@@ -1,0 +1,1 @@
+A method and server for predicting damaging missense mutations. Nat Methods

@@ -1,0 +1,4 @@
+{"item_id": "0", "content": "Hyper-IgM1 syndrome is a rare genetic primary immunodeficiency disease caused by mutations of the CD40 ligand gene."}
+{"item_id": "1", "content": "Autosomal dominant polycystic kidney disease is the most common human monogenic disorder and is caused by mutations in the PKD1 or PKD2 genes."}
+{"item_id": "2", "content": "Paroxysmal nocturnal hemoglobinuria (PNH) is an acquired hemolytic anemia caused by the expansion of a hematopoietic progenitor cell that has acquired a mutation in the X-linked PIGA gene."}
+{"item_id": "3", "content": "Ichthyosis vulgaris (IV) is a genetic disorder with a prevalence of 1:250 -1000 caused by filaggrin (FLG) mutations, which also predispose to atopic diseases."}

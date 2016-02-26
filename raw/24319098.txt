@@ -1,0 +1,1 @@
+A multi-scale, discrete-cell simulation of organogenesis: Application to the effects of strain stimulus on collective cell behavior during ameloblast migration

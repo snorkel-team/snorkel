@@ -1,0 +1,1 @@
+A simple PCR test to detect the common 35delG mutation in the connexin 26 gene.

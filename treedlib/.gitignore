@@ -1,0 +1,7 @@
+# etc.
+*.ipynb_checkpoints/
+*.swp
+*.pyc
+env.sh
+.project
+.pydevproject

@@ -1,0 +1,1 @@
+A clean data set of EST-confirmed splice sites from Homo sapiens and standards for clean-up procedures.

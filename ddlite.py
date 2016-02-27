@@ -1,5 +1,6 @@
 import os
 from collections import namedtuple, defaultdict
+import random
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.parse.stanford import StanfordDependencyParser
@@ -148,6 +149,7 @@ class Relations:
     self.X = None
     self.F = None
     self.feat_index = {}
+    self.w = None
 
   def extract(self, sents):
     for sent in sents:
@@ -181,3 +183,123 @@ class Relations:
       for j in f_index[feat]:
         self.F[i,j] = 1
     self.F = csr_matrix(self.F)
+
+  def learn_feats_and_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9, verbose=False):
+    """
+    Takes in a R x N matrix of rules and an F x N matrix of features
+    Stacks them, giving the rules a +1 prior (i.e. init value)
+    Then runs learning, returning the learned weights
+    """
+    R, N = self.X.shape  # sparse
+    F, N = self.F.shape  # dense
+    X = np.array(np.vstack([self.X, self.F.todense()]))
+    w0 = np.concatenate([np.ones(R), np.zeros(F)])
+    self.w = learn_params(X, nSteps=nSteps, w0=w0, sample=sample, nSamples=nSamples, mu=mu, verbose=verbose)
+
+
+#
+# Logistic regression algs
+# Ported from Chris's Julia notebook...
+#
+def log_odds(p):
+  """This is the logit function"""
+  return np.log(float(p) / (1-p))
+
+def odds_to_prob(l):
+  """
+  This is the inverse logit function logit^{-1}:
+
+    l       = \log\frac{p}{1-p}
+    \exp(l) = \frac{p}{1-p}
+    p       = \frac{\exp(l)}{1 + \exp(l)}
+  """
+  return np.exp(l) / (1.0 + np.exp(l))
+
+def sample_data(X, w, nSamples):
+  """
+  Here we do Gibbs sampling over the decision variables (representing our objects), o_j
+  corresponding to the columns of X
+  The model is just logistic regression, e.g.
+
+    P(o_j=1 | X_{*,j}; w) = logit^{-1}(w \dot X_{*,j})
+
+  This can be calculated exactly, so this is essentially a noisy version of the exact calc...
+  """
+  if type(X) != np.ndarray or type(w) != np.ndarray:
+    raise TypeError("Inputs should be np.ndarray type.")
+  R, N = X.shape
+  if w.shape != (R,):
+    raise Exception("w should be an array of length %s" % R)
+  t = np.zeros(N)
+  f = np.zeros(N)
+
+  # Take samples of random variables
+  for i in range(nSamples):
+    idx = random.randint(0, N-1)
+    if random.random() < odds_to_prob(np.dot(X[:,idx].T, w)):
+      t[idx] += 1
+    else:
+      f[idx] += 1
+  return t, f
+
+def exact_data(X, w):
+  """
+  We calculate the exact conditional probability of the decision variables in
+  logistic regression; see sample_data
+  """
+  if type(X) != np.ndarray or type(w) != np.ndarray:
+    raise TypeError("Inputs should be np.ndarray type.")
+  R, N = X.shape
+  if w.shape != (R,):
+    raise Exception("w should be an array of length %s" % R)
+  t = np.array(map(odds_to_prob, np.dot(X.T, w)))
+  return t, 1-t
+
+def transform_sample_stats(X, t, f):
+  """
+  Here we calculate the expected accuracy of each rule/feature
+  (corresponding to the rows of X) wrt to the distribution of samples S:
+  
+    E_S[ accuracy_i ] = E_(t,f)[ \frac{TP + TN}{TP + FP + TN + FN} ]
+                      = \frac{X_{i|x_{ij}>0}*t - X_{i|x_{ij}<0}*f}{t+f}
+                      = \frac12\left(\frac{X*(t-f)}{t+f} + 1\right)
+  """
+  if type(X) != np.ndarray:
+    raise TypeError("Inputs should be np.ndarray type.")
+  n_pred = np.diag(np.dot(abs(X), t+f))
+  p_correct = (np.diag(np.linalg.inv(n_pred)*(np.dot(X, t) - np.dot(X, f))) + 1) / 2
+  return p_correct, np.diag(n_pred)
+
+def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose=False):
+  """We perform SGD wrt the weights w"""
+  if type(X) != np.ndarray:
+    raise TypeError("Inputs should be np.ndarray type.")
+  R, N = X.shape
+  
+  # We initialize w at 1 for rules & 0 for features
+  # As a default though, if no w0 provided, we initialize to all zeros
+  w = np.zeros(R) if w0 is None else w0
+  g = np.zeros(R)
+  l = np.zeros(R)
+
+  # Take SGD steps
+  for step in range(nSteps):
+    if step % 100 == 0 and verbose:
+      print "Learning epoch = %s" % step
+
+    # Get the expected rule accuracy
+    t,f = sample_data(X, w, nSamples=nSamples) if sample else exact_data(X, w)
+    p_correct, n_pred = transform_sample_stats(X, t, f) 
+    
+    # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
+    l = np.clip(map(log_odds, p_correct), -10, 10)
+
+    # SGD step, with \ell_2 regularization, and normalization by the number of samples
+    g0 = (n_pred*(w - l)) / np.sum(n_pred) + mu*w
+
+    # Momentum term for faster training
+    g = 0.95*g0 + 0.05*g
+    
+    # Update weights
+    w -= 0.01*g
+  return w

@@ -1,62 +1,12 @@
 import os
 from collections import namedtuple, defaultdict
 import random
-from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.stem import PorterStemmer
-from nltk.parse.stanford import StanfordDependencyParser
-from nltk.internals import find_jars_within_path
 import numpy as np
 from scipy.sparse import lil_matrix, csr_matrix
 from tree_structs import corenlp_to_xmltree
 from treedlib import compile_relation_feature_generator
 
-Sentence = namedtuple('Sentence', 'words, lemmas, poses, dep_parents, dep_labels')
-
-class SentenceParser:
-  def __init__(self):
-
-    # Init Porter stemmer
-    self.stemmer = PorterStemmer()
-
-    # A hackey fix is needed here to load the Stanford parser correctly
-    # Ref: https://gist.github.com/alvations/e1df0ba227e542955a8a
-    PARSER = "%s/parser" % os.getcwd()
-    p = '$CLASSPATH:{0}:{0}/stanford-parser.jar:{0}/stanford-parser-3.6.0-models.jar'.format(PARSER)
-    os.environ["CLASSPATH"] = p
-    self.parser = StanfordDependencyParser()
-    stanford_dir = self.parser._classpath[0].rpartition('/')[0]
-    self.parser._classpath = tuple(find_jars_within_path(stanford_dir))
-
-  def _parse_sent(self, words, conll):
-    """Parse a single sentence- input as a CONLL-4 array- returning a Sentence object"""
-    toks, poses, dep_parents, dep_labels = zip(*filter(lambda l : len(l) == 4, conll))
-
-    # Correct the indexing error introduced by dropping punctuation w/out adjusting idxs
-    # TODO: Find the damn flag that keeps punctuation!
-    offsets = []
-    d = 0
-    for i in range(len(words)):
-      if i+d >= len(toks) or words[i] != toks[i+d]:
-        d -= 1
-      offsets.append(d)
-
-    return Sentence(
-      words=list(toks),
-      lemmas=[self.stemmer.stem(t.lower()) for t in toks],
-      poses=list(poses),
-      dep_parents=[i + offsets[i-1] if i > 0 else 0 for i in map(int, dep_parents)],
-      dep_labels=list(dep_labels))
-
-  def parse(self, doc):
-    """Parse a raw document as a string into a list of sentences"""
-    # Split into sentences & words
-    sents = map(word_tokenize, sent_tokenize(doc))
-
-    # Pass in all sents to parser- note there is a performance gain here
-    # that could surely be exploited more...
-    for i,parse in enumerate(self.parser.parse_sents(sents)):
-      conll = [l.split('\t') for l in list(parse)[0].to_conll(4).split('\n')]
-      yield self._parse_sent(sents[i], conll)   
+from parser import Sentence, SentenceParser
 
 
 class DictionaryMatch:
@@ -85,7 +35,7 @@ class DictionaryMatch:
       seq = s[self.match_attrib]
     except TypeError:
       seq = s.__dict__[self.match_attrib]
-    
+
     # Loop over all ngrams
     for l in self.ngr:
       for i in range(0, len(seq)-l+1):
@@ -291,7 +241,7 @@ def transform_sample_stats(X, t, f):
   """
   Here we calculate the expected accuracy of each rule/feature
   (corresponding to the rows of X) wrt to the distribution of samples S:
-  
+
     E_S[ accuracy_i ] = E_(t,f)[ \frac{TP + TN}{TP + FP + TN + FN} ]
                       = \frac{X_{i|x_{ij}>0}*t - X_{i|x_{ij}<0}*f}{t+f}
                       = \frac12\left(\frac{X*(t-f)}{t+f} + 1\right)
@@ -307,7 +257,7 @@ def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose
   if type(X) != np.ndarray:
     raise TypeError("Inputs should be np.ndarray type.")
   R, N = X.shape
-  
+
   # We initialize w at 1 for rules & 0 for features
   # As a default though, if no w0 provided, we initialize to all zeros
   w = np.zeros(R) if w0 is None else w0
@@ -321,8 +271,8 @@ def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose
 
     # Get the expected rule accuracy
     t,f = sample_data(X, w, nSamples=nSamples) if sample else exact_data(X, w)
-    p_correct, n_pred = transform_sample_stats(X, t, f) 
-    
+    p_correct, n_pred = transform_sample_stats(X, t, f)
+
     # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
     l = np.clip(map(log_odds, p_correct), -10, 10)
 
@@ -331,7 +281,7 @@ def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose
 
     # Momentum term for faster training
     g = 0.95*g0 + 0.05*g
-    
+
     # Update weights
     w -= 0.01*g
   return w

@@ -1,0 +1,3 @@
+[submodule "treedlib"]
+	path = treedlib
+	url = https://github.com/HazyResearch/treedlib.git

@@ -48,7 +48,7 @@ r = Relations(
   sentences)
 ```
 The `Relations` object both extracts the candidate relations, and then serves as the interface to and container of them.  To access them- as `Relation` objects- we use `r.relations`, and can render a visualization of one via e.g. `r.relations[0].render`:
-[IMAGE HERE]
+![rendered-relation](rel_tree.png)
 
 ### Distant Supervision
 The goal is now to create a set of _rules_ that specify which relations are true versus false, which we will use to _train_ the system to perform this inference correctly.  _Note that if a set of labeled data is available, these labels could technically be used to create a trivial set of rules; however we assume we are operating in a scenario where such a large training dataset is not available._

@@ -145,13 +145,14 @@ class Relations:
   def __init__(self, e1, e2, sents):
     self.e1 = e1
     self.e2 = e2
-    self.relations = list(self.extract(sents))
+    self.relations = list(self._extract(sents))
+    self.rules = None
+    self.feats = None
     self.X = None
-    self.F = None
     self.feat_index = {}
     self.w = None
 
-  def extract(self, sents):
+  def _extract(self, sents):
     for sent in sents:
       for rel in self._apply(sent):
         yield rel
@@ -163,10 +164,10 @@ class Relations:
         yield Relation(e1_idxs, e2_idxs, self.e1.label, self.e2.label, sent, xt)
 
   def apply_rules(self, rules):
-    self.X = np.zeros((len(rules), len(self.relations)))
+    self.rules = np.zeros((len(rules), len(self.relations)))
     for i,rule in enumerate(rules):
       for j,rel in enumerate(self.relations):
-        self.X[i,j] = rule(rel)
+        self.rules[i,j] = rule(rel)
 
   def extract_features(self, method='treedlib'):
     get_feats = compile_relation_feature_generator()
@@ -177,24 +178,55 @@ class Relations:
 
     # Apply the feature generator, constructing a sparse matrix incrementally
     # Note that lil_matrix should be relatively efficient as we proceed row-wise
-    self.F = lil_matrix((len(f_index), len(self.relations)))
+    self.feats = lil_matrix((len(f_index), len(self.relations)))
     for i,feat in enumerate(f_index.keys()):
       self.feat_index[i] = feat
       for j in f_index[feat]:
         self.F[i,j] = 1
-    self.F = csr_matrix(self.F)
+    self.feats = csr_matrix(self.F)
 
   def learn_feats_and_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9, verbose=False):
     """
-    Takes in a R x N matrix of rules and an F x N matrix of features
+    Uses the R x N matrix of rules and the F x N matrix of features defined
+    for the Relations object
     Stacks them, giving the rules a +1 prior (i.e. init value)
-    Then runs learning, returning the learned weights
+    Then runs learning, saving the learned weights
     """
-    R, N = self.X.shape  # sparse
-    F, N = self.F.shape  # dense
-    X = np.array(np.vstack([self.X, self.F.todense()]))
+    R, N = self.rules.shape  # dense
+    F, N = self.feats.shape  # sparse
+    self.X = np.array(np.vstack([self.rules, self.feats.todense()]))
     w0 = np.concatenate([np.ones(R), np.zeros(F)])
-    self.w = learn_params(X, nSteps=nSteps, w0=w0, sample=sample, nSamples=nSamples, mu=mu, verbose=verbose)
+    self.w = learn_params(self.X, nSteps=nSteps, w0=w0, sample=sample, nSamples=nSamples, mu=mu, verbose=verbose)
+
+  def get_predicted(self):
+    """Get the array of predicted (boolean) variables given learned weight param w"""
+    return np.sign(np.dot(self.X.T, self.w))
+
+  def get_classification_accuracy(self, ground_truth):
+    """Given the labels for the Relations set, return the classification accuracy"""
+    if len(ground_truth) != self.X.shape[1]:
+      raise ValueError("%s ground truth labels for %s relations." % (len(ground_truth), self.X.shape[1]))
+    pred = self.get_predicted()
+    return (np.dot(pred, ground_truth) / len(ground_truth) + 1) / 2
+
+  def get_rule_priority_vote_accuracy(self, ground_truth):
+    """
+    This is to answer the question: 'How well would my rules alone do?'
+    I.e. without any features, learning of rule or feature weights, etc.- this serves as a
+    natural baseline / quick metric
+    Labels are assigned by the first rule that emits one for each relation (based on the order
+    of the provided rules list)
+    """
+    R, N = self.rules.shape
+    if len(ground_truth) != N:
+      raise ValueError("%s ground truth labels for %s relations." % (len(ground_truth), self.X.shape[1]))
+    correct = 0
+    for i in range(N):
+      for j in range(R):
+        if self.rules[i,j] != 0:
+          correct += 1 if self.rules[i,j] == ground_truth[i] else 0
+          break
+    return float(correct) / N
 
 
 #

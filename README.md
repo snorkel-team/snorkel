@@ -34,11 +34,11 @@ for sent in parser.parse(doc_string):
 
 The output is a generator of `Sentence` objects, which have various useful sentence attributes (as mentioned partially above).
 
-Note that this is often the slowest part of the process, so for large document sets, pre-processing with high parallelism and/or external to DeepDive Lite is recommended.
+**_Note:_** this is often the slowest part of the process, so for large document sets, pre-processing with high parallelism and/or external to DeepDive Lite is recommended.  Further improvements on speed to come as well [TODO].
 
 
 ### Candidate Extraction
-DeepDive Lite is (currently) focused around extracting _relation mentions_ from text, involving either one or two entities.  In either case, we define a `Relations` object, which extracts a set of _candidate relation mentions_- our task is then to write rules which distinguish _true_ relation mentions from _false_ ones.
+DeepDive Lite is (currently) focused around extracting _relation mentions_ from text, involving either one or two entities.  In either case, we define a `Relations` object, which extracts a set of _candidate relation mentions_.  Our task is then to train the system to distinguish _true_ relation mentions from _false_ ones.
 
 For the binary case, we define a relation based on two sets of _entity mentions_, described via declarative operators.  For example, we can define a relation as occuring between phrases that match a list of gene names, and phrases that match a list of phenotype names, and then extract them from a set of sentences:
 ```python
@@ -51,14 +51,16 @@ The `Relations` object both extracts the candidate relations, and then serves as
 ![rendered-relation](rel_tree.png)
 
 ### Distant Supervision
-The goal is now to create a set of _rules_ that specify which relations are true versus false, which we will use to _train_ the system to perform this inference correctly.  _Note that if a set of labeled data is available, these labels could technically be used to create a trivial set of rules; however we assume we are operating in a scenario where such a large training dataset is not available._
+The goal is now to create a set of _rules_ that specify which relations are true versus false, which we will use to _train_ the system to perform this inference correctly.*
 
 In the context of DeepDive Lite, **a rule is simply a function which accepts a `Relation` object and returns a value in {-1,0,1}** (where 0 means 'abstain').  Once a list of rules is created, this list is applied to the `Relations` set via `r.apply_rules(rules)`.  This generates a matrix of rule labels `r.rules`, with rows corresponding to rules, and columns to relation candidates.
 
-Note also that a natural question is: 'how well would my rules alone do on the classification task?'.  To answer this question, relative to a set of ground truth- which provides a natural baseline for further performance downstream- we can use `r.get_rule_priority_vote_accuracy(idxs, ground_truth)`.
+Note also that a natural question is: 'how well would my rules alone do on the classification task?'.  This provides a natural baseline for assessing  further performance downstream.  To answer this question, relative to a set of ground truth, we can use `r.get_rule_priority_vote_accuracy(idxs, ground_truth)`.
+
+*_Note that if a set of labeled data is available, these labels could technically be used to create a trivial set of rules; however we assume we are operating in domains where a sufficiently large labeled training set is not available._
 
 ### Feature Extraction
-Feature extraction is done _automatically_ via `r.extract_features()`, although the method of featurization can be selected and customized [TODO].  After this has been performed, a (sparse) matrix of features `r.feats` is generated, with rows corresponding to features and columns to relation candidates.
+Feature extraction is done _automatically_ via `r.extract_features()`.  The method of featurization can however be selected and customized [TODO].  After this has been performed, a (sparse) matrix of features `r.feats` is generated, with rows corresponding to features and columns to relation candidates.
 
 ### Learning
 Learning of rule & feature weights can be done using logistic regression, via `r.learn_feats_and_weights()`.  This generates a learned parameter array `r.w`.  Predicted relation values (with -1 meaning false, and 1 meaning true) can then be generated via `r.get_predicted`, and accuracy relative to a set of ground truth labels via `r.get_classification_accuracy(idxs, ground_truth)`.

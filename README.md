@@ -11,6 +11,7 @@ DeepDive Lite is also part of a broader attempt to answer the following research
 DeepDive Lite requires the following python modules; we provide example install commands using `pip`:
 * [nltk](http://www.nltk.org/install.html): `sudo pip install -U nltk`
 * [lxml](http://lxml.de/installation.html): `sudo pip install -U lxml`
+* [requests](http://docs.python-requests.org/en/master/user/install/#install): `sudo pip install -U requests`
 * [numpy](http://docs.scipy.org/doc/numpy-1.10.1/user/install.html): `sudo pip install -U numpy`
 * [scipy](http://www.scipy.org/install.html)
 

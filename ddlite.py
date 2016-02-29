@@ -1,9 +1,11 @@
-import os
+import os, sys
 from collections import namedtuple, defaultdict
 import random
 import numpy as np
 from scipy.sparse import lil_matrix, csr_matrix
 from tree_structs import corenlp_to_xmltree
+
+sys.path.append('%s/treedlib' % os.getcwd())
 from treedlib import compile_relation_feature_generator
 
 from parser import Sentence, SentenceParser
@@ -128,12 +130,12 @@ class Relations:
 
     # Apply the feature generator, constructing a sparse matrix incrementally
     # Note that lil_matrix should be relatively efficient as we proceed row-wise
-    self.feats = lil_matrix((len(f_index), len(self.relations)))
+    F = lil_matrix((len(f_index), len(self.relations)))
     for i,feat in enumerate(f_index.keys()):
       self.feat_index[i] = feat
       for j in f_index[feat]:
-        self.F[i,j] = 1
-    self.feats = csr_matrix(self.F)
+        F[i,j] = 1
+    self.feats = csr_matrix(F)
 
   def learn_feats_and_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9, verbose=False):
     """
@@ -171,10 +173,10 @@ class Relations:
     if len(ground_truth) != N:
       raise ValueError("%s ground truth labels for %s relations." % (len(ground_truth), self.X.shape[1]))
     correct = 0
-    for i in range(N):
-      for j in range(R):
+    for j in range(N):
+      for i in range(R):
         if self.rules[i,j] != 0:
-          correct += 1 if self.rules[i,j] == ground_truth[i] else 0
+          correct += 1 if self.rules[i,j] == ground_truth[j] else 0
           break
     return float(correct) / N
 

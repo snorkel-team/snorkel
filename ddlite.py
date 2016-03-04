@@ -4,6 +4,7 @@ import random
 import numpy as np
 from scipy.sparse import lil_matrix, csr_matrix
 from tree_structs import corenlp_to_xmltree
+import matplotlib.pyplot as plt
 
 sys.path.append('%s/treedlib' % os.getcwd())
 from treedlib import compile_relation_feature_generator
@@ -150,16 +151,23 @@ class Relations:
     w0 = np.concatenate([np.ones(R), np.zeros(F)])
     self.w = learn_params(self.X, nSteps=nSteps, w0=w0, sample=sample, nSamples=nSamples, mu=mu, verbose=verbose)
 
+  def get_link(self):
+    """Get the array of predicted link function values (continuous) given learned weight param w"""
+    return np.dot(self.X.T, self.w)
+
   def get_predicted(self):
     """Get the array of predicted (boolean) variables given learned weight param w"""
-    return np.sign(np.dot(self.X.T, self.w))
+    return np.sign(self.get_link())
+    
+  def correct_classification(self, ground_truth):
+    """Given the labels for the Relations set, return boolean array indicating correct classification"""
+    return np.dot(self.get_predicted(), ground_truth)
 
   def get_classification_accuracy(self, ground_truth):
     """Given the labels for the Relations set, return the classification accuracy"""
     if len(ground_truth) != self.X.shape[1]:
       raise ValueError("%s ground truth labels for %s relations." % (len(ground_truth), self.X.shape[1]))
-    pred = self.get_predicted()
-    return (np.dot(pred, ground_truth) / len(ground_truth) + 1) / 2
+    return (self.correct_classification() / len(ground_truth) + 1) / 2
 
   def get_rule_priority_vote_accuracy(self, ground_truth):
     """
@@ -179,6 +187,31 @@ class Relations:
           correct += 1 if self.rules[i,j] == ground_truth[j] else 0
           break
     return float(correct) / N
+    
+  def plot_calibration(self, ground_truth):
+    """Show classification accuracy and probability histogram plots"""
+    x = 0.1 * (1 + np.array(range(10)))
+    probs = odds_to_prob(self.get_link())
+    bin_assign = [x[i] for i in np.digitize(probs, x)]
+    correct = self.correct_classification()
+    correct_prob = [np.mean(correct[bin_assign == p]) for p in x]
+    
+    # Accuracy plot
+    plt.subplot(1,2,1)    
+    plt.plot(x, x, 'b--', x, correct_prob, 'ro-')
+    plt.title('(a) Accuracy (whole set)')
+    plt.xlabel('Probability')
+    plt.ylabel('Accuracy')
+    
+    # Prediction probability plot
+    plt.subplot(1,2,2)
+    plt.hist(probs, bins=10, normed=False, facecolor='blue')
+    plt.title('(b) # Predictions (whole set)')
+    plt.xlabel('Probability')
+    plt.ylabel('# Predictions')
+    
+    plt.show()
+    
 
 
 #

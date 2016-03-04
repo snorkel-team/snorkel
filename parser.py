@@ -72,13 +72,16 @@ class HTMLParser(FileTypeParser):
     def parse(self, fp):
         with open(fp, 'rb') as f:
             mulligatawny = BeautifulSoup(f)
-        return filter(self._cleaner, mulligatawny.findAll(text=True))
+        txt = filter(self._cleaner, mulligatawny.findAll(text=True))
+        return ' '.join(self._strip_special(s) for s in txt if s != '\n')
     def _cleaner(self, s):
         if s.parent.name in ['style', 'script', '[document]', 'head', 'title']:
             return False
         elif re.match('<!--.*-->', unicode(s)):
             return False
         return True
+    def _strip_special(self, s):
+        return ''.join(c for c in s if ord(c) < 128)
         
 
 '''
@@ -93,18 +96,22 @@ class DocParser:
         
     # Parse all docs parseable by passed file type parser
     def parseDoc(self):
+        docs = []
         for fn in self._fs:
             f = os.path.join(self.path, fn)
             if self._ftparser.can_parse(f):
-                yield self._ftparser.parse(f)
+                docs.append(self._ftparser.parse(f))
             else:
                 warnings.warn("Skipping imparseable file {}".format(f))
+        return docs
     
     # Use SentenceParser to return parsed sentences
     def parseDocSentences(self):
+        sentences = []
         sp = SentenceParser()
         for txt in self.parseDoc():
-            yield sp.parse(txt)
+            sentences.append(sp.parse(txt))
+        return sentences
     
     def _get_files(self):
         if os.path.isfile(self.path):

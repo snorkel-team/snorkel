@@ -83,41 +83,43 @@ class HTMLParser(FileTypeParser):
     def _strip_special(self, s):
         return ''.join(c for c in s if ord(c) < 128)
         
+'''
+Null parser for preprocessed files
+'''
+class NullParser(FileTypeParser):
+    def can_parse(self, fp):
+        return True
+    def parse(self, fp):
+        with open(fp, 'rb') as f:
+            return f.read()
+            
 
 '''
 Wrapper for a FileTypeParser that parses a file, directory, or pattern
 Defaults to using HTMLParser
 '''
 class DocParser: 
-    def __init__(self, path, ftparser = HTMLParser()):
+    def __init__(self, path, ftparser = NullParser()):
         self.path = path
         self._ftparser = ftparser
         self._fs = self._get_files()
         
     # Parse all docs parseable by passed file type parser
-    def parseDoc(self):
-        docs = []
-        for fn in self._fs:
-            f = os.path.join(self.path, fn)
-            if self._ftparser.can_parse(f):
-                docs.append(self._ftparser.parse(f))
-            else:
-                warnings.warn("Skipping imparseable file {}".format(f))
-        return docs
+    def parseDocs(self):
+        return [self._ftparser.parse(f) if self._ftparser.can_parse(f)
+                else warnings.warn("Skipping imparseable file {}".format(f))
+                for f in self._fs]
     
     # Use SentenceParser to return parsed sentences
     def parseDocSentences(self):
-        sentences = []
         sp = SentenceParser()
-        for txt in self.parseDoc():
-            sentences.append(sp.parse(txt))
-        return sentences
+        return [sp.parse(txt) for txt in self.parseDocs()]
     
     def _get_files(self):
         if os.path.isfile(self.path):
             return [self.path]
         elif os.path.isdir(self.path):
-            return os.listdir(self.path)
+            return [os.path.join(self.path, f) for f in os.listdir(self.path)]
         else:
             return glob.glob(self.path)
             

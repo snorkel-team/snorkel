@@ -2,6 +2,9 @@ import os, sys
 from collections import namedtuple, defaultdict
 import random
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from scipy.sparse import lil_matrix, csr_matrix
 from tree_structs import corenlp_to_xmltree
 
@@ -199,7 +202,7 @@ class Relations:
     """
     Given the labels for the Relations set, return the classification accuracy
     Return either accuracy for all variables or only holdout set
-    Note: ground_truth must either be an array the length of the full dataset, or of the holdout
+    Note: ground_truth must be an array either the length of the full dataset, or of the holdout
           If the latter, holdout_only must be set to True
     """
     gt = self._handle_ground_truth(ground_truth, holdout_only)
@@ -213,7 +216,7 @@ class Relations:
     natural baseline / quick metric
     Labels are assigned by the first rule that emits one for each relation (based on the order
     of the provided rules list)
-    Note: ground_truth must either be an array the length of the full dataset, or of the holdout
+    Note: ground_truth must be an array either the length of the full dataset, or of the holdout
           If the latter, holdout_only must be set to True
     """
     R, N = self.rules.shape
@@ -226,6 +229,43 @@ class Relations:
           correct += 1 if self.rules[i,j] == gt[j] else 0
           break
     return float(correct) / len(gt)
+
+  def _plot_prediction_probability(self, probs):
+    plt.hist(probs, bins=10, normed=False, facecolor='blue')
+    plt.xlabel("Probability")
+    plt.ylabel("# Predictions")
+    
+  def _plot_accuracy(self, probs, ground_truth):
+    x = 0.1 * (1 + np.array(range(10)))
+    bin_assign = [x[i] for i in np.digitize(probs, x)]
+    correct = (self.get_predicted() == ground_truth)
+    correct_prob = [np.mean(correct[bin_assign == p]) for p in x]
+    plt.plot(x, x, 'b--', x, correct_prob, 'ro-')
+    plt.xlabel("Probability")
+    plt.ylabel("Accuracy")
+
+  def plot_calibration(self, ground_truth):
+    """
+    Show classification accuracy and probability histogram plots
+    Note: ground_truth must be an array either the length of the full dataset, or of the holdout
+    """
+    if len(self.holdout) == 0:
+        warnings.warn("No holdout set for calibration plots")
+        self._plot_prediction_probability(self.get_predicted_probability())
+        plt.title("# Predictions (whole set)")
+    else:
+      holdout_probs = self.get_predicted_probability(holdout_only = True)
+      gt = self._handle_ground_truth(ground_truth, holdout_only = True)
+      plt.subplot(1,3,1)
+      self._plot_accuracy(self, hold_out_probs, gt)
+      plt.title("(a) Accuracy (holdout set)")
+      plt.subplot(1,3,2)
+      self._plot_prediction_probability(holdout_probs)
+      plt.title("(b) # Predictions (holdout set)")
+      plt.subplot(1,3,3)
+      self._plot_prediction_probability(self.get_predicted_probability())
+      plt.title("(c) # Predictions (whole set)")
+    plt.show()
 
 #
 # Logistic regression algs

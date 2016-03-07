@@ -8,7 +8,7 @@ from tree_structs import corenlp_to_xmltree
 sys.path.append('%s/treedlib' % os.getcwd())
 from treedlib import compile_relation_feature_generator
 
-from parser import Sentence, SentenceParser
+from parser import *
 
 
 class DictionaryMatch:

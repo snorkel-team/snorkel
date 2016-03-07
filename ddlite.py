@@ -149,7 +149,7 @@ class Relations:
     R, N = self.rules.shape  # dense
     F, N = self.feats.shape  # sparse
     
-    if hasattr(holdout, "__len__") and (not isinstance(holdout, str)):
+    if hasattr(holdout, "__iter__"):
         self.holdout = holdout
     elif not hasattr(holdout, "__len__") and (0 <= holdout < 1):
         self.holdout = np.random.choice(N, np.floor(holdout * N), replace=False)
@@ -199,6 +199,8 @@ class Relations:
     """
     Given the labels for the Relations set, return the classification accuracy
     Return either accuracy for all variables or only holdout set
+    Note: ground_truth must either be an array the length of the full dataset, or of the holdout
+          If the latter, holdout_only must be set to True
     """
     gt = self._handle_ground_truth(ground_truth, holdout_only)
     pred = self.get_predicted(holdout_only)
@@ -211,6 +213,8 @@ class Relations:
     natural baseline / quick metric
     Labels are assigned by the first rule that emits one for each relation (based on the order
     of the provided rules list)
+    Note: ground_truth must either be an array the length of the full dataset, or of the holdout
+          If the latter, holdout_only must be set to True
     """
     R, N = self.rules.shape
     gt = self._handle_ground_truth(ground_truth, holdout_only)

@@ -64,7 +64,7 @@ class FileTypeParser:
         raise NotImplementedError()
         
 '''
-HTML parser using BeautifulSoup
+Basic HTML parser using BeautifulSoup to return visible text
 '''
 class HTMLParser(FileTypeParser):
     def can_parse(self, fp):
@@ -84,9 +84,9 @@ class HTMLParser(FileTypeParser):
         return ''.join(c for c in s if ord(c) < 128)
         
 '''
-Null parser for preprocessed files
+Text parser for preprocessed files
 '''
-class NullParser(FileTypeParser):
+class TextParser(FileTypeParser):
     def can_parse(self, fp):
         return True
     def parse(self, fp):
@@ -96,19 +96,23 @@ class NullParser(FileTypeParser):
 
 '''
 Wrapper for a FileTypeParser that parses a file, directory, or pattern
-Defaults to using HTMLParser
+Defaults to using TextParser
 '''
 class DocParser: 
-    def __init__(self, path, ftparser = NullParser()):
+    def __init__(self, path, ftparser = TextParser()):
         self.path = path
+        if not issubclass(ftparser.__class__, FileTypeParser):
+            warnings.warn("File parser is not a subclass of FileTypeParser")
         self._ftparser = ftparser
         self._fs = self._get_files()
         
     # Parse all docs parseable by passed file type parser
     def parseDocs(self):
-        return [self._ftparser.parse(f) if self._ftparser.can_parse(f)
-                else warnings.warn("Skipping imparseable file {}".format(f))
-                for f in self._fs]
+        for f in self._fs:
+            if self._ftparser.can_parse(f):
+                yield self._ftparser.parse(f)
+            else:
+                warnings.warn("Skipping imparseable file {}".format(f))
     
     # Use SentenceParser to return parsed sentences
     def parseDocSentences(self):

@@ -103,6 +103,7 @@ class Relations:
     self.X = None
     self.feat_index = {}
     self.w = None
+    self.holdout = []
 
   def _extract(self, sents):
     for sent in sents:
@@ -137,49 +138,94 @@ class Relations:
         F[i,j] = 1
     self.feats = csr_matrix(F)
 
-  def learn_feats_and_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9, verbose=False):
+  def learn_feats_and_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9, holdout=0.1, verbose=False):
     """
     Uses the R x N matrix of rules and the F x N matrix of features defined
     for the Relations object
     Stacks them, giving the rules a +1 prior (i.e. init value)
     Then runs learning, saving the learned weights
-    """
+    Holds out a set of variables for testing, either a random fraction or a specific set of indices
+    """   
     R, N = self.rules.shape  # dense
     F, N = self.feats.shape  # sparse
+    
+    if hasattr(holdout, "__iter__"):
+        self.holdout = holdout
+    elif not hasattr(holdout, "__len__") and (0 <= holdout < 1):
+        self.holdout = np.random.choice(N, np.floor(holdout * N), replace=False)
+    else:
+        raise ValueError("Holdout must be an array of indices or fraction")    
+    
     self.X = np.array(np.vstack([self.rules, self.feats.todense()]))
     w0 = np.concatenate([np.ones(R), np.zeros(F)])
-    self.w = learn_params(self.X, nSteps=nSteps, w0=w0, sample=sample, nSamples=nSamples, mu=mu, verbose=verbose)
+    self.w = learn_params(self.X[:, np.setdiff1d(range(N), self.holdout)],
+                          nSteps=nSteps, w0=w0, sample=sample,
+                          nSamples=nSamples, mu=mu, verbose=verbose)
 
-  def get_predicted(self):
-    """Get the array of predicted (boolean) variables given learned weight param w"""
-    return np.sign(np.dot(self.X.T, self.w))
+  def get_link(self, holdout_only=False):
+    """
+    Get the array of predicted link function values (continuous) given learned weight param w
+    Return either all variables or only holdout set
+    """
+    return np.dot(self.X[:,self.holdout].T, self.w) if holdout_only else np.sign(np.dot(self.X.T, self.w))       
 
-  def get_classification_accuracy(self, ground_truth):
-    """Given the labels for the Relations set, return the classification accuracy"""
-    if len(ground_truth) != self.X.shape[1]:
-      raise ValueError("%s ground truth labels for %s relations." % (len(ground_truth), self.X.shape[1]))
-    pred = self.get_predicted()
-    return (np.dot(pred, ground_truth) / len(ground_truth) + 1) / 2
+  def get_predicted_probability(self, holdout_only=False):
+    """
+    Get the array of predicted probabilities (continuous) for variables given learned weight param w
+    Return either all variables or only holdout set
+    """
+    return odds_to_prob(self.get_link(holdout_only))
+ 
+  def get_predicted(self, holdout_only=False):
+    """
+    Get the array of predicted (boolean) variables given learned weight param w
+    Return either all variables or only holdout set
+    """
+    return np.sign(self.get_link(holdout_only))
+    
+  def _handle_ground_truth(self, ground_truth, holdout_only):
+    gt = None
+    N = self.rules.shape[1]
+    if len(ground_truth) == N:
+      gt = ground_truth[self.holdout] if holdout_only else ground_truth
+    elif holdout_only and len(ground_truth) == len(self.holdout):
+      gt = ground_truth
+    else:
+      raise ValueError("{} ground truth labels for {} relations and holdout size {}.".
+        format(len(ground_truth), N, len(self.holdout)))
+    return gt
 
-  def get_rule_priority_vote_accuracy(self, ground_truth):
+  def get_classification_accuracy(self, ground_truth, holdout_only=False):
+    """
+    Given the labels for the Relations set, return the classification accuracy
+    Return either accuracy for all variables or only holdout set
+    Note: ground_truth must either be an array the length of the full dataset, or of the holdout
+          If the latter, holdout_only must be set to True
+    """
+    gt = self._handle_ground_truth(ground_truth, holdout_only)
+    pred = self.get_predicted(holdout_only)
+    return (np.dot(pred, gt) / len(gt) + 1) / 2
+
+  def get_rule_priority_vote_accuracy(self, ground_truth, holdout_only=False):
     """
     This is to answer the question: 'How well would my rules alone do?'
     I.e. without any features, learning of rule or feature weights, etc.- this serves as a
     natural baseline / quick metric
     Labels are assigned by the first rule that emits one for each relation (based on the order
     of the provided rules list)
+    Note: ground_truth must either be an array the length of the full dataset, or of the holdout
+          If the latter, holdout_only must be set to True
     """
     R, N = self.rules.shape
-    if len(ground_truth) != N:
-      raise ValueError("%s ground truth labels for %s relations." % (len(ground_truth), self.X.shape[1]))
+    gt = self._handle_ground_truth(ground_truth, holdout_only)
+    grid = self.holdout if holdout_only else xrange(N)
     correct = 0
-    for j in range(N):
-      for i in range(R):
+    for j in grid:
+      for i in xrange(R):
         if self.rules[i,j] != 0:
-          correct += 1 if self.rules[i,j] == ground_truth[j] else 0
+          correct += 1 if self.rules[i,j] == gt[j] else 0
           break
-    return float(correct) / N
-
+    return float(correct) / len(gt)
 
 #
 # Logistic regression algs

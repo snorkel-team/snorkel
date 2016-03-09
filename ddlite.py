@@ -167,7 +167,7 @@ class Relations:
     Get the array of predicted link function values (continuous) given learned weight param w
     Return either all variables or only holdout set
     """
-    return np.dot(self.X[:,self.holdout].T, self.w) if holdout_only else np.sign(np.dot(self.X.T, self.w))       
+    return np.dot(self.X[:,self.holdout].T, self.w) if holdout_only else np.dot(self.X.T, self.w)     
 
   def get_predicted_probability(self, holdout_only=False):
     """

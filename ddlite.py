@@ -55,42 +55,18 @@ def tag_seq(words, seq, tag):
 
 def tag_seqs(words, seqs, tags):
   """
-  Given a list of words, a *list* of lists of indexes, anmd the corresponding tags
+  Given a list of words, a *list* of lists of indexes, and the corresponding tags
   This function substitutes the tags for the words coresponding to the index lists,
   taking care of shifting indexes appropriately after multi-word substitutions
   NOTE: this assumes non-overlapping seqs!
   """
   words_out = words
   dj = 0
-  for i in np.argsort(seqs):
-    i = int(i)
+  for i in np.argsort(seqs, axis=0):
+    i = int(i[0])
     words_out = tag_seq(words_out, map(lambda j : j - dj, seqs[i]), tags[i])
     dj += len(seqs[i]) - 1
   return words_out
-
-
-class Relation:
-  def __init__(self, e1_idxs, e2_idxs, e1_label, e2_label, sent, xt):
-    self.e1_idxs = e1_idxs
-    self.e2_idxs = e2_idxs
-    self.idxs = [self.e1_idxs, self.e2_idxs]
-    self.e1_label = e1_label
-    self.e2_label = e2_label
-    self.labels = [self.e1_label, self.e2_label]
-
-    # Absorb XMLTree and Sentence object attributes for access by rules
-    self.xt = xt
-    self.root = self.xt.root
-    self.__dict__.update(sent.__dict__)
-
-    # Add some additional useful attibutes
-    self.tagged_sent = ' '.join(tag_seqs(self.words, self.idxs, self.labels))
-
-  def render(self):
-    self.xt.render_tree(self.idxs)
-
-  def __repr__(self):
-    return '<Relation: %s - %s>' % (self.e1_idxs, self.e2_idxs)
 
 class Extractions(object):
   def __init__(self, sents):
@@ -103,7 +79,9 @@ class Extractions(object):
     self.extractions = list(self._extract(sents))
     
   def _extract(self, sents):
-    raise NotImplementedError()
+    for sent in sents:
+      for ext in self._apply(sent):
+        yield ext
 
   def _apply(self, sent):
     raise NotImplementedError()
@@ -216,18 +194,39 @@ class Extractions(object):
           correct += 1 if self.rules[i,j] == gt[j] else 0
           break
     return float(correct) / len(gt)
+  
+  def __repr__(self):
+    return '\n'.join(str(e) for e in self.extractions)
           
+class Relation:
+  def __init__(self, e1_idxs, e2_idxs, e1_label, e2_label, sent, xt):
+    self.e1_idxs = e1_idxs
+    self.e2_idxs = e2_idxs
+    self.idxs = [self.e1_idxs, self.e2_idxs]
+    self.e1_label = e1_label
+    self.e2_label = e2_label
+    self.labels = [self.e1_label, self.e2_label]
+
+    # Absorb XMLTree and Sentence object attributes for access by rules
+    self.xt = xt
+    self.root = self.xt.root
+    self.__dict__.update(sent.__dict__)
+
+    # Add some additional useful attributes
+    self.tagged_sent = ' '.join(tag_seqs(self.words, self.idxs, self.labels))
+
+  def render(self):
+    self.xt.render_tree(self.idxs)
+
+  def __repr__(self):
+    return '<Relation: {} - {}>'.format(self.e1_idxs, self.e2_idxs)
+
 class Relations(Extractions):
   def __init__(self, e1, e2, sents):
     self.e1 = e1
     self.e2 = e2
     super(Relations, self).__init__(sents)
     self.relations = self.extractions
-    
-  def _extract(self, sents):
-    for sent in sents:
-      for rel in self._apply(sent):
-        yield rel
 
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
@@ -242,6 +241,55 @@ class Relations(Extractions):
       for feat in get_feats(ext.root, ext.e1_idxs, ext.e2_idxs):
         f_index[feat].append(j)
     return f_index
+
+class Entity:
+  def __init__(self, idxs, name, sent, xt):
+    self.name = name
+    self.idxs = idxs
+    # Absorb XMLTree and Sentence object attributes for access by rules
+    self.xt = xt
+    self.root = self.xt.root
+    self.__dict__.update(sent.__dict__)
+
+    # Add some additional useful attributes
+    self.tagged_sent = ' '.join(tag_seqs(self.words, [self.idxs], 'ENT'))
+
+  def render(self):
+    self.xt.render_tree([self.idxs])
+
+  def __repr__(self):
+    return '<Entity: {}>'.format(self.name)
+
+class Entities(Extractions):
+  def __init__(self, sents):
+    #e
+    super(Entities, self).__init__(sents)
+    self.entities = self.extractions
+
+  def _apply(self, sent):
+    xt = corenlp_to_xmltree(sent)
+    # Search for consecutive named entity blocks
+    nr_pos = ['NN', 'NNS']
+    n_words = len(sent.poses)
+    l_idxs = (i for i in xrange(n_words) if sent.poses[i] in nr_pos)
+    r_idx = None
+    for l_idx in l_idxs:
+      # Emit all sub n-grams
+      yield Entity([l_idx], sent.lemmas[l_idx], sent, xt)
+      r_idx = l_idx + 1
+      while r_idx < n_words and sent.poses[r_idx] in nr_pos:
+        rg = range(l_idx, r_idx+1)
+        yield(Entity(rg, ' '.join(sent.lemmas[i] for i in rg), sent, xt))
+        r_idx += 1
+  
+  def _get_features(self, method='treedlib'):
+    #get_feats = compile_relation_feature_generator()
+    f_index = defaultdict(list)
+    for j,ext in enumerate(self.extractions):
+      #for feat in get_feats(ext.root, ext.e1_idxs, ext.e2_idxs):
+      # f_index[feat].append(j)
+      pass
+    return f_index    
     
 
 #
@@ -350,4 +398,16 @@ def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose
     # Update weights
     w -= 0.01*g
   return w
+
+if __name__ == '__main__':
+  txt = "Han\'s likes Luke and a wookie. Han Solo don\'t like bounty hunters."
+  parser = SentenceParser()
+  sents = list(parser.parse(txt))
+
+  R = Relations(DictionaryMatch('R', ['Han Solo', 'Luke', 'Chewie']),
+                DictionaryMatch('E', ['Bounty Hunters']), sents)
+  print R
+  
+  E = Entities(sents)
+  print E                
   

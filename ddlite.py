@@ -92,46 +92,36 @@ class Relation:
   def __repr__(self):
     return '<Relation: %s - %s>' % (self.e1_idxs, self.e2_idxs)
 
-
-class Relations:
-  def __init__(self, e1, e2, sents):
-    self.e1 = e1
-    self.e2 = e2
-    self.relations = list(self._extract(sents))
+class Extractions(object):
+  def __init__(self, sents):
     self.rules = None
     self.feats = None
     self.X = None
     self.feat_index = {}
     self.w = None
     self.holdout = []
-
+    self.extractions = list(self._extract(sents))
+    
   def _extract(self, sents):
-    for sent in sents:
-      for rel in self._apply(sent):
-        yield rel
+    raise NotImplementedError()
 
   def _apply(self, sent):
-    xt = corenlp_to_xmltree(sent)
-    for e1_idxs in self.e1.apply(sent):
-      for e2_idxs in self.e2.apply(sent):
-        yield Relation(e1_idxs, e2_idxs, self.e1.label, self.e2.label, sent, xt)
-
+    raise NotImplementedError()
+    
   def apply_rules(self, rules):
-    self.rules = np.zeros((len(rules), len(self.relations)))
+    self.rules = np.zeros((len(rules), len(self.extractions)))
     for i,rule in enumerate(rules):
-      for j,rel in enumerate(self.relations):
-        self.rules[i,j] = rule(rel)
-
-  def extract_features(self, method='treedlib'):
-    get_feats = compile_relation_feature_generator()
-    f_index = defaultdict(list)
-    for j,rel in enumerate(self.relations):
-      for feat in get_feats(rel.root, rel.e1_idxs, rel.e2_idxs):
-        f_index[feat].append(j)
-
+      for j,ext in enumerate(self.extractions):
+        self.rules[i,j] = rule(ext)
+        
+  def _get_features(self):
+      raise NotImplementedError()    
+    
+  def extract_features(self, *args):
+    f_index = self._get_features(args)
     # Apply the feature generator, constructing a sparse matrix incrementally
     # Note that lil_matrix should be relatively efficient as we proceed row-wise
-    F = lil_matrix((len(f_index), len(self.relations)))
+    F = lil_matrix((len(f_index), len(self.extractions)))
     for i,feat in enumerate(f_index.keys()):
       self.feat_index[i] = feat
       for j in f_index[feat]:
@@ -151,7 +141,7 @@ class Relations:
     
     if hasattr(holdout, "__iter__"):
         self.holdout = holdout
-    elif not hasattr(holdout, "__len__") and (0 <= holdout < 1):
+    elif not hasattr(holdout, "__iter__") and (0 <= holdout < 1):
         self.holdout = np.random.choice(N, np.floor(holdout * N), replace=False)
     else:
         raise ValueError("Holdout must be an array of indices or fraction")    
@@ -226,6 +216,33 @@ class Relations:
           correct += 1 if self.rules[i,j] == gt[j] else 0
           break
     return float(correct) / len(gt)
+          
+class Relations(Extractions):
+  def __init__(self, e1, e2, sents):
+    self.e1 = e1
+    self.e2 = e2
+    super(Relations, self).__init__(sents)
+    self.relations = self.extractions
+    
+  def _extract(self, sents):
+    for sent in sents:
+      for rel in self._apply(sent):
+        yield rel
+
+  def _apply(self, sent):
+    xt = corenlp_to_xmltree(sent)
+    for e1_idxs in self.e1.apply(sent):
+      for e2_idxs in self.e2.apply(sent):
+        yield Relation(e1_idxs, e2_idxs, self.e1.label, self.e2.label, sent, xt)
+  
+  def _get_features(self, method='treedlib'):
+    get_feats = compile_relation_feature_generator()
+    f_index = defaultdict(list)
+    for j,ext in enumerate(self.extractions):
+      for feat in get_feats(ext.root, ext.e1_idxs, ext.e2_idxs):
+        f_index[feat].append(j)
+    return f_index
+    
 
 #
 # Logistic regression algs
@@ -333,3 +350,4 @@ def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose
     # Update weights
     w -= 0.01*g
   return w
+  

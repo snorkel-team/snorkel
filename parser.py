@@ -71,7 +71,7 @@ class HTMLParser(FileTypeParser):
         return fp.endswith('.html')
     def parse(self, fp):
         with open(fp, 'rb') as f:
-            mulligatawny = BeautifulSoup(f)
+            mulligatawny = BeautifulSoup(f, 'lxml')
         txt = filter(self._cleaner, mulligatawny.findAll(text=True))
         return ' '.join(self._strip_special(s) for s in txt if s != '\n')
     def _cleaner(self, s):

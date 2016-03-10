@@ -169,6 +169,7 @@ class Relations:
     """
     return np.dot(self.X[:,self.holdout].T, self.w) if holdout_only else np.dot(self.X.T, self.w)       
 
+
   def get_predicted_probability(self, holdout_only=False):
     """
     Get the array of predicted probabilities (continuous) for variables given learned weight param w

@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<!--[if IE 6]><html id="bleacherreport" class="ie ie6 ie67 no-js team " lang="en" xmlns:fb="http://www.facebook.com/2008/fbml" xmlns:og="http://opengraphprotocol.org/schema/"><![endif]--><!--[if IE 7]><html id="bleacherreport" class="ie ie67 ie7 ie78 no-js team " lang="en" xmlns:fb="http://www.facebook.com/2008/fbml" xmlns:og="http://opengraphprotocol.org/schema/"><![endif]--><!--[if IE 8]><html id="bleacherreport" class="ie ie78 ie8 ie89 no-js team " lang="en" xmlns:fb="http://www.facebook.com/2008/fbml" xmlns:og="http://opengraphprotocol.org/schema/"><![endif]--><!--[if IE 9]><html id="bleacherreport" class="ie ie89 ie9 no-js team " lang="en" xmlns:fb="http://www.facebook.com/2008/fbml" xmlns:og="http://opengraphprotocol.org/schema/"><![endif]--><!--[if gt IE 9]><!--><html id="bleacherreport" class=" no-js team " lang="en" xmlns:fb="http://www.facebook.com/2008/fbml" xmlns:og="http://opengraphprotocol.org/schema/"><!--<![endif]-->
+<head>
+  
+
+    <script src="//d2wy8f7a9ursnm.cloudfront.net/bugsnag-2.min.js" data-apikey="2b8505ded0c9d91c70652f50003b609a"></script>
+
+
+  <script>
+    var _sf_startpt               = (new Date()).getTime()
+    var _sf_async_config          =  _sf_async_config || {};
+    _sf_async_config.domain       = 'bleacherreport.com';
+    _sf_async_config.uid          = 45648;
+    _sf_async_config.useCanonical = true;
+  </script>
+
+  
+
+<meta charset="utf-8">
+<script type="text/javascript">window.NREUM||(NREUM={});NREUM.info={"errorBeacon":"bam.nr-data.net","licenseKey":"d0c34cbdc7","atts":"HhAUEl5IG1VbVAJSUjpbDxJeEV9YWEAAFRpHQhNZF15mUFARXxUHXQcFBAIGDAFSBlcDVVEBVglWUgkOVVJcAg9RV1AIVgVbXVUFXQUCBwdWA1NXDwtQBlwCVVBQBAcHAggPVwQAFUsY","queueTime":0,"transactionName":"Jl0PRBZcVVVRQUpWRBFbAlwBQBZKXFwSGFcXRghTCFY=","applicationTime":160,"beacon":"bam.nr-data.net","applicationID":"1841291","agent":""}</script>
+<script type="text/javascript">(window.NREUM||(NREUM={})).loader_config={xpid:"UQ8UUF5XCQEJVQ=="};window.NREUM||(NREUM={}),__nr_require=function(t,e,n){function r(n){if(!e[n]){var o=e[n]={exports:{}};t[n][0].call(o.exports,function(e){var o=t[n][1][e];return r(o||e)},o,o.exports)}return e[n].exports}if("function"==typeof __nr_require)return __nr_require;for(var o=0;o<n.length;o++)r(n[o]);return r}({QJf3ax:[function(t,e){function n(){}function r(t){function e(t){return t&&t instanceof n?t:t?a(t,i,o):o()}function u(n,r,o){t&&t(n,r,o);for(var i=e(o),a=l(n),s=a.length,f=0;s>f;f++)a[f].apply(i,r);var u=c[v[n]];return u&&u.push([w,n,r,i]),i}function d(t,e){m[t]=l(t).concat(e)}function l(t){return m[t]||[]}function p(t){return f[t]=f[t]||r(u)}function h(t,e){s(t,function(t,n){e=e||"feature",v[n]=e,e in c||(c[e]=[])})}var m={},v={},w={on:d,emit:u,get:p,listeners:l,context:e,buffer:h};return w}function o(){return new n}var i="nr@context",a=t("gos"),s=t(1),c={},f={},u=e.exports=r();u.backlog=c},{1:24,gos:"7eSDFh"}],ee:[function(t,e){e.exports=t("QJf3ax")},{}],3:[function(t){function e(t){try{i.console&&console.log(t)}catch(e){}}var n,r=t("ee"),o=t(1),i={};try{n=localStorage.getItem("__nr_flags").split(","),console&&"function"==typeof console.log&&(i.console=!0,-1!==n.indexOf("dev")&&(i.dev=!0),-1!==n.indexOf("nr_dev")&&(i.nrDev=!0))}catch(a){}i.nrDev&&r.on("internal-error",function(t){e(t.stack)}),i.dev&&r.on("fn-err",function(t,n,r){e(r.stack)}),i.dev&&(e("NR AGENT IN DEVELOPMENT MODE"),e("flags: "+o(i,function(t){return t}).join(", ")))},{1:24,ee:"QJf3ax"}],4:[function(t){function e(t,e,n,i,a){try{f?f-=1:r("err",[a||new UncaughtException(t,e,n)])}catch(c){try{r("ierr",[c,(new Date).getTime(),!0])}catch(u){}}return"function"==typeof s?s.apply(this,o(arguments)):!1}function UncaughtException(t,e,n){this.message=t||"Uncaught error with no additional information",this.sourceURL=e,this.line=n}function n(t){r("err",[t,(new Date).getTime()])}var r=t("handle"),o=t(6),i=t("ee"),a=t("loader"),s=window.onerror,c=!1,f=0;a.features.err=!0,t(5),window.onerror=e;try{throw new Error}catch(u){"stack"in u&&(t(1),t(2),"addEventListener"in window&&t(3),a.xhrWrappable&&t(4),c=!0)}i.on("fn-start",function(){c&&(f+=1)}),i.on("fn-err",function(t,e,r){c&&(this.thrown=!0,n(r))}),i.on("fn-end",function(){c&&!this.thrown&&f>0&&(f-=1)}),i.on("internal-error",function(t){r("ierr",[t,(new Date).getTime(),!0])})},{1:10,2:9,3:7,4:11,5:3,6:25,ee:"QJf3ax",handle:"D5DuLP",loader:"G9z0Bl"}],5:[function(t){t("loader").features.ins=!0},{loader:"G9z0Bl"}],6:[function(t){function e(){}if(window.performance&&window.performance.timing&&window.performance.getEntriesByType){var n=t("ee"),r=t("handle"),o=t(1),i=t(2);t("loader").features.stn=!0,t(3);var a=NREUM.o.EV;n.on("fn-start",function(t){var e=t[0];e instanceof a&&(this.bstStart=Date.now())}),n.on("fn-end",function(t,e){var n=t[0];n instanceof a&&r("bst",[n,e,this.bstStart,Date.now()])}),o.on("fn-start",function(t,e,n){this.bstStart=Date.now(),this.bstType=n}),o.on("fn-end",function(t,e){r("bstTimer",[e,this.bstStart,Date.now(),this.bstType])}),i.on("fn-start",function(){this.bstStart=Date.now()}),i.on("fn-end",function(t,e){r("bstTimer",[e,this.bstStart,Date.now(),"requestAnimationFrame"])}),n.on("pushState-start",function(){this.time=Date.now(),this.startPath=location.pathname+location.hash}),n.on("pushState-end",function(){r("bstHist",[location.pathname+location.hash,this.startPath,this.time])}),"addEventListener"in window.performance&&(window.performance.clearResourceTimings?window.performance.addEventListener("resourcetimingbufferfull",function(){r("bstResource",[window.performance.getEntriesByType("resource")]),window.performance.clearResourceTimings()},!1):window.performance.addEventListener("webkitresourcetimingbufferfull",function(){r("bstResource",[window.performance.getEntriesByType("resource")]),window.performance.webkitClearResourceTimings()},!1)),document.addEventListener("scroll",e,!1),document.addEventListener("keypress",e,!1),document.addEventListener("click",e,!1)}},{1:10,2:9,3:8,ee:"QJf3ax",handle:"D5DuLP",loader:"G9z0Bl"}],7:[function(t,e){function n(t){for(var e=t;e&&!e.hasOwnProperty("addEventListener");)e=Object.getPrototypeOf(e);e&&r(e)}function r(t){a.inPlace(t,["addEventListener","removeEventListener"],"-",o)}function o(t){return t[1]}var i=t("ee").get("events"),a=t(1)(i),s=t("gos");e.exports=i,r(window),"getPrototypeOf"in Object?(n(document),n(XMLHttpRequest.prototype)):XMLHttpRequest.prototype.hasOwnProperty("addEventListener")&&r(XMLHttpRequest.prototype),i.on("addEventListener-start",function(t){if(t[1]){var e=t[1];if("function"==typeof e){var n=s(e,"nr@wrapped",function(){return a(e,"fn-",null,e.name||"anonymous")});this.wrapped=t[1]=n}else"function"==typeof e.handleEvent&&a.inPlace(e,["handleEvent"],"fn-")}}),i.on("removeEventListener-start",function(t){var e=this.wrapped;e&&(t[1]=e)})},{1:26,ee:"QJf3ax",gos:"7eSDFh"}],8:[function(t,e){var n=t("ee").get("history"),r=t(1)(n);e.exports=n,r.inPlace(window.history,["pushState","replaceState"],"-")},{1:26,ee:"QJf3ax"}],9:[function(t,e){var n=t("ee").get("raf"),r=t(1)(n);e.exports=n,r.inPlace(window,["requestAnimationFrame","mozRequestAnimationFrame","webkitRequestAnimationFrame","msRequestAnimationFrame"],"raf-"),n.on("raf-start",function(t){t[0]=r(t[0],"fn-")})},{1:26,ee:"QJf3ax"}],10:[function(t,e){function n(t,e,n){t[0]=i(t[0],"fn-",null,n)}function r(t,e,n){this.method=n,this.timerDuration="number"==typeof t[1]?t[1]:0,t[0]=i(t[0],"fn-",this,n)}var o=t("ee").get("timer"),i=t(1)(o);e.exports=o,i.inPlace(window,["setTimeout","setImmediate"],"setTimer-"),i.inPlace(window,["setInterval"],"setInterval-"),i.inPlace(window,["clearTimeout","clearImmediate"],"clearTimeout-"),o.on("setInterval-start",n),o.on("setTimer-start",r)},{1:26,ee:"QJf3ax"}],11:[function(t,e){function n(t,e){e=e||this;var n=i.context(e);e.readyState>3&&!n.resolved&&(n.resolved=!0,i.emit("xhr-resolved",[],e));try{c.inPlace(e,l,"fn-",r)}catch(o){}}function r(t,e){return e}function o(t,e){for(var n in t)e[n]=t[n];return e}var i=t("ee").get("xhr"),a=t(1),s=t(2),c=s(i),f=s(a),u=NREUM.o,d=u.XHR,l=["onload","onerror","onabort","onloadstart","onloadend","onprogress","ontimeout","onreadystatechange"];e.exports=i,window.XMLHttpRequest=function(t){var e=new d(t);try{i.emit("new-xhr",[e],e),e.hasOwnProperty("addEventListener")&&f.inPlace(e,["addEventListener","removeEventListener"],"-",r),e.addEventListener("readystatechange",n,!1)}catch(o){try{i.emit("internal-error",[o])}catch(a){}}return e},o(d,XMLHttpRequest),XMLHttpRequest.prototype=d.prototype,c.inPlace(XMLHttpRequest.prototype,["open","send"],"-xhr-",r),i.on("send-xhr-start",n),i.on("open-xhr-start",n)},{1:7,2:26,ee:"QJf3ax"}],12:[function(t){function e(t){var e=this.params,r=this.metrics;if(!this.ended){this.ended=!0;for(var o=0;u>o;o++)t.removeEventListener(f[o],this.listener,!1);if(!e.aborted){if(r.duration=(new Date).getTime()-this.startTime,4===t.readyState){e.status=t.status;var i=n(t,this.lastSize);if(i&&(r.rxSize=i),this.sameOrigin){var s=t.getResponseHeader("X-NewRelic-App-Data");s&&(e.cat=s.split(", ").pop())}}else e.status=0;r.cbTime=this.cbTime,c.emit("xhr-done",[t],t),a("xhr",[e,r,this.startTime])}}}function n(t,e){var n=t.responseType;if("json"===n&&null!==e)return e;var o="arraybuffer"===n||"blob"===n||"json"===n?t.response:t.responseText;return r(o)}function r(t){if("string"==typeof t&&t.length)return t.length;if("object"!=typeof t)return void 0;if("undefined"!=typeof ArrayBuffer&&t instanceof ArrayBuffer&&t.byteLength)return t.byteLength;if("undefined"!=typeof Blob&&t instanceof Blob&&t.size)return t.size;if("undefined"!=typeof FormData&&t instanceof FormData)return void 0;try{return JSON.stringify(t).length}catch(e){return void 0}}function o(t,e){var n=s(e),r=t.params;r.host=n.hostname+":"+n.port,r.pathname=n.pathname,t.sameOrigin=n.sameOrigin}var i=t("loader");if(i.xhrWrappable){var a=t("handle"),s=t(2),c=t("ee"),f=["load","error","abort","timeout"],u=f.length,d=t(1),l=t(3),p=window.XMLHttpRequest;i.features.xhr=!0,t(5),t(4),c.on("new-xhr",function(t){var n=this;n.totalCbs=0,n.called=0,n.cbTime=0,n.end=e,n.ended=!1,n.xhrGuids={},n.lastSize=null,l&&(l>34||10>l)||window.opera||t.addEventListener("progress",function(t){n.lastSize=t.loaded},!1)}),c.on("open-xhr-start",function(t){this.params={method:t[0]},o(this,t[1]),this.metrics={}}),c.on("open-xhr-end",function(t,e){"loader_config"in NREUM&&"xpid"in NREUM.loader_config&&this.sameOrigin&&e.setRequestHeader("X-NewRelic-ID",NREUM.loader_config.xpid)}),c.on("send-xhr-start",function(t,e){var n=this.metrics,o=t[0],i=this;if(n&&o){var a=r(o);a&&(n.txSize=a)}this.startTime=(new Date).getTime(),this.listener=function(t){try{"abort"===t.type&&(i.params.aborted=!0),("load"!==t.type||i.called===i.totalCbs&&(i.onloadCalled||"function"!=typeof e.onload))&&i.end(e)}catch(n){try{c.emit("internal-error",[n])}catch(r){}}};for(var s=0;u>s;s++)e.addEventListener(f[s],this.listener,!1)}),c.on("xhr-cb-time",function(t,e,n){this.cbTime+=t,e?this.onloadCalled=!0:this.called+=1,this.called!==this.totalCbs||!this.onloadCalled&&"function"==typeof n.onload||this.end(n)}),c.on("xhr-load-added",function(t,e){var n=""+d(t)+!!e;this.xhrGuids&&!this.xhrGuids[n]&&(this.xhrGuids[n]=!0,this.totalCbs+=1)}),c.on("xhr-load-removed",function(t,e){var n=""+d(t)+!!e;this.xhrGuids&&this.xhrGuids[n]&&(delete this.xhrGuids[n],this.totalCbs-=1)}),c.on("addEventListener-end",function(t,e){e instanceof p&&"load"===t[0]&&c.emit("xhr-load-added",[t[1],t[2]],e)}),c.on("removeEventListener-end",function(t,e){e instanceof p&&"load"===t[0]&&c.emit("xhr-load-removed",[t[1],t[2]],e)}),c.on("fn-start",function(t,e,n){e instanceof p&&("onload"===n&&(this.onload=!0),("load"===(t[0]&&t[0].type)||this.onload)&&(this.xhrCbStart=(new Date).getTime()))}),c.on("fn-end",function(t,e){this.xhrCbStart&&c.emit("xhr-cb-time",[(new Date).getTime()-this.xhrCbStart,this.onload,e],e)})}},{1:"XL7HBI",2:13,3:15,4:11,5:7,ee:"QJf3ax",handle:"D5DuLP",loader:"G9z0Bl"}],13:[function(t,e){e.exports=function(t){var e=document.createElement("a"),n=window.location,r={};e.href=t,r.port=e.port;var o=e.href.split("://");!r.port&&o[1]&&(r.port=o[1].split("/")[0].split("@").pop().split(":")[1]),r.port&&"0"!==r.port||(r.port="https"===o[0]?"443":"80"),r.hostname=e.hostname||n.hostname,r.pathname=e.pathname,r.protocol=o[0],"/"!==r.pathname.charAt(0)&&(r.pathname="/"+r.pathname);var i=!e.protocol||":"===e.protocol||e.protocol===n.protocol,a=e.hostname===document.domain&&e.port===n.port;return r.sameOrigin=i&&(!e.hostname||a),r}},{}],14:[function(t,e){function n(t,e){return function(){r(t,[(new Date).getTime()].concat(i(arguments)),null,e)}}var r=t("handle"),o=t(1),i=t(2);"undefined"==typeof window.newrelic&&(newrelic=NREUM);var a=["setPageViewName","addPageAction","setCustomAttribute","finished","addToTrace","inlineHit"],s=["addPageAction"],c="api-";o(a,function(t,e){newrelic[e]=n(c+e,"api")}),o(s,function(t,e){newrelic[e]=n(c+e)}),e.exports=newrelic,newrelic.noticeError=function(t){"string"==typeof t&&(t=new Error(t)),r("err",[t,(new Date).getTime()])}},{1:24,2:25,handle:"D5DuLP"}],15:[function(t,e){var n=0,r=navigator.userAgent.match(/Firefox[\/\s](\d+\.\d+)/);r&&(n=+r[1]),e.exports=n},{}],gos:[function(t,e){e.exports=t("7eSDFh")},{}],"7eSDFh":[function(t,e){function n(t,e,n){if(r.call(t,e))return t[e];var o=n();if(Object.defineProperty&&Object.keys)try{return Object.defineProperty(t,e,{value:o,writable:!0,enumerable:!1}),o}catch(i){}return t[e]=o,o}var r=Object.prototype.hasOwnProperty;e.exports=n},{}],handle:[function(t,e){e.exports=t("D5DuLP")},{}],D5DuLP:[function(t,e){function n(t,e,n,o){r.buffer([t],o),r.emit(t,e,n)}var r=t("ee").get("handle");e.exports=n,n.ee=r},{ee:"QJf3ax"}],XL7HBI:[function(t,e){function n(t){var e=typeof t;return!t||"object"!==e&&"function"!==e?-1:t===window?0:i(t,o,function(){return r++})}var r=1,o="nr@id",i=t("gos");e.exports=n},{gos:"7eSDFh"}],id:[function(t,e){e.exports=t("XL7HBI")},{}],G9z0Bl:[function(t,e){function n(){if(!h++){var t=p.info=NREUM.info,e=f.getElementsByTagName("script")[0];if(t&&t.licenseKey&&t.applicationID&&e){s(d,function(e,n){t[e]||(t[e]=n)});var n="https"===u.split(":")[0]||t.sslForHttp;p.proto=n?"https://":"http://",a("mark",["onload",i()],null,"api");var r=f.createElement("script");r.src=p.proto+t.agent,e.parentNode.insertBefore(r,e)}}}function r(){"complete"===f.readyState&&o()}function o(){a("mark",["domContent",i()],null,"api")}function i(){return(new Date).getTime()}var a=t("handle"),s=t(1),c=window,f=c.document;NREUM.o={ST:setTimeout,XHR:c.XMLHttpRequest,REQ:c.Request,EV:c.Event,PR:c.Promise,MO:c.MutationObserver},t(2);var u=(""+location).split("?")[0],d={beacon:"bam.nr-data.net",errorBeacon:"bam.nr-data.net",agent:"js-agent.newrelic.com/nr-885.min.js"},l=window.XMLHttpRequest&&XMLHttpRequest.prototype&&XMLHttpRequest.prototype.addEventListener&&!/CriOS/.test(navigator.userAgent),p=e.exports={offset:i(),origin:u,features:{},xhrWrappable:l};f.addEventListener?(f.addEventListener("DOMContentLoaded",o,!1),c.addEventListener("load",n,!1)):(f.attachEvent("onreadystatechange",r),c.attachEvent("onload",n)),a("mark",["firstbyte",i()],null,"api");var h=0},{1:24,2:14,handle:"D5DuLP"}],loader:[function(t,e){e.exports=t("G9z0Bl")},{}],24:[function(t,e){function n(t,e){var n=[],o="",i=0;for(o in t)r.call(t,o)&&(n[i]=e(o,t[o]),i+=1);return n}var r=Object.prototype.hasOwnProperty;e.exports=n},{}],25:[function(t,e){function n(t,e,n){e||(e=0),"undefined"==typeof n&&(n=t?t.length:0);for(var r=-1,o=n-e||0,i=Array(0>o?0:o);++r<o;)i[r]=t[e+r];return i}e.exports=n},{}],26:[function(t,e){function n(t){return!(t&&"function"==typeof t&&t.apply&&!t[i])}var r=t("ee"),o=t(1),i="nr@original",a=Object.prototype.hasOwnProperty,s=!1;e.exports=function(t){function e(t,e,r,a){function nrWrapper(){var n,i,s,c;try{i=this,n=o(arguments),s="function"==typeof r?r(n,i):r||{}}catch(u){d([u,"",[n,i,a],s])}f(e+"start",[n,i,a],s);try{return c=t.apply(i,n)}catch(l){throw f(e+"err",[n,i,l],s),l}finally{f(e+"end",[n,i,c],s)}}return n(t)?t:(e||(e=""),nrWrapper[i]=t,u(t,nrWrapper),nrWrapper)}function c(t,r,o,i){o||(o="");var a,s,c,f="-"===o.charAt(0);for(c=0;c<r.length;c++)s=r[c],a=t[s],n(a)||(t[s]=e(a,f?s+o:o,i,s))}function f(e,n,r){if(!s){s=!0;try{t.emit(e,n,r)}catch(o){d([o,e,n,r])}s=!1}}function u(t,e){if(Object.defineProperty&&Object.keys)try{var n=Object.keys(t);return n.forEach(function(n){Object.defineProperty(e,n,{get:function(){return t[n]},set:function(e){return t[n]=e,e}})}),e}catch(r){d([r])}for(var o in t)a.call(t,o)&&(e[o]=t[o]);return e}function d(e){try{t.emit("internal-error",e)}catch(n){}}return t||(t=r),e.inPlace=c,e.flag=i,e}},{1:25,ee:"QJf3ax"}]},{},["G9z0Bl",4,12,6,5]);</script>
+<title>Success of Boston Red Sox Rests on Shoulders of Dustin Pedroia | Bleacher Report</title>
+<link href="http://static2.bleacherreport.net/favicon.ico" rel="shortcut icon">
+<link href="http://static2.bleacherreport.net/apple-touch-icon.png" rel="apple-touch-icon">
+<meta name="aol-te-auth" content="1c424580-0f86-4d9b-88b2-bc8c0d029d4c">
+<meta name="msvalidate.01" content="7A63840181953B2A5A1FEA25FB45A991">
+<meta name="robots" content="NOODP">
+<meta name="verify-v1" content="+Ntj422Jc4V03qgBqLYbF3LMvrursV0X2btn2Zoqn9w=">
+
+  <link rel="canonical" href="http://bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia">
+
+  <meta name="description" content="The latest Boston Red Sox news, trade rumors, scores, live coverage, free agent updates, power rankings, mock drafts and more">
+
+  <meta name="keywords" content="Baseball, MLB, AL East, Boston Red Sox, Dustin Pedroia, Opinion">
+
+  <meta property="fb:app_id" content="135174055162">
+
+
+
+<meta property="og:site_name" content="Bleacher Report">
+<meta property="og:url" content="http://bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia">
+<meta property="og:title" content="Success of Sox Rests on Shoulders of Pedroia">
+<meta property="og:description" content="The  Boston Red Sox  were winners of just 69 games in 2012, their lowest win total since the 1965 season (not counting the strike-shortened seasons of 1994 and 1981), when they won 62 games...">
+<meta property="og:image" content="http://img.bleacherreport.net/img/images/photos/002/172/293/hi-res-152810031_crop_exact.jpg?w=1500&h=1500&q=85">
+<meta property="og:type" content="article">
+
+
+<meta name="twitter:description" content="The  Boston Red Sox  were winners of just 69 games in 2012, their lowest win total since the 1965 season (not counting the strike-shortened seasons of 1994 and 1981), when they won 62 games...">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:app:name:iphone" content="Team Stream by Bleacher Report">
+<meta name="twitter:app:id:iphone" content="418075935">
+<meta name="twitter:app:name:ipad" content="Team Stream by Bleacher Report">
+<meta name="twitter:app:id:ipad" content="484725748">
+<meta name="twitter:app:name:googleplay" content="Team Stream by Bleacher Report">
+<meta name="twitter:app:id:googleplay" content="com.bleacherreport.android.teamstream">
+<meta name="twitter:widgets:new-embed-design" content="on">
+
+
+
+
+<meta property="al:iphone:url" content="teamstream://article/m.bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia" />
+<meta property="al:iphone:app_store_id" content="418075935" />
+<meta property="al:iphone:app_name" content="Team Stream" />
+
+<meta property="al:ipad:url" content="teamstream://article/m.bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia" />
+<meta property="al:ipad:app_store_id" content="484725748" />
+<meta property="al:ipad:app_name" content="Team Stream" />
+
+<meta property="al:android:url" content="" />
+<meta property="al:android:app_name" content="Team Stream" />
+<meta property="al:android:package" content="com.bleacherreport.android.teamstream" />
+
+<meta property="al:web:url" content="http://bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia" />
+
+
+<link rel="alternate" href="android-app://com.bleacherreport.android.teamstream/http/bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia" />
+<link rel="alternate" href="ios-app://418075935/http/bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia" />
+
+      <style>
+      .team-color-background, .team-color-background--sudo:before { background-color: #002244!important; }
+      .team-color-text { color: #002244!important; }
+      .team-color-border, blockquote { border-color: #002244!important;}
+      .team-color-border-top-sudo:after, .team-color-border-top-sudo:before  { border-top-color: #002244!important; }
+      .team-color-border-right-sudo:after, .team-color-border-right-sudo:before  { border-right-color: #002244!important; }
+    </style>
+  
+  
+    
+      <style>
+        #page-header .header-logo { background-image: url("http://cdn.bleacherreport.net/images/team_logos/73x73/boston_red_sox.png"); }
+
+        @media only screen and (-webkit-min-device-pixel-ratio: 1.5) {
+          #page-header .header-logo { background-image: url("http://cdn.bleacherreport.net/images/team_logos/146x146/boston_red_sox.png"); }
+        }
+      </style>
+    
+  
+
+  <link href="http://static2.bleacherreport.net/pkg/stylesheets/e8bf1d10_redesign_common.css" media="screen" rel="stylesheet" />
+
+<style>
+  html, .entry .entry-header .timestamp, .shop-module { background-color: #002244; }.module .header h3 { border-top-color: #002244; }
+</style>
+
+  <link href="http://bleacherreport.com/articles/feed?tag_id=85" rel="alternate" title="Boston Red Sox RSS feed" type="application/rss+xml" />
+
+<link href="http://bleacherreport.com/articles/feed" rel="alternate" title="Bleacher Report RSS feed" type="application/rss+xml" />
+
+<script src="http://static2.bleacherreport.net/pkg/javascripts/c0658390_redesign_top.js"></script>
+<script>
+  BR.front_page_survey   = false;
+  BR.funnel_country      = "USA";
+  BR.optimizely_cookie   = false;
+  BR.optimizely_sampling = true;
+  BR.PageData            = {"article":1539852,"buzz":"","division":"AL_East","event":"none","fantasy":"none","gp_flag":"","league":"MLB","render_strategy":"article","site":"MLB","tags":"Baseball,MLB,AL_East,Boston_Red_Sox,Dustin_Pedroia,Opinion","team":"Boston_Red_Sox","url_hierarchy_level_1":"bleacherreport.com/articles","writer":"Kenny DeJohn","zone":"article"};
+  BR.QueryString         = (function (key) {
+    var vars = {}, hash;
+    var q = document.URL.split('?')[1];
+    if(q != undefined) {
+      q = q.split('&');
+      for(var i = 0; i < q.length; i++){
+        hash = q[i].split('=');
+        vars[hash[0]] = hash[1];
+      }
+    }
+    return vars
+  }());
+</script>
+
+<script>
+  var googletag = googletag || {};
+
+  googletag.cmd = googletag.cmd || [];
+
+  BR.Ads              = BR.Ads || {};
+  BR.Ads.sitePlatform = 'desk';
+  BR.Ads.slots        = [];
+
+      // need default id because external article stubs do not have ids
+    BR.Ads.articleId = 1539852;
+  
+  
+      BR.Ads.embedded = false;
+  
+  
+      BR.Ads.layout = 'default';
+  
+  
+      BR.Ads.social = false;
+  
+      BR.Ads.tagId = 85;
+  
+  </script>
+
+<!--[if lte IE 8]>
+<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+
+
+      <link href="http://static2.bleacherreport.net/pkg/stylesheets/c672103f_redesign_newsletter_signup.css" media="screen" rel="stylesheet" />
+      <link href="http://static2.bleacherreport.net/pkg/stylesheets/1a5bb43a_redesign_social_promos.css" media="screen" rel="stylesheet" />
+    
+  <link rel='alternate' href="android-app://com.bleacherreport.android.teamstream/teamstream/article/bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia">
+  
+  <script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','//connect.facebook.net/en_US/fbevents.js');
+
+fbq('init', '952029928171391');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=952029928171391&ev=PageView&noscript=1"
+/></noscript>
+
+    <link href="http://static2.bleacherreport.net/pkg/stylesheets/8a9818fd_desktop_articles.css" media="screen" rel="stylesheet" />
+    
+        <link href="http://static2.bleacherreport.net/pkg/stylesheets/d8fa9bee_redesign_articles.css" media="screen" rel="stylesheet" />
+    
+    <link href="http://static2.bleacherreport.net/pkg/stylesheets/f8e526ba_redesign_print.css" media="print" rel="stylesheet" />
+
+    
+    
+    
+<meta property="article:publisher" content="http://www.facebook.com/bleacherreport">
+
+
+<meta name="og:locale" content="en_UK">
+<meta name="twitter:image" content="http://img.bleacherreport.net/img/images/photos/002/172/293/hi-res-152810031_crop_exact.jpg?w=200&h=200&q=85">
+<meta name="twitter:site" content="@bleacherreport">
+<meta name="twitter:title" content="Success of Sox Rests on Shoulders of Pedroia">
+<meta name="twitter:url" content="http://bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia">
+
+<meta name="pubdate" content="2013-02-22T12:25:46-05:00">
+<meta name="author" content="Kenny DeJohn">
+<meta name="section" content="Team">
+
+<meta name="twitter:app:url:iphone" content="teamstream://article/m.bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia">
+<meta name="twitter:app:url:ipad" content="teamstream://article/m.bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia">
+<meta name="twitter:app:url:googleplay" content="http://m.bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia">
+
+<link rel="alternate" type="application/json+oembed" href="http://bleacherreport.com/oembed?url=http%3A%2F%2Fbleacherreport.com%2Farticles%2F1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia&format=json">
+<link rel="alternate" type="application/xml+oembed" href="http://bleacherreport.com/oembed?url=http%3A%2F%2Fbleacherreport.com%2Farticles%2F1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia&format=xml">
+
+          <style>
+      #page-header { background-image: url("http://cdn.bleacherreport.net/images/team_logos/148x148/boston_red_sox.png"); }
+      @media (-webkit-min-device-pixel-ratio: 1.5), (min--moz-device-pixel-ratio: 1.5), (min-device-pixel-ratio: 1.5) {
+        #page-header { background-image: url("http://cdn.bleacherreport.net/images/team_logos/296x296/boston_red_sox.png"); background-size: 148px 148px; }
+      }
+    </style>
+  
+
+    
+    <!-- "article_data_script/1539852/desktop" cached 03/04/2016 at 08:33 PM -->
+    <script>
+        (function() {
+            BR.articleData = BR.articleData || {};
+
+            $.extend(BR.articleData, {"createdAt":"2013-02-22T12:25:46-05:00","author":{"isLeadWriter":false,"isColumnist":false,"twitterName":null,"rankLabel":"Analyst","name":"Kenny DeJohn","customByline":"","avatar":"http://cdn.bleacherreport.net/images_root/users/photos/000/461/634/Screen_shot_2014-06-23_at_12.36.26_PM.png?1403541476","title":"Analyst III","permalink":"461634-kenny-dejohn"},"updatedAt":"2015-05-31T01:32:03-04:00","authorId":461634,"renderStrategy":"article","containsVideo":false,"dynamicHook":"Success of Red Sox Rests on Shoulders of Dustin Pedroia","id":1539852,"primaryPhoto":null,"title":"Success of Boston Red Sox Rests on Shoulders of Dustin Pedroia","permalink":"1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia"}, {
+                media_slots: BR.articleData.media_slots || {}
+            });
+
+            if(window.location.hash && window.location.hash.indexOf('/page/') !== -1)  {
+                // url hash struct => #articles/#####-article-title/page/num
+                BR.articleData.page = window.location.hash.split('/')[3] || 1;
+            }
+
+            
+                 BR.articleData.team_color = "002244"
+            
+        })();
+    </script>
+
+
+<script>
+    $.extend(BR.articleData, {"page":1,"hitCount":1832,"commentsDisabled":null,"commentsCount":"3"});
+</script>
+
+
+    <script>
+        BR.can_edit = false;
+        BR.can_recache = false;
+    </script>
+
+</head>
+
+<body>
+  <script>
+	var _comscore = _comscore || [];
+	var _gaq      = _gaq || [];
+</script>
+
+					<script>
+		BR.analyticsLoggedIn = false;
+		BR.analyticsPageType = "article";
+		BR.partnerDomain     = "";
+		BR.teamTrackerPath   = "";
+
+				BR.teamTrackerPath = "/mlb"+"";
+				BR.teamTrackerPath += "?pagetype=" + BR.analyticsPageType + "&logged_in=" + BR.analyticsLoggedIn;
+		if(BR.partnerDomain) { BR.teamTrackerPath += "&external_domain=" + BR.partnerDomain; }
+			try { var author_id = BR.Article.getArticleAuthorId(); if(author_id) { BR.teamTrackerPath += "&author=" + author_id; } } catch(exception) {}
+
+			_gaq.push(
+				['_setAccount', 'UA-432905-1'],
+				['_addIgnoredOrganic', 'bleacherreport.com'], ['_addIgnoredOrganic', 'www.bleacherreport.com'], ['_addIgnoredOrganic', 'bleacherreport'], ['_addIgnoredOrganic', 'Bleacher Report'], ['_addIgnoredOrganic', 'the bleacher report'],
+				['_setCustomVar', 1, "blue_green", "fp-variation-1", 2],
+				['_setCustomVar', 2, "page_type", "article", 3]
+				, ['_setCustomVar', 3, "team_tracker_path", "/mlb/boston-red-sox", 3]												, ['_setCustomVar', 5, "author_id", "461634", 3]			);
+
+			if(BR.PageData.league) {
+				_gaq.push(['_setPageGroup', '1', BR.PageData.league]);
+				if(BR.PageData.team && BR.PageData.team != 'none') {
+					_gaq.push(['_setPageGroup', '2', BR.PageData.team]);
+				}
+			} else {
+									_gaq.push(['_setPageGroup', '1', 'Other Article']);
+							}
+
+							_gaq.push(["_trackPageview"]);
+			
+			
+			
+			
+			(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ga);
+			})();
+		</script>
+
+				<script>
+			_comscore.push({ c1: "2", c2: "6246855", c4: 'http://bleacherreport.com', c5: 'MLB', c6: ''});
+			(function() {
+			var s = document.createElement("script"), el = document.getElementsByTagName("script")[0]; s.async = true;
+			s.src = (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js";
+			el.parentNode.insertBefore(s, el);
+			})();
+		</script>
+					<noscript>
+				<img src="http://b.scorecardresearch.com/p?c1=2&amp;c2=6246855&amp;c4=bleacherreport.com&amp;cv=2.0&amp;cj=1" width="0" height="0" alt="">
+			</noscript>
+		
+								<script>
+				window.Krux||((Krux=function(){Krux.q.push(arguments);}).q=[]);
+				(function(){
+					function retrieve(n){
+						var m, k='kx'+n;
+						if (window.localStorage) {
+							return window.localStorage[k] || "";
+						} else if (navigator.cookieEnabled) {
+							m = document.cookie.match(k+'=([^;]*)');
+							return (m && unescape(m[1])) || "";
+						} else {
+							return '';
+						}
+					}
+					Krux.user = retrieve('user');
+					Krux.segments = retrieve('segs') && retrieve('segs').split(',') || [];
+				})();
+			</script>
+			<script class="kxct" data-id="ITb9Q03y" data-timing="async" data-version="1.9" type="text/javascript">
+				window.Krux||((Krux=function(){Krux.q.push(arguments)}).q=[]);
+				(function(){
+				var k=document.createElement('script');k.type='text/javascript';k.async=true;
+				var m,src=(m=location.href.match(/\bkxsrc=([^&]+)/))&&decodeURIComponent(m[1]);
+				k.src = /^https?:\/\/([^\/]+\.)?krxd\.net(:\d{1,5})?\//i.test(src) ? src : src === "disable" ? "" :
+				(location.protocol==="https:"?"https:":"http:")+"//cdn.krxd.net/controltag?confid=ITb9Q03y";
+				var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(k,s);
+				}());
+			</script>
+			
+<script>
+	BR.environment = "production";
+	BR.layser_host = null;
+	BR.imagePrefix = "";
+</script>
+
+
+
+	
+
+
+	
+<div id="fixed-region">
+    <div id="feedback-module"></div>
+    
+</div>
+
+<section id="header" class="logo-tall usa">
+        <script id="nav-script">
+	BR.Nav = BR.Nav || {};
+	BR.Nav.items = [{"items":[{"items":[{"url":"/buffalo-bills","title":"Buffalo","id":"buffalo-bills"},{"url":"/miami-dolphins","title":"Miami","id":"miami-dolphins"},{"url":"/new-england-patriots","title":"New England","id":"new-england-patriots"},{"url":"/new-york-jets","title":"NY Jets","id":"new-york-jets"}],"title":"AFC East","id":"afc-east"},{"items":[{"url":"/baltimore-ravens","title":"Baltimore","id":"baltimore-ravens"},{"url":"/cincinnati-bengals","title":"Cincinnati","id":"cincinnati-bengals"},{"url":"/cleveland-browns","title":"Cleveland","id":"cleveland-browns"},{"url":"/pittsburgh-steelers","title":"Pittsburgh","id":"pittsburgh-steelers"}],"title":"AFC North","id":"afc-north"},{"items":[{"url":"/houston-texans","title":"Houston","id":"houston-texans"},{"url":"/indianapolis-colts","title":"Indianapolis","id":"indianapolis-colts"},{"url":"/jacksonville-jaguars","title":"Jacksonville","id":"jacksonville-jaguars"},{"url":"/tennessee-titans","title":"Tennessee","id":"tennessee-titans"}],"title":"AFC South","id":"afc-south"},{"items":[{"url":"/denver-broncos","title":"Denver","id":"denver-broncos"},{"url":"/kansas-city-chiefs","title":"Kansas City","id":"kansas-city-chiefs"},{"url":"/oakland-raiders","title":"Oakland","id":"oakland-raiders"},{"url":"/san-diego-chargers","title":"San Diego","id":"san-diego-chargers"}],"title":"AFC West","id":"afc-west"},{"items":[{"url":"/dallas-cowboys","title":"Dallas","id":"dallas-cowboys"},{"url":"/new-york-giants","title":"NY Giants","id":"new-york-giants"},{"url":"/philadelphia-eagles","title":"Philadelphia","id":"philadelphia-eagles"},{"url":"/washington-redskins","title":"Washington","id":"washington-redskins"}],"title":"NFC East","id":"nfc-east"},{"items":[{"url":"/chicago-bears","title":"Chicago","id":"chicago-bears"},{"url":"/detroit-lions","title":"Detroit","id":"detroit-lions"},{"url":"/green-bay-packers","title":"Green Bay","id":"green-bay-packers"},{"url":"/minnesota-vikings","title":"Minnesota","id":"minnesota-vikings"}],"title":"NFC North","id":"nfc-north"},{"items":[{"url":"/atlanta-falcons","title":"Atlanta","id":"atlanta-falcons"},{"url":"/carolina-panthers","title":"Carolina","id":"carolina-panthers"},{"url":"/new-orleans-saints","title":"New Orleans","id":"new-orleans-saints"},{"url":"/tampa-bay-buccaneers","title":"Tampa Bay","id":"tampa-bay-buccaneers"}],"title":"NFC South","id":"nfc-south"},{"items":[{"url":"/arizona-cardinals","title":"Arizona","id":"arizona-cardinals"},{"url":"/san-francisco-49ers","title":"San Francisco","id":"san-francisco-49ers"},{"url":"/seattle-seahawks","title":"Seattle","id":"seattle-seahawks"},{"url":"/st-louis-rams","title":"St Louis","id":"st-louis-rams"}],"title":"NFC West","id":"nfc-west"}],"url":"/nfl","title":"NFL","id":"nfl","links":[{"url":"/nfl","title":"Home","id":"nfl"},{"url":"/fantasy-football","title":"Fantasy","id":"fantasy-football"},{"url":"/nfl/teams","title":"Teams","id":"nfl/teams"},{"url":"/nfl-draft","title":"NFL Draft","id":"nfl-draft"},{"url":"/nfl-1000-rankings","title":"NFL 1000","id":"nfl-1000-rankings"},{"url":"/nfl/archives","title":"Archives","id":"nfl/archives"},{"url":"https://www.scorebig.com/nfl-tickets","title":"NFL Tickets","id":"https://www.scorebig.com/nfl-tickets"}]},{"items":[{"items":[{"url":"/boston-celtics","title":"Boston","id":"boston-celtics"},{"url":"/brooklyn-nets","title":"Brooklyn","id":"brooklyn-nets"},{"url":"/new-york-knicks","title":"New York","id":"new-york-knicks"},{"url":"/philadelphia-76ers","title":"Philadelphia","id":"philadelphia-76ers"},{"url":"/toronto-raptors","title":"Toronto","id":"toronto-raptors"}],"title":"Atlantic","id":"atlantic"},{"items":[{"url":"/chicago-bulls","title":"Chicago","id":"chicago-bulls"},{"url":"/cleveland-cavaliers","title":"Cleveland","id":"cleveland-cavaliers"},{"url":"/detroit-pistons","title":"Detroit","id":"detroit-pistons"},{"url":"/indiana-pacers","title":"Indiana","id":"indiana-pacers"},{"url":"/milwaukee-bucks","title":"Milwaukee","id":"milwaukee-bucks"}],"title":"Central","id":"central"},{"items":[{"url":"/denver-nuggets","title":"Denver","id":"denver-nuggets"},{"url":"/minnesota-timberwolves","title":"Minnesota","id":"minnesota-timberwolves"},{"url":"/oklahoma-city-thunder","title":"Oklahoma City","id":"oklahoma-city-thunder"},{"url":"/portland-trail-blazers","title":"Portland","id":"portland-trail-blazers"},{"url":"/utah-jazz","title":"Utah","id":"utah-jazz"}],"title":"Northwest","id":"northwest"},{"items":[{"url":"/golden-state-warriors","title":"Golden St","id":"golden-state-warriors"},{"url":"/los-angeles-clippers","title":"LA Clippers","id":"los-angeles-clippers"},{"url":"/los-angeles-lakers","title":"LA Lakers","id":"los-angeles-lakers"},{"url":"/phoenix-suns","title":"Phoenix","id":"phoenix-suns"},{"url":"/sacramento-kings","title":"Sacramento","id":"sacramento-kings"}],"title":"Pacific","id":"pacific"},{"items":[{"url":"/atlanta-hawks","title":"Atlanta","id":"atlanta-hawks"},{"url":"/charlotte-bobcats","title":"Charlotte","id":"charlotte-bobcats"},{"url":"/miami-heat","title":"Miami","id":"miami-heat"},{"url":"/orlando-magic","title":"Orlando","id":"orlando-magic"},{"url":"/washington-wizards","title":"Washington","id":"washington-wizards"}],"title":"Southeast","id":"southeast"},{"items":[{"url":"/dallas-mavericks","title":"Dallas","id":"dallas-mavericks"},{"url":"/houston-rockets","title":"Houston","id":"houston-rockets"},{"url":"/memphis-grizzlies","title":"Memphis","id":"memphis-grizzlies"},{"url":"/new-orleans-pelicans","title":"New Orleans","id":"new-orleans-pelicans"},{"url":"/san-antonio-spurs","title":"San Antonio","id":"san-antonio-spurs"}],"title":"Southwest","id":"southwest"}],"url":"/nba","title":"NBA","id":"nba","links":[{"url":"/nba","title":"Home","id":"nba"},{"url":"/nba-draft-2015","title":"Draft","id":"nba-draft-2015"},{"url":"/nba/teams","title":"Teams","id":"nba/teams"},{"url":"/nba-200","title":"NBA 200","id":"nba-200"},{"url":"/nba/archives","title":"Archives","id":"nba/archives"},{"url":"https://www.scorebig.com/nba-tickets","title":"NBA Tickets","id":"https://www.scorebig.com/nba-tickets"}]},{"items":[{"items":[{"url":"/cincinnati-bearcats-basketball","title":"Cincinnati","id":"cincinnati-bearcats-basketball"},{"url":"/uconn-basketball","title":"Connecticut","id":"uconn-basketball"},{"url":"/east-carolina-basketball","title":"East Carolina","id":"east-carolina-basketball"},{"url":"/houston-cougars-basketball","title":"Houston","id":"houston-cougars-basketball"},{"url":"/memphis-tigers-basketball","title":"Memphis","id":"memphis-tigers-basketball"},{"url":"/south-florida-bulls-basketball","title":"South Florida","id":"south-florida-bulls-basketball"},{"url":"/smu-basketball","title":"SMU","id":"smu-basketball"},{"url":"/temple-basketball","title":"Temple","id":"temple-basketball"},{"url":"/tulane-basketball","title":"Tulane","id":"tulane-basketball"},{"url":"/tulsa-golden-hurricane-basketball","title":"Tulsa","id":"tulsa-golden-hurricane-basketball"},{"url":"/ucf-basketball","title":"UCF","id":"ucf-basketball"}],"url":"/american-athletic-conference-basketball","title":"AAC","id":"american-athletic-conference-basketball"},{"items":[{"url":"/boston-college-basketball","title":"Boston College","id":"boston-college-basketball"},{"url":"/clemson-basketball","title":"Clemson","id":"clemson-basketball"},{"url":"/duke-basketball","title":"Duke","id":"duke-basketball"},{"url":"/florida-state-basketball","title":"Florida St","id":"florida-state-basketball"},{"url":"/georgia-tech-basketball","title":"Georgia Tech","id":"georgia-tech-basketball"},{"url":"/louisville-cardinals-basketball","title":"Louisville","id":"louisville-cardinals-basketball"},{"url":"/miami-hurricanes-basketball","title":"Miami (FL)","id":"miami-hurricanes-basketball"},{"url":"/unc-basketball","title":"North Carolina","id":"unc-basketball"},{"url":"/nc-state-basketball","title":"NC State","id":"nc-state-basketball"},{"url":"/notre-dame-basketball","title":"Notre Dame","id":"notre-dame-basketball"},{"url":"/pitt-basketball","title":"Pittsburgh","id":"pitt-basketball"},{"url":"/syracuse-basketball","title":"Syracuse","id":"syracuse-basketball"},{"url":"/uva-basketball","title":"Virginia","id":"uva-basketball"},{"url":"/virginia-tech-basketball","title":"Virginia Tech","id":"virginia-tech-basketball"},{"url":"/wake-forest-basketball","title":"Wake Forest","id":"wake-forest-basketball"}],"url":"/acc-basketball","title":"ACC","id":"acc-basketball","links":[{"url":"/acc-basketball","title":"ACC Home","id":"acc-basketball"},{"url":"/acc-basketball/archives","title":"Archives","id":"acc-basketball/archives"}]},{"hide":true,"items":[{"url":"/albany-basketball","title":"Albany","id":"albany-basketball"},{"url":"/binghamton-basketball","title":"Binghamton","id":"binghamton-basketball"},{"url":"/hartford-basketball","title":"Hartford","id":"hartford-basketball"},{"url":"/maine-basketball","title":"Maine ","id":"maine-basketball"},{"url":"/new-hampshire-basketball","title":"New Hampshire","id":"new-hampshire-basketball"},{"url":"/stony-brook-basketball","title":"Stony Brook","id":"stony-brook-basketball"},{"url":"/umbc-basketball","title":"UMBC","id":"umbc-basketball"},{"url":"/vermont-basketball","title":"Vermont","id":"vermont-basketball"},{"url":"/umass-lowell-river-hawks-basketball","title":"UMass Lowell River Hawks","id":"umass-lowell-river-hawks-basketball"}],"url":"/america-east-basketball","title":"America East","id":"america-east-basketball","links":[{"url":"/america-east-basketball","title":"America East Home","id":"america-east-basketball"},{"url":"/america-east-basketball/archives","title":"Archives","id":"america-east-basketball/archives"}]},{"hide":true,"items":[{"url":"/florida-gulf-coast-basketball","title":"Florida Gulf Coast","id":"florida-gulf-coast-basketball"},{"url":"/jacksonville-basketball","title":"Jacksonville","id":"jacksonville-basketball"},{"url":"/kennesaw-state-basketball","title":"Kennesaw St","id":"kennesaw-state-basketball"},{"url":"/lipscomb-basketball","title":"Lipscomb","id":"lipscomb-basketball"},{"url":"/north-florida-basketball","title":"North Florida","id":"north-florida-basketball"},{"url":"/northern-kentucky-basketball","title":"Northern Kentucky","id":"northern-kentucky-basketball"},{"url":"/stetson-basketball","title":"Stetson","id":"stetson-basketball"},{"url":"/usc-upstate-basketball","title":"USC Upstate","id":"usc-upstate-basketball"}],"url":"/atlantic-sun-basketball","title":"Atlantic Sun","id":"atlantic-sun-basketball","links":[{"url":"/atlantic-sun-basketball","title":"Atlantic Sun Home","id":"atlantic-sun-basketball"},{"url":"/atlantic-sun-basketball/archives","title":"Archives","id":"atlantic-sun-basketball/archives"}]},{"items":[{"url":"/davidson-basketball","title":"Davidson","id":"davidson-basketball"},{"url":"/dayton-basketball","title":"Dayton","id":"dayton-basketball"},{"url":"/duquesne-basketball","title":"Duquesne","id":"duquesne-basketball"},{"url":"/fordham-basketball","title":"Fordham","id":"fordham-basketball"},{"url":"/george-mason-basketball","title":"George Mason ","id":"george-mason-basketball"},{"url":"/gw-basketball","title":"George Washington","id":"gw-basketball"},{"url":"/la-salle-basketball","title":"La Salle","id":"la-salle-basketball"},{"url":"/umass-basketball","title":"Massachusetts","id":"umass-basketball"},{"url":"/rhode-island-rams-basketball","title":"Rhode Island","id":"rhode-island-rams-basketball"},{"url":"/richmond-spiders-basketball","title":"Richmond","id":"richmond-spiders-basketball"},{"url":"/saint-louis-billikens-basketball","title":"Saint Louis","id":"saint-louis-billikens-basketball"},{"url":"/st-josephs-basketball","title":"St. Joseph's","id":"st-josephs-basketball"},{"url":"/st-bonaventure-basketball","title":"St. Bonaventure","id":"st-bonaventure-basketball"},{"url":"/virginia-commonwealth-basketball","title":"Virginia Commonwealth","id":"virginia-commonwealth-basketball"}],"url":"/atlantic-ten-basketball","title":"Atlantic 10","id":"atlantic-ten-basketball","links":[{"url":"/atlantic-ten-basketball","title":"Atlantic 10 Home","id":"atlantic-ten-basketball"},{"url":"/atlantic-ten-basketball/archives","title":"Archives","id":"atlantic-ten-basketball/archives"}]},{"items":[{"url":"/baylor-basketball","title":"Baylor","id":"baylor-basketball"},{"url":"/iowa-state-basketball","title":"Iowa St","id":"iowa-state-basketball"},{"url":"/kansas-jayhawks-basketball","title":"Kansas","id":"kansas-jayhawks-basketball"},{"url":"/kansas-state-basketball","title":"Kansas St","id":"kansas-state-basketball"},{"url":"/oklahoma-sooners-basketball","title":"Oklahoma","id":"oklahoma-sooners-basketball"},{"url":"/oklahoma-state-basketball","title":"Oklahoma St","id":"oklahoma-state-basketball"},{"url":"/tcu-basketball","title":"TCU","id":"tcu-basketball"},{"url":"/texas-longhorns-basketball","title":"Texas","id":"texas-longhorns-basketball"},{"url":"/texas-tech-basketball","title":"Texas Tech","id":"texas-tech-basketball"},{"url":"/wvu-basketball","title":"West Virginia","id":"wvu-basketball"}],"url":"/big-12-basketball","title":"Big 12","id":"big-12-basketball","links":[{"url":"/big-12-basketball","title":"Big 12 Home","id":"big-12-basketball"},{"url":"/big-12-basketball/archives","title":"Archives","id":"big-12-basketball/archives"}]},{"items":[{"url":"/butler-basketball","title":"Butler","id":"butler-basketball"},{"url":"/creighton-basketball","title":"Creighton","id":"creighton-basketball"},{"url":"/depaul-basketball","title":"DePaul","id":"depaul-basketball"},{"url":"/georgetown-basketball","title":"Georgetown","id":"georgetown-basketball"},{"url":"/marquette-basketball","title":"Marquette","id":"marquette-basketball"},{"url":"/providence-friars-basketball","title":"Providence","id":"providence-friars-basketball"},{"url":"/seton-hall-basketball","title":"Seton Hall","id":"seton-hall-basketball"},{"url":"/st-johns-basketball","title":"St John's","id":"st-johns-basketball"},{"url":"/villanova-basketball","title":"Villanova","id":"villanova-basketball"},{"url":"/xavier-basketball","title":"Xavier","id":"xavier-basketball"}],"url":"/big-east-basketball","title":"Big East","id":"big-east-basketball","links":[{"url":"/big-east-basketball","title":"Big East Home","id":"big-east-basketball"},{"url":"/big-east-basketball/archives","title":"Archives","id":"big-east-basketball/archives"}]},{"hide":true,"items":[{"url":"/eastern-washington-basketball","title":"Eastern Washington","id":"eastern-washington-basketball"},{"url":"/idaho-vandals-basketball","title":"Idaho","id":"idaho-vandals-basketball"},{"url":"/idaho-state-basketball","title":"Idaho St","id":"idaho-state-basketball"},{"url":"/montana-basketball","title":"Montana","id":"montana-basketball"},{"url":"/montana-state-basketball","title":"Montana St","id":"montana-state-basketball"},{"url":"/north-dakota-basketball","title":"North Dakota","id":"north-dakota-basketball"},{"url":"/northern-arizona-basketball","title":"Northern Arizona","id":"northern-arizona-basketball"},{"url":"/northern-colorado-basketball","title":"Northern Colorado","id":"northern-colorado-basketball"},{"url":"/portland-state-basketball","title":"Portland St","id":"portland-state-basketball"},{"url":"/sacramento-state-basketball","title":"Sacramento St","id":"sacramento-state-basketball"},{"url":"/weber-state-basketball","title":"Weber St","id":"weber-state-basketball"},{"url":"/southern-utah-basketball","title":"Southern Utah","id":"southern-utah-basketball"}],"url":"/big-sky-basketball","title":"Big Sky","id":"big-sky-basketball","links":[{"url":"/big-sky-basketball","title":"Big Sky Home","id":"big-sky-basketball"},{"url":"/big-sky-basketball/archives","title":"Archives","id":"big-sky-basketball/archives"}]},{"hide":true,"items":[{"url":"/campbell-basketball","title":"Campbell","id":"campbell-basketball"},{"url":"/charleston-southern-basketball","title":"Charleston Southern","id":"charleston-southern-basketball"},{"url":"/coastal-carolina-basketball","title":"Coastal Carolina","id":"coastal-carolina-basketball"},{"url":"/gardner-webb-basketball","title":"Gardner-Webb","id":"gardner-webb-basketball"},{"url":"/high-point-basketball","title":"High Point","id":"high-point-basketball"},{"url":"/liberty-basketball","title":"Liberty","id":"liberty-basketball"},{"url":"/longwood-basketball","title":"Longwood","id":"longwood-basketball"},{"url":"/north-carolina-asheville-basketball","title":"North Carolina-Asheville","id":"north-carolina-asheville-basketball"},{"url":"/presbyterian-basketball","title":"Presbyterian","id":"presbyterian-basketball"},{"url":"/radford","title":"Radford","id":"radford"},{"url":"/winthrop","title":"Winthrop","id":"winthrop"}],"url":"/big-south-basketball","title":"Big South","id":"big-south-basketball","links":[{"url":"/big-south-basketball","title":"Big South Home","id":"big-south-basketball"},{"url":"/big-south-basketball/archives","title":"Archives","id":"big-south-basketball/archives"}]},{"items":[{"url":"/illinois-fighting-illini-basketball","title":"Illinois","id":"illinois-fighting-illini-basketball"},{"url":"/indiana-hoosiers-basketball","title":"Indiana","id":"indiana-hoosiers-basketball"},{"url":"/iowa-hawkeyes-basketball","title":"Iowa","id":"iowa-hawkeyes-basketball"},{"url":"/maryland-terrapins-basketball","title":"Maryland","id":"maryland-terrapins-basketball"},{"url":"/michigan-wolverines-basketball","title":"Michigan","id":"michigan-wolverines-basketball"},{"url":"/michigan-state-basketball","title":"Michigan St","id":"michigan-state-basketball"},{"url":"/minnesota-golden-gophers-basketball","title":"Minnesota","id":"minnesota-golden-gophers-basketball"},{"url":"/nebraska-cornhuskers-basketball","title":"Nebraska","id":"nebraska-cornhuskers-basketball"},{"url":"/northwestern-basketball","title":"Northwestern","id":"northwestern-basketball"},{"url":"/ohio-state-basketball","title":"Ohio St","id":"ohio-state-basketball"},{"url":"/penn-state-basketball","title":"Penn St","id":"penn-state-basketball"},{"url":"/purdue-basketball","title":"Purdue","id":"purdue-basketball"},{"url":"/rutgers-basketball","title":"Rutgers","id":"rutgers-basketball"},{"url":"/wisconsin-badgers-basketball","title":"Wisconsin","id":"wisconsin-badgers-basketball"}],"url":"/big-10-basketball","title":"Big Ten","id":"big-10-basketball","links":[{"url":"/big-10-basketball","title":"Big Ten Home","id":"big-10-basketball"},{"url":"/big-10-basketball/archives","title":"Archives","id":"big-10-basketball/archives"}]},{"hide":true,"items":[{"url":"/cal-poly-basketball","title":"Cal Poly","id":"cal-poly-basketball"},{"url":"/cal-state-fullerton-basketball","title":"Cal St Fullerton","id":"cal-state-fullerton-basketball"},{"url":"/cal-state-northridge-basketball","title":"Cal St Northridge","id":"cal-state-northridge-basketball"},{"url":"/hawaii-warriors-basketball","title":"Hawaii","id":"hawaii-warriors-basketball"},{"url":"/long-beach-state-basketball","title":"Long Beach St","id":"long-beach-state-basketball"},{"url":"/uc-davis-basketball","title":"UC Davis","id":"uc-davis-basketball"},{"url":"/uc-irvine-basketball","title":"UC Irvine","id":"uc-irvine-basketball"},{"url":"/uc-riverside-basketball","title":"UC Riverside","id":"uc-riverside-basketball"},{"url":"/uc-santa-barbara-basketball","title":"UC Santa Barbara","id":"uc-santa-barbara-basketball"}],"url":"/big-west-basketball","title":"Big West","id":"big-west-basketball","links":[{"url":"/big-west-basketball","title":"Big West Home","id":"big-west-basketball"},{"url":"/big-west-basketball/archives","title":"Archives","id":"big-west-basketball/archives"}]},{"hide":true,"items":[{"url":"/charleston-basketball","title":"Charleston","id":"charleston-basketball"},{"url":"/delaware-basketball","title":"Delaware","id":"delaware-basketball"},{"url":"/drexel-basketball","title":"Drexel","id":"drexel-basketball"},{"url":"/elon-basketball","title":"Elon","id":"elon-basketball"},{"url":"/hofstra-basketball","title":"Hofstra","id":"hofstra-basketball"},{"url":"/james-madison-basketball","title":"James Madison","id":"james-madison-basketball"},{"url":"/north-carolina-wilmington-basketball","title":"North Carolina-Wilmington","id":"north-carolina-wilmington-basketball"},{"url":"/northeastern-basketball","title":"Northeastern","id":"northeastern-basketball"},{"url":"/towson-basketball","title":"Towson","id":"towson-basketball"},{"url":"/william-mary-basketball","title":"William & Mary","id":"william-mary-basketball"}],"url":"/colonial-athletic-basketball","title":"Colonial","id":"colonial-athletic-basketball","links":[{"url":"/colonial-athletic-basketball","title":"Colonial Home","id":"colonial-athletic-basketball"},{"url":"/colonial-athletic-basketball/archives","title":"Archives","id":"colonial-athletic-basketball/archives"}]},{"hide":true,"items":[{"url":"/florida-atlantic-basketball","title":"Florida Atlantic","id":"florida-atlantic-basketball"},{"url":"/florida-international-basketball","title":"Florida International","id":"florida-international-basketball"},{"url":"/louisiana-tech-basketball","title":"Louisiana Tech","id":"louisiana-tech-basketball"},{"url":"/marshall-basketball","title":"Marshall","id":"marshall-basketball"},{"url":"/middle-tennessee-state-basketball","title":"Middle Tennessee St","id":"middle-tennessee-state-basketball"},{"url":"/north-texas-basketball","title":"North Texas","id":"north-texas-basketball"},{"url":"/old-dominion-basketball","title":"Old Dominion","id":"old-dominion-basketball"},{"url":"/rice-owls-basketball","title":"Rice","id":"rice-owls-basketball"},{"url":"/southern-miss-golden-basketball","title":"Southern Miss","id":"southern-miss-golden-basketball"},{"url":"/texas-san-antonio-basketball","title":"Texas-San Antonio","id":"texas-san-antonio-basketball"},{"url":"/uab-basketball","title":"UAB","id":"uab-basketball"},{"url":"/utep-basketball","title":"UTEP","id":"utep-basketball"},{"url":"/western-kentucky-basketball","title":"Western Kentucky","id":"western-kentucky-basketball"}],"url":"/conference-usa-basketball","title":"Conference USA","id":"conference-usa-basketball","links":[{"url":"/conference-usa-basketball","title":"Conference USA Home","id":"conference-usa-basketball"},{"url":"/conference-usa-basketball/archives","title":"Archives","id":"conference-usa-basketball/archives"}]},{"hide":true,"items":[{"url":"/cleveland-state-basketball","title":"Cleveland St","id":"cleveland-state-basketball"},{"url":"/detroit-mercy-basketball","title":"Detroit","id":"detroit-mercy-basketball"},{"url":"/wisconsin-green-bay-basketball","title":"Green Bay","id":"wisconsin-green-bay-basketball"},{"url":"/illinois-chicago-basketball","title":"Illinois-Chicago","id":"illinois-chicago-basketball"},{"url":"/wisconsin-milwaukee-basketball","title":"Milwaukee","id":"wisconsin-milwaukee-basketball"},{"url":"/valparaiso-basketball","title":"Valparaiso","id":"valparaiso-basketball"},{"url":"/wright-state-basketball","title":"Wright St","id":"wright-state-basketball"},{"url":"/youngstown-state-basketball","title":"Youngstown St","id":"youngstown-state-basketball"},{"url":"/oakland-basketball","title":"Oakland","id":"oakland-basketball"}],"url":"/horizon-league-basketball","title":"Horizon League","id":"horizon-league-basketball","links":[{"url":"/horizon-league-basketball","title":"Horizon League Home","id":"horizon-league-basketball"},{"url":"/horizon-league-basketball/archives","title":"Archives","id":"horizon-league-basketball/archives"}]},{"hide":true,"items":[{"url":"/bryant-university-basketball","title":"Bryant University","id":"bryant-university-basketball"},{"url":"/njit-basketball","title":"N.J.I.T.","id":"njit-basketball"},{"url":"/north-dakota-basketball","title":"North Dakota","id":"north-dakota-basketball"},{"url":"/south-dakota-basketball","title":"South Dakota","id":"south-dakota-basketball"}],"url":"/independents-basketball","title":"Independents","id":"independents-basketball","links":[{"url":"/independents-basketball","title":"Independents Home","id":"independents-basketball"},{"url":"/independents-basketball/archives","title":"Archives","id":"independents-basketball/archives"}]},{"hide":true,"items":[{"url":"/brown-bears-basketball","title":"Brown","id":"brown-bears-basketball"},{"url":"/columbia-basketball","title":"Columbia","id":"columbia-basketball"},{"url":"/cornell-basketball","title":"Cornell","id":"cornell-basketball"},{"url":"/dartmouth-basketball","title":"Dartmouth","id":"dartmouth-basketball"},{"url":"/harvard-basketball","title":"Harvard","id":"harvard-basketball"},{"url":"/penn-basketball","title":"Pennsylvania","id":"penn-basketball"},{"url":"/princeton-basketball","title":"Princeton","id":"princeton-basketball"},{"url":"/yale-basketball","title":"Yale","id":"yale-basketball"}],"url":"/ivy-league-basketball","title":"Ivy League","id":"ivy-league-basketball","links":[{"url":"/ivy-league-basketball","title":"Ivy League Home","id":"ivy-league-basketball"},{"url":"/ivy-league-basketball/archives","title":"Archives","id":"ivy-league-basketball/archives"}]},{"hide":true,"items":[{"url":"/canisius-basketball","title":"Canisius","id":"canisius-basketball"},{"url":"/fairfield-basketball","title":"Fairfield","id":"fairfield-basketball"},{"url":"/iona-basketball","title":"Iona","id":"iona-basketball"},{"url":"/manhattan-basketball","title":"Manhattan","id":"manhattan-basketball"},{"url":"/marist-basketball","title":"Marist ","id":"marist-basketball"},{"url":"/niagara-basketball","title":"Niagara","id":"niagara-basketball"},{"url":"/rider-basketball","title":"Rider","id":"rider-basketball"},{"url":"/siena-basketball","title":"Siena","id":"siena-basketball"},{"url":"/st-peters-basketball","title":"St. Peter's","id":"st-peters-basketball"},{"url":"/monmouth","title":"Monmouth","id":"monmouth"},{"url":"/quinnipiac-basketball","title":"Quinnipiac","id":"quinnipiac-basketball"}],"url":"/maac-conference-basketball","title":"MAAC","id":"maac-conference-basketball","links":[{"url":"/maac-conference-basketball","title":"MAAC Home","id":"maac-conference-basketball"},{"url":"/maac-conference-basketball/archives","title":"Archives","id":"maac-conference-basketball/archives"}]},{"hide":true,"items":[{"url":"/bethune-cookman-basketball","title":"Bethune-Cookman","id":"bethune-cookman-basketball"},{"url":"/coppin-state-basketball","title":"Coppin St","id":"coppin-state-basketball"},{"url":"/delaware-state-basketball","title":"Delaware State","id":"delaware-state-basketball"},{"url":"/florida-am-basketball","title":"Florida A&M","id":"florida-am-basketball"},{"url":"/hampton-basketball","title":"Hampton","id":"hampton-basketball"},{"url":"/howard-basketball","title":"Howard","id":"howard-basketball"},{"url":"/maryland-eastern-shore-basketball","title":"Maryland-Eastern Shore","id":"maryland-eastern-shore-basketball"},{"url":"/morgan-state-basketball","title":"Morgan St","id":"morgan-state-basketball"},{"url":"/norfolk-state-basketball","title":"Norfolk St","id":"norfolk-state-basketball"},{"url":"/north-carolina-at-basketball","title":"North Carolina A&T","id":"north-carolina-at-basketball"},{"url":"/north-carolina-central-basketball","title":"North Carolina Central","id":"north-carolina-central-basketball"},{"url":"/savannah-state-basketball","title":"Savannah St","id":"savannah-state-basketball"},{"url":"/south-carolina-state-basketball","title":"South Carolina St","id":"south-carolina-state-basketball"}],"url":"/meac-basketball","title":"MEAC","id":"meac-basketball","links":[{"url":"/meac-basketball","title":"MEAC Home","id":"meac-basketball"},{"url":"/meac-basketball/archives","title":"Archives","id":"meac-basketball/archives"}]},{"hide":true,"items":[{"url":"/akron-zips-basketball","title":"Akron","id":"akron-zips-basketball"},{"url":"/ball-state-basketball","title":"Ball St","id":"ball-state-basketball"},{"url":"/bowling-green-basketball","title":"Bowling Green","id":"bowling-green-basketball"},{"url":"/buffalo-bulls-basketball","title":"Buffalo Bulls","id":"buffalo-bulls-basketball"},{"url":"/central-michigan-basketball","title":"Central Michigan","id":"central-michigan-basketball"},{"url":"/eastern-michigan-basketball","title":"Eastern Michigan","id":"eastern-michigan-basketball"},{"url":"/kent-state-basketball","title":"Kent St","id":"kent-state-basketball"},{"url":"/miami-redhawks-basketball","title":"Miami (OH)","id":"miami-redhawks-basketball"},{"url":"/northern-illinois-basketball","title":"Northern Illinois","id":"northern-illinois-basketball"},{"url":"/ohio-bobcats-basketball","title":"Ohio Bobcats","id":"ohio-bobcats-basketball"},{"url":"/toledo-basketball","title":"Toledo","id":"toledo-basketball"},{"url":"/western-michigan-basketball","title":"Western Michigan","id":"western-michigan-basketball"}],"url":"/mid-american-conference-basketball","title":"Mid-American","id":"mid-american-conference-basketball","links":[{"url":"/mid-american-conference-basketball","title":"Mid-American Home","id":"mid-american-conference-basketball"},{"url":"/mid-american-conference-basketball/archives","title":"Archives","id":"mid-american-conference-basketball/archives"}]},{"hide":true,"items":[{"url":"/air-force-basketball","title":"Air Force","id":"air-force-basketball"},{"url":"/boise-state-basketball","title":"Boise St","id":"boise-state-basketball"},{"url":"/colorado-state-basketball","title":"Colorado St","id":"colorado-state-basketball"},{"url":"/fresno-state-basketball","title":"Fresno St","id":"fresno-state-basketball"},{"url":"/new-mexico-lobos-basketball","title":"New Mexico","id":"new-mexico-lobos-basketball"},{"url":"/nevada-wolfpack-basketball","title":"Nevada","id":"nevada-wolfpack-basketball"},{"url":"/san-diego-state-basketball","title":"San Diego St ","id":"san-diego-state-basketball"},{"url":"/unlv-basketball","title":"UNLV","id":"unlv-basketball"},{"url":"/wyoming-cowboys-basketball","title":"Wyoming","id":"wyoming-cowboys-basketball"},{"url":"/san-jose-state-basketball","title":"San Jose St","id":"san-jose-state-basketball"},{"url":"/utah-state-basketball","title":"Utah St","id":"utah-state-basketball"}],"url":"/mountain-west-basketball","title":"Mountain West","id":"mountain-west-basketball","links":[{"url":"/mountain-west-basketball","title":"Mountain West Home","id":"mountain-west-basketball"},{"url":"/mountain-west-basketball/archives","title":"Archives","id":"mountain-west-basketball/archives"}]},{"hide":true,"items":[{"url":"/bradley-basketball","title":"Bradley","id":"bradley-basketball"},{"url":"/drake-basketball","title":"Drake","id":"drake-basketball"},{"url":"/evansville-basketball","title":"Evansville","id":"evansville-basketball"},{"url":"/illinois-state-basketball","title":"Illinois St","id":"illinois-state-basketball"},{"url":"/indiana-state-basketball","title":"Indiana St","id":"indiana-state-basketball"},{"url":"/missouri-state-basketball","title":"Missouri St","id":"missouri-state-basketball"},{"url":"/northern-iowa-basketball","title":"Northern Iowa","id":"northern-iowa-basketball"},{"url":"/southern-illinois-basketball","title":"Southern Illinois","id":"southern-illinois-basketball"},{"url":"/wichita-state-basketball","title":"Wichita St","id":"wichita-state-basketball"},{"url":"/loyola-il-basketball","title":"Loyola (IL)","id":"loyola-il-basketball"}],"url":"/mvc-conference-basketball","title":"Missouri Valley","id":"mvc-conference-basketball","links":[{"url":"/mvc-conference-basketball","title":"Missouri Valley Home","id":"mvc-conference-basketball"},{"url":"/mvc-conference-basketball/archives","title":"Archives","id":"mvc-conference-basketball/archives"}]},{"hide":true,"items":[{"url":"/bryant-university-basketball","title":"Bryant","id":"bryant-university-basketball"},{"url":"/central-connecticut-state","title":"Central Connecticut St","id":"central-connecticut-state"},{"url":"/fairleigh-dickinson","title":"Fairleigh Dickinson","id":"fairleigh-dickinson"},{"url":"/long-island-basketball","title":"Long Island","id":"long-island-basketball"},{"url":"/mount-st-marys-basketball","title":"Mount St. Mary's","id":"mount-st-marys-basketball"},{"url":"/robert-morris","title":"Robert Morris","id":"robert-morris"},{"url":"/sacred-heart-basketball","title":"Sacred Heart","id":"sacred-heart-basketball"},{"url":"/st-francis-ny","title":"St. Francis (NY)","id":"st-francis-ny"},{"url":"/st-francis-pa","title":"St. Francis (PA)","id":"st-francis-pa"},{"url":"/wagner-basketball","title":"Wagner","id":"wagner-basketball"}],"url":"/ne-conference-basketball","title":"Northeast","id":"ne-conference-basketball","links":[{"url":"/northeast-conference","title":"Northeast Home","id":"northeast-conference"},{"url":"/northeast-conference/archives","title":"Archives","id":"northeast-conference/archives"}]},{"hide":true,"items":[{"url":"/austin-peay-basketball","title":"Austin Peay","id":"austin-peay-basketball"},{"url":"/belmont-basketball","title":"Belmont","id":"belmont-basketball"},{"url":"/eastern-illinois-basketball","title":"Eastern Illinois","id":"eastern-illinois-basketball"},{"url":"/eastern-kentucky-basketball","title":"Eastern Kentucky","id":"eastern-kentucky-basketball"},{"url":"/jacksonville-state-basketball","title":"Jacksonville St","id":"jacksonville-state-basketball"},{"url":"/morehead-state-basketball","title":"Morehead St","id":"morehead-state-basketball"},{"url":"/murray-state-basketball","title":"Murray St","id":"murray-state-basketball"},{"url":"/siu-edwardsville-basketball","title":"SIU Edwardsville","id":"siu-edwardsville-basketball"},{"url":"/southeast-missouri-state-basketball","title":"Southeast Missouri St","id":"southeast-missouri-state-basketball"},{"url":"/tennessee-state-basketball","title":"Tennessee St","id":"tennessee-state-basketball"},{"url":"/tennessee-tech-basketball","title":"Tennessee Tech","id":"tennessee-tech-basketball"},{"url":"/tennessee-martin-basketball","title":"Tennessee-Martin","id":"tennessee-martin-basketball"}],"url":"/ohio-valley-basketball","title":"Ohio Valley","id":"ohio-valley-basketball","links":[{"url":"/ohio-valley-basketball","title":"Ohio Valley Home","id":"ohio-valley-basketball"},{"url":"/ohio-valley-basketball/archives","title":"Archives","id":"ohio-valley-basketball/archives"}]},{"items":[{"url":"/arizona-wildcats-basketball","title":"Arizona","id":"arizona-wildcats-basketball"},{"url":"/arizona-state-basketball","title":"Arizona St","id":"arizona-state-basketball"},{"url":"/cal-bears-basketball","title":"California","id":"cal-bears-basketball"},{"url":"/colorado-buffaloes-basketball","title":"Colorado","id":"colorado-buffaloes-basketball"},{"url":"/oregon-ducks-basketball","title":"Oregon","id":"oregon-ducks-basketball"},{"url":"/oregon-state-basketball","title":"Oregon St","id":"oregon-state-basketball"},{"url":"/stanford-basketball","title":"Stanford","id":"stanford-basketball"},{"url":"/ucla-basketball","title":"UCLA","id":"ucla-basketball"},{"url":"/usc-basketball","title":"USC","id":"usc-basketball"},{"url":"/utah-utes-basketball","title":"Utah","id":"utah-utes-basketball"},{"url":"/washington-huskies-basketball","title":"Washington","id":"washington-huskies-basketball"},{"url":"/washington-state-basketball","title":"Washington St","id":"washington-state-basketball"}],"url":"/pac-12-basketball","title":"Pacific-12","id":"pac-12-basketball","links":[{"url":"/pac-12-basketball","title":"Pacific-12 Home","id":"pac-12-basketball"},{"url":"/pac-10-basketball/archives","title":"Archives","id":"pac-10-basketball/archives"}]},{"hide":true,"items":[{"url":"/american-university-basketball","title":"American University","id":"american-university-basketball"},{"url":"/army-basketball","title":"Army","id":"army-basketball"},{"url":"/bucknell-basketball","title":"Bucknell","id":"bucknell-basketball"},{"url":"/colgate-basketball","title":"Colgate","id":"colgate-basketball"},{"url":"/holy-cross-basketball","title":"Holy Cross","id":"holy-cross-basketball"},{"url":"/lafayette-basketball","title":"Lafayette","id":"lafayette-basketball"},{"url":"/lehigh-basketball","title":"Lehigh","id":"lehigh-basketball"},{"url":"/navy-basketball","title":"Navy","id":"navy-basketball"},{"url":"/boston-university-basketball","title":"Boston University","id":"boston-university-basketball"},{"url":"/loyola-md-basketball","title":"Loyola (MD)","id":"loyola-md-basketball"}],"url":"/patriot-league-basketball","title":"Patriot League","id":"patriot-league-basketball","links":[{"url":"/patriot-league-basketball","title":"Patriot League Home","id":"patriot-league-basketball"},{"url":"/patriot-league-basketball/archives","title":"Archives","id":"patriot-league-basketball/archives"}]},{"items":[{"url":"/alabama-crimson-tide-basketball","title":"Alabama","id":"alabama-crimson-tide-basketball"},{"url":"/arkansas-razorbacks-basketball","title":"Arkansas","id":"arkansas-razorbacks-basketball"},{"url":"/auburn-basketball","title":"Auburn","id":"auburn-basketball"},{"url":"/florida-gators-basketball","title":"Florida","id":"florida-gators-basketball"},{"url":"/georgia-bulldogs-basketball","title":"Georgia","id":"georgia-bulldogs-basketball"},{"url":"/kentucky-wildcats-basketball","title":"Kentucky","id":"kentucky-wildcats-basketball"},{"url":"/lsu-basketball","title":"LSU","id":"lsu-basketball"},{"url":"/ole-miss-basketball","title":"Mississippi","id":"ole-miss-basketball"},{"url":"/mississippi-state-basketball","title":"Mississippi St","id":"mississippi-state-basketball"},{"url":"/missouri-tigers-basketball","title":"Missouri","id":"missouri-tigers-basketball"},{"url":"/south-carolina-basketball","title":"South Carolina","id":"south-carolina-basketball"},{"url":"/tennessee-volunteers-basketball","title":"Tennessee","id":"tennessee-volunteers-basketball"},{"url":"/texas-am-basketball","title":"Texas A&M","id":"texas-am-basketball"},{"url":"/vanderbilt-basketball","title":"Vanderbilt","id":"vanderbilt-basketball"}],"url":"/sec-basketball","title":"SEC","id":"sec-basketball","links":[{"url":"/sec-basketball","title":"SEC Home","id":"sec-basketball"},{"url":"/sec-basketball/archives","title":"Archives","id":"sec-basketball/archives"}]},{"hide":true,"items":[{"url":"/chattanooga-basketball","title":"Chattanooga","id":"chattanooga-basketball"},{"url":"/citadel-basketball","title":"Citadel","id":"citadel-basketball"},{"url":"/east-tennessee-state-basketball","title":"East Tennessee St","id":"east-tennessee-state-basketball"},{"url":"/furman-basketball","title":"Furman","id":"furman-basketball"},{"url":"/mercer-basketball","title":"Mercer","id":"mercer-basketball"},{"url":"/samford-basketball","title":"Samford","id":"samford-basketball"},{"url":"/unc-greensboro-basketball","title":"UNC-Greensboro","id":"unc-greensboro-basketball"},{"url":"/virginia-military-basketball","title":"Virginia Military","id":"virginia-military-basketball"},{"url":"/western-carolina-basketball","title":"Western Carolina","id":"western-carolina-basketball"},{"url":"/wofford-basketball","title":"Wofford","id":"wofford-basketball"}],"url":"/southern-conference-basketball","title":"Southern","id":"southern-conference-basketball","links":[{"url":"/southern-conference-basketball","title":"Southern Home","id":"southern-conference-basketball"},{"url":"/southern-conference-basketball/archives","title":"Archives","id":"southern-conference-basketball/archives"}]},{"hide":true,"items":[{"url":"/central-arkansas-basketball","title":"Central Arkansas","id":"central-arkansas-basketball"},{"url":"/lamar-basketball","title":"Lamar","id":"lamar-basketball"},{"url":"/mcneese-state-basketball","title":"McNeese St","id":"mcneese-state-basketball"},{"url":"/nicholls-state-basketball","title":"Nicholls St","id":"nicholls-state-basketball"},{"url":"/northwestern-state-basketball","title":"Northwestern St","id":"northwestern-state-basketball"},{"url":"/sam-houston-state-basketball","title":"Sam Houston St","id":"sam-houston-state-basketball"},{"url":"/southeastern-louisiana-basketball","title":"Southeastern Louisiana","id":"southeastern-louisiana-basketball"},{"url":"/stephen-f-austin-basketball","title":"Stephen F. Austin","id":"stephen-f-austin-basketball"},{"url":"/texas-am-cc-basketball","title":"Texas A&M-CC","id":"texas-am-cc-basketball"},{"url":"/abilene-christian-wildcats-basketball","title":"Abilene Christian Wildcats","id":"abilene-christian-wildcats-basketball"},{"url":"/houston-baptist-basketball","title":"Houston Baptist","id":"houston-baptist-basketball"},{"url":"/incarnate-word-cardinals-basketball","title":"Incarnate Word Cardinals","id":"incarnate-word-cardinals-basketball"},{"url":"/new-orleans-privateers-basketball","title":"New Orleans","id":"new-orleans-privateers-basketball"}],"url":"/southland-conference","title":"Southland","id":"southland-conference","links":[{"url":"/southland-conference","title":"Southland Home","id":"southland-conference"},{"url":"/southland-conference/archives","title":"Archives","id":"southland-conference/archives"}]},{"hide":true,"items":[{"url":"/denver-pioneers-basketball","title":"Denver","id":"denver-pioneers-basketball"},{"url":"/ipfw-basketball","title":"IPFW","id":"ipfw-basketball"},{"url":"/iupui-basketball","title":"IUPUI","id":"iupui-basketball"},{"url":"/nebraska-omaha-basketball","title":"Nebraska-Omaha","id":"nebraska-omaha-basketball"},{"url":"/north-dakota-state-basketball","title":"North Dakota St","id":"north-dakota-state-basketball"},{"url":"/oral-roberts-basketball","title":"Oral Roberts","id":"oral-roberts-basketball"},{"url":"/south-dakota-state-basketball","title":"South Dakota St","id":"south-dakota-state-basketball"},{"url":"/western-illinois-basketball","title":"Western Illinois","id":"western-illinois-basketball"}],"url":"/summit-league-basketball","title":"Summit League","id":"summit-league-basketball","links":[{"url":"/summit-league-basketball","title":"Summit League Home","id":"summit-league-basketball"},{"url":"/summit-league-basketball/archives","title":"Archives","id":"summit-league-basketball/archives"}]},{"hide":true,"items":[{"url":"/appalachian-state-basketball","title":"Appalachian St","id":"appalachian-state-basketball"},{"url":"/arkansas-state-basketball","title":"Arkansas St","id":"arkansas-state-basketball"},{"url":"/arkansas-little-rock-basketball","title":"Arkansas-Little Rock","id":"arkansas-little-rock-basketball"},{"url":"/georgia-southern-basketball","title":"Georgia Southern","id":"georgia-southern-basketball"},{"url":"/georgia-state-basketball","title":"Georgia St","id":"georgia-state-basketball"},{"url":"/louisiana-lafayette-basketball","title":"Louisiana-Lafayette","id":"louisiana-lafayette-basketball"},{"url":"/louisiana-monroe-basketball","title":"Louisiana-Monroe","id":"louisiana-monroe-basketball"},{"url":"/south-alabama","title":"South Alabama","id":"south-alabama"},{"url":"/troy-basketball","title":"Troy","id":"troy-basketball"},{"url":"/texas-state-basketball","title":"Texas St","id":"texas-state-basketball"},{"url":"/texas-arlington-basketball","title":"Texas-Arlington","id":"texas-arlington-basketball"}],"url":"/sun-belt-basketball","title":"Sun Belt","id":"sun-belt-basketball","links":[{"url":"/sun-belt-basketball","title":"Sun Belt Home","id":"sun-belt-basketball"},{"url":"/sun-belt-basketball/archives","title":"Archives","id":"sun-belt-basketball/archives"}]},{"hide":true,"items":[{"url":"/alabama-am-basketball","title":"Alabama A&M","id":"alabama-am-basketball"},{"url":"/alabama-state-basketball","title":"Alabama St","id":"alabama-state-basketball"},{"url":"/alcorn-state-basketball","title":"Alcorn St","id":"alcorn-state-basketball"},{"url":"/arkansas-pine-bluff-basketball","title":"Arkansas-Pine Bluff","id":"arkansas-pine-bluff-basketball"},{"url":"/grambling-state-basketball","title":"Grambling St","id":"grambling-state-basketball"},{"url":"/jackson-state-basketball","title":"Jackson St","id":"jackson-state-basketball"},{"url":"/misssissippi-valley-state-basketball","title":"Misssissippi Valley St","id":"misssissippi-valley-state-basketball"},{"url":"/prairie-view-am-basketball","title":"Prairie View A&M","id":"prairie-view-am-basketball"},{"url":"/southern-university-basketball","title":"Southern University","id":"southern-university-basketball"},{"url":"/texas-southern-basketball","title":"Texas Southern","id":"texas-southern-basketball"}],"url":"/swac-basketball","title":"SWAC","id":"swac-basketball","links":[{"url":"/swac-basketball","title":"SWAC Home","id":"swac-basketball"},{"url":"/swac-basketball/archives","title":"Archives","id":"swac-basketball/archives"}]},{"hide":true,"items":[{"url":"/new-mexico-state-basketball","title":"New Mexico St","id":"new-mexico-state-basketball"},{"url":"/seattle-redhawks-basketball","title":"Seattle","id":"seattle-redhawks-basketball"},{"url":"/chicago-state-basketball","title":"Chicago St","id":"chicago-state-basketball"},{"url":"/cal-state-bakersfield-basketball","title":"Cal St Bakersfield","id":"cal-state-bakersfield-basketball"},{"url":"/grand-canyon-antelopes-basketball","title":"Grand Canyon Antelopes","id":"grand-canyon-antelopes-basketball"},{"url":"/umkc-basketball","title":"UMKC","id":"umkc-basketball"},{"url":"/utah-valley-basketball","title":"Utah Valley","id":"utah-valley-basketball"},{"url":"/texas-pan-american-basketball","title":"UT Rio Grande Valley","id":"texas-pan-american-basketball"}],"url":"/wac-basketball","title":"WAC","id":"wac-basketball","links":[{"url":"/wac-basketball","title":"WAC Home","id":"wac-basketball"},{"url":"/wac-basketball/archives","title":"Archives","id":"wac-basketball/archives"}]},{"hide":true,"items":[{"url":"/gonzaga-basketball","title":"Gonzaga","id":"gonzaga-basketball"},{"url":"/loyola-marymount-basketball","title":"Loyola Marymount","id":"loyola-marymount-basketball"},{"url":"/pepperdine-basketball","title":"Pepperdine","id":"pepperdine-basketball"},{"url":"/portland-pilots-basketball","title":"Portland","id":"portland-pilots-basketball"},{"url":"/saint-marys-basketball","title":"Saint Mary's","id":"saint-marys-basketball"},{"url":"/san-diego-toreros-basketballl","title":"San Diego","id":"san-diego-toreros-basketballl"},{"url":"/san-francisco-dons-basketball","title":"San Francisco","id":"san-francisco-dons-basketball"},{"url":"/santa-clara-basketball","title":"Santa Clara","id":"santa-clara-basketball"},{"url":"/pacific-tigers-basketball","title":"Pacific","id":"pacific-tigers-basketball"}],"url":"/wcc-basketball","title":"WCC","id":"wcc-basketball","links":[{"url":"/wcc-basketball","title":"WCC Home","id":"wcc-basketball"},{"url":"/wcc-basketball/archives","title":"Archives","id":"wcc-basketball/archives"},{"url":"/byu-basketball","title":"Brigham Young","id":"byu-basketball"}]}],"url":"/college-basketball","title":"CBB","id":"college-basketball","links":[{"url":"/college-basketball","title":"Home","id":"college-basketball"},{"url":"/college-basketball/teams","title":"Teams","id":"college-basketball/teams"},{"url":"/college-basketball/archives","title":"Archives","id":"college-basketball/archives"}]},{"items":[{"items":[{"url":"/baltimore-orioles","title":"Baltimore","id":"baltimore-orioles"},{"url":"/boston-red-sox","title":"Boston","id":"boston-red-sox"},{"url":"/new-york-yankees","title":"NY Yankees","id":"new-york-yankees"},{"url":"/tampa-bay-rays","title":"Tampa Bay","id":"tampa-bay-rays"},{"url":"/toronto-blue-jays","title":"Toronto","id":"toronto-blue-jays"}],"title":"AL East","id":"al-east"},{"items":[{"url":"/chicago-white-sox","title":"Chi White Sox","id":"chicago-white-sox"},{"url":"/cleveland-indians","title":"Cleveland","id":"cleveland-indians"},{"url":"/detroit-tigers","title":"Detroit","id":"detroit-tigers"},{"url":"/kansas-city-royals","title":"Kansas City","id":"kansas-city-royals"},{"url":"/minnesota-twins","title":"Minnesota","id":"minnesota-twins"}],"title":"AL Central","id":"al-central"},{"items":[{"url":"/houston-astros","title":"Houston","id":"houston-astros"},{"url":"/los-angeles-angels-of-anaheim","title":"LA Angels","id":"los-angeles-angels-of-anaheim"},{"url":"/oakland-athletics","title":"Oakland","id":"oakland-athletics"},{"url":"/seattle-mariners","title":"Seattle","id":"seattle-mariners"},{"url":"/texas-rangers","title":"Texas","id":"texas-rangers"}],"title":"AL West","id":"al-west"},{"items":[{"url":"/atlanta-braves","title":"Atlanta","id":"atlanta-braves"},{"url":"/florida-marlins","title":"Miami","id":"florida-marlins"},{"url":"/new-york-mets","title":"NY Mets","id":"new-york-mets"},{"url":"/philadelphia-phillies","title":"Philadelphia","id":"philadelphia-phillies"},{"url":"/washington-nationals","title":"Washington","id":"washington-nationals"}],"title":"NL East","id":"nl-east"},{"items":[{"url":"/chicago-cubs","title":"Chi Cubs","id":"chicago-cubs"},{"url":"/cincinnati-reds","title":"Cincinnati","id":"cincinnati-reds"},{"url":"/milwaukee-brewers","title":"Milwaukee","id":"milwaukee-brewers"},{"url":"/pittsburgh-pirates","title":"Pittsburgh","id":"pittsburgh-pirates"},{"url":"/st-louis-cardinals","title":"St Louis","id":"st-louis-cardinals"}],"title":"NL Central","id":"nl-central"},{"items":[{"url":"/arizona-diamondbacks","title":"Arizona","id":"arizona-diamondbacks"},{"url":"/colorado-rockies","title":"Colorado","id":"colorado-rockies"},{"url":"/los-angeles-dodgers","title":"LA Dodgers","id":"los-angeles-dodgers"},{"url":"/san-diego-padres","title":"San Diego","id":"san-diego-padres"},{"url":"/san-francisco-giants","title":"San Francisco","id":"san-francisco-giants"}],"title":"NL West","id":"nl-west"}],"url":"/mlb","title":"MLB","id":"mlb","links":[{"url":"/mlb","title":"Home","id":"mlb"},{"url":"/fantasy-baseball","title":"Fantasy","id":"fantasy-baseball"},{"url":"/mlb/teams","title":"Teams","id":"mlb/teams"},{"url":"/mlb/archives","title":"Archives","id":"mlb/archives"},{"url":"https://www.scorebig.com/mlb-tickets","title":"MLB Tickets","id":"https://www.scorebig.com/mlb-tickets"}]},{"items":[{"items":[{"url":"/cincinnati-bearcats-football","title":"Cincinnati","id":"cincinnati-bearcats-football"},{"url":"/uconn-football","title":"Connecticut","id":"uconn-football"},{"url":"/east-carolina-football","title":"East Carolina","id":"east-carolina-football"},{"url":"/houston-cougars-football","title":"Houston","id":"houston-cougars-football"},{"url":"/memphis-tigers-football","title":"Memphis","id":"memphis-tigers-football"},{"url":"/navy-football","title":"Navy","id":"navy-football"},{"url":"/smu-mustangs-football","title":"SMU","id":"smu-mustangs-football"},{"url":"/south-florida-bulls-football","title":"South Florida","id":"south-florida-bulls-football"},{"url":"/temple-football","title":"Temple","id":"temple-football"},{"url":"/ucf-knights-football","title":"UCF","id":"ucf-knights-football"},{"url":"/tulane-football","title":"Tulane","id":"tulane-football"},{"url":"/tulsa-football","title":"Tulsa","id":"tulsa-football"}],"url":"/american-athletic-conference-football","title":"AAC","id":"american-athletic-conference-football"},{"items":[{"url":"/boston-college-football","title":"Boston College","id":"boston-college-football"},{"url":"/clemson-football","title":"Clemson","id":"clemson-football"},{"url":"/duke-football","title":"Duke","id":"duke-football"},{"url":"/florida-state-football","title":"Florida St","id":"florida-state-football"},{"url":"/georgia-tech-football","title":"Georgia Tech","id":"georgia-tech-football"},{"url":"/louisville-cardinals-football","title":"Louisville","id":"louisville-cardinals-football"},{"url":"/miami-hurricanes-football","title":"Miami (FL)","id":"miami-hurricanes-football"},{"url":"/unc-football","title":"North Carolina","id":"unc-football"},{"url":"/nc-state-football","title":"NC State","id":"nc-state-football"},{"url":"/pitt-football","title":"Pittsburgh","id":"pitt-football"},{"url":"/syracuse-football","title":"Syracuse","id":"syracuse-football"},{"url":"/uva-football","title":"Virginia","id":"uva-football"},{"url":"/virginia-tech-football","title":"Virginia Tech","id":"virginia-tech-football"},{"url":"/wake-forest-football","title":"Wake Forest","id":"wake-forest-football"}],"url":"/acc-football","title":"ACC","id":"acc-football","links":[{"url":"/acc-football","title":"ACC Home","id":"acc-football"},{"url":"/acc-football/archives","title":"Archives","id":"acc-football/archives"}]},{"items":[{"url":"/baylor-football","title":"Baylor","id":"baylor-football"},{"url":"/iowa-state-football","title":"Iowa St","id":"iowa-state-football"},{"url":"/kansas-jayhawks-football","title":"Kansas","id":"kansas-jayhawks-football"},{"url":"/kansas-state-football","title":"Kansas St","id":"kansas-state-football"},{"url":"/oklahoma-sooners-football","title":"Oklahoma","id":"oklahoma-sooners-football"},{"url":"/oklahoma-state-football","title":"Oklahoma St","id":"oklahoma-state-football"},{"url":"/tcu-football","title":"TCU","id":"tcu-football"},{"url":"/texas-longhorns-football","title":"Texas","id":"texas-longhorns-football"},{"url":"/texas-tech-football","title":"Texas Tech","id":"texas-tech-football"},{"url":"/wvu-football","title":"West Virginia","id":"wvu-football"}],"url":"/big-12-football","title":"Big 12","id":"big-12-football","links":[{"url":"/big-12-football","title":"Big 12 Home","id":"big-12-football"},{"url":"/big-12-football/archives","title":"Archives","id":"big-12-football/archives"}]},{"hide":true,"items":[{"url":"/charleston-southern-football","title":"Charleston Southern","id":"charleston-southern-football"},{"url":"/coastal-carolina-chanticleers-football","title":"Coastal Carolina","id":"coastal-carolina-chanticleers-football"},{"url":"/gardner-webb-runnin-bulldogs-football","title":"Gardner-Webb","id":"gardner-webb-runnin-bulldogs-football"},{"url":"/liberty-football","title":"Liberty","id":"liberty-football"},{"url":"/presbyterian-football","title":"Presbyterian","id":"presbyterian-football"},{"url":"/radford-football","title":"Radford","id":"radford-football"},{"url":"/unc-asheville-football","title":"UNC Asheville","id":"unc-asheville-football"},{"url":"/winthrop-football","title":"Winthrop","id":"winthrop-football"}],"url":"/big-south-football","title":"Big South","id":"big-south-football","links":[{"url":"/big-south-football","title":"Big South Home","id":"big-south-football"},{"url":"/big-south-football/archives","title":"Archives","id":"big-south-football/archives"},{"url":"/virginia-military-football","title":"Virginia Military Institute","id":"virginia-military-football"}]},{"items":[{"url":"/illinois-fighting-illini-football","title":"Illinois","id":"illinois-fighting-illini-football"},{"url":"/indiana-hoosiers-football","title":"Indiana","id":"indiana-hoosiers-football"},{"url":"/iowa-hawkeyes-football","title":"Iowa","id":"iowa-hawkeyes-football"},{"url":"/maryland-terrapins-football","title":"Maryland","id":"maryland-terrapins-football"},{"url":"/michigan-wolverines-football","title":"Michigan","id":"michigan-wolverines-football"},{"url":"/michigan-state-football","title":"Michigan St","id":"michigan-state-football"},{"url":"/minnesota-golden-gophers-football","title":"Minnesota","id":"minnesota-golden-gophers-football"},{"url":"/nebraska-cornhuskers-football","title":"Nebraska","id":"nebraska-cornhuskers-football"},{"url":"/northwestern-football","title":"Northwestern","id":"northwestern-football"},{"url":"/ohio-state-football","title":"Ohio St","id":"ohio-state-football"},{"url":"/penn-state-football","title":"Penn St","id":"penn-state-football"},{"url":"/purdue-football","title":"Purdue","id":"purdue-football"},{"url":"/rutgers-football","title":"Rutgers","id":"rutgers-football"},{"url":"/wisconsin-badgers-football","title":"Wisconsin","id":"wisconsin-badgers-football"}],"url":"/big-10-football","title":"Big Ten","id":"big-10-football","links":[{"url":"/big-10-football","title":"Big Ten Home","id":"big-10-football"},{"url":"/big-10-football/archives","title":"Archives","id":"big-10-football/archives"}]},{"hide":true,"items":[{"url":"/florida-atlantic-football","title":"Florida Atlantic","id":"florida-atlantic-football"},{"url":"/florida-international-football","title":"Florida International","id":"florida-international-football"},{"url":"/louisiana-tech-football","title":"Louisiana Tech","id":"louisiana-tech-football"},{"url":"/marshall-football","title":"Marshall","id":"marshall-football"},{"url":"/middle-tennesse-football","title":"Middle Tennesse St","id":"middle-tennesse-football"},{"url":"/north-texas-mean-green-football","title":"North Texas","id":"north-texas-mean-green-football"},{"url":"/rice-football","title":"Rice","id":"rice-football"},{"url":"/southern-miss-football","title":"Southern Miss","id":"southern-miss-football"},{"url":"/utep-miners-football","title":"UTEP","id":"utep-miners-football"},{"url":"/old-dominion-football","title":"Old Dominion","id":"old-dominion-football"},{"url":"/uab-football","title":"UAB","id":"uab-football"},{"url":"/utsa-roadrunners-football","title":"UTSA","id":"utsa-roadrunners-football"}],"url":"/conference-usa-football","title":"Conference USA","id":"conference-usa-football","links":[{"url":"/conference-usa-football","title":"Conference USA Home","id":"conference-usa-football"},{"url":"/conference-usa-football/archives","title":"Archives","id":"conference-usa-football/archives"}]},{"hide":true,"items":[{"url":"/brown-bears-football","title":"Brown","id":"brown-bears-football"},{"url":"/columbia-football","title":"Columbia","id":"columbia-football"},{"url":"/cornell-football","title":"Cornell","id":"cornell-football"},{"url":"/dartmouth-football","title":"Dartmouth","id":"dartmouth-football"},{"url":"/harvard-football","title":"Harvard","id":"harvard-football"},{"url":"/penn-football","title":"Penn","id":"penn-football"},{"url":"/princeton-football","title":"Princeton","id":"princeton-football"},{"url":"/yale-football","title":"Yale","id":"yale-football"}],"url":"/ivy-league-football","title":"Ivy League","id":"ivy-league-football","links":[{"url":"/ivy-league-football","title":"Ivy League Home","id":"ivy-league-football"},{"url":"/ivy-league-football/archives","title":"Archives","id":"ivy-league-football/archives"}]},{"hide":true,"items":[{"url":"/akron-football","title":"Akron","id":"akron-football"},{"url":"/ball-state-football","title":"Ball St","id":"ball-state-football"},{"url":"/bowling-green-state-football","title":"Bowling Green","id":"bowling-green-state-football"},{"url":"/buffalo-bulls-football","title":"Buffalo Bulls","id":"buffalo-bulls-football"},{"url":"/central-michigan-football","title":"Central Michigan","id":"central-michigan-football"},{"url":"/eastern-michigan-football","title":"Eastern Michigan","id":"eastern-michigan-football"},{"url":"/kent-state-football","title":"Kent St","id":"kent-state-football"},{"url":"/miami-redhawks-football","title":"Miami (OH)","id":"miami-redhawks-football"},{"url":"/northern-illinois-football","title":"Northern Illinois","id":"northern-illinois-football"},{"url":"/ohio-bobcats-football","title":"Ohio","id":"ohio-bobcats-football"},{"url":"/toledo-football","title":"Toledo","id":"toledo-football"},{"url":"/western-michigan-football","title":"Western Michigan","id":"western-michigan-football"},{"url":"/umass-football","title":"UMass","id":"umass-football"}],"url":"/mid-american-conference-football","title":"Mid-American","id":"mid-american-conference-football","links":[{"url":"/mid-american-conference-football","title":"Mid-American Home","id":"mid-american-conference-football"},{"url":"/mid-american-conference-football/archives","title":"Archives","id":"mid-american-conference-football/archives"}]},{"hide":true,"items":[{"url":"/air-force-football","title":"Air Force","id":"air-force-football"},{"url":"/boise-state-football","title":"Boise St","id":"boise-state-football"},{"url":"/colorado-state-football","title":"Colorado St","id":"colorado-state-football"},{"url":"/fresno-state-football","title":"Fresno St","id":"fresno-state-football"},{"url":"/hawaii-warriors-football","title":"Hawaii","id":"hawaii-warriors-football"},{"url":"/nevada-wolfpack-football","title":"Nevada","id":"nevada-wolfpack-football"},{"url":"/new-mexico-lobos-football","title":"New Mexico","id":"new-mexico-lobos-football"},{"url":"/san-diego-state-football","title":"San Diego St","id":"san-diego-state-football"},{"url":"/unlv-football","title":"UNLV","id":"unlv-football"},{"url":"/wyoming-cowboys-football","title":"Wyoming","id":"wyoming-cowboys-football"},{"url":"/utah-state-football","title":"Utah St","id":"utah-state-football"},{"url":"/san-jose-state-football","title":"San Jose St","id":"san-jose-state-football"}],"url":"/mountain-west-football","title":"Mountain West","id":"mountain-west-football","links":[{"url":"/mountain-west-football","title":"Mountain West Home","id":"mountain-west-football"},{"url":"/mountain-west-football/archives","title":"Archives","id":"mountain-west-football/archives"}]},{"items":[{"url":"/arizona-wildcats-football","title":"Arizona","id":"arizona-wildcats-football"},{"url":"/arizona-state-football","title":"Arizona St","id":"arizona-state-football"},{"url":"/cal-bears-football","title":"California","id":"cal-bears-football"},{"url":"/colorado-buffaloes-football","title":"Colorado","id":"colorado-buffaloes-football"},{"url":"/oregon-ducks-football","title":"Oregon","id":"oregon-ducks-football"},{"url":"/oregon-state-football","title":"Oregon St","id":"oregon-state-football"},{"url":"/stanford-football","title":"Stanford","id":"stanford-football"},{"url":"/ucla-football","title":"UCLA","id":"ucla-football"},{"url":"/usc-football","title":"USC","id":"usc-football"},{"url":"/utah-utes-football","title":"Utah","id":"utah-utes-football"},{"url":"/washington-huskies-football","title":"Washington","id":"washington-huskies-football"},{"url":"/washington-state-football","title":"Washington St","id":"washington-state-football"}],"url":"/pac-12-football","title":"Pacific-12","id":"pac-12-football","links":[{"url":"/pac-12-football","title":"Pac-12 Home","id":"pac-12-football"},{"url":"/pac-10-football/archives","title":"Archives","id":"pac-10-football/archives"}]},{"items":[{"url":"/alabama-crimson-tide-football","title":"Alabama","id":"alabama-crimson-tide-football"},{"url":"/arkansas-razorbacks-football","title":"Arkansas","id":"arkansas-razorbacks-football"},{"url":"/auburn-football","title":"Auburn","id":"auburn-football"},{"url":"/florida-gators-football","title":"Florida","id":"florida-gators-football"},{"url":"/georgia-bulldogs-football","title":"Georgia","id":"georgia-bulldogs-football"},{"url":"/kentucky-wildcats-football","title":"Kentucky","id":"kentucky-wildcats-football"},{"url":"/lsu-football","title":"LSU","id":"lsu-football"},{"url":"/ole-miss-football","title":"Mississippi","id":"ole-miss-football"},{"url":"/mississippi-state-football","title":"Mississippi St","id":"mississippi-state-football"},{"url":"/missouri-tigers-football","title":"Missouri","id":"missouri-tigers-football"},{"url":"/south-carolina-football","title":"South Carolina","id":"south-carolina-football"},{"url":"/tennessee-volunteers-football","title":"Tennessee","id":"tennessee-volunteers-football"},{"url":"/texas-am-football","title":"Texas A&M","id":"texas-am-football"},{"url":"/vanderbilt-football","title":"Vanderbilt","id":"vanderbilt-football"}],"url":"/sec-football","title":"SEC","id":"sec-football","links":[{"url":"/sec-football","title":"SEC Home","id":"sec-football"},{"url":"/sec-football/archives","title":"Archives","id":"sec-football/archives"}]},{"items":[{"url":"/army-football","title":"Army","id":"army-football"},{"url":"/byu-football","title":"Brigham Young","id":"byu-football"},{"url":"/notre-dame-football","title":"Notre Dame","id":"notre-dame-football"}],"url":"/independents-football","title":"Independents","id":"independents-football","links":[{"url":"/independents-football","title":"Independents Home","id":"independents-football"},{"url":"/independents-football/archives","title":"Archives","id":"independents-football/archives"}]},{"hide":true,"items":[{"url":"/charleston-football","title":"Charleston","id":"charleston-football"},{"url":"/citadel-football","title":"Citadel","id":"citadel-football"},{"url":"/davidson-football","title":"Davidson","id":"davidson-football"},{"url":"/elon-football","title":"Elon","id":"elon-football"},{"url":"/furman-football","title":"Furman","id":"furman-football"},{"url":"/samford-football","title":"Samford","id":"samford-football"},{"url":"/tennessee-chattanooga-football","title":"Tennessee Chattanooga","id":"tennessee-chattanooga-football"},{"url":"/unc-greensboro-football","title":"UNC Greensboro","id":"unc-greensboro-football"},{"url":"/western-carolina-football","title":"Western Carolina","id":"western-carolina-football"},{"url":"/wofford-football","title":"Wofford","id":"wofford-football"}],"url":"/southern-conference-football","title":"Southern","id":"southern-conference-football","links":[{"url":"/southern-conference-football","title":"Southern Home","id":"southern-conference-football"},{"url":"/southern-conference-football/archives","title":"Archives","id":"southern-conference-football/archives"}]},{"hide":true,"items":[{"url":"/appalachian-state-football","title":"Appalachian St","id":"appalachian-state-football"},{"url":"/arkansas-state-football","title":"Arkansas St","id":"arkansas-state-football"},{"url":"/georgia-southern-football","title":"Georgia Southern","id":"georgia-southern-football"},{"url":"/georgia-state-football","title":"Georgia State","id":"georgia-state-football"},{"url":"/idaho-vandals-football","title":"Idaho","id":"idaho-vandals-football"},{"url":"/louisiana-lafayette-football","title":"Louisiana-Lafayette","id":"louisiana-lafayette-football"},{"url":"/louisiana-monroe-football","title":"Louisiana-Monroe","id":"louisiana-monroe-football"},{"url":"/new-mexico-state-football","title":"New Mexico St","id":"new-mexico-state-football"},{"url":"/south-alabama-football","title":"South Alabama","id":"south-alabama-football"},{"url":"/texas-state-football","title":"Texas St","id":"texas-state-football"},{"url":"/troy-trojans-football","title":"Troy","id":"troy-trojans-football"}],"url":"/sun-belt-football","title":"Sun Belt","id":"sun-belt-football","links":[{"url":"/sun-belt-football","title":"Sun Belt Home","id":"sun-belt-football"},{"url":"/sun-belt-football/archives","title":"Archives","id":"sun-belt-football/archives"}]}],"url":"/college-football","title":"CFB","id":"college-football","links":[{"url":"/college-football","title":"Home","id":"college-football"},{"url":"/recruiting","title":"Recruiting","id":"recruiting"},{"url":"/cfb-recruiting-200","title":"CFB 200","id":"cfb-recruiting-200"},{"url":"/college-football/teams","title":"Teams","id":"college-football/teams"},{"url":"/college-football/archives","title":"Archives","id":"college-football/archives"},{"url":"https://www.scorebig.com/college-football-tickets","title":"CFB Tickets","id":"https://www.scorebig.com/college-football-tickets"}]},{"allLink":[{"url":"/world-football/teams","title":"All Football Leagues","id":"world-football/teams"}],"items":[{"items":[{"url":"/algeria-national-football","title":"Algeria","id":"algeria-national-football"},{"url":"/argentina","title":"Argentina","id":"argentina"},{"url":"/australia-national-football","title":"Australia","id":"australia-national-football"},{"url":"/austria","title":"Austria","id":"austria"},{"url":"/belgium-national-football","title":"Belgium","id":"belgium-national-football"},{"url":"/bosnia-herzegovina-national-football","title":"Bosnia-Herzegovina","id":"bosnia-herzegovina-national-football"},{"url":"/brazilian-football","title":"Brazil","id":"brazilian-football"},{"url":"/cameroon-national-football","title":"Cameroon","id":"cameroon-national-football"},{"url":"/chile-national-football","title":"Chile","id":"chile-national-football"},{"url":"/colombia-national-football","title":"Colombia","id":"colombia-national-football"},{"url":"/costa-rica-national-football","title":"Costa Rica","id":"costa-rica-national-football"},{"url":"/croatia-international-football","title":"Croatia","id":"croatia-international-football"},{"url":"/denmark-national-football","title":"Denmark","id":"denmark-national-football"},{"url":"/ecuador-national-football","title":"Ecuador","id":"ecuador-national-football"},{"url":"/england","title":"England","id":"england"},{"url":"/france","title":"France","id":"france"},{"url":"/germany","title":"Germany","id":"germany"},{"url":"/ghana-national-football","title":"Ghana","id":"ghana-national-football"},{"url":"/greece-national-football","title":"Greece","id":"greece-national-football"},{"url":"/honduras-national-football","title":"Honduras","id":"honduras-national-football"},{"url":"/ireland","title":"Ireland","id":"ireland"},{"url":"/iran-national-football","title":"Iran","id":"iran-national-football"},{"url":"/italy","title":"Italy","id":"italy"},{"url":"/ivory-coast-national-football","title":"Ivory Coast","id":"ivory-coast-national-football"},{"url":"/japan-national-football","title":"Japan","id":"japan-national-football"},{"url":"/mexico-national-football","title":"Mexico","id":"mexico-national-football"},{"url":"/netherlands","title":"Netherlands","id":"netherlands"},{"url":"/new-zealand-national-football","title":"New Zealand","id":"new-zealand-national-football"},{"url":"/nigeria-national-football","title":"Nigeria","id":"nigeria-national-football"},{"url":"/northern-ireland","title":"Northern Ireland","id":"northern-ireland"},{"url":"/north-korea-national-football","title":"North Korea","id":"north-korea-national-football"},{"url":"/paraguay-national-football","title":"Paraguay","id":"paraguay-national-football"},{"url":"/poland","title":"Poland","id":"poland"},{"url":"/portugal-national-football","title":"Portugal","id":"portugal-national-football"},{"url":"/russia","title":"Russia","id":"russia"},{"url":"/scotland","title":"Scotland","id":"scotland"},{"url":"/serbia-national-football","title":"Serbia","id":"serbia-national-football"},{"url":"/slovakia-national-football","title":"Slovakia","id":"slovakia-national-football"},{"url":"/slovenia-national-football","title":"Slovenia","id":"slovenia-national-football"},{"url":"/south-africa-national-football","title":"South Africa","id":"south-africa-national-football"},{"url":"/south-korea-national-football","title":"South Korea","id":"south-korea-national-football"},{"url":"/spain","title":"Spain","id":"spain"},{"url":"/sweden","title":"Sweden","id":"sweden"},{"url":"/switzerland","title":"Switzerland","id":"switzerland"},{"url":"/ukraine","title":"Ukraine","id":"ukraine"},{"url":"/united-states","title":"United States","id":"united-states"},{"url":"/uruguay-national-football","title":"Uruguay","id":"uruguay-national-football"},{"url":"/wales-national-football","title":"Wales","id":"wales-national-football"}],"url":"/international-football","title":"International Football","id":"international-football","links":[{"url":"/international-football","title":"International Football Home","id":"international-football"},{"url":"/international-football/teams","title":"Teams","id":"international-football/teams"},{"url":"/international-football/archives","title":"Archives","id":"international-football/archives"},{"url":"https://www.scorebig.com/soccer-tickets","title":"Soccer Tickets","id":"https://www.scorebig.com/soccer-tickets"}]},{"items":[{"url":"/arsenal","title":"Arsenal","id":"arsenal"},{"url":"/aston-villa","title":"Aston Villa","id":"aston-villa"},{"url":"/bournemouth","title":"Bournemouth","id":"bournemouth"},{"url":"/chelsea","title":"Chelsea","id":"chelsea"},{"url":"/crystal-palace","title":"Crystal Palace","id":"crystal-palace"},{"url":"/everton","title":"Everton","id":"everton"},{"url":"/leicester-city","title":"Leicester City","id":"leicester-city"},{"url":"/liverpool","title":"Liverpool","id":"liverpool"},{"url":"/manchester-city","title":"Manchester City","id":"manchester-city"},{"url":"/manchester-united","title":"Manchester United","id":"manchester-united"},{"url":"/newcastle-united","title":"Newcastle United","id":"newcastle-united"},{"url":"/norwich-city","title":"Norwich City","id":"norwich-city"},{"url":"/southampton","title":"Southampton","id":"southampton"},{"url":"/stoke-city","title":"Stoke City","id":"stoke-city"},{"url":"/sunderland","title":"Sunderland","id":"sunderland"},{"url":"/swansea-city","title":"Swansea City","id":"swansea-city"},{"url":"/tottenham-hotspur","title":"Tottenham Hotspur","id":"tottenham-hotspur"},{"url":"/watford-fc","title":"Watford","id":"watford-fc"},{"url":"/west-bromwich","title":"West Bromwich Albion","id":"west-bromwich"},{"url":"/west-ham-united","title":"West Ham United","id":"west-ham-united"}],"url":"/epl","title":"Premier League","id":"epl","links":[{"url":"/epl","title":"Premier League Home","id":"epl"},{"url":"/transfer-window","title":"Transfers","id":"transfer-window"},{"url":"/epl/teams","title":"Teams","id":"epl/teams"},{"url":"/epl/archives","title":"Archives","id":"epl/archives"}]},{"items":[{"url":"/ac-milan","title":"AC Milan","id":"ac-milan"},{"url":"/as-roma","title":"AS Roma","id":"as-roma"},{"url":"/atalanta","title":"Atalanta","id":"atalanta"},{"url":"/cagliari","title":"Cagliari","id":"cagliari"},{"url":"/cesena","title":"Cesena","id":"cesena"},{"url":"/chievo-verona","title":"Chievo Verona","id":"chievo-verona"},{"url":"/empoli","title":"Empoli","id":"empoli"},{"url":"/fiorentina","title":"Fiorentina","id":"fiorentina"},{"url":"/genoa","title":"Genoa","id":"genoa"},{"url":"/inter-milan","title":"Inter Milan","id":"inter-milan"},{"url":"/juventus","title":"Juventus","id":"juventus"},{"url":"/lazio","title":"Lazio","id":"lazio"},{"url":"/napoli","title":"Napoli","id":"napoli"},{"url":"/palermo","title":"Palermo","id":"palermo"},{"url":"/parma","title":"Parma","id":"parma"},{"url":"/sampdoria","title":"Sampdoria","id":"sampdoria"},{"url":"/sassuolo","title":"Sassuolo","id":"sassuolo"},{"url":"/torino","title":"Torino","id":"torino"},{"url":"/udinese","title":"Udinese","id":"udinese"},{"url":"/verona","title":"Verona","id":"verona"}],"url":"/serie-a","title":"Serie A","id":"serie-a","links":[{"url":"/serie-a","title":"Serie A Home","id":"serie-a"},{"url":"/transfer-window","title":"Transfers","id":"transfer-window"},{"url":"/serie-a/archives","title":"Archives","id":"serie-a/archives"}]},{"items":[{"url":"/athletic-club","title":"Athletic Club Bilbao","id":"athletic-club"},{"url":"/atletico-madrid","title":"Atletico Madrid","id":"atletico-madrid"},{"url":"/celta-da-vigo","title":"Celta de Vigo","id":"celta-da-vigo"},{"url":"/eibar","title":"Eibar","id":"eibar"},{"url":"/fc-barcelona","title":"FC Barcelona","id":"fc-barcelona"},{"url":"/getafe-cf","title":"Getafe CF","id":"getafe-cf"},{"url":"/granada","title":"Granada","id":"granada"},{"url":"/las-palmas-ud","title":"Las Palmas","id":"las-palmas-ud"},{"url":"/levante","title":"Levante","id":"levante"},{"url":"/malaga-cf","title":"Malaga CF","id":"malaga-cf"},{"url":"/rayo-vallecano","title":"Rayo Vallecano","id":"rayo-vallecano"},{"url":"/rc-deportivo","title":"RC Deportivo","id":"rc-deportivo"},{"url":"/rcd-espanyol","title":"RCD Espanyol","id":"rcd-espanyol"},{"url":"/real-betis","title":"Real Betis","id":"real-betis"},{"url":"/real-madrid","title":"Real Madrid","id":"real-madrid"},{"url":"/real-sociedad","title":"Real Sociedad","id":"real-sociedad"},{"url":"/sevilla","title":"Sevilla","id":"sevilla"},{"url":"/real-sporting","title":"Sporting Gijon","id":"real-sporting"},{"url":"/valencia-cf","title":"Valencia CF","id":"valencia-cf"},{"url":"/villarreal-cf","title":"Villarreal CF","id":"villarreal-cf"}],"url":"/la-liga","title":"La Liga","id":"la-liga","links":[{"url":"/la-liga","title":"La Liga Home","id":"la-liga"},{"url":"/transfer-window","title":"Transfers","id":"transfer-window"},{"url":"/la-liga/archives","title":"Archives","id":"la-liga/archives"}]},{"items":[{"url":"/chicago-fire","title":"Chicago Fire","id":"chicago-fire"},{"url":"/columbus-crew","title":"Columbus Crew","id":"columbus-crew"},{"url":"/dc-united","title":"DC United","id":"dc-united"},{"url":"/fc-dallas","title":"FC Dallas","id":"fc-dallas"},{"url":"/houston-dynamo","title":"Houston Dynamo","id":"houston-dynamo"},{"url":"/los-angeles-galaxy","title":"Los Angeles Galaxy","id":"los-angeles-galaxy"},{"url":"/new-england-revolution","title":"New England Revolution","id":"new-england-revolution"},{"url":"/new-york-red-bulls","title":"New York Red Bulls","id":"new-york-red-bulls"},{"url":"/new-york-city-fc","title":"NYCFC","id":"new-york-city-fc"},{"url":"/orlando-city","title":"Orlando City","id":"orlando-city"},{"url":"/philadelphia-union","title":"Philadelphia Union","id":"philadelphia-union"},{"url":"/real-salt-lake","title":"Real Salt Lake","id":"real-salt-lake"},{"url":"/san-jose-earthquakes","title":"San Jose Earthquakes","id":"san-jose-earthquakes"},{"url":"/seattle-sounders-fc","title":"Seattle Sounders","id":"seattle-sounders-fc"},{"url":"/toronto-fc","title":"Toronto FC","id":"toronto-fc"},{"url":"/sporting-kansas-city","title":"Sporting Kansas City","id":"sporting-kansas-city"},{"url":"/portland-timbers","title":"Portland Timbers","id":"portland-timbers"},{"url":"/montreal-impact","title":"Montreal Impact","id":"montreal-impact"},{"url":"/vancouver-whitecaps","title":"Vancouver Whitecaps","id":"vancouver-whitecaps"}],"url":"/mls","title":"MLS","id":"mls","links":[{"url":"/mls","title":"MLS Home","id":"mls"},{"url":"/mls/archives","title":"Archives","id":"mls/archives"}]},{"url":"/united-states-womens-national-team","title":"US Women's Soccer","id":"united-states-womens-national-team"},{"hide":true,"items":[{"url":"/birmingham-city","title":"Birmingham City","id":"birmingham-city"},{"url":"/barnsley","title":"Barnsley","id":"barnsley"},{"url":"/blackburn-rovers","title":"Blackburn Rovers","id":"blackburn-rovers"},{"url":"/bolton-wanderers","title":"Bolton Wanderers","id":"bolton-wanderers"},{"url":"/brighton-hove-albion","title":"Brighton & Hove Albion","id":"brighton-hove-albion"},{"url":"/burnley","title":"Burnley","id":"burnley"},{"url":"/charlton-athletic","title":"Charlton Athletic","id":"charlton-athletic"},{"url":"/derby-county","title":"Derby County","id":"derby-county"},{"url":"/doncaster-rovers","title":"Doncaster Rovers","id":"doncaster-rovers"},{"url":"/huddersfield-town","title":"Huddersfield Town","id":"huddersfield-town"},{"url":"/ipswich-town","title":"Ipswich Town","id":"ipswich-town"},{"url":"/leeds-united","title":"Leeds United","id":"leeds-united"},{"url":"/leicester-city","title":"Leicester City","id":"leicester-city"},{"url":"/middlesbrough","title":"Middlesbrough","id":"middlesbrough"},{"url":"/nottingham-forest","title":"Nottingham Forest","id":"nottingham-forest"},{"url":"/queens-park-rangers","title":"Queens Park Rangers","id":"queens-park-rangers"},{"url":"/reading","title":"Reading","id":"reading"},{"url":"/sheffield-wednesday","title":"Sheffield Wednesday","id":"sheffield-wednesday"},{"url":"/yeovil-town","title":"Yeovil Town","id":"yeovil-town"}],"url":"/football-league-championship","title":"Football League Championship","id":"football-league-championship","links":[{"url":"/football-league-championship","title":"The Championship Home","id":"football-league-championship"}]},{"hide":true,"items":[{"url":"/atletico-mineiro","title":"\"Atl\u00e9tico Mineiro\"","id":"atletico-mineiro"},{"url":"/atletico-paranaense","title":"\"Atl\u00e9tico Paranaense\"","id":"atletico-paranaense"},{"url":"/bahia","title":"Bahia","id":"bahia"},{"url":"/botafogo","title":"Botafogo","id":"botafogo"},{"url":"/criciuma","title":"\"Crici\u00fama\"","id":"criciuma"},{"url":"/corinthians","title":"Corinthians","id":"corinthians"},{"url":"/coritiba","title":"Coritiba","id":"coritiba"},{"url":"/cruzeiro","title":"Cruzeiro","id":"cruzeiro"},{"url":"/flamengo","title":"Flamengo","id":"flamengo"},{"url":"/fluminense","title":"Fluminense","id":"fluminense"},{"url":"/goias","title":"\"Goi\u00e1s\"","id":"goias"},{"url":"/gremio","title":"\"Gr\u00eamio\"","id":"gremio"},{"url":"/internacional","title":"Internacional","id":"internacional"},{"url":"/nautico","title":"\"N\u00e1utico\"","id":"nautico"},{"url":"/ponte-preta","title":"Ponte Preta","id":"ponte-preta"},{"url":"/portuguesa","title":"Portuguesa","id":"portuguesa"},{"url":"/santos","title":"Santos","id":"santos"},{"url":"/sao-paulo-fc","title":"\"S\u00e3o Paulo FC\"","id":"sao-paulo-fc"},{"url":"/vasco-da-gama","title":"Vasco da Gama","id":"vasco-da-gama"},{"url":"/vitoria","title":"\"Vit\u00f3ria\"","id":"vitoria"}],"url":"/brasileirao","title":"\"Brasileir\u00e3o\"","id":"brasileirao"},{"hide":true,"items":[{"url":"/ado-den-haag","title":"ADO Den Haag","id":"ado-den-haag"},{"url":"/ajax","title":"Ajax","id":"ajax"},{"url":"/az","title":"AZ Alkmaar","id":"az"},{"url":"/sc-cambuur","title":"Cambuur","id":"sc-cambuur"},{"url":"/feyenoord","title":"Feyenoord","id":"feyenoord"},{"url":"/go-ahead-eagles","title":"Go Ahead Eagles","id":"go-ahead-eagles"},{"url":"/fc-groningen","title":"Groningen","id":"fc-groningen"},{"url":"/sc-heerenveen","title":"Heerenveen","id":"sc-heerenveen"},{"url":"/heracles-almelo","title":"Heracles Almelo","id":"heracles-almelo"},{"url":"/nac-breda","title":"NAC Breda","id":"nac-breda"},{"url":"/nec","title":"NEC Nijmegen","id":"nec"},{"url":"/psv-eindhoven","title":"PSV Eindhoven","id":"psv-eindhoven"},{"url":"/rkc-waalwijk","title":"RKC Waalwijk","id":"rkc-waalwijk"},{"url":"/roda-jc","title":"Roda JC","id":"roda-jc"},{"url":"/fc-twente","title":"Twente","id":"fc-twente"},{"url":"/fc-utrecht","title":"Utrecht","id":"fc-utrecht"},{"url":"/vitesse","title":"Vitesse Arnhem","id":"vitesse"},{"url":"/zwolle","title":"Zwolle","id":"zwolle"}],"url":"/eredivisie","title":"Eredivisie","id":"eredivisie"},{"hide":true,"items":[{"url":"/aberdeen","title":"Aberdeen","id":"aberdeen"},{"url":"/celtic","title":"Celtic","id":"celtic"},{"url":"/dundee-united","title":"Dundee United","id":"dundee-united"},{"url":"/hearts","title":"Hearts","id":"hearts"},{"url":"/hibernian-fc","title":"Hibernian FC","id":"hibernian-fc"},{"url":"/motherwell","title":"Motherwell","id":"motherwell"},{"url":"/partick-thistle-fc","title":"Partick Thistle FC","id":"partick-thistle-fc"},{"url":"/ross-county-fc","title":"Ross County FC","id":"ross-county-fc"},{"url":"/st-johnstone","title":"St. Johnstone","id":"st-johnstone"},{"url":"/st-mirren","title":"St. Mirren","id":"st-mirren"}],"url":"/scottish-premier-league","title":"Scottish Premier League","id":"scottish-premier-league"}],"url":"/world-football","title":"Soccer","id":"world-football","links":[{"url":"/world-football","title":"Home","id":"world-football"},{"url":"/world-football/teams","title":"Teams","id":"world-football/teams"},{"url":"/world-football/archives","title":"Archives","id":"world-football/archives"}]},{"items":[{"hide":true,"items":[{"url":"/ufc","title":"UFC Home","id":"ufc"},{"url":"/ufc/archives","title":"Archives","id":"ufc/archives"}],"url":"/ufc","title":"UFC","id":"ufc"},{"items":[{"url":"/mma","title":"MMA Home","id":"mma"},{"url":"/mma/archives","title":"Archives","id":"mma/archives"}],"url":"/mma","title":"More MMA","id":"mma"},{"items":[{"url":"/bellator","title":"Bellator Home","id":"bellator"},{"url":"/bellator/archives","title":"Archives","id":"bellator/archives"}],"url":"/bellator","title":"Bellator","id":"bellator"},{"items":[{"url":"/wsof","title":"WSOF Home","id":"wsof"},{"url":"/wsof/archives","title":"Archives","id":"wsof/archives"}],"url":"/wsof","title":"WSOF","id":"wsof"}],"url":"/ufc","title":"UFC","id":"ufc","links":[{"url":"/ufc","title":"Home","id":"ufc"},{"url":"/mma/teams","title":"Fighters","id":"mma/teams"},{"url":"/cagedin","title":"Blog","id":"cagedin"},{"url":"/ufc/archives","title":"Archives","id":"ufc/archives"},{"url":"https://www.scorebig.com/ufc-tickets","title":"UFC Tickets","id":"https://www.scorebig.com/ufc-tickets"}]},{"items":[{"items":[{"url":"/boston-bruins","title":"Boston","id":"boston-bruins"},{"url":"/buffalo-sabres","title":"Buffalo","id":"buffalo-sabres"},{"url":"/detroit-red-wings","title":"Detroit","id":"detroit-red-wings"},{"url":"/florida-panthers","title":"Florida","id":"florida-panthers"},{"url":"/montreal-canadiens","title":"Montreal","id":"montreal-canadiens"},{"url":"/ottawa-senators","title":"Ottawa","id":"ottawa-senators"},{"url":"/tampa-bay-lightning","title":"Tampa Bay","id":"tampa-bay-lightning"},{"url":"/toronto-maple-leafs","title":"Toronto","id":"toronto-maple-leafs"}],"url":"/nhl-atlantic","title":"Atlantic","id":"nhl-atlantic"},{"items":[{"url":"/chicago-blackhawks","title":"Chicago","id":"chicago-blackhawks"},{"url":"/colorado-avalanche","title":"Colorado","id":"colorado-avalanche"},{"url":"/dallas-stars","title":"Dallas","id":"dallas-stars"},{"url":"/minnesota-wild","title":"Minnesota","id":"minnesota-wild"},{"url":"/nashville-predators","title":"Nashville","id":"nashville-predators"},{"url":"/st-louis-blues","title":"St. Louis","id":"st-louis-blues"},{"url":"/winnipeg-jets","title":"Winnipeg","id":"winnipeg-jets"}],"url":"/nhl-central","title":"Central","id":"nhl-central"},{"items":[{"url":"/anaheim-ducks","title":"Anaheim","id":"anaheim-ducks"},{"url":"/arizona-coyotes","title":"Arizona","id":"arizona-coyotes"},{"url":"/calgary-flames","title":"Calgary","id":"calgary-flames"},{"url":"/edmonton-oilers","title":"Edmonton","id":"edmonton-oilers"},{"url":"/los-angeles-kings","title":"Los Angeles","id":"los-angeles-kings"},{"url":"/san-jose-sharks","title":"San Jose","id":"san-jose-sharks"},{"url":"/vancouver-canucks","title":"Vancouver","id":"vancouver-canucks"}],"title":"Pacific","id":"pacific"},{"items":[{"url":"/carolina-hurricanes","title":"Carolina","id":"carolina-hurricanes"},{"url":"/columbus-blue-jackets","title":"Columbus","id":"columbus-blue-jackets"},{"url":"/new-jersey-devils","title":"New Jersey","id":"new-jersey-devils"},{"url":"/new-york-islanders","title":"NY Islanders","id":"new-york-islanders"},{"url":"/new-york-rangers","title":"NY Rangers","id":"new-york-rangers"},{"url":"/philadelphia-flyers","title":"Philadelphia","id":"philadelphia-flyers"},{"url":"/pittsburgh-penguins","title":"Pittsburgh","id":"pittsburgh-penguins"},{"url":"/washington-capitals","title":"Washington","id":"washington-capitals"}],"url":"/nhl-metropolitan","title":"Metropolitan","id":"nhl-metropolitan"}],"url":"/nhl","title":"NHL","id":"nhl","links":[{"url":"/nhl","title":"Home","id":"nhl"},{"url":"/nhl-draft","title":"Draft","id":"nhl-draft"},{"url":"/nhl/teams","title":"Teams","id":"nhl/teams"},{"url":"/nhl/archives","title":"Archives","id":"nhl/archives"},{"url":"https://www.scorebig.com/nhl-tickets","title":"NHL Tickets","id":"https://www.scorebig.com/nhl-tickets"}]},{"items":[{"items":[{"url":"/pro-wrestling","title":"Wrestling Home","id":"pro-wrestling"},{"url":"/pro-wrestling/archives","title":"Archives","id":"pro-wrestling/archives"}],"url":"/pro-wrestling","title":"More Wrestling","id":"pro-wrestling"},{"items":[{"url":"/tna-wrestling","title":"TNA Home","id":"tna-wrestling"},{"url":"/tna-wrestling/archives","title":"Archives","id":"tna-wrestling/archives"}],"url":"/tna-wrestling","title":"TNA","id":"tna-wrestling"}],"url":"/wwe","title":"WWE","id":"wwe","links":[{"url":"/wwe","title":"Home","id":"wwe"},{"url":"/pro-wrestling/teams","title":"Fighters","id":"pro-wrestling/teams"},{"url":"/pro-wrestling/archives","title":"Archives","id":"pro-wrestling/archives"},{"url":"https://www.scorebig.com/wwe-tickets","title":"WWE Tickets","id":"https://www.scorebig.com/wwe-tickets"}]},{"url":"/golf","title":"Golf","id":"golf","links":[{"url":"/golf","title":"Home","id":"golf"},{"url":"/golf/teams","title":"Golfers","id":"golf/teams"},{"url":"/golf/archives","title":"Archives","id":"golf/archives"},{"url":"https://www.scorebig.com/golf-tickets","title":"Golf Tickets","id":"https://www.scorebig.com/golf-tickets"}]},{"url":"/nascar","title":"NASCAR","id":"nascar"},{"items":[{"items":[{"url":"/boxing","title":"Boxing","id":"boxing"},{"url":"/ufc","title":"UFC","id":"ufc"},{"url":"/bellator","title":"Bellator","id":"bellator"},{"url":"/wwe","title":"WWE","id":"wwe"},{"url":"/tna-wrestling","title":"TNA","id":"tna-wrestling"}],"title":"Combat Sports","id":"combat-sports"},{"items":[{"url":"/auto-racing","title":"All Motorsports","id":"auto-racing"},{"url":"/f1","title":"F1","id":"f1"},{"url":"/nascar","title":"NASCAR","id":"nascar"},{"url":"/indycar-series","title":"IndyCar","id":"indycar-series"}],"title":"Motorsports","id":"motorsports"},{"items":[{"url":"/action-sports","title":"Action Sports","id":"action-sports"},{"url":"/cfl","title":"CFL","id":"cfl"},{"url":"/cycling","title":"Cycling","id":"cycling"},{"url":"/fishing","title":"Fishing","id":"fishing"},{"url":"/golf","title":"Golf","id":"golf"},{"url":"/horse-racing","title":"Horse Racing","id":"horse-racing"},{"url":"/lacrosse","title":"Lacrosse","id":"lacrosse"},{"url":"/tennis","title":"Tennis","id":"tennis"},{"url":"/track-and-field","title":"Track & Field","id":"track-and-field"}],"title":"Outdoor Sports","id":"outdoor-sports"},{"items":[{"url":"/cricket","title":"Cricket","id":"cricket"},{"url":"/rugby","title":"Rugby Union","id":"rugby"},{"url":"/rugby-league","title":"Rugby League","id":"rugby-league"},{"url":"/college-baseball","title":"College Baseball","id":"college-baseball"},{"url":"/wnba","title":"WNBA","id":"wnba"},{"url":"/womens-college-basketball","title":"Women's College Basketball","id":"womens-college-basketball"},{"url":"/womens-professional-soccer","title":"Women's Professional Soccer","id":"womens-professional-soccer"},{"url":"/sports-odds","title":"Odds","id":"sports-odds"}],"title":"More Sports","id":"more-sports"}],"url":"/more","title":"More","id":"more"},{"url":"/trending","title":"Trending","id":"trending"},{"url":"http://thelab.bleacherreport.com/","title":"Lab","id":"http://thelab.bleacherreport.com/"},{"url":"/sports-lists","title":"Lists","id":"sports-lists"},{"hide":true,"items":[{"title":"Combat Sports","id":"combat-sports"},{"items":[{"url":"/action-sports","title":"Action Sports","id":"action-sports"},{"url":"/track-and-field","title":"Athletics","id":"track-and-field"},{"url":"/cycling","title":"Cycling","id":"cycling"},{"url":"/cfl","title":"CFL","id":"cfl"},{"url":"/fishing","title":"Fishing","id":"fishing"},{"url":"/golf","title":"Golf","id":"golf"},{"url":"/horse-racing","title":"Horse Racing","id":"horse-racing"},{"url":"/lacrosse","title":"Lacrosse","id":"lacrosse"}],"title":"Outdoor Sports","id":"outdoor-sports"},{"items":[{"url":"/wnba","title":"WNBA","id":"wnba"},{"url":"/womens-college-basketball","title":"Women's College Basketball","id":"womens-college-basketball"}],"title":"US Sports","id":"us-sports"}],"url":"/uk-more","title":"UK More","id":"uk-more"},{"url":"/video","title":"Video","id":"video","links":[{"url":"/team-stream-now","title":"Team Stream Now","id":"team-stream-now"},{"url":"/uninterrupted","title":"UNINTERRUPTED","id":"uninterrupted"},{"url":"/br-studios","title":"B/R Studios","id":"br-studios"},{"url":"/samsung-the-life","title":"The Life","id":"samsung-the-life"},{"url":"/records-milestones","title":"Records & Milestones","id":"records-milestones"},{"url":"/simms-lefkoe-podcast","title":"The Simms &amp; Lefkoe Podcast","id":"simms-lefkoe-podcast"}]},{"url":"https://www.scorebig.com","title":"Tickets","id":"https://www.scorebig.com"},{"hide":true,"items":[{"url":"/tour-de-france","title":"Tour de France","id":"tour-de-france"}],"url":"/cycling","title":"Cycling","id":"cycling","links":[{"url":"/cycling/archives","title":"Archive","id":"cycling/archives"}]},{"hide":true,"url":"/olympics","title":"Olympics","id":"olympics"},{"hide":true,"items":[{"url":"/english-premiership-rugby","title":"English Premiership Rugby","id":"english-premiership-rugby"},{"url":"/international-rugby","title":"International Rugby","id":"international-rugby"},{"url":"/pro-12-rugby","title":"Pro 12","id":"pro-12-rugby"},{"url":"/super-14-rugby","title":"Super 14","id":"super-14-rugby"},{"url":"/top-14-rugby","title":"Top 14 Rugby","id":"top-14-rugby"}],"url":"/rugby","title":"Rugby","id":"rugby","links":[{"url":"/rugby/archives","title":"Archives","id":"rugby/archives"}]},{"hide":true,"url":"/tennis","title":"Tennis","id":"tennis","links":[{"url":"/tennis","title":"Home","id":"tennis"},{"url":"/tennis/teams","title":"Players","id":"tennis/teams"},{"url":"/tennis/archives","title":"Archives","id":"tennis/archives"}]},{"hide":true,"items":[{"items":[{"url":"/wwe","title":"WWE Home","id":"wwe"}],"url":"/wwe","title":"WWE","id":"wwe"}],"url":"/pro-wrestling","title":"Wrestling","id":"pro-wrestling","links":[{"url":"/pro-wrestling","title":"Home","id":"pro-wrestling"},{"url":"/pro-wrestling/archives","title":"Archives","id":"pro-wrestling/archives"},{"url":"/pro-wrestling/teams","title":"People","id":"pro-wrestling/teams"}]}];
+	
+</script>
+
+
+
+<div id="nav-wrapper">
+	<nav id="nav-container" class="with-subnav">
+		<div class="br-nav-wrapper nav-no-js">
+	<ul class="nav nav--block large-nav-links">
+		<li class="flyout" id="nav-header-logo">
+			<a href="/"></a>
+		</li>
+		<li id="nfl" class="flyout">
+			<a href="/nfl">NFL</a>
+		</li>
+		<li id="nba" class="flyout">
+			<a href="/nba">NBA</a>
+		</li>
+		<li id="cfb" class="flyout">
+			<a href="college-football">CFB</a>
+		</li>
+		<li id="mlb" class="flyout">
+			<a href="/mlb">MLB</a>
+		</li>
+		<li id="soccer" class="flyout">
+			<a href="/world-football">Soccer</a>
+		</li>
+		<li id="ufc" class="flyout">
+			<a href="/ufc">UFC</a>
+		</li>
+		<li id="nhl" class="flyout">
+			<a href="/nhl">NHL</a>
+		</li>
+		<li id="wwe" class="flyout">
+			<a href="/wwe">WWE</a>
+		</li>
+		<li id="golf" class="flyout">
+			<a href="/golf">Golf</a>
+		</li>
+		<li id="nascar" class="flyout">
+			<a href="/nascar">NASCAR</a>
+		</li>
+		<li id="cbb" class="flyout">
+			<a href="/college-basketball">CBB</a>
+		</li>
+		<li id="more" class="flyout">
+			<a href="/more">More</a>
+		</li>
+		<li id="trending" class="flyout">
+			<a href="/trending">Trending</a>
+		</li>
+		<li id="lab" class="flyout">
+			<a href="http://thelab.bleacherreport.com">Lab</a>
+		</li>
+		<li id="lists" class="flyout">
+			<a href="sports-lists">Lists</a>
+		</li>
+		<li id="video" class="flyout">
+			<a href="/video">Video</a>
+		</li>
+		<li id="tickets" class="flyout">
+			<a href="http://www.scorebig.com">Tickets</a>
+		</li>
+	</ul>
+</div>
+
+	</nav>
+	
+</div>
+
+            
+	
+	<section id="scoreline"></section>
+
+    
+</section>
+
+
+	<div id="outer-container">
+      
+<div class="br-ad-wrapper">
+      <div id="br-ad-1" class="br-ad" data-collapsed="1" data-position="bnr_atf_01" data-reload="2" data-size="[[970,250],[970,66],[728,90],[728,1],[450,1]]"></div>
+  </div>
+
+  
+  
+    
+	
+	
+
+
+			
+					<div id="page-header" class="team-page boston-red-sox with-logo">
+									<h1>
+						<a href="/boston-red-sox">
+							Boston
+							<span>Red Sox</span>
+						</a>
+					</h1>
+							</div>
+			
+  
+
+  <div id="container">
+    <!-- "breaking_news_85" cached 03/04/2016 at 08:25 PM -->
+				
+    <div id='newsletter-stored-email' style="display:none"></div>
+
+
+  
+  
+  
+
+<div id="newsletter-lightbox"></div> 
+
+<div id="content" class="article-page">
+  <div id="container-page">
+    
+
+
+  <!-- "article_1539852_body" cached 03/04/2016 at 08:33 PM -->
+    
+
+<!-- ~verifyCache~ -->
+<!-- ~verifySocial~ -->
+
+<div id="article-slider" itemscope itemtype="http://schema.org/Article">
+
+  <article class="article article--article cf ">
+
+    <header class="article_header cf">
+      <meta itemprop="about" content="Baseball, MLB, AL East, Boston Red Sox, Dustin Pedroia, Opinion"/>
+      <meta itemprop="description" content="The latest Boston Red Sox news, trade rumors, scores, live coverage, free agent updates, power rankings, mock drafts and more"/>
+      <meta itemprop="keywords" content="Baseball, MLB, AL East, Boston Red Sox, Dustin Pedroia, Opinion"/>
+      <meta itemprop="interactionCount" data-correlation="comments" content="UserComments:3"/>
+      <meta itemprop="interactionCount" data-correlation="twitter" content=""/>
+      <meta itemprop="interactionCount" data-correlation="facebook" content=""/>
+      <meta itemprop="isFamilyFriendly" content="true"/>
+      <meta itemprop="url" content="http://bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia">
+
+      <h1 class="article_title" itemprop="headline name">Success of Boston Red Sox Rests on Shoulders of Dustin Pedroia</h1>
+      
+        
+
+<h4 class="article_author" itemprop="author">
+     
+        
+            <address class="article_author-info" itemscope itemtype="http://schema.org/Person">
+                By <a class="article_author-link" itemprop="url" href="/users/461634-kenny-dejohn" title="Kenny DeJohn">
+                  <span itemprop="name">Kenny  DeJohn</span>
+                </a>, <span class="author-rank">Analyst</span>
+            </address>
+        
+    
+
+    
+        <time class="article_timestamp" itemprop="datePublished" data-updated_at="1361553946">Feb 22, 2013</time>
+    
+</h4>
+
+      
+
+      
+        <div id="top-share-buttons-region">
+          
+
+<ul class="share-buttons cf share-buttons--top">
+  
+
+<li class="share-button button button--facebook " data-source="facebook" data-position="top" data-url="http://bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia">
+  <a href="#" target="_blank" title="Share on Facebook">
+    <span class="br-sprite br-sprite--facebook "></span>
+    
+<span class="share-text">Share</span>
+<span class="share-count"></span>
+  </a>
+</li>
+  
+
+<li class="share-button button button--twitter " data-source="twitter" data-position="top">
+  <a href="https://twitter.com/intent/tweet?original_referer=http%3A%2F%2Fbleacherreport.com%2Farticles%2F1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia&text=Success+of+Boston+Red+Sox+Rests+on+Shoulders+of+Dustin+Pedroia&tw_p=tweetbutton&via=bleacherreport&counturl=http%3A%2F%2Fbleacherreport.com%2Farticles%2F1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia&url=http%3A%2F%2Fbleacherreport.com%2Farticles%2F1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia%3Futm_source%3Dtwitter.com%26utm_medium%3Dshare%26utm_campaign%3Dweb-des-art-top-85" target="_blank" title="Share on Twitter">
+    <span class="br-sprite br-sprite--twitter "></span>
+    
+<span class="share-text">Tweet</span>
+<span class="share-count"></span>
+  </a>
+</li>
+
+  <li class="total-share-count team-color-text"></li>
+</ul>
+        </div>
+      
+    </header>
+
+    <div class="article_pages ">
+              
+
+        
+          <section class="article_page  js-article-page-1 cf  is-active " data-page="1">
+
+            <header class="article_page-header">
+  
+  
+    <div class="article_nav-bar br-texture--sudo br-texture--sudo-fade-to-white">
+      
+          <div class="paginators paginators--top">
+    
+        <a href="javascript: void(0)" title="Next Article" class="paginator paginator--primary paginator--next">Next ARTICLE <span class="aquo">&raquo;</span></a>
+    
+</div>
+      
+        
+          <span class="bar-headline">Use your &larr; &rarr; (arrow) keys to browse more stories</span>
+        
+      
+    </div>
+  
+</header>
+
+            
+  
+
+  
+    
+  
+    <div class="article_image" itemprop="associatedMedia">
+      <div class="article_image--main  " style="max-width:630px" itemscope itemtype="http://schema.org/ImageObject">
+                  
+              <img itemprop="contentURL" src="http://img.bleacherreport.net/img/images/photos/002/172/293/hi-res-152810031_crop_north.jpg?w=630&h=420&q=75" alt="Success of Boston Red Sox Rests on Shoulders of Dustin Pedroia" width="630" height="420" />
+          
+
+          
+              <div class="caption-overlay border-box" max-width="630"></div>
+          
+        
+        
+          <div class="article_image-accreditation" max-width="630">
+            <span>Jared Wickerham/Getty Images</span> <br>
+            
+          </div>
+        
+
+        
+      </div>
+    </div>
+  
+
+
+  
+
+
+
+            
+
+            
+              <div class="article_info team-color-border cf">
+
+  
+    
+      <div class="total-reads article-stats">
+        <div class="team-color-text article-stats_count">1.8K</div>
+        <div class="article-stats_label">Reads</div>
+      </div>
+    
+  
+
+  <div class="article_comments js-open-comments article-stats ">
+    <div class="comments-count team-color-text article-stats_count">3</div>
+    <div class="comments-label article-stats_label">Comments</div>
+  </div>
+
+  
+</div>
+            
+
+            <div class="article_body cf" itemprop="articleBody">
+              
+    <p>The <a href="http://bleacherreport.com/boston-red-sox">Boston Red Sox</a> were winners of just 69 games in 2012, their lowest win total since the 1965 season (not counting the strike-shortened seasons of 1994 and 1981), when they won 62 games.</p><p>Injuries, off-field issues and several other factors played into the poor season, but the Red Sox look to be in good position to improve in 2013.</p><p>The pitching staff appears healthy, and the team has plenty of young talent ready to take over when their names are called.</p><p>However, there's one player on the team that will control the fate of the Red Sox with his on-field performance and off-field conduct. That player is 2008 AL MVP winner Dustin <span class="spellcheck">Pedroia</span>.</p><p><span class="spellcheck">Pedroia</span> had another fine season in 2012, playing in 141 games and posting a line of .290/.347/.449. He recorded 15 home runs, drove in 65 runs, stole 20 bases and scored 81 runs.</p><p>While a great season, it was far from the year he put together in 2008. Just one year after winning the AL Rookie of the Year Award, <span class="spellcheck">Pedroia</span> filled the stat sheet.</p><p>He recorded a line of .326/.376/.493 with 17 home runs, 83 RBI, 20 stolen bases, 118 runs scored, 213 hits and 54 doubles. He was a first time All-Star, first time Gold Glove winner and first time Silver Slugger winner to top it all off.</p><p>While it's unfair to expect anybody to put up those numbers on a consistent basis, <span class="spellcheck">Pedroia</span> needs to do his best to come close in 2013. Coming off a season where his team failed to make noise in the AL East for the first time in recent memory, <span class="spellcheck">Pedroia</span>, the team's leader needs to put his best on the field.</p><p>And yes, <span class="spellcheck">Pedroia</span> is the team's leader at this point in his career. David Ortiz, entering his 10th season with the Red Sox, will play second fiddle in terms of leadership to <span class="spellcheck">Pedroia</span> in 2013. No other player on the team has the leadership qualities that <span class="spellcheck">Pedroia</span> has.</p><p><div class="article_image article-image cf " style="max-width:340px;">
+    <div class="article_image--body ">
+                  
+
+          <img class="white-frame border-box" src="http://img.bleacherreport.net/img/article/media_slots/photos/000/736/636/hi-res-150705506_crop_exact.jpg?w=340&h=227&q=85" width="340" height="227" alt="" />
+        
+        
+            <div class="caption-overlay border-box"></div>
+
+            <span class="article_image-accreditation">
+                Jim Rogash/Getty Images
+            </span>
+        
+        
+    </div>
+
+    </div></p><p>He plays hard every play of every game and sets a great example for his teammates. Not only that, his on-field numbers reflect how hard he plays. If nothing else, he motivates his teammates by showing them what hard work can do.</p><p>The success of the 2013 season for Boston will also be up to <span class="spellcheck">Pedroia</span>'s off-field actions. With all the negative media attention that Boston received last season for various different off-field escapades, it should be <span class="spellcheck">Pedroia</span>'s job to make sure his teammates are doing the right thing.</p><p>Now, there's nothing wrong with having some <a href="http://www.nytimes.com/2011/10/20/sports/baseball/red-sox-off-season-consumed-by-fried-chicken-and-beer.html?_r=0">chicken and a beer</a>, but come on, there's a time and place for everything.</p><p>I'm not at all blaming Boston's dietary choices for the 69-win season they posted in 2013, but off-field distractions have to be at a minimal this season.</p><p>There's a new culture now in Boston. Bobby Valentine has been replaced by John Farrell, and Ben <span class="spellcheck">Cherington</span> is entering his second season replacing Theo Epstein.</p><p>With that new culture, the Red Sox should be striving to rid themselves of previous flaws. As the team's leader, <span class="spellcheck">Pedroia</span> needs to orchestrate that transition.</p><p>I expect a big season from the small second baseman in 2013, both in terms of on-field production and his ability to lead the team off the diamond.</p><p>Look for the Red Sox to make huge strides in 2013, but only if <span class="spellcheck">Pedroia</span> can shoulder the load.&nbsp;</p>
+
+
+            </div>
+
+            
+
+            
+          </section>
+        
+      
+    </div>
+
+    <footer class="article_footer">
+      
+
+<ul class="share-buttons cf">
+    
+
+<li class="share-button button button--facebook button--medium" data-source="facebook" data-position="bot" data-url="http://bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia">
+  <a href="#" target="_blank" title="Share on Facebook">
+    <span class="br-sprite br-sprite--facebook br-sprite--medium"></span>
+    
+<span class="share-text">Share</span>
+<span class="share-count"></span>
+  </a>
+</li>
+    
+
+<li class="share-button button button--twitter button--medium" data-source="twitter" data-position="bot">
+  <a href="https://twitter.com/intent/tweet?original_referer=http%3A%2F%2Fbleacherreport.com%2Farticles%2F1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia&text=Success+of+Boston+Red+Sox+Rests+on+Shoulders+of+Dustin+Pedroia&tw_p=tweetbutton&via=bleacherreport&counturl=http%3A%2F%2Fbleacherreport.com%2Farticles%2F1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia&url=http%3A%2F%2Fbleacherreport.com%2Farticles%2F1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia%3Futm_source%3Dtwitter.com%26utm_medium%3Dshare%26utm_campaign%3Dweb-des-art-bot-85" target="_blank" title="Share on Twitter">
+    <span class="br-sprite br-sprite--twitter br-sprite--medium"></span>
+    
+<span class="share-text">Tweet</span>
+<span class="share-count"></span>
+  </a>
+</li>
+
+    
+
+<li class="share-button button button--google-plus button--medium" data-source="google-plus" data-position="bot">
+  <a href="https://plus.google.com/share?url=http%3A%2F%2Fbleacherreport.com%2Farticles%2F1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia%3Futm_source%3Dplus.url.google.com%26utm_medium%3Dshare%26utm_campaign%3Dweb-des-art-bot-85" title="Share on Google Plus">
+    <span class="br-sprite br-sprite--google-plus br-sprite--medium"></span>
+  </a>
+</li>
+    
+    
+      
+
+<li class="button button--comments css-triangle css-triangle--right team-color-background team-color-border-top-sudo button--medium">
+  <a href="javascript:void(0)" class="js-open-comments" title="Open Comments">
+    <span class="comments-count">3</span>
+    <span class="comments-label">Comments</span>
+  </a>
+</li>
+    
+</ul>
+
+    </footer>
+
+    
+  </article>
+</div>
+
+  
+
+    			<div class="OUTBRAIN" data-src="http://bleacherreport.com/articles/1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia" data-widget-id="AR_1" data-ob-template="BleacherReport_1" ></div>
+	
+
+<script>
+!function(d, s, id, url, en) {
+  if(d.getElementById(id)) {
+    if(d.createEvent) {
+      var e = d.createEvent('Events'); e.initEvent(en, true, true); d.dispatchEvent(e);
+    } else {
+      d.documentElement[en] = 'true';
+    }
+  } else {
+    var js = d.createElement(s), fjs = d.getElementsByTagName(s)[0]; js.id = id; js.src = url;
+    if(d.createEvent) {
+      js.onload = function() { var e = d.createEvent('Events'); e.initEvent(en, true, true); d.dispatchEvent(e); };
+    } else {
+      js.onreadystatechange = function() { if(js.readyState === 'loaded') { d.documentElement[en] = 'true'; } };
+    }
+    fjs.parentNode.insertBefore(js, fjs);
+  }
+}(document, 'script', 'outbrain-javascript', 'http://widgets.outbrain.com/outbrain.js', 'OutbrainJavaScriptLoaded');
+</script>
+
+
+    <div id="comments" data-page="0"></div>
+  </div>
+</div>
+
+
+    <div id="sidebar" class="article-page">
+                    <!-- "tag_85_side_column" cached 03/04/2016 at 04:36 PM -->
+                                                                            
+                            
+  <div id="fans-on-facebook-module" class="module">
+    <div class="header">
+      <h3>Follow Boston Red Sox from B/R on Facebook</h3>
+    </div>
+
+    
+    <div class="fb-like facebook-like-inline facebook-like-impression" data-href="http://www.facebook.com/BRBostonRedSox" data-ref="facebook-like-conversion-team_sidebar" data-send="false" data-show-faces="true" data-width="310"></div>
+    <p>Follow <a href="http://www.facebook.com/BRBostonRedSox" target="_blank">Boston Red Sox from B/R on Facebook</a> and get the latest updates straight to your newsfeed!</p>
+  </div>
+
+
+                        
+                                    
+                  
+<div class="br-ad-wrapper">
+  <div id="br-ad-2" class="br-ad" data-collapsed="2" data-position="rect_atf_01" data-reload="2" data-size="[[300,600],[300,250],[300,2]]"></div>
+</div>
+
+
+                
+
+  <div id="content-player-module" class="module "> 
+    <div class="header">
+      <h3>
+         Team Stream<sup>TM</sup>
+      </h3>
+    </div>
+
+        <ul class="thumbnail content-player_list content-player_list--current">
+          
+<li class="content-player_item border-box first" data-article-id="397616" data-position="0" title="Bobby Doerr: A Second Base Legend">
+  
+  <a href="/articles/397616-bobby-doerr-a-second-base-legend">
+    <img src="http://cdn.bleacherreport.net/images_root/images/photos/000/960/744/51557104_crop_100x68.jpg?1274975434" width="100" height="68" alt="">
+    
+  </a>
+  <a href="/articles/397616-bobby-doerr-a-second-base-legend">Bobby Doerr: A Second Base Legend</a>
+      <div class="source">from Bleacher Report</div>
+      <div class="team-color-border css-triangle css-triangle--right team-color-border-right-sudo"></div>
+</li>
+
+        </ul>
+        <div class="br-texture--shadow-line br-sprite--sudo br-sprite--sudo-shadow-line"></div>
+        <div class="content-player_scroller">
+          <ul class="thumbnail content-player_list content-player_list--pages">
+            
+          </ul>
+        </div>
+
+        <div class="br-texture--shadow-line br-sprite--sudo br-sprite--sudo-shadow-line"></div>
+    <div id="content-player-controls" data-position="0">
+      <a href="#" class="previous disabled"><span class="aquo">&laquo;</span> Previous</a>
+      <a href="#" class="next">Next <span class="aquo">&raquo;</span></a>
+    </div>
+  </div>
+
+
+                                
+                
+                
+                
+                
+
+                                    <div id="affiliate-articles" class="module">
+  <div class="header">
+    <h3>Out of Bounds</h3>
+  </div>
+  <div class="OUTBRAIN" data-src="http://bleacherreport.com/articles/397616-bobby-doerr-a-second-base-legend" data-widget-id="SB_1" data-ob-template="BleacherReport_1"></div>
+  
+  
+  
+  <script>
+  $(function() {
+    var country_cookie = $.cookie('country_code') || "";
+    if (country_cookie !== "" && country_cookie.toLowerCase() !== "usa") {
+      $(".OUTBRAIN[data-widget-id='SB_1']").attr('data-widget-id', "SB_4")
+    }
+  });
+  </script>
+  <div class="OUTBRAIN" data-src="http://bleacherreport.com/articles/397616-bobby-doerr-a-second-base-legend" data-widget-id="SB_2" data-ob-template="BleacherReport_1"></div>
+  
+
+<script>
+!function(d, s, id, url, en) {
+  if(d.getElementById(id)) {
+    if(d.createEvent) {
+      var e = d.createEvent('Events'); e.initEvent(en, true, true); d.dispatchEvent(e);
+    } else {
+      d.documentElement[en] = 'true';
+    }
+  } else {
+    var js = d.createElement(s), fjs = d.getElementsByTagName(s)[0]; js.id = id; js.src = url;
+    if(d.createEvent) {
+      js.onload = function() { var e = d.createEvent('Events'); e.initEvent(en, true, true); d.dispatchEvent(e); };
+    } else {
+      js.onreadystatechange = function() { if(js.readyState === 'loaded') { d.documentElement[en] = 'true'; } };
+    }
+    fjs.parentNode.insertBefore(js, fjs);
+  }
+}(document, 'script', 'outbrain-javascript', 'http://widgets.outbrain.com/outbrain.js', 'OutbrainJavaScriptLoaded');
+</script>
+
+</div>
+
+                
+                                     
+                
+                                      
+<div class="br-ad-wrapper">
+  <div id="br-ad-3" class="br-ad" data-collapsed="3" data-position="rect_btf_01" data-reload="1" data-size="[[300,600],[300,250],[300,3]]"></div>
+</div>
+
+
+                
+                
+
+
+	<div id="article-newsletter-side-module" class="module">
+		<div class="header">
+			<h3><a href="/boston-red-sox/newsletter">Red Sox Newsletter</a></h3>
+		</div>
+		<div id="article-newsletter-engage-content">
+			<div class="step-1">
+				<img alt="Boston Red Sox" class="png-fix" height="50" src="http://cdn.bleacherreport.net/images/team_logos/50x50/boston_red_sox.png" width="50" />
+				<p class="newsletter-intro">We'd like to send you the most entertaining <strong class="signup_tag">Boston Red Sox</strong> articles, videos, and podcasts from around the web.</p>
+				<p id="newsletter-error" class="error"></p>
+				<form id="permanent-newsletter" method="post">
+					<p class="newsletter-error error"></p>
+					<p id="email-input"><input type="text" name="newsletter-email" class="text medium-text border-box" placeholder="Your Email Address" id="newsletter-email"></p>
+					<p id="sign-me-up">
+						<a class="medium-orange button" id="newsletter-submit">Subscribe Now</a>
+						<img alt="" height="16" id="newsletter-side-module-spinner" src="http://static2.bleacherreport.net/images/redesign/common/loading/small.gif?1456949345" width="16" />
+					</p>
+					<span id="newsletter-agreement">By signing up for our newsletter, you agree to our <a href="/pages/terms">Terms</a> and <a href="/pages/privacy">Privacy Policy</a>.</span>
+				</form>
+			</div>
+			<div class="step-2">
+				<p><em>Thanks for signing up.</em></p>
+				<span class="small-orange button newsletter-kiosk">Subscribe to More Teams</span>
+			</div>
+		</div>
+	</div>
+
+
+
+                                    
+
+                
+                                    <div class="article_page_ad">
+                          
+<div class="br-ad-wrapper">
+  <div id="br-ad-4" class="br-ad" data-collapsed="4" data-position="rect_btf_02" data-reload="1" data-size="[[300,250],[300,4]]"></div>
+</div>
+
+
+                    </div>
+                            
+            </div>
+
+    
+ 
+
+
+
+  </div>
+
+        	<footer class="organism footer">
+	<div class="links">
+		<ul>
+			<li><a href="/about">About</a></li>
+			<li><a href="/advertise">Advertise</a></li>
+			<li><a href="http://blog.bleacherreport.com">Blog</a></li>
+			<li><a href="/contact">Contact Us</a></li>
+			<li><a href="/careers">Careers</a></li>
+			<li><a href="/pages/comguidelines">Community Guidelines</a></li>
+			<li><a href="/press-room">Press</a></li>
+			<li><a href="/pages/privacy">Privacy</a></li>
+			<li><a href="/pages/terms">Terms Of Use</a></li>
+			<li><a href="https://www.scorebig.com/">Tickets</a></li>
+		</ul>
+		<div class="social">
+			<span class="facebook"><a href="https://www.facebook.com/bleacherreport"></a></span>
+			<span class="twitter"><a href="https://twitter.com/bleacherreport"></a></span>
+			<span class="instagram"><a href="https://instagram.com/bleacherreport/"></a></span>
+		</div>
+	</div>
+	<div class="modules">
+		<div class="module newsletter">
+			<div class="icon"></div>
+			<h2>Stay on your game</h2>
+			<p>Get the latest news, insights, and forecasts on your teams across leagues.</p>
+			<a class="newsletter-kiosk button">Choose Teams<span>&raquo;&rsaquo;</span></a>
+		</div>
+		<div class="module writer">
+			<div class="icon"></div>
+			<h2>Launch your career</h2>
+			<p>B/R's <a href="/pages/wi">Advanced Program in Sports Media</a> can give you the edge you need to get ahead.</p>
+			<a class="button" href="/apsm">Apply Now<span>&raquo;&rsaquo;</span></a>
+		</div>
+		<div class="module stream">
+			<div class="icon"></div>
+			<h2>Get the app</h2>
+			<p>Real-time news for your teams right on your mobile device.</p>
+			<a class="button" href="/mobile">Download<span>&raquo;&rsaquo;</span></a>
+		</div>
+	</div>
+	<div class="attribution">
+		Copyright &copy; 2015 Bleacher Report, Inc. Turner Broadcasting System, Inc. All Rights Reserved. BleacherReport.com is part of Bleacher Report &ndash; Turner Sports Network, part of the Turner Sports and Entertainment Network. Certain photos copyright &copy; 2015 Getty Images. Any commercial use or distribution without the express written consent of Getty Images is strictly prohibited.
+    	<a href="#" onclick="(function(){var s=document.createElement('script');s.src='//preferences.truste.com/webservices/js?domain=turner.com&amp;type=turner&amp;js=responsive';s.onreadystatechange=function(){if(this.readyState=='loaded'||this.readyState=='complete'){view(trusteId);}};s.onload=function(){view(trusteId);};document.getElementsByTagName('head')[0].appendChild(s);})()">AdChoices <img src="http://cdn.bleacherreport.net/images/ad-choices.png" width="12" height="12" alt="" style="vertical-align:middle;"></a>
+	</div>
+</footer>
+
+
+  </div>
+
+  <script>
+	(function() {
+    if(document.location.protocol == 'http:'){
+  		var gads = document.createElement('script');
+  		gads.async = true;
+  		gads.type = 'text/javascript';
+  		var useSSL = 'https:' == document.location.protocol;
+  		gads.src = (useSSL ? 'https:' : 'http:') + '//www.googletagservices.com/tag/js/gpt.js';
+  		var node = document.getElementsByTagName('head')[0];
+  		node.parentNode.insertBefore(gads, node);
+    }
+	})();
+</script>
+
+<script>
+	BR.tag_permalink = "boston-red-sox";
+  BR.tag_type      = "Team";
+
+	BR.serverData = BR.serverData || {};
+
+  BR.serverData.api_url                  = "http://api.bleacherreport.com/api/v1";
+  BR.serverData.base_url                 = BR.PageData.url_hierarchy_level_1;
+  BR.serverData.bluegreen_active         = false;
+  BR.serverData.cnn                      = false;
+  BR.serverData.cnn_app                  = false;
+  BR.serverData.country                  = "";
+  BR.serverData.disableSocialTsPromo     = false;
+  BR.serverData.djay_url                 = "http://djay.bleacherreport.com/api";
+  BR.serverData.embedded                 = false;
+  BR.serverData.ensure_optimizely_mobile = true;
+  BR.serverData.env                      = "production";
+  BR.serverData.fbAppId                  = 135174055162;
+  BR.serverData.from_social              = false;
+  BR.serverData.is_article               = true;
+  BR.serverData.is_fallback              = false;
+  BR.serverData.ngtv                     = false;
+  BR.serverData.privacyPolicy            = true;
+  BR.serverData.recon_url                = "http://recon.bleacherreport.com/";
+  BR.serverData.request_scheme           = "http";
+  BR.serverData.section_page_flyin       = false;
+  BR.serverData.secure_host              = "https://bleacherreport.com";
+  BR.serverData.server_home              = "/home/deploy";
+  BR.serverData.snapper_url              = "http://cdn.bleacherreport.net/snapper/";
+  BR.serverData.team_page                = false;
+  BR.serverData.team_stream              = false;
+  BR.serverData.verbose_prism            = false;
+	
+		BR.serverData.comments_disabled = false;
+	
+
+  
+</script>
+
+  				<script>
+		  (function () {
+		    var d = new Image(1, 1);
+		    d.onerror = d.onload = function () {
+		      d.onerror = d.onload = null;
+		    };
+		    d.src = ["//secure-us.imrworldwide.com/cgi-bin/m?ci=us-204044h&cg=0&cc=1&si=", escape(window.location.href), "&rp=", escape(document.referrer), "&ts=compact&rnd=", (new Date()).getTime()].join('');
+		  })();
+		</script>
+		<noscript>
+		  <div>
+		    <img src="//secure-us.imrworldwide.com/cgi-bin/m?ci=us-204044h&amp;cg=0&amp;cc=1&amp;ts=noscript" width="1" height="1" alt="" />
+		  </div>
+		</noscript>
+
+	  			<script>
+  var _sf_async_config     = _sf_async_config || {};
+  _sf_async_config.authors = BR.PageData.writer;
+
+  if(BR.cobrand) {
+    _sf_async_config.sections = (BR.PageData.league ? BR.PageData.league : BR.PageData.site) + ',cobrand';
+  } else {
+    _sf_async_config.sections = BR.PageData.site + ',br';
+  }
+
+  (function(){
+    function loadChartbeat() {
+      window._sf_endpt=(new Date()).getTime();
+      var e = document.createElement('script');
+      e.setAttribute('language', 'javascript');
+      e.setAttribute('type', 'text/javascript');
+      e.setAttribute('src',
+         (('https:' == document.location.protocol) ? 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/' : 'http://static.chartbeat.com/') +
+         'js/chartbeat.js');
+      document.body.appendChild(e);
+    }
+    var oldonload = window.onload;
+    window.onload = (typeof window.onload != 'function') ?
+       loadChartbeat : function() { oldonload(); loadChartbeat(); };
+  })();
+</script>
+
+		  
+<script>
+    (function (d,s,id) {
+        var t, js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js=d.createElement(s); js.id=id;
+        js.src="//player.ooyala.com/v3/MDYzZmYzZjIwNTA0YjI4Y2YyM2JmNTgw?platform=html5-fallback";
+        js.onload = js.onreadystatechange = function(){
+            var ev;
+
+            js.onreadystatechange = js.onload = null;
+
+            try {
+                ev = new Event('ooyalaLoaded');
+            }
+            catch(e) {
+                ev = document.createEvent('Event');
+                ev.initEvent('ooyalaLoaded', true, true);
+            }
+
+            document.dispatchEvent(ev);
+        };
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, "script", "ooyala-pscript"));
+</script>
+
+
+  <div id="fb-root"></div>
+<script>
+    window.fbAsyncInit = function() {
+        FB.init({
+            appId      : BR.serverData.fbAppId, // App ID from the app dashboard
+            cookie: true,
+            channelUrl : 'http://bleacherreport.com/facebook_channel.html', // Channel file for x-domain comms
+            status     : true, // Check Facebook Login status
+            xfbml      : true, // Look for social plugins on the page
+            version    : 'v2.3'
+        });
+
+        // Additional initialization code such as adding Event Listeners goes here
+        (function($){
+            $(document).trigger('fbLoaded');
+        }(jQuery));
+    };
+
+    // Load the SDK asynchronously
+    (function(){
+        // If we've already installed the SDK, we're done
+        if (document.getElementById('facebook-jssdk')) {return;}
+
+        // Get the first script element, which we'll use to find the parent node
+        var firstScriptElement = document.getElementsByTagName('script')[0];
+
+        // Create a new script element and set its id
+        var facebookJS = document.createElement('script');
+        facebookJS.id = 'facebook-jssdk';
+
+        // Set the new script's source to the source of the Facebook JS SDK
+        facebookJS.src = '//connect.facebook.net/en_US/all.js';
+
+        // Insert the Facebook JS SDK into the DOM
+        firstScriptElement.parentNode.insertBefore(facebookJS, firstScriptElement);
+    }());
+</script>
+
+
+<div id="pixels">
+  
+</div>
+
+    
+<div id="br-ad-5" class="br-ad" data-position="oop_skin_01" data-reload="2" data-size="[[3,3]]"></div>
+
+
+<script>
+  BR.currentUser = BR.currentUser || {};
+  BR.currentUser.stream_tags = null;
+</script>
+
+
+
+<script>
+BR.sign_up_template = "\t<div class=\"sign_up_container\">\n\t\t<div class=\"sign_up_side\">\n\t\t\t<h4>Sign up through Facebook</h4>\n\t\t\t<ul>\n\t\t\t\t<li>Follow your Facebook friends on Bleacher Report</li>\n\t\t\t\t<li>Share your articles, comments, and more with friends</li>\n\t\t\t</ul>\n\t\t\t<img alt=\"Connect with Facebook\" class=\"facebook_connect png-fix\" height=\"23\" src=\"http://static2.bleacherreport.net/images/redesign/facebook/connect.png?1457103694\" width=\"193\" />\n\t\t</div>\n\n\t\t<div class=\"sign_up_body\">\n\t\t\t<div id=\"join_bleacher_report\">\n\t\t\t\t<h4>Join Bleacher Report</h4>\n\t\t\t\t<p id=\"hat_sign_up_required\" class=\"alert\">You must register in order for that functionality to work!</p>\n\t\t\t\t<ul>\n\t\t\t\t\t<form action=\"https://bleacherreport.com/accounts/create_from_hat\" id=\"hat_signup_form\" method=\"post\">\n\t\t\t\t\t\t<li>\n\t\t\t\t\t\t\t<label for=\"br-hat-sign-up-first_name\">First Name <em>(required)</em></label>\n\t\t\t\t\t\t\t<input class=\"text medium-text\" name=\"first_name\" id=\"br-hat-sign-up-first_name\">\n\t\t\t\t\t\t\t<div class=\"signup_errors\" id=\"first_name_errors\"></div>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li>\n\t\t\t\t\t\t\t<label for=\"br-hat-sign-up-last_name\">Last Name <em>(required)</em></label>\n\t\t\t\t\t\t\t<input class=\"text medium-text\" name=\"last_name\" id=\"br-hat-sign-up-last_name\">\n\t\t\t\t\t\t\t<div class=\"signup_errors\" id=\"last_name_errors\"></div>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li>\n\t\t\t\t\t\t\t<label for=\"br-hat-sign-up-email\">Email <em>(required)</em></label>\n\t\t\t\t\t\t\t<input type=\"email\" class=\"text medium-text\" name=\"email\" id=\"br-hat-sign-up-email\">\n\t\t\t\t\t\t\t<div class=\"signup_errors\" id=\"email_errors\"></div>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li>\n\t\t\t\t\t\t\t<label for=\"br-hat-sign-up-password\">Password <em>(required)</em></label>\n\t\t\t\t\t\t\t<input type=\"password\" class=\"text medium-text\" name=\"password\" id=\"br-hat-sign-up-password\">\n\t\t\t\t\t\t\t<div class=\"signup_errors\" id=\"password_errors\"></div>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li>\n\t\t\t\t\t\t\t<label for=\"br-hat-sign-up-password_confirmation\">Confirm Password <em>(required)</em></label>\n\t\t\t\t\t\t\t<input type=\"password\" class=\"text medium-text\" name=\"password_confirmation\" id=\"br-hat-sign-up-password_confirmation\">\n\t\t\t\t\t\t\t<div class=\"signup_errors\" id=\"password_confirmation_errors\"></div>\n\t\t\t\t\t\t\t<input name=\"comment\" id=\"br-hat-sign-up-comment\">\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li id=\"hat_sign_up_captcha\">\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li>\n\t\t\t\t\t\t\t<span id=\"hat_signup_submit\" class=\"medium-orange button\">Sign Up</span>\n\t\t\t\t\t\t\t<input type=\"submit\" value=\"\" style=\"display:none\" />\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li class=\"sign-up-tos\">By clicking on 'Sign Up' above, you confirm that you have accepted the <a href=\"/pages/terms\" target=\"_blank\">Terms of Service</a>.</li>\n\t\t\t\t\t\t<input type=\"hidden\" id=\"hat_comment_body\" name=\"comment_body\">\n\t\t\t\t\t\t<input type=\"hidden\" id=\"hat_comment_article_id\" name=\"comment_article_id\">\n\t\t\t\t\t\t<input type=\"hidden\" id=\"hat_comment_parent_id\" name=\"comment_parent_id\">\n\t\t\t\t\t\t<input type=\"hidden\" name=\"current_href\">\n\t\t\t\t\t</form>\n\t\t\t\t</ul>\n\t\t\t</div><!-- end of sign up main, join edition -->\n\n\t\t\t<div id=\"log_in_to_bleacher_report\">\n\t\t\t\t<h4>Log in to Bleacher Report</h4>\n\t\t\t\t<div id=\"login_message\"></div>\n\t\t\t\t<ul>\n\t\t\t\t\t<form id=\"login_form\" action=\"https://bleacherreport.com/login_from_ajax\" method=\"post\">\n\t\t\t\t\t\t<li>\n\t\t\t\t\t\t\t<label for=\"hat_log_in_email\">Email</label>\n\t\t\t\t\t\t\t<input type=\"email\" class=\"text medium-text\" name=\"user[email]\" id=\"hat_log_in_email\">\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li>\n\t\t\t\t\t\t\t<label for=\"hat_log_in_password\">Password</label>\n\t\t\t\t\t\t\t<input type=\"password\" class=\"text medium-text\" name=\"user[password]\" id=\"hat_log_in_password\">\n\t\t\t\t\t\t\t<a href=\"#\" class=\"forgot-password-link\">Forgot password?</a>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li><input id=\"login_button\" type=\"submit\" value=\"Log In\" class=\"medium-orange button\"></li>\n\t\t\t\t\t</form>\n\t\t\t\t</ul>\n\n\t\t\t\t<ul id=\"change-password\">\n\t\t\t\t\t<h4>Change your password</h4>\n\t\t\t\t\t<form action=\"/accounts/forgot_password\" method=\"post\">\n\t\t\t\t\t\t<li>\n\t\t\t\t\t\t\t<label for=\"email\">Email Address</label>\n\t\t\t\t\t\t\t<input id=\"email\" name=\"email\" type=\"email\" class=\"text medium-text\">\n\t\t\t\t\t\t\t<a href=\"#\" class=\"forgot-password-link\">I know my password.</a>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li><input type=\"submit\" value=\"Change password\" class=\"medium-orange button\"></li>\n\t\t\t\t\t</form>\n\t\t\t\t</ul>\n\t\t\t</div><!-- end of sign up main, log in edition -->\n\t\t</div>\n\t</div>\n";
+</script>
+
+
+  <script src="http://static2.bleacherreport.net/pkg/javascripts/2e56ead4_redesign_common.js"></script>
+  <script src="http://static2.bleacherreport.net/pkg/javascripts/c2a6ebc7_redesign_marionette_common.js"></script>
+
+<!--[if IE]>
+  <script src="http://static2.bleacherreport.net/pkg/javascripts/ef3933e3_redesign_ie.js"></script>
+<![endif]-->
+
+<!--[if IE 6]>
+  <script src="http://static2.bleacherreport.net/pkg/javascripts/42016d79_redesign_ie6.js"></script>
+  <script>DD_belatedPNG.fix("#header-logo,.caption-overlay");</script>
+<![endif]-->
+
+<script>
+  BR.timedConfig = {"uber_module":true,"slideshows_ready":false,"comments_count_display":25,"iphone_promo":true,"tablet_app_promo":true,"new_url_cutoff_date":"2012/01/12","reprocess_photo_delay":10};
+</script>
+
+<div id="tooltip">
+	<div class="body png-fix"></div>
+	<div class="right png-fix"></div>
+</div>
+
+<div id="kiosk-container"></div>
+
+
+      <script>
+      BR.signup_tag = {};
+      BR.signup_tag.id = 85;
+      BR.signup_tag.type = "Team";
+      BR.signup_tag.permalink = 'boston-red-sox';
+      BR.signup_tag.hide_newsletter_signup = false;
+      BR.signup_tag.facebook_page = "BRBostonRedSox";
+      
+        BR.signup_tag.twitter_account = 'BR_RedSox';
+      
+
+      BR.fan_survey_enabled = false
+      BR.asocial_promo_enabled = false;
+      BR.facebook_like_popup_enabled = true;
+
+      BR.newsletter = false && !(BR.asocial_promo_enabled || BR.facebook_like_popup_enabled);
+
+      
+    </script>
+    <script src="http://static2.bleacherreport.net/pkg/javascripts/7af26ba6_redesign_newsletter_signup.js"></script>
+    <script src="http://static2.bleacherreport.net/pkg/javascripts/4848902b_redesign_newsletter_controller.js"></script>
+      <script src="http://static2.bleacherreport.net/pkg/javascripts/2bf60b8b_redesign_social_promos.js"></script>
+      <script>
+        
+        BR.tnt = false;
+        BR.tag_id = 85;
+        BR.tag_type = "Team";
+        BR.currentArticle = {"sorted_source_title":null,"channel_primary_image_150x100":"http://img.bleacherreport.net/img/images/photos/002/172/293/hi-res-152810031_crop_north.jpg?w=150&h=100&q=75","external_source":null,"channel_primary_image":"http://img.bleacherreport.net/img/images/photos/002/172/293/hi-res-152810031_crop_north.jpg?w=100&h=68&q=75","channel_primary_image_grayscale":"http://cdn.bleacherreport.net/images_root/images/photos/002/172/293/hi-res-152810031_bw_100x68.jpg?1361553844","dynamic_hook":"Success of Sox Rests on Shoulders of Pedroia","render_strategy":"article","id":1539852,"is_video":false,"league_override":false,"title":"Success of Boston Red Sox Rests on Shoulders of Dustin Pedroia","permalink":"1539852-success-of-boston-red-sox-rests-on-shoulders-of-dustin-pedroia"};
+        BR.context = "boston-red-sox";
+        BR.tags = [{"facebook_page":null,"twitter_account":null,"name":"Baseball","id":9,"permalink":"baseball"},{"facebook_page":"MLBBR","twitter_account":"BR_MLB","name":"MLB","id":18,"permalink":"mlb"},{"facebook_page":null,"twitter_account":null,"name":"AL East","id":30,"permalink":"al-east"},{"facebook_page":"BRBostonRedSox","twitter_account":"BR_RedSox","name":"Boston Red Sox","id":85,"permalink":"boston-red-sox"},{"facebook_page":null,"twitter_account":null,"name":"Dustin Pedroia","id":4507,"permalink":"dustin-pedroia"},{"facebook_page":null,"twitter_account":null,"name":"Opinion","id":7018,"permalink":"editorial"}];
+        BR.channel_tag_id = 85;
+        BR.channel_context = "boston-red-sox";
+    </script>
+
+    <script src="http://static2.bleacherreport.net/pkg/javascripts/a470ac15_redesign_article.js"></script>
+
+    
+        
+        
+        
+        
+        
+            
+
+    <script>
+  window.twttr = (function (d,s,id) {
+    var t, js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return window.twttr; js=d.createElement(s); js.id=id;
+    js.src="https://platform.twitter.com/widgets.js"; fjs.parentNode.insertBefore(js, fjs);
+    return window.twttr || (t = { _e: [], ready: function(f){ t._e.push(f) } });
+  }(document, "script", "twitter-wjs"));
+</script>
+
+
+    <script>
+        (function() {
+            var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+            po.src = 'https://apis.google.com/js/plusone.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+        })();
+    </script>
+
+		<script src="http://static2.bleacherreport.net/pkg/javascripts/50c26373_react_scores.js"></script>
+		<script>
+			$(document).ready(function(){
+				BR.Scores.ScoresView = new BR.Scores.Scoreboard.Views.SportsScores({el: $("#scoreline")});
+				BR.Scores.ScoresView.render();
+			});
+		</script>
+	
+
+  <script>
+    if(BR.MarionetteApplication) { BR.MarionetteApplication.start(); }
+  </script>
+  <!-- Generated on 03/04/2016 at 08:34 PM -->
+</body>
+</html>

@@ -36,6 +36,8 @@ class SentenceParser:
 
     def parse(self, doc):
         """Parse a raw document as a string into a list of sentences"""
+        if len(doc.strip()) == 0:
+            return
         resp = requests.post(self.endpoint, data=doc, allow_redirects=True)
         blocks = resp.content.strip().split('\n\n')
         for block in blocks:
@@ -57,7 +59,7 @@ class SentenceParser:
 Abstract base class for file type parsers
 Must implement method inidicating if file can be parsed and parser
 '''
-class FileTypeParser:
+class FileTypeParser(object):
     def can_parse(self, f):
         raise NotImplementedError()
     def parse(self, f):
@@ -71,7 +73,7 @@ class HTMLParser(FileTypeParser):
         return fp.endswith('.html')
     def parse(self, fp):
         with open(fp, 'rb') as f:
-            mulligatawny = BeautifulSoup(f)
+            mulligatawny = BeautifulSoup(f, 'lxml')
         txt = filter(self._cleaner, mulligatawny.findAll(text=True))
         return ' '.join(self._strip_special(s) for s in txt if s != '\n')
     def _cleaner(self, s):
@@ -81,7 +83,7 @@ class HTMLParser(FileTypeParser):
             return False
         return True
     def _strip_special(self, s):
-        return ''.join(c for c in s if ord(c) < 128)
+        return (''.join(c for c in s if ord(c) < 128)).encode('ascii', 'ignore')
         
 '''
 Text parser for preprocessed files

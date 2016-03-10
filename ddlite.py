@@ -7,6 +7,7 @@ from tree_structs import corenlp_to_xmltree
 
 sys.path.append('%s/treedlib' % os.getcwd())
 from treedlib import compile_relation_feature_generator
+from entity_features import compile_entity_feature_generator
 
 from parser import *
 
@@ -262,33 +263,31 @@ class Entity:
 
 class Entities(Extractions):
   def __init__(self, sents):
-    #e
     super(Entities, self).__init__(sents)
     self.entities = self.extractions
 
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
     # Search for consecutive named entity blocks
-    nr_pos = ['NN', 'NNS']
+    nr_pos = ['NN', 'NNS', 'NNP', 'NNPS']
     n_words = len(sent.poses)
     l_idxs = (i for i in xrange(n_words) if sent.poses[i] in nr_pos)
     r_idx = None
     for l_idx in l_idxs:
       # Emit all sub n-grams
-      yield Entity([l_idx], sent.lemmas[l_idx], sent, xt)
-      r_idx = l_idx + 1
+      r_idx = l_idx
       while r_idx < n_words and sent.poses[r_idx] in nr_pos:
-        rg = range(l_idx, r_idx+1)
-        yield(Entity(rg, ' '.join(sent.lemmas[i] for i in rg), sent, xt))
         r_idx += 1
+        rg = range(l_idx, r_idx)
+        yield(Entity(rg, ' '.join(sent.lemmas[i] for i in rg), sent, xt))
+        
   
   def _get_features(self, method='treedlib'):
-    #get_feats = compile_relation_feature_generator()
+    get_feats = compile_entity_feature_generator()
     f_index = defaultdict(list)
     for j,ext in enumerate(self.extractions):
-      #for feat in get_feats(ext.root, ext.e1_idxs, ext.e2_idxs):
-      # f_index[feat].append(j)
-      pass
+      for feat in get_feats(ext.root, ext.idxs):
+        f_index[feat].append(j)
     return f_index    
     
 
@@ -400,7 +399,7 @@ def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose
   return w
 
 if __name__ == '__main__':
-  txt = "Han\'s likes Luke and a wookie. Han Solo don\'t like bounty hunters."
+  txt = "Han likes Luke and a wookie. Han Solo don\'t like bounty hunters."
   parser = SentenceParser()
   sents = list(parser.parse(txt))
 

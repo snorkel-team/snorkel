@@ -3,3 +3,9 @@
 *.pyc
 parser/
 /stanford-corenlp-*
+
+/saved_sents.pkl
+
+/deepdive
+/mindtagger.pid
+/mindtagger

@@ -288,6 +288,150 @@ class Entities(Extractions):
     return f_index    
     
 
+  #
+  # Mindtagger
+  #
+  def launch_mindtagger(self, task_name, generate_items, task_root = "mindtagger", **kwargs):
+    import os, socket, pipes
+
+    args = dict(
+        task = task_name,
+        task_root = task_root,
+        # figure out hostname and task name from IPython notebook
+        host = socket.gethostname(),
+        # determine a port number based on user name
+        port = hash(os.getlogin()) % 1000 + 8000,
+      )
+    args['task_path'] = "%s/%s" % (args['task_root'], args['task'])
+    args['mindtagger_baseurl'] = "http://%(host)s:%(port)s/" % args
+    args['mindtagger_url'] = "%(mindtagger_baseurl)s#/mindtagger/%(task)s" % args
+    # quoted values for shell
+    shargs = { k: pipes.quote(str(v)) for k,v in args.iteritems() }
+
+    def system(script):
+      return os.system("bash -c %s" % pipes.quote(script))
+
+    # install mindbender included in DeepDive's release
+    if system("""
+      export PREFIX="$PWD"/deepdive
+      [[ -x "$PREFIX"/bin/mindbender ]] ||
+      bash <(curl -fsSL git.io/getdeepdive || wget -qO- git.io/getdeepdive) deepdive_from_release
+    """ % shargs) != 0: raise OSError("Mindtagger could not be installed")
+
+    if not os.path.exists(args['task_path']):
+      # prepare a mindtagger task from the data this object is holding
+      try:
+        if system("""
+          set -eu
+          t=%(task_path)s
+          rm -rf "$t"~
+          ! [ -e "$t" ] || mv -f "$t" "$t"~
+          mkdir -p "$t"
+          """ % shargs) != 0: raise OSError("Mindtagger task could not be created")
+        with open("%(task_path)s/mindtagger.conf" % args, "w") as f:
+          f.write("""
+            title: %(task)s Labeling task for estimating precision
+            items: {
+                file: items.csv
+                key_columns: [sent_id]
+            }
+            template: template.html
+            """ % args)
+        with open("%(task_path)s/template.html" % args, "w") as f:
+          f.write("""
+            <mindtagger mode="precision">
+
+              <template for="each-item">
+                <strong>{{item.e1_label}} -- {{item.e2_label}}</strong>
+                with expectation <strong>{{item.expectation | number:3}}</strong>
+                appeared in sentence {{item.sent_id}}:
+                <blockquote>
+                    <big mindtagger-word-array="item.words" array-format="json">
+                        <mindtagger-highlight-words index-array="item.e1_idxs" with-style="background-color: yellow;"/>
+                        <mindtagger-highlight-words index-array="item.e2_idxs" with-style="background-color: cyan;"/>
+                    </big>
+                </blockquote>
+
+                <div>
+                  <div mindtagger-item-details></div>
+                </div>
+              </template>
+
+              <template for="tags">
+                <span mindtagger-adhoc-tags></span>
+                <span mindtagger-note-tags></span>
+              </template>
+
+            </mindtagger>
+            """ % args)
+        with open("%(task_path)s/items.csv" % args, "w") as f:
+          # prepare data to label
+          import csv
+          items = generate_items()
+          item = next(items)
+          o = csv.DictWriter(f, fieldnames=item.keys())
+          o.writeheader()
+          o.writerow(item)
+          for item in items:
+            o.writerow(item)
+      except:
+        raise OSError("Mindtagger task data could not be prepared: %s" % str(sys.exc_info()))
+
+    # launch mindtagger
+    if system("""
+      # restart any running mindtagger instance
+      ! [ -s mindtagger.pid ] || kill -TERM $(cat mindtagger.pid) || true
+      PORT=%(port)s deepdive/bin/mindbender tagger %(task_root)s/*/mindtagger.conf &
+      echo $! >mindtagger.pid
+      """ % shargs) != 0: raise OSError("Mindtagger could not be started")
+    while system("curl --silent --max-time 1 --head %(mindtagger_url)s >/dev/null" % shargs) != 0:
+      time.sleep(0.1)
+
+    self.mindtagger_instance = args
+    return args['mindtagger_url']
+
+  def open_mindtagger(self, num_sample = 100, **kwargs):
+    # decide the relations to label
+    relations = random.sample(self.relations, num_sample) if len(self.relations) > num_sample else self.relations
+
+    # define how data maps to Mindtagger items
+    import json
+    def generate_items():
+      for i, item in enumerate(relations):
+        yield dict(
+          sent_id         = str(i),
+          # FIXME doc_id  = item.doc_id,
+          # FIXME sent_id = item.sent_id,
+          words           = json.dumps(item.words),
+          e1_idxs         = json.dumps(item.e1_idxs),
+          e1_label        = item.e1_label,
+          e2_idxs         = json.dumps(item.e2_idxs),
+          e2_label        = item.e2_label,
+        )
+
+    # determine a task name using hash of the items
+    # See: http://stackoverflow.com/a/7823051/390044 for non-negative hexadecimal
+    def tohex(val, nbits):
+      return "%x" % ((val + (1 << nbits)) % (1 << nbits))
+    task_name = tohex(hash(json.dumps([i for i in generate_items()])), 64)
+
+    # launch Mindtagger
+    url = self.launch_mindtagger(task_name, generate_items, **kwargs)
+
+    # return an iframe
+    from IPython.display import IFrame
+    return IFrame(url, **kwargs)
+
+  def get_mindtagger_tags(self):
+    tags_url = "%(mindtagger_baseurl)sapi/mindtagger/%(task)s/tags.json?attrs=sent_id" % self.mindtagger_instance
+
+    import urllib, json
+    opener = urllib.FancyURLopener({})
+    t = opener.open(tags_url)
+    tags = json.loads(t.read())
+
+    return tags
+
 #
 # Logistic regression algs
 # Ported from Chris's Julia notebook...

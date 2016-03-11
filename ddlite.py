@@ -95,6 +95,7 @@ class MindTaggerInstance:
       return os.system("bash -c %s" % pipes.quote(script))
 
     # install mindbender included in DeepDive's release
+    print "Making sure MindTagger is installed. Hang on!"
     if system("""
       export PREFIX="$PWD"/deepdive
       [[ -x "$PREFIX"/bin/mindbender ]] ||
@@ -347,9 +348,8 @@ class Extractions(object):
     
   def open_mindtagger(self, num_sample = 100, **kwargs):
     self.mindtagger_instance = MindTaggerInstance()
-    self.mindtagger_instance.open_mindtagger(self.extractions,
-                                             self.generate_mindtagger_items,
-                                             num_sample, **kwargs)
+    return self.mindtagger_instance.open_mindtagger(self.extractions,
+             self.generate_mindtagger_items, num_sample, **kwargs)
   
   def get_mindtagger_tags(self):
     return self.mindtagger_instance.get_mindtagger_tags()

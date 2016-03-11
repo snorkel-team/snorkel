@@ -36,6 +36,8 @@ class SentenceParser:
 
     def parse(self, doc):
         """Parse a raw document as a string into a list of sentences"""
+        if len(doc.strip()) == 0:
+            return
         resp = requests.post(self.endpoint, data=doc, allow_redirects=True)
         blocks = resp.content.strip().split('\n\n')
         for block in blocks:
@@ -57,7 +59,7 @@ class SentenceParser:
 Abstract base class for file type parsers
 Must implement method inidicating if file can be parsed and parser
 '''
-class FileTypeParser:
+class FileTypeParser(object):
     def can_parse(self, f):
         raise NotImplementedError()
     def parse(self, f):
@@ -81,7 +83,7 @@ class HTMLParser(FileTypeParser):
             return False
         return True
     def _strip_special(self, s):
-        return ''.join(c for c in s if ord(c) < 128)
+        return (''.join(c for c in s if ord(c) < 128)).encode('ascii', 'ignore')
         
 '''
 Text parser for preprocessed files
@@ -117,7 +119,7 @@ class DocParser:
     # Use SentenceParser to return parsed sentences
     def parseDocSentences(self):
         sp = SentenceParser()
-        return [sp.parse(txt) for txt in self.parseDocs()]
+        return [sent for txt in self.parseDocs() for sent in sp.parse(txt)]
     
     def _get_files(self):
         if os.path.isfile(self.path):

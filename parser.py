@@ -119,7 +119,7 @@ class DocParser:
     # Use SentenceParser to return parsed sentences
     def parseDocSentences(self):
         sp = SentenceParser()
-        return [sp.parse(txt) for txt in self.parseDocs()]
+        return [sent for txt in self.parseDocs() for sent in sp.parse(txt)]
     
     def _get_files(self):
         if os.path.isfile(self.path):

@@ -8,19 +8,46 @@ One shorter-term motivation is also to provide a lighter-weight entry point to t
 DeepDive Lite is also part of a broader attempt to answer the following research questions: how much progress can be made with the _schema_ and _distant supervision rules_ being the sole user entry point to the application development process?  To what degree can DeepDive be seen/used as an (iterative) _compiler_, which takes in a rule-based program, and transforms it to a statistical learning & inference-based one?
 
 ## Installation / dependencies
-DeepDive Lite requires the following python modules; we provide example install commands using `pip`:
-* [nltk](http://www.nltk.org/install.html): `sudo pip install -U nltk`
-* [lxml](http://lxml.de/installation.html): `sudo pip install -U lxml`
-* [requests](http://docs.python-requests.org/en/master/user/install/#install): `sudo pip install -U requests`
-* [numpy](http://docs.scipy.org/doc/numpy-1.10.1/user/install.html): `sudo pip install -U numpy`
+
+<!-- TODO these manual instruction could be abstracted away with a simple launcher script, that takes as input a ipynb and simply opens it after any necessary setup.. -->
+
+First of all, make sure all git submodule has been downloaded.
+
+```bash
+git submodule update --init
+```
+
+DeepDive Lite requires [a few python packages](python-package-requirement.txt) including:
+
+* [nltk](http://www.nltk.org/install.html)
+* [lxml](http://lxml.de/installation.html)
+* [requests](http://docs.python-requests.org/en/master/user/install/#install)
+* [numpy](http://docs.scipy.org/doc/numpy-1.10.1/user/install.html)
 * [scipy](http://www.scipy.org/install.html)
+
+We provide a simple way to install everything using `virtualenv`:
+
+```bash
+# set up a Python virtualenv
+virtualenv .virtualenv
+source .virtualenv/bin/activate
+
+pip install --requirement python-package-requirement.txt
+```
+
+Alternatively, they could be installed system-wide if `sudo pip` is used instead of `pip` in the last command without the virtualenv setup and activation.
 
 In addition the Stanford CoreNLP parser jars need to be downloaded; this can be done using:
 ```bash
 ./install-parser.sh
 ```
 
-Finally, DeepDive Lite is built specifically with usage in **Jupyter/IPython notebooks** in mind; see their [installation instructions](http://jupyter.readthedocs.org/en/latest/install.html).
+Finally, DeepDive Lite is built specifically with usage in **Jupyter/IPython notebooks** in mind.
+The `jupyter` command is installed as part of the above installation steps, so the following command within the virtualenv opens our demo notebook.
+
+```bash
+jupyter notebook DeepDiveLite.ipynb
+```
 
 ## Basics
 Please see the Jupyter notebook demo in `DeepDiveLite.ipynb` for more detail!

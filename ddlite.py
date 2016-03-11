@@ -5,9 +5,9 @@ import numpy as np
 from scipy.sparse import lil_matrix, csr_matrix
 from tree_structs import corenlp_to_xmltree
 
-sys.path.append('%s/treedlib' % os.getcwd())
+sys.path.append('{}/treedlib'.format(os.getcwd()))
 from treedlib import compile_relation_feature_generator
-from entity_features import compile_entity_feature_generator
+from entity_features import *
 
 from parser import *
 
@@ -221,7 +221,8 @@ class Relation:
     self.xt.render_tree(self.idxs)
 
   def __repr__(self):
-    return '<Relation: {} - {}>'.format(self.e1_idxs, self.e2_idxs)
+    return '<Relation: {}{} - {}{}>'.format([self.words[i] for i in self.e1_idxs], 
+      self.e1_idxs, [self.words[i] for i in self.e2_idxs], self.e2_idxs)
 
 class Relations(Extractions):
   def __init__(self, e1, e2, sents):
@@ -245,43 +246,34 @@ class Relations(Extractions):
     return f_index
 
 class Entity:
-  def __init__(self, idxs, name, sent, xt):
-    self.name = name
+  def __init__(self, idxs, label, sent, xt):
     self.idxs = idxs
+    self.label = label
     # Absorb XMLTree and Sentence object attributes for access by rules
     self.xt = xt
     self.root = self.xt.root
     self.__dict__.update(sent.__dict__)
 
     # Add some additional useful attributes
-    self.tagged_sent = ' '.join(tag_seqs(self.words, [self.idxs], 'ENT'))
+    self.tagged_sent = ' '.join(tag_seqs(self.words, [self.idxs], [self.label]))
 
   def render(self):
     self.xt.render_tree([self.idxs])
 
   def __repr__(self):
-    return '<Entity: {}>'.format(self.name)
+    return '<Entity: {}{}>'.format([self.words[i] for i in self.idxs], self.idxs)
+
 
 class Entities(Extractions):
-  def __init__(self, sents):
+  def __init__(self, e, sents):
+    self.e = e
     super(Entities, self).__init__(sents)
     self.entities = self.extractions
 
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
-    # Search for consecutive named entity blocks
-    nr_pos = ['NN', 'NNS', 'NNP', 'NNPS']
-    n_words = len(sent.poses)
-    l_idxs = (i for i in xrange(n_words) if sent.poses[i] in nr_pos)
-    r_idx = None
-    for l_idx in l_idxs:
-      # Emit all sub n-grams
-      r_idx = l_idx
-      while r_idx < n_words and sent.poses[r_idx] in nr_pos:
-        r_idx += 1
-        rg = range(l_idx, r_idx)
-        yield(Entity(rg, ' '.join(sent.lemmas[i] for i in rg), sent, xt))
-        
+    for e_idxs in self.e.apply(sent):
+      yield Entity(e_idxs, self.e.label, sent, xt)        
   
   def _get_features(self, method='treedlib'):
     get_feats = compile_entity_feature_generator()
@@ -289,6 +281,10 @@ class Entities(Extractions):
     for j,ext in enumerate(self.extractions):
       for feat in get_feats(ext.root, ext.idxs):
         f_index[feat].append(j)
+      for feat in get_ddlib_feats(Sentence(ext.words, ext.lemmas, ext.poses,
+                                           ext.dep_parents, ext.dep_labels),
+                                  ext.idxs):
+        f_index["DDLIB_" + feat].append(j)
     return f_index    
     
 
@@ -404,10 +400,22 @@ if __name__ == '__main__':
   parser = SentenceParser()
   sents = list(parser.parse(txt))
 
-  R = Relations(DictionaryMatch('R', ['Han Solo', 'Luke', 'Chewie']),
-                DictionaryMatch('E', ['Bounty Hunters']), sents)
+  g = DictionaryMatch('G', ['Han Solo', 'Luke', 'wookie'])
+  b = DictionaryMatch('B', ['Bounty Hunters'])
+
+  print "***** Relation0 *****"
+  R = Relations(g, b, sents)
   print R
+  print R.relations[0].tagged_sent
   
-  E = Entities(sents)
+  print "***** Relation 1 *****"
+  R = Relations(g, g, sents)
+  print R
+  for r in R.relations:
+      print r.tagged_sent
+  
+  print "***** Entity *****"
+  E = Entities(g, sents)
   print E                
-  
+  for e in E.entities:
+      print e.tagged_sent

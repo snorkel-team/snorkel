@@ -70,7 +70,17 @@ def tag_seqs(words, seqs, tags):
   return words_out
 
 class Extractions(object):
+  """
+  Base class for extractions
+  Sub-classes need to yield extractions from sentences (_apply) and 
+  generate features (_get_features)
+  See Relations and Entities for examples
+  """
   def __init__(self, sents):
+    """
+    Set up learning problem and generate candidates
+     * sents is a flat list of Sentence objects
+    """
     self.rules = None
     self.feats = None
     self.X = None
@@ -539,7 +549,7 @@ def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose
     w -= 0.01*g
   return w
 
-if __name__ == '__main__':
+def main():
   txt = "Han likes Luke and a wookie. Han Solo don\'t like bounty hunters."
   parser = SentenceParser()
   sents = list(parser.parse(txt))
@@ -563,3 +573,6 @@ if __name__ == '__main__':
   print E                
   for e in E.entities:
       print e.tagged_sent
+
+if __name__ == '__main__':
+  main()

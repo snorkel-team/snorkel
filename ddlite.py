@@ -258,8 +258,14 @@ class Relations(Extractions):
     self.e1 = e1
     self.e2 = e2
     super(Relations, self).__init__(sents)
-    self.relations = self.extractions
-
+    
+  @property
+  def relations(self):
+    return self.extractions
+  @relations.setter
+  def relations(self, ex):
+    self.extractions = ex  
+  
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
     for e1_idxs in self.e1.apply(sent):
@@ -299,8 +305,14 @@ class Entities(Extractions):
       warnings.warn("e is not a Matcher subclass")
     self.e = e
     super(Entities, self).__init__(sents)
-    self.entities = self.extractions
 
+  @property
+  def entities(self):
+    return self.extractions
+  @entities.setter
+  def entities(self, ex):
+    self.extractions = ex
+  
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
     for e_idxs in self.e.apply(sent):

@@ -148,7 +148,7 @@ class Extractions(object):
         raise ValueError("Holdout must be an array of indices or fraction")
     self.X = sparse.hstack([self.rules, self.feats], format='csr')
     if not use_sparse:
-      self.X = self.X.todense()
+      self.X = np.asarray(self.X.todense())
     w0 = np.concatenate([np.ones(R), np.zeros(F)])
     self.w = learn_params(self.X[np.setdiff1d(range(N), self.holdout), :],
                           nSteps=nSteps, w0=w0, sample=sample,

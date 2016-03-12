@@ -7,5 +7,6 @@ parser/
 /saved_sents.pkl
 
 /deepdive
+/deepdive-*.tar.gz
 /mindtagger.pid
 /mindtagger

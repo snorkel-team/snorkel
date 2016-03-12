@@ -74,7 +74,7 @@ class MindTaggerInstance:
   def __init__(self):
     self.instance = None
 
-  def launch_mindtagger(self, task_name, generate_items, task_root = "mindtagger", **kwargs):
+  def launch_mindtagger(self, task_name, generate_items, task_root = "mindtagger", task_recreate = True, **kwargs):
     import os, socket, pipes
 
     args = dict(
@@ -102,14 +102,12 @@ class MindTaggerInstance:
       bash <(curl -fsSL git.io/getdeepdive || wget -qO- git.io/getdeepdive) deepdive_from_release
     """ % shargs) != 0: raise OSError("Mindtagger could not be installed")
 
-    if not os.path.exists(args['task_path']):
+    if task_recreate or not os.path.exists(args['task_path']):
       # prepare a mindtagger task from the data this object is holding
       try:
         if system("""
           set -eu
           t=%(task_path)s
-          rm -rf "$t"~
-          ! [ -e "$t" ] || mv -f "$t" "$t"~
           mkdir -p "$t"
           """ % shargs) != 0: raise OSError("Mindtagger task could not be created")
         with open("%(task_path)s/mindtagger.conf" % args, "w") as f:
@@ -131,8 +129,8 @@ class MindTaggerInstance:
                 appeared in sentence {{item.sent_id}}:
                 <blockquote>
                     <big mindtagger-word-array="item.words" array-format="json">
-                        <mindtagger-highlight-words index-array="item.e1_idxs" with-style="background-color: yellow;"/>
-                        <mindtagger-highlight-words index-array="item.e2_idxs" with-style="background-color: cyan;"/>
+                        <mindtagger-highlight-words index-array="item.e1_idxs" array-format="json" with-style="background-color: yellow;"/>
+                        <mindtagger-highlight-words index-array="item.e2_idxs" array-format="json" with-style="background-color: cyan;"/>
                     </big>
                 </blockquote>
 

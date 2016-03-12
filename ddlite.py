@@ -374,12 +374,14 @@ def sample_data(X, w, nSamples):
   f = np.zeros(N)
 
   # Take samples of random variables
-  for i in range(nSamples):
-    idx = random.randint(0, N-1)
-    if random.random() < odds_to_prob(X[idx, :].dot(w)):
-      t[idx] += 1
-    else:
-      f[idx] += 1
+  idxs = np.round(np.random.rand(nSamples) * (N-1)).astype(int)
+  ct = np.bincount(idxs)
+  # Estimate probability of correct assignment
+  increment = np.random.rand(nSamples) < odds_to_prob(X[idxs, :].dot(w))
+  increment_f = -1. * (increment - 1)
+  t[idxs] = increment * ct[idxs]
+  f[idxs] = increment_f * ct[idxs]
+  
   return t, f
 
 def exact_data(X, w):

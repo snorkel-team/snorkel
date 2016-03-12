@@ -109,12 +109,18 @@ class Extractions(object):
   def _apply(self, sent):
     raise NotImplementedError()
     
-  def apply_rules(self, rules):
-    R = sparse.lil_matrix((self.num_extractions(), len(rules)))
+  def apply_rules(self, rules_f):
+    """ Apply rule functions given in list. Allows adding to existing rules """
+    nr_old = self.num_rules()
+    if self.rules is None:
+      self.rules = sparse.lil_matrix((self.num_extractions(), len(rules_f)))
+    else:
+      self.rules = sparse.hstack([self.rules, 
+                     sparse.lil_matrix((self.num_extractions, len(rules_f)))],
+                     format = 'lil')
     for i,ext in enumerate(self.extractions):    
-      for j,rule in enumerate(rules):
-        R[i,j] = rule(ext)
-    self.rules = sparse.csr_matrix(R)
+      for ja,rule in enumerate(rules):
+        self.rules[i,ja + nr_old] = rule(ext)
         
   def _get_features(self):
       raise NotImplementedError()    
@@ -129,7 +135,7 @@ class Extractions(object):
       for i in f_index[feat]:
         F[i,j] = 1
     self.feats = sparse.csr_matrix(F)
-
+        
   def learn_feats_and_weights(self, nSteps=1000, sample=False, nSamples=100,
         mu=1e-9, holdout=0.1, use_sparse = True, verbose=False):
     """
@@ -146,7 +152,7 @@ class Extractions(object):
         self.holdout = np.random.choice(N, np.floor(holdout * N), replace=False)
     else:
         raise ValueError("Holdout must be an array of indices or fraction")
-    self.X = sparse.hstack([self.rules, self.feats], format='csr')
+    self.X = sparse.hstack([self.rules.tocsr(), self.feats], format='csr')
     if not use_sparse:
       self.X = np.asarray(self.X.todense())
     w0 = np.concatenate([np.ones(R), np.zeros(F)])

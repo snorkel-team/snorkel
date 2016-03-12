@@ -67,7 +67,7 @@ def tag_seqs(words, seqs, tags):
   words_out = words
   dj = 0
   for i in np.argsort(seqs, axis=0):
-    i = int(i[0])
+    i = int(i[0]) if hasattr(i, '__iter__') else int(i)
     words_out = tag_seq(words_out, map(lambda j : j - dj, seqs[i]), tags[i])
     dj += len(seqs[i]) - 1
   return words_out

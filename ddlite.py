@@ -325,7 +325,7 @@ class Entities(Extractions):
 #
 def log_odds(p):
   """This is the logit function"""
-  return np.log(float(p) / (1.0 - p))
+  return np.log(p / (1.0 - p))
 
 def odds_to_prob(l):
   """
@@ -365,7 +365,7 @@ def exact_data(X, w):
   We calculate the exact conditional probability of the decision variables in
   logistic regression; see sample_data
   """
-  t = np.array(map(odds_to_prob, X.dot(w)))
+  t = odds_to_prob(X.dot(w))
   return t, 1-t
 
 def abs_csr(X):
@@ -385,9 +385,10 @@ def transform_sample_stats(Xt, t, f, Xt_abs = None):
   """
   if Xt_abs is None:
     Xt_abs = abs_csr(Xt) if sparse.issparse(Xt) else abs(Xt)
-  n_pred = np.diag(Xt_abs.dot(t+f))
-  p_correct = (np.diag(np.linalg.inv(n_pred)*(Xt.dot(t) - Xt.dot(f))) + 1) / 2
-  return p_correct, np.diag(n_pred)
+  n_pred = Xt_abs.dot(t+f)
+  m = (1. / (n_pred + 1e-8)) * (Xt.dot(t) - Xt.dot(f))
+  p_correct = (m + 1) / 2
+  return p_correct, n_pred
 
 def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose=False):
   """We perform SGD wrt the weights w"""
@@ -415,7 +416,7 @@ def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose
     p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
 
     # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
-    l = np.clip(map(log_odds, p_correct), -10, 10)
+    l = np.clip(log_odds(p_correct), -10, 10)
 
     # SGD step, with \ell_2 regularization, and normalization by the number of samples
     g0 = (n_pred*(w - l)) / np.sum(n_pred) + mu*w

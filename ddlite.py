@@ -11,8 +11,11 @@ from entity_features import *
 
 from parser import *
 
-
-class DictionaryMatch:
+class Matcher(object):
+  def apply(self, s):
+    raise NotImplementedError()
+    
+class DictionaryMatch(Matcher):
   """Selects according to ngram-matching against a dictionary i.e. list of words"""
   def __init__(self, label, dictionary, match_attrib='words', ignore_case=True):
     self.label = label
@@ -236,6 +239,10 @@ class Relation:
 
 class Relations(Extractions):
   def __init__(self, e1, e2, sents):
+    if not issubclass(e1.__class__, Matcher):
+      warnings.warn("e1 is not a Matcher subclass")
+    if not issubclass(e2.__class__, Matcher):
+      warnings.warn("e2 is not a Matcher subclass")
     self.e1 = e1
     self.e2 = e2
     super(Relations, self).__init__(sents)
@@ -276,6 +283,8 @@ class Entity:
 
 class Entities(Extractions):
   def __init__(self, e, sents):
+    if not issubclass(e.__class__, Matcher):
+      warnings.warn("e is not a Matcher subclass")
     self.e = e
     super(Entities, self).__init__(sents)
     self.entities = self.extractions

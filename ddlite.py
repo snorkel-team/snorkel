@@ -95,8 +95,17 @@ class Extractions(object):
   def num_extractions(self):
     return len(self.extractions)
   
-  def num_rules(self):
-    return 0 if self.rules is None else self.rules.shape[1]
+  def num_rules(self, result='all'):
+    if self.rules is None:
+      return 0
+    vals = np.array(np.sum(np.array(self.rules.data)))
+    if result.lower().startswith('pos'):
+      return np.sum(vals == 1.)
+    if result.lower().startswith('neg'):
+      return np.sum(vals == -1.)
+    if result.lower().startswith('abs'):
+      return np.product(self.rules.shape) - self.rules.nnz
+    return self.rules.shape[1]
  
   def num_feats(self):
     return 0 if self.feats is None else self.feats.shape[1]
@@ -112,14 +121,11 @@ class Extractions(object):
   def apply_rules(self, rules_f):
     """ Apply rule functions given in list. Allows adding to existing rules """
     nr_old = self.num_rules()
-    if self.rules is None:
-      self.rules = sparse.lil_matrix((self.num_extractions(), len(rules_f)))
-    else:
-      self.rules = sparse.hstack([self.rules, 
-                     sparse.lil_matrix((self.num_extractions, len(rules_f)))],
-                     format = 'lil')
+    add = sparse.lil_matrix((self.num_extractions(), len(rules_f)))
+    self.rules = add if self.rules is None else sparse.hstack([self.rules,add], 
+                                                               format = 'lil')
     for i,ext in enumerate(self.extractions):    
-      for ja,rule in enumerate(rules):
+      for ja,rule in enumerate(rules_f):
         self.rules[i,ja + nr_old] = rule(ext)
         
   def _get_features(self):
@@ -129,12 +135,11 @@ class Extractions(object):
     f_index = self._get_features(args)
     # Apply the feature generator, constructing a sparse matrix incrementally
     # Note that lil_matrix should be relatively efficient as we proceed row-wise
-    F = sparse.lil_matrix((self.num_extractions(), len(f_index)))    
+    self.feats = sparse.lil_matrix((self.num_extractions(), len(f_index)))    
     for j,feat in enumerate(f_index.keys()):
       self.feat_index[j] = feat
       for i in f_index[feat]:
-        F[i,j] = 1
-    self.feats = sparse.csr_matrix(F)
+        self.feats[i,j] = 1
         
   def learn_feats_and_weights(self, nSteps=1000, sample=False, nSamples=100,
         mu=1e-9, holdout=0.1, use_sparse = True, verbose=False):
@@ -152,7 +157,7 @@ class Extractions(object):
         self.holdout = np.random.choice(N, np.floor(holdout * N), replace=False)
     else:
         raise ValueError("Holdout must be an array of indices or fraction")
-    self.X = sparse.hstack([self.rules.tocsr(), self.feats], format='csr')
+    self.X = sparse.hstack([self.rules, self.feats], format='csr')
     if not use_sparse:
       self.X = np.asarray(self.X.todense())
     w0 = np.concatenate([np.ones(R), np.zeros(F)])
@@ -219,7 +224,6 @@ class Extractions(object):
     grid = self.holdout if holdout_only else xrange(N)
     correct = 0
     #TODO: more efficient rule checking for sparse matrix using NONZERO
-    #TODO: got too deep here (check Alex's original code)
     dense_rules = self.rules.todense()
     for i in grid:
       for j in xrange(R):

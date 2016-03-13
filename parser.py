@@ -11,7 +11,7 @@ from collections import namedtuple, defaultdict
 from subprocess import Popen
 
 
-Sentence = namedtuple('Sentence', 'words, lemmas, poses, dep_parents, dep_labels')
+Sentence = namedtuple('Sentence', 'words, lemmas, poses, dep_parents, dep_labels, sent_id, doc_id')
 
 
 class SentenceParser:
@@ -34,7 +34,7 @@ class SentenceParser:
         if self.server_pid is not None:
             os.kill(self.server_pid, signal.SIGTERM)
 
-    def parse(self, doc):
+    def parse(self, doc, doc_id=None):
         """Parse a raw document as a string into a list of sentences"""
         if len(doc.strip()) == 0:
             return
@@ -43,6 +43,7 @@ class SentenceParser:
         if blocks[0].startswith("CoreNLP request timed out"):
             warnings.warn("CoreNLP request timed out for document")
             return
+        sent_id = 0
         for block in blocks:
             lines = block.split('\n')
             parts = defaultdict(list)
@@ -55,7 +56,10 @@ class SentenceParser:
                     if key == 'dep_parents':
                         val = int(val)
                     parts[key].append(val)
+            parts['sent_id'] = sent_id
+            parts['doc_id'] = doc_id
             sent = Sentence(**parts)
+            sent_id += 1
             yield sent
             
 '''
@@ -122,7 +126,8 @@ class DocParser:
     # Use SentenceParser to return parsed sentences
     def parseDocSentences(self):
         sp = SentenceParser()
-        return [sent for txt in self.parseDocs() for sent in sp.parse(txt)]
+        return [sent for doc_id, txt in enumerate(self.parseDocs())
+                for sent in sp.parse(txt, doc_id)]
     
     def _get_files(self):
         if os.path.isfile(self.path):

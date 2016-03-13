@@ -2,7 +2,7 @@ import os, sys, json
 from collections import namedtuple, defaultdict
 import random
 import numpy as np
-from scipy.sparse import lil_matrix, csr_matrix
+import scipy.sparse as sparse
 from tree_structs import corenlp_to_xmltree
 
 sys.path.append('{}/treedlib'.format(os.getcwd()))
@@ -209,7 +209,10 @@ class MindTaggerInstance:
     return tags
 
 class Extraction(object):
-    
+  """
+  Base class for an extraction
+  See Entity and Relation for examples
+  """
   def __init__(self, all_idxs, labels, sent, xt):
     self.all_idxs = all_idxs
     self.labels = labels
@@ -224,14 +227,14 @@ class Extraction(object):
 
   def render(self):
     self.xt.render_tree(self.all_idxs)
-
+  
   def __repr__(self):
     raise NotImplementedError()
-  
+    
 
 class Extractions(object):
   """
-  Base class for extractions
+  Base class for a collection of extractions
   Sub-classes need to yield extractions from sentences (_apply) and 
   generate features (_get_features)
   See Relations and Entities for examples
@@ -249,6 +252,24 @@ class Extractions(object):
     self.holdout = []
     self.extractions = list(self._extract(sents))
     self.mindtagger_instance = None
+  
+  def num_extractions(self):
+    return len(self.extractions)
+  
+  def num_rules(self, result='all'):
+    if self.rules is None:
+      return 0
+    vals = np.array(np.sum(np.array(self.rules.data)))
+    if result.lower().startswith('pos'):
+      return np.sum(vals == 1.)
+    if result.lower().startswith('neg'):
+      return np.sum(vals == -1.)
+    if result.lower().startswith('abs'):
+      return np.product(self.rules.shape) - self.rules.nnz
+    return self.rules.shape[1]
+ 
+  def num_feats(self):
+    return 0 if self.feats is None else self.feats.shape[1]
     
   def _extract(self, sents):
     for sent in sents:
@@ -258,11 +279,17 @@ class Extractions(object):
   def _apply(self, sent):
     raise NotImplementedError()
     
-  def apply_rules(self, rules):
-    self.rules = np.zeros((len(rules), len(self.extractions)))
-    for i,rule in enumerate(rules):
-      for j,ext in enumerate(self.extractions):
-        self.rules[i,j] = rule(ext)
+  def apply_rules(self, rules_f, clear=False):
+    """ Apply rule functions given in list
+    Allows adding to existing rules or clearing rules with CLEAR=True
+    """
+    nr_old = self.num_rules() if not clear else 0
+    add = sparse.lil_matrix((self.num_extractions(), len(rules_f)))
+    self.rules = add if (self.rules is None or clear)\
+                     else sparse.hstack([self.rules,add], format = 'lil')
+    for i,ext in enumerate(self.extractions):    
+      for ja,rule in enumerate(rules_f):
+        self.rules[i,ja + nr_old] = rule(ext)
         
   def _get_features(self):
       raise NotImplementedError()    
@@ -271,34 +298,33 @@ class Extractions(object):
     f_index = self._get_features(args)
     # Apply the feature generator, constructing a sparse matrix incrementally
     # Note that lil_matrix should be relatively efficient as we proceed row-wise
-    F = lil_matrix((len(f_index), len(self.extractions)))
-    for i,feat in enumerate(f_index.keys()):
-      self.feat_index[i] = feat
-      for j in f_index[feat]:
-        F[i,j] = 1
-    self.feats = csr_matrix(F)
-
-  def learn_feats_and_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9, holdout=0.1, verbose=False):
+    self.feats = sparse.lil_matrix((self.num_extractions(), len(f_index)))    
+    for j,feat in enumerate(f_index.keys()):
+      self.feat_index[j] = feat
+      for i in f_index[feat]:
+        self.feats[i,j] = 1
+        
+  def learn_feats_and_weights(self, nSteps=1000, sample=False, nSamples=100,
+        mu=1e-9, holdout=0.1, use_sparse = True, verbose=False):
     """
     Uses the R x N matrix of rules and the F x N matrix of features defined
     for the Relations object
     Stacks them, giving the rules a +1 prior (i.e. init value)
     Then runs learning, saving the learned weights
     Holds out a set of variables for testing, either a random fraction or a specific set of indices
-    """   
-    R, N = self.rules.shape  # dense
-    F, N = self.feats.shape  # sparse
-    
+    """
+    N, R, F = self.num_extractions(), self.num_rules(), self.num_feats()
     if hasattr(holdout, "__iter__"):
         self.holdout = holdout
     elif not hasattr(holdout, "__iter__") and (0 <= holdout < 1):
         self.holdout = np.random.choice(N, np.floor(holdout * N), replace=False)
     else:
-        raise ValueError("Holdout must be an array of indices or fraction")    
-    
-    self.X = np.array(np.vstack([self.rules, self.feats.todense()]))
+        raise ValueError("Holdout must be an array of indices or fraction")
+    self.X = sparse.hstack([self.rules, self.feats], format='csr')
+    if not use_sparse:
+      self.X = np.asarray(self.X.todense())
     w0 = np.concatenate([np.ones(R), np.zeros(F)])
-    self.w = learn_params(self.X[:, np.setdiff1d(range(N), self.holdout)],
+    self.w = learn_params(self.X[np.setdiff1d(range(N), self.holdout), :],
                           nSteps=nSteps, w0=w0, sample=sample,
                           nSamples=nSamples, mu=mu, verbose=verbose)
     probs = self.get_predicted_probability()
@@ -310,8 +336,7 @@ class Extractions(object):
     Get the array of predicted link function values (continuous) given learned weight param w
     Return either all variables or only holdout set
     """
-    return np.dot(self.X[:,self.holdout].T, self.w) if holdout_only else np.dot(self.X.T, self.w)       
-
+    return self.X[self.holdout, :].dot(self.w) if holdout_only else self.X.dot(self.w)
 
   def get_predicted_probability(self, holdout_only=False):
     """
@@ -329,7 +354,7 @@ class Extractions(object):
     
   def _handle_ground_truth(self, ground_truth, holdout_only):
     gt = None
-    N = self.rules.shape[1]
+    N = self.num_extractions()
     if len(ground_truth) == N:
       gt = ground_truth[self.holdout] if holdout_only else ground_truth
     elif holdout_only and len(ground_truth) == len(self.holdout):
@@ -360,14 +385,16 @@ class Extractions(object):
     Note: ground_truth must either be an array the length of the full dataset, or of the holdout
           If the latter, holdout_only must be set to True
     """
-    R, N = self.rules.shape
+    R, N = self.num_rules(), self.num_extractions()
     gt = self._handle_ground_truth(ground_truth, holdout_only)
     grid = self.holdout if holdout_only else xrange(N)
     correct = 0
-    for j in grid:
-      for i in xrange(R):
-        if self.rules[i,j] != 0:
-          correct += 1 if self.rules[i,j] == gt[j] else 0
+    #TODO: more efficient rule checking for sparse matrix using NONZERO
+    dense_rules = self.rules.todense()
+    for i in grid:
+      for j in xrange(R):
+        if dense_rules[i,j] != 0:
+          correct += 1 if dense_rules[i,j] == gt[j] else 0
           break
     return float(correct) / len(gt)
     
@@ -411,8 +438,14 @@ class Relations(Extractions):
     self.e1 = e1
     self.e2 = e2
     super(Relations, self).__init__(sents)
-    self.relations = self.extractions
-
+    
+  @property
+  def relations(self):
+    return self.extractions
+  @relations.setter
+  def relations(self, ex):
+    self.extractions = ex  
+  
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
     for e1_idxs in self.e1.apply(sent):
@@ -470,8 +503,14 @@ class Entities(Extractions):
       warnings.warn("e is not a Matcher subclass")
     self.e = e
     super(Entities, self).__init__(sents)
-    self.entities = self.extractions
 
+  @property
+  def entities(self):
+    return self.extractions
+  @entities.setter
+  def entities(self, ex):
+    self.extractions = ex
+  
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
     for e_idxs in self.e.apply(sent):
@@ -515,7 +554,7 @@ class Entities(Extractions):
 #
 def log_odds(p):
   """This is the logit function"""
-  return np.log(float(p) / (1-p))
+  return np.log(p / (1.0 - p))
 
 def odds_to_prob(l):
   """
@@ -537,21 +576,19 @@ def sample_data(X, w, nSamples):
 
   This can be calculated exactly, so this is essentially a noisy version of the exact calc...
   """
-  if type(X) != np.ndarray or type(w) != np.ndarray:
-    raise TypeError("Inputs should be np.ndarray type.")
-  R, N = X.shape
-  if w.shape != (R,):
-    raise Exception("w should be an array of length %s" % R)
+  N, R = X.shape
   t = np.zeros(N)
   f = np.zeros(N)
 
   # Take samples of random variables
-  for i in range(nSamples):
-    idx = random.randint(0, N-1)
-    if random.random() < odds_to_prob(np.dot(X[:,idx].T, w)):
-      t[idx] += 1
-    else:
-      f[idx] += 1
+  idxs = np.round(np.random.rand(nSamples) * (N-1)).astype(int)
+  ct = np.bincount(idxs)
+  # Estimate probability of correct assignment
+  increment = np.random.rand(nSamples) < odds_to_prob(X[idxs, :].dot(w))
+  increment_f = -1. * (increment - 1)
+  t[idxs] = increment * ct[idxs]
+  f[idxs] = increment_f * ct[idxs]
+  
   return t, f
 
 def exact_data(X, w):
@@ -559,15 +596,16 @@ def exact_data(X, w):
   We calculate the exact conditional probability of the decision variables in
   logistic regression; see sample_data
   """
-  if type(X) != np.ndarray or type(w) != np.ndarray:
-    raise TypeError("Inputs should be np.ndarray type.")
-  R, N = X.shape
-  if w.shape != (R,):
-    raise Exception("w should be an array of length %s" % R)
-  t = np.array(map(odds_to_prob, np.dot(X.T, w)))
+  t = odds_to_prob(X.dot(w))
   return t, 1-t
 
-def transform_sample_stats(X, t, f):
+def abs_csr(X):
+  """ Element-wise absolute value of csr matrix """
+  X_abs = X.copy()
+  X_abs.data = np.abs(X_abs.data)
+  return X_abs
+
+def transform_sample_stats(Xt, t, f, Xt_abs = None):
   """
   Here we calculate the expected accuracy of each rule/feature
   (corresponding to the rows of X) wrt to the distribution of samples S:
@@ -576,17 +614,18 @@ def transform_sample_stats(X, t, f):
                       = \frac{X_{i|x_{ij}>0}*t - X_{i|x_{ij}<0}*f}{t+f}
                       = \frac12\left(\frac{X*(t-f)}{t+f} + 1\right)
   """
-  if type(X) != np.ndarray:
-    raise TypeError("Inputs should be np.ndarray type.")
-  n_pred = np.diag(np.dot(abs(X), t+f))
-  p_correct = (np.diag(np.linalg.inv(n_pred)*(np.dot(X, t) - np.dot(X, f))) + 1) / 2
-  return p_correct, np.diag(n_pred)
+  if Xt_abs is None:
+    Xt_abs = abs_csr(Xt) if sparse.issparse(Xt) else abs(Xt)
+  n_pred = Xt_abs.dot(t+f)
+  m = (1. / (n_pred + 1e-8)) * (Xt.dot(t) - Xt.dot(f))
+  p_correct = (m + 1) / 2
+  return p_correct, n_pred
 
 def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose=False):
   """We perform SGD wrt the weights w"""
-  if type(X) != np.ndarray:
-    raise TypeError("Inputs should be np.ndarray type.")
-  R, N = X.shape
+  if type(X) != np.ndarray and not sparse.issparse(X):
+    raise TypeError("Inputs should be np.ndarray type or scipy sparse.")
+  N, R = X.shape
 
   # We initialize w at 1 for rules & 0 for features
   # As a default though, if no w0 provided, we initialize to all zeros
@@ -594,6 +633,10 @@ def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose
   g = np.zeros(R)
   l = np.zeros(R)
 
+  # Pre-generate other matrices
+  Xt = X.transpose()
+  Xt_abs = abs_csr(Xt) if sparse.issparse(Xt) else np.abs(Xt)
+  
   # Take SGD steps
   for step in range(nSteps):
     if step % 100 == 0 and verbose:
@@ -601,10 +644,10 @@ def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose
 
     # Get the expected rule accuracy
     t,f = sample_data(X, w, nSamples=nSamples) if sample else exact_data(X, w)
-    p_correct, n_pred = transform_sample_stats(X, t, f)
+    p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
 
     # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
-    l = np.clip(map(log_odds, p_correct), -10, 10)
+    l = np.clip(log_odds(p_correct), -10, 10)
 
     # SGD step, with \ell_2 regularization, and normalization by the number of samples
     g0 = (n_pred*(w - l)) / np.sum(n_pred) + mu*w

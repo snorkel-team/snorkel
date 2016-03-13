@@ -1,3 +1,12 @@
+/.virtualenv
 .ipynb_checkpoints
 *.pyc
 parser/
+/stanford-corenlp-*
+
+/saved_sents.pkl
+
+/deepdive
+/deepdive-*.tar.gz
+/mindtagger.pid
+/mindtagger

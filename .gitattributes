@@ -1,2 +1,3 @@
-*.html linguist-vendored=false
-*.txt  linguist-vendored=false
+*.html linguist-vendored
+*.txt  linguist-vendored
+gene_tag_example/data/* linguist-vendored

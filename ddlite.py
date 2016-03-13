@@ -279,12 +279,14 @@ class Extractions(object):
   def _apply(self, sent):
     raise NotImplementedError()
     
-  def apply_rules(self, rules_f):
-    """ Apply rule functions given in list. Allows adding to existing rules """
-    nr_old = self.num_rules()
+  def apply_rules(self, rules_f, clear=False):
+    """ Apply rule functions given in list
+    Allows adding to existing rules or clearing rules with CLEAR=True
+    """
+    nr_old = self.num_rules() if not clear else 0
     add = sparse.lil_matrix((self.num_extractions(), len(rules_f)))
-    self.rules = add if self.rules is None else sparse.hstack([self.rules,add], 
-                                                               format = 'lil')
+    self.rules = add if (self.rules is None or clear)\
+                     else sparse.hstack([self.rules,add], format = 'lil')
     for i,ext in enumerate(self.extractions):    
       for ja,rule in enumerate(rules_f):
         self.rules[i,ja + nr_old] = rule(ext)

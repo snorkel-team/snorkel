@@ -2,6 +2,9 @@ import os, sys, json
 from collections import namedtuple, defaultdict
 import random
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 from tree_structs import corenlp_to_xmltree
 
@@ -368,7 +371,7 @@ class Extractions(object):
     """
     Given the labels for the Relations set, return the classification accuracy
     Return either accuracy for all variables or only holdout set
-    Note: ground_truth must either be an array the length of the full dataset, or of the holdout
+    Note: ground_truth must be an array either the length of the full dataset, or of the holdout
           If the latter, holdout_only must be set to True
     """
     gt = self._handle_ground_truth(ground_truth, holdout_only)
@@ -382,7 +385,7 @@ class Extractions(object):
     natural baseline / quick metric
     Labels are assigned by the first rule that emits one for each relation (based on the order
     of the provided rules list)
-    Note: ground_truth must either be an array the length of the full dataset, or of the holdout
+    Note: ground_truth must be an array either the length of the full dataset, or of the holdout
           If the latter, holdout_only must be set to True
     """
     R, N = self.num_rules(), self.num_extractions()
@@ -397,6 +400,45 @@ class Extractions(object):
           correct += 1 if dense_rules[i,j] == gt[j] else 0
           break
     return float(correct) / len(gt)
+    
+  def _plot_prediction_probability(self, probs):
+    plt.hist(probs, bins=10, normed=False, facecolor='blue')
+    plt.xlim((0,1))
+    plt.xlabel("Probability")
+    plt.ylabel("# Predictions")
+    
+  def _plot_accuracy(self, probs, ground_truth):
+    x = 0.1 * (1 + np.array(range(10)))
+    bin_assign = [x[i] for i in np.digitize(probs, x)]
+    correct = (self.get_predicted() == ground_truth)
+    correct_prob = [np.mean(correct[bin_assign == p]) for p in x]
+    plt.plot(x, x, 'b--', x, correct_prob, 'ro-')
+    plt.xlabel("Probability")
+    plt.ylabel("Accuracy")
+
+  def plot_calibration(self, ground_truth = None):
+    """
+    Show classification accuracy and probability histogram plots
+    Note: ground_truth must be an array either the length of the full dataset, or of the holdout
+    """
+    has_holdout, has_gt = (len(self.holdout) > 0), (ground_truth is not None)
+    n_plots = 1 + has_holdout + (has_holdout and has_gt)
+    # Whole set histogram
+    plt.subplot(1,n_plots,1)
+    self._plot_prediction_probability(self.get_predicted_probability())
+    plt.title("(a) # Predictions (whole set)")
+    # Hold out histogram
+    if has_holdout:
+      holdout_probs = self.get_predicted_probability(holdout_only = True)
+      plt.subplot(1,n_plots,2)
+      self._plot_prediction_probability(holdout_probs)
+      plt.title("(b) # Predictions (holdout set)")
+      if has_gt:
+        gt = self._handle_ground_truth(ground_truth, holdout_only = True)
+        plt.subplot(1,n_plots,3)
+        self._plot_accuracy(self, holdout_probs, gt)
+        plt.title("(c) Accuracy (holdout set)")
+    plt.show()
     
   def generate_mindtagger_items(self):
     raise NotImplementedError()
@@ -639,8 +681,11 @@ def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose
   
   # Take SGD steps
   for step in range(nSteps):
-    if step % 100 == 0 and verbose:
-      print "Learning epoch = %s" % step
+    if step % 100 == 0 and verbose:    
+      if step % 500 == 0:
+        print "\nLearning epoch = ",
+      print "%s\t" % step,
+      
 
     # Get the expected rule accuracy
     t,f = sample_data(X, w, nSamples=nSamples) if sample else exact_data(X, w)

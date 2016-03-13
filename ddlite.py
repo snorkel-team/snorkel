@@ -71,8 +71,38 @@ def tag_seqs(words, seqs, tags):
   
 class MindTaggerInstance:
 
-  def __init__(self):
+  def __init__(self, style_block, title_block):
+    self._style_block = style_block
+    self._title_block = title_block
     self.instance = None
+    
+  def _generate_task_format(self):
+    return  """
+            <mindtagger mode="precision">
+
+              <template for="each-item">
+                {}
+                with expectation <strong>{{item.expectation | number:3}}</strong>
+                appeared in sentence {{item.sent_id}}:
+                <blockquote>
+                    <big mindtagger-word-array="item.words" array-format="json">
+                        {}
+                    </big>
+                </blockquote>
+
+                <div>
+                  <div mindtagger-item-details></div>
+                </div>
+              </template>
+
+              <template for="tags">
+                <span mindtagger-adhoc-tags></span>
+                <span mindtagger-note-tags></span>
+              </template>
+
+            </mindtagger>
+            """.format(self._title_block, self._style_block)
+    
 
   def launch_mindtagger(self, task_name, generate_items, task_root = "mindtagger", task_recreate = True, **kwargs):
     import os, socket, pipes
@@ -120,32 +150,7 @@ class MindTaggerInstance:
             template: template.html
             """ % args)
         with open("%(task_path)s/template.html" % args, "w") as f:
-          f.write("""
-            <mindtagger mode="precision">
-
-              <template for="each-item">
-                <strong>{{item.e1_label}} -- {{item.e2_label}}</strong>
-                with expectation <strong>{{item.expectation | number:3}}</strong>
-                appeared in sentence {{item.sent_id}}:
-                <blockquote>
-                    <big mindtagger-word-array="item.words" array-format="json">
-                        <mindtagger-highlight-words index-array="item.e1_idxs" array-format="json" with-style="background-color: yellow;"/>
-                        <mindtagger-highlight-words index-array="item.e2_idxs" array-format="json" with-style="background-color: cyan;"/>
-                    </big>
-                </blockquote>
-
-                <div>
-                  <div mindtagger-item-details></div>
-                </div>
-              </template>
-
-              <template for="tags">
-                <span mindtagger-adhoc-tags></span>
-                <span mindtagger-note-tags></span>
-              </template>
-
-            </mindtagger>
-            """ % args)
+          f.write(self._generate_task_format())
         with open("%(task_path)s/items.csv" % args, "w") as f:
           # prepare data to label
           import csv
@@ -344,8 +349,13 @@ class Extractions(object):
   def generate_mindtagger_items(self):
     raise NotImplementedError()
     
+  def mindtagger_style_blocks(self):
+    raise NotImplementedError()
+    
   def open_mindtagger(self, num_sample = 100, **kwargs):
-    self.mindtagger_instance = MindTaggerInstance()
+    blocks = self.mindtagger_style_blocks()
+    self.mindtagger_instance = MindTaggerInstance(blocks['style_block'],
+                                                  blocks['title_block'])
     return self.mindtagger_instance.open_mindtagger(self.extractions,
              self.generate_mindtagger_items, num_sample, **kwargs)
   
@@ -413,6 +423,17 @@ class Relations(Extractions):
         e2_idxs         = json.dumps(item.e2_idxs),
         e2_label        = item.e2_label,
       )
+      
+  def mindtagger_style_blocks(self):
+    s1 = """
+         <mindtagger-highlight-words index-array="item.e1_idxs" array-format="json" with-style="background-color: yellow;"/>
+         <mindtagger-highlight-words index-array="item.e2_idxs" array-format="json" with-style="background-color: cyan;"/>
+         """
+    s2 = """
+         <strong>{{item.e1_label}} -- {{item.e2_label}}</strong>
+         """
+    return {'style_block' : s1, 'title_block' : s2}
+                        
     
 
 class Entity:

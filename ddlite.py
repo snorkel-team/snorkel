@@ -74,9 +74,8 @@ def tag_seqs(words, seqs, tags):
   
 class MindTaggerInstance:
 
-  def __init__(self, style_block, title_block):
-    self._style_block = style_block
-    self._title_block = title_block
+  def __init__(self, mindtagger_format):
+    self._mindtagger_format = mindtagger_format
     self.instance = None
     
   def _generate_task_format(self):
@@ -84,12 +83,12 @@ class MindTaggerInstance:
             <mindtagger mode="precision">
 
               <template for="each-item">
-                {}
-                with expectation <strong>{{item.expectation | number:3}}</strong>
-                appeared in sentence {{item.sent_id}}:
+                %(title_block)s
+                with probability <strong>{{item.probability | number:3}}</strong>
+                appeared in sentence {{item.sent_id}} of document {{item.doc_id}}:
                 <blockquote>
                     <big mindtagger-word-array="item.words" array-format="json">
-                        {}
+                        %(style_block)s
                     </big>
                 </blockquote>
 
@@ -104,11 +103,12 @@ class MindTaggerInstance:
               </template>
 
             </mindtagger>
-            """.format(self._title_block, self._style_block)
+            """ % self._mindtagger_format
     
 
-  def launch_mindtagger(self, task_name, generate_items, task_root = "mindtagger", task_recreate = True, **kwargs):
-    import os, socket, pipes
+  def launch_mindtagger(self, task_name, generate_items, task_root="mindtagger",
+                        task_recreate = True, **kwargs):
+    import socket, pipes
 
     args = dict(
         task = task_name,
@@ -180,12 +180,10 @@ class MindTaggerInstance:
     self.instance = args
     return args['mindtagger_url']
   
-  def open_mindtagger(self, extractions, generate_mt_items, num_sample = 100, **kwargs):
-    # decide the relations to label
-    ext_sample = random.sample(extractions, num_sample) if len(extractions) > num_sample else extractions
-    
+  def open_mindtagger(self, generate_mt_items, num_sample = 100, **kwargs):
+
     def generate_items():
-      return generate_mt_items(ext_sample)      
+      return generate_mt_items(num_sample)      
 
     # determine a task name using hash of the items
     # See: http://stackoverflow.com/a/7823051/390044 for non-negative hexadecimal
@@ -209,6 +207,27 @@ class MindTaggerInstance:
     tags = json.loads(t.read())
 
     return tags
+
+class Extraction(object):
+    
+  def __init__(self, all_idxs, labels, sent, xt):
+    self.all_idxs = all_idxs
+    self.labels = labels
+    # Absorb XMLTree and Sentence object attributes for access by rules
+    self.xt = xt
+    self.root = self.xt.root
+    self.__dict__.update(sent.__dict__)
+    self.probability = None
+
+    # Add some additional useful attributes
+    self.tagged_sent = ' '.join(tag_seqs(self.words, self.all_idxs, self.labels))
+
+  def render(self):
+    self.xt.render_tree(self.all_idxs)
+
+  def __repr__(self):
+    raise NotImplementedError()
+  
 
 class Extractions(object):
   """
@@ -282,6 +301,9 @@ class Extractions(object):
     self.w = learn_params(self.X[:, np.setdiff1d(range(N), self.holdout)],
                           nSteps=nSteps, w0=w0, sample=sample,
                           nSamples=nSamples, mu=mu, verbose=verbose)
+    probs = self.get_predicted_probability()
+    for i, ext in enumerate(self.extractions):
+      ext.probability = probs[i]
 
   def get_link(self, holdout_only=False):
     """
@@ -352,15 +374,13 @@ class Extractions(object):
   def generate_mindtagger_items(self):
     raise NotImplementedError()
     
-  def mindtagger_style_blocks(self):
+  def mindtagger_format(self):
     raise NotImplementedError()
     
   def open_mindtagger(self, num_sample = 100, **kwargs):
-    blocks = self.mindtagger_style_blocks()
-    self.mindtagger_instance = MindTaggerInstance(blocks['style_block'],
-                                                  blocks['title_block'])
-    return self.mindtagger_instance.open_mindtagger(self.extractions,
-             self.generate_mindtagger_items, num_sample, **kwargs)
+    self.mindtagger_instance = MindTaggerInstance(self.mindtagger_format())
+    return self.mindtagger_instance.open_mindtagger(self.generate_mindtagger_items,
+                                                    num_sample, **kwargs)
   
   def get_mindtagger_tags(self):
     return self.mindtagger_instance.get_mindtagger_tags()
@@ -369,25 +389,14 @@ class Extractions(object):
     return '\n'.join(str(e) for e in self.extractions)
   
           
-class Relation:
+class Relation(Extraction):
   def __init__(self, e1_idxs, e2_idxs, e1_label, e2_label, sent, xt):
     self.e1_idxs = e1_idxs
     self.e2_idxs = e2_idxs
-    self.idxs = [self.e1_idxs, self.e2_idxs]
     self.e1_label = e1_label
     self.e2_label = e2_label
-    self.labels = [self.e1_label, self.e2_label]
-
-    # Absorb XMLTree and Sentence object attributes for access by rules
-    self.xt = xt
-    self.root = self.xt.root
-    self.__dict__.update(sent.__dict__)
-
-    # Add some additional useful attributes
-    self.tagged_sent = ' '.join(tag_seqs(self.words, self.idxs, self.labels))
-
-  def render(self):
-    self.xt.render_tree(self.idxs)
+    super(Relation, self).__init__([self.e1_idxs, self.e2_idxs],
+                                   [self.e1_label, self.e2_label], sent, xt)
 
   def __repr__(self):
     return '<Relation: {}{} - {}{}>'.format([self.words[i] for i in self.e1_idxs], 
@@ -418,20 +427,22 @@ class Relations(Extractions):
         f_index[feat].append(j)
     return f_index
     
-  def generate_mindtagger_items(self, extractions_sample):
-    for i, item in enumerate(extractions_sample):
+  def generate_mindtagger_items(self, n_samp):
+    N = len(self.extractions)
+    ext_sample = random.sample(self.extractions, n_samp) if N > n_samp else self.extractions 
+    for item in ext_sample:
       yield dict(
-        sent_id         = str(i),
-        # FIXME doc_id  = item.doc_id,
-        # FIXME sent_id = item.sent_id,
+        doc_id          = item.doc_id,
+        sent_id         = item.sent_id,
         words           = json.dumps(item.words),
         e1_idxs         = json.dumps(item.e1_idxs),
         e1_label        = item.e1_label,
         e2_idxs         = json.dumps(item.e2_idxs),
         e2_label        = item.e2_label,
+        probability     = item.probability
       )
       
-  def mindtagger_style_blocks(self):
+  def mindtagger_format(self):
     s1 = """
          <mindtagger-highlight-words index-array="item.e1_idxs" array-format="json" with-style="background-color: yellow;"/>
          <mindtagger-highlight-words index-array="item.e2_idxs" array-format="json" with-style="background-color: cyan;"/>
@@ -443,20 +454,11 @@ class Relations(Extractions):
                         
     
 
-class Entity:
+class Entity(Extraction):
   def __init__(self, idxs, label, sent, xt):
     self.idxs = idxs
     self.label = label
-    # Absorb XMLTree and Sentence object attributes for access by rules
-    self.xt = xt
-    self.root = self.xt.root
-    self.__dict__.update(sent.__dict__)
-
-    # Add some additional useful attributes
-    self.tagged_sent = ' '.join(tag_seqs(self.words, [self.idxs], [self.label]))
-
-  def render(self):
-    self.xt.render_tree([self.idxs])
+    super(Entity, self).__init__([idxs], [label], sent, xt)
 
   def __repr__(self):
     return '<Entity: {}{}>'.format([self.words[i] for i in self.idxs], self.idxs)
@@ -481,14 +483,31 @@ class Entities(Extractions):
     for j,ext in enumerate(self.extractions):
       for feat in get_feats(ext.root, ext.idxs):
         f_index[feat].append(j)
-      for feat in get_ddlib_feats(Sentence(ext.words, ext.lemmas, ext.poses,
-                                           ext.dep_parents, ext.dep_labels),
-                                  ext.idxs):
+      for feat in get_ddlib_feats(ext, ext.idxs):
         f_index["DDLIB_" + feat].append(j)
     return f_index    
   
-  def generate_mindtagger_items(self, extractions_sample):
-    pass
+  def generate_mindtagger_items(self, n_samp):
+    N = len(self.extractions)
+    ext_sample = random.sample(self.extractions, n_samp) if N > n_samp else self.extractions 
+    for item in ext_sample:
+      yield dict(
+        doc_id          = item.doc_id,
+        sent_id         = item.sent_id,
+        words           = json.dumps(item.words),
+        idxs            = json.dumps(item.idxs),
+        label           = item.label,
+        probability     = item.probability
+      )
+      
+  def mindtagger_format(self):
+    s1 = """
+         <mindtagger-highlight-words index-array="item.idxs" array-format="json" with-style="background-color: cyan;"/>
+         """
+    s2 = """
+         <strong>{{item.label}} candidate</strong>
+         """
+    return {'style_block' : s1, 'title_block' : s2}
 
 #
 # Logistic regression algs

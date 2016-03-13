@@ -40,7 +40,7 @@ class SentenceParser:
             return
         resp = requests.post(self.endpoint, data=doc, allow_redirects=True)
         blocks = resp.content.strip().split('\n\n')
-        if blocks[0].startswith('CoreNLP request timed out'):
+        if blocks[0].startswith("CoreNLP request timed out"):
             warnings.warn("CoreNLP request timed out for document")
             return
         for block in blocks:

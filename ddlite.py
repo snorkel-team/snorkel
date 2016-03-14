@@ -241,7 +241,10 @@ class Extraction(object):
     self.id = ex_id
   def __getattr__(self, name):
     if name == 'probability':
-      return self.extractions.get_predicted_probability(subset=[self.id])[0]
+      if self.extractions.X is None or self.extractions.w is None:
+        return None
+      else:
+        return self.extractions.get_predicted_probability(subset=[self.id])[0]
     return getattr(self.extractions._extractions[self.id], name)
   def __repr__(self):
     return str(self.extractions._extractions[self.id])
@@ -378,6 +381,8 @@ class Extractions(object):
     Get the array of predicted link function values (continuous) given learned weight param w
     Return either all variables or only holdout set
     """
+    if self.X is None or self.w is None:
+      raise ValueError("Inference has not been run yet")
     if subset is None:
       return self.X.dot(self.w)
     if subset is 'holdout':

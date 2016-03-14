@@ -1,11 +1,13 @@
-import os, sys, json
-from collections import namedtuple, defaultdict
+import atexit, json, os, sys
+from collections import defaultdict
 import random
+
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
+
 from tree_structs import corenlp_to_xmltree
 
 sys.path.append('{}/treedlib'.format(os.getcwd()))
@@ -13,6 +15,10 @@ from treedlib import compile_relation_feature_generator
 from entity_features import *
 
 from parser import *
+
+######################################
+############## MATCHERS ##############
+###################################### 
 
 class Matcher(object):
   def apply(self, s):
@@ -75,11 +81,23 @@ def tag_seqs(words, seqs, tags):
     dj += len(seqs[i]) - 1
   return words_out
   
+########################################
+############## MINDTAGGER ##############
+######################################## 
+
 class MindTaggerInstance:
 
   def __init__(self, mindtagger_format):
     self._mindtagger_format = mindtagger_format
     self.instance = None
+    atexit.register(self._kill_mindtagger)
+  
+  def _system(script):
+      return os.system("bash -c %s" % pipes.quote(script))
+    
+  def _kill_mindtagger(self):
+    if self.instance is not None:
+      self._system("kill -TERM $(cat mindtagger.pid)")
     
   def _generate_task_format(self):
     return  """
@@ -127,12 +145,11 @@ class MindTaggerInstance:
     # quoted values for shell
     shargs = { k: pipes.quote(str(v)) for k,v in args.iteritems() }
 
-    def system(script):
-      return os.system("bash -c %s" % pipes.quote(script))
+    
 
     # install mindbender included in DeepDive's release
     print "Making sure MindTagger is installed. Hang on!"
-    if system("""
+    if self._system("""
       export PREFIX="$PWD"/deepdive
       [[ -x "$PREFIX"/bin/mindbender ]] ||
       bash <(curl -fsSL git.io/getdeepdive || wget -qO- git.io/getdeepdive) deepdive_from_release
@@ -141,7 +158,7 @@ class MindTaggerInstance:
     if task_recreate or not os.path.exists(args['task_path']):
       # prepare a mindtagger task from the data this object is holding
       try:
-        if system("""
+        if self._system("""
           set -eu
           t=%(task_path)s
           mkdir -p "$t"
@@ -171,14 +188,14 @@ class MindTaggerInstance:
         raise OSError("Mindtagger task data could not be prepared: %s" % str(sys.exc_info()))
 
     # launch mindtagger
-    if system("""
+    if self._system("""
       # restart any running mindtagger instance
       ! [ -s mindtagger.pid ] || kill -TERM $(cat mindtagger.pid) || true
       PORT=%(port)s deepdive/bin/mindbender tagger %(task_root)s/*/mindtagger.conf &
       echo $! >mindtagger.pid
       """ % shargs) != 0: raise OSError("Mindtagger could not be started")
-    while system("curl --silent --max-time 1 --head %(mindtagger_url)s >/dev/null" % shargs) != 0:
-      time.sleep(0.1)
+    while self._system("curl --silent --max-time 1 --head %(mindtagger_url)s >/dev/null" % shargs) != 0:
+      time.sleep(0.1)        
 
     self.instance = args
     return args['mindtagger_url']
@@ -211,10 +228,25 @@ class MindTaggerInstance:
 
     return tags
 
+#########################################
+############## EXTRACTIONS ##############
+#########################################
+
 class Extraction(object):
+  def __init__(self, extractions, ex_id):
+    self.extractions = extractions
+    self.id = ex_id
+  def __getattr__(self, name):
+    if name == 'probability':
+      return self.extractions.get_predicted_probability(subset=[self.id])
+    return getattr(self.extractions._extractions[self.id], name)
+  def __repr__(self):
+    return str(self.extractions._extractions[self.id])
+
+class extraction_internal(object):
   """
   Base class for an extraction
-  See Entity and Relation for examples
+  See entity_internal and relation_internal for examples
   """
   def __init__(self, all_idxs, labels, sent, xt):
     self.all_idxs = all_idxs
@@ -223,7 +255,6 @@ class Extraction(object):
     self.xt = xt
     self.root = self.xt.root
     self.__dict__.update(sent.__dict__)
-    self.probability = None
 
     # Add some additional useful attributes
     self.tagged_sent = ' '.join(tag_seqs(self.words, self.all_idxs, self.labels))
@@ -234,7 +265,6 @@ class Extraction(object):
   def __repr__(self):
     raise NotImplementedError()
     
-
 class Extractions(object):
   """
   Base class for a collection of extractions
@@ -253,11 +283,20 @@ class Extractions(object):
     self.feat_index = {}
     self.w = None
     self.holdout = []
-    self.extractions = list(self._extract(sents))
+    self._extractions = list(self._extract(sents))
     self.mindtagger_instance = None
   
+  def __getitem__(self, i):
+    return Extraction(self, i)
+    
+  def __len__(self):
+    return len(self._extractions)
+
+  def __iter__(self):
+    return (Extraction(self, i) for i in xrange(0, len(self)))
+  
   def num_extractions(self):
-    return len(self.extractions)
+    return len(self)
   
   def num_rules(self, result='all'):
     if self.rules is None:
@@ -290,7 +329,7 @@ class Extractions(object):
     add = sparse.lil_matrix((self.num_extractions(), len(rules_f)))
     self.rules = add if (self.rules is None or clear)\
                      else sparse.hstack([self.rules,add], format = 'lil')
-    for i,ext in enumerate(self.extractions):    
+    for i,ext in enumerate(self._extractions):    
       for ja,rule in enumerate(rules_f):
         self.rules[i,ja + nr_old] = rule(ext)
         
@@ -330,30 +369,34 @@ class Extractions(object):
     self.w = learn_params(self.X[np.setdiff1d(range(N), self.holdout), :],
                           nSteps=nSteps, w0=w0, sample=sample,
                           nSamples=nSamples, mu=mu, verbose=verbose)
-    probs = self.get_predicted_probability()
-    for i, ext in enumerate(self.extractions):
-      ext.probability = probs[i]
 
-  def get_link(self, holdout_only=False):
+  def get_link(self, subset=None):
     """
     Get the array of predicted link function values (continuous) given learned weight param w
     Return either all variables or only holdout set
     """
-    return self.X[self.holdout, :].dot(self.w) if holdout_only else self.X.dot(self.w)
+    if subset is None:
+      return self.X.dot(self.w)
+    if subset is 'holdout':
+      return self.X[self.holdout, :].dot(self.w)
+    try:
+      return self.X[subset, :].dow(self.w)
+    except:
+      raise ValueError("subset must be either 'holdout' or an array of indices 0 <= i < {}".format(self.num_extractions()))
 
-  def get_predicted_probability(self, holdout_only=False):
+  def get_predicted_probability(self, subset=None):
     """
     Get the array of predicted probabilities (continuous) for variables given learned weight param w
     Return either all variables or only holdout set
     """
-    return odds_to_prob(self.get_link(holdout_only))
+    return odds_to_prob(self.get_link(subset))
  
-  def get_predicted(self, holdout_only=False):
+  def get_predicted(self, subset=None):
     """
     Get the array of predicted (boolean) variables given learned weight param w
     Return either all variables or only holdout set
     """
-    return np.sign(self.get_link(holdout_only))
+    return np.sign(self.get_link(subset))
     
   def _handle_ground_truth(self, ground_truth, holdout_only):
     gt = None
@@ -375,7 +418,7 @@ class Extractions(object):
           If the latter, holdout_only must be set to True
     """
     gt = self._handle_ground_truth(ground_truth, holdout_only)
-    pred = self.get_predicted(holdout_only)
+    pred = self.get_predicted('holdout' if holdout_only else None)
     return (np.dot(pred, gt) / len(gt) + 1) / 2
 
   def get_rule_priority_vote_accuracy(self, ground_truth, holdout_only=False):
@@ -410,7 +453,7 @@ class Extractions(object):
   def _plot_accuracy(self, probs, ground_truth):
     x = 0.1 * (1 + np.array(range(10)))
     bin_assign = [x[i] for i in np.digitize(probs, x)]
-    correct = (self.get_predicted() == ground_truth)
+    correct = ((2*(probs >= 0.5) - 1) == ground_truth)
     correct_prob = [np.mean(correct[bin_assign == p]) for p in x]
     plt.plot(x, x, 'b--', x, correct_prob, 'ro-')
     plt.xlabel("Probability")
@@ -429,7 +472,7 @@ class Extractions(object):
     plt.title("(a) # Predictions (whole set)")
     # Hold out histogram
     if has_holdout:
-      holdout_probs = self.get_predicted_probability(holdout_only = True)
+      holdout_probs = self.get_predicted_probability('holdout')
       plt.subplot(1,n_plots,2)
       self._plot_prediction_probability(holdout_probs)
       plt.title("(b) # Predictions (holdout set)")
@@ -455,17 +498,24 @@ class Extractions(object):
     return self.mindtagger_instance.get_mindtagger_tags()
   
   def __repr__(self):
-    return '\n'.join(str(e) for e in self.extractions)
-  
-          
-class Relation(Extraction):
+    return '\n'.join(str(e) for e in self._extractions)
+
+#######################################
+############## RELATIONS ##############
+#######################################
+
+# Alias for relation
+Relation = Extraction
+
+class relation_internal(extraction_internal):
   def __init__(self, e1_idxs, e2_idxs, e1_label, e2_label, sent, xt):
     self.e1_idxs = e1_idxs
     self.e2_idxs = e2_idxs
     self.e1_label = e1_label
     self.e2_label = e2_label
-    super(Relation, self).__init__([self.e1_idxs, self.e2_idxs],
-                                   [self.e1_label, self.e2_label], sent, xt)
+    super(relation_internal, self).__init__([self.e1_idxs, self.e2_idxs],
+                                            [self.e1_label, self.e2_label], 
+                                            sent, xt)
 
   def __repr__(self):
     return '<Relation: {}{} - {}{}>'.format([self.words[i] for i in self.e1_idxs], 
@@ -480,33 +530,32 @@ class Relations(Extractions):
     self.e1 = e1
     self.e2 = e2
     super(Relations, self).__init__(sents)
-    
-  @property
-  def relations(self):
-    return self.extractions
-  @relations.setter
-  def relations(self, ex):
-    self.extractions = ex  
+  
+  def __getitem__(self, i):
+    return Relation(self, i)  
   
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
     for e1_idxs in self.e1.apply(sent):
       for e2_idxs in self.e2.apply(sent):
-        yield Relation(e1_idxs, e2_idxs, self.e1.label, self.e2.label, sent, xt)
+        yield relation_internal(e1_idxs, e2_idxs, self.e1.label, 
+                                self.e2.label, sent, xt)
   
   def _get_features(self, method='treedlib'):
     get_feats = compile_relation_feature_generator()
     f_index = defaultdict(list)
-    for j,ext in enumerate(self.extractions):
+    for j,ext in enumerate(self._extractions):
       for feat in get_feats(ext.root, ext.e1_idxs, ext.e2_idxs):
         f_index[feat].append(j)
     return f_index
     
   def generate_mindtagger_items(self, n_samp):
-    N = len(self.extractions)
-    ext_sample = random.sample(self.extractions, n_samp) if N > n_samp else self.extractions 
-    for item in ext_sample:
+    N = len(self._extractions)
+    ext_sample = np.random.choice(N, n_samp, replace=False) if N > n_samp else range(N) 
+    for i in ext_sample:
+      item = self[i]      
       yield dict(
+        ext_id          = item.id,
         doc_id          = item.doc_id,
         sent_id         = item.sent_id,
         words           = json.dumps(item.words),
@@ -526,14 +575,19 @@ class Relations(Extractions):
          <strong>{{item.e1_label}} -- {{item.e2_label}}</strong>
          """
     return {'style_block' : s1, 'title_block' : s2}
-                        
     
+######################################
+############## ENTITIES ##############
+######################################     
 
-class Entity(Extraction):
+# Alias for Entity
+Entity = Extraction
+
+class entity_internal(extraction_internal):
   def __init__(self, idxs, label, sent, xt):
     self.idxs = idxs
     self.label = label
-    super(Entity, self).__init__([idxs], [label], sent, xt)
+    super(entity_internal, self).__init__([idxs], [label], sent, xt)
 
   def __repr__(self):
     return '<Entity: {}{}>'.format([self.words[i] for i in self.idxs], self.idxs)
@@ -545,23 +599,19 @@ class Entities(Extractions):
       warnings.warn("e is not a Matcher subclass")
     self.e = e
     super(Entities, self).__init__(sents)
-
-  @property
-  def entities(self):
-    return self.extractions
-  @entities.setter
-  def entities(self, ex):
-    self.extractions = ex
+  
+  def __getitem__(self, i):
+    return Entity(self, i)  
   
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
     for e_idxs in self.e.apply(sent):
-      yield Entity(e_idxs, self.e.label, sent, xt)        
+      yield entity_internal(e_idxs, self.e.label, sent, xt)        
   
   def _get_features(self, method='treedlib'):
     get_feats = compile_entity_feature_generator()
     f_index = defaultdict(list)
-    for j,ext in enumerate(self.extractions):
+    for j,ext in enumerate(self._extractions):
       for feat in get_feats(ext.root, ext.idxs):
         f_index[feat].append(j)
       for feat in get_ddlib_feats(ext, ext.idxs):
@@ -569,10 +619,12 @@ class Entities(Extractions):
     return f_index    
   
   def generate_mindtagger_items(self, n_samp):
-    N = len(self.extractions)
-    ext_sample = random.sample(self.extractions, n_samp) if N > n_samp else self.extractions 
-    for item in ext_sample:
+    N = self.num_extractions()
+    ext_sample = np.random.choice(N, n_samp, replace=False) if N > n_samp else range(N) 
+    for i in ext_sample:
+      item = self[i]      
       yield dict(
+        ext_id          = item.id,
         doc_id          = item.doc_id,
         sent_id         = item.sent_id,
         words           = json.dumps(item.words),
@@ -589,6 +641,10 @@ class Entities(Extractions):
          <strong>{{item.label}} candidate</strong>
          """
     return {'style_block' : s1, 'title_block' : s2}
+
+########################################
+############## ALGORITHMS ##############
+######################################## 
 
 #
 # Logistic regression algs
@@ -715,18 +771,18 @@ def main():
   print "***** Relation0 *****"
   R = Relations(g, b, sents)
   print R
-  print R.relations[0].tagged_sent
+  print R[0].tagged_sent
   
   print "***** Relation 1 *****"
   R = Relations(g, g, sents)
   print R
-  for r in R.relations:
+  for r in R:
       print r.tagged_sent
   
   print "***** Entity *****"
   E = Entities(g, sents)
   print E                
-  for e in E.entities:
+  for e in E:
       print e.tagged_sent
 
 if __name__ == '__main__':

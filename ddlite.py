@@ -1,19 +1,22 @@
-import atexit, json, os, sys
+# Base Python
+import atexit, json, os, pipes, socket, sys, warnings
 from collections import defaultdict
-import random
 
+# Scientific modules
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
+warnings.filterwarnings("ignore", module="matplotlib")
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 
-from tree_structs import corenlp_to_xmltree
-
+# Feature modules
 sys.path.append('{}/treedlib'.format(os.getcwd()))
 from treedlib import compile_relation_feature_generator
+from tree_structs import corenlp_to_xmltree
 from entity_features import *
 
+# ddlite parsers
 from parser import *
 
 ######################################
@@ -92,7 +95,7 @@ class MindTaggerInstance:
     self.instance = None
     atexit.register(self._kill_mindtagger)
   
-  def _system(script):
+  def _system(self, script):
       return os.system("bash -c %s" % pipes.quote(script))
     
   def _kill_mindtagger(self):
@@ -129,8 +132,7 @@ class MindTaggerInstance:
 
   def launch_mindtagger(self, task_name, generate_items, task_root="mindtagger",
                         task_recreate = True, **kwargs):
-    import socket, pipes
-
+                            
     args = dict(
         task = task_name,
         task_root = task_root,
@@ -168,7 +170,7 @@ class MindTaggerInstance:
             title: %(task)s Labeling task for estimating precision
             items: {
                 file: items.csv
-                key_columns: [sent_id]
+                key_columns: [ext_id]
             }
             template: template.html
             """ % args)
@@ -219,7 +221,7 @@ class MindTaggerInstance:
     return IFrame(url, **kwargs)
     
   def get_mindtagger_tags(self):
-    tags_url = "%(mindtagger_baseurl)sapi/mindtagger/%(task)s/tags.json?attrs=sent_id" % self.instance
+    tags_url = "%(mindtagger_baseurl)sapi/mindtagger/%(task)s/tags.json?attrs=ext_id" % self.instance
 
     import urllib, json
     opener = urllib.FancyURLopener({})
@@ -233,12 +235,13 @@ class MindTaggerInstance:
 #########################################
 
 class Extraction(object):
+  """ Proxy providing an interface into the Extractions class """
   def __init__(self, extractions, ex_id):
     self.extractions = extractions
     self.id = ex_id
   def __getattr__(self, name):
     if name == 'probability':
-      return self.extractions.get_predicted_probability(subset=[self.id])
+      return self.extractions.get_predicted_probability(subset=[self.id])[0]
     return getattr(self.extractions._extractions[self.id], name)
   def __repr__(self):
     return str(self.extractions._extractions[self.id])
@@ -380,7 +383,7 @@ class Extractions(object):
     if subset is 'holdout':
       return self.X[self.holdout, :].dot(self.w)
     try:
-      return self.X[subset, :].dow(self.w)
+      return self.X[subset, :].dot(self.w)
     except:
       raise ValueError("subset must be either 'holdout' or an array of indices 0 <= i < {}".format(self.num_extractions()))
 
@@ -515,7 +518,7 @@ class relation_internal(extraction_internal):
     self.e2_label = e2_label
     super(relation_internal, self).__init__([self.e1_idxs, self.e2_idxs],
                                             [self.e1_label, self.e2_label], 
-                                            sent, xt)
+                                             sent, xt)
 
   def __repr__(self):
     return '<Relation: {}{} - {}{}>'.format([self.words[i] for i in self.e1_idxs], 
@@ -550,7 +553,7 @@ class Relations(Extractions):
     return f_index
     
   def generate_mindtagger_items(self, n_samp):
-    N = len(self._extractions)
+    N = len(self)
     ext_sample = np.random.choice(N, n_samp, replace=False) if N > n_samp else range(N) 
     for i in ext_sample:
       item = self[i]      

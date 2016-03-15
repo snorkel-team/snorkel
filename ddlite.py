@@ -1,5 +1,5 @@
 # Base Python
-import atexit, json, os, pipes, socket, sys, warnings
+import atexit, bisect, json, os, pipes, re, socket, sys, warnings
 from collections import defaultdict
 
 # Scientific modules
@@ -19,9 +19,9 @@ from entity_features import *
 # ddlite parsers
 from parser import *
 
-######################################
-############## MATCHERS ##############
-###################################### 
+##################################################################
+############################ MATCHERS ############################
+################################################################## 
 
 class Matcher(object):
   def apply(self, s):
@@ -62,6 +62,35 @@ class DictionaryMatch(Matcher):
         if phrase in self.dl[l]:
           yield list(range(i, i+l))
 
+class RegexMatch(Matcher):
+  """Selects according to ngram-matching against a regex """
+  def __init__(self, label, regex_pattern, match_attrib='words', ignore_case=True):
+    self.label = label
+    self.match_attrib = match_attrib
+    # Ignore whitespace when we join the match attribute
+    self._re_comp = re.compile(regex_pattern, flags=re.I if ignore_case else 0)
+
+  def apply(self, s):
+    """
+    Take in an object or dictionary which contains match_attrib
+    and get the index lists of matching phrases
+    """
+    # Make sure we're operating on a dict, then get match_attrib
+    try:
+      seq = s[self.match_attrib]
+    except TypeError:
+      seq = s.__dict__[self.match_attrib]
+    
+    # Convert character index to token index
+    start_c_idx = [0]
+    for s in seq:
+      start_c_idx.append(start_c_idx[-1]+len(s)+1)
+    # Find regex matches over phrase
+    phrase = ' '.join(seq)
+    for match in self._re_comp.finditer(phrase):
+      start = bisect.bisect(start_c_idx, match.start())
+      end = bisect.bisect(start_c_idx, match.end())
+      yield list(range(start-1, end))
 
 def tag_seq(words, seq, tag):
   """Sub in a tag for a subsequence of a list"""
@@ -84,9 +113,9 @@ def tag_seqs(words, seqs, tags):
     dj += len(seqs[i]) - 1
   return words_out
   
-########################################
-############## MINDTAGGER ##############
-######################################## 
+####################################################################
+############################ MINDTAGGER ############################
+#################################################################### 
 
 class MindTaggerInstance:
 
@@ -230,9 +259,9 @@ class MindTaggerInstance:
 
     return tags
 
-#########################################
-############## EXTRACTIONS ##############
-#########################################
+#####################################################################
+############################ EXTRACTIONS ############################
+#####################################################################
 
 class Extraction(object):
   """ Proxy providing an interface into the Extractions class """
@@ -508,9 +537,9 @@ class Extractions(object):
   def __repr__(self):
     return '\n'.join(str(e) for e in self._extractions)
 
-#######################################
-############## RELATIONS ##############
-#######################################
+###################################################################
+############################ RELATIONS ############################
+###################################################################
 
 # Alias for relation
 Relation = Extraction
@@ -584,9 +613,9 @@ class Relations(Extractions):
          """
     return {'style_block' : s1, 'title_block' : s2}
     
-######################################
-############## ENTITIES ##############
-######################################     
+##################################################################
+############################ ENTITIES ############################
+##################################################################     
 
 # Alias for Entity
 Entity = Extraction
@@ -650,9 +679,9 @@ class Entities(Extractions):
          """
     return {'style_block' : s1, 'title_block' : s2}
 
-########################################
-############## ALGORITHMS ##############
-######################################## 
+####################################################################
+############################ ALGORITHMS ############################
+#################################################################### 
 
 #
 # Logistic regression algs
@@ -792,6 +821,13 @@ def main():
   print E                
   for e in E:
       print e.tagged_sent
+      
+  print "***** Regex *****"
+  pattern = "l[a-zA-z]ke"
+  rm = RegexMatch('L', pattern, match_attrib='lemmas', ignore_case=True)
+  L = Entities(rm, sents)
+  for er in L:
+      print er.tagged_sent
 
 if __name__ == '__main__':
   main()

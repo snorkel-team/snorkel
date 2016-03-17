@@ -91,6 +91,23 @@ class RegexMatch(Matcher):
       start = bisect.bisect(start_c_idx, match.start())
       end = bisect.bisect(start_c_idx, match.end())
       yield list(range(start-1, end))
+      
+class MultiMatcher(Matcher):
+  """ 
+  Wrapper to apply multiple matchers of a given entity type 
+  Priority of labeling given by matcher order
+  """
+  def __init__(self, label, matchers):
+    self.label = label
+    self.matchers = matchers
+  def apply(self, s):
+    applied = set()
+    for m in self.matchers:
+      for rg in m.apply(s):
+        if rg[0] not in applied:
+          applied.add(rg[0])
+          yield rg        
+    
 
 def tag_seq(words, seq, tag):
   """Sub in a tag for a subsequence of a list"""
@@ -828,6 +845,13 @@ def main():
   L = Entities(rm, sents)
   for er in L:
       print er.tagged_sent
+      
+  print "***** Dict + Regex *****"
+  pattern = "VB[a-zA-Z]?"
+  vbz = RegexMatch('verbs', pattern, match_attrib='poses', ignore_case=True)
+  DR = Entities(MultiMatcher('COMBO', [b,vbz]), sents)
+  for dr in DR:
+      print dr.tagged_sent
 
 if __name__ == '__main__':
   main()

@@ -60,7 +60,7 @@ class DictionaryMatch(Matcher):
         phrase = ' '.join(seq[i:i+l])
         phrase = phrase.lower() if self.ignore_case else phrase
         if phrase in self.dl[l]:
-          yield list(range(i, i+l))
+          yield list(range(i, i+l)), self.label
 
 class RegexMatch(Matcher):
   """Selects according to ngram-matching against a regex """
@@ -90,23 +90,30 @@ class RegexMatch(Matcher):
     for match in self._re_comp.finditer(phrase):
       start = bisect.bisect(start_c_idx, match.start())
       end = bisect.bisect(start_c_idx, match.end())
-      yield list(range(start-1, end))
+      yield list(range(start-1, end)), self.label
       
 class MultiMatcher(Matcher):
   """ 
   Wrapper to apply multiple matchers of a given entity type 
   Priority of labeling given by matcher order
   """
-  def __init__(self, label, matchers):
-    self.label = label
-    self.matchers = matchers
+  def __init__(self, *matchers, **kwargs):
+    if len(matchers) > 0:
+      [warnings.warn("Non-Matcher object passed to MultiMatcher")
+       for m in matchers if not issubclass(m.__class__, Matcher)]
+      self.matchers = matchers
+    else:
+      raise ValueError("Need at least one matcher")
+    self.label = kwargs['label'] if 'label' in kwargs else None
+    
   def apply(self, s):
     applied = set()
     for m in self.matchers:
-      for rg in m.apply(s):
-        if rg[0] not in applied:
-          applied.add(rg[0])
-          yield rg        
+      for rg, m_label in m.apply(s):
+        rg_end = (rg[0], rg[-1])
+        if rg_end not in applied:
+          applied.add(rg_end)
+          yield rg, self.label if self.label is not None else m_label
     
 
 def tag_seq(words, seq, tag):
@@ -590,10 +597,9 @@ class Relations(Extractions):
   
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
-    for e1_idxs in self.e1.apply(sent):
-      for e2_idxs in self.e2.apply(sent):
-        yield relation_internal(e1_idxs, e2_idxs, self.e1.label, 
-                                self.e2.label, sent, xt)
+    for e1_idxs, e1_label in self.e1.apply(sent):
+      for e2_idxs, e2_label in self.e2.apply(sent):
+        yield relation_internal(e1_idxs, e2_idxs, e1_label, e2_label, sent, xt)
   
   def _get_features(self, method='treedlib'):
     get_feats = compile_relation_feature_generator()
@@ -659,8 +665,8 @@ class Entities(Extractions):
   
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
-    for e_idxs in self.e.apply(sent):
-      yield entity_internal(e_idxs, self.e.label, sent, xt)        
+    for e_idxs, e_label in self.e.apply(sent):
+      yield entity_internal(e_idxs, e_label, sent, xt)        
   
   def _get_features(self, method='treedlib'):
     get_feats = compile_entity_feature_generator()
@@ -822,7 +828,7 @@ def main():
   g = DictionaryMatch('G', ['Han Solo', 'Luke', 'wookie'])
   b = DictionaryMatch('B', ['Bounty Hunters'])
 
-  print "***** Relation0 *****"
+  print "***** Relation 0 *****"
   R = Relations(g, b, sents)
   print R
   print R[0].tagged_sent
@@ -849,7 +855,7 @@ def main():
   print "***** Dict + Regex *****"
   pattern = "VB[a-zA-Z]?"
   vbz = RegexMatch('verbs', pattern, match_attrib='poses', ignore_case=True)
-  DR = Entities(MultiMatcher('COMBO', [b,vbz]), sents)
+  DR = Entities(MultiMatcher(b,vbz), sents)
   for dr in DR:
       print dr.tagged_sent
 

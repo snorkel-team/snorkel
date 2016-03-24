@@ -1,5 +1,5 @@
 # Base Python
-import atexit, json, os, pipes, socket, sys, warnings
+import atexit, bisect, json, os, pipes, re, socket, sys, warnings
 from collections import defaultdict
 
 # Scientific modules
@@ -19,9 +19,9 @@ from entity_features import *
 # ddlite parsers
 from parser import *
 
-######################################
-############## MATCHERS ##############
-###################################### 
+##################################################################
+############################ MATCHERS ############################
+################################################################## 
 
 class Matcher(object):
   def apply(self, s):
@@ -60,8 +60,61 @@ class DictionaryMatch(Matcher):
         phrase = ' '.join(seq[i:i+l])
         phrase = phrase.lower() if self.ignore_case else phrase
         if phrase in self.dl[l]:
-          yield list(range(i, i+l))
+          yield list(range(i, i+l)), self.label
 
+class RegexMatch(Matcher):
+  """Selects according to ngram-matching against a regex """
+  def __init__(self, label, regex_pattern, match_attrib='words', ignore_case=True):
+    self.label = label
+    self.match_attrib = match_attrib
+    # Ignore whitespace when we join the match attribute
+    self._re_comp = re.compile(regex_pattern, flags=re.I if ignore_case else 0)
+
+  def apply(self, s):
+    """
+    Take in an object or dictionary which contains match_attrib
+    and get the index lists of matching phrases
+    """
+    # Make sure we're operating on a dict, then get match_attrib
+    try:
+      seq = s[self.match_attrib]
+    except TypeError:
+      seq = s.__dict__[self.match_attrib]
+    
+    # Convert character index to token index
+    start_c_idx = [0]
+    for s in seq:
+      start_c_idx.append(start_c_idx[-1]+len(s)+1)
+    # Find regex matches over phrase
+    phrase = ' '.join(seq)
+    for match in self._re_comp.finditer(phrase):
+      start = bisect.bisect(start_c_idx, match.start())
+      end = bisect.bisect(start_c_idx, match.end())
+      yield list(range(start-1, end)), self.label
+      
+class MultiMatcher(Matcher):
+  """ 
+  Wrapper to apply multiple matchers of a given entity type 
+  Priority of labeling given by matcher order
+  """
+  def __init__(self, *matchers, **kwargs):
+    if len(matchers) > 0:
+      [warnings.warn("Non-Matcher object passed to MultiMatcher")
+       for m in matchers if not issubclass(m.__class__, Matcher)]
+      self.matchers = matchers
+    else:
+      raise ValueError("Need at least one matcher")
+    self.label = kwargs['label'] if 'label' in kwargs else None
+    
+  def apply(self, s):
+    applied = set()
+    for m in self.matchers:
+      for rg, m_label in m.apply(s):
+        rg_end = (rg[0], rg[-1])
+        if rg_end not in applied:
+          applied.add(rg_end)
+          yield rg, self.label if self.label is not None else m_label
+    
 
 def tag_seq(words, seq, tag):
   """Sub in a tag for a subsequence of a list"""
@@ -84,9 +137,9 @@ def tag_seqs(words, seqs, tags):
     dj += len(seqs[i]) - 1
   return words_out
   
-########################################
-############## MINDTAGGER ##############
-######################################## 
+####################################################################
+############################ MINDTAGGER ############################
+#################################################################### 
 
 class MindTaggerInstance:
 
@@ -230,9 +283,9 @@ class MindTaggerInstance:
 
     return tags
 
-#########################################
-############## EXTRACTIONS ##############
-#########################################
+#####################################################################
+############################ EXTRACTIONS ############################
+#####################################################################
 
 class Extraction(object):
   """ Proxy providing an interface into the Extractions class """
@@ -508,9 +561,9 @@ class Extractions(object):
   def __repr__(self):
     return '\n'.join(str(e) for e in self._extractions)
 
-#######################################
-############## RELATIONS ##############
-#######################################
+###################################################################
+############################ RELATIONS ############################
+###################################################################
 
 # Alias for relation
 Relation = Extraction
@@ -544,10 +597,9 @@ class Relations(Extractions):
   
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
-    for e1_idxs in self.e1.apply(sent):
-      for e2_idxs in self.e2.apply(sent):
-        yield relation_internal(e1_idxs, e2_idxs, self.e1.label, 
-                                self.e2.label, sent, xt)
+    for e1_idxs, e1_label in self.e1.apply(sent):
+      for e2_idxs, e2_label in self.e2.apply(sent):
+        yield relation_internal(e1_idxs, e2_idxs, e1_label, e2_label, sent, xt)
   
   def _get_features(self, method='treedlib'):
     get_feats = compile_relation_feature_generator()
@@ -584,9 +636,9 @@ class Relations(Extractions):
          """
     return {'style_block' : s1, 'title_block' : s2}
     
-######################################
-############## ENTITIES ##############
-######################################     
+##################################################################
+############################ ENTITIES ############################
+##################################################################     
 
 # Alias for Entity
 Entity = Extraction
@@ -613,8 +665,8 @@ class Entities(Extractions):
   
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
-    for e_idxs in self.e.apply(sent):
-      yield entity_internal(e_idxs, self.e.label, sent, xt)        
+    for e_idxs, e_label in self.e.apply(sent):
+      yield entity_internal(e_idxs, e_label, sent, xt)        
   
   def _get_features(self, method='treedlib'):
     get_feats = compile_entity_feature_generator()
@@ -650,9 +702,9 @@ class Entities(Extractions):
          """
     return {'style_block' : s1, 'title_block' : s2}
 
-########################################
-############## ALGORITHMS ##############
-######################################## 
+####################################################################
+############################ ALGORITHMS ############################
+#################################################################### 
 
 #
 # Logistic regression algs
@@ -776,7 +828,7 @@ def main():
   g = DictionaryMatch('G', ['Han Solo', 'Luke', 'wookie'])
   b = DictionaryMatch('B', ['Bounty Hunters'])
 
-  print "***** Relation0 *****"
+  print "***** Relation 0 *****"
   R = Relations(g, b, sents)
   print R
   print R[0].tagged_sent
@@ -792,6 +844,20 @@ def main():
   print E                
   for e in E:
       print e.tagged_sent
+      
+  print "***** Regex *****"
+  pattern = "l[a-zA-z]ke"
+  rm = RegexMatch('L', pattern, match_attrib='lemmas', ignore_case=True)
+  L = Entities(rm, sents)
+  for er in L:
+      print er.tagged_sent
+      
+  print "***** Dict + Regex *****"
+  pattern = "VB[a-zA-Z]?"
+  vbz = RegexMatch('verbs', pattern, match_attrib='poses', ignore_case=True)
+  DR = Entities(MultiMatcher(b,vbz), sents)
+  for dr in DR:
+      print dr.tagged_sent
 
 if __name__ == '__main__':
   main()

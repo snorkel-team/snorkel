@@ -1,1 +1,0 @@
-Reference priors in a variance components problem

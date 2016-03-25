@@ -1,1 +1,0 @@
-Effects of single SNPs, haplotypes, and whole-genome LD maps on accuracy of association mapping.

@@ -1,1 +1,0 @@
-A note on paternity computation in cases lacking a mother

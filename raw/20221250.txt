@@ -1,1 +1,0 @@
-Development of a method for screening short-lived proteins using green fluorescent protein.

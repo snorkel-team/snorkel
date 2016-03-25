@@ -1,6 +1,7 @@
 # Base Python
-import atexit, bisect, json, os, pipes, re, socket, sys, warnings
+import cPickle, json, os, sys, warnings
 from collections import defaultdict
+import lxml.etree as et
 
 # Scientific modules
 import numpy as np
@@ -13,108 +14,21 @@ import scipy.sparse as sparse
 # Feature modules
 sys.path.append('{}/treedlib'.format(os.getcwd()))
 from treedlib import compile_relation_feature_generator
-from tree_structs import corenlp_to_xmltree
-from entity_features import *
+from tree_structs import corenlp_to_xmltree, XMLTree
+from ddlite_entity_features import *
 
 # ddlite parsers
-from parser import *
+from ddlite_parser import *
 
-##################################################################
-############################ MATCHERS ############################
-################################################################## 
+# ddlite matchers
+from ddlite_matcher import *
 
-class Matcher(object):
-  def apply(self, s):
-    raise NotImplementedError()
-    
-class DictionaryMatch(Matcher):
-  """Selects according to ngram-matching against a dictionary i.e. list of words"""
-  def __init__(self, label, dictionary, match_attrib='words', ignore_case=True):
-    self.label = label
-    self.match_attrib = match_attrib
-    self.ignore_case = ignore_case
+# ddlite mindtagger
+from ddlite_mindtagger import *
 
-    # Split the dictionary up by phrase length (i.e. # of tokens)
-    self.dl = defaultdict(lambda : set())
-    for phrase in dictionary:
-      self.dl[len(phrase.split())].add(phrase.lower() if ignore_case else phrase)
-    self.dl.update((k, frozenset(v)) for k,v in self.dl.iteritems())
-
-    # Get the ngram range for this dictionary
-    self.ngr = range(max(1, min(self.dl.keys())), max(self.dl.keys())+1)
-
-  def apply(self, s):
-    """
-    Take in an object or dictionary which contains match_attrib
-    and get the index lists of matching phrases
-    """
-    # Make sure we're operating on a dict, then get match_attrib
-    try:
-      seq = s[self.match_attrib]
-    except TypeError:
-      seq = s.__dict__[self.match_attrib]
-
-    # Loop over all ngrams
-    for l in self.ngr:
-      for i in range(0, len(seq)-l+1):
-        phrase = ' '.join(seq[i:i+l])
-        phrase = phrase.lower() if self.ignore_case else phrase
-        if phrase in self.dl[l]:
-          yield list(range(i, i+l)), self.label
-
-class RegexMatch(Matcher):
-  """Selects according to ngram-matching against a regex """
-  def __init__(self, label, regex_pattern, match_attrib='words', ignore_case=True):
-    self.label = label
-    self.match_attrib = match_attrib
-    # Ignore whitespace when we join the match attribute
-    self._re_comp = re.compile(regex_pattern, flags=re.I if ignore_case else 0)
-
-  def apply(self, s):
-    """
-    Take in an object or dictionary which contains match_attrib
-    and get the index lists of matching phrases
-    """
-    # Make sure we're operating on a dict, then get match_attrib
-    try:
-      seq = s[self.match_attrib]
-    except TypeError:
-      seq = s.__dict__[self.match_attrib]
-    
-    # Convert character index to token index
-    start_c_idx = [0]
-    for s in seq:
-      start_c_idx.append(start_c_idx[-1]+len(s)+1)
-    # Find regex matches over phrase
-    phrase = ' '.join(seq)
-    for match in self._re_comp.finditer(phrase):
-      start = bisect.bisect(start_c_idx, match.start())
-      end = bisect.bisect(start_c_idx, match.end())
-      yield list(range(start-1, end)), self.label
-      
-class MultiMatcher(Matcher):
-  """ 
-  Wrapper to apply multiple matchers of a given entity type 
-  Priority of labeling given by matcher order
-  """
-  def __init__(self, *matchers, **kwargs):
-    if len(matchers) > 0:
-      [warnings.warn("Non-Matcher object passed to MultiMatcher")
-       for m in matchers if not issubclass(m.__class__, Matcher)]
-      self.matchers = matchers
-    else:
-      raise ValueError("Need at least one matcher")
-    self.label = kwargs['label'] if 'label' in kwargs else None
-    
-  def apply(self, s):
-    applied = set()
-    for m in self.matchers:
-      for rg, m_label in m.apply(s):
-        rg_end = (rg[0], rg[-1])
-        if rg_end not in applied:
-          applied.add(rg_end)
-          yield rg, self.label if self.label is not None else m_label
-    
+#####################################################################
+############################ TAGGING UTILS ##########################
+#####################################################################
 
 def tag_seq(words, seq, tag):
   """Sub in a tag for a subsequence of a list"""
@@ -136,152 +50,6 @@ def tag_seqs(words, seqs, tags):
     words_out = tag_seq(words_out, map(lambda j : j - dj, seqs[i]), tags[i])
     dj += len(seqs[i]) - 1
   return words_out
-  
-####################################################################
-############################ MINDTAGGER ############################
-#################################################################### 
-
-class MindTaggerInstance:
-
-  def __init__(self, mindtagger_format):
-    self._mindtagger_format = mindtagger_format
-    self.instance = None
-    atexit.register(self._kill_mindtagger)
-  
-  def _system(self, script):
-      return os.system("bash -c %s" % pipes.quote(script))
-    
-  def _kill_mindtagger(self):
-    if self.instance is not None:
-      self._system("kill -TERM $(cat mindtagger.pid)")
-    
-  def _generate_task_format(self):
-    return  """
-            <mindtagger mode="precision">
-
-              <template for="each-item">
-                %(title_block)s
-                with probability <strong>{{item.probability | number:3}}</strong>
-                appeared in sentence {{item.sent_id}} of document {{item.doc_id}}:
-                <blockquote>
-                    <big mindtagger-word-array="item.words" array-format="json">
-                        %(style_block)s
-                    </big>
-                </blockquote>
-
-                <div>
-                  <div mindtagger-item-details></div>
-                </div>
-              </template>
-
-              <template for="tags">
-                <span mindtagger-adhoc-tags></span>
-                <span mindtagger-note-tags></span>
-              </template>
-
-            </mindtagger>
-            """ % self._mindtagger_format
-    
-
-  def launch_mindtagger(self, task_name, generate_items, task_root="mindtagger",
-                        task_recreate = True, **kwargs):
-                            
-    args = dict(
-        task = task_name,
-        task_root = task_root,
-        # figure out hostname and task name from IPython notebook
-        host = socket.gethostname(),
-        # determine a port number based on user name
-        port = hash(os.getlogin()) % 1000 + 8000,
-      )
-    args['task_path'] = "%s/%s" % (args['task_root'], args['task'])
-    args['mindtagger_baseurl'] = "http://%(host)s:%(port)s/" % args
-    args['mindtagger_url'] = "%(mindtagger_baseurl)s#/mindtagger/%(task)s" % args
-    # quoted values for shell
-    shargs = { k: pipes.quote(str(v)) for k,v in args.iteritems() }
-
-    
-
-    # install mindbender included in DeepDive's release
-    print "Making sure MindTagger is installed. Hang on!"
-    if self._system("""
-      export PREFIX="$PWD"/deepdive
-      [[ -x "$PREFIX"/bin/mindbender ]] ||
-      bash <(curl -fsSL git.io/getdeepdive || wget -qO- git.io/getdeepdive) deepdive_from_release
-    """ % shargs) != 0: raise OSError("Mindtagger could not be installed")
-
-    if task_recreate or not os.path.exists(args['task_path']):
-      # prepare a mindtagger task from the data this object is holding
-      try:
-        if self._system("""
-          set -eu
-          t=%(task_path)s
-          mkdir -p "$t"
-          """ % shargs) != 0: raise OSError("Mindtagger task could not be created")
-        with open("%(task_path)s/mindtagger.conf" % args, "w") as f:
-          f.write("""
-            title: %(task)s Labeling task for estimating precision
-            items: {
-                file: items.csv
-                key_columns: [ext_id]
-            }
-            template: template.html
-            """ % args)
-        with open("%(task_path)s/template.html" % args, "w") as f:
-          f.write(self._generate_task_format())
-        with open("%(task_path)s/items.csv" % args, "w") as f:
-          # prepare data to label
-          import csv
-          items = generate_items()
-          item = next(items)
-          o = csv.DictWriter(f, fieldnames=item.keys())
-          o.writeheader()
-          o.writerow(item)
-          for item in items:
-            o.writerow(item)
-      except:
-        raise OSError("Mindtagger task data could not be prepared: %s" % str(sys.exc_info()))
-
-    # launch mindtagger
-    if self._system("""
-      # restart any running mindtagger instance
-      ! [ -s mindtagger.pid ] || kill -TERM $(cat mindtagger.pid) || true
-      PORT=%(port)s deepdive/bin/mindbender tagger %(task_root)s/*/mindtagger.conf &
-      echo $! >mindtagger.pid
-      """ % shargs) != 0: raise OSError("Mindtagger could not be started")
-    while self._system("curl --silent --max-time 1 --head %(mindtagger_url)s >/dev/null" % shargs) != 0:
-      time.sleep(0.1)        
-
-    self.instance = args
-    return args['mindtagger_url']
-  
-  def open_mindtagger(self, generate_mt_items, num_sample = 100, **kwargs):
-
-    def generate_items():
-      return generate_mt_items(num_sample)      
-
-    # determine a task name using hash of the items
-    # See: http://stackoverflow.com/a/7823051/390044 for non-negative hexadecimal
-    def tohex(val, nbits):
-      return "%x" % ((val + (1 << nbits)) % (1 << nbits))
-    task_name = tohex(hash(json.dumps([i for i in generate_items()])), 64)
-
-    # launch Mindtagger
-    url = self.launch_mindtagger(task_name, generate_items, **kwargs)
-
-    # return an iframe
-    from IPython.display import IFrame
-    return IFrame(url, **kwargs)
-    
-  def get_mindtagger_tags(self):
-    tags_url = "%(mindtagger_baseurl)sapi/mindtagger/%(task)s/tags.json?attrs=ext_id" % self.instance
-
-    import urllib, json
-    opener = urllib.FancyURLopener({})
-    t = opener.open(tags_url)
-    tags = json.loads(t.read())
-
-    return tags
 
 #####################################################################
 ############################ EXTRACTIONS ############################
@@ -321,6 +89,17 @@ class extraction_internal(object):
   def render(self):
     self.xt.render_tree(self.all_idxs)
   
+  def __getstate__(self):
+    cp = self.__dict__.copy()
+    del cp['root']
+    cp['xt'] = cp['xt'].to_str()
+    return cp
+    
+  def __setstate__(self, d):
+    self.__dict__ = d
+    self.xt = XMLTree(et.fromstring(d['xt']), self.words)
+    self.root = self.xt.root    
+  
   def __repr__(self):
     raise NotImplementedError()
     
@@ -331,10 +110,10 @@ class Extractions(object):
   generate features (_get_features)
   See Relations and Entities for examples
   """
-  def __init__(self, sents):
+  def __init__(self, C):
     """
     Set up learning problem and generate candidates
-     * sents is a flat list of Sentence objects
+     * C is a flat list of Sentence objects or a path to pickled extractions
     """
     self.rules = None
     self.feats = None
@@ -342,8 +121,15 @@ class Extractions(object):
     self.feat_index = {}
     self.w = None
     self.holdout = []
-    self._extractions = list(self._extract(sents))
     self.mindtagger_instance = None
+    if isinstance(C, basestring):
+      try:
+        with open(C, 'rb') as f:
+          self._extractions = cPickle.load(f)
+      except:
+        raise ValueError("No pickled extractions at {}".format(C))
+    else:
+      self._extractions = list(self._extract(C)) 
   
   def __getitem__(self, i):
     return Extraction(self, i)
@@ -405,8 +191,8 @@ class Extractions(object):
       for i in f_index[feat]:
         self.feats[i,j] = 1
         
-  def learn_feats_and_weights(self, nSteps=1000, sample=False, nSamples=100,
-        mu=1e-9, holdout=0.1, use_sparse = True, verbose=False):
+  def learn_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9, 
+                    holdout=0.1, use_sparse = True, verbose=False):
     """
     Uses the R x N matrix of rules and the F x N matrix of features defined
     for the Relations object
@@ -425,9 +211,9 @@ class Extractions(object):
     if not use_sparse:
       self.X = np.asarray(self.X.todense())
     w0 = np.concatenate([np.ones(R), np.zeros(F)])
-    self.w = learn_params(self.X[np.setdiff1d(range(N), self.holdout), :],
-                          nSteps=nSteps, w0=w0, sample=sample,
-                          nSamples=nSamples, mu=mu, verbose=verbose)
+    self.w = learn_ridge_logreg(self.X[np.setdiff1d(range(N), self.holdout),:],
+                                nSteps=nSteps, w0=w0, sample=sample,
+                                nSamples=nSamples, mu=mu, verbose=verbose)
 
   def get_link(self, subset=None):
     """
@@ -557,7 +343,13 @@ class Extractions(object):
   
   def get_mindtagger_tags(self):
     return self.mindtagger_instance.get_mindtagger_tags()
-  
+
+  def dump_extractions(self, loc):
+    if os.path.isfile(loc):
+      warnings.warn("Overwriting file {}".format(loc))
+    with open(loc, 'w+') as f:
+      cPickle.dump(self._extractions, f)
+    
   def __repr__(self):
     return '\n'.join(str(e) for e in self._extractions)
 
@@ -583,14 +375,15 @@ class relation_internal(extraction_internal):
       self.e1_idxs, [self.words[i] for i in self.e2_idxs], self.e2_idxs)
 
 class Relations(Extractions):
-  def __init__(self, e1, e2, sents):
-    if not issubclass(e1.__class__, Matcher):
-      warnings.warn("e1 is not a Matcher subclass")
-    if not issubclass(e2.__class__, Matcher):
-      warnings.warn("e2 is not a Matcher subclass")
-    self.e1 = e1
-    self.e2 = e2
-    super(Relations, self).__init__(sents)
+  def __init__(self, content, matcher1=None, matcher2=None):
+    if matcher1 is not None and matcher2 is not None:
+      if not issubclass(matcher1.__class__, Matcher):
+        warnings.warn("matcher1 is not a Matcher subclass")
+      if not issubclass(matcher2.__class__, Matcher):
+        warnings.warn("matcher2 is not a Matcher subclass")
+      self.e1 = matcher1
+      self.e2 = matcher2
+    super(Relations, self).__init__(content)
   
   def __getitem__(self, i):
     return Relation(self, i)  
@@ -654,11 +447,12 @@ class entity_internal(extraction_internal):
 
 
 class Entities(Extractions):
-  def __init__(self, e, sents):
-    if not issubclass(e.__class__, Matcher):
-      warnings.warn("e is not a Matcher subclass")
-    self.e = e
-    super(Entities, self).__init__(sents)
+  def __init__(self, content, matcher=None):
+    if matcher is not None:
+      if not issubclass(matcher.__class__, Matcher):
+        warnings.warn("e is not a Matcher subclass")
+      self.e = matcher
+    super(Entities, self).__init__(content)
   
   def __getitem__(self, i):
     return Entity(self, i)  
@@ -779,7 +573,8 @@ def transform_sample_stats(Xt, t, f, Xt_abs = None):
   p_correct = (m + 1) / 2
   return p_correct, n_pred
 
-def learn_params(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, verbose=False):
+def learn_ridge_logreg(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, 
+                       verbose=False):
   """We perform SGD wrt the weights w"""
   if type(X) != np.ndarray and not sparse.issparse(X):
     raise TypeError("Inputs should be np.ndarray type or scipy sparse.")

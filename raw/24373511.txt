@@ -1,1 +1,0 @@
-Autocorrelation on words and its applications: analysis of suffix trees by string-ruler approach

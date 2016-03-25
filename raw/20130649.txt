@@ -1,1 +1,0 @@
-A single-sample method for normalizing and combining full-resolution copy numbers from multiple platforms, labs and analysis methods

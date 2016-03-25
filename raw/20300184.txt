@@ -1,1 +1,0 @@
-The JIP3 scaffold protein UNC-16 regulates RAB-5 dependent membrane trafficking in _C. elegans_.

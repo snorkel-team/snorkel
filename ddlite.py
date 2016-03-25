@@ -320,12 +320,6 @@ class Entities(Extractions):
 ####################################################################
 ############################ INFERENCE #############################
 #################################################################### 
-class InferenceLogger:
-  def __init__(self):
-    self.num_rules = []
-    self.num_labeled = []
-    self.recall = []
-    self.precision = []
 
 class ExtractionInference:
   def __init__(self, extractions, feats=None):
@@ -339,7 +333,7 @@ class ExtractionInference:
         raise ValueError("Could not automatically extract features")
     else:
       raise ValueError("Features must be numpy ndarray or sparse")
-    self.logger = InferenceLogger()
+    self.logger = None
     self.rules = None
     self.X = None
     self.w = None

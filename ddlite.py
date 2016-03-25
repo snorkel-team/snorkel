@@ -57,18 +57,17 @@ def tag_seqs(words, seqs, tags):
 
 class Extraction(object):
   """ Proxy providing an interface into the Extractions class """
-  def __init__(self, extractions, ex_id):
-    self.extractions = extractions
+  def __init__(self, extractions, ex_id, p=None):
+    self.E = extractions
     self.id = ex_id
+    self._p = p
   def __getattr__(self, name):
-    if name == 'probability':
-      if self.extractions.X is None or self.extractions.w is None:
-        return None
-      else:
-        return self.extractions.get_predicted_probability(subset=[self.id])[0]
-    return getattr(self.extractions._extractions[self.id], name)
+    if name.startswith('prob'):
+      return self._p
+    return getattr(self.E._extractions[self.id], name)
   def __repr__(self):
-    return str(self.extractions._extractions[self.id])
+    s = str(self.E._extractions[self.id])
+    return s if self._p is None else (s + " with probability " + str(self._p))
 
 class extraction_internal(object):
   """
@@ -115,13 +114,6 @@ class Extractions(object):
     Set up learning problem and generate candidates
      * C is a flat list of Sentence objects or a path to pickled extractions
     """
-    self.rules = None
-    self.feats = None
-    self.X = None
-    self.feat_index = {}
-    self.w = None
-    self.holdout = []
-    self.mindtagger_instance = None
     if isinstance(C, basestring):
       try:
         with open(C, 'rb') as f:
@@ -129,7 +121,9 @@ class Extractions(object):
       except:
         raise ValueError("No pickled extractions at {}".format(C))
     else:
-      self._extractions = list(self._extract(C)) 
+      self._extractions = list(self._extract(C))
+    self.feats = None
+    self.feat_index = {}
   
   def __getitem__(self, i):
     return Extraction(self, i)
@@ -142,6 +136,218 @@ class Extractions(object):
   
   def num_extractions(self):
     return len(self)
+ 
+  def num_feats(self):
+    return 0 if self.feats is None else self.feats.shape[1]
+    
+  def _extract(self, sents):
+    for sent in sents:
+      for ext in self._apply(sent):
+        yield ext
+
+  def _apply(self, sent):
+    raise NotImplementedError()
+            
+  def _get_features(self):
+      raise NotImplementedError()    
+    
+  def extract_features(self, *args):
+    f_index = self._get_features(args)
+    # Apply the feature generator, constructing a sparse matrix incrementally
+    # Note that lil_matrix should be relatively efficient as we proceed row-wise
+    self.feats = sparse.lil_matrix((self.num_extractions(), len(f_index)))    
+    for j,feat in enumerate(f_index.keys()):
+      self.feat_index[j] = feat
+      for i in f_index[feat]:
+        self.feats[i,j] = 1
+    return self.feats
+      
+  def generate_mindtagger_items(self, samp, probs):
+    raise NotImplementedError()
+    
+  def mindtagger_format(self):
+    raise NotImplementedError()
+
+  def dump_extractions(self, loc):
+    if os.path.isfile(loc):
+      warnings.warn("Overwriting file {}".format(loc))
+    with open(loc, 'w+') as f:
+      cPickle.dump(self._extractions, f)
+    
+  def __repr__(self):
+    return '\n'.join(str(e) for e in self._extractions)
+
+###################################################################
+############################ RELATIONS ############################
+###################################################################
+
+# Alias for relation
+Relation = Extraction
+
+class relation_internal(extraction_internal):
+  def __init__(self, e1_idxs, e2_idxs, e1_label, e2_label, sent, xt):
+    self.e1_idxs = e1_idxs
+    self.e2_idxs = e2_idxs
+    self.e1_label = e1_label
+    self.e2_label = e2_label
+    super(relation_internal, self).__init__([self.e1_idxs, self.e2_idxs],
+                                            [self.e1_label, self.e2_label], 
+                                             sent, xt)
+
+  def __repr__(self):
+    return '<Relation: {}{} - {}{}>'.format([self.words[i] for i in self.e1_idxs], 
+      self.e1_idxs, [self.words[i] for i in self.e2_idxs], self.e2_idxs)
+
+class Relations(Extractions):
+  def __init__(self, content, matcher1=None, matcher2=None):
+    if matcher1 is not None and matcher2 is not None:
+      if not issubclass(matcher1.__class__, Matcher):
+        warnings.warn("matcher1 is not a Matcher subclass")
+      if not issubclass(matcher2.__class__, Matcher):
+        warnings.warn("matcher2 is not a Matcher subclass")
+      self.e1 = matcher1
+      self.e2 = matcher2
+    super(Relations, self).__init__(content)
+  
+  def __getitem__(self, i):
+    return Relation(self, i)  
+  
+  def _apply(self, sent):
+    xt = corenlp_to_xmltree(sent)
+    for e1_idxs, e1_label in self.e1.apply(sent):
+      for e2_idxs, e2_label in self.e2.apply(sent):
+        yield relation_internal(e1_idxs, e2_idxs, e1_label, e2_label, sent, xt)
+  
+  def _get_features(self, method='treedlib'):
+    get_feats = compile_relation_feature_generator()
+    f_index = defaultdict(list)
+    for j,ext in enumerate(self._extractions):
+      for feat in get_feats(ext.root, ext.e1_idxs, ext.e2_idxs):
+        f_index[feat].append(j)
+    return f_index
+    
+  def generate_mindtagger_items(self, samp, probs):
+    for i, p in zip(samp, probs):
+      item = self[i]      
+      yield dict(
+        ext_id          = item.id,
+        doc_id          = item.doc_id,
+        sent_id         = item.sent_id,
+        words           = json.dumps(item.words),
+        e1_idxs         = json.dumps(item.e1_idxs),
+        e1_label        = item.e1_label,
+        e2_idxs         = json.dumps(item.e2_idxs),
+        e2_label        = item.e2_label,
+        probability     = p
+      )
+      
+  def mindtagger_format(self):
+    s1 = """
+         <mindtagger-highlight-words index-array="item.e1_idxs" array-format="json" with-style="background-color: yellow;"/>
+         <mindtagger-highlight-words index-array="item.e2_idxs" array-format="json" with-style="background-color: cyan;"/>
+         """
+    s2 = """
+         <strong>{{item.e1_label}} -- {{item.e2_label}}</strong>
+         """
+    return {'style_block' : s1, 'title_block' : s2}
+    
+##################################################################
+############################ ENTITIES ############################
+##################################################################     
+
+# Alias for Entity
+Entity = Extraction
+
+class entity_internal(extraction_internal):
+  def __init__(self, idxs, label, sent, xt):
+    self.idxs = idxs
+    self.label = label
+    super(entity_internal, self).__init__([idxs], [label], sent, xt)
+
+  def __repr__(self):
+    return '<Entity: {}{}>'.format([self.words[i] for i in self.idxs], self.idxs)
+
+
+class Entities(Extractions):
+  def __init__(self, content, matcher=None):
+    if matcher is not None:
+      if not issubclass(matcher.__class__, Matcher):
+        warnings.warn("e is not a Matcher subclass")
+      self.e = matcher
+    super(Entities, self).__init__(content)
+  
+  def __getitem__(self, i):
+    return Entity(self, i)  
+  
+  def _apply(self, sent):
+    xt = corenlp_to_xmltree(sent)
+    for e_idxs, e_label in self.e.apply(sent):
+      yield entity_internal(e_idxs, e_label, sent, xt)        
+  
+  def _get_features(self, method='treedlib'):
+    get_feats = compile_entity_feature_generator()
+    f_index = defaultdict(list)
+    for j,ext in enumerate(self._extractions):
+      for feat in get_feats(ext.root, ext.idxs):
+        f_index[feat].append(j)
+      for feat in get_ddlib_feats(ext, ext.idxs):
+        f_index["DDLIB_" + feat].append(j)
+    return f_index    
+  
+  def generate_mindtagger_items(self, samp, probs):
+    for i, p in zip(samp, probs):
+      item = self[i]    
+      yield dict(
+        ext_id          = item.id,
+        doc_id          = item.doc_id,
+        sent_id         = item.sent_id,
+        words           = json.dumps(item.words),
+        idxs            = json.dumps(item.idxs),
+        label           = item.label,
+        probability     = p
+      )
+      
+  def mindtagger_format(self):
+    s1 = """
+         <mindtagger-highlight-words index-array="item.idxs" array-format="json" with-style="background-color: cyan;"/>
+         """
+    s2 = """
+         <strong>{{item.label}} candidate</strong>
+         """
+    return {'style_block' : s1, 'title_block' : s2}
+    
+
+####################################################################
+############################ INFERENCE #############################
+#################################################################### 
+class InferenceLogger:
+  def __init__(self):
+    self.num_rules = []
+    self.num_labeled = []
+    self.recall = []
+    self.precision = []
+
+class ExtractionInference:
+  def __init__(self, extractions, feats=None):
+    self.E = extractions
+    if type(feats) == np.ndarray or sparse.issparse(feats):
+      self.feats = feats
+    elif feats is None:
+      try:
+        self.feats = self.E.extract_features()
+      except:
+        raise ValueError("Could not automatically extract features")
+    else:
+      raise ValueError("Features must be numpy ndarray or sparse")
+    self.logger = InferenceLogger()
+    self.rules = None
+    self.X = None
+    self.w = None
+    self.holdout = []
+    self.mindtagger_instance = None
+
+  def num_extractions(self):
+    return len(self.E)
   
   def num_rules(self, result='all'):
     if self.rules is None:
@@ -157,15 +363,7 @@ class Extractions(object):
  
   def num_feats(self):
     return 0 if self.feats is None else self.feats.shape[1]
-    
-  def _extract(self, sents):
-    for sent in sents:
-      for ext in self._apply(sent):
-        yield ext
 
-  def _apply(self, sent):
-    raise NotImplementedError()
-    
   def apply_rules(self, rules_f, clear=False):
     """ Apply rule functions given in list
     Allows adding to existing rules or clearing rules with CLEAR=True
@@ -174,22 +372,9 @@ class Extractions(object):
     add = sparse.lil_matrix((self.num_extractions(), len(rules_f)))
     self.rules = add if (self.rules is None or clear)\
                      else sparse.hstack([self.rules,add], format = 'lil')
-    for i,ext in enumerate(self._extractions):    
+    for i,ext in enumerate(self.E._extractions):    
       for ja,rule in enumerate(rules_f):
         self.rules[i,ja + nr_old] = rule(ext)
-        
-  def _get_features(self):
-      raise NotImplementedError()    
-    
-  def extract_features(self, *args):
-    f_index = self._get_features(args)
-    # Apply the feature generator, constructing a sparse matrix incrementally
-    # Note that lil_matrix should be relatively efficient as we proceed row-wise
-    self.feats = sparse.lil_matrix((self.num_extractions(), len(f_index)))    
-    for j,feat in enumerate(f_index.keys()):
-      self.feat_index[j] = feat
-      for i in f_index[feat]:
-        self.feats[i,j] = 1
         
   def learn_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9, 
                     holdout=0.1, use_sparse = True, verbose=False):
@@ -330,171 +515,17 @@ class Extractions(object):
         plt.title("(c) Accuracy (holdout set)")
     plt.show()
     
-  def generate_mindtagger_items(self):
-    raise NotImplementedError()
-    
-  def mindtagger_format(self):
-    raise NotImplementedError()
-    
   def open_mindtagger(self, num_sample = 100, **kwargs):
-    self.mindtagger_instance = MindTaggerInstance(self.mindtagger_format())
-    return self.mindtagger_instance.open_mindtagger(self.generate_mindtagger_items,
-                                                    num_sample, **kwargs)
+    self.mindtagger_instance = MindTaggerInstance(self.E.mindtagger_format())
+    N = self.num_extractions()
+    samp = np.random.choice(N, num_sample, replace=False) if N > num_sample else range(N)
+    probs = self.get_predicted_probability(subset=samp)
+    return self.mindtagger_instance.open_mindtagger(self.E.generate_mindtagger_items,
+                                                    samp, probs, **kwargs)
   
   def get_mindtagger_tags(self):
     return self.mindtagger_instance.get_mindtagger_tags()
-
-  def dump_extractions(self, loc):
-    if os.path.isfile(loc):
-      warnings.warn("Overwriting file {}".format(loc))
-    with open(loc, 'w+') as f:
-      cPickle.dump(self._extractions, f)
     
-  def __repr__(self):
-    return '\n'.join(str(e) for e in self._extractions)
-
-###################################################################
-############################ RELATIONS ############################
-###################################################################
-
-# Alias for relation
-Relation = Extraction
-
-class relation_internal(extraction_internal):
-  def __init__(self, e1_idxs, e2_idxs, e1_label, e2_label, sent, xt):
-    self.e1_idxs = e1_idxs
-    self.e2_idxs = e2_idxs
-    self.e1_label = e1_label
-    self.e2_label = e2_label
-    super(relation_internal, self).__init__([self.e1_idxs, self.e2_idxs],
-                                            [self.e1_label, self.e2_label], 
-                                             sent, xt)
-
-  def __repr__(self):
-    return '<Relation: {}{} - {}{}>'.format([self.words[i] for i in self.e1_idxs], 
-      self.e1_idxs, [self.words[i] for i in self.e2_idxs], self.e2_idxs)
-
-class Relations(Extractions):
-  def __init__(self, content, matcher1=None, matcher2=None):
-    if matcher1 is not None and matcher2 is not None:
-      if not issubclass(matcher1.__class__, Matcher):
-        warnings.warn("matcher1 is not a Matcher subclass")
-      if not issubclass(matcher2.__class__, Matcher):
-        warnings.warn("matcher2 is not a Matcher subclass")
-      self.e1 = matcher1
-      self.e2 = matcher2
-    super(Relations, self).__init__(content)
-  
-  def __getitem__(self, i):
-    return Relation(self, i)  
-  
-  def _apply(self, sent):
-    xt = corenlp_to_xmltree(sent)
-    for e1_idxs, e1_label in self.e1.apply(sent):
-      for e2_idxs, e2_label in self.e2.apply(sent):
-        yield relation_internal(e1_idxs, e2_idxs, e1_label, e2_label, sent, xt)
-  
-  def _get_features(self, method='treedlib'):
-    get_feats = compile_relation_feature_generator()
-    f_index = defaultdict(list)
-    for j,ext in enumerate(self._extractions):
-      for feat in get_feats(ext.root, ext.e1_idxs, ext.e2_idxs):
-        f_index[feat].append(j)
-    return f_index
-    
-  def generate_mindtagger_items(self, n_samp):
-    N = len(self)
-    ext_sample = np.random.choice(N, n_samp, replace=False) if N > n_samp else range(N) 
-    for i in ext_sample:
-      item = self[i]      
-      yield dict(
-        ext_id          = item.id,
-        doc_id          = item.doc_id,
-        sent_id         = item.sent_id,
-        words           = json.dumps(item.words),
-        e1_idxs         = json.dumps(item.e1_idxs),
-        e1_label        = item.e1_label,
-        e2_idxs         = json.dumps(item.e2_idxs),
-        e2_label        = item.e2_label,
-        probability     = item.probability
-      )
-      
-  def mindtagger_format(self):
-    s1 = """
-         <mindtagger-highlight-words index-array="item.e1_idxs" array-format="json" with-style="background-color: yellow;"/>
-         <mindtagger-highlight-words index-array="item.e2_idxs" array-format="json" with-style="background-color: cyan;"/>
-         """
-    s2 = """
-         <strong>{{item.e1_label}} -- {{item.e2_label}}</strong>
-         """
-    return {'style_block' : s1, 'title_block' : s2}
-    
-##################################################################
-############################ ENTITIES ############################
-##################################################################     
-
-# Alias for Entity
-Entity = Extraction
-
-class entity_internal(extraction_internal):
-  def __init__(self, idxs, label, sent, xt):
-    self.idxs = idxs
-    self.label = label
-    super(entity_internal, self).__init__([idxs], [label], sent, xt)
-
-  def __repr__(self):
-    return '<Entity: {}{}>'.format([self.words[i] for i in self.idxs], self.idxs)
-
-
-class Entities(Extractions):
-  def __init__(self, content, matcher=None):
-    if matcher is not None:
-      if not issubclass(matcher.__class__, Matcher):
-        warnings.warn("e is not a Matcher subclass")
-      self.e = matcher
-    super(Entities, self).__init__(content)
-  
-  def __getitem__(self, i):
-    return Entity(self, i)  
-  
-  def _apply(self, sent):
-    xt = corenlp_to_xmltree(sent)
-    for e_idxs, e_label in self.e.apply(sent):
-      yield entity_internal(e_idxs, e_label, sent, xt)        
-  
-  def _get_features(self, method='treedlib'):
-    get_feats = compile_entity_feature_generator()
-    f_index = defaultdict(list)
-    for j,ext in enumerate(self._extractions):
-      for feat in get_feats(ext.root, ext.idxs):
-        f_index[feat].append(j)
-      for feat in get_ddlib_feats(ext, ext.idxs):
-        f_index["DDLIB_" + feat].append(j)
-    return f_index    
-  
-  def generate_mindtagger_items(self, n_samp):
-    N = self.num_extractions()
-    ext_sample = np.random.choice(N, n_samp, replace=False) if N > n_samp else range(N) 
-    for i in ext_sample:
-      item = self[i]      
-      yield dict(
-        ext_id          = item.id,
-        doc_id          = item.doc_id,
-        sent_id         = item.sent_id,
-        words           = json.dumps(item.words),
-        idxs            = json.dumps(item.idxs),
-        label           = item.label,
-        probability     = item.probability
-      )
-      
-  def mindtagger_format(self):
-    s1 = """
-         <mindtagger-highlight-words index-array="item.idxs" array-format="json" with-style="background-color: cyan;"/>
-         """
-    s2 = """
-         <strong>{{item.label}} candidate</strong>
-         """
-    return {'style_block' : s1, 'title_block' : s2}
 
 ####################################################################
 ############################ ALGORITHMS ############################

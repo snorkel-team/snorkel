@@ -114,10 +114,10 @@ class MindTaggerInstance:
     self.instance = args
     return args['mindtagger_url']
   
-  def open_mindtagger(self, generate_mt_items, num_sample = 100, **kwargs):
+  def open_mindtagger(self, generate_mt_items, sample, probs, **kwargs):
 
     def generate_items():
-      return generate_mt_items(num_sample)      
+      return generate_mt_items(sample, probs)      
 
     # determine a task name using hash of the items
     # See: http://stackoverflow.com/a/7823051/390044 for non-negative hexadecimal

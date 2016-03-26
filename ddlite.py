@@ -363,7 +363,70 @@ class CandidateModel:
     for i,c in enumerate(self.C._candidates):    
       for j,labeler in enumerate(labelers_f):
         self.labelers[i,j + nr_old] = labeler(c)
-        
+
+  def _coverage(self):
+    cov = [(self.labelers == lab).sum(1) for lab in [1,-1]]
+    abst = self.num_labelers() - cov[0] - cov[1]
+    cov.insert(1, abst)
+    return [np.ravel(c) for c in cov]
+
+  def _plot_coverage(self):
+    cov = self._coverage()
+    cov_ct = [np.sum(x > 0) for x in cov]
+    tot_cov = float(np.sum((cov[0] + cov[2]) > 0)) / self.num_candidates()
+    idx, bar_width = np.array([1, 0, -1]), 0.5
+    plt.bar(idx, cov_ct, bar_width, color='b')
+    plt.xlabel("Label type")
+    plt.ylabel("# candidates")
+    plt.xticks(idx + bar_width * 0.5, ("Positive", "Abstain", "Negative"))
+    return tot_cov * 100.
+    
+  def _plot_overlap(self):
+    tot_ov = float(np.sum(abs_sparse(self.labelers).sum(1) > 1)) / self.num_candidates()
+    cts = abs_sparse(self.labelers).sum(1)
+    plt.hist(cts, bins=20, normed=False, facecolor='blue')
+    plt.xlim((0,np.max(cts)))
+    plt.xlabel("# candidates")
+    plt.ylabel("# positive and negative labels")
+    return tot_ov * 100.
+    
+  def _plot_conflict(self):
+    x, _, y = self._coverage()
+    tot_conf = float(np.dot(x, y)) / self.num_candidates()
+    bz = np.linspace(0, np.max([np.max(x), np.max(y)]), num=10) 
+    H, xr, yr = np.histogram2d(x, y, bins=[bz,bz], normed=False)
+    plt.imshow(H, interpolation='nearest', origin='low',
+               extent=[xr[0], xr[-1], yr[0], yr[-1]])
+    plt.colorbar(fraction=0.046, pad=0.04)
+    plt.xlabel("# negative labels")
+    plt.ylabel("# positive labels")
+    return tot_conf * 100.
+    
+
+  def plot_labeler_stats(self):
+    if self.labelers is None:
+      raise ValueError("No labelers applied yet")
+    """
+    Show classification accuracy and probability histogram plots
+    Note: ground_truth must be an array either the length of the full dataset, or of the holdout
+    """
+    #has_holdout, has_gt = (len(self.holdout) > 0), (ground_truth is not None)
+    n_plots = 3
+    # Labeler coverage
+    plt.subplot(1,n_plots,1)
+    tot_cov = self._plot_coverage()
+    plt.title("(a) Candidate coverage: {:.2f}%".format(tot_cov))
+    # Labeler overlap
+    plt.subplot(1,n_plots,2)
+    tot_ov = self._plot_overlap()
+    plt.title("(b) Candidates with overlap: {:.2f}%".format(tot_ov))
+    # Labeler conflict
+    plt.subplot(1,n_plots,3)
+    tot_conf = self._plot_conflict()
+    plt.title("(c) Candidates with conflict: {:.2f}%".format(tot_conf))
+    
+    plt.show()
+
   def learn_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9, 
                     holdout=0.1, use_sparse = True, verbose=False):
     """
@@ -570,10 +633,15 @@ def exact_data(X, w):
   t = odds_to_prob(X.dot(w))
   return t, 1-t
 
-def abs_csr(X):
-  """ Element-wise absolute value of csr matrix """
+def abs_sparse(X):
+  """ Element-wise absolute value of sparse matrix """
   X_abs = X.copy()
-  X_abs.data = np.abs(X_abs.data)
+  if sparse.isspmatrix_csr(X) or sparse.isspmatrix_csc(X):
+    X_abs.data = np.abs(X_abs.data)
+  elif sparse.isspmatrix_lil(X):
+    X_abs.data = np.array([np.abs(L) for L in X_abs.data])
+  else:
+    raise ValueError("Only supports CSR/CSC and LIL matrices")
   return X_abs
 
 def transform_sample_stats(Xt, t, f, Xt_abs = None):
@@ -586,7 +654,7 @@ def transform_sample_stats(Xt, t, f, Xt_abs = None):
                       = \frac12\left(\frac{X*(t-f)}{t+f} + 1\right)
   """
   if Xt_abs is None:
-    Xt_abs = abs_csr(Xt) if sparse.issparse(Xt) else abs(Xt)
+    Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else abs(Xt)
   n_pred = Xt_abs.dot(t+f)
   m = (1. / (n_pred + 1e-8)) * (Xt.dot(t) - Xt.dot(f))
   p_correct = (m + 1) / 2
@@ -607,7 +675,7 @@ def learn_ridge_logreg(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9,
 
   # Pre-generate other matrices
   Xt = X.transpose()
-  Xt_abs = abs_csr(Xt) if sparse.issparse(Xt) else np.abs(Xt)
+  Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else np.abs(Xt)
   
   # Take SGD steps
   for step in range(nSteps):

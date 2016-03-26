@@ -1,6 +1,6 @@
 # Base Python
 import cPickle, json, os, sys, warnings
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import lxml.etree as et
 
 # Scientific modules
@@ -319,8 +319,30 @@ class Entities(Candidates):
     
 
 ####################################################################
-############################ INFERENCE #############################
+############################ LEARNING ##############################
 #################################################################### 
+
+class DictTable(OrderedDict):
+  def set_title(self, head1, head2):
+    self.title = [head1, head2]
+  def set_num(self, n):
+    self.num = n
+  def _repr_html_(self):
+    html = ["<table>"]
+    if hasattr(self, 'title'):
+      html.append("<tr>")
+      html.append("<td><b>{0}</b></td>".format(self.title[0]))
+      html.append("<td><b>{0}</b></td>".format(self.title[1]))
+      html.append("</tr>")
+    items = self.items()[:self.num] if hasattr(self, 'num') else self.items()
+    for k, v in items:
+      html.append("<tr>")
+      html.append("<td>{0}</td>".format(k))
+      v = "{:.3f}".format(v) if isinstance(v, float) else v
+      html.append("<td>{0}</td>".format(v))
+      html.append("</tr>")
+    html.append("</table>")
+    return ''.join(html)
 
 class CandidateModel:
   def __init__(self, candidates, feats=None):
@@ -336,6 +358,7 @@ class CandidateModel:
       raise ValueError("Features must be numpy ndarray or sparse")
     self.logger = None
     self.labelers = None
+    self.labeler_names = []
     self.X = None
     self.w = None
     self.holdout = []
@@ -358,20 +381,24 @@ class CandidateModel:
     """
     nr_old = self.num_labelers() if not clear else 0
     add = sparse.lil_matrix((self.num_candidates(), len(labelers_f)))
-    self.labelers = add if (self.labelers is None or clear)\
-                        else sparse.hstack([self.labelers,add], format = 'lil')
+    add_names = [lab.__name__ for lab in labelers_f]
+    if self.labelers is None or clear:
+      self.labelers = add
+      self.labeler_names = add_names
+    else:
+      self.labelers = sparse.hstack([self.labelers,add], format = 'lil')
+      self.labeler_names.extend(add_names)
     for i,c in enumerate(self.C._candidates):    
       for j,labeler in enumerate(labelers_f):
         self.labelers[i,j + nr_old] = labeler(c)
-
+    
   def _coverage(self):
     cov = [(self.labelers == lab).sum(1) for lab in [1,-1]]
     abst = self.num_labelers() - cov[0] - cov[1]
     cov.insert(1, abst)
     return [np.ravel(c) for c in cov]
 
-  def _plot_coverage(self):
-    cov = self._coverage()
+  def _plot_coverage(self, cov):
     cov_ct = [np.sum(x > 0) for x in cov]
     tot_cov = float(np.sum((cov[0] + cov[2]) > 0)) / self.num_candidates()
     idx, bar_width = np.array([1, 0, -1]), 0.5
@@ -384,22 +411,25 @@ class CandidateModel:
   def _plot_overlap(self):
     tot_ov = float(np.sum(abs_sparse(self.labelers).sum(1) > 1)) / self.num_candidates()
     cts = abs_sparse(self.labelers).sum(1)
-    plt.hist(cts, bins=20, normed=False, facecolor='blue')
+    plt.hist(cts, bins=15, normed=False, facecolor='blue')
     plt.xlim((0,np.max(cts)))
     plt.xlabel("# candidates")
     plt.ylabel("# positive and negative labels")
     return tot_ov * 100.
     
-  def _plot_conflict(self):
-    x, _, y = self._coverage()
+  def _plot_conflict(self, cov):
+    x, _, y = cov
     tot_conf = float(np.dot(x, y)) / self.num_candidates()
-    bz = np.linspace(0, np.max([np.max(x), np.max(y)]), num=10) 
+    m = np.max([np.max(x), np.max(y)])
+    bz = np.linspace(-0.5, m+0.5, num=m+2)
     H, xr, yr = np.histogram2d(x, y, bins=[bz,bz], normed=False)
     plt.imshow(H, interpolation='nearest', origin='low',
                extent=[xr[0], xr[-1], yr[0], yr[-1]])
     plt.colorbar(fraction=0.046, pad=0.04)
     plt.xlabel("# negative labels")
     plt.ylabel("# positive labels")
+    plt.xticks(range(m+1))
+    plt.yticks(range(m+1))
     return tot_conf * 100.
     
 
@@ -412,9 +442,10 @@ class CandidateModel:
     """
     #has_holdout, has_gt = (len(self.holdout) > 0), (ground_truth is not None)
     n_plots = 3
+    cov = self._coverage()
     # Labeler coverage
     plt.subplot(1,n_plots,1)
-    tot_cov = self._plot_coverage()
+    tot_cov = self._plot_coverage(cov)
     plt.title("(a) Candidate coverage: {:.2f}%".format(tot_cov))
     # Labeler overlap
     plt.subplot(1,n_plots,2)
@@ -422,10 +453,34 @@ class CandidateModel:
     plt.title("(b) Candidates with overlap: {:.2f}%".format(tot_ov))
     # Labeler conflict
     plt.subplot(1,n_plots,3)
-    tot_conf = self._plot_conflict()
+    tot_conf = self._plot_conflict(cov)
     plt.title("(c) Candidates with conflict: {:.2f}%".format(tot_conf))
-    
+    # Show plots    
     plt.show()
+
+  def _mean_lab_conf(self, label_idx):
+    label_csc = self.labelers.tocsc()
+    other_idx = np.setdiff1d(range(self.num_labelers()), label_idx)
+    agree = label_csc[:, other_idx].multiply(label_csc[:, label_idx])
+    return float((agree == -1).sum()) / self.num_candidates()
+    
+  def top_conflict_labelers(self, n=10):
+    d = {nm : self._mean_lab_conf(i) for i,nm in enumerate(self.labeler_names)}
+    tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
+    tab.set_num(n)
+    tab.set_title("Labeler", "Mean conflicts per candidate")
+    return tab
+    
+  def _abstain_frac(self, label_idx):
+    label_csc = abs_sparse(self.labelers.tocsc()[:,label_idx])
+    return 1 - float((label_csc == 1).sum()) / self.num_candidates()
+    
+  def top_abstain_labelers(self, n=10):
+    d = {nm : self._abstain_frac(i) for i,nm in enumerate(self.labeler_names)}
+    tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
+    tab.set_num(n)
+    tab.set_title("Labeler", "Fraction of abstained votes")
+    return tab 
 
   def learn_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9, 
                     holdout=0.1, use_sparse = True, verbose=False):

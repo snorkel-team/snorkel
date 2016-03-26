@@ -362,6 +362,8 @@ class CandidateModel:
     self.X = None
     self.w = None
     self.holdout = []
+    self.mindtagger_labels = np.zeros((self.num_candidates()))
+    self.gold_labels = np.zeros((self.num_candidates()))
     self.mindtagger_instance = None
 
   def num_candidates(self):
@@ -372,8 +374,21 @@ class CandidateModel:
       return 0
     return self.labelers.shape[1]
  
+  def get_ground_truth(self, gt='resolve'):
+    if gt.lower() == 'resolve':
+      return np.array([g if g != 0 else m for g,m in
+                       zip(self.gold_labels, self.mindtagger_labels)])
+    if gt.lower() == 'mindtagger':
+      return self.mindtagger_labels
+    if gt.lower() == 'gold':
+      return self.gold_labels
+    raise ValueError("Unknown ground truth type: {}".format(gt))
+ 
+  def has_ground_truth(self):
+    return self.get_ground_truth() != 0
+ 
   def num_feats(self):
-    return 0 if self.feats is None else self.feats.shape[1]
+    return self.feats.shape[1]
 
   def apply_labelers(self, labelers_f, clear=False):
     """ Apply labeler functions given in list
@@ -411,8 +426,8 @@ class CandidateModel:
   def _plot_overlap(self):
     tot_ov = float(np.sum(abs_sparse(self.labelers).sum(1) > 1)) / self.num_candidates()
     cts = abs_sparse(self.labelers).sum(1)
-    plt.hist(cts, bins=15, normed=False, facecolor='blue')
-    plt.xlim((0,np.max(cts)))
+    plt.hist(cts, bins=min(15, self.num_labelers()+1), facecolor='blue')
+    plt.xlim((0,np.max(cts)+1))
     plt.xlabel("# candidates")
     plt.ylabel("# positive and negative labels")
     return tot_ov * 100.
@@ -480,7 +495,24 @@ class CandidateModel:
     tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
     tab.set_num(n)
     tab.set_title("Labeler", "Fraction of abstained votes")
-    return tab 
+    return tab
+    
+  def _lab_acc(self, label_idx):
+    gt = self.get_ground_truth('resolve')
+    agree = np.ravel(self.labelers.tocsc()[:,label_idx].todense()) * gt
+    n_gt = np.sum(np.abs(agree))
+    if n_gt == 0:
+      raise ValueError("No ground truth labels")
+    return (float(np.sum(agree == 1)) / n_gt, int(n_gt))
+
+  def bottom_empirical_accuracy(self, n=10):
+    d = {nm : self._lab_acc(i) for i,nm in enumerate(self.labeler_names)}
+    tab = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
+    for k in tab:
+      tab[k] = "{:.3f} (n={})".format(tab[k][0], tab[k][1])
+    tab.set_num(n)
+    tab.set_title("Labeler", "Empirical labeler accuracy")
+    return tab    
 
   def learn_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9, 
                     holdout=0.1, use_sparse = True, verbose=False):

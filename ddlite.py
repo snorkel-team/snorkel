@@ -458,8 +458,8 @@ class CandidateModel:
     cts = abs_sparse(self.labelers).sum(1)
     plt.hist(cts, bins=min(15, self.num_labelers()+1), facecolor='blue')
     plt.xlim((0,np.max(cts)+1))
-    plt.xlabel("# candidates")
-    plt.ylabel("# positive and negative labels")
+    plt.xlabel("# positive and negative labels")
+    plt.ylabel("# candidates")
     return tot_ov * 100.
     
   def _plot_conflict(self, cov):

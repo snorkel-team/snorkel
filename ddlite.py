@@ -527,17 +527,17 @@ class CandidateModel:
     tab.set_title("Labeler", "Fraction of abstained votes")
     return tab
     
-  def _lab_acc(self, label_idx):
-    gt = self.get_ground_truth('resolve')
-    agree = np.ravel(self.labelers.tocsc()[:,label_idx].todense()) * gt
-    n_gt = np.sum(np.abs(agree))
-    if n_gt == 0:
+  def _lab_acc(self, label_idx, subset):
+    idxs, gt = self.get_labeled_ground_truth('resolve', subset)
+    agree = np.ravel(self.labelers.tocsc()[:,label_idx].todense())[idxs] * gt    
+    n_both = np.sum(agree != 0)
+    if n_both == 0:
       raise ValueError("No ground truth labels")
-    return (float(np.sum(agree == 1)) / n_gt, int(n_gt))
+    return (float(np.sum(agree == 1)) / n_both, n_both)
 
-  def bottom_empirical_accuracy(self, n=10):
+  def bottom_empirical_accuracy(self, n=10, subset=None):
     """ Show the labelers with the lowest accuracy compared to ground truth """
-    d = {nm : self._lab_acc(i) for i,nm in enumerate(self.labeler_names)}
+    d = {nm : self._lab_acc(i,subset) for i,nm in enumerate(self.labeler_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
     for k in tab:
       tab[k] = "{:.3f} (n={})".format(tab[k][0], tab[k][1])

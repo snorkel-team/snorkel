@@ -362,33 +362,63 @@ class CandidateModel:
     self.X = None
     self.w = None
     self.holdout = []
-    self.mindtagger_labels = np.zeros((self.num_candidates()))
-    self.gold_labels = np.zeros((self.num_candidates()))
+    self._mindtagger_labels = np.zeros((self.num_candidates()))
+    self._gold_labels = np.zeros((self.num_candidates()))
     self.mindtagger_instance = None
 
   def num_candidates(self):
     return len(self.C)
+    
+  def num_feats(self):
+    return self.feats.shape[1]
   
   def num_labelers(self, result='all'):
     if self.labelers is None:
       return 0
     return self.labelers.shape[1]
- 
+
+  def set_gold_labels(self, gold):
+    """ Set gold labels for all candidates 
+    May abstain with 0, and all other labels are -1 or 1
+    """
+    N = self.num_candidates()
+    gold_f = np.ravel(gold)
+    if gold_f.shape != (N,) or not np.all(np.in1d(gold_f, [-1,0,1])):
+      raise ValueError("Must have {} gold labels in [-1, 0, 1]".format(N))    
+    self._gold_labels = gold_f
+    
   def get_ground_truth(self, gt='resolve'):
+    """ Get ground truth from mindtagger, gold, or both with priority gold """
     if gt.lower() == 'resolve':
       return np.array([g if g != 0 else m for g,m in
-                       zip(self.gold_labels, self.mindtagger_labels)])
+                       zip(self._gold_labels, self._mindtagger_labels)])
     if gt.lower() == 'mindtagger':
-      return self.mindtagger_labels
+      return self._mindtagger_labels
     if gt.lower() == 'gold':
-      return self.gold_labels
+      return self._gold_labels
     raise ValueError("Unknown ground truth type: {}".format(gt))
  
   def has_ground_truth(self):
+    """ Get boolean array of which candidates have some ground truth """
     return self.get_ground_truth() != 0
- 
-  def num_feats(self):
-    return self.feats.shape[1]
+    
+  def get_labeled_ground_truth(self, gt='resolve', subset=None):
+    """ Get indices and labels of subset which has ground truth """
+    gt_all = self.get_ground_truth(gt)
+    if subset is None:
+      has_gt = (gt_all != 0)
+      return np.ravel(np.where(has_gt)), gt_all[has_gt]
+    if subset is 'holdout':
+      gt_all = gt_all[self.holdout]
+      has_gt = (gt_all != 0)
+      return self.holdout[has_gt], gt_all[has_gt]
+    try:
+      gt_all = gt_all[subset]
+      has_gt = (gt_all != 0)
+      return subset[has_gt], gt_all[has_gt]
+    except:
+      raise ValueError("subset must be either 'holdout' or an array of\
+                       indices 0 <= i < {}".format(self.num_candidates()))
 
   def apply_labelers(self, labelers_f, clear=False):
     """ Apply labeler functions given in list
@@ -449,13 +479,11 @@ class CandidateModel:
     
 
   def plot_labeler_stats(self):
+    """ Show plots for evaluating labeler quality
+    Coverage bar plot, overlap histogram, and conflict heat map
+    """
     if self.labelers is None:
       raise ValueError("No labelers applied yet")
-    """
-    Show classification accuracy and probability histogram plots
-    Note: ground_truth must be an array either the length of the full dataset, or of the holdout
-    """
-    #has_holdout, has_gt = (len(self.holdout) > 0), (ground_truth is not None)
     n_plots = 3
     cov = self._coverage()
     # Labeler coverage
@@ -480,6 +508,7 @@ class CandidateModel:
     return float((agree == -1).sum()) / self.num_candidates()
     
   def top_conflict_labelers(self, n=10):
+    """ Show the labelers with the highest mean conflicts per candidate """
     d = {nm : self._mean_lab_conf(i) for i,nm in enumerate(self.labeler_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
     tab.set_num(n)
@@ -491,6 +520,7 @@ class CandidateModel:
     return 1 - float((label_csc == 1).sum()) / self.num_candidates()
     
   def top_abstain_labelers(self, n=10):
+    """ Show the labelers with the highest fraction of abstains """
     d = {nm : self._abstain_frac(i) for i,nm in enumerate(self.labeler_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
     tab.set_num(n)
@@ -506,6 +536,7 @@ class CandidateModel:
     return (float(np.sum(agree == 1)) / n_gt, int(n_gt))
 
   def bottom_empirical_accuracy(self, n=10):
+    """ Show the labelers with the lowest accuracy compared to ground truth """
     d = {nm : self._lab_acc(i) for i,nm in enumerate(self.labeler_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
     for k in tab:
@@ -514,22 +545,15 @@ class CandidateModel:
     tab.set_title("Labeler", "Empirical labeler accuracy")
     return tab    
 
-  def learn_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9, 
-                    holdout=0.1, use_sparse = True, verbose=False):
+  def learn_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9,
+                    use_sparse = True, verbose=False):
     """
-    Uses the R x N matrix of labelers and the F x N matrix of features defined
-    for the Relations object
+    Uses the N x R matrix of labelers and the N x F matrix of features
     Stacks them, giving the labelers a +1 prior (i.e. init value)
     Then runs learning, saving the learned weights
-    Holds out a set of variables for testing, either a random fraction or a specific set of indices
+    Holds out preset set of candidates for evaluation
     """
     N, R, F = self.num_candidates(), self.num_labelers(), self.num_feats()
-    if hasattr(holdout, "__iter__"):
-        self.holdout = holdout
-    elif not hasattr(holdout, "__iter__") and (0 <= holdout < 1):
-        self.holdout = np.random.choice(N, np.floor(holdout * N), replace=False)
-    else:
-        raise ValueError("Holdout must be an array of indices or fraction")
     self.X = sparse.hstack([self.labelers, self.feats], format='csr')
     if not use_sparse:
       self.X = np.asarray(self.X.todense())
@@ -540,8 +564,8 @@ class CandidateModel:
 
   def get_link(self, subset=None):
     """
-    Get the array of predicted link function values (continuous) given learned weight param w
-    Return either all variables or only holdout set
+    Get the array of predicted link function values (continuous) given weights
+    Return either all candidates, a specified subset, or only holdout set
     """
     if self.X is None or self.w is None:
       raise ValueError("Inference has not been run yet")
@@ -552,44 +576,31 @@ class CandidateModel:
     try:
       return self.X[subset, :].dot(self.w)
     except:
-      raise ValueError("subset must be either 'holdout' or an array of indices 0 <= i < {}".format(self.num_candidates()))
+      raise ValueError("subset must be either 'holdout' or an array of\
+                       indices 0 <= i < {}".format(self.num_candidates()))
 
   def get_predicted_probability(self, subset=None):
     """
-    Get the array of predicted probabilities (continuous) for variables given learned weight param w
-    Return either all variables or only holdout set
+    Get array of predicted probabilities (continuous) given weights
+    Return either all candidates, a specified subset, or only holdout set
     """
     return odds_to_prob(self.get_link(subset))
  
   def get_predicted(self, subset=None):
     """
-    Get the array of predicted (boolean) variables given learned weight param w
-    Return either all variables or only holdout set
+    Get the array of predicted (boolean) variables given weights
+    Return either all variables, a specified subset, or only holdout set
     """
     return np.sign(self.get_link(subset))
-    
-  def _handle_ground_truth(self, ground_truth, holdout_only):
-    gt = None
-    N = self.num_candidates()
-    if len(ground_truth) == N:
-      gt = ground_truth[self.holdout] if holdout_only else ground_truth
-    elif holdout_only and len(ground_truth) == len(self.holdout):
-      gt = ground_truth
-    else:
-      raise ValueError("{} ground truth labels for {} relations and holdout size {}.".
-        format(len(ground_truth), N, len(self.holdout)))
-    return gt
 
-  def get_classification_accuracy(self, ground_truth, holdout_only=False):
+  def get_classification_accuracy(self, gt='resolve', subset=None):
     """
-    Given the labels for the Relations set, return the classification accuracy
-    Return either accuracy for all variables or only holdout set
-    Note: ground_truth must be an array either the length of the full dataset, or of the holdout
-          If the latter, holdout_only must be set to True
+    Given the ground truth, return the classification accuracy
+    Return either accuracy for all candidates, a subset, or holdout set
     """
-    gt = self._handle_ground_truth(ground_truth, holdout_only)
-    pred = self.get_predicted('holdout' if holdout_only else None)
-    return (np.dot(pred, gt) / len(gt) + 1) / 2
+    idxs, gt = self.get_labeled_ground_truth(gt, subset)
+    pred = self.get_predicted(idxs)
+    return np.mean(gt == pred)
 
   def get_labeler_priority_vote_accuracy(self, ground_truth, holdout_only=False):
     """
@@ -629,12 +640,12 @@ class CandidateModel:
     plt.xlabel("Probability")
     plt.ylabel("Accuracy")
 
-  def plot_calibration(self, ground_truth = None):
+  def plot_calibration(self):
     """
     Show classification accuracy and probability histogram plots
-    Note: ground_truth must be an array either the length of the full dataset, or of the holdout
     """
-    has_holdout, has_gt = (len(self.holdout) > 0), (ground_truth is not None)
+    idxs, gt = self.get_labeled_ground_truth('resolve', None)
+    has_holdout, has_gt = (len(self.holdout) > 0), (len(gt) > 0)
     n_plots = 1 + has_holdout + (has_holdout and has_gt)
     # Whole set histogram
     plt.subplot(1,n_plots,1)
@@ -646,10 +657,10 @@ class CandidateModel:
       plt.subplot(1,n_plots,2)
       self._plot_prediction_probability(holdout_probs)
       plt.title("(b) # Predictions (holdout set)")
+      # Classification bucket accuracy
       if has_gt:
-        gt = self._handle_ground_truth(ground_truth, holdout_only = True)
         plt.subplot(1,n_plots,3)
-        self._plot_accuracy(self, holdout_probs, gt)
+        self._plot_accuracy(self, holdout_probs[idxs], gt)
         plt.title("(c) Accuracy (holdout set)")
     plt.show()
     

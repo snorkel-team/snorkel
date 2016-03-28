@@ -77,7 +77,7 @@ class candidate_internal(object):
   def __init__(self, all_idxs, labels, sent, xt):
     self.all_idxs = all_idxs
     self.labels = labels
-    # Absorb XMLTree and Sentence object attributes for access by labelers
+    # Absorb XMLTree and Sentence object attributes for access by LFs
     self.xt = xt
     self.root = self.xt.root
     self.__dict__.update(sent.__dict__)
@@ -357,8 +357,8 @@ class CandidateModel:
     else:
       raise ValueError("Features must be numpy ndarray or sparse")
     self.logger = None
-    self.labelers = None
-    self.labeler_names = []
+    self.LFs = None
+    self.LF_names = []
     self.X = None
     self.w = None
     self.holdout = []
@@ -372,10 +372,10 @@ class CandidateModel:
   def num_feats(self):
     return self.feats.shape[1]
   
-  def num_labelers(self, result='all'):
-    if self.labelers is None:
+  def num_LFs(self, result='all'):
+    if self.LFs is None:
       return 0
-    return self.labelers.shape[1]
+    return self.LFs.shape[1]
 
   def set_gold_labels(self, gold):
     """ Set gold labels for all candidates 
@@ -420,26 +420,26 @@ class CandidateModel:
       raise ValueError("subset must be either 'holdout' or an array of\
                        indices 0 <= i < {}".format(self.num_candidates()))
 
-  def apply_labelers(self, labelers_f, clear=False):
+  def apply_LFs(self, LFs_f, clear=False):
     """ Apply labeler functions given in list
-    Allows adding to existing labelers or clearing labelers with CLEAR=True
+    Allows adding to existing LFs or clearing LFs with CLEAR=True
     """
-    nr_old = self.num_labelers() if not clear else 0
-    add = sparse.lil_matrix((self.num_candidates(), len(labelers_f)))
-    add_names = [lab.__name__ for lab in labelers_f]
-    if self.labelers is None or clear:
-      self.labelers = add
-      self.labeler_names = add_names
+    nr_old = self.num_LFs() if not clear else 0
+    add = sparse.lil_matrix((self.num_candidates(), len(LFs_f)))
+    add_names = [lab.__name__ for lab in LFs_f]
+    if self.LFs is None or clear:
+      self.LFs = add
+      self.LF_names = add_names
     else:
-      self.labelers = sparse.hstack([self.labelers,add], format = 'lil')
-      self.labeler_names.extend(add_names)
+      self.LFs = sparse.hstack([self.LFs,add], format = 'lil')
+      self.LF_names.extend(add_names)
     for i,c in enumerate(self.C._candidates):    
-      for j,labeler in enumerate(labelers_f):
-        self.labelers[i,j + nr_old] = labeler(c)
+      for j,LF in enumerate(LFs_f):
+        self.LFs[i,j + nr_old] = LF(c)
     
   def _coverage(self):
-    cov = [(self.labelers == lab).sum(1) for lab in [1,-1]]
-    abst = self.num_labelers() - cov[0] - cov[1]
+    cov = [(self.LFs == lab).sum(1) for lab in [1,-1]]
+    abst = self.num_LFs() - cov[0] - cov[1]
     cov.insert(1, abst)
     return [np.ravel(c) for c in cov]
 
@@ -449,14 +449,14 @@ class CandidateModel:
     idx, bar_width = np.array([1, 0, -1]), 0.5
     plt.bar(idx, cov_ct, bar_width, color='b')
     plt.xlabel("Label type")
-    plt.ylabel("# candidates")
+    plt.ylabel("# candidates with at least one of label type")
     plt.xticks(idx + bar_width * 0.5, ("Positive", "Abstain", "Negative"))
     return tot_cov * 100.
     
   def _plot_overlap(self):
-    tot_ov = float(np.sum(abs_sparse(self.labelers).sum(1) > 1)) / self.num_candidates()
-    cts = abs_sparse(self.labelers).sum(1)
-    plt.hist(cts, bins=min(15, self.num_labelers()+1), facecolor='blue')
+    tot_ov = float(np.sum(abs_sparse(self.LFs).sum(1) > 1)) / self.num_candidates()
+    cts = abs_sparse(self.LFs).sum(1)
+    plt.hist(cts, bins=min(15, self.num_LFs()+1), facecolor='blue')
     plt.xlim((0,np.max(cts)+1))
     plt.xlabel("# positive and negative labels")
     plt.ylabel("# candidates")
@@ -470,91 +470,91 @@ class CandidateModel:
     H, xr, yr = np.histogram2d(x, y, bins=[bz,bz], normed=False)
     plt.imshow(H, interpolation='nearest', origin='low',
                extent=[xr[0], xr[-1], yr[0], yr[-1]])
-    plt.colorbar(fraction=0.046, pad=0.04)
+    cb = plt.colorbar(fraction=0.046, pad=0.04)
+    cb.set_label("# candidates")
     plt.xlabel("# negative labels")
     plt.ylabel("# positive labels")
     plt.xticks(range(m+1))
     plt.yticks(range(m+1))
     return tot_conf * 100.
-    
 
-  def plot_labeler_stats(self):
-    """ Show plots for evaluating labeler quality
+  def plot_LF_stats(self):
+    """ Show plots for evaluating LF quality
     Coverage bar plot, overlap histogram, and conflict heat map
     """
-    if self.labelers is None:
-      raise ValueError("No labelers applied yet")
+    if self.LFs is None:
+      raise ValueError("No LFs applied yet")
     n_plots = 3
     cov = self._coverage()
-    # Labeler coverage
+    # LF coverage
     plt.subplot(1,n_plots,1)
     tot_cov = self._plot_coverage(cov)
     plt.title("(a) Candidate coverage: {:.2f}%".format(tot_cov))
-    # Labeler overlap
+    # LF overlap
     plt.subplot(1,n_plots,2)
     tot_ov = self._plot_overlap()
     plt.title("(b) Candidates with overlap: {:.2f}%".format(tot_ov))
-    # Labeler conflict
+    # LF conflict
     plt.subplot(1,n_plots,3)
     tot_conf = self._plot_conflict(cov)
     plt.title("(c) Candidates with conflict: {:.2f}%".format(tot_conf))
     # Show plots    
     plt.show()
 
-  def _mean_lab_conf(self, label_idx):
-    label_csc = self.labelers.tocsc()
-    other_idx = np.setdiff1d(range(self.num_labelers()), label_idx)
-    agree = label_csc[:, other_idx].multiply(label_csc[:, label_idx])
+  def _mean_LF_conf(self, LF_idx):
+    LF_csc = self.LFs.tocsc()
+    other_idx = np.setdiff1d(range(self.num_LFs()), LF_idx)
+    agree = LF_csc[:, other_idx].multiply(LF_csc[:, LF_idx])
     return float((agree == -1).sum()) / self.num_candidates()
     
-  def top_conflict_labelers(self, n=10):
-    """ Show the labelers with the highest mean conflicts per candidate """
-    d = {nm : self._mean_lab_conf(i) for i,nm in enumerate(self.labeler_names)}
+  def top_conflict_LFs(self, n=10):
+    """ Show the LFs with the highest mean conflicts per candidate """
+    d = {nm : self._mean_LF_conf(i) for i,nm in enumerate(self.LF_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
     tab.set_num(n)
-    tab.set_title("Labeler", "Mean conflicts per candidate")
+    tab.set_title("Labeling function", "Mean conflicts per candidate")
     return tab
     
-  def _abstain_frac(self, label_idx):
-    label_csc = abs_sparse(self.labelers.tocsc()[:,label_idx])
-    return 1 - float((label_csc == 1).sum()) / self.num_candidates()
+  def _abstain_frac(self, LF_idx):
+    LF_csc = abs_sparse(self.LFs.tocsc()[:,LF_idx])
+    return 1 - float((LF_csc == 1).sum()) / self.num_candidates()
     
-  def top_abstain_labelers(self, n=10):
-    """ Show the labelers with the highest fraction of abstains """
-    d = {nm : self._abstain_frac(i) for i,nm in enumerate(self.labeler_names)}
+  def lowest_coverage_LFs(self, n=10):
+    """ Show the LFs with the highest fraction of abstains """
+    d = {nm : self._abstain_frac(i) for i,nm in enumerate(self.LF_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
     tab.set_num(n)
-    tab.set_title("Labeler", "Fraction of abstained votes")
+    tab.set_title("Labeling function", "Fraction of abstained votes")
     return tab
     
-  def _lab_acc(self, label_idx, subset):
+  def _LF_acc(self, LF_idx, subset):
     idxs, gt = self.get_labeled_ground_truth('resolve', subset)
-    agree = np.ravel(self.labelers.tocsc()[:,label_idx].todense())[idxs] * gt    
+    agree = np.ravel(self.LFs.tocsc()[:,LF_idx].todense())[idxs] * gt    
     n_both = np.sum(agree != 0)
     if n_both == 0:
       raise ValueError("No ground truth labels")
     return (float(np.sum(agree == 1)) / n_both, n_both)
 
-  def bottom_empirical_accuracy(self, n=10, subset=None):
-    """ Show the labelers with the lowest accuracy compared to ground truth """
-    d = {nm : self._lab_acc(i,subset) for i,nm in enumerate(self.labeler_names)}
+  def lowest_empirical_accuracy_LFs(self, n=10, subset=None):
+    """ Show the LFs with the lowest accuracy compared to ground truth """
+    d = {nm : self._LF_acc(i,subset) for i,nm in enumerate(self.LF_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
     for k in tab:
       tab[k] = "{:.3f} (n={})".format(tab[k][0], tab[k][1])
     tab.set_num(n)
-    tab.set_title("Labeler", "Empirical labeler accuracy")
+    tab.set_title("Labeling function", "Empirical LF accuracy")
     return tab    
 
   def learn_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9,
                     use_sparse = True, verbose=False):
     """
-    Uses the N x R matrix of labelers and the N x F matrix of features
-    Stacks them, giving the labelers a +1 prior (i.e. init value)
+    Uses the N x R matrix of LFs and the N x F matrix of features
+    Stacks them, giving the LFs a +1 prior (i.e. init value)
     Then runs learning, saving the learned weights
     Holds out preset set of candidates for evaluation
     """
-    N, R, F = self.num_candidates(), self.num_labelers(), self.num_feats()
-    self.X = sparse.hstack([self.labelers, self.feats], format='csr')
+    N, R, F = self.num_candidates(), self.num_LFs(), self.num_feats()
+    self.X = sparse.hstack([self.LFs, self.feats], format='csr')
     if not use_sparse:
       self.X = np.asarray(self.X.todense())
     w0 = np.concatenate([np.ones(R), np.zeros(F)])
@@ -602,26 +602,25 @@ class CandidateModel:
     pred = self.get_predicted(idxs)
     return np.mean(gt == pred)
 
-  def get_labeler_priority_vote_accuracy(self, ground_truth, holdout_only=False):
+  def get_LF_priority_vote_accuracy(self, gt='resolve', subset=None):
     """
-    This is to answer the question: 'How well would my labelers alone do?'
-    I.e. without any features, learning of labeler or feature weights, etc.- this serves as a
+    This is to answer the question: 'How well would my LFs alone do?'
+    I.e. without any features, learning of LF or feature weights, etc.- this serves as a
     natural baseline / quick metric
-    Labels are assigned by the first labeler that emits one for each relation (based on the order
-    of the provided labelers list)
+    Labels are assigned by the first LF that emits one for each relation (based on the order
+    of the provided LF list)
     Note: ground_truth must be an array either the length of the full dataset, or of the holdout
           If the latter, holdout_only must be set to True
     """
-    R, N = self.num_labelers(), self.num_candidates()
-    gt = self._handle_ground_truth(ground_truth, holdout_only)
-    grid = self.holdout if holdout_only else xrange(N)
+    R = self.num_LFs()
+    grid, gt = self.get_labeled_ground_truth(gt, subset)
     correct = 0
-    #TODO: more efficient labeler checking for sparse matrix using NONZERO
-    dense_labelers = self.labelers.todense()
+    #TODO: more efficient LF checking for sparse matrix using NONZERO
+    dense_LFs = self.LFs.todense()
     for i in grid:
       for j in xrange(R):
-        if dense_labelers[i,j] != 0:
-          correct += 1 if dense_labelers[i,j] == gt[j] else 0
+        if dense_LFs[i,j] != 0:
+          correct += 1 if dense_LFs[i,j] == gt[j] else 0
           break
     return float(correct) / len(gt)
     
@@ -744,7 +743,7 @@ def abs_sparse(X):
 
 def transform_sample_stats(Xt, t, f, Xt_abs = None):
   """
-  Here we calculate the expected accuracy of each labeler/feature
+  Here we calculate the expected accuracy of each LF/feature
   (corresponding to the rows of X) wrt to the distribution of samples S:
 
     E_S[ accuracy_i ] = E_(t,f)[ \frac{TP + TN}{TP + FP + TN + FN} ]
@@ -765,7 +764,7 @@ def learn_ridge_logreg(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9,
     raise TypeError("Inputs should be np.ndarray type or scipy sparse.")
   N, R = X.shape
 
-  # We initialize w at 1 for labelers & 0 for features
+  # We initialize w at 1 for LFs & 0 for features
   # As a default though, if no w0 provided, we initialize to all zeros
   w = np.zeros(R) if w0 is None else w0
   g = np.zeros(R)
@@ -783,7 +782,7 @@ def learn_ridge_logreg(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9,
       print "%s\t" % step,
       
 
-    # Get the expected labeler accuracy
+    # Get the expected LF accuracy
     t,f = sample_data(X, w, nSamples=nSamples) if sample else exact_data(X, w)
     p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
 

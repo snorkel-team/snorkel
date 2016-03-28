@@ -344,6 +344,71 @@ class DictTable(OrderedDict):
     html.append("</table>")
     return ''.join(html)
 
+def log_title(heads=["ID", "# LFs", "# ground truth", "Precision", "Recall", "F1"]):
+  html = ["<tr>"]
+  html.extend("<td><b>{0}</b></td>".format(h) for h in heads)
+  html.append("</tr>")
+  return ''.join(html)
+
+class ModelLog:
+  def __init__(self, log_id, LF_names, gt_idxs, gt, pred):
+    self.id = log_id
+    self.LF_names = LF_names
+    self.gt_idxs = gt_idxs
+    self.set_metrics(gt, pred)
+  def set_metrics(self, gt, pred):
+    tp = np.dot(pred == 1, gt == 1)
+    fp = np.dot(pred == 1, gt == -1)
+    fn = np.dot(pred == -1, gt == 1)
+    self.precision = float(tp) / float(tp + fp)
+    self.recall = float(tp) / float(tp + fn)
+    self.f1 = 2 * (self.precision * self.recall)/(self.precision + self.recall)
+  def num_LFs(self):
+    return len(self.LF_names)
+  def num_gt(self):
+    return len(self.gt_idxs)
+  def table_entry(self):
+    html = ["<tr>"]
+    html.append("<td>{0}</td>".format(self.id))
+    html.append("<td>{0}</td>".format(self.num_LFs()))
+    html.append("<td>{0}</td>".format(self.num_gt()))
+    html.append("<td>{:.3f}</td>".format(self.precision))
+    html.append("<td>{:.3f}</td>".format(self.recall))
+    html.append("<td>{:.3f}</td>".format(self.f1))
+    html.append("</tr>")
+    return ''.join(html)
+  def _repr_html_(self):
+    html = ["<table>"]
+    html.append(log_title())
+    html.append(self.table_entry())
+    html.append("</table>")
+    html.append("<table>")
+    html.append(log_title(["LF"]))
+    html.extend("<tr><td>{0}</td></tr>".format(lf) for lf in self.LF_names)
+    html.append("</table>")
+    return ''.join(html)
+
+class ModelLogger:
+  def __init__(self):
+    self.logs = []
+  def __getitem__(self, i):
+    return self.logs[i]  
+  def __len__(self):
+    return len(self.logs)
+  def __iter__(self):
+    return (self.logs[i] for i in xrange(0, len(self)))
+  def log(self, ml):
+    if issubclass(ml.__class__, ModelLog):
+      self.logs.append(ml)
+    else:
+      raise ValueError("Log must be subclass of ModelLog")
+  def _repr_html_(self):
+    html = ["<table>"]
+    html.append(log_title())
+    html.extend(log.table_entry() for log in self.logs)
+    html.append("</table>")
+    return ''.join(html)
+
 class CandidateModel:
   def __init__(self, candidates, feats=None):
     self.C = candidates
@@ -356,12 +421,13 @@ class CandidateModel:
         raise ValueError("Could not automatically extract features")
     else:
       raise ValueError("Features must be numpy ndarray or sparse")
-    self.logger = None
+    self.logger = ModelLogger()
     self.LFs = None
     self.LF_names = []
     self.X = None
     self.w = None
-    self.holdout = []
+    self.holdout = np.array([])
+    self._current_mindtagger_samples = np.array([])
     self._mindtagger_labels = np.zeros((self.num_candidates()))
     self._gold_labels = np.zeros((self.num_candidates()))
     self.mindtagger_instance = None
@@ -544,9 +610,19 @@ class CandidateModel:
     tab.set_num(n)
     tab.set_title("Labeling function", "Empirical LF accuracy")
     return tab    
+    
+  def set_holdout(self, idxs=None):
+    if idxs is None:
+      self.holdout = np.ravel(np.where(self.has_ground_truth()))
+    else:
+      try:
+        self.holdout = np.ravel(np.arange(self.num_candidates())[idxs])
+      except:
+        raise ValueError("Indexes must be in range [0, num_candidates()) or be\
+                          boolean array of length num_candidates()")
 
   def learn_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9,
-                    use_sparse = True, verbose=False):
+                    use_sparse = True, verbose=False, log=True):
     """
     Uses the N x R matrix of LFs and the N x F matrix of features
     Stacks them, giving the LFs a +1 prior (i.e. init value)
@@ -561,6 +637,8 @@ class CandidateModel:
     self.w = learn_ridge_logreg(self.X[np.setdiff1d(range(N), self.holdout),:],
                                 nSteps=nSteps, w0=w0, sample=sample,
                                 nSamples=nSamples, mu=mu, verbose=verbose)
+    if log:
+      return self.add_to_log()
 
   def get_link(self, subset=None):
     """
@@ -663,16 +741,48 @@ class CandidateModel:
         plt.title("(c) Accuracy (holdout set)")
     plt.show()
     
-  def open_mindtagger(self, num_sample = 100, **kwargs):
+  def open_mindtagger(self, num_sample = None, **kwargs):
     self.mindtagger_instance = MindTaggerInstance(self.C.mindtagger_format())
-    N = self.num_candidates()
-    samp = np.random.choice(N, num_sample, replace=False) if N > num_sample else range(N)
-    probs = self.get_predicted_probability(subset=samp)
+    if isinstance(num_sample, int):
+      N = self.num_candidates()
+      self._current_mindtagger_samples = np.random.choice(N, num_sample, replace=False)\
+                                        if N > num_sample else range(N)
+    elif num_sample is not None:
+      raise ValueError("Number of samples is integer or None")
+    try:
+      probs = self.get_predicted_probability(subset=self._current_mindtagger_samples)
+    except:
+      probs = [None for _ in xrange(len(self._current_mindtagger_samples))]
     return self.mindtagger_instance.open_mindtagger(self.C.generate_mindtagger_items,
-                                                    samp, probs, **kwargs)
+                                                    self._current_mindtagger_samples,
+                                                    probs, **kwargs)
   
-  def get_mindtagger_tags(self):
-    return self.mindtagger_instance.get_mindtagger_tags()
+  def add_mindtagger_tags(self):
+    tags = self.mindtagger_instance.get_mindtagger_tags()
+    is_tagged = [i for i,tag in enumerate(tags) if 'is_correct' in tag]
+    tb = [tags[i]['is_correct'] for i in is_tagged]
+    tb = [1 if t else -1 for t in tb]
+    self._mindtagger_labels[self._current_mindtagger_samples[is_tagged]] = tb
+    
+  def add_to_log(self, log_id=None, gt='resolve', subset='holdout', verb=True):
+    if log_id is None:
+      log_id = len(self.logger)
+    gt_idxs, gt = self.get_labeled_ground_truth(gt, subset)
+    pred = self.get_predicted(gt_idxs)    
+    self.logger.log(ModelLog(log_id, self.LF_names, gt_idxs, gt, pred))
+    if verb:
+      return self.logger[-1]
+      
+  def show_log(self, idx=None):
+    if idx is None:
+      return self.logger
+    elif isinstance(idx, int):
+      try:
+        return self.logger[idx]
+      except:
+        raise ValueError("Index must be for one of {} logs".format(len(self.logger)))
+    else:
+      raise ValueError("Index must be an integer index or None")
     
 
 ####################################################################

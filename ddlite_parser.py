@@ -1,5 +1,6 @@
 import atexit
 import glob
+import json
 import os
 import re
 import requests
@@ -11,7 +12,8 @@ from collections import namedtuple, defaultdict
 from subprocess import Popen
 
 
-Sentence = namedtuple('Sentence', 'words, lemmas, poses, dep_parents, dep_labels, sent_id, doc_id')
+Sentence = namedtuple('Sentence', ['words', 'lemmas', 'poses', 'dep_parents',
+                                   'dep_labels', 'sent_id', 'doc_id', 'text'])
 
 
 class SentenceParser:
@@ -28,7 +30,7 @@ class SentenceParser:
         # Wait a bit for java to start up.
         time.sleep(0.5)
         atexit.register(self._kill_pserver)
-        self.endpoint = 'http://localhost:%d/?properties={"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "conll"}' % self.port
+        self.endpoint = 'http://localhost:%d/?properties={"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % self.port
 
     def _kill_pserver(self):
         if self.server_pid is not None:
@@ -39,25 +41,24 @@ class SentenceParser:
         if len(doc.strip()) == 0:
             return
         resp = requests.post(self.endpoint, data=doc, allow_redirects=True)
-        blocks = resp.content.strip().split('\n\n')
-        if blocks[0].startswith("CoreNLP request timed out"):
-            warnings.warn("CoreNLP request timed out for document")
-            return
+        blocks = json.loads(resp.content.strip())['sentences']
         sent_id = 0
         for block in blocks:
-            lines = block.split('\n')
             parts = defaultdict(list)
-            for line in lines:
-                vals = line.split('\t')
-                for i, key in enumerate(['', 'words', 'lemmas', 'poses', '', 'dep_parents', 'dep_labels']):
-                    if not key:
-                        continue
-                    val = vals[i]
-                    if key == 'dep_parents':
-                        val = int(val)
-                    parts[key].append(val)
+            dep_order, dep_par, dep_lab = [], [], []
+            for tok, deps in zip(block['tokens'], block['basic-dependencies']):
+                parts['words'].append(tok['word'])
+                parts['lemmas'].append(tok['lemma'])
+                parts['poses'].append(tok['pos'])
+                dep_par.append(deps['governor'])
+                dep_lab.append(deps['dep'])
+                dep_order.append(deps['dependent'])
+            parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
+            parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['sent_id'] = sent_id
             parts['doc_id'] = doc_id
+            parts['text'] = doc[block['tokens'][0]['characterOffsetBegin'] : 
+                                block['tokens'][-1]['characterOffsetEnd']]
             sent = Sentence(**parts)
             sent_id += 1
             yield sent
@@ -139,7 +140,9 @@ class DocParser:
             
     def __repr__(self):
         return "Document parser for files: {}".format(self._fs)
-        
+
+def sort_X_on_Y(X, Y):
+  return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]        
 
 def main():
     doc = 'Hello world. How are you?'

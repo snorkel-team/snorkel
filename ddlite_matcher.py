@@ -8,6 +8,8 @@ class Matcher(object):
 class DictionaryMatch(Matcher):
   """Selects according to ngram-matching against a dictionary i.e. list of words"""
   def __init__(self, label, dictionary, match_attrib='words', ignore_case=True):
+    if match_attrib in ['sent_id', 'doc_id', 'text']:
+      raise ValueError("Match attribute cannot be ID or sentence text")
     self.label = label
     self.match_attrib = match_attrib
     self.ignore_case = ignore_case
@@ -43,6 +45,8 @@ class DictionaryMatch(Matcher):
 class RegexMatch(Matcher):
   """Selects according to ngram-matching against a regex """
   def __init__(self, label, regex_pattern, match_attrib='words', ignore_case=True):
+    if match_attrib in ['sent_id', 'doc_id']:
+      raise ValueError("Match attribute cannot be ID")
     self.label = label
     self.match_attrib = match_attrib
     # Ignore whitespace when we join the match attribute
@@ -64,7 +68,7 @@ class RegexMatch(Matcher):
     for s in seq:
       start_c_idx.append(start_c_idx[-1]+len(s)+1)
     # Find regex matches over phrase
-    phrase = ' '.join(seq)
+    phrase = seq if self.match_attrib == 'text' else ' '.join(seq)
     for match in self._re_comp.finditer(phrase):
       start = bisect.bisect(start_c_idx, match.start())
       end = bisect.bisect(start_c_idx, match.end())

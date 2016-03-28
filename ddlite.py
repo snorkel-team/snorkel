@@ -438,19 +438,16 @@ class CandidateModel:
         self.LFs[i,j + nr_old] = LF(c)
     
   def _coverage(self):
-    cov = [(self.LFs == lab).sum(1) for lab in [1,-1]]
-    abst = self.num_LFs() - cov[0] - cov[1]
-    cov.insert(1, abst)
-    return [np.ravel(c) for c in cov]
+    return [np.ravel((self.LFs == lab).sum(1)) for lab in [1,-1]]
 
   def _plot_coverage(self, cov):
     cov_ct = [np.sum(x > 0) for x in cov]
     tot_cov = float(np.sum((cov[0] + cov[2]) > 0)) / self.num_candidates()
-    idx, bar_width = np.array([1, 0, -1]), 0.5
+    idx, bar_width = np.array([1, -1]), 0.5
     plt.bar(idx, cov_ct, bar_width, color='b')
     plt.xlabel("Label type")
     plt.ylabel("# candidates with at least one of label type")
-    plt.xticks(idx + bar_width * 0.5, ("Positive", "Abstain", "Negative"))
+    plt.xticks(idx + bar_width * 0.5, ("Positive", "Negative"))
     return tot_cov * 100.
     
   def _plot_overlap(self):
@@ -489,30 +486,30 @@ class CandidateModel:
     # LF coverage
     plt.subplot(1,n_plots,1)
     tot_cov = self._plot_coverage(cov)
-    plt.title("(a) Candidate coverage: {:.2f}%".format(tot_cov))
+    plt.title("(a) Label balance (candidate coverage: {:.2f}%)".format(tot_cov))
     # LF overlap
     plt.subplot(1,n_plots,2)
     tot_ov = self._plot_overlap()
-    plt.title("(b) Candidates with overlap: {:.2f}%".format(tot_ov))
+    plt.title("(b) Label count histogram (candidates with overlap: {:.2f}%)".format(tot_ov))
     # LF conflict
     plt.subplot(1,n_plots,3)
     tot_conf = self._plot_conflict(cov)
-    plt.title("(c) Candidates with conflict: {:.2f}%".format(tot_conf))
+    plt.title("(c) Label heat map (candidates with conflict: {:.2f}%)".format(tot_conf))
     # Show plots    
     plt.show()
 
-  def _mean_LF_conf(self, LF_idx):
+  def _LF_conf(self, LF_idx):
     LF_csc = self.LFs.tocsc()
     other_idx = np.setdiff1d(range(self.num_LFs()), LF_idx)
     agree = LF_csc[:, other_idx].multiply(LF_csc[:, LF_idx])
-    return float((agree == -1).sum()) / self.num_candidates()
+    return (np.ravel((agree == -1).sum(1)) > 0) / self.num_candidates()
     
   def top_conflict_LFs(self, n=10):
     """ Show the LFs with the highest mean conflicts per candidate """
     d = {nm : self._mean_LF_conf(i) for i,nm in enumerate(self.LF_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
     tab.set_num(n)
-    tab.set_title("Labeling function", "Mean conflicts per candidate")
+    tab.set_title("Labeling function", "Fraction of candidates where LF has conflict")
     return tab
     
   def _abstain_frac(self, LF_idx):

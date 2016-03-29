@@ -14,6 +14,8 @@ cache:
     - parser
 
 install:
+  - sudo apt-get install -qq python-numpy python-scipy
+
   # Install all dependencies as per our README
   - pip install -r python-package-requirement.txt
   - test -e parser/corenlp.sh || ./install-parser.sh

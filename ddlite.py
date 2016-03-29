@@ -360,8 +360,8 @@ class ModelLog:
     tp = np.sum((pred == 1) * (gt == 1))
     fp = np.sum((pred == 1) * (gt == -1))
     fn = np.sum((pred == -1) * (gt == 1))
-    self.precision = float(tp) / float(tp + fp)
-    self.recall = float(tp) / float(tp + fn)
+    self.precision = 0 if tp == 0 else float(tp) / float(tp + fp)
+    self.recall = 0 if tp == 0 else float(tp) / float(tp + fn)
     self.f1 = 2 * (self.precision * self.recall)/(self.precision + self.recall)
   def num_LFs(self):
     return len(self.LF_names)
@@ -749,7 +749,7 @@ class CandidateModel:
     if isinstance(num_sample, int):
       N = self.num_candidates()
       self._current_mindtagger_samples = np.random.choice(N, num_sample, replace=False)\
-                                        if N > num_sample else range(N)
+                                          if N > num_sample else range(N)
     elif num_sample is not None:
       raise ValueError("Number of samples is integer or None")
     try:

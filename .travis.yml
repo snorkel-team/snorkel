@@ -15,11 +15,11 @@ jdk:
 
 cache:
   directories:
-    - $HOME/virtualenv
+    - $HOME/virtualenv/python${TRAVIS_PYTHON_VERSION}_with_system_site_packages/local/lib/python${TRAVIS_PYTHON_VERSION}/site-packages
     - parser
 
 install:
-  - sudo apt-get install -qq python-numpy python-scipy
+  - sudo apt-get install -qq python-numpy python-scipy python-matplotlib
 
   # Install all dependencies as per our README
   - pip install -r python-package-requirement.txt

@@ -28,7 +28,7 @@ class SentenceParser:
         # Wait a bit for java to start up.
         time.sleep(0.5)
         atexit.register(self._kill_pserver)
-        self.endpoint = 'http://localhost:%d/?properties={"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "conll"}' % self.port
+        self.endpoint = 'http://127.0.0.1:%d/?properties={"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "conll"}' % self.port
 
     def _kill_pserver(self):
         if self.server_pid is not None:

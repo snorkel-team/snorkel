@@ -344,6 +344,71 @@ class DictTable(OrderedDict):
     html.append("</table>")
     return ''.join(html)
 
+def log_title(heads=["ID", "# LFs", "# ground truth", "Precision", "Recall", "F1"]):
+  html = ["<tr>"]
+  html.extend("<td><b>{0}</b></td>".format(h) for h in heads)
+  html.append("</tr>")
+  return ''.join(html)
+
+class ModelLog:
+  def __init__(self, log_id, LF_names, gt_idxs, gt, pred):
+    self.id = log_id
+    self.LF_names = LF_names
+    self.gt_idxs = gt_idxs
+    self.set_metrics(gt, pred)
+  def set_metrics(self, gt, pred):
+    tp = np.sum((pred == 1) * (gt == 1))
+    fp = np.sum((pred == 1) * (gt == -1))
+    fn = np.sum((pred == -1) * (gt == 1))
+    self.precision = float(tp) / float(tp + fp)
+    self.recall = float(tp) / float(tp + fn)
+    self.f1 = 2 * (self.precision * self.recall)/(self.precision + self.recall)
+  def num_LFs(self):
+    return len(self.LF_names)
+  def num_gt(self):
+    return len(self.gt_idxs)
+  def table_entry(self):
+    html = ["<tr>"]
+    html.append("<td>{0}</td>".format(self.id))
+    html.append("<td>{0}</td>".format(self.num_LFs()))
+    html.append("<td>{0}</td>".format(self.num_gt()))
+    html.append("<td>{:.3f}</td>".format(self.precision))
+    html.append("<td>{:.3f}</td>".format(self.recall))
+    html.append("<td>{:.3f}</td>".format(self.f1))
+    html.append("</tr>")
+    return ''.join(html)
+  def _repr_html_(self):
+    html = ["<table>"]
+    html.append(log_title())
+    html.append(self.table_entry())
+    html.append("</table>")
+    html.append("<table>")
+    html.append(log_title(["LF"]))
+    html.extend("<tr><td>{0}</td></tr>".format(lf) for lf in self.LF_names)
+    html.append("</table>")
+    return ''.join(html)
+
+class ModelLogger:
+  def __init__(self):
+    self.logs = []
+  def __getitem__(self, i):
+    return self.logs[i]
+  def __len__(self):
+    return len(self.logs)
+  def __iter__(self):
+    return (self.logs[i] for i in xrange(0, len(self)))
+  def log(self, ml):
+    if issubclass(ml.__class__, ModelLog):
+      self.logs.append(ml)
+    else:
+      raise ValueError("Log must be subclass of ModelLog")
+  def _repr_html_(self):
+    html = ["<table>"]
+    html.append(log_title())
+    html.extend(log.table_entry() for log in self.logs)
+    html.append("</table>")
+    return ''.join(html)
+
 class CandidateModel:
   def __init__(self, candidates, feats=None):
     self.C = candidates
@@ -356,13 +421,15 @@ class CandidateModel:
         raise ValueError("Could not automatically extract features")
     else:
       raise ValueError("Features must be numpy ndarray or sparse")
-    self.logger = None
+    self.logger = ModelLogger()
     self.LFs = None
     self.LF_names = []
     self.X = None
     self.w = None
-    self.holdout = []
+    self.holdout = np.array([])
+    self._current_mindtagger_samples = np.array([])
     self._mindtagger_labels = np.zeros((self.num_candidates()))
+    self._tags = []
     self._gold_labels = np.zeros((self.num_candidates()))
     self.mindtagger_instance = None
 
@@ -443,8 +510,9 @@ class CandidateModel:
   def _plot_coverage(self, cov):
     cov_ct = [np.sum(x > 0) for x in cov]
     tot_cov = float(np.sum((cov[0] + cov[1]) > 0)) / self.num_candidates()
-    idx, bar_width = np.array([1, -1]), 0.5
+    idx, bar_width = np.array([1, -1]), 1
     plt.bar(idx, cov_ct, bar_width, color='b')
+    plt.xlim((-1.5, 2.5))
     plt.xlabel("Label type")
     plt.ylabel("# candidates with at least one of label type")
     plt.xticks(idx + bar_width * 0.5, ("Positive", "Negative"))
@@ -502,11 +570,11 @@ class CandidateModel:
     LF_csc = self.LFs.tocsc()
     other_idx = np.setdiff1d(range(self.num_LFs()), LF_idx)
     agree = LF_csc[:, other_idx].multiply(LF_csc[:, LF_idx])
-    return (np.ravel((agree == -1).sum(1)) > 0) / self.num_candidates()
+    return float((np.ravel((agree == -1).sum(1)) > 0).sum()) / self.num_candidates()
     
   def top_conflict_LFs(self, n=10):
     """ Show the LFs with the highest mean conflicts per candidate """
-    d = {nm : self._mean_LF_conf(i) for i,nm in enumerate(self.LF_names)}
+    d = {nm : self._LF_conf(i) for i,nm in enumerate(self.LF_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
     tab.set_num(n)
     tab.set_title("Labeling function", "Fraction of candidates where LF has conflict")
@@ -529,7 +597,7 @@ class CandidateModel:
     agree = np.ravel(self.LFs.tocsc()[:,LF_idx].todense())[idxs] * gt    
     n_both = np.sum(agree != 0)
     if n_both == 0:
-      raise ValueError("No ground truth labels")
+      return (0, 0)
     return (float(np.sum(agree == 1)) / n_both, n_both)
 
   def lowest_empirical_accuracy_LFs(self, n=10, subset=None):
@@ -541,9 +609,19 @@ class CandidateModel:
     tab.set_num(n)
     tab.set_title("Labeling function", "Empirical LF accuracy")
     return tab    
+    
+  def set_holdout(self, idxs=None):
+    if idxs is None:
+      self.holdout = np.ravel(np.where(self.has_ground_truth()))
+    else:
+      try:
+        self.holdout = np.ravel(np.arange(self.num_candidates())[idxs])
+      except:
+        raise ValueError("Indexes must be in range [0, num_candidates()) or be\
+                          boolean array of length num_candidates()")
 
   def learn_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9,
-                    use_sparse = True, verbose=False, holdout=None):
+                    use_sparse = True, verbose=False, log=True):
     """
     Uses the N x R matrix of LFs and the N x F matrix of features
     Stacks them, giving the LFs a +1 prior (i.e. init value)
@@ -552,13 +630,14 @@ class CandidateModel:
     """
     N, R, F = self.num_candidates(), self.num_LFs(), self.num_feats()
     self.X = sparse.hstack([self.LFs, self.feats], format='csr')
-    # TODO holdout fraction
     if not use_sparse:
       self.X = np.asarray(self.X.todense())
     w0 = np.concatenate([np.ones(R), np.zeros(F)])
     self.w = learn_ridge_logreg(self.X[np.setdiff1d(range(N), self.holdout),:],
                                 nSteps=nSteps, w0=w0, sample=sample,
                                 nSamples=nSamples, mu=mu, verbose=verbose)
+    if log:
+      return self.add_to_log()
 
   def get_link(self, subset=None):
     """
@@ -629,11 +708,15 @@ class CandidateModel:
     plt.ylabel("# Predictions")
     
   def _plot_accuracy(self, probs, ground_truth):
-    x = 0.1 * (1 + np.array(range(10)))
+    x = 0.1 * np.array(range(11))
     bin_assign = [x[i] for i in np.digitize(probs, x)]
     correct = ((2*(probs >= 0.5) - 1) == ground_truth)
-    correct_prob = [np.mean(correct[bin_assign == p]) for p in x]
-    plt.plot(x, x, 'b--', x, correct_prob, 'ro-')
+    correct_prob = np.array([np.mean(correct[bin_assign == p]) for p in x])
+    xc = x[np.isfinite(correct_prob)]
+    correct_prob = correct_prob[np.isfinite(correct_prob)]
+    plt.plot(x, x, 'b--', xc, correct_prob, 'ro-')
+    plt.xlim((0,1))
+    plt.ylim((0,1))
     plt.xlabel("Probability")
     plt.ylabel("Accuracy")
 
@@ -646,31 +729,64 @@ class CandidateModel:
     n_plots = 1 + has_holdout + (has_holdout and has_gt)
     # Whole set histogram
     plt.subplot(1,n_plots,1)
-    self._plot_prediction_probability(self.get_predicted_probability())
+    probs = self.get_predicted_probability()
+    self._plot_prediction_probability(probs)
     plt.title("(a) # Predictions (whole set)")
     # Hold out histogram
     if has_holdout:
-      holdout_probs = self.get_predicted_probability('holdout')
       plt.subplot(1,n_plots,2)
-      self._plot_prediction_probability(holdout_probs)
+      self._plot_prediction_probability(probs[self.holdout])
       plt.title("(b) # Predictions (holdout set)")
       # Classification bucket accuracy
       if has_gt:
         plt.subplot(1,n_plots,3)
-        self._plot_accuracy(self, holdout_probs[idxs], gt)
+        self._plot_accuracy(probs[idxs], gt)
         plt.title("(c) Accuracy (holdout set)")
     plt.show()
     
-  def open_mindtagger(self, num_sample = 100, **kwargs):
+  def open_mindtagger(self, num_sample = None, **kwargs):
     self.mindtagger_instance = MindTaggerInstance(self.C.mindtagger_format())
-    N = self.num_candidates()
-    samp = np.random.choice(N, num_sample, replace=False) if N > num_sample else range(N)
-    probs = self.get_predicted_probability(subset=samp)
+    if isinstance(num_sample, int):
+      N = self.num_candidates()
+      self._current_mindtagger_samples = np.random.choice(N, num_sample, replace=False)\
+                                        if N > num_sample else range(N)
+    elif num_sample is not None:
+      raise ValueError("Number of samples is integer or None")
+    try:
+      probs = self.get_predicted_probability(subset=self._current_mindtagger_samples)
+    except:
+      probs = [None for _ in xrange(len(self._current_mindtagger_samples))]
     return self.mindtagger_instance.open_mindtagger(self.C.generate_mindtagger_items,
-                                                    samp, probs, **kwargs)
+                                                    self._current_mindtagger_samples,
+                                                    probs, **kwargs)
   
-  def get_mindtagger_tags(self):
-    return self.mindtagger_instance.get_mindtagger_tags()
+  def add_mindtagger_tags(self, tags=None):
+    tags = self.mindtagger_instance.get_mindtagger_tags()
+    self._tags = tags
+    is_tagged = [i for i,tag in enumerate(tags) if 'is_correct' in tag]
+    tb = [tags[i]['is_correct'] for i in is_tagged]
+    tb = [1 if t else -1 for t in tb]
+    self._mindtagger_labels[self._current_mindtagger_samples[is_tagged]] = tb
+    
+  def add_to_log(self, log_id=None, gt='resolve', subset='holdout', verb=True):
+    if log_id is None:
+      log_id = len(self.logger)
+    gt_idxs, gt = self.get_labeled_ground_truth(gt, subset)
+    pred = self.get_predicted(gt_idxs)    
+    self.logger.log(ModelLog(log_id, self.LF_names, gt_idxs, gt, pred))
+    if verb:
+      return self.logger[-1]
+      
+  def show_log(self, idx=None):
+    if idx is None:
+      return self.logger
+    elif isinstance(idx, int):
+      try:
+        return self.logger[idx]
+      except:
+        raise ValueError("Index must be for one of {} logs".format(len(self.logger)))
+    else:
+      raise ValueError("Index must be an integer index or None")
     
 
 ####################################################################
@@ -798,7 +914,7 @@ def learn_ridge_logreg(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9,
   return w
 
 def main():
-  txt = "Han likes Luke and a wookie. Han Solo don\'t like bounty hunters."
+  txt = "Han likes Luke and a good-wookie. Han Solo don\'t like bounty hunters."
   parser = SentenceParser()
   sents = list(parser.parse(txt))
 
@@ -806,18 +922,18 @@ def main():
   b = DictionaryMatch('B', ['Bounty Hunters'])
 
   print "***** Relation 0 *****"
-  R = Relations(g, b, sents)
+  R = Relations(sents, g, b)
   print R
   print R[0].tagged_sent
   
   print "***** Relation 1 *****"
-  R = Relations(g, g, sents)
+  R = Relations(sents, g, g)
   print R
   for r in R:
       print r.tagged_sent
   
   print "***** Entity *****"
-  E = Entities(g, sents)
+  E = Entities(sents, g)
   print E                
   for e in E:
       print e.tagged_sent
@@ -825,14 +941,15 @@ def main():
   print "***** Regex *****"
   pattern = "l[a-zA-z]ke"
   rm = RegexMatch('L', pattern, match_attrib='lemmas', ignore_case=True)
-  L = Entities(rm, sents)
+  L = Entities(sents, rm)
   for er in L:
       print er.tagged_sent
       
   print "***** Dict + Regex *****"
   pattern = "VB[a-zA-Z]?"
   vbz = RegexMatch('verbs', pattern, match_attrib='poses', ignore_case=True)
-  DR = Entities(MultiMatcher(b,vbz), sents)
+  n = RegexMatch('neg', "don\'t", match_attrib='text')
+  DR = Entities(sents, MultiMatcher(b,vbz,n))
   for dr in DR:
       print dr.tagged_sent
 

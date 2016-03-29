@@ -15,8 +15,6 @@ addons:
       # Some Python packages aren't possible to install w/ pip
     - python-numpy
     - python-scipy
-      # for CoreNLP
-    - oracle-java8-installer
 
 # Need the following lines to use system-wide Python packages from our virtualenv
 # See: http://stackoverflow.com/a/18986891
@@ -24,13 +22,20 @@ virtualenv:
   system_site_packages: true
 
 install:
+  # Use Java 8 for CoreNLP
+  - jdk_switcher use oraclejdk8
+
+  # Install all dependencies as per our README
   - pip install -r python-package-requirement.txt
   - test -d parser || ./install-parser.sh
 
   # Use runipy to run Jupyter/IPython notebooks from command-line
-  # For more ideas, see: https://github.com/rossant/ipycache/issues/7
   - pip install runipy
 
 script:
+  # Make sure the notebooks run end-to-end
   - runipy GeneTaggerExample_Extraction.ipynb
   - runipy GeneTaggerExample_Learning.ipynb
+
+  # TODO check outputs, upload results, etc.
+  # for more ideas, see: https://github.com/rossant/ipycache/issues/7

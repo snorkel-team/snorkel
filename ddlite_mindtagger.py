@@ -51,7 +51,8 @@ class MindTaggerInstance:
         # figure out hostname and task name from IPython notebook
         host = socket.gethostname(),
         # determine a port number based on user name
-        port = hash(os.getlogin()) % 1000 + 8000,
+        # NOTE os.getlogin() raises an ioctl error on Travis (Precise 12.04), see: https://github.com/gitpython-developers/gitpython/issues/39
+        port = hash(pwd.getpwuid(os.getuid()).pw_name) % 1000 + 8000,
       )
     args['task_path'] = "%s/%s" % (args['task_root'], args['task'])
     args['mindtagger_baseurl'] = "http://%(host)s:%(port)s/" % args

@@ -234,7 +234,7 @@ class Relations(Candidates):
         ext_id          = item.id,
         doc_id          = item.doc_id,
         sent_id         = item.sent_id,
-        words           = json.dumps(item.words),
+        words           = json.dumps(corenlp_cleaner(item.words)),
         e1_idxs         = json.dumps(item.e1_idxs),
         e1_label        = item.e1_label,
         e2_idxs         = json.dumps(item.e2_idxs),
@@ -302,7 +302,7 @@ class Entities(Candidates):
         ext_id          = item.id,
         doc_id          = item.doc_id,
         sent_id         = item.sent_id,
-        words           = json.dumps(item.words),
+        words           = json.dumps(corenlp_cleaner(item.words)),
         idxs            = json.dumps(item.idxs),
         label           = item.label,
         probability     = p

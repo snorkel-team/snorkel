@@ -18,6 +18,9 @@ addons:
     # CoreNLP needs Java 8
     - oracle-java8-installer
 
+jdk:
+  - oraclejdk8
+
 # Need the following lines to use system-wide Python packages from our virtualenv
 # See: http://stackoverflow.com/a/18986891
 virtualenv:

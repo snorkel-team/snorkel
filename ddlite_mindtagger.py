@@ -1,4 +1,4 @@
-import atexit, json, os, pipes, socket, sys, time
+import atexit, json, os, pwd, pipes, socket, sys, time
 
 class MindTaggerInstance:
 

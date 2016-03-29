@@ -1,0 +1,40 @@
+sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
+language:
+  - python
+python:
+  - "2.7"
+
+cache:
+  directories:
+    - $HOME/virtualenv
+    - parser
+
+addons:
+  apt:
+    packages:
+    # Some Python packages can't be installed on Travis w/ pip
+    - python-numpy
+    - python-scipy
+    # CoreNLP needs Java 8
+    - oracle-java8-installer
+
+# Need the following lines to use system-wide Python packages from our virtualenv
+# See: http://stackoverflow.com/a/18986891
+virtualenv:
+  system_site_packages: true
+
+install:
+  # Install all dependencies as per our README
+  - pip install -r python-package-requirement.txt
+  - test -d parser || ./install-parser.sh
+
+  # Use runipy to run Jupyter/IPython notebooks from command-line
+  - pip install runipy
+
+script:
+  # Make sure the notebooks run end-to-end
+  - runipy GeneTaggerExample_Extraction.ipynb
+  - runipy GeneTaggerExample_Learning.ipynb
+
+  # TODO check outputs, upload results, etc.
+  # for more ideas, see: https://github.com/rossant/ipycache/issues/7

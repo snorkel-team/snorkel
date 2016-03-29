@@ -15,7 +15,8 @@ jdk:
 
 cache:
   directories:
-    - $HOME/download
+    - download
+    - $HOME/miniconda/envs/test
     - $HOME/.cache/pip
     - parser
 
@@ -36,7 +37,7 @@ before_install:
 
 install:
   # Install binary distribution of scientific python modules
-  - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
+  - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION || conda update --yes -n test python=$TRAVIS_PYTHON_VERSION
   - source activate test
   - conda install --yes numpy=$NUMPY scipy=$SCIPY matplotlib pip
 

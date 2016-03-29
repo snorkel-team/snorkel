@@ -18,10 +18,10 @@ Sentence = namedtuple('Sentence', 'words, lemmas, poses, dep_parents, dep_labels
 from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 s = requests.Session()
-retries = Retry(total=10,
+retries = Retry(total=20,
                 backoff_factor=0.5,
                 status_forcelist=[ 500, 502, 503, 504 ])
-s.mount('http://127.0.0.1', HTTPAdapter(max_retries=retries))
+s.mount('http://', HTTPAdapter(max_retries=retries))
 
 class SentenceParser:
     def __init__(self):

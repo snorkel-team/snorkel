@@ -13,6 +13,15 @@ from subprocess import Popen
 
 Sentence = namedtuple('Sentence', 'words, lemmas, poses, dep_parents, dep_labels, sent_id, doc_id')
 
+# Enables retries for CoreNLP server
+# See: http://stackoverflow.com/a/35504626
+from requests.packages.urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
+s = requests.Session()
+retries = Retry(total=10,
+                backoff_factor=0.5,
+                status_forcelist=[ 500, 502, 503, 504 ])
+s.mount('http://127.0.0.1', HTTPAdapter(max_retries=retries))
 
 class SentenceParser:
     def __init__(self):
@@ -25,8 +34,6 @@ class SentenceParser:
         self.port = 12345
         cmd = ['java -Xmx4g -cp "parser/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d' % self.port]
         self.server_pid = Popen(cmd, shell=True).pid
-        # Wait a bit for java to start up.
-        time.sleep(0.5)
         atexit.register(self._kill_pserver)
         self.endpoint = 'http://127.0.0.1:%d/?properties={"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "conll"}' % self.port
 

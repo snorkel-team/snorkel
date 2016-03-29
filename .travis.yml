@@ -3,7 +3,7 @@ dist: trusty
 
 env:
   global:
-    - NUMPY: 1.11
+    - NUMPY: 1.10
     - SCIPY: 0.17
 
 language:

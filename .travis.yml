@@ -30,14 +30,15 @@ before_install:
   - cd download
   - travis_retry wget -c http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
-  - bash miniconda.sh -b -f -p $HOME/miniconda
+  - bash miniconda.sh -b -f -p ~/miniconda
   - cd ..
-  - export PATH=/home/travis/miniconda/bin:$PATH
+  - export PATH=~/miniconda/bin:$PATH
   - conda update --yes conda
 
 install:
   # Install binary distribution of scientific python modules
-  - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION || conda update --yes -n test python=$TRAVIS_PYTHON_VERSION
+  - test -e ~/miniconda/envs/test/bin/activate || rm -rf ~/miniconda/envs/test
+  - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
   - source activate test
   - conda install --yes numpy=$NUMPY scipy=$SCIPY matplotlib pip
 

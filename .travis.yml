@@ -1,30 +1,17 @@
-sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
+sudo: required
+dist: trusty
+
 language:
   - python
 python:
   - "2.7"
+jdk:
+  - oraclejdk8
 
 cache:
   directories:
     - $HOME/virtualenv
     - parser
-
-addons:
-  apt:
-    packages:
-    # Some Python packages can't be installed on Travis w/ pip
-    - python-numpy
-    - python-scipy
-    # CoreNLP needs Java 8
-    - oracle-java8-installer
-
-jdk:
-  - oraclejdk8
-
-# Need the following lines to use system-wide Python packages from our virtualenv
-# See: http://stackoverflow.com/a/18986891
-virtualenv:
-  system_site_packages: true
 
 install:
   # Install all dependencies as per our README

@@ -11,5 +11,5 @@ parser/
 /mindtagger.pid
 /mindtagger
 
-# where pickles are stored
-/gene_tag_example
+# pickled data from notebooks
+*.pkl

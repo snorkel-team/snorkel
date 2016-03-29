@@ -50,8 +50,7 @@ before_install:
 
 install:
   # Install binary distribution of scientific python modules
-  - test -e ~/miniconda/envs/test/bin/activate || rm -rf ~/miniconda/envs/test
-  - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
+  - test -e ~/miniconda/envs/test/bin/activate || ( rm -rf ~/miniconda/envs/test; conda create --yes -n test python=$TRAVIS_PYTHON_VERSION )
   - source activate test
   - conda install --yes numpy=$NUMPY scipy=$SCIPY matplotlib pip
 

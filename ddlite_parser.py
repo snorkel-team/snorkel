@@ -16,7 +16,6 @@ Sentence = namedtuple('Sentence', ['words', 'lemmas', 'poses', 'dep_parents',
                                    'dep_labels', 'sent_id', 'doc_id', 'text',
                                    'token_idxs'])
 
-
 class SentenceParser:
     def __init__(self):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
@@ -28,10 +27,21 @@ class SentenceParser:
         self.port = 12345
         cmd = ['java -Xmx4g -cp "parser/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d' % self.port]
         self.server_pid = Popen(cmd, shell=True).pid
-        # Wait a bit for java to start up.
-        time.sleep(0.5)
         atexit.register(self._kill_pserver)
-        self.endpoint = 'http://localhost:%d/?properties={"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % self.port
+        self.endpoint = 'http://127.0.0.1:%d/?properties={"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % self.port
+
+        # Following enables retries to cope with CoreNLP server boot-up latency
+        # See: http://stackoverflow.com/a/35504626
+        from requests.packages.urllib3.util.retry import Retry
+        from requests.adapters import HTTPAdapter
+        self.requests_session = requests.Session()
+        retries = Retry(total=None,
+                        connect=20,
+                        read=0,
+                        backoff_factor=0.1,
+                        status_forcelist=[ 500, 502, 503, 504 ])
+        self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
+
 
     def _kill_pserver(self):
         if self.server_pid is not None:
@@ -41,7 +51,7 @@ class SentenceParser:
         """Parse a raw document as a string into a list of sentences"""
         if len(doc.strip()) == 0:
             return
-        resp = requests.post(self.endpoint, data=doc, allow_redirects=True)
+        resp = self.requests_session.post(self.endpoint, data=doc, allow_redirects=True)
         blocks = json.loads(resp.content.strip())['sentences']
         sent_id = 0
         for block in blocks:

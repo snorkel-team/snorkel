@@ -10,3 +10,6 @@ parser/
 /deepdive-*.tar.gz
 /mindtagger.pid
 /mindtagger
+
+# pickled data from notebooks
+*.pkl

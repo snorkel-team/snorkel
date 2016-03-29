@@ -1,0 +1,27 @@
+sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
+language:
+  - python
+python:
+  - "2.7"
+
+cache:
+  directories:
+    - parser
+
+addons:
+  apt:
+    packages:
+      # for CoreNLP
+    - oracle-java8-installer
+
+install:
+  - pip install -r python-package-requirement.txt
+  - ./install-parser.sh
+
+  # Use runipy to run Jupyter/IPython notebooks from command-line
+  # For more ideas, see: https://github.com/rossant/ipycache/issues/7
+  - pip install runipy
+
+script:
+  - runipy GeneTaggerExample_Extraction.ipynb
+  - runipy GeneTaggerExample_Learning.ipynb

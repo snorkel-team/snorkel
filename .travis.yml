@@ -7,7 +7,7 @@ python:
 cache:
   directories:
     - parser
-    - /home/travis/virtualenv/python2.7/lib/python2.7/site-packages
+    - /home/travis/virtualenv
 
 addons:
   apt:

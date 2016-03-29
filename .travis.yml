@@ -24,6 +24,7 @@ cache:
 # See: https://github.com/Theano/Theano/blob/master/.travis.yml (for caching)
 # See: http://conda.pydata.org/docs/travis.html
 before_install:
+  - deactivate  # leaving Travis' virtualenv first since otherwise Jupyter/IPython gets confused with conda inside a virtualenv (See: https://github.com/ipython/ipython/issues/8898)
   - mkdir -p download
   - cd download
   - travis_retry wget -c http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda.sh

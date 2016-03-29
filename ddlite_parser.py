@@ -13,7 +13,8 @@ from subprocess import Popen
 
 
 Sentence = namedtuple('Sentence', ['words', 'lemmas', 'poses', 'dep_parents',
-                                   'dep_labels', 'sent_id', 'doc_id', 'text'])
+                                   'dep_labels', 'sent_id', 'doc_id', 'text',
+                                   'token_idxs'])
 
 
 class SentenceParser:
@@ -50,6 +51,7 @@ class SentenceParser:
                 parts['words'].append(tok['word'])
                 parts['lemmas'].append(tok['lemma'])
                 parts['poses'].append(tok['pos'])
+                parts['token_idxs'].append(tok['characterOffsetBegin'])
                 dep_par.append(deps['governor'])
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])

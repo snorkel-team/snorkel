@@ -8,7 +8,7 @@ class Matcher(object):
 class DictionaryMatch(Matcher):
   """Selects according to ngram-matching against a dictionary i.e. list of words"""
   def __init__(self, label, dictionary, match_attrib='words', ignore_case=True):
-    if match_attrib in ['sent_id', 'doc_id', 'text']:
+    if match_attrib in ['sent_id', 'doc_id', 'text', 'token_idxs']:
       raise ValueError("Match attribute cannot be ID or sentence text")
     self.label = label
     self.match_attrib = match_attrib
@@ -45,7 +45,7 @@ class DictionaryMatch(Matcher):
 class RegexMatch(Matcher):
   """Selects according to ngram-matching against a regex """
   def __init__(self, label, regex_pattern, match_attrib='words', ignore_case=True):
-    if match_attrib in ['sent_id', 'doc_id']:
+    if match_attrib in ['sent_id', 'doc_id', 'token_idxs']:
       raise ValueError("Match attribute cannot be ID")
     self.label = label
     self.match_attrib = match_attrib
@@ -60,13 +60,13 @@ class RegexMatch(Matcher):
     # Make sure we're operating on a dict, then get match_attrib
     try:
       seq = s[self.match_attrib]
+      start_c_idx = s['token_idxs']
     except TypeError:
       seq = s.__dict__[self.match_attrib]
+      start_c_idx = s.__dict__['token_idxs']
     
-    # Convert character index to token index
-    start_c_idx = [0]
-    for s in seq:
-      start_c_idx.append(start_c_idx[-1]+len(s)+1)
+    # Convert character index to token index and form phrase
+    start_c_idx = [c - start_c_idx[0] for c in start_c_idx]
     # Find regex matches over phrase
     phrase = seq if self.match_attrib == 'text' else ' '.join(seq)
     for match in self._re_comp.finditer(phrase):

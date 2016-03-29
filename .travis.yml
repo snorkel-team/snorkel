@@ -6,8 +6,8 @@ python:
 
 cache:
   directories:
+    - $HOME/virtualenv
     - parser
-    - /home/travis/virtualenv
 
 addons:
   apt:
@@ -24,8 +24,8 @@ virtualenv:
   system_site_packages: true
 
 install:
-  - pip install -r python-package-requirement.txt --use-mirrors
-  - ./install-parser.sh
+  - pip install -r python-package-requirement.txt
+  - test -d parser || ./install-parser.sh
 
   # Use runipy to run Jupyter/IPython notebooks from command-line
   # For more ideas, see: https://github.com/rossant/ipycache/issues/7

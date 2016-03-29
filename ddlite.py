@@ -357,9 +357,9 @@ class ModelLog:
     self.gt_idxs = gt_idxs
     self.set_metrics(gt, pred)
   def set_metrics(self, gt, pred):
-    tp = np.dot(pred == 1, gt == 1)
-    fp = np.dot(pred == 1, gt == -1)
-    fn = np.dot(pred == -1, gt == 1)
+    tp = np.sum((pred == 1) * (gt == 1))
+    fp = np.sum((pred == 1) * (gt == -1))
+    fn = np.sum((pred == -1) * (gt == 1))
     self.precision = float(tp) / float(tp + fp)
     self.recall = float(tp) / float(tp + fn)
     self.f1 = 2 * (self.precision * self.recall)/(self.precision + self.recall)
@@ -392,7 +392,7 @@ class ModelLogger:
   def __init__(self):
     self.logs = []
   def __getitem__(self, i):
-    return self.logs[i]  
+    return self.logs[i]
   def __len__(self):
     return len(self.logs)
   def __iter__(self):
@@ -429,6 +429,7 @@ class CandidateModel:
     self.holdout = np.array([])
     self._current_mindtagger_samples = np.array([])
     self._mindtagger_labels = np.zeros((self.num_candidates()))
+    self._tags = []
     self._gold_labels = np.zeros((self.num_candidates()))
     self.mindtagger_instance = None
 
@@ -508,9 +509,10 @@ class CandidateModel:
 
   def _plot_coverage(self, cov):
     cov_ct = [np.sum(x > 0) for x in cov]
-    tot_cov = float(np.sum((cov[0] + cov[2]) > 0)) / self.num_candidates()
-    idx, bar_width = np.array([1, -1]), 0.5
+    tot_cov = float(np.sum((cov[0] + cov[1]) > 0)) / self.num_candidates()
+    idx, bar_width = np.array([1, -1]), 1
     plt.bar(idx, cov_ct, bar_width, color='b')
+    plt.xlim((-1.5, 2.5))
     plt.xlabel("Label type")
     plt.ylabel("# candidates with at least one of label type")
     plt.xticks(idx + bar_width * 0.5, ("Positive", "Negative"))
@@ -526,7 +528,7 @@ class CandidateModel:
     return tot_ov * 100.
     
   def _plot_conflict(self, cov):
-    x, _, y = cov
+    x, y = cov
     tot_conf = float(np.dot(x, y)) / self.num_candidates()
     m = np.max([np.max(x), np.max(y)])
     bz = np.linspace(-0.5, m+0.5, num=m+2)
@@ -568,11 +570,11 @@ class CandidateModel:
     LF_csc = self.LFs.tocsc()
     other_idx = np.setdiff1d(range(self.num_LFs()), LF_idx)
     agree = LF_csc[:, other_idx].multiply(LF_csc[:, LF_idx])
-    return (np.ravel((agree == -1).sum(1)) > 0) / self.num_candidates()
+    return float((np.ravel((agree == -1).sum(1)) > 0).sum()) / self.num_candidates()
     
   def top_conflict_LFs(self, n=10):
     """ Show the LFs with the highest mean conflicts per candidate """
-    d = {nm : self._mean_LF_conf(i) for i,nm in enumerate(self.LF_names)}
+    d = {nm : self._LF_conf(i) for i,nm in enumerate(self.LF_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
     tab.set_num(n)
     tab.set_title("Labeling function", "Fraction of candidates where LF has conflict")
@@ -595,7 +597,7 @@ class CandidateModel:
     agree = np.ravel(self.LFs.tocsc()[:,LF_idx].todense())[idxs] * gt    
     n_both = np.sum(agree != 0)
     if n_both == 0:
-      raise ValueError("No ground truth labels")
+      return (0, 0)
     return (float(np.sum(agree == 1)) / n_both, n_both)
 
   def lowest_empirical_accuracy_LFs(self, n=10, subset=None):
@@ -706,11 +708,15 @@ class CandidateModel:
     plt.ylabel("# Predictions")
     
   def _plot_accuracy(self, probs, ground_truth):
-    x = 0.1 * (1 + np.array(range(10)))
+    x = 0.1 * np.array(range(11))
     bin_assign = [x[i] for i in np.digitize(probs, x)]
     correct = ((2*(probs >= 0.5) - 1) == ground_truth)
-    correct_prob = [np.mean(correct[bin_assign == p]) for p in x]
-    plt.plot(x, x, 'b--', x, correct_prob, 'ro-')
+    correct_prob = np.array([np.mean(correct[bin_assign == p]) for p in x])
+    xc = x[np.isfinite(correct_prob)]
+    correct_prob = correct_prob[np.isfinite(correct_prob)]
+    plt.plot(x, x, 'b--', xc, correct_prob, 'ro-')
+    plt.xlim((0,1))
+    plt.ylim((0,1))
     plt.xlabel("Probability")
     plt.ylabel("Accuracy")
 
@@ -723,18 +729,18 @@ class CandidateModel:
     n_plots = 1 + has_holdout + (has_holdout and has_gt)
     # Whole set histogram
     plt.subplot(1,n_plots,1)
-    self._plot_prediction_probability(self.get_predicted_probability())
+    probs = self.get_predicted_probability()
+    self._plot_prediction_probability(probs)
     plt.title("(a) # Predictions (whole set)")
     # Hold out histogram
     if has_holdout:
-      holdout_probs = self.get_predicted_probability('holdout')
       plt.subplot(1,n_plots,2)
-      self._plot_prediction_probability(holdout_probs)
+      self._plot_prediction_probability(probs[self.holdout])
       plt.title("(b) # Predictions (holdout set)")
       # Classification bucket accuracy
       if has_gt:
         plt.subplot(1,n_plots,3)
-        self._plot_accuracy(self, holdout_probs[idxs], gt)
+        self._plot_accuracy(probs[idxs], gt)
         plt.title("(c) Accuracy (holdout set)")
     plt.show()
     
@@ -754,8 +760,9 @@ class CandidateModel:
                                                     self._current_mindtagger_samples,
                                                     probs, **kwargs)
   
-  def add_mindtagger_tags(self):
+  def add_mindtagger_tags(self, tags=None):
     tags = self.mindtagger_instance.get_mindtagger_tags()
+    self._tags = tags
     is_tagged = [i for i,tag in enumerate(tags) if 'is_correct' in tag]
     tb = [tags[i]['is_correct'] for i in is_tagged]
     tb = [1 if t else -1 for t in tb]

@@ -914,7 +914,7 @@ def learn_ridge_logreg(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9,
   return w
 
 def main():
-  txt = "Han likes Luke and a wookie. Han Solo don\'t like bounty hunters."
+  txt = "Han likes Luke and a good-wookie. Han Solo don\'t like bounty hunters."
   parser = SentenceParser()
   sents = list(parser.parse(txt))
 
@@ -922,18 +922,18 @@ def main():
   b = DictionaryMatch('B', ['Bounty Hunters'])
 
   print "***** Relation 0 *****"
-  R = Relations(g, b, sents)
+  R = Relations(sents, g, b)
   print R
   print R[0].tagged_sent
   
   print "***** Relation 1 *****"
-  R = Relations(g, g, sents)
+  R = Relations(sents, g, g)
   print R
   for r in R:
       print r.tagged_sent
   
   print "***** Entity *****"
-  E = Entities(g, sents)
+  E = Entities(sents, g)
   print E                
   for e in E:
       print e.tagged_sent
@@ -941,14 +941,15 @@ def main():
   print "***** Regex *****"
   pattern = "l[a-zA-z]ke"
   rm = RegexMatch('L', pattern, match_attrib='lemmas', ignore_case=True)
-  L = Entities(rm, sents)
+  L = Entities(sents, rm)
   for er in L:
       print er.tagged_sent
       
   print "***** Dict + Regex *****"
   pattern = "VB[a-zA-Z]?"
   vbz = RegexMatch('verbs', pattern, match_attrib='poses', ignore_case=True)
-  DR = Entities(MultiMatcher(b,vbz), sents)
+  n = RegexMatch('neg', "don\'t", match_attrib='text')
+  DR = Entities(sents, MultiMatcher(b,vbz,n))
   for dr in DR:
       print dr.tagged_sent
 

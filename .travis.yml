@@ -1,7 +1,6 @@
 # Travis CI config for DDlite, a Jupyter/IPython notebook version of DeepDive
 
-#sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
-sudo: required
+sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
 
 env:
   global:
@@ -46,7 +45,6 @@ before_install:
   - conda update --yes conda
 
   # Make sure Java 8 is used
-  - sudo apt-get install oracle-java8-installer  # NOTE this should be disabled when using Travis' container-based infra
   - export PATH="/usr/lib/jvm/java-8-oracle/bin:$PATH"
   - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
   - java -version

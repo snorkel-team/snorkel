@@ -7,15 +7,24 @@ python:
 cache:
   directories:
     - parser
+    - /home/travis/virtualenv/python2.7/lib/python2.7/site-packages
 
 addons:
   apt:
     packages:
+      # Some Python packages aren't possible to install w/ pip
+    - python-numpy
+    - python-scipy
       # for CoreNLP
     - oracle-java8-installer
 
+# Need the following lines to use system-wide Python packages from our virtualenv
+# See: http://stackoverflow.com/a/18986891
+virtualenv:
+  system_site_packages: true
+
 install:
-  - pip install -r python-package-requirement.txt
+  - pip install -r python-package-requirement.txt --use-mirrors
   - ./install-parser.sh
 
   # Use runipy to run Jupyter/IPython notebooks from command-line

@@ -442,7 +442,7 @@ class CandidateModel:
 
   def _plot_coverage(self, cov):
     cov_ct = [np.sum(x > 0) for x in cov]
-    tot_cov = float(np.sum((cov[0] + cov[2]) > 0)) / self.num_candidates()
+    tot_cov = float(np.sum((cov[0] + cov[1]) > 0)) / self.num_candidates()
     idx, bar_width = np.array([1, -1]), 0.5
     plt.bar(idx, cov_ct, bar_width, color='b')
     plt.xlabel("Label type")
@@ -460,7 +460,7 @@ class CandidateModel:
     return tot_ov * 100.
     
   def _plot_conflict(self, cov):
-    x, _, y = cov
+    x, y = cov
     tot_conf = float(np.dot(x, y)) / self.num_candidates()
     m = np.max([np.max(x), np.max(y)])
     bz = np.linspace(-0.5, m+0.5, num=m+2)
@@ -543,7 +543,7 @@ class CandidateModel:
     return tab    
 
   def learn_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9,
-                    use_sparse = True, verbose=False):
+                    use_sparse = True, verbose=False, holdout=None):
     """
     Uses the N x R matrix of LFs and the N x F matrix of features
     Stacks them, giving the LFs a +1 prior (i.e. init value)
@@ -552,6 +552,7 @@ class CandidateModel:
     """
     N, R, F = self.num_candidates(), self.num_LFs(), self.num_feats()
     self.X = sparse.hstack([self.LFs, self.feats], format='csr')
+    # TODO holdout fraction
     if not use_sparse:
       self.X = np.asarray(self.X.todense())
     w0 = np.concatenate([np.ones(R), np.zeros(F)])

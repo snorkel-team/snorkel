@@ -5,6 +5,11 @@ language:
   - python
 python:
   - "2.7"
+# Need the following lines to use system-wide Python packages from our virtualenv
+# See: http://stackoverflow.com/a/18986891
+virtualenv:
+  system_site_packages: true
+
 jdk:
   - oraclejdk8
 

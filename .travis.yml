@@ -1,11 +1,8 @@
 sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
 language:
   - python
-  - java
 python:
   - "2.7"
-jdk:
-  - oraclejdk8
 
 cache:
   directories:
@@ -15,9 +12,11 @@ cache:
 addons:
   apt:
     packages:
-      # Some Python packages aren't possible to install w/ pip
+    # Some Python packages can't be installed on Travis w/ pip
     - python-numpy
     - python-scipy
+    # CoreNLP needs Java 8
+    - oracle-java8-installer
 
 # Need the following lines to use system-wide Python packages from our virtualenv
 # See: http://stackoverflow.com/a/18986891
@@ -25,9 +24,6 @@ virtualenv:
   system_site_packages: true
 
 install:
-  # Use Java 8 for CoreNLP
-  - jdk_switcher use oraclejdk8
-
   # Install all dependencies as per our README
   - pip install -r python-package-requirement.txt
   - test -d parser || ./install-parser.sh

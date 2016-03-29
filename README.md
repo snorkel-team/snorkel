@@ -1,5 +1,7 @@
 # DeepDive Lite
 
+## *Note: this documentation is potentially out-of-date. See the gene tagger example for usage information.*
+
 ## Motivation
 DeepDive Lite is an attempt to provide a lighter-weight interface to the process of creating a structured information extraction application in DeepDive.  DeepDive Lite is built for rapid prototyping and development solely focused around **defining an input/output schema**, and **creating a set of _distant supervision rules_**.  The goal is to then be able to directly plug these objects into DeepDive proper, and instantly get a more scalable, performant and customizable version of the application (which can then be iterated on within the DeepDive development framework).
 

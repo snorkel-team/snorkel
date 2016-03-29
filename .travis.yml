@@ -1,5 +1,6 @@
-sudo: required
-dist: trusty
+# Travis CI config for DDlite, a Jupyter/IPython notebook version of DeepDive
+
+sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
 
 env:
   global:
@@ -15,10 +16,17 @@ jdk:
 
 cache:
   directories:
+    - /var/cache/oracle-jdk8-installer
     - download
-    - $HOME/miniconda/envs/test
     - $HOME/.cache/pip
+    - $HOME/miniconda/envs/test
     - parser
+
+addons:
+  apt:
+    packages:
+    # CoreNLP needs Java 8
+    - oracle-java8-installer
 
 # Following trick is necessary to get a binary distribution of numpy, scipy, etc. which takes too long to build every time
 # See: http://stackoverflow.com/q/30588634
@@ -34,6 +42,11 @@ before_install:
   - cd ..
   - export PATH=~/miniconda/bin:$PATH
   - conda update --yes conda
+
+  # Make sure Java 8 is used
+  - export PATH="/usr/lib/jvm/java-8-oracle/bin:$PATH"
+  - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
+  - java -version
 
 install:
   # Install binary distribution of scientific python modules

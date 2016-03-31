@@ -933,7 +933,7 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
         if step % 500 == 0:
           print "Learning epoch = ",
         print "%s\t" % step,
-        if step % 400 == 0:
+        if (step+100) % 500 == 0:
           print "\n",
       
       # Get the expected LF accuracy

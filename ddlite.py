@@ -907,7 +907,7 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
       raise ValueError("Penalty parameters must be non-negative")
     mu_seq.sort()
   else:
-    mu_seq = get_mu_seq(20, X, w0, mu_min_ratio)
+    mu_seq = get_mu_seq(20, rate, alpha, mu_min_ratio)
 
   weights = dict()
   # Search over penalty parameter values
@@ -939,7 +939,7 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
       wn = np.linalg.norm(w, ord=2)
       if wn < 1e-12 or np.linalg.norm(g, ord=2) / wn < tol:
         if verbose:
-          print "SGD converged for mu={:.3f} after {} steps".format(mu, step)
+          print "\nSGD converged for mu={:.3f} after {} steps".format(mu, step)
         break
 
       # Update weights
@@ -952,18 +952,18 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
     
     # SGD did not converge    
     else:
+      print '\n'
       warnings.warn("SGD did not converge for mu={:.3f}.\
                      Try increasing maxIter.".format(mu))
 
     # Store result and set warm start for next penalty
-    weights[mu] = {'w': w.copy(), 'nnz': np.sum(np.abs(w) > 1e-12)}
+    weights[mu] = w.copy()
     w0 = w
     
   return weights
   
-def get_mu_seq(n, X, w0, min_ratio):
-  #TODO: max should be min value that always gives w=0
-  mv = 1e-2
+def get_mu_seq(n, rate, alpha, min_ratio):
+  mv = float(1 + rate * 10) / alpha
   return np.logspace(np.log10(mv * min_ratio), np.log10(mv), n)
   
 def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, plot=True, alpha=0,
@@ -997,10 +997,10 @@ def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, plot=True, alpha=0,
     train = np.setdiff1d(range(N), test)
     w = learn_elasticnet_logreg(X[train, :], w0=w0, mu_seq=mu_seq,
                                 verbose=False, **kwargs)
-    for mu, d in w.iteritems():
-      spread = 2*np.sqrt(np.mean(np.square(odds_to_prob(X[test,:].dot(d['w'])) - 0.5)))
+    for mu, wm in w.iteritems():
+      spread = 2*np.sqrt(np.mean(np.square(odds_to_prob(X[test,:].dot(wm)) - 0.5)))
       cv_results[mu]['p'].append(spread)
-      cv_results[mu]['nnz'].append(d['nnz'])
+      cv_results[mu]['nnz'].append(np.sum(np.abs(wm) > 1e-12))
   # Average spreads
   p = np.array([np.mean(cv_results[mu]['p']) for mu in mu_seq])
   # Find opt index, sd, and 1 sd rule index
@@ -1043,7 +1043,7 @@ def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, plot=True, alpha=0,
     plt.show()
   # Train a model using the 1se mu
   w_opt = learn_elasticnet_logreg(X,  w0=w0, mu_seq=mu_seq[idx_1se if opt_1se else opt_idx], **kwargs)
-  return w_opt[w_opt.keys()[0]]['w']
+  return w_opt[w_opt.keys()[0]]
 
 def main():
   txt = "Han likes Luke and a good-wookie. Han Solo don\'t like bounty hunters."

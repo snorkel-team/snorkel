@@ -877,7 +877,7 @@ def transform_sample_stats(Xt, t, f, Xt_abs = None):
   return p_correct, n_pred
 
 def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
-                            nSamples=100, alpha=0, mu_seq=None, 
+                            nSamples=100, alpha=0, mu_seq=None, n_mu=20,
                             mu_min_ratio=1e-6, rate=0.01, verbose=False):
   """ Perform SGD wrt the weights w
        * w0 is the initial guess for w
@@ -907,7 +907,7 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
       raise ValueError("Penalty parameters must be non-negative")
     mu_seq.sort()
   else:
-    mu_seq = get_mu_seq(20, rate, alpha, mu_min_ratio)
+    mu_seq = get_mu_seq(n_mu, rate, alpha, mu_min_ratio)
 
   weights = dict()
   # Search over penalty parameter values
@@ -963,12 +963,12 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
   return weights
   
 def get_mu_seq(n, rate, alpha, min_ratio):
-  mv = max(float(1 + rate * 10), float(rate * 11)) / alpha
+  mv = (max(float(1 + rate * 10), float(rate * 11)) / (alpha + 1e-6))
   return np.logspace(np.log10(mv * min_ratio), np.log10(mv), n)
   
-def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, plot=True, alpha=0,
-                         mu_min_ratio=1e-6, opt_1se=True, rate=0.01,
-                         verbose=True, **kwargs):
+def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, alpha=0, rate=0.01,
+                         mu_min_ratio=1e-6, n_mu=20, opt_1se=True, 
+                         verbose=True, plot=True, **kwargs):
   N, R = X.shape
   # Initialize weights if no initial provided
   w0 = np.zeros(R) if w0 is None else w0   
@@ -982,7 +982,7 @@ def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, plot=True, alpha=0,
       raise ValueError("Penalty parameters must be non-negative")
     mu_seq.sort()
   else:
-    mu_seq = get_mu_seq(20, rate, alpha, mu_min_ratio)
+    mu_seq = get_mu_seq(n_mu, rate, alpha, mu_min_ratio)
   # Partition data
   try:
     folds = np.array_split(np.random.choice(N, N, replace=False), nfolds)

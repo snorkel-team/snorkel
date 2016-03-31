@@ -963,11 +963,12 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
   return weights
   
 def get_mu_seq(n, rate, alpha, min_ratio):
-  mv = float(1 + rate * 10) / alpha
+  mv = max(float(1 + rate * 10), float(rate * 11)) / alpha
   return np.logspace(np.log10(mv * min_ratio), np.log10(mv), n)
   
 def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, plot=True, alpha=0,
-                         mu_min_ratio=1e-6, opt_1se=True, verbose=True, **kwargs):
+                         mu_min_ratio=1e-6, opt_1se=True, rate=0.01,
+                         verbose=True, **kwargs):
   N, R = X.shape
   # Initialize weights if no initial provided
   w0 = np.zeros(R) if w0 is None else w0   
@@ -981,7 +982,7 @@ def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, plot=True, alpha=0,
       raise ValueError("Penalty parameters must be non-negative")
     mu_seq.sort()
   else:
-    mu_seq = get_mu_seq(20, X, w0, mu_min_ratio)
+    mu_seq = get_mu_seq(20, rate, alpha, mu_min_ratio)
   # Partition data
   try:
     folds = np.array_split(np.random.choice(N, N, replace=False), nfolds)
@@ -995,8 +996,8 @@ def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, plot=True, alpha=0,
     if verbose:
       print "Running test fold {}".format(nf)
     train = np.setdiff1d(range(N), test)
-    w = learn_elasticnet_logreg(X[train, :], w0=w0, mu_seq=mu_seq,
-                                verbose=False, **kwargs)
+    w = learn_elasticnet_logreg(X[train, :], w0=w0, mu_seq=mu_seq, alpha=alpha,
+                                rate=rate, verbose=False, **kwargs)
     for mu, wm in w.iteritems():
       spread = 2*np.sqrt(np.mean(np.square(odds_to_prob(X[test,:].dot(wm)) - 0.5)))
       cv_results[mu]['p'].append(spread)
@@ -1042,7 +1043,9 @@ def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, plot=True, alpha=0,
                fontsize=10, markerscale=0.5)
     plt.show()
   # Train a model using the 1se mu
-  w_opt = learn_elasticnet_logreg(X,  w0=w0, mu_seq=mu_seq[idx_1se if opt_1se else opt_idx], **kwargs)
+  w_opt = learn_elasticnet_logreg(X,  w0=w0, alpha=alpha, rate=rate,
+                                  mu_seq=mu_seq[idx_1se if opt_1se else opt_idx],
+                                  **kwargs)
   return w_opt[w_opt.keys()[0]]
 
 def main():

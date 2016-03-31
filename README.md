@@ -69,6 +69,7 @@ Here are a few practical tips for working with DeepDive Lite:
 ## Documentation
 
 **Class: Sentence**
+
 |**Member**|**Notes**|
 |:---------|:--------|
 |`words`| Tokenized words|
@@ -82,24 +83,28 @@ Here are a few practical tips for working with DeepDive Lite:
 |`token_idxs`| Document character offsets for start of each sentence token |
 
 **Class: SentenceParser**
+
 |**Method**|**Notes**|
 |:---------|:--------|
 |`__init()__`| Starts CoreNLPServer|
 |`parse(doc, doc_id=None)| Parse document into `Sentence`s|
 
 **Class: DictionaryMatcher**
+
 |**Method**|**Notes**|
 |:---------|:--------|
 |`__init__(label, dictionary, match_attrib='words', ignore_case=True)`| |
 |`apply(sentence)`| Tokens joined with spaces |
 
 **Class: RegexMatcher**
+
 |**Method**|**Notes**|
 |:---------|:--------|
 |`__init__(label, regex_pattern, match_attrib='words', ignore_case=True)`| Entire sentence text can be searched using `match_attrib='text'`|
 |`apply(sentence)`| Tokens joined with spaces |
 
 **Class: MultiMatcher**
+
 |**Method**|**Notes**|
 |:---------|:--------|
 |`__init__(matcher1, matcher2,...)`| |

@@ -486,23 +486,33 @@ class CandidateModel:
     except:
       raise ValueError("subset must be either 'holdout' or an array of\
                        indices 0 <= i < {}".format(self.num_candidates()))
+                       
+  def set_LF_matrix(self, LF_matrix, names, clear=False):
+    try:
+      add = sparse.lil_matrix(LF_matrix)
+    except:
+      raise ValueError("Could not convert LF_matrix to sparse matrix")
+    if add.shape[0] != self.num_candidates():
+      raise ValueError("LF_matrix must have one row per candidate")
+    if len(names) != add.shape[1]:
+      raise ValueError("Must have one name per LF_matrix column")
+    if self.LFs is None or clear:
+      self.LFs = add
+      self.LF_names = names
+    else:
+      self.LFs = sparse.hstack([self.LFs,add], format = 'lil')
+      self.LF_names.extend(names)
 
   def apply_LFs(self, LFs_f, clear=False):
     """ Apply labeler functions given in list
     Allows adding to existing LFs or clearing LFs with CLEAR=True
     """
-    nr_old = self.num_LFs() if not clear else 0
     add = sparse.lil_matrix((self.num_candidates(), len(LFs_f)))
-    add_names = [lab.__name__ for lab in LFs_f]
-    if self.LFs is None or clear:
-      self.LFs = add
-      self.LF_names = add_names
-    else:
-      self.LFs = sparse.hstack([self.LFs,add], format = 'lil')
-      self.LF_names.extend(add_names)
     for i,c in enumerate(self.C._candidates):    
       for j,LF in enumerate(LFs_f):
-        self.LFs[i,j + nr_old] = LF(c)
+        add[i,j] = LF(c)
+    add_names = [lab.__name__ for lab in LFs_f]
+    self.set_LF_matrix(add, add_names, clear)    
     
   def _coverage(self):
     return [np.ravel((self.LFs == lab).sum(1)) for lab in [1,-1]]

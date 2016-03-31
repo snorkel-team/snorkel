@@ -1,13 +1,15 @@
 # DeepDive Lite
 
-## *Note: this documentation is potentially out-of-date. See the gene tagger example for usage information.*
+[![Build Status](https://travis-ci.org/HazyResearch/ddlite.svg?branch=master)](https://travis-ci.org/HazyResearch/ddlite)
 
 ## Motivation
-DeepDive Lite is an attempt to provide a lighter-weight interface to the process of creating a structured information extraction application in DeepDive.  DeepDive Lite is built for rapid prototyping and development solely focused around **defining an input/output schema**, and **creating a set of _distant supervision rules_**.  The goal is to then be able to directly plug these objects into DeepDive proper, and instantly get a more scalable, performant and customizable version of the application (which can then be iterated on within the DeepDive development framework).
+DeepDive Lite provides a lighter-weight interface for creating a structured information extraction application in DeepDive. DeepDive Lite is built for rapid prototyping and development focused on **defining an input/output schema**, and **creating a set of _labeling functions_**. The goal is to be able to directly plug these objects into DeepDive proper to get a more scalable, performant, and customizable version of the application.
 
-One shorter-term motivation is also to provide a lighter-weight entry point to the DeepDive application development cycle for new non-expert users.  However DeepDive Lite may also be useful for "expert" DeepDive users as a simple toolset for certain development and prototyping tasks.
+An immediate motivation is to provide a lighter-weight entry point to the DeepDive application development cycle for non-expert users. DeepDive Lite may also be useful for expert DeepDive users as a toolset for development and prototyping tasks.
 
-DeepDive Lite is also part of a broader attempt to answer the following research questions: how much progress can be made with the _schema_ and _distant supervision rules_ being the sole user entry point to the application development process?  To what degree can DeepDive be seen/used as an (iterative) _compiler_, which takes in a rule-based program, and transforms it to a statistical learning & inference-based one?
+DeepDive Lite is also part of a broader effort to answer the following research questions: 
+* How much progress can be made with the _schema_ and _labeling functions_ being the only user entry points to the application development process?
+* To what degree can DeepDive be seen/used as an _iterative compiler_, which takes in a rule-based program, and transforms it to a statistical learning and inference-based one?
 
 ## Installation / dependencies
 
@@ -48,49 +50,59 @@ Finally, DeepDive Lite is built specifically with usage in **Jupyter/IPython not
 The `jupyter` command is installed as part of the above installation steps, so the following command within the virtualenv opens our demo notebook.
 
 ```bash
-jupyter notebook DeepDiveLite.ipynb
+jupyter notebook GeneTaggerExample_Extraction.ipynb
 ```
 
-## Basics
-Please see the Jupyter notebook demo in `DeepDiveLite.ipynb` for more detail!
+## Learning how to use DeepDive Lite
+The best way to learn how to use is to open up the demo notebooks. **GeneTaggerExample_Extraction.ipynb** walks through the candidate extraction workflow for an entity tagging task. **GeneTaggerExample_Learning.ipynb** picks up where the extraction notebook left off. The learning notebook demonstrates the labeling function iteration workflow and learning methods.
 
-### Preprocessing Input
-The `SentenceParser` can be used to split a document (input as a string) into sentences, and to extract a range of basic linguistic features from these sentences, such as part-of-speech tags, a dependency tree parse, lemmatized words, etc:
-```python
-parser = SentenceParser()
-for sent in parser.parse(doc_string):
-  yield sent
-```
+## Best practices for labeling function iteration
+The following flowchart illustrates the labeling function iteration workflow.
 
-The output is a generator of `Sentence` objects, which have various useful sentence attributes (as mentioned partially above).
+## Best practices for using DeepDive Lite notebooks
+Here are a few practical tips for working with DeepDive Lite:
+* Use `autoreload`
+* Keep working source code in another file 
+* Pickle extractions often and with unique names
+* Document past labeling functions either remotely or with the `CandidateModel` log
 
-**_Note:_** this is often the slowest part of the process, so for large document sets, pre-processing with high parallelism and/or external to DeepDive Lite is recommended.  Further improvements on speed to come as well [TODO].
+## Documentation
+
+**Class: Sentence**
+|**Member**|**Notes**|
+|:---------|:--------|
+|`words`| Tokenized words|
+|`lemmas`| Tokenized lemmas|
+|`poses`| Tokenized parts-of-speech|
+|`dep_parents`| Dependency parent index for each token |
+|`dep_labels`|Dependency label for each token|
+|`sent_id`| Sentence ID|
+|`doc_id`|Document ID|
+|`text`| Raw sentence text|
+|`token_idxs`| Document character offsets for start of each sentence token |
+
+**Class: SentenceParser**
+|**Method**|**Notes**|
+|:---------|:--------|
+|`__init()__`| Starts CoreNLPServer|
+|`parse(doc, doc_id=None)| Parse document into `Sentence`s|
+
+**Class: DictionaryMatcher**
+|**Method**|**Notes**|
+|:---------|:--------|
+|`__init__(label, dictionary, match_attrib='words', ignore_case=True)`| |
+|`apply(sentence)`| Tokens joined with spaces |
+
+**Class: RegexMatcher**
+|**Method**|**Notes**|
+|:---------|:--------|
+|`__init__(label, regex_pattern, match_attrib='words', ignore_case=True)`| Entire sentence text can be searched using `match_attrib='text'`|
+|`apply(sentence)`| Tokens joined with spaces |
+
+**Class: MultiMatcher**
+|**Method**|**Notes**|
+|:---------|:--------|
+|`__init__(matcher1, matcher2,...)`| |
+|`apply(sentence)`| Yields individual matcher label if `label` argument not in initialization |
 
 
-### Candidate Extraction
-DeepDive Lite is (currently) focused around extracting _relation mentions_ from text, involving either one or two entities.  In either case, we define a `Relations` object, which extracts a set of _candidate relation mentions_.  Our task is then to train the system to distinguish _true_ relation mentions from _false_ ones.
-
-For the binary case, we define a relation based on two sets of _entity mentions_, described via declarative operators.  For example, we can define a relation as occuring between phrases that match a list of gene names, and phrases that match a list of phenotype names, and then extract them from a set of sentences:
-```python
-r = Relations(
-  DictionaryMatch('G', genes, ignore_case=False),
-  DictionaryMatch('P', phenos),
-  sentences)
-```
-The `Relations` object both extracts the candidate relations, and then serves as the interface to and container of them.  To access them- as `Relation` objects- we use `r.relations`, and can render a visualization of one via e.g. `r.relations[0].render`:
-![rendered-relation](rel_tree.png)
-
-### Distant Supervision
-The goal is now to create a set of _rules_ that specify which relations are true versus false, which we will use to _train_ the system to perform this inference correctly.*
-
-In the context of DeepDive Lite, **a rule is simply a function which accepts a `Relation` object and returns a value in {-1,0,1}** (where 0 means 'abstain').  Once a list of rules is created, this list is applied to the `Relations` set via `r.apply_rules(rules)`.  This generates a matrix of rule labels `r.rules`, with rows corresponding to rules, and columns to relation candidates.
-
-Note also that a natural question is: 'how well would my rules alone do on the classification task?'.  This provides a natural baseline for assessing  further performance downstream.  To answer this question, relative to a set of ground truth, we can use `r.get_rule_priority_vote_accuracy(idxs, ground_truth)`.
-
-*_Note that if a set of labeled data is available, these labels could technically be used to create a trivial set of rules; however we assume we are operating in domains where a sufficiently large labeled training set is not available._
-
-### Feature Extraction
-Feature extraction is done _automatically_ via `r.extract_features()`.  The method of featurization can however be selected and customized [TODO].  After this has been performed, a (sparse) matrix of features `r.feats` is generated, with rows corresponding to features and columns to relation candidates.
-
-### Learning
-Learning of rule & feature weights can be done using logistic regression, via `r.learn_feats_and_weights()`.  This generates a learned parameter array `r.w`.  Predicted relation values (with -1 meaning false, and 1 meaning true) can then be generated via `r.get_predicted`, and accuracy relative to a set of ground truth labels via `r.get_classification_accuracy(idxs, ground_truth)`.

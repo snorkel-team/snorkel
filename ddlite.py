@@ -975,7 +975,7 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
   return weights
   
 def get_mu_seq(n, rate, alpha, min_ratio):
-  mv = (max(float(1 + rate * 10), float(rate * 11)) / (alpha + 1e-6))
+  mv = (max(float(1 + rate * 10), float(rate * 11)) / (alpha + 1e-3))
   return np.logspace(np.log10(mv * min_ratio), np.log10(mv), n)
   
 def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, alpha=0, rate=0.01,
@@ -1032,15 +1032,15 @@ def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, alpha=0, rate=0.01,
                 zorder=10, label="Maximum spread: mu={}".format(mu_seq[opt_idx]))
     ax1.scatter(mu_seq[idx_1se], p[idx_1se], marker='*', color='royalblue', 
                 s=500, zorder=10, label="1se rule: mu={}".format(mu_seq[idx_1se]))
-    ax1.errorbar(mu_seq, p, yerr=p_sd, fmt='ro-')
+    ax1.errorbar(mu_seq, p, yerr=p_sd, fmt='ro-', label='Spread statistic')
     ax1.set_xlabel('log(penalty)')
-    ax1.set_ylabel('Marginal probability spread')
+    ax1.set_ylabel('Marginal probability spread: ' + r'$2\sqrt{\mathrm{mean}[(p_i - 0.5)^2]}$')
     ax1.set_ylim(-0.04, 1.04)
     for t1 in ax1.get_yticklabels():
       t1.set_color('r')
     # Plot nnz
     ax2 = ax1.twinx()
-    ax2.plot(mu_seq, nnzs, '.--', color='gray')
+    ax2.plot(mu_seq, nnzs, '.--', color='gray', label='Sparsity')
     ax2.set_ylabel('Number of non-zero coefficients')
     ax2.set_ylim(-0.01*np.max(nnzs), np.max(nnzs)*1.01)
     for t2 in ax2.get_yticklabels():
@@ -1049,16 +1049,19 @@ def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, alpha=0, rate=0.01,
     box1 = ax1.get_position()
     ax1.set_position([box1.x0, box1.y0+box1.height*0.1, box1.width, box1.height*0.9])
     box2 = ax2.get_position()
-    ax2.set_position([box2.x0, box2.y0+box2.height*0.1, box2.width, box2.height*0.9])    
-    plt.title("{}-fold cross validation for elastic net logistic regression with mixing parameter {}".format(nfolds, alpha))
-    ax1.legend(loc='upper center', bbox_to_anchor=(0.5,-0.05), scatterpoints=1,
-               fontsize=10, markerscale=0.5)
+    ax2.set_position([box2.x0, box2.y0+box2.height*0.1, box2.width, box2.height*0.9])
+    plt.title("{}-fold cross validation for elastic net logistic regression with mixing parameter {}".
+              format(nfolds, alpha))
+    lns1, lbs1 = ax1.get_legend_handles_labels()
+    lns2, lbs2 = ax2.get_legend_handles_labels()
+    ax1.legend(lns1+lns2, lbs1+lbs2, loc='upper center', bbox_to_anchor=(0.5,-0.05),
+               scatterpoints=1, fontsize=10, markerscale=0.5)
     plt.show()
   # Train a model using the 1se mu
-  w_opt = learn_elasticnet_logreg(X,  w0=w0, alpha=alpha, rate=rate,
-                                  mu_seq=mu_seq[idx_1se if opt_1se else opt_idx],
-                                  **kwargs)
-  return w_opt[w_opt.keys()[0]]
+  mu_opt = mu_seq[idx_1se if opt_1se else opt_idx]
+  w_opt = learn_elasticnet_logreg(X, w0=w0, alpha=alpha, rate=rate,
+                                  mu_seq=mu_seq, **kwargs)
+  return w_opt[mu_opt]
 
 def main():
   txt = "Han likes Luke and a good-wookie. Han Solo don\'t like bounty hunters."

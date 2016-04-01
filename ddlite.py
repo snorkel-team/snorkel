@@ -362,7 +362,8 @@ class ModelLog:
     fn = np.sum((pred == -1) * (gt == 1))
     self.precision = 0 if tp == 0 else float(tp) / float(tp + fp)
     self.recall = 0 if tp == 0 else float(tp) / float(tp + fn)
-    self.f1 = 2 * (self.precision * self.recall)/(self.precision + self.recall)
+    self.f1 = 0 if (self.precision == 0 or self.recall == 0)\
+      else 2 * (self.precision * self.recall)/(self.precision + self.recall)
   def num_LFs(self):
     return len(self.LF_names)
   def num_gt(self):
@@ -620,8 +621,10 @@ class CandidateModel:
         raise ValueError("Indexes must be in range [0, num_candidates()) or be\
                           boolean array of length num_candidates()")
 
-  def learn_weights(self, nSteps=1000, sample=False, nSamples=100, mu=1e-9,
-                    use_sparse = True, verbose=False, log=True):
+  def learn_weights(self, nfolds=3, maxIter=1000, tol=1e-6, sample=False, 
+                    n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, 
+                    alpha=0, opt_1se=True, use_sparse = True, plot=False, 
+                    verbose=False, log=True):
     """
     Uses the N x R matrix of LFs and the N x F matrix of features
     Stacks them, giving the LFs a +1 prior (i.e. init value)
@@ -633,9 +636,23 @@ class CandidateModel:
     if not use_sparse:
       self.X = np.asarray(self.X.todense())
     w0 = np.concatenate([np.ones(R), np.zeros(F)])
-    self.w = learn_ridge_logreg(self.X[np.setdiff1d(range(N), self.holdout),:],
-                                nSteps=nSteps, w0=w0, sample=sample,
-                                nSamples=nSamples, mu=mu, verbose=verbose)
+    # If a single mu is provided, just fit a single model
+    if mu is not None and (not hasattr(mu, '__iter__') or len(mu) == 1):
+      mu = mu if not hasattr(mu, '__iter__') else mu[0]
+      self.w = learn_elasticnet_logreg(self.X[np.setdiff1d(range(N), self.holdout),:],
+                                       maxIter=maxIter, tol=tol, w0=w0, 
+                                       mu_seq=mu, alpha=alpha, sample=sample,
+                                       n_samples=n_samples, verbose=verbose)[mu]
+    # TODO: handle args between learning functions better
+    elif nfolds > 1: 
+      self.w = cv_elasticnet_logreg(self.X[np.setdiff1d(range(N), self.holdout),:],
+                                    nfolds=nfolds, w0=w0, mu_seq=mu, plot=plot,
+                                    alpha=alpha, mu_min_ratio=mu_min_ratio,
+                                    n_mu=n_mu, opt_1se=opt_1se, verbose=verbose,
+                                    sample=sample, n_samples=n_samples,
+                                    maxIter=maxIter, tol=tol)
+    else:
+      raise ValueError("Must have multiple CV folds if single mu not provided")
     if log:
       return self.add_to_log()
 
@@ -811,7 +828,7 @@ def odds_to_prob(l):
   """
   return np.exp(l) / (1.0 + np.exp(l))
 
-def sample_data(X, w, nSamples):
+def sample_data(X, w, n_samples):
   """
   Here we do Gibbs sampling over the decision variables (representing our objects), o_j
   corresponding to the columns of X
@@ -826,10 +843,10 @@ def sample_data(X, w, nSamples):
   f = np.zeros(N)
 
   # Take samples of random variables
-  idxs = np.round(np.random.rand(nSamples) * (N-1)).astype(int)
+  idxs = np.round(np.random.rand(n_samples) * (N-1)).astype(int)
   ct = np.bincount(idxs)
   # Estimate probability of correct assignment
-  increment = np.random.rand(nSamples) < odds_to_prob(X[idxs, :].dot(w))
+  increment = np.random.rand(n_samples) < odds_to_prob(X[idxs, :].dot(w))
   increment_f = -1. * (increment - 1)
   t[idxs] = increment * ct[idxs]
   f[idxs] = increment_f * ct[idxs]
@@ -871,47 +888,180 @@ def transform_sample_stats(Xt, t, f, Xt_abs = None):
   p_correct = (m + 1) / 2
   return p_correct, n_pred
 
-def learn_ridge_logreg(X, nSteps, w0=None, sample=True, nSamples=100, mu=1e-9, 
-                       verbose=False):
-  """We perform SGD wrt the weights w"""
+def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
+                            n_samples=100, alpha=0, mu_seq=None, n_mu=20,
+                            mu_min_ratio=1e-6, rate=0.01, verbose=False):
+  """ Perform SGD wrt the weights w
+       * w0 is the initial guess for w
+       * sample and n_samples determine SGD batch size
+       * alpha is the elastic net penalty mixing parameter (0=ridge, 1=lasso)
+       * mu is the sequence of elastic net penalties to search over
+  """
   if type(X) != np.ndarray and not sparse.issparse(X):
     raise TypeError("Inputs should be np.ndarray type or scipy sparse.")
   N, R = X.shape
-
-  # We initialize w at 1 for LFs & 0 for features
-  # As a default though, if no w0 provided, we initialize to all zeros
-  w = np.zeros(R) if w0 is None else w0
-  g = np.zeros(R)
-  l = np.zeros(R)
 
   # Pre-generate other matrices
   Xt = X.transpose()
   Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else np.abs(Xt)
   
-  # Take SGD steps
-  for step in range(nSteps):
-    if step % 100 == 0 and verbose:    
-      if step % 500 == 0:
-        print "\nLearning epoch = ",
-      print "%s\t" % step,
+  # Initialize weights if no initial provided
+  w0 = np.zeros(R) if w0 is None else w0   
+  
+  # Check mixing parameter
+  if not (0 <= alpha <= 1):
+    raise ValueError("Mixing parameter must be in [0,1]")
+  
+  # Determine penalty parameters  
+  if mu_seq is not None:
+    mu_seq = np.ravel(mu_seq)
+    if not np.all(mu_seq >= 0):
+      raise ValueError("Penalty parameters must be non-negative")
+    mu_seq.sort()
+  else:
+    mu_seq = get_mu_seq(n_mu, rate, alpha, mu_min_ratio)
+
+  weights = dict()
+  # Search over penalty parameter values
+  for mu in mu_seq:
+    w = w0.copy()
+    g = np.zeros(R)
+    l = np.zeros(R)
+    # Take SGD steps
+    for step in range(maxIter):
+      if step % 100 == 0 and verbose:    
+        if step % 500 == 0:
+          print "Learning epoch = ",
+        print "%s\t" % step,
+        if (step+100) % 500 == 0:
+          print "\n",
       
+      # Get the expected LF accuracy
+      t,f = sample_data(X, w, n_samples=n_samples) if sample else exact_data(X, w)
+      p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
 
-    # Get the expected LF accuracy
-    t,f = sample_data(X, w, nSamples=nSamples) if sample else exact_data(X, w)
-    p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
+      # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
+      l = np.clip(log_odds(p_correct), -10, 10)
 
-    # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
-    l = np.clip(log_odds(p_correct), -10, 10)
+      # SGD step with normalization by the number of samples
+      g0 = (n_pred*(w - l)) / np.sum(n_pred)
 
-    # SGD step, with \ell_2 regularization, and normalization by the number of samples
-    g0 = (n_pred*(w - l)) / np.sum(n_pred) + mu*w
+      # Momentum term for faster training
+      g = 0.95*g0 + 0.05*g
 
-    # Momentum term for faster training
-    g = 0.95*g0 + 0.05*g
+      # Check for convergence
+      wn = np.linalg.norm(w, ord=2)
+      if wn < 1e-12 or np.linalg.norm(g, ord=2) / wn < tol:
+        if verbose:
+          print "SGD converged for mu={:.3f} after {} steps".format(mu, step)
+        break
 
-    # Update weights
-    w -= 0.01*g
-  return w
+      # Update weights
+      w -= rate*g
+      
+      # Apply elastic net penalty
+      soft = np.abs(w) - alpha * mu
+      #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
+      w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / (1+(1-alpha)*mu)
+    
+    # SGD did not converge    
+    else:
+      warnings.warn("SGD did not converge for mu={:.3f}. Try increasing maxIter.".format(mu))
+
+    # Store result and set warm start for next penalty
+    weights[mu] = w.copy()
+    w0 = w
+    
+  return weights
+  
+def get_mu_seq(n, rate, alpha, min_ratio):
+  mv = (max(float(1 + rate * 10), float(rate * 11)) / (alpha + 1e-3))
+  return np.logspace(np.log10(mv * min_ratio), np.log10(mv), n)
+  
+def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, alpha=0, rate=0.01,
+                         mu_min_ratio=1e-6, n_mu=20, opt_1se=True, 
+                         verbose=True, plot=True, **kwargs):
+  N, R = X.shape
+  # Initialize weights if no initial provided
+  w0 = np.zeros(R) if w0 is None else w0   
+  # Check mixing parameter
+  if not (0 <= alpha <= 1):
+    raise ValueError("Mixing parameter must be in [0,1]")
+  # Determine penalty parameters  
+  if mu_seq is not None:
+    mu_seq = np.ravel(mu_seq)
+    if not np.all(mu_seq >= 0):
+      raise ValueError("Penalty parameters must be non-negative")
+    mu_seq.sort()
+  else:
+    mu_seq = get_mu_seq(n_mu, rate, alpha, mu_min_ratio)
+  # Partition data
+  try:
+    folds = np.array_split(np.random.choice(N, N, replace=False), nfolds)
+    if len(folds[0]) < 10:
+      warnings.warn("Folds are smaller than 10 observations")
+  except:
+    raise ValueError("Number of folds must be a non-negative integer")
+  # Get CV results
+  cv_results = defaultdict(lambda : defaultdict(list))
+  for nf, test in enumerate(folds):
+    if verbose:
+      print "Running test fold {}".format(nf)
+    train = np.setdiff1d(range(N), test)
+    w = learn_elasticnet_logreg(X[train, :], w0=w0, mu_seq=mu_seq, alpha=alpha,
+                                rate=rate, verbose=False, **kwargs)
+    for mu, wm in w.iteritems():
+      spread = 2*np.sqrt(np.mean(np.square(odds_to_prob(X[test,:].dot(wm)) - 0.5)))
+      cv_results[mu]['p'].append(spread)
+      cv_results[mu]['nnz'].append(np.sum(np.abs(wm) > 1e-12))
+  # Average spreads
+  p = np.array([np.mean(cv_results[mu]['p']) for mu in mu_seq])
+  # Find opt index, sd, and 1 sd rule index
+  opt_idx = np.argmax(p)
+  p_sd = np.array([np.std(cv_results[mu]['p']) for mu in mu_seq])
+  t = np.max(p) - p_sd[opt_idx]
+  idx_1se = np.max(np.where(p >= t))
+  # Average number of non-zero coefs
+  nnzs = np.array([np.mean(cv_results[mu]['nnz']) for mu in mu_seq])
+  # glmnet plot
+  if plot:
+    fig, ax1 = plt.subplots()
+    # Plot spread
+    ax1.set_xscale('log', nonposx='clip')    
+    ax1.scatter(mu_seq[opt_idx], p[opt_idx], marker='*', color='purple', s=500,
+                zorder=10, label="Maximum spread: mu={}".format(mu_seq[opt_idx]))
+    ax1.scatter(mu_seq[idx_1se], p[idx_1se], marker='*', color='royalblue', 
+                s=500, zorder=10, label="1se rule: mu={}".format(mu_seq[idx_1se]))
+    ax1.errorbar(mu_seq, p, yerr=p_sd, fmt='ro-', label='Spread statistic')
+    ax1.set_xlabel('log(penalty)')
+    ax1.set_ylabel('Marginal probability spread: ' + r'$2\sqrt{\mathrm{mean}[(p_i - 0.5)^2]}$')
+    ax1.set_ylim(-0.04, 1.04)
+    for t1 in ax1.get_yticklabels():
+      t1.set_color('r')
+    # Plot nnz
+    ax2 = ax1.twinx()
+    ax2.plot(mu_seq, nnzs, '.--', color='gray', label='Sparsity')
+    ax2.set_ylabel('Number of non-zero coefficients')
+    ax2.set_ylim(-0.01*np.max(nnzs), np.max(nnzs)*1.01)
+    for t2 in ax2.get_yticklabels():
+      t2.set_color('gray')
+    # Shrink plot for legend
+    box1 = ax1.get_position()
+    ax1.set_position([box1.x0, box1.y0+box1.height*0.1, box1.width, box1.height*0.9])
+    box2 = ax2.get_position()
+    ax2.set_position([box2.x0, box2.y0+box2.height*0.1, box2.width, box2.height*0.9])
+    plt.title("{}-fold cross validation for elastic net logistic regression with mixing parameter {}".
+              format(nfolds, alpha))
+    lns1, lbs1 = ax1.get_legend_handles_labels()
+    lns2, lbs2 = ax2.get_legend_handles_labels()
+    ax1.legend(lns1+lns2, lbs1+lbs2, loc='upper center', bbox_to_anchor=(0.5,-0.05),
+               scatterpoints=1, fontsize=10, markerscale=0.5)
+    plt.show()
+  # Train a model using the 1se mu
+  mu_opt = mu_seq[idx_1se if opt_1se else opt_idx]
+  w_opt = learn_elasticnet_logreg(X, w0=w0, alpha=alpha, rate=rate,
+                                  mu_seq=mu_seq, **kwargs)
+  return w_opt[mu_opt]
 
 def main():
   txt = "Han likes Luke and a good-wookie. Han Solo don\'t like bounty hunters."

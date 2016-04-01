@@ -139,5 +139,98 @@ Here are a few practical tips for working with DeepDive Lite:
 
 **Class: Relation **
 
+|**Member**|**Notes**|
+|:---------|:--------|
+| All `Sentence` members ||
+| `prob` |  |
+| `all_idxs` | |
+| `labels` ||
+| `xt` | XMLTree |
+| `root` | XMLTree root|
+|`tagged_sent` | Sentence text with matched tokens replaced by labels |
+|`e1_idxs`| Tokens matched by first matcher |
+|`e2_idxs`| Tokens matched by second matcher |
+|`e1_label`| First matcher label |
+|`e2_label`| Second matcher label |
+
 |**Method**|**Notes**|
 |:---------|:--------|
+|`render` | Generates sentence dependency tree figure with matched tokens highlighted|
+
+**Class: Relations **
+
+|**Member**|**Notes**|
+|:---------|:--------|
+|`feats` | Feature matrix |
+
+|**Method**|**Notes**|
+|:---------|:--------|
+|`__init__(content, matcher1=None, matcher2=None)`| `content` is a list of `Sentence` objects, or a path to Pickled `Relations` object |
+|`[i]` | Access `i`th `Relation`|
+|`len()` | Number of relations |
+| `num_candidates()` |  |
+| `num_feats()` |  |
+| `extract_features(*args)` | |
+| `dump_candidates(f)` | Pickle object to file |
+
+**Class: Entity **
+
+|**Member**|**Notes**|
+|:---------|:--------|
+| All `Sentence` members ||
+| `prob` |  |
+| `all_idxs` | |
+| `labels` ||
+| `xt` | XMLTree |
+| `root` | XMLTree root|
+|`tagged_sent` | Sentence text with matched tokens replaced by label |
+|`e_idxs`| Tokens matched by matcher |
+|`e_label`| Matcher label |
+
+|**Method**|**Notes**|
+|:---------|:--------|
+|`render` | Generates sentence dependency tree figure with matched tokens highlighted|
+
+**Class: Entities **
+
+|**Member**|**Notes**|
+|:---------|:--------|
+|`feats` | Feature matrix |
+
+|**Method**|**Notes**|
+|:---------|:--------|
+|`__init__(content, matcher=None)`| `content` is a list of `Sentence` objects, or a path to Pickled `Entities` object |
+|`[i]` | Access `i`th `Entity`|
+|`len()` | Number of entities |
+| `num_candidates()` | |
+| `num_feats()` |  |
+| `extract_features(*args)` | |
+| `dump_candidates(f)` | Pickle object to file |
+
+**Class: CandidateModel **
+
+|**Member**|**Notes**|
+|:---------|:--------|
+|`C`| `Candidates` object |
+|`feats`| Feature matrix |
+|`logger`| `ModelLogger` object |
+|`LF`| Labeling function matrix |
+|`LF_names`| Labeling functions names |
+|`X`| Joint LF and feature matrix |
+|`w`| Learned weights|
+|`holdout`| Indices of holdout set |
+|`mindtagger_instance`| `MindTaggerInstance` object |
+
+|**Method**|**Notes**|
+|:---------|:--------|
+|`num_candidates()` ||
+|`num_feats()` ||
+|`num_LFs()` ||
+|`set_gold_labels(gold)`| Set gold standard labels |
+|`get_ground_truth(gt='resolve')` | Get ground truth from just MindTagger (`gt='mindtagger'`), just gold standard labels (`gt='gold'`), or resolve with conflict priority to gold standard (`gt='resolve'`) |
+|`has_ground_truth()` | Get boolean array of candidates with some ground truth |
+|`get_labeled_ground_truth(gt='resolve', subset=None)` |  Get indices and labels of candidates in `subset` labeled by method `gt`; `subset` can be `'holdout'` or an array of indices |
+
+
+
+

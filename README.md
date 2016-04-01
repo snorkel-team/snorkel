@@ -68,6 +68,7 @@ Here are a few practical tips for working with DeepDive Lite:
 
 ## Documentation
 
+### **ddlite_parser.py**
 **Class: Sentence**
 
 |**Member**|**Notes**|
@@ -87,7 +88,31 @@ Here are a few practical tips for working with DeepDive Lite:
 |**Method**|**Notes**|
 |:---------|:--------|
 |`__init()__`| Starts CoreNLPServer|
-|`parse(doc, doc_id=None)| Parse document into `Sentence`s|
+|`parse(doc, doc_id=None)` | Parse document into `Sentence`s|
+
+**Class: HTMLParser**
+
+|**Method**|**Notes**|
+|:---------|:--------|
+|`can_parse(f)`||
+|`parse(f)`| Returns visible text in HTML file|
+
+**Class: TextParser**
+
+|**Method**|**Notes**|
+|:---------|:--------|
+|`can_parse(f)`||
+|`parse(f)`| Returns all text in file|
+
+**Class: DocParser**
+
+|**Method**|**Notes**|
+|:---------|:--------|
+|`__init__(path, ftparser = TextParser())` | `path` can be single file, a directory, or a glob expression |
+|`parseDocs()` | Returns docs as parsed by `ftparser` |
+|`parseDocSentences()` | Returns `Sentence`s from `SentenceParser` parsing of doc content |
+
+### **ddlite_matcher.py**
 
 **Class: DictionaryMatcher**
 
@@ -110,4 +135,9 @@ Here are a few practical tips for working with DeepDive Lite:
 |`__init__(matcher1, matcher2,...)`| |
 |`apply(sentence)`| Yields individual matcher label if `label` argument not in initialization |
 
+### **ddlite.py**
 
+**Class: Relation **
+
+|**Method**|**Notes**|
+|:---------|:--------|

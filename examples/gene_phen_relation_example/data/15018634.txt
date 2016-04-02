@@ -1,0 +1,1 @@
+Mutation detection for exons 2 to 10 of the polycystic kidney disease 1 (_PKD1_)-gene by DGGE

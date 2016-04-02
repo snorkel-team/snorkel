@@ -1,0 +1,1 @@
+A multifunctional lentiviral-based gene knockdown with concurrent rescue that controls for off-target effects of RNAi

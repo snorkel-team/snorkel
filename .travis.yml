@@ -21,7 +21,7 @@ cache:
     - $HOME/.cache/pip
     - $HOME/miniconda/envs/test     # to avoid repetitively setting up Ana/Miniconda environment
     - parser                        # to avoid repetitively downloading CoreNLP
-    - deepdive                      # to avoid repetitively installing DeepDive and Mindtagger
+    - examples/deepdive             # to avoid repetitively installing DeepDive and Mindtagger
 
 addons:
   apt:
@@ -64,8 +64,9 @@ install:
 
 script:
   # Make sure the notebooks run end-to-end
-  - runipy GeneTaggerExample_Extraction.ipynb
-  - runipy GeneTaggerExample_Learning.ipynb
+  - runipy examples/GeneTaggerExample_Extraction.ipynb
+  - runipy examples/GeneTaggerExample_Learning.ipynb
+  - runipy examples/GenePhenRelationExample_Extraction.ipynb
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

@@ -1,0 +1,1 @@
+The _Arabidopsis_ AtSTE24 is a CAAX protease with broad substrate specificity.

@@ -1,7 +1,8 @@
-import unittest, os
+import os, sys, unittest
 import numpy as np
 import scipy.sparse as sparse
 
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from ddlite import *
 
 class TestInference(unittest.TestCase):
@@ -89,7 +90,7 @@ class TestInference(unittest.TestCase):
                                       sample=False, alpha=self.ridge,
                                       mu_seq=mu, rate=0.01, verbose=True)[mu]
         w_s = learn_elasticnet_logreg(X, maxIter=2500, tol=1e-4, w0=w0,
-                                      sample=True, nSamples=200,
+                                      sample=True, n_samples=200,
                                       alpha=self.ridge, mu_seq=mu, rate=0.01,
                                       verbose=True)[mu]
         # Check sample marginals are close to deterministic solutio
@@ -146,6 +147,5 @@ class TestInference(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    os.chdir('../')
     unittest.main()
     

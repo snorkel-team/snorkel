@@ -1,5 +1,6 @@
 import sys, os
-sys.path.append('%s/treedlib/treedlib' % os.getcwd())
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                             'treedlib/treedlib'))
 from templates import *
 import lxml.etree as et
 

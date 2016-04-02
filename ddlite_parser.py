@@ -25,7 +25,8 @@ class SentenceParser:
         # In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
         # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
         self.port = 12345
-        cmd = ['java -Xmx4g -cp "parser/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d' % self.port]
+        loc = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'parser')
+        cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d' % (loc, self.port)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
         self.endpoint = 'http://127.0.0.1:%d/?properties={"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % self.port
@@ -84,6 +85,8 @@ class FileTypeParser(object):
         raise NotImplementedError()
     def parse(self, f):
         raise NotImplementedError()
+    def _strip_special(self, s):
+        return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
         
 '''
 Basic HTML parser using BeautifulSoup to return visible text
@@ -102,8 +105,6 @@ class HTMLParser(FileTypeParser):
         elif re.match('<!--.*-->', unicode(s)):
             return False
         return True
-    def _strip_special(self, s):
-        return (''.join(c for c in s if ord(c) < 128)).encode('ascii', 'ignore')
         
 '''
 Text parser for preprocessed files
@@ -113,8 +114,7 @@ class TextParser(FileTypeParser):
         return True
     def parse(self, fp):
         with open(fp, 'rb') as f:
-            return f.read()
-            
+            return self._strip_special(f.read())
 
 '''
 Wrapper for a FileTypeParser that parses a file, directory, or pattern

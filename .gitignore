@@ -6,10 +6,11 @@ parser/
 
 /saved_sents.pkl
 
-/deepdive
-/deepdive-*.tar.gz
-/mindtagger.pid
-/mindtagger
+examples/deepdive
+examples/deepdive-*.tar.gz
+examples/mindtagger.pid
+examples/mindtagger
+
 
 # pickled data from notebooks
 *.pkl

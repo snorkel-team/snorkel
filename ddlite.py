@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 
 # Feature modules
-sys.path.append('{}/treedlib'.format(os.getcwd()))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                             'treedlib'))
 from treedlib import compile_relation_feature_generator
 from tree_structs import corenlp_to_xmltree, XMLTree
 from ddlite_entity_features import *

@@ -1,0 +1,221 @@
+Domain analyses of Usher syndrome causing Clarin-1 and GPR98 protein models
+Usher syndrome is an autosomal recessive disorder that causes hearing loss, Retinitis Pigmentosa (RP) and vestibular dysfunction.
+It is clinically and genetically heterogeneous disorder which is clinically divided into three types i.e. type I, type II and type III. To
+date, there are about twelve loci and ten identified genes which are associated with Usher syndrome. A mutation in any of these
+genes e.g. CDH23, CLRN1, GPR98, MYO7A, PCDH15, USH1C, USH1G, USH2A and DFNB31 can result in Usher syndrome or
+non-syndromic deafness. These genes provide instructions for making proteins that play important roles in normal hearing,
+balance and vision. Studies have shown that protein structures of only seven genes have been determined experimentally and there
+are still three genes whose structures are unavailable. These genes are Clarin-1, GPR98 and Usherin. In the absence of an
+experimentally determined structure, homology modeling and threading often provide a useful 3D model of a protein. Therefore in
+the current study Clarin-1 and GPR98 proteins have been analyzed for signal peptide, domains and motifs. Clarin-1 protein was
+found to be without any signal peptide and consists of prokar lipoprotein domain. Clarin-1 is classified within claudin 2 super
+family and consists of twelve motifs. Whereas, GPR98 has a 29 amino acids long signal peptide and classified within GPCR family
+2 having Concanavalin A-like lectin/glucanase superfamily. It was found to be consists of GPS and G protein receptor F2 domains
+and twenty nine motifs. Their 3D structures have been predicted using I-TASSER server. The model of Clarin-1 showed only _-helix_
+but no beta sheets while model of GPR98 showed both _-helix_ and  sheets. The predicted structures were then evaluated and
+validated by MolProbity and Ramachandran plot. The evaluation of the predicted structures showed 78.9% residues of Clarin-1
+and 78.9% residues of GPR98 within favored regions. The findings of present study has resulted in the three dimensional structure
+prediction and conserved domain analysis which will be quite beneficial in better understanding of molecular components,
+protein-protein interaction, clinical heterogeneity and pathophysiology of Usher syndrome. 
+Usher syndrome (USH) is an autosomal recessive disorder that
+causes deafness (hearing loss), blindness (retinis pigmentosa)
+and vestibular areflexia (dysfunction). It was discovered in 1858
+by Von Graefe. He found hearing and vision loss and vestibular
+impairment in the persons suffering from Usher syndrome.
+Later on a British ophthalmologist found that this syndrome is
+inheritable []. Mutations in different genes or different
+mutations in the same genes produce same or clinically
+heterogeneous features in affected individuals. On the basis of
+retinal degeneration level, hearing impairment and presence or
+absence of vestibular dysfunction; severity of Usher syndrome
+can be determined. Chales Usher had initially put Usher
+Syndrome in two categories []. Currently, this syndrome is
+clinically divided into three types i.e. type I, type II and type III.
+Type I is most severe form in which children are deaf at birth
+with severe balance and vision problems, usually loss of
+peripheral vision followed by continuous retinal degeneration
+resulting in complete blindness in the second or third decade of
+life. Usher syndrome type I has genetically six subtypes i.e.
+USHIB-USHIG. MYO7A is the one of the most common genes
+of Usher syndrome type I that causes USHIB. MYO7A is
+responsible for organelle transport and clearance of optin from
+cilium []. Diagnosis of the disease can be confirmed by
+mutational analysis of the reported genes and
+electroretinography (ERG) of affected individuals []. By the analysis of USA and UK population, 27 different
+mutations have been identified where 19 mutations are new
+and remaining are missense mutations. 35-39% is found in
+USHIB & USHID, 11% in USHIF, while 7% in USHIC and
+USHIG []. In Pakistani population, data collection over more
+than 400 families shows that 10% of the children are suffering
+from USH1. Half of them are linked with the subtype USHIB
+and approximately 30% are linked with USHID, while
+remaining is equally divided with USHIC and USHIF. Relative
+abundance in the sampling of Pakistani deaf children shows
+42.9% of the children are affected with USH1 and 4.1% with
+USH2 []. Usher syndrome type II (USHIIA-USHIIC) is less severe than
+type I. Children born with type II have moderate to severe
+hearing loss and normal balance. Usher syndrome type III
+(USHIIIA) is less severe than type I and II. Persons with type III
+may develop progressive hearing loss and visual problem but
+have normal vestibular function. So far, 12 loci and 10 genes
+have been identified out of which six (MYO7A, CDH23,
+PCDH15, USH1E, USHIC and USHIG) are responsible for
+Usher type I, three (USH2A, GPR98 and DFNB31) for type II
+and only one (USH3A) for Usher type III [, ]. Mutations in MYO7A cause USHIB; USH1C & USH1D are
+caused by mutations in USH1C and CDH23, respectively; while
+USHIF and non-syndromic deafness are caused by mutations in
+PCDH15. USHIB encodes Myosin VIIA that acts as motor
+protein, USHID encodes cadherin 23 and USHIF encodes
+photocadherin15, these are two cell-cell adhesion proteins.
+USHIC encodes harmonin and USHIG encodes SANS, both are
+scaffold proteins. These proteins create a network with each
+other by binding to PZD domain in USHIC harmonin protein
+and its scaffold function is carried out with SANS protein. In
+USH type 2, the USH2A encodes a protein named as Usherin
+and USH2C encodes G-protein, both are trans-membrane
+proteins. The proteins of USH type II are also a part of protein
+network and involved in protein interactions. They also serve
+as a candidate for USH2B. USH type I and type II proteins form
+interactions in the protein network that shows the
+pathophysiological pathway in USH. Studies have shown that protein structures of only seven USH
+genes have been determined experimentally and there are still
+three genes whose protein structures are unavailable. These
+genes are Clarin-1 (USH3A), GPR98 (USH2C) and Usherin
+(USH2A). In the absence of an experimentally determined
+structure, comparative or homology modeling and threading
+often provide a useful 3D model for a protein that is related to
+at least one protein structure. Therefore in the current study
+Clarin-1 and GPR98 proteins have been selected for _in-silico_
+analysis and 3D structure prediction. The current findings will
+help in the determination of protein-protein interactions which
+will be beneficial in understanding the molecular basis of both
+auditory and photo-transduction. Amino acid sequences of the Usher genes Clarin-1 (GeneBank
+Accession # NG_009168) and GPR98 (GeneBank Accession #
+NG_007083) were obtained from Universal Protein Resource
+[]. Usher syndrome proteins may contain signal peptide in their
+sequence. To find the signal peptide, SignalP-4.1 Server was
+used. The SignalP-4.1 server determines the presence and area
+of signal-peptide cleavage-sites in amino acid sequence of
+proteins []. A protein sequence with a precise 3D structure and a precise
+function always contains a domain. Domains of the Usher
+proteins under study were analyzed and identified by various
+databases; Prosite database using ScanProsite at Expasy,
+InterPro database using InterProScan at EBI, Pfam database
+using Search Pfam at Sanger Institute [] and with the help
+of Conserved Domain Database using CDD search at NCBI
+[]. The existence of a specific motif reveals particular functions of
+the proteins. The conserved functional motifs in the protein
+sequence of Usher proteins under study were found by Motif
+Search Server using Prosite pattern, Prosite profile, PRODOM
+and PRINTS databases []. I-TASSER server was used for protein-structure predictions.
+For protein structure and function prediction by I-TASSER, the
+server was accessed through the link []. The
+protein sequences were submitted in the query box or the files
+were uploaded through local computer in FASTA format. The
+results received via email were analyzed further. To view the structures in atomic coordinate files with pdb
+extensions, to enable the manipulation of the image and to
+visualize the molecules with different perspectives, molecular
+visualization tool is needed. The PDB files obtained from ITASSER
+server were visualized with UCSC CHIMERA []. After the prediction of 3D structures, the predicted models
+were evaluated and validated through MolProbity and
+Ramachandran Plot [] for their sterio-chemical properties.
+MolProbity server computed Ramachandarn values for
+dihedral angles, poor rotameric conformations, C deviation,
+bad angles and bond lengths of all the residues. In the current study the amino acid sequence of Clarin-1
+(GenBank Accession # NG_009168) and GPR98 (GenBank
+Accession # NG_007083) were retrieved from UniProt
+(Accession no. P58418 and Q8WXG9, respectively). Before using the retrieved protein sequences for homology
+modeling, the sequences were analyzed for the presence of
+signal peptide through SignalP-4.1 server. A signal peptide is a
+short length peptide chain that helps in the transportation of
+protein inside and outside of the cell. This short chain is
+eliminated during maturation of the protein. Therefore, the
+signal amino acid sequence should be eliminated from primary
+sequence. The elimination of signal peptide confirms the
+structure prediction according to the original structure of the
+protein. According to Signal-HMM result of Clarin-1, the
+maximum cleavage (max. C) site probability was 0.500 at 28th
+amino acid and there was no signal peptide in the protein.
+Whereas, in GPR98 sequence analysis Signal-HMM results
+showed that the maximum cleavage (max. C) site probability of
+the GPR98 signal peptide was 0.594 at 30th amino acid and a
+signal peptide of 29 amino acids was present (the sequence of
+which was removed before proceeding further). With the help of Prosite, Pfam, InterProScan and CDD search, a
+number of domain hits were found within the proteins being
+analyzed. Prosite results showed the existence of prokar
+lipoprotein domain within Clarin-1 and presence of two
+domains, GPS and G protein receptor F2 within GPR98. Pfam
+and InterProScan results showed that Clarin-1 is classified
+within claudin 2 super family that play role in sterocilia and
+photoreceptor cell synapses. There were four transmembrane
+domains in Clarin-1 which play role in photoreceptor cell
+synapses, pathophysiological pathway and hair cell
+development. While, in GPR98 the InterProScan results also
+showed the presence of GPS domain. The protein is classified
+within GPCR family 2 and Concanavalin A-like
+lectin/glucanase superfamily. The Pfam analysis showed the
+presence of three domains Calx-Beta, Laminin G3 and EPTP
+families within GPR98 protein. Additionally in GPR98, seven
+PZD binding domain hits were found that help in the formation
+of hair cell stereocilia []. The study of Clarin-1 protein by
+means of Conserved Domain Database (CDD) Search tool
+indicated that there is no conserved domain within this protein
+while twenty five Calx-Beta domains within GPR98 were
+observed. Motifs are amino acid residues within a domain that occur
+consistently and are responsible to carry out the specific
+function of the particular protein. Multiple short conserved
+motifs drawn from sequence alignments may carry the
+Fingerprints. Fingerprints are very helpful in evolutionary
+studies and in assigning a recently sequenced protein to a
+particular family. In PRINTS and PROSITE, fingerprints are
+created from gapped alignments, but in case of BLOCKS from
+un-gapped alignments. From PROSITE and PRINTS,
+fingerprints may consist of numerous motifs, thats why these
+are more flexible and strong as compared to a single PROSITE
+motif. It is helpful to verify similar data from more than one
+database and then compare their results. Therefore, fingerprints
+in the query sequences were found by MOTIF search server
+using PROSITE, PRODOM and PRINTS. Results of Clarin-1
+showed 12 motifs with prokar lipoprotein being the most
+prominent in PRODOM and Rhodopsin-like GPCR superfamily
+signature in PRINTS; while in GPR98, twenty nine motifs were
+observed. GPR98 also contains several repeated motifs
+including some calcium binding Calx-Beta repeats and seven
+copies of an epitempin repeats. The tertiary structures of Clarin-1 and GPR98 proteins were
+predicted using I-TASSER server. In case of Clarin-1, homology
+modeling through I-TASSER was done using template (PDB ID:
+4DR0A) which has 27% homology with the Clarin-1. The model
+of Clarin-1 showed only _-helix_ but no beta sheets in it. Similarly the same procedure was repeated with
+GPR98 by using a template (PDB ID: 4IGlA; having 22%
+similarity) and predicted model of GPR98 showed both _-helix_
+and  sheets. Both predicted structures were then statistically evaluated and
+validated as shown in (see supplementary material).
+Validation and evaluation of 3D structure of proteins,
+complexes and nucleic acid can be done automatically and
+efficiently by MolProbity []. When  and  angles of the
+amino acids of a particular protein are plotted against each
+other, the resulting diagram is called a Ramachandran plot. It is basically a technique to visualize dihedral angles
+ against  of all residues, which is the back bone of protein
+structure. Clarin-1 and GPR98 showed same percentage of
+residues in favored region when evaluated by Ramachandran
+plot. Clarin-1 showed 78.9% of its residues in favored region.
+Similarly, the predicted model of GPR98 also had 78.9%
+residues in favored region as shown in (see
+supplementary material). Advances in molecular genetics techniques have revolutionized
+the identification of new mutations in various genes but usually
+the effect of these new mutations upon mutated protein
+structure and function, protein-protein interactions, onset and
+severity of disease is not focused. The present manuscript
+answers this fundamental question. The signal peptide analysis
+showed the presence of 29 amino acid long signal peptide in
+GPR98, whereas no signal peptide was observed in Clarin-1.
+Both proteins consist of a number of conserved domains which
+play important role in sterocilia development and
+photoreceptor cell synapses. Clarin-1 showed twelve motifs
+with prokar lipoprotein being the most prominent while in
+GPR98 twenty nine motifs were observed including calcium
+binding Calx-Beta repeats. The Clarin-1 predicted structure
+showed only _-helix_ while in GPR98 structure both _-helix_ and 
+sheets were present. The study will help to better understand
+the pathophysiology of disease, impact of allele variants on
+protein and to devise new tools for therapeutic intervention. 

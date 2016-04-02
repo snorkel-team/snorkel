@@ -21,7 +21,7 @@ cache:
     - $HOME/.cache/pip
     - $HOME/miniconda/envs/test     # to avoid repetitively setting up Ana/Miniconda environment
     - parser                        # to avoid repetitively downloading CoreNLP
-    - deepdive                      # to avoid repetitively installing DeepDive and Mindtagger
+    - examples/deepdive             # to avoid repetitively installing DeepDive and Mindtagger
 
 addons:
   apt:

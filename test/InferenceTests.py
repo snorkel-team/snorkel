@@ -7,140 +7,145 @@ from ddlite import *
 class TestInference(unittest.TestCase):
     
     def setUp(self):
-        self.n = None
-        self.F = None
-        self.R = None
-        self.w_opt = None
-        self.gt = None
-        self.X = None
+        self.ridge = 0
+        self.lasso = 1
     
     def tearDown(self):
         pass
     
-    def test_ridge_logistic_regression_easy(self):
-        print "Running easy logistic regression test"
-        # Setup problem
-        self.n = 50
-        n_feats, n_goodfeats = 10, 8
-        n_rules, n_goodrules = 4, 4
-        self._make_feats(n_feats, n_goodfeats)
-        self._make_rules(n_rules, n_goodrules, n_feats, n_goodfeats, 0, 
-                         n_goodfeats * 1/2)
-        self._make_X()
-        # Learn params
-        w0 = np.concatenate([np.ones(n_rules), np.zeros(n_feats)])
-        w = learn_params(self.X, 100, sample=False, verbose=True, w0=w0,
-                         mu=0.01)
-        self.assertGreater(np.mean(np.sign(self.X.dot(w)) == self.gt),
-                           0.9)
+    def logistic_regression_small(self, alpha, mu):
+        X, w0, gt = self._problem(n=250, nlf=50, lf_prior=0.4, lf_mean=0.7,
+                                  lf_sd=0.25, nf=250, f_prior=0.2, f_mean=0.6,
+                                  f_sd=0.25)
+        w = learn_elasticnet_logreg(X, maxIter=500, tol=1e-4, w0=w0,
+                                    sample=False, alpha=alpha, mu_seq=mu, 
+                                    rate=0.01, verbose=True)[mu]
+        self.assertGreater(np.mean(np.sign(X.dot(w)) == gt), 0.85)
     
-    def test_ridge_logistic_regression_medium(self):
-        print "Running medium logistic regression test"
-        # Setup problem
-        self.n = 250
-        n_feats, n_goodfeats = 25, 20
-        n_rules, n_goodrules = 4, 3
-        self._make_feats(n_feats, n_goodfeats)
-        self._make_rules(n_rules, n_goodrules, n_feats, n_goodfeats, 0, 
-                         n_goodfeats * 1/2)
-        self._make_X()
-        # Learn params
-        w0 = np.concatenate([np.ones(n_rules), np.zeros(n_feats)])
-        w = learn_params(self.X, 500, sample=False, verbose=True, w0=w0, 
-                         mu=0.01)
-        self.assertGreater(np.mean(np.sign(self.X.dot(w)) == self.gt), 
-                           0.9)
+    def test_ridge_logistic_regression_small_1(self):
+        print "Running small ridge logistic regression test 1"
+        self.logistic_regression_small(self.ridge, 1e-6)
         
-    def test_ridge_logistic_regression_hard(self):
-        print "Running hard logistic regression test"
-        # Setup problem
-        self.n = 250
-        n_feats, n_goodfeats = 25, 20
-        n_rules, n_goodrules = 4, 3
-        self._make_feats(n_feats, n_goodfeats)
-        self._make_rules(n_rules, n_goodrules, n_feats, n_goodfeats, 0.05,
-                         n_goodfeats * 1/2)
-        self._make_X()
-        # Learn params
-        w0 = np.concatenate([np.ones(n_rules), np.zeros(n_feats)])
-        w = learn_params(self.X, 500, sample=False, verbose=True, w0=w0,
-                         mu=0.01)
-        self.assertGreater(np.mean(np.sign(self.X.dot(w)) == self.gt), 
-                           0.8)
+    def test_lasso_logistic_regression_small_1(self):
+        print "Running small lasso logistic regression test 1"
+        self.logistic_regression_small(self.lasso, 1e-6)
+        
+    def test_ridge_logistic_regression_small_2(self):
+        print "Running small ridge logistic regression test 2"
+        self.logistic_regression_small(self.ridge, 1e-4)
+        
+    def test_lasso_logistic_regression_small_2(self):
+        print "Running small lasso logistic regression test 2"
+        self.logistic_regression_small(self.lasso, 1e-4)
+
+    def logistic_regression_large(self, alpha, mu):
+        X, w0, gt = self._problem(n=1000, nlf=100, lf_prior=0.2, lf_mean=0.7,
+                                  lf_sd=0.25, nf=5000, f_prior=0.05, f_mean=0.6,
+                                  f_sd=0.25)
+        w = learn_elasticnet_logreg(X, maxIter=1000, tol=1e-4, w0=w0,
+                                    sample=False, alpha=alpha, mu_seq=mu, 
+                                    rate=0.01, verbose=True)[mu]
+        self.assertGreater(np.mean(np.sign(X.dot(w)) == gt), 0.85)
+        
+    def test_ridge_logistic_regression_large_1(self):
+        print "Running large ridge logistic regression test 1"
+        self.logistic_regression_large(self.ridge, 1e-6)
+        
+    def test_lasso_logistic_regression_large_1(self):
+        print "Running large lasso logistic regression test 1"
+        self.logistic_regression_large(self.lasso, 1e-6)
+        
+    def test_ridge_logistic_regression_large_2(self):
+        print "Running large ridge logistic regression test 2"
+        self.logistic_regression_large(self.ridge, 1e-4)
+        
+    def test_lasso_logistic_regression_large_2(self):
+        print "Running large lasso logistic regression test 2"
+        self.logistic_regression_large(self.lasso, 1e-4)
         
     def test_logistic_regression_sparse(self):
         print "Running logistic regression test with sparse operations"
-        # Setup problem
-        self.n = 100
-        n_feats, n_goodfeats = 2500, 2000
-        n_rules, n_goodrules = 40, 30
-        self._make_feats(n_feats, n_goodfeats)
-        self._make_rules(n_rules, n_goodrules, n_feats, n_goodfeats, 0.05,
-                         n_goodfeats * 1/2)
-        self._make_X()
-        # Learn params
-        w0 = np.concatenate([np.ones(n_rules), np.zeros(n_feats)])
-        w_d = learn_params(self.X, 500, sample=False, verbose=True, w0=w0,
-                           mu=0.01)
-        w_s = learn_params(sparse.csr_matrix(self.X), 500, sample=False,
-                           verbose=True, w0=w0, mu=0.01)
+        X, w0, gt = self._problem(n=500, nlf=75, lf_prior=0.3, lf_mean=0.7,
+                                  lf_sd=0.25, nf=1000, f_prior=0.1, f_mean=0.6,
+                                  f_sd=0.25)
+        mu = 1e-4
+        w_s = learn_elasticnet_logreg(X, maxIter=2500, tol=1e-4, w0=w0,
+                                      sample=False, alpha=self.ridge,
+                                      mu_seq=mu, rate=0.01, verbose=True)[mu]
+        w_d = learn_elasticnet_logreg(np.asarray(X.todense()), maxIter=2500,
+                                      tol=1e-4, w0=w0, sample=False,
+                                      alpha=self.ridge, mu_seq=mu, rate=0.01,
+                                      verbose=True)[mu]
         # Check sparse solution is close to dense solution
-        self.assertLessEqual(np.linalg.norm(w_s - w_d), 1e-4)
-    
-    def test_logistic_regression_sample(self):
-        print "Running logistic regression test with sampling"
-        # Setup problem
-        self.n = 1000
-        n_feats, n_goodfeats = 15000, 10000
-        n_rules, n_goodrules = 400, 50
-        self._make_feats(n_feats, n_goodfeats, c=0.005, sp=True)
-        self._make_rules(n_rules, n_goodrules, n_feats, n_goodfeats, 0.05,
-                         n_goodfeats * 0.005)
-        self._make_X()       
-        X_sparse = sparse.csr_matrix(self.X)        
-        # Learn params
-        w0 = np.concatenate([np.ones(n_rules), np.zeros(n_feats)])
-        w = learn_params(X_sparse, 500, sample=False,
-                         verbose=True, w0=w0, mu=0.01)
-        w_samp = learn_params(X_sparse, 500, sample=True, nSamples=100,
-                              verbose=True, w0=w0, mu=0.01)
-        # Check sparse solution is close to dense solution
-        self.assertLessEqual(np.linalg.norm(w_samp - w), 0.01)
+        self.assertLessEqual(np.linalg.norm(w_s - w_d), 1e-6)
         
-    def _make_feats(self, nf, ngf, c=0.5, sp=False):
-        # Make NF binary features
-        self.F = (np.random.rand(self.n, nf) < c).astype(float)
-        if sp:
-            self.F = sparse.csr_matrix(self.F)
-        # Set the ground truth by summing first NGF features
-        # If at least 1/2 are 1's, then it's a positive case
-        cutoff = ngf * c
-        self.w_opt = np.concatenate([np.ones(ngf), np.zeros(nf - ngf)])
-        self.gt = 2*((self.F.dot(self.w_opt) >= cutoff).astype(float)) - 1
-    
-    def _make_rules(self, nr, ngr, nf, ngf, strength, cutoff):
-        # Make NGR good rules
-        Rg = np.vstack([self.F.dot(np.concatenate([(np.random.rand(ngf) >
-                                                    strength).astype(float), 
-                                                  np.zeros(nf-ngf)]))
-                        for _ in xrange(ngr)])
-        # Make NR - NGR random rules
-        if nr != ngr:
-            Rb = np.vstack([ngf * np.random.rand(self.n) 
-                           for _ in xrange(nr - ngr)])
-            R = np.vstack([Rg, Rb])
-        else:
-            R = Rg
-        # Convert to rule output (no zeros)
-        self.R = (2*((R >= cutoff).astype(float)) - 1).T
-    
-    def _make_X(self):
-        if sparse.issparse(self.F):
-            self.X = sparse.hstack([self.R, self.F], format='csr')
-        else:
-            self.X = np.hstack([self.R, self.F])
+    def test_logistic_regression_sample(self):
+        print "Running logistic regression test with sparse operations"
+        X, w0, gt = self._problem(n=500, nlf=75, lf_prior=0.3, lf_mean=0.7,
+                                  lf_sd=0.25, nf=1000, f_prior=0.1, f_mean=0.6,
+                                  f_sd=0.25)
+        mu = 1e-4
+        w_d = learn_elasticnet_logreg(X, maxIter=2500, tol=1e-4, w0=w0,
+                                      sample=False, alpha=self.ridge,
+                                      mu_seq=mu, rate=0.01, verbose=True)[mu]
+        w_s = learn_elasticnet_logreg(X, maxIter=2500, tol=1e-4, w0=w0,
+                                      sample=True, nSamples=200,
+                                      alpha=self.ridge, mu_seq=mu, rate=0.01,
+                                      verbose=True)[mu]
+        # Check sample marginals are close to deterministic solutio
+        ld, ls = odds_to_prob(X.dot(w_d)), odds_to_prob(X.dot(w_s))
+        self.assertLessEqual(np.linalg.norm(ld-ls) / np.linalg.norm(ld), 0.05)
+                             
+    def test_logistic_regression_cv(self):
+        print "Running logistic regression test with cross validation"
+        X, w0, gt = self._problem(n=500, nlf=50, lf_prior=0.2, lf_mean=0.6,
+                                  lf_sd=0.25, nf=800, f_prior=0.1, f_mean=0.55,
+                                  f_sd=0.25)
+        mu_seq = [1e6, 1, 1e-12]
+        w = cv_elasticnet_logreg(X, nfolds=3, w0=w0, mu_seq=mu_seq, plot=False,
+                                 alpha=self.ridge, opt_1se=True, verbose=True,
+                                 maxIter=2500, tol=1e-4, sample=False,
+                                 rate=0.01)
+        w_all = [learn_elasticnet_logreg(X, maxIter=2500, tol=1e-4, w0=w0,
+                                         sample=False, alpha=self.ridge,
+                                         mu_seq=mu, rate=0.01, verbose=True)[mu]
+                for mu in mu_seq]
+        for wp in w_all:
+            self.assertGreaterEqual(np.mean(np.sign(X.dot(w)) == gt),
+                                    np.mean(np.sign(X.dot(wp)) == gt)-0.05)
+                         
+                         
+    def _problem(self, n, nlf, lf_prior, lf_mean, lf_sd, nf, f_prior, f_mean, f_sd):
+        # Gen gt  
+        gt = np.concatenate([np.ones((np.floor(n/2))), 
+                             -1 * np.ones((n-np.floor(n/2)))])
+        ##### LF #####
+        # LF label?
+        lf_label = np.random.rand(n, nlf) < lf_prior
+        # LF correct?
+        lf_corr = ((lf_sd * np.random.randn(n, nlf) + lf_mean) > 0.5).astype(float)
+        lf_corr[lf_corr == 0] = -1
+        # LF
+        LF = (lf_corr * gt[:, np.newaxis]) * lf_label
+        ##### F #####
+        # F label?
+        f_label = np.random.rand(n, nf) < f_prior
+        # F correct?
+        f_corr = ((f_sd * np.random.randn(n, nf) + f_mean) > 0.5).astype(float)
+        f_corr[f_corr == 0] = -1
+        # LF
+        F = (f_corr * gt[:, np.newaxis]) * f_label
+        ##### X #####
+        LF = sparse.csr_matrix(LF)
+        F = sparse.csr_matrix(F)
+        # Join matrices
+        X_sparse = sparse.hstack([LF, F], format='csr')
+        # Set initial weights
+        w0 = np.concatenate([np.ones(nlf), np.zeros(nf)])
+        return X_sparse, w0, gt
 
 
 if __name__ == '__main__':
     os.chdir('../')
     unittest.main()
+    

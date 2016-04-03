@@ -37,6 +37,8 @@ source .virtualenv/bin/activate
 pip install --requirement python-package-requirement.txt
 ```
 
+*Note: if you have an issue with the matplotlib install related to the module `freetype`, see [this post](http://stackoverflow.com/questions/20533426/ubuntu-running-pip-install-gives-error-the-following-required-packages-can-no)*
+
 Alternatively, they could be installed system-wide if `sudo pip` is used instead of `pip` in the last command without the virtualenv setup and activation.
 
 In addition the Stanford CoreNLP parser jars need to be downloaded; this can be done using:

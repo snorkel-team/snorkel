@@ -51,7 +51,7 @@ class SentenceParser:
         """Parse a raw document as a string into a list of sentences"""
         if len(doc.strip()) == 0:
             return
-        resp = self.requests_session.post(self.endpoint, data=doc, allow_redirects=True)
+        resp = self.requests_session.post(self.endpoint, data=doc.encode('utf-8'), allow_redirects=True)
         content = resp.content.strip()
         if content.startswith("Request is too long to be handled by server"):
           raise ValueError("File {} too long. Max character count is 100K".format(doc_id))

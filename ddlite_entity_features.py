@@ -2,7 +2,6 @@ import sys, os
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
                              'treedlib/treedlib'))
 from templates import *
-import lxml.etree as et
 
 def compile_entity_feature_generator():
   """
@@ -15,7 +14,7 @@ def compile_entity_feature_generator():
   m = Mention(0)
 
   # Basic relation feature templates
-  templates = [
+  temps = [
     [Indicator(m, a) for a in BASIC_ATTRIBS_REL],
     Indicator(m, 'dep_label,lemma'),
     # The *first element on the* path to the root: ngram lemmas along it
@@ -27,7 +26,7 @@ def compile_entity_feature_generator():
   ]
 
   # return generator function
-  return Compile(templates).apply_mention
+  return Compile(temps).apply_mention
 
 def get_ddlib_feats(sent, idxs):
   """

@@ -116,7 +116,7 @@ class TextParser(FileTypeParser):
         return True
     def parse(self, fp):
         with open(fp, 'rb') as f:
-            return self._strip_special(f.read())
+            return f.read()
 
 '''
 Wrapper for a FileTypeParser that parses a file, directory, or pattern

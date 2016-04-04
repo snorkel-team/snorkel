@@ -71,7 +71,8 @@ Here are a few practical tips for working with DeepDive Lite:
 ## Documentation
 
 ### **ddlite_parser.py**
-**Class: Sentence**
+
+#### Class: Sentence
 
 |**Member**|**Notes**|
 |:---------|:--------|
@@ -85,28 +86,28 @@ Here are a few practical tips for working with DeepDive Lite:
 |`text`| Raw sentence text|
 |`token_idxs`| Document character offsets for start of each sentence token |
 
-**Class: SentenceParser**
+#### Class: SentenceParser
 
 |**Method**|**Notes**|
 |:---------|:--------|
 |`__init()__`| Starts CoreNLPServer|
 |`parse(doc, doc_id=None)` | Parse document into `Sentence`s|
 
-**Class: HTMLParser**
+#### Class: HTMLParser
 
 |**Method**|**Notes**|
 |:---------|:--------|
 |`can_parse(f)`||
 |`parse(f)`| Returns visible text in HTML file|
 
-**Class: TextParser**
+#### Class: TextParser
 
 |**Method**|**Notes**|
 |:---------|:--------|
 |`can_parse(f)`||
 |`parse(f)`| Returns all text in file|
 
-**Class: DocParser**
+#### Class: DocParser
 
 |**Method**|**Notes**|
 |:---------|:--------|
@@ -116,21 +117,21 @@ Here are a few practical tips for working with DeepDive Lite:
 
 ### **ddlite_matcher.py**
 
-**Class: DictionaryMatcher**
+#### Class: DictionaryMatcher
 
 |**Method**|**Notes**|
 |:---------|:--------|
 |`__init__(label, dictionary, match_attrib='words', ignore_case=True)`| |
 |`apply(sentence)`| Tokens joined with spaces |
 
-**Class: RegexMatcher**
+#### Class: RegexMatcher
 
 |**Method**|**Notes**|
 |:---------|:--------|
 |`__init__(label, regex_pattern, match_attrib='words', ignore_case=True)`| Entire sentence text can be searched using `match_attrib='text'`|
 |`apply(sentence)`| Tokens joined with spaces |
 
-**Class: MultiMatcher**
+#### Class: MultiMatcher
 
 |**Method**|**Notes**|
 |:---------|:--------|
@@ -139,7 +140,7 @@ Here are a few practical tips for working with DeepDive Lite:
 
 ### **ddlite.py**
 
-**Class: Relation **
+#### Class: Relation
 
 |**Member**|**Notes**|
 |:---------|:--------|
@@ -159,7 +160,7 @@ Here are a few practical tips for working with DeepDive Lite:
 |:---------|:--------|
 |`render` | Generates sentence dependency tree figure with matched tokens highlighted|
 
-**Class: Relations **
+#### Class: Relations
 
 |**Member**|**Notes**|
 |:---------|:--------|
@@ -175,7 +176,7 @@ Here are a few practical tips for working with DeepDive Lite:
 | `extract_features(*args)` | |
 | `dump_candidates(f)` | Pickle object to file |
 
-**Class: Entity **
+#### Class: Entity
 
 |**Member**|**Notes**|
 |:---------|:--------|
@@ -193,7 +194,7 @@ Here are a few practical tips for working with DeepDive Lite:
 |:---------|:--------|
 |`render` | Generates sentence dependency tree figure with matched tokens highlighted|
 
-**Class: Entities **
+#### Class: Entities
 
 |**Member**|**Notes**|
 |:---------|:--------|
@@ -209,7 +210,7 @@ Here are a few practical tips for working with DeepDive Lite:
 | `extract_features(*args)` | |
 | `dump_candidates(f)` | Pickle object to file |
 
-**Class: CandidateModel **
+#### Class: CandidateModel
 
 |**Member**|**Notes**|
 |:---------|:--------|

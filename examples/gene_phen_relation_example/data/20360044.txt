@@ -1,0 +1,1 @@
+Mapping chromatin interactions by chromosome conformation capture (3C)

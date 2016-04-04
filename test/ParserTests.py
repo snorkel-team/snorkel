@@ -1,5 +1,7 @@
-import unittest, requests, os
-from parser import *
+import os, requests, sys, unittest
+
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+from ddlite_parser import *
 
 class TestParsers(unittest.TestCase):
     
@@ -37,5 +39,4 @@ class TestParsers(unittest.TestCase):
         self.assertEqual(len(sents[0].words), 13)        
 
 if __name__ == '__main__':
-    os.chdir('../')
     unittest.main()

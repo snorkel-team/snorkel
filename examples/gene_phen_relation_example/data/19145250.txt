@@ -1,0 +1,1 @@
+Analysis of multiple SNPs in genetic association studies: comparison of three multi-locus methods to prioritize and select SNPs.

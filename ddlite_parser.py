@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import atexit
 import glob
 import json
@@ -24,7 +26,7 @@ class SentenceParser:
         # In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
         # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
         self.port = 12345
-        loc = os.path.join(os.path.dirname(os.path.realpath('__file__')), 'parser')
+        loc = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
@@ -51,11 +53,11 @@ class SentenceParser:
         """Parse a raw document as a string into a list of sentences"""
         if len(doc.strip()) == 0:
             return
-        resp = self.requests_session.post(self.endpoint, data=doc, allow_redirects=True)
+        resp = self.requests_session.post(self.endpoint, data=doc.encode('utf-8'), allow_redirects=True)
         content = resp.content.strip()
         if content.startswith("Request is too long to be handled by server"):
           raise ValueError("File {} too long. Max character count is 100K".format(doc_id))
-        blocks = json.loads(resp.content.strip())['sentences']
+        blocks = json.loads(content, strict=False)['sentences']
         sent_id = 0
         for block in blocks:
             parts = defaultdict(list)
@@ -167,6 +169,11 @@ def main():
     parser = SentenceParser()
     for s in parser.parse(doc):
         print s
+        
+    doc2 = u'IC50 value of 87.81 µg mL(-1).'
+    for s in parser.parse(doc2):
+        print s
+        print s.text
 
 if __name__ == '__main__':
     main()

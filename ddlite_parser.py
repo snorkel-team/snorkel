@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import atexit
 import glob
 import json
@@ -5,7 +7,6 @@ import os
 import re
 import requests
 import signal
-import time
 import warnings
 from bs4 import BeautifulSoup
 from collections import namedtuple, defaultdict
@@ -52,8 +53,11 @@ class SentenceParser:
         """Parse a raw document as a string into a list of sentences"""
         if len(doc.strip()) == 0:
             return
-        resp = self.requests_session.post(self.endpoint, data=doc, allow_redirects=True)
-        blocks = json.loads(resp.content.strip())['sentences']
+        resp = self.requests_session.post(self.endpoint, data=doc.encode('utf-8'), allow_redirects=True)
+        content = resp.content.strip()
+        if content.startswith("Request is too long to be handled by server"):
+          raise ValueError("File {} too long. Max character count is 100K".format(doc_id))
+        blocks = json.loads(content, strict=False)['sentences']
         sent_id = 0
         for block in blocks:
             parts = defaultdict(list)
@@ -114,7 +118,7 @@ class TextParser(FileTypeParser):
         return True
     def parse(self, fp):
         with open(fp, 'rb') as f:
-            return self._strip_special(f.read())
+            return f.read()
 
 '''
 Wrapper for a FileTypeParser that parses a file, directory, or pattern
@@ -165,7 +169,11 @@ def main():
     parser = SentenceParser()
     for s in parser.parse(doc):
         print s
-
+        
+    doc2 = u'IC50 value of 87.81 µg mL(-1).'
+    for s in parser.parse(doc2):
+        print s
+        print s.text
 
 if __name__ == '__main__':
     main()

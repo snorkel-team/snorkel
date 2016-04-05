@@ -526,7 +526,8 @@ class CandidateModel:
     if isinstance(lf, int):
       try:
         lf_csc = self.lf_matrix.tocsc()
-        self.lf_matrix = (lf_csc[:, np.setdiff1d(range(self.num_lfs()), lf)]).tolil()
+        other_idx = np.concatenate((range(lf), range(lf+1, self.num_lfs())))
+        self.lf_matrix = (lf_csc[:, other_idx]).tolil()
         self.lf_names.pop(lf)
       except:
         raise ValueError("{} is not a valid LF index".format(lf))
@@ -597,7 +598,7 @@ class CandidateModel:
 
   def _lf_conf(self, lf_idx):
     lf_csc = self.lf_matrix.tocsc()
-    other_idx = np.setdiff1d(range(self.num_lfs()), lf_idx)
+    other_idx = np.concatenate((range(lf_idx),range(lf_idx+1, self.num_lfs())))
     agree = lf_csc[:, other_idx].multiply(lf_csc[:, lf_idx])
     return float((np.ravel((agree == -1).sum(1)) > 0).sum()) / self.num_candidates()
     

@@ -792,19 +792,22 @@ class CandidateModel:
     
   def open_mindtagger(self, num_sample = None, **kwargs):
     self.mindtagger_instance = MindTaggerInstance(self.C.mindtagger_format())
-    if isinstance(num_sample, int):
+    if isinstance(num_sample, int) and num_sample > 0:
       N = self.num_candidates()
       self._current_mindtagger_samples = np.random.choice(N, num_sample, replace=False)\
                                           if N > num_sample else range(N)
-    elif num_sample is not None:
+    elif not num_sample and not self._current_mindtagger_samples:
+      raise ValueError("No current MindTagger sample. Set num_sample")
+    elif num_sample:
       raise ValueError("Number of samples is integer or None")
     try:
       probs = self.get_predicted_probability(subset=self._current_mindtagger_samples)
     except:
       probs = [None for _ in xrange(len(self._current_mindtagger_samples))]
+    tags = self.get_ground_truth('resolve')[self._current_mindtagger_samples]
     return self.mindtagger_instance.open_mindtagger(self.C.generate_mindtagger_items,
                                                     self._current_mindtagger_samples,
-                                                    probs, **kwargs)
+                                                    probs, tags, **kwargs)
   
   def add_mindtagger_tags(self, tags=None):
     tags = self.mindtagger_instance.get_mindtagger_tags()

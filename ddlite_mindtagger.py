@@ -1,4 +1,5 @@
-import atexit, json, os, pwd, pipes, socket, sys, time
+from collections import OrderedDict
+import atexit, json, os, pwd, pipes, socket, sys, time, warnings
 
 class MindTaggerInstance:
 
@@ -43,7 +44,7 @@ class MindTaggerInstance:
     
 
   def launch_mindtagger(self, task_name, generate_items, task_root="mindtagger",
-                        task_recreate = True, **kwargs):
+                        task_recreate = True, tags = None, **kwargs):
                             
     args = dict(
         task = task_name,
@@ -102,6 +103,9 @@ class MindTaggerInstance:
       except:
         raise OSError("Mindtagger task data could not be prepared: %s" % str(sys.exc_info()))
 
+    if tags:
+      self.gen_tags_json(tags)
+
     # launch mindtagger
     if self._system("""
       # restart any running mindtagger instance
@@ -142,3 +146,17 @@ class MindTaggerInstance:
     tags = json.loads(t.read())
 
     return tags
+    
+    
+  def gen_tags_json(self, tags):
+    json_dict = {'version': 1, 'key_columns': ['ext_id'], 'by_key': OrderedDict()}
+    for i,t in enumerate(tags):
+      if t != 0:
+        json_dict['by_key'][str(i)] = dict()      
+        json_dict['by_key'][str(i)]['is_correct'] = (t > 0)
+    p = '{}/{}'.format(self.instance['task_path'], 'tags.json')
+    try:    
+      with open(p, 'w+') as f:
+        json.dump(json_dict, f)
+    except:
+      warnings.warn("MindTagger: Could not copy tags")

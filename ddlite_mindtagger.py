@@ -1,4 +1,4 @@
-import atexit, json, os, pwd, pipes, socket, sys, time
+import atexit, json, os, pwd, pipes, socket, sys, time, warnings, traceback
 
 class MindTaggerInstance:
 
@@ -43,7 +43,7 @@ class MindTaggerInstance:
     
 
   def launch_mindtagger(self, task_name, generate_items, task_root="mindtagger",
-                        task_recreate = True, **kwargs):
+                        task_recreate = True, tags = None, **kwargs):
                             
     args = dict(
         task = task_name,
@@ -102,6 +102,11 @@ class MindTaggerInstance:
       except:
         raise OSError("Mindtagger task data could not be prepared: %s" % str(sys.exc_info()))
 
+    self.instance = args
+    
+    if tags is not None:
+      self.gen_tags_json(tags)
+
     # launch mindtagger
     if self._system("""
       # restart any running mindtagger instance
@@ -112,10 +117,9 @@ class MindTaggerInstance:
     while self._system("curl --silent --max-time 1 --head %(mindtagger_url)s >/dev/null" % shargs) != 0:
       time.sleep(0.1)        
 
-    self.instance = args
     return args['mindtagger_url']
   
-  def open_mindtagger(self, generate_mt_items, sample, probs, **kwargs):
+  def open_mindtagger(self, generate_mt_items, sample, probs, tags, **kwargs):
 
     def generate_items():
       return generate_mt_items(sample, probs)      
@@ -127,7 +131,7 @@ class MindTaggerInstance:
     task_name = tohex(hash(json.dumps([i for i in generate_items()])), 64)
 
     # launch Mindtagger
-    url = self.launch_mindtagger(task_name, generate_items, **kwargs)
+    url = self.launch_mindtagger(task_name, generate_items, tags=tags, **kwargs)
 
     # return an iframe
     from IPython.display import IFrame
@@ -142,3 +146,18 @@ class MindTaggerInstance:
     tags = json.loads(t.read())
 
     return tags
+    
+    
+  def gen_tags_json(self, tags):
+    json_dict = {'version': 1, 'key_columns': ['ext_id'], 'by_key': dict()}
+    for i,t in enumerate(tags):
+      if t != 0:
+        json_dict['by_key'][str(i)] = dict()      
+        json_dict['by_key'][str(i)]['is_correct'] = True if (t > 0) else False
+    p = '{}/{}'.format(self.instance['task_path'], 'tags.json')
+    try:    
+      with open(p, 'w+') as f:
+        json.dump(json_dict, f, indent=2, sort_keys=True)
+    except:
+      warnings.warn("MindTagger: Could not copy tags")
+      print traceback.print_exc()

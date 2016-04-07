@@ -414,13 +414,16 @@ class ModelLogger:
 class CandidateModel:
   def __init__(self, candidates, feats=None):
     self.C = candidates
-    if type(feats) == np.ndarray or sparse.issparse(feats):
+    if self._check_feats(feats):
       self.feats = feats
     elif feats is None:
-      try:
-        self.feats = self.C.extract_features()
-      except:
-        raise ValueError("Could not automatically extract features")
+      if hasattr(self.C, 'feats') and self._check_feats(self.C.feats):
+        self.feats = self.C.feats
+      else:      
+        try:
+          self.feats = self.C.extract_features()
+        except:
+          raise ValueError("Could not automatically extract features")
     else:
       raise ValueError("Features must be numpy ndarray or sparse")
     self.logger = ModelLogger()
@@ -434,6 +437,10 @@ class CandidateModel:
     self._tags = []
     self._gold_labels = np.zeros((self.num_candidates()))
     self.mindtagger_instance = None
+    
+  def _check_feats(self, feats):
+    return ((type(feats) == np.ndarray or sparse.issparse(feats)) and
+            (feats.shape[0] == self.num_candidates()))
 
   def num_candidates(self):
     return len(self.C)

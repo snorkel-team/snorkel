@@ -66,7 +66,12 @@ class RegexMatch(Matcher):
       start_c_idx = s.__dict__['token_idxs']
     
     # Convert character index to token index and form phrase
-    start_c_idx = [c - start_c_idx[0] for c in start_c_idx]
+    if self.match_attrib == 'text':
+      start_c_idx = [c - start_c_idx[0] for c in start_c_idx]
+    else:
+      start_c_idx = [0]
+      for s in seq:
+        start_c_idx.append(start_c_idx[-1] + len(s) + 1)
     # Find regex matches over phrase
     phrase = seq if self.match_attrib == 'text' else ' '.join(seq)
     for match in self._re_comp.finditer(phrase):
@@ -96,3 +101,21 @@ class MultiMatcher(Matcher):
         if rg_end not in applied:
           applied.add(rg_end)
           yield rg, self.label if self.label is not None else m_label
+
+def main():
+  from ddlite import SentenceParser
+  txt = "Han likes Luke and a good-wookie. Han Solo don\'t like 88-IG."
+  parser = SentenceParser()
+  sents = list(parser.parse(txt))
+
+  g = DictionaryMatch('G', ['Han Solo', 'Luke', 'wookie'])
+  b1 = RegexMatch('B1', "\d+", match_attrib="text")
+  b2 = RegexMatch('B2', "\d+", match_attrib="words")
+  
+  print list(g.apply(sents[0])) 
+  print list(b1.apply(sents[1]))
+  print list(b2.apply(sents[1]))  
+
+if __name__ == '__main__':
+  main()
+  

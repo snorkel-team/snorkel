@@ -53,7 +53,10 @@ class SentenceParser:
         """Parse a raw document as a string into a list of sentences"""
         if len(doc.strip()) == 0:
             return
-        resp = self.requests_session.post(self.endpoint, data=doc.encode('utf-8'), allow_redirects=True)
+        if isinstance(doc, unicode):
+          doc = doc.encode('utf-8')
+        resp = self.requests_session.post(self.endpoint, data=doc, allow_redirects=True)
+        doc = doc.decode('utf-8')
         content = resp.content.strip()
         if content.startswith("Request is too long to be handled by server"):
           raise ValueError("File {} too long. Max character count is 100K".format(doc_id))
@@ -170,7 +173,7 @@ def main():
     for s in parser.parse(doc):
         print s
         
-    doc2 = u'IC50 value of 87.81 µg mL(-1).'
+    doc2 = u'IC50 value 87.81 µg mL(-1). IC50 abcµgmue of 1. I µµggval abcµgm ()'
     for s in parser.parse(doc2):
         print s
         print s.text

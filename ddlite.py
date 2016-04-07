@@ -796,7 +796,7 @@ class CandidateModel:
       N = self.num_candidates()
       self._current_mindtagger_samples = np.random.choice(N, num_sample, replace=False)\
                                           if N > num_sample else range(N)
-    elif not num_sample and not self._current_mindtagger_samples:
+    elif not num_sample and len(self._current_mindtagger_samples) < 0:
       raise ValueError("No current MindTagger sample. Set num_sample")
     elif num_sample:
       raise ValueError("Number of samples is integer or None")

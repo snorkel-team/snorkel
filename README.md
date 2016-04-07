@@ -233,7 +233,22 @@ Here are a few practical tips for working with DeepDive Lite:
 |`get_ground_truth(gt='resolve')` | Get ground truth from just MindTagger (`gt='mindtagger'`), just gold standard labels (`gt='gold'`), or resolve with conflict priority to gold standard (`gt='resolve'`) |
 |`has_ground_truth()` | Get boolean array of candidates with some ground truth |
 |`get_labeled_ground_truth(gt='resolve', subset=None)` |  Get indices and labels of candidates in `subset` labeled by method `gt`; `subset` can be `'holdout'` or an array of indices |
-
-
-
-
+|`set_lf_matrix(lf_matrix, names, clear=False)` | Set a custom LF matrix with LF names `names` ; appends to or clears existing based on `clear`|
+|`apply_lfs(lfs_f, clear=False)` | Apply LFs in list `lfs_f`; appends to or clears existing based on `clear`|
+|`delete_lf(lf)` | Delete LF by index or name |
+|`plot_lf_stats()` | Generates plots to examine coverage, overlap, and conflict |
+|`top_conflict_lfs(n=10)` | Show the top `n` conflict LFs |
+|`lowest_coverage_lfs(n=10)` | Show the `n` LFs with lowest coverage |
+|`lowest_empirical_accuracy_lfs(n=10, subset=None)` | Show the `n` LFs with the lowest empirical accuracy against ground truth for candidates in `subset` |
+|`set_holdout(idxs=None)` | Set holdout set to all candidates with ground truth (`idxs=None`) or subset `idxs`|
+|`learn_weights(nfolds=3, maxIter=1000, tol=1e-6, sample=False, n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, alpha=0, opt_1se=True, use_sparse=True, plot=False, verbose=False, log=True)` | Learn an elastic net logistic regression on candidates not in holdout set <ul><li>`nfolds`: number of folds for cross-validation</li><li>`maxIter`: maximum number of SGD iterations</li><li>`tol`: tolerance for relative gradient magnitude to weights for convergence</li><li>`sample`: Use batch SGD</li> <li>`n_samples`: Batch size for SGD</li><li>`mu`: sequence of regularization parameters to fit; if `None`, automatic sequence is chosen s.t. largest value is close to minimum value at which all weights are zero</li><li>`n_mu`: number of regularization parameters for automatic sequence</li><li>`mu_min_ratio`: lower bound for regularization parameter automatic sequence as ratio to largest value</li><li>`alpha`: elastic net mixing parameter (0 for l<sub>2</sub>, 1 for l<sub>1</sub>)</li><li>`opt_1se`: use one-standard-error-rule for choosing regularization parameter</li><li>`use_sparse`: use sparse operations</li><li>`plot`: show diagnostic plot for cross-validation</li><li>`verbose`: be verbose</li><li>`log`: log result in `ModelLogger`</li></ul> |
+|`get_link(subset=None)` | Get link function values for all candidates (`subset=None`), an index subset (`subset`), or holdout set (`subset='holdout'`) |
+|`get_predicted_probability(subset=None)` | Get predicted probabilities for candidates |
+|`get_predicted(subset=None)` | Get predicted responses for candidates |
+|`get_classification_accuracy(gt='resolve', subset=None)` | Get classification accuracy over `subset` against ground truth determined by `gt` |
+|`get_LF_priority_vote_accuracy(gt='resolve', subset=None)` | Get classification accuracy over `subset` against ground truth determined by `gt` from LFs alone; assignment prioritized by LF order |
+|`plot_calibration()` | Show DeepDive calibration plots |
+|`open_mindtagger(num_sample=None, ...)` | Open MindTagger portal for labeling; sample is either the last sample (`num_sample=None`) or a random sample of size `num_sample` |
+|`add_mindtagger_tags()` | Import tags from current MindTagger session |
+|`add_to_log(log_id=None, gt='resolve', subset='holdout', verb=True)` | Add current learning result to log; precision and recall computed from ground truth in `subset` determined by `gt` |
+|`show_log(idx=None)` | Show all learning results (`idx=None`) or learning result `idx` | 

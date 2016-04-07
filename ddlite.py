@@ -806,7 +806,7 @@ class CandidateModel:
                                                     self._current_mindtagger_samples,
                                                     probs, **kwargs)
   
-  def add_mindtagger_tags(self, tags=None):
+  def add_mindtagger_tags(self):
     tags = self.mindtagger_instance.get_mindtagger_tags()
     self._tags = tags
     is_tagged = [i for i,tag in enumerate(tags) if 'is_correct' in tag]

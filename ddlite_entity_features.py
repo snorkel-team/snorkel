@@ -56,28 +56,28 @@ def _get_window_features(sent, idxs, window=3, combinations=True, isolated=True)
     right_poses = []
     try:
         for i in range(1, window + 1):
-            lemma = str(sent.lemmas[idxs[0] - i])
+            lemma = sent.lemmas[idxs[0] - i]
             try:
                 float(lemma)
                 lemma = "_NUMBER"
             except ValueError:
                 pass
             left_lemmas.append(lemma)
-            left_poses.append(str(sent.poses[idxs[0] - i]))
+            left_poses.append(sent.poses[idxs[0] - i])
     except IndexError:
         pass
     left_lemmas.reverse()
     left_poses.reverse()
     try:
         for i in range(1, window + 1):
-            lemma = str(sent.lemmas[idxs[-1] + i])
+            lemma = sent.lemmas[idxs[-1] + i]
             try:
                 float(lemma)
                 lemma = "_NUMBER"
             except ValueError:
                 pass
             right_lemmas.append(lemma)
-            right_poses.append(str(sent.poses[idxs[-1] + i]))
+            right_poses.append(sent.poses[idxs[-1] + i])
     except IndexError:
         pass
     if isolated:

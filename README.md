@@ -15,7 +15,7 @@ DeepDive Lite is also part of a broader effort to answer the following research 
 
 <!-- TODO these manual instruction could be abstracted away with a simple launcher script, that takes as input a ipynb and simply opens it after any necessary setup.. -->
 
-First of all, make sure all git submodule has been downloaded.
+First of all, make sure all git submodules have been downloaded.
 
 ```bash
 git submodule update --init
@@ -28,6 +28,7 @@ DeepDive Lite requires [a few python packages](python-package-requirement.txt) i
 * [requests](http://docs.python-requests.org/en/master/user/install/#install)
 * [numpy](http://docs.scipy.org/doc/numpy-1.10.1/user/install.html)
 * [scipy](http://www.scipy.org/install.html)
+* [matplotlib](http://matplotlib.org/users/installing.html)
 
 We provide a simple way to install everything using `virtualenv`:
 
@@ -52,20 +53,31 @@ Finally, DeepDive Lite is built specifically with usage in **Jupyter/IPython not
 The `jupyter` command is installed as part of the above installation steps, so the following command within the virtualenv opens our demo notebook.
 
 ```bash
-jupyter notebook GeneTaggerExample_Extraction.ipynb
+jupyter notebook examples/GeneTaggerExample_Extraction.ipynb
 ```
 
 ## Learning how to use DeepDive Lite
-The best way to learn how to use is to open up the demo notebooks. **GeneTaggerExample_Extraction.ipynb** walks through the candidate extraction workflow for an entity tagging task. **GeneTaggerExample_Learning.ipynb** picks up where the extraction notebook left off. The learning notebook demonstrates the labeling function iteration workflow and learning methods.
+The best way to learn how to use is to open up the demo notebooks in the **examples** folder. **GeneTaggerExample_Extraction.ipynb** walks through the candidate extraction workflow for an entity tagging task. **GeneTaggerExample_Learning.ipynb** picks up where the extraction notebook left off. The learning notebook demonstrates the labeling function iteration workflow and learning methods. For examples of extracting relations, see **GenePhenRelationExample_Extraction.ipynb** and **GenePhenRelationExample_Learning.ipynb**.
 
 ## Best practices for labeling function iteration
-The following flowchart illustrates the labeling function iteration workflow.
+The flowchart below illustrates the labeling function iteration workflow.
+
+![ddlite workflow](/figs/LFworkflow.png)
+
+First, we generate candidates, a hold out set of candidates (using MindTagger or gold standard labels), and initial set of labeling functions *L<sup>(0)</sup>* for a `CandidateModel`. The next step is to examine the coverage and accuracy of labeling functions using `CandidateModel.plot_lf_stats()`, `CandidateModel.top_conflict_lfs()`, `CandidateModel.lowest_coverage_lfs()`, and `CandidateModel.lowest_empirical_accuracy_lfs()`. If coverage is the primary issue, we write a new candidate function and append it to *L<sup>(0)</sup>* to form *L<sup>(1)</sup>*. If accuracy is the primary issue instead, we form *L<sup>(1)</sup>* by revising an existing labeling function which may be implemented incorrectly. This process continues until we are satisfied with the labeling function set. We then learn a model, and depending on the performance over the hold out set, revaluate our labeling function set as before.
+
+Several parts of this workflow could result in overfitting, so tie your bootstraps with care:
+
+* Generating a sufficiently large and diverse hold out set before iterating on labeling functions is important for accurate evaluation.
+* A labeling function with low empirical accuracy on the hold out set could work well on the entire data set. This is not a reason to delete it (unless the implementation is incorrect).
+* Metrics obtained by altering learning parameters directly to maximize performance against the hold out set are upwards biased and not representative of general performance.
 
 ## Best practices for using DeepDive Lite notebooks
 Here are a few practical tips for working with DeepDive Lite:
 * Use `autoreload`
 * Keep working source code in another file 
 * Pickle extractions often and with unique names
+* Entire objects (extractions and features) subclassed from `Candidates` can be pickled
 * Document past labeling functions either remotely or with the `CandidateModel` log
 
 ## Documentation

@@ -7,12 +7,13 @@ class Matcher(object):
     
 class DictionaryMatch(Matcher):
   """Selects according to ngram-matching against a dictionary i.e. list of words"""
-  def __init__(self, label, dictionary, match_attrib='words', ignore_case=True):
+  def __init__(self, label, dictionary, match_attrib='words', ignore_case=True, longest_match=True):
     if match_attrib in ['sent_id', 'doc_id', 'text', 'token_idxs']:
       raise ValueError("Match attribute cannot be ID or sentence text")
     self.label = label
     self.match_attrib = match_attrib
     self.ignore_case = ignore_case
+    self.longest_match = longest_match
 
     # Split the dictionary up by phrase length (i.e. # of tokens)
     self.dl = defaultdict(lambda : set())
@@ -20,8 +21,8 @@ class DictionaryMatch(Matcher):
       self.dl[len(phrase.split())].add(phrase.lower() if ignore_case else phrase)
     self.dl.update((k, frozenset(v)) for k,v in self.dl.iteritems())
 
-    # Get the ngram range for this dictionary
-    self.ngr = range(max(1, min(self.dl.keys())), max(self.dl.keys())+1)
+    # Get the *DESC order* ngram range for this dictionary
+    self.ngr = range(max(1, min(self.dl.keys())), max(self.dl.keys())+1)[::-1]
 
   def apply(self, s):
     """
@@ -34,13 +35,22 @@ class DictionaryMatch(Matcher):
     except TypeError:
       seq = s.__dict__[self.match_attrib]
 
+    # Keep track of indexes we've already matched so that we can e.g. keep longest match only
+    matched_seqs = []
+
     # Loop over all ngrams
     for l in self.ngr:
       for i in range(0, len(seq)-l+1):
+        ssidx = range(i, i+l)
+
+        # If we are only taking the longest match, skip if a subset of already-tagged idxs
+        if self.longest_match and any(set(ssidx) <= ms for ms in matched_seqs):
+          continue
         phrase = ' '.join(seq[i:i+l])
         phrase = phrase.lower() if self.ignore_case else phrase
         if phrase in self.dl[l]:
-          yield list(range(i, i+l)), self.label
+          matched_seqs.append(frozenset(ssidx))
+          yield list(ssidx), self.label
 
 class RegexMatch(Matcher):
   """Selects according to ngram-matching against a regex """

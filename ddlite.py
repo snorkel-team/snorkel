@@ -62,10 +62,12 @@ class Candidate(object):
     self.C = candidates
     self.id = ex_id
     self._p = p
+    
   def __getattr__(self, name):
     if name.startswith('prob'):
       return self._p
     return getattr(self.C._candidates[self.id], name)
+    
   def __repr__(self):
     s = str(self.C._candidates[self.id])
     return s if self._p is None else (s + " with probability " + str(self._p))
@@ -134,7 +136,7 @@ class Candidates(object):
     return len(self._candidates)
 
   def __iter__(self):
-    return (Candidate(self, i) for i in xrange(0, len(self)))
+    return (self[i] for i in xrange(0, len(self)))
   
   def num_candidates(self):
     return len(self)
@@ -257,8 +259,18 @@ class Relations(Candidates):
 ############################ ENTITIES ############################
 ##################################################################     
 
-# Alias for Entity
-Entity = Candidate
+class Entity(Candidate):
+  def __init__(self, *args, **kwargs):
+    super(Entity, self).__init__(*args, **kwargs) 
+
+  def mention(self, attribute='words'):
+    if attribute is 'text':
+      raise ValueError('Cannot get mention against text')
+    try:
+      seq = self.__getattr__(attribute)
+      return [seq[i] for i in self.idxs]
+    except:
+      raise ValueError('Invalid attribute')
 
 class entity_internal(candidate_internal):
   def __init__(self, idxs, label, sent, xt):
@@ -1120,6 +1132,7 @@ def main():
   E = Entities(sents, g)
   print E                
   for e in E:
+      print e.mention()
       print e.tagged_sent
       
   print "***** Regex *****"

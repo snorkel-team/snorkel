@@ -204,7 +204,8 @@ Here are a few practical tips for working with DeepDive Lite:
 
 |**Method**|**Notes**|
 |:---------|:--------|
-|`render` | Generates sentence dependency tree figure with matched tokens highlighted|
+|`render()` | Generates sentence dependency tree figure with matched tokens highlighted |
+|`mention(attribute='words')` | Return list of `attribute` tokens in mention | 
 
 #### Class: Entities
 

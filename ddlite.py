@@ -802,12 +802,16 @@ class CandidateModel:
         plt.title("(c) Accuracy (holdout set)")
     plt.show()
     
-  def open_mindtagger(self, num_sample = None, **kwargs):
+  def _get_all_abstained(self):
+      return np.ravel(np.where(np.ravel(self.lf_matrix.sum(1)) == 0))
+    
+  def open_mindtagger(self, num_sample=None, abstain=False, **kwargs):
     self.mindtagger_instance = MindTaggerInstance(self.C.mindtagger_format())
     if isinstance(num_sample, int) and num_sample > 0:
       N = self.num_candidates()
-      self._current_mindtagger_samples = np.random.choice(N, num_sample, replace=False)\
-                                          if N > num_sample else range(N)
+      pool = self._get_all_abstained() if abstain else range(N)
+      self._current_mindtagger_samples = np.random.choice(pool, num_sample, replace=False)\
+                                          if len(pool) > num_sample else pool
     elif not num_sample and len(self._current_mindtagger_samples) < 0:
       raise ValueError("No current MindTagger sample. Set num_sample")
     elif num_sample:

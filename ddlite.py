@@ -804,7 +804,9 @@ class CandidateModel:
       probs = self.get_predicted_probability(subset=self._current_mindtagger_samples)
     except:
       probs = [None for _ in xrange(len(self._current_mindtagger_samples))]
-    tags = self.get_ground_truth('resolve')[self._current_mindtagger_samples]
+    tags_l = self.get_ground_truth('resolve')[self._current_mindtagger_samples]
+    tags = np.zeros_like(self._mindtagger_labels)
+    tags[self._current_mindtagger_samples] = tags_l
     return self.mindtagger_instance.open_mindtagger(self.C.generate_mindtagger_items,
                                                     self._current_mindtagger_samples,
                                                     probs, tags, **kwargs)

@@ -522,7 +522,7 @@ class CandidateModel:
     Allows adding to existing LFs or clearing LFs with CLEAR=True
     """
     add = sparse.lil_matrix((self.num_candidates(), len(lfs_f)))
-    for i,c in enumerate(self.C._candidates):    
+    for i,c in enumerate(self.C):    
       for j,lf in enumerate(lfs_f):
         add[i,j] = lf(c)
     add_names = [lab.__name__ for lab in lfs_f]

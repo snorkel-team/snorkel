@@ -199,8 +199,8 @@ Here are a few practical tips for working with DeepDive Lite:
 | `xt` | XMLTree |
 | `root` | XMLTree root|
 |`tagged_sent` | Sentence text with matched tokens replaced by label |
-|`e_idxs`| Tokens matched by matcher |
-|`e_label`| Matcher label |
+|`idxs`| Tokens matched by matcher |
+|`label`| Matcher label |
 
 |**Method**|**Notes**|
 |:---------|:--------|

@@ -811,7 +811,7 @@ class CandidateModel:
       N = self.num_candidates()
       pool = self._get_all_abstained() if abstain else range(N)
       self._current_mindtagger_samples = np.random.choice(pool, num_sample, replace=False)\
-                                          if N > num_sample else len(pool)
+                                          if len(pool) > num_sample else pool
     elif not num_sample and len(self._current_mindtagger_samples) < 0:
       raise ValueError("No current MindTagger sample. Set num_sample")
     elif num_sample:

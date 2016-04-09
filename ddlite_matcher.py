@@ -104,13 +104,36 @@ class MultiMatcher(Matcher):
     self.label = kwargs['label'] if 'label' in kwargs else None
     
   def apply(self, s):
-    applied = set()
+    raise NotImplementedError()
+
+class Union(MultiMatcher):
+  """
+  Generate candidates by taking the *union* of several matchers' outputs
+  Priority given by matcher order
+  """
+  def apply(self, s):
+    seen = set()
     for m in self.matchers:
-      for rg, m_label in m.apply(s):
-        rg_end = (rg[0], rg[-1])
-        if rg_end not in applied:
-          applied.add(rg_end)
-          yield rg, self.label if self.label is not None else m_label
+      for m_idxs, m_label in m.apply(s):
+        m_range = (m_idxs[0], m_idxs[-1])
+        if m_range not in seen:
+          seen.add(m_range)
+          yield m_idxs, self.label if self.label is not None else m_label
+
+class Intersection(MultiMatcher):
+  """
+  Generate candidates by taking the *intersection* of several matchers' outputs
+  Priority given by matcher order
+  """
+  def apply(self, s):
+    seen_counts = defaultdict(int)
+    M = len(self.matchers)
+    for m in self.matchers:
+      for m_idxs, m_label in m.apply(s):
+        m_range = (m_idxs[0], m_idxs[-1])
+        seen_counts[m_range] += 1
+        if seen_counts[m_range] == M:
+          yield m_idxs, self.label if self.label is not None else m_label
 
 def main():
   from ddlite import SentenceParser

@@ -371,10 +371,10 @@ class ModelLog:
     self.set_metrics(gt, pred)
   def set_metrics(self, gt, pred):
     tp = np.sum((pred == 1) * (gt == 1))
-    fp = np.sum((pred == 1) * (gt == -1))
-    fn = np.sum((pred == -1) * (gt == 1))
+    fp = np.sum((pred == 1) * (gt != 1))
+    p = np.sum(gt == 1)
     self.precision = 0 if tp == 0 else float(tp) / float(tp + fp)
-    self.recall = 0 if tp == 0 else float(tp) / float(tp + fn)
+    self.recall = 0 if tp == 0 else float(tp) / float(p)
     self.f1 = 0 if (self.precision == 0 or self.recall == 0)\
       else 2 * (self.precision * self.recall)/(self.precision + self.recall)
   def num_lfs(self):
@@ -761,13 +761,13 @@ class CandidateModel:
     
   def _plot_prediction_probability(self, probs):
     plt.hist(probs, bins=10, normed=False, facecolor='blue')
-    plt.xlim((0,1))
+    plt.xlim((0,1.025))
     plt.xlabel("Probability")
     plt.ylabel("# Predictions")
     
   def _plot_accuracy(self, probs, ground_truth):
     x = 0.1 * np.array(range(11))
-    bin_assign = [x[i] for i in np.digitize(probs, x)]
+    bin_assign = [x[i] for i in np.digitize(probs, x)-1]
     correct = ((2*(probs >= 0.5) - 1) == ground_truth)
     correct_prob = np.array([np.mean(correct[bin_assign == p]) for p in x])
     xc = x[np.isfinite(correct_prob)]

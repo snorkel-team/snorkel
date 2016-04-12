@@ -58,7 +58,7 @@ class SentenceParser:
         resp = self.requests_session.post(self.endpoint, data=doc, allow_redirects=True)
         doc = doc.decode('utf-8')
         content = resp.content.strip()
-        if content.startswith("Request is too long to be handled by server"):
+        if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
           raise ValueError("File {} too long. Max character count is 100K".format(doc_id))
         blocks = json.loads(content, strict=False)['sentences']
         sent_id = 0

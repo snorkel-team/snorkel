@@ -192,24 +192,4 @@ class RegexNgramMatch(CandidateExtractor):
     for match in self._re_comp.finditer(phrase):
       start = bisect.bisect(start_c_idx, match.start())
       end = bisect.bisect(start_c_idx, match.end())
-      yield list(range(start-1, end)), self.label
-
-
-def main():
-  from ddlite import SentenceParser
-  txt = "Han likes Luke and a good-wookie. Han Solo don\'t like 88-IG."
-  parser = SentenceParser()
-  sents = list(parser.parse(txt))
-
-  # TODO: Update
-  g = DictionaryMatch('G', ['Han Solo', 'Luke', 'wookie'])
-  b1 = RegexMatch('B1', "\d+", match_attrib="text")
-  b2 = RegexMatch('B2', "\d+", match_attrib="words")
-  
-  print list(g.apply(sents[0])) 
-  print list(b1.apply(sents[1]))
-  print list(b2.apply(sents[1]))  
-
-if __name__ == '__main__':
-  main()
-  
+      yield list(range(start-1, end)), self.label  

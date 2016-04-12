@@ -62,10 +62,12 @@ class Candidate(object):
     self.C = candidates
     self.id = ex_id
     self._p = p
+    
   def __getattr__(self, name):
     if name.startswith('prob'):
       return self._p
     return getattr(self.C._candidates[self.id], name)
+    
   def __repr__(self):
     s = str(self.C._candidates[self.id])
     return s if self._p is None else (s + " with probability " + str(self._p))
@@ -134,7 +136,7 @@ class Candidates(object):
     return len(self._candidates)
 
   def __iter__(self):
-    return (Candidate(self, i) for i in xrange(0, len(self)))
+    return (self[i] for i in xrange(0, len(self)))
   
   def num_candidates(self):
     return len(self)
@@ -257,8 +259,18 @@ class Relations(Candidates):
 ############################ ENTITIES ############################
 ##################################################################     
 
-# Alias for Entity
-Entity = Candidate
+class Entity(Candidate):
+  def __init__(self, *args, **kwargs):
+    super(Entity, self).__init__(*args, **kwargs) 
+
+  def mention(self, attribute='words'):
+    if attribute is 'text':
+      raise ValueError('Cannot get mention against text')
+    try:
+      seq = self.__getattr__(attribute)
+      return [seq[i] for i in self.idxs]
+    except:
+      raise ValueError('Invalid attribute')
 
 class entity_internal(candidate_internal):
   def __init__(self, idxs, label, sent, xt):
@@ -359,10 +371,10 @@ class ModelLog:
     self.set_metrics(gt, pred)
   def set_metrics(self, gt, pred):
     tp = np.sum((pred == 1) * (gt == 1))
-    fp = np.sum((pred == 1) * (gt == -1))
-    fn = np.sum((pred == -1) * (gt == 1))
+    fp = np.sum((pred == 1) * (gt != 1))
+    p = np.sum(gt == 1)
     self.precision = 0 if tp == 0 else float(tp) / float(tp + fp)
-    self.recall = 0 if tp == 0 else float(tp) / float(tp + fn)
+    self.recall = 0 if tp == 0 else float(tp) / float(p)
     self.f1 = 0 if (self.precision == 0 or self.recall == 0)\
       else 2 * (self.precision * self.recall)/(self.precision + self.recall)
   def num_lfs(self):
@@ -510,7 +522,7 @@ class CandidateModel:
     Allows adding to existing LFs or clearing LFs with CLEAR=True
     """
     add = sparse.lil_matrix((self.num_candidates(), len(lfs_f)))
-    for i,c in enumerate(self.C._candidates):    
+    for i,c in enumerate(self.C):    
       for j,lf in enumerate(lfs_f):
         add[i,j] = lf(c)
     add_names = [lab.__name__ for lab in lfs_f]
@@ -749,13 +761,13 @@ class CandidateModel:
     
   def _plot_prediction_probability(self, probs):
     plt.hist(probs, bins=10, normed=False, facecolor='blue')
-    plt.xlim((0,1))
+    plt.xlim((0,1.025))
     plt.xlabel("Probability")
     plt.ylabel("# Predictions")
     
   def _plot_accuracy(self, probs, ground_truth):
     x = 0.1 * np.array(range(11))
-    bin_assign = [x[i] for i in np.digitize(probs, x)]
+    bin_assign = [x[i] for i in np.digitize(probs, x)-1]
     correct = ((2*(probs >= 0.5) - 1) == ground_truth)
     correct_prob = np.array([np.mean(correct[bin_assign == p]) for p in x])
     xc = x[np.isfinite(correct_prob)]
@@ -790,12 +802,16 @@ class CandidateModel:
         plt.title("(c) Accuracy (holdout set)")
     plt.show()
     
-  def open_mindtagger(self, num_sample = None, **kwargs):
+  def _get_all_abstained(self):
+      return np.ravel(np.where(np.ravel(self.lf_matrix.sum(1)) == 0))
+    
+  def open_mindtagger(self, num_sample=None, abstain=False, **kwargs):
     self.mindtagger_instance = MindTaggerInstance(self.C.mindtagger_format())
     if isinstance(num_sample, int) and num_sample > 0:
       N = self.num_candidates()
-      self._current_mindtagger_samples = np.random.choice(N, num_sample, replace=False)\
-                                          if N > num_sample else range(N)
+      pool = self._get_all_abstained() if abstain else range(N)
+      self._current_mindtagger_samples = np.random.choice(pool, num_sample, replace=False)\
+                                          if len(pool) > num_sample else pool
     elif not num_sample and len(self._current_mindtagger_samples) < 0:
       raise ValueError("No current MindTagger sample. Set num_sample")
     elif num_sample:
@@ -804,7 +820,9 @@ class CandidateModel:
       probs = self.get_predicted_probability(subset=self._current_mindtagger_samples)
     except:
       probs = [None for _ in xrange(len(self._current_mindtagger_samples))]
-    tags = self.get_ground_truth('resolve')[self._current_mindtagger_samples]
+    tags_l = self.get_ground_truth('resolve')[self._current_mindtagger_samples]
+    tags = np.zeros_like(self._mindtagger_labels)
+    tags[self._current_mindtagger_samples] = tags_l
     return self.mindtagger_instance.open_mindtagger(self.C.generate_mindtagger_items,
                                                     self._current_mindtagger_samples,
                                                     probs, tags, **kwargs)
@@ -1118,6 +1136,7 @@ def main():
   E = Entities(sents, g)
   print E                
   for e in E:
+      print e.mention()
       print e.tagged_sent
       
   print "***** Regex *****"

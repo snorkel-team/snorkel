@@ -1,6 +1,5 @@
-import bisect, re, warnings
+import bisect, re
 from collections import defaultdict
-import itertools
 
 class CandidateExtractor(object):
   """
@@ -11,7 +10,6 @@ class CandidateExtractor(object):
   """
   def __init__(self, *candidate_extractors, **opts):
     self.candidate_extractors = candidate_extractors
-    print self.candidate_extractors
     if len(self.candidate_extractors) > 0:
       # NOTE: using issubclass is problematic here...
       if not all([hasattr(c, 'apply') for c in self.candidate_extractors]):
@@ -40,7 +38,7 @@ class CandidateExtractor(object):
       for ce in self.candidate_extractors:
         for idxs,label in ce.apply(s):
           for idxs_out,label_out in self._apply(s, idxs=idxs):
-            l = '%s : %s' % (label_out, label)
+            l = '%s : %s' % (label_out, label) if len(label_out) > 0 else label
             yield idxs_out,l
   
   def _apply(self, s, idxs=None):
@@ -120,7 +118,7 @@ class DictionaryMatch(CandidateExtractor):
           yield list(ssidx), self.label
 
 
-class Regex(CandidateExtractor):
+class RegexBase(CandidateExtractor):
   """Parent class for Regex-related candidate extractors"""
   def init(self):
     self.label        = self.opts['label']
@@ -131,7 +129,7 @@ class Regex(CandidateExtractor):
     self.sep          = self.opts.get('sep', ' ')
 
 
-class RegexFilterAny(Regex):
+class RegexFilterAny(RegexBase):
   """Filter candidates where *any* element matches the regex"""
   def _apply(self, s, idxs=None):
     seq = self._get_attrib_seq(s)
@@ -140,7 +138,7 @@ class RegexFilterAny(Regex):
       yield idxs, self.label
 
 
-class RegexFilterAll(Regex):
+class RegexFilterAll(RegexBase):
   """Filter candidates where *all* elements match the regex"""
   def _apply(self, s, idxs=None):
     seq = self._get_attrib_seq(s)
@@ -149,7 +147,7 @@ class RegexFilterAll(Regex):
       yield idxs, self.label
 
 
-class RegexFilterConcat(Regex):
+class RegexFilterConcat(RegexBase):
   """Filter candidates where the concatenated elements phrase matches the regex"""
   def _apply(self, s, idxs=None):
     seq = self._get_attrib_seq(s)
@@ -158,38 +156,32 @@ class RegexFilterConcat(Regex):
       yield idxs, self.label
 
 
-# TODO: Adapt this to new compositional format!
-class RegexNgramMatch(CandidateExtractor):
+class RegexNgramMatch(RegexBase):
   """Selects according to ngram-matching against a regex """
-  def __init__(self, label, regex_pattern, match_attrib='words', ignore_case=True):
-    self.label = label
-    self.match_attrib = match_attrib
-    # Ignore whitespace when we join the match attribute
-    self._re_comp = re.compile(regex_pattern, flags=re.I if ignore_case else 0)
-
-  def apply(self, s):
-    """
-    Take in an object or dictionary which contains match_attrib
-    and get the index lists of matching phrases
-    """
-    # Make sure we're operating on a dict, then get match_attrib
-    try:
-      seq = s[self.match_attrib]
-      start_c_idx = s['token_idxs']
-    except TypeError:
-      seq = s.__dict__[self.match_attrib]
-      start_c_idx = s.__dict__['token_idxs']
-    
+  def _apply(self, s, idxs=None):
+    seq = self._get_attrib_seq(s)
+    idxs = range(len(seq)) if idxs is None else idxs
+    idx_set = set(idxs)
     # Convert character index to token index and form phrase
     if self.match_attrib == 'text':
+      try:
+        start_c_idx = s['token_idxs']
+      except TypeError:
+        start_c_idx = s.__dict__['token_idxs']
       start_c_idx = [c - start_c_idx[0] for c in start_c_idx]
     else:
       start_c_idx = [0]
       for s in seq:
         start_c_idx.append(start_c_idx[-1] + len(s) + 1)
     # Find regex matches over phrase
-    phrase = seq if self.match_attrib == 'text' else ' '.join(seq)
+    is_txt = (self.match_attrib == 'text')
+    phrase = seq if is_txt else self.sep.join(seq[i] for i in idxs)
     for match in self._re_comp.finditer(phrase):
       start = bisect.bisect(start_c_idx, match.start())
       end = bisect.bisect(start_c_idx, match.end())
-      yield list(range(start-1, end)), self.label  
+      rg = list(range(start-1, end))
+      if not is_txt:
+        yield [idxs[i] for i in rg], self.label 
+      elif set(rg).issubset(idx_set):
+        yield rg, self.label
+

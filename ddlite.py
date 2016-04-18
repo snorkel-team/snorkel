@@ -205,10 +205,10 @@ class relation_internal(candidate_internal):
 class Relations(Candidates):
   def __init__(self, content, matcher1=None, matcher2=None):
     if matcher1 is not None and matcher2 is not None:
-      if not issubclass(matcher1.__class__, Matcher):
-        warnings.warn("matcher1 is not a Matcher subclass")
-      if not issubclass(matcher2.__class__, Matcher):
-        warnings.warn("matcher2 is not a Matcher subclass")
+      if not issubclass(matcher1.__class__, CandidateExtractor):
+        warnings.warn("matcher1 is not a CandidateExtractor subclass")
+      if not issubclass(matcher2.__class__, CandidateExtractor):
+        warnings.warn("matcher2 is not a CandidateExtractor subclass")
       self.e1 = matcher1
       self.e2 = matcher2
     super(Relations, self).__init__(content)
@@ -285,8 +285,8 @@ class entity_internal(candidate_internal):
 class Entities(Candidates):
   def __init__(self, content, matcher=None):
     if matcher is not None:
-      if not issubclass(matcher.__class__, Matcher):
-        warnings.warn("matcher is not a Matcher subclass")
+      if not issubclass(matcher.__class__, CandidateExtractor):
+        warnings.warn("matcher is not a CandidateExtractor subclass")
       self.e = matcher
     super(Entities, self).__init__(content)
   

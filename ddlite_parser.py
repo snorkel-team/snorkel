@@ -7,6 +7,7 @@ import os
 import re
 import requests
 import signal
+import sys
 import warnings
 from bs4 import BeautifulSoup
 from collections import namedtuple, defaultdict
@@ -47,7 +48,10 @@ class SentenceParser:
 
     def _kill_pserver(self):
         if self.server_pid is not None:
-            os.kill(self.server_pid, signal.SIGTERM)
+            try:
+              os.kill(self.server_pid, signal.SIGTERM)
+            except:
+              sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
     def parse(self, doc, doc_id=None):
         """Parse a raw document as a string into a list of sentences"""

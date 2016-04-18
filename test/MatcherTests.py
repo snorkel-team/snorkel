@@ -8,15 +8,15 @@ class TestMatchers(unittest.TestCase):
     
     def setUp(self):
         
-        with open('data_matcher/cc_kurt.txt', 'rb') as f:
+        with open('test/data_matcher/cc_kurt.txt', 'rb') as f:
             self.txt = f.read()
         sp = SentenceParser()
         self.sents = list(sp.parse(self.txt))
         
-        with open('data_matcher/dict1.txt', 'rb') as g:
+        with open('test/data_matcher/dict1.txt', 'rb') as g:
             self.d1 = [line.strip() for line in g.readlines()]
         
-        with open('data_matcher/dict2.txt', 'rb') as h:
+        with open('test/data_matcher/dict2.txt', 'rb') as h:
             self.d2 = [line.strip() for line in h.readlines()]
     
     def tearDown(self):

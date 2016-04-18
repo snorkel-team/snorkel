@@ -64,6 +64,8 @@ install:
 
 script:
   # Make sure the notebooks run end-to-end
+  - python test/MatcherTests.py
+  - python test/InferenceTests.py
   - runipy examples/GeneTaggerExample_Extraction.ipynb
   - runipy examples/GeneTaggerExample_Learning.ipynb
   - docs="data_small" runipy examples/GenePhenRelationExample_Extraction.ipynb

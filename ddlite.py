@@ -558,6 +558,7 @@ class CandidateModel:
     plt.xlabel("Label type")
     plt.ylabel("# candidates with at least one of label type")
     plt.xticks(idx + bar_width * 0.5, ("Positive", "Negative"))
+    return tot_cov * 100.
     
   def _plot_conflict(self, cov):
     x, y = cov

@@ -441,6 +441,8 @@ class CandidateModel:
     self.X = None
     self.w = None
     self.holdout = np.array([])
+    self.validate = np.array([])
+    self.test = np.array([])
     self._current_mindtagger_samples = np.array([])
     self._mindtagger_labels = np.zeros((self.num_candidates()))
     self._tags = []
@@ -661,8 +663,16 @@ class CandidateModel:
       except:
         raise ValueError("Indexes must be in range [0, num_candidates()) or be\
                           boolean array of length num_candidates()")
+                          
+  def set_validate_and_test(self, p=0.5):
+    if len(self.holdout) == 0:
+      raise ValueError("Holdout has not been set. Use set_holdout()")
+    h = self.holdout.copy()
+    np.random.shuffle(h)
+    self.validate = h[ : np.floor(p * len(h))]
+    self.test = h[np.floor(p * len(h)) : ]
 
-  def learn_weights(self, nfolds=3, maxIter=1000, tol=1e-6, sample=False, 
+  def learn_weights(self, maxIter=1000, tol=1e-6, sample=False, 
                     n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, 
                     alpha=0, opt_1se=True, use_sparse = True, plot=False, 
                     verbose=False, log=True):
@@ -685,7 +695,7 @@ class CandidateModel:
                                        mu_seq=mu, alpha=alpha, sample=sample,
                                        n_samples=n_samples, verbose=verbose)[mu]
     # TODO: handle args between learning functions better
-    elif nfolds > 1: 
+    elif len(self.validate) > 0: 
       self.w = cv_elasticnet_logreg(self.X[np.setdiff1d(range(N), self.holdout),:],
                                     nfolds=nfolds, w0=w0, mu_seq=mu, plot=plot,
                                     alpha=alpha, mu_min_ratio=mu_min_ratio,
@@ -693,7 +703,7 @@ class CandidateModel:
                                     sample=sample, n_samples=n_samples,
                                     maxIter=maxIter, tol=tol)
     else:
-      raise ValueError("Must have multiple CV folds if single mu not provided")
+      raise ValueError("Must have validation set if single mu not provided")
     if log:
       return self.add_to_log()
 

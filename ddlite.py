@@ -593,11 +593,12 @@ class DDLiteModel:
       raise ValueError("lf must be a string name or integer index")
     
   def _coverage(self):
-    return [np.ravel((self.lf_matrix == lab).sum(1)) for lab in [1,-1]]
+    return [np.ravel((self.lf_matrix[self.devset(),:] == lab).sum(1))
+            for lab in [1,-1]]
 
   def _plot_coverage(self, cov):
     cov_ct = [np.sum(x > 0) for x in cov]
-    tot_cov = float(np.sum((cov[0] + cov[1]) > 0)) / self.num_candidates()
+    tot_cov = float(np.sum((cov[0] + cov[1]) > 0)) / len(self.devset())
     idx, bar_width = np.array([1, -1]), 1
     plt.bar(idx, cov_ct, bar_width, color='b')
     plt.xlim((-1.5, 2.5))
@@ -608,7 +609,7 @@ class DDLiteModel:
     
   def _plot_conflict(self, cov):
     x, y = cov
-    tot_conf = float(np.dot(x, y)) / self.num_candidates()
+    tot_conf = float(np.dot(x, y)) / self.devset()
     m = np.max([np.max(x), np.max(y)])
     bz = np.linspace(-0.5, m+0.5, num=m+2)
     H, xr, yr = np.histogram2d(x, y, bins=[bz,bz], normed=False)
@@ -656,8 +657,9 @@ class DDLiteModel:
     return tab
     
   def _abstain_frac(self, lf_idx):
-    lf_csc = abs_sparse(self.lf_matrix.tocsc()[:,lf_idx])
-    return 1 - float((lf_csc == 1).sum()) / self.num_candidates()
+    ds = self.devset()
+    lf_csc = abs_sparse(self.lf_matrix.tocsc()[ds,lf_idx])
+    return 1 - float((lf_csc == 1).sum()) / len(ds)
     
   def lowest_coverage_lfs(self, n=10):
     """ Show the LFs with the highest fraction of abstains """
@@ -666,16 +668,17 @@ class DDLiteModel:
     tab.set_num(n)
     tab.set_title("Labeling function", "Fraction of abstained votes")
     return tab
-    
-  def _lf_acc(self, lf_idx, subset):
-    idxs, gt = self.get_labeled_ground_truth('resolve', subset)
+
+  def _lf_acc(self, lf_idx):
+    ds = self.devset()
+    idxs, gt = self.get_labeled_ground_truth('resolve', subse)
     agree = np.ravel(self.lf_matrix.tocsc()[:,lf_idx].todense())[idxs] * gt    
     n_both = np.sum(agree != 0)
     if n_both == 0:
       return (0, 0)
     return (float(np.sum(agree == 1)) / n_both, n_both)
-
-  def lowest_empirical_accuracy_lfs(self, n=10, subset=None):
+    
+  def lowest_empirical_accuracy_lfs(self, n=10):
     """ Show the LFs with the lowest accuracy compared to ground truth """
     d = {nm : self._lf_acc(i,subset) for i,nm in enumerate(self.lf_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
@@ -700,6 +703,9 @@ class DDLiteModel:
     np.random.shuffle(h)
     self.validation = h[ : np.floor(p * len(h))]
     self.test = h[np.floor(p * len(h)) : ]
+    
+  def devset(self):
+    return np.setdiff1d(range(self.num_candidates()), self.holdout)
 
   def learn_weights(self, maxIter=1000, tol=1e-6, sample=False, 
                     n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, 
@@ -719,13 +725,13 @@ class DDLiteModel:
     # If a single mu is provided, just fit a single model
     if mu is not None and (not hasattr(mu, '__iter__') or len(mu) == 1):
       mu = mu if not hasattr(mu, '__iter__') else mu[0]
-      self.w = learn_elasticnet_logreg(self.X[np.setdiff1d(range(N), self.holdout),:],
+      self.w = learn_elasticnet_logreg(self.X[self.devset(),:],
                                        maxIter=maxIter, tol=tol, w0=w0, 
                                        mu_seq=mu, alpha=alpha, sample=sample,
                                        n_samples=n_samples, verbose=verbose)[mu]
     # TODO: handle args between learning functions better
     elif len(self.validation) > 0: 
-      result = learn_elasticnet_logreg(self.X[np.setdiff1d(range(N), self.holdout),:],
+      result = learn_elasticnet_logreg(self.X[self.devset(),:],
                                        maxIter=maxIter, tol=tol, w0=w0, 
                                        mu_seq=mu, alpha=alpha, sample=sample,
                                        n_samples=n_samples, verbose=verbose)
@@ -751,7 +757,7 @@ class DDLiteModel:
   def get_link(self, subset=None, use_lfs=False):
     """
     Get the array of predicted link function values (continuous) given weights
-    Return either all candidates, a specified subset, or only holdout set
+    Return either all candidates, a specified subset, or only validation/test set
     """
     start = 0 if use_lfs else self.num_lfs()
     if self.X is None or self.w is None:
@@ -765,27 +771,27 @@ class DDLiteModel:
     try:
       return self.X[subset, start:].dot(self.w[start:])
     except:
-      raise ValueError("subset must be 'test', 'holdout', or an array of\
+      raise ValueError("subset must be 'test', 'validation', or an array of\
                        indices 0 <= i < {}".format(self.num_candidates()))
 
   def get_predicted_probability(self, subset=None):
     """
     Get array of predicted probabilities (continuous) given weights
-    Return either all candidates, a specified subset, or only holdout set
+    Return either all candidates, a specified subset, or only validation/test set
     """
     return odds_to_prob(self.get_link(subset))
  
   def get_predicted(self, subset=None):
     """
     Get the array of predicted (boolean) variables given weights
-    Return either all variables, a specified subset, or only holdout set
+    Return either all variables, a specified subset, or only validation/test set
     """
     return np.sign(self.get_link(subset))
 
   def get_classification_accuracy(self, gt='resolve', subset=None):
     """
     Given the ground truth, return the classification accuracy
-    Return either accuracy for all candidates, a subset, or holdout set
+    Return either accuracy for all candidates, a subset, or validation/test set
     """
     idxs, gt = self.get_labeled_ground_truth(gt, subset)
     pred = self.get_predicted(idxs)
@@ -798,8 +804,6 @@ class DDLiteModel:
     natural baseline / quick metric
     Labels are assigned by the first LF that emits one for each relation (based on the order
     of the provided LF list)
-    Note: ground_truth must be an array either the length of the full dataset, or of the holdout
-          If the latter, holdout_only must be set to True
     """
     R = self.num_lfs()
     grid, gt = self.get_labeled_ground_truth(gt, subset)
@@ -814,7 +818,7 @@ class DDLiteModel:
     return float(correct) / len(gt)
     
   def _plot_prediction_probability(self, probs):
-    plt.hist(probs, bins=10, normed=False, facecolor='blue')
+    plt.hist(probs, bins=20, normed=False, facecolor='blue')
     plt.xlim((0,1.025))
     plt.xlabel("Probability")
     plt.ylabel("# Predictions")
@@ -837,23 +841,23 @@ class DDLiteModel:
     Show classification accuracy and probability histogram plots
     """
     idxs, gt = self.get_labeled_ground_truth('resolve', None)
-    has_holdout, has_gt = (len(self.holdout) > 0), (len(gt) > 0)
-    n_plots = 1 + has_holdout + (has_holdout and has_gt)
+    has_test, has_gt = (len(self.test) > 0), (len(gt) > 0)
+    n_plots = 1 + has_test + (has_test and has_gt)
     # Whole set histogram
     plt.subplot(1,n_plots,1)
     probs = self.get_predicted_probability()
     self._plot_prediction_probability(probs)
     plt.title("(a) # Predictions (whole set)")
     # Hold out histogram
-    if has_holdout:
+    if has_test:
       plt.subplot(1,n_plots,2)
-      self._plot_prediction_probability(probs[self.holdout])
-      plt.title("(b) # Predictions (holdout set)")
+      self._plot_prediction_probability(probs[self.test])
+      plt.title("(b) # Predictions (test set)")
       # Classification bucket accuracy
       if has_gt:
         plt.subplot(1,n_plots,3)
         self._plot_accuracy(probs[idxs], gt)
-        plt.title("(c) Accuracy (holdout set)")
+        plt.title("(c) Accuracy (test set)")
     plt.show()
     
   def _get_all_abstained(self):

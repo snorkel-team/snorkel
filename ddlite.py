@@ -288,21 +288,34 @@ class Entity(Candidate):
   def __init__(self, *args, **kwargs):
     super(Entity, self).__init__(*args, **kwargs) 
 
-  def mention(self, attribute='words'):
+  def get_attr_seq(self, attribute, idxs):
     if attribute is 'text':
-      raise ValueError("Cannot get mention against text")
+      raise ValueError("Cannot get indexes against text")
     try:
       seq = self.__getattr__(attribute)
-      return [seq[i] for i in self.idxs]
+      return [seq[i] for i in idxs]
     except:
-      raise ValueError("Invalid attribute")
+      raise ValueError("Invalid attribute or index range")  
+
+  def mention(self, attribute='words'):
+    return self.get_attr_seq(attribute, self.idxs)
+      
+  def pre_window(self, attribute='words', n=3):
+    b = np.min(self.idxs)
+    s = [b - i for i in range(1, min(b+1,n+1))]
+    return self.get_attr_seq(attribute, s)
+  
+  def post_window(self, attribute='words', n=3):
+    b = len(self.words) - np.max(self.idxs)
+    s = [np.max(self.idxs) + i for i in range(1, min(b,n+1))]
+    return self.get_attr_seq(attribute, s)
   
   def __repr__(self):
       hdr = str(self.C._candidates[self.id])
       return "{0}\nWords: {1}\nLemmas: {2}\nPOSES: {3}".format(hdr, self.words,
                                                                self.lemmas,
-                                                               self.poses)
-
+                                                               self.poses)    
+    
 class entity_internal(candidate_internal):
   def __init__(self, idxs, label, sent, xt):
     self.idxs = idxs
@@ -1170,9 +1183,11 @@ def main():
   E = Entities(sents, g)
   print E                
   for e in E:
-      print e.mention()
+      print e.mention('poses')
       print e.tagged_sent
   print E[0]
+  print E[0].pre_window()
+  print E[0].post_window()
 
 if __name__ == '__main__':
   main()

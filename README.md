@@ -188,7 +188,9 @@ Update coming...
 |**Method**|**Notes**|
 |:---------|:--------|
 |`render()` | Generates sentence dependency tree figure with matched tokens highlighted |
-|`mention(attribute='words')` | Return list of `attribute` tokens in mention | 
+|`mention(attribute='words')` | Return list of `attribute` tokens in mention |
+|`pre_window(attribute='words', n=3)| Return list of `n` `attribute` tokens before mention |
+|`post_window(attribute='words', n=3)| Return list of `n` `attribute` tokens after mention |
 
 #### Class: Entities
 

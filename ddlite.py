@@ -414,13 +414,8 @@ class ModelLog:
     self.gt_idxs = gt_idxs
     self.set_metrics(gt, pred)
   def set_metrics(self, gt, pred):
-    tp = np.sum((pred == 1) * (gt == 1))
-    fp = np.sum((pred == 1) * (gt != 1))
-    p = np.sum(gt == 1)
-    self.precision = 0 if tp == 0 else float(tp) / float(tp + fp)
-    self.recall = 0 if tp == 0 else float(tp) / float(p)
-    self.f1 = 0 if (self.precision == 0 or self.recall == 0)\
-      else 2 * (self.precision * self.recall)/(self.precision + self.recall)
+    self.precision, self.recall = precision(gt, pred), recall(gt, pred)
+    self.f1 = f1_score(self.precision, self.recall)
   def num_lfs(self):
     return len(self.lf_names)
   def num_gt(self):
@@ -483,9 +478,10 @@ class DDLiteModel:
     self.lf_matrix = None
     self.lf_names = []
     self.X = None
+    self._w_fit = None
     self.w = None
     self.holdout = np.array([])
-    self.validate = np.array([])
+    self.validation = np.array([])
     self.test = np.array([])
     self._current_mindtagger_samples = np.array([])
     self._mindtagger_labels = np.zeros((self.num_candidates()))
@@ -535,16 +531,20 @@ class DDLiteModel:
     if subset is None:
       has_gt = (gt_all != 0)
       return np.ravel(np.where(has_gt)), gt_all[has_gt]
-    if subset is 'holdout':
-      gt_all = gt_all[self.holdout]
+    if subset is 'test':
+      gt_all = gt_all[self.test]
       has_gt = (gt_all != 0)
-      return self.holdout[has_gt], gt_all[has_gt]
+      return self.test[has_gt], gt_all[has_gt]
+    if subset is 'validation':
+      gt_all = gt_all[self.validation]
+      has_gt = (gt_all != 0)
+      return self.validation[has_gt], gt_all[has_gt]
     try:
       gt_all = gt_all[subset]
       has_gt = (gt_all != 0)
       return subset[has_gt], gt_all[has_gt]
     except:
-      raise ValueError("subset must be either 'holdout' or an array of\
+      raise ValueError("subset must be 'test', 'validation' or an array of\
                        indices 0 <= i < {}".format(self.num_candidates()))
                        
   def set_lf_matrix(self, lf_matrix, names, clear=False):
@@ -685,7 +685,9 @@ class DDLiteModel:
     tab.set_title("Labeling function", "Empirical LF accuracy")
     return tab    
     
-  def set_holdout(self, idxs=None):
+  def set_holdout(self, idxs=None, p=0.5):
+    if not 0 <= p <= 1:
+      raise ValueError("Validate/test split proportions must be in [0,1]")
     if idxs is None:
       self.holdout = np.ravel(np.where(self.has_ground_truth()))
     else:
@@ -694,13 +696,9 @@ class DDLiteModel:
       except:
         raise ValueError("Indexes must be in range [0, num_candidates()) or be\
                           boolean array of length num_candidates()")
-                          
-  def set_validate_and_test(self, p=0.5):
-    if len(self.holdout) == 0:
-      raise ValueError("Holdout has not been set. Use set_holdout()")
     h = self.holdout.copy()
     np.random.shuffle(h)
-    self.validate = h[ : np.floor(p * len(h))]
+    self.validation = h[ : np.floor(p * len(h))]
     self.test = h[np.floor(p * len(h)) : ]
 
   def learn_weights(self, maxIter=1000, tol=1e-6, sample=False, 
@@ -726,33 +724,48 @@ class DDLiteModel:
                                        mu_seq=mu, alpha=alpha, sample=sample,
                                        n_samples=n_samples, verbose=verbose)[mu]
     # TODO: handle args between learning functions better
-    elif len(self.validate) > 0: 
-      self.w = cv_elasticnet_logreg(self.X[np.setdiff1d(range(N), self.holdout),:],
-                                    nfolds=nfolds, w0=w0, mu_seq=mu, plot=plot,
-                                    alpha=alpha, mu_min_ratio=mu_min_ratio,
-                                    n_mu=n_mu, opt_1se=opt_1se, verbose=verbose,
-                                    sample=sample, n_samples=n_samples,
-                                    maxIter=maxIter, tol=tol)
+    elif len(self.validation) > 0: 
+      result = learn_elasticnet_logreg(self.X[np.setdiff1d(range(N), self.holdout),:],
+                                       maxIter=maxIter, tol=tol, w0=w0, 
+                                       mu_seq=mu, alpha=alpha, sample=sample,
+                                       n_samples=n_samples, verbose=verbose)
+      self._w_fit = OrderedDict()
+      ValidatedFit = namedtuple('ValidatedFit', ['w', 'P', 'R', 'F1'])
+      gt = self.get_ground_truth()[self.validation]
+      f1_opt, w_opt = 0, None
+      for mu in sorted(result.keys()):
+        w = result[mu]
+        pred = odds_to_prob(self.X[self.validate,
+                                   self.num_lfs():].dot(w[self.num_lfs():]))
+        prec, rec = precision(gt, pred), recall(gt, pred)
+        f1 = f1_score(prec, rec)
+        self._w_fit[mu] = ValidatedFit(w, prec, rec, f1)
+        if f1 > f1_opt:
+          w_opt, f1_opt = w, f1
+      self.w = w_opt
     else:
       raise ValueError("Must have validation set if single mu not provided")
     if log:
       return self.add_to_log()
 
-  def get_link(self, subset=None):
+  def get_link(self, subset=None, use_lfs=False):
     """
     Get the array of predicted link function values (continuous) given weights
     Return either all candidates, a specified subset, or only holdout set
     """
+    start = 0 if use_lfs else self.num_lfs()
     if self.X is None or self.w is None:
       raise ValueError("Inference has not been run yet")
     if subset is None:
-      return self.X.dot(self.w)
-    if subset is 'holdout':
-      return self.X[self.holdout, :].dot(self.w)
+      return self.X[:, start:].dot(self.w[start:])
+    if subset is 'test':
+      return self.X[self.test, start:].dot(self.w[start:])
+    if subset is 'validation':
+      return self.X[self.validation, start:].dot(self.w[start:])
     try:
-      return self.X[subset, :].dot(self.w)
+      return self.X[subset, start:].dot(self.w[start:])
     except:
-      raise ValueError("subset must be either 'holdout' or an array of\
+      raise ValueError("subset must be 'test', 'holdout', or an array of\
                        indices 0 <= i < {}".format(self.num_candidates()))
 
   def get_predicted_probability(self, subset=None):
@@ -876,7 +889,7 @@ class DDLiteModel:
     tb = [1 if t else -1 for t in tb]
     self._mindtagger_labels[self._current_mindtagger_samples[is_tagged]] = tb
     
-  def add_to_log(self, log_id=None, gt='resolve', subset='holdout', verb=True):
+  def add_to_log(self, log_id=None, gt='resolve', subset='test', verb=True):
     if log_id is None:
       log_id = len(self.logger)
     gt_idxs, gt = self.get_labeled_ground_truth(gt, subset)
@@ -1154,6 +1167,24 @@ def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, alpha=0, rate=0.01,
   w_opt = learn_elasticnet_logreg(X, w0=w0, alpha=alpha, rate=rate,
                                   mu_seq=mu_seq, **kwargs)
   return w_opt[mu_opt]
+
+def precision(gt, pred):
+  tp = np.sum((pred == 1) * (gt == 1))
+  fp = np.sum((pred == 1) * (gt != 1))
+  return 0 if tp == 0 else float(tp) / float(tp + fp)
+
+def recall(gt, pred):
+  tp = np.sum((pred == 1) * (gt == 1))
+  p = np.sum(gt == 1)
+  return 0 if tp == 0 else float(tp) / float(p)
+
+def f1_score(gt=None, pred=None, prec=None, rec=None):
+  if precision is None or recall is None:
+    if gt is None or pred is None:
+      raise ValueError("Need both gt and pred or both prec and rec")
+    prec = precision(gt, pred) if prec is None else prec
+    rec = recall(gt, pred) if rec is None else rec
+  return 0 if (prec * rec == 0) else 2 * (prec * rec)/(prec + rec)
 
 def main():
   txt = "Han likes Luke and a good-wookie. Han Solo don\'t like bounty hunters."

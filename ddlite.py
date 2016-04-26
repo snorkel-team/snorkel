@@ -604,15 +604,6 @@ class DDLiteModel:
     plt.xticks(idx + bar_width * 0.5, ("Positive", "Negative"))
     return tot_cov * 100.
     
-  def _plot_overlap(self):
-    tot_ov = float(np.sum(abs_sparse(self.lf_matrix).sum(1) > 1)) / self.num_candidates()
-    cts = abs_sparse(self.lf_matrix).sum(1)
-    plt.hist(cts, bins=min(15, self.num_lfs()+1), facecolor='blue')
-    plt.xlim((0,np.max(cts)+1))
-    plt.xlabel("# positive and negative labels")
-    plt.ylabel("# candidates")
-    return tot_ov * 100.
-    
   def _plot_conflict(self, cov):
     x, y = cov
     tot_conf = float(np.dot(x, y)) / self.num_candidates()
@@ -635,20 +626,16 @@ class DDLiteModel:
     """
     if self.lf_matrix is None:
       raise ValueError("No LFs applied yet")
-    n_plots = 3
+    n_plots = 2
     cov = self._coverage()
     # LF coverage
     plt.subplot(1,n_plots,1)
     tot_cov = self._plot_coverage(cov)
     plt.title("(a) Label balance (candidate coverage: {:.2f}%)".format(tot_cov))
-    # LF overlap
-    plt.subplot(1,n_plots,2)
-    tot_ov = self._plot_overlap()
-    plt.title("(b) Label count histogram (candidates with overlap: {:.2f}%)".format(tot_ov))
     # LF conflict
-    plt.subplot(1,n_plots,3)
+    plt.subplot(1,n_plots,2)
     tot_conf = self._plot_conflict(cov)
-    plt.title("(c) Label heat map (candidates with conflict: {:.2f}%)".format(tot_conf))
+    plt.title("(b) Label heat map (candidates with conflict: {:.2f}%)".format(tot_conf))
     # Show plots    
     plt.show()
 

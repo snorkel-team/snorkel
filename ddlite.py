@@ -415,7 +415,7 @@ class ModelLog:
     self.set_metrics(gt, pred)
   def set_metrics(self, gt, pred):
     self.precision, self.recall = precision(gt, pred), recall(gt, pred)
-    self.f1 = f1_score(self.precision, self.recall)
+    self.f1 = f1_score(prec = self.precision, rec = self.recall)
   def num_lfs(self):
     return len(self.lf_names)
   def num_gt(self):
@@ -509,6 +509,16 @@ class DDLiteModel:
     if gold_f.shape != (N,) or not np.all(np.in1d(gold_f, [-1,0,1])):
       raise ValueError("Must have {} gold labels in [-1, 0, 1]".format(N))    
     self._gold_labels = gold_f
+    
+  def set_mindtagger_labels(self, mt):
+    """ Set MT labels for all candidates 
+    May abstain with 0, and all other labels are -1 or 1
+    """
+    N = self.num_candidates()
+    mt_f = np.ravel(mt)
+    if mt_f.shape != (N,) or not np.all(np.in1d(mt_f, [-1,0,1])):
+      raise ValueError("Must have {} MT labels in [-1, 0, 1]".format(N))    
+    self._mindtagger_labels = mt_f
     
   def get_ground_truth(self, gt='resolve'):
     """ Get ground truth from mindtagger, gold, or both with priority gold """
@@ -609,7 +619,7 @@ class DDLiteModel:
     
   def _plot_conflict(self, cov):
     x, y = cov
-    tot_conf = float(np.dot(x, y)) / self.devset()
+    tot_conf = float(np.dot(x, y)) / len(self.devset())
     m = np.max([np.max(x), np.max(y)])
     bz = np.linspace(-0.5, m+0.5, num=m+2)
     H, xr, yr = np.histogram2d(x, y, bins=[bz,bz], normed=False)
@@ -671,13 +681,20 @@ class DDLiteModel:
 
   def _lf_acc(self, lf_idx):
     ds = self.devset()
-    idxs, gt = self.get_labeled_ground_truth('resolve', ds)
-    pred = (self.lf_matrix.tocsc()[:,lf_idx].todense())[idxs]
-    return (f1_score(gt, pred), len(pred))
+    gt = self.get_ground_truth('resolve')
+    pred = (self.lf_matrix.tocsc()[:,lf_idx].todense())
+    has_label = np.where(pred != 0)
+    has_gt = np.where(gt != 0)
+    # Get labels/gt for candidates in dev set, with label, with gt
+    gd_idxs = np.intersect1d(has_label, ds)
+    gd_idxs = np.intersect1d(has_gt, gd_idxs)
+    gt = gt[gd_idxs]
+    pred = pred[gd_idxs]
+    return (f1_score(gt = gt, pred = pred), len(gd_idxs))
     
-  def lowest_empirical_accuracy_lfs(self, n=10):
+  def lowest_empirical_f1_lfs(self, n=10):
     """ Show the LFs with the lowest accuracy compared to ground truth """
-    d = {nm : self._lf_acc(i,subset) for i,nm in enumerate(self.lf_names)}
+    d = {nm : self._lf_acc(i) for i,nm in enumerate(self.lf_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
     for k in tab:
       tab[k] = "{:.3f} (n={})".format(tab[k][0], tab[k][1])
@@ -738,12 +755,12 @@ class DDLiteModel:
       f1_opt, w_opt = 0, None
       for mu in sorted(result.keys()):
         w = result[mu]
-        pred = odds_to_prob(self.X[self.validate,
+        pred = odds_to_prob(self.X[self.validation,
                                    self.num_lfs():].dot(w[self.num_lfs():]))
         prec, rec = precision(gt, pred), recall(gt, pred)
-        f1 = f1_score(prec, rec)
+        f1 = f1_score(prec = prec, rec = rec)
         self._w_fit[mu] = ValidatedFit(w, prec, rec, f1)
-        if f1 > f1_opt:
+        if f1 >= f1_opt:
           w_opt, f1_opt = w, f1
       self.w = w_opt
     else:
@@ -1170,17 +1187,19 @@ def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, alpha=0, rate=0.01,
   return w_opt[mu_opt]
 
 def precision(gt, pred):
+  pred[pred == 0] = 1
   tp = np.sum((pred == 1) * (gt == 1))
   fp = np.sum((pred == 1) * (gt != 1))
   return 0 if tp == 0 else float(tp) / float(tp + fp)
 
 def recall(gt, pred):
+  pred[pred == 0] = 1
   tp = np.sum((pred == 1) * (gt == 1))
   p = np.sum(gt == 1)
   return 0 if tp == 0 else float(tp) / float(p)
 
 def f1_score(gt=None, pred=None, prec=None, rec=None):
-  if precision is None or recall is None:
+  if prec is None or rec is None:
     if gt is None or pred is None:
       raise ValueError("Need both gt and pred or both prec and rec")
     prec = precision(gt, pred) if prec is None else prec

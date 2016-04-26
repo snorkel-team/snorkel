@@ -185,8 +185,33 @@ class Candidates(object):
 ############################ RELATIONS ############################
 ###################################################################
 
-# Alias for relation
-Relation = Candidate
+class Relation(Candidate):
+  def __init__(self, *args, **kwargs):
+    super(Relation, self).__init__(*args, **kwargs) 
+
+  def mention(self, m, attribute='words'):
+    if attribute is 'text':
+      raise ValueError("Cannot get mention against text")
+    if m not in [1, 2]:
+      raise ValueError("Mention number must be 1 or 2")
+    try:
+      seq = self.__getattr__(attribute)
+      idxs = self.e1_idxs if m == 1 else self.e2_idxs
+      return [seq[i] for i in idxs]
+    except:
+      raise ValueError("Invalid attribute")
+      
+  def mention1(self, attribute='words'):
+      return self.mention(1, attribute)
+
+  def mention2(self, attribute='words'):
+      return self.mention(2, attribute)
+  
+  def __repr__(self):
+      hdr = str(self.C._candidates[self.id])
+      return "{0}\nWords: {0}\nLemmas: {0}\nPOSES: {0}".format(hdr, self.words,
+                                                               self.lemmas,
+                                                               self.poses)
 
 class relation_internal(candidate_internal):
   def __init__(self, e1_idxs, e2_idxs, e1_label, e2_label, sent, xt):
@@ -263,15 +288,34 @@ class Entity(Candidate):
   def __init__(self, *args, **kwargs):
     super(Entity, self).__init__(*args, **kwargs) 
 
-  def mention(self, attribute='words'):
+  def get_attr_seq(self, attribute, idxs):
     if attribute is 'text':
-      raise ValueError('Cannot get mention against text')
+      raise ValueError("Cannot get indexes against text")
     try:
       seq = self.__getattr__(attribute)
-      return [seq[i] for i in self.idxs]
+      return [seq[i] for i in idxs]
     except:
-      raise ValueError('Invalid attribute')
+      raise ValueError("Invalid attribute or index range")  
 
+  def mention(self, attribute='words'):
+    return self.get_attr_seq(attribute, self.idxs)
+      
+  def pre_window(self, attribute='words', n=3):
+    b = np.min(self.idxs)
+    s = [b - i for i in range(1, min(b+1,n+1))]
+    return self.get_attr_seq(attribute, s)
+  
+  def post_window(self, attribute='words', n=3):
+    b = len(self.words) - np.max(self.idxs)
+    s = [np.max(self.idxs) + i for i in range(1, min(b,n+1))]
+    return self.get_attr_seq(attribute, s)
+  
+  def __repr__(self):
+      hdr = str(self.C._candidates[self.id])
+      return "{0}\nWords: {1}\nLemmas: {2}\nPOSES: {3}".format(hdr, self.words,
+                                                               self.lemmas,
+                                                               self.poses)    
+    
 class entity_internal(candidate_internal):
   def __init__(self, idxs, label, sent, xt):
     self.idxs = idxs
@@ -423,7 +467,7 @@ class ModelLogger:
     html.append("</table>")
     return ''.join(html)
 
-class CandidateModel:
+class DDLiteModel:
   def __init__(self, candidates, feats=None):
     self.C = candidates
     if type(feats) == np.ndarray or sparse.issparse(feats):
@@ -562,15 +606,6 @@ class CandidateModel:
     plt.xticks(idx + bar_width * 0.5, ("Positive", "Negative"))
     return tot_cov * 100.
     
-  def _plot_overlap(self):
-    tot_ov = float(np.sum(abs_sparse(self.lf_matrix).sum(1) > 1)) / self.num_candidates()
-    cts = abs_sparse(self.lf_matrix).sum(1)
-    plt.hist(cts, bins=min(15, self.num_lfs()+1), facecolor='blue')
-    plt.xlim((0,np.max(cts)+1))
-    plt.xlabel("# positive and negative labels")
-    plt.ylabel("# candidates")
-    return tot_ov * 100.
-    
   def _plot_conflict(self, cov):
     x, y = cov
     tot_conf = float(np.dot(x, y)) / self.num_candidates()
@@ -593,20 +628,16 @@ class CandidateModel:
     """
     if self.lf_matrix is None:
       raise ValueError("No LFs applied yet")
-    n_plots = 3
+    n_plots = 2
     cov = self._coverage()
     # LF coverage
     plt.subplot(1,n_plots,1)
     tot_cov = self._plot_coverage(cov)
     plt.title("(a) Label balance (candidate coverage: {:.2f}%)".format(tot_cov))
-    # LF overlap
-    plt.subplot(1,n_plots,2)
-    tot_ov = self._plot_overlap()
-    plt.title("(b) Label count histogram (candidates with overlap: {:.2f}%)".format(tot_ov))
     # LF conflict
-    plt.subplot(1,n_plots,3)
+    plt.subplot(1,n_plots,2)
     tot_conf = self._plot_conflict(cov)
-    plt.title("(c) Label heat map (candidates with conflict: {:.2f}%)".format(tot_conf))
+    plt.title("(b) Label heat map (candidates with conflict: {:.2f}%)".format(tot_conf))
     # Show plots    
     plt.show()
 
@@ -865,6 +896,7 @@ class CandidateModel:
     else:
       raise ValueError("Index must be an integer index or None")
     
+CandidateModel = DDLiteModel
 
 ####################################################################
 ############################ ALGORITHMS ############################
@@ -1128,12 +1160,14 @@ def main():
   parser = SentenceParser()
   sents = list(parser.parse(txt))
 
-  g = DictionaryMatch('G', ['Han Solo', 'Luke', 'wookie'])
-  b = DictionaryMatch('B', ['Bounty Hunters'])
+  g = DictionaryMatch(label='G', dictionary=['Han Solo', 'Luke', 'wookie'])
+  b = DictionaryMatch(label='B', dictionary=['Bounty Hunters'])
 
   print "***** Relation 0 *****"
   R = Relations(sents, g, b)
   print R
+  print R[0].mention1()
+  print R[0].mention2()
   print R[0].tagged_sent
   
   print "***** Relation 1 *****"
@@ -1146,23 +1180,11 @@ def main():
   E = Entities(sents, g)
   print E                
   for e in E:
-      print e.mention()
+      print e.mention('poses')
       print e.tagged_sent
-      
-  print "***** Regex *****"
-  pattern = "l[a-zA-z]ke"
-  rm = RegexMatch('L', pattern, match_attrib='lemmas', ignore_case=True)
-  L = Entities(sents, rm)
-  for er in L:
-      print er.tagged_sent
-      
-  print "***** Dict + Regex *****"
-  pattern = "VB[a-zA-Z]?"
-  vbz = RegexMatch('verbs', pattern, match_attrib='poses', ignore_case=True)
-  n = RegexMatch('neg', "don\'t", match_attrib='text')
-  DR = Entities(sents, MultiMatcher(b,vbz,n))
-  for dr in DR:
-      print dr.tagged_sent
+  print E[0]
+  print E[0].pre_window()
+  print E[0].post_window()
 
 if __name__ == '__main__':
   main()

@@ -671,12 +671,9 @@ class DDLiteModel:
 
   def _lf_acc(self, lf_idx):
     ds = self.devset()
-    idxs, gt = self.get_labeled_ground_truth('resolve', subse)
-    agree = np.ravel(self.lf_matrix.tocsc()[:,lf_idx].todense())[idxs] * gt    
-    n_both = np.sum(agree != 0)
-    if n_both == 0:
-      return (0, 0)
-    return (float(np.sum(agree == 1)) / n_both, n_both)
+    idxs, gt = self.get_labeled_ground_truth('resolve', ds)
+    pred = (self.lf_matrix.tocsc()[:,lf_idx].todense())[idxs]
+    return (f1_score(gt, pred), len(pred))
     
   def lowest_empirical_accuracy_lfs(self, n=10):
     """ Show the LFs with the lowest accuracy compared to ground truth """
@@ -685,7 +682,7 @@ class DDLiteModel:
     for k in tab:
       tab[k] = "{:.3f} (n={})".format(tab[k][0], tab[k][1])
     tab.set_num(n)
-    tab.set_title("Labeling function", "Empirical LF accuracy")
+    tab.set_title("Labeling function", "Empirical LF F1 score")
     return tab    
     
   def set_holdout(self, idxs=None, p=0.5):

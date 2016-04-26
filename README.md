@@ -129,26 +129,7 @@ Here are a few practical tips for working with DeepDive Lite:
 
 ### **ddlite_matcher.py**
 
-#### Class: DictionaryMatcher
-
-|**Method**|**Notes**|
-|:---------|:--------|
-|`__init__(label, dictionary, match_attrib='words', ignore_case=True)`| |
-|`apply(sentence)`| Tokens joined with spaces |
-
-#### Class: RegexMatcher
-
-|**Method**|**Notes**|
-|:---------|:--------|
-|`__init__(label, regex_pattern, match_attrib='words', ignore_case=True)`| Entire sentence text can be searched using `match_attrib='text'`|
-|`apply(sentence)`| Tokens joined with spaces |
-
-#### Class: MultiMatcher
-
-|**Method**|**Notes**|
-|:---------|:--------|
-|`__init__(matcher1, matcher2,...)`| |
-|`apply(sentence)`| Yields individual matcher label if `label` argument not in initialization |
+Update coming...
 
 ### **ddlite.py**
 
@@ -171,6 +152,8 @@ Here are a few practical tips for working with DeepDive Lite:
 |**Method**|**Notes**|
 |:---------|:--------|
 |`render` | Generates sentence dependency tree figure with matched tokens highlighted|
+|`mention1(attribute='words')` | Return list of `attribute` tokens in first mention |
+|`mention2(attribute='words')` | Return list of `attribute` tokens in second mention |
 
 #### Class: Relations
 
@@ -223,7 +206,7 @@ Here are a few practical tips for working with DeepDive Lite:
 | `extract_features(*args)` | |
 | `dump_candidates(f)` | Pickle object to file |
 
-#### Class: CandidateModel
+#### Class: DDLiteModel (CandidateModel)
 
 |**Member**|**Notes**|
 |:---------|:--------|

@@ -185,8 +185,33 @@ class Candidates(object):
 ############################ RELATIONS ############################
 ###################################################################
 
-# Alias for relation
-Relation = Candidate
+class Relation(Candidate):
+  def __init__(self, *args, **kwargs):
+    super(Relation, self).__init__(*args, **kwargs) 
+
+  def mention(self, m, attribute='words'):
+    if attribute is 'text':
+      raise ValueError("Cannot get mention against text")
+    if m not in [1, 2]:
+      raise ValueError("Mention number must be 1 or 2")
+    try:
+      seq = self.__getattr__(attribute)
+      idxs = self.e1_idxs if m == 1 else self.e2_idxs
+      return [seq[i] for i in idxs]
+    except:
+      raise ValueError("Invalid attribute")
+      
+  def mention1(self, attribute='words'):
+      return self.mention(1, attribute)
+
+  def mention2(self, attribute='words'):
+      return self.mention(2, attribute)
+  
+  def __repr__(self):
+      hdr = str(self.C._candidates[self.id])
+      return "{0}\nWords: {0}\nLemmas: {0}\nPOSES: {0}".format(hdr, self.words,
+                                                               self.lemmas,
+                                                               self.poses)
 
 class relation_internal(candidate_internal):
   def __init__(self, e1_idxs, e2_idxs, e1_label, e2_label, sent, xt):
@@ -265,12 +290,18 @@ class Entity(Candidate):
 
   def mention(self, attribute='words'):
     if attribute is 'text':
-      raise ValueError('Cannot get mention against text')
+      raise ValueError("Cannot get mention against text")
     try:
       seq = self.__getattr__(attribute)
       return [seq[i] for i in self.idxs]
     except:
-      raise ValueError('Invalid attribute')
+      raise ValueError("Invalid attribute")
+  
+  def __repr__(self):
+      hdr = str(self.C._candidates[self.id])
+      return "{0}\nWords: {1}\nLemmas: {2}\nPOSES: {3}".format(hdr, self.words,
+                                                               self.lemmas,
+                                                               self.poses)
 
 class entity_internal(candidate_internal):
   def __init__(self, idxs, label, sent, xt):
@@ -423,7 +454,7 @@ class ModelLogger:
     html.append("</table>")
     return ''.join(html)
 
-class CandidateModel:
+class DDLiteModel:
   def __init__(self, candidates, feats=None):
     self.C = candidates
     if type(feats) == np.ndarray or sparse.issparse(feats):
@@ -855,6 +886,7 @@ class CandidateModel:
     else:
       raise ValueError("Index must be an integer index or None")
     
+CandidateModel = DDLiteModel
 
 ####################################################################
 ############################ ALGORITHMS ############################
@@ -1118,12 +1150,14 @@ def main():
   parser = SentenceParser()
   sents = list(parser.parse(txt))
 
-  g = DictionaryMatch('G', ['Han Solo', 'Luke', 'wookie'])
-  b = DictionaryMatch('B', ['Bounty Hunters'])
+  g = DictionaryMatch(label='G', dictionary=['Han Solo', 'Luke', 'wookie'])
+  b = DictionaryMatch(label='B', dictionary=['Bounty Hunters'])
 
   print "***** Relation 0 *****"
   R = Relations(sents, g, b)
   print R
+  print R[0].mention1()
+  print R[0].mention2()
   print R[0].tagged_sent
   
   print "***** Relation 1 *****"
@@ -1138,21 +1172,7 @@ def main():
   for e in E:
       print e.mention()
       print e.tagged_sent
-      
-  print "***** Regex *****"
-  pattern = "l[a-zA-z]ke"
-  rm = RegexMatch('L', pattern, match_attrib='lemmas', ignore_case=True)
-  L = Entities(sents, rm)
-  for er in L:
-      print er.tagged_sent
-      
-  print "***** Dict + Regex *****"
-  pattern = "VB[a-zA-Z]?"
-  vbz = RegexMatch('verbs', pattern, match_attrib='poses', ignore_case=True)
-  n = RegexMatch('neg', "don\'t", match_attrib='text')
-  DR = Entities(sents, MultiMatcher(b,vbz,n))
-  for dr in DR:
-      print dr.tagged_sent
+  print E[0]
 
 if __name__ == '__main__':
   main()

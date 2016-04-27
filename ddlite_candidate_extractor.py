@@ -10,20 +10,29 @@ class CandidateExtractor(object):
   def __init__(self, *children, **opts):
     self.children = children
     self.opts     = opts
-    self.init()
 
-  def init(self):
+    # Global opts
     self.n                  = self.opts.get('n', 3)
     self.longest_match_only = self.opts.get('longest_match_only', True)
     self.attrib             = self.opts.get('attrib', 'words')
     self.label              = self.opts.get('label', None)
 
+    # Load child opts
+    self.init()
+
+  def init(self):
+    pass
+
   def filter(self, idxs, seq):
-    """
-    The key function that filters the set of candidates returned
-    This is composed of the child filter functions; note we use union semantics by default
-    """
-    return any([c.filter(idxs, seq) for c in self.children])
+    """This is the filter of the individual operator, which is then composed with other operators"""
+    return True
+
+  def filter_comp(self, idxs, seq):
+    """By default, operators are recursively composed with AND semantics"""
+    if len(self.children) > 0:
+      return self.filter(idxs, seq) and all([c.filter_comp(idxs, seq) for c in self.children])
+    else:
+      return self.filter(idxs, seq)
 
   def apply(self, s):
     """Apply the candidate extractor to a Sentence object"""
@@ -43,7 +52,7 @@ class CandidateExtractor(object):
           continue
 
         # Filter by filter
-        if self.filter(cidxs, seq):
+        if self.filter_comp(cidxs, seq):
           matched_seqs.append(frozenset(cidxs))
           yield cidxs
   
@@ -68,8 +77,8 @@ class DictionaryMatch(CandidateExtractor):
 
 class Union(CandidateExtractor):
   """Selects the union of two or more candidate extractors"""
-  def filter(self, idxs, seq):
-    return any([c.filter(idxs, seq) for c in self.children])
+  def filter_comp(self, idxs, seq):
+    return any([c.filter_comp(idxs, seq) for c in self.children])
 
 
 class Concat(CandidateExtractor):

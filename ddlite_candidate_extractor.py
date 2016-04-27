@@ -23,16 +23,16 @@ class CandidateExtractor(object):
   def init(self):
     pass
 
-  def filter(self, idxs, seq):
+  def _filter(self, idxs, seq):
     """This is the filter of the individual operator, which is then composed with other operators"""
     return True
 
-  def filter_comp(self, idxs, seq):
+  def filter(self, idxs, seq):
     """By default, operators are recursively composed with AND semantics"""
     if len(self.children) > 0:
-      return self.filter(idxs, seq) and all([c.filter_comp(idxs, seq) for c in self.children])
+      return self._filter(idxs, seq) and all([c.filter(idxs, seq) for c in self.children])
     else:
-      return self.filter(idxs, seq)
+      return self._filter(idxs, seq)
 
   def apply(self, s):
     """Apply the candidate extractor to a Sentence object"""
@@ -52,7 +52,7 @@ class CandidateExtractor(object):
           continue
 
         # Filter by filter
-        if self.filter_comp(cidxs, seq):
+        if self.filter(cidxs, seq):
           matched_seqs.append(frozenset(cidxs))
           yield cidxs
   
@@ -70,20 +70,26 @@ class DictionaryMatch(CandidateExtractor):
     self.sep         = self.opts.get('sep', ' ')
     self.attrib      = self.opts.get('attrib', 'words')
 
-  def filter(self, idxs, seq):
+  def _filter(self, idxs, seq):
     s = seq[self.attrib]
     return self.sep.join(s[i] for i in idxs) in self.d
 
 
 class Union(CandidateExtractor):
   """Selects the union of two or more candidate extractors"""
-  def filter_comp(self, idxs, seq):
-    return any([c.filter_comp(idxs, seq) for c in self.children])
+  def filter(self, idxs, seq):
+    return any([c.filter(idxs, seq) for c in self.children])
 
 
 class Concat(CandidateExtractor):
+  """Selects candidates which are the concatenation of adjacent matches from child operators"""
   def filter(self, idxs, seq):
-    raise NotImplementedError()
+    if len(self.children) > 2:
+      raise ValueError("More than two child CandidateExtractors not currently supported by Concat.")
+    for split in range(1,len(idxs)):
+      if self.children[0].filter(idxs[:split], seq) and self.children[1].filter(idxs[split:], seq):
+        return True
+    return False
 
 
 class RegexMatch(CandidateExtractor):
@@ -96,7 +102,7 @@ class RegexMatch(CandidateExtractor):
     self.sep         = self.opts.get('sep', ' ')
     self.attrib      = self.opts.get('attrib', 'words')
 
-  def filter(self, idxs, seq):
+  def _filter(self, idxs, seq):
     s = seq[self.attrib]
     if self.semantics.lower() == 'concat':
       return self.rgx_comp.match(self.sep.join(s[i] for i in idxs)) is not None
@@ -117,5 +123,5 @@ class TagMatch(RegexMatch):
 
 class FuzzyDictionaryMatch(CandidateExtractor):
   """Matches against a dictionary with fuzzy phrase-level matching"""
-  def filter(self, idxs, seq):
+  def _filter(self, idxs, seq):
     raise NotImplementedError()

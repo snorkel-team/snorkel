@@ -874,14 +874,14 @@ class DDLiteModel:
         plt.title("(c) Accuracy (test set)")
     plt.show()
     
-  def _get_all_abstained(self):
-      return np.ravel(np.where(np.ravel(self.lf_matrix.sum(1)) == 0))
+  def _get_all_abstained(self, dev=True):
+      idxs = self.devset() if dev else range(self.num_candidates())
+      return np.ravel(np.where(np.ravel((self.lf_matrix[idxs,:]).sum(1)) == 0))
     
   def open_mindtagger(self, num_sample=None, abstain=False, **kwargs):
     self.mindtagger_instance = MindTaggerInstance(self.C.mindtagger_format())
     if isinstance(num_sample, int) and num_sample > 0:
-      N = self.num_candidates()
-      pool = self._get_all_abstained() if abstain else range(N)
+      pool = self._get_all_abstained(dev=True) if abstain else self.devset()
       self._current_mindtagger_samples = np.random.choice(pool, num_sample, replace=False)\
                                           if len(pool) > num_sample else pool
     elif not num_sample and len(self._current_mindtagger_samples) < 0:

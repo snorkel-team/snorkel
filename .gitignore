@@ -1,3 +1,5 @@
+*.swp
+.DS_Store
 /.virtualenv
 .ipynb_checkpoints
 *.pyc

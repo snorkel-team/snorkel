@@ -9,13 +9,13 @@ class CandidateExtractor(object):
   """
   def __init__(self, *children, **opts):
     self.children = children
-    self.opts    = opts
+    self.opts     = opts
     self.init()
 
   def init(self):
     self.n                  = self.opts.get('n', 3)
     self.longest_match_only = self.opts.get('longest_match_only', True)
-    self.match_attrib       = self.opts.get('match_attrib', 'words')
+    self.attrib             = self.opts.get('attrib', 'words')
     self.label              = self.opts.get('label', None)
 
   def filter(self, idxs, seq):
@@ -28,7 +28,7 @@ class CandidateExtractor(object):
   def apply(self, s):
     """Apply the candidate extractor to a Sentence object"""
     seq = s if isinstance(s, dict) else s.__dict__
-    L   = len(seq[self.match_attrib])
+    L   = len(seq[self.attrib])
 
     # Keep track of indexes we've already matched so that we can e.g. keep longest match only
     matched_seqs = []
@@ -56,13 +56,13 @@ class CandidateExtractor(object):
 class DictionaryMatch(CandidateExtractor):
   """Selects candidate ngrams that match against a given list d""" 
   def init(self):
-    self.d            = frozenset(self.opts['d'])
-    self.ignore_case  = self.opts.get('ignore_case', True)
-    self.sep          = self.opts.get('sep', ' ')
-    self.match_attrib = self.opts.get('match_attrib', 'words')
+    self.d           = frozenset(self.opts['d'])
+    self.ignore_case = self.opts.get('ignore_case', True)
+    self.sep         = self.opts.get('sep', ' ')
+    self.attrib      = self.opts.get('attrib', 'words')
 
   def filter(self, idxs, seq):
-    s = seq[self.match_attrib]
+    s = seq[self.attrib]
     return self.sep.join(s[i] for i in idxs) in self.d
 
 
@@ -80,15 +80,15 @@ class Concat(CandidateExtractor):
 class RegexMatch(CandidateExtractor):
   """Filters by regex pattern matching"""
   def init(self):
-    self.semantics    = self.opts.get('semantics', 'concat')
-    self.rgx          = self.opts['rgx']
-    self.ignore_case  = self.opts.get('ignore_case', True)
-    self.rgx_comp     = re.compile(self.rgx, flags=re.I if self.ignore_case else 0)
-    self.sep          = self.opts.get('sep', ' ')
-    self.match_attrib = self.opts.get('match_attrib', 'words')
+    self.semantics   = self.opts.get('semantics', 'concat')
+    self.rgx         = self.opts['rgx']
+    self.ignore_case = self.opts.get('ignore_case', True)
+    self.rgx_comp    = re.compile(self.rgx, flags=re.I if self.ignore_case else 0)
+    self.sep         = self.opts.get('sep', ' ')
+    self.attrib      = self.opts.get('attrib', 'words')
 
   def filter(self, idxs, seq):
-    s = seq[self.match_attrib]
+    s = seq[self.attrib]
     if self.semantics.lower() == 'concat':
       return self.rgx_comp.match(self.sep.join(s[i] for i in idxs)) is not None
     elif self.semantics.lower() == 'all':
@@ -98,9 +98,12 @@ class RegexMatch(CandidateExtractor):
 
 
 class TagMatch(RegexMatch):
-  """Filters by matching tags e.g. POS tags"""
-  def filter(self, idxs, seq):
-    raise NotImplementedError()
+  """Filters by matching tags (using rgx patterns), for e.g. POS tags"""
+  def init(self):
+    self.rgx       = self.opts['tag']
+    self.rgx_comp  = re.compile(self.rgx, flags=re.I)
+    self.semantics = 'all'
+    self.attrib    = self.opts.get('attrib', 'poses')
 
 
 class FuzzyDictionaryMatch(CandidateExtractor):

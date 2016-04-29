@@ -688,8 +688,8 @@ class DDLiteModel:
     # Get labels/gt for candidates in dev set, with label, with gt
     gd_idxs = np.intersect1d(has_label, ds)
     gd_idxs = np.intersect1d(has_gt, gd_idxs)
-    gt = gt[gd_idxs]
-    pred = pred[gd_idxs]
+    gt = np.ravel(gt[gd_idxs])
+    pred = np.ravel(pred[gd_idxs])
     return (f1_score(gt = gt, pred = pred), len(gd_idxs))
     
   def lowest_empirical_f1_lfs(self, n=10):
@@ -719,7 +719,7 @@ class DDLiteModel:
     self.test = h[np.floor(p * len(h)) : ]
     
   def devset(self):
-    return np.setdiff1d(range(self.num_candidates()), self.holdout)
+    return np.ravel(np.setdiff1d(range(self.num_candidates()), self.holdout))
 
   def learn_weights(self, maxIter=1000, tol=1e-6, sample=False, 
                     n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, 
@@ -844,7 +844,7 @@ class DDLiteModel:
     correct_prob = np.array([np.mean(correct[bin_assign == p]) for p in x])
     xc = x[np.isfinite(correct_prob)]
     correct_prob = correct_prob[np.isfinite(correct_prob)]
-    plt.plot(x, x, 'b--', xc, correct_prob, 'ro-')
+    plt.plot(x, np.abs(x-0.5) + 0.5, 'b--', xc, correct_prob, 'ro-')
     plt.xlim((0,1))
     plt.ylim((0,1))
     plt.xlabel("Probability")
@@ -1187,12 +1187,14 @@ def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, alpha=0, rate=0.01,
   return w_opt[mu_opt]
 
 def precision(gt, pred):
+  pred, gt = np.ravel(pred), np.ravel(gt)
   pred[pred == 0] = 1
   tp = np.sum((pred == 1) * (gt == 1))
   fp = np.sum((pred == 1) * (gt != 1))
   return 0 if tp == 0 else float(tp) / float(tp + fp)
 
 def recall(gt, pred):
+  pred, gt = np.ravel(pred), np.ravel(gt)
   pred[pred == 0] = 1
   tp = np.sum((pred == 1) * (gt == 1))
   p = np.sum(gt == 1)
@@ -1202,6 +1204,7 @@ def f1_score(gt=None, pred=None, prec=None, rec=None):
   if prec is None or rec is None:
     if gt is None or pred is None:
       raise ValueError("Need both gt and pred or both prec and rec")
+    pred, gt = np.ravel(pred), np.ravel(gt)
     prec = precision(gt, pred) if prec is None else prec
     rec = recall(gt, pred) if rec is None else rec
   return 0 if (prec * rec == 0) else 2 * (prec * rec)/(prec + rec)

@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/HazyResearch/ddlite.svg?branch=master)](https://travis-ci.org/HazyResearch/ddlite)
 
-![](figs/darpa.JPG | width=30)
+<img src="figs/darpa.JPG" width="80" height="80" />
 #### Supported by DARPA's [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) under contract number N66001-15-C-4043.
 
 ## Motivation

@@ -4,7 +4,7 @@
 
 #### Sponsored by: 
 <img src="figs/darpa.JPG" width="80" height="80" />
-#### via the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043.
+#### as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043.
 
 ## Motivation
 DeepDive Lite provides a lighter-weight interface for creating a structured information extraction application in DeepDive. DeepDive Lite is built for rapid prototyping and development focused on **defining an input/output schema**, and **creating a set of _labeling functions_**. The goal is to be able to directly plug these objects into DeepDive proper to get a more scalable, performant, and customizable version of the application.

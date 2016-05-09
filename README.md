@@ -22,7 +22,8 @@ DeepDive Lite is also part of a broader effort to answer the following research 
 First of all, make sure all git submodules have been downloaded.
 
 ```bash
-git submodule update --init
+git submodule update --init --recursive
+git submodule update --recursive
 ```
 
 DeepDive Lite requires [a few python packages](python-package-requirement.txt) including:

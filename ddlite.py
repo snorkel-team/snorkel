@@ -601,6 +601,26 @@ class DDLiteModel:
         raise ValueError("{} is not a valid LF index".format(lf))
     else:
       raise ValueError("lf must be a string name or integer index")
+
+  def lf_stats(self):
+    """
+    Returns basic summary statistics of the LFs as applied to the current set of candidates
+    * Coverage = % of candidates that have at least one label
+    * Overlap  = % of candidates labeled by > 1 LFs
+    * Conflict = % of candidates with conflicting labels
+    """
+    X    = self.lf_matrix.transpose()
+    M, N = map(float, X.shape)
+    xsum = abs(X).sum(0)
+
+    # Get summary statistics
+    coverage = np.where(xsum > 0)[1].shape[1] / N
+    overlap  = np.where(xsum > 1)[1].shape[1] / N
+    conflict = np.where(xsum > abs(X.sum(0)))[1].shape[1] / N
+    return coverage, overlap, conflict
+
+  def print_lf_stats(self):
+    print "Coverage:\t%s\nOverlap:\t%s\nConflict:\t%s" % self.lf_stats()
     
   def _coverage(self):
     return [np.ravel((self.lf_matrix[self.devset(),:] == lab).sum(1))

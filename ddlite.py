@@ -602,30 +602,35 @@ class DDLiteModel:
     else:
       raise ValueError("lf must be a string name or integer index")
     
-  def _cover(self):
-    return [np.ravel((self.lf_matrix[self.devset(),:] == lab).sum(1))
-            for lab in [1,-1]]
+  def _cover(self, idxs=None):
+    idxs = self.devset() if idxs is None else idxs
+    try:
+      return [np.ravel((self.lf_matrix[idxs,:] == lab).sum(1))
+              for lab in [1,-1]]
+    except:
+      raise ValueError("Invalid indexes for cover")
 
-  def coverage(self, cov=None):
-    cov = self._cover() if cov is None else cov    
+  def coverage(self, cov=None, idxs=None):
+    cov = self._cover(idxs) if cov is None else cov    
     return float(np.sum((cov[0] + cov[1]) > 0)) / len(self.devset())
 
-  def overlap(self, cov=None):    
-    cov = self._cover() if cov is None else cov    
+  def overlap(self, cov=None, idxs=None):    
+    cov = self._cover(idxs) if cov is None else cov    
     return float(np.sum((cov[0] + cov[1]) > 1)) / len(self.devset())
 
-  def conflict(self, cov=None):    
-    cov = self._cover() if cov is None else cov    
+  def conflict(self, cov=None, idxs=None):    
+    cov = self._cover(idxs) if cov is None else cov    
     return float(np.sum(np.multiply(cov[0], cov[1]) > 0)) / len(self.devset())
 
-  def print_lf_stats(self):
+  def print_lf_stats(self, idxs=None):
     """
     Returns basic summary statistics of the LFs as applied to the current set of candidates
     * Coverage = % of candidates that have at least one label
     * Overlap  = % of candidates labeled by > 1 LFs
     * Conflict = % of candidates with conflicting labels
     """
-    cov = self._cover()
+    cov = self._cover(idxs)
+    print "LF stats on dev set" if idxs is None else "LF stats on idxs"
     print "Coverage:\t{:.3f}%\nOverlap:\t{:.3f}%\nConflict:\t{:.3f}%".format(
             100. * self.coverage(cov), 
             100. * self.overlap(cov),

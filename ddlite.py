@@ -1006,12 +1006,16 @@ def sample_data(X, w, n_samples):
   
   return t, f
 
-def exact_data(X, w):
+
+def exact_data(X, w, evidence=None):
   """
   We calculate the exact conditional probability of the decision variables in
   logistic regression; see sample_data
   """
   t = odds_to_prob(X.dot(w))
+  if evidence is not None:
+    t[evidence > 0.0] = 1.0
+    t[evidence < 0.0] = 0.0
   return t, 1-t
 
 def abs_sparse(X):
@@ -1025,7 +1029,7 @@ def abs_sparse(X):
     raise ValueError("Only supports CSR/CSC and LIL matrices")
   return X_abs
 
-def transform_sample_stats(Xt, t, f, Xt_abs = None):
+def transform_sample_stats(Xt, t, f, Xt_abs=None):
   """
   Here we calculate the expected accuracy of each LF/feature
   (corresponding to the rows of X) wrt to the distribution of samples S:
@@ -1043,7 +1047,8 @@ def transform_sample_stats(Xt, t, f, Xt_abs = None):
 
 def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
                             n_samples=100, alpha=0, mu_seq=None, n_mu=20,
-                            mu_min_ratio=1e-6, rate=0.01, verbose=False):
+                            mu_min_ratio=1e-6, rate=0.01, evidence=None,
+                            verbose=False):
   """ Perform SGD wrt the weights w
        * w0 is the initial guess for w
        * sample and n_samples determine SGD batch size
@@ -1074,6 +1079,9 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
   else:
     mu_seq = get_mu_seq(n_mu, rate, alpha, mu_min_ratio)
 
+  if evidence is not None:
+    evidence = np.ravel(evidence)
+
   weights = dict()
   # Search over penalty parameter values
   for mu in mu_seq:
@@ -1090,7 +1098,7 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
           print "\n",
       
       # Get the expected LF accuracy
-      t,f = sample_data(X, w, n_samples=n_samples) if sample else exact_data(X, w)
+      t,f = sample_data(X, w, n_samples=n_samples) if sample else exact_data(X, w, evidence)
       p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
 
       # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...

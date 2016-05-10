@@ -601,35 +601,39 @@ class DDLiteModel:
         raise ValueError("{} is not a valid LF index".format(lf))
     else:
       raise ValueError("lf must be a string name or integer index")
+    
+  def _cover(self):
+    return [np.ravel((self.lf_matrix[self.devset(),:] == lab).sum(1))
+            for lab in [1,-1]]
 
-  def lf_stats(self):
+  def coverage(self, cov=None):
+    cov = self._cover() if cov is None else cov    
+    return float(np.sum((cov[0] + cov[1]) > 0)) / len(self.devset())
+
+  def overlap(self, cov=None):    
+    cov = self._cover() if cov is None else cov    
+    return float(np.sum((cov[0] + cov[1]) > 1)) / len(self.devset())
+
+  def conflict(self, cov=None):    
+    cov = self._cover() if cov is None else cov    
+    return float(np.sum(np.multiply(cov[0], cov[1]) > 0)) / len(self.devset())
+
+  def print_lf_stats(self):
     """
     Returns basic summary statistics of the LFs as applied to the current set of candidates
     * Coverage = % of candidates that have at least one label
     * Overlap  = % of candidates labeled by > 1 LFs
     * Conflict = % of candidates with conflicting labels
     """
-    X    = self.lf_matrix.transpose()
-    M, N = map(float, X.shape)
-    xsum = abs(X).sum(0)
-
-    # Get summary statistics
-    coverage = np.where(xsum > 0)[1].shape[1] / N
-    overlap  = np.where(xsum > 1)[1].shape[1] / N
-    conflict = np.where(xsum > abs(X.sum(0)))[1].shape[1] / N
-    return coverage, overlap, conflict
-
-  def print_lf_stats(self):
-    """Prints LF stats"""
-    print "Coverage:\t%s\nOverlap:\t%s\nConflict:\t%s" % self.lf_stats()
-    
-  def _coverage(self):
-    return [np.ravel((self.lf_matrix[self.devset(),:] == lab).sum(1))
-            for lab in [1,-1]]
+    cov = self._cover()
+    print "Coverage:\t{:.3f}%\nOverlap:\t{:.3f}%\nConflict:\t{:.3f}%".format(
+            100. * self.coverage(cov), 
+            100. * self.overlap(cov),
+            100. * self.conflict(cov))
 
   def _plot_coverage(self, cov):
     cov_ct = [np.sum(x > 0) for x in cov]
-    tot_cov = float(np.sum((cov[0] + cov[1]) > 0)) / len(self.devset())
+    tot_cov = self.coverage(cov)
     idx, bar_width = np.array([1, -1]), 1
     plt.bar(idx, cov_ct, bar_width, color='b')
     plt.xlim((-1.5, 2.5))
@@ -640,7 +644,7 @@ class DDLiteModel:
     
   def _plot_conflict(self, cov):
     x, y = cov
-    tot_conf = float(np.dot(x, y)) / len(self.devset())
+    tot_conf = self.conflict(cov)
     m = np.max([np.max(x), np.max(y)])
     bz = np.linspace(-0.5, m+0.5, num=m+2)
     H, xr, yr = np.histogram2d(x, y, bins=[bz,bz], normed=False)
@@ -661,7 +665,7 @@ class DDLiteModel:
     if self.lf_matrix is None:
       raise ValueError("No LFs applied yet")
     n_plots = 2
-    cov = self._coverage()
+    cov = self._cover()
     # LF coverage
     plt.subplot(1,n_plots,1)
     tot_cov = self._plot_coverage(cov)

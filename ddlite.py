@@ -620,6 +620,7 @@ class DDLiteModel:
     return coverage, overlap, conflict
 
   def print_lf_stats(self):
+    """Prints LF stats"""
     print "Coverage:\t%s\nOverlap:\t%s\nConflict:\t%s" % self.lf_stats()
     
   def _coverage(self):

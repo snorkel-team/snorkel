@@ -239,6 +239,7 @@ Update coming...
 |`set_lf_matrix(lf_matrix, names, clear=False)` | Set a custom LF matrix with LF names `names` ; appends to or clears existing based on `clear`|
 |`apply_lfs(lfs_f, clear=False)` | Apply LFs in list `lfs_f`; appends to or clears existing based on `clear`|
 |`delete_lf(lf)` | Delete LF by index or name |
+|`print_lf_stats(idxs=None) | Print coverage, overlap, and conflict on the devset (`idxs=None`) or on candidates `idxs` |
 |`plot_lf_stats()` | Generates plots to examine coverage, overlap, and conflict |
 |`top_conflict_lfs(n=10)` | Show the top `n` conflict LFs |
 |`lowest_coverage_lfs(n=10)` | Show the `n` LFs with lowest coverage |

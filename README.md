@@ -107,7 +107,7 @@ Here are a few practical tips for working with DeepDive Lite:
 
 |**Method**|**Notes**|
 |:---------|:--------|
-|`__init()__`| Starts CoreNLPServer|
+|`__init__(tok_whitespace=False)`| Starts CoreNLPServer; if input is pretokenized and space separated, use `tok_whitespace=True` |
 |`parse(doc, doc_id=None)` | Parse document into `Sentence`s|
 
 #### Class: HTMLParser

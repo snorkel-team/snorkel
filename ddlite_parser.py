@@ -19,7 +19,7 @@ Sentence = namedtuple('Sentence', ['words', 'lemmas', 'poses', 'dep_parents',
                                    'token_idxs'])
 
 class SentenceParser:
-    def __init__(self):
+    def __init__(self, tok_whitespace=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
         # Kill it when python exits.
@@ -27,11 +27,13 @@ class SentenceParser:
         # In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
         # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
         self.port = 12345
+	self.tok_whitespace = tok_whitespace
         loc = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
-        self.endpoint = 'http://127.0.0.1:%d/?properties={"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % self.port
+        props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else "" 
+        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % self.port, props
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626

@@ -33,7 +33,7 @@ class SentenceParser:
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
         props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else "" 
-        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % self.port, props
+        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % (self.port, props)
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626

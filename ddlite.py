@@ -441,6 +441,17 @@ class ModelLog:
     html.append("</table>")
     return ''.join(html)
 
+class SideTables:
+  def __init__(self, table1, table2):
+    self.t1, self.t2 = table1, table2
+  def _repr_html_(self):
+    t1_html = self.t1._repr_html_()
+    t2_html = self.t2._repr_html_()
+    t1_html = t1_html[:6] + " style=\"float: left\"" + t1_html[6:] 
+    t2_html = t2_html[:6] + " style=\"float: left\"" + t2_html[6:] 
+    return t1_html + t2_html
+    
+
 class ModelLogger:
   def __init__(self):
     self.logs = []
@@ -720,17 +731,27 @@ class DDLiteModel:
     gd_idxs = np.intersect1d(has_gt, gd_idxs)
     gt = np.ravel(gt[gd_idxs])
     pred = np.ravel(pred[gd_idxs])
-    return (f1_score(gt = gt, pred = pred), len(gd_idxs))
+    n_neg = np.sum(pred == -1)
+    n_pos = np.sum(pred == 1)
+    neg_acc = 0 if n_neg == 0 else float(np.sum((pred == -1) * (gt == -1))) / n_neg
+    pos_acc = 0 if n_pos == 0 else float(np.sum((pred == 1) * (gt == 1))) / n_pos
+    return (pos_acc, n_pos, neg_acc, n_neg)
     
-  def lowest_empirical_f1_lfs(self, n=10):
+  def lowest_empirical_accuracy_lfs(self, n=10):
     """ Show the LFs with the lowest accuracy compared to ground truth """
     d = {nm : self._lf_acc(i) for i,nm in enumerate(self.lf_names)}
-    tab = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
-    for k in tab:
-      tab[k] = "{:.3f} (n={})".format(tab[k][0], tab[k][1])
-    tab.set_num(n)
-    tab.set_title("Labeling function", "Empirical LF F1 score")
-    return tab    
+    tab_pos = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
+    for k in tab_pos:
+      tab_pos[k] = "{:.3f} (n={})".format(tab_pos[k][0], tab_pos[k][1])
+    tab_pos.set_num(n)
+    tab_pos.set_title("Labeling function", "Empirical LF positive-class accuracy")
+    
+    tab_neg = DictTable(sorted(d.items(), key=lambda t:t[1][2]))
+    for k in tab_neg:
+      tab_neg[k] = "{:.3f} (n={})".format(tab_neg[k][2], tab_neg[k][3])
+    tab_neg.set_num(n)
+    tab_neg.set_title("Labeling function", "Empirical LF negative-class accuracy")
+    return SideTables(tab_pos, tab_neg)    
     
   def set_holdout(self, idxs=None, p=0.5):
     if not 0 <= p <= 1:

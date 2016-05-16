@@ -819,7 +819,7 @@ class DDLiteModel:
     if log:
       return self.add_to_log()
 
-  def get_link(self, subset=None, use_lfs=False):
+  def get_link(self, subset=None, use_lfs=True):
     """
     Get the array of predicted link function values (continuous) given weights
     Return either all candidates, a specified subset, or only validation/test set

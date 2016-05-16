@@ -774,7 +774,8 @@ class DDLiteModel:
 
   def learn_weights(self, maxIter=1000, tol=1e-6, sample=False, 
                     n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, 
-                    alpha=0, opt_1se=True, use_sparse = True, plot=False, 
+                    alpha=0, rate=0.01, decay=0.99, bias=False, 
+		    warm_starts=False, use_sparse=True,
                     verbose=False, log=True):
     """
     Uses the N x R matrix of LFs and the N x F matrix of features
@@ -783,31 +784,34 @@ class DDLiteModel:
     Holds out preset set of candidates for evaluation
     """
     N, R, F = self.num_candidates(), self.num_lfs(), self.num_feats()
-    self.X = sparse.hstack([self.lf_matrix, self.feats], format='csr')
+    self.X = sparse.hstack([self.lf_matrix, self.feats], format='csr') if not bias\
+	       else sparse.hstack([self.lf_matrix, self.feats, np.ones((N,1))], format='csr')
     if not use_sparse:
       self.X = np.asarray(self.X.todense())
-    w0 = np.concatenate([np.ones(R), np.zeros(F)])
+    w0 = np.concatenate([np.ones(R), np.zeros(F)]) if not bias\
+ 	   else np.concatenate([np.ones(R), np.zeros(F), 0])
     # If a single mu is provided, just fit a single model
     if mu is not None and (not hasattr(mu, '__iter__') or len(mu) == 1):
       mu = mu if not hasattr(mu, '__iter__') else mu[0]
       self.w = learn_elasticnet_logreg(self.X[self.devset(),:],
                                        maxIter=maxIter, tol=tol, w0=w0, 
                                        mu_seq=mu, alpha=alpha, sample=sample,
-                                       n_samples=n_samples, verbose=verbose)[mu]
+                                       n_samples=n_samples, warm_starts=warm_starts,
+                                       rate=rate, decay=decay, verbose=verbose)[mu]
     # TODO: handle args between learning functions better
     elif len(self.validation) > 0: 
       result = learn_elasticnet_logreg(self.X[self.devset(),:],
                                        maxIter=maxIter, tol=tol, w0=w0, 
                                        mu_seq=mu, alpha=alpha, sample=sample,
-                                       n_samples=n_samples, verbose=verbose)
+                                       n_samples=n_samples, warm_starts=warm_starts,
+                                       rate=rate, decay=decay, verbose=verbose)
       self._w_fit = OrderedDict()
       ValidatedFit = namedtuple('ValidatedFit', ['w', 'P', 'R', 'F1'])
       gt = self.get_ground_truth()[self.validation]
       f1_opt, w_opt = 0, None
       for mu in sorted(result.keys()):
         w = result[mu]
-        pred = odds_to_prob(self.X[self.validation,
-                                   self.num_lfs():].dot(w[self.num_lfs():]))
+        pred = odds_to_prob(self.X[self.validation,:].dot(w))
         prec, rec = precision(gt, pred), recall(gt, pred)
         f1 = f1_score(prec = prec, rec = rec)
         self._w_fit[mu] = ValidatedFit(w, prec, rec, f1)
@@ -1068,8 +1072,8 @@ def transform_sample_stats(Xt, t, f, Xt_abs=None):
 
 def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
                             n_samples=100, alpha=0, mu_seq=None, n_mu=20,
-                            mu_min_ratio=1e-6, rate=0.01, evidence=None,
-                            verbose=False):
+                            mu_min_ratio=1e-6, rate=0.01, decay=1,
+                            warm_starts=False, evidence=None, verbose=False):
   """ Perform SGD wrt the weights w
        * w0 is the initial guess for w
        * sample and n_samples determine SGD batch size
@@ -1106,18 +1110,17 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
   weights = dict()
   # Search over penalty parameter values
   for mu in mu_seq:
+    if verbose:
+      print "Begin training for mu = {}".format(mu)
     w = w0.copy()
     g = np.zeros(R)
     l = np.zeros(R)
+    g_size = 0
+    cur_rate = rate
     # Take SGD steps
     for step in range(maxIter):
       if step % 100 == 0 and verbose:    
-        if step % 500 == 0:
-          print "Learning epoch = ",
-        print "%s\t" % step,
-        if (step+100) % 500 == 0:
-          print "\n",
-      
+        print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size) 
       # Get the expected LF accuracy
       t,f = sample_data(X, w, n_samples=n_samples) if sample else exact_data(X, w, evidence)
       p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
@@ -1133,18 +1136,20 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
 
       # Check for convergence
       wn = np.linalg.norm(w, ord=2)
-      if wn < 1e-12 or np.linalg.norm(g, ord=2) / wn < tol:
+      g_size = np.linalg.norm(g, ord=2)
+      if wn < 1e-12 or g_size / wn < tol:
         if verbose:
           print "SGD converged for mu={:.3f} after {} steps".format(mu, step)
         break
 
       # Update weights
-      w -= rate*g
+      cur_rate *= decay
+      w -= cur_rate * g
       
       # Apply elastic net penalty
-      soft = np.abs(w) - alpha * mu
+      soft = np.abs(w) - cur_rate * alpha * mu
       #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
-      w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / (1+(1-alpha)*mu)
+      w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / (1 + (1-alpha) * cur_rate * mu)
     
     # SGD did not converge    
     else:
@@ -1152,7 +1157,8 @@ def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
 
     # Store result and set warm start for next penalty
     weights[mu] = w.copy()
-    w0 = w
+    if warm_starts:
+      w0 = w
     
   return weights
   

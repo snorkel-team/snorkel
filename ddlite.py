@@ -811,7 +811,7 @@ class DDLiteModel:
       f1_opt, w_opt = 0, None
       for mu in sorted(result.keys()):
         w = result[mu]
-        pred = odds_to_prob(self.X[self.validation,:].dot(w))
+        pred = 2*(odds_to_prob(self.X[self.validation,:].dot(w)) >= 0.5) - 1
         prec, rec = precision(gt, pred), recall(gt, pred)
         f1 = f1_score(prec = prec, rec = rec)
         self._w_fit[mu] = ValidatedFit(w, prec, rec, f1)

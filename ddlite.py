@@ -806,10 +806,11 @@ class DDLiteModel:
     # TODO: handle args between learning functions better
     elif len(self.validation) > 0: 
       result = learn_elasticnet_logreg(self.X[self.devset(),:],
-                                       maxIter=maxIter, tol=tol, w0=w0, 
-                                       mu_seq=mu, alpha=alpha, sample=sample,
-                                       n_samples=n_samples, warm_starts=warm_starts,
-                                       rate=rate, decay=decay, verbose=verbose)
+                                       maxIter=maxIter, tol=tol, w0=w0, n_mu=n_mu, 
+                                       mu_seq=mu, mu_min_ratio=mu_min_ratio,
+                                       alpha=alpha, rate=rate, decay=decay, 
+                                       sample=sample, n_samples=n_samples,
+                                       warm_starts=warm_starts, verbose=verbose)
       self._w_fit = OrderedDict()
       ValidatedFit = namedtuple('ValidatedFit', ['w', 'P', 'R', 'F1'])
       gt = self.get_ground_truth()[self.validation]

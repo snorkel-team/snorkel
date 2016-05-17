@@ -772,6 +772,11 @@ class DDLiteModel:
   def devset(self):
     return np.ravel(np.setdiff1d(range(self.num_candidates()), self.holdout))
 
+  def learn_weights_validated(self, **kwargs):
+    if len(self.validation) == 0:
+      raise ValueError("No validation set. Use set_holdout(p) with p>0.")
+    return self.learn_weights(**kwargs)
+
   def learn_weights(self, maxIter=1000, tol=1e-6, sample=False, 
                     n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, 
                     alpha=0, rate=0.01, decay=0.99, bias=False, 

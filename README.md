@@ -7,13 +7,13 @@
 #### as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043.
 
 ## Motivation
-DeepDive Lite provides a lighter-weight interface for creating a structured information extraction application in DeepDive. DeepDive Lite is built for rapid prototyping and development focused on **defining an input/output schema**, and **creating a set of _labeling functions_**. The goal is to be able to directly plug these objects into DeepDive proper to get a more scalable, performant, and customizable version of the application.
+DDLite is intended to be a lightweight but powerful framework for prototyping & developing **structured information extraction applications** for domains in which large labeled training sets are not available or easy to obtain, using the _data programming_ paradigm.
 
-An immediate motivation is to provide a lighter-weight entry point to the DeepDive application development cycle for non-expert users. DeepDive Lite may also be useful for expert DeepDive users as a toolset for development and prototyping tasks.
+In the data programming approach to developing a machine learning system, the developer focuses on writing a set of _labeling functions_, which create a large but noisy training set. DDLite then learns a generative model of this noise- learning, essentially, which labeling functions are more accurate than others- and uses this to train a discriminative classifier.
 
-DeepDive Lite is also part of a broader effort to answer the following research questions: 
-* How much progress can be made with the _schema_ and _labeling functions_ being the only user entry points to the application development process?
-* To what degree can DeepDive be seen/used as an _iterative compiler_, which takes in a rule-based program, and transforms it to a statistical learning and inference-based one?
+At a high level, the idea is that developers can focus on writing labeling functions- which are just (Python) functions that provide a label for some subset of data points- and not think about algorithms _or_ features!
+
+DDLite is very much a work in progress, but some people have already begun developing applications with it, and initial feedback has been positive... let us know what you think, and how we can improve it, in the [Issues](https://github.com/HazyResearch/ddlite/issues) section!
 
 ## Installation / dependencies
 

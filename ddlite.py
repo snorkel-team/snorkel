@@ -730,11 +730,21 @@ class DDLiteModel:
     gd_idxs = np.intersect1d(has_label, ds)
     gd_idxs = np.intersect1d(has_gt, gd_idxs)
     gt = np.ravel(gt[gd_idxs])
-    pred = np.ravel(pred[gd_idxs])
-    n_neg = np.sum(pred == -1)
-    n_pos = np.sum(pred == 1)
-    neg_acc = 0 if n_neg == 0 else float(np.sum((pred == -1) * (gt == -1))) / n_neg
-    pos_acc = 0 if n_pos == 0 else float(np.sum((pred == 1) * (gt == 1))) / n_pos
+    pred_sub = np.ravel(pred[gd_idxs])
+    n_neg = np.sum(pred_sub == -1)
+    n_pos = np.sum(pred_sub == 1)
+    if np.sum(pred == -1) == 0:
+      neg_acc = -1
+    elif n_neg == 0:
+      neg_acc = 0
+    else:
+      neg_acc = float(np.sum((pred_sub == -1) * (gt == -1))) / n_neg
+    if np.sum(pred == 1) == 0:
+      pos_acc = -1
+    elif n_pos == 0:
+      pos_acc = 0
+    else: 
+      pos_acc = float(np.sum((pred_sub == 1) * (gt == 1))) / n_pos
     return (pos_acc, n_pos, neg_acc, n_neg)
     
   def lowest_empirical_accuracy_lfs(self, n=10):
@@ -742,15 +752,21 @@ class DDLiteModel:
     d = {nm : self._lf_acc(i) for i,nm in enumerate(self.lf_names)}
     tab_pos = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
     for k in tab_pos:
+      if tab_pos[k][0] < 0:
+        del tab_pos[k]
+        continue
       tab_pos[k] = "{:.3f} (n={})".format(tab_pos[k][0], tab_pos[k][1])
     tab_pos.set_num(n)
-    tab_pos.set_title("Labeling function", "Empirical LF positive-class accuracy")
+    tab_pos.set_title("Labeling function", "Empirical LF acc. (positive)")
     
     tab_neg = DictTable(sorted(d.items(), key=lambda t:t[1][2]))
     for k in tab_neg:
+      if tab_neg[k][2] < 0:
+        del tab_neg[k]
+        continue
       tab_neg[k] = "{:.3f} (n={})".format(tab_neg[k][2], tab_neg[k][3])
     tab_neg.set_num(n)
-    tab_neg.set_title("Labeling function", "Empirical LF negative-class accuracy")
+    tab_neg.set_title("Labeling function", "Empirical LF acc. (negative)")
     return SideTables(tab_pos, tab_neg)    
     
   def set_holdout(self, idxs=None, p=0.5):

@@ -979,7 +979,6 @@ class DDLiteModel:
   def use_lfs(self, use=True):
     self.use_lfs = bool(use)
 
-  #TODO: update
   def get_log_odds(self, subset='validation'):
     """
     Get the array of predicted link function values (continuous) given weights
@@ -991,9 +990,9 @@ class DDLiteModel:
     if subset is None:
       return self.X[:, start:].dot(self.w[start:])
     if subset is 'test':
-      return self.X[self.test, start:].dot(self.w[start:])
+      return self.X[self.test(), start:].dot(self.w[start:])
     if subset is 'validation':
-      return self.X[self.validation, start:].dot(self.w[start:])
+      return self.X[self.validation(), start:].dot(self.w[start:])
     try:
       return self.X[subset, start:].dot(self.w[start:])
     except:
@@ -1041,14 +1040,13 @@ class DDLiteModel:
     plt.ylim((0,1))
     plt.xlabel("Probability")
     plt.ylabel("Accuracy")
-
-  #TODO: update
+.
   def plot_calibration(self):
     """
     Show classification accuracy and probability histogram plots
     """
-    idxs, gt = self.get_labeled_ground_truth('resolve', None)
-    has_test, has_gt = (len(self.test) > 0), (len(gt) > 0)
+    idxs, gt = self.get_labeled_ground_truth(None)
+    has_test, has_gt = (len(self.test()) > 0), (len(gt) > 0)
     n_plots = 1 + has_test + (has_test and has_gt)
     # Whole set histogram
     plt.subplot(1,n_plots,1)
@@ -1058,7 +1056,7 @@ class DDLiteModel:
     # Hold out histogram
     if has_test:
       plt.subplot(1,n_plots,2)
-      self._plot_prediction_probability(probs[self.test])
+      self._plot_prediction_probability(probs[self.test()])
       plt.title("(b) # Predictions (test set)")
       # Classification bucket accuracy
       if has_gt:
@@ -1067,16 +1065,14 @@ class DDLiteModel:
         plt.title("(c) Accuracy (test set)")
     plt.show()
     
-  #TODO: update
-  def _get_all_abstained(self, dev=True):
-      idxs = self.devset() if dev else range(self.num_candidates())
-      return np.ravel(np.where(np.ravel((self.lf_matrix[idxs,:]).sum(1)) == 0))
+  def _get_all_abstained(self, training=True):
+    idxs = self.training() if training else range(self.num_candidates())
+    return np.ravel(np.where(np.ravel((self.lf_matrix[idxs,:]).sum(1)) == 0))
 
-  #TODO: update
   def open_mindtagger(self, num_sample=None, abstain=False, **kwargs):
     self.mindtagger_instance = MindTaggerInstance(self.C.mindtagger_format())
     if isinstance(num_sample, int) and num_sample > 0:
-      pool = self._get_all_abstained(dev=True) if abstain else self.devset()
+      pool = self._get_all_abstained(dev=True) if abstain else self.training()
       self._current_mindtagger_samples = np.random.choice(pool, num_sample, replace=False)\
                                           if len(pool) > num_sample else pool
     elif not num_sample and len(self._current_mindtagger_samples) < 0:
@@ -1094,14 +1090,14 @@ class DDLiteModel:
                                                     self._current_mindtagger_samples,
                                                     probs, tags, **kwargs)
   
-  #TODO: update
   def add_mindtagger_tags(self):
     tags = self.mindtagger_instance.get_mindtagger_tags()
-    self._tags = tags
+    self._mt_tags = tags
     is_tagged = [i for i,tag in enumerate(tags) if 'is_correct' in tag]
     tb = [tags[i]['is_correct'] for i in is_tagged]
     tb = [1 if t else -1 for t in tb]
-    self._mindtagger_labels[self._current_mindtagger_samples[is_tagged]] = tb
+    idxs = self._current_mindtagger_samples[is_tagged]
+    self.update_gt(tb, idxs=idxs)
   
   #TODO: update
   def add_to_log(self, log_id=None, subset='test', show=True):

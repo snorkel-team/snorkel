@@ -512,6 +512,8 @@ class CandidateGT:
     self.validation = np.array([], dtype=int)
     self.test = np.array([], dtype=int)
     
+    self.training = np.array(range(self.n()), dtype=int)
+    
     self.dev_split = 0.3
     self.dev1 = np.array([], dtype=int)
     self.dev2 = np.array([], dtype=int)
@@ -519,15 +521,15 @@ class CandidateGT:
   def n(self):
     return len(self._gt_dict)
     
+  def _update_training(self):
+    self.training = np.setdiff1d(np.array(range(self.n()), dtype=int), 
+                                 self.holdout())
+    
   def holdout(self):
     return np.concatenate(self.validation, self.test)
     
   def dev(self):
     return np.concatenate(self.dev1, self.dev2)
-    
-  def training(self):
-    return np.ravel(np.setdiff1d(np.array(range(self.n()), dtype=int), 
-                                 self.holdout()))
 
   def set_holdout(self, idxs=None, validation_frac=0.5):
     """ Set validation and test sets """
@@ -544,33 +546,7 @@ class CandidateGT:
     np.random.shuffle(h)
     self.validation = h[ : np.floor(validation_frac * len(h))]
     self.test = h[np.floor(validation_frac * len(h)) : ]
-    
-  def get_labeled_ground_truth(self, subset=None):
-    """ Get indices and labels of subset which have ground truth """
-    gt_all = self._gt_vec
-    if subset is None:
-      has_gt = (gt_all != 0)
-      return np.ravel(np.where(has_gt)), gt_all[has_gt]
-    if subset is 'training':
-      t = self.training()
-      gt_all = gt_all[t]
-      has_gt = (gt_all != 0)
-      return t[has_gt], gt_all[has_gt]
-    if subset is 'test':
-      gt_all = gt_all[self.test]
-      has_gt = (gt_all != 0)
-      return self.test[has_gt], gt_all[has_gt]
-    if subset is 'validation':
-      gt_all = gt_all[self.validation]
-      has_gt = (gt_all != 0)
-      return self.validation[has_gt], gt_all[has_gt]
-    try:
-      gt_all = gt_all[subset]
-      has_gt = (gt_all != 0)
-      return subset[has_gt], gt_all[has_gt]
-    except:
-      raise ValueError("subset must be 'training', 'test', 'validation' or an\
-                        array of indices 0 <= i < {}".format(self.n()))
+    self._update_training()
     
   def _update_devs(self, dev_split):
     idxs,_ = self.get_labeled_ground_truth('training')
@@ -614,6 +590,33 @@ class CandidateGT:
       raise ValueError("Exactly one of idxs and uids must be not None")
     # Update dev sets
     self._update_devs(self.dev_split)
+    
+  def get_labeled_ground_truth(self, subset=None):
+    """ Get indices and labels of subset which have ground truth """
+    gt_all = self._gt_vec
+    if subset is None:
+      has_gt = (gt_all != 0)
+      return np.ravel(np.where(has_gt)), gt_all[has_gt]
+    if subset is 'training':
+      t = self.training()
+      gt_all = gt_all[t]
+      has_gt = (gt_all != 0)
+      return t[has_gt], gt_all[has_gt]
+    if subset is 'test':
+      gt_all = gt_all[self.test]
+      has_gt = (gt_all != 0)
+      return self.test[has_gt], gt_all[has_gt]
+    if subset is 'validation':
+      gt_all = gt_all[self.validation]
+      has_gt = (gt_all != 0)
+      return self.validation[has_gt], gt_all[has_gt]
+    try:
+      gt_all = gt_all[subset]
+      has_gt = (gt_all != 0)
+      return subset[has_gt], gt_all[has_gt]
+    except:
+      raise ValueError("subset must be 'training', 'test', 'validation' or an\
+                        array of indices 0 <= i < {}".format(self.n()))
 
 class DDLiteModel:
   def __init__(self, candidates, feats=None, gt_dict=None):
@@ -644,6 +647,10 @@ class DDLiteModel:
     # Status
     self.use_lfs = True
     self.model = None
+    
+  #####################################
+  ########## Basic size info ##########
+  #####################################
 
   def num_candidates(self):
     return len(self.C)
@@ -656,7 +663,46 @@ class DDLiteModel:
       return 0
     return self.lf_matrix.shape[1]
     
-  
+  ###################################
+  ########## GT attributes ##########
+  ###################################
+    
+  def gt_dictionary(self):
+    return self.gt._gt_dict
+    
+  def holdout(self):
+    return self.gt.holdout()
+    
+  def validation(self):
+    return self.gt.validation
+    
+  def test(self):
+    return self.gt.test
+
+  def dev(self):
+    return self.gt.dev()
+
+  def dev1(self):
+    return self.gt.dev1
+
+  def dev2(self):
+    return self.gt.dev2
+    
+  def training(self):
+    return self.gt.training
+    
+  def set_holdout(self, idxs=None, validation_frac=0.5):
+    self.gt.set_holdout(idxs, validation_frac)
+    
+  def get_labeled_ground_truth(self, subset=None):
+    return self.gt.get_labeled_ground_truth(subset)
+    
+  def update_gt(self, gt, idxs=None, uids=None):
+    self.gt.update_gt(gt, idxs, uids)
+    
+  ###################################
+  ########## LF operations ##########
+  ###################################
                        
   def set_lf_matrix(self, lf_matrix, names, clear=False):
     try:
@@ -703,35 +749,37 @@ class DDLiteModel:
     else:
       raise ValueError("lf must be a string name or integer index")
     
+  ###################################
+  ########## LF stat comp. ##########
+  ###################################    
+
   def _cover(self, idxs=None):
-    idxs = self.devset() if idxs is None else idxs
-    try:
-      return [np.ravel((self.lf_matrix[idxs,:] == lab).sum(1))
-              for lab in [1,-1]]
-    except:
-      raise ValueError("Invalid indexes for cover")
+    idxs = self.training() if idxs is None else idxs
+    return [np.ravel((self.lf_matrix[idxs,:] == lab).sum(1))
+            for lab in [1,-1]]
 
   def coverage(self, cov=None, idxs=None):
     cov = self._cover(idxs) if cov is None else cov    
-    return float(np.sum((cov[0] + cov[1]) > 0)) / len(self.devset())
+    return np.mean((cov[0] + cov[1]) > 0)
 
   def overlap(self, cov=None, idxs=None):    
     cov = self._cover(idxs) if cov is None else cov    
-    return float(np.sum((cov[0] + cov[1]) > 1)) / len(self.devset())
+    return np.mean((cov[0] + cov[1]) > 1)
 
   def conflict(self, cov=None, idxs=None):    
     cov = self._cover(idxs) if cov is None else cov    
-    return float(np.sum(np.multiply(cov[0], cov[1]) > 0)) / len(self.devset())
+    return np.mean(np.multiply(cov[0], cov[1]) > 0)
 
   def print_lf_stats(self, idxs=None):
     """
-    Returns basic summary statistics of the LFs as applied to the current set of candidates
+    Returns basic summary statistics of the LFs on training set (default) or
+    passed idxs
     * Coverage = % of candidates that have at least one label
     * Overlap  = % of candidates labeled by > 1 LFs
     * Conflict = % of candidates with conflicting labels
     """
     cov = self._cover(idxs)
-    print "LF stats on dev set" if idxs is None else "LF stats on idxs"
+    print "LF stats on training set" if idxs is None else "LF stats on idxs"
     print "Coverage:\t{:.3f}%\nOverlap:\t{:.3f}%\nConflict:\t{:.3f}%".format(
             100. * self.coverage(cov), 
             100. * self.overlap(cov),
@@ -775,19 +823,20 @@ class DDLiteModel:
     # LF coverage
     plt.subplot(1,n_plots,1)
     tot_cov = self._plot_coverage(cov)
-    plt.title("(a) Label balance (candidate coverage: {:.2f}%)".format(tot_cov))
+    plt.title("(a) Label balance (training set coverage: {:.2f}%)".format(tot_cov))
     # LF conflict
     plt.subplot(1,n_plots,2)
     tot_conf = self._plot_conflict(cov)
-    plt.title("(b) Label heat map (candidates with conflict: {:.2f}%)".format(tot_conf))
+    plt.title("(b) Label heat map (training set conflict: {:.2f}%)".format(tot_conf))
     # Show plots    
     plt.show()
 
   def _lf_conf(self, lf_idx):
     lf_csc = self.lf_matrix.tocsc()
     other_idx = np.concatenate((range(lf_idx),range(lf_idx+1, self.num_lfs())))
-    agree = lf_csc[:, other_idx].multiply(lf_csc[:, lf_idx])
-    return float((np.ravel((agree == -1).sum(1)) > 0).sum()) / self.num_candidates()
+    ts = self.training()
+    agree = lf_csc[ts, other_idx].multiply(lf_csc[ts, lf_idx])
+    return float((np.ravel((agree == -1).sum(1)) > 0).sum()) / len(ts)
     
   def top_conflict_lfs(self, n=10):
     """ Show the LFs with the highest mean conflicts per candidate """
@@ -798,9 +847,8 @@ class DDLiteModel:
     return tab
     
   def _abstain_frac(self, lf_idx):
-    ds = self.devset()
-    lf_csc = abs_sparse(self.lf_matrix.tocsc()[ds,lf_idx])
-    return 1 - float((lf_csc == 1).sum()) / len(ds)
+    lf_v = np.ravel(self.lf_matrix.tocsc()[self.training(), lf_idx].todense())
+    return np.mean(lf_v == 0)
     
   def lowest_coverage_lfs(self, n=10):
     """ Show the LFs with the highest fraction of abstains """
@@ -810,15 +858,13 @@ class DDLiteModel:
     tab.set_title("Labeling function", "Fraction of abstained votes")
     return tab
 
-  # TODO: update
-  def _lf_acc(self, lf_idx):
-    ds = self.devset()
-    gt = self.get_ground_truth('resolve')
-    pred = (self.lf_matrix.tocsc()[:,lf_idx].todense())
+  def _lf_acc(self, subset, lf_idx):
+    gt = self.gt._gt_vec
+    pred = np.ravel(self.lf_matrix.tocsc()[:,lf_idx].todense())
     has_label = np.where(pred != 0)
     has_gt = np.where(gt != 0)
     # Get labels/gt for candidates in dev set, with label, with gt
-    gd_idxs = np.intersect1d(has_label, ds)
+    gd_idxs = np.intersect1d(has_label, subset)
     gd_idxs = np.intersect1d(has_gt, gd_idxs)
     gt = np.ravel(gt[gd_idxs])
     pred_sub = np.ravel(pred[gd_idxs])
@@ -838,16 +884,24 @@ class DDLiteModel:
       pos_acc = float(np.sum((pred_sub == 1) * (gt == 1))) / n_pos
     return (pos_acc, n_pos, neg_acc, n_neg)
     
-  #TODO: update
+  def _lf_acc_gen(self, lf_idx):
+    pos_acc1, n_pos, neg_acc1, n_neg = self._lf_acc(self.dev1(), lf_idx)
+    pos_acc2, _, neg_acc2, _ = self._lf_acc(self.dev2(), lf_idx)
+    pos_acc2, neg_acc2 = max(0, pos_acc2), max(0, neg_acc2)
+    return (pos_acc1, n_pos, abs(pos_acc1 - pos_acc2),
+            neg_acc1, n_neg, abs(neg_acc1 - neg_acc2))    
+    
   def lowest_empirical_accuracy_lfs(self, n=10):
     """ Show the LFs with the lowest accuracy compared to ground truth """
-    d = {nm : self._lf_acc(i) for i,nm in enumerate(self.lf_names)}
+    d = {nm : self._lf_acc_gen(i) for i,nm in enumerate(self.lf_names)}
     tab_pos = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
     for k in tab_pos:
       if tab_pos[k][0] < 0:
         del tab_pos[k]
         continue
-      tab_pos[k] = "{:.3f} (n={})".format(tab_pos[k][0], tab_pos[k][1])
+      tab_pos[k] = "{:.3f} (n={}, generalization={})".format(tab_pos[k][0],
+                                                             tab_pos[k][1],
+                                                             tab_pos[k][2]) 
     tab_pos.set_num(n)
     tab_pos.set_title("Labeling function", "Empirical LF acc. (positive)")
     
@@ -856,31 +910,12 @@ class DDLiteModel:
       if tab_neg[k][2] < 0:
         del tab_neg[k]
         continue
-      tab_neg[k] = "{:.3f} (n={})".format(tab_neg[k][2], tab_neg[k][3])
+      tab_neg[k] = "{:.3f} (n={}, generalization={})".format(tab_neg[k][2],
+                                                             tab_neg[k][3],
+                                                             tab_neg[k][4])
     tab_neg.set_num(n)
     tab_neg.set_title("Labeling function", "Empirical LF acc. (negative)")
-    return SideTables(tab_pos, tab_neg)    
-    
-  #TODO: update
-  def set_holdout(self, idxs=None, p=0.5):
-    if not 0 <= p <= 1:
-      raise ValueError("Validate/test split proportions must be in [0,1]")
-    if idxs is None:
-      self.holdout = np.ravel(np.where(self.has_ground_truth()))
-    else:
-      try:
-        self.holdout = np.ravel(np.arange(self.num_candidates())[idxs])
-      except:
-        raise ValueError("Indexes must be in range [0, num_candidates()) or be\
-                          boolean array of length num_candidates()")
-    h = self.holdout.copy()
-    np.random.shuffle(h)
-    self.validation = h[ : np.floor(p * len(h))]
-    self.test = h[np.floor(p * len(h)) : ]
-    
-  #TODO: update
-  def devset(self):
-    return np.ravel(np.setdiff1d(range(self.num_candidates()), self.holdout))
+    return SideTables(tab_pos, tab_neg)        
 
   def learn_weights_validated(self, **kwargs):
     if len(self.validation) == 0:
@@ -889,9 +924,9 @@ class DDLiteModel:
 
   #TODO: update
   def learn_weights(self, maxIter=1000, tol=1e-6, sample=False, 
-                    n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, 
+                    n_samples=100, mu=1e-7, n_mu=20, mu_min_ratio=1e-6, 
                     alpha=0, rate=0.01, decay=0.99, bias=False, 
-		    warm_starts=False, use_sparse=True,
+		         warm_starts=False, use_sparse=True,
                     verbose=False, log=True):
     """
     Uses the N x R matrix of LFs and the N x F matrix of features

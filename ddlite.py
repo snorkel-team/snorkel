@@ -68,6 +68,15 @@ class Candidate(object):
       return self._p
     return getattr(self.C._candidates[self.id], name)
     
+  def get_attr_seq(self, attribute, idxs):
+    if attribute is 'text':
+      raise ValueError("Cannot get indexes against text")
+    try:
+      seq = self.__getattr__(attribute)
+      return [seq[i] for i in idxs]
+    except:
+      raise ValueError("Invalid attribute or index range")  
+    
   def __repr__(self):
     s = str(self.C._candidates[self.id])
     return s if self._p is None else (s + " with probability " + str(self._p))
@@ -78,6 +87,7 @@ class candidate_internal(object):
   See entity_internal and relation_internal for examples
   """
   def __init__(self, all_idxs, labels, sent, xt):
+    self.uid = "{}::{}::{}".format(sent.doc_name, sent.sent_id, all_idxs)
     self.all_idxs = all_idxs
     self.labels = labels
     # Absorb XMLTree and Sentence object attributes for access by LFs
@@ -190,22 +200,43 @@ class Relation(Candidate):
     super(Relation, self).__init__(*args, **kwargs) 
 
   def mention(self, m, attribute='words'):
-    if attribute is 'text':
-      raise ValueError("Cannot get mention against text")
     if m not in [1, 2]:
       raise ValueError("Mention number must be 1 or 2")
-    try:
-      seq = self.__getattr__(attribute)
-      idxs = self.e1_idxs if m == 1 else self.e2_idxs
-      return [seq[i] for i in idxs]
-    except:
-      raise ValueError("Invalid attribute")
-      
+    return self.get_attr_seq(attribute, self.e1_idxs if m==1 else self.e2_idxs)
+    
   def mention1(self, attribute='words'):
       return self.mention(1, attribute)
 
   def mention2(self, attribute='words'):
-      return self.mention(2, attribute)
+      return self.mention(2, attribute)    
+    
+  def pre_window(self, m, attribute='words', n=3):
+    if m not in [1, 2]:
+      raise ValueError("Mention number must be 1 or 2")
+    idxs = self.e1_idxs if m==1 else self.e2_idxs
+    b = np.min(idxs)
+    s = [b - i for i in range(1, min(b+1,n+1))]
+    return self.get_attr_seq(attribute, s)
+  
+  def post_window(self, m, attribute='words', n=3):
+    if m not in [1, 2]:
+      raise ValueError("Mention number must be 1 or 2")
+    idxs = self.e1_idxs if m==1 else self.e2_idxs
+    b = len(self.words) - np.max(idxs)
+    s = [np.max(idxs) + i for i in range(1, min(b,n+1))]
+    return self.get_attr_seq(attribute, s)
+    
+  def pre_window1(self, attribute='words', n=3):
+    return self.pre_window(1, attribute, n)
+
+  def pre_window2(self, attribute='words', n=3):
+    return self.pre_window(2, attribute, n)
+
+  def post_window1(self, attribute='words', n=3):
+    return self.post_window(1, attribute, n)
+    
+  def post_window2(self, attribute='words', n=3):
+    return self.post_window(2, attribute, n)
   
   def __repr__(self):
       hdr = str(self.C._candidates[self.id])
@@ -287,15 +318,6 @@ class Relations(Candidates):
 class Entity(Candidate):
   def __init__(self, *args, **kwargs):
     super(Entity, self).__init__(*args, **kwargs) 
-
-  def get_attr_seq(self, attribute, idxs):
-    if attribute is 'text':
-      raise ValueError("Cannot get indexes against text")
-    try:
-      seq = self.__getattr__(attribute)
-      return [seq[i] for i in idxs]
-    except:
-      raise ValueError("Invalid attribute or index range")  
 
   def mention(self, attribute='words'):
     return self.get_attr_seq(attribute, self.idxs)
@@ -401,16 +423,29 @@ class DictTable(OrderedDict):
     html.append("</table>")
     return ''.join(html)
 
-def log_title(heads=["ID", "# LFs", "# ground truth", "Precision", "Recall", "F1"]):
+class SideTables:
+  def __init__(self, table1, table2):
+    self.t1, self.t2 = table1, table2
+  def _repr_html_(self):
+    t1_html = self.t1._repr_html_()
+    t2_html = self.t2._repr_html_()
+    t1_html = t1_html[:6] + " style=\"float: left\"" + t1_html[6:] 
+    t2_html = t2_html[:6] + " style=\"float: left\"" + t2_html[6:] 
+    return t1_html + t2_html
+
+def log_title(heads=["ID", "# LFs", "# ground truth", "Use LFs", "Model", 
+                     "Precision", "Recall", "F1"]):
   html = ["<tr>"]
   html.extend("<td><b>{0}</b></td>".format(h) for h in heads)
   html.append("</tr>")
   return ''.join(html)
 
 class ModelLog:
-  def __init__(self, log_id, lf_names, gt_idxs, gt, pred):
+  def __init__(self, log_id, lf_names, use_lfs, model, gt_idxs, gt, pred):
     self.id = log_id
     self.lf_names = lf_names
+    self.use_lfs = use_lfs
+    self.model = model
     self.gt_idxs = gt_idxs
     self.set_metrics(gt, pred)
   def set_metrics(self, gt, pred):
@@ -425,6 +460,8 @@ class ModelLog:
     html.append("<td>{0}</td>".format(self.id))
     html.append("<td>{0}</td>".format(self.num_lfs()))
     html.append("<td>{0}</td>".format(self.num_gt()))
+    html.append("<td>{0}</td>".format(self.use_lfs))
+    html.append("<td>{0}</td>".format(self.model))    
     html.append("<td>{:.3f}</td>".format(self.precision))
     html.append("<td>{:.3f}</td>".format(self.recall))
     html.append("<td>{:.3f}</td>".format(self.f1))
@@ -439,18 +476,7 @@ class ModelLog:
     html.append(log_title(["LF"]))
     html.extend("<tr><td>{0}</td></tr>".format(lf) for lf in self.lf_names)
     html.append("</table>")
-    return ''.join(html)
-
-class SideTables:
-  def __init__(self, table1, table2):
-    self.t1, self.t2 = table1, table2
-  def _repr_html_(self):
-    t1_html = self.t1._repr_html_()
-    t2_html = self.t2._repr_html_()
-    t1_html = t1_html[:6] + " style=\"float: left\"" + t1_html[6:] 
-    t2_html = t2_html[:6] + " style=\"float: left\"" + t2_html[6:] 
-    return t1_html + t2_html
-    
+    return ''.join(html)    
 
 class ModelLogger:
   def __init__(self):
@@ -473,85 +499,63 @@ class ModelLogger:
     html.append("</table>")
     return ''.join(html)
 
-class DDLiteModel:
-  def __init__(self, candidates, feats=None):
-    self.C = candidates
-    if type(feats) == np.ndarray or sparse.issparse(feats):
-      self.feats = feats
-    elif feats is None:
-      try:
-        self.feats = self.C.extract_features()
-      except:
-        raise ValueError("Could not automatically extract features")
+class CandidateGT:
+  def __init__(self, candidates, gt_dict=None):
+    gt_dict = gt_dict if isinstance(gt_dict, dict) else dict()
+    self._gt_dict = OrderedDict()
+    self._gt_vec = np.zeros((len(gt_dict)), dtype=int)
+    for i,c in enumerate(candidates):
+      l = gt_dict[c.uid] if c.uid in gt_dict else 0
+      self._gt_dict[c.uid] = l
+      self._gt_vec[i] = l
+
+    self.validation = np.array([], dtype=int)
+    self.test = np.array([], dtype=int)
+    
+    self.dev_split = 0.3
+    self.dev1 = np.array([], dtype=int)
+    self.dev2 = np.array([], dtype=int)
+      
+  def n(self):
+    return len(self._gt_dict)
+    
+  def holdout(self):
+    return np.concatenate(self.validation, self.test)
+    
+  def dev(self):
+    return np.concatenate(self.dev1, self.dev2)
+    
+  def training(self):
+    return np.ravel(np.setdiff1d(np.array(range(self.n()), dtype=int), 
+                                 self.holdout()))
+
+  def set_holdout(self, idxs=None, validation_frac=0.5):
+    """ Set validation and test sets """
+    if not 0 <= validation_frac <= 1:
+      raise ValueError("Validate/test split proportions must be in [0,1]")
+    if idxs is None:
+      h = np.ravel(np.where(self.has_ground_truth()))
     else:
-      raise ValueError("Features must be numpy ndarray or sparse")
-    self.logger = ModelLogger()
-    self.lf_matrix = None
-    self.lf_names = []
-    self.X = None
-    self._w_fit = None
-    self.w = None
-    self.holdout = np.array([])
-    self.validation = np.array([])
-    self.test = np.array([])
-    self._current_mindtagger_samples = np.array([])
-    self._mindtagger_labels = np.zeros((self.num_candidates()))
-    self._tags = []
-    self._gold_labels = np.zeros((self.num_candidates()))
-    self.mindtagger_instance = None
-
-  def num_candidates(self):
-    return len(self.C)
+      try:
+        h = np.ravel(np.arange(self.n())[idxs])
+      except:
+        raise ValueError("Indexes must be in range [0, num_candidates()) or be\
+                          boolean array of length num_candidates()")
+    np.random.shuffle(h)
+    self.validation = h[ : np.floor(validation_frac * len(h))]
+    self.test = h[np.floor(validation_frac * len(h)) : ]
     
-  def num_feats(self):
-    return self.feats.shape[1]
-  
-  def num_lfs(self, result='all'):
-    if self.lf_matrix is None:
-      return 0
-    return self.lf_matrix.shape[1]
-
-  def set_gold_labels(self, gold):
-    """ Set gold labels for all candidates 
-    May abstain with 0, and all other labels are -1 or 1
-    """
-    N = self.num_candidates()
-    gold_f = np.ravel(gold)
-    if gold_f.shape != (N,) or not np.all(np.in1d(gold_f, [-1,0,1])):
-      raise ValueError("Must have {} gold labels in [-1, 0, 1]".format(N))    
-    self._gold_labels = gold_f
-    
-  def set_mindtagger_labels(self, mt):
-    """ Set MT labels for all candidates 
-    May abstain with 0, and all other labels are -1 or 1
-    """
-    N = self.num_candidates()
-    mt_f = np.ravel(mt)
-    if mt_f.shape != (N,) or not np.all(np.in1d(mt_f, [-1,0,1])):
-      raise ValueError("Must have {} MT labels in [-1, 0, 1]".format(N))    
-    self._mindtagger_labels = mt_f
-    
-  def get_ground_truth(self, gt='resolve'):
-    """ Get ground truth from mindtagger, gold, or both with priority gold """
-    if gt.lower() == 'resolve':
-      return np.array([g if g != 0 else m for g,m in
-                       zip(self._gold_labels, self._mindtagger_labels)])
-    if gt.lower() == 'mindtagger':
-      return self._mindtagger_labels
-    if gt.lower() == 'gold':
-      return self._gold_labels
-    raise ValueError("Unknown ground truth type: {}".format(gt))
- 
-  def has_ground_truth(self):
-    """ Get boolean array of which candidates have some ground truth """
-    return self.get_ground_truth() != 0
-    
-  def get_labeled_ground_truth(self, gt='resolve', subset=None):
-    """ Get indices and labels of subset which has ground truth """
-    gt_all = self.get_ground_truth(gt)
+  def get_labeled_ground_truth(self, subset=None):
+    """ Get indices and labels of subset which have ground truth """
+    gt_all = self._gt_vec
     if subset is None:
       has_gt = (gt_all != 0)
       return np.ravel(np.where(has_gt)), gt_all[has_gt]
+    if subset is 'training':
+      t = self.training()
+      gt_all = gt_all[t]
+      has_gt = (gt_all != 0)
+      return t[has_gt], gt_all[has_gt]
     if subset is 'test':
       gt_all = gt_all[self.test]
       has_gt = (gt_all != 0)
@@ -565,8 +569,94 @@ class DDLiteModel:
       has_gt = (gt_all != 0)
       return subset[has_gt], gt_all[has_gt]
     except:
-      raise ValueError("subset must be 'test', 'validation' or an array of\
-                       indices 0 <= i < {}".format(self.num_candidates()))
+      raise ValueError("subset must be 'training', 'test', 'validation' or an\
+                        array of indices 0 <= i < {}".format(self.n()))
+    
+  def _update_devs(self, dev_split):
+    idxs,_ = self.get_labeled_ground_truth('training')
+    np.random.shuffle(idxs)
+    self.dev1 = idxs[ : np.floor(dev_split * len(idxs))]
+    self.dev2 = idxs[np.floor(dev_split * len(idxs)) : ]
+    
+  def update_gt(self, gt, idxs=None, uids=None):
+    """ Set ground truth for idxs XOR uids to gt. Updates dev sets. """
+    # Check input  
+    try:
+      gt = np.ravel(gt)
+    except:
+      raise ValueError("gt must be array-like")
+    if not np.all(np.in1d(gt, [-1,0,1])):
+      raise ValueError("gt must be -1, 0, or 1")
+    # Assign gt by indexes  
+    if idxs is not None and uids is None:
+      if len(idxs) != len(gt):
+        raise ValueError("idxs and gt must be same length")
+      try:
+        self._gt_vec[idxs] = gt
+      except:
+        raise ValueError("Could not assign gt to idxs")
+      k = self._gt_dict.keys()
+      for i,label in zip(idxs,gt):
+        self._gt_dict[k[i]] = label
+    # Assign gt by uid    
+    elif uids is not None and idxs is None:
+      if len(uids) != len(gt):
+        raise ValueError("uids and gt must be same length")
+      for uid,label in zip(uids,gt):
+        if uid not in self._gt_dict:
+          raise ValueError("uid {} not in candidates".format(uid))
+        self._gt_dict[uid] = label
+      # TODO: should be O(update size)
+      for i,uid in enumerate(self._gt_dict.keys()):
+        self._gt_vec[i] = self._gt_dict[uid]
+    # Both/neither idxs and uids defined    
+    else:
+      raise ValueError("Exactly one of idxs and uids must be not None")
+    # Update dev sets
+    self._update_devs(self.dev_split)
+
+class DDLiteModel:
+  def __init__(self, candidates, feats=None, gt_dict=None):
+    self.C = candidates
+    if type(feats) == np.ndarray or sparse.issparse(feats):
+      self.feats = feats
+    elif feats is None:
+      try:
+        self.feats = self.C.extract_features()
+      except:
+        raise ValueError("Could not automatically extract features")
+    else:
+      raise ValueError("Features must be numpy ndarray or sparse")
+    self.logger = ModelLogger()
+    # LF data
+    self.lf_matrix = None
+    self.lf_names = []
+    # Model data    
+    self.X = None
+    self._w_fit = None
+    self.w = None
+    # GT data
+    self.gt = CandidateGT(candidates, gt_dict)
+    # MT data
+    self._current_mindtagger_samples = np.array([], dtype=int)
+    self._mt_tags = []
+    self.mindtagger_instance = None
+    # Status
+    self.use_lfs = True
+    self.model = None
+
+  def num_candidates(self):
+    return len(self.C)
+    
+  def num_feats(self):
+    return self.feats.shape[1]
+  
+  def num_lfs(self, result='all'):
+    if self.lf_matrix is None:
+      return 0
+    return self.lf_matrix.shape[1]
+    
+  
                        
   def set_lf_matrix(self, lf_matrix, names, clear=False):
     try:
@@ -720,6 +810,7 @@ class DDLiteModel:
     tab.set_title("Labeling function", "Fraction of abstained votes")
     return tab
 
+  # TODO: update
   def _lf_acc(self, lf_idx):
     ds = self.devset()
     gt = self.get_ground_truth('resolve')
@@ -747,6 +838,7 @@ class DDLiteModel:
       pos_acc = float(np.sum((pred_sub == 1) * (gt == 1))) / n_pos
     return (pos_acc, n_pos, neg_acc, n_neg)
     
+  #TODO: update
   def lowest_empirical_accuracy_lfs(self, n=10):
     """ Show the LFs with the lowest accuracy compared to ground truth """
     d = {nm : self._lf_acc(i) for i,nm in enumerate(self.lf_names)}
@@ -769,6 +861,7 @@ class DDLiteModel:
     tab_neg.set_title("Labeling function", "Empirical LF acc. (negative)")
     return SideTables(tab_pos, tab_neg)    
     
+  #TODO: update
   def set_holdout(self, idxs=None, p=0.5):
     if not 0 <= p <= 1:
       raise ValueError("Validate/test split proportions must be in [0,1]")
@@ -785,6 +878,7 @@ class DDLiteModel:
     self.validation = h[ : np.floor(p * len(h))]
     self.test = h[np.floor(p * len(h)) : ]
     
+  #TODO: update
   def devset(self):
     return np.ravel(np.setdiff1d(range(self.num_candidates()), self.holdout))
 
@@ -793,6 +887,7 @@ class DDLiteModel:
       raise ValueError("No validation set. Use set_holdout(p) with p>0.")
     return self.learn_weights(**kwargs)
 
+  #TODO: update
   def learn_weights(self, maxIter=1000, tol=1e-6, sample=False, 
                     n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, 
                     alpha=0, rate=0.01, decay=0.99, bias=False, 
@@ -804,6 +899,7 @@ class DDLiteModel:
     Then runs learning, saving the learned weights
     Holds out preset set of candidates for evaluation
     """
+    self.model = "Joint"
     N, R, F = self.num_candidates(), self.num_lfs(), self.num_feats()
     self.X = sparse.hstack([self.lf_matrix, self.feats], format='csr') if not bias\
 	       else sparse.hstack([self.lf_matrix, self.feats, np.ones((N,1))], format='csr')
@@ -844,13 +940,17 @@ class DDLiteModel:
       raise ValueError("Must have validation set if single mu not provided")
     if log:
       return self.add_to_log()
+      
+  def use_lfs(self, use=True):
+    self.use_lfs = bool(use)
 
-  def get_link(self, subset=None, use_lfs=True):
+  #TODO: update
+  def get_log_odds(self, subset='validation'):
     """
     Get the array of predicted link function values (continuous) given weights
     Return either all candidates, a specified subset, or only validation/test set
     """
-    start = 0 if use_lfs else self.num_lfs()
+    start = 0 if self.use_lfs else self.num_lfs()
     if self.X is None or self.w is None:
       raise ValueError("Inference has not been run yet")
     if subset is None:
@@ -865,55 +965,35 @@ class DDLiteModel:
       raise ValueError("subset must be 'test', 'validation', or an array of\
                        indices 0 <= i < {}".format(self.num_candidates()))
 
-  def get_predicted_probability(self, subset=None):
+  def get_predicted_probability(self, subset='validation'):
     """
     Get array of predicted probabilities (continuous) given weights
     Return either all candidates, a specified subset, or only validation/test set
     """
-    return odds_to_prob(self.get_link(subset))
+    return odds_to_prob(self.get_log_odds(subset))
  
-  def get_predicted(self, subset=None):
+  def get_predicted(self, subset='validation'):
     """
     Get the array of predicted (boolean) variables given weights
     Return either all variables, a specified subset, or only validation/test set
     """
-    return np.sign(self.get_link(subset))
+    return np.sign(self.get_log_odds(subset))
 
-  def get_classification_accuracy(self, gt='resolve', subset=None):
+  def get_classification_accuracy(self, subset='validation'):
     """
     Given the ground truth, return the classification accuracy
     Return either accuracy for all candidates, a subset, or validation/test set
     """
-    idxs, gt = self.get_labeled_ground_truth(gt, subset)
+    idxs, gt = self.get_labeled_ground_truth(subset)
     pred = self.get_predicted(idxs)
     return np.mean(gt == pred)
-
-  def get_LF_priority_vote_accuracy(self, gt='resolve', subset=None):
-    """
-    This is to answer the question: 'How well would my LFs alone do?'
-    I.e. without any features, learning of LF or feature weights, etc.- this serves as a
-    natural baseline / quick metric
-    Labels are assigned by the first LF that emits one for each relation (based on the order
-    of the provided LF list)
-    """
-    R = self.num_lfs()
-    grid, gt = self.get_labeled_ground_truth(gt, subset)
-    correct = 0
-    #TODO: more efficient LF checking for sparse matrix using NONZERO
-    dense_lfs = self.lf_matrix.todense()
-    for i in grid:
-      for j in xrange(R):
-        if dense_lfs[i,j] != 0:
-          correct += 1 if dense_lfs[i,j] == gt[j] else 0
-          break
-    return float(correct) / len(gt)
     
   def _plot_prediction_probability(self, probs):
     plt.hist(probs, bins=20, normed=False, facecolor='blue')
     plt.xlim((0,1.025))
     plt.xlabel("Probability")
     plt.ylabel("# Predictions")
-    
+
   def _plot_accuracy(self, probs, ground_truth):
     x = 0.1 * np.array(range(11))
     bin_assign = [x[i] for i in np.digitize(probs, x)-1]
@@ -927,6 +1007,7 @@ class DDLiteModel:
     plt.xlabel("Probability")
     plt.ylabel("Accuracy")
 
+  #TODO: update
   def plot_calibration(self):
     """
     Show classification accuracy and probability histogram plots
@@ -951,10 +1032,12 @@ class DDLiteModel:
         plt.title("(c) Accuracy (test set)")
     plt.show()
     
+  #TODO: update
   def _get_all_abstained(self, dev=True):
       idxs = self.devset() if dev else range(self.num_candidates())
       return np.ravel(np.where(np.ravel((self.lf_matrix[idxs,:]).sum(1)) == 0))
-    
+
+  #TODO: update
   def open_mindtagger(self, num_sample=None, abstain=False, **kwargs):
     self.mindtagger_instance = MindTaggerInstance(self.C.mindtagger_format())
     if isinstance(num_sample, int) and num_sample > 0:
@@ -976,6 +1059,7 @@ class DDLiteModel:
                                                     self._current_mindtagger_samples,
                                                     probs, tags, **kwargs)
   
+  #TODO: update
   def add_mindtagger_tags(self):
     tags = self.mindtagger_instance.get_mindtagger_tags()
     self._tags = tags
@@ -983,27 +1067,27 @@ class DDLiteModel:
     tb = [tags[i]['is_correct'] for i in is_tagged]
     tb = [1 if t else -1 for t in tb]
     self._mindtagger_labels[self._current_mindtagger_samples[is_tagged]] = tb
-    
-  def add_to_log(self, log_id=None, gt='resolve', subset='test', verb=True):
+  
+  #TODO: update
+  def add_to_log(self, log_id=None, subset='test', show=True):
     if log_id is None:
       log_id = len(self.logger)
-    gt_idxs, gt = self.get_labeled_ground_truth(gt, subset)
+    gt_idxs, gt = self.get_labeled_ground_truth(subset)
     pred = self.get_predicted(gt_idxs)    
-    self.logger.log(ModelLog(log_id, self.lf_names, gt_idxs, gt, pred))
-    if verb:
+    self.logger.log(ModelLog(log_id, self.lf_names, self.use_lfs, self.model,
+                             gt_idxs, gt, pred))
+    if show:
       return self.logger[-1]
       
   def show_log(self, idx=None):
     if idx is None:
       return self.logger
-    elif isinstance(idx, int):
-      try:
-        return self.logger[idx]
-      except:
-        raise ValueError("Index must be for one of {} logs".format(len(self.logger)))
-    else:
-      raise ValueError("Index must be an integer index or None")
-    
+    try:
+      return self.logger[idx]
+    except:
+      raise ValueError("Index must be for one of {} logs".format(len(self.logger)))
+
+# Legacy name
 CandidateModel = DDLiteModel
 
 ####################################################################

@@ -16,7 +16,6 @@ jdk:
 
 cache:
   directories:
-    - /var/cache/oracle-jdk8-installer  # hoping to speed up the: apt-get install oracle-java8-installer
     - download
     - $HOME/.cache/pip
     - $HOME/miniconda/envs/test     # to avoid repetitively setting up Ana/Miniconda environment

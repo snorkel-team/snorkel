@@ -27,6 +27,9 @@ from ddlite_matcher import *
 # ddlite mindtagger
 from ddlite_mindtagger import *
 
+# ddlite learning
+from ddlite_learning import learn_elasticnet_logreg, odds_to_prob
+
 #####################################################################
 ############################ TAGGING UTILS ##########################
 #####################################################################
@@ -87,7 +90,8 @@ class candidate_internal(object):
   See entity_internal and relation_internal for examples
   """
   def __init__(self, all_idxs, labels, sent, xt):
-    self.uid = "{}::{}::{}".format(sent.doc_name, sent.sent_id, all_idxs)
+    self.uid = "{}::{}::{}::{}".format(sent.doc_name, sent.sent_id,
+                                       all_idxs, labels)
     self.all_idxs = all_idxs
     self.labels = labels
     # Absorb XMLTree and Sentence object attributes for access by LFs
@@ -399,7 +403,30 @@ class Entities(Candidates):
 
 ####################################################################
 ############################ LEARNING ##############################
-#################################################################### 
+####################################################################
+
+def precision(gt, pred):
+  pred, gt = np.ravel(pred), np.ravel(gt)
+  pred[pred == 0] = 1
+  tp = np.sum((pred == 1) * (gt == 1))
+  fp = np.sum((pred == 1) * (gt != 1))
+  return 0 if tp == 0 else float(tp) / float(tp + fp)
+
+def recall(gt, pred):
+  pred, gt = np.ravel(pred), np.ravel(gt)
+  pred[pred == 0] = 1
+  tp = np.sum((pred == 1) * (gt == 1))
+  p = np.sum(gt == 1)
+  return 0 if tp == 0 else float(tp) / float(p)
+
+def f1_score(gt=None, pred=None, prec=None, rec=None):
+  if prec is None or rec is None:
+    if gt is None or pred is None:
+      raise ValueError("Need both gt and pred or both prec and rec")
+    pred, gt = np.ravel(pred), np.ravel(gt)
+    prec = precision(gt, pred) if prec is None else prec
+    rec = recall(gt, pred) if rec is None else rec
+  return 0 if (prec * rec == 0) else 2 * (prec * rec)/(prec + rec)
 
 class DictTable(OrderedDict):
   def set_title(self, heads):
@@ -498,6 +525,8 @@ class ModelLogger:
     html.extend(log.table_entry() for log in self.logs)
     html.append("</table>")
     return ''.join(html)
+
+ValidatedFit = namedtuple('ValidatedFit', ['w', 'P', 'R', 'F1'])
 
 class CandidateGT:
   def __init__(self, candidates, gt_dict=None):
@@ -965,7 +994,7 @@ class DDLiteModel:
         col, tp, na, ng, pa, pg = ("#0099ff", "Positive", "N/A", "N/A",
                                    "{:.2f}% (n={})".format(100.*v[2][0], v[2][1]),
                                    "{:.2f} (n={})".format(v[2][2], v[2][3]))
-      elif both_k:
+      if both_k:
         col, tp, pa, pg, na, ng = ("#c700ff", "Both",
                                    "{:.2f}% (n={})".format(100.*v[2][0], v[2][1]),
                                    "{:.2f} (n={})".format(v[2][2], v[2][3]),
@@ -993,12 +1022,11 @@ class DDLiteModel:
       raise ValueError("No validation set. Use set_holdout(p) with p>0.")
     return self.learn_weights(**kwargs)
 
-  #TODO: update
-  def learn_weights(self, maxIter=1000, tol=1e-6, sample=False, 
+  def learn_weights(self, n_iter=1000, tol=1e-6, sample=False, 
                     n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, 
                     alpha=0, rate=0.01, decay=0.99, bias=False, 
-		         warm_starts=False, use_sparse=True,
-                    verbose=False, log=True):
+		            warm_starts=False, use_sparse=True, verbose=False,
+                    log=True, plot=True):
     """
     Uses the N x R matrix of LFs and the N x F matrix of features
     Stacks them, giving the LFs a +1 prior (i.e. init value)
@@ -1013,49 +1041,95 @@ class DDLiteModel:
     if not use_sparse:
       self.X = np.asarray(self.X.todense())
     w0 = np.concatenate([np.ones(R), np.zeros(F)]) if not bias\
- 	   else np.concatenate([np.ones(R), np.zeros(F), 0])
+ 	   else np.concatenate([np.ones(R), np.zeros(F+1)])
+    unreg = [self.X.shape[1]-1] if bias else []
     # If a single mu is provided, just fit a single model
     if mu is not None and (not hasattr(mu, '__iter__') or len(mu) == 1):
       mu = mu if not hasattr(mu, '__iter__') else mu[0]
       self.w = learn_elasticnet_logreg(self.X[self.dev(),:],
-                                       maxIter=maxIter, tol=tol, w0=w0, 
+                                       n_iter=n_iter, tol=tol, w0=w0, 
                                        mu_seq=mu, alpha=alpha, sample=sample,
                                        n_samples=n_samples, warm_starts=warm_starts,
-                                       rate=rate, decay=decay, verbose=verbose)[mu]
+                                       rate=rate, decay=decay, unreg=unreg,
+                                       verbose=verbose)[mu]
     # TODO: handle args between learning functions better
     elif len(self.validation()) > 0: 
       result = learn_elasticnet_logreg(self.X[self.dev(),:],
-                                       maxIter=maxIter, tol=tol, w0=w0, n_mu=n_mu, 
+                                       n_iter=n_iter, tol=tol, w0=w0, n_mu=n_mu, 
                                        mu_seq=mu, mu_min_ratio=mu_min_ratio,
                                        alpha=alpha, rate=rate, decay=decay, 
                                        sample=sample, n_samples=n_samples,
-                                       warm_starts=warm_starts, verbose=verbose)
+                                       warm_starts=warm_starts, unreg=unreg,
+                                       verbose=verbose)
       self._w_fit = OrderedDict()
-      ValidatedFit = namedtuple('ValidatedFit', ['w', 'P', 'R', 'F1'])
       gt = self.gt._gt_vec[self.validation()]
-      f1_opt, w_opt = 0, None
+      f1_opt, w_opt, mu_opt = 0, None, None
+      s = 0 if self.use_lfs else self.num_lfs()
       for mu in sorted(result.keys()):
         w = result[mu]
-        pred = 2*(odds_to_prob(self.X[self.validation(),:].dot(w)) >= 0.5) - 1
+        pred = 2*(odds_to_prob(self.X[self.validation(),s:].dot(w[s:])) >= 0.5) - 1
         prec, rec = precision(gt, pred), recall(gt, pred)
         f1 = f1_score(prec = prec, rec = rec)
         self._w_fit[mu] = ValidatedFit(w, prec, rec, f1)
         if f1 >= f1_opt:
-          w_opt, f1_opt = w, f1
+          w_opt, f1_opt, mu_opt = w, f1, mu
       self.w = w_opt
+      if plot:
+        self.plot_learning_diagnostics(mu_opt, f1_opt)
     # Fit using a default mu value  
     else:
       warnings.warn("Using default mu value with no validation set")
       mu = 1e-7
       self.w = learn_elasticnet_logreg(self.X[self.dev(),:],
-                                       maxIter=maxIter, tol=tol, w0=w0, 
+                                       n_iter=n_iter, tol=tol, w0=w0, 
                                        mu_seq=mu, alpha=alpha, sample=sample,
                                        n_samples=n_samples, warm_starts=warm_starts,
-                                       rate=rate, decay=decay, verbose=verbose)[mu]
+                                       rate=rate, decay=decay, unreg=unreg,
+                                       verbose=verbose)[mu]
     if log:
       return self.add_to_log()
       
-  def use_lfs(self, use=True):
+  def plot_learning_diagnostics(self, mu_opt, f1_opt):
+    
+    mu_seq = sorted(self._w_fit.keys())
+    p = np.ravel([self._w_fit[mu].P for mu in mu_seq])
+    r = np.ravel([self._w_fit[mu].R for mu in mu_seq])
+    f1 = np.ravel([self._w_fit[mu].F1 for mu in mu_seq])
+    nnz = np.ravel([np.sum(self._w_fit[mu].w != 0) for mu in mu_seq])    
+    
+    fig, ax1 = plt.subplots()
+    # Plot spread
+    ax1.set_xscale('log', nonposx='clip')    
+    ax1.scatter(mu_opt, f1_opt, marker='*', color='purple', s=500,
+                zorder=10, label="Maximum F1: mu={}".format(mu_opt))
+    ax1.plot(mu_seq, f1, 'o-', color='red', label='F1 score')
+    ax1.plot(mu_seq, p, 'o--', color='blue', label='Precision')
+    ax1.plot(mu_seq, r, 'o--', color='green', label='Recall')
+    ax1.set_xlabel('log(penalty)')
+    ax1.set_ylabel('F1 score/Precision/Recall')
+    ax1.set_ylim(-0.04, 1.04)
+    for t1 in ax1.get_yticklabels():
+      t1.set_color('r')
+    # Plot nnz
+    ax2 = ax1.twinx()
+    ax2.plot(mu_seq, nnz, '.:', color='gray', label='Sparsity')
+    ax2.set_ylabel('Number of non-zero coefficients')
+    ax2.set_ylim(-0.01*np.max(nnz), np.max(nnz)*1.01)
+    for t2 in ax2.get_yticklabels():
+      t2.set_color('gray')
+    # Shrink plot for legend
+    box1 = ax1.get_position()
+    ax1.set_position([box1.x0, box1.y0+box1.height*0.1, box1.width, box1.height*0.9])
+    box2 = ax2.get_position()
+    ax2.set_position([box2.x0, box2.y0+box2.height*0.1, box2.width, box2.height*0.9])
+    plt.title("Validation for logistic regression learning")
+    lns1, lbs1 = ax1.get_legend_handles_labels()
+    lns2, lbs2 = ax2.get_legend_handles_labels()
+    ax1.legend(lns1+lns2, lbs1+lbs2, loc='upper center', bbox_to_anchor=(0.5,-0.05),
+               scatterpoints=1, fontsize=10, markerscale=0.5)
+    plt.show()
+      
+  def set_use_lfs(self, use=True):
     self.use_lfs = bool(use)
 
   def get_log_odds(self, subset=None):
@@ -1202,209 +1276,6 @@ CandidateModel = DDLiteModel
 ####################################################################
 ############################ ALGORITHMS ############################
 #################################################################### 
-
-#
-# Logistic regression algs
-# Ported from Chris's Julia notebook...
-#
-def log_odds(p):
-  """This is the logit function"""
-  return np.log(p / (1.0 - p))
-
-def odds_to_prob(l):
-  """
-  This is the inverse logit function logit^{-1}:
-
-    l       = \log\frac{p}{1-p}
-    \exp(l) = \frac{p}{1-p}
-    p       = \frac{\exp(l)}{1 + \exp(l)}
-  """
-  return np.exp(l) / (1.0 + np.exp(l))
-
-def sample_data(X, w, n_samples):
-  """
-  Here we do Gibbs sampling over the decision variables (representing our objects), o_j
-  corresponding to the columns of X
-  The model is just logistic regression, e.g.
-
-    P(o_j=1 | X_{*,j}; w) = logit^{-1}(w \dot X_{*,j})
-
-  This can be calculated exactly, so this is essentially a noisy version of the exact calc...
-  """
-  N, R = X.shape
-  t = np.zeros(N)
-  f = np.zeros(N)
-
-  # Take samples of random variables
-  idxs = np.round(np.random.rand(n_samples) * (N-1)).astype(int)
-  ct = np.bincount(idxs)
-  # Estimate probability of correct assignment
-  increment = np.random.rand(n_samples) < odds_to_prob(X[idxs, :].dot(w))
-  increment_f = -1. * (increment - 1)
-  t[idxs] = increment * ct[idxs]
-  f[idxs] = increment_f * ct[idxs]
-  
-  return t, f
-
-
-def exact_data(X, w, evidence=None):
-  """
-  We calculate the exact conditional probability of the decision variables in
-  logistic regression; see sample_data
-  """
-  t = odds_to_prob(X.dot(w))
-  if evidence is not None:
-    t[evidence > 0.0] = 1.0
-    t[evidence < 0.0] = 0.0
-  return t, 1-t
-
-def abs_sparse(X):
-  """ Element-wise absolute value of sparse matrix """
-  X_abs = X.copy()
-  if sparse.isspmatrix_csr(X) or sparse.isspmatrix_csc(X):
-    X_abs.data = np.abs(X_abs.data)
-  elif sparse.isspmatrix_lil(X):
-    X_abs.data = np.array([np.abs(L) for L in X_abs.data])
-  else:
-    raise ValueError("Only supports CSR/CSC and LIL matrices")
-  return X_abs
-
-def transform_sample_stats(Xt, t, f, Xt_abs=None):
-  """
-  Here we calculate the expected accuracy of each LF/feature
-  (corresponding to the rows of X) wrt to the distribution of samples S:
-
-    E_S[ accuracy_i ] = E_(t,f)[ \frac{TP + TN}{TP + FP + TN + FN} ]
-                      = \frac{X_{i|x_{ij}>0}*t - X_{i|x_{ij}<0}*f}{t+f}
-                      = \frac12\left(\frac{X*(t-f)}{t+f} + 1\right)
-  """
-  if Xt_abs is None:
-    Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else abs(Xt)
-  n_pred = Xt_abs.dot(t+f)
-  m = (1. / (n_pred + 1e-8)) * (Xt.dot(t) - Xt.dot(f))
-  p_correct = (m + 1) / 2
-  return p_correct, n_pred
-
-def learn_elasticnet_logreg(X, maxIter=500, tol=1e-6, w0=None, sample=True,
-                            n_samples=100, alpha=0, mu_seq=None, n_mu=20,
-                            mu_min_ratio=1e-6, rate=0.01, decay=1,
-                            warm_starts=False, evidence=None, verbose=False):
-  """ Perform SGD wrt the weights w
-       * w0 is the initial guess for w
-       * sample and n_samples determine SGD batch size
-       * alpha is the elastic net penalty mixing parameter (0=ridge, 1=lasso)
-       * mu is the sequence of elastic net penalties to search over
-  """
-  if type(X) != np.ndarray and not sparse.issparse(X):
-    raise TypeError("Inputs should be np.ndarray type or scipy sparse.")
-  N, R = X.shape
-
-  # Pre-generate other matrices
-  Xt = X.transpose()
-  Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else np.abs(Xt)
-  
-  # Initialize weights if no initial provided
-  w0 = np.zeros(R) if w0 is None else w0   
-  
-  # Check mixing parameter
-  if not (0 <= alpha <= 1):
-    raise ValueError("Mixing parameter must be in [0,1]")
-  
-  # Determine penalty parameters  
-  if mu_seq is not None:
-    mu_seq = np.ravel(mu_seq)
-    if not np.all(mu_seq >= 0):
-      raise ValueError("Penalty parameters must be non-negative")
-    mu_seq.sort()
-  else:
-    mu_seq = get_mu_seq(n_mu, rate, alpha, mu_min_ratio)
-
-  if evidence is not None:
-    evidence = np.ravel(evidence)
-
-  weights = dict()
-  # Search over penalty parameter values
-  for mu in mu_seq:
-    if verbose:
-      print "Begin training for mu = {}".format(mu)
-    w = w0.copy()
-    g = np.zeros(R)
-    l = np.zeros(R)
-    g_size = 0
-    cur_rate = rate
-    # Take SGD steps
-    for step in range(maxIter):
-      if step % 100 == 0 and verbose:    
-        print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size) 
-      # Get the expected LF accuracy
-      t,f = sample_data(X, w, n_samples=n_samples) if sample else exact_data(X, w, evidence)
-      p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
-
-      # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
-      l = np.clip(log_odds(p_correct), -10, 10)
-
-      # SGD step with normalization by the number of samples
-      g0 = (n_pred*(w - l)) / np.sum(n_pred)
-
-      # Momentum term for faster training
-      g = 0.95*g0 + 0.05*g
-
-      # Check for convergence
-      wn = np.linalg.norm(w, ord=2)
-      g_size = np.linalg.norm(g, ord=2)
-      if wn < 1e-12 or g_size / wn < tol:
-        if verbose:
-          print "SGD converged for mu={:.3f} after {} steps".format(mu, step)
-        break
-
-      # Update weights
-      cur_rate *= decay
-      w -= cur_rate * g
-      
-      # Apply elastic net penalty
-      soft = np.abs(w) - cur_rate * alpha * mu
-      #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
-      w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / (1 + (1-alpha) * cur_rate * mu)
-    
-    # SGD did not converge    
-    else:
-      warnings.warn("SGD did not converge for mu={:.3f}. Try increasing maxIter.".format(mu))
-
-    # Store result and set warm start for next penalty
-    weights[mu] = w.copy()
-    if warm_starts:
-      w0 = w
-    
-  return weights
-  
-def get_mu_seq(n, rate, alpha, min_ratio):
-  mv = (max(float(1 + rate * 10), float(rate * 11)) / (alpha + 1e-3))
-  return np.logspace(np.log10(mv * min_ratio), np.log10(mv), n)
-  
-
-
-def precision(gt, pred):
-  pred, gt = np.ravel(pred), np.ravel(gt)
-  pred[pred == 0] = 1
-  tp = np.sum((pred == 1) * (gt == 1))
-  fp = np.sum((pred == 1) * (gt != 1))
-  return 0 if tp == 0 else float(tp) / float(tp + fp)
-
-def recall(gt, pred):
-  pred, gt = np.ravel(pred), np.ravel(gt)
-  pred[pred == 0] = 1
-  tp = np.sum((pred == 1) * (gt == 1))
-  p = np.sum(gt == 1)
-  return 0 if tp == 0 else float(tp) / float(p)
-
-def f1_score(gt=None, pred=None, prec=None, rec=None):
-  if prec is None or rec is None:
-    if gt is None or pred is None:
-      raise ValueError("Need both gt and pred or both prec and rec")
-    pred, gt = np.ravel(pred), np.ravel(gt)
-    prec = precision(gt, pred) if prec is None else prec
-    rec = recall(gt, pred) if rec is None else rec
-  return 0 if (prec * rec == 0) else 2 * (prec * rec)/(prec + rec)
 
 def main():
   txt = "Han likes Luke and a good-wookie. Han Solo don\'t like bounty hunters."

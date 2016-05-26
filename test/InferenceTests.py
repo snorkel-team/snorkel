@@ -95,26 +95,7 @@ class TestInference(unittest.TestCase):
                                       verbose=True)[mu]
         # Check sample marginals are close to deterministic solutio
         ld, ls = odds_to_prob(X.dot(w_d)), odds_to_prob(X.dot(w_s))
-        self.assertLessEqual(np.linalg.norm(ld-ls) / np.linalg.norm(ld), 0.05)
-                             
-    def test_logistic_regression_cv(self):
-        print "Running logistic regression test with cross validation"
-        X, w0, gt = self._problem(n=500, nlf=50, lf_prior=0.2, lf_mean=0.6,
-                                  lf_sd=0.25, nf=800, f_prior=0.1, f_mean=0.55,
-                                  f_sd=0.25)
-        mu_seq = [1e6, 1, 1e-12]
-        w = cv_elasticnet_logreg(X, nfolds=3, w0=w0, mu_seq=mu_seq, plot=False,
-                                 alpha=self.ridge, opt_1se=True, verbose=True,
-                                 maxIter=2500, tol=1e-4, sample=False,
-                                 rate=0.01)
-        w_all = [learn_elasticnet_logreg(X, maxIter=2500, tol=1e-4, w0=w0,
-                                         sample=False, alpha=self.ridge,
-                                         mu_seq=mu, rate=0.01, verbose=True)[mu]
-                for mu in mu_seq]
-        for wp in w_all:
-            self.assertGreaterEqual(np.mean(np.sign(X.dot(w)) == gt),
-                                    np.mean(np.sign(X.dot(wp)) == gt)-0.05)
-                         
+        self.assertLessEqual(np.linalg.norm(ld-ls) / np.linalg.norm(ld), 0.05)                         
                          
     def _problem(self, n, nlf, lf_prior, lf_mean, lf_sd, nf, f_prior, f_mean, f_sd):
         # Gen gt  

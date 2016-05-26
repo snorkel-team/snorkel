@@ -18,7 +18,7 @@ class TestInference(unittest.TestCase):
         X, w0, gt = self._problem(n=250, nlf=50, lf_prior=0.4, lf_mean=0.7,
                                   lf_sd=0.25, nf=250, f_prior=0.2, f_mean=0.6,
                                   f_sd=0.25)
-        w = learn_elasticnet_logreg(X, maxIter=500, tol=1e-4, w0=w0,
+        w = learn_elasticnet_logreg(X, n_iter=500, tol=1e-4, w0=w0,
                                     sample=False, alpha=alpha, mu_seq=mu, 
                                     rate=0.01, verbose=True)[mu]
         self.assertGreater(np.mean(np.sign(X.dot(w)) == gt), 0.85)
@@ -43,7 +43,7 @@ class TestInference(unittest.TestCase):
         X, w0, gt = self._problem(n=1000, nlf=100, lf_prior=0.2, lf_mean=0.7,
                                   lf_sd=0.25, nf=5000, f_prior=0.05, f_mean=0.6,
                                   f_sd=0.25)
-        w = learn_elasticnet_logreg(X, maxIter=1000, tol=1e-4, w0=w0,
+        w = learn_elasticnet_logreg(X, n_iter=1000, tol=1e-4, w0=w0,
                                     sample=False, alpha=alpha, mu_seq=mu, 
                                     rate=0.01, verbose=True)[mu]
         self.assertGreater(np.mean(np.sign(X.dot(w)) == gt), 0.85)
@@ -70,10 +70,10 @@ class TestInference(unittest.TestCase):
                                   lf_sd=0.25, nf=1000, f_prior=0.1, f_mean=0.6,
                                   f_sd=0.25)
         mu = 1e-4
-        w_s = learn_elasticnet_logreg(X, maxIter=2500, tol=1e-4, w0=w0,
+        w_s = learn_elasticnet_logreg(X, n_iter=2500, tol=1e-4, w0=w0,
                                       sample=False, alpha=self.ridge,
                                       mu_seq=mu, rate=0.01, verbose=True)[mu]
-        w_d = learn_elasticnet_logreg(np.asarray(X.todense()), maxIter=2500,
+        w_d = learn_elasticnet_logreg(np.asarray(X.todense()), n_iter=2500,
                                       tol=1e-4, w0=w0, sample=False,
                                       alpha=self.ridge, mu_seq=mu, rate=0.01,
                                       verbose=True)[mu]
@@ -86,10 +86,10 @@ class TestInference(unittest.TestCase):
                                   lf_sd=0.25, nf=1000, f_prior=0.1, f_mean=0.6,
                                   f_sd=0.25)
         mu = 1e-4
-        w_d = learn_elasticnet_logreg(X, maxIter=2500, tol=1e-4, w0=w0,
+        w_d = learn_elasticnet_logreg(X, n_iter=2500, tol=1e-4, w0=w0,
                                       sample=False, alpha=self.ridge,
                                       mu_seq=mu, rate=0.01, verbose=True)[mu]
-        w_s = learn_elasticnet_logreg(X, maxIter=2500, tol=1e-4, w0=w0,
+        w_s = learn_elasticnet_logreg(X, n_iter=2500, tol=1e-4, w0=w0,
                                       sample=True, n_samples=200,
                                       alpha=self.ridge, mu_seq=mu, rate=0.01,
                                       verbose=True)[mu]

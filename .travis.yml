@@ -26,7 +26,7 @@ addons:
   apt:
     packages:
     # CoreNLP needs Java 8
-    - oracle-java8-installer
+    - openjdk-8-jdk 
 
 # Following trick is necessary to get a binary distribution of numpy, scipy, etc. which takes too long to build every time
 # See: http://stackoverflow.com/q/30588634

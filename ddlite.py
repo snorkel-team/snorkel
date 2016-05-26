@@ -1,6 +1,6 @@
 # Base Python
 import cPickle, json, os, sys, warnings
-from collections import defaultdict, OrderedDict
+from collections import defaultdict, OrderedDict, namedtuple
 import lxml.etree as et
 
 # Scientific modules
@@ -402,23 +402,23 @@ class Entities(Candidates):
 #################################################################### 
 
 class DictTable(OrderedDict):
-  def set_title(self, head1, head2):
-    self.title = [head1, head2]
-  def set_num(self, n):
-    self.num = n
+  def set_title(self, heads):
+    self.title = heads
+  def set_rows(self, n):
+    self.rows = n
+  def set_cols(self, n):
+    self.cols = n
   def _repr_html_(self):
     html = ["<table>"]
     if hasattr(self, 'title'):
       html.append("<tr>")
-      html.append("<td><b>{0}</b></td>".format(self.title[0]))
-      html.append("<td><b>{0}</b></td>".format(self.title[1]))
+      html.extend("<td><b>{0}</b></td>".format(t) for t in self.title)
       html.append("</tr>")
-    items = self.items()[:self.num] if hasattr(self, 'num') else self.items()
+    items = self.items()[:self.rows] if hasattr(self, 'rows') else self.items()
     for k, v in items:
       html.append("<tr>")
       html.append("<td>{0}</td>".format(k))
-      v = "{:.3f}".format(v) if isinstance(v, float) else v
-      html.append("<td>{0}</td>".format(v))
+      html.extend("<td>{0}</td>".format(i) for i in v)
       html.append("</tr>")
     html.append("</table>")
     return ''.join(html)
@@ -429,11 +429,11 @@ class SideTables:
   def _repr_html_(self):
     t1_html = self.t1._repr_html_()
     t2_html = self.t2._repr_html_()
-    t1_html = t1_html[:6] + " style=\"float: left\"" + t1_html[6:] 
+    t1_html = t1_html[:6] + " style=\"margin-right: 1%;float: left\"" + t1_html[6:] 
     t2_html = t2_html[:6] + " style=\"float: left\"" + t2_html[6:] 
     return t1_html + t2_html
 
-def log_title(heads=["ID", "# LFs", "# ground truth", "Use LFs", "Model", 
+def log_title(heads=["ID", "# LFs", "Test set size", "Use LFs", "Model", 
                      "Precision", "Recall", "F1"]):
   html = ["<tr>"]
   html.extend("<td><b>{0}</b></td>".format(h) for h in heads)
@@ -503,7 +503,7 @@ class CandidateGT:
   def __init__(self, candidates, gt_dict=None):
     gt_dict = gt_dict if isinstance(gt_dict, dict) else dict()
     self._gt_dict = OrderedDict()
-    self._gt_vec = np.zeros((len(gt_dict)), dtype=int)
+    self._gt_vec = np.zeros((len(candidates)), dtype=int)
     for i,c in enumerate(candidates):
       l = gt_dict[c.uid] if c.uid in gt_dict else 0
       self._gt_dict[c.uid] = l
@@ -514,29 +514,45 @@ class CandidateGT:
     
     self.training = np.array(range(self.n()), dtype=int)
     
-    self.dev_split = 0.3
+    self.dev_split = 0.7
     self.dev1 = np.array([], dtype=int)
     self.dev2 = np.array([], dtype=int)
+    
+    self.min_dev = 20
+    self.min_val = 20
+    self.min_test = 20
       
   def n(self):
-    return len(self._gt_dict)
+    return len(self._gt_vec)
+    
+  def get_gt_dict(self):
+    return self._gt_dict
+
+  def dev_size_warn(self):    
+    if len(self.dev1) < self.min_dev or len(self.dev2) < self.min_dev:
+      warnings.warn("Dev sets are too small for reliable estimates")
+     
+  def val_test_size_warn(self):    
+    if len(self.validation) < self.min_val or len(self.test) < self.min_test:
+      warnings.warn("Validation/test sets are too small for reliable estimates")
+      
     
   def _update_training(self):
     self.training = np.setdiff1d(np.array(range(self.n()), dtype=int), 
                                  self.holdout())
     
   def holdout(self):
-    return np.concatenate(self.validation, self.test)
+    return np.concatenate([self.validation, self.test])
     
   def dev(self):
-    return np.concatenate(self.dev1, self.dev2)
+    return np.concatenate([self.dev1, self.dev2])
 
   def set_holdout(self, idxs=None, validation_frac=0.5):
     """ Set validation and test sets """
     if not 0 <= validation_frac <= 1:
       raise ValueError("Validate/test split proportions must be in [0,1]")
     if idxs is None:
-      h = np.ravel(np.where(self.has_ground_truth()))
+      h = np.ravel(np.where(self._gt_vec != 0))
     else:
       try:
         h = np.ravel(np.arange(self.n())[idxs])
@@ -547,6 +563,7 @@ class CandidateGT:
     self.validation = h[ : np.floor(validation_frac * len(h))]
     self.test = h[np.floor(validation_frac * len(h)) : ]
     self._update_training()
+    self._update_devs(self.dev_split)
     
   def _update_devs(self, dev_split):
     idxs,_ = self.get_labeled_ground_truth('training')
@@ -598,7 +615,7 @@ class CandidateGT:
       has_gt = (gt_all != 0)
       return np.ravel(np.where(has_gt)), gt_all[has_gt]
     if subset is 'training':
-      t = self.training()
+      t = self.training
       gt_all = gt_all[t]
       has_gt = (gt_all != 0)
       return t[has_gt], gt_all[has_gt]
@@ -648,9 +665,9 @@ class DDLiteModel:
     self.use_lfs = True
     self.model = None
     
-  #####################################
-  ########## Basic size info ##########
-  #####################################
+  #########################################################
+  #################### Basic size info ####################
+  #########################################################
 
   def num_candidates(self):
     return len(self.C)
@@ -663,9 +680,9 @@ class DDLiteModel:
       return 0
     return self.lf_matrix.shape[1]
     
-  ###################################
-  ########## GT attributes ##########
-  ###################################
+  #######################################################
+  #################### GT attributes ####################
+  #######################################################
     
   def gt_dictionary(self):
     return self.gt._gt_dict
@@ -700,9 +717,18 @@ class DDLiteModel:
   def update_gt(self, gt, idxs=None, uids=None):
     self.gt.update_gt(gt, idxs, uids)
     
-  ###################################
-  ########## LF operations ##########
-  ###################################
+  def dev_size_warn(self):
+    self.gt.dev_size_warn()
+
+  def test_val_size_warn(self):
+    self.gt.val_test_size_warn()
+    
+  def get_gt_dict(self):
+    return self.gt.get_gt_dict()    
+    
+  #######################################################
+  #################### LF operations ####################
+  #######################################################
                        
   def set_lf_matrix(self, lf_matrix, names, clear=False):
     try:
@@ -749,9 +775,9 @@ class DDLiteModel:
     else:
       raise ValueError("lf must be a string name or integer index")
     
-  ###################################
-  ########## LF stat comp. ##########
-  ###################################    
+  #######################################################
+  #################### LF stat comp. ####################
+  #######################################################    
 
   def _cover(self, idxs=None):
     idxs = self.training() if idxs is None else idxs
@@ -835,27 +861,32 @@ class DDLiteModel:
     lf_csc = self.lf_matrix.tocsc()
     other_idx = np.concatenate((range(lf_idx),range(lf_idx+1, self.num_lfs())))
     ts = self.training()
-    agree = lf_csc[ts, other_idx].multiply(lf_csc[ts, lf_idx])
+    agree = lf_csc[:, other_idx].multiply(lf_csc[:, lf_idx])
+    agree = agree[ts,:]
     return float((np.ravel((agree == -1).sum(1)) > 0).sum()) / len(ts)
     
   def top_conflict_lfs(self, n=10):
     """ Show the LFs with the highest mean conflicts per candidate """
-    d = {nm : self._lf_conf(i) for i,nm in enumerate(self.lf_names)}
+    d = {nm : ["{:.2f}%".format(100.*self._lf_conf(i))]
+         for i,nm in enumerate(self.lf_names)}
     tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
-    tab.set_num(n)
-    tab.set_title("Labeling function", "Fraction of candidates where LF has conflict")
+    tab.set_rows(n)
+    tab.set_cols(2)
+    tab.set_title(["Labeling function", "Percent candidates where LF has conflict"])
     return tab
     
-  def _abstain_frac(self, lf_idx):
+  def _lf_coverage(self, lf_idx):
     lf_v = np.ravel(self.lf_matrix.tocsc()[self.training(), lf_idx].todense())
-    return np.mean(lf_v == 0)
+    return 1 - np.mean(lf_v == 0)
     
   def lowest_coverage_lfs(self, n=10):
     """ Show the LFs with the highest fraction of abstains """
-    d = {nm : self._abstain_frac(i) for i,nm in enumerate(self.lf_names)}
-    tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
-    tab.set_num(n)
-    tab.set_title("Labeling function", "Fraction of abstained votes")
+    d = {nm : ["{:.2f}%".format(100.*self._lf_coverage(i))]
+         for i,nm in enumerate(self.lf_names)}
+    tab = DictTable(sorted(d.items(), key=lambda t:t[1]))
+    tab.set_rows(n)
+    tab.set_cols(2)
+    tab.set_title(["Labeling function", "Candidate coverage"])
     return tab
 
   def _lf_acc(self, subset, lf_idx):
@@ -886,36 +917,76 @@ class DDLiteModel:
     
   def _lf_acc_gen(self, lf_idx):
     pos_acc1, n_pos, neg_acc1, n_neg = self._lf_acc(self.dev1(), lf_idx)
-    pos_acc2, _, neg_acc2, _ = self._lf_acc(self.dev2(), lf_idx)
+    pos_acc2, n_pos2, neg_acc2, n_neg2 = self._lf_acc(self.dev2(), lf_idx)
     pos_acc2, neg_acc2 = max(0, pos_acc2), max(0, neg_acc2)
-    return (pos_acc1, n_pos, abs(pos_acc1 - pos_acc2),
-            neg_acc1, n_neg, abs(neg_acc1 - neg_acc2))    
+    return (pos_acc1, n_pos, abs(pos_acc1 - pos_acc2), n_pos2,
+            neg_acc1, n_neg, abs(neg_acc1 - neg_acc2), n_neg2)    
     
   def lowest_empirical_accuracy_lfs(self, n=10):
+    self.dev_size_warn()
+    print "100% accuracy and 0 generalization score are \"perfect\""
     """ Show the LFs with the lowest accuracy compared to ground truth """
-    d = {nm : self._lf_acc_gen(i) for i,nm in enumerate(self.lf_names)}
+    d = {nm : list(self._lf_acc_gen(i)) for i,nm in enumerate(self.lf_names)}
     tab_pos = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
     for k in tab_pos:
       if tab_pos[k][0] < 0:
         del tab_pos[k]
         continue
-      tab_pos[k] = "{:.3f} (n={}, generalization={})".format(tab_pos[k][0],
-                                                             tab_pos[k][1],
-                                                             tab_pos[k][2]) 
-    tab_pos.set_num(n)
-    tab_pos.set_title("Labeling function", "Empirical LF acc. (positive)")
+      tab_pos[k] = ["{:.2f}% (n={})".format(100.*tab_pos[k][0], tab_pos[k][1]),
+                    "{:.2f} (n={})".format(tab_pos[k][2], tab_pos[k][3])] 
+    tab_pos.set_rows(n)
+    tab_pos.set_cols(3)
+    tab_pos.set_title(["Labeling function", "Positive accuracy",
+                       "Gen. score"])
     
-    tab_neg = DictTable(sorted(d.items(), key=lambda t:t[1][2]))
+    tab_neg = DictTable(sorted(d.items(), key=lambda t:t[1][4]))
     for k in tab_neg:
-      if tab_neg[k][2] < 0:
+      if tab_neg[k][4] < 0:
         del tab_neg[k]
         continue
-      tab_neg[k] = "{:.3f} (n={}, generalization={})".format(tab_neg[k][2],
-                                                             tab_neg[k][3],
-                                                             tab_neg[k][4])
-    tab_neg.set_num(n)
-    tab_neg.set_title("Labeling function", "Empirical LF acc. (negative)")
-    return SideTables(tab_pos, tab_neg)        
+      tab_neg[k] = ["{:.2f}% (n={})".format(100.*tab_neg[k][4], tab_neg[k][5]),
+                    "{:.2f} (n={})".format(tab_neg[k][6], tab_neg[k][7])]
+    tab_neg.set_rows(n)
+    tab_neg.set_cols(3)
+    tab_neg.set_title(["Labeling function", "Negative accuracy",
+                       "Gen. score"])
+    return SideTables(tab_pos, tab_neg)
+    
+  def lf_summary_table(self):
+    d = {nm : [self._lf_coverage(i), self._lf_conf(i), self._lf_acc_gen(i)]
+         for i,nm in enumerate(self.lf_names)}
+    for k,v in d.items():
+      del d[k]
+      pos_k, both_k = (v[2][0] >= 0), (v[2][0] >= 0 and v[2][4] >= 0)
+      col, tp, pa, pg, na, ng = ("#ee0b40", "Negative", "N/A", "N/A",
+                                 "{:.2f}% (n={})".format(100.*v[2][4], v[2][5]),
+                                 "{:.2f} (n={})".format(v[2][6], v[2][7]))
+      if pos_k:
+        col, tp, na, ng, pa, pg = ("#0099ff", "Positive", "N/A", "N/A",
+                                   "{:.2f}% (n={})".format(100.*v[2][0], v[2][1]),
+                                   "{:.2f} (n={})".format(v[2][2], v[2][3]))
+      elif both_k:
+        col, tp, pa, pg, na, ng = ("#c700ff", "Both",
+                                   "{:.2f}% (n={})".format(100.*v[2][0], v[2][1]),
+                                   "{:.2f} (n={})".format(v[2][2], v[2][3]),
+                                   "{:.2f}% (n={})".format(100.*v[2][4], v[2][5]),
+                                   "{:.2f} (n={})".format(v[2][6], v[2][7]))     
+      fancy_k = "<b><font color=\"{}\">{}</font></b>".format(col, k)
+      d[fancy_k] = [tp, "{:.2f}%".format(100.*v[0]),
+                      "{:.2f}%".format(100.*v[1]), pa, pg, na, ng]
+    tab = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
+    tab.set_rows(len(self.lf_names))
+    tab.set_cols(8)
+    tab.set_title(["Labeling<br />function", "Label<br />type",
+                   "Candidate<br />coverage", "Candidate<br />conflict", 
+                   "Positive<br />accuracy", "Positive<br />gen. score",
+                   "Negative<br />accuracy", "Negative<br />gen. score"])
+    return tab
+    
+
+  ######################################################
+  #################### Learning fns ####################
+  ######################################################
 
   def learn_weights_validated(self, **kwargs):
     if len(self.validation) == 0:
@@ -924,7 +995,7 @@ class DDLiteModel:
 
   #TODO: update
   def learn_weights(self, maxIter=1000, tol=1e-6, sample=False, 
-                    n_samples=100, mu=1e-7, n_mu=20, mu_min_ratio=1e-6, 
+                    n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, 
                     alpha=0, rate=0.01, decay=0.99, bias=False, 
 		         warm_starts=False, use_sparse=True,
                     verbose=False, log=True):
@@ -934,6 +1005,7 @@ class DDLiteModel:
     Then runs learning, saving the learned weights
     Holds out preset set of candidates for evaluation
     """
+    self.test_val_size_warn()
     self.model = "Joint"
     N, R, F = self.num_candidates(), self.num_lfs(), self.num_feats()
     self.X = sparse.hstack([self.lf_matrix, self.feats], format='csr') if not bias\
@@ -945,14 +1017,14 @@ class DDLiteModel:
     # If a single mu is provided, just fit a single model
     if mu is not None and (not hasattr(mu, '__iter__') or len(mu) == 1):
       mu = mu if not hasattr(mu, '__iter__') else mu[0]
-      self.w = learn_elasticnet_logreg(self.X[self.devset(),:],
+      self.w = learn_elasticnet_logreg(self.X[self.dev(),:],
                                        maxIter=maxIter, tol=tol, w0=w0, 
                                        mu_seq=mu, alpha=alpha, sample=sample,
                                        n_samples=n_samples, warm_starts=warm_starts,
                                        rate=rate, decay=decay, verbose=verbose)[mu]
     # TODO: handle args between learning functions better
-    elif len(self.validation) > 0: 
-      result = learn_elasticnet_logreg(self.X[self.devset(),:],
+    elif len(self.validation()) > 0: 
+      result = learn_elasticnet_logreg(self.X[self.dev(),:],
                                        maxIter=maxIter, tol=tol, w0=w0, n_mu=n_mu, 
                                        mu_seq=mu, mu_min_ratio=mu_min_ratio,
                                        alpha=alpha, rate=rate, decay=decay, 
@@ -960,26 +1032,33 @@ class DDLiteModel:
                                        warm_starts=warm_starts, verbose=verbose)
       self._w_fit = OrderedDict()
       ValidatedFit = namedtuple('ValidatedFit', ['w', 'P', 'R', 'F1'])
-      gt = self.get_ground_truth()[self.validation]
+      gt = self.gt._gt_vec[self.validation()]
       f1_opt, w_opt = 0, None
       for mu in sorted(result.keys()):
         w = result[mu]
-        pred = 2*(odds_to_prob(self.X[self.validation,:].dot(w)) >= 0.5) - 1
+        pred = 2*(odds_to_prob(self.X[self.validation(),:].dot(w)) >= 0.5) - 1
         prec, rec = precision(gt, pred), recall(gt, pred)
         f1 = f1_score(prec = prec, rec = rec)
         self._w_fit[mu] = ValidatedFit(w, prec, rec, f1)
         if f1 >= f1_opt:
           w_opt, f1_opt = w, f1
       self.w = w_opt
+    # Fit using a default mu value  
     else:
-      raise ValueError("Must have validation set if single mu not provided")
+      warnings.warn("Using default mu value with no validation set")
+      mu = 1e-7
+      self.w = learn_elasticnet_logreg(self.X[self.dev(),:],
+                                       maxIter=maxIter, tol=tol, w0=w0, 
+                                       mu_seq=mu, alpha=alpha, sample=sample,
+                                       n_samples=n_samples, warm_starts=warm_starts,
+                                       rate=rate, decay=decay, verbose=verbose)[mu]
     if log:
       return self.add_to_log()
       
   def use_lfs(self, use=True):
     self.use_lfs = bool(use)
 
-  def get_log_odds(self, subset='validation'):
+  def get_log_odds(self, subset=None):
     """
     Get the array of predicted link function values (continuous) given weights
     Return either all candidates, a specified subset, or only validation/test set
@@ -999,21 +1078,21 @@ class DDLiteModel:
       raise ValueError("subset must be 'test', 'validation', or an array of\
                        indices 0 <= i < {}".format(self.num_candidates()))
 
-  def get_predicted_probability(self, subset='validation'):
+  def get_predicted_probability(self, subset=None):
     """
     Get array of predicted probabilities (continuous) given weights
     Return either all candidates, a specified subset, or only validation/test set
     """
     return odds_to_prob(self.get_log_odds(subset))
  
-  def get_predicted(self, subset='validation'):
+  def get_predicted(self, subset=None):
     """
     Get the array of predicted (boolean) variables given weights
     Return either all variables, a specified subset, or only validation/test set
     """
     return np.sign(self.get_log_odds(subset))
 
-  def get_classification_accuracy(self, subset='validation'):
+  def get_classification_accuracy(self, subset=None):
     """
     Given the ground truth, return the classification accuracy
     Return either accuracy for all candidates, a subset, or validation/test set
@@ -1040,7 +1119,7 @@ class DDLiteModel:
     plt.ylim((0,1))
     plt.xlabel("Probability")
     plt.ylabel("Accuracy")
-.
+
   def plot_calibration(self):
     """
     Show classification accuracy and probability histogram plots
@@ -1083,8 +1162,8 @@ class DDLiteModel:
       probs = self.get_predicted_probability(subset=self._current_mindtagger_samples)
     except:
       probs = [None for _ in xrange(len(self._current_mindtagger_samples))]
-    tags_l = self.get_ground_truth('resolve')[self._current_mindtagger_samples]
-    tags = np.zeros_like(self._mindtagger_labels)
+    tags_l = self.gt._gt_vec[self._current_mindtagger_samples]
+    tags = np.zeros_like(self.gt._gt_vec)
     tags[self._current_mindtagger_samples] = tags_l
     return self.mindtagger_instance.open_mindtagger(self.C.generate_mindtagger_items,
                                                     self._current_mindtagger_samples,
@@ -1099,7 +1178,6 @@ class DDLiteModel:
     idxs = self._current_mindtagger_samples[is_tagged]
     self.update_gt(tb, idxs=idxs)
   
-  #TODO: update
   def add_to_log(self, log_id=None, subset='test', show=True):
     if log_id is None:
       log_id = len(self.logger)
@@ -1303,90 +1381,7 @@ def get_mu_seq(n, rate, alpha, min_ratio):
   mv = (max(float(1 + rate * 10), float(rate * 11)) / (alpha + 1e-3))
   return np.logspace(np.log10(mv * min_ratio), np.log10(mv), n)
   
-def cv_elasticnet_logreg(X, nfolds=5, w0=None, mu_seq=None, alpha=0, rate=0.01,
-                         mu_min_ratio=1e-6, n_mu=20, opt_1se=True, 
-                         verbose=True, plot=True, **kwargs):
-  N, R = X.shape
-  # Initialize weights if no initial provided
-  w0 = np.zeros(R) if w0 is None else w0   
-  # Check mixing parameter
-  if not (0 <= alpha <= 1):
-    raise ValueError("Mixing parameter must be in [0,1]")
-  # Determine penalty parameters  
-  if mu_seq is not None:
-    mu_seq = np.ravel(mu_seq)
-    if not np.all(mu_seq >= 0):
-      raise ValueError("Penalty parameters must be non-negative")
-    mu_seq.sort()
-  else:
-    mu_seq = get_mu_seq(n_mu, rate, alpha, mu_min_ratio)
-  # Partition data
-  try:
-    folds = np.array_split(np.random.choice(N, N, replace=False), nfolds)
-    if len(folds[0]) < 10:
-      warnings.warn("Folds are smaller than 10 observations")
-  except:
-    raise ValueError("Number of folds must be a non-negative integer")
-  # Get CV results
-  cv_results = defaultdict(lambda : defaultdict(list))
-  for nf, test in enumerate(folds):
-    if verbose:
-      print "Running test fold {}".format(nf)
-    train = np.setdiff1d(range(N), test)
-    w = learn_elasticnet_logreg(X[train, :], w0=w0, mu_seq=mu_seq, alpha=alpha,
-                                rate=rate, verbose=False, **kwargs)
-    for mu, wm in w.iteritems():
-      spread = 2*np.sqrt(np.mean(np.square(odds_to_prob(X[test,:].dot(wm)) - 0.5)))
-      cv_results[mu]['p'].append(spread)
-      cv_results[mu]['nnz'].append(np.sum(np.abs(wm) > 1e-12))
-  # Average spreads
-  p = np.array([np.mean(cv_results[mu]['p']) for mu in mu_seq])
-  # Find opt index, sd, and 1 sd rule index
-  opt_idx = np.argmax(p)
-  p_sd = np.array([np.std(cv_results[mu]['p']) for mu in mu_seq])
-  t = np.max(p) - p_sd[opt_idx]
-  idx_1se = np.max(np.where(p >= t))
-  # Average number of non-zero coefs
-  nnzs = np.array([np.mean(cv_results[mu]['nnz']) for mu in mu_seq])
-  # glmnet plot
-  if plot:
-    fig, ax1 = plt.subplots()
-    # Plot spread
-    ax1.set_xscale('log', nonposx='clip')    
-    ax1.scatter(mu_seq[opt_idx], p[opt_idx], marker='*', color='purple', s=500,
-                zorder=10, label="Maximum spread: mu={}".format(mu_seq[opt_idx]))
-    ax1.scatter(mu_seq[idx_1se], p[idx_1se], marker='*', color='royalblue', 
-                s=500, zorder=10, label="1se rule: mu={}".format(mu_seq[idx_1se]))
-    ax1.errorbar(mu_seq, p, yerr=p_sd, fmt='ro-', label='Spread statistic')
-    ax1.set_xlabel('log(penalty)')
-    ax1.set_ylabel('Marginal probability spread: ' + r'$2\sqrt{\mathrm{mean}[(p_i - 0.5)^2]}$')
-    ax1.set_ylim(-0.04, 1.04)
-    for t1 in ax1.get_yticklabels():
-      t1.set_color('r')
-    # Plot nnz
-    ax2 = ax1.twinx()
-    ax2.plot(mu_seq, nnzs, '.--', color='gray', label='Sparsity')
-    ax2.set_ylabel('Number of non-zero coefficients')
-    ax2.set_ylim(-0.01*np.max(nnzs), np.max(nnzs)*1.01)
-    for t2 in ax2.get_yticklabels():
-      t2.set_color('gray')
-    # Shrink plot for legend
-    box1 = ax1.get_position()
-    ax1.set_position([box1.x0, box1.y0+box1.height*0.1, box1.width, box1.height*0.9])
-    box2 = ax2.get_position()
-    ax2.set_position([box2.x0, box2.y0+box2.height*0.1, box2.width, box2.height*0.9])
-    plt.title("{}-fold cross validation for elastic net logistic regression with mixing parameter {}".
-              format(nfolds, alpha))
-    lns1, lbs1 = ax1.get_legend_handles_labels()
-    lns2, lbs2 = ax2.get_legend_handles_labels()
-    ax1.legend(lns1+lns2, lbs1+lbs2, loc='upper center', bbox_to_anchor=(0.5,-0.05),
-               scatterpoints=1, fontsize=10, markerscale=0.5)
-    plt.show()
-  # Train a model using the 1se mu
-  mu_opt = mu_seq[idx_1se if opt_1se else opt_idx]
-  w_opt = learn_elasticnet_logreg(X, w0=w0, alpha=alpha, rate=rate,
-                                  mu_seq=mu_seq, **kwargs)
-  return w_opt[mu_opt]
+
 
 def precision(gt, pred):
   pred, gt = np.ravel(pred), np.ravel(gt)

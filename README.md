@@ -102,6 +102,7 @@ Here are a few practical tips for working with DeepDive Lite:
 |`doc_id`|Document ID|
 |`text`| Raw sentence text|
 |`token_idxs`| Document character offsets for start of each sentence token |
+|`doc_name` | File name of document |
 
 #### Class: SentenceParser
 
@@ -110,26 +111,26 @@ Here are a few practical tips for working with DeepDive Lite:
 |`__init__(tok_whitespace=False)`| Starts CoreNLPServer; if input is pretokenized and space separated, use `tok_whitespace=True` |
 |`parse(doc, doc_id=None)` | Parse document into `Sentence`s|
 
-#### Class: HTMLParser
+#### Class: HTMLReader
 
 |**Method**|**Notes**|
 |:---------|:--------|
-|`can_parse(f)`||
+|`can_read(f)`||
 |`parse(f)`| Returns visible text in HTML file|
 
-#### Class: TextParser
+#### Class: TextReader
 
 |**Method**|**Notes**|
 |:---------|:--------|
-|`can_parse(f)`||
+|`can_read(f)`||
 |`parse(f)`| Returns all text in file|
 
 #### Class: DocParser
 
 |**Method**|**Notes**|
 |:---------|:--------|
-|`__init__(path, ftparser = TextParser())` | `path` can be single file, a directory, or a glob expression |
-|`parseDocs()` | Returns docs as parsed by `ftparser` |
+|`__init__(path, ftreader = TextReader())` | `path` can be single file, a directory, or a glob expression |
+|`readDocs()` | Returns docs as parsed by `ftreader` |
 |`parseDocSentences()` | Returns `Sentence`s from `SentenceParser` parsing of doc content |
 
 ### **ddlite_matcher.py**
@@ -143,6 +144,7 @@ Update coming...
 |**Member**|**Notes**|
 |:---------|:--------|
 | All `Sentence` members ||
+|`uid`| Unique candidate ID |
 | `prob` |  |
 | `all_idxs` | |
 | `labels` ||
@@ -159,12 +161,17 @@ Update coming...
 |`render` | Generates sentence dependency tree figure with matched tokens highlighted|
 |`mention1(attribute='words')` | Return list of `attribute` tokens in first mention |
 |`mention2(attribute='words')` | Return list of `attribute` tokens in second mention |
+|`pre_window1(attribute='words', n=3)| Return list of `n` `attribute` tokens before first mention |
+|`pre_window2(attribute='words', n=3)| Return list of `n` `attribute` tokens before second mention |
+|`post_window1(attribute='words', n=3)| Return list of `n` `attribute` tokens after first mention |
+|`post_window2(attribute='words', n=3)| Return list of `n` `attribute` tokens after second mention |
 
 #### Class: Relations
 
 |**Member**|**Notes**|
 |:---------|:--------|
 |`feats` | Feature matrix |
+|`feat_index` | Feature names |
 
 |**Method**|**Notes**|
 |:---------|:--------|
@@ -181,6 +188,7 @@ Update coming...
 |**Member**|**Notes**|
 |:---------|:--------|
 | All `Sentence` members ||
+|`uid`| Unique candidate ID |
 | `prob` |  |
 | `all_idxs` | |
 | `labels` ||
@@ -202,6 +210,7 @@ Update coming...
 |**Member**|**Notes**|
 |:---------|:--------|
 |`feats` | Feature matrix |
+|`feat_index` | Feature names |
 
 |**Method**|**Notes**|
 |:---------|:--------|
@@ -220,39 +229,50 @@ Update coming...
 |`C`| `Candidates` object |
 |`feats`| Feature matrix |
 |`logger`| `ModelLogger` object |
-|`LF`| Labeling function matrix |
-|`LF_names`| Labeling functions names |
+|`lf_matrix`| Labeling function matrix |
+|`lf_names`| Labeling functions names |
 |`X`| Joint LF and feature matrix |
 |`w`| Learned weights|
-|`holdout`| Indices of holdout set |
+|`gt`| `CandidateGT` object|
 |`mindtagger_instance`| `MindTaggerInstance` object |
+|`use_lfs` | Use LF weights for prediction?|
+|`model` | Last model type learned |
 
 |**Method**|**Notes**|
 |:---------|:--------|
 |`num_candidates()` ||
 |`num_feats()` ||
-|`num_LFs()` ||
-|`set_gold_labels(gold)`| Set gold standard labels |
-|`get_ground_truth(gt='resolve')` | Get ground truth from just MindTagger (`gt='mindtagger'`), just gold standard labels (`gt='gold'`), or resolve with conflict priority to gold standard (`gt='resolve'`) |
-|`has_ground_truth()` | Get boolean array of candidates with some ground truth |
-|`get_labeled_ground_truth(gt='resolve', subset=None)` |  Get indices and labels of candidates in `subset` labeled by method `gt`; `subset` can be `'holdout'` or an array of indices |
+|`num_lfs()` ||
+|`gt_dictionary()` | Dictionary of ground truth labels indexed by candidate uid|
+|`holdout()` | Indices of holdout set (validation and test) |
+|`validation()` | Indices of validation set |
+|`test()` |Indices of test set |
+|`dev()` |Indices of dev set (subset of training with ground truth) |
+|`dev1()` |Indices of primary dev set (for accuracy scores) |
+|`dev2()` | Indices of secondary dev set (for generalization scores) |
+|`training()` | Indices of training set |
+|`set_holdout(idxs=None, validation_frac=0.5)` | Set holdout set to indices `idxs` or all candidates with ground truth (`idxs=None`); randomly split validation and test at fraction `validation_frac` |
+|`get_labeled_ground_truth(subset=None)` |  Get indices and labels of candidates in `subset` with ground truth; `subset` can be `'training'`, `'validation'`, `'test'`, `None` (all), or an array of indices |
+| `update_gt(gt, idxs=None, uids=None)` | Update ground truth with labels in `gt` array, indexed by `idxs` or candidate `uids`|
+|`get_gt_dict()` | Return the dictionary of ground truth labels keyed by candidate uid |
 |`set_lf_matrix(lf_matrix, names, clear=False)` | Set a custom LF matrix with LF names `names` ; appends to or clears existing based on `clear`|
 |`apply_lfs(lfs_f, clear=False)` | Apply LFs in list `lfs_f`; appends to or clears existing based on `clear`|
 |`delete_lf(lf)` | Delete LF by index or name |
-|`print_lf_stats(idxs=None) | Print coverage, overlap, and conflict on the devset (`idxs=None`) or on candidates `idxs` |
+|`print_lf_stats(idxs=None) | Print coverage, overlap, and conflict on the training set (`idxs=None`) or on candidates `idxs` |
 |`plot_lf_stats()` | Generates plots to examine coverage, overlap, and conflict |
 |`top_conflict_lfs(n=10)` | Show the top `n` conflict LFs |
 |`lowest_coverage_lfs(n=10)` | Show the `n` LFs with lowest coverage |
-|`lowest_empirical_accuracy_lfs(n=10, subset=None)` | Show the `n` LFs with the lowest empirical accuracy against ground truth for candidates in `subset` |
-|`set_holdout(idxs=None)` | Set holdout set to all candidates with ground truth (`idxs=None`) or subset `idxs`|
-|`learn_weights(nfolds=3, maxIter=1000, tol=1e-6, sample=False, n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, alpha=0, opt_1se=True, use_sparse=True, plot=False, verbose=False, log=True)` | Learn an elastic net logistic regression on candidates not in holdout set <ul><li>`nfolds`: number of folds for cross-validation</li><li>`maxIter`: maximum number of SGD iterations</li><li>`tol`: tolerance for relative gradient magnitude to weights for convergence</li><li>`sample`: Use batch SGD</li> <li>`n_samples`: Batch size for SGD</li><li>`mu`: sequence of regularization parameters to fit; if `None`, automatic sequence is chosen s.t. largest value is close to minimum value at which all weights are zero</li><li>`n_mu`: number of regularization parameters for automatic sequence</li><li>`mu_min_ratio`: lower bound for regularization parameter automatic sequence as ratio to largest value</li><li>`alpha`: elastic net mixing parameter (0 for l<sub>2</sub>, 1 for l<sub>1</sub>)</li><li>`opt_1se`: use one-standard-error-rule for choosing regularization parameter</li><li>`use_sparse`: use sparse operations</li><li>`plot`: show diagnostic plot for cross-validation</li><li>`verbose`: be verbose</li><li>`log`: log result in `ModelLogger`</li></ul> |
-|`get_link(subset=None)` | Get link function values for all candidates (`subset=None`), an index subset (`subset`), or holdout set (`subset='holdout'`) |
+|`lowest_empirical_accuracy_lfs(n=10)` | Show the `n` LFs with the lowest empirical accuracy against ground truth for candidates in the devset |
+|`lf_summary_table()` | Print a table with summary statistics for each LF |
+|`learn_weights(n_iter=1000, tol=1e-6, sample=False, n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, alpha=0, rate=0.01, decay=0.99, bias=False, warm_starts=False, use_sparse=True, verbose=False, log=True, plot=True)` | Use data programming to learn an elastic net logistic regression on candidates not in training set <ul><li>`n_iter`: maximum number of SGD iterations</li><li>`tol`: tolerance for relative gradient magnitude to weights for convergence</li><li>`sample`: Use batch SGD</li> <li>`n_samples`: Batch size for SGD</li><li>`mu`: sequence of regularization parameters to fit; if `None` and validation set exists, automatic sequence is chosen s.t. largest value is close to minimum value at which all weights are zero; if `None` and no validation set exists, uses a default parameter</li><li>`n_mu`: number of regularization parameters for automatic sequence</li><li>`mu_min_ratio`: lower bound for regularization parameter automatic sequence as ratio to largest value</li><li>`alpha`: elastic net mixing parameter (0 for l<sub>2</sub>, 1 for l<sub>1</sub>)</li><li>`rate`: SGD learning rate</li><li>`decay`: SGD learning rate decay</li><li>`bias`: use bias term</li><li>`warm_starts`: use warm starts when fitting a sequence of mu values</li><li>`use_sparse`: use sparse operations</li><li>`verbose`: be verbose</li><li>`log`: log result in `ModelLogger`</li><li>`plot`: show diagnostic plot for validation set performance</li></ul> |
+|`learn_weights_validated(**kwargs)` | Wrapper for `learn_weights()`|
+|`set_use_lfs(use=True)` | Setter for using LF weights in prediction |
+|`get_log_odds(subset=None)` | Get log odds values for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) |
 |`get_predicted_probability(subset=None)` | Get predicted probabilities for candidates |
 |`get_predicted(subset=None)` | Get predicted responses for candidates |
-|`get_classification_accuracy(gt='resolve', subset=None)` | Get classification accuracy over `subset` against ground truth determined by `gt` |
-|`get_LF_priority_vote_accuracy(gt='resolve', subset=None)` | Get classification accuracy over `subset` against ground truth determined by `gt` from LFs alone; assignment prioritized by LF order |
+|`get_classification_accuracy(subset=None)` | Get classification accuracy over `subset` against ground truth |
 |`plot_calibration()` | Show DeepDive calibration plots |
-|`open_mindtagger(num_sample=None, ...)` | Open MindTagger portal for labeling; sample is either the last sample (`num_sample=None`) or a random sample of size `num_sample` |
+|`open_mindtagger(num_sample=None, abstain=False, **kwargs)` | Open MindTagger portal for labeling; sample is either the last sample (`num_sample=None`) or a random sample of size `num_sample`; if `abstain=True` show only canidates which haven't been labeled by any LF |
 |`add_mindtagger_tags()` | Import tags from current MindTagger session |
-|`add_to_log(log_id=None, gt='resolve', subset='holdout', verb=True)` | Add current learning result to log; precision and recall computed from ground truth in `subset` determined by `gt` |
+|`add_to_log(log_id=None, subset='test', show=True)` | Add current learning result to log; precision and recall computed from ground truth in `subset` |
 |`show_log(idx=None)` | Show all learning results (`idx=None`) or learning result `idx` | 

@@ -66,6 +66,7 @@ script:
   - python test/MatcherTests.py
   - python test/InferenceTests.py
   # Run notebooks end-to-end
+  - mkdir examples/gene_tag_example/gt
   - runipy examples/GeneTaggerExample_Extraction.ipynb  
   - runipy examples/GeneTaggerExample_Learning.ipynb
   - docs="data_small" runipy examples/GenePhenRelationExample_Extraction.ipynb

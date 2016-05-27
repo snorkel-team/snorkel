@@ -1046,7 +1046,7 @@ class DDLiteModel:
     # If a single mu is provided, just fit a single model
     if mu is not None and (not hasattr(mu, '__iter__') or len(mu) == 1):
       mu = mu if not hasattr(mu, '__iter__') else mu[0]
-      self.w = learn_elasticnet_logreg(self.X[self.dev(),:],
+      self.w = learn_elasticnet_logreg(self.X[self.training(),:],
                                        n_iter=n_iter, tol=tol, w0=w0, 
                                        mu_seq=mu, alpha=alpha, sample=sample,
                                        n_samples=n_samples, warm_starts=warm_starts,
@@ -1054,7 +1054,7 @@ class DDLiteModel:
                                        verbose=verbose)[mu]
     # TODO: handle args between learning functions better
     elif len(self.validation()) > 0: 
-      result = learn_elasticnet_logreg(self.X[self.dev(),:],
+      result = learn_elasticnet_logreg(self.X[self.training(),:],
                                        n_iter=n_iter, tol=tol, w0=w0, n_mu=n_mu, 
                                        mu_seq=mu, mu_min_ratio=mu_min_ratio,
                                        alpha=alpha, rate=rate, decay=decay, 
@@ -1080,7 +1080,7 @@ class DDLiteModel:
     else:
       warnings.warn("Using default mu value with no validation set")
       mu = 1e-7
-      self.w = learn_elasticnet_logreg(self.X[self.dev(),:],
+      self.w = learn_elasticnet_logreg(self.X[self.training(),:],
                                        n_iter=n_iter, tol=tol, w0=w0, 
                                        mu_seq=mu, alpha=alpha, sample=sample,
                                        n_samples=n_samples, warm_starts=warm_starts,

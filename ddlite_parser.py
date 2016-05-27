@@ -16,7 +16,7 @@ from subprocess import Popen
 
 Sentence = namedtuple('Sentence', ['words', 'lemmas', 'poses', 'dep_parents',
                                    'dep_labels', 'sent_id', 'doc_id', 'text',
-                                   'token_idxs'])
+                                   'token_idxs', 'doc_name'])
 
 class SentenceParser:
     def __init__(self, tok_whitespace=False):
@@ -55,7 +55,7 @@ class SentenceParser:
             except:
               sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
-    def parse(self, doc, doc_id=None):
+    def parse(self, doc, doc_id=None, doc_name=None):
         """Parse a raw document as a string into a list of sentences"""
         if len(doc.strip()) == 0:
             return
@@ -85,6 +85,7 @@ class SentenceParser:
             parts['doc_id'] = doc_id
             parts['text'] = doc[block['tokens'][0]['characterOffsetBegin'] : 
                                 block['tokens'][-1]['characterOffsetEnd']]
+            parts['doc_name'] = doc_name
             sent = Sentence(**parts)
             sent_id += 1
             yield sent
@@ -93,10 +94,10 @@ class SentenceParser:
 Abstract base class for file type parsers
 Must implement method inidicating if file can be parsed and parser
 '''
-class FileTypeParser(object):
-    def can_parse(self, f):
+class FileTypeReader(object):
+    def can_read(self, f):
         raise NotImplementedError()
-    def parse(self, f):
+    def read(self, f):
         raise NotImplementedError()
     def _strip_special(self, s):
         return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
@@ -104,10 +105,10 @@ class FileTypeParser(object):
 '''
 Basic HTML parser using BeautifulSoup to return visible text
 '''
-class HTMLParser(FileTypeParser):
-    def can_parse(self, fp):
+class HTMLReader(FileTypeReader):
+    def can_read(self, fp):
         return fp.endswith('.html')
-    def parse(self, fp):
+    def read(self, fp):
         with open(fp, 'rb') as f:
             mulligatawny = BeautifulSoup(f, 'lxml')
         txt = filter(self._cleaner, mulligatawny.findAll(text=True))
@@ -122,10 +123,10 @@ class HTMLParser(FileTypeParser):
 '''
 Text parser for preprocessed files
 '''
-class TextParser(FileTypeParser):
-    def can_parse(self, fp):
+class TextReader(FileTypeReader):
+    def can_read(self, fp):
         return True
-    def parse(self, fp):
+    def read(self, fp):
         with open(fp, 'rb') as f:
             return f.read()
 
@@ -134,26 +135,27 @@ Wrapper for a FileTypeParser that parses a file, directory, or pattern
 Defaults to using TextParser
 '''
 class DocParser: 
-    def __init__(self, path, ftparser = TextParser()):
+    def __init__(self, path, ftreader = TextReader()):
         self.path = path
-        if not issubclass(ftparser.__class__, FileTypeParser):
+        if not issubclass(ftreader.__class__, FileTypeReader):
             warnings.warn("File parser is not a subclass of FileTypeParser")
-        self._ftparser = ftparser
+        self._ftreader = ftreader
         self._fs = self._get_files()
         
     # Parse all docs parseable by passed file type parser
-    def parseDocs(self):
+    def readDocs(self):
         for f in self._fs:
-            if self._ftparser.can_parse(f):
-                yield self._ftparser.parse(f)
+            doc_name = os.path.basename(f)
+            if self._ftreader.can_read(f):
+                yield doc_name, self._ftreader.read(f)
             else:
-                warnings.warn("Skipping imparseable file {}".format(f))
+                warnings.warn("Skipping unreadable file {}".format(f))
     
     # Use SentenceParser to return parsed sentences
     def parseDocSentences(self):
         sp = SentenceParser()
-        return [sent for doc_id, txt in enumerate(self.parseDocs())
-                for sent in sp.parse(txt, doc_id)]
+        return [sent for doc_id, (doc_name, txt) in enumerate(self.readDocs())
+                for sent in sp.parse(txt, doc_id, doc_name)]
     
     def _get_files(self):
         if os.path.isfile(self.path):
@@ -170,7 +172,8 @@ def sort_X_on_Y(X, Y):
   return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]   
 
 def corenlp_cleaner(words):
-  d = {'-RRB-': ')', '-LRB-': '('}
+  d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
+       '-RSB-': ']', '-LSB-': '['}
   return map(lambda w: d[w] if w in d else w, words)
 
 def main():

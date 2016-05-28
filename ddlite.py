@@ -1022,71 +1022,68 @@ class DDLiteModel:
       raise ValueError("No validation set. Use set_holdout(p) with p>0.")
     return self.learn_weights(**kwargs)
 
-  def learn_weights(self, n_iter=1000, tol=1e-6, sample=False, 
-                    n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, 
-                    alpha=0, rate=0.01, decay=0.99, bias=False, 
-		            warm_starts=False, use_sparse=True, verbose=False,
-                    log=True, plot=True):
+  def learn_weights(self, **kwargs):
     """
     Uses the N x R matrix of LFs and the N x F matrix of features
     Stacks them, giving the LFs a +1 prior (i.e. init value)
     Then runs learning, saving the learned weights
     Holds out preset set of candidates for evaluation
     """
+    # Warn if test size is small
     self.test_val_size_warn()
-    self.model = "Joint"
-    N, R, F = self.num_candidates(), self.num_lfs(), self.num_feats()
-    self.X = sparse.hstack([self.lf_matrix, self.feats], format='csr') if not bias\
-	       else sparse.hstack([self.lf_matrix, self.feats, np.ones((N,1))], format='csr')
-    if not use_sparse:
-      self.X = np.asarray(self.X.todense())
-    w0 = np.concatenate([np.ones(R), np.zeros(F)]) if not bias\
- 	   else np.concatenate([np.ones(R), np.zeros(F+1)])
-    unreg = [self.X.shape[1]-1] if bias else []
-    # If a single mu is provided, just fit a single model
+    # Read opts
+    pipeline = kwargs.get('pipeline', True)
+    self.model = "Pipeline" if pipeline else "Joint"
+    bias = kwargs.get('bias', False)
+    use_sparse = kwargs.get('use_sparse', True)
+    mu = kwargs.get('mu', None)
+    # Handle single mu values
     if mu is not None and (not hasattr(mu, '__iter__') or len(mu) == 1):
       mu = mu if not hasattr(mu, '__iter__') else mu[0]
-      self.w = learn_elasticnet_logreg(self.X[self.training(),:],
-                                       n_iter=n_iter, tol=tol, w0=w0, 
-                                       mu_seq=mu, alpha=alpha, sample=sample,
-                                       n_samples=n_samples, warm_starts=warm_starts,
-                                       rate=rate, decay=decay, unreg=unreg,
-                                       verbose=verbose)[mu]
-    # TODO: handle args between learning functions better
-    elif len(self.validation()) > 0: 
-      result = learn_elasticnet_logreg(self.X[self.training(),:],
-                                       n_iter=n_iter, tol=tol, w0=w0, n_mu=n_mu, 
-                                       mu_seq=mu, mu_min_ratio=mu_min_ratio,
-                                       alpha=alpha, rate=rate, decay=decay, 
-                                       sample=sample, n_samples=n_samples,
-                                       warm_starts=warm_starts, unreg=unreg,
-                                       verbose=verbose)
+    elif len(self.validation()) == 0:
+      warnings.warn("Using default mu value with no validation set")
+      mu = 1e-7
+    # Fit model
+    N, R, D = self.num_candidates(), self.num_lfs(), self.num_feats()
+    LF, F = self.lf_matrix, self.feats
+    w0, unreg = np.concatenate([np.ones(R), np.zeros(D)]), []
+    if bias:
+      F = sparse.hstack([F, np.ones((N,1))], format='csr')
+      w0 = np.concatenate([w0, np.zeros(1)])
+      unreg = [(not pipeline) * LF.shape[1] + F.shape[1] - 1]
+    self.X = sparse.hstack([LF, F], format='csr')
+    if not use_sparse:
+      LF, F, self.X = map(np.asarray, [LF.todense(), F.todense(),
+                                       self.X.todense()])
+    result = learn_elasticnet_logreg(F=F[self.training(), :], 
+                                     LF=LF[self.training(), :],
+                                     w0=w0, unreg=unreg, mu_seq=mu, **kwargs)
+    w_all, self._lf_marginals = result, None    
+    if pipeline:
+      zw = np.zeros_like(result[0])
+      w_all = {k : np.concatenate((zw, v)) for k,v in result[1].iteritems()}
+      self._lf_marginals = result[2]
+    # Validation?
+    if len(w_all) == 1:
+      self.w = w_all.values()[0]
+    else:
       self._w_fit = OrderedDict()
       gt = self.gt._gt_vec[self.validation()]
       f1_opt, w_opt, mu_opt = 0, None, None
       s = 0 if self.use_lfs else self.num_lfs()
-      for mu in sorted(result.keys()):
-        w = result[mu]
-        pred = 2*(odds_to_prob(self.X[self.validation(),s:].dot(w[s:])) >= 0.5) - 1
+      for mu in sorted(w_all.keys()):
+        w = w_all[mu]
+        probs = odds_to_prob(self.X[self.validation(),s:].dot(w[s:]))
+        pred = 2*(probs >= 0.5) - 1
         prec, rec = precision(gt, pred), recall(gt, pred)
         f1 = f1_score(prec = prec, rec = rec)
         self._w_fit[mu] = ValidatedFit(w, prec, rec, f1)
         if f1 >= f1_opt:
           w_opt, f1_opt, mu_opt = w, f1, mu
       self.w = w_opt
-      if plot:
+      if kwargs.get('plot', True):
         self.plot_learning_diagnostics(mu_opt, f1_opt)
-    # Fit using a default mu value  
-    else:
-      warnings.warn("Using default mu value with no validation set")
-      mu = 1e-7
-      self.w = learn_elasticnet_logreg(self.X[self.training(),:],
-                                       n_iter=n_iter, tol=tol, w0=w0, 
-                                       mu_seq=mu, alpha=alpha, sample=sample,
-                                       n_samples=n_samples, warm_starts=warm_starts,
-                                       rate=rate, decay=decay, unreg=unreg,
-                                       verbose=verbose)[mu]
-    if log:
+    if kwargs.get('log', True):
       return self.add_to_log()
       
   def plot_learning_diagnostics(self, mu_opt, f1_opt):

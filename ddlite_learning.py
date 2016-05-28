@@ -39,13 +39,13 @@ class joint_learning_opts:
     # Use warm starts?
     self.warm_starts = kwargs.get('warm_starts', False)
     # Regularization
-    if 'mu_seq' in kwargs:
+    if ('mu_seq' in kwargs) and (kwargs['mu_seq'] is not None):
       self.mu_seq = np.ravel(kwargs['mu_seq'])
       if not np.all(self.mu_seq >= 0):
         raise ValueError("Penalty parameters must be non-negative")
       self.mu_seq.sort()
     else:
-      n_mu = kwargs.get('n_mu', 10)
+      n_mu = kwargs.get('n_mu', 5)
       mu_min_ratio = kwargs.get('mu_min_ratio', 1e-6)
       self.mu_seq = get_mu_seq(n_mu, self.rate, self.alpha, mu_min_ratio)
     # Evidence/marginals
@@ -86,7 +86,8 @@ class pipeline_learning_opts:
     tol = kwargs.get('tol', 1e-6)
     self.lf_args['tol'], self.feats_args['tol'] = tol, tol
     # Initial weights
-    self.lf_args['w0'] = kwargs.get('w0_lf', np.ones(R))
+    lf_mult = kwargs.get('w0_mult_lf', 1)
+    self.lf_args['w0'] = lf_mult * kwargs.get('w0_lf', np.ones(R))
     self.feats_args['w0'] = kwargs.get('w0_feats', np.zeros(D))
     # Sample for SGD?
     sample = kwargs.get('sample', True)
@@ -114,13 +115,15 @@ class pipeline_learning_opts:
                                                  warm_starts)
     # Regularization
     self.lf_args['mu_seq'] = kwargs.get('mu_lf', 1e-7)
-    if 'mu_seq_feats' in kwargs:
+    if ('mu_seq' in kwargs) and ('mu_seq_feats' not in kwargs):
+      kwargs['mu_seq_feats'] = kwargs['mu_seq']
+    if ('mu_seq_feats' in kwargs) and (kwargs['mu_seq_feats'] is not None):
       self.feats_args['mu_seq'] = np.ravel(kwargs['mu_seq_feats'])
       if not np.all(self.feats_args['mu_seq'] >= 0):
         raise ValueError("Penalty parameters must be non-negative")
       self.feats_args['mu_seq'].sort()
     else:
-      n_mu_feats = kwargs.get('n_mu_feats', 10)
+      n_mu_feats = kwargs.get('n_mu_feats', 5)
       mu_min_ratio_feats = kwargs.get('mu_min_ratio_feats', 1e-6)
       self.feats_args['mu_seq'] = get_mu_seq(n_mu_feats,
                                              self.feats_args['rate'],
@@ -286,7 +289,7 @@ def joint_learn_elasticnet_logreg(**kwargs):
       g_size = np.linalg.norm(g, ord=2)
       if step % 100 == 0 and verbose:    
         print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size) 
-      if (wn < 1e-12 or g_size / wn < opts.tol) and step > 50:
+      if (wn < 1e-12 or g_size / wn < opts.tol) and step >= 10:
         if verbose:
           print "SGD converged for mu={:.3f} after {} steps".format(mu, step)
         break

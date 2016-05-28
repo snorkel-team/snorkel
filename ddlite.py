@@ -1045,7 +1045,7 @@ class DDLiteModel:
       mu = 1e-7
     # Fit model
     N, R, D = self.num_candidates(), self.num_lfs(), self.num_feats()
-    LF, F = self.lf_matrix, self.feats
+    LF, F = self.lf_matrix.tocsr(), self.feats.tocsr()
     w0, unreg = np.concatenate([np.ones(R), np.zeros(D)]), []
     if bias:
       F = sparse.hstack([F, np.ones((N,1))], format='csr')

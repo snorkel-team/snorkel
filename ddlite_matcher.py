@@ -1,5 +1,6 @@
 import bisect, re
 from collections import defaultdict
+import sys
 
 class CandidateExtractor(object):
   """
@@ -62,7 +63,6 @@ class Union(CandidateExtractor):
 
   def _apply(self, s, idxs):
     yield idxs, ''
-
     
 class DictionaryMatch(CandidateExtractor):
   """Selects according to ngram-matching against a dictionary i.e. list of words"""
@@ -116,6 +116,113 @@ class DictionaryMatch(CandidateExtractor):
         if phrase in self.dl[l]:
           matched_seqs.append(frozenset(ssidx))
           yield list(ssidx), self.label
+
+
+class ConcatDictionaryMatch(CandidateExtractor):
+  """
+  Selects according to ngram-matching against a dictionary i.e. list of words.
+  If candidates are juxtaposed, will merge it in one candidate
+  """
+  def init(self):
+    # Load opts- this is from the kwargs dict
+    self.label         = self.opts['label']
+    self.dictionary    = self.opts['dictionary']
+    #Optinal dictionnary for quality/linkwords
+    self.dictionary_optional_q = self.opts.get('dictionary_optional_q', None)
+    self.match_attrib  = self.opts.get('match_attrib', 'words')
+    self.ignore_case   = self.opts.get('ignore_case', True)
+    self.longest_match = self.opts.get('longest_match', True)
+
+    # Split the dictionary up by phrase length (i.e. # of tokens)
+    self.dl = defaultdict(lambda : set())
+    for phrase in self.dictionary:
+      self.dl[len(phrase.split())].add(phrase.lower() if self.ignore_case else phrase)
+    self.dl.update((k, frozenset(v)) for k,v in self.dl.iteritems())
+
+    #Same for the optional dict
+    if self.dictionary_optional_q is not None:
+      # Split the dictionary up by phrase length (i.e. # of tokens)
+      self.dl_q = defaultdict(lambda : set())
+      for phrase in self.dictionary_optional_q:
+        self.dl_q[len(phrase.split())].add(phrase.lower() if self.ignore_case else phrase)
+      self.dl_q.update((k, frozenset(v)) for k,v in self.dl_q.iteritems())
+
+    # Get the *DESC order* ngram range for this dictionary
+    if self.dictionary_optional_q is None:
+      self.ngr = range(max(1, min(self.dl.keys())), max(self.dl.keys())+1)[::-1]
+    else:
+      self.ngr = range(max(1, min(min(self.dl_q.keys()), min(self.dl.keys()))), max(max(self.dl.keys()), max(self.dl_q.keys()))+1)[::-1]
+
+  def _apply(self, s, idxs=None):
+    """
+    Take in an object or dictionary which contains match_attrib
+    and get the index lists of matching phrases
+    If idxs=None, consider all indices, otherwise constrain to subset of idxs
+    """
+    seq = self._get_attrib_seq(s)
+
+    # If idxs=None, consider the full index range, otherwise only subseqs of idxs
+    start = 0 if idxs is None else min(idxs)
+    end   = len(seq) if idxs is None else max(idxs)+1
+    L     = len(seq) if idxs is None else len(idxs)
+
+    # NOTE: We assume that idxs is a range of consecutive indices!
+    if L != end - start:
+      raise ValueError("Candidates must be over consecutive spans of indices")
+
+    # Keep track of indexes we've already matched so that we can e.g. keep longest match only
+    matched_seqs = []
+    if self.dictionary_optional_q is not None:
+      matched_seqs_q =[]
+
+    # We create an array of the length of the sequence. For each match found, we will add "1" at the idxs of the match if it is in the optional dict and '2' if it is in the main dict.
+    matched_seqs_array= [ 0 for i in range(L)]
+
+    # Loop over all ngrams
+    for l in filter(lambda n : n <= L, self.ngr):
+      for i in range(start, end-l+1):
+        ssidx = range(i, i+l)
+
+        # If we are only taking the longest match, skip if a subset of already-tagged idxs
+        if self.longest_match and any(set(ssidx) <= ms for ms in matched_seqs) and (self.dictionary_optional_q is None or any(set(ssidx) <= ms for ms in matched_seqs_q)):
+          continue
+        phrase = ' '.join(seq[i:i+l])
+        phrase = phrase.lower() if self.ignore_case else phrase
+        if phrase in self.dl[l]:
+          matched_seqs.append(frozenset(ssidx))
+          for idx_match in ssidx:
+            matched_seqs_array[idx_match] +=2 
+        if self.dictionary_optional_q is not None and phrase in self.dl_q[l]:
+          matched_seqs_q.append(frozenset(ssidx))
+          for idx_match in ssidx:
+            matched_seqs_array[idx_match] +=1      
+
+    #Here we extract the concatenated candidates. We want to extract the series of non null indexes. 
+    #Moreover, we don't want candidates with only candidates from the candidate dictionary, therefore a candidate must have one idx with a strictly superior to 1 value (either a 2 or a 3).
+
+    idx_current = start
+    watching_candidates = False
+    contain_candidate_from_main_dict = False
+    begin_current_candidate = -1
+    while idx_current < end:
+
+      #if the matched value > 1, it means we are observing a candidate in the main dict
+      if matched_seqs_array[idx_current] > 1:
+        contain_candidate_from_main_dict = True
+
+      if not watching_candidates:
+        if matched_seqs_array[idx_current] > 0:
+          begin_current_candidate = idx_current
+          watching_candidates = True
+      else:
+        if matched_seqs_array[idx_current] == 0:
+          watching_candidates = False
+          #We want to extract only the concatenated candidates from which one of the candidates is in the main dictionnary
+          if contain_candidate_from_main_dict:
+            contain_candidate_from_main_dict = False
+            yield list(range(begin_current_candidate, idx_current)), self.label
+      idx_current+=1
+
 
 
 class RegexBase(CandidateExtractor):

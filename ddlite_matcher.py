@@ -121,13 +121,15 @@ class ConcatDictionaryMatch(CandidateExtractor):
   """
   Selects according to ngram-matching against a dictionary i.e. list of words.
   If candidates are juxtaposed, will merge it in one candidate
+  Possibility to add a 'dictionary optional' for which candidates will be merged with the candidates from the main dictionary. But candidates from just this dictionary won't be extracted.
+  For instance, if 'decrease' and 'of' are in the optional dictionary while 'germination' is in the main one, 'decrease of germination' will be extracted as candidate while just 'of' won't be extracted.
   """
   def init(self):
     # Load opts- this is from the kwargs dict
     self.label         = self.opts['label']
     self.dictionary    = self.opts['dictionary']
     #Optinal dictionnary for quality/linkwords
-    self.dictionary_optional_q = self.opts.get('dictionary_optional_q', None)
+    self.dictionary_optional = self.opts.get('dictionary_optional', None)
     self.match_attrib  = self.opts.get('match_attrib', 'words')
     self.ignore_case   = self.opts.get('ignore_case', True)
     self.longest_match = self.opts.get('longest_match', True)
@@ -139,15 +141,15 @@ class ConcatDictionaryMatch(CandidateExtractor):
     self.dl.update((k, frozenset(v)) for k,v in self.dl.iteritems())
 
     #Same for the optional dict
-    if self.dictionary_optional_q is not None:
+    if self.dictionary_optional is not None:
       # Split the dictionary up by phrase length (i.e. # of tokens)
       self.dl_q = defaultdict(lambda : set())
-      for phrase in self.dictionary_optional_q:
+      for phrase in self.dictionary_optional:
         self.dl_q[len(phrase.split())].add(phrase.lower() if self.ignore_case else phrase)
       self.dl_q.update((k, frozenset(v)) for k,v in self.dl_q.iteritems())
 
     # Get the *DESC order* ngram range for this dictionary
-    if self.dictionary_optional_q is None:
+    if self.dictionary_optional is None:
       self.ngr = range(max(1, min(self.dl.keys())), max(self.dl.keys())+1)[::-1]
     else:
       self.ngr = range(max(1, min(min(self.dl_q.keys()), min(self.dl.keys()))), max(max(self.dl.keys()), max(self.dl_q.keys()))+1)[::-1]
@@ -171,7 +173,7 @@ class ConcatDictionaryMatch(CandidateExtractor):
 
     # Keep track of indexes we've already matched so that we can e.g. keep longest match only
     matched_seqs = []
-    if self.dictionary_optional_q is not None:
+    if self.dictionary_optional is not None:
       matched_seqs_q =[]
 
     # We create an array of the length of the sequence. For each match found, we will add "1" at the idxs of the match if it is in the optional dict and '2' if it is in the main dict.
@@ -183,7 +185,7 @@ class ConcatDictionaryMatch(CandidateExtractor):
         ssidx = range(i, i+l)
 
         # If we are only taking the longest match, skip if a subset of already-tagged idxs
-        if self.longest_match and any(set(ssidx) <= ms for ms in matched_seqs) and (self.dictionary_optional_q is None or any(set(ssidx) <= ms for ms in matched_seqs_q)):
+        if self.longest_match and any(set(ssidx) <= ms for ms in matched_seqs) and (self.dictionary_optional is None or any(set(ssidx) <= ms for ms in matched_seqs_q)):
           continue
         phrase = ' '.join(seq[i:i+l])
         phrase = phrase.lower() if self.ignore_case else phrase
@@ -191,7 +193,7 @@ class ConcatDictionaryMatch(CandidateExtractor):
           matched_seqs.append(frozenset(ssidx))
           for idx_match in ssidx:
             matched_seqs_array[idx_match] +=2 
-        if self.dictionary_optional_q is not None and phrase in self.dl_q[l]:
+        if self.dictionary_optional is not None and phrase in self.dl_q[l]:
           matched_seqs_q.append(frozenset(ssidx))
           for idx_match in ssidx:
             matched_seqs_array[idx_match] +=1      

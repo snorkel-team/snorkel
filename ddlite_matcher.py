@@ -1,6 +1,5 @@
 import bisect, re
 from collections import defaultdict
-import sys
 
 class CandidateExtractor(object):
   """

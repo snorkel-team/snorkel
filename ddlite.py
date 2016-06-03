@@ -90,7 +90,7 @@ class candidate_internal(object):
   See entity_internal and relation_internal for examples
   """
   def __init__(self, all_idxs, labels, sent, xt):
-    self.uid = "{}::{}::{}::{}".format(sent.doc_name, sent.sent_id,
+    self.uid = "{}::{}::{}::{}".format(sent.doc_id, sent.sent_id,
                                        all_idxs, labels)
     self.all_idxs = all_idxs
     self.labels = labels

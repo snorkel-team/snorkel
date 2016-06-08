@@ -130,33 +130,33 @@ class TextReader(FileTypeReader):
         with open(fp, 'rb') as f:
             return f.read()
 
-'''
-Wrapper for a FileTypeParser that parses a file, directory, or pattern
-Defaults to using TextParser
-'''
 class DocParser: 
+    """
+    Wrapper for a FileTypeParser that parses a file, directory, or pattern
+    Defaults to using TextParser
+    """
     def __init__(self, path, ftreader = TextReader()):
         self.path = path
         if not issubclass(ftreader.__class__, FileTypeReader):
             warnings.warn("File parser is not a subclass of FileTypeParser")
         self._ftreader = ftreader
         self._fs = self._get_files()
-        
+      
     # Parse all docs parseable by passed file type parser
     def readDocs(self):
         for f in self._fs:
             doc_name = os.path.basename(f)
-            if self._ftreader.can_read(f):
-                yield doc_name, self._ftreader.read(f)
-            else:
-                warnings.warn("Skipping unreadable file {}".format(f))
-    
+        if self._ftreader.can_read(f):
+            yield doc_name, self._ftreader.read(f)
+        else:
+            warnings.warn("Skipping unreadable file {}".format(f))
+
     # Use SentenceParser to return parsed sentences
     def parseDocSentences(self):
         sp = SentenceParser()
         return [sent for doc_name, txt in self.readDocs()
                 for sent in sp.parse(txt, doc_name, doc_name)]
-    
+
     def _get_files(self):
         if os.path.isfile(self.path):
             return [self.path]
@@ -164,12 +164,12 @@ class DocParser:
             return [os.path.join(self.path, f) for f in os.listdir(self.path)]
         else:
             return glob.glob(self.path)
-            
+        
     def __repr__(self):
-        return "Document parser for files: {}".format(self._fs)
+      return "Document parser for files: {}".format(self._fs)
 
 def sort_X_on_Y(X, Y):
-  return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]   
+    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]   
 
 def corenlp_cleaner(words):
   d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',

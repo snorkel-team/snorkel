@@ -12,7 +12,91 @@ import warnings
 from bs4 import BeautifulSoup
 from collections import namedtuple, defaultdict
 from subprocess import Popen
+import lxml.etree as et
 
+Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
+
+class DocParser: 
+    """Parse a file or directory of files into a set of Document objects."""
+    def __init__(self, path):
+        self.path = path
+      
+    def parse(self):
+        """
+        Parse a file or directory of files into a set of Document objects.
+
+        - Input: A file or directory path.
+        - Output: A set of Document objects, which at least have a _text_ attribute,
+                  and possibly a dictionary of other attributes.
+        """
+        for fp in self._get_files():
+            file_name = os.path.basename(fp)
+            for doc in self.parse_file(fp, file_name):
+                yield doc
+
+    def parse_file(self, fp, file_name):
+        raise NotImplementedError()
+
+    def _get_files(self):
+        if os.path.isfile(self.path):
+            return [self.path]
+        elif os.path.isdir(self.path):
+            return [os.path.join(self.path, f) for f in os.listdir(self.path)]
+        else:
+            return glob.glob(self.path)
+
+class TextDocParser(DocParser):
+    """Simple parsing of raw text files, assuming one document per file"""
+    def parse_file(self, fp, file_name):
+        with open(fp, 'rb') as f:
+            yield Document(id=None, file=file_name, text=f.read(), attribs={})
+
+class HTMLDocParser(DocParser):
+    """Simple parsing of raw HTML files, assuming one document per file"""
+    def parse_file(self, fp, file_name):
+        with open(fp, 'rb') as f:
+            html = BeautifulSoup(f, 'lxml')
+            txt = filter(self._filter, soup.findAll(text=True))
+            txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
+            yield Document(id=None, file=file_name, text=txt, attribs={})
+
+    def _cleaner(self, s):
+        if s.parent.name in ['style', 'script', '[document]', 'head', 'title']:
+            return False
+        elif re.match('<!--.*-->', unicode(s)):
+            return False
+        return True
+
+    def _strip_special(self, s):
+        return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
+
+class XMLDocParser(DocParser):
+    """
+    Parse an XML file or directory of XML files into a set of Document objects.
+
+    Use XPath queries to specify a _document_ object, and then for each document,
+    a set of _text_ sections and an _id_.
+
+    **Note: Include the full document XML etree in the attribs dict with keep_tree=True**
+    """
+    def __init__(self, path, doc='.//document', text='./text/text()', id='./id/text()',
+                    keep_tree=False):
+        self.path = path
+        self.doc = doc
+        self.text = text
+        self.id = id
+        self.keep_tree = keep_tree
+
+    def parse_file(self, f, file_name):
+        for i,doc in enumerate(et.parse(f).xpath(self.doc)):
+            #try:
+            text = '\n'.join(filter(lambda t : t is not None, doc.xpath(self.text)))
+            ids = doc.xpath(self.id)
+            id = ids[0] if len(ids) > 0 else None
+            attribs = {'root':doc} if self.keep_tree else {}
+            yield Document(id=id, file=file_name, text=text, attribs=attribs)
+            #except:
+            #    print "Error parsing document #%s (id=%s) in file %s" % (i,id,file_name)
 
 Sentence = namedtuple('Sentence', ['words', 'lemmas', 'poses', 'dep_parents',
                                    'dep_labels', 'sent_id', 'doc_id', 'text',
@@ -89,85 +173,7 @@ class SentenceParser:
             sent = Sentence(**parts)
             sent_id += 1
             yield sent
-            
-'''
-Abstract base class for file type parsers
-Must implement method inidicating if file can be parsed and parser
-'''
-class FileTypeReader(object):
-    def can_read(self, f):
-        raise NotImplementedError()
-    def read(self, f):
-        raise NotImplementedError()
-    def _strip_special(self, s):
-        return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
         
-'''
-Basic HTML parser using BeautifulSoup to return visible text
-'''
-class HTMLReader(FileTypeReader):
-    def can_read(self, fp):
-        return fp.endswith('.html')
-    def read(self, fp):
-        with open(fp, 'rb') as f:
-            mulligatawny = BeautifulSoup(f, 'lxml')
-        txt = filter(self._cleaner, mulligatawny.findAll(text=True))
-        return ' '.join(self._strip_special(s) for s in txt if s != '\n')
-    def _cleaner(self, s):
-        if s.parent.name in ['style', 'script', '[document]', 'head', 'title']:
-            return False
-        elif re.match('<!--.*-->', unicode(s)):
-            return False
-        return True
-        
-'''
-Text parser for preprocessed files
-'''
-class TextReader(FileTypeReader):
-    def can_read(self, fp):
-        return True
-    def read(self, fp):
-        with open(fp, 'rb') as f:
-            return f.read()
-
-class DocParser: 
-    """
-    Wrapper for a FileTypeParser that parses a file, directory, or pattern
-    Defaults to using TextParser
-    """
-    def __init__(self, path, ftreader = TextReader()):
-        self.path = path
-        if not issubclass(ftreader.__class__, FileTypeReader):
-            warnings.warn("File parser is not a subclass of FileTypeParser")
-        self._ftreader = ftreader
-        self._fs = self._get_files()
-      
-    # Parse all docs parseable by passed file type parser
-    def readDocs(self):
-        for f in self._fs:
-            doc_name = os.path.basename(f)
-        if self._ftreader.can_read(f):
-            yield doc_name, self._ftreader.read(f)
-        else:
-            warnings.warn("Skipping unreadable file {}".format(f))
-
-    # Use SentenceParser to return parsed sentences
-    def parseDocSentences(self):
-        sp = SentenceParser()
-        return [sent for doc_name, txt in self.readDocs()
-                for sent in sp.parse(txt, doc_name, doc_name)]
-
-    def _get_files(self):
-        if os.path.isfile(self.path):
-            return [self.path]
-        elif os.path.isdir(self.path):
-            return [os.path.join(self.path, f) for f in os.listdir(self.path)]
-        else:
-            return glob.glob(self.path)
-        
-    def __repr__(self):
-      return "Document parser for files: {}".format(self._fs)
-
 def sort_X_on_Y(X, Y):
     return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]   
 
@@ -175,17 +181,3 @@ def corenlp_cleaner(words):
   d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
        '-RSB-': ']', '-LSB-': '['}
   return map(lambda w: d[w] if w in d else w, words)
-
-def main():
-    doc = 'Hello world. How are you?'
-    parser = SentenceParser()
-    for s in parser.parse(doc):
-        print s
-        
-    doc2 = u'IC50 value 87.81 µg mL(-1). IC50 abcµgmue of 1. I µµggval abcµgm ()'
-    for s in parser.parse(doc2):
-        print s
-        print s.text
-
-if __name__ == '__main__':
-    main()

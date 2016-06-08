@@ -1051,11 +1051,14 @@ table {
         
           
   <ul>
-    <li class="mono"><a href="#ddlite_parser.DocParser.__init__">__init__</a></li>
-    <li class="mono"><a href="#ddlite_parser.DocParser.parseDocSentences">parseDocSentences</a></li>
-    <li class="mono"><a href="#ddlite_parser.DocParser.readDocs">readDocs</a></li>
+    <li class="mono"><a href="#ddlite_parser.DocParser.parse">parse</a></li>
+    <li class="mono"><a href="#ddlite_parser.DocParser.parse_file">parse_file</a></li>
   </ul>
 
+        </li>
+        <li class="mono">
+        <span class="class_name"><a href="#ddlite_parser.Document">Document</a></span>
+        
         </li>
         <li class="mono">
         <span class="class_name"><a href="#ddlite_parser.FileTypeReader">FileTypeReader</a></span>
@@ -1101,6 +1104,17 @@ table {
   </ul>
 
         </li>
+        <li class="mono">
+        <span class="class_name"><a href="#ddlite_parser.XMLDocParser">XMLDocParser</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#ddlite_parser.XMLDocParser.__init__">__init__</a></li>
+    <li class="mono"><a href="#ddlite_parser.XMLDocParser.parse">parse</a></li>
+    <li class="mono"><a href="#ddlite_parser.XMLDocParser.parse_file">parse_file</a></li>
+  </ul>
+
+        </li>
       </ul>
     </li>
 
@@ -1134,6 +1148,49 @@ table {
 <span class="kn">from</span> <span class="nn">bs4</span> <span class="kn">import</span> <span class="n">BeautifulSoup</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span><span class="p">,</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">subprocess</span> <span class="kn">import</span> <span class="n">Popen</span>
+<span class="kn">import</span> <span class="nn">lxml.etree</span> <span class="kn">as</span> <span class="nn">et</span>
+
+<span class="n">Document</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Document&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;file_path&#39;</span><span class="p">,</span> <span class="s">&#39;text&#39;</span><span class="p">,</span> <span class="s">&#39;attribs&#39;</span><span class="p">])</span>
+
+<span class="k">class</span> <span class="nc">DocParser</span><span class="p">:</span> 
+    <span class="sd">&quot;&quot;&quot;Parse a file or directory of files into a set of Document objects.&quot;&quot;&quot;</span>
+      
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse a file or directory of files into a set of Document objects.</span>
+
+<span class="sd">        - Input: A file or directory path.</span>
+<span class="sd">        - Output: A set of Document objects, which at least have a _text_ attribute,</span>
+<span class="sd">                  and possibly a dictionary of other attributes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_files</span><span class="p">():</span>
+            <span class="n">doc_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_file</span><span class="p">():</span>
+                <span class="k">yield</span> <span class="n">doc</span>
+
+    <span class="k">def</span> <span class="nf">parse_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_get_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">XMLDocParser</span><span class="p">(</span><span class="n">DocParser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse an XML file or directory of XML files into a set of Document objects.</span>
+<span class="sd">    </span>
+<span class="sd">    Inputs: document node name (doc) and text attribute node name (text)</span>
+<span class="sd">    _Note that this assumes that a document could have multiple text nodes, e.g.</span>
+<span class="sd">    corresponding to sections or paragraphs, and these are concatenated by default</span>
+<span class="sd">    here!_</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&#39;document&#39;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s">&#39;text&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span> <span class="o">=</span> <span class="n">doc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_text</span> <span class="o">=</span> <span class="n">text</span>
 
 
 <span class="n">Sentence</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Sentence&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;words&#39;</span><span class="p">,</span> <span class="s">&#39;lemmas&#39;</span><span class="p">,</span> <span class="s">&#39;poses&#39;</span><span class="p">,</span> <span class="s">&#39;dep_parents&#39;</span><span class="p">,</span>
@@ -1252,43 +1309,6 @@ table {
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
-<span class="k">class</span> <span class="nc">DocParser</span><span class="p">:</span> 
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Wrapper for a FileTypeParser that parses a file, directory, or pattern</span>
-<span class="sd">    Defaults to using TextParser</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">ftreader</span> <span class="o">=</span> <span class="n">TextReader</span><span class="p">()):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">ftreader</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">FileTypeReader</span><span class="p">):</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;File parser is not a subclass of FileTypeParser&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_ftreader</span> <span class="o">=</span> <span class="n">ftreader</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_files</span><span class="p">()</span>
-      
-    <span class="c"># Parse all docs parseable by passed file type parser</span>
-    <span class="k">def</span> <span class="nf">readDocs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fs</span><span class="p">:</span>
-            <span class="n">doc_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ftreader</span><span class="o">.</span><span class="n">can_read</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
-            <span class="k">yield</span> <span class="n">doc_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ftreader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Skipping unreadable file {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
-
-    <span class="c"># Use SentenceParser to return parsed sentences</span>
-    <span class="k">def</span> <span class="nf">parseDocSentences</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">sp</span> <span class="o">=</span> <span class="n">SentenceParser</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">sent</span> <span class="k">for</span> <span class="n">doc_name</span><span class="p">,</span> <span class="n">txt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">readDocs</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">sp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">txt</span><span class="p">,</span> <span class="n">doc_name</span><span class="p">,</span> <span class="n">doc_name</span><span class="p">)]</span>
-
-    <span class="k">def</span> <span class="nf">_get_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
-        
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-      <span class="k">return</span> <span class="s">&quot;Document parser for files: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fs</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">sort_X_on_Y</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span><span class="n">x</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span><span class="n">X</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span> <span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>   
@@ -1400,37 +1420,28 @@ table {
       <p id="ddlite_parser.DocParser" class="name">class <span class="ident">DocParser</span></p>
       
   
-    <div class="desc"><p>Wrapper for a FileTypeParser that parses a file, directory, or pattern
-Defaults to using TextParser</p></div>
+    <div class="desc"><p>Parse a file or directory of files into a set of Document objects.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-ddlite_parser.DocParser', this);">Show source &equiv;</a></p>
   <div id="source-ddlite_parser.DocParser" class="source">
     <div class="codehilite"><pre><span class="k">class</span> <span class="nc">DocParser</span><span class="p">:</span> 
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Wrapper for a FileTypeParser that parses a file, directory, or pattern</span>
-<span class="sd">    Defaults to using TextParser</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">ftreader</span> <span class="o">=</span> <span class="n">TextReader</span><span class="p">()):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">ftreader</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">FileTypeReader</span><span class="p">):</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;File parser is not a subclass of FileTypeParser&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_ftreader</span> <span class="o">=</span> <span class="n">ftreader</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_files</span><span class="p">()</span>
+    <span class="sd">&quot;&quot;&quot;Parse a file or directory of files into a set of Document objects.&quot;&quot;&quot;</span>
       
-    <span class="c"># Parse all docs parseable by passed file type parser</span>
-    <span class="k">def</span> <span class="nf">readDocs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fs</span><span class="p">:</span>
-            <span class="n">doc_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ftreader</span><span class="o">.</span><span class="n">can_read</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
-            <span class="k">yield</span> <span class="n">doc_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ftreader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Skipping unreadable file {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse a file or directory of files into a set of Document objects.</span>
 
-    <span class="c"># Use SentenceParser to return parsed sentences</span>
-    <span class="k">def</span> <span class="nf">parseDocSentences</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">sp</span> <span class="o">=</span> <span class="n">SentenceParser</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">sent</span> <span class="k">for</span> <span class="n">doc_name</span><span class="p">,</span> <span class="n">txt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">readDocs</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">sp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">txt</span><span class="p">,</span> <span class="n">doc_name</span><span class="p">,</span> <span class="n">doc_name</span><span class="p">)]</span>
+<span class="sd">        - Input: A file or directory path.</span>
+<span class="sd">        - Output: A set of Document objects, which at least have a _text_ attribute,</span>
+<span class="sd">                  and possibly a dictionary of other attributes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_files</span><span class="p">():</span>
+            <span class="n">doc_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_file</span><span class="p">():</span>
+                <span class="k">yield</span> <span class="n">doc</span>
+
+    <span class="k">def</span> <span class="nf">parse_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_get_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
@@ -1439,9 +1450,6 @@ Defaults to using TextParser</p></div>
             <span class="k">return</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
-        
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-      <span class="k">return</span> <span class="s">&quot;Document parser for files: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fs</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1453,92 +1461,128 @@ Defaults to using TextParser</p></div>
           <ul class="class_list">
           <li><a href="#ddlite_parser.DocParser">DocParser</a></li>
           </ul>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="ddlite_parser.DocParser.parse">
+    <p>def <span class="ident">parse</span>(</p><p>self, path)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Parse a file or directory of files into a set of Document objects.</p>
+<ul>
+<li>Input: A file or directory path.</li>
+<li>Output: A set of Document objects, which at least have a <em>text</em> attribute,
+          and possibly a dictionary of other attributes.</li>
+</ul></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-ddlite_parser.DocParser.parse', this);">Show source &equiv;</a></p>
+  <div id="source-ddlite_parser.DocParser.parse" class="source">
+    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse a file or directory of files into a set of Document objects.</span>
+<span class="sd">    - Input: A file or directory path.</span>
+<span class="sd">    - Output: A set of Document objects, which at least have a _text_ attribute,</span>
+<span class="sd">              and possibly a dictionary of other attributes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_files</span><span class="p">():</span>
+        <span class="n">doc_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_file</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">doc</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="ddlite_parser.DocParser.parse_file">
+    <p>def <span class="ident">parse_file</span>(</p><p>self, f)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-ddlite_parser.DocParser.parse_file', this);">Show source &equiv;</a></p>
+  <div id="source-ddlite_parser.DocParser.parse_file" class="source">
+    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">parse_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="ddlite_parser.Document" class="name">class <span class="ident">Document</span></p>
+      
+  
+    <div class="desc"><p>Document(name, file_path, text, attribs)</p></div>
+  <div class="source_cont">
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#ddlite_parser.Document">Document</a></li>
+          <li>__builtin__.tuple</li>
+          <li>__builtin__.object</li>
+          </ul>
           <h3>Instance variables</h3>
             <div class="item">
-            <p id="ddlite_parser.DocParser.path" class="name">var <span class="ident">path</span></p>
+            <p id="ddlite_parser.Document.attribs" class="name">var <span class="ident">attribs</span></p>
             
 
             
   
+    <div class="desc"><p>Alias for field number 3</p></div>
   <div class="source_cont">
 </div>
 
             </div>
-          <h3>Methods</h3>
+            <div class="item">
+            <p id="ddlite_parser.Document.file_path" class="name">var <span class="ident">file_path</span></p>
             
-  <div class="item">
-    <div class="name def" id="ddlite_parser.DocParser.__init__">
-    <p>def <span class="ident">__init__</span>(</p><p>self, path, ftreader=&lt;__pdoc_file_module__.TextReader object at 0x10a9158d0&gt;)</p>
-    </div>
-    
 
-    
+            
   
+    <div class="desc"><p>Alias for field number 1</p></div>
   <div class="source_cont">
-  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-ddlite_parser.DocParser.__init__', this);">Show source &equiv;</a></p>
-  <div id="source-ddlite_parser.DocParser.__init__" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">ftreader</span> <span class="o">=</span> <span class="n">TextReader</span><span class="p">()):</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">ftreader</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">FileTypeReader</span><span class="p">):</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;File parser is not a subclass of FileTypeParser&quot;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_ftreader</span> <span class="o">=</span> <span class="n">ftreader</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_files</span><span class="p">()</span>
-</pre></div>
-
-  </div>
 </div>
 
-  </div>
-  
+            </div>
+            <div class="item">
+            <p id="ddlite_parser.Document.name" class="name">var <span class="ident">name</span></p>
             
-  <div class="item">
-    <div class="name def" id="ddlite_parser.DocParser.parseDocSentences">
-    <p>def <span class="ident">parseDocSentences</span>(</p><p>self)</p>
-    </div>
-    
 
-    
+            
   
+    <div class="desc"><p>Alias for field number 0</p></div>
   <div class="source_cont">
-  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-ddlite_parser.DocParser.parseDocSentences', this);">Show source &equiv;</a></p>
-  <div id="source-ddlite_parser.DocParser.parseDocSentences" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">parseDocSentences</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="n">sp</span> <span class="o">=</span> <span class="n">SentenceParser</span><span class="p">()</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">sent</span> <span class="k">for</span> <span class="n">doc_name</span><span class="p">,</span> <span class="n">txt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">readDocs</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">sp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">txt</span><span class="p">,</span> <span class="n">doc_name</span><span class="p">,</span> <span class="n">doc_name</span><span class="p">)]</span>
-</pre></div>
-
-  </div>
 </div>
 
-  </div>
-  
+            </div>
+            <div class="item">
+            <p id="ddlite_parser.Document.text" class="name">var <span class="ident">text</span></p>
             
-  <div class="item">
-    <div class="name def" id="ddlite_parser.DocParser.readDocs">
-    <p>def <span class="ident">readDocs</span>(</p><p>self)</p>
-    </div>
-    
 
-    
+            
   
+    <div class="desc"><p>Alias for field number 2</p></div>
   <div class="source_cont">
-  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-ddlite_parser.DocParser.readDocs', this);">Show source &equiv;</a></p>
-  <div id="source-ddlite_parser.DocParser.readDocs" class="source">
-    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">readDocs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fs</span><span class="p">:</span>
-        <span class="n">doc_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ftreader</span><span class="o">.</span><span class="n">can_read</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
-        <span class="k">yield</span> <span class="n">doc_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ftreader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Skipping unreadable file {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
-</pre></div>
-
-  </div>
 </div>
 
-  </div>
-  
+            </div>
       </div>
       </div>
       
@@ -2149,6 +2193,133 @@ Defaults to using TextParser</p></div>
     <div class="codehilite"><pre><span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fp</span><span class="p">):</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="ddlite_parser.XMLDocParser" class="name">class <span class="ident">XMLDocParser</span></p>
+      
+  
+    <div class="desc"><p>Parse an XML file or directory of XML files into a set of Document objects.</p>
+<p>Inputs: document node name (doc) and text attribute node name (text)
+<em>Note that this assumes that a document could have multiple text nodes, e.g.
+corresponding to sections or paragraphs, and these are concatenated by default
+here!</em></p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-ddlite_parser.XMLDocParser', this);">Show source &equiv;</a></p>
+  <div id="source-ddlite_parser.XMLDocParser" class="source">
+    <div class="codehilite"><pre><span class="k">class</span> <span class="nc">XMLDocParser</span><span class="p">(</span><span class="n">DocParser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse an XML file or directory of XML files into a set of Document objects.</span>
+<span class="sd">    </span>
+<span class="sd">    Inputs: document node name (doc) and text attribute node name (text)</span>
+<span class="sd">    _Note that this assumes that a document could have multiple text nodes, e.g.</span>
+<span class="sd">    corresponding to sections or paragraphs, and these are concatenated by default</span>
+<span class="sd">    here!_</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&#39;document&#39;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s">&#39;text&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span> <span class="o">=</span> <span class="n">doc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_text</span> <span class="o">=</span> <span class="n">text</span>
+</pre></div>
+
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#ddlite_parser.XMLDocParser">XMLDocParser</a></li>
+          <li><a href="#ddlite_parser.DocParser">DocParser</a></li>
+          </ul>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="ddlite_parser.XMLDocParser.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, doc=&#39;document&#39;, text=&#39;text&#39;)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-ddlite_parser.XMLDocParser.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-ddlite_parser.XMLDocParser.__init__" class="source">
+    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&#39;document&#39;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s">&#39;text&#39;</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span> <span class="o">=</span> <span class="n">doc</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_text</span> <span class="o">=</span> <span class="n">text</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="ddlite_parser.XMLDocParser.parse">
+    <p>def <span class="ident">parse</span>(</p><p>self, path)</p>
+    </div>
+    
+    <p class="inheritance">
+     <strong>Inheritance:</strong>
+       <code><a href="#ddlite_parser.DocParser">DocParser</a></code>.<code><a href="#ddlite_parser.DocParser.parse">parse</a></code>
+    </p>
+
+    
+  
+    <div class="desc inherited"><p>Parse a file or directory of files into a set of Document objects.</p>
+<ul>
+<li>Input: A file or directory path.</li>
+<li>Output: A set of Document objects, which at least have a <em>text</em> attribute,
+          and possibly a dictionary of other attributes.</li>
+</ul></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-ddlite_parser.XMLDocParser.parse', this);">Show source &equiv;</a></p>
+  <div id="source-ddlite_parser.XMLDocParser.parse" class="source">
+    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse a file or directory of files into a set of Document objects.</span>
+<span class="sd">    - Input: A file or directory path.</span>
+<span class="sd">    - Output: A set of Document objects, which at least have a _text_ attribute,</span>
+<span class="sd">              and possibly a dictionary of other attributes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_files</span><span class="p">():</span>
+        <span class="n">doc_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_file</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">doc</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="ddlite_parser.XMLDocParser.parse_file">
+    <p>def <span class="ident">parse_file</span>(</p><p>self, f)</p>
+    </div>
+    
+    <p class="inheritance">
+     <strong>Inheritance:</strong>
+       <code><a href="#ddlite_parser.DocParser">DocParser</a></code>.<code><a href="#ddlite_parser.DocParser.parse_file">parse_file</a></code>
+    </p>
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-ddlite_parser.XMLDocParser.parse_file', this);">Show source &equiv;</a></p>
+  <div id="source-ddlite_parser.XMLDocParser.parse_file" class="source">
+    <div class="codehilite"><pre><span class="k">def</span> <span class="nf">parse_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 </pre></div>
 
   </div>

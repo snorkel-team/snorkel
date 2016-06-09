@@ -139,14 +139,14 @@ class SentenceParser:
             except:
               sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
-    def parse(self, doc, doc_id=None, doc_name=None):
+    def parse(self, s, doc_id=None, doc_name=None):
         """Parse a raw document as a string into a list of sentences"""
-        if len(doc.strip()) == 0:
+        if len(s.strip()) == 0:
             return
-        if isinstance(doc, unicode):
-          doc = doc.encode('utf-8')
-        resp = self.requests_session.post(self.endpoint, data=doc, allow_redirects=True)
-        doc = doc.decode('utf-8')
+        if isinstance(s, unicode):
+          s = s.encode('utf-8')
+        resp = self.requests_session.post(self.endpoint, data=s, allow_redirects=True)
+        s = s.decode('utf-8')
         content = resp.content.strip()
         if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
           raise ValueError("File {} too long. Max character count is 100K".format(doc_id))
@@ -167,12 +167,20 @@ class SentenceParser:
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['sent_id'] = sent_id
             parts['doc_id'] = doc_id
-            parts['text'] = doc[block['tokens'][0]['characterOffsetBegin'] : 
+            parts['text'] = s[block['tokens'][0]['characterOffsetBegin'] : 
                                 block['tokens'][-1]['characterOffsetEnd']]
             parts['doc_name'] = doc_name
             sent = Sentence(**parts)
             sent_id += 1
             yield sent
+    
+    def parse_docs(self, docs):
+        """Parse a list of Document objects into a list of pre-processed Sentences."""
+        sents = []
+        for doc in docs:
+            for sent in self.parse(doc.text, doc.id, doc.file):
+                sents.append(sent)
+        return sents
         
 def sort_X_on_Y(X, Y):
     return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]   

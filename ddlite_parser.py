@@ -100,7 +100,7 @@ class XMLDocParser(DocParser):
 
 Sentence = namedtuple('Sentence', ['words', 'lemmas', 'poses', 'dep_parents',
                                    'dep_labels', 'sent_id', 'doc_id', 'text',
-                                   'token_idxs', 'doc_name'])
+                                   'char_offsets', 'doc_name'])
 
 class SentenceParser:
     def __init__(self, tok_whitespace=False):
@@ -159,7 +159,7 @@ class SentenceParser:
                 parts['words'].append(tok['word'])
                 parts['lemmas'].append(tok['lemma'])
                 parts['poses'].append(tok['pos'])
-                parts['token_idxs'].append(tok['characterOffsetBegin'])
+                parts['char_offsets'].append(tok['characterOffsetBegin'])
                 dep_par.append(deps['governor'])
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])

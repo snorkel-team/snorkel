@@ -9,9 +9,9 @@
 ## Motivation
 DDLite is intended to be a lightweight but powerful framework for prototyping & developing **structured information extraction applications** for domains in which large labeled training sets are not available or easy to obtain, using the _data programming_ paradigm.
 
-In the data programming approach to developing a machine learning system, the developer focuses on writing a set of _labeling functions_, which create a large but noisy training set. DDLite then learns a generative model of this noise- learning, essentially, which labeling functions are more accurate than others- and uses this to train a discriminative classifier.
+In the data programming approach to developing a machine learning system, the developer focuses on writing a set of _labeling functions_, which create a large but noisy training set. DDLite then learns a generative model of this noise&mdash;learning, essentially, which labeling functions are more accurate than others&mdash;and uses this to train a discriminative classifier.
 
-At a high level, the idea is that developers can focus on writing labeling functions- which are just (Python) functions that provide a label for some subset of data points- and not think about algorithms _or_ features!
+At a high level, the idea is that developers can focus on writing labeling functions&mdash;which are just (Python) functions that provide a label for some subset of data points&mdash;and not think about algorithms _or_ features!
 
 DDLite is very much a work in progress, but some people have already begun developing applications with it, and initial feedback has been positive... let us know what you think, and how we can improve it, in the [Issues](https://github.com/HazyResearch/ddlite/issues) section!
 

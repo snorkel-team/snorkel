@@ -31,9 +31,8 @@ class joint_learning_opts:
     self.alpha = kwargs.get('alpha', 0)
     if not (0 <= self.alpha <= 1):
       raise ValueError("Mixing parameter must be in [0,1]")
-    # Learning rate and decay
+    # Learning rate
     self.rate = kwargs.get('rate', 0.01)
-    self.decay = kwargs.get('decay', 1)
     # Parameters to not regularize
     self.unreg = kwargs.get('unreg', [])
     # Use warm starts?
@@ -99,13 +98,10 @@ class pipeline_learning_opts:
     self.feats_args['alpha'] = kwargs.get('alpha_feats', alpha)
     if not (0 <= self.feats_args['alpha'] <= 1):
       raise ValueError("Mixing parameter must be in [0,1]")
-    # Learning rate and decay
+    # Learning rate
     rate = kwargs.get('rate', 0.01)
-    decay = kwargs.get('decay', 1)
     self.lf_args['rate'] = kwargs.get('rate_lf', rate)
-    self.lf_args['decay'] = kwargs.get('decay_lf', decay)
     self.feats_args['rate'] = kwargs.get('rate_feats', rate)
-    self.feats_args['decay'] = kwargs.get('decay_feats', decay)
     # Parameters to not regularize
     unreg = kwargs.get('unreg', [])
     self.feats_args['unreg'] = kwargs.get('unreg_feats', unreg)
@@ -228,13 +224,14 @@ def pipeline_learn_elasticnet_logreg(**kwargs):
   opts = pipeline_learning_opts(kwargs)
   # Learn LF weights  
   lfm = opts.lf_args['mu_seq']
+  lfrate = opts.lf_args['rate']
   if opts.lf_args['verbose']:
-    print "Learning LF accuracies with mu={}".format(lfm)
+    print "Learning LF accuracies with mu={}, rate={}".format(lfm, lfrate)
   lf_weights = joint_learn_elasticnet_logreg(X=opts.LF, **opts.lf_args)[lfm]
   marginals = odds_to_prob(np.ravel(opts.LF.dot(lf_weights)))
   # Learn feature weights
   if opts.feats_args['verbose']:
-    print "Learning feature weights"
+    print "Learning feature weights with rate={}".format(opts.feats_args['rate'])
   feat_weights = joint_learn_elasticnet_logreg(X=opts.F, marginals=marginals,
                                                **opts.feats_args)
   return lf_weights, feat_weights, marginals
@@ -270,7 +267,7 @@ def joint_learn_elasticnet_logreg(**kwargs):
     g = np.zeros(R)
     l = np.zeros(R)
     g_size = 0
-    cur_rate = opts.rate
+    rate = opts.rate
     # Gradient descent
     for step in range(opts.n_iter):
       # Get the expected LF accuracy
@@ -287,20 +284,19 @@ def joint_learn_elasticnet_logreg(**kwargs):
       # Check for convergence
       wn = np.linalg.norm(w, ord=2)
       g_size = np.linalg.norm(g, ord=2)
-      if step % 100 == 0 and verbose:    
+      if step % 250 == 0 and verbose:    
         print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size) 
       if (wn < 1e-12 or g_size / wn < opts.tol) and step >= 10:
         if verbose:
           print "SGD converged for mu={:.3f} after {} steps".format(mu, step)
         break
       # Update weights
-      cur_rate *= opts.decay
-      w -= cur_rate * g
+      w -= rate * g
       # Store weights to not be regularized      
       w_unreg = w[opts.unreg].copy()
       # Apply elastic net penalty
-      soft = np.abs(w) - cur_rate * opts.alpha * mu
-      ridge_pen = (1 + (1-opts.alpha) * cur_rate * mu)
+      soft = np.abs(w) - rate * opts.alpha * mu
+      ridge_pen = (1 + (1-opts.alpha) * rate * mu)
       #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
       w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
       # Unregularize

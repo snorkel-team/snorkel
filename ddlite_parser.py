@@ -154,8 +154,8 @@ class DocParser:
     # Use SentenceParser to return parsed sentences
     def parseDocSentences(self):
         sp = SentenceParser()
-        return [sent for doc_id, (doc_name, txt) in enumerate(self.readDocs())
-                for sent in sp.parse(txt, doc_id, doc_name)]
+        return [sent for doc_name, txt in self.readDocs()
+                for sent in sp.parse(txt, doc_name, doc_name)]
     
     def _get_files(self):
         if os.path.isfile(self.path):

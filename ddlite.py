@@ -90,7 +90,7 @@ class candidate_internal(object):
   See entity_internal and relation_internal for examples
   """
   def __init__(self, all_idxs, labels, sent, xt):
-    self.uid = "{}::{}::{}::{}".format(sent.doc_name, sent.sent_id,
+    self.uid = "{}::{}::{}::{}".format(sent.doc_id, sent.sent_id,
                                        all_idxs, labels)
     self.all_idxs = all_idxs
     self.labels = labels
@@ -737,6 +737,9 @@ class DDLiteModel:
   def training(self):
     return self.gt.training
     
+  def covered(self):
+    return np.unique(self.lf_matrix.nonzero()[0])
+    
   def set_holdout(self, idxs=None, validation_frac=0.5):
     self.gt.set_holdout(idxs, validation_frac)
     
@@ -1055,8 +1058,9 @@ class DDLiteModel:
     if not use_sparse:
       LF, F, self.X = map(np.asarray, [LF.todense(), F.todense(),
                                        self.X.todense()])
-    result = learn_elasticnet_logreg(F=F[self.training(), :], 
-                                     LF=LF[self.training(), :],
+    train_cov = np.intersect1d(self.training(), self.covered())
+    result = learn_elasticnet_logreg(F=F[train_cov, :], 
+                                     LF=LF[train_cov, :],
                                      w0=w0, unreg=unreg, mu_seq=mu, **kwargs)
     w_all, self._lf_marginals = result, None    
     if pipeline:

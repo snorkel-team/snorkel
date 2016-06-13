@@ -270,6 +270,10 @@ Update coming...
 |`get_log_odds(subset=None)` | Get log odds values for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) |
 |`get_predicted_probability(subset=None)` | Get predicted probabilities for candidates |
 |`get_predicted(subset=None)` | Get predicted responses for candidates |
+|`get_log_odds_lf(subset=None)` | Get log odds values for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) using only LFs|
+|`get_predicted_probability_lf(subset=None)` | Get predicted probabilities for candidates using only LFs |
+|`get_predicted_lf(subset=None)` | Get predicted responses for candidates using only LFs|
+
 |`get_classification_accuracy(subset=None)` | Get classification accuracy over `subset` against ground truth |
 |`plot_calibration()` | Show DeepDive calibration plots |
 |`open_mindtagger(num_sample=None, abstain=False, **kwargs)` | Open MindTagger portal for labeling; sample is either the last sample (`num_sample=None`) or a random sample of size `num_sample`; if `abstain=True` show only canidates which haven't been labeled by any LF |

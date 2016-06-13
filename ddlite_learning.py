@@ -234,7 +234,7 @@ def pipeline_learn_elasticnet_logreg(**kwargs):
     print "Learning feature weights with rate={}".format(opts.feats_args['rate'])
   feat_weights = joint_learn_elasticnet_logreg(X=opts.F, marginals=marginals,
                                                **opts.feats_args)
-  return lf_weights, feat_weights, marginals
+  return lf_weights, feat_weights, lf_weights
 
 def joint_learn_elasticnet_logreg(**kwargs):
   """ Perform SGD wrt the weights w

@@ -685,6 +685,7 @@ class DDLiteModel:
     self.X = None
     self._w_fit = None
     self.w = None
+    self._lf_w = None
     # GT data
     self.gt = CandidateGT(candidates, gt_dict)
     # MT data
@@ -1063,11 +1064,11 @@ class DDLiteModel:
     result = learn_elasticnet_logreg(F=F[train_cov, :], 
                                      LF=LF[train_cov, :],
                                      w0=w0, unreg=unreg, mu_seq=mu, **kwargs)
-    w_all, self._lf_marginals = result, None    
+    w_all, self._lf_w = result, None    
     if pipeline:
       zw = np.zeros_like(result[0])
       w_all = {k : np.concatenate((zw, v)) for k,v in result[1].iteritems()}
-      self._lf_marginals = result[2]
+      self._lf_w = result[2]
     # Validation?
     if len(w_all) == 1:
       self.w = w_all.values()[0]
@@ -1134,25 +1135,35 @@ class DDLiteModel:
   def set_use_lfs(self, use=True):
     self.use_lfs = bool(use)
 
+  def _log_odds(self, X, w, start, subset):
+    if X is None or w is None:
+      raise ValueError("Inference has not been run yet")
+    if subset is None:
+      return X[:, start:].dot(w[start:])
+    if subset is 'test':
+      return X[self.test(), start:].dot(w[start:])
+    if subset is 'validation':
+      return X[self.validation(), start:].dot(w[start:])
+    try:
+      return X[subset, start:].dot(w[start:])
+    except:
+      raise ValueError("subset must be 'test', 'validation', or an array of\
+                       indices 0 <= i < {}".format(self.num_candidates()))
+
   def get_log_odds(self, subset=None):
     """
     Get the array of predicted link function values (continuous) given weights
     Return either all candidates, a specified subset, or only validation/test set
     """
     start = 0 if self.use_lfs else self.num_lfs()
-    if self.X is None or self.w is None:
-      raise ValueError("Inference has not been run yet")
-    if subset is None:
-      return self.X[:, start:].dot(self.w[start:])
-    if subset is 'test':
-      return self.X[self.test(), start:].dot(self.w[start:])
-    if subset is 'validation':
-      return self.X[self.validation(), start:].dot(self.w[start:])
-    try:
-      return self.X[subset, start:].dot(self.w[start:])
-    except:
-      raise ValueError("subset must be 'test', 'validation', or an array of\
-                       indices 0 <= i < {}".format(self.num_candidates()))
+    return self._log_odds(self.X, self.w, start, subset)
+    
+  def get_log_odds_lf(self, subset=None):
+    """
+    Get the array of predicted link function values (continuous) given LF weights
+    Return either all candidates, a specified subset, or only validation/test set
+    """
+    return self._log_odds(self.lf_matrix.tocsr(), self._lf_w, 0, subset)
 
   def get_predicted_probability(self, subset=None):
     """
@@ -1161,12 +1172,26 @@ class DDLiteModel:
     """
     return odds_to_prob(self.get_log_odds(subset))
  
+  def get_predicted_probability_lf(self, subset=None):
+    """
+    Get array of predicted probabilities (continuous) given LF weights
+    Return either all candidates, a specified subset, or only validation/test set
+    """
+    return odds_to_prob(self.get_log_odds_lf(subset)) 
+ 
   def get_predicted(self, subset=None):
     """
     Get the array of predicted (boolean) variables given weights
     Return either all variables, a specified subset, or only validation/test set
     """
     return np.sign(self.get_log_odds(subset))
+    
+  def get_predicted_lf(self, subset=None):
+    """
+    Get the array of predicted (boolean) variables given LF weights
+    Return either all variables, a specified subset, or only validation/test set
+    """
+    return np.sign(self.get_log_odds_lf(subset))
 
   def get_classification_accuracy(self, subset=None):
     """

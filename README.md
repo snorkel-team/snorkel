@@ -286,6 +286,7 @@ DDLite provides a number of options for learning predictive models. The simplest
  The rest of the parameters are as follows.
 
 ### Common parameters to both joint and pipeline
+
 | **Parameter** | **Default value** | **Type** | **Notes** |
 | `mu` | Set automatically if validation set,</br>or `1e-7` if no validation set | `float` or array-like, all non-negative | Sequence of or single regularization parameter</br>to use when training with features |
 | `bias` | `False` | `bool` | Include a bias term? |
@@ -301,6 +302,7 @@ DDLite provides a number of options for learning predictive models. The simplest
 
 
 ### Parameters for pipeline learning
+
 | **Parameter** | **Default value** | **Notes** |
 | `n_iter` | `500` | `int` | Default number of iterations for both stages |
 | `n_iter_lf` | `n_iter` | `int` | Number of iterations for LF stage |
@@ -317,6 +319,7 @@ DDLite provides a number of options for learning predictive models. The simplest
 |`mu_min_ratio_feats` | `1e-6` | `float` | Ratio of smallest to largest `mu` values to fit if `mu` is `None` |
 
 ### Parameters for joint learning
+
 | **Parameter** | **Default value** | **Notes** |
 | `n_iter` | `500` | `int` | Number of iterations |
 | `rate` | `0.01` | `float` | Learning rate |

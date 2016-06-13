@@ -487,7 +487,8 @@ class ModelLog:
     html.append("<td>{0}</td>".format(self.id))
     html.append("<td>{0}</td>".format(self.num_lfs()))
     html.append("<td>{0}</td>".format(self.num_gt()))
-    html.append("<td>{0}</td>".format(self.use_lfs))
+    html.append("<td>{0}</td>".format(self.use_lfs if self.model=="Joint" 
+                                                   else "N/A"))
     html.append("<td>{0}</td>".format(self.model))    
     html.append("<td>{:.3f}</td>".format(self.precision))
     html.append("<td>{:.3f}</td>".format(self.recall))

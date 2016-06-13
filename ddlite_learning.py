@@ -303,7 +303,8 @@ def joint_learn_elasticnet_logreg(**kwargs):
       w[opts.unreg] = w_unreg    
     # SGD did not converge    
     else:
-      print "Final gradient magnitude for mu={:.3f}: {:.3f}".format(mu, g_size)
+      if verbose:
+        print "Final gradient magnitude for mu={:.3f}: {:.3f}".format(mu, g_size)
     # Store result and set warm start for next penalty
     weights[mu] = w.copy()
     if opts.warm_starts:

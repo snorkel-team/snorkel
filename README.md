@@ -264,7 +264,7 @@ Update coming...
 |`lowest_coverage_lfs(n=10)` | Show the `n` LFs with lowest coverage |
 |`lowest_empirical_accuracy_lfs(n=10)` | Show the `n` LFs with the lowest empirical accuracy against ground truth for candidates in the devset |
 |`lf_summary_table()` | Print a table with summary statistics for each LF |
-|`learn_weights(n_iter=1000, tol=1e-6, sample=False, n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, alpha=0, rate=0.01, decay=0.99, bias=False, warm_starts=False, use_sparse=True, verbose=False, log=True, plot=True)` | Use data programming to learn an elastic net logistic regression on candidates not in training set <ul><li>`n_iter`: maximum number of SGD iterations</li><li>`tol`: tolerance for relative gradient magnitude to weights for convergence</li><li>`sample`: Use batch SGD</li> <li>`n_samples`: Batch size for SGD</li><li>`mu`: sequence of regularization parameters to fit; if `None` and validation set exists, automatic sequence is chosen s.t. largest value is close to minimum value at which all weights are zero; if `None` and no validation set exists, uses a default parameter</li><li>`n_mu`: number of regularization parameters for automatic sequence</li><li>`mu_min_ratio`: lower bound for regularization parameter automatic sequence as ratio to largest value</li><li>`alpha`: elastic net mixing parameter (0 for l<sub>2</sub>, 1 for l<sub>1</sub>)</li><li>`rate`: SGD learning rate</li><li>`decay`: SGD learning rate decay</li><li>`bias`: use bias term</li><li>`warm_starts`: use warm starts when fitting a sequence of mu values</li><li>`use_sparse`: use sparse operations</li><li>`verbose`: be verbose</li><li>`log`: log result in `ModelLogger`</li><li>`plot`: show diagnostic plot for validation set performance</li></ul> |
+|`learn_weights(**kwargs)` | See [Learning in DDLite](#learnopts) below |
 |`learn_weights_validated(**kwargs)` | Wrapper for `learn_weights()`|
 |`set_use_lfs(use=True)` | Setter for using LF weights in prediction |
 |`get_log_odds(subset=None)` | Get log odds values for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) |
@@ -276,3 +276,49 @@ Update coming...
 |`add_mindtagger_tags()` | Import tags from current MindTagger session |
 |`add_to_log(log_id=None, subset='test', show=True)` | Add current learning result to log; precision and recall computed from ground truth in `subset` |
 |`show_log(idx=None)` | Show all learning results (`idx=None`) or learning result `idx` | 
+
+## Learning in DDLite<a name="learnopts"></a>
+DDLite provides a number of options for learning predictive models. The simplest option is to just `DDLiteModel.learn_weights()`, but the results probably won't be so hot using only default values. There are two important decisions to make before setting other parameters.
+
+* **Pipeline or joint learning?** In the pipeline learning approach, the LF accuracies are learned separately from the feature weights. These are the "LF stage" and "feature stage", respectively. In the joint learning approach, the LF accuracies and feature weights are learned at the same time. We suggest using pipeline (`pipeline=True`) since it's more flexible than the joint approach (`pipeline=False`); pipeline is also the default.
+* **Use a validation set?** The regularization parameter can be tuned automatically. This requires a validation set to be defined using `DDLiteModel.set_holdout(validation_frac=p)` with `p > 0`, and either multiple or no values passed as the regularization parameter.
+
+ The rest of the parameters are as follows.
+
+### Common parameters to both joint and pipeline
+| **Parameter** | **Default value** | **Type** | **Notes** |
+| `mu` | Set automatically if validation set,</br>or `1e-7` if no validation set | `float` or array-like, all non-negative | Sequence of or single regularization parameter</br>to use when training with features |
+| `bias` | `False` | `bool` | Include a bias term? |
+| `use_sparse` | `True` | `bool` | Use sparse matrix operations? |
+| `verbose` | `False` | `bool` | Print information during training? |
+| `plot` | `True` | `bool` | If using validation set to tune, show a diagnostic plot? |
+| `log` | `True` | `bool` | Log the learning results? |
+| `tol` | `1e-6` | `float` | Threshold of gradient-to-weights ratio to stop learning |
+|`sample` | `True` | `bool` | Use mini-batch SGD or full gradient? |
+|`n_samples` | `100` | `int` | Number of samples in mini-batch |
+|`alpha` | `0` | `float`, in `[0,1]` | Elastic-net mixing parameter (`0` is ridge, `1` is lasso) for feature training |
+|`warm_starts`| `False` | `bool`| Use warm starts if multiple `mu` values? |
+
+
+### Parameters for pipeline learning
+| **Parameter** | **Default value** | **Notes** |
+| `n_iter` | `500` | `int` | Default number of iterations for both stages |
+| `n_iter_lf` | `n_iter` | `int` | Number of iterations for LF stage |
+| `n_iter_feats` | `n_iter` | `int` | Number of iterations for feature stage |
+| `w0_mult_lf` | `1` | `float` | Multiplier for initial LF weights (`1` or `3` are typical) | 
+| `alpha_feats` | `alpha` | `float` | Same as `alpha` |
+| `rate` | `0.01` | `float` | Default learning rate for both stages |
+| `rate_lf` | `rate` | `float` | Learning rate for LF stage |
+| `rate_feats` | `rate` | `float` | Learning rate for feature stage |
+| `warm_starts_feats` | `warm_starts` | `bool` | Same as `warm_starts` |
+| `mu_lf` | `1e-7`, non-negative | `float` | Regularization parameter for LF stage |
+|`mu_seq_feats` | `mu` | `float` or array-like, all non-negative | Same as `mu`|
+| `n_mu_feats` | `5` | `int` | Number of `mu` values to fit if `mu` is `None` |
+|`mu_min_ratio_feats` | `1e-6` | `float` | Ratio of smallest to largest `mu` values to fit if `mu` is `None` |
+
+### Parameters for joint learning
+| **Parameter** | **Default value** | **Notes** |
+| `n_iter` | `500` | `int` | Number of iterations |
+| `rate` | `0.01` | `float` | Learning rate |
+| `n_mu` | `5` | `int` | Number of `mu` values to fit if `mu` is `None` |
+|`mu_min_ratio` | `1e-6` | `float` | Ratio of smallest to largest `mu` values to fit if `mu` is `None` |

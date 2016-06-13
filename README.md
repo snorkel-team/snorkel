@@ -288,6 +288,7 @@ DDLite provides a number of options for learning predictive models. The simplest
 ### Common parameters to both joint and pipeline
 
 | **Parameter** | **Default value** | **Type** | **Notes** |
+|:---------|:--------|:---------|:--------|
 | `mu` | Set automatically if validation set,</br>or `1e-7` if no validation set | `float` or array-like, all non-negative | Sequence of or single regularization parameter</br>to use when training with features |
 | `bias` | `False` | `bool` | Include a bias term? |
 | `use_sparse` | `True` | `bool` | Use sparse matrix operations? |
@@ -303,7 +304,8 @@ DDLite provides a number of options for learning predictive models. The simplest
 
 ### Parameters for pipeline learning
 
-| **Parameter** | **Default value** | **Notes** |
+| **Parameter** | **Default value** | **Type** | **Notes** |
+|:---------|:--------|:---------|:--------|
 | `n_iter` | `500` | `int` | Default number of iterations for both stages |
 | `n_iter_lf` | `n_iter` | `int` | Number of iterations for LF stage |
 | `n_iter_feats` | `n_iter` | `int` | Number of iterations for feature stage |

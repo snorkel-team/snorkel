@@ -3,7 +3,7 @@ import numpy as np
 import scipy.sparse as sparse
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
-from ddlite_learning import joint_learn_elasticnet_logreg, odds_to_prob
+from ddlite_learning import learn_elasticnet_logreg, odds_to_prob
 
 class TestInference(unittest.TestCase):
     
@@ -19,9 +19,9 @@ class TestInference(unittest.TestCase):
         X, w0, gt = self._problem(n=250, nlf=50, lf_prior=0.4, lf_mean=0.7,
                                   lf_sd=0.25, nf=250, f_prior=0.2, f_mean=0.6,
                                   f_sd=0.25)
-        w = joint_learn_elasticnet_logreg(X=X, pipeline=False, n_iter=500, tol=1e-4,
-                                    w0=w0, sample=False, alpha=alpha, mu_seq=mu, 
-                                    rate=0.01, verbose=True)[mu]
+        w = learn_elasticnet_logreg(X=X, n_iter=500, tol=1e-4, mu=mu,
+                                    w0=w0, sample=False, alpha=alpha, 
+                                    rate=0.01, verbose=True)
         self.assertGreater(np.mean(np.sign(X.dot(w)) == gt), 0.85)
     
     def test_ridge_logistic_regression_small_1(self):
@@ -44,9 +44,9 @@ class TestInference(unittest.TestCase):
         X, w0, gt = self._problem(n=1000, nlf=100, lf_prior=0.2, lf_mean=0.7,
                                   lf_sd=0.25, nf=5000, f_prior=0.05, f_mean=0.6,
                                   f_sd=0.25)
-        w = joint_learn_elasticnet_logreg(X=X, n_iter=1000, tol=1e-4, w0=w0, pipeline=False,
-                                    sample=False, alpha=alpha, mu_seq=mu, 
-                                    rate=0.01, verbose=True)[mu]
+        w = learn_elasticnet_logreg(X=X, n_iter=1000, tol=1e-4, w0=w0,
+                                    sample=False, alpha=alpha, mu=mu, 
+                                    rate=0.01, verbose=True)
         self.assertGreater(np.mean(np.sign(X.dot(w)) == gt), 0.85)
         
     def test_ridge_logistic_regression_large_1(self):
@@ -65,35 +65,19 @@ class TestInference(unittest.TestCase):
         print "Running large lasso logistic regression test 2"
         self.logistic_regression_large(self.lasso, 1e-4)
         
-    def test_logistic_regression_sparse(self):
-        print "Running logistic regression test with sparse operations"
-        X, w0, gt = self._problem(n=500, nlf=75, lf_prior=0.3, lf_mean=0.7,
-                                  lf_sd=0.25, nf=1000, f_prior=0.1, f_mean=0.6,
-                                  f_sd=0.25)
-        mu = 1e-4
-        w_s = joint_learn_elasticnet_logreg(X=X, n_iter=2500, tol=1e-4, w0=w0, pipeline=False,
-                                      sample=False, alpha=self.ridge,
-                                      mu_seq=mu, rate=0.01, verbose=True)[mu]
-        w_d = joint_learn_elasticnet_logreg(X=np.asarray(X.todense()), n_iter=2500, pipeline=False,
-                                      tol=1e-4, w0=w0, sample=False,
-                                      alpha=self.ridge, mu_seq=mu, rate=0.01,
-                                      verbose=True)[mu]
-        # Check sparse solution is close to dense solution
-        self.assertLessEqual(np.linalg.norm(w_s - w_d), 1e-6)
-        
     def test_logistic_regression_sample(self):
         print "Running logistic regression test with sparse operations"
         X, w0, gt = self._problem(n=500, nlf=75, lf_prior=0.3, lf_mean=0.7,
                                   lf_sd=0.25, nf=1000, f_prior=0.1, f_mean=0.6,
                                   f_sd=0.25)
         mu = 1e-4
-        w_d = joint_learn_elasticnet_logreg(X=X, n_iter=2500, tol=1e-4, w0=w0, pipeline=False,
+        w_d = learn_elasticnet_logreg(X=X, n_iter=2500, tol=1e-4, w0=w0,
                                       sample=False, alpha=self.ridge,
-                                      mu_seq=mu, rate=0.01, verbose=True)[mu]
-        w_s = joint_learn_elasticnet_logreg(X=X, n_iter=2500, tol=1e-4, w0=w0, pipeline=False,
+                                      mu_seq=mu, rate=0.01, verbose=True)
+        w_s = learn_elasticnet_logreg(X=X, n_iter=2500, tol=1e-4, w0=w0,
                                       sample=True, n_samples=200,
                                       alpha=self.ridge, mu_seq=mu, rate=0.01,
-                                      verbose=True)[mu]
+                                      verbose=True)
         # Check sample marginals are close to deterministic solutio
         ld, ls = odds_to_prob(X.dot(w_d)), odds_to_prob(X.dot(w_s))
         self.assertLessEqual(np.linalg.norm(ld-ls) / np.linalg.norm(ld), 0.05)                         

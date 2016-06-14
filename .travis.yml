@@ -61,6 +61,9 @@ install:
   # Use runipy to run Jupyter/IPython notebooks from command-line
   - pip install runipy
 
+  # Install theano
+  - conda install --yes theano
+
 script:
   # Run test modules
   - python test/MatcherTests.py

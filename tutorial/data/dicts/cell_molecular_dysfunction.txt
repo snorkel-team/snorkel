@@ -1,0 +1,6146 @@
+v-erb-b2 Erythroblastic Leukemia Viral Oncogene Homolog 2, Neuro/Glioblastoma Derived Oncogene Homolog (Avian) c.2325_2326ins12
+v-erb-b2 Erythroblastic Leukemia Viral Oncogene Homolog 2, Neuro/Glioblastoma Derived Oncogene Homolog (Avian) c.2324_2325ins12
+Partial monosomy of the long arm of chromosome 13
+Atypical squamous cells, cannot exclude high-grade squamous intraepithelial lesion
+v-akt Murine Thymoma Viral Oncogene Homolog 1 Gene Mutation
+High-grade squamous intraepithelial lesion with features suspicious for invasion
+Janus Kinase 2 (A Protein Tyrosine Kinase) Gene Variant
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha Protein Variant
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog Gene Mutation
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 Gene Mutation
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1405G_1407GGA>AGT
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1396G>C
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha E545Q
+EGFR Mutation Resulting in Tyrosine Kinase Inhibitor Sensitivity
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1405G_1407GGA>AGC
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha H1047R
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha H1047Q
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha H1047T
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha H1047Y
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha H1047X
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha H1047L
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.35_36GT>AA
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1799T>G
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1799T>C
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1799T>A
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1406G>A
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1406G>C
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1406G>T
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.38_39GC>TG
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.37_39GGC>CGT
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog C.36T>C
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.34G>A
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.34G>C
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.34G>T
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1791A>G
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.180_181TC>CA
+EGFR Mutation Resulting in Tyrosine Kinase Inhibitor Resistance
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1798_1799GT>AA
+Tyrosine Kinase-Type Cell Surface Receptor HER2 Protein Variant
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.180_181TC>AA
+Muscle fiber atrophy, mixed type I and II
+Epidermal Growth Factor Receptor Gene c.2254_2277del24 EGFR c.2254_2277del24
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.34_35GG>TT
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.34_35GG>TA
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.39C>T
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.39C>G
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.39C>A
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.34_36GGT>TGC
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.34_36GGT>TGG
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.35_36GT>TC
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1799_1800TG>AA
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1799_1800TG>AT
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.34_35GG>CT
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.34_35GG>AT
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.34_35GG>AA
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1397G>C
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1397G>A
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1397G>T
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha E545X
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha E545V
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha E545K
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha E545A
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha E545G
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha E545D
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1789_1790CT>TC
+Impaired intestinal epithelial cell transport of amino acids
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.38_39GC>TT
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.181C>G
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.181C>A
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.38G>C
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.38G>T
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.35_36GT>AC
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1790T>G
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1790T>A
+Muscle fibre atrophy, mixed type I and II
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.38G>A
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.182A>T
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.182A>C
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.182A>G
+Simultaneous Trisomies of Chromosomes 4, 10, and 17
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.183A>C
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.183A>T
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1789C>G
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.35_36GT>AG
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1798G>T
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1798G>A
+Chromosomes 1 and 2, monosomy 2q duplication 1p
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.35G>T
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.35G>A
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1405G>A
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1405G>C
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.38_39GC>AA
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.38_39GC>AG
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.38_39GC>AT
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.35G>C
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1798_1799GT>AG
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.37G>A
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.37G>C
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.37G>T
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform Protein Variant
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha C420R
+v-Ki-ras2 Kirsten Rat Sarcoma Viral Oncogene Homolog c.37_38GG>AA
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1797_1799AGT>GAG
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha E542Q
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha E542V
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha E542X
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha E542G
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase 110 kDa Catalytic Subunit Alpha E542K
+v-akt Murine Thymoma Viral Oncogene Homolog 1 c.49G>A
+v-raf Murine Sarcoma Viral Oncogene Homolog B1 c.1405_1406GG>TC
+Hormonal pattern incompatible with age and history
+Clonal Immunoglobulin Kappa Light Chain Gene Rearrangement
+X chromosome, duplication Xq13 1 q21 1
+Chromosome 7, partial deletion of short arm
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.181_182CA>AG
+Monoclonal Immunoglobulin Kappa Light Chain Gene Rearrangement
+Fibroblast Growth Factor Receptor 1 Gene Amplification
+Unmutated Immunoglobulin Heavy Chain Variable Region Gene
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.181_183CAA>AAG
+Platelet-Derived Growth Factor Receptor, Alpha Polypeptide c.2525A>T
+Fibroblast Growth Factor Receptor 2 Gene Amplification
+Fibroblast Growth Factor Receptor 2 Gene Activation
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform E545K
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform E545G
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform E545A
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform E545X
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform E545V
+ABL1 and ABL2 Tyrosine Kinase Protein Overexpression
+Chromosome 4, Partial Monosomy of Distal 4q
+Deletion and duplication of mitochondrial deoxyribonucleic acid
+Fibroblast Growth Factor Receptor 1 Gene Activation
+Immunoglobulin Heavy Chain Locus Variable Region Mutation
+Atypical Endocervical Glandular Cells of Undetermined Significance
+Monoclonal T-Cell Receptor Gamma Chain Gene Rearrangement
+Fibroblast Growth Factor Receptor 2 Protein Variant
+Simultaneous Trisomies of Chromosomes 4 and 10
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.182_183AA>GG
+Fibroblast Growth Factor Receptor 2 Gene Mutation
+Loss of Chromosome 3p FHIT Gene Locus
+Chromosome 1, q42 11 q42 12 duplication
+Clonal T-Cell Receptor Gamma Chain Gene Rearrangement
+Atypical Endocervical Glandular Cells of Uncertain Significance
+C-abl and ARG Tyrosine Kinase Protein Overexpression
+Impaired intestinal epithelial cell transport of fats
+TGF-beta Receptor Type II Tumor-Suppressor Gene Inactivation
+Impaired intestinal epithelial cell transport of carbohydrates
+Familial spastic paraplegia with neuropathy and poikiloderma
+Clonal T-Cell Receptor Beta Chain Gene Rearrangement
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.182_183AA>TG
+Monoclonal Immunoglobulin Lambda Light Chain Gene Rearrangement
+Platelet-Derived Growth Factor Receptor Alpha Gene Mutation
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform E542X
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform E542V
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform E542Q
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform E542K
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform E542G
+Loss of Chromosome 11q ATM Gene Locus
+Clonal Immunoglobulin Lambda Light Chain Gene Rearrangement
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.180_181AC>TA
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform C420R
+Atypical Endocervical Glandular Cell of Undetermined Significance
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform H1047L
+Atypical endocervical glandular cells of uncertain significance
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform H1047X
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform H1047Y
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform H1047T
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform H1047Q
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform H1047R
+Platelet-Derived Growth Factor Receptor Alpha Protein Overexpression
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.181C>A
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.181C>G
+Monoclonal T-Cell Receptor Beta Chain Gene Rearrangement
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.181_182CA>TT
+Surface alteration of special sense organ cell
+Atypical Endocervical Glandular Cell of Uncertain Significance
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform E545D
+Phosphatidylinositol-4,5-Bisphosphate 3-Kinase Catalytic Subunit Alpha Isoform E545Q
+Serine/Threonine-Protein Kinase B-raf Protein V600 Protein Variation
+Chromosomal alterations of group G and Y
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.183A>G
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.183A>C
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.183A>T
+Platelet-Derived Growth Factor Receptor Alpha Protein Variant
+Chromosomal alterations of group C and X
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.182A>T
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.182A>G
+Neuroblastoma RAS Viral (v-ras) Oncogene Homolog c.182A>C
+Deregulation of Protein and Messenger RNA Expression
+Epidermal Growth Factor Receptor Gene c.2235_2246del12
+Epidermal Growth Factor Receptor Gene c.2320_2321ins12
+Epidermal Growth Factor Receptor Gene c.2283_2284ins12
+Epidermal Growth Factor Receptor Gene c.2319_2320insAACCCCCAC
+EGFR Tyrosine Kinase Inhibitor Resistant Mutation
+Fibroblast Growth Factor Receptor 2 K659E
+Epidermal Growth Factor Receptor Gene c.2290_2291ins12
+Fibroblast Growth Factor Receptor 2 c.1115C>G
+Fibroblast Growth Factor Receptor 2 c.1144T>C
+Trisomy 18 - mitotic nondisjunction mosaicism
+Epidermal Growth Factor Receptor Gene c.2319_2320insCCCCAC
+Epidermal Growth Factor Receptor Gene c.2303_2304ins9
+Epidermal Growth Factor Receptor Gene c.2310_2311insGGT
+Alteration of filamentous portion of nucleolus
+Atypical Glandular Cells of Uncertain Significance
+Epidermal Growth Factor Receptor Gene c.2154_2155GG>TT
+Fibroblast Growth Factor Receptor 2 Pro253Arg
+Mouse Double Minute 2 Gene Amplification
+Epidermal Growth Factor Receptor Gene c.2239_2262del24
+Paternal uniparental disomy of chromosome 13
+Epidermal Growth Factor Receptor G719X; NP_005219.2:p.Gly719Xxx
+Chromosome replaced with ring or dicentric
+Fibroblast Growth Factor Receptor 2 Cys382Arg
+establishment or maintenance of heterochromatin architecture
+Epidermal Growth Factor Receptor Gene c.2156G>A
+Epidermal Growth Factor Receptor Gene c.2156G>C
+Epidermal Growth Factor Receptor Gene c.2307_2308ins15
+Epidermal Growth Factor Receptor Gene c.2238_2252del15
+Epidermal Growth Factor Receptor Gene c.2310_2311ins9
+Fibroblast Growth Factor Receptor 2 c.1124A>G
+Aberrant DNA Methylation of MGMT Gene
+Epidermal Growth Factor Receptor Gene c.2156delG
+Epidermal Growth Factor Receptor Gene Activation
+Atypical glandular cells of undetermined significance
+Fibroblast Growth Factor Receptor 2 c.758C>G
+Fibroblast Growth Factor Receptor 2 Asn549His
+atypical glandular cells of uncertain significance
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide Protein Variant
+Epidermal Growth Factor Receptor Gene c.2318_2319insCCCCCA
+Atypical endocervical cells of undetermined significance
+Positive Regulation of Oxidative Stress Process
+Epidermal Growth Factor Receptor Gene c.2236_2237ins18
+Epidermal Growth Factor Receptor Gene c.2239_2247del9
+Paternal uniparental disomy for chromosome 11
+Fibroblast Growth Factor Receptor 2 C382R
+Epidermal Growth Factor Receptor Gene c.2322_2323insCACGTG
+Atypical squamous cells, cannot exclude HSIL
+Epidermal Growth Factor Receptor Gene c.2253_2276del24
+Epidermal Growth Factor Receptor Gene c.2582T>G
+Chromosome 5, trisomy 5pter p13 3
+Atypical glandular cells of uncertain significance
+Epidermal Growth Factor Receptor Gene c.2369C>T
+Fibroblast Growth Factor Receptor 2 P253R
+Epidermal Growth Factor Receptor Gene c.334_1137del804
+Epidermal Growth Factor Receptor Gene c.2310_2311insAACCCCCAC
+Epidermal Growth Factor Receptor Gene c.2311_2312ins12
+Monoclonal Immunoglobulin Light Chain Gene Rearrangement
+Monoclonal Immunoglobulin Heavy Chain Gene Rearrangement
+Epidermal Growth Factor Receptor Gene c.2313_2314insAAC
+Fibroblast Growth Factor Receptor 2 Y375C
+Epidermal Growth Factor Receptor Gene c.2257_2277del21
+Atypical Glandular Cell of Undetermined Significance
+Clonal Immunoglobulin Light Chain Gene Rearrangement
+SPASTIC PARAPLEGIA WITH NEUROPATHY AND POIKILODERMA
+Epidermal Growth Factor Receptor Activating Mutation
+FLT3 Tyrosine Kinase Domain Point Mutation
+Epidermal Growth Factor Receptor Gene c.2573_2574TG>GT
+Epidermal Growth Factor Receptor Gene c.2581C>G
+Clonal Immunoglobulin Heavy Chain Gene Rearrangement
+Epidermal Growth Factor Receptor Gene c.2572C>T
+Epidermal Growth Factor Receptor Gene c.2572C>A
+Fibroblast Growth Factor Receptor 2 Ser252Trp
+Maternal uniparental disomy of chromosome 13
+Atypical Glandular Cells of Undetermined Significance
+Epidermal Growth Factor Receptor Gene c.2310_2311insGGGTTA
+Chromosome 7, trisomy 7p13 p12 2
+Epidermal Growth Factor Receptor Gene c.2239_2256del18
+Epidermal Growth Factor Receptor Gene c.2310_2311insGGGGAC
+Epidermal Growth Factor Receptor Gene c.2311_2312ins9
+Epidermal Growth Factor Receptor Gene c.2302_2303ins9
+Platelet-Derived Growth Factor Receptor Alpha Asp842Val
+Alteration of amorphous portion of nucleolus
+Epidermal Growth Factor Receptor Gene c.2315_2316insGACACACCC
+Fibroblast Growth Factor Receptor 2 Tyr375Cys
+Chromosome 4, partial trisomy distal 4q
+Epidermal Growth Factor Receptor Gene c.2308_2309ins9
+Epidermal Growth Factor Receptor Gene c.2219_2220ins18
+Fibroblast Growth Factor Receptor 2 c.1647T>G
+Fibroblast Growth Factor Receptor 2 c.1647T>A
+Epidermal Growth Factor Receptor Gene c.2246_2260del15
+Epidermal Growth Factor Receptor Gene c.2125_2129delGAAAC
+Molecular Biology, Restriction Fragment Length Polymorphisms
+Keratinocyte Growth Factor Receptor Protein Variant
+Fibroblast Growth Factor Receptor 2 c.755C>G
+Receptor Tyrosine-Protein Kinase erbB-2 Protein Variant
+Absence of Biallelic TCRgamma Locus Deletion
+Epidermal Growth Factor Receptor Gene c.2254_2277del24
+Fibroblast Growth Factor Receptor 2 Asn549Lys
+Epidermal Growth Factor Receptor Gene c.2307_2308insTGCGTG
+Epidermal Growth Factor Receptor Gene c.2240_2254del15
+Fibroblast Growth Factor Receptor 2 Ser372Cys
+Monosomies and deletions from the autosomes
+Epidermal Growth Factor Receptor Gene c.2309_2310ins14
+Epidermal Growth Factor Receptor Gene c.2307_2308ins9
+Chromosome 3, deletion of distal 3p
+EGFR Tyrosine Kinase Inhibitor Sensitizing Mutation
+Epidermal Growth Factor Receptor Gene c.2322_2322G>CCACGTG
+Epidermal Growth Factor Receptor Gene Mutation
+Fibroblast Growth Factor Receptor 2 N549K
+Fibroblast Growth Factor Receptor 2 N549H
+abnormal glandular cells of undetermined significance
+Epidermal Growth Factor Receptor Gene c.2308_2309insACGGCG
+Fibroblast Growth Factor Receptor 2 S372C
+Fibroblast Growth Factor Receptor 2 c.1975A>G
+Fibroblast Growth Factor Receptor 2 c.1645A>C
+Epidermal Growth Factor Receptor Gene c.2235_2249del15
+Epidermal Growth Factor Receptor Gene c.2231_2232ins18
+Deletion and duplication of mitochondrial DNA
+Epidermal Growth Factor Receptor Gene c.2310_2311insGGC
+Epidermal Growth Factor Receptor Gene c.2247_2273del27
+Epidermal Growth Factor Receptor Gene c.2155G>A
+Platelet-Derived Growth Factor Receptor Alpha D842V
+Spastic Paraplegia With Neuropathy And Poikiloderma
+Epidermal Growth Factor Receptor Protein Variant
+Serine/Threonine-Protein Kinase B-raf Protein V600 Mutation
+Serine/Threonine-Protein Kinase B-raf Protein Val600 Mutation
+Epidermal Growth Factor Receptor Gene c.2309_2310AC>CCAGCGTGGAT
+Epidermal Growth Factor Receptor Gene c.2235_2252del18
+Epidermal Growth Factor Receptor Gene c.2319_2320insCAC
+Epidermal Growth Factor Receptor Gene c.2572_2573CT>AG
+Epidermal Growth Factor Receptor Gene c.2572_2573CT>AA
+Epidermal Growth Factor Receptor Gene c.2298_2299insGCCATA
+Epidermal Growth Factor Receptor Gene c.2232_2233ins18
+Receptor Tyrosine-Protein Kinase erbB-1 Protein Variant
+Epidermal Growth Factor Receptor Gene c.2250_2273del24
+Epidermal Growth Factor Receptor Gene c.2155G>T
+Epidermal Growth Factor Receptor Gene Amplification
+Fibroblast Growth Factor Receptor 2 S252W
+Epidermal Growth Factor Receptor Gene c.2321_2322insCCACGT
+Epidermal Growth Factor Receptor Gene c.2573T>G
+Epidermal Growth Factor Receptor Gene c.2573T>A
+Epidermal Growth Factor Receptor Gene c.2233_2247del15
+Mouse Double Minute 2 Gene Mutation
+Epidermal Growth Factor Receptor Gene c.2234_2236delAGG
+atypical glandular cells of undetermined significance
+Chromosome 3, trisomy 3q13 2 q25
+Chromosome 1, uniparental disomy 1q12 q21
+Tyrosine Kinase-Type Cell Surface Receptor A775_G776insYVMA
+Trisomy 13 - mitotic nondisjunction mosaicism
+Epidermal Growth Factor Receptor Gene c.2310_2311insAAC
+Epidermal Growth Factor Receptor Gene c.2852T>A
+Epidermal Growth Factor Receptor Gene c.2239_2253del15
+Epidermal Growth Factor Receptor Gene c.2236_2253del18
+Fibroblast Growth Factor Receptor 2 Lys659Glu
+Atypical Glandular Cell of Uncertain Significance
+Epidermal Growth Factor Receptor Gene c.2236_2250del15
+Janus Kinase 2 Protein Variant
+Epidermal Growth Factor Receptor vIII
+Epidermal Growth Factor Receptor A750_E758del
+Cyclin D2 Messenger RNA Overexpression
+Endometrial cells out of cycle
+Epidermal Growth Factor Receptor V774del
+Epidermal Growth Factor Receptor N756_L760del
+Serine/Threonine-Protein Kinase B-raf Protein Variant
+Muscle fiber atrophy, type I
+Receptor Tyrosine-Protein Kinase erbB-1 R748_P753del
+Receptor Tyrosine-Protein Kinase erbB-1 V769_D770insGVV
+Chromosomal alterations of group B
+Chromosomal alterations of group A
+Chromosomal alterations of group F
+Chromosomal alterations of group D
+Chromosomal alterations of group E
+p210 BCR-ABL1 Fusion Protein Expression
+Epidermal Growth Factor Receptor S752_V769del
+Receptor Tyrosine-Protein Kinase erbB-1 P772_H773insYNP
+Chromosome 8, partial monosomy 8p2
+Cytosine to Thymidine Transition Abnormality
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide H1047L
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide H1047Q
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide H1047T
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide H1047X
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide H1047Y
+Chromosome 17, trisomy 17p11 2
+Keratinocyte Growth Factor Receptor C382R
+Receptor Tyrosine-Protein Kinase erbB-1 E746_T751del
+Epidermal Growth Factor Receptor P772_H773insTHP
+Keratinocyte Growth Factor Receptor N549K
+Keratinocyte Growth Factor Receptor N549H
+Partial deletion of chromosome Y
+Transforming Protein N-Ras Protein Variant
+Receptor Tyrosine-Protein Kinase erbB-1 A763_Y764insFQEA
+Thymidine to Cytosine Transition Abnormality
+Receptor Tyrosine-Protein Kinase erbB-1 S768_V769insAWT
+Epidermal Growth Factor Receptor H773_V774insNPH
+Muscle fibre small group atrophy
+p230 BCR/ABL1 Fusion Protein Expression
+FLT3 Juxtamembrane Domain Point Mutation
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide E545X
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide E545V
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide E545Q
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide E545K
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide E545D
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide E545G
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide E545A
+Receptor Tyrosine-Protein Kinase erbB-1 A767_S768insTLA
+Receptor Tyrosine-Protein Kinase erbB-2 A775_G776insYVMA
+Epidermal Growth Factor Receptor N771_P772insH
+Chromosome 1, trisomy 1q32 qter
+Epidermal Growth Factor Receptor H773_V774insGH
+Receptor Tyrosine-Protein Kinase erbB-1 D770_N771insGD
+Receptor Tyrosine-Protein Kinase erbB-1 A750_K757del
+Plasma membrane receptor site alteration
+Cytosine to Guanosine Transversion Abnormality
+Monoclonal T-Cell Receptor Gene Rearrangement
+Epidermal Growth Factor Receptor V834del
+Chromosome 22, trisomy q11 q13
+Epidermal Growth Factor Receptor D770fs*61
+Chromosome 22, microdeletion 22 q11
+Epidermal Growth Factor Receptor K745_E749del
+Epidermal Growth Factor Receptor I789_L792del
+Receptor Tyrosine-Protein Kinase erbB-1 I740_P741insPVAIKI
+Atypical glandular cells, favour neoplastic
+Receptor Tyrosine-Protein Kinase erbB-1 G719V
+Receptor Tyrosine-Protein Kinase erbB-1 G719S
+Birt Hogg Dube Gene Mutation
+Receptor Tyrosine-Protein Kinase erbB-1 G719X
+Receptor Tyrosine-Protein Kinase erbB-1 G719D
+Receptor Tyrosine-Protein Kinase erbB-1 G719C
+Receptor Tyrosine-Protein Kinase erbB-1 G719A
+Dual red blood cell population
+Inactivation of p53 Tumor-Suppressor Gene
+Receptor Tyrosine-Protein Kinase erbB-1 E746_A750del
+Epidermal Growth Factor Receptor V769_D770insASV
+Receptor Tyrosine-Protein Kinase erbB-1 H773_V774insG
+Receptor Tyrosine-Protein Kinase erbB-1 H773_V774insH
+RAC-alpha Serine/Threonine-Protein Kinase Protein Variant
+Epidermal Growth Factor Receptor H773_V774insH
+Epidermal Growth Factor Receptor H773_V774insG
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.3139C>T
+Receptor Tyrosine-Protein Kinase erbB-1 Y764_V765insHH
+Post-Radiation Cytologic Changes with Dysplasia
+free radical oxidation of tissue
+Keratinocyte Growth Factor Receptor K659E
+Receptor Tyrosine-Protein Kinase erbB-1 T751_E758del
+Epidermal Growth Factor Receptor S768_V769insAWT
+Epidermal Growth Factor Receptor T790M
+Epidermal Growth Factor Receptor D770_N771insN
+Epidermal Growth Factor Receptor D770_N771insG
+Epidermal Growth Factor Receptor D770_N771insD
+Receptor Tyrosine-Protein Kinase erbB-1 I789_L792del
+Receptor Tyrosine-Protein Kinase erbB-1 V769_D770insDNV
+Receptor Tyrosine-Protein Kinase erbB-1 A750_E758del
+Guanosine to Adenosine Transition Abnormality
+Duplication 1q42 11 q42 12
+Duplication with other complex rearrangement
+Epidermal Growth Factor Receptor E746_A750del
+Cytosine to Adenosine Transversion Abnormality
+Keratinocyte Growth Factor Receptor Pro253Arg
+X chromosome, trisomy Xpter Xq13
+Chromosome 5, Trisomy 5p, Complete
+Keratinocyte Growth Factor Receptor Tyr375Cys
+Keratinocyte Growth Factor Receptor Asn549His
+Receptor Tyrosine-Protein Kinase erbB-1 N771_P772insH
+Thymidine to Adenosine Transversion Abnormality
+Epidermal Growth Factor Receptor E746_P753del
+Receptor Trposine-Protein Kinase erbB-1 L858W
+Muscle fiber hypertrophy, type II
+Muscle fiber small group atrophy
+Receptor Tyrosine-Protein Kinase erbB-1 p.K745_A750del
+Receptor Tyrosine-Protein Kinase erbB-1 V769_D770insMASVD
+Change in cytochemical muscle architecture
+type ii muscle fiber atrophy
+hMLH1 Mismatch Repair Gene Inactivation
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.1624G>C
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.1624G>A
+Impaired intestinal epithelial cell transport
+Receptor Tyrosine-Protein Kinase erbB-1 L861F
+Receptor Tyrosine-Protein Kinase erbB-1 L861Q
+Receptor Tyrosine-Protein Kinase erbB-1 L861P
+Receptor Tyrosine-Protein Kinase erbB-1 L861V
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide H1047R
+Uniparental disomy of chromosome 11
+Uniparental disomy of chromosome 13
+Epidermal Growth Factor Receptor V769_D770insGSV
+Keratinocyte Growth Factor Receptor Asn549Lys
+Chromosome 1q, duplication 1q12 q21
+Partial Tandem Duplication of MLL
+Chromosome 1, duplication 1p21 p32
+Receptor Tyrosine-Protein Kinase erbB-1 V769_D770insCV
+Chromosome 3, Distal 3q2 Trisomy
+Epidermal Growth Factor Receptor L747_K754del
+Receptor Tyrosine-Protein Kinase erbB-1 V774_C775insHV
+Guanosine to Cytosine Transversion Abnormality
+Epidermal Growth Factor Receptor G719fs*29
+Receptor Tyrosine-Protein Kinase erbB-1 I744_K745insKIPVAI
+Muscle fibre atrophy, type I
+Chromosome 2, monosomy 2pter p24
+Epidermal Growth Factor Receptor V769_D770insCV
+Receptor Tyrosine-Protein Kinase erbB-1 L858A
+Receptor Tyrosine-Protein Kinase erbB-1 H773_V774insGNPH
+Receptor Tyrosine-Protein Kinase erbB-1 D770_N771insAPW
+Epidermal Growth Factor Receptor S752_I759del
+Epidermal Growth Factor Receptor E746_T751del
+Epidermal Growth Factor Receptor A767_S768insTLA
+Epidermal Growth Factor Receptor V769_D770insMASVD
+Receptor Tyrosine-Protein Kinase erbB-1 E746_R748del
+Epidermal Growth Factor Receptor P772_H773insQV
+Epidermal Growth Factor Receptor L747_P753del
+Epidermal Growth Factor Receptor D770_N771insDG
+Epidermal Growth Factor Receptor E709fs*1
+Atypical Cell of Uncertain Significance
+Epidermal Growth Factor Receptor P772_H773insDHP
+Adenosine to Guanosine Transition Abnormality
+Monosomy and deletion from autosome
+Epidermal Growth Factor Receptor L747_A755del
+KIT Tyrosine Kinase Protein Overexpression
+Receptor Tyrosine-Protein Kinase erbB-1 G719fs*29
+Chromosome 4, monosomy 4p14 p16
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.3140A>G
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.3140A>T
+Receptor Tyrosine-Protein Kinase erbB-1 V769_D770insGSV
+Epidermal Growth Factor Receptor Overexpression
+Muscle fibre large group atrophy
+Chromosome 5, Trisomy 5p, Partial
+Epidermal Growth Factor Receptor K745_L747del
+Chromosome 1, monosomy 1q32 q42
+Epidermal Growth Factor Receptor H773_V774insGNPH
+Epidermal Growth Factor Receptor D770_N771insAPW
+Receptor Tyrosine-Protein Kinase erbB-1 P772_H773insQV
+Receptor Tyrosine-Protein Kinase erbB-1 A750_K754del
+Epidermal Growth Factor Receptor L858G
+Epidermal Growth Factor Receptor L858A
+Epidermal Growth Factor Receptor L858M
+Epidermal Growth Factor Receptor L858K
+Epidermal Growth Factor Receptor L858W
+Epidermal Growth Factor Receptor L858R
+Epidermal Growth Factor Receptor L858P
+Epidermal Growth Factor Receptor L858Q
+Receptor Tyrosine-Protein Kinase erbB-1 M766_A767insAI
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.1635G>C
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.1635G>T
+Chromosome 1, deletion q21 q25
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.3141T>G
+Receptor Tyrosine-Protein Kinase erbB-1 P772_H773insTHP
+Epidermal Growth Factor Receptor L861V
+Epidermal Growth Factor Receptor L861R
+Epidermal Growth Factor Receptor L861P
+Epidermal Growth Factor Receptor L861Q
+Epidermal Growth Factor Receptor L861F
+Guanosine to Thymidine Transversion Abnormality
+Epidermal Growth Factor Receptor A750_K757del
+Cyclin D1 Messenger RNA Overexpression
+PMS1 Mismatch Repair Gene Inactivation
+Chromosome 4, trisomy 4q25 qter
+p230 BCR-ABL1 Fusion Protein Expression
+BCR-ABL Tyrosine Kinase Inhibitor-Resistant Mutation
+Receptor Tyrosine-Protein Kinase erbB-1 D770_N771insNPH
+Duplication Xq13 1 q21 1
+hSNF5/INI1 Tumor Suppressor Gene Inactivation
+Receptor Tyrosine-Protein Kinase erbB-1 D770fs*61
+Receptor Tyrosine-Protein Kinase erbB-1 P753_I759del
+Smooth endoplasmic reticulum membrane alteration
+Chromosome 3, monosomy 3q21 23
+Chromosome 3, monosomy 3p14 p11
+Chromosome 8, monosomy 8p23 1
+Receptor Tyrosine-Protein Kinase erbB-1 P772_H773insDHP
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide E542G
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide E542K
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide E542V
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide E542Q
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide E542X
+Chromosome 4, Partial Trisomy 4p
+Adenosine to Cytosine Transversion Abnormality
+Epidermal Growth Factor Receptor D761_E762insEAFQ
+Type III EGF Deletion-Mutant Receptor
+Epidermal Growth Factor Receptor K745_E746insVPVAIK
+Mitochondrial Complex II Gene Mutation
+Receptor Tyrosine-Protein Kinase erbB-1 P772_H773insDNP
+Keratinocyte Growth Factor Receptor P253R
+Keratinocyte Growth Factor Receptor Y375C
+Inactivation of Retinoblastoma Tumor-Suppressor Gene
+Pituitary Tumor Transforming Gene Overexpression
+Receptor Tyrosine-Protein Kinase erbB-1 T790M
+CD117 Tyrosine Kinase Protein Overexpression
+Epidermal Growth Factor Receptor D770_N771insMATP
+Chromosome 1, monosomy 1p34 p32
+Epidermal Growth Factor Receptor N771_P772insN
+Thymidine to Guanosine Transversion Abnormality
+Epidermal Growth Factor Receptor L747_A750del
+Impaired intestinal epithelial cell digestion
+MAP2K4 Tumor Suppressor Gene Inactivation
+Keratinocyte Growth Factor Receptor Ser252Trp
+Receptor Tyrosine-Protein Kinase erbB-1 H773_V774insPH
+atrophy fibers ii muscle type
+Chromosome 17, deletion 17q23 q24
+Receptor Tyrosine-Protein Kinase erbB-1 E746_S752del
+Receptor Tyrosine-Protein Kinase erbB-1 E746_E749del
+Muscle fibre hypertrophy, type II
+Atypical cells of undetermined significance
+Monoclonal Antigen Receptor Gene Rearrangement
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.1633G>C
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.1633G>A
+Absence of Biallelic TCRgamma Deletion
+Receptor Tyrosine-Protein Kinase erbB-1 D770_N771insGL
+Chromosome 1, monosomy 1p31 p22
+Receptor Tyrosine-Protein Kinase erbB-1 H773_V774insNPH
+Mutation of the BRCA1 Gene
+hMSH2 Mismatch Repair Gene Inactivation
+Epidermal Growth Factor Receptor E746_S752del
+Receptor Tyrosine-Protein Kinase erbB-1 L747_T751del
+C-KIT Tyrosine Kinase Protein Overexpression
+MKK4 Tumor Suppressor Gene Inactivation
+Mutation in Sporadic Breast Tumor
+Adenosine to Thymidine Transversion Abnormality
+Atypical Cell of Undetermined Significance
+Receptor Tyrosine-Protein Kinase erbB-1 E746_P753del
+Receptor Tyrosine-Protein Kinase erbB-1 L747_E749del
+Receptor Tyrosine-Protein Kinase erbB-1 D770_N771insDG
+Receptor Tyrosine-Protein Kinase erbB-1 L747_A750del
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.1625A>G
+Muscle fiber large group atrophy
+Epidermal Growth Factor Receptor E746_E749del
+Keratinocyte Growth Factor Receptor Lys659Glu
+Epidermal Growth Factor Receptor D770_N771insSVP
+Epidermal Growth Factor Receptor D770_N771insSVQ
+Epidermal Growth Factor Receptor D770_N771insSVD
+Receptor Tyrosine-Protein Kinase erbB-1 R748_S752del
+Epidermal Growth Factor Receptor L747_S752del
+Atypical cells of uncertain significance
+Receptor Tyrosine-Protein Kinase erbB-1 V834del
+Tyrosine-Protein Kinase JAK2 Protein Variant
+Deletion of part of autosome
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.1634A>G
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.1634A>C
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.1634A>T
+MYST3-Various Partners Fusion Protein Expression
+hMSH6 Mismatch Repair Gene Inactivation
+Keratinocyte Growth Factor Receptor Cys382Arg
+Mutation of the Nucleophosmin Gene
+PMS2 Mismatch Repair Gene Inactivation
+Trisomy Xq13 1 q21 1
+Keratinocyte Growth Factor Receptor Ser372Cys
+Receptor Tyrosine-Protein Kinase erbB-1 E709fs*1
+Receptor Tyrosine-Protein Kinase erbB-1 N771_P772insN
+Receptor Tyrosine-Protein Kinase erbB-1 K745_L747del
+Chromosome 1, monosomy 1q25 q32
+Tumor Suppressor Gene Inactivation Process
+Receptor Tyrosine-Protein Kinase erbB-1 D770_N771insMATP
+Janus Kinase 2 Gene Variant
+Muscle fiber atrophy, type II
+Trisomy 1q42 11 q42 12
+Epidermal Growth Factor Receptor V765_M766insMAS
+Post-radiation cytologic changes with dysplasia
+Epidermal Growth Factor Receptor R748_S752del
+Chromosome 4 short arm deletion
+Thickening of the basement membrane
+Epidermal Growth Factor Receptor P753_I759del
+Epidermal Growth Factor Receptor P772_H773insPR
+Chromosome 9 inversion or duplication
+Uniparental disomy of chromosome 2
+Epidermal Growth Factor Receptor P772_H773insDNP
+Receptor Tyrosine-Protein Kinase erbB-1 L861R
+Receptor Tyrosine-Protein Kinase erbB-1 K745_E746insVPVAIK
+Deregulation of Programmed Cell Death
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.1258T>C
+Epidermal Growth Factor Receptor L747_E749del
+LYMPHOBLASTIC TRANSFORMATION, INTRINSIC DEFECT IN
+Mutation of the BRCA2 Gene
+Chromosome 21, uniparental disomy of
+Epidermal Growth Factor Receptor p.K745_A750del
+X chromosome, monosomy Xp22 pter
+Rough endoplasmic reticulum cavity alteration
+Receptor Tyrosine-Protein Kinase erbB-1 V774del
+Epidermal Growth Factor Receptor V774_C775insHV
+Epidermal Growth Factor Receptor H773_V774insPH
+Epidermal Growth Factor Receptor T751_E758del
+Keratinocyte Growth Factor Receptor S252W
+Epidermal Growth Factor Receptor V769_D770insDNV
+Epidermal Growth Factor Receptor A763_Y764insFQEA
+Epidermal Growth Factor Receptor E746del
+Receptor Tyrosine-Protein Kinase erbB-1 L747_A755del
+Chromosome 1, trisomy 1q42 qter
+Receptor Tyrosine-Protein Kinase erbB-1 N756_L760del
+Receptor Tyrosine-Protein Kinase erbB-1 S752_I759del
+Clonal T-Cell Receptor Gene Rearrangement
+Epidermal Growth Factor Receptor Y764_V765insHH
+Epidermal Growth Factor Receptor G719D
+Epidermal Growth Factor Receptor G719C
+Epidermal Growth Factor Receptor G719A
+Epidermal Growth Factor Receptor G719X
+Epidermal Growth Factor Receptor G719S
+Inflammatory alteration of cellular material
+Chromosome 1, monosomy 1p22 p13
+Clonal Antigen Receptor Gene Rearrangement
+Duplication seen only at prometaphase
+Receptor Tyrosine-Protein Kinase erbB-1 L747_P753del
+Epidermal Growth Factor Receptor L747del
+Epidermal Growth Factor Receptor L747_T751del
+Receptor Tyrosine-Protein Kinase erbB-1 V769_D770insASV
+Receptor Tyrosine-Protein Kinase erbB-1 S752_V769del
+Receptor Tyrosine-Protein Kinase erbB-1 S768_V769insVAS
+Whole chromosome trisomy, mitotic nondisjunction
+Lymphoblastic Transformation, Intrinsic Defect in
+Deletion seen only at prometaphase
+Receptor Tyrosine-Protein Kinase erbB-1 L747_S752del
+p190 BCR/ABL1 Fusion Protein Expression
+CFTR gene.p.IVS8 polyT 7T/9T variant
+Receptor Tyrosine-Protein Kinase erbB-1 V765_M766insMAS
+TGF-beta RII Tumor-Suppressor Gene Inactivation
+Receptor Tyrosine-Protein Kinase erbB-1 H773_V774insGH
+Epidermal Growth Factor Receptor A750_K754del
+Chromosome 6, deletion 6q13 q15
+Chromosome 11, partial trisomy 11q
+Epidermal Growth Factor Receptor E746_R748del
+TEL-PDGFbeta Receptor Fusion Protein Expression
+Receptor Tyrosine-Protein Kinase erbB-1 D770_N771insG
+Receptor Tyrosine-Protein Kinase erbB-1 D770_N771insD
+Receptor Tyrosine-Protein Kinase erbB-1 D770_N771insN
+Atypical glandular cells, favor neoplastic
+p210 BCR/ABL1 Fusion Protein Expression
+Receptor Tyrosine-Protein Kinase erbB-1 D761_E762insEAFQ
+Chromosome 2, trisomy 2pter p24
+Receptor Tyrosine-Protein Kinase erbB-1 E746del
+Receptor Tyrosine-Protein Kinase erbB-1 L858M
+Receptor Tyrosine-Protein Kinase erbB-1 L858K
+Receptor Tyrosine-Protein Kinase erbB-1 L858G
+Receptor Tyrosine-Protein Kinase erbB-1 L858R
+Receptor Tyrosine-Protein Kinase erbB-1 L858Q
+Receptor Tyrosine-Protein Kinase erbB-1 L858P
+Receptor Tyrosine-Protein Kinase erbB-1 D770_N771insSVQ
+Receptor Tyrosine-Protein Kinase erbB-1 D770_N771insSVP
+Epidermal Growth Factor Receptor M766_A767insAI
+Receptor Tyrosine-Protein Kinase erbB-1 D770_N771insSVD
+Chromosome 2, trisomy 2p13 p21
+Zeta-Associated Protein-70 Messenger RNA Overexpression
+Chromosome 10, trisomy 10pter p13
+p190 BCR-ABL1 Fusion Protein Expression
+Epidermal Growth Factor Receptor G719V
+Epidermal Growth Factor Receptor R748_P753del
+Epidermal Growth Factor Receptor P772_H773insYNP
+Chromosome 10, uniparental disomy of
+Phosphoinositide-3-Kinase Catalytic Alpha Polypeptide C420R
+Epidermal Growth Factor Receptor D770_N771insNPH
+Receptor Tyrosine-Protein Kinase erbB-1 L747_K754del
+Unbalanced Translocation of Chromosome 1
+Chromosome inversion in normal individual
+KAT6A-Various Partners Fusion Protein Expression
+Muscle fibre hypertrophy, type I
+Epidermal Growth Factor Receptor D770_N771insGL
+Epidermal Growth Factor Receptor D770_N771insGD
+Epidermal Growth Factor Receptor I744_K745insKIPVAI
+Smooth endoplasmic reticulum cavity alteration
+Receptor Tyrosine-Protein Kinase erbB-1 L747del
+Rough endoplasmic reticulum membrane alteration
+Receptor Tyrosine-Protein Kinase erbB-1 K745_E749del
+Epidermal Growth Factor Receptor V769_D770insGV
+Formation of Bistrand Abasic Site
+Epidermal Growth Factor Receptor I740_P741insPVAIKI
+Muscle fibre atrophy, type II
+Keratinocyte Growth Factor Receptor S372C
+Chromosome 3, distal 3p monosomy
+Receptor Tyrosine-Protein Kinase erbB-1 P772_H773insPR
+Epidermal Growth Factor Receptor S768_V769insVAS
+MOZ-Various Partners Fusion Protein Expression
+Various Partners-MLL Fusion Protein Expression.
+Epidermal Growth Factor Receptor V769_D770insGVV
+Phosphoinositide-3-Kinase, Catalytic, Alpha Polypeptide c.1625A>T
+Chromosome 13, partial monosomy 13q
+Muscle fiber hypertrophy, type I
+Clonal BCL3 Gene Rearrangement
+Chromosome 14q, partial deletions
+Chromosome 8, mosaic trisomy
+Cyclin D2 mRNA Overexpression
+MEN1 Tumor-Suppressor Gene Inactivation
+AML1/ETO Fusion Protein Expression
+NPM1/RARA Fusion Protein Expression
+Serine/Threonine-Protein Kinase B-raf Gly466Glu
+E2A/PBX1 Fusion Protein Expression
+Smooth endoplasmic reticulum fragmentation
+FUS/DDIT3 Fusion Protein Expression
+BCL-2 Messenger RNA Overexpression
+Trisomy 3q13 2 q25
+Single Stranded DNA Breaks
+PSF-TFE3 Fusion Protein Expression
+CD44 Messenger RNA Overexpression
+TCF12/NR4A3 Fusion Protein Expression
+Chromosome 2, trisomy 2q37
+Chromosome 5, uniparental disomy
+OTT-MAL Fusion Protein Expression
+IRF4/MUM1 Messenger RNA Overexpression
+CD332 Antigen Protein Variant
+Severe urothelial cell atypia
+EWSR1/ERG Fusion Protein Expression
+Chromosome 20, duplication 20p
+CBFbeta-MYH11 Fusion Protein Expression
+Tyrosine-Protein Kinase JAK2 Met929Ile
+Alteration of mitochondrial matrix
+Moderate Columnar Cell Atypia
+Deletion 2q duplication 1p
+Out of Frame Mutation
+CD117 Exon 13 Mutation
+Chromosome 11, deletion 11p
+RAC-alpha Serine/Threonine-Protein Kinase Glu17Lys
+RPN1-MECOM Fusion Protein Expression
+NPM1-RARA Fusion Protein Expression
+Severe squamous cell atypia
+DEK/NUP214 Fusion Protein Expression
+Gain of Chromosome 12q
+Gain of Chromosome 12p
+KIT Somatic Point Mutation
+Tyrosine-Protein Kinase JAK2 G935R
+MADH4 Tumor-Suppressor Gene Inactivation
+OTT/MAL Fusion Protein Expression
+Chromosome 9, trisomy 9p
+Signal Transduction Pathway Deregulation
+EWS/NR4A3 Fusion Protein Expression
+EWS-CHOP Fusion Protein Expression
+Rough endoplasmic reticulum alteration
+NF-2 Tumor-Suppressor Gene Inactivation
+Loss of Chromosome 1p36
+Extracellular electron dense deposit
+BIRC3/MALT1 Fusion Protein Expression
+EWSR1-ETV4 Fusion Protein Expression
+NF-1 Tumor-Suppressor Gene Inactivation
+Loss of Chromosome 9p
+TEL/AML1 Fusion Protein Expression
+Gain of Chromosome 10p
+PAX3-FKHR Fusion Protein Expression
+DNA Single Strand Break
+EWS/FLI1 Fusion Protein Expression
+Cytosine to Thymidine Transition
+RUNX1/RUNX1T1 Fusion Protein Expression
+Loss of Chromosome 14q
+Extracellular ground substance alteration
+Abnormal cellular hormonal pattern
+Janus Kinase 2 Val617Phe
+STAT5-RARalpha Fusion Protein Expression
+BCL6 Messenger RNA Overexpression
+Cell surface interdigitation alteration
+Janus Kinase 2 V617F
+ALK Fusion Protein Expression
+Loss of Chromosome 3
+AML1-ETO Fusion Protein Expression
+Loss of Chromosome 9
+Cellular AND/OR subcellular abnormality
+RPN1/EVI1 Fusion Protein Expression
+Gain in Chromosome 12
+SS18-SSX2 Fusion Protein Expression
+NF2 Tumor-Suppressor Gene Inactivation
+Deletion of long arm
+ETV6/JAK2 Fusion Protein Expression
+Serine/Threonine-Protein Kinase B-raf Gly469Ala
+EWS-FLI1 Fusion Protein Expression
+Transforming Protein N-Ras G13X
+Loss of Chromosome 5q
+Chromosome 3, trisomy 3p25
+PRCC-TFE3 Fusion Protein Expression
+Gain of Chromosome 14
+Gain of Chromosome 13
+Gain of Chromosome 11
+FAS Ligand Gene Mutation
+FIP1L1/PDGFRalpha Fusion Protein Expression
+Philadelphia chromosome, Ph1, present
+Tyrosine-Protein Kinase JAK2 Y931C
+Tyrosine-Protein Kinase JAK2 Glu985Lys
+BCR/PDGFRA Fusion Protein Expression
+Janus Kinase 2 Ile960Val
+T (Brachyury) Gene Duplication
+Formation of Apurinic Site
+EWS-ETV1 Fusion Protein Expression
+MLL/AFF1 Fusion Protein Expression
+Reading Frame Shift Mutation
+X chromosome, trisomy Xq25
+Mild squamous cell atypia
+Serine/Threonine-Protein Kinase B-raf L597R
+Serine/Threonine-Protein Kinase B-raf L597S
+Serine/Threonine-Protein Kinase B-raf L597Q
+Serine/Threonine-Protein Kinase B-raf L597V
+Serine/Threonine-Protein Kinase B-raf G466A
+Chromosome 2, monosomy 2q24
+ZBTB16-RARA Fusion Protein Expression
+RAC-alpha Serine/Threonine-Protein Kinase E17K
+FLT3 Internal Tandem Duplication
+Chromosome 20, deletion 20p
+Loss of Chromosome 7q
+Isochromosome for short arm
+Gain of Chromosome 12q15-qter
+Bone marrow maturation arrest
+STAT5B-RARA Fusion Protein Expression
+Chromosome 18, trisomy 18p
+PAX3/FOXO4 Fusion Protein Expression
+JAZF1/JJAZ1 Fusion Protein Expression
+Gain of Chromosome 1q
+Moderate Glandular Cell Atypia
+Severe glandular cell atypia
+Gain of Chromosome 16
+Gain of Chromosome 17
+Gain of Chromosome 15
+Gain of Chromosome 12
+Gain of Chromosome 10
+Gain of Chromosome 18
+Gain of Chromosome 19
+X chromosome, trisomy Xq
+NUMA1-RARA Fusion Protein Expression
+Whole chromosome trisomy syndrome
+ETV6-RUNX1 Fusion Protein Expression
+PAX7-FOXO1 Fusion Protein Expression
+Gain of Chromosome 20q13
+CBFB-MYH11 Fusion Protein Expression
+NuMA-RARalpha Fusion Protein Expression
+Loss of Chromosome 12
+Loss of Chromosome 13
+Loss of Chromosome 10
+Loss of Chromosome 11
+Loss of Chromosome 17
+MLL-AF4 Fusion Protein Expression
+Loss of Chromosome 1p
+Chromosome 16, uniparental disomy
+Chromosome 7, monosomy 7q21
+Muscle fiber perifascicular atrophy
+X chromosome, monosomy Xq28
+SS18/SSX Fusion Protein Expression
+Severe Transitional Cell Atypia
+PAX3-AFX Fusion Protein Expression
+Chromosome 3, monosomy 3q13
+Janus Kinase 2 Met929Ile
+Gain of Chromosome 3q
+EWS/FEV Fusion Protein Expression
+K-Ras 2 Protein Variant
+MECT1-MAML2 Fusion Protein Expression
+EWS-ERG Fusion Protein Expression
+ETV6-CBFalpha2 Fusion Protein Expression
+KIT Exon 11 Mutation
+Serine/Threonine-Protein Kinase B-raf G469E
+Serine/Threonine-Protein Kinase B-raf G469A
+Serine/Threonine-Protein Kinase B-raf G469V
+Serine/Threonine-Protein Kinase B-raf G469S
+Serine/Threonine-Protein Kinase B-raf G469R
+Severe Squamous Cell Atypia
+Clonal BCL6 Gene Rearrangement
+Gain of Chromosome 18q
+Janus Kinase 2 Arg938Leu
+ETV6/ABL1 Fusion Protein Expression
+Loss of Chromosome 18
+Loss of Chromosome 19
+deletion of short arm
+STAT5B/RARA Fusion Protein Expression
+Loss of Chromosome 16
+Loss of Chromosome 3p
+Loss of Chromosome 3q
+Loss of Chromosome 14
+PAX7/FKHR Fusion Protein Expression
+Gain of Chromosome 20
+Chromosome 11q partial deletion
+P53 Tumor-Suppressor Gene Inactivation
+Intracytoplasmic electron dense material
+Extracellular electron dense deposition
+Gain of Chromosome 1p31
+SFPQ/TFE3 Fusion Protein Expression
+Moderate Squamous Cell Atypia
+Restriction fragment length polymorphism
+Loss of Chromosome 19q
+Chromosome 6, monosomy 6p23
+Gain of Chromosome 5p
+Gain of Chromosome 5q
+RAC-alpha Serine/Threonine-Protein Kinase p.Glu17Lys
+SS18/SSX4 Fusion Protein Expression
+Chromosome 4, trisomy 4q21
+Muscle fibre perifascicular atrophy
+MLL Partial Tandem Duplication
+RUNX1-RUNX1T1 Fusion Protein Expression
+X0 sex chromosome alteration
+Serine/Threonine-Protein Kinase B-raf Val600Arg
+Predominance of parabasal cells
+Gain of Chromosome 1q21-31
+Chromosome 6, monosomy 6q1
+Chromosome 6, monosomy 6q2
+COL1A1-PDGFbeta Fusion Protein Expression
+Gain of Chromosome 9q34
+EWS-NR4A3 Fusion Protein Expression
+BRCA2 Tumor-Suppressor Gene Inactivation
+NPM-ALK Fusion Protein Expression
+Chromosome 14, trisomy mosaic
+Monosomy 2q duplication 1p
+EWSR1/WT1 Fusion Protein Expression
+FUS/CREB3L2 Fusion Protein Expression
+JAZF1-JJAZ1 Fusion Protein Expression
+Cyclin E Protein Overexpression
+Double Stranded DNA Breaks
+Gain of Chromosome 22q
+ASPL/TFE3 Fusion Protein Expression
+Loss of Chromosome 17p
+Loss of Chromosome 17q
+Gain of Chromosome 7p
+Gain of Chromosome 7q
+Cytosine to Guanosine Transversion
+FUS/CREB3L1 Fusion Protein Expression
+Severe Glandular Cell Atypia
+Chromosome 14q, terminal duplication
+Gain of Chromosome 11q13
+Mosiacism of chromosome 13q
+MYST3-V Fusion Protein Expression
+RBP56-CHN Fusion Protein Expression
+Uniparental disomy of 10
+Uniparental disomy of 11
+Uniparental disomy of 13
+Uniparental disomy of 15
+Uniparental disomy of 16
+COL1A1/PDGFB Fusion Protein Expression
+V-MLL Fusion Protein Expression
+MOZ/V Fusion Protein Expression
+NONO-TFE3 Fusion Protein Expression
+Loss of Chromosome 12p
+Inner nuclear membrane alteration
+PTCH Tumor-Suppressor Gene Inactivation
+Gain of Chromosome 20q
+Chromosome 2, monosomy 2p22
+Gain of Chromosome 9p
+Gain of Chromosome 9q
+Plasma membrane globulin coating
+Chromosome 17p Deletion Syndrome
+EWSR1-NR4A3 Fusion Protein Expression
+Mosaic trisomy 1q12 q21
+EWS-CHN Fusion Protein Expression
+Deletion of short arm
+Chromosome 7, monosomy 7q2
+Chromosome 7, monosomy 7q3
+TFG/NR4A3 Fusion Protein Expression
+MECOM/RUNX1 Fusion Protein Expression
+SSXT-SSX2 Fusion Protein Expression
+PML/RARA Fusion Protein Expression
+Gain of Chromosome 5
+EVI1-AML1 Fusion Protein Expression
+Smooth endoplasmic reticulum alteration
+Proto-Oncogene Neu Protein Variant
+Microsatellite Mutation Pathway Deregulation
+MLL/MLLT3 Fusion Protein Expression
+RPN1-EVI1 Fusion Protein Expression
+Thymidine to Cytosine Transition
+Loss of E-cadherin Expression
+Abnormal nucleotide base sequence
+CDH1 Tumor-Suppressor Gene Inactivation
+Moderate squamous cell atypia
+TFG-ALKlong Fusion Protein Expression
+Chromosome 12p partial deletion
+Restriction Fragment Length Polymorphisms
+CRTC1/MAML2 Fusion Protein Expression
+Monoclonal BCL-6 Gene Rearrangement
+Loss of Chromosome 13q
+COL1A2-PLAG1 Fusion Protein Expression
+SS18-SSX4 Fusion Protein Expression
+TAF15-NR4A3 Fusion Protein Expression
+EWSR1-PATZ1 Fusion Protein Expression
+API2/MLT Fusion Protein Expression
+Janus Kinase 2 c.1849G>T
+C-KIT Somatic Point Mutation
+Intranuclear electron dense deposition
+TCF3/PBX1 Fusion Protein Expression
+RPN1/MECOM Fusion Protein Expression
+Janus Kinase 2 c.1848_1849TG>CT
+MLL/AF10 Fusion Protein Expression
+BCR-PDGFRAlpha Fusion Protein Expression
+Tyrosine-Protein Kinase JAK2 Ile960Val
+Janus Kinase 2 G935R
+APC Tumor-Suppressor Gene Inactivation
+Chromosome 9, duplication 9q21
+Lengthening of short arm
+MYH9-ALK Fusion Protein Expression
+Chromosome 11p, partial deletion
+TCF3-PBX1 Fusion Protein Expression
+c-erbB2 Messenger RNA Overexpression
+genetics of colorectal cancer
+RBM15-MKL1 Fusion Protein Expression
+Alteration of mitochondrial membrane
+Loss of Chromosome 11p
+Loss of Chromosome 11q
+PLZF/RARA Fusion Protein Expression
+Serine/Threonine-Protein Kinase B-raf Val600Leu
+PML-RARalpha Fusion Protein Expression
+KIT Exon 9 Mutation
+Philadelphia chromosome, Ph<sup>1</sup>, present
+Gain of Chromosome 3q24-qter
+ETV6-PDGFRB Fusion Protein Expression
+Chromosome 11 uniparental disomy
+SSXT-SSX Fusion Protein Expression
+EWS/ATF1 Fusion Protein Expression
+Janus Kinase 2 E985K
+CD140a Antigen Protein Variant
+A-myb Messenger RNA Overexpression
+Serine/Threonine-Protein Kinase B-raf V600E
+GTPase NRas Protein Variant
+LKB1 Tumor-Suppressor Gene Inactivation
+p230 Fusion Protein Expression
+Deletion with complex rearrangement
+MLL/MLLT10 Fusion Protein Expression
+Impaired Cell Membrane Integrity
+Extracellular lipid aggregate alteration
+PAX3/FKHR Fusion Protein Expression
+Tumor Suppressor Gene Inactivation
+SS18-SSX1 Fusion Protein Expression
+Chromosome 1, monosomy 1q4
+RBP56/CHN Fusion Protein Expression
+Janus Kinase 2 Tyr931Cys
+Mitochondria deoxyribonucleic acid deletion
+Thymidine to Guanosine Mutation
+PAX3-FOXO1 Fusion Protein Expression
+TFG-NR4A3 Fusion Protein Expression
+EWSR1/NR4A3 Fusion Protein Expression
+CD95 Apoptotic Pathway Deregulation
+TEL/ABL Fusion Protein Expression
+EGFR exon 18 G719X
+MLL-MLLT3 Fusion Protein Expression
+EWSR1-WT1 Fusion Protein Expression
+CBFB/MYH11 Fusion Protein Expression
+EWS-ZSG Fusion Protein Expression
+FIP1L1-PDGFRA Fusion Protein Expression
+Janus Kinase 2 Glu985Lys
+FUS/ATF1 Fusion Protein Expression
+Severe columnar cell atypia
+NPM-RARalpha Fusion Protein Expression
+RAC-alpha Serine/Threonine-Protein Kinase p.E17K
+BRD4-NUT Fusion Protein Expression
+XXY sex chromosome alteration
+FAS Apoptosis Pathway Deregulation
+Atypia Suspicious for Malignancy
+BRAF V600 Protein Variation
+Serine/Threonine-Protein Kinase B-raf Val600Met
+SYT-SSX4 Fusion Protein Expression
+Serine/Threonine-Protein Kinase B-raf Gly466Val
+Thymidine to Guanosine Transversion
+PAX3/AFX Fusion Protein Expression
+Loss of Merlin Expression
+Loss of Chromosomes 1p/19q
+Atypia suspicious for malignancy
+LMO2 Messenger RNA Overexpression
+Zeta-Associated Protein-70 mRNA Overexpression
+NMYC Gene Amplification dysfunction
+TAF15/NR4A3 Fusion Protein Expression
+EWSR1/DDIT3 Fusion Protein Expression
+CRTC1-MAML2 Fusion Protein Expression
+DEK-CAN Fusion Protein Expression
+Extracellular background material alteration
+TSC1 Tumor-Suppressor Gene Inactivation
+Cytoplasmic lipid droplet alteration
+DNA Breaks, Double Stranded
+Guanosine to Adenosine Mutation
+Extracellular macromolecule aggregate alteration
+STK11 Tumor-Suppressor Gene Inactivation
+Deletions of chromosome 8
+PAX3-FOXO4 Fusion Protein Expression
+NuMA/RARA Fusion Protein Expression
+Casp 10 Gene Mutation
+Proliferative spindle cell nodule
+MECOM-RUNX1 Fusion Protein Expression
+Squamous Metaplasia with Atypia
+Chromosome 5, monosomy 5q35
+TEL-AML1 Fusion Protein Expression
+Ring chromosome 14 syndrome
+ETV6-JAK2 Fusion Protein Expression
+Intranuclear electron dense deposit
+HAS2-PLAG1 Fusion Protein Expression
+PAX3-NCOA1 Fusion Protein Expression
+Gain of Chromosome Xq
+Unbalanced translocation and insertion
+MME Gene mRNA Overexpression
+Denaturation of lens proteins
+SS18L/SSX1 Fusion Protein Expression
+Chromosome 15q, partial deletion
+SSXT-SSX4 Fusion Protein Expression
+Extracellular electron dense material
+Mild Columnar Cell Atypia
+Alteration of chromosome structure
+E-CAD Tumor-Suppressor Gene Inactivation
+DEK/CAN Fusion Protein Expression
+ERBB2 Messenger RNA Overexpression
+Gain of Chromosome 17q22-q24
+Gain of Chromosome 13q
+CD117 Somatic Point Mutation
+Tyrosine-Protein Kinase JAK2 Val617Phe
+Double Stranded DNA Break
+Polymorphism, Restriction Fragment Length
+Loss of Chromosome 22q
+MLLT3-MLL Fusion Protein Expression
+ALO17-ALK Fusion Protein Expression
+Mild Squamous Cell Atypia
+VHL Tumor-Suppressor Gene Inactivation
+MLL-ENL Fusion Protein Expression
+SYT/SSX2 Fusion Protein Expression
+Fumarate Hydratase Gene Mutation
+TFG-ALKshort Fusion Protein Expression
+Intracytoplasmic electron dense deposit
+Anaplastic Lymphoma Kinase Overexpression
+Serine/Threonine-Protein Kinase B-raf Leu597Arg
+Serine/Threonine-Protein Kinase B-raf Val600Gly
+PAX3/NCOA1 Fusion Protein Expression
+TGFbetaRII Tumor-Suppressor Gene Inactivation
+JAZF1-SUZ12 Fusion Protein Expression
+EWSR1/ETV4 Fusion Protein Expression
+AKT Family Gene Mutation
+Cytosine to Adenosine Mutation
+Mild transitional cell atypia
+Isochromosome for long arm
+WT1 Tumor-Suppressor Gene Inactivation
+Loss of Chromosome 18q21
+MLL-MLLT1 Fusion Protein Expression
+Loss of Chromosome 20q
+Chromosome 4, monosomy 4q32
+ASPSCR1/TFE3 Fusion Protein Expression
+Adenosine to Guanosine Mutation
+Grade 1 Intraepithelial Neoplasia
+NPM1-ALK Fusion Protein Expression
+Philadelphia chromosome, Ph^1^, present
+Moderate columnar cell atypia
+Restriction Fragment Length Polymorphism
+Chromosome 22, monosome mosaic
+Chromosome 18 mosaic monosomy
+Tyrosine-Protein Kinase JAK2 Arg938Leu
+MLL-AFF1 Fusion Protein Expression
+Grade II Intraepithelial Neoplasia
+Alteration of chromosome number
+Guanosine to Adenosine Transition
+Gain of Chromosome 17p
+Gain of Chromosome 17q
+Rough endoplasmic reticulum fragmentation
+X chromosome, trisomy Xp3
+PAX7/FOXO1 Fusion Protein Expression
+Serine/Threonine-Protein Kinase B-raf Gly469Val
+Chromosome 1, monosomy 1p32
+EWSR1-ETV1 Fusion Protein Expression
+Transforming Protein N-Ras G12X
+Monoclonal Immunoglobulin Gene Rearrangement
+Loss of Chromosome 4q
+Cyclin D1 mRNA Overexpression
+Trisomy 5pter p13 3
+Tyrosine-Protein Kinase JAK2 M929I
+Clonal BCL-2 Gene Rearrangement
+TPM3-ALK Fusion Protein Expression
+Philadelphia chromosome, Ph1, absent
+Guanosine to Thymidine Transversion
+EWSR1/ATF1 Fusion Protein Expression
+Clonal BCL-6 Gene Rearrangement
+SS18L1-SSX1 Fusion Protein Expression
+JAZF1/SUZ12 Fusion Protein Expression
+BRD4/NUT Fusion Protein Expression
+colorectal cancer, genetics of
+Chromosome 21, monosomy 21q22
+EWSR1-FLI1 Fusion Protein Expression
+MEN-1 Tumor-Suppressor Gene Inactivation
+Single Stranded DNA Break
+EWSR1/FLI1 Fusion Protein Expression
+FHIT Tumor-Suppressor Gene Inactivation
+Gain of Chromosome 15q
+CD117 Exon 9 Mutation
+Alteration of mitochondrial cristae
+TFG-CHN Fusion Protein Expression
+Fungal cytoplasmic inclusion body
+Guanosine to Cytosine Transversion
+Loss of Chromosome 6q
+Loss of Chromosome 6p
+Clonal BCL2 Gene Rearrangement
+EWS-WT1 Fusion Protein Expression
+PRCC/TFE3 Fusion Protein Expression
+TMPRSS2-ERG Fusion Protein Expression
+Low Grade Intraepithelial Neoplasia
+SS18-SSX Fusion Protein Expression
+TFG-ALK Fusion Protein Expression
+c-KIT Exon 9 Mutation
+Loss of Chromosome 9q
+BRCA1 Tumor-Suppressor Gene Inactivation
+Moderate transitional cell atypia
+HMGIC-LPP Fusion Protein Expression
+Single Strand DNA Breaks
+MLL/AF9 Fusion Protein Expression
+HMGA2/LPP Fusion Protein Expression
+Serine/Threonine-Protein Kinase B-raf Gly469Ser
+Chromosome 3, monosomy 3q27
+Moderate Transitional Cell Atypia
+MLL/EEN Fusion Protein Expression
+CBFalpha2-ETO Fusion Protein Expression
+SS18/SSX1 Fusion Protein Expression
+V/MLL Fusion Protein Expression
+DNA Double Strand Break
+MOZ-V Fusion Protein Expression
+MSN-ALK Fusion Protein Expression
+Mottled basement membrane thickening
+IGF2R Tumor-Suppressor Gene Inactivation
+MLL-FEL Fusion Protein Expression
+GTPase KRas Protein Variant
+Beta Catenin Gene Mutation
+Philadelphia chromosome, Ph<sup>1</sup>, absent
+KIT Exon 13 Mutation
+BCL-6 Messenger RNA Overexpression
+EWS/CHOP Fusion Protein Expression
+MLL-EEN Fusion Protein Expression
+Thymidine to Adenosine Mutation
+FUS/ERG Fusion Protein Expression
+Elastic fibre cross linking
+p210 Fusion Protein Expression
+Cytosine to Guanosine Mutation
+MLL/ENL Fusion Protein Expression
+ASPSCR1-TFE3 Fusion Protein Expression
+RCC17-TFE3 Fusion Protein Expression
+FIP1L1-PDGFRalpha Fusion Protein Expression
+BCR-JAK2 Fusion Protein Expression
+SS18/SSX2 Fusion Protein Expression
+Gain of Chromosome 22
+Gain of Chromosome 21
+Moderate urothelial cell atypia
+KAT6A-V Fusion Protein Expression
+PML-RARA Fusion Protein Expression
+Gain of Chromosome 2p
+PKCbeta1 Messenger RNA Overexpression
+Sporadic Breast Tumor Mutation
+BRD4-C15orf55 Fusion Protein Expression
+Whole chromosome trisomy, mosaicism
+Gain of Chromosome 7q32
+Chromosome 14q, terminal deletion
+Gain of Chromosome 19q
+PAX3/FOXO1 Fusion Protein Expression
+RB1 Tumor-Suppressor Gene Inactivation
+DNA Damage, Radiation Induced
+KAT6A/V Fusion Protein Expression
+NONO/TFE3 Fusion Protein Expression
+Loss of Chromosome 2q
+Loss of Chromosome 2p
+Loss of Chromosome 22
+Loss of Chromosome 21
+Increased NFkappaB Pathway Activation
+Lengthening of long arm
+SYT-SSX Fusion Protein Expression
+Chromosome 9, trisomy 9q32
+TSC2 Tumor-Suppressor Gene Inactivation
+ZAP70 Messenger RNA Overexpression
+MLL/MLLT1 Fusion Protein Expression
+CD117 Exon 11 Mutation
+Adenosine to Thymidine Mutation
+XYY sex chromosome alteration
+p190 Fusion Protein Expression
+Gain of Chromosome 4q
+Serine/Threonine-Protein Kinase B-raf Val600Ala
+EWS/CHN Fusion Protein Expression
+deletion of long arm
+EWSR1/ETV1 Fusion Protein Expression
+IRF4 Gene mRNA Overexpression
+Elastic fiber cross linking
+Chromosome 16, trisomy 16q
+COL1A2/PLAG1 Fusion Protein Expression
+TGFBR2 Tumor-Suppressor Gene Inactivation
+Casp 8 Gene Mutation
+WT-1 Tumor-Suppressor Gene Inactivation
+Tyrosine-Protein Kinase JAK2 V617F
+Ring Chromosome 14 Syndrome
+Mild urothelial cell atypia
+DEK-NUP214 Fusion Protein Expression
+Chromosome 6, trisomy 6q
+Chromosome 6, trisomy 6p
+TCF12-NR4A3 Fusion Protein Expression
+Cytosine to Thymidine Mutation
+Serine/Threonine-Protein Kinase B-raf Gly466Ala
+PML-RARa Fusion Protein Expression
+BCR-FGFR1 Fusion Protein Expression
+Clonal Immunoglobulin Gene Rearrangement
+Double Strand DNA Breaks
+TPM4-ALK Fusion Protein Expression
+BRD4/C15orf55 Fusion Protein Expression
+Severe transitional cell atypia
+PSF/TFE3 Fusion Protein Expression
+Tyrosine-Protein Kinase JAK2 R938L
+Mild Glandular Cell Atypia
+Guanosine to Cytosine Mutation
+FUS-ATF1 Fusion Protein Expression
+Loss of Chromosome 18q
+Loss of Chromosome 18p
+Gain of Chromosome 6q
+Gain of Chromosome 6p
+Chromosome 15 uniparental disomy
+EVI1/RUNX1 Fusion Protein Expression
+MLL/AF4 Fusion Protein Expression
+Grade 2 Intraepithelial Neoplasia
+EWSR1-FEV Fusion Protein Expression
+Cyclin D1 Protein Overexpression
+Mismatch Repair Gene Inactivation
+Serine/Threonine-Protein Kinase B-raf Val600Asp
+Intranuclear electron dense material
+Adenosine to Thymidine Transversion
+Adenosine to Guanosine Transition
+BIRC3-MALT1 Fusion Protein Expression
+Serine/Threonine-Protein Kinase B-raf Gly466Arg
+Janus Kinase 2 I960V
+Cyclin D1 Gene Overexpression
+Janus Kinase 2 R938L
+restriction fragment length polymorphism
+Thymidine to Adenosine Transversion
+c-KIT Exon 11 Mutation
+SYT/SSX4 Fusion Protein Expression
+TEL-JAK2 Fusion Protein Expression
+MLL-ELL Fusion Protein Expression
+PAX7-FKHR Fusion Protein Expression
+Spastic paraplegia neuropathy poikiloderma
+BCR-PDGFRA Fusion Protein Expression
+Postoperative Spindle Cell Nodule
+Loss of Chromosome 16q
+Loss of Chromosome 16p
+MYST3/V Fusion Protein Expression
+Chromosome 8, partial trisomy
+Janus Kinase 2 Y931C
+Adenosine to Cytosine Transversion
+EWSR1-ATF1 Fusion Protein Expression
+Formation of Apyrimidine Site
+EWS/ETV4 Fusion Protein Expression
+Chromosome 3, monosomy 3p25
+MLL-SH3GL1 Fusion Protein Expression
+Janus Kinase 2 c.2792A>G
+Loss of Chromosome 8p
+ETV6/NTRK3 Fusion Protein Expression
+FUS-ERG Fusion Protein Expression
+Chromosome 18, deletion 18q23
+Chromosome 22 mosaic monosomy
+EWSR1-DDIT3 Fusion Protein Expression
+Chromosome 7 uniparental disomy
+ETV6/PDGFRB Fusion Protein Expression
+ATIC-ALK Fusion Protein Expression
+HAS2/PLAG1 Fusion Protein Expression
+No oestrogen effect present
+Clonal BCL-3 Gene Rearrangement
+DPC4 Tumor-Suppressor Gene Inactivation
+Loss of Chromosome 1
+Loss of Chromosome 2
+Loss of Chromosome 4
+Loss of Chromosome 5
+Loss of Chromosome 6
+Loss of Chromosome 7
+Loss of Chromosome 8
+Cyclin D1 Gene Amplification
+Loss of Chromosome X
+Loss of Chromosome Y
+Radiation Induced DNA Damage
+COL1A1-PDGFB Fusion Protein Expression
+Uniparental disomy of 21
+Mild Transitional Cell Atypia
+Serine/Threonine-Protein Kinase B-raf G466E
+Serine/Threonine-Protein Kinase B-raf G466R
+Serine/Threonine-Protein Kinase B-raf G466V
+BCR/JAK2 Fusion Protein Expression
+PLZF-RARalpha Fusion Protein Expression
+Monoclonal BCL-2 Gene Rearrangement
+Hyperplasia of Golgi structure
+Tyrosine-Protein Kinase JAK2 Gly935Arg
+Gain of Chromosome 12q13-14
+CLTC-ALK Fusion Protein Expression
+RBM15/MKL1 Fusion Protein Expression
+Chromosome 15, trisomy mosaicism
+Proto-Oncogene c-ErbB-1 Protein Variant
+Hypertrophy of Golgi apparatus
+Janus Kinase 2 Gly935Arg
+EWSR1/FEV Fusion Protein Expression
+Gain of Chromosome 12q13
+SYT/SSX1 Fusion Protein Expression
+EWS/WT1 Fusion Protein Expression
+Gain of Chromosome 7p13-pter
+TEL-ABL Fusion Protein Expression
+Adenosine to Cytosine Mutation
+Loss of Chromosome 12q
+FUS-DDIT3 Fusion Protein Expression
+SYT-SSX1 Fusion protein Expression
+MLL-MLLT10 Fusion Protein Expression
+Autosomal deletion - mosaicism
+Chromosome 14q, proximal duplication
+TCF12/CHN Fusion Protein Expression
+ASPL-TFE3 Fusion Protein Expression
+Gain of Chromosome 4
+Gain of Chromosome 6
+Gain of Chromosome 7
+Gain of Chromosome 1
+Gain of Chromosome 3
+Gain of Chromosome 8
+Gain of Chromosome 9
+Guanosine to Thymidine Mutation
+BCR-ABL1 Fusion Protein Expression
+ETV6-ABL1 Fusion Protein Expression
+Gain of Chromosome X
+Gain of Chromosome Y
+Chromosome 3, monosomy 3p2
+Gain of Chromosome 8q
+Postoperative spindle cell nodule
+EWS-FEV Fusion Protein Expression
+EWSR1-ERG Fusion Protein Expression
+Trisomy 14 mosaicism syndrome
+FUS/CHOP Fusion Protein Expression
+Serine/Threonine-Protein Kinase B-raf V600M
+Serine/Threonine-Protein Kinase B-raf V600L
+Uniparental disomy of 5
+Uniparental disomy of 2
+Serine/Threonine-Protein Kinase B-raf V600K
+Serine/Threonine-Protein Kinase B-raf V600D
+Serine/Threonine-Protein Kinase B-raf V600G
+Serine/Threonine-Protein Kinase B-raf V600A
+Serine/Threonine-Protein Kinase B-raf Val600Lys
+SSXT-SSX1 Fusion Protein Expression
+Serine/Threonine-Protein Kinase B-raf V600R
+MLL/SH3GL1 Fusion Protein Expression
+NF1 Tumor-Suppressor Gene Inactivation
+EWSR1/PATZ1 Fusion Protein Expression
+ETV6/RUNX1 Fusion Protein Expression
+Paternal uniparental disomy 13
+BCR/ABL1 Fusion Protein Expression
+Chromosome 9, trisomy mosaic
+ZBTB16/RARA Fusion Protein Expression
+Cyclin D1 Gene Activation
+ETV6-NTRK3 Fusion Protein Expression
+MLL/ELL Fusion Protein Expression
+Tyrosine-Protein Kinase JAK2 E985K
+Loss of Chromosome 10q
+Loss of Chromosome 10p
+Thymidine to Cytosine Mutation
+FUS-CHOP Fusion Protein Expression
+Severe Columnar Cell Atypia
+Grade I Intraepithelial Neoplasia
+MLL-AF10 Fusion Protein Expression
+c-KIT Exon 13 Mutation
+EWS-ATF1 Fusion Protein Expression
+Tyrosine-Protein Kinase JAK2 Tyr931Cys
+MECT1/MAML2 Fusion Protein Expression
+EWS/ERG Fusion Protein Expression
+Chromosome 5, trisomy 5p
+BCL2 Gene mRNA Overexpression
+Uniparental disomy 1q12 q21
+Cytosine to Adenosine Transversion
+Embryonic Lethal Mutation Abnormality
+API2-MLT Fusion Protein Expression
+Philadelphia chromosome, Ph^1^, absent
+TCF12-CHN Fusion Protein Expression
+EWS/ZSG Fusion Protein Expression
+Tyrosine-Protein Kinase JAK2 I960V
+DNA Breaks, Single Stranded
+E2A-PBX1 Fusion Protein Expression
+Janus Kinase 2 M929I
+No estrogen effect present
+Moderate glandular cell atypia
+Serine/Threonine-Protein Kinase B-raf Leu597Val
+CD10 Messenger RNA Overexpression
+Fusion of foot processes
+HMGA2-LPP Fusion Protein Expression
+Plasma membrane coating alteration
+Posttraumatic Spindle Cell Nodule
+MLL-AF9 Fusion Protein Expression
+Chromosome 17, trisomy 17q22
+Chromosome 7, trisomy mosaic
+SYT-SSX2 Fusion Protein Expression
+Gene Product Sequence Variation
+Impaired leukocyte chemotaxis, function
+Trisomy 7p13 p12 2
+Variable Number Tandem Repeat
+Outer nuclear membrane alteration
+Transforming Protein N-Ras Q61X
+Mild glandular cell atypia
+Transforming Protein N-Ras Q61R
+Transforming Protein N-Ras Q61P
+Transforming Protein N-Ras Q61L
+Transforming Protein N-Ras Q61K
+Transforming Protein N-Ras Q61H
+Transforming Protein N-Ras Q61E
+BCR/FGFR1 Fusion Protein Expression
+EWS-E1AF Fusion Protein Expression
+TEL/JAK2 Fusion Protein Expression
+NUMA1/RARA Fusion Protein Expression
+Formation of Abasic Site
+SFPQ-TFE3 Fusion Protein Expression
+Partial deletion of Y
+HMGIC/LPP Fusion Protein Expression
+PTEN Tumor-Suppressor Gene Inactivation
+EWS/ETV1 Fusion Protein Expression
+FUS-CREB3L1 Fusion Protein Expression
+FUS-CREB3L2 Fusion Protein Expression
+Intracytoplasmic electron dense deposition
+Serine/Threonine-Protein Kinase B-raf Gly469Glu
+Mild columnar cell atypia
+TFG/CHN Fusion Protein Expression
+TP53 Tumor-Suppressor Gene Inactivation
+Atypical epidermoid metaplasia
+Proto-Oncogene c-ErbB-1 A750_K757del
+Squamous cell atypia
+Mismatches, Base Pair
+Leukocyte maturation arrest
+PTPN11 Gene Mutation
+Extracellular plasma alteration
+EGFR delta Val774
+Nuclear lead inclusion
+DNA Break, Single-Stranded
+Keratin Pearls Formation
+Birt-Hogg-Dube Gene Mutation
+CD332 Gene Mutation
+Foot process alteration
+Breaks, Single-Stranded DNA
+BRCA2 Gene Inactivation
+BMPR1A Gene Mutation
+Effect, Viral Cytopathic
+Proto-Oncogene c-ErbB-1 V774del
+Proto-Oncogene c-ErbB-1 S768_V769insVAS
+Benign lymphoepithelial lesion
+FGFR2 Gene Mutation
+HNF1A Gene Mutation
+Proto-Oncogene c-ErbB-1 T751_E758del
+Abnormal cell size
+Numerical Chromosomal Abnormalities
+ERBB Gene Mutation
+Trisomy 9 mosaicism
+HST-2 Gene Amplification
+REL Gene Amplification
+CD332 Antigen Ser372Cys
+EGFR delta Val834
+Cytoplasmic matrix alteration
+Mild inflammatory atypia
+Replication Error Phenotype
+Inversion Mutation Abnormality
+Endoplasmic reticulum fragmentation
+Bone crystal alteration
+Moderate Epithelial Dysplasia
+Deoxyribonucleic acid damage
+atrophy fibers muscle
+Proto-Oncogene c-ErbB-1 D770_N771insSVQ
+Proto-Oncogene c-ErbB-1 D770_N771insSVD
+Ciliary centriole alteration
+Cabot ring bodies
+EGFR Protein Variant
+AKT1 Protein Variant
+JAK2 Gene Mutation
+Structural Chromosome Anomalies
+Tight junction alteration
+PDGFRA Gene Amplification
+frame shift mutation
+EGFR-TKI Resistant Mutation
+Elastic fiber fragmentation
+Glandular Cell Atypia
+Cell shape alteration
+Basement membrane proliferation
+Trisomy 22 mosaic
+B-RAF Gene Mutation
+Transitional Cell Atypia
+Cabot ring body
+Low-Frequency Microsatellite Instability
+STK11 Gene Inactivation
+Cytoplasmic fibre alteration
+MYCL1 Gene Amplification
+NRAS NP_002515.1 :p.Gln61Pro
+Duplication 5pter p13.3
+Deletion 1p31 p22
+virus cytopathogenic effect
+MADH4 Gene Inactivation
+Abnormal cell structure
+Mild Koilocytotic Atypia
+Extracellular fibre alteration
+Squamous Pearl Formation
+Aberrant Chromosome 1
+Proto-Oncogene c-ErbB-1 I744_K745insKIPVAI
+Fragmentation of myofilaments
+Proto-Oncogene c-ErbB-1 L747_A750del
+Oxidative Stress Induction
+PRKCB mRNA Overexpression
+Glandular necrotizing metaplasia
+Chromosome 13+18+21+X+Y aneuploidy
+Proto-Oncogene c-ErbB-1 V774_C775insHV
+Expansions, DNA Repeat
+SMAD4/DPC4 Gene Inactivation
+Ring Chromosome 14
+Ring Chromosome 18
+PI3KCA Gene Mutation
+Chromosome 5q31-33 Deletion
+Ring 9, Chromosome
+CD44 mRNA Overexpression
+Glandular cell atypia
+FOS Gene Amplification
+DNA Break, Double-Stranded
+XY, female phenotype
+NRAS NP_002515.1 :p.Gln61Lys
+Cell size alteration
+Phenotypes, Replication Error
+Chromosome 18 ring
+Error Phenotypes, Replication
+Cell Membrane Process
+Proto-Oncogene c-ErbB-1 D770_N771insNPH
+Hypersegmentation of nucleus
+Cell Stress Process
+Expansion, Trinucleotide Repeat
+Proto-Oncogene c-ErbB-1 S752_V769del
+RB1 Gene Inactivation
+RET Gene Mutation
+Trisomy 1q42 qter
+Abnormal eosinophil production
+GTPase KRas G12S
+CASP8 Gene Mutation
+Muscle fiber hypertrophy
+Premature Termination Abnormality
+Monosomy 4p14 p16
+Viral Cytopathogenic Effect
+Trisomy 7 mosaicism
+Plasma membrane reduplication
+ERBB2 Protein Overexpression
+Duplication 2pter p24
+Leucocyte maturation arrest
+Muscle fiber change
+HER2/neu Gene Mutation
+ERBB1 Gene Mutation
+Homogeneously Staining Region
+Plasma membrane rupture
+Nuclear membrane reduplication
+Repeat Expansions, DNA
+CDC73 Gene Mutation
+Proto-Oncogene c-ErbB-1 S752_I759del
+Muscle fibre atrophy
+Fibrocartilage matrix alteration
+Chromosome 13p, trisomy
+Antibody Dependent Enhancement
+Chromosome 5p syndrome
+Proto-Oncogene c-ErbB-1 E746_E749del
+Multiple Nucleotide Abnormalities
+Proto-Oncogene c-ErbB-1 H773_V774insGNPH
+GATA1 Gene Mutation
+Basement membrane-like material
+PI3Kalpha Protein Variant
+Mosaic trisomy 16
+Mosaic trisomy 10
+IRF4/MUM1 mRNA Overexpression
+Interstitial deletion 17p
+EGFR delta Leu747
+MDM2 Gene Amplification
+PKCbeta1 mRNA Overexpression
+Multiple Transversion Abnormalities
+de novo Mutation
+NRAS Gene Mutation
+Expansions, Trinucleotide Repeat
+abnormal cell structure
+Glandular necrotising metaplasia
+NRAS NP_002515.1 :p.Gln61Arg
+GTPase KRas A146X
+Monosomy 1p31 p22
+Parabasal cells predominate
+EGFRvIII Gene Mutation
+Major partial trisomy
+Monosomy 3q21 23
+FGFR1 Gene Activation
+TNFSF6 Gene Mutation
+Granulocyte granule deficiency
+Break, Double-Stranded DNA
+Columnar cell atypia
+HRPT2 Gene Mutation
+Polar body alteration
+Proto-Oncogene c-ErbB-1 H773_V774insG
+Proto-Oncogene c-ErbB-1 H773_V774insH
+NPM1 Gene Mutation
+CCND1 Gene Activation
+Rearrangement of 8q11-13
+BCL-6 mRNA Overexpression
+ERBB2 mRNA Overexpression
+CDKN2C Gene Mutation
+Viral Cytopathic Effects
+Proto-Oncogene c-ErbB-1 T790M
+Trisomy 14 mosaic
+MSH2 Gene Inactivation
+RAS-RAF Pathway Deregulation
+SDHB Gene Mutation
+Increased mesangial matrix
+Centric fusion translocation
+Dominant-Negative Mutation Abnormality
+N-myc Gene Amplification
+Lymphocyte destruction, function
+Break, Single-Stranded DNA
+Cartilage matrix alteration
+Chromosome 18 aneuploidy
+Deletion 1q21 q25
+Proto-Oncogene c-ErbB-1 A750_K754del
+CD332 Antigen S252W
+Mixed Nucleotide Abnormalities
+Chromosome 8 deletion
+Abnormal basophil production
+duplication of chromosome
+Proto-Oncogene c-ErbB-1 D770_N771insGL
+Distal Duplication 15q
+Moderate Cytologic Atypia
+Proto-Oncogene c-ErbB-1 D770_N771insGD
+PPARG Gene Rearrangement
+Tumor-Suppressor Pathway Deregulation
+Elastic fiber alteration
+c-myc Gene Amplification
+Unbalanced Chromosomal Rearrangement
+CD332 Antigen Pro253Arg
+Atypical Cell Present
+SMARCB1 Gene Inactivation
+DNA Break, Double-Strand
+EGFR Protein Overexpression
+NRAS Protein Variant
+Proto-Oncogene c-ErbB-1 A767_S768insTLA
+Chromosome 15 ring
+Mild koilocytotic atypia
+cytotoxic lymphocyte reaction
+LKB1 Gene Inactivation
+Epithelial cell abnormality
+Y chromosome microdeletions
+SMAD4 Gene Inactivation
+Keratin pearl formation
+NF2 Gene Mutation
+Proto-Oncogene c-ErbB-1 E746_S752del
+Ki-Ras Protein Variant
+Trisomy mosaic 22
+CD332 Antigen Cys382Arg
+Deletion 1q32 q42
+Golgi membrane alteration
+Duplication 1q12 q21
+Balanced Chromosomal Aberration/Rearrangement
+p16/CMM2 Gene Inactivation
+Radiation-Induced DNA Damage
+Atypical cell present
+Multiple Transition Mutations
+c-myc Gene Activation
+Terminal bar alteration
+HST-1 Gene Amplification
+severe epithelial dysplasia
+Haematopoietic maturation arrest
+NRAS NP_002515.1 :p.Gln61Xxx
+Proto-Oncogene c-ErbB-1 V769_D770insGVV
+Repeat Expansion, DNA
+Microdeletion 22 q11
+MYC Gene Amplification
+dysplasia epithelial severe
+Translation Initiation Abnormality
+BRCA1 Gene Inactivation
+CCND2 mRNA Overexpression
+ERBB2 Protein Variant
+Adrenal gland cytomegaly
+T Gene Duplication
+CDKN1C Gene Mutation
+Myelin sheath alteration
+Monosomy 6q13 q15
+Extracellular fiber alteration
+c-H-ras Gene Amplification
+Hyposegmentation of nucleus
+Abnormal basophil maturation
+Repeat Expansions, Trinucleotide
+Proto-Oncogene c-ErbB-1 D770_N771insSVP
+LMO2 mRNA Overexpression
+Plasma membrane alteration
+NRAS G13 Mutation
+Deletion Xp22 pter
+Retrograde Degeneration, Transneuronal
+Mosaic Monosome 22
+PDGFRalpha Protein Overexpression
+Proto-Oncogene c-ErbB-1 D770_N771insMATP
+Gene Amplification Abnormality
+Monosomy 8p23 1
+Trisomy 14 mosaicism
+Break, Single-Strand DNA
+BRAF V600 Mutation
+ATM Gene Mutation
+Duplication 4q25 qter
+FGFR1 Gene Rearrangement
+CASP10 Gene Mutation
+Proto-Oncogene c-ErbB-1 I740_P741insPVAIKI
+Proto-Oncogene c-ErbB-1 K745_E746insVPVAIK
+NOTCH1 Gene Mutation
+Double-Strand DNA Breaks
+Extracellular sap alteration
+EGFRvIII Protein Variant
+CDKN2C Gene Deletion
+Double-Stranded DNA Breaks
+Chromosome 8 Deletion
+Trinucleotide Repeat, Expanded
+CD332 Antigen P253R
+Chromosome 17 deletion
+FLCN Gene Mutation
+Nucleotide base deletion
+Somatic Mutation Abnormality
+EGFR Gene Activation
+GTPase NRas G12X
+Duplication 14q proximal
+Nuclear shape alteration
+De novo mutation
+RUNX1 Gene Mutation
+Proto-Oncogene c-ErbB-1 V769_D770insASV
+Severe Koilocytotic Atypia
+Mitochondrial cristae fragmentation
+ETV6 Gene Mutation
+KRAS Gene Activation
+PI3KCA Gene Amplification
+c-erbB2 Gene Amplification
+GTPase KRas G12E
+Severe koilocytotic atypia
+Transneuronal Retrograde Degeneration
+Cytopathic Effects, Viral
+Chromosome 7, monosomy
+HER-2 Gene Amplification
+CD140a Antigen D842V
+Severe inflammatory atypia
+Proto-Oncogene c-ErbB-1 P753_I759del
+Basement membrane duplication
+K-Ras 2 Q61L
+K-Ras 2 Q61K
+K-Ras 2 Q61D
+K-Ras 2 Q61E
+K-Ras 2 Q61X
+K-Ras 2 Q61R
+K-Ras 2 Q61P
+Deletion 17q23 q24
+Proto-Oncogene c-ErbB-1 G719fs*29
+Rearrangement of 17p11-13
+DNA Interstrand Crosslinking
+Proto-Oncogene c-ErbB-1 G719A
+Basement membrane thickening
+Viral Cytopathic Effect
+Gene Deletion Abnormality
+Abnormal DNA Repair
+Extracellular matrix alteration
+Genotoxicity, Radiation Induced
+PDGFR-Alpha Protein Variant
+muscle fiber atrophy
+Chromosome 19 ring
+Mixed Nucleotide Mutations
+Moderate inflammatory atypia
+Proto-Oncogene c-ErbB-1 E746_R748del
+Base Pair Mismatch
+Proto-Oncogene c-ErbB-1 L861F
+Deletion 17p Syndrome
+BRAF NP_004324.2:p.V600 Mutation
+Crystalline macromolecule alteration
+Extracellular vacuole alteration
+Proto-Oncogene c-ErbB-1 L747_E749del
+Proto-Oncogene c-ErbB-1 N771_P772insH
+DNA Degradation, Apoptotic
+Proto-Oncogene c-ErbB-1 N771_P772insN
+Nuclear membrane thickening
+Apoptotic DNA Degradation
+Abnormal hematopoietic maturation
+Impaired leukocyte chemotaxis
+Mechanical fragility, function
+GTPase KRas Q61L
+GTPase KRas Q61K
+GTPase KRas Q61H
+GTPase KRas Q61E
+GTPase KRas Q61D
+GTPase KRas Q61X
+GTPase KRas Q61R
+GTPase KRas Q61P
+Protein Sequence Alteration
+Moderate Koilocytotic Atypia
+Effects, Viral Cytopathogenic
+FGFR4 Gene Mutation
+Proto-Oncogene c-ErbB-1 L747_T751del
+NF2 Gene Inactivation
+Cell Membrane Alteration
+Ring 15, Chromosome
+PIK3CA Protein Variant
+ERBB2 Gene Mutation
+Partial deletion 11p
+Duplication 1p21 p32
+ASXL1 Gene Mutation
+VHL Gene Inactivation
+Cell structure alteration
+SDHD Gene Mutation
+Chromosome 16, trisomy
+WT1 Gene Inactivation
+Duplication 3q13.2 q25
+Impaired leucocyte chemotaxis
+Cytopathogenic Effect, Viral
+Golgi cavity alteration
+Chromosome 10 ring
+Additional X Chromosome
+VIRAL CYTOPATHOGEN EFF
+Proto-Oncogene c-ErbB-1 P772_H773insQV
+PIK3CA Gene Amplification
+Apoptotic Pathway Deregulation
+Repeat, Expanded Trinucleotide
+CCND1 mRNA Overexpression
+Multiple Transversion Mutations
+KRAS A146 Mutation
+Cell Stress-Related Process
+JUN Pathway Deregulation
+Moderate koilocytotic atypia
+K-Ras 2 G12N
+K-Ras 2 G12L
+K-Ras 2 G12I
+K-Ras 2 G12F
+K-Ras 2 G12D
+K-Ras 2 G12E
+K-Ras 2 G12C
+K-Ras 2 G12A
+K-Ras 2 G12Y
+K-Ras 2 G12V
+K-Ras 2 G12W
+K-Ras 2 G12R
+K-Ras 2 G12S
+Trinucleotide Repeat Expansions
+Chromosome 17 ring
+Chromosome 12 aneuploidy
+GTPase NRas Q61L
+CCND1 Gene Amplification
+Trisomy 10pter p13
+K-Ras 2 G13D
+ALK Gene Mutation
+paired helical filament
+K-Ras 2 G13V
+Nuclear/cytoplasmic ratio increased
+Proto-Oncogene c-ErbB-1 P772_H773insDNP
+GTPase KRas G13N
+GTPase KRas G13A
+GTPase KRas G13C
+GTPase KRas G13D
+GTPase KRas G13E
+GTPase KRas G13R
+GTPase KRas G13S
+GTPase KRas G13V
+KRAS Protein Variant
+Molecular Pathway Deregulation
+Proto-Oncogene c-ErbB-1 V834del
+BHD Gene Mutation
+GNA11 Gene Mutation
+Nonproliferative fibrocystic change
+CD332 Antigen N549H
+CD332 Antigen N549K
+Columnar Cell Atypia
+c-met Gene Mutation
+IKZF1 Gene Mutation
+Frameshift Mutation function
+Deletion 11q partial
+Ring chromosome 1
+Ring chromosome 8
+abnormalities cell epithelial
+ERG Gene Rearrangement
+MKK4 Gene Inactivation
+P13K-AKT Pathway Deregulation
+Molecular Sequence Variation
+NRAS Q61 Mutation
+MYB Gene Amplification
+Cell membrane alteration
+Fusion Protein Expression
+temperature sensitive mutant
+Nuclear membrane alteration
+Coarsely dispersed chromatin
+Restriction Site Polymorphism
+DNA Breaks, Single-Stranded
+Monosomy 11q partial
+MSH6 Gene Inactivation
+Trisomy 8 Mosaicism
+EGFR delta E746
+Rearrangement of 6q13
+Degenerations, Transneuronal Retrograde
+Golgi vesicle alteration
+Endoplasmic Reticulum Stress
+Hematopoietic maturation arrest
+Frame Shift Mutations
+Degeneration, Transneuronal Retrograde
+LMYC Gene Amplification
+Cytopathic Effect, Viral
+Viral Cytopathogenic Effects
+Monosomy 2pter p24
+NRAS NP_002515.1 :p.Gln61His
+UV Mutation Abnormality
+Trisomy Xpter Xq13
+Nuclear sap alteration
+BEK Gene Mutation
+Chromosome 14 ring
+Proto-Oncogene c-ErbB-1 E709fs*1
+Transitional cell metaplasia
+Single-Stranded DNA Break
+CD332 Antigen S372C
+PMS1 Gene Inactivation
+FGFR2 Gene Activation
+Chromosome 22 ring
+hSNF5/INI1 Gene Inactivation
+Chromosome 9 Ring
+HER1 Gene Mutation
+v-fos Gene Amplification
+Atypical apocrine metaplasia
+FH Gene Mutation
+short arm deletion
+BCR-ABL TKI-Resistant Mutation
+RET Gene Rearrangement
+WRN Gene Mutation
+Chromosome 4p deletion
+Mutation, Frame Shift
+PDGFRA Gene Mutation
+DNA strand break
+Deletion 1q25 q32
+Abnormal nuclear/cytoplasmic ratio
+Proto-Oncogene c-ErbB-1 M766_A767insAI
+Break, Double-Strand DNA
+Duplication 2p13 p21
+NRAS G12 Mutation
+Single-Strand DNA Breaks
+Endoplasmic Reticulum Stresses
+Deletion 6q16 q21
+Frameshift Mutation Abnormality
+Proto-Oncogene c-ErbB-1 R748_P753del
+BRAF Gene Mutation
+Muscle fibre hypertrophy
+FASLG Gene Mutation
+Partial trisomy 8
+Proto-Oncogene c-ErbB-1 A763_Y764insFQEA
+Proto-Oncogene c-ErbB-1 P772_H773insDHP
+Foot process fusion
+Proto-Oncogene c-ErbB-1 H773_V774insNPH
+Duplication 10pter p13
+CD332 Antigen Tyr375Cys
+genetics colorectal cancer
+Monosomy 1p22 p13
+Mild epithelial dysplasia
+BLM Gene Mutation
+Numerical Chromosome Aberration
+Effects, Viral Cytopathic
+Basement membrane alteration
+Duplication of chromosome
+Nuclear size alteration
+Premature Termination Mutation
+FGF6 Gene Amplification
+Reticulin fibril alteration
+CTNNB1 Gene Mutation
+AKT Gene Mutation
+Proto-Oncogene c-ErbB-1 D770_N771insN
+Proto-Oncogene c-ErbB-1 D770_N771insD
+Proto-Oncogene c-ErbB-1 D770_N771insG
+ERBB2 p. A775_G776insYVMA
+Deletion 8p23 1
+Rearrangement of 11q
+GNAS Gene Mutation
+FGFR2 Gene Amplification
+Extracellular granule alteration
+Chromosome 21 ring
+HRAS Gene Mutation
+Alteration of centromere
+Atypical Apocrine Metaplasia
+DNA Replication Damage
+Thyrotropin, Biologically Inactive
+Proto-Oncogene c-ErbB-1 A750_E758del
+TP53 Gene Inactivation
+Duplication 22q11 q13
+Gene Duplication Abnormality
+Chromosomal structural abnormalities
+DNA Breaks, Double-Strand
+PTEN gene mutation
+Rearrangement of 8q21
+Chromosome 13q monosomy
+MET Gene Mutation
+Proto-Oncogene c-ErbB-1 Y764_V765insHH
+Defective molecular assembly
+Proto-Oncogene c-ErbB-1 H773_V774insGH
+Proto-Oncogene c-ErbB-1 L861P
+Proto-Oncogene c-ErbB-1 L861Q
+Proto-Oncogene c-ErbB-1 L861R
+Proto-Oncogene c-ErbB-1 L861V
+Monosomy 1q32 q42
+Finely dispersed chromatin
+Y chromosome deletion
+EZH2 Gene Mutation
+Tumor-Suppressor Gene Inactivation
+Ring chromosome 17
+Ring chromosome 14
+Ring chromosome 13
+Ring chromosome 10
+Ring chromosome 19
+Trisomy 14q proximal
+DNA Breaks, Double-Stranded
+FAS Gene Mutation
+EGFR G719 Mutation
+Nucleotide Transversion Abnormality
+GTPase NRas Q61E
+GTPase NRas Q61K
+GTPase NRas Q61H
+GTPase NRas Q61R
+GTPase NRas Q61P
+GTPase NRas Q61X
+Proto-Oncogene c-ErbB-1 p.K745_A750del
+Messenger RNA Overexpression
+DNA Replicating Damage
+GTPase NRas G13X
+Proto-Oncogene c-ErbB-1 E746_P753del
+PDGFRalpha Gene Mutation
+PTCH Gene Inactivation
+BRAF NP_004324.2:p.Val600 Mutation
+TEMPERATURE-SENSITIVE LETHAL MUTATION
+Diffuse oncocytic metaplasia
+K-Ras 2 A146X
+Expanded Trinucleotide Repeat
+Balanced Chromosomal Alteration
+Giant Rod Chromosome
+Diffuse hyperplastic oncocytosis
+Base Pair Mismatches
+Muscle fiber atrophy
+Proto-Oncogene c-ErbB-1 K745_L747del
+Virus-Induced Cell Proliferation
+HRAS Gene Amplification
+PDGFRA gene rearrangements
+MYCN Gene Amplification
+PTCH1 Gene Inactivation
+Monosomy 1p34 p32
+K-SAM Gene Mutation
+KGFR Protein Variant
+Ring Chromosome 1
+CD332 Antigen Y375C
+CD332 Antigen Ser252Trp
+Deletion 3p14 p11
+c-erbB2 Gene Activation
+BRAF p.Val600 Mutation
+DNA Repeat Expansion
+Rearrangement of 3q
+Mutagenic Process, Pathologic
+Structural Chromosomal Abnormality
+Ring 14 Syndrome
+Oncogene Activation Process
+Distal Duplication 10q
+EGFR-TKI Sensitizing Mutation
+Proto-Oncogene c-ErbB-1 E746_A750del
+DNA Repeat Expansions
+Chromosome Xq trisomy
+Proto-Oncogene c-ErbB-1 V769_D770insCV
+Monosomy 1q21 q25
+Abnormal macromolecular binding
+Dilated endoplasmic reticulum
+Proto-Oncogene c-ErbB-1 V769_D770insDNV
+Chromosome 13 duplication
+PMS2 Gene Inactivation
+PALB2 Gene Mutation
+Margination of chromatin
+Nuclear chromatin alteration
+Rearrangement of 1p11-q11
+Nuclear membrane proliferation
+Basement membrane fragmentation
+Monosomy Xp22 pter
+Mosaic trisomy 21
+Proto-Oncogene c-ErbB-1 L747_S752del
+JAK2 Protein Variant
+Abnormal eosinophil maturation
+Duplication Xpter Xq13
+Erythrocyte destruction, function
+Trisomy 2pter p24
+deletions dna mitochondrial
+Proto-Oncogene c-ErbB-1 H773_V774insPH
+FGFR2 Protein Variant
+Proto-Oncogene c-ErbB-1 E746_T751del
+Cell Cycle Deregulation
+Severe epithelial dysplasia
+Double-Stranded DNA Break
+NRAS NP_002515.1 :p.Gly12Xxx
+Severe cytologic atypia
+Proto-Oncogene c-ErbB-1 L858Q
+Pinocytotic vacuole alteration
+KRAS Q61 Mutation
+Rearrangement of 2p23
+Cytoplasmic fiber alteration
+Duplication 7p13 p12.2
+ALK Kinase Upregulation
+Nuclear/cytoplasmic ratio decreased
+NMYC Gene Amplification
+Muscle fibre change
+Philadelphia chromosome, Ph
+Retrograde Degenerations, Transneuronal
+Moderate cytologic atypia
+long arm deletion
+EGFR Gene Mutation
+Transitional cell atypia
+CDKN2A Gene Inactivation
+HER2 Gene Mutation
+Trisomy 4q25 qter
+Proto-Oncogene c-ErbB-1 I789_L792del
+Breaks, Single-Strand DNA
+Abnormal molecular cross-linking
+Trisomy 1p21 p32
+Numerical Chromosomal Abnormality
+Atypical squamous metaplasia
+Monosomy 18 mosaicism
+GPC3 Gene Inactivation
+PIK3CA E545 Mutation
+Trans Synaptic Degeneration
+Proto-Oncogene c-ErbB-1 V769_D770insGV
+Cytoplasmic filament alteration
+BRCA2 Gene Mutation
+EGFR Gene Amplification
+Granulocyte destruction, function
+Receptor site alteration
+KIT Gene Mutation
+c-K-ras Protein Variant
+JAK2 Gene Variant
+Deregulation of Apoptosis
+CD332 Antigen Lys659Glu
+Deletion 4p14 p16
+Bistrand Abasic Site
+EGFR delta V834
+Proto-Oncogene c-ErbB-1 K745_E749del
+Duplication 17p11 2
+chromosome disorders duplication
+Trisomy Partial 8
+Stress, Endoplasmic Reticulum
+Proto-Oncogene c-ErbB-1 D761_E762insEAFQ
+Expansion, DNA Repeat
+c-erbB1 Gene Amplification
+Repeats, Expanded Trinucleotide
+EGFR Activating Mutation
+KGFR Gene Mutation
+Protein Splicing Abnormality
+DNA Intrastrand Crosslinking
+Group chromosomal alteration
+FHIT Gene Inactivation
+Urothelial cell atypia
+deletion short arm
+Partial Monosomy 17p
+Proto-Oncogene c-ErbB-1 V765_M766insMAS
+Ring 22, Chromosome
+NRAS NP_002515.1 :p.Gln61Leu
+Single-Stranded DNA Breaks
+Expanded Trinucleotide Repeats
+c-met Gene Amplification
+Breaks, Double-Stranded DNA
+genetic colorectal cancer
+DNA Strand Break
+Diffuse cytologic atypia
+Mutations, Frame Shift
+Proto-Oncogene c-ErbB-1 R748_S752del
+KRAS2 Gene Mutation
+Focal cytologic atypia
+Elastic fibre fragmentation
+Proto-Oncogene c-ErbB-1 P772_H773insYNP
+PIK3CA Gene Mutation
+Mismatch, Base Pair
+BRAF p.V600 Mutation
+Moderate epithelial dysplasia
+Phenotype, Replication Error
+Chromosomal Translocation Process
+SDHC Gene Mutation
+Nuclear pore alteration
+Squamous Pearls Formation
+ALK Kinase Overexpression
+Elastic fibre alteration
+CDK4 Gene Inactivation
+Abnormal chromosomal banding
+Stresses, Endoplasmic Reticulum
+DNA Break, Single-Strand
+t(1;19) (q23;p13.3); PBX/E2A
+Oxyphilic cell metaplasia
+Proto-Oncogene c-ErbB-1 L747_K754del
+CEBPA Gene Mutation
+Reticulum Stresses, Endoplasmic
+Trisomy 17p11 2
+KRAS Gene Amplification
+MUTYH Gene Mutation
+mitochondrial dna deletion
+Microtubule Dynamics Alteration
+L-myc Gene Amplification
+A-myb mRNA Overexpression
+Severe Cytologic Atypia
+Error Phenotype, Replication
+Suspect cell present
+Balanced Chromosomal Translocation
+MLH1 Gene Inactivation
+ERBB2 Gene Amplification
+Protein Sequence Abnormality
+DNA Degradation, Necrotic
+CD332 Antigen C382R
+Aberrant DNA Methylation
+Sex chromosome mosaicism
+Trinucleotide Repeat Expansion
+Chromosome 13 ring
+Proto-Oncogene c-ErbB-1 S768_V769insAWT
+NRAS NP_002515.1 :p.Gln61Glu
+WAS Gene Mutation
+PDGFRA Gene Rearrangement
+Chromosome 1 ring
+Rearrangement of 11q13-21
+Germline Mutation Abnormality
+MYBL1 mRNA Overexpression
+Rearrangement of 21q
+EGFR delta V774
+Chromosome 5q31.1 Deletion
+Mild cytologic atypia
+CHEK2 Gene Mutation
+Partial trisomy syndromes
+Proto-Oncogene c-ErbB-1 V769_D770insMASVD
+p110alpha Protein Variant
+CCNE1 Gene Amplification
+NF1 Gene Inactivation
+Tandem Repeat Variation
+MYC Pathway Deregulation
+Partial trisomy 10q
+BRAF Protein Variant
+Nissl substance alteration
+KRAS-2 Gene Mutation
+Atypical Squamous Metaplasia
+Abnormal erythrocyte destruction
+AKT1 Gene Mutation
+Effect, Viral Cytopathogenic
+MET Gene Amplification
+KRAS Gene Mutation
+de novo mutation
+ZAP-70 mRNA Overexpression
+Proto-Oncogene c-ErbB-1 V769_D770insGSV
+Gsalpha Gene Mutation
+Platelet destruction, function
+Reactive cellular changes
+Trisomy 9 translocation
+Numerical Chromosome Anomaly
+BCL-2 mRNA Overexpression
+Unbalanced Chromosomal Alteration
+Gene Fusion Abnormality
+K-Ras 2 Q61H
+Chromosome 13q deletion
+RASSF1 Gene Inactivation
+Squamous Cell Atypia
+FGFR1 Gene Amplification
+Spindle cell nodule
+TGFBR2 Gene Inactivation
+Proto-Oncogene c-ErbB-1 N756_L760del
+Chromosome 20 ring
+Chromosome 13 aneuploidy
+Monosomy 6q16 q21
+MEN1 Gene Inactivation
+Transneuronal Retrograde Degenerations
+PDGFRA Protein Variant
+CD332 Antigen Asn549Lys
+PDGFRB Gene Rearrangement
+MYC Gene Mutation
+Dentin crystal alteration
+Proto-Oncogene c-ErbB-1 P772_H773insPR
+Structural extracellular alteration
+Frame Shift Mutation
+Collagen fibril alteration
+JAK-STAT Pathway Deregulation
+PIK3CA H1047 Mutation
+c-K-ras Gene Amplification
+Proto-Oncogene c-ErbB-1 L747_P753del
+TSC2 Gene Inactivation
+epithelial cell abnormality
+mild epithelial dysplasia
+RB-E2F Pathway Deregulation
+DNA Adduct Formation
+MAP2K4 Gene Inactivation
+Monosomy 3p14 p11
+Neuronal axonal change
+Reactive cytologic changes
+FGFR3 Gene Mutation
+Abasic Site Formation
+Endoplasmic reticulum alteration
+Macromolecular defective synthesis
+Duplication 1q42 qter
+Bone matrix alteration
+IGF2R Gene Inactivation
+Mitochondria DNA deletion
+Necrotic DNA Degradation
+chromosome number abnormality
+Cell content alteration
+Balanced Chromosomal Rearrangement
+Repeat Expansion, Trinucleotide
+Trisomy 9 mosaic
+Abnormal haematopoietic maturation
+Deletion 3q21 23
+GNAQ Gene Mutation
+Deletion 2pter p24
+Deletion 6q13 q15
+CD10 mRNA Overexpression
+CD140a Antigen Asp842Val
+Monosomy 17q23 q24
+p16 Gene Inactivation
+Nucleotide Transition Abnormality
+Monosomy 1q25 q32
+ECT1 Gene Mutation
+Trisomy 22q11 q13
+Trisomy 2p13 p21
+Single-Strand DNA Break
+Rearrangement of 12q13
+K-Ras 2 G13N
+K-Ras 2 G13A
+K-Ras 2 G13C
+K-Ras 2 G13E
+K-Ras 2 G13S
+K-Ras 2 G13R
+Balanced autosomal translocation
+Viral Cell Proliferation
+APC Gene Inactivation
+Deletion 1p34 p32
+Chromosome 8 ring
+Chromosome uniparental disomy
+N-RAS Gene Mutation
+BEK Gene Amplification
+Reticulum Stress, Endoplasmic
+Additional sex chromosome
+Proto-Oncogene c-ErbB-1 L747_A755del
+GTPase KRas G12I
+GTPase KRas G12N
+GTPase KRas G12L
+GTPase KRas G12C
+GTPase KRas G12A
+GTPase KRas G12F
+GTPase KRas G12D
+GTPase KRas G12Y
+GTPase KRas G12R
+GTPase KRas G12W
+GTPase KRas G12V
+Proto-Oncogene Neu A775_G776insYVMA
+Ring 21, Chromosome
+BRCA1 Gene Mutation
+Protein Truncation Abnormality
+RASSF1A Gene Inactivation
+KRAS2 Gene Amplification
+Golgi vacuole alteration
+Deletion 1p22 p13
+Cabot's ring body
+PTEN Gene Mutation
+c-fos Gene Amplification
+Surface receptor alteration
+CD332 Antigen Asn549His
+PI3K Gene Mutation
+Duplication 1q32 qter
+Cell centre alteration
+Cabot's ring bodies
+Cell center alteration
+Proto-Oncogene c-ErbB-1 P772_H773insTHP
+Replication Error Phenotypes
+AKT2 Gene Amplification
+TNFRSF6 Gene Mutation
+CD332 Antigen K659E
+c-K-ras Gene Mutation
+Trinucleotide Repeats, Expanded
+Cytopathogenic Effects, Viral
+Breaks, Double-Strand DNA
+Numerical Chromosome Anomalies
+Chromosome 13p duplication
+Proto-Oncogene c-ErbB-1 L858W
+Proto-Oncogene c-ErbB-1 L858P
+Proto-Oncogene c-ErbB-1 L858R
+Proto-Oncogene c-ErbB-1 L858M
+Proto-Oncogene c-ErbB-1 L858K
+Proto-Oncogene c-ErbB-1 L858G
+Proto-Oncogene c-ErbB-1 L858A
+NRAS NP_002515.1 :p.Gly13Xxx
+PDL2 Gene Overexpression
+THYROTROPIN, BIOLOGICALLY INACTIVE
+PDCD1LG2 Gene Overexpression
+Plasma membrane thickening
+High-Frequency Microsatellite Instability
+Proto-Oncogene c-ErbB-1 G719X
+Proto-Oncogene c-ErbB-1 G719S
+Abnormal megakaryocyte production
+Proto-Oncogene c-ErbB-1 G719V
+Proto-Oncogene c-ErbB-1 G719C
+Proto-Oncogene c-ErbB-1 G719D
+CDH1 Gene Inactivation
+EGFR p. K29_n298insG
+MDM2 Gene Mutation
+PI3K Gene Amplification
+Cancer Gene Mutation
+Proto-Oncogene c-ErbB-1 L747del
+CCND1 Gene Overexpression
+TSC1 Gene Inactivation
+FGF4 Gene Amplification
+Unbalanced Chromosomal Alteration/Rearrangement
+Triploidy and polyploidy
+Mild Cytologic Atypia
+Double-Strand DNA Break
+PTEN Gene Inactivation
+c-myc Gene Mutation
+Ring 14 syndrome
+NEU Gene Mutation
+BCL2 Gene Translocation
+Reactive endocervical cells
+EGFR delta L747
+PIK3CA E542 Mutation
+Proto-Oncogene c-ErbB-1 D770_N771insDG
+colorectal cancer genetics
+Mild Epithelial Dysplasia
+Mitochondrial DNA deletions
+DNA Breaks, Single-Strand
+Rearrangement of 6q25
+Embryonic Lethal Mutation
+Rearrangement of 1p11-13
+Structural Chromosome Aberration
+Trisomy 15 mosaicism
+FGFR-2 Protein Variant
+EGFR delta Glu746
+MSX1 Gene Mutation
+Trisomy 1q32 qter
+Central neuronal chromatolysis
+Multiple Transition Abnormalities
+RECQL4 Gene Mutation
+Proto-Oncogene c-ErbB-1 D770fs*61
+Myelin body formation
+Proto-Oncogene c-ErbB-1 E746del
+ERBB c.2236_2237ins18
+BCL-2 Translocation
+Antibody-Dependent Enhancements
+EGFR NP_005219.2:p.E746del
+EGFR c.2156G>A
+EGFR c.2156G>C
+Mitotic alteration
+EGFR Val774del
+KRAS c.180_181delTCinsAA
+C-H cell
+abnormal chromosome
+transneuronal degeneration
+B-RAF1 c.1798G>A
+B-RAF1 c.1798G>T
+Axonal Reactions
+EGFR p.Leu747del
+Chromosomal Rearrangement
+Polyploidy syndrome
+ERBB c.2246_2260del15
+K-SAM c.1647T>A
+K-SAM c.1647T>G
+EGFR NP_005219.2:p.Glu709fs*1
+Monosomy 21q22
+BRAF c.1797_1799delAGTinsGAG
+NRAS1 c.183A>G
+NRAS1 c.183A>C
+ERBB1 c.2321_2322insCCACGT
+NRAS1 c.183A>T
+Trisomy 9q32
+NRAS c.181_182delCAinsAG
+BRAF NP_004324.2:p.L597V
+C-KIT Mutation
+BRAF NP_004324.2:p.L597R
+BRAF NP_004324.2:p.L597S
+BRAF NP_004324.2:p.L597Q
+DNA Adduction
+JAK2 p.V617F
+BRAF NP_004324.2:p.G469V
+BRAF NP_004324.2:p.G469S
+BRAF NP_004324.2:p.G469R
+BRAF NP_004324.2:p.G469E
+BRAF NP_004324.2:p.G469A
+EGFR NM_005228.3:c.2319_2320insAACCCCCAC
+Imbalances, Allelic
+EGFR p.V769_D770insMASVD
+EGFR L747_S752del
+EGFR S768_V769insVAS
+Nucleolar enlargement
+Disease-causing Mutation
+ERBB c.2232_2233ins18
+FGFR-2 Tyr375Cys
+KRAS NP_004976.2:p.Gly12Ser
+EGFR NM_005228.3:c.2246_2260del15
+Deletion 6p23
+EGFR NM_005228.3:c.2311_2312insTGGCCACCCCCA
+Chromosome Fragility
+ERBB c.2572C>A
+PIK3CA NP_006209.2:p.Cys420Arg
+KGFR Ser372Cys
+EGFR NM_005228.3:c.2236_2237ins18
+ERBB c.2572C>T
+KRAS p.Gln61Glu
+robertsonian translocation
+KRAS NM_004985.3:c.180_181delTCinsAA
+Monosomy 4p
+EGFR NM_005228.3:c.2154_2155delGGinsTT
+EGFR c.2311_2312ins9
+HER1 c.2322_2322G>CCACGTG
+FLT3/ITD Mutation
+KRAS p.Gly13Cys
+BRAF p.Val600Ala
+Oncogene Fusion
+Duplication 4p
+BRAF NM_004333.4:c.1789C>G
+Trisomy 3p25
+EGFR R748_P753del
+EGFR p.Gly719Ala
+KRAS p.Gln61Arg
+BRAF c.1396G>C
+EGFR NM_005228.3:c.2125_2129delGAAAC
+C-K-RAS c.34_35GG>AT
+Proteostasis Dysfunctions
+Unbalanced Translocation
+Preneoplastic Change
+PIK3CA c.3139C>T
+PIK3CA His1047Gln
+EGFR NP_005219.2:p.Asn771_Pro772insHis
+EGFR NP_005219.2:p.L747_K754del
+BRAF c.1789_1790CT>TC
+PI3K c.1633G>A
+FGFR-2 N549H
+PI3K c.1633G>C
+EGFR Leu861Val
+JAK2 p.E985K
+HER1 c.2235_2252del18
+KRAS c.38_39GC>TG
+Reaction, Axon
+C-K-RAS c.35_36GT>AG
+KRAS c.38_39GC>TT
+Chromosomal instability
+EGFR NM_005228.3:c.2257_2277del21
+ERBB1 c.2156delG
+JAK2 NP_004963.1:p.V617F
+Trisomy Xp3
+EGFR NP_005219.2:p.Pro772_His773insThrHisPro
+EGFR p.P772_H773insTHP
+NRAS1 c.181_183CAA>AAG
+inversions pericentric
+koilocytotic atypia
+NRAS c.181_183delCAAinsAAG
+Proteostasis Deficiencies
+ERBB1 c.2239_2256del18
+Genome Instabilities
+EGFR NP_005219.2:p.R748_S752del
+BRAF NP_004324.2:p.V600K
+BRAF NP_004324.2:p.V600M
+BRAF NP_004324.2:p.V600L
+BRAF NP_004324.2:p.V600A
+BRAF NP_004324.2:p.V600E
+BRAF NP_004324.2:p.V600D
+BRAF NP_004324.2:p.V600G
+BRAF NP_004324.2:p.V600R
+Deletion 2p22
+EGFR p.Leu858Pro
+Deletion 3p25
+KRAS p.Gly12Leu
+NRAS1 c.182A>T
+Concentric hypertrophy
+BRAF G466E
+EGFR NM_005228.3:c.2156delG
+BRAF G466A
+NRAS1 c.182A>G
+NRAS1 c.182A>C
+BRAF G466V
+BRAF G466R
+NRAS NM_002524.4:c.182_183delAAinsTG
+PIK3CA p.His1047Thr
+Chromosome Abnormalities
+Gene Insertions
+KRAS2 c.39C>G
+KRAS2 c.39C>A
+chromosomes translocation
+KRAS2 c.39C>T
+Aberration, Chromosomal
+BRAF c.1405_1406GG>TC
+KRAS c.34_35delGGinsTA
+EGFR c.2236_2250del15
+KRAS c.34_35delGGinsTT
+Autosome Abnormalities
+NRAS NP_002515.1:p.Q61E
+PDGFRA c.2525A>T
+NRAS NP_002515.1:p.Q61L
+Deletion, Chromosome
+NRAS NP_002515.1:p.Q61H
+NRAS NP_002515.1:p.Q61K
+NRAS NP_002515.1:p.Q61P
+NRAS NP_002515.1:p.Q61X
+genomes instability
+EGFR p.Y764_V765insHH
+ERBB1 c.2154_2155GG>TT
+Inversion Mutation
+Pseudotrisomy 18
+genome instability
+hypersegmented neutrophil
+EGFR c.2319_2320insCCCCAC
+Insertions, Gene
+KRAS Gln61Lys
+EGFR NP_005219.2:p.V769_D770insMASVD
+BRAF NP_004324.2:p.Val600Ala
+moderate dysplasia
+EGFR NP_005219.2:p.His773_Val774insAsnProHis
+KRAS p.Gly12Arg
+aplastic crisis
+AKT c.49G>A
+PIK3CA c.1634A>T
+BRAF p.L597V
+BRAF p.L597Q
+BRAF p.L597R
+BRAF p.L597S
+Break, Chromosome
+EGFR Val834del
+Sequence Deletion
+JAK2 p.M929I
+BRAF p.Gly469Ala
+Primary hypertrophy
+EGFR NM_005228.3:c.2318_2319insCCCCCA
+Golgi hypertrophy
+EGFR c.2322_2322G>CCACGTG
+EGFR c.2231_2232insTAAAATTCCCGTCGCTAT
+concentric hypertrophy
+EGFR p.A750_K754del
+N-ras c.181_183CAA>AAG
+Deletion 14qter
+PIK3CA p.Glu545Ala
+EGFR NP_005219.2:p.K745_E746insVPVAIK
+ERBB c.2236_2253del18
+KRAS NM_004985.3:c.180_181delTCinsCA
+BRAF NP_004324.2:p.Gly466Glu
+FGFR-2 S372C
+KGFR S252W
+isochromosome 12p
+Duplication 6p
+Duplication 6q
+EGFR NP_005219.2:p.A750_K757del
+Severe dysplasia
+EGFR NP_005219.2:p.Leu747_Pro753del
+EGFR p.G719S
+BRAF NM_004333.4:c.1405G>A
+Gastric metaplasia
+EGFR NP_005219.2:p.N771_P772insN
+EGFR NP_005219.2:p.N771_P772insH
+Chromocentre alteration
+Deletions, Sequence
+Secondary degeneration
+EGFR NP_005219.2:p.L747_S752del
+EGFR NM_005228.3:c.2235_2252del18
+EGFR P753_I759del
+EGFR c.2307_2308ns9
+FGFR2 Asn549His
+EGFR NM_005228.3:c.2320_2321ins12
+HER1 c.2236_2253del18
+EGFR E746_R748del
+NRAS c.183A>T
+KRAS c.34_35GG>CT
+NRAS c.183A>C
+NRAS c.183A>G
+KRAS2 c.182A>G
+Mutations, Suppressor
+KRAS2 c.182A>C
+BRAF NP_004324.2:p.Gly469Ser
+KRAS2 c.182A>T
+Chromosome Aberration
+EGFR T751_E758del
+JAK2 NP_004963.1:p.Arg938Leu
+EGFR G719D
+EGFR G719C
+EGFR G719A
+EGFR G719V
+Chromosomal Amplification
+ERBB c.2319_2320insCAC
+EGFR G719S
+EGFR G719X
+EGFR Leu858Ala
+transition mutation
+EGFR c.2236_2237insTTCCCGTCGCTATCAAGG
+c-K-ras A146X
+Robertsonian Translocation
+KRAS NM_004985.3:c.37_38delGGinsAA
+EGFR NP_005219.2:p.Leu747_Ala750del
+KGFR c.1115C>G
+INJ DNA
+PIK3CA NP_006209.2:p.C420R
+Monosomy 3q27
+EGFR NP_005219.2:p.His773_Val774insGlyHis
+C-K-RAS c.38G>C
+BRAF p.Leu597Val
+atypia inflammatory
+EGFR NM_005228.3:c.2310_2311insGGGTTA
+HER1 c.2239_2256del18
+ERBB1 c.2253_2276del24
+KRAS c.38G>T
+JAK2 G935R
+ERBB2 NM_004448.2p.2325_2326ins12
+Degeneration, Trans-Synaptic
+Mixed Mutations
+KRAS c.38G>C
+Gene Insertion
+EGFR NP_005219.2:p.R748_P753del
+virus pathogenesis
+EGFR L861V
+EGFR L861R
+EGFR L861Q
+EGFR L861P
+EGFR NP_005219.2:p.Tyr764_Val765insHisHis
+EGFR Leu858Trp
+Inversion, Chromosome
+EGFR NM_005228.3:c.2236_2253delGAATTAAGAGAAGCAACA
+ERBB c.2309_2310ins14
+Binucleate cell
+Point Mutations
+FGFR2 Cys382Arg
+EGFR c.2307_2308ins15
+FGFR2 c.1647T>A
+Decreased elasticity
+FGFR2 c.1647T>G
+EGFR NP_005219.2:p.D770_N771insN
+C-K-RAS c.35G>T
+C-K-RAS c.35G>A
+C-K-RAS c.35G>C
+EGFR NP_005219.2:p.H773_V774insGH
+DNA Injury
+KGFR c.1975A>G
+Stresses, Oxidative
+Gastric Metaplasia
+Double Minutes
+new mutation
+EGFR NM_005228.3:c.2322delGinsCCACGTG
+KRAS Gly12Val
+EGFR NP_005219.2:p.Asn756_Leu760del
+B-RAF1 c.1396G>C
+Chromosome breakage
+Chromosome Anomalies
+HER1 c.2315_2316insGACACACCC
+JAK2 c.1848_1849delTGinsCT
+EGFR NP_005219.2:p.Leu858Trp
+Monosomy 12p11
+EGFR NM_005228.3:c.2307_2308ins9
+ERBB c.2313_2314insAAC
+Tricentric chromosome
+KRAS G12V
+KRAS G12W
+KRAS G12R
+KRAS G12S
+ERBB1 c.2290_2291ins12
+KRAS G12Y
+KRAS G12F
+KRAS G12D
+KRAS G12E
+KRAS G12C
+KRAS G12A
+KRAS G12N
+KRAS G12I
+CEBPA Mutation
+Duplication 16q
+NRAS c.182A>C
+KRAS2 c.183A>T
+NRAS c.182A>G
+Transition Mutations
+Robertsonian translocation
+KRAS2 c.183A>C
+NRAS c.182A>T
+KRAS c.34_35GG>AA
+KRAS c.34_35GG>AT
+Chromosomal Inversion
+JAK2 M929I
+EGFR NM_005228.3:c.2309_2310delACinsCCAGCGTGGAT
+EGFR NM_005228.3:c.2239_2253del15
+Heterodisomy, Uniparental
+HER-2/neu c.2324_2325ins12
+FGFR2 c.1144T>C
+KRAS NM_004985.3:c.34G>T
+KRAS NM_004985.3:c.34G>A
+KRAS NM_004985.3:c.34G>C
+Degeneration, Retrograde
+K-SAM c.1645A>C
+EGFR NM_005228.3:c.2572_2573delCTinsAG
+Degenerations, Trans-Synaptic
+HER2 c.2325_2326ins12
+KRAS NP_004976.2:p.Gln61His
+EGFR p.Leu858Trp
+Chromosome Abnormality
+TRK Rearrangement
+Duplication 9q32
+C-K-RAS c.34_36GGT>TGG
+EGFR NP_005219.2:p.D770_N771insAPW
+abnormal chromosomes
+EGFR c.2239_2247del9
+CD332 c.758C>G
+HER2 c.2324_2325ins12
+p110alpha E545X
+p110alpha E545Q
+p110alpha E545V
+Nonsense Mutation
+p110alpha E545K
+NRAS NM_002524.4:c.180_181delACinsTA
+p110alpha E545A
+p110alpha E545D
+p110alpha E545G
+BRAF p.G469S
+BRAF p.G469R
+BRAF p.G469V
+BRAF p.G469A
+EGFR NP_005219.2:p.Val769_Asp770insGlySerVal
+BRAF p.G469E
+Koilocytotic Atypia
+EGFR NP_005219.2:p.Asp761_Glu762insGluAlaPheGln
+JAK2 V617F
+HER1 c.2156delG
+EGFR S752_V769del
+Pathology, Cellular
+EGFR E746_S752del
+EGFR Thr790Met
+BRAF NM_004333.4:c.1790T>G
+Aberrant Chromosome
+ERBB1 c.2309_2310AC>CCAGCGTGGAT
+EGFR NP_005219.2:p.V769_D770insCV
+EGFR p.V769_D770insCV
+Chromosomal Translocations
+Trisomy Xq
+tubular aggregates
+FGFR2 p.Asn549Lys
+Lymphocyte destruction
+PIK3CA NP_006209.2:p.E545K
+PIK3CA NP_006209.2:p.E545D
+PIK3CA NP_006209.2:p.E545G
+Cytocentrum alteration
+PIK3CA NP_006209.2:p.E545A
+PIK3CA NP_006209.2:p.E545X
+PIK3CA NP_006209.2:p.E545V
+PIK3CA NP_006209.2:p.E545Q
+KRAS1 c.38_39GC>AA
+EGFR E746_A750del
+KRAS1 c.38_39GC>AG
+Abnormality, Autosome
+KRAS1 c.38_39GC>AT
+PI3K c.1258T>C
+NRAS Gln61Pro
+FGFR2 p.Y375C
+axotomy response
+EGFR p.D770_N771insDG
+EGFR NP_005219.2:p.Thr790Met
+BRAF Gly466Ala
+EGFR c.2308_2309ins9
+B-RAF1 c.1789C>G
+Radiation-Induced Recombination
+PDGFRA p.Asp842Val
+C-K-RAS C.36T>C
+ECT1 c.1144T>C
+KRAS NM_004985.3:c.35_36delGTinsAA
+KRAS NM_004985.3:c.35_36delGTinsAC
+KRAS NM_004985.3:c.35_36delGTinsAG
+HER1 c.2246_2260del15
+EGFR c.2303_2304insTGTGGCCAG
+KRAS NM_004985.3:c.39C>A
+EGFR c.2308_2309insCCAGCGTGG
+EGFR NM_005228.3:c.2320_2321insGCAACCCCCACG
+BRAF c.1789C>G
+degeneration nerves
+B-RAF1 c.1789_1790CT>TC
+B-RAF1 c.1799T>G
+B-RAF1 c.1799T>C
+B-RAF1 c.1799T>A
+PPAR-gamma Rearrangement
+BRAF Leu597Val
+EGFR c.2572_2573CT>AA
+EGFR c.2572_2573CT>AG
+EGFR L747_A755del
+Compensatory hypertrophy
+EGFR p.Leu858Arg
+Mutation, Nonsense
+KRAS NM_004985.3:c.182A>C
+Protein Deregulation
+HER1 c.2309_2310AC>CCAGCGTGGAT
+FGFR2 NM_000141.4:c.1647T>A
+FGFR2 NM_000141.4:c.1647T>G
+KRAS NM_004985.3:c.182A>G
+c-K-ras G13N
+c-K-ras G13C
+c-K-ras G13A
+c-K-ras G13E
+c-K-ras G13D
+EGFR NP_005219.2:p.Ser768_Val769insAlaTrpThr
+c-K-ras G13S
+c-K-ras G13R
+AKT1 NP_001014431.1:p.Glu17Lys
+PTTG1 Overexpression
+Dicentric chromosome
+FGFR2 NP_000132.3:p.P253R
+BRAF p.Val600Gly
+Epithelial metaplasia
+JAK2 NP_004963.1:p.Y931C
+ERBB c.2322_2322G>CCACGTG
+BRAF p.Val600Glu
+C-K-RAS c.37_39GGC>CGT
+C-K-RAS c.183A>T
+Monosomy 6p23
+C-K-RAS c.183A>C
+Proto-Oncogene c-ErbB-1D770_N771insAPW
+C-K-RAS c.39C>T
+C-K-RAS c.39C>G
+EGFR c.2310_2311insAGCGTGGAC
+C-K-RAS c.39C>A
+EGFR NM_005228.3:c.2307_2308ins15
+Epidermoid metaplasia
+PIK3CA p.E542G
+PIK3CA p.E542K
+PIK3CA p.E542Q
+PIK3CA p.E542V
+PIK3CA p.E542X
+Injuries, DNA
+BRAF c.1799T>C
+BRAF c.1799T>A
+BRAF c.1799T>G
+NP_002515.1 :p.Gln61Xxx
+PDGFRA Asp842Val
+B-RAF1 c.1790T>A
+B-RAF1 c.1790T>G
+ERBB c.2235_2252del18
+EGFR NM_005228.3:c.2311_2312insGCGTGGACA
+Monosomy 5p
+KRAS c.35_36delGTinsTC
+EGFR p.I740_P741insPVAIKI
+Nuclear degeneration
+EGFR NP_005219.2:p.L747_T751del
+EGFR NP_005219.2:p.E746_A750del
+EGFR NP_005219.2:p.H773_V774insH
+Focal dysplasia
+EGFR NP_005219.2:p.H773_V774insG
+Degenerations, Neuron
+Inflammatory atypia
+EGFR NP_005219.2:p.Met766_Ala767insAlaIle
+EGFR c.2309_2310ins14
+Chromosomal Duplications
+Degeneration, Nerve
+EGFR NP_005219.2:p.Asp770_Asn771insSerValAsp
+ERBB c.2310_2311insAAC
+PIK3CA NM_006218.1:c.3140A>G
+KRAS NP_004976.2:p.Gly12Tyr
+C-K-RAS c.37G>C
+C-K-RAS c.37G>A
+EGFR NP_005219.2:p.Val769_Asp770insGlyVal
+PIK3CA NM_006218.1:c.3140A>T
+ERBB1 c.2311_2312ins9
+Centriole alteration
+Stresses, Genotoxic
+ERBB1 c.2319_2320insCAC
+Nick, DNA
+C-K-RAS c.34_35GG>AA
+NRAS NP_002515.1:p.G12X
+EGFR NP_005219.2:p.Asp770_Asn771insAspGly
+KRAS NP_004976.2:p.Q61X
+ERBB1 c.2235_2246del12
+HER1 c.2310_2311ins9
+KRAS NP_004976.2:p.Q61P
+KRAS NP_004976.2:p.Q61R
+PTEN Loss
+KRAS NP_004976.2:p.Q61H
+KRAS NP_004976.2:p.Q61K
+KRAS NP_004976.2:p.Q61L
+KRAS NP_004976.2:p.Q61E
+KRAS NP_004976.2:p.Q61D
+Secondary hypertrophy
+EGFR NP_005219.2:p.L747_A755del
+KRAS Gly13Ser
+HER1 c.2231_2232ins18
+Golgi hyperplasia
+ERBB2 NM_004448.2p.2324_2325ins12
+Gene Amplification
+Cytoplasmic alteration
+EGFR NM_005228.3:c.2310_2311ins9
+EGFR c.2253_2276del24
+NRAS1 c.182_183AA>GG
+FGFR2 NP_000132.3:p.Tyr375Cys
+FGFR2 NM_000141.4:c.1975A>G
+Cytogenetic Abnormalities
+FGFR-2 N549K
+EGFR NP_005219.2:p.M766_A767insAI
+PIK3CA p.H1047L
+chromosome abnormalities
+PIK3CA p.H1047R
+PIK3CA p.H1047T
+PDGFR2 c.2525A>T
+EGFR NM_005228.3:c.2319_2320ins9
+ERBB c.2310_2311insGGGTTA
+HER1 c.2247_2273del27
+KRAS p.Q61R
+Oncogene Fusions
+KRAS p.Q61P
+KRAS p.Q61X
+KRAS p.Q61D
+KRAS p.Q61E
+KRAS p.Q61L
+KRAS p.Q61K
+KRAS p.Q61H
+NRAS Gln61Arg
+ERBB c.2155G>T
+ERBB c.2155G>A
+JAK-2 c.1849G>T
+EGFR p.Leu858Ala
+oncocytic metaplasia
+FGFR-2 Y375C
+Atypical dysplasia
+KRAS1 c.38G>T
+BRAF NM_004333.4:c.1797_1799delAGTinsGAG
+KRAS1 c.38G>C
+KRAS1 c.38G>A
+C-K-RAS c.182A>G
+C-K-RAS c.182A>C
+Duplication 3p25
+ERBB c.2231_2232ins18
+C-K-RAS c.182A>T
+Trans-Synaptic Degenerations
+KRAS Gly12Asp
+KRAS Gly12Asn
+EGFR P772_H773insDNP
+PIK3CA Glu542Val
+EGFR p.N771_P772insN
+EGFR p.N771_P772insH
+chromosomal translocations
+EGFR c.2302_2303insTCCAGGAAGCCT
+EGFR c.2235_2252del18
+chromosomal anomalies
+C-K-RAS c.38G>A
+C-K-RAS c.38G>T
+suppressor mutation
+KRAS c.38G>A
+HER1 c.2311_2312ins12
+Mutation, Point
+KRAS p.Gly12Phe
+ERBB c.2302_2303ins9
+Polysomy 3
+null allele
+ERBB c.2320_2321ins12
+transversion mutation
+KRAS1 c.34_35GG>TA
+KGFR Y375C
+Chromosomal Deletion
+KI-RAS c.35G>T
+CASP8 Mutation
+KI-RAS c.35G>C
+KI-RAS c.35G>A
+KRAS NP_004976.2:p.Gln61Glu
+Physiologic hypertrophy
+Trisomy, XXY
+ERBB1 c.2254_2277del24
+Temperature-sensitive mutation
+BRAF NM_004333.4:c.1790T>A
+KRAS c.38_39delGCinsTG
+PIK3CA Glu545Asp
+KRAS c.38_39delGCinsTT
+HEMOPOIETIC PROLIFERATION
+axon chromatolysis
+FGFR2 NM_000141.4:c.1124A>G
+EGFR c.2311_2312insTGGCCACCCCCA
+Cytoplasmic aggregate
+Monosomy 3p2
+EGFR Leu858Lys
+EGFR p.L858W
+BEK c.1115C>G
+ERBB1 c.2283_2284ins12
+EGFR NM_005228.3:c.2573_2574delTGinsGT
+HER1 c.2238_2252del15
+EGFR c.2319_2320insAACCCCCAC
+EGFR NP_005219.2:p.Lys745_Glu749del
+EGFR NP_005219.2:p.Val765_Met766insMetAlaSer
+EGFR NM_005228.3:c.2155G>T
+EGFR NM_005228.3:c.2155G>A
+genetic translocation
+EGFR L858A
+EGFR L858G
+EGFR NP_005219.2:p.V769_D770insGV
+EGFR L858K
+EGFR L858M
+EGFR p.R748_S752del
+EGFR L858R
+EGFR L858Q
+EGFR L858P
+EGFR L858W
+Abnormality, Chromosome
+pericentric inversion
+EGFR NP_005219.2:p.P753_I759del
+HER1 c.2154_2155GG>TT
+BRAF NM_004333.4:c.1799_1800delTGinsAA
+Trisomy 21
+BRAF NM_004333.4:c.1799_1800delTGinsAT
+EGFR NP_005219.2:p.K745_L747del
+Translocation, Genetic
+KRAS Gln61Glu
+EGFR p.V774del
+EGFR NM_005228.3:c.2239_2256del18
+EGFR K745_L747del
+ERBB c.2315_2316insGACACACCC
+HER1 c.2572_2573CT>AA
+KRAS NP_004976.2:p.Ala146Xxx
+Gene Deletion
+HER1 c.2572_2573CT>AG
+Deletion 2q24
+EGFR NP_005219.2:p.Asn771_Pro772insAsn
+EGFR p.R748_P753del
+dna damage
+HER1 c.2310_2311insGGGTTA
+KRAS p.G12Y
+KRAS p.G12V
+KRAS p.G12W
+KRAS p.G12R
+KRAS p.G12S
+KRAS p.G12N
+KRAS p.G12L
+KRAS p.G12F
+HER1 c.2307_2308ins15
+KRAS p.G12E
+KRAS p.G12C
+EGFR p.H773_V774insPH
+ERBB c.2319_2320ins9
+KRAS1 c.39C>G
+KRAS1 c.39C>A
+EGFR NM_005228.3:c.2310_2311insGGGGAC
+Deletion 20p
+KRAS1 c.39C>T
+KRAS1 c.180_181TC>AA
+NRAS NM_002524.4:c.182_183delAAinsGG
+EGFR NM_005228.3:c.2309_2310ins14
+KRAS Gln61Xxx
+ERBB1 c.2318_2319insCCCCCA
+ERBB c.2290_2291ins12
+KRAS c.180_181TC>CA
+KRAS p.Gly12Asp
+founder mutation
+Trisomy 13p
+Duplication 18p
+PIK3CA p.Glu542Val
+EGFR H773_V774insH
+EGFR p.D770fs*61
+Isodicentric Chromosome
+EGFR NP_005219.2:p.L861V
+EGFR NP_005219.2:p.L861R
+EGFR NP_005219.2:p.L861Q
+EGFR NP_005219.2:p.L861P
+EGFR NP_005219.2:p.L861F
+EGFR T790M
+EGFR NP_005219.2:p.Leu858Pro
+ERBB c.2235_2246del12
+Instabilities, Genome
+Flagella alteration
+HER1 c.2236_2250del15
+Microtubule alteration
+NRAS Q61X
+NRAS Q61R
+KRAS p.G12I
+NRAS Q61K
+NRAS Q61H
+NRAS Q61L
+KRAS NP_004976.2:p.Gly12Leu
+EGFR NM_005228.3:c.2235_2246del12
+Germline Mutation
+KRAS p.G12D
+NRAS Q61E
+BRAF V600R
+BRAF V600A
+BRAF V600G
+BRAF V600E
+BRAF V600D
+BRAF V600K
+KRAS p.G12A
+BRAF V600M
+BRAF V600L
+Degeneration, Wallerian
+NRAS1 c.181_182CA>AG
+Monosomy 17
+Monosomy 16
+Monosomy 13
+Monosomy 11
+Monosomy 10
+Chromosomal Abnormality
+KGFR C382R
+dysplasia severe
+HER1 c.2573T>G
+cells damage
+ERBB1 c.2239_2253del15
+Hypersegmented nucleus
+Y-chromosome microdeletions
+EGFR NM_005228.3:c.2308_2309insACGGCG
+KRAS Gly12Ile
+point mutations
+EGFR NP_005219.2:p.Lys745_Leu747del
+EGFR NM_005228.3:c.2239_2247delTTAAGAGAA
+EGFR p.V834del
+KRAS NP_004976.2:p.Gly12Cys
+EGFR Leu858Met
+EGFR NM_005228.3:c.2311_2312ins12
+ERBB1 c.2302_2303ins9
+EGFR p.Thr790Met
+KRAS c.34_35GG>TA
+KRAS c.34_35GG>TT
+Instability, Chromosomal
+KRAS Gly12Ala
+ERBB1 c.2310_2311insAAC
+EGFR c.2246_2260del15
+Aberration, Cytogenetic
+EGFR p.V769_D770insASV
+ERBB c.2154_2155GG>TT
+PIK3CA p.Glu545Gly
+p110alpha H1047X
+p110alpha H1047Y
+p110alpha H1047T
+p110alpha H1047R
+p110alpha H1047Q
+p110alpha H1047L
+KRAS p.Gln61Asp
+ECT1 c.1124A>G
+FGFR2 p.K659E
+BRAF c.1799_1800TG>AA
+BRAF c.1799_1800TG>AT
+KRAS1 c.180_181TC>CA
+ERBB1 c.2310_2311ins9
+EGFR NM_005228.3:c.2303_2304insTGTGGCCAG
+EGFR c.2156delG
+EGFR Gly719Ser
+Abnormalities, Chromosome
+ERBB c.2219_2220ins18
+FGFR2 S252W
+KRAS c.180_181TC>AA
+Monosomy 6q1
+Monosomy 6q2
+EGFR c.2235_2246del12
+NRAS c.182_183delAAinsGG
+EGFR NM_005228.3:c.2369C>T
+NRAS Gln61Glu
+KRAS Gly12Cys
+EGFR NP_005219.2:p.S752_V769del
+BRAF NP_004324.2:p.Val600Met
+KGFR K659E
+chromosomal aberration
+EGFR NP_005219.2:p.Asp770_Asn771insGlyLeu
+BRAF NM_004333.4:c.1406G>T
+FGFR2 Ser252Trp
+BRAF NM_004333.4:c.1406G>C
+BRAF NM_004333.4:c.1406G>A
+Monosomy 1q4
+EGFR NM_005228.3:c.2307_2308insATGGCCAGCGTGGAC
+HER1 c.2125_2129delGAAAC
+Out-of-Frame Mutations
+HER1 c.2233_2247del15
+cemental dysplasia
+EGFR c.2320_2321insGCAACCCCCACG
+Cytogenetic Aberrations
+ERBB1 c.2239_2262del24
+ERBB1 c.2320_2321ins12
+EGFR NP_005219.2:p.H773_V774insPH
+Monosomy 2q24
+Deletion 1q4
+Founder Mutation
+BRAF c.1798_1799GT>AG
+CD117 Mutation
+EGFR Leu858Gly
+KRAS1 c.37G>T
+EGFR Leu858Gln
+KRAS1 c.37G>C
+KRAS1 c.37G>A
+chromosome deletion
+EGFR p.T751_E758del
+KRAS c.37_39GGC>CGT
+KI-RAS c.34_36GGT>TGG
+KI-RAS c.34_36GGT>TGC
+dysplasia moderate
+PDGFRA NM_006206.4:c.2525A>T
+ERBB c.2572_2573delCTinsAA
+B-RAF1 c.1797_1799AGT>GAG
+KRAS2 c.38G>A
+EGFR NP_005219.2:p.D770fs*61
+Mitochondrial vacuolation
+EGFR D770_N771insG
+EGFR D770_N771insD
+EGFR D770_N771insN
+NRAS NP_002515.1:p.Q61R
+neuron degeneration
+Lysosome alteration
+HER1 c.2155G>A
+Tetrasomy 7
+Trisomy 6q
+Trisomy 6p
+HER1 c.2155G>T
+Axon Reaction
+KRAS p.Gly12Glu
+DNA injury
+ERBB c.2254_2277del24
+PIK3CA Glu542Xxx
+KRAS NM_004985.3:c.181C>G
+KRAS NM_004985.3:c.181C>A
+Transversion Mutations
+Nuclear alteration
+Hyaline plaque
+KRAS G12L
+BRAF p.Gly469Val
+ERBB c.2298_2299insGCCATA
+BRAF Gly466Glu
+EGFR NP_005219.2:p.Leu861Gln
+EGFR NP_005219.2:p.Glu746_Glu749del
+B-RAF1 c.1791A>G
+PI3Kalpha C420R
+NRAS p.G13X
+Sequence Inversions
+BRAF c.1790T>G
+Gene Abnormality
+EGFR NP_005219.2:p.His773_Val774insHis
+B-RAF1 c.1798_1799GT>AA
+PIK3CA Glu542Gly
+EGFR c.2320_2321ins12
+PIK3CA Glu542Gln
+EGFR NP_005219.2:p.Asp770_Asn771insGly
+BEK c.758C>G
+JAK2 p.Y931C
+KRAS c.34_35delGGinsCT
+ERBB1 c.2308_2309ins9
+Autosome Abnormality
+Nissl degeneration
+HER1 c.2319_2320insCAC
+KRAS c.34_36delGGTinsTGG
+Desmosome alteration
+KRAS c.34_36delGGTinsTGC
+EGFR D770fs*61
+EGFR NM_005228.3:c.2322_2323insCACGTG
+BRCA2 Mutation
+EGFR P772_H773insDHP
+NRAS p.Gln61Leu
+nerve degeneration
+Protein Truncation
+ERBB1 c.2233_2247del15
+EGFR p.V769_D770insGV
+HER1 c.2311_2312ins9
+EGFR p.E746del
+BRAF NM_004333.4:c.1405_1407delGGAinsAGT
+DNA Crosslink
+NRAS c.180_181delACinsTA
+BRAF NM_004333.4:c.1405_1407delGGAinsAGC
+EGFR A750_K754del
+cell damage
+Nicks, DNA
+Deletion 7q21
+EGFR NP_005219.2:p.A750_E758del
+Mild Dysplasia
+PI3Kalpha E545K
+PI3Kalpha E545A
+PI3Kalpha E545G
+PI3Kalpha E545D
+PI3Kalpha E545X
+Point Mutation
+EGFR c.2319_2320insCAC
+PI3Kalpha E545Q
+PI3Kalpha E545V
+JAK2 c.1848_1849TG>CT
+Defective phagocytosis
+Deletion 3q13
+EGFR c.2310_2311insGCACCGTGG
+Monosomy 1p32
+NRAS p.Gln61Glu
+JAK2 E985K
+EGFR NM_005228.3:c.2253_2276del24
+degeneration neurons
+KRAS NP_004976.2:p.Gly13Val
+KRAS p.Gln61Leu
+Pappenheimer bodies
+EGFR NP_005219.2:p.P772_H773insPR
+Granulocyte destruction
+Imbalance, Allelic
+ERBB1 c.2310_2311insGGT
+ERBB1 c.2310_2311insGGC
+EGFR L747_A750del
+Duplication 20p
+Trisomies, XXY
+EGFR P772_H773insPR
+KRAS Gly13Arg
+KRAS c.34G>A
+KRAS c.34G>C
+EGFR NP_005219.2:p.D770_N771insDG
+PIK3CA c.1634A>G
+KRAS c.34G>T
+ERBB c.2307_2308ins9
+Oxidative stress
+EGFR V769_D770insGVV
+PIK3CA Glu545Lys
+ERBB c.2311_2312ins9
+PIK3CA p.Glu542Lys
+Sequences, Inverted
+Uniparental Isodisomies
+EGFR p.H773_V774insNPH
+ERBB1 c.2307_2308ins15
+NRAS Q61P
+HER1 c.2318_2319insCCCCCA
+KRAS p.Gly12Val
+Proteostasis Dysfunction
+NRAS Gln61Xxx
+EGFR V769_D770insGV
+EGFR NP_005219.2:p.Leu858Gly
+EGFR NP_005219.2:p.Leu858Gln
+Epithelial Metaplasia
+B-RAF1 c.1405G>A
+B-RAF1 c.1405G>C
+XXY trisomy
+KRAS1 c.37_39GGC>CGT
+EGFR NP_005219.2:p.E746_T751del
+EGFR NP_005219.2:p.H773_V774insNPH
+KRAS c.34_35delGGinsAA
+Chediak-Higashi cell
+KRAS c.34_35delGGinsAT
+BRAF NM_004333.4:c.1798_1799delGTinsAG
+KRAS2 c.34_36GGT>TGC
+EGFR NP_005219.2:p.Leu858Arg
+EGFR c.2232_2233insAAAATTCCCGTCGCTATC
+chromosome mutations
+Haemolytic crisis
+Synovial metaplasia
+BRAF NP_004324.2:p.Gly466Ala
+HER1 c.2240_2254del15
+KRAS1 c.35G>T
+KRAS1 c.35G>C
+EGFR p.P772_H773insDHP
+KRAS c.35_36delGTinsAG
+KRAS c.35_36delGTinsAA
+KRAS c.35_36delGTinsAC
+p110-alpha c.1258T>C
+PIK3CA NP_006209.2:p.His1047Leu
+JAK2 p.Ile960Val
+KRAS c.38_39delGCinsAA
+EGFR NP_005219.2:p.K29_N298insG
+KRAS c.38_39delGCinsAG
+EGFR p.L747_S752del
+KRAS c.38_39delGCinsAT
+Enhancement, Antibody-Dependent
+chromosome deletions
+BRAF Leu597Gln
+EGFR p.A767_S768insTLA
+BRAF NM_004333.4:c.1798G>T
+HER1 c.2253_2276del24
+BRAF NM_004333.4:c.1798G>A
+Cytogenetic Abnormality
+FLT3-TKD Mutation
+Heterodisomies, Uniparental
+FGFR2 p.Pro253Arg
+NP_002515.1 :p.Gly12Xxx
+Duplication 2q37
+EGFR NP_005219.2:p.Y764_V765insHH
+Fragility, Chromosome
+cellular atypia
+HER1 c.2310_2311insGGT
+HER1 c.2310_2311insGGC
+Monosomy, Partial
+PIK3CA His1047Tyr
+Degenerations, Nerve
+BRAF Val600Ala
+EGFR NP_005219.2:p.Val774_Cys775insHisVal
+CBFalpha2 Mutation
+EGFR c.2240_2254del15
+Chromosome Translocation
+KGFR c.755C>G
+translocation robertsonian
+EGFR c.2239_2253del15
+NRAS c.180_181AC>TA
+partial monosomy
+EGFR c.2315_2316insGACACACCC
+NRAS1 c.182_183AA>TG
+Aberrations, Cytogenetic
+HER1 c.2298_2299insGCCATA
+Reaction, Axonal
+Instability, Chromosome
+Fused cristae
+deletion chromosome
+C-K-RAS c.34_35GG>TT
+CD332 c.1115C>G
+EGFR p.H773_V774insGH
+KRAS1 c.34_36GGT>TGC
+KRAS1 c.34_36GGT>TGG
+KRAS Gln61Arg
+Partial Monosomy
+EGFR p.H773_V774insG
+ECT1 c.1645A>C
+EGFR p.H773_V774insH
+Papillary proliferation
+ERBB1 c.2572C>T
+Paracentric Inversion
+K-SAM c.1975A>G
+ERBB1 c.2369C>T
+KRAS NM_004985.3:c.38G>T
+Chromosomal Duplication
+FGFR2 NM_000141.4:c.755C>G
+Epithelial pearl
+EGFR NP_005219.2:p.L747_E749del
+EGFR NP_005219.2:p.Val769_Asp770insCysVal
+ERBB1 c.2156G>C
+ERBB1 c.2156G>A
+translocation reciprocal
+Chromosomal Aberrations
+EGFR p.E746_S752del
+EGFR p.E746_P753del
+EGFR p.I744_K745insKIPVAI
+Null Allele
+PIK3CA Glu545Val
+Warburg Effect
+RHEPDGFRA c.2525A>T
+EGFR NP_005219.2:p.V769_D770insGSV
+Monosomy 3p25
+disorders mosaicism
+Abnormality, Cytogenetic
+Axonal swelling
+KRAS p.Gly12Tyr
+EGFR NM_005228.3:c.2240_2254delTAAGAGAAGCAACAT
+XXY Trisomies
+Cytologic Atypia
+HER1 c.2573T>A
+Replication Error
+PIK3CA NP_006209.2:p.His1047Arg
+Deletion 1p32
+C-K-RAS c.38_39GC>TG
+Monosomy 7
+Monosomy 6
+Monosomy 5
+Monosomy 3
+Monosomy 9
+Monosomy 8
+KI-RAS c.37_38GG>AA
+FGFR-2 Asn549Lys
+ERBB c.2572_2573CT>AA
+ERBB c.2572_2573CT>AG
+KRAS NP_004976.2:p.Gln61Leu
+Monosomy 7q3
+Monosomy 7q2
+KRAS p.Gly13Arg
+Derivative Chromosome
+KGFR Asn549Lys
+Sequence Inversion
+BRAF p.G466V
+BRAF p.G466R
+BRAF p.G466E
+BRAF p.G466A
+EGFR NM_005228.3:c.2303_2304ins9
+Dicentric Chromosome
+NRAS1 c.180_181AC>TA
+EGFR c.2235_2249del15
+Hypersegmented neutrophils
+N-ras c.180_181AC>TA
+KGFR c.1645A>C
+EGFR c.2310_2311insGGGGAC
+FGFR2 NM_000141.4:c.1144T>C
+PIK3CA NM_006218.1:c.1635G>T
+Fibrocystic changes
+PIK3CA NM_006218.1:c.1635G>C
+Cytologic atypia
+KRAS p.Gly13Glu
+degeneration secondary
+EGFR Leu861Arg
+p110-alpha c.1634A>T
+p110-alpha c.1634A>C
+p110-alpha c.1634A>G
+Insertion, Gene
+NRAS p.Gln61Arg
+deleterious mutation
+FLT3-JM-PM Mutation
+NRAS NM_002524.4:c.181_182delCAinsTT
+FGFR-2 Ser252Trp
+PIK3CA NP_006209.2:p.His1047Gln
+KRAS1 c.35_36GT>AC
+KRAS1 c.35_36GT>AA
+KRAS1 c.35_36GT>AG
+BRAF NP_004324.2:p.Val600Glu
+BRAF NP_004324.2:p.Val600Gly
+Glandular Metaplasia
+Deletion 4q32
+EGFR c.2250_2273del24
+Genome Instability
+gastric metaplasia
+PI3K c.3140A>G
+EGFR NP_005219.2:p.Leu861Val
+EGFR NM_005228.3:c.2581C>G
+PI3K c.3140A>T
+Cemental dysplasia
+ERBB1 c.2250_2273del24
+atypical cell
+marker chromosome
+Chromosomal Breakage
+Chromosome Instabilities
+Allelic Imbalance
+FGFR-2 Lys659Glu
+Markers, Chromosome
+Isochromosome 7q
+ERBB1 c.2322_2323insCACGTG
+JAK2 p.I960V
+EGFR NP_005219.2:p.E746_E749del
+EGFR NP_005219.2:p.T790M
+Patch formation
+Duplication, Chromosomal
+B-RAF1 c.1397G>T
+B-RAF1 c.1397G>C
+B-RAF1 c.1397G>A
+BRAF c.1799_1800delTGinsAT
+B-RAF1 c.1798_1799GT>AG
+BRAF c.1799_1800delTGinsAA
+Monosomy 11p
+Hemolytic crisis
+Genetic inversion
+Chromosome Marker
+genetic inversion
+Chromosome Break
+EGFR p.E746_E749del
+EGFR NP_005219.2:p.Gly719Cys
+Deletion 12p13
+Deletion 11p
+PIK3CA E542Q
+PIK3CA E542V
+AKT1 p.Glu17Lys
+PIK3CA E542X
+PIK3CA E542K
+Trisomy 14qter
+EGFR NM_005228.3:c.2240_2254del15
+KRAS Gln61Pro
+KRAS c.37_38delGGinsAA
+PAX5-IGH Translocation
+PIK3CA NP_006209.2:p.Glu545Ala
+JAK2 NP_004963.1:p.M929I
+Point mutation
+KRAS1 c.183A>T
+ERBB c.2319_2320insCCCCAC
+Dominant Negative
+PIK3CA p.His1047Gln
+KRAS p.Gly12Ser
+KRAS C.36T>C
+ERBB1 c.2236_2253del18
+CD140A c.2525A>T
+EGFR Leu747del
+EGFR p.Leu861Val
+Damage, DNA
+EGFR Gly719Xxx
+EGFR c.2233_2247del15
+KGFR S372C
+Diploid-Triploid Mosaicism
+EGFR p.L747_A755del
+ECT1 c.755C>G
+EGFR NP_005219.2:p.I789_L792del
+JAK2 NM_004972.3:c.1849G>T
+p110alpha E542K
+EGFR NP_005219.2:p.Leu747del
+JAK2 p.Gly935Arg
+EGFR NM_005228.3:c.2309_2310insATGGCCAGCGTGGA
+cabot ring
+NRAS p.Gly13Xxx
+EGFR NP_005219.2:p.Asp770_Asn771insAsp
+EGFR NP_005219.2:p.Asp770_Asn771insAsn
+Dominant-Negative Mutant
+BRAF Leu597Arg
+Chromosome Breakage
+BRAF p.Leu597Gln
+Chromosome Markers
+Monosomy 5q35
+EGFR NP_005219.2:p.I740_P741insPVAIKI
+DNA Nick
+BRAF NP_004324.2:p.Leu597Gln
+Polysome alteration
+EGFR c.2290_2291ins12
+HER1 c.2239_2253del15
+PIK3CA c.1625A>G
+PIK3CA c.1625A>T
+Severe Dysplasia
+Duplication 4q21
+hypersegmented neutrophils
+EGFR Leu861Pro
+BRAF c.1789_1790delCTinsTC
+EGFR H773_V774insPH
+Cytoplasmic hyalinisation
+EGFR NP_005219.2:p.Ser752_Val769del
+Aberrations, Chromosome
+chromosomes marker
+KRAS2 c.35G>T
+KRAS NP_004976.2:p.Gly12Ala
+KRAS2 c.35G>C
+KRAS2 c.35G>A
+ERBB c.2156delG
+Inversion, Sequence
+Monosomy 2p22
+cellular pathology
+ERBB1 c.2307_2308ins9
+ERBB2 c.2324_2325insATACGTGATGGC
+KGFR N549K
+KGFR N549H
+EGFR V769_D770insCV
+ERBB c.2235_2249del15
+KRAS NP_004976.2:p.Gly13Arg
+chromosome abnormality
+HER1 c.2572C>T
+BRAF NP_004324.2:p.Gly469Val
+Monosomy 13q
+EGFR NM_005228.3:c.2572C>T
+EGFR NM_005228.3:c.2572C>A
+Tubular aggregates
+ERBB1 c.2315_2316insGACACACCC
+FGFR2 NP_000132.3:p.Ser252Trp
+EGFR NM_005228.3:c.2239_2247del9
+Reciprocal Translocation
+PIK3CA p.Glu545Gln
+KRAS NP_004976.2:p.Gln61Pro
+Axonal Reaction
+KRAS2 c.181C>G
+KRAS2 c.181C>A
+Stress, Oxidative
+Marker, Chromosome
+Mutations, Nonsense
+KRAS c.34_36GGT>TGG
+KRAS c.34_36GGT>TGC
+PIK3CA Glu542Lys
+EGFR p.E746_T751del
+PIK3CA NM_006218.1:c.1633G>C
+PIK3CA NM_006218.1:c.1633G>A
+BRAF p.Leu597Arg
+JAK2 I960V
+JAK2 NM_004972.3:c.2792A>G
+EGFR NM_005228.3:c.2302_2303insTCCAGGAAGCCT
+Allelic Imbalances
+FGFR2 p.C382R
+Monosomy 18q23
+KGFR c.1124A>G
+ERBB c.2321_2322insCCACGT
+EGFR p.K745_E746insVPVAIK
+EGFR NM_005228.3:c.2231_2232ins18
+EGFR NM_005228.3:c.2254_2277delTCTCCGAAAGCCAACAAGGAAATC
+FGFR2 NM_000141.4:c.1115C>G
+Deletion 7q2
+Deletion 7q3
+Instabilities, Chromosome
+KRAS2 c.34_35GG>CT
+EGFR NP_005219.2:p.S768_V769insVAS
+EGFR c.2154_2155delGGinsTT
+EGFR c.2283_2284insGAAGCCTTCCAG
+BRAF p.Gly466Val
+KGFR Cys382Arg
+Chromosome inversion
+KRAS1 c.38_39GC>TT
+EGFR NP_005219.2:p.His773_Val774insGlyAsnProHis
+C/EBPalpha Mutation
+KRAS1 c.38_39GC>TG
+EGFR p.Val774del
+NRAS G12X
+EGFR NM_005228.3:c.2311_2312ins9
+Deletions, Chromosome
+Mitochondrial alteration
+KRAS c.182A>G
+JTK10 c.1848_1849TG>CT
+BRAF NP_004324.2:p.Val600Arg
+FGFR-2 C382R
+EGFR NP_005219.2:p.V774_C775insHV
+ABNORM AUTOSOME
+BRAF c.1406G>A
+ERBB1 c.2155G>A
+FGFR2 p.S372C
+BRAF c.1406G>T
+Golgi enlargement
+EGFR NP_005219.2:p.K745_A750del
+KRAS Gly13Glu
+Transversion Mutation
+FGFR2 p.Ser372Cys
+Mechanical fragility
+Chromatid break
+HER1 c.2310_2311insAACCCCCAC
+Allele Imbalance
+Chromocenter alteration
+chromosomal translocation
+JAK-2 c.1848_1849TG>CT
+EGFR L747_K754del
+Genomic Instability
+EGFR p.V774_C775insHV
+HER1 c.2250_2273del24
+wallerian degeneration
+BRAF NM_004333.4:c.1397G>T
+Deficiency, Proteostasis
+EGFR c.2310_2311insGGGTTA
+EGFR p.I789_L792del
+BRAF NM_004333.4:c.1396G>C
+cell injury
+FGFR2 NM_000141.4:c.758C>G
+ERBB c.2369C>T
+JAK2 c.2792A>G
+Chromosomal Instability
+Mutation Abnormality
+ERBB c.2283_2284ins12
+Hyposegmented nucleus
+KRAS NP_004976.2:p.Gln61Arg
+Deletion 18q23
+EGFR NP_005219.2:p.Ser752_Ile759delSerProLysAlaAsnLysGluIle
+EGFR NP_005219.2:p.D770_N771insSVD
+Telomere Shortenings
+EGFR NP_005219.2:p.D770_N771insSVQ
+EGFR NP_005219.2:p.D770_N771insSVP
+ERBB c.2318_2319insCCCCCA
+Suppressor mutation
+EGFR NP_005219.2:p.I744_K745insKIPVAI
+EGFR NP_005219.2:p.Gly719fs*29
+PIK3CA Glu545Xxx
+metaplasia intestinal
+EGFR NP_005219.2:p.Ala750_Lys754del
+Shortenings, Telomere
+KRAS p.Gly12Cys
+EGFR Glu746del
+KI-RAS c.38_39GC>TG
+NP_002515.1 :p.Gln61His
+fibrocystic changes
+HER1 c.2582T>G
+HER1 c.2582T>A
+damage dna
+EGFR NP_005219.2:p.Ile744_Lys745insLysIleProValAlaIle
+EGFR NM_005228.3:c.2234_2236delAGG
+Golgi alteration
+EGFR p.L747_E749del
+HER1 c.2307_2308insTGCGTG
+ERBB c.2250_2273del24
+Breakage, Chromosome
+PDGFRA NP_006197.1:p.D842V
+KRAS NP_004976.2:p.Gly12Asp
+KRAS1 C.36T>C
+KRAS NP_004976.2:p.Gly12Asn
+EGFR V765_M766insMAS
+ERBB c.2573T>A
+ERBB c.2573T>G
+EGFR p.P772_H773insQV
+Mutation, Frameshift
+NRAS Gln61Lys
+Moderate Dysplasia
+KRAS NP_004976.2:p.Gly12Val
+JAK2 p.Tyr931Cys
+Disomy, Uniparental
+Inversions, Chromosomal
+KRAS2 c.34_35GG>AA
+Somatic Mutation
+EGFR NP_005219.2:p.A767_S768insTLA
+EGFR NP_005219.2:p.Pro772_His773insProArg
+somatic mutations
+HER1 c.2572C>A
+K-SAM c.758C>G
+EGFR c.delGinsCCACGTG
+KRAS NP_004976.2:p.G13V
+KRAS NP_004976.2:p.G13R
+KRAS NP_004976.2:p.G13S
+KRAS NP_004976.2:p.G13E
+KRAS NP_004976.2:p.G13C
+KRAS NP_004976.2:p.G13A
+KRAS NP_004976.2:p.G13N
+Breakages, Chromosome
+Securin Overexpression
+ERBB1 c.2240_2254del15
+ERBB1 c.2309_2310ins14
+Ki-Ras G12C
+Ki-Ras G12A
+JAK2 Glu985Lys
+Ki-Ras G12D
+Ki-Ras G12E
+Ki-Ras G12I
+Ki-Ras G12N
+Ki-Ras G12L
+Ki-Ras G12R
+Ki-Ras G12V
+Ki-Ras G12W
+FGFR2 K659E
+Ki-Ras G12Y
+DNA Nicks
+FGFR2 NP_000132.3:p.S372C
+EGFR NP_005219.2:P772_H773insDHP
+EGFR E709fs*1
+EGFR c.2257_2277del21
+FGFR2 p.Asn549His
+AKT1 NP_001014431.1:p.E17K
+Cytologic engulfment
+NRAS c.182_183delAAinsTG
+Mutations, Out-of-Frame
+Fibrocystic change
+Somatic mutation
+FGFR2 c.1115C>G
+JAK2 Y931C
+K-SAM c.1124A>G
+PIK3CA His1047Xxx
+KRAS Gly12Tyr
+FGFR2 S372C
+PI3K c.1635G>T
+Intestinal metaplasia
+Instabilities, Genomic
+PI3K c.1635G>C
+Myofilament loss
+EGFR NM_005228.3:c.2302_2303insCGCTGGCCA
+BRAF p.V600R
+KI-RAS c.34_35GG>AA
+EGFR p.S752_V769del
+Genetic Translocation
+BRAF p.V600D
+KI-RAS c.34_35GG>AT
+BRAF p.V600M
+BRAF p.V600L
+K-SAM c.1115C>G
+EGFR NP_005219.2:p.N756_L760del
+Mesangium alteration
+neural degeneration
+EGFR NP_005219.2:p.Leu861Phe
+JAK2 NP_004963.1:p.I960V
+FGFR2 P253R
+NRAS1 c.181_182CA>TT
+Microvillus alteration
+KRAS1 c.181C>A
+KRAS1 c.181C>G
+EGFR L861F
+EGFR NM_005228.3:c.2239_2262del24
+XXY Trisomy
+Deletion 13q
+Pathologic Mutagenesis
+EGFR c.2125_2129delGAAAC
+KRAS NP_004976.2:p.Gly13Glu
+cytologic atypia
+Deletion 6q2
+Deletion 6q1
+KGFR c.758C>G
+EGFR c.2310_2311insAACCCCCAC
+KI-RAS c.39C>T
+KI-RAS c.39C>A
+KI-RAS c.39C>G
+EGFR NP_005219.2:p.Pro772_His773insTyrAsnPro
+Trisomy 20p
+ECT1 c.1647T>A
+ECT1 c.1647T>G
+FGFR2 NP_000132.3:p.Ser372Cys
+BRAF p.Val600Arg
+DNA Injuries
+EGFR NP_005219.2:p.D761_E762insEAFQ
+Deletion Xq28
+HER1 c.2308_2309insACGGCG
+JAK2 NM_004972.3:c.1848_1849TG>CT
+Mild dysplasia
+chromosomal mutations
+EGFR p.D770_N771insSVQ
+EGFR p.D770_N771insSVP
+EGFR E746del
+EGFR p.D770_N771insSVD
+ERBB1 c.2303_2304ins9
+K-SAM c.755C>G
+KI-RAS c.37G>T
+ERBB1 c.2573T>G
+ERBB1 c.2573T>A
+nonsense mutation
+EGFR N756_L760del
+KI-RAS c.37G>A
+KI-RAS c.37G>C
+ERBB c.2310_2311insGGT
+Ring 14
+tubular aggregate
+FGFR2 NP_000132.3:p.N549H
+FGFR2 NP_000132.3:p.N549K
+ERBB c.2310_2311insGGC
+Meiotic alteration
+Koilocytotic atypia
+KRAS G13D
+DNA Damage
+EGFR NM_005228.3:c.2310_2311insAAC
+EGFR NP_005219.2:p.E746_S752del
+EGFR NP_005219.2:p.D770_N771insG
+EGFR NP_005219.2:p.D770_N771insD
+HER1 c.2308_2309ins9
+Metaplastic Change
+BRAF Gly469Ser
+Chromosome Breakages
+EGFR NM_005228.3:c.2236_2253del18
+EGFR p.P772_H773insDNP
+Erythrocyte vacuolisation
+CD332 c.755C>G
+PIK3CA NM_006218.1:c.3141T>G
+EGFR p.H773_V774insGNPH
+EGFR NM_005228.3:c.2156G>C
+EGFR NM_005228.3:c.2156G>A
+PIK3CA p.Glu545Asp
+EGFR NM_005228.3:c.2310_2311insAGCGTGGAC
+Chromosomal Instabilities
+KRAS p.Gly13Ser
+Microtubule Process
+Duplication 13p
+HER1 c.2302_2303ins9
+PIK3CA Glu545Gly
+PIK3CA Glu545Gln
+KGFR P253R
+KRAS c.181C>G
+KRAS NM_004985.3:c.36T>C
+KRAS c.181C>A
+EGFR NP_005219.2:p.S768_V769insAWT
+Sequence Deletions
+KRAS NM_004985.3:c.39C>G
+Monosomy 3q13
+p110-alpha c.1624G>A
+KRAS NM_004985.3:c.39C>T
+p110-alpha c.1624G>C
+EGFR c.2307_2308insATGGCCAGCGTGGAC
+KI-RAS c.34_35GG>CT
+Granulation anomaly
+EGFR I744_K745insKIPVAI
+Diffuse Dysplasia
+Pappenheimer body
+Mutation, Transition
+NRAS c.181C>A
+NRAS c.181C>G
+PIK3CA p.E545V
+PIK3CA p.E545Q
+PIK3CA p.E545X
+PIK3CA p.E545G
+PIK3CA p.E545D
+PIK3CA p.E545A
+PIK3CA p.E545K
+mild dysplasia
+EGFR c.2239_2256del18
+EGFR NP_005219.2:p.P772_H773insTHP
+Duplication Xq
+BRAF NP_004324.2:p.Leu597Ser
+BRAF NP_004324.2:p.Gly466Val
+Abnormalities, Chromosomal
+KRAS NM_004985.3:c.34_36delGGTinsTGC
+EGFR NP_005219.2:p.Ser768_Val769insValAlaSer
+KRAS NM_004985.3:c.34_36delGGTinsTGG
+Chromosome Instability
+Chromosomal Insertion
+EGFR c.2219_2220ins18
+Mesangial proliferation
+FGFR2 C382R
+Hypertonic cryohemolysis
+PIK3CA p.Glu542Gln
+PIK3CA p.Glu542Gly
+C-K-RAS c.34_36GG>TA
+Trans-synaptic degeneration
+EGFR NP_005219.2:p.Gly719Xxx
+EGFR H773_V774insNPH
+Embryonic Mosaic
+KRAS1 c.182A>T
+KI-RAS c.38G>A
+KI-RAS c.38G>C
+KRAS1 c.182A>C
+Moderate dysplasia
+KRAS1 c.182A>G
+KRAS p.Gly12Asn
+FGFR2 NP_000132.3:p.Cys382Arg
+EGFR NM_005228.3:c.2232_2233ins18
+KI-RAS c.38G>T
+KRAS NP_004976.2:p.Gly13Cys
+JTK10 c.1849G>T
+KRAS Gln61Leu
+Ribosome alteration
+EGFR NP_005219.2:p.Gly719Ala
+EGFR NP_005219.2:p.Glu746_Ala750del
+EGFR c.2581C>G
+EGFR NP_005219.2:p.V30_R297delK29_N298insG
+EGFR K745_A750del
+EGFR c.2573T>A
+EGFR c.2573T>G
+PIK3CA NP_006209.2:p.Glu542Val
+KI-RAS C.36T>C
+Injury, DNA
+NRAS Gln61His
+EGFR c.2572_2573delCTinsAG
+UV Mutagenesis
+PIK3CA NM_006218.1:c.1625A>T
+PIK3CA NM_006218.1:c.1625A>G
+EGFR NP_005219.2:p.Val769_Asp770insAspAsnVal
+JAK2 Gly935Arg
+EGFR D770_N771insGL
+Chromosome abnormalities
+EGFR I740_P741insPVAIKI
+Monosomy 20p
+EGFR Gly719Ala
+ERBB1 c.2238_2252del15
+EGFR c.2308_2309insACGGCG
+JAK2 NP_004963.1:p.Met929Ile
+KRAS2 c.37G>A
+KRAS2 c.37G>C
+KRAS2 c.37G>T
+HER1 c.2254_2277del24
+ERBB c.2573_2574TG>GT
+Masked Near-Haploidy
+Chromosomal translocation
+Deletion 5q35
+somatic mutation
+N-ras c.182A>T
+N-ras c.182A>C
+HER1 c.2236_2237ins18
+N-ras c.182A>G
+EGFR NP_005219.2:p.His773_Val774insGly
+EGFR c.2302_2303insCGCTGGCCA
+ERBB1 c.2235_2252del18
+Sequence, Inverted
+KRAS NM_004985.3:c.38G>A
+KRAS NM_004985.3:c.38G>C
+PIK3CA c.1635G>T
+PIK3CA His1047Thr
+PIK3CA c.1635G>C
+BRAF Gly466Arg
+KRAS2 c.38G>C
+C-K-RAS c.34G>C
+C-K-RAS c.34G>A
+Inverted Sequences
+C-K-RAS c.34G>T
+Focal Dysplasia
+EGFR NP_005219.2:p.V774del
+EGFR NM_005228.3:c.2582T>A
+Chromosome Duplication
+CD332 c.1975A>G
+DNA INJ
+BRAF c.1397G>T
+BRAF c.1397G>C
+BRAF c.1397G>A
+JAK2 NP_004963.1:p.Tyr931Cys
+KRAS1 c.183A>C
+EGFR NP_005219.2:p.Glu746_Arg748del
+EGFR NM_005228.3:c.2308_2309ins9
+Chromosomal Aberration
+p110alpha E542G
+p110alpha E542Q
+Deceptive Imprinting
+p110alpha E542V
+p110alpha E542X
+p110-alpha c.1633G>A
+p110-alpha c.1633G>C
+EGFR p.M766_A767insAI
+NRAS p.Gln61His
+Chromosomal Gain
+EGFR NP_005219.2:p.Leu747_Ser752delLeuArgGluAlaThrSer
+ERBB c.2239_2262del24
+KRAS1 c.37_38GG>AA
+Duplication Xq25
+EGFR S768_V769insAWT
+EGFR NP_005219.2:p.Val769_Asp770insMetAlaSerValAsp
+BRAF p.Gly466Ala
+EGFR NP_005219.2:p.Arg748_Ser752del
+JAK2 p.Met929Ile
+Partial monosomy
+Erythrocyte vacuolization
+Pericentric inversion
+Ki-Ras A146X
+FGFR2 p.Lys659Glu
+hemolytic crisis
+ERBB c.2311_2312ins12
+BRAF p.Gly469Ser
+IGH-MAF Translocation
+EGFR p.Gly719Cys
+EGFR p.Val834del
+KRAS p.A146X
+EGFR NP_005219.2:p.G719S
+EGFR NP_005219.2:p.G719V
+EGFR NP_005219.2:p.G719X
+EGFR NP_005219.2:p.G719C
+EGFR NP_005219.2:p.G719A
+EGFR NP_005219.2:p.G719D
+Stereocilia alteration
+fibrocystic change
+NP_004324.2:p.V600 Mutation
+EGFR NM_005228.3:c.2219_2220insTCCCGTCGCTATTAAAAT
+BRAF c.1798G>T
+EGFR NM_005228.3:c.2310_2311insGCACCGTGG
+KRAS2 c.38_39GC>TG
+ERBB1 c.2313_2314insAAC
+BRAF c.1798G>A
+EGFR NM_005228.3:c.2321_2322insCCACGT
+KRAS2 c.38_39GC>TT
+KRAS p.Gln61His
+FGFR2 p.Ser252Trp
+Shortened telomeres
+JAK2 NP_004963.1:p.Glu985Lys
+Damages, DNA
+KRAS G13V
+KRAS G13S
+KRAS G13R
+IgVH Mutation
+KRAS G13E
+BRAF c.1791A>G
+KRAS G13C
+KRAS G13N
+EGFR c.2236_2253del18
+HER1 c.2156G>C
+HER1 c.2156G>A
+KGFR Ser252Trp
+Trisomy 18p
+severe dysplasia
+Duplication 17q
+EGFR c.2298_2299insGCCATA
+EGFR NP_005219.2:p.V769_D770insASV
+EGFR NM_005228.3:c.2308_2309insGCAGCGTGG
+BRAF Gly469Ala
+atypical cells
+EGFR D770_N771insGD
+DNA Damages
+Proteostasis Deficiency
+N-ras c.183A>G
+N-ras c.183A>C
+Chromosome Alterations
+N-ras c.183A>T
+Trisomy Xq25
+Chromosomal Translocation
+Deficiencies, Proteostasis
+EGFR p.T790M
+Duplication 9q21
+API2-MLT Translocation
+HER-2 c.2325_2326ins12
+EGFR Gly719Asp
+EGFR V774_C775insHV
+KRAS c.35_36GT>TC
+BRAF c.1797_1799AGT>GAG
+EGFR NP_005219.2:p.Glu746del
+EGFR NP_005219.2:p.Leu861Pro
+KRAS2 c.37_38GG>AA
+BRAF Leu597Ser
+ERBB1 c.2310_2311insGGGGAC
+KRAS2 c.34_35GG>TT
+Telomere Shortening
+EGFR Gly719Cys
+ERBB2 c.2325_2326ins12
+KRAS2 c.34_35GG>TA
+KRAS NP_004976.2:p.Gly13Ser
+NTRK1 Rearrangement
+EGFR D770_N771insMATP
+EGFR p.V769_D770insDNV
+Pericentric Inversion
+EGFR N771_P772insN
+EGFR N771_P772insH
+EGFR c.2236_2237ins18
+JAK2 p.Glu985Lys
+Mutation, Transversion
+Contraction bands
+EGFR p.S768_V769insVAS
+EGFR V774del
+Monosomy 4q32
+EGFR A750_K757del
+metaplasia squamous
+BRAF NP_004324.2:p.G466E
+Wallerian degeneration
+BRAF NP_004324.2:p.G466V
+BRAF NP_004324.2:p.G466R
+NEU c.2325_2326ins12
+EGFR NM_005228.3:c.2247_2273del27
+NRAS Gly13Xxx
+NRAS c.181_182CA>TT
+BRAF c.1798_1799delGTinsAA
+BRAF c.1798_1799delGTinsAG
+ABNORM CHROMOSOMAL
+FGFR-2 Pro253Arg
+KRAS NM_004985.3:c.34_35delGGinsAT
+N-ras c.182_183AA>TG
+Mutations, Frameshift
+KRAS NM_004985.3:c.34_35delGGinsAA
+Partial Monosomies
+EGFR NP_005219.2:p.Leu747_Thr751del
+EGFR NM_005228.3:c.2298_2299insGCCATA
+EGFR NP_005219.2:p.Ile740_Pro741insProValAlaIleLysIle
+EGFR NM_005228.3:c.2308_2309insCCAGCGTGG
+ERBB1 c.2319_2320insCCCCAC
+HER1 c.2309_2310ins14
+EGFR p.D770_N771insGL
+EGFR p.D770_N771insGD
+Transition Mutation
+KI-RAS c.34_35GG>TT
+PIK3CA p.Glu545Xxx
+KI-RAS c.34_35GG>TA
+EGFR NP_005219.2:p.Lys745_Ala750del
+EGFR NP_005219.2:p.D770_N771insMATP
+dysplasia mild
+Uniparental Disomies
+CD332 c.1645A>C
+EGFR p.D770_N771insNPH
+chromosomal abnormalities
+FGFR2 Lys659Glu
+Trisomy 16q
+c-K-ras G12I
+c-K-ras G12L
+c-K-ras G12N
+c-K-ras G12A
+c-K-ras G12C
+c-K-ras G12D
+c-K-ras G12E
+c-K-ras G12F
+Monosomy 7q21
+c-K-ras G12R
+c-K-ras G12S
+c-K-ras G12W
+Suppressor Mutation
+FGFR-2 Ser372Cys
+Myelin figure
+BRAF c.1790T>A
+BRAF NP_004324.2:p.Gly466Arg
+EGFR NP_005219.2:p.L747_A750del
+Microtubule Alteration
+IGH@/MAF Translocation
+PIK3CA NP_006209.2:p.Glu542Xxx
+BEK c.1647T>A
+EGFR c.2573_2574delTGinsGT
+Isodisomies, Uniparental
+PI3K c.1625A>G
+PI3Kalpha E542G
+PIK3CA NM_006218.1:c.1258T>C
+EGFR p.D770_N771insMATP
+EGFR NM_005228.3:c.2310_2311insAACCCCCAC
+Diffuse dysplasia
+EGFR c.2369C>T
+KRAS1 c.35_36GT>TC
+EGFR NM_005228.3:c.2235_2249delGGAATTAAGAGAAGC
+NRAS NM_002524.4:c.181_182delCAinsAG
+PI3K c.3139C>T
+PIK3CA NP_006209.2:p.Glu542Gln
+NRAS NP_002515.1:p.G13X
+Acentric chromosome
+Monosomy 14q11
+KI-RAS c.38_39GC>AA
+KI-RAS c.38_39GC>AG
+EGFR A750_E758del
+Nissl Degeneration
+KI-RAS c.38_39GC>AT
+Isochromosome 17q
+EGFR NP_005219.2:p.Asp770_Asn771insSerValGln
+FGFR2 Ser372Cys
+ERBB1 c.2219_2220ins18
+EGFR c.2322_2323insCACGTG
+ERBB c.2257_2277del21
+AKT1 Glu17Lys
+JAK2 NP_004963.1:p.E985K
+JAK2 NP_004963.1:p.Ile690Val
+FGFR2 Pro253Arg
+KRAS2 c.35_36GT>AA
+KRAS2 c.35_36GT>AG
+EGFR p.Gly719Ser
+BRAF c.1406G>C
+EGFR c.2219_2220insTCCCGTCGCTATTAAAAT
+p110-alpha c.1635G>T
+KRAS NM_004985.3:c.35G>C
+KRAS NM_004985.3:c.35G>A
+p110-alpha c.1635G>C
+Retrograde Degeneration
+KRAS NM_004985.3:c.35G>T
+TRANSLOCATION GENET
+EGFR NP_005219.2:p.Leu858Met
+GATA1 Mutation
+EGFR c.2307_2308insTGCGTG
+EGFR NP_005219.2:p.E746_R748del
+EGFR NM_005228.3:c.2572_2573delCTinsAA
+Cytoplasmic accumulation
+Chromosomal Fragility
+secondary degeneration
+PIK3CA NM_006218.1:c.1634A>G
+KRAS NM_004985.3:c.34_35delGGinsCT
+PIK3CA NM_006218.1:c.1634A>C
+PIK3CA NM_006218.1:c.1634A>T
+ERBB1 c.2246_2260del15
+Mutagenic Process
+EGFR NP_005219.2:p.Pro772_His773insGlnVal
+CD332 c.1647T>A
+CD332 c.1647T>G
+uniparental disomy
+EGFR p.E746_A750del
+KI-RAS c.34G>A
+KI-RAS c.34G>C
+BRAF NP_004324.2:p.G466A
+KI-RAS c.34G>T
+Multifocal dysplasia
+EGFR c.2232_2233ins18
+EGFR NP_005219.2:p.Asp770_Asn771insMetAlaThrPro
+EGFR S752_I759del
+EGFR p.L747_P753del
+HER1 c.2235_2249del15
+Chromosomal Loss
+Aberrations, Chromosomal
+EGFR P772_H773insYNP
+Chromosome Aberrations
+Chediak-Higashi cells
+PIK3CA p.Glu542Xxx
+EGFR p.A763_Y764insFQEA
+KRAS A146X
+PIK3CA Cys420Arg
+NRAS c.182_183AA>GG
+HER1 c.2290_2291ins12
+ERBB1 c.2581C>G
+HER1 c.2319_2320insCCCCAC
+EGFR NP_005219.2:p.Leu747_Glu749delLeuArgGlu
+BEK c.1645A>C
+KRAS NP_004976.2:p.Gly12Glu
+KI-RAS c.181C>A
+KI-RAS c.181C>G
+KRAS2 c.38_39GC>AT
+PIK3CA NP_006209.2:p.Glu545Lys
+PIK3CA NP_006209.2:p.His1047Tyr
+JAK2 NP_004963.1:p.Val617Phe
+AUTOSOME ABNORM
+NRAS p.Q61L
+NRAS p.Q61K
+NRAS p.Q61H
+NRAS p.Q61E
+Glandular metaplasia
+NRAS p.Q61X
+NRAS p.Q61R
+NRAS p.Q61P
+EGFR NP_005219.2:p.Asp770_Asn771insSerValPro
+BRAF c.1405_1407delGGAinsAGC
+Toxic vacuolization
+BRAF c.1405_1407delGGAinsAGT
+EGFR c.334_1137del804
+EGFR NM_005228.3:c.2307_2308insGACAACGTG
+EGFR NP_005219.2:p.Arg748_Pro753del
+Metaplastic keratinisation
+C-K-RAS c.34_36GGT>TGC
+EGFR H773_V774insGNPH
+C-K-RAS c.35_36GT>TC
+chromosome aberration
+EGFR c.2572C>A
+FGFR2 c.758C>G
+EGFR c.2572C>T
+Translocations, Genetic
+NRAS p.Gly12Xxx
+Genetic Change
+KRAS Q61K
+Tetrasomy 17
+Tetrasomy 12
+JAK-2 c.2792A>G
+KI-RAS c.35_36GT>AA
+KI-RAS c.35_36GT>AC
+KI-RAS c.35_36GT>AG
+EGFR Leu858Arg
+KRAS p.G13S
+KRAS p.G13R
+Extravascular hemolysis
+KRAS p.G13V
+BRAF p.Leu597Ser
+KRAS p.G13N
+KRAS p.G13A
+KRAS p.G13C
+KRAS p.G13E
+KRAS p.G13D
+PIK3CA NP_006209.2:p.E542G
+EGFR c.2234_2236delAGG
+PIK3CA NP_006209.2:p.E542K
+SEQ DELETION
+PIK3CA NP_006209.2:p.E542V
+PIK3CA NP_006209.2:p.E542Q
+PIK3CA NP_006209.2:p.E542X
+NP_002515.1 :p.Gly13Xxx
+EGFR NM_005228.3:c.2308_2309insGGGTCGTGG
+paracentric inversion
+EGFR L747_T751del
+PIK3CA p.His1047Xxx
+EGFR NM_005228.3:c.2219_2220ins18
+chromosome duplication
+Chromosome inversions
+NP_002515.1 :p.Gln61Glu
+PIK3CA c.1624G>C
+PIK3CA c.1624G>A
+Nonsense Mutations
+ERBB1 c.2310_2311insGGGTTA
+EGFR NP_005219.2:p.Gly719Val
+ERBB c.2239_2253del15
+Genetic Translocations
+KRAS Gly12Arg
+Retrograde Degenerations
+KRAS NM_004985.3:c.182A>T
+ERBB2 NP_004439.2:p.Ala775_Gly776insTyrValMetAla
+chromosome markers
+NRAS1 c.181C>A
+NRAS1 c.181C>G
+JAK2 Ile960Val
+Monosomy 14qter
+ERBB1 c.2232_2233ins18
+FGFR-2 S252W
+EGFR NP_005219.2:p.Leu861Arg
+EGFR NP_005219.2:p.G719fs*29
+Trisomy 17q22
+Genomic Instabilities
+Genotoxic Stress
+EGFR p.G719fs*29
+Breakage, Chromosomal
+ERBB1 c.2235_2249del15
+PIK3CA p.Glu1047Arg
+N-ras c.181_182CA>AG
+PIK3CA Glu545Ala
+Chromosomal Inversions
+EGFR K745_E746insVPVAIK
+EGFR H773_V774insG
+Disomies, Uniparental
+KRAS1 c.34_35GG>AA
+KRAS1 c.34_35GG>AT
+BRAF c.1405_1407GGA>AGT
+KGFR Asn549His
+BRAF c.1405_1407GGA>AGC
+EGFR NP_005219.2:p.E746_P753del
+PIK3CA NP_006209.2:p.Glu545Val
+FGFR2 Asn549Lys
+ERBB2 c.2324_2325ins12
+KRAS NP_004976.2:p.Gln61Lys
+ERBB c.2581C>G
+EGFR NP_005219.2:p.D770_N771insNPH
+EGFR NM_005228.3:c.2573T>G
+EGFR NM_005228.3:c.2573T>A
+EGFR P772_H773insTHP
+Trisomy 4q21
+Reciprocal translocation
+ERBB1 c.2298_2299insGCCATA
+EGFR I789_L792del
+K-SAM c.1144T>C
+chromosome translocation
+EGFR A767_S768insTLA
+EGFR p.D761_E762insEAFQ
+Cellular Stress
+Trisomy 16
+Trisomy 10
+Trisomy 13
+Trisomy 18
+Trisomy 19
+Oncocytic metaplasia
+KI-RAS c.37_39GGC>CGT
+KRAS2 c.37_39GGC>CGT
+HER-2 c.2324_2325ins12
+EGFR p.Leu858Lys
+Abnormalities, Autosome
+PDGFRA D842V
+Genotoxic Stresses
+EGFR p.D770_N771insG
+EGFR p.D770_N771insD
+EGFR p.D770_N771insN
+EGFR c.2310_2311insGGT
+EGFR c.2310_2311insGGC
+KRAS2 c.34_36GGT>TGG
+KRAS NM_004985.3:c.183A>T
+KRAS NM_004985.3:c.183A>C
+EGFR G719fs*29
+EGFR p.V769_D770insGVV
+KRAS2 c.38G>T
+JAK2 c.1849G>T
+axonal swelling
+Acquired dysplasia
+KRAS p.Ala146Xxx
+ERBB c.2310_2311ins9
+PDGFR-Alpha Asp842Val
+EGFR NM_005228.3:c.2283_2284insGAAGCCTTCCAG
+FGFR2 c.1124A>G
+t(1;19)(q23;p13.3); PBX/E2A
+EGFR p.Gly719Val
+BRAF NM_004333.4:c.1789_1790delCTinsTC
+JAK2 NP_004963.1:p.G935R
+FGFR2 NP_000132.3:p.Lys659Glu
+ERBB1 c.2573_2574TG>GT
+Trisomy 10q
+KRAS c.35_36GT>AA
+KRAS c.35_36GT>AC
+KRAS c.35_36GT>AG
+Cytogenetic Aberration
+C-K-RAS c.38_39GC>AG
+C-K-RAS c.38_39GC>AA
+EGFR Leu858Pro
+C-K-RAS c.38_39GC>AT
+BRAF Gly469Val
+EGFR c.2582T>G
+EGFR c.2582T>A
+EGFR NM_005228.3:c.2307_2308insTGCGTG
+FGFR2 NM_000141.4:c.1645A>C
+Instability, Genome
+BRAF p.Gly469Glu
+EGFR NP_005219.2:p.Leu747_Ala755del
+NP_002515.1 :p.Gln61Pro
+KRAS1 c.34_35GG>CT
+Gene Deregulation
+JAK2 NP_004963.1:p.Gly935Arg
+FGFR-2 P253R
+ERBB1 c.2231_2232ins18
+Deletion, Sequence
+BRAF G469E
+BRAF G469A
+EGFR c.2303_2304ins9
+KRAS NM_004985.3:c.37_39delGGCinsCGT
+Deletion 3q27
+BRAF G469V
+BRAF G469S
+BRAF G469R
+KRAS p.Gly13Asn
+Duplication 14qter
+KRAS p.Gly13Asp
+Centrosome alteration
+ERBB1 c.2155G>T
+ERBB c.2239_2256del18
+PIK3CA p.Glu545Lys
+EGFR NP_005219.2:p.Thr751_Glu758del
+EGFR NM_005228.3:c.2290_2291ins12
+KRAS NM_004985.3:c.34_35delGGinsTT
+KRAS NM_004985.3:c.34_35delGGinsTA
+EGFR NP_005219.2:p.A750_K754del
+BRAF NP_004324.2:p.Gly469Glu
+Hypersegmented neutrophil
+FGFR2 NP_000132.3:p.K659E
+Neuronal achromasia
+ERBB2 A775_G776insYVMA
+stress oxidative
+EGFR H773_V774insGH
+PIK3CA c.1633G>C
+PIK3CA c.1633G>A
+ERBB1 c.2247_2273del27
+Abnormality, Chromosomal
+chromosomal mutation
+c-K-ras G12Y
+KRAS2 c.38_39GC>AA
+KRAS2 c.38_39GC>AG
+EGFR c.2311_2312ins12
+EGFR NP_005219.2:p.Glu746_Ser752del
+KRAS NP_004976.2:p.Gly12Phe
+c-K-ras G12V
+KRAS Gly12Ser
+ERBB1 c.2572_2573CT>AA
+ERBB1 c.2572_2573CT>AG
+KRAS NP_004976.2:p.A146X
+Chromosome Breaks
+EGFR NP_005219.2:p.Leu858Lys
+Ki-Ras Q61K
+Ki-Ras Q61H
+Ki-Ras Q61L
+Ki-Ras Q61D
+Ki-Ras Q61E
+Ki-Ras Q61X
+Ki-Ras Q61R
+Ki-Ras Q61P
+chromosome marker
+Intestinal Metaplasia
+Fragility, Chromosomal
+EGFR p.P753_I759del
+NRAS p.G12X
+Breaks, Chromosome
+EGFR NP_005219.2:p.Asp770fs*61
+Trisomy 7
+EGFR p.Leu858Met
+Oxidative Stresses
+KRAS c.38_39GC>AA
+EGFR c.2283_2284ins12
+KRAS c.38_39GC>AG
+KRAS c.38_39GC>AT
+Trans-Synaptic Degeneration
+BRAF NP_004324.2:p.Leu597Arg
+p110-alpha c.3141T>G
+chromosomal abnormality
+EGFR NM_005228.3:c.2231_2232insTAAAATTCCCGTCGCTAT
+FGFR2 NP_000132.3:p.Y375C
+Extravascular haemolysis
+PIK3CA p.Cys420Arg
+BRAF NM_004333.4:c.1799T>A
+JTK10 c.2792A>G
+BRAF NM_004333.4:c.1799T>C
+BRAF NM_004333.4:c.1799T>G
+Neuron Degenerations
+AKT1 c.49G>A
+EGFR NM_005228.3:c.2232_2233insAAAATTCCCGTCGCTATC
+EGFR NM_005228.3:c.2250_2273del24
+EGFR NM_005228.3:c.2313_2314insAAC
+Mutation, Out-of-Frame
+FGFR2 p.P253R
+FLT3-ITD Mutation
+KRAS Gly13Val
+Mesothelial metaplasia
+BEK c.1647T>G
+EGFR NP_005219.2:p.P772_H773insYNP
+KRAS c.37G>A
+KRAS c.37G>C
+B-RAF1 c.1799_1800TG>AA
+Platelet destruction
+ERBB c.2156G>A
+ERBB c.2156G>C
+B-RAF1 c.1799_1800TG>AT
+KRAS c.37G>T
+PI3Kalpha E542K
+Ergastoplasmic alteration
+Chromosomal Abnormalities
+PI3Kalpha E542X
+PI3Kalpha E542V
+PI3Kalpha E542Q
+chromosome breakage
+EGFR c.2154_2155GG>TT
+ERBB1 c.2582T>G
+ERBB1 c.2322_2322G>CCACGTG
+KRAS NP_004976.2:p.Gly12Trp
+PI3K c.1634A>C
+PI3K c.1634A>G
+EGFR A763_Y764insFQEA
+atypicals cells
+PI3K c.1634A>T
+EGFR NP_005219.2:p.S752_I759del
+Chédiak-Higashi cell
+HER1 c.2310_2311insGGGGAC
+NRAS p.Gln61Xxx
+EGFR NM_005228.3:c.2315_2316insGACACACCC
+Inversion, Chromosomal
+EGFR NP_005219.2:p.Ala763_Tyr764insPheglnGluAla
+JAK2 p.Arg938Leu
+ERBB c.2303_2304ins9
+KGFR Pro253Arg
+EGFR c.2307_2308insGACAACGTG
+chromosome aberrations
+FGFR-2 K659E
+Nonsense mutation
+Breaks, Chromosomal
+PI3K c.1625A>T
+BRAF c.1405G>A
+BRAF c.1405G>C
+KRAS1 c.34G>C
+KRAS1 c.34G>A
+KRAS1 c.34G>T
+Suppressor Mutations
+EGFR NM_005228.3:c.2319_2320insCAC
+EGFR NP_005219.2:p.D770_N771insGD
+Chromosomal Breakages
+EGFR NP_005219.2:p.D770_N771insGL
+ERBB c.2307_2308ins15
+PIK3CA NP_006209.2:p.Glu542Lys
+KRAS Gly12Leu
+EGFR V769_D770insASV
+EGFR V769_D770insMASVD
+Oxidative Stress
+EGFR V834del
+FGFR2 NP_000132.3:p.Pro253Arg
+EGFR NP_005219.2:p.Lys745_Glu746insValProValAlaIleLys
+ECT1 c.758C>G
+JAK2 Val617Phe
+Chromosomal Break
+EGFR p.L747_A750del
+EGFR c.2308_2309insGGGTCGTGG
+EGFR c.2155G>A
+Dysfunction, Proteostasis
+EGFR c.2155G>T
+ERBB c.2238_2252del15
+DNA Crosslinking
+cabots rings
+JAK2 Tyr931Cys
+KRAS Ala146Xxx
+EGFR NP_005219.2:p.Glu746_Thr751delGluLeuArgGluAlaThr
+PDGFR-2 c.2525A>T
+Polysomy 17
+Polysomy 10
+Translocation, Chromosomal
+Degeneration, Nissl
+EGFR NP_005219.2:p.V765_M766insMAS
+EGFR p.Glu746del
+NRAS c.181_183CAA>AAG
+Dominant-Negative Mutation
+EGFR NP_005219.2:p.Leu747_Lys754del
+ERBB c.2240_2254del15
+EGFR c.2307_2308ins9
+Cytoplasmic hyalinization
+chromosome mutation
+EGFR NP_005219.2:p.P772_H773insDNP
+HER1 c.2320_2321ins12
+FGFR2 NP_000132.3:p.C382R
+EGFR NM_005228.3:c.2236_2250del15
+KRAS NM_004985.3:c.38_39delGCinsTT
+KRAS NM_004985.3:c.38_39delGCinsTG
+ERBB c.2307_2308insTGCGTG
+EGFR p.D770_N771insAPW
+p110-alpha c.3140A>T
+p110-alpha c.3140A>G
+Out-of-Frame Mutation
+EGFR p.K745_A750del
+Minimal Aneuploidy
+Trisomy 2q37
+EGFR c.2302_2303ins9
+BRCA1 Mutation
+PIK3CA p.His1047Tyr
+CD332 c.1144T>C
+PIK3CA c.3140A>T
+N-ras c.182_183AA>GG
+EGFR NP_005219.2:p.P772_H773insQV
+EGFR p.Leu861Pro
+PIK3CA NP_006209.2:p.H1047X
+Stress, Genotoxic
+p110-alpha c.1625A>G
+PI3Kalpha H1047L
+PIK3CA NP_006209.2:p.H1047Q
+p110-alpha c.3139C>T
+p110-alpha c.1625A>T
+PI3Kalpha H1047Y
+PI3Kalpha H1047X
+PI3Kalpha H1047R
+PI3Kalpha H1047Q
+PI3Kalpha H1047T
+EGFR D770_N771insSVQ
+EGFR D770_N771insSVP
+PIK3CA c.3140A>G
+ERBB1 c.2319_2320ins9
+EGFR R748_S752del
+EGFR D770_N771insSVD
+c-K-ras Q61X
+EGFR NP_005219.2:p.E709fs*1
+EGFR NM_005228.3:c.2307_2308insGCCAGCGTG
+c-K-ras Q61R
+c-K-ras Q61L
+c-K-ras Q61H
+c-K-ras Q61K
+c-K-ras Q61D
+c-K-ras Q61E
+KRAS Gly13Cys
+ERBB c.2322_2323insCACGTG
+PIK3CA H1047Q
+PIK3CA H1047R
+chromosome inversions
+PIK3CA H1047T
+AML1 Mutation
+PIK3CA H1047X
+PIK3CA H1047Y
+PIK3CA H1047L
+Chromosome break
+EGFR c.2238_2252del15
+ERBB c.2253_2276del24
+NRAS Gln61Leu
+EGFR NP_005219.2:p.Val769_Asp770insAlaSerVal
+EGFR NM_005228.3:c.334_1137del804
+Frameshift Mutations
+EGFR NM_005228.3:c.2239_2256delTTAAGAGAAGCAACATCT
+KRAS Gly13Asn
+EGFR p.K745_E749del
+KRAS Gly13Asp
+KRAS p.Gln61Xxx
+PIK3CA NP_006209.2:p.Glu545Xxx
+EGFR NP_005219.2:p.Asp770_Asn771insGlyAsp
+Chylomicron alteration
+ERBB c.2247_2273del27
+EGFR NM_005228.3:c.2302_2303ins9
+PIK3CA NP_006209.2:p.His1047Xxx
+PIK3CA E545Q
+PIK3CA E545K
+KRAS2 c.34_35GG>AT
+PIK3CA E545A
+PIK3CA E545G
+PIK3CA E545D
+EGFR V769_D770insDNV
+ERBB c.2582T>A
+ERBB c.2582T>G
+Nucleolar hypertrophy
+RET/PTC Rearrangement
+N-ras c.181_182CA>TT
+PIK3CA NM_006218.1:c.1624G>C
+PIK3CA NM_006218.1:c.1624G>A
+EGFR NP_005219.2:p.V834del
+FGFR2 p.N549H
+FGFR2 p.N549K
+Giant mitochondria
+EGFR NP_005219.2:p.His773_Val774insProHis
+EGFR NP_005219.2:p.Gly719Ser
+c-K-ras G13V
+KRAS Gly13Ala
+NP_002515.1 :p.Gln61Arg
+EGFR Gly719Val
+EGFR NP_005219.2:p.Asp770_Asn771insAsnProHis
+EGFR c.2311_2312insGCGTGGACA
+NRAS c.181_182CA>AG
+FLT3/TKD Mutation
+KGFR Lys659Glu
+Chromosome Deletion
+PIK3CA c.1634A>C
+PIK3CA p.His1047Leu
+EGFR p.K745_L747del
+Cabot rings
+Base-Base Mismatch
+KGFR c.1647T>G
+KGFR c.1647T>A
+KRAS c.35G>C
+KRAS c.35G>A
+EGFR NP_005219.2:p.Pro772_His773insAspHisPro
+C-K-RAS c.35_36GT>AC
+C-K-RAS c.35_36GT>AA
+KRAS c.35G>T
+EGFR NP_005219.2:p.Asp770_Asn771insAlaProTrp
+AKT1 NM_001014431.1:c.49G>A
+EGFR NM_005228.3:c.2233_2247del15
+KRAS NP_004976.2:p.Gly12Ile
+EGFR NP_005219.2:p.L747_P753del
+BRAF Gly469Arg
+CD332 c.1124A>G
+Duplication Xp3
+EGFR NM_005228.3:c.2283_2284ins12
+EGFR p.G719C
+EGFR p.G719A
+EGFR p.G719D
+EGFR p.G719X
+KI-RAS c.35_36GT>TC
+Shortening, Telomere
+EGFR p.G719V
+BRAF NM_004333.4:c.1405G>C
+Mutation, Suppressor
+Chromosome Inversion
+KRAS2 c.180_181TC>CA
+Uniparental disomy
+EGFR NP_005219.2:p.Ala750_Lys757del
+ERBB c.2310_2311insAACCCCCAC
+KRAS NP_004976.2:p.G13D
+EGFR c.2318_2319insCCCCCA
+NRAS c.181_182delCAinsTT
+Squamous Metaplasia
+NRAS NM_002524.4:c.183A>C
+NRAS NM_002524.4:c.183A>G
+Break, Chromosomal
+NRAS NM_002524.4:c.183A>T
+KI-RAS c.180_181TC>CA
+IGH/MAF Translocation
+EGFR p.L747_T751del
+NRAS NM_002524.4:c.181_183delCAAinsAAG
+BIRC3-MALT1 Translocation
+BRAF NP_004324.2:p.Val600Leu
+PIK3CA His1047Leu
+EGFR D770_N771insNPH
+JAK2 p.G935R
+EGFR D770_N771insAPW
+Uniparental Heterodisomies
+HER1 c.2235_2246del12
+Chromosome fragment
+ERBB1 c.2257_2277del21
+PIK3CA c.1258T>C
+KRAS Gln61Asp
+KRAS2 c.35_36GT>AC
+BRAF NM_004333.4:c.1798_1799delGTinsAA
+KGFR c.1144T>C
+MYC Translocation
+Nerve Degeneration
+Ki-Ras G12S
+Maturation acceleration
+EGFR p.S768_V769insAWT
+Duplication, Chromosome
+HER1 c.2283_2284ins12
+KRAS2 C.36T>C
+EGFR NP_005219.2:p.L747del
+True hypertrophy
+EGFR c.2309_2310AC>CCAGCGTGGAT
+EGFR p.E746_R748del
+EGFR NP_005219.2:p.Glu746_Pro753del
+PIK3CA NM_006218.1:c.3139C>T
+EGFR p.Gly719Asp
+Mitochondrial hyperplasia
+BRAF p.Val600Lys
+KRAS NM_004985.3:c.35_36delGTinsTC
+EGFR E746_P753del
+KRAS1 c.34_35GG>TT
+EGFR c.2231_2232ins18
+EGFR NP_005219.2:p.Val769_Asp770insGlyValVal
+HER-2/neu c.2325_2326ins12
+Reactions, Axon
+KRAS Gly12Trp
+BRAF p.Val600Met
+EGFR c.2310_2311ins9
+EGFR L747del
+KRAS NP_004976.2:p.Gln61Xxx
+EGFR p.N756_L760del
+PIK3CA p.C420R
+Oncogene Deregulation
+EGFR c.2310_2311insAAC
+ERBB c.2310_2311insGGGGAC
+degeneration neuron
+Uniparental Isodisomy
+Chromosome 13q-mosaicism
+BRAF L597V
+BRAF L597Q
+BRAF L597R
+BRAF L597S
+Instability, Genomic
+PI3K c.3141T>G
+KRAS2 c.34G>A
+KRAS2 c.34G>C
+JAK2 p.R938L
+EGFR p.A750_E758del
+KRAS2 c.34G>T
+HER1 c.2257_2277del21
+EGFR p.V769_D770insGSV
+HER1 c.2573_2574TG>GT
+BRAF c.1798_1799GT>AA
+EGFR p.L747_K754del
+EGFR NM_005228.3:c.2235_2249del15
+HER1 c.2321_2322insCCACGT
+HER1 c.2219_2220ins18
+c-K-ras Q61P
+frameshift mutation
+B-RAF1 c.1405_1406GG>TC
+chromosomal aberrations
+ERBB1 c.2307_2308insTGCGTG
+FGFR2 NP_000132.3:p.Asn549His
+KRAS1 c.35G>A
+NRAS NM_002524.4:c.182A>T
+KRAS2 c.180_181TC>AA
+EGFR NM_005228.3:c.2236_2237insTTCCCGTCGCTATCAAGG
+KI-RAS c.183A>C
+NRAS NM_002524.4:c.182A>G
+NRAS NM_002524.4:c.182A>C
+BRAF NM_004333.4:c.1791A>G
+KRAS NP_004976.2:p.Gly13Ala
+Aberration, Chromosome
+C-K-RAS c.37_38GG>AA
+Translocations, Chromosomal
+PIK3CA NP_006209.2:p.Glu545Gly
+HER1 c.2239_2262del24
+PIK3CA NP_006209.2:p.Glu545Gln
+EGFR V769_D770insGSV
+EGFR p.L861F
+EGFR p.L861V
+EGFR p.L861R
+EGFR p.L861Q
+EGFR p.L861P
+Neuron Degeneration
+KRAS NP_004976.2:p.Gln61Asp
+HER1 c.2319_2320ins9
+KRAS c.39C>T
+KRAS c.39C>G
+KRAS c.39C>A
+ERBB1 c.2572C>A
+KI-RAS c.180_181TC>AA
+EGFR c.2308_2309insGCAGCGTGG
+Cytoplasmic droplets
+C-K-RAS c.38_39GC>TT
+HER1 c.2307_2308ins9
+KRAS NP_004976.2:p.Gly13Asn
+KRAS NP_004976.2:p.Gly13Asp
+Inverted Sequence
+KRAS Gly12Phe
+Genetic Alteration
+EGFR Y764_V765insHH
+BRAF NM_004333.4:c.1405_1406delGGinsTC
+HFE gene.c.845G>A
+BRAF c.1405_1406delGGinsTC
+EGFR c.2247_2273del27
+Novel Mutation
+ERBB c.2233_2247del15
+HER1 c.2369C>T
+Impaired phagocytosis
+Abnormalities, Cytogenetic
+PIK3CA NP_006209.2:p.His1047Thr
+Gene Fusion
+EGFR L747_E749del
+Disomy 9q21
+Complex Karyotype
+Instabilities, Chromosomal
+squamous metaplasia
+EGFR p.V765_M766insMAS
+Endothelial metaplasia
+KRAS G13A
+EGFR NP_005219.2:p.V769_D770insGVV
+EGFR c.2309_2310insATGGCCAGCGTGGA
+EGFR p.P772_H773insYNP
+Nucleolar alteration
+HER1 c.2310_2311insAAC
+Fragility, function
+BEK c.1975A>G
+Extracellular alteration
+HER1 c.2232_2233ins18
+EGFR c.2313_2314insAAC
+ERBB1 c.2311_2312ins12
+Abnormal haematopoiesis
+C-K-RAS c.180_181TC>CA
+FGFR2 p.Tyr375Cys
+EGFR c.2307_2308insGCCAGCGTG
+N-ras c.181C>A
+N-ras c.181C>G
+EGFR p.Leu861Gln
+B-RAF1 c.1406G>A
+B-RAF1 c.1406G>C
+B-RAF1 c.1406G>T
+ECT1 c.1975A>G
+CPE VIRAL
+Deleterious Mutation
+EGFR NP_005219.2:p.Pro772_His773insAspAsnPro
+EGFR K745_E749del
+KRAS c.182A>C
+Maturation deceleration
+EGFR p.S752_I759del
+Erythrocyte destruction
+Chromosome Duplications
+KRAS c.182A>T
+ERBB c.2234_2236delAGG
+BRAF NM_004333.4:c.1397G>A
+BRAF NM_004333.4:c.1397G>C
+ERBB1 c.2236_2237ins18
+EGFR p.Leu861Arg
+ERBB c.2236_2250del15
+KI-RAS c.38_39GC>TT
+NEU c.2324_2325ins12
+Inverted Chromosome
+NP_002515.1 :p.Gln61Leu
+ERBB1 c.2234_2236delAGG
+Ki-Ras G12F
+C-Myc Translocation
+EGFR M766_A767insAI
+axon reaction
+KRAS Gly12Glu
+EGFR NP_005219.2:p.K745_E749del
+PDGFR-Alpha D842V
+EGFR p.L858M
+EGFR p.L858K
+EGFR p.L858G
+EGFR p.L858A
+PIK3CA NP_006209.2:p.Glu542Gly
+EGFR p.L858R
+EGFR p.L858Q
+EGFR p.L858P
+PI3K c.1624G>A
+PI3K c.1624G>C
+DNA damage
+KRAS p.Gln61Pro
+PIK3CA c.3141T>G
+BRAF NP_004324.2:p.Val600Asp
+ERBB2 NP_004439.2p:A775_G776insYVMA
+ERBB c.2308_2309insACGGCG
+PIK3CA NP_006209.2:p.Glu545Asp
+BRAF p.V600A
+Abnormal hematopoiesis
+BRAF p.V600G
+Oncogene Activation
+BRAF p.V600E
+BRAF NP_004324.2:p.Leu597Val
+BRAF p.V600K
+BRAF NP_004324.2:p.Val600Lys
+KRAS Gln61His
+HER1 c.2313_2314insAAC
+IGH@-MAF Translocation
+FGFR2 NP_000132.3:p.S252W
+EGFR NP_005219.2:p.Leu858Ala
+BEK c.1124A>G
+EGFR c.2321_2322insCCACGT
+chromosomal deletion
+EGFR NM_005228.3:c.2254_2277del24
+EGFR NM_005228.3:c.2582T>G
+Chromosomal Rearrangements
+KRAS p.Gly12Trp
+EGFR Leu861Gln
+JAK2 p.Val617Phe
+NRAS p.Gln61Lys
+EGFR NP_005219.2:p.V769_D770insDNV
+Paracentric inversion
+FGFR2 c.1645A>C
+Frameshift Mutation
+Aplastic crisis
+FGFR2 c.755C>G
+EGFR E746_E749del
+HER1 c.2303_2304ins9
+Inversions, Sequence
+NP_004324.2:p.Val600 Mutation
+BRAF p.Val600Leu
+genetic translocations
+EGFR c.2319_2320ins9
+Degeneration, Neuron
+JAK2 Mutation
+C-K-RAS c.37G>T
+Mutations, Point
+ERBB1 c.2308_2309insACGGCG
+NPM1 Mutation
+KI-RAS c.182A>T
+FGFR2 Tyr375Cys
+EGFR p.E709fs*1
+KI-RAS c.182A>G
+KI-RAS c.182A>C
+C-K-RAS c.180_181TC>AA
+Nerve Degenerations
+EGFR D770_N771insDG
+Deletion 21q22
+ERBB c.2308_2309ins9
+EGFR c.2309_2310delACinsCCAGCGTGGAT
+ERBB c.2239_2247del9
+KRAS p.Gly12Ala
+intestinal metaplasia
+EGFR p.A750_K757del
+Cilia alteration
+ERBB1 c.2236_2250del15
+FGFR2 N549H
+FGFR2 N549K
+KRAS p.Gln61Lys
+EGFR NP_005219.2:p.A763_Y764insFQEA
+EGFR NP_005219.2:p.Gly719Asp
+PIK3CA E545X
+KRAS Q61H
+KRAS Q61L
+KRAS Q61D
+KRAS Q61E
+KRAS Q61X
+disease-causing mutation
+KRAS Q61R
+KRAS Q61P
+KRAS c.183A>C
+AKT1 p.E17K
+novel mutation
+BRAF p.Gly469Arg
+KRAS c.183A>T
+EGFR NM_005228.3:c.2310_2311insGGC
+Chromosome Inversions
+BRAF Gly466Val
+KRAS p.Gly12Ile
+EGFR Leu861Phe
+EGFR NM_005228.3:c.2310_2311insGGT
+p110alpha C420R
+ABNORM CHROMOSOME
+PDGFRA NP_006197.1:p.Asp842Val
+Chromosomal Alterations
+FGFR2 NP_000132.3:p.Asn549Lys
+EGFR NP_005219.2:p.Pro753_Ile759del
+NRAS G13X
+BRAF p.Gly466Glu
+Inversions, Chromosome
+C-K-RAS c.181C>A
+C-K-RAS c.181C>G
+PIK3CA E545V
+KRAS2 c.35_36GT>TC
+KRAS NP_004976.2:p.Gly12Arg
+FGFR2 p.S252W
+EGFR p.P772_H773insPR
+AKT1 E17K
+Ki-Ras G13N
+HER1 c.2322_2323insCACGTG
+Ki-Ras G13E
+Ki-Ras G13D
+Duplications, Chromosome
+Ki-Ras G13A
+Ki-Ras G13C
+BRAF p.Gly466Arg
+EGFR NP_005219.2:p.H773_V774insGNPH
+Ki-Ras G13V
+inflammatory atypia
+Ki-Ras G13S
+Ki-Ras G13R
+Wallerian Degeneration
+ERBB1 c.2239_2247del9
+Duplications, Chromosomal
+CHROMOSOME ABNORM
+BRAF NP_004324.2:p.Gly469Arg
+pathologic autolysis
+Chromosomal Breaks
+NRAS NM_002524.4:c.181C>G
+NRAS NM_002524.4:c.181C>A
+KRAS NP_004976.2:p.G12I
+KRAS NP_004976.2:p.G12L
+KRAS NP_004976.2:p.G12N
+KRAS NP_004976.2:p.G12A
+KRAS NP_004976.2:p.G12C
+KRAS NP_004976.2:p.G12E
+KRAS NP_004976.2:p.G12D
+KRAS NP_004976.2:p.G12F
+KRAS NP_004976.2:p.G12Y
+Trisomy 3
+Trisomy 6
+point mutation
+Trisomy 4
+Trisomy 5
+KRAS NP_004976.2:p.G12S
+KRAS NP_004976.2:p.G12R
+KRAS NP_004976.2:p.G12W
+KRAS NP_004976.2:p.G12V
+BRAF Gly469Glu
+ERBB2 c.2325_2326insTACGTGATGGCT
+EGFR NP_005219.2:p.L858M
+EGFR NP_005219.2:p.L858K
+EGFR NP_005219.2:p.L858G
+EGFR NP_005219.2:p.L858A
+EGFR NP_005219.2:p.L858W
+EGFR NP_005219.2:p.L858R
+EGFR NP_005219.2:p.L858Q
+EGFR NP_005219.2:p.L858P
+ERBB1 c.2582T>A
+Breakages, Chromosomal
+Squamous metaplasia
+KRAS c.37_39delGGCinsCGT
+EGFR NP_005219.2:p.Ala767_Ser768insThrLeuAla
+HER1 c.2234_2236delAGG
+KRAS NM_004985.3:c.37G>A
+KRAS NM_004985.3:c.37G>C
+KRAS NM_004985.3:c.37G>T
+PIK3CA Glu1047Arg
+B-RAF1 c.1405_1407GGA>AGT
+Gene Duplication
+B-RAF1 c.1405_1407GGA>AGC
+Mesangial hyperplasia
+NRAS Gly12Xxx
+PIK3CA NP_006209.2:p.H1047L
+KRAS NM_004985.3:c.38_39delGCinsAT
+JAK2 R938L
+PIK3CA NP_006209.2:p.H1047T
+PIK3CA NP_006209.2:p.H1047R
+KRAS NM_004985.3:c.38_39delGCinsAA
+Uniparental Heterodisomy
+KRAS NM_004985.3:c.38_39delGCinsAG
+PIK3CA NP_006209.2:p.H1047Y
+chromosome inversion
+KRAS c.180_181delTCinsCA
+reciprocal translocation
+Axon Reactions
+ECT1 c.1115C>G
+Uniparental Disomy
+cabot rings
+KRAS p.Gly13Ala
+NRAS c.182_183AA>TG
+EGFR E746_T751del
+oxidative stress
+ERBB c.2309_2310AC>CCAGCGTGGAT
+Degenerations, Retrograde
+HER1 c.2581C>G
+ERBB c.2125_2129delGAAAC
+BEK c.755C>G
+BEK c.1144T>C
+EGFR p.L747del
+KRAS p.Gly13Val
+BRAF p.Val600Asp
+EGFR NM_005228.3:c.2319_2320insCCCCAC
+KI-RAS c.183A>T
+PIK3CA p.Glu545Val
+EGFR P772_H773insQV
+NP_002515.1 :p.Gln61Lys
+CASP10 Mutation
+HER1 c.2239_2247del9
+EGFR NP_005219.2:p.T751_E758del
+Metaplastic keratinization
+EGFR NP_005219.2:p.Ile789_Leu792del
+ERBB1 c.2310_2311insAACCCCCAC
+JAK2 Arg938Leu
+EGFR p.Leu861Phe
+EGFR c.2573_2574TG>GT
+JAK2 NP_004963.1:p.R938L
+FGFR-2 Cys382Arg
+Antibody-Dependent Enhancement
+FGFR2 p.Cys382Arg
+FGFR-2 Asn549His
+EGFR NP_005219.2:p.Ala750_Glu758del
+EGFR p.Leu858Gly
+C-K-RAS c.34_35GG>CT
+EGFR p.Leu858Gln
+chromosomal instability
+EGFR L747_P753del
+Reactions, Axonal
+BRAF NP_004324.2:p.Gly469Ala
+Deletion 4p
+Deletion 14q31
+Dysfunctions, Proteostasis
+JAK2 NM_004972.3:c.1848_1849delTGinsCT
+PIK3CA p.H1047X
+PIK3CA p.H1047Y
+chromosome translocations
+EGFR NM_005228.3:c.2238_2252del15
+PIK3CA p.H1047Q
+robertsonian translocations
+Cytoplasmic deposition
+KRAS c.37_38GG>AA
+JAK2 Met929Ile
+Monosomies, Partial
+Toxic vacuolisation
+EGFR c.2239_2262del24
+ERBB1 c.2125_2129delGAAAC
+PDGFRA p.D842V
+FGFR2 c.1975A>G
+Monosomy Xq28
+clastogenesis
+NM_005228.3:c.2235_2252del18
+NP_005219.2:p.His773_Val774insGly
+NP_005219.2:p.Gly719Val
+NM_005228.3:c.2308_2309insACGGCG
+Dyskaryosis
+NP_005219.2:p.D770_N771insD
+NP_005219.2:p.D770_N771insG
+NP_005219.2:p.D770_N771insN
+Erythrocytoschisis
+NP_005219.2:p.V765_M766insMAS
+NP_005219.2:p.Leu861Val
+NM_005228.3:c.2240_2254del15
+VNTR
+NP_000132.3:p.S252W
+NM_005228.3:c.2253_2276del24
+NP_004324.2:p.Leu597Gln
+Epithelialisation
+NM_002524.4:c.181_183delCAAinsAAG
+NM_005228.3:c.2311_2312ins9
+NP_004976.2:p.Gly13Cys
+NM_005228.3:c.2320_2321ins12
+NM_005228.3:c.2319_2320insCCCCAC
+Tetrasomies
+RFLPs
+NM_005228.3:c.2283_2284ins12
+Triploid
+NM_005228.3:c.2232_2233insAAAATTCCCGTCGCTATC
+NM_004448.2:c.2325_2326ins12
+NP_005219.2:p.Leu747_Glu749delLeuArgGlu
+NP_004976.2:p.Gly12Cys
+Tetraploidies
+NP_005219.2:p.M766_A767insAI
+NP_005219.2:p.S752_V769del
+NM_005228.3:c.2290_2291ins12
+NM_004333.4:c.1789_1790delCTinsTC
+epithelialization
+NM_000141.4:c.1645A>C
+NM_005228.3:c.2309_2310AC>CCAGCGTGGAT
+NP_005219.2:p.Pro772_His773insAspHisPro
+NP_004963.1:p.Ile960Val
+NM_004985.3:c.181C>A
+NM_004985.3:c.181C>G
+NM_002524.4:c.181_182delCAinsAG
+NP_005219.2:p.Val765_Met766insMetAlaSer
+NP_005219.2:p.D770_N771insGD
+NP_004324.2:p.Gly469Arg
+NP_005219.2:p.D770_N771insGL
+Hyperchromia
+NM_005228.3:c.2308_2309insGCAGCGTGG
+NP_004976.2:p.Gly13Arg
+NM_006218.1:c.3141T>G
+Metaplasia
+NP_006209.2:p.Glu545Gln
+NP_005219.2:p.Glu746_Pro753del
+aneuploid
+NM_005228.3:c.2231_2232insTAAAATTCCCGTCGCTAT
+NP_005219.2:p.Val834del
+NM_004985.3:c.38G>C
+NM_005228.3:c.2322_2322G>CCACGTG
+NM_004985.3:c.38G>T
+NM_002524.4:c.180_181AC>TA
+NM_005228.3:c.2240_2254delTAAGAGAAGCAACAT
+NM_000141.4:c.755C>G
+Chromatolysis
+NM_006218.1:c.3139C>T
+Epidermalization
+hyperchromia
+NP_004324.2:p.Val600Asp
+NP_005219.2:p.G719X
+NP_001138385.1:p.Cys383Arg
+hyperchromasia
+Tetrasomy
+NP_004976.2:p.Gln61Leu
+NP_005219.2:p.Glu746_Glu749del
+NP_005219.2:p.Leu747_Ala750del
+NM_004985.3:c.35_36delGTinsTC
+NP_004976.2:p.Ala146Xxx
+NP_005219.2:p.His773_Val774insAsnProHis
+NM_004985.3:c.182A>G
+NM_004985.3:c.182A>C
+NM_004985.3:c.182A>T
+NM_005228.3:c.2298_2299insGCCATA
+NP_005219.2:p.Glu746_Thr751del
+NM_004333.4:c.1405_1406GG>TC
+NP_006209.2:p.Glu545Gly
+NM_004333.4:1798G>T
+NM_006218.1:c.1634A>C
+NM_006218.1:c.1634A>G
+NM_004333.4:1798G>A
+CPE
+NM_005228.3:c.2239_2256delTTAAGAGAAGCAACATCT
+NM_005228.3:c.2235_2249delGGAATTAAGAGAAGC
+NP_005219.2:p.Leu858Gln
+NP_005219.2:p.Leu858Gly
+NP_004963.1:p.V617F
+Haploinsufficiency
+NP_005219.2:p.Glu746_Thr751delGluLeuArgGluAlaThr
+NP_004963.1:p.Val617Phe
+NM_004448.2:c.2325_2326insTACGTGATGGCT
+NP_005219.2:p.Leu858Met
+NP_004324.2:p.Leu597Ser
+NP_005219.2:p.D770_N771insMATP
+NM_004333.4:c.1397G>A
+NP_005219.2:p.Glu746del
+Tetraploids
+NP_004324.2:p.Gly469Val
+NP_005219.2:p.Gly719Xxx
+hyperchromatism
+NP_004976.2:p.Gly13Ala
+Lytotoxicity
+NM_000141.4:c.758C>G
+NP_005219.2:p.V769_D770insGSV
+NM_005228.3:c.2154_2155GG>TT
+Near-Haploidy
+Mosaicism
+NP_005219.2:p.Glu746_Ser752del
+Koilocytosis
+Frameshift
+NM_004333.4:1799_1800TG>AT
+NM_004333.4:1799_1800TG>AA
+NP_005219.2:p.Gly719Ser
+NM_004333.4:c.1406G>T
+NM_004333.4:c.1406G>A
+NM_004333.4:c.1406G>C
+NM_004333.4:c.1799_1800delTGinsAA
+NM_004333.4:c.1799_1800delTGinsAT
+Hyperdiploidy
+Tetraploidy
+NP_000132.3:p.N549K
+NP_000132.3:p.N549H
+NM_005228.3:c.2302_2303ins9
+NP_005219.2:p.V834del
+inv
+NP_005219.2:p.Pro772_His773insGlnVal
+ins
+NP_004976.2:p.Gly12Ala
+NP_005219.2:p.Leu858Trp
+karyorrhexis
+NP_005219.2:p.Leu861Pro
+NM_004985.3:c.35G>A
+NP_000132.3:p.K659E
+NM_004985.3:c.35G>T
+NP_005219.2:p.Thr790Met
+NP_004963.1:p.R938L
+NP_006209.2:p.Glu545Lys
+NP_005219.2:p.Asp770_Asn771insAlaProTrp
+NP_006197.1:p.Asp842Val
+NP_004963.1:p.Glu985Lys
+NM_004985.3:c.37_39delGGCinsCGT
+NP_005219.2:p.Ser752_Ile759delSerProLysAlaAsnLysGluIle
+NM_006218.1:c.1633G>C
+mutants
+NM_004333.4:c.1789_1790CT>TC
+Karyolysis
+NP_004976.2:p.Gly12Ser
+Aneuploidy
+NM_002524.4:c.180_181delACinsTA
+Aneuploids
+NM_000141.4:c.1115C>G
+NP_004976.2:p.Gly13Val
+NP_005219.2:p.K745_E746insVPVAIK
+NM_005228.3:c.2310_2311insGCACCGTGG
+NM_002524.4:c.182A>C
+NM_002524.4:c.182A>G
+hypocellular
+NM_002524.4:c.182A>T
+NP_005219.2:p.Pro772_His773insThrHisPro
+NM_005228.3:c.2573_2574TG>GT
+Achromasia
+NM_005228.3:c.2310_2311insGGC
+NM_005228.3:c.2310_2311insGGT
+Polyploidies
+Hypotriploidy
+karyolysis
+NM_004985.3:c.35_36GT>TC
+Hypoploidy
+NP_000132.3:p.Asn549His
+NM_000141.4:c.1647T>G
+NM_000141.4:c.1647T>A
+Macronucleus
+NM_005228.3:c.2235_2249del15
+NP_000132.3:p.Ser372Cys
+NM_005228.3:c.2322_2323insCACGTG
+NM_004985.3:c.37G>T
+NM_004985.3:c.37G>A
+NM_004985.3:c.37G>C
+NP_005219.2:p.Leu858Pro
+NM_004333.4:c.1396G>C
+NM_004985.3:c.34_36delGGTinsTGG
+NM_004985.3:c.34_36delGGTinsTGC
+Polyploid
+NM_004333.4:c.1791A>G
+NP_004439.2:p.Ala775_Gly776insTyrValMetAla
+Near-Haploid
+polyploidy
+translocation
+NP_004976.2:p.Gly13Glu
+NM_005228.3:c.2310_2311insGGGTTA
+NP_001138385.1:p.N550H
+NP_001138385.1:p.N550K
+polyploid
+NM_005228.3:c.2156delG
+NM_004985.3:c.38_39delGCinsTG
+NM_004985.3:c.38_39delGCinsTT
+t
+NM_004985.3:c.180_181delTCinsAA
+Truncation
+NP_004976.2:p.Gln61Lys
+NM_005228.3:c.2238_2252del15
+NM_005228.3:c.2311_2312insTGGCCACCCCCA
+NP_005219.2:p.Asp770_Asn771insSerValAsp
+RFLP
+NP_005219.2:p.Val769_Asp770insMetAlaSerValAsp
+NP_001014431.1:p.Glu17Lys
+NP_004976.2:p.Gln61Arg
+RER
+NP_001138385.1:p.Ser373Cys
+Polyploids
+Epidermalisation
+NP_004976.2:p.Gln61Glu
+NP_004324.2:p.Gly469Glu
+NP_006209.2:p.Glu545Xxx
+Polysomy
+NM_005228.3:c.2307_2308insATGGCCAGCGTGGAC
+NP_005219.2:p.P772_H773insPR
+NP_005219.2:p.His773_Val774insHis
+NP_005219.2:p.V774del
+NP_004963.1:p.E985K
+oncocytosis
+NM_005228.3:c.2572_2573CT>AG
+NM_005228.3:c.2572_2573CT>AA
+NM_004985.3:c.180_181delTCinsCA
+NP_006209.2:p.His1047Thr
+NM_005228.3:c.2309_2310insATGGCCAGCGTGGA
+NM_005228.3:c.2236_2237insTTCCCGTCGCTATCAAGG
+NM_004333.4:c.1405_1407GGA>AGT
+NM_004333.4:c.1405_1407GGA>AGC
+NP_004963.1:p.Arg938Leu
+Hypochromia
+NM_005228.3:c.2308_2309insGGGTCGTGG
+NM_002524.4:c.181_183CAA>AAG
+NP_005219.2:p.Arg748_Pro753del
+NM_004985.3:c.183A>T
+NM_004985.3:c.183A>C
+NP_004976.2:p.Gln61Pro
+Eight-Twenty-One
+hyperparakeratosis
+dyskaryosis
+NP_005219.2:p.Pro772_His773insTyrAsnPro
+NM_005228.3:c.2307_2308insTGCGTG
+NM_005228.3:c.2303_2304insTGTGGCCAG
+satellitosis
+NP_004324.2:p.Gly466Arg
+NM_005228.3:c.2309_2310ins14
+C-MycT
+NP_005219.2:p.Asp761_Glu762insGluAlaPheGln
+NM_005228.3:c.2283_2284insGAAGCCTTCCAG
+NP_004963.1:p.M929I
+NP_005219.2:p.Ala750_Lys754del
+NP_005219.2:p.His773_Val774insGlyHis
+NP_004976.2:p.Gln61His
+NP_004976.2:p.Gly12Tyr
+NP_005219.2:p.Ala763_Tyr764insPheglnGluAla
+Hypochromatism
+Oncocytosis
+NM_005228.3:c.2573T>A
+NM_005228.3:c.2573T>G
+NP_004324.2:p.Val600Ala
+NM_002524.4:c.181_182CA>AG
+NP_005219.2:p.D770fs*61
+NP_004976.2:p.Gly12Trp
+PHF
+Transversion
+NP_005219.2:p.Asp770_Asn771insSerValGln
+epithelialisation
+NM_004985.3:c.34G>A
+NM_004985.3:c.34G>C
+NM_004985.3:c.34G>T
+Deletion
+NM_005228.3:c.2308_2309ins9
+NP_005219.2:p.Asp770_Asn771insGly
+NP_005219.2:p.Lys745_Glu746insValProValAlaIleLys
+NM_004985.3:c.35_36delGTinsAA
+NM_004985.3:c.35_36delGTinsAC
+NM_004985.3:c.35_36delGTinsAG
+Hypertriploidy
+Del
+NM_006218.1:c.1635G>T
+metaplasia
+metaplasis
+NM_006218.1:c.1635G>C
+NM_004448.2:c.2324_2325ins12
+NM_005228.3:c.2156G>A
+NM_005228.3:c.2156G>C
+NM_004333.4:c.1798_1799delGTinsAG
+NP_006209.2:p.His1047Xxx
+NM_004333.4:c.1798_1799delGTinsAA
+NM_005228.3:c.2307_2308insGACAACGTG
+NP_006209.2:p.Glu542Gln
+NP_006209.2:p.Glu542Gly
+NP_004976.2:p.Gly12Asn
+i
+NP_004976.2:p.Gly12Asp
+neurodegeneration
+Karyomegaly
+NM_004985.3:c.38_39GC>TG
+NM_004985.3:c.38_39GC>TT
+mutation
+NM_004985.3:c.38_39delGCinsAG
+NM_004985.3:c.38_39delGCinsAA
+NM_004985.3:c.38_39delGCinsAT
+NM_004985.3:c.180_181TC>AA
+dup
+NM_006218.1:c.1258T>C
+EGFRvIII
+NP_004976.2:p.Gly13Ser
+Amyloidogenesis
+Endoreplication
+NM_005228.3:c.2236_2250del15
+NP_006209.2:p.Glu545Val
+NP_004963.1:p.G935R
+NP_005219.2:p.I789_L792del
+NM_005228.3:c.2310_2311ins9
+NP_000132.3:p.Lys659Glu
+NM_004985.3:c.37_39GGC>CGT
+MSI-H
+MSI-L
+NP_005219.2:p.Leu747del
+NM_006218.1:c.1624G>A
+NM_006218.1:c.1624G>C
+Myelophthisis
+NP_000132.3:p.Cys382Arg
+NM_004985.3:c.180_181TC>CA
+NP_006209.2:p.Glu1047Arg
+NP_005219.2:p.Arg748_Ser752del
+MLL-PTD
+NM_004985.3:c.34_35delGGinsTT
+NM_004985.3:c.34_35delGGinsTA
+NP_005219.2:p.Leu747_Lys754del
+NM_006218.1:c.1634A>T
+NP_005219.2:p.H773_V774insH
+NP_005219.2:p.H773_V774insG
+NP_004324.2:p.Gly469Ser
+NP_001138385.1:p.Asn550Lys
+NM_004985.3:c.35G>C
+NM_004333.4:1799T>A
+NM_004333.4:1799T>G
+NP_004963.1:p.Y931C
+NP_005219.2:p.Glu746_Ala750del
+NM_006206.4:c.2525A>T
+Epithelialization
+dic
+phototoxicology
+Hyperploidy
+Endoreduplications
+NM_005228.3:c.2582T>A
+NM_005228.3:c.2582T>G
+NM_002524.4:c.182_183AA>TG
+NM_002524.4:c.181C>A
+NM_002524.4:c.181C>G
+NM_005228.3:c.2257_2277del21
+Erythrocytorrhexis
+NP_005219.2:p.Gly719Cys
+idic
+NM_004333.4:c.1405_1407delGGAinsAGC
+NP_001138385.1:p.C383R
+NP_006209.2:p.Glu542Val
+NM_002524.4:c.181_182CA>TT
+NM_004985.3:c.35_36GT>AC
+NM_004985.3:c.35_36GT>AA
+NM_004985.3:c.35_36GT>AG
+NM_004985.3:c.34_35GG>TT
+NM_004985.3:c.34_35GG>TA
+DM
+NP_005219.2:p.Gly719fs*29
+NM_005228.3:c.2250_2273del24
+NP_005219.2:p.D770_N771insNPH
+NM_005228.3:c.2310_2311insAGCGTGGAC
+NP_005219.2:p.Ala750_Glu758del
+NP_004324.2:p.Gly466Val
+NM_005228.3:c.2310_2311insGGGGAC
+NP_004324.2:p.Gly466Ala
+NP_001138385.1:p.Y376C
+NM_000141.4:c.1124A>G
+NP_004324.2:p.Val600Met
+NP_005219.2:p.D770_N771insDG
+NP_005219.2:p.D770_N771insSVQ
+NP_004324.2:p.Leu597Arg
+NP_004976.2:p.Gly13Asp
+NP_005219.2:p.Met766_Ala767insAlaIle
+Dicentric
+NP_004976.2:p.Gly13Asn
+Transition
+NP_005219.2:p.T751_E758del
+NP_000132.3:p.S372C
+NM_004333.4:c.1799T>C
+NP_005219.2:p.His773_Val774insGlyAsnProHis
+NM_005228.3:c.2154_2155delGGinsTT
+NM_005228.3:c.2318_2319insCCCCCA
+NM_005228.3:c.2233_2247del15
+NM_004985.3:c.37_38GG>AA
+NP_001138385.1:p.Asn550His
+NP_004963.1:p.Gly935Arg
+NM_002524.4:c.182_183AA>GG
+Satellitosis
+NP_005219.2:p.Leu858Lys
+Haploinsufficiencies
+NP_004324.2:p.Val600Glu
+NP_004324.2:p.Val600Gly
+NM_005228.3:c.2307_2308insGCCAGCGTG
+NP_006209.2:p.His1047Tyr
+der
+NP_004324.2:p.Val600Arg
+del
+Hypochromasia
+NP_004324.2:p.Gly469Ala
+NP_005219.2:p.Val769_Asp770insCysVal
+NM_005228.3:c.2307_2308ins9
+NP_005219.2:p.H773_V774insGH
+NM_006218.1:c.1633G>A
+NP_000132.3:p.Y375C
+NP_005219.2:p.Y764_V765insHH
+Duplication
+NP_005219.2:p.N771_P772insN
+NP_005219.2:p.N771_P772insH
+NM_005228.3:c.2319_2320insAACCCCCAC
+Cytotoxicity
+Estatrophy
+NM_004985.3:c.38_39GC>AA
+NM_004985.3:c.38_39GC>AG
+NM_004985.3:c.38_39GC>AT
+NP_004324.2:p.Leu597Val
+rflp
+NP_005219.2:p.Ile789_Leu792del
+Mutation
+NM_005228.3:c.2219_2220insTCCCGTCGCTATTAAAAT
+NM_005228.3:c.2573_2574delTGinsGT
+NP_005219.2:p.P772_H773insTHP
+Translocation
+NM_005228.3:c.2311_2312insGCGTGGACA
+NM_002524.4:c.181_182delCAinsTT
+NP_005219.2:p.Asp770_Asn771insGlyAsp
+NP_004976.2:p.Gly12Ile
+NM_005228.3:c.2239_2247delTTAAGAGAA
+NP_005219.2:p.D770_N771insSVP
+NM_005228.3:c.2155G>T
+NP_004976.2:p.Gly12Val
+NP_000132.3:p.Asn549Lys
+NM_005228.3:c.2155G>A
+Inversion
+NP_005219.2:p.D770_N771insSVD
+NP_005219.2:p.Leu861Gln
+koilocytosis
+NP_005219.2:p.H773_V774insGNPH
+NP_005219.2:p.I740_P741insPVAIKI
+NP_005219.2:p.I744_K745insKIPVAI
+AGUS
+Fragility
+NM_004333.4:c.1405G>A
+NM_004333.4:c.1405G>C
+ABD
+NP_005219.2:p.Val769_Asp770insGlyValVal
+NM_005228.3:c.2234_2236delAGG
+NP_000132.3:p.Ser252Trp
+NM_005228.3:c.2239_2256del18
+NM_005228.3:c.2310_2311insAACCCCCAC
+NP_000132.3:p.P253R
+NP_001138385.1:p.Lys660Glu
+Mutated
+NM_004985.3:C.36T>C
+NP_000132.3:p.Tyr375Cys
+NM_004972.3:c.1849G>T
+NP_001138385.1:p.K660E
+NP_005219.2:p.V774_C775insHV
+NM_000141.4:c.1144T>C
+NM_005228.3:c.2319_2320ins9
+NM_002524.4:c.182_183delAAinsTG
+Polyploidy
+NP_005219.2:p.Gly719Ala
+NM_005228.3:c.2319_2320insCAC
+add
+NP_006209.2:p.Glu545Asp
+NP_005219.2:p.Asp770_Asn771insAspGly
+NM_004985.3:c.34_36GGT>TGC
+NM_004985.3:c.34_36GGT>TGG
+NM_005228.3:c.2313_2314insAAC
+NP_005219.2:p.Ala750_Lys757del
+NP_005219.2:p.A763_Y764insFQEA
+NM_005228.3:c.2302_2303insCGCTGGCCA
+NP_004976.2:p.Gln61Xxx
+NM_005228.3:c.2236_2253delGAATTAAGAGAAGCAACA
+NM_004333.4:c.1405_1407delGGAinsAGT
+NP_005219.2:p.V769_D770insGVV
+-17p13
+NP_005219.2:p.Pro772_His773insAspAsnPro
+NP_004963.1:p.Tyr931Cys
+NP_001138385.1:p.S373C
+NP_006209.2:p.Glu542Xxx
+HPOCROM
+NM_005228.3:c.2254_2277delTCTCCGAAAGCCAACAAGGAAATC
+NP_005219.2:p.Leu747_Ser752delLeuArgGluAlaThrSer
+NM_005228.3:c.2247_2273del27
+patching
+NM_005228.3:c.2581C>G
+chromatolysis
+NM_004333.4:1798_1799GT>AA
+NM_004972.3:c.1848_1849TG>CT
+NM_004333.4:1798_1799GT>AG
+NM_006218.1:c.1625A>G
+NM_006218.1:c.1625A>T
+hsr
+NP_005219.2:p.H773_V774insPH
+NM_005228.3:c.2320_2321insGCAACCCCCACG
+NP_004963.1:p.I960V
+NP_005219.2:p.Leu858Ala
+NP_005219.2:p.V769_D770insMASVD
+NM_006218.1:c.3140A>G
+NM_006218.1:c.3140A>T
+NM_004985.3:c.34_35delGGinsAT
+NM_004985.3:c.34_35delGGinsAA
+Amplification
+Triploidy
+NM_005228.3:c.2572_2573delCTinsAG
+NM_005228.3:c.2572_2573delCTinsAA
+NP_005219.2:p.Asn756_Leu760del
+NP_005219.2:p.Ser768_Val769insAlaTrpThr
+NM_005228.3:c.2246_2260del15
+NM_005228.3:c.2303_2304ins9
+NP_000132.3:p.Pro253Arg
+NP_005219.2:p.Leu861Arg
+NP_005219.2:p.Val769_Asp770insAspAsnVal
+NP_005219.2:p.Ala767_Ser768insThrLeuAla
+NP_005219.2:p.Glu709fs*1
+genotoxicity
+Hyperchromasia
+NM_005228.3:c.2239_2247del9
+NP_004976.2:p.Gly12Phe
+Megalocyte
+NM_005228.3:c.2321_2322insCCACGT
+NM_004985.3:c.34_35delGGinsCT
+Hyperparakeratosis
+NM_005228.3:c.2239_2262del24
+NP_005219.2:p.Asp770_Asn771insSerValPro
+NP_005219.2:p.Asp770_Asn771insMetAlaThrPro
+NP_005219.2:p.P753_I759del
+Neuronophagia
+NM_004985.3:c.38G>A
+NM_005228.3:c.2125_2129delGAAAC
+aneuploidies
+NM_004333.4:c.1789C>G
+NM_005228.3:c.2236_2253del18
+Clasmatodendrosis
+NP_005219.2:p.Gly719Asp
+NP_005219.2:p.P772_H773insYNP
+NP_005219.2:p.Val769_Asp770insGlyVal
+NM_005228.3:c.2232_2233ins18
+NP_005219.2:p.Leu861Phe
+NP_005219.2:p.Asp770_Asn771insAsnProHis
+NM_005228.3:c.2235_2246del12
+NP_006209.2:p.Glu545Ala
+NP_005219.2:p.S752_I759del
+NM_004333.4:c.1397G>C
+NM_004333.4:c.1397G>T
+NP_005219.2:p.Val769_Asp770insGlySerVal
+NP_005219.2:p.Asp770_Asn771insAsn
+cytotoxicity
+NP_004976.2:p.Gly12Leu
+NP_005219.2:p.A750_K754del
+NM_005228.3:c.2219_2220ins18
+NP_004976.2:p.Gly12Glu
+fragility
+NM_005228.3:c.2310_2311insAAC
+NP_005219.2:p.Val769_Asp770insAlaSerVal
+NM_004972.3:c.1848_1849delTGinsCT
+mosaicism
+NP_005219.2:p.Val774del
+NP_005219.2:p.V769_D770insCV
+NP_005219.2:p.Val774_Cys775insHisVal
+NM_004985.3:c.39C>T
+NM_004985.3:c.39C>G
+NM_004985.3:c.39C>A
+Hypodiploidy
+NP_005219.2:p.Ile744_Lys745insLysIleProValAlaIle
+NM_004333.4:1797_1799AGT>GAG
+NP_004963.12:p.Met929Ile
+NM_004985.3:c.34_35GG>AT
+NM_004985.3:c.34_35GG>AA
+NM_005228.3:c.2572C>A
+NM_005228.3:c.2572C>T
+NM_002524.4:c.182_183delAAinsGG
+NM_004972.3:c.2792A>G
+UV-Mutagenesis
+Mutant
+NM_005228.3:c.2254_2277del24
+NP_005219.2:p.Lys745_Glu749del
+NM_005228.3:c.2302_2303insTCCAGGAAGCCT
+NM_005228.3:c.2369C>T
+NP_006209.2:p.Glu542Lys
+NP_004976.2:p.Gln61Asp
+NP_006209.2:p.His1047Leu
+NP_005219.2:p.P772_H773insQV
+Endoreplications
+NM_005228.3:c.2308_2309insCCAGCGTGG
+NP_005219.2:p.Leu747_Pro753del
+NP_005219.2:p.Lys745_Ala750del
+NP_005219.2:p.Leu858Arg
+NM_005228.3:c.delGinsCCACGTG
+Anisokaryosis
+NP_006209.2:p.His1047Gln
+Hyperchromatism
+hypochromia
+NP_000132.3:p.C382R
+NM_005228.3:c.2311_2312ins12
+NP_005219.2:p.D770_N771insAPW
+hypochromasia
+Aneuploid
+NP_005219.2:p.Asp770fs*61
+NP_004324.2:p.Val600Leu
+NP_004324.2:p.Gly466Glu
+NM_004985.3:c.34_35GG>CT
+Karyorrhexis
+NP_005219.2:p.Leu747_Thr751del
+NP_005219.2:p.Thr751_Glu758del
+aneuploidy
+agus
+NP_005219.2:p.P772_H773insDNP
+Neurodegeneration
+NM_005228.3:c.2315_2316insGACACACCC
+tetrasomy
+NP_005219.2:p.Pro753_Ile759del
+NP_005219.2:p.V769_D770insGV
+NP_006197.1:p.D842V
+NM_004333.4:c.1790T>A
+NM_004333.4:c.1790T>G
+myelophthisis
+NP_005219.2:p.Ser752_Val769del
+NM_005228.3:c.2307_2308ins15
+NP_005219.2:p.N756_L760del
+NP_005219.2:p.Ile740_Pro741insProValAlaIleLysIle
+NP_005219.2:p.Leu747_Ala755del
+NP_004324.2:p.Val600Lys
+NP_005219.2:p.Asp770_Asn771insGlyLeu
+Endoreduplication
+NP_005219.2:p.Ser768_Val769insValAlaSer
+Aneuploidies
+NP_005219.2:p.P772_H773insDHP
+NP_005219.2:p.Glu746_Arg748del
+Nonsense
+Macrocytosis
+NM_004985.3:c.37_38delGGinsAA
+mutant
+NM_005228.3:c.2309_2310delACinsCCAGCGTGGAT
+NM_005228.3:c.2231_2232ins18
+NM_004448.2:c.2324_2325insATACGTGATGGC
+Tetraploid
+NM_004333.4:c.1797_1799delAGTinsGAG
+NP_006209.2:p.Cys420Arg
+NM_001014431.1:c.49G>A
+Neutrophils.hypersegmented
+NP_005219.2:p.H773_V774insNPH
+NP_004976.2:p.Gly12Arg
+NM_005228.3:c.2236_2237ins18
+NM_002524.4:c.183A>T
+NM_002524.4:c.183A>G
+NM_002524.4:c.183A>C
+NM_004333.4:c.1405_1406delGGinsTC
+NM_000141.4:c.1975A>G
+NP_001138385.1:p.Tyr376Cys

@@ -82,30 +82,6 @@ def transform_sample_stats(Xt, t, f, Xt_abs=None):
   m = (1. / (n_pred + 1e-8)) * (Xt.dot(t) - Xt.dot(f))
   p_correct = (m + 1) / 2
   return p_correct, n_pred
-    
-def pipeline_learn_elasticnet_logreg(LF, F, **kwargs):
-  """ Pipeline learning """
-  # Check data matrices
-  if F.shape[0] != LF.shape[0]:
-    raise ValueError("F and LF have different number of rows")
-  N, D, R = F.shape[0], F.shape[1], LF.shape[1]
-  # Get options
-  opts = pipeline_learning_opts(N, D, R, kwargs)
-  # Learn LF weights  
-  lf_m = opts.lf_args['mu']
-  if opts.lf_args['verbose']:
-    lf_rate = opts.lf_args['rate']
-    print "Learning LF accuracies with mu={}, rate={}".format(lf_m, lf_rate)
-  lf_weights = learn_elasticnet_logreg(X=LF, **opts.lf_args)
-  marginals = odds_to_prob(np.ravel(LF.dot(lf_weights)))
-  # Learn feature weights
-  
-  if opts.feats_args['verbose']:
-    feat_rate = opts.feat_args['rate']
-    print "Learning feature weights with rate={}".format(feat_rate)
-  feat_weights = learn_elasticnet_logreg(X=F, marginals=marginals,
-                                               **opts.feats_args)
-  return lf_weights, feat_weights
 
 def learn_elasticnet_logreg(X, n_iter=500, w0=None, rate=DEFAULT_RATE, 
                             alpha=DEFAULT_ALPHA, mu=DEFAULT_MU, 

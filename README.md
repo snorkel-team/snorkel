@@ -315,7 +315,7 @@ Update coming...
 | `verbose` | `True` | `bool` | Print information during training? |
 | `maxlen` | `100` | `int` | Max input length |
 | `contain_mention` | `True` | `bool` | Use mentions for training? |
-| `word_window_length` | `0` | `int` | Use words in window of size `word_window_length` around mentions |
+| `word_window_length` | `0` | `int` | Use words in window of size `word_window_length` around mentions. Here is the definition of [word window](http://web.stanford.edu/~jurafsky/mintz.pdf)|
 |`ignore_case` | `True` | `bool` | Ignore case? |
 
 

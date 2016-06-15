@@ -681,7 +681,7 @@ class DDLiteModel:
     self.lf_names = []
     # Model probabilities
     self.model = None
-    self.probabilities = None
+    self.marginals = None
     self.lf_marginals = None
     self.lf_weights = None
     # GT data
@@ -1069,7 +1069,7 @@ class DDLiteModel:
       weights[mu] = learn_elasticnet_logreg(F[tc,:], mu=mu, **kwargs)
     # Results
     if len(weights) == 1:
-      self.probabilities = odds_to_prob(np.ravel(F.dot(weights[mu_seq[0]])))
+      self.marginals = odds_to_prob(np.ravel(F.dot(weights[mu_seq[0]])))
     else:
       w_fit = OrderedDict()
       gt = self.gt._gt_vec[self.validation()]
@@ -1083,7 +1083,7 @@ class DDLiteModel:
         w_fit[mu] = ValidatedFit(w, prec, rec, f1)
         if f1 >= f1_opt:
           w_opt, f1_opt, mu_opt = w, f1, mu
-      self.probabilities = odds_to_prob(np.ravel(F.dot(w_opt)))
+      self.marginals = odds_to_prob(np.ravel(F.dot(w_opt)))
       if plot:
         self.plot_lr_diagnostics(w_fit, mu_opt, f1_opt)
     if log:
@@ -1153,14 +1153,14 @@ class DDLiteModel:
       raise ValueError("subset must be 'test', 'validation', or an array of\
                        indices 0 <= i < {}".format(self.num_candidates()))
 
-  def get_predicted_probability(self, subset=None):
+  def get_predicted_marginals(self, subset=None):
     """
     Get array of predicted probabilities (continuous) given weights
     Return either all candidates, a specified subset, or only validation/test set
     """
-    return self._prob_sub(self.probabilities, subset)
+    return self._prob_sub(self.marginals, subset)
  
-  def get_lf_predicted_probability(self, subset=None):
+  def get_lf_predicted_marginals(self, subset=None):
     """
     Get array of predicted probabilities (continuous) given LF weights
     Return either all candidates, a specified subset, or only validation/test set
@@ -1172,14 +1172,14 @@ class DDLiteModel:
     Get the array of predicted (boolean) variables given weights
     Return either all variables, a specified subset, or only validation/test set
     """
-    return np.sign(self.get_predicted_probability(subset) - 0.5)
+    return np.sign(self.get_predicted_marginals(subset) - 0.5)
     
   def get_lf_predicted(self, subset=None):
     """
     Get the array of predicted (boolean) variables given LF weights
     Return either all variables, a specified subset, or only validation/test set
     """
-    return np.sign(self.get_lf_predicted_probability(subset) - 0.5)
+    return np.sign(self.get_lf_predicted_marginals(subset) - 0.5)
 
   def get_classification_accuracy(self, subset=None):
     """
@@ -1218,7 +1218,7 @@ class DDLiteModel:
     n_plots = 1 + has_test + (has_test and has_gt)
     # Whole set histogram
     plt.subplot(1,n_plots,1)
-    probs = self.get_predicted_probability()
+    probs = self.get_predicted_marginals()
     self._plot_prediction_probability(probs)
     plt.title("(a) # Predictions (whole set)")
     # Hold out histogram
@@ -1248,7 +1248,7 @@ class DDLiteModel:
     elif num_sample:
       raise ValueError("Number of samples is integer or None")
     try:
-      probs = self.get_predicted_probability(subset=self._current_mindtagger_samples)
+      probs = self.get_predicted_marginals(subset=self._current_mindtagger_samples)
     except:
       probs = [None for _ in xrange(len(self._current_mindtagger_samples))]
     tags_l = self.gt._gt_vec[self._current_mindtagger_samples]

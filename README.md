@@ -231,11 +231,8 @@ Update coming...
 |`logger`| `ModelLogger` object |
 |`lf_matrix`| Labeling function matrix |
 |`lf_names`| Labeling functions names |
-|`X`| Joint LF and feature matrix |
-|`w`| Learned weights|
 |`gt`| `CandidateGT` object|
 |`mindtagger_instance`| `MindTaggerInstance` object |
-|`use_lfs` | Use LF weights for prediction?|
 |`model` | Last model type learned |
 
 |**Method**|**Notes**|
@@ -264,16 +261,11 @@ Update coming...
 |`lowest_coverage_lfs(n=10)` | Show the `n` LFs with lowest coverage |
 |`lowest_empirical_accuracy_lfs(n=10)` | Show the `n` LFs with the lowest empirical accuracy against ground truth for candidates in the devset |
 |`lf_summary_table()` | Print a table with summary statistics for each LF |
-|`learn_weights(**kwargs)` | See [Learning in DDLite](#learnopts) below |
-|`learn_weights_validated(**kwargs)` | Wrapper for `learn_weights()`|
-|`set_use_lfs(use=True)` | Setter for using LF weights in prediction |
-|`get_log_odds(subset=None)` | Get log odds values for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) |
-|`get_predicted_probability(subset=None)` | Get predicted probabilities for candidates |
-|`get_predicted(subset=None)` | Get predicted responses for candidates |
-|`get_log_odds_lf(subset=None)` | Get log odds values for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) using only LFs|
-|`get_predicted_probability_lf(subset=None)` | Get predicted probabilities for candidates using only LFs |
-|`get_predicted_lf(subset=None)` | Get predicted responses for candidates using only LFs|
-
+|`train_model(method="lr", lf_opts, model_opts)` | See [Learning in DDLite](#learnopts) below |
+|`get_predicted_marginals(subset=None)` | Get predicted marginal probabilities for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) |
+|`get_lf_predicted_marginals(subset=None)` | Get predicted marginal probabilities for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) using only LFs|
+|`get_predicted(subset=None)` | Get predicted response for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) |
+|`get_lf_predicted(subset=None)` | Get predicted response for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) using only LFs |
 |`get_classification_accuracy(subset=None)` | Get classification accuracy over `subset` against ground truth |
 |`plot_calibration()` | Show DeepDive calibration plots |
 |`open_mindtagger(num_sample=None, abstain=False, **kwargs)` | Open MindTagger portal for labeling; sample is either the last sample (`num_sample=None`) or a random sample of size `num_sample`; if `abstain=True` show only canidates which haven't been labeled by any LF |
@@ -282,52 +274,41 @@ Update coming...
 |`show_log(idx=None)` | Show all learning results (`idx=None`) or learning result `idx` | 
 
 ## Learning in DDLite<a name="learnopts"></a>
-DDLite provides a number of options for learning predictive models. The simplest option is to just `DDLiteModel.learn_weights()`, but the results probably won't be so hot using only default values. There are two important decisions to make before setting other parameters.
+DDLite provides a number of options for learning predictive models. The simplest option is to just `DDLiteModel.train_model()`, but this uses only default parameter values. `DDLiteModel.train_model` accepts the following arguments
 
-* **Pipeline or joint learning?** In the pipeline learning approach, the LF accuracies are learned separately from the feature weights. These are the "LF stage" and "feature stage", respectively. In the joint learning approach, the LF accuracies and feature weights are learned at the same time. We suggest using pipeline (`pipeline=True`) since it's more flexible than the joint approach (`pipeline=False`); pipeline is also the default.
-* **Use a validation set?** The regularization parameter can be tuned automatically. This requires a validation set to be defined using `DDLiteModel.set_holdout(validation_frac=p)` with `p > 0`, and either multiple or no values passed as the regularization parameter.
+| **Parameter** | **Default value** | **Type** | **Notes**|
+|:---------|:--------|:---------|:--------|
+| `method` | `"lr"`, logistic regression | `str` | DDLite currently only supports logistic regression |
+| `lf_opts` | `dict()` | `dict` | Options passed to `DDLiteModel.learn_lf_accuracies` |
+| `model_opts` | `dict()` | `dict` | Options passed to model training function (from `method`) |
 
- The rest of the parameters are as follows.
+The following parameters can be passed to `DDLiteModel.learn_lf_accuracies`, which executes the first stage of the data programming learning pipeline.
 
-### Common parameters to both joint and pipeline
+| **Parameter** | **Default value** | **Type** | **Notes**|
+|:---------|:--------|:---------|:--------|
+| `n_iter` | `500` | `int` | Number of gradient descent iterations |
+| `initial_mult` | `1` | `float` | Value by which to multiply the initial weights, which are all 1 by default |
+| `rate` | `0.01` | `float` | Learning rate |
+| `mu` | `1e-7`, non-negative | `float` | Ridge regularization parameter |
+|`sample` | `True` | `bool` | Use mini-batch SGD or full gradient? |
+|`n_samples` | `100` | `int` | Number of samples in mini-batch |
+| `verbose` | `True` | `bool` | Print information during training? |
+
+For the logistic regression model (`DDLiteModel.train_model(method="lr", ...)`), the regularization parameter can be tuned automatically. This requires a validation set defined using `DDLiteModel.set_holdout(validation_frac=p)` with `p > 0`, and either multiple or no values passed as the regularization parameter. The rest of the parameters passed to the logistic regression model via `model_opts` are as follows:
 
 | **Parameter** | **Default value** | **Type** | **Notes** |
 |:---------|:--------|:---------|:--------|
-| `mu` | Set automatically if validation set,</br>or `1e-7` if no validation set | `float` or array-like, all non-negative | Sequence of or single regularization parameter</br>to use when training with features |
+| `mu` | Set automatically if validation set,</br>or `1e-9` if no validation set | `float` or array-like, all non-negative | Sequence of or single regularization parameter</br>to use when training with features |
+| `n_mu` | `5` | `int` | Number of `mu` values to fit if `mu` is `None` |
+|`mu_min_ratio` | `1e-6` | `float` | Ratio of smallest to largest `mu` values to fit if `mu` is `None` |
 | `bias` | `False` | `bool` | Include a bias term? |
-| `use_sparse` | `True` | `bool` | Use sparse matrix operations? |
+| `n_iter` | `500` | `int` | Number of gradient descent iterations |
+| `rate` | `0.01` | `float` | Learning rate |
+| `tol` | `1e-6` | `float` | Threshold of gradient-to-weights ratio to stop learning |
+|`alpha` | `0` | `float`, in `[0,1]` | Elastic-net mixing parameter (`0` is ridge, `1` is lasso) |
+|`warm_starts`| `False` | `bool`| Use warm starts if multiple `mu` values? |
+|`sample` | `True` | `bool` | Use mini-batch SGD or full gradient? |
+|`n_samples` | `100` | `int` | Number of samples in mini-batch |
 | `verbose` | `False` | `bool` | Print information during training? |
 | `plot` | `True` | `bool` | If using validation set to tune, show a diagnostic plot? |
 | `log` | `True` | `bool` | Log the learning results? |
-| `tol` | `1e-6` | `float` | Threshold of gradient-to-weights ratio to stop learning |
-|`sample` | `True` | `bool` | Use mini-batch SGD or full gradient? |
-|`n_samples` | `100` | `int` | Number of samples in mini-batch |
-|`alpha` | `0` | `float`, in `[0,1]` | Elastic-net mixing parameter (`0` is ridge, `1` is lasso) for feature training |
-|`warm_starts`| `False` | `bool`| Use warm starts if multiple `mu` values? |
-
-
-### Parameters for pipeline learning
-
-| **Parameter** | **Default value** | **Type** | **Notes** |
-|:---------|:--------|:---------|:--------|
-| `n_iter` | `500` | `int` | Default number of iterations for both stages |
-| `n_iter_lf` | `n_iter` | `int` | Number of iterations for LF stage |
-| `n_iter_feats` | `n_iter` | `int` | Number of iterations for feature stage |
-| `w0_mult_lf` | `1` | `float` | Multiplier for initial LF weights (`1` or `3` are typical) | 
-| `alpha_feats` | `alpha` | `float` | Same as `alpha` |
-| `rate` | `0.01` | `float` | Default learning rate for both stages |
-| `rate_lf` | `rate` | `float` | Learning rate for LF stage |
-| `rate_feats` | `rate` | `float` | Learning rate for feature stage |
-| `warm_starts_feats` | `warm_starts` | `bool` | Same as `warm_starts` |
-| `mu_lf` | `1e-7`, non-negative | `float` | Regularization parameter for LF stage |
-|`mu_seq_feats` | `mu` | `float` or array-like, all non-negative | Same as `mu`|
-| `n_mu_feats` | `5` | `int` | Number of `mu` values to fit if `mu` is `None` |
-|`mu_min_ratio_feats` | `1e-6` | `float` | Ratio of smallest to largest `mu` values to fit if `mu` is `None` |
-
-### Parameters for joint learning
-
-| **Parameter** | **Default value** | **Notes** |
-| `n_iter` | `500` | `int` | Number of iterations |
-| `rate` | `0.01` | `float` | Learning rate |
-| `n_mu` | `5` | `int` | Number of `mu` values to fit if `mu` is `None` |
-|`mu_min_ratio` | `1e-6` | `float` | Ratio of smallest to largest `mu` values to fit if `mu` is `None` |

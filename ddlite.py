@@ -1598,59 +1598,116 @@ class DDLiteModel:
     for id, p in pred:
       self.lstm_pred[id]=p
 
-  def get_word_dict(self):
+  def get_word_dict(self, contain_mention, word_window_length, ignore_case):
     """
     Get array of training word sequences
     Return word dictionary
     """
     lstm_dict = {'__place_holder__':0, '__unknown__':1}
     if type(self.C) is Entities:
-      words = list(set([i.lower() for idx in self.training() for i in self.C[idx].mention()]))
+      words=[]
+      for i in self.training():
+        min_idx=min(self.C._candidates[i].idxs)
+        max_idx=max(self.C._candidates[i].idxs)+1
+        length=len(self.C._candidates[i].words)
+        lw= range(max(0,min_idx-word_window_length), min_idx)
+        rw= range(max_idx,min(max_idx+word_window_length, length))
+        m=self.C._candidates[i].idxs
+        w=np.array(self.C._candidates[i].words)
+        m=w[m] if contain_mention else []
+        seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m,w[rw]))]
+        words +=seq
+      words = list(set(words))
       for i in range(len(words)):
         lstm_dict[words[i]]=i+2
       self.word_dict=lstm_dict
     if type(self.C) is Relations:
       words=[]
-      for idx in self.training():
-        e1_idxs=self.C._candidates[idx].e1_idxs
-        e2_idxs=self.C._candidates[idx].e2_idxs
+      for i in self.training():
+        e1_idxs=self.C._candidates[i].e1_idxs
+        e2_idxs=self.C._candidates[i].e2_idxs
         if (int(min(e1_idxs))>int(max(e2_idxs)) or int(min(e2_idxs))>int(max(e1_idxs))):
           pass
         else:
           continue
         start_idx = min(int(max(e1_idxs)), int(max(e2_idxs)))+1
         end_idx = max(int(min(e1_idxs)), int(min(e2_idxs)))
-        words+=self.C._candidates[idx].words[start_idx:end_idx]
+        min_idx=min(min(e1_idxs), min(e2_idxs))
+        max_idx=max(max(e1_idxs), max(e2_idxs))+1
+        length=len(self.C._candidates[i].words)
+        lw=range(max(0,min_idx-word_window_length), min_idx)
+        rw=range(max_idx,min(max_idx+word_window_length, length))
+        w=np.array(self.C._candidates[i].words)
+        if contain_mention:
+          if min(e1_idxs) < min(e2_idxs):
+            m1,m2=w[e1_idxs],w[e2_idxs]
+          else:
+            m1,m2=w[e2_idxs],w[e1_idxs]
+        else:
+          m1,m2=[],[]
+        wq=self.C._candidates[i].words[start_idx:end_idx]
+        seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m1,wq,m2,w[rw]))]
+        words+=seq
       words=list(set(words))
       for i in range(len(words)):
         lstm_dict[words[i]]=i+2
       self.word_dict=lstm_dict
 
-  def map_word_to_id(self):
+  def map_word_to_id(self, contain_mention, word_window_length, ignore_case):
     """
     Get array of candidate word sequences given word dictionary
     Return array of candidate id sequences
     """
     self.lstm_X=[]
     if type(self.C) is Entities:
-      for idx in range(self.num_candidates()):
-        x=[0]+[self.word_dict[i.lower()] if i.lower() in self.word_dict else 1 for i in self.C[idx].mention()]+[0]
+      words=[]
+      for i in range(self.num_candidates()):
+        min_idx=min(self.C._candidates[i].idxs)
+        max_idx=max(self.C._candidates[i].idxs)+1
+        length=len(self.C._candidates[i].words)
+        lw= range(max(0,min_idx-word_window_length), min_idx)
+        rw= range(max_idx,min(max_idx+word_window_length, length))
+        m=self.C._candidates[i].idxs
+        w=np.array(self.C._candidates[i].words)
+        m=w[m] if contain_mention else ['__place_holder__']
+        seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m,w[rw]))]
+        x=[0]+[self.word_dict[j] if j in self.word_dict else 1 for j in seq]+[0]
         self.lstm_X.append(x)
     if type(self.C) is Relations:
       words=[]
-      for idx in range(self.num_candidates()):
-        e1_idxs=self.C._candidates[idx].e1_idxs
-        e2_idxs=self.C._candidates[idx].e2_idxs
+      for i in range(self.num_candidates()):
+        e1_idxs=self.C._candidates[i].e1_idxs
+        e2_idxs=self.C._candidates[i].e2_idxs
         if (int(min(e1_idxs))>int(max(e2_idxs)) or int(min(e2_idxs))>int(max(e1_idxs))):
           pass
         else:
+          self.lstm_X.append([0])
           continue
         start_idx = min(int(max(e1_idxs)), int(max(e2_idxs)))+1
         end_idx = max(int(min(e1_idxs)), int(min(e2_idxs)))
-        x=[0]+[self.word_dict[i.lower()] if i.lower() in self.word_dict else 1 for i in self.C._candidates[idx].words[start_idx:end_idx]]+[0]
+        min_idx=min(min(e1_idxs), min(e2_idxs))
+        max_idx=max(max(e1_idxs), max(e2_idxs))+1
+        length=len(self.C._candidates[i].words)
+        lw=range(max(0,min_idx-word_window_length), min_idx)
+        rw=range(max_idx,min(max_idx+word_window_length, length))
+        w=np.array(self.C._candidates[i].words)
+        if contain_mention:
+          if min(e1_idxs) < min(e2_idxs):
+            m1,m2=w[e1_idxs],w[e2_idxs]
+          else:
+            m1,m2=w[e2_idxs],w[e1_idxs]
+        else:
+          m1,m2=['__place_holder__'],['__place_holder__']
+        wq=self.C._candidates[i].words[start_idx:end_idx]
+        seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m1,wq,m2,w[rw]))]
+        x=[0]+[self.word_dict[j] if j in self.word_dict else 1 for j in seq]+[0]
         self.lstm_X.append(x)
 
   def lstm_learn_weights(self, **kwargs):
+    contain_mention=kwargs.get('contain_mention', True)
+    word_window_length=kwargs.get('word_window_length', 0)
+    ignore_case=kwargs.get('ignore_case', True)
+
     dim = kwargs.get('dim', 50)
     batch_size = kwargs.get('batch_size', 100)
     learning_rate = kwargs.get('rate', 100)
@@ -1658,8 +1715,9 @@ class DDLiteModel:
     maxlen = kwargs.get('maxlen', 100)
     dropout = kwargs.get('dropout', True)
     verbose=kwargs.get('verbose', False)
-    self.get_word_dict()
-    self.map_word_to_id()
+
+    self.get_word_dict(contain_mention=contain_mention, word_window_length=word_window_length, ignore_case=ignore_case)
+    self.map_word_to_id(contain_mention=contain_mention, word_window_length=word_window_length, ignore_case=ignore_case)
     self.lstm(dim=dim, batch_size=batch_size, learning_rate=learning_rate, epoch=epoch, dropout=dropout, verbose=verbose, maxlen=maxlen)
 
 # Legacy name

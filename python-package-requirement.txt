@@ -6,3 +6,4 @@ numpy
 scipy
 bs4
 matplotlib
+theano

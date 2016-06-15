@@ -74,14 +74,13 @@ class TestLSTM(unittest.TestCase):
            LF_rna, LF_snp, LF_variant, LF_IN, LF_LRB]
     DDL.apply_lfs(LFs, clear=False)
 
-    mu_seq = np.ravel([1e-9, 1e-5, 1e-3, 1e-1])
-    DDL.learn_weights(sample=False, n_iter_lf=500, n_iter_feats=3000, mu_lf=1e-7, mu_seq_feats=mu_seq, verbose=True, w0_mult_lf=1, rate=0.01, alpha=0.5, bias=False)
-    idxs, self.gt = DDL.get_labeled_ground_truth(subset=DDL.holdout())
+    lf_opts = {'sample': False, 'verbose': True}
+    model_opts = {'n_iter': 300, 'verbose': True, 'contain_mention': True, 'word_window_length': 0, 'ignore_case': False}
+    DDL.train_model(method='lstm', lf_opts=lf_opts, model_opts=model_opts)
 
-    DDL.lstm_learn_weights(n_iter=300,verbose=True, contain_mention=True, word_window_length=0, ignore_case=False)
-    self.lstm_pred=np.array(DDL.lstm_pred)[DDL.holdout()]
-
-    self.assertGreaterEqual(np.mean(self.lstm_pred==self.gt), 0.7)
+    idxs, gt = DDL.get_labeled_ground_truth(subset=DDL.holdout())
+    acc = np.mean(DDL.get_predicted(subset=DDL.holdout()) == gt)
+    self.assertGreaterEqual(acc, 0.7)
 
 if __name__ == '__main__':
     unittest.main()

@@ -695,12 +695,6 @@ class DDLiteModel:
     self.mindtagger_instance = None
     # Status
     self.model = None
-    
-    # LSTM
-    self.lstm_X = None
-    self.lstm_pred = None
-    self.lstm_pred_prob = None
-
 
   #########################################################
   #################### Basic size info ####################
@@ -1099,14 +1093,18 @@ class DDLiteModel:
       return self.add_to_log()
     else:
       return None
-    
+
   def train_model(self, method="lr", lf_opts=dict(), model_opts=dict()):
     self.learn_lf_accuracies(**lf_opts)
     if method == "lr":
       return self.train_model_lr(**model_opts)
+    elif method == "lstm":
+      lstm = LSTM(self.C, self.training(), self.lf_marginals)
+      lstm.train_model_lstm(**model_opts)
+      self.marginals=lstm.marginals
     else:
       raise ValueError("Method {} not recognized. Options: \"lr\"").format(method)
-      
+
   def plot_lr_diagnostics(self, w_fit, mu_opt, f1_opt):
     """ Plot validation set performance for logistic regression regularization """
     mu_seq = sorted(w_fit.keys())
@@ -1293,17 +1291,6 @@ class DDLiteModel:
       return self.logger[idx]
     except:
       raise ValueError("Index must be for one of {} logs".format(len(self.logger)))
-
-  ######################################################
-  ######################## LSTM ########################
-  ######################################################
-
-  def lstm_learn_weights(self, **kwargs):
-    lstm = LSTM(self.C, self.training(), self.get_predicted_probability_lf())
-    lstm.learn_weights(**kwargs)
-    self.lstm_X = lstm.lstm_X
-    self.lstm_pred = lstm.lstm_pred
-    self.lstm_pred_prob = lstm.lstm_pred_prob
 
 # Legacy name
 CandidateModel = DDLiteModel

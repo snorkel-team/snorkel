@@ -23,10 +23,9 @@ class LSTM(object):
     self.lstm_params = None
     self.lstm_tparams = None
     self.lstm_settings = None
-    self.lstm_word_dict = None
     self.lstm_X = None
-    self.lstm_pred = None
-    self.lstm_pred_prob = None
+    self.word_dict = None
+    self.marginals = None
 
   def num_candidates(self):
     return len(self.C)
@@ -307,11 +306,9 @@ class LSTM(object):
     use_noise.set_value(0.)
     ids = self.mini_batches(len(test_data[0]), batch_size, shuffle=True)
     pred=self.pred_p(f_pred_prob, test_data, ids)
-    self.lstm_pred_prob = [0.]*len(pred)
-    self.lstm_pred = [0.]*len(pred)
+    self.marginals = np.array([0.]*len(pred))
     for id, p in pred:
-      self.lstm_pred_prob[id]=p
-      self.lstm_pred[id] = 1. if p>0.5 else -1.
+      self.marginals[id]=p
 
   def get_word_dict(self, contain_mention, word_window_length, ignore_case):
     """
@@ -418,7 +415,7 @@ class LSTM(object):
         x=[0]+[self.word_dict[j] if j in self.word_dict else 1 for j in seq]+[0]
         self.lstm_X.append(x)
 
-  def learn_weights(self, **kwargs):
+  def train_model_lstm(self, **kwargs):
     contain_mention=kwargs.get('contain_mention', True)
     word_window_length=kwargs.get('word_window_length', 0)
     ignore_case=kwargs.get('ignore_case', True)

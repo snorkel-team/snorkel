@@ -55,7 +55,7 @@ class SentenceParser:
             except:
               sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
-    def parse(self, doc, doc_id=None, doc_name=None):
+    def parse(self, doc, doc_id, doc_name=None):
         """Parse a raw document as a string into a list of sentences"""
         if len(doc.strip()) == 0:
             return

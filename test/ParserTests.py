@@ -14,17 +14,17 @@ class TestParsers(unittest.TestCase):
     def test_doc_parser(self):
         """ Basic tests for document parsers """
         d1 = DocParser('test/data/*.txt')
-        self.assertEqual(len(list(d1.parseDocs())), 3)
-        self.assertEqual(len(d1.parseDocSentences()), 3)
+        self.assertEqual(len(list(d1.readDocs())), 3)
+        self.assertEqual(len(d1.parseDocSentences()), 205)
         
         d2 = DocParser('test/data/')
-        self.assertEqual(len(list(d2.parseDocs())), 4)
+        self.assertEqual(len(list(d2.readDocs())), 4)
         
         d3 = DocParser('test/data/25075304.txt')
-        self.assertEqual(len(list(d3.parseDocs())), 1)
+        self.assertEqual(len(list(d3.readDocs())), 1)
         
-        d4 = DocParser('test/data/', HTMLParser())
-        self.assertEqual(len(list(d4.parseDocs())), 1)
+        d4 = DocParser('test/data/', HTMLReader())
+        self.assertEqual(len(list(d4.readDocs())), 1)
         self.assertEqual(len(list(d4.parseDocSentences()[0])), 47)
     
     def test_sentence_parser(self):

@@ -4,7 +4,7 @@ sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user
 
 env:
   global:
-    - NUMPY: 1.10
+    - NUMPY: 1.11
     - SCIPY: 0.17
 
 language:

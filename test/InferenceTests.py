@@ -73,10 +73,10 @@ class TestInference(unittest.TestCase):
         mu = 1e-4
         w_d = learn_elasticnet_logreg(X=X, n_iter=2500, tol=1e-4, w0=w0,
                                       sample=False, alpha=self.ridge,
-                                      mu_seq=mu, rate=0.01, verbose=True)
+                                      mu=mu, rate=0.01, verbose=True)
         w_s = learn_elasticnet_logreg(X=X, n_iter=2500, tol=1e-4, w0=w0,
                                       sample=True, n_samples=200,
-                                      alpha=self.ridge, mu_seq=mu, rate=0.01,
+                                      alpha=self.ridge, mu=mu, rate=0.01,
                                       verbose=True)
         # Check sample marginals are close to deterministic solutio
         ld, ls = odds_to_prob(X.dot(w_d)), odds_to_prob(X.dot(w_s))

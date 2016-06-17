@@ -31,6 +31,9 @@ from ddlite_mindtagger import *
 from ddlite_learning import learn_elasticnet_logreg, odds_to_prob, get_mu_seq,\
                             DEFAULT_RATE, DEFAULT_MU, DEFAULT_ALPHA
 
+# ddlite LSTM
+from ddlite_lstm import *
+
 #####################################################################
 ############################ TAGGING UTILS ##########################
 #####################################################################
@@ -692,7 +695,7 @@ class DDLiteModel:
     self.mindtagger_instance = None
     # Status
     self.model = None
-    
+
   #########################################################
   #################### Basic size info ####################
   #########################################################
@@ -1042,7 +1045,7 @@ class DDLiteModel:
     F = self.feats.tocsr()
     if bias:
       F = sparse.hstack([F, np.ones((F.shape[0],1))], format='csr')
-    kwargs['w0'] = np.zeros(F.shape[1] + bias)
+    kwargs['w0'] = np.zeros(F.shape[1])
     kwargs['unreg'] = [F.shape[1]-1] if bias else []
     # Handle mu values
     mu_seq = kwargs.get('mu', None)
@@ -1090,14 +1093,18 @@ class DDLiteModel:
       return self.add_to_log()
     else:
       return None
-    
+
   def train_model(self, method="lr", lf_opts=dict(), model_opts=dict()):
     self.learn_lf_accuracies(**lf_opts)
     if method == "lr":
       return self.train_model_lr(**model_opts)
+    elif method == "lstm":
+      lstm = LSTM(self.C, self.training(), self.lf_marginals)
+      lstm.train_model_lstm(**model_opts)
+      self.marginals=lstm.marginals
     else:
       raise ValueError("Method {} not recognized. Options: \"lr\"").format(method)
-      
+
   def plot_lr_diagnostics(self, w_fit, mu_opt, f1_opt):
     """ Plot validation set performance for logistic regression regularization """
     mu_seq = sorted(w_fit.keys())
@@ -1325,3 +1332,4 @@ def main():
 
 if __name__ == '__main__':
   main()
+

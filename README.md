@@ -34,6 +34,7 @@ DeepDive Lite requires [a few python packages](python-package-requirement.txt) i
 * [numpy](http://docs.scipy.org/doc/numpy-1.10.1/user/install.html)
 * [scipy](http://www.scipy.org/install.html)
 * [matplotlib](http://matplotlib.org/users/installing.html)
+* [theano](http://deeplearning.net/software/theano/install.html)
 
 We provide a simple way to install everything using `virtualenv`:
 
@@ -234,6 +235,9 @@ Update coming...
 |`gt`| `CandidateGT` object|
 |`mindtagger_instance`| `MindTaggerInstance` object |
 |`model` | Last model type learned |
+|`lstm_X` | LSTM feature matrix |
+|`lstm_pred` | LSTM predicted responses |
+|`lstm_pred_prob` | LSTM predicted probabilities |
 
 |**Method**|**Notes**|
 |:---------|:--------|
@@ -272,6 +276,48 @@ Update coming...
 |`add_mindtagger_tags()` | Import tags from current MindTagger session |
 |`add_to_log(log_id=None, subset='test', show=True)` | Add current learning result to log; precision and recall computed from ground truth in `subset` |
 |`show_log(idx=None)` | Show all learning results (`idx=None`) or learning result `idx` | 
+
+### **ddlite_lstm.py**
+
+#### Class: LSTM
+|**Member**|**Notes**|
+|:---------|:--------|
+|`C`| `Candidates` object |
+|`training`| Training set |
+|`lf_probs`| Labeling function marginal probabilities |
+|`lstm_SEED`| Random seed |
+|`lstm_params`| Parameter object |
+|`lstm_tparams`| Theano parameter object |
+|`lstm_settings`| Settings |
+|`lstm_word_dict`| Word dictionary |
+|`lstm_X` | Feature matrix |
+|`lstm_pred` | Predicted responses |
+|`lstm_pred_prob` | Predicted probabilities |
+
+|**Method**|**Notes**|
+|:---------|:--------|
+|`num_candidates()` ||
+|`build_lstm()` | Build LSTM model given settings|
+|`pred_p()` | Get predicted probabilities |
+|`lstm()` | Train and test LSTM |
+|`get_word_dict()` | Get word dictionary from training data |
+|`map_word_to_id()` | Get feature matrix |
+
+#### Parameters for LSTM
+
+| **Parameter** | **Default value** | **Type** | **Notes** |
+|:---------|:--------|:---------|:--------|
+| `n_iter` | `300` | `int` | Default number of iterations |
+| `rate` | `0.01` | `float` | Default learning rate |
+| `batch_size` | `100` | `int` | Default batch size |
+| `dim` | `50` | `int` | Default word embedding dimension |
+| `dropout` | `True` | `bool` | Use dropout? |
+| `verbose` | `True` | `bool` | Print information during training? |
+| `maxlen` | `100` | `int` | Max input length |
+| `contain_mention` | `True` | `bool` | Use mentions for training? |
+| `word_window_length` | `0` | `int` | Use words in window of size `word_window_length` around mentions. Here is the definition of [word window](http://web.stanford.edu/~jurafsky/mintz.pdf)|
+|`ignore_case` | `True` | `bool` | Ignore case? |
+
 
 ## Learning in DDLite<a name="learnopts"></a>
 DDLite provides a number of options for learning predictive models. The simplest option is to just `DDLiteModel.train_model()`, but this uses only default parameter values. `DDLiteModel.train_model` accepts the following arguments

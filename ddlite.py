@@ -1045,7 +1045,7 @@ class DDLiteModel:
     F = self.feats.tocsr()
     if bias:
       F = sparse.hstack([F, np.ones((F.shape[0],1))], format='csr')
-    kwargs['w0'] = np.zeros(F.shape[1] + bias)
+    kwargs['w0'] = np.zeros(F.shape[1])
     kwargs['unreg'] = [F.shape[1]-1] if bias else []
     # Handle mu values
     mu_seq = kwargs.get('mu', None)

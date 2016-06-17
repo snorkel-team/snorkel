@@ -3,6 +3,8 @@ import os, sys, unittest, cPickle
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from ddlite import *
 
+os.chdir(sys.path[0])
+
 class TestLSTM(unittest.TestCase):
 
   def test_accuracy(self):

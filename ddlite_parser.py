@@ -169,7 +169,8 @@ class DocParser:
         if os.path.isfile(self.path):
             return [self.path]
         elif os.path.isdir(self.path):
-            return [os.path.join(self.path, f) for f in os.listdir(self.path)]
+            return filter(lambda x: os.path.isfile(x),
+                          [os.path.join(self.path, f) for f in os.listdir(self.path)])
         else:
             return glob.glob(self.path)
             

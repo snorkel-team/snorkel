@@ -69,6 +69,7 @@ script:
   - python test/MatcherTests.py
   - python test/InferenceTests.py
   - python test/LSTMTests.py
+  - python test/ParserTests.py
   # Run notebooks end-to-end
   - runipy examples/GeneTaggerExample_Extraction.ipynb  
   - runipy examples/GeneTaggerExample_Learning.ipynb

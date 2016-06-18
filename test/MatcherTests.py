@@ -5,13 +5,20 @@ import ddlite_matcher
 from ddlite_parser import SentenceParser
 
 class TestMatchers(unittest.TestCase):
-    
+
+    @classmethod
+    def setUpClass(cls):
+        cls.sp = SentenceParser()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.sp._kill_pserver()
+
     def setUp(self):
         
         with open('test/data_matcher/cc_kurt.txt', 'rb') as f:
             self.txt = f.read()
-        sp = SentenceParser()
-        self.sents = list(sp.parse(self.txt, doc_id=1))
+        self.sents = list(self.sp.parse(self.txt, doc_id=1))
         
         with open('test/data_matcher/dict1.txt', 'rb') as g:
             self.d1 = [line.strip() for line in g.readlines()]

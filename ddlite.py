@@ -1302,7 +1302,7 @@ CandidateModel = DDLiteModel
 def main():
   txt = "Han likes Luke and a good-wookie. Han Solo don\'t like bounty hunters."
   parser = SentenceParser()
-  sents = list(parser.parse(txt))
+  sents = list(parser.parse(txt, 'doc1'))
 
   g = DictionaryMatch(label='G', dictionary=['Han Solo', 'Luke', 'wookie'])
   b = DictionaryMatch(label='B', dictionary=['Bounty Hunters'])

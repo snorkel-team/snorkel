@@ -29,7 +29,7 @@ class SentenceParser:
         self.port = 12345
 	self.tok_whitespace = tok_whitespace
         loc = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'parser')
-        cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
+        cmd = ['java -Djava.io.tmpdir=/tmp -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
         props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else "" 
@@ -51,9 +51,14 @@ class SentenceParser:
     def _kill_pserver(self):
         if self.server_pid is not None:
             try:
-              os.kill(self.server_pid, signal.SIGTERM)
+                if os.path.isfile('/tmp/corenlp.shutdown'):
+                    shutdown_key = open('/tmp/corenlp.shutdown').read()
+                    resp = self.requests_session.get('http://127.0.0.1:%d/shutdown?key=%s' % (self.port, shutdown_key))
+                    print('shutdown: ' + resp.content.strip())
+                os.kill(self.server_pid, signal.SIGTERM)
+                self.server_pid = None
             except:
-              sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
+                sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
     def parse(self, doc, doc_id, doc_name=None):
         """Parse a raw document as a string into a list of sentences"""
@@ -135,12 +140,16 @@ Wrapper for a FileTypeParser that parses a file, directory, or pattern
 Defaults to using TextParser
 '''
 class DocParser: 
-    def __init__(self, path, ftreader = TextReader()):
+    def __init__(self, path, ftreader = TextReader(), sp=None):
         self.path = path
         if not issubclass(ftreader.__class__, FileTypeReader):
             warnings.warn("File parser is not a subclass of FileTypeParser")
         self._ftreader = ftreader
         self._fs = self._get_files()
+        if sp is None:
+            self.sp = SentenceParser()
+        else:
+            self.sp = sp
         
     # Parse all docs parseable by passed file type parser
     def readDocs(self):
@@ -153,15 +162,15 @@ class DocParser:
     
     # Use SentenceParser to return parsed sentences
     def parseDocSentences(self):
-        sp = SentenceParser()
         return [sent for doc_name, txt in self.readDocs()
-                for sent in sp.parse(txt, doc_name, doc_name)]
+                for sent in self.sp.parse(txt, doc_name, doc_name)]
     
     def _get_files(self):
         if os.path.isfile(self.path):
             return [self.path]
         elif os.path.isdir(self.path):
-            return [os.path.join(self.path, f) for f in os.listdir(self.path)]
+            return filter(lambda x: os.path.isfile(x),
+                          [os.path.join(self.path, f) for f in os.listdir(self.path)])
         else:
             return glob.glob(self.path)
             

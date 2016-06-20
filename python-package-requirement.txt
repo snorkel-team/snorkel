@@ -2,8 +2,8 @@ jupyter
 nltk
 lxml
 requests
-numpy
-scipy
+numpy>=1.11
+scipy>=0.17
 bs4
 matplotlib
 theano

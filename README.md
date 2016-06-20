@@ -63,7 +63,7 @@ jupyter notebook examples/GeneTaggerExample_Extraction.ipynb
 ```
 
 ## Learning how to use DeepDive Lite
-The best way to learn how to use is to open up the demo notebooks in the **examples** folder. **GeneTaggerExample_Extraction.ipynb** walks through the candidate extraction workflow for an entity tagging task. **GeneTaggerExample_Learning.ipynb** picks up where the extraction notebook left off. The learning notebook demonstrates the labeling function iteration workflow and learning methods. For examples of extracting relations, see **GenePhenRelationExample_Extraction.ipynb** and **GenePhenRelationExample_Learning.ipynb**.
+The best way to learn how to use is to open up the demo notebooks in the **[examples](https://github.com/HazyResearch/ddlite/tree/master/examples)** folder. **[GeneTaggerExample_Extraction.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GeneTaggerExample_Extraction.ipynb)** walks through the candidate extraction workflow for an entity tagging task. **[GeneTaggerExample_Learning.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GeneTaggerExample_Learning.ipynb)** picks up where the extraction notebook left off. The learning notebook demonstrates the labeling function iteration workflow and learning methods. For examples of extracting relations, see **[GenePhenRelationExample_Extraction.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GenePhenRelationExample_Extraction.ipynb)** and **GenePhenRelationExample_Learning.ipynb**.
 
 ## Best practices for labeling function iteration
 The flowchart below illustrates the labeling function iteration workflow.

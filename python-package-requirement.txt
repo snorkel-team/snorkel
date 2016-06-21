@@ -6,4 +6,4 @@ numpy>=1.11
 scipy>=0.17
 bs4
 matplotlib
-theano
+theano>=0.8.2

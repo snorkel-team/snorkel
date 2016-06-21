@@ -6,4 +6,4 @@ numpy
 scipy
 bs4
 matplotlib
-theano
+theano>=0.8.2

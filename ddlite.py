@@ -591,16 +591,16 @@ class CandidateGT:
         raise ValueError("Indexes must be in range [0, num_candidates()) or be\
                           boolean array of length num_candidates()")
     np.random.shuffle(h)
-    self.validation = h[ : np.floor(validation_frac * len(h))]
-    self.test = h[np.floor(validation_frac * len(h)) : ]
+    self.validation = h[ : int(np.floor(validation_frac * len(h)))]
+    self.test = h[int(np.floor(validation_frac * len(h))) : ]
     self._update_training()
     self._update_devs(self.dev_split)
     
   def _update_devs(self, dev_split):
     idxs,_ = self.get_labeled_ground_truth('training')
     np.random.shuffle(idxs)
-    self.dev1 = idxs[ : np.floor(dev_split * len(idxs))]
-    self.dev2 = idxs[np.floor(dev_split * len(idxs)) : ]
+    self.dev1 = idxs[ : int(np.floor(dev_split * len(idxs)))]
+    self.dev2 = idxs[int(np.floor(dev_split * len(idxs))) : ]
     
   def update_gt(self, gt, idxs=None, uids=None):
     """ Set ground truth for idxs XOR uids to gt. Updates dev sets. """

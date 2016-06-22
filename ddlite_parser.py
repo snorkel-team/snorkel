@@ -95,10 +95,10 @@ class SentenceParser:
             sent_id += 1
             yield sent
             
-'''
+"""
 Abstract base class for file type parsers
-Must implement method inidicating if file can be parsed and parser
-'''
+Must implement method indicating if file can be parsed and parser
+"""
 class FileTypeReader(object):
     def can_read(self, f):
         raise NotImplementedError()
@@ -107,9 +107,9 @@ class FileTypeReader(object):
     def _strip_special(self, s):
         return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
         
-'''
+"""
 Basic HTML parser using BeautifulSoup to return visible text
-'''
+"""
 class HTMLReader(FileTypeReader):
     def can_read(self, fp):
         return fp.endswith('.html')
@@ -125,9 +125,9 @@ class HTMLReader(FileTypeReader):
             return False
         return True
         
-'''
+"""
 Text parser for preprocessed files
-'''
+"""
 class TextReader(FileTypeReader):
     def can_read(self, fp):
         return True
@@ -135,10 +135,10 @@ class TextReader(FileTypeReader):
         with open(fp, 'rb') as f:
             return f.read()
 
-'''
+"""
 Wrapper for a FileTypeParser that parses a file, directory, or pattern
 Defaults to using TextParser
-'''
+"""
 class DocParser: 
     def __init__(self, path, ftreader = TextReader(), sp=None):
         self.path = path

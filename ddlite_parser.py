@@ -98,7 +98,7 @@ class XMLDocParser(DocParser):
             #except:
             #    print "Error parsing document #%s (id=%s) in file %s" % (i,id,file_name)
 
-Sentence = namedtuple('Sentence', ['words', 'lemmas', 'poses', 'dep_parents',
+Sentence = namedtuple('Sentence', ['id', 'words', 'lemmas', 'poses', 'dep_parents',
                                    'dep_labels', 'sent_id', 'doc_id', 'text',
                                    'char_offsets', 'doc_name'])
 
@@ -170,6 +170,7 @@ class SentenceParser:
             parts['text'] = s[block['tokens'][0]['characterOffsetBegin'] : 
                                 block['tokens'][-1]['characterOffsetEnd']]
             parts['doc_name'] = doc_name
+            parts['id'] = "%s-%s" % (parts['doc_id'], parts['sent_id'])
             sent = Sentence(**parts)
             sent_id += 1
             yield sent

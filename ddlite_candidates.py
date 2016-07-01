@@ -29,10 +29,9 @@ class Ngram(Candidate):
         # Inherit full sentence object (tranformed to dict) and check for necessary attribs
         self.s = sent if isinstance(sent, dict) else sent._asdict()
         REQ_ATTRIBS = ['id', WORDS]
-        if not all([s.has_key(a) for a in REQ_ATTRIBS]):
-            raise ValueError("Sentence object must have attributes %s to form Ngram object" \
-                    % ", ".join(REQ_ATTRIBS)
-        
+        if not all([self.s.has_key(a) for a in REQ_ATTRIBS]):
+            raise ValueError("Sentence object must have attributes %s to form Ngram object" % ", ".join(REQ_ATTRIBS))
+
         # Set basic object attributes
         self.id          = "%s_%s_%s" % (s['id'], char_offset, char_len)
         self.n           = n

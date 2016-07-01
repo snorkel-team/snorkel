@@ -33,7 +33,7 @@ class Ngram(Candidate):
             raise ValueError("Sentence object must have attributes %s to form Ngram object" % ", ".join(REQ_ATTRIBS))
 
         # Set basic object attributes
-        self.id          = "%s_%s_%s" % (s['id'], char_offset, char_len)
+        self.id          = "%s_%s_%s" % (self.s['id'], char_offset, char_len)
         self.n           = n
         self.char_offset = char_offset
         self.char_len    = char_len
@@ -41,7 +41,7 @@ class Ngram(Candidate):
     
     def get_attrib_tokens(self, a):
         """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""
-        return self.s[a][word_offset:word_offset+n]
+        return self.s[a][self.word_offset:self.word_offset+self.n]
     
     def get_attrib_span(self, a, sep=" "):
         """Get the span of sentence attribute _a_ over the range defined by word_offset, n"""
@@ -49,9 +49,12 @@ class Ngram(Candidate):
 
         # NOTE: Special behavior for words currently (due to correspondence with char_offsets)
         if a == WORDS:
-            return span[self.char_offset:self.char_offset+self.char_len]
+            return span[:self.char_len]
         else:
             return span
+        
+    def __repr__(self):
+        return '<Ngram("%s", id=%s, char_offset=%s, word_offset=%s)' % (self.get_attrib_span(WORDS), self.id, self.char_offset, self.word_offset)
 
 
 class Ngrams(CandidateSpace):

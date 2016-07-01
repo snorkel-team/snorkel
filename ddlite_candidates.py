@@ -17,20 +17,42 @@ class CandidateSpace(object):
         raise NotImplementedError()
 
 
+# Basic sentence attributes
+WORDS        = 'words'
+CHAR_OFFSETS = 'char_offsets'
+
+
 class Ngram(Candidate):
     """A span of _n_ tokens, identified by sentence id and character offset."""
-    def __init__(self, n, sentence_id, char_offset, char_len, words, sep=" ", word_offset=None):
-        self.id          = "%s_%s_%s" % (sentence_id, char_offset, char_len)
+    def __init__(self, char_offset, char_len, word_offset, n, sent):
+        
+        # Inherit full sentence object (tranformed to dict) and check for necessary attribs
+        self.s = sent if isinstance(sent, dict) else sent._asdict()
+        REQ_ATTRIBS = ['id', WORDS]
+        if not all([s.has_key(a) for a in REQ_ATTRIBS]):
+            raise ValueError("Sentence object must have attributes %s to form Ngram object" \
+                    % ", ".join(REQ_ATTRIBS)
+        
+        # Set basic object attributes
+        self.id          = "%s_%s_%s" % (s['id'], char_offset, char_len)
         self.n           = n
-        self.sentence_id = sentence_id
         self.char_offset = char_offset
         self.char_len    = char_len
         self.word_offset = word_offset
-        self.words       = words
-        
-        # Get the actual span indicated by char_offset and char_len
-        s           = sep.join(words) if isinstance(sep, str) else "".join(zip(words, sep))
-        self.string = s[:char_len]
+    
+    def get_attrib_tokens(self, a):
+        """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""
+        return self.s[a][word_offset:word_offset+n]
+    
+    def get_attrib_span(self, a, sep=" "):
+        """Get the span of sentence attribute _a_ over the range defined by word_offset, n"""
+        span = sep.join(self.get_attrib_tokens(a))
+
+        # NOTE: Special behavior for words currently (due to correspondence with char_offsets)
+        if a == WORDS:
+            return span[self.char_offset:self.char_offset+self.char_len]
+        else:
+            return span
 
 
 class Ngrams(CandidateSpace):
@@ -38,30 +60,21 @@ class Ngrams(CandidateSpace):
     Defines the space of candidates as all n-grams (n <= n_max) in a sentence _x_,
     indexing by **character offset**.
     """
-    def __init__(self, n_max=5, words_key='words', char_offsets_key='char_offsets'):
-        self.n_max         = n_max
-        self.words_key     = 'words'
-        self.char_idxs_key = 'char_offsets'
+    def __init__(self, n_max=5):
+        self.n_max = n_max
     
     def apply(self, x):
-        d = x if isinstance(x, dict) else x._asdict()
+        s = x if isinstance(x, dict) else x._asdict()
         try:
-            s_id    = d[id]
-            s_words = d[words_key]
-            s_cos   = d[char_offsets_key]
+            cos   = s[CHAR_OFFSETS]
+            words = s[WORDS]
         except:
-            print "Input object must have id, words and char_offset attributes:"
-            print "\n\twords_key='%s'\n\tchar_offsets_key='%s'" % (words_key, char_offsets_key)
-            raise ValueError()
+            raise ValueError("Input object must have %s, %s attributes" % (CHAR_OFFSET, WORDS))
 
         # Loop over all n-grams in **reverse** order (to facilitate longest-match semantics)
-        L = len(words)
+        L = len(cos)
         for l in range(1, self.n_max+1)[::-1]:
             for i in range(L-l+1):
-
-                # Use the full token spans--**with default separator**--by default
-                co    = s_cos[i]
-                words = [s_words[i] for i in range(i, i+l)]
-                cl    = len(' '.join(words))
-                yield Ngram(n=l, sentence_id=s_id, char_offset=co, char_len=cl, words=words, \
-                        word_offset=i)
+                ws = words[i:i+l] 
+                cl = len(' '.join(ws))  # NOTE: Use full ' '-separated word spans by default
+                yield Ngram(char_offset=cos[i], char_len=cl, word_offset=i, n=l, sent=s)

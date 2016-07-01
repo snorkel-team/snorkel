@@ -19,14 +19,18 @@ class CandidateSpace(object):
 
 class Ngram(Candidate):
     """A span of _n_ tokens, identified by sentence id and character offset."""
-    def __init__(self, n, sentence_id, char_offset, words, sep=" ", word_offset=None):
-        self.id          = "%s_%s_%s" % (sentence_id, char_offset, n)
+    def __init__(self, n, sentence_id, char_offset, char_len, words, sep=" ", word_offset=None):
+        self.id          = "%s_%s_%s" % (sentence_id, char_offset, char_len)
         self.n           = n
         self.sentence_id = sentence_id
         self.char_offset = char_offset
+        self.char_len    = char_len
         self.word_offset = word_offset
         self.words       = words
-        self.string      = sep.join(words) if isinstance(sep, str) else "".join(zip(words, sep))
+        
+        # Get the actual span indicated by char_offset and char_len
+        s           = sep.join(words) if isinstance(sep, str) else "".join(zip(words, sep))
+        self.string = s[:char_len]
 
 
 class Ngrams(CandidateSpace):
@@ -42,9 +46,9 @@ class Ngrams(CandidateSpace):
     def apply(self, x):
         d = x if isinstance(x, dict) else x._asdict()
         try:
-            sid          = d[id]
-            words        = d[words_key]
-            char_offsets = d[char_offsets_key]
+            s_id    = d[id]
+            s_words = d[words_key]
+            s_cos   = d[char_offsets_key]
         except:
             print "Input object must have id, words and char_offset attributes:"
             print "\n\twords_key='%s'\n\tchar_offsets_key='%s'" % (words_key, char_offsets_key)
@@ -54,5 +58,10 @@ class Ngrams(CandidateSpace):
         L = len(words)
         for l in range(1, self.n_max+1)[::-1]:
             for i in range(L-l+1):
-                yield Ngram(n=l, sentence_id=sid, char_offset=char_offsets[i], \
-                        words=[words[i] for i in range(i, i+l)], word_offset=i)
+
+                # Use the full token spans--**with default separator**--by default
+                co    = s_cos[i]
+                words = [s_words[i] for i in range(i, i+l)]
+                cl    = len(' '.join(words))
+                yield Ngram(n=l, sentence_id=s_id, char_offset=co, char_len=cl, words=words, \
+                        word_offset=i)

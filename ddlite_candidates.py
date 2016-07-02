@@ -41,6 +41,9 @@ class Ngram(Candidate):
         self.word_end    = self.char_to_word_index(char_end)
         self.n           = self.word_end - self.word_start + 1
 
+        # A dictionary to hold task-specific metadata e.g. canonical id, category, etc.
+        self.metadata = {}
+
     def char_to_word_index(self, ci):
         """Given a character-level index (offset), return the index of the **word this char is in**"""
         for i,co in enumerate(self.sentence[CHAR_OFFSETS]):

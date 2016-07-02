@@ -33,7 +33,7 @@ class Ngram(Candidate):
             raise ValueError("Sentence object must have attributes %s to form Ngram object" % ", ".join(REQ_ATTRIBS))
 
         # Set basic object attributes
-        self.id          = "%s_chars:%s-%s" % (self.s['id'], char_start, char_end)
+        self.id          = "%s:%s-%s" % (self.s['id'], char_start, char_end)
         self.char_start  = char_start
         self.char_end    = char_end
         self.char_len    = char_end - char_start + 1

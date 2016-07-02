@@ -47,18 +47,17 @@ class Matcher(object):
         """
         seen_spans = set()
         for c in candidates:
-            if not self.longest_match_only or not any([self._is_subspan(c, s) for s in seen_spans]):
+            if self.f(c) > 0 and (not self.longest_match_only or not any([self._is_subspan(c, s) for s in seen_spans])):
                 if self.longest_match_only:
-                    self.seen_spans.add(self._get_span(c))
-                if self.f(c) > 0:
-                    yield c
+                    seen_spans.add(self._get_span(c))
+                yield c
 
 
 class NgramMatcher(Matcher):
     """Matcher base class for Ngram objects"""
     def _is_subspan(self, c, span):
         """Tests if candidate c is subspan of span, where span is defined specific to candidate type"""
-        return c.char_start >= span[0] and c.char_end >= span[1]
+        return c.char_start >= span[0] and c.char_end <= span[1]
 
     def _get_span(self, c):
         """Gets a tuple that identifies a span for the specific candidate class that c belongs to"""

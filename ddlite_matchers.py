@@ -72,7 +72,9 @@ class DictionaryMatch(NgramMatcher):
         self.attrib      = self.opts.get('attrib', 'words')
     
     def _f(self, c):
-        return 1 if c.get_attrib_span(self.attrib) in self.d else 0
+        p = c.get_attrib_span(self.attrib)
+        p = p.lower() if self.ignore_case else p
+        return 1 if p in self.d else 0
 
 
 class Union(NgramMatcher):
@@ -85,8 +87,32 @@ class Union(NgramMatcher):
 
 
 class Concat(NgramMatcher):
-    """Selects candidates which are the concatenation of adjacent matches from child operators"""
+    """
+    Selects candidates which are the concatenation of adjacent matches from child operators
+    NOTE: Currently slices on **word index** and considers concatenation along these divisions only
+    """
+    def init(self):
+        self.permutations  = self.opts.get('permutations', False)
+        self.both_required = self.opts.get('both_required', True)
+        self.ignore_sep    = self.opts.get('ignore_sep', True)
+        self.sep           = self.opts.get('sep', " ")
+
     def f(self, c):
         if len(self.children) != 2:
             raise ValueError("Concat takes two child Matcher objects as arguments.")
-        
+        if not self.both_required and (self.children[0].f(c) or self.children[1].f(c)):
+            return 1
+
+        # Iterate over candidate splits **at the word boundaries**
+        for wsplit in range(c.word_start+1, c.word_end+1):
+            csplit = c.word_to_char_index(wsplit) - c.char_start  # NOTE the switch to **candidate-relative** char index
+
+            # Optionally check for specific separator
+            if self.ignore_sep or c.get_span()[csplit-1] == self.sep:
+                c1 = c[:csplit-len(self.sep)]
+                c2 = c[csplit:]
+                if self.children[0].f(c1) and self.children[1].f(c2):
+                    return 1
+                if self.permutations and self.children[1].f(c1) and self.children[0].f(c2):
+                    return 1
+        return 0

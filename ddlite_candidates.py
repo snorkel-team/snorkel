@@ -27,13 +27,13 @@ class Ngram(Candidate):
     def __init__(self, char_start, char_end, sent):
         
         # Inherit full sentence object (tranformed to dict) and check for necessary attribs
-        self.s = sent if isinstance(sent, dict) else sent._asdict()
+        self.sentence = sent if isinstance(sent, dict) else sent._asdict()
         REQ_ATTRIBS = ['id', WORDS]
-        if not all([self.s.has_key(a) for a in REQ_ATTRIBS]):
+        if not all([self.sentence.has_key(a) for a in REQ_ATTRIBS]):
             raise ValueError("Sentence object must have attributes %s to form Ngram object" % ", ".join(REQ_ATTRIBS))
 
         # Set basic object attributes
-        self.id          = "%s:%s-%s" % (self.s['id'], char_start, char_end)
+        self.id          = "%s:%s-%s" % (self.sentence['id'], char_start, char_end)
         self.char_start  = char_start
         self.char_end    = char_end
         self.char_len    = char_end - char_start + 1
@@ -43,24 +43,31 @@ class Ngram(Candidate):
 
     def char_to_word_index(self, ci):
         """Given a character-level index (offset), return the index of the **word this char is in**"""
-        for i,co in enumerate(self.s[CHAR_OFFSETS]):
+        for i,co in enumerate(self.sentence[CHAR_OFFSETS]):
             if ci == co:
                 return i
             elif ci < co:
                 return i-1
         return i
+
+    def word_to_char_index(self, wi):
+        """Given a word-level index, return the character-level index (offset) of the word's start"""
+        return self.sentence[CHAR_OFFSETS][wi]
     
     def get_attrib_tokens(self, a):
         """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""
-        return self.s[a][self.word_start:self.word_end+1]
+        return self.sentence[a][self.word_start:self.word_end+1]
     
     def get_attrib_span(self, a, sep=" "):
         """Get the span of sentence attribute _a_ over the range defined by word_offset, n"""
         # NOTE: Special behavior for words currently (due to correspondence with char_offsets)
         if a == WORDS:
-            return sep.join(self.s[WORDS])[self.char_start:self.char_end+1]
+            return sep.join(self.sentence[WORDS])[self.char_start:self.char_end+1]
         else:
             return sep.join(self.get_attrib_tokens(a))
+    
+    def get_span(self):
+        return self.get_attrib_span(WORDS)
 
     def __getitem__(self, key):
         """
@@ -70,7 +77,7 @@ class Ngram(Candidate):
         if isinstance(key, slice):
             char_start = self.char_start if key.start is None else self.char_start + key.start
             char_end   = self.char_end if key.stop is None else self.char_start + key.stop - 1
-            return Ngram(char_start, char_end, self.s)
+            return Ngram(char_start, char_end, self.sentence)
         else:
             raise NotImplementedError()
         

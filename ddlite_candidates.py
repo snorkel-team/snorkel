@@ -23,8 +23,8 @@ CHAR_OFFSETS = 'char_offsets'
 
 
 class Ngram(Candidate):
-    """A span of _n_ tokens, identified by sentence id and character offset."""
-    def __init__(self, char_offset, char_len, word_offset, n, sent):
+    """A span of _n_ tokens, identified by sentence id and character-index start, end (inclusive)"""
+    def __init__(self, char_start, char_end, word_start, word_end, sent):
         
         # Inherit full sentence object (tranformed to dict) and check for necessary attribs
         self.s = sent if isinstance(sent, dict) else sent._asdict()
@@ -33,15 +33,17 @@ class Ngram(Candidate):
             raise ValueError("Sentence object must have attributes %s to form Ngram object" % ", ".join(REQ_ATTRIBS))
 
         # Set basic object attributes
-        self.id          = "%s_%s_%s" % (self.s['id'], char_offset, char_len)
-        self.n           = n
-        self.char_offset = char_offset
-        self.char_len    = char_len
-        self.word_offset = word_offset
+        self.id          = "%s_chars:%s-%s" % (self.s['id'], char_start, char_end)
+        self.char_start  = char_start
+        self.char_end    = char_end
+        self.char_len    = char_end - char_start + 1
+        self.word_start  = word_start
+        self.word_end    = word_end
+        self.n           = word_end - word_start + 1
     
     def get_attrib_tokens(self, a):
         """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""
-        return self.s[a][self.word_offset:self.word_offset+self.n]
+        return self.s[a][self.word_start:self.word_end+1]
     
     def get_attrib_span(self, a, sep=" "):
         """Get the span of sentence attribute _a_ over the range defined by word_offset, n"""
@@ -54,7 +56,8 @@ class Ngram(Candidate):
             return span
         
     def __repr__(self):
-        return '<Ngram("%s", id=%s, char_offset=%s, word_offset=%s)' % (self.get_attrib_span(WORDS), self.id, self.char_offset, self.word_offset)
+        return '<Ngram("%s", id=%s, chars=[%s,%s], words=[%s,%s])' \
+            % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.word_start, self.word_end)
 
 
 class Ngrams(CandidateSpace):
@@ -79,4 +82,4 @@ class Ngrams(CandidateSpace):
             for i in range(L-l+1):
                 ws = words[i:i+l] 
                 cl = len(' '.join(ws))  # NOTE: Use full ' '-separated word spans by default
-                yield Ngram(char_offset=cos[i], char_len=cl, word_offset=i, n=l, sent=s)
+                yield Ngram(char_start=cos[i], char_end=cos[i]+cl-1, word_start=i, word_end=i+l-1, sent=s)

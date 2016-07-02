@@ -53,6 +53,8 @@ class Matcher(object):
                 yield c
 
 
+WORDS = 'words'
+
 class NgramMatcher(Matcher):
     """Matcher base class for Ngram objects"""
     def _is_subspan(self, c, span):
@@ -69,7 +71,7 @@ class DictionaryMatch(NgramMatcher):
     def init(self):
         self.d           = frozenset(self.opts['d'])
         self.ignore_case = self.opts.get('ignore_case', True) 
-        self.attrib      = self.opts.get('attrib', 'words')
+        self.attrib      = self.opts.get('attrib', WORDS)
     
     def _f(self, c):
         p = c.get_attrib_span(self.attrib)
@@ -116,3 +118,30 @@ class Concat(NgramMatcher):
                 if self.permutations and self.children[1].f(c1) and self.children[0].f(c2):
                     return 1
         return 0
+
+
+class RegexMatch(NgramMatcher):
+    """Base regex class- does not specify specific semantics of *what* is being matched yet"""
+    def init(self):
+        self.rgx         = self.opts['rgx']
+        self.ignore_case = self.opts.get('ignore_case', True)
+        self.attrib      = self.opts.get('attrib', WORDS)
+        self.sep         = self.opts.get('sep', " ")
+
+        # Compile regex matcher
+        self.r = re.compile(self.rgx, flags=re.I if self.ignore_case else 0)
+
+    def _f(self, c):
+        raise NotImplementedError()
+
+
+class RegexMatchSpan(RegexMatch):
+    """Matches regex pattern on **full concatenated span**"""
+    def _f(self, c):
+        return 1 if self.r.match(c.get_attrib_span(self.attrib, sep=self.sep)) is not None else 0
+
+
+class RegexMatchEach(RegexMatch):
+    """Matches regex pattern on **each token**"""
+    def _f(self, c):
+        return 1 if all([self.r.match(t) is not None for t in c.get_attrib_tokens(self.attrib)]) else 0

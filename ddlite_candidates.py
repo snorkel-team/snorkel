@@ -66,7 +66,7 @@ class Ngram(Candidate):
         else:
             return sep.join(self.get_attrib_tokens(a))
     
-    def get_span(self):
+    def get_span(self, sep=" "):
         return self.get_attrib_span(WORDS)
 
     def __getitem__(self, key):

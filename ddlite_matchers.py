@@ -75,10 +75,18 @@ class DictionaryMatch(NgramMatcher):
         return 1 if c.get_attrib_span(self.attrib) in self.d else 0
 
 
-class Union(Matcher):
+class Union(NgramMatcher):
     """Takes the union of candidate sets returned by child operators"""
     def f(self, c):
        for child in self.children:
            if child.f(c) > 0:
                return 1
        return 0
+
+
+class Concat(NgramMatcher):
+    """Selects candidates which are the concatenation of adjacent matches from child operators"""
+    def f(self, c):
+        if len(self.children) != 2:
+            raise ValueError("Concat takes two child Matcher objects as arguments.")
+        

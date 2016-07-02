@@ -24,7 +24,7 @@ CHAR_OFFSETS = 'char_offsets'
 
 class Ngram(Candidate):
     """A span of _n_ tokens, identified by sentence id and character-index start, end (inclusive)"""
-    def __init__(self, char_start, char_end, word_start, word_end, sent):
+    def __init__(self, char_start, char_end, sent):
         
         # Inherit full sentence object (tranformed to dict) and check for necessary attribs
         self.s = sent if isinstance(sent, dict) else sent._asdict()
@@ -37,9 +37,18 @@ class Ngram(Candidate):
         self.char_start  = char_start
         self.char_end    = char_end
         self.char_len    = char_end - char_start + 1
-        self.word_start  = word_start
-        self.word_end    = word_end
-        self.n           = word_end - word_start + 1
+        self.word_start  = self.char_to_word_index(char_start)
+        self.word_end    = self.char_to_word_index(char_end)
+        self.n           = self.word_end - self.word_start + 1
+
+    def char_to_word_index(self, ci):
+        """Given a character-level index (offset), return the index of the **word this char is in**"""
+        for i,co in enumerate(self.s[CHAR_OFFSETS]):
+            if ci == co:
+                return i
+            elif ci < co:
+                return i-1
+        return i
     
     def get_attrib_tokens(self, a):
         """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""
@@ -47,13 +56,23 @@ class Ngram(Candidate):
     
     def get_attrib_span(self, a, sep=" "):
         """Get the span of sentence attribute _a_ over the range defined by word_offset, n"""
-        span = sep.join(self.get_attrib_tokens(a))
-
         # NOTE: Special behavior for words currently (due to correspondence with char_offsets)
         if a == WORDS:
-            return span[:self.char_len]
+            return sep.join(self.s[WORDS])[self.char_start:self.char_end+1]
         else:
-            return span
+            return sep.join(self.get_attrib_tokens(a))
+
+    def __getitem__(self, key):
+        """
+        Slice operation returns a new candidate sliced according to **char index**
+        Note that the slicing is w.r.t. the candidate range (not the abs. sentence char indexing)
+        """
+        if isinstance(key, slice):
+            char_start = self.char_start if key.start is None else self.char_start + key.start
+            char_end   = self.char_end if key.stop is None else self.char_start + key.stop - 1
+            return Ngram(char_start, char_end, self.s)
+        else:
+            raise NotImplementedError()
         
     def __repr__(self):
         return '<Ngram("%s", id=%s, chars=[%s,%s], words=[%s,%s])' \
@@ -82,4 +101,4 @@ class Ngrams(CandidateSpace):
             for i in range(L-l+1):
                 ws = words[i:i+l] 
                 cl = len(' '.join(ws))  # NOTE: Use full ' '-separated word spans by default
-                yield Ngram(char_start=cos[i], char_end=cos[i]+cl-1, word_start=i, word_end=i+l-1, sent=s)
+                yield Ngram(char_start=cos[i], char_end=cos[i]+cl-1, sent=s)

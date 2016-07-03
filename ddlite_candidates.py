@@ -20,11 +20,11 @@ class CandidateSpace(object):
 # Basic sentence attributes
 WORDS        = 'words'
 CHAR_OFFSETS = 'char_offsets'
-
+TEXT         = 'text'
 
 class Ngram(Candidate):
     """A span of _n_ tokens, identified by sentence id and character-index start, end (inclusive)"""
-    def __init__(self, char_start, char_end, sent):
+    def __init__(self, char_start, char_end, sent, metadata={}):
         
         # Inherit full sentence object (tranformed to dict) and check for necessary attribs
         self.sentence = sent if isinstance(sent, dict) else sent._asdict()
@@ -41,8 +41,11 @@ class Ngram(Candidate):
         self.word_end    = self.char_to_word_index(char_end)
         self.n           = self.word_end - self.word_start + 1
 
+        # NOTE: We assume that the char_offsets are **relative to the document start**
+        self.sent_offset = self.sentence[CHAR_OFFSETS][0]
+
         # A dictionary to hold task-specific metadata e.g. canonical id, category, etc.
-        self.metadata = {}
+        self.metadata = metadata
 
     def char_to_word_index(self, ci):
         """Given a character-level index (offset), return the index of the **word this char is in**"""
@@ -65,7 +68,9 @@ class Ngram(Candidate):
         """Get the span of sentence attribute _a_ over the range defined by word_offset, n"""
         # NOTE: Special behavior for words currently (due to correspondence with char_offsets)
         if a == WORDS:
-            return sep.join(self.sentence[WORDS])[self.char_start:self.char_end+1]
+            start = self.char_start - self.sent_offset
+            end   = self.char_end - self.sent_offset
+            return self.sentence[TEXT][start:end+1]
         else:
             return sep.join(self.get_attrib_tokens(a))
     
@@ -110,5 +115,5 @@ class Ngrams(CandidateSpace):
         for l in range(1, self.n_max+1)[::-1]:
             for i in range(L-l+1):
                 ws = words[i:i+l] 
-                cl = len(' '.join(ws))  # NOTE: Use full ' '-separated word spans by default
+                cl = cos[i+l-1] - cos[i] + len(words[i+l-1])  # NOTE that we derive char_len without using sep
                 yield Ngram(char_start=cos[i], char_end=cos[i]+cl-1, sent=s)

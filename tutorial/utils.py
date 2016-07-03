@@ -1,24 +1,33 @@
 from lxml import etree as et
 from collections import defaultdict, namedtuple
+from ddlite_candidates import Ngram
 
-PubtatorMention = namedtuple('PubtatorMention', 'mesh_id, text, char_offset, char_length')
+def ensure_dict(x):
+    return x if isinstance(x, dict) else x._asdict()
 
-PubtatorRelation = namedtuple('PubtatorRelation', 'types, mesh_ids')
+WORDS        = 'words'
+CHAR_OFFSETS = 'char_offsets'
 
-def collect_pubtator_annotations(doc):
+def collect_pubtator_annotations(doc, sents, sep=" "):
     """
-    Given a list of ddlite Documents with PubTator/CDR annotations,
-    extract a dictionary of annotations by type.
+    Given a Document with PubTator/CDR annotations, and a corresponding set of Sentences,
+    extract a set of Ngram objects indexed according to **Sentence character indexing**
+    NOTE: Assume the sentences are provided in correct order & have standard separator.
     """
-    annotations = defaultdict(list)
+    sent_offsets = [ensure_dict(s)[CHAR_OFFSETS][0] for s in sents]
+
+    # Get Ngrams
+    ngrams = []
     for a in doc.attribs['root'].xpath('.//annotation'):
 
         # Relation annotations
         if len(a.xpath('./infon[@key="relation"]')) > 0:
+
+            # TODO: Pull these out!
             type = a.xpath('./infon[@key="relation"]/text()')[0]
             types = a.xpath('./infon[@key != "relation"]/@key')
             mesh_ids = a.xpath('./infon[@key != "relation"]/text()')
-            annotations[type].append(PubtatorRelation(types=types, mesh_ids=mesh_ids))
+            pass
 
         # Mention annotations
         else:
@@ -27,6 +36,17 @@ def collect_pubtator_annotations(doc):
             length = int(a.xpath('./location/@length')[0])
             type = a.xpath('./infon[@key="type"]/text()')[0]
             mesh = a.xpath('./infon[@key="MESH"]/text()')[0]
-            annotations[type].append(PubtatorMention(mesh_id=mesh, text=txt,
-                                                     char_offset=offset, char_length=length))
-    return annotations
+            
+            # Get sentence id and relative character offset
+            si = len(sent_offsets) - 1
+            for i,so in enumerate(sent_offsets):
+                if offset == so:
+                    si = i
+                    break
+                elif offset < so:
+                    si = i - 1
+                    break
+            #offset -= sent_offsets[si]
+            ngrams.append(Ngram(offset, offset + length - 1, sents[si], metadata={
+                'mesh_id' : mesh, 'type' : type}))
+    return ngrams

@@ -1,8 +1,15 @@
 
 
 class Candidate(object):
-    """A candidate object, to be classified."""
-    pass
+    """A candidate object, **uniquely identified by its id**"""
+    def __init__(self, id):
+        self.id = id
+    
+    def __eq__(self, other):
+        if type(self) is type(other):
+            return self.id == other.id
+        else:
+            raise NotImplementedError()
 
 
 class CandidateSpace(object):

@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 from collections import namedtuple, defaultdict
 from subprocess import Popen
 import lxml.etree as et
+from itertools import chain
 
 Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
 
@@ -77,15 +78,15 @@ class XMLDocParser(DocParser):
     Use XPath queries to specify a _document_ object, and then for each document,
     a set of _text_ sections and an _id_.
 
-    **Note: Include the full document XML etree in the attribs dict with keep_tree=True**
+    **Note: Include the full document XML etree in the attribs dict with keep_xml_tree=True**
     """
     def __init__(self, path, doc='.//document', text='./text/text()', id='./id/text()',
-                    keep_tree=False):
+                    keep_xml_tree=False):
         self.path = path
         self.doc = doc
         self.text = text
         self.id = id
-        self.keep_tree = keep_tree
+        self.keep_xml_tree = keep_xml_tree
 
     def parse_file(self, f, file_name):
         for i,doc in enumerate(et.parse(f).xpath(self.doc)):
@@ -93,7 +94,7 @@ class XMLDocParser(DocParser):
             text = '\n'.join(filter(lambda t : t is not None, doc.xpath(self.text)))
             ids = doc.xpath(self.id)
             id = ids[0] if len(ids) > 0 else None
-            attribs = {'root':doc} if self.keep_tree else {}
+            attribs = {'root':doc} if self.keep_xml_tree else {}
             yield Document(id=id, file=file_name, text=text, attribs=attribs)
             #except:
             #    print "Error parsing document #%s (id=%s) in file %s" % (i,id,file_name)
@@ -190,3 +191,30 @@ def corenlp_cleaner(words):
   d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
        '-RSB-': ']', '-LSB-': '['}
   return map(lambda w: d[w] if w in d else w, words)
+
+
+class Corpus(object):
+    """
+    A Corpus object helps instantiate and then holds a set of Documents and associated Sentences
+    Default iterator is over (Document, Sentences) tuples
+    """
+    def __init__(self, doc_parser, sent_parser):
+        
+        # Parse documents
+        print "Parsing documents..."
+        self.doc_parser = doc_parser
+        self.docs       = list(self.doc_parser.parse())
+
+        # Parse sentences
+        print "Parsing sentences..."
+        self.sent_parser = sent_parser
+        self.sents       = defaultdict(list)
+        for sent in self.sent_parser.parse_docs(self.docs):
+            self.sents[sent.doc_id].append(sent)
+
+    def __iter__(self):
+        for doc in self.docs:
+            yield (doc, self.sents[doc.id])
+
+    def itersentences(self):
+        return chain.from_iterable(self.sents.itervalues())

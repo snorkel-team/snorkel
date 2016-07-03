@@ -6,10 +6,13 @@ class Candidate(object):
         self.id = id
     
     def __eq__(self, other):
-        if type(self) is type(other):
+        try:
             return self.id == other.id
-        else:
+        except:
             raise NotImplementedError()
+    
+    def __hash__(self):
+        return hash(self.id)
 
 
 class CandidateSpace(object):

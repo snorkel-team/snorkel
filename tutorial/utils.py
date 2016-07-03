@@ -31,6 +31,14 @@ def collect_pubtator_annotations(doc, sents, sep=" "):
 
         # Mention annotations
         else:
+
+            # NOTE: Ignore CompositeRole individual mention annotations for now
+            comp_roles = a.xpath('./infon[@key="CompositeRole"]/text()')
+            comp_role = comp_roles[0] if len(comp_roles) > 0 else None
+            if comp_role == 'IndividualMention':
+                continue
+
+            # Get basic annotation attributes
             txt = a.xpath('./text/text()')[0]
             offset = int(a.xpath('./location/@offset')[0])
             length = int(a.xpath('./location/@length')[0])
@@ -46,7 +54,6 @@ def collect_pubtator_annotations(doc, sents, sep=" "):
                 elif offset < so:
                     si = i - 1
                     break
-            #offset -= sent_offsets[si]
             ngrams.append(Ngram(offset, offset + length - 1, sents[si], metadata={
-                'mesh_id' : mesh, 'type' : type}))
+                'mesh_id' : mesh, 'type' : type, 'composite' : comp_role}))
     return ngrams

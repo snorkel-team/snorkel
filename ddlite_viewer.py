@@ -36,48 +36,65 @@ class Viewer(object):
         """Access the corpus objects generator method to yield (context, candidates) tuples"""
         return corpus
 
-    def _get_html(self, context):
-        """Renders a context to basic html form"""
-        return context
+    def _tag_span(self, html, vid, pid, cids):
+        """
+        Given interior html and a viewer id (vid), page id (pid), and **list of candidate 
+        ids (cids) that use this span**, return a the span-enclosed html such that it 
+        will be highlighted, browsable and taggable in the Viewer module.
+        """
+        classes =  []
+        if len(cids) > 0:
+            classes.append('candidate')
+        classes += ['c-{vid}-{pid}-{cid}'.format(vid=vid, pid=pid, cid=c) for c in cids]
+        return '<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)
 
-    def _tag_html(self, context_html, candidates):
-        """Tags candidates within html context in spans, with ids corresponding to candidate.id"""
-        return context_html
-    
-    def render(self, n=5):
+    def _tag_context(self, context, candidates, vid, pid, cid_offset=0):
+        """Given the raw context, tag the spans using the generic _tag_span method"""
+        raise NotImplementedError()
+
+    def render(self, n=24, n_per_page=3, body_height_px=250):
         """Renders viewer pane"""
 
         # Random viewer id to avoid js cross-cell collisions
         vid = randint(0,10000)
 
         # Render the generic html
-        lis           = []
-        li_html       = '<li class="list-group-item context-li" id="%s-%s" data-nc="%s">%s</li>'
-        id_offset     = 0
-        for i,c in enumerate(islice(self.views, n)):
-            context, candidates = c
-
-            # Render each context as a separate div
-            li = li_html % (vid, i, len(candidates), self._tag_html(self._get_html(context), candidates, vid, id_offset=id_offset))
-            lis.append(li)
-            id_offset += len(candidates)
+        li_html   = '<li class="list-group-item">{data}</li>'
+        page_html = """
+            <div class="viewer-page viewer-page-{vid}" id="viewer-page-{vid}-{pid}" data-nc="{nc}">
+                <ul class="list-group">{data}</ul>
+            </div>
+            """
+        
+        # Iterate over pages of contexts
+        # TODO: Don't materialize the full list of all candidates here!
+        views = list(self.views)
+        pid   = 0
+        pages = []
+        for i in range(0, n, n_per_page):
+            lis        = []
+            cid_offset = 0
+            for j in range(i, i+n_per_page):
+                context, candidates = views[j]
+                lis.append(li_html.format(data=self._tag_context(context, candidates, vid, pid, cid_offset=cid_offset)))
+                cid_offset += len(candidates)
+            pages.append(page_html.format(vid=vid, pid=pid, nc=cid_offset, data=''.join(lis)))
+            pid += 1
 
         # Render in primary Viewer template
-        html = open(HOME + '/viewer/viewer.html').read().format(vid=vid, data="\n".join(lis))
-        js   = open(HOME + '/viewer/viewer.js').read() % (vid,)
+        html = open(HOME + '/viewer/viewer.html').read().format(vid=vid, bh=body_height_px, data=''.join(pages))
+        js   = open(HOME + '/viewer/viewer.js').read() % (vid, len(pages))
         render(html, js)
 
 
-class SentenceViewer(Viewer):
-    """Viewer for Sentence objects and candidate spans within them, given a Corpus object"""
+class SentenceNgramViewer(Viewer):
+    """Viewer for Sentence objects and Ngram candidate spans within them, given a Corpus object"""
     def _corpus_generator(self, corpus):
         return corpus.iter_sentences_and_candidates()
 
-    def _get_html(self, context):
-        return context.text
-
-    def _tag_html(self, context_html, candidates, vid, id_offset=0):
+    def _tag_context(self, context, candidates, vid, pid, cid_offset=0):
         """Tag **potentially overlapping** spans of text, at the character-level"""
+        context_html = context.text
         if len(candidates) == 0:
             return context_html
 
@@ -86,23 +103,22 @@ class SentenceViewer(Viewer):
         splits = splits if splits[0] == 0 else [0] + splits
 
         # Tag by classes
-        span_classes = defaultdict(list)
+        span_cids = defaultdict(list)
         for i,c in enumerate(candidates):
             for j in range(splits.index(c.sent_char_start), splits.index(c.sent_char_end+1)):
-                if "candidate" not in span_classes[splits[j]]:
-                    span_classes[splits[j]].append("candidate")
-                span_classes[splits[j]].append("c-%s-%s" % (i+id_offset, vid))  # cid is relative to group on page
+                span_cids[splits[j]].append(i + cid_offset)
 
         # Also include candidate metadata- as hidden divs
+        # TODO: Handle this in nicer way!
         html = ""
         for i,c in enumerate(candidates):
 
             # Set the caption shown when candidate is highlighted
             cap   = "CID: %s" % c.id
-            html += '<div class="candidate-data" id="cdata-%s-%s" caption="%s"></div>' % (i+id_offset, vid, cap)
+            html += '<div class="candidate-data" id="cdata-{vid}-{pid}-{cid}" caption="{cap}"></div>'.format(vid=vid, pid=pid, cid=i+cid_offset, cap=cap)
 
         # Render as sequence of spans
         for i,s in enumerate(splits):
             end   = splits[i+1] if i < len(splits)-1 else len(context_html)
-            html += '<span class="%s">%s</span>' % (' '.join(span_classes[s]), context_html[s:end])
+            html += self._tag_span(context_html[s:end], vid, pid, span_cids[s])
         return html

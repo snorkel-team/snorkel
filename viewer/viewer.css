@@ -2,9 +2,13 @@ span.candidate {
     background-color: rgba(255,255,0,0.3);
 }
 
-span.highlight {
+span.highlighted-candidate {
     font-weight: bolder;
     background-color: rgba(255,255,0,1.0);
+}
+
+span.hidden-candidate {
+    display: none;
 }
 
 .panel-heading {
@@ -18,5 +22,9 @@ span.highlight {
 }
 
 .candidate-data {
+    display: none;
+}
+
+.viewer-page {
     display: none;
 }

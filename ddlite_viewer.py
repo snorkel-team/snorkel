@@ -1,6 +1,7 @@
 from itertools import islice
 from random import randint
 import os
+from collections import defaultdict
 
 HOME = os.environ['DDLHOME']
 
@@ -16,9 +17,9 @@ JS_LIBS = [
     "viewer/bootstrap/js/bootstrap.min.js"
 ]
 
-def render(html, js):
+def render(html, js, css_isolated=False):
     """Renders an html + js payload in IPython"""
-    display_html(HTML(data=html))
+    display_html(HTML(data=html), metadata=dict(isolated=css_isolated))
     if js is not None:
         display_javascript(Javascript(data=js, lib=JS_LIBS))
 
@@ -72,5 +73,23 @@ class SentenceViewer(Viewer):
         return context.text
 
     def _tag_html(self, context_html, candidates):
-        span_html = '<span style="background:yellow">%s</span>'
-        return span_html % context_html
+        """Tag **potentially overlapping** spans of text, at the character-level"""
+        if len(candidates) == 0:
+            return context_html
+
+        # First, we split the string up into chunks by unioning all span start / end points
+        splits = sorted(list(set([c.char_start for c in candidates] + [c.char_end + 1 for c in candidates])))
+        splits = splits if splits[0] == 0 else [0] + splits
+
+        # Tag by classes
+        span_classes = defaultdict(list)
+        for c in candidates:
+            for i in range(splits.index(c.char_start), splits.index(c.char_end+1)):
+                span_classes[splits[i]].append("yellow")  # TODO: Make this class candidate-specific!
+
+        # Render as sequence of spans
+        html = ""
+        for i,s in enumerate(splits):
+            end   = splits[i+1] if i < len(splits)-1 else len(context_html)
+            html += '<span class="%s">%s</span>' % (' '.join(span_classes[s]), context_html[s:end])  # TODO: Add id!
+        return html

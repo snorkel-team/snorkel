@@ -45,20 +45,23 @@ $("#prev-cand-" + vid).click(function() {
 
 // Arrow key functionality
 $(document).keydown(function(e) {
-    // TODO: Check for ':focus' to execute; not working with Jupyter nb...
-    switch(e.which) {
-        case 37: // Left
-        switchCandidate(-1);
-        break;
 
-        case 38: // Up
-        break;
+    // Check that the Jupyter notebook cell the viewer is in is selected
+    if ($("#viewer-"+vid).parents(".cell").hasClass("selected")) {
+        switch(e.which) {
+            case 37: // Left
+            switchCandidate(-1);
+            break;
 
-        case 39: // Right
-        switchCandidate(1);
-        break;
+            case 38: // Up
+            break;
 
-        case 40: // Down
-        break;
+            case 39: // Right
+            switchCandidate(1);
+            break;
+
+            case 40: // Down
+            break;
+        }
     }
 });

@@ -1,3 +1,22 @@
-span.yellow {
-    background-color: yellow;
+span.candidate {
+    background-color: rgba(255,255,0,0.3);
+}
+
+span.highlight {
+    font-weight: bolder;
+    background-color: rgba(255,255,0,1.0);
+}
+
+.panel-heading {
+    position: relative;
+}
+
+.candidate-caption {
+    position: absolute;
+    right: 15px;
+    top: 20px;
+}
+
+.candidate-data {
+    display: none;
 }

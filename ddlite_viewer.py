@@ -14,7 +14,7 @@ except:
 JS_LIBS = [
     "http://d3js.org/d3.v3.min.js",
     "https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js",
-    "viewer/bootstrap/js/bootstrap.min.js"
+    #"%s/viewer/bootstrap/js/bootstrap.min.js" % HOME
 ]
 
 def render(html, js, css_isolated=False):
@@ -51,17 +51,21 @@ class Viewer(object):
         vid = randint(0,10000)
 
         # Render the generic html
-        lis     = []
-        li_html = '<li class="list-group-item" id="%s-%s">%s</li>'
+        lis           = []
+        li_html       = '<li class="list-group-item context-li" id="%s-%s" data-nc="%s">%s</li>'
+        id_offset     = 0
         for i,c in enumerate(islice(self.views, n)):
             context, candidates = c
 
             # Render each context as a separate div
-            lis.append(li_html % (vid, i, self._tag_html(self._get_html(context), candidates)))
+            li = li_html % (vid, i, len(candidates), self._tag_html(self._get_html(context), candidates, vid, id_offset=id_offset))
+            lis.append(li)
+            id_offset += len(candidates)
 
         # Render in primary Viewer template
         html = open(HOME + '/viewer/viewer.html').read().format(vid=vid, data="\n".join(lis))
-        render(html, None)
+        js   = open(HOME + '/viewer/viewer.js').read() % (vid,)
+        render(html, js)
 
 
 class SentenceViewer(Viewer):
@@ -72,24 +76,33 @@ class SentenceViewer(Viewer):
     def _get_html(self, context):
         return context.text
 
-    def _tag_html(self, context_html, candidates):
+    def _tag_html(self, context_html, candidates, vid, id_offset=0):
         """Tag **potentially overlapping** spans of text, at the character-level"""
         if len(candidates) == 0:
             return context_html
 
         # First, we split the string up into chunks by unioning all span start / end points
-        splits = sorted(list(set([c.char_start for c in candidates] + [c.char_end + 1 for c in candidates])))
+        splits = sorted(list(set([c.sent_char_start for c in candidates] + [c.sent_char_end + 1 for c in candidates])))
         splits = splits if splits[0] == 0 else [0] + splits
 
         # Tag by classes
         span_classes = defaultdict(list)
-        for c in candidates:
-            for i in range(splits.index(c.char_start), splits.index(c.char_end+1)):
-                span_classes[splits[i]].append("yellow")  # TODO: Make this class candidate-specific!
+        for i,c in enumerate(candidates):
+            for j in range(splits.index(c.sent_char_start), splits.index(c.sent_char_end+1)):
+                if "candidate" not in span_classes[splits[j]]:
+                    span_classes[splits[j]].append("candidate")
+                span_classes[splits[j]].append("c-%s-%s" % (i+id_offset, vid))  # cid is relative to group on page
+
+        # Also include candidate metadata- as hidden divs
+        html = ""
+        for i,c in enumerate(candidates):
+
+            # Set the caption shown when candidate is highlighted
+            cap   = "CID: %s" % c.id
+            html += '<div class="candidate-data" id="cdata-%s-%s" caption="%s"></div>' % (i+id_offset, vid, cap)
 
         # Render as sequence of spans
-        html = ""
         for i,s in enumerate(splits):
             end   = splits[i+1] if i < len(splits)-1 else len(context_html)
-            html += '<span class="%s">%s</span>' % (' '.join(span_classes[s]), context_html[s:end])  # TODO: Add id!
+            html += '<span class="%s">%s</span>' % (' '.join(span_classes[s]), context_html[s:end])
         return html

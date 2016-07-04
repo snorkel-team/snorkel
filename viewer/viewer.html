@@ -1,13 +1,29 @@
-<!-- <link href="../viewer/bootstrap/css/bootstrap.min.css" rel="stylesheet" /> -->
+<link href="../viewer/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
 <link href="../viewer/viewer.css" type="text/css" rel="stylesheet" />
 <div id="viewer-{vid}" class="viewer-pane panel panel-default">
     <div class="panel-heading">
         <h3 class="panel-title">Viewer</h3>
+        <div id="candidate-caption-{vid}" class="candidate-caption"></div>
     </div>
     <div class="panel-body">
         <ul class="list-group">
             {data}
         </ul>
     </div>
-    <div class="panel-footer"></div>
+    <div class="panel-footer">
+        <div class="btn-group" role="group" aria-label="...">
+            <button id="prev-page-{vid}" type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-left-arrow" aria-hidden="true"></span> Prev. Page (U)
+            </button>
+            <button id="prev-cand-{vid}" type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-down-arrow" aria-hidden="true"></span> Prev. Cand. (L)
+            </button>
+            <button id="next-cand-{vid}" type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-up-arrow" aria-hidden="true"></span> Next Cand. (R)
+            </button>
+            <button id="next-page-{vid}" type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-right-arrow" aria-hidden="true"></span> Next Page (D)
+            </button>
+        </div>
+    </div>
 </div>

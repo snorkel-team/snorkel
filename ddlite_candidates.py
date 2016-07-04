@@ -52,7 +52,9 @@ class Ngram(Candidate):
         self.n           = self.word_end - self.word_start + 1
 
         # NOTE: We assume that the char_offsets are **relative to the document start**
-        self.sent_offset = self.sentence[CHAR_OFFSETS][0]
+        self.sent_offset     = self.sentence[CHAR_OFFSETS][0]
+        self.sent_char_start = self.char_start - self.sent_offset
+        self.sent_char_end   = self.char_end - self.sent_offset
 
         # A dictionary to hold task-specific metadata e.g. canonical id, category, etc.
         self.metadata = metadata
@@ -78,9 +80,7 @@ class Ngram(Candidate):
         """Get the span of sentence attribute _a_ over the range defined by word_offset, n"""
         # NOTE: Special behavior for words currently (due to correspondence with char_offsets)
         if a == WORDS:
-            start = self.char_start - self.sent_offset
-            end   = self.char_end - self.sent_offset
-            return self.sentence[TEXT][start:end+1]
+            return self.sentence[TEXT][self.sent_char_start:self.sent_char_end+1]
         else:
             return sep.join(self.get_attrib_tokens(a))
     

@@ -4,6 +4,7 @@ cd "$DDLHOME"
 
 # Make sure home directory is on pythonpath
 export PYTHONPATH="$PYTHONPATH:$DDLHOME"
+export PATH="$PATH:$DDLHOME"
 
 # Make sure parser is installed
 PARSER="parser/stanford-corenlp-3.6.0.jar"

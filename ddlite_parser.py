@@ -212,9 +212,25 @@ class Corpus(object):
         for sent in self.sent_parser.parse_docs(self.docs):
             self.sents[sent.doc_id].append(sent)
 
+        # Store candidates as well, indexed by sentence id
+        self.candidates = {}
+
     def __iter__(self):
         for doc in self.docs:
             yield (doc, self.sents[doc.id])
 
-    def itersentences(self):
+    def iter_sentences(self):
         return chain.from_iterable(self.sents.itervalues())
+
+    def extract_candidates(self, candidate_space, matcher):
+        """Given a CandidateSpace and a Matcher object, extract a set of candidates"""
+        self.candidates = {}
+        for sent in self.iter_sentences():
+            self.candidates[sent.id] = list(matcher.apply(candidate_space.apply(sent)))
+
+    def iter_candidates(self):
+        return chain.from_iterable(self.candidates.itervalues())
+
+    def iter_sentences_and_candidates(self):
+        for sent in self.iter_sentences():
+            yield (sent, self.candidates[sent.id])

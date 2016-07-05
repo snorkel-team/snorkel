@@ -38,12 +38,13 @@ class Ngram(Candidate):
         
         # Inherit full sentence object (tranformed to dict) and check for necessary attribs
         self.sentence = sent if isinstance(sent, dict) else sent._asdict()
+        self.sent_id  = self.sentence['id']
         REQ_ATTRIBS = ['id', WORDS]
         if not all([self.sentence.has_key(a) for a in REQ_ATTRIBS]):
             raise ValueError("Sentence object must have attributes %s to form Ngram object" % ", ".join(REQ_ATTRIBS))
 
         # Set basic object attributes
-        self.id          = "%s:%s-%s" % (self.sentence['id'], char_start, char_end)
+        self.id          = "%s:%s-%s" % (self.sent_id, char_start, char_end)
         self.char_start  = char_start
         self.char_end    = char_end
         self.char_len    = char_end - char_start + 1

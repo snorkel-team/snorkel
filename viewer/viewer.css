@@ -7,8 +7,12 @@ span.highlighted-candidate {
     background-color: rgba(255,255,0,1.0);
 }
 
-span.hidden-candidate {
-    display: none;
+span.gold-annotation {
+    color: red;
+}
+
+span.highlighted-gold-annotation {
+    background-color: rgba(217,83,79,0.5);
 }
 
 .panel-heading {

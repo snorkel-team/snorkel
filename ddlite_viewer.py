@@ -1,5 +1,5 @@
 from itertools import islice
-from random import randint
+from random import randint, sample
 import os
 from collections import defaultdict
 
@@ -26,17 +26,39 @@ def render(html, js, css_isolated=False):
 
 class Viewer(object):
     """
-    Generic object for viewing and labeling candidate objects in their rendered context
-    Takes a list of *views* which are (context, candidates) tuples, where candidates is a list of candidate objects
+    Generic object for viewing and labeling candidate objects in their rendered contexts.
+    Takes in:
+        - A list of *contexts* (e.g. Sentence objects) having an id attribute;
+        - A list of *candidates( (e.g. Ngram mention spans), having a join attribute fn
+            (candidate_join_key_fn) such that contexts and candidates are joined on
+            context.id == candidate_join_key_fn(candidate)
+        - Optionally: a list of *gold annotations* of the same type as the candidates
+        - A max number of contexts to render (n_max)
+    By default, contexts with no candidates or gold annotations are filtered out, however
+    this can be disabled (filter_empty) and any filtering can be done prior to passing into
+    the Viewer object!
     """
-    def __init__(self, corpus):
-        self.views = self._corpus_generator(corpus)
+    def __init__(self, contexts, candidates, candidate_join_key_fn, gold=[], n_max=100, filter_empty=True):
+        
+        # Index candidates by context
+        candidates_index = defaultdict(list)
+        for c in candidates:
+            candidates_index[candidate_join_key_fn(c)].append(c)
 
-    def _corpus_generator(self, corpus):
-        """Access the corpus objects generator method to yield (context, candidates) tuples"""
-        return corpus
+        # Index gold annotations by context
+        gold_index = defaultdict(list)
+        for g in gold:
+            gold_index[candidate_join_key_fn(g)].append(g)
 
-    def _tag_span(self, html, vid, pid, cids):
+        # Store as list of (context, candidates, gold) 'views'
+        self.views = []
+        for c in contexts:
+            if len(self.views) == n_max:
+                break
+            if len(candidates_index[c.id]) + len(gold_index[c.id]) > 0 or not filter_empty:
+                self.views.append((c, candidates_index[c.id], gold_index[c.id]))
+
+    def _tag_span(self, html, vid, pid, cids, gold=False):
         """
         Given interior html and a viewer id (vid), page id (pid), and **list of candidate 
         ids (cids) that use this span**, return a the span-enclosed html such that it 
@@ -45,71 +67,78 @@ class Viewer(object):
         classes =  []
         if len(cids) > 0:
             classes.append('candidate')
+
+        # For gold annotations, no scrolling, so only need to mark as gold
+        if gold:
+            classes.append('gold-annotation')
+
+        # Mark each cid
         classes += ['c-{vid}-{pid}-{cid}'.format(vid=vid, pid=pid, cid=c) for c in cids]
         return '<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)
 
-    def _tag_context(self, context, candidates, vid, pid, cid_offset=0):
+    def _tag_context(self, context, candidates, gold, vid, pid, cid_offset=0):
         """Given the raw context, tag the spans using the generic _tag_span method"""
         raise NotImplementedError()
 
-    def render(self, n=24, n_per_page=3, body_height_px=250):
+    def render(self, n_per_page=3, height=225):
         """Renders viewer pane"""
-
-        # Random viewer id to avoid js cross-cell collisions
-        vid = randint(0,10000)
-
-        # Render the generic html
+        N = len(self.views)
         li_html   = '<li class="list-group-item">{data}</li>'
         page_html = """
             <div class="viewer-page viewer-page-{vid}" id="viewer-page-{vid}-{pid}" data-nc="{nc}">
                 <ul class="list-group">{data}</ul>
-            </div>
-            """
-        
+            </div>"""
+
+        # Random viewer id to avoid js cross-cell collisions
+        vid = randint(0,10000)
+
         # Iterate over pages of contexts
-        # TODO: Don't materialize the full list of all candidates here!
-        views = list(self.views)
         pid   = 0
         pages = []
-        for i in range(0, n, n_per_page):
+        for i in range(0, N, n_per_page):
             lis        = []
             cid_offset = 0
-            for j in range(i, i+n_per_page):
-                context, candidates = views[j]
-                lis.append(li_html.format(data=self._tag_context(context, candidates, vid, pid, cid_offset=cid_offset)))
+            for j in range(i, min(N, i+n_per_page)):
+                context, candidates, gold = self.views[j]
+                lis.append(li_html.format(data=self._tag_context(context, candidates, gold, vid, pid, cid_offset=cid_offset)))
                 cid_offset += len(candidates)
             pages.append(page_html.format(vid=vid, pid=pid, nc=cid_offset, data=''.join(lis)))
             pid += 1
 
         # Render in primary Viewer template
-        html = open(HOME + '/viewer/viewer.html').read().format(vid=vid, bh=body_height_px, data=''.join(pages))
+        html = open(HOME + '/viewer/viewer.html').read().format(vid=vid, bh=height, data=''.join(pages))
         js   = open(HOME + '/viewer/viewer.js').read() % (vid, len(pages))
         render(html, js)
 
 
 class SentenceNgramViewer(Viewer):
     """Viewer for Sentence objects and Ngram candidate spans within them, given a Corpus object"""
-    def _corpus_generator(self, corpus):
-        return corpus.iter_sentences_and_candidates()
 
-    def _tag_context(self, context, candidates, vid, pid, cid_offset=0):
+    def _tag_context(self, sentence, candidates, gold, vid, pid, cid_offset=0):
         """Tag **potentially overlapping** spans of text, at the character-level"""
-        context_html = context.text
-        if len(candidates) == 0:
-            return context_html
+        context_html = sentence.text
 
         # Sort candidates by char_start
         candidates.sort(key=lambda c : c.char_start)
+        gold.sort(key=lambda g : g.char_start)
 
         # First, we split the string up into chunks by unioning all span start / end points
-        splits = sorted(list(set([c.sent_char_start for c in candidates] + [c.sent_char_end + 1 for c in candidates])))
-        splits = splits if splits[0] == 0 else [0] + splits
+        splits  = [c.sent_char_start for c in candidates] + [c.sent_char_end + 1 for c in candidates]
+        splits += [g.sent_char_start for g in gold] + [g.sent_char_end + 1 for g in gold]
+        if len(splits) == 0:
+            return context_html
+        splits  = sorted(list(set(splits)))
+        splits  = splits if splits[0] == 0 else [0] + splits
 
         # Tag by classes
-        span_cids = defaultdict(list)
+        span_cids    = defaultdict(list)
+        span_is_gold = defaultdict(bool)
         for i,c in enumerate(candidates):
             for j in range(splits.index(c.sent_char_start), splits.index(c.sent_char_end+1)):
                 span_cids[splits[j]].append(i + cid_offset)
+        for i,g in enumerate(gold):
+            for j in range(splits.index(g.sent_char_start), splits.index(g.sent_char_end+1)):
+                span_is_gold[splits[j]] = True
 
         # Also include candidate metadata- as hidden divs
         # TODO: Handle this in nicer way!
@@ -123,5 +152,5 @@ class SentenceNgramViewer(Viewer):
         # Render as sequence of spans
         for i,s in enumerate(splits):
             end   = splits[i+1] if i < len(splits)-1 else len(context_html)
-            html += self._tag_span(context_html[s:end], vid, pid, span_cids[s])
+            html += self._tag_span(context_html[s:end], vid, pid, span_cids[s], gold=span_is_gold[s])
         return html

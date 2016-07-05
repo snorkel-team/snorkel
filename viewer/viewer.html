@@ -1,25 +1,27 @@
 <link href="../viewer/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
 <link href="../viewer/viewer.css" type="text/css" rel="stylesheet" />
-<div id="viewer-{vid}" class="viewer-pane panel panel-default">
+<div id="viewer-{vid}" class="viewer-pane panel panel-default" tabindex="0">
     <div class="panel-heading">
         <h3 class="panel-title">Viewer</h3>
-        <div id="candidate-caption-{vid}" class="candidate-caption"></div>
+        <div id="candidate-caption-{vid}" class="panel-left-justify"></div>
     </div>
     <div class="panel-body" style="height:{bh}px">{data}</div>
     <div class="panel-footer">
         <div class="btn-group" role="group" aria-label="...">
             <button id="prev-page-{vid}" type="button" class="btn btn-default">
-                <span class="glyphicon glyphicon-left-arrow" aria-hidden="true"></span> Prev. Page (U)
+                <span class="glyphicon glyphicon-left-arrow" aria-hidden="true"></span> Prev. Page (i)
             </button>
             <button id="prev-cand-{vid}" type="button" class="btn btn-default">
-                <span class="glyphicon glyphicon-down-arrow" aria-hidden="true"></span> Prev. Cand. (L)
+                <span class="glyphicon glyphicon-down-arrow" aria-hidden="true"></span> Prev. Cand. (j)
             </button>
             <button id="next-cand-{vid}" type="button" class="btn btn-default">
-                <span class="glyphicon glyphicon-up-arrow" aria-hidden="true"></span> Next Cand. (R)
+                <span class="glyphicon glyphicon-up-arrow" aria-hidden="true"></span> Next Cand. (l)
             </button>
             <button id="next-page-{vid}" type="button" class="btn btn-default">
-                <span class="glyphicon glyphicon-right-arrow" aria-hidden="true"></span> Next Page (D)
+                <span class="glyphicon glyphicon-right-arrow" aria-hidden="true"></span> Next Page (k)
             </button>
         </div>
+        <span><i>  Viewer must be focused for keyboard control</i></span>
+        <div class="page-num panel-left-justify">Page <span id="page-{vid}">0</span></div>
     </div>
 </div>

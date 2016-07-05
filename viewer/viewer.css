@@ -15,7 +15,11 @@ span.hidden-candidate {
     position: relative;
 }
 
-.candidate-caption {
+.panel-footer {
+    position: relative;
+}
+
+.panel-left-justify {
     position: absolute;
     right: 15px;
     top: 20px;

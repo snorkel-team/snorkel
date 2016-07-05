@@ -98,6 +98,9 @@ class SentenceNgramViewer(Viewer):
         if len(candidates) == 0:
             return context_html
 
+        # Sort candidates by char_start
+        candidates.sort(key=lambda c : c.char_start)
+
         # First, we split the string up into chunks by unioning all span start / end points
         splits = sorted(list(set([c.sent_char_start for c in candidates] + [c.sent_char_end + 1 for c in candidates])))
         splits = splits if splits[0] == 0 else [0] + splits

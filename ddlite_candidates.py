@@ -95,7 +95,12 @@ class Ngram(Candidate):
         """
         if isinstance(key, slice):
             char_start = self.char_start if key.start is None else self.char_start + key.start
-            char_end   = self.char_end if key.stop is None else self.char_start + key.stop - 1
+            if key.stop is None:
+                char_end = self.char_end
+            elif key.stop >= 0:
+                char_end = self.char_start + key.stop - 1
+            else:
+                char_end = self.char_end + key.stop
             return Ngram(char_start, char_end, self.sentence)
         else:
             raise NotImplementedError()

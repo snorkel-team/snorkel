@@ -83,11 +83,14 @@ class Viewer(object):
     def render(self, n_per_page=3, height=225):
         """Renders viewer pane"""
         N = len(self.views)
-        li_html   = '<li class="list-group-item">{data}</li>'
+        li_html   = """
+        <li class="list-group-item" data-toggle="tooltip" data-placement="top" title="{cid}">{data}</li>
+        """
         page_html = """
-            <div class="viewer-page viewer-page-{vid}" id="viewer-page-{vid}-{pid}" data-nc="{nc}">
-                <ul class="list-group">{data}</ul>
-            </div>"""
+        <div class="viewer-page viewer-page-{vid}" id="viewer-page-{vid}-{pid}" data-nc="{nc}">
+            <ul class="list-group">{data}</ul>
+        </div>
+        """
 
         # Random viewer id to avoid js cross-cell collisions
         vid = randint(0,10000)
@@ -100,7 +103,8 @@ class Viewer(object):
             cid_offset = 0
             for j in range(i, min(N, i+n_per_page)):
                 context, candidates, gold = self.views[j]
-                lis.append(li_html.format(data=self._tag_context(context, candidates, gold, vid, pid, cid_offset=cid_offset)))
+                li_data = self._tag_context(context, candidates, gold, vid, pid, cid_offset=cid_offset)
+                lis.append(li_html.format(data=li_data, cid=context.id))
                 cid_offset += len(candidates)
             pages.append(page_html.format(vid=vid, pid=pid, nc=cid_offset, data=''.join(lis)))
             pid += 1

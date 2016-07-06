@@ -3,6 +3,11 @@ var nPages = %s;
 var cid    = 0;
 var pid    = 0;
 
+// Enable tooltip functionality
+$(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+});
+
 // Get the selector for a given candidate by number (w.r.t. to entire page group)
 function candidateSelector(cid) {
     return $("span.c-" + vid + "-" + pid + "-" + cid);

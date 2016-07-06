@@ -202,35 +202,40 @@ class Corpus(object):
         
         # Parse documents
         print "Parsing documents..."
-        self.doc_parser = doc_parser
-        self.docs       = list(self.doc_parser.parse())
+        self._docs_by_id = {}
+        for doc in doc_parser.parse():
+            self._docs_by_id[doc.id] = doc
 
         # Parse sentences
         print "Parsing sentences..."
-        self.sent_parser = sent_parser
-        self.sents       = defaultdict(list)
-        for sent in self.sent_parser.parse_docs(self.docs):
-            self.sents[sent.doc_id].append(sent)
-
-        # Store candidates as well, indexed by sentence id
-        self.candidates = {}
+        self._sentences_by_id     = {}
+        self._sentences_by_doc_id = defaultdict(list)
+        for sent in sent_parser.parse_docs(self._docs_by_id.values()):
+            self._sentences_by_id[sent.id] = sent
+            self._sentences_by_doc_id[sent.doc_id].append(sent)
 
     def __iter__(self):
-        for doc in self.docs:
-            yield (doc, self.sents[doc.id])
+        """Default iterator is over (document, sentence) tuples"""
+        for doc in self.iter_docs():
+            yield (doc, self.get_sentences_in(doc.id))
+
+    def iter_docs(self):
+        return self._docs_by_id.itervalues()
 
     def iter_sentences(self):
-        return chain.from_iterable(self.sents.itervalues())
+        return self._sentences_by_id.itervalues()
 
-    def extract_candidates(self, candidate_space, matcher):
-        """Given a CandidateSpace and a Matcher object, extract a set of candidates"""
-        self.candidates = {}
-        for sent in self.iter_sentences():
-            self.candidates[sent.id] = list(matcher.apply(candidate_space.apply(sent)))
+    def get_docs(self):
+        return self._docs_by_id.values()
 
-    def iter_candidates(self):
-        return chain.from_iterable(self.candidates.itervalues())
+    def get_sentences(self):
+        return self._sentences_by_id.values()
 
-    def iter_sentences_and_candidates(self):
-        for sent in self.iter_sentences():
-            yield (sent, self.candidates[sent.id])
+    def get_doc(self, id):
+        return self._docs_by_id[id]
+
+    def get_sentence(self, id):
+        return self._sentences_by_id[id]
+
+    def get_sentences_in(self, doc_id):
+        return self._sentences_by_doc_id[doc_id]

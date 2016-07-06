@@ -1,3 +1,6 @@
+from collections import defaultdict
+from itertools import chain
+from time import time
 
 
 class Candidate(object):
@@ -26,6 +29,51 @@ class CandidateSpace(object):
     def apply(self, x):
         raise NotImplementedError()
 
+
+class Candidates(object):
+    """
+    A generic class to hold and index a set of Candidates
+    Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
+    a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
+    """
+    def __init__(self, candidate_space, matcher, contexts):
+        
+        # By default, index candidates by context id
+        print "Extracting candidates..."
+        self._candidates_by_id         = {}
+        self._candidates_by_context_id = defaultdict(list)
+        for context in contexts:
+            for candidate in matcher.apply(candidate_space.apply(context)):
+                self._candidates_by_id[candidate.id] = candidate
+                self._candidates_by_context_id[context.id].append(candidate)
+    
+    def __iter__(self):
+        """Default iterator is over Candidates"""
+        return self._candidates_by_id.itervalues()
+
+    def get_candidates(self):
+        return self._candidates_by_id.values()
+
+    def get_candidate(self, id):
+        """Retrieve a candidate by candidate id"""
+        return self._candidates_by_id[id]
+    
+    def get_candidates_in(self, context_id):
+        """Return the candidates in a specific context (e.g. Sentence)"""
+        return self._candidates_by_context_id[context_id]
+
+    def gold_stats(self, gold_set):
+        """Return precision and recall relative to a "gold" set of candidates of the same type"""
+        gold = gold_set if isinstance(gold_set, set) else set(gold_set)
+        cs   = self.get_candidates()
+        nc   = len(cs)
+        ng   = len(gold)
+        both = len(gold.intersection(cs))
+        print "# of gold annotations\t= %s" % ng
+        print "# of candidates\t\t= %s" % nc
+        print "Candidate recall\t= %0.3f" % (both / float(ng),)
+        print "Candidate precision\t= %0.3f" % (both / float(nc),)
+    
 
 # Basic sentence attributes
 WORDS        = 'words'

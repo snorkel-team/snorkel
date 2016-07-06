@@ -117,6 +117,8 @@ class Viewer(object):
 
 class SentenceNgramViewer(Viewer):
     """Viewer for Sentence objects and Ngram candidate spans within them, given a Corpus object"""
+    def __init__(self, sentences, candidates, gold=[], n_max=100, filter_empty=True):
+        super(SentenceNgramViewer, self).__init__(sentences, candidates, lambda c : c.sent_id, gold=gold, n_max=n_max, filter_empty=filter_empty)
 
     def _tag_context(self, sentence, candidates, gold, vid, pid, cid_offset=0):
         """Tag **potentially overlapping** spans of text, at the character-level"""

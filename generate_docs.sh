@@ -6,3 +6,5 @@ for f in *.py; do
     echo -e "\n$f"
     pdoc --overwrite --html --html-dir docs/ $f
 done
+echo ""
+echo "Done: PDoc documentation in docs/."

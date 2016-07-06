@@ -94,15 +94,18 @@ class Concat(NgramMatcher):
     NOTE: Currently slices on **word index** and considers concatenation along these divisions only
     """
     def init(self):
-        self.permutations  = self.opts.get('permutations', False)
-        self.both_required = self.opts.get('both_required', True)
-        self.ignore_sep    = self.opts.get('ignore_sep', True)
-        self.sep           = self.opts.get('sep', " ")
+        self.permutations   = self.opts.get('permutations', False)
+        self.left_required  = self.opts.get('left_required', True)
+        self.right_required = self.opts.get('right_required', True)
+        self.ignore_sep     = self.opts.get('ignore_sep', True)
+        self.sep            = self.opts.get('sep', " ")
 
     def f(self, c):
         if len(self.children) != 2:
             raise ValueError("Concat takes two child Matcher objects as arguments.")
-        if not self.both_required and (self.children[0].f(c) or self.children[1].f(c)):
+        if not self.left_required and self.children[1].f(c):
+            return 1
+        if not self.right_required and self.children[0].f(c):
             return 1
 
         # Iterate over candidate splits **at the word boundaries**

@@ -1,5 +1,11 @@
 import re
 from itertools import chain
+import warnings
+try:
+    from nltk.stem.porter import PorterStemmer
+except ImportError:
+    warnings.warn("nltk not installed- some default functionality may be absent.")
+
 
 class Matcher(object):
     """
@@ -72,10 +78,26 @@ class DictionaryMatch(NgramMatcher):
         self.d           = frozenset(self.opts['d'])
         self.ignore_case = self.opts.get('ignore_case', True) 
         self.attrib      = self.opts.get('attrib', WORDS)
+
+        # Optionally use a stemmer, preprocess the dictionary
+        # Note that user can provide *an object having a stem() method*
+        self.stemmer = self.opts.get('stemmer', None)
+        if self.stemmer is not None:
+            if self.stemmer == 'porter':
+                self.stemmer = PorterStemmer()
+            self.d = frozenset(self._stem(w) for w in list(self.d))
+
+    def _stem(self, w):
+        """Apply stemmer, handling encoding errors"""
+        try:
+            return self.stemmer.stem(w)
+        except UnicodeDecodeError:
+            return w
     
     def _f(self, c):
         p = c.get_attrib_span(self.attrib)
         p = p.lower() if self.ignore_case else p
+        p = self._stem(p) if self.stemmer is not None else p
         return 1 if p in self.d else 0
 
 

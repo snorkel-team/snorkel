@@ -1,6 +1,9 @@
+import sys
 from collections import defaultdict
 from itertools import chain
 from time import time
+from multiprocessing import Process, Queue, JoinableQueue
+from Queue import Empty
 
 
 class Candidate(object):
@@ -30,23 +33,81 @@ class CandidateSpace(object):
         raise NotImplementedError()
 
 
+class CandidateExtractorProcess(Process):
+    def __init__(self, candidate_space, matcher, contexts_in, candidates_out):
+        Process.__init__(self)
+        self.candidate_space = candidate_space
+        self.matcher         = matcher
+        self.contexts_in     = contexts_in
+        self.candidates_out  = candidates_out
+
+    def run(self):
+        while True:
+            try:
+                context = self.contexts_in.get(False)
+                for candidate in self.matcher.apply(self.candidate_space.apply(context)):
+                    self.candidates_out.put(candidate, False)
+                self.contexts_in.task_done()
+            except Empty:
+                break
+
+
+QUEUE_COLLECT_TIMEOUT = 5
+
 class Candidates(object):
     """
     A generic class to hold and index a set of Candidates
     Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
     a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
     """
-    def __init__(self, candidate_space, matcher, contexts):
-        
-        # By default, index candidates by context id
+    def __init__(self, candidate_space, matcher, contexts, parallelism=False, join_key='context_id'):
+        self.join_key = join_key
+        self.ps = []
+
+        # Extract & index candidates
         print "Extracting candidates..."
+        if parallelism in [1, False]:
+            candidates = self._extract(candidate_space, matcher, contexts)
+        else:
+            candidates = self._extract_multiprocess(candidate_space, matcher, contexts, parallelism=parallelism)
+        self._index(candidates)
+
+    def _extract(self, candidate_space, matcher, contexts):
+        return chain.from_iterable(matcher.apply(candidate_space.apply(c)) for c in contexts)
+
+    def _extract_multiprocess(self, candidate_space, matcher, contexts, parallelism=2):
+        contexts_in    = JoinableQueue()
+        candidates_out = Queue()
+
+        # Fill the in-queue with contexts
+        for context in contexts:
+            contexts_in.put(context)
+
+        # Start worker Processes
+        for i in range(parallelism):
+            p  = CandidateExtractorProcess(candidate_space, matcher, contexts_in, candidates_out)
+            p.start()
+            self.ps.append(p)
+        
+        # Join on JoinableQueue of contexts
+        contexts_in.join()
+        
+        # Collect candidates out
+        candidates = []
+        while True:
+            try:
+                candidates.append(candidates_out.get(True, QUEUE_COLLECT_TIMEOUT))
+            except Empty:
+                break
+        return candidates
+
+    def _index(self, candidates):
         self._candidates_by_id         = {}
         self._candidates_by_context_id = defaultdict(list)
-        for context in contexts:
-            for candidate in matcher.apply(candidate_space.apply(context)):
-                self._candidates_by_id[candidate.id] = candidate
-                self._candidates_by_context_id[context.id].append(candidate)
-    
+        for c in candidates:
+            self._candidates_by_id[c.id] = c
+            self._candidates_by_context_id[c.__dict__[self.join_key]].append(c)
+
     def __iter__(self):
         """Default iterator is over Candidates"""
         return self._candidates_by_id.itervalues()
@@ -107,6 +168,9 @@ class Ngram(Candidate):
 
         # A dictionary to hold task-specific metadata e.g. canonical id, category, etc.
         self.metadata = metadata
+
+        # To enable generic methods
+        self.context_id = self.sent_id
 
     def char_to_word_index(self, ci):
         """Given a character-level index (offset), return the index of the **word this char is in**"""

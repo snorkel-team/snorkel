@@ -1,4 +1,6 @@
-# DeepDive Lite
+# Snorkel
+
+### _Formerly DDLite, in transition!_
 
 [![Build Status](https://travis-ci.org/HazyResearch/ddlite.svg?branch=master)](https://travis-ci.org/HazyResearch/ddlite)
 

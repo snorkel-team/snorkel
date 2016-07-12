@@ -17,11 +17,11 @@ from itertools import chain
 
 Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
 
-class DocParser: 
+class DocParser:
     """Parse a file or directory of files into a set of Document objects."""
     def __init__(self, path):
         self.path = path
-      
+
     def parse(self):
         """
         Parse a file or directory of files into a set of Document objects.
@@ -71,6 +71,7 @@ class HTMLDocParser(DocParser):
     def _strip_special(self, s):
         return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
 
+
 class XMLDocParser(DocParser):
     """
     Parse an XML file or directory of XML files into a set of Document objects.
@@ -99,9 +100,45 @@ class XMLDocParser(DocParser):
             #except:
             #    print "Error parsing document #%s (id=%s) in file %s" % (i,id,file_name)
 
-Sentence = namedtuple('Sentence', ['id', 'words', 'lemmas', 'poses', 'dep_parents',
-                                   'dep_labels', 'sent_id', 'doc_id', 'text',
-                                   'char_offsets', 'doc_name'])
+class HTMLTableParser(DocParser):
+    def __init__(self, path):
+        self.path = path
+        self.table_id = 0
+
+    """Simple parsing of raw HTML tables, assuming one document per file"""
+    def parse_file(self, fp, file_name):
+        with open(fp, 'rb') as f:
+            soup = BeautifulSoup(f, 'lxml')
+            tables = soup.findAll("table")
+            for table in tables:
+                yield Document(id=table_id, file=file_name, text=table, attribs=None)
+                table_id += 1
+
+identity_info   = ['id', 'doc_id', 'sent_id', 'doc_name']
+lingual_info    = ['words', 'lemmas', 'poses', 'dep_parents',
+                   'dep_labels', 'char_offsets', 'text']
+structural_info = ['header_tag', 'row_num', 'col_num']
+visual_info     = []
+
+Cell     = namedtuple('Cell', identity_info + lingual_info + structural_info + visual_info)
+Sentence = namedtuple('Sentence', identity_info + lingual_info)
+
+class CellParser(SentenceParser):
+
+    def parse_docs(self, docs):
+        """Temporary redirect to be fixed later by refactoring"""
+        return parse_tables(docs)
+
+    def parse_tables(self, tables):
+        """Parse a list of Document objects (html tables) into a list of pre-processed Cells."""
+        cells = []
+        for doc in docs:
+            # get cells from text
+
+            # parse
+            for cell in self.parse(doc.text, doc.id, doc.file):
+                sents.append(cell[])
+        return cells
 
 class SentenceParser:
     def __init__(self, tok_whitespace=False):
@@ -117,7 +154,7 @@ class SentenceParser:
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
-        props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else "" 
+        props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
         self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % (self.port, props)
 
         # Following enables retries to cope with CoreNLP server boot-up latency
@@ -168,14 +205,14 @@ class SentenceParser:
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['sent_id'] = sent_id
             parts['doc_id'] = doc_id
-            parts['text'] = s[block['tokens'][0]['characterOffsetBegin'] : 
+            parts['text'] = s[block['tokens'][0]['characterOffsetBegin'] :
                                 block['tokens'][-1]['characterOffsetEnd']]
             parts['doc_name'] = doc_name
             parts['id'] = "%s-%s" % (parts['doc_id'], parts['sent_id'])
             sent = Sentence(**parts)
             sent_id += 1
             yield sent
-    
+
     def parse_docs(self, docs):
         """Parse a list of Document objects into a list of pre-processed Sentences."""
         sents = []
@@ -183,9 +220,9 @@ class SentenceParser:
             for sent in self.parse(doc.text, doc.id, doc.file):
                 sents.append(sent)
         return sents
-        
+
 def sort_X_on_Y(X, Y):
-    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]   
+    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
 
 def corenlp_cleaner(words):
   d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
@@ -199,7 +236,7 @@ class Corpus(object):
     Default iterator is over (Document, Sentences) tuples
     """
     def __init__(self, doc_parser, sent_parser):
-        
+
         # Parse documents
         print "Parsing documents..."
         self._docs_by_id = {}

@@ -1,0 +1,25 @@
+<table>
+  <tr>
+    <th>Person</th>
+    <th>Age</th>
+    <th>Birthdate</th>
+  </tr>
+  <tr>
+    <th>Alice</th>
+    <td>45</td>
+    <td>Mar. 15, 1971</td>
+  </tr>
+  <tr>
+    <th>Bob</th>
+    <td>17</td>
+    <td>Jan. 1, 1999</td>
+  </tr>
+  <tr>
+    <th>Charlie</th>
+    <td>80</td>
+    <td>July 13, 1936</td>
+  </tr>
+  <caption>
+    Table 1: Ages and birthdates of the world's most important people.
+  </caption>
+</table>

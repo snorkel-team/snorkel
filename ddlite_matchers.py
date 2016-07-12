@@ -18,7 +18,7 @@ class Matcher(object):
         self.opts               = opts
         self.longest_match_only = self.opts.get('longest_match_only', False)
         self.init()
-    
+
     def init(self):
         pass
 
@@ -28,8 +28,8 @@ class Matcher(object):
 
     def f(self, c):
         """
-        The recursicvely composed version of filter function f
-        By default, returns logical **conjunction** of opeerator and single child operator
+        The recursively composed version of filter function f
+        By default, returns logical **conjunction** of operator and single child operator
         """
         if len(self.children) == 0:
             return self._f(c)
@@ -76,7 +76,7 @@ class DictionaryMatch(NgramMatcher):
     """Selects candidate Ngrams that match against a given list d"""
     def init(self):
         self.d           = frozenset(self.opts['d'])
-        self.ignore_case = self.opts.get('ignore_case', True) 
+        self.ignore_case = self.opts.get('ignore_case', True)
         self.attrib      = self.opts.get('attrib', WORDS)
 
         # Optionally use a stemmer, preprocess the dictionary
@@ -93,7 +93,7 @@ class DictionaryMatch(NgramMatcher):
             return self.stemmer.stem(w)
         except UnicodeDecodeError:
             return w
-    
+
     def _f(self, c):
         p = c.get_attrib_span(self.attrib)
         p = p.lower() if self.ignore_case else p

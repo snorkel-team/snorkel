@@ -136,12 +136,20 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             var cl  = String(label) + "-candidate";
             var cln = String(!label) + "-candidate";
             var c   = this.$el.find("span.c-"+this.pid+"-"+this.cid);
+
+            // Flush css background-color property, so class css not overidden
+            c.css("background-color", "");
+
+            // Toggle label highlighting
             if (c.hasClass(cl)) {
                 c.removeClass(cl);
+                this.setRGBABackgroundOpacity(c, "1.0");
             } else {
                 c.removeClass(cln);
                 c.addClass(cl);
             }
+
+            // Set the label and pass back to the model
         },
     });
 

@@ -34,27 +34,31 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             });
 
             // Arrow key functionality
-            $(document).keydown(function(e) {
+            this.$el.keydown(function(e) {
+                switch(e.which) {
+                    case 74: // j
+                    that.switchCandidate(-1);
+                    break;
 
-                // Check that the Jupyter notebook cell the viewer is in is selected
-                if (this.$el.find("#viewer").parents(".cell").hasClass("selected")) {
-                    switch(e.which) {
-                        case 74: // j
-                        this.switchCandidate(-1);
-                        break;
+                    case 73: // i
+                    that.switchPage(-1);
+                    break;
 
-                        case 73: // i
-                        this.switchPage(-1);
-                        break;
+                    case 76: // l
+                    that.switchCandidate(1);
+                    break;
 
-                        case 76: // l
-                        this.switchCandidate(1);
-                        break;
+                    case 75: // k
+                    that.switchPage(1);
+                    break;
 
-                        case 75: // k
-                        this.switchPage(1);
-                        break;
-                    }
+                    case 84: // t
+                    that.labelCandidate(true);
+                    break;
+
+                    case 70: // f
+                    that.labelCandidate(false);
+                    break;
                 }
             });
 

@@ -26,6 +26,12 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             this.$el.find("#prev-page").click(function() {
                 that.switchPage(-1);
             });
+            this.$el.find("#label-true").click(function() {
+                that.labelCandidate(true);
+            });
+            this.$el.find("#label-false").click(function() {
+                that.labelCandidate(false);
+            });
 
             // Arrow key functionality
             $(document).keydown(function(e) {
@@ -63,12 +69,30 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             //})
         },
 
+        // Highlight spans
+        setRGBABackgroundOpacity: function(el, opacity) {
+            var rgx = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*(\d\.\d+)\)/;
+            var m   = rgx.exec(el.css("background-color"));
+
+            // Handle rgb
+            if (m == null) {
+                rgx = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/;
+                m   = rgx.exec(el.css("background-color"));
+            }
+            el.css("background-color", "rgba("+m[1]+","+m[2]+","+m[3]+","+opacity+")");
+        },
+
         // Cycle through candidates and highlight, by increment inc
         switchCandidate: function(inc) {
             var nC = parseInt(this.$el.find("#viewer-page-"+this.pid).attr("data-nc"));
+            if (nC == 0) { return false; }
 
-            // Clear highlighting and highlight new candidate
-            this.$el.find("span.candidate").removeClass("highlighted-candidate");
+            // Clear highlighting from previous candidate
+            var cOld = this.$el.find("span.c-"+this.pid+"-"+this.cid);
+            this.setRGBABackgroundOpacity(cOld, "0.3");
+            cOld.removeClass("highlighted-candidate");
+
+            // Increment
             if (this.cid + inc < 0) {
                 this.cid = nC + (this.cid + inc);
             } else if (this.cid + inc > nC - 1) {
@@ -76,11 +100,15 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             } else {
                 this.cid += inc;
             }
-            this.$el.find("span.c-"+this.pid+"-"+this.cid).addClass("highlighted-candidate");
+
+            // Highlight new candidate
+            var cNew = this.$el.find("span.c-"+this.pid+"-"+this.cid);
+            this.setRGBABackgroundOpacity(cNew, 1.0);
+            cNew.addClass("highlighted-candidate");
 
             // Fill in caption
             // TODO: Redo this with widget data?
-            this.$el.find("#candidate-caption").html(this.$el.find("#cdata-"+this.pid+"-"+this.cid).attr("caption"));
+            //this.$el.find("#candidate-caption").html(this.$el.find("#cdata-"+this.pid+"-"+this.cid).attr("caption"));
         },
 
         // Switch through pages
@@ -101,6 +129,19 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             // Reset cid and set to first candidate
             this.cid = 0;
             this.switchCandidate(0);
+        },
+
+        // Label candidates
+        labelCandidate: function(label) {
+            var cl  = String(label) + "-candidate";
+            var cln = String(!label) + "-candidate";
+            var c   = this.$el.find("span.c-"+this.pid+"-"+this.cid);
+            if (c.hasClass(cl)) {
+                c.removeClass(cl);
+            } else {
+                c.removeClass(cln);
+                c.addClass(cl);
+            }
         },
     });
 

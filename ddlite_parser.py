@@ -9,11 +9,19 @@ import requests
 import signal
 import sys
 import warnings
+import numpy as np
+import re
 from bs4 import BeautifulSoup
 from collections import namedtuple, defaultdict
 from subprocess import Popen
 import lxml.etree as et
 from itertools import chain
+
+identity_tags   = ['id', 'doc_id', 'sent_id', 'doc_name']
+lingual_tags    = ['words', 'lemmas', 'poses', 'dep_parents',
+                   'dep_labels', 'char_offsets', 'text']
+structural_tags = ['row_num', 'col_num', 'header_tag']
+visual_tags     = []
 
 Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
 
@@ -100,45 +108,7 @@ class XMLDocParser(DocParser):
             #except:
             #    print "Error parsing document #%s (id=%s) in file %s" % (i,id,file_name)
 
-class HTMLTableParser(DocParser):
-    def __init__(self, path):
-        self.path = path
-        self.table_id = 0
-
-    """Simple parsing of raw HTML tables, assuming one document per file"""
-    def parse_file(self, fp, file_name):
-        with open(fp, 'rb') as f:
-            soup = BeautifulSoup(f, 'lxml')
-            tables = soup.findAll("table")
-            for table in tables:
-                yield Document(id=table_id, file=file_name, text=table, attribs=None)
-                table_id += 1
-
-identity_info   = ['id', 'doc_id', 'sent_id', 'doc_name']
-lingual_info    = ['words', 'lemmas', 'poses', 'dep_parents',
-                   'dep_labels', 'char_offsets', 'text']
-structural_info = ['header_tag', 'row_num', 'col_num']
-visual_info     = []
-
-Cell     = namedtuple('Cell', identity_info + lingual_info + structural_info + visual_info)
-Sentence = namedtuple('Sentence', identity_info + lingual_info)
-
-class CellParser(SentenceParser):
-
-    def parse_docs(self, docs):
-        """Temporary redirect to be fixed later by refactoring"""
-        return parse_tables(docs)
-
-    def parse_tables(self, tables):
-        """Parse a list of Document objects (html tables) into a list of pre-processed Cells."""
-        cells = []
-        for doc in docs:
-            # get cells from text
-
-            # parse
-            for cell in self.parse(doc.text, doc.id, doc.file):
-                sents.append(cell[])
-        return cells
+Sentence = namedtuple('Sentence', identity_tags + lingual_tags)
 
 class SentenceParser:
     def __init__(self, tok_whitespace=False):
@@ -220,6 +190,48 @@ class SentenceParser:
             for sent in self.parse(doc.text, doc.id, doc.file):
                 sents.append(sent)
         return sents
+
+class HTMLTableParser(DocParser):
+    """Simple parsing of raw HTML tables, assuming one document per file"""
+
+    def parse_file(self, fp, file_name):
+        table_pattern = re.compile(r"(<table[^>]*>.*?</table[^>]*>)")
+        with open(fp, 'r') as f:
+            tables = table_pattern.findall(f.read())
+            for table_id, table in enumerate(tables):
+                yield Document(id=table_id, file=file_name, text=table, attribs=None)
+
+Cell = namedtuple('Cell', identity_tags + lingual_tags + structural_tags + visual_tags)
+
+class CellParser(SentenceParser):
+
+    def parse_table(self, table, doc_id=None, doc_name=None):
+        row_pattern = re.compile(r"<(tr)[^>]*>(.*?)</tr[^>]*>")
+        col_pattern = re.compile(r"<(t[dh])[^>]*>(.*?)</\1[^>]*>")
+        (row_tags, rows) = zip(*(row_pattern.findall(table)))
+        grid = []
+        for i, row in enumerate(rows):
+            (col_tags, cols) = zip(*(col_pattern.findall(row)))
+            grid_row = []
+            for j, col in enumerate(cols):
+                for sent in self.parse(col, doc_id, doc_name):
+                    parts = sent._asdict()
+                    parts['row_num'] = i
+                    parts['col_num'] = j
+                    parts['header_tag'] = (col_tags[j] == 'th')
+                    grid_row.append(Cell(**parts))
+            grid.append(grid_row)
+        return grid
+
+    def parse_docs(self, docs):
+        """Parse a list of Document objects (html tables) into a list of pre-processed Cells."""
+        cells = []
+        for doc in docs:
+            # grid is a 2D list of lists of Cells
+            grid = self.parse_table(doc.text, doc.id, doc.file)
+            # NOTE: grid is not currently be utilized, but may someday be useful
+        return cells
+
 
 def sort_X_on_Y(X, Y):
     return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]

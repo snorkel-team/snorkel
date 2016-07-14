@@ -1,98 +1,110 @@
-var vid    = %s;
-var nPages = %s;
-var cid    = 0;
-var pid    = 0;
+require.undef('viewer');
 
-// Enable tooltip functionality
-$(function () {
-    $('[data-toggle="tooltip"]').tooltip()
+// NOTE: all elements should be selected using this.$el.find to avoid collisions with other Viewers
+
+define('viewer', ["jupyter-js-widgets"], function(widgets) {
+    var ViewerView = widgets.DOMWidgetView.extend({
+        render: function() {
+            this.nPages = this.model.get('n_pages');
+            this.pid = 0;
+            this.cid = 0;
+
+            // Insert the html payload
+            this.$el.append(this.model.get('html'));
+
+            // Enable button functionality for navigation
+            var that = this;
+            this.$el.find("#next-cand").click(function() {
+                that.switchCandidate(1);
+            });
+            this.$el.find("#prev-cand").click(function() {
+                that.switchCandidate(-1);
+            });
+            this.$el.find("#next-page").click(function() {
+                that.switchPage(1);
+            });
+            this.$el.find("#prev-page").click(function() {
+                that.switchPage(-1);
+            });
+
+            // Arrow key functionality
+            $(document).keydown(function(e) {
+
+                // Check that the Jupyter notebook cell the viewer is in is selected
+                if (this.$el.find("#viewer").parents(".cell").hasClass("selected")) {
+                    switch(e.which) {
+                        case 74: // j
+                        this.switchCandidate(-1);
+                        break;
+
+                        case 73: // i
+                        this.switchPage(-1);
+                        break;
+
+                        case 76: // l
+                        this.switchCandidate(1);
+                        break;
+
+                        case 75: // k
+                        this.switchPage(1);
+                        break;
+                    }
+                }
+            });
+
+            // Show the first page and highlight the first candidate
+            this.$el.find("#viewer-page-0").show();
+            this.switchCandidate(0);
+
+            // Enable tooltips
+            // TODO: Fix this?
+            //$(function () {
+            //      this.$el.find('[data-toggle="tooltip"]').tooltip()
+            //})
+        },
+
+        // Cycle through candidates and highlight, by increment inc
+        switchCandidate: function(inc) {
+            var nC = parseInt(this.$el.find("#viewer-page-"+this.pid).attr("data-nc"));
+
+            // Clear highlighting and highlight new candidate
+            this.$el.find("span.candidate").removeClass("highlighted-candidate");
+            if (this.cid + inc < 0) {
+                this.cid = nC + (this.cid + inc);
+            } else if (this.cid + inc > nC - 1) {
+                this.cid = (this.cid + inc) - nC;
+            } else {
+                this.cid += inc;
+            }
+            this.$el.find("span.c-"+this.pid+"-"+this.cid).addClass("highlighted-candidate");
+
+            // Fill in caption
+            // TODO: Redo this with widget data?
+            this.$el.find("#candidate-caption").html(this.$el.find("#cdata-"+this.pid+"-"+this.cid).attr("caption"));
+        },
+
+        // Switch through pages
+        switchPage: function(inc) {
+            this.$el.find(".viewer-page").hide();
+            if (this.pid + inc < 0) {
+                this.pid = 0;
+            } else if (this.pid + inc > this.nPages - 1) {
+                this.pid = this.nPages - 1;
+            } else {
+                this.pid += inc;
+            }
+            this.$el.find("#viewer-page-"+this.pid).show();
+
+            // Show pagination
+            this.$el.find("#page").html(this.pid);
+
+            // Reset cid and set to first candidate
+            this.cid = 0;
+            this.switchCandidate(0);
+        },
+    });
+
+    return {
+        ViewerView: ViewerView
+    };
 });
-
-// Get the selector for a given candidate by number (w.r.t. to entire page group)
-function candidateSelector(cid) {
-    return $("span.c-" + vid + "-" + pid + "-" + cid);
-}
-
-// Cycle through candidates and highlight, by increment inc
-function switchCandidate(inc) {
-    var nC = parseInt($("#viewer-page-"+vid+"-"+pid).attr("data-nc"));
-
-    // Clear highlighting and highlight new candidate
-    $("span.candidate").removeClass("highlighted-candidate");
-    if (cid + inc < 0) {
-        cid = nC + (cid + inc);
-    } else if (cid + inc > nC - 1) {
-        cid = (cid + inc) - nC;
-    } else {
-        cid += inc;
-    }
-    candidateSelector(cid).addClass("highlighted-candidate");
-
-    // Fill in caption
-    $("#candidate-caption-"+vid).html($("#cdata-"+vid+"-"+pid+"-"+cid).attr("caption"));
-};
-
-$("#next-cand-" + vid).click(function() {
-    switchCandidate(1);
-});
-
-$("#prev-cand-" + vid).click(function() {
-    switchCandidate(-1);
-});
-
-// Switch through pages
-function switchPage(inc) {
-    $(".viewer-page-"+vid).hide();
-    if (pid + inc < 0) {
-        pid = 0;
-    } else if (pid + inc > nPages - 1) {
-        pid = nPages - 1;
-    } else {
-        pid += inc;
-    }
-    $("#viewer-page-"+vid+"-"+pid).show();
-
-    // Show pagination
-    $("#page-"+vid).html(pid);
-
-    // Reset cid and set to first candidate
-    cid = 0;
-    switchCandidate(0);
-}
-
-$("#next-page-" + vid).click(function() {
-    switchPage(1);
-});
-
-$("#prev-page-" + vid).click(function() {
-    switchPage(-1);
-});
-
-// Arrow key functionality
-$(document).keydown(function(e) {
-
-    // Check that the Jupyter notebook cell the viewer is in is selected
-    if ($("#viewer-"+vid).parents(".cell").hasClass("selected")) {
-        switch(e.which) {
-            case 74: // j
-            switchCandidate(-1);
-            break;
-
-            case 73: // i
-            switchPage(-1);
-            break;
-
-            case 76: // l
-            switchCandidate(1);
-            break;
-
-            case 75: // k
-            switchPage(1);
-            break;
-        }
-    }
-});
-
-// Show the first page and highlight the first candidate
-$("#viewer-page-"+vid+"-0").show();
-switchCandidate(0);

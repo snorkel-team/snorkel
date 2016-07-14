@@ -1,30 +1,22 @@
+from __future__ import print_function
+try:
+    from IPython.core.display import display, Javascript
+except:
+    raise Exception("This module must be run in IPython.")
 from itertools import islice
 from random import randint, sample
 import os
 from collections import defaultdict
+import ipywidgets as widgets
+from traitlets import Unicode, Int
+
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 HOME = os.environ['DDLHOME']
 
-try:
-    from IPython.core.display import display_html, HTML, display_javascript, Javascript
-except:
-    raise Exception("This module must be run in IPython.")
 
-
-JS_LIBS = [
-    "http://d3js.org/d3.v3.min.js",
-    "https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js",
-    #"%s/viewer/bootstrap/js/bootstrap.min.js" % HOME
-]
-
-def render(html, js, css_isolated=False):
-    """Renders an html + js payload in IPython"""
-    display_html(HTML(data=html), metadata=dict(isolated=css_isolated))
-    if js is not None:
-        display_javascript(Javascript(data=js, lib=JS_LIBS))
-
-
-class Viewer(object):
+class Viewer(widgets.DOMWidget):
     """
     Generic object for viewing and labeling candidate objects in their rendered contexts.
     Takes in:
@@ -38,7 +30,17 @@ class Viewer(object):
     this can be disabled (filter_empty) and any filtering can be done prior to passing into
     the Viewer object!
     """
-    def __init__(self, contexts, candidates, candidate_join_key_fn, gold=[], n_max=100, filter_empty=True):
+    _view_name   = Unicode('ViewerView').tag(sync=True)
+    _view_module = Unicode('viewer').tag(sync=True)
+    n_pages      = Int().tag(sync=True)
+    html         = Unicode('<h3>Error!</h3>').tag(sync=True)
+
+    def __init__(self, contexts, candidates, candidate_join_key_fn, gold=[], n_max=100, filter_empty=True, n_per_page=3, height=225):
+        super(Viewer, self).__init__()
+
+        # Viewer display configs
+        self.n_per_page = n_per_page
+        self.height     = height
         
         # Index candidates by context
         candidates_index = defaultdict(list)
@@ -58,9 +60,12 @@ class Viewer(object):
             if len(candidates_index[c.id]) + len(gold_index[c.id]) > 0 or not filter_empty:
                 self.views.append((c, candidates_index[c.id], gold_index[c.id]))
 
-    def _tag_span(self, html, vid, pid, cids, gold=False):
+        # display js, construct html and pass on to widget model
+        self.render()
+
+    def _tag_span(self, html, pid, cids, gold=False):
         """
-        Given interior html and a viewer id (vid), page id (pid), and **list of candidate 
+        Given interior html and a page id (pid), and **list of candidate 
         ids (cids) that use this span**, return a the span-enclosed html such that it 
         will be highlighted, browsable and taggable in the Viewer module.
         """
@@ -73,54 +78,51 @@ class Viewer(object):
             classes.append('gold-annotation')
 
         # Mark each cid
-        classes += ['c-{vid}-{pid}-{cid}'.format(vid=vid, pid=pid, cid=c) for c in cids]
+        classes += ['c-{pid}-{cid}'.format(pid=pid, cid=c) for c in cids]
         return '<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)
 
-    def _tag_context(self, context, candidates, gold, vid, pid, cid_offset=0):
+    def _tag_context(self, context, candidates, gold, pid, cid_offset=0):
         """Given the raw context, tag the spans using the generic _tag_span method"""
         raise NotImplementedError()
 
-    def render(self, n_per_page=3, height=225):
+    def render(self):
         """Renders viewer pane"""
         N = len(self.views)
         li_html   = """
         <li class="list-group-item" data-toggle="tooltip" data-placement="top" title="{cid}">{data}</li>
         """
         page_html = """
-        <div class="viewer-page viewer-page-{vid}" id="viewer-page-{vid}-{pid}" data-nc="{nc}">
+        <div class="viewer-page" id="viewer-page-{pid}" data-nc="{nc}">
             <ul class="list-group">{data}</ul>
         </div>
         """
 
-        # Random viewer id to avoid js cross-cell collisions
-        vid = randint(0,10000)
-
         # Iterate over pages of contexts
         pid   = 0
         pages = []
-        for i in range(0, N, n_per_page):
+        for i in range(0, N, self.n_per_page):
             lis        = []
             cid_offset = 0
-            for j in range(i, min(N, i+n_per_page)):
+            for j in range(i, min(N, i + self.n_per_page)):
                 context, candidates, gold = self.views[j]
-                li_data = self._tag_context(context, candidates, gold, vid, pid, cid_offset=cid_offset)
+                li_data = self._tag_context(context, candidates, gold, pid, cid_offset=cid_offset)
                 lis.append(li_html.format(data=li_data, cid=context.id))
                 cid_offset += len(candidates)
-            pages.append(page_html.format(vid=vid, pid=pid, nc=cid_offset, data=''.join(lis)))
+            pages.append(page_html.format(pid=pid, nc=cid_offset, data=''.join(lis)))
             pid += 1
 
         # Render in primary Viewer template
-        html = open(HOME + '/viewer/viewer.html').read().format(vid=vid, bh=height, data=''.join(pages))
-        js   = open(HOME + '/viewer/viewer.js').read() % (vid, len(pages))
-        render(html, js)
+        self.n_pages = len(pages)
+        self.html    = open(HOME + '/viewer/viewer.html').read().format(bh=self.height, data=''.join(pages))
+        display(Javascript(open(HOME + '/viewer/viewer.js').read()))
 
 
 class SentenceNgramViewer(Viewer):
     """Viewer for Sentence objects and Ngram candidate spans within them, given a Corpus object"""
-    def __init__(self, sentences, candidates, gold=[], n_max=100, filter_empty=True):
-        super(SentenceNgramViewer, self).__init__(sentences, candidates, lambda c : c.sent_id, gold=gold, n_max=n_max, filter_empty=filter_empty)
+    def __init__(self, sentences, candidates, gold=[], n_max=100, filter_empty=True, n_per_page=3, height=225):
+        super(SentenceNgramViewer, self).__init__(sentences, candidates, lambda c : c.sent_id, gold=gold, n_max=n_max, filter_empty=filter_empty, n_per_page=n_per_page, height=height)
 
-    def _tag_context(self, sentence, candidates, gold, vid, pid, cid_offset=0):
+    def _tag_context(self, sentence, candidates, gold, pid, cid_offset=0):
         """Tag **potentially overlapping** spans of text, at the character-level"""
         context_html = sentence.text
 
@@ -153,10 +155,10 @@ class SentenceNgramViewer(Viewer):
 
             # Set the caption shown when candidate is highlighted
             cap   = "CID: %s" % c.id
-            html += '<div class="candidate-data" id="cdata-{vid}-{pid}-{cid}" caption="{cap}"></div>'.format(vid=vid, pid=pid, cid=i+cid_offset, cap=cap)
+            html += '<div class="candidate-data" id="cdata-{pid}-{cid}" caption="{cap}"></div>'.format(pid=pid, cid=i+cid_offset, cap=cap)
 
         # Render as sequence of spans
         for i,s in enumerate(splits):
             end   = splits[i+1] if i < len(splits)-1 else len(context_html)
-            html += self._tag_span(context_html[s:end], vid, pid, span_cids[s], gold=span_is_gold[s])
+            html += self._tag_span(context_html[s:end], pid, span_cids[s], gold=span_is_gold[s])
         return html

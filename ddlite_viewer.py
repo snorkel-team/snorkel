@@ -8,7 +8,7 @@ from random import randint, sample
 import os
 from collections import defaultdict
 import ipywidgets as widgets
-from traitlets import Unicode, Int
+from traitlets import Unicode, Int, Dict, List
 
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -30,10 +30,11 @@ class Viewer(widgets.DOMWidget):
     this can be disabled (filter_empty) and any filtering can be done prior to passing into
     the Viewer object!
     """
-    _view_name   = Unicode('ViewerView').tag(sync=True)
-    _view_module = Unicode('viewer').tag(sync=True)
-    n_pages      = Int().tag(sync=True)
-    html         = Unicode('<h3>Error!</h3>').tag(sync=True)
+    _view_name         = Unicode('ViewerView').tag(sync=True)
+    _view_module       = Unicode('viewer').tag(sync=True)
+    n_pages            = Int().tag(sync=True)
+    html               = Unicode('<h3>Error!</h3>').tag(sync=True)
+    _labels_serialized = Unicode().tag(sync=True)
 
     def __init__(self, contexts, candidates, candidate_join_key_fn, gold=[], n_max=100, filter_empty=True, n_per_page=3, height=225):
         super(Viewer, self).__init__()
@@ -115,6 +116,10 @@ class Viewer(widgets.DOMWidget):
         self.n_pages = len(pages)
         self.html    = open(HOME + '/viewer/viewer.html').read().format(bh=self.height, data=''.join(pages))
         display(Javascript(open(HOME + '/viewer/viewer.js').read()))
+
+    def get_labels(self):
+        """De-serialize labels, map to candidate id, and return as dictionary"""
+        return dict(x.split(':') for x in self._labels_serialized.split(','))
 
 
 class SentenceNgramViewer(Viewer):

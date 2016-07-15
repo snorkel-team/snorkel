@@ -8,6 +8,7 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             this.nPages = this.model.get('n_pages');
             this.pid = 0;
             this.cid = 0;
+            this.labels = {};
 
             // Insert the html payload
             this.$el.append(this.model.get('html'));
@@ -154,7 +155,20 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             }
 
             // Set the label and pass back to the model
+            this.labels["c-"+this.pid+"-"+this.cid] = label;
+            this.model.set('_labels_serialized', this.serializeDict(this.labels));
+            this.touch();
         },
+
+        // Serialization of hash maps, because traitlets Dict doesn't seem to work...
+        serializeDict: function(d) {
+            var s = [];
+            for (var key in d) {
+                s.push(key+":"+d[key]);
+            }
+            return s.join();
+        }
+
     });
 
     return {

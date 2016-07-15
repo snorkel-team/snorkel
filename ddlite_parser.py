@@ -20,7 +20,7 @@ from itertools import chain
 identity_tags   = ['id', 'doc_id', 'sent_id', 'doc_name']
 lingual_tags    = ['words', 'lemmas', 'poses', 'dep_parents',
                    'dep_labels', 'char_offsets', 'text']
-structural_tags = ['row_num', 'col_num', 'header_tag']
+structural_tags = ['row_num', 'col_num', 'header_tag', 'meta_cell']
 visual_tags     = []
 
 Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
@@ -197,7 +197,7 @@ class HTMLTableParser(DocParser):
     def parse_file(self, fp, file_name):
         table_pattern = re.compile(r"(<table[^>]*>.*?</table[^>]*>)")
         with open(fp, 'r') as f:
-            tables = table_pattern.findall(f.read())
+            tables = table_pattern.findall(f.read().replace('\n',''))
             for table_id, table in enumerate(tables):
                 yield Document(id=table_id, file=file_name, text=table, attribs=None)
 
@@ -208,30 +208,36 @@ class CellParser(SentenceParser):
     def parse_table(self, table, doc_id=None, doc_name=None):
         row_pattern = re.compile(r"<(tr)[^>]*>(.*?)</tr[^>]*>")
         col_pattern = re.compile(r"<(t[dh])[^>]*>(.*?)</\1[^>]*>")
+        caption_pattern = re.compile(r"<caption[^>]*>(.*?)</caption[^>]*>")
+        cell_id = 0
         (row_tags, rows) = zip(*(row_pattern.findall(table)))
-        grid = []
         for i, row in enumerate(rows):
             (col_tags, cols) = zip(*(col_pattern.findall(row)))
-            grid_row = []
             for j, col in enumerate(cols):
                 for sent in self.parse(col, doc_id, doc_name):
-                    parts = sent._asdict()
-                    parts['row_num'] = i
-                    parts['col_num'] = j
-                    parts['header_tag'] = (col_tags[j] == 'th')
-                    grid_row.append(Cell(**parts))
-            grid.append(grid_row)
-        return grid
+                    header_tag = (col_tags[j] == 'th')
+                    yield self._sent_to_cell(sent, cell_id, row_num=i, col_num=j, header_tag=header_tag)
+                    cell_id += 1
+        # caption = caption_pattern.findall(table)[0]
+        # for sent in self.parse(caption, doc_id, doc_name):
+        #     yield self._sent_to_cell(sent, meta_cell=True)
 
     def parse_docs(self, docs):
         """Parse a list of Document objects (html tables) into a list of pre-processed Cells."""
         cells = []
         for doc in docs:
-            # grid is a 2D list of lists of Cells
-            grid = self.parse_table(doc.text, doc.id, doc.file)
-            # NOTE: grid is not currently be utilized, but may someday be useful
+            for cell in self.parse_table(doc.text, doc.id, doc.file):
+                cells.append(cell)
         return cells
 
+    def _sent_to_cell(self, sent, cell_id, row_num=-1, col_num=-1, header_tag=False, meta_cell=False):
+        parts = sent._asdict()
+        parts['id'] = "%s-%s" % (parts['doc_id'], cell_id)
+        parts['row_num'] = row_num
+        parts['col_num'] = col_num
+        parts['header_tag'] = header_tag
+        parts['meta_cell'] = meta_cell
+        return Cell(**parts)
 
 def sort_X_on_Y(X, Y):
     return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]

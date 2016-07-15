@@ -5,7 +5,8 @@ require.undef('viewer');
 define('viewer', ["jupyter-js-widgets"], function(widgets) {
     var ViewerView = widgets.DOMWidgetView.extend({
         render: function() {
-            this.nPages = this.model.get('n_pages');
+            this.cids   = this.model.get('cids');
+            this.nPages = this.cids.length;
             this.pid = 0;
             this.cid = 0;
             this.labels = {};
@@ -66,54 +67,42 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             // Show the first page and highlight the first candidate
             this.$el.find("#viewer-page-0").show();
             this.switchCandidate(0);
-
-            // Enable tooltips
-            // TODO: Fix this?
-            //$(function () {
-            //      this.$el.find('[data-toggle="tooltip"]').tooltip()
-            //})
         },
 
-        // Highlight spans
-        setRGBABackgroundOpacity: function(el, opacity) {
-            var rgx = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*(\d\.\d+)\)/;
-            var m   = rgx.exec(el.css("background-color"));
-
-            // Handle rgb
-            if (m == null) {
-                rgx = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/;
-                m   = rgx.exec(el.css("background-color"));
-            }
-            el.css("background-color", "rgba("+m[1]+","+m[2]+","+m[3]+","+opacity+")");
-        },
+        // Get candidate selector for currently selected candidate, escaping id properly
+        getCandidate: function() {
+            return this.$el.find("."+this.cids[this.pid][this.cid].replace(/:/g, "\\:"));
+        },  
 
         // Cycle through candidates and highlight, by increment inc
         switchCandidate: function(inc) {
-            var nC = parseInt(this.$el.find("#viewer-page-"+this.pid).attr("data-nc"));
-            if (nC == 0) { return false; }
+            var N = this.cids[this.pid].length
+            if (N == 0) { return false; }
 
             // Clear highlighting from previous candidate
-            var cOld = this.$el.find("span.c-"+this.pid+"-"+this.cid);
-            this.setRGBABackgroundOpacity(cOld, "0.3");
-            cOld.removeClass("highlighted-candidate");
+            if (inc != 0) {
+                var cPrev = this.getCandidate();
+                this.setRGBABackgroundOpacity(cPrev, 0.3);
+                cPrev.removeClass("highlighted-candidate");
 
-            // Increment
-            if (this.cid + inc < 0) {
-                this.cid = nC + (this.cid + inc);
-            } else if (this.cid + inc > nC - 1) {
-                this.cid = (this.cid + inc) - nC;
-            } else {
-                this.cid += inc;
+                // Increment the cid counter
+                if (this.cid + inc >= N) {
+                    this.cid = N - 1;
+                } else if (this.cid + inc < 0) {
+                    this.cid = 0;
+                } else {
+                    this.cid += inc;
+                }
             }
 
             // Highlight new candidate
-            var cNew = this.$el.find("span.c-"+this.pid+"-"+this.cid);
-            this.setRGBABackgroundOpacity(cNew, 1.0);
-            cNew.addClass("highlighted-candidate");
+            var cNext = this.getCandidate();
+            this.setRGBABackgroundOpacity(cNext, 1.0);
+            cNext.addClass("highlighted-candidate");
 
-            // Fill in caption
-            // TODO: Redo this with widget data?
-            //this.$el.find("#candidate-caption").html(this.$el.find("#cdata-"+this.pid+"-"+this.cid).attr("caption"));
+            // Push this new cid to the model
+            this.model.set('selected_cid', this.cids[this.pid][this.cid]);
+            this.touch();
         },
 
         // Switch through pages
@@ -136,11 +125,12 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             this.switchCandidate(0);
         },
 
-        // Label candidates
+        // Label currently-selected candidate
         labelCandidate: function(label) {
+            var c   = this.getCandidate();
+            var cid = this.cids[this.pid][this.cid];
             var cl  = String(label) + "-candidate";
             var cln = String(!label) + "-candidate";
-            var c   = this.$el.find("span.c-"+this.pid+"-"+this.cid);
 
             // Flush css background-color property, so class css not overidden
             c.css("background-color", "");
@@ -148,14 +138,15 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             // Toggle label highlighting
             if (c.hasClass(cl)) {
                 c.removeClass(cl);
-                this.setRGBABackgroundOpacity(c, "1.0");
+                this.setRGBABackgroundOpacity(c, 1.0);
+                this.labels[cid] = null;
             } else {
                 c.removeClass(cln);
                 c.addClass(cl);
+                this.labels[cid] = label;
             }
 
             // Set the label and pass back to the model
-            this.labels["c-"+this.pid+"-"+this.cid] = label;
             this.model.set('_labels_serialized', this.serializeDict(this.labels));
             this.touch();
         },
@@ -164,11 +155,29 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
         serializeDict: function(d) {
             var s = [];
             for (var key in d) {
-                s.push(key+":"+d[key]);
+                s.push(key+"~~"+d[key]);
             }
             return s.join();
-        }
+        },
 
+        // Highlight spans
+        setRGBABackgroundOpacity: function(el, opacity) {
+            var rgx = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*(\d\.\d+)\)/;
+            var m   = rgx.exec(el.css("background-color"));
+
+            // Handle rgb
+            if (m == null) {
+                rgx = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/;
+                m   = rgx.exec(el.css("background-color"));
+            }
+            if (m != null) {
+                el.css("background-color", "rgba("+m[1]+","+m[2]+","+m[3]+","+opacity+")");
+
+            // TODO: Clean up this hack!!
+            } else {
+                el.css("background-color", "rgba(255,255,0,1)");
+            }
+        },
     });
 
     return {

@@ -16,6 +16,17 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 HOME = os.environ['DDLHOME']
 
 
+# PAGE LAYOUT TEMPLATES
+LI_HTML = """
+<li class="list-group-item" data-toggle="tooltip" data-placement="top" title="{context_id}">{data}</li>
+"""
+
+PAGE_HTML = """
+<div class="viewer-page" id="viewer-page-{pid}">
+    <ul class="list-group">{data}</ul>
+</div>
+"""
+
 class Viewer(widgets.DOMWidget):
     """
     Generic object for viewing and labeling candidate objects in their rendered contexts.
@@ -32,9 +43,10 @@ class Viewer(widgets.DOMWidget):
     """
     _view_name         = Unicode('ViewerView').tag(sync=True)
     _view_module       = Unicode('viewer').tag(sync=True)
-    n_pages            = Int().tag(sync=True)
+    cids               = List().tag(sync=True)
     html               = Unicode('<h3>Error!</h3>').tag(sync=True)
     _labels_serialized = Unicode().tag(sync=True)
+    selected_cid       = Unicode().tag(sync=True)
 
     def __init__(self, contexts, candidates, candidate_join_key_fn, gold=[], n_max=100, filter_empty=True, n_per_page=3, height=225):
         super(Viewer, self).__init__()
@@ -42,6 +54,11 @@ class Viewer(widgets.DOMWidget):
         # Viewer display configs
         self.n_per_page = n_per_page
         self.height     = height
+
+        # Index candidates by id
+        self.candidates = {}
+        for c in candidates:
+            self.candidates[c.id] = c
         
         # Index candidates by context
         candidates_index = defaultdict(list)
@@ -64,62 +81,48 @@ class Viewer(widgets.DOMWidget):
         # display js, construct html and pass on to widget model
         self.render()
 
-    def _tag_span(self, html, pid, cids, gold=False):
-        """
-        Given interior html and a page id (pid), and **list of candidate 
-        ids (cids) that use this span**, return a the span-enclosed html such that it 
-        will be highlighted, browsable and taggable in the Viewer module.
-        """
-        classes =  []
-        if len(cids) > 0:
-            classes.append('candidate')
-
-        # For gold annotations, no scrolling, so only need to mark as gold
-        if gold:
-            classes.append('gold-annotation')
-
-        # Mark each cid
-        classes += ['c-{pid}-{cid}'.format(pid=pid, cid=c) for c in cids]
+    def _tag_span(self, html, cids, gold=False):
+        """Create the span around a segment of the context associated with one or more candidates / gold annotations"""
+        classes  = ['candidate'] if len(cids) > 0 else []
+        classes += ['gold-annotation'] if gold else []
+        classes += cids
         return '<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)
 
-    def _tag_context(self, context, candidates, gold, pid, cid_offset=0):
+    def _tag_context(self, context, candidates, gold):
         """Given the raw context, tag the spans using the generic _tag_span method"""
         raise NotImplementedError()
 
     def render(self):
         """Renders viewer pane"""
-        N = len(self.views)
-        li_html   = """
-        <li class="list-group-item" data-toggle="tooltip" data-placement="top" title="{cid}">{data}</li>
-        """
-        page_html = """
-        <div class="viewer-page" id="viewer-page-{pid}" data-nc="{nc}">
-            <ul class="list-group">{data}</ul>
-        </div>
-        """
+        cids = []
 
         # Iterate over pages of contexts
         pid   = 0
         pages = []
+        N     = len(self.views)
         for i in range(0, N, self.n_per_page):
-            lis        = []
-            cid_offset = 0
+            pg_cids = []
+            lis     = []
             for j in range(i, min(N, i + self.n_per_page)):
                 context, candidates, gold = self.views[j]
-                li_data = self._tag_context(context, candidates, gold, pid, cid_offset=cid_offset)
-                lis.append(li_html.format(data=li_data, cid=context.id))
-                cid_offset += len(candidates)
-            pages.append(page_html.format(pid=pid, nc=cid_offset, data=''.join(lis)))
+                li_data = self._tag_context(context, candidates, gold)
+                lis.append(LI_HTML.format(data=li_data, context_id=context.id))
+                pg_cids += [c.id for c in sorted(candidates, key=lambda c : c.char_start)]
+            pages.append(PAGE_HTML.format(pid=pid, data=''.join(lis)))
+            cids.append(pg_cids)
             pid += 1
 
         # Render in primary Viewer template
-        self.n_pages = len(pages)
+        self.cids    = cids
         self.html    = open(HOME + '/viewer/viewer.html').read().format(bh=self.height, data=''.join(pages))
         display(Javascript(open(HOME + '/viewer/viewer.js').read()))
 
     def get_labels(self):
         """De-serialize labels, map to candidate id, and return as dictionary"""
-        return dict(x.split(':') for x in self._labels_serialized.split(','))
+        return dict(x.split('~~') for x in self._labels_serialized.split(',') if len(x) > 0)
+
+    def get_selected(self):
+        return self.candidates[self.selected_cid]
 
 
 class SentenceNgramViewer(Viewer):
@@ -127,43 +130,23 @@ class SentenceNgramViewer(Viewer):
     def __init__(self, sentences, candidates, gold=[], n_max=100, filter_empty=True, n_per_page=3, height=225):
         super(SentenceNgramViewer, self).__init__(sentences, candidates, lambda c : c.sent_id, gold=gold, n_max=n_max, filter_empty=filter_empty, n_per_page=n_per_page, height=height)
 
-    def _tag_context(self, sentence, candidates, gold, pid, cid_offset=0):
+    def _is_subspan(self, s, e, c):
+        return s >= c.sent_char_start and e <= c.sent_char_end
+
+    def _tag_context(self, sentence, candidates, gold):
         """Tag **potentially overlapping** spans of text, at the character-level"""
-        context_html = sentence.text
+        s = sentence.text
 
-        # Sort candidates by char_start
-        candidates.sort(key=lambda c : c.char_start)
-        gold.sort(key=lambda g : g.char_start)
+        # First, split the sentence into the *smallest* single-candidate chunks
+        both   = candidates + gold
+        splits = sorted(list(set([b.sent_char_start for b in both] + [b.sent_char_end + 1 for b in both] + [0, len(s)])))
 
-        # First, we split the string up into chunks by unioning all span start / end points
-        splits  = [c.sent_char_start for c in candidates] + [c.sent_char_end + 1 for c in candidates]
-        splits += [g.sent_char_start for g in gold] + [g.sent_char_end + 1 for g in gold]
-        if len(splits) == 0:
-            return context_html
-        splits  = sorted(list(set(splits)))
-        splits  = splits if splits[0] == 0 else [0] + splits
-
-        # Tag by classes
-        span_cids    = defaultdict(list)
-        span_is_gold = defaultdict(bool)
-        for i,c in enumerate(candidates):
-            for j in range(splits.index(c.sent_char_start), splits.index(c.sent_char_end+1)):
-                span_cids[splits[j]].append(i + cid_offset)
-        for i,g in enumerate(gold):
-            for j in range(splits.index(g.sent_char_start), splits.index(g.sent_char_end+1)):
-                span_is_gold[splits[j]] = True
-
-        # Also include candidate metadata- as hidden divs
-        # TODO: Handle this in nicer way!
+        # For each chunk, add cid if subset of candidate span, tag if gold, and produce span
         html = ""
-        for i,c in enumerate(candidates):
-
-            # Set the caption shown when candidate is highlighted
-            cap   = "CID: %s" % c.id
-            html += '<div class="candidate-data" id="cdata-{pid}-{cid}" caption="{cap}"></div>'.format(pid=pid, cid=i+cid_offset, cap=cap)
-
-        # Render as sequence of spans
-        for i,s in enumerate(splits):
-            end   = splits[i+1] if i < len(splits)-1 else len(context_html)
-            html += self._tag_span(context_html[s:end], pid, span_cids[s], gold=span_is_gold[s])
+        for i in range(len(splits)-1):
+            start  = splits[i]
+            end    = splits[i+1] - 1
+            cids   = [c.id for c in candidates if self._is_subspan(start, end, c)]
+            gcids  = [g.id for g in gold if self._is_subspan(start, end, g)]
+            html += self._tag_span(s[start:end+1], cids, gold=len(gcids) > 0)
         return html

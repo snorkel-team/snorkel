@@ -12,6 +12,7 @@ span.false-candidate {
 
 span.highlighted-candidate {
     font-weight: bolder;
+    box-shadow: 1px 1px 1px grey;
 }
 
 span.gold-annotation {

@@ -203,7 +203,7 @@ class HTMLTableParser(DocParser):
 
 Cell = namedtuple('Cell', identity_tags + lingual_tags + structural_tags + visual_tags)
 
-class CellParser(SentenceParser):
+class TableParser(SentenceParser):
 
     def parse_table(self, table, doc_id=None, doc_name=None):
         row_pattern = re.compile(r"<(tr)[^>]*>(.*?)</tr[^>]*>")
@@ -218,9 +218,9 @@ class CellParser(SentenceParser):
                     header_tag = (col_tags[j] == 'th')
                     yield self._sent_to_cell(sent, cell_id, row_num=i, col_num=j, header_tag=header_tag)
                     cell_id += 1
-        # caption = caption_pattern.findall(table)[0]
-        # for sent in self.parse(caption, doc_id, doc_name):
-        #     yield self._sent_to_cell(sent, meta_cell=True)
+        caption = caption_pattern.findall(table)[0]
+        for sent in self.parse(caption, doc_id, doc_name):
+            yield self._sent_to_cell(sent, cell_id, meta_cell=True)
 
     def parse_docs(self, docs):
         """Parse a list of Document objects (html tables) into a list of pre-processed Cells."""

@@ -10,13 +10,13 @@ class Candidate(object):
     """A candidate object, **uniquely identified by its id**"""
     def __init__(self, id):
         self.id = id
-    
+
     def __eq__(self, other):
         try:
             return self.id == other.id
         except:
             raise NotImplementedError()
-    
+
     def __hash__(self):
         return hash(self.id)
 
@@ -88,10 +88,10 @@ class Candidates(object):
             p  = CandidateExtractorProcess(candidate_space, matcher, contexts_in, candidates_out)
             p.start()
             self.ps.append(p)
-        
+
         # Join on JoinableQueue of contexts
         contexts_in.join()
-        
+
         # Collect candidates out
         candidates = []
         while True:
@@ -118,7 +118,7 @@ class Candidates(object):
     def get_candidate(self, id):
         """Retrieve a candidate by candidate id"""
         return self._candidates_by_id[id]
-    
+
     def get_candidates_in(self, context_id):
         """Return the candidates in a specific context (e.g. Sentence)"""
         return self._candidates_by_context_id[context_id]
@@ -134,7 +134,7 @@ class Candidates(object):
         print "# of candidates\t\t= %s" % nc
         print "Candidate recall\t= %0.3f" % (both / float(ng),)
         print "Candidate precision\t= %0.3f" % (both / float(nc),)
-    
+
 
 # Basic sentence attributes
 WORDS        = 'words'
@@ -144,7 +144,7 @@ TEXT         = 'text'
 class Ngram(Candidate):
     """A span of _n_ tokens, identified by sentence id and character-index start, end (inclusive)"""
     def __init__(self, char_start, char_end, sent, metadata={}):
-        
+
         # Inherit full sentence object (tranformed to dict) and check for necessary attribs
         self.sentence = sent if isinstance(sent, dict) else sent._asdict()
         self.sent_id  = self.sentence['id']
@@ -184,11 +184,11 @@ class Ngram(Candidate):
     def word_to_char_index(self, wi):
         """Given a word-level index, return the character-level index (offset) of the word's start"""
         return self.sentence[CHAR_OFFSETS][wi]
-    
+
     def get_attrib_tokens(self, a):
         """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""
         return self.sentence[a][self.word_start:self.word_end+1]
-    
+
     def get_attrib_span(self, a, sep=" "):
         """Get the span of sentence attribute _a_ over the range defined by word_offset, n"""
         # NOTE: Special behavior for words currently (due to correspondence with char_offsets)
@@ -196,7 +196,7 @@ class Ngram(Candidate):
             return self.sentence[TEXT][self.sent_char_start:self.sent_char_end+1]
         else:
             return sep.join(self.get_attrib_tokens(a))
-    
+
     def get_span(self, sep=" "):
         return self.get_attrib_span(WORDS)
 
@@ -216,7 +216,7 @@ class Ngram(Candidate):
             return Ngram(char_start, char_end, self.sentence)
         else:
             raise NotImplementedError()
-        
+
     def __repr__(self):
         return '<Ngram("%s", id=%s, chars=[%s,%s], words=[%s,%s])' \
             % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.word_start, self.word_end)
@@ -229,7 +229,7 @@ class Ngrams(CandidateSpace):
     """
     def __init__(self, n_max=5):
         self.n_max = n_max
-    
+
     def apply(self, x):
         s = x if isinstance(x, dict) else x._asdict()
         try:
@@ -242,6 +242,69 @@ class Ngrams(CandidateSpace):
         L = len(cos)
         for l in range(1, self.n_max+1)[::-1]:
             for i in range(L-l+1):
-                ws = words[i:i+l] 
+                ws = words[i:i+l]
                 cl = cos[i+l-1] - cos[i] + len(words[i+l-1])  # NOTE that we derive char_len without using sep
                 yield Ngram(char_start=cos[i], char_end=cos[i]+cl-1, sent=s)
+
+
+"""-----------------------HERE BEGINS BRADEN'S KINGDOM-----------------------"""
+
+class EntityExtractors(Object):
+    def __init__(self, )
+
+class EntityExtractor(EntityExtractors):
+
+
+class Entities(Candidates):
+    def __init__(self, )
+
+
+class RelationExtractor(Candidates):
+    """
+    A generator for relation mentions
+    """
+    def __init__(self, entity_extractors, relation_space):
+        self.arity = len(entity_extactors) if isinstance(entity_extactors, list) else 1
+
+    def apply(self, context):
+        """
+        yield a relation for each cross-product (nested for loop) tuple of entities extracted
+            from the given context
+
+        OLD sample:
+            def apply(self, s):
+                for c in self.matcher.apply(self.candidate_space.apply(s)):
+                    try:
+                        yield range(c.word_start, c.word_end+1), 'MATCHER'
+        """
+
+
+
+class Relations(Candidates):
+    """
+    TODO: (fix this)
+    A generic class to hold and index a set of (candidate) Relations
+    Takes in a CandidateSpace operator over some context type (e.g. Rows, applied over Table objects),
+    a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
+    """
+    def __init__(self, relation_extractor, corpus):
+        self.corpus = corpus
+        self.space = relation_space
+
+    # def __init__(self, candidate_space, matcher, contexts):
+    #     self.join_key = join_key
+    #     self.ps = []
+
+    #     # Extract & index candidates
+    #     print "Extracting candidates..."
+    #     if parallelism in [1, False]:
+    #         candidates = self._extract(candidate_space, matcher, contexts)
+    #     else:
+    #         candidates = self._extract_multiprocess(candidate_space, matcher, contexts, parallelism=parallelism)
+    #     self._index(candidates)
+
+    def _extract(self, candidate_space, matcher, contexts):
+        return chain.from_iterable(matcher.apply(candidate_space.apply(c)) for c in contexts)
+
+    def _get_features(self):
+

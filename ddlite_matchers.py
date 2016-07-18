@@ -75,8 +75,8 @@ class NgramMatcher(Matcher):
 class DictionaryMatch(NgramMatcher):
     """Selects candidate Ngrams that match against a given list d"""
     def init(self):
-        self.d           = frozenset(self.opts['d'])
         self.ignore_case = self.opts.get('ignore_case', True)
+        self.d           = frozenset(w.lower() if self.ignore_case else w for w in self.opts['d'])
         self.attrib      = self.opts.get('attrib', WORDS)
 
         # Optionally use a stemmer, preprocess the dictionary

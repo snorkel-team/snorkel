@@ -122,7 +122,10 @@ class Viewer(widgets.DOMWidget):
         return dict(x.split('~~') for x in self._labels_serialized.split(',') if len(x) > 0)
 
     def get_selected(self):
-        return self.candidates[self.selected_cid]
+        if len(self.selected_cid) > 0:
+            return self.candidates[self.selected_cid]
+        else:
+            return None
 
 
 class SentenceNgramViewer(Viewer):

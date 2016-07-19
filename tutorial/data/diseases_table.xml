@@ -1,51 +1,53 @@
-<table>
-  <tr>
-    <th>Disease</th>
-    <th>Location</th>
-    <th>Year</th>
-  </tr>
-  <tr>
-    <th>Polio</th>
-    <td>New York</td>
-    <td>1914</td>
-  </tr>
-  <tr>
-    <th>Chicken Pox</th>
-    <td>Boston</td>
-    <td>2001</td>
-  </tr>
-  <tr>
-    <th>Scurvy</th>
-    <td>Annapolis</td>
-    <td>1901</td>
-  </tr>
-  <caption>
-    Table 1: Infectious diseases and where to find them.
-  </caption>
-</table>
+<html lang="en">
+  <table>
+    <tr>
+      <th>Disease</th>
+      <th>Location</th>
+      <th>Year</th>
+    </tr>
+    <tr>
+      <th>Polio</th>
+      <td>New York</td>
+      <td>1914</td>
+    </tr>
+    <tr>
+      <th>Chicken Pox</th>
+      <td>Boston</td>
+      <td>2001</td>
+    </tr>
+    <tr>
+      <th>Scurvy</th>
+      <td>Annapolis</td>
+      <td>1901</td>
+    </tr>
+    <caption>
+      Table 1: Infectious diseases and where to find them.
+    </caption>
+  </table>
 
-<table>
-  <tr>
-    <th>Problem</th>
-    <th>Cause</th>
-    <th>Cost</th>
-  </tr>
-  <tr>
-    <th>Arthritis</th>
-    <td>Pokemon Go</td>
-    <td>Free</td>
-  </tr>
-  <tr>
-    <th>Yellow Fever</th>
-    <td>Unicorns</td>
-    <td>$17.75</td>
-  </tr>
-  <tr>
-    <th>Hypochondria</th>
-    <td>Fear</td>
-    <td>$100</td>
-  </tr>
-  <caption>
-    Table 2: Three ways to get sick and pay for it.
-  </caption>
-</table>
+  <table>
+    <tr>
+      <th>Problem</th>
+      <th>Cause</th>
+      <th>Cost</th>
+    </tr>
+    <tr>
+      <th>Arthritis</th>
+      <td>Pokemon Go</td>
+      <td>Free</td>
+    </tr>
+    <tr>
+      <th>Yellow Fever</th>
+      <td>Unicorns</td>
+      <td>$17.75</td>
+    </tr>
+    <tr>
+      <th>Hypochondria</th>
+      <td>Fear</td>
+      <td>$100</td>
+    </tr>
+    <caption>
+      Table 2: Three ways to get sick and pay for it.
+    </caption>
+  </table>
+</html>

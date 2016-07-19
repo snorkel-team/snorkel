@@ -17,13 +17,15 @@ from subprocess import Popen
 import lxml.etree as et
 from itertools import chain
 
-identity_tags   = ['id', 'doc_id', 'sent_id', 'doc_name']
-lingual_tags    = ['words', 'lemmas', 'poses', 'dep_parents',
-                   'dep_labels', 'char_offsets', 'text']
-structural_tags = ['row_num', 'col_num', 'header_tag', 'meta_cell']
-visual_tags     = []
+id_attrs        = ['id', 'doc_id', 'doc_name']
+sentence_attrs  = id_attrs + ['sent_id', 'words', 'lemmas', 'poses', 'dep_parents', 'dep_labels', 'char_offsets', 'text']
+table_attrs     = id_attrs + ['table_id', 'cells'] # 'title', 'caption'
+cell_attrs      = sentence_attrs + ['cell_id', 'row_num', 'col_num', 'html_tag']
 
 Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
+Sentence = namedtuple('Sentence', sentence_attrs)
+Table    = namedtuple('Table', table_attrs)
+Cell     = namedtuple('Cell', cell_attrs)
 
 class DocParser:
     """Parse a file or directory of files into a set of Document objects."""
@@ -107,8 +109,6 @@ class XMLDocParser(DocParser):
             yield Document(id=id, file=file_name, text=text, attribs=attribs)
             #except:
             #    print "Error parsing document #%s (id=%s) in file %s" % (i,id,file_name)
-
-Sentence = namedtuple('Sentence', identity_tags + lingual_tags)
 
 class SentenceParser:
     def __init__(self, tok_whitespace=False):
@@ -195,49 +195,46 @@ class HTMLTableParser(DocParser):
     """Simple parsing of raw HTML tables, assuming one document per file"""
 
     def parse_file(self, fp, file_name):
-        table_pattern = re.compile(r"(<table[^>]*>.*?</table[^>]*>)")
+        doc_pattern = re.compile(r"(<html[^>]*>.*?</html[^>]*>)")
         with open(fp, 'r') as f:
-            tables = table_pattern.findall(f.read().replace('\n',''))
-            for table_id, table in enumerate(tables):
-                yield Document(id=table_id, file=file_name, text=table, attribs=None)
-
-Cell = namedtuple('Cell', identity_tags + lingual_tags + structural_tags + visual_tags)
+            docs = doc_pattern.findall(f.read().replace('\n',''))
+            for doc_id, text in enumerate(docs):
+                yield Document(id=doc_id, file=file_name, text=text, attribs=None)
 
 class TableParser(SentenceParser):
 
-    def parse_table(self, table, doc_id=None, doc_name=None):
+    def parse_table(self, table, table_id=None, doc_id=None, doc_name=None):
         row_pattern = re.compile(r"<(tr)[^>]*>(.*?)</tr[^>]*>")
         col_pattern = re.compile(r"<(t[dh])[^>]*>(.*?)</\1[^>]*>")
-        caption_pattern = re.compile(r"<caption[^>]*>(.*?)</caption[^>]*>")
+        # caption_pattern = re.compile(r"<caption[^>]*>(.*?)</caption[^>]*>")
+        cells = []
         cell_id = 0
         (row_tags, rows) = zip(*(row_pattern.findall(table)))
         for i, row in enumerate(rows):
             (col_tags, cols) = zip(*(col_pattern.findall(row)))
             for j, col in enumerate(cols):
                 for sent in self.parse(col, doc_id, doc_name):
-                    header_tag = (col_tags[j] == 'th')
-                    yield self._sent_to_cell(sent, cell_id, row_num=i, col_num=j, header_tag=header_tag)
+                    parts = sent._asdict()
+                    parts['id'] = "%s-%s-%s" % (doc_id, table_id, cell_id)
+                    parts['cell_id'] = cell_id
+                    parts['html_tag'] = col_tags[j]
+                    parts['row_num'] = i
+                    parts['col_num'] = j
+                    cells.append(Cell(**parts))
                     cell_id += 1
-        caption = caption_pattern.findall(table)[0]
-        for sent in self.parse(caption, doc_id, doc_name):
-            yield self._sent_to_cell(sent, cell_id, meta_cell=True)
+        id = "%s-%s" % (doc_id, table_id)
+        table = Table(id, doc_id, doc_name, table_id, cells)
+        return table
 
     def parse_docs(self, docs):
-        """Parse a list of Document objects (html tables) into a list of pre-processed Cells."""
-        cells = []
+        """Parse a list of Document objects into a list of pre-processed Tables."""
+        table_pattern = re.compile(r"(<table[^>]*>.*?</table[^>]*>)")
+        tables = []
         for doc in docs:
-            for cell in self.parse_table(doc.text, doc.id, doc.file):
-                cells.append(cell)
-        return cells
-
-    def _sent_to_cell(self, sent, cell_id, row_num=-1, col_num=-1, header_tag=False, meta_cell=False):
-        parts = sent._asdict()
-        parts['id'] = "%s-%s" % (parts['doc_id'], cell_id)
-        parts['row_num'] = row_num
-        parts['col_num'] = col_num
-        parts['header_tag'] = header_tag
-        parts['meta_cell'] = meta_cell
-        return Cell(**parts)
+            html_tables = table_pattern.findall(doc.text)
+            for table_id, table in enumerate(html_tables):
+                tables.append(self.parse_table(table, table_id=table_id, doc_id=doc.id, doc_name=doc.file))
+        return tables
 
 def sort_X_on_Y(X, Y):
     return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
@@ -253,7 +250,7 @@ class Corpus(object):
     A Corpus object helps instantiate and then holds a set of Documents and associated Sentences
     Default iterator is over (Document, Sentences) tuples
     """
-    def __init__(self, doc_parser, sent_parser):
+    def __init__(self, doc_parser, context_parser):
 
         # Parse documents
         print "Parsing documents..."
@@ -261,13 +258,13 @@ class Corpus(object):
         for doc in doc_parser.parse():
             self._docs_by_id[doc.id] = doc
 
-        # Parse sentences
-        print "Parsing sentences..."
+        # Parse contexts
+        print "Parsing contexts..."
         self._sentences_by_id     = {}
         self._sentences_by_doc_id = defaultdict(list)
-        for sent in sent_parser.parse_docs(self._docs_by_id.values()):
-            self._sentences_by_id[sent.id] = sent
-            self._sentences_by_doc_id[sent.doc_id].append(sent)
+        for context in context_parser.parse_docs(self._docs_by_id.values()):
+            self._sentences_by_id[context.id] = context
+            self._sentences_by_doc_id[context.doc_id].append(context)
 
     def __iter__(self):
         """Default iterator is over (document, sentence) tuples"""

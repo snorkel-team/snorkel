@@ -74,7 +74,7 @@ script:
   - python test/InferenceTests.py
   
   # Run notebooks end-to-end
-  - runipy tutorial/CDR_Tutorial.ipynb
+  - TESTING=true runipy tutorial/CDR_Tutorial.ipynb
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

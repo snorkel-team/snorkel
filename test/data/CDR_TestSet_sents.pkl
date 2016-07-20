@@ -2,7 +2,7 @@
 ccopy_reg
 _reconstructor
 p2
-(cddlite_parser
+(csnorkel.parser
 Sentence
 p3
 c__builtin__

@@ -2,7 +2,7 @@
 ccopy_reg
 _reconstructor
 p2
-(cddlite_candidates
+(csnorkel.candidates
 Ngram
 p3
 c__builtin__

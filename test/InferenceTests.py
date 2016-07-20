@@ -3,7 +3,7 @@ import numpy as np
 import scipy.sparse as sparse
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
-from ddlite import *
+from snorkel.snorkel import *
 
 class TestInference(unittest.TestCase):
     

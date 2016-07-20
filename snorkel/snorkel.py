@@ -12,23 +12,22 @@ import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 
 # Feature modules
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
-                             'treedlib'))
+sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 from treedlib import compile_relation_feature_generator
 from tree_structs import corenlp_to_xmltree, XMLTree
-from ddlite_entity_features import *
+from entity_features import *
 
 # ddlite parsers
-from ddlite_parser import *
+from parser import *
 
 # ddlite matchers
-from ddlite_matchers import *
+from matchers import *
 
 # ddlite mindtagger
-from ddlite_mindtagger import *
+from mindtagger import *
 
 # ddlite learning
-from ddlite_learning import learn_elasticnet_logreg, odds_to_prob
+from learning import learn_elasticnet_logreg, odds_to_prob
 
 #####################################################################
 ############################ TAGGING UTILS ##########################

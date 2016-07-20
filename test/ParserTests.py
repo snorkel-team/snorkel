@@ -1,9 +1,9 @@
 import os, requests, sys, unittest
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 import cPickle
-from ddlite_parser import *
+from snorkel.parser import *
 
-ROOT = os.environ['DDLHOME']
+ROOT = os.environ['SNORKELHOME']
 
 class TestParsers(unittest.TestCase):
     
@@ -34,6 +34,9 @@ class TestParsers(unittest.TestCase):
         sent_parser = SentenceParser()
 
         corpus = Corpus(xml_parser, sent_parser, max_docs=20)
+
+        print len(corpus.get_docs())
+        print len(corpus.get_sentences())
 
         self.assertEqual(corpus.get_docs(), gold_docs)
         self.assertEqual(corpus.get_sentences(), gold_sents)

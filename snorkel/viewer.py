@@ -13,7 +13,7 @@ from traitlets import Unicode, Int, Dict, List
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-HOME = os.environ['DDLHOME']
+HOME = os.environ['SNORKELHOME']
 
 
 # PAGE LAYOUT TEMPLATES

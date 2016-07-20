@@ -1,8 +1,8 @@
 import os, sys, unittest, cPickle
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
-from ddlite_candidates import *
+from snorkel.candidates import *
 
-DATA_PATH = os.environ['DDLHOME'] + '/test/data/'
+DATA_PATH = os.environ['SNORKELHOME'] + '/test/data/'
 
 class TestCandidateSpace(unittest.TestCase):
     

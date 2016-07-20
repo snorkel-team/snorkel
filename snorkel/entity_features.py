@@ -1,6 +1,5 @@
 import sys, os
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
-                             'treedlib/treedlib'))
+sys.path.append(os.environ['SNORKELHOME'] + '/treedlib/treedlib')
 from templates import *
 
 def compile_entity_feature_generator():

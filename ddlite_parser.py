@@ -40,11 +40,16 @@ class DocParser:
 
     def _get_files(self):
         if os.path.isfile(self.path):
-            return [self.path]
+            fpaths = [self.path]
         elif os.path.isdir(self.path):
-            return [os.path.join(self.path, f) for f in os.listdir(self.path)]
+            fpaths = [os.path.join(self.path, f) for f in os.listdir(self.path)]
         else:
-            return glob.glob(self.path)
+            fpaths = glob.glob(self.path)
+        if len(fpaths) > 0:
+            return fpaths
+        else:
+            raise IOError("File or directory not found: %s" % (self.path,))
+
 
 class TextDocParser(DocParser):
     """Simple parsing of raw text files, assuming one document per file"""
@@ -90,14 +95,12 @@ class XMLDocParser(DocParser):
 
     def parse_file(self, f, file_name):
         for i,doc in enumerate(et.parse(f).xpath(self.doc)):
-            #try:
             text = '\n'.join(filter(lambda t : t is not None, doc.xpath(self.text)))
             ids = doc.xpath(self.id)
             id = ids[0] if len(ids) > 0 else None
             attribs = {'root':doc} if self.keep_xml_tree else {}
-            yield Document(id=id, file=file_name, text=text, attribs=attribs)
-            #except:
-            #    print "Error parsing document #%s (id=%s) in file %s" % (i,id,file_name)
+            yield Document(id=str(id), file=str(file_name), text=str(text), attribs=attribs)
+
 
 Sentence = namedtuple('Sentence', ['id', 'words', 'lemmas', 'poses', 'dep_parents',
                                    'dep_labels', 'sent_id', 'doc_id', 'text',
@@ -198,12 +201,14 @@ class Corpus(object):
     A Corpus object helps instantiate and then holds a set of Documents and associated Sentences
     Default iterator is over (Document, Sentences) tuples
     """
-    def __init__(self, doc_parser, sent_parser):
+    def __init__(self, doc_parser, sent_parser, max_docs=None):
         
         # Parse documents
         print "Parsing documents..."
         self._docs_by_id = {}
-        for doc in doc_parser.parse():
+        for i,doc in enumerate(doc_parser.parse()):
+            if max_docs and i == max_docs:
+                break
             self._docs_by_id[doc.id] = doc
 
         # Parse sentences

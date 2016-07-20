@@ -116,7 +116,7 @@ class SentenceParser:
         # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
         self.port = 12345
 	self.tok_whitespace = tok_whitespace
-        loc = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'parser')
+        loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)

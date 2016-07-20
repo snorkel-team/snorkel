@@ -58,7 +58,7 @@ install:
   - conda install --yes numpy=$NUMPY scipy=$SCIPY matplotlib pip
 
   # Install all dependencies as per our README
-  - pip install -r python-package-requirement.txt
+  - pip install -r requirements.txt
   - test -e parser/corenlp.sh || ./install-parser.sh
 
   # Use runipy to run Jupyter/IPython notebooks from command-line

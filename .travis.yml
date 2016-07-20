@@ -49,9 +49,7 @@ before_install:
   - java -version
 
   # Set DDLHOME environment variable
-  - export DDLHOME=`pwd`
-  - export PATH="$PATH:$DDLHOME"
-  - export PYTHONPATH="$PYTHONPATH:$DDLHOME"
+  - ./set_env.sh
 
 install:
   # Install binary distribution of scientific python modules

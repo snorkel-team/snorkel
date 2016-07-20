@@ -48,6 +48,11 @@ before_install:
   - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
   - java -version
 
+  # Set DDLHOME environment variable
+  - export DDLHOME=`pwd`
+  - export PATH="$PATH:$DDLHOME"
+  - export PYTHONPATH="$PYTHONPATH:$DDLHOME"
+
 install:
   # Install binary distribution of scientific python modules
   - test -e ~/miniconda/envs/test/bin/activate || ( rm -rf ~/miniconda/envs/test; conda create --yes -n test python=$TRAVIS_PYTHON_VERSION )
@@ -62,9 +67,6 @@ install:
   - pip install runipy
 
 script:
-  # Set DDLHOME environment variable
-  - export DDLHOME=`pwd`
-
   # Run test modules
   - python test/ParserTests.py
   - python test/CandidateSpaceTests.py

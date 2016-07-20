@@ -22,7 +22,7 @@ from ddlite_entity_features import *
 from ddlite_parser import *
 
 # ddlite matchers
-from ddlite_matcher import *
+from ddlite_matchers import *
 
 # ddlite mindtagger
 from ddlite_mindtagger import *

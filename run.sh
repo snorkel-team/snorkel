@@ -1,5 +1,5 @@
 # Set & move to home directory
-./set_env.sh
+source set_env.sh
 cd "$SNORKELHOME"
 
 # Make sure parser is installed

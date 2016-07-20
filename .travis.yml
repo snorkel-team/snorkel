@@ -48,8 +48,8 @@ before_install:
   - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
   - java -version
 
-  # Set DDLHOME environment variable
-  - ./set_env.sh
+  # Set environment variables
+  - source set_env.sh
 
 install:
   # Install binary distribution of scientific python modules

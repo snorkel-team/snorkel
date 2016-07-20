@@ -1,6 +1,10 @@
 import numpy as np
 import scipy.sparse as sparse
 import warnings
+    
+DEFAULT_MU = 1e-9
+DEFAULT_RATE = 0.01
+DEFAULT_ALPHA = 0
 
 def log_odds(p):
   """This is the logit function"""
@@ -79,116 +83,93 @@ def transform_sample_stats(Xt, t, f, Xt_abs=None):
   p_correct = (m + 1) / 2
   return p_correct, n_pred
 
-def learn_elasticnet_logreg(X, n_iter=500, tol=1e-6, w0=None, sample=True,
-                            n_samples=100, alpha=0, mu_seq=None, n_mu=10,
-                            mu_min_ratio=1e-6, rate=0.01, decay=1, 
-                            warm_starts=False, evidence=None, marginals=None,
-                            unreg=[], verbose=False):
+def learn_elasticnet_logreg(X, n_iter=500, w0=None, rate=DEFAULT_RATE, 
+                            alpha=DEFAULT_ALPHA, mu=DEFAULT_MU, 
+                            sample=True, n_samples=100,
+                            unreg=[], marginals=None, evidence=None,
+                            warm_starts=False, tol=1e-6, verbose=True):
   """ Perform SGD wrt the weights w
        * w0 is the initial guess for w
        * sample and n_samples determine SGD batch size
        * alpha is the elastic net penalty mixing parameter (0=ridge, 1=lasso)
        * mu is the sequence of elastic net penalties to search over
   """
-  if type(X) != np.ndarray and not sparse.issparse(X):
-    raise TypeError("Inputs should be np.ndarray type or scipy sparse.")
+  # Data matrix
   N, R = X.shape
-
   # Pre-generate other matrices
   Xt = X.transpose()
-  Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else np.abs(Xt)
-  
-  # Initialize weights if no initial provided
-  w0 = np.zeros(R) if w0 is None else w0   
-  
-  # Check mixing parameter
-  if not (0 <= alpha <= 1):
-    raise ValueError("Mixing parameter must be in [0,1]")
-  
-  # Determine penalty parameters  
-  if mu_seq is not None:
-    mu_seq = np.ravel(mu_seq)
-    if not np.all(mu_seq >= 0):
-      raise ValueError("Penalty parameters must be non-negative")
-    mu_seq.sort()
-  else:
-    mu_seq = get_mu_seq(n_mu, rate, alpha, mu_min_ratio)
-
-  if evidence is not None:
-    evidence = np.ravel(evidence)
-    if len(evidence) != N:
-      raise ValueError("Need {} evidence values".format(N))
-  
+  Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else np.abs(Xt)  
+  # Initial weights
+  w0 = w0 if w0 is not None else np.zeros(R)
+  # Transform marginals
   if marginals is not None:
     marginals = np.ravel(marginals)
-    if not (np.all(marginals >= 0) and np.all(marginals <=1) and
-            len(marginals) == N):
-      raise ValueError("Need {} marginals in range [0,1]".format(N))
+    if len(marginals) != N:
+      raise ValueError("Need {} marginals".format(N))
     t,f = marginals, 1-marginals
-
-  if marginals is not None and evidence is not None:
-    warnings.warn("Both evidence and marginals defined. Only using marginals.")
-
-  weights = dict()
-  
-  # Search over penalty parameter values
-  for mu in mu_seq:
+  # Set evidence
+  if evidence is not None:
+    if marginals is not None:
+      warnings.warn("Both evidence and marginals provided. Ignoring evidence.")
+    else: 
+      evidence = np.ravel(evidence)
+      if len(evidence) != N:
+        raise ValueError("Need {} evidence variables".format(N))
+  # Check values
+  if not (0 <= alpha <= 1):
+    raise ValueError("alpha must be in [0,1]")
+  if mu < 0:
+    raise ValueError("mu must be non-negative")
+  # Initialize training
+  w = w0.copy()
+  g = np.zeros(R)
+  l = np.zeros(R)
+  g_size = 0
+  # Gradient descent
+  if verbose:
+    print "Begin training for rate={}, mu={}".format(rate, mu)
+  for step in range(n_iter):
+    # Get the expected LF accuracy
+    if marginals is None:
+      t,f = sample_data(X, w, n_samples=n_samples) if sample\
+            else exact_data(X, w, evidence)
+    p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
+    # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
+    l = np.clip(log_odds(p_correct), -10, 10)
+    # SGD step with normalization by the number of samples
+    g0 = (n_pred*(w - l)) / np.sum(n_pred)
+    # Momentum term for faster training
+    g = 0.95*g0 + 0.05*g
+    # Check for convergence
+    wn = np.linalg.norm(w, ord=2)
+    g_size = np.linalg.norm(g, ord=2)
+    if step % 250 == 0 and verbose:    
+      print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step,g_size) 
+    if (wn < 1e-12 or g_size / wn < tol) and step >= 10:
+      if verbose:
+        print "SGD converged for mu={} after {} steps".format(mu, step)
+      break
+    # Update weights
+    w -= rate * g
+    # Store weights to not be regularized      
+    w_unreg = w[unreg].copy()
+    # Apply elastic net penalty
+    soft = np.abs(w) - rate * alpha * mu
+    ridge_pen = (1 + (1-alpha) * rate * mu)
+    #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
+    w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
+    # Unregularize
+    w[unreg] = w_unreg    
+  # SGD did not converge    
+  else:
     if verbose:
-      print "Begin training for mu = {}".format(mu)
-    w = w0.copy()
-    g = np.zeros(R)
-    l = np.zeros(R)
-    g_size = 0
-    cur_rate = rate
-    # Take SGD steps
-    for step in range(n_iter):
-      # Get the expected LF accuracy
-      if marginals is None:
-        t,f = sample_data(X, w, n_samples=n_samples) if sample\
-              else exact_data(X, w, evidence)
-      p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
-
-      # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
-      l = np.clip(log_odds(p_correct), -10, 10)
-
-      # SGD step with normalization by the number of samples
-      g0 = (n_pred*(w - l)) / np.sum(n_pred)
-
-      # Momentum term for faster training
-      g = 0.95*g0 + 0.05*g
-
-      # Check for convergence
-      wn = np.linalg.norm(w, ord=2)
-      g_size = np.linalg.norm(g, ord=2)
-      if step % 100 == 0 and verbose:    
-        print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size) 
-      if wn < 1e-12 or g_size / wn < tol:
-        if verbose:
-          print "SGD converged for mu={:.3f} after {} steps".format(mu, step)
-        break
-
-      # Update weights
-      cur_rate *= decay
-      w -= cur_rate * g
-      
-      w_unreg = w[unreg].copy()
-      # Apply elastic net penalty
-      soft = np.abs(w) - cur_rate * alpha * mu
-      #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
-      w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / (1 + (1-alpha) * cur_rate * mu)
-      w[unreg] = w_unreg
-    
-    # SGD did not converge    
-    else:
-      print "Final gradient magnitude for mu={:.3f}: {:.3f}".format(mu, g_size)
-
-    # Store result and set warm start for next penalty
-    weights[mu] = w.copy()
-    if warm_starts:
-      w0 = w
-    
-  return weights
+      print "Final gradient magnitude for rate={}, mu={}: {:.3f}".format(rate,
+                                                                         mu,
+                                                                         g_size)
+  # Return learned weights  
+  return w
   
 def get_mu_seq(n, rate, alpha, min_ratio):
   mv = (max(float(1 + rate * 10), float(rate * 11)) / (alpha + 1e-3))
   return np.logspace(np.log10(mv * min_ratio), np.log10(mv), n)
+  

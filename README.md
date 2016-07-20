@@ -1,4 +1,6 @@
-# DeepDive Lite
+# Snorkel
+
+### _Formerly DDLite, in transition!_
 
 [![Build Status](https://travis-ci.org/HazyResearch/ddlite.svg?branch=master)](https://travis-ci.org/HazyResearch/ddlite)
 
@@ -34,6 +36,7 @@ DeepDive Lite requires [a few python packages](python-package-requirement.txt) i
 * [numpy](http://docs.scipy.org/doc/numpy-1.10.1/user/install.html)
 * [scipy](http://www.scipy.org/install.html)
 * [matplotlib](http://matplotlib.org/users/installing.html)
+* [theano](http://deeplearning.net/software/theano/install.html)
 
 We provide a simple way to install everything using `virtualenv`:
 
@@ -77,14 +80,14 @@ c.InteractiveShellApp.exec_lines = ['%autoreload 2']
 To generate documentation (built using [pdoc](https://github.com/BurntSushi/pdoc)), run `./generate_docs.sh`.
 
 ## Learning how to use DeepDive Lite
-The best way to learn how to use is to open up the demo notebooks in the **examples** folder. **GeneTaggerExample_Extraction.ipynb** walks through the candidate extraction workflow for an entity tagging task. **GeneTaggerExample_Learning.ipynb** picks up where the extraction notebook left off. The learning notebook demonstrates the labeling function iteration workflow and learning methods. For examples of extracting relations, see **GenePhenRelationExample_Extraction.ipynb** and **GenePhenRelationExample_Learning.ipynb**.
+The best way to learn how to use is to open up the demo notebooks in the **[examples](https://github.com/HazyResearch/ddlite/tree/master/examples)** folder. **[GeneTaggerExample_Extraction.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GeneTaggerExample_Extraction.ipynb)** walks through the candidate extraction workflow for an entity tagging task. **[GeneTaggerExample_Learning.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GeneTaggerExample_Learning.ipynb)** picks up where the extraction notebook left off. The learning notebook demonstrates the labeling function iteration workflow and learning methods. For examples of extracting relations, see **[GenePhenRelationExample_Extraction.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GenePhenRelationExample_Extraction.ipynb)** and **GenePhenRelationExample_Learning.ipynb**.
 
 ## Best practices for labeling function iteration
 The flowchart below illustrates the labeling function iteration workflow.
 
 ![ddlite workflow](/figs/LFworkflow.png)
 
-First, we generate candidates, a hold out set of candidates (using MindTagger or gold standard labels), and initial set of labeling functions *L<sup>(0)</sup>* for a `CandidateModel`. The next step is to examine the coverage and accuracy of labeling functions using `CandidateModel.plot_lf_stats()`, `CandidateModel.top_conflict_lfs()`, `CandidateModel.lowest_coverage_lfs()`, and `CandidateModel.lowest_empirical_accuracy_lfs()`. If coverage is the primary issue, we write a new candidate function and append it to *L<sup>(0)</sup>* to form *L<sup>(1)</sup>*. If accuracy is the primary issue instead, we form *L<sup>(1)</sup>* by revising an existing labeling function which may be implemented incorrectly. This process continues until we are satisfied with the labeling function set. We then learn a model, and depending on the performance over the hold out set, revaluate our labeling function set as before.
+First, we generate candidates, a hold out set of candidates (using MindTagger or gold standard labels), and initial set of labeling functions *L<sup>(0)</sup>* for a `CandidateModel`. The next step is to examine the coverage and accuracy of labeling functions using `CandidateModel.plot_lf_stats()`, `CandidateModel.top_conflict_lfs()`, `CandidateModel.lowest_coverage_lfs()`, and `CandidateModel.lowest_empirical_accuracy_lfs()`. If coverage is the primary issue, we write a new candidate function and append it to *L<sup>(0)</sup>* to form *L<sup>(1)</sup>*. If accuracy is the primary issue instead, we form *L<sup>(1)</sup>* by revising an existing labeling function which may be implemented incorrectly. This process continues until we are satisfied with the labeling function set. We then learn a model, and depending on the performance over the hold out set, reevaluate our labeling function set as before.
 
 Several parts of this workflow could result in overfitting, so tie your bootstraps with care:
 
@@ -246,12 +249,12 @@ Update coming...
 |`logger`| `ModelLogger` object |
 |`lf_matrix`| Labeling function matrix |
 |`lf_names`| Labeling functions names |
-|`X`| Joint LF and feature matrix |
-|`w`| Learned weights|
 |`gt`| `CandidateGT` object|
 |`mindtagger_instance`| `MindTaggerInstance` object |
-|`use_lfs` | Use LF weights for prediction?|
 |`model` | Last model type learned |
+|`lstm_X` | LSTM feature matrix |
+|`lstm_pred` | LSTM predicted responses |
+|`lstm_pred_prob` | LSTM predicted probabilities |
 
 |**Method**|**Notes**|
 |:---------|:--------|
@@ -279,15 +282,96 @@ Update coming...
 |`lowest_coverage_lfs(n=10)` | Show the `n` LFs with lowest coverage |
 |`lowest_empirical_accuracy_lfs(n=10)` | Show the `n` LFs with the lowest empirical accuracy against ground truth for candidates in the devset |
 |`lf_summary_table()` | Print a table with summary statistics for each LF |
-|`learn_weights(n_iter=1000, tol=1e-6, sample=False, n_samples=100, mu=None, n_mu=20, mu_min_ratio=1e-6, alpha=0, rate=0.01, decay=0.99, bias=False, warm_starts=False, use_sparse=True, verbose=False, log=True, plot=True)` | Use data programming to learn an elastic net logistic regression on candidates not in training set <ul><li>`n_iter`: maximum number of SGD iterations</li><li>`tol`: tolerance for relative gradient magnitude to weights for convergence</li><li>`sample`: Use batch SGD</li> <li>`n_samples`: Batch size for SGD</li><li>`mu`: sequence of regularization parameters to fit; if `None` and validation set exists, automatic sequence is chosen s.t. largest value is close to minimum value at which all weights are zero; if `None` and no validation set exists, uses a default parameter</li><li>`n_mu`: number of regularization parameters for automatic sequence</li><li>`mu_min_ratio`: lower bound for regularization parameter automatic sequence as ratio to largest value</li><li>`alpha`: elastic net mixing parameter (0 for l<sub>2</sub>, 1 for l<sub>1</sub>)</li><li>`rate`: SGD learning rate</li><li>`decay`: SGD learning rate decay</li><li>`bias`: use bias term</li><li>`warm_starts`: use warm starts when fitting a sequence of mu values</li><li>`use_sparse`: use sparse operations</li><li>`verbose`: be verbose</li><li>`log`: log result in `ModelLogger`</li><li>`plot`: show diagnostic plot for validation set performance</li></ul> |
-|`learn_weights_validated(**kwargs)` | Wrapper for `learn_weights()`|
-|`set_use_lfs(use=True)` | Setter for using LF weights in prediction |
-|`get_log_odds(subset=None)` | Get log odds values for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) |
-|`get_predicted_probability(subset=None)` | Get predicted probabilities for candidates |
-|`get_predicted(subset=None)` | Get predicted responses for candidates |
+|`train_model(method="lr", lf_opts, model_opts)` | See [Learning in DDLite](#learnopts) below |
+|`get_predicted_marginals(subset=None)` | Get predicted marginal probabilities for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) |
+|`get_lf_predicted_marginals(subset=None)` | Get predicted marginal probabilities for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) using only LFs|
+|`get_predicted(subset=None)` | Get predicted response for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) |
+|`get_lf_predicted(subset=None)` | Get predicted response for all candidates (`subset=None`), an index subset (`subset`), test set (`subset='test'`), or validation set (`subset='validation'`) using only LFs |
 |`get_classification_accuracy(subset=None)` | Get classification accuracy over `subset` against ground truth |
 |`plot_calibration()` | Show DeepDive calibration plots |
 |`open_mindtagger(num_sample=None, abstain=False, **kwargs)` | Open MindTagger portal for labeling; sample is either the last sample (`num_sample=None`) or a random sample of size `num_sample`; if `abstain=True` show only canidates which haven't been labeled by any LF |
 |`add_mindtagger_tags()` | Import tags from current MindTagger session |
 |`add_to_log(log_id=None, subset='test', show=True)` | Add current learning result to log; precision and recall computed from ground truth in `subset` |
 |`show_log(idx=None)` | Show all learning results (`idx=None`) or learning result `idx` | 
+
+### **ddlite_lstm.py**
+
+#### Class: LSTM
+|**Member**|**Notes**|
+|:---------|:--------|
+|`C`| `Candidates` object |
+|`training`| Training set |
+|`lf_probs`| Labeling function marginal probabilities |
+|`lstm_SEED`| Random seed |
+|`lstm_params`| Parameter object |
+|`lstm_tparams`| Theano parameter object |
+|`lstm_settings`| Settings |
+|`lstm_word_dict`| Word dictionary |
+|`lstm_X` | Feature matrix |
+|`lstm_pred` | Predicted responses |
+|`lstm_pred_prob` | Predicted probabilities |
+
+|**Method**|**Notes**|
+|:---------|:--------|
+|`num_candidates()` ||
+|`build_lstm()` | Build LSTM model given settings|
+|`pred_p()` | Get predicted probabilities |
+|`lstm()` | Train and test LSTM |
+|`get_word_dict()` | Get word dictionary from training data |
+|`map_word_to_id()` | Get feature matrix |
+
+#### Parameters for LSTM
+
+| **Parameter** | **Default value** | **Type** | **Notes** |
+|:---------|:--------|:---------|:--------|
+| `n_iter` | `300` | `int` | Default number of iterations |
+| `rate` | `0.01` | `float` | Default learning rate |
+| `batch_size` | `100` | `int` | Default batch size |
+| `dim` | `50` | `int` | Default word embedding dimension |
+| `dropout` | `True` | `bool` | Use dropout? |
+| `verbose` | `True` | `bool` | Print information during training? |
+| `maxlen` | `100` | `int` | Max input length |
+| `contain_mention` | `True` | `bool` | Use mentions for training? |
+| `word_window_length` | `0` | `int` | Use words in window of size `word_window_length` around mentions. Here is the definition of [word window](http://web.stanford.edu/~jurafsky/mintz.pdf)|
+|`ignore_case` | `True` | `bool` | Ignore case? |
+
+
+## Learning in DDLite<a name="learnopts"></a>
+DDLite provides a number of options for learning predictive models. The simplest option is to just `DDLiteModel.train_model()`, but this uses only default parameter values. `DDLiteModel.train_model` accepts the following arguments
+
+| **Parameter** | **Default value** | **Type** | **Notes**|
+|:---------|:--------|:---------|:--------|
+| `method` | `"lr"`, logistic regression | `str` | DDLite currently only supports logistic regression |
+| `lf_opts` | `dict()` | `dict` | Options passed to `DDLiteModel.learn_lf_accuracies` |
+| `model_opts` | `dict()` | `dict` | Options passed to model training function (from `method`) |
+
+The following parameters can be passed to `DDLiteModel.learn_lf_accuracies`, which executes the first stage of the data programming learning pipeline.
+
+| **Parameter** | **Default value** | **Type** | **Notes**|
+|:---------|:--------|:---------|:--------|
+| `n_iter` | `500` | `int` | Number of gradient descent iterations |
+| `initial_mult` | `1` | `float` | Value by which to multiply the initial weights, which are all 1 by default |
+| `rate` | `0.01` | `float` | Learning rate |
+| `mu` | `1e-7`, non-negative | `float` | Ridge regularization parameter |
+|`sample` | `True` | `bool` | Use mini-batch SGD or full gradient? |
+|`n_samples` | `100` | `int` | Number of samples in mini-batch |
+| `verbose` | `True` | `bool` | Print information during training? |
+
+For the logistic regression model (`DDLiteModel.train_model(method="lr", ...)`), the regularization parameter can be tuned automatically. This requires a validation set defined using `DDLiteModel.set_holdout(validation_frac=p)` with `p > 0`, and either multiple or no values passed as the regularization parameter. The rest of the parameters passed to the logistic regression model via `model_opts` are as follows:
+
+| **Parameter** | **Default value** | **Type** | **Notes** |
+|:---------|:--------|:---------|:--------|
+| `mu` | Set automatically if validation set,</br>or `1e-9` if no validation set | `float` or array-like, all non-negative | Sequence of or single regularization parameter</br>to use when training with features |
+| `n_mu` | `5` | `int` | Number of `mu` values to fit if `mu` is `None` |
+|`mu_min_ratio` | `1e-6` | `float` | Ratio of smallest to largest `mu` values to fit if `mu` is `None` |
+| `bias` | `False` | `bool` | Include a bias term? |
+| `n_iter` | `500` | `int` | Number of gradient descent iterations |
+| `rate` | `0.01` | `float` | Learning rate |
+| `tol` | `1e-6` | `float` | Threshold of gradient-to-weights ratio to stop learning |
+|`alpha` | `0` | `float`, in `[0,1]` | Elastic-net mixing parameter (`0` is ridge, `1` is lasso) |
+|`warm_starts`| `False` | `bool`| Use warm starts if multiple `mu` values? |
+|`sample` | `True` | `bool` | Use mini-batch SGD or full gradient? |
+|`n_samples` | `100` | `int` | Number of samples in mini-batch |
+| `verbose` | `False` | `bool` | Print information during training? |
+| `plot` | `True` | `bool` | If using validation set to tune, show a diagnostic plot? |
+| `log` | `True` | `bool` | Log the learning results? |

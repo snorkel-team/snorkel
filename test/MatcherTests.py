@@ -5,7 +5,6 @@ from snorkel.matchers import *
 DATA_PATH = os.environ['SNORKELHOME'] + '/test/data/'
 
 class TestMatchers(unittest.TestCase):
-    
     def setUp(self):
         with open(DATA_PATH + 'CDR_TestSet_sents.pkl', 'rb') as f:
             self.sents = cPickle.load(f)

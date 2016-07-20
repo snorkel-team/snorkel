@@ -64,13 +64,17 @@ install:
   # Use runipy to run Jupyter/IPython notebooks from command-line
   - pip install runipy
 
+  # Install theano
+  - conda install --yes theano
+
 script:
   # Run test modules
   - python test/ParserTests.py
   - python test/CandidateSpaceTests.py
   - python test/MatcherTests.py
   - python test/InferenceTests.py
-  
+  - python test/LSTMTests.py
+
   # Run notebooks end-to-end
   - TESTING=true runipy tutorial/CDR_Tutorial.ipynb
 

@@ -127,13 +127,24 @@ class DocParser:
         - Output: A set of Document objects, which at least have a _text_ attribute,
                   and possibly a dictionary of other attributes.
         """
+        seen_ids = set()
         for fp in self._get_files():
             file_name = os.path.basename(fp)
-            for doc in self.parse_file(fp, file_name):
-                yield doc
+            if self._can_read(file_name):
+                for doc in self.parse_file(fp, file_name):
+
+                    # Check for null or non-unique docid
+                    if doc.id is None or doc.id in seen_ids:
+                        raise ValueError("Documents must have unique, non-null ids!")
+                    else:
+                        seen_ids.add(doc.id)
+                        yield doc
 
     def parse_file(self, fp, file_name):
         raise NotImplementedError()
+
+    def _can_read(self, fpath):
+        return True
 
     def _get_files(self):
         if os.path.isfile(self.path):
@@ -152,7 +163,8 @@ class TextDocParser(DocParser):
     """Simple parsing of raw text files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with open(fp, 'rb') as f:
-            yield Document(id=None, file=file_name, text=f.read(), attribs={})
+            id = re.sub(r'\..*$', '', os.path.basename(fp))
+            yield Document(id=id, file=file_name, text=f.read(), attribs={})
 
 
 class HTMLDocParser(DocParser):
@@ -162,8 +174,11 @@ class HTMLDocParser(DocParser):
             html = BeautifulSoup(f, 'lxml')
             txt = filter(self._cleaner, html.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
+            id = re.sub(r'\..*$', '', os.path.basename(fp))
+            yield Document(id=id, file=file_name, text=txt, attribs={})
 
-            yield Document(id=None, file=file_name, text=txt, attribs={})
+    def _can_read(self, fpath):
+        return fpath.endswith('.html')
 
     def _cleaner(self, s):
         if s.parent.name in ['style', 'script', '[document]', 'head', 'title']:
@@ -200,6 +215,9 @@ class XMLDocParser(DocParser):
             id = ids[0] if len(ids) > 0 else None
             attribs = {'root':doc} if self.keep_xml_tree else {}
             yield Document(id=str(id), file=str(file_name), text=str(text), attribs=attribs)
+
+    def _can_read(self, fpath):
+        return fpath.endswith('.xml')
 
 
 class SentenceParser:

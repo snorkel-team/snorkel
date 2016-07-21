@@ -1,1 +1,0 @@
-ConsensusPathDBa database for integrating human functional interaction networks

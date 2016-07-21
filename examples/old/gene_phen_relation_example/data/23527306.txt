@@ -1,0 +1,1 @@
+GenABEL: an R library for genome-wide association analysis. Bioinformatics, 23: 12941296.Li H, Durbin R (2009) Fast and accurate short read alignment with Burrows-Wheeler transform

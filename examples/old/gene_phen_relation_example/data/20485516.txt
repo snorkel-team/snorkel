@@ -1,0 +1,1 @@
+Efficient association mapping of quantitative trait loci with selective genotyping.

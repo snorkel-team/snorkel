@@ -1,1 +1,0 @@
-Power calculations for genetic association studies using estimated probability distributions

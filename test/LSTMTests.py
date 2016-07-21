@@ -12,10 +12,10 @@ class TestLSTM(unittest.TestCase):
   def test_accuracy(self):
     np.random.seed(seed=1701)
 
-    E = Entities(os.path.join(ROOT, 'test/data/lstm_test/gene_tag_saved_entities_v6.pkl'))
+    E = Entities(os.path.join(ROOT, 'test/data/lstm_test/gene_tag_saved_entities_v7.pkl'))
 
     feats = None
-    pkl_f = os.path.join(ROOT, 'test/data/lstm_test/gene_tag_feats_v1.pkl')
+    pkl_f = os.path.join(ROOT, 'test/data/lstm_test/gene_tag_feats_v2.pkl')
     with open(pkl_f, 'rb') as f:
       feats = cPickle.load(f)
 
@@ -24,8 +24,11 @@ class TestLSTM(unittest.TestCase):
 
     with open(os.path.join(ROOT, 'test/data/lstm_test/gt/uids.pkl'), 'rb') as f:
       uids = cPickle.load(f)
-    with open(os.path.join(ROOT, 'data/lstm_test/gt/gt.pkl'), 'rb') as f:
+    with open(os.path.join(ROOT, 'test/data/lstm_test/gt/gt.pkl'), 'rb') as f:
       gt = cPickle.load(f)
+
+    # Transform for legacy compatibility!
+    uids = [re.sub(r'\.html', '', re.sub(r'\[\'.*?\'\]', '[\'MATCHER\']', uid)) for uid in uids]
     
     DDL.update_gt(gt[:50], uids=uids[:50])
     DDL.set_holdout(validation_frac=0.5)
@@ -84,7 +87,7 @@ class TestLSTM(unittest.TestCase):
 
     idxs, gt = DDL.get_labeled_ground_truth(subset=DDL.holdout())
     acc = np.mean(DDL.get_predicted(subset=DDL.holdout()) == gt)
-    self.assertGreaterEqual(acc, 0.7)
+    self.assertGreaterEqual(acc, 0.68)
 
 if __name__ == '__main__':
     unittest.main()

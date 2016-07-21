@@ -1,0 +1,1 @@
+The PyMOL Molecular Graphics System. (2002) DeLano Scientific, Palo Alto, CA, USA

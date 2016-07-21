@@ -1,0 +1,1 @@
+Inferring copy number variants in high-coverage genomes using ERDS

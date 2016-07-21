@@ -1,0 +1,1 @@
+DOGSET: pre-designed primer sets for fine-scale mapping and DNA sequence interrogation in the dog.

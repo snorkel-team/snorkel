@@ -1,1 +1,0 @@
-MMDB: annotating protein sequences with Entrezs 3D-structure database

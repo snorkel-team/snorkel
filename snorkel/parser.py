@@ -32,11 +32,15 @@ class DocParser:
         """
         for fp in self._get_files():
             file_name = os.path.basename(fp)
-            for doc in self.parse_file(fp, file_name):
-                yield doc
+            if self._can_read(file_name):
+                for doc in self.parse_file(fp, file_name):
+                    yield doc
 
     def parse_file(self, fp, file_name):
         raise NotImplementedError()
+
+    def _can_read(self, fpath):
+        return True
 
     def _get_files(self):
         if os.path.isfile(self.path):
@@ -62,9 +66,12 @@ class HTMLDocParser(DocParser):
     def parse_file(self, fp, file_name):
         with open(fp, 'rb') as f:
             html = BeautifulSoup(f, 'lxml')
-            txt = filter(self._filter, soup.findAll(text=True))
+            txt = filter(self._cleaner, html.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
             yield Document(id=None, file=file_name, text=txt, attribs={})
+
+    def _can_read(self, fpath):
+        return fpath.endswith('.html')
 
     def _cleaner(self, s):
         if s.parent.name in ['style', 'script', '[document]', 'head', 'title']:
@@ -100,6 +107,9 @@ class XMLDocParser(DocParser):
             id = ids[0] if len(ids) > 0 else None
             attribs = {'root':doc} if self.keep_xml_tree else {}
             yield Document(id=str(id), file=str(file_name), text=str(text), attribs=attribs)
+
+    def _can_read(self, fpath):
+        return fpath.endswith('.xml')
 
 
 Sentence = namedtuple('Sentence', ['id', 'words', 'lemmas', 'poses', 'dep_parents',

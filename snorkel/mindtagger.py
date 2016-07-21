@@ -65,7 +65,7 @@ class MindTaggerInstance:
     # install mindbender included in DeepDive's release
     print "Making sure MindTagger is installed. Hang on!"
     if self._system("""
-      export PREFIX="$PWD"/deepdive
+      export PREFIX="$SNORKELHOME"/deepdive
       [[ -x "$PREFIX"/bin/mindbender ]] ||
       bash <(curl -fsSL git.io/getdeepdive || wget -qO- git.io/getdeepdive) deepdive_from_release
     """ % shargs) != 0: raise OSError("Mindtagger could not be installed")
@@ -111,7 +111,7 @@ class MindTaggerInstance:
     if self._system("""
       # restart any running mindtagger instance
       ! [ -s mindtagger.pid ] || kill -TERM $(cat mindtagger.pid) || true
-      PORT=%(port)s deepdive/bin/mindbender tagger %(task_root)s/*/mindtagger.conf &
+      PORT=%(port)s "$SNORKELHOME"/deepdive/bin/mindbender tagger %(task_root)s/*/mindtagger.conf &
       echo $! >mindtagger.pid
       """ % shargs) != 0: raise OSError("Mindtagger could not be started")
     while self._system("curl --silent --max-time 1 --head %(mindtagger_url)s >/dev/null" % shargs) != 0:

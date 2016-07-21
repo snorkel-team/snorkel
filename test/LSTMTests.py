@@ -12,10 +12,10 @@ class TestLSTM(unittest.TestCase):
   def test_accuracy(self):
     np.random.seed(seed=1701)
 
-    E = Entities(os.path.join(ROOT, 'test/data/lstm_test/gene_tag_saved_entities_v6.pkl'))
+    E = Entities(os.path.join(ROOT, 'test/data/lstm_test/gene_tag_saved_entities_v7.pkl'))
 
     feats = None
-    pkl_f = os.path.join(ROOT, 'test/data/lstm_test/gene_tag_feats_v1.pkl')
+    pkl_f = os.path.join(ROOT, 'test/data/lstm_test/gene_tag_feats_v2.pkl')
     with open(pkl_f, 'rb') as f:
       feats = cPickle.load(f)
 

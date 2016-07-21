@@ -2,3 +2,6 @@
 	path = treedlib
 	url = https://www.github.com/HazyResearch/treedlib.git
 	branch = master
+[submodule "DockerBuild"]
+	path = DockerBuild
+	url = https://github.com/netj/DockerBuild.git

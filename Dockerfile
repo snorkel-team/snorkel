@@ -13,15 +13,42 @@
 FROM jupyter/datascience-notebook
 MAINTAINER deepdive-dev@googlegroups.com
 
-# install dependencies of Snorkel's dependencies
+# Install Java 8 for CoreNLP
+# See: http://www.webupd8.org/2014/03/how-to-install-oracle-java-8-in-debian.html
 USER root
-RUN apt-get update && apt-get install -qy \
-        python-dev libxml2-dev libxslt1-dev zlib1g-dev \
+RUN echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee /etc/apt/sources.list.d/webupd8team-java.list \
+ && echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee -a /etc/apt/sources.list.d/webupd8team-java.list \
+ && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886 \
+ && echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections \
+ && apt-get update && apt-get install -qy \
+        oracle-java8-installer \
+        oracle-java8-set-default \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 USER jovyan
 
-# grab a shallow clone of Snorkel
+# Install dependencies of Snorkel's dependencies
+# (lxml, matplotlib)
+USER root
+RUN apt-get update && apt-get install -qy \
+        python-dev libxml2-dev libxslt1-dev zlib1g-dev \
+        pkg-config libfreetype6-dev \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+USER jovyan
+
+# Install python2
+RUN conda install --yes python=2.7
+
+# Install binary distribution of scientific python modules
+ARG NUMPY=1.11
+ARG SCIPY=0.17
+RUN conda install --yes numpy=$NUMPY scipy=$SCIPY matplotlib pip
+
+# Install theano
+RUN conda install --yes theano
+
+# Grab a shallow clone of Snorkel
 ARG BRANCH=master
 ENV BRANCH=$BRANCH
 RUN git clone https://github.com/HazyResearch/snorkel.git \
@@ -30,11 +57,11 @@ RUN git clone https://github.com/HazyResearch/snorkel.git \
  && cd snorkel \
  && git submodule update --init --recursive
 
-# set up Snorkel
+# Set up Snorkel
 WORKDIR snorkel
+RUN ./install-parser.sh
 RUN pip2 install --requirement requirements.txt \
  && pip3 install --requirement requirements.txt
-RUN ./install-parser.sh
 WORKDIR ..
 
 ENV SNORKELHOME=/home/jovyan/work/snorkel

@@ -1,0 +1,14 @@
+# Dockerfile for hazyresearch/snorkel-dev
+
+FROM hazyresearch/snorkel
+MAINTAINER deepdive-dev@googlegroups.com
+
+# Use runipy to run Jupyter/IPython notebooks from command-line
+RUN pip install runipy
+
+WORKDIR snorkel
+
+# Install all dependencies as per our README
+RUN test -e parser/corenlp.sh || ./install-parser.sh
+RUN pip install -r requirements.txt
+

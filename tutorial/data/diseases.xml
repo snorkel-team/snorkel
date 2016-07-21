@@ -5,8 +5,8 @@
  </head>
  <body>
   <table>
-   <tbody>
-    <tr>
+   <tbody font="blue">
+    <tr align="left" size="5">
      <th>
       Disease
      </th>

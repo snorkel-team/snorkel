@@ -17,10 +17,11 @@ from subprocess import Popen
 import lxml.etree as et
 from itertools import chain
 
-id_attrs        = ['id', 'doc_id', 'doc_name', 'type']
+id_attrs        = ['id', 'doc_id', 'doc_name']
 sentence_attrs  = id_attrs + ['sent_id', 'words', 'lemmas', 'poses', 'dep_parents', 'dep_labels', 'char_offsets', 'text']
-table_attrs     = id_attrs + ['table_id', 'cells'] # 'title', 'caption'
-cell_attrs      = sentence_attrs + ['cell_id', 'row_num', 'col_num', 'html_tag']
+table_attrs     = id_attrs + ['table_id', 'cells', 'xhtml'] # 'title', 'caption'
+cell_attrs      = sentence_attrs + ['table_id', 'cell_id', 'row_num', 'col_num', \
+                  'html_tag', 'html_attrs', 'html_anc_tags', 'html_anc_attrs']
 
 Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
 Sentence = namedtuple('Sentence', sentence_attrs)
@@ -192,53 +193,51 @@ class SentenceParser:
         return sents
 
 class HTMLTableParser(DocParser):
-    """Simple parsing of raw HTML tables, assuming one document per file"""
+    """Simple parsing of raw HTML tables"""
 
     def parse_file(self, fp, file_name):
-        doc_pattern = re.compile(r"(<html[^>]*>.*?</html[^>]*>)")
         with open(fp, 'r') as f:
-            docs = doc_pattern.findall(f.read().replace('\n',''))
-            for doc_id, text in enumerate(docs):
-                yield Document(id=doc_id, file=file_name, text=text, attribs=None)
+            soup = BeautifulSoup(f, 'xml')
+            for doc_id, text in enumerate(soup.find_all('html')):
+                yield Document(id=doc_id, file=file_name, text=unicode(text), attribs=None)
 
 class TableParser(SentenceParser):
 
     def parse_table(self, table, table_id=None, doc_id=None, doc_name=None):
-        row_pattern = re.compile(r"<(tr)[^>]*>(.*?)</tr[^>]*>")
-        col_pattern = re.compile(r"<(t[dh])[^>]*>(.*?)</\1[^>]*>")
-        # caption_pattern = re.compile(r"<caption[^>]*>(.*?)</caption[^>]*>")
         cells = []
         cell_id = 0
-        (row_tags, rows) = zip(*(row_pattern.findall(table)))
-        for i, row in enumerate(rows):
-            (col_tags, cols) = zip(*(col_pattern.findall(row)))
-            for j, col in enumerate(cols):
-                for sent in self.parse(col, doc_id, doc_name):
-                    parts = sent._asdict()
-                    # html_tag = ?
-                    # html_attrs = [?,...,?]
-                    # html_ancestor_tags = [?,...,?]
-                    # html_ancestor_attrs = [?,...,?]
-                    # row_num = ?
-                    # col_num = ?
-                    parts['id'] = "%s-%s-%s" % (doc_id, table_id, cell_id)
-                    parts['cell_id'] = cell_id
-                    parts['html_tag'] = col_tags[j]
-                    parts['row_num'] = i
-                    parts['col_num'] = j
-                    cells.append(Cell(**parts))
+        for row_num, row in enumerate(table.find_all('tr')):
+            ancestors = [(row.name, row.attrs.items())] + [(ancestor.name, ancestor.attrs.items()) for ancestor in row.parents if ancestor is not None][:-2]
+            (tags, attrs) = zip(*ancestors)
+            html_anc_tags = tags
+            html_anc_attrs = [a[0]+"="+a[1] for a in chain.from_iterable(attrs)]
+            for col_num, cell in enumerate(row.children):
+                if cell.name in ['th','td']:
+                    cell['cell_id'] = cell_id
+                    for sent in self.parse(cell.get_text(strip=True), doc_id, doc_name):
+                        parts = sent._asdict()
+                        parts['id'] = "%s-%s-%s" % (doc_id, table_id, cell_id)
+                        parts['doc_id'] = doc_id
+                        parts['table_id'] = table_id
+                        parts['cell_id'] = cell_id
+                        parts['doc_name'] = doc_name
+                        parts['row_num'] = row_num
+                        parts['col_num'] = col_num
+                        parts['html_tag'] = cell.name
+                        parts['html_attrs'] = [a[0]+"="+a[1] for a in cell.attrs]
+                        parts['html_anc_tags'] = html_anc_tags
+                        parts['html_anc_attrs'] = html_anc_attrs
+                        cells.append(Cell(**parts))
                     cell_id += 1
         id = "%s-%s" % (doc_id, table_id)
-        table = Table(id, doc_id, doc_name, table_id, cells)
-        return table
+        return Table(id, doc_id, doc_name, table_id, cells, table)
 
     def parse_docs(self, docs):
         """Parse a list of Document objects into a list of pre-processed Tables."""
-        table_pattern = re.compile(r"(<table[^>]*>.*?</table[^>]*>)")
         tables = []
         for doc in docs:
-            html_tables = table_pattern.findall(doc.text)
-            for table_id, table in enumerate(html_tables):
+            soup = BeautifulSoup(doc.text, 'xml')
+            for table_id, table in enumerate(soup.find_all('table')):
                 tables.append(self.parse_table(table, table_id=table_id, doc_id=doc.id, doc_name=doc.file))
         return tables
 

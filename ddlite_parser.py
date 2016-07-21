@@ -213,7 +213,6 @@ class TableParser(SentenceParser):
             html_anc_attrs = [a[0]+"="+a[1] for a in chain.from_iterable(attrs)]
             for col_num, cell in enumerate(row.children):
                 if cell.name in ['th','td']:
-                    cell['cell_id'] = cell_id
                     for sent in self.parse(cell.get_text(strip=True), doc_id, doc_name):
                         parts = sent._asdict()
                         parts['id'] = "%s-%s-%s" % (doc_id, table_id, cell_id)
@@ -229,6 +228,7 @@ class TableParser(SentenceParser):
                         parts['html_anc_tags'] = html_anc_tags
                         parts['html_anc_attrs'] = html_anc_attrs
                         cells.append(Cell(**parts))
+                    cell['cell_id'] = cell_id
                     cell_id += 1
         id = "%s-%s" % (doc_id, table_id)
         return Table(id, doc_id, doc_name, table_id, cells, table)

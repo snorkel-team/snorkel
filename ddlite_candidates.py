@@ -267,6 +267,35 @@ class CellNgram(Ngram):
         return '<CellNgram("%s", id=%s, chars=[%s,%s], (row,col)=(%s,%s), tag=%s)' \
             % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.row_num, self.col_num, self.html_tag)
 
+    def get_table_feats(self):
+        yield "ROW_NUM_%s" % self.row_num
+        yield "COL_NUM_%s" % self.col_num
+        yield "HTML_TAG_" + self.html_tag
+        for attr in self.html_attrs:
+            yield "HTML_ATTR_" + attr
+        for tag in self.html_anc_tags:
+            yield "HTML_ANC_TAG_" + tag
+        for attr in self.html_anc_attrs:
+            yield "HTML_ANC_ATTR_" + attr
+
+###############
+#     # NOTE: to be used with a Candidates object, not a Candidate object
+#     def _get_features(self):
+#         f_index = defaultdict(list)
+#         # f_index = super(CellNgrams, self)._get_features()
+#         for j,cand in enumerate(self._candidates):
+#           for feat in get_table_feats(cand):
+#             f_index["TABLE_" + feat].append(j)
+#         return f_index
+
+# def get_table_feats(c):
+#     yield "ROW_NUM_" + c.row_num
+#     yield "COL_NUM_" + c.col_num
+
+#   for seq_feat in _get_seq_features(sent, idxs):
+#     yield seq_feat
+###############
+
 class CellNgrams(Ngrams):
     """
     Defines the space of candidates as all n-grams (n <= n_max) in a cell within a table _x_
@@ -282,6 +311,7 @@ class CellNgrams(Ngrams):
         for cell in cells:
             for ngram in super(CellNgrams, self).apply(cell):
                 yield CellNgram(cell, ngram)
+
 
 class EntityExtractor(object):
     def __init__(self, candidate_space, matcher):

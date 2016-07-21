@@ -313,36 +313,36 @@ class CellNgrams(Ngrams):
                 yield CellNgram(cell, ngram)
 
 
-class EntityExtractor(object):
-    def __init__(self, candidate_space, matcher):
-        self.candidate_space = candidate_space
-        self.matcher = matcher
+# class EntityExtractor(object):
+#     def __init__(self, candidate_space, matcher):
+#         self.candidate_space = candidate_space
+#         self.matcher = matcher
 
-    def apply(self, context):
-        # if 'table_id' in context._fields:
-        #     for cell in context.cells:
-        #         for e in self.matcher.apply(self.candidate_space.apply(cell)):
-        #             yield e
-        # else:
-        for e in self.matcher.apply(self.candidate_space.apply(context)):
-            yield e
+#     def apply(self, context):
+#         # if 'table_id' in context._fields:
+#         #     for cell in context.cells:
+#         #         for e in self.matcher.apply(self.candidate_space.apply(cell)):
+#         #             yield e
+#         # else:
+#         for e in self.matcher.apply(self.candidate_space.apply(context)):
+#             yield e
 
-class RelationExtractor(object):
-    """
-    A generator for relation mentions. NOTE: currently limited to two entities/relation
-    """
-    def __init__(self, entity_extractors):
-        self.arity = len(entity_extractors) if isinstance(entity_extractors, list) else 1
-        self.extractors = entity_extractors
+# class RelationExtractor(object):
+#     """
+#     A generator for relation mentions. NOTE: currently limited to two entities/relation
+#     """
+#     def __init__(self, entity_extractors):
+#         self.arity = len(entity_extractors) if isinstance(entity_extractors, list) else 1
+#         self.extractors = entity_extractors
 
-    def apply(self, context):
-        """
-        Yield a relation for each cross-product (nested for loop) tuple of entities extracted
-            from the given context
-        """
-        for e1 in self.extractors[0].apply(context):
-            for e2 in self.extractors[1].apply(context):
-                yield Relation(e1,e2)
+#     def apply(self, context):
+#         """
+#         Yield a relation for each cross-product (nested for loop) tuple of entities extracted
+#             from the given context
+#         """
+#         for e1 in self.extractors[0].apply(context):
+#             for e2 in self.extractors[1].apply(context):
+#                 yield Relation(e1,e2)
 
 # class Entity(Candidate):
 #     def _get_features(self):
@@ -354,16 +354,16 @@ class RelationExtractor(object):
 #         row_num
 #         col_num
 
-class Relation(Candidate):
-    def __init__(self, e1, e2):
-        self.id = "%s:%s" % (e1.id, e2.id)
-        self.context_id = e1.sent_id
-        self.e1 = e1
-        self.e2 = e2
+# class Relation(Candidate):
+#     def __init__(self, e1, e2):
+#         self.id = "%s:%s" % (e1.id, e2.id)
+#         self.context_id = e1.sent_id
+#         self.e1 = e1
+#         self.e2 = e2
 
-    def __repr__(self):
-        return 'Relation<Ngram("%s", id=%s),Ngram("%s", id=%s)>' \
-            % (self.e1.get_attrib_span(WORDS), self.e1.id, self.e2.get_attrib_span(WORDS), self.e2.id)
+#     def __repr__(self):
+#         return 'Relation<Ngram("%s", id=%s),Ngram("%s", id=%s)>' \
+#             % (self.e1.get_attrib_span(WORDS), self.e1.id, self.e2.get_attrib_span(WORDS), self.e2.id)
 
     # def _get_features(self):
     #     entity1_features

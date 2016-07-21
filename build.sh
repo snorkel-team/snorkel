@@ -3,5 +3,7 @@
 set -euo pipefail
 set -x
 
+. set_env.sh
+
 # not much to do
 java -version

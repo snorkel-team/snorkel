@@ -3,6 +3,9 @@
 set -euo pipefail
 set -x
 
+# Set up environment
+. set_env.sh
+
 # Run notebooks end-to-end
 # NOTE: Currently some tests (LSTMTests) rely on data produced by these notebooks...
 TESTING=true runipy tutorial/CDR_Tutorial.ipynb

@@ -135,11 +135,8 @@ class Candidates(object):
      * C is a flat list of Sentence objects or a path to pickled candidates
     """
     if isinstance(C, basestring):
-      try:
-        with open(C, 'rb') as f:
-          self._candidates = cPickle.load(f)
-      except:
-        raise ValueError("No pickled candidates at {}".format(C))
+      with open(C, 'rb') as f:
+        self._candidates = cPickle.load(f)
     else:
       self._candidates = list(self._extract_candidates(C))
     self.feats = None

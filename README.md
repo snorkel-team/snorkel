@@ -2,7 +2,7 @@
 
 ### _Formerly DDLite, in transition!_
 
-[![Build Status](https://travis-ci.org/HazyResearch/ddlite.svg?branch=master)](https://travis-ci.org/HazyResearch/ddlite)
+[![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 
 #### Sponsored by: 
 <img src="figs/darpa.JPG" width="80" height="80" />

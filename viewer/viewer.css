@@ -1,0 +1,46 @@
+span.candidate {
+    background-color: rgba(255,255,0,0.3);
+}
+
+span.true-candidate {
+    background-color: rgba(92,184,92,1.0);
+}
+
+span.false-candidate {
+    background-color: rgba(169,68,66,1.0);
+}
+
+span.highlighted-candidate {
+    font-weight: bolder;
+    box-shadow: 1px 1px 1px grey;
+}
+
+span.gold-annotation {
+    color: red;
+}
+
+span.highlighted-gold-annotation {
+    background-color: rgba(217,83,79,0.5);
+}
+
+.panel-heading {
+    position: relative;
+}
+
+.panel-footer {
+    position: relative;
+}
+
+.panel-left-justify {
+    position: absolute;
+    right: 15px;
+    top: 20px;
+}
+
+.candidate-data {
+    display: none;
+}
+
+.viewer-page {
+    display: none;
+}

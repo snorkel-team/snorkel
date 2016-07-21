@@ -1,0 +1,1 @@
+a program for rapid ab-initio shape determination in small-angle scattering

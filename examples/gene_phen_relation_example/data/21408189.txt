@@ -1,1 +1,0 @@
-Rapid high-throughput analysis of DNaseI hypersensitive sites using a modified MLPA approach.

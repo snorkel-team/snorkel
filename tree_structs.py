@@ -3,9 +3,9 @@ import os
 import re
 import lxml.etree as et
 
-from ddlite_parser import corenlp_cleaner
+from snorkel.parser import corenlp_cleaner
 
-APP_HOME = os.path.dirname(os.path.realpath(__file__))
+APP_HOME = os.environ['SNORKELHOME']
 
 # Load IPython display functionality libs if possible i.e. if in IPython
 try:

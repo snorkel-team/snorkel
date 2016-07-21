@@ -1,1 +1,0 @@
-Weighting by Inverse Variance or by Sample Size in Meta-Analysis: A Simulation Study.

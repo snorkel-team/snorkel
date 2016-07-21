@@ -1,1 +1,0 @@
-Efficient genome-wide association testing of gene-environment interaction in case-parent trios

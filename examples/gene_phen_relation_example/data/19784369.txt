@@ -1,1 +1,0 @@
-Universal SNP genotyping assay with fluorescence polarization detection.

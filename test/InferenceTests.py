@@ -3,7 +3,7 @@ import numpy as np
 import scipy.sparse as sparse
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
-from ddlite_learning import learn_elasticnet_logreg, odds_to_prob
+from snorkel.learning import learn_elasticnet_logreg, odds_to_prob
 
 class TestInference(unittest.TestCase):
     
@@ -114,4 +114,3 @@ class TestInference(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    

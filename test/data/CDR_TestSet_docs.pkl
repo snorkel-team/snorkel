@@ -1,0 +1,209 @@
+(lp1
+ccopy_reg
+_reconstructor
+p2
+(csnorkel.parser
+Document
+p3
+c__builtin__
+tuple
+p4
+(S'23892921'
+p5
+S'CDR_TestSet.xml'
+p6
+S'"Real-world" data on the efficacy and safety of lenalidomide and dexamethasone in patients with relapsed/refractory multiple myeloma who were treated according to the standard clinical practice: a study of the Greek Myeloma Study Group.\nLenalidomide and dexamethasone (RD) is a standard of care for relapsed/refractory multiple myeloma (RRMM), but there is limited published data on its efficacy and safety in the "real world" (RW), according to the International Society of Pharmacoeconomics and Outcomes Research definition. We studied 212 RRMM patients who received RD in RW. Objective response (>PR (partial response)) rate was 77.4 % (complete response (CR), 20.2 %). Median time to first and best response was 2 and 5 months, respectively. Median time to CR when RD was given as 2nd or >2(nd)-line treatment at 4 and 11 months, respectively. Quality of response was independent of previous lines of therapies or previous exposure to thalidomide or bortezomib. Median duration of response was 34.4 months, and it was higher in patients who received RD until progression (not reached versus 19 months, p < 0.001). Improvement of humoral immunity occurred in 60 % of responders (p < 0.001) and in the majority of patients who achieved stable disease. Adverse events were reported in 68.9 % of patients (myelosuppression in 49.4 %) and 12.7 % of patients needed hospitalization. Peripheral neuropathy was observed only in 2.5 % of patients and deep vein thrombosis in 5.7 %. Dose reductions were needed in 31 % of patients and permanent discontinuation in 38.9 %. Median time to treatment discontinuation was 16.8 months. Performance status (PS) and initial lenalidomide dose predicted for treatment discontinuation. Extra-medullary relapses occurred in 3.8 % of patients. Our study confirms that RD is effective and safe in RRMM in the RW; it produces durable responses especially in patients who continue on treatment till progression and improves humoral immunity even in patients with stable disease.'
+p7
+(dp8
+ttRp9
+ag2
+(g3
+g4
+(S'8701013'
+p10
+g6
+S'Famotidine-associated delirium. A series of six cases.\nFamotidine is a histamine H2-receptor antagonist used in inpatient settings for prevention of stress ulcers and is showing increasing popularity because of its low cost. Although all of the currently available H2-receptor antagonists have shown the propensity to cause delirium, only two previously reported cases have been associated with famotidine. The authors report on six cases of famotidine-associated delirium in hospitalized patients who cleared completely upon removal of famotidine. The pharmacokinetics of famotidine are reviewed, with no change in its metabolism in the elderly population seen. The implications of using famotidine in elderly persons are discussed.'
+p11
+(dp12
+ttRp13
+ag2
+(g3
+g4
+(S'24100055'
+p14
+g6
+S'Incidence of heparin-induced thrombocytopenia type II and postoperative recovery of platelet count in liver graft recipients: a retrospective cohort analysis.\nBACKGROUND: Thrombocytopenia in patients with end-stage liver disease is a common disorder caused mainly by portal hypertension, low levels of thrombopoetin, and endotoxemia. The impact of immune-mediated heparin-induced thrombocytopenia type II (HIT type II) as a cause of thrombocytopenia after liver transplantation is not yet understood, with few literature citations reporting contradictory results. The aim of our study was to demonstrate the perioperative course of thrombocytopenia after liver transplantation and determine the occurrence of clinical HIT type II. METHOD: We retrospectively evaluated the medical records of 205 consecutive adult patients who underwent full-size liver transplantation between January 2006 and December 2010 due to end-stage or malignant liver disease. Preoperative platelet count, postoperative course of platelets, and clinical signs of HIT type II were analyzed. RESULTS: A total of 155 (75.6%) of 205 patients had thrombocytopenia before transplantation, significantly influenced by Model of End-Stage Liver Disease score and liver cirrhosis. The platelet count exceeded 100,000/uL in most of the patients (n = 193) at a medium of 7 d. Regarding HIT II, there were four (1.95%) patients with a background of HIT type II. CONCLUSIONS: The incidence of HIT in patients with end-stage hepatic failure is, with about 1.95%, rare. For further reduction of HIT type II, the use of intravenous heparin should be avoided and the prophylactic anticoagulation should be performed with low-molecular-weight heparin after normalization of platelet count.'
+p15
+(dp16
+ttRp17
+ag2
+(g3
+g4
+(S'23871786'
+p18
+g6
+S'Pubertal exposure to Bisphenol A increases anxiety-like behavior and decreases acetylcholinesterase activity of hippocampus in adult male mice.\nThe negative effects of Bisphenol A (BPA) on neurodevelopment and behaviors have been well established. Acetylcholinesterase (AChE) is a regulatory enzyme which is involved in anxiety-like behavior. This study investigated behavioral phenotypes and AChE activity in male mice following BPA exposure during puberty. On postnatal day (PND) 35, male mice were exposed to 50mg BPA/kg diet per day for a period of 35 days. On PND71, a behavioral assay was performed using the elevated plus maze (EPM) and the light/dark test. In addition, AChE activity was measured in the prefrontal cortex, hypothalamus, cerebellum and hippocampus. Results from our behavioral phenotyping indicated that anxiety-like behavior was increased in mice exposed to BPA. AChE activity was significantly decreased in the hippocampus of mice with BPA compared to control mice, whereas no difference was found in the prefrontal cortex, hypothalamus and cerebellum. Our findings showed that pubertal BPA exposure increased anxiety-like behavior, which may be associated with decreased AChE activity of the hippocampus in adult male mice. Further studies are necessary to investigate the cholinergic signaling of the hippocampus in PBE induced anxiety-like behaviors.'
+p19
+(dp20
+ttRp21
+ag2
+(g3
+g4
+(S'23949582'
+p22
+g6
+S"The cytogenetic action of ifosfamide, mesna, and their combination on peripheral rabbit lymphocytes: an in vivo/in vitro cytogenetic study.\nIfosfamide (IFO) is an alkylating nitrogen mustard, administrated as an antineoplasmic agent. It is characterized by its intense urotoxic action, leading to hemorrhagic cystitis. This side effect of IFO raises the requirement for the co-administration with sodium 2-sulfanylethanesulfonate (Mesna) aiming to avoid or minimize this effect. IFO and Mesna were administrated separately on rabbit's lymphocytes in vivo, which were later developed in vitro. Cytogenetic markers for sister chromatid exchanges (SCEs), proliferation rate index (PRI) and Mitotic Index were recorded. Mesna's action, in conjunction with IFO reduces the frequency of SCEs, in comparison with the SCEs recordings obtained when IFO is administered alone. In addition to this, when high concentrations of Mesna were administered alone significant reductions of the PRI were noted, than with IFO acting at the same concentration on the lymphocytes. Mesna significantly reduces IFO's genotoxicity, while when administered in high concentrations it acts in an inhibitory fashion on the cytostatic action of the drug."
+p23
+(dp24
+ttRp25
+ag2
+(g3
+g4
+(S'23952588'
+p26
+g6
+S"Risk factors and predictors of levodopa-induced dyskinesia among multiethnic Malaysians with Parkinson's disease.\nChronic pulsatile levodopa therapy for Parkinson's disease (PD) leads to the development of motor fluctuations and dyskinesia. We studied the prevalence and predictors of levodopa-induced dyskinesia among multiethnic Malaysian patients with PD. METHODS: This is a cross-sectional study involving 95 patients with PD on uninterrupted levodopa therapy for at least 6 months. The instrument used was the UPDRS questionnaires. The predictors of dyskinesia were determined using multivariate logistic regression analysis. RESULTS: The mean age was 65.6 + 8.5 years. The mean onset age was 58.5 + 9.8 years. The median disease duration was 6 (7) years. Dyskinesia was present in 44% (n = 42) with median levodopa therapy of 3 years. There were 64.3% Chinese, 31% Malays, and 3.7% Indians and other ethnic groups. Eighty-one percent of patients with dyskinesia had clinical fluctuations. Patients with dyskinesia had lower onset age ( p < 0.001), longer duration of levodopa therapy ( p < 0.001), longer disease duration ( p < 0.001), higher total daily levodopa dose ( p < 0.001), and higher total UPDRS scores ( p = 0.005) than patients without dyskinesia. The three significant predictors of dyskinesia were duration of levodopa therapy, onset age, and total daily levodopa dose. CONCLUSIONS: The prevalence of levodopa-induced dyskinesia in our patients was 44%. The most significant predictors were duration of levodopa therapy, total daily levodopa dose, and onset age."
+p27
+(dp28
+ttRp29
+ag2
+(g3
+g4
+(S'23535177'
+p30
+g6
+S"Cerebellar sensory processing alterations impact motor cortical plasticity in Parkinson's disease: clues from dyskinetic patients.\nThe plasticity of primary motor cortex (M1) in patients with Parkinson's disease (PD) and levodopa-induced dyskinesias (LIDs) is severely impaired. We recently reported in young healthy subjects that inhibitory cerebellar stimulation enhanced the sensorimotor plasticity of M1 that was induced by paired associative stimulation (PAS). This study demonstrates that the deficient sensorimotor M1 plasticity in 16 patients with LIDs could be reinstated by a single session of real inhibitory cerebellar stimulation but not sham stimulation. This was evident only when a sensory component was involved in the induction of plasticity, indicating that cerebellar sensory processing function is involved in the resurgence of M1 plasticity. The benefit of inhibitory cerebellar stimulation on LIDs is known. To explore whether this benefit is linked to the restoration of sensorimotor plasticity of M1, we conducted an additional study looking at changes in LIDs and PAS-induced plasticity after 10 sessions of either bilateral, real inhibitory cerebellar stimulation or sham stimulation. Only real and not sham stimulation had an antidyskinetic effect and it was paralleled by a resurgence in the sensorimotor plasticity of M1. These results suggest that alterations in cerebellar sensory processing function, occurring secondary to abnormal basal ganglia signals reaching it, may be an important element contributing to the maladaptive sensorimotor plasticity of M1 and the emergence of abnormal involuntary movements."
+p31
+(dp32
+ttRp33
+ag2
+(g3
+g4
+(S'23872883'
+p34
+g6
+S'Biochemical effects of Solidago virgaurea extract on experimental cardiotoxicity.\nCardiovascular diseases (CVDs) are the major health problem of advanced as well as developing countries of the world. The aim of the present study was to investigate the protective effect of the Solidago virgaurea extract on isoproterenol-induced cardiotoxicity in rats. The subcutaneous injection of isoproterenol (30 mg/kg) into rats twice at an interval of 24 h, for two consecutive days, led to a significant increase in serum lactate dehydrogenase, creatine phosphokinase, alanine transaminase, aspartate transaminase, and angiotensin-converting enzyme activities, total cholesterol, triglycerides, free serum fatty acid, cardiac tissue malondialdehyde (MDA), and nitric oxide levels and a significant decrease in levels of glutathione and superoxide dismutase in cardiac tissue as compared to the normal control group (P < 0.05). Pretreatment with S. virgaurea extract for 5 weeks at a dose of 250 mg/kg followed by isoproterenol injection significantly prevented the observed alterations. Captopril (50 mg/kg/day, given orally), an inhibitor of angiotensin-converting enzyme used as a standard cardioprotective drug, was used as a positive control in this study. The data of the present study suggest that S. virgaurea extract exerts its protective effect by decreasing MDA level and increasing the antioxidant status in isoproterenol-treated rats. The study emphasizes the beneficial action of S. virgaurea extract as a cardioprotective agent.'
+p35
+(dp36
+ttRp37
+ag2
+(g3
+g4
+(S'22836123'
+p38
+g6
+S'Late-onset scleroderma renal crisis induced by tacrolimus and prednisolone: a case report.\nScleroderma renal crisis (SRC) is a rare complication of systemic sclerosis (SSc) but can be severe enough to require temporary or permanent renal replacement therapy. Moderate to high dose corticosteroid use is recognized as a major risk factor for SRC. Furthermore, there have been reports of thrombotic microangiopathy precipitated by cyclosporine in patients with SSc. In this article, we report a patient with SRC induced by tacrolimus and corticosteroids. The aim of this work is to call attention to the risk of tacrolimus use in patients with SSc.'
+p39
+(dp40
+ttRp41
+ag2
+(g3
+g4
+(S'24068571'
+p42
+g6
+S'Incidence of postoperative delirium is high even in a population without known risk factors.\nPURPOSE: Postoperative delirium is a recognized complication in populations at risk. The aim of this study is to assess the prevalence of early postoperative delirium in a population without known risk factors admitted to the ICU for postoperative monitoring after elective major surgery. The secondary outcome investigated is to identify eventual independent risk factors among demographic data and anesthetic drugs used. METHODS: An observational, prospective study was conducted on a consecutive cohort of patients admitted to our ICU within and for at least 24 h after major surgical procedures. Exclusion criteria were any preexisting predisposing factor for delirium or other potentially confounding neurological dysfunctions. Patients were assessed daily using the confusion assessment method for the ICU scale for 3 days after the surgical procedure. Early postoperative delirium incidence risk factors were then assessed through three different multiple regression models. RESULTS: According to the confusion assessment method for the ICU scale, 28 % of patients were diagnosed with early postoperative delirium. The use of thiopentone was significantly associated with an eight-fold-higher risk for delirium compared to propofol (57.1% vs. 7.1%, RR = 8.0, X2 = 4.256; df = 1; 0.05 < p < 0.02). CONCLUSION: In this study early postoperative delirium was found to be a very common complication after major surgery, even in a population without known risk factors. Thiopentone was independently associated with an increase in its relative risk.'
+p43
+(dp44
+ttRp45
+ag2
+(g3
+g4
+(S'24040781'
+p46
+g6
+S'An unexpected diagnosis in a renal-transplant patient with proteinuria treated with everolimus: AL amyloidosis.\nProteinuria is an expected complication in transplant patients treated with mammalian target of rapamycin inhibitors (mTOR-i). However, clinical suspicion should always be supported by histological evidence in order to investigate potential alternate diagnoses such as acute or chronic rejection, interstitial fibrosis and tubular atrophy, or recurrent or de novo glomerulopathy. In this case we report the unexpected diagnosis of amyloidosis in a renal-transplant patient with pre-transplant monoclonal gammapathy of undetermined significance who developed proteinuria after conversion from tacrolimus to everolimus.'
+p47
+(dp48
+ttRp49
+ag2
+(g3
+g4
+(S'23666265'
+p50
+g6
+S"The function of P2X3 receptor and NK1 receptor antagonists on cyclophosphamide-induced cystitis in rats.\nPURPOSE: The purpose of the study is to explore the function of P2X3 and NK1 receptors antagonists on cyclophosphamide (CYP)-induced cystitis in rats. METHODS: Sixty female Sprague-Dawley (SD) rats were randomly divided into three groups. The rats in the control group were intraperitoneally (i.p.) injected with 0.9% saline (4 ml/kg); the rats in the model group were i.p. injected with CYP (150 mg/kg); and the rats in the intervention group were i.p. injected with CYP with subsequently perfusion of bladder with P2X3 and NK1 receptors' antagonists, Suramin and GR 82334. Spontaneous pain behaviors following the administration of CYP were observed. Urodynamic parameters, bladder pressure-volume curve, maximum voiding pressure (MVP), and maximum cystometric capacity (MCC), were recorded. Pathological changes in bladder tissue were observed. Immunofluorescence was used to detect the expression of P2X3 and NK1 receptors in bladder. RESULTS: Cyclophosphamide treatment increased the spontaneous pain behaviors scores. The incidence of bladder instability during urine storage period of model group was significantly higher than intervention group (X(2) = 7.619, P = 0.007) and control group (X(2) = 13.755, P = 0.000). MCC in the model group was lower than the control and intervention groups (P < 0.01). Histological changes evident in model and intervention groups rats' bladder included edema, vasodilation, and infiltration of inflammatory cells. In model group, the expression of P2X3 receptor increased in urothelium and suburothelium, and NK1 receptor increased in suburothelium, while the expression of them in intervention group was lower. CONCLUSIONS: In CYP-induced cystitis, the expression of P2X3 and NK1 receptors increased in urothelium and/or suburothelium. Perfusion of bladder with P2X3 and NK1 receptors antagonists ameliorated the bladder function."
+p51
+(dp52
+ttRp53
+ag2
+(g3
+g4
+(S'23433219'
+p54
+g6
+S'The risk and associated factors of methamphetamine psychosis in methamphetamine-dependent patients in Malaysia.\nOBJECTIVE: The objective of this study was to determine the risk of lifetime and current methamphetamine-induced psychosis in patients with methamphetamine dependence. The association between psychiatric co-morbidity and methamphetamine-induced psychosis was also studied. METHODS: This was a cross-sectional study conducted concurrently at a teaching hospital and a drug rehabilitation center in Malaysia. Patients with the diagnosis of methamphetamine based on DSM-IV were interviewed using the Mini International Neuropsychiatric Interview (M.I.N.I.) for methamphetamine-induced psychosis and other Axis I psychiatric disorders. The information on sociodemographic background and drug use history was obtained from interview or medical records. RESULTS: Of 292 subjects, 47.9% of the subjects had a past history of psychotic symptoms and 13.0% of the patients were having current psychotic symptoms. Co-morbid major depressive disorder (OR=7.18, 95 CI=2.612-19.708), bipolar disorder (OR=13.807, 95 CI=5.194-36.706), antisocial personality disorder (OR=12.619, 95 CI=6.702-23.759) and heavy methamphetamine uses were significantly associated with lifetime methamphetamine-induced psychosis after adjusted for other factors. Major depressive disorder (OR=2.870, CI=1.154-7.142) and antisocial personality disorder (OR=3.299, 95 CI=1.375-7.914) were the only factors associated with current psychosis. CONCLUSION: There was a high risk of psychosis in patients with methamphetamine dependence. It was associated with co-morbid affective disorder, antisocial personality, and heavy methamphetamine use. It is recommended that all cases of methamphetamine dependence should be screened for psychotic symptoms.'
+p55
+(dp56
+ttRp57
+ag2
+(g3
+g4
+(S'24088636'
+p58
+g6
+S'Linezolid-induced optic neuropathy.\nMany systemic antimicrobials have been implicated to cause ocular adverse effects. This is especially relevant in multidrug therapy where more than one drug can cause a similar ocular adverse effect. We describe a case of progressive loss of vision associated with linezolid therapy. A 45-year-old male patient who was on treatment with multiple second-line anti-tuberculous drugs including linezolid and ethambutol for extensively drug-resistant tuberculosis (XDR-TB) presented to us with painless progressive loss of vision in both eyes. Color vision was defective and fundus examination revealed optic disc edema in both eyes. Ethambutol-induced toxic optic neuropathy was suspected and tablet ethambutol was withdrawn. Deterioration of vision occurred despite withdrawal of ethambutol. Discontinuation of linezolid resulted in marked improvement of vision. Our report emphasizes the need for monitoring of visual function in patients on long-term linezolid treatment.'
+p59
+(dp60
+ttRp61
+ag2
+(g3
+g4
+(S'23846525'
+p62
+g6
+S'Acute hepatitis associated with clopidogrel: a case report and review of the literature.\nDrug-induced hepatotoxicity is a common cause of acute hepatitis, and the recognition of the responsible drug may be difficult. We describe a case of clopidogrel-related acute hepatitis. The diagnosis is strongly suggested by an accurate medical history and liver biopsy. Reports about cases of hepatotoxicity due to clopidogrel are increasing in the last few years, after the increased use of this drug. In conclusion, we believe that physicians should carefully consider the risk of drug-induced hepatic injury when clopidogrel is prescribed.'
+p63
+(dp64
+ttRp65
+ag2
+(g3
+g4
+(S'24091473'
+p66
+g6
+S'Resuscitation with lipid, epinephrine, or both in levobupivacaine-induced cardiac toxicity in newborn piglets.\nBACKGROUND: The optimal dosing regimens of lipid emulsion, epinephrine, or both are not yet determined in neonates in cases of local anaesthetic systemic toxicity (LAST). METHODS: Newborn piglets received levobupivacaine until cardiovascular collapse occurred. Standard cardiopulmonary resuscitation was started and electrocardiogram (ECG) was monitored for ventricular tachycardia, fibrillation, or QRS prolongation. Piglets were then randomly allocated to four groups: control (saline), Intralipid( ) alone, epinephrine alone, or a combination of Intralipd plus epinephrine. Resuscitation continued for 30 min or until there was a return of spontaneous circulation (ROSC) accompanied by a mean arterial pressure at or superior to the baseline pressure and normal sinus rhythm for a period of 30 min. RESULTS: ROSC was achieved in only one of the control piglets compared with most of the treated piglets. Mortality was not significantly different between the three treatment groups, but was significantly lower in all the treatment groups compared with control. The number of ECG abnormalities was zero in the Intralipid only group, but 14 and 17, respectively, in the epinephrine and epinephrine plus lipid groups (P<0.05). CONCLUSIONS: Lipid emulsion with or without epinephrine, or epinephrine alone were equally effective in achieving a return to spontaneous circulation in this model of LAST. Epinephrine alone or in combination with lipid was associated with an increased number of ECG abnormalities compared with lipid emulsion alone.'
+p67
+(dp68
+ttRp69
+ag2
+(g3
+g4
+(S'24072398'
+p70
+g6
+S'A single neurotoxic dose of methamphetamine induces a long-lasting depressive-like behaviour in mice.\nMethamphetamine (METH) triggers a disruption of the monoaminergic system and METH abuse leads to negative emotional states including depressive symptoms during drug withdrawal. However, it is currently unknown if the acute toxic dosage of METH also causes a long-lasting depressive phenotype and persistent monoaminergic deficits. Thus, we now assessed the depressive-like behaviour in mice at early and long-term periods following a single high METH dose (30 mg/kg, i.p.). METH did not alter the motor function and procedural memory of mice as assessed by swimming speed and escape latency to find the platform in a cued version of the water maze task. However, METH significantly increased the immobility time in the tail suspension test at 3 and 49 days post-administration. This depressive-like profile induced by METH was accompanied by a marked depletion of frontostriatal dopaminergic and serotonergic neurotransmission, indicated by a reduction in the levels of dopamine, DOPAC and HVA, tyrosine hydroxylase and serotonin, observed at both 3 and 49 days post-administration. In parallel, another neurochemical feature of depression--astroglial dysfunction--was unaffected in the cortex and the striatal levels of the astrocytic protein marker, glial fibrillary acidic protein, were only transiently increased at 3 days. These findings demonstrate for the first time that a single high dose of METH induces long-lasting depressive-like behaviour in mice associated with a persistent disruption of frontostriatal dopaminergic and serotonergic homoeostasis.'
+p71
+(dp72
+ttRp73
+ag2
+(g3
+g4
+(S'439781'
+p74
+g6
+S'Indomethacin induced hypotension in sodium and volume depleted rats.\nAfter a single oral dose of 4 mg/kg indomethacin (IDM) to sodium and volume depleted rats plasma renin activity (PRA) and systolic blood pressure fell significantly within four hours. In sodium repleted animals indomethacin did not change systolic blood pressure (BP) although plasma renin activity was decreased. Thus, indomethacin by inhibition of prostaglandin synthesis may diminish the blood pressure maintaining effect of the stimulated renin-angiotensin system in sodium and volume depletion.'
+p75
+(dp76
+ttRp77
+ag2
+(g3
+g4
+(S'24067251'
+p78
+g6
+S'An investigation of the pattern of kidney injury in HIV-positive persons exposed to tenofovir disoproxil fumarate: an examination of a large population database (MHRA database).\nThe potential for tenofovir to cause a range of kidney syndromes has been established from mechanistic and randomised clinical trials. However, the exact pattern of kidney involvement is still uncertain. We undertook a descriptive analysis of Yellow Card records of 407 HIV-positive persons taking tenofovir disoproxil fumarate (TDF) as part of their antiretroviral therapy regimen and submitted to the Medicines and Healthcare Products Regulatory Agency (MHRA) with suspected kidney adverse effects. Reports that satisfy defined criteria were classified as acute kidney injury, kidney tubular dysfunction and Fanconi syndrome. Of the 407 Yellow Card records analysed, 106 satisfied criteria for TDF-related kidney disease, of which 53 (50%) had features of kidney tubular dysfunction, 35 (33%) were found to have features of glomerular dysfunction and 18 (17%) had Fanconi syndrome. The median TDF exposure was 316 days (interquartile range 120-740). The incidence of hospitalisation for TDF kidney adverse effects was high, particularly amongst patients with features of Fanconi syndrome. The pattern of kidney syndromes in this population series mirrors that reported in randomised clinical trials. Cessation of TDF was associated with complete restoration of kidney function in up half of the patients in this report.'
+p79
+(dp80
+ttRp81
+ag2
+(g3
+g4
+(S'23864035'
+p82
+g6
+S'Bortezomib and dexamethasone as salvage therapy in patients with relapsed/refractory multiple myeloma: analysis of long-term clinical outcomes.\nBortezomib (bort)-dexamethasone (dex) is an effective therapy for relapsed/refractory (R/R) multiple myeloma (MM). This retrospective study investigated the combination of bort (1.3 mg/m(2) on days 1, 4, 8, and 11 every 3 weeks) and dex (20 mg on the day of and the day after bort) as salvage treatment in 85 patients with R/R MM after prior autologous stem cell transplantation or conventional chemotherapy. The median number of prior lines of therapy was 2. Eighty-seven percent of the patients had received immunomodulatory drugs included in some line of therapy before bort-dex. The median number of bort-dex cycles was 6, up to a maximum of 12 cycles. On an intention-to-treat basis, 55 % of the patients achieved at least partial response, including 19 % CR and 35 % achieved at least very good partial response. Median durations of response, time to next therapy and treatment-free interval were 8, 11.2, and 5.1 months, respectively. The most relevant adverse event was peripheral neuropathy, which occurred in 78 % of the patients (grade II, 38 %; grade III, 21 %) and led to treatment discontinuation in 6 %. With a median follow up of 22 months, median time to progression, progression-free survival (PFS) and overall survival (OS) were 8.9, 8.7, and 22 months, respectively. Prolonged PFS and OS were observed in patients achieving CR and receiving bort-dex a single line of prior therapy. Bort-dex was an effective salvage treatment for MM patients, particularly for those in first relapse.'
+p83
+(dp84
+ttRp85
+a.

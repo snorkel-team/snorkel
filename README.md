@@ -64,6 +64,21 @@ The `jupyter` command is installed as part of the above installation steps, so t
 jupyter notebook examples/GeneTaggerExample_Extraction.ipynb
 ```
 
+### Jupyter Notebook Best Practices
+It's usually most convenient to write most code in an external `.py` file, and load as a module that's automatically reloaded; use:
+```python
+%load_ext autoreload
+%autoreload 2
+```
+A more convenient option is to add these lines to your IPython config file, in `~/.ipython/profile_default/ipython_config.py`:
+```
+c.InteractiveShellApp.extensions = ['autoreload']     
+c.InteractiveShellApp.exec_lines = ['%autoreload 2']
+```
+
+## Documentation
+To generate documentation (built using [pdoc](https://github.com/BurntSushi/pdoc)), run `./generate_docs.sh`.
+
 ## Learning how to use DeepDive Lite
 The best way to learn how to use is to open up the demo notebooks in the **[examples](https://github.com/HazyResearch/ddlite/tree/master/examples)** folder. **[GeneTaggerExample_Extraction.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GeneTaggerExample_Extraction.ipynb)** walks through the candidate extraction workflow for an entity tagging task. **[GeneTaggerExample_Learning.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GeneTaggerExample_Learning.ipynb)** picks up where the extraction notebook left off. The learning notebook demonstrates the labeling function iteration workflow and learning methods. For examples of extracting relations, see **[GenePhenRelationExample_Extraction.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GenePhenRelationExample_Extraction.ipynb)** and **GenePhenRelationExample_Learning.ipynb**.
 

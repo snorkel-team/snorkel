@@ -20,3 +20,6 @@ examples/mindtagger
 
 # pickled data from notebooks
 *.pkl
+
+# PyCharm
+.idea

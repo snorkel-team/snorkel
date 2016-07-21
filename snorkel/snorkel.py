@@ -11,6 +11,21 @@ warnings.filterwarnings("ignore", module="matplotlib")
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 
+# Object-relational mapping with SQLAlchemy
+# This must be performed before importing other Snorkel modules!
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+if 'SNORKELDB' in os.environ:
+  snorkel_engine = create_engine(os.environ['SNORKELDB'])
+else:
+  raise RuntimeError('Snorkel database connection string must be set as SNORKELDB environment variable.')
+SnorkelSession = sessionmaker(bind=snorkel_engine)
+Base = declarative_base()
+def init_db():
+  Base.metadata.create_all(snorkel_engine)
+# End SQLAlchemy setup
+
 # Feature modules
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 from treedlib import compile_relation_feature_generator
@@ -45,7 +60,7 @@ def tag_seq(words, seq, tag):
 def tag_seqs(words, seqs, tags):
   """
   Given a list of words, a *list* of lists of indexes, and the corresponding tags
-  This function substitutes the tags for the words coresponding to the index lists,
+  This function substitutes the tags for the words corresponding to the index lists,
   taking care of shifting indexes appropriately after multi-word substitutions
   NOTE: this assumes non-overlapping seqs!
   """

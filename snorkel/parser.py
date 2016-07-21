@@ -10,12 +10,109 @@ import signal
 import sys
 import warnings
 from bs4 import BeautifulSoup
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 from subprocess import Popen
 import lxml.etree as et
-from itertools import chain
+from snorkel import Base, SnorkelSession
+from sqlalchemy import Column, String, Integer, Text, ForeignKey
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.orm import relationship, backref
+from sqlalchemy.types import PickleType
 
-Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
+
+class Corpus(Base):
+    """
+    A Corpus holds a set of Documents and associated Sentences.
+    Default iterator is over (Document, Sentences) tuples
+    """
+
+    __tablename__ = 'corpus'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+
+    def __iter__(self):
+        """Default iterator is over (document, sentence) tuples"""
+        for doc in self.documents:
+            for sentence in doc.sentences:
+                yield (doc, sentence)
+
+    def iter_docs(self):
+        for doc in self.documents:
+            yield doc
+
+    def iter_sentences(self):
+        for doc in self.documents:
+            for sentence in doc.sentences:
+                yield sentence
+
+    def get_docs(self):
+        return self.documents
+
+    def get_sentences(self):
+        return [sentence for doc in self.documents for sentence in doc]
+
+    def get_doc(self, id):
+        session = SnorkelSession.object_session(self)
+        return session.query(Document).filter(Document.id == id).one()
+
+    def get_sentence(self, id):
+        session = SnorkelSession.object_session(self)
+        return session.query(Document).filter(Sentence.id == id).one()
+
+    def get_sentences_in(self, doc_id):
+        session = SnorkelSession.object_session(self)
+        return session.query(Document).filter(Document.id == id).one().sentences
+
+
+class Document(Base):
+    __tablename__ = 'document'
+    id = Column(Integer, primary_key=True)
+    corpus_id = Column(Integer, ForeignKey('corpus.id'))
+    corpus = relationship(Corpus, backref=backref('documents', uselist=True, cascade='delete,all'))
+    name = Column(String)
+    file = Column(String)
+    attribs = Column(PickleType)
+
+
+class Sentence(Base):
+    __tablename__ = 'sentence'
+    id = Column(Integer, primary_key=True)
+    document_id = Column(Integer, ForeignKey('document.id'))
+    document = relationship(Document, backref=backref('sentences', uselist=True, cascade='delete,all'))
+    text = Column(Text)
+    words = Column(postgresql.ARRAY(String))
+    lemmas = Column(postgresql.ARRAY(String))
+    poses = Column(postgresql.ARRAY(String))
+    dep_parents = Column(postgresql.ARRAY(String))
+    dep_labels = Column(postgresql.ARRAY(String))
+    char_offsets = Column(postgresql.ARRAY(String))
+
+
+class CorpusParser:
+    """
+    Invokes a DocParser and runs the output through a SentenceParser to produce a Corpus
+    """
+
+    def __init__(self, corpus, doc_parser, sent_parser, max_docs=None):
+        self.corpus = corpus
+        self.doc_parser = doc_parser
+        self.sent_parser = sent_parser
+        self.max_docs = max_docs
+
+    def parse(self):
+        session = SnorkelSession.object_session(self.corpus)
+
+        for i, (doc, text) in enumerate(self.doc_parser.parse()):
+            if self.max_docs and i == self.max_docs:
+                break
+            doc.corpus = self.corpus
+            session.add(doc)
+
+            for sent in self.sent_parser.parse(doc, text):
+                session.add(sent)
+
+        session.commit()
+
 
 class DocParser: 
     """Parse a file or directory of files into a set of Document objects."""
@@ -57,13 +154,15 @@ class TextDocParser(DocParser):
         with open(fp, 'rb') as f:
             yield Document(id=None, file=file_name, text=f.read(), attribs={})
 
+
 class HTMLDocParser(DocParser):
     """Simple parsing of raw HTML files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with open(fp, 'rb') as f:
             html = BeautifulSoup(f, 'lxml')
-            txt = filter(self._filter, soup.findAll(text=True))
+            txt = filter(self._cleaner, html.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
+
             yield Document(id=None, file=file_name, text=txt, attribs={})
 
     def _cleaner(self, s):
@@ -75,6 +174,7 @@ class HTMLDocParser(DocParser):
 
     def _strip_special(self, s):
         return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
+
 
 class XMLDocParser(DocParser):
     """
@@ -101,10 +201,6 @@ class XMLDocParser(DocParser):
             attribs = {'root':doc} if self.keep_xml_tree else {}
             yield Document(id=str(id), file=str(file_name), text=str(text), attribs=attribs)
 
-
-Sentence = namedtuple('Sentence', ['id', 'words', 'lemmas', 'poses', 'dep_parents',
-                                   'dep_labels', 'sent_id', 'doc_id', 'text',
-                                   'char_offsets', 'doc_name'])
 
 class SentenceParser:
     def __init__(self, tok_whitespace=False):
@@ -143,17 +239,17 @@ class SentenceParser:
             except:
               sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
-    def parse(self, s, doc_id=None, doc_name=None):
+    def parse(self, text, document):
         """Parse a raw document as a string into a list of sentences"""
-        if len(s.strip()) == 0:
+        if len(text.strip()) == 0:
             return
-        if isinstance(s, unicode):
-          s = s.encode('utf-8')
-        resp = self.requests_session.post(self.endpoint, data=s, allow_redirects=True)
-        s = s.decode('utf-8')
+        if isinstance(text, unicode):
+          text = text.encode('utf-8')
+        resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
+        text = text.decode('utf-8')
         content = resp.content.strip()
         if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
-          raise ValueError("File {} too long. Max character count is 100K".format(doc_id))
+          raise ValueError("File {} too long. Max character count is 100K".format(document.id))
         blocks = json.loads(content, strict=False)['sentences']
         sent_id = 0
         for block in blocks:
@@ -169,78 +265,19 @@ class SentenceParser:
                 dep_order.append(deps['dependent'])
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
-            parts['sent_id'] = sent_id
-            parts['doc_id'] = doc_id
-            parts['text'] = s[block['tokens'][0]['characterOffsetBegin'] : 
+            parts['text'] = text[block['tokens'][0]['characterOffsetBegin'] :
                                 block['tokens'][-1]['characterOffsetEnd']]
-            parts['doc_name'] = doc_name
             parts['id'] = "%s-%s" % (parts['doc_id'], parts['sent_id'])
             sent = Sentence(**parts)
             sent_id += 1
             yield sent
-    
-    def parse_docs(self, docs):
-        """Parse a list of Document objects into a list of pre-processed Sentences."""
-        sents = []
-        for doc in docs:
-            for sent in self.parse(doc.text, doc.id, doc.file):
-                sents.append(sent)
-        return sents
-        
+
+
 def sort_X_on_Y(X, Y):
     return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]   
 
+
 def corenlp_cleaner(words):
-  d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
-       '-RSB-': ']', '-LSB-': '['}
-  return map(lambda w: d[w] if w in d else w, words)
-
-
-class Corpus(object):
-    """
-    A Corpus object helps instantiate and then holds a set of Documents and associated Sentences
-    Default iterator is over (Document, Sentences) tuples
-    """
-    def __init__(self, doc_parser, sent_parser, max_docs=None):
-        
-        # Parse documents
-        print "Parsing documents..."
-        self._docs_by_id = {}
-        for i,doc in enumerate(doc_parser.parse()):
-            if max_docs and i == max_docs:
-                break
-            self._docs_by_id[doc.id] = doc
-
-        # Parse sentences
-        print "Parsing sentences..."
-        self._sentences_by_id     = {}
-        self._sentences_by_doc_id = defaultdict(list)
-        for sent in sent_parser.parse_docs(self._docs_by_id.values()):
-            self._sentences_by_id[sent.id] = sent
-            self._sentences_by_doc_id[sent.doc_id].append(sent)
-
-    def __iter__(self):
-        """Default iterator is over (document, sentence) tuples"""
-        for doc in self.iter_docs():
-            yield (doc, self.get_sentences_in(doc.id))
-
-    def iter_docs(self):
-        return self._docs_by_id.itervalues()
-
-    def iter_sentences(self):
-        return self._sentences_by_id.itervalues()
-
-    def get_docs(self):
-        return self._docs_by_id.values()
-
-    def get_sentences(self):
-        return self._sentences_by_id.values()
-
-    def get_doc(self, id):
-        return self._docs_by_id[id]
-
-    def get_sentence(self, id):
-        return self._sentences_by_id[id]
-
-    def get_sentences_in(self, doc_id):
-        return self._sentences_by_doc_id[doc_id]
+    d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
+         '-RSB-': ']', '-LSB-': '['}
+    return map(lambda w: d[w] if w in d else w, words)

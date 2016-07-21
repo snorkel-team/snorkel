@@ -7,3 +7,4 @@ scipy>=0.17
 bs4
 matplotlib
 theano>=0.8.2
+sqlalchemy

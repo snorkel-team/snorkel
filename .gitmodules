@@ -5,3 +5,6 @@
 [submodule "DockerBuild"]
 	path = DockerBuild
 	url = https://github.com/netj/DockerBuild.git
+[submodule "test/bats"]
+	path = test/bats
+	url = https://github.com/sstephenson/bats.git

@@ -1,0 +1,18 @@
+#!/usr/bin/env bats
+# a BATS template for running Snorkel notebooks
+
+load ../test/SnorkelTestEnv
+
+# this template is supposed to be symlinked as a .bats file sharing the
+# basename with the target .ipynb file to test
+Notebook="$SnorkelTestBasePath"
+[[ -e "$Notebook" ]] || {
+    echo >&2 "$Notebook: No such notebook file to test"
+    false
+}
+
+@test "$SnorkelTestBaseName runs" {
+    . "$SNORKELHOME"/set_env.sh
+    export TESTING=true  # XXX to have Viewer working
+    runipy "$Notebook"
+}

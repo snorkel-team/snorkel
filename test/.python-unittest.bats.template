@@ -1,0 +1,8 @@
+#!/usr/bin/env bats
+# a BATS template for running Snorkel unit tests
+
+load ../test/SnorkelTestEnv
+
+@test "$SnorkelTestBaseName runs" {
+    python "$SnorkelTestBasePath"
+}

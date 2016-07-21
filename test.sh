@@ -1,23 +1,14 @@
 #!/usr/bin/env bash
 # test script for Snorkel
 set -euo pipefail
+Here=$(dirname "$0")
+
+# run all .bats files under test/ unless arguments specify which ones to run
+[[ $# -gt 0 ]] || { cd "$Here"; set -- */*.bats; }
+
+# ensure environment
 set -x
+cd "$Here"
 
-# Set up environment
-. set_env.sh
-
-# Run notebooks end-to-end
-# NOTE: Currently some tests (LSTMTests) rely on data produced by these notebooks...
-TESTING=true runipy tutorial/CDR_Tutorial.ipynb
-runipy examples/GeneTaggerExample_Extraction.ipynb  
-runipy examples/GeneTaggerExample_Learning.ipynb
-
-# Run test modules
-python test/ParserTests.py
-python test/CandidateSpaceTests.py
-python test/MatcherTests.py
-python test/InferenceTests.py
-python test/LSTMTests.py
-
-# TODO check outputs, upload results, etc.
-# for more ideas, see: https://github.com/rossant/ipycache/issues/7
+# use bats to run everything
+test/bats/bin/bats "$@"

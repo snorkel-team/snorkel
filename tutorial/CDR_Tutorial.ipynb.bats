@@ -1,0 +1,1 @@
+../test/.runipy.bats.template

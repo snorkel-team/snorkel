@@ -192,7 +192,7 @@ class SentenceParser:
                 sents.append(sent)
         return sents
 
-class HTMLTableParser(DocParser):
+class HTMLParser(DocParser):
     """Simple parsing of raw HTML tables"""
 
     def parse_file(self, fp, file_name):

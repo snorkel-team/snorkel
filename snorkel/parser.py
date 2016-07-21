@@ -136,9 +136,9 @@ class SentenceParser:
         self.port = 12345
 	self.tok_whitespace = tok_whitespace
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
-        cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
-        self.server_pid = Popen(cmd, shell=True).pid
-        atexit.register(self._kill_pserver)
+        cmd = ['exec java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
+        server_pid = Popen(cmd, shell=True).pid
+        atexit.register(os.kill, server_pid, signal.SIGTERM)
         props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else "" 
         self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % (self.port, props)
 
@@ -154,13 +154,6 @@ class SentenceParser:
                         status_forcelist=[ 500, 502, 503, 504 ])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
 
-
-    def _kill_pserver(self):
-        if self.server_pid is not None:
-            try:
-              os.kill(self.server_pid, signal.SIGTERM)
-            except:
-              sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
     def parse(self, s, doc_id=None, doc_name=None):
         """Parse a raw document as a string into a list of sentences"""

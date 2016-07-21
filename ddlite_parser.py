@@ -219,6 +219,7 @@ class TableParser(SentenceParser):
                         parts['id'] = "%s-%s-%s" % (doc_id, table_id, cell_id)
                         parts['doc_id'] = doc_id
                         parts['table_id'] = table_id
+                        parts['sent_id'] = table_id # TEMPORARY! Refactor to just have context_id
                         parts['cell_id'] = cell_id
                         parts['doc_name'] = doc_name
                         parts['row_num'] = row_num

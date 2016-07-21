@@ -54,86 +54,86 @@ class CandidateExtractorProcess(Process):
 
 QUEUE_COLLECT_TIMEOUT = 5
 
-# class Candidates(object):
-#     """
-#     A generic class to hold and index a set of Candidates
-#     Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
-#     a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
-#     """
-#     def __init__(self, candidate_space, matcher, contexts, parallelism=False, join_key='context_id'):
-#         self.join_key = join_key
-#         self.ps = []
+class Candidates(object):
+    """
+    A generic class to hold and index a set of Candidates
+    Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
+    a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
+    """
+    def __init__(self, candidate_space, matcher, contexts, parallelism=False, join_key='context_id'):
+        self.join_key = join_key
+        self.ps = []
 
-#         # Extract & index candidates
-#         print "Extracting candidates..."
-#         if parallelism in [1, False]:
-#             candidates = self._extract(candidate_space, matcher, contexts)
-#         else:
-#             candidates = self._extract_multiprocess(candidate_space, matcher, contexts, parallelism=parallelism)
-#         self._index(candidates)
+        # Extract & index candidates
+        print "Extracting candidates..."
+        if parallelism in [1, False]:
+            candidates = self._extract(candidate_space, matcher, contexts)
+        else:
+            candidates = self._extract_multiprocess(candidate_space, matcher, contexts, parallelism=parallelism)
+        self._index(candidates)
 
-#     def _extract(self, candidate_space, matcher, contexts):
-#         return chain.from_iterable(matcher.apply(candidate_space.apply(c)) for c in contexts)
+    def _extract(self, candidate_space, matcher, contexts):
+        return chain.from_iterable(matcher.apply(candidate_space.apply(c)) for c in contexts)
 
-#     def _extract_multiprocess(self, candidate_space, matcher, contexts, parallelism=2):
-#         contexts_in    = JoinableQueue()
-#         candidates_out = Queue()
+    def _extract_multiprocess(self, candidate_space, matcher, contexts, parallelism=2):
+        contexts_in    = JoinableQueue()
+        candidates_out = Queue()
 
-#         # Fill the in-queue with contexts
-#         for context in contexts:
-#             contexts_in.put(context)
+        # Fill the in-queue with contexts
+        for context in contexts:
+            contexts_in.put(context)
 
-#         # Start worker Processes
-#         for i in range(parallelism):
-#             p  = CandidateExtractorProcess(candidate_space, matcher, contexts_in, candidates_out)
-#             p.start()
-#             self.ps.append(p)
+        # Start worker Processes
+        for i in range(parallelism):
+            p  = CandidateExtractorProcess(candidate_space, matcher, contexts_in, candidates_out)
+            p.start()
+            self.ps.append(p)
 
-#         # Join on JoinableQueue of contexts
-#         contexts_in.join()
+        # Join on JoinableQueue of contexts
+        contexts_in.join()
 
-#         # Collect candidates out
-#         candidates = []
-#         while True:
-#             try:
-#                 candidates.append(candidates_out.get(True, QUEUE_COLLECT_TIMEOUT))
-#             except Empty:
-#                 break
-#         return candidates
+        # Collect candidates out
+        candidates = []
+        while True:
+            try:
+                candidates.append(candidates_out.get(True, QUEUE_COLLECT_TIMEOUT))
+            except Empty:
+                break
+        return candidates
 
-#     def _index(self, candidates):
-#         self._candidates_by_id         = {}
-#         self._candidates_by_context_id = defaultdict(list)
-#         for c in candidates:
-#             self._candidates_by_id[c.id] = c
-#             self._candidates_by_context_id[c.__dict__[self.join_key]].append(c)
+    def _index(self, candidates):
+        self._candidates_by_id         = {}
+        self._candidates_by_context_id = defaultdict(list)
+        for c in candidates:
+            self._candidates_by_id[c.id] = c
+            self._candidates_by_context_id[c.__dict__[self.join_key]].append(c)
 
-#     def __iter__(self):
-#         """Default iterator is over Candidates"""
-#         return self._candidates_by_id.itervalues()
+    def __iter__(self):
+        """Default iterator is over Candidates"""
+        return self._candidates_by_id.itervalues()
 
-#     def get_candidates(self):
-#         return self._candidates_by_id.values()
+    def get_candidates(self):
+        return self._candidates_by_id.values()
 
-#     def get_candidate(self, id):
-#         """Retrieve a candidate by candidate id"""
-#         return self._candidates_by_id[id]
+    def get_candidate(self, id):
+        """Retrieve a candidate by candidate id"""
+        return self._candidates_by_id[id]
 
-#     def get_candidates_in(self, context_id):
-#         """Return the candidates in a specific context (e.g. Sentence)"""
-#         return self._candidates_by_context_id[context_id]
+    def get_candidates_in(self, context_id):
+        """Return the candidates in a specific context (e.g. Sentence)"""
+        return self._candidates_by_context_id[context_id]
 
-#     def gold_stats(self, gold_set):
-#         """Return precision and recall relative to a "gold" set of candidates of the same type"""
-#         gold = gold_set if isinstance(gold_set, set) else set(gold_set)
-#         cs   = self.get_candidates()
-#         nc   = len(cs)
-#         ng   = len(gold)
-#         both = len(gold.intersection(cs))
-#         print "# of gold annotations\t= %s" % ng
-#         print "# of candidates\t\t= %s" % nc
-#         print "Candidate recall\t= %0.3f" % (both / float(ng),)
-#         print "Candidate precision\t= %0.3f" % (both / float(nc),)
+    def gold_stats(self, gold_set):
+        """Return precision and recall relative to a "gold" set of candidates of the same type"""
+        gold = gold_set if isinstance(gold_set, set) else set(gold_set)
+        cs   = self.get_candidates()
+        nc   = len(cs)
+        ng   = len(gold)
+        both = len(gold.intersection(cs))
+        print "# of gold annotations\t= %s" % ng
+        print "# of candidates\t\t= %s" % nc
+        print "Candidate recall\t= %0.3f" % (both / float(ng),)
+        print "Candidate precision\t= %0.3f" % (both / float(nc),)
 
 
 # Basic sentence attributes
@@ -248,74 +248,40 @@ class Ngrams(CandidateSpace):
 
 
 """-------------------------HERE BE BRADEN'S KINGDOM-------------------------"""
+# Basic table attributes
+CELLS        = 'cells'
 
-class Rows(CandidateSpace):
+class CellNgram(Ngram):
+    def __init__(self, cell, ngram):
+        super(CellNgram, self).__init__(ngram.char_start, ngram.char_end, ngram.sentence)
+        self.table_id = cell.table_id
+        self.cell_id = cell.cell_id
+        self.row_num = cell.row_num
+        self.col_num = cell.col_num
+        self.html_tag = cell.html_tag
+        self.html_attrs = cell.html_attrs
+        self.html_anc_tags = cell.html_anc_tags
+        self.html_anc_attrs = cell.html_anc_attrs
+
+    def __repr__(self):
+        return '<CellNgram("%s", id=%s, chars=[%s,%s], (row,col)=(%s,%s), tag=%s)' \
+            % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.row_num, self.col_num, self.html_tag)
+
+class CellNgrams(Ngrams):
     """
-    Defines the space of candidates as all n-grams (n <= n_max) within _m_ rows,
-    indexing by **character offset**.
+    Defines the space of candidates as all n-grams (n <= n_max) in a cell within a table _x_
+    "Calling _apply(x)_ given an object _x_ returns a generator over candidates in _x_."
     """
+    def apply(self, x):
+        table = x if isinstance(x, dict) else x._asdict()
+        try:
+            cells = table[CELLS]
+        except:
+            raise ValueError("Input object must have %s attribute" % CELLS)
 
-class Candidates(object):
-    """
-    A generic class to hold and index a set of Candidates
-    Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
-    a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
-    """
-    def __init__(self, extractor, contexts, parallelism=False, join_key='context_id'):
-        self.join_key = join_key
-        self.ps = []
-
-        # Extract & index candidates
-        print "Extracting candidates..."
-        if parallelism in [1, False]:
-            candidates = self._extract(extractor, contexts)
-        else:
-            candidates = self._extract_multiprocess(extractor, contexts)
-        self._index(candidates)
-
-    def _extract(self, extractor, contexts):
-        return chain.from_iterable(extractor.apply(c) for c in contexts)
-
-    def _extract_multiprocess(self, extractor, contexts, parallelism=2):
-        raise NotImplementedError
-
-    # NOTE: For tables, _get_features must have access to auxiliary data structures
-    def _get_features(self):
-        raise NotImplementedError
-
-    def _index(self, candidates):
-        self._candidates_by_id         = {}
-        self._candidates_by_context_id = defaultdict(list)
-        for c in candidates:
-            self._candidates_by_id[c.id] = c
-            self._candidates_by_context_id[c.__dict__[self.join_key]].append(c)
-
-    def __iter__(self):
-        """Default iterator is over Candidates"""
-        return self._candidates_by_id.itervalues()
-
-    def get_candidates(self):
-        return self._candidates_by_id.values()
-
-    def get_candidate(self, id):
-        """Retrieve a candidate by candidate id"""
-        return self._candidates_by_id[id]
-
-    def get_candidates_in(self, context_id):
-        """Return the candidates in a specific context (e.g. Sentence)"""
-        return self._candidates_by_context_id[context_id]
-
-    def gold_stats(self, gold_set):
-        """Return precision and recall relative to a "gold" set of candidates of the same type"""
-        gold = gold_set if isinstance(gold_set, set) else set(gold_set)
-        cs   = self.get_candidates()
-        nc   = len(cs)
-        ng   = len(gold)
-        both = len(gold.intersection(cs))
-        print "# of gold annotations\t= %s" % ng
-        print "# of candidates\t\t= %s" % nc
-        print "Candidate recall\t= %0.3f" % (both / float(ng),)
-        print "Candidate precision\t= %0.3f" % (both / float(nc),)
+        for cell in cells:
+            for ngram in super(CellNgrams, self).apply(cell):
+                yield CellNgram(cell, ngram)
 
 class EntityExtractor(object):
     def __init__(self, candidate_space, matcher):
@@ -323,13 +289,13 @@ class EntityExtractor(object):
         self.matcher = matcher
 
     def apply(self, context):
-        if 'table_id' in context._fields:
-            for cell in context.cells:
-                for e in self.matcher.apply(self.candidate_space.apply(cell)):
-                    yield e
-        else:
-            for e in self.matcher.apply(self.candidate_space.apply(context)):
-                yield e
+        # if 'table_id' in context._fields:
+        #     for cell in context.cells:
+        #         for e in self.matcher.apply(self.candidate_space.apply(cell)):
+        #             yield e
+        # else:
+        for e in self.matcher.apply(self.candidate_space.apply(context)):
+            yield e
 
 class RelationExtractor(object):
     """
@@ -382,6 +348,69 @@ class Relation(Candidate):
     #     [html_tag]_between = True    (e.g., hr, br)
     #     [Ngram]_between = True  (e.g., "Voltage")
 
+
+# class Candidates(object):
+#     """
+#     A generic class to hold and index a set of Candidates
+#     Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
+#     a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
+#     """
+#     def __init__(self, extractor, contexts, parallelism=False, join_key='context_id'):
+#         self.join_key = join_key
+#         self.ps = []
+
+#         # Extract & index candidates
+#         print "Extracting candidates..."
+#         if parallelism in [1, False]:
+#             candidates = self._extract(extractor, contexts)
+#         else:
+#             candidates = self._extract_multiprocess(extractor, contexts)
+#         self._index(candidates)
+
+#     def _extract(self, extractor, contexts):
+#         return chain.from_iterable(extractor.apply(c) for c in contexts)
+
+#     def _extract_multiprocess(self, extractor, contexts, parallelism=2):
+#         raise NotImplementedError
+
+#     # NOTE: For tables, _get_features must have access to auxiliary data structures
+#     def _get_features(self):
+#         raise NotImplementedError
+
+#     def _index(self, candidates):
+#         self._candidates_by_id         = {}
+#         self._candidates_by_context_id = defaultdict(list)
+#         for c in candidates:
+#             self._candidates_by_id[c.id] = c
+#             self._candidates_by_context_id[c.__dict__[self.join_key]].append(c)
+
+#     def __iter__(self):
+#         """Default iterator is over Candidates"""
+#         return self._candidates_by_id.itervalues()
+
+#     def get_candidates(self):
+#         return self._candidates_by_id.values()
+
+#     def get_candidate(self, id):
+#         """Retrieve a candidate by candidate id"""
+#         return self._candidates_by_id[id]
+
+#     def get_candidates_in(self, context_id):
+#         """Return the candidates in a specific context (e.g. Sentence)"""
+#         return self._candidates_by_context_id[context_id]
+
+#     def gold_stats(self, gold_set):
+#         """Return precision and recall relative to a "gold" set of candidates of the same type"""
+#         gold = gold_set if isinstance(gold_set, set) else set(gold_set)
+#         cs   = self.get_candidates()
+#         nc   = len(cs)
+#         ng   = len(gold)
+#         both = len(gold.intersection(cs))
+#         print "# of gold annotations\t= %s" % ng
+#         print "# of candidates\t\t= %s" % nc
+#         print "Candidate recall\t= %0.3f" % (both / float(ng),)
+#         print "Candidate precision\t= %0.3f" % (both / float(nc),)
+
 # class Entities(Candidates):
 #     def __init__(self, entity_extractor, corpus, parallelism=False):
 #         self.corpus = corpus
@@ -389,7 +418,6 @@ class Relation(Candidate):
 
 #     def _extract(self, contexts):
 #         return chain.from_iterable(self.extractor.apply(c) for c in contexts)
-
 
 # class Relations(Candidates):
 #     """
@@ -417,7 +445,6 @@ class Relation(Candidate):
 #     def _get_features(self):
 #         raise NotImplementedError
 
-#     """ ----------- INDEX AND ACCESS METHODS ----------- """
 #     def _index(self, candidates):
 #         self._candidates_by_id         = {}
 #         self._candidates_by_context_id = defaultdict(list)

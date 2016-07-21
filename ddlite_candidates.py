@@ -249,6 +249,12 @@ class Ngrams(CandidateSpace):
 
 """-------------------------HERE BE BRADEN'S KINGDOM-------------------------"""
 
+class Rows(CandidateSpace):
+    """
+    Defines the space of candidates as all n-grams (n <= n_max) within _m_ rows,
+    indexing by **character offset**.
+    """
+
 class Candidates(object):
     """
     A generic class to hold and index a set of Candidates
@@ -342,6 +348,16 @@ class RelationExtractor(object):
             for e2 in self.extractors[1].apply(context):
                 yield Relation(e1,e2)
 
+# class Entity(Candidate):
+#     def _get_features(self):
+#         # HTML
+#         html_tag_{tag} = True
+#         html_attr_{attr} = True
+#         html_ancestor_tag_{tag} = True
+#         html_ancestor_attr_{attr} = True
+#         row_num
+#         col_num
+
 class Relation(Candidate):
     def __init__(self, e1, e2):
         self.id = "%s:%s" % (e1.id, e2.id)
@@ -352,6 +368,19 @@ class Relation(Candidate):
     def __repr__(self):
         return 'Relation<Ngram("%s", id=%s),Ngram("%s", id=%s)>' \
             % (self.e1.get_attrib_span(WORDS), self.e1.id, self.e2.get_attrib_span(WORDS), self.e2.id)
+
+    # def _get_features(self):
+    #     entity1_features
+    #     entity2_features
+    #     Cell_match = True
+    #     Row_diff_low = False
+    #     Row_diff_0 = True
+    #     Row_diff_high = False
+    #     Col_diff_low = False
+    #     Col_diff_0 = True
+    #     Col_diff_high = False
+    #     [html_tag]_between = True    (e.g., hr, br)
+    #     [Ngram]_between = True  (e.g., "Voltage")
 
 # class Entities(Candidates):
 #     def __init__(self, entity_extractor, corpus, parallelism=False):

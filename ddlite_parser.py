@@ -17,7 +17,7 @@ from subprocess import Popen
 import lxml.etree as et
 from itertools import chain
 
-id_attrs        = ['id', 'doc_id', 'doc_name']
+id_attrs        = ['id', 'doc_id', 'doc_name', 'type']
 sentence_attrs  = id_attrs + ['sent_id', 'words', 'lemmas', 'poses', 'dep_parents', 'dep_labels', 'char_offsets', 'text']
 table_attrs     = id_attrs + ['table_id', 'cells'] # 'title', 'caption'
 cell_attrs      = sentence_attrs + ['cell_id', 'row_num', 'col_num', 'html_tag']
@@ -66,8 +66,8 @@ class HTMLDocParser(DocParser):
     """Simple parsing of raw HTML files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with open(fp, 'rb') as f:
-            html = BeautifulSoup(f, 'lxml')
-            txt = filter(self._filter, soup.findAll(text=True))
+            soup = BeautifulSoup(f, 'lxml')
+            txt = filter(self, soup.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
             yield Document(id=None, file=file_name, text=txt, attribs={})
 
@@ -215,6 +215,12 @@ class TableParser(SentenceParser):
             for j, col in enumerate(cols):
                 for sent in self.parse(col, doc_id, doc_name):
                     parts = sent._asdict()
+                    # html_tag = ?
+                    # html_attrs = [?,...,?]
+                    # html_ancestor_tags = [?,...,?]
+                    # html_ancestor_attrs = [?,...,?]
+                    # row_num = ?
+                    # col_num = ?
                     parts['id'] = "%s-%s-%s" % (doc_id, table_id, cell_id)
                     parts['cell_id'] = cell_id
                     parts['html_tag'] = col_tags[j]

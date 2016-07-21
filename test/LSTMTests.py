@@ -24,8 +24,11 @@ class TestLSTM(unittest.TestCase):
 
     with open(os.path.join(ROOT, 'test/data/lstm_test/gt/uids.pkl'), 'rb') as f:
       uids = cPickle.load(f)
-    with open(os.path.join(ROOT, 'data/lstm_test/gt/gt.pkl'), 'rb') as f:
+    with open(os.path.join(ROOT, 'test/data/lstm_test/gt/gt.pkl'), 'rb') as f:
       gt = cPickle.load(f)
+
+    # Transform for legacy compatibility!
+    #uids = [re.sub(r'\.html', '', re.sub(r'\[\'.*?\'\]', '[\'MATCHER\']', uid)) for uid in uids]
     
     DDL.update_gt(gt[:50], uids=uids[:50])
     DDL.set_holdout(validation_frac=0.5)

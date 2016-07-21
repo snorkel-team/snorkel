@@ -77,6 +77,8 @@ script:
 
   # Run notebooks end-to-end
   - TESTING=true runipy tutorial/CDR_Tutorial.ipynb
+  - runipy examples/GeneTaggerExample_Extraction.ipynb  
+  - runipy examples/GeneTaggerExample_Learning.ipynb
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

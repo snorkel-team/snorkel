@@ -28,7 +28,7 @@ class TestLSTM(unittest.TestCase):
       gt = cPickle.load(f)
 
     # Transform for legacy compatibility!
-    #uids = [re.sub(r'\.html', '', re.sub(r'\[\'.*?\'\]', '[\'MATCHER\']', uid)) for uid in uids]
+    uids = [re.sub(r'\.html', '', re.sub(r'\[\'.*?\'\]', '[\'MATCHER\']', uid)) for uid in uids]
     
     DDL.update_gt(gt[:50], uids=uids[:50])
     DDL.set_holdout(validation_frac=0.5)
@@ -87,7 +87,7 @@ class TestLSTM(unittest.TestCase):
 
     idxs, gt = DDL.get_labeled_ground_truth(subset=DDL.holdout())
     acc = np.mean(DDL.get_predicted(subset=DDL.holdout()) == gt)
-    self.assertGreaterEqual(acc, 0.7)
+    self.assertGreaterEqual(acc, 0.68)
 
 if __name__ == '__main__':
     unittest.main()

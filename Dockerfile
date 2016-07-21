@@ -57,9 +57,12 @@ RUN git clone https://github.com/HazyResearch/snorkel.git \
  && cd snorkel \
  && git submodule update --init --recursive
 
-# Set up Snorkel
+# Set up Snorkel: installing CoreNLP, Mindbender (part of DeepDive), etc.
 WORKDIR snorkel
-RUN ./install-parser.sh
+RUN ./install-parser.sh \
+ && rm -f stanford-corenlp-*.zip
+RUN bash -euc 'PREFIX="$PWD"/deepdive bash <(curl -fsSL git.io/getdeepdive || wget -qO- git.io/getdeepdive) deepdive_from_release' \
+ && rm -f deepdive-*.tar.gz
 RUN pip2 install --requirement requirements.txt \
  && pip3 install --requirement requirements.txt
 WORKDIR ..

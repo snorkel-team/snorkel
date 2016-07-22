@@ -496,4 +496,3 @@ class CellNgrams(Ngrams):
 #     def get_candidates_in(self, context_id):
 #         """Return the candidates in a specific context (e.g. Sentence)"""
 #         return self._candidates_by_context_id[context_id]
-

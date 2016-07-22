@@ -19,8 +19,8 @@ from itertools import chain
 
 id_attrs        = ['id', 'doc_id', 'doc_name']
 sentence_attrs  = id_attrs + ['sent_id', 'words', 'lemmas', 'poses', 'dep_parents', 'dep_labels', 'char_offsets', 'text']
-table_attrs     = id_attrs + ['table_id', 'cells', 'xhtml'] # 'title', 'caption'
-cell_attrs      = sentence_attrs + ['table_id', 'cell_id', 'row_num', 'col_num', \
+table_attrs     = id_attrs + ['context_id', 'table_id', 'cells', 'xhtml'] # 'title', 'caption'
+cell_attrs      = sentence_attrs + ['context_id', 'table_id', 'cell_id', 'row_num', 'col_num', \
                   'html_tag', 'html_attrs', 'html_anc_tags', 'html_anc_attrs']
 
 Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
@@ -226,6 +226,7 @@ class HTMLParser(DocParser):
 class TableParser(SentenceParser):
 
     def parse_table(self, table, table_id=None, doc_id=None, doc_name=None):
+        context_id = "%s-%s" % (doc_id, table_id)
         cells = []
         cell_id = 0
         for row_num, row in enumerate(table.find_all('tr')):
@@ -239,8 +240,9 @@ class TableParser(SentenceParser):
                         parts = sent._asdict()
                         parts['id'] = "%s-%s-%s" % (doc_id, table_id, cell_id)
                         parts['doc_id'] = doc_id
+                        parts['context_id'] = context_id
+                        parts['sent_id'] = context_id       # TEMPORARY
                         parts['table_id'] = table_id
-                        parts['sent_id'] = table_id # TEMPORARY! Refactor to just have context_id
                         parts['cell_id'] = cell_id
                         parts['doc_name'] = doc_name
                         parts['row_num'] = row_num
@@ -252,8 +254,8 @@ class TableParser(SentenceParser):
                         cells.append(Cell(**parts))
                     cell['cell_id'] = cell_id
                     cell_id += 1
-        id = "%s-%s" % (doc_id, table_id)
-        return Table(id, doc_id, doc_name, table_id, cells, table)
+        id = context_id
+        return Table(id, doc_id, doc_name, context_id, table_id, cells, table)
 
     def parse_docs(self, docs):
         """Parse a list of Document objects into a list of pre-processed Tables."""
@@ -294,12 +296,12 @@ class Corpus(object):
         print "Parsing contexts..."
         self._contexts_by_id     = {}
         self._contexts_by_doc_id = defaultdict(list)
-        for sent in context_parser.parse_docs(self._docs_by_id.values()):
-            self._contexts_by_id[sent.id] = sent
-            self._contexts_by_doc_id[sent.doc_id].append(sent)
+        for context in context_parser.parse_docs(self._docs_by_id.values()):
+            self._contexts_by_id[context.id] = context
+            self._contexts_by_doc_id[context.doc_id].append(context)
 
     def __iter__(self):
-        """Default iterator is over (document, sentence) tuples"""
+        """Default iterator is over (document, context) tuples"""
         for doc in self.iter_docs():
             yield (doc, self.get_contexts_in(doc.id))
 

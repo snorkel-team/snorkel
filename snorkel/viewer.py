@@ -59,7 +59,7 @@ class Viewer(widgets.DOMWidget):
         self.candidates = {}
         for c in candidates:
             self.candidates[c.id] = c
-        
+
         # Index candidates by context
         candidates_index = defaultdict(list)
         for c in candidates:

@@ -13,14 +13,14 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 from subprocess import Popen
 import lxml.etree as et
-from snorkel import Base, SnorkelSession, snorkel_postgres
+from snorkel import SnorkelBase, SnorkelSession, snorkel_postgres
 from sqlalchemy import Column, String, Integer, Text, ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import PickleType
 
 
-class Corpus(Base):
+class Corpus(SnorkelBase):
     """
     A Corpus holds a set of Documents and associated Sentences.
     Default iterator is over (Document, Sentences) tuples
@@ -29,6 +29,9 @@ class Corpus(Base):
     __tablename__ = 'corpus'
     id = Column(Integer, primary_key=True)
     name = Column(String)
+
+    def __repr__(self):
+        return "Corpus" + str((self.id, self.name))
 
     def __iter__(self):
         """Default iterator is over (document, sentence) tuples"""
@@ -49,7 +52,7 @@ class Corpus(Base):
         return self.documents
 
     def get_sentences(self):
-        return [sentence for doc in self.documents for sentence in doc]
+        return [sentence for doc in self.documents for sentence in doc.sentences]
 
     def get_doc(self, id):
         session = SnorkelSession.object_session(self)
@@ -64,7 +67,7 @@ class Corpus(Base):
         return session.query(Document).filter(Document.id == id).one().sentences
 
 
-class Document(Base):
+class Document(SnorkelBase):
     __tablename__ = 'document'
     id = Column(Integer, primary_key=True)
     corpus_id = Column(Integer, ForeignKey('corpus.id'))
@@ -73,20 +76,24 @@ class Document(Base):
     file = Column(String)
     attribs = Column(PickleType)
 
+    def __repr__(self):
+        return "Document" + str((self.id, self.corpus_id, self.name, self.file, self.attribs))
 
-class Sentence(Base):
+
+class Sentence(SnorkelBase):
     __tablename__ = 'sentence'
     id = Column(Integer, primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
     document = relationship(Document, backref=backref('sentences', uselist=True, cascade='delete,all'))
+    position = Column(Integer)
     text = Column(Text)
     if snorkel_postgres:
         words = Column(postgresql.ARRAY(String))
         lemmas = Column(postgresql.ARRAY(String))
         poses = Column(postgresql.ARRAY(String))
-        dep_parents = Column(postgresql.ARRAY(String))
+        dep_parents = Column(postgresql.ARRAY(Integer))
         dep_labels = Column(postgresql.ARRAY(String))
-        char_offsets = Column(postgresql.ARRAY(String))
+        char_offsets = Column(postgresql.ARRAY(Integer))
     else:
         words = Column(PickleType)
         lemmas = Column(PickleType)
@@ -94,6 +101,15 @@ class Sentence(Base):
         dep_parents = Column(PickleType)
         dep_labels = Column(PickleType)
         char_offsets = Column(PickleType)
+
+    # This is necessary for backwards compatibility with namedtuples
+    # TODO: Remove it!
+    def _asdict(self):
+        return self.__dict__
+
+    def __repr__(self):
+        return "Sentence" + str((self.id, self.document_id, self.position, self.text, self.words, self.lemmas,
+                                 self.poses, self.dep_parents, self.dep_labels, self.char_offsets))
 
 
 class CorpusParser:
@@ -135,18 +151,11 @@ class DocParser:
         - Output: A set of Document objects, which at least have a _text_ attribute,
                   and possibly a dictionary of other attributes.
         """
-        seen_ids = set()
         for fp in self._get_files():
             file_name = os.path.basename(fp)
             if self._can_read(file_name):
-                for doc in self.parse_file(fp, file_name):
-
-                    # Check for null or non-unique docid
-                    if doc.id is None or doc.id in seen_ids:
-                        raise ValueError("Documents must have unique, non-null ids!")
-                    else:
-                        seen_ids.add(doc.id)
-                        yield doc
+                for doc, text in self.parse_file(fp, file_name):
+                    yield doc, text
 
     def parse_file(self, fp, file_name):
         raise NotImplementedError()
@@ -172,7 +181,7 @@ class TextDocParser(DocParser):
     def parse_file(self, fp, file_name):
         with open(fp, 'rb') as f:
             id = re.sub(r'\..*$', '', os.path.basename(fp))
-            yield Document(id=id, file=file_name, text=f.read(), attribs={})
+            yield Document(id=id, file=file_name, attribs={}), f.read()
 
 
 class HTMLDocParser(DocParser):
@@ -183,7 +192,7 @@ class HTMLDocParser(DocParser):
             txt = filter(self._cleaner, html.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
             id = re.sub(r'\..*$', '', os.path.basename(fp))
-            yield Document(id=id, file=file_name, text=txt, attribs={})
+            yield Document(id=id, file=file_name, attribs={}), txt
 
     def _can_read(self, fpath):
         return fpath.endswith('.html')
@@ -222,7 +231,7 @@ class XMLDocParser(DocParser):
             ids = doc.xpath(self.id)
             id = ids[0] if len(ids) > 0 else None
             attribs = {'root':doc} if self.keep_xml_tree else {}
-            yield Document(id=str(id), file=str(file_name), text=str(text), attribs=attribs)
+            yield Document(id=str(id), file=str(file_name), attribs=attribs), str(text)
 
     def _can_read(self, fpath):
         return fpath.endswith('.xml')
@@ -265,7 +274,7 @@ class SentenceParser:
             except:
               sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
-    def parse(self, text, document):
+    def parse(self, document, text):
         """Parse a raw document as a string into a list of sentences"""
         if len(text.strip()) == 0:
             return
@@ -293,7 +302,8 @@ class SentenceParser:
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['text'] = text[block['tokens'][0]['characterOffsetBegin'] :
                                 block['tokens'][-1]['characterOffsetEnd']]
-            parts['id'] = "%s-%s" % (parts['doc_id'], parts['sent_id'])
+            parts['position'] = sent_id
+            parts['document_id'] = document.id
             sent = Sentence(**parts)
             sent_id += 1
             yield sent

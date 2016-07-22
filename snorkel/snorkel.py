@@ -23,9 +23,7 @@ else:
   snorkel_postgres = False
   snorkel_engine = create_engine('sqlite:///snorkel.db')
 SnorkelSession = sessionmaker(bind=snorkel_engine)
-Base = declarative_base()
-def init_db():
-  Base.metadata.create_all(snorkel_engine)
+SnorkelBase = declarative_base()
 # End SQLAlchemy setup
 
 # Feature modules
@@ -48,6 +46,10 @@ from learning import learn_elasticnet_logreg, odds_to_prob, get_mu_seq,\
                             DEFAULT_RATE, DEFAULT_MU, DEFAULT_ALPHA
 # ddlite LSTM
 from lstm import *
+
+# This call must be performed after all classes that extend SnorkelBase are
+# declared to ensure the database schema is initialized
+SnorkelBase.metadata.create_all(snorkel_engine)
 
 #####################################################################
 ############################ TAGGING UTILS ##########################
@@ -109,7 +111,7 @@ class candidate_internal(object):
   See entity_internal and relation_internal for examples
   """
   def __init__(self, all_idxs, labels, sent, xt):
-    self.uid = "{}::{}::{}::{}".format(sent.doc_id, sent.sent_id,
+    self.uid = "{}::{}::{}::{}".format(sent.document.id, sent.position,
                                        all_idxs, labels)
     self.all_idxs = all_idxs
     self.labels = labels
@@ -311,8 +313,8 @@ class Relations(Candidates):
       item = self[i]      
       yield dict(
         ext_id          = item.id,
-        doc_id          = item.doc_id,
-        sent_id         = item.sent_id,
+        doc_id          = item.document.id,
+        sent_id         = item.position,
         words           = json.dumps(corenlp_cleaner(item.words)),
         e1_idxs         = json.dumps(item.e1_idxs),
         e1_label        = item.e1_label,
@@ -399,8 +401,8 @@ class Entities(Candidates):
       item = self[i]    
       yield dict(
         ext_id          = item.id,
-        doc_id          = item.doc_id,
-        sent_id         = item.sent_id,
+        doc_id          = item.document.id,
+        sent_id         = item.position,
         words           = json.dumps(corenlp_cleaner(item.words)),
         idxs            = json.dumps(item.idxs),
         label           = item.label,

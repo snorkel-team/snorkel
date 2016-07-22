@@ -1,10 +1,9 @@
 # Set & move to home directory
-export DDLHOME=$(cd "$(dirname "$0")" && pwd)
-cd "$DDLHOME"
+source set_env.sh
+cd "$SNORKELHOME"
 
-# Make sure home directory is on pythonpath
-export PYTHONPATH="$PYTHONPATH:$DDLHOME"
-export PATH="$PATH:$DDLHOME"
+# Make sure the submodules are installed
+git submodule update --init --recursive
 
 # Make sure parser is installed
 PARSER="parser/stanford-corenlp-3.6.0.jar"

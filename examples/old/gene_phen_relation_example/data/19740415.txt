@@ -1,0 +1,1 @@
+A combinatorial searching method for detecting a set of interacting loci associated with complex traits

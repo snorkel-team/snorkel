@@ -1,0 +1,198 @@
+(lp1
+S"24040354.html::7::[[20]]::['GeneName']"
+p2
+aS"23043317.html::5::[[26]]::['Multi : Upper : Nouns']"
+p3
+aS"20674096.html::6::[[20]]::['GeneName']"
+p4
+aS"8730343.html::4::[[17]]::['Multi : Upper : Nouns']"
+p5
+aS"16275254.html::5::[[12]]::['Multi : Upper : Nouns']"
+p6
+aS"1279681.html::2::[[23]]::['Multi : Upper : Nouns']"
+p7
+aS"22493262.html::7::[[16]]::['GeneName']"
+p8
+aS"15131400.html::0::[[8]]::['Multi : Upper : Nouns']"
+p9
+aS"14617013.html::5::[[5]]::['Multi : Upper : Nouns']"
+p10
+aS"24451042.html::6::[[28]]::['Multi : Upper : Nouns']"
+p11
+aS"19422653.html::0::[[16]]::['GeneName']"
+p12
+aS"8364576.html::5::[[4]]::['GeneName']"
+p13
+aS"11748859.html::3::[[9]]::['GeneName']"
+p14
+aS"12665530.html::3::[[5]]::['Multi : Upper : Nouns']"
+p15
+aS"17443271.html::0::[[50]]::['Multi : Upper : Nouns']"
+p16
+aS"16540520.html::2::[[10]]::['GeneName']"
+p17
+aS"17654016.html::0::[[20]]::['Multi : Upper : Nouns']"
+p18
+aS"23362253.html::7::[[4]]::['Multi : Upper : Nouns']"
+p19
+aS"24040354.html::8::[[13]]::['GeneName']"
+p20
+aS"24241792.html::8::[[1]]::['Multi : Upper : Nouns']"
+p21
+aS"20674096.html::3::[[12]]::['Multi : Upper : Nouns']"
+p22
+aS"18221821.html::4::[[6]]::['Multi : Upper : Nouns']"
+p23
+aS"21719485.html::0::[[4]]::['Multi : Upper : Nouns']"
+p24
+aS"12115348.html::7::[[11]]::['GeneName']"
+p25
+aS"23867180.html::8::[[3]]::['Multi : Upper : Nouns']"
+p26
+aS"20674096.html::0::[[8]]::['GeneName']"
+p27
+aS"2797589.html::3::[[29]]::['Multi : Upper : Nouns']"
+p28
+aS"21674708.html::0::[[4]]::['Multi : Upper : Nouns']"
+p29
+aS"10569952.html::3::[[6]]::['Multi : Upper : Nouns']"
+p30
+aS"20655472.html::5::[[3]]::['Multi : Upper : Nouns']"
+p31
+aS"21719485.html::2::[[46]]::['Multi : Upper : Nouns']"
+p32
+aS"15300631.html::0::[[18]]::['Multi : Upper : Nouns']"
+p33
+aS"24508273.html::8::[[0]]::['Multi : Upper : Nouns']"
+p34
+aS"24508273.html::9::[[7]]::['Multi : Upper : Nouns']"
+p35
+aS"12115348.html::5::[[1]]::['Multi : Upper : Nouns']"
+p36
+aS"20212223.html::5::[[19]]::['GeneName']"
+p37
+aS"15498870.html::1::[[23]]::['GeneName']"
+p38
+aS"8532077.html::2::[[15]]::['GeneName']"
+p39
+aS"16788378.html::3::[[11]]::['Multi : Upper : Nouns']"
+p40
+aS"21701824.html::4::[[10]]::['Multi : Upper : Nouns']"
+p41
+aS"19242361.html::0::[[26]]::['Multi : Upper : Nouns']"
+p42
+aS"20560925.html::2::[[7]]::['GeneName']"
+p43
+aS"19242361.html::2::[[3]]::['Multi : Upper : Nouns']"
+p44
+aS"9489236.html::3::[[29]]::['Multi : Upper : Nouns']"
+p45
+aS"17376881.html::8::[[21]]::['GeneName']"
+p46
+aS"23558642.html::6::[[10]]::['Multi : Upper : Nouns']"
+p47
+aS"20560925.html::0::[[10]]::['Multi : Upper : Nouns']"
+p48
+aS"20560925.html::1::[[17]]::['GeneName']"
+p49
+aS"17654016.html::2::[[10]]::['GeneName']"
+p50
+aS"19349604.html::8::[[3]]::['GeneName']"
+p51
+aS"8364576.html::2::[[11]]::['Multi : Upper : Nouns']"
+p52
+aS"18981260.html::6::[[12]]::['GeneName']"
+p53
+aS"24040354.html::7::[[7]]::['Multi : Upper : Nouns']"
+p54
+aS"17855696.html::3::[[6]]::['Multi : Upper : Nouns']"
+p55
+aS"23867180.html::6::[[12]]::['Multi : Upper : Nouns']"
+p56
+aS"21701824.html::8::[[5]]::['Multi : Upper : Nouns']"
+p57
+aS"19946179.html::6::[[34]]::['Multi : Upper : Nouns']"
+p58
+aS"15161943.html::7::[[7]]::['Multi : Upper : Nouns']"
+p59
+aS"3468506.html::0::[[4]]::['Multi : Upper : Nouns']"
+p60
+aS"1522213.html::0::[[4]]::['Multi : Upper : Nouns']"
+p61
+aS"21719485.html::5::[[6]]::['Multi : Upper : Nouns']"
+p62
+aS"21701824.html::0::[[44]]::['Multi : Upper : Nouns']"
+p63
+aS"23043317.html::4::[[23]]::['Multi : Upper : Nouns']"
+p64
+aS"18981260.html::3::[[16]]::['GeneName']"
+p65
+aS"19242361.html::3::[[7]]::['GeneName']"
+p66
+aS"16035308.html::1::[[0]]::['Multi : Upper : Nouns']"
+p67
+aS"18981260.html::6::[[14]]::['GeneName']"
+p68
+aS"23867180.html::2::[[27]]::['GeneName']"
+p69
+aS"15834044.html::1::[[20]]::['Multi : Upper : Nouns']"
+p70
+aS"16540520.html::5::[[68]]::['Multi : Upper : Nouns']"
+p71
+aS"23043317.html::12::[[25]]::['GeneName']"
+p72
+aS"15498870.html::7::[[13]]::['Multi : Upper : Nouns']"
+p73
+aS"11349230.html::11::[[10]]::['Multi : Upper : Nouns']"
+p74
+aS"8831077.html::1::[[50]]::['Multi : Upper : Nouns']"
+p75
+aS"20560925.html::7::[[31]]::['Multi : Upper : Nouns']"
+p76
+aS"18981260.html::7::[[21]]::['Multi : Upper : Nouns']"
+p77
+aS"11676571.html::4::[[10]]::['Multi : Upper : Nouns']"
+p78
+aS"18591888.html::6::[[35]]::['Multi : Upper : Nouns']"
+p79
+aS"12115348.html::9::[[15]]::['Multi : Upper : Nouns']"
+p80
+aS"16503405.html::2::[[19]]::['GeneName']"
+p81
+aS"12115348.html::1::[[14]]::['GeneName']"
+p82
+aS"9149751.html::0::[[8]]::['Multi : Upper : Nouns']"
+p83
+aS"24915922.html::11::[[7]]::['GeneName']"
+p84
+aS"21719485.html::5::[[6]]::['GeneName']"
+p85
+aS"17855696.html::7::[[10]]::['GeneName']"
+p86
+aS"19242361.html::4::[[20]]::['Multi : Upper : Nouns']"
+p87
+aS"14708601.html::4::[[17]]::['Multi : Upper : Nouns']"
+p88
+aS"24040354.html::4::[[29]]::['GeneName']"
+p89
+aS"12115348.html::0::[[3]]::['Multi : Upper : Nouns']"
+p90
+aS"24451042.html::10::[[10]]::['Multi : Upper : Nouns']"
+p91
+aS"17500032.html::5::[[3]]::['Multi : Upper : Nouns']"
+p92
+aS"18221821.html::3::[[27]]::['Multi : Upper : Nouns']"
+p93
+aS"19946179.html::1::[[24]]::['GeneName']"
+p94
+aS"21179469.html::4::[[26]]::['Multi : Upper : Nouns']"
+p95
+aS"21384338.html::2::[[12]]::['Multi : Upper : Nouns']"
+p96
+aS"10747059.html::4::[[26]]::['GeneName']"
+p97
+aS"23558642.html::5::[[21]]::['GeneName']"
+p98
+aS"16540520.html::5::[[58]]::['Multi : Upper : Nouns']"
+p99
+a.

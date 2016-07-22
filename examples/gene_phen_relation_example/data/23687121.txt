@@ -1,1 +1,0 @@
-A high-throughput screen to identify inhibitors of SOD1 transcription

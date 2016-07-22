@@ -1,0 +1,35 @@
+_KRAS_ Analysis in 34 Noonan Syndrome Patients without
+_PTPN11_ Mutation
+Noonan syndrome (NS) is an autosomal dominant disorder characterized by short stature,
+cardiovascular lesions, and a constellation of minor anomalies including hypertelorism,
+webbed neck, and cubitus valgus. Mental
+retardation and hearing difficulty are also often observed in affected individuals, as are
+hypoplastic external genitalia and cryptorchidism in affected males. Furthermore, malignant
+disorders such as juvenile myelomonocytic leukemia and neuroblastoma have occasionally been
+reported in NS. Recent molecular studies have successfully revealed genetic causes in NS. It is known that
+mutations of _PTPN11_ (protein-tyrosine phosphatase, nonreceptor type 11) (), _KRAS_ (v-Ki-ras2 Kirsten rat sarcoma viral oncogene
+homolog) (, ),
+and _SOS1_ (son of sevenless homolog 1) (, ) account for roughly 45%, <5% and 510% of NS
+patients, respectively, although the underlying genetic factors are still unknown in a
+substantial fraction of NS patients. Since such genes are involved in the mitogen-activated
+protein kinase signaling pathway, this explains the occasional occurrence of malignant
+disorders in NS. Here, we report mutation analysis
+of _KRAS_ in _PTPN11_ mutation negative NS patients. This study consisted of 34 NS patients (22 males and 12 females) aged 0.134.5 years who
+met the diagnostic criteria proposed by van der Burgt _et al_.. All patients were found to have no discernible mutations in the
+coding exons 115 of _PTPN11_ by direct sequencing; the clinical and molecular data in
+_PTPN11_ mutation positive patients have been reported previously. The karyotype was normal in all the patients. This study was approved by the IRB at the National Center for Child Health and
+Development. After obtaining informed consent, leukocyte genomic DNA of each patient was
+amplified by PCR for all the 5 exons (exons 14b) and their flanking splice sites of the
+_KRAS_ gene (isoforms A and B). Subsequently, the PCR products were subjected to direct
+sequencing from both directions on a CEQ 8000 autosequencer (Beckman Coulter,
+http://www.beckman.com/). The primer sequences and PCR conditions are shown in. No mutations were identified in any of the patients, while the previously known silent SNP
+on exon 4b (519T>C, Asp173Asp, _rs17473423_) was found in 12 patients. No mutations were found in the _KRAS_ gene in the 34 NS patients who had no _PTPN11_ mutations.
+This would be consistent with the previous finding that _KRAS_ mutations are rare in NS
+patients (<5%). However, since _KRAS_ mutations are
+frequently associated with malignant lesions (,, ), _KRAS_ appears
+to be worth analyzing in NS patients. At present, the underlying genetic cause(s) remains to be clarified in the NS patients
+examined in this study. Although some of them may have mutations in _SOS1_ or in unexamined
+promoter regions or intronic sequences of _PTPN11_ or _KRAS_, most, if not all, of them would be
+classified as a group of NS patients in whom a causative gene(s) remains to be determined.
+Thus, when a novel candidate or demonstrated gene for NS has been identified, these patients
+should be examined for mutations of the gene. 

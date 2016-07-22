@@ -1,1 +1,0 @@
-Characterization of novel SLC6A8 variants with the use of splice-site analysis tools and implementation of a newly developed LOVD database

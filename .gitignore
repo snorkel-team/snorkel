@@ -1,5 +1,4 @@
-*.swo
-*.swp
+*.sw[opnm]
 .DS_Store
 /.virtualenv
 .ipynb_checkpoints

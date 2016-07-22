@@ -1,6 +1,6 @@
 from lxml import etree as et
 from collections import defaultdict, namedtuple
-from ddlite_candidates import Ngram
+from snorkel.candidates import Ngram
 
 def ensure_dict(x):
     return x if isinstance(x, dict) else x._asdict()

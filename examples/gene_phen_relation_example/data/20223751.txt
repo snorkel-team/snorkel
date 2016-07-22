@@ -1,1 +1,0 @@
-GISP binding to TSG101 increases GABA receptor stability by down-regulating ESCRT-mediated lysosomal degradation

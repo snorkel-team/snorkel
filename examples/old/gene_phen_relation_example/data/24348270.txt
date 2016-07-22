@@ -1,0 +1,1 @@
+A label-free quantification method by MS/MS TIC compared to SILAC and spectral counting in a proteomics screen

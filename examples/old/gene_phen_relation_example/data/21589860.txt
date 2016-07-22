@@ -1,0 +1,1 @@
+Does strong linkage disequilibrium guarantee redundant association results?

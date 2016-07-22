@@ -4,7 +4,7 @@ sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user
 
 env:
   global:
-    - NUMPY: 1.10
+    - NUMPY: 1.11
     - SCIPY: 0.17
 
 language:
@@ -48,6 +48,9 @@ before_install:
   - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
   - java -version
 
+  # Set environment variables
+  - source set_env.sh
+
 install:
   # Install binary distribution of scientific python modules
   - test -e ~/miniconda/envs/test/bin/activate || ( rm -rf ~/miniconda/envs/test; conda create --yes -n test python=$TRAVIS_PYTHON_VERSION )
@@ -61,14 +64,22 @@ install:
   # Use runipy to run Jupyter/IPython notebooks from command-line
   - pip install runipy
 
+  # Install theano
+  - conda install --yes theano
+
 script:
-  # Run test modules
-  - python test/MatcherTests.py
-  - python test/InferenceTests.py
   # Run notebooks end-to-end
+  # NOTE: Currently some tests (LSTMTests) rely on data produced by these notebooks...
+  - TESTING=true runipy tutorial/CDR_Tutorial.ipynb
   - runipy examples/GeneTaggerExample_Extraction.ipynb  
   - runipy examples/GeneTaggerExample_Learning.ipynb
-  - docs="data_small" runipy examples/GenePhenRelationExample_Extraction.ipynb
+
+  # Run test modules
+  - python test/ParserTests.py
+  - python test/CandidateSpaceTests.py
+  - python test/MatcherTests.py
+  - python test/InferenceTests.py
+  - python test/LSTMTests.py
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

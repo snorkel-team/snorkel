@@ -264,6 +264,7 @@ class TableParser(SentenceParser):
                 tables.append(self.parse_table(table, table_id=table_id, doc_id=doc.id, doc_name=doc.file))
         return tables
 
+
 def sort_X_on_Y(X, Y):
     return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
 
@@ -275,10 +276,11 @@ def corenlp_cleaner(words):
 
 class Corpus(object):
     """
-    A Corpus object helps instantiate and then holds a set of Documents and associated Sentences
-    Default iterator is over (Document, Sentences) tuples
+    A Corpus object helps instantiate and then holds a set of Documents and associated Contexts
+    Default iterator is over (Document, Contexts) tuples
     """
-    def __init__(self, doc_parser, sent_parser, max_docs=None):
+
+    def __init__(self, doc_parser, context_parser, max_docs=None):
 
         # Parse documents
         print "Parsing documents..."
@@ -288,36 +290,55 @@ class Corpus(object):
                 break
             self._docs_by_id[doc.id] = doc
 
-        # Parse contexts
+        # Parse sentences
         print "Parsing contexts..."
-        self._sentences_by_id     = {}
-        self._sentences_by_doc_id = defaultdict(list)
-        for context in sent_parser.parse_docs(self._docs_by_id.values()):
-            self._sentences_by_id[context.id] = context
-            self._sentences_by_doc_id[context.doc_id].append(context)
+        self._contexts_by_id     = {}
+        self._contexts_by_doc_id = defaultdict(list)
+        for sent in context_parser.parse_docs(self._docs_by_id.values()):
+            self._contexts_by_id[sent.id] = sent
+            self._contexts_by_doc_id[sent.doc_id].append(sent)
 
     def __iter__(self):
         """Default iterator is over (document, sentence) tuples"""
         for doc in self.iter_docs():
-            yield (doc, self.get_sentences_in(doc.id))
+            yield (doc, self.get_contexts_in(doc.id))
 
     def iter_docs(self):
         return self._docs_by_id.itervalues()
 
-    def iter_sentences(self):
-        return self._sentences_by_id.itervalues()
+    def iter_contexts(self):
+        return self._contexts_by_id.itervalues()
 
     def get_docs(self):
         return self._docs_by_id.values()
 
-    def get_sentences(self):
-        return self._sentences_by_id.values()
+    def get_contexts(self):
+        return self._contexts_by_id.values()
 
     def get_doc(self, id):
         return self._docs_by_id[id]
 
+    def get_context(self, id):
+        return self._contexts_by_id[id]
+
+    def get_contexts_in(self, doc_id):
+        return self._contexts_by_doc_id[doc_id]
+
+
+class SentencesCorpus(Corpus):
+    """
+    A Corpus object that accepts method names with "sentence" instead of "context",
+    for backward compatibility's sake.
+    """
+
+    def iter_sentences(self):
+        return self._contexts_by_id.itervalues()
+
+    def get_sentences(self):
+        return self._contexts_by_id.values()
+
     def get_sentence(self, id):
-        return self._sentences_by_id[id]
+        return self._contexts_by_id[id]
 
     def get_sentences_in(self, doc_id):
-        return self._sentences_by_doc_id[doc_id]
+        return self._contexts_by_doc_id[doc_id]

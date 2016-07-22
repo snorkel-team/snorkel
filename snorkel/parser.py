@@ -17,11 +17,11 @@ from itertools import chain
 
 Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
 
-class DocParser: 
+class DocParser:
     """Parse a file or directory of files into a set of Document objects."""
     def __init__(self, path):
         self.path = path
-      
+
     def parse(self):
         """
         Parse a file or directory of files into a set of Document objects.
@@ -139,7 +139,7 @@ class SentenceParser:
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
-        props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else "" 
+        props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
         self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % (self.port, props)
 
         # Following enables retries to cope with CoreNLP server boot-up latency
@@ -190,14 +190,14 @@ class SentenceParser:
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['sent_id'] = sent_id
             parts['doc_id'] = doc_id
-            parts['text'] = s[block['tokens'][0]['characterOffsetBegin'] : 
+            parts['text'] = s[block['tokens'][0]['characterOffsetBegin'] :
                                 block['tokens'][-1]['characterOffsetEnd']]
             parts['doc_name'] = doc_name
             parts['id'] = "%s-%s" % (parts['doc_id'], parts['sent_id'])
             sent = Sentence(**parts)
             sent_id += 1
             yield sent
-    
+
     def parse_docs(self, docs):
         """Parse a list of Document objects into a list of pre-processed Sentences."""
         sents = []
@@ -205,9 +205,9 @@ class SentenceParser:
             for sent in self.parse(doc.text, doc.id, doc.file):
                 sents.append(sent)
         return sents
-        
+
 def sort_X_on_Y(X, Y):
-    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]   
+    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
 
 def corenlp_cleaner(words):
   d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
@@ -217,11 +217,11 @@ def corenlp_cleaner(words):
 
 class Corpus(object):
     """
-    A Corpus object helps instantiate and then holds a set of Documents and associated Sentences
-    Default iterator is over (Document, Sentences) tuples
+    A Corpus object helps instantiate and then holds a set of Documents and associated Contexts
+    Default iterator is over (Document, Contexts) tuples
     """
-    def __init__(self, doc_parser, sent_parser, max_docs=None):
-        
+    def __init__(self, doc_parser, context_parser, max_docs=None):
+
         # Parse documents
         print "Parsing documents..."
         self._docs_by_id = {}
@@ -231,35 +231,54 @@ class Corpus(object):
             self._docs_by_id[doc.id] = doc
 
         # Parse sentences
-        print "Parsing sentences..."
-        self._sentences_by_id     = {}
-        self._sentences_by_doc_id = defaultdict(list)
-        for sent in sent_parser.parse_docs(self._docs_by_id.values()):
-            self._sentences_by_id[sent.id] = sent
-            self._sentences_by_doc_id[sent.doc_id].append(sent)
+        print "Parsing contexts..."
+        self._contexts_by_id     = {}
+        self._contexts_by_doc_id = defaultdict(list)
+        for sent in context_parser.parse_docs(self._docs_by_id.values()):
+            self._contexts_by_id[sent.id] = sent
+            self._contexts_by_doc_id[sent.doc_id].append(sent)
 
     def __iter__(self):
         """Default iterator is over (document, sentence) tuples"""
         for doc in self.iter_docs():
-            yield (doc, self.get_sentences_in(doc.id))
+            yield (doc, self.get_contexts_in(doc.id))
 
     def iter_docs(self):
         return self._docs_by_id.itervalues()
 
-    def iter_sentences(self):
-        return self._sentences_by_id.itervalues()
+    def iter_contexts(self):
+        return self._contexts_by_id.itervalues()
 
     def get_docs(self):
         return self._docs_by_id.values()
 
-    def get_sentences(self):
-        return self._sentences_by_id.values()
+    def get_contexts(self):
+        return self._contexts_by_id.values()
 
     def get_doc(self, id):
         return self._docs_by_id[id]
 
+    def get_context(self, id):
+        return self._contexts_by_id[id]
+
+    def get_contexts_in(self, doc_id):
+        return self._contexts_by_doc_id[doc_id]
+
+
+class SentencesCorpus(Corpus):
+    """
+    A Corpus object that accepts method names with "sentence" instead of "context",
+    for backward compatibility's sake.
+    """
+
+    def iter_sentences(self):
+        return self._contexts_by_id.itervalues()
+
+    def get_sentences(self):
+        return self._contexts_by_id.values()
+
     def get_sentence(self, id):
-        return self._sentences_by_id[id]
+        return self._contexts_by_id[id]
 
     def get_sentences_in(self, doc_id):
-        return self._sentences_by_doc_id[doc_id]
+        return self._contexts_by_doc_id[doc_id]

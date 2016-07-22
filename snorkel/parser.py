@@ -279,7 +279,7 @@ class Corpus(object):
     Default iterator is over (Document, Sentences) tuples
     """
     def __init__(self, doc_parser, sent_parser, max_docs=None):
-        
+
         # Parse documents
         print "Parsing documents..."
         self._docs_by_id = {}
@@ -292,7 +292,7 @@ class Corpus(object):
         print "Parsing contexts..."
         self._sentences_by_id     = {}
         self._sentences_by_doc_id = defaultdict(list)
-        for context in context_parser.parse_docs(self._docs_by_id.values()):
+        for context in sent_parser.parse_docs(self._docs_by_id.values()):
             self._sentences_by_id[context.id] = context
             self._sentences_by_doc_id[context.doc_id].append(context)
 

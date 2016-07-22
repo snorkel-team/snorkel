@@ -234,9 +234,9 @@ class Corpus(object):
         print "Parsing contexts..."
         self._contexts_by_id     = {}
         self._contexts_by_doc_id = defaultdict(list)
-        for sent in context_parser.parse_docs(self._docs_by_id.values()):
-            self._contexts_by_id[sent.id] = sent
-            self._contexts_by_doc_id[sent.doc_id].append(sent)
+        for context in context_parser.parse_docs(self._docs_by_id.values()):
+            self._contexts_by_id[context.id] = context
+            self._contexts_by_doc_id[context.doc_id].append(context)
 
     def __iter__(self):
         """Default iterator is over (document, sentence) tuples"""

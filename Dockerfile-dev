@@ -9,4 +9,8 @@
 FROM hazyresearch/snorkel
 MAINTAINER deepdive-dev@googlegroups.com
 
+# use nbconvert that allows kernel to clean up things via atexit hooks
+RUN pip2 install --upgrade git+git://github.com/netj/nbconvert.git@graceful-kernel-shutdown-after-execute \
+ && pip3 install --upgrade git+git://github.com/netj/nbconvert.git@graceful-kernel-shutdown-after-execute
+
 WORKDIR snorkel

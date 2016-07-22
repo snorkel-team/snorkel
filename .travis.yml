@@ -16,6 +16,12 @@ before_install:
   - export DOCKER_IMAGE=hazyresearch/snorkel-dev
   - docker pull $DOCKER_IMAGE
 
+  # rescue git from detached HEAD state for DockerBuild
+  - if [[ $TRAVIS_PULL_REQUEST = false ]];
+    then git checkout -qf $TRAVIS_BRANCH;
+    else git checkout -qf -b pr$TRAVIS_PULL_REQUEST;
+    fi
+
 install:
   - ./DockerBuild/build-in-container
 

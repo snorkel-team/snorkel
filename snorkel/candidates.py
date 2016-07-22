@@ -5,6 +5,10 @@ from time import time
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
 
+import scipy.sparse as sparse
+# from entity_features import compile_entity_feature_generator
+# from snorkel import entity_internal
+# from tree_structs import corenlp_to_xmltree, XMLTree
 
 class Candidate(object):
     """A candidate object, **uniquely identified by its id**"""
@@ -63,6 +67,8 @@ class Candidates(object):
     def __init__(self, candidate_space, matcher, contexts, parallelism=False, join_key='context_id'):
         self.join_key = join_key
         self.ps = []
+        self.feats = None
+        self.feat_index = {}
 
         # Extract & index candidates
         print "Extracting candidates..."
@@ -71,6 +77,9 @@ class Candidates(object):
         else:
             candidates = self._extract_multiprocess(candidate_space, matcher, contexts, parallelism=parallelism)
         self._index(candidates)
+
+    def num_candidates(self):
+        return len(self._candidates_by_id)
 
     def _extract(self, candidate_space, matcher, contexts):
         return chain.from_iterable(matcher.apply(candidate_space.apply(c)) for c in contexts)
@@ -135,6 +144,24 @@ class Candidates(object):
         print "Candidate recall\t= %0.3f" % (both / float(ng),)
         print "Candidate precision\t= %0.3f" % (both / float(nc),)
 
+    # POST-REFACTOR methods below this line
+    def _get_feature_index(self):
+        f_index = defaultdict(list)
+        for j,cand in enumerate(self._candidates_by_id.values()):
+            for feat in cand._get_features():
+                f_index[feat].append(j)
+        return f_index
+
+    def extract_features(self, *args):
+        f_index = self._get_feature_index()
+        # Apply the feature generator, constructing a sparse matrix incrementally
+        # Note that lil_matrix should be relatively efficient as we proceed row-wise
+        self.feats = sparse.lil_matrix((self.num_candidates(), len(f_index)))
+        for j,feat in enumerate(f_index.keys()):
+            self.feat_index[j] = feat
+            for i in f_index[feat]:
+                self.feats[i,j] = 1
+        return self.feats
 
 # Basic sentence attributes
 WORDS        = 'words'
@@ -172,6 +199,27 @@ class Ngram(Candidate):
         # To enable generic methods
         self.context_id = self.sent_id
 
+    def __getitem__(self, key):
+        """
+        Slice operation returns a new candidate sliced according to **char index**
+        Note that the slicing is w.r.t. the candidate range (not the abs. sentence char indexing)
+        """
+        if isinstance(key, slice):
+            char_start = self.char_start if key.start is None else self.char_start + key.start
+            if key.stop is None:
+                char_end = self.char_end
+            elif key.stop >= 0:
+                char_end = self.char_start + key.stop - 1
+            else:
+                char_end = self.char_end + key.stop
+            return Ngram(char_start, char_end, self.sentence)
+        else:
+            raise NotImplementedError()
+
+    def __repr__(self):
+        return '<Ngram("%s", id=%s, chars=[%s,%s], words=[%s,%s])' \
+            % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.word_start, self.word_end)
+
     def char_to_word_index(self, ci):
         """Given a character-level index (offset), return the index of the **word this char is in**"""
         for i,co in enumerate(self.sentence[CHAR_OFFSETS]):
@@ -200,26 +248,20 @@ class Ngram(Candidate):
     def get_span(self, sep=" "):
         return self.get_attrib_span(WORDS)
 
-    def __getitem__(self, key):
-        """
-        Slice operation returns a new candidate sliced according to **char index**
-        Note that the slicing is w.r.t. the candidate range (not the abs. sentence char indexing)
-        """
-        if isinstance(key, slice):
-            char_start = self.char_start if key.start is None else self.char_start + key.start
-            if key.stop is None:
-                char_end = self.char_end
-            elif key.stop >= 0:
-                char_end = self.char_start + key.stop - 1
-            else:
-                char_end = self.char_end + key.stop
-            return Ngram(char_start, char_end, self.sentence)
-        else:
-            raise NotImplementedError()
+    def _get_features(self):
+        # for cand in self._apply(self.sentence):
+        #     get_treedlib_feats = compile_entity_feature_generator()
+        #     for feat in get_treedlib_feats(cand.root, cand.idxs):
+        #         yield ''.join(["TREEDLIB_",feat])
+        #     for feat in get_ddlib_feats(cand, cand.idxs):
+        #         yield ''.join(["DDLIB_",feat])
+        yield "TREEDLIB_features_to come"
+        yield "DDLIB_features_to come"
 
-    def __repr__(self):
-        return '<Ngram("%s", id=%s, chars=[%s,%s], words=[%s,%s])' \
-            % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.word_start, self.word_end)
+    # def _apply(self, sent):
+    #     xt = corenlp_to_xmltree(sent)
+    #     for e_idxs, e_label in self.e.apply(sent):
+    #         yield entity_internal(e_idxs, e_label, sent, xt)
 
 
 class Ngrams(CandidateSpace):
@@ -267,6 +309,12 @@ class CellNgram(Ngram):
         return '<CellNgram("%s", id=%s, chars=[%s,%s], (row,col)=(%s,%s), tag=%s)' \
             % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.row_num, self.col_num, self.html_tag)
 
+    def _get_features(self):
+        for feat in super(CellNgram, self)._get_features():
+            yield feat
+        for feat in self.get_table_feats():
+            yield ''.join(["TABLE_",feat])
+
     def get_table_feats(self):
         yield "ROW_NUM_%s" % self.row_num
         yield "COL_NUM_%s" % self.col_num
@@ -278,23 +326,6 @@ class CellNgram(Ngram):
         for attr in self.html_anc_attrs:
             yield "HTML_ANC_ATTR_" + attr
 
-###############
-#     # NOTE: to be used with a Candidates object, not a Candidate object
-#     def _get_features(self):
-#         f_index = defaultdict(list)
-#         # f_index = super(CellNgrams, self)._get_features()
-#         for j,cand in enumerate(self._candidates):
-#           for feat in get_table_feats(cand):
-#             f_index["TABLE_" + feat].append(j)
-#         return f_index
-
-# def get_table_feats(c):
-#     yield "ROW_NUM_" + c.row_num
-#     yield "COL_NUM_" + c.col_num
-
-#   for seq_feat in _get_seq_features(sent, idxs):
-#     yield seq_feat
-###############
 
 class CellNgrams(Ngrams):
     """

@@ -5,7 +5,6 @@ from time import time
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
 
-import scipy.sparse as sparse
 # from entity_features import compile_entity_feature_generator
 # from snorkel import entity_internal
 # from tree_structs import corenlp_to_xmltree, XMLTree
@@ -69,6 +68,7 @@ class Candidates(object):
         self.ps = []
         self.feats = None
         self.feat_index = {}
+        self.contexts = contexts
 
         # Extract & index candidates
         print "Extracting candidates..."
@@ -144,24 +144,6 @@ class Candidates(object):
         print "Candidate recall\t= %0.3f" % (both / float(ng),)
         print "Candidate precision\t= %0.3f" % (both / float(nc),)
 
-    # POST-REFACTOR methods below this line
-    def _get_feature_index(self):
-        f_index = defaultdict(list)
-        for j,cand in enumerate(self._candidates_by_id.values()):
-            for feat in cand._get_features():
-                f_index[feat].append(j)
-        return f_index
-
-    def extract_features(self, *args):
-        f_index = self._get_feature_index()
-        # Apply the feature generator, constructing a sparse matrix incrementally
-        # Note that lil_matrix should be relatively efficient as we proceed row-wise
-        self.feats = sparse.lil_matrix((self.num_candidates(), len(f_index)))
-        for j,feat in enumerate(f_index.keys()):
-            self.feat_index[j] = feat
-            for i in f_index[feat]:
-                self.feats[i,j] = 1
-        return self.feats
 
 # Basic sentence attributes
 WORDS        = 'words'
@@ -248,15 +230,6 @@ class Ngram(Candidate):
     def get_span(self, sep=" "):
         return self.get_attrib_span(WORDS)
 
-    def _get_features(self):
-        # for cand in self._apply(self.sentence):
-        #     get_treedlib_feats = compile_entity_feature_generator()
-        #     for feat in get_treedlib_feats(cand.root, cand.idxs):
-        #         yield ''.join(["TREEDLIB_",feat])
-        #     for feat in get_ddlib_feats(cand, cand.idxs):
-        #         yield ''.join(["DDLIB_",feat])
-        yield "TREEDLIB_features_to come"
-        yield "DDLIB_features_to come"
 
     # def _apply(self, sent):
     #     xt = corenlp_to_xmltree(sent)
@@ -296,6 +269,7 @@ CELLS        = 'cells'
 class CellNgram(Ngram):
     def __init__(self, cell, ngram):
         super(CellNgram, self).__init__(ngram.char_start, ngram.char_end, ngram.sentence)
+        self.context_id = cell.context_id
         self.table_id = cell.table_id
         self.cell_id = cell.cell_id
         self.row_num = cell.row_num
@@ -308,23 +282,6 @@ class CellNgram(Ngram):
     def __repr__(self):
         return '<CellNgram("%s", id=%s, chars=[%s,%s], (row,col)=(%s,%s), tag=%s)' \
             % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.row_num, self.col_num, self.html_tag)
-
-    def _get_features(self):
-        for feat in super(CellNgram, self)._get_features():
-            yield feat
-        for feat in self.get_table_feats():
-            yield ''.join(["TABLE_",feat])
-
-    def get_table_feats(self):
-        yield "ROW_NUM_%s" % self.row_num
-        yield "COL_NUM_%s" % self.col_num
-        yield "HTML_TAG_" + self.html_tag
-        for attr in self.html_attrs:
-            yield "HTML_ATTR_" + attr
-        for tag in self.html_anc_tags:
-            yield "HTML_ANC_TAG_" + tag
-        for attr in self.html_anc_attrs:
-            yield "HTML_ANC_ATTR_" + attr
 
 
 class CellNgrams(Ngrams):
@@ -375,15 +332,6 @@ class CellNgrams(Ngrams):
 #             for e2 in self.extractors[1].apply(context):
 #                 yield Relation(e1,e2)
 
-# class Entity(Candidate):
-#     def _get_features(self):
-#         # HTML
-#         html_tag_{tag} = True
-#         html_attr_{attr} = True
-#         html_ancestor_tag_{tag} = True
-#         html_ancestor_attr_{attr} = True
-#         row_num
-#         col_num
 
 # class Relation(Candidate):
 #     def __init__(self, e1, e2):

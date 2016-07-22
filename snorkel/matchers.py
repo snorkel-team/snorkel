@@ -154,6 +154,8 @@ class RegexMatch(NgramMatcher):
         self.sep         = self.opts.get('sep', " ")
 
         # Compile regex matcher
+        # NOTE: Enforce full span matching by ensuring that regex ends with $!
+        self.rgx = self.rgx if self.rgx.endswith('$') else self.rgx + r'$'
         self.r = re.compile(self.rgx, flags=re.I if self.ignore_case else 0)
 
     def _f(self, c):

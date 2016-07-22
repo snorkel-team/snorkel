@@ -1,6 +1,5 @@
 # Base Python
-import cPickle, os, sys, warnings
-import ujson as json
+import cPickle, json, os, sys, warnings
 from collections import defaultdict, OrderedDict, namedtuple
 import lxml.etree as et
 

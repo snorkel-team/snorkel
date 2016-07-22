@@ -13,7 +13,8 @@ Notebook="$SnorkelTestBasePath"
 
 @test "$SnorkelTestBaseName runs" {
     . "$SNORKELHOME"/set_env.sh
-    export TESTING=true  # XXX to have Viewer working
-    set --; [[ -z $CI ]] || set -- --overwrite  # update the notebooks in place from CI
-    runipy "$@" "$Notebook"
+    set --; [[ -z $CI ]] || set -- --inplace  # update the notebooks in place from CI
+    jupyter nbconvert --to notebook \
+        -y --log-level=10 --ExecutePreprocessor.timeout=300 \
+        --execute "$@" "$Notebook"
 }

@@ -1,1 +1,1 @@
-../test/.runipy.bats.template
+../test/.execute-notebook.bats.template

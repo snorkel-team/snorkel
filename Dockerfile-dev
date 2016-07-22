@@ -9,7 +9,4 @@
 FROM hazyresearch/snorkel
 MAINTAINER deepdive-dev@googlegroups.com
 
-# Use runipy to run Jupyter/IPython notebooks from command-line
-RUN pip install runipy
-
 WORKDIR snorkel

@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 from subprocess import Popen
 import lxml.etree as et
-from snorkel import Base, SnorkelSession
+from snorkel import Base, SnorkelSession, snorkel_postgres
 from sqlalchemy import Column, String, Integer, Text, ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship, backref
@@ -80,12 +80,20 @@ class Sentence(Base):
     document_id = Column(Integer, ForeignKey('document.id'))
     document = relationship(Document, backref=backref('sentences', uselist=True, cascade='delete,all'))
     text = Column(Text)
-    words = Column(postgresql.ARRAY(String))
-    lemmas = Column(postgresql.ARRAY(String))
-    poses = Column(postgresql.ARRAY(String))
-    dep_parents = Column(postgresql.ARRAY(String))
-    dep_labels = Column(postgresql.ARRAY(String))
-    char_offsets = Column(postgresql.ARRAY(String))
+    if snorkel_postgres:
+        words = Column(postgresql.ARRAY(String))
+        lemmas = Column(postgresql.ARRAY(String))
+        poses = Column(postgresql.ARRAY(String))
+        dep_parents = Column(postgresql.ARRAY(String))
+        dep_labels = Column(postgresql.ARRAY(String))
+        char_offsets = Column(postgresql.ARRAY(String))
+    else:
+        words = Column(PickleType)
+        lemmas = Column(PickleType)
+        poses = Column(PickleType)
+        dep_parents = Column(PickleType)
+        dep_labels = Column(PickleType)
+        char_offsets = Column(PickleType)
 
 
 class CorpusParser:

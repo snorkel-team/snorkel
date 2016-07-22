@@ -5,6 +5,7 @@
 *.pyc
 parser/
 /stanford-corenlp-*
+*.db
 
 /saved_sents.pkl
 

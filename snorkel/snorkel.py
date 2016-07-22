@@ -17,9 +17,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 if 'SNORKELDB' in os.environ:
+  snorkel_postgres = os.environ['SNORKELDB'].startswith('postgres')
   snorkel_engine = create_engine(os.environ['SNORKELDB'])
 else:
-  raise RuntimeError('Snorkel database connection string must be set as SNORKELDB environment variable.')
+  snorkel_postgres = False
+  snorkel_engine = create_engine('sqlite:///snorkel.db')
 SnorkelSession = sessionmaker(bind=snorkel_engine)
 Base = declarative_base()
 def init_db():

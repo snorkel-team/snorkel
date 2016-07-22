@@ -55,6 +55,18 @@ pip install --requirement python-package-requirement.txt
 
 Alternatively, they could be installed system-wide if `sudo pip` is used instead of `pip` in the last command without the virtualenv setup and activation.
 
+## Learning how to use Snorkel
+New tutorial (in progress; covers through candidate extraction for entities):
+```
+tutorial/CRD_tutorial.ipynb
+```
+
+Supported legacy tutorial (covers full pipeline):
+ * **[GeneTaggerExample_Extraction.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GeneTaggerExample_Extraction.ipynb)** walks through the candidate extraction workflow for an entity tagging task. * **[GeneTaggerExample_Learning.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GeneTaggerExample_Learning.ipynb)** picks up where the extraction notebook left off. The learning notebook demonstrates the labeling function iteration workflow and learning methods.
+
+## Documentation
+To generate documentation (built using [pdoc](https://github.com/BurntSushi/pdoc)), run `./generate_docs.sh`.
+
 ### Jupyter Notebook Best Practices
 
 Snorkel is built specifically with usage in **Jupyter/IPython notebooks** in mind; an incomplete set of best practices for the notebooks:
@@ -69,15 +81,3 @@ A more convenient option is to add these lines to your IPython config file, in `
 c.InteractiveShellApp.extensions = ['autoreload']     
 c.InteractiveShellApp.exec_lines = ['%autoreload 2']
 ```
-
-## Documentation
-To generate documentation (built using [pdoc](https://github.com/BurntSushi/pdoc)), run `./generate_docs.sh`.
-
-## Learning how to use Snorkel
-New tutorial (in progress; covers through candidate extraction for entities):
-```
-tutorial/CRD_tutorial.ipynb
-```
-
-Supported legacy tutorial (covers full pipeline):
- * **[GeneTaggerExample_Extraction.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GeneTaggerExample_Extraction.ipynb)** walks through the candidate extraction workflow for an entity tagging task. * **[GeneTaggerExample_Learning.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GeneTaggerExample_Learning.ipynb)** picks up where the extraction notebook left off. The learning notebook demonstrates the labeling function iteration workflow and learning methods.

@@ -2,9 +2,9 @@
 
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 
-#### Sponsored by: 
+## Acknowledgements
 <img src="figs/darpa.JPG" width="80" height="80" />
-#### as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043.
+Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043.
 
 ## Versions
 * `master`: Current stable development version (v0.3)
@@ -23,7 +23,7 @@ In the data programming approach to developing a machine learning system, the de
 
 At a high level, the idea is that developers can focus on writing labeling functions&mdash;which are just (Python) functions that provide a label for some subset of data points&mdash;and not think about algorithms _or_ features!
 
-Snorkel is very much a work in progress, but some people have already begun developing applications with it, and initial feedback has been positive... let us know what you think, and how we can improve it, in the [Issues](https://github.com/HazyResearch/ddlite/issues) section!
+**_Snorkel is very much a work in progress_**, but some people have already begun developing applications with it, and initial feedback has been positive... let us know what you think, and how we can improve it, in the [Issues](https://github.com/HazyResearch/ddlite/issues) section!
 
 ### References
 * Technical report on Data Programming: [https://arxiv.org/abs/1605.07723](https://arxiv.org/abs/1605.07723)
@@ -67,7 +67,11 @@ Supported legacy tutorial (covers full pipeline):
 ## Documentation
 To generate documentation (built using [pdoc](https://github.com/BurntSushi/pdoc)), run `./generate_docs.sh`.
 
-### Jupyter Notebook Best Practices
+## Issues
+We like [issues](https://github.com/HazyResearch/snorkel/issues) as a place to put bugs, questions, feature requests, etc- don't be shy!
+If submitting an issue about a bug, however, **please provide a pointer to a notebook (and relevant data) to reproduce it.**
+
+## Jupyter Notebook Best Practices
 
 Snorkel is built specifically with usage in **Jupyter/IPython notebooks** in mind; an incomplete set of best practices for the notebooks:
 

@@ -1,0 +1,1 @@
+.python-unittest.bats.template

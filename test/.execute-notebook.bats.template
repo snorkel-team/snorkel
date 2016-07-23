@@ -1,0 +1,20 @@
+#!/usr/bin/env bats
+# a BATS template for running Snorkel notebooks
+
+load ../test/SnorkelTestEnv
+
+# this template is supposed to be symlinked as a .bats file sharing the
+# basename with the target .ipynb file to test
+Notebook="$SnorkelTestBasePath"
+[[ -e "$Notebook" ]] || {
+    echo >&2 "$Notebook: No such notebook file to test"
+    false
+}
+
+@test "$SnorkelTestBaseName runs" {
+    . "$SNORKELHOME"/set_env.sh
+    set --; [[ -z $CI ]] || set -- --inplace  # update the notebooks in place from CI
+    jupyter nbconvert --to notebook \
+        -y --log-level=10 --ExecutePreprocessor.timeout=300 \
+        --execute "$@" "$Notebook"
+}

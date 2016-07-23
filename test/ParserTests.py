@@ -7,14 +7,6 @@ ROOT = os.environ['SNORKELHOME']
 
 class TestParsers(unittest.TestCase):
     
-    @classmethod
-    def setUpClass(cls):
-        cls.sp = SentenceParser()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.sp._kill_pserver()
-
     def test_parser_1(self):
         """Tests the XMLDocParser and SentenceParser subclasses"""
 

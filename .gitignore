@@ -20,3 +20,6 @@ examples/mindtagger
 
 # pickled data from notebooks
 *.pkl
+
+# test logs
+*.bats.test*.log

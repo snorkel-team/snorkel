@@ -1,0 +1,1 @@
+../test/.execute-notebook.bats.template

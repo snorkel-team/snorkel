@@ -1,0 +1,16 @@
+# Dockerfile for hazyresearch/snorkel-dev
+# to be used with DockerBuild/ also by Travis CI
+#
+# $ docker build -t hazyresearch/snorkel-dev - <Dockerfile-dev
+#
+# Optional:
+# $ docker push hazyresearch/snorkel-dev
+
+FROM hazyresearch/snorkel
+MAINTAINER deepdive-dev@googlegroups.com
+
+# use nbconvert that allows kernel to clean up things via atexit hooks
+RUN pip2 install --upgrade git+git://github.com/netj/nbconvert.git@graceful-kernel-shutdown-after-execute \
+ && pip3 install --upgrade git+git://github.com/netj/nbconvert.git@graceful-kernel-shutdown-after-execute
+
+WORKDIR snorkel

@@ -1,18 +1,13 @@
-import atexit, json, os, pwd, pipes, socket, sys, time, warnings, traceback
+import atexit, json, os, signal, pwd, pipes, socket, sys, time, warnings, traceback
 
 class MindTaggerInstance:
 
   def __init__(self, mindtagger_format):
     self._mindtagger_format = mindtagger_format
     self.instance = None
-    atexit.register(self._kill_mindtagger)
   
   def _system(self, script):
       return os.system("bash -c %s" % pipes.quote(script))
-    
-  def _kill_mindtagger(self):
-    if self.instance is not None:
-      self._system("kill -TERM $(cat mindtagger.pid)")
     
   def _generate_task_format(self):
     return  """
@@ -65,7 +60,7 @@ class MindTaggerInstance:
     # install mindbender included in DeepDive's release
     print "Making sure MindTagger is installed. Hang on!"
     if self._system("""
-      export PREFIX="$PWD"/deepdive
+      export PREFIX="$SNORKELHOME"/deepdive
       [[ -x "$PREFIX"/bin/mindbender ]] ||
       bash <(curl -fsSL git.io/getdeepdive || wget -qO- git.io/getdeepdive) deepdive_from_release
     """ % shargs) != 0: raise OSError("Mindtagger could not be installed")
@@ -111,9 +106,12 @@ class MindTaggerInstance:
     if self._system("""
       # restart any running mindtagger instance
       ! [ -s mindtagger.pid ] || kill -TERM $(cat mindtagger.pid) || true
-      PORT=%(port)s deepdive/bin/mindbender tagger %(task_root)s/*/mindtagger.conf &
+      PORT=%(port)s "$SNORKELHOME"/deepdive/bin/mindbender tagger %(task_root)s/*/mindtagger.conf &
       echo $! >mindtagger.pid
       """ % shargs) != 0: raise OSError("Mindtagger could not be started")
+    pid = int(file("mindtagger.pid").readline().strip())
+    atexit.register(os.kill, pid, signal.SIGTERM)
+
     while self._system("curl --silent --max-time 1 --head %(mindtagger_url)s >/dev/null" % shargs) != 0:
       time.sleep(0.1)        
 

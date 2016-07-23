@@ -2,7 +2,7 @@
 
 ### _Formerly DDLite, in transition!_
 
-[![Build Status](https://travis-ci.org/HazyResearch/ddlite.svg?branch=master)](https://travis-ci.org/HazyResearch/ddlite)
+[![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 
 #### Sponsored by: 
 <img src="figs/darpa.JPG" width="80" height="80" />
@@ -19,6 +19,25 @@ DDLite is very much a work in progress, but some people have already begun devel
 
 ## Installation / dependencies
 
+### Running Snorkel with Docker
+
+Docker can simplify the setup required for Snorkel.
+
+1. Install [Docker](https://www.docker.com/products/docker) (requires admin rights).
+
+2. Run:
+
+    ```bash
+    docker run -it -p12345:8888 --volume $PWD:/work --rm hazyresearch/snorkel
+    ```
+
+    If download is too slow, and you're on Stanford campus, have your Docker installation use a local registry mirror: `http://raiders6.stanford.edu:5000`
+
+3. Open <http://localhost:12345> in your browser.
+
+
+### Normal installation
+
 <!-- TODO these manual instruction could be abstracted away with a simple launcher script, that takes as input a ipynb and simply opens it after any necessary setup.. -->
 
 First of all, make sure all git submodules have been downloaded.
@@ -28,7 +47,7 @@ git submodule update --init --recursive
 git submodule update --recursive
 ```
 
-DeepDive Lite requires [a few python packages](python-package-requirement.txt) including:
+DeepDive Lite requires [a few python packages](requirements.txt) including:
 
 * [nltk](http://www.nltk.org/install.html)
 * [lxml](http://lxml.de/installation.html)
@@ -45,7 +64,7 @@ We provide a simple way to install everything using `virtualenv`:
 virtualenv .virtualenv
 source .virtualenv/bin/activate
 
-pip install --requirement python-package-requirement.txt
+pip install --requirement requirements.txt
 ```
 
 *Note: if you have an issue with the matplotlib install related to the module `freetype`, see [this post](http://stackoverflow.com/questions/20533426/ubuntu-running-pip-install-gives-error-the-following-required-packages-can-no); if you have an issue installing ipython, try [upgrading setuptools](http://stackoverflow.com/questions/35943606/error-on-installing-ipython-for-python-3-sys-platform-darwin-and-platform)*

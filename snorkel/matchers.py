@@ -158,18 +158,6 @@ class Concat(NgramMatcher):
         return 0
 
 
-class SlotMatch(NgramMatcher):
-    """Match a character-level composition of other matchers"""
-    def init(self):
-        try:
-            self.pattern = self.opts['pattern']
-        except KeyError:
-            raise Exception("Please supply a slot fill pattern p as pattern=p.")
-
-    def f(self, c):
-        if len(self.children) 
-
-
 class RegexMatch(NgramMatcher):
     """Base regex class- does not specify specific semantics of *what* is being matched yet"""
     def init(self):

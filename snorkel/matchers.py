@@ -18,9 +18,19 @@ class Matcher(object):
         self.opts               = opts
         self.longest_match_only = self.opts.get('longest_match_only', False)
         self.init()
+        self._check_opts()
 
     def init(self):
         pass
+
+    def _check_opts(self):
+        """
+        Checks for unsupported opts, throws error if found
+        NOTE: Must be called _after_ init()
+        """
+        for opt in self.opts.keys():
+            if not self.__dict__.has_key(opt):
+                raise Exception("Unsupported option: %s" % opt)
 
     def _f(self, c):
         """The internal (non-composed) version of filter function f"""

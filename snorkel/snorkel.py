@@ -406,14 +406,14 @@ class Entities(Candidates):
 
 def precision(gt, pred):
   pred, gt = np.ravel(pred), np.ravel(gt)
-  pred[pred == 0] = 1
+  #pred[pred == 0] = 1
   tp = np.sum((pred == 1) * (gt == 1))
   fp = np.sum((pred == 1) * (gt != 1))
   return 0 if tp == 0 else float(tp) / float(tp + fp)
 
 def recall(gt, pred):
   pred, gt = np.ravel(pred), np.ravel(gt)
-  pred[pred == 0] = 1
+  #pred[pred == 0] = 1
   tp = np.sum((pred == 1) * (gt == 1))
   p = np.sum(gt == 1)
   return 0 if tp == 0 else float(tp) / float(p)
@@ -1031,8 +1031,9 @@ class DDLiteModel:
     self.lf_marginals = odds_to_prob(np.ravel(LF.dot(self.lf_weights)))
     
   def train_model_lr(self, bias=False, n_mu=5, mu_min_ratio=1e-6, 
-                     plot=True, log=True, **kwargs):
+                     plot=True, log=True, joint=False, **kwargs):
     """ Learn second stage of pipeline with logistic regression """
+    print "Running in %s mode..." % joint
     self.model = "Logistic regression"
     # Warn if test size is small
     self.test_val_size_warn()
@@ -1041,6 +1042,10 @@ class DDLiteModel:
     if bias:
       F = sparse.hstack([F, np.ones((F.shape[0],1))], format='csr')
     kwargs['w0'] = np.zeros(F.shape[1])
+    if joint:
+      LF = self.lf_matrix.tocsr()
+      F  = sparse.hstack([F, LF], format='csr')
+      kwargs['w0'] = np.concatenate([kwargs['w0'], 10*np.ones(LF.shape[1])])
     kwargs['unreg'] = [F.shape[1]-1] if bias else []
     # Handle mu values
     mu_seq = kwargs.get('mu', None)
@@ -1089,9 +1094,11 @@ class DDLiteModel:
     else:
       return None
 
-  def train_model(self, method="lr", lf_opts=dict(), model_opts=dict()):
-    self.learn_lf_accuracies(**lf_opts)
+  def train_model(self, method="lr", joint=False, lf_opts=dict(), model_opts=dict()):
+    if not joint:
+        self.learn_lf_accuracies(**lf_opts)
     if method == "lr":
+      model_opts['joint'] = joint
       return self.train_model_lr(**model_opts)
     elif method == "lstm":
       lstm = LSTM(self.C, self.training(), self.lf_marginals)

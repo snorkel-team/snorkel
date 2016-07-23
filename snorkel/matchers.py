@@ -86,8 +86,11 @@ class DictionaryMatch(NgramMatcher):
     """Selects candidate Ngrams that match against a given list d"""
     def init(self):
         self.ignore_case = self.opts.get('ignore_case', True)
-        self.d           = frozenset(w.lower() if self.ignore_case else w for w in self.opts['d'])
         self.attrib      = self.opts.get('attrib', WORDS)
+        try:
+            self.d = frozenset(w.lower() if self.ignore_case else w for w in self.opts['d'])
+        except KeyError:
+            raise Exception("Please supply a dictionary (list of phrases) d as d=d.")
 
         # Optionally use a stemmer, preprocess the dictionary
         # Note that user can provide *an object having a stem() method*
@@ -158,7 +161,10 @@ class Concat(NgramMatcher):
 class RegexMatch(NgramMatcher):
     """Base regex class- does not specify specific semantics of *what* is being matched yet"""
     def init(self):
-        self.rgx         = self.opts['rgx']
+        try:
+            self.rgx = self.opts['rgx']
+        except KeyError:
+            raise Exception("Please supply a regular expression string r as rgx=r.")
         self.ignore_case = self.opts.get('ignore_case', True)
         self.attrib      = self.opts.get('attrib', WORDS)
         self.sep         = self.opts.get('sep', " ")

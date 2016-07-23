@@ -58,7 +58,7 @@ Alternatively, they could be installed system-wide if `sudo pip` is used instead
 ## Learning how to use Snorkel
 New tutorial (in progress; covers through candidate extraction for entities):
 ```
-tutorial/CRD_tutorial.ipynb
+tutorial/CDR_tutorial.ipynb
 ```
 
 Supported legacy tutorial (covers full pipeline):

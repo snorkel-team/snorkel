@@ -1066,7 +1066,7 @@ class DDLiteModel:
       mu_seq = get_mu_seq(n_mu, rate, alpha, mu_min_ratio)
     # Train model
     tc = np.intersect1d(self.training(), self.covered())
-    kwargs['marginals'] = self.lf_marginals[tc]
+    #kwargs['marginals'] = self.lf_marginals[tc]
     weights = dict()
     for mu in mu_seq:
       weights[mu] = learn_elasticnet_logreg(F[tc,:], mu=mu, **kwargs)
@@ -1096,7 +1096,7 @@ class DDLiteModel:
 
   def train_model(self, method="lr", joint=False, lf_opts=dict(), model_opts=dict()):
     if not joint:
-        self.learn_lf_accuracies(**lf_opts)
+      self.learn_lf_accuracies(**lf_opts)
     if method == "lr":
       model_opts['joint'] = joint
       return self.train_model_lr(**model_opts)

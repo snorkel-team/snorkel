@@ -18,9 +18,19 @@ class Matcher(object):
         self.opts               = opts
         self.longest_match_only = self.opts.get('longest_match_only', False)
         self.init()
+        self._check_opts()
 
     def init(self):
         pass
+
+    def _check_opts(self):
+        """
+        Checks for unsupported opts, throws error if found
+        NOTE: Must be called _after_ init()
+        """
+        for opt in self.opts.keys():
+            if not self.__dict__.has_key(opt):
+                raise Exception("Unsupported option: %s" % opt)
 
     def _f(self, c):
         """The internal (non-composed) version of filter function f"""
@@ -76,8 +86,11 @@ class DictionaryMatch(NgramMatcher):
     """Selects candidate Ngrams that match against a given list d"""
     def init(self):
         self.ignore_case = self.opts.get('ignore_case', True)
-        self.d           = frozenset(w.lower() if self.ignore_case else w for w in self.opts['d'])
         self.attrib      = self.opts.get('attrib', WORDS)
+        try:
+            self.d = frozenset(w.lower() if self.ignore_case else w for w in self.opts['d'])
+        except KeyError:
+            raise Exception("Please supply a dictionary (list of phrases) d as d=d.")
 
         # Optionally use a stemmer, preprocess the dictionary
         # Note that user can provide *an object having a stem() method*
@@ -145,10 +158,45 @@ class Concat(NgramMatcher):
         return 0
 
 
+class SlotFillMatch(NgramMatcher):
+    """Matches a slot fill pattern of matchers _at the character level_"""
+    def init(self):
+        self.attrib = self.opts.get('attrib', WORDS)
+        try:
+            self.pattern = self.opts['pattern']
+        except KeyError:
+            raise Exception("Please supply a slot-fill pattern p as pattern=p.")
+
+        # Parse slot fill pattern
+        split        = re.split(r'\{(\d+)\}', self.pattern)
+        self._ops    = map(int, split[1::2])
+        self._splits = split[::2]
+
+        # Check for correct number of child matchers / slots
+        if len(self.children) != len(set(self._ops)):
+            raise ValueError("Number of provided matchers (%s) != number of slots (%s)." \
+                    % (len(self.children), len(set(self._ops))))
+
+    def f(self, c):
+        # First, filter candidates by matching splits pattern
+        m = re.match(r'(.+)'.join(self._splits) + r'$', c.get_attrib_span(self.attrib))
+        if m is None:
+            return 0
+
+        # Then, recursively apply matchers
+        for i,op in enumerate(self._ops):
+            if self.children[op].f(c[m.start(i+1):m.end(i+1)]) == 0:
+                return 0
+        return 1
+
+
 class RegexMatch(NgramMatcher):
     """Base regex class- does not specify specific semantics of *what* is being matched yet"""
     def init(self):
-        self.rgx         = self.opts['rgx']
+        try:
+            self.rgx = self.opts['rgx']
+        except KeyError:
+            raise Exception("Please supply a regular expression string r as rgx=r.")
         self.ignore_case = self.opts.get('ignore_case', True)
         self.attrib      = self.opts.get('attrib', WORDS)
         self.sep         = self.opts.get('sep', " ")

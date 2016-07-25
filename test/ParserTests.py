@@ -6,7 +6,7 @@ from snorkel.parser import *
 ROOT = os.environ['SNORKELHOME']
 
 class TestParsers(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         cls.sp = SentenceParser()
@@ -38,10 +38,10 @@ class TestParsers(unittest.TestCase):
         corpus = Corpus(xml_parser, sent_parser, max_docs=20)
 
         print len(corpus.get_docs())
-        print len(corpus.get_sentences())
+        print len(corpus.get_contexts())
 
         self.assertEqual(corpus.get_docs(), gold_docs)
-        self.assertEqual(corpus.get_sentences(), gold_sents)
+        self.assertEqual(corpus.get_contexts(), gold_sents)
 
 if __name__ == '__main__':
     unittest.main()

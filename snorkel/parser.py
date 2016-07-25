@@ -10,12 +10,145 @@ import signal
 import sys
 import warnings
 from bs4 import BeautifulSoup
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 from subprocess import Popen
 import lxml.etree as et
-from itertools import chain
+from snorkel import SnorkelBase, SnorkelSession, snorkel_postgres
+from sqlalchemy import Column, String, Integer, Text, ForeignKey
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.orm import relationship, backref
+from sqlalchemy.types import PickleType
 
-Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
+
+class Corpus(SnorkelBase):
+    """
+    A Corpus holds a set of Documents and associated Contexts.
+    Default iterator is over (Document, Context) tuples
+    """
+
+    __tablename__ = 'corpus'
+    id = Column(String, primary_key=True)
+
+    def __repr__(self):
+        return "Corpus" + str((self.id, self.name))
+
+    def __iter__(self):
+        """Default iterator is over (document, sentence) tuples"""
+        for doc in self.documents:
+            for context in doc.contexts:
+                yield (doc, context)
+
+    def iter_docs(self):
+        for doc in self.documents:
+            yield doc
+
+    def iter_contexts(self):
+        for doc in self.documents:
+            for context in doc.contexts:
+                yield context
+
+    def get_docs(self):
+        return self.documents
+
+    def get_contexts(self):
+        return [context for doc in self.documents for context in doc.contexts]
+
+    def get_doc(self, id):
+        session = SnorkelSession.object_session(self)
+        return session.query(Document).filter(Document.id == id).one()
+
+    def get_context(self, id):
+        session = SnorkelSession.object_session(self)
+        return session.query(Document).filter(Sentence.id == id).one()
+
+    def get_contexts_in(self, doc_id):
+        session = SnorkelSession.object_session(self)
+        return session.query(Document).filter(Document.id == id).one().contexts
+
+
+class Document(SnorkelBase):
+    __tablename__ = 'document'
+    id = Column(String, primary_key=True)
+    corpus_id = Column(String, ForeignKey('corpus.id'))
+    corpus = relationship(Corpus, backref=backref('documents', uselist=True, cascade='delete,all'))
+    name = Column(String)
+    file = Column(String)
+    attribs = Column(PickleType)
+
+    def __repr__(self):
+        return "Document" + str((self.id, self.corpus_id, self.name, self.file, self.attribs))
+
+
+class Context(SnorkelBase):
+    __tablename__ = 'context'
+    id = Column(String, primary_key=True)
+    type = Column(String)
+    document_id = Column(String, ForeignKey('document.id'))
+    document = relationship(Document, backref=backref('contexts', uselist=True, cascade='delete,all'))
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'context',
+        'polymorphic_on': type
+    }
+
+
+class Sentence(Context):
+    __tablename__ = 'sentence'
+    id = Column(String, ForeignKey('context.id'), primary_key=True)
+    position = Column(Integer)
+    text = Column(Text)
+    if snorkel_postgres:
+        words = Column(postgresql.ARRAY(String))
+        lemmas = Column(postgresql.ARRAY(String))
+        poses = Column(postgresql.ARRAY(String))
+        dep_parents = Column(postgresql.ARRAY(Integer))
+        dep_labels = Column(postgresql.ARRAY(String))
+        char_offsets = Column(postgresql.ARRAY(Integer))
+    else:
+        words = Column(PickleType)
+        lemmas = Column(PickleType)
+        poses = Column(PickleType)
+        dep_parents = Column(PickleType)
+        dep_labels = Column(PickleType)
+        char_offsets = Column(PickleType)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'sentence',
+    }
+
+    # This is necessary for backwards compatibility with namedtuples
+    # TODO: Remove it!
+    def _asdict(self):
+        return self.__dict__
+
+    def __repr__(self):
+        return "Sentence" + str((self.id, self.document_id, self.position, self.text, self.words, self.lemmas,
+                                 self.poses, self.dep_parents, self.dep_labels, self.char_offsets))
+
+
+class CorpusParser:
+    """
+    Invokes a DocParser and runs the output through a SentenceParser to produce a Corpus
+    """
+
+    def __init__(self, doc_parser, sent_parser, max_docs=None):
+        self.doc_parser = doc_parser
+        self.sent_parser = sent_parser
+        self.max_docs = max_docs
+
+    def parse(self):
+        corpus = Corpus()
+
+        for i, (doc, text) in enumerate(self.doc_parser.parse()):
+            if self.max_docs and i == self.max_docs:
+                break
+            doc.corpus = corpus
+
+            for _ in self.sent_parser.parse(doc, text):
+                pass
+
+        return corpus
+
 
 class DocParser:
     """Parse a file or directory of files into a set of Document objects."""
@@ -30,18 +163,11 @@ class DocParser:
         - Output: A set of Document objects, which at least have a _text_ attribute,
                   and possibly a dictionary of other attributes.
         """
-        seen_ids = set()
         for fp in self._get_files():
             file_name = os.path.basename(fp)
             if self._can_read(file_name):
-                for doc in self.parse_file(fp, file_name):
-
-                    # Check for null or non-unique docid
-                    if doc.id is None or doc.id in seen_ids:
-                        raise ValueError("Documents must have unique, non-null ids!")
-                    else:
-                        seen_ids.add(doc.id)
-                        yield doc
+                for doc, text in self.parse_file(fp, file_name):
+                    yield doc, text
 
     def parse_file(self, fp, file_name):
         raise NotImplementedError()
@@ -67,7 +193,8 @@ class TextDocParser(DocParser):
     def parse_file(self, fp, file_name):
         with open(fp, 'rb') as f:
             id = re.sub(r'\..*$', '', os.path.basename(fp))
-            yield Document(id=id, file=file_name, text=f.read(), attribs={})
+            yield Document(id=id, file=file_name, attribs={}), f.read()
+
 
 class HTMLDocParser(DocParser):
     """Simple parsing of raw HTML files, assuming one document per file"""
@@ -77,7 +204,7 @@ class HTMLDocParser(DocParser):
             txt = filter(self._cleaner, html.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
             id = re.sub(r'\..*$', '', os.path.basename(fp))
-            yield Document(id=id, file=file_name, text=txt, attribs={})
+            yield Document(id=id, file=file_name, attribs={}), txt
 
     def _can_read(self, fpath):
         return fpath.endswith('.html')
@@ -91,6 +218,7 @@ class HTMLDocParser(DocParser):
 
     def _strip_special(self, s):
         return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
+
 
 class XMLDocParser(DocParser):
     """
@@ -115,15 +243,11 @@ class XMLDocParser(DocParser):
             ids = doc.xpath(self.id)
             id = ids[0] if len(ids) > 0 else None
             attribs = {'root':doc} if self.keep_xml_tree else {}
-            yield Document(id=str(id), file=str(file_name), text=str(text), attribs=attribs)
+            yield Document(id=str(id), file=str(file_name), attribs=attribs), str(text)
 
     def _can_read(self, fpath):
         return fpath.endswith('.xml')
 
-
-Sentence = namedtuple('Sentence', ['id', 'words', 'lemmas', 'poses', 'dep_parents',
-                                   'dep_labels', 'sent_id', 'doc_id', 'text',
-                                   'char_offsets', 'doc_name'])
 
 class SentenceParser:
     def __init__(self, tok_whitespace=False):
@@ -134,7 +258,7 @@ class SentenceParser:
         # In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
         # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
         self.port = 12345
-	self.tok_whitespace = tok_whitespace
+        self.tok_whitespace = tok_whitespace
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
         self.server_pid = Popen(cmd, shell=True).pid
@@ -162,17 +286,17 @@ class SentenceParser:
             except:
               sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
-    def parse(self, s, doc_id=None, doc_name=None):
+    def parse(self, document, text):
         """Parse a raw document as a string into a list of sentences"""
-        if len(s.strip()) == 0:
+        if len(text.strip()) == 0:
             return
-        if isinstance(s, unicode):
-          s = s.encode('utf-8')
-        resp = self.requests_session.post(self.endpoint, data=s, allow_redirects=True)
-        s = s.decode('utf-8')
+        if isinstance(text, unicode):
+          text = text.encode('utf-8')
+        resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
+        text = text.decode('utf-8')
         content = resp.content.strip()
         if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
-          raise ValueError("File {} too long. Max character count is 100K".format(doc_id))
+          raise ValueError("File {} too long. Max character count is 100K".format(document.id))
         blocks = json.loads(content, strict=False)['sentences']
         sent_id = 0
         for block in blocks:
@@ -188,97 +312,46 @@ class SentenceParser:
                 dep_order.append(deps['dependent'])
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
-            parts['sent_id'] = sent_id
-            parts['doc_id'] = doc_id
-            parts['text'] = s[block['tokens'][0]['characterOffsetBegin'] :
+            parts['text'] = text[block['tokens'][0]['characterOffsetBegin'] :
                                 block['tokens'][-1]['characterOffsetEnd']]
-            parts['doc_name'] = doc_name
-            parts['id'] = "%s-%s" % (parts['doc_id'], parts['sent_id'])
+            parts['position'] = sent_id
+            parts['id'] = "sent-%s-%s" % (document.id, parts['position'])
             sent = Sentence(**parts)
+            sent.document = document
             sent_id += 1
             yield sent
 
-    def parse_docs(self, docs):
-        """Parse a list of Document objects into a list of pre-processed Sentences."""
-        sents = []
-        for doc in docs:
-            for sent in self.parse(doc.text, doc.id, doc.file):
-                sents.append(sent)
-        return sents
 
 def sort_X_on_Y(X, Y):
-    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
+    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]   
+
 
 def corenlp_cleaner(words):
-  d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
-       '-RSB-': ']', '-LSB-': '['}
-  return map(lambda w: d[w] if w in d else w, words)
+    d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
+         '-RSB-': ']', '-LSB-': '['}
+    return map(lambda w: d[w] if w in d else w, words)
 
 
-class Corpus(object):
+class SentencesCorpus(object):
     """
-    A Corpus object helps instantiate and then holds a set of Documents and associated Contexts
-    Default iterator is over (Document, Contexts) tuples
-    """
-    def __init__(self, doc_parser, context_parser, max_docs=None):
-
-        # Parse documents
-        print "Parsing documents..."
-        self._docs_by_id = {}
-        for i,doc in enumerate(doc_parser.parse()):
-            if max_docs and i == max_docs:
-                break
-            self._docs_by_id[doc.id] = doc
-
-        # Parse sentences
-        print "Parsing contexts..."
-        self._contexts_by_id     = {}
-        self._contexts_by_doc_id = defaultdict(list)
-        for context in context_parser.parse_docs(self._docs_by_id.values()):
-            self._contexts_by_id[context.id] = context
-            self._contexts_by_doc_id[context.doc_id].append(context)
-
-    def __iter__(self):
-        """Default iterator is over (document, sentence) tuples"""
-        for doc in self.iter_docs():
-            yield (doc, self.get_contexts_in(doc.id))
-
-    def iter_docs(self):
-        return self._docs_by_id.itervalues()
-
-    def iter_contexts(self):
-        return self._contexts_by_id.itervalues()
-
-    def get_docs(self):
-        return self._docs_by_id.values()
-
-    def get_contexts(self):
-        return self._contexts_by_id.values()
-
-    def get_doc(self, id):
-        return self._docs_by_id[id]
-
-    def get_context(self, id):
-        return self._contexts_by_id[id]
-
-    def get_contexts_in(self, doc_id):
-        return self._contexts_by_doc_id[doc_id]
-
-
-class SentencesCorpus(Corpus):
-    """
-    A Corpus object that accepts method names with "sentence" instead of "context",
+    A Corpus decorator that accepts method names with "sentence" instead of "context",
     for backward compatibility's sake.
     """
 
+    # TODO
+    # Pass through unsupported calls to inner corpus
+
+    def __init__(self, corpus):
+        self.corpus = corpus
+
     def iter_sentences(self):
-        return self._contexts_by_id.itervalues()
+        return self.corpus.iter_contexts()
 
     def get_sentences(self):
-        return self._contexts_by_id.values()
+        return self.corpus.get_contexts()
 
     def get_sentence(self, id):
-        return self._contexts_by_id[id]
+        return self.corpus.get_context(id)
 
     def get_sentences_in(self, doc_id):
-        return self._contexts_by_doc_id[doc_id]
+        return self.corpus.get_contexts_in(doc_id)

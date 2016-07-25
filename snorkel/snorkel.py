@@ -11,6 +11,21 @@ warnings.filterwarnings("ignore", module="matplotlib")
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 
+# Object-relational mapping with SQLAlchemy
+# This must be performed before importing other Snorkel modules!
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+if 'SNORKELDB' in os.environ:
+  snorkel_postgres = os.environ['SNORKELDB'].startswith('postgres')
+  snorkel_engine = create_engine(os.environ['SNORKELDB'])
+else:
+  snorkel_postgres = False
+  snorkel_engine = create_engine('sqlite:///snorkel.db')
+SnorkelSession = sessionmaker(bind=snorkel_engine)
+SnorkelBase = declarative_base()
+# End SQLAlchemy setup
+
 # Feature modules
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 from treedlib import compile_relation_feature_generator
@@ -32,6 +47,10 @@ from learning import learn_elasticnet_logreg, odds_to_prob, get_mu_seq,\
 # ddlite LSTM
 from lstm import *
 
+# This call must be performed after all classes that extend SnorkelBase are
+# declared to ensure the database schema is initialized
+SnorkelBase.metadata.create_all(snorkel_engine)
+
 #####################################################################
 ############################ TAGGING UTILS ##########################
 #####################################################################
@@ -45,7 +64,7 @@ def tag_seq(words, seq, tag):
 def tag_seqs(words, seqs, tags):
   """
   Given a list of words, a *list* of lists of indexes, and the corresponding tags
-  This function substitutes the tags for the words coresponding to the index lists,
+  This function substitutes the tags for the words corresponding to the index lists,
   taking care of shifting indexes appropriately after multi-word substitutions
   NOTE: this assumes non-overlapping seqs!
   """
@@ -92,7 +111,7 @@ class candidate_internal(object):
   See entity_internal and relation_internal for examples
   """
   def __init__(self, all_idxs, labels, sent, xt):
-    self.uid = "{}::{}::{}::{}".format(sent.doc_id, sent.sent_id,
+    self.uid = "{}::{}::{}::{}".format(sent.document.id, sent.position,
                                        all_idxs, labels)
     self.all_idxs = all_idxs
     self.labels = labels
@@ -294,8 +313,8 @@ class Relations(Candidates):
       item = self[i]      
       yield dict(
         ext_id          = item.id,
-        doc_id          = item.doc_id,
-        sent_id         = item.sent_id,
+        doc_id          = item.document.id,
+        sent_id         = item.position,
         words           = json.dumps(corenlp_cleaner(item.words)),
         e1_idxs         = json.dumps(item.e1_idxs),
         e1_label        = item.e1_label,
@@ -382,8 +401,8 @@ class Entities(Candidates):
       item = self[i]    
       yield dict(
         ext_id          = item.id,
-        doc_id          = item.doc_id,
-        sent_id         = item.sent_id,
+        doc_id          = item.document.id,
+        sent_id         = item.position,
         words           = json.dumps(corenlp_cleaner(item.words)),
         idxs            = json.dumps(item.idxs),
         label           = item.label,

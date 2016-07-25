@@ -406,14 +406,12 @@ class Entities(Candidates):
 
 def precision(gt, pred):
   pred, gt = np.ravel(pred), np.ravel(gt)
-  #pred[pred == 0] = 1
   tp = np.sum((pred == 1) * (gt == 1))
   fp = np.sum((pred == 1) * (gt != 1))
   return 0 if tp == 0 else float(tp) / float(tp + fp)
 
 def recall(gt, pred):
   pred, gt = np.ravel(pred), np.ravel(gt)
-  #pred[pred == 0] = 1
   tp = np.sum((pred == 1) * (gt == 1))
   p = np.sum(gt == 1)
   return 0 if tp == 0 else float(tp) / float(p)

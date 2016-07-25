@@ -1031,7 +1031,7 @@ class DDLiteModel:
     self.lf_marginals = odds_to_prob(np.ravel(LF.dot(self.lf_weights)))
     
   def train_model_lr(self, bias=False, n_mu=5, mu_min_ratio=1e-6, 
-                     plot=True, log=True, joint=False, **kwargs):
+                     plot=True, log=True, joint=False, lf_w0=10, **kwargs):
     """ Learn second stage of pipeline with logistic regression """
     print "Running in %s mode..." % joint
     self.model = "Logistic regression"
@@ -1045,7 +1045,7 @@ class DDLiteModel:
     if joint:
       LF = self.lf_matrix.tocsr()
       F  = sparse.hstack([F, LF], format='csr')
-      kwargs['w0'] = np.concatenate([kwargs['w0'], 10*np.ones(LF.shape[1])])
+      kwargs['w0'] = np.concatenate([kwargs['w0'], lf_w0*np.ones(LF.shape[1])])
     kwargs['unreg'] = [F.shape[1]-1] if bias else []
     # Handle mu values
     mu_seq = kwargs.get('mu', None)
@@ -1066,7 +1066,8 @@ class DDLiteModel:
       mu_seq = get_mu_seq(n_mu, rate, alpha, mu_min_ratio)
     # Train model
     tc = np.intersect1d(self.training(), self.covered())
-    #kwargs['marginals'] = self.lf_marginals[tc]
+    if not joint:
+      kwargs['marginals'] = self.lf_marginals[tc]
     weights = dict()
     for mu in mu_seq:
       weights[mu] = learn_elasticnet_logreg(F[tc,:], mu=mu, **kwargs)

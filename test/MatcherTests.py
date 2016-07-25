@@ -38,14 +38,13 @@ class TestMatchers(unittest.TestCase):
         pass
 
     def test_slot_fill_match(self):
-        sent_parser = SentenceParser()
         
         # Test 1
         dm        = DictionaryMatch(d=['X','Y','Z'])
         rm        = RegexMatchSpan(rgx=r'\d{3}')
         sf        = SlotFillMatch(dm, rm, pattern="{0}-{1}")
         test_sent = "X-123 causes gas."
-        sent      = list(sent_parser.parse(test_sent))[0]
+        sent      = list(self.sp.parse(test_sent))[0]
         matches   = list(sf.apply(self.ngrams.apply(sent)))
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0].get_span(), "X-123")
@@ -54,7 +53,7 @@ class TestMatchers(unittest.TestCase):
         dm        = DictionaryMatch(d=['Burritos', 'Tacos'], ignore_case=True)
         sf        = SlotFillMatch(dm, pattern="{0} and/or {0}")
         test_sent = "Burritos and/or tacos causes gas."
-        sent      = list(sent_parser.parse(test_sent))[0]
+        sent      = list(self.sp.parse(test_sent))[0]
         matches   = list(sf.apply(self.ngrams.apply(sent)))
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0].get_span(), "Burritos and/or tacos")

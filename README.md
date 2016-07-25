@@ -2,9 +2,9 @@
 
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 
-#### Sponsored by: 
+## Acknowledgements
 <img src="figs/darpa.JPG" width="80" height="80" />
-#### as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043.
+Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043.
 
 ## Versions
 * `master`: Current stable development version (v0.3)
@@ -23,7 +23,7 @@ In the data programming approach to developing a machine learning system, the de
 
 At a high level, the idea is that developers can focus on writing labeling functions&mdash;which are just (Python) functions that provide a label for some subset of data points&mdash;and not think about algorithms _or_ features!
 
-Snorkel is very much a work in progress, but some people have already begun developing applications with it, and initial feedback has been positive... let us know what you think, and how we can improve it, in the [Issues](https://github.com/HazyResearch/ddlite/issues) section!
+**_Snorkel is very much a work in progress_**, but some people have already begun developing applications with it, and initial feedback has been positive... let us know what you think, and how we can improve it, in the [Issues](https://github.com/HazyResearch/ddlite/issues) section!
 
 ### References
 * Technical report on Data Programming: [https://arxiv.org/abs/1605.07723](https://arxiv.org/abs/1605.07723)
@@ -51,6 +51,11 @@ source .virtualenv/bin/activate
 pip install --requirement python-package-requirement.txt
 ```
 
+Finally, enable `ipywidgets`:
+```bash
+jupyter nbextension enable --py widgetsnbextension --sys-prefix
+```
+
 *Note: if you have an issue with the matplotlib install related to the module `freetype`, see [this post](http://stackoverflow.com/questions/20533426/ubuntu-running-pip-install-gives-error-the-following-required-packages-can-no); if you have an issue installing ipython, try [upgrading setuptools](http://stackoverflow.com/questions/35943606/error-on-installing-ipython-for-python-3-sys-platform-darwin-and-platform)*
 
 Alternatively, they could be installed system-wide if `sudo pip` is used instead of `pip` in the last command without the virtualenv setup and activation.
@@ -58,7 +63,7 @@ Alternatively, they could be installed system-wide if `sudo pip` is used instead
 ## Learning how to use Snorkel
 New tutorial (in progress; covers through candidate extraction for entities):
 ```
-tutorial/CRD_tutorial.ipynb
+tutorial/CDR_tutorial.ipynb
 ```
 
 Supported legacy tutorial (covers full pipeline):
@@ -67,7 +72,11 @@ Supported legacy tutorial (covers full pipeline):
 ## Documentation
 To generate documentation (built using [pdoc](https://github.com/BurntSushi/pdoc)), run `./generate_docs.sh`.
 
-### Jupyter Notebook Best Practices
+## Issues
+We like [issues](https://github.com/HazyResearch/snorkel/issues) as a place to put bugs, questions, feature requests, etc- don't be shy!
+If submitting an issue about a bug, however, **please provide a pointer to a notebook (and relevant data) to reproduce it.**
+
+## Jupyter Notebook Best Practices
 
 Snorkel is built specifically with usage in **Jupyter/IPython notebooks** in mind; an incomplete set of best practices for the notebooks:
 

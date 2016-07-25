@@ -82,8 +82,9 @@ class Document(SnorkelBase):
 class Context(SnorkelBase):
     __tablename__ = 'context'
     id = Column(String, primary_key=True)
-    document_id = Column(Integer, ForeignKey('document.id'))
-    document = relationship(Document, backref=backref('sentences', uselist=True, cascade='delete,all'))
+    type = Column(String)
+    document_id = Column(String, ForeignKey('document.id'))
+    document = relationship(Document, backref=backref('contexts', uselist=True, cascade='delete,all'))
 
     __mapper_args__ = {
         'polymorphic_identity': 'context',
@@ -130,25 +131,23 @@ class CorpusParser:
     Invokes a DocParser and runs the output through a SentenceParser to produce a Corpus
     """
 
-    def __init__(self, corpus, doc_parser, sent_parser, max_docs=None):
-        self.corpus = corpus
+    def __init__(self, doc_parser, sent_parser, max_docs=None):
         self.doc_parser = doc_parser
         self.sent_parser = sent_parser
         self.max_docs = max_docs
 
     def parse(self):
-        session = SnorkelSession.object_session(self.corpus)
+        corpus = Corpus()
 
         for i, (doc, text) in enumerate(self.doc_parser.parse()):
             if self.max_docs and i == self.max_docs:
                 break
-            doc.corpus = self.corpus
-            session.add(doc)
+            doc.corpus = corpus
 
-            for sent in self.sent_parser.parse(doc, text):
-                session.add(sent)
+            for _ in self.sent_parser.parse(doc, text):
+                pass
 
-        session.commit()
+        return corpus
 
 
 class DocParser:
@@ -316,8 +315,9 @@ class SentenceParser:
             parts['text'] = text[block['tokens'][0]['characterOffsetBegin'] :
                                 block['tokens'][-1]['characterOffsetEnd']]
             parts['position'] = sent_id
-            parts['document_id'] = document.id
+            parts['id'] = "sent-%s-%s" % (document.id, parts['position'])
             sent = Sentence(**parts)
+            sent.document = document
             sent_id += 1
             yield sent
 

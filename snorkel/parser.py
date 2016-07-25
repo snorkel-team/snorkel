@@ -22,13 +22,12 @@ from sqlalchemy.types import PickleType
 
 class Corpus(SnorkelBase):
     """
-    A Corpus holds a set of Documents and associated Sentences.
-    Default iterator is over (Document, Sentences) tuples
+    A Corpus holds a set of Documents and associated Contexts.
+    Default iterator is over (Document, Context) tuples
     """
 
     __tablename__ = 'corpus'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
+    id = Column(String, primary_key=True)
 
     def __repr__(self):
         return "Corpus" + str((self.id, self.name))
@@ -36,41 +35,41 @@ class Corpus(SnorkelBase):
     def __iter__(self):
         """Default iterator is over (document, sentence) tuples"""
         for doc in self.documents:
-            for sentence in doc.sentences:
-                yield (doc, sentence)
+            for context in doc.contexts:
+                yield (doc, context)
 
     def iter_docs(self):
         for doc in self.documents:
             yield doc
 
-    def iter_sentences(self):
+    def iter_contexts(self):
         for doc in self.documents:
-            for sentence in doc.sentences:
-                yield sentence
+            for context in doc.contexts:
+                yield context
 
     def get_docs(self):
         return self.documents
 
-    def get_sentences(self):
-        return [sentence for doc in self.documents for sentence in doc.sentences]
+    def get_contexts(self):
+        return [context for doc in self.documents for context in doc.contexts]
 
     def get_doc(self, id):
         session = SnorkelSession.object_session(self)
         return session.query(Document).filter(Document.id == id).one()
 
-    def get_sentence(self, id):
+    def get_context(self, id):
         session = SnorkelSession.object_session(self)
         return session.query(Document).filter(Sentence.id == id).one()
 
-    def get_sentences_in(self, doc_id):
+    def get_contexts_in(self, doc_id):
         session = SnorkelSession.object_session(self)
-        return session.query(Document).filter(Document.id == id).one().sentences
+        return session.query(Document).filter(Document.id == id).one().contexts
 
 
 class Document(SnorkelBase):
     __tablename__ = 'document'
-    id = Column(Integer, primary_key=True)
-    corpus_id = Column(Integer, ForeignKey('corpus.id'))
+    id = Column(String, primary_key=True)
+    corpus_id = Column(String, ForeignKey('corpus.id'))
     corpus = relationship(Corpus, backref=backref('documents', uselist=True, cascade='delete,all'))
     name = Column(String)
     file = Column(String)
@@ -80,11 +79,21 @@ class Document(SnorkelBase):
         return "Document" + str((self.id, self.corpus_id, self.name, self.file, self.attribs))
 
 
-class Sentence(SnorkelBase):
-    __tablename__ = 'sentence'
-    id = Column(Integer, primary_key=True)
+class Context(SnorkelBase):
+    __tablename__ = 'context'
+    id = Column(String, primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
     document = relationship(Document, backref=backref('sentences', uselist=True, cascade='delete,all'))
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'context',
+        'polymorphic_on': type
+    }
+
+
+class Sentence(Context):
+    __tablename__ = 'sentence'
+    id = Column(String, ForeignKey('context.id'), primary_key=True)
     position = Column(Integer)
     text = Column(Text)
     if snorkel_postgres:
@@ -101,6 +110,10 @@ class Sentence(SnorkelBase):
         dep_parents = Column(PickleType)
         dep_labels = Column(PickleType)
         char_offsets = Column(PickleType)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'sentence',
+    }
 
     # This is necessary for backwards compatibility with namedtuples
     # TODO: Remove it!
@@ -246,7 +259,7 @@ class SentenceParser:
         # In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
         # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
         self.port = 12345
-	self.tok_whitespace = tok_whitespace
+        self.tok_whitespace = tok_whitespace
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
         self.server_pid = Popen(cmd, shell=True).pid
@@ -318,87 +331,27 @@ def corenlp_cleaner(words):
          '-RSB-': ']', '-LSB-': '['}
     return map(lambda w: d[w] if w in d else w, words)
 
-    def parse_docs(self, docs):
-        """Parse a list of Document objects into a list of pre-processed Sentences."""
-        sents = []
-        for doc in docs:
-            for sent in self.parse(doc.text, doc.id, doc.file):
-                sents.append(sent)
-        return sents
 
-def sort_X_on_Y(X, Y):
-    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
-
-def corenlp_cleaner(words):
-  d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
-       '-RSB-': ']', '-LSB-': '['}
-  return map(lambda w: d[w] if w in d else w, words)
-
-
-class Corpus(object):
+class SentencesCorpus(object):
     """
-    A Corpus object helps instantiate and then holds a set of Documents and associated Contexts
-    Default iterator is over (Document, Contexts) tuples
-    """
-    def __init__(self, doc_parser, context_parser, max_docs=None):
-
-        # Parse documents
-        print "Parsing documents..."
-        self._docs_by_id = {}
-        for i,doc in enumerate(doc_parser.parse()):
-            if max_docs and i == max_docs:
-                break
-            self._docs_by_id[doc.id] = doc
-
-        # Parse sentences
-        print "Parsing contexts..."
-        self._contexts_by_id     = {}
-        self._contexts_by_doc_id = defaultdict(list)
-        for context in context_parser.parse_docs(self._docs_by_id.values()):
-            self._contexts_by_id[context.id] = context
-            self._contexts_by_doc_id[context.doc_id].append(context)
-
-    def __iter__(self):
-        """Default iterator is over (document, sentence) tuples"""
-        for doc in self.iter_docs():
-            yield (doc, self.get_contexts_in(doc.id))
-
-    def iter_docs(self):
-        return self._docs_by_id.itervalues()
-
-    def iter_contexts(self):
-        return self._contexts_by_id.itervalues()
-
-    def get_docs(self):
-        return self._docs_by_id.values()
-
-    def get_contexts(self):
-        return self._contexts_by_id.values()
-
-    def get_doc(self, id):
-        return self._docs_by_id[id]
-
-    def get_context(self, id):
-        return self._contexts_by_id[id]
-
-    def get_contexts_in(self, doc_id):
-        return self._contexts_by_doc_id[doc_id]
-
-
-class SentencesCorpus(Corpus):
-    """
-    A Corpus object that accepts method names with "sentence" instead of "context",
+    A Corpus decorator that accepts method names with "sentence" instead of "context",
     for backward compatibility's sake.
     """
 
+    # TODO
+    # Pass through unsupported calls to inner corpus
+
+    def __init__(self, corpus):
+        self.corpus = corpus
+
     def iter_sentences(self):
-        return self._contexts_by_id.itervalues()
+        return self.corpus.iter_contexts()
 
     def get_sentences(self):
-        return self._contexts_by_id.values()
+        return self.corpus.get_contexts()
 
     def get_sentence(self, id):
-        return self._contexts_by_id[id]
+        return self.corpus.get_context(id)
 
     def get_sentences_in(self, doc_id):
-        return self._contexts_by_doc_id[doc_id]
+        return self.corpus.get_contexts_in(doc_id)

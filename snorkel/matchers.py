@@ -158,6 +158,38 @@ class Concat(NgramMatcher):
         return 0
 
 
+class SlotFillMatch(NgramMatcher):
+    """Matches a slot fill pattern of matchers _at the character level_"""
+    def init(self):
+        self.attrib = self.opts.get('attrib', WORDS)
+        try:
+            self.pattern = self.opts['pattern']
+        except KeyError:
+            raise Exception("Please supply a slot-fill pattern p as pattern=p.")
+
+        # Parse slot fill pattern
+        split        = re.split(r'\{(\d+)\}', self.pattern)
+        self._ops    = map(int, split[1::2])
+        self._splits = split[::2]
+
+        # Check for correct number of child matchers / slots
+        if len(self.children) != len(set(self._ops)):
+            raise ValueError("Number of provided matchers (%s) != number of slots (%s)." \
+                    % (len(self.children), len(set(self._ops))))
+
+    def f(self, c):
+        # First, filter candidates by matching splits pattern
+        m = re.match(r'(.+)'.join(self._splits) + r'$', c.get_attrib_span(self.attrib))
+        if m is None:
+            return 0
+
+        # Then, recursively apply matchers
+        for i,op in enumerate(self._ops):
+            if self.children[op].f(c[m.start(i+1):m.end(i+1)]) == 0:
+                return 0
+        return 1
+
+
 class RegexMatch(NgramMatcher):
     """Base regex class- does not specify specific semantics of *what* is being matched yet"""
     def init(self):

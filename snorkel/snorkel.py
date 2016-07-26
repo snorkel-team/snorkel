@@ -415,8 +415,7 @@ class Learner(object):
         - _A test set to compute performance against, which consists of a dict mapping candidate id -> T/F_
     """
     # TODO: Tuner (GridSearch) class that wraps this! 
-    #def __init__(self, candidates, lfs, model=LogReg, featurizer=None, test_set=None):
-    def __init__(self, candidates, lfs, model=None, featurizer=None, test_set=None):
+    def __init__(self, candidates, lfs, model=LogReg(), featurizer=None, test_set=None):
         
         # (1) Generate the noisy training set T by applying the LFs
         print "Applying LFs to Candidates..."
@@ -461,7 +460,7 @@ class Learner(object):
         self.w0 = np.concatenate([lf_w0*np.ones(m), feat_w0*np.ones(f)])
 
         # Train model
-        self.w = self.model(self.X, w0=self.w0, **model_hyperparams).train()
+        self.w = self.model.train(self.X, w0=self.w0, **model_hyperparams)
         
         # Print out score if test_set was provided
         self._print_test_score()
@@ -483,7 +482,7 @@ class PipelinedLearner(Learner):
         # TODO
 
         # Learn model over features
-        #self.w = self.model( \
+        #self.w = self.model.train( \
         #    self.F, training_marginals=self.training_marginals, w0=feat_w0*np.ones(f), **model_hyperparams)
 
         # Print out score if test_set was provided

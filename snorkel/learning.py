@@ -83,93 +83,103 @@ def transform_sample_stats(Xt, t, f, Xt_abs=None):
   p_correct = (m + 1) / 2
   return p_correct, n_pred
 
-def learn_elasticnet_logreg(X, n_iter=500, w0=None, rate=DEFAULT_RATE, 
-                            alpha=DEFAULT_ALPHA, mu=DEFAULT_MU, 
-                            sample=True, n_samples=100,
-                            unreg=[], marginals=None, evidence=None,
-                            warm_starts=False, tol=1e-6, verbose=True):
-  """ Perform SGD wrt the weights w
-       * w0 is the initial guess for w
-       * sample and n_samples determine SGD batch size
-       * alpha is the elastic net penalty mixing parameter (0=ridge, 1=lasso)
-       * mu is the sequence of elastic net penalties to search over
-  """
-  # Data matrix
-  N, R = X.shape
-  # Pre-generate other matrices
-  Xt = X.transpose()
-  Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else np.abs(Xt)  
-  # Initial weights
-  w0 = w0 if w0 is not None else np.zeros(R)
-  # Transform marginals
-  if marginals is not None:
-    marginals = np.ravel(marginals)
-    if len(marginals) != N:
-      raise ValueError("Need {} marginals".format(N))
-    t,f = marginals, 1-marginals
-  # Set evidence
-  if evidence is not None:
-    if marginals is not None:
-      warnings.warn("Both evidence and marginals provided. Ignoring evidence.")
-    else: 
-      evidence = np.ravel(evidence)
-      if len(evidence) != N:
-        raise ValueError("Need {} evidence variables".format(N))
-  # Check values
-  if not (0 <= alpha <= 1):
-    raise ValueError("alpha must be in [0,1]")
-  if mu < 0:
-    raise ValueError("mu must be non-negative")
-  # Initialize training
-  w = w0.copy()
-  g = np.zeros(R)
-  l = np.zeros(R)
-  g_size = 0
-  # Gradient descent
-  if verbose:
-    print "Begin training for rate={}, mu={}".format(rate, mu)
-  for step in range(n_iter):
-    # Get the expected LF accuracy
-    if marginals is None:
-      t,f = sample_data(X, w, n_samples=n_samples) if sample\
-            else exact_data(X, w, evidence)
-    p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
-    # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
-    l = np.clip(log_odds(p_correct), -10, 10)
-    # SGD step with normalization by the number of samples
-    g0 = (n_pred*(w - l)) / np.sum(n_pred)
-    # Momentum term for faster training
-    g = 0.95*g0 + 0.05*g
-    # Check for convergence
-    wn = np.linalg.norm(w, ord=2)
-    g_size = np.linalg.norm(g, ord=2)
-    if step % 250 == 0 and verbose:    
-      print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step,g_size) 
-    if (wn < 1e-12 or g_size / wn < tol) and step >= 10:
+
+class NoiseAwareModel(object):
+    """Simple abstract base class for a model."""
+    def __init__(self):
+        pass
+
+    def learn_weights(self, X, training_marginals=None, **hyperparams):
+        raise NotImplementedError()
+
+
+class LogReg(NoiseAwareModel):
+    """Logistic regression."""
+    def learn_weights(X, training_marginals=None, n_iter=500, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, \
+            mu=DEFAULT_MU, sample=True, n_samples=100, unreg=[], evidence=None, warm_starts=False, tol=1e-6, \
+            verbose=True):
+      """
+      Perform SGD wrt the weights w
+           * w0 is the initial guess for w
+           * sample and n_samples determine SGD batch size
+           * alpha is the elastic net penalty mixing parameter (0=ridge, 1=lasso)
+           * mu is the sequence of elastic net penalties to search over
+      """
+      # Data matrix
+      N, R = X.shape
+      # Pre-generate other matrices
+      Xt = X.transpose()
+      Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else np.abs(Xt)  
+      # Initial weights
+      w0 = w0 if w0 is not None else np.zeros(R)
+      # Transform marginals
+      if marginals is not None:
+        marginals = np.ravel(marginals)
+        if len(marginals) != N:
+          raise ValueError("Need {} marginals".format(N))
+        t,f = marginals, 1-marginals
+      # Set evidence
+      if evidence is not None:
+        if marginals is not None:
+          warnings.warn("Both evidence and marginals provided. Ignoring evidence.")
+        else: 
+          evidence = np.ravel(evidence)
+          if len(evidence) != N:
+            raise ValueError("Need {} evidence variables".format(N))
+      # Check values
+      if not (0 <= alpha <= 1):
+        raise ValueError("alpha must be in [0,1]")
+      if mu < 0:
+        raise ValueError("mu must be non-negative")
+      # Initialize training
+      w = w0.copy()
+      g = np.zeros(R)
+      l = np.zeros(R)
+      g_size = 0
+      # Gradient descent
       if verbose:
-        print "SGD converged for mu={} after {} steps".format(mu, step)
-      break
-    # Update weights
-    w -= rate * g
-    # Store weights to not be regularized      
-    w_unreg = w[unreg].copy()
-    # Apply elastic net penalty
-    soft = np.abs(w) - rate * alpha * mu
-    ridge_pen = (1 + (1-alpha) * rate * mu)
-    #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
-    w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
-    # Unregularize
-    w[unreg] = w_unreg    
-  # SGD did not converge    
-  else:
-    if verbose:
-      print "Final gradient magnitude for rate={}, mu={}: {:.3f}".format(rate,
-                                                                         mu,
-                                                                         g_size)
-  # Return learned weights  
-  return w
-  
+        print "Begin training for rate={}, mu={}".format(rate, mu)
+      for step in range(n_iter):
+        # Get the expected LF accuracy
+        if marginals is None:
+          t,f = sample_data(X, w, n_samples=n_samples) if sample\
+                else exact_data(X, w, evidence)
+        p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
+        # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
+        l = np.clip(log_odds(p_correct), -10, 10)
+        # SGD step with normalization by the number of samples
+        g0 = (n_pred*(w - l)) / np.sum(n_pred)
+        # Momentum term for faster training
+        g = 0.95*g0 + 0.05*g
+        # Check for convergence
+        wn = np.linalg.norm(w, ord=2)
+        g_size = np.linalg.norm(g, ord=2)
+        if step % 250 == 0 and verbose:    
+          print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step,g_size) 
+        if (wn < 1e-12 or g_size / wn < tol) and step >= 10:
+          if verbose:
+            print "SGD converged for mu={} after {} steps".format(mu, step)
+          break
+        # Update weights
+        w -= rate * g
+        # Store weights to not be regularized      
+        w_unreg = w[unreg].copy()
+        # Apply elastic net penalty
+        soft = np.abs(w) - rate * alpha * mu
+        ridge_pen = (1 + (1-alpha) * rate * mu)
+        #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
+        w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
+        # Unregularize
+        w[unreg] = w_unreg    
+      # SGD did not converge    
+      else:
+        if verbose:
+          print "Final gradient magnitude for rate={}, mu={}: {:.3f}".format(rate,
+                                                                             mu,
+                                                                             g_size)
+      # Return learned weights  
+      return w
+      
 def get_mu_seq(n, rate, alpha, min_ratio):
   mv = (max(float(1 + rate * 10), float(rate * 11)) / (alpha + 1e-3))
   return np.logspace(np.log10(mv * min_ratio), np.log10(mv), n)
-  

@@ -1,24 +1,70 @@
-import sys
-from collections import defaultdict
 from itertools import chain
-from time import time
 from multiprocessing import Process, Queue, JoinableQueue
+from snorkel import SnorkelBase, SnorkelSession
+from parser import Context
+from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy.orm import relationship, backref
+from sqlalchemy.types import PickleType
 from Queue import Empty
 
 
-class Candidate(object):
-    """A candidate object, **uniquely identified by its id**"""
-    def __init__(self, id):
-        self.id = id
-    
-    def __eq__(self, other):
-        try:
-            return self.id == other.id
-        except:
-            raise NotImplementedError()
-    
-    def __hash__(self):
-        return hash(self.id)
+QUEUE_COLLECT_TIMEOUT = 5
+
+
+class Candidates(SnorkelBase):
+    """A named collection of Candidate objects."""
+    __tablename__ = 'candidates'
+    id = Column(String, primary_key=True)
+
+    def __repr__(self):
+        return "Candidates" + str((self.id,))
+
+    def __iter__(self):
+        """Default iterator is over Candidate objects"""
+        for candidate in self.candidates:
+            yield candidate
+
+    def get_candidates(self):
+        return self.candidates
+
+    def get_candidate(self, candidate_id):
+        """Retrieve a Candidate by id"""
+        session = SnorkelSession.object_session(self)
+        return session.query(Candidate).filter(Candidate.id == candidate_id).one()
+
+    def get_candidates_in(self, context_id):
+        """Return the candidates in a specific context (e.g. Sentence)"""
+        session = SnorkelSession.object_session(self)
+        return session.query(Candidate).filter(Context.id == context_id)
+
+    def gold_stats(self, gold_set):
+        """Return precision and recall relative to a "gold" set of candidates of the same type"""
+        # TODO: Make this efficient via SQL
+        gold = gold_set if isinstance(gold_set, set) else set(gold_set)
+        cs   = self.get_candidates()
+        nc   = len(cs)
+        ng   = len(gold)
+        both = len(gold.intersection(cs))
+        print "# of gold annotations\t= %s" % ng
+        print "# of candidates\t\t= %s" % nc
+        print "Candidate recall\t= %0.3f" % (both / float(ng),)
+        print "Candidate precision\t= %0.3f" % (both / float(nc),)
+
+
+class Candidate(SnorkelBase):
+    """
+    A candidate k-arity relation, **uniquely identified by its id**.
+    """
+    __tablename__ = 'candidate'
+    id = Column(String, primary_key=True)
+    type = Column(String)
+    context_id = Column(String, ForeignKey('context.id'))
+    context = relationship(Context, backref=backref('candidates', uselist=True, cascade='delete,all'))
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'candidate',
+        'polymorphic_on': type
+    }
 
 
 class CandidateSpace(object):
@@ -52,40 +98,48 @@ class CandidateExtractorProcess(Process):
                 break
 
 
-QUEUE_COLLECT_TIMEOUT = 5
-
-class Candidates(object):
+class CandidateExtractor(object):
     """
-    A generic class to hold and index a set of Candidates
+    A generic class to create a set of Candidate objects.
+
     Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
     a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
     """
     def __init__(self, candidate_space, matcher, contexts, parallelism=False, join_key='context_id'):
+        self.candidate_space = candidate_space
+        self.matcher = matcher
+        self.contexts = contexts
+        self.parallelism = parallelism
         self.join_key = join_key
+
         self.ps = []
 
-        # Extract & index candidates
-        print "Extracting candidates..."
-        if parallelism in [1, False]:
-            candidates = self._extract(candidate_space, matcher, contexts)
+    def extract(self):
+        candidates = Candidates()
+
+        if self.parallelism in [1, False]:
+            for candidate in self._extract():
+                candidate.candidates = candidates
         else:
-            candidates = self._extract_multiprocess(candidate_space, matcher, contexts, parallelism=parallelism)
-        self._index(candidates)
+            for candidate in self._extract_multiprocess():
+                candidate.candidates = candidates
 
-    def _extract(self, candidate_space, matcher, contexts):
-        return chain.from_iterable(matcher.apply(candidate_space.apply(c)) for c in contexts)
+        return candidates
 
-    def _extract_multiprocess(self, candidate_space, matcher, contexts, parallelism=2):
+    def _extract(self):
+        return chain.from_iterable(self.matcher.apply(self.candidate_space.apply(c)) for c in self.contexts)
+
+    def _extract_multiprocess(self):
         contexts_in    = JoinableQueue()
         candidates_out = Queue()
 
         # Fill the in-queue with contexts
-        for context in contexts:
+        for context in self.contexts:
             contexts_in.put(context)
 
         # Start worker Processes
-        for i in range(parallelism):
-            p  = CandidateExtractorProcess(candidate_space, matcher, contexts_in, candidates_out)
+        for i in range(self.parallelism):
+            p = CandidateExtractorProcess(self.candidate_space, self.matcher, contexts_in, candidates_out)
             p.start()
             self.ps.append(p)
         
@@ -101,80 +155,39 @@ class Candidates(object):
                 break
         return candidates
 
-    def _index(self, candidates):
-        self._candidates_by_id         = {}
-        self._candidates_by_context_id = defaultdict(list)
-        for c in candidates:
-            self._candidates_by_id[c.id] = c
-            self._candidates_by_context_id[c.__dict__[self.join_key]].append(c)
-
-    def __iter__(self):
-        """Default iterator is over Candidates"""
-        return self._candidates_by_id.itervalues()
-
-    def get_candidates(self):
-        return self._candidates_by_id.values()
-
-    def get_candidate(self, id):
-        """Retrieve a candidate by candidate id"""
-        return self._candidates_by_id[id]
-    
-    def get_candidates_in(self, context_id):
-        """Return the candidates in a specific context (e.g. Sentence)"""
-        return self._candidates_by_context_id[context_id]
-
-    def gold_stats(self, gold_set):
-        """Return precision and recall relative to a "gold" set of candidates of the same type"""
-        gold = gold_set if isinstance(gold_set, set) else set(gold_set)
-        cs   = self.get_candidates()
-        nc   = len(cs)
-        ng   = len(gold)
-        both = len(gold.intersection(cs))
-        print "# of gold annotations\t= %s" % ng
-        print "# of candidates\t\t= %s" % nc
-        print "Candidate recall\t= %0.3f" % (both / float(ng),)
-        print "Candidate precision\t= %0.3f" % (both / float(nc),)
-    
-
-# Basic sentence attributes
-WORDS        = 'words'
-CHAR_OFFSETS = 'char_offsets'
-TEXT         = 'text'
 
 class Ngram(Candidate):
-    """A span of _n_ tokens, identified by sentence id and character-index start, end (inclusive)"""
-    def __init__(self, char_start, char_end, sent, metadata={}):
-        
-        # Inherit full sentence object (tranformed to dict) and check for necessary attribs
-        self.sentence = sent if isinstance(sent, dict) else sent._asdict()
-        self.sent_id  = self.sentence['id']
-        REQ_ATTRIBS = ['id', WORDS]
-        if not all([self.sentence.has_key(a) for a in REQ_ATTRIBS]):
-            raise ValueError("Sentence object must have attributes %s to form Ngram object" % ", ".join(REQ_ATTRIBS))
+    """
+    A span of _n_ tokens, identified by Context id and character-index start, end (inclusive).
 
-        # Set basic object attributes
-        self.id          = "%s:%s-%s" % (self.sent_id, char_start, char_end)
-        self.char_start  = char_start
-        self.char_end    = char_end
-        self.char_len    = char_end - char_start + 1
-        self.word_start  = self.char_to_word_index(char_start)
-        self.word_end    = self.char_to_word_index(char_end)
-        self.n           = self.word_end - self.word_start + 1
+    char_offsets are **relative to the Document start**
+    """
+    __tablename__ = 'ngram'
+    id = Column(String, ForeignKey('candidate.id'), primary_key=True)
+    char_start = Column(Integer)
+    char_end = Column(Integer)
+    meta = Column(PickleType)
 
-        # NOTE: We assume that the char_offsets are **relative to the document start**
-        self.sent_offset     = self.sentence[CHAR_OFFSETS][0]
-        self.sent_char_start = self.char_start - self.sent_offset
-        self.sent_char_end   = self.char_end - self.sent_offset
+    __mapper_args__ = {
+        'polymorphic_identity': 'ngram',
+    }
 
-        # A dictionary to hold task-specific metadata e.g. canonical id, category, etc.
-        self.metadata = metadata
+    def __len__(self):
+        return self.char_end - self.char_start + 1
 
-        # To enable generic methods
-        self.context_id = self.sent_id
+    def get_word_start(self):
+        return self.char_to_word_index(self.char_start)
+
+    def get_word_end(self):
+        return self.char_to_word_index(self.char_end)
+
+    def get_n(self):
+        return self.get_word_end() - self.get_word_start() + 1
 
     def char_to_word_index(self, ci):
         """Given a character-level index (offset), return the index of the **word this char is in**"""
-        for i,co in enumerate(self.sentence[CHAR_OFFSETS]):
+        i = None
+        for i, co in enumerate(self.context.char_offsets):
             if ci == co:
                 return i
             elif ci < co:
@@ -183,22 +196,7 @@ class Ngram(Candidate):
 
     def word_to_char_index(self, wi):
         """Given a word-level index, return the character-level index (offset) of the word's start"""
-        return self.sentence[CHAR_OFFSETS][wi]
-    
-    def get_attrib_tokens(self, a):
-        """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""
-        return self.sentence[a][self.word_start:self.word_end+1]
-    
-    def get_attrib_span(self, a, sep=" "):
-        """Get the span of sentence attribute _a_ over the range defined by word_offset, n"""
-        # NOTE: Special behavior for words currently (due to correspondence with char_offsets)
-        if a == WORDS:
-            return self.sentence[TEXT][self.sent_char_start:self.sent_char_end+1]
-        else:
-            return sep.join(self.get_attrib_tokens(a))
-    
-    def get_span(self, sep=" "):
-        return self.get_attrib_span(WORDS)
+        return self.context.char_offsets[wi]
 
     def __getitem__(self, key):
         """
@@ -213,35 +211,30 @@ class Ngram(Candidate):
                 char_end = self.char_start + key.stop - 1
             else:
                 char_end = self.char_end + key.stop
-            return Ngram(char_start, char_end, self.sentence)
+            return Ngram(char_start, char_end, self.context)
         else:
             raise NotImplementedError()
         
     def __repr__(self):
         return '<Ngram("%s", id=%s, chars=[%s,%s], words=[%s,%s])' \
-            % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.word_start, self.word_end)
+            % (" ".join(self.context.words), self.id, self.char_start, self.char_end, self.get_word_start(), self.get_word_end())
 
 
 class Ngrams(CandidateSpace):
     """
-    Defines the space of candidates as all n-grams (n <= n_max) in a sentence _x_,
+    Defines the space of candidates as all n-grams (n <= n_max) in a Sentence _x_,
     indexing by **character offset**.
     """
     def __init__(self, n_max=5):
+        CandidateSpace.__init__(self)
         self.n_max = n_max
     
-    def apply(self, x):
-        s = x if isinstance(x, dict) else x._asdict()
-        try:
-            cos   = s[CHAR_OFFSETS]
-            words = s[WORDS]
-        except:
-            raise ValueError("Input object must have %s, %s attributes" % (CHAR_OFFSET, WORDS))
-
+    def apply(self, context):
         # Loop over all n-grams in **reverse** order (to facilitate longest-match semantics)
-        L = len(cos)
+        L = len(context.char_offsets)
         for l in range(1, self.n_max+1)[::-1]:
             for i in range(L-l+1):
-                ws = words[i:i+l] 
-                cl = cos[i+l-1] - cos[i] + len(words[i+l-1])  # NOTE that we derive char_len without using sep
-                yield Ngram(char_start=cos[i], char_end=cos[i]+cl-1, sent=s)
+                ws = context.words[i:i+l]
+                # NOTE that we derive char_len without using sep
+                cl = context.char_offsets[i+l-1] - context.char_offsets[i] + len(context.words[i+l-1])
+                yield Ngram(char_start=context.char_offsets[i], char_end=context.char_offsets[i]+cl-1, context=context)

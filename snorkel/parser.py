@@ -8,7 +8,6 @@ import re
 import requests
 import signal
 import sys
-import warnings
 from bs4 import BeautifulSoup
 from collections import defaultdict
 from subprocess import Popen
@@ -23,17 +22,18 @@ from sqlalchemy.types import PickleType
 class Corpus(SnorkelBase):
     """
     A Corpus holds a set of Documents and associated Contexts.
-    Default iterator is over (Document, Context) tuples
+
+    Default iterator is over (Document, Context) tuples.
     """
 
     __tablename__ = 'corpus'
     id = Column(String, primary_key=True)
 
     def __repr__(self):
-        return "Corpus" + str((self.id, self.name))
+        return "Corpus" + str((self.id,))
 
     def __iter__(self):
-        """Default iterator is over (document, sentence) tuples"""
+        """Default iterator is over (document, context) tuples"""
         for doc in self.documents:
             for context in doc.contexts:
                 yield (doc, context)
@@ -67,19 +67,20 @@ class Corpus(SnorkelBase):
 
 
 class Document(SnorkelBase):
+    """An object in a Corpus."""
     __tablename__ = 'document'
     id = Column(String, primary_key=True)
     corpus_id = Column(String, ForeignKey('corpus.id'))
     corpus = relationship(Corpus, backref=backref('documents', uselist=True, cascade='delete,all'))
-    name = Column(String)
     file = Column(String)
     attribs = Column(PickleType)
 
     def __repr__(self):
-        return "Document" + str((self.id, self.corpus_id, self.name, self.file, self.attribs))
+        return "Document" + str((self.id, self.corpus_id, self.file, self.attribs))
 
 
 class Context(SnorkelBase):
+    """A piece of content contained in a Document."""
     __tablename__ = 'context'
     id = Column(String, primary_key=True)
     type = Column(String)
@@ -93,6 +94,7 @@ class Context(SnorkelBase):
 
 
 class Sentence(Context):
+    """A sentence Context in a Document."""
     __tablename__ = 'sentence'
     id = Column(String, ForeignKey('context.id'), primary_key=True)
     position = Column(Integer)
@@ -116,11 +118,6 @@ class Sentence(Context):
         'polymorphic_identity': 'sentence',
     }
 
-    # This is necessary for backwards compatibility with namedtuples
-    # TODO: Remove it!
-    def _asdict(self):
-        return self.__dict__
-
     def __repr__(self):
         return "Sentence" + str((self.id, self.document_id, self.position, self.text, self.words, self.lemmas,
                                  self.poses, self.dep_parents, self.dep_labels, self.char_offsets))
@@ -128,7 +125,7 @@ class Sentence(Context):
 
 class CorpusParser:
     """
-    Invokes a DocParser and runs the output through a SentenceParser to produce a Corpus
+    Invokes a DocParser and runs the output through a SentenceParser to produce a Corpus.
     """
 
     def __init__(self, doc_parser, sent_parser, max_docs=None):
@@ -231,7 +228,7 @@ class XMLDocParser(DocParser):
     """
     def __init__(self, path, doc='.//document', text='./text/text()', id='./id/text()',
                     keep_xml_tree=False):
-        self.path = path
+        DocParser.__init__(self, path)
         self.doc = doc
         self.text = text
         self.id = id
@@ -335,11 +332,10 @@ def corenlp_cleaner(words):
 class SentencesCorpus(object):
     """
     A Corpus decorator that accepts method names with "sentence" instead of "context",
-    for backward compatibility's sake.
+    for backwards compatibility.
     """
 
-    # TODO
-    # Pass through unsupported calls to inner corpus
+    # TODO: Pass through unsupported calls to inner corpus
 
     def __init__(self, corpus):
         self.corpus = corpus

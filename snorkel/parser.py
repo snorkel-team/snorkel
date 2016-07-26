@@ -227,7 +227,7 @@ class TableParser(SentenceParser):
 
     def parse_table(self, table, table_id=None, doc_id=None, doc_name=None):
         context_id = "%s-%s" % (doc_id, table_id)
-        cells = []
+        cells = {}
         cell_id = 0
         for row_num, row in enumerate(table.find_all('tr')):
             ancestors = [(row.name, row.attrs.items())] + [(ancestor.name, ancestor.attrs.items()) for ancestor in row.parents if ancestor is not None][:-2]
@@ -251,11 +251,11 @@ class TableParser(SentenceParser):
                         parts['html_attrs'] = [a[0]+"="+a[1] for a in cell.attrs]
                         parts['html_anc_tags'] = html_anc_tags
                         parts['html_anc_attrs'] = html_anc_attrs
-                        cells.append(Cell(**parts))
-                    cell['cell_id'] = cell_id
+                        cells[str(cell_id)] = Cell(**parts)
+                    cell['cell_id'] = str(cell_id)
                     cell_id += 1
         id = context_id
-        return Table(id, doc_id, doc_name, context_id, table_id, cells, table)
+        return Table(id, doc_id, doc_name, context_id, table_id, cells, str(table))
 
     def parse_docs(self, docs):
         """Parse a list of Document objects into a list of pre-processed Tables."""

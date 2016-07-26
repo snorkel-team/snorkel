@@ -255,7 +255,7 @@ class Ngrams(CandidateSpace):
             words = s[WORDS]
             text  = s[TEXT]
         except:
-            raise ValueError("Input object must have attributes: " + ' '.join([CHAR_OFFSET, WORDS, TEXT]))
+            raise ValueError("Input object must have attributes: " + ' '.join([CHAR_OFFSET, WORDS , TEXT]))
 
 
         # Loop over all n-grams in **reverse** order (to facilitate longest-match semantics)
@@ -310,7 +310,7 @@ class CellNgrams(Ngrams):
         except:
             raise ValueError("Input object must have %s attribute" % CELLS)
 
-        for cell in cells:
+        for cell in cells.values():
             for ngram in super(CellNgrams, self).apply(cell):
                 yield CellNgram(cell, ngram)
 

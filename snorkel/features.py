@@ -1,6 +1,8 @@
 from collections import defaultdict
 import scipy.sparse as sparse
 
+from lxml import etree as et
+
 class Featurizer(object):
     def __init__(self, candidates, corpus):
         self.num_cand = candidates.num_candidates()
@@ -48,6 +50,16 @@ class NgramFeaturizer(Featurizer):
     def _featurize(self, sent, context):
         yield "Ngram_features_to_come"
 
+    # def get_ling_feats(self, sent, context):
+    #     get_feats = compile_entity_feature_generator()
+    #     f_index = defaultdict(list)
+    #     for cand in enumerate(self._candidates):
+    #       for feat in get_feats(cand.root, cand.idxs):
+    #         yield feat
+    #       for feat in get_ddlib_feats(cand, cand.idxs):
+    #         f_index["DDLIB_" + feat].append(j)
+    #     return f_index
+
 class CellNgramFeaturizer(NgramFeaturizer):
     def _featurize(self, cell, context):
         for feat in super(CellNgramFeaturizer, self)._featurize(cell, context):
@@ -65,4 +77,30 @@ class CellNgramFeaturizer(NgramFeaturizer):
             yield "HTML_ANC_TAG_" + tag
         for attr in cell.html_anc_attrs:
             yield "HTML_ANC_ATTR_" + attr
-        # TODO: add cell span features here
+        for ngram in self.get_aligned_ngrams(cell, context, axis='row'):
+            yield "ROW_NGRAM_" + ngram
+        for ngram in self.get_aligned_ngrams(cell, context, axis='col'):
+            yield "COL_NGRAM_" + ngram
+
+
+    # NOTE: it may just be simpler to search by row_num, col_num rather than
+    # traversing tree, though other range features may differ
+    def get_aligned_ngrams(self, cell, context, axis='row'):
+
+        root = et.fromstring(context.xhtml)
+        if axis=='row':
+            cell_ids = root.xpath('//*[@cell_id="%s"]/following-sibling::*/@cell_id' % cell.cell_id)
+        if axis=='col':
+            position = len(root.xpath('//*[@cell_id="%s"]/following-sibling::*/@cell_id' % cell.cell_id)) + 1
+            cell_ids = root.xpath('//*[@cell_id][position()=%d]/@cell_id' % position)
+        for cell_id in cell_ids:
+            words = context.cells[str(cell_id)].words
+            for ngram in self.get_ngrams(words):
+                yield ngram
+
+    # replace with a library function?
+    def get_ngrams(self, words, n_max=3):
+        N = len(words)
+        for root in range(N):
+            for n in range(min(n_max, N - root)):
+                yield ' '.join(words[root:root+n+1])

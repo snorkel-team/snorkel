@@ -222,6 +222,15 @@ class RegexMatchEach(RegexMatch):
         return 1 if all([self.r.match(t) is not None for t in c.get_attrib_tokens(self.attrib)]) else 0
 
 
+class NumberMatcher(Matcher):
+    def _f(self, c):
+        try:
+            float(c.get_attrib_span('words'))
+            return 1
+        except:
+            return 0
+
+
 class CandidateExtractor(object):
     """Temporary class for interfacing with the post-candidate-extraction code"""
     def __init__(self, candidate_space, matcher):

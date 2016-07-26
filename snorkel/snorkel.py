@@ -415,17 +415,18 @@ class Learner(object):
         - _A test set to compute performance against, which consists of a dict mapping candidate id -> T/F_
     """
     # TODO: Tuner (GridSearch) class that wraps this! 
-    def __init__(self, candidates, lfs, model=LogReg, featurizer=None, test_set=None):
+    #def __init__(self, candidates, lfs, model=LogReg, featurizer=None, test_set=None):
+    def __init__(self, candidates, lfs, model=None, featurizer=None, test_set=None):
         
         # (1) Generate the noisy training set T by applying the LFs
         print "Applying LFs to Candidates..."
         self.candidates = candidates
         self.lfs        = lfs
 
-        # T_{i,j} is the label (in {-1,0,1}) given by LF i to Candidate j
+        # T_{i,j} is the label (in {-1,0,1}) given to candidate i by LF j
         self.T = self._apply_lfs(self)
 
-        # Generate features; F_{i,j} is 1 if the ith feature applies to Candidate j
+        # Generate features; F_{i,j} is 1 if candidate i has feature j
         if featurizer is not None:
             print "Feauturizing candidates..."
             self.F = featurizer.apply(self.candidates)
@@ -439,24 +440,31 @@ class Learner(object):
         """Apply the labeling functions to the candidates to populate X"""
         # TODO: Parallelize this
         self.X = sparse.lil_matrix((len(self.candidates), len(lfs)))
-        for i,lf in enumerate(self.lfs):
-            for j,c in enumerate(self.candidates):
+        for i,c in enumerate(self.candidates):
+            for j,lf in enumerate(self.lfs):
                 self.X[i,j] = lf(c)
         self.X = self.X.tocsr()
+
+    def _print_test_score():
+        # TODO
+        raise NotImplementedError()
 
     def train_model(self, feat_w0=0.0, lf_w0=1.0, **model_hyperparams):
         """Train model: **as default, use "joint" approach**"""
         # TODO: Bias term
-        m, n = self.T.shape
-        f, _ = self.F.shape
+        n, m = self.T.shape
+        _, f = self.F.shape
         if self.X is None:
-            self.X  = sparse.vstack([self.T, self.F], format='csc')
+            self.X  = sparse.hstack([self.T, self.F], format='csc')
 
         # Set initial values for feature weights
         self.w0 = np.concatenate([lf_w0*np.ones(m), feat_w0*np.ones(f)])
 
         # Train model
         self.w = self.model(self.X, w0=self.w0, **model_hyperparams).train()
+        
+        # Print out score if test_set was provided
+        self._print_test_score()
 
 
 class PipelinedLearner(Learner):
@@ -469,13 +477,14 @@ class PipelinedLearner(Learner):
 
         # Learn lf accuracies first
         # TODO: Distinguish between model hyperparams...
-        self.lf_accs = LogReg(self.T, w0=feat_w0*np.ones(m), **model_hyperparams)
+        self.lf_accs = LogReg(self.T, w0=lf_w0*np.ones(m), **model_hyperparams)
+
+        # Compute marginal probabilities over the candidates from this model of the training set
+        # TODO
 
         # Learn model over features
-        self.w       = 
+        #self.w = self.model( \
+        #    self.F, training_marginals=self.training_marginals, w0=feat_w0*np.ones(f), **model_hyperparams)
 
-        # Set initial values for feature weights
-        self.w0 = np.concatenate([lf_w0*np.ones(m), feat_w0*np.ones(f)])
-
-        # Train model
-        self.w = self.model(self.X, w0=self.w0, **model_hyperparams).train()
+        # Print out score if test_set was provided
+        #self._print_test_score()

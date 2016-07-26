@@ -15,7 +15,7 @@ import lxml.etree as et
 from snorkel import SnorkelBase, SnorkelSession, snorkel_postgres
 from sqlalchemy import Column, String, Integer, Text, ForeignKey
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 from sqlalchemy.types import PickleType
 
 
@@ -28,6 +28,8 @@ class Corpus(SnorkelBase):
 
     __tablename__ = 'corpus'
     id = Column(String, primary_key=True)
+
+    documents = relationship('Document', backref='corpus')
 
     def __repr__(self):
         return "Corpus" + str((self.id,))
@@ -71,9 +73,10 @@ class Document(SnorkelBase):
     __tablename__ = 'document'
     id = Column(String, primary_key=True)
     corpus_id = Column(String, ForeignKey('corpus.id'))
-    corpus = relationship(Corpus, backref=backref('documents', uselist=True, cascade='delete,all'))
     file = Column(String)
     attribs = Column(PickleType)
+
+    contexts = relationship('Context', backref='document')
 
     def __repr__(self):
         return "Document" + str((self.id, self.corpus_id, self.file, self.attribs))
@@ -85,7 +88,8 @@ class Context(SnorkelBase):
     id = Column(String, primary_key=True)
     type = Column(String)
     document_id = Column(String, ForeignKey('document.id'))
-    document = relationship(Document, backref=backref('contexts', uselist=True, cascade='delete,all'))
+
+    candidates = relationship('Candidate', backref='context', cascade_backrefs=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'context',

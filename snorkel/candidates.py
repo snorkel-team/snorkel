@@ -184,6 +184,15 @@ class Ngram(Candidate):
     def get_n(self):
         return self.get_word_end() - self.get_word_start() + 1
 
+    def get_sent_offset(self):
+        return self.context.char_offsets[0]
+
+    def get_sent_char_start(self):
+        return self.char_start - self.get_sent_offset()
+
+    def get_sent_char_end(self):
+        return self.char_end - self.get_sent_offset()
+
     def char_to_word_index(self, ci):
         """Given a character-level index (offset), return the index of the **word this char is in**"""
         i = None

@@ -246,14 +246,19 @@ class TableParser(SentenceParser):
                 for ancestor in row.parents if ancestor is not None][:-2])
             (tags, attrs) = zip(*ancestors)
             html_anc_tags = tags
-            html_anc_attrs = ["=".join(a[0:2]) for a in chain.from_iterable(attrs)]
+            html_anc_attrs = []
+            for a in chain.from_iterable(attrs):
+                attr = a[0]
+                values = a[1]
+                if isinstance(values, list):
+                    html_anc_attrs += ["=".join([attr,val]) for val in values]
+                else:
+                    html_anc_attrs += ["=".join([attr,values])]
             for col_num, cell in enumerate(row.children):
                 # NOTE: currently not including title, caption, footers, etc.
                 cell_idx += 1
                 if cell.name in ['th','td']:
                     cell_id = "%s-%s" % (table_id, cell_idx)
-                    # add new attribute to the html
-                    cell['cell_id'] = cell_id
                     for phrase_idx, phrase in enumerate(self.parse(cell.get_text(strip=True), doc_id, doc_name)):
                         phrase_id = "%s-%s" % (cell_id, phrase_idx)
                         parts = phrase._asdict()
@@ -268,10 +273,20 @@ class TableParser(SentenceParser):
                         parts['row_num'] = row_num
                         parts['col_num'] = col_num
                         parts['html_tag'] = cell.name
-                        parts['html_attrs'] = ["=".join(a) for a in cell.attrs.items()][:-1]
+                        html_attrs = []
+                        for a in cell.attrs.items():
+                            attr = a[0]
+                            values = a[1]
+                            if isinstance(values, list):
+                                html_attrs += ["=".join([attr,val]) for val in values]
+                            else:
+                                html_attrs += ["=".join([attr,values])]
+                        parts['html_attrs'] = html_attrs
                         parts['html_anc_tags'] = html_anc_tags
                         parts['html_anc_attrs'] = html_anc_attrs
                         phrases[phrase_id] = Phrase(**parts)
+                    # add new attribute to the html
+                    cell['cell_id'] = cell_id
         context_id = table_id
         id = table_id
         return Table(id, doc_id, doc_name, context_id, table_id, phrases, str(table))
@@ -306,19 +321,23 @@ class Corpus(object):
         # Parse documents
         print "Parsing documents..."
         self._docs_by_id = {}
-        for i,doc in enumerate(doc_parser.parse()):
+        self.num_docs = 0
+        for i, doc in enumerate(doc_parser.parse()):
             if max_docs and i == max_docs:
                 break
             self._docs_by_id[doc.id] = doc
-            print i
+            self.num_docs += 1
 
         # Parse sentences
         print "Parsing contexts..."
         self._contexts_by_id     = {}
         self._contexts_by_doc_id = defaultdict(list)
+        self.num_contexts = 0
         for context in context_parser.parse_docs(self._docs_by_id.values()):
             self._contexts_by_id[context.id] = context
             self._contexts_by_doc_id[context.doc_id].append(context)
+            self.num_contexts += 1
+        print "Parsed %s documents and %s contexts" % (self.num_docs, self.num_contexts)
 
     def __iter__(self):
         """Default iterator is over (document, context) tuples"""

@@ -46,6 +46,9 @@ class Featurizer(object):
         features = self._features_by_id[id]
         return features if features is not None else None
 
+    def get_features(self):
+        return self.feats
+
 class NgramFeaturizer(Featurizer):
     def _featurize(self, sent, context):
         yield "Ngram_features_to_come"

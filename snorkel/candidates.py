@@ -157,6 +157,7 @@ class Ngram(Candidate):
 
         # Inherit full sentence object (tranformed to dict) and check for necessary attribs
         self.sentence = sent if isinstance(sent, dict) else sent._asdict()
+        self.doc_id = self.sentence['doc_id']
         self.sent_id  = self.sentence['id']
         REQ_ATTRIBS = ['id', WORDS]
         if not all([self.sentence.has_key(a) for a in REQ_ATTRIBS]):

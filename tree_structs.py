@@ -2,8 +2,7 @@ import json
 import os
 import re
 import lxml.etree as et
-
-from snorkel.parser import corenlp_cleaner
+from snorkel.utils import corenlp_cleaner
 
 APP_HOME = os.environ['SNORKELHOME']
 

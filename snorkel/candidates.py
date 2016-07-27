@@ -233,7 +233,7 @@ class Ngrams(CandidateSpace):
         self.split_rgx    = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
     
     def apply(self, x):
-        s = x if isinstance(x, dict) else x._asdict()
+        s = x if isinstance(x, dict) else x.__dict__
         try:
             cos   = s[CHAR_OFFSETS]
             words = s[WORDS]

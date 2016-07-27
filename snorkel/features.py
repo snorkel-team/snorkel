@@ -31,21 +31,13 @@ class Featurizer(object):
             for f in get_feats(c):
                 yield i, prefix + f
 
-    def apply(self, candidates):
-        feature_generators = []
+    # TODO: This is *TEMP* code!
+    def _match_contexts(self, candidates):
+        """Given the candidates, and using _generate_context_feats, return a list of generators."""
+        raise NotImplementedError()
 
-        # TODO: This is *TEMP* code! Also, this is for legacy candidates!!
-        if self.arity == 1:
-            feature_generators.append(self._generate_context_feats( \
-                lambda c : get_ddlib_feats(c, c.idxs), 'DDLIB_', candidates))
-        if self.arity == 1 and candidates[0].root is not None:
-            get_feats = compile_entity_feature_generator()
-            feature_generators.append(self._generate_context_feats( \
-                lambda c : get_feats(c.root, c.idxs), 'TDLIB_', candidates))
-        if self.arity == 2 and candidates[0].root is not None:
-            get_feats = compile_relation_feature_generator()
-            feature_generators.append(self._generate_context_feats( \
-                lambda c : get_feats(c.root, c.e1_idxs, c.e2_idxs), 'TDLIB_', candidates))
+    def apply(self, candidates):
+        feature_generators = self._match_contexts(candidates)
 
         # Assemble and return the sparse feature matrix
         f_index = defaultdict(list)
@@ -61,3 +53,34 @@ class Featurizer(object):
             for i in f_index[f]:
                 F[i,j] = 1
         return F
+
+
+class NgramFeaturizer(Featurizer):
+    """Feature for relations (of arity >= 1) defined over Ngram objects."""
+    def _match_contexts(self, candidates):
+        feature_generators = []
+
+        # Unary relations
+        if self.arity == 1:
+            cidxs = range(c.word_start, c.word_end+1)
+
+            # Add DDLIB entity features
+            feature_generators.append(self._generate_context_feats( \
+                lambda c : get_ddlib_feats(c, cidxs), 'DDLIB_', candidates))
+
+            # Add TreeDLib entity features
+            if candidates[0].xmltree is not None:
+                get_feats = compile_entity_feature_generator()
+                feature_generators.append(self._generate_context_feats( \
+                    lambda c : get_feats(c.xmltree.root, cidxs), 'TDLIB_', candidates))
+
+        if self.arity == 2:
+            c1idxs = range(c.e1.word_start, c.e1.word_end+1)
+            c2idxs = range(c.e2.word_start, c.e2.word_end+1)
+
+            # Add TreeDLib relation features
+            if candidates[0].root is not None:
+                get_feats = compile_relation_feature_generator()
+                feature_generators.append(self._generate_context_feats( \
+                    lambda c : get_feats(c.xmltree.root, c1idxs, c2idxs), 'TDLIB_', candidates))
+        return feature_generators

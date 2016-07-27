@@ -108,4 +108,4 @@ class TableNgramFeaturizer(NgramFeaturizer):
         N = len(words)
         for root in range(N):
             for n in range(min(n_max, N - root)):
-                yield ' '.join(words[root:root+n+1])
+                yield '_'.join(words[root:root+n+1])

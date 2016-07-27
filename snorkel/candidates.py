@@ -280,17 +280,18 @@ class Ngrams(CandidateSpace):
 """-------------------------HERE BE BRADEN'S KINGDOM-------------------------"""
 
 class TableNgram(Ngram):
-    def __init__(self, cell, ngram):
+    def __init__(self, phrase, ngram):
         super(TableNgram, self).__init__(ngram.char_start, ngram.char_end, ngram.sentence)
-        self.context_id = cell.context_id
-        self.table_id = cell.table_id
-        self.cell_id = cell.cell_id
-        self.row_num = cell.row_num
-        self.col_num = cell.col_num
-        self.html_tag = cell.html_tag
-        self.html_attrs = cell.html_attrs
-        self.html_anc_tags = cell.html_anc_tags
-        self.html_anc_attrs = cell.html_anc_attrs
+        self.context_id = phrase.context_id
+        self.table_id = phrase.table_id
+        self.cell_id = phrase.cell_id
+        self.row_num = phrase.row_num
+        self.col_num = phrase.col_num
+        self.html_tag = phrase.html_tag
+        self.html_attrs = phrase.html_attrs
+        self.html_anc_tags = phrase.html_anc_tags
+        self.html_anc_attrs = phrase.html_anc_attrs
+        self.uid = phrase.id
 
     def __repr__(self):
         return '<TableNgram("%s", id=%s, chars=[%s,%s], (row,col)=(%s,%s), tag=%s)' \
@@ -302,8 +303,8 @@ class TableNgrams(Ngrams):
     Defines the space of candidates as all n-grams (n <= n_max) in a cell within a table _x_
     "Calling _apply(x)_ given an object _x_ returns a generator over candidates in _x_."
     """
-    def apply(self, x):
-        table = x if isinstance(x, dict) else x._asdict()
+    def apply(self, context):
+        table = context if isinstance(context, dict) else context._asdict()
         try:
             phrases = table['phrases']
         except:

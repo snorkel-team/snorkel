@@ -2,6 +2,8 @@ from collections import defaultdict
 import scipy.sparse as sparse
 
 from lxml import etree as et
+from entity_features import get_ddlib_feats
+from entity_features import compile_entity_feature_generator
 
 class Featurizer(object):
     def __init__(self, candidates, corpus):
@@ -50,27 +52,36 @@ class Featurizer(object):
         return self.feats
 
 class NgramFeaturizer(Featurizer):
-    def _featurize(self, sent, context):
-        yield "Ngram_features_to_come"
+    def _featurize(self, cand, context):
+        # This is a poor man's substitue for coreNLP until they come together
+        for feat in self.generate_temp_nlp_feats(cand, context):
+            yield feat
+        # for feat in self.generate_nlp_feats(cand, context):
+        #     yield feat
+        # for feat in self.generate_ddlib_feats(cand, context):
+        #     yield feat
 
-    # def get_ling_feats(self, sent, context):
-    #     get_feats = compile_entity_feature_generator()
-    #     f_index = defaultdict(list)
-    #     for cand in enumerate(self._candidates):
-    #       for feat in get_feats(cand.root, cand.idxs):
-    #         yield feat
-    #       for feat in get_ddlib_feats(cand, cand.idxs):
-    #         f_index["DDLIB_" + feat].append(j)
-    #     return f_index
+    def generate_temp_nlp_feats(self, cand, context):
+        for ngram in self.get_ngrams(cand.get_attrib_tokens('words')):
+            yield ''.join(["BASIC_NGRAM_", ngram])
+
+    # def generate_nlp_feats(self, cand, context):
+    #     get_nlp_feats = compile_entity_feature_generator()
+    #     for feat in get_nlp_feats(cand.root, cand.idxs):
+    #         yield ''.join(["NLP_", feat])
+
+    # def generate_ddlib_feats(self, cand, context):
+    #     for feat in get_ddlib_feats(cand, cand.idxs):
+    #         yield ''.join(["DDLIB_", feat])
 
 class TableNgramFeaturizer(NgramFeaturizer):
     def _featurize(self, cand, context):
         for feat in super(TableNgramFeaturizer, self)._featurize(cand, context):
             yield feat
-        for feat in self.get_cell_feats(cand, context):
+        for feat in self.generate_table_feats(cand, context):
             yield ''.join(["TABLE_",feat])
 
-    def get_cell_feats(self, cand, context):
+    def generate_table_feats(self, cand, context):
         yield "ROW_NUM_%s" % cand.row_num
         yield "COL_NUM_%s" % cand.col_num
         yield "HTML_TAG_" + cand.html_tag
@@ -96,7 +107,7 @@ class TableNgramFeaturizer(NgramFeaturizer):
         # if axis=='col':
             # position = len(root.xpath('//*[@snorkel_id="%s"]/following-sibling::*/@snorkel_id' % cand.cell_id)) + 1
             # snorkel_ids = root.xpath('//*[@snorkel_id][position()=%d]/@snorkel_id' % position)
-        # SQL lookup method
+        # SQL join method (eventually)
         if axis=='row':
             phrase_ids = [phrase.id for phrase in context.phrases.values() if phrase.row_num == cand.row_num]
         elif axis=='col':

@@ -19,8 +19,10 @@ class Featurizer(object):
     The apply() function takes in N candidates, and returns an N x F sparse matrix,
     where F is the dimension of the feature space.
     """
-    def __init__(self, arity):
-        self.arity = arity
+    def __init__(self, arity=1):
+        self.arity          = arity
+        self.feat_index     = {}
+        self.feat_inv_index = {}
     
     def _generate_context_feats(self, get_feats, prefix, candidates):
         """
@@ -31,12 +33,20 @@ class Featurizer(object):
             for f in get_feats(c):
                 yield i, prefix + f
 
-    # TODO: This is *TEMP* code!
     def _match_contexts(self, candidates):
         """Given the candidates, and using _generate_context_feats, return a list of generators."""
         raise NotImplementedError()
 
     def apply(self, candidates):
+        """Given feature set has already been fit, simply apply to candidates."""
+        F                  = sparse.lil_matrix((len(candidates), len(self.feat_index.keys())))
+        feature_generators = self._match_contexts(candidates)
+        for i,f in itertools.chain(*feature_generators):
+            F[i,self.feat_index[f]] = 1
+        return F
+
+    def fit_apply(self, candidates):
+        """Assembles the set of features to be used, and applies this transformation to the candidates"""
         feature_generators = self._match_contexts(candidates)
 
         # Assemble and return the sparse feature matrix
@@ -46,10 +56,10 @@ class Featurizer(object):
 
         # Assemble and return sparse feature matrix
         # Also assemble reverse index of feature matrix index -> feature verbose name
-        self.feature_index = {}
-        F                  = sparse.lil_matrix((len(candidates), len(f_index.keys())))
+        F = sparse.lil_matrix((len(candidates), len(f_index.keys())))
         for j,f in enumerate(f_index.keys()):
-            self.feature_index[j] = f
+            self.feat_index[f] = j
+            self.feat_inv_index[j] = f
             for i in f_index[f]:
                 F[i,j] = 1
         return F

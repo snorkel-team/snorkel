@@ -21,8 +21,8 @@ class Featurizer(object):
     """
     def __init__(self, arity=1):
         self.arity          = arity
-        self.feat_index     = {}
-        self.feat_inv_index = {}
+        self.feat_index     = None
+        self.feat_inv_index = None
     
     def _generate_context_feats(self, get_feats, prefix, candidates):
         """
@@ -56,7 +56,9 @@ class Featurizer(object):
 
         # Assemble and return sparse feature matrix
         # Also assemble reverse index of feature matrix index -> feature verbose name
-        F = sparse.lil_matrix((len(candidates), len(f_index.keys())))
+        self.feat_index     = {}
+        self.feat_inv_index = {}
+        F                   = sparse.lil_matrix((len(candidates), len(f_index.keys())))
         for j,f in enumerate(f_index.keys()):
             self.feat_index[f] = j
             self.feat_inv_index[j] = f

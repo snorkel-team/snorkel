@@ -92,8 +92,12 @@ class NoiseAwareModel(object):
     def train(self, X, training_marginals=None, **hyperparams):
         raise NotImplementedError()
 
-    def predict(self, X):
+    def get_marginals(self, X):
         raise NotImplementedError()
+
+    def predict(self, X):
+        """Return numpy array of elements in {-1,0,1} based on predicted marginal probabilities."""
+        return np.array([1 if p > 0.5 else -1 if p < 0.5 else 0 for p in self.get_marginals(X)])
 
 
 class LogReg(NoiseAwareModel):

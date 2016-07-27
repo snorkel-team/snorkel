@@ -11,26 +11,47 @@ warnings.filterwarnings("ignore", module="matplotlib")
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 
-def precision(gt, pred):
-  pred, gt = np.ravel(pred), np.ravel(gt)
-  tp = np.sum((pred == 1) * (gt == 1))
-  fp = np.sum((pred == 1) * (gt != 1))
-  return 0 if tp == 0 else float(tp) / float(tp + fp)
+def precision(pred, gold):
+    tp = np.sum((pred == 1) * (gold == 1))
+    fp = np.sum((pred == 1) * (gold != 1))
+    return 0 if tp == 0 else float(tp) / float(tp + fp)
 
-def recall(gt, pred):
-  pred, gt = np.ravel(pred), np.ravel(gt)
-  tp = np.sum((pred == 1) * (gt == 1))
-  p = np.sum(gt == 1)
-  return 0 if tp == 0 else float(tp) / float(p)
+def recall(pred, gold):
+    tp = np.sum((pred == 1) * (gold == 1))
+    p  = np.sum(gold == 1)
+    return 0 if tp == 0 else float(tp) / float(p)
 
-def f1_score(gt=None, pred=None, prec=None, rec=None):
-  if prec is None or rec is None:
-    if gt is None or pred is None:
-      raise ValueError("Need both gt and pred or both prec and rec")
-    pred, gt = np.ravel(pred), np.ravel(gt)
-    prec = precision(gt, pred) if prec is None else prec
-    rec = recall(gt, pred) if rec is None else rec
-  return 0 if (prec * rec == 0) else 2 * (prec * rec)/(prec + rec)
+def f1_score(pred, gold):
+    prec = precision(pred, gold)
+    rec  = recall(pred, gold)
+    return 0 if (prec * rec == 0) else 2 * (prec * rec)/(prec + rec)
+
+def test_scores(pred, gold, return_vals=True, verbose=False):
+    """Returns: (precision, recall, f1_score, tp, fp, tn, fn, n_test)"""
+    n_t = len(gold)
+    if np.sum(gold == 1) + np.sum(gold == -1) != n_t:
+        raise ValueError("Gold labels must be in {-1,1}.")
+    tp   = np.sum((pred == 1) * (gold == 1))
+    fp   = np.sum((pred == 1) * (gold == -1))
+    tn   = np.sum((pred == -1) * (gold == -1))
+    fn   = np.sum((pred == -1) * (gold == 1))
+    prec = tp / float(tp + fp)
+    rec  = tp / float(tp + fn)
+    f1   = 2 * (prec * rec) / (prec + rec)
+
+    # Print simple report if verbose=True
+    if verbose:
+        print "="*20
+        print "Test set size:\t%s" % n_t
+        print "-"*20
+        print "Precision:\t%s" % prec
+        print "Recall:\t%s" % rec
+        print "F1 Score:\t%s" $ f1
+        print "-"*20
+        print "TP: %s | FP: %s | TN: %s | FN: %s" % (tp,fp,tn,fn)
+        print "="*20
+    if return_vals:
+        return prec, rec, f1, tp, fp, tn, fn, n_t
 
 class DictTable(OrderedDict):
   def set_title(self, heads):

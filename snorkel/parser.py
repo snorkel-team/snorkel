@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
+from .models import Corpus, Document, Sentence
 import atexit
 from bs4 import BeautifulSoup
 from collections import defaultdict
 import glob
 import json
 import lxml.etree as et
-from models import Corpus, Document, Sentence
 import os
 import re
 import requests

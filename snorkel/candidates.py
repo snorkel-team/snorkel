@@ -1,5 +1,5 @@
+from .models import Candidates, Ngram
 from itertools import chain
-from models import Candidates, Ngram
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
 
@@ -113,5 +113,4 @@ class Ngrams(CandidateSpace):
                 cl = context.char_offsets[i+l-1] - context.char_offsets[i] + len(context.words[i+l-1])
                 char_start = context.char_offsets[i]
                 char_end = context.char_offsets[i] + cl - 1
-                ngram_id = "ngram-%s-%s-%s" % (context.id, str(char_start), str(char_end))
-                yield Ngram(id=ngram_id, char_start=char_start, char_end=char_end, context=context)
+                yield Ngram(char_start, char_end, context)

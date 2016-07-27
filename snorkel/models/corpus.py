@@ -1,4 +1,4 @@
-from meta import SnorkelBase, snorkel_postgres
+from .meta import SnorkelBase, snorkel_postgres
 from sqlalchemy import Column, String, Integer, Text, ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
@@ -21,10 +21,9 @@ class Corpus(SnorkelBase):
         return "Corpus" + str((self.id,))
 
     def __iter__(self):
-        """Default iterator is over (document, context) tuples"""
+        """Default iterator is over (document, document.contexts) tuples"""
         for doc in self.documents:
-            for context in doc.contexts:
-                yield (doc, context)
+            yield (doc, doc.contexts)
 
     def get_contexts(self):
         return [context for doc in self.documents for context in doc.contexts]

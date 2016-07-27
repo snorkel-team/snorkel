@@ -7,6 +7,19 @@ except ImportError:
     warnings.warn("nltk not installed- some default functionality may be absent.")
 
 
+def gold_stats(candidates, gold_set):
+        """Return precision and recall relative to a "gold" set of candidates of the same type"""
+        # TODO: Make this efficient via SQL
+        gold = gold_set if isinstance(gold_set, set) else set(gold_set)
+        nc   = len(candidates)
+        ng   = len(gold)
+        both = len(gold.intersection(candidates.candidates))
+        print "# of gold annotations\t= %s" % ng
+        print "# of candidates\t\t= %s" % nc
+        print "Candidate recall\t= %0.3f" % (both / float(ng),)
+        print "Candidate precision\t= %0.3f" % (both / float(nc),)
+
+
 class Matcher(object):
     """
     Applies a function f : c -> {0,1} to a generator of candidates,

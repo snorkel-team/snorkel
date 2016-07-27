@@ -1,4 +1,4 @@
-from meta import SnorkelBase
+from .meta import SnorkelBase
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import PickleType
@@ -55,8 +55,18 @@ class Ngram(Candidate):
         'polymorphic_identity': 'ngram',
     }
 
+    def __init__(self, char_start, char_end, context, meta=None):
+        self.id = "ngram-%s-%s-%s" % (context.id, str(char_start), str(char_end))
+        self.char_start = char_start
+        self.char_end = char_end
+        self.context = context
+        if meta is not None:
+            self.meta = meta
+
     def __len__(self):
         return self.char_end - self.char_start + 1
+
+    # TODO: Below methods could be replaced with transient members, i.e., not persisted, using the @reconstructor decorator
 
     def get_word_start(self):
         return self.char_to_word_index(self.char_start)

@@ -79,8 +79,37 @@ class NgramFeaturizer(Featurizer):
             c2idxs = range(c.e2.word_start, c.e2.word_end+1)
 
             # Add TreeDLib relation features
-            if candidates[0].root is not None:
+            if candidates[0].xmltree.root is not None:
                 get_feats = compile_relation_feature_generator()
                 feature_generators.append(self._generate_context_feats( \
                     lambda c : get_feats(c.xmltree.root, c1idxs, c2idxs), 'TDLIB_', candidates))
         return feature_generators
+
+
+class LegacyCandidateFeaturizer(Featurizer):
+    """Temporary class to handle v0.2 Candidate objects."""
+    def _match_contexts(self, candidates):
+        feature_generators = []
+
+        # Unary relations
+        if self.arity == 1:
+
+            # Add DDLIB entity features
+            feature_generators.append(self._generate_context_feats( \
+                lambda c : get_ddlib_feats(c, c.idxs), 'DDLIB_', candidates))
+
+            # Add TreeDLib entity features
+            if candidates[0].root is not None:
+                get_feats = compile_entity_feature_generator()
+                feature_generators.append(self._generate_context_feats( \
+                    lambda c : get_feats(c.root, c.idxs), 'TDLIB_', candidates))
+
+        if self.arity == 2:
+
+            # Add TreeDLib relation features
+            if candidates[0].root is not None:
+                get_feats = compile_relation_feature_generator()
+                feature_generators.append(self._generate_context_feats( \
+                    lambda c : get_feats(c.root, c.e1_idxs, c.e2_idxs), 'TDLIB_', candidates))
+        return feature_generators
+    

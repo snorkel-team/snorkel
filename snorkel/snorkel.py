@@ -11,24 +11,7 @@ warnings.filterwarnings("ignore", module="matplotlib")
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 
-# Object-relational mapping with SQLAlchemy
-# This must be performed before importing other Snorkel modules!
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-if 'SNORKELDB' in os.environ:
-  snorkel_postgres = os.environ['SNORKELDB'].startswith('postgres')
-  snorkel_engine = create_engine(os.environ['SNORKELDB'])
-else:
-  snorkel_postgres = False
-  snorkel_engine = create_engine('sqlite:///snorkel.db')
-SnorkelSession = sessionmaker(bind=snorkel_engine)
-SnorkelBase = declarative_base()
-# End SQLAlchemy setup
-
 from parser import *
-
-from candidates import *
 
 from matchers import *
 
@@ -38,9 +21,7 @@ from learning import learn_elasticnet_logreg, odds_to_prob, get_mu_seq,\
                             DEFAULT_RATE, DEFAULT_MU, DEFAULT_ALPHA
 from lstm import *
 
-# This call must be performed after all classes that extend SnorkelBase are
-# declared to ensure the database schema is initialized
-SnorkelBase.metadata.create_all(snorkel_engine)
+
 
 #####################################################################
 ############################ TAGGING UTILS ##########################

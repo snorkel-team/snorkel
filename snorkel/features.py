@@ -60,9 +60,9 @@ class NgramFeaturizer(Featurizer):
     #         f_index["DDLIB_" + feat].append(j)
     #     return f_index
 
-class CellNgramFeaturizer(NgramFeaturizer):
+class TableNgramFeaturizer(NgramFeaturizer):
     def _featurize(self, cand, context):
-        for feat in super(CellNgramFeaturizer, self)._featurize(cand, context):
+        for feat in super(TableNgramFeaturizer, self)._featurize(cand, context):
             yield feat
         for feat in self.get_cell_feats(cand, context):
             yield ''.join(["TABLE_",feat])

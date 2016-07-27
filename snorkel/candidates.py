@@ -278,9 +278,9 @@ class Ngrams(CandidateSpace):
 
 """-------------------------HERE BE BRADEN'S KINGDOM-------------------------"""
 
-class CellNgram(Ngram):
+class TableNgram(Ngram):
     def __init__(self, cell, ngram):
-        super(CellNgram, self).__init__(ngram.char_start, ngram.char_end, ngram.sentence)
+        super(TableNgram, self).__init__(ngram.char_start, ngram.char_end, ngram.sentence)
         self.context_id = cell.context_id
         self.table_id = cell.table_id
         self.cell_id = cell.cell_id
@@ -292,11 +292,11 @@ class CellNgram(Ngram):
         self.html_anc_attrs = cell.html_anc_attrs
 
     def __repr__(self):
-        return '<CellNgram("%s", id=%s, chars=[%s,%s], (row,col)=(%s,%s), tag=%s)' \
+        return '<TableNgram("%s", id=%s, chars=[%s,%s], (row,col)=(%s,%s), tag=%s)' \
             % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.row_num, self.col_num, self.html_tag)
 
 
-class CellNgrams(Ngrams):
+class TableNgrams(Ngrams):
     """
     Defines the space of candidates as all n-grams (n <= n_max) in a cell within a table _x_
     "Calling _apply(x)_ given an object _x_ returns a generator over candidates in _x_."
@@ -309,8 +309,8 @@ class CellNgrams(Ngrams):
             raise ValueError("Input object must have %s attribute" % 'phrases')
 
         for phrase in phrases.values():
-            for ngram in super(CellNgrams, self).apply(phrase):
-                yield CellNgram(phrase, ngram)
+            for ngram in super(TableNgrams, self).apply(phrase):
+                yield TableNgram(phrase, ngram)
 
 
 # class EntityExtractor(object):

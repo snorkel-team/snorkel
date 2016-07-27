@@ -61,7 +61,6 @@ class Learner(object):
         self.test_set = test_set
         self.X_train  = None
         self.X_test   = None
-        self.w        = None
 
     def _apply_lfs(self, candidates):
         """Apply the labeling functions to the candidates to populate X"""
@@ -72,7 +71,13 @@ class Learner(object):
         return X.tocsr()
 
     def _print_test_score(self):
-        # TODO
+        predicted = self.model.predict(self.X_test)
+
+        # TODO: Map test_set values -> order of X_test rows!!!
+
+        # TODO: calculate precision and recall
+        
+        # TODO: Print!
         raise NotImplementedError()
 
     def train_model(self, feat_w0=0.0, lf_w0=1.0, **model_hyperparams):
@@ -85,19 +90,19 @@ class Learner(object):
         w0 = np.concatenate([lf_w0*np.ones(self.m), feat_w0*np.ones(self.f)])
 
         # Train model
-        self.w = self.model.train(self.X_train, w0=w0, **model_hyperparams)
+        self.model.train(self.X_train, w0=w0, **model_hyperparams)
         
         # Print out score if test_set was provided
         self._print_test_score()
 
     def lf_weights(self):
-        return self.w[:self.m]
+        return self.model.w[:self.m]
 
     def lf_accs(self):
-        return odds_to_prob(self.lf_weights)
+        return odds_to_prob(self.lf_weights())
 
     def feat_weights(self):
-        return self.w[self.m:]
+        return self.model.w[self.m:]
         
 
 class PipelinedLearner(Learner):

@@ -89,17 +89,26 @@ class NoiseAwareModel(object):
     def __init__(self):
         pass
 
-    def learn_weights(self, X, training_marginals=None, **hyperparams):
+    def train(self, X, training_marginals=None, **hyperparams):
+        raise NotImplementedError()
+
+    def predict(self, X):
         raise NotImplementedError()
 
 
 class LogReg(NoiseAwareModel):
     """Logistic regression."""
-    def learn_weights(X, training_marginals=None, n_iter=500, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, \
+    def __init__(self):
+        self.w = None
+
+    def train(X, training_marginals=None, n_iter=500, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, \
             mu=DEFAULT_MU, sample=True, n_samples=100, unreg=[], evidence=None, warm_starts=False, tol=1e-6, \
             verbose=True):
       """
       Perform SGD wrt the weights w
+        * n_iter : Number of steps of SGD
+        * w0     : Initial value for weights w
+        * 
            * w0 is the initial guess for w
            * sample and n_samples determine SGD batch size
            * alpha is the elastic net penalty mixing parameter (0=ridge, 1=lasso)
@@ -179,6 +188,10 @@ class LogReg(NoiseAwareModel):
                                                                              g_size)
       # Return learned weights  
       return w
+
+    def predict(self, w, X):
+        # TODO
+        
       
 def get_mu_seq(n, rate, alpha, min_ratio):
   mv = (max(float(1 + rate * 10), float(rate * 11)) / (alpha + 1e-3))

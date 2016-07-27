@@ -246,7 +246,7 @@ class TableParser(SentenceParser):
                 for ancestor in row.parents if ancestor is not None][:-2])
             (tags, attrs) = zip(*ancestors)
             html_anc_tags = tags
-            html_anc_attrs = ["=".join(a) for a in chain.from_iterable(attrs)]
+            html_anc_attrs = ["=".join(a[0:2]) for a in chain.from_iterable(attrs)]
             for col_num, cell in enumerate(row.children):
                 # NOTE: currently not including title, caption, footers, etc.
                 cell_idx += 1
@@ -268,7 +268,7 @@ class TableParser(SentenceParser):
                         parts['row_num'] = row_num
                         parts['col_num'] = col_num
                         parts['html_tag'] = cell.name
-                        parts['html_attrs'] = ["=".join(a) for a in cell.attrs]
+                        parts['html_attrs'] = ["=".join(a) for a in cell.attrs.items()][:-1]
                         parts['html_anc_tags'] = html_anc_tags
                         parts['html_anc_attrs'] = html_anc_attrs
                         phrases[phrase_id] = Phrase(**parts)

@@ -61,40 +61,45 @@ class NgramFeaturizer(Featurizer):
     #     return f_index
 
 class CellNgramFeaturizer(NgramFeaturizer):
-    def _featurize(self, cell, context):
-        for feat in super(CellNgramFeaturizer, self)._featurize(cell, context):
+    def _featurize(self, cand, context):
+        for feat in super(CellNgramFeaturizer, self)._featurize(cand, context):
             yield feat
-        for feat in self.get_cell_feats(cell, context):
+        for feat in self.get_cell_feats(cand, context):
             yield ''.join(["TABLE_",feat])
 
-    def get_cell_feats(self, cell, context):
-        yield "ROW_NUM_%s" % cell.row_num
-        yield "COL_NUM_%s" % cell.col_num
-        yield "HTML_TAG_" + cell.html_tag
-        for attr in cell.html_attrs:
+    def get_cell_feats(self, cand, context):
+        yield "ROW_NUM_%s" % cand.row_num
+        yield "COL_NUM_%s" % cand.col_num
+        yield "HTML_TAG_" + cand.html_tag
+        for attr in cand.html_attrs:
             yield "HTML_ATTR_" + attr
-        for tag in cell.html_anc_tags:
+        for tag in cand.html_anc_tags:
             yield "HTML_ANC_TAG_" + tag
-        for attr in cell.html_anc_attrs:
+        for attr in cand.html_anc_attrs:
             yield "HTML_ANC_ATTR_" + attr
-        for ngram in self.get_aligned_ngrams(cell, context, axis='row'):
+        for ngram in self.get_aligned_ngrams(cand, context, axis='row'):
             yield "ROW_NGRAM_" + ngram
-        for ngram in self.get_aligned_ngrams(cell, context, axis='col'):
+        for ngram in self.get_aligned_ngrams(cand, context, axis='col'):
             yield "COL_NGRAM_" + ngram
 
 
     # NOTE: it may just be simpler to search by row_num, col_num rather than
-    # traversing tree, though other range features may differ
-    def get_aligned_ngrams(self, cell, context, axis='row'):
-
-        root = et.fromstring(context.xhtml)
+    # traversing tree, though other range features may benefit from tree structure
+    def get_aligned_ngrams(self, cand, context, axis='row'):
+        # Tree traversal method:
+        # root = et.fromstring(context.html)
+        # if axis=='row':
+            # snorkel_ids = root.xpath('//*[@snorkel_id="%s"]/following-sibling::*/@snorkel_id' % cand.cell_id)
+        # if axis=='col':
+            # position = len(root.xpath('//*[@snorkel_id="%s"]/following-sibling::*/@snorkel_id' % cand.cell_id)) + 1
+            # snorkel_ids = root.xpath('//*[@snorkel_id][position()=%d]/@snorkel_id' % position)
+        # SQL lookup method
         if axis=='row':
-            cell_ids = root.xpath('//*[@cell_id="%s"]/following-sibling::*/@cell_id' % cell.cell_id)
-        if axis=='col':
-            position = len(root.xpath('//*[@cell_id="%s"]/following-sibling::*/@cell_id' % cell.cell_id)) + 1
-            cell_ids = root.xpath('//*[@cell_id][position()=%d]/@cell_id' % position)
-        for cell_id in cell_ids:
-            words = context.cells[str(cell_id)].words
+            phrase_ids = [phrase.id for phrase in context.phrases.values() if phrase.row_num == cand.row_num]
+        elif axis=='col':
+            phrase_ids = [phrase.id for phrase in context.phrases.values() if phrase.col_num == cand.col_num]
+        for phrase_id in phrase_ids:
+            words = context.phrases[phrase_id].words
             for ngram in self.get_ngrams(words):
                 yield ngram
 

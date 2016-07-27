@@ -277,8 +277,6 @@ class Ngrams(CandidateSpace):
 
 
 """-------------------------HERE BE BRADEN'S KINGDOM-------------------------"""
-# Basic table attributes
-CELLS        = 'cells'
 
 class CellNgram(Ngram):
     def __init__(self, cell, ngram):
@@ -306,13 +304,13 @@ class CellNgrams(Ngrams):
     def apply(self, x):
         table = x if isinstance(x, dict) else x._asdict()
         try:
-            cells = table[CELLS]
+            phrases = table['phrases']
         except:
-            raise ValueError("Input object must have %s attribute" % CELLS)
+            raise ValueError("Input object must have %s attribute" % 'phrases')
 
-        for cell in cells.values():
-            for ngram in super(CellNgrams, self).apply(cell):
-                yield CellNgram(cell, ngram)
+        for phrase in phrases.values():
+            for ngram in super(CellNgrams, self).apply(phrase):
+                yield CellNgram(phrase, ngram)
 
 
 # class EntityExtractor(object):

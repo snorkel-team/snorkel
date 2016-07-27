@@ -18,20 +18,28 @@ import lxml.etree as et
 from itertools import chain
 
 id_attrs        = ['id', 'doc_id', 'doc_name']
-sentence_attrs  = id_attrs + ['sent_id', 'words', 'lemmas', 'poses', 'dep_parents', 'dep_labels', 'char_offsets', 'text']
-table_attrs     = id_attrs + ['context_id', 'table_id', 'cells', 'xhtml'] # 'title', 'caption'
-cell_attrs      = sentence_attrs + ['context_id', 'table_id', 'cell_id', 'row_num', 'col_num', \
+lingual_attrs   = ['words', 'lemmas', 'poses', 'dep_parents', 'dep_labels', 'char_offsets', 'text']
+sentence_attrs  = id_attrs + ['sent_id'] + lingual_attrs
+table_attrs     = id_attrs + ['context_id', 'table_id', 'phrases', 'html']
+cell_attrs      = id_attrs + ['context_id', 'table_id', 'cell_id', 'row_num', 'col_num', \
                   'html_tag', 'html_attrs', 'html_anc_tags', 'html_anc_attrs']
+phrase_attrs    = cell_attrs + ['phrase_id', 'sent_id'] + lingual_attrs
+
 
 Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
 Sentence = namedtuple('Sentence', sentence_attrs)
 Table    = namedtuple('Table', table_attrs)
 Cell     = namedtuple('Cell', cell_attrs)
+Phrase   = namedtuple('Phrase', phrase_attrs)
 
 class DocParser:
     """Parse a file or directory of files into a set of Document objects."""
     def __init__(self, path):
         self.path = path
+        self.init()
+
+    def init(self):
+        pass
 
     def parse(self):
         """
@@ -216,54 +224,65 @@ class SentenceParser:
 
 class HTMLParser(DocParser):
     """Simple parsing of raw HTML tables"""
+    def init(self):
+        self.doc_id = 0
 
     def parse_file(self, fp, file_name):
         with open(fp, 'r') as f:
             soup = BeautifulSoup(f, 'xml')
-            for doc_id, text in enumerate(soup.find_all('html')):
-                yield Document(id=doc_id, file=file_name, text=unicode(text), attribs=None)
+            for text in enumerate(soup.find_all('html')):
+                yield Document(id=self.doc_id, file=file_name, text=unicode(text), attribs=None)
+                self.doc_id += 1
 
 class TableParser(SentenceParser):
 
-    def parse_table(self, table, table_id=None, doc_id=None, doc_name=None):
-        context_id = "%s-%s" % (doc_id, table_id)
-        cells = {}
-        cell_id = 0
+    def parse_table(self, table, table_idx=None, doc_id=None, doc_name=None):
+        table_id = "%s-%s" % (doc_id, table_idx)
+        phrases = {}
+        cell_idx = -1
         for row_num, row in enumerate(table.find_all('tr')):
-            ancestors = [(row.name, row.attrs.items())] + [(ancestor.name, ancestor.attrs.items()) for ancestor in row.parents if ancestor is not None][:-2]
+            ancestors = ([(row.name, row.attrs.items())]
+                + [(ancestor.name, ancestor.attrs.items())
+                for ancestor in row.parents if ancestor is not None][:-2])
             (tags, attrs) = zip(*ancestors)
             html_anc_tags = tags
-            html_anc_attrs = [a[0]+"="+a[1] for a in chain.from_iterable(attrs)]
+            html_anc_attrs = ["=".join(a) for a in chain.from_iterable(attrs)]
             for col_num, cell in enumerate(row.children):
+                # NOTE: currently not including title, caption, footers, etc.
+                cell_idx += 1
                 if cell.name in ['th','td']:
-                    for sent in self.parse(cell.get_text(strip=True), doc_id, doc_name):
-                        parts = sent._asdict()
-                        parts['id'] = "%s-%s-%s" % (doc_id, table_id, cell_id)
+                    cell_id = "%s-%s" % (table_id, cell_idx)
+                    # add new attribute to the html
+                    cell['cell_id'] = cell_id
+                    for phrase_idx, phrase in enumerate(self.parse(cell.get_text(strip=True), doc_id, doc_name)):
+                        phrase_id = "%s-%s" % (cell_id, phrase_idx)
+                        parts = phrase._asdict()
                         parts['doc_id'] = doc_id
-                        parts['context_id'] = context_id
-                        parts['sent_id'] = context_id       # TEMPORARY
                         parts['table_id'] = table_id
+                        parts['context_id'] = table_id # tables are the context
                         parts['cell_id'] = cell_id
+                        parts['phrase_id'] = phrase_id
+                        parts['sent_id'] = phrase_id # temporary fix until ORM
+                        parts['id'] = phrase_id
                         parts['doc_name'] = doc_name
                         parts['row_num'] = row_num
                         parts['col_num'] = col_num
                         parts['html_tag'] = cell.name
-                        parts['html_attrs'] = [a[0]+"="+a[1] for a in cell.attrs]
+                        parts['html_attrs'] = ["=".join(a) for a in cell.attrs]
                         parts['html_anc_tags'] = html_anc_tags
                         parts['html_anc_attrs'] = html_anc_attrs
-                        cells[str(cell_id)] = Cell(**parts)
-                    cell['cell_id'] = str(cell_id)
-                    cell_id += 1
-        id = context_id
-        return Table(id, doc_id, doc_name, context_id, table_id, cells, str(table))
+                        phrases[phrase_id] = Phrase(**parts)
+        context_id = table_id
+        id = table_id
+        return Table(id, doc_id, doc_name, context_id, table_id, phrases, str(table))
 
     def parse_docs(self, docs):
         """Parse a list of Document objects into a list of pre-processed Tables."""
         tables = []
         for doc in docs:
-            soup = BeautifulSoup(doc.text, 'xml')
-            for table_id, table in enumerate(soup.find_all('table')):
-                tables.append(self.parse_table(table, table_id=table_id, doc_id=doc.id, doc_name=doc.file))
+            soup = BeautifulSoup(doc.text, 'lxml')
+            for table_idx, table in enumerate(soup.find_all('table')):
+                tables.append(self.parse_table(table, table_idx=table_idx, doc_id=doc.id, doc_name=doc.file))
         return tables
 
 
@@ -291,6 +310,7 @@ class Corpus(object):
             if max_docs and i == max_docs:
                 break
             self._docs_by_id[doc.id] = doc
+            print i
 
         # Parse sentences
         print "Parsing contexts..."

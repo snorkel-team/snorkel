@@ -77,6 +77,22 @@ class Learner(object):
         self.gold_labels     = None
         self.X_test          = None
 
+    def _set_model_X(self, L, F):
+        """Given LF matrix L, feature matrix F, return the matrix used by the end discriminative model."""
+        return sparse.hstack([L, F], format='csc')
+
+    def train(self, lf_w0=5.0, feat_w0=0.0, **model_hyperparams):
+        """Train model: **as default, use "joint" approach**"""
+        # TODO: Bias term
+        # Set the initial weights for LFs and feats
+        w0 = np.concatenate([lf_w0*np.ones(self.m), feat_w0*np.ones(self.f)])
+
+        # Construct matrix X for "joint" approach
+        self.X_train = self._set_model_X(self.L_train, self.F_train)
+
+        # Train model
+        self.model.train(self.X_train, w0=w0, **model_hyperparams)
+
     def test(self, test_candidates, gold_labels, show_plots=True):
         """
         Apply the LFs and featurize the test candidates, using the same transformation as in training set;
@@ -87,24 +103,12 @@ class Learner(object):
             self.test_candidates = test_candidates
             self.gold_labels     = gold_labels
             L_test, F_test       = self.training_set.transform(test_candidates)
-            self.X_test          = sparse.hstack([L_test, F_test], format='csc')
+            self.X_test          = self._set_model_X(L_test, F_test)
         test_scores(self.model.predict(self.X_test), gold_labels, return_vals=False, verbose=True)
 
         # Optionally, plot calibration plots
         if show_plots:
             calibration_plots(self.model.marginals(self.X_train), self.model.marginals(self.X_test), gold_labels)
-
-    def train(self, lf_w0=5.0, feat_w0=0.0, **kwargs):
-        """Train model: **as default, use "joint" approach**"""
-        # TODO: Bias term
-        # Set the initial weights for LFs and feats
-        w0 = np.concatenate([lf_w0*np.ones(self.m), feat_w0*np.ones(self.f)])
-
-        # Construct matrix X for "joint" approach
-        self.X_train = sparse.hstack([self.L_train, self.F_train], format='csc')
-
-        # Train model
-        self.model.train(self.X_train, w0=w0, **kwargs)
 
     def lf_weights(self):
         return self.model.w[:self.m]
@@ -118,17 +122,28 @@ class Learner(object):
 
 class PipelinedLearner(Learner):
     """Implements the **"pipelined" approach**"""
-    def train_model(self, feat_w0=0.0, lf_w0=1.0, **model_hyperparams):
+    def _set_model_X(self, L, F):
+        return F.tocsc()
+
+    def train(self, feat_w0=0.0, lf_w0=1.0, **model_hyperparams):
         """Train model: **as default, use "joint" approach**"""
+        w0_1 = lf_w0*np.ones(self.m)
+        w0_2 = feat_w0*np.ones(self.f)
+
         # Learn lf accuracies first
-        self.lf_accs = LogReg(self.L_train, w0=lf_w0*np.ones(self.m), **model_hyperparams)
+        self.training_model = LogReg()
+        self.training_model.train(self.L_train, w0=w0_1, **model_hyperparams)
 
         # Compute marginal probabilities over the candidates from this model of the training set
-        # TODO
+        training_marginals = self.training_model.marginals(self.L_train)
 
         # Learn model over features
-        self.w = self.model.train( \
-            self.F, training_marginals=self.training_marginals, w0=feat_w0*np.ones(self.f), **model_hyperparams)
+        self.X_train = self._set_model_X(self.L_train, self.F_train)
+        self.w       = self.model.train(self.X_train, training_marginals=training_marginals, w0=w0_2, \
+            **model_hyperparams)
 
-        # Print out score if test_set was provided
-        self._print_test_score()
+    def lf_weights(self):
+        return self.training_model.w
+
+    def feat_weights(self):
+        return self.model.w

@@ -9,19 +9,19 @@ not directly from individual submodules. For example, the correct way to import 
 The only exception is importing SnorkelBase or other classes in order to extend Snorkel's data models.
 To ensure that any additional data models are included in the storage backend, these must be imported
 and the extending subtypes defined before importing `snorkel.models`. For example, the correct way to
-define a new type of Candidate is
->>> from snorkel.models.candidates import Candidate
+define a new type of Context is
+>>> from snorkel.models.context import Context
 >>> from sqlalchemy import Column, String, ForeignKey
 >>>
->>> class NewType(Candidate):
+>>> class NewType(Context):
 >>>     # Declares name for storage table
 >>>     __tablename__ = 'newtype'
->>>     # Connects NewType records to generic Canididate records by sharing primary keys
->>>     id = Column(String, ForeignKey('candidate.id'), primary_key=True)
+>>>     # Connects NewType records to generic Context records
+>>>     id = Column(String, ForeignKey('context.id'))
 >>>
 >>>     # Polymorphism information for SQLAlchemy
 >>>     __mapper_args__ = {
->>>         'polymorphic_identity': 'ngram',
+>>>         'polymorphic_identity': 'newtype',
 >>>     }
 >>>
 >>>     # Rest of class definition here
@@ -30,8 +30,8 @@ define a new type of Candidate is
 >>> import snorkel.models
 """
 from .meta import SnorkelBase, SnorkelSession, snorkel_engine, snorkel_postgres
-from .corpus import Corpus, Document, Context, Sentence
-from .candidates import Candidates, Candidate, Ngram
+from .context import Context, Corpus, Document, Sentence
+from .candidate import Candidate, Ngram, CandidateSet
 
 # This call must be performed after all classes that extend SnorkelBase are
 # declared to ensure the storage schema is initialized

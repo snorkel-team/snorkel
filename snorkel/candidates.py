@@ -1,4 +1,4 @@
-from .models import Candidates, Ngram
+from .models import CandidateSet, Ngram
 from itertools import chain
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
@@ -53,7 +53,7 @@ class CandidateExtractor(object):
         self.ps = []
 
     def extract(self, contexts):
-        c = Candidates()
+        c = CandidateSet()
 
         if self.parallelism in [1, False]:
             for candidate in self._extract(contexts):
@@ -108,9 +108,8 @@ class Ngrams(CandidateSpace):
         L = len(context.char_offsets)
         for l in range(1, self.n_max+1)[::-1]:
             for i in range(L-l+1):
-                ws = context.words[i:i+l]
                 # NOTE that we derive char_len without using sep
-                cl = context.char_offsets[i+l-1] - context.char_offsets[i] + len(context.words[i+l-1])
                 char_start = context.char_offsets[i]
+                cl = context.char_offsets[i+l-1] - context.char_offsets[i] + len(context.words[i+l-1])
                 char_end = context.char_offsets[i] + cl - 1
-                yield Ngram(char_start, char_end, context)
+                yield Ngram(char_start=char_start, char_end=char_end, context=context)

@@ -1,37 +1,17 @@
 from .meta import SnorkelBase
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Table, Column, String, Integer, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import PickleType
 
 
-class Candidates(SnorkelBase):
-    """A named collection of Candidate objects."""
-    __tablename__ = 'candidates'
-    id = Column(String, primary_key=True)
-
-    candidates = relationship('Candidate', backref='candidates')
-
-    def __repr__(self):
-        return "Candidates" + str((self.id,))
-
-    def __iter__(self):
-        """Default iterator is over Candidate objects"""
-        for candidate in self.candidates:
-            yield candidate
-
-    def __len__(self):
-        return len(self.candidates)
-
-
 class Candidate(SnorkelBase):
     """
-    A candidate k-arity relation, **uniquely identified by its id**.
+    A candidate relation.
     """
     __tablename__ = 'candidate'
-    id = Column(String, primary_key=True)
-    type = Column(String)
-    candidates_id = Column(String, ForeignKey('candidates.id'))
-    context_id = Column(String, ForeignKey('context.id'))
+    id = Column(Integer, primary_key=True)
+    context_id = Column(Integer, ForeignKey('context.id'))
+    type = Column(String, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',
@@ -43,25 +23,20 @@ class Ngram(Candidate):
     """
     A span of _n_ tokens, identified by Context id and character-index start, end (inclusive).
 
-    char_offsets are **relative to the Document start**
+    char_offsets are **relative to the Context start**
     """
-    __tablename__ = 'ngram'
-    id = Column(String, ForeignKey('candidate.id'), primary_key=True)
-    char_start = Column(Integer)
-    char_end = Column(Integer)
-    meta = Column(PickleType)
+    __table__ = Table('ngram', SnorkelBase.metadata,
+                      Column('id', Integer),
+                      Column('context_id', Integer, primary_key=True),
+                      Column('char_start', Integer, primary_key=True),
+                      Column('char_end', Integer, primary_key=True),
+                      Column('meta', PickleType),
+                      ForeignKeyConstraint(['id', 'context_id'], ['candidate.id', 'candidate.context_id'])
+                      )
 
     __mapper_args__ = {
         'polymorphic_identity': 'ngram',
     }
-
-    def __init__(self, char_start, char_end, context, meta=None):
-        self.id = "ngram-%s-%s-%s" % (context.id, str(char_start), str(char_end))
-        self.char_start = char_start
-        self.char_end = char_end
-        self.context = context
-        if meta is not None:
-            self.meta = meta
 
     def __len__(self):
         return self.char_end - self.char_start + 1
@@ -133,5 +108,37 @@ class Ngram(Candidate):
             raise NotImplementedError()
 
     def __repr__(self):
-        return 'Ngram("%s", id=%s, chars=[%s,%s], words=[%s,%s])' \
-            % (" ".join(self.context.words), self.id, self.char_start, self.char_end, self.get_word_start(), self.get_word_end())
+        return 'Ngram("%s", context=%s, chars=[%s,%s], words=[%s,%s])' \
+            % (" ".join(self.context.words), self.context, self.char_start, self.char_end, self.get_word_start(),
+               self.get_word_end())
+
+
+candidate_set_association = Table('candidate_set_association', SnorkelBase.metadata,
+                                  Column('set', Integer, ForeignKey('candidate_set.id')),
+                                  Column('candidate', Integer, ForeignKey('candidate.id'))
+                                  )
+
+
+class CandidateSet(SnorkelBase):
+    """A named collection of Candidate objects."""
+    __tablename__ = 'candidate_set'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    candidates = relationship("Candidate", secondary=candidate_set_association, backref="sets")
+
+    def __repr__(self):
+        return "Candidate Set (" + self.name + ")"
+
+    def append(self, item):
+        self.candidates.append(item)
+
+    def remove(self, item):
+        self.candidates.remove(item)
+
+    def __iter__(self):
+        """Default iterator is over Candidate objects"""
+        for candidate in self.candidates:
+            yield candidate
+
+    def __len__(self):
+        return len(self.candidates)

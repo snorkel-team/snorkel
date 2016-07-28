@@ -53,6 +53,47 @@ def test_scores(pred, gold, return_vals=True, verbose=False):
     if return_vals:
         return prec, rec, f1, tp, fp, tn, fn, n_t
 
+def plot_prediction_probability(probs):
+    plt.hist(probs, bins=20, normed=False, facecolor='blue')
+    plt.xlim((0,1.025))
+    plt.xlabel("Probability")
+    plt.ylabel("# Predictions")
+
+def plot_accuracy(probs, ground_truth):
+    x = 0.1 * np.array(range(11))
+    bin_assign = [x[i] for i in np.digitize(probs, x)-1]
+    correct = ((2*(probs >= 0.5) - 1) == ground_truth)
+    correct_prob = np.array([np.mean(correct[bin_assign == p]) for p in x])
+    xc = x[np.isfinite(correct_prob)]
+    correct_prob = correct_prob[np.isfinite(correct_prob)]
+    plt.plot(x, np.abs(x-0.5) + 0.5, 'b--', xc, correct_prob, 'ro-')
+    plt.xlim((0,1))
+    plt.ylim((0,1))
+    plt.xlabel("Probability")
+    plt.ylabel("Accuracy")
+
+def calibration_plots(train_marginals, test_marginals, gold_labels=None):
+    """Show classification accuracy and probability histogram plots"""
+    n_plots = 3 if gold_labels is not None else 1
+    
+    # Whole set histogram
+    plt.subplot(1,n_plots,1)
+    plot_prediction_probability(train_marginals)
+    plt.title("(a) # Predictions (training set)")
+
+    if gold_labels is not None:
+
+        # Hold-out histogram
+        plt.subplot(1,n_plots,2)
+        plot_prediction_probability(test_marginals)
+        plt.title("(b) # Predictions (test set)")
+
+        # Classification bucket accuracy
+        plt.subplot(1,n_plots,3)
+        plot_accuracy(test_marginals, gold_labels)
+        plt.title("(c) Accuracy (test set)")
+    plt.show()
+
 class DictTable(OrderedDict):
   def set_title(self, heads):
     self.title = heads
@@ -85,350 +126,10 @@ class SideTables:
     t2_html = t2_html[:6] + " style=\"float: left\"" + t2_html[6:] 
     return t1_html + t2_html
 
-def log_title(heads=["ID", "# LFs", "Test set size", "Model", 
-                     "Precision", "Recall", "F1"]):
-  html = ["<tr>"]
-  html.extend("<td><b>{0}</b></td>".format(h) for h in heads)
-  html.append("</tr>")
-  return ''.join(html)
-
-class ModelLog:
-  def __init__(self, log_id, lf_names, model, gt_idxs, gt, pred):
-    self.id = log_id
-    self.lf_names = lf_names
-    self.model = model
-    self.gt_idxs = gt_idxs
-    self.set_metrics(gt, pred)
-  def set_metrics(self, gt, pred):
-    self.precision, self.recall = precision(gt, pred), recall(gt, pred)
-    self.f1 = f1_score(prec = self.precision, rec = self.recall)
-  def num_lfs(self):
-    return len(self.lf_names)
-  def num_gt(self):
-    return len(self.gt_idxs)
-  def table_entry(self):
-    html = ["<tr>"]
-    html.append("<td>{0}</td>".format(self.id))
-    html.append("<td>{0}</td>".format(self.num_lfs()))
-    html.append("<td>{0}</td>".format(self.num_gt()))
-    html.append("<td>{0}</td>".format(self.model))    
-    html.append("<td>{:.3f}</td>".format(self.precision))
-    html.append("<td>{:.3f}</td>".format(self.recall))
-    html.append("<td>{:.3f}</td>".format(self.f1))
-    html.append("</tr>")
-    return ''.join(html)
-  def _repr_html_(self):
-    html = ["<table>"]
-    html.append(log_title())
-    html.append(self.table_entry())
-    html.append("</table>")
-    html.append("<table>")
-    html.append(log_title(["LF"]))
-    html.extend("<tr><td>{0}</td></tr>".format(lf) for lf in self.lf_names)
-    html.append("</table>")
-    return ''.join(html)    
-
-class ModelLogger:
-  def __init__(self):
-    self.logs = []
-  def __getitem__(self, i):
-    return self.logs[i]
-  def __len__(self):
-    return len(self.logs)
-  def __iter__(self):
-    return (self.logs[i] for i in xrange(0, len(self)))
-  def log(self, ml):
-    if issubclass(ml.__class__, ModelLog):
-      self.logs.append(ml)
-    else:
-      raise ValueError("Log must be subclass of ModelLog")
-  def _repr_html_(self):
-    html = ["<table>"]
-    html.append(log_title())
-    html.extend(log.table_entry() for log in self.logs)
-    html.append("</table>")
-    return ''.join(html)
-
-ValidatedFit = namedtuple('ValidatedFit', ['w', 'P', 'R', 'F1'])
-
-class CandidateGT:
-  def __init__(self, candidates, gt_dict=None):
-    gt_dict = gt_dict if isinstance(gt_dict, dict) else dict()
-    self._gt_dict = OrderedDict()
-    self._gt_vec = np.zeros((len(candidates)), dtype=int)
-    for i,c in enumerate(candidates):
-      l = gt_dict[c.uid] if c.uid in gt_dict else 0
-      self._gt_dict[c.uid] = l
-      self._gt_vec[i] = l
-
-    self.validation = np.array([], dtype=int)
-    self.test = np.array([], dtype=int)
-    
-    self.training = np.array(range(self.n()), dtype=int)
-    
-    self.dev_split = 0.7
-    self.dev1 = np.array([], dtype=int)
-    self.dev2 = np.array([], dtype=int)
-    
-    self.min_dev = 20
-    self.min_val = 20
-    self.min_test = 20
-      
-  def n(self):
-    return len(self._gt_vec)
-    
-  def get_gt_dict(self):
-    return self._gt_dict
-
-  def dev_size_warn(self):    
-    if len(self.dev1) < self.min_dev or len(self.dev2) < self.min_dev:
-      warnings.warn("Dev sets are too small for reliable estimates")
-     
-  def val_test_size_warn(self):    
-    if len(self.validation) < self.min_val or len(self.test) < self.min_test:
-      warnings.warn("Validation/test sets are too small for reliable estimates")
-      
-    
-  def _update_training(self):
-    self.training = np.setdiff1d(np.array(range(self.n()), dtype=int), 
-                                 self.holdout())
-    
-  def holdout(self):
-    return np.concatenate([self.validation, self.test])
-    
-  def dev(self):
-    return np.concatenate([self.dev1, self.dev2])
-
-  def set_holdout(self, idxs=None, validation_frac=0.5):
-    """ Set validation and test sets """
-    if not 0 <= validation_frac <= 1:
-      raise ValueError("Validate/test split proportions must be in [0,1]")
-    if idxs is None:
-      h = np.ravel(np.where(self._gt_vec != 0))
-    else:
-      try:
-        h = np.ravel(np.arange(self.n())[idxs])
-      except:
-        raise ValueError("Indexes must be in range [0, num_candidates()) or be\
-                          boolean array of length num_candidates()")
-    np.random.shuffle(h)
-    self.validation = h[ : int(np.floor(validation_frac * len(h)))]
-    self.test = h[int(np.floor(validation_frac * len(h))) : ]
-    self._update_training()
-    self._update_devs(self.dev_split)
-    
-  def _update_devs(self, dev_split):
-    idxs,_ = self.get_labeled_ground_truth('training')
-    np.random.shuffle(idxs)
-    self.dev1 = idxs[ : int(np.floor(dev_split * len(idxs)))]
-    self.dev2 = idxs[int(np.floor(dev_split * len(idxs))) : ]
-    
-  def update_gt(self, gt, idxs=None, uids=None):
-    """ Set ground truth for idxs XOR uids to gt. Updates dev sets. """
-    # Check input  
-    try:
-      gt = np.ravel(gt)
-    except:
-      raise ValueError("gt must be array-like")
-    if not np.all(np.in1d(gt, [-1,0,1])):
-      raise ValueError("gt must be -1, 0, or 1")
-    # Assign gt by indexes  
-    if idxs is not None and uids is None:
-      if len(idxs) != len(gt):
-        raise ValueError("idxs and gt must be same length")
-      try:
-        self._gt_vec[idxs] = gt
-      except:
-        raise ValueError("Could not assign gt to idxs")
-      k = self._gt_dict.keys()
-      for i,label in zip(idxs,gt):
-        self._gt_dict[k[i]] = label
-    # Assign gt by uid    
-    elif uids is not None and idxs is None:
-      if len(uids) != len(gt):
-        raise ValueError("uids and gt must be same length")
-      for uid,label in zip(uids,gt):
-        if uid not in self._gt_dict:
-          raise ValueError("uid {} not in candidates".format(uid))
-        self._gt_dict[uid] = label
-      # TODO: should be O(update size)
-      for i,uid in enumerate(self._gt_dict.keys()):
-        self._gt_vec[i] = self._gt_dict[uid]
-    # Both/neither idxs and uids defined    
-    else:
-      raise ValueError("Exactly one of idxs and uids must be not None")
-    # Update dev sets
-    self._update_devs(self.dev_split)
-    
-  def get_labeled_ground_truth(self, subset=None):
-    """ Get indices and labels of subset which have ground truth """
-    gt_all = self._gt_vec
-    if subset is None:
-      has_gt = (gt_all != 0)
-      return np.ravel(np.where(has_gt)), gt_all[has_gt]
-    if subset is 'training':
-      t = self.training
-      gt_all = gt_all[t]
-      has_gt = (gt_all != 0)
-      return t[has_gt], gt_all[has_gt]
-    if subset is 'test':
-      gt_all = gt_all[self.test]
-      has_gt = (gt_all != 0)
-      return self.test[has_gt], gt_all[has_gt]
-    if subset is 'validation':
-      gt_all = gt_all[self.validation]
-      has_gt = (gt_all != 0)
-      return self.validation[has_gt], gt_all[has_gt]
-    try:
-      gt_all = gt_all[subset]
-      has_gt = (gt_all != 0)
-      return subset[has_gt], gt_all[has_gt]
-    except:
-      raise ValueError("subset must be 'training', 'test', 'validation' or an\
-                        array of indices 0 <= i < {}".format(self.n()))
 
 class DDLiteModel:
   def __init__(self, candidates, feats=None, gt_dict=None):
     self.C = candidates
-    if type(feats) == np.ndarray or sparse.issparse(feats):
-      self.feats = feats
-    elif feats is None:
-      try:
-        self.feats = self.C.extract_features()
-      except:
-        raise ValueError("Could not automatically extract features")
-    else:
-      raise ValueError("Features must be numpy ndarray or sparse")
-    self.logger = ModelLogger()
-    # LF data
-    self.lf_matrix = None
-    self.lf_names = []
-    # Model probabilities
-    self.model = None
-    self.marginals = None
-    self.lf_marginals = None
-    self.lf_weights = None
-    # GT data
-    self.gt = CandidateGT(candidates, gt_dict)
-    # MT data
-    self._current_mindtagger_samples = np.array([], dtype=int)
-    self._mt_tags = []
-    self.mindtagger_instance = None
-    # Status
-    self.model = None
-
-  #########################################################
-  #################### Basic size info ####################
-  #########################################################
-
-  def num_candidates(self):
-    return len(self.C)
-    
-  def num_feats(self):
-    return self.feats.shape[1]
-  
-  def num_lfs(self, result='all'):
-    if self.lf_matrix is None:
-      return 0
-    return self.lf_matrix.shape[1]
-    
-  #######################################################
-  #################### GT attributes ####################
-  #######################################################
-    
-  def gt_dictionary(self):
-    return self.gt._gt_dict
-    
-  def holdout(self):
-    return self.gt.holdout()
-    
-  def validation(self):
-    return self.gt.validation
-    
-  def test(self):
-    return self.gt.test
-
-  def dev(self):
-    return self.gt.dev()
-
-  def dev1(self):
-    return self.gt.dev1
-
-  def dev2(self):
-    return self.gt.dev2
-    
-  def training(self):
-    return self.gt.training
-    
-  def covered(self):
-    return np.unique(self.lf_matrix.nonzero()[0])
-    
-  def set_holdout(self, idxs=None, validation_frac=0.5):
-    self.gt.set_holdout(idxs, validation_frac)
-    
-  def get_labeled_ground_truth(self, subset=None):
-    return self.gt.get_labeled_ground_truth(subset)
-    
-  def update_gt(self, gt, idxs=None, uids=None):
-    self.gt.update_gt(gt, idxs, uids)
-    
-  def dev_size_warn(self):
-    self.gt.dev_size_warn()
-
-  def test_val_size_warn(self):
-    self.gt.val_test_size_warn()
-    
-  def get_gt_dict(self):
-    return self.gt.get_gt_dict()    
-    
-  #######################################################
-  #################### LF operations ####################
-  #######################################################
-                       
-  def set_lf_matrix(self, lf_matrix, names, clear=False):
-    try:
-      add = sparse.lil_matrix(lf_matrix)
-    except:
-      raise ValueError("Could not convert lf_matrix to sparse matrix")
-    if add.shape[0] != self.num_candidates():
-      raise ValueError("lf_matrix must have one row per candidate")
-    if len(names) != add.shape[1]:
-      raise ValueError("Must have one name per lf_matrix column")
-    if self.lf_matrix is None or clear:
-      self.lf_matrix = add
-      self.lf_names = names
-    else:
-      self.lf_matrix = sparse.hstack([self.lf_matrix,add], format = 'lil')
-      self.lf_names.extend(names)
-
-  def apply_lfs(self, lfs_f, clear=False):
-    """ Apply labeler functions given in list
-    Allows adding to existing LFs or clearing LFs with CLEAR=True
-    """
-    add = sparse.lil_matrix((self.num_candidates(), len(lfs_f)))
-    for i,c in enumerate(self.C):    
-      for j,lf in enumerate(lfs_f):
-        add[i,j] = lf(c)
-    add_names = [lab.__name__ for lab in lfs_f]
-    self.set_lf_matrix(add, add_names, clear)
-    
-  def delete_lf(self, lf):
-    """ Delete LF by index or name """
-    if isinstance(lf, str):
-      try:
-        lf = self.lf_names.index(lf)
-      except:
-        raise ValueError("{} is not a valid labeling function name".format(lf))
-    if isinstance(lf, int):
-      try:
-        lf_csc = self.lf_matrix.tocsc()
-        other_idx = np.concatenate((range(lf), range(lf+1, self.num_lfs())))
-        self.lf_matrix = (lf_csc[:, other_idx]).tolil()
-        self.lf_names.pop(lf)
-      except:
-        raise ValueError("{} is not a valid LF index".format(lf))
-    else:
-      raise ValueError("lf must be a string name or integer index")
     
   #######################################################
   #################### LF stat comp. ####################
@@ -638,102 +339,6 @@ class DDLiteModel:
                    "Negative<br />accuracy", "Negative<br />gen. score"])
     return tab
     
-
-  ######################################################
-  #################### Learning fns ####################
-  ######################################################
-
-  def learn_lf_accuracies(self, n_iter=500, initial_mult=1, rate=0.01, mu=1e-7,
-                          sample=True, n_samples=100, verbose=True):
-    """ Learn first stage of pipeline """
-    tc = np.intersect1d(self.training(), self.covered())
-    LF = self.lf_matrix.tocsr()
-    w0 = initial_mult * np.ones(LF.shape[1])
-    self.lf_weights = learn_elasticnet_logreg(LF[tc, :], n_iter=n_iter, w0=w0,
-                                              rate=rate, alpha=0, mu=mu,
-                                              sample=sample,
-                                              n_samples=n_samples,
-                                              verbose=verbose)
-    self.lf_marginals = odds_to_prob(np.ravel(LF.dot(self.lf_weights)))
-    
-  def train_model_lr(self, bias=False, n_mu=5, mu_min_ratio=1e-6, 
-                     plot=True, log=True, joint=False, lf_w0=10, **kwargs):
-    """ Learn second stage of pipeline with logistic regression """
-    print "Running in %s mode..." % joint
-    self.model = "Logistic regression"
-    # Warn if test size is small
-    self.test_val_size_warn()
-    # Set data, add bias term
-    F = self.feats.tocsr()
-    if bias:
-      F = sparse.hstack([F, np.ones((F.shape[0],1))], format='csr')
-    kwargs['w0'] = np.zeros(F.shape[1])
-    if joint:
-      LF = self.lf_matrix.tocsr()
-      F  = sparse.hstack([F, LF], format='csr')
-      kwargs['w0'] = np.concatenate([kwargs['w0'], lf_w0*np.ones(LF.shape[1])])
-    kwargs['unreg'] = [F.shape[1]-1] if bias else []
-    # Handle mu values
-    mu_seq = kwargs.get('mu', None)
-    if 'mu' in kwargs:
-      del kwargs['mu']
-    # User provided
-    if mu_seq is not None:
-      mu_seq = np.ravel(mu_seq)
-      mu_seq.sort()
-    # Default 
-    elif len(self.validation()) == 0:
-      warnings.warn("Using default mu value with no validation set")
-      mu_seq = [DEFAULT_MU]
-    # Automatic
-    else:
-      rate = kwargs.get('rate', DEFAULT_RATE)
-      alpha = kwargs.get('alpha', DEFAULT_ALPHA)
-      mu_seq = get_mu_seq(n_mu, rate, alpha, mu_min_ratio)
-    # Train model
-    tc = np.intersect1d(self.training(), self.covered())
-    if not joint:
-      kwargs['marginals'] = self.lf_marginals[tc]
-    weights = dict()
-    for mu in mu_seq:
-      weights[mu] = learn_elasticnet_logreg(F[tc,:], mu=mu, **kwargs)
-    # Results
-    if len(weights) == 1:
-      self.marginals = odds_to_prob(np.ravel(F.dot(weights[mu_seq[0]])))
-    else:
-      w_fit = OrderedDict()
-      gt = self.gt._gt_vec[self.validation()]
-      f1_opt, w_opt, mu_opt = 0, None, None
-      for mu in mu_seq:
-        w = weights[mu]
-        probs = odds_to_prob(F[self.validation(),:].dot(w[:]))
-        pred = 2*(probs >= 0.5) - 1
-        prec, rec = precision(gt, pred), recall(gt, pred)
-        f1 = f1_score(prec = prec, rec = rec)
-        w_fit[mu] = ValidatedFit(w, prec, rec, f1)
-        if f1 >= f1_opt:
-          w_opt, f1_opt, mu_opt = w, f1, mu
-      self.marginals = odds_to_prob(np.ravel(F.dot(w_opt)))
-      if plot:
-        self.plot_lr_diagnostics(w_fit, mu_opt, f1_opt)
-    if log:
-      return self.add_to_log()
-    else:
-      return None
-
-  def train_model(self, method="lr", joint=False, lf_opts=dict(), model_opts=dict()):
-    if not joint:
-      self.learn_lf_accuracies(**lf_opts)
-    if method == "lr":
-      model_opts['joint'] = joint
-      return self.train_model_lr(**model_opts)
-    elif method == "lstm":
-      lstm = LSTM(self.C, self.training(), self.lf_marginals)
-      lstm.train_model_lstm(**model_opts)
-      self.marginals=lstm.marginals
-    else:
-      raise ValueError("Method {} not recognized. Options: \"lr\"").format(method)
-
   def plot_lr_diagnostics(self, w_fit, mu_opt, f1_opt):
     """ Plot validation set performance for logistic regression regularization """
     mu_seq = sorted(w_fit.keys())
@@ -774,152 +379,6 @@ class DDLiteModel:
                scatterpoints=1, fontsize=10, markerscale=0.5)
     plt.show()
 
-  def _prob_sub(self, probs, subset):
-    if probs is None:
-      raise ValueError("Inference has not been run yet")
-    if subset is None:
-      return probs
-    if subset is 'test':
-      return probs[self.test()]
-    if subset is 'validation':
-      return probs[self.validation()]
-    try:
-      return probs[subset]
-    except:
-      raise ValueError("subset must be 'test', 'validation', or an array of\
-                       indices 0 <= i < {}".format(self.num_candidates()))
-
-  def get_predicted_marginals(self, subset=None):
-    """
-    Get array of predicted probabilities (continuous) given weights
-    Return either all candidates, a specified subset, or only validation/test set
-    """
-    return self._prob_sub(self.marginals, subset)
- 
-  def get_lf_predicted_marginals(self, subset=None):
-    """
-    Get array of predicted probabilities (continuous) given LF weights
-    Return either all candidates, a specified subset, or only validation/test set
-    """
-    return self._prob_sub(self.lf_marginals, subset)
- 
-  def get_predicted(self, subset=None):
-    """
-    Get the array of predicted (boolean) variables given weights
-    Return either all variables, a specified subset, or only validation/test set
-    """
-    return np.sign(self.get_predicted_marginals(subset) - 0.5)
-    
-  def get_lf_predicted(self, subset=None):
-    """
-    Get the array of predicted (boolean) variables given LF weights
-    Return either all variables, a specified subset, or only validation/test set
-    """
-    return np.sign(self.get_lf_predicted_marginals(subset) - 0.5)
-
-  def get_classification_accuracy(self, subset=None):
-    """
-    Given the ground truth, return the classification accuracy
-    Return either accuracy for all candidates, a subset, or validation/test set
-    """
-    idxs, gt = self.get_labeled_ground_truth(subset)
-    pred = self.get_predicted(idxs)
-    return np.mean(gt == pred)
-    
-  def _plot_prediction_probability(self, probs):
-    plt.hist(probs, bins=20, normed=False, facecolor='blue')
-    plt.xlim((0,1.025))
-    plt.xlabel("Probability")
-    plt.ylabel("# Predictions")
-
-  def _plot_accuracy(self, probs, ground_truth):
-    x = 0.1 * np.array(range(11))
-    bin_assign = [x[i] for i in np.digitize(probs, x)-1]
-    correct = ((2*(probs >= 0.5) - 1) == ground_truth)
-    correct_prob = np.array([np.mean(correct[bin_assign == p]) for p in x])
-    xc = x[np.isfinite(correct_prob)]
-    correct_prob = correct_prob[np.isfinite(correct_prob)]
-    plt.plot(x, np.abs(x-0.5) + 0.5, 'b--', xc, correct_prob, 'ro-')
-    plt.xlim((0,1))
-    plt.ylim((0,1))
-    plt.xlabel("Probability")
-    plt.ylabel("Accuracy")
-
-  def plot_calibration(self):
-    """
-    Show classification accuracy and probability histogram plots
-    """
-    idxs, gt = self.get_labeled_ground_truth(None)
-    has_test, has_gt = (len(self.test()) > 0), (len(gt) > 0)
-    n_plots = 1 + has_test + (has_test and has_gt)
-    # Whole set histogram
-    plt.subplot(1,n_plots,1)
-    probs = self.get_predicted_marginals()
-    self._plot_prediction_probability(probs)
-    plt.title("(a) # Predictions (whole set)")
-    # Hold out histogram
-    if has_test:
-      plt.subplot(1,n_plots,2)
-      self._plot_prediction_probability(probs[self.test()])
-      plt.title("(b) # Predictions (test set)")
-      # Classification bucket accuracy
-      if has_gt:
-        plt.subplot(1,n_plots,3)
-        self._plot_accuracy(probs[idxs], gt)
-        plt.title("(c) Accuracy (test set)")
-    plt.show()
-    
   def _get_all_abstained(self, training=True):
     idxs = self.training() if training else range(self.num_candidates())
     return np.ravel(np.where(np.ravel((self.lf_matrix[idxs,:]).sum(1)) == 0))
-
-  def open_mindtagger(self, num_sample=None, abstain=False, **kwargs):
-    self.mindtagger_instance = MindTaggerInstance(self.C.mindtagger_format())
-    if isinstance(num_sample, int) and num_sample > 0:
-      pool = self._get_all_abstained(dev=True) if abstain else self.training()
-      self._current_mindtagger_samples = np.random.choice(pool, num_sample, replace=False)\
-                                          if len(pool) > num_sample else pool
-    elif not num_sample and len(self._current_mindtagger_samples) < 0:
-      raise ValueError("No current MindTagger sample. Set num_sample")
-    elif num_sample:
-      raise ValueError("Number of samples is integer or None")
-    try:
-      probs = self.get_predicted_marginals(subset=self._current_mindtagger_samples)
-    except:
-      probs = [None for _ in xrange(len(self._current_mindtagger_samples))]
-    tags_l = self.gt._gt_vec[self._current_mindtagger_samples]
-    tags = np.zeros_like(self.gt._gt_vec)
-    tags[self._current_mindtagger_samples] = tags_l
-    return self.mindtagger_instance.open_mindtagger(self.C.generate_mindtagger_items,
-                                                    self._current_mindtagger_samples,
-                                                    probs, tags, **kwargs)
-  
-  def add_mindtagger_tags(self):
-    tags = self.mindtagger_instance.get_mindtagger_tags()
-    self._mt_tags = tags
-    is_tagged = [i for i,tag in enumerate(tags) if 'is_correct' in tag]
-    tb = [tags[i]['is_correct'] for i in is_tagged]
-    tb = [1 if t else -1 for t in tb]
-    idxs = self._current_mindtagger_samples[is_tagged]
-    self.update_gt(tb, idxs=idxs)
-  
-  def add_to_log(self, log_id=None, subset='test', show=True):
-    if log_id is None:
-      log_id = len(self.logger)
-    gt_idxs, gt = self.get_labeled_ground_truth(subset)
-    pred = self.get_predicted(gt_idxs)    
-    self.logger.log(ModelLog(log_id, self.lf_names, self.model,
-                             gt_idxs, gt, pred))
-    if show:
-      return self.logger[-1]
-      
-  def show_log(self, idx=None):
-    if idx is None:
-      return self.logger
-    try:
-      return self.logger[idx]
-    except:
-      raise ValueError("Index must be for one of {} logs".format(len(self.logger)))
-
-# Legacy name
-CandidateModel = DDLiteModel

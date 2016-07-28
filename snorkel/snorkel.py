@@ -14,7 +14,7 @@ import scipy.sparse as sparse
 from features import Featurizer
 from learning import LogReg, odds_to_prob
 from lstm import *
-from learning_utils import test_scores
+from learning_utils import test_scores, calibration_plots
 
 
 class TrainingSet(object):
@@ -77,7 +77,7 @@ class Learner(object):
         self.gold_labels     = None
         self.X_test          = None
 
-    def test(self, test_candidates, gold_labels):
+    def test(self, test_candidates, gold_labels, show_plots=True):
         """
         Apply the LFs and featurize the test candidates, using the same transformation as in training set;
         then test against gold labels using trained model.
@@ -87,8 +87,12 @@ class Learner(object):
             self.test_candidates = test_candidates
             self.gold_labels     = gold_labels
             L_test, F_test       = self.training_set.transform(test_candidates)
-            self.X_test = sparse.hstack([L_test, F_test], format='csc')
+            self.X_test          = sparse.hstack([L_test, F_test], format='csc')
         test_scores(self.model.predict(self.X_test), gold_labels, return_vals=False, verbose=True)
+
+        # Optionally, plot calibration plots
+        if show_plots:
+            calibration_plots(self.model.marginals(self.X_train), self.model.marginals(self.X_test), gold_labels)
 
     def train(self, lf_w0=5.0, feat_w0=0.0, **kwargs):
         """Train model: **as default, use "joint" approach**"""

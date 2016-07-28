@@ -301,14 +301,23 @@ class TableNgram(Ngram):
             % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.row_num, self.col_num, self.html_tag)
 
 ### HACKY ###
-    def aligned(self, attribute='words'):
-        return self.row_window() + self.col_window()
+    def aligned(self, attribute='words', case_sensitive=False):
+        return (self.row_window(case_sensitive=case_sensitive)
+              + self.col_window(case_sensitive=case_sensitive))
 
-    def row_window(self, attribute='words'):
-        return [ngram for ngram in self.get_aligned_ngrams(self.context, axis='row')]
+    def row_window(self, attribute='words', case_sensitive=False):
+        ngrams = [ngram for ngram in self.get_aligned_ngrams(self.context, axis='row')]
+        if not case_sensitive:
+            return [ngram.lower() for ngram in ngrams]
+        else:
+            return ngrams
 
-    def col_window(self, attribute='words'):
-        return [ngram for ngram in self.get_aligned_ngrams(self.context, axis='col')]
+    def col_window(self, attribute='words', case_sensitive=False):
+        ngrams = [ngram for ngram in self.get_aligned_ngrams(self.context, axis='col')]
+        if not case_sensitive:
+            return [ngram.lower() for ngram in ngrams]
+        else:
+            return ngrams
 
     # NOTE: it may just be simpler to search by row_num, col_num rather than
     # traversing tree, though other range features may benefit from tree structure

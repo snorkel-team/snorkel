@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sparse
 import warnings
+from learning_utils import sparse_abs
     
 DEFAULT_MU = 1e-6
 DEFAULT_RATE = 0.01
@@ -56,16 +57,6 @@ def exact_data(X, w, evidence=None):
     t[evidence < 0.0] = 0.0
   return t, 1-t
 
-def abs_sparse(X):
-  """ Element-wise absolute value of sparse matrix """
-  X_abs = X.copy()
-  if sparse.isspmatrix_csr(X) or sparse.isspmatrix_csc(X):
-    X_abs.data = np.abs(X_abs.data)
-  elif sparse.isspmatrix_lil(X):
-    X_abs.data = np.array([np.abs(L) for L in X_abs.data])
-  else:
-    raise ValueError("Only supports CSR/CSC and LIL matrices")
-  return X_abs
 
 def transform_sample_stats(Xt, t, f, Xt_abs=None):
   """
@@ -77,7 +68,7 @@ def transform_sample_stats(Xt, t, f, Xt_abs=None):
                       = \frac12\left(\frac{X*(t-f)}{t+f} + 1\right)
   """
   if Xt_abs is None:
-    Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else abs(Xt)
+    Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else abs(Xt)
   n_pred = Xt_abs.dot(t+f)
   m = (1. / (n_pred + 1e-8)) * (Xt.dot(t) - Xt.dot(f))
   p_correct = (m + 1) / 2
@@ -123,7 +114,7 @@ class LogReg(NoiseAwareModel):
         """
         N, M   = X.shape
         Xt     = X.transpose()
-        Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else np.abs(Xt)  
+        Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else np.abs(Xt)  
         w0     = w0 if w0 is not None else np.zeros(M)
         if training_marginals is not None:
             t,f = training_marginals, 1-training_marginals

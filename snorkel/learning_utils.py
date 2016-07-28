@@ -212,6 +212,60 @@ class SideTables:
     return t1_html + t2_html
 
 
+def sparse_abs(X):
+    """Element-wise absolute value of sparse matrix- avoids casting to dense matrix!"""
+    X_abs = X.copy()
+    if not sparse.issparse(X):
+        return abs(X_abs)
+    if sparse.isspmatrix_csr(X) or sparse.isspmatrix_csc(X):
+        X_abs.data = np.abs(X_abs.data)
+    elif sparse.isspmatrix_lil(X):
+        X_abs.data = np.array([np.abs(L) for L in X_abs.data])
+    else:
+        raise ValueError("Only supports CSR/CSC and LIL matrices")
+    return X_abs
+
+
+def label_coverage(L):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
+    Return the **fraction of candidates which have > 0 (non-zero) labels.**
+    """
+    return np.where(L.sum(axis=1) != 0, 1, 0).sum() / float(L.shape[0])
+
+def label_overlap(L):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
+    Return the **fraction of candidates which have > 1 (non-zero) labels.**
+    """
+    return np.where(sparse_abs(L).sum(axis=1) > 1, 1, 0).sum() / float(L.shape[0])
+
+def label_conflict(L):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
+    Return the **fraction of candidates which have > 1 (non-zero) labels _which are not equal_.**
+    """
+    return np.where(sparse_abs(L).sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).sum() / float(L.shape[0])
+
+def lf_summary_stats(L, return_vals=True, verbose=False):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
+    Return simple summary statistics
+    """
+    N, M = L.shape
+    coverage, overlap, conflict = label_coverage(L), label_overlap(L), label_conflict(L)
+    if verbose:
+        print "=" * 60
+        print "LF Summary Statistics: %s LFs applied to %s candidates" % (M, N)
+        print "-" * 60
+        print "Coverage (candidates w/ > 0 labels):\t\t%0.2f%%" % (coverage*100,)
+        print "Overlap (candidates w/ > 1 labels):\t\t%0.2f%%" % (overlap*100,)
+        print "Conflict (candidates w/ conflicting labels):\t%0.2f%%" % (conflict*100,)
+        print "=" * 60
+    if return_vals:
+        return coverage, overlap, conflict
+
+
 class DDLiteModel:
   def __init__(self, candidates, feats=None, gt_dict=None):
     self.C = candidates

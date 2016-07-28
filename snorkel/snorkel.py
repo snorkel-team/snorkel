@@ -14,7 +14,7 @@ import scipy.sparse as sparse
 from features import Featurizer
 from learning import LogReg, odds_to_prob
 from lstm import *
-from learning_utils import test_scores, calibration_plots
+from learning_utils import test_scores, calibration_plots, lf_summary_stats
 
 
 class TrainingSet(object):
@@ -31,7 +31,9 @@ class TrainingSet(object):
         self.training_candidates = training_candidates
         self.featurizer          = featurizer
         self.lfs                 = lfs
+        self.lf_names            = [lf.__name__ for lf in lfs]
         self.L, self.F           = self.transform(self.training_candidates, fit=True)
+        self.lf_stats()
 
     def transform(self, candidates, fit=False):
         """Apply LFs and featurize the candidates"""
@@ -50,6 +52,10 @@ class TrainingSet(object):
             for j,lf in enumerate(self.lfs):
                 X[i,j] = lf(c)
         return X.tocsr()
+
+    def lf_stats(self, return_vals=False, verbose=True):
+        """Print out basic stats about the LFs wrt the training candidates"""
+        return lf_summary_stats(self.L, return_vals=return_vals, verbose=verbose)
 
 
 class Learner(object):

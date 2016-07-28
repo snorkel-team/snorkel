@@ -14,38 +14,34 @@ import scipy.sparse as sparse
 from features import Featurizer
 from learning import LogReg, odds_to_prob
 from lstm import *
+from learning_utils import test_scores
 
 
-class Learner(object):
+class TrainingSet(object):
     """
-    Core learning class for Snorkel, encapsulating the overall pipeline:
-        1. Generating a noisy training set by applying the LFs to the candidates
-        2. Modeling this noisy training set
-        3. Learning a model over the candidate features, trained on the noisy training set
+    Wrapper data object which applies the LFs to the candidates comprising the training set,
+    featurizes them, and then stores the resulting _noisy training set_, as well as the LFs and featurizer.
 
     As input takes:
-        - A set of Candidate objects
+        - A set of Candidate objects comprising the training set
         - A set of labeling functions (LFs) which are functions f : Candidate -> {-1,0,1}
         - A Featurizer object, which is applied to the Candidate objects to generate features
-        - A Model object, representing the model to train
-        - _A test set to compute performance against, which consists of a dict mapping candidate id -> T/F_
     """
-    # TODO: Tuner (GridSearch) class that wraps this! 
-    def __init__(self, train_candidates, lfs, featurizer=None, model=None):
-        self.lfs              = lfs
-        self.model            = model
-        self.featurizer       = None
-        self.train_candidates = train_candidates
-        self.train_cids       = [c.id for c in self.train_candidates]
-        self.X_train          = None
+    def __init__(self, training_candidates, lfs, featurizer=None):
+        self.training_candidates = training_candidates
+        self.featurizer          = featurizer
+        self.lfs                 = lfs
+        self.L, self.F           = self.transform(self.training_candidates, fit=True)
 
-        # Apply LFs and featurize the candidates
+    def transform(self, candidates, fit=False):
+        """Apply LFs and featurize the candidates"""
         print "Applying LFs..."
-        self.L_train         = self._apply_lfs(self.train_candidates)
-        self.n_train, self.m = self.L_train.shape
-        print "Featurizing..."
-        self.F_train         = featurizer.fit_apply(self.train_candidates) if featurizer else None
-        self.f               = self.F_train.shape[1] if self.F_train is not None else 0
+        L = self._apply_lfs(candidates)
+        F = None
+        if self.featurizer is not None:
+            print "Featurizing..."
+            F = self.featurizer.fit_transform(candidates) if fit else self.featurizer.transform(candidates)
+        return L, F
 
     def _apply_lfs(self, candidates):
         """Apply the labeling functions to the candidates to populate X"""
@@ -55,12 +51,44 @@ class Learner(object):
                 X[i,j] = lf(c)
         return X.tocsr()
 
+
+class Learner(object):
+    """
+    Core learning class for Snorkel, encapsulating the overall process of learning a generative model of the
+    training data set (specifically: of the LF-emitted labels and the true class labels), and then using this
+    to train a given noise-aware discriminative model.
+
+    As input takes a TrainingSet object and a NoiseAwareModel object (the discriminative model to train).
+    """
+    # TODO: Tuner (GridSearch) class that wraps this! 
+    def __init__(self, training_set, model=None):
+        self.training_set = training_set
+        self.model        = model
+
+        # Derived objects from the training set
+        self.L_train         = self.training_set.L
+        self.n_train, self.m = self.L_train.shape
+        self.F_train         = self.training_set.F
+        self.f               = self.F_train.shape[1]
+        self.X_train         = None
+
+        # Cache the transformed test set as well
+        self.test_candidates = None
+        self.gold_labels     = None
+        self.X_test          = None
+
     def test(self, test_candidates, gold_labels):
-        """Apply the LFs and featurize the test candidates, then test against gold labels using trained model"""
-        L_test = self._apply_lfs(test_candidates)
-        F_test = featurizer.apply(test_candidates) if featurizer else None
-        X_test = sparse.hstack([L_test, F_test], format='csc')
-        test_scores(self.model.predict(X_test), gold_labels, return_vals=False, verbose=True)
+        """
+        Apply the LFs and featurize the test candidates, using the same transformation as in training set;
+        then test against gold labels using trained model.
+        """
+        # Cache transformed test set
+        if self.X_test is None or test_candidates != self.test_candidates or any(gold_labels != self.gold_labels):
+            self.test_candidates = test_candidates
+            self.gold_labels     = gold_labels
+            L_test, F_test       = self.training_set.transform(test_candidates)
+            self.X_test = sparse.hstack([L_test, F_test], format='csc')
+        test_scores(self.model.predict(self.X_test), gold_labels, return_vals=False, verbose=True)
 
     def train(self, feat_w0=0.0, lf_w0=1.0, **model_hyperparams):
         """Train model: **as default, use "joint" approach**"""

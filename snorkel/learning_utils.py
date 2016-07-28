@@ -41,15 +41,15 @@ def test_scores(pred, gold, return_vals=True, verbose=False):
 
     # Print simple report if verbose=True
     if verbose:
-        print "="*20
+        print "=" * 40
         print "Test set size:\t%s" % n_t
-        print "-"*20
+        print "-" * 40
         print "Precision:\t%s" % prec
-        print "Recall:\t%s" % rec
-        print "F1 Score:\t%s" $ f1
-        print "-"*20
+        print "Recall:\t\t%s" % rec
+        print "F1 Score:\t%s" % f1
+        print "-" * 40
         print "TP: %s | FP: %s | TN: %s | FN: %s" % (tp,fp,tn,fn)
-        print "="*20
+        print "=" * 40
     if return_vals:
         return prec, rec, f1, tp, fp, tn, fn, n_t
 

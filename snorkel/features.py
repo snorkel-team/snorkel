@@ -16,7 +16,7 @@ class Featurizer(object):
     A Featurizer applies a set of **feature generators** to each Candidate,
     based on (i) the arity of the candidate, and (ii) the _associated Contexts_.
     
-    The apply() function takes in N candidates, and returns an N x F sparse matrix,
+    The transform() function takes in N candidates, and returns an N x F sparse matrix,
     where F is the dimension of the feature space.
     """
     def __init__(self, arity=1):
@@ -37,15 +37,16 @@ class Featurizer(object):
         """Given the candidates, and using _generate_context_feats, return a list of generators."""
         raise NotImplementedError()
 
-    def apply(self, candidates):
+    def transform(self, candidates):
         """Given feature set has already been fit, simply apply to candidates."""
         F                  = sparse.lil_matrix((len(candidates), len(self.feat_index.keys())))
         feature_generators = self._match_contexts(candidates)
         for i,f in itertools.chain(*feature_generators):
-            F[i,self.feat_index[f]] = 1
+            if self.feat_index.has_key(f):
+                F[i,self.feat_index[f]] = 1
         return F
 
-    def fit_apply(self, candidates):
+    def fit_transform(self, candidates):
         """Assembles the set of features to be used, and applies this transformation to the candidates"""
         feature_generators = self._match_contexts(candidates)
 

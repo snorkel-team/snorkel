@@ -126,8 +126,8 @@ class LogReg(NoiseAwareModel):
         Xt = X.transpose()
         Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else np.abs(Xt)  
         w0 = w0 if w0 is not None else np.zeros(R)
-        if marginals is not None:
-            t,f = marginals, 1-marginals
+        if training_marginals is not None:
+            t,f = training_marginals, 1-training_marginals
 
         # Initialize training
         w = w0.copy()
@@ -141,7 +141,7 @@ class LogReg(NoiseAwareModel):
         for step in range(n_iter):
         
             # Get the expected LF accuracy
-            if marginals is None:
+            if training_marginals is None:
                 t,f = sample_data(X, w, n_samples=n_samples) if sample else exact_data(X, w, evidence)
             p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
 
@@ -188,7 +188,7 @@ class LogReg(NoiseAwareModel):
         # Return learned weights  
         self.w = w
 
-    def get_marginals(self, w, X):
+    def get_marginals(self, X):
         return odds_to_prob(X.dot(self.w))
         
       

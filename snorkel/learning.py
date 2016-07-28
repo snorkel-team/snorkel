@@ -2,9 +2,9 @@ import numpy as np
 import scipy.sparse as sparse
 import warnings
     
-DEFAULT_MU = 1e-9
+DEFAULT_MU = 1e-6
 DEFAULT_RATE = 0.01
-DEFAULT_ALPHA = 0
+DEFAULT_ALPHA = 0.5
 
 def log_odds(p):
   """This is the logit function"""
@@ -106,7 +106,7 @@ class LogReg(NoiseAwareModel):
         self.w = None
 
     def train(self, X, training_marginals=None, n_iter=500, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, \
-            mu=DEFAULT_MU, sample=True, n_samples=100, unreg=[], evidence=None, warm_starts=False, tol=1e-6, \
+            mu=DEFAULT_MU, sample=False, n_samples=100, unreg=[], evidence=None, warm_starts=False, tol=1e-6, \
             verbose=True):
         """
         Perform SGD wrt the weights w

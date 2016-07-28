@@ -90,16 +90,17 @@ class Learner(object):
             self.X_test = sparse.hstack([L_test, F_test], format='csc')
         test_scores(self.model.predict(self.X_test), gold_labels, return_vals=False, verbose=True)
 
-    def train(self, feat_w0=0.0, lf_w0=1.0, **model_hyperparams):
+    def train(self, lf_w0=5.0, feat_w0=0.0, **kwargs):
         """Train model: **as default, use "joint" approach**"""
         # TODO: Bias term
-        self.X_train = sparse.hstack([self.L_train, self.F_train], format='csc')
-
-        # Set initial values for feature weights
+        # Set the initial weights for LFs and feats
         w0 = np.concatenate([lf_w0*np.ones(self.m), feat_w0*np.ones(self.f)])
 
+        # Construct matrix X for "joint" approach
+        self.X_train = sparse.hstack([self.L_train, self.F_train], format='csc')
+
         # Train model
-        self.model.train(self.X_train, w0=w0, **model_hyperparams)
+        self.model.train(self.X_train, w0=w0, **kwargs)
 
     def lf_weights(self):
         return self.model.w[:self.m]

@@ -109,7 +109,7 @@ class Ngram(Candidate):
 
     def __repr__(self):
         return 'Ngram("%s", context=%s, chars=[%s,%s], words=[%s,%s])' \
-            % (" ".join(self.context.words), self.context, self.char_start, self.char_end, self.get_word_start(),
+            % (self.get_span(), self.context.id, self.char_start, self.char_end, self.get_word_start(),
                self.get_word_end())
 
 
@@ -142,3 +142,6 @@ class CandidateSet(SnorkelBase):
 
     def __len__(self):
         return len(self.candidates)
+
+    def __getitem__(self, key):
+        return self.candidates[key]

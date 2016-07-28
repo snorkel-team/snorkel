@@ -131,7 +131,9 @@ class XMLDocParser(DocParser):
             text = '\n'.join(filter(lambda t : t is not None, doc.xpath(self.text)))
             ids = doc.xpath(self.id)
             id = ids[0] if len(ids) > 0 else None
-            attribs = {'root':doc} if self.keep_xml_tree else {}
+            # We store the XML tree as a string due to a serialization bug. It cannot currently be pickled directly
+            #TODO: Implement a special dictionary that can handle this automatically (http://docs.sqlalchemy.org/en/latest/orm/extensions/mutable.html)
+            attribs = {'root': et.tostring(doc)} if self.keep_xml_tree else {}
             yield Document(name=str(id), file=str(file_name), attribs=attribs), str(text)
 
     def _can_read(self, fpath):

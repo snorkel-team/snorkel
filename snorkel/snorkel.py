@@ -67,12 +67,12 @@ class Candidate(object):
     self.C = candidates
     self.id = ex_id
     self._p = p
-
+    
   def __getattr__(self, name):
     if name.startswith('prob'):
       return self._p
     return getattr(self.C._candidates[self.id], name)
-
+    
   def get_attr_seq(self, attribute, idxs):
     if attribute is 'text':
       raise ValueError("Cannot get indexes against text")
@@ -80,8 +80,8 @@ class Candidate(object):
       seq = self.__getattr__(attribute)
       return [seq[i] for i in idxs]
     except:
-      raise ValueError("Invalid attribute or index range")
-
+      raise ValueError("Invalid attribute or index range")  
+    
   def __repr__(self):
     s = str(self.C._candidates[self.id])
     return s if self._p is None else (s + " with probability " + str(self._p))
@@ -106,26 +106,26 @@ class candidate_internal(object):
 
   def render(self):
     self.xt.render_tree(self.all_idxs)
-
+  
   # Pickling instructions
   def __getstate__(self):
     cp = self.__dict__.copy()
     del cp['root']
     cp['xt'] = cp['xt'].to_str()
     return cp
-
+    
   def __setstate__(self, d):
     self.__dict__ = d
     self.xt = XMLTree(et.fromstring(d['xt']), self.words)
-    self.root = self.xt.root
-
+    self.root = self.xt.root    
+  
   def __repr__(self):
     raise NotImplementedError()
-
+    
 class Candidates(object):
   """
   Base class for a collection of candidates
-  Sub-classes need to yield candidates from sentences (_apply) and
+  Sub-classes need to yield candidates from sentences (_apply) and 
   generate features (_get_features)
   See Relations and Entities for examples
   """
@@ -141,22 +141,22 @@ class Candidates(object):
       self._candidates = list(self._extract_candidates(C))
     self.feats = None
     self.feat_index = {}
-
+  
   def __getitem__(self, i):
     return Candidate(self, i)
-
+    
   def __len__(self):
     return len(self._candidates)
 
   def __iter__(self):
     return (self[i] for i in xrange(0, len(self)))
-
+  
   def num_candidates(self):
     return len(self)
-
+ 
   def num_feats(self):
     return 0 if self.feats is None else self.feats.shape[1]
-
+    
   def _extract_candidates(self, sents):
     for sent in sents:
       for cand in self._apply(sent):
@@ -164,24 +164,24 @@ class Candidates(object):
 
   def _apply(self, sent):
     raise NotImplementedError()
-
+            
   def _get_features(self):
-      raise NotImplementedError()
-
+      raise NotImplementedError()    
+    
   def extract_features(self, *args):
     f_index = self._get_features(args)
     # Apply the feature generator, constructing a sparse matrix incrementally
     # Note that lil_matrix should be relatively efficient as we proceed row-wise
-    self.feats = sparse.lil_matrix((self.num_candidates(), len(f_index)))
+    self.feats = sparse.lil_matrix((self.num_candidates(), len(f_index)))    
     for j,feat in enumerate(f_index.keys()):
       self.feat_index[j] = feat
       for i in f_index[feat]:
         self.feats[i,j] = 1
     return self.feats
-
+      
   def generate_mindtagger_items(self, samp, probs):
     raise NotImplementedError()
-
+    
   def mindtagger_format(self):
     raise NotImplementedError()
 
@@ -190,7 +190,7 @@ class Candidates(object):
       warnings.warn("Overwriting file {}".format(loc))
     with open(loc, 'w+') as f:
       cPickle.dump(self._candidates, f)
-
+    
   def __repr__(self):
     return '\n'.join(str(c) for c in self._candidates)
 
@@ -200,19 +200,19 @@ class Candidates(object):
 
 class Relation(Candidate):
   def __init__(self, *args, **kwargs):
-    super(Relation, self).__init__(*args, **kwargs)
+    super(Relation, self).__init__(*args, **kwargs) 
 
   def mention(self, m, attribute='words'):
     if m not in [1, 2]:
       raise ValueError("Mention number must be 1 or 2")
     return self.get_attr_seq(attribute, self.e1_idxs if m==1 else self.e2_idxs)
-
+    
   def mention1(self, attribute='words'):
       return self.mention(1, attribute)
 
   def mention2(self, attribute='words'):
-      return self.mention(2, attribute)
-
+      return self.mention(2, attribute)    
+    
   def pre_window(self, m, attribute='words', n=3):
     if m not in [1, 2]:
       raise ValueError("Mention number must be 1 or 2")
@@ -220,7 +220,7 @@ class Relation(Candidate):
     b = np.min(idxs)
     s = [b - i for i in range(1, min(b+1,n+1))]
     return self.get_attr_seq(attribute, s)
-
+  
   def post_window(self, m, attribute='words', n=3):
     if m not in [1, 2]:
       raise ValueError("Mention number must be 1 or 2")
@@ -228,7 +228,7 @@ class Relation(Candidate):
     b = len(self.words) - np.max(idxs)
     s = [np.max(idxs) + i for i in range(1, min(b,n+1))]
     return self.get_attr_seq(attribute, s)
-
+    
   def pre_window1(self, attribute='words', n=3):
     return self.pre_window(1, attribute, n)
 
@@ -237,10 +237,10 @@ class Relation(Candidate):
 
   def post_window1(self, attribute='words', n=3):
     return self.post_window(1, attribute, n)
-
+    
   def post_window2(self, attribute='words', n=3):
     return self.post_window(2, attribute, n)
-
+  
   def __repr__(self):
       hdr = str(self.C._candidates[self.id])
       return "{0}\nWords: {0}\nLemmas: {0}\nPOSES: {0}".format(hdr, self.words,
@@ -254,11 +254,11 @@ class relation_internal(candidate_internal):
     self.e1_label = e1_label
     self.e2_label = e2_label
     super(relation_internal, self).__init__([self.e1_idxs, self.e2_idxs],
-                                            [self.e1_label, self.e2_label],
+                                            [self.e1_label, self.e2_label], 
                                              sent, xt)
 
   def __repr__(self):
-    return '<Relation: {}{} - {}{}>'.format([self.words[i] for i in self.e1_idxs],
+    return '<Relation: {}{} - {}{}>'.format([self.words[i] for i in self.e1_idxs], 
       self.e1_idxs, [self.words[i] for i in self.e2_idxs], self.e2_idxs)
 
 class Relations(Candidates):
@@ -271,16 +271,16 @@ class Relations(Candidates):
       self.e1 = matcher1
       self.e2 = matcher2
     super(Relations, self).__init__(content)
-
+  
   def __getitem__(self, i):
-    return Relation(self, i)
-
+    return Relation(self, i)  
+  
   def _apply(self, sent):
     xt = corenlp_to_xmltree(sent)
     for e1_idxs, e1_label in self.e1.apply(sent):
       for e2_idxs, e2_label in self.e2.apply(sent):
         yield relation_internal(e1_idxs, e2_idxs, e1_label, e2_label, sent, xt)
-
+  
   def _get_features(self, method='treedlib'):
     get_feats = compile_relation_feature_generator()
     f_index = defaultdict(list)
@@ -288,10 +288,10 @@ class Relations(Candidates):
       for feat in get_feats(cand.root, cand.e1_idxs, cand.e2_idxs):
         f_index[feat].append(j)
     return f_index
-
+    
   def generate_mindtagger_items(self, samp, probs):
     for i, p in zip(samp, probs):
-      item = self[i]
+      item = self[i]      
       yield dict(
         ext_id          = item.id,
         doc_id          = item.doc_id,
@@ -303,7 +303,7 @@ class Relations(Candidates):
         e2_label        = item.e2_label,
         probability     = p
       )
-
+      
   def mindtagger_format(self):
     s1 = """
          <mindtagger-highlight-words index-array="item.e1_idxs" array-format="json" with-style="background-color: yellow;"/>
@@ -313,34 +313,34 @@ class Relations(Candidates):
          <strong>{{item.e1_label}} -- {{item.e2_label}}</strong>
          """
     return {'style_block' : s1, 'title_block' : s2}
-
+    
 ##################################################################
 ############################ ENTITIES ############################
-##################################################################
+##################################################################     
 
 class Entity(Candidate):
   def __init__(self, *args, **kwargs):
-    super(Entity, self).__init__(*args, **kwargs)
+    super(Entity, self).__init__(*args, **kwargs) 
 
   def mention(self, attribute='words'):
     return self.get_attr_seq(attribute, self.idxs)
-
+      
   def pre_window(self, attribute='words', n=3):
     b = np.min(self.idxs)
     s = [b - i for i in range(1, min(b+1,n+1))]
     return self.get_attr_seq(attribute, s)
-
+  
   def post_window(self, attribute='words', n=3):
     b = len(self.words) - np.max(self.idxs)
     s = [np.max(self.idxs) + i for i in range(1, min(b,n+1))]
     return self.get_attr_seq(attribute, s)
-
+  
   def __repr__(self):
       hdr = str(self.C._candidates[self.id])
       return "{0}\nWords: {1}\nLemmas: {2}\nPOSES: {3}".format(hdr, self.words,
                                                                self.lemmas,
-                                                               self.poses)
-
+                                                               self.poses)    
+    
 class entity_internal(candidate_internal):
   def __init__(self, idxs, label, sent, xt):
     self.idxs = idxs
@@ -358,16 +358,15 @@ class Entities(Candidates):
         warnings.warn("matcher is not a CandidateExtractor subclass")
       self.e = matcher
     super(Entities, self).__init__(content)
-
+  
   def __getitem__(self, i):
-    return Entity(self, i)
-
+    return Entity(self, i)  
+  
   def _apply(self, sent):
-    import pdb; pdb.set_trace()  # breakpoint b01b4c70 //
     xt = corenlp_to_xmltree(sent)
     for e_idxs, e_label in self.e.apply(sent):
-      yield entity_internal(e_idxs, e_label, sent, xt)
-
+      yield entity_internal(e_idxs, e_label, sent, xt)        
+  
   def _get_features(self, method='treedlib'):
     get_feats = compile_entity_feature_generator()
     f_index = defaultdict(list)
@@ -376,11 +375,11 @@ class Entities(Candidates):
         f_index[feat].append(j)
       for feat in get_ddlib_feats(cand, cand.idxs):
         f_index["DDLIB_" + feat].append(j)
-    return f_index
-
+    return f_index    
+  
   def generate_mindtagger_items(self, samp, probs):
     for i, p in zip(samp, probs):
-      item = self[i]
+      item = self[i]    
       yield dict(
         ext_id          = item.id,
         doc_id          = item.doc_id,
@@ -390,7 +389,7 @@ class Entities(Candidates):
         label           = item.label,
         probability     = p
       )
-
+      
   def mindtagger_format(self):
     s1 = """
          <mindtagger-highlight-words index-array="item.idxs" array-format="json" with-style="background-color: cyan;"/>
@@ -399,7 +398,7 @@ class Entities(Candidates):
          <strong>{{item.label}} candidate</strong>
          """
     return {'style_block' : s1, 'title_block' : s2}
-
+    
 
 ####################################################################
 ############################ LEARNING ##############################
@@ -454,11 +453,11 @@ class SideTables:
   def _repr_html_(self):
     t1_html = self.t1._repr_html_()
     t2_html = self.t2._repr_html_()
-    t1_html = t1_html[:6] + " style=\"margin-right: 1%;float: left\"" + t1_html[6:]
-    t2_html = t2_html[:6] + " style=\"float: left\"" + t2_html[6:]
+    t1_html = t1_html[:6] + " style=\"margin-right: 1%;float: left\"" + t1_html[6:] 
+    t2_html = t2_html[:6] + " style=\"float: left\"" + t2_html[6:] 
     return t1_html + t2_html
 
-def log_title(heads=["ID", "# LFs", "Test set size", "Model",
+def log_title(heads=["ID", "# LFs", "Test set size", "Model", 
                      "Precision", "Recall", "F1"]):
   html = ["<tr>"]
   html.extend("<td><b>{0}</b></td>".format(h) for h in heads)
@@ -484,7 +483,7 @@ class ModelLog:
     html.append("<td>{0}</td>".format(self.id))
     html.append("<td>{0}</td>".format(self.num_lfs()))
     html.append("<td>{0}</td>".format(self.num_gt()))
-    html.append("<td>{0}</td>".format(self.model))
+    html.append("<td>{0}</td>".format(self.model))    
     html.append("<td>{:.3f}</td>".format(self.precision))
     html.append("<td>{:.3f}</td>".format(self.recall))
     html.append("<td>{:.3f}</td>".format(self.f1))
@@ -499,7 +498,7 @@ class ModelLog:
     html.append(log_title(["LF"]))
     html.extend("<tr><td>{0}</td></tr>".format(lf) for lf in self.lf_names)
     html.append("</table>")
-    return ''.join(html)
+    return ''.join(html)    
 
 class ModelLogger:
   def __init__(self):
@@ -536,39 +535,39 @@ class CandidateGT:
 
     self.validation = np.array([], dtype=int)
     self.test = np.array([], dtype=int)
-
+    
     self.training = np.array(range(self.n()), dtype=int)
-
+    
     self.dev_split = 0.7
     self.dev1 = np.array([], dtype=int)
     self.dev2 = np.array([], dtype=int)
-
+    
     self.min_dev = 20
     self.min_val = 20
     self.min_test = 20
-
+      
   def n(self):
     return len(self._gt_vec)
-
+    
   def get_gt_dict(self):
     return self._gt_dict
 
-  def dev_size_warn(self):
+  def dev_size_warn(self):    
     if len(self.dev1) < self.min_dev or len(self.dev2) < self.min_dev:
       warnings.warn("Dev sets are too small for reliable estimates")
-
-  def val_test_size_warn(self):
+     
+  def val_test_size_warn(self):    
     if len(self.validation) < self.min_val or len(self.test) < self.min_test:
       warnings.warn("Validation/test sets are too small for reliable estimates")
-
-
+      
+    
   def _update_training(self):
-    self.training = np.setdiff1d(np.array(range(self.n()), dtype=int),
+    self.training = np.setdiff1d(np.array(range(self.n()), dtype=int), 
                                  self.holdout())
-
+    
   def holdout(self):
     return np.concatenate([self.validation, self.test])
-
+    
   def dev(self):
     return np.concatenate([self.dev1, self.dev2])
 
@@ -589,23 +588,23 @@ class CandidateGT:
     self.test = h[int(np.floor(validation_frac * len(h))) : ]
     self._update_training()
     self._update_devs(self.dev_split)
-
+    
   def _update_devs(self, dev_split):
     idxs,_ = self.get_labeled_ground_truth('training')
     np.random.shuffle(idxs)
     self.dev1 = idxs[ : int(np.floor(dev_split * len(idxs)))]
     self.dev2 = idxs[int(np.floor(dev_split * len(idxs))) : ]
-
+    
   def update_gt(self, gt, idxs=None, uids=None):
     """ Set ground truth for idxs XOR uids to gt. Updates dev sets. """
-    # Check input
+    # Check input  
     try:
       gt = np.ravel(gt)
     except:
       raise ValueError("gt must be array-like")
     if not np.all(np.in1d(gt, [-1,0,1])):
       raise ValueError("gt must be -1, 0, or 1")
-    # Assign gt by indexes
+    # Assign gt by indexes  
     if idxs is not None and uids is None:
       if len(idxs) != len(gt):
         raise ValueError("idxs and gt must be same length")
@@ -616,7 +615,7 @@ class CandidateGT:
       k = self._gt_dict.keys()
       for i,label in zip(idxs,gt):
         self._gt_dict[k[i]] = label
-    # Assign gt by uid
+    # Assign gt by uid    
     elif uids is not None and idxs is None:
       if len(uids) != len(gt):
         raise ValueError("uids and gt must be same length")
@@ -627,12 +626,12 @@ class CandidateGT:
       # TODO: should be O(update size)
       for i,uid in enumerate(self._gt_dict.keys()):
         self._gt_vec[i] = self._gt_dict[uid]
-    # Both/neither idxs and uids defined
+    # Both/neither idxs and uids defined    
     else:
       raise ValueError("Exactly one of idxs and uids must be not None")
     # Update dev sets
     self._update_devs(self.dev_split)
-
+    
   def get_labeled_ground_truth(self, subset=None):
     """ Get indices and labels of subset which have ground truth """
     gt_all = self._gt_vec
@@ -696,28 +695,28 @@ class DDLiteModel:
 
   def num_candidates(self):
     return len(self.C)
-
+    
   def num_feats(self):
     return self.feats.shape[1]
-
+  
   def num_lfs(self, result='all'):
     if self.lf_matrix is None:
       return 0
     return self.lf_matrix.shape[1]
-
+    
   #######################################################
   #################### GT attributes ####################
   #######################################################
-
+    
   def gt_dictionary(self):
     return self.gt._gt_dict
-
+    
   def holdout(self):
     return self.gt.holdout()
-
+    
   def validation(self):
     return self.gt.validation
-
+    
   def test(self):
     return self.gt.test
 
@@ -729,35 +728,35 @@ class DDLiteModel:
 
   def dev2(self):
     return self.gt.dev2
-
+    
   def training(self):
     return self.gt.training
-
+    
   def covered(self):
     return np.unique(self.lf_matrix.nonzero()[0])
-
+    
   def set_holdout(self, idxs=None, validation_frac=0.5):
     self.gt.set_holdout(idxs, validation_frac)
-
+    
   def get_labeled_ground_truth(self, subset=None):
     return self.gt.get_labeled_ground_truth(subset)
-
+    
   def update_gt(self, gt, idxs=None, uids=None):
     self.gt.update_gt(gt, idxs, uids)
-
+    
   def dev_size_warn(self):
     self.gt.dev_size_warn()
 
   def test_val_size_warn(self):
     self.gt.val_test_size_warn()
-
+    
   def get_gt_dict(self):
-    return self.gt.get_gt_dict()
-
+    return self.gt.get_gt_dict()    
+    
   #######################################################
   #################### LF operations ####################
   #######################################################
-
+                       
   def set_lf_matrix(self, lf_matrix, names, clear=False):
     try:
       add = sparse.lil_matrix(lf_matrix)
@@ -779,12 +778,12 @@ class DDLiteModel:
     Allows adding to existing LFs or clearing LFs with CLEAR=True
     """
     add = sparse.lil_matrix((self.num_candidates(), len(lfs_f)))
-    for i,c in enumerate(self.C):
+    for i,c in enumerate(self.C):    
       for j,lf in enumerate(lfs_f):
         add[i,j] = lf(c)
     add_names = [lab.__name__ for lab in lfs_f]
     self.set_lf_matrix(add, add_names, clear)
-
+    
   def delete_lf(self, lf):
     """ Delete LF by index or name """
     if isinstance(lf, str):
@@ -802,10 +801,10 @@ class DDLiteModel:
         raise ValueError("{} is not a valid LF index".format(lf))
     else:
       raise ValueError("lf must be a string name or integer index")
-
+    
   #######################################################
   #################### LF stat comp. ####################
-  #######################################################
+  #######################################################    
 
   def _cover(self, idxs=None):
     idxs = self.training() if idxs is None else idxs
@@ -813,15 +812,15 @@ class DDLiteModel:
             for lab in [1,-1]]
 
   def coverage(self, cov=None, idxs=None):
-    cov = self._cover(idxs) if cov is None else cov
+    cov = self._cover(idxs) if cov is None else cov    
     return np.mean((cov[0] + cov[1]) > 0)
 
-  def overlap(self, cov=None, idxs=None):
-    cov = self._cover(idxs) if cov is None else cov
+  def overlap(self, cov=None, idxs=None):    
+    cov = self._cover(idxs) if cov is None else cov    
     return np.mean((cov[0] + cov[1]) > 1)
 
-  def conflict(self, cov=None, idxs=None):
-    cov = self._cover(idxs) if cov is None else cov
+  def conflict(self, cov=None, idxs=None):    
+    cov = self._cover(idxs) if cov is None else cov    
     return np.mean(np.multiply(cov[0], cov[1]) > 0)
 
   def print_lf_stats(self, idxs=None):
@@ -835,7 +834,7 @@ class DDLiteModel:
     cov = self._cover(idxs)
     print "LF stats on training set" if idxs is None else "LF stats on idxs"
     print "Coverage:\t{:.3f}%\nOverlap:\t{:.3f}%\nConflict:\t{:.3f}%".format(
-            100. * self.coverage(cov),
+            100. * self.coverage(cov), 
             100. * self.overlap(cov),
             100. * self.conflict(cov))
 
@@ -849,7 +848,7 @@ class DDLiteModel:
     plt.ylabel("# candidates with at least one of label type")
     plt.xticks(idx + bar_width * 0.5, ("Positive", "Negative"))
     return tot_cov * 100.
-
+    
   def _plot_conflict(self, cov):
     x, y = cov
     tot_conf = self.conflict(cov)
@@ -882,7 +881,7 @@ class DDLiteModel:
     plt.subplot(1,n_plots,2)
     tot_conf = self._plot_conflict(cov)
     plt.title("(b) Label heat map (training set conflict: {:.2f}%)".format(tot_conf))
-    # Show plots
+    # Show plots    
     plt.show()
 
   def _lf_conf(self, lf_idx):
@@ -892,7 +891,7 @@ class DDLiteModel:
     agree = lf_csc[:, other_idx].multiply(lf_csc[:, lf_idx])
     agree = agree[ts,:]
     return float((np.ravel((agree == -1).sum(1)) > 0).sum()) / len(ts)
-
+    
   def top_conflict_lfs(self, n=10):
     """ Show the LFs with the highest mean conflicts per candidate """
     d = {nm : ["{:.2f}%".format(100.*self._lf_conf(i))]
@@ -902,11 +901,11 @@ class DDLiteModel:
     tab.set_cols(2)
     tab.set_title(["Labeling function", "Percent candidates where LF has conflict"])
     return tab
-
+    
   def _lf_coverage(self, lf_idx):
     lf_v = np.ravel(self.lf_matrix.tocsc()[self.training(), lf_idx].todense())
     return 1 - np.mean(lf_v == 0)
-
+    
   def lowest_coverage_lfs(self, n=10):
     """ Show the LFs with the highest fraction of abstains """
     d = {nm : ["{:.2f}%".format(100.*self._lf_coverage(i))]
@@ -939,17 +938,17 @@ class DDLiteModel:
       pos_acc = -1
     elif n_pos == 0:
       pos_acc = 0
-    else:
+    else: 
       pos_acc = float(np.sum((pred_sub == 1) * (gt == 1))) / n_pos
     return (pos_acc, n_pos, neg_acc, n_neg)
-
+    
   def _lf_acc_gen(self, lf_idx):
     pos_acc1, n_pos, neg_acc1, n_neg = self._lf_acc(self.dev1(), lf_idx)
     pos_acc2, n_pos2, neg_acc2, n_neg2 = self._lf_acc(self.dev2(), lf_idx)
     pos_acc2, neg_acc2 = max(0, pos_acc2), max(0, neg_acc2)
     return (pos_acc1, n_pos, abs(pos_acc1 - pos_acc2), n_pos2,
-            neg_acc1, n_neg, abs(neg_acc1 - neg_acc2), n_neg2)
-
+            neg_acc1, n_neg, abs(neg_acc1 - neg_acc2), n_neg2)    
+    
   def lowest_empirical_accuracy_lfs(self, n=10):
     self.dev_size_warn()
     print "100% accuracy and 0 generalization score are \"perfect\""
@@ -961,12 +960,12 @@ class DDLiteModel:
         del tab_pos[k]
         continue
       tab_pos[k] = ["{:.2f}% (n={})".format(100.*tab_pos[k][0], tab_pos[k][1]),
-                    "{:.2f} (n={})".format(tab_pos[k][2], tab_pos[k][3])]
+                    "{:.2f} (n={})".format(tab_pos[k][2], tab_pos[k][3])] 
     tab_pos.set_rows(n)
     tab_pos.set_cols(3)
     tab_pos.set_title(["Labeling function", "Positive accuracy",
                        "Gen. score"])
-
+    
     tab_neg = DictTable(sorted(d.items(), key=lambda t:t[1][4]))
     for k in tab_neg:
       if tab_neg[k][4] < 0:
@@ -979,7 +978,7 @@ class DDLiteModel:
     tab_neg.set_title(["Labeling function", "Negative accuracy",
                        "Gen. score"])
     return SideTables(tab_pos, tab_neg)
-
+    
   def lf_summary_table(self):
     d = {nm : [self._lf_coverage(i), self._lf_conf(i), self._lf_acc_gen(i)]
          for i,nm in enumerate(self.lf_names)}
@@ -998,7 +997,7 @@ class DDLiteModel:
                                    "{:.2f}% (n={})".format(100.*v[2][0], v[2][1]),
                                    "{:.2f} (n={})".format(v[2][2], v[2][3]),
                                    "{:.2f}% (n={})".format(100.*v[2][4], v[2][5]),
-                                   "{:.2f} (n={})".format(v[2][6], v[2][7]))
+                                   "{:.2f} (n={})".format(v[2][6], v[2][7]))     
       fancy_k = "<b><font color=\"{}\">{}</font></b>".format(col, k)
       d[fancy_k] = [tp, "{:.2f}%".format(100.*v[0]),
                       "{:.2f}%".format(100.*v[1]), pa, pg, na, ng]
@@ -1006,11 +1005,11 @@ class DDLiteModel:
     tab.set_rows(len(self.lf_names))
     tab.set_cols(8)
     tab.set_title(["Labeling<br />function", "Label<br />type",
-                   "Candidate<br />coverage", "Candidate<br />conflict",
+                   "Candidate<br />coverage", "Candidate<br />conflict", 
                    "Positive<br />accuracy", "Positive<br />gen. score",
                    "Negative<br />accuracy", "Negative<br />gen. score"])
     return tab
-
+    
 
   ######################################################
   #################### Learning fns ####################
@@ -1028,8 +1027,8 @@ class DDLiteModel:
                                               n_samples=n_samples,
                                               verbose=verbose)
     self.lf_marginals = odds_to_prob(np.ravel(LF.dot(self.lf_weights)))
-
-  def train_model_lr(self, bias=False, n_mu=5, mu_min_ratio=1e-6,
+    
+  def train_model_lr(self, bias=False, n_mu=5, mu_min_ratio=1e-6, 
                      plot=True, log=True, joint=False, lf_w0=10, **kwargs):
     """ Learn second stage of pipeline with logistic regression """
     print "Running in %s mode..." % joint
@@ -1054,7 +1053,7 @@ class DDLiteModel:
     if mu_seq is not None:
       mu_seq = np.ravel(mu_seq)
       mu_seq.sort()
-    # Default
+    # Default 
     elif len(self.validation()) == 0:
       warnings.warn("Using default mu value with no validation set")
       mu_seq = [DEFAULT_MU]
@@ -1113,11 +1112,11 @@ class DDLiteModel:
     p = np.ravel([w_fit[mu].P for mu in mu_seq])
     r = np.ravel([w_fit[mu].R for mu in mu_seq])
     f1 = np.ravel([w_fit[mu].F1 for mu in mu_seq])
-    nnz = np.ravel([np.sum(w_fit[mu].w != 0) for mu in mu_seq])
-
+    nnz = np.ravel([np.sum(w_fit[mu].w != 0) for mu in mu_seq])    
+    
     fig, ax1 = plt.subplots()
     # Plot spread
-    ax1.set_xscale('log', nonposx='clip')
+    ax1.set_xscale('log', nonposx='clip')    
     ax1.scatter(mu_opt, f1_opt, marker='*', color='purple', s=500,
                 zorder=10, label="Maximum F1: mu={}".format(mu_opt))
     ax1.plot(mu_seq, f1, 'o-', color='red', label='F1 score')
@@ -1168,21 +1167,21 @@ class DDLiteModel:
     Return either all candidates, a specified subset, or only validation/test set
     """
     return self._prob_sub(self.marginals, subset)
-
+ 
   def get_lf_predicted_marginals(self, subset=None):
     """
     Get array of predicted probabilities (continuous) given LF weights
     Return either all candidates, a specified subset, or only validation/test set
     """
     return self._prob_sub(self.lf_marginals, subset)
-
+ 
   def get_predicted(self, subset=None):
     """
     Get the array of predicted (boolean) variables given weights
     Return either all variables, a specified subset, or only validation/test set
     """
     return np.sign(self.get_predicted_marginals(subset) - 0.5)
-
+    
   def get_lf_predicted(self, subset=None):
     """
     Get the array of predicted (boolean) variables given LF weights
@@ -1198,7 +1197,7 @@ class DDLiteModel:
     idxs, gt = self.get_labeled_ground_truth(subset)
     pred = self.get_predicted(idxs)
     return np.mean(gt == pred)
-
+    
   def _plot_prediction_probability(self, probs):
     plt.hist(probs, bins=20, normed=False, facecolor='blue')
     plt.xlim((0,1.025))
@@ -1241,7 +1240,7 @@ class DDLiteModel:
         self._plot_accuracy(probs[idxs], gt)
         plt.title("(c) Accuracy (test set)")
     plt.show()
-
+    
   def _get_all_abstained(self, training=True):
     idxs = self.training() if training else range(self.num_candidates())
     return np.ravel(np.where(np.ravel((self.lf_matrix[idxs,:]).sum(1)) == 0))
@@ -1266,7 +1265,7 @@ class DDLiteModel:
     return self.mindtagger_instance.open_mindtagger(self.C.generate_mindtagger_items,
                                                     self._current_mindtagger_samples,
                                                     probs, tags, **kwargs)
-
+  
   def add_mindtagger_tags(self):
     tags = self.mindtagger_instance.get_mindtagger_tags()
     self._mt_tags = tags
@@ -1275,17 +1274,17 @@ class DDLiteModel:
     tb = [1 if t else -1 for t in tb]
     idxs = self._current_mindtagger_samples[is_tagged]
     self.update_gt(tb, idxs=idxs)
-
+  
   def add_to_log(self, log_id=None, subset='test', show=True):
     if log_id is None:
       log_id = len(self.logger)
     gt_idxs, gt = self.get_labeled_ground_truth(subset)
-    pred = self.get_predicted(gt_idxs)
+    pred = self.get_predicted(gt_idxs)    
     self.logger.log(ModelLog(log_id, self.lf_names, self.model,
                              gt_idxs, gt, pred))
     if show:
       return self.logger[-1]
-
+      
   def show_log(self, idx=None):
     if idx is None:
       return self.logger
@@ -1299,7 +1298,7 @@ CandidateModel = DDLiteModel
 
 ####################################################################
 ############################ ALGORITHMS ############################
-####################################################################
+#################################################################### 
 
 def main():
   txt = "Han likes Luke and a good-wookie. Han Solo don\'t like bounty hunters."
@@ -1315,16 +1314,16 @@ def main():
   print R[0].mention1()
   print R[0].mention2()
   print R[0].tagged_sent
-
+  
   print "***** Relation 1 *****"
   R = Relations(sents, g, g)
   print R
   for r in R:
       print r.tagged_sent
-
+  
   print "***** Entity *****"
   E = Entities(sents, g)
-  print E
+  print E                
   for e in E:
       print e.mention('poses')
       print e.tagged_sent

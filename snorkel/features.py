@@ -11,7 +11,7 @@ class Featurizer(object):
         self._features_by_id = defaultdict(list)
         print "Extracting features..."
         self.feats = self.extract_features(candidates, corpus)
-        print "Extracted {} features for each of {} mentions".format(self.num_features(), self.num_candidates())
+        print "Extracted {} features for each of {} candidates".format(self.num_features(), self.num_candidates())
 
     def num_candidates(self):
         return self.num_cand

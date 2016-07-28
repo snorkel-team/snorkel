@@ -18,6 +18,7 @@ class Candidate(SnorkelBase):
         'polymorphic_on': type
     }
 
+
 class Ngram(Candidate):
     """
     A span of _n_ tokens, identified by Context id and character-index start, end (inclusive).

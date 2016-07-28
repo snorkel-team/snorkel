@@ -25,7 +25,7 @@ class CorpusParser:
         self.sent_parser = sent_parser
         self.max_docs = max_docs
 
-    def parse(self):
+    def parse_corpus(self, name=None):
         corpus = Corpus()
 
         for i, (doc, text) in enumerate(self.doc_parser.parse()):
@@ -35,6 +35,9 @@ class CorpusParser:
 
             for _ in self.sent_parser.parse(doc, text):
                 pass
+
+        if name is not None:
+            corpus.name = name
 
         return corpus
 

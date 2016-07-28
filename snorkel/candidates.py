@@ -64,7 +64,7 @@ class CandidateExtractor(object):
 
         self.ps = []
 
-    def extract(self, contexts):
+    def extract(self, contexts, name=None):
         c = CandidateSet()
 
         if self.parallelism in [1, False]:
@@ -73,6 +73,9 @@ class CandidateExtractor(object):
         else:
             for candidate in self._extract_multiprocess(contexts):
                 c.candidates.append(candidate)
+
+        if name is not None:
+            c.name = name
 
         return c
 

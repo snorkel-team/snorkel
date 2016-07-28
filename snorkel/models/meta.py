@@ -13,4 +13,4 @@ else:
     snorkel_engine = create_engine('sqlite:///snorkel.db')
 
 SnorkelSession = sessionmaker(bind=snorkel_engine)
-SnorkelBase = declarative_base()
+SnorkelBase = declarative_base(name='SnorkelBase')

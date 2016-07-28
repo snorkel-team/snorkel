@@ -18,7 +18,6 @@ class Candidate(SnorkelBase):
         'polymorphic_on': type
     }
 
-
 class Ngram(Candidate):
     """
     A span of _n_ tokens, identified by Context id and character-index start, end (inclusive).
@@ -40,6 +39,15 @@ class Ngram(Candidate):
 
     def __len__(self):
         return self.char_end - self.char_start + 1
+
+    def __eq__(self, other):
+        if isinstance(other, Ngram):
+            return self.context == other.context and self.char_start == other.char_start and self.char_end == other.char_end
+        else:
+            return False
+
+    def __hash__(self):
+        return hash(self.context) + hash(self.char_start) + hash(self.char_end)
 
     # TODO: Below methods could be replaced with transient members, i.e., not persisted, using the @reconstructor decorator
 
@@ -103,7 +111,7 @@ class Ngram(Candidate):
                 char_end = self.char_start + key.stop - 1
             else:
                 char_end = self.char_end + key.stop
-            return Ngram(char_start, char_end, self.context)
+            return Ngram(char_start=char_start, char_end=char_end, context=self.context)
         else:
             raise NotImplementedError()
 

@@ -85,7 +85,7 @@ class Viewer(widgets.DOMWidget):
         """Create the span around a segment of the context associated with one or more candidates / gold annotations"""
         classes  = ['candidate'] if len(cids) > 0 else []
         classes += ['gold-annotation'] if gold else []
-        classes += cids
+        classes += str(cids)
         return '<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)
 
     def _tag_context(self, context, candidates, gold):
@@ -131,10 +131,10 @@ class Viewer(widgets.DOMWidget):
 class SentenceNgramViewer(Viewer):
     """Viewer for Sentence objects and Ngram candidate spans within them, given a Corpus object"""
     def __init__(self, sentences, candidates, gold=[], n_max=100, filter_empty=True, n_per_page=3, height=225):
-        super(SentenceNgramViewer, self).__init__(sentences, candidates, lambda c : c.sent_id, gold=gold, n_max=n_max, filter_empty=filter_empty, n_per_page=n_per_page, height=height)
+        super(SentenceNgramViewer, self).__init__(sentences, candidates, lambda c : c.context.id, gold=gold, n_max=n_max, filter_empty=filter_empty, n_per_page=n_per_page, height=height)
 
     def _is_subspan(self, s, e, c):
-        return s >= c.sent_char_start and e <= c.sent_char_end
+        return s >= c.get_sent_char_start() and e <= c.get_sent_char_end()
 
     def _tag_context(self, sentence, candidates, gold):
         """Tag **potentially overlapping** spans of text, at the character-level"""
@@ -142,7 +142,7 @@ class SentenceNgramViewer(Viewer):
 
         # First, split the sentence into the *smallest* single-candidate chunks
         both   = candidates + gold
-        splits = sorted(list(set([b.sent_char_start for b in both] + [b.sent_char_end + 1 for b in both] + [0, len(s)])))
+        splits = sorted(list(set([b.get_sent_char_start() for b in both] + [b.get_sent_char_end() + 1 for b in both] + [0, len(s)])))
 
         # For each chunk, add cid if subset of candidate span, tag if gold, and produce span
         html = ""

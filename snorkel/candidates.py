@@ -6,6 +6,18 @@ from Queue import Empty
 QUEUE_COLLECT_TIMEOUT = 5
 
 
+def gold_stats(candidates, gold):
+        """Return precision and recall relative to a "gold" CandidateSet"""
+        # TODO: Make this efficient via SQL
+        nc   = len(candidates)
+        ng   = len(gold)
+        both = len(gold.intersection(candidates.candidates))
+        print "# of gold annotations\t= %s" % ng
+        print "# of candidates\t\t= %s" % nc
+        print "Candidate recall\t= %0.3f" % (both / float(ng),)
+        print "Candidate precision\t= %0.3f" % (both / float(nc),)
+
+
 class CandidateSpace(object):
     """
     Defines the **space** of candidate objects

@@ -1,23 +1,9 @@
 import re
-from itertools import chain
 import warnings
 try:
     from nltk.stem.porter import PorterStemmer
 except ImportError:
     warnings.warn("nltk not installed- some default functionality may be absent.")
-
-
-def gold_stats(candidates, gold_set):
-        """Return precision and recall relative to a "gold" set of candidates of the same type"""
-        # TODO: Make this efficient via SQL
-        gold = gold_set if isinstance(gold_set, set) else set(gold_set)
-        nc   = len(candidates)
-        ng   = len(gold)
-        both = len(gold.intersection(candidates.candidates))
-        print "# of gold annotations\t= %s" % ng
-        print "# of candidates\t\t= %s" % nc
-        print "Candidate recall\t= %0.3f" % (both / float(ng),)
-        print "Candidate precision\t= %0.3f" % (both / float(nc),)
 
 
 class Matcher(object):
@@ -157,7 +143,7 @@ class Concat(NgramMatcher):
             return 1
 
         # Iterate over candidate splits **at the word boundaries**
-        for wsplit in range(c.word_start+1, c.word_end+1):
+        for wsplit in range(c.get_word_start()+1, c.get_word_end()+1):
             csplit = c.word_to_char_index(wsplit) - c.char_start  # NOTE the switch to **candidate-relative** char index
 
             # Optionally check for specific separator

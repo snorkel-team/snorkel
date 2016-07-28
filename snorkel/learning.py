@@ -105,27 +105,26 @@ class LogReg(NoiseAwareModel):
     def __init__(self):
         self.w = None
 
-    def train(self, X, training_marginals=None, n_iter=500, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, \
-            mu=DEFAULT_MU, sample=False, n_samples=100, unreg=[], evidence=None, warm_starts=False, tol=1e-6, \
+    def train(self, X, training_marginals=None, n_iter=1000, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, \
+            mu=DEFAULT_MU, sample=False, n_samples=100, evidence=None, warm_starts=False, tol=1e-6, \
             verbose=True):
         """
         Perform SGD wrt the weights w
         * n_iter:      Number of steps of SGD
         * w0:          Initial value for weights w
-        * rate:
+        * rate:        I.e. the SGD step size
         * alpha:       Elastic net penalty mixing parameter (0=ridge, 1=lasso)
         * mu:          Elastic net penalty
         * sample:      Whether to sample or not
         * n_samples:   Number of samples per SGD step
-        * unreg:
         * evidence:    Ground truth to condition on
         * warm_starts:
-        * tol:
+        * tol:         For testing for SGD convergence, i.e. stopping threshold
         """
-        N, M = X.shape
-        Xt = X.transpose()
+        N, M   = X.shape
+        Xt     = X.transpose()
         Xt_abs = abs_sparse(Xt) if sparse.issparse(Xt) else np.abs(Xt)  
-        w0 = w0 if w0 is not None else np.zeros(R)
+        w0     = w0 if w0 is not None else np.zeros(M)
         if training_marginals is not None:
             t,f = training_marginals, 1-training_marginals
 
@@ -155,10 +154,10 @@ class LogReg(NoiseAwareModel):
             g = 0.95*g0 + 0.05*g
             
             # Check for convergence
-            wn = np.linalg.norm(w, ord=2)
+            wn     = np.linalg.norm(w, ord=2)
             g_size = np.linalg.norm(g, ord=2)
             if step % 250 == 0 and verbose:    
-                print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step,g_size) 
+                print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size) 
             if (wn < 1e-12 or g_size / wn < tol) and step >= 10:
                 if verbose:
                     print "SGD converged for mu={} after {} steps".format(mu, step)
@@ -167,9 +166,6 @@ class LogReg(NoiseAwareModel):
             # Update weights
             w -= rate * g
             
-            # Store weights to not be regularized      
-            w_unreg = w[unreg].copy()
-
             # Apply elastic net penalty
             soft = np.abs(w) - rate * alpha * mu
             ridge_pen = (1 + (1-alpha) * rate * mu)
@@ -177,10 +173,7 @@ class LogReg(NoiseAwareModel):
             #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
             w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
             
-            # Unregularize
-            w[unreg] = w_unreg    
-            
-            # SGD did not converge    
+        # SGD did not converge    
         else:
             if verbose:
                 print "Final gradient magnitude for rate={}, mu={}: {:.3f}".format(rate, mu, g_size)

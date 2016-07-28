@@ -94,6 +94,91 @@ def calibration_plots(train_marginals, test_marginals, gold_labels=None):
         plt.title("(c) Accuracy (test set)")
     plt.show()
 
+
+ValidatedFit = namedtuple('ValidatedFit', ['w', 'P', 'R', 'F1'])
+
+
+def grid_search_plot(w_fit, mu_opt, f1_opt):
+    """ Plot validation set performance for logistic regression regularization """
+    mu_seq = sorted(w_fit.keys())
+    p = np.ravel([w_fit[mu].P for mu in mu_seq])
+    r = np.ravel([w_fit[mu].R for mu in mu_seq])
+    f1 = np.ravel([w_fit[mu].F1 for mu in mu_seq])
+    nnz = np.ravel([np.sum(w_fit[mu].w != 0) for mu in mu_seq])    
+
+    fig, ax1 = plt.subplots()
+    
+    # Plot spread
+    ax1.set_xscale('log', nonposx='clip')    
+    ax1.scatter(mu_opt, f1_opt, marker='*', color='purple', s=500,
+                zorder=10, label="Maximum F1: mu={}".format(mu_opt))
+    ax1.plot(mu_seq, f1, 'o-', color='red', label='F1 score')
+    ax1.plot(mu_seq, p, 'o--', color='blue', label='Precision')
+    ax1.plot(mu_seq, r, 'o--', color='green', label='Recall')
+    ax1.set_xlabel('log(penalty)')
+    ax1.set_ylabel('F1 score/Precision/Recall')
+    ax1.set_ylim(-0.04, 1.04)
+    for t1 in ax1.get_yticklabels():
+      t1.set_color('r')
+    
+    # Plot nnz
+    ax2 = ax1.twinx()
+    ax2.plot(mu_seq, nnz, '.:', color='gray', label='Sparsity')
+    ax2.set_ylabel('Number of non-zero coefficients')
+    ax2.set_ylim(-0.01*np.max(nnz), np.max(nnz)*1.01)
+    for t2 in ax2.get_yticklabels():
+      t2.set_color('gray')
+    
+    # Shrink plot for legend
+    box1 = ax1.get_position()
+    ax1.set_position([box1.x0, box1.y0+box1.height*0.1, box1.width, box1.height*0.9])
+    box2 = ax2.get_position()
+    ax2.set_position([box2.x0, box2.y0+box2.height*0.1, box2.width, box2.height*0.9])
+    plt.title("Validation for logistic regression learning")
+    lns1, lbs1 = ax1.get_legend_handles_labels()
+    lns2, lbs2 = ax2.get_legend_handles_labels()
+    ax1.legend(lns1+lns2, lbs1+lbs2, loc='upper center', bbox_to_anchor=(0.5,-0.05),
+               scatterpoints=1, fontsize=10, markerscale=0.5)
+    plt.show()
+
+
+# TODO: Should this just be a function?
+class GridSearch(object):
+    """
+    Runs hyperparameter grid search over a Learner object with train and test methods
+    Selects based on maximizing F1 score on a supplied cross-validation (cv) set.
+    """
+    # TODO: Support more than one search axis!
+    def __init__(self, learner, param_name, param_vals, cv_candidates, cv_gold_labels, **model_hyperparams):
+        self.learner = learner
+
+        # For display of plot
+        w_fit = OrderedDict()
+
+        # Iterate over the param values
+        w_opt  = None
+        f1_opt = 0.0
+        for pv in param_vals:
+            model_hyperparams[param_name] = pv
+
+            # Train the model
+            self.learner.train(**model_hyperparams)
+
+            # Test the model
+            scores        = self.learner.test(cv_candidates, cv_gold_labels, display=False, return_vals=True)
+            prec, rec, f1 = scores[:3]
+            w_fit[pv]     = ValidatedFit(self.learner.model.w, prec, rec, f1)
+            if f1 > f1_opt:
+                # TODO: Access params from both parts of pipeline...
+                w_opt  = self.learner.model.w
+                pv_opt = pv
+                f1_opt = f1
+
+        # Set optimal parameter in the learner model
+        self.learner.model.w = w_opt
+        grid_search_plot(w_fit, pv_opt, f1_opt)
+
+
 class DictTable(OrderedDict):
   def set_title(self, heads):
     self.title = heads
@@ -339,45 +424,6 @@ class DDLiteModel:
                    "Negative<br />accuracy", "Negative<br />gen. score"])
     return tab
     
-  def plot_lr_diagnostics(self, w_fit, mu_opt, f1_opt):
-    """ Plot validation set performance for logistic regression regularization """
-    mu_seq = sorted(w_fit.keys())
-    p = np.ravel([w_fit[mu].P for mu in mu_seq])
-    r = np.ravel([w_fit[mu].R for mu in mu_seq])
-    f1 = np.ravel([w_fit[mu].F1 for mu in mu_seq])
-    nnz = np.ravel([np.sum(w_fit[mu].w != 0) for mu in mu_seq])    
-    
-    fig, ax1 = plt.subplots()
-    # Plot spread
-    ax1.set_xscale('log', nonposx='clip')    
-    ax1.scatter(mu_opt, f1_opt, marker='*', color='purple', s=500,
-                zorder=10, label="Maximum F1: mu={}".format(mu_opt))
-    ax1.plot(mu_seq, f1, 'o-', color='red', label='F1 score')
-    ax1.plot(mu_seq, p, 'o--', color='blue', label='Precision')
-    ax1.plot(mu_seq, r, 'o--', color='green', label='Recall')
-    ax1.set_xlabel('log(penalty)')
-    ax1.set_ylabel('F1 score/Precision/Recall')
-    ax1.set_ylim(-0.04, 1.04)
-    for t1 in ax1.get_yticklabels():
-      t1.set_color('r')
-    # Plot nnz
-    ax2 = ax1.twinx()
-    ax2.plot(mu_seq, nnz, '.:', color='gray', label='Sparsity')
-    ax2.set_ylabel('Number of non-zero coefficients')
-    ax2.set_ylim(-0.01*np.max(nnz), np.max(nnz)*1.01)
-    for t2 in ax2.get_yticklabels():
-      t2.set_color('gray')
-    # Shrink plot for legend
-    box1 = ax1.get_position()
-    ax1.set_position([box1.x0, box1.y0+box1.height*0.1, box1.width, box1.height*0.9])
-    box2 = ax2.get_position()
-    ax2.set_position([box2.x0, box2.y0+box2.height*0.1, box2.width, box2.height*0.9])
-    plt.title("Validation for logistic regression learning")
-    lns1, lbs1 = ax1.get_legend_handles_labels()
-    lns2, lbs2 = ax2.get_legend_handles_labels()
-    ax1.legend(lns1+lns2, lbs1+lbs2, loc='upper center', bbox_to_anchor=(0.5,-0.05),
-               scatterpoints=1, fontsize=10, markerscale=0.5)
-    plt.show()
 
   def _get_all_abstained(self, training=True):
     idxs = self.training() if training else range(self.num_candidates())

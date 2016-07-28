@@ -93,7 +93,7 @@ class Learner(object):
         # Train model
         self.model.train(self.X_train, w0=w0, **model_hyperparams)
 
-    def test(self, test_candidates, gold_labels, show_plots=True):
+    def test(self, test_candidates, gold_labels, display=True, return_vals=False):
         """
         Apply the LFs and featurize the test candidates, using the same transformation as in training set;
         then test against gold labels using trained model.
@@ -104,11 +104,10 @@ class Learner(object):
             self.gold_labels     = gold_labels
             L_test, F_test       = self.training_set.transform(test_candidates)
             self.X_test          = self._set_model_X(L_test, F_test)
-        test_scores(self.model.predict(self.X_test), gold_labels, return_vals=False, verbose=True)
-
-        # Optionally, plot calibration plots
-        if show_plots:
+        if display:
             calibration_plots(self.model.marginals(self.X_train), self.model.marginals(self.X_test), gold_labels)
+        return test_scores(self.model.predict(self.X_test), gold_labels, return_vals=return_vals, verbose=display)
+
 
     def lf_weights(self):
         return self.model.w[:self.m]

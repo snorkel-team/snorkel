@@ -62,7 +62,7 @@ class NgramFeaturizer(Featurizer):
         #     yield feat
 
     def generate_temp_nlp_feats(self, cand, context):
-        for ngram in self.get_ngrams(cand.get_attrib_tokens('words')):
+        for ngram in cand.get_ngrams(cand.get_attrib_tokens('words')):
             yield ''.join(["BASIC_NGRAM_", ngram])
 
     # def generate_nlp_feats(self, cand, context):
@@ -91,35 +91,8 @@ class TableNgramFeaturizer(NgramFeaturizer):
             yield "HTML_ANC_TAG_" + tag
         for attr in cand.html_anc_attrs:
             yield "HTML_ANC_ATTR_" + attr
-        for ngram in self.get_aligned_ngrams(cand, context, axis='row'):
+        for ngram in cand.get_aligned_ngrams(context, axis='row'):
             yield "ROW_NGRAM_" + ngram
-        for ngram in self.get_aligned_ngrams(cand, context, axis='col'):
+        for ngram in cand.get_aligned_ngrams(context, axis='col'):
             yield "COL_NGRAM_" + ngram
 
-
-    # NOTE: it may just be simpler to search by row_num, col_num rather than
-    # traversing tree, though other range features may benefit from tree structure
-    def get_aligned_ngrams(self, cand, context, axis='row'):
-        # Tree traversal method:
-        # root = et.fromstring(context.html)
-        # if axis=='row':
-            # snorkel_ids = root.xpath('//*[@snorkel_id="%s"]/following-sibling::*/@snorkel_id' % cand.cell_id)
-        # if axis=='col':
-            # position = len(root.xpath('//*[@snorkel_id="%s"]/following-sibling::*/@snorkel_id' % cand.cell_id)) + 1
-            # snorkel_ids = root.xpath('//*[@snorkel_id][position()=%d]/@snorkel_id' % position)
-        # SQL join method (eventually)
-        if axis=='row':
-            phrase_ids = [phrase.id for phrase in context.phrases.values() if phrase.row_num == cand.row_num]
-        elif axis=='col':
-            phrase_ids = [phrase.id for phrase in context.phrases.values() if phrase.col_num == cand.col_num]
-        for phrase_id in phrase_ids:
-            words = context.phrases[phrase_id].words
-            for ngram in self.get_ngrams(words):
-                yield ngram
-
-    # replace with a library function?
-    def get_ngrams(self, words, n_max=3):
-        N = len(words)
-        for root in range(N):
-            for n in range(min(n_max, N - root)):
-                yield '_'.join(words[root:root+n+1])

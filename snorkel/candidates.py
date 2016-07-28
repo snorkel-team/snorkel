@@ -165,6 +165,7 @@ class Ngram(Candidate):
 
         # Set basic object attributes
         self.id          = "%s:%s-%s" % (self.sent_id, char_start, char_end)
+        self.uid         = self.id
         self.char_start  = char_start
         self.char_end    = char_end
         self.char_len    = char_end - char_start + 1
@@ -232,11 +233,13 @@ class Ngram(Candidate):
     def get_span(self, sep=" "):
         return self.get_attrib_span(WORDS)
 
+### HACKY ###
+    def pre_window(self, attribute='words'):
+        return self.sentence[attribute][:self.word_start]
 
-    # def _apply(self, sent):
-    #     xt = corenlp_to_xmltree(sent)
-    #     for e_idxs, e_label in self.e.apply(sent):
-    #         yield entity_internal(e_idxs, e_label, sent, xt)
+    def post_window(self, attribute='words'):
+        return self.sentence[attribute][self.word_start+1:]
+
 
 
 class Ngrams(CandidateSpace):
@@ -280,7 +283,7 @@ class Ngrams(CandidateSpace):
 """-------------------------HERE BE BRADEN'S KINGDOM-------------------------"""
 
 class TableNgram(Ngram):
-    def __init__(self, phrase, ngram):
+    def __init__(self, phrase, ngram, table):
         super(TableNgram, self).__init__(ngram.char_start, ngram.char_end, ngram.sentence)
         self.context_id = phrase.context_id
         self.table_id = phrase.table_id
@@ -291,11 +294,48 @@ class TableNgram(Ngram):
         self.html_attrs = phrase.html_attrs
         self.html_anc_tags = phrase.html_anc_tags
         self.html_anc_attrs = phrase.html_anc_attrs
-        self.uid = phrase.id
+        self.context = table
 
     def __repr__(self):
         return '<TableNgram("%s", id=%s, chars=[%s,%s], (row,col)=(%s,%s), tag=%s)' \
             % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.row_num, self.col_num, self.html_tag)
+
+### HACKY ###
+    def aligned(self, attribute='words'):
+        return self.row_window() + self.col_window()
+
+    def row_window(self, attribute='words'):
+        return [ngram for ngram in self.get_aligned_ngrams(self.context, axis='row')]
+
+    def col_window(self, attribute='words'):
+        return [ngram for ngram in self.get_aligned_ngrams(self.context, axis='col')]
+
+    # NOTE: it may just be simpler to search by row_num, col_num rather than
+    # traversing tree, though other range features may benefit from tree structure
+    def get_aligned_ngrams(self, context, n_max=3, attribute='words', axis='row'):
+        # SQL join method (eventually)
+        if axis=='row':
+            phrase_ids = [phrase.id for phrase in context.phrases.values() if phrase.row_num == self.row_num]
+        elif axis=='col':
+            phrase_ids = [phrase.id for phrase in context.phrases.values() if phrase.col_num == self.col_num]
+        for phrase_id in phrase_ids:
+            words = context.phrases[phrase_id].words
+            for ngram in self.get_ngrams(words, n_max=n_max):
+                yield ngram
+        # Tree traversal method:
+        # root = et.fromstring(context.html)
+        # if axis=='row':
+            # snorkel_ids = root.xpath('//*[@snorkel_id="%s"]/following-sibling::*/@snorkel_id' % cand.cell_id)
+        # if axis=='col':
+            # position = len(root.xpath('//*[@snorkel_id="%s"]/following-sibling::*/@snorkel_id' % cand.cell_id)) + 1
+            # snorkel_ids = root.xpath('//*[@snorkel_id][position()=%d]/@snorkel_id' % position)
+
+    # replace with a library function?
+    def get_ngrams(self, words, n_max=3):
+        N = len(words)
+        for root in range(N):
+            for n in range(min(n_max, N - root)):
+                yield '_'.join(words[root:root+n+1])
 
 
 class TableNgrams(Ngrams):
@@ -304,188 +344,14 @@ class TableNgrams(Ngrams):
     "Calling _apply(x)_ given an object _x_ returns a generator over candidates in _x_."
     """
     def apply(self, context):
-        table = context if isinstance(context, dict) else context._asdict()
+        # table = context if isinstance(context, dict) else context._asdict()
         try:
-            phrases = table['phrases']
+            phrases = context.phrases
         except:
             raise ValueError("Input object must have %s attribute" % 'phrases')
 
         for phrase in phrases.values():
             for ngram in super(TableNgrams, self).apply(phrase):
-                yield TableNgram(phrase, ngram)
+                yield TableNgram(phrase, ngram, context)
 
 
-# class EntityExtractor(object):
-#     def __init__(self, candidate_space, matcher):
-#         self.candidate_space = candidate_space
-#         self.matcher = matcher
-
-#     def apply(self, context):
-#         # if 'table_id' in context._fields:
-#         #     for cell in context.cells:
-#         #         for e in self.matcher.apply(self.candidate_space.apply(cell)):
-#         #             yield e
-#         # else:
-#         for e in self.matcher.apply(self.candidate_space.apply(context)):
-#             yield e
-
-# class RelationExtractor(object):
-#     """
-#     A generator for relation mentions. NOTE: currently limited to two entities/relation
-#     """
-#     def __init__(self, entity_extractors):
-#         self.arity = len(entity_extractors) if isinstance(entity_extractors, list) else 1
-#         self.extractors = entity_extractors
-
-#     def apply(self, context):
-#         """
-#         Yield a relation for each cross-product (nested for loop) tuple of entities extracted
-#             from the given context
-#         """
-#         for e1 in self.extractors[0].apply(context):
-#             for e2 in self.extractors[1].apply(context):
-#                 yield Relation(e1,e2)
-
-
-# class Relation(Candidate):
-#     def __init__(self, e1, e2):
-#         self.id = "%s:%s" % (e1.id, e2.id)
-#         self.context_id = e1.sent_id
-#         self.e1 = e1
-#         self.e2 = e2
-
-#     def __repr__(self):
-#         return 'Relation<Ngram("%s", id=%s),Ngram("%s", id=%s)>' \
-#             % (self.e1.get_attrib_span(WORDS), self.e1.id, self.e2.get_attrib_span(WORDS), self.e2.id)
-
-    # def _get_features(self):
-    #     entity1_features
-    #     entity2_features
-    #     Cell_match = True
-    #     Row_diff_low = False
-    #     Row_diff_0 = True
-    #     Row_diff_high = False
-    #     Col_diff_low = False
-    #     Col_diff_0 = True
-    #     Col_diff_high = False
-    #     [html_tag]_between = True    (e.g., hr, br)
-    #     [Ngram]_between = True  (e.g., "Voltage")
-
-
-# class Candidates(object):
-#     """
-#     A generic class to hold and index a set of Candidates
-#     Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
-#     a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
-#     """
-#     def __init__(self, extractor, contexts, parallelism=False, join_key='context_id'):
-#         self.join_key = join_key
-#         self.ps = []
-
-#         # Extract & index candidates
-#         print "Extracting candidates..."
-#         if parallelism in [1, False]:
-#             candidates = self._extract(extractor, contexts)
-#         else:
-#             candidates = self._extract_multiprocess(extractor, contexts)
-#         self._index(candidates)
-
-#     def _extract(self, extractor, contexts):
-#         return chain.from_iterable(extractor.apply(c) for c in contexts)
-
-#     def _extract_multiprocess(self, extractor, contexts, parallelism=2):
-#         raise NotImplementedError
-
-#     # NOTE: For tables, _get_features must have access to auxiliary data structures
-#     def _get_features(self):
-#         raise NotImplementedError
-
-#     def _index(self, candidates):
-#         self._candidates_by_id         = {}
-#         self._candidates_by_context_id = defaultdict(list)
-#         for c in candidates:
-#             self._candidates_by_id[c.id] = c
-#             self._candidates_by_context_id[c.__dict__[self.join_key]].append(c)
-
-#     def __iter__(self):
-#         """Default iterator is over Candidates"""
-#         return self._candidates_by_id.itervalues()
-
-#     def get_candidates(self):
-#         return self._candidates_by_id.values()
-
-#     def get_candidate(self, id):
-#         """Retrieve a candidate by candidate id"""
-#         return self._candidates_by_id[id]
-
-#     def get_candidates_in(self, context_id):
-#         """Return the candidates in a specific context (e.g. Sentence)"""
-#         return self._candidates_by_context_id[context_id]
-
-#     def gold_stats(self, gold_set):
-#         """Return precision and recall relative to a "gold" set of candidates of the same type"""
-#         gold = gold_set if isinstance(gold_set, set) else set(gold_set)
-#         cs   = self.get_candidates()
-#         nc   = len(cs)
-#         ng   = len(gold)
-#         both = len(gold.intersection(cs))
-#         print "# of gold annotations\t= %s" % ng
-#         print "# of candidates\t\t= %s" % nc
-#         print "Candidate recall\t= %0.3f" % (both / float(ng),)
-#         print "Candidate precision\t= %0.3f" % (both / float(nc),)
-
-# class Entities(Candidates):
-#     def __init__(self, entity_extractor, corpus, parallelism=False):
-#         self.corpus = corpus
-#         self.extractor = entity_extractor
-
-#     def _extract(self, contexts):
-#         return chain.from_iterable(self.extractor.apply(c) for c in contexts)
-
-# class Relations(Candidates):
-#     """
-#     A generic class to hold and index a set of (candidate) Relations
-#     Takes in a RelationExtractor and a corpus of context objects (e.g. Tables)
-#     """
-#     def __init__(self, relation_extractor, corpus, parallelism=False):
-#         self.corpus = corpus
-#         self.extractor = relation_extractor
-
-#         # Extract & index candidates
-#         print "Extracting candidates..."
-#         if parallelism in [1, False]:
-#             candidates = self._extract()
-#         else:
-#             candidates = self._extract_multiprocess()
-#         self._index(candidates)
-
-#     def _extract(self):
-#         return chain.from_iterable(self.relation_extractor.apply(c) for c in self.corpus.get_contexts())
-
-#     def _extract_multiprocess(self, relation_extractor, corpus, parallelism=2):
-#         raise NotImplementedError
-
-#     def _get_features(self):
-#         raise NotImplementedError
-
-#     def _index(self, candidates):
-#         self._candidates_by_id         = {}
-#         self._candidates_by_context_id = defaultdict(list)
-#         for c in candidates:
-#             self._candidates_by_id[c.id] = c
-#             self._candidates_by_context_id[c.__dict__[self.join_key]].append(c)
-
-#     def __iter__(self):
-#         """Default iterator is over Candidates"""
-#         return self._candidates_by_id.itervalues()
-
-#     def get_candidates(self):
-#         return self._candidates_by_id.values()
-
-#     def get_candidate(self, id):
-#         """Retrieve a candidate by candidate id"""
-#         return self._candidates_by_id[id]
-
-#     def get_candidates_in(self, context_id):
-#         """Return the candidates in a specific context (e.g. Sentence)"""
-#         return self._candidates_by_context_id[context_id]

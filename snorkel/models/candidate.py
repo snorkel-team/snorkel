@@ -1,7 +1,34 @@
 from .meta import SnorkelBase
 from sqlalchemy import Table, Column, String, Integer, ForeignKey, ForeignKeyConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import PickleType
+
+
+class CandidateSet(SnorkelBase):
+    """A named collection of Candidate objects."""
+    __tablename__ = 'candidate_set'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+
+    def __repr__(self):
+        return "Candidate Set (" + self.name + ")"
+
+    def append(self, item):
+        self.candidates.append(item)
+
+    def remove(self, item):
+        self.candidates.remove(item)
+
+    def __iter__(self):
+        """Default iterator is over Candidate objects"""
+        for candidate in self.candidates:
+            yield candidate
+
+    def __len__(self):
+        return len(self.candidates)
+
+    def __getitem__(self, key):
+        return self.candidates[key]
 
 
 class Candidate(SnorkelBase):
@@ -10,7 +37,8 @@ class Candidate(SnorkelBase):
     """
     __tablename__ = 'candidate'
     id = Column(Integer, primary_key=True)
-    context_id = Column(Integer, ForeignKey('context.id'))
+    candidate_set_id = Column(Integer, ForeignKey('candidate_set.id'))
+    set = relationship('CandidateSet', backref=backref('candidates', cascade='all, delete-orphan'))
     type = Column(String, nullable=False)
 
     __mapper_args__ = {
@@ -27,12 +55,15 @@ class Ngram(Candidate):
     """
     __table__ = Table('ngram', SnorkelBase.metadata,
                       Column('id', Integer),
-                      Column('context_id', Integer, primary_key=True),
+                      Column('candidate_set_id', Integer, primary_key=True),
+                      Column('context_id', Integer, ForeignKey('context.id'), primary_key=True),
                       Column('char_start', Integer, primary_key=True),
                       Column('char_end', Integer, primary_key=True),
                       Column('meta', PickleType),
-                      ForeignKeyConstraint(['id', 'context_id'], ['candidate.id', 'candidate.context_id'])
+                      ForeignKeyConstraint(['id', 'candidate_set_id'], ['candidate.id', 'candidate.candidate_set_id'])
                       )
+
+    context = relationship('Context', backref=backref('candidates', cascade_backrefs=False))
 
     __mapper_args__ = {
         'polymorphic_identity': 'ngram',
@@ -120,37 +151,3 @@ class Ngram(Candidate):
         return 'Ngram("%s", context=%s, chars=[%s,%s], words=[%s,%s])' \
             % (self.get_span(), self.context.id, self.char_start, self.char_end, self.get_word_start(),
                self.get_word_end())
-
-
-candidate_set_association = Table('candidate_set_association', SnorkelBase.metadata,
-                                  Column('set', Integer, ForeignKey('candidate_set.id')),
-                                  Column('candidate', Integer, ForeignKey('candidate.id'))
-                                  )
-
-
-class CandidateSet(SnorkelBase):
-    """A named collection of Candidate objects."""
-    __tablename__ = 'candidate_set'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    candidates = relationship("Candidate", secondary=candidate_set_association, backref="sets")
-
-    def __repr__(self):
-        return "Candidate Set (" + self.name + ")"
-
-    def append(self, item):
-        self.candidates.append(item)
-
-    def remove(self, item):
-        self.candidates.remove(item)
-
-    def __iter__(self):
-        """Default iterator is over Candidate objects"""
-        for candidate in self.candidates:
-            yield candidate
-
-    def __len__(self):
-        return len(self.candidates)
-
-    def __getitem__(self, key):
-        return self.candidates[key]

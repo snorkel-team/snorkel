@@ -1,7 +1,7 @@
 from .meta import SnorkelBase, snorkel_postgres
 from sqlalchemy import Column, String, Integer, Text, ForeignKey
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import PickleType
 
 
@@ -10,8 +10,6 @@ class Context(SnorkelBase):
     __tablename__ = 'context'
     id = Column(Integer, primary_key=True)
     type = Column(String, nullable=False)
-
-    candidates = relationship('Candidate', backref='context', cascade_backrefs=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'context',
@@ -51,7 +49,7 @@ class Document(Context):
     id = Column(Integer, ForeignKey('context.id'), nullable=False)
     name = Column(String, primary_key=True)
     corpus_id = Column(Integer, ForeignKey('corpus.id'), primary_key=True)
-    corpus = relationship('Corpus', backref='documents', foreign_keys=corpus_id)
+    corpus = relationship('Corpus', backref=backref('documents', cascade='all, delete-orphan'), foreign_keys=corpus_id)
     file = Column(String)
     attribs = Column(PickleType)
 
@@ -68,7 +66,7 @@ class Sentence(Context):
     __tablename__ = 'sentence'
     id = Column(Integer, ForeignKey('context.id'))
     document_id = Column(Integer, ForeignKey('document.id'), primary_key=True)
-    document = relationship('Document', backref='sentences', foreign_keys=document_id)
+    document = relationship('Document', backref=backref('sentences', cascade='all, delete-orphan'), foreign_keys=document_id)
     position = Column(Integer, primary_key=True)
     text = Column(Text, nullable=False)
     if snorkel_postgres:

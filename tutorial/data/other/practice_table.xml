@@ -1,0 +1,57 @@
+# select all cells in 2nd column:
+//cell[id=8]/parent::row/preceding-sibling::row/cell[position()=2]
+# select all cells in 2nd column:
+//cell[position()=2]
+
+<table>
+
+<title> My Title </title>
+<caption> My Caption </caption>
+<body>
+
+<row>
+	<cell>
+		<text> a </text>
+		<id> 1 </id>
+	</cell>
+	<cell>
+		<text> b </text>
+		<id> 2 </id>
+	</cell>
+	<cell>
+		<text> c </text>
+		<id> 3 </id>
+	</cell>
+</row>
+<row>
+	<cell>
+		<text> d </text>
+		<id> 4 </id>
+	</cell>
+	<cell>
+		<text> e </text>
+		<id> 5 </id>
+	</cell>
+	<cell>
+		<text> f </text>
+		<id> 6 </id>
+	</cell>
+</row>
+<row>
+	<cell>
+		<text> g </text>
+		<id> 7 </id>
+	</cell>
+	<cell>
+		<text> h </text>
+		<id> 8 </id>
+	</cell>
+	<cell>
+		<text> i </text>
+		<id> 9 </id>
+	</cell>
+</row>
+
+</body>
+
+</table>

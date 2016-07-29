@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Sentence
+from .models import Corpus, Document, Sentence, Table, Cell
 import atexit
 from bs4 import BeautifulSoup
 from collections import defaultdict
+from itertools import chain
 import glob
 import json
 import lxml.etree as et
@@ -14,23 +15,20 @@ import signal
 from subprocess import Popen
 import sys
 # =======
-# import sys
 # import warnings
 # import numpy as np
-# import re
-# from bs4 import BeautifulSoup
-# from collections import namedtuple, defaultdict
 # >>>>>>> tables
 
 
 class CorpusParser:
     """
-    Invokes a DocParser and runs the output through a SentenceParser to produce a Corpus.
+    Invokes a DocParser and runs the output through a ContextParser
+    (e.g., SentenceParser) to produce a Corpus.
     """
 
-    def __init__(self, doc_parser, sent_parser, max_docs=None):
+    def __init__(self, doc_parser, context_parser, max_docs=None):
         self.doc_parser = doc_parser
-        self.sent_parser = sent_parser
+        self.context_parser = context_parser
         self.max_docs = max_docs
 
     def parse_corpus(self, name=None):
@@ -41,7 +39,7 @@ class CorpusParser:
                 break
             doc.corpus = corpus
 
-            for _ in self.sent_parser.parse(doc, text):
+            for _ in self.context_parser.parse(doc, text):
                 pass
 
         if name is not None:
@@ -244,24 +242,54 @@ class SentenceParser:
 
 
 class HTMLParser(DocParser):
-    """Simple parsing of raw HTML tables"""
+    """Simple parsing of files into html documents"""
     def init(self):
         self.doc_id = 0
 
     def parse_file(self, fp, file_name):
         with open(fp, 'r') as f:
-            soup = BeautifulSoup(f, 'xml')
+            soup = BeautifulSoup(f, 'xml') # TODO: consider change from XML to HTML?
             for text in enumerate(soup.find_all('html')):
-                yield Document(id=self.doc_id, file=file_name, text=unicode(text), attribs=None)
+                id = self.doc_id
+                attribs = None
+                yield Document(name=str(id), file=str(file_name), attribs=attribs), str(text)
                 self.doc_id += 1
+                # TODO: need unicode instead of str for messy htmls?
+
+# class CellParser():
+#     def parse
+
+# yield Document(name=str(id), file=str(file_name), attribs=attribs), str(text)
+
+# for i, (doc, text) in enumerate(self.doc_parser.parse()):
+#     if self.max_docs and i == self.max_docs:
+#         break
+#     doc.corpus = corpus
+
+#     for _ in self.context_parser.parse(doc, text):
+#         pass
 
 class TableParser(SentenceParser):
+    """Simple parsing of the tables in html documents into cells and phrases within cells"""
+    def parse(self, document, text):
+        for table in self.parse_html(document, text):
+            for cell in self.parse_table(table):
+                yield cell
+                # for phrase in self.parse_cell(cell):
+                #     yield phrase
 
-    def parse_table(self, table, table_idx=None, doc_id=None, doc_name=None):
-        table_id = "%s-%s" % (doc_id, table_idx)
-        phrases = {}
-        cell_idx = -1
-        for row_num, row in enumerate(table.find_all('tr')):
+    def parse_html(self, document, text):
+        soup = BeautifulSoup(text, 'lxml') # TODO: lxml is best parser for this?
+        for i, table in enumerate(soup.find_all('table')):
+            yield Table(document_id=document.id,
+                        document=document,
+                        position=i,
+                        text=str(text))
+
+    def parse_table(self, table):
+        soup = BeautifulSoup(table.text, 'lxml')
+        position = 0
+        for row_num, row in enumerate(soup.find_all('tr')):
             ancestors = ([(row.name, row.attrs.items())]
                 + [(ancestor.name, ancestor.attrs.items())
                 for ancestor in row.parents if ancestor is not None][:-2])
@@ -275,51 +303,104 @@ class TableParser(SentenceParser):
                     html_anc_attrs += ["=".join([attr,val]) for val in values]
                 else:
                     html_anc_attrs += ["=".join([attr,values])]
-            for col_num, cell in enumerate(row.children):
-                # NOTE: currently not including title, caption, footers, etc.
-                cell_idx += 1
-                if cell.name in ['th','td']:
-                    cell_id = "%s-%s" % (table_id, cell_idx)
-                    for phrase_idx, phrase in enumerate(self.parse(cell.get_text(strip=True), doc_id, doc_name)):
-                        phrase_id = "%s-%s" % (cell_id, phrase_idx)
-                        parts = phrase._asdict()
-                        parts['doc_id'] = doc_id
-                        parts['table_id'] = table_id
-                        parts['context_id'] = table_id # tables are the context
-                        parts['cell_id'] = cell_id
-                        parts['phrase_id'] = phrase_id
-                        parts['sent_id'] = phrase_id # temporary fix until ORM
-                        parts['id'] = phrase_id
-                        parts['doc_name'] = doc_name
-                        parts['row_num'] = row_num
-                        parts['col_num'] = col_num
-                        parts['html_tag'] = cell.name
-                        html_attrs = []
-                        for a in cell.attrs.items():
-                            attr = a[0]
-                            values = a[1]
-                            if isinstance(values, list):
-                                html_attrs += ["=".join([attr,val]) for val in values]
-                            else:
-                                html_attrs += ["=".join([attr,values])]
-                        parts['html_attrs'] = html_attrs
-                        parts['html_anc_tags'] = html_anc_tags
-                        parts['html_anc_attrs'] = html_anc_attrs
-                        phrases[phrase_id] = Phrase(**parts)
+            for col_num, html_cell in enumerate(row.children):
+                # TODO: include title, caption, footers, etc.
+                if html_cell.name in ['th','td']:
+                    parts = defaultdict(list)
+                    parts['document_id'] = table.document_id
+                    parts['table_id'] = table.id
+                    parts['table'] = table
+                    parts['position'] = position
+                    parts['text'] = str(html_cell.get_text(strip=True))
+                    parts['row_num'] = row_num
+                    parts['col_num'] = col_num
+                    parts['html_tag'] = html_cell.name
+                    html_attrs = []
+                    # TODO: clean this
+                    for a in html_cell.attrs.items():
+                        attr = a[0]
+                        values = a[1]
+                        if isinstance(values, list):
+                            html_attrs += ["=".join([attr,val]) for val in values]
+                        else:
+                            html_attrs += ["=".join([attr,values])]
+                    parts['html_attrs'] = html_attrs
+                    parts['html_anc_tags'] = html_anc_tags
+                    parts['html_anc_attrs'] = html_anc_attrs
+                    cell = Cell(**parts)
                     # add new attribute to the html
-                    cell['cell_id'] = cell_id
-        context_id = table_id
-        id = table_id
-        return Table(id, doc_id, doc_name, context_id, table_id, phrases, str(table))
+                    html_cell['snorkel_id'] = cell.id
+                    yield cell
 
-    def parse_docs(self, docs):
-        """Parse a list of Document objects into a list of pre-processed Tables."""
-        tables = []
-        for doc in docs:
-            soup = BeautifulSoup(doc.text, 'lxml')
-            for table_idx, table in enumerate(soup.find_all('table')):
-                tables.append(self.parse_table(table, table_idx=table_idx, doc_id=doc.id, doc_name=doc.file))
-        return tables
+
+    # def parse_table(self, table, table_idx=None, doc_id=None, doc_name=None):
+    #     table_id = "%s-%s" % (doc_id, table_idx)
+    #     phrases = {}
+    #     cell_idx = -1
+    #     for row_num, row in enumerate(table.find_all('tr')):
+    #         ancestors = ([(row.name, row.attrs.items())]
+    #             + [(ancestor.name, ancestor.attrs.items())
+    #             for ancestor in row.parents if ancestor is not None][:-2])
+    #         (tags, attrs) = zip(*ancestors)
+    #         html_anc_tags = tags
+    #         html_anc_attrs = []
+    #         for a in chain.from_iterable(attrs):
+    #             attr = a[0]
+    #             values = a[1]
+    #             if isinstance(values, list):
+    #                 html_anc_attrs += ["=".join([attr,val]) for val in values]
+    #             else:
+    #                 html_anc_attrs += ["=".join([attr,values])]
+    #         for col_num, cell in enumerate(row.children):
+    #             # NOTE: currently not including title, caption, footers, etc.
+    #             cell_idx += 1
+    #             if cell.name in ['th','td']:
+    #                 cell_id = "%s-%s" % (table_id, cell_idx)
+    #                 for phrase_idx, phrase in enumerate(self.parse(cell.get_text(strip=True), doc_id, doc_name)):
+    #                     phrase_id = "%s-%s" % (cell_id, phrase_idx)
+    #                     parts = phrase._asdict()
+    #                     parts['doc_id'] = doc_id
+    #                     parts['table_id'] = table_id
+    #                     parts['context_id'] = table_id # tables are the context
+    #                     parts['cell_id'] = cell_id
+    #                     parts['phrase_id'] = phrase_id
+    #                     parts['sent_id'] = phrase_id # temporary fix until ORM
+    #                     parts['id'] = phrase_id
+    #                     parts['doc_name'] = doc_name
+    #                     parts['row_num'] = row_num
+    #                     parts['col_num'] = col_num
+    #                     parts['html_tag'] = cell.name
+    #                     html_attrs = []
+    #                     for a in cell.attrs.items():
+    #                         attr = a[0]
+    #                         values = a[1]
+    #                         if isinstance(values, list):
+    #                             html_attrs += ["=".join([attr,val]) for val in values]
+    #                         else:
+    #                             html_attrs += ["=".join([attr,values])]
+    #                     parts['html_attrs'] = html_attrs
+    #                     parts['html_anc_tags'] = html_anc_tags
+    #                     parts['html_anc_attrs'] = html_anc_attrs
+    #                     phrases[phrase_id] = Phrase(**parts)
+    #                 # add new attribute to the html
+    #                 cell['cell_id'] = cell_id
+    #     context_id = table_id
+    #     id = table_id
+    #     return Table(id, doc_id, doc_name, context_id, table_id, phrases, str(table))
+
+    # def parse_docs(self, docs):
+    #     """Parse a list of Document objects into a list of pre-processed Tables."""
+    #     tables = []
+    #     for doc in docs:
+    #         soup = BeautifulSoup(doc.text, 'lxml')
+    #         for table_idx, table in enumerate(soup.find_all('table')):
+    #             tables.append(self.parse_table(table, table_idx=table_idx, doc_id=doc.id, doc_name=doc.file))
+    #     return tables
+
+
+class PassParser(TableParser):
+    def parse_table(self, table, table_idx=None, doc_id=None, doc_name=None):
+        pass
 
 
 def sort_X_on_Y(X, Y):

@@ -9,7 +9,7 @@ QUEUE_COLLECT_TIMEOUT = 5
 # import sys
 # import re
 # from collections import defaultdict
-# from itertools import chain, product
+# from itertools import chain
 # from time import time
 # >>>>>>> tables
 

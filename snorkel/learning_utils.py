@@ -178,40 +178,6 @@ class GridSearch(object):
         self.learner.model.w = w_opt
         grid_search_plot(w_fit, pv_opt, f1_opt)
 
-
-class DictTable(OrderedDict):
-  def set_title(self, heads):
-    self.title = heads
-  def set_rows(self, n):
-    self.rows = n
-  def set_cols(self, n):
-    self.cols = n
-  def _repr_html_(self):
-    html = ["<table>"]
-    if hasattr(self, 'title'):
-      html.append("<tr>")
-      html.extend("<td><b>{0}</b></td>".format(t) for t in self.title)
-      html.append("</tr>")
-    items = self.items()[:self.rows] if hasattr(self, 'rows') else self.items()
-    for k, v in items:
-      html.append("<tr>")
-      html.append("<td>{0}</td>".format(k))
-      html.extend("<td>{0}</td>".format(i) for i in v)
-      html.append("</tr>")
-    html.append("</table>")
-    return ''.join(html)
-
-class SideTables:
-  def __init__(self, table1, table2):
-    self.t1, self.t2 = table1, table2
-  def _repr_html_(self):
-    t1_html = self.t1._repr_html_()
-    t2_html = self.t2._repr_html_()
-    t1_html = t1_html[:6] + " style=\"margin-right: 1%;float: left\"" + t1_html[6:] 
-    t2_html = t2_html[:6] + " style=\"float: left\"" + t2_html[6:] 
-    return t1_html + t2_html
-
-
 def sparse_abs(X):
     """Element-wise absolute value of sparse matrix- avoids casting to dense matrix!"""
     X_abs = X.copy()
@@ -226,34 +192,64 @@ def sparse_abs(X):
     return X_abs
 
 
-def label_coverage(L):
+def candidate_coverage(L):
     """
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates which have > 0 (non-zero) labels.**
     """
     return np.where(L.sum(axis=1) != 0, 1, 0).sum() / float(L.shape[0])
 
-def label_overlap(L):
+def LF_coverage(L):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
+    Return the **fraction of candidates that each LF labels.**
+    """
+    return np.ravel(sparse_abs(L).sum(axis=0) / float(L.shape[0]))
+
+def candidate_overlap(L):
     """
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates which have > 1 (non-zero) labels.**
     """
     return np.where(sparse_abs(L).sum(axis=1) > 1, 1, 0).sum() / float(L.shape[0])
 
-def label_conflict(L):
+def LF_overlaps(L):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
+    Return the **fraction of candidates that each LF _overlaps with other LFs on_.**
+    """
+    L_abs = sparse_abs(L)
+    return np.ravel(np.where(L_abs.sum(axis=1) > 1, 1, 0).T * L_abs / float(L.shape[0]))
+
+def candidate_conflict(L):
     """
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates which have > 1 (non-zero) labels _which are not equal_.**
     """
     return np.where(sparse_abs(L).sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).sum() / float(L.shape[0])
 
-def lf_summary_stats(L, return_vals=True, verbose=False):
+def LF_conflicts(L):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
+    Return the **fraction of candidates that each LF _conflicts with other LFs on_.**
+    """
+    L_abs = sparse_abs(L)
+    return np.ravel(np.where(L_abs.sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).T * L_abs / float(L.shape[0]))
+
+def LF_accuracies(L, labels):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate, and labels {-1,1}
+    Return the accuracy of each LF w.r.t. these labels
+    """
+    return np.ravel(0.5*(L.T.dot(labels) / sparse_abs(L).sum(axis=0) + 1))
+
+def training_set_summary_stats(L, return_vals=True, verbose=False):
     """
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return simple summary statistics
     """
     N, M = L.shape
-    coverage, overlap, conflict = label_coverage(L), label_overlap(L), label_conflict(L)
+    coverage, overlap, conflict = candidate_coverage(L), candidate_overlap(L), candidate_conflict(L)
     if verbose:
         print "=" * 60
         print "LF Summary Statistics: %s LFs applied to %s candidates" % (M, N)
@@ -266,46 +262,13 @@ def lf_summary_stats(L, return_vals=True, verbose=False):
         return coverage, overlap, conflict
 
 
+
+##### Old stuff...
+
 class DDLiteModel:
   def __init__(self, candidates, feats=None, gt_dict=None):
     self.C = candidates
     
-  #######################################################
-  #################### LF stat comp. ####################
-  #######################################################    
-
-  def _cover(self, idxs=None):
-    idxs = self.training() if idxs is None else idxs
-    return [np.ravel((self.lf_matrix[idxs,:] == lab).sum(1))
-            for lab in [1,-1]]
-
-  def coverage(self, cov=None, idxs=None):
-    cov = self._cover(idxs) if cov is None else cov    
-    return np.mean((cov[0] + cov[1]) > 0)
-
-  def overlap(self, cov=None, idxs=None):    
-    cov = self._cover(idxs) if cov is None else cov    
-    return np.mean((cov[0] + cov[1]) > 1)
-
-  def conflict(self, cov=None, idxs=None):    
-    cov = self._cover(idxs) if cov is None else cov    
-    return np.mean(np.multiply(cov[0], cov[1]) > 0)
-
-  def print_lf_stats(self, idxs=None):
-    """
-    Returns basic summary statistics of the LFs on training set (default) or
-    passed idxs
-    * Coverage = % of candidates that have at least one label
-    * Overlap  = % of candidates labeled by > 1 LFs
-    * Conflict = % of candidates with conflicting labels
-    """
-    cov = self._cover(idxs)
-    print "LF stats on training set" if idxs is None else "LF stats on idxs"
-    print "Coverage:\t{:.3f}%\nOverlap:\t{:.3f}%\nConflict:\t{:.3f}%".format(
-            100. * self.coverage(cov), 
-            100. * self.overlap(cov),
-            100. * self.conflict(cov))
-
   def _plot_coverage(self, cov):
     cov_ct = [np.sum(x > 0) for x in cov]
     tot_cov = self.coverage(cov)
@@ -351,134 +314,3 @@ class DDLiteModel:
     plt.title("(b) Label heat map (training set conflict: {:.2f}%)".format(tot_conf))
     # Show plots    
     plt.show()
-
-  def _lf_conf(self, lf_idx):
-    lf_csc = self.lf_matrix.tocsc()
-    other_idx = np.concatenate((range(lf_idx),range(lf_idx+1, self.num_lfs())))
-    ts = self.training()
-    agree = lf_csc[:, other_idx].multiply(lf_csc[:, lf_idx])
-    agree = agree[ts,:]
-    return float((np.ravel((agree == -1).sum(1)) > 0).sum()) / len(ts)
-    
-  def top_conflict_lfs(self, n=10):
-    """ Show the LFs with the highest mean conflicts per candidate """
-    d = {nm : ["{:.2f}%".format(100.*self._lf_conf(i))]
-         for i,nm in enumerate(self.lf_names)}
-    tab = DictTable(sorted(d.items(), key=lambda t:t[1], reverse=True))
-    tab.set_rows(n)
-    tab.set_cols(2)
-    tab.set_title(["Labeling function", "Percent candidates where LF has conflict"])
-    return tab
-    
-  def _lf_coverage(self, lf_idx):
-    lf_v = np.ravel(self.lf_matrix.tocsc()[self.training(), lf_idx].todense())
-    return 1 - np.mean(lf_v == 0)
-    
-  def lowest_coverage_lfs(self, n=10):
-    """ Show the LFs with the highest fraction of abstains """
-    d = {nm : ["{:.2f}%".format(100.*self._lf_coverage(i))]
-         for i,nm in enumerate(self.lf_names)}
-    tab = DictTable(sorted(d.items(), key=lambda t:t[1]))
-    tab.set_rows(n)
-    tab.set_cols(2)
-    tab.set_title(["Labeling function", "Candidate coverage"])
-    return tab
-
-  def _lf_acc(self, subset, lf_idx):
-    gt = self.gt._gt_vec
-    pred = np.ravel(self.lf_matrix.tocsc()[:,lf_idx].todense())
-    has_label = np.where(pred != 0)
-    has_gt = np.where(gt != 0)
-    # Get labels/gt for candidates in dev set, with label, with gt
-    gd_idxs = np.intersect1d(has_label, subset)
-    gd_idxs = np.intersect1d(has_gt, gd_idxs)
-    gt = np.ravel(gt[gd_idxs])
-    pred_sub = np.ravel(pred[gd_idxs])
-    n_neg = np.sum(pred_sub == -1)
-    n_pos = np.sum(pred_sub == 1)
-    if np.sum(pred == -1) == 0:
-      neg_acc = -1
-    elif n_neg == 0:
-      neg_acc = 0
-    else:
-      neg_acc = float(np.sum((pred_sub == -1) * (gt == -1))) / n_neg
-    if np.sum(pred == 1) == 0:
-      pos_acc = -1
-    elif n_pos == 0:
-      pos_acc = 0
-    else: 
-      pos_acc = float(np.sum((pred_sub == 1) * (gt == 1))) / n_pos
-    return (pos_acc, n_pos, neg_acc, n_neg)
-    
-  def _lf_acc_gen(self, lf_idx):
-    pos_acc1, n_pos, neg_acc1, n_neg = self._lf_acc(self.dev1(), lf_idx)
-    pos_acc2, n_pos2, neg_acc2, n_neg2 = self._lf_acc(self.dev2(), lf_idx)
-    pos_acc2, neg_acc2 = max(0, pos_acc2), max(0, neg_acc2)
-    return (pos_acc1, n_pos, abs(pos_acc1 - pos_acc2), n_pos2,
-            neg_acc1, n_neg, abs(neg_acc1 - neg_acc2), n_neg2)    
-    
-  def lowest_empirical_accuracy_lfs(self, n=10):
-    self.dev_size_warn()
-    print "100% accuracy and 0 generalization score are \"perfect\""
-    """ Show the LFs with the lowest accuracy compared to ground truth """
-    d = {nm : list(self._lf_acc_gen(i)) for i,nm in enumerate(self.lf_names)}
-    tab_pos = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
-    for k in tab_pos:
-      if tab_pos[k][0] < 0:
-        del tab_pos[k]
-        continue
-      tab_pos[k] = ["{:.2f}% (n={})".format(100.*tab_pos[k][0], tab_pos[k][1]),
-                    "{:.2f} (n={})".format(tab_pos[k][2], tab_pos[k][3])] 
-    tab_pos.set_rows(n)
-    tab_pos.set_cols(3)
-    tab_pos.set_title(["Labeling function", "Positive accuracy",
-                       "Gen. score"])
-    
-    tab_neg = DictTable(sorted(d.items(), key=lambda t:t[1][4]))
-    for k in tab_neg:
-      if tab_neg[k][4] < 0:
-        del tab_neg[k]
-        continue
-      tab_neg[k] = ["{:.2f}% (n={})".format(100.*tab_neg[k][4], tab_neg[k][5]),
-                    "{:.2f} (n={})".format(tab_neg[k][6], tab_neg[k][7])]
-    tab_neg.set_rows(n)
-    tab_neg.set_cols(3)
-    tab_neg.set_title(["Labeling function", "Negative accuracy",
-                       "Gen. score"])
-    return SideTables(tab_pos, tab_neg)
-    
-  def lf_summary_table(self):
-    d = {nm : [self._lf_coverage(i), self._lf_conf(i), self._lf_acc_gen(i)]
-         for i,nm in enumerate(self.lf_names)}
-    for k,v in d.items():
-      del d[k]
-      pos_k, both_k = (v[2][0] >= 0), (v[2][0] >= 0 and v[2][4] >= 0)
-      col, tp, pa, pg, na, ng = ("#ee0b40", "Negative", "N/A", "N/A",
-                                 "{:.2f}% (n={})".format(100.*v[2][4], v[2][5]),
-                                 "{:.2f} (n={})".format(v[2][6], v[2][7]))
-      if pos_k:
-        col, tp, na, ng, pa, pg = ("#0099ff", "Positive", "N/A", "N/A",
-                                   "{:.2f}% (n={})".format(100.*v[2][0], v[2][1]),
-                                   "{:.2f} (n={})".format(v[2][2], v[2][3]))
-      if both_k:
-        col, tp, pa, pg, na, ng = ("#c700ff", "Both",
-                                   "{:.2f}% (n={})".format(100.*v[2][0], v[2][1]),
-                                   "{:.2f} (n={})".format(v[2][2], v[2][3]),
-                                   "{:.2f}% (n={})".format(100.*v[2][4], v[2][5]),
-                                   "{:.2f} (n={})".format(v[2][6], v[2][7]))     
-      fancy_k = "<b><font color=\"{}\">{}</font></b>".format(col, k)
-      d[fancy_k] = [tp, "{:.2f}%".format(100.*v[0]),
-                      "{:.2f}%".format(100.*v[1]), pa, pg, na, ng]
-    tab = DictTable(sorted(d.items(), key=lambda t:t[1][0]))
-    tab.set_rows(len(self.lf_names))
-    tab.set_cols(8)
-    tab.set_title(["Labeling<br />function", "Label<br />type",
-                   "Candidate<br />coverage", "Candidate<br />conflict", 
-                   "Positive<br />accuracy", "Positive<br />gen. score",
-                   "Negative<br />accuracy", "Negative<br />gen. score"])
-    return tab
-    
-
-  def _get_all_abstained(self, training=True):
-    idxs = self.training() if training else range(self.num_candidates())
-    return np.ravel(np.where(np.ravel((self.lf_matrix[idxs,:]).sum(1)) == 0))

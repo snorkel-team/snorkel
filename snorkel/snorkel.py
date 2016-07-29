@@ -1,9 +1,6 @@
-# Base Python
 import cPickle, json, os, sys, warnings
 from collections import defaultdict, OrderedDict, namedtuple
 import lxml.etree as et
-
-# Scientific modules
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -14,7 +11,9 @@ import scipy.sparse as sparse
 from features import Featurizer
 from learning import LogReg, odds_to_prob
 from lstm import *
-from learning_utils import test_scores, calibration_plots, lf_summary_stats
+from learning_utils import test_scores, calibration_plots, training_set_summary_stats, sparse_abs, LF_coverage, \
+    LF_overlaps, LF_conflicts, LF_accuracies
+from pandas import Series, DataFrame
 
 
 class TrainingSet(object):
@@ -33,7 +32,10 @@ class TrainingSet(object):
         self.lfs                 = lfs
         self.lf_names            = [lf.__name__ for lf in lfs]
         self.L, self.F           = self.transform(self.training_candidates, fit=True)
-        self.lf_stats()
+        self.dev_candidates      = None
+        self.dev_labels          = None
+        self.L_dev               = None
+        self.summary_stats()
 
     def transform(self, candidates, fit=False):
         """Apply LFs and featurize the candidates"""
@@ -53,9 +55,30 @@ class TrainingSet(object):
                 X[i,j] = lf(c)
         return X.tocsr()
 
-    def lf_stats(self, return_vals=False, verbose=True):
+    def summary_stats(self, return_vals=False, verbose=True):
         """Print out basic stats about the LFs wrt the training candidates"""
-        return lf_summary_stats(self.L, return_vals=return_vals, verbose=verbose)
+        return training_set_summary_stats(self.L, return_vals=return_vals, verbose=verbose)
+
+    def lf_stats(self, dev_candidates=None, dev_labels=None):
+        """Returns a pandas Dataframe with the LFs and various per-LF statistics"""
+        N, M = self.L.shape
+
+        # Default LF stats
+        d = {
+            'j'         : range(len(self.lfs)),
+            'coverage'  : Series(data=LF_coverage(self.L), index=self.lf_names),
+            'overlaps'  : Series(data=LF_overlaps(self.L), index=self.lf_names),
+            'conflicts' : Series(data=LF_conflicts(self.L), index=self.lf_names)
+        }
+        
+        # Empirical stats, based on supplied development set
+        if dev_candidates and dev_labels is not None:
+            if self.L_dev is None or dev_candidates != self.dev_candidates or any(dev_labels != self.dev_labels):
+                self.dev_candidates = dev_candidates
+                self.dev_labels     = dev_labels
+                self.L_dev          = self._apply_lfs(dev_candidates)
+            d['accuracy'] = Series(data=LF_accuracies(self.L_dev, self.dev_labels), index=self.lf_names)
+        return DataFrame(data=d, index=self.lf_names)
 
 
 class Learner(object):

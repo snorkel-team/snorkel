@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Sentence, Table, Cell
+from .models import Corpus, Document, Sentence, Table, Cell, Phrase
 import atexit
 from bs4 import BeautifulSoup
 from collections import defaultdict
@@ -169,7 +169,7 @@ class XMLDocParser(DocParser):
         return fpath.endswith('.xml')
 
 
-class SentenceParser:
+class SentenceParser(object):
     def __init__(self, tok_whitespace=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
@@ -256,27 +256,14 @@ class HTMLParser(DocParser):
                 self.doc_id += 1
                 # TODO: need unicode instead of str for messy htmls?
 
-# class CellParser():
-#     def parse
-
-# yield Document(name=str(id), file=str(file_name), attribs=attribs), str(text)
-
-# for i, (doc, text) in enumerate(self.doc_parser.parse()):
-#     if self.max_docs and i == self.max_docs:
-#         break
-#     doc.corpus = corpus
-
-#     for _ in self.context_parser.parse(doc, text):
-#         pass
 
 class TableParser(SentenceParser):
     """Simple parsing of the tables in html documents into cells and phrases within cells"""
     def parse(self, document, text):
         for table in self.parse_html(document, text):
             for cell in self.parse_table(table):
-                yield cell
-                # for phrase in self.parse_cell(cell):
-                #     yield phrase
+                for phrase in self.parse_cell(cell):
+                    yield phrase
 
     def parse_html(self, document, text):
         soup = BeautifulSoup(text, 'lxml') # TODO: lxml is best parser for this?
@@ -287,7 +274,7 @@ class TableParser(SentenceParser):
                         text=str(text))
 
     def parse_table(self, table):
-        soup = BeautifulSoup(table.text, 'lxml')
+        soup = BeautifulSoup(table.text, 'lxml') # TODO: lxlml is best parser for this?
         position = 0
         for row_num, row in enumerate(soup.find_all('tr')):
             ancestors = ([(row.name, row.attrs.items())]
@@ -309,8 +296,11 @@ class TableParser(SentenceParser):
                     parts = defaultdict(list)
                     parts['document_id'] = table.document_id
                     parts['table_id'] = table.id
-                    parts['table'] = table
                     parts['position'] = position
+
+                    parts['document'] = table.document
+                    parts['table'] = table
+
                     parts['text'] = str(html_cell.get_text(strip=True))
                     parts['row_num'] = row_num
                     parts['col_num'] = col_num
@@ -332,6 +322,32 @@ class TableParser(SentenceParser):
                     html_cell['snorkel_id'] = cell.id
                     yield cell
 
+    def parse_cell(self, cell):
+        parts = defaultdict(list)
+        parts['document_id'] = cell.document_id
+        parts['table_id'] = cell.table_id
+        parts['cell_id'] = cell.id
+
+        parts['document'] = cell.document
+        parts['table'] = cell.table
+        parts['cell'] = cell
+
+        parts['row_num'] = cell.row_num
+        parts['col_num'] = cell.col_num
+        parts['html_tag'] = cell.html_tag
+        parts['html_attrs'] = cell.html_attrs
+        parts['html_anc_tags'] = cell.html_anc_tags
+        parts['html_anc_attrs'] = cell.html_anc_attrs
+        for i, sent in enumerate(super(TableParser, self).parse(cell.document, cell.text)):
+            parts['text'] = sent.text
+            parts['position'] = i
+            parts['words'] = sent.words
+            parts['lemmas'] = sent.lemmas
+            parts['poses'] = sent.poses
+            parts['char_offsets'] = sent.char_offsets
+            parts['dep_parents'] = sent.dep_parents
+            parts['dep_labels'] = sent.dep_labels
+            yield Phrase(**parts)
 
     # def parse_table(self, table, table_idx=None, doc_id=None, doc_name=None):
     #     table_id = "%s-%s" % (doc_id, table_idx)

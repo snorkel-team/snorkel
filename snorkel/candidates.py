@@ -73,7 +73,7 @@ class CandidateExtractor(object):
         self.ps = []
         self.feats = None
         self.feat_index = {}
-        self.contexts = contexts
+        # self.contexts = contexts
 
     def extract(self, contexts, name=None):
         c = CandidateSet()

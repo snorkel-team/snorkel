@@ -95,8 +95,10 @@ class Table(Context):
     __tablename__ = 'table'
     id = Column(Integer, ForeignKey('context.id'))
     document_id = Column(Integer, ForeignKey('document.id'), primary_key=True)
-    document = relationship('Document', backref=backref('tables', cascade='all, delete-orphan'), foreign_keys=document_id)
     position = Column(Integer, primary_key=True)
+
+    document = relationship('Document', backref=backref('tables', cascade='all, delete-orphan'), foreign_keys=document_id)
+
     text = Column(Text, nullable=False)
 
     __mapper_args__ = {
@@ -112,9 +114,12 @@ class Cell(Context):
     id = Column(Integer, ForeignKey('context.id'))
     document_id = Column(Integer, ForeignKey('document.id'), primary_key=True)
     table_id = Column(Integer, ForeignKey('table.id'), primary_key=True)
-    table = relationship('Table', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=table_id)
     position = Column(Integer, primary_key=True)
-    text = Column(Text, nullable=False) ### TEMPORARY UNTIL PHRASES EXIST ###
+
+    document = relationship('Document', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=document_id)
+    table = relationship('Table', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=table_id)
+
+    text = Column(Text, nullable=False)
     row_num = Column(Integer)
     col_num = Column(Integer)
     html_tag = Column(Text)
@@ -132,8 +137,51 @@ class Cell(Context):
     }
 
     def __repr__(self):
-        return "Cell" + str((self.table.document.name, self.table.position, self.position, self.text))
+        return "Cell" + str((self.document.name, self.table.position, self.position, self.text))
 
+class Phrase(Context):
+    __tablename__ = 'phrase'
+    id = Column(Integer, ForeignKey('context.id'))
+    document_id = Column(Integer, ForeignKey('document.id'), primary_key=True)
+    table_id = Column(Integer, ForeignKey('table.id'), primary_key=True)
+    cell_id = Column(Integer, ForeignKey('cell.id'), primary_key=True)
+    position = Column(Integer, primary_key=True)
+
+    document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
+    table = relationship('Table', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=table_id)
+    cell = relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=cell_id)
+
+    text = Column(Text, nullable=False)
+    row_num = Column(Integer)
+    col_num = Column(Integer)
+    html_tag = Column(Text)
+    if snorkel_postgres:
+        html_attrs = Column(postgresql.ARRAY(String))
+        html_anc_tags = Column(postgresql.ARRAY(String))
+        html_anc_attrs = Column(postgresql.ARRAY(String))
+        words = Column(postgresql.ARRAY(String), nullable=False)
+        char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
+        lemmas = Column(postgresql.ARRAY(String))
+        poses = Column(postgresql.ARRAY(String))
+        dep_parents = Column(postgresql.ARRAY(Integer))
+        dep_labels = Column(postgresql.ARRAY(String))
+    else:
+        html_attrs = Column(PickleType)
+        html_anc_tags = Column(PickleType)
+        html_anc_attrs = Column(PickleType)
+        words = Column(PickleType, nullable=False)
+        char_offsets = Column(PickleType, nullable=False)
+        lemmas = Column(PickleType)
+        poses = Column(PickleType)
+        dep_parents = Column(PickleType)
+        dep_labels = Column(PickleType)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'phrase',
+    }
+
+    def __repr__(self):
+        return "Phrase" + str((self.table.document.name, self.table.position, self.cell.position, self.position, self.text))
 
 # =======
 # id_attrs        = ['id', 'doc_id', 'doc_name']
@@ -143,7 +191,6 @@ class Cell(Context):
 # cell_attrs      = id_attrs + ['context_id', 'table_id', 'cell_id', 'row_num', 'col_num', \
 #                   'html_tag', 'html_attrs', 'html_anc_tags', 'html_anc_attrs']
 # phrase_attrs    = cell_attrs + ['phrase_id', 'sent_id'] + lingual_attrs
-
 
 # Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
 # Table    = namedtuple('Table', table_attrs)

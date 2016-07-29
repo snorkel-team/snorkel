@@ -151,3 +151,32 @@ class Ngram(Candidate):
         return 'Ngram("%s", context=%s, chars=[%s,%s], words=[%s,%s])' \
             % (self.get_span(), self.context.id, self.char_start, self.char_end, self.get_word_start(),
                self.get_word_end())
+
+# class TableNgram(Ngram):
+
+#     __table__ = Table('table_ngram', SnorkelBase.metadata,
+#                   Column('id', Integer),
+#                   Column('candidate_set_id', Integer, primary_key=True),
+#                   Column('context_id', Integer, ForeignKey('context.id'), primary_key=True),
+#                   Column('char_start', Integer, primary_key=True),
+#                   Column('char_end', Integer, primary_key=True),
+#                   Column('meta', PickleType),
+#                   ForeignKeyConstraint(['id', 'candidate_set_id'], ['candidate.id', 'candidate.candidate_set_id'])
+#                   )
+
+#     __mapper_args__ = {
+#         'polymorphic_identity': 'table_ngram',
+#     }
+
+#     def __init__(self, phrase, ngram, table):
+#         super(TableNgram, self).__init__(ngram.char_start, ngram.char_end, ngram.sentence)
+#         self.context_id = phrase.context_id
+#         self.table_id = phrase.table_id
+#         self.cell_id = phrase.cell_id
+#         self.row_num = phrase.row_num
+#         self.col_num = phrase.col_num
+#         self.html_tag = phrase.html_tag
+#         self.html_attrs = phrase.html_attrs
+#         self.html_anc_tags = phrase.html_anc_tags
+#         self.html_anc_attrs = phrase.html_anc_attrs
+#         self.context = table

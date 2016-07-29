@@ -30,7 +30,7 @@ define a new type of Context is
 >>> import snorkel.models
 """
 from .meta import SnorkelBase, SnorkelSession, snorkel_engine, snorkel_postgres
-from .context import Context, Corpus, Document, Sentence, Table, Cell
+from .context import Context, Corpus, Document, Sentence, Table, Cell, Phrase
 from .candidate import Candidate, Ngram, CandidateSet
 
 # This call must be performed after all classes that extend SnorkelBase are

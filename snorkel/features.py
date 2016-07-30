@@ -79,23 +79,16 @@ class NgramFeaturizer(Featurizer):
 
             # Add DDLIB entity features
             feature_generators.append(self._generate_context_feats( \
-                lambda c : get_ddlib_feats(c, cidxs), 'DDLIB_', candidates))
+                lambda c : get_ddlib_feats(c, range(c.word_start, c.word_end+1)), 'DDLIB_', candidates))
 
             # Add TreeDLib entity features
             if candidates[0].xmltree is not None:
                 get_feats = compile_entity_feature_generator()
                 feature_generators.append(self._generate_context_feats( \
-                    lambda c : get_feats(c.xmltree.root, cidxs), 'TDLIB_', candidates))
+                    lambda c : get_feats(c.xmltree.root, range(c.word_start, c.word_end+1)), 'TDL_', candidates))
 
         if self.arity == 2:
-            c1idxs = range(c.e1.word_start, c.e1.word_end+1)
-            c2idxs = range(c.e2.word_start, c.e2.word_end+1)
-
-            # Add TreeDLib relation features
-            if candidates[0].xmltree.root is not None:
-                get_feats = compile_relation_feature_generator()
-                feature_generators.append(self._generate_context_feats( \
-                    lambda c : get_feats(c.xmltree.root, c1idxs, c2idxs), 'TDLIB_', candidates))
+            raise NotImplementedError("Featurizer needs to be implemented for binary relations!")
         return feature_generators
 
 

@@ -75,7 +75,6 @@ class NgramFeaturizer(Featurizer):
 
         # Unary relations
         if self.arity == 1:
-            cidxs = range(c.word_start, c.word_end+1)
 
             # Add DDLIB entity features
             feature_generators.append(self._generate_context_feats( \

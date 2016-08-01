@@ -10,6 +10,8 @@ matplotlib.use('Agg')
 warnings.filterwarnings("ignore", module="matplotlib")
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
+from itertools import product
+from pandas import DataFrame
 
 def precision(pred, gold):
     tp = np.sum((pred == 1) * (gold == 1))
@@ -142,41 +144,52 @@ def grid_search_plot(w_fit, mu_opt, f1_opt):
     plt.show()
 
 
-# TODO: Should this just be a function?
 class GridSearch(object):
     """
     Runs hyperparameter grid search over a Learner object with train and test methods
     Selects based on maximizing F1 score on a supplied cross-validation (cv) set.
     """
-    # TODO: Support more than one search axis!
-    def __init__(self, learner, param_name, param_vals, cv_candidates, cv_gold_labels, **model_hyperparams):
-        self.learner = learner
+    def __init__(self, learner, param_names, param_val_ranges, cv_candidates, cv_gold_labels, **model_hyperparams):
+        self.learner           = learner
+        self.param_names       = param_names
+        self.param_val_ranges  = param_val_ranges
+        self.cv_candidates     = cv_candidates
+        self.cv_gold_labels    = cv_gold_labels
+        self.model_hyperparams = model_hyperparams
 
-        # For display of plot
-        w_fit = OrderedDict()
-
+    def search(self):
+        """Basic method to start grid search, returns DataFrame table of results"""
         # Iterate over the param values
-        w_opt  = None
-        f1_opt = 0.0
-        for pv in param_vals:
-            model_hyperparams[param_name] = pv
+        run_stats   = []
+        param_opts  = np.zeros(len(self.param_names))
+        f1_opt      = 0.0
+        for param_vals in product(*self.param_val_ranges):
+
+            # Set the new hyperparam configuration to test
+            for pn, pv in zip(self.param_names, param_vals):
+                self.model_hyperparams[pn] = pv
+            print "=" * 60
+            print "Testing %s" % ', '.join(["%s = %0.2e" % (pn,pv) for pn,pv in zip(self.param_names, param_vals)])
+            print "=" * 60
 
             # Train the model
-            self.learner.train(**model_hyperparams)
+            self.learner.train(**self.model_hyperparams)
 
             # Test the model
-            scores        = self.learner.test(cv_candidates, cv_gold_labels, display=False, return_vals=True)
-            prec, rec, f1 = scores[:3]
-            w_fit[pv]     = ValidatedFit(self.learner.model.w, prec, rec, f1)
+            scores   = self.learner.test(self.cv_candidates, self.cv_gold_labels, display=False, return_vals=True)
+            p, r, f1 = scores[:3]
+            run_stats.append(list(param_vals) + [p, r, f1])
             if f1 > f1_opt:
-                # TODO: Access params from both parts of pipeline...
-                w_opt  = self.learner.model.w
-                pv_opt = pv
-                f1_opt = f1
+                w_opt      = self.learner.model.w
+                param_opts = param_vals
+                f1_opt     = f1
 
         # Set optimal parameter in the learner model
         self.learner.model.w = w_opt
-        grid_search_plot(w_fit, pv_opt, f1_opt)
+
+        # Return DataFrame of scores
+        return DataFrame.from_records(run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1'])
+
 
 def sparse_abs(X):
     """Element-wise absolute value of sparse matrix- avoids casting to dense matrix!"""

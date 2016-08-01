@@ -254,7 +254,7 @@ class Ngrams(CandidateSpace):
                 # Check for split
                 # NOTE: For simplicity, we only split single tokens right now!
                 if l == 1 and self.split_rgx is not None:
-                    m = re.search(self.split_rgx, text[char_start:char_end+1])
+                    m = re.search(self.split_rgx, text[char_start-cos[0]:char_end-cos[0]+1])
                     if m is not None and l < self.n_max:
                         yield Ngram(char_start=char_start, char_end=char_start + m.start(1) - 1, sent=s)
                         yield Ngram(char_start=char_start + m.end(1), char_end=char_end, sent=s)

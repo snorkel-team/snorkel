@@ -77,8 +77,10 @@ class NgramFeaturizer(Featurizer):
     """Feature for relations (of arity >= 1) defined over Ngram objects."""
     def _preprocess_candidates(self, candidates):
         for c in candidates:
-            if c.sentence.xmltree is None:
-                c.sentence.xmltree = corenlp_to_xmltree(get_as_dict(c.sentence))
+            if not isinstance(c.sentence, dict):
+                c.sentence = get_as_dict(c.sentence)
+            if c.sentence['xmltree'] is None:
+                c.sentence['xmltree'] = corenlp_to_xmltree(c.sentence)
         return candidates
 
     def _match_contexts(self, candidates):

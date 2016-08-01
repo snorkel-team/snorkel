@@ -224,7 +224,8 @@ class Ngram(Candidate):
         """For pickling with the XMLTree object"""
         cp = self.__dict__.copy()
         if cp['sentence'] is not None:
-            cp['sentence'] = get_as_dict(cp['sentence'])['xmltree'].to_str()
+            cp['sentence'] = get_as_dict(cp['sentence'])
+            cp['sentence']['xmltree'] = cp['sentence']['xmltree'].to_str()
         return cp
 
     def __setstate__(self, d):

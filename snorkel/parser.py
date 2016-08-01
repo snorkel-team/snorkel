@@ -14,7 +14,6 @@ from subprocess import Popen
 import lxml.etree as et
 from itertools import chain
 from utils import corenlp_cleaner, sort_X_on_Y
-from tree_structs import corenlp_to_xmltree, XMLTree
 
 Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
 
@@ -122,41 +121,8 @@ class XMLDocParser(DocParser):
         return fpath.endswith('.xml')
 
 
-class Sentence(object):
-    def __init__(self, id, words, lemmas, poses, dep_parents, dep_labels, sent_id, doc_id, text, char_offsets, \
-        doc_name, xmltree=None):
-        self.id           = id
-        self.words        = words
-        self.lemmas       = lemmas
-        self.poses        = poses
-        self.dep_parents  = dep_parents
-        self.dep_labels   = dep_labels
-        self.sent_id      = sent_id
-        self.doc_id       = doc_id
-        self.text         = text
-        self.char_offsets = char_offsets
-        self.doc_name     = doc_name
-        self.xmltree      = xmltree
-
-    def __getstate__(self):
-        """For pickling with the XMLTree object"""
-        cp = self.__dict__.copy()
-        if cp['xmltree'] is not None:
-            cp['xmltree'] = cp['xmltree'].to_str()
-        return cp
-
-    def __setstate__(self, d):
-        """For pickling with the XMLTree object"""
-        self.__dict__ = d
-        if self.xmltree is not None:
-            self.xmltree = XMLTree(et.fromstring(d['xmltree']), self.words)
-
-    def __eq__(self, other):
-        """Ignore XMLTree for equality test otherwise too expensive e.g. for tests."""
-        return self.__getstate__() == other.__getstate__()
-
-    def __repr__(self):
-        return "Sentence(%s)" % ', '.join(["%s=%s" % (k,v) for k,v in self.__dict__.iteritems()]) 
+Sentence = namedtuple('Sentence', ['id', 'words', 'lemmas', 'poses', 'dep_parents', 'dep_labels', 'sent_id', \
+    'doc_id', 'text', 'char_offsets', 'doc_name', 'xmltree'])
 
 
 class SentenceParser:
@@ -227,8 +193,7 @@ class SentenceParser:
                                 block['tokens'][-1]['characterOffsetEnd']]
             parts['doc_name'] = doc_name
             parts['id'] = "%s-%s" % (parts['doc_id'], parts['sent_id'])
-            if xmltree:
-                parts['xmltree'] = corenlp_to_xmltree(parts)
+            parts['xmltree'] = None
             sent = Sentence(**parts)
             sent_id += 1
             yield sent

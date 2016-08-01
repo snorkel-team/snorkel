@@ -8,6 +8,7 @@ import itertools
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 from treedlib import compile_relation_feature_generator
 from tree_structs import corenlp_to_xmltree, XMLTree
+from utils import get_as_dict
 from entity_features import *
 
 
@@ -33,6 +34,10 @@ class Featurizer(object):
             for f in get_feats(c):
                 yield i, prefix + f
 
+    # TODO: Take this out...
+    def _preprocess_candidates(self, candidates):
+        return candidates
+
     def _match_contexts(self, candidates):
         """Given the candidates, and using _generate_context_feats, return a list of generators."""
         raise NotImplementedError()
@@ -40,7 +45,7 @@ class Featurizer(object):
     def transform(self, candidates):
         """Given feature set has already been fit, simply apply to candidates."""
         F                  = sparse.lil_matrix((len(candidates), len(self.feat_index.keys())))
-        feature_generators = self._match_contexts(candidates)
+        feature_generators = self._match_contexts(self._preprocess_candidates(candidates))
         for i,f in itertools.chain(*feature_generators):
             if self.feat_index.has_key(f):
                 F[i,self.feat_index[f]] = 1
@@ -48,7 +53,7 @@ class Featurizer(object):
 
     def fit_transform(self, candidates):
         """Assembles the set of features to be used, and applies this transformation to the candidates"""
-        feature_generators = self._match_contexts(candidates)
+        feature_generators = self._match_contexts(self._preprocess_candidates(candidates))
 
         # Assemble and return the sparse feature matrix
         f_index = defaultdict(list)
@@ -70,6 +75,12 @@ class Featurizer(object):
 
 class NgramFeaturizer(Featurizer):
     """Feature for relations (of arity >= 1) defined over Ngram objects."""
+    def _preprocess_candidates(self, candidates):
+        for c in candidates:
+            if c.sentence.xmltree is None:
+                c.sentence.xmltree = corenlp_to_xmltree(get_as_dict(c.sentence))
+        return candidates
+
     def _match_contexts(self, candidates):
         feature_generators = []
 
@@ -81,10 +92,9 @@ class NgramFeaturizer(Featurizer):
                 lambda c : get_ddlib_feats(c, range(c.word_start, c.word_end+1)), 'DDLIB_', candidates))
 
             # Add TreeDLib entity features
-            if candidates[0].sentence.xmltree is not None:
-                get_feats = compile_entity_feature_generator()
-                feature_generators.append(self._generate_context_feats( \
-                    lambda c : get_feats(c.sentence.xmltree.root, range(c.word_start, c.word_end+1)), 'TDL_', candidates))
+            get_feats = compile_entity_feature_generator()
+            feature_generators.append(self._generate_context_feats( \
+                lambda c : get_feats(c.sentence.xmltree.root, range(c.word_start, c.word_end+1)), 'TDL_', candidates))
 
         if self.arity == 2:
             raise NotImplementedError("Featurizer needs to be implemented for binary relations!")

@@ -6,6 +6,7 @@ from time import time
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
 from utils import get_as_dict
+from tree_structs import XMLTree
 
 
 class Candidate(object):
@@ -223,14 +224,14 @@ class Ngram(Candidate):
         """For pickling with the XMLTree object"""
         cp = self.__dict__.copy()
         if cp['sentence'] is not None:
-            cp['sentence'] = cp['sentence'].__getstate__()
+            cp['sentence'] = get_as_dict(cp['sentence'])['xmltree'].to_str()
         return cp
 
     def __setstate__(self, d):
         """For pickling with the XMLTree object"""
         self.__dict__ = d
         if self.sentence is not None:
-            self.sentence = self.sentence.__setstate__(get_as_dict(self.sentence))
+            self.sentence.xmltree = XMLTree(et.fromstring(self.sentence.xmltree), self.sentence.words)
 
     def __repr__(self):
         return '<Ngram("%s", id=%s, chars=[%s,%s], words=[%s,%s])' \

@@ -149,7 +149,7 @@ class Sentence(object):
         """For pickling with the XMLTree object"""
         self.__dict__ = d
         if self.xmltree is not None:
-            self.xmltree  = XMLTree(et.fromstring(d['xmltree']), self.words)
+            self.xmltree = XMLTree(et.fromstring(d['xmltree']), self.words)
 
     def __eq__(self, other):
         """Ignore XMLTree for equality test otherwise too expensive e.g. for tests."""

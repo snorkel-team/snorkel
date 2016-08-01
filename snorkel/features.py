@@ -7,14 +7,14 @@ from entity_features import compile_entity_feature_generator
 
 class Featurizer(object):
     def __init__(self, candidates, corpus):
-        self.num_cand = candidates.num_candidates()
+        self.number_of_candidates = len(candidates)
         self._features_by_id = defaultdict(list)
         print "Extracting features..."
         self.feats = self.extract_features(candidates, corpus)
         print "Extracted {} features for each of {} candidates".format(self.num_features(), self.num_candidates())
 
     def num_candidates(self):
-        return self.num_cand
+        return self.number_of_candidates
 
     def num_features(self):
         return self.feats.shape[1]
@@ -27,7 +27,7 @@ class Featurizer(object):
     def _get_feature_index(self, candidates, corpus):
         f_index = defaultdict(list)
         for j,cand in enumerate(candidates):
-            for feat in self._featurize(cand, corpus.get_context(cand.context_id)):
+            for feat in self._featurize(cand):
                 self._features_by_id[cand.id].append(feat)
                 f_index[feat].append(j)
         return f_index
@@ -52,18 +52,24 @@ class Featurizer(object):
         return self.feats
 
 class NgramFeaturizer(Featurizer):
-    def _featurize(self, cand, context):
+    def _featurize(self, cand):
         # This is a poor man's substitue for coreNLP until they come together
-        for feat in self.generate_temp_nlp_feats(cand, context):
+        for feat in self.generate_temp_nlp_feats(cand):
             yield feat
         # for feat in self.generate_nlp_feats(cand, context):
         #     yield feat
         # for feat in self.generate_ddlib_feats(cand, context):
         #     yield feat
 
-    def generate_temp_nlp_feats(self, cand, context):
-        for ngram in cand.get_ngrams(cand.get_attrib_tokens('words')):
+    def generate_temp_nlp_feats(self, cand):
+        for ngram in self.get_ngrams(cand.get_attrib_tokens('words')):
             yield ''.join(["BASIC_NGRAM_", ngram])
+
+    def get_ngrams(self, words, n_max=3):
+        N = len(words)
+        for root in range(N):
+            for n in range(min(n_max, N - root)):
+                yield '_'.join(words[root:root+n+1])
 
     # def generate_nlp_feats(self, cand, context):
     #     get_nlp_feats = compile_entity_feature_generator()
@@ -75,24 +81,43 @@ class NgramFeaturizer(Featurizer):
     #         yield ''.join(["DDLIB_", feat])
 
 class TableNgramFeaturizer(NgramFeaturizer):
-    def _featurize(self, cand, context):
-        for feat in super(TableNgramFeaturizer, self)._featurize(cand, context):
+    def _featurize(self, cand):
+        for feat in super(TableNgramFeaturizer, self)._featurize(cand):
             yield feat
-        for feat in self.generate_table_feats(cand, context):
+        for feat in self.generate_table_feats(cand):
             yield ''.join(["TABLE_",feat])
 
-    def generate_table_feats(self, cand, context):
-        yield "ROW_NUM_%s" % cand.row_num
-        yield "COL_NUM_%s" % cand.col_num
-        yield "HTML_TAG_" + cand.html_tag
-        for attr in cand.html_attrs:
+    def generate_table_feats(self, cand):
+        yield "ROW_NUM_%s" % cand.context.row_num
+        yield "COL_NUM_%s" % cand.context.col_num
+        yield "HTML_TAG_" + cand.context.html_tag
+        for attr in cand.context.html_attrs:
             yield "HTML_ATTR_" + attr
-        for tag in cand.html_anc_tags:
+        for tag in cand.context.html_anc_tags:
             yield "HTML_ANC_TAG_" + tag
-        for attr in cand.html_anc_attrs:
+        for attr in cand.context.html_anc_attrs:
             yield "HTML_ANC_ATTR_" + attr
-        for ngram in cand.get_aligned_ngrams(context, axis='row'):
+        for ngram in self.get_aligned_ngrams(cand, axis='row'):
             yield "ROW_NGRAM_" + ngram
-        for ngram in cand.get_aligned_ngrams(context, axis='col'):
+        for ngram in self.get_aligned_ngrams(cand, axis='col'):
             yield "COL_NGRAM_" + ngram
 
+    # NOTE: it may just be simpler to search by row_num, col_num rather than
+    # traversing tree, though other range features may benefit from tree structure
+    def get_aligned_ngrams(self, cand, n_max=3, attribute='words', axis='row'):
+        # SQL join method (eventually)
+        if axis=='row':
+            aligned_phrases = [phrase for phrase in cand.context.table.phrases if phrase.row_num == cand.context.row_num]
+        elif axis=='col':
+            aligned_phrases = [phrase for phrase in cand.context.table.phrases if phrase.col_num == cand.context.col_num]
+        for phrase in aligned_phrases:
+            words = phrase.words
+            for ngram in self.get_ngrams(words, n_max=n_max):
+                yield ngram
+        # Tree traversal method:
+        # root = et.fromstring(context.html)
+        # if axis=='row':
+            # snorkel_ids = root.xpath('//*[@snorkel_id="%s"]/following-sibling::*/@snorkel_id' % cand.cell_id)
+        # if axis=='col':
+            # position = len(root.xpath('//*[@snorkel_id="%s"]/following-sibling::*/@snorkel_id' % cand.cell_id)) + 1
+            # snorkel_ids = root.xpath('//*[@snorkel_id][position()=%d]/@snorkel_id' % position)

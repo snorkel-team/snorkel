@@ -414,11 +414,6 @@ class TableParser(SentenceParser):
     #     return tables
 
 
-class PassParser(TableParser):
-    def parse_table(self, table, table_idx=None, doc_id=None, doc_name=None):
-        pass
-
-
 def sort_X_on_Y(X, Y):
     return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
 

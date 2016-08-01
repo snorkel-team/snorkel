@@ -1,5 +1,5 @@
 from .meta import SnorkelBase
-from sqlalchemy import Table, Column, String, Integer, ForeignKey, ForeignKeyConstraint
+from sqlalchemy import Table, Column, String, Integer, Text, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import PickleType
 
@@ -151,6 +151,9 @@ class Ngram(Candidate):
         return 'Ngram("%s", context=%s, chars=[%s,%s], words=[%s,%s])' \
             % (self.get_span(), self.context.id, self.char_start, self.char_end, self.get_word_start(),
                self.get_word_end())
+
+
+
 
 # class TableNgram(Ngram):
 

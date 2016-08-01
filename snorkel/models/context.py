@@ -41,6 +41,9 @@ class Corpus(Context):
     def get_sentences(self):
         return [sentence for doc in self.documents for sentence in doc.sentences]
 
+    def get_tables(self):
+        return [table for doc in self.documents for table in doc.tables]
+
 
 class Document(Context):
     """An object in a Corpus."""
@@ -139,6 +142,7 @@ class Cell(Context):
     def __repr__(self):
         return "Cell" + str((self.document.name, self.table.position, self.position, self.text))
 
+
 class Phrase(Context):
     __tablename__ = 'phrase'
     id = Column(Integer, ForeignKey('context.id'))
@@ -182,19 +186,3 @@ class Phrase(Context):
 
     def __repr__(self):
         return "Phrase" + str((self.table.document.name, self.table.position, self.cell.position, self.position, self.text))
-
-# =======
-# id_attrs        = ['id', 'doc_id', 'doc_name']
-# lingual_attrs   = ['words', 'lemmas', 'poses', 'dep_parents', 'dep_labels', 'char_offsets', 'text']
-# sentence_attrs  = id_attrs + ['sent_id'] + lingual_attrs
-# table_attrs     = id_attrs + ['context_id', 'table_id', 'phrases', 'html']
-# cell_attrs      = id_attrs + ['context_id', 'table_id', 'cell_id', 'row_num', 'col_num', \
-#                   'html_tag', 'html_attrs', 'html_anc_tags', 'html_anc_attrs']
-# phrase_attrs    = cell_attrs + ['phrase_id', 'sent_id'] + lingual_attrs
-
-# Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
-# Table    = namedtuple('Table', table_attrs)
-# Sentence = namedtuple('Sentence', sentence_attrs)
-# Cell     = namedtuple('Cell', cell_attrs)
-# Phrase   = namedtuple('Phrase', phrase_attrs)
-# >>>>>>> tables

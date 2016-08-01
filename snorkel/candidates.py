@@ -5,6 +5,7 @@ from itertools import chain
 from time import time
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
+from utils import get_as_dict
 
 
 class Candidate(object):
@@ -147,7 +148,7 @@ class Ngram(Candidate):
     def __init__(self, char_start, char_end, sent, metadata={}):
         
         # Inherit full sentence object (tranformed to dict) and check for necessary attribs
-        self.sentence = sent if isinstance(sent, dict) else sent._asdict()
+        self.sentence = get_as_dict(sent)
         self.sent_id  = self.sentence['id']
         REQ_ATTRIBS = ['id', WORDS]
         if not all([self.sentence.has_key(a) for a in REQ_ATTRIBS]):
@@ -233,7 +234,7 @@ class Ngrams(CandidateSpace):
         self.split_rgx    = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
     
     def apply(self, x):
-        s = x if isinstance(x, dict) else x.__dict__
+        s = get_as_dict(x)
         try:
             cos   = s[CHAR_OFFSETS]
             words = s[WORDS]

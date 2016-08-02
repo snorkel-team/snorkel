@@ -7,7 +7,7 @@ def compile_entity_feature_generator():
   Given optional arguments, returns a generator function which accepts an xml root
   and a list of indexes for a mention, and will generate relation features for this entity
   """
-  
+
   BASIC_ATTRIBS_REL = ['lemma', 'dep_label']
 
   m = Mention(0)
@@ -27,56 +27,56 @@ def compile_entity_feature_generator():
   # return generator function
   return Compile(temps).apply_mention
 
-def get_ddlib_feats(sent, idxs):
+def get_ddlib_feats(cand, idxs):
   """
   Minimalist port of generic mention features from ddlib
   """
-  for seq_feat in _get_seq_features(sent, idxs):
+  for seq_feat in _get_seq_features(cand, idxs):
     yield seq_feat
-  
-  for window_feat in _get_window_features(sent, idxs):
+
+  for window_feat in _get_window_features(cand, idxs):
     yield window_feat
 
-  if sent.sentence['words'][idxs[0]][0].isupper():
-      yield "STARTS_WITH_CAPTIAL"
+  if cand.context.words[idxs[0]][0].isupper():
+    yield "STARTS_WITH_CAPTIAL"
 
   yield "LENGTH_{}".format(len(idxs))
 
-def _get_seq_features(sent, idxs):
-  yield "WORD_SEQ_[" + " ".join(sent.sentence['words'][i] for i in idxs) + "]"
-  yield "LEMMA_SEQ_[" + " ".join(sent.sentence['lemmas'][i] for i in idxs) + "]"
-  yield "POS_SEQ_[" + " ".join(sent.sentence['poses'][i] for i in idxs) + "]"
-  yield "DEP_SEQ_[" + " ".join(sent.sentence['dep_labels'][i] for i in idxs) + "]"
+def _get_seq_features(cand, idxs):
+    yield "WORD_SEQ_[" + " ".join(cand.context.words[i] for i in idxs) + "]"
+    yield "LEMMA_SEQ_[" + " ".join(cand.context.lemmas[i] for i in idxs) + "]"
+    yield "POS_SEQ_[" + " ".join(cand.context.poses[i] for i in idxs) + "]"
+    yield "DEP_SEQ_[" + " ".join(cand.context.dep_labels[i] for i in idxs) + "]"
 
-def _get_window_features(sent, idxs, window=3, combinations=True, isolated=True):
+def _get_window_features(cand, idxs, window=3, combinations=True, isolated=True):
     left_lemmas = []
     left_poses = []
     right_lemmas = []
     right_poses = []
     try:
         for i in range(1, window + 1):
-            lemma = sent.sentence['lemmas'][idxs[0] - i]
+            lemma = cand.context.lemmas[idxs[0] - i]
             try:
                 float(lemma)
                 lemma = "_NUMBER"
             except ValueError:
                 pass
             left_lemmas.append(lemma)
-            left_poses.append(sent.sentence['poses'][idxs[0] - i])
+            left_poses.append(cand.context.poses[idxs[0] - i])
     except IndexError:
         pass
     left_lemmas.reverse()
     left_poses.reverse()
     try:
         for i in range(1, window + 1):
-            lemma = sent.sentence['lemmas'][idxs[-1] + i]
+            lemma = cand.context.lemmas[idxs[-1] + i]
             try:
                 float(lemma)
                 lemma = "_NUMBER"
             except ValueError:
                 pass
             right_lemmas.append(lemma)
-            right_poses.append(sent.sentence['poses'][idxs[-1] + i])
+            right_poses.append(cand.context.poses[idxs[-1] + i])
     except IndexError:
         pass
     if isolated:
@@ -119,3 +119,18 @@ def _get_window_features(sent, idxs, window=3, combinations=True, isolated=True)
                     curr_left_lemmas + "]_[" + curr_right_lemmas + "]"
                 yield "W_POS_L_" + str(i+1) + "_R_" + str(j+1) + "_[" + \
                     curr_left_poses + "]_[" + curr_right_poses + "]"
+
+def get_table_feats(cand):
+    yield "ROW_NUM_%s" % cand.context.row_num
+    yield "COL_NUM_%s" % cand.context.col_num
+    yield "HTML_TAG_" + cand.context.html_tag
+    for attr in cand.context.html_attrs:
+        yield "HTML_ATTR_" + attr
+    for tag in cand.context.html_anc_tags:
+        yield "HTML_ANC_TAG_" + tag
+    for attr in cand.context.html_anc_attrs:
+        yield "HTML_ANC_ATTR_" + attr
+    # for ngram in self.get_aligned_ngrams(cand, axis='row'):
+    #     yield "ROW_NGRAM_" + ngram
+    # for ngram in self.get_aligned_ngrams(cand, axis='col'):
+    #     yield "COL_NGRAM_" + ngram

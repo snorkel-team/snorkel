@@ -38,7 +38,6 @@ class CorpusParser:
             if self.max_docs and i == self.max_docs:
                 break
             doc.corpus = corpus
-            print "%s documents parsed" % i #TEMP
 
             for _ in self.context_parser.parse(doc, text):
                 pass

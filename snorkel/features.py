@@ -72,15 +72,20 @@ class Featurizer(object):
                 F[i,j] = 1
         return F
 
+    def print_features(self, candidate):
+        feature_generators = self._match_contexts(self._preprocess_candidates(candidate))
+        for i,f in itertools.chain(*feature_generators):
+            print f
+
 
 class NgramFeaturizer(Featurizer):
     """Feature for relations (of arity >= 1) defined over Ngram objects."""
     def _preprocess_candidates(self, candidates):
-        for c in candidates:
-            if not isinstance(c.sentence, dict):
-                c.sentence = get_as_dict(c.sentence)
-            if c.sentence['xmltree'] is None:
-                c.sentence['xmltree'] = corenlp_to_xmltree(c.sentence)
+        # for c in candidates:
+            # if not isinstance(c.context, dict):
+            #     c.context = get_as_dict(c.context)
+            # if c.context['xmltree'] is None:
+            #     c.context['xmltree'] = corenlp_to_xmltree(c.context)
         return candidates
 
     def _match_contexts(self, candidates):
@@ -91,15 +96,31 @@ class NgramFeaturizer(Featurizer):
 
             # Add DDLIB entity features
             feature_generators.append(self._generate_context_feats( \
-                lambda c : get_ddlib_feats(c, range(c.word_start, c.word_end+1)), 'DDLIB_', candidates))
+                lambda c : get_ddlib_feats(c, range(c.get_word_start(), c.get_word_end()+1)), 'DDLIB_', candidates))
 
-            # Add TreeDLib entity features
-            get_feats = compile_entity_feature_generator()
-            feature_generators.append(self._generate_context_feats( \
-                lambda c : get_feats(c.sentence['xmltree'].root, range(c.word_start, c.word_end+1)), 'TDL_', candidates))
+            # # Add TreeDLib entity features
+            # get_feats = compile_entity_feature_generator()
+            # feature_generators.append(self._generate_context_feats( \
+            #     lambda c : get_feats(c.context['xmltree'].root, range(c.word_start, c.word_end+1)), 'TDL_', candidates))
 
         if self.arity == 2:
             raise NotImplementedError("Featurizer needs to be implemented for binary relations!")
+        return feature_generators
+
+
+class TableNgramFeaturizer(NgramFeaturizer):
+    """In addition to Ngram features, add table structure information."""
+    def _match_contexts(self, candidates):
+        feature_generators = super(TableNgramFeaturizer, self)._match_contexts(candidates)
+
+        # Unary relations
+        if self.arity == 1:
+            feature_generators.append(self._generate_context_feats( \
+                lambda c : get_table_feats(c), 'TABLE_', candidates))
+
+        if self.arity == 2:
+            raise NotImplementedError("Featurizer needs to be implemented for binary relations!")
+
         return feature_generators
 
 

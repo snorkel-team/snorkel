@@ -220,7 +220,7 @@ class RegexMatchEach(RegexMatch):
     def _f(self, c):
         return True if all([self.r.match(t) is not None for t in c.get_attrib_tokens(self.attrib)]) else 0
 
-# =======
+
 class NumberMatcher(Matcher):
     """Matches candidates whose words can be converted to a float"""
     def _f(self, c):
@@ -247,6 +247,7 @@ class RangeMatcher(NumberMatcher):
         return super(RangeMatcher,self)._f(cand) and (self.low <= self.num) and (self.num <= self.high)
 
 
+# =======
 # class CandidateExtractor(object):
 #     """Temporary class for interfacing with the post-candidate-extraction code"""
 #     def __init__(self, candidate_space, matcher):

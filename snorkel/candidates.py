@@ -3,6 +3,7 @@ from itertools import chain
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
 from utils import get_as_dict
+import re
 
 QUEUE_COLLECT_TIMEOUT = 5
 
@@ -257,12 +258,13 @@ class Ngrams(CandidateSpace):
 
                 # Check for split
                 # NOTE: For simplicity, we only split single tokens right now!
-                if l == 1 and self.split_rgx is not None:
-                    m = re.search(self.split_rgx,
-                        text[char_start-context.char_offsets[0]:char_end-context.char_offsets[0]+1])
-                    if m is not None and l < self.n_max:
-                        yield Ngram(char_start=char_start, char_end=char_start + m.start(1) - 1, sent=s)
-                        yield Ngram(char_start=char_start + m.end(1), char_end=char_end, sent=s)
+                # if l == 1 and self.split_rgx is not None:
+                #     m = re.search(self.split_rgx,
+                #         context.text[char_start-context.char_offsets[0]:char_end-context.char_offsets[0]+1])
+                #     if m is not None and l < self.n_max:
+                #         if char_start > char_start + m.start(1) - 1 or char_start + m.end(1) > char_end:
+                #         yield Ngram(char_start=char_start, char_end=char_start + m.start(1) - 1, context=context)
+                #         yield Ngram(char_start=char_start + m.end(1), char_end=char_end, context=context)
 
 class TableNgrams(Ngrams):
     """

@@ -71,6 +71,7 @@ class Sentence(Context):
     document = relationship('Document', backref=backref('sentences', cascade='all, delete-orphan'), foreign_keys=document_id)
     position = Column(Integer, primary_key=True)
     text = Column(Text, nullable=False)
+    xmltree = Column(PickleType)
     if snorkel_postgres:
         words = Column(postgresql.ARRAY(String), nullable=False)
         char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
@@ -156,6 +157,7 @@ class Phrase(Context):
     cell = relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=cell_id)
 
     text = Column(Text, nullable=False)
+    xmltree = Column(PickleType)
     row_num = Column(Integer)
     col_num = Column(Integer)
     html_tag = Column(Text)

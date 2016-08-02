@@ -147,6 +147,8 @@ class Learner(object):
     def feat_weights(self):
         return self.model.w[self.m:]
         
+    def predictions(self):
+        return self.model.predict(self.X_test)
 
 class PipelinedLearner(Learner):
     """Implements the **"pipelined" approach**"""

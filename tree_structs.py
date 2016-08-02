@@ -64,7 +64,7 @@ def corenlp_to_xmltree(s, prune_root=True):
   Also adds special word_idx attribute corresponding to original sequence order in sentence
   """
   # Convert input object to dictionary
-  if type(s) != dict:
+  if isinstance(s, dict) == False:
     try:
       s = s.__dict__ if hasattr(s, '__dict__') else dict(s)
     except:

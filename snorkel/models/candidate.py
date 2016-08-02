@@ -152,39 +152,43 @@ class Ngram(Candidate):
             % (self.get_span(), self.context.id, self.char_start, self.char_end, self.get_word_start(),
                self.get_word_end())
 
-# ### HACKY ###
-#     def pre_window(self, attribute='words'):
-#         return self.sentence[attribute][:self.word_start]
+### TODO: move to helper functions file
+    # TODO: add option for limit on pre/post window (i.e., post within 3 words)
+    def post_window(self, attribute='words'):
+        return getattr(self.context, attribute)[self.get_word_start()+1:]
 
-#     def post_window(self, attribute='words'):
-#         return self.sentence[attribute][self.word_start+1:]
+    def pre_window(self, attribute='words'):
+        return getattr(self.context, attribute)[:self.get_word_start()]
 
+    def aligned(self, attribute='words', case_sensitive=False):
+        return (self.row_window(case_sensitive=case_sensitive)
+              + self.col_window(case_sensitive=case_sensitive))
 
-# class TableNgram(Ngram):
+    def row_window(self, attribute='words', case_sensitive=False):
+        ngrams = [ngram for ngram in self.get_aligned_ngrams(axis='row')]
+        return [ngram.lower() for ngram in ngrams] if not case_sensitive else ngrams
 
-#     __table__ = Table('table_ngram', SnorkelBase.metadata,
-#                   Column('id', Integer),
-#                   Column('candidate_set_id', Integer, primary_key=True),
-#                   Column('context_id', Integer, ForeignKey('context.id'), primary_key=True),
-#                   Column('char_start', Integer, primary_key=True),
-#                   Column('char_end', Integer, primary_key=True),
-#                   Column('meta', PickleType),
-#                   ForeignKeyConstraint(['id', 'candidate_set_id'], ['candidate.id', 'candidate.candidate_set_id'])
-#                   )
+    def col_window(self, attribute='words', case_sensitive=False):
+        ngrams = [ngram for ngram in self.get_aligned_ngrams(axis='col')]
+        return [ngram.lower() for ngram in ngrams] if not case_sensitive else ngrams
 
-#     __mapper_args__ = {
-#         'polymorphic_identity': 'table_ngram',
-#     }
+    # NOTE: it may just be simpler to search by row_num, col_num rather than
+    # traversing tree, though other range features may benefit from tree structure
+    def get_aligned_ngrams(self, n_max=3, attribute='words', axis='row'):
+        axis_name = axis + '_num'
+        phrases = [phrase for phrase in self.context.table.phrases if getattr(phrase,axis_name) == getattr(self.context,axis_name)]
+        # if axis=='row':
+        #     phrase_ids = [phrase.id for phrase in context.phrases.values() if phrase.row_num == self.row_num]
+        # elif axis=='col':
+        #     phrase_ids = [phrase.id for phrase in context.phrases.values() if phrase.col_num == self.col_num]
+        for phrase in phrases:
+            for ngram in self.get_ngrams(getattr(phrase,attribute), n_max=n_max):
+                yield ngram
 
-#     def __init__(self, phrase, ngram, table):
-#         super(TableNgram, self).__init__(ngram.char_start, ngram.char_end, ngram.sentence)
-#         self.context_id = phrase.context_id
-#         self.table_id = phrase.table_id
-#         self.cell_id = phrase.cell_id
-#         self.row_num = phrase.row_num
-#         self.col_num = phrase.col_num
-#         self.html_tag = phrase.html_tag
-#         self.html_attrs = phrase.html_attrs
-#         self.html_anc_tags = phrase.html_anc_tags
-#         self.html_anc_attrs = phrase.html_anc_attrs
-#         self.context = table
+    # replace with a library function?
+    def get_ngrams(self, tokens, n_max=3):
+        N = len(tokens)
+        for root in range(N):
+            for n in range(min(n_max, N - root)):
+                yield '_'.join(tokens[root:root+n+1])
+

@@ -77,7 +77,7 @@ def plot_accuracy(probs, ground_truth):
 def calibration_plots(train_marginals, test_marginals, gold_labels=None):
     """Show classification accuracy and probability histogram plots"""
     n_plots = 3 if gold_labels is not None else 1
-    
+
     # Whole set histogram
     plt.subplot(1,n_plots,1)
     plot_prediction_probability(train_marginals)
@@ -106,12 +106,12 @@ def grid_search_plot(w_fit, mu_opt, f1_opt):
     p = np.ravel([w_fit[mu].P for mu in mu_seq])
     r = np.ravel([w_fit[mu].R for mu in mu_seq])
     f1 = np.ravel([w_fit[mu].F1 for mu in mu_seq])
-    nnz = np.ravel([np.sum(w_fit[mu].w != 0) for mu in mu_seq])    
+    nnz = np.ravel([np.sum(w_fit[mu].w != 0) for mu in mu_seq])
 
     fig, ax1 = plt.subplots()
-    
+
     # Plot spread
-    ax1.set_xscale('log', nonposx='clip')    
+    ax1.set_xscale('log', nonposx='clip')
     ax1.scatter(mu_opt, f1_opt, marker='*', color='purple', s=500,
                 zorder=10, label="Maximum F1: mu={}".format(mu_opt))
     ax1.plot(mu_seq, f1, 'o-', color='red', label='F1 score')
@@ -122,7 +122,7 @@ def grid_search_plot(w_fit, mu_opt, f1_opt):
     ax1.set_ylim(-0.04, 1.04)
     for t1 in ax1.get_yticklabels():
       t1.set_color('r')
-    
+
     # Plot nnz
     ax2 = ax1.twinx()
     ax2.plot(mu_seq, nnz, '.:', color='gray', label='Sparsity')
@@ -130,7 +130,7 @@ def grid_search_plot(w_fit, mu_opt, f1_opt):
     ax2.set_ylim(-0.01*np.max(nnz), np.max(nnz)*1.01)
     for t2 in ax2.get_yticklabels():
       t2.set_color('gray')
-    
+
     # Shrink plot for legend
     box1 = ax1.get_position()
     ax1.set_position([box1.x0, box1.y0+box1.height*0.1, box1.width, box1.height*0.9])
@@ -276,52 +276,52 @@ def training_set_summary_stats(L, return_vals=True, verbose=False):
 
 ##### Old stuff...
 
-class DDLiteModel:
-  def __init__(self, candidates, feats=None, gt_dict=None):
-    self.C = candidates
-    
-  def _plot_coverage(self, cov):
-    cov_ct = [np.sum(x > 0) for x in cov]
-    tot_cov = self.coverage(cov)
-    idx, bar_width = np.array([1, -1]), 1
-    plt.bar(idx, cov_ct, bar_width, color='b')
-    plt.xlim((-1.5, 2.5))
-    plt.xlabel("Label type")
-    plt.ylabel("# candidates with at least one of label type")
-    plt.xticks(idx + bar_width * 0.5, ("Positive", "Negative"))
-    return tot_cov * 100.
-    
-  def _plot_conflict(self, cov):
-    x, y = cov
-    tot_conf = self.conflict(cov)
-    m = np.max([np.max(x), np.max(y)])
-    bz = np.linspace(-0.5, m+0.5, num=m+2)
-    H, xr, yr = np.histogram2d(x, y, bins=[bz,bz], normed=False)
-    plt.imshow(H, interpolation='nearest', origin='low',
-               extent=[xr[0], xr[-1], yr[0], yr[-1]])
-    cb = plt.colorbar(fraction=0.046, pad=0.04)
-    cb.set_label("# candidates")
-    plt.xlabel("# negative labels")
-    plt.ylabel("# positive labels")
-    plt.xticks(range(m+1))
-    plt.yticks(range(m+1))
-    return tot_conf * 100.
+# class DDLiteModel:
+#   def __init__(self, candidates, feats=None, gt_dict=None):
+#     self.C = candidates
 
-  def plot_lf_stats(self):
-    """ Show plots for evaluating LF quality
-    Coverage bar plot, overlap histogram, and conflict heat map
-    """
-    if self.lf_matrix is None:
-      raise ValueError("No LFs applied yet")
-    n_plots = 2
-    cov = self._cover()
-    # LF coverage
-    plt.subplot(1,n_plots,1)
-    tot_cov = self._plot_coverage(cov)
-    plt.title("(a) Label balance (training set coverage: {:.2f}%)".format(tot_cov))
-    # LF conflict
-    plt.subplot(1,n_plots,2)
-    tot_conf = self._plot_conflict(cov)
-    plt.title("(b) Label heat map (training set conflict: {:.2f}%)".format(tot_conf))
-    # Show plots    
-    plt.show()
+#   def _plot_coverage(self, cov):
+#     cov_ct = [np.sum(x > 0) for x in cov]
+#     tot_cov = self.coverage(cov)
+#     idx, bar_width = np.array([1, -1]), 1
+#     plt.bar(idx, cov_ct, bar_width, color='b')
+#     plt.xlim((-1.5, 2.5))
+#     plt.xlabel("Label type")
+#     plt.ylabel("# candidates with at least one of label type")
+#     plt.xticks(idx + bar_width * 0.5, ("Positive", "Negative"))
+#     return tot_cov * 100.
+
+#   def _plot_conflict(self, cov):
+#     x, y = cov
+#     tot_conf = self.conflict(cov)
+#     m = np.max([np.max(x), np.max(y)])
+#     bz = np.linspace(-0.5, m+0.5, num=m+2)
+#     H, xr, yr = np.histogram2d(x, y, bins=[bz,bz], normed=False)
+#     plt.imshow(H, interpolation='nearest', origin='low',
+#                extent=[xr[0], xr[-1], yr[0], yr[-1]])
+#     cb = plt.colorbar(fraction=0.046, pad=0.04)
+#     cb.set_label("# candidates")
+#     plt.xlabel("# negative labels")
+#     plt.ylabel("# positive labels")
+#     plt.xticks(range(m+1))
+#     plt.yticks(range(m+1))
+#     return tot_conf * 100.
+
+#   def plot_lf_stats(self):
+#     """ Show plots for evaluating LF quality
+#     Coverage bar plot, overlap histogram, and conflict heat map
+#     """
+#     if self.lf_matrix is None:
+#       raise ValueError("No LFs applied yet")
+#     n_plots = 2
+#     cov = self._cover()
+#     # LF coverage
+#     plt.subplot(1,n_plots,1)
+#     tot_cov = self._plot_coverage(cov)
+#     plt.title("(a) Label balance (training set coverage: {:.2f}%)".format(tot_cov))
+#     # LF conflict
+#     plt.subplot(1,n_plots,2)
+#     tot_conf = self._plot_conflict(cov)
+#     plt.title("(b) Label heat map (training set conflict: {:.2f}%)".format(tot_conf))
+#     # Show plots
+#     plt.show()

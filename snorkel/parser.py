@@ -189,8 +189,7 @@ class SentenceParser(object):
             except:
                 sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
-    def parse(self, document, text):
-        """Parse a raw document as a string into a list of sentences"""
+    def get_nlp_tags(self, text, document):
         if len(text.strip()) == 0:
             return
         if isinstance(text, unicode):
@@ -198,10 +197,11 @@ class SentenceParser(object):
         resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
         text = text.decode('utf-8')
         content = resp.content.strip()
+        import pdb; pdb.set_trace()  # breakpoint 598a31c5 //
         if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
-          raise ValueError("File {} too long. Max character count is 100K".format(document.id))
+          raise ValueError("File {} too long. Max character count is 100K".format(document.name))
         blocks = json.loads(content, strict=False)['sentences']
-        sent_id = 0
+        position = 0
         for block in blocks:
             parts = defaultdict(list)
             dep_order, dep_par, dep_lab = [], [], []
@@ -217,11 +217,15 @@ class SentenceParser(object):
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['text'] = text[block['tokens'][0]['characterOffsetBegin'] :
                                 block['tokens'][-1]['characterOffsetEnd']]
-            parts['position'] = sent_id
-            # parts['xmltree'] = None
+            parts['position'] = position
+            position += 1
+            yield parts
+
+    def parse(self, document, text):
+        """Parse a raw document as a string into a list of sentences"""
+        for parts in self.get_nlp_tags(text, document):
             sent = Sentence(**parts)
             sent.document = document
-            sent_id += 1
             yield sent
 
 
@@ -243,11 +247,32 @@ class HTMLParser(DocParser):
 
 class TableParser(SentenceParser):
     """Simple parsing of the tables in html documents into cells and phrases within cells"""
-    def parse(self, document, text):
-        for table in self.parse_html(document, text):
-            for cell in self.parse_table(table):
-                for phrase in self.parse_cell(cell):
-                    yield phrase
+    def parse(self, document, text, batch=True):
+        if batch:
+            idx = 0
+            cell_start = [idx]
+            delim = ' . '
+            for table in self.parse_html(document, text):
+                for cell in self.parse_table(table):
+                    idx += len(cell.text) + len(delim)
+                    cell_start.append(idx)
+            text_batch = delim.join(cell.text for cell in document.cells)
+            cell_idx = 0
+            position = 0
+            for parts in self.get_nlp_tags(text_batch, document):
+                if parts['char_offsets'][0] >= cell_start[cell_idx + 1]:
+                    cell_idx += 1
+                    position = 0
+                else:
+                    position += 1
+                parts['position'] = position
+                yield self.build_phrase(document.cells[cell_idx], parts)
+
+        else:
+            for table in self.parse_html(document, text):
+                for cell in self.parse_table(table):
+                    for phrase in self.parse_cell(cell):
+                        yield phrase
 
     def parse_html(self, document, text):
         soup = BeautifulSoup(text, 'lxml') # TODO: lxml is best parser for this?
@@ -305,6 +330,7 @@ class TableParser(SentenceParser):
                     # add new attribute to the html
                     html_cell['snorkel_id'] = cell.id
                     yield cell
+                    position += 1
 
     def parse_cell(self, cell):
         parts = defaultdict(list)
@@ -332,6 +358,23 @@ class TableParser(SentenceParser):
             parts['dep_parents'] = sent.dep_parents
             parts['dep_labels'] = sent.dep_labels
             yield Phrase(**parts)
+
+    def build_phrase(self, cell, parts):
+        parts['document_id'] = cell.document_id
+        parts['table_id'] = cell.table_id
+        parts['cell_id'] = cell.id
+
+        parts['document'] = cell.document
+        parts['table'] = cell.table
+        parts['cell'] = cell
+
+        parts['row_num'] = cell.row_num
+        parts['col_num'] = cell.col_num
+        parts['html_tag'] = cell.html_tag
+        parts['html_attrs'] = cell.html_attrs
+        parts['html_anc_tags'] = cell.html_anc_tags
+        parts['html_anc_attrs'] = cell.html_anc_attrs
+        return Phrase(**parts)
 
 
 def sort_X_on_Y(X, Y):

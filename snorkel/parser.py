@@ -42,6 +42,8 @@ class CorpusParser:
             for _ in self.context_parser.parse(doc, text):
                 pass
 
+            print "Document %s parsed" % i
+
         if name is not None:
             corpus.name = name
 
@@ -197,7 +199,6 @@ class SentenceParser(object):
         resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
         text = text.decode('utf-8')
         content = resp.content.strip()
-        import pdb; pdb.set_trace()  # breakpoint 598a31c5 //
         if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
           raise ValueError("File {} too long. Max character count is 100K".format(document.name))
         blocks = json.loads(content, strict=False)['sentences']
@@ -205,6 +206,7 @@ class SentenceParser(object):
         for block in blocks:
             parts = defaultdict(list)
             dep_order, dep_par, dep_lab = [], [], []
+            num_tokens = len(block['tokens'])
             for tok, deps in zip(block['tokens'], block['basic-dependencies']):
                 parts['words'].append(tok['word'])
                 parts['lemmas'].append(tok['lemma'])
@@ -249,24 +251,24 @@ class TableParser(SentenceParser):
     """Simple parsing of the tables in html documents into cells and phrases within cells"""
     def parse(self, document, text, batch=True):
         if batch:
-            idx = 0
-            cell_start = [idx]
-            delim = ' . '
             for table in self.parse_html(document, text):
+                idx = 0
+                cell_start = [idx]
+                delim = '. '
                 for cell in self.parse_table(table):
                     idx += len(cell.text) + len(delim)
                     cell_start.append(idx)
-            text_batch = delim.join(cell.text for cell in document.cells)
-            cell_idx = 0
-            position = 0
-            for parts in self.get_nlp_tags(text_batch, document):
-                if parts['char_offsets'][0] >= cell_start[cell_idx + 1]:
-                    cell_idx += 1
-                    position = 0
-                else:
-                    position += 1
-                parts['position'] = position
-                yield self.build_phrase(document.cells[cell_idx], parts)
+                text_batch = delim.join(cell.text for cell in table.cells)
+                cell_idx = 0
+                position = 0
+                for parts in self.get_nlp_tags(text_batch, document):
+                    if parts['char_offsets'][0] >= cell_start[cell_idx + 1]:
+                        cell_idx += 1
+                        position = 0
+                    else:
+                        position += 1
+                    parts['position'] = position
+                    yield self.build_phrase(document.cells[cell_idx], parts)
 
         else:
             for table in self.parse_html(document, text):

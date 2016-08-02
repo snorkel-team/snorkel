@@ -221,30 +221,30 @@ class RegexMatchEach(RegexMatch):
         return True if all([self.r.match(t) is not None for t in c.get_attrib_tokens(self.attrib)]) else 0
 
 # =======
-# class NumberMatcher(Matcher):
-#     """Matches candidates whose words can be converted to a float"""
-#     def _f(self, c):
-#         try:
-#             self.num = float(c.get_attrib_span('words'))
-#             return True
-#         except:
-#             return False
+class NumberMatcher(Matcher):
+    """Matches candidates whose words can be converted to a float"""
+    def _f(self, c):
+        try:
+            self.num = float(c.get_attrib_span('words'))
+            return True
+        except:
+            return False
 
 
-# class RangeMatcher(NumberMatcher):
-#     """
-#     Matches candidates whose words can be converted to a float within a
-#     user-defined range (inclusive)
-#     """
-#     def init(self):
-#         try:
-#             self.low = self.opts['low']
-#             self.high = self.opts['high']
-#         except KeyError:
-#             raise Exception("Please supply a lower (l) and upper (u) bound as low=l and high=u")
+class RangeMatcher(NumberMatcher):
+    """
+    Matches candidates whose words can be converted to a float within a
+    user-defined range (inclusive)
+    """
+    def init(self):
+        try:
+            self.low = self.opts['low']
+            self.high = self.opts['high']
+        except KeyError:
+            raise Exception("Please supply a lower (l) and upper (u) bound as low=l and high=u")
 
-#     def _f(self, cand):
-#         return super(RangeMatcher,self)._f(cand) and (self.low <= self.num) and (self.num <= self.high)
+    def _f(self, cand):
+        return super(RangeMatcher,self)._f(cand) and (self.low <= self.num) and (self.num <= self.high)
 
 
 # class CandidateExtractor(object):

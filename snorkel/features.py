@@ -16,7 +16,7 @@ class Featurizer(object):
     """
     A Featurizer applies a set of **feature generators** to each Candidate,
     based on (i) the arity of the candidate, and (ii) the _associated Contexts_.
-    
+
     The transform() function takes in N candidates, and returns an N x F sparse matrix,
     where F is the dimension of the feature space.
     """
@@ -24,7 +24,7 @@ class Featurizer(object):
         self.arity          = arity
         self.feat_index     = None
         self.feat_inv_index = None
-    
+
     def _generate_context_feats(self, get_feats, prefix, candidates):
         """
         Given a function that given a candidate, generates features, _using a specific context_,
@@ -71,6 +71,11 @@ class Featurizer(object):
             for i in f_index[f]:
                 F[i,j] = 1
         return F
+
+    def print_features(self, candidate):
+        feature_generators = self._match_contexts(self._preprocess_candidates(candidate))
+        for i,f in itertools.chain(*feature_generators):
+            print f
 
 
 class NgramFeaturizer(Featurizer):
@@ -129,4 +134,4 @@ class LegacyCandidateFeaturizer(Featurizer):
                 feature_generators.append(self._generate_context_feats( \
                     lambda c : get_feats(c.root, c.e1_idxs, c.e2_idxs), 'TDLIB_', candidates))
         return feature_generators
-    
+

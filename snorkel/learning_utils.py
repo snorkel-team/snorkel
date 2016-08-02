@@ -149,15 +149,12 @@ class GridSearch(object):
     Runs hyperparameter grid search over a Learner object with train and test methods
     Selects based on maximizing F1 score on a supplied cross-validation (cv) set.
     """
-    def __init__(self, learner, param_names, param_val_ranges, cv_candidates, cv_gold_labels, **model_hyperparams):
+    def __init__(self, learner, param_names, param_val_ranges):
         self.learner           = learner
         self.param_names       = param_names
         self.param_val_ranges  = param_val_ranges
-        self.cv_candidates     = cv_candidates
-        self.cv_gold_labels    = cv_gold_labels
-        self.model_hyperparams = model_hyperparams
 
-    def search(self):
+    def fit(self, cv_candidates, cv_gold_labels, **model_hyperparams):
         """Basic method to start grid search, returns DataFrame table of results"""
         # Iterate over the param values
         run_stats   = []
@@ -167,16 +164,16 @@ class GridSearch(object):
 
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
-                self.model_hyperparams[pn] = pv
+                model_hyperparams[pn] = pv
             print "=" * 60
             print "Testing %s" % ', '.join(["%s = %0.2e" % (pn,pv) for pn,pv in zip(self.param_names, param_vals)])
             print "=" * 60
 
             # Train the model
-            self.learner.train(**self.model_hyperparams)
+            self.learner.train(**model_hyperparams)
 
             # Test the model
-            scores   = self.learner.test(self.cv_candidates, self.cv_gold_labels, display=False, return_vals=True)
+            scores   = self.learner.test(cv_candidates, cv_gold_labels, display=False, return_vals=True)
             p, r, f1 = scores[:3]
             run_stats.append(list(param_vals) + [p, r, f1])
             if f1 > f1_opt:
@@ -188,7 +185,8 @@ class GridSearch(object):
         self.learner.model.w = w_opt
 
         # Return DataFrame of scores
-        return DataFrame.from_records(run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1'])
+        self.results = DataFrame.from_records(run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1'])
+        return self.results
 
 
 def sparse_abs(X):

@@ -13,11 +13,11 @@ import re
 import requests
 import signal
 from subprocess import Popen
+import lxml.etree as et
+from itertools import chain
+from utils import corenlp_cleaner, sort_X_on_Y
 import sys
-# =======
-# import warnings
-# import numpy as np
-# >>>>>>> tables
+
 
 
 class CorpusParser:
@@ -48,22 +48,6 @@ class CorpusParser:
 
         return corpus
 
-# =======
-# id_attrs        = ['id', 'doc_id', 'doc_name']
-# lingual_attrs   = ['words', 'lemmas', 'poses', 'dep_parents', 'dep_labels', 'char_offsets', 'text']
-# sentence_attrs  = id_attrs + ['sent_id'] + lingual_attrs
-# table_attrs     = id_attrs + ['context_id', 'table_id', 'phrases', 'html']
-# cell_attrs      = id_attrs + ['context_id', 'table_id', 'cell_id', 'row_num', 'col_num', \
-#                   'html_tag', 'html_attrs', 'html_anc_tags', 'html_anc_attrs']
-# phrase_attrs    = cell_attrs + ['phrase_id', 'sent_id'] + lingual_attrs
-
-
-# Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
-# Sentence = namedtuple('Sentence', sentence_attrs)
-# Table    = namedtuple('Table', table_attrs)
-# Cell     = namedtuple('Cell', cell_attrs)
-# Phrase   = namedtuple('Phrase', phrase_attrs)
-# >>>>>>> tables
 
 class DocParser:
     """Parse a file or directory of files into a set of Document objects."""
@@ -199,13 +183,12 @@ class SentenceParser(object):
                         status_forcelist=[ 500, 502, 503, 504 ])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
 
-
     def _kill_pserver(self):
         if self.server_pid is not None:
             try:
-              os.kill(self.server_pid, signal.SIGTERM)
+                os.kill(self.server_pid, signal.SIGTERM)
             except:
-              sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
+                sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
     def parse(self, document, text):
         """Parse a raw document as a string into a list of sentences"""
@@ -236,6 +219,7 @@ class SentenceParser(object):
             parts['text'] = text[block['tokens'][0]['characterOffsetBegin'] :
                                 block['tokens'][-1]['characterOffsetEnd']]
             parts['position'] = sent_id
+            # parts['xmltree'] = None
             sent = Sentence(**parts)
             sent.document = document
             sent_id += 1
@@ -350,70 +334,6 @@ class TableParser(SentenceParser):
             parts['dep_labels'] = sent.dep_labels
             yield Phrase(**parts)
 
-    # def parse_table(self, table, table_idx=None, doc_id=None, doc_name=None):
-    #     table_id = "%s-%s" % (doc_id, table_idx)
-    #     phrases = {}
-    #     cell_idx = -1
-    #     for row_num, row in enumerate(table.find_all('tr')):
-    #         ancestors = ([(row.name, row.attrs.items())]
-    #             + [(ancestor.name, ancestor.attrs.items())
-    #             for ancestor in row.parents if ancestor is not None][:-2])
-    #         (tags, attrs) = zip(*ancestors)
-    #         html_anc_tags = tags
-    #         html_anc_attrs = []
-    #         for a in chain.from_iterable(attrs):
-    #             attr = a[0]
-    #             values = a[1]
-    #             if isinstance(values, list):
-    #                 html_anc_attrs += ["=".join([attr,val]) for val in values]
-    #             else:
-    #                 html_anc_attrs += ["=".join([attr,values])]
-    #         for col_num, cell in enumerate(row.children):
-    #             # NOTE: currently not including title, caption, footers, etc.
-    #             cell_idx += 1
-    #             if cell.name in ['th','td']:
-    #                 cell_id = "%s-%s" % (table_id, cell_idx)
-    #                 for phrase_idx, phrase in enumerate(self.parse(cell.get_text(strip=True), doc_id, doc_name)):
-    #                     phrase_id = "%s-%s" % (cell_id, phrase_idx)
-    #                     parts = phrase._asdict()
-    #                     parts['doc_id'] = doc_id
-    #                     parts['table_id'] = table_id
-    #                     parts['context_id'] = table_id # tables are the context
-    #                     parts['cell_id'] = cell_id
-    #                     parts['phrase_id'] = phrase_id
-    #                     parts['sent_id'] = phrase_id # temporary fix until ORM
-    #                     parts['id'] = phrase_id
-    #                     parts['doc_name'] = doc_name
-    #                     parts['row_num'] = row_num
-    #                     parts['col_num'] = col_num
-    #                     parts['html_tag'] = cell.name
-    #                     html_attrs = []
-    #                     for a in cell.attrs.items():
-    #                         attr = a[0]
-    #                         values = a[1]
-    #                         if isinstance(values, list):
-    #                             html_attrs += ["=".join([attr,val]) for val in values]
-    #                         else:
-    #                             html_attrs += ["=".join([attr,values])]
-    #                     parts['html_attrs'] = html_attrs
-    #                     parts['html_anc_tags'] = html_anc_tags
-    #                     parts['html_anc_attrs'] = html_anc_attrs
-    #                     phrases[phrase_id] = Phrase(**parts)
-    #                 # add new attribute to the html
-    #                 cell['cell_id'] = cell_id
-    #     context_id = table_id
-    #     id = table_id
-    #     return Table(id, doc_id, doc_name, context_id, table_id, phrases, str(table))
-
-    # def parse_docs(self, docs):
-    #     """Parse a list of Document objects into a list of pre-processed Tables."""
-    #     tables = []
-    #     for doc in docs:
-    #         soup = BeautifulSoup(doc.text, 'lxml')
-    #         for table_idx, table in enumerate(soup.find_all('table')):
-    #             tables.append(self.parse_table(table, table_idx=table_idx, doc_id=doc.id, doc_name=doc.file))
-    #     return tables
-
 
 def sort_X_on_Y(X, Y):
     return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
@@ -422,51 +342,5 @@ def corenlp_cleaner(words):
     d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
          '-RSB-': ']', '-LSB-': '['}
     return map(lambda w: d[w] if w in d else w, words)
-
-# =======
-# class Corpus(object):
-#     """
-#     A Corpus object helps instantiate and then holds a set of Documents and associated Contexts
-#     Default iterator is over (Document, Contexts) tuples
-#     """
-
-#     def __init__(self, doc_parser, context_parser, max_docs=None):
-
-#         # Parse documents
-#         print "Parsing documents..."
-#         self._docs_by_id = {}
-#         self.num_docs = 0
-#         for i, doc in enumerate(doc_parser.parse()):
-#             if max_docs and i == max_docs:
-#                 break
-#             self._docs_by_id[doc.id] = doc
-#             self.num_docs += 1
-
-#         # Parse sentences
-#         print "Parsing contexts..."
-#         self._contexts_by_id     = {}
-#         self._contexts_by_doc_id = defaultdict(list)
-#         self.num_contexts = 0
-#         for context in context_parser.parse_docs(self._docs_by_id.values()):
-#             self._contexts_by_id[context.id] = context
-#             self._contexts_by_doc_id[context.doc_id].append(context)
-#             self.num_contexts += 1
-#         print "Parsed %s documents and %s contexts" % (self.num_docs, self.num_contexts)
-
-#     def __iter__(self):
-#         """Default iterator is over (document, context) tuples"""
-#         for doc in self.iter_docs():
-#             yield (doc, self.get_contexts_in(doc.id))
-
-#     def iter_docs(self):
-#         return self._docs_by_id.itervalues()
-
-#     def iter_contexts(self):
-#         return self._contexts_by_id.itervalues()
-
-#     def get_docs(self):
-#         return self._docs_by_id.values()
-# >>>>>>> tables
-
 
 

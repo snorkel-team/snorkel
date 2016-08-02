@@ -2,16 +2,9 @@ from .models import CandidateSet, Ngram
 from itertools import chain
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
+from utils import get_as_dict
 
 QUEUE_COLLECT_TIMEOUT = 5
-
-# =======
-# import sys
-# import re
-# from collections import defaultdict
-# from itertools import chain
-# from time import time
-# >>>>>>> tables
 
 
 def gold_stats(candidates, gold):
@@ -90,14 +83,6 @@ class CandidateExtractor(object):
 
         return c
 
-# =======
-#     def num_candidates(self):
-#         return len(self._candidates_by_id)
-
-#     def _extract(self, candidate_space, matcher, contexts):
-#         return chain.from_iterable(matcher.apply(candidate_space.apply(c)) for c in contexts)
-# >>>>>>> tables
-
     def _extract(self, contexts):
         return chain.from_iterable(self.matcher.apply(self.candidate_space.apply(c)) for c in contexts)
 
@@ -127,40 +112,39 @@ class CandidateExtractor(object):
                 break
         return candidates
 
-# =======
-#     def _index(self, candidates):
-#         self._candidates_by_id         = {}
-#         self._candidates_by_context_id = defaultdict(list)
-#         for c in candidates:
-#             self._candidates_by_id[c.id] = c
-#             self._candidates_by_context_id[c.__dict__[self.join_key]].append(c)
+    def _index(self, candidates):
+        self._candidates_by_id         = {}
+        self._candidates_by_context_id = defaultdict(list)
+        for c in candidates:
+            self._candidates_by_id[c.id] = c
+            self._candidates_by_context_id[c.__dict__[self.join_key]].append(c)
 
-#     def __iter__(self):
-#         """Default iterator is over Candidates"""
-#         return self._candidates_by_id.itervalues()
+    def __iter__(self):
+        """Default iterator is over Candidates"""
+        return self._candidates_by_id.itervalues()
 
-#     def get_candidates(self):
-#         return self._candidates_by_id.values()
+    def get_candidates(self):
+        return self._candidates_by_id.values()
 
-#     def get_candidate(self, id):
-#         """Retrieve a candidate by candidate id"""
-#         return self._candidates_by_id[id]
+    def get_candidate(self, id):
+        """Retrieve a candidate by candidate id"""
+        return self._candidates_by_id[id]
 
-#     def get_candidates_in(self, context_id):
-#         """Return the candidates in a specific context (e.g. Sentence)"""
-#         return self._candidates_by_context_id[context_id]
+    def get_candidates_in(self, context_id):
+        """Return the candidates in a specific context (e.g. Sentence)"""
+        return self._candidates_by_context_id[context_id]
 
-#     def gold_stats(self, gold_set):
-#         """Return precision and recall relative to a "gold" set of candidates of the same type"""
-#         gold = gold_set if isinstance(gold_set, set) else set(gold_set)
-#         cs   = self.get_candidates()
-#         nc   = len(cs)
-#         ng   = len(gold)
-#         both = len(gold.intersection(cs))
-#         print "# of gold annotations\t= %s" % ng
-#         print "# of candidates\t\t= %s" % nc
-#         print "Candidate recall\t= %0.3f" % (both / float(ng),)
-#         print "Candidate precision\t= %0.3f" % (both / float(nc),)
+    def gold_stats(self, gold_set):
+        """Return precision and recall relative to a "gold" set of candidates of the same type"""
+        gold = gold_set if isinstance(gold_set, set) else set(gold_set)
+        cs   = self.get_candidates()
+        nc   = len(cs)
+        ng   = len(gold)
+        both = len(gold.intersection(cs))
+        print "# of gold annotations\t= %s" % ng
+        print "# of candidates\t\t= %s" % nc
+        print "Candidate recall\t= %0.3f" % (both / float(ng),)
+        print "Candidate precision\t= %0.3f" % (both / float(nc),)
 
 
 # # Basic sentence attributes
@@ -173,8 +157,7 @@ class CandidateExtractor(object):
 #     def __init__(self, char_start, char_end, sent, metadata={}):
 
 #         # Inherit full sentence object (tranformed to dict) and check for necessary attribs
-#         self.sentence = sent if isinstance(sent, dict) else sent._asdict()
-#         self.doc_id = self.sentence['doc_id']
+#         self.sentence = get_as_dict(sent)
 #         self.sent_id  = self.sentence['id']
 #         REQ_ATTRIBS = ['id', WORDS]
 #         if not all([self.sentence.has_key(a) for a in REQ_ATTRIBS]):
@@ -182,7 +165,6 @@ class CandidateExtractor(object):
 
 #         # Set basic object attributes
 #         self.id          = "%s:%s-%s" % (self.sent_id, char_start, char_end)
-#         self.uid         = self.id
 #         self.char_start  = char_start
 #         self.char_end    = char_end
 #         self.char_len    = char_end - char_start + 1
@@ -200,27 +182,6 @@ class CandidateExtractor(object):
 
 #         # To enable generic methods
 #         self.context_id = self.sent_id
-
-#     def __getitem__(self, key):
-#         """
-#         Slice operation returns a new candidate sliced according to **char index**
-#         Note that the slicing is w.r.t. the candidate range (not the abs. sentence char indexing)
-#         """
-#         if isinstance(key, slice):
-#             char_start = self.char_start if key.start is None else self.char_start + key.start
-#             if key.stop is None:
-#                 char_end = self.char_end
-#             elif key.stop >= 0:
-#                 char_end = self.char_start + key.stop - 1
-#             else:
-#                 char_end = self.char_end + key.stop
-#             return Ngram(char_start, char_end, self.sentence)
-#         else:
-#             raise NotImplementedError()
-
-#     def __repr__(self):
-#         return '<Ngram("%s", id=%s, chars=[%s,%s], words=[%s,%s])' \
-#             % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.word_start, self.word_end)
 
 #     def char_to_word_index(self, ci):
 #         """Given a character-level index (offset), return the index of the **word this char is in**"""
@@ -250,24 +211,38 @@ class CandidateExtractor(object):
 #     def get_span(self, sep=" "):
 #         return self.get_attrib_span(WORDS)
 
-# ### HACKY ###
-#     def pre_window(self, attribute='words'):
-#         return self.sentence[attribute][:self.word_start]
+#     def __getitem__(self, key):
+#         """
+#         Slice operation returns a new candidate sliced according to **char index**
+#         Note that the slicing is w.r.t. the candidate range (not the abs. sentence char indexing)
+#         """
+#         if isinstance(key, slice):
+#             char_start = self.char_start if key.start is None else self.char_start + key.start
+#             if key.stop is None:
+#                 char_end = self.char_end
+#             elif key.stop >= 0:
+#                 char_end = self.char_start + key.stop - 1
+#             else:
+#                 char_end = self.char_end + key.stop
+#             return Ngram(char_start, char_end, self.sentence)
+#         else:
+#             raise NotImplementedError()
 
-#     def post_window(self, attribute='words'):
-#         return self.sentence[attribute][self.word_start+1:]
+#     def __repr__(self):
+#         return '<Ngram("%s", id=%s, chars=[%s,%s], words=[%s,%s])' \
+#             % (self.get_attrib_span(WORDS), self.id, self.char_start, self.char_end, self.word_start, self.word_end)
 
-
-# >>>>>>> tables
+# >>>>>>> learning-refactor
 
 class Ngrams(CandidateSpace):
     """
     Defines the space of candidates as all n-grams (n <= n_max) in a Sentence _x_,
     indexing by **character offset**.
     """
-    def __init__(self, n_max=5):
+    def __init__(self, n_max=5, split_tokens=['-', '/']):
         CandidateSpace.__init__(self)
         self.n_max = n_max
+        self.split_rgx    = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
 
     def apply(self, context):
         # Loop over all n-grams in **reverse** order (to facilitate longest-match semantics)
@@ -280,16 +255,20 @@ class Ngrams(CandidateSpace):
                 char_end = context.char_offsets[i] + cl - 1
                 yield Ngram(char_start=char_start, char_end=char_end, context=context)
 
+                # Check for split
+                # NOTE: For simplicity, we only split single tokens right now!
+                if l == 1 and self.split_rgx is not None:
+                    m = re.search(self.split_rgx,
+                        text[char_start-context.char_offsets[0]:char_end-context.char_offsets[0]+1])
+                    if m is not None and l < self.n_max:
+                        yield Ngram(char_start=char_start, char_end=char_start + m.start(1) - 1, sent=s)
+                        yield Ngram(char_start=char_start + m.end(1), char_end=char_end, sent=s)
+
 class TableNgrams(Ngrams):
     """
     Defines the space of candidates as all n-grams (n <= n_max) in a Table _x_,
     indexing by **character offset**.
     """
-    # def apply(self, context):
-    #     a = 42
-    #     for ngram in super(TableNgrams, self).apply(context):
-    #         yield ngram
-
     def apply(self, context):
         try:
             phrases = context.phrases

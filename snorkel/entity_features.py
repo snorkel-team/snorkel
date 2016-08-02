@@ -37,16 +37,16 @@ def get_ddlib_feats(sent, idxs):
   for window_feat in _get_window_features(sent, idxs):
     yield window_feat
 
-  if sent.words[idxs[0]][0].isupper():
+  if sent.sentence['words'][idxs[0]][0].isupper():
       yield "STARTS_WITH_CAPTIAL"
 
   yield "LENGTH_{}".format(len(idxs))
 
 def _get_seq_features(sent, idxs):
-  yield "WORD_SEQ_[" + " ".join(sent.words[i] for i in idxs) + "]"
-  yield "LEMMA_SEQ_[" + " ".join(sent.lemmas[i] for i in idxs) + "]"
-  yield "POS_SEQ_[" + " ".join(sent.poses[i] for i in idxs) + "]"
-  yield "DEP_SEQ_[" + " ".join(sent.dep_labels[i] for i in idxs) + "]"
+  yield "WORD_SEQ_[" + " ".join(sent.sentence['words'][i] for i in idxs) + "]"
+  yield "LEMMA_SEQ_[" + " ".join(sent.sentence['lemmas'][i] for i in idxs) + "]"
+  yield "POS_SEQ_[" + " ".join(sent.sentence['poses'][i] for i in idxs) + "]"
+  yield "DEP_SEQ_[" + " ".join(sent.sentence['dep_labels'][i] for i in idxs) + "]"
 
 def _get_window_features(sent, idxs, window=3, combinations=True, isolated=True):
     left_lemmas = []
@@ -55,28 +55,28 @@ def _get_window_features(sent, idxs, window=3, combinations=True, isolated=True)
     right_poses = []
     try:
         for i in range(1, window + 1):
-            lemma = sent.lemmas[idxs[0] - i]
+            lemma = sent.sentence['lemmas'][idxs[0] - i]
             try:
                 float(lemma)
                 lemma = "_NUMBER"
             except ValueError:
                 pass
             left_lemmas.append(lemma)
-            left_poses.append(sent.poses[idxs[0] - i])
+            left_poses.append(sent.sentence['poses'][idxs[0] - i])
     except IndexError:
         pass
     left_lemmas.reverse()
     left_poses.reverse()
     try:
         for i in range(1, window + 1):
-            lemma = sent.lemmas[idxs[-1] + i]
+            lemma = sent.sentence['lemmas'][idxs[-1] + i]
             try:
                 float(lemma)
                 lemma = "_NUMBER"
             except ValueError:
                 pass
             right_lemmas.append(lemma)
-            right_poses.append(sent.poses[idxs[-1] + i])
+            right_poses.append(sent.sentence['poses'][idxs[-1] + i])
     except IndexError:
         pass
     if isolated:

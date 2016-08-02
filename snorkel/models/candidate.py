@@ -152,7 +152,12 @@ class Ngram(Candidate):
             % (self.get_span(), self.context.id, self.char_start, self.char_end, self.get_word_start(),
                self.get_word_end())
 
+# ### HACKY ###
+#     def pre_window(self, attribute='words'):
+#         return self.sentence[attribute][:self.word_start]
 
+#     def post_window(self, attribute='words'):
+#         return self.sentence[attribute][self.word_start+1:]
 
 
 # class TableNgram(Ngram):

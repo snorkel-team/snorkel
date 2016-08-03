@@ -42,9 +42,6 @@ class CorpusParser:
             for _ in self.context_parser.parse(doc, text):
                 pass
 
-            # TODO: delete this line:
-            # print "Document %s parsed" % i
-
         if name is not None:
             corpus.name = name
 

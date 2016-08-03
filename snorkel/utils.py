@@ -30,3 +30,9 @@ def split_html_attrs(attrs):
         else:
             html_attrs += ["=".join([attr,values])]
     return html_attrs
+
+def slice_into_ngrams(tokens, n_max=3, delim='_'):
+    N = len(tokens)
+    for root in range(N):
+        for n in range(min(n_max, N - root)):
+            yield delim.join(tokens[root:root+n+1])

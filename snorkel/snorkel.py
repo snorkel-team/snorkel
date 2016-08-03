@@ -177,3 +177,32 @@ class PipelinedLearner(Learner):
 
     def feat_weights(self):
         return self.model.w
+
+class LSTMLearner(Learner):
+    """Implements the **"LSTM" approach**"""
+
+    def train(self, lf_w0=1.0, **model_hyperparams):
+        """Train model: **as default, use "joint" approach**"""
+        w0_1 = lf_w0*np.ones(self.m)
+
+        # Learn lf accuracies first
+        self.training_model = LogReg()
+        self.training_model.train(self.L_train, w0=w0_1)
+
+        # Compute marginal probabilities over the candidates from this model of the training set
+        training_marginals = self.training_model.marginals(self.L_train)
+        
+        # Learn model over training set
+        self.w = self.model.train(self.training_set.training_candidates, training_marginals=training_marginals, \
+                                  **model_hyperparams)
+
+    def test(self, test_candidates, gold_labels, display=True, return_vals=False):
+        # Cache transformed test set
+        if test_candidates != self.test_candidates or any(gold_labels != self.gold_labels):
+            self.test_candidates = test_candidates
+            self.gold_labels     = gold_labels
+        return test_scores(self.model.predict(self.test_candidates), gold_labels, return_vals=return_vals, verbose=display)
+
+    def predictions(self):
+        return self.model.predict(self.test_candidates)
+

@@ -12,11 +12,12 @@ from theano import config
 import theano.tensor as tensor
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
-class LSTM(object):
+class LSTMModel(object):
 
-  def __init__(self, candidates, training, lf_probs):
-    self.C = candidates
-    self.training = training
+  def __init__(self, training, lf_probs):
+    self.training_set = training
+    self.testing_set = None
+    self.training = range(len(training))
     self.lf_probs = lf_probs
     # LSTM
     self.lstm_SEED = 123
@@ -24,11 +25,9 @@ class LSTM(object):
     self.lstm_tparams = None
     self.lstm_settings = None
     self.lstm_X = None
+    self.lstm_Y = None
     self.word_dict = None
     self.marginals = None
-
-  def num_candidates(self):
-    return len(self.C)
 
   def ortho_weight(self):
     u, s, v = np.linalg.svd(np.random.randn(self.lstm_settings['dim'], self.lstm_settings['dim']))
@@ -220,9 +219,9 @@ class LSTM(object):
   def pred(self, f_pred, data, minibatches):
     error = 0
     for id, samples in minibatches:
-      x = [data[1][i] for i in samples]
-      y = [data[2][i] for i in samples]
-      w = [data[3][i] for i in samples]
+      x = [data[0][i] for i in samples]
+      y = [data[1][i] for i in samples]
+      w = [data[2][i] for i in samples]
       x, mask, y, w = self.process_data(x, y, w, maxlen = None)
       preds = f_pred(x, mask)
       error += (preds == y).sum()
@@ -233,10 +232,10 @@ class LSTM(object):
     error = 0
     res = []
     for id, samples in minibatches:
-      l = [data[0][i] for i in samples]
-      x = [data[1][i] for i in samples]
-      y = [data[2][i] for i in samples]
-      w = [data[3][i] for i in samples]
+      l = samples
+      x = [data[0][i] for i in samples]
+      y = [data[1][i] for i in samples]
+      w = [data[2][i] for i in samples]
       x, mask, y, w = self.process_data(x, y, w, maxlen = None)
       preds = f_pred_prob(x, mask)
       pred_l = preds.argmax(axis = 1)
@@ -252,7 +251,6 @@ class LSTM(object):
            maxlen = 1000,           # max sequence len
            dropout = True,
            verbose = True):
-
     self.lstm_settings = locals().copy()
 
     self.lstm_settings['label_dim'] = 2
@@ -261,17 +259,18 @@ class LSTM(object):
 
     self.init_lstm_theano_params()
 
-    use_noise, x, mask, y, f_pred_prob, f_pred, cost, w = self.build_lstm()
+    self.use_noise, self.x, self.mask, self.y, self.f_pred_prob, self.f_pred, self.cost, self.w = self.build_lstm()
 
-    f_cost = theano.function([x, mask, y, w], cost, name='f_cost')
-    grads = tensor.grad(cost, wrt=list(self.lstm_tparams.values()))
-    f_grad = theano.function([x, mask, y, w], grads, name='f_grad')
+    self.f_cost = theano.function([self.x, self.mask, self.y, self.w], self.cost, name='f_cost')
+    self.grads  = tensor.grad(self.cost, wrt=list(self.lstm_tparams.values()))
+    self.f_grad = theano.function([self.x, self.mask, self.y, self.w], self.grads, name='f_grad')
 
-    lr = tensor.scalar(name='lr')
-    f_grad_shared, f_update = optimizer(lr, self.lstm_tparams, grads, x, mask, y, w, cost)
+    self.lr = tensor.scalar(name='lr')
+    self.f_grad_shared, self.f_update = optimizer(self.lr, self.lstm_tparams, self.grads, self.x, self.mask, \
+                                                  self.y, self.w, self.cost)
 
     train_data, x, y, w = [], [], [], []
-    for idx in self.training:
+    for idx in range(len(self.training_set)):
         x.append(self.lstm_X[idx])
         if self.lf_probs[idx]>0.5:
           y.append(1)
@@ -279,36 +278,28 @@ class LSTM(object):
         else:
           y.append(0)
           w.append(1.-self.lf_probs[idx])
-    train_data=[self.training,x,y,w]
-
-    test_data=[range(self.num_candidates()),self.lstm_X,[1]*self.num_candidates(),[1.]*self.num_candidates()]
+    train_data=[x,y,w]
 
     error_log = []
     for idx in range(epoch):
-      ids = self.mini_batches(len(train_data[0]), batch_size, shuffle=True)
+      ids = self.mini_batches(len(self.training_set), batch_size, shuffle=True)
       for id, samples in ids:
-        use_noise.set_value(1.)
-        x = [train_data[1][i] for i in samples]
-        y = [train_data[2][i] for i in samples]
-        w = np.array([train_data[3][i] for i in samples]).astype(config.floatX)
+        self.use_noise.set_value(1.)
+        x = [train_data[0][i] for i in samples]
+        y = [train_data[1][i] for i in samples]
+        w = np.array([train_data[2][i] for i in samples]).astype(config.floatX)
         x, mask, y, w = self.process_data(x, y, w, maxlen)
-        preds = f_pred_prob(x, mask)
-        cost = f_grad_shared(x, mask, y, w)
-        f_update(learning_rate)
+        preds = self.f_pred_prob(x, mask)
+        cost = self.f_grad_shared(x, mask, y, w)
+        self.f_update(learning_rate)
         if np.isnan(cost) or np.isinf(cost):
           raise ValueError("Bad cost")
-      use_noise.set_value(0.)
-      train_error = self.pred(f_pred, train_data, ids)
+      self.use_noise.set_value(0.)
+      train_error = self.pred(self.f_pred, train_data, ids)
       if error_log == [] or train_error < min(error_log):
         self.lstm_params = self.transfer_params_from_gpu_to_cpy()
       if verbose:
         print ("Epoch #%d, Training error: %f") % (idx, train_error)
-    use_noise.set_value(0.)
-    ids = self.mini_batches(len(test_data[0]), batch_size, shuffle=True)
-    pred=self.pred_p(f_pred_prob, test_data, ids)
-    self.marginals = np.array([0.]*len(pred))
-    for id, p in pred:
-      self.marginals[id]=p
 
   def get_word_dict(self, contain_mention, word_window_length, ignore_case):
     """
@@ -316,119 +307,72 @@ class LSTM(object):
     Return word dictionary
     """
     lstm_dict = {'__place_holder__':0, '__unknown__':1}
-    if type(self.C) is snorkel.Entities:
-      words=[]
-      for i in self.training:
-        min_idx=min(self.C._candidates[i].idxs)
-        max_idx=max(self.C._candidates[i].idxs)+1
-        length=len(self.C._candidates[i].words)
-        lw= range(max(0,min_idx-word_window_length), min_idx)
-        rw= range(max_idx,min(max_idx+word_window_length, length))
-        m=self.C._candidates[i].idxs
-        w=np.array(self.C._candidates[i].words)
-        m=w[m] if contain_mention else []
-        seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m,w[rw]))]
-        words +=seq
-      words = list(set(words))
-      for i in range(len(words)):
-        lstm_dict[words[i]]=i+2
-      self.word_dict=lstm_dict
-    if type(self.C) is snorkel.Relations:
-      words=[]
-      for i in self.training:
-        e1_idxs=self.C._candidates[i].e1_idxs
-        e2_idxs=self.C._candidates[i].e2_idxs
-        if (int(min(e1_idxs))>int(max(e2_idxs)) or int(min(e2_idxs))>int(max(e1_idxs))):
-          pass
-        else:
-          continue
-        start_idx = min(int(max(e1_idxs)), int(max(e2_idxs)))+1
-        end_idx = max(int(min(e1_idxs)), int(min(e2_idxs)))
-        min_idx=min(min(e1_idxs), min(e2_idxs))
-        max_idx=max(max(e1_idxs), max(e2_idxs))+1
-        length=len(self.C._candidates[i].words)
-        lw=range(max(0,min_idx-word_window_length), min_idx)
-        rw=range(max_idx,min(max_idx+word_window_length, length))
-        w=np.array(self.C._candidates[i].words)
-        if contain_mention:
-          if min(e1_idxs) < min(e2_idxs):
-            m1,m2=w[e1_idxs],w[e2_idxs]
-          else:
-            m1,m2=w[e2_idxs],w[e1_idxs]
-        else:
-          m1,m2=[],[]
-        wq=self.C._candidates[i].words[start_idx:end_idx]
-        seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m1,wq,m2,w[rw]))]
-        words+=seq
-      words=list(set(words))
-      for i in range(len(words)):
-        lstm_dict[words[i]]=i+2
-      self.word_dict=lstm_dict
+    words=[]
+    for c in self.training_set:
+      min_idx=min(c.idxs)
+      max_idx=max(c.idxs)+1
+      length=len(c.get_attrib('words'))
+      lw= range(max(0,min_idx-word_window_length), min_idx)
+      rw= range(max_idx,min(max_idx+word_window_length, length))
+      m=c.idxs
+      w=np.array(c.get_attrib('words'))
+      m=w[m] if contain_mention else []
+      seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m,w[rw]))]
+      words +=seq
+    words = sorted(list(set(words)))
+    for i in range(len(words)):
+      lstm_dict[words[i]]=i+2
+    self.word_dict=lstm_dict
 
-  def map_word_to_id(self, contain_mention, word_window_length, ignore_case):
+  def map_word_to_id(self, data, contain_mention, word_window_length, ignore_case):
     """
     Get array of candidate word sequences given word dictionary
     Return array of candidate id sequences
     """
-    self.lstm_X=[]
-    if type(self.C) is snorkel.Entities:
-      words=[]
-      for i in range(self.num_candidates()):
-        min_idx=min(self.C._candidates[i].idxs)
-        max_idx=max(self.C._candidates[i].idxs)+1
-        length=len(self.C._candidates[i].words)
-        lw= range(max(0,min_idx-word_window_length), min_idx)
-        rw= range(max_idx,min(max_idx+word_window_length, length))
-        m=self.C._candidates[i].idxs
-        w=np.array(self.C._candidates[i].words)
-        m=w[m] if contain_mention else ['__place_holder__']
-        seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m,w[rw]))]
-        x=[0]+[self.word_dict[j] if j in self.word_dict else 1 for j in seq]+[0]
-        self.lstm_X.append(x)
-    if type(self.C) is snorkel.Relations:
-      words=[]
-      for i in range(self.num_candidates()):
-        e1_idxs=self.C._candidates[i].e1_idxs
-        e2_idxs=self.C._candidates[i].e2_idxs
-        if (int(min(e1_idxs))>int(max(e2_idxs)) or int(min(e2_idxs))>int(max(e1_idxs))):
-          pass
-        else:
-          self.lstm_X.append([0])
-          continue
-        start_idx = min(int(max(e1_idxs)), int(max(e2_idxs)))+1
-        end_idx = max(int(min(e1_idxs)), int(min(e2_idxs)))
-        min_idx=min(min(e1_idxs), min(e2_idxs))
-        max_idx=max(max(e1_idxs), max(e2_idxs))+1
-        length=len(self.C._candidates[i].words)
-        lw=range(max(0,min_idx-word_window_length), min_idx)
-        rw=range(max_idx,min(max_idx+word_window_length, length))
-        w=np.array(self.C._candidates[i].words)
-        if contain_mention:
-          if min(e1_idxs) < min(e2_idxs):
-            m1,m2=w[e1_idxs],w[e2_idxs]
-          else:
-            m1,m2=w[e2_idxs],w[e1_idxs]
-        else:
-          m1,m2=['__place_holder__'],['__place_holder__']
-        wq=self.C._candidates[i].words[start_idx:end_idx]
-        seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m1,wq,m2,w[rw]))]
-        x=[0]+[self.word_dict[j] if j in self.word_dict else 1 for j in seq]+[0]
-        self.lstm_X.append(x)
+    lstm_X=[]
+    words=[]
+    for c in data:
+      min_idx=min(c.idxs)
+      max_idx=max(c.idxs)+1
+      length=len(c.get_attrib('words'))
+      lw= range(max(0,min_idx-word_window_length), min_idx)
+      rw= range(max_idx,min(max_idx+word_window_length, length))
+      m=c.idxs
+      w=np.array(c.get_attrib('words'))
+      m=w[m] if contain_mention else ['__place_holder__']
+      seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m,w[rw]))]
+      x=[0]+[self.word_dict[j] if j in self.word_dict else 1 for j in seq]+[0]
+      lstm_X.append(x)
+    return lstm_X
 
-  def train_model_lstm(self, **kwargs):
-    contain_mention=kwargs.get('contain_mention', True)
-    word_window_length=kwargs.get('word_window_length', 0)
-    ignore_case=kwargs.get('ignore_case', True)
+  def train(self, **kwargs):
+    self.contain_mention=kwargs.get('contain_mention', True)
+    self.word_window_length=kwargs.get('word_window_length', 0)
+    self.ignore_case=kwargs.get('ignore_case', True)
 
-    dim = kwargs.get('dim', 50)
-    batch_size = kwargs.get('batch_size', 100)
-    learning_rate = kwargs.get('rate', 0.01)
-    epoch = kwargs.get('n_iter', 300)
-    maxlen = kwargs.get('maxlen', 100)
-    dropout = kwargs.get('dropout', True)
-    verbose=kwargs.get('verbose', False)
+    self.dim = kwargs.get('dim', 50)
+    self.batch_size = kwargs.get('batch_size', 100)
+    self.learning_rate = kwargs.get('rate', 0.01)
+    self.epoch = kwargs.get('n_iter', 300)
+    self.maxlen = kwargs.get('maxlen', 100)
+    self.dropout = kwargs.get('dropout', True)
+    self.verbose=kwargs.get('verbose', True)
 
-    self.get_word_dict(contain_mention=contain_mention, word_window_length=word_window_length, ignore_case=ignore_case)
-    self.map_word_to_id(contain_mention=contain_mention, word_window_length=word_window_length, ignore_case=ignore_case)
-    self.lstm(dim=dim, batch_size=batch_size, learning_rate=learning_rate, epoch=epoch, dropout=dropout, verbose=verbose, maxlen=maxlen)
-
+    self.get_word_dict(contain_mention=self.contain_mention, word_window_length=self.word_window_length, \
+                       ignore_case=self.ignore_case)
+    self.lstm_X = self.map_word_to_id(self.training_set, contain_mention=self.contain_mention, \
+                                      word_window_length=self.word_window_length, ignore_case=self.ignore_case)
+    self.lstm(dim=self.dim, batch_size=self.batch_size, learning_rate=self.learning_rate, epoch=self.epoch, \
+              dropout=self.dropout, verbose=self.verbose, maxlen=self.maxlen)
+    
+  def test(self, testing_set):
+    self.lstm_Y = self.map_word_to_id(testing_set, contain_mention=self.contain_mention, \
+                                      word_window_length=self.word_window_length, ignore_case=self.ignore_case)
+    self.use_noise.set_value(0.)
+    test_data=[self.lstm_Y,[1]*len(testing_set),[1.]*len(testing_set)]
+    ids  = self.mini_batches(len(testing_set), self.batch_size, shuffle=True)
+    pred = self.pred_p(self.f_pred_prob, test_data, ids)
+    self.marginals = np.array([0.]*len(pred))
+    for id, p in pred:
+      self.marginals[id]=p
+    return self.marginals

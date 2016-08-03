@@ -2,7 +2,8 @@ import numpy as np
 import scipy.sparse as sparse
 import warnings
 from learning_utils import sparse_abs
-    
+from lstm import LSTMModel
+
 DEFAULT_MU = 1e-6
 DEFAULT_RATE = 0.01
 DEFAULT_ALPHA = 0.5
@@ -179,3 +180,16 @@ class LogReg(NoiseAwareModel):
 def get_mu_seq(n, rate, alpha, min_ratio):
     mv = (max(float(1 + rate * 10), float(rate * 11)) / (alpha + 1e-3))
     return np.logspace(np.log10(mv * min_ratio), np.log10(mv), n)
+
+class LSTM(NoiseAwareModel):
+    """Long Short-Term Memory."""
+    def __init__(self):
+        self.lstm = None
+        self.w = None
+
+    def train(self, X, training_marginals, **hyperparams):
+        self.lstm = LSTMModel(X, training_marginals)
+        self.lstm.train(**hyperparams)
+
+    def marginals(self, X):
+        return self.lstm.test(X)

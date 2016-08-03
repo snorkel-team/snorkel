@@ -22,7 +22,7 @@ class DocParser:
     def __init__(self, path):
         self.path = path
 
-    def parse(self):
+    def parse(self, decoding='utf-8'):
         """
         Parse a file or directory of files into a set of Document objects.
 
@@ -35,6 +35,10 @@ class DocParser:
             file_name = os.path.basename(fp)
             if self._can_read(file_name):
                 for doc in self.parse_file(fp, file_name):
+
+                    # Ensure proper encoding
+                    if decoding is not None:
+                        doc = doc._replace(text=doc.text.decode(decoding))
 
                     # Check for null or non-unique docid
                     if doc.id is None or doc.id in seen_ids:
@@ -134,7 +138,7 @@ class SentenceParser:
         # In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
         # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
         self.port = 12345
-	self.tok_whitespace = tok_whitespace
+        self.tok_whitespace = tok_whitespace
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
         self.server_pid = Popen(cmd, shell=True).pid
@@ -167,7 +171,7 @@ class SentenceParser:
         if len(s.strip()) == 0:
             return
         if isinstance(s, unicode):
-          s = s.encode('utf-8')
+            s = s.encode('utf-8')
         resp = self.requests_session.post(self.endpoint, data=s, allow_redirects=True)
         s = s.decode('utf-8')
         content = resp.content.strip()
@@ -175,6 +179,7 @@ class SentenceParser:
           raise ValueError("File {} too long. Max character count is 100K".format(doc_id))
         blocks = json.loads(content, strict=False)['sentences']
         sent_id = 0
+        diverged = False
         for block in blocks:
             parts = defaultdict(list)
             dep_order, dep_par, dep_lab = [], [], []
@@ -190,8 +195,15 @@ class SentenceParser:
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['sent_id'] = sent_id
             parts['doc_id'] = doc_id
-            parts['text'] = s[block['tokens'][0]['characterOffsetBegin'] :
-                                block['tokens'][-1]['characterOffsetEnd']]
+
+            # NOTE: We have observed weird bugs where CoreNLP diverges from raw document text (see Issue #368)
+            # In these cases we go with CoreNLP so as not to cause downstream issues but throw a warning
+            doc_text = s[block['tokens'][0]['characterOffsetBegin'] : block['tokens'][-1]['characterOffsetEnd']]
+            L = len(block['tokens'])
+            parts['text'] = ''.join(t['originalText'] + t['after'] if i < L - 1 else t['originalText'] for i,t in enumerate(block['tokens']))
+            if not diverged and doc_text != parts['text']:
+                diverged = True
+                warnings.warn("CoreNLP parse has diverged from raw document text!")
             parts['doc_name'] = doc_name
             parts['id'] = "%s-%s" % (parts['doc_id'], parts['sent_id'])
             sent = Sentence(**parts)

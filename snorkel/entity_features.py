@@ -38,7 +38,7 @@ def get_ddlib_feats(cand, idxs):
     yield window_feat
 
   if cand.context.words[idxs[0]][0].isupper():
-    yield "STARTS_WITH_CAPTIAL"
+    yield "STARTS_WITH_CAPITAL"
 
   yield "LENGTH_{}".format(len(idxs))
 

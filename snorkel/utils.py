@@ -17,10 +17,14 @@ def corenlp_cleaner(words):
     return map(lambda w: d[w] if w in d else w, words)
 
 def split_html_attrs(attrs):
+    """
+    Given an iterable object of (attr, values) pairs, returns a list of separated
+    "attr=value" strings
+    """
     html_attrs = []
     for a in attrs:
         attr = a[0]
-        values = a[1]
+        values = a[1].split(';')
         if isinstance(values, list):
             html_attrs += ["=".join([attr,val]) for val in values]
         else:

@@ -42,7 +42,8 @@ class CorpusParser:
             for _ in self.context_parser.parse(doc, text):
                 pass
 
-            print "Document %s parsed" % i
+            # TODO: delete this line:
+            # print "Document %s parsed" % i
 
         if name is not None:
             corpus.name = name
@@ -219,6 +220,7 @@ class SentenceParser(object):
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['text'] = text[block['tokens'][0]['characterOffsetBegin'] :
                                 block['tokens'][-1]['characterOffsetEnd']]
+            parts['xmltree'] = None
             parts['position'] = position
             position += 1
             yield parts
@@ -308,9 +310,7 @@ class TableParser(SentenceParser):
                     parts['row_num'] = row_num
                     parts['col_num'] = col_num
                     parts['html_tag'] = html_cell.name
-                    foo = split_html_attrs(html_cell.attrs.items())
-                    parts['html_attrs'] = foo
-                    import pdb; pdb.set_trace()  # breakpoint 7ecd4637 //
+                    parts['html_attrs'] = split_html_attrs(html_cell.attrs.items())
                     parts['html_anc_tags'] = html_anc_tags
                     parts['html_anc_attrs'] = html_anc_attrs
                     cell = Cell(**parts)

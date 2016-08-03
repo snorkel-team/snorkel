@@ -38,6 +38,7 @@ class Corpus(Context):
         for doc in self.documents:
             yield (doc, doc.sentences)
 
+
     def get_sentences(self):
         return [sentence for doc in self.documents for sentence in doc.sentences]
 

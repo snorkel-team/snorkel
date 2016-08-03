@@ -72,10 +72,12 @@ class Featurizer(object):
                 F[i,j] = 1
         return F
 
-    def print_features(self, candidate):
-        feature_generators = self._match_contexts(self._preprocess_candidates(candidate))
+    def get_features_by_candidate(self, candidate):
+        feature_generators = self._match_contexts(self._preprocess_candidates([candidate]))
+        feats = []
         for i,f in itertools.chain(*feature_generators):
-            print f
+            feats.append(f)
+        return feats
 
 
 class NgramFeaturizer(Featurizer):

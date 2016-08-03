@@ -2,7 +2,7 @@ from .meta import SnorkelBase
 from sqlalchemy import Table, Column, String, Integer, Text, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import PickleType
-from utils import slice_into_ngrams
+from snorkel.utils import slice_into_ngrams
 
 class CandidateSet(SnorkelBase):
     """A named collection of Candidate objects."""
@@ -153,27 +153,46 @@ class Ngram(Candidate):
                self.get_word_end())
 
     ### LF Utilities ###
-    def post_window(self, attribute='words'):
-        return getattr(self.context, attribute)[self.get_word_start()+1:]
+    def post_window(self, attr='words'):
+        return getattr(self.context, attr)[self.get_word_start()+1:]
 
-    def pre_window(self, attribute='words'):
-        return getattr(self.context, attribute)[:self.get_word_start()]
+    def pre_window(self, attr='words'):
+        return getattr(self.context, attr)[:self.get_word_start()]
 
-    def aligned_ngrams(self, attribute='words', n_max=3, case_sensitive=False):
-        return (self.row_ngrams(attribute=attribute, n_max=n_max, case_sensitive=case_sensitive)
-              + self.col_ngrams(attribute=attribute, n_max=n_max, case_sensitive=case_sensitive))
+    def post_ngrams(self, attr='words'):
+        return self.post_window(attr=attr)
 
-    def row_ngrams(self, attribute='words', n_max=3, case_sensitive=False):
-        ngrams = [ngram for ngram in self.get_aligned_ngrams(attribute=attribute, n_max=n_max, axis='row')]
-        return [ngram.lower() for ngram in ngrams] if not case_sensitive else ngrams
+    def pre_ngrams(self, attr='words'):
+        return self.pre_window(attr=attr)
 
-    def col_ngrams(self, attribute='words', case_sensitive=False):
-        ngrams = [ngram for ngram in self.get_aligned_ngrams(attribute=attribute, n_max=n_max, axis='col')]
-        return [ngram.lower() for ngram in ngrams] if not case_sensitive else ngrams
+    def cell_ngrams(self, attr='words'):
+        return self.post_ngrams(attr=attr) + self.pre_ngrams(attr=attr)
 
-    def get_aligned_ngrams(self, n_max=3, attribute='words', axis='row'):
-        axis_name = axis + '_num'
-        phrases = [phrase for phrase in self.context.table.phrases if getattr(phrase,axis_name) == getattr(self.context,axis_name)]
+    def neighbor_cell_ngrams(self, attr='words', n_max=3, dist=1):
+        f = lambda x: 0 < x and x <= dist
+        phrases = [phrase for phrase in self.context.table.phrases if
+            f(abs(phrase.row_num - self.context.row_num) + abs(phrase.col_num - self.context.col_num))]
         for phrase in phrases:
-            for ngram in slice_into_ngrams(getattr(phrase,attribute), n_max=n_max):
+            for ngram in slice_into_ngrams(getattr(phrase,attr), n_max=n_max):
+                yield ngram
+
+    def aligned_ngrams(self, attr='words', n_max=3, case_sensitive=False):
+        return (self.row_ngrams(attr=attr, n_max=n_max, case_sensitive=case_sensitive)
+              + self.col_ngrams(attr=attr, n_max=n_max, case_sensitive=case_sensitive))
+
+    def row_ngrams(self, attr='words', n_max=3, case_sensitive=False):
+        ngrams = [ngram for ngram in self._get_aligned_ngrams(attr=attr, n_max=n_max, axis='row')]
+        return [ngram.lower() for ngram in ngrams] if not case_sensitive else ngrams
+
+    def col_ngrams(self, attr='words', n_max=3, case_sensitive=False):
+        ngrams = [ngram for ngram in self._get_aligned_ngrams(attr=attr, n_max=n_max, axis='col')]
+        return [ngram.lower() for ngram in ngrams] if not case_sensitive else ngrams
+
+    def _get_aligned_ngrams(self, n_max=3, attr='words', axis='row'):
+        axis_name = axis + '_num'
+        phrases = [phrase for phrase in self.context.table.phrases
+            if getattr(phrase,axis_name) == getattr(self.context,axis_name)
+            and phrase != self.context]
+        for phrase in phrases:
+            for ngram in slice_into_ngrams(getattr(phrase,attr), n_max=n_max):
                 yield ngram

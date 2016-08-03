@@ -130,7 +130,8 @@ def get_table_feats(cand):
         yield "HTML_ANC_TAG_" + tag
     for attr in cand.context.html_anc_attrs:
         yield "HTML_ANC_ATTR_" + attr
-    # for ngram in self.get_aligned_ngrams(cand, axis='row'):
-    #     yield "ROW_NGRAM_" + ngram
-    # for ngram in self.get_aligned_ngrams(cand, axis='col'):
-    #     yield "COL_NGRAM_" + ngram
+    for attr in ['words','lemmas','poses']:
+        for ngram in cand.row_ngrams(attr=attr):
+            yield "ROW_%s_%s" % (attr.upper(), ngram)
+        for ngram in cand.col_ngrams(attr=attr):
+            yield "COL_%s_%s" % (attr.upper(), ngram)

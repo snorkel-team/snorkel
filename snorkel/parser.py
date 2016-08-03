@@ -270,7 +270,7 @@ class TableParser(SentenceParser):
                             position = 0
                     parts['position'] = position
                     position += 1
-                    yield self.build_phrase(document.cells[cell_idx], parts)
+                    yield Phrase(**(self.inherit_cell_attrs(table.cells[cell_idx], parts)))
 
         else: # not batched
             for table in self.parse_html(document, text):
@@ -296,14 +296,14 @@ class TableParser(SentenceParser):
             (tags, attrs) = zip(*ancestors)
             html_anc_tags = tags
             html_anc_attrs = split_html_attrs(chain.from_iterable(attrs))
-            for col_num, html_cell in enumerate(row.children):
+            col_num = 0
+            for html_cell in row.children:
                 # TODO: include title, caption, footers, etc.
                 if html_cell.name in ['th','td']:
                     parts = defaultdict(list)
                     parts['document_id'] = table.document_id
                     parts['table_id'] = table.id
                     parts['position'] = position
-
                     parts['document'] = table.document
                     parts['table'] = table
 
@@ -315,27 +315,13 @@ class TableParser(SentenceParser):
                     parts['html_anc_tags'] = html_anc_tags
                     parts['html_anc_attrs'] = html_anc_attrs
                     cell = Cell(**parts)
-                    # add new attribute to the html
-                    html_cell['snorkel_id'] = cell.id
+                    html_cell['snorkel_id'] = cell.id   # add new attribute to the html
                     yield cell
                     position += 1
+                    col_num += 1
 
     def parse_cell(self, cell):
-        parts = defaultdict(list)
-        parts['document_id'] = cell.document_id
-        parts['table_id'] = cell.table_id
-        parts['cell_id'] = cell.id
-
-        parts['document'] = cell.document
-        parts['table'] = cell.table
-        parts['cell'] = cell
-
-        parts['row_num'] = cell.row_num
-        parts['col_num'] = cell.col_num
-        parts['html_tag'] = cell.html_tag
-        parts['html_attrs'] = cell.html_attrs
-        parts['html_anc_tags'] = cell.html_anc_tags
-        parts['html_anc_attrs'] = cell.html_anc_attrs
+        parts = inherit_cell_attrs(cell, defaultdict(list))
         for i, sent in enumerate(super(TableParser, self).parse(cell.document, cell.text)):
             parts['text'] = sent.text
             parts['position'] = i
@@ -347,7 +333,7 @@ class TableParser(SentenceParser):
             parts['dep_labels'] = sent.dep_labels
             yield Phrase(**parts)
 
-    def build_phrase(self, cell, parts):
+    def inherit_cell_attrs(self, cell, parts):
         parts['document_id'] = cell.document_id
         parts['table_id'] = cell.table_id
         parts['cell_id'] = cell.id
@@ -362,6 +348,5 @@ class TableParser(SentenceParser):
         parts['html_attrs'] = cell.html_attrs
         parts['html_anc_tags'] = cell.html_anc_tags
         parts['html_anc_attrs'] = cell.html_anc_attrs
-        return Phrase(**parts)
-
+        return parts
 

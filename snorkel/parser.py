@@ -157,7 +157,7 @@ class XMLDocParser(DocParser):
 
 
 class SentenceParser(object):
-    def __init__(self, tok_whitespace=False):
+    def __init__(self, delim='', tok_whitespace=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
         # Kill it when python exits.
@@ -171,6 +171,8 @@ class SentenceParser(object):
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
         props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
+        props += "\"ssplit.htmlBoundariesToDiscard\": \"%s\"," % delim if delim else ""
+        # props += "\"ssplit.newlineIsSentenceBreak\": \"%s\"," % "two" if delim else ""
         self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % (self.port, props)
 
         # Following enables retries to cope with CoreNLP server boot-up latency
@@ -250,25 +252,27 @@ class HTMLParser(DocParser):
 
 class TableParser(SentenceParser):
     """Simple parsing of the tables in html documents into cells and phrases within cells"""
+    def __init__(self, tok_whitespace=False):
+        self.delim = "<NC>" # NC = New Cell
+        super(TableParser, self).__init__(delim=self.delim[1:-1], tok_whitespace=tok_whitespace)
+
     def parse(self, document, text, batch=True):
         if batch:
             for table in self.parse_html(document, text):
-                idx = 0
-                cell_start = [idx]
-                delim = ' . '
+                char_idx = 0
+                cell_start = [char_idx]
                 for cell in self.parse_table(table):
-                    idx += len(cell.text) + len(delim)
-                    cell_start.append(idx)
-                text_batch = delim.join(cell.text for cell in table.cells)
+                    char_idx += len(cell.text) + len(self.delim)
+                    cell_start.append(char_idx)
+                text_batch = self.delim.join(cell.text for cell in table.cells)
                 cell_idx = 0
                 position = 0
                 for parts in self.get_nlp_tags(text_batch, document):
-                    if parts['char_offsets'][0] >= cell_start[cell_idx + 1]:
-                        cell_idx += 1
-                        position = 0
-                    else:
-                        position += 1
+                    while parts['char_offsets'][0] >= cell_start[cell_idx + 1]:
+                            cell_idx += 1
+                            position = 0
                     parts['position'] = position
+                    position += 1
                     yield self.build_phrase(document.cells[cell_idx], parts)
 
         else: # not batched

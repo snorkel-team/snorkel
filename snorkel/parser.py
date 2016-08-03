@@ -15,7 +15,7 @@ import signal
 from subprocess import Popen
 import lxml.etree as et
 from itertools import chain
-from utils import corenlp_cleaner, sort_X_on_Y
+from utils import corenlp_cleaner, sort_X_on_Y, split_html_attrs
 import sys
 
 
@@ -238,13 +238,12 @@ class HTMLParser(DocParser):
 
     def parse_file(self, fp, file_name):
         with open(fp, 'r') as f:
-            soup = BeautifulSoup(f, 'xml') # TODO: consider change from XML to HTML?
+            soup = BeautifulSoup(f, 'lxml')
             for text in enumerate(soup.find_all('html')):
                 id = self.doc_id
                 attribs = None
                 yield Document(name=str(id), file=str(file_name), attribs=attribs), str(text)
                 self.doc_id += 1
-                # TODO: need unicode instead of str for messy htmls?
 
 
 class TableParser(SentenceParser):
@@ -254,7 +253,7 @@ class TableParser(SentenceParser):
             for table in self.parse_html(document, text):
                 idx = 0
                 cell_start = [idx]
-                delim = '. '
+                delim = ' . '
                 for cell in self.parse_table(table):
                     idx += len(cell.text) + len(delim)
                     cell_start.append(idx)
@@ -270,22 +269,22 @@ class TableParser(SentenceParser):
                     parts['position'] = position
                     yield self.build_phrase(document.cells[cell_idx], parts)
 
-        else:
+        else: # not batched
             for table in self.parse_html(document, text):
                 for cell in self.parse_table(table):
                     for phrase in self.parse_cell(cell):
                         yield phrase
 
     def parse_html(self, document, text):
-        soup = BeautifulSoup(text, 'lxml') # TODO: lxml is best parser for this?
+        soup = BeautifulSoup(text, 'lxml')
         for i, table in enumerate(soup.find_all('table')):
             yield Table(document_id=document.id,
                         document=document,
                         position=i,
-                        text=str(text))
+                        text=str(table))
 
     def parse_table(self, table):
-        soup = BeautifulSoup(table.text, 'lxml') # TODO: lxlml is best parser for this?
+        soup = BeautifulSoup(table.text, 'lxml')
         position = 0
         for row_num, row in enumerate(soup.find_all('tr')):
             ancestors = ([(row.name, row.attrs.items())]
@@ -293,14 +292,7 @@ class TableParser(SentenceParser):
                 for ancestor in row.parents if ancestor is not None][:-2])
             (tags, attrs) = zip(*ancestors)
             html_anc_tags = tags
-            html_anc_attrs = []
-            for a in chain.from_iterable(attrs):
-                attr = a[0]
-                values = a[1]
-                if isinstance(values, list):
-                    html_anc_attrs += ["=".join([attr,val]) for val in values]
-                else:
-                    html_anc_attrs += ["=".join([attr,values])]
+            html_anc_attrs = split_html_attrs(chain.from_iterable(attrs))
             for col_num, html_cell in enumerate(row.children):
                 # TODO: include title, caption, footers, etc.
                 if html_cell.name in ['th','td']:
@@ -316,16 +308,9 @@ class TableParser(SentenceParser):
                     parts['row_num'] = row_num
                     parts['col_num'] = col_num
                     parts['html_tag'] = html_cell.name
-                    html_attrs = []
-                    # TODO: clean this
-                    for a in html_cell.attrs.items():
-                        attr = a[0]
-                        values = a[1]
-                        if isinstance(values, list):
-                            html_attrs += ["=".join([attr,val]) for val in values]
-                        else:
-                            html_attrs += ["=".join([attr,values])]
-                    parts['html_attrs'] = html_attrs
+                    foo = split_html_attrs(html_cell.attrs.items())
+                    parts['html_attrs'] = foo
+                    import pdb; pdb.set_trace()  # breakpoint 7ecd4637 //
                     parts['html_anc_tags'] = html_anc_tags
                     parts['html_anc_attrs'] = html_anc_attrs
                     cell = Cell(**parts)
@@ -377,14 +362,5 @@ class TableParser(SentenceParser):
         parts['html_anc_tags'] = cell.html_anc_tags
         parts['html_anc_attrs'] = cell.html_anc_attrs
         return Phrase(**parts)
-
-
-def sort_X_on_Y(X, Y):
-    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
-
-def corenlp_cleaner(words):
-    d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
-         '-RSB-': ']', '-LSB-': '['}
-    return map(lambda w: d[w] if w in d else w, words)
 
 

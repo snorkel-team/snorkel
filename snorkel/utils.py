@@ -12,6 +12,17 @@ def sort_X_on_Y(X, Y):
     return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
 
 def corenlp_cleaner(words):
-  d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
+    d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
        '-RSB-': ']', '-LSB-': '['}
-  return map(lambda w: d[w] if w in d else w, words)
+    return map(lambda w: d[w] if w in d else w, words)
+
+def split_html_attrs(attrs):
+    html_attrs = []
+    for a in attrs:
+        attr = a[0]
+        values = a[1]
+        if isinstance(values, list):
+            html_attrs += ["=".join([attr,val]) for val in values]
+        else:
+            html_attrs += ["=".join([attr,values])]
+    return html_attrs

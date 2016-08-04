@@ -1,9 +1,7 @@
 import os, sys, unittest
 import numpy as np
 import scipy.sparse as sparse
-
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
-from snorkel.learning import learn_elasticnet_logreg, odds_to_prob
+from snorkel.learning import LogReg, odds_to_prob
 
 class TestInference(unittest.TestCase):
     
@@ -19,10 +17,11 @@ class TestInference(unittest.TestCase):
         X, w0, gt = self._problem(n=250, nlf=50, lf_prior=0.4, lf_mean=0.7,
                                   lf_sd=0.25, nf=250, f_prior=0.2, f_mean=0.6,
                                   f_sd=0.25)
-        w = learn_elasticnet_logreg(X=X, n_iter=500, tol=1e-4, mu=mu,
-                                    w0=w0, sample=False, alpha=alpha, 
-                                    rate=0.01, verbose=True)
-        self.assertGreater(np.mean(np.sign(X.dot(w)) == gt), 0.85)
+        l = LogReg()
+        l.train(X=X, n_iter=500, tol=1e-4, mu=mu,
+                w0=w0, sample=False, alpha=alpha, 
+                rate=0.01, verbose=True)
+        self.assertGreater(np.mean(np.sign(X.dot(l.w)) == gt), 0.85)
     
     def test_ridge_logistic_regression_small_1(self):
         print "Running small ridge logistic regression test 1"
@@ -44,10 +43,11 @@ class TestInference(unittest.TestCase):
         X, w0, gt = self._problem(n=1000, nlf=100, lf_prior=0.2, lf_mean=0.7,
                                   lf_sd=0.25, nf=5000, f_prior=0.05, f_mean=0.6,
                                   f_sd=0.25)
-        w = learn_elasticnet_logreg(X=X, n_iter=1000, tol=1e-4, w0=w0,
-                                    sample=False, alpha=alpha, mu=mu, 
-                                    rate=0.01, verbose=True)
-        self.assertGreater(np.mean(np.sign(X.dot(w)) == gt), 0.85)
+        l = LogReg()
+        l.train(X=X, n_iter=1000, tol=1e-4, w0=w0,
+                sample=False, alpha=alpha, mu=mu, 
+                rate=0.01, verbose=True)
+        self.assertGreater(np.mean(np.sign(X.dot(l.w)) == gt), 0.85)
         
     def test_ridge_logistic_regression_large_1(self):
         print "Running large ridge logistic regression test 1"
@@ -71,15 +71,17 @@ class TestInference(unittest.TestCase):
                                   lf_sd=0.25, nf=1000, f_prior=0.1, f_mean=0.6,
                                   f_sd=0.25)
         mu = 1e-4
-        w_d = learn_elasticnet_logreg(X=X, n_iter=2500, tol=1e-4, w0=w0,
-                                      sample=False, alpha=self.ridge,
-                                      mu=mu, rate=0.01, verbose=True)
-        w_s = learn_elasticnet_logreg(X=X, n_iter=2500, tol=1e-4, w0=w0,
-                                      sample=True, n_samples=200,
-                                      alpha=self.ridge, mu=mu, rate=0.01,
-                                      verbose=True)
+        l_d = LogReg()
+        l_d.train(X=X, n_iter=2500, tol=1e-4, w0=w0,
+                  sample=False, alpha=self.ridge,
+                  mu=mu, rate=0.01, verbose=True)
+        l_s = LogReg()
+        l_s.train(X=X, n_iter=2500, tol=1e-4, w0=w0,
+                  sample=True, n_samples=200,
+                  alpha=self.ridge, mu=mu, rate=0.01,
+                  verbose=True)
         # Check sample marginals are close to deterministic solutio
-        ld, ls = odds_to_prob(X.dot(w_d)), odds_to_prob(X.dot(w_s))
+        ld, ls = odds_to_prob(X.dot(l_d.w)), odds_to_prob(X.dot(l_s.w))
         self.assertLessEqual(np.linalg.norm(ld-ls) / np.linalg.norm(ld), 0.05)                         
                          
     def _problem(self, n, nlf, lf_prior, lf_mean, lf_sd, nf, f_prior, f_mean, f_sd):

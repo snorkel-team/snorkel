@@ -153,15 +153,31 @@ class Learner(object):
 
     def test_mv(self, test_candidates, gold_labels, display=True, return_vals=False):
         """Test *unweighted* majority vote of *just the LFs*"""
+        # Ensure that L_test is initialized
         self.test(test_candidates, gold_labels, display=False)
+
+        # L_test * 1
         mv_pred = np.ravel(np.sign(self.L_test.sum(axis=1)))
         return test_scores(mv_pred, gold_labels, return_vals=return_vals, verbose=display)
 
     def test_wmv(self, test_candidates, gold_labels, display=True, return_vals=False):
-        """Test *unweighted* majority vote of *just the LFs*"""
+        """Test *weighted* majority vote of *just the LFs*"""
+        # Ensure that L_test is initialized
         self.test(test_candidates, gold_labels, display=False)
+
+        # L_test * w_lfs
         wmv_pred = np.sign(self.L_test.dot(self.lf_weights()))
         return test_scores(wmv_pred, gold_labels, return_vals=return_vals, verbose=display)
+
+    def candidate_stats(self):
+        """Return a DataFrame of per-candidate stats"""
+        # TODO
+        raise NotImplementedError()
+
+    def feature_stats(self, n_max=100):
+        """Return a DataFrame of highest (abs)-weighted features"""
+        # TODO
+        raise NotImplementedError()
 
 
 class PipelinedLearner(Learner):

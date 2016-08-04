@@ -4,8 +4,6 @@ from collections import OrderedDict
 # Scientific modules
 import numpy as np
 
-import snorkel
-
 # ddlite LSTM
 import theano
 from theano import config

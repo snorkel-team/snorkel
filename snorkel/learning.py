@@ -177,10 +177,6 @@ class LogReg(NoiseAwareModel):
         return odds_to_prob(X.dot(self.w))
         
       
-def get_mu_seq(n, rate, alpha, min_ratio):
-    mv = (max(float(1 + rate * 10), float(rate * 11)) / (alpha + 1e-3))
-    return np.logspace(np.log10(mv * min_ratio), np.log10(mv), n)
-
 class LSTM(NoiseAwareModel):
     """Long Short-Term Memory."""
     def __init__(self):

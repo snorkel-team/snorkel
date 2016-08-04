@@ -79,7 +79,7 @@ script:
   - python test/CandidateSpaceTests.py
   - python test/MatcherTests.py
   - python test/InferenceTests.py
-  - python test/LSTMTests.py
+  #- python test/LSTMTests.py
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

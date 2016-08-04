@@ -711,8 +711,9 @@ class CandidateGT:
     self._gt_dict = OrderedDict()
     self._gt_vec = np.zeros((len(candidates)), dtype=int)
     for i,c in enumerate(candidates):
-      l = gt_dict[c.id] if c.id in gt_dict else 0
-      self._gt_dict[c.id] = l
+      # TEMP - change uid back to id #
+      l = gt_dict[c.uid] if c.uid in gt_dict else 0
+      self._gt_dict[c.uid] = l
       self._gt_vec[i] = l
 
     self.validation = np.array([], dtype=int)

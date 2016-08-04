@@ -1,6 +1,7 @@
 import lxml.etree as et
 from snorkel.models import CandidateSet
 from snorkel.candidates import Ngram
+from collections import defaultdict
 import csv
 
 def collect_pubtator_annotations(doc, sents, sep=" "):
@@ -54,7 +55,7 @@ def collect_pubtator_annotations(doc, sents, sep=" "):
                 'mesh_id': mesh, 'type': type, 'composite': comp_role}))
     return ngrams
 
-def collect_hardware_annotations(filename, attribute, candidates):
+def collect_hardware_temperature_annotations(filename, attribute, candidates):
     with open(filename, 'rb') as csvfile:
         gold_reader = csv.reader(csvfile)
         gold = []
@@ -67,9 +68,16 @@ def collect_hardware_annotations(filename, attribute, candidates):
 
     # match with candidates
     gt_dict = {}
-    for c in candidates:
+    pairs = defaultdict(list)
+    for i, c in enumerate(candidates):
         filename = (c.context.document.file).split('.')[0]
         temp = c.get_attrib_span('words')
-        label = 1 if (filename, temp) in gold else -1
-        gt_dict[c.id] = label
+        pairs[(filename, temp)].append(c)
+    conflicts = 0
+    for (a,b) in pairs.items():
+        if len(b) > 1:
+            conflicts += len(b)
+        else:
+            label = 1 if a in gold else -1
+            gt_dict[b[0].uid] = label
     return gt_dict

@@ -40,6 +40,8 @@ class Candidate(SnorkelBase):
     candidate_set_id = Column(Integer, ForeignKey('candidate_set.id'))
     set = relationship('CandidateSet', backref=backref('candidates', cascade='all, delete-orphan'))
     type = Column(String, nullable=False)
+    # TEMP #
+    uid = Column(String, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',

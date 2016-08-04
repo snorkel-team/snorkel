@@ -167,7 +167,14 @@ class Ngrams(CandidateSpace):
                 char_start = context.char_offsets[i]
                 cl = context.char_offsets[i+l-1] - context.char_offsets[i] + len(context.words[i+l-1])
                 char_end = context.char_offsets[i] + cl - 1
-                yield Ngram(char_start=char_start, char_end=char_end, context=context)
+                # TEMP #
+                uid = '%s-%s-%s-%s:%s-%s' % (context.cell.document.name,
+                                       context.cell.table.position,
+                                       context.cell.position,
+                                       context.position,
+                                       char_start,
+                                       char_end)
+                yield Ngram(char_start=char_start, char_end=char_end, context=context, uid=uid)
 
                 # Check for split
                 # NOTE: For simplicity, we only split single tokens right now!

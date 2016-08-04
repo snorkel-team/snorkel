@@ -1,3 +1,5 @@
+from itertools import chain
+
 def get_as_dict(x):
     """Return an object as a dictionary of its attributes"""
     if isinstance(x, dict):
@@ -24,11 +26,8 @@ def split_html_attrs(attrs):
     html_attrs = []
     for a in attrs:
         attr = a[0]
-        values = a[1].split(';')
-        if isinstance(values, list):
-            html_attrs += ["=".join([attr,val]) for val in values]
-        else:
-            html_attrs += ["=".join([attr,values])]
+        values = [v.split(';') for v in a[1]] if isinstance(a[1],list) else [a[1]]
+        html_attrs += ["=".join([attr,val]) for val in chain.from_iterable(values)]
     return html_attrs
 
 def slice_into_ngrams(tokens, n_max=3, delim='_'):

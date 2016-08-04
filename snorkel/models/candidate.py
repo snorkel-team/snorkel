@@ -168,13 +168,35 @@ class Ngram(Candidate):
     def cell_ngrams(self, attr='words'):
         return self.post_ngrams(attr=attr) + self.pre_ngrams(attr=attr)
 
-    def neighbor_cell_ngrams(self, attr='words', n_max=3, dist=1):
+    def neighborhood_ngrams(self, attr='words', n_max=3, dist=1, case_sensitive=False):
+        # TODO: optimize with SQL query
         f = lambda x: 0 < x and x <= dist
         phrases = [phrase for phrase in self.context.table.phrases if
             f(abs(phrase.row_num - self.context.row_num) + abs(phrase.col_num - self.context.col_num))]
         for phrase in phrases:
             for ngram in slice_into_ngrams(getattr(phrase,attr), n_max=n_max):
-                yield ngram
+                yield ngram if case_sensitive else ngram.lower()
+
+    def neighbor_ngrams(self, attr='words', n_max=3, dist=1, case_sensitive=False):
+        # TODO: optimize with SQL query
+        for phrase in self.context.table.phrases:
+            side = ''
+            row_diff = phrase.row_num - self.context.row_num
+            col_diff = phrase.col_num - self.context.col_num
+            if col_diff==0:
+                if 0 < row_diff and row_diff <= dist:
+                    side = "UP"
+                elif  0 > row_diff and row_diff >= -dist:
+                    side = "DOWN"
+            elif row_diff==0:
+                if 0 < col_diff and col_diff <= dist:
+                    side = "RIGHT"
+                elif  0 > col_diff and col_diff >= -dist:
+                    side = "LEFT"
+            if side:
+                for ngram in slice_into_ngrams(getattr(phrase,attr), n_max=n_max):
+                    yield (ngram,side) if case_sensitive else (ngram.lower(), side)
+
 
     def aligned_ngrams(self, attr='words', n_max=3, case_sensitive=False):
         return (self.row_ngrams(attr=attr, n_max=n_max, case_sensitive=case_sensitive)

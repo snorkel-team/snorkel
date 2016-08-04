@@ -38,9 +38,9 @@ def get_ddlib_feats(cand, idxs):
     yield window_feat
 
   if cand.context.words[idxs[0]][0].isupper():
-    yield "STARTS_WITH_CAPITAL"
+    yield u"STARTS_WITH_CAPITAL"
 
-  yield "LENGTH_{}".format(len(idxs))
+  yield u"NUM_WORDS_%s" % len(idxs)
 
 def _get_seq_features(cand, idxs):
     yield "WORD_SEQ_[" + " ".join(cand.context.words[i] for i in idxs) + "]"
@@ -121,17 +121,43 @@ def _get_window_features(cand, idxs, window=3, combinations=True, isolated=True)
                     curr_left_poses + "]_[" + curr_right_poses + "]"
 
 def get_table_feats(cand):
-    yield "ROW_NUM_%s" % cand.context.row_num
-    yield "COL_NUM_%s" % cand.context.col_num
-    yield "HTML_TAG_" + cand.context.html_tag
+    yield u"ROW_NUM_%s" % cand.context.row_num
+    yield u"COL_NUM_%s" % cand.context.col_num
+    yield u"HTML_TAG_" + cand.context.html_tag
     for attr in cand.context.html_attrs:
-        yield "HTML_ATTR_" + attr
+        yield u"HTML_ATTR_" + attr
     for tag in cand.context.html_anc_tags:
-        yield "HTML_ANC_TAG_" + tag
+        yield u"HTML_ANC_TAG_" + tag
     for attr in cand.context.html_anc_attrs:
-        yield "HTML_ANC_ATTR_" + attr
+        yield u"HTML_ANC_ATTR_" + attr
     for attr in ['words','lemmas','poses']:
         for ngram in cand.row_ngrams(attr=attr):
             yield "ROW_%s_%s" % (attr.upper(), ngram)
+            if attr=="lemmas":
+                try:
+                    if float(ngram).is_integer():
+                        yield u"ROW_INT"
+                    else:
+                        yield u"ROW_FLOAT"
+                except:
+                    pass
         for ngram in cand.col_ngrams(attr=attr):
             yield "COL_%s_%s" % (attr.upper(), ngram)
+            if attr=="lemmas":
+                try:
+                    if float(ngram).is_integer():
+                        yield u"COL_INT"
+                    else:
+                        yield u"COL_FLOAT"
+                except:
+                    pass
+        for (ngram, side) in cand.neighbor_ngrams(attr=attr):
+            yield "NEIGHBOR_%s_%s_%s" % (side, attr.upper(), ngram)
+            if attr=="lemmas":
+                try:
+                    if float(ngram).is_integer():
+                        yield "NEIGHBOR_%s_INT" % side
+                    else:
+                        yield "NEIGHBOR_%s_FLOAT" % side
+                except:
+                    pass

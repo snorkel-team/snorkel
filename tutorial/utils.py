@@ -1,7 +1,7 @@
 import lxml.etree as et
 from snorkel.models import CandidateSet
 from snorkel.candidates import Ngram
-
+import csv
 
 def collect_pubtator_annotations(doc, sents, sep=" "):
     """
@@ -40,7 +40,7 @@ def collect_pubtator_annotations(doc, sents, sep=" "):
             length = int(a.xpath('./location/@length')[0])
             type = a.xpath('./infon[@key="type"]/text()')[0]
             mesh = a.xpath('./infon[@key="MESH"]/text()')[0]
-            
+
             # Get sentence id and relative character offset
             si = len(sent_offsets) - 1
             for i,so in enumerate(sent_offsets):
@@ -53,3 +53,23 @@ def collect_pubtator_annotations(doc, sents, sep=" "):
             ngrams.append(Ngram(char_start=offset, char_end=offset + length - 1, context=sents[si], meta={
                 'mesh_id': mesh, 'type': type, 'composite': comp_role}))
     return ngrams
+
+def collect_hardware_annotations(filename, attribute, candidates):
+    with open(filename, 'rb') as csvfile:
+        gold_reader = csv.reader(csvfile)
+        gold = []
+        for row in gold_reader:
+            (doc, part, temp, attr) = row
+            if attr==attribute:
+                gold.append((doc,temp))
+    gold = set(gold)
+    print "%s gold annotations" % len(gold)
+
+    # match with candidates
+    gt_dict = {}
+    for c in candidates:
+        filename = (c.context.document.file).split('.')[0]
+        temp = c.get_attrib_span('words')
+        label = 1 if (filename, temp) in gold else -1
+        gt_dict[c.id] = label
+    return gt_dict

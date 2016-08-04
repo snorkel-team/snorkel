@@ -148,6 +148,9 @@ class CandidateExtractor(object):
         print "Candidate precision\t= %0.3f" % (both / float(nc),)
 
 
+EntityExtractor = CandidateExtractor
+
+
 class Ngrams(CandidateSpace):
     """
     Defines the space of candidates as all n-grams (n <= n_max) in a Sentence _x_,

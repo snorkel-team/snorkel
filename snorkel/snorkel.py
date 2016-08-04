@@ -104,6 +104,8 @@ class Learner(object):
         # Cache the transformed test set as well
         self.test_candidates = None
         self.gold_labels     = None
+        self.L_test          = None
+        self.F_test          = None
         self.X_test          = None
 
     def _set_model_X(self, L, F):
@@ -129,14 +131,13 @@ class Learner(object):
         """
         # Cache transformed test set
         if self.X_test is None or test_candidates != self.test_candidates or any(gold_labels != self.gold_labels):
-            self.test_candidates = test_candidates
-            self.gold_labels     = gold_labels
-            L_test, F_test       = self.training_set.transform(test_candidates)
-            self.X_test          = self._set_model_X(L_test, F_test)
+            self.test_candidates     = test_candidates
+            self.gold_labels         = gold_labels
+            self.L_test, self.F_test = self.training_set.transform(test_candidates)
+            self.X_test              = self._set_model_X(self.L_test, self.F_test)
         if display:
             calibration_plots(self.model.marginals(self.X_train), self.model.marginals(self.X_test), gold_labels)
         return test_scores(self.model.predict(self.X_test), gold_labels, return_vals=return_vals, verbose=display)
-
 
     def lf_weights(self):
         return self.model.w[:self.m]
@@ -149,6 +150,19 @@ class Learner(object):
         
     def predictions(self):
         return self.model.predict(self.X_test)
+
+    def test_mv(self, test_candidates, gold_labels, display=True, return_vals=False):
+        """Test *unweighted* majority vote of *just the LFs*"""
+        self.test(test_candidates, gold_labels, display=False)
+        mv_pred = np.ravel(np.sign(self.L_test.sum(axis=1)))
+        return test_scores(mv_pred, gold_labels, return_vals=return_vals, verbose=display)
+
+    def test_wmv(self, test_candidates, gold_labels, display=True, return_vals=False):
+        """Test *unweighted* majority vote of *just the LFs*"""
+        self.test(test_candidates, gold_labels, display=False)
+        wmv_pred = np.sign(self.L_test.dot(self.lf_weights()))
+        return test_scores(wmv_pred, gold_labels, return_vals=return_vals, verbose=display)
+
 
 class PipelinedLearner(Learner):
     """Implements the **"pipelined" approach**"""

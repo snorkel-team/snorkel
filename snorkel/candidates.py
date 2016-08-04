@@ -65,6 +65,7 @@ class Candidates(object):
     def __init__(self, candidate_space, matcher, contexts, parallelism=False, join_key='context_id'):
         self.join_key = join_key
         self.ps = []
+        self.contexts = contexts
 
         # Extract & index candidates
         print "Extracting candidates..."
@@ -124,6 +125,9 @@ class Candidates(object):
     def get_candidates_in(self, context_id):
         """Return the candidates in a specific context (e.g. Sentence)"""
         return self._candidates_by_context_id[context_id]
+
+    def get_contexts(self):
+        return self.contexts
 
     def gold_stats(self, gold_set):
         """Return precision and recall relative to a "gold" set of candidates of the same type"""
@@ -207,6 +211,14 @@ class Ngram(Candidate):
     
     def get_span(self, sep=" "):
         return self.get_attrib_span(WORDS)
+
+    def left_window(self, attrib=WORDS, n=5):
+        """Get the array of tokens of attribute _attrib_ to the *left* of the ngram in the sentence"""
+        return self.sentence[attrib][max(0, self.word_start-n):self.word_start]
+
+    def right_window(self, attrib=WORDS, n=5):
+        """Get the array of tokens of attribute _attrib_ to the *right* of the ngram in the sentence"""
+        return self.sentence[attrib][self.word_end+1:self.word_end+1+n]
 
     def __getitem__(self, key):
         """

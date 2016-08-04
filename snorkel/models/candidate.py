@@ -11,7 +11,7 @@ class CandidateSet(SnorkelBase):
     name = Column(String, unique=True, nullable=False)
 
     def __repr__(self):
-        return "Candidate Set (" + self.name + ")"
+        return "Candidate Set (" + str(self.name) + ")"
 
     def append(self, item):
         self.candidates.append(item)
@@ -196,3 +196,38 @@ class Ngram(Candidate):
         for phrase in phrases:
             for ngram in slice_into_ngrams(getattr(phrase,attr), n_max=n_max):
                 yield ngram
+
+
+class NgramPair(Candidate):
+    """
+    A pair of Ngram Candidates, representing a relation from Ngram 1 to Ngram 2.
+    """
+    __table__ = Table('ngram_pair', SnorkelBase.metadata,
+                      Column('id', Integer),
+                      Column('candidate_set_id', Integer, primary_key=True),
+                      Column('ngram0_id', Integer, primary_key=True),
+                      Column('ngram1_id', Integer, primary_key=True),
+                      ForeignKeyConstraint(['id', 'candidate_set_id'], ['candidate.id', 'candidate.candidate_set_id']),
+                      ForeignKeyConstraint(['ngram0_id', 'candidate_set_id'], ['ngram.id', 'ngram.candidate_set_id']),
+                      ForeignKeyConstraint(['ngram1_id', 'candidate_set_id'], ['ngram.id', 'ngram.candidate_set_id'])
+                      )
+
+    ngram0 = relationship('Ngram', backref=backref('ngram_source_pairs', cascade_backrefs=False),
+                          cascade_backrefs=False, foreign_keys='NgramPair.ngram0_id')
+    ngram1 = relationship('Ngram', backref=backref('ngram_dest_pairs', cascade_backrefs=False),
+                          cascade_backrefs=False, foreign_keys='NgramPair.ngram1_id')
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'ngram_pair',
+    }
+
+    def __getitem__(self, key):
+        if key == 0:
+            return self.ngram0
+        elif key == 1:
+            return self.ngram1
+        else:
+            raise KeyError
+
+    def __repr__(self):
+        return "NgramPair(%s, %s)" % (self.ngram0, self.ngram1)

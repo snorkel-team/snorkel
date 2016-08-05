@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import atexit
 import glob
 import json
@@ -14,6 +13,7 @@ from collections import namedtuple, defaultdict
 from subprocess import Popen
 import lxml.etree as et
 from itertools import chain
+from utils import corenlp_cleaner, sort_X_on_Y
 
 Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
 
@@ -121,9 +121,9 @@ class XMLDocParser(DocParser):
         return fpath.endswith('.xml')
 
 
-Sentence = namedtuple('Sentence', ['id', 'words', 'lemmas', 'poses', 'dep_parents',
-                                   'dep_labels', 'sent_id', 'doc_id', 'text',
-                                   'char_offsets', 'doc_name'])
+Sentence = namedtuple('Sentence', ['id', 'words', 'lemmas', 'poses', 'dep_parents', 'dep_labels', 'sent_id', \
+    'doc_id', 'text', 'char_offsets', 'doc_name', 'xmltree'])
+
 
 class SentenceParser:
     def __init__(self, tok_whitespace=False):
@@ -134,7 +134,7 @@ class SentenceParser:
         # In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
         # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
         self.port = 12345
-	self.tok_whitespace = tok_whitespace
+        self.tok_whitespace = tok_whitespace
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
         self.server_pid = Popen(cmd, shell=True).pid
@@ -154,25 +154,24 @@ class SentenceParser:
                         status_forcelist=[ 500, 502, 503, 504 ])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
 
-
     def _kill_pserver(self):
         if self.server_pid is not None:
             try:
-              os.kill(self.server_pid, signal.SIGTERM)
+                os.kill(self.server_pid, signal.SIGTERM)
             except:
-              sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
+                sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
-    def parse(self, s, doc_id=None, doc_name=None):
+    def parse(self, s, doc_id=None, doc_name=None, xmltree=True):
         """Parse a raw document as a string into a list of sentences"""
         if len(s.strip()) == 0:
             return
         if isinstance(s, unicode):
-          s = s.encode('utf-8')
+            s = s.encode('utf-8')
         resp = self.requests_session.post(self.endpoint, data=s, allow_redirects=True)
         s = s.decode('utf-8')
         content = resp.content.strip()
         if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
-          raise ValueError("File {} too long. Max character count is 100K".format(doc_id))
+            raise ValueError("File {} too long. Max character count is 100K".format(doc_id))
         blocks = json.loads(content, strict=False)['sentences']
         sent_id = 0
         for block in blocks:
@@ -194,25 +193,18 @@ class SentenceParser:
                                 block['tokens'][-1]['characterOffsetEnd']]
             parts['doc_name'] = doc_name
             parts['id'] = "%s-%s" % (parts['doc_id'], parts['sent_id'])
+            parts['xmltree'] = None
             sent = Sentence(**parts)
             sent_id += 1
             yield sent
 
-    def parse_docs(self, docs):
+    def parse_docs(self, docs, xmltree=True):
         """Parse a list of Document objects into a list of pre-processed Sentences."""
         sents = []
         for doc in docs:
-            for sent in self.parse(doc.text, doc.id, doc.file):
+            for sent in self.parse(doc.text, doc.id, doc.file, xmltree=xmltree):
                 sents.append(sent)
         return sents
-
-def sort_X_on_Y(X, Y):
-    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
-
-def corenlp_cleaner(words):
-  d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
-       '-RSB-': ']', '-LSB-': '['}
-  return map(lambda w: d[w] if w in d else w, words)
 
 
 class Corpus(object):

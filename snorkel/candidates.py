@@ -5,6 +5,7 @@ from itertools import chain
 from time import time
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
+from utils import get_as_dict
 
 
 class Candidate(object):
@@ -64,6 +65,7 @@ class Candidates(object):
     def __init__(self, candidate_space, matcher, contexts, parallelism=False, join_key='context_id'):
         self.join_key = join_key
         self.ps = []
+        self.contexts = contexts
 
         # Extract & index candidates
         print "Extracting candidates..."
@@ -124,6 +126,9 @@ class Candidates(object):
         """Return the candidates in a specific context (e.g. Sentence)"""
         return self._candidates_by_context_id[context_id]
 
+    def get_contexts(self):
+        return self.contexts
+
     def gold_stats(self, gold_set):
         """Return precision and recall relative to a "gold" set of candidates of the same type"""
         gold = gold_set if isinstance(gold_set, set) else set(gold_set)
@@ -147,7 +152,8 @@ class Ngram(Candidate):
     def __init__(self, char_start, char_end, sent, metadata={}):
         
         # Inherit full sentence object (tranformed to dict) and check for necessary attribs
-        self.sentence = sent if isinstance(sent, dict) else sent._asdict()
+        self.sentence = get_as_dict(sent)
+        self.doc_id   = self.sentence['doc_id']
         self.sent_id  = self.sentence['id']
         REQ_ATTRIBS = ['id', WORDS]
         if not all([self.sentence.has_key(a) for a in REQ_ATTRIBS]):
@@ -161,6 +167,7 @@ class Ngram(Candidate):
         self.word_start  = self.char_to_word_index(char_start)
         self.word_end    = self.char_to_word_index(char_end)
         self.n           = self.word_end - self.word_start + 1
+        self.idxs        = range(self.word_start, self.word_end + 1)
 
         # NOTE: We assume that the char_offsets are **relative to the document start**
         self.sent_offset     = self.sentence[CHAR_OFFSETS][0]
@@ -185,8 +192,12 @@ class Ngram(Candidate):
     def word_to_char_index(self, wi):
         """Given a word-level index, return the character-level index (offset) of the word's start"""
         return self.sentence[CHAR_OFFSETS][wi]
+
+    def get_attrib(self, a=WORDS):
+        """Get the sentence attribute _a_"""
+        return self.sentence[a]
     
-    def get_attrib_tokens(self, a):
+    def get_attrib_tokens(self, a=WORDS):
         """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""
         return self.sentence[a][self.word_start:self.word_end+1]
     
@@ -200,6 +211,14 @@ class Ngram(Candidate):
     
     def get_span(self, sep=" "):
         return self.get_attrib_span(WORDS)
+
+    def left_window(self, attrib=WORDS, n=5):
+        """Get the array of tokens of attribute _attrib_ to the *left* of the ngram in the sentence"""
+        return self.sentence[attrib][max(0, self.word_start-n):self.word_start]
+
+    def right_window(self, attrib=WORDS, n=5):
+        """Get the array of tokens of attribute _attrib_ to the *right* of the ngram in the sentence"""
+        return self.sentence[attrib][self.word_end+1:self.word_end+1+n]
 
     def __getitem__(self, key):
         """
@@ -233,7 +252,7 @@ class Ngrams(CandidateSpace):
         self.split_rgx    = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
     
     def apply(self, x):
-        s = x if isinstance(x, dict) else x._asdict()
+        s = get_as_dict(x)
         try:
             cos   = s[CHAR_OFFSETS]
             words = s[WORDS]

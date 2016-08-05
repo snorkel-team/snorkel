@@ -89,17 +89,19 @@ class Learner(object):
 
     As input takes a TrainingSet object and a NoiseAwareModel object (the discriminative model to train).
     """
-    # TODO: Tuner (GridSearch) class that wraps this! 
     def __init__(self, training_set, model=None):
         self.training_set = training_set
         self.model        = model
 
+        # We need to know certain properties _that are set in the model defn_
+        self.bias_term = self.model.bias_term if hasattr(self.model, 'bias_term') else False
+
         # Derived objects from the training set
         self.L_train         = self.training_set.L
-        self.n_train, self.m = self.L_train.shape
         self.F_train         = self.training_set.F
-        self.f               = self.F_train.shape[1]
         self.X_train         = None
+        self.n_train, self.m = self.L_train.shape
+        self.f               = self.F_train.shape[1]
 
         # Cache the transformed test set as well
         self.test_candidates = None
@@ -110,13 +112,17 @@ class Learner(object):
 
     def _set_model_X(self, L, F):
         """Given LF matrix L, feature matrix F, return the matrix used by the end discriminative model."""
-        return sparse.hstack([L, F], format='csc')
+        n, m = L.shape
+        X    = sparse.hstack([L, F], format='csr')
+        if self.bias_term:
+            X = sparse.hstack([X, np.ones((n, 1))], format='csr')
+        return X
 
     def train(self, lf_w0=5.0, feat_w0=0.0, **model_hyperparams):
         """Train model: **as default, use "joint" approach**"""
-        # TODO: Bias term
         # Set the initial weights for LFs and feats
         w0 = np.concatenate([lf_w0*np.ones(self.m), feat_w0*np.ones(self.f)])
+        w0 = np.append(w0, 0) if self.bias_term else w0
 
         # Construct matrix X for "joint" approach
         self.X_train = self._set_model_X(self.L_train, self.F_train)
@@ -145,8 +151,8 @@ class Learner(object):
     def lf_accs(self):
         return odds_to_prob(self.lf_weights())
 
-    def feat_weights(self):
-        return self.model.w[self.m:]
+    def feature_weights(self):
+        return self.model.w[self.m:self.m+self.f]
         
     def predictions(self):
         return self.model.predict(self.X_test)
@@ -169,60 +175,62 @@ class Learner(object):
         wmv_pred = np.sign(self.L_test.dot(self.lf_weights()))
         return test_scores(wmv_pred, gold_labels, return_vals=return_vals, verbose=display)
 
-    def candidate_stats(self):
-        """Return a DataFrame of per-candidate stats"""
-        # TODO
-        raise NotImplementedError()
-
     def feature_stats(self, n_max=100):
         """Return a DataFrame of highest (abs)-weighted features"""
-        # TODO
-        raise NotImplementedError()
+        idxs = np.argsort(np.abs(self.feature_weights()))[::-1][:n_max]
+        d = {'j': idxs, 'w': [self.feature_weights()[i] for i in idxs]}
+        return DataFrame(data=d, index=[self.training_set.featurizer.feat_inv_index[i] for i in idxs])
 
 
 class PipelinedLearner(Learner):
-    """Implements the **"pipelined" approach**"""
+    """
+    Implements the **"pipelined" approach**- this is the method more literally corresponding
+    to the Data Programming paper
+    """
     def _set_model_X(self, L, F):
-        return F.tocsc()
+        n, f = F.shape
+        X    = F.tocsr()
+        if self.bias_term:
+            X = sparse.hstack([X, np.ones((n, 1))], format='csr')
+        return X
+
+    def train_lf_model(self, w0=1.0, **model_hyperparams):
+        """Train the first _generative_ model of the LFs"""
+        w0 = w0*np.ones(self.m)
+        self.training_model = LogReg()
+        self.training_model.train(self.L_train, w0=w0, **model_hyperparams)
+
+        # Compute marginal probabilities over the candidates from this model of the training set
+        return self.training_model.marginals(self.L_train)
+
+    def train_model(self, training_marginals, w0=0.0, **model_hyperparams):
+        """Train the provided end _discriminative_ model"""
+        w0           = w0*np.ones(self.f)
+        w0           = np.append(w0, 0) if self.bias_term else w0
+        self.X_train = self._set_model_X(self.L_train, self.F_train)
+        self.w       = self.model.train(self.X_train, training_marginals=training_marginals, \
+                        w0=w0, **model_hyperparams)
 
     def train(self, feat_w0=0.0, lf_w0=1.0, **model_hyperparams):
         """Train model: **as default, use "joint" approach**"""
-        w0_1 = lf_w0*np.ones(self.m)
-        w0_2 = feat_w0*np.ones(self.f)
-
-        # Learn lf accuracies first
-        self.training_model = LogReg()
-        self.training_model.train(self.L_train, w0=w0_1, **model_hyperparams)
-
-        # Compute marginal probabilities over the candidates from this model of the training set
-        training_marginals = self.training_model.marginals(self.L_train)
-
-        # Learn model over features
-        self.X_train = self._set_model_X(self.L_train, self.F_train)
-        self.w       = self.model.train(self.X_train, training_marginals=training_marginals, w0=w0_2, \
-            **model_hyperparams)
+        print "Training LF model..."
+        training_marginals = self.train_lf_model(w0=lf_w0, **model_hyperparams)
+        print "Training model..."
+        self.train_model(training_marginals, w0=feat_w0, **model_hyperparams)
 
     def lf_weights(self):
         return self.training_model.w
 
-    def feat_weights(self):
+    def feature_weights(self):
         return self.model.w
 
-class LSTMLearner(Learner):
-    """Implements the **"LSTM" approach**"""
 
-    def train(self, lf_w0=1.0, **model_hyperparams):
-        """Train model: **as default, use "joint" approach**"""
-        w0_1 = lf_w0*np.ones(self.m)
-
-        # Learn lf accuracies first
-        self.training_model = LogReg()
-        self.training_model.train(self.L_train, w0=w0_1)
-
-        # Compute marginal probabilities over the candidates from this model of the training set
-        training_marginals = self.training_model.marginals(self.L_train)
-        
-        # Learn model over training set
+class RepresentationLearner(PipelinedLearner):
+    """
+    Implements the _pipelined_ approach for an end model that also learns a representation
+    """
+    def train_model(self, training_marginals, w0=0.0, **model_hyperparams):
+        """Train the provided end _discriminative_ model"""
         self.w = self.model.train(self.training_set.training_candidates, training_marginals=training_marginals, \
                                   **model_hyperparams)
 
@@ -231,8 +239,10 @@ class LSTMLearner(Learner):
         if test_candidates != self.test_candidates or any(gold_labels != self.gold_labels):
             self.test_candidates = test_candidates
             self.gold_labels     = gold_labels
+        if display:
+            calibration_plots(self.model.marginals(self.training_set.training_candidates), \
+                                self.model.marginals(self.test_candidates), gold_labels)
         return test_scores(self.model.predict(self.test_candidates), gold_labels, return_vals=return_vals, verbose=display)
 
     def predictions(self):
         return self.model.predict(self.test_candidates)
-

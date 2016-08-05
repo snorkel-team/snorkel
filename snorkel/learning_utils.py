@@ -208,7 +208,7 @@ def candidate_coverage(L):
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates which have > 0 (non-zero) labels.**
     """
-    return np.where(L.sum(axis=1) != 0, 1, 0).sum() / float(L.shape[0])
+    return np.where(sparse_abs(L).sum(axis=1) != 0, 1, 0).sum() / float(L.shape[0])
 
 def LF_coverage(L):
     """

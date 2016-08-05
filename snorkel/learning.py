@@ -94,8 +94,9 @@ class NoiseAwareModel(object):
 
 class LogReg(NoiseAwareModel):
     """Logistic regression."""
-    def __init__(self):
-        self.w = None
+    def __init__(self, bias_term=False):
+        self.w         = None
+        self.bias_term = bias_term
 
     def train(self, X, training_marginals=None, n_iter=1000, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, \
             mu=DEFAULT_MU, sample=False, n_samples=100, evidence=None, warm_starts=False, tol=1e-6, \
@@ -157,13 +158,18 @@ class LogReg(NoiseAwareModel):
             
             # Update weights
             w -= rate * g
-            
+
             # Apply elastic net penalty
-            soft = np.abs(w) - rate * alpha * mu
+            w_bias    = w[-1]
+            soft      = np.abs(w) - rate * alpha * mu
             ridge_pen = (1 + (1-alpha) * rate * mu)
             
             #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
             w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
+
+            # Don't regularize the bias term
+            if self.bias_term:
+                w[-1] = w_bias
             
         # SGD did not converge    
         else:
@@ -183,9 +189,9 @@ class LSTM(NoiseAwareModel):
         self.lstm = None
         self.w = None
 
-    def train(self, X, training_marginals, **hyperparams):
-        self.lstm = LSTMModel(X, training_marginals)
+    def train(self, training_candidates, training_marginals, **hyperparams):
+        self.lstm = LSTMModel(training_candidates, training_marginals)
         self.lstm.train(**hyperparams)
 
-    def marginals(self, X):
-        return self.lstm.test(X)
+    def marginals(self, test_candidates):
+        return self.lstm.test(test_candidates)

@@ -9,8 +9,8 @@ except ImportError:
 
 class Matcher(object):
     """
-    Applies a function f : c -> {0,1} to a generator of candidates,
-    returning only candidates _c_ s.t. _f(c) == 1_,
+    Applies a function f : c -> {True,False} to a generator of candidates,
+    returning only candidates _c_ s.t. _f(c) == True_,
     where f can be compositionally defined.
     """
     def __init__(self, *children, **opts):
@@ -34,7 +34,7 @@ class Matcher(object):
 
     def _f(self, c):
         """The internal (non-composed) version of filter function f"""
-        return 1
+        return True
 
     def f(self, c):
         """
@@ -44,7 +44,7 @@ class Matcher(object):
         if len(self.children) == 0:
             return self._f(c)
         elif len(self.children) == 1:
-            return self._f(c) * self.children[0].f(c)
+            return self._f(c) and self.children[0].f(c)
         else:
             raise Exception("%s does not support more than one child Matcher" % self.__name__)
 
@@ -63,7 +63,7 @@ class Matcher(object):
         """
         seen_spans = set()
         for c in candidates:
-            if self.f(c) > 0 and (not self.longest_match_only or not any([self._is_subspan(c, s) for s in seen_spans])):
+            if self.f(c) is True and (not self.longest_match_only or not any([self._is_subspan(c, s) for s in seen_spans])):
                 if self.longest_match_only:
                     seen_spans.add(self._get_span(c))
                 yield c
@@ -111,7 +111,7 @@ class DictionaryMatch(NgramMatcher):
         p = c.get_attrib_span(self.attrib)
         p = p.lower() if self.ignore_case else p
         p = self._stem(p) if self.stemmer is not None else p
-        return 1 if p in self.d else 0
+        return True if p in self.d else False
 
 
 class Union(NgramMatcher):
@@ -119,8 +119,8 @@ class Union(NgramMatcher):
     def f(self, c):
        for child in self.children:
            if child.f(c) > 0:
-               return 1
-       return 0
+               return True
+       return False
 
 
 class Concat(NgramMatcher):
@@ -139,9 +139,9 @@ class Concat(NgramMatcher):
         if len(self.children) != 2:
             raise ValueError("Concat takes two child Matcher objects as arguments.")
         if not self.left_required and self.children[1].f(c):
-            return 1
+            return True
         if not self.right_required and self.children[0].f(c):
-            return 1
+            return True
 
         # Iterate over candidate splits **at the word boundaries**
         for wsplit in range(c.word_start+1, c.word_end+1):
@@ -152,10 +152,10 @@ class Concat(NgramMatcher):
                 c1 = c[:csplit-len(self.sep)]
                 c2 = c[csplit:]
                 if self.children[0].f(c1) and self.children[1].f(c2):
-                    return 1
+                    return True
                 if self.permutations and self.children[1].f(c1) and self.children[0].f(c2):
-                    return 1
-        return 0
+                    return True
+        return False
 
 
 class SlotFillMatch(NgramMatcher):
@@ -181,13 +181,13 @@ class SlotFillMatch(NgramMatcher):
         # First, filter candidates by matching splits pattern
         m = re.match(r'(.+)'.join(self._splits) + r'$', c.get_attrib_span(self.attrib))
         if m is None:
-            return 0
+            return False
 
         # Then, recursively apply matchers
         for i,op in enumerate(self._ops):
             if self.children[op].f(c[m.start(i+1):m.end(i+1)]) == 0:
-                return 0
-        return 1
+                return False
+        return True
 
 
 class RegexMatch(NgramMatcher):
@@ -213,10 +213,33 @@ class RegexMatch(NgramMatcher):
 class RegexMatchSpan(RegexMatch):
     """Matches regex pattern on **full concatenated span**"""
     def _f(self, c):
-        return 1 if self.r.match(c.get_attrib_span(self.attrib, sep=self.sep)) is not None else 0
+        return True if self.r.match(c.get_attrib_span(self.attrib, sep=self.sep)) is not None else 0
 
 
 class RegexMatchEach(RegexMatch):
     """Matches regex pattern on **each token**"""
     def _f(self, c):
-        return 1 if all([self.r.match(t) is not None for t in c.get_attrib_tokens(self.attrib)]) else 0
+        return True if all([self.r.match(t) is not None for t in c.get_attrib_tokens(self.attrib)]) else 0
+
+
+class NumberMatcher(Matcher):
+    def _f(self, c):
+        try:
+            float(c.get_attrib_span('words'))
+            return True
+        except:
+            return False
+
+
+class CandidateExtractor(object):
+    """Temporary class for interfacing with the post-candidate-extraction code"""
+    def __init__(self, candidate_space, matcher):
+        self.candidate_space = candidate_space
+        self.matcher         = matcher
+
+    def apply(self, s):
+        for c in self.matcher.apply(self.candidate_space.apply(s)):
+            try:
+                yield range(c.word_start, c.word_end+1), 'MATCHER'
+            except:
+                raise Exception("Candidate must have word_start and word_end attributes.")

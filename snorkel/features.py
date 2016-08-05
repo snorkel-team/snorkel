@@ -106,6 +106,7 @@ class NgramFeaturizer(Featurizer):
 
         if self.arity == 2:
             raise NotImplementedError("Featurizer needs to be implemented for binary relations!")
+
         return feature_generators
 
 
@@ -124,6 +125,20 @@ class TableNgramFeaturizer(NgramFeaturizer):
 
         return feature_generators
 
+class TableNgramPairFeaturizer(TableNgramFeaturizer):
+    def _match_contexts(self, candidates):
+        # collect (entity) feature generators from parent
+        entity_feature_generators = super(TableNgramFeaturizer, self)._match_contexts(candidates)
+
+        # TODO:
+        # make a generator that runs through component entities and tacks on their prefixes
+
+
+        # TODO:
+        # then run relation feature generators
+        relation_feature_generators = []
+
+        return entity_feature_generators + relation_feature_generators
 
 class LegacyCandidateFeaturizer(Featurizer):
     """Temporary class to handle v0.2 Candidate objects."""

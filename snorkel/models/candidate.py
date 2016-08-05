@@ -254,4 +254,5 @@ class NgramPair(Candidate):
             raise KeyError
 
     def __repr__(self):
-        return "NgramPair(%s, %s)" % (self.ngram0, self.ngram1)
+        return "NgramPair(%s, %s, Table=%s)" % (self.ngram0.get_span(), self.ngram1.get_span(), self.ngram0.context.table.position)
+        # return "NgramPair(%s, %s)" % (self.ngram0, self.ngram1)

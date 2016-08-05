@@ -55,14 +55,14 @@ def collect_pubtator_annotations(doc, sents, sep=" "):
                 'mesh_id': mesh, 'type': type, 'composite': comp_role}))
     return ngrams
 
-def collect_hardware_temperature_annotations(filename, attribute, candidates):
-    with open(filename, 'rb') as csvfile:
+def collect_hardware_entity_gold(filename, attribute, candidates):
+    with open(filename, 'r') as csvfile:
         gold_reader = csv.reader(csvfile)
         gold = []
         for row in gold_reader:
-            (doc, part, temp, attr) = row
+            (doc, part, val, attr) = row
             if attr==attribute:
-                gold.append((doc,temp))
+                gold.append((doc,val))
     gold = set(gold)
     print "%s gold annotations" % len(gold)
 
@@ -71,8 +71,8 @@ def collect_hardware_temperature_annotations(filename, attribute, candidates):
     pairs = defaultdict(list)
     for i, c in enumerate(candidates):
         filename = (c.context.document.file).split('.')[0]
-        temp = c.get_attrib_span('words')
-        pairs[(filename, temp)].append(c)
+        val = c.get_attrib_span('words')
+        pairs[(filename, val)].append(c)
     conflicts = 0
     for (a,b) in pairs.items():
         if len(b) > 1:
@@ -80,4 +80,25 @@ def collect_hardware_temperature_annotations(filename, attribute, candidates):
         else:
             label = 1 if a in gold else -1
             gt_dict[b[0].uid] = label
+    return gt_dict
+
+def collect_hardware_relation_gold(filename, attribute, candidates):
+    with open(filename, 'r') as csvfile:
+        gold_reader = csv.reader(csvfile)
+        gold = []
+        for row in gold_reader:
+            (doc, part, val, attr) = row
+            if attr==attribute:
+                gold.append((part,val))
+    gold = set(gold)
+    print "%s gold annotations available" % len(gold)
+
+    # match with candidates
+    gt_dict = {}
+    pairs = defaultdict(list)
+    for c in candidates:
+        part = c.ngram0.get_attrib_span('words')
+        val = c.ngram1.get_attrib_span('words')
+        label = 1 if (part, val) in gold else -1
+        gt_dict[c.uid] = label
     return gt_dict

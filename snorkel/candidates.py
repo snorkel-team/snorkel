@@ -1,4 +1,4 @@
-from .models import CandidateSet, Ngram
+from .models import CandidateSet, Ngram, NgramPair
 from itertools import chain
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
@@ -58,16 +58,13 @@ class CandidateExtractor(object):
     Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
     a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
     """
-    def __init__(self, candidate_space, matcher, parallelism=False, join_key='context_id'):
-        self.candidate_space = candidate_space
-        self.matcher = matcher
+    def __init__(self, parallelism=False, join_key='context_id'):
         self.parallelism = parallelism
         self.join_key = join_key
 
         self.ps = []
         self.feats = None
         self.feat_index = {}
-        # self.contexts = contexts
 
     def extract(self, contexts, name=None):
         c = CandidateSet()
@@ -85,7 +82,7 @@ class CandidateExtractor(object):
         return c
 
     def _extract(self, contexts):
-        return chain.from_iterable(self.matcher.apply(self.candidate_space.apply(c)) for c in contexts)
+        raise NotImplementedError
 
     def _extract_multiprocess(self, contexts):
         contexts_in    = JoinableQueue()
@@ -148,7 +145,29 @@ class CandidateExtractor(object):
         print "Candidate precision\t= %0.3f" % (both / float(nc),)
 
 
-EntityExtractor = CandidateExtractor
+class EntityExtractor(CandidateExtractor):
+    def __init__(self, candidate_space, matcher, parallelism=False, join_key='context_id'):
+        super(EntityExtractor, self).__init__(parallelism=parallelism, join_key=join_key)
+        self.candidate_space = candidate_space
+        self.matcher = matcher
+
+    def _extract(self, contexts):
+        return chain.from_iterable(self.matcher.apply(self.candidate_space.apply(c)) for c in contexts)
+
+
+class RelationExtractor(CandidateExtractor):
+    """Temporary class for getting quick numbers"""
+    def __init__(self, extractor1, extractor2, join_key='context_id'):
+        super(RelationExtractor, self).__init__(parallelism=False, join_key=join_key)
+        self.e1 = extractor1
+        self.e2 = extractor2
+
+    def _extract(self, contexts):
+        for context in contexts:
+            for ngram0 in self.e1._extract([context]):
+                for ngram1 in self.e2._extract([context]):
+                    uid = '%s_&_%s' % (ngram0.uid, ngram1.uid)
+                    yield NgramPair(ngram0=ngram0, ngram1=ngram1, uid=uid)
 
 
 class Ngrams(CandidateSpace):

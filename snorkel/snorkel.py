@@ -32,9 +32,13 @@ class TrainingSet(object):
         self.lfs                 = lfs
         self.lf_names            = [lf.__name__ for lf in lfs]
         self.L, self.F           = self.transform(self.training_candidates, fit=True)
-        self.dev_candidates      = None
-        self.dev_labels          = None
-        self.L_dev               = None
+
+        # Cached data for LF empirical stats
+        self.lf_stat_candidates = None
+        self.lf_stat_labels     = None
+        self.Ls                 = None
+
+        # Print training set summary stats
         self.summary_stats()
 
     def transform(self, candidates, fit=False):
@@ -59,7 +63,7 @@ class TrainingSet(object):
         """Print out basic stats about the LFs wrt the training candidates"""
         return training_set_summary_stats(self.L, return_vals=return_vals, verbose=verbose)
 
-    def lf_stats(self, dev_candidates=None, dev_labels=None):
+    def lf_stats(self, candidates=None, labels=None):
         """Returns a pandas Dataframe with the LFs and various per-LF statistics"""
         N, M = self.L.shape
 
@@ -72,12 +76,12 @@ class TrainingSet(object):
         }
         
         # Empirical stats, based on supplied development set
-        if dev_candidates and dev_labels is not None:
-            if self.L_dev is None or dev_candidates != self.dev_candidates or any(dev_labels != self.dev_labels):
-                self.dev_candidates = dev_candidates
-                self.dev_labels     = dev_labels
-                self.L_dev          = self._apply_lfs(dev_candidates)
-            d['accuracy'] = Series(data=LF_accuracies(self.L_dev, self.dev_labels), index=self.lf_names)
+        if candidates and labels is not None:
+            if self.Ls is None or candidates != self.lf_stat_candidates or any(labels != self.lf_stat_labels):
+                self.lf_stat_candidates = candidates
+                self.lf_stat_labels     = labels
+                self.Ls          = self._apply_lfs(candidates)
+            d['accuracy'] = Series(data=LF_accuracies(self.Ls, self.lf_stat_labels), index=self.lf_names)
         return DataFrame(data=d, index=self.lf_names)
 
 

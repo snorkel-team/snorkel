@@ -154,7 +154,7 @@ class GridSearch(object):
         self.param_names       = param_names
         self.param_val_ranges  = param_val_ranges
 
-    def fit(self, cv_candidates, cv_gold_labels, **model_hyperparams):
+    def fit(self, candidates, gold_labels, **model_hyperparams):
         """Basic method to start grid search, returns DataFrame table of results"""
         # Iterate over the param values
         run_stats   = []
@@ -173,7 +173,7 @@ class GridSearch(object):
             self.learner.train(**model_hyperparams)
 
             # Test the model
-            scores   = self.learner.test(cv_candidates, cv_gold_labels, display=False, return_vals=True)
+            scores   = self.learner.test(candidates, gold_labels, display=False, return_vals=True)
             p, r, f1 = scores[:3]
             run_stats.append(list(param_vals) + [p, r, f1])
             if f1 > f1_opt:

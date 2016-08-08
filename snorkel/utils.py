@@ -26,8 +26,14 @@ def split_html_attrs(attrs):
     html_attrs = []
     for a in attrs:
         attr = a[0]
-        values = [v.split(';') for v in a[1]] if isinstance(a[1],list) else [a[1]]
-        html_attrs += ["=".join([attr,val]) for val in chain.from_iterable(values)]
+        values = [v.split(';') for v in a[1]] if isinstance(a[1],list) else [a[1].split(';')]
+        for i in range(len(values)):
+            while isinstance(values[i], list):
+                values[i] = values[i][0]
+        html_attrs += ["=".join([attr,val]) for val in values]
+        # html_attrs += ["=".join([attr,val]) for val in chain.from_iterable(values)]
+        # if not isinstance(values, list):
+
     return html_attrs
 
 def slice_into_ngrams(tokens, n_max=3, delim='_'):

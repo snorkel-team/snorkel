@@ -1,5 +1,5 @@
-from .meta import SnorkelBase
-from sqlalchemy import Table, Column, String, Integer, ForeignKey, ForeignKeyConstraint
+from .meta import SnorkelBase, snorkel_postgres
+from sqlalchemy import Table, Column, String, Integer, ForeignKey, ForeignKeyConstraint, Index
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import PickleType
 
@@ -41,6 +41,13 @@ class Candidate(SnorkelBase):
     set = relationship('CandidateSet', backref=backref('candidates', cascade='all, delete-orphan'))
     type = Column(String, nullable=False)
 
+    # Postgres requires an explicit unique index to use a tuple as a compound foreign key,
+    # even if it is redundant as in this case
+    if snorkel_postgres:
+        __table_args__ = (
+            Index('candidate_unique_id_candidate_set_id', id, candidate_set_id, unique=True),
+        )
+
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',
         'polymorphic_on': type
@@ -54,7 +61,7 @@ class Ngram(Candidate):
     char_offsets are **relative to the Context start**
     """
     __table__ = Table('ngram', SnorkelBase.metadata,
-                      Column('id', Integer),
+                      Column('id', Integer, unique=True),
                       Column('candidate_set_id', Integer, primary_key=True),
                       Column('context_id', Integer, ForeignKey('context.id'), primary_key=True),
                       Column('char_start', Integer, primary_key=True),
@@ -62,6 +69,13 @@ class Ngram(Candidate):
                       Column('meta', PickleType),
                       ForeignKeyConstraint(['id', 'candidate_set_id'], ['candidate.id', 'candidate.candidate_set_id'])
                       )
+
+    # Postgres requires an explicit unique index to use a tuple as a compound foreign key,
+    # even if it is redundant as in this case
+    if snorkel_postgres:
+        __table_args__ = (
+            Index('ngram_unique_id_candidate_set_id', __table__.c.id, __table__.c.candidate_set_id, unique=True),
+        )
 
     context = relationship('Context', backref=backref('candidates', cascade_backrefs=False))
 
@@ -158,7 +172,7 @@ class NgramPair(Candidate):
     A pair of Ngram Candidates, representing a relation from Ngram 1 to Ngram 2.
     """
     __table__ = Table('ngram_pair', SnorkelBase.metadata,
-                      Column('id', Integer),
+                      Column('id', Integer, unique=True),
                       Column('candidate_set_id', Integer, primary_key=True),
                       Column('ngram0_id', Integer, primary_key=True),
                       Column('ngram1_id', Integer, primary_key=True),
@@ -182,7 +196,7 @@ class NgramPair(Candidate):
         elif key == 1:
             return self.ngram1
         else:
-            raise KeyError
+            raise KeyError('Valid keys are 0 and 1.')
 
     def __repr__(self):
         return "NgramPair(%s, %s)" % (self.ngram0, self.ngram1)

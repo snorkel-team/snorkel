@@ -121,8 +121,8 @@ def _get_window_features(cand, idxs, window=3, combinations=True, isolated=True)
                     curr_left_poses + "]_[" + curr_right_poses + "]"
 
 def get_table_feats(cand):
-    yield u"ROW_NUM_%s" % cand.context.row_num
-    yield u"COL_NUM_%s" % cand.context.col_num
+    yield u"ROW_NUM_[%s]" % cand.context.row_num
+    yield u"COL_NUM_[%s]" % cand.context.col_num
     yield u"HTML_TAG_" + cand.context.html_tag
     for attr in cand.context.html_attrs:
         yield u"HTML_ATTR_" + attr
@@ -130,7 +130,7 @@ def get_table_feats(cand):
         yield u"HTML_ANC_TAG_" + tag
     for attr in cand.context.html_anc_attrs:
         yield u"HTML_ANC_ATTR_" + attr
-    for attr in ['words','lemmas','poses']:
+    for attr in ['words']: # ['lemmas','poses']
         for ngram in cand.row_ngrams(attr=attr):
             yield "ROW_%s_%s" % (attr.upper(), ngram)
             if attr=="lemmas":
@@ -161,3 +161,19 @@ def get_table_feats(cand):
                         yield "NEIGHBOR_%s_FLOAT" % side
                 except:
                     pass
+
+def get_relation_table_feats(cand):
+    if cand.ngram0.context.table == cand.ngram1.context.table:
+        yield u"SAME_TABLE"
+        row_diff = cand.ngram0.context.row_num - cand.ngram1.context.row_num
+        yield u"ROW_DIFF_[%s]" % row_diff
+        col_diff = cand.ngram0.context.col_num - cand.ngram1.context.col_num
+        yield u"COL_DIFF_[%s]" % col_diff
+        yield u"MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff))
+        if cand.ngram0.context.cell == cand.ngram1.context.cell:
+            yield u"SAME_CELL"
+            yield u"WORD_DIFF_[%s]" % cand.ngram0.get_word_start() - cand.ngram1.get_word_start()
+            yield u"CHAR_DIFF_[%s]" % cand.ngram0.char_start - cand.ngram1.char_start
+            if cand.ngram0.context.phrase == cand.ngram1.context.phrase:
+                yield u"SAME_PHRASE"
+

@@ -9,7 +9,8 @@ sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 from treedlib import compile_relation_feature_generator
 from tree_structs import corenlp_to_xmltree, XMLTree
 from utils import get_as_dict
-from entity_features import *
+from entity_features import get_table_feats, get_relation_table_feats, \
+    get_ddlib_feats, compile_entity_feature_generator
 
 
 class Featurizer(object):
@@ -126,19 +127,30 @@ class TableNgramFeaturizer(NgramFeaturizer):
         return feature_generators
 
 class TableNgramPairFeaturizer(TableNgramFeaturizer):
+    def _prepend_entity_label(self, generator, entity_label):
+        for feat in generator:
+            yield (feat[0], ('e%s_' % entity_label) + feat[1])
+
     def _match_contexts(self, candidates):
+        # TODO: generalize this to arity=N
         # collect (entity) feature generators from parent
-        entity_feature_generators = super(TableNgramFeaturizer, self)._match_contexts(candidates)
+        e0_feature_generators = TableNgramFeaturizer._match_contexts(
+            self, [candidate.ngram0 for candidate in candidates])
+        e1_feature_generators = TableNgramFeaturizer._match_contexts(
+            self, [candidate.ngram1 for candidate in candidates])
 
-        # TODO:
-        # make a generator that runs through component entities and tacks on their prefixes
+        feature_generators = []
+        for i in range(len(e0_feature_generators)):
+            feature_generators += [self._prepend_entity_label(e0_feature_generators[i],0)]
+        for i in range(len(e1_feature_generators)):
+            feature_generators += [self._prepend_entity_label(e1_feature_generators[i],1)]
 
 
-        # TODO:
-        # then run relation feature generators
-        relation_feature_generators = []
+        feature_generators.append(self._generate_context_feats( \
+            lambda c : get_relation_table_feats(c), 'RTABLE_', candidates))
 
-        return entity_feature_generators + relation_feature_generators
+        return feature_generators
+
 
 class LegacyCandidateFeaturizer(Featurizer):
     """Temporary class to handle v0.2 Candidate objects."""

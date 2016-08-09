@@ -56,7 +56,8 @@ class CandidateExtractor(object):
     Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
     a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
     """
-    def __init__(self, candidate_space, matcher, parallelism=False, join_key='context_id'):
+    def __init__(self, candidate_spaces, matchers, parallelism=False, join_fn=None):
+        # TODO: handle new inputs!
         self.candidate_space = candidate_space
         self.matcher = matcher
         self.parallelism = parallelism
@@ -80,8 +81,37 @@ class CandidateExtractor(object):
         return c
 
     def _extract(self, contexts):
-        return chain.from_iterable(self.matcher.apply(self.candidate_space.apply(c)) for c in contexts)
 
+        # Unary candidates
+        if self.artiy == 1:
+            return chain.from_iterable(self.matcher.apply(self.candidate_space.apply(c)) for c in contexts)
+
+        # Binary candidates
+        elif self.arity == 2:
+            for context in contexts:
+
+                # TODO:
+                tc1s = list(self.matchers[0].apply(self.candidate_spaces[0].apply(context)))
+                tc2s = tc1s
+
+            
+                # Self-relations- materialize once to avoid repeated computation
+                if self.candidate_spaces[0] == self.candidate_spaces[1] and self.matchers[0] == self.matchers[1]:
+                    for tc1 in tc1s:
+                        for tc2 in tc2s:
+                            if tc1 != tc2 and (self.join_fn is None or self.join_fn(tc1, tc2)):
+
+                                # TODO: Transform two TransientCandidates -> the non-transient pairwise version
+                                yield _
+
+
+                for tc in self.candidate_space.apply(context):
+                    if self.
+
+        # Higher-arity candidates
+        else:
+            raise NotImplementedError()
+            
     def _extract_multiprocess(self, contexts):
         contexts_in    = JoinableQueue()
         candidates_out = Queue()

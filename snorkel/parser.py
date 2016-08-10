@@ -215,6 +215,8 @@ class SentenceParser(object):
                 dep_par.append(deps['governor'])
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])
+            # make char_offsets relative to start of sentence
+            parts['char_offsets'] = [p - parts['char_offsets'][0] for p in parts['char_offsets']]
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['text'] = text[block['tokens'][0]['characterOffsetBegin'] :
@@ -234,8 +236,8 @@ class SentenceParser(object):
 
 class HTMLParser(DocParser):
     """Simple parsing of files into html documents"""
-    def init(self):
-        self.doc_id = 0
+    # def init(self):
+    #     self.doc_id = 0
 
     def parse_file(self, fp, file_name):
         with open(fp, 'r') as f:

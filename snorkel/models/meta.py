@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 # We initialize the engine within the models module because models' schema can depend on
 # which data types are supported by the engine
-if 'SNORKELDB' in os.environ:
+if 'SNORKELDB' in os.environ and os.environ['SNORKELDB'] != '':
     snorkel_postgres = os.environ['SNORKELDB'].startswith('postgres')
     snorkel_engine = create_engine(os.environ['SNORKELDB'])
 else:

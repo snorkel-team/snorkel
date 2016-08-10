@@ -2,6 +2,7 @@
 
 from .models import Corpus, Document, Sentence
 import atexit
+import warnings
 from bs4 import BeautifulSoup
 from collections import defaultdict
 import glob
@@ -192,6 +193,7 @@ class SentenceParser:
           raise ValueError("File {} too long. Max character count is 100K".format(document.id))
         blocks = json.loads(content, strict=False)['sentences']
         sent_id = 0
+        diverged = False
         for block in blocks:
             parts = defaultdict(list)
             dep_order, dep_par, dep_lab = [], [], []
@@ -207,8 +209,14 @@ class SentenceParser:
             parts['char_offsets'] = [p - parts['char_offsets'][0] for p in parts['char_offsets']]
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
-            parts['text'] = text[block['tokens'][0]['characterOffsetBegin'] :
-                                block['tokens'][-1]['characterOffsetEnd']]
+            # NOTE: We have observed weird bugs where CoreNLP diverges from raw document text (see Issue #368)
+            # In these cases we go with CoreNLP so as not to cause downstream issues but throw a warning
+            doc_text = text[block['tokens'][0]['characterOffsetBegin'] : block['tokens'][-1]['characterOffsetEnd']]
+            L = len(block['tokens'])
+            parts['text'] = ''.join(t['originalText'] + t['after'] if i < L - 1 else t['originalText'] for i,t in enumerate(block['tokens']))
+            if not diverged and doc_text != parts['text']:
+                diverged = True
+                warnings.warn("CoreNLP parse has diverged from raw document text!")
             parts['position'] = sent_id
             sent = Sentence(**parts)
             sent.document = document

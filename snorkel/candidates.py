@@ -1,4 +1,4 @@
-from .models import CandidateSet, Ngram
+from .models import CandidateSet, TemporarySpan
 from itertools import chain
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
@@ -69,10 +69,10 @@ class CandidateExtractor(object):
 
         if self.parallelism in [1, False]:
             for candidate in self._extract(contexts):
-                c.candidates.append(candidate)
+                c.candidates.append(candidate.promote())
         else:
             for candidate in self._extract_multiprocess(contexts):
-                c.candidates.append(candidate)
+                c.candidates.append(candidate.promote())
 
         if name is not None:
             c.name = name
@@ -127,4 +127,4 @@ class Ngrams(CandidateSpace):
                 char_start = context.char_offsets[i]
                 cl = context.char_offsets[i+l-1] - context.char_offsets[i] + len(context.words[i+l-1])
                 char_end = context.char_offsets[i] + cl - 1
-                yield Ngram(char_start=char_start, char_end=char_end, context=context)
+                yield TemporarySpan(char_start=char_start, char_end=char_end, context=context)

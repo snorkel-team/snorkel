@@ -104,9 +104,9 @@ class Viewer(widgets.DOMWidget):
                 # the candidates that are passed in
                 #candidates = self.candidates.intersection(context.candidates)
                 try:
-                    candidates = [c for c in self.candidates if c.context_id == context.id]
+                    candidates = [c for c in self.candidates if c.context == context]
                 except:
-                    candidates = [c for c in self.candidates if c.span0.context_id == context.id]
+                    candidates = [c for c in self.candidates if c.span0.context == context]
 
                 # TODO: Replace this (and other similar) statements with SQLAlchemy syntax
                 gold = [g for g in self.gold if g.context_id == context.id]
@@ -114,7 +114,12 @@ class Viewer(widgets.DOMWidget):
                 # Construct the <li> and page view elements
                 li_data = self._tag_context(context, candidates, gold)
                 lis.append(LI_HTML.format(data=li_data, context_id=context.id))
-                page_cids += [c.id for c in sorted(candidates, key=lambda c : c.char_start)]
+
+                # TODO: Remove this hack
+                try:
+                    page_cids += [c.id for c in sorted(candidates, key=lambda c : c.char_start)]
+                except:
+                    page_cids += [c.id for c in sorted(candidates, key=lambda c : c.span0.char_start)]
             pages.append(PAGE_HTML.format(pid=pid, data=''.join(lis)))
             cids.append(page_cids)
             pid += 1
@@ -148,15 +153,27 @@ class SentenceNgramViewer(Viewer):
         s = sentence.text
 
         # First, split the sentence into the *smallest* single-candidate chunks
-        both   = list(candidates) + list(gold)
-        splits = sorted(list(set([b.char_start for b in both] + [b.char_end + 1 for b in both] + [0, len(s)])))
+        # TODO: Remove this hack!
+        try:
+            both   = list(candidates) + list(gold)
+            splits = sorted(list(set([b.char_start for b in both] + [b.char_end + 1 for b in both] + [0, len(s)])))
+        except:
+            both   = [c.span0 for c in candidates] + [c.span1 for c in candidates] + [g.span0 for g in gold] + [g.span1 for g in gold]
+            splits = sorted(list(set([b.char_start for b in both] + [b.char_end + 1 for b in both] + [0, len(s)])))
 
         # For each chunk, add cid if subset of candidate span, tag if gold, and produce span
         html = ""
         for i in range(len(splits)-1):
             start  = splits[i]
             end    = splits[i+1] - 1
-            cids   = [c.id for c in candidates if self._is_subspan(start, end, c)]
-            gcids  = [g.id for g in gold if self._is_subspan(start, end, g)]
+
+            # TODO: Remove this hack!
+            try:
+                cids  = [c.id for c in candidates if self._is_subspan(start, end, c)]
+                gcids = [g.id for g in gold if self._is_subspan(start, end, g)]
+            except:
+                cids  = [c.id for c in candidates if self._is_subspan(start, end, c.span0) or self._is_subspan(start, end, c.span1)]
+                gcids = [g.id for g in gold if self._is_subspan(start, end, g.span0) or self._is_subspan(start, end, g.span1)]
+
             html += self._tag_span(s[start:end+1], cids, gold=len(gcids) > 0)
         return html

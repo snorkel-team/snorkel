@@ -1,4 +1,4 @@
-from .models import CandidateSet, Ngram, NgramPair
+from .models import CandidateSet, TemporarySpan, SpanPair
 from itertools import chain
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
@@ -71,10 +71,10 @@ class CandidateExtractor(object):
 
         if self.parallelism in [1, False]:
             for candidate in self._extract(contexts):
-                c.candidates.append(candidate)
+                c.candidates.append(candidate.promote())
         else:
             for candidate in self._extract_multiprocess(contexts):
-                c.candidates.append(candidate)
+                c.candidates.append(candidate.promote())
 
         if name is not None:
             c.name = name
@@ -164,10 +164,10 @@ class RelationExtractor(CandidateExtractor):
 
     def _extract(self, contexts):
         for context in contexts:
-            for ngram0 in self.e1._extract([context]):
-                for ngram1 in self.e2._extract([context]):
-                    uid = '%s_&_%s' % (ngram0.uid, ngram1.uid)
-                    yield NgramPair(ngram0=ngram0, ngram1=ngram1, uid=uid)
+            for span0 in self.e1._extract([context]):
+                for span1 in self.e2._extract([context]):
+                    uid = '%s_&_%s' % (span0.uid, span1.uid)
+                    yield SpanPair(span0=(span0.promote()), span1=(span1.promote()), uid=uid)
 
 
 class Ngrams(CandidateSpace):
@@ -196,17 +196,17 @@ class Ngrams(CandidateSpace):
                                        context.position,
                                        char_start,
                                        char_end)
-                yield Ngram(char_start=char_start, char_end=char_end, context=context, uid=uid)
+                yield TemporarySpan(char_start=char_start, char_end=char_end, context=context, uid=uid)
 
                 # Check for split
                 # NOTE: For simplicity, we only split single tokens right now!
-                # if l == 1 and self.split_rgx is not None:
-                #     m = re.search(self.split_rgx,
-                #         context.text[char_start-context.char_offsets[0]:char_end-context.char_offsets[0]+1])
-                #     if m is not None and l < self.n_max:
-                #         if char_start > char_start + m.start(1) - 1 or char_start + m.end(1) > char_end:
-                #         yield Ngram(char_start=char_start, char_end=char_start + m.start(1) - 1, context=context)
-                #         yield Ngram(char_start=char_start + m.end(1), char_end=char_end, context=context)
+                if l == 1 and self.split_rgx is not None:
+                    m = re.search(self.split_rgx,
+                        context.text[char_start-context.char_offsets[0]:char_end-context.char_offsets[0]+1])
+                    if m is not None and l < self.n_max:
+                        if char_start > char_start + m.start(1) - 1 or char_start + m.end(1) > char_end:
+                            yield TemporarySpan(char_start=char_start, char_end=char_start + m.start(1) - 1, context=context)
+                            yield TemporarySpan(char_start=char_start + m.end(1), char_end=char_end, context=context)
 
 class TableNgrams(Ngrams):
     """
@@ -220,6 +220,5 @@ class TableNgrams(Ngrams):
             phrases = [context]
 
         for phrase in phrases:
-            for ngram in super(TableNgrams, self).apply(phrase):
-                yield ngram
-
+            for temp_span in super(TableNgrams, self).apply(phrase):
+                yield temp_span

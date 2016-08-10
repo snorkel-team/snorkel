@@ -31,7 +31,7 @@ define a new type of Context is
 """
 from .meta import SnorkelBase, SnorkelSession, snorkel_engine, snorkel_postgres
 from .context import Context, Corpus, Document, Sentence, Table, Cell, Phrase
-from .candidate import Candidate, Ngram, NgramPair, CandidateSet
+from .candidate import Candidate, TemporarySpan, Span, SpanPair, CandidateSet
 
 # This call must be performed after all classes that extend SnorkelBase are
 # declared to ensure the storage schema is initialized

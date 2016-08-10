@@ -236,8 +236,10 @@ class SentenceParser(object):
 
 class HTMLParser(DocParser):
     """Simple parsing of files into html documents"""
-    # def init(self):
-    #     self.doc_id = 0
+    # TEMP
+    def init(self):
+        self.doc_id = 0
+    # TEMP
 
     def parse_file(self, fp, file_name):
         with open(fp, 'r') as f:

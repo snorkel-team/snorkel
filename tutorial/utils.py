@@ -1,19 +1,18 @@
 import lxml.etree as et
-from snorkel.models import CandidateSet
-from snorkel.candidates import Ngram
+from snorkel.models import CandidateSet, Span
 from collections import defaultdict
 import csv
 
 def collect_pubtator_annotations(doc, sents, sep=" "):
     """
     Given a Document with PubTator/CDR annotations, and a corresponding set of Sentences,
-    extract a set of Ngram objects indexed according to **Sentence character indexing**
+    extract a set of Span objects indexed according to **Sentence character indexing**
     NOTE: Assume the sentences are provided in correct order & have standard separator.
     """
     sent_offsets = [s.char_offsets[0] for s in sents]
 
-    # Get Ngrams
-    ngrams = CandidateSet()
+    # Get Spans
+    spans = CandidateSet()
     annotations = et.fromstring(doc.attribs['root']).xpath('.//annotation')
     for a in annotations:
 
@@ -51,9 +50,9 @@ def collect_pubtator_annotations(doc, sents, sep=" "):
                 elif offset < so:
                     si = i - 1
                     break
-            ngrams.append(Ngram(char_start=offset, char_end=offset + length - 1, context=sents[si], meta={
+            spans.append(Span(char_start=offset, char_end=offset + length - 1, context=sents[si], meta={
                 'mesh_id': mesh, 'type': type, 'composite': comp_role}))
-    return ngrams
+    return spans
 
 def collect_hardware_entity_gold(filename, attribute, candidates):
     with open(filename, 'r') as csvfile:
@@ -97,8 +96,8 @@ def collect_hardware_relation_gold(filename, attribute, candidates):
     gt_dict = {}
     pairs = defaultdict(list)
     for c in candidates:
-        part = c.ngram0.get_attrib_span('words')
-        val = c.ngram1.get_attrib_span('words')
+        part = c.span0.get_attrib_span('words')
+        val = c.span1.get_attrib_span('words')
         label = 1 if (part, val) in gold else -1
         gt_dict[c.uid] = label
     return gt_dict

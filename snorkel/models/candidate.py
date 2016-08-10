@@ -56,10 +56,11 @@ class Candidate(SnorkelBase):
 
 class TemporarySpan(object):
 
-    def __init__(self, context=None, char_end=None, char_start=None):
+    def __init__(self, context=None, char_end=None, char_start=None, meta=None):
         self.context = context
         self.char_end = char_end
         self.char_start = char_start
+        self.meta = meta
 
     def __len__(self):
         return self.char_end - self.char_start + 1

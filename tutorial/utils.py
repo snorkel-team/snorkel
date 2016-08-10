@@ -1,6 +1,6 @@
 import lxml.etree as et
 from snorkel.models import CandidateSet
-from snorkel.candidates import Ngram
+from snorkel.candidates import TemporarySpan
 
 
 def collect_pubtator_annotations(doc, sents, sep=" "):
@@ -50,6 +50,6 @@ def collect_pubtator_annotations(doc, sents, sep=" "):
                 elif offset < so:
                     si = i - 1
                     break
-            ngrams.append(Ngram(char_start=offset, char_end=offset + length - 1, context=sents[si], meta={
+            ngrams.append(TemporarySpan(char_start=offset, char_end=offset + length - 1, context=sents[si], meta={
                 'mesh_id': mesh, 'type': type, 'composite': comp_role}))
     return ngrams

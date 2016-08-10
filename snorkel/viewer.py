@@ -58,10 +58,17 @@ class Viewer(widgets.DOMWidget):
         # Get all the contexts containing the candidates
         self.candidates = set(candidates)
         self.gold       = set(gold)
-        self.contexts   = list(set(c.context for c in self.candidates.union(self.gold)))
+
+        # TODO: Hack!!!
+        try:
+            self.contexts = list(set(c.context for c in self.candidates.union(self.gold)))
+        except:
+            self.contexts = list(set(c.span0.context for c in self.candidates.union(self.gold)))
 
         # TODO: Replace with proper ORM syntax
         self.candidates_by_id = dict([(c.id, c) for c in self.candidates])
+
+        # TODO: Remove this workaround
 
         # display js, construct html and pass on to widget model
         self.render()
@@ -95,7 +102,11 @@ class Viewer(widgets.DOMWidget):
 
                 # NOTE: We do *not* assume that the user wants to see all candidates in each context- only
                 # the candidates that are passed in
-                candidates = self.candidates.intersection(context.candidates)
+                #candidates = self.candidates.intersection(context.candidates)
+                try:
+                    candidates = [c for c in self.candidates if c.context_id == context.id]
+                except:
+                    candidates = [c for c in self.candidates if c.span0.context_id == context.id]
 
                 # TODO: Replace this (and other similar) statements with SQLAlchemy syntax
                 gold = [g for g in self.gold if g.context_id == context.id]

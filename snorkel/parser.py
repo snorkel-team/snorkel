@@ -204,6 +204,8 @@ class SentenceParser:
                 dep_par.append(deps['governor'])
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])
+            # make char_offsets relative to start of sentence
+            parts['char_offsets'] = [p - parts['char_offsets'][0] for p in parts['char_offsets']]
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['text'] = text[block['tokens'][0]['characterOffsetBegin'] :
@@ -216,7 +218,7 @@ class SentenceParser:
 
 
 def sort_X_on_Y(X, Y):
-    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]   
+    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
 
 
 def corenlp_cleaner(words):

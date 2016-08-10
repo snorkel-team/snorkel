@@ -1,14 +1,9 @@
-import cPickle, json, os, sys, warnings
-from collections import defaultdict, OrderedDict, namedtuple
-import lxml.etree as et
-import numpy as np
+import warnings
 import matplotlib
 matplotlib.use('Agg')
 warnings.filterwarnings("ignore", module="matplotlib")
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-import matplotlib.pyplot as plt
 import scipy.sparse as sparse
-from features import Featurizer
 from learning import LogReg, odds_to_prob
 from lstm import *
 from learning_utils import test_scores, calibration_plots, training_set_summary_stats, sparse_abs, LF_coverage, \
@@ -74,7 +69,7 @@ class TrainingSet(object):
             'overlaps'  : Series(data=LF_overlaps(self.L), index=self.lf_names),
             'conflicts' : Series(data=LF_conflicts(self.L), index=self.lf_names)
         }
-        
+
         # Empirical stats, based on supplied development set
         if candidates and labels is not None:
             if self.Ls is None or candidates != self.lf_stat_candidates or any(labels != self.lf_stat_labels):
@@ -157,7 +152,7 @@ class Learner(object):
 
     def feature_weights(self):
         return self.model.w[self.m:self.m+self.f]
-        
+
     def predictions(self):
         return self.model.predict(self.X_test)
 

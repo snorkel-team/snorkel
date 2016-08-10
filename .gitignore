@@ -5,6 +5,7 @@
 *.pyc
 parser/
 /stanford-corenlp-*
+*.db
 
 /saved_sents.pkl
 
@@ -20,3 +21,6 @@ examples/mindtagger
 
 # pickled data from notebooks
 *.pkl
+
+# PyCharm
+.idea

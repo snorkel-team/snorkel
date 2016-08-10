@@ -1,12 +1,7 @@
-from lxml import etree as et
-from collections import defaultdict, namedtuple
+import lxml.etree as et
+from snorkel.models import CandidateSet
 from snorkel.candidates import Ngram
 
-def ensure_dict(x):
-    return x if isinstance(x, dict) else x._asdict()
-
-WORDS        = 'words'
-CHAR_OFFSETS = 'char_offsets'
 
 def collect_pubtator_annotations(doc, sents, sep=" "):
     """
@@ -14,11 +9,12 @@ def collect_pubtator_annotations(doc, sents, sep=" "):
     extract a set of Ngram objects indexed according to **Sentence character indexing**
     NOTE: Assume the sentences are provided in correct order & have standard separator.
     """
-    sent_offsets = [ensure_dict(s)[CHAR_OFFSETS][0] for s in sents]
+    sent_offsets = [s.char_offsets[0] for s in sents]
 
     # Get Ngrams
-    ngrams = []
-    for a in doc.attribs['root'].xpath('.//annotation'):
+    ngrams = CandidateSet()
+    annotations = et.fromstring(doc.attribs['root']).xpath('.//annotation')
+    for a in annotations:
 
         # Relation annotations
         if len(a.xpath('./infon[@key="relation"]')) > 0:
@@ -54,6 +50,6 @@ def collect_pubtator_annotations(doc, sents, sep=" "):
                 elif offset < so:
                     si = i - 1
                     break
-            ngrams.append(Ngram(offset, offset + length - 1, sents[si], metadata={
-                'mesh_id' : mesh, 'type' : type, 'composite' : comp_role}))
+            ngrams.append(Ngram(char_start=offset, char_end=offset + length - 1, context=sents[si], meta={
+                'mesh_id': mesh, 'type': type, 'composite': comp_role}))
     return ngrams

@@ -1,5 +1,4 @@
 import re
-from itertools import chain
 import warnings
 try:
     from nltk.stem.porter import PorterStemmer
@@ -144,7 +143,7 @@ class Concat(NgramMatcher):
             return True
 
         # Iterate over candidate splits **at the word boundaries**
-        for wsplit in range(c.word_start+1, c.word_end+1):
+        for wsplit in range(c.get_word_start()+1, c.get_word_end()+1):
             csplit = c.word_to_char_index(wsplit) - c.char_start  # NOTE the switch to **candidate-relative** char index
 
             # Optionally check for specific separator
@@ -219,27 +218,4 @@ class RegexMatchSpan(RegexMatch):
 class RegexMatchEach(RegexMatch):
     """Matches regex pattern on **each token**"""
     def _f(self, c):
-        return True if all([self.r.match(t) is not None for t in c.get_attrib_tokens(self.attrib)]) else 0
-
-
-class NumberMatcher(Matcher):
-    def _f(self, c):
-        try:
-            float(c.get_attrib_span('words'))
-            return True
-        except:
-            return False
-
-
-class CandidateExtractor(object):
-    """Temporary class for interfacing with the post-candidate-extraction code"""
-    def __init__(self, candidate_space, matcher):
-        self.candidate_space = candidate_space
-        self.matcher         = matcher
-
-    def apply(self, s):
-        for c in self.matcher.apply(self.candidate_space.apply(s)):
-            try:
-                yield range(c.word_start, c.word_end+1), 'MATCHER'
-            except:
-                raise Exception("Candidate must have word_start and word_end attributes.")
+        return 1 if all([self.r.match(t) is not None for t in c.get_attrib_tokens(self.attrib)]) else 0

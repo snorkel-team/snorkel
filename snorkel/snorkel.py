@@ -97,10 +97,11 @@ class Learner(object):
 
         # Derived objects from the training set
         self.L_train         = self.training_set.L
-        self.F_train         = self.training_set.F
         self.X_train         = None
         self.n_train, self.m = self.L_train.shape
-        self.f               = self.F_train.shape[1]
+        if self.training_set.F is not None:
+            self.F_train = self.training_set.F
+            self.f       = self.F_train.shape[1]
 
         # Cache the transformed test set as well
         self.test_candidates = None

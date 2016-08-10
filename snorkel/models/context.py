@@ -24,7 +24,7 @@ class Corpus(Context):
     Default iterator is over (Document, Sentence) tuples.
     """
     __tablename__ = 'corpus'
-    id = Column(Integer, ForeignKey('context.id'), nullable=False)
+    id = Column(Integer, ForeignKey('context.id'), unique=True, nullable=False)
     name = Column(String, primary_key=True)
 
     __mapper_args__ = {
@@ -46,7 +46,7 @@ class Corpus(Context):
 class Document(Context):
     """An object in a Corpus."""
     __tablename__ = 'document'
-    id = Column(Integer, ForeignKey('context.id'), nullable=False)
+    id = Column(Integer, ForeignKey('context.id'), unique=True, nullable=False)
     name = Column(String, primary_key=True)
     corpus_id = Column(Integer, ForeignKey('corpus.id'), primary_key=True)
     corpus = relationship('Corpus', backref=backref('documents', cascade='all, delete-orphan'), foreign_keys=corpus_id)
@@ -64,7 +64,7 @@ class Document(Context):
 class Sentence(Context):
     """A sentence Context in a Document."""
     __tablename__ = 'sentence'
-    id = Column(Integer, ForeignKey('context.id'))
+    id = Column(Integer, ForeignKey('context.id'), unique=True)
     document_id = Column(Integer, ForeignKey('document.id'), primary_key=True)
     document = relationship('Document', backref=backref('sentences', cascade='all, delete-orphan'), foreign_keys=document_id)
     position = Column(Integer, primary_key=True)

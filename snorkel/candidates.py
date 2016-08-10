@@ -158,7 +158,6 @@ class CandidateExtractor(object):
                 break
         return candidates
 
-
 class Ngrams(CandidateSpace):
     """
     Defines the space of candidates as all n-grams (n <= n_max) in a Sentence _x_,

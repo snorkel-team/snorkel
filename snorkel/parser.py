@@ -172,13 +172,12 @@ class SentenceParser:
                         status_forcelist=[ 500, 502, 503, 504 ])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
 
-
     def _kill_pserver(self):
         if self.server_pid is not None:
             try:
-              os.kill(self.server_pid, signal.SIGTERM)
+                os.kill(self.server_pid, signal.SIGTERM)
             except:
-              sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
+                sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
     def parse(self, document, text):
         """Parse a raw document as a string into a list of sentences"""

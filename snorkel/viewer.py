@@ -119,7 +119,9 @@ class Viewer(widgets.DOMWidget):
 
     def get_labels(self):
         """De-serialize labels, map to candidate id, and return as dictionary"""
-        return dict(x.split('~~') for x in self._labels_serialized.split(',') if len(x) > 0)
+        labels = [x.split('~~') for x in self._labels_serialized.split(',') if len(x) > 0]
+        LABEL_MAP = {'true':1, 'false':-1}
+        return dict([(id, LABEL_MAP.get(l, 0)) for id,l in labels])
 
     def get_selected(self):
         if len(self.selected_cid) > 0:

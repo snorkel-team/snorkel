@@ -1,4 +1,4 @@
-# Snorkel
+<img src="figs/logo_01.png" width="150"/>
 
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 

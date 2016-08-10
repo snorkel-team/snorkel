@@ -32,14 +32,8 @@ class TestParsers(unittest.TestCase):
             text='.//passage/text/text()',
             id='.//id/text()',
             keep_xml_tree=False)
-
         sent_parser = SentenceParser()
-
         corpus = Corpus(xml_parser, sent_parser, max_docs=20)
-
-        print len(corpus.get_docs())
-        print len(corpus.get_contexts())
-
         self.assertEqual(corpus.get_docs(), gold_docs)
         self.assertEqual(corpus.get_contexts(), gold_sents)
 

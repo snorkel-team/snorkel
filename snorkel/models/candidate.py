@@ -190,8 +190,8 @@ class SpanPair(Candidate):
                       Column('span0_id', Integer, primary_key=True),
                       Column('span1_id', Integer, primary_key=True),
                       ForeignKeyConstraint(['id', 'candidate_set_id'], ['candidate.id', 'candidate.candidate_set_id']),
-                      ForeignKeyConstraint(['span0_id', 'candidate_set_id'], ['span.id', 'span.candidate_set_id']),
-                      ForeignKeyConstraint(['span1_id', 'candidate_set_id'], ['span.id', 'span.candidate_set_id'])
+                      ForeignKeyConstraint(['span0_id'], ['span.id']),
+                      ForeignKeyConstraint(['span1_id'], ['span.id'])
                       )
 
     span0 = relationship('Span', backref=backref('span_source_pairs', cascade_backrefs=False),

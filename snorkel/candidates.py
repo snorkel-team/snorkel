@@ -76,7 +76,7 @@ class CandidateExtractor(object):
     def extract(self, contexts, name=None):
         c = CandidateSet()
         if self.parallelism in [1, False]:
-            for candidate in self._extract(contexts):
+            for candidate in self._extract(contexts, name):
                 c.candidates.append(candidate)
         else:
             for candidate in self._extract_multiprocess(contexts):
@@ -85,7 +85,7 @@ class CandidateExtractor(object):
             c.name = name
         return c
 
-    def _extract(self, contexts):
+    def _extract(self, contexts, name):
 
         # Unary candidates
         if self.arity == 1:
@@ -95,6 +95,7 @@ class CandidateExtractor(object):
 
         # Binary candidates
         elif self.arity == 2:
+            span_set = CandidateSet(name=str(name + '-spans'))
             
             # NOTE: We are implicitly joining on context1.id == context2.id by iterating over contexts!
             for context in contexts:
@@ -108,6 +109,7 @@ class CandidateExtractor(object):
                     tcs2 = self.matchers[1].apply(self.candidate_spaces[1].apply(context))
 
                 # Do the local join, materializing all pairs of matched unary candidates
+                promoted_candidates = {}
                 for tc1 in tcs1:
                     for tc2 in tcs2:
 
@@ -117,8 +119,16 @@ class CandidateExtractor(object):
 
                         # AND-composition of implicit context.id join with optional join_fn condition
                         if (self.join_fn is None or self.join_fn(tc1, tc2)):
-                            c1 = tc1.promote()
-                            c2 = tc2.promote()
+                            if tc1 not in promoted_candidates:
+                                promoted_candidates[tc1] = tc1.promote()
+                                promoted_candidates[tc1].set = span_set
+
+                            if tc2 not in promoted_candidates:
+                                promoted_candidates[tc2] = tc2.promote()
+                                promoted_candidates[tc2].set = span_set
+
+                            c1 = promoted_candidates[tc1]
+                            c2 = promoted_candidates[tc2]
                             
                             # TODO: Un-hardcode this!
                             if isinstance(c1, Span) and isinstance(c2, Span):

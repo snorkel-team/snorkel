@@ -70,6 +70,9 @@ class TemporarySpan(object):
         else:
             return False
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __hash__(self):
         return hash(self.context) + hash(self.char_start) + hash(self.char_end)
 
@@ -110,6 +113,9 @@ class TemporarySpan(object):
 
     def get_span(self, sep=" "):
         return self.get_attrib_span('words', sep)
+
+    def __contains__(self, other_span):
+        return other_span.char_start >= self.char_start and other_span.char_end <= self.char_end
 
     def __getitem__(self, key):
         """

@@ -71,7 +71,7 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
 
         // Get candidate selector for currently selected candidate, escaping id properly
         getCandidate: function() {
-            return this.$el.find("."+this.cids[this.pid][this.cid].replace(/:/g, "\\:"));
+            return this.$el.find("."+this.cids[this.pid][this.cid]);
         },  
 
         // Cycle through candidates and highlight, by increment inc

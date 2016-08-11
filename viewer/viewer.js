@@ -162,21 +162,23 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
 
         // Highlight spans
         setRGBABackgroundOpacity: function(el, opacity) {
-            var rgx = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*(\d\.\d+)\)/;
-            var m   = rgx.exec(el.css("background-color"));
+            el.each(function() {
+                var rgx = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*(\d\.\d+)\)/;
+                var m   = rgx.exec($(this).css("background-color"));
 
-            // Handle rgb
-            if (m == null) {
-                rgx = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/;
-                m   = rgx.exec(el.css("background-color"));
-            }
-            if (m != null) {
-                el.css("background-color", "rgba("+m[1]+","+m[2]+","+m[3]+","+opacity+")");
+                // Handle rgb
+                if (m == null) {
+                    rgx = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/;
+                    m   = rgx.exec($(this).css("background-color"));
+                }
+                if (m != null) {
+                    $(this).css("background-color", "rgba("+m[1]+","+m[2]+","+m[3]+","+opacity+")");
 
-            // TODO: Clean up this hack!!
-            } else {
-                el.css("background-color", "rgba(255,255,0,1)");
-            }
+                // TODO: Clean up this hack!!
+                } else {
+                    $(this).css("background-color", "rgba(255,255,0,1)");
+                }
+            });
         },
     });
 

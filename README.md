@@ -10,12 +10,6 @@ Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program
 * `master`: Current stable development version (v0.3)
 * `v0.2-stable`: Last full version (v0.2)
 
-## Running
-After installing (see below), just run:
-```
-./run.sh
-```
-
 ## Motivation
 Snorkel is intended to be a lightweight but powerful framework for developing **structured information extraction applications** for domains in which large labeled training sets are not available or easy to obtain, using the _data programming_ paradigm.
 
@@ -59,6 +53,12 @@ jupyter nbextension enable --py widgetsnbextension --sys-prefix
 *Note: if you have an issue with the matplotlib install related to the module `freetype`, see [this post](http://stackoverflow.com/questions/20533426/ubuntu-running-pip-install-gives-error-the-following-required-packages-can-no); if you have an issue installing ipython, try [upgrading setuptools](http://stackoverflow.com/questions/35943606/error-on-installing-ipython-for-python-3-sys-platform-darwin-and-platform)*
 
 Alternatively, they could be installed system-wide if `sudo pip` is used instead of `pip` in the last command without the virtualenv setup and activation.
+
+## Running
+After installing (see below), just run:
+```
+./run.sh
+```
 
 ## Learning how to use Snorkel
 New tutorial (in progress; covers through candidate extraction for entities):

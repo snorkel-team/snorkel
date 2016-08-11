@@ -94,9 +94,21 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
                     this.cid += inc;
                 }
             }
+            var cNext = this.getCandidate();
+
+            // Make sure correct label class is applied (e.g. if overlapping)
+            // TODO: Clean this up
+            var cid = this.cids[this.pid][this.cid];
+            if (cid in this.labels) {
+                var label = this.labels[cid];
+                var cl    = String(label) + "-candidate";
+                var cln   = String(!label) + "-candidate";
+                cNext.css("background-color", "");
+                cNext.removeClass(cln);
+                cNext.addClass(cl);
+            }
 
             // Highlight new candidate
-            var cNext = this.getCandidate();
             this.setRGBABackgroundOpacity(cNext, 1.0);
             cNext.addClass("highlighted-candidate");
 

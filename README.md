@@ -27,6 +27,7 @@ At a high level, the idea is that developers can focus on writing labeling funct
 
 Snorkel requires [a few python packages](python-package-requirement.txt) including:
 
+* [sqlalchemy](http://www.sqlalchemy.org/)
 * [nltk](http://www.nltk.org/install.html)
 * [lxml](http://lxml.de/installation.html)
 * [requests](http://docs.python-requests.org/en/master/user/install/#install)

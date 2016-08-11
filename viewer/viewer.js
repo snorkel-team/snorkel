@@ -101,7 +101,7 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             cNext.addClass("highlighted-candidate");
 
             // Push this new cid to the model
-            this.model.set('selected_cid', this.cids[this.pid][this.cid]);
+            this.model.set('_selected_cid', this.cids[this.pid][this.cid]);
             this.touch();
         },
 

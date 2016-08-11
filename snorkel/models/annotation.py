@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship, backref
 
 class Annotator(SnorkelBase):
     """A human who provides annotations."""
-    __tablename = 'annotator'
+    __tablename__ = 'annotator'
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
 

@@ -36,14 +36,16 @@ Snorkel requires [a few python packages](python-package-requirement.txt) includi
 * [matplotlib](http://matplotlib.org/users/installing.html)
 * [theano](http://deeplearning.net/software/theano/install.html)
 
-We provide a simple way to install everything using `virtualenv`:
-
+Everything can be installed using `pip`; note that `sudo` can be prepended to install
+dependencies system wide:
 ```bash
-# set up a Python virtualenv
+pip install --requirement python-package-requirement.txt
+```
+
+Alternatively, `virtualenv` can be used by starting with:
+```bash
 virtualenv .virtualenv
 source .virtualenv/bin/activate
-
-pip install --requirement python-package-requirement.txt
 ```
 
 Finally, enable `ipywidgets`:
@@ -52,8 +54,6 @@ jupyter nbextension enable --py widgetsnbextension --sys-prefix
 ```
 
 *Note: if you have an issue with the matplotlib install related to the module `freetype`, see [this post](http://stackoverflow.com/questions/20533426/ubuntu-running-pip-install-gives-error-the-following-required-packages-can-no); if you have an issue installing ipython, try [upgrading setuptools](http://stackoverflow.com/questions/35943606/error-on-installing-ipython-for-python-3-sys-platform-darwin-and-platform)*
-
-Alternatively, they could be installed system-wide if `sudo pip` is used instead of `pip` in the last command without the virtualenv setup and activation.
 
 ## Running
 After installing (see below), just run:

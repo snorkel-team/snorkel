@@ -2,6 +2,7 @@ from .models import CandidateSet, TemporarySpan, Span, SpanPair
 from itertools import chain
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
+from copy import deepcopy
 
 QUEUE_COLLECT_TIMEOUT = 5
 
@@ -70,6 +71,15 @@ class CandidateExtractor(object):
         else:
             self.arity = len(self.candidate_spaces)
 
+        # Check for whether it is a self-relation
+        self.self_relation = False
+        if self.arity == 2:
+            if self.candidate_spaces[0] == self.candidate_spaces[1] and self.matchers[0] == self.matchers[1]:
+                self.self_relation = True
+
+        # Make sure the candidate spaces are different so generators aren't expended!
+        self.candidate_spaces = map(deepcopy, self.candidate_spaces)
+
         # Track processes for multicore execution
         self.ps = []
 
@@ -95,18 +105,21 @@ class CandidateExtractor(object):
 
         # Binary candidates
         elif self.arity == 2:
+
+            # We store the unary spans in a CandidateSet as this is necessary in current ORM approach
             span_set = CandidateSet(name=str(name + '-spans'))
             
             # NOTE: We are implicitly joining on context1.id == context2.id by iterating over contexts!
             for context in contexts:
 
-                # Self-relations- materialize once to avoid repeated computation
-                if self.candidate_spaces[0] == self.candidate_spaces[1] and self.matchers[0] == self.matchers[1]:
+                # Materialize once if self-relation; we materialize assuming that we have small contexts s.t.
+                # computation expense > memory expense
+                if self.self_relation:
                     tcs1 = list(self.matchers[0].apply(self.candidate_spaces[0].apply(context)))
                     tcs2 = tcs1
                 else:
-                    tcs1 = self.matchers[0].apply(self.candidate_spaces[0].apply(context))
-                    tcs2 = self.matchers[1].apply(self.candidate_spaces[1].apply(context))
+                    tcs1 = list(self.matchers[0].apply(self.candidate_spaces[0].apply(context)))
+                    tcs2 = list(self.matchers[1].apply(self.candidate_spaces[1].apply(context)))
 
                 # Do the local join, materializing all pairs of matched unary candidates
                 promoted_candidates = {}

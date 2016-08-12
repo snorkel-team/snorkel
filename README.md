@@ -10,12 +10,6 @@ Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program
 * `master`: Current stable development version (v0.3)
 * `v0.2-stable`: Last full version (v0.2)
 
-## Running
-After installing (see below), just run:
-```
-./run.sh
-```
-
 ## Motivation
 Snorkel is intended to be a lightweight but powerful framework for developing **structured information extraction applications** for domains in which large labeled training sets are not available or easy to obtain, using the _data programming_ paradigm.
 
@@ -33,6 +27,7 @@ At a high level, the idea is that developers can focus on writing labeling funct
 
 Snorkel requires [a few python packages](python-package-requirement.txt) including:
 
+* [sqlalchemy](http://www.sqlalchemy.org/)
 * [nltk](http://www.nltk.org/install.html)
 * [lxml](http://lxml.de/installation.html)
 * [requests](http://docs.python-requests.org/en/master/user/install/#install)
@@ -41,14 +36,16 @@ Snorkel requires [a few python packages](python-package-requirement.txt) includi
 * [matplotlib](http://matplotlib.org/users/installing.html)
 * [theano](http://deeplearning.net/software/theano/install.html)
 
-We provide a simple way to install everything using `virtualenv`:
-
+Everything can be installed using `pip`; note that `sudo` can be prepended to install
+dependencies system wide:
 ```bash
-# set up a Python virtualenv
+pip install --requirement python-package-requirement.txt
+```
+
+Alternatively, `virtualenv` can be used by starting with:
+```bash
 virtualenv .virtualenv
 source .virtualenv/bin/activate
-
-pip install --requirement python-package-requirement.txt
 ```
 
 Finally, enable `ipywidgets`:
@@ -58,7 +55,11 @@ jupyter nbextension enable --py widgetsnbextension --sys-prefix
 
 *Note: if you have an issue with the matplotlib install related to the module `freetype`, see [this post](http://stackoverflow.com/questions/20533426/ubuntu-running-pip-install-gives-error-the-following-required-packages-can-no); if you have an issue installing ipython, try [upgrading setuptools](http://stackoverflow.com/questions/35943606/error-on-installing-ipython-for-python-3-sys-platform-darwin-and-platform)*
 
-Alternatively, they could be installed system-wide if `sudo pip` is used instead of `pip` in the last command without the virtualenv setup and activation.
+## Running
+After installing (see below), just run:
+```
+./run.sh
+```
 
 ## Learning how to use Snorkel
 New tutorial (in progress; covers through candidate extraction for entities):

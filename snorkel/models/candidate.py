@@ -66,9 +66,9 @@ class TemporarySpan(object):
         return self.char_end - self.char_start + 1
 
     def __eq__(self, other):
-        if isinstance(other, TemporarySpan):
+        try:
             return self.context == other.context and self.char_start == other.char_start and self.char_end == other.char_end
-        else:
+        except AttributeError:
             return False
 
     def __ne__(self, other):
@@ -202,6 +202,15 @@ class SpanPair(Candidate):
     __mapper_args__ = {
         'polymorphic_identity': 'span_pair',
     }
+
+    def __eq__(self, other):
+        try:
+            return self.span0 == other.span0 and self.span1 == other.span1
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __getitem__(self, key):
         if key == 0:

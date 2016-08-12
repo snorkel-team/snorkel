@@ -135,6 +135,8 @@ class Learner(object):
         Apply the LFs and featurize the test candidates, using the same transformation as in training set;
         then test against gold labels using trained model.
         """
+        gold_labels = np.array(gold_labels)
+
         # Cache transformed test set
         if self.X_test is None or test_candidates != self.test_candidates or any(gold_labels != self.gold_labels):
             self.test_candidates     = test_candidates

@@ -31,24 +31,6 @@ class CandidateSpace(object):
         raise NotImplementedError()
 
 
-class CandidateExtractorProcess(Process):
-    def __init__(self, candidate_space, matcher, contexts_in, candidates_out):
-        Process.__init__(self)
-        self.candidate_space = candidate_space
-        self.matcher         = matcher
-        self.contexts_in     = contexts_in
-        self.candidates_out  = candidates_out
-
-    def run(self):
-        while True:
-            try:
-                context = self.contexts_in.get(False)
-                for candidate in self.matcher.apply(self.candidate_space.apply(context)):
-                    self.candidates_out.put(candidate, False)
-                self.contexts_in.task_done()
-            except Empty:
-                break
-
 
 class CandidateExtractor(object):
     # TODO: Revise docstring!
@@ -89,7 +71,7 @@ class CandidateExtractor(object):
             for candidate in self._extract(contexts, name):
                 c.candidates.append(candidate)
         else:
-            for candidate in self._extract_multiprocess(contexts):
+            for candidate in self._extract_multiprocess(contexts, name):
                 c.candidates.append(candidate)
         if name is not None:
             c.name = name
@@ -97,65 +79,68 @@ class CandidateExtractor(object):
 
     def _extract(self, contexts, name):
 
+        # We store the unary spans in a CandidateSet as this is necessary in current ORM approach
+        span_set = CandidateSet(name=str(name + '-spans')) if self.arity == 2 else None
+
+        # In single-core mode, just loop over the contexts
+        for context in contexts:
+
+            # NOTE: We are implicitly joining on context1.id == context2.id by iterating over contexts!
+            for candidate in self._extract_from_context(context, span_set=span_set):
+                yield candidate
+
+    def _extract_from_context(self, context, span_set=None):
+
         # Unary candidates
         if self.arity == 1:
-            for tc in chain.from_iterable(self.matchers[0].apply(self.candidate_spaces[0].apply(context)) \
-                for context in contexts):
+            for tc in self.matchers[0].apply(self.candidate_spaces[0].apply(context)):
                 yield tc.promote()
 
         # Binary candidates
         elif self.arity == 2:
 
-            # We store the unary spans in a CandidateSet as this is necessary in current ORM approach
-            span_set = CandidateSet(name=str(name + '-spans'))
-            
-            # NOTE: We are implicitly joining on context1.id == context2.id by iterating over contexts!
-            for context in contexts:
+            # Materialize once if self-relation; we materialize assuming that we have small contexts s.t.
+            # computation expense > memory expense
+            if self.self_relation:
+                tcs1 = list(self.matchers[0].apply(self.candidate_spaces[0].apply(context)))
+                tcs2 = tcs1
+            else:
+                tcs1 = list(self.matchers[0].apply(self.candidate_spaces[0].apply(context)))
+                tcs2 = list(self.matchers[1].apply(self.candidate_spaces[1].apply(context)))
 
-                # Materialize once if self-relation; we materialize assuming that we have small contexts s.t.
-                # computation expense > memory expense
-                if self.self_relation:
-                    tcs1 = list(self.matchers[0].apply(self.candidate_spaces[0].apply(context)))
-                    tcs2 = tcs1
-                else:
-                    tcs1 = list(self.matchers[0].apply(self.candidate_spaces[0].apply(context)))
-                    tcs2 = list(self.matchers[1].apply(self.candidate_spaces[1].apply(context)))
+            # Do the local join, materializing all pairs of matched unary candidates
+            promoted_candidates = {}
+            for tc1 in tcs1:
+                for tc2 in tcs2:
 
-                # Do the local join, materializing all pairs of matched unary candidates
-                promoted_candidates = {}
-                for tc1 in tcs1:
-                    for tc2 in tcs2:
+                    # Check for self-joins and "nested" joins (joins from span to its subspan)
+                    if tc1 == tc2 or (self.no_nesting and (tc1 in tc2 or tc2 in tc1)):
+                        continue
 
-                        # Check for self-joins and "nested" joins (joins from span to its subspan)
-                        if tc1 == tc2 or (self.no_nesting and (tc1 in tc2 or tc2 in tc1)):
-                            continue
+                    # AND-composition of implicit context.id join with optional join_fn condition
+                    if (self.join_fn is None or self.join_fn(tc1, tc2)):
+                        if tc1 not in promoted_candidates:
+                            promoted_candidates[tc1] = tc1.promote()
+                            promoted_candidates[tc1].set = span_set
 
-                        # AND-composition of implicit context.id join with optional join_fn condition
-                        if (self.join_fn is None or self.join_fn(tc1, tc2)):
-                            if tc1 not in promoted_candidates:
-                                promoted_candidates[tc1] = tc1.promote()
-                                promoted_candidates[tc1].set = span_set
+                        if tc2 not in promoted_candidates:
+                            promoted_candidates[tc2] = tc2.promote()
+                            promoted_candidates[tc2].set = span_set
 
-                            if tc2 not in promoted_candidates:
-                                promoted_candidates[tc2] = tc2.promote()
-                                promoted_candidates[tc2].set = span_set
-
-                            c1 = promoted_candidates[tc1]
-                            c2 = promoted_candidates[tc2]
-                            
-                            # TODO: Un-hardcode this!
-                            if isinstance(c1, Span) and isinstance(c2, Span):
-                                yield SpanPair(span0=c1, span1=c2)
-                            else:
-                                raise NotImplementedError("Only Spans -> SpanPair mappings are handled currently.")
+                        c1 = promoted_candidates[tc1]
+                        c2 = promoted_candidates[tc2]
+                        
+                        # TODO: Un-hardcode this!
+                        if isinstance(c1, Span) and isinstance(c2, Span):
+                            yield SpanPair(span0=c1, span1=c2)
+                        else:
+                            raise NotImplementedError("Only Spans -> SpanPair mappings are handled currently.")
 
         # Higher-arity candidates
         else:
             raise NotImplementedError()
             
-    def _extract_multiprocess(self, contexts):
-        # TODO: Implement this!!!
-        raise NotImplementedError()
+    def _extract_multiprocess(self, contexts, name=None):
         contexts_in    = JoinableQueue()
         candidates_out = Queue()
 
@@ -165,7 +150,7 @@ class CandidateExtractor(object):
 
         # Start worker Processes
         for i in range(self.parallelism):
-            p = CandidateExtractorProcess(self.candidate_space, self.matcher, contexts_in, candidates_out)
+            p = CandidateExtractorProcess(self._extract_from_context, contexts_in, candidates_out, name=name)
             p.start()
             self.ps.append(p)
         
@@ -180,6 +165,26 @@ class CandidateExtractor(object):
             except Empty:
                 break
         return candidates
+
+
+class CandidateExtractorProcess(Process):
+    def __init__(self, extractor, contexts_in, candidates_out, name=None):
+        Process.__init__(self)
+        self.extractor      = extractor
+        self.contexts_in    = contexts_in
+        self.candidates_out = candidates_out
+        self.name           = name
+
+    def run(self):
+        while True:
+            try:
+                context = self.contexts_in.get(False)
+                for candidate in self.extractor(context, self.name):
+                    self.candidates_out.put(candidate, False)
+                self.contexts_in.task_done()
+            except Empty:
+                break
+
 
 class Ngrams(CandidateSpace):
     """

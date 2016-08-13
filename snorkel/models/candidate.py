@@ -159,7 +159,7 @@ class TemporarySpan(object):
         return Span(context=self.context, char_start=self.char_start, char_end=self.char_end)
 
 
-class Span(Candidate, TemporarySpan):
+class Span(TemporarySpan, Candidate):
     """
     A span of characters, identified by Context id and character-index start, end (inclusive).
 
@@ -191,14 +191,8 @@ class Span(Candidate, TemporarySpan):
     def _get_instance(self, **kwargs):
         return Span(**kwargs)
 
-    def __eq__(self, other):
-        return super(TemporarySpan, self) == other
-
-    def __ne__(self, other):
-        return super(TemporarySpan, self) != other
-
     def __hash__(self):
-        return hash(super(TemporarySpan, self))
+        return super(TemporarySpan, self).__hash__()
 
 
 class SpanPair(Candidate):
@@ -225,10 +219,10 @@ class SpanPair(Candidate):
     }
 
     def __eq__(self, other):
-        try:
+        #try:
             return self.span0 == other.span0 and self.span1 == other.span1
-        except AttributeError:
-            return False
+        #except AttributeError:
+        #    return False
 
     def __ne__(self, other):
         try:

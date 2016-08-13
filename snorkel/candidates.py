@@ -31,7 +31,6 @@ class CandidateSpace(object):
         raise NotImplementedError()
 
 
-
 class CandidateExtractor(object):
     # TODO: Revise docstring!
     """

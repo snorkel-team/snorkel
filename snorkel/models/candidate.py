@@ -192,13 +192,13 @@ class Span(Candidate, TemporarySpan):
         return Span(**kwargs)
 
     def __eq__(self, other):
-        return super(TemporarySpan, self).__eq__(other)
+        return super(TemporarySpan, self) == other
 
     def __ne__(self, other):
-        return super(TemporarySpan, self).__ne__(other)
+        return super(TemporarySpan, self) != other
 
     def __hash__(self):
-        return super(TemporarySpan, self).__hash__()
+        return hash(super(TemporarySpan, self))
 
 
 class SpanPair(Candidate):

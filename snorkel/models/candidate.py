@@ -10,14 +10,23 @@ class CandidateSet(SnorkelBase):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
 
-    def __repr__(self):
-        return "Candidate Set (" + str(self.name) + ")"
-
     def append(self, item):
         self.candidates.append(item)
 
     def remove(self, item):
         self.candidates.remove(item)
+
+    def __repr__(self):
+        return "Candidate Set (" + str(self.name) + ")"
+
+    def __eq__(self, other):
+        return self is other
+
+    def __ne__(self, other):
+        return self is not other
+
+    def __hash__(self):
+        return id(self)
 
     def __iter__(self):
         """Default iterator is over Candidate objects"""
@@ -33,7 +42,7 @@ class CandidateSet(SnorkelBase):
 
 class Candidate(SnorkelBase):
     """
-    A candidate relation.
+    An abstract candidate relation.
     """
     __tablename__ = 'candidate'
     id = Column(Integer, primary_key=True)
@@ -72,7 +81,10 @@ class TemporarySpan(object):
             return False
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        try:
+            return self.context != other.context or self.char_start != other.char_start or self.char_end != other.char_end
+        except AttributeError:
+            return True
 
     def __hash__(self):
         return hash(self.context) + hash(self.char_start) + hash(self.char_end)
@@ -210,7 +222,13 @@ class SpanPair(Candidate):
             return False
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        try:
+            return self.span0 != other.span0 or self.span1 != other.span1
+        except AttributeError:
+            return True
+
+    def __hash__(self):
+        return hash(self.span0) + hash(self.span1)
 
     def __getitem__(self, key):
         if key == 0:

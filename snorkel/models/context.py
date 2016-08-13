@@ -16,6 +16,15 @@ class Context(SnorkelBase):
         'polymorphic_on': type
     }
 
+    def __eq__(self, other):
+        return self is other
+
+    def __ne__(self, other):
+        return self is not other
+
+    def __hash__(self):
+        return id(self)
+
 
 class Corpus(Context):
     """

@@ -15,16 +15,20 @@ class Feature(SnorkelBase):
         UniqueConstraint(candidate_id, name),
     )
 
+    def __repr__(self):
+        return "Feature (" + str(self.name) + " on " + str(self.candidate) + ")"
+
     def __eq__(self, other):
         try:
-            return self.candidate == other.candidate \
-                   and self.candidate.set == other.candidate.set \
-                   and self.name == other.name
+            return self.candidate == other.candidate and self.name == other.name
         except AttributeError:
             return False
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        try:
+            return self.candidate != other.candidate or self.name != other.name
+        except AttributeError:
+            return True
 
-    def __repr__(self):
-        return "Feature (" + str(self.name) + " on " + str(self.candidate) + ")"
+    def __hash__(self):
+        return hash(self.candidate) + hash(self.name)

@@ -12,6 +12,11 @@ from utils import get_as_dict
 from entity_features import *
 
 
+def get_all_features(candidate_set, session):
+    """Given a CandidateSet and Session, generates (Candidate, <feature name>) pairs for all Candidates in the set."""
+    # TODO
+
+
 class Featurizer(object):
     def __init__(self):
         self.feat_index = None

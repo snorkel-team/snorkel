@@ -191,9 +191,6 @@ class Span(TemporarySpan, Candidate):
     def _get_instance(self, **kwargs):
         return Span(**kwargs)
 
-    def __hash__(self):
-        return super(TemporarySpan, self).__hash__()
-
 
 class SpanPair(Candidate):
     """

@@ -64,16 +64,24 @@ class CandidateExtractor(object):
         # Track processes for multicore execution
         self.ps = []
 
-    def extract(self, session, contexts, name, parallelism=False):
+    def extract(self, contexts, name, session=None, parallelism=False):
+
+        # Create a candidate set
         c = CandidateSet(name=name)
-        session.add(c)
+        if session is not None:
+            session.add(c)
+
+        # Run extraction
         if parallelism in [1, False]:
             for candidate in self._extract(contexts, name):
                 c.candidates.append(candidate)
         else:
-            for candidate in self._extract_multiprocess(contexts, name):
+            for candidate in self._extract_multiprocess(contexts, parallelism, name):
                 c.candidates.append(candidate)
-        session.commit()
+
+        # Commit the session and return the candidate set
+        if session is not None:
+            session.commit()
         return c
 
     def _extract(self, contexts, name):
@@ -139,7 +147,7 @@ class CandidateExtractor(object):
         else:
             raise NotImplementedError()
             
-    def _extract_multiprocess(self, contexts, name=None):
+    def _extract_multiprocess(self, contexts, parallelism, name=None):
         contexts_in    = JoinableQueue()
         candidates_out = Queue()
 
@@ -148,7 +156,7 @@ class CandidateExtractor(object):
             contexts_in.put(context)
 
         # Start worker Processes
-        for i in range(self.parallelism):
+        for i in range(parallelism):
             p = CandidateExtractorProcess(self._extract_from_context, contexts_in, candidates_out, name=name)
             p.start()
             self.ps.append(p)

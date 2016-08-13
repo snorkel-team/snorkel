@@ -40,10 +40,10 @@ class CandidateExtractor(object):
     Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
     a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
     """
-    def __init__(self, cspaces, matchers, parallelism=False, join_fn=None, no_nesting=True):
+    def __init__(self, cspaces, matchers, session, join_fn=None, no_nesting=True):
         self.candidate_spaces = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers         = matchers if type(matchers) in [list, tuple] else [matchers]
-        self.parallelism      = parallelism
+        self.session          = session
         self.join_fn          = join_fn
         self.no_nesting       = no_nesting
 
@@ -65,16 +65,16 @@ class CandidateExtractor(object):
         # Track processes for multicore execution
         self.ps = []
 
-    def extract(self, contexts, name=None):
-        c = CandidateSet()
-        if self.parallelism in [1, False]:
+    def extract(self, contexts, name, parallelism=False):
+        c = CandidateSet(name=name)
+        session.add(c)
+        if parallelism in [1, False]:
             for candidate in self._extract(contexts, name):
                 c.candidates.append(candidate)
         else:
             for candidate in self._extract_multiprocess(contexts, name):
                 c.candidates.append(candidate)
-        if name is not None:
-            c.name = name
+        session.commit()
         return c
 
     def _extract(self, contexts, name):

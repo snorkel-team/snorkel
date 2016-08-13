@@ -1,8 +1,7 @@
 import os, sys
 from collections import defaultdict
-import numpy as np
 import scipy.sparse as sparse
-import itertools
+from .models import Candidate, Feature
 
 # Feature modules
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
@@ -12,9 +11,10 @@ from utils import get_as_dict
 from entity_features import *
 
 
-def get_all_features(candidate_set, session):
+def load_all_features(candidate_set, session):
     """Given a CandidateSet and Session, generates (Candidate, <feature name>) pairs for all Candidates in the set."""
-    # TODO
+    for x in session.query(Candidate).filter(Candidate.set == candidate_set).join(Feature):
+        yield x
 
 
 class Featurizer(object):

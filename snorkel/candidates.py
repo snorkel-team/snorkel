@@ -120,11 +120,11 @@ class CandidateExtractor(object):
                     if (self.join_fn is None or self.join_fn(tc1, tc2)):
                         if tc1 not in promoted_candidates:
                             promoted_candidates[tc1] = tc1.promote()
-                            promoted_candidates[tc1].set = span_set
+                            promoted_candidates[tc1].set = unary_set
 
                         if tc2 not in promoted_candidates:
                             promoted_candidates[tc2] = tc2.promote()
-                            promoted_candidates[tc2].set = span_set
+                            promoted_candidates[tc2].set = unary_set
 
                         c1 = promoted_candidates[tc1]
                         c2 = promoted_candidates[tc2]

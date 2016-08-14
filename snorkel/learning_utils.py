@@ -13,6 +13,37 @@ import scipy.sparse as sparse
 from itertools import product
 from pandas import DataFrame
 
+def score(candidates, candidates_gold, gold, learner):
+    '''
+    Compute score with true recall
+    
+    :param candidates   candidate set
+    :param cand_gold    candidate set gold (true candidate)
+    :param gold         true set gold
+    :param learner      learner 
+    
+    '''
+    # false negatives from complete gold set (missing from candidate set)
+    gold_fn = [c for c in gold if c not in candidates_gold]
+    
+    # candidate match sets
+    _, _, _, m_tp, m_fp, m_tn, m_fn, m_n_t = learner.test(candidates, candidates_gold,
+                                                          display=False, return_vals=True)
+    # model scores, augmented by missing FN set
+    prec = m_tp / float(m_tp + m_fp)
+    rec  = m_tp / float(m_tp + m_fn + len(gold_fn))
+    f1 = 2.0 * (prec * rec) / (prec + rec)
+    
+    print "========================================"
+    print "Recall-corrected Noise-aware Model"
+    print "========================================"
+    print "Corpus Precision {:.3}".format(prec)
+    print "Corpus Recall    {:.3}".format(rec)
+    print "Corpus F1        {:.3}".format(f1)
+    print "----------------------------------------"
+    print "TP: {} | FP: {} | TN: {} | FN: {}".format(m_tp, m_fp, m_tn, (m_fn + len(gold_fn)))
+    print "========================================\n"
+
 def precision(pred, gold):
     tp = np.sum((pred == 1) * (gold == 1))
     fp = np.sum((pred == 1) * (gold != 1))

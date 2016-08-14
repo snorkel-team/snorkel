@@ -31,7 +31,8 @@ class SessionFeaturizer(object):
 
     def load_feats(self, session, cand_set, yield_per=1000):
         """Load features for this candidate set _sorting by candidate id_"""
-        for f in session.query(Feature.name, Feature.candidate_id).join(Candidate).filter(Candidate.set == cand_set).order_by(Candidate.id).yield_per(yield_per):
+        for f in session.query(Feature.name, Feature.candidate_id).join(Candidate) \
+                        .filter(Candidate.set == cand_set).order_by(Candidate.id).yield_per(yield_per):
             yield f
 
     def get_cid_map(self, session, cand_set):
@@ -56,11 +57,11 @@ class SessionFeaturizer(object):
         # Assemble and return sparse feature matrix
         # Also assemble reverse index of feature matrix index -> feature verbose name
         self.feat_index = {}
-        #self.inv_index  = {}
+        self.inv_index  = {}
         F               = sparse.lil_matrix((len(candidate_set), len(f_index.keys())))
         for j,f in enumerate(f_index.keys()):
             self.feat_index[f] = j
-            #self.inv_index[j]  = f
+            self.inv_index[j]  = f
             for i in f_index[f]:
                 F[i,j] = 1
         return F.tocsr()

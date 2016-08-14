@@ -39,6 +39,7 @@ def sample_data(X, w, n_samples):
   # Take samples of random variables
   idxs = np.round(np.random.rand(n_samples) * (N-1)).astype(int)
   ct = np.bincount(idxs)
+  
   # Estimate probability of correct assignment
   increment = np.random.rand(n_samples) < odds_to_prob(X[idxs, :].dot(w))
   increment_f = -1. * (increment - 1)
@@ -87,9 +88,9 @@ class NoiseAwareModel(object):
     def marginals(self, X):
         raise NotImplementedError()
 
-    def predict(self, X):
+    def predict(self, X, b=0.5):
         """Return numpy array of elements in {-1,0,1} based on predicted marginal probabilities."""
-        return np.array([1 if p > 0.5 else -1 if p < 0.5 else 0 for p in self.marginals(X)])
+        return np.array([1 if p > b else -1 if p < b else 0 for p in self.marginals(X)])
 
 
 class LogReg(NoiseAwareModel):
@@ -114,6 +115,14 @@ class LogReg(NoiseAwareModel):
         * warm_starts:
         * tol:         For testing for SGD convergence, i.e. stopping threshold
         """
+
+        # First, we remove the rows (candidates) that have no LF coverage
+        # TODO:
+        #if training_marginals is not None:
+        #    covered            = np.where(training_marginals != 0.5)[0]
+        #    training_marginals = training_marginals[covered]
+        #    X                  = None
+
         N, M   = X.shape
         Xt     = X.transpose()
         Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else np.abs(Xt)  

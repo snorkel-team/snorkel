@@ -13,7 +13,7 @@ import scipy.sparse as sparse
 from itertools import product
 from pandas import DataFrame
 
-def score(candidates, candidates_gold, gold, pred):
+def score(test_candidates, test_labels, test_pred, gold_candidate_set, train_marginals=None, test_marginals=None):
     '''
     Compute score with true recall
     
@@ -24,10 +24,15 @@ def score(candidates, candidates_gold, gold, pred):
     
     '''
     # false negatives from complete gold set (missing from candidate set)
-    gold_fn = [c for c in gold if c not in candidates_gold]
+    gold_fn = [c for c in gold_candidate_set if c not in test_candidates]
+
+    # Print calibration plots
+    if train_marginals is not None and test_marginals is not None:
+        print "Calibration plot:"
+        calibration_plots(train_marginals, test_marginals, test_labels)
     
     # candidate match sets
-    _, _, _, m_tp, m_fp, m_tn, m_fn, m_n_t = test_scores(pred, candidates_gold, return_vals=True, verbose=False)
+    _, _, _, m_tp, m_fp, m_tn, m_fn, m_n_t = test_scores(test_pred, test_labels, return_vals=True, verbose=True)
 
     # model scores, augmented by missing FN set
     prec = m_tp / float(m_tp + m_fp)

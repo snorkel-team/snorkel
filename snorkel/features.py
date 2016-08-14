@@ -6,7 +6,7 @@ from .models import Candidate, Feature
 # Feature modules
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 from treedlib import compile_relation_feature_generator
-from tree_structs import corenlp_to_xmltree, XMLTree
+from tree_structs import corenlp_to_xmltree
 from utils import get_as_dict
 from entity_features import *
 
@@ -15,7 +15,7 @@ def load_all_features(candidate_set, session):
     """
     Given a CandidateSet and Session, generates (Candidate, <feature name>) pairs for all Candidates in the set.
     """
-    for x in session.query(Candidate).filter(Candidate.set == candidate_set).join(Feature):
+    for x in session.query(Feature).join(Candidate).filter(Candidate.set == candidate_set):
         yield x
 
 

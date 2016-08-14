@@ -51,9 +51,10 @@ class TrainingSet(object):
         if annotations is not None:
             """
             d['accuracy'] = Series(data=LF_accuracies(self.Ls, self.lf_stat_labels), index=self.lf_names)
-            return DataFrame(data=d, index=self.lf_names)
             """
             raise NotImplementedError()
+        return DataFrame(data=d, index=self.lf_names)
+
 
 
 class Learner(object):

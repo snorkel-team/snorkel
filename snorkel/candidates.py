@@ -192,7 +192,6 @@ class CandidateExtractorProcess(Process):
             except Empty:
                 break
 
-
 class Ngrams(CandidateSpace):
     """
     Defines the space of candidates as all n-grams (n <= n_max) in a Sentence _x_,
@@ -221,6 +220,8 @@ class Ngrams(CandidateSpace):
                     if m is not None and l < self.n_max:
                         yield TemporarySpan(char_start=char_start, char_end=char_start + m.start(1) - 1, context=context)
                         yield TemporarySpan(char_start=char_start + m.end(1), char_end=char_end, context=context)
+
+
 
 
 class NgramsOld(CandidateSpace):
@@ -258,6 +259,5 @@ class NgramsOld(CandidateSpace):
                     if m is not None and l < self.n_max:
                         yield Ngram(char_start=char_start, char_end=char_start + m.start(1) - 1, sent=s)
                         yield Ngram(char_start=char_start + m.end(1), char_end=char_end, sent=s)
-
 
 

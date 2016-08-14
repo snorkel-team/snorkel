@@ -3,6 +3,7 @@ from itertools import chain
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
 from copy import deepcopy
+import re
 
 QUEUE_COLLECT_TIMEOUT = 5
 
@@ -189,9 +190,10 @@ class Ngrams(CandidateSpace):
     Defines the space of candidates as all n-grams (n <= n_max) in a Sentence _x_,
     indexing by **character offset**.
     """
-    def __init__(self, n_max=5):
+    def __init__(self, n_max=5, split_tokens=['-', '/']):
         CandidateSpace.__init__(self)
         self.n_max = n_max
+        self.split_rgx    = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
     
     def apply(self, context):
         # Loop over all n-grams in **reverse** order (to facilitate longest-match semantics)
@@ -203,3 +205,51 @@ class Ngrams(CandidateSpace):
                 cl = context.char_offsets[i+l-1] - context.char_offsets[i] + len(context.words[i+l-1])
                 char_end = context.char_offsets[i] + cl - 1
                 yield TemporarySpan(char_start=char_start, char_end=char_end, context=context)
+
+                # Check for split
+                # NOTE: For simplicity, we only split single tokens right now!
+                if l == 1 and self.split_rgx is not None:
+                    m = re.search(self.split_rgx, context.text[char_start-context.char_offsets[0]:char_end-context.char_offsets[0]+1])
+                    if m is not None and l < self.n_max:
+                        yield TemporarySpan(char_start=char_start, char_end=char_start + m.start(1) - 1, context=context)
+                        yield TemporarySpan(char_start=char_start + m.end(1), char_end=char_end, context=context)
+
+
+class NgramsOld(CandidateSpace):
+    """
+    Defines the space of candidates as all n-grams (n <= n_max) in a sentence _x_,
+    indexing by **character offset**.
+    """
+    def __init__(self, n_max=5, split_tokens=['-', '/']):
+        CandidateSpace.__init__(self)
+        self.n_max        = n_max
+        self.split_rgx    = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
+    
+    def apply(self, x):
+        s = get_as_dict(x)
+        try:
+            cos   = s[CHAR_OFFSETS]
+            words = s[WORDS]
+            text  = s[TEXT]
+        except:
+            raise ValueError("Input object must have attributes: " + ' '.join([CHAR_OFFSET, WORDS, TEXT]))
+
+        # Loop over all n-grams in **reverse** order (to facilitate longest-match semantics)
+        L = len(cos)
+        for l in range(1, self.n_max+1)[::-1]:
+            for i in range(L-l+1):
+                cl         = cos[i+l-1] - cos[i] + len(words[i+l-1])
+                char_start = cos[i]
+                char_end   = cos[i] + cl - 1
+                yield Ngram(char_start=char_start, char_end=char_end, sent=s)
+                
+                # Check for split
+                # NOTE: For simplicity, we only split single tokens right now!
+                if l == 1 and self.split_rgx is not None:
+                    m = re.search(self.split_rgx, text[char_start-cos[0]:char_end-cos[0]+1])
+                    if m is not None and l < self.n_max:
+                        yield Ngram(char_start=char_start, char_end=char_start + m.start(1) - 1, sent=s)
+                        yield Ngram(char_start=char_start + m.end(1), char_end=char_end, sent=s)
+
+
+

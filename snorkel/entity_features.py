@@ -27,56 +27,56 @@ def compile_entity_feature_generator():
   # return generator function
   return Compile(temps).apply_mention
 
-def get_ddlib_feats(sent, idxs):
+def get_ddlib_feats(context, idxs):
   """
   Minimalist port of generic mention features from ddlib
   """
-  for seq_feat in _get_seq_features(sent, idxs):
+  for seq_feat in _get_seq_features(context, idxs):
     yield seq_feat
   
-  for window_feat in _get_window_features(sent, idxs):
+  for window_feat in _get_window_features(context, idxs):
     yield window_feat
 
-  if sent.sentence['words'][idxs[0]][0].isupper():
+  if context['words'][idxs[0]][0].isupper():
       yield "STARTS_WITH_CAPTIAL"
 
   yield "LENGTH_{}".format(len(idxs))
 
-def _get_seq_features(sent, idxs):
-  yield "WORD_SEQ_[" + " ".join(sent.sentence['words'][i] for i in idxs) + "]"
-  yield "LEMMA_SEQ_[" + " ".join(sent.sentence['lemmas'][i] for i in idxs) + "]"
-  yield "POS_SEQ_[" + " ".join(sent.sentence['poses'][i] for i in idxs) + "]"
-  yield "DEP_SEQ_[" + " ".join(sent.sentence['dep_labels'][i] for i in idxs) + "]"
+def _get_seq_features(context, idxs):
+  yield "WORD_SEQ_[" + " ".join(context['words'][i] for i in idxs) + "]"
+  yield "LEMMA_SEQ_[" + " ".join(context['lemmas'][i] for i in idxs) + "]"
+  yield "POS_SEQ_[" + " ".join(context['poses'][i] for i in idxs) + "]"
+  yield "DEP_SEQ_[" + " ".join(context['dep_labels'][i] for i in idxs) + "]"
 
-def _get_window_features(sent, idxs, window=3, combinations=True, isolated=True):
+def _get_window_features(context, idxs, window=3, combinations=True, isolated=True):
     left_lemmas = []
     left_poses = []
     right_lemmas = []
     right_poses = []
     try:
         for i in range(1, window + 1):
-            lemma = sent.sentence['lemmas'][idxs[0] - i]
+            lemma = context['lemmas'][idxs[0] - i]
             try:
                 float(lemma)
                 lemma = "_NUMBER"
             except ValueError:
                 pass
             left_lemmas.append(lemma)
-            left_poses.append(sent.sentence['poses'][idxs[0] - i])
+            left_poses.append(context['poses'][idxs[0] - i])
     except IndexError:
         pass
     left_lemmas.reverse()
     left_poses.reverse()
     try:
         for i in range(1, window + 1):
-            lemma = sent.sentence['lemmas'][idxs[-1] + i]
+            lemma = context['lemmas'][idxs[-1] + i]
             try:
                 float(lemma)
                 lemma = "_NUMBER"
             except ValueError:
                 pass
             right_lemmas.append(lemma)
-            right_poses.append(sent.sentence['poses'][idxs[-1] + i])
+            right_poses.append(context['poses'][idxs[-1] + i])
     except IndexError:
         pass
     if isolated:

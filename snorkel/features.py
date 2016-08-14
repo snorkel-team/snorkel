@@ -56,11 +56,11 @@ class SessionFeaturizer(object):
         # Assemble and return sparse feature matrix
         # Also assemble reverse index of feature matrix index -> feature verbose name
         self.feat_index = {}
-        self.inv_index  = {}
+        #self.inv_index  = {}
         F               = sparse.lil_matrix((len(candidate_set), len(f_index.keys())))
         for j,f in enumerate(f_index.keys()):
             self.feat_index[f] = j
-            self.inv_index[j]  = f
+            #self.inv_index[j]  = f
             for i in f_index[f]:
                 F[i,j] = 1
         return F.tocsr()

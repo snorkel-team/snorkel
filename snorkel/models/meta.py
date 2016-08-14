@@ -1,7 +1,8 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.pool import QueuePool
 
 # We initialize the engine within the models module because models' schema can depend on
 # which data types are supported by the engine
@@ -10,9 +11,9 @@ if 'SNORKELDB' in os.environ and os.environ['SNORKELDB'] != '':
     snorkel_engine = create_engine(os.environ['SNORKELDB'])
 else:
     snorkel_postgres = False
-    snorkel_engine = create_engine('sqlite:///snorkel.db')
+    snorkel_engine = create_engine('sqlite:///snorkel.db', pool_size=10, poolclass=QueuePool)
 
-SnorkelSession = sessionmaker(bind=snorkel_engine)
+SnorkelSession = scoped_session(sessionmaker(bind=snorkel_engine))
 
 
 class SnorkelComparable(object):

@@ -78,10 +78,14 @@ class CandidateExtractor(object):
         # Run extraction
         if parallelism in [1, False]:
             for context in contexts:
-                for candidate in self._extract_from_context(context, unary_set=unary_set):
+                for tc in self._extract_tc_from_context(context, unary_set=unary_set):
+                    candidate = tc.promote()
+                    session.add(candidate)
                     c.candidates.append(candidate)
         else:
-            for candidate in self._extract_multiprocess(contexts, parallelism, name):
+            for tc in self._extract_tc_multiprocess(contexts, parallelism, name):
+                candidate = tc.promote()
+                session.merge(candidate)
                 c.candidates.append(candidate)
 
         # Commit the session and return the candidate set
@@ -89,12 +93,13 @@ class CandidateExtractor(object):
             session.commit()
         return c
 
-    def _extract_from_context(self, context, unary_set=None):
+    def _extract_tc_from_context(self, context, unary_set=None):
 
         # Unary candidates
         if self.arity == 1:
             for tc in self.matchers[0].apply(self.candidate_spaces[0].apply(context)):
-                yield tc.promote()
+                #yield tc.promote()
+                yield tc
 
         # Binary candidates
         elif self.arity == 2:
@@ -142,7 +147,7 @@ class CandidateExtractor(object):
         else:
             raise NotImplementedError()
             
-    def _extract_multiprocess(self, contexts, parallelism, name=None):
+    def _extract_tc_multiprocess(self, contexts, parallelism, name=None):
         contexts_in    = JoinableQueue()
         candidates_out = Queue()
 
@@ -152,7 +157,7 @@ class CandidateExtractor(object):
 
         # Start worker Processes
         for i in range(parallelism):
-            p = CandidateExtractorProcess(self._extract_from_context, contexts_in, candidates_out, name=name)
+            p = CandidateExtractorProcess(self._extract_tc_from_context, contexts_in, candidates_out, name=name)
             p.start()
             self.ps.append(p)
         

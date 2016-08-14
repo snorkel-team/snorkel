@@ -115,20 +115,19 @@ class LogReg(NoiseAwareModel):
         * warm_starts:
         * tol:         For testing for SGD convergence, i.e. stopping threshold
         """
-
         # First, we remove the rows (candidates) that have no LF coverage
-        # TODO:
-        #if training_marginals is not None:
-        #    covered            = np.where(training_marginals != 0.5)[0]
-        #    training_marginals = training_marginals[covered]
-        #    X                  = None
+        if training_marginals is not None:
+            covered            = np.where(training_marginals != 0.5)[0]
+            training_marginals = training_marginals[covered]
+            X                  = X[covered]
+            t,f                = training_marginals, 1-training_marginals
 
+        # Set up stuff
         N, M   = X.shape
+        print N, M
         Xt     = X.transpose()
         Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else np.abs(Xt)  
         w0     = w0 if w0 is not None else np.zeros(M)
-        if training_marginals is not None:
-            t,f = training_marginals, 1-training_marginals
 
         # Initialize training
         w = w0.copy()

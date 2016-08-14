@@ -97,5 +97,20 @@ class Sentence(Context):
         'polymorphic_identity': 'sentence',
     }
 
+    def _asdict(self):
+        return {
+            'id': self.id,
+            'document': self.document,
+            'position': self.position,
+            'text': self.text,
+            'words': self.words,
+            'char_offsets': self.char_offsets,
+            'lemmas': self.lemmas,
+            'poses': self.poses,
+            'dep_parents': self.dep_parents,
+            'dep_labels': self.dep_labels
+        }
+
+
     def __repr__(self):
         return "Sentence" + str((self.document, self.position, self.text))

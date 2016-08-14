@@ -57,22 +57,30 @@ class Featurizer(object):
 
 class SpanPairFeaturizer(Featurizer):
     """Featurizer for SpanPair objects"""
+
+    def __init__(self):
+        self.feature_generator = compile_relation_feature_generator()
+        super(SpanPairFeaturizer, self).__init__()
+
     def get_feats(self, span_pairs):
-        feature_generator = compile_relation_feature_generator()
         for i,sp in enumerate(span_pairs):
             xmltree = corenlp_to_xmltree(get_as_dict(sp.span0.context))
             s1_idxs = range(sp.span0.get_word_start(), sp.span0.get_word_end() + 1)
             s2_idxs = range(sp.span1.get_word_start(), sp.span1.get_word_end() + 1)
 
             # Apply TDL features
-            for f in feature_generator(xmltree.root, s1_idxs, s2_idxs):
+            for f in self.feature_generator(xmltree.root, s1_idxs, s2_idxs):
                 yield 'TDL_' + f, i
 
 
 class SpanFeaturizer(Featurizer):
     """Featurizer for Span objects"""
+
+    def __init__(self):
+        self.feature_generator = compile_entity_feature_generator()
+        super(SpanFeaturizer, self).__init__()
+
     def get_feats(self, spans):
-        TDL_feature_generator = compile_entity_feature_generator()
         for i,s in enumerate(spans):
             sent    = get_as_dict(s.context)
             xmltree = corenlp_to_xmltree(sent)
@@ -83,5 +91,5 @@ class SpanFeaturizer(Featurizer):
                 yield 'DDL_' + f, i
 
             # Add TreeDLib entity features
-            for f in TDL_feature_generator(xmltree.root, sidxs):
+            for f in self.feature_generator(xmltree.root, sidxs):
                 yield 'TDL_' + f, i

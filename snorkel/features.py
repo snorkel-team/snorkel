@@ -29,9 +29,9 @@ class SessionFeaturizer(object):
                     feature_set.add(f)
         session.commit()
 
-    def load_feats(self, session, cand_set):
+    def load_feats(self, session, cand_set, yield_per=1000):
         """Load features for this candidate set _sorting by candidate id_"""
-        for f in session.query(Feature).join(Candidate).filter(Candidate.set == cand_set).order_by(Candidate.id):
+        for f in session.query(Feature.name, Feature.candidate_id).join(Candidate).filter(Candidate.set == cand_set).order_by(Candidate.id).yield_per(yield_per):
             yield f
 
     def get_cid_map(self, session, cand_set):
@@ -50,8 +50,8 @@ class SessionFeaturizer(object):
 
         # Next, we get the feature -> row number mappings
         f_index = defaultdict(list)
-        for f in self.load_feats(session, candidate_set):
-            f_index[f.name].append(c_index[f.candidate_id])
+        for f, cid in self.load_feats(session, candidate_set):
+            f_index[f].append(c_index[cid])
 
         # Assemble and return sparse feature matrix
         # Also assemble reverse index of feature matrix index -> feature verbose name

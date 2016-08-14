@@ -40,11 +40,12 @@ class CandidateExtractor(object):
     Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
     a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
     """
-    def __init__(self, cspaces, matchers, join_fn=None, no_nesting=True):
+    def __init__(self, cspaces, matchers, join_fn=None, self_relations=False, nested_relations=True):
         self.candidate_spaces = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers         = matchers if type(matchers) in [list, tuple] else [matchers]
         self.join_fn          = join_fn
-        self.no_nesting       = no_nesting
+        self.nested_relations = nested_relations
+        self.self_relations   = self_relations
 
         # Check that arity is same
         if len(self.candidate_spaces) != len(self.matchers):
@@ -113,7 +114,9 @@ class CandidateExtractor(object):
                 for tc2 in tcs2:
 
                     # Check for self-joins and "nested" joins (joins from span to its subspan)
-                    if tc1 == tc2 or (self.no_nesting and (tc1 in tc2 or tc2 in tc1)):
+                    if not self.self_relations and tc1 == tc2:
+                        continue
+                    if not self.nested_relations and (tc1 in tc2 or tc2 in tc1):
                         continue
 
                     # AND-composition of implicit context.id join with optional join_fn condition

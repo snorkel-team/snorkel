@@ -70,10 +70,14 @@ class CandidateExtractor(object):
         if session is not None:
             session.add(c)
 
+        # If arity > 1, create a unary candidate set as well
+        unary_set = CandidateSet(name=str(name + '-unary')) if self.arity > 1 else None
+
         # Run extraction
         if parallelism in [1, False]:
-            for candidate in self._extract(contexts, name):
-                c.candidates.append(candidate)
+            for context in contexts:
+                for candidate in self._extract_from_context(context, unary_set=unary_set):
+                    c.candidates.append(candidate)
         else:
             for candidate in self._extract_multiprocess(contexts, parallelism, name):
                 c.candidates.append(candidate)
@@ -83,19 +87,7 @@ class CandidateExtractor(object):
             session.commit()
         return c
 
-    def _extract(self, contexts, name):
-
-        # We store the unary spans in a CandidateSet as this is necessary in current ORM approach
-        span_set = CandidateSet(name=str(name + '-spans')) if self.arity == 2 else None
-
-        # In single-core mode, just loop over the contexts
-        for context in contexts:
-
-            # NOTE: We are implicitly joining on context1.id == context2.id by iterating over contexts!
-            for candidate in self._extract_from_context(context, span_set=span_set):
-                yield candidate
-
-    def _extract_from_context(self, context, span_set=None):
+    def _extract_from_context(self, context, unary_set=None):
 
         # Unary candidates
         if self.arity == 1:

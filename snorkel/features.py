@@ -12,7 +12,9 @@ from entity_features import *
 
 
 def load_all_features(candidate_set, session):
-    """Given a CandidateSet and Session, generates (Candidate, <feature name>) pairs for all Candidates in the set."""
+    """
+    Given a CandidateSet and Session, generates (Candidate, <feature name>) pairs for all Candidates in the set.
+    """
     for x in session.query(Candidate).filter(Candidate.set == candidate_set).join(Feature):
         yield x
 
@@ -72,11 +74,12 @@ class SpanFeaturizer(Featurizer):
     def get_feats(self, spans):
         TDL_feature_generator = compile_entity_feature_generator()
         for i,s in enumerate(spans):
-            xmltree = corenlp_to_xmltree(get_as_dict(s.context))
+            sent    = get_as_dict(s.context)
+            xmltree = corenlp_to_xmltree(sent)
             sidxs   = range(s.get_word_start(), s.get_word_end() + 1)
 
             # Add DDLIB entity features
-            for f in get_ddlib_feats(s, sidxs):
+            for f in get_ddlib_feats(sent, sidxs):
                 yield 'DDL_' + f, i
 
             # Add TreeDLib entity features

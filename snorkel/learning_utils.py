@@ -13,22 +13,22 @@ import scipy.sparse as sparse
 from itertools import product
 from pandas import DataFrame
 
-def score(candidates, candidates_gold, gold, learner):
+def score(candidates, candidates_gold, gold, pred):
     '''
     Compute score with true recall
     
-    :param candidates   candidate set
-    :param cand_gold    candidate set gold (true candidate)
-    :param gold         true set gold
-    :param learner      learner 
+    :param candidates       candidate set
+    :param candidates_gold  candidate set gold (true candidate)
+    :param gold             true set gold
+    :param pred             model predictions 
     
     '''
     # false negatives from complete gold set (missing from candidate set)
     gold_fn = [c for c in gold if c not in candidates_gold]
     
     # candidate match sets
-    _, _, _, m_tp, m_fp, m_tn, m_fn, m_n_t = learner.test(candidates, candidates_gold,
-                                                          display=False, return_vals=True)
+    _, _, _, m_tp, m_fp, m_tn, m_fn, m_n_t = test_scores(pred, candidates_gold, return_vals=True, verbose=False)
+
     # model scores, augmented by missing FN set
     prec = m_tp / float(m_tp + m_fp)
     rec  = m_tp / float(m_tp + m_fn + len(gold_fn))

@@ -79,11 +79,9 @@ class CandidateExtractor(object):
         if parallelism in [1, False]:
             for context in contexts:
                 for candidate in self._extract_from_context(context, unary_set=unary_set):
-                    session.add(candidate)
                     c.candidates.append(candidate)
         else:
             for candidate in self._extract_multiprocess(contexts, parallelism, name):
-                session.merge(candidate)
                 c.candidates.append(candidate)
 
         # Commit the session and return the candidate set

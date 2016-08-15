@@ -77,9 +77,15 @@ class CandidateExtractor(object):
 
         # Run extraction
         if parallelism in [1, False]:
+            unique_candidates = set()
             for context in contexts:
                 for candidate in self._extract_from_context(context, unary_set=unary_set):
+                    unique_candidates.add(candidate)
+
+                for candidate in unique_candidates:
                     c.candidates.append(candidate)
+
+                unique_candidates.clear()
         else:
             for candidate in self._extract_multiprocess(contexts, parallelism, name):
                 c.candidates.append(candidate)

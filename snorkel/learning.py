@@ -3,6 +3,7 @@ import scipy.sparse as sparse
 import warnings
 from learning_utils import sparse_abs
 from lstm import LSTMModel
+from sklearn import linear_model
 
 DEFAULT_MU = 1e-6
 DEFAULT_RATE = 0.01
@@ -39,13 +40,13 @@ def sample_data(X, w, n_samples):
   # Take samples of random variables
   idxs = np.round(np.random.rand(n_samples) * (N-1)).astype(int)
   ct = np.bincount(idxs)
-  
+
   # Estimate probability of correct assignment
   increment = np.random.rand(n_samples) < odds_to_prob(X[idxs, :].dot(w))
   increment_f = -1. * (increment - 1)
   t[idxs] = increment * ct[idxs]
   f[idxs] = increment_f * ct[idxs]
-  
+
   return t, f
 
 def exact_data(X, w, evidence=None):
@@ -93,6 +94,17 @@ class NoiseAwareModel(object):
         return np.array([1 if p > b else -1 if p < b else 0 for p in self.marginals(X)])
 
 
+class SciKitLR(NoiseAwareModel):
+
+    def train(self, X, training_marginals, **scikit_params):
+        covered = np.where(np.abs(training_marginals - 0.5) < 1e-8)[0]
+        self.model = linear_model.LogisticRegression(**scikit_params)
+        self.model.fit(X[covered, :], (training_marginals[covered] > 0.5))
+
+    def marginals(self, X):
+        return self.model.predict_proba(X)
+
+
 class LogReg(NoiseAwareModel):
     """Logistic regression."""
     def __init__(self, bias_term=False):
@@ -129,7 +141,7 @@ class LogReg(NoiseAwareModel):
         print "Features:\t\t\t%s" % M
         print "="*80
         Xt     = X.transpose()
-        Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else np.abs(Xt)  
+        Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else np.abs(Xt)
         w0     = w0 if w0 is not None else np.zeros(M)
 
         # Initialize training
@@ -137,12 +149,12 @@ class LogReg(NoiseAwareModel):
         g = np.zeros(M)
         l = np.zeros(M)
         g_size = 0
-        
+
         # Gradient descent
         if verbose:
             print "Begin training for rate={}, mu={}".format(rate, mu)
         for step in range(n_iter):
-        
+
             # Get the expected LF accuracy
             if training_marginals is None:
                 t,f = sample_data(X, w, n_samples=n_samples) if sample else exact_data(X, w, evidence)
@@ -150,23 +162,23 @@ class LogReg(NoiseAwareModel):
 
             # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
             l = np.clip(log_odds(p_correct), -10, 10)
-            
+
             # SGD step with normalization by the number of samples
             g0 = (n_pred*(w - l)) / np.sum(n_pred)
-            
+
             # Momentum term for faster training
             g = 0.95*g0 + 0.05*g
-            
+
             # Check for convergence
             wn     = np.linalg.norm(w, ord=2)
             g_size = np.linalg.norm(g, ord=2)
-            if step % 250 == 0 and verbose:    
-                print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size) 
+            if step % 250 == 0 and verbose:
+                print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size)
             if (wn < 1e-12 or g_size / wn < tol) and step >= 10:
                 if verbose:
                     print "SGD converged for mu={} after {} steps".format(mu, step)
                 break
-            
+
             # Update weights
             w -= rate * g
 
@@ -174,26 +186,26 @@ class LogReg(NoiseAwareModel):
             w_bias    = w[-1]
             soft      = np.abs(w) - rate * alpha * mu
             ridge_pen = (1 + (1-alpha) * rate * mu)
-            
+
             #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
             w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
 
             # Don't regularize the bias term
             if self.bias_term:
                 w[-1] = w_bias
-            
-        # SGD did not converge    
+
+        # SGD did not converge
         else:
             if verbose:
                 print "Final gradient magnitude for rate={}, mu={}: {:.3f}".format(rate, mu, g_size)
-        
-        # Return learned weights  
+
+        # Return learned weights
         self.w = w
 
     def marginals(self, X):
         return odds_to_prob(X.dot(self.w))
-        
-      
+
+
 class LSTM(NoiseAwareModel):
     """Long Short-Term Memory."""
     def __init__(self):

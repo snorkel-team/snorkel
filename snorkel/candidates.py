@@ -7,6 +7,8 @@ import re
 
 QUEUE_COLLECT_TIMEOUT = 5
 
+PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
+         '-RSB-': ']', '-LSB-': '['}
 
 def gold_stats(candidates, gold):
         """Return precision and recall relative to a "gold" CandidateSet"""
@@ -77,9 +79,15 @@ class CandidateExtractor(object):
 
         # Run extraction
         if parallelism in [1, False]:
+            unique_candidates = set()
             for context in contexts:
                 for candidate in self._extract_from_context(context, unary_set=unary_set):
+                    unique_candidates.add(candidate)
+
+                for candidate in unique_candidates:
                     c.candidates.append(candidate)
+
+                unique_candidates.clear()
         else:
             for candidate in self._extract_multiprocess(contexts, parallelism, name):
                 c.candidates.append(candidate)
@@ -204,7 +212,11 @@ class Ngrams(CandidateSpace):
             for i in range(L-l+1):
                 # NOTE that we derive char_len without using sep
                 char_start = context.char_offsets[i]
-                cl = context.char_offsets[i+l-1] - context.char_offsets[i] + len(context.words[i+l-1])
+                
+                w = context.words[i+l-1] if context.words[i+l-1] not in PTB else PTB[context.words[i+l-1]]
+                
+                
+                cl = context.char_offsets[i+l-1] - context.char_offsets[i] + len(w)
                 char_end = context.char_offsets[i] + cl - 1
                 yield TemporarySpan(char_start=char_start, char_end=char_end, context=context)
 

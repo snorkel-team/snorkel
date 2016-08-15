@@ -14,6 +14,7 @@ import requests
 import signal
 from subprocess import Popen
 import sys
+import codecs
 
 
 class CorpusParser:
@@ -45,8 +46,9 @@ class CorpusParser:
 
 class DocParser:
     """Parse a file or directory of files into a set of Document objects."""
-    def __init__(self, path):
+    def __init__(self, path, encoding="utf-8"):
         self.path = path
+        self.encoding = encoding
 
     def parse(self):
         """
@@ -84,7 +86,7 @@ class DocParser:
 class TextDocParser(DocParser):
     """Simple parsing of raw text files, assuming one document per file"""
     def parse_file(self, fp, file_name):
-        with open(fp, 'rb') as f:
+        with codecs.open(fp, 'rb', self.encoding, errors="ignore") as f:
             name = re.sub(r'\..*$', '', os.path.basename(fp))
             yield Document(name=name, file=file_name, attribs={}), f.read()
 
@@ -143,6 +145,8 @@ class XMLDocParser(DocParser):
     def _can_read(self, fpath):
         return fpath.endswith('.xml')
 
+PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
+         '-RSB-': ']', '-LSB-': '['}
 
 class SentenceParser:
     def __init__(self, tok_whitespace=False):
@@ -218,6 +222,11 @@ class SentenceParser:
                 diverged = True
                 warnings.warn("CoreNLP parse has diverged from raw document text!")
             parts['position'] = sent_id
+            
+            # replace PennTreeBank tags with original forms
+            parts['words'] = [PTB[w] if w in PTB else w for w in parts['words']]
+            parts['lemmas'] = [PTB[w.upper()] if w.upper() in PTB else w for w in parts['lemmas']]
+            
             sent = Sentence(**parts)
             sent.document = document
             sent_id += 1

@@ -226,6 +226,13 @@ class RegexMatch(NgramMatcher):
 class RegexMatchSpan(RegexMatch):
     """Matches regex pattern on **full concatenated span**"""
     def _f(self, c):
+        s = c.get_attrib_span(self.attrib, sep=self.sep)
+        tokens = c.get_attrib_tokens("words")
+        #if "-LRB-" in tokens or "-RRB-" in tokens:
+        #    print s, "**{}**".format(self.r.match(s))
+        #    print tokens
+        #    print [c.char_start, c.char_end]
+        #    print '----------------'
         return True if self.r.match(c.get_attrib_span(self.attrib, sep=self.sep)) is not None else 0
 
 

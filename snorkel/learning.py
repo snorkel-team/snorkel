@@ -97,12 +97,13 @@ class NoiseAwareModel(object):
 class SciKitLR(NoiseAwareModel):
 
     def train(self, X, training_marginals, **scikit_params):
+        covered = np.where(np.abs(training_marginals - 0.5) < 1e-8)[0]
         self.model = linear_model.LogisticRegression(**scikit_params)
-        self.model.fit(X, (training_marginals > 0.5))
+        self.model.fit(X[covered, :], (training_marginals[covered] > 0.5))
 
     def marginals(self, X):
         return self.model.predict_proba(X)
-        
+
 
 class LogReg(NoiseAwareModel):
     """Logistic regression."""

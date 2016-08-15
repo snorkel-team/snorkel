@@ -117,14 +117,17 @@ class LogReg(NoiseAwareModel):
         """
         # First, we remove the rows (candidates) that have no LF coverage
         if training_marginals is not None:
-            covered            = np.where(training_marginals != 0.5)[0]
+            covered            = np.where(np.abs(training_marginals - 0.5) > 1e-3)[0]
             training_marginals = training_marginals[covered]
             X                  = X[covered]
             t,f                = training_marginals, 1-training_marginals
 
         # Set up stuff
         N, M   = X.shape
-        print N, M
+        print "="*80
+        print "Training marginals (!= 0.5):\t%s" % N
+        print "Features:\t\t\t%s" % M
+        print "="*80
         Xt     = X.transpose()
         Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else np.abs(Xt)  
         w0     = w0 if w0 is not None else np.zeros(M)

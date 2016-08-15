@@ -1,4 +1,6 @@
 import os, sys
+import numpy as np
+from pandas import DataFrame
 from collections import defaultdict
 import scipy.sparse as sparse
 from .models import Candidate, CandidateSet, Feature
@@ -64,6 +66,13 @@ class SessionFeaturizer(object):
             self.inv_index[j]  = f
             for i in f_index[f]:
                 F[i,j] = 1
+
+        # Add in one more entry to the indexes / symbol tables for a bias term (in case one is used)
+        f = len(self.feat_index)
+        self.feat_index['BIAS_TERM'] = f
+        self.inv_index[f]            = 'BIAS_TERM'
+
+        # Return F in CSR sparse format
         return F.tocsr()
 
     def load(self, session, candidate_set):
@@ -80,6 +89,12 @@ class SessionFeaturizer(object):
             if self.feat_index.has_key(f.name):
                 F[c_index[f.candidate_id], self.feat_index[f.name]] = 1
         return F.tocsr()
+    
+    def top_features(self, w, n_max=100):
+        """Return a DataFrame of highest (abs)-weighted features"""
+        idxs = np.argsort(np.abs(w))[::-1][:n_max]
+        d = {'j': idxs, 'w': [w[i] for i in idxs]}
+        return DataFrame(data=d, index=[self.inv_index[i] for i in idxs])
 
 
 class SpanFeaturizer(SessionFeaturizer):

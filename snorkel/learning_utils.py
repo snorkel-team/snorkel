@@ -39,14 +39,19 @@ def score(test_candidates, test_labels, test_pred, gold_candidate_set, train_mar
     rec  = m_tp / float(m_tp + m_fn + len(gold_fn))
     f1 = 2.0 * (prec * rec) / (prec + rec)
     
+    # Corrected FN
+    fn = m_fn + len(gold_fn)
+
     print "========================================"
     print "Recall-corrected Noise-aware Model"
     print "========================================"
+    print "Pos. class accuracy: %s" % (m_tp/float(m_tp+fn),)
+    print "Neg. class accuracy: %s" % (m_tn/float(m_tn+m_fp),)
     print "Corpus Precision {:.3}".format(prec)
     print "Corpus Recall    {:.3}".format(rec)
     print "Corpus F1        {:.3}".format(f1)
     print "----------------------------------------"
-    print "TP: {} | FP: {} | TN: {} | FN: {}".format(m_tp, m_fp, m_tn, (m_fn + len(gold_fn)))
+    print "TP: {} | FP: {} | TN: {} | FN: {}".format(m_tp, m_fp, m_tn, fn)
     print "========================================\n"
 
 def precision(pred, gold):
@@ -81,6 +86,9 @@ def test_scores(pred, gold, return_vals=True, verbose=False):
     if verbose:
         print "=" * 40
         print "Test set size:\t%s" % n_t
+        print "-" * 40
+        print "Pos. class accuracy: %s" % (tp/float(tp+fn),)
+        print "Neg. class accuracy: %s" % (tn/float(tn+fp),)
         print "-" * 40
         print "Precision:\t%s" % prec
         print "Recall:\t\t%s" % rec
@@ -307,57 +315,3 @@ def training_set_summary_stats(L, return_vals=True, verbose=False):
         print "=" * 60
     if return_vals:
         return coverage, overlap, conflict
-
-
-
-##### Old stuff...
-
-class DDLiteModel:
-  def __init__(self, candidates, feats=None, gt_dict=None):
-    self.C = candidates
-    
-  def _plot_coverage(self, cov):
-    cov_ct = [np.sum(x > 0) for x in cov]
-    tot_cov = self.coverage(cov)
-    idx, bar_width = np.array([1, -1]), 1
-    plt.bar(idx, cov_ct, bar_width, color='b')
-    plt.xlim((-1.5, 2.5))
-    plt.xlabel("Label type")
-    plt.ylabel("# candidates with at least one of label type")
-    plt.xticks(idx + bar_width * 0.5, ("Positive", "Negative"))
-    return tot_cov * 100.
-    
-  def _plot_conflict(self, cov):
-    x, y = cov
-    tot_conf = self.conflict(cov)
-    m = np.max([np.max(x), np.max(y)])
-    bz = np.linspace(-0.5, m+0.5, num=m+2)
-    H, xr, yr = np.histogram2d(x, y, bins=[bz,bz], normed=False)
-    plt.imshow(H, interpolation='nearest', origin='low',
-               extent=[xr[0], xr[-1], yr[0], yr[-1]])
-    cb = plt.colorbar(fraction=0.046, pad=0.04)
-    cb.set_label("# candidates")
-    plt.xlabel("# negative labels")
-    plt.ylabel("# positive labels")
-    plt.xticks(range(m+1))
-    plt.yticks(range(m+1))
-    return tot_conf * 100.
-
-  def plot_lf_stats(self):
-    """ Show plots for evaluating LF quality
-    Coverage bar plot, overlap histogram, and conflict heat map
-    """
-    if self.lf_matrix is None:
-      raise ValueError("No LFs applied yet")
-    n_plots = 2
-    cov = self._cover()
-    # LF coverage
-    plt.subplot(1,n_plots,1)
-    tot_cov = self._plot_coverage(cov)
-    plt.title("(a) Label balance (training set coverage: {:.2f}%)".format(tot_cov))
-    # LF conflict
-    plt.subplot(1,n_plots,2)
-    tot_conf = self._plot_conflict(cov)
-    plt.title("(b) Label heat map (training set conflict: {:.2f}%)".format(tot_conf))
-    # Show plots    
-    plt.show()

@@ -10,6 +10,7 @@ import json
 import lxml.etree as et
 import os
 import re
+import codecs
 import requests
 import signal
 from subprocess import Popen
@@ -45,9 +46,10 @@ class CorpusParser:
 
 class DocParser:
     """Parse a file or directory of files into a set of Document objects."""
-    def __init__(self, path):
+    def __init__(self, path, encoding="utf-8"):
         self.path = path
-
+        self.encoding = encoding
+    
     def parse(self):
         """
         Parse a file or directory of files into a set of Document objects.
@@ -84,7 +86,7 @@ class DocParser:
 class TextDocParser(DocParser):
     """Simple parsing of raw text files, assuming one document per file"""
     def parse_file(self, fp, file_name):
-        with open(fp, 'rb') as f:
+        with codecs.open(fp, 'rb', self.encoding, errors="ignore") as f:
             name = re.sub(r'\..*$', '', os.path.basename(fp))
             yield Document(name=name, file=file_name, attribs={}), f.read()
 

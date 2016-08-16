@@ -37,8 +37,9 @@ def get_ddlib_feats(cand, idxs):
   for window_feat in _get_window_features(cand, idxs):
     yield window_feat
 
-  if cand.context.words[idxs[0]][0].isupper():
-    yield u"STARTS_WITH_CAPITAL"
+  # FIXME: this doesn't work for some reason so i commented it out --volodymyr
+  # if cand.context.words[idxs[0]][0].isupper():
+  #   yield u"STARTS_WITH_CAPITAL"
 
   yield u"NUM_WORDS_%s" % len(idxs)
 
@@ -163,17 +164,17 @@ def get_table_feats(cand):
                     pass
 
 def get_relation_table_feats(cand):
-    if cand.ngram0.context.table == cand.ngram1.context.table:
+    if cand.span0.context.table == cand.span1.context.table:
         yield u"SAME_TABLE"
-        row_diff = cand.ngram0.context.row_num - cand.ngram1.context.row_num
+        row_diff = cand.span0.context.row_num - cand.span1.context.row_num
         yield u"ROW_DIFF_[%s]" % row_diff
-        col_diff = cand.ngram0.context.col_num - cand.ngram1.context.col_num
+        col_diff = cand.span0.context.col_num - cand.span1.context.col_num
         yield u"COL_DIFF_[%s]" % col_diff
         yield u"MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff))
-        if cand.ngram0.context.cell == cand.ngram1.context.cell:
+        if cand.span0.context.cell == cand.span1.context.cell:
             yield u"SAME_CELL"
-            yield u"WORD_DIFF_[%s]" % cand.ngram0.get_word_start() - cand.ngram1.get_word_start()
-            yield u"CHAR_DIFF_[%s]" % cand.ngram0.char_start - cand.ngram1.char_start
-            if cand.ngram0.context.phrase == cand.ngram1.context.phrase:
+            yield u"WORD_DIFF_[%s]" % (cand.span0.get_word_start() - cand.span1.get_word_start())
+            yield u"CHAR_DIFF_[%s]" % (cand.span0.char_start - cand.span1.char_start)
+            if cand.span0.context == cand.span1.context:
                 yield u"SAME_PHRASE"
 

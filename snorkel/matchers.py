@@ -86,6 +86,7 @@ class DictionaryMatch(NgramMatcher):
     def init(self):
         self.ignore_case = self.opts.get('ignore_case', True)
         self.attrib      = self.opts.get('attrib', WORDS)
+        self.reverse     = self.opts.get('reverse', False)
         try:
             self.d = frozenset(w.lower() if self.ignore_case else w for w in self.opts['d'])
         except KeyError:
@@ -110,7 +111,7 @@ class DictionaryMatch(NgramMatcher):
         p = c.get_attrib_span(self.attrib)
         p = p.lower() if self.ignore_case else p
         p = self._stem(p) if self.stemmer is not None else p
-        return True if p in self.d else False
+        return (not self.reverse) if p in self.d else self.reverse
 
 class LambdaFunctionMatch(NgramMatcher):
     """Selects candidate Ngrams that match against a given list d"""

@@ -111,10 +111,7 @@ class DictionaryMatch(NgramMatcher):
         p = c.get_attrib_span(self.attrib)
         p = p.lower() if self.ignore_case else p
         p = self._stem(p) if self.stemmer is not None else p
-        if self.reverse:
-            return False if p in self.d else True
-        else:
-            return True if p in self.d else False
+        return (not self.reverse) if p in self.d else self.reverse
 
 class LambdaFunctionMatch(NgramMatcher):
     """Selects candidate Ngrams that match against a given list d"""

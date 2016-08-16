@@ -135,9 +135,9 @@ class TableNgramPairFeaturizer(TableNgramFeaturizer):
         # TODO: generalize this to arity=N
         # collect (entity) feature generators from parent
         e0_feature_generators = TableNgramFeaturizer._match_contexts(
-            self, [candidate.ngram0 for candidate in candidates])
+            self, [candidate.span0 for candidate in candidates])
         e1_feature_generators = TableNgramFeaturizer._match_contexts(
-            self, [candidate.ngram1 for candidate in candidates])
+            self, [candidate.span1 for candidate in candidates])
 
         feature_generators = []
         for i in range(len(e0_feature_generators)):

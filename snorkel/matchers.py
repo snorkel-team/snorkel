@@ -218,4 +218,5 @@ class RegexMatchSpan(RegexMatch):
 class RegexMatchEach(RegexMatch):
     """Matches regex pattern on **each token**"""
     def _f(self, c):
-        return 1 if all([self.r.match(t) is not None for t in c.get_attrib_tokens(self.attrib)]) else 0
+        tokens = c.get_attrib_tokens(self.attrib)
+        return 1 if tokens and all([self.r.match(t) is not None for t in tokens]) else 0

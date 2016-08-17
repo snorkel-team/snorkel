@@ -182,7 +182,7 @@ class Learner(object):
         """Return a DataFrame of highest (abs)-weighted features"""
         idxs = np.argsort(np.abs(self.feature_weights()))[::-1][:n_max]
         d = {'j': idxs, 'w': [self.feature_weights()[i] for i in idxs]}
-        return DataFrame(data=d, index=[self.training_set.featurizer.inv_index[i] for i in idxs])
+        return DataFrame(data=d, index=[self.training_set.featurizer.feat_inv_index[i] for i in idxs])
 
 
 class PipelinedLearner(Learner):

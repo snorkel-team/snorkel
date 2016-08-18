@@ -67,11 +67,6 @@ class SessionFeaturizer(object):
             for i in f_index[f]:
                 F[i,j] = 1
 
-        # Add in one more entry to the indexes / symbol tables for a bias term (in case one is used)
-        f = len(self.feat_index)
-        self.feat_index['BIAS_TERM'] = f
-        self.inv_index[f]            = 'BIAS_TERM'
-
         # Return F in CSR sparse format
         return F.tocsr()
 

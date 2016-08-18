@@ -257,7 +257,7 @@ class TableParser(SentenceParser):
         self.delim = "<NC>" # NC = New Cell
         super(TableParser, self).__init__(delim=self.delim[1:-1], tok_whitespace=tok_whitespace)
 
-    def parse(self, document, text, batch=True):
+    def parse(self, document, text, batch=False):
         if batch:
             for table in self.parse_html(document, text):
                 char_idx = 0
@@ -325,7 +325,7 @@ class TableParser(SentenceParser):
                     col_num += 1
 
     def parse_cell(self, cell):
-        parts = inherit_cell_attrs(cell, defaultdict(list))
+        parts = self.inherit_cell_attrs(cell, defaultdict(list))
         for i, sent in enumerate(super(TableParser, self).parse(cell.document, cell.text)):
             parts['text'] = sent.text
             parts['position'] = i

@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as sparse
+from scipy.optimize import minimize
 import warnings
 from learning_utils import sparse_abs
 from lstm import LSTMModel
@@ -83,7 +84,7 @@ class NoiseAwareModel(object):
     def __init__(self):
         pass
 
-    def train(self, X, training_marginals=None, **hyperparams):
+    def train(self, X, training_marginals, **hyperparams):
         raise NotImplementedError()
 
     def marginals(self, X):
@@ -94,26 +95,142 @@ class NoiseAwareModel(object):
         return np.array([1 if p > b else -1 if p < b else 0 for p in self.marginals(X)])
 
 
-class SciKitLR(NoiseAwareModel):
+class LogRegSKLearn(NoiseAwareModel):
+    """Logistic regression."""
+    def __init__(self):
+        self.w         = None
 
-    def train(self, X, training_marginals, **scikit_params):
-        covered = np.where(np.abs(training_marginals - 0.5) < 1e-8)[0]
-        self.model = linear_model.LogisticRegression(**scikit_params)
-        self.model.fit(X[covered, :], (training_marginals[covered] > 0.5))
+    def train(self, X, training_marginals, alpha=1, C=1.0):
+        penalty    = 'l1' if alpha == 1 else 'l2'
+        self.model = linear_model.LogisticRegression(penalty=penalty, C=C, dual=False)
+       
+        # First, we remove the rows (candidates) that have no LF coverage
+        covered            = np.where(np.abs(training_marginals - 0.5) > 1e-3)[0]
+        training_marginals = training_marginals[covered]
+        X                  = X[covered]
 
+        # Hard threshold the training marginals
+        ypred = np.array([1 if x > 0.5 else 0 for x in training_marginals])
+        self.model.fit(X, ypred)
+        self.w = self.model.coef_.flatten()
+    
     def marginals(self, X):
-        return self.model.predict_proba(X)
+        m = self.model.predict_proba(X)
+        return self.model.predict_proba(X)[...,1]
 
 
 class LogReg(NoiseAwareModel):
-    """Logistic regression."""
     def __init__(self, bias_term=False):
         self.w         = None
         self.bias_term = bias_term
 
-    def train(self, X, training_marginals=None, n_iter=1000, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, \
-            mu=DEFAULT_MU, sample=False, n_samples=100, evidence=None, warm_starts=False, tol=1e-6, \
-            verbose=True):
+    def _loss(self, X, w, m_t, mu, alpha):
+        """
+        Our noise-aware loss function (ignoring regularization term):
+        L(w) = sum_{x,y} E[ log( 1 + exp(-x^Twy) ) ]
+             = sum_{x,y} P(y=1) log( 1 + exp(-x^Tw) ) + P(y=-1) log( 1 + exp(x^Tw) )
+        """
+        z = X.dot(w)
+        return m_t.dot(np.log(1 + np.exp(-z))) + (1 - m_t).dot(np.log(1 + np.exp(z))) \
+                + mu * (alpha*np.linalg.norm(w, ord=1) + (1-alpha)*np.linalg.norm(w, ord=2))
+
+    def train(self, X, training_marginals, method='GD', n_iter=1000, w0=None, rate=0.001, backtracking=False, beta=0.8, mu=1e-6, alpha=0.5, rate_decay=0.999, hard_thresh=False):
+
+        # First, we remove the rows (candidates) that have no LF coverage
+        covered            = np.where(np.abs(training_marginals - 0.5) > 1e-3)[0]
+        training_marginals = training_marginals[covered]
+        X                  = X[covered]
+
+        # Option to try hard thresholding
+        if hard_thresh:
+            training_marginals = np.array([1.0 if x > 0.5 else 0.0 for x in training_marginals])
+        m_t, m_f = training_marginals, 1-training_marginals
+    
+        # Set up stuff
+        N, M = X.shape
+        print "="*80
+        print "Training marginals (!= 0.5):\t%s" % N
+        print "Features:\t\t\t%s" % M
+        print "="*80
+        Xt = X.transpose()
+        w0 = w0 if w0 is not None else np.zeros(M)
+
+        # Initialize training
+        w = w0.copy()
+        g = np.zeros(M)
+
+        # Scipy optimize
+        if method == 'L-BFGS':
+            print "Using L-BFGS-B..."
+            func = lambda w : m_t.dot(np.log(odds_to_prob(X.dot(w)))) + m_f.dot(np.log(odds_to_prob(-X.dot(w))))
+            self.res = minimize(func, w0, method='L-BFGS-B', options={'disp':True, 'iprint':10})
+            self.w = self.res.x
+
+        # Gradient descent
+        elif method == 'GD':
+            print "Using gradient descent..."
+            for step in range(n_iter):
+                if step % 100 == 0:
+                    print "\tLearning epoch = {}\tStep size = {}".format(step, rate)
+
+                # Compute the gradient step
+                """
+                Let g(x) = exp(x) / (1 + exp(x)) = 1 / (1 + exp(-x)) = odds_to_prob(x)
+
+                Our noise-aware loss function (ignoring regularization term):
+                L(w) = sum_{x,y} E[ log( 1 + exp(-x^Twy) ) ]
+                     = sum_{x,y} P(y=1) log( 1 + exp(-x^Tw) ) + P(y=-1) log( 1 + exp(x^Tw) )
+
+                The gradient is thus:
+                grad_w = sum_{x,y} P(y=-1) g(x^Tw) x - P(y=1) g(-x^Tw) x
+                """
+                z = X.dot(w)
+                t = odds_to_prob(z)
+                g0 = Xt.dot(np.multiply(t, m_f)) - Xt.dot(np.multiply(1-t, m_t))
+
+                # Compute the loss
+                L = self._loss(X, w, m_t, mu, alpha)
+                if step % 100 == 0:
+                    print "\tLoss = {:.6f}\tGradient magnitude = {:.6f}".format(L, np.linalg.norm(g0, ord=2))
+
+                # Momentum term
+                g = 0.95*g0 + 0.05*g
+
+                # Backtracking line search
+                if backtracking:
+                    while self._loss(X, w - rate*g, m_t, mu, alpha) > L - 0.5*rate*np.linalg.norm(w, ord=2)**2:
+                        rate *= beta
+                else:
+                    rate *= rate_decay
+
+                # Update weights
+                w -= rate * g
+
+                # Apply elastic net penalty
+                w_bias    = w[-1]
+                soft      = np.abs(w) - rate * alpha * mu
+                ridge_pen = (1 + (1-alpha) * rate * mu)
+                w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
+                if self.bias_term:
+                    w[-1] = w_bias
+
+            # Return learned weights
+            self.w = w
+
+        else:
+            raise NotImplementedError()
+
+    def marginals(self, X):
+        return odds_to_prob(X.dot(self.w))
+
+
+class NaiveBayes(NoiseAwareModel):
+    def __init__(self, bias_term=False):
+        self.w         = None
+        self.bias_term = bias_term
+
+    def train(self, X, n_iter=1000, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, mu=DEFAULT_MU, \
+            sample=False, n_samples=100, evidence=None, warm_starts=False, tol=1e-6, verbose=True):
         """
         Perform SGD wrt the weights w
         * n_iter:      Number of steps of SGD
@@ -127,13 +244,6 @@ class LogReg(NoiseAwareModel):
         * warm_starts:
         * tol:         For testing for SGD convergence, i.e. stopping threshold
         """
-        # First, we remove the rows (candidates) that have no LF coverage
-        if training_marginals is not None:
-            covered            = np.where(np.abs(training_marginals - 0.5) > 1e-3)[0]
-            training_marginals = training_marginals[covered]
-            X                  = X[covered]
-            t,f                = training_marginals, 1-training_marginals
-
         # Set up stuff
         N, M   = X.shape
         print "="*80
@@ -156,8 +266,7 @@ class LogReg(NoiseAwareModel):
         for step in range(n_iter):
 
             # Get the expected LF accuracy
-            if training_marginals is None:
-                t,f = sample_data(X, w, n_samples=n_samples) if sample else exact_data(X, w, evidence)
+            t,f = sample_data(X, w, n_samples=n_samples) if sample else exact_data(X, w, evidence)
             p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
 
             # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...

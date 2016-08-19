@@ -169,6 +169,35 @@ class RelationExtractor(CandidateExtractor):
                     uid = '%s_&_%s' % (span0.uid, span1.uid)
                     yield SpanPair(span0=(span0.promote()), span1=(span1.promote()), uid=uid)
 
+class AlignedTableRelationExtractor(CandidateExtractor):
+    """Table relation extraction for aligned cells only
+
+    Alignment argument can be:
+        'rows': output candidates aligned over rows
+        'cols': output candidates aligned over columns
+        'both': output candidates aligned over either rows or columns
+    """
+    def __init__(self, extractor1, extractor2, alignment='both', join_key='context_id'):
+        super(AlignedTableRelationExtractor, self).__init__(parallelism=False, join_key=join_key)
+        self.alignment = alignment
+        self.e1 = extractor1
+        self.e2 = extractor2
+
+    def _extract(self, contexts):
+        for context in contexts:
+            for span0 in self.e1._extract([context]):
+                for span1 in self.e2._extract([context]):
+                    if self.alignment == 'rows':
+                        if span0.context.cell.row_num != span1.context.cell.row_num: continue
+                    if self.alignment == 'cols':
+                        if span0.context.cell.col_num != span1.context.cell.col_num: continue
+                    if self.alignment == 'both':
+                        if span0.context.cell.col_num != span1.context.cell.col_num \
+                        and span0.context.cell.row_num != span1.context.cell.row_num: continue
+
+                    uid = '%s_&_%s' % (span0.uid, span1.uid)
+                    yield SpanPair(span0=(span0.promote()), span1=(span1.promote()), uid=uid)                    
+
 
 class Ngrams(CandidateSpace):
     """

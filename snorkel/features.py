@@ -58,7 +58,15 @@ class Featurizer(object):
 
         # Assemble and return the sparse feature matrix
         f_index = defaultdict(list)
+        n_tot = len(candidates)
+        first = True
+        print 'Building feature index...'
+        print '%d feature generators in total.' % len(feature_generators)
         for i,f in itertools.chain(*feature_generators):
+            if i % 10000 == 0 and first: 
+                print '%d/%d' % (i, n_tot)
+                first = False
+            if i % 10000 != 0: first = True
             f_index[f].append(i)
 
         # Assemble and return sparse feature matrix
@@ -66,7 +74,10 @@ class Featurizer(object):
         self.feat_index     = {}
         self.feat_inv_index = {}
         F                   = sparse.lil_matrix((len(candidates), len(f_index.keys())))
+        n_tot = len(f_index.keys())
+        print 'Extracting features...'
         for j,f in enumerate(f_index.keys()):
+            if j % 5000 == 0: print '%d/%d' % (j, n_tot)
             self.feat_index[f] = j
             self.feat_inv_index[j] = f
             for i in f_index[f]:

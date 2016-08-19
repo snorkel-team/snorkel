@@ -184,6 +184,18 @@ class Learner(object):
         d = {'j': idxs, 'w': [self.feature_weights()[i] for i in idxs]}
         return DataFrame(data=d, index=[self.training_set.featurizer.feat_inv_index[i] for i in idxs])
 
+    def mislabeled_test_candidates(self, test_candidates, gold_labels):
+      gold_labels = np.array(gold_labels)
+      if self.X_test is None or test_candidates != self.test_candidates or any(gold_labels != self.gold_labels):
+        self.test_candidates     = test_candidates
+        self.gold_labels         = gold_labels
+        self.L_test, self.F_test = self.training_set.transform(test_candidates)
+        self.X_test              = self._set_model_X(self.L_test, self.F_test)
+
+      pred_labels = self.model.predict(self.X_test)
+      return [(c,p,g) for c, p, g in zip(test_candidates, pred_labels, gold_labels) if p != g]
+
+
 
 class PipelinedLearner(Learner):
     """

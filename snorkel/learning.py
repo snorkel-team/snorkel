@@ -252,7 +252,7 @@ class NaiveBayes(NoiseAwareModel):
         print "="*80
         Xt     = X.transpose()
         Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else np.abs(Xt)
-        w0     = w0 if w0 is not None else np.zeros(M)
+        w0     = w0 if w0 is not None else np.ones(M)
 
         # Initialize training
         w = w0.copy()

@@ -20,7 +20,7 @@ At a high level, the idea is that developers can focus on writing labeling funct
 **_Snorkel is very much a work in progress_**, but some people have already begun developing applications with it, and initial feedback has been positive... let us know what you think, and how we can improve it, in the [Issues](https://github.com/HazyResearch/ddlite/issues) section!
 
 ### References
-* Technical report on Data Programming: [https://arxiv.org/abs/1605.07723](https://arxiv.org/abs/1605.07723)
+* Data Programming, to appear at NIPS 2016: [https://arxiv.org/abs/1605.07723](https://arxiv.org/abs/1605.07723)
 * Workshop paper from HILDA 2016 (note Snorkel was previously _DDLite_): [here](http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf)
 
 ## Installation / dependencies

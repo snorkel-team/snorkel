@@ -149,23 +149,26 @@ class Viewer(widgets.DOMWidget):
         self.html = open(HOME+'/viewer/viewer.html').read() % (self.height, ''.join(pages))
         display(Javascript(open(HOME + '/viewer/viewer.js').read()))
 
-    def get_labels(self):
-        """De-serialize labels, map to candidate id, and return as dictionary"""
+    def _get_labels(self):
+        """
+        De-serialize labels from Javascript widget, map to internal candidate id, and return as list of tuples
+        """
         LABEL_MAP = {'true':1, 'false':-1}
         labels    = [x.split('~~') for x in self._labels_serialized.split(',') if len(x) > 0]
         vals      = [(int(cid), LABEL_MAP.get(l, 0)) for cid,l in labels]
         return vals
 
     def save_labels(self):
-        for cid, v in self.get_labels():
-            existing_annotation = self.session.query(Annotation) \
-                .filter(Annotation.annotator == self.annotator) \
-                .filter(Annotation.candidate == self.candidates[cid]) \
-                .first()
-            if existing_annotation is not None:
-                existing_annotation.value = v
+        """
+        Persists current labels.
+        """
+        for cid, v in self._get_labels():
+            if self.annotations[cid] is not None:
+                if self.annotations[cid].value != v:
+                    self.annotations[cid].value = v
             else:
-                self.session.add(Annotation(annotator=self.annotator, candidate=self.candidates[cid], value=v))
+                self.annotations[cid] = Annotation(annotator=self.annotator, candidate=self.candidates[cid], value=v)
+                self.session.add(self.annotations[cid])
         self.session.commit()
 
     def get_selected(self):

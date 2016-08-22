@@ -4,10 +4,7 @@ try:
     from IPython.core.display import display, Javascript
 except:
     raise Exception("This module must be run in IPython.")
-from itertools import islice
-from random import randint, sample
 import os
-from collections import defaultdict
 import ipywidgets as widgets
 from traitlets import Unicode, Int, Dict, List
 import getpass
@@ -27,6 +24,7 @@ PAGE_HTML = """
     <ul class="list-group">{data}</ul>
 </div>
 """
+
 
 class Viewer(widgets.DOMWidget):
     # TODO: Update this docstring
@@ -55,7 +53,14 @@ class Viewer(widgets.DOMWidget):
         self.session = session
 
         # By default, use the username as annotator name
-        self.annotator = Annotator(name=annotator_name if annotator_name is not None else getpass.getuser())
+        name = annotator_name if annotator_name is not None else getpass.getuser()
+
+        # Gets or creates annotator record
+        self.annotator = self.session.query(Annotator).filter(Annotator.name == name).first()
+        if self.annotator is None:
+            self.annotator = Annotator(name=name)
+            session.add(self.annotator)
+            session.commit()
 
         # Viewer display configs
         self.n_per_page = n_per_page
@@ -129,12 +134,18 @@ class Viewer(widgets.DOMWidget):
         LABEL_MAP = {'true':1, 'false':-1}
         labels    = [x.split('~~') for x in self._labels_serialized.split(',') if len(x) > 0]
         vals      = [(int(cid), LABEL_MAP.get(l, 0)) for cid,l in labels]
-        return [Annotation(annotator=self.annotator, candidate=self.candidates[cid], value=v) for cid,v in vals]
+        return vals
 
     def save_labels(self):
-        # TODO: Get this working
-        for annotation in self.get_labels():
-            self.session.add(annotation)
+        for cid, v in self.get_labels():
+            existing_annotation = self.session.query(Annotation) \
+                .filter(Annotation.annotator == self.annotator) \
+                .filter(Annotation.candidate == self.candidates[cid]) \
+                .first()
+            if existing_annotation is not None:
+                existing_annotation.value = v
+            else:
+                self.session.add(Annotation(annotator=self.annotator, candidate=self.candidates[cid], value=v))
         self.session.commit()
 
     def get_selected(self):

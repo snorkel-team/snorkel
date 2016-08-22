@@ -77,6 +77,19 @@ class Viewer(widgets.DOMWidget):
             self.candidates = sorted(list(candidates), key=lambda c : c.span0.char_start)
             self.contexts   = list(set(c.span0.context for c in self.candidates + self.gold))
 
+        # Loads existing annotations
+        self.annotations = [None] * len(self.candidates)
+        init_labels_serialized = []
+        for i, candidate in enumerate(self.candidates):
+            existing_annotation = self.session.query(Annotation) \
+                .filter(Annotation.annotator == self.annotator) \
+                .filter(Annotation.candidate == candidate) \
+                .first()
+            if existing_annotation is not None:
+                self.annotations[i] = existing_annotation
+                init_labels_serialized.append(str(i) + '~~' + str(existing_annotation.value))
+        self._labels_serialized = ','.join(init_labels_serialized)
+
         # display js, construct html and pass on to widget model
         self.render()
 

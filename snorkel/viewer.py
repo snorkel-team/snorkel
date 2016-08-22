@@ -50,8 +50,9 @@ class Viewer(widgets.DOMWidget):
     _labels_serialized = Unicode().tag(sync=True)
     _selected_cid       = Int().tag(sync=True)
 
-    def __init__(self, candidates, gold=[], n_per_page=3, height=225, annotator_name=None):
+    def __init__(self, candidates, session, gold=[], n_per_page=3, height=225, annotator_name=None):
         super(Viewer, self).__init__()
+        self.session = session
 
         # By default, use the username as annotator name
         self.annotator = Annotator(name=annotator_name if annotator_name is not None else getpass.getuser())
@@ -129,6 +130,12 @@ class Viewer(widgets.DOMWidget):
         labels    = [x.split('~~') for x in self._labels_serialized.split(',') if len(x) > 0]
         vals      = [(int(cid), LABEL_MAP.get(l, 0)) for cid,l in labels]
         return [Annotation(annotator=self.annotator, candidate=self.candidates[cid], value=v) for cid,v in vals]
+
+    def save_labels(self):
+        # TODO: Get this working
+        for annotation in self.get_labels():
+            self.session.add(annotation)
+        self.session.commit()
 
     def get_selected(self):
         return self.candidates[self._selected_cid]

@@ -74,6 +74,53 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             return this.$el.find("."+this.cids[this.pid][this.cid]);
         },  
 
+        // Color the candidate correctly according to registered label, as well as set highlighting
+        markCurrentCandidate: function(highlight) {
+            var cid  = this.cids[this.pid][this.cid];
+            var tags = this.$el.find("."+cid);
+
+            // Flush current element-specific styling
+            tags.css("background-color", "");
+
+            // Get all other cids that
+
+            // Set color according to currently registered label
+            if (cid in this.labels) {
+                var label = this.labels[cid];
+                tags.addClass(String(label) + "-candidate");
+                tags.removeClass(String(!label) + "-candidate");
+            
+            // If no label BUT is being highlighted, remove label coloring
+            } else if (highlight) {
+                tags.removeClass("true-candidate");
+                tags.removeClass("false-candidate");
+            
+            // If un-highlighting, leave with first non-null coloring
+            } else {
+                var that = this;
+                tags.each(function() {
+                    var cids = $(this).attr('class').split(/\s+/);
+                    for (var i in cids) {
+                        if (cids[i] in that.labels) {
+                            var label = that.labels[cids[i]];
+                            $(this).addClass(String(label) + "-candidate");
+                            $(this).removeClass(String(!label) + "-candidate");
+                            break;
+                        }
+                    }
+                });
+            }
+
+            // Toggle highlighting
+            if (highlight) {
+                tags.addClass("highlighted-candidate");
+                this.setRGBABackgroundOpacity(tags, 1.0);
+            } else {
+                tags.removeClass("highlighted-candidate");
+                this.setRGBABackgroundOpacity(tags, 0.3);
+            }
+        },
+
         // Cycle through candidates and highlight, by increment inc
         switchCandidate: function(inc) {
             var N = this.cids[this.pid].length
@@ -81,9 +128,7 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
 
             // Clear highlighting from previous candidate
             if (inc != 0) {
-                var cPrev = this.getCandidate();
-                this.setRGBABackgroundOpacity(cPrev, 0.3);
-                cPrev.removeClass("highlighted-candidate");
+                this.markCurrentCandidate(false);
 
                 // Increment the cid counter
                 if (this.cid + inc >= N) {
@@ -94,23 +139,8 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
                     this.cid += inc;
                 }
             }
-            var cNext = this.getCandidate();
-
-            // Make sure correct label class is applied (e.g. if overlapping)
-            // TODO: Clean this up
-            var cid = this.cids[this.pid][this.cid];
-            if (cid in this.labels) {
-                var label = this.labels[cid];
-                var cl    = String(label) + "-candidate";
-                var cln   = String(!label) + "-candidate";
-                cNext.css("background-color", "");
-                cNext.removeClass(cln);
-                cNext.addClass(cl);
-            }
-
-            // Highlight new candidate
-            this.setRGBABackgroundOpacity(cNext, 1.0);
-            cNext.addClass("highlighted-candidate");
+            //var cNext = this.getCandidate();
+            this.markCurrentCandidate(true);
 
             // Push this new cid to the model
             this.model.set('_selected_cid', this.cids[this.pid][this.cid]);
@@ -170,6 +200,13 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
                 s.push(key+"~~"+d[key]);
             }
             return s.join();
+        },
+
+        // Deserialization of hash maps
+        deserializeDict: function(d) {
+            var d = {};
+            // TODO
+            return d;
         },
 
         // Highlight spans

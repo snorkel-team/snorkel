@@ -48,7 +48,7 @@ class Viewer(widgets.DOMWidget):
     cids               = List().tag(sync=True)
     html               = Unicode('<h3>Error!</h3>').tag(sync=True)
     _labels_serialized = Unicode().tag(sync=True)
-    _selected_cid       = Int().tag(sync=True)
+    _selected_cid      = Int().tag(sync=True)
 
     def __init__(self, candidates, session, gold=[], n_per_page=3, height=225, annotator_name=None):
         super(Viewer, self).__init__()

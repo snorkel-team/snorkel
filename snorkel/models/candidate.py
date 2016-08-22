@@ -1,5 +1,5 @@
 from .meta import SnorkelBase, snorkel_postgres
-from sqlalchemy import Table, Column, String, Integer, ForeignKey, ForeignKeyConstraint, Index
+from sqlalchemy import Table, Column, String, Integer, ForeignKey, ForeignKeyConstraint, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import PickleType
 
@@ -52,10 +52,14 @@ class Candidate(SnorkelBase):
 
     # Postgres requires an explicit unique index to use a tuple as a compound foreign key,
     # even if it is redundant as in this case
-    if snorkel_postgres:
-        __table_args__ = (
-            Index('candidate_unique_id_candidate_set_id', id, candidate_set_id, unique=True),
-        )
+    #if snorkel_postgres:
+    #    __table_args__ = (
+    #        Index('candidate_unique_id_candidate_set_id', id, candidate_set_id, unique=True),
+    #    )
+
+    __table_args__ = (
+        UniqueConstraint(id, candidate_set_id),
+    )
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',
@@ -166,21 +170,25 @@ class Span(TemporarySpan, Candidate):
     char_offsets are **relative to the Context start**
     """
     __table__ = Table('span', SnorkelBase.metadata,
-                      Column('id', Integer, unique=True),
-                      Column('candidate_set_id', Integer, primary_key=True),
-                      Column('context_id', Integer, ForeignKey('context.id'), primary_key=True),
-                      Column('char_start', Integer, primary_key=True),
-                      Column('char_end', Integer, primary_key=True),
+                      Column('id', Integer, primary_key=True),
+                      Column('candidate_set_id', Integer),
+                      Column('context_id', Integer, ForeignKey('context.id')),
+                      Column('char_start', Integer),
+                      Column('char_end', Integer),
                       Column('meta', PickleType),
                       ForeignKeyConstraint(['id', 'candidate_set_id'], ['candidate.id', 'candidate.candidate_set_id'])
                       )
 
+    __table_args__ = (
+        UniqueConstraint(__table__.c.candidate_set_id, __table__.c.context_id, __table__.c.char_start, __table__.c.char_end),
+    )
+
     # Postgres requires an explicit unique index to use a tuple as a compound foreign key,
     # even if it is redundant as in this case
-    if snorkel_postgres:
-        __table_args__ = (
-            Index('span_unique_id_candidate_set_id', __table__.c.id, __table__.c.candidate_set_id, unique=True),
-        )
+    #if snorkel_postgres:
+    #    __table_args__ = (
+    #        Index('span_unique_id_candidate_set_id', __table__.c.id, __table__.c.candidate_set_id, unique=True),
+    #    )
 
     context = relationship('Context', backref=backref('candidates', cascade_backrefs=False))
 
@@ -197,14 +205,18 @@ class SpanPair(Candidate):
     A pair of Span Candidates, representing a relation from Span 0 to Span 1.
     """
     __table__ = Table('span_pair', SnorkelBase.metadata,
-                      Column('id', Integer, unique=True),
-                      Column('candidate_set_id', Integer, primary_key=True),
-                      Column('span0_id', Integer, primary_key=True),
-                      Column('span1_id', Integer, primary_key=True),
+                      Column('id', Integer, primary_key=True),
+                      Column('candidate_set_id', Integer),
+                      Column('span0_id', Integer),
+                      Column('span1_id', Integer),
                       ForeignKeyConstraint(['id', 'candidate_set_id'], ['candidate.id', 'candidate.candidate_set_id']),
                       ForeignKeyConstraint(['span0_id'], ['span.id']),
                       ForeignKeyConstraint(['span1_id'], ['span.id'])
                       )
+
+    __table_args__ = (
+        UniqueConstraint(__table__.c.candidate_set_id, __table__.c.span0_id, __table__.c.span1_id),
+    )
 
     span0 = relationship('Span', backref=backref('span_source_pairs', cascade_backrefs=False),
                           cascade_backrefs=False, foreign_keys='SpanPair.span0_id')
@@ -216,10 +228,10 @@ class SpanPair(Candidate):
     }
 
     def __eq__(self, other):
-        #try:
+        try:
             return self.span0 == other.span0 and self.span1 == other.span1
-        #except AttributeError:
-        #    return False
+        except AttributeError:
+            return False
 
     def __ne__(self, other):
         try:

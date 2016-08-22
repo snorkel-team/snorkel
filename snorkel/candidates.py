@@ -1,3 +1,4 @@
+from . import SnorkelSession
 from .models import CandidateSet, TemporarySpan, Span, SpanPair
 from itertools import chain
 from multiprocessing import Process, Queue, JoinableQueue
@@ -68,17 +69,17 @@ class CandidateExtractor(object):
         self.ps = []
 
     def extract(self, contexts, name, session=None, parallelism=False):
-
         # Create a candidate set
         c = CandidateSet(name=name)
-        if session is not None:
-            session.add(c)
 
         # If arity > 1, create a unary candidate set as well
         unary_set = CandidateSet(name=str(name + '-unary')) if self.arity > 1 else None
 
         # Run extraction
         if parallelism in [1, False]:
+            if session is not None:
+                session.add(c)
+
             unique_candidates = set()
             for context in contexts:
                 for candidate in self._extract_from_context(context, unary_set=unary_set):
@@ -88,14 +89,24 @@ class CandidateExtractor(object):
                     c.candidates.append(candidate)
 
                 unique_candidates.clear()
-        else:
-            for candidate in self._extract_multiprocess(contexts, parallelism, name):
-                c.candidates.append(candidate)
 
-        # Commit the session and return the candidate set
-        if session is not None:
+            # Commit the candidates and return the candidate set
+            if session is not None:
+                session.commit()
+            return c
+        else:
+            if session is None:
+                raise ValueError('Session must be provided to use parallelism.')
+
+            session.add(c)
+
+            if unary_set is not None:
+                session.add(unary_set)
+
             session.commit()
-        return c
+
+            self._extract_multiprocess(contexts, parallelism, c, unary_set)
+            return session.query(CandidateSet).filter(CandidateSet.name == name).one()
 
     def _extract_from_context(self, context, unary_set=None):
 
@@ -150,7 +161,7 @@ class CandidateExtractor(object):
         else:
             raise NotImplementedError()
             
-    def _extract_multiprocess(self, contexts, parallelism, name=None):
+    def _extract_multiprocess(self, contexts, parallelism, candidate_set, unary_set):
         contexts_in    = JoinableQueue()
         candidates_out = Queue()
 
@@ -160,9 +171,14 @@ class CandidateExtractor(object):
 
         # Start worker Processes
         for i in range(parallelism):
-            p = CandidateExtractorProcess(self._extract_from_context, contexts_in, candidates_out, name=name)
-            p.start()
+            session = SnorkelSession()
+            c = session.merge(candidate_set)
+            u = session.merge(unary_set) if unary_set is not None else None
+            p = CandidateExtractorProcess(self._extract_from_context, session, contexts_in, candidates_out, c, u)
             self.ps.append(p)
+
+        for p in self.ps:
+            p.start()
         
         # Join on JoinableQueue of contexts
         contexts_in.join()
@@ -178,22 +194,37 @@ class CandidateExtractor(object):
 
 
 class CandidateExtractorProcess(Process):
-    def __init__(self, extractor, contexts_in, candidates_out, name=None):
+    def __init__(self, extractor, session, contexts_in, candidates_out, candidate_set, unary_set):
         Process.__init__(self)
         self.extractor      = extractor
+        self.session        = session
         self.contexts_in    = contexts_in
         self.candidates_out = candidates_out
-        self.name           = name
+        self.candidate_set  = candidate_set
+        self.unary_set      = unary_set
 
     def run(self):
+        c = self.candidate_set
+        u = self.unary_set if self.unary_set is not None else None
+
+        unique_candidates = set()
         while True:
             try:
-                context = self.contexts_in.get(False)
-                for candidate in self.extractor(context, self.name):
-                    self.candidates_out.put(candidate, False)
+                context = self.session.merge(self.contexts_in.get(False))
+                for candidate in self.extractor(context, u):
+                    unique_candidates.add(candidate)
+
+                for candidate in unique_candidates:
+                    c.candidates.append(candidate)
+
+                unique_candidates.clear()
                 self.contexts_in.task_done()
             except Empty:
                 break
+
+        self.session.commit()
+        self.session.close()
+
 
 class Ngrams(CandidateSpace):
     """

@@ -4,10 +4,7 @@ try:
     from IPython.core.display import display, Javascript
 except:
     raise Exception("This module must be run in IPython.")
-from itertools import islice
-from random import randint, sample
 import os
-from collections import defaultdict
 import ipywidgets as widgets
 from traitlets import Unicode, Int, Dict, List
 import getpass
@@ -27,6 +24,7 @@ PAGE_HTML = """
     <ul class="list-group">{data}</ul>
 </div>
 """
+
 
 class Viewer(widgets.DOMWidget):
     # TODO: Update this docstring
@@ -55,7 +53,14 @@ class Viewer(widgets.DOMWidget):
         self.session = session
 
         # By default, use the username as annotator name
-        self.annotator = Annotator(name=annotator_name if annotator_name is not None else getpass.getuser())
+        name = annotator_name if annotator_name is not None else getpass.getuser()
+
+        # Gets or creates annotator record
+        self.annotator = self.session.query(Annotator).filter(Annotator.name == name).first()
+        if self.annotator is None:
+            self.annotator = Annotator(name=name)
+            session.add(self.annotator)
+            session.commit()
 
         # Viewer display configs
         self.n_per_page = n_per_page
@@ -71,6 +76,26 @@ class Viewer(widgets.DOMWidget):
         except:
             self.candidates = sorted(list(candidates), key=lambda c : c.span0.char_start)
             self.contexts   = list(set(c.span0.context for c in self.candidates + self.gold))
+
+        # Loads existing annotations
+        self.annotations = [None] * len(self.candidates)
+        init_labels_serialized = []
+        for i, candidate in enumerate(self.candidates):
+            existing_annotation = self.session.query(Annotation) \
+                .filter(Annotation.annotator == self.annotator) \
+                .filter(Annotation.candidate == candidate) \
+                .first()
+            if existing_annotation is not None:
+                self.annotations[i] = existing_annotation
+                if existing_annotation.value == 1:
+                    value_string = 'true'
+                elif existing_annotation.value == -1:
+                    value_string = 'false'
+                else:
+                    raise ValueError(str(existing_annotation) +
+                                     ' has value not in {1, -1}, which Viewer does not support.')
+                init_labels_serialized.append(str(i) + '~~' + value_string)
+        self._labels_serialized = ','.join(init_labels_serialized)
 
         # display js, construct html and pass on to widget model
         self.render()
@@ -124,17 +149,26 @@ class Viewer(widgets.DOMWidget):
         self.html = open(HOME+'/viewer/viewer.html').read() % (self.height, ''.join(pages))
         display(Javascript(open(HOME + '/viewer/viewer.js').read()))
 
-    def get_labels(self):
-        """De-serialize labels, map to candidate id, and return as dictionary"""
+    def _get_labels(self):
+        """
+        De-serialize labels from Javascript widget, map to internal candidate id, and return as list of tuples
+        """
         LABEL_MAP = {'true':1, 'false':-1}
         labels    = [x.split('~~') for x in self._labels_serialized.split(',') if len(x) > 0]
         vals      = [(int(cid), LABEL_MAP.get(l, 0)) for cid,l in labels]
-        return [Annotation(annotator=self.annotator, candidate=self.candidates[cid], value=v) for cid,v in vals]
+        return vals
 
     def save_labels(self):
-        # TODO: Get this working
-        for annotation in self.get_labels():
-            self.session.add(annotation)
+        """
+        Persists current labels.
+        """
+        for cid, v in self._get_labels():
+            if self.annotations[cid] is not None:
+                if self.annotations[cid].value != v:
+                    self.annotations[cid].value = v
+            else:
+                self.annotations[cid] = Annotation(annotator=self.annotator, candidate=self.candidates[cid], value=v)
+                self.session.add(self.annotations[cid])
         self.session.commit()
 
     def get_selected(self):

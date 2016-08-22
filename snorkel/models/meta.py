@@ -11,9 +11,9 @@ if 'SNORKELDB' in os.environ and os.environ['SNORKELDB'] != '':
     snorkel_engine = create_engine(os.environ['SNORKELDB'])
 else:
     snorkel_postgres = False
-    snorkel_engine = create_engine('sqlite:///snorkel.db', pool_size=10, poolclass=QueuePool)
+    snorkel_engine = create_engine('sqlite:///snorkel.db')
 
-SnorkelSession = scoped_session(sessionmaker(bind=snorkel_engine))
+SnorkelSession = sessionmaker(bind=snorkel_engine)
 
 
 class SnorkelComparable(object):

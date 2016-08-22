@@ -143,8 +143,8 @@ class Viewer(widgets.DOMWidget):
 
 class SentenceNgramViewer(Viewer):
     """Viewer for Sentence objects and candidate Spans within them"""
-    def __init__(self, candidates, gold=[], n_per_page=3, height=225):
-        super(SentenceNgramViewer, self).__init__(candidates, gold=gold, n_per_page=n_per_page, height=height)
+    def __init__(self, candidates, session, gold=[], n_per_page=3, height=225):
+        super(SentenceNgramViewer, self).__init__(candidates, session, gold=gold, n_per_page=n_per_page, height=height)
 
     def _is_subspan(self, s, e, c):
         return s >= c.char_start and e <= c.char_end

@@ -87,7 +87,14 @@ class Viewer(widgets.DOMWidget):
                 .first()
             if existing_annotation is not None:
                 self.annotations[i] = existing_annotation
-                init_labels_serialized.append(str(i) + '~~' + str(existing_annotation.value))
+                if existing_annotation.value == 1:
+                    value_string = 'true'
+                elif existing_annotation.value == -1:
+                    value_string = 'false'
+                else:
+                    raise ValueError(str(existing_annotation) +
+                                     ' has value not in {1, -1}, which Viewer does not support.')
+                init_labels_serialized.append(str(i) + '~~' + value_string)
         self._labels_serialized = ','.join(init_labels_serialized)
 
         # display js, construct html and pass on to widget model

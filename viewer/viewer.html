@@ -1,10 +1,60 @@
-{link}
+<head>
+<style>
+span.candidate {
+    background-color: rgba(255,255,0,0.3);
+}
+
+span.true-candidate {
+    background-color: rgba(92,184,92,1.0);
+}
+
+span.false-candidate {
+    background-color: rgba(169,68,66,1.0);
+}
+
+span.highlighted-candidate {
+    font-weight: bolder;
+    box-shadow: 1px 1px 1px grey;
+}
+
+span.gold-annotation {
+    color: red;
+}
+
+span.highlighted-gold-annotation {
+    background-color: rgba(217,83,79,0.5);
+}
+
+.panel-heading {
+    position: relative;
+}
+
+.panel-footer {
+    position: relative;
+}
+
+.panel-left-justify {
+    position: absolute;
+    right: 15px;
+    top: 20px;
+}
+
+.candidate-data {
+    display: none;
+}
+
+.viewer-page {
+    display: none;
+}
+</style>
+</head>
+
 <div id="viewer" class="viewer-pane panel panel-default" tabindex="0">
     <div class="panel-heading">
         <h3 class="panel-title"><i class="fa fa-eye fa-lg" aria-hidden="true"></i> Viewer</h3>
         <div id="candidate-caption" class="panel-left-justify"></div>
     </div>
-    <div class="panel-body" style="height:{bh}px">{data}</div>
+    <div class="panel-body" style="height:%spx">%s</div>
     <div class="panel-footer">
         <div class="btn-group" role="group" aria-label="...">
             <button id="prev-page" type="button" class="btn btn-default" data-toggle="tooltip" data-placement="top" title="i">

@@ -120,7 +120,12 @@ class Viewer(widgets.DOMWidget):
 
         # Render in primary Viewer template
         self.cids = cids
-        self.html = open(HOME + '/viewer/viewer.html').read().format(bh=self.height, data=''.join(pages))
+        link = [
+            '<link href="%s/viewer/bootstrap/css/bootstrap.min.css" rel="stylesheet" />' % HOME,
+            '<link href="%s/viewer/viewer.css" type="text/css" rel="stylesheet" />' % HOME
+        ]
+        link = '\n'.join(link)
+        self.html = open(HOME+'/viewer/viewer.html').read().format(link=link, bh=self.height, data=''.join(pages))
         display(Javascript(open(HOME + '/viewer/viewer.js').read()))
 
     def get_labels(self):

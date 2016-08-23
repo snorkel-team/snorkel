@@ -9,10 +9,23 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             this.nPages = this.cids.length;
             this.pid = 0;
             this.cid = 0;
-            this.labels = {};
 
             // Insert the html payload
             this.$el.append(this.model.get('html'));
+
+            // Initialize all labels from previous sessions
+            this.labels = this.deserializeDict(this.model.get('_labels_serialized'));
+            for (var i=0; i < this.nPages; i++) {
+                this.pid = i;
+                for (var j=0; j < this.cids[i].length; j++) {
+                    this.cid = j;
+                    if (this.cids[i][j] in this.labels) {
+                        this.markCurrentCandidate(false);
+                    }
+                }
+            }
+            this.pid = 0;
+            this.cid = 0;
 
             // Enable button functionality for navigation
             var that = this;
@@ -79,27 +92,30 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             var cid  = this.cids[this.pid][this.cid];
             var tags = this.$el.find("."+cid);
 
-            // Flush current element-specific styling
-            tags.css("background-color", "");
+            // Clear color classes
+            tags.removeClass("candidate-h");
+            tags.removeClass("true-candidate");
+            tags.removeClass("true-candidate-h");
+            tags.removeClass("false-candidate");
+            tags.removeClass("false-candidate-h");
+            tags.removeClass("highlighted");
 
-            // Get all other cids that
-
-            // Set color according to currently registered label
-            if (cid in this.labels) {
-                var label = this.labels[cid];
-                tags.addClass(String(label) + "-candidate");
-                tags.removeClass(String(!label) + "-candidate");
-            
-            // If no label BUT is being highlighted, remove label coloring
-            } else if (highlight) {
-                tags.removeClass("true-candidate");
-                tags.removeClass("false-candidate");
+            if (highlight) {
+                if (cid in this.labels) {
+                    tags.addClass(String(this.labels[cid]) + "-candidate-h");
+                } else {
+                    tags.addClass("candidate-h");
+                }
             
             // If un-highlighting, leave with first non-null coloring
             } else {
                 var that = this;
                 tags.each(function() {
-                    var cids = $(this).attr('class').split(/\s+/);
+                    var cids = $(this).attr('class').split(/\s+/).map(function(item) {
+                        return parseInt(item);
+                    });
+                    cids.sort();
+                    console.log(cids);
                     for (var i in cids) {
                         if (cids[i] in that.labels) {
                             var label = that.labels[cids[i]];
@@ -111,13 +127,9 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
                 });
             }
 
-            // Toggle highlighting
+            // Extra highlighting css
             if (highlight) {
-                tags.addClass("highlighted-candidate");
-                this.setRGBABackgroundOpacity(tags, 1.0);
-            } else {
-                tags.removeClass("highlighted-candidate");
-                this.setRGBABackgroundOpacity(tags, 0.3);
+                tags.addClass("highlighted");
             }
         },
 
@@ -139,7 +151,6 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
                     this.cid += inc;
                 }
             }
-            //var cNext = this.getCandidate();
             this.markCurrentCandidate(true);
 
             // Push this new cid to the model
@@ -205,31 +216,19 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
         },
 
         // Deserialization of hash maps
-        deserializeDict: function(d) {
+        deserializeDict: function(s) {
             var d = {};
-            // TODO
+            var entries = s.split(/,/);
+            var kv;
+            for (var i in entries) {
+                kv = entries[i].split(/~~/);
+                if (kv[1] == "true") {
+                    d[kv[0]] = true;
+                } else if (kv[1] == "false") {
+                    d[kv[0]] = false;
+                }
+            }
             return d;
-        },
-
-        // Highlight spans
-        setRGBABackgroundOpacity: function(el, opacity) {
-            el.each(function() {
-                var rgx = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*(\d\.\d+)\)/;
-                var m   = rgx.exec($(this).css("background-color"));
-
-                // Handle rgb
-                if (m == null) {
-                    rgx = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/;
-                    m   = rgx.exec($(this).css("background-color"));
-                }
-                if (m != null) {
-                    $(this).css("background-color", "rgba("+m[1]+","+m[2]+","+m[3]+","+opacity+")");
-
-                // TODO: Clean up this hack!!
-                } else {
-                    $(this).css("background-color", "rgba(255,255,0,1)");
-                }
-            });
         },
     });
 

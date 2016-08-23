@@ -160,6 +160,7 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
 
         // Switch through pages
         switchPage: function(inc) {
+            this.markCurrentCandidate(false);
             this.$el.find(".viewer-page").hide();
             if (this.pid + inc < 0) {
                 this.pid = 0;

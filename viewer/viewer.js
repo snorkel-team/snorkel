@@ -42,10 +42,10 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
                 that.switchPage(-1);
             });
             this.$el.find("#label-true").click(function() {
-                that.labelCandidate(true);
+                that.labelCandidate(true, true);
             });
             this.$el.find("#label-false").click(function() {
-                that.labelCandidate(false);
+                that.labelCandidate(false, true);
             });
 
             // Arrow key functionality
@@ -68,11 +68,11 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
                     break;
 
                     case 84: // t
-                    that.labelCandidate(true);
+                    that.labelCandidate(true, true);
                     break;
 
                     case 70: // f
-                    that.labelCandidate(false);
+                    that.labelCandidate(false, true);
                     break;
                 }
             });
@@ -179,24 +179,31 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
         },
 
         // Label currently-selected candidate
-        labelCandidate: function(label) {
-            var c   = this.getCandidate();
-            var cid = this.cids[this.pid][this.cid];
-            var cl  = String(label) + "-candidate";
-            var cln = String(!label) + "-candidate";
-
-            // Flush css background-color property, so class css not overidden
-            c.css("background-color", "");
+        labelCandidate: function(label, highlighted) {
+            var c    = this.getCandidate();
+            var cid  = this.cids[this.pid][this.cid];
+            var cl   = String(label) + "-candidate";
+            var clh  = String(label) + "-candidate-h";
+            var cln  = String(!label) + "-candidate";
+            var clnh = String(!label) + "-candidate-h";
 
             // Toggle label highlighting
-            if (c.hasClass(cl)) {
+            if (c.hasClass(cl) || c.hasClass(clh)) {
                 c.removeClass(cl);
-                this.setRGBABackgroundOpacity(c, 1.0);
+                c.removeClass(clh);
+                if (highlighted) {
+                    c.addClass("candidate-h");
+                }
                 this.labels[cid] = null;
                 this.send({event: 'delete_label', cid: cid});
             } else {
                 c.removeClass(cln);
-                c.addClass(cl);
+                c.removeClass(clnh);
+                if (highlighted) {
+                    c.addClass(clh);
+                } else {
+                    c.addClass(cl);
+                }
                 this.labels[cid] = label;
                 this.send({event: 'set_label', cid: cid, value: label});
             }

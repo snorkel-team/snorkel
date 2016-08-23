@@ -46,7 +46,7 @@ class CandidateSet(SnorkelBase):
         nc = session.query(Context.id).join(Candidate).filter(CandidateSet.name == self.name).distinct().count()
         print "=" * 80
         print "%s candidates in %s contexts" % (self.__len__(), nc)
-        print "Avg. # of candidates / context: %0.1f*" % (self.__len__() / float(nc),)
+        print "Avg. # of candidates / context*: %0.1f" % (self.__len__() / float(nc),)
         if gold_set is not None:
             print "-" * 80
             print "Overlaps with %0.2f%% of gold set" % (len(gold_set.intersection(self)) / float(len(gold_set)),)

@@ -110,6 +110,9 @@ class Viewer(widgets.DOMWidget):
         classes  = ['candidate'] if len(cids) > 0 else []
         classes += ['gold-annotation'] if gold else []
         classes += map(str, cids)
+
+        # Scrub for non-ascii characters; replace with ?
+        html = ''.join([c if ord(c) < 128 else "?" for c in html])
         return '<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)
 
     def _tag_context(self, context, candidates, gold):

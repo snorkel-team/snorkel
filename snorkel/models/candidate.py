@@ -1,7 +1,9 @@
-from .meta import SnorkelBase, snorkel_postgres
+from .meta import SnorkelSession, SnorkelBase, snorkel_postgres
+from .context import Context
 from sqlalchemy import Table, Column, String, Integer, ForeignKey, ForeignKeyConstraint, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import PickleType
+from sqlalchemy.sql import func
 
 
 class CandidateSet(SnorkelBase):
@@ -15,9 +17,6 @@ class CandidateSet(SnorkelBase):
 
     def remove(self, item):
         self.candidates.remove(item)
-
-    def __repr__(self):
-        return "Candidate Set (" + str(self.name) + ")"
 
     def __eq__(self, other):
         return self is other
@@ -39,6 +38,24 @@ class CandidateSet(SnorkelBase):
     def __getitem__(self, key):
         return self.candidates[key]
 
+    def stats(self, gold_set=None):
+        """Print diagnostic stats about candidate set."""
+        session = SnorkelSession.object_session(self)
+
+        # NOTE: This is the number of contexts that had non-zero number of candidates!
+        nc = session.query(Context.id).join(Candidate).filter(CandidateSet.name == self.name).distinct().count()
+        print "=" * 80
+        print "%s candidates in %s contexts" % (self.__len__(), nc)
+        print "Avg. # of candidates / context: %0.1f*" % (self.__len__() / float(nc),)
+        if gold_set is not None:
+            print "-" * 80
+            print "Overlaps with %0.2f%% of gold set" % (len(gold_set.intersection(self)) / float(len(gold_set)),)
+        print "=" * 80
+        print "*Only counting contexts with non-zero number of candidates."
+
+    def __repr__(self):
+        return "Candidate Set (" + str(self.name) + ")"
+
 
 class Candidate(SnorkelBase):
     """
@@ -46,6 +63,7 @@ class Candidate(SnorkelBase):
     """
     __tablename__ = 'candidate'
     id = Column(Integer, primary_key=True)
+    context_id = Column(Integer, ForeignKey('context.id'))
     candidate_set_id = Column(Integer, ForeignKey('candidate_set.id'))
     set = relationship('CandidateSet', backref=backref('candidates', cascade='all, delete-orphan'))
     type = Column(String, nullable=False)

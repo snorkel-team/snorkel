@@ -43,12 +43,13 @@ class CandidateExtractor(object):
     Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
     a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
     """
-    def __init__(self, cspaces, matchers, join_fn=None, self_relations=False, nested_relations=True):
-        self.candidate_spaces = cspaces if type(cspaces) in [list, tuple] else [cspaces]
-        self.matchers         = matchers if type(matchers) in [list, tuple] else [matchers]
-        self.join_fn          = join_fn
-        self.nested_relations = nested_relations
-        self.self_relations   = self_relations
+    def __init__(self, cspaces, matchers, join_fn=None, self_relations=False, nested_relations=False, symmetric_relations=True):
+        self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
+        self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
+        self.join_fn             = join_fn
+        self.nested_relations    = nested_relations
+        self.self_relations      = self_relations
+        self.symmetric_relations = symmetric_relations
 
         # Check that arity is same
         if len(self.candidate_spaces) != len(self.matchers):
@@ -57,10 +58,10 @@ class CandidateExtractor(object):
             self.arity = len(self.candidate_spaces)
 
         # Check for whether it is a self-relation
-        self.self_relation = False
+        self.same_unary = False
         if self.arity == 2:
             if self.candidate_spaces[0] == self.candidate_spaces[1] and self.matchers[0] == self.matchers[1]:
-                self.self_relation = True
+                self.same_unary = True
 
         # Make sure the candidate spaces are different so generators aren't expended!
         self.candidate_spaces = map(deepcopy, self.candidate_spaces)
@@ -120,7 +121,7 @@ class CandidateExtractor(object):
 
             # Materialize once if self-relation; we materialize assuming that we have small contexts s.t.
             # computation expense > memory expense
-            if self.self_relation:
+            if self.same_unary:
                 tcs1 = list(self.matchers[0].apply(self.candidate_spaces[0].apply(context)))
                 tcs2 = tcs1
             else:
@@ -129,8 +130,12 @@ class CandidateExtractor(object):
 
             # Do the local join, materializing all pairs of matched unary candidates
             promoted_candidates = {}
-            for tc1 in tcs1:
-                for tc2 in tcs2:
+            for i,tc1 in enumerate(tcs1):
+                for j,tc2 in enumerate(tcs2):
+
+                    # Optionally exclude symmetric relations; equivalent to extracting *undirected* relations
+                    if self.same_unary and not self.symmetric_relations and j < i:
+                        continue
 
                     # Check for self-joins and "nested" joins (joins from span to its subspan)
                     if not self.self_relations and tc1 == tc2:

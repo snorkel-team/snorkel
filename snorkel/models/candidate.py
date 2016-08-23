@@ -62,12 +62,9 @@ class Candidate(SnorkelBase):
     """
     __tablename__ = 'candidate'
     id = Column(Integer, primary_key=True)
-    context_id = Column(Integer, ForeignKey('context.id'))
     candidate_set_id = Column(Integer, ForeignKey('candidate_set.id'))
     set = relationship('CandidateSet', backref=backref('candidates', cascade='all, delete-orphan'))
     type = Column(String, nullable=False)
-
-    context = relationship('Context', backref=backref('candidates', cascade_backrefs=False))
 
     __table_args__ = (
         UniqueConstraint(id, candidate_set_id),
@@ -183,9 +180,10 @@ class Span(TemporarySpan, Candidate):
     """
     __table__ = Table('span', SnorkelBase.metadata,
                       Column('id', Integer, primary_key=True),
-                      Column('candidate_set_id', Integer),
-                      Column('char_start', Integer),
-                      Column('char_end', Integer),
+                      Column('candidate_set_id', Integer, nullable=False),
+                      Column('context_id', Integer, ForeignKey('context.id'), nullable=False),
+                      Column('char_start', Integer, nullable=False),
+                      Column('char_end', Integer, nullable=False),
                       Column('meta', PickleType),
                       ForeignKeyConstraint(['id', 'candidate_set_id'], ['candidate.id', 'candidate.candidate_set_id'])
                       )
@@ -193,6 +191,8 @@ class Span(TemporarySpan, Candidate):
     __table_args__ = (
         UniqueConstraint(__table__.c.candidate_set_id, __table__.c.context_id, __table__.c.char_start, __table__.c.char_end),
     )
+
+    context = relationship('Context', backref=backref('candidates', cascade_backrefs=False))
 
     __mapper_args__ = {
         'polymorphic_identity': 'span',

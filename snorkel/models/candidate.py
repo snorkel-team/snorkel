@@ -1,9 +1,8 @@
-from .meta import SnorkelSession, SnorkelBase, snorkel_postgres
+from .meta import SnorkelSession, SnorkelBase
 from .context import Context
 from sqlalchemy import Table, Column, String, Integer, ForeignKey, ForeignKeyConstraint, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import PickleType
-from sqlalchemy.sql import func
 
 
 class CandidateSet(SnorkelBase):
@@ -39,7 +38,7 @@ class CandidateSet(SnorkelBase):
         return self.candidates[key]
 
     def stats(self, gold_set=None):
-        """Print diagnostic stats about candidate set."""
+        """Print diagnostic stats about CandidateSet."""
         session = SnorkelSession.object_session(self)
 
         # NOTE: This is the number of contexts that had non-zero number of candidates!
@@ -68,12 +67,7 @@ class Candidate(SnorkelBase):
     set = relationship('CandidateSet', backref=backref('candidates', cascade='all, delete-orphan'))
     type = Column(String, nullable=False)
 
-    # Postgres requires an explicit unique index to use a tuple as a compound foreign key,
-    # even if it is redundant as in this case
-    #if snorkel_postgres:
-    #    __table_args__ = (
-    #        Index('candidate_unique_id_candidate_set_id', id, candidate_set_id, unique=True),
-    #    )
+    context = relationship('Context', backref=backref('candidates', cascade_backrefs=False))
 
     __table_args__ = (
         UniqueConstraint(id, candidate_set_id),
@@ -190,7 +184,6 @@ class Span(TemporarySpan, Candidate):
     __table__ = Table('span', SnorkelBase.metadata,
                       Column('id', Integer, primary_key=True),
                       Column('candidate_set_id', Integer),
-                      Column('context_id', Integer, ForeignKey('context.id')),
                       Column('char_start', Integer),
                       Column('char_end', Integer),
                       Column('meta', PickleType),
@@ -200,15 +193,6 @@ class Span(TemporarySpan, Candidate):
     __table_args__ = (
         UniqueConstraint(__table__.c.candidate_set_id, __table__.c.context_id, __table__.c.char_start, __table__.c.char_end),
     )
-
-    # Postgres requires an explicit unique index to use a tuple as a compound foreign key,
-    # even if it is redundant as in this case
-    #if snorkel_postgres:
-    #    __table_args__ = (
-    #        Index('span_unique_id_candidate_set_id', __table__.c.id, __table__.c.candidate_set_id, unique=True),
-    #    )
-
-    context = relationship('Context', backref=backref('candidates', cascade_backrefs=False))
 
     __mapper_args__ = {
         'polymorphic_identity': 'span',

@@ -97,6 +97,9 @@ class Viewer(widgets.DOMWidget):
                 init_labels_serialized.append(str(i) + '~~' + value_string)
         self._labels_serialized = ','.join(init_labels_serialized)
 
+        # Configures message handler
+        self.on_msg(self.handle_label_event)
+
         # display js, construct html and pass on to widget model
         self.render()
 
@@ -158,18 +161,34 @@ class Viewer(widgets.DOMWidget):
         vals      = [(int(cid), LABEL_MAP.get(l, 0)) for cid,l in labels]
         return vals
 
-    def save_labels(self):
+    def handle_label_event(self, _, content, buffers):
         """
-        Persists current labels.
+        Handles label event by persisting new label
         """
-        for cid, v in self._get_labels():
-            if self.annotations[cid] is not None:
-                if self.annotations[cid].value != v:
-                    self.annotations[cid].value = v
+        if content.get('event', '') == 'set_label':
+            cid = content.get('cid', None)
+            value = content.get('value', None)
+            if value is True:
+                value = 1
+            elif value is False:
+                value = -1
             else:
-                self.annotations[cid] = Annotation(annotator=self.annotator, candidate=self.candidates[cid], value=v)
+                raise ValueError('Unexpected label returned from widget: ' + str(value) +
+                                 '. Expected values are True and False.')
+
+            if self.annotations[cid] is not None:
+                if self.annotations[cid].value != value:
+                    self.annotations[cid].value = value
+                    self.session.commit()
+            else:
+                self.annotations[cid] = Annotation(annotator=self.annotator, candidate=self.candidates[cid], value=value)
                 self.session.add(self.annotations[cid])
-        self.session.commit()
+                self.session.commit()
+        elif content.get('event', '') == 'delete_label':
+            cid = content.get('cid', None)
+            self.session.delete(self.annotations[cid])
+            self.annotations[cid] = None
+            self.session.commit()
 
     def get_selected(self):
         return self.candidates[self._selected_cid]

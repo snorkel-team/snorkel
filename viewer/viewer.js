@@ -182,10 +182,12 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
                 c.removeClass(cl);
                 this.setRGBABackgroundOpacity(c, 1.0);
                 this.labels[cid] = null;
+                this.send({event: 'delete_label', cid: cid});
             } else {
                 c.removeClass(cln);
                 c.addClass(cl);
                 this.labels[cid] = label;
+                this.send({event: 'set_label', cid: cid, value: label});
             }
 
             // Set the label and pass back to the model

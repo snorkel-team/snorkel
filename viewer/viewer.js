@@ -7,8 +7,9 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
         render: function() {
             this.cids   = this.model.get('cids');
             this.nPages = this.cids.length;
-            this.pid = 0;
-            this.cid = 0;
+            this.pid  = 0;
+            this.cxid = 0;
+            this.cid  = 0;
 
             // Insert the html payload
             this.$el.append(this.model.get('html'));
@@ -18,14 +19,18 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             for (var i=0; i < this.nPages; i++) {
                 this.pid = i;
                 for (var j=0; j < this.cids[i].length; j++) {
-                    this.cid = j;
-                    if (this.cids[i][j] in this.labels) {
-                        this.markCurrentCandidate(false);
+                    this.cxid = j;
+                    for (var k=0; k < this.cids[i][j].length; k++) {
+                        this.cid = k;
+                        if (this.cids[i][j][k] in this.labels) {
+                            this.markCurrentCandidate(false);
+                        }
                     }
                 }
             }
-            this.pid = 0;
-            this.cid = 0;
+            this.pid  = 0;
+            this.cxid = 0;
+            this.cid  = 0;
 
             // Enable button functionality for navigation
             var that = this;
@@ -34,6 +39,12 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             });
             this.$el.find("#prev-cand").click(function() {
                 that.switchCandidate(-1);
+            });
+            this.$el.find("#next-context").click(function() {
+                that.switchContext(1);
+            });
+            this.$el.find("#prev-context").click(function() {
+                that.switchContext(-1);
             });
             this.$el.find("#next-page").click(function() {
                 that.switchPage(1);
@@ -84,12 +95,12 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
 
         // Get candidate selector for currently selected candidate, escaping id properly
         getCandidate: function() {
-            return this.$el.find("."+this.cids[this.pid][this.cid]);
+            return this.$el.find("."+this.cids[this.pid][this.cxid][this.cid]);
         },  
 
         // Color the candidate correctly according to registered label, as well as set highlighting
         markCurrentCandidate: function(highlight) {
-            var cid  = this.cids[this.pid][this.cid];
+            var cid  = this.cids[this.pid][this.cxid][this.cid];
             var tags = this.$el.find("."+cid);
 
             // Clear color classes
@@ -144,26 +155,81 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
         // Cycle through candidates and highlight, by increment inc
         switchCandidate: function(inc) {
             var N = this.cids[this.pid].length
-            if (N == 0) { return false; }
+            var M = this.cids[this.pid][this.cxid].length;
+            if (N == 0 || M == 0) { return false; }
 
             // Clear highlighting from previous candidate
             if (inc != 0) {
                 this.markCurrentCandidate(false);
 
                 // Increment the cid counter
-                if (this.cid + inc >= N) {
-                    this.cid = N - 1;
+
+                // Move to next context
+                if (this.cid + inc >= M) {
+                    while (this.cid + inc >= M) {
+                        
+                        // At last context on page, halt
+                        if (this.cxid == N - 1) {
+                            this.cid = M - 1;
+                            inc = 0;
+                            break;
+                        
+                        // Increment to next context
+                        } else {
+                            inc -= M - this.cid;
+                            this.cxid += 1;
+                            M = this.cids[this.pid][this.cxid].length;
+                            this.cid = 0;
+                        }
+                    }
+
+                // Move to previous context
                 } else if (this.cid + inc < 0) {
-                    this.cid = 0;
-                } else {
-                    this.cid += inc;
+                    while (this.cid + inc < 0) {
+                        
+                        // At first context on page, halt
+                        if (this.cxid == 0) {
+                            this.cid = 0;
+                            inc = 0;
+                            break;
+                        
+                        // Increment to previous context
+                        } else {
+                            inc += this.cid + 1;
+                            this.cxid -= 1;
+                            M = this.cids[this.pid][this.cxid].length;
+                            this.cid = M - 1;
+                        }
+                    }
                 }
+
+                // Move within current context
+                this.cid += inc;
             }
             this.markCurrentCandidate(true);
 
             // Push this new cid to the model
-            this.model.set('_selected_cid', this.cids[this.pid][this.cid]);
+            this.model.set('_selected_cid', this.cids[this.pid][this.cxid][this.cid]);
             this.touch();
+        },
+
+        // Switch through contexts
+        switchContext: function(inc) {
+            this.markCurrentCandidate(false);
+
+            // Iterate context on this page
+            var M = this.cids[this.pid].length;
+            if (this.cxid + inc < 0) {
+                this.cxid = 0;
+            } else if (this.cxid + inc >= M) {
+                this.cxid = M - 1;
+            } else {
+                this.cxid += inc;
+            }
+
+            // Reset cid and set to first candidate
+            this.cid = 0;
+            this.switchCandidate(0);
         },
 
         // Switch through pages
@@ -184,13 +250,14 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
 
             // Reset cid and set to first candidate
             this.cid = 0;
+            this.cxid = 0;
             this.switchCandidate(0);
         },
 
         // Label currently-selected candidate
         labelCandidate: function(label, highlighted) {
             var c    = this.getCandidate();
-            var cid  = this.cids[this.pid][this.cid];
+            var cid  = this.cids[this.pid][this.cxid][this.cid];
             var cl   = String(label) + "-candidate";
             var clh  = String(label) + "-candidate-h";
             var cln  = String(!label) + "-candidate";

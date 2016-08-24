@@ -149,7 +149,7 @@ class Viewer(widgets.DOMWidget):
                 # Construct the <li> and page view elements
                 li_data = self._tag_context(context, candidates, gold)
                 lis.append(LI_HTML.format(data=li_data, context_id=context.id))
-                page_cids += [self.candidates.index(c) for c in candidates]
+                page_cids.append([self.candidates.index(c) for c in candidates])
 
             # Assemble the page...
             pages.append(PAGE_HTML.format(pid=pid, data=''.join(lis)))

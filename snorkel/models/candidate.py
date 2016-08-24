@@ -179,11 +179,19 @@ class Span(Candidate, TemporarySpan):
         return Span(**kwargs)
 
     ### LF Utilities ###
-    def post_window(self, attr='words'):
-        return getattr(self.context, attr)[self.get_word_start()+1:]
+    def post_window(self, attr='words', d=None):
+        if not d:
+            return getattr(self.context, attr)[self.get_word_start()+1:]
+        else:
+            end_idx = self.get_word_start()+d+1
+            return getattr(self.context, attr)[self.get_word_start()+1:end_idx]
 
-    def pre_window(self, attr='words'):
-        return getattr(self.context, attr)[:self.get_word_start()]
+    def pre_window(self, attr='words', d=None):
+        if not d:
+            return getattr(self.context, attr)[:self.get_word_start()]
+        else:
+            start_idx = max(self.get_word_start()-d, 0)
+            return getattr(self.context, attr)[start_idx:self.get_word_start()]
 
     def post_ngrams(self, attr='words'):
         return self.post_window(attr=attr)

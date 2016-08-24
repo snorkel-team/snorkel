@@ -115,7 +115,6 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
                         return parseInt(item);
                     });
                     cids.sort();
-                    console.log(cids);
                     for (var i in cids) {
                         if (cids[i] in that.labels) {
                             var label = that.labels[cids[i]];
@@ -130,6 +129,15 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             // Extra highlighting css
             if (highlight) {
                 tags.addClass("highlighted");
+            }
+
+            // Classes for showing direction of relation
+            if (highlight) {
+                this.$el.find("."+cid+"-0").addClass("left-candidate");
+                this.$el.find("."+cid+"-1").addClass("right-candidate");
+            } else {
+                this.$el.find("."+cid+"-0").removeClass("left-candidate");
+                this.$el.find("."+cid+"-1").removeClass("right-candidate");
             }
         },
 

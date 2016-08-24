@@ -234,8 +234,15 @@ class SentenceNgramViewer(Viewer):
                 cids  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c)]
                 gcids = [self.gold.index(g) for g in gold if self._is_subspan(start, end, g)]
             except:
-                cids  = [self.candidates.index(c) for c in candidates if \
-                            self._is_subspan(start, end, c.span0) or self._is_subspan(start, end, c.span1)]
+
+                # For binary candidates, add classes for both the candidate ID and unary span identifiers
+                cids0  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c.span0)]
+                cids0 += ['%s-0' % cid for cid in cids0]
+                cids1  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c.span1)]
+                cids1 += ['%s-1' % cid for cid in cids1]
+                cids   = cids0 + cids1
+
+                # Handle gold...
                 gcids = [self.gold.index(g) for g in gold if \
                             self._is_subspan(start, end, g.span0) or self._is_subspan(start, end, g.span1)]
             html += self._tag_span(s[start:end+1], cids, gold=len(gcids) > 0)

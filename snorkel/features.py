@@ -142,6 +142,28 @@ class TableNgramPairFeaturizer(TableNgramFeaturizer):
 
         return itertools.chain(*feature_generators)
 
+class NgramPairFeaturizer(NgramFeaturizer):
+    def _prepend_entity_label(self, generator, entity_label):
+        for feat in generator:
+            yield (feat[0], ('e%s_' % entity_label) + feat[1])
+
+    def featurize(self, candidates):
+        # TODO: generalize this to arity=N
+        # collect (entity) feature generators from parent
+        e0_feature_generator = NgramFeaturizer.featurize(
+            self, [candidate.span0 for candidate in candidates])
+        e1_feature_generator = NgramFeaturizer.featurize(
+            self, [candidate.span1 for candidate in candidates])
+
+        feature_generators = [
+            self._prepend_entity_label(e0_feature_generator,0),
+            self._prepend_entity_label(e1_feature_generator,1)
+        ]
+
+        # TODO: add features derived from pair (e.g. distance in sentence)
+
+        return itertools.chain(*feature_generators)
+
 class UnionFeaturizer(Featurizer):
     """Combines multiple featurizers into one"""
 

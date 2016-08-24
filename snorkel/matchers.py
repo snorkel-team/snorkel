@@ -186,12 +186,17 @@ class SlotFillMatch(NgramMatcher):
         self._ops    = map(int, split[1::2])
         self._splits = split[::2]
 
+        # NOTE: Must have non-null splits!!
+        if any([len(s) == 0 for s in self._splits[1:-1]]):
+            raise ValueError("SlotFillMatch must have non-empty split patterns to function currently.")
+
         # Check for correct number of child matchers / slots
         if len(self.children) != len(set(self._ops)):
             raise ValueError("Number of provided matchers (%s) != number of slots (%s)." \
                     % (len(self.children), len(set(self._ops))))
 
     def f(self, c):
+
         # First, filter candidates by matching splits pattern
         m = re.match(r'(.+)'.join(self._splits) + r'$', c.get_attrib_span(self.attrib))
         if m is None:

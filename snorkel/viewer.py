@@ -76,6 +76,12 @@ class Viewer(widgets.DOMWidget):
         except:
             self.candidates = sorted(list(candidates), key=lambda c : c.span0.char_start)
             self.contexts   = list(set(c.span0.context for c in self.candidates + self.gold))
+        
+        # If committed, sort contexts by id
+        try:
+            self.contexts = sorted(self.contexts, key=lambda c : c.id)
+        except:
+            pass
 
         # Loads existing annotations
         self.annotations = [None] * len(self.candidates)

@@ -1,5 +1,7 @@
 import re
 import warnings
+import sys
+import unicodedata
 try:
     from nltk.stem.porter import PorterStemmer
 except ImportError:
@@ -85,11 +87,19 @@ class DictionaryMatch(NgramMatcher):
     """Selects candidate Ngrams that match against a given list d"""
     def init(self):
         self.ignore_case = self.opts.get('ignore_case', True)
+        self.strip_punct = self.opts.get('strip_punct', True)
         self.attrib      = self.opts.get('attrib', WORDS)
+        self.punc_tbl = dict.fromkeys(i for i in xrange(sys.maxunicode)
+                                      if unicodedata.category(unichr(i)).startswith('P'))
+
         try:
             self.d = frozenset(w.lower() if self.ignore_case else w for w in self.opts['d'])
         except KeyError:
             raise Exception("Please supply a dictionary (list of phrases) d as d=d.")
+
+        # remove punctuation
+        if self.strip_punct:
+            self.d = frozenset( self._strip_punct(w) for w in self.d )
 
         # Optionally use a stemmer, preprocess the dictionary
         # Note that user can provide *an object having a stem() method*
@@ -106,9 +116,14 @@ class DictionaryMatch(NgramMatcher):
         except UnicodeDecodeError:
             return w
 
+    def _strip_punct(self, w):
+        return w.translate(self.punc_tbl)
+        # return w.translate(string.maketrans("",""), string.punctuation)
+
     def _f(self, c):
         p = c.get_attrib_span(self.attrib)
         p = p.lower() if self.ignore_case else p
+        p = self._strip_punct(p) if self.strip_punct else p
         p = self._stem(p) if self.stemmer is not None else p
         return True if p in self.d else False
 

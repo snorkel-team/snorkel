@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 
+[![Coverage Status](https://coveralls.io/repos/github/HazyResearch/snorkel/badge.svg?branch=master)](https://coveralls.io/github/HazyResearch/snorkel?branch=master)
+
 [![Code Climate](https://codeclimate.com/github/HazyResearch/snorkel/badges/gpa.svg)](https://codeclimate.com/github/HazyResearch/snorkel)
 
 [![Test Coverage](https://codeclimate.com/github/HazyResearch/snorkel/badges/coverage.svg)](https://codeclimate.com/github/HazyResearch/snorkel/coverage)

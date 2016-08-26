@@ -67,6 +67,11 @@ install:
   # Install theano
   - conda install --yes theano
 
+  # Install programs for coverage
+  - pip install coverage
+  - pip install coveralls
+  - pip install codeclimate-test-reporter
+
 script:
   # Run notebooks end-to-end
   # NOTE: Currently some tests (LSTMTests) rely on data produced by these notebooks...

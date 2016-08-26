@@ -2,6 +2,12 @@
 
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 
+[![Code Climate](https://codeclimate.com/github/HazyResearch/snorkel/badges/gpa.svg)](https://codeclimate.com/github/HazyResearch/snorkel)
+
+[![Test Coverage](https://codeclimate.com/github/HazyResearch/snorkel/badges/coverage.svg)](https://codeclimate.com/github/HazyResearch/snorkel/coverage)
+
+[![Issue Count](https://codeclimate.com/github/HazyResearch/snorkel/badges/issue_count.svg)](https://codeclimate.com/github/HazyResearch/snorkel)
+
 ## Acknowledgements
 <img src="figs/darpa.JPG" width="80" height="80" />
 Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043.

@@ -87,7 +87,7 @@ class DictionaryMatch(NgramMatcher):
     """Selects candidate Ngrams that match against a given list d"""
     def init(self):
         self.ignore_case = self.opts.get('ignore_case', True)
-        self.strip_punct = self.opts.get('strip_punct', True)
+        self.strip_punct = self.opts.get('strip_punct', False)
         self.attrib      = self.opts.get('attrib', WORDS)
         self.punc_tbl = dict.fromkeys(i for i in xrange(sys.maxunicode)
                                       if unicodedata.category(unichr(i)).startswith('P'))

@@ -20,7 +20,7 @@ class Corpus(SnorkelBase):
     """
     __tablename__ = 'corpus'
     id = Column(Integer, primary_key=True)
-    name = Column(String, Unique=True, Nullable=False)
+    name = Column(String, unique=True, nullable=False)
     documents = relationship('Document', secondary=corpus_document_association)
     # TODO: What should the cascades be?
 

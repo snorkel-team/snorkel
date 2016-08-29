@@ -67,6 +67,11 @@ install:
   # Install theano
   - conda install --yes theano
 
+  # Install programs for coverage
+  - pip install coverage
+  - pip install coveralls
+  - pip install codeclimate-test-reporter
+
 script:
   # Run notebooks end-to-end
   # NOTE: Currently some tests (LSTMTests) rely on data produced by these notebooks...
@@ -75,11 +80,17 @@ script:
   - TESTING=true runipy examples/GeneTaggerExample_Learning.ipynb
 
   # Run test modules
-  - python test/ParserTests.py
-  - python test/CandidateSpaceTests.py
-  - python test/MatcherTests.py
-  - python test/InferenceTests.py
+  - coverage run -p test/ParserTests.py
+  - coverage run -p test/CandidateSpaceTests.py
+  - coverage run -p test/MatcherTests.py
+  - coverage run -p test/InferenceTests.py
+  - coverage combine
   #- python test/LSTMTests.py
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7
+
+after_success:
+  - codecov
+  - coveralls
+  - codeclimate-test-reporter

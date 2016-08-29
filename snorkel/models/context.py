@@ -16,6 +16,15 @@ class Context(SnorkelBase):
         'polymorphic_on': type
     }
 
+    def __eq__(self, other):
+        return self is other
+
+    def __ne__(self, other):
+        return self is not other
+
+    def __hash__(self):
+        return id(self)
+
 
 class Corpus(Context):
     """
@@ -87,6 +96,21 @@ class Sentence(Context):
     __mapper_args__ = {
         'polymorphic_identity': 'sentence',
     }
+
+    def _asdict(self):
+        return {
+            'id': self.id,
+            'document': self.document,
+            'position': self.position,
+            'text': self.text,
+            'words': self.words,
+            'char_offsets': self.char_offsets,
+            'lemmas': self.lemmas,
+            'poses': self.poses,
+            'dep_parents': self.dep_parents,
+            'dep_labels': self.dep_labels
+        }
+
 
     def __repr__(self):
         return "Sentence" + str((self.document, self.position, self.text))

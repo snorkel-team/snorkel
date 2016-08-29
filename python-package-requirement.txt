@@ -1,4 +1,4 @@
-jupyter
+jupyter>=4.1.0
 nltk
 lxml
 requests
@@ -10,3 +10,4 @@ theano>=0.8.2
 sqlalchemy
 ipywidgets
 pandas
+sklearn

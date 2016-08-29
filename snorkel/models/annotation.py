@@ -12,6 +12,15 @@ class Annotator(SnorkelBase):
     def __repr__(self):
         return "Annotator (" + str(self.name) + ")"
 
+    def __eq__(self, other):
+        return self is other
+
+    def __ne__(self, other):
+        return self is not other
+
+    def __hash__(self):
+        return id(self)
+
 
 class Annotation(SnorkelBase):
     """An annotation of a Candidate.
@@ -32,3 +41,18 @@ class Annotation(SnorkelBase):
 
     def __repr__(self):
         return "Annotation (" + str(self.value) + " by " + str(self.annotator.name) + ")"
+
+    def __eq__(self, other):
+        try:
+            return self.annotator == other.annotator and self.candidate == other.candidate
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        try:
+            return self.annotator != other.annotator or self.candidate != other.candidate
+        except AttributeError:
+            return True
+
+    def __hash__(self):
+        return hash(self.annotator) + hash(self.candidate)

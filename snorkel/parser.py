@@ -15,6 +15,7 @@ import requests
 import signal
 from subprocess import Popen
 import sys
+import codecs
 
 
 class CorpusParser:
@@ -49,7 +50,7 @@ class DocParser:
     def __init__(self, path, encoding="utf-8"):
         self.path = path
         self.encoding = encoding
-    
+
     def parse(self):
         """
         Parse a file or directory of files into a set of Document objects.
@@ -145,6 +146,8 @@ class XMLDocParser(DocParser):
     def _can_read(self, fpath):
         return fpath.endswith('.xml')
 
+PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
+         '-RSB-': ']', '-LSB-': '['}
 
 class SentenceParser:
     def __init__(self, tok_whitespace=False):
@@ -220,6 +223,11 @@ class SentenceParser:
                 diverged = True
                 warnings.warn("CoreNLP parse has diverged from raw document text!")
             parts['position'] = sent_id
+            
+            # replace PennTreeBank tags with original forms
+            parts['words'] = [PTB[w] if w in PTB else w for w in parts['words']]
+            parts['lemmas'] = [PTB[w.upper()] if w.upper() in PTB else w for w in parts['lemmas']]
+            
             sent = Sentence(**parts)
             sent.document = document
             sent_id += 1

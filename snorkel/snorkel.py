@@ -1,8 +1,8 @@
 import warnings
-import matplotlib
-matplotlib.use('Agg')
 warnings.filterwarnings("ignore", module="matplotlib")
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+import matplotlib
+matplotlib.use('Agg')
 import scipy.sparse as sparse
 from learning import LogReg, odds_to_prob
 from lstm import *
@@ -13,38 +13,15 @@ from pandas import Series, DataFrame
 
 class TrainingSet(object):
     """
-    Wrapper data object which applies the LFs to the candidates comprising the training set,
-    featurizes them, and then stores the resulting _noisy training set_, as well as the LFs and featurizer.
-
-    As input takes:
-        - A set of Candidate objects comprising the training set
-        - A set of labeling functions (LFs) which are functions f : Candidate -> {-1,0,1}
-        - A Featurizer object, which is applied to the Candidate objects to generate features
+    Applies the LFs to the _training candidates_, and stores stats on the resulting "training set"
+    and on the individual LFs.
     """
-    def __init__(self, training_candidates, lfs, featurizer=None):
+    def __init__(self, training_candidates, lfs):
         self.training_candidates = training_candidates
-        self.featurizer          = featurizer
         self.lfs                 = lfs
         self.lf_names            = [lf.__name__ for lf in lfs]
-        self.L, self.F           = self.transform(self.training_candidates, fit=True)
-
-        # Cached data for LF empirical stats
-        self.lf_stat_candidates = None
-        self.lf_stat_labels     = None
-        self.Ls                 = None
-
-        # Print training set summary stats
+        self.L                   = self._apply_lfs(self.training_candidates)
         self.summary_stats()
-
-    def transform(self, candidates, fit=False):
-        """Apply LFs and featurize the candidates"""
-        print "Applying LFs..."
-        L = self._apply_lfs(candidates)
-        F = None
-        if self.featurizer is not None:
-            print "Featurizing..."
-            F = self.featurizer.fit_transform(candidates) if fit else self.featurizer.transform(candidates)
-        return L, F
 
     def _apply_lfs(self, candidates):
         """Apply the labeling functions to the candidates to populate X"""
@@ -58,7 +35,7 @@ class TrainingSet(object):
         """Print out basic stats about the LFs wrt the training candidates"""
         return training_set_summary_stats(self.L, return_vals=return_vals, verbose=verbose)
 
-    def lf_stats(self, candidates=None, labels=None):
+    def lf_stats(self, annotations=None):
         """Returns a pandas Dataframe with the LFs and various per-LF statistics"""
         N, M = self.L.shape
 
@@ -70,14 +47,14 @@ class TrainingSet(object):
             'conflicts' : Series(data=LF_conflicts(self.L), index=self.lf_names)
         }
 
-        # Empirical stats, based on supplied development set
-        if candidates and labels is not None:
-            if self.Ls is None or candidates != self.lf_stat_candidates or any(labels != self.lf_stat_labels):
-                self.lf_stat_candidates = candidates
-                self.lf_stat_labels     = labels
-                self.Ls          = self._apply_lfs(candidates)
+        # Empirical stats, based on supplied _development set_ annotations
+        if annotations is not None:
+            """
             d['accuracy'] = Series(data=LF_accuracies(self.Ls, self.lf_stat_labels), index=self.lf_names)
+            """
+            raise NotImplementedError()
         return DataFrame(data=d, index=self.lf_names)
+
 
 
 class Learner(object):

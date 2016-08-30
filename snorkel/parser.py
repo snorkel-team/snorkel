@@ -258,21 +258,24 @@ class TableParser(SentenceParser):
         super(TableParser, self).__init__(delim=self.delim[1:-1], tok_whitespace=tok_whitespace)
 
     def parse(self, document, text, batch=False):
+        # BROKEN: DO NOT USE BATCH MODE FOR NOW
         if batch:
             for table in self.parse_html(document, text):
                 char_idx = 0
                 cell_start = [char_idx]
                 for cell in self.parse_table(table):
-                    char_idx += len(cell.text) + len(self.delim)
+                    char_idx += len(cell.text)
                     cell_start.append(char_idx)
                 text_batch = self.delim.join(cell.text for cell in table.cells)
+                char_idx = 0
                 cell_idx = 0
-                position = 0
+                position = 0 # position of Phrase in Cell
                 for parts in self.get_nlp_tags(text_batch, document):
-                    while parts['char_offsets'][0] >= cell_start[cell_idx + 1]:
-                            cell_idx += 1
-                            position = 0
+                    while char_idx >= cell_start[cell_idx + 1]:
+                        cell_idx += 1
+                        position = 0
                     parts['position'] = position
+                    char_idx += len(parts['text']) + (position > 0) # account for lost whitespace
                     position += 1
                     yield Phrase(**(self.inherit_cell_attrs(table.cells[cell_idx], parts)))
 

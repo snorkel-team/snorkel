@@ -14,7 +14,7 @@ class Corpus(SnorkelBase):
     """
     A set of Documents, uniquely identified by a name.
 
-    Corpora have many-to-many relationships with Documents, so users can create
+    Corpora have many-to-many relationships with Documents, so users can create new
     subsets, supersets, etc.
     """
     __tablename__ = 'corpus'
@@ -22,6 +22,12 @@ class Corpus(SnorkelBase):
     name = Column(String, unique=True, nullable=False)
     documents = relationship('Document', secondary=corpus_document_association, backref='corpora')
     # TODO: What should the cascades be?
+
+    def append(self, item):
+        self.candidates.append(item)
+
+    def remove(self, item):
+        self.candidates.remove(item)
 
     def __repr__(self):
         return "Corpus (" + str(self.name) + ")"
@@ -31,14 +37,8 @@ class Corpus(SnorkelBase):
         for doc in self.documents:
             yield doc
 
-    def __eq__(self, other):
-        return self is other
-
-    def __ne__(self, other):
-        return self is not other
-
-    def __hash__(self):
-        return id(self)
+    def __len__(self):
+        return len(self.documents)
 
 
 class Context(SnorkelBase):
@@ -54,15 +54,6 @@ class Context(SnorkelBase):
         'polymorphic_identity': 'context',
         'polymorphic_on': type
     }
-
-    def __eq__(self, other):
-        return self is other
-
-    def __ne__(self, other):
-        return self is not other
-
-    def __hash__(self):
-        return id(self)
 
 
 class Document(Context):
@@ -227,7 +218,7 @@ class TemporarySpan(object):
         return Span(context=self.context, char_start=self.char_start, char_end=self.char_end)
 
 
-class Span(TemporarySpan, Context):
+class Span(Context, TemporarySpan):
     """
     A span of characters, identified by Context id and character-index start, end (inclusive).
 
@@ -253,3 +244,13 @@ class Span(TemporarySpan, Context):
 
     def _get_instance(self, **kwargs):
         return Span(**kwargs)
+
+    # We redefine these to use default semantics, overriding the operators inherited from TemporarySpan
+    def __eq__(self, other):
+        return self is other
+
+    def __ne__(self, other):
+        return self is not other
+
+    def __hash__(self):
+        return id(self)

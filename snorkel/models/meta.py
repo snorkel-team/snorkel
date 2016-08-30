@@ -15,29 +15,5 @@ else:
 
 SnorkelSession = sessionmaker(bind=snorkel_engine)
 
-
-class SnorkelComparable(object):
-    def __hash__(self):
-        raise NotImplementedError('Classes extending SnorkelBase must implement __eq__, __ne__, and __hash__.')
-
-    def __eq__(self):
-        raise NotImplementedError('Classes extending SnorkelBase must implement __eq__, __ne__, and __hash__.')
-
-    def __ne__(self):
-        raise NotImplementedError('Classes extending SnorkelBase must implement __eq__, __ne__, and __hash__.')
-
-    def __le__(self):
-        raise NotImplementedError('Classes extending SnorkelBase do not support inequality comparisons by default.')
-
-    def __lt__(self):
-        raise NotImplementedError('Classes extending SnorkelBase do not support inequality comparisons by default.')
-
-    def __gt__(self):
-        raise NotImplementedError('Classes extending SnorkelBase do not support inequality comparisons by default.')
-
-    def __ge__(self):
-        raise NotImplementedError('Classes extending SnorkelBase do not support inequality comparisons by default.')
-
-
-SnorkelBase = declarative_base(name='SnorkelBase', cls=SnorkelComparable)
+SnorkelBase = declarative_base(name='SnorkelBase', cls=object)
 

@@ -7,8 +7,7 @@ from sqlalchemy.types import PickleType
 
 corpus_document_association = Table('corpus_document_association', SnorkelBase.metadata,
                                     Column('corpus_id', Integer, ForeignKey('corpus.id')),
-                                    Column('document_id', Integer, ForeignKey('document.id'))
-                                    )
+                                    Column('document_id', Integer, ForeignKey('document.id')))
 
 
 class Corpus(SnorkelBase):
@@ -21,7 +20,7 @@ class Corpus(SnorkelBase):
     __tablename__ = 'corpus'
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
-    documents = relationship('Document', secondary=corpus_document_association)
+    documents = relationship('Document', secondary=corpus_document_association, backref='corpora')
     # TODO: What should the cascades be?
 
     def __repr__(self):
@@ -234,23 +233,23 @@ class Span(TemporarySpan, Context):
 
     char_offsets are **relative to the Context start**
     """
-    __table__ = 'span'
+    __tablename__ = 'span'
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     parent_id = Column(Integer, ForeignKey('context.id'))
-    parent = relationship('Context', backref=backref('spans', cascade='all, delete-orphan'), foreign_keys=parent_id)
-    char_start = Column(Integer, nullable=False),
-    char_end = Column(Integer, nullable=False),
-    meta = Column('meta', PickleType)
+    char_start = Column(Integer, nullable=False)
+    char_end = Column(Integer, nullable=False)
+    meta = Column(PickleType)
 
     __table_args__ = (
         UniqueConstraint(parent_id, char_start, char_end),
     )
 
-    context = relationship('Context', backref=backref('candidates', cascade_backrefs=False))
-
     __mapper_args__ = {
         'polymorphic_identity': 'span',
+        'inherit_condition': (id == Context.id)
     }
+
+    parent = relationship('Context', backref=backref('spans', cascade='all, delete-orphan'), foreign_keys=parent_id)
 
     def _get_instance(self, **kwargs):
         return Span(**kwargs)

@@ -2,7 +2,6 @@ from .meta import SnorkelSession, SnorkelBase
 from .context import Context
 from sqlalchemy import Table, Column, String, Integer, ForeignKey, ForeignKeyConstraint, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.types import PickleType
 
 
 class CandidateSet(SnorkelBase):
@@ -27,7 +26,7 @@ class CandidateSet(SnorkelBase):
         return id(self)
 
     def __iter__(self):
-        """Default iterator is over Candidate objects"""
+        """Default iterator is over self.candidates"""
         for candidate in self.candidates:
             yield candidate
 

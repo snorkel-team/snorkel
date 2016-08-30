@@ -34,8 +34,8 @@ objects that extend Context use the default object identity semantics. See Pytho
 for object.__hash__(self).
 """
 from .meta import SnorkelBase, SnorkelSession, snorkel_engine, snorkel_postgres
-from .context import Context, Corpus, Document, Sentence
-from .candidate import Candidate, TemporarySpan, Span, SpanPair, CandidateSet
+from .context import Context, Corpus, Document, Sentence, TemporarySpan, Span
+from .candidate import Candidate, CandidateSet
 from .annotation import Annotation, Annotator
 from .feature import Feature
 

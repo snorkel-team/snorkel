@@ -16,4 +16,3 @@ else:
 SnorkelSession = sessionmaker(bind=snorkel_engine)
 
 SnorkelBase = declarative_base(name='SnorkelBase', cls=object)
-

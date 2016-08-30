@@ -1,11 +1,21 @@
 from .meta import SnorkelSession, SnorkelBase
 from .context import Context
-from sqlalchemy import Table, Column, String, Integer, ForeignKey, ForeignKeyConstraint, UniqueConstraint
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Table, Column, String, Integer, ForeignKey
+from sqlalchemy.inspection import inspect
+
+
+candidate_set_candidate_association = Table('candidate_set_candidate_association', SnorkelBase.metadata,
+                                            Column('candidate_set_id', Integer, ForeignKey('candidate_set.id')),
+                                            Column('candidate_id', Integer, ForeignKey('candidate.id')))
 
 
 class CandidateSet(SnorkelBase):
-    """A named collection of Candidate objects."""
+    """
+    A set of Candidates, uniquely identified by a name.
+
+    CandidateSets have many-to-many relationships with Candidates, so users can create new
+    subsets, supersets, etc.
+    """
     __tablename__ = 'candidate_set'
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
@@ -16,14 +26,8 @@ class CandidateSet(SnorkelBase):
     def remove(self, item):
         self.candidates.remove(item)
 
-    def __eq__(self, other):
-        return self is other
-
-    def __ne__(self, other):
-        return self is not other
-
-    def __hash__(self):
-        return id(self)
+    def __repr__(self):
+        return "Candidate Set (" + str(self.name) + ")"
 
     def __iter__(self):
         """Default iterator is over self.candidates"""
@@ -32,9 +36,6 @@ class CandidateSet(SnorkelBase):
 
     def __len__(self):
         return len(self.candidates)
-
-    def __getitem__(self, key):
-        return self.candidates[key]
 
     def stats(self, gold_set=None):
         """Print diagnostic stats about CandidateSet."""
@@ -51,79 +52,53 @@ class CandidateSet(SnorkelBase):
         print "=" * 80
         print "*Only counting contexts with non-zero number of candidates."
 
-    def __repr__(self):
-        return "Candidate Set (" + str(self.name) + ")"
-
 
 class Candidate(SnorkelBase):
     """
     An abstract candidate relation.
+
+    New relation types can be defined by extending this class. For example,
+    a new parent-child relation can be defined as
+
+    >>> from snorkel.models.candidate import Candidate
+    >>> from sqlalchemy import Column, String, ForeignKey
+    >>> from sqlalchemy.orm import relationship
+    >>>
+    >>> class NewType(Candidate):
+    >>>     # Declares name for storage table
+    >>>     __tablename__ = 'newtype'
+    >>>     # Connects NewType records to generic Candidate records
+    >>>     id = Column(String, ForeignKey('candidate.id'))
+    >>>
+    >>>     # Polymorphism information for SQLAlchemy
+    >>>     __mapper_args__ = {
+    >>>         'polymorphic_identity': 'newtype',
+    >>>     }
+    >>>
+    >>>     # Relation arguments declared as a compound primary key,
+    >>>     # with each argument a context. More specific Context types can also be used.
+    >>>     parent_id = Column(Integer, ForeignKey('context.id'), primary_key=True)
+    >>>     parent = relationship('Context', foreign_keys=parent_id)
+    >>>     child_id = Column(Integer, ForeignKey('context.id'), primary_key=True)
+    >>>     child = relationship('Context', foreign_keys=child_id)
+    >>>
+    >>> # The entire storage schema, including NewType, can now be initialized with the following import
+    >>> import snorkel.models
     """
     __tablename__ = 'candidate'
     id = Column(Integer, primary_key=True)
-    candidate_set_id = Column(Integer, ForeignKey('candidate_set.id'))
-    set = relationship('CandidateSet', backref=backref('candidates', cascade='all, delete-orphan'))
     type = Column(String, nullable=False)
-
-    __table_args__ = (
-        UniqueConstraint(id, candidate_set_id),
-    )
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',
         'polymorphic_on': type
     }
 
-
-class SpanPair(Candidate):
-    """
-    A pair of Span Candidates, representing a relation from Span 0 to Span 1.
-    """
-    __table__ = Table('span_pair', SnorkelBase.metadata,
-                      Column('id', Integer, primary_key=True),
-                      Column('candidate_set_id', Integer),
-                      Column('span0_id', Integer),
-                      Column('span1_id', Integer),
-                      ForeignKeyConstraint(['id', 'candidate_set_id'], ['candidate.id', 'candidate.candidate_set_id']),
-                      ForeignKeyConstraint(['span0_id'], ['span.id']),
-                      ForeignKeyConstraint(['span1_id'], ['span.id'])
-                      )
-
-    __table_args__ = (
-        UniqueConstraint(__table__.c.candidate_set_id, __table__.c.span0_id, __table__.c.span1_id),
-    )
-
-    span0 = relationship('Span', backref=backref('span_source_pairs', cascade_backrefs=False),
-                          cascade_backrefs=False, foreign_keys='SpanPair.span0_id')
-    span1 = relationship('Span', backref=backref('span_dest_pairs', cascade_backrefs=False),
-                          cascade_backrefs=False, foreign_keys='SpanPair.span1_id')
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'span_pair',
-    }
-
-    def __eq__(self, other):
-        try:
-            return self.span0 == other.span0 and self.span1 == other.span1
-        except AttributeError:
-            return False
-
-    def __ne__(self, other):
-        try:
-            return self.span0 != other.span0 or self.span1 != other.span1
-        except AttributeError:
-            return True
-
-    def __hash__(self):
-        return hash(self.span0) + hash(self.span1)
+    def get_arguments(self):
+        return [self.__getattribute__(self, key.name) for key in inspect(type(self)).primary_key]
 
     def __getitem__(self, key):
-        if key == 0:
-            return self.span0
-        elif key == 1:
-            return self.span1
-        else:
-            raise KeyError('Valid keys are 0 and 1.')
+        return self.get_arguments()[key]
 
     def __repr__(self):
-        return "SpanPair(%s, %s)" % (self.span0, self.span1)
+        return "%s(%s)" % (self._class__.name, ", ".join(self.get_arguments()))

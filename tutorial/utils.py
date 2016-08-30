@@ -66,7 +66,8 @@ def collect_hardware_entity_gold(filename, attribute, candidates):
     print "%s gold annotations" % len(gold)
 
     # match with candidates
-    gt_dict = {}
+    gold_candidates = []
+    gold_labels = []
     pairs = defaultdict(list)
     for i, c in enumerate(candidates):
         filename = (c.context.document.file).split('.')[0]
@@ -78,8 +79,9 @@ def collect_hardware_entity_gold(filename, attribute, candidates):
             conflicts += len(b)
         else:
             label = 1 if a in gold else -1
-            gt_dict[b[0].uid] = label
-    return gt_dict
+            gold_candidates.append(b[0])
+            gold_labels.append(label)
+    return (gold_candidates, gold_labels)
 
 def collect_hardware_relation_gold(filename, attribute, candidates):
     with open(filename, 'r') as csvfile:
@@ -93,11 +95,13 @@ def collect_hardware_relation_gold(filename, attribute, candidates):
     print "%s gold annotations available" % len(gold)
 
     # match with candidates
-    gt_dict = {}
+    gold_candidates = []
+    gold_labels = []
     pairs = defaultdict(list)
     for c in candidates:
         part = c.span0.get_attrib_span('words')
         val = c.span1.get_attrib_span('words')
         label = 1 if (part, val) in gold else -1
-        gt_dict[c.uid] = label
-    return gt_dict
+        gold_candidates.append(c)
+        gold_labels.append(label)
+    return (gold_candidates, gold_labels)

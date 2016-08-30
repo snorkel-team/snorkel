@@ -166,8 +166,7 @@ class RelationExtractor(CandidateExtractor):
         for context in contexts:
             for span0 in self.e1._extract([context]):
                 for span1 in self.e2._extract([context]):
-                    uid = '%s_&_%s' % (span0.uid, span1.uid)
-                    yield SpanPair(span0=(span0.promote()), span1=(span1.promote()), uid=uid)
+                    yield SpanPair(span0=(span0.promote()), span1=(span1.promote()))
 
 class AlignedTableRelationExtractor(CandidateExtractor):
     """Table relation extraction for aligned cells only
@@ -194,9 +193,7 @@ class AlignedTableRelationExtractor(CandidateExtractor):
                     if self.alignment == 'both':
                         if span0.context.cell.col_num != span1.context.cell.col_num \
                         and span0.context.cell.row_num != span1.context.cell.row_num: continue
-
-                    uid = '%s_&_%s' % (span0.uid, span1.uid)
-                    yield SpanPair(span0=(span0.promote()), span1=(span1.promote()), uid=uid)                    
+                    yield SpanPair(span0=(span0.promote()), span1=(span1.promote()))                    
 
 
 class Ngrams(CandidateSpace):
@@ -218,20 +215,7 @@ class Ngrams(CandidateSpace):
                 char_start = context.char_offsets[i]
                 cl = context.char_offsets[i+l-1] - context.char_offsets[i] + len(context.words[i+l-1])
                 char_end = context.char_offsets[i] + cl - 1
-                # TEMP #
-                if hasattr(context, 'cell'):
-                    uid = '%s-%s-%s-%s:%s-%s' % (context.cell.document.name,
-                                           context.cell.table.position,
-                                           context.cell.position,
-                                           context.position,
-                                           char_start,
-                                           char_end)
-                else:
-                    uid = '%s-%s:%s-%s' % (context.document.name,
-                                           context.position,
-                                           char_start,
-                                           char_end)
-                yield TemporarySpan(char_start=char_start, char_end=char_end, context=context, uid=uid)
+                yield TemporarySpan(char_start=char_start, char_end=char_end, context=context)
 
                 # Check for split
                 # NOTE: For simplicity, we only split single tokens right now!

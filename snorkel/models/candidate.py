@@ -40,8 +40,6 @@ class Candidate(SnorkelBase):
     candidate_set_id = Column(Integer, ForeignKey('candidate_set.id'))
     set = relationship('CandidateSet', backref=backref('candidates', cascade='all, delete-orphan'))
     type = Column(String, nullable=False)
-    # TEMP #
-    uid = Column(String, nullable=False)
 
     # Postgres requires an explicit unique index to use a tuple as a compound foreign key,
     # even if it is redundant as in this case
@@ -58,13 +56,10 @@ class Candidate(SnorkelBase):
 
 class TemporarySpan(object):
 
-    def __init__(self, context=None, char_end=None, char_start=None, uid=None):
+    def __init__(self, context=None, char_end=None, char_start=None):
         self.context = context
         self.char_end = char_end
         self.char_start = char_start
-        # TEMP
-        self.uid = uid
-        # ALSO TEMP is the uid keyword argument to __init__
 
     def __len__(self):
         return self.char_end - self.char_start + 1
@@ -142,8 +137,7 @@ class TemporarySpan(object):
         return TemporarySpan(**kwargs)
 
     def promote(self):
-        # TEMP uid
-        return Span(context=self.context, char_start=self.char_start, char_end=self.char_end, uid=self.uid)
+        return Span(context=self.context, char_start=self.char_start, char_end=self.char_end)
 
 
 class Span(Candidate, TemporarySpan):

@@ -71,7 +71,7 @@ script:
   # Run notebooks end-to-end
   # NOTE: Currently some tests (LSTMTests) rely on data produced by these notebooks...
   - TESTING=true runipy tutorial/CDR_Tutorial.ipynb
-  - runipy examples/GeneTaggerExample_Extraction.ipynb  
+  - runipy examples/GeneTaggerExample_Extraction.ipynb
   - runipy examples/GeneTaggerExample_Learning.ipynb
 
   # Run test modules

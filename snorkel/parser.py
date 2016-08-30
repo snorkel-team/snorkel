@@ -353,4 +353,3 @@ class TableParser(SentenceParser):
         parts['html_anc_tags'] = cell.html_anc_tags
         parts['html_anc_attrs'] = cell.html_anc_attrs
         return parts
-

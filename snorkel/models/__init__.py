@@ -28,16 +28,11 @@ define a new type of Context is
 >>>
 >>> # The entire storage schema, including NewType, can now be initialized with the following import
 >>> import snorkel.models
-
-Also note that any object that extends SnorkelBase must implement __hash__, __eq__, and __ne__. By default,
-objects that extend Context use the default object identity semantics. See Python PEP 207 and the documentation
-for object.__hash__(self).
 """
 from .meta import SnorkelBase, SnorkelSession, snorkel_engine, snorkel_postgres
 from .context import Context, Corpus, Document, Sentence, TemporarySpan, Span
 from .candidate import Candidate, CandidateSet
-from .annotation import Annotation, Annotator
-from .feature import Feature
+from .annotation import Feature, FeatureKey, Label, LabelKey, Prediction, PredictionKey
 
 # This call must be performed after all classes that extend SnorkelBase are
 # declared to ensure the storage schema is initialized

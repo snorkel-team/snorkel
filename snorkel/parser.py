@@ -19,29 +19,21 @@ import codecs
 
 
 class CorpusParser:
-    """
-    Invokes a DocParser and runs the output through a SentenceParser to produce a Corpus.
-    """
-
+    """Invokes a DocParser and runs the output through a SentenceParser to produce a Corpus."""
     def __init__(self, doc_parser, sent_parser, max_docs=None):
         self.doc_parser = doc_parser
         self.sent_parser = sent_parser
         self.max_docs = max_docs
 
-    def parse_corpus(self, name=None):
-        corpus = Corpus()
+    def parse_corpus(self, name):
+        corpus = Corpus(name=name)
 
         for i, (doc, text) in enumerate(self.doc_parser.parse()):
             if self.max_docs and i == self.max_docs:
                 break
-            doc.corpus = corpus
-
+            corpus.append(doc)
             for _ in self.sent_parser.parse(doc, text):
                 pass
-
-        if name is not None:
-            corpus.name = name
-
         return corpus
 
 
@@ -89,7 +81,7 @@ class TextDocParser(DocParser):
     def parse_file(self, fp, file_name):
         with codecs.open(fp, 'rb', self.encoding, errors="ignore") as f:
             name = re.sub(r'\..*$', '', os.path.basename(fp))
-            yield Document(name=name, file=file_name, attribs={}), f.read()
+            yield Document(name=name, stable_id=name, meta={'file_name' : file_name}), f.read()
 
 
 class HTMLDocParser(DocParser):
@@ -100,7 +92,7 @@ class HTMLDocParser(DocParser):
             txt = filter(self._cleaner, html.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
             name = re.sub(r'\..*$', '', os.path.basename(fp))
-            yield Document(name=name, file=file_name, attribs={}), txt
+            yield Document(name=name, stable_id=name, meta={'file_name' : file_name}), txt
 
     def _can_read(self, fpath):
         return fpath.endswith('.html')
@@ -116,9 +108,9 @@ class HTMLDocParser(DocParser):
         return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
 
 
-class XMLDocParser(DocParser):
+class XMLMultiDocParser(DocParser):
     """
-    Parse an XML file or directory of XML files into a set of Document objects.
+    Parse an XML file _which contains multiple documents_ into a set of Document objects.
 
     Use XPath queries to specify a _document_ object, and then for each document,
     a set of _text_ sections and an _id_.
@@ -135,16 +127,16 @@ class XMLDocParser(DocParser):
 
     def parse_file(self, f, file_name):
         for i,doc in enumerate(et.parse(f).xpath(self.doc)):
-            text = '\n'.join(filter(lambda t : t is not None, doc.xpath(self.text)))
-            ids = doc.xpath(self.id)
-            id = ids[0] if len(ids) > 0 else None
-            # We store the XML tree as a string due to a serialization bug. It cannot currently be pickled directly
-            #TODO: Implement a special dictionary that can handle this automatically (http://docs.sqlalchemy.org/en/latest/orm/extensions/mutable.html)
-            attribs = {'root': et.tostring(doc)} if self.keep_xml_tree else {}
-            yield Document(name=str(id), file=str(file_name), attribs=attribs), str(text)
+            doc_id = str(doc.xpath(self.id)[0])
+            text   = '\n'.join(filter(lambda t : t is not None, doc.xpath(self.text)))
+            meta = {'file_name': str(file_name)}
+            if self.keep_xml_tree:
+                meta['root'] = et.tostring(doc)
+            yield Document(name=doc_id, stable_id=doc_id, meta=meta), text
 
     def _can_read(self, fpath):
         return fpath.endswith('.xml')
+
 
 PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
          '-RSB-': ']', '-LSB-': '['}
@@ -211,7 +203,8 @@ class SentenceParser:
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])
             # make char_offsets relative to start of sentence
-            parts['char_offsets'] = [p - parts['char_offsets'][0] for p in parts['char_offsets']]
+            abs_sent_offset = parts['char_offsets'][0]
+            parts['char_offsets'] = [p - abs_sent_offset for p in parts['char_offsets']]
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             # NOTE: We have observed weird bugs where CoreNLP diverges from raw document text (see Issue #368)
@@ -227,9 +220,13 @@ class SentenceParser:
             # replace PennTreeBank tags with original forms
             parts['words'] = [PTB[w] if w in PTB else w for w in parts['words']]
             parts['lemmas'] = [PTB[w.upper()] if w.upper() in PTB else w for w in parts['lemmas']]
-            
             sent = Sentence(**parts)
+
+            # Link the sentence to its parent document object
             sent.document = document
+
+            # Assign the stable id as document's stable id plus absolute character offset
+            sent.stable_id = '%s:%s' % (document.stable_id, abs_sent_offset)
             sent_id += 1
             yield sent
 

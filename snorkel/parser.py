@@ -25,15 +25,18 @@ class CorpusParser:
         self.sent_parser = sent_parser
         self.max_docs = max_docs
 
-    def parse_corpus(self, name):
+    def parse_corpus(self, name, session=None):
         corpus = Corpus(name=name)
-
+        if session is not None:
+            session.add(corpus)
         for i, (doc, text) in enumerate(self.doc_parser.parse()):
             if self.max_docs and i == self.max_docs:
                 break
             corpus.append(doc)
             for _ in self.sent_parser.parse(doc, text):
                 pass
+        if session is not None:
+            session.commit()
         return corpus
 
 

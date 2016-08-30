@@ -2,7 +2,7 @@
 
 from .models import Corpus, Document, Sentence, Table, Cell, Phrase
 import atexit
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString, Tag
 from collections import defaultdict
 from itertools import chain
 import glob
@@ -195,7 +195,7 @@ class SentenceParser(object):
         if len(text.strip()) == 0:
             return
         if isinstance(text, unicode):
-          text = text.encode('utf-8')
+            text = text.encode('utf-8')
         resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
         text = text.decode('utf-8')
         content = resp.content.strip()
@@ -237,18 +237,45 @@ class SentenceParser(object):
 class HTMLParser(DocParser):
     """Simple parsing of files into html documents"""
     # TEMP
-    def init(self):
-        self.doc_id = 0
+    # def init(self):
+    #     self.doc_id = 0
     # TEMP
 
     def parse_file(self, fp, file_name):
         with open(fp, 'r') as f:
             soup = BeautifulSoup(f, 'lxml')
-            for text in enumerate(soup.find_all('html')):
-                id = self.doc_id
+            for text in soup.find_all('html'):
+                # id = self.doc_id
+                name = re.sub(r'\..*$', '', os.path.basename(fp))
                 attribs = None
-                yield Document(name=str(id), file=str(file_name), attribs=attribs), str(text)
-                self.doc_id += 1
+                yield Document(name=name, file=str(file_name), attribs=attribs), str(text)
+                # self.doc_id += 1
+
+
+class OmniParser(object):
+    def __init__(self):
+        self.table_parser = TableParser()
+
+    def parse(self, document, text):
+        soup = BeautifulSoup(text, 'lxml')
+        for phrase in self.parse_tag(document, soup):
+            yield phrase
+
+    def parse_tag(self, document, tag):
+        for child in tag.contents:
+            if isinstance(child, NavigableString):
+                pass
+                # print unicode(child)
+            elif isinstance(child, Tag):
+                if child.name == "table":
+                    print "TABLE!"
+                    for phrase in self.table_parser.parse(document, unicode(child)):
+                        yield phrase
+                else:
+                    for phrase in self.parse_tag(document, child):
+                        yield phrase
+            else:
+                import pdb; pdb.set_trace()
 
 
 class TableParser(SentenceParser):
@@ -258,21 +285,24 @@ class TableParser(SentenceParser):
         super(TableParser, self).__init__(delim=self.delim[1:-1], tok_whitespace=tok_whitespace)
 
     def parse(self, document, text, batch=False):
+        # BROKEN: DO NOT USE BATCH MODE FOR NOW
         if batch:
             for table in self.parse_html(document, text):
                 char_idx = 0
                 cell_start = [char_idx]
                 for cell in self.parse_table(table):
-                    char_idx += len(cell.text) + len(self.delim)
+                    char_idx += len(cell.text)
                     cell_start.append(char_idx)
                 text_batch = self.delim.join(cell.text for cell in table.cells)
+                char_idx = 0
                 cell_idx = 0
-                position = 0
+                position = 0 # position of Phrase in Cell
                 for parts in self.get_nlp_tags(text_batch, document):
-                    while parts['char_offsets'][0] >= cell_start[cell_idx + 1]:
-                            cell_idx += 1
-                            position = 0
+                    while char_idx >= cell_start[cell_idx + 1]:
+                        cell_idx += 1
+                        position = 0
                     parts['position'] = position
+                    char_idx += len(parts['text']) + (position > 0) # account for lost whitespace
                     position += 1
                     yield Phrase(**(self.inherit_cell_attrs(table.cells[cell_idx], parts)))
 

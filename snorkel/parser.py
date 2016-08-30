@@ -37,6 +37,7 @@ class CorpusParser:
                 pass
         if session is not None:
             session.commit()
+        corpus.stats()
         return corpus
 
 

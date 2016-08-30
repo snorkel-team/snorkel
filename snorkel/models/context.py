@@ -24,10 +24,10 @@ class Corpus(SnorkelBase):
     # TODO: What should the cascades be?
 
     def append(self, item):
-        self.candidates.append(item)
+        self.documents.append(item)
 
     def remove(self, item):
-        self.candidates.remove(item)
+        self.documents.remove(item)
 
     def __repr__(self):
         return "Corpus (" + str(self.name) + ")"

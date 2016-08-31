@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship, backref
 from snorkel.utils import camel_to_under
 
 
+# TODO: Switch to AnnotationKey(SnorkelBase)
 class AnnotationKeyMixin(object):
     """
     Mixin class for defining annotation key tables.

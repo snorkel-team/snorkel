@@ -1,5 +1,5 @@
 from . import SnorkelSession
-from .models import CandidateSet, TemporarySpan, Span, SpanPair
+from .models import CandidateSet, TemporarySpan, Span
 from itertools import chain
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty

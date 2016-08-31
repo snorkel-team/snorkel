@@ -99,24 +99,52 @@ class AnnotationMixin(object):
 
 
 class LabelKey(AnnotationKeyMixin, SnorkelBase):
+    """
+    Key for Labels.
+    """
     pass
 
 
 class Label(AnnotationMixin, SnorkelBase):
+    """
+    A discrete label associated with a Candidate, indicating a target prediction value.
+
+    Labels are used to represent both human-provided annotations and the output of labeling functions.
+
+    A Label's LabelKey identifies the person or labeling function that provided the Label.
+    """
     value = Column(Integer, nullable=False)
 
 
 class FeatureKey(AnnotationKeyMixin, SnorkelBase):
+    """
+    Key for Features.
+    """
     pass
 
 
 class Feature(AnnotationMixin, SnorkelBase):
+    """
+    An element of a representation of a Candidate in a feature space.
+
+    A Feature's FeatureKey identifies the definition of the Feature, e.g., a function that implements it
+    or the library name and feature name in an automatic featurization library.
+    """
     value = Column(Float, nullable=False)
 
 
 class PredictionKey(AnnotationKeyMixin, SnorkelBase):
+    """
+    Key for Predictions.
+    """
     pass
 
 
 class Prediction(AnnotationMixin, SnorkelBase):
+    """
+    A probability associated with a Candidate, indicating the degree of belief that the Candidate is true.
+
+    A Prediction's PredictionKey indicates which process or method produced the Prediction, e.g., which
+    model with which ParameterSet.
+    """
     value = Column(Float, nullable=False)

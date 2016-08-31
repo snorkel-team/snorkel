@@ -91,7 +91,7 @@ class AnnotationMixin(object):
         return (
             UniqueConstraint(camel_to_under(cls.__name__) + '_key_id',
                              camel_to_under(cls.__name__) + '_candidate_id',
-                             name='unique_key_candidate_pair'),
+                             name=camel_to_under(cls.__name__) + '_unique_key_candidate_pair'),
         )
 
     def __repr__(self):

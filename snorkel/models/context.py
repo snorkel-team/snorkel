@@ -157,31 +157,64 @@ class Sentence(Context):
         return "Sentence" + str((self.document, self.position, self.text))
 
 
-class TemporarySpan(object):
+class TemporaryContext(object):
+    """
+    A context which does not incur the overhead of a proper ORM-based Context object.
+    The TemporaryContext class is specifically for the candidate extraction process, during which a CandidateSpace
+    object will generate many TemporaryContexts, which will then be filtered by Matchers prior to materialization
+    of Candidates and constituent Context objects.
 
-    def __init__(self, context=None, char_end=None, char_start=None, meta=None):
-        self.context = context
-        self.char_end = char_end
+    Every Context object has a corresponding TemporaryContext object from which it inherits.
+
+    A TemporaryContext must have specified equality / set membership semantics, a stable_id for checking
+    uniqueness against the database, and a promote() method which returns a corresponding Context object.
+    """
+    def __eq__(self, other):
+        raise NotImplementedError()
+
+    def __ne__(self, other):
+        raise NotImplementedError()
+
+    def __hash__(self):
+        raise NotImplementedError()
+
+    def get_stable_id(self):
+        raise NotImplementedError()
+
+    def promote(self):
+        raise NotImplementedError()
+
+
+class TemporarySpan(TemporaryContext):
+    """The TemporaryContext version of Span"""
+    def __init__(self, parent, char_start, char_end, meta=None):
+        self.parent     = parent  # The parent Context of the Span
+        self.char_end   = char_end
         self.char_start = char_start
-        self.meta = meta
+        self.meta       = meta
 
     def __len__(self):
         return self.char_end - self.char_start + 1
 
     def __eq__(self, other):
         try:
-            return self.context == other.context and self.char_start == other.char_start and self.char_end == other.char_end
+            return self.parent == other.parent and self.char_start == other.char_start \
+                and self.char_end == other.char_end
         except AttributeError:
             return False
 
     def __ne__(self, other):
         try:
-            return self.context != other.context or self.char_start != other.char_start or self.char_end != other.char_end
+            return self.parent != other.parent or self.char_start != other.char_start \
+                or self.char_end != other.char_end
         except AttributeError:
             return True
 
     def __hash__(self):
-        return hash(self.context) + hash(self.char_start) + hash(self.char_end)
+        return hash(self.parent) + hash(self.char_start) + hash(self.char_end)
+
+    def get_stable_id(self):
+        return '%s:%s-%s' % (self.parent.stable_id, self.char_start, self.char_end)
 
     def get_word_start(self):
         return self.char_to_word_index(self.char_start)
@@ -195,7 +228,7 @@ class TemporarySpan(object):
     def char_to_word_index(self, ci):
         """Given a character-level index (offset), return the index of the **word this char is in**"""
         i = None
-        for i, co in enumerate(self.context.char_offsets):
+        for i, co in enumerate(self.parent.char_offsets):
             if ci == co:
                 return i
             elif ci < co:
@@ -204,17 +237,17 @@ class TemporarySpan(object):
 
     def word_to_char_index(self, wi):
         """Given a word-level index, return the character-level index (offset) of the word's start"""
-        return self.context.char_offsets[wi]
+        return self.parent.char_offsets[wi]
 
     def get_attrib_tokens(self, a):
         """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""
-        return self.context.__getattribute__(a)[self.get_word_start():self.get_word_end() + 1]
+        return self.parent.__getattribute__(a)[self.get_word_start():self.get_word_end() + 1]
 
     def get_attrib_span(self, a, sep=" "):
         """Get the span of sentence attribute _a_ over the range defined by word_offset, n"""
         # NOTE: Special behavior for words currently (due to correspondence with char_offsets)
         if a == 'words':
-            return self.context.text[self.char_start:self.char_end + 1]
+            return self.parent.text[self.char_start:self.char_end + 1]
         else:
             return sep.join(self.get_attrib_tokens(a))
 
@@ -237,20 +270,21 @@ class TemporarySpan(object):
                 char_end = self.char_start + key.stop - 1
             else:
                 char_end = self.char_end + key.stop
-            return self._get_instance(char_start=char_start, char_end=char_end, context=self.context)
+            return self._get_instance(char_start=char_start, char_end=char_end, parent=self.parent)
         else:
             raise NotImplementedError()
 
     def __repr__(self):
-        return '%s("%s", context=%s, chars=[%s,%s], words=[%s,%s])' \
-            % (self.__class__.__name__, self.get_span(), self.context.id, self.char_start, self.char_end,
+        return '%s("%s", parent=%s, chars=[%s,%s], words=[%s,%s])' \
+            % (self.__class__.__name__, self.get_span(), self.parent.id, self.char_start, self.char_end,
                self.get_word_start(), self.get_word_end())
 
     def _get_instance(self, **kwargs):
         return TemporarySpan(**kwargs)
 
     def promote(self):
-        return Span(context=self.context, char_start=self.char_start, char_end=self.char_end)
+        return Span(stable_id=self.get_stable_id(), parent=self.parent, char_start=self.char_start, \
+                char_end=self.char_end)
 
 
 class Span(Context, TemporarySpan):

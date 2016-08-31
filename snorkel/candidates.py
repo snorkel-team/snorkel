@@ -160,29 +160,29 @@ class CandidateExtractor(object):
                 break
         return candidates
 
-    def _generate_temp_spans(self, context, space, matcher, output_set):
+    def _generate_child_contexts(self, context, candidate_space, matcher, session, output_contexts):
         """
         Generates TemporarySpans for a context, using the provided space and matcher
 
         :param context: the context for which temporary spans will be generated
-        :param space: the space of TemporarySpans to consider
+        :param candidate_space: the space of TemporarySpans to consider
         :param matcher: the matcher that the TemporarySpans must pass to be returned
-        :param output_set: set container in which to store output. This method will clear it before using
-        :return: set of unique TemporarySpans, container passed in as output_set
+        :param session: the session
+        :param output_contexts: set container in which to store output. This method will clear it before using
         """
-        pass
+        output_contexts.clear()
 
-    def _persist_spans(self, temp_span_list, session, output_list):
-        """
-        Given a list of sets of TemporarySpans, produces a list of sets of Spans persisted
-        in the database, such that each TemporarySpan has a corresponding Span
+        # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
+        # by the Matcher
+        for tc in matcher.apply(candidate_space.apply(context)):
 
-        :param temp_span_list: list of sets of TemporarySpans to persist
-        :param session: the Session to use to access the database
-        :param output_list: list of sets in which to store output. This method will clear each before using
-        :return: list of sets of persisted Spans, container passed in as output_list
-        """
-        pass
+            # Query the database to see if this context exists already
+            c = session.query(Context).filter(Context.stable_id == tc.get_stable_id()).first()
+            if c is None:
+                c = tc.promote()
+                session.add(c)
+            output_contexts.add(c)
+
 
 class CandidateExtractorProcess(Process):
     def __init__(self, extractor, session, contexts_in, candidates_out, candidate_set, unary_set):

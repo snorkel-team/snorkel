@@ -43,7 +43,8 @@ class CandidateExtractor(object):
     Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
     a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
     """
-    def __init__(self, cspaces, matchers, join_fn=None, self_relations=False, nested_relations=False, symmetric_relations=True):
+    def __init__(self, candidate_class, cspaces, matchers, join_fn=None, self_relations=False, nested_relations=False, symmetric_relations=True):
+        self.candidate_class     = candidate_class
         self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
         self.join_fn             = join_fn
@@ -69,44 +70,31 @@ class CandidateExtractor(object):
         # Track processes for multicore execution
         self.ps = []
 
-    def extract(self, contexts, name, session=None, parallelism=False):
+    def extract(self, contexts, name, session, parallelism=False):
         # Create a candidate set
         c = CandidateSet(name=name)
-
-        # If arity > 1, create a unary candidate set as well
-        unary_set = CandidateSet(name=str(name + '-unary')) if self.arity > 1 else None
+        session.add(c)
+        session.commit()
 
         # Run extraction
         if parallelism in [1, False]:
-            if session is not None:
-                session.add(c)
 
             unique_candidates = set()
             for context in contexts:
-                for candidate in self._extract_from_context(context, unary_set=unary_set):
+                for candidate in self._extract_from_context(context):
                     unique_candidates.add(candidate)
 
                 for candidate in unique_candidates:
+                    session.add(candidate)
                     c.candidates.append(candidate)
 
                 unique_candidates.clear()
 
             # Commit the candidates and return the candidate set
-            if session is not None:
-                session.commit()
+            session.commit()
             return c
         else:
-            if session is None:
-                raise ValueError('Session must be provided to use parallelism.')
-
-            session.add(c)
-
-            if unary_set is not None:
-                session.add(unary_set)
-
-            session.commit()
-
-            self._extract_multiprocess(contexts, parallelism, c, unary_set)
+            self._extract_multiprocess(contexts, parallelism)
             return session.query(CandidateSet).filter(CandidateSet.name == name).one()
 
     def _extract_from_context(self, context, unary_set=None):
@@ -197,6 +185,25 @@ class CandidateExtractor(object):
                 break
         return candidates
 
+    def _generate_temp_spans(self, context, space, matcher):
+        """
+        Generates TemporarySpans for a context, using the provided space and matcher
+
+        :param context: the context for which temporary spans will be generated
+        :param space: the space of TemporarySpans to consider
+        :param matcher: the matcher that the TemporarySpans must pass to be returned
+        :return: set of unique TemporarySpans
+        """
+        pass
+
+    def _persist_spans(self, temp_span_list, session):
+        """
+        Given a list of sets of TemporarySpans, produces a list of sets of Spans persisted
+        in the database, such that each TemporarySpan has a corresponding Span
+        :param temp_span_list: list of sets of TemporarySpans to persist
+        :param session: the Session to use to access the database
+        :return: list of sets of persisted Spans
+        """
 
 class CandidateExtractorProcess(Process):
     def __init__(self, extractor, session, contexts_in, candidates_out, candidate_set, unary_set):

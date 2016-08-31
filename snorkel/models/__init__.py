@@ -31,7 +31,7 @@ define a new type of Context is
 """
 from .meta import SnorkelBase, SnorkelSession, snorkel_engine, snorkel_postgres
 from .context import Context, Corpus, Document, Sentence, TemporarySpan, Span
-from .candidate import Candidate, CandidateSet
+from .candidate import Candidate, CandidateSet, candidate_subclass
 from .annotation import Feature, FeatureKey, Label, LabelKey, Prediction, PredictionKey
 from .parameter import Parameter, ParameterSet
 

@@ -2,7 +2,8 @@ from .meta import SnorkelSession, SnorkelBase
 from .context import Context
 from sqlalchemy import Table, Column, String, Integer, ForeignKey
 from sqlalchemy.inspection import inspect
-
+from sqlalchemy.orm import relationship
+from snorkel.models import snorkel_engine
 
 candidate_set_candidate_association = Table('candidate_set_candidate_association', SnorkelBase.metadata,
                                             Column('candidate_set_id', Integer, ForeignKey('candidate_set.id')),
@@ -95,10 +96,43 @@ class Candidate(SnorkelBase):
     }
 
     def get_arguments(self):
-        return [self.__getattribute__(self, key.name) for key in inspect(type(self)).primary_key]
+        return [self.__getattribute__(key.name) for key in inspect(type(self)).primary_key]
 
     def __getitem__(self, key):
         return self.get_arguments()[key]
 
     def __repr__(self):
-        return "%s(%s)" % (self._class__.name, ", ".join(self.get_arguments()))
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(map(str, self.get_arguments())))
+
+
+def candidate_subclass(class_name, table_name, args):
+    """
+    Creates and returns a Candidate subclass with provided argument names, which are Context type.
+    Creates the table in DB if does not exist yet.
+
+    Similar in spirit to collections.namedtuple.
+    """
+    class_attribs = {
+
+        # Declares name for storage table
+        '__tablename__' : table_name,
+                
+        # Connects ChemicalDisease records to generic Candidate records
+        'id' : Column(Integer, ForeignKey('candidate.id')),
+                
+        # Polymorphism information for SQLAlchemy
+        '__mapper_args__' : {'polymorphic_identity': table_name}
+    }
+        
+    # Create named arguments
+    for arg in args:
+        class_attribs[arg + '_id'] = Column(Integer, ForeignKey('context.id'), primary_key=True)
+        class_attribs[arg]         = relationship('Context', foreign_keys=class_attribs[arg + '_id'])
+            
+    # Create class
+    C = type(class_name, (Candidate,), class_attribs)
+        
+    # Create table in DB
+    if not snorkel_engine.dialect.has_table(snorkel_engine, table_name):
+        C.__table__.create(bind=snorkel_engine)
+    return C

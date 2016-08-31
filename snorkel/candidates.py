@@ -58,12 +58,6 @@ class CandidateExtractor(object):
         else:
             self.arity = len(self.candidate_spaces)
 
-        # Check for whether it is a self-relation
-        self.same_unary = False
-        if self.arity == 2:
-            if self.candidate_spaces[0] == self.candidate_spaces[1] and self.matchers[0] == self.matchers[1]:
-                self.same_unary = True
-
         # Make sure the candidate spaces are different so generators aren't expended!
         self.candidate_spaces = map(deepcopy, self.candidate_spaces)
 
@@ -78,26 +72,23 @@ class CandidateExtractor(object):
 
         # Run extraction
         if parallelism in [1, False]:
-
-            unique_candidates = set()
             for context in contexts:
                 for candidate in self._extract_from_context(context):
-                    unique_candidates.add(candidate)
-
-                for candidate in unique_candidates:
                     session.add(candidate)
                     c.candidates.append(candidate)
-
-                unique_candidates.clear()
 
             # Commit the candidates and return the candidate set
             session.commit()
             return c
         else:
-            self._extract_multiprocess(contexts, parallelism)
+            self._extract_multiprocess(contexts, c, parallelism)
             return session.query(CandidateSet).filter(CandidateSet.name == name).one()
 
     def _extract_from_context(self, context, unary_set=None):
+        temp_spans = [None] * self.arity
+        for i in range(self.arity):
+            temp_spans[i] = self._generate_temp_spans(context, self.candidate_spaces[i], self.matchers[i])
+
 
         # Unary candidates
         if self.arity == 1:
@@ -154,7 +145,7 @@ class CandidateExtractor(object):
         else:
             raise NotImplementedError()
             
-    def _extract_multiprocess(self, contexts, parallelism, candidate_set, unary_set):
+    def _extract_multiprocess(self, contexts, candidate_set, parallelism):
         contexts_in    = JoinableQueue()
         candidates_out = Queue()
 
@@ -166,8 +157,7 @@ class CandidateExtractor(object):
         for i in range(parallelism):
             session = SnorkelSession()
             c = session.merge(candidate_set)
-            u = session.merge(unary_set) if unary_set is not None else None
-            p = CandidateExtractorProcess(self._extract_from_context, session, contexts_in, candidates_out, c, u)
+            p = CandidateExtractorProcess(self._extract_from_context, session, contexts_in, candidates_out, c)
             self.ps.append(p)
 
         for p in self.ps:
@@ -185,25 +175,29 @@ class CandidateExtractor(object):
                 break
         return candidates
 
-    def _generate_temp_spans(self, context, space, matcher):
+    def _generate_temp_spans(self, context, space, matcher, output_set):
         """
         Generates TemporarySpans for a context, using the provided space and matcher
 
         :param context: the context for which temporary spans will be generated
         :param space: the space of TemporarySpans to consider
         :param matcher: the matcher that the TemporarySpans must pass to be returned
-        :return: set of unique TemporarySpans
+        :param output_set: set container in which to store output. This method will clear it before using
+        :return: set of unique TemporarySpans, container passed in as output_set
         """
         pass
 
-    def _persist_spans(self, temp_span_list, session):
+    def _persist_spans(self, temp_span_list, session, output_list):
         """
         Given a list of sets of TemporarySpans, produces a list of sets of Spans persisted
         in the database, such that each TemporarySpan has a corresponding Span
+
         :param temp_span_list: list of sets of TemporarySpans to persist
         :param session: the Session to use to access the database
-        :return: list of sets of persisted Spans
+        :param output_list: list of sets in which to store output. This method will clear each before using
+        :return: list of sets of persisted Spans, container passed in as output_list
         """
+        pass
 
 class CandidateExtractorProcess(Process):
     def __init__(self, extractor, session, contexts_in, candidates_out, candidate_set, unary_set):

@@ -96,7 +96,8 @@ class Candidate(SnorkelBase):
     }
 
     def get_arguments(self):
-        return [self.__getattribute__(key.name) for key in inspect(type(self)).primary_key]
+        #return [self.__getattribute__(key.name) for key in inspect(type(self)).primary_key]
+
 
     def __getitem__(self, key):
         return self.get_arguments()[key]
@@ -121,7 +122,10 @@ def candidate_subclass(class_name, table_name, args):
         'id' : Column(Integer, ForeignKey('candidate.id')),
                 
         # Polymorphism information for SQLAlchemy
-        '__mapper_args__' : {'polymorphic_identity': table_name}
+        '__mapper_args__' : {'polymorphic_identity': table_name},
+
+        # Helper method to get argument names
+        '__argnames__' : args
     }
         
     # Create named arguments

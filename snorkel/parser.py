@@ -145,7 +145,7 @@ class XMLMultiDocParser(DocParser):
 PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
          '-RSB-': ']', '-LSB-': '['}
 
-class SentenceParser:
+class CoreNLPHandler:
     def __init__(self, tok_whitespace=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
@@ -173,7 +173,7 @@ class SentenceParser:
                         backoff_factor=0.1,
                         status_forcelist=[ 500, 502, 503, 504 ])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
-
+    
     def _kill_pserver(self):
         if self.server_pid is not None:
             try:
@@ -193,7 +193,7 @@ class SentenceParser:
         if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
           raise ValueError("File {} too long. Max character count is 100K".format(document.id))
         blocks = json.loads(content, strict=False)['sentences']
-        sent_id = 0
+        position = 0
         diverged = False
         for block in blocks:
             parts = defaultdict(list)
@@ -219,20 +219,29 @@ class SentenceParser:
             if not diverged and doc_text != parts['text']:
                 diverged = True
                 warnings.warn("CoreNLP parse has diverged from raw document text!")
-            parts['position'] = sent_id
+            parts['position'] = position
             
             # replace PennTreeBank tags with original forms
             parts['words'] = [PTB[w] if w in PTB else w for w in parts['words']]
             parts['lemmas'] = [PTB[w.upper()] if w.upper() in PTB else w for w in parts['lemmas']]
-            sent = Sentence(**parts)
 
             # Link the sentence to its parent document object
-            sent.document = document
+            parts['document'] = document
 
             # Assign the stable id as document's stable id plus absolute character offset
-            sent.stable_id = '%s:%s' % (document.stable_id, abs_sent_offset)
-            sent_id += 1
-            yield sent
+            parts['stable_id'] = '%s:%s' % (document.stable_id, abs_sent_offset)
+            position += 1
+            yield parts
+
+
+class SentenceParser(object):
+    def __init__(self, tok_whitespace=False):
+        self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace)
+
+    def parse(self, doc, text):
+        """Parse a raw document as a string into a list of sentences"""
+        for parts in self.corenlp_handler.parse(doc, text):
+            yield Sentence(**parts)
 
 
 def sort_X_on_Y(X, Y):

@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 from snorkel.models import snorkel_engine
 from snorkel.utils import camel_to_under
 
+
 candidate_set_candidate_association = Table('candidate_set_candidate_association', SnorkelBase.metadata,
                                             Column('candidate_set_id', Integer, ForeignKey('candidate_set.id')),
                                             Column('candidate_id', Integer, ForeignKey('candidate.id')))

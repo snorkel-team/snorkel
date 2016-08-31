@@ -6,18 +6,44 @@ from sqlalchemy.orm import relationship, backref
 from snorkel.utils import camel_to_under
 
 
-# TODO: Switch to AnnotationKey(SnorkelBase)
-class AnnotationKeyMixin(object):
-    """
-    Mixin class for defining annotation key tables.
+annotation_key_set_annotation_key_association = \
+    Table('annotation_key_set_annotation_key_association', SnorkelBase.metadata,
+          Column('annotation_key_set_id', Integer, ForeignKey('annotation_key_set.id')),
+          Column('annotation_key_id', Integer, ForeignKey('annotation_key.id')))
 
-    Annotation key tables are mappings from unique string names to integer id numbers.
+
+class AnnotationKeySet(SnorkelBase):
+    """A many-to-many set of AnnotationKeys."""
+    __tablename__   = 'annotation_key_set'
+    id              = Column(Integer, primary_key=True)
+    name            = Column(String, unique=True, nullable=False)
+    annotation_keys = relationship('AnnotationKey', secondary=annotation_key_set_annotation_key_association,
+                        backref='sets')
+    
+    def append(self, item):
+        self.annotation_keys.append(item)
+
+    def remove(self, item):
+        self.annotation_keys.remove(item)
+
+    def __repr__(self):
+        return "Annotation Key Set (" + str(self.name) + ")"
+
+    def __iter__(self):
+        """Default iterator is over self.annotation_keys"""
+        for ak in self.annotation_keys:
+            yield ak
+
+    def __len__(self):
+        return len(self.annotation_keys)
+
+
+class AnnotationKey(SnorkelBase):
+    """
+    The Annotation key table is a mapping from unique string names to integer id numbers.
     These strings uniquely identify who or what produced an annotation.
     """
-    @declared_attr
-    def __tablename__(cls):
-        return camel_to_under(cls.__name__)
-
+    __tablename__ = 'annotation_key'
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
 
@@ -56,24 +82,23 @@ class AnnotationMixin(object):
 
     id = Column(Integer, primary_key=True)
 
-    @declared_attr
-    def key_id(cls):
-        return Column(camel_to_under(cls.__name__) + '_key_id',
-                      Integer,
-                      ForeignKey(camel_to_under(cls.__name__) + '_key.id'))
+    # The key is the "name" or "type" of the Annotation- e.g. the name of a feature, or of a human annotator
+    key_id = Column('annotation_key_id', Integer, ForeignKey('annotation_key.id'))
+    key = relationship('AnnotationKey', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all'))
 
-    @declared_attr
-    def key(cls):
-        return relationship(cls.__name__ + 'Key', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all'))
-
+    # Every annotation is with respect to a candidate
     @declared_attr
     def candidate_id(cls):
         return Column(camel_to_under(cls.__name__) + '_candidate_id', Integer, ForeignKey('candidate.id'))
 
     @declared_attr
     def candidate(cls):
-        return relationship('Candidate', backref=backref(camel_to_under(cls.__name__) + 's', cascade_backrefs=False))
+        return relationship('Candidate', backref=backref(camel_to_under(cls.__name__) + 's', \
+            cascade_backrefs=False))
 
+    # NOTE: What remains to be defined in the subclass is the **value**
+
+    # Table arguments
     @declared_attr
     def __table_args__(cls):
         return (
@@ -84,13 +109,6 @@ class AnnotationMixin(object):
 
     def __repr__(self):
         return self.__class__.__name__ + " (" + str(self.key.name) + " = " + str(self.value) + ")"
-
-
-class LabelKey(AnnotationKeyMixin, SnorkelBase):
-    """
-    Key for Labels.
-    """
-    pass
 
 
 class Label(AnnotationMixin, SnorkelBase):
@@ -104,13 +122,6 @@ class Label(AnnotationMixin, SnorkelBase):
     value = Column(Integer, nullable=False)
 
 
-class FeatureKey(AnnotationKeyMixin, SnorkelBase):
-    """
-    Key for Features.
-    """
-    pass
-
-
 class Feature(AnnotationMixin, SnorkelBase):
     """
     An element of a representation of a Candidate in a feature space.
@@ -119,13 +130,6 @@ class Feature(AnnotationMixin, SnorkelBase):
     or the library name and feature name in an automatic featurization library.
     """
     value = Column(Float, nullable=False)
-
-
-class PredictionKey(AnnotationKeyMixin, SnorkelBase):
-    """
-    Key for Predictions.
-    """
-    pass
 
 
 class Prediction(AnnotationMixin, SnorkelBase):

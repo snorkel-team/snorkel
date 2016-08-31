@@ -13,9 +13,8 @@ class CandidateAnnotator(object):
         * Label
     E.g. for features, LF labels, human annotator labels, etc.
     """
-    def __init__(self, annotation=Annotation, key=AnnotationKey):
+    def __init__(self, annotation=Annotation):
         self.annotation = annotation
-        self.key        = key
 
     def create(self, candidates, annotation_generator, session, annotation_keyset):
         """
@@ -42,7 +41,7 @@ class CandidateAnnotator(object):
             seen.clear()
             for key_name, value in annotation_generator(candidate):
                 if key_names is None or key_name in key_names:
-                    key = self.key(name=key_name)
+                    key = AnnotationKey(name=key_name)
                     a = self.annotation(candidate=candidate, key=key, value=value)
                     if a not in seen:
                         session.add(a)

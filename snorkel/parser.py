@@ -16,6 +16,7 @@ import signal
 from subprocess import Popen
 import sys
 import codecs
+from .utils import sort_X_on_Y
 
 
 class CorpusParser:
@@ -233,7 +234,3 @@ class SentenceParser:
             sent.stable_id = '%s:%s' % (document.stable_id, abs_sent_offset)
             sent_id += 1
             yield sent
-
-
-def sort_X_on_Y(X, Y):
-    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]

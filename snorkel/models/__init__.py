@@ -33,6 +33,7 @@ from .meta import SnorkelBase, SnorkelSession, snorkel_engine, snorkel_postgres
 from .context import Context, Corpus, Document, Sentence, TemporarySpan, Span
 from .candidate import Candidate, CandidateSet
 from .annotation import Feature, FeatureKey, Label, LabelKey, Prediction, PredictionKey
+from .parameter import Parameter, ParameterSet
 
 # This call must be performed after all classes that extend SnorkelBase are
 # declared to ensure the storage schema is initialized

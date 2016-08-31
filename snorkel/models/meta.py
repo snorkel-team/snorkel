@@ -1,8 +1,7 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.pool import QueuePool
+from sqlalchemy.orm import sessionmaker
 
 # We initialize the engine within the models module because models' schema can depend on
 # which data types are supported by the engine

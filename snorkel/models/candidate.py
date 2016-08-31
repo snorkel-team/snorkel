@@ -1,7 +1,6 @@
 from .meta import SnorkelSession, SnorkelBase
 from .context import Context
 from sqlalchemy import Table, Column, String, Integer, ForeignKey
-from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import relationship
 from snorkel.models import snorkel_engine
 
@@ -20,6 +19,7 @@ class CandidateSet(SnorkelBase):
     __tablename__ = 'candidate_set'
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
+    candidates = relationship('Candidate', secondary=candidate_set_candidate_association, backref='sets')
 
     def append(self, item):
         self.candidates.append(item)
@@ -96,8 +96,7 @@ class Candidate(SnorkelBase):
     }
 
     def get_arguments(self):
-        #return [self.__getattribute__(key.name) for key in inspect(type(self)).primary_key]
-
+        return [self.__getattribute__(self, name) for name in self.__argnames__]
 
     def __getitem__(self, key):
         return self.get_arguments()[key]

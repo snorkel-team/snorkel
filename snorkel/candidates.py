@@ -1,6 +1,6 @@
 from . import SnorkelSession
-from .models import CandidateSet, TemporarySpan, Span
-from itertools import chain
+from .models import CandidateSet, TemporarySpan, Context
+from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
 from Queue import Empty
 from copy import deepcopy
@@ -46,6 +46,11 @@ class CandidateExtractor(object):
         # Make sure the candidate spaces are different so generators aren't expended!
         self.candidate_spaces = map(deepcopy, self.candidate_spaces)
 
+        # Preallocates internal data structures
+        self.child_context_sets = [None] * self.arity
+        for i in range(self.arity):
+            self.child_context_sets[i] = set()
+
         # Track processes for multicore execution
         self.ps = []
 
@@ -53,82 +58,50 @@ class CandidateExtractor(object):
         # Create a candidate set
         c = CandidateSet(name=name)
         session.add(c)
-        session.commit()
 
         # Run extraction
         if parallelism in [1, False]:
             for context in contexts:
-                for candidate in self._extract_from_context(context):
-                    session.add(candidate)
+                for candidate in self._extract_from_context(context, session):
                     c.candidates.append(candidate)
 
             # Commit the candidates and return the candidate set
             session.commit()
             return c
         else:
+            session.commit()
             self._extract_multiprocess(contexts, c, parallelism)
             return session.query(CandidateSet).filter(CandidateSet.name == name).one()
 
-    def _extract_from_context(self, context, unary_set=None):
-        temp_spans = [None] * self.arity
+    def _extract_from_context(self, context, session):
+        # Applies matchers to generate child contexts
         for i in range(self.arity):
-            temp_spans[i] = self._generate_temp_spans(context, self.candidate_spaces[i], self.matchers[i])
+            self._generate_child_contexts(context, self.candidate_spaces[i], self.matchers[i], session, self.child_context_sets[i])
 
+        # Generates and persists candidates
+        filter_map = {}
+        arg_map = {}
+        arg_names = self.candidate_class.__argnames__
+        for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
+            # Check for self-joins and "nested" joins (joins from span to its subspan)
+            if self.arity == 2 and not self.self_relations and args[0][1] == args[1][1]:
+                continue
+            # TODO: Make this work for higher-order relations
+            if self.arity == 2 and not self.nested_relations and (args[0][1] in args[1][1] or args[1][1] in args[0][1]):
+                continue
+            # Checks for symmetric relations
+            if self.arity == 2 and not self.symmetric_relations and args[0][0] > args[1][0]:
+                continue
 
-        # Unary candidates
-        if self.arity == 1:
-            for tc in self.matchers[0].apply(self.candidate_spaces[0].apply(context)):
-                yield tc.promote()
-
-        # Binary candidates
-        elif self.arity == 2:
-
-            # Materialize once if self-relation; we materialize assuming that we have small contexts s.t.
-            # computation expense > memory expense
-            if self.same_unary:
-                tcs1 = list(self.matchers[0].apply(self.candidate_spaces[0].apply(context)))
-                tcs2 = tcs1
-            else:
-                tcs1 = list(self.matchers[0].apply(self.candidate_spaces[0].apply(context)))
-                tcs2 = list(self.matchers[1].apply(self.candidate_spaces[1].apply(context)))
-
-            # Do the local join, materializing all pairs of matched unary candidates
-            promoted_candidates = {}
-            for i,tc1 in enumerate(tcs1):
-                for j,tc2 in enumerate(tcs2):
-
-                    # Optionally exclude symmetric relations; equivalent to extracting *undirected* relations
-                    if self.same_unary and not self.symmetric_relations and j < i:
-                        continue
-
-                    # Check for self-joins and "nested" joins (joins from span to its subspan)
-                    if not self.self_relations and tc1 == tc2:
-                        continue
-                    if not self.nested_relations and (tc1 in tc2 or tc2 in tc1):
-                        continue
-
-                    # AND-composition of implicit context.id join with optional join_fn condition
-                    if (self.join_fn is None or self.join_fn(tc1, tc2)):
-                        if tc1 not in promoted_candidates:
-                            promoted_candidates[tc1] = tc1.promote()
-                            promoted_candidates[tc1].set = unary_set
-
-                        if tc2 not in promoted_candidates:
-                            promoted_candidates[tc2] = tc2.promote()
-                            promoted_candidates[tc2].set = unary_set
-
-                        c1 = promoted_candidates[tc1]
-                        c2 = promoted_candidates[tc2]
-                        
-                        # TODO: Un-hardcode this!
-                        if isinstance(c1, Span) and isinstance(c2, Span):
-                            yield SpanPair(span0=c1, span1=c2)
-                        else:
-                            raise NotImplementedError("Only Spans -> SpanPair mappings are handled currently.")
-
-        # Higher-arity candidates
-        else:
-            raise NotImplementedError()
+            for i, arg_name in enumerate(arg_names):
+                filter_map[arg_name] = args[i][1]
+                # scrap: self.candidate_class.__name__ + '.' +
+                arg_map[arg_name] = args[i][1]
+            candidate = session.query(self.candidate_class).filter_by(**filter_map).first()
+            if candidate is None:
+                candidate = self.candidate_class(**arg_map)
+                session.add(candidate)
+            yield candidate
             
     def _extract_multiprocess(self, contexts, candidate_set, parallelism):
         contexts_in    = JoinableQueue()
@@ -162,7 +135,7 @@ class CandidateExtractor(object):
 
     def _generate_child_contexts(self, context, candidate_space, matcher, session, output_contexts):
         """
-        Generates TemporarySpans for a context, using the provided space and matcher
+        Generates TemporaryContexts for a context, using the provided space and matcher
 
         :param context: the context for which temporary spans will be generated
         :param candidate_space: the space of TemporarySpans to consider
@@ -252,7 +225,7 @@ class Ngrams(CandidateSpace):
                 w     = context.words[i+l-1]
                 start = offsets[i]
                 end   = offsets[i+l-1] + len(w) - 1
-                ts    = TemporarySpan(char_start=start, char_end=end, context=context)
+                ts    = TemporarySpan(char_start=start, char_end=end, parent=context)
                 if ts not in seen:
                     seen.add(ts)
                     yield ts
@@ -262,11 +235,11 @@ class Ngrams(CandidateSpace):
                 if l == 1 and self.split_rgx is not None:
                     m = re.search(self.split_rgx, context.text[start-offsets[0]:end-offsets[0]+1])
                     if m is not None and l < self.n_max + 1:
-                        ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, context=context)
+                        ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, parent=context)
                         if ts1 not in seen:
                             seen.add(ts1)
                             yield ts
-                        ts2 = TemporarySpan(char_start=start + m.end(1), char_end=end, context=context)
+                        ts2 = TemporarySpan(char_start=start + m.end(1), char_end=end, parent=context)
                         if ts2 not in seen:
                             seen.add(ts2)
                             yield ts2

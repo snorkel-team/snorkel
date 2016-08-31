@@ -3,6 +3,7 @@ from .context import Context
 from sqlalchemy import Table, Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from snorkel.models import snorkel_engine
+from snorkel.utils import camel_to_under
 
 candidate_set_candidate_association = Table('candidate_set_candidate_association', SnorkelBase.metadata,
                                             Column('candidate_set_id', Integer, ForeignKey('candidate_set.id')),
@@ -105,13 +106,18 @@ class Candidate(SnorkelBase):
         return "%s(%s)" % (self.__class__.__name__, ", ".join(map(str, self.get_arguments())))
 
 
-def candidate_subclass(class_name, table_name, args):
+def candidate_subclass(class_name, args, table_name=None):
     """
     Creates and returns a Candidate subclass with provided argument names, which are Context type.
-    Creates the table in DB if does not exist yet.
+    Similar in spirit to collections.namedtuple.  Creates the table in DB if does not exist yet.
 
-    Similar in spirit to collections.namedtuple.
+    :param class_name: The name of the class, should be "camel case" e.g. NewCandidateClass
+    :param args: A list of names of consituent arguments, which refer to the Contexts--representing mentions--that
+        comprise the candidate
+    :param table_name: The name of the corresponding table in DB; if not provided, is converted from camel case
+        by default, e.g. new_candidate_class
     """
+    table_name = camel_to_under(class_name) if table_name is None else table_name
     class_attribs = {
 
         # Declares name for storage table

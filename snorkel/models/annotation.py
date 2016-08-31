@@ -3,20 +3,7 @@ import re
 from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
-
-
-def camel_to_under(name):
-    """
-    Converts camel-case string to lowercase string separated by underscores.
-
-    Written by epost
-    (http://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case).
-
-    :param name: String to be converted
-    :return: new String with camel-case converted to lowercase, underscored
-    """
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+from snorkel.utils import camel_to_under
 
 
 class AnnotationKeyMixin(object):

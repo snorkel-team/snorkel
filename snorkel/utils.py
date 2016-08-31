@@ -1,3 +1,16 @@
+def camel_to_under(name):
+    """
+    Converts camel-case string to lowercase string separated by underscores.
+
+    Written by epost
+    (http://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case).
+
+    :param name: String to be converted
+    :return: new String with camel-case converted to lowercase, underscored
+    """
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
 def get_as_dict(x):
     """Return an object as a dictionary of its attributes"""
     if isinstance(x, dict):

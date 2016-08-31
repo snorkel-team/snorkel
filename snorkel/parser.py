@@ -16,6 +16,7 @@ import signal
 from subprocess import Popen
 import sys
 import codecs
+from .utils import sort_X_on_Y
 
 
 class CorpusParser:
@@ -242,7 +243,3 @@ class SentenceParser(object):
         """Parse a raw document as a string into a list of sentences"""
         for parts in self.corenlp_handler.parse(doc, text):
             yield Sentence(**parts)
-
-
-def sort_X_on_Y(X, Y):
-    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]

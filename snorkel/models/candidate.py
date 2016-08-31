@@ -68,7 +68,7 @@ class Candidate(SnorkelBase):
     >>>     # Declares name for storage table
     >>>     __tablename__ = 'newtype'
     >>>     # Connects NewType records to generic Candidate records
-    >>>     id = Column(String, ForeignKey('candidate.id'))
+    >>>     id = Column(Integer, ForeignKey('candidate.id'))
     >>>
     >>>     # Polymorphism information for SQLAlchemy
     >>>     __mapper_args__ = {

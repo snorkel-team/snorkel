@@ -2,8 +2,9 @@ import numpy as np
 from pandas import DataFrame
 from collections import defaultdict
 import scipy.sparse as sparse
-from .models import Label, Feature, AnnotationKey, AnnotationKeySet
+from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
 from types import GeneratorType
+from .utils import get_ORM_instance
 
 
 class CandidateAnnotator(object):
@@ -26,10 +27,12 @@ class CandidateAnnotator(object):
         If annotation_key_set_name exists already, only keep those annotations with keys in this set; otherwise,
         create and assign to the new annotation key set.
         """
+        candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
+        key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
+
         # If annotarion_key_set refers to an existing AnnotationKeySet, then use this, and only create annotations
         # which fall within this key_set; otherwise we create a new key set
-        key_set = session.query(AnnotationKeySet).filter(AnnotationKeySet.name == annotation_key_set_name).first()
-        new     = False
+        new = False
         if key_set is None:
             print "Creating new key set..."
             new     = True
@@ -59,7 +62,6 @@ class CandidateAnnotator(object):
                         seen_key_names.add(key_name)
                         
                         # Get or create AnnotationKey
-                        #if key_name in keys:
                         if key_name in key_set.keys:
                             key = key_set.keys[key_name]
                         elif new:
@@ -72,9 +74,33 @@ class CandidateAnnotator(object):
                         session.add(self.annotation(candidate=candidate, key=key, value=value))
         session.commit()
     
-    def load(self, candidate_set, session, annotation_key_set_name):
+    def load(self, candidate_set, key_set, session):
+        # TODO: Docstring!!
+        candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
+        key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
+
+        # Create sparse matrix in LIL format for incremental construction
+        X = sparse.lil_matrix((len(candidate_set), len(key_set)))
+
+        # We map on-the-fly from *ordered* but potentially non-contiguous integer ids to row/col indices
+        row_index = {}
+        col_index = {}
+
+        # Construct the query
+        q = session.query(Label.candidate_id, Label.key_id, Label.value).join(Candidate, AnnotationKey)
+        q = q.filter(Candidate.sets.contains(candidate_set)).filter(AnnotationKey.sets.contains(key_set))
+        q = q.order_by(Label.candidate_id, Label.key_id)
         
-        raise NotImplementedError()
+        # Iteratively contruct sparse matrix
+        for cid, kid, val in q.all():
+            if cid not in row_index:
+                row_index[cid] = len(row_index)
+            if kid not in col_index:
+                col_index[kid] = len(col_index)
+            X[row_index[cid], col_index[kid]] = val
+
+        # Return as CSR sparse matrix
+        return X.tocsr()
 
     # TODO
     def add(self, candidates, annotation_generator, session, annotation_key_set_name):

@@ -47,8 +47,8 @@ class AnnotationKey(SnorkelBase):
     These strings uniquely identify who or what produced an annotation.
     """
     __tablename__ = 'annotation_key'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
+    id        = Column(Integer, primary_key=True)
+    name      = Column(String, unique=True, nullable=False)
 
     def __repr__(self):
         return str(self.__class__.__name__) + " (" + str(self.name) + ")"

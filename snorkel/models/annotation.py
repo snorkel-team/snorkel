@@ -4,6 +4,7 @@ from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstra
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 from snorkel.utils import camel_to_under
+from sqlalchemy.orm.collections import attribute_mapped_collection
 
 
 annotation_key_set_annotation_key_association = \
@@ -17,21 +18,23 @@ class AnnotationKeySet(SnorkelBase):
     __tablename__ = 'annotation_key_set'
     id            = Column(Integer, primary_key=True)
     name          = Column(String, unique=True, nullable=False)
-    keys          = relationship('AnnotationKey', secondary=annotation_key_set_annotation_key_association,
-                        backref='sets')
+    keys          = relationship('AnnotationKey',
+                                 secondary=annotation_key_set_annotation_key_association,
+                                 collection_class=attribute_mapped_collection('name'),
+                                 backref='sets')
     
-    def append(self, item):
-        self.keys.append(item)
+    def append(self, a):
+        self.keys[a.name] = a
 
     def remove(self, item):
-        self.keys.remove(item)
+        del self.keys[a.name]
 
     def __repr__(self):
         return "Annotation Key Set (" + str(self.name) + ")"
 
     def __iter__(self):
         """Default iterator is over self.annotation_keys"""
-        for key in self.keys:
+        for key in self.keys.itervalues():
             yield key
 
     def __len__(self):

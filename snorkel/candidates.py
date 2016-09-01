@@ -87,7 +87,7 @@ class CandidateExtractor(object):
         parent_insert_args = {'type': self.candidate_class.__mapper_args__['polymorphic_identity']}
         arg_names = self.candidate_class.__argnames__
         child_insert_query = self.candidate_class.__table__.insert()
-        child_insert_args = {}
+        child_args = {}
         set_insert_query = candidate_set_candidate_association.insert()
         set_insert_args = {'candidate_set_id': candidate_set.id}
         for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
@@ -102,17 +102,18 @@ class CandidateExtractor(object):
                 continue
 
             for i, arg_name in enumerate(arg_names):
-                child_insert_args[arg_name + '_id'] = args[i][1].id
+                child_args[arg_name + '_id'] = args[i][1].id
             q = select([self.candidate_class.id])
-            for key, value in child_insert_args.items():
+            for key, value in child_args.items():
                 q = q.where(getattr(self.candidate_class, key) == value)
             candidate_id = session.execute(q).first()
 
             # If candidate does not exist, persists it
             if candidate_id is None:
                 candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
-                child_insert_args['id'] = candidate_id[0]
-                session.execute(child_insert_query, child_insert_args)
+                child_args['id'] = candidate_id[0]
+                session.execute(child_insert_query, child_args)
+                del child_args['id']
 
             set_insert_args['candidate_id'] = candidate_id[0]
             session.execute(set_insert_query, set_insert_args)

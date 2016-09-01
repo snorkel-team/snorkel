@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import PickleType
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.session import object_session
+from sqlalchemy.sql import select, text
 import pandas as pd
 
 
@@ -169,6 +170,23 @@ class TemporaryContext(object):
     A TemporaryContext must have specified equality / set membership semantics, a stable_id for checking
     uniqueness against the database, and a promote() method which returns a corresponding Context object.
     """
+    def __init__(self):
+        self.id = None
+
+    def load_id_or_insert(self, session):
+        if self.id is None:
+            stable_id = self.get_stable_id()
+            id = session.execute(select([Context.id]).where(Context.stable_id == stable_id)).first()
+            if id is None:
+                self.id = session.execute(
+                        Context.__table__.insert(),
+                        {'type': self._get_table_name(), 'stable_id': stable_id}).inserted_primary_key[0]
+                insert_args = self._get_insert_args()
+                insert_args['id'] = self.id
+                session.execute(text(self._get_insert_query()), insert_args)
+            else:
+                self.id = id[0]
+
     def __eq__(self, other):
         raise NotImplementedError()
 
@@ -181,13 +199,20 @@ class TemporaryContext(object):
     def get_stable_id(self):
         raise NotImplementedError()
 
-    def promote(self):
+    def _get_table_name(self):
+        raise NotImplementedError()
+
+    def _get_insert_query(self):
+        raise NotImplementedError()
+
+    def _get_insert_args(self):
         raise NotImplementedError()
 
 
 class TemporarySpan(TemporaryContext):
     """The TemporaryContext version of Span"""
     def __init__(self, parent, char_start, char_end, meta=None):
+        super(TemporarySpan, self).__init__()
         self.parent     = parent  # The parent Context of the Span
         self.char_end   = char_end
         self.char_start = char_start
@@ -215,6 +240,18 @@ class TemporarySpan(TemporaryContext):
 
     def get_stable_id(self):
         return '%s:%s-%s' % (self.parent.stable_id, self.char_start, self.char_end)
+
+    def _get_table_name(self):
+        return 'span'
+
+    def _get_insert_query(self):
+        return """INSERT INTO span VALUES(:id, :parent_id, :char_start, :char_end, :meta)"""
+
+    def _get_insert_args(self):
+        return {'parent_id' : self.parent.id,
+                'char_start': self.char_start,
+                'char_end'  : self.char_end,
+                'meta'      : self.meta}
 
     def get_word_start(self):
         return self.char_to_word_index(self.char_start)
@@ -281,10 +318,6 @@ class TemporarySpan(TemporaryContext):
 
     def _get_instance(self, **kwargs):
         return TemporarySpan(**kwargs)
-
-    def promote(self):
-        return Span(stable_id=self.get_stable_id(), parent=self.parent, char_start=self.char_start, \
-                char_end=self.char_end)
 
 
 class Span(Context, TemporarySpan):

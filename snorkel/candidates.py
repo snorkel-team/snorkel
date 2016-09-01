@@ -1,5 +1,5 @@
 from . import SnorkelSession
-from .models import Candidate, CandidateSet, TemporarySpan, Context
+from .models import Candidate, CandidateSet, TemporarySpan
 from .models.candidate import candidate_set_candidate_association
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
@@ -73,9 +73,13 @@ class CandidateExtractor(object):
         return session.query(CandidateSet).filter(CandidateSet.name == name).one()
 
     def _extract_from_context(self, context, candidate_set, session):
-        # Applies matchers to generate child contexts
+        # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
+        # by the Matcher
         for i in range(self.arity):
-            self._generate_child_contexts(context, self.candidate_spaces[i], self.matchers[i], session, self.child_context_sets[i])
+            self.child_context_sets[i].clear()
+            for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
+                tc.load_id_or_insert(session)
+                self.child_context_sets[i].add(tc)
 
         # Generates and persists candidates
         parent_insert_query = Candidate.__table__.insert()
@@ -98,15 +102,15 @@ class CandidateExtractor(object):
 
             for i, arg_name in enumerate(arg_names):
                 child_insert_args[arg_name + '_id'] = args[i][1].id
-            candidate_id = session.query(self.candidate_class.id).filter_by(**child_insert_args).first()[0]
+            candidate_id = session.query(self.candidate_class.id).filter_by(**child_insert_args).first()
 
-            # If candidate does not exist, promote temporary candidate and persists it
+            # If candidate does not exist, persists it
             if candidate_id is None:
-                candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key[0]
-                child_insert_args['id'] = candidate_id
+                candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
+                child_insert_args['id'] = candidate_id[0]
                 session.execute(child_insert_query, child_insert_args)
 
-            set_insert_args['candidate_id'] = candidate_id
+            set_insert_args['candidate_id'] = candidate_id[0]
             session.execute(set_insert_query, set_insert_args)
             
     def _extract_multiprocess(self, contexts, candidate_set, parallelism):
@@ -138,29 +142,6 @@ class CandidateExtractor(object):
             except Empty:
                 break
         return candidates
-
-    def _generate_child_contexts(self, context, candidate_space, matcher, session, output_contexts):
-        """
-        Generates TemporaryContexts for a context, using the provided space and matcher
-
-        :param context: the context for which temporary spans will be generated
-        :param candidate_space: the space of TemporarySpans to consider
-        :param matcher: the matcher that the TemporarySpans must pass to be returned
-        :param session: the session
-        :param output_contexts: set container in which to store output. This method will clear it before using
-        """
-        output_contexts.clear()
-
-        # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
-        # by the Matcher
-        for tc in matcher.apply(candidate_space.apply(context)):
-
-            # Query the database to see if this context exists already
-            c = session.query(Context).filter(Context.stable_id == tc.get_stable_id()).first()
-            if c is None:
-                c = tc.promote()
-                session.add(c)
-            output_contexts.add(c)
 
 
 class CandidateExtractorProcess(Process):

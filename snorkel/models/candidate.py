@@ -38,6 +38,9 @@ class CandidateSet(SnorkelBase):
         for candidate in self.candidates:
             yield candidate
 
+    def __getitem__(self, key):
+        return self.candidates[key]
+
     def __len__(self):
         return self.candidates.count()
 

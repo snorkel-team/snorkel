@@ -11,6 +11,7 @@ def get_ORM_instance(ORM_class, session, instance):
     else:
         return instance
 
+
 def camel_to_under(name):
     """
     Converts camel-case string to lowercase string separated by underscores.
@@ -24,6 +25,7 @@ def camel_to_under(name):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
+
 def get_as_dict(x):
     """Return an object as a dictionary of its attributes"""
     if isinstance(x, dict):
@@ -34,8 +36,10 @@ def get_as_dict(x):
         except AttributeError:
             return x.__dict__
 
+
 def sort_X_on_Y(X, Y):
     return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
+
 
 def corenlp_cleaner(words):
   d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',

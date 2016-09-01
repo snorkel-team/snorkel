@@ -3,7 +3,6 @@ from pandas import DataFrame
 from collections import defaultdict
 import scipy.sparse as sparse
 from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
-from types import GeneratorType
 from .utils import get_ORM_instance
 
 
@@ -17,65 +16,120 @@ class CandidateAnnotator(object):
     """
     def __init__(self, annotation=None):
         self.annotation = annotation
-
-    def create(self, candidate_set, annotation_fns, session, annotation_key_set_name):
-        # TODO: Rewrite docstring
+    
+    def _to_annotation_generator(self, fns):
+        """"
+        Generic method which takes a set of functions, and returns a generator that yields
+        function.__name__, function result pairs.
         """
-        Given a set of candidates and a list of annotation functions each of which, given a candidate,
-        returns annotations as key name, value pairs: persist these annotations in the session.
+        def fn_gen(c):
+            for f in fns:
+                yield f.__name__, f(c)
+        return fn_gen
 
-        If annotation_key_set_name exists already, only keep those annotations with keys in this set; otherwise,
-        create and assign to the new annotation key set.
+    def _create_annotations(self, session, candidate_set, key_set, f, key_set_mutable):
         """
-        candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
-        key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
+        Generates annotations for candidates in a candidate set, and persists these to the database.
+        
+        :param candidate_set: A CandidateSet instance
 
-        # If annotarion_key_set refers to an existing AnnotationKeySet, then use this, and only create annotations
-        # which fall within this key_set; otherwise we create a new key set
-        new = False
-        if key_set is None:
-            print "Creating new key set..."
-            new     = True
-            key_set = AnnotationKeySet(name=annotation_key_set_name)
-            session.add(key_set)
-            session.commit()
-        else:
-            print "Using existing key set with %s keys" % len(key_set)
+        :param key_set: An AnnotationKeySet instance
 
-        # Create annotations (avoiding potential duplicates) and add to session
+        :param f: Can be either:
+
+            * A function which maps a candidate to a generator key_name, value pairs.  Ex: A feature generator
+
+            * A list of functions, each of which maps from candidates to values; by default, the key_name
+                is the function.__name__.  Ex: A list of labeling functions
+
+        :param key_set_mutable: If True, annotations with keys not in the given key set will be added, and the
+        key set will be expanded; if False, these annotations will be considered out-of-domain (OOD) and discarded.
+        """
+        annotation_generator = self._to_annotation_generator(f) if hasattr(f, '__iter__') else f
         seen_key_names = set()
         for candidate in candidate_set:
             seen_key_names.clear()
-            for f in annotation_fns:
+            for key_name, value in annotation_generator(candidate):
+                if key_name not in seen_key_names and value != 0:
+                    seen_key_names.add(key_name)
+                    
+                    # If the annotation is in the key set already, use this AnnotationKey
+                    if key_name in key_set.keys:
+                        key = key_set.keys[key_name]
 
-                # Handle both single-return and generator functions
-                outputs = f(candidate)
-                outputs = outputs if isinstance(outputs, GeneratorType) else [outputs]
-                for output in outputs:
-
-                    # An annotation function either yields a key, value tuple, or else just a value
-                    # In the latter case, we use its name as the key
-                    key_name, value = output if isinstance(output, tuple) else f.__name__, output
-
-                    # Note: we also only store unique non-zero values!
-                    if key_name not in seen_key_names and value != 0:
-                        seen_key_names.add(key_name)
-                        
-                        # Get or create AnnotationKey
-                        if key_name in key_set.keys:
-                            key = key_set.keys[key_name]
-                        elif new:
-                            key = AnnotationKey(name=key_name)
-                            session.add(key)
-                            key_set.append(key)
-                            session.commit()
-                        else:
-                            continue
-                        session.add(self.annotation(candidate=candidate, key=key, value=value))
+                    # Else, only proceed if key set is mutable, in qhich case create new AnnotationKey
+                    elif key_set_mutable:
+                        key = AnnotationKey(name=key_name)
+                        session.add(key)
+                        key_set.append(key)
+                        session.commit()
+                    else:
+                        continue
+                    session.add(self.annotation(candidate=candidate, key=key, value=value))
         session.commit()
     
-    def load(self, candidate_set, key_set, session):
-        # TODO: Docstring!!
+    def create(self, session, candidate_set, f, new_key_set=None, existing_key_set=None):
+        """
+        Generates annotations for candidates in a candidate set, and persists these to the database,
+        as well as returning a sparse matrix representation.
+        
+        :param candidate_set: Can either be a CandidateSet instance or the name of one
+        
+        :param f: Can be either:
+
+            * A function which maps a candidate to a generator key_name, value pairs.  Ex: A feature generator
+
+            * A list of functions, each of which maps from candidates to values; by default, the key_name
+                is the function.__name__.  Ex: A list of labeling functions
+
+        :param new_key_set: An AnnotationKeySet instance or name of a new one to create; if provided, a new
+        key set will be created and populated
+        
+        :param existing_key_set: An AnnotationKeySet instance or name of an existing one; if provided, an
+        existing key set will be used to define the space of annotation keys; any annotations with keys not in
+        this set will simply be discarded.
+        """
+        candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
+        if new_key_set is None and existing_key_set is None:
+            raise ValueError("Must provide a new or existing AnnotationKeySet or annotation key set name.")
+        elif new_key_set is not None:
+            key_set = get_ORM_instance(AnnotationKeySet, session, new_key_set)
+            session.add(key_set)
+            session.commit()
+            mutable = True
+        else:
+            key_set = get_ORM_instance(AnnotationKeySet, session, existing_key_set)
+            mutable = False
+        self._create_annotations(session, candidate_set, key_set, f, key_set_mutable=mutable)
+        return self.load(session, candidate_set, key_set)
+    
+    def update(self, session, candidate_set, key_set, f):
+        """
+        Generates annotations for candidates in a candidate set and *adds* them to an existing annotation set,
+        also adding the respective keys to the key set; returns a sparse matrix representation of the full
+        candidate x annotation_key set.
+
+        :param candidate_set: Can either be a CandidateSet instance or the name of one
+
+        :param key_set: Can either be an AnnotationKeySet instance or the name of one
+        
+        :param f: Can be either:
+
+            * A function which maps a candidate to a generator key_name, value pairs.  Ex: A feature generator
+
+            * A list of functions, each of which maps from candidates to values; by default, the key_name
+                is the function.__name__.  Ex: A list of labeling functions
+        """
+        candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
+        key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
+        self._create_annotations(session, candidate_set, key_set, f, key_set_mutable=True)
+        return self.load(session, candidate_set, key_set)
+
+    def load(self, session, candidate_set, key_set):
+        """
+        Returns the annotations corresponding to a CandidateSet with N members and an AnnotationKeySet with M
+        distinct keys as an N x M CSR sparse matrix.
+        """
         candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
         key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
 
@@ -102,21 +156,13 @@ class CandidateAnnotator(object):
         # Return as CSR sparse matrix
         return X.tocsr()
 
-    # TODO
-    def add(self, candidates, annotation_generator, session, annotation_key_set_name):
-        raise NotImplementedError()
 
-    # TODO
-    def remove(self, candidates, key_name, session, annotation_key_set_name):
-        raise NotImplementedError()
-
-    # TODO
-    def update(self, candidates, annotation_generator, session, annotation_key_set_name):
-        raise NotImplementedError()
-
-
-
-class LabelFunctionAnnotator(CandidateAnnotator):
+class CandidateLabeler(CandidateAnnotator):
     """Apply labeling functions to the candidates, generating Label annotations"""
     def __init__(self):
-        super(LabelFunctionAnnotator, self).__init__(annotation=Label)
+        super(CandidateLabeler, self).__init__(annotation=Label)
+        
+class CandidateFeaturizer(CandidateAnnotator):
+    """Apply feature generators to the candidates, generating Feature annotations"""
+    def __init__(self):
+        super(CandidateFeaturizer, self).__init__(annotation=Feature)

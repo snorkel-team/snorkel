@@ -21,7 +21,8 @@ class CandidateSet(SnorkelBase):
     __tablename__ = 'candidate_set'
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
-    candidates = relationship('Candidate', secondary=candidate_set_candidate_association, backref='sets')
+    candidates = relationship('Candidate', secondary=candidate_set_candidate_association, backref='sets', \
+                    lazy='dynamic')
 
     def append(self, item):
         self.candidates.append(item)
@@ -38,7 +39,7 @@ class CandidateSet(SnorkelBase):
             yield candidate
 
     def __len__(self):
-        return len(self.candidates)
+        return self.candidates.count()
 
     def stats(self, gold_set=None):
         """Print diagnostic stats about CandidateSet."""

@@ -98,7 +98,7 @@ class Candidate(SnorkelBase):
     }
 
     def get_arguments(self):
-        return [self.__getattribute__(self, name) for name in self.__argnames__]
+        return [self.__getattribute__(name) for name in self.__argnames__]
 
     def __getitem__(self, key):
         return self.get_arguments()[key]

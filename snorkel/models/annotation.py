@@ -14,28 +14,28 @@ annotation_key_set_annotation_key_association = \
 
 class AnnotationKeySet(SnorkelBase):
     """A many-to-many set of AnnotationKeys."""
-    __tablename__   = 'annotation_key_set'
-    id              = Column(Integer, primary_key=True)
-    name            = Column(String, unique=True, nullable=False)
-    annotation_keys = relationship('AnnotationKey', secondary=annotation_key_set_annotation_key_association,
+    __tablename__ = 'annotation_key_set'
+    id            = Column(Integer, primary_key=True)
+    name          = Column(String, unique=True, nullable=False)
+    keys          = relationship('AnnotationKey', secondary=annotation_key_set_annotation_key_association,
                         backref='sets')
     
     def append(self, item):
-        self.annotation_keys.append(item)
+        self.keys.append(item)
 
     def remove(self, item):
-        self.annotation_keys.remove(item)
+        self.keys.remove(item)
 
     def __repr__(self):
         return "Annotation Key Set (" + str(self.name) + ")"
 
     def __iter__(self):
         """Default iterator is over self.annotation_keys"""
-        for ak in self.annotation_keys:
-            yield ak
+        for key in self.keys:
+            yield key
 
     def __len__(self):
-        return len(self.annotation_keys)
+        return len(self.keys)
 
 
 class AnnotationKey(SnorkelBase):
@@ -51,6 +51,7 @@ class AnnotationKey(SnorkelBase):
         return str(self.__class__.__name__) + " (" + str(self.name) + ")"
 
 
+# TODO: Make this whole thing polymorphic instead now that only one AnnotationKey class?
 class AnnotationMixin(object):
     """
     Mixin class for defining annotation tables.
@@ -85,21 +86,21 @@ class AnnotationMixin(object):
     # The key is the "name" or "type" of the Annotation- e.g. the name of a feature, or of a human annotator
     @declared_attr
     def key_id(cls):
-        return Column('annotation_key_id', Integer, ForeignKey('annotation_key.id'))
+        return Column('annotation_key_id', Integer, ForeignKey('annotation_key.id'), nullable=False)
 
     @declared_attr
     def key(cls):
-        key = relationship('AnnotationKey', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all'))
+        return relationship('AnnotationKey', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all'))
 
     # Every annotation is with respect to a candidate
     @declared_attr
     def candidate_id(cls):
-        return Column(camel_to_under(cls.__name__) + '_candidate_id', Integer, ForeignKey('candidate.id'))
+        return Column('candidate_id', Integer, ForeignKey('candidate.id'), nullable=False)
 
     @declared_attr
     def candidate(cls):
         return relationship('Candidate', backref=backref(camel_to_under(cls.__name__) + 's', \
-            cascade_backrefs=False))
+                    cascade_backrefs=False))
 
     # NOTE: What remains to be defined in the subclass is the **value**
 
@@ -108,7 +109,7 @@ class AnnotationMixin(object):
     def __table_args__(cls):
         return (
             UniqueConstraint('annotation_key_id',
-                             camel_to_under(cls.__name__) + '_candidate_id',
+                             'candidate_id',
                              name=camel_to_under(cls.__name__) + '_unique_key_candidate_pair'),
         )
 

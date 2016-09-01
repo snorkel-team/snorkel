@@ -1,12 +1,12 @@
 from __future__ import print_function
-from .models import Annotator, Annotation
+from .models import Label, AnnotationKey
 try:
     from IPython.core.display import display, Javascript
 except:
     raise Exception("This module must be run in IPython.")
 import os
 import ipywidgets as widgets
-from traitlets import Unicode, Int, Dict, List
+from traitlets import Unicode, Int, List
 import getpass
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -56,9 +56,9 @@ class Viewer(widgets.DOMWidget):
         name = annotator_name if annotator_name is not None else getpass.getuser()
 
         # Gets or creates annotator record
-        self.annotator = self.session.query(Annotator).filter(Annotator.name == name).first()
+        self.annotator = self.session.query(AnnotationKey).filter(AnnotationKey.name == name).first()
         if self.annotator is None:
-            self.annotator = Annotator(name=name)
+            self.annotator = AnnotationKey(name=name)
             session.add(self.annotator)
             session.commit()
 
@@ -70,12 +70,8 @@ class Viewer(widgets.DOMWidget):
         # Hence, we index by their position in this list
         # We get the sorted candidates and all contexts required, either from unary or binary candidates
         self.gold = list(gold)
-        try:
-            self.candidates = sorted(list(candidates), key=lambda c : c.char_start)
-            self.contexts   = list(set(c.context for c in self.candidates + self.gold))
-        except:
-            self.candidates = sorted(list(candidates), key=lambda c : c.span0.char_start)
-            self.contexts   = list(set(c.span0.context for c in self.candidates + self.gold))
+        self.candidates = sorted(list(candidates), key=lambda c : c[0].char_start)
+        self.contexts   = list(set(c[0].parent for c in self.candidates + self.gold))
         
         # If committed, sort contexts by id
         try:
@@ -87,9 +83,9 @@ class Viewer(widgets.DOMWidget):
         self.annotations = [None] * len(self.candidates)
         init_labels_serialized = []
         for i, candidate in enumerate(self.candidates):
-            existing_annotation = self.session.query(Annotation) \
-                .filter(Annotation.annotator == self.annotator) \
-                .filter(Annotation.candidate == candidate) \
+            existing_annotation = self.session.query(Label) \
+                .filter(Label.key == self.annotator) \
+                .filter(Label.candidate == candidate) \
                 .first()
             if existing_annotation is not None:
                 self.annotations[i] = existing_annotation
@@ -140,10 +136,7 @@ class Viewer(widgets.DOMWidget):
                 context = self.contexts[j]
 
                 # Get the candidates in this context
-                try:
-                    candidates = [c for c in self.candidates if c.context == context]
-                except:
-                    candidates = [c for c in self.candidates if c.span0.context == context]
+                candidates = [c for c in self.candidates if c[0].parent == context]
                 gold = [g for g in self.gold if g.context_id == context.id]
 
                 # Construct the <li> and page view elements
@@ -190,7 +183,7 @@ class Viewer(widgets.DOMWidget):
                     self.annotations[cid].value = value
                     self.session.commit()
             else:
-                self.annotations[cid] = Annotation(annotator=self.annotator, candidate=self.candidates[cid], value=value)
+                self.annotations[cid] = Label(key=self.annotator, candidate=self.candidates[cid], value=value)
                 self.session.add(self.annotations[cid])
                 self.session.commit()
         elif content.get('event', '') == 'delete_label':
@@ -217,8 +210,8 @@ class SentenceNgramViewer(Viewer):
 
         # First, split the sentence into the *smallest* single-candidate chunks
         try:
-            both = [c.span0 for c in candidates] + [c.span1 for c in candidates] \
-                        + [g.span0 for g in gold] + [g.span1 for g in gold]
+            both = [c[0] for c in candidates] + [c[1] for c in candidates] \
+                        + [g[0] for g in gold] + [g[1] for g in gold]
         except:
             both = list(candidates) + list(gold)
         splits = sorted(list(set([b.char_start for b in both] + [b.char_end + 1 for b in both] + [0, len(s)])))
@@ -236,14 +229,14 @@ class SentenceNgramViewer(Viewer):
             except:
 
                 # For binary candidates, add classes for both the candidate ID and unary span identifiers
-                cids0  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c.span0)]
+                cids0  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c[0])]
                 cids0 += ['%s-0' % cid for cid in cids0]
-                cids1  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c.span1)]
+                cids1  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c[1])]
                 cids1 += ['%s-1' % cid for cid in cids1]
                 cids   = cids0 + cids1
 
                 # Handle gold...
                 gcids = [self.gold.index(g) for g in gold if \
-                            self._is_subspan(start, end, g.span0) or self._is_subspan(start, end, g.span1)]
+                            self._is_subspan(start, end, g[0]) or self._is_subspan(start, end, g[1])]
             html += self._tag_span(s[start:end+1], cids, gold=len(gcids) > 0)
         return html

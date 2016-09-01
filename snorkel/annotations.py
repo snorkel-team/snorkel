@@ -16,7 +16,7 @@ class CandidateAnnotator(object):
     def __init__(self, annotation=Annotation):
         self.annotation = annotation
 
-    def create(self, candidates, annotation_generator, session, annotation_keyset):
+    def create(self, candidate_set, annotation_generator, session, annotation_keyset):
         """
         Given a set of candidates and a generator which, given a candidate, yields annotations as key name, value
         pairs, persist these annotations in the session.
@@ -60,6 +60,7 @@ class CandidateAnnotator(object):
     def update(self, candidates, annotation_generator, session, annotation_keyset):
         raise NotImplementedError()
 
-    # TODO
+    # TODO: Enforce proper ordering of candidates (rows) in constructing matrices!
+    # TODO: Proper key order...
     def load(self, candidates, session, annotation_keyset):
         raise NotImplementedError()

@@ -21,8 +21,8 @@ class ParameterSet(SnorkelBase):
 class Parameter(SnorkelBase):
     __tablename__ = 'parameter'
 
-    feature_key_id = Column(Integer, ForeignKey('feature_key.id'), primary_key=True)
-    feature_key = relationship('FeatureKey', backref=backref('parameters', cascade_backrefs=False), cascade_backrefs=False)
+    feature_key_id = Column(Integer, ForeignKey('annotation_key.id'), primary_key=True)
+    feature_key = relationship('AnnotationKey', backref=backref('parameters', cascade_backrefs=False), cascade_backrefs=False)
     set_id = Column(Integer, ForeignKey('parameter_set.id'), primary_key=True)
     set = relationship('ParameterSet', backref=backref('parameters', cascade='all, delete-orphan'))
     value = Column(Float, nullable=False)

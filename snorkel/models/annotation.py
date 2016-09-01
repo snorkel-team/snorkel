@@ -1,6 +1,6 @@
 from .meta import SnorkelBase
 import re
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint, Table
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 from snorkel.utils import camel_to_under
@@ -83,8 +83,13 @@ class AnnotationMixin(object):
     id = Column(Integer, primary_key=True)
 
     # The key is the "name" or "type" of the Annotation- e.g. the name of a feature, or of a human annotator
-    key_id = Column('annotation_key_id', Integer, ForeignKey('annotation_key.id'))
-    key = relationship('AnnotationKey', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all'))
+    @declared_attr
+    def key_id(cls):
+        return Column('annotation_key_id', Integer, ForeignKey('annotation_key.id'))
+
+    @declared_attr
+    def key(cls):
+        key = relationship('AnnotationKey', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all'))
 
     # Every annotation is with respect to a candidate
     @declared_attr
@@ -102,7 +107,7 @@ class AnnotationMixin(object):
     @declared_attr
     def __table_args__(cls):
         return (
-            UniqueConstraint(camel_to_under(cls.__name__) + '_key_id',
+            UniqueConstraint('annotation_key_id',
                              camel_to_under(cls.__name__) + '_candidate_id',
                              name=camel_to_under(cls.__name__) + '_unique_key_candidate_pair'),
         )

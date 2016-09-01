@@ -39,39 +39,39 @@ class CandidateAnnotator(object):
             session.add(key_set)
             session.commit()
             keys = {}
-            print "Creating new key set"
+            print "Creating new key set..."
 
         # Create annotations (avoiding potential duplicates) and add to session
-        seen = set()
+        seen_key_names = set()
         for candidate in candidate_set:
-            seen.clear()
+            seen_key_names.clear()
             for f in annotation_fns:
 
-                # An annotation function either yields a key, value tuple, or else just a value
-                # In the latter case, we use its name as the key
-                res = f(candidate)
-                key_name, value = res if isinstance(res, tuple) else f.__name__, res
+                # Handle both single-return and generator functions
+                outputs = f(candidate)
+                outputs = outputs if isinstance(outputs, GeneratorType) else [outputs]
+                for output in outputs:
 
-                # Note: we also only store non-zero values!
-                if value != 0:
-                    
-                    # Get or create AnnotationKey
-                    if key_name in keys:
-                        key = keys[key_name]
-                    elif new:
-                        key = AnnotationKey(name=key_name)
-                        session.add(key)
-                        key_set.append(key)
-                        session.commit()
-                        keys[key_name] = key
-                    else:
-                        continue
+                    # An annotation function either yields a key, value tuple, or else just a value
+                    # In the latter case, we use its name as the key
+                    key_name, value = output if isinstance(output, tuple) else f.__name__, output
 
-                    # Create Annotation and persist if not duplicate
-                    a = self.annotation(candidate=candidate, key=key, value=value)
-                    if a not in seen:
-                        session.add(a)
-                        seen.add(a)
+                    # Note: we also only store unique non-zero values!
+                    if key_name not in seen_key_names and value != 0:
+                        seen_key_names.add(key_name)
+                        
+                        # Get or create AnnotationKey
+                        if key_name in keys:
+                            key = keys[key_name]
+                        elif new:
+                            key = AnnotationKey(name=key_name)
+                            session.add(key)
+                            key_set.append(key)
+                            session.commit()
+                            keys[key_name] = key
+                        else:
+                            continue
+                        session.add(self.annotation(candidate=candidate, key=key, value=value))
         session.commit()
     
     # TODO

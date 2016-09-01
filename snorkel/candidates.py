@@ -3,6 +3,7 @@ from .models import Candidate, CandidateSet, TemporarySpan
 from .models.candidate import candidate_set_candidate_association
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
+from sqlalchemy.sql import select
 from Queue import Empty
 from copy import deepcopy
 import re
@@ -102,7 +103,10 @@ class CandidateExtractor(object):
 
             for i, arg_name in enumerate(arg_names):
                 child_insert_args[arg_name + '_id'] = args[i][1].id
-            candidate_id = session.query(self.candidate_class.id).filter_by(**child_insert_args).first()
+            q = select([self.candidate_class.id])
+            for key, value in child_insert_args.items():
+                q = q.where(getattr(self.candidate_class, key) == value)
+            candidate_id = session.execute(q).first()
 
             # If candidate does not exist, persists it
             if candidate_id is None:

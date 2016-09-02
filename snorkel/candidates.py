@@ -1,4 +1,5 @@
 from . import SnorkelSession
+from .utils import ProgressBar
 from .models import Candidate, CandidateSet, TemporarySpan
 from .models.candidate import candidate_set_candidate_association
 from itertools import product
@@ -63,13 +64,16 @@ class CandidateExtractor(object):
         session.commit()
 
         # Run extraction
+        pb = ProgressBar(len(contexts))
         if parallelism in [1, False]:
-            for context in contexts:
+            for i, context in enumerate(contexts):
+                pb.bar(i)
                 self._extract_from_context(context, c, session)
         else:
             raise NotImplementedError('Parallelism is not yet implemented.')
             self._extract_multiprocess(contexts, c, parallelism)
 
+        pb.close()
         session.commit()
         return session.query(CandidateSet).filter(CandidateSet.name == name).one()
 

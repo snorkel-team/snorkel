@@ -1,4 +1,23 @@
 import re
+import numpy as np
+import sys
+
+
+class ProgressBar(object):
+    def __init__(self, N, length=40):
+        self.N      = N
+        self.nf     = float(N)
+        self.length = length
+
+    def bar(self, i):
+        """Assumes i ranges through [0, N-1]"""
+        b = np.ceil(((i+1) / self.nf) * self.length)
+        sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), 100*((i+1) / self.nf)))
+        sys.stdout.flush()
+
+    def close(self):
+        sys.stdout.write("\n\n")
+        sys.stdout.flush()
 
 
 def get_ORM_instance(ORM_class, session, instance):

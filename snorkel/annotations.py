@@ -1,6 +1,8 @@
+import sys
+import numpy as np
 import scipy.sparse as sparse
 from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet, Span
-from .utils import get_ORM_instance
+from .utils import get_ORM_instance, ProgressBar
 from .features import get_span_feats
 
 
@@ -45,7 +47,9 @@ class CandidateAnnotator(object):
         """
         annotation_generator = self._to_annotation_generator(f) if hasattr(f, '__iter__') else f
         seen_key_names = set()
-        for candidate in candidate_set:
+        pb = ProgressBar(len(candidate_set))
+        for i, candidate in enumerate(candidate_set):
+            pb.bar(i)
             seen_key_names.clear()
             for key_name, value in annotation_generator(candidate):
                 if key_name not in seen_key_names and value != 0:
@@ -64,6 +68,7 @@ class CandidateAnnotator(object):
                     else:
                         continue
                     session.add(self.annotation(candidate=candidate, key=key, value=value))
+        pb.close()
         session.commit()
     
     def create(self, session, candidate_set, f, new_key_set=None, existing_key_set=None):

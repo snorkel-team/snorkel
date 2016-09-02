@@ -1,6 +1,7 @@
 import re
-import numpy as np
 import sys
+import numpy as np
+import scipy.sparse as sparse
 
 
 class ProgressBar(object):
@@ -26,7 +27,7 @@ def get_ORM_instance(ORM_class, session, instance):
     of this class*, return the instance
     """
     if isinstance(instance, str):
-        return session.query(ORM_class).filter(ORM_class.name == instance).first()
+        return session.query(ORM_class).filter(ORM_class.name == instance).one()
     else:
         return instance
 
@@ -43,6 +44,46 @@ def camel_to_under(name):
     """
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+
+def sparse_abs(X):
+    """Element-wise absolute value of sparse matrix- avoids casting to dense matrix!"""
+    X_abs = X.copy()
+    if not sparse.issparse(X):
+        return abs(X_abs)
+    if sparse.isspmatrix_csr(X) or sparse.isspmatrix_csc(X):
+        X_abs.data = np.abs(X_abs.data)
+    elif sparse.isspmatrix_lil(X):
+        X_abs.data = np.array([np.abs(L) for L in X_abs.data])
+    else:
+        raise ValueError("Only supports CSR/CSC and LIL matrices")
+    return X_abs
+
+
+def matrix_coverage(L):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
+    Return the **fraction of candidates that each LF labels.**
+    """
+    return np.ravel(sparse_abs(L).sum(axis=0) / float(L.shape[0]))
+
+
+def matrix_overlaps(L):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
+    Return the **fraction of candidates that each LF _overlaps with other LFs on_.**
+    """
+    L_abs = sparse_abs(L)
+    return np.ravel(np.where(L_abs.sum(axis=1) > 1, 1, 0).T * L_abs / float(L.shape[0]))
+
+
+def matrix_conflicts(L):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
+    Return the **fraction of candidates that each LF _conflicts with other LFs on_.**
+    """
+    L_abs = sparse_abs(L)
+    return np.ravel(np.where(L_abs.sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).T * L_abs / float(L.shape[0]))
 
 
 def get_as_dict(x):

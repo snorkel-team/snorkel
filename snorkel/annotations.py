@@ -1,7 +1,52 @@
+from pandas import DataFrame, Series
 import scipy.sparse as sparse
+from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps
 from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet, Span
 from .utils import get_ORM_instance
 from .features import get_span_feats
+
+
+class csr_AnnotationMatrix(sparse.csr_matrix):
+    """
+    An extension of the scipy.sparse.csr_matrix class for holding sparse annotation matrices
+    and related helper methods.
+    """
+    def __init__(self, arg1, **kwargs):
+        self.candidate_set = kwargs.pop('candidate_set', None)
+        self.key_set       = kwargs.pop('key_set', None)
+
+        # Note that scipy relies on the first three letters of the class to define matrix type...
+        super(csr_AnnotationMatrix, self).__init__(arg1, **kwargs)
+
+    def get_candidate(self, i):
+        """Return the Candidate object corresponding to row i"""
+        return self.candidate_set.order_by(Candidate.id)[i]
+
+    def get_key(self, j):
+        """Return the AnnotationKey object corresponding to column j"""
+        raise NotImplementedError()
+
+    def stats(self):
+        """Return summary stats about the annotations"""
+        raise NotImplementedError()
+
+    def get_key_stats(self, weights=None):
+        """Return a data frame of per-annotation-key stats"""
+        raise NotImplementedError()
+
+
+class csr_LabelMatrix(csr_AnnotationMatrix):
+    def stats(self):
+        """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
+        # Default LF stats
+        d = {
+            'j'         : range(self.shape[1]),
+            'coverage'  : Series(data=matrix_coverage(self), index=self.lf_names),
+            'overlaps'  : Series(data=matrix_overlaps(self), index=self.lf_names),
+            'conflicts' : Series(data=matrix_conflicts(self), index=self.lf_names)
+        }
+
+        return DataFrame(data=d, index=self.lf_names)
 
 
 class CandidateAnnotator(object):
@@ -12,8 +57,11 @@ class CandidateAnnotator(object):
         * Label
     E.g. for features, LF labels, human annotator labels, etc.
     """
-    def __init__(self, annotation=None):
+    def __init__(self, annotation, annotation_matrix=csr_AnnotationMatrix):
         self.annotation = annotation
+        if not issubclass(annotation_matrix, csr_AnnotationMatrix):
+            raise ValueError('annotation_matrix must be a subclass of csr_AnnotationMatrix')
+        self.annotation_matrix = annotation_matrix
     
     def _to_annotation_generator(self, fns):
         """"
@@ -151,14 +199,14 @@ class CandidateAnnotator(object):
                 col_index[kid] = len(col_index)
             X[row_index[cid], col_index[kid]] = val
 
-        # Return as a csr_AnnotationMatrix
-        return csr_AnnotationMatrix(X, candidate_set=candidate_set, key_set=key_set)
+        # Return as an AnnotationMatrix
+        return self.annotation_matrix(X, candidate_set=candidate_set, key_set=key_set)
 
 
 class CandidateLabeler(CandidateAnnotator):
     """Apply labeling functions to the candidates, generating Label annotations"""
     def __init__(self):
-        super(CandidateLabeler, self).__init__(annotation=Label)
+        super(CandidateLabeler, self).__init__(Label, annotation_matrix=csr_LabelMatrix)
 
         
 class CandidateFeaturizer(CandidateAnnotator):
@@ -189,32 +237,3 @@ class CandidateFeaturizer(CandidateAnnotator):
             raise NotImplementedError("CandidateFeaturizer currently handles only Span-type candidates.")
         return super(CandidateFeaturizer, self).create(session, candidate_set, f, new_key_set=new_feature_set, \
             existing_key_set=existing_feature_set)
-
-
-class csr_AnnotationMatrix(sparse.csr_matrix):
-    """
-    An extension of the scipy.sparse.csr_matrix class for holding sparse annotation matrices
-    and related helper methods.
-    """
-    def __init__(self, arg1, **kwargs):
-        self.candidate_set = kwargs.pop('candidate_set', None)
-        self.key_set       = kwargs.pop('key_set', None)
-            
-        # Note that scipy relies on the first three letters of the class to define matrix type...
-        super(csr_AnnotationMatrix, self).__init__(arg1, **kwargs)
-
-    def get_candidate(self, i):
-        """Return the Candidate object corresponding to row i"""
-        return self.candidate_set.order_by(Candidate.id)[i]
-
-    def get_key(self, j):
-        """Return the AnnotationKey object corresponding to column j"""
-        raise NotImplementedError()
-
-    def get_stats(self):
-        """Return summary stats about the annotation coverage"""
-        raise NotImplementedError()
-
-    def get_key_stats(self, weights=None):
-        """Return a data frame of per-annotation-key stats"""
-        raise NotImplementedError()

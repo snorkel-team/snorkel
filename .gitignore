@@ -6,6 +6,8 @@
 parser/
 /stanford-corenlp-*
 *.db
+downloads/
+docs/
 
 /saved_sents.pkl
 
@@ -24,3 +26,6 @@ examples/mindtagger
 
 # PyCharm
 .idea
+
+# Tutorial
+tutorial/data/CDR_*.BioC.xml

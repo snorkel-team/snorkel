@@ -1,6 +1,7 @@
 import scipy.sparse as sparse
-from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
+from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet, Span
 from .utils import get_ORM_instance
+from .features import get_span_feats
 
 
 class CandidateAnnotator(object):
@@ -186,8 +187,8 @@ class CandidateFeaturizer(CandidateAnnotator):
             f = get_span_feats
         else:
             raise NotImplementedError("CandidateFeaturizer currently handles only Span-type candidates.")
-        super(CandidateFeaturizer, self).create(session, candidate_set, f, new_key_set=new_feature_set, \
-            existing_key_set=existing_feature_set):
+        return super(CandidateFeaturizer, self).create(session, candidate_set, f, new_key_set=new_feature_set, \
+            existing_key_set=existing_feature_set)
 
 
 class csr_AnnotationMatrix(sparse.csr_matrix):

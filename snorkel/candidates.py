@@ -91,12 +91,15 @@ class CandidateExtractor(object):
         set_insert_query = candidate_set_candidate_association.insert()
         set_insert_args = {'candidate_set_id': candidate_set.id}
         for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
+
             # Check for self-joins and "nested" joins (joins from span to its subspan)
             if self.arity == 2 and not self.self_relations and args[0][1] == args[1][1]:
                 continue
+
             # TODO: Make this work for higher-order relations
             if self.arity == 2 and not self.nested_relations and (args[0][1] in args[1][1] or args[1][1] in args[0][1]):
                 continue
+
             # Checks for symmetric relations
             if self.arity == 2 and not self.symmetric_relations and args[0][0] > args[1][0]:
                 continue

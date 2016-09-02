@@ -1,0 +1,49 @@
+from .models import CandidateSet, AnnotationKey, Label
+
+def create_or_fetch_set(session, set_class, instance_or_name):
+    """Returns a named set ORM object given an instance or name as string"""
+    if isinstance(instance_or_name, str):
+        x = session.query(set_class).filter(set_class.name == instance_or_name).first()
+        return x if x is not None else set_class(name=instance_or_name)
+    elif isinstance(instance_or_name, set_class):
+        return instance_or_name
+    else:
+        return ValueError("%s-type required" % set_class.__class__)
+
+class ExternalAnnotationsLoader(object):
+    """Class to load external annotations."""
+    def __init__(self, session, candidate_class, candidate_set, annotation_key):
+        self.session         = session
+        self.candidate_class = candidate_class
+        self.candidate_set   = create_or_fetch_set(self.session, CandidateSet, candidate_set)
+        self.annotation_key  = create_or_fetch_set(self.session, AnnotationKey, annotation_key)
+
+    def add(self, temp_contexts):
+        """
+        Adds a candidate to a new or existing candidate_set.
+        
+        :param temp_contexts: This is a *dictionary* of *TemporaryContext* objects corresponding to the args of
+        the Candidate class.
+        """
+        # Create Contexts, make sure inserted into DB, and form dict of context ids
+        d = {}
+        for argname, temp_context in temp_contexts.iteritems():
+            temp_context.load_id_or_insert(self.session)
+            d[argname + '_id'] = temp_context.id
+
+        # Create Candidate, make sure inserted in DB, and add to candidate set
+        # Note: This operation is not performance-oriented (as it is in e.g. CandidateExtractor)
+        q = self.session.query(self.candidate_class)
+        for k, v in d.iteritems():
+            q = q.filter(getattr(self.candidate_class, k) == v)
+        candidate = q.first()
+        if candidate is None:
+            candidate = self.candidate_class(**d)
+        self.session.add(candidate)
+        self.candidate_set.append(candidate)
+
+        # Add annotation
+        self.session.add(Label(key=self.annotation_key, candidate=candidate, value=1))
+
+        # Commit session
+        self.session.commit()

@@ -168,6 +168,30 @@ class CandidateFeaturizer(CandidateAnnotator):
     def __init__(self):
         super(CandidateFeaturizer, self).__init__(annotation=Feature)
 
+    def create(self, session, candidate_set, new_feature_set=None, existing_feature_set=None):
+        """
+        Generates featuress for candidates in a candidate set, and persists these to the database,
+        as well as returning a sparse matrix representation.  Uses currently supported defaults
+        based on Candidate arity and constituent argument Context type.
+        
+        :param candidate_set: Can either be a CandidateSet instance or the name of one
+        
+        :param new_feature_set: An AnnotationKeySet instance or name of a new one to create; if provided, a new
+        key set will be created and populated
+        
+        :param existing_feature_set: An AnnotationKeySet instance or name of an existing one; if provided, an
+        existing key set will be used to define the space of annotation keys; any annotations with keys not in
+        this set will simply be discarded.
+        """
+        # Identify the arity and argument type of the candidates, assuming it is homogenous
+        args = candidate_set.candidates[0].get_arguments()
+        if isinstance(args[0], Span):
+            f = get_span_feats
+        else:
+            raise NotImplementedError("CandidateFeaturizer currently handles only Span-type candidates.")
+        super(CandidateFeaturizer, self).create(session, candidate_set, f, new_key_set=new_feature_set, \
+            existing_key_set=existing_feature_set):
+
 
 class csr_AnnotationMatrix(csr.csr_matrix):
     """

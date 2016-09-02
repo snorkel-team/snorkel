@@ -1,6 +1,3 @@
-import numpy as np
-from pandas import DataFrame
-from collections import defaultdict
 import scipy.sparse as sparse
 from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
 from .utils import get_ORM_instance
@@ -93,7 +90,7 @@ class CandidateAnnotator(object):
         if new_key_set is None and existing_key_set is None:
             raise ValueError("Must provide a new or existing AnnotationKeySet or annotation key set name.")
         elif new_key_set is not None:
-            key_set = get_ORM_instance(AnnotationKeySet, session, new_key_set)
+            key_set = AnnotationKeySet(name=new_key_set)
             session.add(key_set)
             session.commit()
             mutable = True
@@ -193,9 +190,9 @@ class CandidateFeaturizer(CandidateAnnotator):
             existing_key_set=existing_feature_set):
 
 
-class csr_AnnotationMatrix(csr.csr_matrix):
+class csr_AnnotationMatrix(sparse.csr_matrix):
     """
-    An extension of the scipy.sparse.csr.csr_matrix class for holding sparse annotation matrices
+    An extension of the scipy.sparse.csr_matrix class for holding sparse annotation matrices
     and related helper methods.
     """
     def __init__(self, arg1, **kwargs):

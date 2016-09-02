@@ -207,11 +207,14 @@ class CoreNLPHandler:
                 dep_par.append(deps['governor'])
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])
+
             # make char_offsets relative to start of sentence
             abs_sent_offset = parts['char_offsets'][0]
+            parts['abs_char_offsets'] = parts['char_offsets']
             parts['char_offsets'] = [p - abs_sent_offset for p in parts['char_offsets']]
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
+
             # NOTE: We have observed weird bugs where CoreNLP diverges from raw document text (see Issue #368)
             # In these cases we go with CoreNLP so as not to cause downstream issues but throw a warning
             doc_text = text[block['tokens'][0]['characterOffsetBegin'] : block['tokens'][-1]['characterOffsetEnd']]

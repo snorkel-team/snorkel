@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Sentence
+from .models import Corpus, Document, Sentence, construct_stable_id
 import atexit
 import warnings
 from bs4 import BeautifulSoup
@@ -62,6 +62,9 @@ class DocParser:
                 for doc, text in self.parse_file(fp, file_name):
                     yield doc, text
 
+    def get_stable_id(self, doc_id):
+        return "%s::document:0:0" % doc_id
+
     def parse_file(self, fp, file_name):
         raise NotImplementedError()
 
@@ -85,8 +88,9 @@ class TextDocParser(DocParser):
     """Simple parsing of raw text files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with codecs.open(fp, 'rb', self.encoding, errors="ignore") as f:
-            name = re.sub(r'\..*$', '', os.path.basename(fp))
-            yield Document(name=name, stable_id=name, meta={'file_name' : file_name}), f.read()
+            name      = re.sub(r'\..*$', '', os.path.basename(fp))
+            stable_id = self.get_stable_id(name)
+            yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), f.read()
 
 
 class HTMLDocParser(DocParser):
@@ -97,7 +101,8 @@ class HTMLDocParser(DocParser):
             txt = filter(self._cleaner, html.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
             name = re.sub(r'\..*$', '', os.path.basename(fp))
-            yield Document(name=name, stable_id=name, meta={'file_name' : file_name}), txt
+            stable_id = self.get_stable_id(name)
+            yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), txt
 
     def _can_read(self, fpath):
         return fpath.endswith('.html')
@@ -137,7 +142,8 @@ class XMLMultiDocParser(DocParser):
             meta = {'file_name': str(file_name)}
             if self.keep_xml_tree:
                 meta['root'] = et.tostring(doc)
-            yield Document(name=doc_id, stable_id=doc_id, meta=meta), text
+            stable_id = self.get_stable_id(doc_id)
+            yield Document(name=doc_id, stable_id=stable_id, meta=meta), text
 
     def _can_read(self, fpath):
         return fpath.endswith('.xml')
@@ -232,7 +238,8 @@ class CoreNLPHandler:
             parts['document'] = document
 
             # Assign the stable id as document's stable id plus absolute character offset
-            parts['stable_id'] = '%s:%s' % (document.stable_id, abs_sent_offset)
+            abs_sent_offset_end = abs_sent_offset + parts['char_offsets'][-1] + len(parts['words'][-1])
+            parts['stable_id'] = construct_stable_id(document, 'sentence', abs_sent_offset, abs_sent_offset_end)
             position += 1
             yield parts
 

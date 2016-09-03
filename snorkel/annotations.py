@@ -193,11 +193,6 @@ class FeatureManager(AnnotationManager):
     """Apply feature generators to the candidates, generating Feature annotations"""
     def __init__(self):
         super(FeatureManager, self).__init__(Feature, default_f=get_span_feats)
-        # args = candidate_set.candidates[0].get_arguments()
-        # if isinstance(args[0], Span):
-        #    f = get_span_feats
-        # else:
-        #    raise NotImplementedError("CandidateFeaturizer currently handles only Span-type candidates.")
 
 
 def _to_annotation_generator(fns):

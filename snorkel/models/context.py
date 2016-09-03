@@ -196,6 +196,9 @@ class TemporaryContext(object):
     def __hash__(self):
         raise NotImplementedError()
 
+    def _get_polymorphic_identity(self):
+        raise NotImplementedError()
+
     def get_stable_id(self):
         raise NotImplementedError()
 
@@ -239,9 +242,12 @@ class TemporarySpan(TemporaryContext):
         return hash(self.parent) + hash(self.char_start) + hash(self.char_end)
 
     def get_stable_id(self):
-        return '%s:%s-%s' % (self.parent.stable_id, self.char_start, self.char_end)
+        return construct_stable_id(self.parent, self._get_polymorphic_identity(), self.char_start, self.char_end)
 
     def _get_table_name(self):
+        return 'span'
+
+    def _get_polymorphic_identity(self):
         return 'span'
 
     def _get_insert_query(self):
@@ -356,3 +362,27 @@ class Span(Context, TemporarySpan):
 
     def __hash__(self):
         return id(self)
+
+
+def split_stable_id(stable_id):
+    """
+    Split stable id, returning:
+        * Document (root) stable ID
+        * Context polymorphic type
+        * Character offset start, end *relative to document start*
+    Returns tuple of four values.
+    """
+    split1 = stable_id.split('::')
+    if len(split1) == 2:
+        split2 = split1[1].split(':')
+        if len(split2) == 3:
+            return split1[0], split2[0], int(split2[1]), int(split2[2])
+    raise ValueError("Malformed stable_id:", stable_id)
+
+
+def construct_stable_id(parent_context, polymorphic_type, relative_char_offset_start, relative_char_offset_end):
+    """Contruct a stable ID for a Context given its parent and its character offsets relative to the parent"""
+    doc_id, _, parent_doc_char_start, _ = split_stable_id(parent_context.stable_id)
+    start = parent_doc_char_start + relative_char_offset_start
+    end   = parent_doc_char_start + relative_char_offset_end
+    return "%s::%s:%s:%s" % (doc_id, polymorphic_type, start, end)

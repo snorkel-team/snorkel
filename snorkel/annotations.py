@@ -49,7 +49,7 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
         return DataFrame(data=d, index=self.lf_names)
 
 
-class CandidateAnnotator(object):
+class AnnotationManager(object):
     """
     Abstract class for annotating candidates, saving these annotations to DB, and then reloading them as
     sparse matrices; generic operation which covers Annotation subclasses:
@@ -57,30 +57,51 @@ class CandidateAnnotator(object):
         * Label
     E.g. for features, LF labels, human annotator labels, etc.
     """
-    def __init__(self, annotation, annotation_matrix=csr_AnnotationMatrix):
-        self.annotation = annotation
-        if not issubclass(annotation_matrix, csr_AnnotationMatrix):
-            raise ValueError('annotation_matrix must be a subclass of csr_AnnotationMatrix')
-        self.annotation_matrix = annotation_matrix
+    def __init__(self, annotation_cls, matrix_cls=csr_AnnotationMatrix, default_f=None):
+        self.annotation_cls = annotation_cls
+        if not issubclass(matrix_cls, csr_AnnotationMatrix):
+            raise ValueError('matrix_cls must be a subclass of csr_AnnotationMatrix')
+        self.matrix_cls = matrix_cls
+        self.default_f = default_f
     
-    def _to_annotation_generator(self, fns):
-        """"
-        Generic method which takes a set of functions, and returns a generator that yields
-        function.__name__, function result pairs.
+    def create(self, session, candidate_set, new_key_set, f = None):
         """
-        def fn_gen(c):
-            for f in fns:
-                yield f.__name__, f(c)
-        return fn_gen
+        Generates annotations for candidates in a candidate set, and persists these to the database,
+        as well as returning a sparse matrix representation.
 
-    def _create_annotations(self, session, candidate_set, key_set, f, key_set_mutable):
-        """
-        Generates annotations for candidates in a candidate set, and persists these to the database.
+        :param session: SnorkelSession for the database
         
-        :param candidate_set: A CandidateSet instance
+        :param candidate_set: Can either be a CandidateSet instance or the name of one
 
-        :param key_set: An AnnotationKeySet instance
+        :param new_key_set: Name of a new AnnotationKeySet to create
+        
+        :param f: Can be either:
 
+            * A function which maps a candidate to a generator key_name, value pairs.  Ex: A feature generator
+
+            * A list of functions, each of which maps from candidates to values; by default, the key_name
+                is the function.__name__.  Ex: A list of labeling functions
+        """
+        candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
+        key_set = AnnotationKeySet(name=new_key_set)
+        session.add(key_set)
+        session.commit()
+
+        self.update(session, candidate_set, key_set, f, True)
+        return self.load(session, candidate_set, key_set)
+    
+    def update(self, session, candidate_set, key_set, f, key_set_mutable):
+        """
+        Generates annotations for candidates in a candidate set and *adds* them to an existing annotation set,
+        also adding the respective keys to the key set; returns a sparse matrix representation of the full
+        candidate x annotation_key set.
+
+        :param session: SnorkelSession for the database
+
+        :param candidate_set: Can either be a CandidateSet instance or the name of one
+
+        :param key_set: Can either be an AnnotationKeySet instance or the name of one
+        
         :param f: Can be either:
 
             * A function which maps a candidate to a generator key_name, value pairs.  Ex: A feature generator
@@ -91,7 +112,10 @@ class CandidateAnnotator(object):
         :param key_set_mutable: If True, annotations with keys not in the given key set will be added, and the
         key set will be expanded; if False, these annotations will be considered out-of-domain (OOD) and discarded.
         """
-        annotation_generator = self._to_annotation_generator(f) if hasattr(f, '__iter__') else f
+        candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
+        key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
+
+        annotation_generator = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
         seen_key_names = set()
         pb = ProgressBar(len(candidate_set))
         for i, candidate in enumerate(candidate_set):
@@ -100,7 +124,7 @@ class CandidateAnnotator(object):
             for key_name, value in annotation_generator(candidate):
                 if key_name not in seen_key_names and value != 0:
                     seen_key_names.add(key_name)
-                    
+
                     # If the annotation is in the key set already, use this AnnotationKey
                     if key_name in key_set.keys:
                         key = key_set.keys[key_name]
@@ -113,71 +137,22 @@ class CandidateAnnotator(object):
                         session.commit()
                     else:
                         continue
-                    session.add(self.annotation(candidate=candidate, key=key, value=value))
+                    session.add(self.annotation_cls(candidate=candidate, key=key, value=value))
         pb.close()
         session.commit()
-    
-    def create(self, session, candidate_set, f, new_key_set=None, existing_key_set=None):
-        """
-        Generates annotations for candidates in a candidate set, and persists these to the database,
-        as well as returning a sparse matrix representation.
-        
-        :param candidate_set: Can either be a CandidateSet instance or the name of one
-        
-        :param f: Can be either:
 
-            * A function which maps a candidate to a generator key_name, value pairs.  Ex: A feature generator
-
-            * A list of functions, each of which maps from candidates to values; by default, the key_name
-                is the function.__name__.  Ex: A list of labeling functions
-
-        :param new_key_set: An AnnotationKeySet instance or name of a new one to create; if provided, a new
-        key set will be created and populated
-        
-        :param existing_key_set: An AnnotationKeySet instance or name of an existing one; if provided, an
-        existing key set will be used to define the space of annotation keys; any annotations with keys not in
-        this set will simply be discarded.
-        """
-        candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
-        if new_key_set is None and existing_key_set is None:
-            raise ValueError("Must provide a new or existing AnnotationKeySet or annotation key set name.")
-        elif new_key_set is not None:
-            key_set = AnnotationKeySet(name=new_key_set)
-            session.add(key_set)
-            session.commit()
-            mutable = True
-        else:
-            key_set = get_ORM_instance(AnnotationKeySet, session, existing_key_set)
-            mutable = False
-        self._create_annotations(session, candidate_set, key_set, f, key_set_mutable=mutable)
-        return self.load(session, candidate_set, key_set)
-    
-    def update(self, session, candidate_set, key_set, f):
-        """
-        Generates annotations for candidates in a candidate set and *adds* them to an existing annotation set,
-        also adding the respective keys to the key set; returns a sparse matrix representation of the full
-        candidate x annotation_key set.
-
-        :param candidate_set: Can either be a CandidateSet instance or the name of one
-
-        :param key_set: Can either be an AnnotationKeySet instance or the name of one
-        
-        :param f: Can be either:
-
-            * A function which maps a candidate to a generator key_name, value pairs.  Ex: A feature generator
-
-            * A list of functions, each of which maps from candidates to values; by default, the key_name
-                is the function.__name__.  Ex: A list of labeling functions
-        """
-        candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
-        key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
-        self._create_annotations(session, candidate_set, key_set, f, key_set_mutable=True)
         return self.load(session, candidate_set, key_set)
 
     def load(self, session, candidate_set, key_set):
         """
         Returns the annotations corresponding to a CandidateSet with N members and an AnnotationKeySet with M
         distinct keys as an N x M CSR sparse matrix.
+
+        :param session: SnorkelSession for the database
+
+        :param candidate_set: Can either be a CandidateSet instance or the name of one
+
+        :param key_set: Can either be an AnnotationKeySet instance or the name of one
         """
         candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
         key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
@@ -194,7 +169,7 @@ class CandidateAnnotator(object):
         q = q.filter(Candidate.sets.contains(candidate_set)).filter(AnnotationKey.sets.contains(key_set))
         q = q.order_by(Label.candidate_id, Label.key_id)
         
-        # Iteratively contruct sparse matrix
+        # Iteratively construct sparse matrix
         for cid, kid, val in q.all():
             if cid not in row_index:
                 row_index[cid] = len(row_index)
@@ -203,40 +178,32 @@ class CandidateAnnotator(object):
             X[row_index[cid], col_index[kid]] = val
 
         # Return as an AnnotationMatrix
-        return self.annotation_matrix(X, candidate_set=candidate_set, key_set=key_set)
+        return self.matrix_cls(X, candidate_set=candidate_set, key_set=key_set)
 
 
-class CandidateLabeler(CandidateAnnotator):
+class LabelManager(AnnotationManager):
     """Apply labeling functions to the candidates, generating Label annotations"""
     def __init__(self):
-        super(CandidateLabeler, self).__init__(Label, annotation_matrix=csr_LabelMatrix)
+        super(LabelManager, self).__init__(Label, matrix_cls=csr_LabelMatrix)
 
         
-class CandidateFeaturizer(CandidateAnnotator):
+class FeatureManager(AnnotationManager):
     """Apply feature generators to the candidates, generating Feature annotations"""
     def __init__(self):
-        super(CandidateFeaturizer, self).__init__(annotation=Feature)
+        super(FeatureManager, self).__init__(Feature, default_f=get_span_feats)
+        # args = candidate_set.candidates[0].get_arguments()
+        # if isinstance(args[0], Span):
+        #    f = get_span_feats
+        # else:
+        #    raise NotImplementedError("CandidateFeaturizer currently handles only Span-type candidates.")
 
-    def create(self, session, candidate_set, new_feature_set=None, existing_feature_set=None):
-        """
-        Generates featuress for candidates in a candidate set, and persists these to the database,
-        as well as returning a sparse matrix representation.  Uses currently supported defaults
-        based on Candidate arity and constituent argument Context type.
-        
-        :param candidate_set: Can either be a CandidateSet instance or the name of one
-        
-        :param new_feature_set: An AnnotationKeySet instance or name of a new one to create; if provided, a new
-        key set will be created and populated
-        
-        :param existing_feature_set: An AnnotationKeySet instance or name of an existing one; if provided, an
-        existing key set will be used to define the space of annotation keys; any annotations with keys not in
-        this set will simply be discarded.
-        """
-        # Identify the arity and argument type of the candidates, assuming it is homogenous
-        args = candidate_set.candidates[0].get_arguments()
-        if isinstance(args[0], Span):
-            f = get_span_feats
-        else:
-            raise NotImplementedError("CandidateFeaturizer currently handles only Span-type candidates.")
-        return super(CandidateFeaturizer, self).create(session, candidate_set, f, new_key_set=new_feature_set, \
-            existing_key_set=existing_feature_set)
+
+def _to_annotation_generator(fns):
+    """"
+    Generic method which takes a set of functions, and returns a generator that yields
+    function.__name__, function result pairs.
+    """
+    def fn_gen(c):
+        for f in fns:
+            yield f.__name__, f(c)
+    return fn_gen

@@ -119,7 +119,6 @@ class Sentence(Context):
     text = Column(Text, nullable=False)
     if snorkel_postgres:
         words = Column(postgresql.ARRAY(String), nullable=False)
-        abs_char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
         char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
         lemmas = Column(postgresql.ARRAY(String))
         poses = Column(postgresql.ARRAY(String))
@@ -127,7 +126,6 @@ class Sentence(Context):
         dep_labels = Column(postgresql.ARRAY(String))
     else:
         words = Column(PickleType, nullable=False)
-        abs_char_offsets = Column(PickleType, nullable=False)
         char_offsets = Column(PickleType, nullable=False)
         lemmas = Column(PickleType)
         poses = Column(PickleType)
@@ -149,7 +147,6 @@ class Sentence(Context):
             'position': self.position,
             'text': self.text,
             'words': self.words,
-            'abs_char_offsets': self.abs_char_offsets,
             'char_offsets': self.char_offsets,
             'lemmas': self.lemmas,
             'poses': self.poses,

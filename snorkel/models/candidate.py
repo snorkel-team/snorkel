@@ -1,7 +1,7 @@
 from .meta import SnorkelSession, SnorkelBase
 from .context import Context
-from sqlalchemy import Table, Column, String, Integer, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Table, Column, String, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import relationship, backref
 from snorkel.models import snorkel_engine
 from snorkel.utils import camel_to_under
 
@@ -64,33 +64,8 @@ class Candidate(SnorkelBase):
     """
     An abstract candidate relation.
 
-    New relation types can be defined by extending this class. For example,
-    a new parent-child relation can be defined as
-
-    >>> from snorkel.models.candidate import Candidate
-    >>> from sqlalchemy import Column, String, ForeignKey
-    >>> from sqlalchemy.orm import relationship
-    >>>
-    >>> class NewType(Candidate):
-    >>>     # Declares name for storage table
-    >>>     __tablename__ = 'newtype'
-    >>>     # Connects NewType records to generic Candidate records
-    >>>     id = Column(Integer, ForeignKey('candidate.id'))
-    >>>
-    >>>     # Polymorphism information for SQLAlchemy
-    >>>     __mapper_args__ = {
-    >>>         'polymorphic_identity': 'newtype',
-    >>>     }
-    >>>
-    >>>     # Relation arguments declared as a compound primary key,
-    >>>     # with each argument a context. More specific Context types can also be used.
-    >>>     parent_id = Column(Integer, ForeignKey('context.id'), primary_key=True)
-    >>>     parent = relationship('Context', foreign_keys=parent_id)
-    >>>     child_id = Column(Integer, ForeignKey('context.id'), primary_key=True)
-    >>>     child = relationship('Context', foreign_keys=child_id)
-    >>>
-    >>> # The entire storage schema, including NewType, can now be initialized with the following import
-    >>> import snorkel.models
+    New relation types should be defined by calling candidate_subclass(), **not** subclassing
+    this class directly.
     """
     __tablename__ = 'candidate'
     id = Column(Integer, primary_key=True)
@@ -102,7 +77,7 @@ class Candidate(SnorkelBase):
     }
 
     def get_arguments(self):
-        return [self.__getattribute__(name) for name in self.__argnames__]
+        return tuple(getattr(self, name) for name in self.__argnames__)
 
     def __getitem__(self, key):
         return self.get_arguments()[key]
@@ -129,7 +104,7 @@ def candidate_subclass(class_name, args, table_name=None):
         '__tablename__' : table_name,
                 
         # Connects ChemicalDisease records to generic Candidate records
-        'id' : Column(Integer, ForeignKey('candidate.id')),
+        'id' : Column(Integer, ForeignKey('candidate.id'), primary_key=True),
                 
         # Polymorphism information for SQLAlchemy
         '__mapper_args__' : {'polymorphic_identity': table_name},
@@ -139,10 +114,17 @@ def candidate_subclass(class_name, args, table_name=None):
     }
         
     # Create named arguments
+    unique_con_args = []
     for arg in args:
-        class_attribs[arg + '_id'] = Column(Integer, ForeignKey('context.id'), primary_key=True)
-        class_attribs[arg]         = relationship('Context', foreign_keys=class_attribs[arg + '_id'])
-            
+        class_attribs[arg + '_id'] = Column(Integer, ForeignKey('context.id'))
+        class_attribs[arg]         = relationship('Context',
+                                                  backref=backref(table_name + '_' + arg + 's', cascade_backrefs=False),
+                                                  cascade_backrefs=False,
+                                                  foreign_keys=class_attribs[arg + '_id'])
+        unique_con_args.append(class_attribs[arg + '_id'])
+
+    class_attribs['__table_args__'] = (UniqueConstraint(*unique_con_args),)
+
     # Create class
     C = type(class_name, (Candidate,), class_attribs)
         

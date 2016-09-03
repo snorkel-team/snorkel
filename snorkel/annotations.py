@@ -64,7 +64,7 @@ class AnnotationManager(object):
         self.matrix_cls = matrix_cls
         self.default_f = default_f
     
-    def create(self, session, candidate_set, new_key_set, f = None):
+    def create(self, session, candidate_set, new_key_set, f=None):
         """
         Generates annotations for candidates in a candidate set, and persists these to the database,
         as well as returning a sparse matrix representation.
@@ -87,10 +87,10 @@ class AnnotationManager(object):
         session.add(key_set)
         session.commit()
 
-        self.update(session, candidate_set, key_set, f, True)
+        self.update(session, candidate_set, key_set, True, f)
         return self.load(session, candidate_set, key_set)
     
-    def update(self, session, candidate_set, key_set, f, key_set_mutable):
+    def update(self, session, candidate_set, key_set, key_set_mutable, f=None):
         """
         Generates annotations for candidates in a candidate set and *adds* them to an existing annotation set,
         also adding the respective keys to the key set; returns a sparse matrix representation of the full
@@ -101,6 +101,9 @@ class AnnotationManager(object):
         :param candidate_set: Can either be a CandidateSet instance or the name of one
 
         :param key_set: Can either be an AnnotationKeySet instance or the name of one
+
+        :param key_set_mutable: If True, annotations with keys not in the given key set will be added, and the
+        key set will be expanded; if False, these annotations will be considered out-of-domain (OOD) and discarded.
         
         :param f: Can be either:
 
@@ -108,13 +111,12 @@ class AnnotationManager(object):
 
             * A list of functions, each of which maps from candidates to values; by default, the key_name
                 is the function.__name__.  Ex: A list of labeling functions
-
-        :param key_set_mutable: If True, annotations with keys not in the given key set will be added, and the
-        key set will be expanded; if False, these annotations will be considered out-of-domain (OOD) and discarded.
         """
         candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
         key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
 
+        if f is None:
+            f = self.default_f
         annotation_generator = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
         seen_key_names = set()
         pb = ProgressBar(len(candidate_set))

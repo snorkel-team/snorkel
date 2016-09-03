@@ -1,5 +1,3 @@
-import sys
-import numpy as np
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
 from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps
@@ -107,7 +105,7 @@ class CandidateAnnotator(object):
                     if key_name in key_set.keys:
                         key = key_set.keys[key_name]
 
-                    # Else, only proceed if key set is mutable, in qhich case create new AnnotationKey
+                    # Else, only proceed if key set is mutable, in which case create new AnnotationKey
                     elif key_set_mutable:
                         key = AnnotationKey(name=key_name)
                         session.add(key)

@@ -167,9 +167,10 @@ class AnnotationManager(object):
         col_index = {}
 
         # Construct the query
-        q = session.query(Label.candidate_id, Label.key_id, Label.value).join(Candidate, AnnotationKey)
+        q = session.query(self.annotation_cls.candidate_id, self.annotation_cls.key_id, self.annotation_cls.value)
+        q = q.join(Candidate, AnnotationKey)
         q = q.filter(Candidate.sets.contains(candidate_set)).filter(AnnotationKey.sets.contains(key_set))
-        q = q.order_by(Label.candidate_id, Label.key_id).yield_per(1000)
+        q = q.order_by(self.annotation_cls.candidate_id, self.annotation_cls.key_id).yield_per(1000)
         
         # Iteratively construct sparse matrix
         for cid, kid, val in q.all():

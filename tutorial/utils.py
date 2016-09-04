@@ -1,5 +1,5 @@
 import lxml.etree as et
-from snorkel.models import CandidateSet
+from snorkel.models import CandidateSet, split_stable_id
 from snorkel.candidates import TemporarySpan
 
 
@@ -13,7 +13,8 @@ def get_CD_mentions_by_MESHID(doc_xml, sents):
     Collect a set of Pubtator chemical-induced disease (CID) relation mention annotations.
     Returns a dictionary of (sent_id, char_start, char_end) tuples indexed by MESH ID.
     """
-    sent_offsets = [s.abs_char_offsets[0] for s in sents]
+    # We get the sentence offsets *relative to document start* by unpacking their stable ids
+    sent_offsets = [split_stable_id(s.stable_id)[2] for s in sents]
 
     # Get unary mentions of diseases / chemicals
     unary_mentions = {}

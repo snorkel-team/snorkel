@@ -1,7 +1,9 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
+from sqlalchemy.sql import bindparam, func, select
 from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps
-from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet, Span
+from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
+from .models.annotation import annotation_key_set_annotation_key_association as assoc_table
 from .utils import get_ORM_instance, ProgressBar
 from .features import get_span_feats
 from sqlalchemy.orm.session import object_session
@@ -96,14 +98,17 @@ class AnnotationManager(object):
                 is the function.__name__.  Ex: A list of labeling functions
         """
         candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
+        existing_key_set = session.query(AnnotationKeySet).filter(AnnotationKeySet.name == new_key_set).first()
+        if existing_key_set is not None:
+            raise ValueError('AnnotationKeySet with name ' + new_key_set +
+                             ' already exists in the database. Please specify a new name.')
         key_set = AnnotationKeySet(name=new_key_set)
         session.add(key_set)
         session.commit()
 
-        self.update(session, candidate_set, key_set, key_set_mutable=True, f=f)
-        return self.load(session, candidate_set, key_set)
+        return self.update(session, candidate_set, key_set, True, f)
     
-    def update(self, session, candidate_set, key_set, key_set_mutable=True, f=None):
+    def update(self, session, candidate_set, key_set, expand_key_set, f=None):
         """
         Generates annotations for candidates in a candidate set and *adds* them to an existing annotation set,
         also adding the respective keys to the key set; returns a sparse matrix representation of the full
@@ -115,7 +120,7 @@ class AnnotationManager(object):
 
         :param key_set: Can either be an AnnotationKeySet instance or the name of one
 
-        :param key_set_mutable: If True, annotations with keys not in the given key set will be added, and the
+        :param expand_key_set: If True, annotations with keys not in the given key set will be added, and the
         key set will be expanded; if False, these annotations will be considered out-of-domain (OOD) and discarded.
         
         :param f: Can be either:
@@ -125,34 +130,64 @@ class AnnotationManager(object):
             * A list of functions, each of which maps from candidates to values; by default, the key_name
                 is the function.__name__.  Ex: A list of labeling functions
         """
+        # Prepares arguments
         candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
         key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
-
         if f is None:
             f = self.default_f
+
+        # Prepares helpers
         annotation_generator = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
-        seen_key_names = set()
         pb = ProgressBar(len(candidate_set))
+
+        # Prepares queries
+        key_select_query = select([AnnotationKey.id]).where(AnnotationKey.name == bindparam('name'))
+
+        key_insert_query = AnnotationKey.__table__.insert()
+
+        assoc_select_query = select([func.count()]).select_from(assoc_table)
+        assoc_select_query = assoc_select_query.where(assoc_table.c.annotation_key_set_id == bindparam('ksid'))
+        assoc_select_query = assoc_select_query.where(assoc_table.c.annotation_key_id == bindparam('kid'))
+
+        assoc_insert_query = assoc_table.insert()
+
+        anno_update_query = self.annotation_cls.__table__.update()
+        anno_update_query = anno_update_query.where(self.annotation_cls.candidate_id == bindparam('cid'))
+        anno_update_query = anno_update_query.where(self.annotation_cls.key_id == bindparam('kid'))
+        anno_update_query = anno_update_query.values(value=bindparam('value'))
+
+        anno_insert_query = self.annotation_cls.__table__.insert()
+
+        # Generates annotations for CandidateSet
         for i, candidate in enumerate(candidate_set):
             pb.bar(i)
-            seen_key_names.clear()
             for key_name, value in annotation_generator(candidate):
-                if key_name not in seen_key_names and value != 0:
-                    seen_key_names.add(key_name)
+                # Check if the AnnotationKey already exists, and gets its id
+                key_id = session.execute(key_select_query, {'name': key_name}).first()
+                if key_id is not None:
+                    key_id = key_id[0]
 
-                    # If the annotation is in the key set already, use this AnnotationKey
-                    if key_name in key_set.keys:
-                        key = key_set.keys[key_name]
+                # If expand_key_set is True, then we will always insert or update the Annotation
+                if expand_key_set:
 
-                    # Else, only proceed if key set is mutable, in which case create new AnnotationKey
-                    elif key_set_mutable:
-                        key = AnnotationKey(name=key_name)
-                        session.add(key)
-                        key_set.append(key)
-                        session.commit()
-                    else:
-                        continue
-                    session.add(self.annotation_cls(candidate=candidate, key=key, value=value))
+                    # If key_name does not exist in the database already, creates a new record
+                    if key_id is None:
+                        key_id = session.execute(key_insert_query, {'name': key_name}).inserted_primary_key[0]
+
+                    # Adds the AnnotationKey to the AnnotationKeySet
+                    if session.execute(assoc_select_query, {'ksid': key_set.id, 'kid': key_id}).scalar() == 0:
+                        session.execute(assoc_insert_query, {'annotation_key_set_id': key_set.id, 'annotation_key_id': key_id})
+
+                    # Updates the annotation value
+                    res = session.execute(anno_update_query, {'cid': candidate.id, 'kid': key_id, 'value': value})
+                    if res.rowcount == 0 and value != 0:
+                        session.execute(anno_insert_query, {'candidate_id': candidate.id, 'key_id': key_id, 'value': value})
+
+                # Else, if the key already exists in the database, we just update the annotation value
+                elif key_id is not None:
+                    res = session.execute(anno_update_query, {'cid': candidate.id, 'kid': key_id, 'value': value})
+                    if res.rowcount == 0 and value != 0:
+                        session.execute(anno_insert_query, {'candidate_id': candidate.id, 'key_id': key_id, 'value': value})
         pb.close()
         session.commit()
 

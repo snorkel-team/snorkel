@@ -4,6 +4,7 @@ from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps
 from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet, Span
 from .utils import get_ORM_instance, ProgressBar
 from .features import get_span_feats
+from sqlalchemy.orm.session import object_session
 
 
 class csr_AnnotationMatrix(sparse.csr_matrix):
@@ -20,11 +21,13 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
 
     def get_candidate(self, i):
         """Return the Candidate object corresponding to row i"""
-        return self.candidate_set.order_by(Candidate.id)[i]
+        return self.candidate_set.candidates.order_by(Candidate.id)[i]
 
     def get_key(self, j):
         """Return the AnnotationKey object corresponding to column j"""
-        raise NotImplementedError()
+        session = object_session(self.key_set)
+        return session.query(AnnotationKey).filter(AnnotationKey.sets.contains(self.key_set))\
+                      .order_by(AnnotationKey.id).distinct()[j]
 
     def stats(self):
         """Return summary stats about the annotations"""
@@ -36,17 +39,18 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
 
 
 class csr_LabelMatrix(csr_AnnotationMatrix):
-    def stats(self):
+    def lf_stats(self):
         """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
+        lf_names = [self.get_key(j).name for j in range(self.shape[1])]
+
         # Default LF stats
         d = {
             'j'         : range(self.shape[1]),
-            'coverage'  : Series(data=matrix_coverage(self), index=self.lf_names),
-            'overlaps'  : Series(data=matrix_overlaps(self), index=self.lf_names),
-            'conflicts' : Series(data=matrix_conflicts(self), index=self.lf_names)
+            'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
+            'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
+            'conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
         }
-
-        return DataFrame(data=d, index=self.lf_names)
+        return DataFrame(data=d, index=lf_names)
 
 
 class AnnotationManager(object):

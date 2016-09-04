@@ -95,6 +95,17 @@ class NoiseAwareModel(object):
         return np.array([1 if p > b else -1 if p < b else 0 for p in self.marginals(X)])
 
 
+class NoiseAwareLinearModel(NoiseAwareModel):
+    """Simple abstract base class for a linear model."""
+    def __init__(self, bias_term=False):
+        self.w         = None
+        self.bias_term = bias_term
+
+    def save(self, parameter_set_name):
+        """Save the Parameter (weight) values, i.e. the model, as a new ParameterSet"""
+        raise NotImplementedError()
+
+
 class LogRegSKLearn(NoiseAwareModel):
     """Logistic regression."""
     def __init__(self):

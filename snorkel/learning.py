@@ -5,6 +5,7 @@ import warnings
 from learning_utils import sparse_abs
 from lstm import LSTMModel
 from sklearn import linear_model
+from .models import Parameter, ParameterSet
 
 DEFAULT_MU = 1e-6
 DEFAULT_RATE = 0.01
@@ -81,10 +82,13 @@ def transform_sample_stats(Xt, t, f, Xt_abs=None):
 
 class NoiseAwareModel(object):
     """Simple abstract base class for a model."""
-    def __init__(self):
-        pass
+    def __init__(self, bias_term=False):
+        self.w         = None
+        self.bias_term = bias_term
+        self.X_train   = None
 
     def train(self, X, training_marginals, **hyperparams):
+        """Trains the model; also must set self.X_train and self.w"""
         raise NotImplementedError()
 
     def marginals(self, X):
@@ -94,16 +98,28 @@ class NoiseAwareModel(object):
         """Return numpy array of elements in {-1,0,1} based on predicted marginal probabilities."""
         return np.array([1 if p > b else -1 if p < b else 0 for p in self.marginals(X)])
 
-
-class NoiseAwareLinearModel(NoiseAwareModel):
-    """Simple abstract base class for a linear model."""
-    def __init__(self, bias_term=False):
-        self.w         = None
-        self.bias_term = bias_term
-
-    def save(self, parameter_set_name):
+    def save(self, session, param_set_name):
         """Save the Parameter (weight) values, i.e. the model, as a new ParameterSet"""
-        raise NotImplementedError()
+        # Check for X_train and w
+        if not hasattr(self, 'X_train') or self.X_train is None or not hasattr(self, 'w') or self.w is None:
+            name = self.__class__.__name__
+            raise Exception("{0}.train() must be run, and must set {0}.X_train and {0}.w".format(name))
+
+        # Create new named ParameterSet
+        param_set = ParameterSet(name=param_set_name)
+        session.add(param_set)
+
+        # Create and save a new set of Parameters- note that PK of params is (feature_key_id, param_set_id)
+        # Note: We can switch to using bulk insert if this is too slow...
+        for j, v in enumerate(self.w):
+            session.add(Parameter(feature_key_id=self.X_train.col_index[j], set=param_set, value=v))
+        session.commit()
+
+    def load(self, session, param_set_name):
+        """Load the Parameters into self.w, given ParameterSet.name"""
+        q = session.query(Parameter.value).join(ParameterSet).filter(ParameterSet.name == param_set_name)
+        q = q.order_by(Parameter.feature_key_id)
+        self.w = np.array([res[0] for res in q.all()])
 
 
 class LogRegSKLearn(NoiseAwareModel):
@@ -112,13 +128,16 @@ class LogRegSKLearn(NoiseAwareModel):
         self.w         = None
 
     def train(self, X, training_marginals, alpha=1, C=1.0):
-        penalty    = 'l1' if alpha == 1 else 'l2'
-        self.model = linear_model.LogisticRegression(penalty=penalty, C=C, dual=False)
+        self.X_train = X
+        penalty      = 'l1' if alpha == 1 else 'l2'
+        self.model   = linear_model.LogisticRegression(penalty=penalty, C=C, dual=False)
        
         # First, we remove the rows (candidates) that have no LF coverage
         covered            = np.where(np.abs(training_marginals - 0.5) > 1e-3)[0]
         training_marginals = training_marginals[covered]
-        X                  = X[covered]
+        
+        # TODO: This should be X_train, however copy is broken here!
+        X = X[covered]
 
         # Hard threshold the training marginals
         ypred = np.array([1 if x > 0.5 else 0 for x in training_marginals])
@@ -146,11 +165,14 @@ class LogReg(NoiseAwareModel):
                 + mu * (alpha*np.linalg.norm(w, ord=1) + (1-alpha)*np.linalg.norm(w, ord=2))
 
     def train(self, X, training_marginals, method='GD', n_iter=1000, w0=None, rate=0.001, backtracking=False, beta=0.8, mu=1e-6, alpha=0.5, rate_decay=0.999, hard_thresh=False):
+        self.X_train = X
 
         # First, we remove the rows (candidates) that have no LF coverage
         covered            = np.where(np.abs(training_marginals - 0.5) > 1e-3)[0]
         training_marginals = training_marginals[covered]
-        X                  = X[covered]
+        
+        # TODO: This should be X_train, however copy is broken here!
+        X = X[covered]
 
         # Option to try hard thresholding
         if hard_thresh:
@@ -255,6 +277,8 @@ class NaiveBayes(NoiseAwareModel):
         * warm_starts:
         * tol:         For testing for SGD convergence, i.e. stopping threshold
         """
+        self.X_train = X
+
         # Set up stuff
         N, M   = X.shape
         print "="*80
@@ -338,3 +362,6 @@ class LSTM(NoiseAwareModel):
 
     def marginals(self, test_candidates):
         return self.lstm.test(test_candidates)
+
+    def save(self, session, param_set_name):
+        raise NotImplementedError()

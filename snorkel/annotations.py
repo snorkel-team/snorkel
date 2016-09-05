@@ -210,10 +210,22 @@ class AnnotationManager(object):
         # Create sparse matrix in LIL format for incremental construction
         X = sparse.lil_matrix((len(candidate_set), len(key_set)))
 
-        # First, we query to construct the column index map
+        # First, we query to construct the row index map
+        cid_to_row = {}
+        row_to_cid = {}
+        q = session.query(Candidate.id).filter(Candidate.sets.contains(candidate_set)).order_by(Candidate.id).yield_per(1000)
+        for cid, in q.all():
+            if cid not in cid_to_row:
+                j = len(cid_to_row)
+
+                # Create both mappings
+                cid_to_row[cid] = j
+                row_to_cid[j]   = cid
+
+        # Second, we query to construct the column index map
         kid_to_col = {}
         col_to_kid = {}
-        q = session.query(AnnotationKey.id).filter(AnnotationKey.sets.contains(key_set)).order_by(AnnotationKey.id)
+        q = session.query(AnnotationKey.id).filter(AnnotationKey.sets.contains(key_set)).order_by(AnnotationKey.id).yield_per(1000)
         for kid, in q.all():
             if kid not in kid_to_col:
                 j = len(kid_to_col)
@@ -229,15 +241,7 @@ class AnnotationManager(object):
         q = q.order_by(self.annotation_cls.candidate_id).yield_per(1000)
         
         # Iteratively construct row index and output sparse matrix
-        cid_to_row = {}
-        row_to_cid = {}
         for cid, kid, val in q.all():
-            if cid not in cid_to_row:
-                i = len(cid_to_row)
-
-                # Create both mappings
-                cid_to_row[cid] = i
-                row_to_cid[i]   = cid
             X[cid_to_row[cid], kid_to_col[kid]] = val
 
         # Return as an AnnotationMatrix

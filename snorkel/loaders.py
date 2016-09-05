@@ -1,6 +1,7 @@
 from .models import CandidateSet, AnnotationKey, AnnotationKeySet, Label
 
-def create_or_fetch_set(session, set_class, instance_or_name):
+
+def create_or_fetch(session, set_class, instance_or_name):
     """Returns a named set ORM object given an instance or name as string"""
     if isinstance(instance_or_name, str):
         x = session.query(set_class).filter(set_class.name == instance_or_name).first()
@@ -16,16 +17,21 @@ def create_or_fetch_set(session, set_class, instance_or_name):
     else:
         return ValueError("%s-type required" % set_class.__class__)
 
+
 class ExternalAnnotationsLoader(object):
     """Class to load external annotations."""
     def __init__(self, session, candidate_class, candidate_set, annotation_key):
         self.session         = session
         self.candidate_class = candidate_class
-        self.candidate_set   = create_or_fetch_set(self.session, CandidateSet, candidate_set)
-        self.annotation_key  = create_or_fetch_set(self.session, AnnotationKey, annotation_key)
+        self.candidate_set   = create_or_fetch(self.session, CandidateSet, candidate_set)
+        self.annotation_key  = create_or_fetch(self.session, AnnotationKey, annotation_key)
 
         # Create a key set with the same name as the annotation name
-        self.key_set = create_or_fetch_set(self.session, AnnotationKeySet, annotation_key)
+        self.key_set = create_or_fetch(self.session, AnnotationKeySet, annotation_key)
+
+        if self.annotation_key not in self.key_set.keys:
+            self.key_set.append(self.annotation_key)
+        self.session.commit()
 
     def add(self, temp_contexts):
         """
@@ -54,7 +60,6 @@ class ExternalAnnotationsLoader(object):
         # Add annotation
         label = Label(key=self.annotation_key, candidate=candidate, value=1)
         self.session.add(label)
-        self.key_set.append(label)
 
         # Commit session
         self.session.commit()

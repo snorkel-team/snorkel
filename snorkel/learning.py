@@ -1,8 +1,7 @@
 import numpy as np
 import scipy.sparse as sparse
 from scipy.optimize import minimize
-import warnings
-from learning_utils import sparse_abs
+from learning_utils import score, sparse_abs
 from lstm import LSTMModel
 from sklearn import linear_model
 from .models import Parameter, ParameterSet
@@ -97,6 +96,48 @@ class NoiseAwareModel(object):
     def predict(self, X, b=0.5):
         """Return numpy array of elements in {-1,0,1} based on predicted marginal probabilities."""
         return np.array([1 if p > b else -1 if p < b else 0 for p in self.marginals(X)])
+
+    def score(self, X_test, L_test, gold_candidate_set, b=0.5):
+        if L_test.shape[1] != 1:
+            raise ValueError("L_test must have exactly one column.")
+        predict = self.predict(X_test, b=b)
+        train_marginals = self.marginals(self.X_train) if self.X_train is not None else None
+        test_marginals = self.marginals(X_test)
+
+        test_candidates = set()
+        test_labels = []
+        tp = set()
+        fp = set()
+        tn = set()
+        fn = set()
+
+        for i in range(X_test.shape[0]):
+            candidate = X_test.get_candidate(i)
+            test_candidates.add(candidate)
+            try:
+                L_test_index = L_test.get_row_index(candidate)
+                test_labels.append(L_test[L_test_index, 0])
+                if test_marginals[i] > b:
+                    if test_labels == 1:
+                        tp.add(candidate)
+                    else:
+                        fp.add(candidate)
+                else:
+                    if test_labels == -1:
+                        tn.add(candidate)
+                    else:
+                        fn.add(candidate)
+            except KeyError:
+                test_labels.append(-1)
+                if test_marginals[i] > b:
+                    fn.add(candidate)
+                else:
+                    tn.add(candidate)
+
+        score(test_candidates, np.asarray(test_labels), np.asarray(predict), gold_candidate_set,
+              train_marginals=train_marginals, test_marginals=test_marginals)
+
+        return tp, fp, tn, fn
 
     def save(self, session, param_set_name):
         """Save the Parameter (weight) values, i.e. the model, as a new ParameterSet"""

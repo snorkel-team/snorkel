@@ -1,6 +1,7 @@
 import lxml.etree as et
 from snorkel.models import CandidateSet, split_stable_id
 from snorkel.candidates import TemporarySpan
+from collections import defaultdict
 
 
 def get_docs_xml(filepath, doc_path=".//document", id_path=".//id/text()"):
@@ -17,7 +18,7 @@ def get_CD_mentions_by_MESHID(doc_xml, sents):
     sent_offsets = [split_stable_id(s.stable_id)[2] for s in sents]
 
     # Get unary mentions of diseases / chemicals
-    unary_mentions = {}
+    unary_mentions = defaultdict(list)
     annotations = doc_xml.xpath('.//annotation')
     for a in annotations:
 
@@ -48,7 +49,7 @@ def get_CD_mentions_by_MESHID(doc_xml, sents):
         char_end   = char_start + length - 1
         
         # Index by MESH ID as that is how relations refer to
-        unary_mentions[mesh] = (sent, char_start, char_end, txt)
+        unary_mentions[mesh].append((sent, char_start, char_end, txt))
     return unary_mentions
 
 
@@ -62,12 +63,11 @@ def get_CID_relations(doc_xml, doc):
     unary_mentions = get_CD_mentions_by_MESHID(doc_xml, doc.sentences)
     annotations    = doc_xml.xpath('.//relation')
     for a in annotations:
-        try:
-            chemical = unary_mentions[a.xpath('./infon[@key="Chemical"]/text()')[0]]
-            disease  = unary_mentions[a.xpath('./infon[@key="Disease"]/text()')[0]]
-        except KeyError:
-            continue
+        cid = a.xpath('./infon[@key="Chemical"]/text()')[0]
+        did = a.xpath('./infon[@key="Disease"]/text()')[0]
+        for chemical in unary_mentions[cid]:
+            for disease in unary_mentions[did]:
 
-        # Only take relations in same sentence
-        if chemical[0] == disease[0]:
-            yield (chemical, disease)
+                # Only take relations in same sentence
+                if chemical[0] == disease[0]:
+                    yield (chemical, disease)

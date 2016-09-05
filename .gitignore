@@ -7,7 +7,6 @@ parser/
 /stanford-corenlp-*
 *.db
 downloads/
-docs/
 
 /saved_sents.pkl
 

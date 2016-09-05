@@ -1,16 +1,8 @@
 <img src="figs/logo_01.png" width="150"/>
+**_v0.4.0_**
 
 [![Documentation](https://readthedocs.org/projects/snorkel/badge/?version=latest)](http://snorkel.readthedocs.io/en/latest/)
-
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
-
-[![Coverage Status](https://coveralls.io/repos/github/HazyResearch/snorkel/badge.svg?branch=master)](https://coveralls.io/github/HazyResearch/snorkel?branch=master)
-
-[![Code Climate](https://codeclimate.com/github/HazyResearch/snorkel/badges/gpa.svg)](https://codeclimate.com/github/HazyResearch/snorkel)
-
-[![Test Coverage](https://codeclimate.com/github/HazyResearch/snorkel/badges/coverage.svg)](https://codeclimate.com/github/HazyResearch/snorkel/coverage)
-
-[![Issue Count](https://codeclimate.com/github/HazyResearch/snorkel/badges/issue_count.svg)](https://codeclimate.com/github/HazyResearch/snorkel)
 
 ## Acknowledgements
 <img src="figs/darpa.JPG" width="80" height="80" />
@@ -21,10 +13,6 @@ Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program
 * Installation instructions [below](#installation--dependencies)
 * Get started with the tutorial [below](#learning-how-to-use-snorkel)
 * Documentation [here](http://snorkel.readthedocs.io/en/latest/)
-
-## Versions
-* `master`: Current stable development version (v0.3)
-* `v0.2-stable`: Last full version (v0.2)
 
 ## Motivation
 Snorkel is intended to be a lightweight but powerful framework for developing **structured information extraction applications** for domains in which large labeled training sets are not available or easy to obtain, using the _data programming_ paradigm.
@@ -41,21 +29,15 @@ At a high level, the idea is that developers can focus on writing labeling funct
 
 ## Installation / dependencies
 
-Snorkel requires [a few python packages](python-package-requirement.txt) including:
-
-* [sqlalchemy](http://www.sqlalchemy.org/)
-* [nltk](http://www.nltk.org/install.html)
-* [lxml](http://lxml.de/installation.html)
-* [requests](http://docs.python-requests.org/en/master/user/install/#install)
-* [numpy](http://docs.scipy.org/doc/numpy-1.10.1/user/install.html)
-* [scipy](http://www.scipy.org/install.html)
-* [matplotlib](http://matplotlib.org/users/installing.html)
-* [theano](http://deeplearning.net/software/theano/install.html)
-
-Everything can be installed using `pip`; note that `sudo` can be prepended to install
-dependencies system wide:
+Snorkel requires [a few python packages](python-package-requirement.txt) which can be installed using `pip`:
 ```bash
 pip install --requirement python-package-requirement.txt
+```
+Note that `sudo` can be prepended to install dependencies system wide if this is an option and the above does not work.
+
+Finally, enable `ipywidgets`:
+```bash
+jupyter nbextension enable --py widgetsnbextension --sys-prefix
 ```
 
 Alternatively, `virtualenv` can be used by starting with:
@@ -64,13 +46,6 @@ virtualenv .virtualenv
 source .virtualenv/bin/activate
 ```
 
-Finally, enable `ipywidgets`:
-```bash
-jupyter nbextension enable --py widgetsnbextension --sys-prefix
-```
-
-*Note: if you have an issue with the matplotlib install related to the module `freetype`, see [this post](http://stackoverflow.com/questions/20533426/ubuntu-running-pip-install-gives-error-the-following-required-packages-can-no); if you have an issue installing ipython, try [upgrading setuptools](http://stackoverflow.com/questions/35943606/error-on-installing-ipython-for-python-3-sys-platform-darwin-and-platform)*
-
 ## Running
 After installing (see below), just run:
 ```
@@ -78,20 +53,16 @@ After installing (see below), just run:
 ```
 
 ## Learning how to use Snorkel
-New tutorial (in progress; covers through candidate extraction for entities):
+New tutorial (covers through candidate extraction for entities):
 ```
-tutorial/CDR_tutorial.ipynb
+tutorial/
 ```
-
-Supported legacy tutorial (covers full pipeline):
- * **[GeneTaggerExample_Extraction.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GeneTaggerExample_Extraction.ipynb)** walks through the candidate extraction workflow for an entity tagging task. * **[GeneTaggerExample_Learning.ipynb](https://github.com/HazyResearch/ddlite/blob/master/examples/GeneTaggerExample_Learning.ipynb)** picks up where the extraction notebook left off. The learning notebook demonstrates the labeling function iteration workflow and learning methods.
-
-## Documentation
-To generate documentation (built using [pdoc](https://github.com/BurntSushi/pdoc)), run `./generate_docs.sh`.
 
 ## Issues
 We like [issues](https://github.com/HazyResearch/snorkel/issues) as a place to put bugs, questions, feature requests, etc- don't be shy!
 If submitting an issue about a bug, however, **please provide a pointer to a notebook (and relevant data) to reproduce it.**
+
+*Note: if you have an issue with the matplotlib install related to the module `freetype`, see [this post](http://stackoverflow.com/questions/20533426/ubuntu-running-pip-install-gives-error-the-following-required-packages-can-no); if you have an issue installing ipython, try [upgrading setuptools](http://stackoverflow.com/questions/35943606/error-on-installing-ipython-for-python-3-sys-platform-darwin-and-platform)*
 
 ## Jupyter Notebook Best Practices
 
@@ -107,3 +78,12 @@ A more convenient option is to add these lines to your IPython config file, in `
 c.InteractiveShellApp.extensions = ['autoreload']     
 c.InteractiveShellApp.exec_lines = ['%autoreload 2']
 ```
+
+## More badges...
+[![Coverage Status](https://coveralls.io/repos/github/HazyResearch/snorkel/badge.svg?branch=master)](https://coveralls.io/github/HazyResearch/snorkel?branch=master)
+
+[![Code Climate](https://codeclimate.com/github/HazyResearch/snorkel/badges/gpa.svg)](https://codeclimate.com/github/HazyResearch/snorkel)
+
+[![Test Coverage](https://codeclimate.com/github/HazyResearch/snorkel/badges/coverage.svg)](https://codeclimate.com/github/HazyResearch/snorkel/coverage)
+
+[![Issue Count](https://codeclimate.com/github/HazyResearch/snorkel/badges/issue_count.svg)](https://codeclimate.com/github/HazyResearch/snorkel)

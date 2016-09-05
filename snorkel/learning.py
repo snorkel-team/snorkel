@@ -97,7 +97,7 @@ class NoiseAwareModel(object):
         """Return numpy array of elements in {-1,0,1} based on predicted marginal probabilities."""
         return np.array([1 if p > b else -1 if p < b else 0 for p in self.marginals(X)])
 
-    def score(self, X_test, L_test, gold_candidate_set, b=0.5):
+    def score(self, X_test, L_test, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True):
         if L_test.shape[1] != 1:
             raise ValueError("L_test must have exactly one column.")
         predict = self.predict(X_test, b=b)
@@ -116,14 +116,21 @@ class NoiseAwareModel(object):
             test_candidates.add(candidate)
             try:
                 L_test_index = L_test.get_row_index(candidate)
-                test_labels.append(L_test[L_test_index, 0])
+                test_label   = L_test[L_test_index, 0]
+
+                # Set unlabeled examples to -1 by default
+                if test_label == 0 and set_unlabeled_as_neg:
+                    test_label = -1
+              
+                # Bucket the candidates for error analysis
+                test_labels.append(test_label)
                 if test_marginals[i] > b:
-                    if test_labels == 1:
+                    if test_label == 1:
                         tp.add(candidate)
                     else:
                         fp.add(candidate)
                 else:
-                    if test_labels == -1:
+                    if test_label == -1:
                         tn.add(candidate)
                     else:
                         fn.add(candidate)
@@ -134,9 +141,9 @@ class NoiseAwareModel(object):
                 else:
                     tn.add(candidate)
 
+        # Print diagnostics chart and return error analysis candidate sets
         score(test_candidates, np.asarray(test_labels), np.asarray(predict), gold_candidate_set,
               train_marginals=train_marginals, test_marginals=test_marginals)
-
         return tp, fp, tn, fn
 
     def save(self, session, param_set_name):

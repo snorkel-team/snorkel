@@ -4,7 +4,13 @@ def create_or_fetch_set(session, set_class, instance_or_name):
     """Returns a named set ORM object given an instance or name as string"""
     if isinstance(instance_or_name, str):
         x = session.query(set_class).filter(set_class.name == instance_or_name).first()
-        return x if x is not None else set_class(name=instance_or_name)
+        if x is not None:
+            return x
+        else:
+            x = set_class(name=instance_or_name)
+            session.add(x)
+            session.commit()
+            return x
     elif isinstance(instance_or_name, set_class):
         return instance_or_name
     else:

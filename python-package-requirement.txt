@@ -1,4 +1,4 @@
-jupyter>=4.1.0
+jupyter
 nltk
 lxml
 requests

@@ -18,8 +18,8 @@ Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program
 
 ## Getting Started
 
-* Installation instructions [below](# Installation / dependencies)
-* Get started with the tutorial [below](# Learning how to use Snorkel)
+* Installation instructions [below](#installation--dependencies)
+* Get started with the tutorial [below](#learning-how-to-use-snorkel)
 * Documentation [here](http://snorkel.readthedocs.io/en/latest/)
 
 ## Versions

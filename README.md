@@ -1,5 +1,7 @@
 <img src="figs/logo_01.png" width="150"/>
 
+[![Documentation](http://snorkel.readthedocs.io/en/latest/?badge=latest)](http://snorkel.readthedocs.io/en/latest/?badge=latest)
+
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 
 [![Coverage Status](https://coveralls.io/repos/github/HazyResearch/snorkel/badge.svg?branch=master)](https://coveralls.io/github/HazyResearch/snorkel?branch=master)

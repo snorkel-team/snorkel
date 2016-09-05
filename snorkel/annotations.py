@@ -191,6 +191,7 @@ class AnnotationManager(object):
         pb.close()
         session.commit()
 
+        print "Loading sparse %s matrix..." % self.annotation_cls.__name__
         return self.load(session, candidate_set, key_set)
 
     def load(self, session, candidate_set, key_set):
@@ -235,14 +236,23 @@ class AnnotationManager(object):
                 col_to_kid[j]   = kid
 
         # Construct the query
+        """
         q = session.query(self.annotation_cls.candidate_id, self.annotation_cls.key_id, self.annotation_cls.value)
         q = q.join(Candidate, AnnotationKey)
         q = q.filter(Candidate.sets.contains(candidate_set)).filter(AnnotationKey.sets.contains(key_set))
         q = q.order_by(self.annotation_cls.candidate_id).yield_per(1000)
+        """
+
+        # NOTE: This is much faster as it allows us to skip the above join (which for some reason is
+        # unreasonably slow) by relying on our symbol tables from above; however this will get slower with
+        # The total number of annotations in DB which is weird behavior...
+        q = session.query(self.annotation_cls.candidate_id, self.annotation_cls.key_id, self.annotation_cls.value)
+        q = q.order_by(self.annotation_cls.candidate_id)
         
         # Iteratively construct row index and output sparse matrix
         for cid, kid, val in q.all():
-            X[cid_to_row[cid], kid_to_col[kid]] = val
+            if cid in cid_to_row and kid in kid_to_col:
+                X[cid_to_row[cid], kid_to_col[kid]] = val
 
         # Return as an AnnotationMatrix
         return self.matrix_cls(X, candidate_set=candidate_set, candidate_index=cid_to_row, row_index=row_to_cid,

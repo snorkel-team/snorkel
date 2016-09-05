@@ -1,6 +1,6 @@
 <img src="figs/logo_01.png" width="150"/>
 
-[![Documentation](http://snorkel.readthedocs.io/en/latest/?badge=latest)](http://snorkel.readthedocs.io/en/latest/?badge=latest)
+[![Documentation](https://readthedocs.org/projects/snorkel/badge/?version=latest)](http://snorkel.readthedocs.io/en/latest/)
 
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 
@@ -15,6 +15,12 @@
 ## Acknowledgements
 <img src="figs/darpa.JPG" width="80" height="80" />
 Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043.
+
+## Getting Started
+
+* Installation instructions [below](# Installation / dependencies)
+* Get started with the tutorial [below](# Learning how to use Snorkel)
+* Documentation [here](http://snorkel.readthedocs.io/en/latest/)
 
 ## Versions
 * `master`: Current stable development version (v0.3)

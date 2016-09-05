@@ -1,3 +1,4 @@
+from .models import Span
 
 
 def get_matches(lf, candidate_set, match_values=[1,-1]):
@@ -14,24 +15,43 @@ def get_matches(lf, candidate_set, match_values=[1,-1]):
     return matches
 
 
+def get_text_splits(c):
+    """
+    Given a k-arity Candidate defined over k Spans, return the chunked parent context (e.g. Sentence)
+    split around the k constituent Spans.
+
+    NOTE: Currently assumes that these Spans are in the same Context
+    """
+    spans = []
+    for i, span in enumerate(c.get_arguments()):
+        if not isinstance(span, Span):
+            raise ValueError("Handles Span-type Candidate arguments only")
+        spans.append((span.char_start, span.char_end, i))
+    spans.sort()
+
+    # NOTE: Assume all Spans in same parent Context
+    text = span.parent.text
+
+    # Get text chunks
+    chunks = [text[:spans[0][0]], "{{%s}}" % spans[0][2]]
+    for j in range(len(spans)-1):
+        chunks.append(text[spans[j][1]+1:spans[j+1][0]])
+        chunks.append("{{%s}}" % spans[j+1][2])
+    chunks.append(text[spans[-1][1]+1:])
+    return chunks
+
+
 def get_tagged_text(c):
     """
-    Returns the text of c's parent context with c's unary spans replaced with tags {{A}}, {{B}}, etc.
+    Returns the text of c's parent context with c's unary spans replaced with tags {{0}}, {{1}}, etc.
     A convenience method for writing LFs based on e.g. regexes.
     """
-    s0, e0 = c.span0.char_start, c.span0.char_end
-    s1, e1 = c.span1.char_start, c.span1.char_end
-    t = c.span0.context.text
-    if s1 >= e0:
-        return t[:s0] + r'{{A}}' + t[e0+1:s1] + r'{{B}}' + t[e1+1:]
-    else:
-        return t[:s1] + r'{{B}}' + t[e1+1:s0] + r'{{A}}' + t[e0+1:]
+    return "".join(get_text_splits(c))
+
 
 def get_text_between(c):
-    c0_start, c0_end = c.span0.char_start, c.span0.char_end
-    c1_start, c1_end = c.span1.char_start, c.span1.char_end
-    
-    if c0_end <= c1_start:
-        return c.span0.context.text[c0_end+1:c1_start], False
+    chunks = get_text_splits(c)
+    if len(chunks) == 5:
+        return chunks[2]
     else:
-        return c.span0.context.text[c1_end+1:c0_start], True
+        raise ValueError("Only applicable to binary Candidates")

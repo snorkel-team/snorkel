@@ -1,4 +1,4 @@
-from .models import CandidateSet, AnnotationKey, Label
+from .models import CandidateSet, AnnotationKey, AnnotationKeySet, Label
 
 def create_or_fetch_set(session, set_class, instance_or_name):
     """Returns a named set ORM object given an instance or name as string"""
@@ -23,6 +23,9 @@ class ExternalAnnotationsLoader(object):
         self.candidate_class = candidate_class
         self.candidate_set   = create_or_fetch_set(self.session, CandidateSet, candidate_set)
         self.annotation_key  = create_or_fetch_set(self.session, AnnotationKey, annotation_key)
+
+        # Create a key set with the same name as the annotation name
+        self.key_set = create_or_fetch_set(self.session, AnnotationKeySet, annotation_key)
 
     def add(self, temp_contexts):
         """
@@ -49,7 +52,9 @@ class ExternalAnnotationsLoader(object):
         self.candidate_set.append(candidate)
 
         # Add annotation
-        self.session.add(Label(key=self.annotation_key, candidate=candidate, value=1))
+        label = Label(key=self.annotation_key, candidate=candidate, value=1)
+        self.session.add(label)
+        self.key_set.append(label)
 
         # Commit session
         self.session.commit()

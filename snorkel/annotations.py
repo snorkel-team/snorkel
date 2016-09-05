@@ -32,7 +32,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
                 .filter(Candidate.id == self.row_index[i]).one()
     
     def get_row_index(self, candidate):
-        """Return the row index of the candidate"""
+        """Return the row index of the Candidate"""
         return self.candidate_index[candidate.id]
 
     def get_key(self, j):
@@ -40,8 +40,8 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         return object_session(self.key_set).query(AnnotationKey)\
                 .filter(AnnotationKey.id == self.col_index[j]).one()
 
-    def get_key_index(self, key):
-        """Return the row index of the candidate"""
+    def get_col_index(self, key):
+        """Return the cow index of the AnnotationKey"""
         return self.key_index[key.id]
 
     def stats(self):
@@ -176,7 +176,7 @@ class AnnotationManager(object):
 
                     # Adds the AnnotationKey to the AnnotationKeySet
                     if session.execute(assoc_select_query, {'ksid': key_set.id, 'kid': key_id}).scalar() == 0:
-                        session.execute(assoc_insert_query, {'ksid': key_set.id, 'kid': key_id})
+                        session.execute(assoc_insert_query, {'annotation_key_set_id': key_set.id, 'annotation_key_id': key_id})
 
                     # Updates the annotation value
                     res = session.execute(anno_update_query, {'cid': candidate.id, 'kid': key_id, 'value': value})

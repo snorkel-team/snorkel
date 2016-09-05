@@ -15,7 +15,7 @@ class Matcher(object):
     def __init__(self, *children, **opts):
         self.children           = children
         self.opts               = opts
-        self.longest_match_only = self.opts.get('longest_match_only', False)
+        self.longest_match_only = self.opts.get('longest_match_only', True)
         self.init()
         self._check_opts()
 

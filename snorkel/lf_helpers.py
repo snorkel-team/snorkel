@@ -26,7 +26,9 @@ def get_text_splits(c):
     for i, span in enumerate(c.get_arguments()):
         if not isinstance(span, Span):
             raise ValueError("Handles Span-type Candidate arguments only")
-        spans.append((span.char_start, span.char_end, i))
+
+        # Note: {{0}}, {{1}}, etc. does not work as an un-escaped regex pattern, hence A, B, ...
+        spans.append((span.char_start, span.char_end, chr(65+i)))
     spans.sort()
 
     # NOTE: Assume all Spans in same parent Context
@@ -43,7 +45,7 @@ def get_text_splits(c):
 
 def get_tagged_text(c):
     """
-    Returns the text of c's parent context with c's unary spans replaced with tags {{0}}, {{1}}, etc.
+    Returns the text of c's parent context with c's unary spans replaced with tags {{A}}, {{B}}, etc.
     A convenience method for writing LFs based on e.g. regexes.
     """
     return "".join(get_text_splits(c))

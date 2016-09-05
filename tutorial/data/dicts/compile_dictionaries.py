@@ -38,6 +38,7 @@ def load_disease_dictionary():
     d = set()
       
     # UMLS SemGroup Disorders
+    # TODO: Re-evaluate how to use this... too many general terms??
     dictfile = ROOT + "/umls_disorders_v2.bz2"
     diseases = [line.strip().split("\t")[0] for line in bz2.BZ2File(dictfile, 'rb').readlines()]
     d.update(w for w in diseases if not w.isupper())
@@ -60,6 +61,13 @@ def load_disease_dictionary():
     
     # remove stopwords
     dictfile = ROOT + "/stopwords.txt"
+    stopwords = [line.strip().split("\t")[0] for line in open(dictfile).readlines()]
+    d = [w for w in list(d) if w.lower() not in stopwords and len(w) > 0]
+
+    # remove a manually-created stopwords dictionary based on looking at most-frequent unary terms
+    # TODO: These are all from a subtree of the UMLS that should be dropped there, this is just a temporary
+    # workaround until we do that!!!
+    dictfile = ROOT + "/stopwords_most_frequent.tsv"
     stopwords = [line.strip().split("\t")[0] for line in open(dictfile).readlines()]
     d = [w for w in list(d) if w.lower() not in stopwords and len(w) > 0]
     return d
@@ -163,7 +171,16 @@ def load_chemicals_dictionary():
         "l-arginine", "vasopressin", "cyclosporin a", "n-methyl-d-aspartate", "ace inhibitor", 
         "oral contraceptives", "l-name", "alanine", "amino acid", "lisinopril", "tyrosine", 
         "fenfluramines", "beta-carboline", "glutamine", "octreotide", "antidepressant"]))
-    return [c for c in chemicals.keys() if len(c) > 0], [c for c in acronyms.keys() if len(c) > 0]
+    
+    # Filter empty / single-char entries + convert to list
+    chemicals = [c for c in chemicals.keys() if len(c) > 1]
+    acronyms  = [a for a in acronyms.keys() if len(a) > 1]
+
+    # Filter integers
+    chemicals = filter(lambda x : not x.isdigit(), chemicals)
+    acronyms  = filter(lambda x : not x.isdigit(), acronyms)
+
+    return chemicals, acronyms
 
 
 if __name__ == '__main__':

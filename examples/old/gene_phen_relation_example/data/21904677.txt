@@ -1,1 +1,0 @@
-C-mip interacts with the p85 subunit of PI3 kinase and exerts a dual effect on ERK signaling via the recruitment of Dip1 and DAP kinase

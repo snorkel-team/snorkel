@@ -1,1 +1,0 @@
-Mixed Monte Carlo/molecular dynamics simulations of the prion protein

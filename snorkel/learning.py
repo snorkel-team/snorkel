@@ -101,7 +101,7 @@ class NoiseAwareModel(object):
         if L_test.shape[1] != 1:
             raise ValueError("L_test must have exactly one column.")
         predict = self.predict(X_test, b=b)
-        train_marginals = self.marginals(self.X_train) if self.X_train is not None else None
+        train_marginals = self.marginals(self.X_train) if hasattr(self, 'X_train') and self.X_train is not None else None
         test_marginals = self.marginals(X_test)
 
         test_candidates = set()

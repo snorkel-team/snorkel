@@ -213,7 +213,7 @@ class SentenceNgramViewer(Viewer):
             both = [c[0] for c in candidates] + [c[1] for c in candidates] \
                         + [g[0] for g in gold] + [g[1] for g in gold]
         except:
-            both = list(candidates) + list(gold)
+            both = [c[0] for c in candidates] + [g[0] for g in gold]
         splits = sorted(list(set([b.char_start for b in both] + [b.char_end + 1 for b in both] + [0, len(s)])))
 
         # For each chunk, add cid if subset of candidate span, tag if gold, and produce span
@@ -224,8 +224,8 @@ class SentenceNgramViewer(Viewer):
 
             # Handle both unary and binary candidates
             try:
-                cids  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c)]
-                gcids = [self.gold.index(g) for g in gold if self._is_subspan(start, end, g)]
+                cids  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c[0])]
+                gcids = [self.gold.index(g) for g in gold if self._is_subspan(start, end, g[0])]
             except:
 
                 # For binary candidates, add classes for both the candidate ID and unary span identifiers

@@ -1,4 +1,5 @@
-# Travis CI config for DDlite, a Jupyter/IPython notebook version of DeepDive
+# Travis CI config for Snorkel, a lightweight platform for developing
+# information extraction systems using data programming.
 
 sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
 
@@ -79,11 +80,11 @@ script:
   - cd ..
 
   # Run notebooks end-to-end
-  - TESTING=true runipy tutorial/CDR_Tutorial_1.ipynb
-  - TESTING=true runipy tutorial/CDR_Tutorial_2.ipynb
-  - TESTING=true runipy tutorial/CDR_Tutorial_3.ipynb
-  - TESTING=true runipy tutorial/CDR_Tutorial_4.ipynb
-  - TESTING=true runipy tutorial/CDR_Tutorial_5.ipynb
+  - travis_wait 30 TESTING=true runipy tutorial/CDR_Tutorial_1.ipynb
+  - travis_wait 30 TESTING=true runipy tutorial/CDR_Tutorial_2.ipynb
+  - travis_wait 30 TESTING=true runipy tutorial/CDR_Tutorial_3.ipynb
+  - travis_wait 30 TESTING=true runipy tutorial/CDR_Tutorial_4.ipynb
+  - travis_wait 30 TESTING=true runipy tutorial/CDR_Tutorial_5.ipynb
 
   # Run test modules
 #  - coverage run -p test/ParserTests.py

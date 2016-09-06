@@ -73,6 +73,11 @@ install:
   - pip install codeclimate-test-reporter
 
 script:
+  # Downloads data
+  cd tutorial
+  ./download_data.sh
+  cd ..
+
   # Run notebooks end-to-end
   - TESTING=true runipy tutorial/CDR_Tutorial_1.ipynb
   - TESTING=true runipy tutorial/CDR_Tutorial_2.ipynb

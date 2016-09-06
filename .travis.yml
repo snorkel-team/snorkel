@@ -80,17 +80,14 @@ script:
   - cd ..
 
   # Run notebooks end-to-end
-  - travis_wait 30 TESTING=true runipy tutorial/CDR_Tutorial_1.ipynb
-  - travis_wait 30 TESTING=true runipy tutorial/CDR_Tutorial_2.ipynb
-  - travis_wait 30 TESTING=true runipy tutorial/CDR_Tutorial_3.ipynb
-  - travis_wait 30 TESTING=true runipy tutorial/CDR_Tutorial_4.ipynb
-  - travis_wait 30 TESTING=true runipy tutorial/CDR_Tutorial_5.ipynb
+  - travis_wait 30 runipy tutorial/CDR_Tutorial_1.ipynb
+  - travis_wait 30 runipy tutorial/CDR_Tutorial_2.ipynb
+  - travis_wait 30 runipy tutorial/CDR_Tutorial_3.ipynb
+  - travis_wait 30 runipy tutorial/CDR_Tutorial_4.ipynb
+  - travis_wait 30 runipy tutorial/CDR_Tutorial_5.ipynb
 
   # Run test modules
-#  - coverage run -p test/ParserTests.py
-#  - coverage run -p test/CandidateSpaceTests.py
-#  - coverage run -p test/MatcherTests.py
-#  - coverage run -p test/InferenceTests.py
+#  - coverage run -p test/Tests.py
 #  - coverage combine
 
   # TODO check outputs, upload results, etc.

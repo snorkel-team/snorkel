@@ -14,3 +14,6 @@ echo "Deleting downloads directory..."
 rm -rf downloads
 echo "Done!"
 
+echo "Unpacking biomedical dictionaries data..."
+rm -rf data/dicts
+tar -zxvf dicts.tar.gz -C data

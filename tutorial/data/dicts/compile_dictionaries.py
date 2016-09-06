@@ -1,216 +1,210 @@
-import bz2
-import csv
-import os
-import re
-import sys
-import codecs
-import cPickle
-import itertools
-import numpy as np
+import pandas as pd
 
-# NOTE: This requires the ddbiolib repo: https://github.com/HazyResearch/ddbiolib
-from ddbiolib.datasets import cdr
 from ddbiolib.ontologies.umls import UmlsNoiseAwareDict
 from ddbiolib.ontologies.ctd import load_ctd_dictionary
-from ddbiolib.ontologies.specialist import SpecialistLexicon
 from ddbiolib.ontologies.bioportal import load_bioportal_dictionary
-from ddbiolib.utils import unescape_penn_treebank
 
-ROOT = os.path.join(os.environ['SNORKELHOME'], 'tutorial/data/dicts/')
-print "Using root=", ROOT
+DICT_ROOT = "./"
 
-def load_bioportal_csv_dictionary(filename):
-    """Load BioPortal Ontologies--http://bioportal.bioontology.org/"""
-    reader = csv.reader(open(filename,"rU"),delimiter=',', quotechar='"')
-    d_in = [line for line in reader]
-    d = []
-    for line in d_in[1:]:
-        row = dict(zip(d_in[0],line))
-        d.append(row["Preferred Label"])
-        d += row["Synonyms"].split("|")
-    return d
-    
-def load_disease_dictionary():  
-    """
-    Load a dictionary of disease phrases **as a list**.
-    NOTE: Eventually we'll want to pass along IDs
-    """
-    d = set()
-      
-    # UMLS SemGroup Disorders
-    # TODO: Re-evaluate how to use this... too many general terms??
-    dictfile = ROOT + "/umls_disorders_v2.bz2"
-    diseases = [line.strip().split("\t")[0] for line in bz2.BZ2File(dictfile, 'rb').readlines()]
-    d.update(w for w in diseases if not w.isupper())
+def get_umls_stopwords(n_max=1,keep_words={}):
 
-    # Orphanet Rare Disease Ontology
-    d.update(w for w in load_bioportal_csv_dictionary(ROOT + "/ordo.csv") if not w.isupper())
-    
-    # Human Disease Ontology 
-    d.update(w for w in load_bioportal_csv_dictionary(ROOT + "/DOID.csv") if not w.isupper())
-      
-    # ------------------------------------------------------------
-    # remove cell dysfunction terms
-    dictfile = ROOT + "/cell_molecular_dysfunction.txt"
-    remove_terms = set(line.strip().split("\t")[0] for line in open(dictfile).readlines())
-
-    # remove geographic areas terms
-    dictfile = ROOT + "/umls_geographic_areas.txt"
-    remove_terms.update(line.strip().split("\t")[0] for line in open(dictfile).readlines())
-    d = d.difference(remove_terms)
-    
-    # remove stopwords
-    dictfile = ROOT + "/stopwords.txt"
-    stopwords = [line.strip().split("\t")[0] for line in open(dictfile).readlines()]
-    d = [w for w in list(d) if w.lower() not in stopwords and len(w) > 0]
-
-    # remove a manually-created stopwords dictionary based on looking at most-frequent unary terms
-    # TODO: These are all from a subtree of the UMLS that should be dropped there, this is just a temporary
-    # workaround until we do that!!!
-    dictfile = ROOT + "/stopwords_most_frequent.tsv"
-    stopwords = [line.strip().split("\t")[0] for line in open(dictfile).readlines()]
-    d = [w for w in list(d) if w.lower() not in stopwords and len(w) > 0]
+    stop_entity_types = ["Quantitative Concept", "Temporal Concept", "Animal", "Food",
+                         "Spatial Concept", "Functional Concept"]
+    stop_entities = UmlsNoiseAwareDict(positive=stop_entity_types,
+                                name="terms", ignore_case=True).dictionary()
+    d = {t:1 for t in stop_entities if t not in keep_words and len(t.split()) <= n_max}
     return d
 
+# ==================================================================
+# Prefixes & Suffixes
+# ==================================================================
+# manually created
+inheritance = ["x linked", "x linked recessive", "x linked dominant",
+               "x-linked", "x-linked recessive", "x-linked dominant",
+               "recessive", "dominant", "semidominant", "non-familial",
+               "inherited", "hereditary", "nonhereditary", "familial",
+               "autosomal recessive", "autosomal dominant"]
 
-def load_disease_acronym_dictionary():    
-    """
-    Load a dictionary of disease phrases **as a list**.
-    NOTE: Eventually we'll want to pass along IDs
-    """
-    a = set()
-    
-    # UMLS disorders
-    dictfile = ROOT + "/umls_disorders_v2.bz2"
-    diseases = [line.strip().split("\t")[0] for line in bz2.BZ2File(dictfile, 'rb').readlines()]
-    a.update(w for w in diseases if w.isupper())
-    
-    # Orphanet Rare Disease Ontology
-    a.update(w for w in load_bioportal_csv_dictionary(ROOT + "/ordo.csv") if w.isupper())
-    
-    # Human Disease Ontology 
-    a.update(w for w in load_bioportal_csv_dictionary(ROOT + "/DOID.csv") if w.isupper())
-    
-    # filter by char length
-    a = [w for w in list(a) if len(w) > 1]
-    return a
+# ==================================================================
+# The UMLS Semantic Network
+# ==================================================================
+# The UMLS defines 133 fine-grained entity types which are them
+# grouped into coarser semantic categories using groupings defined at:
+#    https://semanticnetwork.nlm.nih.gov/download/SemGroups.txt
+# This set represents semantic types corresponding to "Disorders"
+# with the sub-entity "Finding" removed due to precision issues (10pt drop!)
 
+disease_entity_types = ["Acquired Abnormality",
+                        "Anatomical Abnormality",
+                        "Cell or Molecular Dysfunction",
+                        "Congenital Abnormality",
+                        "Disease or Syndrome",
+                        "Experimental Model of Disease",
+                        "Injury or Poisoning",
+                        "Mental or Behavioral Dysfunction",
+                        "Neoplastic Process",
+                        "Pathologic Function",
+                        "Sign or Symptom"]
 
-def load_chemicals_dictionary():
-    """Load a dictionary of chemical phrases as a list."""
-    entity_types = [
-        'Antibiotic', 'Carbohydrate', 'Chemical', 'Eicosanoid', 'Element, Ion, or Isotope',
-        'Hazardous or Poisonous Substance', 'Indicator, Reagent, or Diagnostic Aid', 'Inorganic Chemical',
-        'Neuroreactive Substance or Biogenic Amine', 'Nucleic Acid, Nucleoside, or Nucleotide', 
-        'Organic Chemical', 'Organophosphorus Compound', 'Steroid', 'Vitamin', 'Lipid']
+# UMLS terms and abbreviations/acronyms
+umls_disease_terms = UmlsNoiseAwareDict(positive=disease_entity_types, rm_sab=["LPN"], name="terms", ignore_case=False)
+# Disease Abbreviations / Acronyms
+umls_disease_abbrvs = UmlsNoiseAwareDict(positive=disease_entity_types, rm_sab=["LPN"], name="abbrvs", ignore_case=False)
 
-    umls_terms = UmlsNoiseAwareDict(positive=entity_types, name="terms", ignore_case=False)
-    umls_abbrv = UmlsNoiseAwareDict(positive=entity_types, name="abbrvs", ignore_case=False)
+stop_entity_types = ["Geographic Area",
+                     "Genetic Function"]
+umls_stop_terms = UmlsNoiseAwareDict(positive=stop_entity_types, name="terms", ignore_case=True)
 
-    chemicals = umls_terms.dictionary()
-    acronyms = umls_abbrv.dictionary()
+# ==================================================================
+# The National Center for Biomedical Ontology
+# http://bioportal.bioontology.org/
+#
+# Comparative Toxicogenomics Database
+# http://ctdbase.org/
+# ==================================================================
+# This uses 4 disease-related ontologies:
+#   (ordo) Orphanet Rare Disease Ontology
+#   (doid) Human Disease Ontology
+#   (hp)   Human Phenotype Ontology
+#   (ctd)  Comparative Toxicogenomics Database
 
-    # remove stopwords
-    fname = ROOT + "/chem_stopwords.txt"
-    stopwords = dict.fromkeys([line.strip().split("\t")[0] for line in open(fname).readlines()])
-    stopwords.update(dict.fromkeys(["V","IV","III","II","I","cm","mg","pH","In", "Hg", "VIP"]))
-    diseases = [
-        "pain", "hypertension", "hypertensive", "depression", "depressive", "depressed", "bleeding", "infection", 
-        "poisoning", "anxiety", "deaths", "startle"]
-    vague = [
-        "drug", "drugs", "control", "animals", "animal", "related", "injection", "level", "stress", "baseline",
-        "oral"]
+dict_ordo = load_bioportal_dictionary("{}ordo.csv".format(DICT_ROOT))
+dict_doid = load_bioportal_dictionary("{}DOID.csv".format(DICT_ROOT))
+dict_hp   = load_bioportal_dictionary("{}HP.csv".format(DICT_ROOT))
+dict_ctd  = load_ctd_dictionary("{}CTD_diseases.tsv".format(DICT_ROOT))
 
-    # From error analysis
-    vague += [
-        "placebo", "hepatitis", "mediated", "therapeutic", "purpose", "block", "various", "active", "medication", 
-        "dopaminergic", "prevent", "blockade", "conclude", "mouse", "acid", "support", "medications", "lipid",
-        "lipids", "prolactin", "neuronal", "central nervous system", "water", "tonic", "task", "basis", "topical",
-        "hemoglobin", "diagnostic", "pressor", "compound", "solution", "hg", "nervous system", "hepatitis b",
-        "analgesic", "triad", "anti-inflammatory", "opioid", "metabolites", "adrenoceptor", "immunosuppressive",
-        "prophylactic", "unknown", "antioxidant", "anticonvulsant", "inhibitors", "food", "anesthetic",
-        "antiarrhythmic", "retinal", "complex", "antibody", "combinations", "antiepileptic", "component",
-        "contrast", "stopping", "chemical", "label", "sham", "salt", "transcript", "s-1", "glucocorticoid",
-        "glucocorticoids"]
+# ==================================================================
+# Manually Created Dictionaries
+# ==================================================================
+# The goal is to minimize this part as much as possible
+# IDEALLY we should build these from the above external curated resources
+# Otherwise these are put together using Wikipedia and training set debugging
 
-    stopwords.update(dict.fromkeys(diseases))
-    stopwords.update(dict.fromkeys(vague))
+# Common disease acronyms
+fname = "{}common_disease_acronyms.txt".format(DICT_ROOT)
+dict_common_disease_acronyms = dict.fromkeys([l.strip() for l in open(fname,"rU")])
 
-    chemicals = {t.lower().strip():1 for t in chemicals if t.lower().strip() not in [i.lower() for i in stopwords.keys()] and len(t) > 1}
-    acronyms = {t.strip():1 for t in acronyms if t.strip() not in stopwords and len(t) > 1}
-    ban = [
-        "antagonist", "receptor", "agonist", "transporter", "channel", "monohydrate", "phosphokinase", "kinase"]
-    ban += [
-        "drug", "control", "related", "animals", "injection", "level", "duration", "baseline", "agent", "stress", 
-        "liposomal", "vehicle", "total", "pain"]
+fname = "{}stopwords.txt".format(DICT_ROOT)
+dict_stopwords = dict.fromkeys([l.strip() for l in open(fname,"rU")])
 
-    # filter out some noisy dictionary matches
-    for phrase in chemicals.keys():
-        check=False
-        for i in ban:
-            if i.lower() in phrase.lower():
-                check=True
-                break
-        if phrase.endswith('ic'):
-            check=True
-        if phrase.endswith('+'):
-            check=True
-        a=phrase.lower().split()
-        if len(a)==2 and a[0].isdigit() and a[1]=='h':
-            check=True
-        if check:
-            del chemicals[phrase]
+fname = "{}manual_stopwords.txt".format(DICT_ROOT)
+dict_common_stopwords = dict.fromkeys([l.strip() for l in open(fname,"rU")])
 
-    acronyms.update(dict.fromkeys([
-        "CaCl(2)", "PAN", "SNP", "K", "AX", "VPA", "PG-9", "SRL", "ISO", "CAA", "CBZ", "CPA", 
-        "GEM", "CY", "OC", "Ca", "PTZ", "NMDA", "H2O", "CsA", "DA", "GSH", "HBsAg", "Rg1"]))
-
-    chemicals.update(dict.fromkeys([
-        "glutamate", "aspartate", "creatine", "angiotensin", "glutathione", "srl", "dex", "tac",
-        "cya", "l-dopa", "hbeag", "argatroban", "melphalan", "cyclosporine", "enalapril", 
-        "l-arginine", "vasopressin", "cyclosporin a", "n-methyl-d-aspartate", "ace inhibitor", 
-        "oral contraceptives", "l-name", "alanine", "amino acid", "lisinopril", "tyrosine", 
-        "fenfluramines", "beta-carboline", "glutamine", "octreotide", "antidepressant"]))
-    
-    # Filter empty / single-char entries + convert to list
-    chemicals = [c for c in chemicals.keys() if len(c) > 1]
-    acronyms  = [a for a in acronyms.keys() if len(a) > 1]
-
-    # Filter integers
-    chemicals = filter(lambda x : not x.isdigit(), chemicals)
-    acronyms  = filter(lambda x : not x.isdigit(), acronyms)
-
-    return chemicals, acronyms
+# not disease name for this tasks
+dict_common_stopwords.update(dict.fromkeys(["disease", "diseases", "syndrome", "syndromes", "disorder",
+                                            "disorders", "damage", "infection", "bleeding", "injury"]))
 
 
-if __name__ == '__main__':
+diseases = umls_disease_terms.dictionary(min_size=50)
+abbrvs = umls_disease_abbrvs.dictionary(min_size=50)
+stop_entities = umls_stop_terms.dictionary(min_size=50)
 
-    # Save diseases dictionary
-    print 'Compiling disease dictionary...'
-    disease_phrases = load_disease_dictionary()
-    print 'Loaded:', len(disease_phrases)
-    open(ROOT + '/disease_phrases.txt', 'w+').write('\n'.join(disease_phrases))
+diseases.update(dict_ordo)
+diseases.update(dict_doid)
+diseases.update(dict_hp)
+diseases.update(dict_ctd)
+diseases.update(abbrvs)
 
-    # Save disease acronyms dictionary
-    print 'Compiling disease acronyms...'
-    disease_acronyms = load_disease_acronym_dictionary()
-    print 'Loaded:', len(disease_acronyms)
-    open(ROOT + '/disease_acronyms.txt', 'w+').write('\n'.join(disease_acronyms))
+#
+# Abbreviations/Acronymns
+#
+# FIX UPPERCASE ISSUE WITH NON-ACRONYMS
+# Update with all uppercase terms from diseases
+abbrvs.update({term:1 for term in diseases if term.isupper() and len(term) > 1})
 
-    # Save chemical and chemical acronyms dictionaries
-    print 'Compiling chemical dictionaries...'
-    chemical_phrases, chemical_acronyms = load_chemicals_dictionary()
-    print 'Loaded:', len(chemical_phrases)
-    with open(ROOT + '/chemical_phrases.txt', 'w+') as f:
-        for p in chemical_phrases:
-            try:
-                f.write(p + '\n')
-            except UnicodeEncodeError:
-                pass
-    print 'Loaded:', len(chemical_acronyms)
-    with open(ROOT + '/chemical_acronyms.txt', 'w+') as f:
-        for p in chemical_acronyms:
-            try:
-                f.write(p + '\n')
-            except UnicodeEncodeError:
-                pass
+dict_common_disease_acronyms.update(dict.fromkeys(["TNSs", "LIDs", "TDP", "TMA", "TG", "SE", "ALF", "CHC", "RPN", "HITT",
+                                                   "VTE", "HEM", "NIN", "LID", "CIMD", "MAHA", "LID", "CIMD", "MAHA"]))
+abbrvs.update(dict.fromkeys(dict_common_disease_acronyms))
+
+
+# remove stopwords and stop entity types
+stopwords = dict_stopwords
+stopwords.update({term.lower():1 for term in stop_entities})
+stopwords.update(dict.fromkeys(dict_common_stopwords))
+
+disease_or_syndrome = umls_disease_terms.dictionary(semantic_types=["disease_or_syndrome"])
+stopwords.update(get_umls_stopwords(keep_words=disease_or_syndrome))
+
+stopwords.update(dict.fromkeys(inheritance))
+
+diseases = {t.lower().strip():1 for t in diseases if t.lower().strip() not in stopwords and len(t) > 1}
+
+diseases = {t.lower().strip():1 for t in diseases if not t.lower().strip().startswith('heparin-induced')}
+abbrvs = {t:1 for t in abbrvs if len(t) > 1 and t not in stopwords}
+
+# we have these in the UMLS -- why do they get stripped out?
+diseases.update(dict.fromkeys(["melanoma", "qt prolongation", "seizure", "overdose", "tdp"]))
+
+# general disease
+diseases.update(dict.fromkeys(["pain", "hypertension", "hypertensive", "depression", "depressive", "depressed",
+                               "bleeding", "infection", "poisoning", "anxiety", "deaths", "startle"]))
+
+# common disease
+diseases.update(dict.fromkeys(['parkinsonian', 'convulsive', 'leukocyturia', 'bipolar', 'pseudolithiasis',
+                               'malformations', 'angina', 'dysrhythmias', 'calcification', 'paranoid', 'hiv-infected']))
+
+# adj disease
+diseases.update(dict.fromkeys(['acromegalic', 'akinetic', 'allergic', 'arrhythmic', 'arteriopathic', 'asthmatic',
+                               'atherosclerotic', 'bradycardic', 'cardiotoxic', 'cataleptic', 'cholestatic',
+                               'cirrhotic', 'diabetic', 'dyskinetic', 'dystonic', 'eosinophilic', 'epileptic',
+                               'exencephalic', 'haemorrhagic', 'hemolytic', 'hemorrhagic', 'hemosiderotic', 'hepatotoxic'
+                               'hyperalgesic', 'hyperammonemic', 'hypercalcemic', 'hypercapnic', 'hyperemic',
+                               'hyperkinetic', 'hypertrophic', 'hypomanic', 'hypothermic', 'ischaemic', 'ischemic',
+                               'leukemic', 'myelodysplastic', 'myopathic', 'necrotic', 'nephrotic', 'nephrotoxic',
+                               'neuropathic', 'neurotoxic', 'neutropenic', 'ototoxic', 'polyuric', 'proteinuric',
+                               'psoriatic', 'psychiatric', 'psychotic', 'quadriplegic', 'schizophrenic', 'teratogenic',
+                               'thromboembolic', 'thrombotic', 'traumatic', 'vasculitic']))
+
+# remove disease name like chronic renal failure (CRF)
+for d in diseases.keys():
+    if d[-1]==')':
+        s=d.split(' (')
+        if len(s)==2:
+            s1,s2=s[0],s[1][:-1]
+            s3=''.join([i[0] for i in s1.replace('-', ' ').split()]).lower()
+            if s2.lower()==s3.lower():
+                del diseases[d]
+                diseases[s1]=1
+                abbrvs[s2.upper()]=1
+            s3=''.join([i[0] for i in s1.split()]).lower()
+            if s2.lower()==s3.lower() and d in diseases:
+                del diseases[d]
+                diseases[s1]=1
+                abbrvs[s2.upper()]=1
+
+# remove disease name contains general term
+for d in diseases.keys():
+    if d.lower().split()[0] in ['generalized', 'metastatic', 'recurrent', 'complete', 'immune']:
+        del diseases[d]
+
+diseases = pd.Series(diseases.keys())
+diseases.to_csv(DICT_ROOT + 'disease_names.csv', encoding='utf-8')
+
+abbrvs = pd.Series(abbrvs.keys())
+abbrvs.to_csv(DICT_ROOT + 'disease_abbrvs.csv', encoding='utf-8')
+
+# #
+# # DISEASE WITH BODY PART
+# #
+# #
+body_part = UmlsNoiseAwareDict(positive=["Body Part, Organ, or Organ Component", "Body Location or Region"],
+                                name="*", ignore_case=True).dictionary()
+
+specical_body_part = ['back']
+
+functional_concept = {t.lower():1 for t in body_part if len(t) > 1 and
+                      t.lower() not in stopwords and not t.isdigit()}
+
+disease_pattern = ["disease", "diseases", "syndrome", "syndromes", "disorder", "disorders", "damage", "infection",
+       "lesion", "lesions", "impairment", "impairments", "failure", "failures", "occlusion", "occlusions",
+       "dysfunction", "dysfunctions", "toxicity", "injury", "carcinoma", "carcinomas", "thrombosis", "cancer",
+       "cancers", "block", "pain"]
+
+timestamp = ["end-stage", "acute", "chronic", "congestive"]
+
+conjunction = ["and", "or", "and/or"]
+
+body_part.update(functional_concept)
+
+body_part = pd.Series(body_part.keys())
+body_part.to_csv(DICT_ROOT + 'body_parts.csv', encoding='utf-8')

@@ -4484,7 +4484,6 @@ Mutagenic Process
 EGFR NP_005219.2:p.Pro772_His773insGlnVal
 CD332 c.1647T>A
 CD332 c.1647T>G
-uniparental disomy
 EGFR p.E746_A750del
 KI-RAS c.34G>A
 KI-RAS c.34G>C
@@ -5016,7 +5015,6 @@ BRAF NM_004333.4:c.1405G>C
 Mutation, Suppressor
 Chromosome Inversion
 KRAS2 c.180_181TC>CA
-Uniparental disomy
 EGFR NP_005219.2:p.Ala750_Lys757del
 ERBB c.2310_2311insAACCCCCAC
 KRAS NP_004976.2:p.G13D
@@ -5413,7 +5411,6 @@ KRAS c.180_181delTCinsCA
 reciprocal translocation
 Axon Reactions
 ECT1 c.1115C>G
-Uniparental Disomy
 cabot rings
 KRAS p.Gly13Ala
 NRAS c.182_183AA>TG
@@ -5849,7 +5846,6 @@ NM_004985.3:c.35_36GT>AA
 NM_004985.3:c.35_36GT>AG
 NM_004985.3:c.34_35GG>TT
 NM_004985.3:c.34_35GG>TA
-DM
 NP_005219.2:p.Gly719fs*29
 NM_005228.3:c.2250_2273del24
 NP_005219.2:p.D770_N771insNPH

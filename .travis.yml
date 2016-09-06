@@ -81,10 +81,10 @@ script:
 
   # Run notebooks end-to-end
   - travis_wait 30 runipy tutorial/CDR_Tutorial_1.ipynb
-  - travis_wait 30 runipy tutorial/CDR_Tutorial_2.ipynb
-  - travis_wait 30 runipy tutorial/CDR_Tutorial_3.ipynb
-  - travis_wait 30 runipy tutorial/CDR_Tutorial_4.ipynb
-  - travis_wait 30 runipy tutorial/CDR_Tutorial_5.ipynb
+  - travis_wait 60 runipy tutorial/CDR_Tutorial_2.ipynb
+  - travis_wait 45 runipy tutorial/CDR_Tutorial_3.ipynb
+  - travis_wait 45 runipy tutorial/CDR_Tutorial_4.ipynb
+  - travis_wait 45 runipy tutorial/CDR_Tutorial_5.ipynb
 
   # Run test modules
 #  - coverage run -p test/Tests.py

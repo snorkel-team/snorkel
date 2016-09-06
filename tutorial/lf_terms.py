@@ -149,3 +149,14 @@ negative_indicator = ["indicated", "patients", "controlled", "died", "fatal", "n
                       "sedation", "effect", "surgery", "creatinine", "exposure", "chemotherapy", "examined",
                       "long-term", "combination", "reduced", "injection", "response", "severe", "case", "therapy", "pressure",
                       "pressures", "use", "used"]
+
+adj_diseases = ['acromegalic', 'akinetic', 'allergic', 'arrhythmic', 'arteriopathic', 'asthmatic', 
+                'atherosclerotic', 'bradycardic', 'cardiotoxic', 'cataleptic', 'cholestatic', 
+                'cirrhotic', 'diabetic', 'dyskinetic', 'dystonic', 'eosinophilic', 'epileptic', 
+                'exencephalic', 'haemorrhagic', 'hemolytic', 'hemorrhagic', 'hemosiderotic', 'hepatotoxic'
+                'hyperalgesic', 'hyperammonemic', 'hypercalcemic', 'hypercapnic', 'hyperemic', 
+                'hyperkinetic', 'hypertrophic', 'hypomanic', 'hypothermic', 'ischaemic', 'ischemic', 
+                'leukemic', 'myelodysplastic', 'myopathic', 'necrotic', 'nephrotic', 'nephrotoxic', 
+                'neuropathic', 'neurotoxic', 'neutropenic', 'ototoxic', 'polyuric', 'proteinuric', 
+                'psoriatic', 'psychiatric', 'psychotic', 'quadriplegic', 'schizophrenic', 'teratogenic', 
+                'thromboembolic', 'thrombotic', 'traumatic', 'vasculitic']

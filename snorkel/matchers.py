@@ -1,5 +1,4 @@
 import re
-from itertools import chain
 import warnings
 try:
     from nltk.stem.porter import PorterStemmer
@@ -16,7 +15,7 @@ class Matcher(object):
     def __init__(self, *children, **opts):
         self.children           = children
         self.opts               = opts
-        self.longest_match_only = self.opts.get('longest_match_only', False)
+        self.longest_match_only = self.opts.get('longest_match_only', True)
         self.init()
         self._check_opts()
 
@@ -87,6 +86,7 @@ class DictionaryMatch(NgramMatcher):
     def init(self):
         self.ignore_case = self.opts.get('ignore_case', True)
         self.attrib      = self.opts.get('attrib', WORDS)
+        self.reverse     = self.opts.get('reverse', False)
         try:
             self.d = frozenset(w.lower() if self.ignore_case else w for w in self.opts['d'])
         except KeyError:
@@ -111,7 +111,21 @@ class DictionaryMatch(NgramMatcher):
         p = c.get_attrib_span(self.attrib)
         p = p.lower() if self.ignore_case else p
         p = self._stem(p) if self.stemmer is not None else p
-        return True if p in self.d else False
+        return (not self.reverse) if p in self.d else self.reverse
+
+class LambdaFunctionMatch(NgramMatcher):
+    """Selects candidate Ngrams that match against a given list d"""
+    def init(self):
+        self.ignore_case = self.opts.get('ignore_case', True)
+        self.attrib      = self.opts.get('attrib', WORDS)
+        try:
+            self.func = self.opts['func']
+        except KeyError:
+            raise Exception("Please supply a dictionary (list of phrases) d as d=d.")
+    
+    def _f(self, c):
+        """The internal (non-composed) version of filter function f"""
+        return self.func(c)
 
 
 class Union(NgramMatcher):
@@ -144,7 +158,7 @@ class Concat(NgramMatcher):
             return True
 
         # Iterate over candidate splits **at the word boundaries**
-        for wsplit in range(c.word_start+1, c.word_end+1):
+        for wsplit in range(c.get_word_start()+1, c.get_word_end()+1):
             csplit = c.word_to_char_index(wsplit) - c.char_start  # NOTE the switch to **candidate-relative** char index
 
             # Optionally check for specific separator
@@ -172,12 +186,17 @@ class SlotFillMatch(NgramMatcher):
         self._ops    = map(int, split[1::2])
         self._splits = split[::2]
 
+        # NOTE: Must have non-null splits!!
+        if any([len(s) == 0 for s in self._splits[1:-1]]):
+            raise ValueError("SlotFillMatch must have non-empty split patterns to function currently.")
+
         # Check for correct number of child matchers / slots
         if len(self.children) != len(set(self._ops)):
             raise ValueError("Number of provided matchers (%s) != number of slots (%s)." \
                     % (len(self.children), len(set(self._ops))))
 
     def f(self, c):
+
         # First, filter candidates by matching splits pattern
         m = re.match(r'(.+)'.join(self._splits) + r'$', c.get_attrib_span(self.attrib))
         if m is None:
@@ -213,33 +232,18 @@ class RegexMatch(NgramMatcher):
 class RegexMatchSpan(RegexMatch):
     """Matches regex pattern on **full concatenated span**"""
     def _f(self, c):
+        s = c.get_attrib_span(self.attrib, sep=self.sep)
+        tokens = c.get_attrib_tokens("words")
+        #if "-LRB-" in tokens or "-RRB-" in tokens:
+        #    print s, "**{}**".format(self.r.match(s))
+        #    print tokens
+        #    print [c.char_start, c.char_end]
+        #    print '----------------'
         return True if self.r.match(c.get_attrib_span(self.attrib, sep=self.sep)) is not None else 0
 
 
 class RegexMatchEach(RegexMatch):
     """Matches regex pattern on **each token**"""
     def _f(self, c):
-        return True if all([self.r.match(t) is not None for t in c.get_attrib_tokens(self.attrib)]) else 0
-
-
-class NumberMatcher(Matcher):
-    def _f(self, c):
-        try:
-            float(c.get_attrib_span('words'))
-            return True
-        except:
-            return False
-
-
-class CandidateExtractor(object):
-    """Temporary class for interfacing with the post-candidate-extraction code"""
-    def __init__(self, candidate_space, matcher):
-        self.candidate_space = candidate_space
-        self.matcher         = matcher
-
-    def apply(self, s):
-        for c in self.matcher.apply(self.candidate_space.apply(s)):
-            try:
-                yield range(c.word_start, c.word_end+1), 'MATCHER'
-            except:
-                raise Exception("Candidate must have word_start and word_end attributes.")
+        tokens = c.get_attrib_tokens(self.attrib)
+        return 1 if tokens and all([self.r.match(t) is not None for t in tokens]) else 0

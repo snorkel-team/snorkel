@@ -1,1 +1,0 @@
-Genomic mutation consequence calculator.

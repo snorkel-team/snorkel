@@ -1,1 +1,0 @@
-GenotypeColour: colour visualisation of SNPs and CNVs

@@ -1,26 +1,52 @@
 # -*- coding: utf-8 -*-
 
+from .models import Corpus, Document, Sentence, construct_stable_id
 import atexit
-import glob
-import json
-import os
-import re
-import requests
-import signal
-import sys
 import warnings
 from bs4 import BeautifulSoup
-from collections import namedtuple, defaultdict
-from subprocess import Popen
+from collections import defaultdict
+import glob
+import json
 import lxml.etree as et
-from itertools import chain
+import os
+import re
+import codecs
+import requests
+import signal
+from subprocess import Popen
+import sys
+import codecs
+from .utils import sort_X_on_Y
 
-Document = namedtuple('Document', ['id', 'file', 'text', 'attribs'])
+
+class CorpusParser:
+    """Invokes a DocParser and runs the output through a SentenceParser to produce a Corpus."""
+    def __init__(self, doc_parser, sent_parser, max_docs=None):
+        self.doc_parser = doc_parser
+        self.sent_parser = sent_parser
+        self.max_docs = max_docs
+
+    def parse_corpus(self, name, session=None):
+        corpus = Corpus(name=name)
+        if session is not None:
+            session.add(corpus)
+        for i, (doc, text) in enumerate(self.doc_parser.parse()):
+            if self.max_docs and i == self.max_docs:
+                break
+            corpus.append(doc)
+            for _ in self.sent_parser.parse(doc, text):
+                pass
+        if session is not None:
+            session.commit()
+        corpus.stats()
+        return corpus
+
 
 class DocParser:
     """Parse a file or directory of files into a set of Document objects."""
-    def __init__(self, path):
+    def __init__(self, path, encoding="utf-8"):
         self.path = path
+        self.encoding = encoding
 
     def parse(self, decoding='utf-8'):
         """
@@ -30,22 +56,14 @@ class DocParser:
         - Output: A set of Document objects, which at least have a _text_ attribute,
                   and possibly a dictionary of other attributes.
         """
-        seen_ids = set()
         for fp in self._get_files():
             file_name = os.path.basename(fp)
             if self._can_read(file_name):
-                for doc in self.parse_file(fp, file_name):
+                for doc, text in self.parse_file(fp, file_name):
+                    yield doc, text
 
-                    # Ensure proper encoding
-                    if decoding is not None:
-                        doc = doc._replace(text=doc.text.decode(decoding))
-
-                    # Check for null or non-unique docid
-                    if doc.id is None or doc.id in seen_ids:
-                        raise ValueError("Documents must have unique, non-null ids!")
-                    else:
-                        seen_ids.add(doc.id)
-                        yield doc
+    def get_stable_id(self, doc_id):
+        return "%s::document:0:0" % doc_id
 
     def parse_file(self, fp, file_name):
         raise NotImplementedError()
@@ -69,9 +87,11 @@ class DocParser:
 class TextDocParser(DocParser):
     """Simple parsing of raw text files, assuming one document per file"""
     def parse_file(self, fp, file_name):
-        with open(fp, 'rb') as f:
-            id = re.sub(r'\..*$', '', os.path.basename(fp))
-            yield Document(id=id, file=file_name, text=f.read(), attribs={})
+        with codecs.open(fp, 'rb', self.encoding, errors="ignore") as f:
+            name      = re.sub(r'\..*$', '', os.path.basename(fp))
+            stable_id = self.get_stable_id(name)
+            yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), f.read()
+
 
 class HTMLDocParser(DocParser):
     """Simple parsing of raw HTML files, assuming one document per file"""
@@ -80,8 +100,9 @@ class HTMLDocParser(DocParser):
             html = BeautifulSoup(f, 'lxml')
             txt = filter(self._cleaner, html.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
-            id = re.sub(r'\..*$', '', os.path.basename(fp))
-            yield Document(id=id, file=file_name, text=txt, attribs={})
+            name = re.sub(r'\..*$', '', os.path.basename(fp))
+            stable_id = self.get_stable_id(name)
+            yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), txt
 
     def _can_read(self, fpath):
         return fpath.endswith('.html')
@@ -96,9 +117,10 @@ class HTMLDocParser(DocParser):
     def _strip_special(self, s):
         return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
 
-class XMLDocParser(DocParser):
+
+class XMLMultiDocParser(DocParser):
     """
-    Parse an XML file or directory of XML files into a set of Document objects.
+    Parse an XML file _which contains multiple documents_ into a set of Document objects.
 
     Use XPath queries to specify a _document_ object, and then for each document,
     a set of _text_ sections and an _id_.
@@ -107,7 +129,7 @@ class XMLDocParser(DocParser):
     """
     def __init__(self, path, doc='.//document', text='./text/text()', id='./id/text()',
                     keep_xml_tree=False):
-        self.path = path
+        DocParser.__init__(self, path)
         self.doc = doc
         self.text = text
         self.id = id
@@ -115,21 +137,22 @@ class XMLDocParser(DocParser):
 
     def parse_file(self, f, file_name):
         for i,doc in enumerate(et.parse(f).xpath(self.doc)):
-            text = '\n'.join(filter(lambda t : t is not None, doc.xpath(self.text)))
-            ids = doc.xpath(self.id)
-            id = ids[0] if len(ids) > 0 else None
-            attribs = {'root':doc} if self.keep_xml_tree else {}
-            yield Document(id=str(id), file=str(file_name), text=str(text), attribs=attribs)
+            doc_id = str(doc.xpath(self.id)[0])
+            text   = '\n'.join(filter(lambda t : t is not None, doc.xpath(self.text)))
+            meta = {'file_name': str(file_name)}
+            if self.keep_xml_tree:
+                meta['root'] = et.tostring(doc)
+            stable_id = self.get_stable_id(doc_id)
+            yield Document(name=doc_id, stable_id=stable_id, meta=meta), text
 
     def _can_read(self, fpath):
         return fpath.endswith('.xml')
 
 
-Sentence = namedtuple('Sentence', ['id', 'words', 'lemmas', 'poses', 'dep_parents',
-                                   'dep_labels', 'sent_id', 'doc_id', 'text',
-                                   'char_offsets', 'doc_name'])
+PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
+         '-RSB-': ']', '-LSB-': '['}
 
-class SentenceParser:
+class CoreNLPHandler:
     def __init__(self, tok_whitespace=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
@@ -157,28 +180,27 @@ class SentenceParser:
                         backoff_factor=0.1,
                         status_forcelist=[ 500, 502, 503, 504 ])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
-
-
+    
     def _kill_pserver(self):
         if self.server_pid is not None:
             try:
-              os.kill(self.server_pid, signal.SIGTERM)
+                os.kill(self.server_pid, signal.SIGTERM)
             except:
-              sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
+                sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
-    def parse(self, s, doc_id=None, doc_name=None):
+    def parse(self, document, text):
         """Parse a raw document as a string into a list of sentences"""
-        if len(s.strip()) == 0:
+        if len(text.strip()) == 0:
             return
-        if isinstance(s, unicode):
-            s = s.encode('utf-8')
-        resp = self.requests_session.post(self.endpoint, data=s, allow_redirects=True)
-        s = s.decode('utf-8')
+        if isinstance(text, unicode):
+          text = text.encode('utf-8')
+        resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
+        text = text.decode('utf-8')
         content = resp.content.strip()
         if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
-          raise ValueError("File {} too long. Max character count is 100K".format(doc_id))
+          raise ValueError("File {} too long. Max character count is 100K".format(document.id))
         blocks = json.loads(content, strict=False)['sentences']
-        sent_id = 0
+        position = 0
         diverged = False
         for block in blocks:
             parts = defaultdict(list)
@@ -191,106 +213,42 @@ class SentenceParser:
                 dep_par.append(deps['governor'])
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])
+
+            # make char_offsets relative to start of sentence
+            abs_sent_offset = parts['char_offsets'][0]
+            parts['char_offsets'] = [p - abs_sent_offset for p in parts['char_offsets']]
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
-            parts['sent_id'] = sent_id
-            parts['doc_id'] = doc_id
 
             # NOTE: We have observed weird bugs where CoreNLP diverges from raw document text (see Issue #368)
             # In these cases we go with CoreNLP so as not to cause downstream issues but throw a warning
-            doc_text = s[block['tokens'][0]['characterOffsetBegin'] : block['tokens'][-1]['characterOffsetEnd']]
+            doc_text = text[block['tokens'][0]['characterOffsetBegin'] : block['tokens'][-1]['characterOffsetEnd']]
             L = len(block['tokens'])
             parts['text'] = ''.join(t['originalText'] + t['after'] if i < L - 1 else t['originalText'] for i,t in enumerate(block['tokens']))
             if not diverged and doc_text != parts['text']:
                 diverged = True
                 warnings.warn("CoreNLP parse has diverged from raw document text!")
-            parts['doc_name'] = doc_name
-            parts['id'] = "%s-%s" % (parts['doc_id'], parts['sent_id'])
-            sent = Sentence(**parts)
-            sent_id += 1
-            yield sent
+            parts['position'] = position
+            
+            # replace PennTreeBank tags with original forms
+            parts['words'] = [PTB[w] if w in PTB else w for w in parts['words']]
+            parts['lemmas'] = [PTB[w.upper()] if w.upper() in PTB else w for w in parts['lemmas']]
 
-    def parse_docs(self, docs):
-        """Parse a list of Document objects into a list of pre-processed Sentences."""
-        sents = []
-        for doc in docs:
-            for sent in self.parse(doc.text, doc.id, doc.file):
-                sents.append(sent)
-        return sents
+            # Link the sentence to its parent document object
+            parts['document'] = document
 
-def sort_X_on_Y(X, Y):
-    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
-
-def corenlp_cleaner(words):
-  d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
-       '-RSB-': ']', '-LSB-': '['}
-  return map(lambda w: d[w] if w in d else w, words)
+            # Assign the stable id as document's stable id plus absolute character offset
+            abs_sent_offset_end = abs_sent_offset + parts['char_offsets'][-1] + len(parts['words'][-1])
+            parts['stable_id'] = construct_stable_id(document, 'sentence', abs_sent_offset, abs_sent_offset_end)
+            position += 1
+            yield parts
 
 
-class Corpus(object):
-    """
-    A Corpus object helps instantiate and then holds a set of Documents and associated Contexts
-    Default iterator is over (Document, Contexts) tuples
-    """
-    def __init__(self, doc_parser, context_parser, max_docs=None):
+class SentenceParser(object):
+    def __init__(self, tok_whitespace=False):
+        self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace)
 
-        # Parse documents
-        print "Parsing documents..."
-        self._docs_by_id = {}
-        for i,doc in enumerate(doc_parser.parse()):
-            if max_docs and i == max_docs:
-                break
-            self._docs_by_id[doc.id] = doc
-
-        # Parse sentences
-        print "Parsing contexts..."
-        self._contexts_by_id     = {}
-        self._contexts_by_doc_id = defaultdict(list)
-        for context in context_parser.parse_docs(self._docs_by_id.values()):
-            self._contexts_by_id[context.id] = context
-            self._contexts_by_doc_id[context.doc_id].append(context)
-
-    def __iter__(self):
-        """Default iterator is over (document, sentence) tuples"""
-        for doc in self.iter_docs():
-            yield (doc, self.get_contexts_in(doc.id))
-
-    def iter_docs(self):
-        return self._docs_by_id.itervalues()
-
-    def iter_contexts(self):
-        return self._contexts_by_id.itervalues()
-
-    def get_docs(self):
-        return self._docs_by_id.values()
-
-    def get_contexts(self):
-        return self._contexts_by_id.values()
-
-    def get_doc(self, id):
-        return self._docs_by_id[id]
-
-    def get_context(self, id):
-        return self._contexts_by_id[id]
-
-    def get_contexts_in(self, doc_id):
-        return self._contexts_by_doc_id[doc_id]
-
-
-class SentencesCorpus(Corpus):
-    """
-    A Corpus object that accepts method names with "sentence" instead of "context",
-    for backward compatibility's sake.
-    """
-
-    def iter_sentences(self):
-        return self._contexts_by_id.itervalues()
-
-    def get_sentences(self):
-        return self._contexts_by_id.values()
-
-    def get_sentence(self, id):
-        return self._contexts_by_id[id]
-
-    def get_sentences_in(self, doc_id):
-        return self._contexts_by_doc_id[doc_id]
+    def parse(self, doc, text):
+        """Parse a raw document as a string into a list of sentences"""
+        for parts in self.corenlp_handler.parse(doc, text):
+            yield Sentence(**parts)

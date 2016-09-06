@@ -7,12 +7,30 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
         render: function() {
             this.cids   = this.model.get('cids');
             this.nPages = this.cids.length;
-            this.pid = 0;
-            this.cid = 0;
-            this.labels = {};
+            this.pid  = 0;
+            this.cxid = 0;
+            this.cid  = 0;
 
             // Insert the html payload
             this.$el.append(this.model.get('html'));
+
+            // Initialize all labels from previous sessions
+            this.labels = this.deserializeDict(this.model.get('_labels_serialized'));
+            for (var i=0; i < this.nPages; i++) {
+                this.pid = i;
+                for (var j=0; j < this.cids[i].length; j++) {
+                    this.cxid = j;
+                    for (var k=0; k < this.cids[i][j].length; k++) {
+                        this.cid = k;
+                        if (this.cids[i][j][k] in this.labels) {
+                            this.markCurrentCandidate(false);
+                        }
+                    }
+                }
+            }
+            this.pid  = 0;
+            this.cxid = 0;
+            this.cid  = 0;
 
             // Enable button functionality for navigation
             var that = this;
@@ -22,6 +40,12 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             this.$el.find("#prev-cand").click(function() {
                 that.switchCandidate(-1);
             });
+            this.$el.find("#next-context").click(function() {
+                that.switchContext(1);
+            });
+            this.$el.find("#prev-context").click(function() {
+                that.switchContext(-1);
+            });
             this.$el.find("#next-page").click(function() {
                 that.switchPage(1);
             });
@@ -29,10 +53,10 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
                 that.switchPage(-1);
             });
             this.$el.find("#label-true").click(function() {
-                that.labelCandidate(true);
+                that.labelCandidate(true, true);
             });
             this.$el.find("#label-false").click(function() {
-                that.labelCandidate(false);
+                that.labelCandidate(false, true);
             });
 
             // Arrow key functionality
@@ -55,11 +79,11 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
                     break;
 
                     case 84: // t
-                    that.labelCandidate(true);
+                    that.labelCandidate(true, true);
                     break;
 
                     case 70: // f
-                    that.labelCandidate(false);
+                    that.labelCandidate(false, true);
                     break;
                 }
             });
@@ -71,42 +95,146 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
 
         // Get candidate selector for currently selected candidate, escaping id properly
         getCandidate: function() {
-            return this.$el.find("."+this.cids[this.pid][this.cid].replace(/:/g, "\\:"));
+            return this.$el.find("."+this.cids[this.pid][this.cxid][this.cid]);
         },  
+
+        // Color the candidate correctly according to registered label, as well as set highlighting
+        markCurrentCandidate: function(highlight) {
+            var cid  = this.cids[this.pid][this.cxid][this.cid];
+            var tags = this.$el.find("."+cid);
+
+            // Clear color classes
+            tags.removeClass("candidate-h");
+            tags.removeClass("true-candidate");
+            tags.removeClass("true-candidate-h");
+            tags.removeClass("false-candidate");
+            tags.removeClass("false-candidate-h");
+            tags.removeClass("highlighted");
+
+            if (highlight) {
+                if (cid in this.labels) {
+                    tags.addClass(String(this.labels[cid]) + "-candidate-h");
+                } else {
+                    tags.addClass("candidate-h");
+                }
+            
+            // If un-highlighting, leave with first non-null coloring
+            } else {
+                var that = this;
+                tags.each(function() {
+                    var cids = $(this).attr('class').split(/\s+/).map(function(item) {
+                        return parseInt(item);
+                    });
+                    cids.sort();
+                    for (var i in cids) {
+                        if (cids[i] in that.labels) {
+                            var label = that.labels[cids[i]];
+                            $(this).addClass(String(label) + "-candidate");
+                            $(this).removeClass(String(!label) + "-candidate");
+                            break;
+                        }
+                    }
+                });
+            }
+
+            // Extra highlighting css
+            if (highlight) {
+                tags.addClass("highlighted");
+            }
+
+            // Classes for showing direction of relation
+            if (highlight) {
+                this.$el.find("."+cid+"-0").addClass("left-candidate");
+                this.$el.find("."+cid+"-1").addClass("right-candidate");
+            } else {
+                this.$el.find("."+cid+"-0").removeClass("left-candidate");
+                this.$el.find("."+cid+"-1").removeClass("right-candidate");
+            }
+        },
 
         // Cycle through candidates and highlight, by increment inc
         switchCandidate: function(inc) {
             var N = this.cids[this.pid].length
-            if (N == 0) { return false; }
+            var M = this.cids[this.pid][this.cxid].length;
+            if (N == 0 || M == 0) { return false; }
 
             // Clear highlighting from previous candidate
             if (inc != 0) {
-                var cPrev = this.getCandidate();
-                this.setRGBABackgroundOpacity(cPrev, 0.3);
-                cPrev.removeClass("highlighted-candidate");
+                this.markCurrentCandidate(false);
 
                 // Increment the cid counter
-                if (this.cid + inc >= N) {
-                    this.cid = N - 1;
-                } else if (this.cid + inc < 0) {
-                    this.cid = 0;
-                } else {
-                    this.cid += inc;
-                }
-            }
 
-            // Highlight new candidate
-            var cNext = this.getCandidate();
-            this.setRGBABackgroundOpacity(cNext, 1.0);
-            cNext.addClass("highlighted-candidate");
+                // Move to next context
+                if (this.cid + inc >= M) {
+                    while (this.cid + inc >= M) {
+                        
+                        // At last context on page, halt
+                        if (this.cxid == N - 1) {
+                            this.cid = M - 1;
+                            inc = 0;
+                            break;
+                        
+                        // Increment to next context
+                        } else {
+                            inc -= M - this.cid;
+                            this.cxid += 1;
+                            M = this.cids[this.pid][this.cxid].length;
+                            this.cid = 0;
+                        }
+                    }
+
+                // Move to previous context
+                } else if (this.cid + inc < 0) {
+                    while (this.cid + inc < 0) {
+                        
+                        // At first context on page, halt
+                        if (this.cxid == 0) {
+                            this.cid = 0;
+                            inc = 0;
+                            break;
+                        
+                        // Increment to previous context
+                        } else {
+                            inc += this.cid + 1;
+                            this.cxid -= 1;
+                            M = this.cids[this.pid][this.cxid].length;
+                            this.cid = M - 1;
+                        }
+                    }
+                }
+
+                // Move within current context
+                this.cid += inc;
+            }
+            this.markCurrentCandidate(true);
 
             // Push this new cid to the model
-            this.model.set('selected_cid', this.cids[this.pid][this.cid]);
+            this.model.set('_selected_cid', this.cids[this.pid][this.cxid][this.cid]);
             this.touch();
+        },
+
+        // Switch through contexts
+        switchContext: function(inc) {
+            this.markCurrentCandidate(false);
+
+            // Iterate context on this page
+            var M = this.cids[this.pid].length;
+            if (this.cxid + inc < 0) {
+                this.cxid = 0;
+            } else if (this.cxid + inc >= M) {
+                this.cxid = M - 1;
+            } else {
+                this.cxid += inc;
+            }
+
+            // Reset cid and set to first candidate
+            this.cid = 0;
+            this.switchCandidate(0);
         },
 
         // Switch through pages
         switchPage: function(inc) {
+            this.markCurrentCandidate(false);
             this.$el.find(".viewer-page").hide();
             if (this.pid + inc < 0) {
                 this.pid = 0;
@@ -122,28 +250,38 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
 
             // Reset cid and set to first candidate
             this.cid = 0;
+            this.cxid = 0;
             this.switchCandidate(0);
         },
 
         // Label currently-selected candidate
-        labelCandidate: function(label) {
-            var c   = this.getCandidate();
-            var cid = this.cids[this.pid][this.cid];
-            var cl  = String(label) + "-candidate";
-            var cln = String(!label) + "-candidate";
-
-            // Flush css background-color property, so class css not overidden
-            c.css("background-color", "");
+        labelCandidate: function(label, highlighted) {
+            var c    = this.getCandidate();
+            var cid  = this.cids[this.pid][this.cxid][this.cid];
+            var cl   = String(label) + "-candidate";
+            var clh  = String(label) + "-candidate-h";
+            var cln  = String(!label) + "-candidate";
+            var clnh = String(!label) + "-candidate-h";
 
             // Toggle label highlighting
-            if (c.hasClass(cl)) {
+            if (c.hasClass(cl) || c.hasClass(clh)) {
                 c.removeClass(cl);
-                this.setRGBABackgroundOpacity(c, 1.0);
+                c.removeClass(clh);
+                if (highlighted) {
+                    c.addClass("candidate-h");
+                }
                 this.labels[cid] = null;
+                this.send({event: 'delete_label', cid: cid});
             } else {
                 c.removeClass(cln);
-                c.addClass(cl);
+                c.removeClass(clnh);
+                if (highlighted) {
+                    c.addClass(clh);
+                } else {
+                    c.addClass(cl);
+                }
                 this.labels[cid] = label;
+                this.send({event: 'set_label', cid: cid, value: label});
             }
 
             // Set the label and pass back to the model
@@ -160,23 +298,20 @@ define('viewer', ["jupyter-js-widgets"], function(widgets) {
             return s.join();
         },
 
-        // Highlight spans
-        setRGBABackgroundOpacity: function(el, opacity) {
-            var rgx = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*(\d\.\d+)\)/;
-            var m   = rgx.exec(el.css("background-color"));
-
-            // Handle rgb
-            if (m == null) {
-                rgx = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/;
-                m   = rgx.exec(el.css("background-color"));
+        // Deserialization of hash maps
+        deserializeDict: function(s) {
+            var d = {};
+            var entries = s.split(/,/);
+            var kv;
+            for (var i in entries) {
+                kv = entries[i].split(/~~/);
+                if (kv[1] == "true") {
+                    d[kv[0]] = true;
+                } else if (kv[1] == "false") {
+                    d[kv[0]] = false;
+                }
             }
-            if (m != null) {
-                el.css("background-color", "rgba("+m[1]+","+m[2]+","+m[3]+","+opacity+")");
-
-            // TODO: Clean up this hack!!
-            } else {
-                el.css("background-color", "rgba(255,255,0,1)");
-            }
+            return d;
         },
     });
 

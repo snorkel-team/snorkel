@@ -1,4 +1,5 @@
-# Travis CI config for DDlite, a Jupyter/IPython notebook version of DeepDive
+# Travis CI config for Snorkel, a lightweight platform for developing
+# information extraction systems using data programming.
 
 sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
 
@@ -67,19 +68,32 @@ install:
   # Install theano
   - conda install --yes theano
 
+  # Install programs for coverage
+  - pip install coverage
+  - pip install coveralls
+  - pip install codeclimate-test-reporter
+
 script:
+  # Downloads data
+  - cd tutorial
+  - ./download_data.sh
+  - cd ..
+
   # Run notebooks end-to-end
-  # NOTE: Currently some tests (LSTMTests) rely on data produced by these notebooks...
-  - TESTING=true runipy tutorial/CDR_Tutorial.ipynb
-  - runipy examples/GeneTaggerExample_Extraction.ipynb  
-  - runipy examples/GeneTaggerExample_Learning.ipynb
+  - travis_wait 30 runipy tutorial/CDR_Tutorial_1.ipynb
+  - travis_wait 60 runipy tutorial/CDR_Tutorial_2.ipynb
+  - travis_wait 45 runipy tutorial/CDR_Tutorial_3.ipynb
+  - travis_wait 45 runipy tutorial/CDR_Tutorial_4.ipynb
+  - travis_wait 45 runipy tutorial/CDR_Tutorial_5.ipynb
 
   # Run test modules
-  - python test/ParserTests.py
-  - python test/CandidateSpaceTests.py
-  - python test/MatcherTests.py
-  - python test/InferenceTests.py
-  - python test/LSTMTests.py
+#  - coverage run -p test/Tests.py
+#  - coverage combine
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7
+
+after_success:
+  - codecov
+  - coveralls
+  - codeclimate-test-reporter

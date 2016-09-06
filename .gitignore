@@ -5,18 +5,15 @@
 *.pyc
 parser/
 /stanford-corenlp-*
+*.db
+downloads/
 
-/saved_sents.pkl
+# Sphinx
+docs/_build
 
-examples/deepdive
-examples/deepdive-*.tar.gz
-examples/mindtagger.pid
-examples/mindtagger
+# PyCharm
+.idea
 
-/deepdive
-/deepdive-*.tar.gz
-/mindtagger.pid
-/mindtagger
-
-# pickled data from notebooks
-*.pkl
+# Tutorial
+tutorial/data/CDR_*.BioC.xml
+tutorial/data/dicts

@@ -282,7 +282,7 @@ class TemporarySpan(TemporaryContext):
         """Given a word-level index, return the character-level index (offset) of the word's start"""
         return self.parent.char_offsets[wi]
 
-    def get_attrib_tokens(self, a):
+    def get_attrib_tokens(self, a='words'):
         """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""
         return self.parent.__getattribute__(a)[self.get_word_start():self.get_word_end() + 1]
 

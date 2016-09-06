@@ -8,24 +8,12 @@ parser/
 *.db
 downloads/
 
-/saved_sents.pkl
-
-examples/deepdive
-examples/deepdive-*.tar.gz
-examples/mindtagger.pid
-examples/mindtagger
-
-/deepdive
-/deepdive-*.tar.gz
-/mindtagger.pid
-/mindtagger
-
-# pickled data from notebooks
-*.pkl
+# Sphinx
+docs/_build
 
 # PyCharm
 .idea
 
 # Tutorial
 tutorial/data/CDR_*.BioC.xml
-tutorial/data/dicts/CTD_chemicals_diseases.*
+tutorial/data/dicts

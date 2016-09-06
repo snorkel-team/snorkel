@@ -74,18 +74,18 @@ install:
 
 script:
   # Run notebooks end-to-end
-  # NOTE: Currently some tests (LSTMTests) rely on data produced by these notebooks...
-  - TESTING=true runipy tutorial/CDR_Tutorial.ipynb
-  - runipy examples/GeneTaggerExample_Extraction.ipynb  
-  - TESTING=true runipy examples/GeneTaggerExample_Learning.ipynb
+  - TESTING=true runipy tutorial/CDR_Tutorial_1.ipynb
+  - TESTING=true runipy tutorial/CDR_Tutorial_2.ipynb
+  - TESTING=true runipy tutorial/CDR_Tutorial_3.ipynb
+  - TESTING=true runipy tutorial/CDR_Tutorial_4.ipynb
+  - TESTING=true runipy tutorial/CDR_Tutorial_5.ipynb
 
   # Run test modules
-  - coverage run -p test/ParserTests.py
-  - coverage run -p test/CandidateSpaceTests.py
-  - coverage run -p test/MatcherTests.py
-  - coverage run -p test/InferenceTests.py
-  - coverage combine
-  #- python test/LSTMTests.py
+#  - coverage run -p test/ParserTests.py
+#  - coverage run -p test/CandidateSpaceTests.py
+#  - coverage run -p test/MatcherTests.py
+#  - coverage run -p test/InferenceTests.py
+#  - coverage combine
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

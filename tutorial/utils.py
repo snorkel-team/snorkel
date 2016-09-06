@@ -18,7 +18,7 @@ def get_CD_mentions_by_MESHID(doc_xml, sents):
     sent_offsets = [split_stable_id(s.stable_id)[2] for s in sents]
 
     # Get unary mentions of diseases / chemicals
-    unary_mentions = defaultdict(list)
+    unary_mentions = defaultdict(lambda : defaultdict(list))
     annotations = doc_xml.xpath('.//annotation')
     for a in annotations:
 
@@ -49,8 +49,18 @@ def get_CD_mentions_by_MESHID(doc_xml, sents):
         char_end   = char_start + length - 1
         
         # Index by MESH ID as that is how relations refer to
-        unary_mentions[mesh].append((sent, char_start, char_end, txt))
+        unary_mentions[type][mesh].append((sent, char_start, char_end, txt))
     return unary_mentions
+
+
+def get_CID_unary_mentions(doc_xml, doc, type):
+    """
+    Get a set of unary disease mentions in argument-dict format,
+    for ExternalAnnotationsLoader
+    """
+    for mesh_id, ms in get_CD_mentions_by_MESHID(doc_xml, doc.sentences)[type].iteritems():
+        for m in ms:
+            yield {type.lower() : TemporarySpan(parent=m[0], char_start=m[1], char_end=m[2])}
 
 
 def get_CID_relations(doc_xml, doc):
@@ -65,8 +75,8 @@ def get_CID_relations(doc_xml, doc):
     for a in annotations:
         cid = a.xpath('./infon[@key="Chemical"]/text()')[0]
         did = a.xpath('./infon[@key="Disease"]/text()')[0]
-        for chemical in unary_mentions[cid]:
-            for disease in unary_mentions[did]:
+        for chemical in unary_mentions['Chemical'][cid]:
+            for disease in unary_mentions['Disease'][did]:
 
                 # Only take relations in same sentence
                 if chemical[0] == disease[0]:

@@ -1,7 +1,7 @@
 #!/bin/sh
 echo "Unpacking biomedical dictionaries data..."
 rm -rf data/dicts
-tar -zxvf dicts.tar.gz -C data
+tar -zxvf data/dicts.tar.gz -C data
 
 echo "Downloading CDR data..."
 mkdir downloads

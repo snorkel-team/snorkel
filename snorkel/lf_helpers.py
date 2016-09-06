@@ -82,6 +82,25 @@ def contains_token(c, tok, attrib='words'):
     return tok in set(chain.from_iterable(span.get_attrib_tokens(attrib) for span in c.get_arguments()))
 
 
+def get_doc_candidate_spans(c):
+    """
+    Get the Spans in the same document as Candidate c, where these Spans are
+    arguments of Candidates.
+    """
+    # TODO: Fix this to be more efficient and properly general!!
+    spans = list(chain.from_iterable(s.spans for s in c[0].parent.document.sentences))
+    return [s for s in spans if s != c[0]]
+
+
+def get_sent_candidate_spans(c):
+    """
+    Get the Spans in the same Sentence as Candidate c, where these Spans are
+    arguments of Candidates.
+    """
+    # TODO: Fix this to be more efficient and properly general!!
+    return [s for s in c[0].parent.spans if s != c[0]]
+
+
 def get_matches(lf, candidate_set, match_values=[1,-1]):
     """
     A simple helper function to see how many matches (non-zero by default) an LF gets.

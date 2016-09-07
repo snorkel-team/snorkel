@@ -158,6 +158,133 @@ class Sentence(Context):
         return "Sentence" + str((self.document, self.position, self.text))
 
 
+class Table(Context):
+    """A table Context in a Document."""
+    __tablename__ = 'table'
+    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
+    document_id = Column(Integer, ForeignKey('document.id'))
+    document = relationship('Document', backref=backref('tables', cascade='all, delete-orphan'), foreign_keys=document_id)
+    position = Column(Integer, nullable=False)
+    text = Column(Text, nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'table',
+    }
+
+    __table_args__ = (
+        UniqueConstraint(document_id, position),
+    )
+
+    def __repr__(self):
+        return "Table" + str((self.document, self.position, self.text))
+
+
+class Cell(Context):
+    """A cell Context in a Document."""
+    __tablename__ = 'cell'
+    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
+    document_id = Column(Integer, ForeignKey('document.id'))
+    table_id = Column(Integer, ForeignKey('table.id'))
+    document = relationship('Document', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=document_id)
+    table = relationship('Table', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=table_id)
+    position = Column(Integer, nullable=False)
+    text = Column(Text, nullable=False)
+    row_num = Column(Integer)
+    col_num = Column(Integer)
+    html_tag = Column(Text)
+    if snorkel_postgres:
+        html_attrs = Column(postgresql.ARRAY(String))
+        html_anc_tags = Column(postgresql.ARRAY(String))
+        html_anc_attrs = Column(postgresql.ARRAY(String))
+    else:
+        html_attrs = Column(PickleType)
+        html_anc_tags = Column(PickleType)
+        html_anc_attrs = Column(PickleType)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'cell',
+    }
+
+    __table_args__ = (
+        UniqueConstraint(document_id, table_id, position),
+    )
+
+    def __repr__(self):
+        return "Cell" + str((self.document, self.table, self.position, self.text))
+
+
+class Phrase(Context):
+    """A phrase Context in a Document."""
+    __tablename__ = 'phrase'
+    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
+    document_id = Column(Integer, ForeignKey('document.id'))
+    table_id = Column(Integer, ForeignKey('table.id'))
+    cell_id = Column(Integer, ForeignKey('cell.id'))
+    document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
+    table = relationship('Table', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=table_id)
+    cell = relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=cell_id)
+    position = Column(Integer, nullable=False)
+    text = Column(Text, nullable=False)
+    # table_num = Column(Integer)
+    # cell_num = Column(Integer)
+    row_num = Column(Integer)
+    col_num = Column(Integer)
+    html_tag = Column(Text)
+    if snorkel_postgres:
+        html_attrs = Column(postgresql.ARRAY(String))
+        html_anc_tags = Column(postgresql.ARRAY(String))
+        html_anc_attrs = Column(postgresql.ARRAY(String))
+        words = Column(postgresql.ARRAY(String), nullable=False)
+        char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
+        lemmas = Column(postgresql.ARRAY(String))
+        poses = Column(postgresql.ARRAY(String))
+        dep_parents = Column(postgresql.ARRAY(Integer))
+        dep_labels = Column(postgresql.ARRAY(String))
+    else:
+        html_attrs = Column(PickleType)
+        html_anc_tags = Column(PickleType)
+        html_anc_attrs = Column(PickleType)
+        words = Column(PickleType, nullable=False)
+        char_offsets = Column(PickleType, nullable=False)
+        lemmas = Column(PickleType)
+        poses = Column(PickleType)
+        dep_parents = Column(PickleType)
+        dep_labels = Column(PickleType)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'phrase',
+    }
+
+    __table_args__ = (
+        UniqueConstraint(document_id, table_id, cell_id, position),
+    )
+
+    def _asdict(self):
+        return {
+            'id': self.id,
+            'document': self.document,
+            'position': self.position,
+            'text': self.text,
+            'table_num': self.table_num,
+            'cell_num': self.cell_num,
+            'row_num': self.row_num,
+            'col_num': self.col_num,
+            'html_tag': self.html_tag,
+            'html_attrs': self.html_attrs,
+            'html_anc_tags': self.html_anc_tags,
+            'html_anc_attrs': self.html_anc_attrs,
+            'words': self.words,
+            'char_offsets': self.char_offsets,
+            'lemmas': self.lemmas,
+            'poses': self.poses,
+            'dep_parents': self.dep_parents,
+            'dep_labels': self.dep_labels
+        }
+
+    def __repr__(self):
+        return "Phrase" + str((self.document, self.position, self.text))
+
+
 class TemporaryContext(object):
     """
     A context which does not incur the overhead of a proper ORM-based Context object.
@@ -367,9 +494,9 @@ class Span(Context, TemporarySpan):
 def split_stable_id(stable_id):
     """
     Split stable id, returning:
-        * Document (root) stable ID
+        * Parent (root) stable ID
         * Context polymorphic type
-        * Character offset start, end *relative to document start*
+        * Character offset start, end *relative to parent start*
     Returns tuple of four values.
     """
     split1 = stable_id.split('::')
@@ -382,7 +509,7 @@ def split_stable_id(stable_id):
 
 def construct_stable_id(parent_context, polymorphic_type, relative_char_offset_start, relative_char_offset_end):
     """Contruct a stable ID for a Context given its parent and its character offsets relative to the parent"""
-    doc_id, _, parent_doc_char_start, _ = split_stable_id(parent_context.stable_id)
-    start = parent_doc_char_start + relative_char_offset_start
-    end   = parent_doc_char_start + relative_char_offset_end
-    return "%s::%s:%s:%s" % (doc_id, polymorphic_type, start, end)
+    parent_id, _, parent_char_start, _ = split_stable_id(parent_context.stable_id)
+    start = parent_char_start + relative_char_offset_start
+    end   = parent_char_start + relative_char_offset_end
+    return "%s::%s:%s:%s" % (parent_id, polymorphic_type, start, end)

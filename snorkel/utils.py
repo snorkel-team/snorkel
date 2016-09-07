@@ -105,3 +105,26 @@ def corenlp_cleaner(words):
   d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
        '-RSB-': ']', '-LSB-': '['}
   return map(lambda w: d[w] if w in d else w, words)
+
+
+def split_html_attrs(attrs):
+    """
+    Given an iterable object of (attr, values) pairs, returns a list of separated
+    "attr=value" strings
+    """
+    html_attrs = []
+    for a in attrs:
+        attr = a[0]
+        values = [v.split(';') for v in a[1]] if isinstance(a[1],list) else [a[1].split(';')]
+        for i in range(len(values)):
+            while isinstance(values[i], list):
+                values[i] = values[i][0]
+        html_attrs += ["=".join([attr,val]) for val in values]
+    return html_attrs
+
+
+def slice_into_ngrams(tokens, n_max=3, delim='_'):
+    N = len(tokens)
+    for root in range(N):
+        for n in range(min(n_max, N - root)):
+            yield delim.join(tokens[root:root+n+1])

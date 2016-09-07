@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Sentence, construct_stable_id
+from .models import Corpus, Document, Sentence, Table, Cell, Phrase, construct_stable_id
 import atexit
 import warnings
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString, Tag
 from collections import defaultdict
 import glob
 import json
@@ -15,8 +15,9 @@ import requests
 import signal
 from subprocess import Popen
 import sys
-import codecs
-from .utils import sort_X_on_Y
+from .utils import sort_X_on_Y, split_html_attrs
+import copy # TODO: remove one OmniParser is fixed
+
 
 
 class CorpusParser:
@@ -36,9 +37,11 @@ class CorpusParser:
             corpus.append(doc)
             for _ in self.sent_parser.parse(doc, text):
                 pass
+        # import pdb; pdb.set_trace()
         if session is not None:
             session.commit()
-        corpus.stats()
+        # TODO: uncomment me:
+        # corpus.stats()
         return corpus
 
 
@@ -153,7 +156,7 @@ PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
          '-RSB-': ']', '-LSB-': '['}
 
 class CoreNLPHandler:
-    def __init__(self, tok_whitespace=False):
+    def __init__(self, delim='', tok_whitespace=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
         # Kill it when python exits.
@@ -167,6 +170,7 @@ class CoreNLPHandler:
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
         props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
+        props += "\"ssplit.htmlBoundariesToDiscard\": \"%s\"," % delim if delim else ""
         self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % (self.port, props)
 
         # Following enables retries to cope with CoreNLP server boot-up latency
@@ -252,3 +256,85 @@ class SentenceParser(object):
         """Parse a raw document as a string into a list of sentences"""
         for parts in self.corenlp_handler.parse(doc, text):
             yield Sentence(**parts)
+
+
+class HTMLParser(DocParser):
+    """Simple parsing of files into html documents"""
+    def parse_file(self, fp, file_name):
+        with open(fp, 'r') as f:
+            soup = BeautifulSoup(f, 'lxml')
+            for text in soup.find_all('html'):
+                name = re.sub(r'\..*$', '', os.path.basename(fp))
+                stable_id = self.get_stable_id(name)
+                yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), unicode(text)
+
+
+class OmniParser(object):
+    def __init__(self):
+        self.delim = "<NC>" # NC = New Cell 
+        self.corenlp_handler = CoreNLPHandler(delim=self.delim[1:-1])
+
+    def parse(self, document, text):
+        soup = BeautifulSoup(text, 'lxml')
+        self.table_idx = -1
+        # self.cell_idx = -1
+        self.phrase_idx = 0
+        # self.row_num = -1
+        # self.col_num = -1        
+        for phrase in self.parse_tag(soup, document):
+            yield phrase
+
+    def parse_tag(self, tag, document, table=None, cell=None, anc_tags=[], anc_attrs=[]):
+        for child in tag.contents:
+            if isinstance(child, NavigableString):
+                for parts in self.corenlp_handler.parse(document, unicode(child)):
+                    parts['document'] = document
+                    parts['table'] = table
+                    parts['cell'] = cell
+                    parts['row_num'] = cell.row_num if cell is not None else None
+                    parts['col_num'] = cell.col_num if cell is not None else None
+                    parts['html_tag'] = tag.name
+                    parts['html_attrs'] = tag.attrs
+                    parts['html_anc_tags'] = anc_tags
+                    parts['html_anc_attrs'] = anc_attrs
+                    # parts['stable_id'] = construct_stable_id(document, 'phrase', self.phrase_idx, self.phrase_idx)
+                    parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'phrase', self.phrase_idx, self.phrase_idx)
+                    yield Phrase(**parts)
+                    self.phrase_idx += 1
+            else: # isinstance(child, Tag) = True
+                if child.name == "table":
+                    self.table_idx += 1
+                    self.row_num = -1
+                    self.cell_idx = -1
+                    # stable_id = construct_stable_id(document, 'table', self.table_idx, self.table_idx)
+                    stable_id = "%s::%s:%s:%s" % (document.name, 'table', self.table_idx, self.table_idx)
+                    table = Table(document=document, stable_id=stable_id, position=self.table_idx, text=unicode(child))
+                elif child.name == "tr":
+                    self.row_num += 1
+                    self.col_num = -1
+                elif child.name in ["td","th"]:
+                    # TODO: consider using bs4's 'unwrap()' method to remove formatting
+                    #   html tags from the contents of cells so entities are not broken up
+                    self.cell_idx += 1
+                    self.col_num += 1
+                    parts = defaultdict(list)
+                    parts['document'] = document
+                    parts['table'] = table
+                    parts['position'] = self.cell_idx
+                    parts['text'] = unicode(child.get_text(strip=True))
+                    parts['row_num'] = self.row_num
+                    parts['col_num'] = self.col_num
+                    parts['html_tag'] = child.name
+                    parts['html_attrs'] = split_html_attrs(child.attrs.items())
+                    parts['html_anc_tags'] = anc_tags 
+                    parts['html_anc_attrs'] = anc_attrs
+                    # parts['stable_id'] = construct_stable_id(table, 'cell', self.cell_idx, self.cell_idx)
+                    parts['stable_id'] = "%s-%s::%s:%s:%s" % (document.name, table.position, 'cell', self.cell_idx, self.cell_idx)
+                    cell = Cell(**parts)
+                # FIXME: making so many copies is hacky and wasteful
+                temp_anc_tags = copy.deepcopy(anc_tags)
+                temp_anc_tags.append(child.name)
+                temp_anc_attrs = copy.deepcopy(anc_attrs)
+                temp_anc_attrs.extend(child.attrs)
+                for phrase in self.parse_tag(child, document, table, cell, temp_anc_tags, temp_anc_attrs):
+                    yield phrase

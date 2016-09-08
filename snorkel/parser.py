@@ -202,13 +202,17 @@ class CoreNLPHandler:
         if len(text.strip()) == 0:
             return
         if isinstance(text, unicode):
-          text = text.encode('utf-8')
+            text = text.encode('utf-8','ignore')
         resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
         text = text.decode('utf-8')
         content = resp.content.strip()
         if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
           raise ValueError("File {} too long. Max character count is 100K".format(document.id))
-        blocks = json.loads(content, strict=False)['sentences']
+        try:
+            blocks = json.loads(content, strict=False)['sentences']
+        except:
+            print "SKIPPED A MALFORMED SENTENCE!"
+            return
         position = 0
         diverged = False
         for block in blocks:

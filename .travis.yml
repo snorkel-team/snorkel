@@ -75,16 +75,16 @@ install:
 
 script:
   # Downloads data
-  - cd tutorial
+  - cd tutorials/disease_tagger
   - ./download_data.sh
   - cd ..
 
   # Run notebooks end-to-end
-  - travis_wait 30 runipy tutorials/disease_tagger/CDR_Tutorial_1.ipynb
-  - travis_wait 60 runipy tutorials/disease_tagger/CDR_Tutorial_2.ipynb
-  - travis_wait 45 runipy tutorials/disease_tagger/CDR_Tutorial_3.ipynb
-  - travis_wait 45 runipy tutorials/disease_tagger/CDR_Tutorial_4.ipynb
-  - travis_wait 45 runipy tutorials/disease_tagger/CDR_Tutorial_5.ipynb
+  - travis_wait 30 runipy disease_tagger/CDR_Tutorial_1.ipynb
+  - travis_wait 60 runipy disease_tagger/CDR_Tutorial_2.ipynb
+  - travis_wait 45 runipy disease_tagger/CDR_Tutorial_3.ipynb
+  - travis_wait 45 runipy disease_tagger/CDR_Tutorial_4.ipynb
+  - travis_wait 45 runipy disease_tagger/CDR_Tutorial_5.ipynb
 
   # Run test modules
 #  - coverage run -p test/Tests.py

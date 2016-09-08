@@ -37,11 +37,11 @@ class CorpusParser:
             corpus.append(doc)
             for _ in self.sent_parser.parse(doc, text):
                 pass
-        # import pdb; pdb.set_trace()
+            # TODO: remove print
+            print i
         if session is not None:
             session.commit()
-        # TODO: uncomment me:
-        # corpus.stats()
+        corpus.stats()
         return corpus
 
 
@@ -202,7 +202,8 @@ class CoreNLPHandler:
         text = text.decode('utf-8')
         content = resp.content.strip()
         if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
-          raise ValueError("File {} too long. Max character count is 100K".format(document.id))
+            warnings.warn("Request from file {} too long. Max character count is 100K. Request was skipped.".format(document.name), RuntimeWarning)
+            return
         blocks = json.loads(content, strict=False)['sentences']
         position = 0
         diverged = False
@@ -291,13 +292,13 @@ class OmniParser(object):
                     parts['document'] = document
                     parts['table'] = table
                     parts['cell'] = cell
+                    parts['phrase_id'] = self.phrase_idx
                     parts['row_num'] = cell.row_num if cell is not None else None
                     parts['col_num'] = cell.col_num if cell is not None else None
                     parts['html_tag'] = tag.name
                     parts['html_attrs'] = tag.attrs
                     parts['html_anc_tags'] = anc_tags
                     parts['html_anc_attrs'] = anc_attrs
-                    # parts['stable_id'] = construct_stable_id(document, 'phrase', self.phrase_idx, self.phrase_idx)
                     parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'phrase', self.phrase_idx, self.phrase_idx)
                     yield Phrase(**parts)
                     self.phrase_idx += 1
@@ -306,7 +307,6 @@ class OmniParser(object):
                     self.table_idx += 1
                     self.row_num = -1
                     self.cell_idx = -1
-                    # stable_id = construct_stable_id(document, 'table', self.table_idx, self.table_idx)
                     stable_id = "%s::%s:%s:%s" % (document.name, 'table', self.table_idx, self.table_idx)
                     table = Table(document=document, stable_id=stable_id, position=self.table_idx, text=unicode(child))
                 elif child.name == "tr":
@@ -328,10 +328,9 @@ class OmniParser(object):
                     parts['html_attrs'] = split_html_attrs(child.attrs.items())
                     parts['html_anc_tags'] = anc_tags 
                     parts['html_anc_attrs'] = anc_attrs
-                    # parts['stable_id'] = construct_stable_id(table, 'cell', self.cell_idx, self.cell_idx)
-                    parts['stable_id'] = "%s-%s::%s:%s:%s" % (document.name, table.position, 'cell', self.cell_idx, self.cell_idx)
+                    parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'cell', table.position, self.cell_idx)
                     cell = Cell(**parts)
-                # FIXME: making so many copies is hacky and wasteful
+                # FIXME: making so many copies is hacky and wasteful; use a stack?
                 temp_anc_tags = copy.deepcopy(anc_tags)
                 temp_anc_tags.append(child.name)
                 temp_anc_attrs = copy.deepcopy(anc_attrs)

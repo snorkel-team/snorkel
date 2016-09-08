@@ -12,8 +12,8 @@ class ProgressBar(object):
 
     def bar(self, i):
         """Assumes i ranges through [0, N-1]"""
-        b = np.ceil(((i+1) / self.nf) * self.length)
-        sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), 100*((i+1) / self.nf)))
+        b = int(np.ceil(((i+1) / self.nf) * self.length))
+        sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), int(100*((i+1) / self.nf))))
         sys.stdout.flush()
 
     def close(self):
@@ -122,9 +122,14 @@ def split_html_attrs(attrs):
         html_attrs += ["=".join([attr,val]) for val in values]
     return html_attrs
 
-
-def slice_into_ngrams(tokens, n_max=3, delim='_'):
+def tokens_to_ngrams(tokens, n_max=3, delim=' '):
     N = len(tokens)
     for root in range(N):
         for n in range(min(n_max, N - root)):
             yield delim.join(tokens[root:root+n+1])
+
+# def slice_into_ngrams(tokens, n_max=3, delim='_'):
+#     N = len(tokens)
+#     for root in range(N):
+#         for n in range(min(n_max, N - root)):
+#             yield delim.join(tokens[root:root+n+1])

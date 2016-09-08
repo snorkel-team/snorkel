@@ -1,6 +1,6 @@
-from .models import Span
+from .models import Span, Phrase
 from itertools import chain
-
+from utils import tokens_to_ngrams
 
 def get_text_splits(c):
     """
@@ -50,36 +50,41 @@ def get_text_between(c):
         raise ValueError("Only applicable to binary Candidates")
 
 
-def get_left_tokens(c, window=3, attrib='words'):
+def get_left_tokens(c, window=3, attrib='words', case_sensitive=False):
     """
     Return the tokens within a window to the _left_ of the Candidate.
     For higher-arity Candidates, defaults to the _first_ argument.
     :param window: The number of tokens to the left of the first argument to return
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
-    span = c[0]
+    span = c if isinstance(c, Span) else c[0] 
     i    = span.get_word_start()
-    return span.parent._asdict()[attrib][max(0, i-window):i]
+    f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
+    return map(f, span.parent._asdict()[attrib][max(0, i-window):i])
 
 
-def get_right_tokens(c, window=3, attrib='words'):
+def get_right_tokens(c, window=3, attrib='words', case_sensitive=False):
     """
     Return the tokens within a window to the _right_ of the Candidate.
     For higher-arity Candidates, defaults to the _last_ argument.
     :param window: The number of tokens to the right of the last argument to return
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
-    span = c[-1]
+    span = c if isinstance(c, Span) else c[-1]
     i    = span.get_word_end()
-    return span.parent._asdict()[attrib][i+1:i+1+window]
+    f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
+    return map(f, span.parent._asdict()[attrib][i+1:i+1+window])
 
 
-def contains_token(c, tok, attrib='words'):
+def contains_token(c, tok, attrib='words', case_sensitive=False):
     """
     Checks if any of the contituent Spans contain a token
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
-    return tok in set(chain.from_iterable(span.get_attrib_tokens(attrib) for span in c.get_arguments()))
+    spans = [c] if isinstance(c, Span) else c.get_arguments()
+    f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
+    return f(tok) in set(chain.from_iterable(map(f, span.get_attrib_tokens(attrib))
+        for span in spans))
 
 
 def get_doc_candidate_spans(c):
@@ -113,3 +118,135 @@ def get_matches(lf, candidate_set, match_values=[1,-1]):
             matches.append(c)
     print "%s matches" % len(matches)
     return matches
+
+############################### TABLE LF HELPERS ###############################
+def get_cell_ngrams(span, attrib='words', n_max=3, case_sensitive=False):
+    """
+    Checks if any of the contituent Spans contain a token
+    :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    """
+    if (not isinstance(span, Span) or 
+        not isinstance(span.parent, Phrase) or
+        span.parent.cell is None): return []
+    f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
+    return list(chain.from_iterable(tokens_to_ngrams(map(f, getattr(phrase,attrib)), n_max=n_max) 
+        for phrase in span.parent.cell.phrases))
+
+
+# def neighborhood_ngrams(attr='words', n_max=3, dist=1, case_sensitive=False):
+#     # TODO: Fix this to be more efficient (optimize with SQL query)
+#     if self.context.cell is None: return
+#     f = lambda x: 0 < x and x <= dist
+#     phrases = [phrase for phrase in self.context.table.phrases if
+#         phrase.row_num is not None and phrase.col_num is not None and
+#         f(abs(phrase.row_num - self.context.row_num) + abs(phrase.col_num - self.context.col_num))]
+#     for phrase in phrases:
+#         for ngram in slice_into_ngrams(getattr(phrase,attr), n_max=n_max):
+#             yield ngram if case_sensitive else ngram.lower()
+
+
+def neighbor_ngrams(attr='words', n_max=3, dist=1, case_sensitive=False):
+    # TODO: Fix this to be more efficient (optimize with SQL query)
+    if self.context.cell is None: return
+    for phrase in self.context.table.phrases:
+        if phrase.row_num is None or phrase.col_num is None: continue
+        side = ''
+        row_diff = phrase.row_num - self.context.row_num
+        col_diff = phrase.col_num - self.context.col_num
+        if col_diff==0:
+            if 0 < row_diff and row_diff <= dist:
+                side = "UP"
+            elif  0 > row_diff and row_diff >= -dist:
+                side = "DOWN"
+        elif row_diff==0:
+            if 0 < col_diff and col_diff <= dist:
+                side = "RIGHT"
+            elif  0 > col_diff and col_diff >= -dist:
+                side = "LEFT"
+        if side:
+            for ngram in slice_into_ngrams(getattr(phrase,attr), n_max=n_max):
+                yield (ngram,side) if case_sensitive else (ngram.lower(), side)
+
+
+def aligned_ngrams(attr='words', n_max=3, case_sensitive=False):
+    if self.context.cell is None: return
+    for ngram in self.row_ngrams(attr=attr, n_max=n_max, case_sensitive=case_sensitive):
+        yield ngram
+    for ngram in self.col_ngrams(attr=attr, n_max=n_max, case_sensitive=case_sensitive):
+        yield ngram
+
+
+def head_ngrams(axis, attr='words', n_max=3, case_sensitive=False, induced=False):
+    head_cell = self.head_cell(axis, induced=induced)
+    ngrams = chain.from_iterable(
+        self._get_phrase_ngrams(phrase, attr=attr, n_max=n_max) 
+        for cell in cells for phrase in cell.phrases)
+    return [ngram.lower() for ngram in ngrams] if not case_sensitive else ngrams
+
+
+def row_ngrams(attr='words', n_max=3, case_sensitive=False):
+    if self.context.cell is None: return
+    cells = self.row_cells()
+    ngrams = chain.from_iterable(
+        self._get_phrase_ngrams(phrase, attr=attr, n_max=n_max) 
+        for cell in cells for phrase in cell.phrases)
+    if ngrams is None: return
+    for ngram in ngrams:
+        yield ngram if case_sensitive else ngram.lower()
+
+
+def col_ngrams(attr='words', n_max=3, case_sensitive=False):
+    if self.context.cell is None: return
+    cells = self.col_cells()
+    ngrams = chain.from_iterable(
+        self._get_phrase_ngrams(phrase, attr=attr, n_max=n_max) 
+        for cell in cells for phrase in cell.phrases)
+    if ngrams is None: return
+    for ngram in ngrams:
+        yield ngram if case_sensitive else ngram.lower()
+
+
+def head_cell(axis, induced=False):
+    if axis not in ('row', 'col'): 
+        raise Exception("Axis must equal 'row' or 'col' ")
+
+    cells = self._get_aligned_cells(axis=axis)
+    axis_name = axis + '_num'
+    head_cell = sorted(cells, key=lambda x: getattr(x,axis_name))[0]
+    
+    if induced and not head_cell.text.isspace():
+        other_axis = 'col' if axis == 'row' else 'row'
+        other_axis_name = other_axis + '_num'
+        # get aligned cells to head_cell that appear before head_cell and aren't empty
+        aligned_cells = [cell for cell in head_cell.table.cells
+                            if getattr(cell,other_axis_name) == getattr(head_cell,other_axis_name)
+                            if getattr(cell,axis_name) < getattr(head_cell,axis_name)
+                            and not cell.text.isspace()]
+        # pick the last cell among the ones identified above
+        aligned_cells = sorted(aligned_cells, key=lambda x: getattr(x,axis_name), reverse=True)
+        if aligned_cells:
+            head_cell = aligned_cells[0]
+
+    return head_cell
+
+
+def row_cells(self):
+    return [cell for cell in self._get_aligned_cells(axis='row')]
+
+
+def col_cells(self):
+    return [cell for cell in self._get_aligned_cells(axis='col')]
+
+
+def _get_aligned_cells(axis='row'):
+    axis_name = axis + '_num'
+    cells = [cell for cell in self.context.table.cells
+        if getattr(cell,axis_name) == getattr(self.context,axis_name)
+        and cell != self.context.cell]
+    return cells
+
+
+def _get_phrase_ngrams(phrase, n_max=3, attr='words'):
+    for ngram in slice_into_ngrams(getattr(phrase,attr), n_max=n_max):
+        yield ngram
+

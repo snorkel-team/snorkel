@@ -2,6 +2,7 @@ from . import SnorkelSession
 from .utils import ProgressBar
 from .models import Candidate, CandidateSet, TemporarySpan
 from .models.candidate import candidate_set_candidate_association
+from .models.context import Document, Phrase
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
 from sqlalchemy.sql import select
@@ -242,3 +243,18 @@ class Ngrams(CandidateSpace):
                         if ts2 not in seen:
                             seen.add(ts2)
                             yield ts2
+
+class OmniNgrams(Ngrams):
+    """
+    Defines the space of candidates as all n-grams (n <= n_max) in a Document _x_,
+    divided into Phrases inside of html elements (such as table cells).
+    """
+    def __init__(self, n_max=5, split_tokens=['-', '/']):
+        Ngrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
+    
+    def apply(self, context):
+        if type(context) != Document:
+            raise TypeError("Input Contexts to OmniNgrams.apply() must be of type Document")
+        for phrase in context.phrases:
+            for ngram in Ngrams.apply(self, phrase):
+                yield ngram

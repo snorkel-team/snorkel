@@ -34,7 +34,7 @@ class Corpus(SnorkelBase):
         self.documents.remove(item)
 
     def __repr__(self):
-        return "Corpus (" + str(self.name) + ")"
+        return "Corpus (" + unicode(self.name) + ")"
 
     def __iter__(self):
         """Default iterator is over self.documents"""
@@ -106,7 +106,7 @@ class Document(Context):
     }
 
     def __repr__(self):
-        return "Document " + str(self.name)
+        return "Document " + unicode(self.name)
 
 
 class Sentence(Context):
@@ -155,7 +155,7 @@ class Sentence(Context):
         }
 
     def __repr__(self):
-        return "Sentence" + str((self.document, self.position, self.text))
+        return "Sentence" + unicode((self.document, self.position, self.text))
 
 
 class Table(Context):
@@ -176,7 +176,7 @@ class Table(Context):
     )
 
     def __repr__(self):
-        return "Table" + str((self.document, self.position, self.text))
+        return "Table" + unicode((self.document, self.position))
 
 
 class Cell(Context):
@@ -210,7 +210,7 @@ class Cell(Context):
     )
 
     def __repr__(self):
-        return "Cell" + str((self.document, self.table, self.position, self.text))
+        return "Cell" + unicode((self.document, self.table, self.position, self.text))
 
 
 class Phrase(Context):
@@ -220,13 +220,12 @@ class Phrase(Context):
     document_id = Column(Integer, ForeignKey('document.id'))
     table_id = Column(Integer, ForeignKey('table.id'))
     cell_id = Column(Integer, ForeignKey('cell.id'))
+    phrase_id = Column(Integer, nullable=False)
     document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
     table = relationship('Table', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=table_id)
     cell = relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=cell_id)
     position = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
-    # table_num = Column(Integer)
-    # cell_num = Column(Integer)
     row_num = Column(Integer)
     col_num = Column(Integer)
     html_tag = Column(Text)
@@ -256,17 +255,16 @@ class Phrase(Context):
     }
 
     __table_args__ = (
-        UniqueConstraint(document_id, table_id, cell_id, position),
+        UniqueConstraint(document_id, phrase_id),
     )
 
     def _asdict(self):
         return {
             'id': self.id,
             'document': self.document,
+            'phrase_id': self.phrase_id,
             'position': self.position,
             'text': self.text,
-            'table_num': self.table_num,
-            'cell_num': self.cell_num,
             'row_num': self.row_num,
             'col_num': self.col_num,
             'html_tag': self.html_tag,
@@ -282,7 +280,7 @@ class Phrase(Context):
         }
 
     def __repr__(self):
-        return "Phrase" + str((self.document, self.position, self.text))
+        return "Phrase" + unicode((self.document, self.position, self.text))
 
 
 class TemporaryContext(object):

@@ -31,7 +31,7 @@ class CandidateSet(SnorkelBase):
         self.candidates.remove(item)
 
     def __repr__(self):
-        return "Candidate Set (" + str(self.name) + ")"
+        return "Candidate Set (" + unicode(self.name) + ")"
 
     def __iter__(self):
         """Default iterator is over self.candidates"""
@@ -83,7 +83,7 @@ class Candidate(SnorkelBase):
         return self.get_arguments()[key]
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, ", ".join(map(str, self.get_arguments())))
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(map(unicode, self.get_arguments())))
 
 
 def candidate_subclass(class_name, args, table_name=None):

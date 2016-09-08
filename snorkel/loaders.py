@@ -20,11 +20,12 @@ def create_or_fetch(session, set_class, instance_or_name):
 
 class ExternalAnnotationsLoader(object):
     """Class to load external annotations."""
-    def __init__(self, session, candidate_class, candidate_set, annotation_key):
+    def __init__(self, session, candidate_class, candidate_set, annotation_key, expand_candidate_set=False):
         self.session         = session
         self.candidate_class = candidate_class
         self.candidate_set   = create_or_fetch(self.session, CandidateSet, candidate_set)
         self.annotation_key  = create_or_fetch(self.session, AnnotationKey, annotation_key)
+        self.expand_candidate_set = expand_candidate_set
 
         # Create a key set with the same name as the annotation name
         self.key_set = create_or_fetch(self.session, AnnotationKeySet, annotation_key)
@@ -52,10 +53,13 @@ class ExternalAnnotationsLoader(object):
         for k, v in d.iteritems():
             q = q.filter(getattr(self.candidate_class, k) == v)
         candidate = q.first()
-        if candidate is None:
+        if candidate is None and self.expand_candidate_set:
             candidate = self.candidate_class(**d)
-        self.session.add(candidate)
-        self.candidate_set.append(candidate)
+            self.session.add(candidate)
+            self.candidate_set.append(candidate)
+        elif candidate is None:
+            raise ValueError('Candidate %s not found in CandidateSet, and expand_candidate_set is False.'
+                             % tuple(context.id for context in d.values()))
 
         # Add annotation
         label = Label(key=self.annotation_key, candidate=candidate, value=1)

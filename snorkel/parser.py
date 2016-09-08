@@ -172,7 +172,8 @@ class CoreNLPHandler:
         self.port = 12345
         self.tok_whitespace = tok_whitespace
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
-        cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
+        cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
+               % (loc, self.port, 60000)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
         props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
@@ -206,8 +207,10 @@ class CoreNLPHandler:
         resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
         text = text.decode('utf-8')
         content = resp.content.strip()
-        if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
-          raise ValueError("File {} too long. Max character count is 100K".format(document.id))
+        if content.startswith("Request is too long"):
+            raise ValueError("File {} too long. Max character count is 100K.".format(document.name))
+        if content.startswith("CoreNLP request timed out"):
+            raise ValueError("CoreNLP request timed out on file {}.".format(document.name))
         try:
             blocks = json.loads(content, strict=False)['sentences']
         except:

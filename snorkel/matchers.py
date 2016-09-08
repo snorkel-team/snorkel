@@ -247,3 +247,14 @@ class RegexMatchEach(RegexMatch):
     def _f(self, c):
         tokens = c.get_attrib_tokens(self.attrib)
         return 1 if tokens and all([self.r.match(t) is not None for t in tokens]) else 0
+
+
+class PersonMatcher(RegexMatchEach):
+    """
+    A convenience class for setting up a RegexMatchEach to match spans
+    for which each token was tagged as a person.
+    """
+    def __init__(self, **kwargs):
+        kwargs['attrib'] = 'ner_tags'
+        kwargs['rgx'] = 'PERSON'
+        super(PersonMatcher, self).__init__(**kwargs)

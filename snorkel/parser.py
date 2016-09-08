@@ -206,8 +206,10 @@ class CoreNLPHandler:
         resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
         text = text.decode('utf-8')
         content = resp.content.strip()
-        if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
-          raise ValueError("File {} too long. Max character count is 100K".format(document.id))
+        if content.startswith("Request is too long"):
+            raise ValueError("File {} too long. Max character count is 100K.".format(document.name))
+        if content.startswith("CoreNLP request timed out"):
+            raise ValueError("CoreNLP request timed out on file {}.".format(document.name))
         try:
             blocks = json.loads(content, strict=False)['sentences']
         except:

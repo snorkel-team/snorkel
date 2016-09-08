@@ -45,14 +45,14 @@ def get_ddlib_feats(context, idxs):
 def _get_seq_features(context, idxs):
   yield "WORD_SEQ_[" + " ".join(context['words'][i] for i in idxs) + "]"
   yield "LEMMA_SEQ_[" + " ".join(context['lemmas'][i] for i in idxs) + "]"
-  yield "POS_SEQ_[" + " ".join(context['poses'][i] for i in idxs) + "]"
+  yield "POS_SEQ_[" + " ".join(context['pos_tags'][i] for i in idxs) + "]"
   yield "DEP_SEQ_[" + " ".join(context['dep_labels'][i] for i in idxs) + "]"
 
 def _get_window_features(context, idxs, window=3, combinations=True, isolated=True):
     left_lemmas = []
-    left_poses = []
+    left_pos_tags = []
     right_lemmas = []
-    right_poses = []
+    right_pos_tags = []
     try:
         for i in range(1, window + 1):
             lemma = context['lemmas'][idxs[0] - i]
@@ -62,11 +62,11 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
             except ValueError:
                 pass
             left_lemmas.append(lemma)
-            left_poses.append(context['poses'][idxs[0] - i])
+            left_pos_tags.append(context['pos_tags'][idxs[0] - i])
     except IndexError:
         pass
     left_lemmas.reverse()
-    left_poses.reverse()
+    left_pos_tags.reverse()
     try:
         for i in range(1, window + 1):
             lemma = context['lemmas'][idxs[-1] + i]
@@ -76,46 +76,46 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
             except ValueError:
                 pass
             right_lemmas.append(lemma)
-            right_poses.append(context['poses'][idxs[-1] + i])
+            right_pos_tags.append(context['pos_tags'][idxs[-1] + i])
     except IndexError:
         pass
     if isolated:
         for i in range(len(left_lemmas)):
             yield "W_LEFT_" + str(i+1) + "_[" + " ".join(left_lemmas[-i-1:]) + \
                 "]"
-            yield "W_LEFT_POS_" + str(i+1) + "_[" + " ".join(left_poses[-i-1:]) +\
+            yield "W_LEFT_POS_" + str(i+1) + "_[" + " ".join(left_pos_tags[-i-1:]) +\
                 "]"
         for i in range(len(right_lemmas)):
             yield "W_RIGHT_" + str(i+1) + "_[" + " ".join(right_lemmas[:i+1]) +\
                 "]"
             yield "W_RIGHT_POS_" + str(i+1) + "_[" + \
-                " ".join(right_poses[:i+1]) + "]"
+                " ".join(right_pos_tags[:i+1]) + "]"
     if combinations:
         for i in range(len(left_lemmas)):
             curr_left_lemmas = " ".join(left_lemmas[-i-1:])
             try:
-                curr_left_poses = " ".join(left_poses[-i-1:])
+                curr_left_pos_tags = " ".join(left_pos_tags[-i-1:])
             except TypeError:
-                new_poses = []
-                for pos in left_poses[-i-1:]:
+                new_pos_tags = []
+                for pos in left_pos_tags[-i-1:]:
                     to_add = pos
                     if not to_add:
                         to_add = "None"
-                    new_poses.append(to_add)
-                curr_left_poses = " ".join(new_poses)
+                    new_pos_tags.append(to_add)
+                curr_left_pos_tags = " ".join(new_pos_tags)
             for j in range(len(right_lemmas)):
                 curr_right_lemmas = " ".join(right_lemmas[:j+1])
                 try:
-                    curr_right_poses = " ".join(right_poses[:j+1])
+                    curr_right_pos_tags = " ".join(right_pos_tags[:j+1])
                 except TypeError:
-                    new_poses = []
-                    for pos in right_poses[:j+1]:
+                    new_pos_tags = []
+                    for pos in right_pos_tags[:j+1]:
                         to_add = pos
                         if not to_add:
                             to_add = "None"
-                        new_poses.append(to_add)
-                    curr_right_poses = " ".join(new_poses)
+                        new_pos_tags.append(to_add)
+                    curr_right_pos_tags = " ".join(new_pos_tags)
                 yield "W_LEMMA_L_" + str(i+1) + "_R_" + str(j+1) + "_[" + \
                     curr_left_lemmas + "]_[" + curr_right_lemmas + "]"
                 yield "W_POS_L_" + str(i+1) + "_R_" + str(j+1) + "_[" + \
-                    curr_left_poses + "]_[" + curr_right_poses + "]"
+                    curr_left_pos_tags + "]_[" + curr_right_pos_tags + "]"

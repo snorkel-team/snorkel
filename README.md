@@ -31,7 +31,7 @@ At a high level, the idea is that developers can focus on writing labeling funct
 
 ## Installation / dependencies
 
-Snorkel requires [a few python packages](python-package-requirement.txt) which can be installed using `pip`:
+Snorkel currently uses Python 2.7, and requires [a few python packages](python-package-requirement.txt) which can be installed using `pip`:
 ```bash
 pip install --requirement python-package-requirement.txt
 ```
@@ -44,8 +44,8 @@ jupyter nbextension enable --py widgetsnbextension --sys-prefix
 
 Alternatively, `virtualenv` can be used by starting with:
 ```bash
-virtualenv .virtualenv
-source .virtualenv/bin/activate
+virtualenv -p python2.7 <path-to-virtual-env>/.virtualenv
+source <path-to-virtual-env>/.virtualenv/bin/activate
 ```
 
 ## Running

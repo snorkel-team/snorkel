@@ -49,6 +49,20 @@ def get_text_between(c):
     else:
         raise ValueError("Only applicable to binary Candidates")
 
+def get_between_tokens(c, attrib='words'):
+    """
+    TODO: write doc_string
+    """
+    if len(c.get_arguments()) != 2:
+        raise ValueError("Only applicable to binary Candidates")
+    span0 = c[0]
+    span1 = c[1]
+    distance = abs(span0.get_word_start() - span1.get_word_start())
+    if span0.get_word_start() < span1.get_word_start():
+        get_right_tokens(c, window=distance-1, attrib=attrib)
+    else: # span0.get_word_start() < span1.get_word_start()
+        get_right_tokens(c, )
+
 
 def get_left_tokens(c, window=3, attrib='words'):
     """

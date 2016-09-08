@@ -221,7 +221,8 @@ class CoreNLPHandler:
             for tok, deps in zip(block['tokens'], block['basic-dependencies']):
                 parts['words'].append(tok['word'])
                 parts['lemmas'].append(tok['lemma'])
-                parts['poses'].append(tok['pos'])
+                parts['pos_tags'].append(tok['pos'])
+                parts['ner_tags'].append(tok['ner'])
                 parts['char_offsets'].append(tok['characterOffsetBegin'])
                 dep_par.append(deps['governor'])
                 dep_lab.append(deps['dep'])

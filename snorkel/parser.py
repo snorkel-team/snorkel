@@ -83,6 +83,15 @@ class DocParser:
         else:
             raise IOError("File or directory not found: %s" % (self.path,))
 
+class TSVDocParser(DocParser):
+    """Simple parsing of TSV file with one (doc_name <tab> doc_text) per line"""
+    def parse_file(self, fp, file_name):
+        with open(fp,'r') as tsv:
+            for line in tsv:
+                (doc_name, doc_text) = line.split('\t')
+                stable_id=self.get_stable_id(doc_name)
+                yield Document(name=doc_name, stable_id=stable_id, meta={'file_name' : file_name}), doc_text
+
 
 class TextDocParser(DocParser):
     """Simple parsing of raw text files, assuming one document per file"""

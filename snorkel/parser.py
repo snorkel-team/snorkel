@@ -10,7 +10,6 @@ import json
 import lxml.etree as et
 import os
 import re
-import codecs
 import requests
 import signal
 from subprocess import Popen
@@ -48,7 +47,7 @@ class DocParser:
         self.path = path
         self.encoding = encoding
 
-    def parse(self, decoding='utf-8'):
+    def parse(self):
         """
         Parse a file or directory of files into a set of Document objects.
 
@@ -86,7 +85,7 @@ class DocParser:
 class TSVDocParser(DocParser):
     """Simple parsing of TSV file with one (doc_name <tab> doc_text) per line"""
     def parse_file(self, fp, file_name):
-        with open(fp,'r') as tsv:
+        with codecs.open(fp, encoding=self.encoding) as tsv:
             for line in tsv:
                 (doc_name, doc_text) = line.split('\t')
                 stable_id=self.get_stable_id(doc_name)
@@ -96,7 +95,7 @@ class TSVDocParser(DocParser):
 class TextDocParser(DocParser):
     """Simple parsing of raw text files, assuming one document per file"""
     def parse_file(self, fp, file_name):
-        with codecs.open(fp, 'rb', self.encoding, errors="ignore") as f:
+        with codecs.open(fp, encoding=self.encoding) as f:
             name      = re.sub(r'\..*$', '', os.path.basename(fp))
             stable_id = self.get_stable_id(name)
             yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), f.read()
@@ -203,7 +202,7 @@ class CoreNLPHandler:
         if len(text.strip()) == 0:
             return
         if isinstance(text, unicode):
-            text = text.encode('utf-8','ignore')
+            text = text.encode('utf-8', 'error')
         resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
         text = text.decode('utf-8')
         content = resp.content.strip()

@@ -24,11 +24,11 @@ class AnnotationKeySet(SnorkelBase):
                                  secondary=annotation_key_set_annotation_key_association,
                                  backref='sets')
     
-    def append(self, a):
-        self.keys[a.name] = a
+    def append(self, key):
+        self.keys.append(key)
 
-    def remove(self, item):
-        del self.keys[a.name]
+    def remove(self, key):
+        self.keys.remove(key)
 
     def __repr__(self):
         return "Annotation Key Set (" + str(self.name) + ")"

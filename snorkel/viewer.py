@@ -15,11 +15,11 @@ HOME = os.environ['SNORKELHOME']
 
 
 # PAGE LAYOUT TEMPLATES
-LI_HTML = """
+LI_HTML = u"""
 <li class="list-group-item" data-toggle="tooltip" data-placement="top" title="{context_id}">{data}</li>
 """
 
-PAGE_HTML = """
+PAGE_HTML = u"""
 <div class="viewer-page" id="viewer-page-{pid}">
     <ul class="list-group">{data}</ul>
 </div>
@@ -114,8 +114,7 @@ class Viewer(widgets.DOMWidget):
         classes += map(str, cids)
 
         # Scrub for non-ascii characters; replace with ?
-        html = ''.join([c if ord(c) < 128 else "?" for c in html])
-        return '<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)
+        return u'<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)
 
     def _tag_context(self, context, candidates, gold):
         """Given the raw context, tag the spans using the generic _tag_span method"""
@@ -224,10 +223,6 @@ class SentenceNgramViewer(Viewer):
 
             # Handle both unary and binary candidates
             try:
-                cids  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c[0])]
-                gcids = [self.gold.index(g) for g in gold if self._is_subspan(start, end, g[0])]
-            except:
-
                 # For binary candidates, add classes for both the candidate ID and unary span identifiers
                 cids0  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c[0])]
                 cids0 += ['%s-0' % cid for cid in cids0]
@@ -236,7 +231,11 @@ class SentenceNgramViewer(Viewer):
                 cids   = cids0 + cids1
 
                 # Handle gold...
-                gcids = [self.gold.index(g) for g in gold if \
-                            self._is_subspan(start, end, g[0]) or self._is_subspan(start, end, g[1])]
+                gcids = [self.gold.index(g) for g in gold if
+                         self._is_subspan(start, end, g[0]) or self._is_subspan(start, end, g[1])]
+            except:
+                cids  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c[0])]
+                gcids = [self.gold.index(g) for g in gold if self._is_subspan(start, end, g[0])]
+
             html += self._tag_span(s[start:end+1], cids, gold=len(gcids) > 0)
         return html

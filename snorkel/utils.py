@@ -2,6 +2,9 @@ import re
 import sys
 import numpy as np
 import scipy.sparse as sparse
+import random
+from .models import Corpus
+
 
 
 class ProgressBar(object):
@@ -128,8 +131,43 @@ def tokens_to_ngrams(tokens, n_max=3, delim=' '):
         for n in range(min(n_max, N - root)):
             yield delim.join(tokens[root:root+n+1])
 
+
 # def slice_into_ngrams(tokens, n_max=3, delim='_'):
 #     N = len(tokens)
 #     for root in range(N):
 #         for n in range(min(n_max, N - root)):
 #             yield delim.join(tokens[root:root+n+1])
+
+
+def split_corpus(session, corpus, train=0.8, development=0.1, test=0.1, seed=None):
+    if train + development + test != 1:
+        raise ValueError("Values for train + development + test must sum to 1")
+   
+    random.seed(seed)
+    docs = [doc for doc in corpus.documents]
+    random.shuffle(docs)        
+
+    n = len(docs)
+    num_train = int(train * n)
+    num_development = int(development * n)
+    num_test = n - (train + development)
+
+    train_corpus = Corpus(name=corpus.name + ' Training')
+    for doc in docs[:num_train]:
+        train_corpus.append(doc)
+    session.add(train_corpus)
+    print "%d Documents added to corpus %s" % (len(train_corpus), train_corpus.name)
+
+    development_corpus = Corpus(name=corpus.name + ' Development')
+    for doc in docs[num_train:num_train + num_development]:
+        development_corpus.append(doc)
+    session.add(development_corpus)
+    print "%d Documents added to corpus %s" % (len(development_corpus), development_corpus.name)
+
+    test_corpus = Corpus(name=corpus.name + ' Test')
+    for doc in docs[num_train + num_development:]:
+        test_corpus.append(doc)
+    session.add(test_corpus)
+    print "%d Documents added to corpus %s" % (len(test_corpus), test_corpus.name)
+
+    session.commit()

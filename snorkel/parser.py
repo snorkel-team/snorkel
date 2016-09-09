@@ -10,7 +10,6 @@ import json
 import lxml.etree as et
 import os
 import re
-import codecs
 import requests
 import signal
 from subprocess import Popen
@@ -51,7 +50,7 @@ class DocParser:
         self.path = path
         self.encoding = encoding
 
-    def parse(self, decoding='utf-8'):
+    def parse(self):
         """
         Parse a file or directory of files into a set of Document objects.
 
@@ -86,11 +85,20 @@ class DocParser:
         else:
             raise IOError("File or directory not found: %s" % (self.path,))
 
+class TSVDocParser(DocParser):
+    """Simple parsing of TSV file with one (doc_name <tab> doc_text) per line"""
+    def parse_file(self, fp, file_name):
+        with codecs.open(fp, encoding=self.encoding) as tsv:
+            for line in tsv:
+                (doc_name, doc_text) = line.split('\t')
+                stable_id=self.get_stable_id(doc_name)
+                yield Document(name=doc_name, stable_id=stable_id, meta={'file_name' : file_name}), doc_text
+
 
 class TextDocParser(DocParser):
     """Simple parsing of raw text files, assuming one document per file"""
     def parse_file(self, fp, file_name):
-        with codecs.open(fp, 'rb', self.encoding, errors="ignore") as f:
+        with codecs.open(fp, encoding=self.encoding) as f:
             name      = re.sub(r'\..*$', '', os.path.basename(fp))
             stable_id = self.get_stable_id(name)
             yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), f.read()
@@ -166,12 +174,13 @@ class CoreNLPHandler:
         self.port = 12345
         self.tok_whitespace = tok_whitespace
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
-        cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d > /dev/null' % (loc, self.port)]
+        cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
+               % (loc, self.port, 300000)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
         props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
         props += "\"ssplit.htmlBoundariesToDiscard\": \"%s\"," % delim if delim else ""
-        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse", "outputFormat": "json"}' % (self.port, props)
+        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse,ner", "outputFormat": "json"}' % (self.port, props)
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626
@@ -197,14 +206,19 @@ class CoreNLPHandler:
         if len(text.strip()) == 0:
             return
         if isinstance(text, unicode):
-          text = text.encode('utf-8')
+            text = text.encode('utf-8', 'error')
         resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
         text = text.decode('utf-8')
         content = resp.content.strip()
-        if content.startswith("Request is too long") or content.startswith("CoreNLP request timed out"):
-            warnings.warn("Request from file {} too long. Max character count is 100K. Request was skipped.".format(document.name), RuntimeWarning)
+        if content.startswith("Request is too long"):
+            raise ValueError("File {} too long. Max character count is 100K.".format(document.name))
+        if content.startswith("CoreNLP request timed out"):
+            raise ValueError("CoreNLP request timed out on file {}.".format(document.name))
+        try:
+            blocks = json.loads(content, strict=False)['sentences']
+        except:
+            print "SKIPPED A MALFORMED SENTENCE!"
             return
-        blocks = json.loads(content, strict=False)['sentences']
         position = 0
         diverged = False
         for block in blocks:
@@ -213,7 +227,8 @@ class CoreNLPHandler:
             for tok, deps in zip(block['tokens'], block['basic-dependencies']):
                 parts['words'].append(tok['word'])
                 parts['lemmas'].append(tok['lemma'])
-                parts['poses'].append(tok['pos'])
+                parts['pos_tags'].append(tok['pos'])
+                parts['ner_tags'].append(tok['ner'])
                 parts['char_offsets'].append(tok['characterOffsetBegin'])
                 dep_par.append(deps['governor'])
                 dep_lab.append(deps['dep'])

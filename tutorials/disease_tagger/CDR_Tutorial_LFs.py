@@ -85,8 +85,8 @@ def LF_non_disease_acronyms(c):
 
 def LF_pos_in(c):
     '''Candidates beginning with a preposition or subordinating conjunction'''
-    poses = c[0].get_attrib_tokens('poses')
-    return -1 if "IN" in poses[0:1] else 0
+    pos_tags = c[0].get_attrib_tokens('pos_tags')
+    return -1 if "IN" in pos_tags[0:1] else 0
 
 
 def LF_gene_chromosome_link(c):

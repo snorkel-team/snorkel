@@ -15,11 +15,11 @@ HOME = os.environ['SNORKELHOME']
 
 
 # PAGE LAYOUT TEMPLATES
-LI_HTML = """
+LI_HTML = u"""
 <li class="list-group-item" data-toggle="tooltip" data-placement="top" title="{context_id}">{data}</li>
 """
 
-PAGE_HTML = """
+PAGE_HTML = u"""
 <div class="viewer-page" id="viewer-page-{pid}">
     <ul class="list-group">{data}</ul>
 </div>
@@ -114,8 +114,7 @@ class Viewer(widgets.DOMWidget):
         classes += map(str, cids)
 
         # Scrub for non-ascii characters; replace with ?
-        html = ''.join([c if ord(c) < 128 else "?" for c in html])
-        return '<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)
+        return u'<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)
 
     def _tag_context(self, context, candidates, gold):
         """Given the raw context, tag the spans using the generic _tag_span method"""

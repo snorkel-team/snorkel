@@ -62,7 +62,7 @@ class Viewer(widgets.DOMWidget):
         name = annotator_name if annotator_name is not None else getpass.getuser()
 
         # Sets up the AnnotationKeySet and AnnotationKey
-        key_set = self.session.query(AnnotationKeySet).filter(AnnotationKey.name == name).first()
+        key_set = self.session.query(AnnotationKeySet).filter(AnnotationKeySet.name == name).first()
         if key_set is None:
             key_set = AnnotationKeySet(name=name)
             session.add(key_set)
@@ -83,6 +83,8 @@ class Viewer(widgets.DOMWidget):
                 self.annotator = AnnotationKey(name=name)
                 session.add(self.annotator)
                 session.commit()
+            key_set.append(self.annotator)
+            session.commit()
 
         # Viewer display configs
         self.n_per_page = n_per_page

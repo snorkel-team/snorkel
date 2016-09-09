@@ -49,7 +49,8 @@ def get_text_between(c):
     else:
         raise ValueError("Only applicable to binary Candidates")
 
-def get_between_tokens(c, attrib='words'):
+
+def get_between_tokens(c, attrib='words', case_sensitive=False):
     """
     TODO: write doc_string
     """
@@ -59,41 +60,48 @@ def get_between_tokens(c, attrib='words'):
     span1 = c[1]
     distance = abs(span0.get_word_start() - span1.get_word_start())
     if span0.get_word_start() < span1.get_word_start():
-        get_right_tokens(c, window=distance-1, attrib=attrib)
-    else: # span0.get_word_start() < span1.get_word_start()
-        get_right_tokens(c, )
+        return get_right_tokens(span0, window=distance-1, attrib=attrib, case_sensitive=case_sensitive)
+    else: # span0.get_word_start() > span1.get_word_start()
+        return get_left_tokens(span1, window=distance-1, attrib=attrib, case_sensitive=case_sensitive)
 
 
-def get_left_tokens(c, window=3, attrib='words'):
+def get_left_tokens(c, window=3, attrib='words', case_sensitive=False):
     """
     Return the tokens within a window to the _left_ of the Candidate.
     For higher-arity Candidates, defaults to the _first_ argument.
     :param window: The number of tokens to the left of the first argument to return
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
-    span = c[0]
+    span = c if isinstance(c, Span) else c[0] 
     i    = span.get_word_start()
-    return span.parent._asdict()[attrib][max(0, i-window):i]
+    f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
+    return map(f, span.parent._asdict()[attrib][max(0, i-window):i])
 
 
-def get_right_tokens(c, window=3, attrib='words'):
+def get_right_tokens(c, window=3, attrib='words', case_sensitive=False):
     """
     Return the tokens within a window to the _right_ of the Candidate.
     For higher-arity Candidates, defaults to the _last_ argument.
     :param window: The number of tokens to the right of the last argument to return
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
-    span = c[-1]
+    span = c if isinstance(c, Span) else c[-1]
     i    = span.get_word_end()
-    return span.parent._asdict()[attrib][i+1:i+1+window]
+    f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
+    return map(f, span.parent._asdict()[attrib][i+1:i+1+window])
 
 
-def contains_token(c, tok, attrib='words'):
+
+
+def contains_token(c, tok, attrib='words', case_sensitive=False):
     """
     Checks if any of the contituent Spans contain a token
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
-    return tok in set(chain.from_iterable(span.get_attrib_tokens(attrib) for span in c.get_arguments()))
+    spans = [c] if isinstance(c, Span) else c.get_arguments()
+    f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
+    return f(tok) in set(chain.from_iterable(map(f, span.get_attrib_tokens(attrib))
+        for span in spans))
 
 
 def get_doc_candidate_spans(c):

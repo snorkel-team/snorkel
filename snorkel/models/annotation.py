@@ -22,7 +22,6 @@ class AnnotationKeySet(SnorkelBase):
     name          = Column(String, unique=True, nullable=False)
     keys          = relationship('AnnotationKey',
                                  secondary=annotation_key_set_annotation_key_association,
-                                 collection_class=attribute_mapped_collection('name'),
                                  backref='sets')
     
     def append(self, a):

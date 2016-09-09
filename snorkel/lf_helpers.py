@@ -1,5 +1,6 @@
 from .models import Span
 from itertools import chain
+from utils import tokens_to_ngrams
 
 
 def get_text_splits(c):
@@ -50,7 +51,7 @@ def get_text_between(c):
         raise ValueError("Only applicable to binary Candidates")
 
 
-def get_between_tokens(c, attrib='words', case_sensitive=False):
+def get_between_tokens(c, attrib='words', n_max=1, case_sensitive=False):
     """
     TODO: write doc_string
     """
@@ -60,12 +61,12 @@ def get_between_tokens(c, attrib='words', case_sensitive=False):
     span1 = c[1]
     distance = abs(span0.get_word_start() - span1.get_word_start())
     if span0.get_word_start() < span1.get_word_start():
-        return get_right_tokens(span0, window=distance-1, attrib=attrib, case_sensitive=case_sensitive)
+        return get_right_tokens(span0, window=distance-1, attrib=attrib, n_max=n_max, case_sensitive=case_sensitive)
     else: # span0.get_word_start() > span1.get_word_start()
-        return get_left_tokens(span1, window=distance-1, attrib=attrib, case_sensitive=case_sensitive)
+        return get_left_tokens(span1, window=distance-1, attrib=attrib, n_max=n_max, case_sensitive=case_sensitive)
 
 
-def get_left_tokens(c, window=3, attrib='words', case_sensitive=False):
+def get_left_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
     """
     Return the tokens within a window to the _left_ of the Candidate.
     For higher-arity Candidates, defaults to the _first_ argument.
@@ -75,10 +76,10 @@ def get_left_tokens(c, window=3, attrib='words', case_sensitive=False):
     span = c if isinstance(c, Span) else c[0] 
     i    = span.get_word_start()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return map(f, span.parent._asdict()[attrib][max(0, i-window):i])
+    return [ngram for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][max(0, i-window):i]), n_max=n_max)]
 
 
-def get_right_tokens(c, window=3, attrib='words', case_sensitive=False):
+def get_right_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
     """
     Return the tokens within a window to the _right_ of the Candidate.
     For higher-arity Candidates, defaults to the _last_ argument.
@@ -88,9 +89,7 @@ def get_right_tokens(c, window=3, attrib='words', case_sensitive=False):
     span = c if isinstance(c, Span) else c[-1]
     i    = span.get_word_end()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return map(f, span.parent._asdict()[attrib][i+1:i+1+window])
-
-
+    return [ngram for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][i+1:i+1+window]), n_max=n_max)]
 
 
 def contains_token(c, tok, attrib='words', case_sensitive=False):

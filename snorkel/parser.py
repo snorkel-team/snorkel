@@ -12,10 +12,11 @@ import os
 import re
 import requests
 import signal
+import codecs
 from subprocess import Popen
 import sys
 from .utils import sort_X_on_Y, split_html_attrs
-import copy # TODO: remove one OmniParser is fixed
+import copy # TODO: remove once OmniParser is fixed
 
 
 
@@ -40,7 +41,8 @@ class CorpusParser:
             print i
         if session is not None:
             session.commit()
-        corpus.stats()
+        # TODO: uncomment this
+        # corpus.stats()
         return corpus
 
 
@@ -277,7 +279,7 @@ class SentenceParser(object):
 class HTMLParser(DocParser):
     """Simple parsing of files into html documents"""
     def parse_file(self, fp, file_name):
-        with open(fp, 'r') as f:
+        with codecs.open(fp, encoding=self.encoding) as f:
             soup = BeautifulSoup(f, 'lxml')
             for text in soup.find_all('html'):
                 name = re.sub(r'\..*$', '', os.path.basename(fp))

@@ -125,6 +125,7 @@ def split_html_attrs(attrs):
         html_attrs += ["=".join([attr,val]) for val in values]
     return html_attrs
 
+
 def tokens_to_ngrams(tokens, n_max=3, delim=' '):
     N = len(tokens)
     for root in range(N):

@@ -239,7 +239,8 @@ class Phrase(Context):
         words = Column(postgresql.ARRAY(String), nullable=False)
         char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
         lemmas = Column(postgresql.ARRAY(String))
-        poses = Column(postgresql.ARRAY(String))
+        pos_tags = Column(postgresql.ARRAY(String))
+        ner_tags = Column(postgresql.ARRAY(String))
         dep_parents = Column(postgresql.ARRAY(Integer))
         dep_labels = Column(postgresql.ARRAY(String))
     else:
@@ -249,7 +250,8 @@ class Phrase(Context):
         words = Column(PickleType, nullable=False)
         char_offsets = Column(PickleType, nullable=False)
         lemmas = Column(PickleType)
-        poses = Column(PickleType)
+        pos_tags = Column(PickleType)
+        ner_tags = Column(PickleType)
         dep_parents = Column(PickleType)
         dep_labels = Column(PickleType)
 
@@ -277,7 +279,8 @@ class Phrase(Context):
             'words': self.words,
             'char_offsets': self.char_offsets,
             'lemmas': self.lemmas,
-            'poses': self.poses,
+            'pos_tags': self.pos_tags,
+            'ner_tags': self.ner_tags,
             'dep_parents': self.dep_parents,
             'dep_labels': self.dep_labels
         }

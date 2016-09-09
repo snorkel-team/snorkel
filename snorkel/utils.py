@@ -172,3 +172,9 @@ def split_corpus(session, corpus, train=0.8, development=0.1, test=0.1, seed=Non
     print "%d Documents added to corpus %s" % (len(test_corpus), test_corpus.name)
 
     session.commit()
+
+
+def get_keys_by_candidate(annotation_matrix, candidate):
+    (r,c,v) = sparse.find(annotation_matrix[annotation_matrix.get_row_index(candidate),:])
+    return [annotation_matrix.get_key(idx) for idx in c]
+              

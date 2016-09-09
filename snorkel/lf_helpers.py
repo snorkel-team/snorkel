@@ -153,7 +153,7 @@ def get_cell_ngrams(span, attrib='words', n_max=1, case_sensitive=False):
         for phrase in span.parent.cell.phrases))
 
 
-def get_neighbor_cell_ngrams(c, attr='words', n_max=1, case_sensitive=False):
+def get_neighbor_cell_ngrams(c, attrib='words', n_max=1, case_sensitive=False):
     # TODO: Fix this to be more efficient (optimize with SQL query)
     span = c
     if (not isinstance(span, Span) or 
@@ -179,27 +179,27 @@ def get_neighbor_cell_ngrams(c, attr='words', n_max=1, case_sensitive=False):
         #         side = "LEFT"
         # if side:
         if row_diff + col_diff == 1:
-            ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attr), n_max=n_max)]) 
+            ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_max=n_max)]) 
     return map(f, ngrams)
 
 
-def get_row_ngrams(c, attr='words', n_max=1, case_sensitive=False):
-    return _get_axis_ngrams(c, axis='row', attr=attr, n_max=n_max, case_sensitive=case_sensitive)
+def get_row_ngrams(c, attrib='words', n_max=1, case_sensitive=False):
+    return _get_axis_ngrams(c, axis='row', attrib=attrib, n_max=n_max, case_sensitive=case_sensitive)
 
 
-def get_col_ngrams(c, attr='words', n_max=1, case_sensitive=False):
-    return _get_axis_ngrams(c, axis='col', attr=attr, n_max=n_max, case_sensitive=case_sensitive)
+def get_col_ngrams(c, attrib='words', n_max=1, case_sensitive=False):
+    return _get_axis_ngrams(c, axis='col', attrib=attrib, n_max=n_max, case_sensitive=case_sensitive)
 
 
-def get_aligned_ngrams(c, attr='words', n_max=1, case_sensitive=False):
-    return (get_row_ngrams(c, attr=attr, n_max=n_max, case_sensitive=case_sensitive)
-          + get_col_ngrams(c, attr=attr, n_max=n_max, case_sensitive=case_sensitive))
+def get_aligned_ngrams(c, attrib='words', n_max=1, case_sensitive=False):
+    return (get_row_ngrams(c, attrib=attrib, n_max=n_max, case_sensitive=case_sensitive)
+          + get_col_ngrams(c, attrib=attrib, n_max=n_max, case_sensitive=case_sensitive))
 
 
-# def head_ngrams(axis, attr='words', n_max=1, case_sensitive=False, induced=False):
+# def head_ngrams(axis, attrib='words', n_max=1, case_sensitive=False, induced=False):
 #     head_cell = self.head_cell(axis, induced=induced)
 #     ngrams = chain.from_iterable(
-#         self._get_phrase_ngrams(phrase, attr=attr, n_max=n_max) 
+#         self._get_phrase_ngrams(phrase, attrib=attrib, n_max=n_max) 
 #         for cell in cells for phrase in cell.phrases)
 #     return [ngram.lower() for ngram in ngrams] if not case_sensitive else ngrams
 
@@ -228,7 +228,7 @@ def get_aligned_ngrams(c, attr='words', n_max=1, case_sensitive=False):
 #     return head_cell
 
 
-# def neighborhood_ngrams(attr='words', n_max=3, dist=1, case_sensitive=False):
+# def neighborhood_ngrams(attrib='words', n_max=3, dist=1, case_sensitive=False):
 #     # TODO: Fix this to be more efficient (optimize with SQL query)
 #     if self.context.cell is None: return
 #     f = lambda x: 0 < x and x <= dist
@@ -236,7 +236,7 @@ def get_aligned_ngrams(c, attr='words', n_max=1, case_sensitive=False):
 #         phrase.row_num is not None and phrase.col_num is not None and
 #         f(abs(phrase.row_num - self.context.row_num) + abs(phrase.col_num - self.context.col_num))]
 #     for phrase in phrases:
-#         for ngram in slice_into_ngrams(getattr(phrase,attr), n_max=n_max):
+#         for ngram in slice_into_ngrams(getattr(phrase,attrib), n_max=n_max):
 #             yield ngram if case_sensitive else ngram.lower()
 
 
@@ -256,7 +256,7 @@ def _get_aligned_cells(span, axis):
     return cells
 
 
-def _get_axis_ngrams(c, axis, attr='words', n_max=1, case_sensitive=False):
+def _get_axis_ngrams(c, axis, attrib='words', n_max=1, case_sensitive=False):
     span = c
     if (not isinstance(span, Span) or 
         not isinstance(span.parent, Phrase) or
@@ -265,6 +265,6 @@ def _get_axis_ngrams(c, axis, attr='words', n_max=1, case_sensitive=False):
     ngrams = []
     for cell in _get_aligned_cells(span, axis):
         for phrase in cell.phrases:
-            ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attr), n_max=n_max)]) 
+            ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_max=n_max)]) 
     return map(f, ngrams)
 

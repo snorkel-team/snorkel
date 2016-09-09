@@ -244,6 +244,8 @@ class RegexMatchEach(RegexMatch):
 
 class PersonMatcher(RegexMatchEach):
     """
+    Matches Spans that are the names of people, as identified by CoreNLP.
+
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as a person.
     """
@@ -251,3 +253,68 @@ class PersonMatcher(RegexMatchEach):
         kwargs['attrib'] = 'ner_tags'
         kwargs['rgx'] = 'PERSON'
         super(PersonMatcher, self).__init__(**kwargs)
+
+
+class LocationMatcher(RegexMatchEach):
+    """
+    Matches Spans that are the names of locations, as identified by CoreNLP.
+
+    A convenience class for setting up a RegexMatchEach to match spans
+    for which each token was tagged as a location.
+    """
+    def __init__(self, **kwargs):
+        kwargs['attrib'] = 'ner_tags'
+        kwargs['rgx'] = 'LOCATION'
+        super(LocationMatcher, self).__init__(**kwargs)
+
+
+class OrganizationMatcher(RegexMatchEach):
+    """
+    Matches Spans that are the names of organizations, as identified by CoreNLP.
+
+    A convenience class for setting up a RegexMatchEach to match spans
+    for which each token was tagged as an organization.
+    """
+    def __init__(self, **kwargs):
+        kwargs['attrib'] = 'ner_tags'
+        kwargs['rgx'] = 'ORGANIZATION'
+        super(OrganizationMatcher, self).__init__(**kwargs)
+
+
+class DateMatcher(RegexMatchEach):
+    """
+    Matches Spans that are dates, as identified by CoreNLP.
+
+    A convenience class for setting up a RegexMatchEach to match spans
+    for which each token was tagged as a date.
+    """
+    def __init__(self, **kwargs):
+        kwargs['attrib'] = 'ner_tags'
+        kwargs['rgx'] = 'DATE'
+        super(DateMatcher, self).__init__(**kwargs)
+
+
+class NumberMatcher(RegexMatchEach):
+    """
+    Matches Spans that are numbers, as identified by CoreNLP.
+
+    A convenience class for setting up a RegexMatchEach to match spans
+    for which each token was tagged as a number.
+    """
+    def __init__(self, **kwargs):
+        kwargs['attrib'] = 'ner_tags'
+        kwargs['rgx'] = 'NUMBER'
+        super(NumberMatcher, self).__init__(**kwargs)
+
+
+class MiscMatcher(RegexMatchEach):
+    """
+    Matches Spans that are miscellaneous named entities, as identified by CoreNLP.
+
+    A convenience class for setting up a RegexMatchEach to match spans
+    for which each token was tagged as miscellaneous.
+    """
+    def __init__(self, **kwargs):
+        kwargs['attrib'] = 'ner_tags'
+        kwargs['rgx'] = 'MISC'
+        super(MiscMatcher, self).__init__(**kwargs)

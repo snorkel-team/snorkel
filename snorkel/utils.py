@@ -142,3 +142,10 @@ def split_corpus(session, corpus, train=0.8, development=0.1, test=0.1, seed=Non
     print "%d Documents added to corpus %s" % (len(test_corpus), test_corpus.name)
 
     session.commit()
+
+
+def tokens_to_ngrams(tokens, n_max=3, delim=' '):
+    N = len(tokens)
+    for root in range(N):
+        for n in range(min(n_max, N - root)):
+            yield delim.join(tokens[root:root+n+1])

@@ -37,8 +37,6 @@ class CorpusParser:
             corpus.append(doc)
             for _ in self.sent_parser.parse(doc, text):
                 pass
-            # TODO: remove print
-            print i
         if session is not None:
             session.commit()
         # TODO: uncomment this

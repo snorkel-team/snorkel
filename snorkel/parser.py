@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .models import Corpus, Document, Sentence, construct_stable_id
+from .utils import ProgressBar, sort_X_on_Y
 import atexit
 import warnings
 from bs4 import BeautifulSoup
@@ -16,7 +17,6 @@ import signal
 from subprocess import Popen
 import sys
 import codecs
-from .utils import sort_X_on_Y
 
 
 class CorpusParser:
@@ -30,12 +30,20 @@ class CorpusParser:
         corpus = Corpus(name=name)
         if session is not None:
             session.add(corpus)
+        texts = []
         for i, (doc, text) in enumerate(self.doc_parser.parse()):
             if self.max_docs and i == self.max_docs:
                 break
             corpus.append(doc)
-            for _ in self.sent_parser.parse(doc, text):
+            texts.append(text)
+
+        pb = ProgressBar(len(corpus) if self.max_docs is None 
+            else min(len(corpus), self.max_docs))
+        for i in range(len(corpus)):
+            pb.bar(i)
+            for _ in self.sent_parser.parse(corpus.documents[i], texts[i]):
                 pass
+        pb.close()
         if session is not None:
             session.commit()
         corpus.stats()

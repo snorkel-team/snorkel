@@ -102,6 +102,15 @@ def contains_token(c, tok, attrib='words', case_sensitive=False):
         for span in spans))
 
 
+def contains_regex(c, rgx=None, attrib='words', sep=" ", case_sensitive=False)
+    """
+    TODO: write documentation here
+    """   
+    rgx = rgx if rgx.endswith('$') else rgx + r'$'
+    r = re.compile(rgx, flags=re.I if not case_sensitive else 0)
+    return True if r.match(c.get_attrib_span(self.attrib, sep=sep)) is not None else False
+
+
 def get_doc_candidate_spans(c):
     """
     Get the Spans in the same document as Candidate c, where these Spans are

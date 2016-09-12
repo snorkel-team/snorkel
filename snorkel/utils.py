@@ -126,18 +126,11 @@ def split_html_attrs(attrs):
     return html_attrs
 
 
-def tokens_to_ngrams(tokens, n_max=3, delim=' '):
+def tokens_to_ngrams(tokens, n_min=1, n_max=3, delim=' '):
     N = len(tokens)
     for root in range(N):
-        for n in range(min(n_max, N - root)):
+        for n in range(max(n_min - 1, 0), min(n_max, N - root)):
             yield delim.join(tokens[root:root+n+1])
-
-
-# def slice_into_ngrams(tokens, n_max=3, delim='_'):
-#     N = len(tokens)
-#     for root in range(N):
-#         for n in range(min(n_max, N - root)):
-#             yield delim.join(tokens[root:root+n+1])
 
 
 def split_corpus(session, corpus, train=0.8, development=0.1, test=0.1, seed=None):

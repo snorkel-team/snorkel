@@ -15,7 +15,7 @@ import signal
 import codecs
 from subprocess import Popen
 import sys
-from .utils import sort_X_on_Y, split_html_attrs
+from .utils import ProgressBar, sort_X_on_Y, split_html_attrs
 import copy # TODO: remove once OmniParser is fixed
 
 
@@ -31,16 +31,22 @@ class CorpusParser:
         corpus = Corpus(name=name)
         if session is not None:
             session.add(corpus)
+        if self.max_docs is not None:
+            pb = ProgressBar(self.max_docs)
         for i, (doc, text) in enumerate(self.doc_parser.parse()):
-            if self.max_docs and i == self.max_docs:
-                break
+            if self.max_docs is not None:
+                pb.bar(i)
+                if i == self.max_docs:
+                    break
             corpus.append(doc)
             for _ in self.sent_parser.parse(doc, text):
                 pass
+        if self.max_docs is not None:
+            pb.bar(self.max_docs)
+            pb.close()
         if session is not None:
             session.commit()
-        # TODO: uncomment this
-        # corpus.stats()
+        # corpus.stats() # TODO: uncomment this line
         return corpus
 
 

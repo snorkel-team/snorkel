@@ -38,14 +38,10 @@ def load_hardware_labels(loader, candidates, filename, type, attrib):
             if attr == attrib:
                 key = (doc.upper(), part.upper(), val.upper())
                 gold_dict[key] += 1
-                # if gold_dict[key]==2:
-                #     import pdb; pdb.set_trace()
     
     for c in candidates:
-        # import pdb; pdb.set_trace()
         key = ((c[0].parent.document.name).upper(), (c[0].get_span()).upper(), (''.join(c[1].get_span().split())).upper())
         if key in gold_dict:
-            # import pdb; pdb.set_trace()
             # TODO: fix this hard coding
             loader.add({'part' : c[0], 'temp' : c[1]})
 

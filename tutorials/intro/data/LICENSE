@@ -1,7 +1,6 @@
-The data contained in articles-1000.tsv.bz2 is derived from a data set
-released by Signal Media
-(http://research.signalmedia.co/newsir16/signal-dataset.html).
-The Signal Media data set is licensed under a
+Data contained in data.tar.gz is derived from a data set released by
+Signal Media (http://research.signalmedia.co/newsir16/signal-dataset.html).
+Their data set and the contents of data.tar.gz are each licensed under a
 Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 Creative Commons Legal Code

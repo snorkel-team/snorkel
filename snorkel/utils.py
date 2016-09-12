@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import scipy.sparse as sparse
 import random
-from .models import Corpus
+from .models import Corpus, AnnotationKeySet, AnnotationKey
 
 
 
@@ -149,3 +149,30 @@ def tokens_to_ngrams(tokens, n_max=3, delim=' '):
     for root in range(N):
         for n in range(min(n_max, N - root)):
             yield delim.join(tokens[root:root+n+1])
+
+
+def get_or_create_single_key_set(session, name):
+    key_set = session.query(AnnotationKeySet).filter(AnnotationKeySet.name == name).first()
+    if key_set is None:
+        key_set = AnnotationKeySet(name=name)
+        session.add(key_set)
+        session.commit()
+
+    if len(key_set) > 1:
+        raise ValueError('AnnotationKeySet with name ' + unicode(name) + ' already exists and has more than one ' +
+                         'AnnotationKey. Please specify a new name.')
+    elif len(key_set) == 1:
+        if key_set.keys[0].name == name:
+            key = key_set.keys[0]
+        else:
+            raise ValueError('AnnotationKeySet named ' + unicode(name) + ' already exists and has one ' +
+                             'AnnotationKey with a different name. Please specify a new name.')
+    else:
+        key = session.query(AnnotationKey).filter(AnnotationKey.name == name).first()
+        if key is None:
+            key = AnnotationKey(name=name)
+            session.add(key)
+            session.commit()
+        key_set.append(key)
+        session.commit()
+    return key_set, key

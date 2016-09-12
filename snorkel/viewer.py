@@ -1,5 +1,6 @@
 from __future__ import print_function
 from .models import Label, AnnotationKey, AnnotationKeySet
+from .utils import get_or_create_single_key_set
 try:
     from IPython.core.display import display, Javascript
 except:
@@ -61,30 +62,12 @@ class Viewer(widgets.DOMWidget):
         # By default, use the username as annotator name
         name = annotator_name if annotator_name is not None else getpass.getuser()
 
-        # Sets up the AnnotationKeySet and AnnotationKey
-        key_set = self.session.query(AnnotationKeySet).filter(AnnotationKeySet.name == name).first()
-        if key_set is None:
-            key_set = AnnotationKeySet(name=name)
-            session.add(key_set)
-            session.commit()
-
-        if len(key_set) > 1:
-            raise ValueError('AnnotationKeySet with name ' + unicode(name) + ' already exists and has more than one ' +
-                             'AnnotationKey. Please specify a new annotator_name.')
-        elif len(key_set) == 1:
-            if key_set.keys[0].name == name:
-                self.annotator = key_set.keys[0]
-            else:
-                raise ValueError('AnnotationKeySet named ' + unicode(name) + ' already exists and has one ' +
-                                 'AnnotationKey with a different name. Please specify a new annotator_name.')
-        else:
-            self.annotator = self.session.query(AnnotationKey).filter(AnnotationKey.name == name).first()
-            if self.annotator is None:
-                self.annotator = AnnotationKey(name=name)
-                session.add(self.annotator)
-                session.commit()
-            key_set.append(self.annotator)
-            session.commit()
+        # Sets up the AnnotationKey to use
+        try:
+            _, self.annotator = get_or_create_single_key_set(self.session, name)
+        except ValueError:
+            raise ValueError('annotator_name ' + unicode(name) + ' is already in use for an incompatible ' +
+                             'AnnotationKey and/or AnnotationKeySet. Please specify a new annotator_name.')
 
         # Viewer display configs
         self.n_per_page = n_per_page

@@ -84,7 +84,6 @@ script:
   - travis_wait 45 runipy intro/Intro_Tutorial_5.ipynb
 
   # Downloads data
-  - cd ..
   - cd disease_tagger
   - ./download_data.sh
   - cd ..

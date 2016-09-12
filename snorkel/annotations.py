@@ -188,6 +188,7 @@ class AnnotationManager(object):
                     res = session.execute(anno_update_query, {'cid': candidate.id, 'kid': key_id, 'value': value})
                     if res.rowcount == 0 and value != 0:
                         session.execute(anno_insert_query, {'candidate_id': candidate.id, 'key_id': key_id, 'value': value})
+        pb.bar(len(candidate_set))
         pb.close()
         session.commit()
 

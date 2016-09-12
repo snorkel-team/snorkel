@@ -1,6 +1,6 @@
 from __future__ import print_function
-from .models import Label, AnnotationKey, AnnotationKeySet
-from .utils import get_or_create_single_key_set
+from .models import Label
+from .queries import get_or_create_single_key_set
 try:
     from IPython.core.display import display, Javascript
 except:

@@ -76,7 +76,7 @@ install:
 script:
 
   # Runs intro tutorial notebooks
-  cd tutorials
+  - cd tutorials
   - travis_wait 45 runipy intro/Intro_Tutorial_1.ipynb
   - travis_wait 45 runipy intro/Intro_Tutorial_2.ipynb
   - travis_wait 45 runipy intro/Intro_Tutorial_3.ipynb

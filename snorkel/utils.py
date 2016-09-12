@@ -116,6 +116,7 @@ def split_corpus(session, corpus, train=0.8, development=0.1, test=0.1, seed=Non
    
     random.seed(seed)
     docs = [doc for doc in corpus.documents]
+    docs.sort(key=lambda d: d.name)
     random.shuffle(docs)        
 
     n = len(docs)

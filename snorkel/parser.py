@@ -25,7 +25,7 @@ class CorpusParser:
         self.sent_parser = sent_parser
         self.max_docs = max_docs
 
-    def parse_corpus(self, name, session=None):
+    def parse_corpus(self, session, name):
         corpus = Corpus(name=name)
         if session is not None:
             session.add(corpus)
@@ -172,7 +172,7 @@ class CoreNLPHandler:
         self.tok_whitespace = tok_whitespace
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
-               % (loc, self.port, 300000)]
+               % (loc, self.port, 600000)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
         props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
@@ -243,7 +243,7 @@ class CoreNLPHandler:
             parts['text'] = ''.join(t['originalText'] + t['after'] if i < L - 1 else t['originalText'] for i,t in enumerate(block['tokens']))
             if not diverged and doc_text != parts['text']:
                 diverged = True
-                warnings.warn("CoreNLP parse has diverged from raw document text!")
+                #warnings.warn("CoreNLP parse has diverged from raw document text!")
             parts['position'] = position
             
             # replace PennTreeBank tags with original forms

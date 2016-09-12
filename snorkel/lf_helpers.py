@@ -102,7 +102,7 @@ def contains_token(c, tok, attrib='words', case_sensitive=False):
         for span in spans))
 
 
-def contains_regex(c, rgx=None, attrib='words', sep=" ", case_sensitive=False)
+def contains_regex(c, rgx=None, attrib='words', sep=" ", case_sensitive=False):
     """
     TODO: write documentation here
     """   

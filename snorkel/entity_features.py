@@ -1,6 +1,7 @@
 import sys, os
 sys.path.append(os.environ['SNORKELHOME'] + '/treedlib/treedlib')
 from templates import *
+from lf_helpers import get_row_ngrams, get_col_ngrams, get_neighbor_cell_ngrams
 
 def compile_entity_feature_generator():
   """
@@ -119,3 +120,66 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
                     curr_left_lemmas + "]_[" + curr_right_lemmas + "]"
                 yield "W_POS_L_" + str(i+1) + "_R_" + str(j+1) + "_[" + \
                     curr_left_pos_tags + "]_[" + curr_right_pos_tags + "]"
+
+def tabledlib_unary_features(span):
+    yield u"HTML_TAG_" + span.parent.html_tag
+    for attr in span.parent.html_attrs:
+        yield u"HTML_ATTR_" + attr
+    for tag in span.parent.html_anc_tags:
+        yield u"HTML_ANC_TAG_" + tag
+    for attr in span.parent.html_anc_attrs:
+        yield u"HTML_ANC_ATTR_" + attr
+    if span.parent.row_num is not None and span.parent.col_num is not None:
+        yield u"ROW_NUM_[%s]" % span.parent.row_num
+        yield u"COL_NUM_[%s]" % span.parent.col_num
+        for attrib in ['words','lemmas','pos_tags', 'ner_tags']:
+            for ngram in get_row_ngrams(span, n_max=3, attrib=attrib):
+                yield "ROW_%s_%s" % (attrib.upper(), ngram)
+                if attrib=="lemmas":
+                    try:
+                        if float(ngram).is_integer():
+                            yield u"ROW_INT"
+                        else:
+                            yield u"ROW_FLOAT"
+                    except:
+                        pass
+            for ngram in get_col_ngrams(span, n_max=3, attrib=attrib):
+                yield "COL_%s_%s" % (attrib.upper(), ngram)
+                if attrib=="lemmas":
+                    try:
+                        if float(ngram).is_integer():
+                            yield u"COL_INT"
+                        else:
+                            yield u"COL_FLOAT"
+                    except:
+                        pass
+            for (ngram, direction) in get_neighbor_cell_ngrams(span, directions=True, n_max=3, attrib=attrib):
+                yield "NEIGHBOR_%s_%s_%s" % (direction, attrib.upper(), ngram)
+                if attrib=="lemmas":
+                    try:
+                        if float(ngram).is_integer():
+                            yield "NEIGHBOR_%s_INT" % side
+                        else:
+                            yield "NEIGHBOR_%s_FLOAT" % side
+                    except:
+                        pass
+
+def tabledlib_binary_features(span0, span1):
+    for feat in tabledlib_unary_features(span0):
+        yield "e0_" + feat
+    for feat in tabledlib_unary_features(span1):
+        yield "e1_" + feat
+    if span0.parent.table == span1.parent.table:
+        yield u"SAME_TABLE"
+        if span0.parent.cell is not None and span1.parent.cell is not None:
+            row_diff = span0.parent.row_num - span1.parent.row_num
+            yield u"ROW_DIFF_[%s]" % row_diff
+            col_diff = span0.parent.col_num - span1.parent.col_num
+            yield u"COL_DIFF_[%s]" % col_diff
+            yield u"MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff))
+            if span0.parent.cell == span1.parent.cell:
+                yield u"SAME_CELL"
+                yield u"WORD_DIFF_[%s]" % (span0.get_word_start() - span1.get_word_start())
+                yield u"CHAR_DIFF_[%s]" % (span0.char_start - span1.char_start)
+                if span0.parent == span1.parent:
+                    yield u"SAME_PHRASE"

@@ -162,33 +162,38 @@ def get_cell_ngrams(span, attrib='words', n_min=1, n_max=1, case_sensitive=False
         for phrase in span.parent.cell.phrases))
 
 
-def get_neighbor_cell_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     # TODO: Fix this to be more efficient (optimize with SQL query)
     span = c
     if (not isinstance(span, Span) or 
         not isinstance(span.parent, Phrase) or
         span.parent.cell is None): return []
-    f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
+    if directions:
+        f = (lambda w: w) if case_sensitive else (lambda w: (w[0].lower(), w[1]))
+    else:
+        f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     ngrams = []
     for phrase in span.parent.table.phrases:
         if phrase.cell is None:
             continue
         row_diff = abs(phrase.row_num - span.parent.row_num)
         col_diff = abs(phrase.col_num - span.parent.col_num)
-        # side = ''
-        # if col_diff==0:
-        #     if 0 < row_diff and row_diff <= dist:
-        #         side = "UP"
-        #     elif  0 > row_diff and row_diff >= -dist:
-        #         side = "DOWN"
-        # elif row_diff==0:
-        #     if 0 < col_diff and col_diff <= dist:
-        #         side = "RIGHT"
-        #     elif  0 > col_diff and col_diff >= -dist:
-        #         side = "LEFT"
-        # if side:
-        if row_diff + col_diff == 1:
-            ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)]) 
+        if (row_diff or col_diff) and row_diff + col_diff <= dist:
+            if directions:
+                direction = ''
+                if col_diff==0:
+                    if 0 < row_diff and row_diff <= dist:
+                        direction = "UP"
+                    elif  0 > row_diff and row_diff >= -dist:
+                        direction = "DOWN"
+                elif row_diff==0:
+                    if 0 < col_diff and col_diff <= dist:
+                        direction = "RIGHT"
+                    elif  0 > col_diff and col_diff >= -dist:
+                        direction = "LEFT"
+                ngrams.extend([(ngram, direction) for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)])
+            else: 
+                ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)]) 
     return map(f, ngrams)
 
 

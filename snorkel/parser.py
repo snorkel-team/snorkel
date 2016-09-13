@@ -30,20 +30,19 @@ class CorpusParser:
         corpus = Corpus(name=name)
         if session is not None:
             session.add(corpus)
-        texts = []
+        if self.max_docs is not None:
+            pb = ProgressBar(self.max_docs)
         for i, (doc, text) in enumerate(self.doc_parser.parse()):
-            if self.max_docs and i == self.max_docs:
-                break
+            if self.max_docs is not None:
+                pb.bar(i)
+                if i == self.max_docs:
+                    break
             corpus.append(doc)
-            texts.append(text)
-
-        pb = ProgressBar(len(corpus) if self.max_docs is None 
-            else min(len(corpus), self.max_docs))
-        for i in range(len(corpus)):
-            pb.bar(i)
-            for _ in self.sent_parser.parse(corpus.documents[i], texts[i]):
+            for _ in self.sent_parser.parse(doc, text):
                 pass
-        pb.close()
+        if self.max_docs is not None:
+            pb.bar(self.max_docs)
+            pb.close()
         if session is not None:
             session.commit()
         corpus.stats()

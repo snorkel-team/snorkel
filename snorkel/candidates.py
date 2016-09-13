@@ -40,7 +40,7 @@ class CandidateExtractor(object):
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations
         self.symmetric_relations = symmetric_relations
-
+        
         # Check that arity is same
         if len(self.candidate_spaces) != len(self.matchers):
             raise ValueError("Mismatched arity of candidate space and matcher.")
@@ -122,9 +122,32 @@ class CandidateExtractor(object):
                 child_args['id'] = candidate_id[0]
                 session.execute(child_insert_query, child_args)
                 del child_args['id']
+                set_insert_args['candidate_id'] = candidate_id[0]
+                session.execute(set_insert_query, set_insert_args)
+            else:
+                pass
+                # TODO: throw a warning or raise an error; downstream learning may break if this is reached
+                # import pdb; pdb.set_trace()
+                # print
+                # print args[0][1]
+                # print args[1][1]
+                # print candidate_id[0]
+                # print
+                  # if args[0][1].parent.id == 1518 and args[1][1].parent.id == 95674:
+                # if candidate_id[0] == 112:
+                #     import pdb; pdb.set_trace()
+                # print args[0][1].parent.cell
+                # print 
+                # print args[1][1].parent
+                # print args[1][1].parent.cell
+                # print
+                # self.j += 1
+                # import pdb; pdb.set_trace()
 
-            set_insert_args['candidate_id'] = candidate_id[0]
-            session.execute(set_insert_query, set_insert_args)
+            
+            # if set_insert_args['candidate_id'] == 112:
+            #     import pdb; pdb.set_trace()
+            
             
     def _extract_multiprocess(self, contexts, candidate_set, parallelism):
         contexts_in    = JoinableQueue()

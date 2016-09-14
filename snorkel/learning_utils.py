@@ -84,18 +84,17 @@ def test_scores(pred, gold, return_vals=True, verbose=False):
 
     # Print simple report if verbose=True
     if verbose:
-        print "=" * 40
-        print "Test set size:\t%s" % n_t
-        print "-" * 40
+        print "========================================"
+        print "Recall-corrected Noise-aware Model"
+        print "========================================"
         print "Pos. class accuracy: %s" % (tp/float(tp+fn),)
         print "Neg. class accuracy: %s" % (tn/float(tn+fp),)
-        print "-" * 40
-        print "Precision:\t%s" % prec
-        print "Recall:\t\t%s" % rec
-        print "F1 Score:\t%s" % f1
-        print "-" * 40
-        print "TP: %s | FP: %s | TN: %s | FN: %s" % (tp,fp,tn,fn)
-        print "=" * 40
+        print "Corpus Precision {:.3}".format(prec)
+        print "Corpus Recall    {:.3}".format(rec)
+        print "Corpus F1        {:.3}".format(f1)
+        print "----------------------------------------"
+        print "TP: {} | FP: {} | TN: {} | FN: {}".format(tp, fp, tn, fn)
+        print "========================================\n"
     if return_vals:
         return prec, rec, f1, tp, fp, tn, fn, n_t
 

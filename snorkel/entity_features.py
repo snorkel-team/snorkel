@@ -2,6 +2,7 @@ import sys, os
 sys.path.append(os.environ['SNORKELHOME'] + '/treedlib/treedlib')
 from templates import *
 from lf_helpers import get_row_ngrams, get_col_ngrams, get_neighbor_cell_ngrams
+from utils import get_as_dict
 
 def compile_entity_feature_generator():
   """
@@ -153,7 +154,7 @@ def tabledlib_unary_features(span):
                             yield u"COL_FLOAT"
                     except:
                         pass
-            for (ngram, direction) in get_neighbor_cell_ngrams(span, directions=True, n_max=3, attrib=attrib):
+            for (ngram, direction) in get_neighbor_cell_ngrams(span, dist=2, directions=True, n_max=3, attrib=attrib):
                 yield "NEIGHBOR_%s_%s_%s" % (direction, attrib.upper(), ngram)
                 if attrib=="lemmas":
                     try:
@@ -164,22 +165,26 @@ def tabledlib_unary_features(span):
                     except:
                         pass
 
-def tabledlib_binary_features(span0, span1):
-    for feat in tabledlib_unary_features(span0):
-        yield "e0_" + feat
+def tabledlib_binary_features(span1, span2, s1_idxs, s2_idxs):
+    for feat in get_ddlib_feats(get_as_dict(span1.parent), s1_idxs):
+        yield "e1_" + feat
     for feat in tabledlib_unary_features(span1):
         yield "e1_" + feat
-    if span0.parent.table == span1.parent.table:
+    for feat in get_ddlib_feats(get_as_dict(span2.parent), s2_idxs):
+        yield "e2_" + feat
+    for feat in tabledlib_unary_features(span2):
+        yield "e2_" + feat
+    if span1.parent.table == span2.parent.table:
         yield u"SAME_TABLE"
-        if span0.parent.cell is not None and span1.parent.cell is not None:
-            row_diff = span0.parent.row_num - span1.parent.row_num
+        if span1.parent.cell is not None and span2.parent.cell is not None:
+            row_diff = span1.parent.row_num - span2.parent.row_num
             yield u"ROW_DIFF_[%s]" % row_diff
-            col_diff = span0.parent.col_num - span1.parent.col_num
+            col_diff = span1.parent.col_num - span2.parent.col_num
             yield u"COL_DIFF_[%s]" % col_diff
             yield u"MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff))
-            if span0.parent.cell == span1.parent.cell:
+            if span1.parent.cell == span2.parent.cell:
                 yield u"SAME_CELL"
-                yield u"WORD_DIFF_[%s]" % (span0.get_word_start() - span1.get_word_start())
-                yield u"CHAR_DIFF_[%s]" % (span0.char_start - span1.char_start)
-                if span0.parent == span1.parent:
+                yield u"WORD_DIFF_[%s]" % (span1.get_word_start() - span2.get_word_start())
+                yield u"CHAR_DIFF_[%s]" % (span1.char_start - span2.char_start)
+                if span1.parent == span2.parent:
                     yield u"SAME_PHRASE"

@@ -174,17 +174,25 @@ def tabledlib_binary_features(span1, span2, s1_idxs, s2_idxs):
         yield "e2_" + feat
     for feat in tabledlib_unary_features(span2):
         yield "e2_" + feat
-    if span1.parent.table == span2.parent.table:
-        yield u"SAME_TABLE"
-        if span1.parent.cell is not None and span2.parent.cell is not None:
-            row_diff = span1.parent.row_num - span2.parent.row_num
-            yield u"ROW_DIFF_[%s]" % row_diff
-            col_diff = span1.parent.col_num - span2.parent.col_num
-            yield u"COL_DIFF_[%s]" % col_diff
-            yield u"MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff))
-            if span1.parent.cell == span2.parent.cell:
-                yield u"SAME_CELL"
-                yield u"WORD_DIFF_[%s]" % (span1.get_word_start() - span2.get_word_start())
-                yield u"CHAR_DIFF_[%s]" % (span1.char_start - span2.char_start)
-                if span1.parent == span2.parent:
-                    yield u"SAME_PHRASE"
+    if span1.parent.table is not None and span2.parent.table is not None:
+        if span1.parent.table == span2.parent.table:
+            yield u"SAME_TABLE"
+            if span1.parent.cell is not None and span2.parent.cell is not None:
+                row_diff = span1.parent.row_num - span2.parent.row_num
+                col_diff = span1.parent.col_num - span2.parent.col_num
+                yield u"SAME_TABLE_ROW_DIFF_[%s]" % row_diff
+                yield u"SAME_TABLE_COL_DIFF_[%s]" % col_diff
+                yield u"SAME_TABLE_MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff))
+                if span1.parent.cell == span2.parent.cell:
+                    yield u"SAME_CELL"
+                    yield u"WORD_DIFF_[%s]" % (span1.get_word_start() - span2.get_word_start())
+                    yield u"CHAR_DIFF_[%s]" % (span1.char_start - span2.char_start)
+                    if span1.parent == span2.parent:
+                        yield u"SAME_PHRASE"
+        else:
+            if span1.parent.cell is not None and span2.parent.cell is not None:
+                row_diff = span1.parent.row_num - span2.parent.row_num
+                col_diff = span1.parent.col_num - span2.parent.col_num
+                yield u"DIFF_TABLE_ROW_DIFF_[%s]" % row_diff
+                yield u"DIFF_TABLE_COL_DIFF_[%s]" % col_diff
+                yield u"DIFF_TABLE_MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff))

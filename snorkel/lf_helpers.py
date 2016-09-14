@@ -198,17 +198,21 @@ def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=
     return map(f, ngrams)
 
 
-def get_row_ngrams(c, infer=True, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+def get_row_ngrams(c, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     return _get_axis_ngrams(c, axis='row', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
 
 
-def get_col_ngrams(c, infer=True, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+def get_col_ngrams(c, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     return _get_axis_ngrams(c, axis='col', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
 
 
-def get_aligned_ngrams(c, infer=True, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+def get_aligned_ngrams(c, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     return (get_row_ngrams(c, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
           + get_col_ngrams(c, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive))
+
+# TODO: write this LF helper (get furthest north and west cell's ngrams)
+# def get_head_ngrams
+# ...sorted(_get_aligned_cells(cell, axis, infer=False), key=lambda x: getattr(x,axis_name))[0]
 
 def same_document(c):
     return (c[0].parent.document is not None and
@@ -231,7 +235,7 @@ def same_phrase(c):
             c[0].parent == c[1].parent)
 
 
-def _get_axis_ngrams(c, axis, infer=True, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+def _get_axis_ngrams(c, axis, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     # TODO: optimize this with SQL query
     span = c
     if (not isinstance(span, Span) or 
@@ -239,28 +243,36 @@ def _get_axis_ngrams(c, axis, infer=True, attrib='words', n_min=1, n_max=1, case
         span.parent.cell is None): return []  
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     ngrams = []
-    orthog_axis = 'col' if axis=='row' else 'row'
     for cell in _get_aligned_cells(span.parent.cell, axis, infer=infer):
         for phrase in cell.phrases:
             ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)]) 
     return map(f, ngrams)
 
 
-def _get_aligned_cells(root_cell, axis, infer=True):
+def _get_aligned_cells(root_cell, axis, infer=False):
     # TODO: optimize this with SQL query
     axis_name = axis + '_num'
-    ortho_axis = 'row' if axis=='col' else 'col'
+    other_axis = 'row' if axis=='col' else 'col'
     aligned_cells = [cell for cell in root_cell.table.cells
         if getattr(cell, axis_name) == getattr(root_cell, axis_name)
         and cell != root_cell]
-    return [_get_head_cell(cell, ortho_axis) for cell in aligned_cells] if infer else aligned_cells 
+    return [_get_nonempty_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells 
 
 
-def _get_head_cell(cell, axis):
+def _get_nonempty_cell(root_cell, axis):
     # TODO: optimize this with SQL query
+    # TODO: use better time complexity algorithm
     axis_name = axis + '_num'
-    aligned_cells = sorted(_get_aligned_cells(cell, axis, infer=False), key=lambda x: getattr(x,axis_name)) 
-    return aligned_cells[0] if aligned_cells else cell
+    other_axis = 'row' if axis=='col' else 'col'
+    other_axis_name = other_axis + '_num'
+    if root_cell.text or getattr(root_cell, other_axis_name) == 0:
+        return root_cell
+    else:
+        neighbor_cell = [cell for cell in root_cell.table.cells
+            if getattr(cell, axis_name) == getattr(root_cell, axis_name)
+            and getattr(cell, other_axis_name) == getattr(root_cell, other_axis_name) - 1]
+        return _get_nonempty_cell(neighbor_cell[0], axis)
+        
 
 
 # def get_inferred_row_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):

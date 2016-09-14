@@ -42,7 +42,7 @@ class CorpusParser:
             for _ in self.sent_parser.parse(doc, text):
                 pass
         if self.max_docs is not None:
-            pb.bar(self.max_docs)
+            pb.bar(self.max_docs - 1)
             pb.close()
         if session is not None:
             session.commit()
@@ -299,10 +299,7 @@ class OmniParser(object):
     def parse(self, document, text):
         soup = BeautifulSoup(text, 'lxml')
         self.table_idx = -1
-        # self.cell_idx = -1
-        self.phrase_idx = 0
-        # self.row_num = -1
-        # self.col_num = -1        
+        self.phrase_idx = 0      
         for phrase in self.parse_tag(soup, document):
             yield phrase
 

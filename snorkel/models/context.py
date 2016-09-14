@@ -286,7 +286,7 @@ class Phrase(Context):
         }
 
     def __repr__(self):
-        return "Phrase" + unicode((self.document, self.position, self.text))
+        return "Phrase" + unicode((self.document, self.table_id, self.cell_id, self.position, self.text))
 
 
 class TemporaryContext(object):
@@ -429,7 +429,9 @@ class TemporarySpan(TemporaryContext):
         return self.get_attrib_span('words', sep)
 
     def __contains__(self, other_span):
-        return other_span.char_start >= self.char_start and other_span.char_end <= self.char_end
+        return (self.parent == other_span.parent 
+            and other_span.char_start >= self.char_start 
+            and other_span.char_end <= self.char_end)
 
     def __getitem__(self, key):
         """

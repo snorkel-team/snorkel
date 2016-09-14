@@ -1,6 +1,7 @@
 from .models import Span, Phrase
 from itertools import chain
 from utils import tokens_to_ngrams
+import re
 
 def get_text_splits(c):
     """
@@ -106,9 +107,9 @@ def contains_regex(c, rgx=None, attrib='words', sep=" ", case_sensitive=False):
     """
     TODO: write documentation here
     """   
-    rgx = rgx if rgx.endswith('$') else rgx + r'$'
+    spans = [c] if isinstance(c, Span) else c.get_arguments()
     r = re.compile(rgx, flags=re.I if not case_sensitive else 0)
-    return True if r.match(c.get_attrib_span(self.attrib, sep=sep)) is not None else False
+    return any([r.search(span.get_attrib_span(attrib, sep=sep)) is not None for span in spans])
 
 
 def get_doc_candidate_spans(c):
@@ -197,17 +198,100 @@ def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=
     return map(f, ngrams)
 
 
-def get_row_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-    return _get_axis_ngrams(c, axis='row', attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
+def get_row_ngrams(c, infer=True, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    return _get_axis_ngrams(c, axis='row', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
 
 
-def get_col_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-    return _get_axis_ngrams(c, axis='col', attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
+def get_col_ngrams(c, infer=True, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    return _get_axis_ngrams(c, axis='col', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
 
 
-def get_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-    return (get_row_ngrams(c, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
-          + get_col_ngrams(c, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive))
+def get_aligned_ngrams(c, infer=True, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    return (get_row_ngrams(c, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
+          + get_col_ngrams(c, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive))
+
+def same_document(c):
+    return (c[0].parent.document is not None and
+            c[1].parent.document is not None and 
+            c[0].parent.document == c[1].parent.document)
+
+def same_table(c):
+    return (c[0].parent.table is not None and
+            c[1].parent.table is not None and 
+            c[0].parent.table == c[1].parent.table)
+
+def same_cell(c):
+    return (c[0].parent.cell is not None and
+            c[1].parent.cell is not None and 
+            c[0].parent.cell == c[1].parent.cell)
+
+def same_phrase(c):
+    return (c[0].parent is not None and
+            c[1].parent is not None and 
+            c[0].parent == c[1].parent)
+
+
+def _get_axis_ngrams(c, axis, infer=True, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    # TODO: optimize this with SQL query
+    span = c
+    if (not isinstance(span, Span) or 
+        not isinstance(span.parent, Phrase) or
+        span.parent.cell is None): return []  
+    f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
+    ngrams = []
+    orthog_axis = 'col' if axis=='row' else 'row'
+    for cell in _get_aligned_cells(span.parent.cell, axis, infer=infer):
+        for phrase in cell.phrases:
+            ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)]) 
+    return map(f, ngrams)
+
+
+def _get_aligned_cells(root_cell, axis, infer=True):
+    # TODO: optimize this with SQL query
+    axis_name = axis + '_num'
+    ortho_axis = 'row' if axis=='col' else 'col'
+    aligned_cells = [cell for cell in root_cell.table.cells
+        if getattr(cell, axis_name) == getattr(root_cell, axis_name)
+        and cell != root_cell]
+    return [_get_head_cell(cell, ortho_axis) for cell in aligned_cells] if infer else aligned_cells 
+
+
+def _get_head_cell(cell, axis):
+    # TODO: optimize this with SQL query
+    axis_name = axis + '_num'
+    aligned_cells = sorted(_get_aligned_cells(cell, axis, infer=False), key=lambda x: getattr(x,axis_name)) 
+    return aligned_cells[0] if aligned_cells else cell
+
+
+# def get_inferred_row_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+#     return _get_inferred_axis_ngrams(c, axis='row', attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
+
+
+# def _get_inferred_axis_ngrams(c, axis, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+#     span = c
+#     if (not isinstance(span, Span) or 
+#         not isinstance(span.parent, Phrase) or
+#         span.parent.cell is None): return []  
+#     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
+#     ngrams = []
+#     for cell in _get_aligned_cells(span, axis):
+#         for phrase in cell.phrases:
+#             ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)]) 
+#     return map(f, ngrams)
+
+# def _get_row_cells(span):
+#     return [cell for cell in _get_aligned_cells(span, axis='row')]
+
+
+# def _get_col_cells(span):
+#     return [cell for cell in _get_aligned_cells(span, axis='col')]
+
+# def _get_head_cell(cell, axis):
+#     axis_name = axis + '_num'
+#     head_cell = cell
+#     cells = 
+#     while not head_cell.phrases and head_cell.axis_name != 0:
+    # return head_cell
 
 
 # def head_ngrams(axis, attrib='words', n_max=1, case_sensitive=False, induced=False):
@@ -252,33 +336,3 @@ def get_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False
 #     for phrase in phrases:
 #         for ngram in slice_into_ngrams(getattr(phrase,attrib), n_max=n_max):
 #             yield ngram if case_sensitive else ngram.lower()
-
-
-def _get_row_cells(span):
-    return [cell for cell in _get_aligned_cells(span, axis='row')]
-
-
-def _get_col_cells(span):
-    return [cell for cell in _get_aligned_cells(span, axis='col')]
-
-
-def _get_aligned_cells(span, axis):
-    axis_name = axis + '_num'
-    cells = [cell for cell in span.parent.table.cells
-        if getattr(cell, axis_name) == getattr(span.parent, axis_name)
-        and cell != span.parent.cell]
-    return cells
-
-
-def _get_axis_ngrams(c, axis, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-    span = c
-    if (not isinstance(span, Span) or 
-        not isinstance(span.parent, Phrase) or
-        span.parent.cell is None): return []  
-    f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    ngrams = []
-    for cell in _get_aligned_cells(span, axis):
-        for phrase in cell.phrases:
-            ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)]) 
-    return map(f, ngrams)
-

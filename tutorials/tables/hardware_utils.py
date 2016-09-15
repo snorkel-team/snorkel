@@ -53,16 +53,15 @@ def entity_level_f1(tp, fp, tn, fn, filename, corpus, attrib):
     docs = []
     for doc in corpus:
         docs.append((doc.name).upper())
-    gold_dict = get_gold_dict(filename, attrib, docs)
+    gold_dict = set(get_gold_dict(filename, attrib, docs))
     
     TP = FP = TN = FN = 0
-    for c in tp.union(fp):
-        key = ((c[0].parent.document.name).upper(), (c[0].get_span()).upper(), (''.join(c[1].get_span().split())).upper())
-        if key in gold_dict:
-            TP += 1
-        else:
-            FP += 1
-    FN = len(gold_dict) - TP
+    pos = set([((c[0].parent.document.name).upper(), 
+                (c[0].get_span()).upper(), 
+                (''.join(c[1].get_span().split())).upper()) for c in tp.union(fp)])
+    TP = len(pos.intersection(gold_dict))
+    FP = len(pos.difference(gold_dict))
+    FN = len(gold_dict.difference(pos))
 
     prec = TP / float(TP + FP) if TP + FP > 0 else float('nan')
     rec  = TP / float(TP + FN) if TP + FN > 0 else float('nan')

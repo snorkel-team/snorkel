@@ -83,9 +83,16 @@ class CandidateExtractor(object):
         # by the Matcher
         for i in range(self.arity):
             self.child_context_sets[i].clear()
-            for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
-                tc.load_id_or_insert(session)
-                self.child_context_sets[i].add(tc)
+            for ngram in self.candidate_spaces[i].apply(context):
+                for tc in self.matchers[i].apply([ngram]):
+                    tc.load_id_or_insert(session)
+                    self.child_context_sets[i].add(tc)
+            #         # print tc
+            # TODO: WHY IN THE WORLD DO THESE TWO GIVE DIFFERENT RESULTS!?!?
+            # for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
+            #     tc.load_id_or_insert(session)
+            #     self.child_context_sets[i].add(tc)
+                # print tc
 
         # Generates and persists candidates
         parent_insert_query = Candidate.__table__.insert()
@@ -105,7 +112,7 @@ class CandidateExtractor(object):
             if self.arity == 2 and not self.nested_relations and (args[0][1] in args[1][1] or args[1][1] in args[0][1]):
                 continue
 
-            # Checks for symmetric relations
+            # Check for symmetric relations
             if self.arity == 2 and not self.symmetric_relations and args[0][0] > args[1][0]:
                 continue
 
@@ -125,9 +132,8 @@ class CandidateExtractor(object):
                 set_insert_args['candidate_id'] = candidate_id[0]
                 session.execute(set_insert_query, set_insert_args)
             else:
-                # TODO: throw a warning or raise an error; downstream learning may break if this is reached
                 pass
-            
+                # raise RuntimeError("Duplicate candidates are being created!")
             
     def _extract_multiprocess(self, contexts, candidate_set, parallelism):
         contexts_in    = JoinableQueue()
@@ -256,7 +262,7 @@ class OmniNgrams(Ngrams):
         Ngrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
     
     def apply(self, context):
-        if type(context) != Document:
+        if not isinstance(context, Document):
             raise TypeError("Input Contexts to OmniNgrams.apply() must be of type Document")
         for phrase in context.phrases:
             for ngram in Ngrams.apply(self, phrase):

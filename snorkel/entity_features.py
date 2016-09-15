@@ -60,7 +60,7 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
             lemma = context['lemmas'][idxs[0] - i]
             try:
                 float(lemma)
-                lemma = "_NUMBER"
+                lemma = "NUMBER"
             except ValueError:
                 pass
             left_lemmas.append(lemma)
@@ -74,7 +74,7 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
             lemma = context['lemmas'][idxs[-1] + i]
             try:
                 float(lemma)
-                lemma = "_NUMBER"
+                lemma = "NUMBER"
             except ValueError:
                 pass
             right_lemmas.append(lemma)
@@ -125,17 +125,17 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
 def tabledlib_unary_features(span):
     yield u"HTML_TAG_" + span.parent.html_tag
     for attr in span.parent.html_attrs:
-        yield u"HTML_ATTR_" + attr
+        yield u"HTML_ATTR_[" + attr + "]"
     for tag in span.parent.html_anc_tags:
-        yield u"HTML_ANC_TAG_" + tag
+        yield u"HTML_ANC_TAG_[" + tag + "]"
     for attr in span.parent.html_anc_attrs:
-        yield u"HTML_ANC_ATTR_" + attr
+        yield u"HTML_ANC_ATTR_[" + attr + "]"
     if span.parent.row_num is not None and span.parent.col_num is not None:
         yield u"ROW_NUM_[%s]" % span.parent.row_num
         yield u"COL_NUM_[%s]" % span.parent.col_num
         for attrib in ['words','lemmas','pos_tags', 'ner_tags']:
             for ngram in get_row_ngrams(span, n_max=3, attrib=attrib):
-                yield "ROW_%s_%s" % (attrib.upper(), ngram)
+                yield "ROW_%s_[%s]" % (attrib.upper(), ngram)
                 if attrib=="lemmas":
                     try:
                         if float(ngram).is_integer():
@@ -145,7 +145,7 @@ def tabledlib_unary_features(span):
                     except:
                         pass
             for ngram in get_col_ngrams(span, n_max=3, attrib=attrib):
-                yield "COL_%s_%s" % (attrib.upper(), ngram)
+                yield "COL_%s_[%s]" % (attrib.upper(), ngram)
                 if attrib=="lemmas":
                     try:
                         if float(ngram).is_integer():
@@ -155,7 +155,7 @@ def tabledlib_unary_features(span):
                     except:
                         pass
             for (ngram, direction) in get_neighbor_cell_ngrams(span, dist=2, directions=True, n_max=3, attrib=attrib):
-                yield "NEIGHBOR_%s_%s_%s" % (direction, attrib.upper(), ngram)
+                yield "NEIGHBOR_%s_%s_[%s]" % (direction, attrib.upper(), ngram)
                 if attrib=="lemmas":
                     try:
                         if float(ngram).is_integer():

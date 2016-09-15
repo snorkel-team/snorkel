@@ -87,12 +87,10 @@ class CandidateExtractor(object):
                 for tc in self.matchers[i].apply([ngram]):
                     tc.load_id_or_insert(session)
                     self.child_context_sets[i].add(tc)
-            #         # print tc
-            # TODO: WHY IN THE WORLD DO THESE TWO GIVE DIFFERENT RESULTS!?!?
+            # TODO: Figure out why the original version below gives different results
             # for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
             #     tc.load_id_or_insert(session)
             #     self.child_context_sets[i].add(tc)
-                # print tc
 
         # Generates and persists candidates
         parent_insert_query = Candidate.__table__.insert()

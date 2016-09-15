@@ -7,7 +7,7 @@ scipy>=0.17
 bs4
 matplotlib
 theano>=0.8.2
-sqlalchemy>=1.1
+sqlalchemy>=1.0.14
 ipywidgets
 pandas
 sklearn

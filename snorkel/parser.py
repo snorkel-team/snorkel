@@ -352,6 +352,6 @@ class OmniParser(object):
                 temp_anc_tags = copy.deepcopy(anc_tags)
                 temp_anc_tags.append(child.name)
                 temp_anc_attrs = copy.deepcopy(anc_attrs)
-                temp_anc_attrs.extend(child.attrs)
+                temp_anc_attrs.extend(split_html_attrs(child.attrs.items()))
                 for phrase in self.parse_tag(child, document, table, cell, temp_anc_tags, temp_anc_attrs):
                     yield phrase

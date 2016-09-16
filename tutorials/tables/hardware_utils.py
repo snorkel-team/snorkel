@@ -1,6 +1,39 @@
 import csv
 import codecs
 from collections import defaultdict
+from snorkel.candidates import OmniNgrams
+from snorkel.models import TemporaryImplicitSpan
+from difflib import SequenceMatcher 
+import re
+
+class OmniNgramsHardware(OmniNgrams):
+    def __init(self, n_max=5, split_tokens=[]):
+        OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
+    
+    def apply(self, context):
+        for ts in OmniNgrams.apply(self, context):
+            part_nos = [part_no for part_no in expand_implicit_text(ts.get_span())]    
+            if len(part_nos) == 1:
+                yield ts
+            else:
+                for i, part_no in enumerate(part_nos):
+                    yield TemporaryImplicitSpan(
+                        parent         = ts.parent,
+                        char_start     = 0,
+                        char_end       = len(part_no) - 1,
+                        expander_key   = u'part_range',
+                        position       = i,
+                        text           = part_no,
+                        words          = [part_no],
+                        char_offsets   = [0],
+                        lemmas         = [part_no],
+                        pos_tags       = [ts.parent.pos_tags[0]],
+                        ner_tags       = [ts.parent.ner_tags[0]],
+                        dep_parents    = [ts.parent.dep_parents[0]],
+                        dep_labels     = [ts.parent.dep_labels[0]],
+                        meta           = None
+                    )
+
 
 def load_hardware_doc_part_pairs(filename):
     with open(filename, 'r') as csvfile:
@@ -75,3 +108,129 @@ def entity_level_f1(tp, fp, tn, fn, filename, corpus, attrib):
     print "----------------------------------------"
     print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
     print "========================================\n"
+
+
+def expand_implicit_text(text):
+    """
+    Given a string, generates strings that are potentially implied by
+    the original text. Two main operations are performed:
+        1. Expanding ranges (X to Y; X ~ Y; X -- Y)
+        2. Expanding suffixes (123X/Y/Z; 123X, Y, Z)
+    If no implicit terms are found, yields just the original string.
+    To get the correct output from complex strings, this function should be fed
+    many Ngrams from a particular phrase.
+    """
+    DEBUG = False # Set to True to see intermediate values printed out.
+
+    def atoi(num_str):
+        '''
+        Helper function which converts a string to an integer, or returns None.
+        '''
+        try:
+            return int(num_str)
+        except:
+            pass
+        return None
+
+    ### Regex Patterns compile only once per function call.
+    # This range pattern will find text that "looks like" a range.
+    range_pattern = re.compile(ur'^(?P<start>[\w\/]+)(?:\s*(\.{3,}|\~|\-+|to|thru|through|\u2013+|\u2014+|\u2012+|\u2212+)\s*)(?P<end>[\w\/]+)$', re.IGNORECASE | re.UNICODE)
+    suffix_pattern = re.compile(ur'(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)')
+    base_pattern = re.compile(ur'(?P<base>[\w\-]+)(?P<spacer>(?:,|\/)\s*)?(?P<suffix>[\w\-]+)?')
+
+    if DEBUG: print "[debug] Text: " + text
+    inferred_texts = set()
+    final_set = set()
+
+    ### Step 1: Search and expand ranges
+    m = re.search(range_pattern, text)
+    if m:
+        start = m.group("start")
+        end = m.group("end")
+        start_diff = ""
+        end_diff = ""
+        if DEBUG: print "[debug]   Start: %s \t End: %s" % (start, end)
+
+        # Use difflib to find difference. We are interested in 'replace' only
+        seqm = SequenceMatcher(None, start, end).get_opcodes();
+        for opcode, a0, a1, b0, b1 in seqm:
+            if opcode == 'equal':
+                continue
+            elif opcode == 'insert':
+                break
+            elif opcode == 'delete':
+                break
+            elif opcode == 'replace':
+                # NOTE: Potential bug if there is more than 1 replace
+                start_diff = start[a0:a1]
+                end_diff = end[b0:b1]
+            else:
+                raise RuntimeError, "[ERROR] unexpected opcode"
+
+
+        if DEBUG: print "[debug]   start_diff: %s \t end_diff: %s" % (start_diff, end_diff)
+
+        # Check Numbers
+        if atoi(start_diff) and atoi(end_diff):
+            if DEBUG: print "[debug]   Enumerate %d to %d" % (atoi(start_diff), atoi(end_diff))
+            # generate a list of the numbers plugged in
+            number_range = range(atoi(start_diff), atoi(end_diff) + 1)
+            for number in number_range:
+                new_text = start.replace(start_diff,str(number))
+                # Produce the strings with the enumerated ranges
+                inferred_texts.add(new_text)
+
+        # Second, check for single-letter enumeration
+        if len(start_diff) == 1 and len(end_diff) == 1:
+            if start_diff.isalpha() and end_diff.isalpha():
+                def char_range(a, b):
+                    '''
+                    Generates the characters from a to b inclusive.
+                    '''
+                    for c in xrange(ord(a), ord(b)+1):
+                        yield chr(c)
+
+                if DEBUG: print "[debug]   Enumerate %s to %s" % (start_diff, end_diff)
+                letter_range = char_range(start_diff, end_diff)
+                for letter in letter_range:
+                    new_text = start.replace(start_diff,letter)
+                    # Produce the strings with the enumerated ranges
+                    inferred_texts.add(new_text)
+    else: inferred_texts.add(text)
+    if DEBUG: print "[debug]   Inferred Text: \n  " + str(sorted(inferred_texts))
+
+    ### Step 2: Expand suffixes for each of the inferred phrases
+    # NOTE: this only does the simple case of replacing same-length suffixes.
+    # we do not handle cases like "BC546A/B/XYZ/QR"
+    for text in inferred_texts:
+        first_match = re.search(base_pattern,text)
+        if first_match:
+            base = re.search(base_pattern,text).group("base");
+            final_set.add(base) # add the base (multiple times, but set handles that)
+            if (first_match.group("suffix")):
+                all_suffix_lengths = set()
+                # This is a bit inefficient but this first pass just is here
+                # to make sure that the suffixes are the same length
+                for m in re.finditer(suffix_pattern, text):
+                    suffix = m.group("suffix")
+                    suffix_len = len(suffix)
+                    all_suffix_lengths.add(suffix_len)
+                if len(all_suffix_lengths) == 1:
+                    for m in re.finditer(suffix_pattern, text):
+                        spacer = m.group("spacer")
+                        suffix = m.group("suffix")
+                        suffix_len = len(suffix)
+                        trimmed = base[:-suffix_len]
+                        final_set.add(trimmed+suffix)
+    if DEBUG: print "[debug]   Final Set: " + str(sorted(final_set))
+
+    # Yield only the unique values
+    for inferred_texts in final_set:
+        yield inferred_texts
+
+    # NOTE: We make a few assumptions (e.g. suffixes must be same length), but
+    # one important unstated assumption is that if there is a single suffix,
+    # (e.g. BC546A/B), the single suffix will be swapped in no matter what.
+    # In this example, it works. But if we had "ABCD/EFG" we would get "ABCD,AEFG"
+    # Check out UtilsTests.py to see more of our assumptions capture as test
+    # cases.

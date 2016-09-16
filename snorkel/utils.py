@@ -20,6 +20,7 @@ class ProgressBar(object):
         sys.stdout.flush()
 
     def close(self):
+        self.bar(N-1)
         sys.stdout.write("\n\n")
         sys.stdout.flush()
 

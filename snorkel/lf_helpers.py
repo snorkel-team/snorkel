@@ -1,4 +1,4 @@
-from .models import Span, Phrase
+from .models import SnorkelSession, Span, Cell, Phrase
 from itertools import chain
 from utils import tokens_to_ngrams
 import re
@@ -248,9 +248,8 @@ def _get_axis_ngrams(c, axis, infer=False, attrib='words', n_min=1, n_max=1, cas
             ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)]) 
     return map(f, ngrams)
 
-
+# WITHOUT SQL:
 def _get_aligned_cells(root_cell, axis, infer=False):
-    # TODO: optimize this with SQL query
     axis_name = axis + '_num'
     other_axis = 'row' if axis=='col' else 'col'
     aligned_cells = [cell for cell in root_cell.table.cells
@@ -258,10 +257,26 @@ def _get_aligned_cells(root_cell, axis, infer=False):
         and cell != root_cell]
     return [_get_nonempty_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells 
 
+# WITH SQL:
+# TODO: use getattr for row_num/col_num 
+# def _get_aligned_cells(root_cell, axis, infer=False):
+#     session = SnorkelSession.object_session(root_cell)
+#     if axis == 'row':
+#         aligned_cells = session.query(Cell).filter(
+#             Cell.table == root_cell.table).filter(
+#             Cell.row_num == root_cell.row_num).filter(
+#             Cell.id != root_cell.id).all()
+#         other_axis = 'col'
+#     else:
+#         aligned_cells = session.query(Cell).filter(
+#             Cell.table == root_cell.table).filter(
+#             Cell.col_num == root_cell.col_num).filter(
+#             Cell.id != root_cell.id).all()
+#         other_axis = 'row'
+#     return [_get_nonempty_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells 
 
+# WITHOUT SQL:
 def _get_nonempty_cell(root_cell, axis):
-    # TODO: optimize this with SQL query
-    # TODO: use better time complexity algorithm
     axis_name = axis + '_num'
     other_axis = 'row' if axis=='col' else 'col'
     other_axis_name = other_axis + '_num'
@@ -273,78 +288,17 @@ def _get_nonempty_cell(root_cell, axis):
             and getattr(cell, other_axis_name) == getattr(root_cell, other_axis_name) - 1]
         return _get_nonempty_cell(neighbor_cell[0], axis)
         
-
-
-# def get_inferred_row_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-#     return _get_inferred_axis_ngrams(c, axis='row', attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
-
-
-# def _get_inferred_axis_ngrams(c, axis, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-#     span = c
-#     if (not isinstance(span, Span) or 
-#         not isinstance(span.parent, Phrase) or
-#         span.parent.cell is None): return []  
-#     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-#     ngrams = []
-#     for cell in _get_aligned_cells(span, axis):
-#         for phrase in cell.phrases:
-#             ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)]) 
-#     return map(f, ngrams)
-
-# def _get_row_cells(span):
-#     return [cell for cell in _get_aligned_cells(span, axis='row')]
-
-
-# def _get_col_cells(span):
-#     return [cell for cell in _get_aligned_cells(span, axis='col')]
-
-# def _get_head_cell(cell, axis):
+# WITH SQL:
+# def _get_nonempty_cell(root_cell, axis):
 #     axis_name = axis + '_num'
-#     head_cell = cell
-#     cells = 
-#     while not head_cell.phrases and head_cell.axis_name != 0:
-    # return head_cell
-
-
-# def head_ngrams(axis, attrib='words', n_max=1, case_sensitive=False, induced=False):
-#     head_cell = self.head_cell(axis, induced=induced)
-#     ngrams = chain.from_iterable(
-#         self._get_phrase_ngrams(phrase, attrib=attrib, n_max=n_max) 
-#         for cell in cells for phrase in cell.phrases)
-#     return [ngram.lower() for ngram in ngrams] if not case_sensitive else ngrams
-
-
-# def head_cell(axis, induced=False):
-#     if axis not in ('row', 'col'): 
-#         raise Exception("Axis must equal 'row' or 'col' ")
-
-#     cells = self._get_aligned_cells(axis=axis)
-#     axis_name = axis + '_num'
-#     head_cell = sorted(cells, key=lambda x: getattr(x,axis_name))[0]
-    
-#     if induced and not head_cell.text.isspace():
-#         other_axis = 'col' if axis == 'row' else 'row'
-#         other_axis_name = other_axis + '_num'
-#         # get aligned cells to head_cell that appear before head_cell and aren't empty
-#         aligned_cells = [cell for cell in head_cell.table.cells
-#                             if getattr(cell,other_axis_name) == getattr(head_cell,other_axis_name)
-#                             if getattr(cell,axis_name) < getattr(head_cell,axis_name)
-#                             and not cell.text.isspace()]
-#         # pick the last cell among the ones identified above
-#         aligned_cells = sorted(aligned_cells, key=lambda x: getattr(x,axis_name), reverse=True)
-#         if aligned_cells:
-#             head_cell = aligned_cells[0]
-
-#     return head_cell
-
-
-# def neighborhood_ngrams(attrib='words', n_max=3, dist=1, case_sensitive=False):
-#     # TODO: Fix this to be more efficient (optimize with SQL query)
-#     if self.context.cell is None: return
-#     f = lambda x: 0 < x and x <= dist
-#     phrases = [phrase for phrase in self.context.table.phrases if
-#         phrase.row_num is not None and phrase.col_num is not None and
-#         f(abs(phrase.row_num - self.context.row_num) + abs(phrase.col_num - self.context.col_num))]
-#     for phrase in phrases:
-#         for ngram in slice_into_ngrams(getattr(phrase,attrib), n_max=n_max):
-#             yield ngram if case_sensitive else ngram.lower()
+#     other_axis = 'row' if axis=='col' else 'col'
+#     other_axis_name = other_axis + '_num'
+#     if root_cell.text or getattr(root_cell, other_axis_name) == 0:
+#         return root_cell
+#     else:
+#         session = SnorkelSession.object_session(root_cell)
+#         return session.query(Cell).filter(
+#             Cell.table_id == root_cell.table_id).filter(
+#             Cell.row_num == root_cell.row_num).filter(
+#             Cell.col_num < root_cell.col_num).order_by(
+#             -Cell.col_num).first()

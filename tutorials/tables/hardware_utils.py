@@ -43,7 +43,7 @@ def get_gold_dict(filename, attrib, docs=None):
 
 def load_hardware_labels(loader, candidates, filename, attrib, attrib_class):
     gold_dict = get_gold_dict(filename, attrib)
-    
+
     for c in candidates:
         key = ((c[0].parent.document.name).upper(), (c[0].get_span()).upper(), (''.join(c[1].get_span().split())).upper())
         if key in gold_dict:
@@ -54,10 +54,10 @@ def entity_level_f1(tp, fp, tn, fn, filename, corpus, attrib):
     for doc in corpus:
         docs.append((doc.name).upper())
     gold_dict = set(get_gold_dict(filename, attrib, docs))
-    
+
     TP = FP = TN = FN = 0
-    pos = set([((c[0].parent.document.name).upper(), 
-                (c[0].get_span()).upper(), 
+    pos = set([((c[0].parent.document.name).upper(),
+                (c[0].get_span()).upper(),
                 (''.join(c[1].get_span().split())).upper()) for c in tp.union(fp)])
     TP = len(pos.intersection(gold_dict))
     FP = len(pos.difference(gold_dict))
@@ -74,4 +74,39 @@ def entity_level_f1(tp, fp, tn, fn, filename, corpus, attrib):
     print "Corpus F1        {:.3}".format(f1)
     print "----------------------------------------"
     print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
+    print "========================================\n"
+
+
+def entity_level_total_recall(total_candidates, filename, attrib):
+    """Checks entity-level recall of total_candidates compared to gold.
+
+    Turns a CandidateSet into a normal set of entity-level tuples
+    (doc, part, [attrib_value])
+    then compares this to the entity-level tuples found in the gold.
+
+    Example Usage:
+        from hardware_utils import entity_level_total_recall
+        total_candidates = # CandidateSet of all candidates you want to consider
+        filename = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
+        entity_level_total_recall(total_candidates, filename, 'stg_temp_min')
+    """
+    gold_dict = get_gold_dict(filename, attrib)
+    gold_set = set(gold_dict.keys())
+
+    # Turn CandidateSet into set of tuples
+    entity_level_candidates = set()
+    for c in total_candidates:
+        part = c.get_arguments()[0].get_span()
+        temp = c.get_arguments()[1].get_span()
+        doc = c.get_arguments()[1].parent.document.name
+        entity_level_candidates.add((str(doc), str(part), str(temp)))
+
+    print "========================================"
+    print "Scoring on Entity-Level Total Recall"
+    print "========================================"
+    print "Entity-level Candidates extracted: %s " % (len(entity_level_candidates))
+    print "Entity-level Gold: %s" % (len(gold_set))
+    print "Intersection Candidates: %s" % (len(gold_set.intersection(entity_level_candidates))
+    print "----------------------------------------"
+    print "Overlap with Gold:  %0.2f" % (len(gold_set.intersection(entity_level_candidates)) / float(len(gold_set)),)
     print "========================================\n"

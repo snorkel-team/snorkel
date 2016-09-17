@@ -318,7 +318,6 @@ class TemporaryContext(object):
                 for (key, val) in insert_args.items():
                     if isinstance(val, list):
                         if snorkel_postgres:
-                            # TODO: convert lists into Postgres Array objects
                             raise NotImplementedError
                         else:
                             insert_args[key] = pickle.dumps(val)

@@ -13,7 +13,7 @@ class OmniNgramsHardware(OmniNgrams):
     
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
-            part_nos = [part_no for part_no in expand_implicit_text(ts.get_span())]    
+            part_nos = [part_no for part_no in expand_implicit_text(ts.get_span(sep=''))]    
             if len(part_nos) == 1:
                 yield ts
             else:
@@ -34,6 +34,7 @@ class OmniNgramsHardware(OmniNgrams):
                         dep_labels     = [ts.parent.dep_labels[0]],
                         meta           = None
                     )
+                yield ts
 
 
 def load_hardware_doc_part_pairs(filename):
@@ -42,7 +43,7 @@ def load_hardware_doc_part_pairs(filename):
         gold = []
         for row in gold_reader:
             (doc, part, val, attr) = row
-            gold.append((doc, part))
+            gold.append((doc.upper(), part.upper()))
         gold = set(gold)
         return gold
 
@@ -51,15 +52,14 @@ def load_extended_parts_dict(filename):
     gold_pairs = load_hardware_doc_part_pairs(filename)
     (gold_docs, gold_parts) = zip(*gold_pairs)
     # make gold_parts_suffixed for matcher
-    gold_parts_extended = []
+    gold_parts_extended = set([])
     for part in gold_parts:
         for suffix in ['', 'A','B','C','-16','-25','-40']:
-            gold_parts_extended.append(''.join([part,suffix]))
+            gold_parts_extended.add(''.join([part,suffix]))
             if part.endswith(suffix):
-                gold_parts_extended.append(part[:-len(suffix)])
+                gold_parts_extended.add(part[:-len(suffix)])
                 if part[:2].isalpha() and part[2:-1].isdigit() and part[-1].isalpha():
-                    gold_parts_extended.append(' '.join([part[:2], part[2:-1], part[-1]]))
-    # print "Loaded %s gold (doc, part) pairs." % len(gold_pairs)
+                    gold_parts_extended.add(' '.join([part[:2], part[2:-1], part[-1]]))
     return gold_parts_extended
 
 
@@ -228,8 +228,17 @@ def expand_implicit_text(text):
     if DEBUG: print "[debug]   Final Set: " + str(sorted(final_set))
 
     # Yield only the unique values
-    for inferred_texts in final_set:
-        yield inferred_texts
+    part_suffixes = ['-16','-25','-40','A','B','C']
+    suffixed = False
+    for part in final_set:
+        base = part
+        for suffix in part_suffixes:
+            if part.endswith(suffix):
+                base = part[:-len(suffix)]
+                break
+        yield base
+        for suffix in part_suffixes:
+            yield (part + suffix).replace(' ','') # e.g., for parts in SIEMS01215-1
 
     # NOTE: We make a few assumptions (e.g. suffixes must be same length), but
     # one important unstated assumption is that if there is a single suffix,
@@ -252,16 +261,27 @@ def entity_level_total_recall(total_candidates, filename, attrib):
         filename = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
         entity_level_total_recall(total_candidates, filename, 'stg_temp_min')
     """
+    print "Preparing gold set..."
     gold_dict = get_gold_dict(filename, attrib)
-    gold_set = set(gold_dict.keys())
+    # gold_set = set(gold_dict.keys())
+
+    gold_set = set([])
+    for (doc, part, temp) in gold_dict:
+        gold_set.add((doc.upper(), part.upper()))
 
     # Turn CandidateSet into set of tuples
+    print "Preparing candidates..."
+    pb = ProgressBar(len(total_candidates))
     entity_level_candidates = set()
-    for c in total_candidates:
-        part = c.get_arguments()[0].get_span()
-        temp = c.get_arguments()[1].get_span()
-        doc = c.get_arguments()[1].parent.document.name
-        entity_level_candidates.add((str(doc), str(part), str(temp)))
+    for i, c in enumerate(total_candidates):
+        pb.bar(i)
+        part = c.get_arguments()[0].get_span().upper()
+        doc = c.get_arguments()[0].parent.document.name.upper()
+        entity_level_candidates.add((str(doc), str(part)))
+        # temp = c.get_arguments()[1].get_span()
+        # doc = c.get_arguments()[1].parent.document.name
+        # entity_level_candidates.add((str(doc), str(part), str(temp)))
+    pb.close()
 
     print "========================================"
     print "Scoring on Entity-Level Total Recall"

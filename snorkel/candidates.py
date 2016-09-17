@@ -32,11 +32,10 @@ class CandidateExtractor(object):
     Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
     a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
     """
-    def __init__(self, candidate_class, cspaces, matchers, expanders=None, join_fn=None, self_relations=False, nested_relations=False, symmetric_relations=True):
+    def __init__(self, candidate_class, cspaces, matchers, join_fn=None, self_relations=False, nested_relations=False, symmetric_relations=True):
         self.candidate_class     = candidate_class
         self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
-        self.expanders           = expanders if type(expanders) in [list, tuple] else None # TODO: handle else statement
         self.join_fn             = join_fn
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations

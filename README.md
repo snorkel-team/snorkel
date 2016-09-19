@@ -56,7 +56,7 @@ After installing (see below), just run:
 
 ## Learning how to use Snorkel
 There are currently two tutorials for Snorkel, an [introductory tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro)
-and a more advanced [disease-tagging tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/disease_tagger).
+and a more advanced [disease tagging tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/disease_tagging).
 The tutorials are available in the following directories:
 ```
 tutorials/intro

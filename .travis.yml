@@ -89,11 +89,11 @@ script:
   - travis_wait 45 runipy intro/Intro_Tutorial_5.ipynb
 
   # Runs disease tagger tutorial notebooks
-  - travis_wait 45 runipy disease_tagger/CDR_Tutorial_1.ipynb
-  - travis_wait 60 runipy disease_tagger/CDR_Tutorial_2.ipynb
-  - travis_wait 45 runipy disease_tagger/CDR_Tutorial_3.ipynb
-  - travis_wait 45 runipy disease_tagger/CDR_Tutorial_4.ipynb
-  - travis_wait 45 runipy disease_tagger/CDR_Tutorial_5.ipynb
+  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_1.ipynb
+  - travis_wait 60 runipy disease_tagging/Disease_Tagging_Tutorial_2.ipynb
+  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_3.ipynb
+  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_4.ipynb
+  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_5.ipynb
 
   # Run test modules
 #  - coverage run -p test/Tests.py

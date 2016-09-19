@@ -222,12 +222,12 @@ def expand_part_range(text, DEBUG=False):
         base = part
         for suffix in part_suffixes:
             if part.endswith(suffix):
-                base = part[:-len(suffix)]
+                base = part[:-len(suffix)].replace(' ', '') # e.g., for parts in SIEMS01215-1
                 break
         if base:
             yield base
             for suffix in part_suffixes:
-                yield (base + suffix).replace(' ','') # e.g., for parts in SIEMS01215-1
+                yield base + suffix
         else:
             yield part
 

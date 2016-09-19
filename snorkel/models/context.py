@@ -74,7 +74,7 @@ class Corpus(SnorkelBase):
             df = pd.read_sql(query.statement, query.session.bind)
             df.hist(label)
 
-            # Recurse to grandhildren
+            # Recurse to grandchildren
             self.child_context_stats(c)
 
 
@@ -640,14 +640,21 @@ class TemporaryImplicitSpan(TemporarySpan):
 
 class ImplicitSpan(Context, TemporaryImplicitSpan):
     """
-    TODO: Doc string goes here.
+    A span of characters that may not have appeared verbatim in the source text.
+    It is identified by Context id, character-index start and end (inclusive), 
+    as well as a key representing what 'expander' function drew the ImplicitSpan 
+    from an  existing Span, and a position (where position=0 corresponds to the 
+    first ImplicitSpan produced from the expander function).
+
+    The character-index start and end point to the segment of text that was
+    expanded to produce the ImplicitSpan.
     """
     __tablename__ = 'implicit_span'
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     parent_id = Column(Integer, ForeignKey('context.id'))
     char_start = Column(Integer, nullable=False)
     char_end = Column(Integer, nullable=False)
-    expander_key = Column(String)
+    expander_key = Column(String, nullable=False)
     position = Column(Integer, nullable=False)
     text = Column(String)
     if snorkel_postgres:

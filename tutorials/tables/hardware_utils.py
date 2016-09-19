@@ -13,7 +13,7 @@ class OmniNgramsHardware(OmniNgrams):
     
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
-            part_nos = [part_no for part_no in expand_implicit_text(ts.get_span(sep=''))]    
+            part_nos = [part_no for part_no in expand_part_range(ts.get_span())]    
             if len(part_nos) == 1:
                 yield ts
             else:
@@ -113,7 +113,7 @@ def entity_level_f1(tp, fp, tn, fn, filename, corpus, attrib):
     print "========================================\n"
 
 
-def expand_implicit_text(text):
+def expand_part_range(text):
     """
     Given a string, generates strings that are potentially implied by
     the original text. Two main operations are performed:
@@ -125,16 +125,6 @@ def expand_implicit_text(text):
     """
     DEBUG = False # Set to True to see intermediate values printed out.
 
-    def atoi(num_str):
-        '''
-        Helper function which converts a string to an integer, or returns None.
-        '''
-        try:
-            return int(num_str)
-        except:
-            pass
-        return None
-
     ### Regex Patterns compile only once per function call.
     # This range pattern will find text that "looks like" a range.
     range_pattern = re.compile(ur'^(?P<start>[\w\/]+)(?:\s*(\.{3,}|\~|\-+|to|thru|through|\u2013+|\u2014+|\u2012+|\u2212+)\s*)(?P<end>[\w\/]+)$', re.IGNORECASE | re.UNICODE)
@@ -142,7 +132,7 @@ def expand_implicit_text(text):
     base_pattern = re.compile(ur'(?P<base>[\w\-]+)(?P<spacer>(?:,|\/)\s*)?(?P<suffix>[\w\-]+)?')
 
     if DEBUG: print "[debug] Text: " + text
-    inferred_texts = set()
+    expanded_parts = set()
     final_set = set()
 
     ### Step 1: Search and expand ranges
@@ -170,56 +160,48 @@ def expand_implicit_text(text):
             else:
                 raise RuntimeError, "[ERROR] unexpected opcode"
 
-
         if DEBUG: print "[debug]   start_diff: %s \t end_diff: %s" % (start_diff, end_diff)
 
-        # Check Numbers
+        # First, check for number range
         if atoi(start_diff) and atoi(end_diff):
             if DEBUG: print "[debug]   Enumerate %d to %d" % (atoi(start_diff), atoi(end_diff))
             # generate a list of the numbers plugged in
-            number_range = range(atoi(start_diff), atoi(end_diff) + 1)
-            for number in number_range:
-                new_text = start.replace(start_diff,str(number))
+            for number in xrange(atoi(start_diff), atoi(end_diff) + 1):
+                new_part = start.replace(start_diff,str(number))
                 # Produce the strings with the enumerated ranges
-                inferred_texts.add(new_text)
+                expanded_parts.add(new_part)
 
         # Second, check for single-letter enumeration
         if len(start_diff) == 1 and len(end_diff) == 1:
             if start_diff.isalpha() and end_diff.isalpha():
-                def char_range(a, b):
-                    '''
-                    Generates the characters from a to b inclusive.
-                    '''
-                    for c in xrange(ord(a), ord(b)+1):
-                        yield chr(c)
-
                 if DEBUG: print "[debug]   Enumerate %s to %s" % (start_diff, end_diff)
                 letter_range = char_range(start_diff, end_diff)
                 for letter in letter_range:
-                    new_text = start.replace(start_diff,letter)
+                    new_part = start.replace(start_diff,letter)
                     # Produce the strings with the enumerated ranges
-                    inferred_texts.add(new_text)
-    else: inferred_texts.add(text)
-    if DEBUG: print "[debug]   Inferred Text: \n  " + str(sorted(inferred_texts))
+                    expanded_parts.add(new_part)
+    else: 
+        expanded_parts.add(text)
+    if DEBUG: print "[debug]   Inferred Text: \n  " + str(sorted(expanded_parts))
 
     ### Step 2: Expand suffixes for each of the inferred phrases
     # NOTE: this only does the simple case of replacing same-length suffixes.
     # we do not handle cases like "BC546A/B/XYZ/QR"
-    for text in inferred_texts:
-        first_match = re.search(base_pattern,text)
+    for part in expanded_parts:
+        first_match = re.search(base_pattern, part)
         if first_match:
-            base = re.search(base_pattern,text).group("base");
+            base = re.search(base_pattern, part).group("base");
             final_set.add(base) # add the base (multiple times, but set handles that)
             if (first_match.group("suffix")):
                 all_suffix_lengths = set()
                 # This is a bit inefficient but this first pass just is here
                 # to make sure that the suffixes are the same length
-                for m in re.finditer(suffix_pattern, text):
+                for m in re.finditer(suffix_pattern, part):
                     suffix = m.group("suffix")
                     suffix_len = len(suffix)
                     all_suffix_lengths.add(suffix_len)
                 if len(all_suffix_lengths) == 1:
-                    for m in re.finditer(suffix_pattern, text):
+                    for m in re.finditer(suffix_pattern, part):
                         spacer = m.group("spacer")
                         suffix = m.group("suffix")
                         suffix_len = len(suffix)
@@ -227,18 +209,21 @@ def expand_implicit_text(text):
                         final_set.add(trimmed+suffix)
     if DEBUG: print "[debug]   Final Set: " + str(sorted(final_set))
 
-    # Yield only the unique values
+    # Add common part suffixes on each discovered part number
     part_suffixes = ['-16','-25','-40','A','B','C']
-    suffixed = False
+    # import pdb; pdb.set_trace()
     for part in final_set:
         base = part
         for suffix in part_suffixes:
             if part.endswith(suffix):
                 base = part[:-len(suffix)]
                 break
-        yield base
-        for suffix in part_suffixes:
-            yield (part + suffix).replace(' ','') # e.g., for parts in SIEMS01215-1
+        if base:
+            yield base
+            for suffix in part_suffixes:
+                yield (base + suffix).replace(' ','') # e.g., for parts in SIEMS01215-1
+        else:
+            yield part
 
     # NOTE: We make a few assumptions (e.g. suffixes must be same length), but
     # one important unstated assumption is that if there is a single suffix,
@@ -246,6 +231,25 @@ def expand_implicit_text(text):
     # In this example, it works. But if we had "ABCD/EFG" we would get "ABCD,AEFG"
     # Check out UtilsTests.py to see more of our assumptions capture as test
     # cases.
+
+
+def atoi(num_str):
+    '''
+    Helper function which converts a string to an integer, or returns None.
+    '''
+    try:
+        return int(num_str)
+    except:
+        pass
+    return None
+
+
+def char_range(a, b):
+    '''
+    Generates the characters from a to b inclusive.
+    '''
+    for c in xrange(ord(a), ord(b)+1):
+        yield chr(c)
 
 
 def entity_level_total_recall(total_candidates, filename, attrib):
@@ -294,6 +298,7 @@ def entity_level_total_recall(total_candidates, filename, attrib):
     print "========================================\n"
 
     return entity_confusion_matrix(entity_level_candidates, gold_set)
+
 
 
 def entity_confusion_matrix(pred, gold):

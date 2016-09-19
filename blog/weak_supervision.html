@@ -1,0 +1,459 @@
+<!DOCTYPE html><html>
+
+<head>
+<meta charset="utf-8">
+<title>Weak Supervision</title>
+<style type="text/css">
+body {
+  font-family: Helvetica, arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background-color: white;
+  padding: 30px; }
+
+body > *:first-child {
+  margin-top: 0 !important; }
+body > *:last-child {
+  margin-bottom: 0 !important; }
+
+a {
+  color: #4183C4; }
+a.absent {
+  color: #cc0000; }
+a.anchor {
+  display: block;
+  padding-left: 30px;
+  margin-left: -30px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0; }
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 20px 0 10px;
+  padding: 0;
+  font-weight: bold;
+  -webkit-font-smoothing: antialiased;
+  cursor: text;
+  position: relative; }
+
+h1:hover a.anchor, h2:hover a.anchor, h3:hover a.anchor, h4:hover a.anchor, h5:hover a.anchor, h6:hover a.anchor {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA09pVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoMTMuMCAyMDEyMDMwNS5tLjQxNSAyMDEyLzAzLzA1OjIxOjAwOjAwKSAgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OUM2NjlDQjI4ODBGMTFFMTg1ODlEODNERDJBRjUwQTQiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OUM2NjlDQjM4ODBGMTFFMTg1ODlEODNERDJBRjUwQTQiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo5QzY2OUNCMDg4MEYxMUUxODU4OUQ4M0REMkFGNTBBNCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo5QzY2OUNCMTg4MEYxMUUxODU4OUQ4M0REMkFGNTBBNCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PsQhXeAAAABfSURBVHjaYvz//z8DJYCRUgMYQAbAMBQIAvEqkBQWXI6sHqwHiwG70TTBxGaiWwjCTGgOUgJiF1J8wMRAIUA34B4Q76HUBelAfJYSA0CuMIEaRP8wGIkGMA54bgQIMACAmkXJi0hKJQAAAABJRU5ErkJggg==) no-repeat 10px center;
+  text-decoration: none; }
+
+h1 tt, h1 code {
+  font-size: inherit; }
+
+h2 tt, h2 code {
+  font-size: inherit; }
+
+h3 tt, h3 code {
+  font-size: inherit; }
+
+h4 tt, h4 code {
+  font-size: inherit; }
+
+h5 tt, h5 code {
+  font-size: inherit; }
+
+h6 tt, h6 code {
+  font-size: inherit; }
+
+h1 {
+  font-size: 28px;
+  color: black; }
+
+h2 {
+  font-size: 24px;
+  border-bottom: 1px solid #cccccc;
+  color: black; }
+
+h3 {
+  font-size: 18px; }
+
+h4 {
+  font-size: 16px; }
+
+h5 {
+  font-size: 14px; }
+
+h6 {
+  color: #777777;
+  font-size: 14px; }
+
+p, blockquote, ul, ol, dl, li, table, pre {
+  margin: 15px 0; }
+
+hr {
+  background: transparent url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAECAYAAACtBE5DAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBNYWNpbnRvc2giIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OENDRjNBN0E2NTZBMTFFMEI3QjRBODM4NzJDMjlGNDgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OENDRjNBN0I2NTZBMTFFMEI3QjRBODM4NzJDMjlGNDgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo4Q0NGM0E3ODY1NkExMUUwQjdCNEE4Mzg3MkMyOUY0OCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo4Q0NGM0E3OTY1NkExMUUwQjdCNEE4Mzg3MkMyOUY0OCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PqqezsUAAAAfSURBVHjaYmRABcYwBiM2QSA4y4hNEKYDQxAEAAIMAHNGAzhkPOlYAAAAAElFTkSuQmCC) repeat-x 0 0;
+  border: 0 none;
+  color: #cccccc;
+  height: 4px;
+  padding: 0;
+}
+
+body > h2:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+body > h1:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+  body > h1:first-child + h2 {
+    margin-top: 0;
+    padding-top: 0; }
+body > h3:first-child, body > h4:first-child, body > h5:first-child, body > h6:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+
+a:first-child h1, a:first-child h2, a:first-child h3, a:first-child h4, a:first-child h5, a:first-child h6 {
+  margin-top: 0;
+  padding-top: 0; }
+
+h1 p, h2 p, h3 p, h4 p, h5 p, h6 p {
+  margin-top: 0; }
+
+li p.first {
+  display: inline-block; }
+li {
+  margin: 0; }
+ul, ol {
+  padding-left: 30px; }
+
+ul :first-child, ol :first-child {
+  margin-top: 0; }
+
+dl {
+  padding: 0; }
+  dl dt {
+    font-size: 14px;
+    font-weight: bold;
+    font-style: italic;
+    padding: 0;
+    margin: 15px 0 5px; }
+    dl dt:first-child {
+      padding: 0; }
+    dl dt > :first-child {
+      margin-top: 0; }
+    dl dt > :last-child {
+      margin-bottom: 0; }
+  dl dd {
+    margin: 0 0 15px;
+    padding: 0 15px; }
+    dl dd > :first-child {
+      margin-top: 0; }
+    dl dd > :last-child {
+      margin-bottom: 0; }
+
+blockquote {
+  border-left: 4px solid #dddddd;
+  padding: 0 15px;
+  color: #777777; }
+  blockquote > :first-child {
+    margin-top: 0; }
+  blockquote > :last-child {
+    margin-bottom: 0; }
+
+table {
+  padding: 0;border-collapse: collapse; }
+  table tr {
+    border-top: 1px solid #cccccc;
+    background-color: white;
+    margin: 0;
+    padding: 0; }
+    table tr:nth-child(2n) {
+      background-color: #f8f8f8; }
+    table tr th {
+      font-weight: bold;
+      border: 1px solid #cccccc;
+      margin: 0;
+      padding: 6px 13px; }
+    table tr td {
+      border: 1px solid #cccccc;
+      margin: 0;
+      padding: 6px 13px; }
+    table tr th :first-child, table tr td :first-child {
+      margin-top: 0; }
+    table tr th :last-child, table tr td :last-child {
+      margin-bottom: 0; }
+
+img {
+  max-width: 100%; }
+
+span.frame {
+  display: block;
+  overflow: hidden; }
+  span.frame > span {
+    border: 1px solid #dddddd;
+    display: block;
+    float: left;
+    overflow: hidden;
+    margin: 13px 0 0;
+    padding: 7px;
+    width: auto; }
+  span.frame span img {
+    display: block;
+    float: left; }
+  span.frame span span {
+    clear: both;
+    color: #333333;
+    display: block;
+    padding: 5px 0 0; }
+span.align-center {
+  display: block;
+  overflow: hidden;
+  clear: both; }
+  span.align-center > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px auto 0;
+    text-align: center; }
+  span.align-center span img {
+    margin: 0 auto;
+    text-align: center; }
+span.align-right {
+  display: block;
+  overflow: hidden;
+  clear: both; }
+  span.align-right > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px 0 0;
+    text-align: right; }
+  span.align-right span img {
+    margin: 0;
+    text-align: right; }
+span.float-left {
+  display: block;
+  margin-right: 13px;
+  overflow: hidden;
+  float: left; }
+  span.float-left span {
+    margin: 13px 0 0; }
+span.float-right {
+  display: block;
+  margin-left: 13px;
+  overflow: hidden;
+  float: right; }
+  span.float-right > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px auto 0;
+    text-align: right; }
+
+code, tt {
+  margin: 0 2px;
+  padding: 0 5px;
+  white-space: nowrap;
+  border: 1px solid #eaeaea;
+  background-color: #f8f8f8;
+  border-radius: 3px; }
+
+pre code {
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  border: none;
+  background: transparent; }
+
+.highlight pre {
+  background-color: #f8f8f8;
+  border: 1px solid #cccccc;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px; }
+
+pre {
+  background-color: #f8f8f8;
+  border: 1px solid #cccccc;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px; }
+  pre code, pre tt {
+    background-color: transparent;
+    border: none; }
+
+sup {
+    font-size: 0.83em;
+    vertical-align: super;
+    line-height: 0;
+}
+* {
+	-webkit-print-color-adjust: exact;
+}
+@media screen and (min-width: 914px) {
+    body {
+        width: 854px;
+        margin:0 auto;
+    }
+}
+@media print {
+	table, pre {
+		page-break-inside: avoid;
+	}
+	pre {
+		word-wrap: break-word;
+	}
+}
+
+.top-banner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+}
+
+#top-banner-img {
+    opacity: 0.5;
+    max-width: none;
+    max-height: 350px;
+}
+
+#main-title {
+    position: relative;
+    margin-top: 100px;
+    margin-bottom: 100px;
+    padding: 10px;
+    font-size: 40px;
+    background: #333333;
+    color: #f8f8f8;
+    z-index: 10;
+}
+
+blockquote {
+    font-size: large;
+    font-weight: 300;
+}
+
+p.img {
+    text-align: center;
+}
+</style>
+</head>
+<body>
+<span class="top-banner">
+    <img id="top-banner-img" src="oil_barrels_banner.jpg" alt="image alt text">
+</span>
+
+<p id="main-title">Data Programming:<br />Machine Learning with Weak Supervision</p>
+
+<p>Post by Alex Ratner, Stephen Bach and Chris Ré</p>
+
+<p><em>And referencing work by many other <a href="http://cs.stanford.edu/people/chrismre/#students">members of Hazy Research</a></em></p>
+
+<blockquote>
+<p>With the rise of automated feature generation techniques like deep learning, training data is now the critical bottleneck in machine learning.</p>
+
+<ul>
+<li><p>Collecting <em>hand-labeled</em> training data is not an option for most real-world applications.</p></li>
+<li><p>Users can create <em>lower quality</em> training data to <em>weakly supervise</em> their models.</p></li>
+<li><p>We can use generative models to denoise this noisy training data, resulting in competitive performance without <em>any</em> hand-labeled training data!</p></li>
+</ul>
+
+<p>We describe our new <a href="https://arxiv.org/abs/1605.07723"><strong>data programming</strong></a> approach (to appear at NIPS 2016), and our new open-source framework for lightweight information extraction, <a href="https://github.com/HazyResearch/snorkel"><strong>Snorkel</strong></a>, which we use to beat our previous distant supervision-based systems and <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/disease_tagger">match a benchmark disease-tagging system</a>.</p>
+</blockquote>
+
+<p><img src="new-new-banner.png" alt="image alt text"></p>
+
+<h2 id="toc_0">The Problem of Hand-Labeled Training Data</h2>
+
+<blockquote>
+<p>Modern ML models require large amounts of task-specific training data, and creating these labels by hand is often too slow, static and expensive.</p>
+</blockquote>
+
+<p>Deep learning models have become omnipresent in the field of machine learning primarily because they automate the onerous task of selecting or <em>engineering</em> features.  However, especially as they become deeper and more complex, they require massive training sets, and collecting this training data has increasingly become <em>the</em> development bottleneck.  Data may once have been the &quot;new oil,&quot; but for machine learning practitioners, <em>labeled</em> training data is the new scarce commodity.</p>
+
+<p>A cursory look at the internet (or a random machine learning paper) might hide the prevalence of this problem.  It has never been easier to download a training dataset, spin up a convnet, and start creating your own dreaming, painting, image-classifying AI; indeed, vast repositories of curated training data exist, like Imagenet, to help you classify everything from cats vs. dogs to <a href="http://image-net.org/search?q=dog">hot dogs vs. water dogs</a>.</p>
+
+<p>However, as soon as you stray from stable benchmark tasks into the realm of real world applications, a different picture emerges.  Most applications &quot;in the wild&quot; are dynamic, require domain expertise, and need to be rapidly developed; so manually labeling large training sets is not a feasible option.  Indeed, even when we’ve had conversations with organizations that can afford to deploy fleets of cars or new hospital system infrastructures to collect data, the difficulty they have in <strong>labeling enough of this data</strong> <em>still</em> always comes up!</p>
+
+<p>In our current work, we aim to raise the level of abstraction at which humans supervise machine learning systems, by allowing users to label training data <em>programmatically</em>, rather than by hand. Generating more training data in this way may not solve everything, but to quote Sarah Palin, &quot;The fact that drilling won&#39;t solve every problem is no excuse to do nothing at all.&quot;</p>
+
+<h2 id="toc_1">Weak Supervision: Drill, Baby, Drill</h2>
+
+<blockquote>
+<p>For many tasks, we can leverage various heuristics and existing datasets as <em>weak</em> supervision.  We can express these various signals in one unifying framework: as <em>functions</em> which label data.</p>
+</blockquote>
+
+<p class="img"><img src="sarah-palin.jpg" width="500px" /></p>
+
+<p>For many tasks that we&#39;d want to apply machine learning to, there are various ways that we can programmatically generate training data using heuristics, rules-of-thumb, existing databases, ontologies, etc.  We call the resulting training data <em>weak supervision</em>: it isn&#39;t perfectly accurate, and possibly consists of multiple distinct signals that overlap and conflict. Like crude oil, though, it can be extracted, refined, and used just as effectively.</p>
+
+<p>Examples that can be thought of as sources of weak supervision include:</p>
+
+<ul>
+<li><p>Domain heuristics (e.g. common patterns, rules of thumb, etc.)</p></li>
+<li><p>Existing ground-truth data that is not an exact fit for the task at hand, but <em>close enough</em> to be useful (traditionally called &quot;distant supervision&quot;)</p></li>
+<li><p>&quot;Weak&quot; or biased classifiers (a la traditional “boosting”)</p></li>
+<li><p>Unreliable non-expert annotators (e.g. crowdsourcing)</p></li>
+</ul>
+
+<p>In our recent <a href="https://arxiv.org/abs/1605.07723">NIPS 2016 paper</a>, we describe <strong>data programming</strong>, a simple but powerful approach in which we ask domain expert users to encode these various weak supervision signals as <em>labeling functions</em>, which are simply functions that label data, and can be written in standard scripting languages like Python. These labeling functions can be noisy, and can overlap and conflict; we reconcile and denoise them automatically, and then use them to train a discriminative model of interest.</p>
+
+<h3 id="toc_2">A Case Study: Information Extraction from Biomedical Text</h3>
+
+<blockquote>
+<p>Domain experts can often supply a variety of <em>weak supervision</em> patterns and data resources that we can effectively utilize as a substitute for hand-labeled data.</p>
+</blockquote>
+
+<p>Extracting structured information from the biomedical literature is one of the applications that motivates us most: volumes of useful information are effectively locked away in the dense unstructured text of millions of scientific articles.  We&#39;d like to extract it all using machine learning, so that our bio-collaborators could use it to do things like <a href="http://med.stanford.edu/news/all-news/2016/08/automated-genetic-analysis-helps-speed-diagnoses.html">diagnose genetic diseases</a> and <a href="http://helix-web.stanford.edu/projects/index.htm#pgkb">accelerate pharmacogenomics research</a>.</p>
+
+<p>Consider the task of extracting mentions of a certain chemical-disease relationship from the scientific literature. We may not have a large enough (or any) labeled training dataset for this task.  However, in the biomedical space there is a profusion of <a href="https://www.nlm.nih.gov/">curated ontologies, lexicons, and other resources</a>, which include various ontologies of chemical and disease names, databases of known chemical-disease relations of various types, etc., which we can use to provide weak supervision for our task. In addition, we can come up with a range of task-specific heuristics, regular expression patterns, rules-of-thumb, and negative label generation strategies with our bio-collaborators.</p>
+
+<p><img src="lfs.png" alt="image alt text" title="Example CID labeling functions"></p>
+
+<p><em>Two simple example labeling functions (written in Python) for extracting mentions of chemical-induced disease relations from the scientific literature; <code>lf1</code> leverages an existing curated ontology, while <code>lf2</code> uses a heuristic pattern.</em></p>
+
+<p>One way of thinking about this new approach is that instead of asking annotators to directly label data points, we are asking them to describe a <em>process of</em> labeling data, which utilizes various resources or heuristics.  This description comes as a set of labeling functions which have arbitrary (greater than random) accuracy and may overlap and conflict. How then do we reconcile, denoise, and utilize them for training our model? In fact, we&#39;ve been using forms of weak supervision <a href="http://deepdive.stanford.edu/distant_supervision">for a while now</a>, but now we want to use it more easily, flexibly, and on better statistical footing.</p>
+
+<h2 id="toc_3">The Generative Model as an Expressive Vehicle</h2>
+
+<blockquote>
+<p>We can interpret our weak supervision as describing a <strong>generative model</strong>, and use this to automatically reconcile and denoise the training labels we generate.</p>
+</blockquote>
+
+<p>In our data programming approach, we consider the labeling functions as implicitly describing a generative model.  To give a quick refresher: Given data points <em>x</em>, having unknown labels <em>y</em> that we want to predict, in a discriminative approach we model <em>P(y|x)</em> directly, while in a generative approach we model <em>P(x,y) = P(x|y)P(y)</em>.</p>
+
+<p>In our case, we&#39;re modeling a process of training set labeling, <em>P(L,y)</em>, where <em>L</em> are the labels generated by the labeling functions for objects <em>x</em>, and <em>y</em> are the corresponding (unknown) true labels.  By learning a generative model, and directly estimating <em>P(L|y)</em>, we are essentially learning the relative accuracies of the labeling functions based on how they overlap and conflict (note, we don&#39;t need to know <em>y</em>!)</p>
+
+<p><img src="dp_models_fig.png" alt="image alt text" title="Schematic of Data Programming"></p>
+
+<p><em>A toy schematic of our data programming approach: User-written labeling functions label some subset of our data, which we treat as implicitly defining a generative model.  We then use the predictions of this model to train a discriminative model, e.g. a neural network</em></p>
+
+<p>In our data programming approach, use this estimated generative model over the labeling functions to train a <em>noise-aware</em> version of our end discriminative model.  To do so, the generative model infers probabilities over the unknown labels of the training data, and we then minimize the <em>expected</em> loss of the discriminative model with respect to these probabilities.</p>
+
+<p>Estimating the parameters of these generative models can be quite tricky, especially when there are statistical dependencies between the labeling functions used (either user-expressed or inferred). In the case of data programming however, we can show that given enough labeling functions, we can get the same asymptotic scaling as with supervised methods (except in our case, of course, <em>with respect to unlabeled data</em>).  As for handling scale, we&#39;re able to rely on some of our lab members&#39; award-winning work on <a href="http://stanford.edu/%7Ecdesa/papers/icml2016_hogwild_gibbs.pdf">asynchronous Gibbs sampling</a> and the like.  </p>
+
+<p>Recently, both generative models, and pairings of generative and discriminative models, have been getting increased attention more broadly.  For example, <a href="http://arxiv.org/pdf/1406.2661v1.pdf">Generative Adversarial Nets (GANs)</a> are one example of a generative-discriminative pair, wherein the training process is a minimax game where the generative model attempts to &quot;trick&quot; a discriminative model into mistaking its output for labeled training data.</p>
+
+<p>Our approach is fundamentally different in that we view the generative model as a vehicle for <em>expressing a data generation process</em> which we <em>want</em> a discriminative model to learn from.  In our current work, the generative model is implicitly defined by a set of labeling functions.  However, we see this as part of a broader push towards &quot;<strong>Observational ML</strong>,&quot; where any actions a user takes will be passively compiled into a generative model, to use as training signal.  We can look ahead to a future where all the “exhaust” generated by a user during development--e.g. every time someone changes their script, or subselects data--can be fed into a generative model, and used as training data!</p>
+
+<h2 id="toc_4">Snorkel: Lightweight Extraction for All</h2>
+
+<p>Recently, we&#39;ve open-sourced a new lightweight platform for information extraction using data programming, called <a href="https://github.com/HazyResearch/snorkel">Snorkel</a>. Snorkel is designed for a <a href="http://jupyter.org/">Jupyter</a> notebook interface, so that users can rapidly develop their own task- and domain-specific labeling functions.</p>
+
+<p><img src="snorkel-1.png" alt="image alt text" title="Screenshot of Snorkel">
+<em>In this screenshot from the <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro">introductory tutorial</a>, users write simple labeling functions for extracting mentions of spouse relationships from news articles.</em></p>
+
+<p>So far, Snorkel seems to be convenient and intuitive for users, as we outlined in a <a href="http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf">workshop paper at HILDA 2016</a> (back when it was called DDLite).  More recently, as another example, we were able to come within 1 point F1 score of a benchmark for disease tagging <em><a href="https://github.com/HazyResearch/snorkel/tree/master/tutorial">without using any hand-labeled data</a></em>, and have released this as one of our tutorial examples.</p>
+
+<h2 id="toc_5">Next-Step Goals</h2>
+
+<p>Some things we’re currently excited about working on, in the more near term, in no particular order:</p>
+
+<ul>
+<li><p>We recently collaborated with some bio-friends to <a href="http://www.nature.com/articles/ncomms12474">beat human pathologists at some lung cancer prognosis prediction tasks</a>.  We’d like to extend this result to other tasks and domains where there is less training data.</p></li>
+<li><p>More generally, we’re excited to work on images, and multi-modal tasks involving images, text, tables, time-series, etc.</p></li>
+<li><p>We aim to make the process of creating labeling functions even easier for users, especially non-computer scientists. We are exploring techniques for automatically suggesting new labeling functions to complement a user’s existing ones.</p></li>
+</ul>
+
+
+</body>
+
+</html>

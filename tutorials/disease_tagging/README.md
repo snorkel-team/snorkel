@@ -29,7 +29,7 @@ Finally, we evaluate the learned model on the test candidate set.
 ## Background
 
 From the BioCreative workshop's 
-description of the CDR Challenge](http://www.biocreative.org/tasks/biocreative-v/track-3-cdr/):
+[description of the CDR Challenge](http://www.biocreative.org/tasks/biocreative-v/track-3-cdr/):
 > Chemicals, diseases, and their relations are among the most searched topics by PubMed
 > users worldwide (1-3) as they play central roles in many areas of biomedical research
 > and healthcare such as drug discovery and safety surveillance. Although the ultimate

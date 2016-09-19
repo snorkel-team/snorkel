@@ -4,16 +4,16 @@ from collections import defaultdict
 from snorkel.candidates import OmniNgrams
 from snorkel.models import TemporaryImplicitSpan
 from snorkel.utils import ProgressBar
-from difflib import SequenceMatcher 
+from difflib import SequenceMatcher
 import re
 
 class OmniNgramsHardware(OmniNgrams):
     def __init(self, n_max=5, split_tokens=[]):
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
-    
+
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
-            part_nos = [part_no for part_no in expand_part_range(ts.get_span())]    
+            part_nos = [part_no for part_no in expand_part_range(ts.get_span())]
             if len(part_nos) == 1:
                 yield ts
             else:
@@ -90,10 +90,10 @@ def entity_level_f1(tp, fp, tn, fn, filename, corpus, attrib):
     for doc in corpus:
         docs.append((doc.name).upper())
     gold_dict = set(get_gold_dict(filename, attrib, docs))
-    
+
     TP = FP = TN = FN = 0
-    pos = set([((c[0].parent.document.name).upper(), 
-                (c[0].get_span()).upper(), 
+    pos = set([((c[0].parent.document.name).upper(),
+                (c[0].get_span()).upper(),
                 (''.join(c[1].get_span().split())).upper()) for c in tp.union(fp)])
     TP = len(pos.intersection(gold_dict))
     FP = len(pos.difference(gold_dict))
@@ -113,7 +113,7 @@ def entity_level_f1(tp, fp, tn, fn, filename, corpus, attrib):
     print "========================================\n"
 
 
-def expand_part_range(text):
+def expand_part_range(text, DEBUG=False):
     """
     Given a string, generates strings that are potentially implied by
     the original text. Two main operations are performed:
@@ -123,15 +123,13 @@ def expand_part_range(text):
     To get the correct output from complex strings, this function should be fed
     many Ngrams from a particular phrase.
     """
-    DEBUG = False # Set to True to see intermediate values printed out.
-
     ### Regex Patterns compile only once per function call.
     # This range pattern will find text that "looks like" a range.
     range_pattern = re.compile(ur'^(?P<start>[\w\/]+)(?:\s*(\.{3,}|\~|\-+|to|thru|through|\u2013+|\u2014+|\u2012+|\u2212+)\s*)(?P<end>[\w\/]+)$', re.IGNORECASE | re.UNICODE)
     suffix_pattern = re.compile(ur'(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)')
-    base_pattern = re.compile(ur'(?P<base>[\w\-]+)(?P<spacer>(?:,|\/)\s*)?(?P<suffix>[\w\-]+)?')
+    base_pattern = re.compile(ur'(?P<base>[\w\-]+)(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)?')
 
-    if DEBUG: print "[debug] Text: " + text
+    if DEBUG: print "\n[debug] Text: " + text
     expanded_parts = set()
     final_set = set()
 
@@ -180,7 +178,12 @@ def expand_part_range(text):
                     new_part = start.replace(start_diff,letter)
                     # Produce the strings with the enumerated ranges
                     expanded_parts.add(new_part)
-    else: 
+
+        # If we cannot identify a clear number or letter range, or if there are
+        # multple ranges being expressed, just ignore it.
+        if len(expanded_parts) == 0:
+            expanded_parts.add(text)
+    else:
         expanded_parts.add(text)
     if DEBUG: print "[debug]   Inferred Text: \n  " + str(sorted(expanded_parts))
 
@@ -207,6 +210,9 @@ def expand_part_range(text):
                         suffix_len = len(suffix)
                         trimmed = base[:-suffix_len]
                         final_set.add(trimmed+suffix)
+        else:
+            if part and (not part.isspace()):
+                final_set.add(part) # no base was found with suffixes to expand
     if DEBUG: print "[debug]   Final Set: " + str(sorted(final_set))
 
     # Add common part suffixes on each discovered part number

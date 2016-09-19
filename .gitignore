@@ -15,5 +15,5 @@ docs/_build
 .idea
 
 # Tutorial
-tutorial/data/CDR_*.BioC.xml
-tutorial/data/dicts
+tutorials/tables/data/hardware/hardware*/
+

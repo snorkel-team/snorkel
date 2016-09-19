@@ -19,9 +19,9 @@ cache:
   directories:
     - download
     - $HOME/.cache/pip
-    - $HOME/miniconda/envs/test     # to avoid repetitively setting up Ana/Miniconda environment
-    - parser                        # to avoid repetitively downloading CoreNLP
-    - tutorials/disease_tagger/data # to avoid repetitively downloading CDR data
+    - $HOME/miniconda/envs/test      # to avoid repetitively setting up Ana/Miniconda environment
+    - parser                         # to avoid repetitively downloading CoreNLP
+    - tutorials/disease_tagging/data # to avoid repetitively downloading CDR data
 
 addons:
   apt:
@@ -62,8 +62,8 @@ install:
   - pip install -r python-package-requirement.txt
   - test -e parser/corenlp.sh || ./install-parser.sh
 
-  # Downloads data for disease tagger tutorial
-  - cd tutorials/disease_tagger
+  # Downloads data for disease tagging tutorial
+  - cd tutorials/disease_tagging
   - ./download_data.sh
   - cd ../..
 

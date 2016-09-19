@@ -61,6 +61,7 @@ For example, in the sentence
 > The patient had no apparent associated conditions which might have predisposed him to the
 > development of bradyarrhythmias; and, thus, this probably represented a true idiosyncrasy
 > to lidocaine.
+
 our goal is to tag the disease name [bradyarrhythmias](https://en.wikipedia.org/wiki/Bradycardia).
 
 ### References

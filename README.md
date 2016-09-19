@@ -13,7 +13,7 @@
 ## Getting Started
 
 * Installation instructions [below](#installation--dependencies)
-* Get started with the tutorial [below](#learning-how-to-use-snorkel)
+* Get started with the tutorials [below](#learning-how-to-use-snorkel)
 * Documentation [here](http://snorkel.readthedocs.io/en/latest/)
 
 ## Motivation

@@ -55,6 +55,14 @@ This tutorial focuses on the first subtask of the challenge, disease tagging:
 > and normalization, which was found to be highly difficult on its own (8) in previous
 > BioCreative CTD tasks (10,11).
 
+## Example
+
+For example, in the sentence
+> The patient had no apparent associated conditions which might have predisposed him to the
+> development of bradyarrhythmias; and, thus, this probably represented a true idiosyncrasy
+> to lidocaine.
+our goal is to tag the disease name [bradyarrhythmias](https://en.wikipedia.org/wiki/Bradycardia).
+
 ### References
 
 > 1.	Islamaj Dogan, R., Murray, G.C., Neveol, A., et al. (2009) Understanding PubMed user search behavior through log analysis. Database (Oxford), 2009, bap018.

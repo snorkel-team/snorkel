@@ -4,16 +4,16 @@ from collections import defaultdict
 from snorkel.candidates import OmniNgrams
 from snorkel.models import TemporaryImplicitSpan
 from snorkel.utils import ProgressBar
-from difflib import SequenceMatcher 
+from difflib import SequenceMatcher
 import re
 
 class OmniNgramsHardware(OmniNgrams):
     def __init(self, n_max=5, split_tokens=[]):
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
-    
+
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
-            part_nos = [part_no for part_no in expand_part_range(ts.get_span())]    
+            part_nos = [part_no for part_no in expand_part_range(ts.get_span())]
             if len(part_nos) == 1:
                 yield ts
             else:
@@ -90,10 +90,10 @@ def entity_level_f1(tp, fp, tn, fn, filename, corpus, attrib):
     for doc in corpus:
         docs.append((doc.name).upper())
     gold_dict = set(get_gold_dict(filename, attrib, docs))
-    
+
     TP = FP = TN = FN = 0
-    pos = set([((c[0].parent.document.name).upper(), 
-                (c[0].get_span()).upper(), 
+    pos = set([((c[0].parent.document.name).upper(),
+                (c[0].get_span()).upper(),
                 (''.join(c[1].get_span().split())).upper()) for c in tp.union(fp)])
     TP = len(pos.intersection(gold_dict))
     FP = len(pos.difference(gold_dict))
@@ -178,7 +178,12 @@ def expand_part_range(text, DEBUG=False):
                     new_part = start.replace(start_diff,letter)
                     # Produce the strings with the enumerated ranges
                     expanded_parts.add(new_part)
-    else: 
+
+        # If we cannot identify a clear number or letter range, or if there are
+        # multple ranges being expressed, just ignore it.
+        if len(expanded_parts) == 0:
+            expanded_parts.add(text)
+    else:
         expanded_parts.add(text)
     if DEBUG: print "[debug]   Inferred Text: \n  " + str(sorted(expanded_parts))
 

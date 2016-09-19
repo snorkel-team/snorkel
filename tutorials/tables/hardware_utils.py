@@ -113,7 +113,7 @@ def entity_level_f1(tp, fp, tn, fn, filename, corpus, attrib):
     print "========================================\n"
 
 
-def expand_part_range(text):
+def expand_part_range(text, DEBUG=False):
     """
     Given a string, generates strings that are potentially implied by
     the original text. Two main operations are performed:
@@ -123,15 +123,13 @@ def expand_part_range(text):
     To get the correct output from complex strings, this function should be fed
     many Ngrams from a particular phrase.
     """
-    DEBUG = False # Set to True to see intermediate values printed out.
-
     ### Regex Patterns compile only once per function call.
     # This range pattern will find text that "looks like" a range.
     range_pattern = re.compile(ur'^(?P<start>[\w\/]+)(?:\s*(\.{3,}|\~|\-+|to|thru|through|\u2013+|\u2014+|\u2012+|\u2212+)\s*)(?P<end>[\w\/]+)$', re.IGNORECASE | re.UNICODE)
     suffix_pattern = re.compile(ur'(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)')
-    base_pattern = re.compile(ur'(?P<base>[\w\-]+)(?P<spacer>(?:,|\/)\s*)?(?P<suffix>[\w\-]+)?')
+    base_pattern = re.compile(ur'(?P<base>[\w\-]+)(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)?')
 
-    if DEBUG: print "[debug] Text: " + text
+    if DEBUG: print "\n[debug] Text: " + text
     expanded_parts = set()
     final_set = set()
 
@@ -207,6 +205,9 @@ def expand_part_range(text):
                         suffix_len = len(suffix)
                         trimmed = base[:-suffix_len]
                         final_set.add(trimmed+suffix)
+        else:
+            if part and (not part.isspace()):
+                final_set.add(part) # no base was found with suffixes to expand
     if DEBUG: print "[debug]   Final Set: " + str(sorted(final_set))
 
     # Add common part suffixes on each discovered part number

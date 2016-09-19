@@ -83,7 +83,7 @@ class Candidate(SnorkelBase):
         return self.get_arguments()[key]
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, ", ".join(map(str, self.get_arguments())))
+        return u"%s(%s)" % (self.__class__.__name__, u", ".join(map(unicode, self.get_arguments())))
 
 
 def candidate_subclass(class_name, args, table_name=None):

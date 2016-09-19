@@ -1,5 +1,6 @@
 from __future__ import print_function
-from .models import Label, AnnotationKey
+from .models import Label
+from .queries import get_or_create_single_key_set
 try:
     from IPython.core.display import display, Javascript
 except:
@@ -15,11 +16,11 @@ HOME = os.environ['SNORKELHOME']
 
 
 # PAGE LAYOUT TEMPLATES
-LI_HTML = """
+LI_HTML = u"""
 <li class="list-group-item" data-toggle="tooltip" data-placement="top" title="{context_id}">{data}</li>
 """
 
-PAGE_HTML = """
+PAGE_HTML = u"""
 <div class="viewer-page" id="viewer-page-{pid}">
     <ul class="list-group">{data}</ul>
 </div>
@@ -27,19 +28,8 @@ PAGE_HTML = """
 
 
 class Viewer(widgets.DOMWidget):
-    # TODO: Update this docstring
     """
-    Generic object for viewing and labeling candidate objects in their rendered contexts.
-    Takes in:
-        - A list of *contexts* (e.g. Sentence objects) having an id attribute;
-        - A list of *candidates( (e.g. Ngram mention spans), having a join attribute fn
-            (candidate_join_key_fn) such that contexts and candidates are joined on
-            context.id == candidate_join_key_fn(candidate)
-        - Optionally: a list of *gold annotations* of the same type as the candidates
-        - A max number of contexts to render (n_max)
-    By default, contexts with no candidates or gold annotations are filtered out, however
-    this can be disabled (filter_empty) and any filtering can be done prior to passing into
-    the Viewer object!
+    Generic object for viewing and labeling Candidate objects in their rendered Contexts.
     """
     _view_name         = Unicode('ViewerView').tag(sync=True)
     _view_module       = Unicode('viewer').tag(sync=True)
@@ -49,18 +39,35 @@ class Viewer(widgets.DOMWidget):
     _selected_cid      = Int().tag(sync=True)
 
     def __init__(self, candidates, session, gold=[], n_per_page=3, height=225, annotator_name=None):
+        """
+        Initializes a Viewer.
+
+        The Viewer uses the keyword argument annotator_name to define an AnnotationKeySet with that name, containing
+        a single AnnotationKey of the same name. If it already exists, it will be resused, but if the AnnotationKeySet
+        already exists and contains other keys, the Viewer will raise an error.
+
+        This AnnotationKeySet can be used to retrieve the labels with a LabelManager, and corresponding AnnotationKeys
+        can be grouped into a new AnnotationKeySet to manage the work of multiple annotators simultaneously.
+
+        :param candidates: A Python container of Candidates (e.g., not a CandidateSet, but candidate_set.candidates)
+        :param session: The SnorkelSession for the database backend
+        :param gold: Optional, Python container of Candidates that are know to have positive labels
+        :param n_per_page: Optional, number of Contexts to display per page
+        :param height: Optional, the height in pixels of the Viewer
+        :param annotator_name: Name of the human using the Viewer, for saving their work. Defaults to system username.
+        """
         super(Viewer, self).__init__()
         self.session = session
 
         # By default, use the username as annotator name
         name = annotator_name if annotator_name is not None else getpass.getuser()
 
-        # Gets or creates annotator record
-        self.annotator = self.session.query(AnnotationKey).filter(AnnotationKey.name == name).first()
-        if self.annotator is None:
-            self.annotator = AnnotationKey(name=name)
-            session.add(self.annotator)
-            session.commit()
+        # Sets up the AnnotationKey to use
+        try:
+            _, self.annotator = get_or_create_single_key_set(self.session, name)
+        except ValueError:
+            raise ValueError('annotator_name ' + unicode(name) + ' is already in use for an incompatible ' +
+                             'AnnotationKey and/or AnnotationKeySet. Please specify a new annotator_name.')
 
         # Viewer display configs
         self.n_per_page = n_per_page
@@ -114,8 +121,7 @@ class Viewer(widgets.DOMWidget):
         classes += map(str, cids)
 
         # Scrub for non-ascii characters; replace with ?
-        html = ''.join([c if ord(c) < 128 else "?" for c in html])
-        return '<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)
+        return u'<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)
 
     def _tag_context(self, context, candidates, gold):
         """Given the raw context, tag the spans using the generic _tag_span method"""
@@ -224,10 +230,6 @@ class SentenceNgramViewer(Viewer):
 
             # Handle both unary and binary candidates
             try:
-                cids  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c[0])]
-                gcids = [self.gold.index(g) for g in gold if self._is_subspan(start, end, g[0])]
-            except:
-
                 # For binary candidates, add classes for both the candidate ID and unary span identifiers
                 cids0  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c[0])]
                 cids0 += ['%s-0' % cid for cid in cids0]
@@ -236,7 +238,11 @@ class SentenceNgramViewer(Viewer):
                 cids   = cids0 + cids1
 
                 # Handle gold...
-                gcids = [self.gold.index(g) for g in gold if \
-                            self._is_subspan(start, end, g[0]) or self._is_subspan(start, end, g[1])]
+                gcids = [self.gold.index(g) for g in gold if
+                         self._is_subspan(start, end, g[0]) or self._is_subspan(start, end, g[1])]
+            except:
+                cids  = [self.candidates.index(c) for c in candidates if self._is_subspan(start, end, c[0])]
+                gcids = [self.gold.index(g) for g in gold if self._is_subspan(start, end, g[0])]
+
             html += self._tag_span(s[start:end+1], cids, gold=len(gcids) > 0)
         return html

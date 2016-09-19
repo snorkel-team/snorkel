@@ -105,3 +105,10 @@ def corenlp_cleaner(words):
   d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
        '-RSB-': ']', '-LSB-': '['}
   return map(lambda w: d[w] if w in d else w, words)
+
+
+def tokens_to_ngrams(tokens, n_max=3, delim=' '):
+    N = len(tokens)
+    for root in range(N):
+        for n in range(min(n_max, N - root)):
+            yield delim.join(tokens[root:root+n+1])

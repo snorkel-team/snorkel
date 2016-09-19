@@ -62,7 +62,7 @@ class Matcher(object):
         """
         seen_spans = set()
         for c in candidates:
-            if self.f(c) is True and (not self.longest_match_only or not any([self._is_subspan(c, s) for s in seen_spans])):
+            if self.f(c) and (not self.longest_match_only or not any([self._is_subspan(c, s) for s in seen_spans])):
                 if self.longest_match_only:
                     seen_spans.add(self._get_span(c))
                 yield c
@@ -232,18 +232,89 @@ class RegexMatch(NgramMatcher):
 class RegexMatchSpan(RegexMatch):
     """Matches regex pattern on **full concatenated span**"""
     def _f(self, c):
-        s = c.get_attrib_span(self.attrib, sep=self.sep)
-        tokens = c.get_attrib_tokens("words")
-        #if "-LRB-" in tokens or "-RRB-" in tokens:
-        #    print s, "**{}**".format(self.r.match(s))
-        #    print tokens
-        #    print [c.char_start, c.char_end]
-        #    print '----------------'
-        return True if self.r.match(c.get_attrib_span(self.attrib, sep=self.sep)) is not None else 0
+        return True if self.r.match(c.get_attrib_span(self.attrib, sep=self.sep)) is not None else False
 
 
 class RegexMatchEach(RegexMatch):
     """Matches regex pattern on **each token**"""
     def _f(self, c):
         tokens = c.get_attrib_tokens(self.attrib)
-        return 1 if tokens and all([self.r.match(t) is not None for t in tokens]) else 0
+        return True if tokens and all([self.r.match(t) is not None for t in tokens]) else False
+
+
+class PersonMatcher(RegexMatchEach):
+    """
+    Matches Spans that are the names of people, as identified by CoreNLP.
+
+    A convenience class for setting up a RegexMatchEach to match spans
+    for which each token was tagged as a person.
+    """
+    def __init__(self, **kwargs):
+        kwargs['attrib'] = 'ner_tags'
+        kwargs['rgx'] = 'PERSON'
+        super(PersonMatcher, self).__init__(**kwargs)
+
+
+class LocationMatcher(RegexMatchEach):
+    """
+    Matches Spans that are the names of locations, as identified by CoreNLP.
+
+    A convenience class for setting up a RegexMatchEach to match spans
+    for which each token was tagged as a location.
+    """
+    def __init__(self, **kwargs):
+        kwargs['attrib'] = 'ner_tags'
+        kwargs['rgx'] = 'LOCATION'
+        super(LocationMatcher, self).__init__(**kwargs)
+
+
+class OrganizationMatcher(RegexMatchEach):
+    """
+    Matches Spans that are the names of organizations, as identified by CoreNLP.
+
+    A convenience class for setting up a RegexMatchEach to match spans
+    for which each token was tagged as an organization.
+    """
+    def __init__(self, **kwargs):
+        kwargs['attrib'] = 'ner_tags'
+        kwargs['rgx'] = 'ORGANIZATION'
+        super(OrganizationMatcher, self).__init__(**kwargs)
+
+
+class DateMatcher(RegexMatchEach):
+    """
+    Matches Spans that are dates, as identified by CoreNLP.
+
+    A convenience class for setting up a RegexMatchEach to match spans
+    for which each token was tagged as a date.
+    """
+    def __init__(self, **kwargs):
+        kwargs['attrib'] = 'ner_tags'
+        kwargs['rgx'] = 'DATE'
+        super(DateMatcher, self).__init__(**kwargs)
+
+
+class NumberMatcher(RegexMatchEach):
+    """
+    Matches Spans that are numbers, as identified by CoreNLP.
+
+    A convenience class for setting up a RegexMatchEach to match spans
+    for which each token was tagged as a number.
+    """
+    def __init__(self, **kwargs):
+        kwargs['attrib'] = 'ner_tags'
+        kwargs['rgx'] = 'NUMBER'
+        super(NumberMatcher, self).__init__(**kwargs)
+
+
+class MiscMatcher(RegexMatchEach):
+    """
+    Matches Spans that are miscellaneous named entities, as identified by CoreNLP.
+
+    A convenience class for setting up a RegexMatchEach to match spans
+    for which each token was tagged as miscellaneous.
+    """
+    def __init__(self, **kwargs):
+        kwargs['attrib'] = 'ner_tags'
+        kwargs['rgx'] = 'MISC'
+        super(MiscMatcher, self).__init__(**kwargs)

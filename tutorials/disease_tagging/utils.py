@@ -91,7 +91,7 @@ def get_CID_relations(doc_xml, doc):
 # DICTIONARY LOADERS
 #####################################################################
 
-DICT_ROOT = os.environ['SNORKELHOME'] + '/tutorial/data/dicts/'
+DICT_ROOT = os.environ['SNORKELHOME'] + '/tutorials/disease_tagging/data/dicts/'
 
 
 def load_bioportal_csv_dictionary(filename):

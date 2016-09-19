@@ -62,7 +62,7 @@ For example, in the sentence
 > development of bradyarrhythmias; and, thus, this probably represented a true idiosyncrasy
 > to lidocaine.
 
-our goal is to tag the disease name [bradyarrhythmias](https://en.wikipedia.org/wiki/Bradycardia).
+our goal is to tag the disease name "[bradyarrhythmias](https://en.wikipedia.org/wiki/Bradycardia)."
 
 ### References
 

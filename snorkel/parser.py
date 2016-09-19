@@ -42,11 +42,10 @@ class CorpusParser:
             for _ in self.sent_parser.parse(doc, text):
                 pass
         if self.max_docs is not None:
-            pb.bar(self.max_docs - 1)
             pb.close()
         if session is not None:
             session.commit()
-        # corpus.stats() # TODO: uncomment this line
+        # corpus.stats() # Note: corpus.stats breaks with OmniParser
         return corpus
 
 
@@ -331,8 +330,9 @@ class OmniParser(object):
                     self.row_num += 1
                     self.col_num = -1
                 elif child.name in ["td","th"]:
-                    # TODO: consider using bs4's 'unwrap()' method to remove formatting
-                    #   html tags from the contents of cells so entities are not broken up
+                    # NOTE: If needed for future applications, use bs4's 'unwrap()' 
+                    # method to remove formatting html tags from the contents of 
+                    # cells so entities are not broken up
                     self.cell_idx += 1
                     self.col_num += 1
                     parts = defaultdict(list)

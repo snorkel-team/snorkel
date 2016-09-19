@@ -1,4 +1,4 @@
-from .models import SnorkelSession, Span, Cell, Phrase
+from .models import SnorkelSession, TemporarySpan, Span, Cell, Phrase
 from itertools import chain
 from utils import tokens_to_ngrams
 import re
@@ -12,7 +12,7 @@ def get_text_splits(c):
     """
     spans = []
     for i, span in enumerate(c.get_arguments()):
-        if not isinstance(span, Span):
+        if not isinstance(span, TemporarySpan):
             raise ValueError("Handles Span-type Candidate arguments only")
 
         # Note: {{0}}, {{1}}, etc. does not work as an un-escaped regex pattern, hence A, B, ...
@@ -83,7 +83,7 @@ def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitiv
     :param n_max: The maximum n of the ngrams that should be returned
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    span = c if isinstance(c, Span) else c[0] 
+    span = c if isinstance(c, TemporarySpan) else c[0] 
     i    = span.get_word_start()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     return [ngram for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][max(0, i-window):i]), n_min=n_min, n_max=n_max)]
@@ -99,7 +99,7 @@ def get_right_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensiti
     :param n_max: The maximum n of the ngrams that should be returned
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    span = c if isinstance(c, Span) else c[-1]
+    span = c if isinstance(c, TemporarySpan) else c[-1]
     i    = span.get_word_end()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     return [ngram for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][i+1:i+1+window]), n_min=n_min, n_max=n_max)]
@@ -112,7 +112,7 @@ def contains_token(c, tok, attrib='words', case_sensitive=False):
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    spans = [c] if isinstance(c, Span) else c.get_arguments()
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     return f(tok) in set(chain.from_iterable(map(f, span.get_attrib_tokens(attrib))
         for span in spans))
@@ -126,7 +126,7 @@ def contains_regex(c, rgx=None, attrib='words', sep=" ", case_sensitive=False):
     :param sep: The separator to be used in concatening the retrieved tokens
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    spans = [c] if isinstance(c, Span) else c.get_arguments()
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     r = re.compile(rgx, flags=re.I if not case_sensitive else 0)
     return any([r.search(span.get_attrib_span(attrib, sep=sep)) is not None for span in spans])
 
@@ -209,7 +209,7 @@ def get_phrase_ngrams(span, attrib='words', n_min=1, n_max=1, case_sensitive=Fal
     :param n_max: The maximum n of the ngrams that should be returned
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    if not isinstance(span, Span):
+    if not isinstance(span, TemporarySpan):
         raise ValueError("Handles Span-type Candidate arguments only")
     return (get_left_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
           + get_right_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive))
@@ -224,7 +224,7 @@ def get_cell_ngrams(span, attrib='words', n_min=1, n_max=1, case_sensitive=False
     :param n_max: The maximum n of the ngrams that should be returned
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    if not isinstance(span, Span):
+    if not isinstance(span, TemporarySpan):
         raise ValueError("Handles Span-type Candidate arguments only")
     if (not isinstance(span.parent, Phrase) or
         span.parent.cell is None): return []
@@ -245,7 +245,7 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
     # TODO: Fix this to be more efficient (optimize with SQL query)
-    if not isinstance(span, Span):
+    if not isinstance(span, TemporarySpan):
         raise ValueError("Handles Span-type Candidate arguments only")
     if (not isinstance(span.parent, Phrase) or
         span.parent.cell is None): return []
@@ -322,7 +322,7 @@ def get_aligned_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case
 # ...sorted(_get_aligned_cells(cell, axis, infer=False), key=lambda x: getattr(x,axis_name))[0]
 
 def _get_axis_ngrams(span, axis, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-    if not isinstance(span, Span):
+    if not isinstance(span, TemporarySpan):
         raise ValueError("Handles Span-type Candidate arguments only")
     if (not isinstance(span.parent, Phrase) or
         span.parent.cell is None): return []

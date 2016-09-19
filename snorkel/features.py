@@ -3,7 +3,7 @@ import numpy as np
 from pandas import DataFrame
 from collections import defaultdict
 import scipy.sparse as sparse
-from .models import Candidate, CandidateSet, Feature, Span, Phrase
+from .models import Candidate, CandidateSet, Feature, TemporarySpan, Phrase
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 from treedlib import compile_relation_feature_generator
 from tree_structs import corenlp_to_xmltree
@@ -13,8 +13,8 @@ from entity_features import *
 
 def get_span_feats(candidate):
     args = candidate.get_arguments()
-    if not isinstance(args[0], Span):
-        raise ValueError("Accepts Span-type arguments, %s-type found.")
+    if not (isinstance(args[0], TemporarySpan)):
+        raise ValueError("Accepts Span-type arguments, %s-type found." % type(candidate))
 
     # Unary candidates
     if len(args) == 1:

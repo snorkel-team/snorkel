@@ -258,10 +258,10 @@ class OmniNgrams(Ngrams):
     """
     def __init__(self, n_max=5, split_tokens=['-', '/']):
         Ngrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
-    
+
     def apply(self, context):
         if not isinstance(context, Document):
             raise TypeError("Input Contexts to OmniNgrams.apply() must be of type Document")
         for phrase in context.phrases:
-            for ngram in Ngrams.apply(self, phrase):
-                yield ngram
+            for ts in Ngrams.apply(self, phrase):
+                yield ts

@@ -9,9 +9,10 @@ from .models import Corpus
 
 class ProgressBar(object):
     def __init__(self, N, length=40):
-        self.N      = N
-        self.nf     = float(N)
+        self.N      = max(1, N)
+        self.nf     = float(self.N)
         self.length = length
+
 
     def bar(self, i):
         """Assumes i ranges through [0, N-1]"""
@@ -20,6 +21,7 @@ class ProgressBar(object):
         sys.stdout.flush()
 
     def close(self):
+        self.bar(self.N-1)
         sys.stdout.write("\n\n")
         sys.stdout.flush()
 

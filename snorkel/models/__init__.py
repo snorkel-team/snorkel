@@ -30,7 +30,8 @@ define a new type of Context is
 >>> import snorkel.models
 """
 from .meta import SnorkelBase, SnorkelSession, snorkel_engine, snorkel_postgres
-from .context import Context, Corpus, Document, Sentence, Table, Cell, Phrase, TemporarySpan, Span
+from .context import Context, Corpus, Document, Sentence, Table, Cell, Phrase, \
+    TemporarySpan, Span, TemporaryImplicitSpan, ImplicitSpan
 from .context import construct_stable_id, split_stable_id
 from .candidate import Candidate, CandidateSet, candidate_subclass
 from .annotation import Feature, Label, Prediction, AnnotationKey, AnnotationKeySet

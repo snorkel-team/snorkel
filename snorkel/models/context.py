@@ -6,6 +6,7 @@ from sqlalchemy.types import PickleType
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.sql import select, text
+import pickle
 import pandas as pd
 
 
@@ -73,7 +74,7 @@ class Corpus(SnorkelBase):
             df = pd.read_sql(query.statement, query.session.bind)
             df.hist(label)
 
-            # Recurse to grandhildren
+            # Recurse to grandchildren
             self.child_context_stats(c)
 
 
@@ -314,6 +315,12 @@ class TemporaryContext(object):
                         {'type': self._get_table_name(), 'stable_id': stable_id}).inserted_primary_key[0]
                 insert_args = self._get_insert_args()
                 insert_args['id'] = self.id
+                for (key, val) in insert_args.items():
+                    if isinstance(val, list):
+                        if snorkel_postgres:
+                            raise NotImplementedError
+                        else:
+                            insert_args[key] = pickle.dumps(val)
                 session.execute(text(self._get_insert_query()), insert_args)
             else:
                 self.id = id[0]
@@ -485,6 +492,202 @@ class Span(Context, TemporarySpan):
 
     def _get_instance(self, **kwargs):
         return Span(**kwargs)
+
+    # We redefine these to use default semantics, overriding the operators inherited from TemporarySpan
+    def __eq__(self, other):
+        return self is other
+
+    def __ne__(self, other):
+        return self is not other
+
+    def __hash__(self):
+        return id(self)
+
+
+class TemporaryImplicitSpan(TemporarySpan):
+    """The TemporaryContext version of ImplicitSpan"""
+    def __init__(self, parent, char_start, char_end, expander_key, position, 
+            text, words, char_offsets, lemmas, pos_tags, ner_tags, dep_parents,
+            dep_labels, meta=None):
+        super(TemporarySpan, self).__init__()
+        self.parent         = parent  # The parent Context of the Span
+        self.char_start     = char_start
+        self.char_end       = char_end
+        self.expander_key   = expander_key
+        self.position       = position
+        self.text           = text
+        self.words          = words
+        self.char_offsets   = char_offsets
+        self.lemmas         = lemmas
+        self.pos_tags       = pos_tags
+        self.ner_tags       = ner_tags
+        self.dep_parents    = dep_parents
+        self.dep_labels     = dep_labels
+        self.meta           = meta
+
+    def __len__(self):
+        return sum(map(len, words))
+
+    def __eq__(self, other):
+        try:
+            return (self.parent == other.parent 
+                and self.char_start == other.char_start and self.char_end == other.char_end 
+                and self.expander_key == other.expander_key and self.position == other.position)
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        try:
+            return (self.parent != other.parent 
+                or self.char_start != other.char_start or self.char_end != other.char_end 
+                or self.expander_key != other.expander_key or self.position != other.position)
+        except AttributeError:
+            return True
+
+    def __hash__(self):
+        return (hash(self.parent) + hash(self.char_start) + hash(self.char_end) 
+                + hash(self.expander_key) + hash(self.position))
+
+    def get_stable_id(self):
+        return (construct_stable_id(self.parent, self._get_polymorphic_identity(), self.char_start, self.char_end)
+            + ':%s:%s' % (self.expander_key, self.position))
+
+    def _get_table_name(self):
+        return 'implicit_span'
+
+    def _get_polymorphic_identity(self):
+        return 'implicit_span'
+
+    def _get_insert_query(self):
+        return """INSERT INTO implicit_span VALUES(:id, :parent_id, :char_start, :char_end, :expander_key, :position, :text, :words, :char_offsets, :lemmas, :pos_tags, :ner_tags, :dep_parents, :dep_labels, :meta)"""
+
+    def _get_insert_args(self):
+        return {'parent_id'     : self.parent.id,
+                'char_start'    : self.char_start,
+                'char_end'      : self.char_end,
+                'expander_key'  : self.expander_key,
+                'position'      : self.position,
+                'text'          : self.text,
+                'words'         : self.words,
+                'char_offsets'  : self.char_offsets,
+                'lemmas'        : self.lemmas,
+                'pos_tags'      : self.pos_tags,
+                'ner_tags'      : self.ner_tags,
+                'dep_parents'   : self.dep_parents,
+                'dep_labels'    : self.dep_labels,
+                'meta'          : self.meta
+                }
+
+    def get_word_start(self):
+        return 0
+
+    def get_word_end(self):
+        return len(self.words) - 1
+
+    def char_to_word_index(self, ci):
+        """Given a character-level index (offset), return the index of the **word this char is in**"""
+        i = None
+        for i, co in enumerate(self.char_offsets):
+            if ci == co:
+                return i
+            elif ci < co:
+                return i-1
+        return i
+
+    def word_to_char_index(self, wi):
+        """Given a word-level index, return the character-level index (offset) of the word's start"""
+        return self.char_offsets[wi]
+
+    def get_attrib_tokens(self, a='words'):
+        """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""
+        return self.__getattribute__(a)[self.get_word_start():self.get_word_end() + 1]
+
+    def get_attrib_span(self, a, sep=" "):
+        """Get the span of sentence attribute _a_ over the range defined by word_offset, n"""
+        # NOTE: Special behavior for words currently (due to correspondence with char_offsets)
+        if a == 'words':
+            return self.text
+        else:
+            return sep.join(self.get_attrib_tokens(a))
+
+    def __getitem__(self, key):
+        """
+        Slice operation returns a new candidate sliced according to **char index**
+        Note that the slicing is w.r.t. the candidate range (not the abs. sentence char indexing)
+        """
+        if isinstance(key, slice):
+            char_start = self.char_start if key.start is None else self.char_start + key.start
+            if key.stop is None:
+                char_end = self.char_end
+            elif key.stop >= 0:
+                char_end = self.char_start + key.stop - 1
+            else:
+                char_end = self.char_end + key.stop
+            return self._get_instance(parent=self.parent, char_start=char_start, char_end=char_end, expander_key=expander_key,
+                position=position, text=text, words=words, char_offsets=char_offsets, lemmas=lemmas, pos_tags=pos_tags, 
+                ner_tags=ner_tags, dep_parents=dep_parents, dep_labels=dep_labels, meta=meta)
+        else:
+            raise NotImplementedError()
+
+    def __repr__(self):
+        return '%s("%s", parent=%s, words=[%s,%s], position=[%s])' \
+            % (self.__class__.__name__, self.get_span(), self.parent.id, 
+               self.get_word_start(), self.get_word_end(), self.position)
+
+    def _get_instance(self, **kwargs):
+        return TemporaryImplicitSpan(**kwargs)
+
+
+class ImplicitSpan(Context, TemporaryImplicitSpan):
+    """
+    A span of characters that may not have appeared verbatim in the source text.
+    It is identified by Context id, character-index start and end (inclusive), 
+    as well as a key representing what 'expander' function drew the ImplicitSpan 
+    from an  existing Span, and a position (where position=0 corresponds to the 
+    first ImplicitSpan produced from the expander function).
+
+    The character-index start and end point to the segment of text that was
+    expanded to produce the ImplicitSpan.
+    """
+    __tablename__ = 'implicit_span'
+    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
+    parent_id = Column(Integer, ForeignKey('context.id'))
+    char_start = Column(Integer, nullable=False)
+    char_end = Column(Integer, nullable=False)
+    expander_key = Column(String, nullable=False)
+    position = Column(Integer, nullable=False)
+    text = Column(String)
+    if snorkel_postgres:
+        words = Column(postgresql.ARRAY(String), nullable=False)
+        char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
+        lemmas = Column(postgresql.ARRAY(String))
+        pos_tags = Column(postgresql.ARRAY(String))
+        ner_tags = Column(postgresql.ARRAY(String))
+        dep_parents = Column(postgresql.ARRAY(Integer))
+        dep_labels = Column(postgresql.ARRAY(String))
+    else:
+        words = Column(PickleType, nullable=False)
+        char_offsets = Column(PickleType, nullable=False)
+        lemmas = Column(PickleType)
+        pos_tags = Column(PickleType)
+        ner_tags = Column(PickleType)
+        dep_parents = Column(PickleType)
+        dep_labels = Column(PickleType)
+    meta = Column(PickleType)
+
+    __table_args__ = (
+        UniqueConstraint(parent_id, char_start, char_end, expander_key, position),
+    )
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'implicit_span',
+        'inherit_condition': (id == Context.id)
+    }
+
+    parent = relationship('Context', backref=backref('implicit_spans', cascade='all, delete-orphan'), foreign_keys=parent_id)
+
+    def _get_instance(self, **kwargs):
+        return ImplicitSpan(**kwargs)
 
     # We redefine these to use default semantics, overriding the operators inherited from TemporarySpan
     def __eq__(self, other):

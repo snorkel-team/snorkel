@@ -1,4 +1,4 @@
-from .models import Span, Phrase
+from .models import SnorkelSession, Span, Cell, Phrase
 from itertools import chain
 from utils import tokens_to_ngrams
 import re
@@ -53,12 +53,19 @@ def get_text_between(c):
 
 def get_between_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
-    TODO: write doc_string
+    Get the ngrams _between_ two unary Spans of a binary-Span Candidate, where
+    both share the same parent Context.
+    :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    :param n_min: The minimum n of the ngrams that should be returned
+    :param n_max: The maximum n of the ngrams that should be returned
+    :param case_sensitive: If false, all ngrams will be returned in lower case
     """
     if len(c.get_arguments()) != 2:
         raise ValueError("Only applicable to binary Candidates")
     span0 = c[0]
     span1 = c[1]
+    if span0.parent != span1.parent:
+        raise ValueError("Only applicable to Candidates where both spans are from the same immediate Context.")
     distance = abs(span0.get_word_start() - span1.get_word_start())
     if span0.get_word_start() < span1.get_word_start():
         return get_right_ngrams(span0, window=distance-1, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
@@ -68,10 +75,13 @@ def get_between_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False
 
 def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
-    Return the ngrams within a window to the _left_ of the Candidate.
+    Get the ngrams within a window to the _left_ of the Candidate from its parent Context.
     For higher-arity Candidates, defaults to the _first_ argument.
     :param window: The number of tokens to the left of the first argument to return
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    :param n_min: The minimum n of the ngrams that should be returned
+    :param n_max: The maximum n of the ngrams that should be returned
+    :param case_sensitive: If false, all ngrams will be returned in lower case
     """
     span = c if isinstance(c, Span) else c[0] 
     i    = span.get_word_start()
@@ -81,10 +91,13 @@ def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitiv
 
 def get_right_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
-    Return the ngrams within a window to the _right_ of the Candidate.
+    Get the ngrams within a window to the _right_ of the Candidate from its parent Context.
     For higher-arity Candidates, defaults to the _last_ argument.
-    :param window: The number of tokens to the right of the last argument to return
+    :param window: The number of tokens to the left of the first argument to return
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    :param n_min: The minimum n of the ngrams that should be returned
+    :param n_max: The maximum n of the ngrams that should be returned
+    :param case_sensitive: If false, all ngrams will be returned in lower case
     """
     span = c if isinstance(c, Span) else c[-1]
     i    = span.get_word_end()
@@ -94,8 +107,10 @@ def get_right_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensiti
 
 def contains_token(c, tok, attrib='words', case_sensitive=False):
     """
-    Checks if any of the contituent Spans contain a token
+    Return True if any of the contituent Spans contain the given token
+    :param tok: The token being searched for
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    :param case_sensitive: If false, all ngrams will be returned in lower case
     """
     spans = [c] if isinstance(c, Span) else c.get_arguments()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
@@ -105,8 +120,12 @@ def contains_token(c, tok, attrib='words', case_sensitive=False):
 
 def contains_regex(c, rgx=None, attrib='words', sep=" ", case_sensitive=False):
     """
-    TODO: write documentation here
-    """   
+    Return True if any of the contituent Spans contain the given regular expression
+    :param rgx: The regex being searched for
+    :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    :param sep: The separator to be used in concatening the retrieved tokens
+    :param case_sensitive: If false, all ngrams will be returned in lower case
+    """
     spans = [c] if isinstance(c, Span) else c.get_arguments()
     r = re.compile(rgx, flags=re.I if not case_sensitive else 0)
     return any([r.search(span.get_attrib_span(attrib, sep=sep)) is not None for span in spans])
@@ -145,29 +164,90 @@ def get_matches(lf, candidate_set, match_values=[1,-1]):
     return matches
 
 ############################### TABLE LF HELPERS ###############################
+def same_document(c):
+    """
+    Return True if all Spans in the given candidate are from the same Document.
+    :param c: The candidate whose Spans are being compared
+    """
+    return (all([c[i].parent.document is not None 
+        and c[i].parent.document==c[0].parent.document for i in range(len(c.get_arguments()))])) 
+
+
+def same_table(c):
+    """
+    Return True if all Spans in the given candidate are from the same Table.
+    :param c: The candidate whose Spans are being compared
+    """
+    return (all([c[i].parent.table is not None 
+        and c[i].parent.table==c[0].parent.table for i in range(len(c.get_arguments()))])) 
+
+
+def same_cell(c):
+    """
+    Return True if all Spans in the given candidate are from the same Cell.
+    :param c: The candidate whose Spans are being compared
+    """
+    return (all([c[i].parent.cell is not None 
+        and c[i].parent.cell==c[0].parent.cell for i in range(len(c.get_arguments()))])) 
+
+
+def same_phrase(c):
+    """
+    Return True if all Spans in the given candidate are from the same Phrase.
+    :param c: The candidate whose Spans are being compared
+    """
+    return (all([c[i].parent is not None 
+        and c[i].parent==c[0].parent for i in range(len(c.get_arguments()))])) 
+
+
 def get_phrase_ngrams(span, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    """
+    Get the ngrams that are in the Phrase of the given span, not including itself.
+    :param span: The span whose Phrase is being searched
+    :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    :param n_min: The minimum n of the ngrams that should be returned
+    :param n_max: The maximum n of the ngrams that should be returned
+    :param case_sensitive: If false, all ngrams will be returned in lower case
+    """
+    if not isinstance(span, Span):
+        raise ValueError("Handles Span-type Candidate arguments only")
     return (get_left_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
           + get_right_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive))
 
 
 def get_cell_ngrams(span, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
-    Checks if any of the contituent Spans contain a token
+    Get the ngrams that are in the Cell of the given span, not including itself.
+    :param span: The span whose Cell is being searched
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    :param n_min: The minimum n of the ngrams that should be returned
+    :param n_max: The maximum n of the ngrams that should be returned
+    :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    if (not isinstance(span, Span) or 
-        not isinstance(span.parent, Phrase) or
+    if not isinstance(span, Span):
+        raise ValueError("Handles Span-type Candidate arguments only")
+    if (not isinstance(span.parent, Phrase) or
         span.parent.cell is None): return []
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     return list(chain.from_iterable(tokens_to_ngrams(map(f, getattr(phrase,attrib)), n_min=n_min, n_max=n_max) 
         for phrase in span.parent.cell.phrases))
 
 
-def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    """
+    Get the ngrams from all Cells that are within a given Cell distance in one direction from the given span  
+    :param span: The span whose neighbor Cells are being searched
+    :param dist: The Cell distance within which a neighbor Cell must be to be considered
+    :param directions: A Boolean expressing whether or not to return the direction of each ngram
+    :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    :param n_min: The minimum n of the ngrams that should be returned
+    :param n_max: The maximum n of the ngrams that should be returned
+    :param case_sensitive: If false, all ngrams will be returned in lower case
+    """
     # TODO: Fix this to be more efficient (optimize with SQL query)
-    span = c
-    if (not isinstance(span, Span) or 
-        not isinstance(span.parent, Phrase) or
+    if not isinstance(span, Span):
+        raise ValueError("Handles Span-type Candidate arguments only")
+    if (not isinstance(span.parent, Phrase) or
         span.parent.cell is None): return []
     if directions:
         f = (lambda w: w) if case_sensitive else (lambda w: (w[0].lower(), w[1]))
@@ -179,7 +259,7 @@ def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=
             continue
         row_diff = abs(phrase.row_num - span.parent.row_num)
         col_diff = abs(phrase.col_num - span.parent.col_num)
-        if (row_diff or col_diff) and row_diff + col_diff <= dist:
+        if (row_diff or col_diff) and not (row_diff and col_diff) and row_diff + col_diff <= dist:
             if directions:
                 direction = ''
                 if col_diff==0:
@@ -198,49 +278,55 @@ def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=
     return map(f, ngrams)
 
 
-def get_row_ngrams(c, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-    return _get_axis_ngrams(c, axis='row', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
+def get_row_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    """
+    Get the ngrams from all Cells that are in the same row as the given span 
+    :param span: The span whose neighbor Cells are being searched
+    :param infer: If True, then if a Cell is empty, use the contents from the first non-empty Cell above it
+    :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    :param n_min: The minimum n of the ngrams that should be returned
+    :param n_max: The maximum n of the ngrams that should be returned
+    :param case_sensitive: If false, all ngrams will be returned in lower case
+    """
+    return _get_axis_ngrams(span, axis='row', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
 
 
-def get_col_ngrams(c, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-    return _get_axis_ngrams(c, axis='col', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
+def get_col_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    """
+    Get the ngrams from all Cells that are in the same column as the given span 
+    :param span: The span whose neighbor Cells are being searched
+    :param infer: If True, then if a Cell is empty, use the contents from the first non-empty Cell to the left of it
+    :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    :param n_min: The minimum n of the ngrams that should be returned
+    :param n_max: The maximum n of the ngrams that should be returned
+    :param case_sensitive: If false, all ngrams will be returned in lower case
+    """
+    return _get_axis_ngrams(span, axis='col', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
 
 
-def get_aligned_ngrams(c, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-    return (get_row_ngrams(c, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
-          + get_col_ngrams(c, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive))
+def get_aligned_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    """
+    Get the ngrams from all Cells that are in the same row or column as the given span 
+    :param span: The span whose neighbor Cells are being searched
+    :param infer: Refer to get_[row/col]_ngrams for description
+    :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    :param n_min: The minimum n of the ngrams that should be returned
+    :param n_max: The maximum n of the ngrams that should be returned
+    :param case_sensitive: If false, all ngrams will be returned in lower case
+    """
+    return (get_row_ngrams(span, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
+          + get_col_ngrams(span, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive))
 
 # TODO: write this LF helper (get furthest north and west cell's ngrams)
 # def get_head_ngrams
 # ...sorted(_get_aligned_cells(cell, axis, infer=False), key=lambda x: getattr(x,axis_name))[0]
 
-def same_document(c):
-    return (c[0].parent.document is not None and
-            c[1].parent.document is not None and 
-            c[0].parent.document == c[1].parent.document)
-
-def same_table(c):
-    return (c[0].parent.table is not None and
-            c[1].parent.table is not None and 
-            c[0].parent.table == c[1].parent.table)
-
-def same_cell(c):
-    return (c[0].parent.cell is not None and
-            c[1].parent.cell is not None and 
-            c[0].parent.cell == c[1].parent.cell)
-
-def same_phrase(c):
-    return (c[0].parent is not None and
-            c[1].parent is not None and 
-            c[0].parent == c[1].parent)
-
-
-def _get_axis_ngrams(c, axis, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-    # TODO: optimize this with SQL query
-    span = c
-    if (not isinstance(span, Span) or 
-        not isinstance(span.parent, Phrase) or
-        span.parent.cell is None): return []  
+def _get_axis_ngrams(span, axis, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    if not isinstance(span, Span):
+        raise ValueError("Handles Span-type Candidate arguments only")
+    if (not isinstance(span.parent, Phrase) or
+        span.parent.cell is None): return []
+    # TODO: optimize this with SQL query 
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     ngrams = []
     for cell in _get_aligned_cells(span.parent.cell, axis, infer=infer):
@@ -248,9 +334,8 @@ def _get_axis_ngrams(c, axis, infer=False, attrib='words', n_min=1, n_max=1, cas
             ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)]) 
     return map(f, ngrams)
 
-
+# WITHOUT SQL:
 def _get_aligned_cells(root_cell, axis, infer=False):
-    # TODO: optimize this with SQL query
     axis_name = axis + '_num'
     other_axis = 'row' if axis=='col' else 'col'
     aligned_cells = [cell for cell in root_cell.table.cells
@@ -258,10 +343,26 @@ def _get_aligned_cells(root_cell, axis, infer=False):
         and cell != root_cell]
     return [_get_nonempty_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells 
 
+# WITH SQL:
+# TODO: use getattr for row_num/col_num 
+# def _get_aligned_cells(root_cell, axis, infer=False):
+#     session = SnorkelSession.object_session(root_cell)
+#     if axis == 'row':
+#         aligned_cells = session.query(Cell).filter(
+#             Cell.table == root_cell.table).filter(
+#             Cell.row_num == root_cell.row_num).filter(
+#             Cell.id != root_cell.id).all()
+#         other_axis = 'col'
+#     else:
+#         aligned_cells = session.query(Cell).filter(
+#             Cell.table == root_cell.table).filter(
+#             Cell.col_num == root_cell.col_num).filter(
+#             Cell.id != root_cell.id).all()
+#         other_axis = 'row'
+#     return [_get_nonempty_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells 
 
+# WITHOUT SQL:
 def _get_nonempty_cell(root_cell, axis):
-    # TODO: optimize this with SQL query
-    # TODO: use better time complexity algorithm
     axis_name = axis + '_num'
     other_axis = 'row' if axis=='col' else 'col'
     other_axis_name = other_axis + '_num'
@@ -273,78 +374,17 @@ def _get_nonempty_cell(root_cell, axis):
             and getattr(cell, other_axis_name) == getattr(root_cell, other_axis_name) - 1]
         return _get_nonempty_cell(neighbor_cell[0], axis)
         
-
-
-# def get_inferred_row_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-#     return _get_inferred_axis_ngrams(c, axis='row', attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
-
-
-# def _get_inferred_axis_ngrams(c, axis, attrib='words', n_min=1, n_max=1, case_sensitive=False):
-#     span = c
-#     if (not isinstance(span, Span) or 
-#         not isinstance(span.parent, Phrase) or
-#         span.parent.cell is None): return []  
-#     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-#     ngrams = []
-#     for cell in _get_aligned_cells(span, axis):
-#         for phrase in cell.phrases:
-#             ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)]) 
-#     return map(f, ngrams)
-
-# def _get_row_cells(span):
-#     return [cell for cell in _get_aligned_cells(span, axis='row')]
-
-
-# def _get_col_cells(span):
-#     return [cell for cell in _get_aligned_cells(span, axis='col')]
-
-# def _get_head_cell(cell, axis):
+# WITH SQL:
+# def _get_nonempty_cell(root_cell, axis):
 #     axis_name = axis + '_num'
-#     head_cell = cell
-#     cells = 
-#     while not head_cell.phrases and head_cell.axis_name != 0:
-    # return head_cell
-
-
-# def head_ngrams(axis, attrib='words', n_max=1, case_sensitive=False, induced=False):
-#     head_cell = self.head_cell(axis, induced=induced)
-#     ngrams = chain.from_iterable(
-#         self._get_phrase_ngrams(phrase, attrib=attrib, n_max=n_max) 
-#         for cell in cells for phrase in cell.phrases)
-#     return [ngram.lower() for ngram in ngrams] if not case_sensitive else ngrams
-
-
-# def head_cell(axis, induced=False):
-#     if axis not in ('row', 'col'): 
-#         raise Exception("Axis must equal 'row' or 'col' ")
-
-#     cells = self._get_aligned_cells(axis=axis)
-#     axis_name = axis + '_num'
-#     head_cell = sorted(cells, key=lambda x: getattr(x,axis_name))[0]
-    
-#     if induced and not head_cell.text.isspace():
-#         other_axis = 'col' if axis == 'row' else 'row'
-#         other_axis_name = other_axis + '_num'
-#         # get aligned cells to head_cell that appear before head_cell and aren't empty
-#         aligned_cells = [cell for cell in head_cell.table.cells
-#                             if getattr(cell,other_axis_name) == getattr(head_cell,other_axis_name)
-#                             if getattr(cell,axis_name) < getattr(head_cell,axis_name)
-#                             and not cell.text.isspace()]
-#         # pick the last cell among the ones identified above
-#         aligned_cells = sorted(aligned_cells, key=lambda x: getattr(x,axis_name), reverse=True)
-#         if aligned_cells:
-#             head_cell = aligned_cells[0]
-
-#     return head_cell
-
-
-# def neighborhood_ngrams(attrib='words', n_max=3, dist=1, case_sensitive=False):
-#     # TODO: Fix this to be more efficient (optimize with SQL query)
-#     if self.context.cell is None: return
-#     f = lambda x: 0 < x and x <= dist
-#     phrases = [phrase for phrase in self.context.table.phrases if
-#         phrase.row_num is not None and phrase.col_num is not None and
-#         f(abs(phrase.row_num - self.context.row_num) + abs(phrase.col_num - self.context.col_num))]
-#     for phrase in phrases:
-#         for ngram in slice_into_ngrams(getattr(phrase,attrib), n_max=n_max):
-#             yield ngram if case_sensitive else ngram.lower()
+#     other_axis = 'row' if axis=='col' else 'col'
+#     other_axis_name = other_axis + '_num'
+#     if root_cell.text or getattr(root_cell, other_axis_name) == 0:
+#         return root_cell
+#     else:
+#         session = SnorkelSession.object_session(root_cell)
+#         return session.query(Cell).filter(
+#             Cell.table_id == root_cell.table_id).filter(
+#             Cell.row_num == root_cell.row_num).filter(
+#             Cell.col_num < root_cell.col_num).order_by(
+#             -Cell.col_num).first()

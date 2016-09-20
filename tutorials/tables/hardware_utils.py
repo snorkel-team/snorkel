@@ -7,8 +7,39 @@ from snorkel.utils import ProgressBar
 from difflib import SequenceMatcher
 import re
 
-class OmniNgramsHardware(OmniNgrams):
-    def __init(self, n_max=5, split_tokens=[]):
+class OmniNgramsTemp(OmniNgrams):
+    def __init__(self, n_max=5, split_tokens=[]):
+        OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
+        # TODO: replace rgx with individual replace statements 
+        self.rgx = re.compile(r'^(?:\-|\u2010|\u2011|\u2012|\u2013|\u2014|\u2212)\s*(\d+)$', flags=re.UNICODE)
+
+    def apply(self, context):
+        for ts in OmniNgrams.apply(self, context):
+            m = self.rgx.match(ts.get_span())
+            if m:
+                temp = u'-' + m.group(1)
+                yield TemporaryImplicitSpan(
+                    parent         = ts.parent,
+                    char_start     = ts.char_start,
+                    char_end       = ts.char_end,
+                    expander_key   = u'neg_temp',
+                    position       = 0,
+                    text           = temp,
+                    words          = [temp],
+                    char_offsets   = [0],
+                    lemmas         = [temp],
+                    pos_tags       = [ts.parent.pos_tags[-1]],
+                    ner_tags       = [ts.parent.ner_tags[-1]],
+                    dep_parents    = [ts.parent.dep_parents[-1]],
+                    dep_labels     = [ts.parent.dep_labels[-1]],
+                    meta           = None)
+            else:
+                yield ts
+                
+    
+
+class OmniNgramsPart(OmniNgrams):
+    def __init__(self, n_max=5, split_tokens=[]):
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
 
     def apply(self, context):
@@ -20,8 +51,8 @@ class OmniNgramsHardware(OmniNgrams):
                 for i, part_no in enumerate(part_nos):
                     yield TemporaryImplicitSpan(
                         parent         = ts.parent,
-                        char_start     = 0,
-                        char_end       = len(part_no) - 1,
+                        char_start     = ts.char_start,
+                        char_end       = ts.char_end,
                         expander_key   = u'part_range',
                         position       = i,
                         text           = part_no,
@@ -66,22 +97,42 @@ def load_extended_parts_dict(filename):
 def get_gold_dict(filename, attrib, docs=None):
     with codecs.open(filename, encoding="utf-8") as csvfile:
         gold_reader = csv.reader(csvfile)
-        gold_dict = defaultdict(int)
+        gold_dict = set()
         for row in gold_reader:
             (doc, part, val, attr) = row
             if docs is None or doc.upper() in docs:
                 if attr == attrib:
                     key = (doc.upper(), part.upper(), val.upper())
-                    gold_dict[key] += 1
+                    gold_dict.add(key)
     return gold_dict
 
-def load_hardware_labels(loader, candidates, filename, attrib, attrib_class):
+
+def count_hardware_labels(candidates, filename, attrib, attrib_class):
     gold_dict = get_gold_dict(filename, attrib)
+    gold_cand = defaultdict(int)
     pb = ProgressBar(len(candidates))
     for i, c in enumerate(candidates):
         pb.bar(i)
         key = ((c[0].parent.document.name).upper(), (c[0].get_span()).upper(), (''.join(c[1].get_span().split())).upper())
         if key in gold_dict:
+            gold_cand[key] += 1
+    pb.close()
+    import pdb; pdb.set_trace()
+    return gold_cand
+
+
+def load_hardware_labels(loader, candidates, filename, attrib, attrib_class):
+    gold_dict = get_gold_dict(filename, attrib)
+    gold_cand = defaultdict(int)
+    pb = ProgressBar(len(candidates))
+    for i, c in enumerate(candidates):
+        pb.bar(i)
+        key = ((c[0].parent.document.name).upper(), (c[0].get_span()).upper(), (''.join(c[1].get_span().split())).upper())
+        if key in gold_dict:
+            gold_cand[key] += 1
+    for c in candidates:
+        key = ((c[0].parent.document.name).upper(), (c[0].get_span()).upper(), (''.join(c[1].get_span().split())).upper())
+        if key in gold_dict and gold_dict[key] == 1:
             loader.add({'part' : c[0], attrib_class : c[1]})
     pb.close()
 
@@ -257,7 +308,7 @@ def char_range(a, b):
         yield chr(c)
 
 
-def entity_level_total_recall(candidates, gold_file, attribute, relation=True):
+def entity_level_total_recall(candidates, gold_file, attribute='stg_temp_min', relation=True):
     """Checks entity-level recall of candidates compared to gold.
 
     Turns a CandidateSet into a normal set of entity-level tuples

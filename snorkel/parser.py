@@ -330,10 +330,10 @@ class OmniParser(object):
                     self.row_num += 1
                     self.col_num = -1
                 elif child.name in ["td","th"]:
-                    # if len(child.contents) > 1:
-                    #     text = child.text
-                    #     child.clear()
-                    #     child.string = text
+                    if len(child.contents) > 1:
+                        text = child.text
+                        child.clear()
+                        child.string = text
                     self.cell_idx += 1
                     self.col_num += 1
                     parts = defaultdict(list)

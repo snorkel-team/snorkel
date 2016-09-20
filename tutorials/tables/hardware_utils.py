@@ -217,7 +217,6 @@ def expand_part_range(text, DEBUG=False):
 
     # Add common part suffixes on each discovered part number
     part_suffixes = ['-16','-25','-40','A','B','C']
-    # import pdb; pdb.set_trace()
     for part in final_set:
         base = part
         for suffix in part_suffixes:
@@ -258,39 +257,41 @@ def char_range(a, b):
         yield chr(c)
 
 
-def entity_level_total_recall(total_candidates, filename, attrib):
-    """Checks entity-level recall of total_candidates compared to gold.
+def entity_level_total_recall(candidates, gold_file, attribute, relation=True):
+    """Checks entity-level recall of candidates compared to gold.
 
     Turns a CandidateSet into a normal set of entity-level tuples
-    (doc, part, [attrib_value])
+    (doc, part, [attribute_value])
     then compares this to the entity-level tuples found in the gold.
 
     Example Usage:
         from hardware_utils import entity_level_total_recall
-        total_candidates = # CandidateSet of all candidates you want to consider
-        filename = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
-        entity_level_total_recall(total_candidates, filename, 'stg_temp_min')
+        candidates = # CandidateSet of all candidates you want to consider
+        gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
+        entity_level_total_recall(candidates, gold_file, 'stg_temp_min')
     """
     print "Preparing gold set..."
-    gold_dict = get_gold_dict(filename, attrib)
-    # gold_set = set(gold_dict.keys())
-
-    gold_set = set([])
-    for (doc, part, temp) in gold_dict:
-        gold_set.add((doc.upper(), part.upper()))
+    gold_dict = get_gold_dict(gold_file, attribute)
+    gold_set = set()
+    for (doc, part, attr) in gold_dict:
+        if relation:
+            gold_set.add((doc.upper(), part.upper(), attr.upper()))
+        else:
+            gold_set.add((doc.upper(), part.upper()))
 
     # Turn CandidateSet into set of tuples
     print "Preparing candidates..."
-    pb = ProgressBar(len(total_candidates))
+    pb = ProgressBar(len(candidates))
     entity_level_candidates = set()
-    for i, c in enumerate(total_candidates):
+    for i, c in enumerate(candidates):
         pb.bar(i)
-        part = c.get_arguments()[0].get_span().upper()
-        doc = c.get_arguments()[0].parent.document.name.upper()
-        entity_level_candidates.add((str(doc), str(part)))
-        # temp = c.get_arguments()[1].get_span()
-        # doc = c.get_arguments()[1].parent.document.name
-        # entity_level_candidates.add((str(doc), str(part), str(temp)))
+        part = c.get_arguments()[0].get_span()
+        doc = c.get_arguments()[0].parent.document.name
+        if relation:
+            attr = c.get_arguments()[1].get_span().replace(' ', '')
+            entity_level_candidates.add((doc.upper(), part.upper(), attr.upper()))
+        else:
+            entity_level_candidates.add((doc.upper(), part.upper()))
     pb.close()
 
     print "========================================"

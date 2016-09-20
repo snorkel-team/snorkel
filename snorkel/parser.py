@@ -285,7 +285,7 @@ class HTMLParser(DocParser):
         with codecs.open(fp, encoding=self.encoding) as f:
             soup = BeautifulSoup(f, 'lxml')
             for text in soup.find_all('html'):
-                name = re.sub(r'\..*$', '', os.path.basename(fp))
+                name = os.path.basename(fp)[:os.path.basename(fp).rfind('.')]
                 stable_id = self.get_stable_id(name)
                 yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), unicode(text)
 
@@ -330,9 +330,10 @@ class OmniParser(object):
                     self.row_num += 1
                     self.col_num = -1
                 elif child.name in ["td","th"]:
-                    # NOTE: If needed for future applications, use bs4's 'unwrap()' 
-                    # method to remove formatting html tags from the contents of 
-                    # cells so entities are not broken up
+                    # if len(child.contents) > 1:
+                    #     text = child.text
+                    #     child.clear()
+                    #     child.string = text
                     self.cell_idx += 1
                     self.col_num += 1
                     parts = defaultdict(list)

@@ -121,19 +121,14 @@ def count_hardware_labels(candidates, filename, attrib, attrib_class):
     return gold_cand
 
 
-def load_hardware_labels(loader, candidates, filename, attrib, attrib_class):
+def load_hardware_labels(loader, candidates, filename, candidate_attribs, gold_attrib='stg_temp_min'):
     gold_dict = get_gold_dict(filename, attrib)
-    gold_cand = defaultdict(int)
     pb = ProgressBar(len(candidates))
     for i, c in enumerate(candidates):
         pb.bar(i)
         key = ((c[0].parent.document.name).upper(), (c[0].get_span()).upper(), (''.join(c[1].get_span().split())).upper())
         if key in gold_dict:
-            gold_cand[key] += 1
-    for c in candidates:
-        key = ((c[0].parent.document.name).upper(), (c[0].get_span()).upper(), (''.join(c[1].get_span().split())).upper())
-        if key in gold_dict and gold_dict[key] == 1:
-            loader.add({'part' : c[0], attrib_class : c[1]})
+            loader.add({candidate_attribs[0] : c[0], candidate_attribs[1] : c[1]})
     pb.close()
 
 def entity_level_f1(tp, fp, tn, fn, filename, corpus, attrib):
@@ -267,19 +262,22 @@ def expand_part_range(text, DEBUG=False):
     if DEBUG: print "[debug]   Final Set: " + str(sorted(final_set))
 
     # Add common part suffixes on each discovered part number
-    part_suffixes = ['-16','-25','-40','A','B','C']
+    # part_suffixes = ['-16','-25','-40','A','B','C']
+    # for part in final_set:
+    #     base = part
+    #     for suffix in part_suffixes:
+    #         if part.endswith(suffix):
+    #             base = part[:-len(suffix)].replace(' ', '') # e.g., for parts in SIEMS01215-1
+    #             break
+    #     if base:
+    #         yield base
+    #         for suffix in part_suffixes:
+    #             yield base + suffix
+    #     else:
+    #         yield part
+
     for part in final_set:
-        base = part
-        for suffix in part_suffixes:
-            if part.endswith(suffix):
-                base = part[:-len(suffix)].replace(' ', '') # e.g., for parts in SIEMS01215-1
-                break
-        if base:
-            yield base
-            for suffix in part_suffixes:
-                yield base + suffix
-        else:
-            yield part
+        yield part
 
     # NOTE: We make a few assumptions (e.g. suffixes must be same length), but
     # one important unstated assumption is that if there is a single suffix,

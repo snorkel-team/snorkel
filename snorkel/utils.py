@@ -90,6 +90,41 @@ def matrix_conflicts(L):
     L_abs = sparse_abs(L)
     return np.ravel(np.where(L_abs.sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).T * L_abs / float(L.shape[0]))
 
+def matrix_accuracy(L, G):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate
+    and a set of gold candidates:
+    Return the accuracy of each LF compared to the gold.
+    """
+    N, M = L.shape
+    # Create N x 1 vector to compare against
+    gold_labels = np.ndarray((N,1))
+    for i in xrange(N):
+        if L.get_candidate(i) in G:
+            gold_labels[i] = [1]
+        else:
+            gold_labels[i] = [-1]
+
+    # Calculate accuracy of each LF
+    accuracy = np.ndarray(M)
+    # NOTE: Commented out loop penalizes for zeros
+    # for i in xrange(M):
+    #     accuracy[i] = np.sum(gold_labels == L.tocsc()[:,i].toarray())/ float(N)
+
+    for i in xrange(M):
+        nonzeros = 0
+        correct = 0
+        for j in xrange(N):
+            if L.tocsc()[:,i].toarray()[j] == [0]: # Do not penalize for 0
+                continue
+            nonzeros += 1
+            if gold_labels[j] == L.tocsc()[:,i].toarray()[j]:
+                correct +=1;
+        if nonzeros == 0:
+            accuracy[i] = 0.0 # if all labels are 0, accuracy of 0
+        else:
+            accuracy[i] = correct / float(nonzeros)
+    return np.ravel(accuracy)
 
 def get_as_dict(x):
     """Return an object as a dictionary of its attributes"""
@@ -138,11 +173,11 @@ def tokens_to_ngrams(tokens, n_min=1, n_max=3, delim=' '):
 def split_corpus(session, corpus, train=0.8, development=0.1, test=0.1, seed=None):
     if train + development + test != 1.0:
         raise ValueError("Values for train + development + test must sum to 1")
-   
+
     if seed:
         random.seed(seed)
     docs = [doc for doc in corpus.documents]
-    random.shuffle(docs)        
+    random.shuffle(docs)
 
     n = len(docs)
     num_train = int(train * n)
@@ -176,4 +211,3 @@ def split_corpus(session, corpus, train=0.8, development=0.1, test=0.1, seed=Non
 def get_keys_by_candidate(annotation_matrix, candidate):
     (r,c,v) = sparse.find(annotation_matrix[annotation_matrix.get_row_index(candidate),:])
     return [annotation_matrix.get_key(idx) for idx in c]
-              

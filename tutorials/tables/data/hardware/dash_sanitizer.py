@@ -30,7 +30,7 @@ def get_files(path):
     else:
         raise IOError("File or directory not found: %s" % (path,))
 
-for fp in get_files('/Users/bradenhancock/snorkel/tutorial/data/hardware/hardware_html/'):
+for fp in get_files('/Users/bradenhancock/snorkel/tutorials/tables/data/hardware/hardware1000_html/'):
     f = open(fp,'r')
     filedata = f.read()
     f.close()

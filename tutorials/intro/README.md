@@ -9,7 +9,7 @@ First we parse the raw input documents into _contexts_ (documents, sentences), a
 consituent linguistic attributes.
 
 2. **Candidate Extraction [[Intro_Tutorial_2](Intro_Tutorial_2.ipynb)]:**
-Next, we use _matcher_ operators to extract sets of _candidate_ disease mentions from the
+Next, we use _matcher_ operators to extract sets of _candidate_ spouse relation mentions from the
 preprocessed input. We will use these sets as training, development, and test data.
 
 3. **Annotating Evaluation Data [[Intro_Tutorial_3](Intro_Tutorial_3.ipynb)]:**

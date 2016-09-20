@@ -303,6 +303,11 @@ class OmniParser(object):
             yield phrase
 
     def parse_tag(self, tag, document, table=None, cell=None, anc_tags=[], anc_attrs=[]):
+        if any(isinstance(child, NavigableString) and unicode(child)!=u'\n' for child in tag.contents):
+            # NOTE: do '?' replacement for hardware only
+            text = tag.get_text(' ').replace('?',' - ')
+            tag.clear()
+            tag.string = text
         for child in tag.contents:
             if isinstance(child, NavigableString):
                 for parts in self.corenlp_handler.parse(document, unicode(child)):
@@ -330,17 +335,13 @@ class OmniParser(object):
                     self.row_num += 1
                     self.col_num = -1
                 elif child.name in ["td","th"]:
-                    if len(child.contents) > 1:
-                        text = child.text
-                        child.clear()
-                        child.string = text
                     self.cell_idx += 1
                     self.col_num += 1
                     parts = defaultdict(list)
                     parts['document'] = document
                     parts['table'] = table
                     parts['position'] = self.cell_idx
-                    parts['text'] = unicode(child.get_text(strip=True))
+                    parts['text'] = unicode(child)
                     parts['row_num'] = self.row_num
                     parts['col_num'] = self.col_num
                     parts['html_tag'] = child.name

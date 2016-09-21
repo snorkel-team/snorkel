@@ -91,7 +91,9 @@ def candidate_subclass(class_name, args, table_name=None):
     Creates and returns a Candidate subclass with provided argument names, which are Context type.
     Creates the table in DB if does not exist yet.
 
-    Import as `snorkel.models.candidate_subclass`.
+    Import using
+    .. code-block:
+        from snorkel.models import candidate_subclass
 
     :param class_name: The name of the class, should be "camel case" e.g. NewCandidateClass
     :param args: A list of names of consituent arguments, which refer to the Contexts--representing mentions--that

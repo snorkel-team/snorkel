@@ -4,7 +4,10 @@ Subpackage for all built-in Snorkel data models.
 To ensure correct behavior, this subpackage should always be treated as a single module (with one exception
 described below). This rule means that all data models should be imported from this subpackage,
 not directly from individual submodules. For example, the correct way to import the Corpus class is
->>> from snorkel.models import Corpus
+
+.. code-block:: python
+
+    from snorkel.models import Corpus
 
 The only exception is importing SnorkelBase or other classes in order to extend Snorkel's data models.
 To ensure that any additional data models are included in the storage backend, these must be imported

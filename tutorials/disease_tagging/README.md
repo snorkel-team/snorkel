@@ -28,8 +28,12 @@ Finally, we evaluate the learned model on the test candidate set.
 
 ## Background
 
-From the BioCreative workshop's 
-[description of the CDR Challenge](http://www.biocreative.org/tasks/biocreative-v/track-3-cdr/):
+This tutorial focuses on the first subtask of the BioCreative's workshop's CDR challenge,
+_disease tagging_, which is an important component of information extraction for biomedical
+domains such as [medical genetics](http://deepdive.stanford.edu/showcase/apps#genetics)
+and [pharmacogenomics](http://deepdive.stanford.edu/showcase/apps#pharmacogenomics).
+
+From the BioCreative workshop's [description](http://www.biocreative.org/tasks/biocreative-v/track-3-cdr/):
 > Chemicals, diseases, and their relations are among the most searched topics by PubMed
 > users worldwide (1-3) as they play central roles in many areas of biomedical research
 > and healthcare such as drug discovery and safety surveillance. Although the ultimate
@@ -49,23 +53,13 @@ From the BioCreative workshop's
 > and chemicals (8-10)) to extracting relations, remains challenging. In addition, few
 > relation extraction tools are freely available and to our best knowledge there is limited
 > success of using such tools in real-world applications.
-
-This tutorial focuses on the first subtask of the challenge, disease tagging:
+>
 > An intermediate step for automatic CDR extraction is disease named entity recognition
 > and normalization, which was found to be highly difficult on its own (8) in previous
 > BioCreative CTD tasks (10,11).
-
-## Example
-
-For example, in the sentence
-> The patient had no apparent associated conditions which might have predisposed him to the
-> development of bradyarrhythmias; and, thus, this probably represented a true idiosyncrasy
-> to lidocaine.
-
-our goal is to tag the disease name "[bradyarrhythmias](https://en.wikipedia.org/wiki/Bradycardia)."
-
-### References
-
+>
+> References
+>
 > 1.	Islamaj Dogan, R., Murray, G.C., Neveol, A., et al. (2009) Understanding PubMed user search behavior through log analysis. Database (Oxford), 2009, bap018.
 >
 > 2. Lu, Z. (2010) PubMed and beyond: a survey of web tools for searching biomedical literature. Database (Oxford), vol. 2011, baq036.
@@ -87,3 +81,13 @@ our goal is to tag the disease name "[bradyarrhythmias](https://en.wikipedia.org
 > 10.	Wiegers, T.C., Davis, A.P., Mattingly, C.J. (2014) Web services-based text-mining demonstrates broad impacts for interoperability and process simplification. Database (Oxford), 2014, bau050.
 >
 > 11.	Wiegers, T.C., Davis, A.P., Mattingly, C.J. (2012) Collaborative biocuration--text-mining development task for document prioritization for curation. Database (Oxford), 2012, bas037.
+
+## Example
+
+For example, in the sentence
+> The patient had no apparent associated conditions which might have predisposed him to the
+> development of bradyarrhythmias; and, thus, this probably represented a true idiosyncrasy
+> to lidocaine.
+
+our goal is to tag the disease name "[bradyarrhythmias](https://en.wikipedia.org/wiki/Bradycardia)."
+

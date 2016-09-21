@@ -27,10 +27,10 @@ class CandidateExtractor(object):
     """
     An operator to extract Candidate objects from Context objects.
 
-    :param candidate_class: The type of relation to extract, defined using :func:`~snorkel.models.candidate_subclass`
+    :param candidate_class: The type of relation to extract, defined using :func:`snorkel.models.candidate_subclass`
     :param cspaces: one or list of :class:`CandidateSpace` objects, one for each relation argument. Defines space of
                     Contexts to consider
-    :param matchers: one or list of :class:`Matcher` objects, one for each relation argument. Only tuples of
+    :param matchers: one or list of :class:`snorkel.matchers.Matcher` objects, one for each relation argument. Only tuples of
                      Contexts for which each element is accepted by the corresponding Matcher will be returned as Candidates
     :param self_relations: Boolean indicating whether to extract Candidates that relate the same context.
                            Only applies to binary relations. Default is False.

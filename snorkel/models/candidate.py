@@ -92,7 +92,9 @@ def candidate_subclass(class_name, args, table_name=None):
     Creates the table in DB if does not exist yet.
 
     Import using:
-    .. code:: python
+
+    .. code-block:: python
+
         from snorkel.models import candidate_subclass
 
     :param class_name: The name of the class, should be "camel case" e.g. NewCandidateClass

@@ -10,7 +10,9 @@ The only exception is importing SnorkelBase or other classes in order to extend 
 To ensure that any additional data models are included in the storage backend, these must be imported
 and the extending subtypes defined before importing `snorkel.models`. For example, the correct way to
 define a new type of Context is:
-.. code:: python
+
+.. code-block:: python
+
     from snorkel.models.context import Context
     from sqlalchemy import Column, String, ForeignKey
 

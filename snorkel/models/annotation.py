@@ -63,16 +63,16 @@ class AnnotationMixin(object):
     An annotation is a value associated with a Candidate. Examples include labels, features,
     and predictions.
 
-    New types of annotations can be defined by creating an annotation class and corresponding annotation, for example:
-    >>> from snorkel.models.annotation import AnnotationMixin
-    >>> from snorkel.models.meta import SnorkelBase
-    >>>
-    >>> class NewAnnotation(AnnotationMixin, SnorkelBase):
-    >>>     value = Column(Float, nullable=False)
-    >>>
-    >>>
-    >>> # The entire storage schema, including NewAnnotation, can now be initialized with the following import
-    >>> import snorkel.models
+    New types of annotations can be defined by creating an annotation class and corresponding annotation, for example::
+        from snorkel.models.annotation import AnnotationMixin
+        from snorkel.models.meta import SnorkelBase
+
+        class NewAnnotation(AnnotationMixin, SnorkelBase):
+            value = Column(Float, nullable=False)
+
+
+        # The entire storage schema, including NewAnnotation, can now be initialized with the following import
+        import snorkel.models
 
     The annotation class should include a Column attribute named value.
     """

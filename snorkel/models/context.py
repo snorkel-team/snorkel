@@ -180,7 +180,51 @@ class Table(Context):
     )
 
     def __repr__(self):
-        return "Table" + unicode((self.document, self.position))
+        return "Table(Doc: %s, Position: %s)" % (self.document.name, self.position)
+
+
+class Row(Context):
+    """A row Context in a Document."""
+    __tablename__ = 'row'
+    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
+    document_id = Column(Integer, ForeignKey('document.id'))
+    table_id = Column(Integer, ForeignKey('table.id'))
+    document = relationship('Document', backref=backref('rows', cascade='all, delete-orphan'), foreign_keys=document_id)
+    table = relationship('Table', backref=backref('rows', cascade='all, delete-orphan'), foreign_keys=table_id)
+    position = Column(Integer, nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'row',
+    }
+
+    __table_args__ = (
+        UniqueConstraint(document_id, table_id, position),
+    )
+
+    def __repr__(self):
+        return "Row(Doc: %s, Table: %s, Position: %s)" % (self.document.name, self.table.position, self.position)
+
+
+class Col(Context):
+    """A column Context in a Document."""
+    __tablename__ = 'col'
+    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
+    document_id = Column(Integer, ForeignKey('document.id'))
+    table_id = Column(Integer, ForeignKey('table.id'))
+    document = relationship('Document', backref=backref('cols', cascade='all, delete-orphan'), foreign_keys=document_id)
+    table = relationship('Table', backref=backref('cols', cascade='all, delete-orphan'), foreign_keys=table_id)
+    position = Column(Integer, nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'col',
+    }
+
+    __table_args__ = (
+        UniqueConstraint(document_id, table_id, position),
+    )
+
+    def __repr__(self):
+        return "Col(Doc: %s, Table: %s, Position: %s)" % (self.document.name, self.table.position, self.position)
 
 
 class Cell(Context):
@@ -189,12 +233,13 @@ class Cell(Context):
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
     table_id = Column(Integer, ForeignKey('table.id'))
+    row_id =  Column(Integer, ForeignKey('row.id'))
+    col_id =  Column(Integer, ForeignKey('col.id'))
     document = relationship('Document', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=document_id)
     table = relationship('Table', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=table_id)
-    position = Column(Integer, nullable=False)
+    row = relationship('Row', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=row_id)
+    col = relationship('Col', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=col_id)
     text = Column(Text, nullable=False)
-    row_num = Column(Integer)
-    col_num = Column(Integer)
     html_tag = Column(Text)
     if snorkel_postgres:
         html_attrs = Column(postgresql.ARRAY(String))
@@ -210,11 +255,12 @@ class Cell(Context):
     }
 
     __table_args__ = (
-        UniqueConstraint(document_id, table_id, position),
+        UniqueConstraint(document_id, table_id, row_id, col_id),
     )
 
     def __repr__(self):
-        return "Cell" + unicode((self.document, self.table, self.position, self.text))
+        return ("Cell(Doc: %s, Table: %s, Row: %s, Col: %s)" % 
+            (self.document.name, self.table.position, self.row.position, self.col.position))
 
 
 class Phrase(Context):
@@ -223,11 +269,15 @@ class Phrase(Context):
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
     table_id = Column(Integer, ForeignKey('table.id'))
+    row_id =  Column(Integer, ForeignKey('row.id'))
+    col_id =  Column(Integer, ForeignKey('col.id'))
     cell_id = Column(Integer, ForeignKey('cell.id'))
     phrase_id = Column(Integer, nullable=False)
     document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
     table = relationship('Table', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=table_id)
     cell = relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=cell_id)
+    row = relationship('Row', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=row_id)
+    col = relationship('Col', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=col_id)
     position = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
     row_num = Column(Integer)
@@ -287,7 +337,9 @@ class Phrase(Context):
         }
 
     def __repr__(self):
-        return "Phrase" + unicode((self.document, self.table_id, self.cell_id, self.position, self.text))
+        return ("Phrase(Doc: %s, Table: %s, Row: %s, Col: %s, Position: %s, Text: %s)" % 
+            (self.document.name, self.table.position, self.row.position, 
+            self.col.position, self.position, self.text))
 
 
 class TemporaryContext(object):

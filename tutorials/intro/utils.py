@@ -23,5 +23,5 @@ def add_spouse_label(session, key, cls, person1, person2, value):
         label = Label(candidate=candidate, key=key, value=value)
         session.add(label)
     else:
-        label.value = int(label)
+        label.value = int(value)
     session.commit()

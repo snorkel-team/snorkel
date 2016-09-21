@@ -76,7 +76,7 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
             'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
             'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
             'conflicts' : Series(data=matrix_conflicts(self), index=lf_names),
-            'accuracy': Series(data=matrix_accuracy(self, gold), index=lf_names),
+            'accuracy'  : Series(data=matrix_accuracy(self, gold), index=lf_names),
         }
         return DataFrame(data=d, index=lf_names)
 

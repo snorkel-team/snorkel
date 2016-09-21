@@ -174,7 +174,7 @@ def split_corpus(session, corpus, train=0.8, development=0.1, test=0.1, seed=Non
     if train + development + test != 1.0:
         raise ValueError("Values for train + development + test must sum to 1")
 
-    if seed:
+    if seed is not None:
         random.seed(seed)
     docs = [doc for doc in corpus.documents]
     random.shuffle(docs)

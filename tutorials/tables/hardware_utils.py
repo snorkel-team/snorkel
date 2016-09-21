@@ -71,11 +71,10 @@ class OmniNgramsPart(OmniNgrams):
 def load_hardware_doc_part_pairs(filename):
     with open(filename, 'r') as csvfile:
         gold_reader = csv.reader(csvfile)
-        gold = []
+        gold = set()
         for row in gold_reader:
             (doc, part, val, attr) = row
-            gold.append((doc.upper(), part.upper()))
-        gold = set(gold)
+            gold.add((doc.upper(), part.upper()))
         return gold
 
 
@@ -83,7 +82,7 @@ def load_extended_parts_dict(filename):
     gold_pairs = load_hardware_doc_part_pairs(filename)
     (gold_docs, gold_parts) = zip(*gold_pairs)
     # make gold_parts_suffixed for matcher
-    gold_parts_extended = set([])
+    gold_parts_extended = set()
     for part in gold_parts:
         for suffix in ['', 'A','B','C','-16','-25','-40']:
             gold_parts_extended.add(''.join([part,suffix]))
@@ -131,11 +130,11 @@ def load_hardware_labels(loader, candidates, filename, candidate_attribs, gold_a
             loader.add({candidate_attribs[0] : c[0], candidate_attribs[1] : c[1]})
     pb.close()
 
-def entity_level_f1(tp, fp, tn, fn, filename, corpus, attrib):
+def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     docs = []
     for doc in corpus:
         docs.append((doc.name).upper())
-    gold_dict = set(get_gold_dict(filename, attrib, docs))
+    gold_dict = set(get_gold_dict(gold_file, attrib, docs))
 
     TP = FP = TN = FN = 0
     pos = set([((c[0].parent.document.name).upper(),
@@ -157,6 +156,67 @@ def entity_level_f1(tp, fp, tn, fn, filename, corpus, attrib):
     print "----------------------------------------"
     print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
     print "========================================\n"
+
+
+def entity_level_total_recall(candidates, gold_file, attribute='stg_temp_min', relation=True):
+    """Checks entity-level recall of candidates compared to gold.
+
+    Turns a CandidateSet into a normal set of entity-level tuples
+    (doc, part, [attribute_value])
+    then compares this to the entity-level tuples found in the gold.
+
+    Example Usage:
+        from hardware_utils import entity_level_total_recall
+        candidates = # CandidateSet of all candidates you want to consider
+        gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
+        entity_level_total_recall(candidates, gold_file, 'stg_temp_min')
+    """
+    print "Preparing gold set..."
+    gold_dict = get_gold_dict(gold_file, attribute)
+    gold_set = set()
+    for (doc, part, attr) in gold_dict:
+        if relation:
+            gold_set.add((doc.upper(), part.upper(), attr.upper()))
+        else:
+            gold_set.add((doc.upper(), part.upper()))
+
+    # Turn CandidateSet into set of tuples
+    print "Preparing candidates..."
+    pb = ProgressBar(len(candidates))
+    entity_level_candidates = set()
+    for i, c in enumerate(candidates):
+        pb.bar(i)
+        part = c.get_arguments()[0].get_span()
+        doc = c.get_arguments()[0].parent.document.name
+        if relation:
+            attr = c.get_arguments()[1].get_span().replace(' ', '')
+            entity_level_candidates.add((doc.upper(), part.upper(), attr.upper()))
+        else:
+            entity_level_candidates.add((doc.upper(), part.upper()))
+    pb.close()
+
+    print "========================================"
+    print "Scoring on Entity-Level Total Recall"
+    print "========================================"
+    print "Entity-level Candidates extracted: %s " % (len(entity_level_candidates))
+    print "Entity-level Gold: %s" % (len(gold_set))
+    print "Intersection Candidates: %s" % (len(gold_set.intersection(entity_level_candidates)))
+    print "----------------------------------------"
+    print "Overlap with Gold:  %0.2f" % (len(gold_set.intersection(entity_level_candidates)) / float(len(gold_set)),)
+    print "========================================\n"
+
+    return entity_confusion_matrix(entity_level_candidates, gold_set)
+
+
+def entity_confusion_matrix(pred, gold):
+    if not isinstance(pred, set):
+        pred = set(pred)
+    if not isinstance(gold, set):
+        gold = set(gold)
+    TP = pred.intersection(gold)
+    FP = pred.difference(gold)
+    FN = gold.difference(pred)
+    return (TP, FP, FN)
 
 
 def expand_part_range(text, DEBUG=False):
@@ -305,64 +365,3 @@ def char_range(a, b):
     for c in xrange(ord(a), ord(b)+1):
         yield chr(c)
 
-
-def entity_level_total_recall(candidates, gold_file, attribute='stg_temp_min', relation=True):
-    """Checks entity-level recall of candidates compared to gold.
-
-    Turns a CandidateSet into a normal set of entity-level tuples
-    (doc, part, [attribute_value])
-    then compares this to the entity-level tuples found in the gold.
-
-    Example Usage:
-        from hardware_utils import entity_level_total_recall
-        candidates = # CandidateSet of all candidates you want to consider
-        gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
-        entity_level_total_recall(candidates, gold_file, 'stg_temp_min')
-    """
-    print "Preparing gold set..."
-    gold_dict = get_gold_dict(gold_file, attribute)
-    gold_set = set()
-    for (doc, part, attr) in gold_dict:
-        if relation:
-            gold_set.add((doc.upper(), part.upper(), attr.upper()))
-        else:
-            gold_set.add((doc.upper(), part.upper()))
-
-    # Turn CandidateSet into set of tuples
-    print "Preparing candidates..."
-    pb = ProgressBar(len(candidates))
-    entity_level_candidates = set()
-    for i, c in enumerate(candidates):
-        pb.bar(i)
-        part = c.get_arguments()[0].get_span()
-        doc = c.get_arguments()[0].parent.document.name
-        if relation:
-            attr = c.get_arguments()[1].get_span().replace(' ', '')
-            entity_level_candidates.add((doc.upper(), part.upper(), attr.upper()))
-        else:
-            entity_level_candidates.add((doc.upper(), part.upper()))
-    pb.close()
-
-    print "========================================"
-    print "Scoring on Entity-Level Total Recall"
-    print "========================================"
-    print "Entity-level Candidates extracted: %s " % (len(entity_level_candidates))
-    print "Entity-level Gold: %s" % (len(gold_set))
-    print "Intersection Candidates: %s" % (len(gold_set.intersection(entity_level_candidates)))
-    print "----------------------------------------"
-    print "Overlap with Gold:  %0.2f" % (len(gold_set.intersection(entity_level_candidates)) / float(len(gold_set)),)
-    print "========================================\n"
-
-    return entity_confusion_matrix(entity_level_candidates, gold_set)
-
-
-
-def entity_confusion_matrix(pred, gold):
-    if not isinstance(pred, set):
-        pred = set(pred)
-    if not isinstance(gold, set):
-        gold = set(gold)
-    TP = pred.intersection(gold)
-    FP = pred.difference(gold)
-    FN = gold.difference(pred)
-    return (TP, FP, FN)

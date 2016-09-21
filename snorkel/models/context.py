@@ -239,6 +239,8 @@ class Cell(Context):
     table = relationship('Table', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=table_id)
     row = relationship('Row', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=row_id)
     col = relationship('Col', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=col_id)
+    row_num = Column(Integer)
+    col_num = Column(Integer)
     text = Column(Text, nullable=False)
     html_tag = Column(Text)
     if snorkel_postgres:
@@ -337,9 +339,13 @@ class Phrase(Context):
         }
 
     def __repr__(self):
-        return ("Phrase(Doc: %s, Table: %s, Row: %s, Col: %s, Position: %s, Text: %s)" % 
-            (self.document.name, self.table.position, self.row.position, 
-            self.col.position, self.position, self.text))
+        if self.row and self.col:
+            return ("Phrase(Doc: %s, Table: %s, Row: %s, Col: %s, Position: %s, Text: %s)" % 
+                (self.document.name, self.table.position, self.row.position, 
+                self.col.position, self.position, self.text))
+        else:
+            return ("Phrase(Doc: %s, Table: %s, Row: X, Col: X, Position: %s, Text: %s)" % 
+                (self.document.name, self.table.position, self.position, self.text))
 
 
 class TemporaryContext(object):

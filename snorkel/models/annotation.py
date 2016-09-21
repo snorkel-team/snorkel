@@ -64,7 +64,9 @@ class AnnotationMixin(object):
     and predictions.
 
     New types of annotations can be defined by creating an annotation class and corresponding annotation, for example:
+
     .. code-block:: python
+
         from snorkel.models.annotation import AnnotationMixin
         from snorkel.models.meta import SnorkelBase
 

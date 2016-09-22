@@ -99,17 +99,18 @@ def matrix_accuracy(L, G):
     Accuracy is defined as: (# correct non-zero labels) / (# non-zero labels)
     """
     N, M = L.shape
-    pb = ProgressBar(N)
+    pb = ProgressBar(len(G))
     # Create N x 1 vector to compare against
     # NOTE: The creation of this vector takes a while. This can be optimized,
     # perhaps with a SQL query or something.
     gold_labels = np.ndarray((N,1))
-    for i in xrange(N):
-        pb.bar(i)
-        if L.get_candidate(i) in G:
-            gold_labels[i] = [1]
-        else:
-            gold_labels[i] = [-1]
+    gold_labels.fill(-1)
+    count = 0
+    for c in G:
+        pb.bar(count)
+        count += 1
+        index = L.get_row_index(c)
+        gold_labels[index] = [1]
 
     pb.close()
     gold_label_matrix = np.repeat(gold_labels, M, axis=1)

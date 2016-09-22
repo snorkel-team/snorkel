@@ -40,7 +40,7 @@ def get_ddlib_feats(context, idxs):
     yield window_feat
 
   if context['words'][idxs[0]][0].isupper():
-      yield "STARTS_WITH_CAPTIAL"
+      yield "STARTS_WITH_CAPITAL"
 
   yield "LENGTH_{}".format(len(idxs))
 
@@ -128,12 +128,12 @@ def tabledlib_unary_features(span):
         yield u"HTML_ATTR_[" + attr + "]"
     for tag in span.parent.html_anc_tags:
         yield u"HTML_ANC_TAG_[" + tag + "]"
-    for attr in span.parent.html_anc_attrs:
-        yield u"HTML_ANC_ATTR_[" + attr + "]"
+    # for attr in span.parent.html_anc_attrs:
+    #     yield u"HTML_ANC_ATTR_[" + attr + "]"
     if span.parent.row_num is not None and span.parent.col_num is not None:
         yield u"ROW_NUM_[%s]" % span.parent.row_num
         yield u"COL_NUM_[%s]" % span.parent.col_num
-        for attrib in ['words','lemmas','pos_tags', 'ner_tags']:
+        for attrib in ['words']: #,'lemmas','pos_tags', 'ner_tags']:
             for ngram in get_row_ngrams(span, n_max=3, attrib=attrib):
                 yield "ROW_%s_[%s]" % (attrib.upper(), ngram)
                 if attrib=="lemmas":
@@ -154,16 +154,16 @@ def tabledlib_unary_features(span):
                             yield u"COL_FLOAT"
                     except:
                         pass
-            for (ngram, direction) in get_neighbor_cell_ngrams(span, dist=2, directions=True, n_max=3, attrib=attrib):
-                yield "NEIGHBOR_%s_%s_[%s]" % (direction, attrib.upper(), ngram)
-                if attrib=="lemmas":
-                    try:
-                        if float(ngram).is_integer():
-                            yield "NEIGHBOR_%s_INT" % side
-                        else:
-                            yield "NEIGHBOR_%s_FLOAT" % side
-                    except:
-                        pass
+            # for (ngram, direction) in get_neighbor_cell_ngrams(span, dist=2, directions=True, n_max=3, attrib=attrib):
+            #     yield "NEIGHBOR_%s_%s_[%s]" % (direction, attrib.upper(), ngram)
+            #     if attrib=="lemmas":
+            #         try:
+            #             if float(ngram).is_integer():
+            #                 yield "NEIGHBOR_%s_INT" % side
+            #             else:
+            #                 yield "NEIGHBOR_%s_FLOAT" % side
+            #         except:
+            #             pass
 
 def tabledlib_binary_features(span1, span2, s1_idxs, s2_idxs):
     for feat in get_ddlib_feats(get_as_dict(span1.parent), s1_idxs):

@@ -95,9 +95,12 @@ def matrix_accuracy(L, G):
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate
     and a set of gold candidates:
     Return the accuracy of each LF compared to the gold.
+    Accuracy is defined as: (# correct non-zero labels) / (# non-zero labels)
     """
     N, M = L.shape
     # Create N x 1 vector to compare against
+    # NOTE: The creation of this vector takes a while. This can be optimized,
+    # perhaps with a SQL query or something.
     gold_labels = np.ndarray((N,1))
     for i in xrange(N):
         if L.get_candidate(i) in G:
@@ -105,25 +108,11 @@ def matrix_accuracy(L, G):
         else:
             gold_labels[i] = [-1]
 
+    gold_label_matrix = np.repeat(gold_labels, M, axis=1)
+    correct_labels = np.clip(np.multiply(gold_label_matrix, L.toarray()), 0, 1)
     # Calculate accuracy of each LF
-    accuracy = np.ndarray(M)
-    # NOTE: Commented out loop penalizes for zeros
-    # for i in xrange(M):
-    #     accuracy[i] = np.sum(gold_labels == L.tocsc()[:,i].toarray())/ float(N)
-
-    for i in xrange(M):
-        nonzeros = 0
-        correct = 0
-        for j in xrange(N):
-            if L.tocsc()[:,i].toarray()[j] == [0]: # Do not penalize for 0
-                continue
-            nonzeros += 1
-            if gold_labels[j] == L.tocsc()[:,i].toarray()[j]:
-                correct +=1;
-        if nonzeros == 0:
-            accuracy[i] = 0.0 # if all labels are 0, accuracy of 0
-        else:
-            accuracy[i] = correct / float(nonzeros)
+    non_zero_cols = (L.toarray() != 0).sum(axis=0) # count non-zero elements of each col
+    accuracy = np.divide(np.sum(correct_labels, axis=0), non_zero_cols)
     return np.ravel(accuracy)
 
 def get_as_dict(x):
@@ -182,7 +171,7 @@ def split_corpus(session, corpus, train=0.8, development=0.1, test=0.1, seed=Non
     n = len(docs)
     num_train = int(train * n)
     num_development = int(development * n)
-    num_test = int(n - (train + development))
+    num_test = n - (train + development)
 
     if num_train > 0:
         train_corpus = Corpus(name=corpus.name + ' Training')

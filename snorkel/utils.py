@@ -101,15 +101,13 @@ def matrix_accuracy(L, G):
     N, M = L.shape
     pb = ProgressBar(len(G))
     # Create N x 1 vector to compare against
-    # NOTE: The creation of this vector takes a while. This can be optimized,
-    # perhaps with a SQL query or something.
     gold_labels = np.ndarray((N,1))
     gold_labels.fill(-1)
     count = 0
     for c in G:
         pb.bar(count)
         count += 1
-        index = L.get_row_index(c)
+        index = L.get_row_index(c) # NOTE: Assumes G is a subset of L
         gold_labels[index] = [1]
 
     pb.close()

@@ -98,18 +98,20 @@ def matrix_accuracy(L, G):
     Return the accuracy of each LF compared to the gold.
     Accuracy is defined as: (# correct non-zero labels) / (# non-zero labels)
     """
-    print "Creating N x 1 vector"
     N, M = L.shape
+    pb = ProgressBar(N)
     # Create N x 1 vector to compare against
     # NOTE: The creation of this vector takes a while. This can be optimized,
     # perhaps with a SQL query or something.
     gold_labels = np.ndarray((N,1))
     for i in xrange(N):
+        pb.bar(i)
         if L.get_candidate(i) in G:
             gold_labels[i] = [1]
         else:
             gold_labels[i] = [-1]
 
+    pb.close()
     gold_label_matrix = np.repeat(gold_labels, M, axis=1)
     correct_labels = np.clip(np.multiply(gold_label_matrix, L.toarray()), 0, 1)
     # Calculate accuracy of each LF

@@ -40,7 +40,7 @@ class CandidateExtractor(object):
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations
         self.symmetric_relations = symmetric_relations
-        
+
         # Check that arity is same
         if len(self.candidate_spaces) != len(self.matchers):
             raise ValueError("Mismatched arity of candidate space and matcher.")
@@ -121,6 +121,21 @@ class CandidateExtractor(object):
                 q = q.where(getattr(self.candidate_class, key) == value)
             candidate_id = session.execute(q).first()
 
+            # NOTE: We can use this code in order to allow candidates to be
+            # added to two separate CandidateSets using different matchers.
+            # But, I'm not sure if this will break anything else, so its just
+            # here for development purposes.
+            #
+            # If candidate does not exist, persists it
+            # if candidate_id is None:
+            #     candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
+            #     child_args['id'] = candidate_id[0]
+            #     session.execute(child_insert_query, child_args)
+            #     del child_args['id']
+            #
+            # set_insert_args['candidate_id'] = candidate_id[0]
+            # session.execute(set_insert_query, set_insert_args)
+
             # If candidate does not exist, persists it
             if candidate_id is None:
                 candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
@@ -132,7 +147,7 @@ class CandidateExtractor(object):
             else:
                 pass
                 # raise RuntimeError("Duplicate candidates are being created!")
-            
+
     def _extract_multiprocess(self, contexts, candidate_set, parallelism):
         contexts_in    = JoinableQueue()
         candidates_out = Queue()
@@ -150,10 +165,10 @@ class CandidateExtractor(object):
 
         for p in self.ps:
             p.start()
-        
+
         # Join on JoinableQueue of contexts
         contexts_in.join()
-        
+
         # Collect candidates out
         candidates = []
         while True:
@@ -218,7 +233,7 @@ class Ngrams(CandidateSpace):
         CandidateSpace.__init__(self)
         self.n_max     = n_max
         self.split_rgx = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
-    
+
     def apply(self, context):
 
         # These are the character offset--**relative to the sentence start**--for each _token_

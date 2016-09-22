@@ -42,6 +42,8 @@ Finally, enable `ipywidgets`:
 jupyter nbextension enable --py widgetsnbextension --sys-prefix
 ```
 
+By default (e.g. in the tutorials, etc.) we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
+
 Alternatively, `virtualenv` can be used by starting with:
 ```bash
 virtualenv -p python2.7 .virtualenv

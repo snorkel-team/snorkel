@@ -90,12 +90,14 @@ def matrix_conflicts(L):
     L_abs = sparse_abs(L)
     return np.ravel(np.where(L_abs.sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).T * L_abs / float(L.shape[0]))
 
+
 def matrix_accuracy(L, G):
     """
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate
     and a set of gold candidates:
     Return the accuracy of each LF compared to the gold.
     """
+    print "Creating N x 1 vector"
     N, M = L.shape
     # Create N x 1 vector to compare against
     gold_labels = np.ndarray((N,1))
@@ -105,13 +107,15 @@ def matrix_accuracy(L, G):
         else:
             gold_labels[i] = [-1]
 
+    print "Calculating accuracy of each LF"
     # Calculate accuracy of each LF
     accuracy = np.ndarray(M)
     # NOTE: Commented out loop penalizes for zeros
     # for i in xrange(M):
     #     accuracy[i] = np.sum(gold_labels == L.tocsc()[:,i].toarray())/ float(N)
-
+    pb = ProgresBar(M)
     for i in xrange(M):
+        pb.bar(i)
         nonzeros = 0
         correct = 0
         for j in xrange(N):
@@ -124,7 +128,9 @@ def matrix_accuracy(L, G):
             accuracy[i] = 0.0 # if all labels are 0, accuracy of 0
         else:
             accuracy[i] = correct / float(nonzeros)
+    pb.close()
     return np.ravel(accuracy)
+
 
 def get_as_dict(x):
     """Return an object as a dictionary of its attributes"""

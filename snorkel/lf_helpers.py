@@ -68,9 +68,11 @@ def get_between_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False
         raise ValueError("Only applicable to Candidates where both spans are from the same immediate Context.")
     distance = abs(span0.get_word_start() - span1.get_word_start())
     if span0.get_word_start() < span1.get_word_start():
-        return get_right_ngrams(span0, window=distance-1, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
+        for ngram in get_right_ngrams(span0, window=distance-1, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+            yield ngram
     else: # span0.get_word_start() > span1.get_word_start()
-        return get_left_ngrams(span1, window=distance-1, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
+        for ngram in get_left_ngrams(span1, window=distance-1, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+            yield ngram
 
 
 def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitive=False):
@@ -86,7 +88,8 @@ def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitiv
     span = c if isinstance(c, TemporarySpan) else c[0] 
     i    = span.get_word_start()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return [ngram for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][max(0, i-window):i]), n_min=n_min, n_max=n_max)]
+    for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][max(0, i-window):i]), n_min=n_min, n_max=n_max):
+        yield ngram
 
 
 def get_right_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitive=False):
@@ -102,7 +105,8 @@ def get_right_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensiti
     span = c if isinstance(c, TemporarySpan) else c[-1]
     i    = span.get_word_end()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return [ngram for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][i+1:i+1+window]), n_min=n_min, n_max=n_max)]
+    for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][i+1:i+1+window]), n_min=n_min, n_max=n_max):
+        yield ngram
 
 
 def contains_token(c, tok, attrib='words', case_sensitive=False):
@@ -211,8 +215,10 @@ def get_phrase_ngrams(span, attrib='words', n_min=1, n_max=1, case_sensitive=Fal
     """
     if not isinstance(span, TemporarySpan):
         raise ValueError("Handles Span-type Candidate arguments only")
-    return (get_left_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
-          + get_right_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive))
+    for ngram in get_left_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+        yield ngram
+    for ngram in get_right_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+        yield ngram
 
 
 def get_cell_ngrams(span, attrib='words', n_min=1, n_max=1, case_sensitive=False):
@@ -227,10 +233,11 @@ def get_cell_ngrams(span, attrib='words', n_min=1, n_max=1, case_sensitive=False
     if not isinstance(span, TemporarySpan):
         raise ValueError("Handles Span-type Candidate arguments only")
     if (not isinstance(span.parent, Phrase) or
-        span.parent.cell is None): return []
+        span.parent.cell is None): return
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return list(chain.from_iterable(tokens_to_ngrams(map(f, getattr(phrase,attrib)), n_min=n_min, n_max=n_max) 
-        for phrase in span.parent.cell.phrases))
+    for ngram in (chain.from_iterable(tokens_to_ngrams(map(f, getattr(phrase,attrib)), n_min=n_min, n_max=n_max) 
+        for phrase in span.parent.cell.phrases)):
+        yield ngram
 
 
 def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
@@ -248,12 +255,11 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
     if not isinstance(span, TemporarySpan):
         raise ValueError("Handles Span-type Candidate arguments only")
     if (not isinstance(span.parent, Phrase) or
-        span.parent.cell is None): return []
+        span.parent.cell is None): return
     if directions:
         f = (lambda w: w) if case_sensitive else (lambda w: (w[0].lower(), w[1]))
     else:
         f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    ngrams = []
     for phrase in span.parent.table.phrases:
         if phrase.cell is None:
             continue
@@ -272,10 +278,11 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
                         direction = "RIGHT"
                     elif  0 > col_diff and col_diff >= -dist:
                         direction = "LEFT"
-                ngrams.extend([(ngram, direction) for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)])
+                for ngram in tokens_to_ngrams(map(f, getattr(phrase, attrib)), n_min=n_min, n_max=n_max):
+                    yield (ngram, direction)
             else: 
-                ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)]) 
-    return map(f, ngrams)
+                for ngram in tokens_to_ngrams(map(f, getattr(phrase, attrib)), n_min=n_min, n_max=n_max):
+                    yield  ngram
 
 
 def get_row_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
@@ -288,7 +295,8 @@ def get_row_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sen
     :param n_max: The maximum n of the ngrams that should be returned
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    return _get_axis_ngrams(span, axis='row', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
+    for ngram in _get_axis_ngrams(span, axis='row', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+        yield ngram
 
 
 def get_col_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
@@ -301,7 +309,8 @@ def get_col_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sen
     :param n_max: The maximum n of the ngrams that should be returned
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    return _get_axis_ngrams(span, axis='col', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
+    for ngram in _get_axis_ngrams(span, axis='col', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+        yield ngram
 
 
 def get_aligned_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
@@ -314,8 +323,10 @@ def get_aligned_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case
     :param n_max: The maximum n of the ngrams that should be returned
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    return (get_row_ngrams(span, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)
-          + get_col_ngrams(span, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive))
+    for ngram in get_row_ngrams(span, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+        yield ngram
+    for ngram in get_col_ngrams(span, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+        yield ngram
 
 # TODO: write this LF helper (get furthest north and west cell's ngrams)
 # def get_head_ngrams
@@ -325,14 +336,13 @@ def _get_axis_ngrams(span, axis, infer=False, attrib='words', n_min=1, n_max=1, 
     if not isinstance(span, TemporarySpan):
         raise ValueError("Handles Span-type Candidate arguments only")
     if (not isinstance(span.parent, Phrase) or
-        span.parent.cell is None): return []
+        span.parent.cell is None): return
     # TODO: optimize this with SQL query 
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    ngrams = []
     for cell in _get_aligned_cells(span.parent.cell, axis, infer=infer):
         for phrase in cell.phrases:
-            ngrams.extend([ngram for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max)]) 
-    return map(f, ngrams)
+            for ngram in tokens_to_ngrams(map(f, getattr(phrase, attrib)), n_min=n_min, n_max=n_max):
+                yield ngram 
 
 # WITHOUT SQL:
 def _get_aligned_cells(root_cell, axis, infer=False):

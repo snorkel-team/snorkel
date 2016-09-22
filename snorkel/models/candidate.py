@@ -30,6 +30,40 @@ class CandidateSet(SnorkelBase):
     def remove(self, item):
         self.candidates.remove(item)
 
+    def difference(self, other, name, session):
+        """
+        Return the set difference between self and another CandidateSet
+        """
+        diff_set = CandidateSet(name=name)
+        session.add(diff_set)
+        session.commit()
+        # Naive implementation that manually iterates to compute the difference
+        for candidate in self:
+            if candidate not in other:
+                diff_set.append(candidate)
+
+        for candidate in other:
+            if candidate not in self:
+                diff_set.append(candidate)
+
+        session.commit()
+        return session.query(CandidateSet).filter(CandidateSet.name == name).one()
+
+    def intersection(self, other, name, session):
+        """
+        Return the set intersection between self and another CandidateSet
+        """
+        int_set = CandidateSet(name=name)
+        session.add(int_set)
+        session.commit()
+        # Naive implementation that manually iterates to compute the intersection
+        for candidate in self:
+            if candidate in other:
+                int_set.append(candidate)
+
+        session.commit()
+        return session.query(CandidateSet).filter(CandidateSet.name == name).one()
+
     def __repr__(self):
         return "Candidate Set (" + unicode(self.name) + ")"
 

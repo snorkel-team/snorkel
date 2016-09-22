@@ -256,10 +256,10 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
         raise ValueError("Handles Span-type Candidate arguments only")
     if (not isinstance(span.parent, Phrase) or
         span.parent.cell is None): return
-    if directions:
-        f = (lambda w: w) if case_sensitive else (lambda w: (w[0].lower(), w[1]))
-    else:
-        f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
+    # if directions:
+    #     f = (lambda w: w) if case_sensitive else (lambda w: (w[0].lower(), w[1]))
+    # else:
+    f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     for phrase in span.parent.table.phrases:
         if phrase.cell is None:
             continue
@@ -278,6 +278,10 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
                         direction = "RIGHT"
                     elif  0 > col_diff and col_diff >= -dist:
                         direction = "LEFT"
+                # tokens = map(f, getattr(phrase, attrib))
+                # for token in tokens:
+                #     if isinstance(token, tuple):
+                #         import pdb; pdb.set_trace()
                 for ngram in tokens_to_ngrams(map(f, getattr(phrase, attrib)), n_min=n_min, n_max=n_max):
                     yield (ngram, direction)
             else: 

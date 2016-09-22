@@ -11,11 +11,11 @@ class OmniNgramsTemp(OmniNgrams):
     def __init__(self, n_max=5, split_tokens=[]):
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
         # TODO: replace rgx with individual replace statements 
-        self.rgx = re.compile(r'^(?:\-|\u2010|\u2011|\u2012|\u2013|\u2014|\u2212)\s*(\d+)$', flags=re.UNICODE)
+        #self.rgx = re.compile(r'^(?:\-|\u2010|\u2011|\u2012|\u2013|\u2014|\u2212)\s*(\d+)$', flags=re.UNICODE)
 
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
-            m = self.rgx.match(ts.get_span())
+            m = re.match(r'^(?:\-|\u2010|\u2011|\u2012|\u2013|\u2014|\u2212)\s*(\d+)$', ts.get_span())
             if m:
                 temp = u'-' + m.group(1)
                 yield TemporaryImplicitSpan(
@@ -121,7 +121,7 @@ def count_hardware_labels(candidates, filename, attrib, attrib_class):
 
 
 def load_hardware_labels(loader, candidates, filename, candidate_attribs, gold_attrib='stg_temp_min'):
-    gold_dict = get_gold_dict(filename, attrib)
+    gold_dict = get_gold_dict(filename, gold_attrib)
     pb = ProgressBar(len(candidates))
     for i, c in enumerate(candidates):
         pb.bar(i)

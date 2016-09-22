@@ -182,7 +182,7 @@ def split_corpus(session, corpus, train=0.8, development=0.1, test=0.1, seed=Non
     n = len(docs)
     num_train = int(train * n)
     num_development = int(development * n)
-    num_test = n - (train + development)
+    num_test = int(n - (train + development))
 
     if num_train > 0:
         train_corpus = Corpus(name=corpus.name + ' Training')

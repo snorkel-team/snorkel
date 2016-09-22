@@ -48,8 +48,7 @@ class CandidateExtractor(object):
             self.arity = len(self.candidate_spaces)
 
         # Make sure the candidate spaces are different so generators aren't expended!
-        # TODO: uncomment this
-        # self.candidate_spaces = map(deepcopy, self.candidate_spaces)
+        self.candidate_spaces = map(deepcopy, self.candidate_spaces)
 
         # Preallocates internal data structures
         self.child_context_sets = [None] * self.arity

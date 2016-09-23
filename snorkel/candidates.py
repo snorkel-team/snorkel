@@ -91,14 +91,9 @@ class CandidateExtractor(object):
         # by the Matcher
         for i in range(self.arity):
             self.child_context_sets[i].clear()
-            for ngram in self.candidate_spaces[i].apply(context):
-                for tc in self.matchers[i].apply([ngram]):
-                    tc.load_id_or_insert(session)
-                    self.child_context_sets[i].add(tc)
-            # TODO: Figure out why the original version below gives different results
-            # for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
-            #     tc.load_id_or_insert(session)
-            #     self.child_context_sets[i].add(tc)
+            for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
+                tc.load_id_or_insert(session)
+                self.child_context_sets[i].add(tc)
 
         # Generates and persists candidates
         parent_insert_query = Candidate.__table__.insert()
@@ -129,32 +124,17 @@ class CandidateExtractor(object):
                 q = q.where(getattr(self.candidate_class, key) == value)
             candidate_id = session.execute(q).first()
 
-            # NOTE: We can use this code in order to allow candidates to be
-            # added to two separate CandidateSets using different matchers.
-            # But, I'm not sure if this will break anything else, so its just
-            # here for development purposes.
-            #
-            # If candidate does not exist, persists it
-            # if candidate_id is None:
-            #     candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
-            #     child_args['id'] = candidate_id[0]
-            #     session.execute(child_insert_query, child_args)
-            #     del child_args['id']
-            #
-            # set_insert_args['candidate_id'] = candidate_id[0]
-            # session.execute(set_insert_query, set_insert_args)
-
             # If candidate does not exist, persists it
             if candidate_id is None:
                 candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
                 child_args['id'] = candidate_id[0]
                 session.execute(child_insert_query, child_args)
                 del child_args['id']
-                set_insert_args['candidate_id'] = candidate_id[0]
-                session.execute(set_insert_query, set_insert_args)
-            else:
-                pass
-                # raise RuntimeError("Duplicate candidates are being created!")
+            
+            # Add candidate to the given CandidateSet
+            set_insert_args['candidate_id'] = candidate_id[0]
+            session.execute(set_insert_query, set_insert_args)
+
 
     def _extract_multiprocess(self, contexts, candidate_set, parallelism):
         contexts_in    = JoinableQueue()

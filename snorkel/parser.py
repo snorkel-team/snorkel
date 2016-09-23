@@ -304,8 +304,8 @@ class OmniParser(object):
 
     def parse_tag(self, tag, document, table=None, cell=None, anc_tags=[], anc_attrs=[]):
         if any(isinstance(child, NavigableString) and unicode(child)!=u'\n' for child in tag.contents):
-            # NOTE: do '?' replacement for hardware only
-            text = tag.get_text(' ').replace('?',' - ')
+            # TODO/NOTE: do '?' replacement for hardware only
+            text = tag.get_text(' ').replace('?','%')
             tag.clear()
             tag.string = text
         for child in tag.contents:

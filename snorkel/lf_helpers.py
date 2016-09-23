@@ -74,6 +74,9 @@ def get_between_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False
         for ngram in get_left_ngrams(span1, window=distance-1, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
             yield ngram
 
+# TODO: define for compatibility with master (can call on *_*_ngrams)
+# def get_left_tokens()
+# def get_right_tokens()
 
 def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """

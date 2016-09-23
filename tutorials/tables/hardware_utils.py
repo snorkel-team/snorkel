@@ -6,6 +6,7 @@ from snorkel.models import TemporaryImplicitSpan
 from snorkel.utils import ProgressBar
 from difflib import SequenceMatcher
 import re
+import os
 
 class OmniNgramsTemp(OmniNgrams):
     def __init__(self, n_max=5, split_tokens=[]):
@@ -41,6 +42,9 @@ class OmniNgramsTemp(OmniNgrams):
 class OmniNgramsPart(OmniNgrams):
     def __init__(self, n_max=5, split_tokens=[]):
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
+        # TEMP
+        filename = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
+        self.gold_parts = get_gold_parts(filename) 
 
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
@@ -93,16 +97,25 @@ def load_extended_parts_dict(filename):
     return gold_parts_extended
 
 
-def get_gold_dict(filename, attrib, docs=None):
+def get_gold_parts(filename, docs=None):
+    return set(map(lambda x: x[0], get_gold_dict(filename, doc_on=False, part_on=True, val_on=False, docs=docs)))
+
+
+def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None, docs=None):
     with codecs.open(filename, encoding="utf-8") as csvfile:
         gold_reader = csv.reader(csvfile)
         gold_dict = set()
         for row in gold_reader:
             (doc, part, val, attr) = row
             if docs is None or doc.upper() in docs:
-                if attr == attrib:
-                    key = (doc.upper(), part.upper(), val.upper())
-                    gold_dict.add(key)
+                if attrib and attr != attrib:
+                    continue
+                else:
+                    key = []
+                    if doc_on:  key.append(doc.upper())  
+                    if part_on: key.append(part.upper())
+                    if val_on:  key.append(val.upper())  
+                    gold_dict.add(tuple(key))
     return gold_dict
 
 
@@ -130,33 +143,6 @@ def load_hardware_labels(loader, candidates, filename, candidate_attribs, gold_a
             loader.add({candidate_attribs[0] : c[0], candidate_attribs[1] : c[1]})
     pb.close()
 
-def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
-    docs = []
-    for doc in corpus:
-        docs.append((doc.name).upper())
-    gold_dict = set(get_gold_dict(gold_file, attrib, docs))
-
-    TP = FP = TN = FN = 0
-    pos = set([((c[0].parent.document.name).upper(),
-                (c[0].get_span()).upper(),
-                (''.join(c[1].get_span().split())).upper()) for c in tp.union(fp)])
-    TP = len(pos.intersection(gold_dict))
-    FP = len(pos.difference(gold_dict))
-    FN = len(gold_dict.difference(pos))
-
-    prec = TP / float(TP + FP) if TP + FP > 0 else float('nan')
-    rec  = TP / float(TP + FN) if TP + FN > 0 else float('nan')
-    f1   = 2 * (prec * rec) / (prec + rec) if prec + rec > 0 else float('nan')
-    print "========================================"
-    print "Scoring on Entity-Level Gold Data"
-    print "========================================"
-    print "Corpus Precision {:.3}".format(prec)
-    print "Corpus Recall    {:.3}".format(rec)
-    print "Corpus F1        {:.3}".format(f1)
-    print "----------------------------------------"
-    print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
-    print "========================================\n"
-
 
 def entity_level_total_recall(candidates, gold_file, attribute='stg_temp_min', relation=True):
     """Checks entity-level recall of candidates compared to gold.
@@ -171,14 +157,7 @@ def entity_level_total_recall(candidates, gold_file, attribute='stg_temp_min', r
         gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
         entity_level_total_recall(candidates, gold_file, 'stg_temp_min')
     """
-    print "Preparing gold set..."
-    gold_dict = get_gold_dict(gold_file, attribute)
-    gold_set = set()
-    for (doc, part, attr) in gold_dict:
-        if relation:
-            gold_set.add((doc.upper(), part.upper(), attr.upper()))
-        else:
-            gold_set.add((doc.upper(), part.upper()))
+    gold_set = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=relation, attrib=attribute)
 
     # Turn CandidateSet into set of tuples
     print "Preparing candidates..."
@@ -217,6 +196,34 @@ def entity_confusion_matrix(pred, gold):
     FP = pred.difference(gold)
     FN = gold.difference(pred)
     return (TP, FP, FN)
+
+
+def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
+    docs = []
+    for doc in corpus:
+        docs.append((doc.name).upper())
+    gold_dict = set(get_gold_dict(gold_file, attrib, docs))
+
+    TP = FP = TN = FN = 0
+    pos = set([((c[0].parent.document.name).upper(),
+                (c[0].get_span()).upper(),
+                (''.join(c[1].get_span().split())).upper()) for c in tp.union(fp)])
+    TP = len(pos.intersection(gold_dict))
+    FP = len(pos.difference(gold_dict))
+    FN = len(gold_dict.difference(pos))
+
+    prec = TP / float(TP + FP) if TP + FP > 0 else float('nan')
+    rec  = TP / float(TP + FN) if TP + FN > 0 else float('nan')
+    f1   = 2 * (prec * rec) / (prec + rec) if prec + rec > 0 else float('nan')
+    print "========================================"
+    print "Scoring on Entity-Level Gold Data"
+    print "========================================"
+    print "Corpus Precision {:.3}".format(prec)
+    print "Corpus Recall    {:.3}".format(rec)
+    print "Corpus F1        {:.3}".format(f1)
+    print "----------------------------------------"
+    print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
+    print "========================================\n"
 
 
 def expand_part_range(text, DEBUG=False):

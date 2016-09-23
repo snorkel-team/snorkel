@@ -42,22 +42,32 @@ class OmniNgramsTemp(OmniNgrams):
 class OmniNgramsPart(OmniNgrams):
     def __init__(self, n_max=5, split_tokens=[]):
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
-        # TEMP
-        filename = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
-        self.gold_parts = get_gold_parts(filename) 
+        # TODO: replace dictionary with first pass of each doc to gather part names/suffix classes
+        gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
+        gold_parts = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=False)
+        self.parts_by_doc = defaultdict(set)
+        for part in gold_parts:
+            self.parts_by_doc[part[0]].add(part[1]) # TODO: change gold_parts to work with namedTuples
 
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
-            part_nos = [part_no for part_no in expand_part_range(ts.get_span())]
-            if len(part_nos) == 1:
-                yield ts
-            else:
-                for i, part_no in enumerate(part_nos):
+            enumerated_parts = [part_no for part_no in expand_part_range(ts.get_span())]
+            possible_parts =  self.parts_by_doc[ts.parent.document.name]
+            implicit_parts = []
+            for seen in enumerated_parts:
+                for part in possible_parts:
+                    if part.startswith(seen):
+                        implicit_parts.append(part)
+            yield ts #TODO: is this necessary all the time?
+            for i, part_no in enumerate(implicit_parts):
+                if part_no == ts.get_span():
+                    continue
+                else:
                     yield TemporaryImplicitSpan(
                         parent         = ts.parent,
                         char_start     = ts.char_start,
                         char_end       = ts.char_end,
-                        expander_key   = u'part_range',
+                        expander_key   = u'part_expander',
                         position       = i,
                         text           = part_no,
                         words          = [part_no],
@@ -69,7 +79,6 @@ class OmniNgramsPart(OmniNgrams):
                         dep_labels     = [ts.parent.dep_labels[0]],
                         meta           = None
                     )
-                yield ts
 
 
 def load_hardware_doc_part_pairs(filename):
@@ -82,6 +91,7 @@ def load_hardware_doc_part_pairs(filename):
         return gold
 
 
+# OBSOLETE:
 def load_extended_parts_dict(filename):
     gold_pairs = load_hardware_doc_part_pairs(filename)
     (gold_docs, gold_parts) = zip(*gold_pairs)
@@ -129,7 +139,6 @@ def count_hardware_labels(candidates, filename, attrib, attrib_class):
         if key in gold_dict:
             gold_cand[key] += 1
     pb.close()
-    import pdb; pdb.set_trace()
     return gold_cand
 
 
@@ -168,8 +177,8 @@ def entity_level_total_recall(candidates, gold_file, attribute='stg_temp_min', r
         part = c.get_arguments()[0].get_span()
         doc = c.get_arguments()[0].parent.document.name
         if relation:
-            attr = c.get_arguments()[1].get_span().replace(' ', '')
-            entity_level_candidates.add((doc.upper(), part.upper(), attr.upper()))
+            val = c.get_arguments()[1].get_span().replace(' ', '')
+            entity_level_candidates.add((doc.upper(), part.upper(), val.upper()))
         else:
             entity_level_candidates.add((doc.upper(), part.upper()))
     pb.close()

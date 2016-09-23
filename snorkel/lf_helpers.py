@@ -55,8 +55,7 @@ def get_text_between(c):
 # TODO: replace in tutorials with get_between_ngrams and delete this
 def get_between_tokens(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """ An alias for get_between_ngrams maintained for backwards compatibility. """
-    for ngram in get_between_ngrams(c, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
-        yield ngram
+    return [ngram for ngram in get_between_ngrams(c, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)]
 
 def get_between_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
@@ -85,8 +84,7 @@ def get_between_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False
 # TODO: replace in tutorials with get_left_ngrams and delete this
 def get_left_tokens(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """ An alias for get_left_ngrams maintained for backwards compatibility. """
-    for ngram in get_left_ngrams(c, window=window, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
-        yield ngram
+    return [ngram for ngram in get_left_ngrams(c, window=window, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)]
 
 
 def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitive=False):
@@ -109,8 +107,7 @@ def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitiv
 # TODO: replace in tutorials with get_right_ngrams and delete this
 def get_right_tokens(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """ An alias for get_right_ngrams maintained for backwards compatibility. """
-    for ngram in get_right_ngrams(c, window=window, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
-        yield ngram
+    return [ngram for ngram in get_right_ngrams(c, window=window, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive)]
 
 
 def get_right_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitive=False):

@@ -106,3 +106,11 @@ after_success:
   - codecov
   - coveralls
   - codeclimate-test-reporter
+
+# Email notifications
+notifications:
+  email:
+    recipients:
+      - bradenjh@cs.stanford.edu
+    on_success: [always|never|change] # default: always
+    on_failure: [always|never|change] # default: always

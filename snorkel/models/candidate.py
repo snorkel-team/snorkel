@@ -117,13 +117,20 @@ class Candidate(SnorkelBase):
         return self.get_arguments()[key]
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, ", ".join(map(unicode, self.get_arguments())))
+        return u"%s(%s)" % (self.__class__.__name__, u", ".join(map(unicode, self.get_arguments())))
+
 
 
 def candidate_subclass(class_name, args, table_name=None):
     """
     Creates and returns a Candidate subclass with provided argument names, which are Context type.
-    Similar in spirit to collections.namedtuple.  Creates the table in DB if does not exist yet.
+    Creates the table in DB if does not exist yet.
+
+    Import using:
+
+    .. code-block:: python
+
+        from snorkel.models import candidate_subclass
 
     :param class_name: The name of the class, should be "camel case" e.g. NewCandidateClass
     :param args: A list of names of consituent arguments, which refer to the Contexts--representing mentions--that

@@ -13,7 +13,7 @@
 ## Getting Started
 
 * Installation instructions [below](#installation--dependencies)
-* Get started with the tutorial [below](#learning-how-to-use-snorkel)
+* Get started with the tutorials [below](#learning-how-to-use-snorkel)
 * Documentation [here](http://snorkel.readthedocs.io/en/latest/)
 
 ## Motivation
@@ -23,7 +23,7 @@ In the data programming approach to developing a machine learning system, the de
 
 At a high level, the idea is that developers can focus on writing labeling functions&mdash;which are just (Python) functions that provide a label for some subset of data points&mdash;and not think about algorithms _or_ features!
 
-**_Snorkel is very much a work in progress_**, but some people have already begun developing applications with it, and initial feedback has been positive... let us know what you think, and how we can improve it, in the [Issues](https://github.com/HazyResearch/ddlite/issues) section!
+**_Snorkel is very much a work in progress_**, but some people have already begun developing applications with it, and initial feedback has been positive... let us know what you think, and how we can improve it, in the [Issues](https://github.com/HazyResearch/snorkel/issues) section!
 
 ### References
 * Data Programming, to appear at NIPS 2016: [https://arxiv.org/abs/1605.07723](https://arxiv.org/abs/1605.07723)
@@ -42,6 +42,8 @@ Finally, enable `ipywidgets`:
 jupyter nbextension enable --py widgetsnbextension --sys-prefix
 ```
 
+By default (e.g. in the tutorials, etc.) we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
+
 Alternatively, `virtualenv` can be used by starting with:
 ```bash
 virtualenv -p python2.7 .virtualenv
@@ -55,9 +57,12 @@ After installing (see below), just run:
 ```
 
 ## Learning how to use Snorkel
-New tutorial (covers through candidate extraction for entities):
+There are currently two tutorials for Snorkel, an [introductory tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro)
+and a more advanced [disease tagging tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/disease_tagging).
+The tutorials are available in the following directories:
 ```
-tutorial/
+tutorials/intro
+tutorials/disease_tagger
 ```
 
 ## Issues

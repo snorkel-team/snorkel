@@ -19,9 +19,9 @@ cache:
   directories:
     - download
     - $HOME/.cache/pip
-    - $HOME/miniconda/envs/test     # to avoid repetitively setting up Ana/Miniconda environment
-    - parser                        # to avoid repetitively downloading CoreNLP
-    - examples/deepdive             # to avoid repetitively installing DeepDive and Mindtagger
+    - $HOME/miniconda/envs/test      # to avoid repetitively setting up Ana/Miniconda environment
+    - parser                         # to avoid repetitively downloading CoreNLP
+    - tutorials/disease_tagging/data # to avoid repetitively downloading CDR data
 
 addons:
   apt:
@@ -62,6 +62,11 @@ install:
   - pip install -r python-package-requirement.txt
   - test -e parser/corenlp.sh || ./install-parser.sh
 
+  # Downloads data for disease tagging tutorial
+  - cd tutorials/disease_tagging
+  - ./download_data.sh
+  - cd ../..
+
   # Use runipy to run Jupyter/IPython notebooks from command-line
   - pip install runipy
 
@@ -74,17 +79,21 @@ install:
   - pip install codeclimate-test-reporter
 
 script:
-  # Downloads data
-  - cd tutorials/disease_tagger
-  - ./download_data.sh
-  - cd ..
 
-  # Run notebooks end-to-end
-  - travis_wait 30 runipy disease_tagger/CDR_Tutorial_1.ipynb
-  - travis_wait 60 runipy disease_tagger/CDR_Tutorial_2.ipynb
-  - travis_wait 45 runipy disease_tagger/CDR_Tutorial_3.ipynb
-  - travis_wait 45 runipy disease_tagger/CDR_Tutorial_4.ipynb
-  - travis_wait 45 runipy disease_tagger/CDR_Tutorial_5.ipynb
+  # Runs intro tutorial notebooks
+  - cd tutorials
+  - travis_wait 45 runipy intro/Intro_Tutorial_1.ipynb
+  - travis_wait 45 runipy intro/Intro_Tutorial_2.ipynb
+  - travis_wait 45 runipy intro/Intro_Tutorial_3.ipynb
+  - travis_wait 45 runipy intro/Intro_Tutorial_4.ipynb
+  - travis_wait 45 runipy intro/Intro_Tutorial_5.ipynb
+
+  # Runs disease tagger tutorial notebooks
+  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_1.ipynb
+  - travis_wait 60 runipy disease_tagging/Disease_Tagging_Tutorial_2.ipynb
+  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_3.ipynb
+  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_4.ipynb
+  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_5.ipynb
 
   # Run test modules
 #  - coverage run -p test/Tests.py

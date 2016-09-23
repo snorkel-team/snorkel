@@ -22,14 +22,13 @@ class AnnotationKeySet(SnorkelBase):
     name          = Column(String, unique=True, nullable=False)
     keys          = relationship('AnnotationKey',
                                  secondary=annotation_key_set_annotation_key_association,
-                                 collection_class=attribute_mapped_collection('name'),
                                  backref='sets')
     
-    def append(self, a):
-        self.keys[a.name] = a
+    def append(self, key):
+        self.keys.append(key)
 
-    def remove(self, item):
-        del self.keys[a.name]
+    def remove(self, key):
+        self.keys.remove(key)
 
     def __repr__(self):
         return "Annotation Key Set (" + str(self.name) + ")"
@@ -65,15 +64,18 @@ class AnnotationMixin(object):
     and predictions.
 
     New types of annotations can be defined by creating an annotation class and corresponding annotation, for example:
-    >>> from snorkel.models.annotation import AnnotationMixin
-    >>> from snorkel.models.meta import SnorkelBase
-    >>>
-    >>> class NewAnnotation(AnnotationMixin, SnorkelBase):
-    >>>     value = Column(Float, nullable=False)
-    >>>
-    >>>
-    >>> # The entire storage schema, including NewAnnotation, can now be initialized with the following import
-    >>> import snorkel.models
+
+    .. code-block:: python
+
+        from snorkel.models.annotation import AnnotationMixin
+        from snorkel.models.meta import SnorkelBase
+
+        class NewAnnotation(AnnotationMixin, SnorkelBase):
+            value = Column(Float, nullable=False)
+
+
+        # The entire storage schema, including NewAnnotation, can now be initialized with the following import
+        import snorkel.models
 
     The annotation class should include a Column attribute named value.
     """

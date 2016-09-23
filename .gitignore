@@ -5,7 +5,7 @@
 *.pyc
 parser/
 /stanford-corenlp-*
-*.db
+*.db*
 downloads/
 
 # Sphinx
@@ -14,6 +14,17 @@ docs/_build
 # PyCharm
 .idea
 
-# Tutorial
-tutorials/tables/data/hardware/hardware*/
+# Tutorials
 
+tutorials/disease_tagger/data/CDR_DevelopmentSet.BioC.xml
+tutorials/disease_tagger/data/CDR_TestSet.BioC.xml
+tutorials/disease_tagger/data/CDR_TrainingSet.BioC.xml
+tutorials/disease_tagger/data/dicts/
+tutorials/disease_tagger/snorkel.db
+tutorials/intro/data/articles-dev.tsv
+tutorials/intro/data/articles-test.tsv
+tutorials/intro/data/articles-train.tsv
+tutorials/intro/data/gold_labels.tsv
+tutorials/intro/snorkel.db
+
+tutorials/tables/data/hardware/hardware*/

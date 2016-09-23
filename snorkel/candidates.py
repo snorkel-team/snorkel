@@ -25,18 +25,26 @@ def gold_stats(candidates, gold):
 
 
 class CandidateExtractor(object):
-    # TODO: Revise docstring!
     """
-    A generic class to create a Candidates object, which is a set of Candidate objects.
+    An operator to extract Candidate objects from Context objects.
 
-    Takes in a CandidateSpace operator over some context type (e.g. Ngrams, applied over Sentence objects),
-    a Matcher over that candidate space, and a set of context objects (e.g. Sentences)
+    :param candidate_class: The type of relation to extract, defined using
+                            :func:`snorkel.models.candidate_subclass <snorkel.models.candidate.candidate_subclass>`
+    :param cspaces: one or list of :class:`CandidateSpace` objects, one for each relation argument. Defines space of
+                    Contexts to consider
+    :param matchers: one or list of :class:`snorkel.matchers.Matcher` objects, one for each relation argument. Only tuples of
+                     Contexts for which each element is accepted by the corresponding Matcher will be returned as Candidates
+    :param self_relations: Boolean indicating whether to extract Candidates that relate the same context.
+                           Only applies to binary relations. Default is False.
+    :param nested_relations: Boolean indicating whether to extract Candidates that relate one Context with another
+                             that contains it. Only applies to binary relations. Default is False.
+    :param symmetric_relations: Boolean indicating whether to extract symmetric Candidates, i.e., rel(A,B) and rel(B,A),
+                                where A and B are Contexts. Only applies to binary relations. Default is True.
     """
-    def __init__(self, candidate_class, cspaces, matchers, join_fn=None, self_relations=False, nested_relations=False, symmetric_relations=True):
+    def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=True):
         self.candidate_class     = candidate_class
         self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
-        self.join_fn             = join_fn
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations
         self.symmetric_relations = symmetric_relations

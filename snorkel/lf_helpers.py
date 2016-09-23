@@ -3,6 +3,7 @@ from itertools import chain
 from utils import tokens_to_ngrams
 import re
 
+
 def get_text_splits(c):
     """
     Given a k-arity Candidate defined over k Spans, return the chunked parent context (e.g. Sentence)
@@ -51,6 +52,12 @@ def get_text_between(c):
         raise ValueError("Only applicable to binary Candidates")
 
 
+# TODO: replace in tutorials with get_between_ngrams and delete this
+def get_between_tokens(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    """ An alias for get_between_ngrams maintained for backwards compatibility. """
+    for ngram in get_between_ngrams(c, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+        yield ngram
+
 def get_between_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
     Get the ngrams _between_ two unary Spans of a binary-Span Candidate, where
@@ -74,9 +81,13 @@ def get_between_ngrams(c, attrib='words', n_min=1, n_max=1, case_sensitive=False
         for ngram in get_left_ngrams(span1, window=distance-1, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
             yield ngram
 
-# TODO: define for compatibility with master (can call on *_*_ngrams)
-# def get_left_tokens()
-# def get_right_tokens()
+
+# TODO: replace in tutorials with get_left_ngrams and delete this
+def get_left_tokens(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    """ An alias for get_left_ngrams maintained for backwards compatibility. """
+    for ngram in get_left_ngrams(c, window=window, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+        yield ngram
+
 
 def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
@@ -92,6 +103,13 @@ def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitiv
     i    = span.get_word_start()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][max(0, i-window):i]), n_min=n_min, n_max=n_max):
+        yield ngram
+
+
+# TODO: replace in tutorials with get_right_ngrams and delete this
+def get_right_tokens(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+    """ An alias for get_right_ngrams maintained for backwards compatibility. """
+    for ngram in get_right_ngrams(c, window=window, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
         yield ngram
 
 
@@ -344,7 +362,7 @@ def _get_axis_ngrams(span, axis, infer=False, attrib='words', n_min=1, n_max=1, 
             for ngram in tokens_to_ngrams(map(f, getattr(phrase, attrib)), n_min=n_min, n_max=n_max):
                 yield ngram 
 
-# WITHOUT SQL:
+
 def _get_aligned_cells(root_cell, axis, infer=False):
     axis_name = axis + '_num'
     other_axis = 'row' if axis=='col' else 'col'
@@ -353,25 +371,7 @@ def _get_aligned_cells(root_cell, axis, infer=False):
         and cell != root_cell]
     return [_get_nonempty_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells 
 
-# WITH SQL:
-# TODO: use getattr for row_num/col_num 
-# def _get_aligned_cells(root_cell, axis, infer=False):
-#     session = SnorkelSession.object_session(root_cell)
-#     if axis == 'row':
-#         aligned_cells = session.query(Cell).filter(
-#             Cell.table == root_cell.table).filter(
-#             Cell.row_num == root_cell.row_num).filter(
-#             Cell.id != root_cell.id).all()
-#         other_axis = 'col'
-#     else:
-#         aligned_cells = session.query(Cell).filter(
-#             Cell.table == root_cell.table).filter(
-#             Cell.col_num == root_cell.col_num).filter(
-#             Cell.id != root_cell.id).all()
-#         other_axis = 'row'
-#     return [_get_nonempty_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells 
 
-# WITHOUT SQL:
 def _get_nonempty_cell(root_cell, axis):
     axis_name = axis + '_num'
     other_axis = 'row' if axis=='col' else 'col'
@@ -383,18 +383,3 @@ def _get_nonempty_cell(root_cell, axis):
             if getattr(cell, axis_name) == getattr(root_cell, axis_name)
             and getattr(cell, other_axis_name) == getattr(root_cell, other_axis_name) - 1]
         return _get_nonempty_cell(neighbor_cell[0], axis)
-        
-# WITH SQL:
-# def _get_nonempty_cell(root_cell, axis):
-#     axis_name = axis + '_num'
-#     other_axis = 'row' if axis=='col' else 'col'
-#     other_axis_name = other_axis + '_num'
-#     if root_cell.text or getattr(root_cell, other_axis_name) == 0:
-#         return root_cell
-#     else:
-#         session = SnorkelSession.object_session(root_cell)
-#         return session.query(Cell).filter(
-#             Cell.table_id == root_cell.table_id).filter(
-#             Cell.row_num == root_cell.row_num).filter(
-#             Cell.col_num < root_cell.col_num).order_by(
-#             -Cell.col_num).first()

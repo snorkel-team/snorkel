@@ -458,7 +458,7 @@ class TemporarySpan(TemporaryContext):
             raise NotImplementedError()
 
     def __repr__(self):
-        return '%s("%s", parent=%s, chars=[%s,%s], words=[%s,%s])' \
+        return u'%s("%s", parent=%s, chars=[%s,%s], words=[%s,%s])' \
             % (self.__class__.__name__, self.get_span(), self.parent.id, self.char_start, self.char_end,
                self.get_word_start(), self.get_word_end())
 

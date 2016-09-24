@@ -17,4 +17,4 @@ fi
 
 # Launch jupyter notebook!
 echo "Launching Jupyter Notebook..."
-jupyter notebook --no-browser
+jupyter notebook

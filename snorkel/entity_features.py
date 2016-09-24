@@ -60,7 +60,7 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
             lemma = context['lemmas'][idxs[0] - i]
             try:
                 float(lemma)
-                lemma = "NUMBER"
+                lemma = "_NUMBER"
             except ValueError:
                 pass
             left_lemmas.append(lemma)
@@ -74,7 +74,7 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
             lemma = context['lemmas'][idxs[-1] + i]
             try:
                 float(lemma)
-                lemma = "NUMBER"
+                lemma = "_NUMBER"
             except ValueError:
                 pass
             right_lemmas.append(lemma)

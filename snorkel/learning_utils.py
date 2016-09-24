@@ -193,18 +193,23 @@ class GridSearch(object):
     Runs hyperparameter grid search over a Learner object with train and test methods
     Selects based on maximizing F1 score on a supplied cross-validation (cv) set.
     """
-    def __init__(self, learner, param_names, param_val_ranges):
-        self.learner           = learner
-        self.param_names       = param_names
-        self.param_val_ranges  = param_val_ranges
+    def __init__(self, model, X, training_marginals, param_names, param_val_ranges):
+        self.model              = model
+        self.X                  = X
+        self.training_marginals = training_marginals
+        self.param_names        = param_names
+        self.param_val_ranges   = param_val_ranges
+        
+    def search_space(self):
+        return product(*self.param_val_ranges)
 
-    def fit(self, candidates, gold_labels, **model_hyperparams):
+    def fit(self, X_test, L_test, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, **model_hyperparams):
         """Basic method to start grid search, returns DataFrame table of results"""
         # Iterate over the param values
         run_stats   = []
         param_opts  = np.zeros(len(self.param_names))
         f1_opt      = 0.0
-        for param_vals in product(*self.param_val_ranges):
+        for param_vals in self.search_space():
 
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
@@ -214,24 +219,33 @@ class GridSearch(object):
             print "=" * 60
 
             # Train the model
-            self.learner.train(**model_hyperparams)
+            self.model.train(self.X, self.training_marginals, **model_hyperparams)
 
             # Test the model
-            scores   = self.learner.test(candidates, gold_labels, display=False, return_vals=True)
-            p, r, f1 = scores[:3]
+            tp, fp, tn, fn = self.model.score(X_test, L_test, gold_candidate_set, b, set_unlabeled_as_neg, disp=False)
+            p, r = float(len(tp)) / (len(tp) + len(fp)), float(len(tp)) / (len(tp) + len(fn))
+            f1 = 2.0 * (p * r) / (p + r)
             run_stats.append(list(param_vals) + [p, r, f1])
             if f1 > f1_opt:
-                w_opt      = self.learner.model.w
+                w_opt      = self.model.w
                 param_opts = param_vals
                 f1_opt     = f1
 
         # Set optimal parameter in the learner model
-        self.learner.model.w = w_opt
+        self.model.w = w_opt
 
         # Return DataFrame of scores
         self.results = DataFrame.from_records(run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1'])
         return self.results
-
+    
+    
+class RandomSearch(GridSearch):
+    def __init__(self, model, X, training_marginals, param_names, param_val_ranges, fraction=0.5):
+        self.fraction = fraction
+        super(RandomSearch, self).__init__( model, X, training_marginals, param_names, param_val_ranges)
+        
+    def search_space(self):
+        return [x for x in product(*self.param_val_ranges) if np.random.rand() < self.fraction]
 
 def sparse_abs(X):
     """Element-wise absolute value of sparse matrix- avoids casting to dense matrix!"""

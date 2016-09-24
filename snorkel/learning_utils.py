@@ -224,7 +224,7 @@ class GridSearch(object):
             # Test the model
             tp, fp, tn, fn = self.model.score(X_test, L_test, gold_candidate_set, b, set_unlabeled_as_neg, disp=False)
             p, r = float(len(tp)) / (len(tp) + len(fp)), float(len(tp)) / (len(tp) + len(fn))
-            f1 = 2.0 * (p * r) / (p + r)
+            f1 = 2.0 * (p * r) / (p + r) if (p + r) > 0 else 0
             run_stats.append(list(param_vals) + [p, r, f1])
             if f1 > f1_opt:
                 w_opt      = self.model.w

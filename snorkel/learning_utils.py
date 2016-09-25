@@ -265,7 +265,7 @@ class GridSearch(object):
         # Iterate over the param values
         run_stats   = []
         param_opts  = np.zeros(len(self.param_names))
-        f1_opt      = 0.0
+        f1_opt      = -1.0
         for param_vals in self.search_space():
 
             # Set the new hyperparam configuration to test

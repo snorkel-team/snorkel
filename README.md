@@ -12,6 +12,7 @@
 
 ## Getting Started
 
+* [The Snorkel webpage](http://hazyresearch.github.io/snorkel/)
 * Installation instructions [below](#installation--dependencies)
 * Get started with the tutorials [below](#learning-how-to-use-snorkel)
 * Documentation [here](http://snorkel.readthedocs.io/en/latest/)

@@ -101,8 +101,8 @@ def test_scores(pred, gold, return_vals=True, verbose=False):
         return prec, rec, f1, tp, fp, tn, fn, n_t
     
 def scores_from_counts(tp, fp, tn, fn):
-    prec = float(len(tp)) / (len(tp) + len(fp)) if tp > 0 else 0
-    rec = float(len(tp)) / (len(tp) + len(fn)) if tp > 0 else 0
+    prec = float(len(tp)) / (len(tp) + len(fp)) if len(tp) > 0 else 0
+    rec = float(len(tp)) / (len(tp) + len(fn)) if len(tp) > 0 else 0
     f1 = 2.0 * (prec * rec) / (prec + rec) if (prec + rec) > 0 else 0
     return prec, rec, f1    
 

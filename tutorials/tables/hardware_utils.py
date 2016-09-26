@@ -52,16 +52,15 @@ class OmniNgramsPart(OmniNgrams):
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
             enumerated_parts = [part_no for part_no in expand_part_range(ts.get_span())]
-            possible_parts =  self.parts_by_doc[ts.parent.document.name]
+            possible_parts =  self.parts_by_doc[ts.parent.document.name.upper()]
             implicit_parts = []
             for seen in enumerated_parts:
                 for part in possible_parts:
                     if part.startswith(seen):
                         implicit_parts.append(part)
-            yield ts #TODO: is this necessary all the time?
             for i, part_no in enumerate(implicit_parts):
                 if part_no == ts.get_span():
-                    continue
+                    yield ts
                 else:
                     yield TemporaryImplicitSpan(
                         parent         = ts.parent,
@@ -337,6 +336,9 @@ def expand_part_range(text, DEBUG=False):
                 final_set.add(part) # no base was found with suffixes to expand
     if DEBUG: print "[debug]   Final Set: " + str(sorted(final_set))
 
+    for part in final_set:
+        yield part
+
     # Add common part suffixes on each discovered part number
     # part_suffixes = ['-16','-25','-40','A','B','C']
     # for part in final_set:
@@ -351,9 +353,6 @@ def expand_part_range(text, DEBUG=False):
     #             yield base + suffix
     #     else:
     #         yield part
-
-    for part in final_set:
-        yield part
 
     # NOTE: We make a few assumptions (e.g. suffixes must be same length), but
     # one important unstated assumption is that if there is a single suffix,
@@ -380,4 +379,22 @@ def char_range(a, b):
     '''
     for c in xrange(ord(a), ord(b)+1):
         yield chr(c)
+
+def part_error_analysis(c):
+    print "Doc: %s" % c.part.parent.document
+    print "------------"
+    print "Part:"
+    print c.part
+    table_info(c.part)
+    print "------------"
+    print "Temp:"
+    print c.temp
+    table_info(c.temp)
+
+def table_info(span):
+    print "Table: %s" % span.parent.table
+    if span.parent.cell:
+        print "Row: %s" % span.parent.row_num
+        print "Col: %s" % span.parent.col_num
+    print "Phrase: %s" % span.parent
 

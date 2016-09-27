@@ -208,15 +208,18 @@ def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     docs = []
     for doc in corpus:
         docs.append((doc.name).upper())
-    gold_dict = set(get_gold_dict(gold_file, attrib, docs))
+    gold_dict = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=True, attrib=attrib, docs=docs)
 
     TP = FP = TN = FN = 0
     pos = set([((c[0].parent.document.name).upper(),
                 (c[0].get_span()).upper(),
                 (''.join(c[1].get_span().split())).upper()) for c in tp.union(fp)])
-    TP = len(pos.intersection(gold_dict))
-    FP = len(pos.difference(gold_dict))
-    FN = len(gold_dict.difference(pos))
+    TP_set = pos.intersection(gold_dict)
+    TP = len(TP_set)
+    FP_set = pos.difference(gold_dict)
+    FP = len(FP_set)
+    FN_set = gold_dict.difference(pos)
+    FN = len(FN_set)
 
     prec = TP / float(TP + FP) if TP + FP > 0 else float('nan')
     rec  = TP / float(TP + FN) if TP + FN > 0 else float('nan')
@@ -230,7 +233,8 @@ def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     print "----------------------------------------"
     print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
     print "========================================\n"
-
+    
+    return (TP_set, FP_set, FN_set)
 
 def expand_part_range(text, DEBUG=False):
     """

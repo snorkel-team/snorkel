@@ -97,7 +97,7 @@ class NoiseAwareModel(object):
         """Return numpy array of elements in {-1,0,1} based on predicted marginal probabilities."""
         return np.array([1 if p > b else -1 if p < b else 0 for p in self.marginals(X)])
 
-    def score(self, X_test, L_test, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True):
+    def score(self, X_test, L_test, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, display=True):
         if L_test.shape[1] != 1:
             raise ValueError("L_test must have exactly one column.")
         predict = self.predict(X_test, b=b)
@@ -142,8 +142,9 @@ class NoiseAwareModel(object):
                     tn.add(candidate)
 
         # Print diagnostics chart and return error analysis candidate sets
-        score(test_candidates, np.asarray(test_labels), np.asarray(predict), gold_candidate_set,
-              train_marginals=train_marginals, test_marginals=test_marginals)
+        if display:
+            score(test_candidates, np.asarray(test_labels), np.asarray(predict), gold_candidate_set,
+                  train_marginals=train_marginals, test_marginals=test_marginals)
         return tp, fp, tn, fn
 
     def save(self, session, param_set_name):

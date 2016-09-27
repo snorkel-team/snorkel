@@ -5,6 +5,7 @@ import lxml.etree as et
 
 # Scientific modules
 import numpy as np
+import math
 import matplotlib
 matplotlib.use('Agg')
 warnings.filterwarnings("ignore", module="matplotlib")
@@ -98,6 +99,12 @@ def test_scores(pred, gold, return_vals=True, verbose=False):
         print "=" * 40
     if return_vals:
         return prec, rec, f1, tp, fp, tn, fn, n_t
+    
+def scores_from_counts(tp, fp, tn, fn):
+    prec = float(len(tp)) / (len(tp) + len(fp)) if len(tp) > 0 else 0
+    rec = float(len(tp)) / (len(tp) + len(fn)) if len(tp) > 0 else 0
+    f1 = 2.0 * (prec * rec) / (prec + rec) if (prec + rec) > 0 else 0
+    return prec, rec, f1    
 
 def plot_prediction_probability(probs):
     plt.hist(probs, bins=20, normed=False, facecolor='blue')
@@ -187,24 +194,79 @@ def grid_search_plot(w_fit, mu_opt, f1_opt):
                scatterpoints=1, fontsize=10, markerscale=0.5)
     plt.show()
 
+    
+class Parameter(object):
+    """Base class for a grid search parameter"""
+    def __init__(self, name):
+        self.name = name
+    
+    def get_all_values(self):
+        raise NotImplementedError()
+    
+    def draw_values(self, n):
+        return np.random.choice(self.get_all_values(), n)
+    
+class ListParameter(Parameter):
+    """List of parameter values for searching"""
+    def __init__(self, name, parameter_list):
+        self.parameter_list = np.ravel(parameter_list)
+        super(ListParameter, self).__init__(name)
+    
+    def get_all_values(self):
+        return self.parameter_list
+    
+class RangeParameter(Parameter):
+    """
+    Range of parameter values for searching.
+    min_value and max_value are the ends of the search range
+    If log_base is specified, scale the search range in the log base
+    step is range step size or exponent step size
+    """
+    def __init__(self, name, min_value, max_value, step=1, log_base=None):
+        self.min_value = min_value
+        self.max_value = max_value
+        self.step = step
+        self.log_base = log_base
+        super(RangeParameter, self).__init__(name)
+        
+    def get_all_values(self):
+        if self.log_base:
+            min_exp = math.log(self.min_value, self.log_base)
+            max_exp = math.log(self.max_value, self.log_base)
+            exps = np.arange(min_exp, max_exp + self.step, step=self.step)
+            return np.power(self.log_base, exps)
+        return np.arange(self.min_value, self.max_value + self.step, step=self.step)
+        
 
 class GridSearch(object):
     """
-    Runs hyperparameter grid search over a Learner object with train and test methods
-    Selects based on maximizing F1 score on a supplied cross-validation (cv) set.
+    Runs hyperparameter grid search over a model object with train and score methods,
+    training data (X), and training_marginals
+    Selects based on maximizing F1 score on a supplied validation set
+    Specify search space with Parameter arguments
     """
-    def __init__(self, learner, param_names, param_val_ranges):
-        self.learner           = learner
-        self.param_names       = param_names
-        self.param_val_ranges  = param_val_ranges
+    def __init__(self, model, X, training_marginals, *parameters):
+        self.model              = model
+        self.X                  = X
+        self.training_marginals = training_marginals
+        self.params             = parameters
+        self.param_names        = [param.name for param in parameters]
+        
+    def search_space(self):
+        return product(param.get_all_values() for param in self.params)
 
-    def fit(self, candidates, gold_labels, **model_hyperparams):
-        """Basic method to start grid search, returns DataFrame table of results"""
+    def fit(self, X_validation, validation_labels, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, **model_hyperparams):
+        """
+        Basic method to start grid search, returns DataFrame table of results
+          b specifies the positive class threshold for calculating f1
+          set_unlabeled_as_neg is used to decide class of unlabeled cases for f1
+          Non-search parameters are set using model_hyperparamters
+        """
         # Iterate over the param values
         run_stats   = []
         param_opts  = np.zeros(len(self.param_names))
-        f1_opt      = 0.0
-        for param_vals in product(*self.param_val_ranges):
+        f1_opt      = -1.0
+        for param_vals in self.search_space():
 
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
@@ -214,24 +276,33 @@ class GridSearch(object):
             print "=" * 60
 
             # Train the model
-            self.learner.train(**model_hyperparams)
+            self.model.train(self.X, self.training_marginals, **model_hyperparams)
 
             # Test the model
-            scores   = self.learner.test(candidates, gold_labels, display=False, return_vals=True)
-            p, r, f1 = scores[:3]
+            tp, fp, tn, fn = self.model.score(X_validation, validation_labels, gold_candidate_set, b, set_unlabeled_as_neg, display=False)
+            p, r, f1 = scores_from_counts(tp, fp, tn, fn)
             run_stats.append(list(param_vals) + [p, r, f1])
             if f1 > f1_opt:
-                w_opt      = self.learner.model.w
+                w_opt      = self.model.w
                 param_opts = param_vals
                 f1_opt     = f1
 
         # Set optimal parameter in the learner model
-        self.learner.model.w = w_opt
+        self.model.w = w_opt
 
         # Return DataFrame of scores
         self.results = DataFrame.from_records(run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1'])
         return self.results
-
+    
+    
+class RandomSearch(GridSearch):
+    def __init__(self, model, X, training_marginals, n, *parameters):
+        """Search a random sample of size n from a parameter grid"""
+        self.n = n
+        super(RandomSearch, self).__init__(model, X, training_marginals, *parameters)
+        
+    def search_space(self):
+        return zip(*[param.draw_values(self.n) for param in self.params])
 
 def sparse_abs(X):
     """Element-wise absolute value of sparse matrix- avoids casting to dense matrix!"""

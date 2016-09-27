@@ -130,7 +130,9 @@ class CandidateExtractor(object):
                 child_args['id'] = candidate_id[0]
                 session.execute(child_insert_query, child_args)
                 del child_args['id']
-            
+            else:
+                raise ValueError("Duplicate candidates found in %s." % candidate_set)
+
             # Add candidate to the given CandidateSet
             set_insert_args['candidate_id'] = candidate_id[0]
             session.execute(set_insert_query, set_insert_args)

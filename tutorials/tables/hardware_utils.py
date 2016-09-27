@@ -11,8 +11,6 @@ import os
 class OmniNgramsTemp(OmniNgrams):
     def __init__(self, n_max=5, split_tokens=[]):
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
-        # TODO: replace rgx with individual replace statements 
-        #self.rgx = re.compile(r'^(?:\-|\u2010|\u2011|\u2012|\u2013|\u2014|\u2212)\s*(\d+)$', flags=re.UNICODE)
 
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
@@ -53,11 +51,11 @@ class OmniNgramsPart(OmniNgrams):
         for ts in OmniNgrams.apply(self, context):
             enumerated_parts = [part_no for part_no in expand_part_range(ts.get_span())]
             possible_parts =  self.parts_by_doc[ts.parent.document.name.upper()]
-            implicit_parts = []
-            for seen in enumerated_parts:
+            implicit_parts = set()
+            for base in enumerated_parts:
                 for part in possible_parts:
-                    if part.startswith(seen):
-                        implicit_parts.append(part)
+                    if part.startswith(base):
+                        implicit_parts.add(part)
             for i, part_no in enumerate(implicit_parts):
                 if part_no == ts.get_span():
                     yield ts

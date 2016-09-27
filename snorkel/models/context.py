@@ -389,7 +389,7 @@ class TemporarySpan(TemporaryContext):
             self.parent.document.name, 
             self._get_polymorphic_identity(), 
             self.parent.id, 
-            self.char_start, 
+            self.char_start,
             self.char_end)
 
     def _get_table_name(self):

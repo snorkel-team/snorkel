@@ -300,7 +300,7 @@ class TemporaryContext(object):
     Every Context object has a corresponding TemporaryContext object from which it inherits.
 
     A TemporaryContext must have specified equality / set membership semantics, a stable_id for checking
-    uniqueness against the database, and a promote() method which returns a corresponding Context object.
+    uniqueness against the database, and a corresponding Context object.
     """
     def __init__(self):
         self.id = None
@@ -364,15 +364,19 @@ class TemporarySpan(TemporaryContext):
 
     def __eq__(self, other):
         try:
-            return self.parent == other.parent and self.char_start == other.char_start \
-                and self.char_end == other.char_end
+            # TODO: add check that other is not an ImpliciSpan
+            return (self.parent == other.parent and 
+                    self.char_start == other.char_start and 
+                    self.char_end == other.char_end)
         except AttributeError:
             return False
 
     def __ne__(self, other):
         try:
-            return self.parent != other.parent or self.char_start != other.char_start \
-                or self.char_end != other.char_end
+            # TODO: add check that other is not an ImpliciSpan
+            return (self.parent != other.parent or 
+                    self.char_start != other.char_start or 
+                    self.char_end != other.char_end)
         except AttributeError:
             return True
 
@@ -380,7 +384,13 @@ class TemporarySpan(TemporaryContext):
         return hash(self.parent) + hash(self.char_start) + hash(self.char_end)
 
     def get_stable_id(self):
-        return construct_stable_id(self.parent, self._get_polymorphic_identity(), self.char_start, self.char_end)
+        # return construct_stable_id(self.parent, self._get_polymorphic_identity(), self.char_start, self.char_end)
+        return "%s::%s:%s:%s:%s" % (
+            self.parent.document.name, 
+            self._get_polymorphic_identity(), 
+            self.parent.id, 
+            self.char_start, 
+            self.char_end)
 
     def _get_table_name(self):
         return 'span'
@@ -530,17 +540,21 @@ class TemporaryImplicitSpan(TemporarySpan):
 
     def __eq__(self, other):
         try:
-            return (self.parent == other.parent 
-                and self.char_start == other.char_start and self.char_end == other.char_end 
-                and self.expander_key == other.expander_key and self.position == other.position)
+            return (self.parent == other.parent and
+                    self.char_start == other.char_start and 
+                    self.char_end == other.char_end and
+                    self.expander_key == other.expander_key and 
+                    self.position == other.position)
         except AttributeError:
             return False
 
     def __ne__(self, other):
         try:
-            return (self.parent != other.parent 
-                or self.char_start != other.char_start or self.char_end != other.char_end 
-                or self.expander_key != other.expander_key or self.position != other.position)
+            return (self.parent != other.parent or
+                    self.char_start != other.char_start or 
+                    self.char_end != other.char_end or 
+                    self.expander_key != other.expander_key or 
+                    self.position != other.position)
         except AttributeError:
             return True
 
@@ -549,8 +563,16 @@ class TemporaryImplicitSpan(TemporarySpan):
                 + hash(self.expander_key) + hash(self.position))
 
     def get_stable_id(self):
-        return (construct_stable_id(self.parent, self._get_polymorphic_identity(), self.char_start, self.char_end)
-            + ':%s:%s' % (self.expander_key, self.position))
+        # return (construct_stable_id(self.parent, self._get_polymorphic_identity(), self.char_start, self.char_end)
+        #     + ':%s:%s' % (self.expander_key, self.position))
+        return '%s::%s:%s:%s:%s:%s:%s' % (
+            self.parent.document.name, 
+            self._get_polymorphic_identity(),                             
+            self.parent.id, 
+            self.char_start, 
+            self.char_end, 
+            self.expander_key, 
+            self.position)
 
     def _get_table_name(self):
         return 'implicit_span'

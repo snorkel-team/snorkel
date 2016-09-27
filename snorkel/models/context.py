@@ -442,13 +442,13 @@ class TemporarySpan(TemporaryContext):
         return hash(self.parent) + hash(self.char_start) + hash(self.char_end)
 
     def get_stable_id(self):
-        # return construct_stable_id(self.parent, self._get_polymorphic_identity(), self.char_start, self.char_end)
-        return "%s::%s:%s:%s:%s" % (
-            self.parent.document.name, 
-            self._get_polymorphic_identity(), 
-            self.parent.id, 
-            self.char_start,
-            self.char_end)
+        return construct_stable_id(self.parent, self._get_polymorphic_identity(), self.char_start, self.char_end)
+        # return "%s::%s:%s:%s:%s" % (
+        #     self.parent.document.name, 
+        #     self._get_polymorphic_identity(), 
+        #     self.parent.id, 
+        #     self.char_start,
+        #     self.char_end)
 
     def _get_table_name(self):
         return 'span'
@@ -621,16 +621,16 @@ class TemporaryImplicitSpan(TemporarySpan):
                 + hash(self.expander_key) + hash(self.position))
 
     def get_stable_id(self):
-        # return (construct_stable_id(self.parent, self._get_polymorphic_identity(), self.char_start, self.char_end)
-        #     + ':%s:%s' % (self.expander_key, self.position))
-        return '%s::%s:%s:%s:%s:%s:%s' % (
-            self.parent.document.name, 
-            self._get_polymorphic_identity(),                             
-            self.parent.id, 
-            self.char_start, 
-            self.char_end, 
-            self.expander_key, 
-            self.position)
+        return (construct_stable_id(self.parent, self._get_polymorphic_identity(), self.char_start, self.char_end)
+            + ':%s:%s' % (self.expander_key, self.position))
+        # return '%s::%s:%s:%s:%s:%s:%s' % (
+        #     self.parent.document.name, 
+        #     self._get_polymorphic_identity(),                             
+        #     self.parent.id, 
+        #     self.char_start, 
+        #     self.char_end, 
+        #     self.expander_key, 
+        #     self.position)
 
     def _get_table_name(self):
         return 'implicit_span'

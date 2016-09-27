@@ -123,16 +123,17 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
                     curr_left_pos_tags + "]_[" + curr_right_pos_tags + "]"
 
 def tabledlib_unary_features(span):
-    yield u"HTML_TAG_" + span.parent.html_tag
-    for attr in span.parent.html_attrs:
+    phrase = span.parent
+    yield u"HTML_TAG_" + phrase.html_tag
+    for attr in phrase.html_attrs:
         yield u"HTML_ATTR_[" + attr + "]"
-    for tag in span.parent.html_anc_tags:
+    for tag in phrase.html_anc_tags:
         yield u"HTML_ANC_TAG_[" + tag + "]"
-    # for attr in span.parent.html_anc_attrs:
-    #     yield u"HTML_ANC_ATTR_[" + attr + "]"
-    if span.parent.row_num is not None and span.parent.col_num is not None:
-        yield u"ROW_NUM_[%s]" % span.parent.row_num
-        yield u"COL_NUM_[%s]" % span.parent.col_num
+    # for attr in phrase.html_anc_attrs:
+        # yield u"HTML_ANC_ATTR_[" + attr + "]"
+    if phrase.row_num is not None and phrase.col_num is not None:
+        yield u"ROW_NUM_[%s]" % phrase.row_num
+        yield u"COL_NUM_[%s]" % phrase.col_num
         for attrib in ['words']: #,'lemmas','pos_tags', 'ner_tags']:
             for ngram in get_row_ngrams(span, n_max=3, attrib=attrib):
                 yield "ROW_%s_[%s]" % (attrib.upper(), ngram)

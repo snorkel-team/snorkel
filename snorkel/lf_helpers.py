@@ -221,6 +221,10 @@ def same_phrase(c):
     return (all([c[i].parent is not None 
         and c[i].parent==c[0].parent for i in range(len(c.get_arguments()))])) 
 
+# TODO: write these
+# def same_row(c):
+
+# def same_col(c):
 
 def get_phrase_ngrams(span, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
@@ -275,11 +279,10 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
     if (not isinstance(span.parent, Phrase) or
         span.parent.cell is None): return
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    for phrase in span.parent.table.phrases:
-        if phrase.cell is None:
-            continue
-        row_diff = abs(phrase.row_num - span.parent.row_num)
-        col_diff = abs(phrase.col_num - span.parent.col_num)
+    root_cell = span.parent
+    for phrase in chain.from_iterable([root_cell.row.phrases, root_cell.col.phrases]):
+        row_diff = abs(phrase.row_num - root_cell.row_num)
+        col_diff = abs(phrase.col_num - root_cell.col_num)
         if (row_diff or col_diff) and not (row_diff and col_diff) and row_diff + col_diff <= dist:
             if directions:
                 direction = ''
@@ -352,12 +355,10 @@ def _get_axis_ngrams(span, axis, infer=False, attrib='words', n_min=1, n_max=1, 
         raise ValueError("Handles Span-type Candidate arguments only")
     if (not isinstance(span.parent, Phrase) or
         span.parent.cell is None): return
-    # TODO: optimize this with SQL query 
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    for cell in _get_aligned_cells(span.parent.cell, axis, infer=infer):
-        for phrase in cell.phrases:
-            for ngram in tokens_to_ngrams(map(f, getattr(phrase, attrib)), n_min=n_min, n_max=n_max):
-                yield ngram 
+    for phrase in _get_aligned_phrases(span.parent, axis, infer=infer):
+        for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max): 
+            yield f(ngram)
 
 
 def _get_aligned_cells(root_cell, axis, infer=False):
@@ -366,10 +367,19 @@ def _get_aligned_cells(root_cell, axis, infer=False):
     aligned_cells = [cell for cell in root_cell.table.cells
         if getattr(cell, axis_name) == getattr(root_cell, axis_name)
         and cell != root_cell]
-    return [_get_nonempty_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells 
+    return [_infer_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells 
 
 
-def _get_nonempty_cell(root_cell, axis):
+def _get_aligned_phrases(root_phrase, axis, infer=False):
+    axis_name = axis + '_num'
+    if infer:
+        other_axis = 'row' if axis=='col' else 'col'
+        return [phrase for phrase in _infer_cell(cell, other_axis) for cell in getattr(root_phrase, axis).cells]
+    else:
+        return [phrase for phrase in getattr(root_phrase, axis).phrases]
+
+
+def _infer_cell(root_cell, axis):
     axis_name = axis + '_num'
     other_axis = 'row' if axis=='col' else 'col'
     other_axis_name = other_axis + '_num'
@@ -379,4 +389,4 @@ def _get_nonempty_cell(root_cell, axis):
         neighbor_cell = [cell for cell in root_cell.table.cells
             if getattr(cell, axis_name) == getattr(root_cell, axis_name)
             and getattr(cell, other_axis_name) == getattr(root_cell, other_axis_name) - 1]
-        return _get_nonempty_cell(neighbor_cell[0], axis)
+        return _infer_cell(neighbor_cell[0], axis)

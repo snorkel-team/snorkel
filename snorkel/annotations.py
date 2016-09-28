@@ -50,36 +50,29 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
 
 
 class csr_LabelMatrix(csr_AnnotationMatrix):
-    def lf_stats(self):
+    def lf_stats(self, gold=None):
         """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
         lf_names = [self.get_key(j).name for j in range(self.shape[1])]
 
-        # Default LF stats
-        d = {
-            'j'         : range(self.shape[1]),
-            'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
-            'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
-            'conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
-        }
+        if gold is not None:
+            d = {
+                'j'         : range(self.shape[1]),
+                'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
+                'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
+                'conflicts' : Series(data=matrix_conflicts(self), index=lf_names),
+                'accuracy'  : Series(data=matrix_accuracy(self, gold), index=lf_names),
+            }
+        else:
+            # Default LF stats
+            d = {
+                'j'         : range(self.shape[1]),
+                'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
+                'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
+                'conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
+            }
+
+
         return DataFrame(data=d, index=lf_names)
-
-    def lf_accuracy(self, gold):
-        """
-        Returns a pandas DataFrame with the LFs and various per-LF statistics
-        including the accuracy of each LF compared to the gold CandidateSet
-        """
-        lf_names = [self.get_key(j).name for j in range(self.shape[1])]
-
-        # Default LF stats
-        d = {
-            'j'         : range(self.shape[1]),
-            'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
-            'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
-            'conflicts' : Series(data=matrix_conflicts(self), index=lf_names),
-            'accuracy'  : Series(data=matrix_accuracy(self, gold), index=lf_names),
-        }
-        return DataFrame(data=d, index=lf_names)
-
 
 class AnnotationManager(object):
     """

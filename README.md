@@ -12,7 +12,7 @@
 
 ## Getting Started
 
-* [The Snorkel webpage](http://hazyresearch.github.io/snorkel/)
+* [Data Programming: ML with Weak Supervision](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html)
 * Installation instructions [below](#installation--dependencies)
 * Get started with the tutorials [below](#learning-how-to-use-snorkel)
 * Documentation [here](http://snorkel.readthedocs.io/en/latest/)

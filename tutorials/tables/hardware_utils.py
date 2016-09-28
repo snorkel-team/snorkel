@@ -38,24 +38,31 @@ class OmniNgramsTemp(OmniNgrams):
     
 
 class OmniNgramsPart(OmniNgrams):
-    def __init__(self, n_max=5, split_tokens=[]):
+    def __init__(self, parts_by_doc=None, n_max=5, split_tokens=[]):
+        # parts_by_doc is a dictionary d where d[document_name.upper()] = [partA, partB, ...]
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
-        # TODO: replace dictionary with first pass of each doc to gather part names/suffix classes
-        gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
-        gold_parts = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=False)
-        self.parts_by_doc = defaultdict(set)
-        for part in gold_parts:
-            self.parts_by_doc[part[0]].add(part[1]) # TODO: change gold_parts to work with namedTuples
-
+        self.link_parts = (parts_by_doc is not None)
+        if parts_by_doc:
+            self.parts_by_doc = parts_by_doc
+            # using gold dictionary
+            # gold_parts = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=False)
+            # gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
+            # self.parts_by_doc = defaultdict(set)
+            # for part in gold_parts:
+            #     self.parts_by_doc[part[0]].add(part[1]) # TODO: change gold_parts to work with namedTuples
+            
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
             enumerated_parts = [part_no for part_no in expand_part_range(ts.get_span())]
-            possible_parts =  self.parts_by_doc[ts.parent.document.name.upper()]
-            implicit_parts = set()
-            for base in enumerated_parts:
-                for part in possible_parts:
-                    if part.startswith(base):
-                        implicit_parts.add(part)
+            if self.link_parts:
+                possible_parts =  self.parts_by_doc[ts.parent.document.name.upper()]
+                implicit_parts = set()
+                for base in enumerated_parts:
+                    for part in possible_parts:
+                        if part.startswith(base):
+                            implicit_parts.add(part)
+            else:
+                implicit_parts = set(enumerated_parts)
             for i, part_no in enumerate(implicit_parts):
                 if part_no == ts.get_span():
                     yield ts

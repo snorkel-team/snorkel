@@ -7,10 +7,6 @@ import numpy as np
 import scipy.sparse as sparse
 from utils import exact_data, sample_data, sparse_abs, transform_sample_stats
 
-DEFAULT_MU = 1e-6
-DEFAULT_RATE = 0.01
-DEFAULT_ALPHA = 0.5
-
 DEP_SIMILAR = 0
 DEP_FIXING = 1
 DEP_REINFORCING = 2

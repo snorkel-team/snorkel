@@ -1,18 +1,15 @@
-# Base Python
-import cPickle, json, os, sys, warnings
-from collections import defaultdict, OrderedDict, namedtuple
-import lxml.etree as et
-
-# Scientific modules
+from collections import namedtuple
+from itertools import product
 import numpy as np
 import math
 import matplotlib
 matplotlib.use('Agg')
+import warnings
 warnings.filterwarnings("ignore", module="matplotlib")
 import matplotlib.pyplot as plt
-import scipy.sparse as sparse
-from itertools import product
 from pandas import DataFrame
+import scipy.sparse as sparse
+
 
 def score(test_candidates, test_labels, test_pred, gold_candidate_set, train_marginals=None, test_marginals=None):
     '''
@@ -386,3 +383,71 @@ def training_set_summary_stats(L, return_vals=True, verbose=False):
         print "=" * 60
     if return_vals:
         return coverage, overlap, conflict
+
+def log_odds(p):
+  """This is the logit function"""
+  return np.log(p / (1.0 - p))
+
+def odds_to_prob(l):
+  """
+  This is the inverse logit function logit^{-1}:
+
+    l       = \log\frac{p}{1-p}
+    \exp(l) = \frac{p}{1-p}
+    p       = \frac{\exp(l)}{1 + \exp(l)}
+  """
+  return np.exp(l) / (1.0 + np.exp(l))
+
+def sample_data(X, w, n_samples):
+  """
+  Here we do Gibbs sampling over the decision variables (representing our objects), o_j
+  corresponding to the columns of X
+  The model is just logistic regression, e.g.
+
+    P(o_j=1 | X_{*,j}; w) = logit^{-1}(w \dot X_{*,j})
+
+  This can be calculated exactly, so this is essentially a noisy version of the exact calc...
+  """
+  N, R = X.shape
+  t = np.zeros(N)
+  f = np.zeros(N)
+
+  # Take samples of random variables
+  idxs = np.round(np.random.rand(n_samples) * (N-1)).astype(int)
+  ct = np.bincount(idxs)
+
+  # Estimate probability of correct assignment
+  increment = np.random.rand(n_samples) < odds_to_prob(X[idxs, :].dot(w))
+  increment_f = -1. * (increment - 1)
+  t[idxs] = increment * ct[idxs]
+  f[idxs] = increment_f * ct[idxs]
+
+  return t, f
+
+def exact_data(X, w, evidence=None):
+  """
+  We calculate the exact conditional probability of the decision variables in
+  logistic regression; see sample_data
+  """
+  t = odds_to_prob(X.dot(w))
+  if evidence is not None:
+    t[evidence > 0.0] = 1.0
+    t[evidence < 0.0] = 0.0
+  return t, 1-t
+
+
+def transform_sample_stats(Xt, t, f, Xt_abs=None):
+  """
+  Here we calculate the expected accuracy of each LF/feature
+  (corresponding to the rows of X) wrt to the distribution of samples S:
+
+    E_S[ accuracy_i ] = E_(t,f)[ \frac{TP + TN}{TP + FP + TN + FN} ]
+                      = \frac{X_{i|x_{ij}>0}*t - X_{i|x_{ij}<0}*f}{t+f}
+                      = \frac12\left(\frac{X*(t-f)}{t+f} + 1\right)
+  """
+  if Xt_abs is None:
+    Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else abs(Xt)
+  n_pred = Xt_abs.dot(t+f)
+  m = (1. / (n_pred + 1e-8)) * (Xt.dot(t) - Xt.dot(f))
+  p_correct = (m + 1) / 2
+  return p_correct, n_pred

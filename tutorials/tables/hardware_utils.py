@@ -38,24 +38,31 @@ class OmniNgramsTemp(OmniNgrams):
     
 
 class OmniNgramsPart(OmniNgrams):
-    def __init__(self, n_max=5, split_tokens=[]):
+    def __init__(self, parts_by_doc=None, n_max=5, split_tokens=[]):
+        # parts_by_doc is a dictionary d where d[document_name.upper()] = [partA, partB, ...]
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
-        # TODO: replace dictionary with first pass of each doc to gather part names/suffix classes
-        gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
-        gold_parts = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=False)
-        self.parts_by_doc = defaultdict(set)
-        for part in gold_parts:
-            self.parts_by_doc[part[0]].add(part[1]) # TODO: change gold_parts to work with namedTuples
-
+        self.link_parts = (parts_by_doc is not None)
+        if parts_by_doc:
+            self.parts_by_doc = parts_by_doc
+            # using gold dictionary
+            # gold_parts = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=False)
+            # gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
+            # self.parts_by_doc = defaultdict(set)
+            # for part in gold_parts:
+            #     self.parts_by_doc[part[0]].add(part[1]) # TODO: change gold_parts to work with namedTuples
+            
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
             enumerated_parts = [part_no for part_no in expand_part_range(ts.get_span())]
-            possible_parts =  self.parts_by_doc[ts.parent.document.name.upper()]
-            implicit_parts = set()
-            for base in enumerated_parts:
-                for part in possible_parts:
-                    if part.startswith(base):
-                        implicit_parts.add(part)
+            if self.link_parts:
+                possible_parts =  self.parts_by_doc[ts.parent.document.name.upper()]
+                implicit_parts = set()
+                for base in enumerated_parts:
+                    for part in possible_parts:
+                        if part.startswith(base):
+                            implicit_parts.add(part)
+            else:
+                implicit_parts = set(enumerated_parts)
             for i, part_no in enumerate(implicit_parts):
                 if part_no == ts.get_span():
                     yield ts
@@ -141,11 +148,16 @@ def count_hardware_labels(candidates, filename, attrib, attrib_class):
 
 def load_hardware_labels(loader, candidates, filename, candidate_attribs, gold_attrib='stg_temp_min'):
     gold_dict = get_gold_dict(filename, gold_attrib)
+    gold_dict_by_doc = defaultdict(set)
+    for g in gold_dict:
+        gold_dict_by_doc[g[0]].add((g[1],g[2]))
     pb = ProgressBar(len(candidates))
     for i, c in enumerate(candidates):
         pb.bar(i)
-        key = ((c[0].parent.document.name).upper(), (c[0].get_span()).upper(), (''.join(c[1].get_span().split())).upper())
-        if key in gold_dict:
+        doc = (c[0].parent.document.name).upper()
+        part = (c[0].get_span()).upper()
+        val = (''.join(c[1].get_span().split())).upper()
+        if (part, val) in gold_dict_by_doc[doc]:
             loader.add({candidate_attribs[0] : c[0], candidate_attribs[1] : c[1]})
     pb.close()
 

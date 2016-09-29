@@ -19,11 +19,11 @@ docs/_build
 
 # Tutorials
 
-tutorials/disease_tagger/data/CDR_DevelopmentSet.BioC.xml
-tutorials/disease_tagger/data/CDR_TestSet.BioC.xml
-tutorials/disease_tagger/data/CDR_TrainingSet.BioC.xml
-tutorials/disease_tagger/data/dicts/
-tutorials/disease_tagger/snorkel.db
+tutorials/disease_tagging/data/CDR_DevelopmentSet.BioC.xml
+tutorials/disease_tagging/data/CDR_TestSet.BioC.xml
+tutorials/disease_tagging/data/CDR_TrainingSet.BioC.xml
+tutorials/disease_tagging/data/dicts/
+tutorials/disease_tagging/snorkel.db
 tutorials/intro/data/articles-dev.tsv
 tutorials/intro/data/articles-test.tsv
 tutorials/intro/data/articles-train.tsv

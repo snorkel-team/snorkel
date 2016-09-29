@@ -148,11 +148,16 @@ def count_hardware_labels(candidates, filename, attrib, attrib_class):
 
 def load_hardware_labels(loader, candidates, filename, candidate_attribs, gold_attrib='stg_temp_min'):
     gold_dict = get_gold_dict(filename, gold_attrib)
+    gold_dict_by_doc = defaultdict(set)
+    for g in gold_dict:
+        gold_dict_by_doc[g[0]].add((g[1],g[2]))
     pb = ProgressBar(len(candidates))
     for i, c in enumerate(candidates):
         pb.bar(i)
-        key = ((c[0].parent.document.name).upper(), (c[0].get_span()).upper(), (''.join(c[1].get_span().split())).upper())
-        if key in gold_dict:
+        doc = (c[0].parent.document.name).upper()
+        part = (c[0].get_span()).upper()
+        val = (''.join(c[1].get_span().split())).upper()
+        if (part, val) in gold_dict_by_doc[doc]:
             loader.add({candidate_attribs[0] : c[0], candidate_attribs[1] : c[1]})
     pb.close()
 

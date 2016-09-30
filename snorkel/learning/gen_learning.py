@@ -5,7 +5,7 @@ from numbskull.factorgraph import FactorGraph
 from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
 import numpy as np
 import scipy.sparse as sparse
-from utils import exact_data, sample_data, sparse_abs, transform_sample_stats
+from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
 
 DEP_SIMILAR = 0
 DEP_FIXING = 1
@@ -18,7 +18,7 @@ class NaiveBayes(NoiseAwareModel):
         self.w         = None
         self.bias_term = bias_term
 
-    def train(self, X, n_iter=1000, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, mu=DEFAULT_MU, \
+    def train(self, X, n_iter=1000, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, mu=DEFAULT_MU,
             sample=False, n_samples=100, evidence=None, warm_starts=False, tol=1e-6, verbose=True):
         """
         Perform SGD wrt the weights w
@@ -121,7 +121,7 @@ class GenerativeModel(object):
         self.lf_class_propensity = lf_class_propensity
         self.seed = seed
 
-    def train(self, L, deps):
+    def train(self, L, deps=()):
         self.L = L
         self._process_dependency_graph(deps)
         self._compile()
@@ -134,35 +134,38 @@ class GenerativeModel(object):
         functions are specified using their column indices in `self.L`. The third element is the type of dependency.
         Options are :const:`DEP_SIMILAR`, :const:`DEP_FIXING`, :const:`DEP_REINFORCING`, and :const:`DEP_EXCLUSIVE`.
 
-        The results are lists of unique pairs of Label AnnotationKeys. They are set as various object members, one
-        for each type of dependency.
+        The results are :class:`scipy.sparse.csr_matrix` objects that represent directed adjacency matrices. They are
+        set as various GenerativeModel members, two for each type of dependency, e.g., `dep_similar` and `dep_similar_T`
+        (its transpose for efficient inverse lookups).
 
         :param deps: iterable of tuples of the form (lf_1, lf_2, type)
         """
-        #TODO: Redo as sparse matrices
         self.dep_similar = sparse.lil_matrix(self.L.shape[1], self.L.shape[1])
         self.dep_fixing = sparse.lil_matrix(self.L.shape[1], self.L.shape[1])
         self.dep_reinforcing = sparse.lil_matrix(self.L.shape[1], self.L.shape[1])
         self.dep_exclusive = sparse.lil_matrix(self.L.shape[1], self.L.shape[1])
 
         for lf1, lf2, dep_type in deps:
+            if lf1 == lf2:
+                raise ValueError("Invalid dependency. Labeling function cannot depend on itself.")
+
             if dep_type == DEP_SIMILAR:
-                dep_set = self.dep_similar
+                dep_mat = self.dep_similar
             elif dep_type == DEP_FIXING:
-                dep_set = self.dep_fixing
+                dep_mat = self.dep_fixing
             elif dep_type == DEP_REINFORCING:
-                dep_set = self.dep_reinforcing
+                dep_mat = self.dep_reinforcing
             elif dep_type == DEP_EXCLUSIVE:
-                dep_set = self.dep_exclusive
+                dep_mat = self.dep_exclusive
             else:
                 raise ValueError("Unrecognized dependency type: " + unicode(dep_type))
 
-            dep_set.add((lf1, lf2))
+            dep_mat[lf1, lf2] = 1
 
-        self.dep_similar = sorted([dep for dep in self.dep_similar], key=lambda lf1, lf2: lf1 - 1 / float(lf2))
-        self.dep_fixing = sorted([dep for dep in self.dep_fixing], key=lambda lf1, lf2: lf1 - 1 / float(lf2))
-        self.dep_reinforcing = sorted([dep for dep in self.dep_reinforcing], key=lambda lf1, lf2: lf1 - 1 / float(lf2))
-        self.dep_exclusive = sorted([dep for dep in self.dep_exclusive], key=lambda lf1, lf2: lf1 - 1 / float(lf2))
+        for dep_name in ('similar', 'fixing', 'reinforcing', 'exclusive'):
+            dep_name = 'dep_' + dep_name
+            setattr(self, dep_name, getattr(self, dep_name).tocsr(copy=True))
+            setattr(self, dep_name + '_T', getattr(self, dep_name).transpose().tocsr(copy=True))
 
     def _compile(self):
         """
@@ -180,47 +183,118 @@ class GenerativeModel(object):
             n_weights += n
         if self.lf_class_propensity:
             n_weights += n
-        n_weights += len(self.dep_similar) + len(self.dep_fixing) + len(self.dep_reinforcing) + len(self.dep_exclusive)
+        n_weights += self.dep_similar.getnnz() + self.dep_fixing.getnnz() + \
+                     self.dep_reinforcing.getnnz() + self.dep_exclusive.getnnz()
 
-        n_vars = m * (n+1)
+        n_vars = m * (n + 1)
+        n_factors = m * n_weights
 
-        n_factors = m * (n+1)
+        n_edges = 1 + 2 * n
         if self.lf_prior:
-            n_factors += m * n
+            n_edges += n
         if self.lf_propensity:
-            n_factors += m * n
+            n_edges += n
         if self.lf_class_propensity:
-            n_factors += m * n
-        n_factors += m * (len(self.dep_similar) + len(self.dep_fixing) +
-                          len(self.dep_reinforcing) + len(self.dep_exclusive))
-
-        n_edges = 0
+            n_edges += 2 * n
+        n_edges += 2 * self.dep_similar.getnnz() + 3 * self.dep_fixing.getnnz() + \
+                   3 * self.dep_reinforcing.getnnz() + 2 * self.dep_exclusive.getnnz()
+        n_edges *= m
 
         weight = np.zeros(n_weights, Weight)
         variable = np.zeros(n_vars, Variable)
         factor = np.zeros(n_factors, Factor)
-        fmap = np.zeros(n_edges, FactorToVar)
+        ftv = np.zeros(n_edges, FactorToVar)
         domain_mask = np.zeros(n_vars, np.bool)
 
         #
+        # Compiles weight matrix
         #
+        weight[0]['isFixed'] = False
+        # In most information extraction tasks, the label distribution is weighted towards the negative class, so we
+        # initialize accordingly
+        weight[0]['initialValue'] = -1
+        for i in range(1, weight.shape[0]):
+            weight[i]['isFixed'] = False
+            weight[i]['initialValue'] = 1.1 - .2 * random.random()
+
+        #
+        # Compiles variable matrix
+        #
+        init_values = (0, 1)
+        for i in range(m):
+            variable[i]['isEvidence'] = False
+            variable[i]['initialValue'] = random.choose(init_values)
+            variable[i]["dataType"] = 1
+            variable[i]["cardinality"] = 2
+
+        for i in range(m):
+            for j in range(n):
+                index = m + n * i + j
+                variable[index]["isEvidence"] = 1
+                if self.L[i, j] == 1:
+                    variable[index]["initialValue"] = 2
+                elif self.L[i, j] == 0:
+                    variable[index]["initialValue"] = 1
+                elif self.L[i, j] == -1:
+                    variable[index]["initialValue"] = 0
+                else:
+                    raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
+                                     "Valid values are 1, 0, and -1. " % i, j, self.L[i, j])
+                variable[index]["dataType"] = 1
+                variable[index]["cardinality"] = 3
+
+        #
+        # Compiles factor and ftv matrices
         #
 
-        variable[0]["isEvidence"] = 0
-        variable[0]["initialValue"] = 0
-        variable[0]["dataType"] = 0
-        variable[0]["cardinality"] = 2
+        # Class prior
+        for i in range(m):
+            factor[i]["factorFunction"] = FACTORS["FUNC_DP_GEN_CLASS_PRIOR"]
+            factor[i]["weightId"] = 0
+            factor[i]["featureValue"] = 1
+            factor[i]["arity"] = 1
+            factor[i]["ftv_offset"] = i
 
-        variable[1]["isEvidence"] = 0
-        variable[1]["initialValue"] = 0
-        variable[1]["dataType"] = 0
-        variable[1]["cardinality"] = 2
+            ftv[i]["vid"] = i
 
-        factor[0]["factorFunction"] = value
-        factor[0]["weightId"] = 0
-        factor[0]["featureValue"] = 1
-        factor[0]["arity"] = 2
-        factor[0]["ftv_offset"] = 0
+        # Factors over labeling function outputs
+        f_off, ftv_off, w_off = self._compile_output_factors(factor, m, ftv, m, 1,
+                                                             "FUNC_DP_GEN_LF_ACCURACY",
+                                                             (lambda m, n, i, j: i,
+                                                              lambda m, n, i, j: m + n * i + j))
+        if self.lf_prior:
+            f_off, ftv_off, w_off = self._compile_output_factors(factor, f_off, ftv, ftv_off, w_off,
+                                                                 "FUNC_DP_GEN_LF_PRIOR",
+                                                                 (lambda m, n, i, j: m + n * i + j))
+        if self.lf_propensity:
+            f_off, ftv_off, w_off = self._compile_output_factors(factor, f_off, ftv, ftv_off, w_off,
+                                                                 "FUNC_DP_GEN_LF_PROPENSITY",
+                                                                 (lambda m, n, i, j: m + n * i + j))
 
-        fmap[0]["vid"] = 0
-        fmap[1]["vid"] = 1
+        if self.lf_class_propensity:
+            f_off, ftv_off, w_off = self._compile_output_factors(factor, f_off, ftv, ftv_off, w_off,
+                                                                 "FUNC_DP_GEN_LF_CLASS_PROPENSITY",
+                                                                 (lambda m, n, i, j: m + n * i + j))
+
+    def _compile_output_factors(self, factors, factors_offset, ftv, ftv_offset, weight_offset, factor_name, vid_funcs):
+        """
+        Compiles factors over the outputs of labeling functions, i.e., for which there is one weight per labeling
+        function and one factor per labeling function-candidate pair.
+        """
+        m, n = self.L.shape
+
+        for i in range(m):
+            for j in range(n):
+                factors_index = factors_offset + n * i + j
+                ftv_index = ftv_offset + len(vid_funcs) * (n * i + j)
+
+                factors[factors_index]["factorFunction"] = FACTORS[factor_name]
+                factors[factors_index]["weightId"] = weight_offset + j
+                factors[factors_index]["featureValue"] = 1
+                factors[factors_index]["arity"] = len(vid_funcs)
+                factors[factors_index]["ftv_offset"] = ftv_offset
+
+                for i, vid_func in enumerate(vid_funcs):
+                    ftv[ftv_index + i]["vid"] = vid_func(m, n, i, j)
+
+        return factors_offset + m * n, ftv_offset + len(vid_funcs) * m * n, weight_offset + n

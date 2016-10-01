@@ -290,8 +290,8 @@ class LogReg(NoiseAwareModel):
 
                 # Apply elastic net penalty
                 w_bias    = w[-1]
-                soft      = np.abs(w) - rate * alpha * mu
-                ridge_pen = (1 + (1-alpha) * rate * mu)
+                soft      = np.abs(w) - mu
+                ridge_pen = (1 + (1-alpha) * mu)
                 w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
                 if self.bias_term:
                     w[-1] = w_bias
@@ -377,8 +377,8 @@ class NaiveBayes(NoiseAwareModel):
 
             # Apply elastic net penalty
             w_bias    = w[-1]
-            soft      = np.abs(w) - rate * alpha * mu
-            ridge_pen = (1 + (1-alpha) * rate * mu)
+            soft      = np.abs(w) - mu
+            ridge_pen = (1 + (1-alpha) * mu)
 
             #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
             w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen

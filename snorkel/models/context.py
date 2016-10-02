@@ -339,14 +339,13 @@ class Phrase(Context):
         }
 
     def __repr__(self):
-        if self.row and self.col:
             return ("Phrase(Doc: %s, Table: %s, Row: %s, Col: %s, Position: %s, Text: %s)" % 
-                (self.document.name, self.table.position, self.row.position, 
-                self.col.position, self.position, self.text))
-        else:
-            return ("Phrase(Doc: %s, Table: %s, Row: X, Col: X, Position: %s, Text: %s)" % 
-                (self.document.name, self.table.position, self.position, self.text))
-
+                (self.document.name,
+                getattr(self.table, 'position', 'X'), 
+                getattr(self.row, 'position', 'X'), 
+                getattr(self.col, 'position', 'X'), 
+                self.position, 
+                self.text))
 
 class TemporaryContext(object):
     """

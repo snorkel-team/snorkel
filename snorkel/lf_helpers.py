@@ -362,16 +362,14 @@ def _get_axis_ngrams(span, axis, infer=False, attrib='words', n_min=1, n_max=1, 
 
 
 def _get_aligned_cells(root_cell, axis, infer=False):
-    axis_name = axis + '_num'
     other_axis = 'row' if axis=='col' else 'col'
     aligned_cells = [cell for cell in root_cell.table.cells
-        if getattr(cell, axis_name) == getattr(root_cell, axis_name)
+        if getattr(cell, axis) == getattr(root_cell, axis)
         and cell != root_cell]
     return [_infer_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells 
 
 
 def _get_aligned_phrases(root_phrase, axis, infer=False):
-    axis_name = axis + '_num'
     if infer:
         other_axis = 'row' if axis=='col' else 'col'
         return [phrase for phrase in _infer_cell(cell, other_axis) for cell in getattr(root_phrase, axis).cells]
@@ -380,13 +378,12 @@ def _get_aligned_phrases(root_phrase, axis, infer=False):
 
 
 def _infer_cell(root_cell, axis):
-    axis_name = axis + '_num'
     other_axis = 'row' if axis=='col' else 'col'
-    other_axis_name = other_axis + '_num'
-    if root_cell.text or getattr(root_cell, other_axis_name) == 0:
+    # TODO: Fix this hack; checking for len(text)==9 checks if cell is "<td></td>"
+    if len(root_cell.text)!=9 or getattr(root_cell, other_axis).position == 0:
         return root_cell
     else:
         neighbor_cell = [cell for cell in root_cell.table.cells
-            if getattr(cell, axis_name) == getattr(root_cell, axis_name)
-            and getattr(cell, other_axis_name) == getattr(root_cell, other_axis_name) - 1]
+            if getattr(cell, axis) == getattr(root_cell, axis)
+            and getattr(cell, other_axis).position == getattr(root_cell, other_axis).position - 1]
         return _infer_cell(neighbor_cell[0], axis)

@@ -5,6 +5,7 @@ from learning_utils import score, sparse_abs
 from lstm import LSTMModel
 from sklearn import linear_model
 from .models import Parameter, ParameterSet
+import operator
 
 DEFAULT_MU = 1e-6
 DEFAULT_RATE = 0.01
@@ -122,7 +123,7 @@ class NoiseAwareModel(object):
                 # Set unlabeled examples to -1 by default
                 if test_label == 0 and set_unlabeled_as_neg:
                     test_label = -1
-              
+
                 # Bucket the candidates for error analysis
                 test_labels.append(test_label)
                 if test_marginals[i] > b:
@@ -180,11 +181,11 @@ class LogRegSKLearn(NoiseAwareModel):
         self.X_train = X
         penalty      = 'l1' if alpha == 1 else 'l2'
         self.model   = linear_model.LogisticRegression(penalty=penalty, C=C, dual=False)
-       
+
         # First, we remove the rows (candidates) that have no LF coverage
         covered            = np.where(np.abs(training_marginals - 0.5) > 1e-3)[0]
         training_marginals = training_marginals[covered]
-        
+
         # TODO: This should be X_train, however copy is broken here!
         X = X[covered]
 
@@ -192,7 +193,7 @@ class LogRegSKLearn(NoiseAwareModel):
         ypred = np.array([1 if x > 0.5 else 0 for x in training_marginals])
         self.model.fit(X, ypred)
         self.w = self.model.coef_.flatten()
-    
+
     def marginals(self, X):
         m = self.model.predict_proba(X)
         return self.model.predict_proba(X)[...,1]
@@ -219,7 +220,7 @@ class LogReg(NoiseAwareModel):
         # First, we remove the rows (candidates) that have no LF coverage
         covered            = np.where(np.abs(training_marginals - 0.5) > 1e-3)[0]
         training_marginals = training_marginals[covered]
-        
+
         # TODO: This should be X_train, however copy is broken here!
         X = X[covered]
 
@@ -227,7 +228,7 @@ class LogReg(NoiseAwareModel):
         if hard_thresh:
             training_marginals = np.array([1.0 if x > 0.5 else 0.0 for x in training_marginals])
         m_t, m_f = training_marginals, 1-training_marginals
-    
+
         # Set up stuff
         N, M = X.shape
         print "="*80
@@ -305,6 +306,24 @@ class LogReg(NoiseAwareModel):
     def marginals(self, X):
         return odds_to_prob(X.dot(self.w))
 
+
+    def get_feature_weights(self, feature_matrix, getDict=False):
+        """ Returns a mapping of features and their weights (if non-zero)
+        If a LogReg model `m`, `m.w` is the weight vector, and the corresponding
+        features are described in feature matrix `F`. If `m.w[i]` is nonzero,
+        `F.get_key(i)` is the corresponding feature key.
+        """
+        weights = dict()
+        for i in xrange(len(self.w)):
+            if self.w[i] > 0.0:
+                weights[feature_matrix.get_key(i)] = float(self.w[i])
+
+        if getDict: #optionally get access to the dictionary for easier searching
+            return weights
+        else:
+            # Sort by descending weight, code from epost:
+            # (http://stackoverflow.com/questions/613183/sort-a-python-dictionary-by-value)
+            return sorted(weights.items(), key=operator.itemgetter(1), reverse=True)
 
 class NaiveBayes(NoiseAwareModel):
     def __init__(self, bias_term=False):

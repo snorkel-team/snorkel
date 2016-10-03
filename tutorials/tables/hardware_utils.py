@@ -2,8 +2,9 @@ import csv
 import codecs
 from collections import defaultdict
 from snorkel.candidates import OmniNgrams
-from snorkel.models import TemporaryImplicitSpan
+from snorkel.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, Label
 from snorkel.utils import ProgressBar
+from snorkel.loaders import create_or_fetch
 from difflib import SequenceMatcher
 import re
 import os
@@ -146,21 +147,26 @@ def count_hardware_labels(candidates, filename, attrib, attrib_class):
     return gold_cand
 
 
-def load_hardware_labels(loader, candidates, filename, candidate_attribs, gold_attrib='stg_temp_min'):
+def load_hardware_labels(session, label_set_name, annotation_key_name, candidates, filename, gold_attrib='stg_temp_min'):
+    candidate_set   = create_or_fetch(session, CandidateSet, label_set_name)
+    annotation_key  = create_or_fetch(session, AnnotationKey, annotation_key_name)
     gold_dict = get_gold_dict(filename, gold_attrib)
-    gold_dict_by_doc = defaultdict(set)
-    for g in gold_dict:
-        gold_dict_by_doc[g[0]].add((g[1],g[2]))
-    pb = ProgressBar(len(candidates))
+    cand_total = len(candidates)
+    pb = ProgressBar(cand_total)
+    print 'Loading', cand_total, 'candidate labels'
+    pb_interval = cand_total/100
     for i, c in enumerate(candidates):
-        pb.bar(i)
+        # The progress bar drawing is ridiculously slow
+        if i%pb_interval==0: pb.bar(i)
         doc = (c[0].parent.document.name).upper()
         part = (c[0].get_span()).upper()
         val = (''.join(c[1].get_span().split())).upper()
-        if (part, val) in gold_dict_by_doc[doc]:
-            loader.add({candidate_attribs[0] : c[0], candidate_attribs[1] : c[1]})
+        if (doc, part, val) in gold_dict:
+            candidate_set.append(c)
+            session.add(Label(key=annotation_key, candidate=c, value=1))
+    session.commit()
     pb.close()
-
+    
 
 def entity_level_total_recall(candidates, gold_file, attribute='stg_temp_min', relation=True):
     """Checks entity-level recall of candidates compared to gold.

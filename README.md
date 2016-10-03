@@ -43,6 +43,10 @@ Finally, enable `ipywidgets`:
 jupyter nbextension enable --py widgetsnbextension --sys-prefix
 ```
 
+_Note: Currently the `Viewer` is supported on the following versions:_
+* `jupyter`: 4.1
+* `jupyter notebook`: 4.2
+
 By default (e.g. in the tutorials, etc.) we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
 
 Alternatively, `virtualenv` can be used by starting with:

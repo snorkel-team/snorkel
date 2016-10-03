@@ -1,7 +1,7 @@
 from .disc_learning import NoiseAwareModel
 from ..models import Parameter, ParameterSet
+from numbskull import NumbSkull
 from numbskull.inference import FACTORS
-from numbskull.factorgraph import FactorGraph
 from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
 import numpy as np
 import scipy.sparse as sparse
@@ -116,15 +116,59 @@ class GenerativeModel(object):
     def __init__(self, lf_prior=True, lf_propensity=True, lf_class_propensity=True, seed=271828):
         self.L = None
         self.fg = None
+
         self.lf_prior = lf_prior
         self.lf_propensity = lf_propensity
         self.lf_class_propensity = lf_class_propensity
+
         self.seed = seed
+
+
 
     def train(self, L, deps=()):
         self.L = L
         self._process_dependency_graph(deps)
         self._compile()
+        self.fg.learning(out=False)
+        self._process_learned_weights()
+
+    def marginals(self, L):
+        if self.fg is None:
+            raise ValueError("Must fit model with train() before computing marginal probabilities.")
+
+        marginals = np.ndarray(L.shape[0], dtype=float)
+
+        for i in range(L.shape[0]):
+            logp_true = self.class_prior_weight
+            logp_false = -1 * self.class_prior_weight
+
+            for j in range(L.shape[1]):
+                if L[i, j] == 1:
+                    logp_true  += self.lf_accuracy_weights[j]
+                    logp_false -= self.lf_accuracy_weights[j]
+                    logp_true  += self.lf_class_propensity_weights[j]
+                    logp_false  -= self.lf_class_propensity_weights[j]
+                elif L[i, j] == -1:
+                    logp_true  -= self.lf_accuracy_weights[j]
+                    logp_false += self.lf_accuracy_weights[j]
+                    logp_true  += self.lf_class_propensity_weights[j]
+                    logp_false  -= self.lf_class_propensity_weights[j]
+
+                for k in range(L.shape[1]):
+                    if j != k and (L[i, j] != 0 or L[i, k] == 0):
+                        if L[i, j] == -1 and L[i, k] == 1:
+                            logp_true += self.dep_fixing_weights[j, k]
+                        elif L[i, j] == 1 and L[i, k] == -1:
+                            logp_false += self.dep_fixing_weights[j, k]
+
+                        if L[i, j] == 1 and L[i, k] == 1:
+                            logp_true += self.dep_reinforcing_weights[j, k]
+                        elif L[i, j] == -1 and L[i, k] == -1:
+                            logp_false += self.dep_reinforcing_weights[j, k]
+
+            marginals[i] = 1 / (1 + np.exp(-1 * (logp_true + logp_false)))
+
+        return marginals
 
     def _process_dependency_graph(self, deps):
         """
@@ -164,13 +208,12 @@ class GenerativeModel(object):
 
         for dep_name in ('similar', 'fixing', 'reinforcing', 'exclusive'):
             dep_name = 'dep_' + dep_name
-            setattr(self, dep_name, getattr(self, dep_name).tocsr(copy=True))
-            setattr(self, dep_name + '_T', getattr(self, dep_name).transpose().tocsr(copy=True))
+            setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
     def _compile(self):
         """
-        Compiles a :class:`numbskull.factorgraph.FactorGraph` based on the current `self.L` and labeling function
-        dependencies.
+        Compiles a :class:`numbskull.Numbskull` object with a generative model based on the current `self.L` and
+        labeling function dependencies compiled as its first factor graph.
 
         The result is set as `self.fg`.
         """
@@ -274,7 +317,13 @@ class GenerativeModel(object):
         if self.lf_class_propensity:
             f_off, ftv_off, w_off = self._compile_output_factors(factor, f_off, ftv, ftv_off, w_off,
                                                                  "FUNC_DP_GEN_LF_CLASS_PROPENSITY",
-                                                                 (lambda m, n, i, j: m + n * i + j))
+                                                                 (lambda m, n, i, j: i,
+                                                                  lambda m, n, i, j: m + n * i + j))
+
+        # Loads factor graph
+        self.fg = NumbSkull(n_inference_epoch=100, n_learning_epoch=100, quiet=True)
+
+        self.fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
 
     def _compile_output_factors(self, factors, factors_offset, ftv, ftv_offset, weight_offset, factor_name, vid_funcs):
         """
@@ -298,3 +347,41 @@ class GenerativeModel(object):
                     ftv[ftv_index + i]["vid"] = vid_func(m, n, i, j)
 
         return factors_offset + m * n, ftv_offset + len(vid_funcs) * m * n, weight_offset + n
+
+    def _process_learned_weights(self):
+        m, n = self.L.shape
+
+        w = self.fg.getFactorGraph().getWeights()
+        self.class_prior_weight = w[0]
+        self.lf_accuracy_weights = w[1:1 + n]
+
+        w_off = 1 + n
+
+        if self.lf_prior:
+            self.lf_prior_weights = w[w_off:w_off + n]
+            w_off += n
+        else:
+            self.lf_prior_weights = np.zeros((n,), dtype=float)
+
+        if self.lf_propensity:
+            self.lf_propensity_weights = w[w_off:w_off + n]
+            w_off += n
+        else:
+            self.lf_propensity_weights = np.zeros((n,), dtype=float)
+
+        if self.lf_class_propensity:
+            self.lf_class_propensity_weights = w[w_off:w_off + n]
+            w_off += n
+        else:
+            self.lf_class_propensity_weights = np.zeros((n,), dtype=float)
+
+        for dep_name in ('similar', 'fixing', 'reinforcing', 'exclusive'):
+            setattr(self, 'dep_' + dep_name + '_weights', sparse.lil_matrix(self.L.shape[1], self.L.shape[1]))
+            weight_mat = getattr(self, 'dep_' + dep_name + '_weights')
+            mat = getattr(self, 'dep_' + dep_name)
+
+            for i in range(len(mat.data)):
+                weight_mat[mat.row[i], mat.col[i]] = w[w_off]
+                w_off += 1
+
+            setattr(self, 'dep_' + dep_name + '_weights', getattr(self, mat.tocsr(copy=True)))

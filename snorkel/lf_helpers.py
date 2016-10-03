@@ -97,7 +97,7 @@ def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, case_sensitiv
     :param n_max: The maximum n of the ngrams that should be returned
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    span = c if isinstance(c, TemporarySpan) else c[0] 
+    span = c if isinstance(c, TemporarySpan) else c[0]
     i    = span.get_word_start()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][max(0, i-window):i]), n_min=n_min, n_max=n_max):
@@ -191,8 +191,8 @@ def same_document(c):
     Return True if all Spans in the given candidate are from the same Document.
     :param c: The candidate whose Spans are being compared
     """
-    return (all([c[i].parent.document is not None 
-        and c[i].parent.document==c[0].parent.document for i in range(len(c.get_arguments()))])) 
+    return (all([c[i].parent.document is not None
+        and c[i].parent.document==c[0].parent.document for i in range(len(c.get_arguments()))]))
 
 
 def same_table(c):
@@ -200,8 +200,8 @@ def same_table(c):
     Return True if all Spans in the given candidate are from the same Table.
     :param c: The candidate whose Spans are being compared
     """
-    return (all([c[i].parent.table is not None 
-        and c[i].parent.table==c[0].parent.table for i in range(len(c.get_arguments()))])) 
+    return (all([c[i].parent.table is not None
+        and c[i].parent.table==c[0].parent.table for i in range(len(c.get_arguments()))]))
 
 
 def same_cell(c):
@@ -209,8 +209,8 @@ def same_cell(c):
     Return True if all Spans in the given candidate are from the same Cell.
     :param c: The candidate whose Spans are being compared
     """
-    return (all([c[i].parent.cell is not None 
-        and c[i].parent.cell==c[0].parent.cell for i in range(len(c.get_arguments()))])) 
+    return (all([c[i].parent.cell is not None
+        and c[i].parent.cell==c[0].parent.cell for i in range(len(c.get_arguments()))]))
 
 
 def same_phrase(c):
@@ -218,8 +218,8 @@ def same_phrase(c):
     Return True if all Spans in the given candidate are from the same Phrase.
     :param c: The candidate whose Spans are being compared
     """
-    return (all([c[i].parent is not None 
-        and c[i].parent==c[0].parent for i in range(len(c.get_arguments()))])) 
+    return (all([c[i].parent is not None
+        and c[i].parent==c[0].parent for i in range(len(c.get_arguments()))]))
 
 # TODO: write these
 # def same_row(c):
@@ -257,14 +257,14 @@ def get_cell_ngrams(span, attrib='words', n_min=1, n_max=1, case_sensitive=False
     if (not isinstance(span.parent, Phrase) or
         span.parent.cell is None): return
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    for ngram in (chain.from_iterable(tokens_to_ngrams(map(f, getattr(phrase,attrib)), n_min=n_min, n_max=n_max) 
+    for ngram in (chain.from_iterable(tokens_to_ngrams(map(f, getattr(phrase,attrib)), n_min=n_min, n_max=n_max)
         for phrase in span.parent.cell.phrases)):
         yield ngram
 
 
 def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
-    Get the ngrams from all Cells that are within a given Cell distance in one direction from the given span  
+    Get the ngrams from all Cells that are within a given Cell distance in one direction from the given span
     :param span: The span whose neighbor Cells are being searched
     :param dist: The Cell distance within which a neighbor Cell must be to be considered
     :param directions: A Boolean expressing whether or not to return the direction of each ngram
@@ -298,14 +298,14 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
                         direction = "LEFT"
                 for ngram in tokens_to_ngrams(map(f, getattr(phrase, attrib)), n_min=n_min, n_max=n_max):
                     yield (ngram, direction)
-            else: 
+            else:
                 for ngram in tokens_to_ngrams(map(f, getattr(phrase, attrib)), n_min=n_min, n_max=n_max):
                     yield  ngram
 
 
 def get_row_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
-    Get the ngrams from all Cells that are in the same row as the given span 
+    Get the ngrams from all Cells that are in the same row as the given span
     :param span: The span whose neighbor Cells are being searched
     :param infer: If True, then if a Cell is empty, use the contents from the first non-empty Cell above it
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
@@ -319,7 +319,7 @@ def get_row_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sen
 
 def get_col_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
-    Get the ngrams from all Cells that are in the same column as the given span 
+    Get the ngrams from all Cells that are in the same column as the given span
     :param span: The span whose neighbor Cells are being searched
     :param infer: If True, then if a Cell is empty, use the contents from the first non-empty Cell to the left of it
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
@@ -333,7 +333,7 @@ def get_col_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sen
 
 def get_aligned_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
-    Get the ngrams from all Cells that are in the same row or column as the given span 
+    Get the ngrams from all Cells that are in the same row or column as the given span
     :param span: The span whose neighbor Cells are being searched
     :param infer: Refer to get_[row/col]_ngrams for description
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
@@ -357,7 +357,7 @@ def _get_axis_ngrams(span, axis, infer=False, attrib='words', n_min=1, n_max=1, 
         span.parent.cell is None): return
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     for phrase in _get_aligned_phrases(span.parent, axis, infer=infer):
-        for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max): 
+        for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max):
             yield f(ngram)
 
 
@@ -366,13 +366,15 @@ def _get_aligned_cells(root_cell, axis, infer=False):
     aligned_cells = [cell for cell in root_cell.table.cells
         if getattr(cell, axis) == getattr(root_cell, axis)
         and cell != root_cell]
-    return [_infer_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells 
+    return [_infer_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells
 
 
 def _get_aligned_phrases(root_phrase, axis, infer=False):
     if infer:
         other_axis = 'row' if axis=='col' else 'col'
-        return [phrase for phrase in _infer_cell(cell, other_axis) for cell in getattr(root_phrase, axis).cells]
+        # TODO: There seems to be some discrepency in the order of this list comprehension.
+        # This is what is needed for Python 2.7.
+        return [phrase for cell in getattr(root_phrase, axis).cells for phrase in _infer_cell(cell, other_axis).phrases]
     else:
         return [phrase for phrase in getattr(root_phrase, axis).phrases]
 

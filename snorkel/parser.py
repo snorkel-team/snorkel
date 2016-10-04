@@ -327,6 +327,12 @@ class OmniParser(object):
                     yield Phrase(**parts)
                     self.phrase_idx += 1
             else: # isinstance(child, Tag) = True
+                # TODO: find replacement for this check to reset table to None
+                if "table" not in [parent.name for parent in child.parents]:
+                    table = None
+                    row = None
+                    col = None
+                    cell = None
                 if child.name == "table":
                     self.table_idx += 1
                     self.row_num = -1

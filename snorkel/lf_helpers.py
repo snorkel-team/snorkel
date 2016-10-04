@@ -258,9 +258,12 @@ def get_cell_ngrams(span, attrib='words', n_min=1, n_max=1, case_sensitive=False
     if (not isinstance(span.parent, Phrase) or
         span.parent.cell is None): return
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    for ngram in (chain.from_iterable(tokens_to_ngrams(map(f, getattr(phrase,attrib)), n_min=n_min, n_max=n_max)
-        for phrase in span.parent.cell.phrases)):
+    for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
         yield ngram
+    for ngram in chain.from_iterable([tokens_to_ngrams(map(f, getattr(phrase,attrib)), n_min=n_min, n_max=n_max) \
+        for phrase in span.parent.cell.phrases if phrase != span.parent]):
+        yield ngram
+    
 
 
 def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):

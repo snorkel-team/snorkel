@@ -9,7 +9,7 @@ def compile_entity_feature_generator():
   Given optional arguments, returns a generator function which accepts an xml root
   and a list of indexes for a mention, and will generate relation features for this entity
   """
-  
+
   BASIC_ATTRIBS_REL = ['lemma', 'dep_label']
 
   m = Mention(0)
@@ -35,7 +35,7 @@ def get_ddlib_feats(context, idxs):
   """
   for seq_feat in _get_seq_features(context, idxs):
     yield seq_feat
-  
+
   for window_feat in _get_window_features(context, idxs):
     yield window_feat
 
@@ -135,7 +135,7 @@ def tabledlib_unary_features(span):
         yield u"ROW_NUM_[%s]" % phrase.row_num
         yield u"COL_NUM_[%s]" % phrase.col_num
         for attrib in ['words']: #,'lemmas','pos_tags', 'ner_tags']:
-            for ngram in get_row_ngrams(span, n_max=3, attrib=attrib):
+            for ngram in get_row_ngrams(span, infer=True, n_max=3, attrib=attrib):
                 yield "ROW_%s_[%s]" % (attrib.upper(), ngram)
                 if attrib=="lemmas":
                     try:
@@ -145,7 +145,7 @@ def tabledlib_unary_features(span):
                             yield u"ROW_FLOAT"
                     except:
                         pass
-            for ngram in get_col_ngrams(span, n_max=3, attrib=attrib):
+            for ngram in get_col_ngrams(span, infer=True, n_max=3, attrib=attrib):
                 yield "COL_%s_[%s]" % (attrib.upper(), ngram)
                 if attrib=="lemmas":
                     try:

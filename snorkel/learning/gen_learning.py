@@ -4,6 +4,7 @@ from numbskull import NumbSkull
 from numbskull.inference import FACTORS
 from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
 import numpy as np
+import random
 import scipy.sparse as sparse
 from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
 
@@ -11,6 +12,10 @@ DEP_SIMILAR = 0
 DEP_FIXING = 1
 DEP_REINFORCING = 2
 DEP_EXCLUSIVE = 3
+
+DEFAULT_MU = 1e-6
+DEFAULT_RATE = 0.01
+DEFAULT_ALPHA = 0.5
 
 
 class NaiveBayes(NoiseAwareModel):
@@ -112,6 +117,7 @@ class GenerativeModel(object):
     :param lf_prior:
     :param lf_propensity:
     :param lf_class_propensity:
+    :param seed:
     """
     def __init__(self, lf_prior=True, lf_propensity=True, lf_class_propensity=True, seed=271828):
         self.L = None
@@ -121,13 +127,19 @@ class GenerativeModel(object):
         self.lf_propensity = lf_propensity
         self.lf_class_propensity = lf_class_propensity
 
-        self.seed = seed
+        self.rng = random.Random()
+        self.rng.seed(seed)
 
-
+        # These names of factor types are for the convenience of several methods that perform the same operations over
+        # multiple types, but this class's behavior is not fully specified here. Other methods, such as marginals(),
+        # as well as maps defined within methods, require manual adjustments to implement changes.
+        self.optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
+        self.dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
 
     def train(self, L, deps=()):
         self.L = L
         self._process_dependency_graph(deps)
+        self.fg = NumbSkull(n_inference_epoch=100, n_learning_epoch=100, quiet=True)
         self._compile()
         self.fg.learning(out=False)
         self._process_learned_weights()
@@ -184,50 +196,43 @@ class GenerativeModel(object):
 
         :param deps: iterable of tuples of the form (lf_1, lf_2, type)
         """
-        self.dep_similar = sparse.lil_matrix(self.L.shape[1], self.L.shape[1])
-        self.dep_fixing = sparse.lil_matrix(self.L.shape[1], self.L.shape[1])
-        self.dep_reinforcing = sparse.lil_matrix(self.L.shape[1], self.L.shape[1])
-        self.dep_exclusive = sparse.lil_matrix(self.L.shape[1], self.L.shape[1])
+        dep_name_map = {
+            DEP_SIMILAR: 'dep_similar',
+            DEP_FIXING: 'dep_fixing',
+            DEP_REINFORCING: 'dep_reinforcing',
+            DEP_EXCLUSIVE: 'dep_exclusive'
+        }
+
+        for dep_name in self.dep_names:
+            setattr(self, dep_name, sparse.lil_matrix(self.L.shape[1], self.L.shape[1]))
 
         for lf1, lf2, dep_type in deps:
             if lf1 == lf2:
                 raise ValueError("Invalid dependency. Labeling function cannot depend on itself.")
 
-            if dep_type == DEP_SIMILAR:
-                dep_mat = self.dep_similar
-            elif dep_type == DEP_FIXING:
-                dep_mat = self.dep_fixing
-            elif dep_type == DEP_REINFORCING:
-                dep_mat = self.dep_reinforcing
-            elif dep_type == DEP_EXCLUSIVE:
-                dep_mat = self.dep_exclusive
+            if dep_type in dep_name_map:
+                dep_mat = getattr(self, dep_name_map[dep_type])
             else:
                 raise ValueError("Unrecognized dependency type: " + unicode(dep_type))
 
             dep_mat[lf1, lf2] = 1
 
-        for dep_name in ('similar', 'fixing', 'reinforcing', 'exclusive'):
-            dep_name = 'dep_' + dep_name
+        for dep_name in self.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
     def _compile(self):
         """
-        Compiles a :class:`numbskull.Numbskull` object with a generative model based on the current `self.L` and
-        labeling function dependencies compiled as its first factor graph.
-
-        The result is set as `self.fg`.
+        Compiles a generative model based on the current `self.L` and labeling function dependencies compiled as the
+        next factor graph in `self.fg`, which is assumed to be an instance of :class:`numbskull.Numbskull`.
         """
         m, n = self.L.shape()
 
         n_weights = 1 + n
-        if self.lf_prior:
-            n_weights += n
-        if self.lf_propensity:
-            n_weights += n
-        if self.lf_class_propensity:
-            n_weights += n
-        n_weights += self.dep_similar.getnnz() + self.dep_fixing.getnnz() + \
-                     self.dep_reinforcing.getnnz() + self.dep_exclusive.getnnz()
+        for optional_name in self.optional_names:
+            if getattr(self, optional_name):
+                n_weights += n
+        for dep_name in self.dep_names:
+            n_weights += getattr(self, dep_name).getnnz()
 
         n_vars = m * (n + 1)
         n_factors = m * n_weights
@@ -258,15 +263,14 @@ class GenerativeModel(object):
         weight[0]['initialValue'] = -1
         for i in range(1, weight.shape[0]):
             weight[i]['isFixed'] = False
-            weight[i]['initialValue'] = 1.1 - .2 * random.random()
+            weight[i]['initialValue'] = 1.1 - .2 * self.rng.random()
 
         #
         # Compiles variable matrix
         #
-        init_values = (0, 1)
         for i in range(m):
             variable[i]['isEvidence'] = False
-            variable[i]['initialValue'] = random.choose(init_values)
+            variable[i]['initialValue'] = self.rng.randrange(0, 2)
             variable[i]["dataType"] = 1
             variable[i]["cardinality"] = 2
 
@@ -301,28 +305,59 @@ class GenerativeModel(object):
             ftv[i]["vid"] = i
 
         # Factors over labeling function outputs
-        f_off, ftv_off, w_off = self._compile_output_factors(factor, m, ftv, m, 1,
-                                                             "FUNC_DP_GEN_LF_ACCURACY",
-                                                             (lambda m, n, i, j: i,
-                                                              lambda m, n, i, j: m + n * i + j))
-        if self.lf_prior:
-            f_off, ftv_off, w_off = self._compile_output_factors(factor, f_off, ftv, ftv_off, w_off,
-                                                                 "FUNC_DP_GEN_LF_PRIOR",
-                                                                 (lambda m, n, i, j: m + n * i + j))
-        if self.lf_propensity:
-            f_off, ftv_off, w_off = self._compile_output_factors(factor, f_off, ftv, ftv_off, w_off,
-                                                                 "FUNC_DP_GEN_LF_PROPENSITY",
-                                                                 (lambda m, n, i, j: m + n * i + j))
+        f_off, ftv_off, w_off = self._compile_output_factors(factor, m, ftv, m, 1, "FUNC_DP_GEN_LF_ACCURACY",
+                                                             (lambda m, n, i, j: i, lambda m, n, i, j: m + n * i + j))
 
-        if self.lf_class_propensity:
-            f_off, ftv_off, w_off = self._compile_output_factors(factor, f_off, ftv, ftv_off, w_off,
-                                                                 "FUNC_DP_GEN_LF_CLASS_PROPENSITY",
-                                                                 (lambda m, n, i, j: i,
-                                                                  lambda m, n, i, j: m + n * i + j))
+        optional_name_map = {
+            'lf_prior':
+                ('FUNC_DP_GEN_LF_PRIOR', (
+                    lambda m, n, i, j: m + n * i + j,)),
+            'lf_propensity':
+                ('FUNC_DP_GEN_LF_PROPENSITY', (
+                    lambda m, n, i, j: m + n * i + j,)),
+            'lf_class_propensity':
+                ('FUNC_DP_GEN_LF_CLASS_PROPENSITY', (
+                    lambda m, n, i, j: i,
+                    lambda m, n, i, j: m + n * i + j)),
+        }
+
+        for optional_name in self.optional_names:
+            if getattr(self, optional_name):
+                f_off, ftv_off, w_off = self._compile_output_factors(factor, f_off, ftv, ftv_off, w_off,
+                                                                     optional_name_map[optional_name][0],
+                                                                     optional_name_map[optional_name][1])
+
+        # Factors for labeling function dependencies
+        dep_name_map = {
+            'dep_similar':
+                ('FUNC_DP_GEN_DEP_SIMILAR', (
+                    lambda m, n, i, j, k: m + n * i + j,
+                    lambda m, n, i, j, k: m + n * i + k)),
+            'dep_fixing':
+                ('FUNC_DP_GEN_DEP_FIXING', (
+                    lambda m, n, i, j, k: i,
+                    lambda m, n, i, j, k: m + n * i + j,
+                    lambda m, n, i, j, k: m + n * i + k)),
+            'dep_reinforcing':
+                ('FUNC_DP_GEN_DEP_REINFORCING', (
+                    lambda m, n, i, j, k: i,
+                    lambda m, n, i, j, k: m + n * i + j,
+                    lambda m, n, i, j, k: m + n * i + k)),
+            'dep_exclusive':
+                ('FUNC_DP_GEN_DEP_EXCLUSIVE', (
+                    lambda m, n, i, j, k: m + n * i + j,
+                    lambda m, n, i, j, k: m + n * i + k))
+        }
+
+        for dep_name in self.dep_names:
+            mat = getattr(self, dep_name)
+            for i in range(len(mat.data)):
+                f_off, ftv_off, w_off = self._compile_dep_factors(factor, f_off, ftv, ftv_off, w_off,
+                                                                  mat.row[i], mat.col[i],
+                                                                  dep_name_map[dep_name][0],
+                                                                  dep_name_map[dep_name][1])
 
         # Loads factor graph
-        self.fg = NumbSkull(n_inference_epoch=100, n_learning_epoch=100, quiet=True)
-
         self.fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
 
     def _compile_output_factors(self, factors, factors_offset, ftv, ftv_offset, weight_offset, factor_name, vid_funcs):
@@ -348,40 +383,50 @@ class GenerativeModel(object):
 
         return factors_offset + m * n, ftv_offset + len(vid_funcs) * m * n, weight_offset + n
 
+    def _compile_dep_factors(self, factors, factors_offset, ftv, ftv_offset, weight_offset, j, k, factor_name, vid_funcs):
+        """
+        Compiles factors for dependencies between pairs of labeling functions (possibly also depending on the latent
+        class label).
+        """
+        m, n = self.L.shape
+
+        for i in range(m):
+            factors_index = factors_offset + i
+            ftv_index = ftv_offset + len(vid_funcs) * i
+
+            factors[factors_index]["factorFunction"] = FACTORS[factor_name]
+            factors[factors_index]["weightId"] = weight_offset
+            factors[factors_index]["featureValue"] = 1
+            factors[factors_index]["arity"] = len(vid_funcs)
+            factors[factors_index]["ftv_offset"] = ftv_offset
+
+            for i, vid_func in enumerate(vid_funcs):
+                ftv[ftv_index + i]["vid"] = vid_func(m, n, i, j, k)
+
+        return factors_offset + m, ftv_offset + len(vid_funcs) * m, weight_offset + 1
+
     def _process_learned_weights(self):
         m, n = self.L.shape
 
         w = self.fg.getFactorGraph().getWeights()
         self.class_prior_weight = w[0]
         self.lf_accuracy_weights = w[1:1 + n]
-
         w_off = 1 + n
 
-        if self.lf_prior:
-            self.lf_prior_weights = w[w_off:w_off + n]
-            w_off += n
-        else:
-            self.lf_prior_weights = np.zeros((n,), dtype=float)
+        for optional_name in self.optional_names:
+            if getattr(self, optional_name):
+                setattr(self, optional_name + '_weights', w[w_off:w_off + n])
+                w_off += n
+            else:
+                setattr(self, optional_name + '_weights', np.zeros(n, dtype=float))
 
-        if self.lf_propensity:
-            self.lf_propensity_weights = w[w_off:w_off + n]
-            w_off += n
-        else:
-            self.lf_propensity_weights = np.zeros((n,), dtype=float)
-
-        if self.lf_class_propensity:
-            self.lf_class_propensity_weights = w[w_off:w_off + n]
-            w_off += n
-        else:
-            self.lf_class_propensity_weights = np.zeros((n,), dtype=float)
-
-        for dep_name in ('similar', 'fixing', 'reinforcing', 'exclusive'):
-            setattr(self, 'dep_' + dep_name + '_weights', sparse.lil_matrix(self.L.shape[1], self.L.shape[1]))
-            weight_mat = getattr(self, 'dep_' + dep_name + '_weights')
-            mat = getattr(self, 'dep_' + dep_name)
+        for dep_name in self.dep_names:
+            mat = getattr(self, dep_name)
+            setattr(self, dep_name + '_weights', sparse.lil_matrix(self.L.shape[1], self.L.shape[1]))
+            weight_mat = getattr(self, dep_name + '_weights')
 
             for i in range(len(mat.data)):
                 weight_mat[mat.row[i], mat.col[i]] = w[w_off]
                 w_off += 1
 
-            setattr(self, 'dep_' + dep_name + '_weights', getattr(self, mat.tocsr(copy=True)))
+            setattr(self, dep_name + '_weights', getattr(self, weight_mat.tocsr(copy=True)))

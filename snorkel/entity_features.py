@@ -134,8 +134,8 @@ def tabledlib_unary_features(span):
     if phrase.row_num is not None and phrase.col_num is not None:
         yield u"ROW_NUM_[%s]" % phrase.row_num
         yield u"COL_NUM_[%s]" % phrase.col_num
-        for attrib in ['words']: #,'lemmas','pos_tags', 'ner_tags']:
-            for ngram in get_row_ngrams(span, infer=True, n_max=3, attrib=attrib):
+        for attrib in ['lemmas']: #,'words', 'pos_tags', 'ner_tags']:
+            for ngram in get_row_ngrams(span, n_max=2, attrib=attrib):
                 yield "ROW_%s_[%s]" % (attrib.upper(), ngram)
                 if attrib=="lemmas":
                     try:
@@ -145,7 +145,7 @@ def tabledlib_unary_features(span):
                             yield u"ROW_FLOAT"
                     except:
                         pass
-            for ngram in get_col_ngrams(span, infer=True, n_max=3, attrib=attrib):
+            for ngram in get_col_ngrams(span, n_max=2, attrib=attrib):
                 yield "COL_%s_[%s]" % (attrib.upper(), ngram)
                 if attrib=="lemmas":
                     try:
@@ -155,6 +155,10 @@ def tabledlib_unary_features(span):
                             yield u"COL_FLOAT"
                     except:
                         pass
+            for ngram in get_row_ngrams(span, n_max=2, attrib=attrib, direct=False, infer=True):
+                yield "ROW_INFERRED_%s_[%s]" % (attrib.upper(), ngram)         
+            for ngram in get_col_ngrams(span, n_max=2, attrib=attrib, direct=False, infer=True):
+                yield "COL_INFERRED_%s_[%s]" % (attrib.upper(), ngram)         
             # for (ngram, direction) in get_neighbor_cell_ngrams(span, dist=2, directions=True, n_max=3, attrib=attrib):
             #     yield "NEIGHBOR_%s_%s_[%s]" % (direction, attrib.upper(), ngram)
             #     if attrib=="lemmas":

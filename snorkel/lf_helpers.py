@@ -1,6 +1,7 @@
 from .models import SnorkelSession, TemporarySpan, Span, Cell, Phrase
 from itertools import chain
 from utils import tokens_to_ngrams
+from collections import namedtuple
 import re
 
 
@@ -303,7 +304,7 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
                     yield  ngram
 
 
-def get_row_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+def get_row_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
     Get the ngrams from all Cells that are in the same row as the given span
     :param span: The span whose neighbor Cells are being searched
@@ -313,11 +314,11 @@ def get_row_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sen
     :param n_max: The maximum n of the ngrams that should be returned
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    for ngram in _get_axis_ngrams(span, axis='row', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+    for ngram in _get_axis_ngrams(span, axis='row', direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
         yield ngram
 
 
-def get_col_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+def get_col_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
     Get the ngrams from all Cells that are in the same column as the given span
     :param span: The span whose neighbor Cells are being searched
@@ -327,11 +328,11 @@ def get_col_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sen
     :param n_max: The maximum n of the ngrams that should be returned
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    for ngram in _get_axis_ngrams(span, axis='col', infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+    for ngram in _get_axis_ngrams(span, axis='col', direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
         yield ngram
 
 
-def get_aligned_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+def get_aligned_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     """
     Get the ngrams from all Cells that are in the same row or column as the given span
     :param span: The span whose neighbor Cells are being searched
@@ -341,51 +342,56 @@ def get_aligned_ngrams(span, infer=False, attrib='words', n_min=1, n_max=1, case
     :param n_max: The maximum n of the ngrams that should be returned
     :param case_sensitive: If false, all ngrams will be returned in lower case
     """
-    for ngram in get_row_ngrams(span, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+    for ngram in get_row_ngrams(span, direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
         yield ngram
-    for ngram in get_col_ngrams(span, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
+    for ngram in get_col_ngrams(span, direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, case_sensitive=case_sensitive):
         yield ngram
 
 # TODO: write this LF helper (get furthest north and west cell's ngrams)
 # def get_head_ngrams
 # ...sorted(_get_aligned_cells(cell, axis, infer=False), key=lambda x: getattr(x,axis_name))[0]
 
-def _get_axis_ngrams(span, axis, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
+def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min=1, n_max=1, case_sensitive=False):
     if not isinstance(span, TemporarySpan):
         raise ValueError("Handles Span-type Candidate arguments only")
     if (not isinstance(span.parent, Phrase) or
         span.parent.cell is None): return
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    for phrase in _get_aligned_phrases(span.parent, axis, infer=infer):
+    for phrase in _get_aligned_phrases(span.parent, axis, direct=direct, infer=infer):
         for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max):
             yield f(ngram)
 
 
-def _get_aligned_cells(root_cell, axis, infer=False):
-    other_axis = 'row' if axis=='col' else 'col'
+def _get_aligned_cells(root_cell, axis, direct=True, infer=False):
     aligned_cells = [cell for cell in root_cell.table.cells
         if getattr(cell, axis) == getattr(root_cell, axis)
         and cell != root_cell]
-    return [_infer_cell(cell, other_axis) for cell in aligned_cells] if infer else aligned_cells
+    return [_infer_cell(cell, _other_axis(axis), direct=direct, infer=infer) \
+        for cell in aligned_cells] if infer else aligned_cells
 
 
-def _get_aligned_phrases(root_phrase, axis, infer=False):
-    if infer:
-        other_axis = 'row' if axis=='col' else 'col'
-        # TODO: There seems to be some discrepency in the order of this list comprehension.
-        # This is what is needed for Python 2.7.
-        return [phrase for cell in getattr(root_phrase, axis).cells for phrase in _infer_cell(cell, other_axis).phrases]
-    else:
-        return [phrase for phrase in getattr(root_phrase, axis).phrases]
+def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False):
+    # TODO: There seems to be some discrepency in the order of this list comprehension.
+    # This is what is needed for Python 2.7.
+    return [phrase for cell in getattr(root_phrase, axis).cells if cell != root_phrase.cell \
+                for phrase in _infer_cell(cell, _other_axis(axis), direct, infer).phrases]
 
-
-def _infer_cell(root_cell, axis):
-    other_axis = 'row' if axis=='col' else 'col'
+PhantomCell = namedtuple('PhantomCell','phrases')
+def _infer_cell(root_cell, axis, direct, infer):
+    # NOTE: not defined for direct = False and infer = False
     # TODO: Fix this hack; checking for len(text)==9 checks if cell is "<td></td>"
-    if len(root_cell.text)!=9 or getattr(root_cell, other_axis).position == 0:
+    empty = len(root_cell.text) == 9
+    edge = getattr(root_cell, _other_axis(axis)).position == 0
+    if direct and (not empty or edge or not infer):
         return root_cell
     else:
-        neighbor_cell = [cell for cell in root_cell.table.cells
-            if getattr(cell, axis) == getattr(root_cell, axis)
-            and getattr(cell, other_axis).position == getattr(root_cell, other_axis).position - 1]
-        return _infer_cell(neighbor_cell[0], axis)
+        if edge or not empty:
+            return PhantomCell(phrases=[]) 
+        else:
+            neighbor_cells = [cell for cell in root_cell.table.cells
+                if getattr(cell, axis) == getattr(root_cell, axis)
+                and getattr(cell, _other_axis(axis)).position == getattr(root_cell, _other_axis(axis)).position - 1]
+            return _infer_cell(neighbor_cells[0], axis, direct=True, infer=True)
+
+def _other_axis(axis):
+    return 'row' if axis=='col' else 'col'

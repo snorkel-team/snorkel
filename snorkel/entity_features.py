@@ -131,30 +131,36 @@ def tabledlib_unary_features(span):
         yield u"HTML_ANC_TAG_[" + tag + "]"
     # for attr in phrase.html_anc_attrs:
         # yield u"HTML_ANC_ATTR_[" + attr + "]"
-    if phrase.row_num is not None and phrase.col_num is not None:
-        yield u"ROW_NUM_[%s]" % phrase.row_num
-        yield u"COL_NUM_[%s]" % phrase.col_num
-        for attrib in ['lemmas']: #,'words', 'pos_tags', 'ner_tags']:
+    for attrib in ['lemmas']: #,'words', 'pos_tags', 'ner_tags']:
+        for ngram in get_left_ngrams(span, window=7, n_max=2, attrib=attrib):
+            yield "LEFT_%s_[%s]" % (attrib.upper(), ngram)
+        for ngram in get_right_ngrams(span, window=7, n_max=2, attrib=attrib):
+            yield "RIGHT_%s_[%s]" % (attrib.upper(), ngram)
+        if phrase.row_num is not None and phrase.col_num is not None:
+            for ngram in get_cell_ngrams(span, n_max=2, attrib=attrib):
+                yield "CELL_%s_[%s]" % (attrib.upper(), ngram)
+            yield u"ROW_NUM_[%s]" % phrase.row_num
+            yield u"COL_NUM_[%s]" % phrase.col_num
             for ngram in get_row_ngrams(span, n_max=2, attrib=attrib):
                 yield "ROW_%s_[%s]" % (attrib.upper(), ngram)
-                if attrib=="lemmas":
-                    try:
-                        if float(ngram).is_integer():
-                            yield u"ROW_INT"
-                        else:
-                            yield u"ROW_FLOAT"
-                    except:
-                        pass
+                # if attrib=="lemmas":
+                #     try:
+                #         if float(ngram).is_integer():
+                #             yield u"ROW_INT"
+                #         else:
+                #             yield u"ROW_FLOAT"
+                #     except:
+                #         pass
             for ngram in get_col_ngrams(span, n_max=2, attrib=attrib):
                 yield "COL_%s_[%s]" % (attrib.upper(), ngram)
-                if attrib=="lemmas":
-                    try:
-                        if float(ngram).is_integer():
-                            yield u"COL_INT"
-                        else:
-                            yield u"COL_FLOAT"
-                    except:
-                        pass
+                # if attrib=="lemmas":
+                #     try:
+                #         if float(ngram).is_integer():
+                #             yield u"COL_INT"
+                #         else:
+                #             yield u"COL_FLOAT"
+                #     except:
+                #         pass
             for ngram in get_row_ngrams(span, n_max=2, attrib=attrib, direct=False, infer=True):
                 yield "ROW_INFERRED_%s_[%s]" % (attrib.upper(), ngram)         
             for ngram in get_col_ngrams(span, n_max=2, attrib=attrib, direct=False, infer=True):
@@ -171,12 +177,12 @@ def tabledlib_unary_features(span):
             #             pass
 
 def tabledlib_binary_features(span1, span2, s1_idxs, s2_idxs):
-    for feat in get_ddlib_feats(get_as_dict(span1.parent), s1_idxs):
-        yield "e1_" + feat
+    # for feat in get_ddlib_feats(get_as_dict(span1.parent), s1_idxs):
+    #     yield "DDL_e1_" + feat
     for feat in tabledlib_unary_features(span1):
         yield "e1_" + feat
-    for feat in get_ddlib_feats(get_as_dict(span2.parent), s2_idxs):
-        yield "e2_" + feat
+    # for feat in get_ddlib_feats(get_as_dict(span2.parent), s2_idxs):
+    #     yield "DDL_e2_" + feat
     for feat in tabledlib_unary_features(span2):
         yield "e2_" + feat
     if span1.parent.table is not None and span2.parent.table is not None:

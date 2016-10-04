@@ -2,7 +2,7 @@ import csv
 import codecs
 from collections import defaultdict
 from snorkel.candidates import OmniNgrams
-from snorkel.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, Label
+from snorkel.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, AnnotationKeySet, Label
 from snorkel.utils import ProgressBar
 from snorkel.loaders import create_or_fetch
 from difflib import SequenceMatcher
@@ -148,9 +148,14 @@ def count_hardware_labels(candidates, filename, attrib, attrib_class):
 
 
 def load_hardware_labels(session, label_set_name, annotation_key_name, candidates, filename, gold_attrib='stg_temp_min'):
+    gold_dict = get_gold_dict(filename, attrib=gold_attrib)
     candidate_set   = create_or_fetch(session, CandidateSet, label_set_name)
     annotation_key  = create_or_fetch(session, AnnotationKey, annotation_key_name)
-    gold_dict = get_gold_dict(filename, gold_attrib)
+    key_set         = create_or_fetch(session, AnnotationKeySet, annotation_key_name)
+    if annotation_key not in key_set.keys:
+        key_set.append(annotation_key)
+    session.commit()
+
     cand_total = len(candidates)
     pb = ProgressBar(cand_total)
     print 'Loading', cand_total, 'candidate labels'
@@ -166,6 +171,7 @@ def load_hardware_labels(session, label_set_name, annotation_key_name, candidate
             session.add(Label(key=annotation_key, candidate=c, value=1))
     session.commit()
     pb.close()
+    return (candidate_set, annotation_key)
     
 
 def entity_level_total_recall(candidates, gold_file, attribute='stg_temp_min', relation=True):

@@ -49,13 +49,12 @@ def get_span_feats(candidate):
         s2_idxs       = range(span2.get_word_start(), span2.get_word_end() + 1)
         if len(s1_idxs) > 0 and len(s2_idxs) > 0:
 
-            # TODO: consider if DDL feats should go here?
-
             # Apply TreeDLib relation features
             for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs):
                 yield 'TDL_' + f, 1
             
             # Add TableDLib relation features (if applicable)
+            # NOTE: TableDLib for relations calls DDLIB on entities internally
             if isinstance(span1.parent, Phrase) or isinstance(span2.parent, Phrase):
                 for f in get_tabledlib_feats(span1, span2, s1_idxs, s2_idxs):
                     yield 'TAB_' + f, 1

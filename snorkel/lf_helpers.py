@@ -100,8 +100,7 @@ def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
     """
     span = c if isinstance(c, TemporarySpan) else c[0]
     i    = span.get_word_start()
-    f = (lambda w: w.lower()) if lower else (lambda w: w) 
-    for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][max(0, i-window):i]), n_min=n_min, n_max=n_max):
+    for ngram in tokens_to_ngrams(span.parent._asdict()[attrib][max(0, i-window):i], n_min=n_min, n_max=n_max, lower=lower):
         yield ngram
 
 
@@ -123,8 +122,7 @@ def get_right_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
     """
     span = c if isinstance(c, TemporarySpan) else c[-1]
     i    = span.get_word_end()
-    f = (lambda w: w.lower()) if lower else (lambda w: w) 
-    for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][i+1:i+1+window]), n_min=n_min, n_max=n_max):
+    for ngram in tokens_to_ngrams(span.parent._asdict()[attrib][i+1:i+1+window], n_min=n_min, n_max=n_max, lower=lower):
         yield ngram
 
 
@@ -141,7 +139,7 @@ def contains_token(c, tok, attrib='words', lower=True):
         for span in spans))
 
 
-def contains_regex(c, rgx=None, attrib='words', sep=" ", lower=True):
+def contains_regex(c, rgx=None, attrib='words', sep=" ", ignore_case=True):
     """
     Return True if any of the contituent Spans contain the given regular expression
     :param rgx: The regex being searched for
@@ -150,7 +148,7 @@ def contains_regex(c, rgx=None, attrib='words', sep=" ", lower=True):
     :param lower: If false, all ngrams will be returned in lower case
     """
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
-    r = re.compile(rgx, flags=re.I if not lower else 0)
+    r = re.compile(rgx, flags=re.I if ignore_case else 0)
     return any([r.search(span.get_attrib_span(attrib, sep=sep)) is not None for span in spans])
 
 
@@ -255,11 +253,10 @@ def get_cell_ngrams(span, attrib='words', n_min=1, n_max=1, lower=True):
     """
     if not isinstance(span, TemporarySpan):
         raise ValueError("Handles Span-type Candidate arguments only")
-    f = (lambda w: w.lower()) if lower else (lambda w: w) 
     for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
-        yield f(ngram)
+        yield ngram
     if span.parent.cell is not None:
-        for ngram in chain.from_iterable([tokens_to_ngrams(map(f, getattr(phrase,attrib)), n_min=n_min, n_max=n_max) \
+        for ngram in chain.from_iterable([tokens_to_ngrams(getattr(phrase,attrib), n_min=n_min, n_max=n_max, lower=lower) \
             for phrase in span.parent.cell.phrases if phrase != span.parent]):
             yield ngram
     
@@ -279,9 +276,8 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
     # TODO: Fix this to be more efficient (optimize with SQL query)
     if not isinstance(span, TemporarySpan):
         raise ValueError("Handles Span-type Candidate arguments only")
-    f = (lambda w: w.lower()) if lower else (lambda w: w) 
     for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
-        yield f(ngram)
+        yield ngram
     if span.parent.cell is not None:
         root_cell = span.parent.cell
         for phrase in chain.from_iterable([root_cell.row.phrases, root_cell.col.phrases]):
@@ -300,10 +296,10 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
                             direction = "RIGHT"
                         elif  0 > col_diff and col_diff >= -dist:
                             direction = "LEFT"
-                    for ngram in tokens_to_ngrams(map(f, getattr(phrase, attrib)), n_min=n_min, n_max=n_max):
+                    for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
                         yield (ngram, direction)
                 else:
-                    for ngram in tokens_to_ngrams(map(f, getattr(phrase, attrib)), n_min=n_min, n_max=n_max):
+                    for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
                         yield  ngram
 
 
@@ -350,6 +346,16 @@ def get_aligned_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, 
     for ngram in get_col_ngrams(span, direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
         yield ngram
 
+# def get_head_ngrams(span, direction, attrib='words', n_min=1, n_max=1, lower=True):
+#     if not isinstance(span, TemporarySpan):
+#         raise ValueError("Handles Span-type Candidate arguments only")
+#     if not span.parent.cell:
+#         return
+#     else:
+#         for phrase in _get_head_cell(span.parent.cell).phrases:
+#             for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
+#                 yield ngram
+
 # TODO: write this LF helper (get furthest north and west cell's ngrams)
 # def get_head_ngrams
 # ...sorted(_get_aligned_cells(cell, axis, infer=False), key=lambda x: getattr(x,axis_name))[0]
@@ -357,13 +363,12 @@ def get_aligned_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, 
 def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
     if not isinstance(span, TemporarySpan):
         raise ValueError("Handles Span-type Candidate arguments only")
-    f = (lambda w: w.lower()) if lower else (lambda w: w) 
     for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
-        yield f(ngram)
+        yield ngram
     if (span.parent.cell is not None):
         for phrase in _get_aligned_phrases(span.parent, axis, direct=direct, infer=infer):
-            for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max):
-                yield f(ngram)
+            for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
+                yield ngram
 
 
 def _get_aligned_cells(root_cell, axis, direct=True, infer=False):

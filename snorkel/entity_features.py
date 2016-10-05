@@ -125,13 +125,13 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
 def tabledlib_unary_features(span):
     phrase = span.parent
     yield u"HTML_TAG_" + phrase.html_tag
-    for attr in phrase.html_attrs:
-        yield u"HTML_ATTR_[" + attr + "]"
+    # for attr in phrase.html_attrs:
+    #     yield u"HTML_ATTR_[" + attr + "]"
     for tag in phrase.html_anc_tags:
         yield u"HTML_ANC_TAG_[" + tag + "]"
     # for attr in phrase.html_anc_attrs:
         # yield u"HTML_ANC_ATTR_[" + attr + "]"
-    for attrib in ['lemmas']: #,'words', 'pos_tags', 'ner_tags']:
+    for attrib in ['words']: #,'lemmas', 'pos_tags', 'ner_tags']:
         for ngram in get_left_ngrams(span, window=7, n_max=2, attrib=attrib):
             yield "LEFT_%s_[%s]" % (attrib.upper(), ngram)
         for ngram in get_right_ngrams(span, window=7, n_max=2, attrib=attrib):
@@ -141,26 +141,13 @@ def tabledlib_unary_features(span):
                 yield "CELL_%s_[%s]" % (attrib.upper(), ngram)
             yield u"ROW_NUM_[%s]" % phrase.row_num
             yield u"COL_NUM_[%s]" % phrase.col_num
+            for axis in ['row', 'col']:
+                for ngram in get_head_ngrams(span, axis, n_max=2, attrib=attrib):
+                    yield "%s_HEAD_%s_[%s]" % (axis.upper(), attrib.upper(), ngram)
             for ngram in get_row_ngrams(span, n_max=2, attrib=attrib):
                 yield "ROW_%s_[%s]" % (attrib.upper(), ngram)
-                # if attrib=="lemmas":
-                #     try:
-                #         if float(ngram).is_integer():
-                #             yield u"ROW_INT"
-                #         else:
-                #             yield u"ROW_FLOAT"
-                #     except:
-                #         pass
             for ngram in get_col_ngrams(span, n_max=2, attrib=attrib):
                 yield "COL_%s_[%s]" % (attrib.upper(), ngram)
-                # if attrib=="lemmas":
-                #     try:
-                #         if float(ngram).is_integer():
-                #             yield u"COL_INT"
-                #         else:
-                #             yield u"COL_FLOAT"
-                #     except:
-                #         pass
             for ngram in get_row_ngrams(span, n_max=2, attrib=attrib, direct=False, infer=True):
                 yield "ROW_INFERRED_%s_[%s]" % (attrib.upper(), ngram)         
             for ngram in get_col_ngrams(span, n_max=2, attrib=attrib, direct=False, infer=True):

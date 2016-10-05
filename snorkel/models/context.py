@@ -657,11 +657,8 @@ class TemporaryImplicitSpan(TemporarySpan):
                 'meta'          : self.meta
                 }
 
-    def get_word_start(self):
-        return 0
-
-    def get_word_end(self):
-        return len(self.words) - 1
+    def get_n(self):
+        return len(self.words)
 
     def char_to_word_index(self, ci):
         """Given a character-level index (offset), return the index of the **word this char is in**"""

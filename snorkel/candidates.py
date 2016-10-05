@@ -66,7 +66,7 @@ class CandidateExtractor(object):
         # Track processes for multicore execution
         self.ps = []
 
-    def extract(self, contexts, name, session, parallelism=False):
+    def extract(self, contexts, name, session, parallelism=False, ignore_different_tables=False):
         # Create a candidate set
         c = CandidateSet(name=name)
         session.add(c)
@@ -77,7 +77,7 @@ class CandidateExtractor(object):
         if parallelism in [1, False]:
             for i, context in enumerate(contexts):
                 pb.bar(i)
-                self._extract_from_context(context, c, session)
+                self._extract_from_context(context, c, session, ignore_different_tables=ignore_different_tables)
         else:
             raise NotImplementedError('Parallelism is not yet implemented.')
             self._extract_multiprocess(contexts, c, parallelism)
@@ -86,7 +86,7 @@ class CandidateExtractor(object):
         session.commit()
         return session.query(CandidateSet).filter(CandidateSet.name == name).one()
 
-    def _extract_from_context(self, context, candidate_set, session):
+    def _extract_from_context(self, context, candidate_set, session, ignore_different_tables=False):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
         for i in range(self.arity):
@@ -116,6 +116,16 @@ class CandidateExtractor(object):
             # Check for symmetric relations
             if self.arity == 2 and not self.symmetric_relations and args[0][0] > args[1][0]:
                 continue
+
+            # NOTE: This is specifically for the tables task. We want to eliminate (part, temp) where
+            # the part and the temperature are both in tables, but in different tables.
+            # TODO: We will want to remove this when it comes to DC gains, and this probably wont
+            # apply to other applications.
+            part_span = args[0][1]
+            temp_span = args[1][1]
+            if part_span.parent.table != None and temp_span.parent.table != None:
+                if (part_span.parent.table != temp_span.parent.table) and ignore_different_tables:
+                    continue
 
             for i, arg_name in enumerate(arg_names):
                 child_args[arg_name + '_id'] = args[i][1].id

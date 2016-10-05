@@ -312,7 +312,7 @@ class LogReg(NoiseAwareModel):
         return odds_to_prob(X.dot(self.w))
 
 
-    def get_feature_weights(self, feature_matrix, getDict=False):
+    def get_feature_weights(self, feature_matrix, getDict=False, reverse=True):
         """ Returns a mapping of features and their weights (if non-zero)
         If a LogReg model `m`, `m.w` is the weight vector, and the corresponding
         features are described in feature matrix `F`. If `m.w[i]` is nonzero,
@@ -320,7 +320,7 @@ class LogReg(NoiseAwareModel):
         """
         weights = dict()
         for i in xrange(len(self.w)):
-            if self.w[i] > 0.0:
+            if abs(self.w[i]) >= 0.000001:
                 weights[feature_matrix.get_key(i)] = float(self.w[i])
 
         if getDict: #optionally get access to the dictionary for easier searching
@@ -328,7 +328,7 @@ class LogReg(NoiseAwareModel):
         else:
             # Sort by descending weight, code from epost:
             # (http://stackoverflow.com/questions/613183/sort-a-python-dictionary-by-value)
-            return sorted(weights.items(), key=operator.itemgetter(1), reverse=True)
+            return sorted(weights.items(), key=operator.itemgetter(1), reverse=reverse)
 
 class NaiveBayes(NoiseAwareModel):
     def __init__(self, bias_term=False):

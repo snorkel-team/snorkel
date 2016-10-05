@@ -346,19 +346,22 @@ def get_aligned_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, 
     for ngram in get_col_ngrams(span, direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
         yield ngram
 
-# def get_head_ngrams(span, direction, attrib='words', n_min=1, n_max=1, lower=True):
-#     if not isinstance(span, TemporarySpan):
-#         raise ValueError("Handles Span-type Candidate arguments only")
-#     if not span.parent.cell:
-#         return
-#     else:
-#         for phrase in _get_head_cell(span.parent.cell).phrases:
-#             for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
-#                 yield ngram
 
-# TODO: write this LF helper (get furthest north and west cell's ngrams)
-# def get_head_ngrams
-# ...sorted(_get_aligned_cells(cell, axis, infer=False), key=lambda x: getattr(x,axis_name))[0]
+def get_head_ngrams(span, axis, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
+    if not isinstance(span, TemporarySpan):
+        raise ValueError("Handles Span-type Candidate arguments only")
+    if not span.parent.cell:
+        return
+    else:
+        for phrase in _get_head_cell(span.parent.cell, axis, infer=infer).phrases:
+            for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
+                yield ngram
+
+
+def _get_head_cell(root_cell, axis, infer=False):
+    other_axis = 'row' if axis=='col' else 'col'
+    return sorted(_get_aligned_cells(root_cell, axis, direct=True, infer=infer), 
+                      key=lambda x: getattr(x, other_axis + '_num'))[0]
 
 def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
     if not isinstance(span, TemporarySpan):

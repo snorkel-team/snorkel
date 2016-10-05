@@ -24,6 +24,7 @@ def odds_to_prob(l):
     p       = \frac{\exp(l)}{1 + \exp(l)}
   """
   l[l > 25] = 25
+  l[l < -25] = -25
   return np.exp(l) / (1.0 + np.exp(l))
 
 def sample_data(X, w, n_samples):
@@ -210,10 +211,11 @@ class LogReg(NoiseAwareModel):
         L(w) = sum_{x,y} E[ log( 1 + exp(-x^Twy) ) ]
              = sum_{x,y} P(y=1) log( 1 + exp(-x^Tw) ) + P(y=-1) log( 1 + exp(x^Tw) )
         """
+        
         z = X.dot(w)
         # Threshold to prevent float rollover into infinity
-        # z[z > 25] = 25
-        # z[z < 25] = -25
+        z[z>25] = 25
+        z[z<-25] = -25
         return m_t.dot(np.log(1 + np.exp(-z))) + (1 - m_t).dot(np.log(1 + np.exp(z))) \
                 + mu * (alpha*np.linalg.norm(w, ord=1) + (1-alpha)*np.linalg.norm(w, ord=2))
 
@@ -223,7 +225,7 @@ class LogReg(NoiseAwareModel):
         # First, we remove the rows (candidates) that have no LF coverage
         covered            = np.where(np.abs(training_marginals - 0.5) > 1e-3)[0]
         training_marginals = training_marginals[covered]
-
+    
         # TODO: This should be X_train, however copy is broken here!
         X = X[covered]
 

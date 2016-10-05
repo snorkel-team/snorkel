@@ -10,7 +10,7 @@ import re
 import os
 
 class OmniNgramsTemp(OmniNgrams):
-    def __init__(self, n_max=5):
+    def __init__(self, n_max=5, split_tokens=None):
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=None)
 
     def apply(self, context):
@@ -39,7 +39,7 @@ class OmniNgramsTemp(OmniNgrams):
     
 
 class OmniNgramsPart(OmniNgrams):
-    def __init__(self, parts_by_doc=None, n_max=5):
+    def __init__(self, parts_by_doc=None, n_max=5, split_tokens=None):
         # parts_by_doc is a dictionary d where d[document_name.upper()] = [partA, partB, ...]
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=None)
         self.link_parts = (parts_by_doc is not None)
@@ -403,6 +403,15 @@ def char_range(a, b):
     '''
     for c in xrange(ord(a), ord(b)+1):
         yield chr(c)
+
+
+def entity_to_candidates(entity, candidate_subset):
+    matches = []
+    for c in candidate_subset:
+        if (c.part.parent.document.name, c.part.get_span(), c.temp.get_span()) == entity:
+            matches.append(c)
+    return matches
+
 
 def part_error_analysis(c):
     print "Doc: %s" % c.part.parent.document

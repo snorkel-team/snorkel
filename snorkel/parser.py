@@ -357,15 +357,15 @@ class OmniParser(object):
                     parts['col'] = col
                     parts['text'] = unicode(child)
                     parts['html_tag'] = child.name
-                    parts['html_attrs'] = split_html_attrs(child.attrs.items())
+                    parts['html_attrs'] = None #split_html_attrs(child.attrs.items())
                     parts['html_anc_tags'] = anc_tags 
-                    parts['html_anc_attrs'] = anc_attrs
+                    parts['html_anc_attrs'] = None #anc_attrs
                     parts['stable_id'] = "%s::%s:%s:%s:%s" % (document.name, 'cell', table.position, row.position, col.position)
                     cell = Cell(**parts)
                 # FIXME: making so many copies is hacky and wasteful; use a stack?
                 temp_anc_tags = copy.deepcopy(anc_tags)
                 temp_anc_tags.append(child.name)
-                temp_anc_attrs = copy.deepcopy(anc_attrs)
-                temp_anc_attrs.extend(split_html_attrs(child.attrs.items()))
+                temp_anc_attrs = None #copy.deepcopy(anc_attrs)
+                # temp_anc_attrs.extend(split_html_attrs(child.attrs.items()))
                 for phrase in self.parse_tag(child, document, table, row, col, cell, temp_anc_tags, temp_anc_attrs):
                     yield phrase

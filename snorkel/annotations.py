@@ -168,6 +168,7 @@ class AnnotationManager(object):
         anno_insert_query = self.annotation_cls.__table__.insert()
 
         # Generates annotations for CandidateSet
+        print "Generating features for %d candidates..." % len(candidate_set)
         pb = ProgressBar(len(candidate_set))
         for i, candidate in enumerate(candidate_set):
             pb.bar(i)

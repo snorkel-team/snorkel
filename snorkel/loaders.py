@@ -66,5 +66,6 @@ class ExternalAnnotationsLoader(object):
         label = Label(key=self.annotation_key, candidate=candidate, value=1)
         self.session.add(label)
 
+        # NOTE: committing on every 'add' operation is very expensive!
         # Commit session
         self.session.commit()

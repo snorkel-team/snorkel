@@ -35,8 +35,8 @@ class OmniNgramsTemp(OmniNgrams):
                     meta           = None)
             else:
                 yield ts
-                
-    
+
+
 
 class OmniNgramsPart(OmniNgrams):
     def __init__(self, parts_by_doc=None, n_max=5):
@@ -127,9 +127,9 @@ def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None,
                     continue
                 else:
                     key = []
-                    if doc_on:  key.append(doc.upper())  
+                    if doc_on:  key.append(doc.upper())
                     if part_on: key.append(part.upper())
-                    if val_on:  key.append(val.upper())  
+                    if val_on:  key.append(val.upper())
                     gold_dict.add(tuple(key))
     return gold_dict
 
@@ -170,7 +170,7 @@ def load_hardware_labels(session, label_set_name, annotation_key_name, candidate
     session.commit()
     pb.close()
     return (candidate_set, annotation_key)
-    
+
 
 def entity_level_total_recall(candidates, gold_file, attribute='stg_temp_min', relation=True):
     """Checks entity-level recall of candidates compared to gold.
@@ -209,7 +209,7 @@ def entity_level_total_recall(candidates, gold_file, attribute='stg_temp_min', r
     print "Entity-level Gold: %s" % (len(gold_set))
     print "Intersection Candidates: %s" % (len(gold_set.intersection(entity_level_candidates)))
     print "----------------------------------------"
-    print "Overlap with Gold:  %0.2f" % (len(gold_set.intersection(entity_level_candidates)) / float(len(gold_set)),)
+    print "Overlap with Gold:  %0.4f" % (len(gold_set.intersection(entity_level_candidates)) / float(len(gold_set)),)
     print "========================================\n"
 
     return entity_confusion_matrix(entity_level_candidates, gold_set)
@@ -255,7 +255,7 @@ def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     print "----------------------------------------"
     print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
     print "========================================\n"
-    
+
     return (TP_set, FP_set, FN_set)
 
 def expand_part_range(text, DEBUG=False):
@@ -421,4 +421,3 @@ def table_info(span):
         print "Row: %s" % span.parent.row_num
         print "Col: %s" % span.parent.col_num
     print "Phrase: %s" % span.parent
-

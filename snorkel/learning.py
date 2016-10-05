@@ -5,6 +5,7 @@ from learning_utils import score, sparse_abs
 from lstm import LSTMModel
 from sklearn import linear_model
 from .models import Parameter, ParameterSet
+from snorkel.utils import get_keys_by_candidate
 import operator
 
 DEFAULT_MU = 1e-6
@@ -329,6 +330,15 @@ class LogReg(NoiseAwareModel):
             # Sort by descending weight, code from epost:
             # (http://stackoverflow.com/questions/613183/sort-a-python-dictionary-by-value)
             return sorted(weights.items(), key=operator.itemgetter(1), reverse=reverse)
+
+    
+    def get_candidate_feature_weights(candidate, feature_matrix, feature_weights=None):
+        if not feature_weights:
+            feature_weights = self.get_feature_weights(feature_matrix, reverse=True)
+        feats = set(get_keys_by_candidate(feature_matrix, candidate))
+        return sorted([f_w for f_w in feature_weights if f_w[0] in feats], 
+                    key=lambda x:abs(x[1]), reverse=True)
+
 
 class NaiveBayes(NoiseAwareModel):
     def __init__(self, bias_term=False):

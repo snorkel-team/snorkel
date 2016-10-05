@@ -1,7 +1,7 @@
 import sys, os
 sys.path.append(os.environ['SNORKELHOME'] + '/treedlib/treedlib')
 from templates import *
-from lf_helpers import get_row_ngrams, get_col_ngrams, get_neighbor_cell_ngrams
+from lf_helpers import *
 from utils import get_as_dict
 
 def compile_entity_feature_generator():

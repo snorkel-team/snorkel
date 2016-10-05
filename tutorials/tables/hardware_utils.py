@@ -10,8 +10,8 @@ import re
 import os
 
 class OmniNgramsTemp(OmniNgrams):
-    def __init__(self, n_max=5, split_tokens=[]):
-        OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
+    def __init__(self, n_max=5):
+        OmniNgrams.__init__(self, n_max=n_max, split_tokens=None)
 
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
@@ -22,11 +22,11 @@ class OmniNgramsTemp(OmniNgrams):
                     parent         = ts.parent,
                     char_start     = ts.char_start,
                     char_end       = ts.char_end,
-                    expander_key   = u'neg_temp',
+                    expander_key   = u'temp_expander',
                     position       = 0,
                     text           = temp,
                     words          = [temp],
-                    char_offsets   = [0],
+                    char_offsets   = ts.parent.char_offsets,
                     lemmas         = [temp],
                     pos_tags       = [ts.parent.pos_tags[-1]],
                     ner_tags       = [ts.parent.ner_tags[-1]],
@@ -39,19 +39,19 @@ class OmniNgramsTemp(OmniNgrams):
     
 
 class OmniNgramsPart(OmniNgrams):
-    def __init__(self, parts_by_doc=None, n_max=5, split_tokens=[]):
+    def __init__(self, parts_by_doc=None, n_max=5):
         # parts_by_doc is a dictionary d where d[document_name.upper()] = [partA, partB, ...]
-        OmniNgrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
+        OmniNgrams.__init__(self, n_max=n_max, split_tokens=None)
         self.link_parts = (parts_by_doc is not None)
-        if parts_by_doc:
-            self.parts_by_doc = parts_by_doc
-            # using gold dictionary
-            # gold_parts = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=False)
-            # gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
-            # self.parts_by_doc = defaultdict(set)
-            # for part in gold_parts:
-            #     self.parts_by_doc[part[0]].add(part[1]) # TODO: change gold_parts to work with namedTuples
-            
+        self.parts_by_doc = parts_by_doc
+        # using gold dictionary
+        # gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
+        # gold_parts = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=False)
+        # self.parts_by_doc = defaultdict(set)
+        # for part in gold_parts:
+        #     self.parts_by_doc[part[0]].add(part[1]) # TODO: change gold_parts to work with namedTuples
+        # import pdb; pdb.set_trace()
+
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
             enumerated_parts = [part_no for part_no in expand_part_range(ts.get_span())]
@@ -76,7 +76,7 @@ class OmniNgramsPart(OmniNgrams):
                         position       = i,
                         text           = part_no,
                         words          = [part_no],
-                        char_offsets   = [0],
+                        char_offsets   = ts.parent.char_offsets,
                         lemmas         = [part_no],
                         pos_tags       = [ts.parent.pos_tags[0]],
                         ner_tags       = [ts.parent.ner_tags[0]],
@@ -157,12 +157,10 @@ def load_hardware_labels(session, label_set_name, annotation_key_name, candidate
     session.commit()
 
     cand_total = len(candidates)
-    pb = ProgressBar(cand_total)
     print 'Loading', cand_total, 'candidate labels'
-    pb_interval = cand_total/100
+    pb = ProgressBar(cand_total)
     for i, c in enumerate(candidates):
-        # The progress bar drawing is ridiculously slow
-        if i%pb_interval==0: pb.bar(i)
+        pb.bar(i)
         doc = (c[0].parent.document.name).upper()
         part = (c[0].get_span()).upper()
         val = (''.join(c[1].get_span().split())).upper()

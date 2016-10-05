@@ -9,13 +9,16 @@ class ProgressBar(object):
         self.N      = max(1, N)
         self.nf     = float(self.N)
         self.length = length
-
+        self.ticks = set([round(i/100.0 * N) for i in range(101)])
+        self.ticks.add(N-1)
+        self.bar(0)
 
     def bar(self, i):
         """Assumes i ranges through [0, N-1]"""
-        b = int(np.ceil(((i+1) / self.nf) * self.length))
-        sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), int(100*((i+1) / self.nf))))
-        sys.stdout.flush()
+        if i in self.ticks:
+            b = int(np.ceil(((i+1) / self.nf) * self.length))
+            sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), int(100*((i+1) / self.nf))))
+            sys.stdout.flush()
 
     def close(self):
         self.bar(self.N-1)
@@ -153,11 +156,12 @@ def split_html_attrs(attrs):
     return html_attrs
 
 
-def tokens_to_ngrams(tokens, n_min=1, n_max=3, delim=' '):
+def tokens_to_ngrams(tokens, n_min=1, n_max=3, lower=False, delim=' '):
+    f = (lambda x: x.lower()) if lower else (lambda x: x)
     N = len(tokens)
     for root in range(N):
         for n in range(max(n_min - 1, 0), min(n_max, N - root)):
-            yield delim.join(tokens[root:root+n+1])
+            yield f(delim.join(tokens[root:root+n+1]))
 
 
 def get_keys_by_candidate(annotation_matrix, candidate):

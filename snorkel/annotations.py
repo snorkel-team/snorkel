@@ -148,7 +148,6 @@ class AnnotationManager(object):
 
         # Prepares helpers
         annotation_generator = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
-        pb = ProgressBar(len(candidate_set))
 
         # Prepares queries
         key_select_query = select([AnnotationKey.id]).where(AnnotationKey.name == bindparam('name'))
@@ -169,6 +168,7 @@ class AnnotationManager(object):
         anno_insert_query = self.annotation_cls.__table__.insert()
 
         # Generates annotations for CandidateSet
+        pb = ProgressBar(len(candidate_set))
         for i, candidate in enumerate(candidate_set):
             pb.bar(i)
             for key_name, value in annotation_generator(candidate):

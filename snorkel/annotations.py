@@ -19,7 +19,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         self.candidate_set   = kwargs.pop('candidate_set', None)
         self.candidate_index = kwargs.pop('candidate_index', None)
         self.row_index       = kwargs.pop('row_index', None)
-        self.key_set         = kwargs.pop('key_set', None)
+        self.key_sets        = kwargs.pop('key_sets', None)
         self.key_index       = kwargs.pop('key_index', None)
         self.col_index       = kwargs.pop('col_index', None)
 
@@ -27,7 +27,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         super(csr_AnnotationMatrix, self).__init__(arg1, **kwargs)
 
     def get_candidate(self, i):
-        """Return the Candidate object corresponding to row i"""
+        """Return the Candidate object corresponding to row i"""====
         return object_session(self.candidate_set).query(Candidate)\
                 .filter(Candidate.id == self.row_index[i]).one()
     
@@ -37,8 +37,10 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
 
     def get_key(self, j):
         """Return the AnnotationKey object corresponding to column j"""
-        return object_session(self.key_set).query(AnnotationKey)\
-                .filter(AnnotationKey.id == self.col_index[j]).one()
+        for rng, key_set in self.key_sets.iteritems():
+            if rng[0] <= j < rng[1]:
+                return object_session(key_set).query(AnnotationKey)\
+                        .filter(AnnotationKey.id == self.col_index[j]).one()
 
     def get_col_index(self, key):
         """Return the cow index of the AnnotationKey"""
@@ -194,7 +196,7 @@ class AnnotationManager(object):
         print "Loading sparse %s matrix..." % self.annotation_cls.__name__
         return self.load(session, candidate_set, key_set)
 
-    def load(self, session, candidate_set, key_set):
+    def load(self, session, candidate_set, *key_sets):
         """
         Returns the annotations corresponding to a CandidateSet with N members and an AnnotationKeySet with M
         distinct keys as an N x M CSR sparse matrix.
@@ -206,14 +208,15 @@ class AnnotationManager(object):
         :param key_set: Can either be an AnnotationKeySet instance or the name of one
         """
         candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
-        key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
+        key_sets       = [get_ORM_instance(AnnotationKeySet, session, ks) for ks in key_sets]
 
         # Create sparse matrix in LIL format for incremental construction
-        X = sparse.lil_matrix((len(candidate_set), len(key_set)))
+        X = sparse.lil_matrix((len(candidate_set), sum(len(ks) for ks in key_sets)))
 
         # First, we query to construct the row index map
         cid_to_row = {}
         row_to_cid = {}
+        key_set_map = {}
         q = session.query(Candidate.id).filter(Candidate.sets.contains(candidate_set)).order_by(Candidate.id).yield_per(1000)
         for cid, in q.all():
             if cid not in cid_to_row:
@@ -226,37 +229,42 @@ class AnnotationManager(object):
         # Second, we query to construct the column index map
         kid_to_col = {}
         col_to_kid = {}
-        q = session.query(AnnotationKey.id).filter(AnnotationKey.sets.contains(key_set)).order_by(AnnotationKey.id).yield_per(1000)
-        for kid, in q.all():
-            if kid not in kid_to_col:
-                j = len(kid_to_col)
+        key_set_offset = 0
+        for key_set in key_sets:
+            q = session.query(AnnotationKey.id).filter(AnnotationKey.sets.contains(key_set)).order_by(AnnotationKey.id).yield_per(1000)
+            for kid, in q.all():
+                if kid not in kid_to_col:
+                    j = len(kid_to_col) + key_set_offset
 
-                # Create both mappings
-                kid_to_col[kid] = j
-                col_to_kid[j]   = kid
+                    # Create both mappings
+                    kid_to_col[kid] = j
+                    col_to_kid[j]   = kid
 
-        # Construct the query
-        """
-        q = session.query(self.annotation_cls.candidate_id, self.annotation_cls.key_id, self.annotation_cls.value)
-        q = q.join(Candidate, AnnotationKey)
-        q = q.filter(Candidate.sets.contains(candidate_set)).filter(AnnotationKey.sets.contains(key_set))
-        q = q.order_by(self.annotation_cls.candidate_id).yield_per(1000)
-        """
+            key_set_map[(key_set_offset, len(key_set))] = key_set
+            key_set_offset += len(key_set)
 
-        # NOTE: This is much faster as it allows us to skip the above join (which for some reason is
-        # unreasonably slow) by relying on our symbol tables from above; however this will get slower with
-        # The total number of annotations in DB which is weird behavior...
-        q = session.query(self.annotation_cls.candidate_id, self.annotation_cls.key_id, self.annotation_cls.value)
-        q = q.order_by(self.annotation_cls.candidate_id)
-        
-        # Iteratively construct row index and output sparse matrix
-        for cid, kid, val in q.all():
-            if cid in cid_to_row and kid in kid_to_col:
-                X[cid_to_row[cid], kid_to_col[kid]] = val
+            # Construct the query
+            """
+            q = session.query(self.annotation_cls.candidate_id, self.annotation_cls.key_id, self.annotation_cls.value)
+            q = q.join(Candidate, AnnotationKey)
+            q = q.filter(Candidate.sets.contains(candidate_set)).filter(AnnotationKey.sets.contains(key_set))
+            q = q.order_by(self.annotation_cls.candidate_id).yield_per(1000)
+            """
+
+            # NOTE: This is much faster as it allows us to skip the above join (which for some reason is
+            # unreasonably slow) by relying on our symbol tables from above; however this will get slower with
+            # The total number of annotations in DB which is weird behavior...
+            q = session.query(self.annotation_cls.candidate_id, self.annotation_cls.key_id, self.annotation_cls.value)
+            q = q.order_by(self.annotation_cls.candidate_id)
+            
+            # Iteratively construct row index and output sparse matrix
+            for cid, kid, val in q.all():
+                if cid in cid_to_row and kid in kid_to_col:
+                    X[cid_to_row[cid], kid_to_col[kid]] = val
 
         # Return as an AnnotationMatrix
         return self.matrix_cls(X, candidate_set=candidate_set, candidate_index=cid_to_row, row_index=row_to_cid,
-                               key_set=key_set, key_index=kid_to_col, col_index=col_to_kid)
+                               key_sets=key_set_map, key_index=kid_to_col, col_index=col_to_kid)
 
 
 class LabelManager(AnnotationManager):

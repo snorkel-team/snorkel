@@ -1,3 +1,5 @@
+.project
+.pydevproject
 *.sw[opnm]
 .DS_Store
 /.virtualenv

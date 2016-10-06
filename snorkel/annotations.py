@@ -27,7 +27,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         super(csr_AnnotationMatrix, self).__init__(arg1, **kwargs)
 
     def get_candidate(self, i):
-        """Return the Candidate object corresponding to row i"""====
+        """Return the Candidate object corresponding to row i"""
         return object_session(self.candidate_set).query(Candidate)\
                 .filter(Candidate.id == self.row_index[i]).one()
     
@@ -234,7 +234,7 @@ class AnnotationManager(object):
             q = session.query(AnnotationKey.id).filter(AnnotationKey.sets.contains(key_set)).order_by(AnnotationKey.id).yield_per(1000)
             for kid, in q.all():
                 if kid not in kid_to_col:
-                    j = len(kid_to_col) + key_set_offset
+                    j = len(kid_to_col)
 
                     # Create both mappings
                     kid_to_col[kid] = j

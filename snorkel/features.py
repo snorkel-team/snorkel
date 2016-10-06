@@ -9,6 +9,7 @@ from treedlib import compile_relation_feature_generator
 from tree_structs import corenlp_to_xmltree
 from utils import get_as_dict
 from entity_features import *
+from functools import partial
 
 
 def get_span_feats(candidate):
@@ -47,3 +48,26 @@ def get_span_feats(candidate):
                 yield 'TDL_' + f, 1
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")
+
+def get_doc_feats(candidate):
+    args = candidate.get_arguments()
+    if not isinstance(args[0], Span):
+        raise ValueError("Accepts Span-type arguments, %s-type found.")
+
+    counter = defaultdict(int)
+
+    parent_doc_sentences = candidate[0].parent.document.sentences
+    for sent in parent_doc_sentences:
+        for lemma in sent.lemmas:
+            counter[lemma] += 1
+
+    for lemma in counter:
+        yield 'DOCFEATS_LEMMA[' + lemma + ']', counter[lemma]
+
+def feats_from_matrix(candidate, candidate_index, X, prefix):
+    i = candidate_index[candidate.id]
+    for j in xrange(X.shape[1]):
+        yield '{0}_{1}'.format(prefix, j), X[i, j]
+
+def feats_from_matrix_generator(candidate_index, X, prefix='col'):
+    return partial(feats_from_matrix, candidate_index=candidate_index, X=X, prefix=prefix)

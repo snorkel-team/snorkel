@@ -147,8 +147,8 @@ def count_hardware_labels(candidates, filename, attrib, attrib_class):
     return gold_cand
 
 
-def load_hardware_labels(session, label_set_name, annotation_key_name, candidates, filename, gold_attrib='stg_temp_min'):
-    gold_dict = get_gold_dict(filename, attrib=gold_attrib)
+def load_hardware_labels(session, label_set_name, annotation_key_name, candidates, filename, attrib):
+    gold_dict = get_gold_dict(filename, attrib=attrib)
     candidate_set   = create_or_fetch(session, CandidateSet, label_set_name)
     annotation_key  = create_or_fetch(session, AnnotationKey, annotation_key_name)
     key_set         = create_or_fetch(session, AnnotationKeySet, annotation_key_name)
@@ -172,7 +172,7 @@ def load_hardware_labels(session, label_set_name, annotation_key_name, candidate
     return (candidate_set, annotation_key)
 
 
-def entity_level_total_recall(candidates, gold_file, attribute='stg_temp_min', relation=True):
+def entity_level_total_recall(candidates, gold_file, attribute, relation=True):
     """Checks entity-level recall of candidates compared to gold.
 
     Turns a CandidateSet into a normal set of entity-level tuples

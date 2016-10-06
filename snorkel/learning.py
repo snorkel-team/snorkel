@@ -24,6 +24,7 @@ def odds_to_prob(l):
     \exp(l) = \frac{p}{1-p}
     p       = \frac{\exp(l)}{1 + \exp(l)}
   """
+  # Threshold to prevent float rollover into infinity
   l[l > 25] = 25
   l[l < -25] = -25
   return np.exp(l) / (1.0 + np.exp(l))

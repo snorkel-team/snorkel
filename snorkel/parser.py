@@ -222,7 +222,7 @@ class CoreNLPHandler:
         try:
             blocks = json.loads(content, strict=False)['sentences']
         except:
-            print "SKIPPED A MALFORMED SENTENCE!"
+            warnings.warn("CoreNLP skipped a malformed sentence.", RuntimeWarning)
             return
         position = 0
         diverged = False

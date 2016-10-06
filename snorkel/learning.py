@@ -102,7 +102,7 @@ class NoiseAwareModel(object):
         """Return numpy array of elements in {-1,0,1} based on predicted marginal probabilities."""
         return np.array([1 if p > b else -1 if p < b else 0 for p in self.marginals(X)])
 
-    def score(self, X_test, L_test, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True):
+    def score(self, X_test, L_test, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, display=True):
         if L_test.shape[1] != 1:
             raise ValueError("L_test must have exactly one column.")
         predict = self.predict(X_test, b=b)
@@ -147,8 +147,9 @@ class NoiseAwareModel(object):
                     tn.add(candidate)
 
         # Print diagnostics chart and return error analysis candidate sets
-        score(test_candidates, np.asarray(test_labels), np.asarray(predict), gold_candidate_set,
-              train_marginals=train_marginals, test_marginals=test_marginals)
+        if display:
+            score(test_candidates, np.asarray(test_labels), np.asarray(predict), gold_candidate_set,
+                  train_marginals=train_marginals, test_marginals=test_marginals)
         return tp, fp, tn, fn
 
     def save(self, session, param_set_name):
@@ -298,8 +299,8 @@ class LogReg(NoiseAwareModel):
 
                 # Apply elastic net penalty
                 w_bias    = w[-1]
-                soft      = np.abs(w) - rate * alpha * mu
-                ridge_pen = (1 + (1-alpha) * rate * mu)
+                soft      = np.abs(w) - mu
+                ridge_pen = (1 + (1-alpha) * mu)
                 w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
                 if self.bias_term:
                     w[-1] = w_bias
@@ -412,8 +413,8 @@ class NaiveBayes(NoiseAwareModel):
 
             # Apply elastic net penalty
             w_bias    = w[-1]
-            soft      = np.abs(w) - rate * alpha * mu
-            ridge_pen = (1 + (1-alpha) * rate * mu)
+            soft      = np.abs(w) - mu
+            ridge_pen = (1 + (1-alpha) * mu)
 
             #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
             w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen

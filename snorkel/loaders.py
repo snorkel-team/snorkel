@@ -34,7 +34,7 @@ class ExternalAnnotationsLoader(object):
             self.key_set.append(self.annotation_key)
         self.session.commit()
 
-    def add(self, temp_contexts):
+    def add(self, temp_contexts, return_candidate=False):
         """
         Adds a candidate to a new or existing candidate_set.
         
@@ -69,3 +69,7 @@ class ExternalAnnotationsLoader(object):
         # NOTE: committing on every 'add' operation is very expensive!
         # Commit session
         self.session.commit()
+
+        # Optionally return the added candidate
+        if return_candidate:
+            return candidate

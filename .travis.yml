@@ -19,7 +19,7 @@ cache:
   directories:
     - download
     - $HOME/.cache/pip
-    # - $HOME/miniconda/envs/test      # to avoid repetitively setting up Ana/Miniconda environment
+#    - $HOME/miniconda/envs/test      # to avoid repetitively setting up Ana/Miniconda environment
     - parser                         # to avoid repetitively downloading CoreNLP
     - tutorials/disease_tagging/data # to avoid repetitively downloading CDR data
 

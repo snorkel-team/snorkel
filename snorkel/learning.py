@@ -22,6 +22,9 @@ def odds_to_prob(l):
     \exp(l) = \frac{p}{1-p}
     p       = \frac{\exp(l)}{1 + \exp(l)}
   """
+  # Threshold to prevent float rollover into infinity/zero
+  l[l > 25] = 25
+  l[l < -25] = -25
   return np.exp(l) / (1.0 + np.exp(l))
 
 def sample_data(X, w, n_samples):
@@ -210,6 +213,9 @@ class LogReg(NoiseAwareModel):
              = sum_{x,y} P(y=1) log( 1 + exp(-x^Tw) ) + P(y=-1) log( 1 + exp(x^Tw) )
         """
         z = X.dot(w)
+        # Threshold to prevent float rollover into infinity/zero
+        z[z>25] = 25
+        z[z<-25] = -25
         return m_t.dot(np.log(1 + np.exp(-z))) + (1 - m_t).dot(np.log(1 + np.exp(z))) \
                 + mu * (alpha*np.linalg.norm(w, ord=1) + (1-alpha)*np.linalg.norm(w, ord=2))
 

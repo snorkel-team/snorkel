@@ -409,3 +409,11 @@ def _infer_cell(root_cell, axis, direct, infer):
 
 def _other_axis(axis):
     return 'row' if axis=='col' else 'col'
+
+
+def overlap(A, B):
+    """Preferable for A to be the smaller set"""
+    for a in A:
+        if a in B:
+            return True
+    return False

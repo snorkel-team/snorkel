@@ -150,7 +150,7 @@ class AnnotationManager(object):
         annotation_generator = AnnotationGenerator(f) if hasattr(f, '__iter__') else f
 
         # Load existing key_id of all annotation keys
-        key_ids = {aKey.name:aKey.id for aKey in session.query(AnnotationKey).all()}
+        key_ids = {aKey.name:aKey.id for aKey in session.query(AnnotationKey)}
         # New id starts with max + 1 when added to the key count
         key_id_offset = max(key_ids.itervalues()) + 1 - len(key_ids) if key_ids else 0 
         annotations = []

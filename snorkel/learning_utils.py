@@ -291,7 +291,7 @@ class GridSearch(object):
         self.model.w = w_opt
 
         # Return DataFrame of scores
-        self.results = DataFrame.from_records(run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1'])
+        self.results = DataFrame.from_records(run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1']).sort('F1', ascending=False)
         return self.results
     
     

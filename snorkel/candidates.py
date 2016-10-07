@@ -41,10 +41,11 @@ class CandidateExtractor(object):
     :param symmetric_relations: Boolean indicating whether to extract symmetric Candidates, i.e., rel(A,B) and rel(B,A),
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
-    def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=True):
+    def __init__(self, candidate_class, cspaces, matchers, throttler=None, self_relations=False, nested_relations=False, symmetric_relations=True):
         self.candidate_class     = candidate_class
         self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
+        self.throttler           = throttler
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations
         self.symmetric_relations = symmetric_relations
@@ -66,7 +67,7 @@ class CandidateExtractor(object):
         # Track processes for multicore execution
         self.ps = []
 
-    def extract(self, contexts, name, session, parallelism=False, ignore_different_tables=False):
+    def extract(self, contexts, name, session, parallelism=False):
         # Create a candidate set
         c = CandidateSet(name=name)
         session.add(c)
@@ -77,7 +78,7 @@ class CandidateExtractor(object):
         if parallelism in [1, False]:
             for i, context in enumerate(contexts):
                 pb.bar(i)
-                self._extract_from_context(context, c, session, ignore_different_tables=ignore_different_tables)
+                self._extract_from_context(context, c, session)
         else:
             raise NotImplementedError('Parallelism is not yet implemented.')
             self._extract_multiprocess(contexts, c, parallelism)
@@ -86,7 +87,7 @@ class CandidateExtractor(object):
         session.commit()
         return session.query(CandidateSet).filter(CandidateSet.name == name).one()
 
-    def _extract_from_context(self, context, candidate_set, session, ignore_different_tables=False):
+    def _extract_from_context(self, context, candidate_set, session):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
         for i in range(self.arity):
@@ -117,14 +118,12 @@ class CandidateExtractor(object):
             if self.arity == 2 and not self.symmetric_relations and args[0][0] > args[1][0]:
                 continue
 
-            # NOTE: This is specifically for the tables task. We want to eliminate (part, temp) where
-            # the part and the temperature are both in tables, but in different tables.
+            # NOTE: This is was introduced specifically for the tables task. 
             # TODO: We will want to remove this when it comes to DC gains, and this probably wont
             # apply to other applications.
-            part_span = args[0][1]
-            temp_span = args[1][1]
-            if part_span.parent.table != None and temp_span.parent.table != None:
-                if (part_span.parent.table != temp_span.parent.table) and ignore_different_tables:
+            # TODO: If throttler is kept, make it more general (accept larger arity)
+            if self.throttler:
+                if not self.throttler.apply(args[0][1], args[1][1]):
                     continue
 
             for i, arg_name in enumerate(arg_names):

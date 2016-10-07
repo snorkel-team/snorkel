@@ -1,11 +1,11 @@
+from .models import Parameter, ParameterSet
+from learning_utils import score, sparse_abs
+from utils import get_keys_by_candidate
 import numpy as np
 import scipy.sparse as sparse
 from scipy.optimize import minimize
-from learning_utils import score, sparse_abs
 from lstm import LSTMModel
 from sklearn import linear_model
-from .models import Parameter, ParameterSet
-from snorkel.utils import get_keys_by_candidate
 import operator
 
 DEFAULT_MU = 1e-6

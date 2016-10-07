@@ -148,20 +148,18 @@ class AnnotationManager(object):
 
         # Prepares helpers
         annotation_generator = AnnotationGenerator(f) if hasattr(f, '__iter__') else f
-        pb = ProgressBar(len(candidate_set))
-
-        import time
-        current_milli_time = lambda: int(round(time.time()))
 
         # Load existing key_id of all annotation keys
         key_ids = {aKey.name:aKey.id for aKey in session.query(AnnotationKey).all()}
         # New id starts with max + 1 when added to the key count
         key_id_offset = max(key_ids.itervalues()) + 1 - len(key_ids) if key_ids else 0 
         annotations = []
-        pb_interval = len(candidate_set)/100
-        # Generates annotations for CandidateSet
+        
+        # print "Generating %s Annotations for CandidateSet %s..." % (key_set.name, candidate_set.name)
+        pb = ProgressBar(len(candidate_set))
+        # Generates annotations for CandidateSetrc
         for i, candidate in enumerate(candidate_set):
-            if i % pb_interval == 0 : pb.bar(i)
+            pb.bar(i)
             # Each candidate have unique 
             existing_key_ids = set()
             for key_name, value in annotation_generator(candidate):
@@ -171,12 +169,8 @@ class AnnotationManager(object):
                     if not expand_key_set: continue
                     key_id = key_id_offset + len(key_ids)
                     key_ids[key_name] = key_id
-                    # start = current_milli_time()
+                    # These operations are fast; leave in inner loop for simplicity
                     session.execute(AnnotationKey.__table__.insert(), {'id':key_id, 'name':key_name})
-                    # end = current_milli_time()
-                    # print
-                    # print (end - start), 'us'
-                    # new_keys.append({'id':key_id, 'name':key_name})
                     session.execute(assoc_table.insert(),{'annotation_key_set_id': key_set.id, 'annotation_key_id': key_id})
                 if key_id in existing_key_ids: continue
                 # Record new annotation
@@ -184,7 +178,7 @@ class AnnotationManager(object):
                 annotations.append({'candidate_id': candidate.id, 'key_id': key_id, 'value': value})
             
         pb.close()
-        print 'Bulk upserting', len(annotations),'annotations...'
+        print 'Bulk upserting %d annotations...' % len(annotations)
         # bulk insert candidate annotations
         session.execute(self.annotation_cls.__table__.insert(), annotations)
         print 'Done.'

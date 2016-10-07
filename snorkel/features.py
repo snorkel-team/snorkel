@@ -49,7 +49,7 @@ def get_span_feats(candidate):
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")
 
-def get_doc_feats(candidate):
+def get_doc_feats(candidate, stopwords=None):
     args = candidate.get_arguments()
     if not isinstance(args[0], Span):
         raise ValueError("Accepts Span-type arguments, %s-type found.")
@@ -62,7 +62,11 @@ def get_doc_feats(candidate):
             counter[lemma] += 1
 
     for lemma in counter:
-        yield 'DOCFEATS_LEMMA[' + lemma + ']', counter[lemma]
+        if (not stopwords) or (lemma not in stopwords): 
+            yield 'DOCFEATS_LEMMA[' + lemma + ']', counter[lemma]
+
+def get_doc_feats_generator(stopwords):
+    return partial(get_doc_feats, stopwords=stopwords)
 
 def feats_from_matrix(candidate, candidate_index, X, prefix):
     i = candidate_index[candidate.id]

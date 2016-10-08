@@ -9,16 +9,16 @@ class ProgressBar(object):
         self.N      = max(1, N)
         self.nf     = float(self.N)
         self.length = length
-        self.update_interval = N/100
+        self.update_interval = self.nf/100
         self.current_tick = 0
         self.bar(0)
 
     def bar(self, i):
         """Assumes i ranges through [0, N-1]"""
-        new_tick = i/self.update_interval 
-        if new_tick > self.current_tick:
-            b = int(np.ceil(((i+1) / self.nf) * self.length))
-            sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), int(100*((i+1) / self.nf))))
+        new_tick = i/self.update_interval
+        if np.floor(new_tick) != np.ceil(self.current_tick):
+            b = int(np.ceil((i / self.nf) * self.length))
+            sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), int(100*(i / self.nf))))
             sys.stdout.flush()
         self.current_tick = new_tick
 

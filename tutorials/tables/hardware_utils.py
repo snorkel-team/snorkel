@@ -5,9 +5,26 @@ from snorkel.candidates import OmniNgrams
 from snorkel.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, AnnotationKeySet, Label
 from snorkel.utils import ProgressBar
 from snorkel.loaders import create_or_fetch
+from snorkel.throttlers import Throttler
 from difflib import SequenceMatcher
 import re
 import os
+
+class PartThrottler(Throttler):
+    """
+    Removes candidates unless the part is not in a table, or the part aligned
+    temperature are not aligned.
+    """
+    def apply(self, part_span, temp_span):
+        """
+        Returns True is the tuple passes, False if it should be throttled
+        """
+        return part_span.parent.table is None or self.aligned(part_span, temp_span)
+
+    def aligned(self, span1, span2):
+        return (span1.parent.table == span2.parent.table and
+            (span1.parent.row_num == span2.parent.row_num or
+             span1.parent.col_num == span2.parent.col_num))
 
 class OmniNgramsTemp(OmniNgrams):
     def __init__(self, n_max=5, split_tokens=None):
@@ -15,9 +32,18 @@ class OmniNgramsTemp(OmniNgrams):
 
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
-            m = re.match(r'^(?:\-|\u2010|\u2011|\u2012|\u2013|\u2014|\u2212|\%)\s*(\d+)$', ts.get_span())
+            m = re.match(r'^(\+|\-|\u2010|\u2011|\u2012|\u2013|\u2014|\u2212|\%)?(\s*)(\d+)$', ts.get_span())
             if m:
-                temp = u'-' + m.group(1)
+                if m.group(1) is None:
+                    temp = ''
+                elif m.group(1) == '+':
+                    if m.group(2) != '':
+                        continue # If bigram '+ 150' is seen, accept the unigram '150', not both 
+                    temp = ''
+                else:
+                    # A bigram '- 150' is different from unigram '150', so we keep the implicit '-150'
+                    temp = '-'
+                temp += m.group(3)
                 yield TemporaryImplicitSpan(
                     parent         = ts.parent,
                     char_start     = ts.char_start,

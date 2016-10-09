@@ -215,6 +215,22 @@ def entity_level_total_recall(candidates, gold_file, attribute, relation=True):
     return entity_confusion_matrix(entity_level_candidates, gold_set)
 
 
+def most_common_document(candidates):
+    """Returns the document that produced the most of the passed-in candidates"""
+    # Turn CandidateSet into set of tuples
+    pb = ProgressBar(len(candidates))
+    candidate_count = {}
+
+    for i, c in enumerate(candidates):
+        pb.bar(i)
+        part = c.get_arguments()[0].get_span()
+        doc = c.get_arguments()[0].parent.document.name
+        candidate_count[doc] = candidate_count.get(doc, 0) + 1 # count number of occurences of keys
+    pb.close()
+    max_doc = max(candidate_count, key=candidate_count.get)
+    return max_doc
+
+
 def entity_confusion_matrix(pred, gold):
     if not isinstance(pred, set):
         pred = set(pred)

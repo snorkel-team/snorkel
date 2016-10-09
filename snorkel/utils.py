@@ -9,7 +9,7 @@ class ProgressBar(object):
         self.N      = max(1, N)
         self.nf     = float(self.N)
         self.length = length
-        self.update_interval = N/float(100) # cast to float to remove divide by zero bug
+        self.update_interval = self.N/float(100) # cast to float to remove divide by zero bug
         self.current_tick = 0
         self.bar(0)
 

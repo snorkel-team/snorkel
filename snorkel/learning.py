@@ -207,6 +207,7 @@ class LogReg(NoiseAwareModel):
     def __init__(self, bias_term=False):
         self.w         = None
         self.bias_term = bias_term
+        self.feature_weights = None
 
     def _loss(self, X, w, m_t, mu, alpha):
         """
@@ -334,12 +335,22 @@ class LogReg(NoiseAwareModel):
             return sorted(weights.items(), key=operator.itemgetter(1), reverse=reverse)
 
     
-    def get_candidate_feature_weights(candidate, feature_matrix, feature_weights=None):
-        if not feature_weights:
-            feature_weights = self.get_feature_weights(feature_matrix, reverse=True)
-        feats = set(get_keys_by_candidate(feature_matrix, candidate))
-        return sorted([f_w for f_w in feature_weights if f_w[0] in feats], 
+    def get_candidate_feature_weights(self, candidate, feature_matrix, feature_weights=None):
+        if self.feature_weights is None:
+            if feature_weights is None:
+                self.feature_weights = self.get_feature_weights(feature_matrix, reverse=True)
+            else:
+                self.feature_weights = feature_weights
+        feats = set(get_keys_by_candidate(candidate, feature_matrix))
+        return sorted([f_w for f_w in self.feature_weights if f_w[0] in feats], 
                     key=lambda x:abs(x[1]), reverse=True)
+
+    
+    def get_candidate_score(self, candidate, feature_matrix, feature_weights=None):
+        score = 0
+        for f,v in self.get_candidate_feature_weights(candidate, feature_matrix, feature_weights):
+            score += v
+        return score
 
 
 class NaiveBayes(NoiseAwareModel):

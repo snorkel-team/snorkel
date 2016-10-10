@@ -132,6 +132,8 @@ def tabledlib_unary_features(span):
     # for attr in phrase.html_anc_attrs:
         # yield u"HTML_ANC_ATTR_[" + attr + "]"
     for attrib in ['words']: #,'lemmas', 'pos_tags', 'ner_tags']:
+        for ngram in span.get_span(attrib):
+            yield "CONTAINS_%s_[%s]" % (attrib.upper(), ngram)
         for ngram in get_left_ngrams(span, window=7, n_max=2, attrib=attrib):
             yield "LEFT_%s_[%s]" % (attrib.upper(), ngram)
         for ngram in get_right_ngrams(span, window=7, n_max=2, attrib=attrib):

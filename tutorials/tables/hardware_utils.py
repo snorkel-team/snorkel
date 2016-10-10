@@ -5,9 +5,70 @@ from snorkel.candidates import OmniNgrams
 from snorkel.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, AnnotationKeySet, Label
 from snorkel.utils import ProgressBar
 from snorkel.loaders import create_or_fetch
+from snorkel.throttlers import Throttler
+from snorkel.lf_helpers import *
 from difflib import SequenceMatcher
 import re
 import os
+
+class PartThrottler(Throttler):
+    """
+    Removes candidates unless the part is not in a table, or the part aligned
+    temperature are not aligned.
+    """
+    def apply(self, part_span, attr_span):
+        """
+        Returns True is the tuple passes, False if it should be throttled
+        """
+        return part_span.parent.table is None or self.aligned(part_span, attr_span)
+
+    def aligned(self, span1, span2):
+        return (span1.parent.table == span2.parent.table and
+            (span1.parent.row_num == span2.parent.row_num or
+             span1.parent.col_num == span2.parent.col_num))
+
+class GainThrottler(PartThrottler):
+    def apply(self, part_span, attr_span):
+        """
+        Returns True is the tuple passes, False if it should be throttled
+        """
+        return (PartThrottler.apply(self, part_span, attr_span) and
+            overlap(['dc', 'gain', 'hfe', 'fe'], list(get_row_ngrams(attr_span, infer=True))))
+
+class PartCurrentThrottler(Throttler):
+    """
+    Removes candidates unless the part is not in a table, or the part aligned
+    temperature are not aligned.
+    """
+    def apply(self, part_span, current_span):
+        """
+        Returns True is the tuple passes, False if it should be throttled
+        """
+        # if both are in the same table
+        if (part_span.parent.table is not None and current_span.parent.table is not None):
+            if (part_span.parent.table == current_span.parent.table):
+                return True
+
+        # if part is in header, current is in table
+        if (part_span.parent.table is None and current_span.parent.table is not None):
+            ngrams = set(get_row_ngrams(current_span))
+            if ('collector' in ngrams and 'current' in ngrams):
+                return True
+
+        # if neither part or temp is in table
+        if (part_span.parent.table is None and current_span.parent.table is None):
+            ngrams = set(get_phrase_ngrams(current_span))
+            num_numbers = list(get_phrase_ngrams(current_span, attrib="ner_tags")).count('number')
+            if ('collector' in ngrams and 'current' in ngrams and num_numbers <= 2):
+                return True
+
+        return False
+
+    def aligned(self, span1, span2):
+        ngrams = set(get_row_ngrams(span2))
+        return  (span1.parent.table == span2.parent.table and
+            (span1.parent.row_num == span2.parent.row_num or span1.parent.col_num == span2.parent.col_num))
+
 
 class OmniNgramsTemp(OmniNgrams):
     def __init__(self, n_max=5, split_tokens=None):
@@ -15,9 +76,18 @@ class OmniNgramsTemp(OmniNgrams):
 
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
-            m = re.match(r'^(?:\-|\u2010|\u2011|\u2012|\u2013|\u2014|\u2212|\%)\s*(\d+)$', ts.get_span())
+            m = re.match(r'^(\+|\-|\u2010|\u2011|\u2012|\u2013|\u2014|\u2212|\%)?(\s*)(\d+)$', ts.get_span())
             if m:
-                temp = u'-' + m.group(1)
+                if m.group(1) is None:
+                    temp = ''
+                elif m.group(1) == '+':
+                    if m.group(2) != '':
+                        continue # If bigram '+ 150' is seen, accept the unigram '150', not both
+                    temp = ''
+                else:
+                    # A bigram '- 150' is different from unigram '150', so we keep the implicit '-150'
+                    temp = '-'
+                temp += m.group(3)
                 yield TemporaryImplicitSpan(
                     parent         = ts.parent,
                     char_start     = ts.char_start,
@@ -215,6 +285,22 @@ def entity_level_total_recall(candidates, gold_file, attribute, relation=True):
     return entity_confusion_matrix(entity_level_candidates, gold_set)
 
 
+def most_common_document(candidates):
+    """Returns the document that produced the most of the passed-in candidates"""
+    # Turn CandidateSet into set of tuples
+    pb = ProgressBar(len(candidates))
+    candidate_count = {}
+
+    for i, c in enumerate(candidates):
+        pb.bar(i)
+        part = c.get_arguments()[0].get_span()
+        doc = c.get_arguments()[0].parent.document.name
+        candidate_count[doc] = candidate_count.get(doc, 0) + 1 # count number of occurences of keys
+    pb.close()
+    max_doc = max(candidate_count, key=candidate_count.get)
+    return max_doc
+
+
 def entity_confusion_matrix(pred, gold):
     if not isinstance(pred, set):
         pred = set(pred)
@@ -408,21 +494,33 @@ def char_range(a, b):
 def entity_to_candidates(entity, candidate_subset):
     matches = []
     for c in candidate_subset:
-        if (c.part.parent.document.name, c.part.get_span(), c.temp.get_span()) == entity:
+        part = c.get_arguments()[0]
+        attr = c.get_arguments()[1]
+        if (part.parent.document.name, part.get_span(), attr.get_span()) == entity:
             matches.append(c)
     return matches
+
+def current_entity_to_candidates(entity, candidate_subset):
+    matches = []
+    for c in candidate_subset:
+        if (c.part.parent.document.name, c.part.get_span(), c.current.get_span()) == entity:
+            matches.append(c)
+    return matches
+
 
 
 def part_error_analysis(c):
     print "Doc: %s" % c.part.parent.document
     print "------------"
+    part = c.get_arguments()[0]
     print "Part:"
-    print c.part
-    table_info(c.part)
+    print part
+    table_info(part)
     print "------------"
-    print "Temp:"
-    print c.temp
-    table_info(c.temp)
+    attr = c.get_arguments()[1]
+    print "Attr:"
+    print attr
+    table_info(attr)
 
 def table_info(span):
     print "Table: %s" % span.parent.table

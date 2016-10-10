@@ -82,7 +82,7 @@ class OmniNgramsTemp(OmniNgrams):
                     temp = ''
                 elif m.group(1) == '+':
                     if m.group(2) != '':
-                        continue # If bigram '+ 150' is seen, accept the unigram '150', not both 
+                        continue # If bigram '+ 150' is seen, accept the unigram '150', not both
                     temp = ''
                 else:
                     # A bigram '- 150' is different from unigram '150', so we keep the implicit '-150'
@@ -499,6 +499,14 @@ def entity_to_candidates(entity, candidate_subset):
         if (part.parent.document.name, part.get_span(), attr.get_span()) == entity:
             matches.append(c)
     return matches
+
+def current_entity_to_candidates(entity, candidate_subset):
+    matches = []
+    for c in candidate_subset:
+        if (c.part.parent.document.name, c.part.get_span(), c.current.get_span()) == entity:
+            matches.append(c)
+    return matches
+
 
 
 def part_error_analysis(c):

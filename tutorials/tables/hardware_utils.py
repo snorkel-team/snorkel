@@ -487,9 +487,17 @@ def char_range(a, b):
 def entity_to_candidates(entity, candidate_subset):
     matches = []
     for c in candidate_subset:
+        if (c.part.parent.document.name, c.part.get_span(), c.temp.get_span()) == entity:
+            matches.append(c)
+    return matches
+
+def current_entity_to_candidates(entity, candidate_subset):
+    matches = []
+    for c in candidate_subset:
         if (c.part.parent.document.name, c.part.get_span(), c.current.get_span()) == entity:
             matches.append(c)
     return matches
+
 
 
 def part_error_analysis(c):

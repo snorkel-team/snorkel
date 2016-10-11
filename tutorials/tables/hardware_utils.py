@@ -16,17 +16,24 @@ class PartThrottler(Throttler):
     Removes candidates unless the part is not in a table, or the part aligned
     temperature are not aligned.
     """
-    def apply(self, part_span, temp_span):
+    def apply(self, part_span, attr_span):
         """
         Returns True is the tuple passes, False if it should be throttled
         """
-        return part_span.parent.table is None or self.aligned(part_span, temp_span)
+        return part_span.parent.table is None or self.aligned(part_span, attr_span)
 
     def aligned(self, span1, span2):
         return (span1.parent.table == span2.parent.table and
             (span1.parent.row_num == span2.parent.row_num or
              span1.parent.col_num == span2.parent.col_num))
 
+class GainThrottler(PartThrottler):
+    def apply(self, part_span, attr_span):
+        """
+        Returns True is the tuple passes, False if it should be throttled
+        """
+        return (PartThrottler.apply(self, part_span, attr_span) and
+            overlap(['dc', 'gain', 'hfe', 'fe'], list(get_row_ngrams(attr_span, infer=True))))
 
 class PartCurrentThrottler(Throttler):
     """
@@ -487,7 +494,9 @@ def char_range(a, b):
 def entity_to_candidates(entity, candidate_subset):
     matches = []
     for c in candidate_subset:
-        if (c.part.parent.document.name, c.part.get_span(), c.temp.get_span()) == entity:
+        part = c.get_arguments()[0]
+        attr = c.get_arguments()[1]
+        if (part.parent.document.name, part.get_span(), attr.get_span()) == entity:
             matches.append(c)
     return matches
 
@@ -503,13 +512,15 @@ def current_entity_to_candidates(entity, candidate_subset):
 def part_error_analysis(c):
     print "Doc: %s" % c.part.parent.document
     print "------------"
+    part = c.get_arguments()[0]
     print "Part:"
-    print c.part
-    table_info(c.part)
+    print part
+    table_info(part)
     print "------------"
-    print "Temp:"
-    print c.temp
-    table_info(c.temp)
+    attr = c.get_arguments()[1]
+    print "Attr:"
+    print attr
+    table_info(attr)
 
 def table_info(span):
     print "Table: %s" % span.parent.table

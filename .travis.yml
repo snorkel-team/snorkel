@@ -59,7 +59,7 @@ install:
   - conda install --yes numpy=$NUMPY scipy=$SCIPY matplotlib pip
 
   # Install Numba
-  - conda install numba
+  - conda install --yes numba
 
   # Install all dependencies as per our README
   - pip install -r python-package-requirement.txt

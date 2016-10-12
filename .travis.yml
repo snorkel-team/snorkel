@@ -58,9 +58,19 @@ install:
   - source activate test
   - conda install --yes numpy=$NUMPY scipy=$SCIPY matplotlib pip
 
+  # Install Numba
+  - conda install numba
+
   # Install all dependencies as per our README
   - pip install -r python-package-requirement.txt
   - test -e parser/corenlp.sh || ./install-parser.sh
+
+  # Install Numbskull
+  - git clone https://github.com/HazyResearch/numbskull.git
+  - cd numbskull
+  - git checkout snorkel
+  - pip install .
+  - cd ..
 
   # Downloads data for disease tagging tutorial
   - cd tutorials/disease_tagging

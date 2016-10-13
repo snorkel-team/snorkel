@@ -4,6 +4,7 @@ class Throttler(object):
         Return True if the tuple should be allowed. Return False if it should
         be throttled.
         """
+        raise DeprecationWarning("Throttler objects are being replaced by passing in a stand-alone throttler function")
         return True
 
 # Reference derivative class (actual copy stored in hardware_utils.py)

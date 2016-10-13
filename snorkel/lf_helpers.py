@@ -242,6 +242,16 @@ def get_phrase_ngrams(span, attrib='words', n_min=1, n_max=1, lower=True):
         yield ngram
 
 
+def get_neighbor_phrase_ngrams(span, d=1, attrib='words', n_min=1, n_max=1, lower=True):
+    if not isinstance(span, TemporarySpan):
+        raise ValueError("Handles Span-type Candidate arguments only")
+    for ngram in chain.from_iterable(
+        [tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower)
+        for phrase in span.parent.document.phrases 
+        if abs(phrase.phrase_id - span.parent.phrase_id) <= d and phrase != span.parent]):
+        yield ngram
+
+
 def get_cell_ngrams(span, attrib='words', n_min=1, n_max=1, lower=True):
     """
     Get the ngrams that are in the Cell of the given span, not including itself.
@@ -410,10 +420,11 @@ def _infer_cell(root_cell, axis, direct, infer):
 def _other_axis(axis):
     return 'row' if axis=='col' else 'col'
 
-
+# TODO: delete me
 def overlap(A, B):
     """Preferable for A to be the smaller set"""
-    for a in A:
-        if a in B:
-            return True
-    return False
+    # raise DeprecationWarning("This helper will be removed soon. Use set(A).isdisjoint(B) instead")
+    # for a in list(A):
+        # if a in list(B):
+            # return True
+    return not set(A).isdisjoint(B)

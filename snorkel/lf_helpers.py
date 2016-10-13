@@ -202,6 +202,19 @@ def same_table(c):
     return (all([c[i].parent.table is not None
         and c[i].parent.table==c[0].parent.table for i in range(len(c.get_arguments()))]))
 
+# TODO: write these
+# def same_row(c):
+
+# def same_col(c):
+
+
+# def same_row(c):
+#     """
+#     Return True if all Spans in the given candidate are from the same Row.
+#     :param c: The candidate whose Spans are being compared
+#     """
+#     return (all([c[i].parent.table is not None
+#     and c[i].parent.table==c[0].parent.table for i in range(len(c.get_arguments()))]))
 
 def same_cell(c):
     """
@@ -220,10 +233,6 @@ def same_phrase(c):
     return (all([c[i].parent is not None
         and c[i].parent==c[0].parent for i in range(len(c.get_arguments()))]))
 
-# TODO: write these
-# def same_row(c):
-
-# def same_col(c):
 
 def get_phrase_ngrams(span, attrib='words', n_min=1, n_max=1, lower=True):
     """

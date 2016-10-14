@@ -202,19 +202,24 @@ def same_table(c):
     return (all([c[i].parent.table is not None
         and c[i].parent.table==c[0].parent.table for i in range(len(c.get_arguments()))]))
 
-# TODO: write these
-# def same_row(c):
 
-# def same_col(c):
+def same_row(c):
+    """
+    Return True if all Spans in the given candidate are from the same Row.
+    :param c: The candidate whose Spans are being compared
+    """
+    return (all([c[i].parent.table is not None
+        and c[i].parent.row_num==c[0].parent.row_num for i in range(len(c.get_arguments()))]))
 
 
-# def same_row(c):
-#     """
-#     Return True if all Spans in the given candidate are from the same Row.
-#     :param c: The candidate whose Spans are being compared
-#     """
-#     return (all([c[i].parent.table is not None
-#     and c[i].parent.table==c[0].parent.table for i in range(len(c.get_arguments()))]))
+def same_col(c):
+    """
+    Return True if all Spans in the given candidate are from the same Col.
+    :param c: The candidate whose Spans are being compared
+    """
+    return (all([c[i].parent.table is not None
+        and c[i].parent.col_num==c[0].parent.col_num for i in range(len(c.get_arguments()))]))
+
 
 def same_cell(c):
     """

@@ -123,7 +123,7 @@ class CandidateExtractor(object):
             # Apply throttler if one was given 
             # (throttler returns whether or not proposed candidate passes throttling condition)
             if self.throttler:
-                if not self.throttler(tuple([args[i][1] for i in range(arity)])):
+                if not self.throttler(tuple([args[i][1] for i in range(self.arity)])):
                     continue
 
             for i, arg_name in enumerate(arg_names):

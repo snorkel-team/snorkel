@@ -104,6 +104,7 @@ script:
   - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_3.ipynb
   - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_4.ipynb
   - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_5.ipynb
+  - cd ..
 
   # Run test modules
   - coverage run -p test/learning/test_gen_learning.py

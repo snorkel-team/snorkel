@@ -15,7 +15,7 @@ from functools import partial
 def get_span_feats(candidate):
     args = candidate.get_arguments()
     if not isinstance(args[0], Span):
-        raise ValueError("Accepts Span-type arguments, %s-type found.")
+        raise ValueError("Accepts Span-type arguments, %s-type= found.")
 
     # Unary candidates
     if len(args) == 1:
@@ -49,24 +49,36 @@ def get_span_feats(candidate):
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")
 
-def get_doc_feats(candidate, stopwords=None):
+
+def get_token_count_feats(candidate, token_generator, ngram=1, stopwords=None):
     args = candidate.get_arguments()
     if not isinstance(args[0], Span):
         raise ValueError("Accepts Span-type arguments, %s-type found.")
 
     counter = defaultdict(int)
 
-    parent_doc_sentences = candidate[0].parent.document.sentences
-    for sent in parent_doc_sentences:
-        for lemma in sent.lemmas:
-            counter[lemma] += 1
+    for tokens in token_generator(candidate):
+        for i in xrange(len(tokens)):
+            for j in range(i+1, min(len(tokens), i + ngram) + 1):
+                counter[' '.join(tokens[i:j])] += 1
 
-    for lemma in counter:
-        if (not stopwords) or (lemma not in stopwords): 
-            yield 'DOCFEATS_LEMMA[' + lemma + ']', counter[lemma]
+    for gram in counter:
+        if (not stopwords) or not all([t in stopwords for t in gram.split()]): 
+            yield 'TOKEN_FEATS[' + gram + ']', counter[gram]
 
-def get_doc_feats_generator(stopwords):
-    return partial(get_doc_feats, stopwords=stopwords)
+def span_token_generator(candidate):
+    return [candidate[0].parent.lemmas]
+
+def doc_token_generator(candidate):
+    return [sent.lemmas for sent in candidate[0].parent.document.sentences]
+
+def get_span_lemma_feats_generator(stopwords, ngram=1):
+    return partial(get_token_count_feats, token_generator=span_token_generator,
+        ngram=ngram, stopwords=stopwords)
+
+def get_doc_lemma_feats_generator(stopwords, ngram=1):
+    return partial(get_token_count_feats, token_generator=doc_token_generator,
+        ngram=ngram, stopwords=stopwords)
 
 def feats_from_matrix(candidate, candidate_index, X, prefix):
     i = candidate_index[candidate.id]

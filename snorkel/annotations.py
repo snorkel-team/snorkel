@@ -240,7 +240,7 @@ class AnnotationManager(object):
                     kid_to_col[kid] = j
                     col_to_kid[j]   = kid
 
-            key_set_map[(key_set_offset, len(key_set))] = key_set
+            key_set_map[(key_set_offset, key_set_offset + len(key_set))] = key_set
             key_set_offset += len(key_set)
 
             # Construct the query

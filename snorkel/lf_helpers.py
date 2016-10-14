@@ -203,6 +203,24 @@ def same_table(c):
         and c[i].parent.table==c[0].parent.table for i in range(len(c.get_arguments()))]))
 
 
+def same_row(c):
+    """
+    Return True if all Spans in the given candidate are from the same Row.
+    :param c: The candidate whose Spans are being compared
+    """
+    return (all([c[i].parent.table is not None
+        and c[i].parent.row_num==c[0].parent.row_num for i in range(len(c.get_arguments()))]))
+
+
+def same_col(c):
+    """
+    Return True if all Spans in the given candidate are from the same Col.
+    :param c: The candidate whose Spans are being compared
+    """
+    return (all([c[i].parent.table is not None
+        and c[i].parent.col_num==c[0].parent.col_num for i in range(len(c.get_arguments()))]))
+
+
 def same_cell(c):
     """
     Return True if all Spans in the given candidate are from the same Cell.
@@ -220,10 +238,6 @@ def same_phrase(c):
     return (all([c[i].parent is not None
         and c[i].parent==c[0].parent for i in range(len(c.get_arguments()))]))
 
-# TODO: write these
-# def same_row(c):
-
-# def same_col(c):
 
 def get_phrase_ngrams(span, attrib='words', n_min=1, n_max=1, lower=True):
     """
@@ -239,6 +253,16 @@ def get_phrase_ngrams(span, attrib='words', n_min=1, n_max=1, lower=True):
     for ngram in get_left_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
         yield ngram
     for ngram in get_right_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+        yield ngram
+
+
+def get_neighbor_phrase_ngrams(span, d=1, attrib='words', n_min=1, n_max=1, lower=True):
+    if not isinstance(span, TemporarySpan):
+        raise ValueError("Handles Span-type Candidate arguments only")
+    for ngram in chain.from_iterable(
+        [tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower)
+        for phrase in span.parent.document.phrases 
+        if abs(phrase.phrase_id - span.parent.phrase_id) <= d and phrase != span.parent]):
         yield ngram
 
 
@@ -410,10 +434,11 @@ def _infer_cell(root_cell, axis, direct, infer):
 def _other_axis(axis):
     return 'row' if axis=='col' else 'col'
 
-
+# TODO: delete me
 def overlap(A, B):
     """Preferable for A to be the smaller set"""
-    for a in A:
-        if a in B:
-            return True
-    return False
+    # raise DeprecationWarning("This helper will be removed soon. Use set(A).isdisjoint(B) instead")
+    # for a in list(A):
+        # if a in list(B):
+            # return True
+    return not set(A).isdisjoint(B)

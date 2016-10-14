@@ -52,14 +52,15 @@ class PartCurrentThrottler(Throttler):
         # if part is in header, current is in table
         if (part_span.parent.table is None and current_span.parent.table is not None):
             ngrams = set(get_row_ngrams(current_span))
+            # if True:
             if ('collector' in ngrams and 'current' in ngrams):
                 return True
 
-        # if neither part or temp is in table
+        # if neither part or current is in table
         if (part_span.parent.table is None and current_span.parent.table is None):
             ngrams = set(get_phrase_ngrams(current_span))
             num_numbers = list(get_phrase_ngrams(current_span, attrib="ner_tags")).count('number')
-            if ('collector' in ngrams and 'current' in ngrams and num_numbers <= 2):
+            if ('collector' in ngrams and 'current' in ngrams and num_numbers <= 3):
                 return True
 
         return False
@@ -263,7 +264,7 @@ def entity_level_total_recall(candidates, gold_file, attribute, relation=True):
     entity_level_candidates = set()
     for i, c in enumerate(candidates):
         pb.bar(i)
-        part = c.get_arguments()[0].get_span()
+        part = c.get_arguments()[0].get_span().replace(' ', '')
         doc = c.get_arguments()[0].parent.document.name
         if relation:
             val = c.get_arguments()[1].get_span().replace(' ', '')
@@ -499,15 +500,6 @@ def entity_to_candidates(entity, candidate_subset):
         if (part.parent.document.name, part.get_span(), attr.get_span()) == entity:
             matches.append(c)
     return matches
-
-def current_entity_to_candidates(entity, candidate_subset):
-    matches = []
-    for c in candidate_subset:
-        if (c.part.parent.document.name, c.part.get_span(), c.current.get_span()) == entity:
-            matches.append(c)
-    return matches
-
-
 
 def part_error_analysis(c):
     print "Doc: %s" % c.part.parent.document

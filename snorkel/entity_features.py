@@ -1,8 +1,12 @@
-import sys, os
-sys.path.append(os.environ['SNORKELHOME'] + '/treedlib/treedlib')
-from templates import *
+import sys
+import os
+
+# from templates import *
 from lf_helpers import *
 from utils import get_as_dict
+from .models import ImplicitSpan
+
+sys.path.append(os.environ['SNORKELHOME'] + '/treedlib/treedlib')
 
 def compile_entity_feature_generator():
   """
@@ -123,6 +127,7 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
                     curr_left_pos_tags + "]_[" + curr_right_pos_tags + "]"
 
 def tabledlib_unary_features(span):
+    yield "SPAN_TYPE_[%s]" % ('IMPLICIT' if isinstance(span, ImplicitSpan) else 'EXPLICIT') 
     phrase = span.parent
     yield u"HTML_TAG_" + phrase.html_tag
     # for attr in phrase.html_attrs:
@@ -132,13 +137,16 @@ def tabledlib_unary_features(span):
     # for attr in phrase.html_anc_attrs:
         # yield u"HTML_ANC_ATTR_[" + attr + "]"
     for attrib in ['words']: #,'lemmas', 'pos_tags', 'ner_tags']:
-        for ngram in span.get_span(attrib):
+        for ngram in span.get_attrib_tokens(attrib):
             yield "CONTAINS_%s_[%s]" % (attrib.upper(), ngram)
         for ngram in get_left_ngrams(span, window=7, n_max=2, attrib=attrib):
             yield "LEFT_%s_[%s]" % (attrib.upper(), ngram)
         for ngram in get_right_ngrams(span, window=7, n_max=2, attrib=attrib):
             yield "RIGHT_%s_[%s]" % (attrib.upper(), ngram)
-        if phrase.row_num is not None and phrase.col_num is not None:
+        if phrase.row_num is None or phrase.col_num is None:
+            for ngram in get_neighbor_phrase_ngrams(span, d=1, n_max=2, attrib=attrib):
+                yield "NEIGHBOR_PHRASE_%s_[%s]" % (attrib.upper(), ngram)
+        else:
             for ngram in get_cell_ngrams(span, n_max=2, attrib=attrib):
                 yield "CELL_%s_[%s]" % (attrib.upper(), ngram)
             yield u"ROW_NUM_[%s]" % phrase.row_num

@@ -34,6 +34,8 @@ class CandidateExtractor(object):
                     Contexts to consider
     :param matchers: one or list of :class:`snorkel.matchers.Matcher` objects, one for each relation argument. Only tuples of
                      Contexts for which each element is accepted by the corresponding Matcher will be returned as Candidates
+    :param throttler: an optional function for filtering out candidates which returns a Boolean expressing whether or not
+                      the candidate should be instantiated.
     :param self_relations: Boolean indicating whether to extract Candidates that relate the same context.
                            Only applies to binary relations. Default is False.
     :param nested_relations: Boolean indicating whether to extract Candidates that relate one Context with another
@@ -118,12 +120,10 @@ class CandidateExtractor(object):
             if self.arity == 2 and not self.symmetric_relations and args[0][0] > args[1][0]:
                 continue
 
-            # NOTE: This is was introduced specifically for the tables task. 
-            # TODO: We will want to remove this when it comes to DC gains, and this probably wont
-            # apply to other applications.
-            # TODO: If throttler is kept, make it more general (accept larger arity)
+            # Apply throttler if one was given 
+            # (throttler returns whether or not proposed candidate passes throttling condition)
             if self.throttler:
-                if not self.throttler.apply(args[0][1], args[1][1]):
+                if not self.throttler(tuple([args[i][1] for i in range(self.arity)])):
                     continue
 
             for i, arg_name in enumerate(arg_names):

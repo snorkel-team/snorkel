@@ -120,9 +120,6 @@ class GenerativeModel(object):
     :param seed:
     """
     def __init__(self, lf_prior=True, lf_propensity=True, lf_class_propensity=True, seed=271828):
-        self.L = None
-        self.fg = None
-
         self.lf_prior = lf_prior
         self.lf_propensity = lf_propensity
         self.lf_class_propensity = lf_class_propensity
@@ -139,14 +136,14 @@ class GenerativeModel(object):
     def train(self, L, deps=()):
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L)
-        fg = NumbSkull(n_inference_epoch=100, n_learning_epoch=1000, quiet=True, learn_non_evidence=True,
-                            stepsize=0.0001, burn_in=50, decay=1.0, reg_param=0.0)
+        fg = NumbSkull(n_inference_epoch=100, n_learning_epoch=500, quiet=True, learn_non_evidence=True,
+                            stepsize=0.000001, burn_in=50, decay=0.95, reg_param=0.1)
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
         fg.learning()
         self._process_learned_weights(L, fg)
 
     def marginals(self, L):
-        if self.fg is None:
+        if self.class_prior_weight is None:
             raise ValueError("Must fit model with train() before computing marginal probabilities.")
 
         marginals = np.ndarray(L.shape[0], dtype=float)

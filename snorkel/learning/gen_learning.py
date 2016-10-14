@@ -137,12 +137,13 @@ class GenerativeModel(object):
         self.dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
 
     def train(self, L, deps=()):
-        self.L = L
-        self._process_dependency_graph(deps)
-        self.fg = NumbSkull(n_inference_epoch=100, n_learning_epoch=100, quiet=True)
-        self._compile()
-        self.fg.learning(out=False)
-        self._process_learned_weights()
+        self._process_dependency_graph(L, deps)
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L)
+        fg = NumbSkull(n_inference_epoch=100, n_learning_epoch=1000, quiet=True, learn_non_evidence=True,
+                            stepsize=0.0001, burn_in=50, decay=1.0, reg_param=0.0)
+        fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
+        fg.learning()
+        self._process_learned_weights(L, fg)
 
     def marginals(self, L):
         if self.fg is None:
@@ -178,16 +179,16 @@ class GenerativeModel(object):
                         elif L[i, j] == -1 and L[i, k] == -1:
                             logp_false += self.dep_reinforcing_weights[j, k]
 
-            marginals[i] = 1 / (1 + np.exp(-1 * (logp_true + logp_false)))
+            marginals[i] = 1 / (1 + np.exp(logp_false - logp_true))
 
         return marginals
 
-    def _process_dependency_graph(self, deps):
+    def _process_dependency_graph(self, L, deps):
         """
         Processes an iterable of triples that specify labeling function dependencies.
 
         The first two elements of the triple are the labeling functions to be modeled as dependent. The labeling
-        functions are specified using their column indices in `self.L`. The third element is the type of dependency.
+        functions are specified using their column indices in `L`. The third element is the type of dependency.
         Options are :const:`DEP_SIMILAR`, :const:`DEP_FIXING`, :const:`DEP_REINFORCING`, and :const:`DEP_EXCLUSIVE`.
 
         The results are :class:`scipy.sparse.csr_matrix` objects that represent directed adjacency matrices. They are
@@ -204,7 +205,7 @@ class GenerativeModel(object):
         }
 
         for dep_name in self.dep_names:
-            setattr(self, dep_name, sparse.lil_matrix(self.L.shape[1], self.L.shape[1]))
+            setattr(self, dep_name, sparse.lil_matrix((L.shape[1], L.shape[1])))
 
         for lf1, lf2, dep_type in deps:
             if lf1 == lf2:
@@ -220,12 +221,11 @@ class GenerativeModel(object):
         for dep_name in self.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
-    def _compile(self):
+    def _compile(self, L):
         """
-        Compiles a generative model based on the current `self.L` and labeling function dependencies compiled as the
-        next factor graph in `self.fg`, which is assumed to be an instance of :class:`numbskull.Numbskull`.
+        Compiles a generative model based on L and the current labeling function dependencies.
         """
-        m, n = self.L.shape()
+        m, n = L.shape
 
         n_weights = 1 + n
         for optional_name in self.optional_names:
@@ -278,15 +278,15 @@ class GenerativeModel(object):
             for j in range(n):
                 index = m + n * i + j
                 variable[index]["isEvidence"] = 1
-                if self.L[i, j] == 1:
+                if L[i, j] == 1:
                     variable[index]["initialValue"] = 2
-                elif self.L[i, j] == 0:
+                elif L[i, j] == 0:
                     variable[index]["initialValue"] = 1
-                elif self.L[i, j] == -1:
+                elif L[i, j] == -1:
                     variable[index]["initialValue"] = 0
                 else:
                     raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
-                                     "Valid values are 1, 0, and -1. " % i, j, self.L[i, j])
+                                     "Valid values are 1, 0, and -1. " % i, j, L[i, j])
                 variable[index]["dataType"] = 1
                 variable[index]["cardinality"] = 3
 
@@ -305,7 +305,7 @@ class GenerativeModel(object):
             ftv[i]["vid"] = i
 
         # Factors over labeling function outputs
-        f_off, ftv_off, w_off = self._compile_output_factors(factor, m, ftv, m, 1, "FUNC_DP_GEN_LF_ACCURACY",
+        f_off, ftv_off, w_off = self._compile_output_factors(L, factor, m, ftv, m, 1, "FUNC_DP_GEN_LF_ACCURACY",
                                                              (lambda m, n, i, j: i, lambda m, n, i, j: m + n * i + j))
 
         optional_name_map = {
@@ -323,14 +323,14 @@ class GenerativeModel(object):
 
         for optional_name in self.optional_names:
             if getattr(self, optional_name):
-                f_off, ftv_off, w_off = self._compile_output_factors(factor, f_off, ftv, ftv_off, w_off,
+                f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off,
                                                                      optional_name_map[optional_name][0],
                                                                      optional_name_map[optional_name][1])
 
         # Factors for labeling function dependencies
         dep_name_map = {
             'dep_similar':
-                ('FUNC_DP_GEN_DEP_SIMILAR', (
+                ('FUNC_EQUAL', (
                     lambda m, n, i, j, k: m + n * i + j,
                     lambda m, n, i, j, k: m + n * i + k)),
             'dep_fixing':
@@ -352,20 +352,19 @@ class GenerativeModel(object):
         for dep_name in self.dep_names:
             mat = getattr(self, dep_name)
             for i in range(len(mat.data)):
-                f_off, ftv_off, w_off = self._compile_dep_factors(factor, f_off, ftv, ftv_off, w_off,
+                f_off, ftv_off, w_off = self._compile_dep_factors(L, factor, f_off, ftv, ftv_off, w_off,
                                                                   mat.row[i], mat.col[i],
                                                                   dep_name_map[dep_name][0],
                                                                   dep_name_map[dep_name][1])
 
-        # Loads factor graph
-        self.fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
+        return weight, variable, factor, ftv, domain_mask, n_edges
 
-    def _compile_output_factors(self, factors, factors_offset, ftv, ftv_offset, weight_offset, factor_name, vid_funcs):
+    def _compile_output_factors(self, L, factors, factors_offset, ftv, ftv_offset, weight_offset, factor_name, vid_funcs):
         """
         Compiles factors over the outputs of labeling functions, i.e., for which there is one weight per labeling
         function and one factor per labeling function-candidate pair.
         """
-        m, n = self.L.shape
+        m, n = L.shape
 
         for i in range(m):
             for j in range(n):
@@ -376,19 +375,19 @@ class GenerativeModel(object):
                 factors[factors_index]["weightId"] = weight_offset + j
                 factors[factors_index]["featureValue"] = 1
                 factors[factors_index]["arity"] = len(vid_funcs)
-                factors[factors_index]["ftv_offset"] = ftv_offset
+                factors[factors_index]["ftv_offset"] = ftv_index
 
-                for i, vid_func in enumerate(vid_funcs):
-                    ftv[ftv_index + i]["vid"] = vid_func(m, n, i, j)
+                for i_var, vid_func in enumerate(vid_funcs):
+                    ftv[ftv_index + i_var]["vid"] = vid_func(m, n, i, j)
 
         return factors_offset + m * n, ftv_offset + len(vid_funcs) * m * n, weight_offset + n
 
-    def _compile_dep_factors(self, factors, factors_offset, ftv, ftv_offset, weight_offset, j, k, factor_name, vid_funcs):
+    def _compile_dep_factors(self, L, factors, factors_offset, ftv, ftv_offset, weight_offset, j, k, factor_name, vid_funcs):
         """
         Compiles factors for dependencies between pairs of labeling functions (possibly also depending on the latent
         class label).
         """
-        m, n = self.L.shape
+        m, n = L.shape
 
         for i in range(m):
             factors_index = factors_offset + i
@@ -398,17 +397,17 @@ class GenerativeModel(object):
             factors[factors_index]["weightId"] = weight_offset
             factors[factors_index]["featureValue"] = 1
             factors[factors_index]["arity"] = len(vid_funcs)
-            factors[factors_index]["ftv_offset"] = ftv_offset
+            factors[factors_index]["ftv_offset"] = ftv_index
 
-            for i, vid_func in enumerate(vid_funcs):
-                ftv[ftv_index + i]["vid"] = vid_func(m, n, i, j, k)
+            for i_var, vid_func in enumerate(vid_funcs):
+                ftv[ftv_index + i_var]["vid"] = vid_func(m, n, i, j, k)
 
         return factors_offset + m, ftv_offset + len(vid_funcs) * m, weight_offset + 1
 
-    def _process_learned_weights(self):
-        m, n = self.L.shape
+    def _process_learned_weights(self, L, fg):
+        m, n = L.shape
 
-        w = self.fg.getFactorGraph().getWeights()
+        w = fg.getFactorGraph().getWeights()
         self.class_prior_weight = w[0]
         self.lf_accuracy_weights = w[1:1 + n]
         w_off = 1 + n
@@ -422,11 +421,11 @@ class GenerativeModel(object):
 
         for dep_name in self.dep_names:
             mat = getattr(self, dep_name)
-            setattr(self, dep_name + '_weights', sparse.lil_matrix(self.L.shape[1], self.L.shape[1]))
+            setattr(self, dep_name + '_weights', sparse.lil_matrix((L.shape[1], L.shape[1])))
             weight_mat = getattr(self, dep_name + '_weights')
 
             for i in range(len(mat.data)):
                 weight_mat[mat.row[i], mat.col[i]] = w[w_off]
                 w_off += 1
 
-            setattr(self, dep_name + '_weights', getattr(self, weight_mat.tocsr(copy=True)))
+            setattr(self, dep_name + '_weights', weight_mat.tocsr(copy=True))

@@ -106,8 +106,8 @@ script:
   - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_5.ipynb
 
   # Run test modules
-#  - coverage run -p test/Tests.py
-#  - coverage combine
+  - coverage run -p test/learning/test_gen_learning.py
+  - coverage combine
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

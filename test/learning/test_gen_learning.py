@@ -34,7 +34,7 @@ class TestGenLearning(unittest.TestCase):
         # The third LF always abstains
 
         # Tests compilation
-        gen_model = GenerativeModel(lf_prior=False, lf_propensity=False, lf_class_propensity=False)
+        gen_model = GenerativeModel(class_prior=True, lf_prior=False, lf_propensity=False, lf_class_propensity=False)
         gen_model._process_dependency_graph(L, ())
         weight, variable, factor, ftv, domain_mask, n_edges = gen_model._compile(L)
 
@@ -44,7 +44,7 @@ class TestGenLearning(unittest.TestCase):
         self.assertEqual(len(weight), 4)
 
         self.assertFalse(weight[0]['isFixed'])
-        self.assertEqual(weight[0]['initialValue'], -1)
+        self.assertEqual(weight[0]['initialValue'], 0.0)
 
         for i in range(1, 4):
             self.assertFalse(weight[i]['isFixed'])
@@ -74,7 +74,7 @@ class TestGenLearning(unittest.TestCase):
         self.assertEqual(len(factor), 20)
 
         for i in range(5):
-            self.assertEqual(factor[i]["factorFunction"], FACTORS["FUNC_DP_GEN_CLASS_PRIOR"])
+            self.assertEqual(factor[i]["factorFunction"], FACTORS["DP_GEN_CLASS_PRIOR"])
             self.assertEqual(factor[i]["weightId"], 0)
             self.assertEqual(factor[i]["featureValue"], 1)
             self.assertEqual(factor[i]["arity"], 1)
@@ -82,7 +82,7 @@ class TestGenLearning(unittest.TestCase):
 
         for i in range(5):
             for j in range(3):
-                self.assertEqual(factor[5 + i * 3 + j]["factorFunction"], FACTORS["FUNC_DP_GEN_LF_ACCURACY"])
+                self.assertEqual(factor[5 + i * 3 + j]["factorFunction"], FACTORS["DP_GEN_LF_ACCURACY"])
                 self.assertEqual(factor[5 + i * 3 + j]["weightId"], j + 1)
                 self.assertEqual(factor[5 + i * 3 + j]["featureValue"], 1)
                 self.assertEqual(factor[5 + i * 3 + j]["arity"], 2)

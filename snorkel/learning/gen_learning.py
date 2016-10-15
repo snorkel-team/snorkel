@@ -119,7 +119,8 @@ class GenerativeModel(object):
     :param lf_class_propensity:
     :param seed:
     """
-    def __init__(self, lf_prior=True, lf_propensity=True, lf_class_propensity=True, seed=271828):
+    def __init__(self, class_prior=False, lf_prior=False, lf_propensity=True, lf_class_propensity=False, seed=271828):
+        self.class_prior = class_prior
         self.lf_prior = lf_prior
         self.lf_propensity = lf_propensity
         self.lf_class_propensity = lf_class_propensity
@@ -137,7 +138,7 @@ class GenerativeModel(object):
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L)
         fg = NumbSkull(n_inference_epoch=100, n_learning_epoch=500, quiet=True, learn_non_evidence=True,
-                            stepsize=0.000001, burn_in=50, decay=0.95, reg_param=0.1)
+                            stepsize=0.01, burn_in=50, decay=0.95, reg_param=0.1)
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
         fg.learning()
         self._process_learned_weights(L, fg)
@@ -224,7 +225,9 @@ class GenerativeModel(object):
         """
         m, n = L.shape
 
-        n_weights = 1 + n
+        n_weights = 1 if self.class_prior else 0
+
+        n_weights += n
         for optional_name in self.optional_names:
             if getattr(self, optional_name):
                 n_weights += n
@@ -234,7 +237,8 @@ class GenerativeModel(object):
         n_vars = m * (n + 1)
         n_factors = m * n_weights
 
-        n_edges = 1 + 2 * n
+        n_edges = 1 if self.class_prior else 0
+        n_edges += 2 * n
         if self.lf_prior:
             n_edges += n
         if self.lf_propensity:
@@ -254,11 +258,14 @@ class GenerativeModel(object):
         #
         # Compiles weight matrix
         #
-        weight[0]['isFixed'] = False
-        # In most information extraction tasks, the label distribution is weighted towards the negative class, so we
-        # initialize accordingly
-        weight[0]['initialValue'] = -1
-        for i in range(1, weight.shape[0]):
+        if self.class_prior:
+            weight[0]['isFixed'] = False
+            weight[0]['initialValue'] = 0
+            w_off = 1
+        else:
+            w_off = 0
+
+        for i in range(w_off, weight.shape[0]):
             weight[i]['isFixed'] = False
             weight[i]['initialValue'] = 1.1 - .2 * self.rng.random()
 
@@ -292,28 +299,35 @@ class GenerativeModel(object):
         #
 
         # Class prior
-        for i in range(m):
-            factor[i]["factorFunction"] = FACTORS["FUNC_DP_GEN_CLASS_PRIOR"]
-            factor[i]["weightId"] = 0
-            factor[i]["featureValue"] = 1
-            factor[i]["arity"] = 1
-            factor[i]["ftv_offset"] = i
+        if self.class_prior:
+            for i in range(m):
+                factor[i]["factorFunction"] = FACTORS["DP_GEN_CLASS_PRIOR"]
+                factor[i]["weightId"] = 0
+                factor[i]["featureValue"] = 1
+                factor[i]["arity"] = 1
+                factor[i]["ftv_offset"] = i
 
-            ftv[i]["vid"] = i
+                ftv[i]["vid"] = i
+
+            f_off = m
+            ftv_off = m
+        else:
+            f_off = 0
+            ftv_off = 0
 
         # Factors over labeling function outputs
-        f_off, ftv_off, w_off = self._compile_output_factors(L, factor, m, ftv, m, 1, "FUNC_DP_GEN_LF_ACCURACY",
+        f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off, "DP_GEN_LF_ACCURACY",
                                                              (lambda m, n, i, j: i, lambda m, n, i, j: m + n * i + j))
 
         optional_name_map = {
             'lf_prior':
-                ('FUNC_DP_GEN_LF_PRIOR', (
+                ('DP_GEN_LF_PRIOR', (
                     lambda m, n, i, j: m + n * i + j,)),
             'lf_propensity':
-                ('FUNC_DP_GEN_LF_PROPENSITY', (
+                ('DP_GEN_LF_PROPENSITY', (
                     lambda m, n, i, j: m + n * i + j,)),
             'lf_class_propensity':
-                ('FUNC_DP_GEN_LF_CLASS_PROPENSITY', (
+                ('DP_GEN_LF_CLASS_PROPENSITY', (
                     lambda m, n, i, j: i,
                     lambda m, n, i, j: m + n * i + j)),
         }
@@ -327,21 +341,21 @@ class GenerativeModel(object):
         # Factors for labeling function dependencies
         dep_name_map = {
             'dep_similar':
-                ('FUNC_EQUAL', (
+                ('EQUAL', (
                     lambda m, n, i, j, k: m + n * i + j,
                     lambda m, n, i, j, k: m + n * i + k)),
             'dep_fixing':
-                ('FUNC_DP_GEN_DEP_FIXING', (
+                ('DP_GEN_DEP_FIXING', (
                     lambda m, n, i, j, k: i,
                     lambda m, n, i, j, k: m + n * i + j,
                     lambda m, n, i, j, k: m + n * i + k)),
             'dep_reinforcing':
-                ('FUNC_DP_GEN_DEP_REINFORCING', (
+                ('DP_GEN_DEP_REINFORCING', (
                     lambda m, n, i, j, k: i,
                     lambda m, n, i, j, k: m + n * i + j,
                     lambda m, n, i, j, k: m + n * i + k)),
             'dep_exclusive':
-                ('FUNC_DP_GEN_DEP_EXCLUSIVE', (
+                ('DP_GEN_DEP_EXCLUSIVE', (
                     lambda m, n, i, j, k: m + n * i + j,
                     lambda m, n, i, j, k: m + n * i + k))
         }
@@ -405,9 +419,16 @@ class GenerativeModel(object):
         m, n = L.shape
 
         w = fg.getFactorGraph().getWeights()
-        self.class_prior_weight = w[0]
-        self.lf_accuracy_weights = w[1:1 + n]
-        w_off = 1 + n
+
+        if self.class_prior:
+            self.class_prior_weight = w[0]
+            w_off = 1
+        else:
+            self.class_prior_weight = 0.0
+            w_off = 0
+
+        self.lf_accuracy_weights = w[w_off:w_off + n]
+        w_off += n
 
         for optional_name in self.optional_names:
             if getattr(self, optional_name):

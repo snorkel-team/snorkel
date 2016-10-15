@@ -8,7 +8,7 @@ git submodule update --init --recursive
 # Make sure parser is installed
 PARSER="parser/stanford-corenlp-3.6.0.jar"
 if [ ! -f "$PARSER" ]; then
-    read -p "CoreNLP [default] parser not found- install now?   " yn
+    read -p "CoreNLP [default] parser not found- install now?  [y/n] " yn
     case $yn in
         [Yy]* ) echo "Installing parser..."; ./install-parser.sh;;
         [Nn]* ) ;;

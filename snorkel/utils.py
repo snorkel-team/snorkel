@@ -6,18 +6,26 @@ import scipy.sparse as sparse
 
 class ProgressBar(object):
     def __init__(self, N, length=40):
-        self.N      = N
-        self.nf     = float(N)
+        self.N      = max(1, N)
+        self.nf     = float(self.N)
         self.length = length
+        self.update_interval = self.nf/100
+        self.current_tick = 0
+        self.bar(0)
 
     def bar(self, i):
         """Assumes i ranges through [0, N-1]"""
-        b = int(np.ceil(((i+1) / self.nf) * self.length))
-        sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), int(100*((i+1) / self.nf))))
-        sys.stdout.flush()
+        new_tick = i/self.update_interval
+        #print new_tick, np.floor(new_tick), np.ceil(self.current_tick)
+        if int(new_tick) != int(self.current_tick):
+            b = int(np.ceil((i / self.nf) * self.length))
+            sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), int(100*(i / self.nf))))
+            sys.stdout.flush()
+        self.current_tick = new_tick
 
     def close(self):
-        sys.stdout.write("\n\n")
+        b = self.length
+        sys.stdout.write("\r[%s%s] %d%%\n" % ("="*b, " "*(self.length-b), 100))
         sys.stdout.flush()
 
 
@@ -86,6 +94,34 @@ def matrix_conflicts(L):
     return np.ravel(np.where(L_abs.sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).T * L_abs / float(L.shape[0]))
 
 
+def matrix_accuracy(L, G):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate
+    and a set of gold candidates:
+    Return the accuracy of each LF compared to the gold.
+    Accuracy is defined as: (# correct non-zero labels) / (# non-zero labels)
+    """
+    N, M = L.shape
+    pb = ProgressBar(len(G))
+    # Create N x 1 vector to compare against
+    gold_labels = np.ndarray((N,1))
+    gold_labels.fill(-1)
+    count = 0
+    for c in G:
+        pb.bar(count)
+        count += 1
+        index = L.get_row_index(c) # NOTE: Assumes G is a subset of L
+        gold_labels[index] = [1]
+
+    pb.close()
+    gold_label_matrix = np.repeat(gold_labels, M, axis=1)
+    correct_labels = np.clip(np.multiply(gold_label_matrix, L.toarray()), 0, 1)
+    # Calculate accuracy of each LF
+    non_zero_cols = (L.toarray() != 0).sum(axis=0) # count non-zero elements of each col
+    accuracy = np.divide(np.sum(correct_labels, axis=0), non_zero_cols)
+    return np.ravel(accuracy)
+
+
 def get_as_dict(x):
     """Return an object as a dictionary of its attributes"""
     if isinstance(x, dict):
@@ -107,8 +143,30 @@ def corenlp_cleaner(words):
   return map(lambda w: d[w] if w in d else w, words)
 
 
-def tokens_to_ngrams(tokens, n_max=3, delim=' '):
+def split_html_attrs(attrs):
+    """
+    Given an iterable object of (attr, values) pairs, returns a list of separated
+    "attr=value" strings
+    """
+    html_attrs = []
+    for a in attrs:
+        attr = a[0]
+        values = [v.split(';') for v in a[1]] if isinstance(a[1],list) else [a[1].split(';')]
+        for i in range(len(values)):
+            while isinstance(values[i], list):
+                values[i] = values[i][0]
+        html_attrs += ["=".join([attr,val]) for val in values]
+    return html_attrs
+
+
+def tokens_to_ngrams(tokens, n_min=1, n_max=3, lower=False, delim=' '):
+    f = (lambda x: x.lower()) if lower else (lambda x: x)
     N = len(tokens)
     for root in range(N):
-        for n in range(min(n_max, N - root)):
-            yield delim.join(tokens[root:root+n+1])
+        for n in range(max(n_min - 1, 0), min(n_max, N - root)):
+            yield f(delim.join(tokens[root:root+n+1]))
+
+
+def get_keys_by_candidate(candidate, annotation_matrix):
+    (r,c,v) = sparse.find(annotation_matrix[annotation_matrix.get_row_index(candidate),:])
+    return [annotation_matrix.get_key(idx) for idx in c]

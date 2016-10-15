@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Sentence, construct_stable_id
-from .utils import ProgressBar, sort_X_on_Y
+from .models import Corpus, Document, Sentence, Table, Row, Col, Cell, Phrase, construct_stable_id
+from .utils import ProgressBar, sort_X_on_Y, split_html_attrs
 import atexit
 import warnings
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString, Tag
 from collections import defaultdict
 import glob
 import json
@@ -13,9 +13,11 @@ import os
 import re
 import requests
 import signal
+import codecs
 from subprocess import Popen
 import sys
 import codecs
+import copy
 
 
 class CorpusParser:
@@ -40,11 +42,10 @@ class CorpusParser:
             for _ in self.sent_parser.parse(doc, text):
                 pass
         if self.max_docs is not None:
-            pb.bar(self.max_docs)
             pb.close()
         if session is not None:
             session.commit()
-        corpus.stats()
+        # corpus.stats() # Note: corpus.stats breaks with OmniParser
         return corpus
 
 
@@ -168,7 +169,7 @@ PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
          '-RSB-': ']', '-LSB-': '['}
 
 class CoreNLPHandler:
-    def __init__(self, tok_whitespace=False):
+    def __init__(self, delim='', tok_whitespace=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
         # Kill it when python exits.
@@ -183,6 +184,7 @@ class CoreNLPHandler:
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
         props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
+        props += "\"ssplit.htmlBoundariesToDiscard\": \"%s\"," % delim if delim else ""
         self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse,ner", "outputFormat": "json"}' % (self.port, props)
 
         # Following enables retries to cope with CoreNLP server boot-up latency
@@ -220,7 +222,7 @@ class CoreNLPHandler:
         try:
             blocks = json.loads(content, strict=False)['sentences']
         except:
-            print "SKIPPED A MALFORMED SENTENCE!"
+            warnings.warn("CoreNLP skipped a malformed sentence.", RuntimeWarning)
             return
         position = 0
         diverged = False
@@ -275,3 +277,95 @@ class SentenceParser(object):
         """Parse a raw document as a string into a list of sentences"""
         for parts in self.corenlp_handler.parse(doc, text):
             yield Sentence(**parts)
+
+
+class HTMLParser(DocParser):
+    """Simple parsing of files into html documents"""
+    def parse_file(self, fp, file_name):
+        with codecs.open(fp, encoding=self.encoding) as f:
+            soup = BeautifulSoup(f, 'lxml')
+            for text in soup.find_all('html'):
+                name = os.path.basename(fp)[:os.path.basename(fp).rfind('.')]
+                stable_id = self.get_stable_id(name)
+                yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), unicode(text)
+
+
+class OmniParser(object):
+    def __init__(self):
+        self.delim = "<NC>" # NC = New Cell 
+        self.corenlp_handler = CoreNLPHandler(delim=self.delim[1:-1])
+
+    def parse(self, document, text):
+        soup = BeautifulSoup(text, 'lxml')
+        self.table_idx = -1
+        self.phrase_idx = 0      
+        for phrase in self.parse_tag(soup, document):
+            yield phrase
+
+    def parse_tag(self, tag, document, table=None, row=None, col=None, cell=None, anc_tags=[], anc_attrs=[]):
+        if any(isinstance(child, NavigableString) and unicode(child)!=u'\n' for child in tag.contents):
+            # TODO/NOTE: do '?' replacement for hardware only
+            text = tag.get_text(' ').replace('?','%')
+            tag.clear()
+            tag.string = text
+        for child in tag.contents:
+            if isinstance(child, NavigableString):
+                for parts in self.corenlp_handler.parse(document, unicode(child)):
+                    parts['document'] = document
+                    parts['table'] = table
+                    parts['cell'] = cell
+                    parts['row'] = row
+                    parts['col'] = col
+                    parts['phrase_id'] = self.phrase_idx
+                    parts['row_num'] = row.position if row is not None else None
+                    parts['col_num'] = col.position if col is not None else None
+                    parts['html_tag'] = tag.name
+                    parts['html_attrs'] = tag.attrs
+                    parts['html_anc_tags'] = anc_tags
+                    parts['html_anc_attrs'] = anc_attrs
+                    parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'phrase', self.phrase_idx, self.phrase_idx)
+                    yield Phrase(**parts)
+                    self.phrase_idx += 1
+            else: # isinstance(child, Tag) = True
+                # TODO: find replacement for this check to reset table to None
+                if "table" not in [parent.name for parent in child.parents]:
+                    table = None
+                    row = None
+                    col = None
+                    cell = None
+                if child.name == "table":
+                    self.table_idx += 1
+                    self.row_num = -1
+                    stable_id = "%s::%s:%s:%s" % (document.name, 'table', self.table_idx, self.table_idx)
+                    table = Table(document=document, stable_id=stable_id, position=self.table_idx, text=unicode(child))
+                elif child.name == "tr":
+                    self.row_num += 1
+                    stable_id = "%s::%s:%s:%s" % (document.name, 'row', table.position, self.row_num)
+                    row = Row(document=document, table=table, stable_id=stable_id, position=self.row_num)
+                    self.col_num = -1
+                elif child.name in ["td","th"]:
+                    self.col_num += 1
+                    if len(table.cols) <= self.col_num:
+                        stable_id = "%s::%s:%s:%s" % (document.name, 'col', table.position, self.col_num)
+                        col = Col(document=document, table=table, stable_id=stable_id, position=self.col_num)
+                    else:
+                        col = table.cols[self.col_num]
+                    parts = defaultdict(list)
+                    parts['document'] = document
+                    parts['table'] = table
+                    parts['row'] = row
+                    parts['col'] = col
+                    parts['text'] = unicode(child)
+                    parts['html_tag'] = child.name
+                    parts['html_attrs'] = None #split_html_attrs(child.attrs.items())
+                    parts['html_anc_tags'] = anc_tags 
+                    parts['html_anc_attrs'] = None #anc_attrs
+                    parts['stable_id'] = "%s::%s:%s:%s:%s" % (document.name, 'cell', table.position, row.position, col.position)
+                    cell = Cell(**parts)
+                # FIXME: making so many copies is hacky and wasteful; use a stack?
+                temp_anc_tags = copy.deepcopy(anc_tags)
+                temp_anc_tags.append(child.name)
+                temp_anc_attrs = None #copy.deepcopy(anc_attrs)
+                # temp_anc_attrs.extend(split_html_attrs(child.attrs.items()))
+                for phrase in self.parse_tag(child, document, table, row, col, cell, temp_anc_tags, temp_anc_attrs):
+                    yield phrase

@@ -2,6 +2,7 @@ from . import SnorkelSession
 from .utils import ProgressBar
 from .models import Candidate, CandidateSet, TemporarySpan
 from .models.candidate import candidate_set_candidate_association
+from .models.context import Document, Phrase
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
 from sqlalchemy.sql import select
@@ -33,6 +34,8 @@ class CandidateExtractor(object):
                     Contexts to consider
     :param matchers: one or list of :class:`snorkel.matchers.Matcher` objects, one for each relation argument. Only tuples of
                      Contexts for which each element is accepted by the corresponding Matcher will be returned as Candidates
+    :param throttler: an optional function for filtering out candidates which returns a Boolean expressing whether or not
+                      the candidate should be instantiated.
     :param self_relations: Boolean indicating whether to extract Candidates that relate the same context.
                            Only applies to binary relations. Default is False.
     :param nested_relations: Boolean indicating whether to extract Candidates that relate one Context with another
@@ -40,10 +43,11 @@ class CandidateExtractor(object):
     :param symmetric_relations: Boolean indicating whether to extract symmetric Candidates, i.e., rel(A,B) and rel(B,A),
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
-    def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=True):
+    def __init__(self, candidate_class, cspaces, matchers, throttler=None, self_relations=False, nested_relations=False, symmetric_relations=True):
         self.candidate_class     = candidate_class
         self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
+        self.throttler           = throttler
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations
         self.symmetric_relations = symmetric_relations
@@ -112,9 +116,15 @@ class CandidateExtractor(object):
             if self.arity == 2 and not self.nested_relations and (args[0][1] in args[1][1] or args[1][1] in args[0][1]):
                 continue
 
-            # Checks for symmetric relations
+            # Check for symmetric relations
             if self.arity == 2 and not self.symmetric_relations and args[0][0] > args[1][0]:
                 continue
+
+            # Apply throttler if one was given 
+            # (throttler returns whether or not proposed candidate passes throttling condition)
+            if self.throttler:
+                if not self.throttler(tuple([args[i][1] for i in range(self.arity)])):
+                    continue
 
             for i, arg_name in enumerate(arg_names):
                 child_args[arg_name + '_id'] = args[i][1].id
@@ -129,10 +139,14 @@ class CandidateExtractor(object):
                 child_args['id'] = candidate_id[0]
                 session.execute(child_insert_query, child_args)
                 del child_args['id']
+            else:
+                raise ValueError("Duplicate candidates found in %s." % candidate_set)
 
+            # Add candidate to the given CandidateSet
             set_insert_args['candidate_id'] = candidate_id[0]
             session.execute(set_insert_query, set_insert_args)
-            
+
+
     def _extract_multiprocess(self, contexts, candidate_set, parallelism):
         contexts_in    = JoinableQueue()
         candidates_out = Queue()
@@ -150,10 +164,10 @@ class CandidateExtractor(object):
 
         for p in self.ps:
             p.start()
-        
+
         # Join on JoinableQueue of contexts
         contexts_in.join()
-        
+
         # Collect candidates out
         candidates = []
         while True:
@@ -218,7 +232,7 @@ class Ngrams(CandidateSpace):
         CandidateSpace.__init__(self)
         self.n_max     = n_max
         self.split_rgx = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
-    
+
     def apply(self, context):
 
         # These are the character offset--**relative to the sentence start**--for each _token_
@@ -250,3 +264,19 @@ class Ngrams(CandidateSpace):
                         if ts2 not in seen:
                             seen.add(ts2)
                             yield ts2
+
+
+class OmniNgrams(Ngrams):
+    """
+    Defines the space of candidates as all n-grams (n <= n_max) in a Document _x_,
+    divided into Phrases inside of html elements (such as table cells).
+    """
+    def __init__(self, n_max=5, split_tokens=['-', '/']):
+        Ngrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
+
+    def apply(self, context):
+        if not isinstance(context, Document):
+            raise TypeError("Input Contexts to OmniNgrams.apply() must be of type Document")
+        for phrase in context.phrases:
+            for ts in Ngrams.apply(self, phrase):
+                yield ts

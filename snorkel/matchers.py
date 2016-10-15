@@ -71,10 +71,10 @@ class Matcher(object):
 WORDS = 'words'
 
 class NgramMatcher(Matcher):
-    """Matcher base class for Ngram objects"""
+    """Matcher base class for Ngram (Span) objects"""
     def _is_subspan(self, c, span):
         """Tests if candidate c is subspan of span, where span is defined specific to candidate type"""
-        return c.char_start >= span[0] and c.char_end <= span[1]
+        return c in span
 
     def _get_span(self, c):
         """Gets a tuple that identifies a span for the specific candidate class that c belongs to"""
@@ -245,7 +245,6 @@ class RegexMatchEach(RegexMatch):
 class PersonMatcher(RegexMatchEach):
     """
     Matches Spans that are the names of people, as identified by CoreNLP.
-
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as a person.
     """
@@ -258,7 +257,6 @@ class PersonMatcher(RegexMatchEach):
 class LocationMatcher(RegexMatchEach):
     """
     Matches Spans that are the names of locations, as identified by CoreNLP.
-
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as a location.
     """
@@ -271,7 +269,6 @@ class LocationMatcher(RegexMatchEach):
 class OrganizationMatcher(RegexMatchEach):
     """
     Matches Spans that are the names of organizations, as identified by CoreNLP.
-
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as an organization.
     """
@@ -284,7 +281,6 @@ class OrganizationMatcher(RegexMatchEach):
 class DateMatcher(RegexMatchEach):
     """
     Matches Spans that are dates, as identified by CoreNLP.
-
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as a date.
     """
@@ -297,7 +293,6 @@ class DateMatcher(RegexMatchEach):
 class NumberMatcher(RegexMatchEach):
     """
     Matches Spans that are numbers, as identified by CoreNLP.
-
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as a number.
     """
@@ -310,7 +305,6 @@ class NumberMatcher(RegexMatchEach):
 class MiscMatcher(RegexMatchEach):
     """
     Matches Spans that are miscellaneous named entities, as identified by CoreNLP.
-
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as miscellaneous.
     """

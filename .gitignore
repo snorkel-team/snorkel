@@ -1,3 +1,5 @@
+.project
+.pydevproject
 *.sw[opnm]
 .DS_Store
 /.virtualenv
@@ -14,19 +16,20 @@ docs/_build
 # PyCharm
 .idea
 
-# Tutorial
-tutorial/data/CDR_*.BioC.xml
-tutorial/data/dicts
+# Visual Studio Code
+.vscode/
 
-tutorials/disease_tagger/data/CDR_DevelopmentSet.BioC.xml
-tutorials/disease_tagger/data/CDR_TestSet.BioC.xml
-tutorials/disease_tagger/data/CDR_TrainingSet.BioC.xml
-tutorials/disease_tagger/data/dicts/
-tutorials/disease_tagger/snorkel.db
+# Tutorials
+
+tutorials/disease_tagging/data/CDR_DevelopmentSet.BioC.xml
+tutorials/disease_tagging/data/CDR_TestSet.BioC.xml
+tutorials/disease_tagging/data/CDR_TrainingSet.BioC.xml
+tutorials/disease_tagging/data/dicts/
+tutorials/disease_tagging/snorkel.db
 tutorials/intro/data/articles-dev.tsv
 tutorials/intro/data/articles-test.tsv
 tutorials/intro/data/articles-train.tsv
 tutorials/intro/data/gold_labels.tsv
 tutorials/intro/snorkel.db
 
-tutorials/tables/data/hardware/
+tutorials/tables/data/hardware/hardware*/

@@ -1,7 +1,7 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
 from sqlalchemy.sql import bindparam, func, select
-from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps
+from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy
 from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
 from .models.annotation import annotation_key_set_annotation_key_association as assoc_table
 from .utils import get_ORM_instance, ProgressBar
@@ -30,7 +30,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         """Return the Candidate object corresponding to row i"""
         return object_session(self.candidate_set).query(Candidate)\
                 .filter(Candidate.id == self.row_index[i]).one()
-    
+
     def get_row_index(self, candidate):
         """Return the row index of the Candidate"""
         return self.candidate_index[candidate.id]
@@ -50,19 +50,29 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
 
 
 class csr_LabelMatrix(csr_AnnotationMatrix):
-    def lf_stats(self):
+    def lf_stats(self, gold=None):
         """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
         lf_names = [self.get_key(j).name for j in range(self.shape[1])]
 
-        # Default LF stats
-        d = {
-            'j'         : range(self.shape[1]),
-            'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
-            'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
-            'conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
-        }
-        return DataFrame(data=d, index=lf_names)
+        if gold is not None:
+            d = {
+                'j'         : range(self.shape[1]),
+                'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
+                'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
+                'conflicts' : Series(data=matrix_conflicts(self), index=lf_names),
+                'accuracy'  : Series(data=matrix_accuracy(self, gold), index=lf_names),
+            }
+        else:
+            # Default LF stats
+            d = {
+                'j'         : range(self.shape[1]),
+                'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
+                'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
+                'conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
+            }
 
+
+        return DataFrame(data=d, index=lf_names)
 
 class AnnotationManager(object):
     """
@@ -78,18 +88,18 @@ class AnnotationManager(object):
             raise ValueError('matrix_cls must be a subclass of csr_AnnotationMatrix')
         self.matrix_cls = matrix_cls
         self.default_f = default_f
-    
+
     def create(self, session, candidate_set, new_key_set, f=None):
         """
         Generates annotations for candidates in a candidate set, and persists these to the database,
         as well as returning a sparse matrix representation.
 
         :param session: SnorkelSession for the database
-        
+
         :param candidate_set: Can either be a CandidateSet instance or the name of one
 
         :param new_key_set: Name of a new AnnotationKeySet to create
-        
+
         :param f: Can be either:
 
             * A function which maps a candidate to a generator key_name, value pairs.  Ex: A feature generator
@@ -107,7 +117,7 @@ class AnnotationManager(object):
         session.commit()
 
         return self.update(session, candidate_set, key_set, True, f)
-    
+
     def update(self, session, candidate_set, key_set, expand_key_set, f=None):
         """
         Generates annotations for candidates in a candidate set and *adds* them to an existing annotation set,
@@ -122,7 +132,7 @@ class AnnotationManager(object):
 
         :param expand_key_set: If True, annotations with keys not in the given key set will be added, and the
         key set will be expanded; if False, these annotations will be considered out-of-domain (OOD) and discarded.
-        
+
         :param f: Can be either:
 
             * A function which maps a candidate to a generator key_name, value pairs.  Ex: A feature generator
@@ -138,7 +148,6 @@ class AnnotationManager(object):
 
         # Prepares helpers
         annotation_generator = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
-        pb = ProgressBar(len(candidate_set))
 
         # Prepares queries
         key_select_query = select([AnnotationKey.id]).where(AnnotationKey.name == bindparam('name'))
@@ -159,6 +168,8 @@ class AnnotationManager(object):
         anno_insert_query = self.annotation_cls.__table__.insert()
 
         # Generates annotations for CandidateSet
+        print "Generating annotations for %d candidates..." % len(candidate_set)
+        pb = ProgressBar(len(candidate_set))
         for i, candidate in enumerate(candidate_set):
             pb.bar(i)
             for key_name, value in annotation_generator(candidate):
@@ -248,7 +259,7 @@ class AnnotationManager(object):
         # The total number of annotations in DB which is weird behavior...
         q = session.query(self.annotation_cls.candidate_id, self.annotation_cls.key_id, self.annotation_cls.value)
         q = q.order_by(self.annotation_cls.candidate_id)
-        
+
         # Iteratively construct row index and output sparse matrix
         for cid, kid, val in q.all():
             if cid in cid_to_row and kid in kid_to_col:
@@ -264,7 +275,7 @@ class LabelManager(AnnotationManager):
     def __init__(self):
         super(LabelManager, self).__init__(Label, matrix_cls=csr_LabelMatrix)
 
-        
+
 class FeatureManager(AnnotationManager):
     """Apply feature generators to the candidates, generating Feature annotations"""
     def __init__(self):

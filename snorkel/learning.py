@@ -1,10 +1,12 @@
+from .models import Parameter, ParameterSet
+from learning_utils import score, sparse_abs
+from utils import get_keys_by_candidate
 import numpy as np
 import scipy.sparse as sparse
 from scipy.optimize import minimize
-from learning_utils import score, sparse_abs
 from lstm import LSTMModel
 from sklearn import linear_model
-from .models import Parameter, ParameterSet
+import operator
 
 DEFAULT_MU = 1e-6
 DEFAULT_RATE = 0.01
@@ -22,6 +24,9 @@ def odds_to_prob(l):
     \exp(l) = \frac{p}{1-p}
     p       = \frac{\exp(l)}{1 + \exp(l)}
   """
+  # Threshold to prevent float rollover into infinity
+  l[l > 25] = 25
+  l[l < -25] = -25
   return np.exp(l) / (1.0 + np.exp(l))
 
 def sample_data(X, w, n_samples):
@@ -121,7 +126,7 @@ class NoiseAwareModel(object):
                 # Set unlabeled examples to -1 by default
                 if test_label == 0 and set_unlabeled_as_neg:
                     test_label = -1
-              
+
                 # Bucket the candidates for error analysis
                 test_labels.append(test_label)
                 if test_marginals[i] > b:
@@ -180,11 +185,11 @@ class LogRegSKLearn(NoiseAwareModel):
         self.X_train = X
         penalty      = 'l1' if alpha == 1 else 'l2'
         self.model   = linear_model.LogisticRegression(penalty=penalty, C=C, dual=False)
-       
+
         # First, we remove the rows (candidates) that have no LF coverage
         covered            = np.where(np.abs(training_marginals - 0.5) > 1e-3)[0]
         training_marginals = training_marginals[covered]
-        
+
         # TODO: This should be X_train, however copy is broken here!
         X = X[covered]
 
@@ -192,7 +197,7 @@ class LogRegSKLearn(NoiseAwareModel):
         ypred = np.array([1 if x > 0.5 else 0 for x in training_marginals])
         self.model.fit(X, ypred)
         self.w = self.model.coef_.flatten()
-    
+
     def marginals(self, X):
         m = self.model.predict_proba(X)
         return self.model.predict_proba(X)[...,1]
@@ -202,6 +207,7 @@ class LogReg(NoiseAwareModel):
     def __init__(self, bias_term=False):
         self.w         = None
         self.bias_term = bias_term
+        self.feature_weights = None
 
     def _loss(self, X, w, m_t, mu, alpha):
         """
@@ -209,7 +215,11 @@ class LogReg(NoiseAwareModel):
         L(w) = sum_{x,y} E[ log( 1 + exp(-x^Twy) ) ]
              = sum_{x,y} P(y=1) log( 1 + exp(-x^Tw) ) + P(y=-1) log( 1 + exp(x^Tw) )
         """
+        
         z = X.dot(w)
+        # Threshold to prevent float rollover into infinity
+        z[z>25] = 25
+        z[z<-25] = -25
         return m_t.dot(np.log(1 + np.exp(-z))) + (1 - m_t).dot(np.log(1 + np.exp(z))) \
                 + mu * (alpha*np.linalg.norm(w, ord=1) + (1-alpha)*np.linalg.norm(w, ord=2))
 
@@ -219,7 +229,7 @@ class LogReg(NoiseAwareModel):
         # First, we remove the rows (candidates) that have no LF coverage
         covered            = np.where(np.abs(training_marginals - 0.5) > 1e-3)[0]
         training_marginals = training_marginals[covered]
-        
+    
         # TODO: This should be X_train, however copy is broken here!
         X = X[covered]
 
@@ -227,7 +237,7 @@ class LogReg(NoiseAwareModel):
         if hard_thresh:
             training_marginals = np.array([1.0 if x > 0.5 else 0.0 for x in training_marginals])
         m_t, m_f = training_marginals, 1-training_marginals
-    
+
         # Set up stuff
         N, M = X.shape
         print "="*80
@@ -304,6 +314,43 @@ class LogReg(NoiseAwareModel):
 
     def marginals(self, X):
         return odds_to_prob(X.dot(self.w))
+
+
+    def get_feature_weights(self, feature_matrix, getDict=False, reverse=True):
+        """ Returns a mapping of features and their weights (if non-zero)
+        If a LogReg model `m`, `m.w` is the weight vector, and the corresponding
+        features are described in feature matrix `F`. If `m.w[i]` is nonzero,
+        `F.get_key(i)` is the corresponding feature key.
+        """
+        weights = dict()
+        for i in xrange(len(self.w)):
+            if abs(self.w[i]) >= 0.000001:
+                weights[feature_matrix.get_key(i)] = float(self.w[i])
+
+        if getDict: #optionally get access to the dictionary for easier searching
+            return weights
+        else:
+            # Sort by descending weight, code from epost:
+            # (http://stackoverflow.com/questions/613183/sort-a-python-dictionary-by-value)
+            return sorted(weights.items(), key=operator.itemgetter(1), reverse=reverse)
+
+    
+    def get_candidate_feature_weights(self, candidate, feature_matrix, feature_weights=None):
+        if self.feature_weights is None:
+            if feature_weights is None:
+                self.feature_weights = self.get_feature_weights(feature_matrix, reverse=True)
+            else:
+                self.feature_weights = feature_weights
+        feats = set(get_keys_by_candidate(candidate, feature_matrix))
+        return sorted([f_w for f_w in self.feature_weights if f_w[0] in feats], 
+                    key=lambda x:abs(x[1]), reverse=True)
+
+    
+    def get_candidate_score(self, candidate, feature_matrix, feature_weights=None):
+        score = 0
+        for f,v in self.get_candidate_feature_weights(candidate, feature_matrix, feature_weights):
+            score += v
+        return score
 
 
 class NaiveBayes(NoiseAwareModel):

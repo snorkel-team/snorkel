@@ -4,8 +4,8 @@ from snorkel.candidates import TemporarySpan
 from collections import defaultdict
 import os
 import codecs
-import csv
 import bz2
+import csv
 
 
 def get_docs_xml(filepath, doc_path=".//document", id_path=".//id/text()"):

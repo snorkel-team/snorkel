@@ -31,7 +31,7 @@ class CandidateSet(SnorkelBase):
         self.candidates.remove(item)
 
     def __repr__(self):
-        return "Candidate Set (" + str(self.name) + ")"
+        return "Candidate Set (" + unicode(self.name) + ")"
 
     def __iter__(self):
         """Default iterator is over self.candidates"""
@@ -55,7 +55,7 @@ class CandidateSet(SnorkelBase):
         print "Avg. # of candidates / context*: %0.1f" % (self.__len__() / float(nc),)
         if gold_set is not None:
             print "-" * 80
-            print "Overlaps with %0.2f%% of gold set" % (len(gold_set.intersection(self)) / float(len(gold_set)),)
+            print "Overlaps with %0.2f% of gold set" % (len(gold_set.intersection(self)) / float(len(gold_set)),)
         print "=" * 80
         print "*Only counting contexts with non-zero number of candidates."
 
@@ -86,6 +86,7 @@ class Candidate(SnorkelBase):
         return u"%s(%s)" % (self.__class__.__name__, u", ".join(map(unicode, self.get_arguments())))
 
 
+
 def candidate_subclass(class_name, args, table_name=None):
     """
     Creates and returns a Candidate subclass with provided argument names, which are Context type.
@@ -108,17 +109,17 @@ def candidate_subclass(class_name, args, table_name=None):
 
         # Declares name for storage table
         '__tablename__' : table_name,
-                
+
         # Connects ChemicalDisease records to generic Candidate records
         'id' : Column(Integer, ForeignKey('candidate.id'), primary_key=True),
-                
+
         # Polymorphism information for SQLAlchemy
         '__mapper_args__' : {'polymorphic_identity': table_name},
 
         # Helper method to get argument names
         '__argnames__' : args
     }
-        
+
     # Create named arguments
     unique_con_args = []
     for arg in args:
@@ -133,7 +134,7 @@ def candidate_subclass(class_name, args, table_name=None):
 
     # Create class
     C = type(class_name, (Candidate,), class_attribs)
-        
+
     # Create table in DB
     if not snorkel_engine.dialect.has_table(snorkel_engine, table_name):
         C.__table__.create(bind=snorkel_engine)

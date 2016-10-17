@@ -67,7 +67,6 @@ install:
   # Install Numbskull
   - git clone https://github.com/HazyResearch/numbskull.git
   - cd numbskull
-  - git checkout snorkel
   - pip install .
   - cd ..
 

@@ -21,7 +21,7 @@ class CandidateSet(SnorkelBase):
     __tablename__ = 'candidate_set'
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
-    candidates = relationship('Candidate', secondary=candidate_set_candidate_association, backref='sets', \
+    candidates = relationship('Candidate', secondary=candidate_set_candidate_association, backref='sets',
                     lazy='dynamic')
 
     def append(self, item):

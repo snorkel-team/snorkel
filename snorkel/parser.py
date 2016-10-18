@@ -169,7 +169,7 @@ PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
          '-RSB-': ']', '-LSB-': '['}
 
 class CoreNLPHandler:
-    def __init__(self, delim='', tok_whitespace=False):
+    def __init__(self, delim='', tok_whitespace=False, timeout=600000):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
         # Kill it when python exits.
@@ -180,7 +180,7 @@ class CoreNLPHandler:
         self.tok_whitespace = tok_whitespace
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
-               % (loc, self.port, 600000)]
+               % (loc, self.port, timeout)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
         props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
@@ -270,8 +270,8 @@ class CoreNLPHandler:
 
 
 class SentenceParser(object):
-    def __init__(self, tok_whitespace=False):
-        self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace)
+    def __init__(self, tok_whitespace=False, timeout=600000):
+        self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace, timeout=timeout)
 
     def parse(self, doc, text):
         """Parse a raw document as a string into a list of sentences"""
@@ -291,9 +291,9 @@ class HTMLParser(DocParser):
 
 
 class OmniParser(object):
-    def __init__(self):
+    def __init__(self, timeout=600000):
         self.delim = "<NC>" # NC = New Cell 
-        self.corenlp_handler = CoreNLPHandler(delim=self.delim[1:-1])
+        self.corenlp_handler = CoreNLPHandler(delim=self.delim[1:-1], timeout=timeout)
 
     def parse(self, document, text):
         soup = BeautifulSoup(text, 'lxml')

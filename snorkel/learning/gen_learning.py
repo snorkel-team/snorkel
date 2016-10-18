@@ -1,5 +1,5 @@
+from .constants import *
 from .disc_learning import NoiseAwareModel
-from ..models import Parameter, ParameterSet
 from numbskull import NumbSkull
 from numbskull.inference import FACTORS
 from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
@@ -7,15 +7,6 @@ import numpy as np
 import random
 import scipy.sparse as sparse
 from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
-
-DEP_SIMILAR = 0
-DEP_FIXING = 1
-DEP_REINFORCING = 2
-DEP_EXCLUSIVE = 3
-
-DEFAULT_MU = 1e-6
-DEFAULT_RATE = 0.01
-DEFAULT_ALPHA = 0.5
 
 
 class NaiveBayes(NoiseAwareModel):

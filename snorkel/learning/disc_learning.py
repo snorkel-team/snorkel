@@ -1,13 +1,10 @@
+from .constants import *
 import numpy as np
 from scipy.optimize import minimize
 from .utils import score, odds_to_prob
 from lstm import LSTMModel
 from sklearn import linear_model
 from ..models import Parameter, ParameterSet
-
-DEFAULT_MU = 1e-6
-DEFAULT_RATE = 0.01
-DEFAULT_ALPHA = 0.5
 
 
 class NoiseAwareModel(object):

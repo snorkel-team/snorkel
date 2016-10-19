@@ -59,7 +59,7 @@ class ExternalAnnotationsLoader(object):
             self.candidate_set.append(candidate)
         elif candidate is None:
             raise ValueError('Candidate %s not found in CandidateSet, and expand_candidate_set is False.'
-                             % tuple(context.id for context in d.values()))
+                             % '-'.join(str(context_id) for context_id in d.values()))
 
         # Add annotation
         label = Label(key=self.annotation_key, candidate=candidate, value=1)

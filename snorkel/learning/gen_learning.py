@@ -125,11 +125,12 @@ class GenerativeModel(object):
         self.optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
         self.dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
 
-    def train(self, L, deps=()):
+    def train(self, L, deps=(), steps=100, step_size=0.01, decay=0.95, reg_param=0.1, reg_type=2, verbose=False, burn_in=50):
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L)
-        fg = NumbSkull(n_inference_epoch=100, n_learning_epoch=500, quiet=True, learn_non_evidence=True,
-                            stepsize=0.01, burn_in=50, decay=0.95, reg_param=0.1)
+        fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=steps, stepsize=step_size, decay=decay,
+                       reg_param=reg_param, reg_type=reg_type, quiet=(not verbose), verbose=verbose,
+                       learn_non_evidence=True, burn_in=burn_in)
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
         fg.learning()
         self._process_learned_weights(L, fg)
@@ -138,7 +139,7 @@ class GenerativeModel(object):
         if self.class_prior_weight is None:
             raise ValueError("Must fit model with train() before computing marginal probabilities.")
 
-        marginals = np.ndarray(L.shape[0], dtype=float)
+        marginals = np.ndarray(L.shape[0], dtype=np.float64)
 
         for i in range(L.shape[0]):
             logp_true = self.class_prior_weight
@@ -251,14 +252,19 @@ class GenerativeModel(object):
         #
         if self.class_prior:
             weight[0]['isFixed'] = False
-            weight[0]['initialValue'] = 0
+            weight[0]['initialValue'] = np.float64(0)
             w_off = 1
         else:
             w_off = 0
 
+        for i in range(w_off, w_off + n):
+            weight[i]['isFixed'] = False
+            weight[i]['initialValue'] = np.float64(1.1 - .2 * self.rng.random())
+
+        w_off += n
         for i in range(w_off, weight.shape[0]):
             weight[i]['isFixed'] = False
-            weight[i]['initialValue'] = 1.1 - .2 * self.rng.random()
+            weight[i]['initialValue'] = np.float64(0.0)
 
         #
         # Compiles variable matrix
@@ -302,9 +308,11 @@ class GenerativeModel(object):
 
             f_off = m
             ftv_off = m
+            w_off = 1
         else:
             f_off = 0
             ftv_off = 0
+            w_off = 0
 
         # Factors over labeling function outputs
         f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off, "DP_GEN_LF_ACCURACY",

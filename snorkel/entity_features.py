@@ -1,7 +1,7 @@
 import sys
 import os
 
-# from templates import *
+from templates import *
 from lf_helpers import *
 from utils import get_as_dict
 from .models import ImplicitSpan

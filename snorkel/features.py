@@ -10,9 +10,12 @@ from tree_structs import corenlp_to_xmltree
 from utils import get_as_dict
 from entity_features import *
 from functools import partial
+import cPickle
 
+with open('stopwords.pkl', 'rb') as f:
+    stopwords = cPickle.load(f)
 
-def get_span_feats(candidate):
+def get_span_feats(candidate, stopwords=None):
     args = candidate.get_arguments()
     if not isinstance(args[0], Span):
         raise ValueError("Accepts Span-type arguments, %s-type= found.")
@@ -44,7 +47,7 @@ def get_span_feats(candidate):
         if len(s1_idxs) > 0 and len(s2_idxs) > 0:
 
             # Apply TDL features
-            for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs):
+            for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs, stopwords=stopwords):
                 yield 'TDL_' + f, 1
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")

@@ -300,6 +300,10 @@ class RandomSearch(GridSearch):
         """Search a random sample of size n from a parameter grid"""
         self.n = n
         super(RandomSearch, self).__init__(model, X, training_marginals, *parameters)
+
+        print "Initialized RandomSearch search of size {0}. Search space size = {1}.".format(
+            self.n, np.product([len(param.get_all_values()) for param in self.params])
+        )
         
     def search_space(self):
         return zip(*[param.draw_values(self.n) for param in self.params])

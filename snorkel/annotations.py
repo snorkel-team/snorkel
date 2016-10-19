@@ -1,7 +1,16 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
 from sqlalchemy.sql import bindparam, func, select
-from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps
+from .utils import (
+    matrix_conflicts,
+    matrix_coverage,
+    matrix_overlaps,
+    matrix_accuracy,
+    matrix_tp,
+    matrix_fp,
+    matrix_tn,
+    matrix_fn,
+)
 from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
 from .models.annotation import annotation_key_set_annotation_key_association as assoc_table
 from .utils import get_ORM_instance, ProgressBar
@@ -52,18 +61,30 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
 
 
 class csr_LabelMatrix(csr_AnnotationMatrix):
-    def lf_stats(self):
+    def lf_stats(self, labels=None):
         """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
         lf_names = [self.get_key(j).name for j in range(self.shape[1])]
 
         # Default LF stats
+        nms = ['j', 'coverage', 'overlaps', 'conflicts']
         d = {
             'j'         : range(self.shape[1]),
             'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
             'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
             'conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
         }
-        return DataFrame(data=d, index=lf_names)
+        if labels is not None:
+            d['accuracy']                = Series(data=matrix_accuracy(self, labels), index=lf_names)
+            d['positive-class accuracy'] = Series(data=matrix_accuracy(self, labels, 1), index=lf_names)
+            d['negative-class accuracy'] = Series(data=matrix_accuracy(self, labels, -1), index=lf_names)
+            d['tp']                      = Series(data=matrix_tp(self, labels), index=lf_names)
+            d['fp']                      = Series(data=matrix_fp(self, labels), index=lf_names)
+            d['tn']                      = Series(data=matrix_tn(self, labels), index=lf_names)
+            d['fn']                      = Series(data=matrix_fn(self, labels), index=lf_names)
+            nms.extend(['accuracy', 'positive-class accuracy', 'negative-class accuracy',
+                        'tp', 'fp', 'tn', 'fn'])
+        df = DataFrame(data=d, index=lf_names)
+        return df[nms]
 
 
 class AnnotationManager(object):

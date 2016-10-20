@@ -110,7 +110,7 @@ class GenerativeModel(object):
     :param lf_class_propensity:
     :param seed:
     """
-    def __init__(self, class_prior=False, lf_prior=False, lf_propensity=True, lf_class_propensity=False, seed=271828):
+    def __init__(self, class_prior=False, lf_prior=False, lf_propensity=False, lf_class_propensity=False, seed=271828):
         self.class_prior = class_prior
         self.lf_prior = lf_prior
         self.lf_propensity = lf_propensity
@@ -125,7 +125,7 @@ class GenerativeModel(object):
         self.optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
         self.dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
 
-    def train(self, L, deps=(), steps=100, step_size=0.01, decay=0.95, reg_param=0.1, reg_type=2, verbose=False, burn_in=50):
+    def train(self, L, deps=(), steps=100, step_size=0.01, decay=0.99, reg_param=0.1, reg_type=2, verbose=False, burn_in=50):
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=steps, stepsize=step_size, decay=decay,
@@ -272,7 +272,7 @@ class GenerativeModel(object):
         for i in range(m):
             variable[i]['isEvidence'] = False
             variable[i]['initialValue'] = self.rng.randrange(0, 2)
-            variable[i]["dataType"] = 1
+            variable[i]["dataType"] = 0
             variable[i]["cardinality"] = 2
 
         for i in range(m):
@@ -288,7 +288,7 @@ class GenerativeModel(object):
                 else:
                     raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
                                      "Valid values are 1, 0, and -1. " % i, j, L[i, j])
-                variable[index]["dataType"] = 1
+                variable[index]["dataType"] = 0
                 variable[index]["cardinality"] = 3
 
         #

@@ -125,7 +125,7 @@ class GenerativeModel(object):
         self.optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
         self.dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
 
-    def train(self, L, deps=(), steps=100, step_size=0.01, decay=0.99, reg_param=0.1, reg_type=2, verbose=False, burn_in=50):
+    def train(self, L, deps=(), steps=100, step_size=0.001, decay=0.99, reg_param=0.1, reg_type=2, verbose=False, burn_in=50):
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=steps, stepsize=step_size, decay=decay,

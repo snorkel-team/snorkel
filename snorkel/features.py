@@ -9,12 +9,13 @@ from treedlib import compile_relation_feature_generator
 from tree_structs import corenlp_to_xmltree
 from utils import get_as_dict
 from entity_features import *
+from functools import partial
+import cPickle
 
-
-def get_span_feats(candidate):
+def get_span_feats(candidate, stopwords=None):
     args = candidate.get_arguments()
     if not isinstance(args[0], Span):
-        raise ValueError("Accepts Span-type arguments, %s-type found.")
+        raise ValueError("Accepts Span-type arguments, %s-type= found.")
 
     # Unary candidates
     if len(args) == 1:
@@ -43,7 +44,46 @@ def get_span_feats(candidate):
         if len(s1_idxs) > 0 and len(s2_idxs) > 0:
 
             # Apply TDL features
-            for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs):
+            for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs, stopwords=stopwords):
                 yield 'TDL_' + f, 1
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")
+
+
+def get_token_count_feats(candidate, token_generator, ngram=1, stopwords=None):
+    args = candidate.get_arguments()
+    if not isinstance(args[0], Span):
+        raise ValueError("Accepts Span-type arguments, %s-type found.")
+
+    counter = defaultdict(int)
+
+    for tokens in token_generator(candidate):
+        for i in xrange(len(tokens)):
+            for j in range(i+1, min(len(tokens), i + ngram) + 1):
+                counter[' '.join(tokens[i:j])] += 1
+
+    for gram in counter:
+        if (not stopwords) or not all([t in stopwords for t in gram.split()]): 
+            yield 'TOKEN_FEATS[' + gram + ']', counter[gram]
+
+def span_token_generator(candidate):
+    return [candidate[0].parent.lemmas]
+
+def doc_token_generator(candidate):
+    return [sent.lemmas for sent in candidate[0].parent.document.sentences]
+
+def get_span_lemma_feats_generator(stopwords, ngram=1):
+    return partial(get_token_count_feats, token_generator=span_token_generator,
+        ngram=ngram, stopwords=stopwords)
+
+def get_doc_lemma_feats_generator(stopwords, ngram=1):
+    return partial(get_token_count_feats, token_generator=doc_token_generator,
+        ngram=ngram, stopwords=stopwords)
+
+def feats_from_matrix(candidate, candidate_index, X, prefix):
+    i = candidate_index[candidate.id]
+    for j in xrange(X.shape[1]):
+        yield '{0}_{1}'.format(prefix, j), X[i, j]
+
+def feats_from_matrix_generator(candidate_index, X, prefix='col'):
+    return partial(feats_from_matrix, candidate_index=candidate_index, X=X, prefix=prefix)

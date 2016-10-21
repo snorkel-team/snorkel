@@ -31,7 +31,7 @@ if __name__ == "__main__":
 		# If only one word in the tag
 		try: 
 			ids_words.write(page_nb+str(i) + delimiter + content[0] + '\n')
-			ids_coordinates.write(delimiter.join([page_nb+ str(i), str(x), str(y),str(h),str(w)]) + '\n')
+			ids_coordinates.write(delimiter.join([page_nb + str(i), page_nb, y, x, str(int(y)+int(h)), str(int(x)+int(w))]) + '\n')
 			i +=1
 		except UnicodeEncodeError:
 			pass
@@ -40,11 +40,11 @@ if __name__ == "__main__":
 		char_width = float(w)/len(text.getText())
 		for word in content:
 			try:
-				word_width = int(char_width*len(word))
+				word_width = int(round(char_width*len(word)))
 				ids_words.write(page_nb+str(i) + delimiter + word + '\n')
-				ids_coordinates.write(delimiter.join([page_nb+str(i), str(x), str(y),str(h),str(word_width)])+ '\n')
+				ids_coordinates.write(delimiter.join([page_nb + str(i), page_nb, y, x, str(int(y)+int(h)), str(int(x)+word_width)])+ '\n')
 				i += 1
-				x = str(float(x) + word_width + 1) # add 1 for white space
+				x = str(int(x) + word_width + 1) # add 1 for white space
 			except UnicodeEncodeError:
 				pass
     ids_words.close()

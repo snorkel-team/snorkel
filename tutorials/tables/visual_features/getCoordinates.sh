@@ -20,7 +20,7 @@ fi
 INPUT_PDF=$1
 NB_PAGES=$(pdfinfo $INPUT_PDF | grep Pages  | sed 's/[^0-9]*//')  
 DIRNAME=$(dirname $INPUT_PDF)
-FILENAME=$(basename $INPUT_PDF)
+FILENAME=$(basename $INPUT_PDF .pdf)
 IDS_WORDS=$DIRNAME/$FILENAME.ids_words
 IDS_COORDINATES=$DIRNAME/$FILENAME.ids_coordinates
 

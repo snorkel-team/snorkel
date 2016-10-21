@@ -12,9 +12,6 @@ from entity_features import *
 from functools import partial
 import cPickle
 
-with open('stopwords.pkl', 'rb') as f:
-    stopwords = cPickle.load(f)
-
 def get_span_feats(candidate, stopwords=None):
     args = candidate.get_arguments()
     if not isinstance(args[0], Span):

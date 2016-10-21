@@ -280,3 +280,25 @@ class OmniNgrams(Ngrams):
         for phrase in context.phrases:
             for ts in Ngrams.apply(self, phrase):
                 yield ts
+
+class Cells(CandidateSpace):
+    """Defines the space of candidates as the entire text in a cell"""
+    def __init__(self):
+        CandidateSpace.__init__(self)
+
+    def apply(self, context):
+        try:
+            phrases = context.phrases
+        except:
+            phrases = [context]
+
+        for phrase in phrases:
+            for temp_span in self._apply_to_phrase(phrase):
+                yield temp_span
+
+    def _apply_to_phrase(self, phrase):
+        L = len(phrase.char_offsets)
+        char_start = phrase.char_offsets[0]
+        cl = phrase.char_offsets[L-1] - phrase.char_offsets[0] + len(phrase.words[L-1])
+        char_end = phrase.char_offsets[0] + cl - 1
+        yield TemporarySpan(char_start=char_start, char_end=char_end, context=phrase)

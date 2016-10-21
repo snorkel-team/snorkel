@@ -1,5 +1,7 @@
 import re
 import warnings
+from lf_helpers import *
+from utils import tokens_to_ngrams
 try:
     from nltk.stem.porter import PorterStemmer
 except ImportError:
@@ -312,3 +314,92 @@ class MiscMatcher(RegexMatchEach):
         kwargs['attrib'] = 'ner_tags'
         kwargs['rgx'] = 'MISC'
         super(MiscMatcher, self).__init__(**kwargs)
+
+class CellNameDictionaryMatcher(NgramMatcher):
+    """Match cells based on their aligned ngrams
+
+    Cell is matched if any of its aligned row/col cells contain spans 
+    matched by a dictionary. Axis is either 'row', 'col', or None (for both)
+
+    This is meant to extract all cells with a certain title (e.g. "phenotype").
+    """
+    def init(self):
+        self.ignore_case = self.opts.get('ignore_case', True)
+        self.attrib      = self.opts.get('attrib', WORDS)
+        self.axis        = self.opts.get('axis', None)
+        self.n_max        = self.opts.get('n_max', 3)
+        if self.axis not in ('row', 'col', None):
+            raise Exception("Invalid axis argument")
+
+        self.cleanup_regex = u'[\u2020*0-9]+'
+
+        try:
+            self.d = frozenset(w.lower() if self.ignore_case else w for w in self.opts['d'])
+        except KeyError:
+            raise Exception("Please supply a dictionary (list of phrases) d as d=d.")
+
+        # Optionally use a stemmer, preprocess the dictionary
+        # Note that user can provide *an object having a stem() method*
+        self.stemmer = self.opts.get('stemmer', None)
+        if self.stemmer is not None:
+            if self.stemmer == 'porter':
+                self.stemmer = PorterStemmer()
+            self.d = frozenset(self._stem(w) for w in list(self.d))
+
+    def _stem(self, w):
+        """Apply stemmer, handling encoding errors"""
+        try:
+            return self.stemmer.stem(w)
+        except UnicodeDecodeError:
+            return w
+
+    def _cleanup(self, w):
+        return re.sub(self.cleanup_regex, '', w)
+
+    def _f_ngram(self, p):
+        p = p.lower() if self.ignore_case else p
+        p = self._cleanup(p)
+        p = self._stem(p) if self.stemmer is not None else p
+        return True if p in self.d else False
+
+    def _f(self, c):
+        if self.axis == 'row': ngrams = get_row_ngrams(c, attr=self.attrib, n_max=self.n_max)
+        if self.axis == 'col': ngrams = get_col_ngrams(c, attr=self.attrib, n_max=self.n_max)
+        if self.axis is None:  ngrams = get_aligned_ngrams(c, attr=self.attrib, n_max=self.n_max)
+
+        return True if any(self._f_ngram(ngram) for ngram in ngrams) else False
+
+class CellNameRegexMatcher(RegexMatch):
+    """Match cells based on their aligned ngrams
+
+    Cell is matched if any of its aligned row/col cells contain spans 
+    matched by a refex. Axis is either 'row', 'col'.
+
+    This is meant to extract all cells with a certain title (e.g. "phenotype").
+    """
+    def init(self):
+        super(CellNameRegexMatcher, self).init()
+
+        self.axis        = self.opts.get('axis', None)
+        self.n_max       = self.opts.get('n_max', 3)
+        self.header_only = self.opts.get('header_only', False)
+        self.max_chars   = self.opts.get('max_chars', 20)
+        if self.axis not in ('row', 'col'):
+            raise Exception("Invalid axis argument")
+
+    def _f(self, c):
+        my_cell = c.parent.cell
+        
+        if self.header_only:
+            header_cell = get_head_cell(my_cell, axis=self.axis, infer=False)
+            if not header_cell or not header_cell.phrases: return False
+            aligned_ngrams = chain.from_iterable(
+                tokens_to_ngrams(getattr(phrase, self.attrib), n_max=self.n_max, delim=self.sep) 
+                for phrase in header_cell.phrases)
+        else:
+            if self.axis == 'row': aligned_ngrams = get_row_ngrams(c, attr=self.attrib, n_max=self.n_max)
+            if self.axis == 'col': aligned_ngrams = get_col_ngrams(c, attr=self.attrib, n_max=self.n_max)
+
+        if self.header_only and len(header_cell.text) > self.max_chars: return False
+        return True if any(self.r.match(ngram) for ngram in aligned_ngrams) else False
+

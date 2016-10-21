@@ -202,7 +202,7 @@ class GenerativeModel(object):
             logp_true = self.weights.class_prior
             logp_false = -1 * self.weights.class_prior
 
-            for j in range(L.shape[1]):
+            for _, j in zip(*L[i].nonzero()):
                 if L[i, j] == 1:
                     logp_true  += self.weights.lf_accuracy[j]
                     logp_false -= self.weights.lf_accuracy[j]
@@ -213,9 +213,11 @@ class GenerativeModel(object):
                     logp_false += self.weights.lf_accuracy[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
+                else:
+                    ValueError("Illegal value at %d, %d: %d. Must be in {-1, 0, 1}." % (i, j, L[i, j]))
 
-                for k in range(L.shape[1]):
-                    if j != k and (L[i, j] != 0 or L[i, k] == 0):
+                for _, k in zip(*L[i].nonzero()):
+                    if j != k:
                         if L[i, j] == -1 and L[i, k] == 1:
                             logp_true += self.weights.dep_fixing[j, k]
                         elif L[i, j] == 1 and L[i, k] == -1:

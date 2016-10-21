@@ -13,6 +13,7 @@ def generate_label_matrix(weights, m):
     n_weights = 1 if weights.class_prior != 0.0 else 0
 
     n_weights += weights.n
+
     for optional_name in GenerativeModel.optional_names:
         for i in range(weights.n):
             if getattr(weights, optional_name)[i] != 0.0:
@@ -125,7 +126,7 @@ def generate_label_matrix(weights, m):
             factor[f_off]["arity"] = 1
             factor[f_off]["ftv_offset"] = ftv_off
 
-            ftv[ftv_off + i]["vid"] = 1 + i
+            ftv[ftv_off]["vid"] = 1 + i
             f_off += 1
             ftv_off += 1
 
@@ -137,12 +138,12 @@ def generate_label_matrix(weights, m):
             factor[f_off]["arity"] = 1
             factor[f_off]["ftv_offset"] = ftv_off
 
-            ftv[ftv_off + i]["vid"] = 1 + i
+            ftv[ftv_off]["vid"] = 1 + i
             f_off += 1
             ftv_off += 1
 
     for i in range(weights.n):
-        if weights.lf_propensity[i] != 0.0:
+        if weights.lf_class_propensity[i] != 0.0:
             factor[f_off]["factorFunction"] = FACTORS["DP_GEN_LF_CLASS_PROPENSITY"]
             factor[f_off]["weightId"] = f_off
             factor[f_off]["featureValue"] = 1

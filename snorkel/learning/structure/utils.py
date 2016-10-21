@@ -3,7 +3,8 @@ from ..constants import *
 
 def get_all_deps(n):
     """
-    Convenience method for getting a list of all dependencies for a given number of labeling functions.
+    Convenience method for getting a list of all dependencies to consider learning for a given number of labeling
+    functions.
 
     No self dependencies are included, i.e., (i, i, _). In cases of symmetric dependencies, e.g., DEP_SIMILAR, only the
     first case, (i, j, _) where i < j, is included.

@@ -114,7 +114,7 @@ class GenerativeModelWeights(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, sparse.lil_matrix((n, n), dtype=np.float64))
 
-    def is_sign_sparsistent(self, other, threshold=0.25):
+    def is_sign_sparsistent(self, other, threshold=0.01):
         if self.n != other.n:
             raise ValueError("Dimension mismatch. %d versus %d" % (self.n, other.n))
 
@@ -186,7 +186,7 @@ class GenerativeModel(object):
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=steps, stepsize=step_size, decay=decay,
-                       reg_param=reg_param, reg_type=reg_type, quiet=(not verbose), verbose=verbose,
+                       reg_param=reg_param, regularization=reg_type, quiet=(not verbose), verbose=verbose,
                        learn_non_evidence=True, burn_in=burn_in)
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
         fg.learning()
@@ -496,7 +496,8 @@ class GenerativeModel(object):
             weight_mat = sparse.lil_matrix((n, n))
 
             for i in range(len(mat.data)):
-                weight_mat[mat.row[i], mat.col[i]] = w[w_off]
+                if w[w_off] != 0:
+                    weight_mat[mat.row[i], mat.col[i]] = w[w_off]
                 w_off += 1
 
             setattr(weights, dep_name, weight_mat.tocsr(copy=True))

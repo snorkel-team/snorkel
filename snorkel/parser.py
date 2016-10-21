@@ -308,9 +308,19 @@ class OmniParser(object):
             text = tag.get_text(' ').replace('?','%')
             tag.clear()
             tag.string = text
+        n_parsing_errors = 0
         for child in tag.contents:
             if isinstance(child, NavigableString):
-                for parts in self.corenlp_handler.parse(document, unicode(child)):
+                try:
+                    parts_generator = self.corenlp_handler.parse(document, unicode(child))
+                except:
+                    print 'CoreNLP error in document %s' % document.name
+                    n_parsing_errors += 1
+                    if n_parsing_errors >= 5: 
+                        raise ValueError('More than five CoreNLP errors have occurred')
+                    else:
+                        continue
+                for parts in parts_generator:
                     parts['document'] = document
                     parts['table'] = table
                     parts['cell'] = cell

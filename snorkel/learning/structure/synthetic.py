@@ -4,7 +4,6 @@ from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
 import numpy as np
 import scipy.sparse as sparse
 from snorkel.learning import GenerativeModel
-from snorkel.learning.constants import *
 
 
 def generate_label_matrix(weights, m):

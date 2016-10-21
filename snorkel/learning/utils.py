@@ -140,8 +140,6 @@ def calibration_plots(train_marginals, test_marginals, gold_labels=None):
         plt.title("(c) Accuracy (test set)")
     plt.show()
 
-ValidatedFit = namedtuple('ValidatedFit', ['w', 'P', 'R', 'F1'])
-
 
 def grid_search_plot(w_fit, mu_opt, f1_opt):
     """ Plot validation set performance for logistic regression regularization """

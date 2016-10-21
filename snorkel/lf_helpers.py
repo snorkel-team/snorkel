@@ -125,6 +125,35 @@ def get_right_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
     for ngram in tokens_to_ngrams(span.parent._asdict()[attrib][i+1:i+1+window], n_min=n_min, n_max=n_max, lower=lower):
         yield ngram
 
+def left_text(c, window=None, attr='words'):
+    """
+    Outputs text immediately following a candidate span.
+    For higher-arity Candidates, defaults to the _first_ argument.
+    :param c: Candidate or TemporarySpan object
+    :param window: Number of tokens to return. If None, return all tokens.
+    :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    """
+    span = c if isinstance(c, TemporarySpan) else c[0]
+    if not window:
+        return getattr(span.parent, attr)[span.get_word_start()+1:]
+    else:
+        end_idx = span.get_word_start()+window+1
+        return getattr(span.parent, attr)[span.get_word_start()+1:end_idx]
+
+def right_text(c, window=None, attr='words'):
+    """
+    Outputs text immediately preceding a candidate span.
+    For higher-arity Candidates, defaults to the _last_ argument.
+    :param c: Candidate or TemporarySpan object
+    :param window: Number of tokens to return. If None, return all tokens.
+    :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    """
+    span = c if isinstance(c, TemporarySpan) else c[-1]
+    if not window:
+        return getattr(span.parent, attr)[:span.get_word_start()]
+    else:
+        start_idx = max(span.get_word_start()-window, 0)
+        return getattr(span.parent, attr)[start_idx:span.get_word_start()]
 
 def contains_token(c, tok, attrib='words', lower=True):
     """
@@ -183,6 +212,7 @@ def get_matches(lf, candidate_set, match_values=[1,-1]):
             matches.append(c)
     print "%s matches" % len(matches)
     return matches
+
 
 ############################### TABLE LF HELPERS ###############################
 def same_document(c):

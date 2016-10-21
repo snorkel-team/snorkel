@@ -85,6 +85,39 @@ def matrix_conflicts(L):
     L_abs = sparse_abs(L)
     return np.ravel(np.where(L_abs.sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).T * L_abs / float(L.shape[0]))
 
+def matrix_accuracy(L, labels, label_class=None):
+    """
+    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate
+    and an N x 1 vector where v_{i} is the gold label given to the ith candidate:
+    Return the **fraction of candidates that each LF covered and agreed with the gold labels**
+    """
+    accs = []
+    for j in xrange(L.shape[1]):
+        cov = np.ravel((L[:, j] != 0).todense())
+        if label_class is not None:
+            cov *= (labels == label_class)
+        accs.append(np.mean(L[cov, j] == labels[cov]))
+    return np.ravel(accs)
+
+def matrix_tp(L, labels):
+    return np.ravel([
+        np.sum(np.ravel((L[:, j] == 1).todense()) * (labels == 1)) for j in xrange(L.shape[1])
+    ])
+
+def matrix_fp(L, labels):
+    return np.ravel([
+        np.sum(np.ravel((L[:, j] == 1).todense()) * (labels != 1)) for j in xrange(L.shape[1])
+    ])
+
+def matrix_tn(L, labels):
+    return np.ravel([
+        np.sum(np.ravel((L[:, j] == -1).todense()) * (labels == -1)) for j in xrange(L.shape[1])
+    ])
+
+def matrix_fn(L, labels):
+    return np.ravel([
+        np.sum(np.ravel((L[:, j] == -1).todense()) * (labels != -1)) for j in xrange(L.shape[1])
+    ])
 
 def get_as_dict(x):
     """Return an object as a dictionary of its attributes"""

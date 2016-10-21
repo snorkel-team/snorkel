@@ -65,7 +65,7 @@ class NoiseAwareModel(object):
             except KeyError:
                 test_labels.append(-1)
                 if test_marginals[i] > b:
-                    fn.add(candidate)
+                    fp.add(candidate)
                 else:
                     tn.add(candidate)
 

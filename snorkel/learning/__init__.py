@@ -3,6 +3,7 @@ Subpackage for Snorkel machine learning modules.
 """
 from .constants import *
 from .disc_learning import NoiseAwareModel, LogReg, LogRegSKLearn
-from .gen_learning import NaiveBayes, GenerativeModel, DEP_SIMILAR, DEP_FIXING, DEP_REINFORCING, DEP_EXCLUSIVE
+from .gen_learning import NaiveBayes, GenerativeModel, GenerativeModelWeights,\
+    DEP_SIMILAR, DEP_FIXING, DEP_REINFORCING, DEP_EXCLUSIVE
 from .param_search import GridSearch, RandomSearch, ListParameter, RangeParameter
 from .utils import *

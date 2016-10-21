@@ -58,14 +58,14 @@ class TestGenLearning(unittest.TestCase):
         for i in range(5):
             self.assertEqual(variable[i]['isEvidence'], 0)
             self.assertTrue(variable[i]['initialValue'] == 0 or variable[i]['initialValue'] == 1)
-            self.assertEqual(variable[i]["dataType"], 1)
+            self.assertEqual(variable[i]["dataType"], 0)
             self.assertEqual(variable[i]["cardinality"], 2)
 
         for i in range(5):
             for j in range(3):
                 self.assertEqual(variable[5 + i * 3 + j]['isEvidence'], 1)
                 self.assertEqual(variable[5 + i * 3 + j]['initialValue'], L[i, j] + 1)
-                self.assertEqual(variable[5 + i * 3 + j]["dataType"], 1)
+                self.assertEqual(variable[5 + i * 3 + j]["dataType"], 0)
                 self.assertEqual(variable[5 + i * 3 + j]["cardinality"], 3)
 
         #
@@ -166,14 +166,14 @@ class TestGenLearning(unittest.TestCase):
         for i in range(5):
             self.assertEqual(variable[i]['isEvidence'], 0)
             self.assertTrue(variable[i]['initialValue'] == 0 or variable[i]['initialValue'] == 1)
-            self.assertEqual(variable[i]["dataType"], 1)
+            self.assertEqual(variable[i]["dataType"], 0)
             self.assertEqual(variable[i]["cardinality"], 2)
 
         for i in range(5):
             for j in range(3):
                 self.assertEqual(variable[5 + i * 3 + j]['isEvidence'], 1)
                 self.assertEqual(variable[5 + i * 3 + j]['initialValue'], L[i, j] + 1)
-                self.assertEqual(variable[5 + i * 3 + j]["dataType"], 1)
+                self.assertEqual(variable[5 + i * 3 + j]["dataType"], 0)
                 self.assertEqual(variable[5 + i * 3 + j]["cardinality"], 3)
 
         #

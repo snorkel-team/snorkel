@@ -102,28 +102,85 @@ class NaiveBayes(NoiseAwareModel):
         return odds_to_prob(X.dot(self.w))
 
 
+class GenerativeModelWeights(object):
+
+    def __init__(self, n):
+        self.n = n
+        self.class_prior = 0.0
+        self.lf_accuracy = np.zeros(n, dtype=np.float64)
+        for optional_name in GenerativeModel.optional_names:
+            setattr(self, optional_name, np.zeros(n, dtype=np.float64))
+
+        for dep_name in GenerativeModel.dep_names:
+            setattr(self, dep_name, sparse.lil_matrix((n, n), dtype=np.float64))
+
+    def is_sign_sparsistent(self, other, threshold=0.25):
+        if self.n != other.n:
+            raise ValueError("Dimension mismatch. %d versus %d" % (self.n, other.n))
+
+        if not self._weight_is_sign_sparsitent(self.class_prior, other.class_prior, threshold):
+            return False
+
+        for i in range(self.n):
+            if not self._weight_is_sign_sparsitent(
+                    self.lf_accuracy[i], other.lf_accuracy[i], threshold):
+                return False
+
+        for name in GenerativeModel.optional_names:
+            for i in range(self.n):
+                if not self._weight_is_sign_sparsitent(
+                        getattr(self, name)[i], getattr(other, name)[i], threshold):
+                    return False
+
+        for name in GenerativeModel.dep_names:
+            for i in range(self.n):
+                for j in range(self.n):
+                    if not self._weight_is_sign_sparsitent(
+                            getattr(self, name)[i, j], getattr(other, name)[i, j], threshold):
+                        return False
+
+        return True
+
+    def _weight_is_sign_sparsitent(self, w1, w2, threshold):
+        if abs(w1) <= threshold and abs(w2) <= threshold:
+            return True
+        elif w1 > threshold and w2 > threshold:
+            return True
+        elif w1 < -1 * threshold and w2 < -1 * threshold:
+            return True
+        else:
+            return False
+
+
 class GenerativeModel(object):
     """
+    A generative model for data programming for binary classification.
 
-    :param lf_prior:
-    :param lf_propensity:
-    :param lf_class_propensity:
-    :param seed:
+    Supports dependencies among labeling functions.
+
+    :param class_prior: whether to include class label prior factors
+    :param lf_prior: whether to include labeling function prior factors
+    :param lf_propensity: whether to include labeling function propensity factors
+    :param lf_class_propensity: whether to include class-specific labeling function propensity factors
+    :param seed: seed for initializing state of Numbskull variables
     """
     def __init__(self, class_prior=False, lf_prior=False, lf_propensity=False, lf_class_propensity=False, seed=271828):
         self.class_prior = class_prior
         self.lf_prior = lf_prior
         self.lf_propensity = lf_propensity
         self.lf_class_propensity = lf_class_propensity
+        self.weights = None
 
         self.rng = random.Random()
         self.rng.seed(seed)
 
-        # These names of factor types are for the convenience of several methods that perform the same operations over
-        # multiple types, but this class's behavior is not fully specified here. Other methods, such as marginals(),
-        # as well as maps defined within methods, require manual adjustments to implement changes.
-        self.optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
-        self.dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
+    # These names of factor types are for the convenience of several methods that perform the same operations over
+    # multiple types, but this class's behavior is not fully specified here. Other methods, such as marginals(),
+    # as well as maps defined within methods, require manual adjustments to implement changes.
+    #
+    # These names are also used by other related classes, such as GenerativeModelParameters
+    optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
+    dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
 
     def train(self, L, deps=(), steps=100, step_size=0.001, decay=0.99, reg_param=0.1, reg_type=2, verbose=False, burn_in=50):
         self._process_dependency_graph(L, deps)
@@ -136,38 +193,38 @@ class GenerativeModel(object):
         self._process_learned_weights(L, fg)
 
     def marginals(self, L):
-        if self.class_prior_weight is None:
+        if self.weights is None:
             raise ValueError("Must fit model with train() before computing marginal probabilities.")
 
         marginals = np.ndarray(L.shape[0], dtype=np.float64)
 
         for i in range(L.shape[0]):
-            logp_true = self.class_prior_weight
-            logp_false = -1 * self.class_prior_weight
+            logp_true = self.weights.class_prior
+            logp_false = -1 * self.weights.class_prior
 
             for j in range(L.shape[1]):
                 if L[i, j] == 1:
-                    logp_true  += self.lf_accuracy_weights[j]
-                    logp_false -= self.lf_accuracy_weights[j]
-                    logp_true  += self.lf_class_propensity_weights[j]
-                    logp_false  -= self.lf_class_propensity_weights[j]
+                    logp_true  += self.weights.lf_accuracy[j]
+                    logp_false -= self.weights.lf_accuracy[j]
+                    logp_true  += self.weights.lf_class_propensity[j]
+                    logp_false -= self.weights.lf_class_propensity[j]
                 elif L[i, j] == -1:
-                    logp_true  -= self.lf_accuracy_weights[j]
-                    logp_false += self.lf_accuracy_weights[j]
-                    logp_true  += self.lf_class_propensity_weights[j]
-                    logp_false  -= self.lf_class_propensity_weights[j]
+                    logp_true  -= self.weights.lf_accuracy[j]
+                    logp_false += self.weights.lf_accuracy[j]
+                    logp_true  += self.weights.lf_class_propensity[j]
+                    logp_false -= self.weights.lf_class_propensity[j]
 
                 for k in range(L.shape[1]):
                     if j != k and (L[i, j] != 0 or L[i, k] == 0):
                         if L[i, j] == -1 and L[i, k] == 1:
-                            logp_true += self.dep_fixing_weights[j, k]
+                            logp_true += self.weights.dep_fixing[j, k]
                         elif L[i, j] == 1 and L[i, k] == -1:
-                            logp_false += self.dep_fixing_weights[j, k]
+                            logp_false += self.weights.dep_fixing[j, k]
 
                         if L[i, j] == 1 and L[i, k] == 1:
-                            logp_true += self.dep_reinforcing_weights[j, k]
+                            logp_true += self.weights.dep_reinforcing[j, k]
                         elif L[i, j] == -1 and L[i, k] == -1:
-                            logp_false += self.dep_reinforcing_weights[j, k]
+                            logp_false += self.weights.dep_reinforcing[j, k]
 
             marginals[i] = 1 / (1 + np.exp(logp_false - logp_true))
 
@@ -194,7 +251,7 @@ class GenerativeModel(object):
             DEP_EXCLUSIVE: 'dep_exclusive'
         }
 
-        for dep_name in self.dep_names:
+        for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, sparse.lil_matrix((L.shape[1], L.shape[1])))
 
         for lf1, lf2, dep_type in deps:
@@ -208,7 +265,7 @@ class GenerativeModel(object):
 
             dep_mat[lf1, lf2] = 1
 
-        for dep_name in self.dep_names:
+        for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
     def _compile(self, L):
@@ -220,10 +277,10 @@ class GenerativeModel(object):
         n_weights = 1 if self.class_prior else 0
 
         n_weights += n
-        for optional_name in self.optional_names:
+        for optional_name in GenerativeModel.optional_names:
             if getattr(self, optional_name):
                 n_weights += n
-        for dep_name in self.dep_names:
+        for dep_name in GenerativeModel.dep_names:
             n_weights += getattr(self, dep_name).getnnz()
 
         n_vars = m * (n + 1)
@@ -331,7 +388,7 @@ class GenerativeModel(object):
                     lambda m, n, i, j: m + n * i + j)),
         }
 
-        for optional_name in self.optional_names:
+        for optional_name in GenerativeModel.optional_names:
             if getattr(self, optional_name):
                 f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off,
                                                                      optional_name_map[optional_name][0],
@@ -359,7 +416,7 @@ class GenerativeModel(object):
                     lambda m, n, i, j, k: m + n * i + k))
         }
 
-        for dep_name in self.dep_names:
+        for dep_name in GenerativeModel.dep_names:
             mat = getattr(self, dep_name)
             for i in range(len(mat.data)):
                 f_off, ftv_off, w_off = self._compile_dep_factors(L, factor, f_off, ftv, ftv_off, w_off,
@@ -415,34 +472,33 @@ class GenerativeModel(object):
         return factors_offset + m, ftv_offset + len(vid_funcs) * m, weight_offset + 1
 
     def _process_learned_weights(self, L, fg):
-        m, n = L.shape
+        _, n = L.shape
 
         w = fg.getFactorGraph().getWeights()
+        weights = GenerativeModelWeights(n)
 
         if self.class_prior:
-            self.class_prior_weight = w[0]
+            weights.class_prior = w[0]
             w_off = 1
         else:
-            self.class_prior_weight = 0.0
             w_off = 0
 
-        self.lf_accuracy_weights = w[w_off:w_off + n]
+        weights.lf_accuracy = np.copy(w[w_off:w_off + n])
         w_off += n
 
-        for optional_name in self.optional_names:
+        for optional_name in GenerativeModel.optional_names:
             if getattr(self, optional_name):
-                setattr(self, optional_name + '_weights', w[w_off:w_off + n])
+                setattr(weights, optional_name, np.copy(w[w_off:w_off + n]))
                 w_off += n
-            else:
-                setattr(self, optional_name + '_weights', np.zeros(n, dtype=float))
 
         for dep_name in self.dep_names:
             mat = getattr(self, dep_name)
-            setattr(self, dep_name + '_weights', sparse.lil_matrix((L.shape[1], L.shape[1])))
-            weight_mat = getattr(self, dep_name + '_weights')
+            weight_mat = sparse.lil_matrix((n, n))
 
             for i in range(len(mat.data)):
                 weight_mat[mat.row[i], mat.col[i]] = w[w_off]
                 w_off += 1
 
-            setattr(self, dep_name + '_weights', weight_mat.tocsr(copy=True))
+            setattr(weights, dep_name, weight_mat.tocsr(copy=True))
+
+        self.weights = weights

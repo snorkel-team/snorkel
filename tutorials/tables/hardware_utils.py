@@ -187,7 +187,7 @@ def get_gold_parts(filename, docs=None):
     return set(map(lambda x: x[0], get_gold_dict(filename, doc_on=False, part_on=True, val_on=False, docs=docs)))
 
 
-def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None, docs=None):
+def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None, docs=None, integerize=False):
     with codecs.open(filename, encoding="utf-8") as csvfile:
         gold_reader = csv.reader(csvfile)
         gold_dict = set()
@@ -200,7 +200,11 @@ def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None,
                     key = []
                     if doc_on:  key.append(doc.upper())
                     if part_on: key.append(part.upper())
-                    if val_on:  key.append(val.upper())
+                    if val_on and val:
+                        if integerize:
+                            key.append(int(float(val)))
+                        else:
+                            key.append(val.upper())
                     gold_dict.add(tuple(key))
     return gold_dict
 
@@ -243,7 +247,7 @@ def load_hardware_labels(session, label_set_name, annotation_key_name, candidate
     return (candidate_set, annotation_key)
 
 
-def entity_level_total_recall(candidates, gold_file, attribute, relation=True):
+def entity_level_total_recall(candidates, gold_file, attribute, relation=True, integerize=False):
     """Checks entity-level recall of candidates compared to gold.
 
     Turns a CandidateSet into a normal set of entity-level tuples
@@ -256,8 +260,7 @@ def entity_level_total_recall(candidates, gold_file, attribute, relation=True):
         gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
         entity_level_total_recall(candidates, gold_file, 'stg_temp_min')
     """
-    gold_set = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=relation, attrib=attribute)
-
+    gold_set = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=relation, attrib=attribute, integerize=integerize)
     # Turn CandidateSet into set of tuples
     print "Preparing candidates..."
     pb = ProgressBar(len(candidates))
@@ -267,12 +270,17 @@ def entity_level_total_recall(candidates, gold_file, attribute, relation=True):
         part = c.get_arguments()[0].get_span().replace(' ', '')
         doc = c.get_arguments()[0].parent.document.name
         if relation:
-            val = c.get_arguments()[1].get_span().replace(' ', '')
-            entity_level_candidates.add((doc.upper(), part.upper(), val.upper()))
+            if integerize:
+                val = int(float(c.get_arguments()[1].get_span().replace(' ', '')))
+                entity_level_candidates.add((doc.upper(), part.upper(), val))
+            else:
+                val = c.get_arguments()[1].get_span().replace(' ', '')
+                entity_level_candidates.add((doc.upper(), part.upper(), val.upper()))
         else:
             entity_level_candidates.add((doc.upper(), part.upper()))
     pb.close()
 
+    # import pdb; pdb.set_trace()
     print "========================================"
     print "Scoring on Entity-Level Total Recall"
     print "========================================"

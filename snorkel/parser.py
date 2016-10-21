@@ -154,7 +154,7 @@ class XMLMultiDocParser(DocParser):
     def parse_file(self, f, file_name):
         for i,doc in enumerate(et.parse(f).xpath(self.doc)):
             doc_id = str(doc.xpath(self.id)[0])
-            text   = '\n'.join(filter(lambda t : t is not None, doc.xpath(self.text)))
+            text = '\n'.join([ et.tostring(elem) for elem in doc.xpath(self.text) if elem is not None])
             meta = {'file_name': str(file_name)}
             if self.keep_xml_tree:
                 meta['root'] = et.tostring(doc)

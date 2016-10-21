@@ -2,7 +2,7 @@ from . import SnorkelSession
 from .utils import ProgressBar
 from .models import Candidate, CandidateSet, TemporarySpan
 from .models.candidate import candidate_set_candidate_association
-from .models.context import Document, Phrase
+from .models.context import Document, Phrase, Cell
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
 from sqlalchemy.sql import select
@@ -282,11 +282,13 @@ class OmniNgrams(Ngrams):
                 yield ts
 
 class Cells(CandidateSpace):
-    """Defines the space of candidates as the entire text in a cell"""
+    """Defines the space of candidates as the complete phrases in cells"""
     def __init__(self):
         CandidateSpace.__init__(self)
 
     def apply(self, context):
+        if not isinstance(context, Cell):
+            raise TypeError("Input Contexts to Cells.apply() must be of type Cell")
         try:
             phrases = context.phrases
         except:
@@ -302,3 +304,39 @@ class Cells(CandidateSpace):
         cl = phrase.char_offsets[L-1] - phrase.char_offsets[0] + len(phrase.words[L-1])
         char_end = phrase.char_offsets[0] + cl - 1
         yield TemporarySpan(char_start=char_start, char_end=char_end, context=phrase)
+
+class SpanningCells(CandidateSpace):
+    """Defines the space of candidates as the phrases in cells that span entire axis"""
+    def __init__(self, axis):
+        CandidateSpace.__init__(self)
+        if axis not in ('row', 'col'):
+            raise ValueError('Invalid axis: %s' % axis)
+        self.axis= axis
+
+    def apply(self, context):
+        if not isinstance(context, Cell):
+            raise TypeError("Input Contexts to SpanningCells.apply() must be of type Cell")
+        try:
+            phrases = context.phrases
+        except:
+            phrases = [context]
+
+        # make sure cell spans entire axis
+        if self.axis == 'row' \
+        and len([cell for cell in context.table.cells if cell.row_num == context.row_num]) > 1:
+            return
+        
+        if self.axis == 'col' \            
+        and len([cell for cell in context.table.cells if cell.col_num == context.col_num]) > 1:
+            return
+
+        for phrase in phrases:
+            for temp_span in self._apply_to_phrase(phrase):
+                yield temp_span
+
+    def _apply_to_phrase(self, phrase):
+        L = len(phrase.char_offsets)
+        char_start = phrase.char_offsets[0]
+        cl = phrase.char_offsets[L-1] - phrase.char_offsets[0] + len(phrase.words[L-1])
+        char_end = phrase.char_offsets[0] + cl - 1
+        yield TemporarySpan(char_start=char_start, char_end=char_end, context=phrase)        

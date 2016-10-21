@@ -492,14 +492,39 @@ def char_range(a, b):
         yield chr(c)
 
 
+def candidates_to_entities(candidates):
+    entities = set()
+    pb = ProgressBar(len(candidates))
+    for i, c in enumerate(candidates):
+        pb.bar(i)
+        part = c.get_arguments()[0]
+        attr = c.get_arguments()[1]
+        doc  = part.parent.document.name
+        entities.add((doc.upper(), part.get_span().upper(), attr.get_span().upper()))
+    pb.close()
+    return entities
+
+
 def entity_to_candidates(entity, candidate_subset):
     matches = []
     for c in candidate_subset:
+        # NOTE: should some 'upper' be going on here somewhere?
         part = c.get_arguments()[0]
         attr = c.get_arguments()[1]
         if (part.parent.document.name, part.get_span(), attr.get_span()) == entity:
             matches.append(c)
     return matches
+
+
+def count_labels(entities, gold):
+    T = 0
+    F = 0
+    for e in entities:
+        if e in gold:
+            T += 1
+        else:
+            F += 1
+    return (T, F)
 
 def part_error_analysis(c):
     print "Doc: %s" % c.part.parent.document

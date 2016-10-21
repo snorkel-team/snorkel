@@ -434,11 +434,5 @@ def _infer_cell(root_cell, axis, direct, infer):
 def _other_axis(axis):
     return 'row' if axis=='col' else 'col'
 
-# TODO: delete me
 def overlap(A, B):
-    """Preferable for A to be the smaller set"""
-    # raise DeprecationWarning("This helper will be removed soon. Use set(A).isdisjoint(B) instead")
-    # for a in list(A):
-        # if a in list(B):
-            # return True
     return not set(A).isdisjoint(B)

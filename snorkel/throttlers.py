@@ -1,15 +1,14 @@
 from lf_helpers import get_aligned_cells
 
 class Throttler(object):
-    def apply(self, span1, span2):
+    def __call__(self, argtuple):
         """
         Return True if the tuple should be allowed. Return False if it should
         be throttled.
         """
-        raise DeprecationWarning("Throttler objects are being replaced by passing in a stand-alone throttler function")
-        return True
+        return NotImplementedError()
 
-class AlignmentThrottler(object):
+class AlignmentThrottler(Throttler):
     """Filters spans that are not aligned"""
     def __init__(self, axis=None, infer=False):
         if axis not in ('row', 'col', None): raise ValueError('Invalid axis: %s' % axis)
@@ -24,22 +23,24 @@ class AlignmentThrottler(object):
 
     def _apply_normal(self, span0, span1):
         if self.axis == 'row':
-            return span0.context.cell.row.position == span1.context.cell.row.position
+            return span0.parent.cell.row.position == span1.parent.cell.row.position
         elif self.axis == 'col':
-            return span0.context.cell.col.position == span1.context.cell.col.position
+            return span0.parent.cell.col.position == span1.parent.cell.col.position
         else:
-            return span0.context.cell.row.position == span1.context.cell.row.position \
-                or span0.context.cell.col.position == span1.context.cell.col.position
+            return span0.parent.cell.row.position == span1.parent.cell.row.position \
+                or span0.parent.cell.col.position == span1.parent.cell.col.position
 
     def _apply_infer(self, span0, span1):
-        # TODO: make sure it's not just span0
+        # TODO: this needs to be made symmetric
         if self.axis in ('row', 'col'):
             aligned_cells = get_aligned_cells(span0.parent.cell, self.axis, infer=True)
         if self.axis is None:
             aligned_cells = get_aligned_cells(span0.parent.cell, 'row', infer=True) \
                           + get_aligned_cells(span0.parent.cell, 'col', infer=True)
         return span1.parent.cell in aligned_cells
-        
+
+# def HeaderSpanThrottler(Throttler):
+#     """Filters spans that are not
 
 # Reference derivative class (actual copy stored in hardware_utils.py)
 # class PartThrottler(Throttler):

@@ -60,12 +60,20 @@ def sparse_abs(X):
     return X_abs
 
 
+def matrix_label_mask(L):
+    """Return a copy of L with all non-zero entries replaced with 1"""
+    nz = L.nonzero()
+    return sparse.csr_matrix((np.ones(len(nz[0])), nz), shape=L.shape)
+
+
 def matrix_coverage(L):
     """
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates that each LF labels.**
     """
-    return np.ravel(sparse_abs(L).sum(axis=0) / float(L.shape[0]))
+    # NOTE: I have an old version of scipy, need to upgrade and replace with .getnnz(axis)!
+    L_mask = matrix_label_mask(L)
+    return np.ravel(L_mask.sum(axis=0) / float(L.shape[0]))
 
 
 def matrix_overlaps(L):
@@ -73,8 +81,24 @@ def matrix_overlaps(L):
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates that each LF _overlaps with other LFs on_.**
     """
-    L_abs = sparse_abs(L)
-    return np.ravel(np.where(L_abs.sum(axis=1) > 1, 1, 0).T * L_abs / float(L.shape[0]))
+    L_mask = matrix_label_mask(L)
+    return np.ravel(np.where(L_mask.sum(axis=1) > 1, 1, 0).T * L_mask / float(L.shape[0]))
+
+
+def matrix_conflict_rows(L):
+    """
+    Given an N x M matrix, return an N-dim array with entries 1 if corresponding row
+    did not have consistent (i.e. all the same) non-zero entries.
+    """
+    conflicted  = np.zeros(L.shape[0])
+    current_val = np.zeros(L.shape[0])
+    for i, j in zip(*L.nonzero()):
+        if conflicted[i] == 0:
+            if current_val[i] == 0:
+                current_val[i] = L[i,j]
+            elif current_val[i] != L[i,j]:
+                conflicted[i] = 1
+    return conflicted
 
 
 def matrix_conflicts(L):
@@ -82,22 +106,25 @@ def matrix_conflicts(L):
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates that each LF _conflicts with other LFs on_.**
     """
-    L_abs = sparse_abs(L)
-    return np.ravel(np.where(L_abs.sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).T * L_abs / float(L.shape[0]))
+    L_mask       = matrix_label_mask(L)
+    L_conflicted = matrix_conflict_rows(L)
+    return np.ravel(L_conflicted * L_mask / float(L.shape[0]))
 
-def matrix_accuracy(L, labels, label_class=None):
+
+def matrix_accuracy(L, labels):
     """
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate
     and an N x 1 vector where v_{i} is the gold label given to the ith candidate:
     Return the **fraction of candidates that each LF covered and agreed with the gold labels**
     """
-    accs = []
-    for j in xrange(L.shape[1]):
-        cov = np.ravel((L[:, j] != 0).todense())
-        if label_class is not None:
-            cov *= (labels == label_class)
-        accs.append(np.mean(L[cov, j] == labels[cov]))
-    return np.ravel(accs)
+    correct = np.zeros(L.shape[1])
+    labeled = np.zeros(L.shape[1])
+    for i, j in zip(*L.nonzero()):
+        labeled[j] += 1
+        if L[i,j] == labels[i]:
+            correct[j] += 1
+    return correct / labeled
+
 
 def matrix_tp(L, labels):
     return np.ravel([

@@ -363,9 +363,14 @@ class CellNameDictionaryMatcher(NgramMatcher):
         return True if p in self.d else False
 
     def _f(self, c):
-        if self.axis == 'row': ngrams = get_row_ngrams(c, attr=self.attrib, n_max=self.n_max)
-        if self.axis == 'col': ngrams = get_col_ngrams(c, attr=self.attrib, n_max=self.n_max)
-        if self.axis is None:  ngrams = get_aligned_ngrams(c, attr=self.attrib, n_max=self.n_max)
+        if self.axis == 'row': ngrams = get_row_ngrams(c, attrib=self.attrib, n_max=self.n_max)
+        if self.axis == 'col': ngrams = get_col_ngrams(c, attrib=self.attrib, n_max=self.n_max)
+        if self.axis is None:  ngrams = get_aligned_ngrams(c, attrib=self.attrib, n_max=self.n_max)
+
+        # # print c.get_span(), [cell.text for cell in get_aligned_cells(c.parent.cell, axis='col')]
+        # ngrams2 = get_col_ngrams(c, attrib=self.attrib, n_max=self.n_max)
+        # if any(self._f_ngram(ngram) for ngram in ngrams2):
+        #     print c.get_span(), [ngram for ngram in get_col_ngrams(c, attrib=self.attrib, n_max=self.n_max)]
 
         return True if any(self._f_ngram(ngram) for ngram in ngrams) else False
 
@@ -397,8 +402,8 @@ class CellNameRegexMatcher(RegexMatch):
                 tokens_to_ngrams(getattr(phrase, self.attrib), n_max=self.n_max, delim=self.sep) 
                 for phrase in header_cell.phrases)
         else:
-            if self.axis == 'row': aligned_ngrams = get_row_ngrams(c, attr=self.attrib, n_max=self.n_max)
-            if self.axis == 'col': aligned_ngrams = get_col_ngrams(c, attr=self.attrib, n_max=self.n_max)
+            if self.axis == 'row': aligned_ngrams = get_row_ngrams(c, attrib=self.attrib, n_max=self.n_max)
+            if self.axis == 'col': aligned_ngrams = get_col_ngrams(c, attrib=self.attrib, n_max=self.n_max)
 
         if self.header_only and len(header_cell.text) > self.max_chars: return False
         return True if any(self.r.match(ngram) for ngram in aligned_ngrams) else False

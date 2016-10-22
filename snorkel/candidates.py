@@ -2,7 +2,7 @@ from . import SnorkelSession
 from .utils import ProgressBar
 from .models import Candidate, CandidateSet, TemporarySpan
 from .models.candidate import candidate_set_candidate_association
-from .models.context import Document, Phrase, Cell
+from .models.context import Document, Table, Cell, Phrase
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
 from sqlalchemy.sql import select
@@ -92,12 +92,17 @@ class CandidateExtractor(object):
     def _extract_from_context(self, context, candidate_set, session):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
+        n = 0
         for i in range(self.arity):
             self.child_context_sets[i].clear()
             for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
                 tc.load_id_or_insert(session)
+                # print unicode(tc)
+                n += 1
                 self.child_context_sets[i].add(tc)
 
+        # if n:
+        #     print [[unicode(c) for c in child_contexts] for child_contexts in self.child_context_sets]
         # Generates and persists candidates
         parent_insert_query = Candidate.__table__.insert()
         parent_insert_args = {'type': self.candidate_class.__mapper_args__['polymorphic_identity']}
@@ -281,20 +286,30 @@ class OmniNgrams(Ngrams):
             for ts in Ngrams.apply(self, phrase):
                 yield ts
 
-class Cells(CandidateSpace):
+class TableNgrams(Ngrams):
+    """
+    Defines the space of candidates as all n-grams (n <= n_max) in a Table _x_,
+    divided into Phrases inside of html elements.
+    """
+    def __init__(self, n_max=5, split_tokens=['-', '/']):
+        Ngrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
+
+    def apply(self, context):
+        if not isinstance(context, Table):
+            raise TypeError("Input Contexts to TableNgrams.apply() must be of type Table")
+        for phrase in context.phrases:
+            for ts in Ngrams.apply(self, phrase):
+                yield ts                
+
+class TableCells(CandidateSpace):
     """Defines the space of candidates as the complete phrases in cells"""
     def __init__(self):
         CandidateSpace.__init__(self)
 
     def apply(self, context):
-        if not isinstance(context, Cell):
-            raise TypeError("Input Contexts to Cells.apply() must be of type Cell")
-        try:
-            phrases = context.phrases
-        except:
-            phrases = [context]
-
-        for phrase in phrases:
+        if not isinstance(context, Table):
+            raise TypeError("Input Contexts to TableCells.apply() must be of type Table")
+        for phrase in context.phrases:
             for temp_span in self._apply_to_phrase(phrase):
                 yield temp_span
 
@@ -303,9 +318,9 @@ class Cells(CandidateSpace):
         char_start = phrase.char_offsets[0]
         cl = phrase.char_offsets[L-1] - phrase.char_offsets[0] + len(phrase.words[L-1])
         char_end = phrase.char_offsets[0] + cl - 1
-        yield TemporarySpan(char_start=char_start, char_end=char_end, context=phrase)
+        yield TemporarySpan(char_start=char_start, char_end=char_end, parent=phrase)
 
-class SpanningCells(CandidateSpace):
+class SpanningTableCells(CandidateSpace):
     """Defines the space of candidates as the phrases in cells that span entire axis"""
     def __init__(self, axis):
         CandidateSpace.__init__(self)
@@ -314,23 +329,19 @@ class SpanningCells(CandidateSpace):
         self.axis= axis
 
     def apply(self, context):
-        if not isinstance(context, Cell):
-            raise TypeError("Input Contexts to SpanningCells.apply() must be of type Cell")
-        try:
-            phrases = context.phrases
-        except:
-            phrases = [context]
+        if not isinstance(context, Table):
+            raise TypeError("Input Contexts to SpanningTableCells.apply() must be of type Table")
 
         # make sure cell spans entire axis
         if self.axis == 'row' \
         and len([cell for cell in context.table.cells if cell.row_num == context.row_num]) > 1:
             return
         
-        if self.axis == 'col' \            
+        if self.axis == 'col' \
         and len([cell for cell in context.table.cells if cell.col_num == context.col_num]) > 1:
             return
 
-        for phrase in phrases:
+        for phrase in context.phrases:
             for temp_span in self._apply_to_phrase(phrase):
                 yield temp_span
 
@@ -339,4 +350,4 @@ class SpanningCells(CandidateSpace):
         char_start = phrase.char_offsets[0]
         cl = phrase.char_offsets[L-1] - phrase.char_offsets[0] + len(phrase.words[L-1])
         char_end = phrase.char_offsets[0] + cl - 1
-        yield TemporarySpan(char_start=char_start, char_end=char_end, context=phrase)        
+        yield TemporarySpan(char_start=char_start, char_end=char_end, parent=phrase)        

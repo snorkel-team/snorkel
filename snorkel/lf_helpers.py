@@ -429,7 +429,7 @@ def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min
                 yield ngram
 
 
-def _get_aligned_cells(root_cell, axis, direct=True, infer=False):
+def get_aligned_cells(root_cell, axis, direct=True, infer=False):
     aligned_cells = [cell for cell in root_cell.table.cells
         if getattr(cell, axis) == getattr(root_cell, axis)
         and cell != root_cell]

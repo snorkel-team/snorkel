@@ -332,16 +332,17 @@ class SpanningTableCells(CandidateSpace):
         if not isinstance(context, Table):
             raise TypeError("Input Contexts to SpanningTableCells.apply() must be of type Table")
 
-        # make sure cell spans entire axis
-        if self.axis == 'row' \
-        and len([cell for cell in context.table.cells if cell.row_num == context.row_num]) > 1:
-            return
-        
-        if self.axis == 'col' \
-        and len([cell for cell in context.table.cells if cell.col_num == context.col_num]) > 1:
-            return
+        def _spans(cell, table, axis):
+            if axis == 'row' and len([c for c in table.cells if c.row == cell.row]) > 1:
+                return False
+            if axis == 'col' and len([c for c in table.cells if c.col == cell.col]) > 1:
+                return False
+            return True
 
-        for phrase in context.phrases:
+        spanning_cells = [cell for cell in context.cells if _spans(cell, context, self.axis)]
+        spanning_phrases = [phrase for cell in spanning_cells for phrase in cell.phrases]
+
+        for phrase in spanning_phrases:
             for temp_span in self._apply_to_phrase(phrase):
                 yield temp_span
 

@@ -446,9 +446,8 @@ def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False):
 
 PhantomCell = namedtuple('PhantomCell','phrases')
 def _infer_cell(root_cell, axis, direct, infer):
-    # NOTE: not defined for direct = False and infer = False
-    # TODO: Fix this hack; checking for len(text)==9 checks if cell is "<td></td>"
-    empty = len(root_cell.text) == 9
+    if direct == False and infer == False: raise ValueError('Direct and infer cannot both be false')
+    empty = _empty(root_cell)
     edge = getattr(root_cell, _other_axis(axis)).position == 0
     if direct and (not empty or edge or not infer):
         return root_cell
@@ -456,10 +455,18 @@ def _infer_cell(root_cell, axis, direct, infer):
         if edge or not empty:
             return PhantomCell(phrases=[]) 
         else:
-            neighbor_cells = [cell for cell in root_cell.table.cells
+            # collect all aligned non-empty cells above (or to the right) of the root cell
+            aligned_cells = [cell for cell in root_cell.table.cells
                 if getattr(cell, axis) == getattr(root_cell, axis)
-                and getattr(cell, _other_axis(axis)).position == getattr(root_cell, _other_axis(axis)).position - 1]
-            return _infer_cell(neighbor_cells[0], axis, direct=True, infer=True)
+                and getattr(cell, _other_axis(axis)).position < getattr(root_cell, _other_axis(axis)).position
+                and not _empty(cell)]
+
+            # pick the last cell among the ones identified above
+            aligned_cells = sorted(aligned_cells, key=lambda x: getattr(x,_other_axis(axis)).position, reverse=True)
+            return aligned_cells[0] if aligned_cells else PhantomCell
+
+def _empty(cell):
+    return True if not cell.text or cell.text.isspace() or cell.text == "<td></td>" else False
 
 def _other_axis(axis):
     return 'row' if axis=='col' else 'col'

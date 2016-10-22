@@ -24,12 +24,12 @@ class AlignmentThrottler(object):
 
     def _apply_normal(self, span0, span1):
         if self.axis == 'row':
-            return span0.context.cell.row_num == span1.context.cell.row_num
+            return span0.context.cell.row.position == span1.context.cell.row.position
         elif self.axis == 'col':
-            return span0.context.cell.col_num == span1.context.cell.col_num
+            return span0.context.cell.col.position == span1.context.cell.col.position
         else:
-            return span0.context.cell.row_num == span1.context.cell.row_num \
-                or span0.context.cell.col_num == span1.context.cell.col_num
+            return span0.context.cell.row.position == span1.context.cell.row.position \
+                or span0.context.cell.col.position == span1.context.cell.col.position
 
     def _apply_infer(self, span0, span1):
         # TODO: make sure it's not just span0

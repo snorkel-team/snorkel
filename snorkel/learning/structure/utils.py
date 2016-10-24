@@ -1,4 +1,18 @@
 from ..constants import *
+import random
+
+
+def get_deps(weights, expand=0.0):
+    deps = []
+    for dep_mat, dep in (
+            (weights.dep_fixing, DEP_FIXING),
+            (weights.dep_reinforcing, DEP_REINFORCING)):
+        for i in range(weights.n):
+            for j in range(weights.n):
+                if dep_mat[i, j] != 0 or (random.random() < expand and i != j):
+                    deps.append((i, j, dep))
+
+    return deps
 
 
 def get_all_deps(n, dep_similar=False, dep_exclusive=False):

@@ -8,7 +8,7 @@ from snorkel.learning import GenerativeModel, GenerativeModelWeights
 
 
 def generate_model(n, dep_density, class_prior=False, lf_propensity=False, lf_prior=False, lf_class_propensity=False,
-                   dep_similar=False, dep_reinforcing=False, dep_fixing=False, dep_exlcusive=False):
+                   dep_similar=False, dep_reinforcing=False, dep_fixing=False, dep_exclusive=False, force_dep=False):
     weights = GenerativeModelWeights(n)
     for i in range(n):
         weights.lf_accuracy[i] = 1.1 - 0.2 * random.random()
@@ -37,7 +37,7 @@ def generate_model(n, dep_density, class_prior=False, lf_propensity=False, lf_pr
     if dep_fixing:
         for i in range(n):
             for j in range(i+1, n):
-                if random.random() < dep_density * 2:
+                if random.random() < dep_density:
                     if random.random() < 0.5:
                         weights.dep_fixing[i, j] = random.choice((1.0, 2.0))
                     else:
@@ -46,19 +46,25 @@ def generate_model(n, dep_density, class_prior=False, lf_propensity=False, lf_pr
     if dep_reinforcing:
         for i in range(n):
             for j in range(i+1, n):
-                if random.random() < dep_density * 2:
+                if random.random() < dep_density:
                     if random.random() < 0.5:
                         weights.dep_reinforcing[i, j] = random.choice((1.0, 2.0,))
                     else:
                         weights.dep_reinforcing[j, i] = random.choice((1.0, 2.0))
 
-    if dep_exlcusive:
+    if dep_exclusive:
         for i in range(n):
             for j in range(i+1, n):
                 if random.random() < dep_density:
-                    weights.dep_similar[i, j] = random.choice((1.0, 2.0))
+                    weights.dep_exclusive[i, j] = random.choice((1.0, 2.0))
 
-    return weights
+    if force_dep and weights.dep_similar.getnnz() == 0 and weights.dep_fixing.getnnz() == 0 \
+        and weights.dep_reinforcing.getnnz() == 0 and weights.dep_exclusive.getnnz() == 0:
+        return generate_model(n, dep_density, class_prior=class_prior, lf_propensity=lf_propensity, lf_prior=lf_prior,
+                              lf_class_propensity=lf_class_propensity, dep_similar=dep_similar, dep_fixing=dep_fixing,
+                              dep_reinforcing=dep_reinforcing, dep_exclusive=dep_exclusive, force_dep=True)
+    else:
+        return weights
 
 
 def generate_label_matrix(weights, m):
@@ -105,6 +111,7 @@ def generate_label_matrix(weights, m):
             for j in range(weights.n):
                 if getattr(weights, dep_name)[i, j] != 0.0:
                     weight[w_off]['initialValue'] = np.float64(getattr(weights, dep_name)[i, j])
+                    w_off += 1
 
     # Variables
     variable = np.zeros(1 + weights.n, Variable)

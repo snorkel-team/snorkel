@@ -546,6 +546,7 @@ def part_error_analysis(c):
     print "Attr:"
     print attr
     table_info(attr)
+    print "------------"
 
 def table_info(span):
     print "Table: %s" % span.parent.table

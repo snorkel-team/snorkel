@@ -239,7 +239,7 @@ def same_phrase(c):
         and c[i].parent==c[0].parent for i in range(len(c.get_arguments()))]))
 
 
-def get_phrase_ngrams(span, attrib='words', n_min=1, n_max=1, lower=True):
+def get_phrase_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     """
     Get the ngrams that are in the Phrase of the given span, not including itself.
     :param span: The span whose Phrase is being searched
@@ -248,25 +248,25 @@ def get_phrase_ngrams(span, attrib='words', n_min=1, n_max=1, lower=True):
     :param n_max: The maximum n of the ngrams that should be returned
     :param lower: If false, all ngrams will be returned in lower case
     """
-    if not isinstance(span, TemporarySpan):
-        raise ValueError("Handles Span-type Candidate arguments only")
-    for ngram in get_left_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
-        yield ngram
-    for ngram in get_right_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
-        yield ngram
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+    for span in spans:
+        for ngram in get_left_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+            yield ngram
+        for ngram in get_right_ngrams(span, window=100, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+            yield ngram
 
 
-def get_neighbor_phrase_ngrams(span, d=1, attrib='words', n_min=1, n_max=1, lower=True):
-    if not isinstance(span, TemporarySpan):
-        raise ValueError("Handles Span-type Candidate arguments only")
-    for ngram in chain.from_iterable(
-        [tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower)
-        for phrase in span.parent.document.phrases 
-        if abs(phrase.phrase_id - span.parent.phrase_id) <= d and phrase != span.parent]):
-        yield ngram
+def get_neighbor_phrase_ngrams(c, d=1, attrib='words', n_min=1, n_max=1, lower=True):
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+    for span in spans:
+        for ngram in chain.from_iterable(
+            [tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower)
+            for phrase in span.parent.document.phrases 
+            if abs(phrase.phrase_id - span.parent.phrase_id) <= d and phrase != span.parent]):
+            yield ngram
 
 
-def get_cell_ngrams(span, attrib='words', n_min=1, n_max=1, lower=True):
+def get_cell_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     """
     Get the ngrams that are in the Cell of the given span, not including itself.
     :param span: The span whose Cell is being searched
@@ -275,18 +275,18 @@ def get_cell_ngrams(span, attrib='words', n_min=1, n_max=1, lower=True):
     :param n_max: The maximum n of the ngrams that should be returned
     :param lower: If false, all ngrams will be returned in lower case
     """
-    if not isinstance(span, TemporarySpan):
-        raise ValueError("Handles Span-type Candidate arguments only")
-    for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
-        yield ngram
-    if span.parent.cell is not None:
-        for ngram in chain.from_iterable([tokens_to_ngrams(getattr(phrase,attrib), n_min=n_min, n_max=n_max, lower=lower) \
-            for phrase in span.parent.cell.phrases if phrase != span.parent]):
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+    for span in spans:
+        for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
             yield ngram
-    
+        if span.parent.cell is not None:
+            for ngram in chain.from_iterable([tokens_to_ngrams(getattr(phrase,attrib), n_min=n_min, n_max=n_max, lower=lower) \
+                for phrase in span.parent.cell.phrases if phrase != span.parent]):
+                yield ngram
+        
 
 
-def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_min=1, n_max=1, lower=True):
+def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=1, n_max=1, lower=True):
     """
     Get the ngrams from all Cells that are within a given Cell distance in one direction from the given span
     :param span: The span whose neighbor Cells are being searched
@@ -298,36 +298,36 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
     :param lower: If false, all ngrams will be returned in lower case
     """
     # TODO: Fix this to be more efficient (optimize with SQL query)
-    if not isinstance(span, TemporarySpan):
-        raise ValueError("Handles Span-type Candidate arguments only")
-    for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
-        yield ngram
-    if span.parent.cell is not None:
-        root_cell = span.parent.cell
-        for phrase in chain.from_iterable([root_cell.row.phrases, root_cell.col.phrases]):
-            row_diff = abs(phrase.row_num - root_cell.row_num)
-            col_diff = abs(phrase.col_num - root_cell.col_num)
-            if (row_diff or col_diff) and not (row_diff and col_diff) and row_diff + col_diff <= dist:
-                if directions:
-                    direction = ''
-                    if col_diff==0:
-                        if 0 < row_diff and row_diff <= dist:
-                            direction = "UP"
-                        elif  0 > row_diff and row_diff >= -dist:
-                            direction = "DOWN"
-                    elif row_diff==0:
-                        if 0 < col_diff and col_diff <= dist:
-                            direction = "RIGHT"
-                        elif  0 > col_diff and col_diff >= -dist:
-                            direction = "LEFT"
-                    for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
-                        yield (ngram, direction)
-                else:
-                    for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
-                        yield  ngram
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+    for span in spans:
+        for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+            yield ngram
+        if span.parent.row_num is not None and span.parent.col_num is not None:
+            root_cell = span.parent.cell
+            for phrase in chain.from_iterable([root_cell.row.phrases, root_cell.col.phrases]):
+                row_diff = abs(phrase.row_num - root_cell.row.position)
+                col_diff = abs(phrase.col_num - root_cell.col.position)
+                if (row_diff or col_diff) and not (row_diff and col_diff) and row_diff + col_diff <= dist:
+                    if directions:
+                        direction = ''
+                        if col_diff==0:
+                            if 0 < row_diff and row_diff <= dist:
+                                direction = "UP"
+                            elif  0 > row_diff and row_diff >= -dist:
+                                direction = "DOWN"
+                        elif row_diff==0:
+                            if 0 < col_diff and col_diff <= dist:
+                                direction = "RIGHT"
+                            elif  0 > col_diff and col_diff >= -dist:
+                                direction = "LEFT"
+                        for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
+                            yield (ngram, direction)
+                    else:
+                        for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
+                            yield  ngram
 
 
-def get_row_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
+def get_row_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
     """
     Get the ngrams from all Cells that are in the same row as the given span
     :param span: The span whose neighbor Cells are being searched
@@ -337,11 +337,13 @@ def get_row_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_ma
     :param n_max: The maximum n of the ngrams that should be returned
     :param lower: If false, all ngrams will be returned in lower case
     """
-    for ngram in _get_axis_ngrams(span, axis='row', direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
-        yield ngram
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+    for span in spans:
+        for ngram in _get_axis_ngrams(span, axis='row', direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+            yield ngram
 
 
-def get_col_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
+def get_col_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
     """
     Get the ngrams from all Cells that are in the same column as the given span
     :param span: The span whose neighbor Cells are being searched
@@ -351,11 +353,13 @@ def get_col_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_ma
     :param n_max: The maximum n of the ngrams that should be returned
     :param lower: If false, all ngrams will be returned in lower case
     """
-    for ngram in _get_axis_ngrams(span, axis='col', direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
-        yield ngram
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+    for span in spans:
+        for ngram in _get_axis_ngrams(span, axis='col', direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+            yield ngram
 
 
-def get_aligned_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
+def get_aligned_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
     """
     Get the ngrams from all Cells that are in the same row or column as the given span
     :param span: The span whose neighbor Cells are being searched
@@ -365,21 +369,25 @@ def get_aligned_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, 
     :param n_max: The maximum n of the ngrams that should be returned
     :param lower: If false, all ngrams will be returned in lower case
     """
-    for ngram in get_row_ngrams(span, direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
-        yield ngram
-    for ngram in get_col_ngrams(span, direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
-        yield ngram
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+    for span in spans:
+        for ngram in get_row_ngrams(span, direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+            yield ngram
+        for ngram in get_col_ngrams(span, direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+            yield ngram
 
 
-def get_head_ngrams(span, axis, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
-    if not isinstance(span, TemporarySpan):
-        raise ValueError("Handles Span-type Candidate arguments only")
-    if not span.parent.cell:
-        return
-    else:
-        for phrase in getattr(_get_head_cell(span.parent.cell, axis, infer=infer), 'phrases', []):
-            for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
-                yield ngram
+def get_head_ngrams(span, axis=None, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+    axes = [axis] if axis else ['row','col']
+    for span in spans:
+        if not span.parent.cell:
+            return
+        else:
+            for axis in axes:
+                for phrase in getattr(_get_head_cell(span.parent.cell, axis, infer=infer), 'phrases', []):
+                    for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
+                        yield ngram
 
 
 def _get_head_cell(root_cell, axis, infer=False):
@@ -389,8 +397,6 @@ def _get_head_cell(root_cell, axis, infer=False):
 
 
 def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
-    if not isinstance(span, TemporarySpan):
-        raise ValueError("Handles Span-type Candidate arguments only")
     for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
         yield ngram
     if (span.parent.cell is not None):

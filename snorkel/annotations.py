@@ -71,7 +71,7 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
             'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
             'conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
         }
-        if labels:
+        if labels is not None:
             col_names.extend(['accuracy', 'tp', 'fp', 'fn', 'tn'])
             d['accuracy'] = Series(data=matrix_accuracy(self, labels), index=lf_names)
             d['tp']       = Series(data=matrix_tp(self, labels), index=lf_names)

@@ -245,7 +245,7 @@ class GridSearch(object):
     def search_space(self):
         return product(param.get_all_values() for param in self.params)
 
-    def fit(self, X_validation, validation_labels, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, **model_hyperparams):
+    def fit(self, X_validation, validation_labels, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
@@ -269,7 +269,7 @@ class GridSearch(object):
             self.model.train(self.X, self.training_marginals, **model_hyperparams)
 
             # Test the model
-            tp, fp, tn, fn = self.model.score(X_validation, validation_labels, gold_candidate_set, b, set_unlabeled_as_neg, display=False)
+            tp, fp, tn, fn = self.model.score(X_validation, validation_labels, gold_candidate_set, b, set_unlabeled_as_neg, display=False, **validation_kwargs)
             p, r, f1 = scores_from_counts(tp, fp, tn, fn)
             run_stats.append(list(param_vals) + [p, r, f1])
             if f1 > f1_opt:

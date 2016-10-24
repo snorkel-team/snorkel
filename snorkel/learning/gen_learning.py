@@ -1,8 +1,8 @@
 from .constants import *
 from .disc_learning import NoiseAwareModel
-from numbskull import NumbSkull
-from numbskull.inference import FACTORS
-from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
+#from numbskull import NumbSkull
+#from numbskull.inference import FACTORS
+#from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
 import numpy as np
 import random
 import scipy.sparse as sparse

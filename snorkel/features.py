@@ -19,20 +19,19 @@ def get_span_feats(candidate, stopwords=None):
 
     # Unary candidates
     if len(args) == 1:
-        get_tdl_feats = compile_entity_feature_generator()
-        span          = args[0]
-        sent          = get_as_dict(span.parent)
-        xmltree       = corenlp_to_xmltree(sent)
-        sidxs         = range(span.get_word_start(), span.get_word_end() + 1)
+        #get_tdl_feats = compile_entity_feature_generator()
+        #xmltree       = corenlp_to_xmltree(sent)
+        span  = args[0]
+        sidxs = range(span.get_word_start(), span.get_word_end() + 1)
         if len(sidxs) > 0:
 
             # Add DDLIB entity features
-            for f in get_ddlib_feats(sent, sidxs):
+            for f in get_ddlib_feats(span, sidxs):
                 yield 'DDL_' + f, 1
 
             # Add TreeDLib entity features
-            for f in get_tdl_feats(xmltree.root, sidxs):
-                yield 'TDL_' + f, 1
+            #for f in get_tdl_feats(xmltree.root, sidxs):
+            #    yield 'TDL_' + f, 1
 
     # Binary candidates
     elif len(args) == 2:

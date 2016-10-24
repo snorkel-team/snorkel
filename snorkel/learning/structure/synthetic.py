@@ -2,8 +2,63 @@ from numbskull import NumbSkull
 from numbskull.inference import FACTORS
 from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
 import numpy as np
+import random
 import scipy.sparse as sparse
-from snorkel.learning import GenerativeModel
+from snorkel.learning import GenerativeModel, GenerativeModelWeights
+
+
+def generate_model(n, dep_density, class_prior=False, lf_propensity=False, lf_prior=False, lf_class_propensity=False,
+                   dep_similar=False, dep_reinforcing=False, dep_fixing=False, dep_exlcusive=False):
+    weights = GenerativeModelWeights(n)
+    for i in range(n):
+        weights.lf_accuracy[i] = 1.1 - 0.2 * random.random()
+
+    if class_prior:
+        weights.class_prior = random.choice((-1.0, -2.0))
+
+    if lf_propensity:
+        for i in range(n):
+            weights.lf_propensity[i] = random.choice((-1.0, -2.0))
+
+    if lf_prior:
+        for i in range(n):
+            weights.lf_prior[i] = random.choice((2.0, -2.0))
+
+    if lf_class_propensity:
+        for i in range(n):
+            weights.lf_class_propensity[i] = random.choice((2.0, -2.0))
+
+    if dep_similar:
+        for i in range(n):
+            for j in range(i+1, n):
+                if random.random() < dep_density:
+                    weights.dep_similar[i, j] = random.choice((1.0, 2.0))
+
+    if dep_fixing:
+        for i in range(n):
+            for j in range(i+1, n):
+                if random.random() < dep_density * 2:
+                    if random.random() < 0.5:
+                        weights.dep_fixing[i, j] = random.choice((1.0, 2.0))
+                    else:
+                        weights.dep_fixing[j, i] = random.choice((1.0, 2.0))
+
+    if dep_reinforcing:
+        for i in range(n):
+            for j in range(i+1, n):
+                if random.random() < dep_density * 2:
+                    if random.random() < 0.5:
+                        weights.dep_reinforcing[i, j] = random.choice((1.0, 2.0,))
+                    else:
+                        weights.dep_reinforcing[j, i] = random.choice((1.0, 2.0))
+
+    if dep_exlcusive:
+        for i in range(n):
+            for j in range(i+1, n):
+                if random.random() < dep_density:
+                    weights.dep_similar[i, j] = random.choice((1.0, 2.0))
+
+    return weights
 
 
 def generate_label_matrix(weights, m):
@@ -192,15 +247,6 @@ def generate_label_matrix(weights, m):
     # Domain mask
     domain_mask = np.zeros(1 + weights.n, np.bool)
 
-    print "Weights"
-    print weight
-    print "Variables"
-    print variable
-    print "Factors"
-    print factor
-    print "FactorToVar"
-    print ftv
-
     # Instantiates factor graph
     ns = NumbSkull(n_inference_epoch=100, quiet=True)
     ns.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
@@ -209,7 +255,7 @@ def generate_label_matrix(weights, m):
     y = np.ndarray((m,), np.int64)
     L = sparse.lil_matrix((m, weights.n))
     for i in range(m):
-        fg.burnIn(100, False)
+        fg.burnIn(10, False)
         y[i] = 1 if fg.var_value[0, 0] == 1 else -1
         for j in range(weights.n):
             L[i, j] = fg.var_value[0, 1 + j] - 1

@@ -182,14 +182,19 @@ class GenerativeModel(object):
     optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
     dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
 
-    def train(self, L, deps=(), steps=100, step_size=0.001, decay=0.99, reg_param=0.1, reg_type=2, verbose=False, burn_in=50):
+    def train(self, L, deps=(), steps=100, step_size=0.001, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
+              truncation=10, burn_in=50, timer=None):
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=steps, stepsize=step_size, decay=decay,
-                       reg_param=reg_param, regularization=reg_type, quiet=(not verbose), verbose=verbose,
-                       learn_non_evidence=True, burn_in=burn_in)
+                       reg_param=reg_param, regularization=reg_type, truncation=truncation,
+                       quiet=(not verbose), verbose=verbose, learn_non_evidence=True, burn_in=burn_in)
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
+        if timer is not None:
+            timer.start()
         fg.learning()
+        if timer is not None:
+            timer.end()
         self._process_learned_weights(L, fg)
 
     def marginals(self, L):

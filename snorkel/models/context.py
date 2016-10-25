@@ -284,7 +284,6 @@ class Phrase(Context):
     text = Column(Text, nullable=False)
     row_num = Column(Integer)
     col_num = Column(Integer)
-    page = Column(Integer)
     html_tag = Column(Text)
     if snorkel_postgres:
         html_attrs = Column(postgresql.ARRAY(String))
@@ -297,10 +296,6 @@ class Phrase(Context):
         ner_tags = Column(postgresql.ARRAY(String))
         dep_parents = Column(postgresql.ARRAY(Integer))
         dep_labels = Column(postgresql.ARRAY(String))
-        top = Column(postgresql.ARRAY(String))
-        left = Column(postgresql.ARRAY(String))
-        bottom = Column(postgresql.ARRAY(String))
-        right = Column(postgresql.ARRAY(String))
     else:
         html_attrs = Column(PickleType)
         html_anc_tags = Column(PickleType)
@@ -312,10 +307,7 @@ class Phrase(Context):
         ner_tags = Column(PickleType)
         dep_parents = Column(PickleType)
         dep_labels = Column(PickleType)
-        top = Column(PickleType)
-        left = Column(PickleType)
-        bottom = Column(PickleType)
-        right = Column(PickleType)
+
     __mapper_args__ = {
         'polymorphic_identity': 'phrase',
     }
@@ -326,29 +318,24 @@ class Phrase(Context):
 
     def _asdict(self):
         return {
-            'id'                : self.id,
-            'document'          : self.document,
-            'phrase_id'         : self.phrase_id,
-            'position'          : self.position,
-            'text'              : self.text,
-            'row_num'           : self.row_num,
-            'col_num'           : self.col_num,
-            'html_tag'          : self.html_tag,
-            'html_attrs'        : self.html_attrs,
-            'html_anc_tags'     : self.html_anc_tags,
-            'html_anc_attrs'    : self.html_anc_attrs,
-            'words'             : self.words,
-            'char_offsets'      : self.char_offsets,
-            'lemmas'            : self.lemmas,
-            'pos_tags'          : self.pos_tags,
-            'ner_tags'          : self.ner_tags,
-            'dep_parents'       : self.dep_parents,
-            'dep_labels'        : self.dep_labels,
-            'page'              : self.page,
-            'top'               : self.top,
-            'left'              : self.left,
-            'bottom'            : self.bottom,
-            'right'             : self.right
+            'id': self.id,
+            'document': self.document,
+            'phrase_id': self.phrase_id,
+            'position': self.position,
+            'text': self.text,
+            'row_num': self.row_num,
+            'col_num': self.col_num,
+            'html_tag': self.html_tag,
+            'html_attrs': self.html_attrs,
+            'html_anc_tags': self.html_anc_tags,
+            'html_anc_attrs': self.html_anc_attrs,
+            'words': self.words,
+            'char_offsets': self.char_offsets,
+            'lemmas': self.lemmas,
+            'pos_tags': self.pos_tags,
+            'ner_tags': self.ner_tags,
+            'dep_parents': self.dep_parents,
+            'dep_labels': self.dep_labels
         }
 
     def __repr__(self):
@@ -588,7 +575,7 @@ class TemporaryImplicitSpan(TemporarySpan):
     """The TemporaryContext version of ImplicitSpan"""
     def __init__(self, parent, char_start, char_end, expander_key, position, 
             text, words, char_offsets, lemmas, pos_tags, ner_tags, dep_parents,
-            dep_labels, page, top, left, bottom, right, meta=None):
+            dep_labels, meta=None):
         super(TemporarySpan, self).__init__()
         self.parent         = parent  # The parent Context of the Span
         self.char_start     = char_start
@@ -603,11 +590,6 @@ class TemporaryImplicitSpan(TemporarySpan):
         self.ner_tags       = ner_tags
         self.dep_parents    = dep_parents
         self.dep_labels     = dep_labels
-        self.page           = page
-        self.top            = top
-        self.left           = left
-        self.bottom         = bottom
-        self.right          = right
         self.meta           = meta
 
     def __len__(self):
@@ -656,27 +638,7 @@ class TemporaryImplicitSpan(TemporarySpan):
         return 'implicit_span'
 
     def _get_insert_query(self):
-        return """INSERT INTO implicit_span VALUES(
-            :id, 
-            :parent_id, 
-            :char_start, 
-            :char_end, 
-            :expander_key, 
-            :position, 
-            :text, 
-            :words, 
-            :char_offsets, 
-            :lemmas, 
-            :pos_tags, 
-            :ner_tags, 
-            :dep_parents, 
-            :dep_labels, 
-            :page,
-            :top,
-            :left,
-            :bottom,
-            :right,
-            :meta)"""
+        return """INSERT INTO implicit_span VALUES(:id, :parent_id, :char_start, :char_end, :expander_key, :position, :text, :words, :char_offsets, :lemmas, :pos_tags, :ner_tags, :dep_parents, :dep_labels, :meta)"""
 
     def _get_insert_args(self):
         return {'parent_id'     : self.parent.id,
@@ -692,11 +654,6 @@ class TemporaryImplicitSpan(TemporarySpan):
                 'ner_tags'      : self.ner_tags,
                 'dep_parents'   : self.dep_parents,
                 'dep_labels'    : self.dep_labels,
-                'page'          : self.page,
-                'top'           : self.top,
-                'left'          : self.left,
-                'bottom'        : self.bottom,
-                'right'         : self.right,
                 'meta'          : self.meta
                 }
 
@@ -776,7 +733,6 @@ class ImplicitSpan(Context, TemporaryImplicitSpan):
     expander_key = Column(String, nullable=False)
     position = Column(Integer, nullable=False)
     text = Column(String)
-    page = Column(Integer)
     if snorkel_postgres:
         words = Column(postgresql.ARRAY(String), nullable=False)
         char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
@@ -785,10 +741,6 @@ class ImplicitSpan(Context, TemporaryImplicitSpan):
         ner_tags = Column(postgresql.ARRAY(String))
         dep_parents = Column(postgresql.ARRAY(Integer))
         dep_labels = Column(postgresql.ARRAY(String))
-        top = Column(postgresql.ARRAY(String))
-        left = Column(postgresql.ARRAY(String))
-        bottom = Column(postgresql.ARRAY(String))
-        right = Column(postgresql.ARRAY(String))
     else:
         words = Column(PickleType, nullable=False)
         char_offsets = Column(PickleType, nullable=False)
@@ -797,10 +749,6 @@ class ImplicitSpan(Context, TemporaryImplicitSpan):
         ner_tags = Column(PickleType)
         dep_parents = Column(PickleType)
         dep_labels = Column(PickleType)
-        top = Column(PickleType)
-        left = Column(PickleType)
-        bottom = Column(PickleType)
-        right = Column(PickleType)        
     meta = Column(PickleType)
 
     __table_args__ = (

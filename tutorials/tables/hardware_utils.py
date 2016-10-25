@@ -103,11 +103,6 @@ class OmniNgramsTemp(OmniNgrams):
                     ner_tags       = [ts.parent.ner_tags[-1]],
                     dep_parents    = [ts.parent.dep_parents[-1]],
                     dep_labels     = [ts.parent.dep_labels[-1]],
-                    page           = [ts.parent.page],
-                    top            = [ts.parent.top[0]],
-                    left           = [ts.parent.left[0]],
-                    bottom         = [ts.parent.bottom[0]],
-                    right          = [ts.parent.right[0]],
                     meta           = None)
             else:
                 yield ts
@@ -158,11 +153,6 @@ class OmniNgramsPart(OmniNgrams):
                         ner_tags       = [ts.parent.ner_tags[0]],
                         dep_parents    = [ts.parent.dep_parents[0]],
                         dep_labels     = [ts.parent.dep_labels[0]],
-                        page           = [ts.parent.page],
-                        top            = [ts.parent.top[0]],
-                        left           = [ts.parent.left[0]],
-                        bottom         = [ts.parent.bottom[0]],
-                        right          = [ts.parent.right[0]],
                         meta           = None
                     )
 

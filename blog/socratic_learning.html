@@ -364,9 +364,13 @@ p.img {
 
 <h1 id="toc_0">Case Study: Who has Taylor Swift Dated?</h1>
 
+<p><img src="taylor1.jpg" alt="image alt text"></p> 
+
+
 <blockquote>
 <p>We will use a toy example to explore Socratic learning. We ran Socratic learning on real relation extraction datasets in other domains and reported results in the paper.</p>
 </blockquote>
+
 
 <h2 id="toc_0">Extraction Phase</h2>
 
@@ -386,7 +390,13 @@ p.img {
 <p>Domain experts often prefer generative models since they “tell a story” about the data. However, these models can be incomplete or incorrect in some cases.</p>
 </blockquote>
 
-<p> We take a break from our case study to look at an underlying issue with generative models. These models are usually easier to write and interpret for domain experts. In the context of data programming, users can write labeling functions that encode domain knowledge to noisily label a certain portion of the unlabeled training data. However, some labeling functions might be too general (say a labeling function that marks any data point with the word “love” in the article as True). Others can work well for some subset of the data and not the other. Because of this, designing these generative models is an arduous and iterative process where experts spend much of their time considering the trade-offs between high accuracy and high coverage models. Moreover, it is not trivial to pick which function to tweak and how. Since a strong generative model is key to the subsequent learning task, debugging at this stage becomes the most time-consuming and challenging part of this process. </p>
+<p> We take a break from our case study to look at an underlying issue with generative models. These models are usually easier to write and interpret for domain experts. In the context of data programming, users can write labeling functions that encode domain knowledge to noisily label a certain portion of the unlabeled training data. However, some labeling functions might be too general.</p>
+	
+<p style="text-align:center;"><img src="misspecification2.png" width=700px></p> 
+
+<p><em>Example of a labeling function that marks any data point with the word "love" or "like" as True and with  "never" as False. It would work well for some data points and not others.</em></p>
+	
+<p> Others can work well for some subset of the data and not the other. Because of this, designing these generative models is an arduous and iterative process where experts spend much of their time considering the trade-offs between high accuracy and high coverage models. Moreover, it is not trivial to pick which function to tweak and how. Since a strong generative model is key to the subsequent learning task, debugging at this stage becomes the most time-consuming and challenging part of this process. </p>
 
 <p> With our approach, we attempt to <em>programatically</em> debug the generative model without user intervention. This is certainly not a complete solution to the problem of misspecified models, but a step towards making generative models more expressive and interpretable. </p>
 

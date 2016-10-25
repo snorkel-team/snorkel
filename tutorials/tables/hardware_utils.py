@@ -257,6 +257,33 @@ def load_hardware_labels(session, label_set_name, annotation_key_name, candidate
     return (candidate_set, annotation_key)
 
 
+def most_common_document(candidates):
+    """Returns the document that produced the most of the passed-in candidates"""
+    # Turn CandidateSet into set of tuples
+    pb = ProgressBar(len(candidates))
+    candidate_count = {}
+
+    for i, c in enumerate(candidates):
+        pb.bar(i)
+        part = c.get_arguments()[0].get_span()
+        doc = c.get_arguments()[0].parent.document.name
+        candidate_count[doc] = candidate_count.get(doc, 0) + 1 # count number of occurences of keys
+    pb.close()
+    max_doc = max(candidate_count, key=candidate_count.get)
+    return max_doc
+
+
+def entity_confusion_matrix(pred, gold):
+    if not isinstance(pred, set):
+        pred = set(pred)
+    if not isinstance(gold, set):
+        gold = set(gold)
+    TP = pred.intersection(gold)
+    FP = pred.difference(gold)
+    FN = gold.difference(pred)
+    return (TP, FP, FN)
+
+
 def entity_level_total_recall(candidates, gold_file, attribute, relation=True, integerize=False):
     """Checks entity-level recall of candidates compared to gold.
 
@@ -304,33 +331,6 @@ def entity_level_total_recall(candidates, gold_file, attribute, relation=True, i
     return entity_confusion_matrix(entity_level_candidates, gold_set)
 
 
-def most_common_document(candidates):
-    """Returns the document that produced the most of the passed-in candidates"""
-    # Turn CandidateSet into set of tuples
-    pb = ProgressBar(len(candidates))
-    candidate_count = {}
-
-    for i, c in enumerate(candidates):
-        pb.bar(i)
-        part = c.get_arguments()[0].get_span()
-        doc = c.get_arguments()[0].parent.document.name
-        candidate_count[doc] = candidate_count.get(doc, 0) + 1 # count number of occurences of keys
-    pb.close()
-    max_doc = max(candidate_count, key=candidate_count.get)
-    return max_doc
-
-
-def entity_confusion_matrix(pred, gold):
-    if not isinstance(pred, set):
-        pred = set(pred)
-    if not isinstance(gold, set):
-        gold = set(gold)
-    TP = pred.intersection(gold)
-    FP = pred.difference(gold)
-    FN = gold.difference(pred)
-    return (TP, FP, FN)
-
-
 def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     docs = []
     for doc in corpus:
@@ -362,6 +362,7 @@ def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     print "========================================\n"
 
     return (TP_set, FP_set, FN_set)
+
 
 def expand_part_range(text, DEBUG=False):
     """

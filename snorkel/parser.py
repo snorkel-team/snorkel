@@ -322,6 +322,11 @@ class OmniParser(object):
                     parts['html_attrs'] = tag.attrs
                     parts['html_anc_tags'] = anc_tags
                     parts['html_anc_attrs'] = anc_attrs
+                    parts['page']   = None
+                    parts['top']    = [None] * len(parts['words'])
+                    parts['left']   = [None] * len(parts['words'])
+                    parts['bottom'] = [None] * len(parts['words'])
+                    parts['right']  = [None] * len(parts['words'])
                     parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'phrase', self.phrase_idx, self.phrase_idx)
                     yield Phrase(**parts)
                     self.phrase_idx += 1
@@ -354,6 +359,8 @@ class OmniParser(object):
                     parts['table'] = table
                     parts['row'] = row
                     parts['col'] = col
+                    parts['row_num'] = row.position
+                    parts['col_num'] = col.position
                     parts['text'] = unicode(child)
                     parts['html_tag'] = child.name
                     parts['html_attrs'] = None #split_html_attrs(child.attrs.items())
@@ -361,6 +368,9 @@ class OmniParser(object):
                     parts['html_anc_attrs'] = None #anc_attrs
                     parts['stable_id'] = "%s::%s:%s:%s:%s" % (document.name, 'cell', table.position, row.position, col.position)
                     cell = Cell(**parts)
+                # NOTE: recent addition; does this mess up counts?
+                elif child.name == "style":
+                    continue
                 # FIXME: making so many copies is hacky and wasteful; use a stack?
                 temp_anc_tags = copy.deepcopy(anc_tags)
                 temp_anc_tags.append(child.name)

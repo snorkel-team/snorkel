@@ -377,7 +377,7 @@ def get_aligned_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_m
             yield ngram
 
 
-def get_head_ngrams(span, axis=None, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
+def get_head_ngrams(c, axis=None, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     axes = [axis] if axis else ['row','col']
     for span in spans:

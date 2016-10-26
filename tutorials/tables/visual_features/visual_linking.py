@@ -14,6 +14,15 @@ def calculate_offset(listA, listB, seedSize, maxOffset):
     return int(np.median(offsets))
 
 
+def display_box(pdf_path, boxes):
+    """
+    Displays each of the bounding boxes passed in 'boxes' on the pdf pointed 
+    to by pdf_path
+    """
+    # boxes is a list of 5-tuples (page, top, left, bottom, right)
+
+
+
 def link_lists(listA, listB, searchMax=100, editCost=20, offsetCost=1, offsetInertia=5):
     DEBUG = False
     if DEBUG:

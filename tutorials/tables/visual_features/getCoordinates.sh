@@ -5,7 +5,7 @@ usage() {
 	echo "Script to extract coordinates at the word level from a PDF file"
 	echo "Creates 2 files:"
 	echo "	.ids_words.txt file with ids and corresponding word (id=page number + int)"
-	echo "	.ids_coordinates.txt with ids and word coordinates on a page (x,y,height,width)" 
+	echo "	.ids_coordinates.txt with ids and word coordinates on a page (top,left,bottom,right)" 
 	exit 0
 }	
 

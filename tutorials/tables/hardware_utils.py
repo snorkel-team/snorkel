@@ -1,15 +1,16 @@
 import csv
 import codecs
+import re
+import os
 from collections import defaultdict
+from difflib import SequenceMatcher
 from snorkel.candidates import OmniNgrams
 from snorkel.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, AnnotationKeySet, Label
 from snorkel.utils import ProgressBar
 from snorkel.loaders import create_or_fetch
 from snorkel.throttlers import Throttler
 from snorkel.lf_helpers import *
-from difflib import SequenceMatcher
-import re
-import os
+
 
 class PartThrottler(Throttler):
     """

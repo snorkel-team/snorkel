@@ -26,11 +26,11 @@ IDS_COORDINATES=$DIRNAME/$FILENAME.ids_coordinates
 
 for i in $(seq 1 $NB_PAGES);
 do
-	pdftohtml -f $i -l $i -i -xml $INPUT_PDF $DIRNAME/$FILENAME.$i
-	python parseXMLoutput.py $DIRNAME/$FILENAME.$i.xml $IDS_WORDS.$i.txt $IDS_COORDINATES.$i.txt $i
+	pdftotext -f $i -l $i -bbox-layout $INPUT_PDF $DIRNAME/$FILENAME.$i.html
+	python parseHTMLoutput.py $DIRNAME/$FILENAME.$i.html $IDS_WORDS.$i.txt $IDS_COORDINATES.$i.txt $i
 	cat $IDS_WORDS.$i.txt >> $IDS_WORDS.txt
 	cat $IDS_COORDINATES.$i.txt >> $IDS_COORDINATES.txt
-	rm $DIRNAME/$FILENAME.$i.xml
+	rm $DIRNAME/$FILENAME.$i.html
 	rm $IDS_WORDS.$i.txt
 	rm $IDS_COORDINATES.$i.txt
 done

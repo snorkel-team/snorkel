@@ -390,7 +390,7 @@ class TemporaryContext(object):
                         if snorkel_postgres:
                             raise NotImplementedError
                         else:
-                            insert_args[key] = pickle.dumps(val)
+                            insert_args[key] = pickle.dumps(val) #NOTE: this works for sqlite, not Postgres
                 session.execute(text(self._get_insert_query()), insert_args)
             else:
                 self.id = id[0]
@@ -702,20 +702,6 @@ class TemporaryImplicitSpan(TemporarySpan):
 
     def get_n(self):
         return len(self.words)
-
-    def char_to_word_index(self, ci):
-        """Given a character-level index (offset), return the index of the **word this char is in**"""
-        i = None
-        for i, co in enumerate(self.char_offsets):
-            if ci == co:
-                return i
-            elif ci < co:
-                return i-1
-        return i
-
-    def word_to_char_index(self, wi):
-        """Given a word-level index, return the character-level index (offset) of the word's start"""
-        return self.char_offsets[wi]
 
     def get_attrib_tokens(self, a='words'):
         """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""

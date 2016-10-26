@@ -19,8 +19,7 @@ if __name__ == "__main__":
     delimiter = args.delimiter
     soup = BeautifulSoup(html_in, "html.parser")
     words = soup.find_all("word")
-    i = 0
-    for word in words:
+    for i,word in enumerate(words):
         xmin = word.get('xmin')
 	xmax = word.get('xmax')
 	ymin = word.get('ymin')
@@ -28,7 +27,6 @@ if __name__ == "__main__":
 	content = word.getText()
 	ids_words.write((page_nb + str(i) + delimiter + content + '\n'))
 	ids_coordinates.write(delimiter.join([page_nb + str(i), page_nb, ymin, xmin, ymax, xmax ]) + '\n')
-		i +=1
     ids_words.close()
     ids_coordinates.close()
 

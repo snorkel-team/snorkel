@@ -1,9 +1,65 @@
-import numpy as np
-from collections import OrderedDict
-from editdistance import eval as editdist
 import subprocess
 import os
 import cv2
+import numpy as np
+from bs4 import BeautifulSoup
+from collections import OrderedDict, defaultdict
+from editdistance import eval as editdist
+from snorkel.models import Phrase
+
+def extract_coordinates(pdf_file):
+    num_pages = subprocess.check_output(
+        "pdfinfo {} | grep Pages  | sed 's/[^0-9]*//'".format(pdf_file), shell=True)
+    pdf_word_list = []
+    coordinate_map= {}
+    for i in range(1, int(num_pages)+1):
+        html_content = subprocess.check_output('pdftotext -f {} -l {} -bbox-layout {} -'.format(str(i), str(i), pdf_file), shell=True)
+        pdf_word_list_i, coordinate_map_i = _coordinates_from_HTML(html_content, i)
+        # sort pdf_word_list by page, then top, then left
+        pdf_word_list += sorted(pdf_word_list_i, key=lambda (word_id,_): coordinate_map_i[word_id][0:3])
+        coordinate_map.update(coordinate_map_i)
+    return pdf_word_list, coordinate_map
+
+def _coordinates_from_HTML(html_content, page_num):
+    pdf_word_list = []
+    coordinate_map= {}
+    soup = BeautifulSoup(html_content, "html.parser")
+    words = soup.find_all("word")
+    i = 0
+    for word in words:
+        xmin = int(float(word.get('xmin')))
+        xmax = int(float(word.get('xmax')))
+        ymin = int(float(word.get('ymin')))
+        ymax = int(float(word.get('ymax')))
+        content = word.getText()
+        if len(content) > 0: # Ignore white spaces
+            word_id = (page_num, i)
+            pdf_word_list.append((word_id, content))
+            coordinate_map[word_id] = (page_num, ymin, xmin, ymax, xmax) #TODO: check this order
+            i += 1
+    return pdf_word_list, coordinate_map
+
+
+def extract_words(corpus):
+    html_word_list = []
+    for phrase in corpus.documents[0].phrases:
+        for i, word in enumerate(phrase.words):
+            html_word_list.append(((phrase.id, i), word))
+    return html_word_list
+
+
+def load_coordinates(corpus, links, coordinate_map, session):
+    for phrase in corpus.documents[0].phrases:
+        (page, top, left, bottom, right) = zip(
+            *[coordinate_map[links[((phrase.id), i)]] for i in range(len(phrase.words))])
+        page = page[0]
+        session.query(Phrase).filter(Phrase.id == phrase.id).update(
+            {"page": page, 
+             "top":  top, 
+             "left": left, 
+             "bottom": bottom, 
+             "right": right})
+    session.commit()
 
 def calculate_offset(listA, listB, seedSize, maxOffset):
     wordsA = zip(*listA[:seedSize])[1]
@@ -16,30 +72,68 @@ def calculate_offset(listA, listB, seedSize, maxOffset):
             pass
     return int(np.median(offsets))
 
+def get_box(span):
+    return (span.parent.page, 
+            span.parent.top[0], 
+            span.parent.left[0], 
+            span.parent.bottom[0],
+            span.parent.right[0])
 
-def display_box(pdf_path, boxes, page_width=612, page_height=792):
+def pdf_to_img(pdf_file, page_num, page_width, page_height):
+    basename = subprocess.check_output('basename {} .pdf'.format(pdf_file), shell=True)
+    dirname = subprocess.check_output('dirname {}'.format(pdf_file), shell=True)
+    img_path = dirname.rstrip() + '/' + basename.rstrip()
+    os.system('pdftoppm -f {} -l {} -jpeg {} {}'.format(page_num, page_num, pdf_file, img_path))
+    img_path += '-{}.jpg'.format(page_num)
+    img = cv2.resize(cv2.imread(img_path), (page_width, page_height))
+    return (img, img_path)
+
+
+def display_candidates(pdf_file, candidates, page_num=1, page_width=612, page_height=792):
     """
-    Displays each of the bounding boxes passed in 'boxes' on the pdf pointed 
-    to by pdf_path
-    """
+    Displays the bounding boxes corresponding to candidates on an image of the pdf
+    pointed to by pdf_file
     # boxes is a list of 5-tuples (page, top, left, bottom, right)
-    basename = subprocess.check_output('basename {} .pdf'.format(pdf_path), shell=True)
-    dirname = subprocess.check_output('dirname {}'.format(pdf_path), shell=True)
-    im_path = dirname.rstrip() + '/' + basename.rstrip()
-    page_nb = boxes[0][0] # take the page number of the first box in the list
-    os.system('pdftoppm -f {} -l {} -jpeg {} {}'.format(page_nb, page_nb, pdf_path, im_path))
-    im_path += '-{}.jpg'.format(page_nb)
-    img = cv2.resize(cv2.imread(im_path),(page_width,page_height))
-    # Plot bounding boxes
-    for p, top, left, bottom, right in boxes:
-	    if not (p == page_nb):
-		    raise Exception("Can not display bounding boxes that are not in the same page.")
-	    cv2.rectangle(img,(int(float(left)),int(float(top))),(int(float(right)),int(float(bottom))),(255,0,0),1)
-    cv2.imshow('Bounding boxes',img)
+    """
+    (img, img_path) = pdf_to_img(pdf_file, page_num, page_width, page_height)
+    colors = [(0,0,255), (255,0,0)]
+    boxes_by_page = defaultdict(list)
+    for c in candidates:
+        for i, span in enumerate(c.get_arguments()):
+            page, top, left, bottom, right = get_box(span)
+            if page == page_num:
+                cv2.rectangle(img, (left, top), (right, bottom), colors[i], 1)
+            boxes_by_page[page] += (top, left, bottom, right)
+    print "Boxes per page:"
+    for (page, boxes) in sorted(boxes_by_page.items()):
+        print "Page %d: %d (%d)" % (page, len(boxes), len(set(boxes)))
+    cv2.imshow('Bounding boxes', img)
     cv2.waitKey() # press any key to exit the opencv output 
     cv2.destroyAllWindows() 
-    # delete image
-    os.system('rm {}'.format(im_path))
+    os.system('rm {}'.format(img_path)) # delete image
+
+
+
+def display_boxes(pdf_file, boxes, page_num=1, page_width=612, page_height=792):
+    """
+    Displays each of the bounding boxes passed in 'boxes' on an image of the pdf
+    pointed to by pdf_file
+    # boxes is a list of 5-tuples (page, top, left, bottom, right)
+    """
+    (img, img_path) = pdf_to_img(pdf_file, page_num, page_width, page_height)
+    boxes_per_page = defaultdict(int)
+    for page, top, left, bottom, right in boxes:
+        if page == page_num:
+            cv2.rectangle(img, (left, top), (right, bottom), (255,0,0), 1)
+        boxes_per_page[page] += 1
+    print "Boxes per page:"
+    for (page, count) in sorted(boxes_per_page.items()):
+        print "Page %d: %d" % (page, count)
+    cv2.imshow('Bounding boxes', img)
+    cv2.waitKey() # press any key to exit the opencv output 
+    cv2.destroyAllWindows() 
+    os.system('rm {}'.format(img_path)) # delete image
+
 
 
 def link_lists(listA, listB, searchMax=100, editCost=20, offsetCost=1, offsetInertia=5):

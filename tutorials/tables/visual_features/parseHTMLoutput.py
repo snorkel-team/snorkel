@@ -2,6 +2,25 @@ import argparse
 import codecs 
 from bs4 import BeautifulSoup
 
+def extract_coordinates_HTML(html_content, page_nb):
+	pdf_word_list = []
+	coordinate_map= {}
+	soup = BeautifulSoup(html_content, "html.parser")
+	words = soup.find_all("word")
+	i=0
+	for word in words:
+		xmin = word.get('xmin')
+		xmax = word.get('xmax')
+		ymin = word.get('ymin')
+		ymax = word.get('ymax')
+		content = word.getText()
+		if len(content)>0: # Ignore white spaces 
+			word_id = page_nb + str(i)
+	        	pdf_word_list.append((word_id, content))
+			coordinate_map[word_id] = (page_nb, ymin, xmin, ymax, xmax)
+			i += 1
+	return pdf_word_list, coordinate_map
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

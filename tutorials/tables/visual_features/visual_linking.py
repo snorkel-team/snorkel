@@ -21,7 +21,6 @@ class VisualLinker():
             html_content = subprocess.check_output('pdftotext -f {} -l {} -bbox-layout {} -'.format(str(i), str(i), pdf_file), shell=True)
             pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(html_content, i)
             # TODO: this is a hack for testing; use a more permanent solution for tokenizing
-            # sort pdf_word_list by page, then top, then left
             pdf_word_list_additions = []
             for j, (word_id, word) in enumerate(pdf_word_list_i):
                 if not word[-1].isalnum():
@@ -31,6 +30,7 @@ class VisualLinker():
                     pdf_word_list_additions.append((new_word_id, word[-1]))
                     coordinate_map_i[new_word_id] = coordinate_map_i[word_id]
             pdf_word_list_i.extend(pdf_word_list_additions)
+            # sort pdf_word_list by page, then top, then left
             pdf_word_list += sorted(pdf_word_list_i, key=lambda (word_id,_): coordinate_map_i[word_id][0:3])
             coordinate_map.update(coordinate_map_i)
         self.pdf_file = pdf_file

@@ -1,6 +1,5 @@
 import os, sys
 import numpy as np
-from pandas import DataFrame
 from collections import defaultdict
 import scipy.sparse as sparse
 from .models import Candidate, CandidateSet, Feature, TemporarySpan, Phrase

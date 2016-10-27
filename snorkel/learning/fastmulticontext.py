@@ -70,25 +70,28 @@ def fmct_update(wo, wo_raw, wi_sub, x_ct, x_type, x_raw, p, lr):
     # Update embedding gradient and linear layer
     grad = np.zeros(embed_size)
     for k in xrange(n_classes):
-        alpha = lr * (p[k] - z[k])
+        # Noise-aware gradient calculation
+        # g(x) = [(1-p)\hat{p} - p(1-\hat{p})]x
+        alpha = lr * ((1-p[k])*z[k] - p[k]*(1-z[k]))
         # Updates for embedded features
         for j in xrange(embed_size):
             grad[j] += alpha * wo[k][j]
-            wo[k][j] += alpha * hidden_embed[j]
+            wo[k][j] -= alpha * hidden_embed[j]
         # Updates for raw features
         for r in xrange(raw_size):
-            wo_raw[k][r] += alpha * x_raw[r]
+            wo_raw[k][r] -= alpha * x_raw[r]
     # Update embeddings
     for i in xrange(x_size):
         for j in xrange(dim):
             if x_ct[i] == 0:
                 continue
-            wi_sub[i][j] += (grad[j + x_type[i]*dim] / x_ct[i])
+            wi_sub[i][j] -= (grad[j + x_type[i]*dim] / x_ct[i])
     # Return loss
-    pmx = np.max(p)
+    pmx, lmx = 0.0, None
     for k in xrange(n_classes):
-        if p[k] == pmx:
-            return -log(z[k])
+        if p[k] > pmx:
+            pmx, lmx = p[k], -log(z[k])
+    return lmx
 
 
 @numba.jit(nopython=True, nogil=True)
@@ -256,6 +259,8 @@ class fastmulticontext(object):
         embed_xs: features to embed
         min_ct: minimum count of feature to include in modeling
         """
+        if not hasattr(min_ct, '__iter__'):
+            min_ct = [min_ct for _ in xrange(self.n_embed)]
         count_dicts = [defaultdict(int) for _ in xrange(self.n_embed)]
         # Count instances of feats in corpus
         for x in embed_xs:
@@ -266,7 +271,7 @@ class fastmulticontext(object):
         self.vocabs = [{} for _ in xrange(self.n_embed)]
         for d, count_dict in enumerate(count_dicts):
             for feat, ct in count_dict.iteritems():
-                if ct >= min_ct:
+                if ct >= min_ct[d]:
                     self.vocabs[d][feat] = len(self.vocabs[d])
         self.vocab_slice = [0]
         for vocab in self.vocabs:

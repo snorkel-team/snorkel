@@ -1,11 +1,12 @@
-from .constants import *
 import numpy as np
-from scipy.optimize import minimize
-from .utils import score, odds_to_prob
-from lstm import LSTMModel
-from sklearn import linear_model
-from ..models import Parameter, ParameterSet
 
+from ..models import Parameter, ParameterSet
+from .constants import *
+from .utils import score, odds_to_prob
+from fastmulticontext import fastmulticontext
+from lstm import LSTMModel
+from scipy.optimize import minimize
+from sklearn import linear_model
 
 class NoiseAwareModel(object):
     """Simple abstract base class for a model."""
@@ -18,19 +19,19 @@ class NoiseAwareModel(object):
         """Trains the model; also must set self.X_train and self.w"""
         raise NotImplementedError()
 
-    def marginals(self, X):
+    def marginals(self, X, **kwargs):
         raise NotImplementedError()
 
     def predict(self, X, b=0.5):
         """Return numpy array of elements in {-1,0,1} based on predicted marginal probabilities."""
         return np.array([1 if p > b else -1 if p < b else 0 for p in self.marginals(X)])
 
-    def score(self, X_test, L_test, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, display=True):
+    def score(self, X_test, L_test, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, display=True, **kwargs):
         if L_test.shape[1] != 1:
             raise ValueError("L_test must have exactly one column.")
         predict = self.predict(X_test, b=b)
         train_marginals = self.marginals(self.X_train) if hasattr(self, 'X_train') and self.X_train is not None else None
-        test_marginals = self.marginals(X_test)
+        test_marginals = self.marginals(X_test, **kwargs)
 
         test_candidates = set()
         test_labels = []
@@ -233,6 +234,29 @@ class LogReg(NoiseAwareModel):
 
     def marginals(self, X):
         return odds_to_prob(X.dot(self.w))
+
+
+class FMCT(NoiseAwareModel):
+    """fastmulticontext"""
+    def __init__(self, preprocess_function=None):
+        self.fmct         = None
+        self.w            = None
+        self.X_train      = None
+        self.bias_term    = None
+        self.preprocess_f = preprocess_function
+
+    def train(self, training_marginals, embed_matrices, **hyperparams):
+        """
+        Train method for fastmulticontext
+        training_marginals: marginal probabilities for training examples
+        embed_matrices: list of matrices to embed
+        hyperparams: fmct hyperparams, including raw_xs
+        """
+        self.fmct = fastmulticontext(self.preprocess_f)
+        self.fmct.train(training_marginals, embed_matrices, **hyperparams)
+
+    def marginals(self, embed_matrices, raw_xs=None):
+        return self.fmct.predict(embed_matrices, raw_xs)
 
 
 class LSTM(NoiseAwareModel):

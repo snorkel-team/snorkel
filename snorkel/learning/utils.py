@@ -1,10 +1,12 @@
+import math
+import matplotlib.pyplot as plt
 import numpy as np
+import scipy.sparse as sparse
+
 import matplotlib
 matplotlib.use('Agg')
 import warnings
 warnings.filterwarnings("ignore", module="matplotlib")
-import matplotlib.pyplot as plt
-import scipy.sparse as sparse
 
 
 def score(test_candidates, test_labels, test_pred, gold_candidate_set, train_marginals=None, test_marginals=None):
@@ -194,12 +196,14 @@ class Parameter(object):
         raise NotImplementedError()
     
     def draw_values(self, n):
-        return np.random.choice(self.get_all_values(), n)
+        # Multidim parameters can't use choice directly
+        v = self.get_all_values()
+        return [v[int(i)] for i in np.random.choice(len(v), n)]
     
 class ListParameter(Parameter):
     """List of parameter values for searching"""
     def __init__(self, name, parameter_list):
-        self.parameter_list = np.ravel(parameter_list)
+        self.parameter_list = np.array(parameter_list)
         super(ListParameter, self).__init__(name)
     
     def get_all_values(self):

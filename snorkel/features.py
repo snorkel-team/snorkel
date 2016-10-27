@@ -79,7 +79,7 @@ def get_span_lemma_feats_generator(stopwords, ngram=1):
     return partial(get_token_count_feats, token_generator=span_token_generator,
         ngram=ngram, stopwords=stopwords)
 
-def get_doc_lemma_feats_generator(stopwords, ngram=1):
+def get_title_lemma_feats_generator(stopwords, ngram=1):
     return partial(get_token_count_feats, token_generator=title_token_generator,
         ngram=ngram, stopwords=stopwords)
 

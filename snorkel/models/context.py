@@ -183,62 +183,14 @@ class Table(Context):
         return "Table(Doc: %s, Position: %s)" % (self.document.name, self.position)
 
 
-class Row(Context):
-    """A row Context in a Document."""
-    __tablename__ = 'row'
-    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
-    document_id = Column(Integer, ForeignKey('document.id'))
-    table_id = Column(Integer, ForeignKey('table.id'))
-    document = relationship('Document', backref=backref('rows', cascade='all, delete-orphan'), foreign_keys=document_id)
-    table = relationship('Table', backref=backref('rows', cascade='all, delete-orphan'), foreign_keys=table_id)
-    position = Column(Integer, nullable=False)
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'row',
-    }
-
-    __table_args__ = (
-        UniqueConstraint(document_id, table_id, position),
-    )
-
-    def __repr__(self):
-        return "Row(Doc: %s, Table: %s, Position: %s)" % (self.document.name, self.table.position, self.position)
-
-
-class Col(Context):
-    """A column Context in a Document."""
-    __tablename__ = 'col'
-    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
-    document_id = Column(Integer, ForeignKey('document.id'))
-    table_id = Column(Integer, ForeignKey('table.id'))
-    document = relationship('Document', backref=backref('cols', cascade='all, delete-orphan'), foreign_keys=document_id)
-    table = relationship('Table', backref=backref('cols', cascade='all, delete-orphan'), foreign_keys=table_id)
-    position = Column(Integer, nullable=False)
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'col',
-    }
-
-    __table_args__ = (
-        UniqueConstraint(document_id, table_id, position),
-    )
-
-    def __repr__(self):
-        return "Col(Doc: %s, Table: %s, Position: %s)" % (self.document.name, self.table.position, self.position)
-
-
 class Cell(Context):
     """A cell Context in a Document."""
     __tablename__ = 'cell'
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
     table_id = Column(Integer, ForeignKey('table.id'))
-    row_id =  Column(Integer, ForeignKey('row.id'))
-    col_id =  Column(Integer, ForeignKey('col.id'))
     document = relationship('Document', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=document_id)
     table = relationship('Table', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=table_id)
-    row = relationship('Row', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=row_id)
-    col = relationship('Col', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=col_id)
     row_start = Column(Integer)
     row_end = Column(Integer)
     col_start = Column(Integer)
@@ -264,7 +216,10 @@ class Cell(Context):
 
     def __repr__(self):
         return ("Cell(Doc: %s, Table: %s, Row: %s, Col: %s)" % 
-            (self.document.name, self.table.position, self.row.position, self.col.position))
+            (self.document.name, 
+             self.table.position, 
+             tuple(set([self.row_start, self.row_end])), 
+             tuple(set([self.col_start, self.col_end]))))
 
 
 class Phrase(Context):
@@ -280,8 +235,6 @@ class Phrase(Context):
     document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
     table = relationship('Table', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=table_id)
     cell = relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=cell_id)
-    row = relationship('Row', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=row_id)
-    col = relationship('Col', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=col_id)
     position = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
     row_start = Column(Integer)
@@ -348,8 +301,8 @@ class Phrase(Context):
             return ("Phrase(Doc: %s, Table: %s, Row: %s, Col: %s, Position: %s, Text: %s)" % 
                 (self.document.name,
                 getattr(self.table, 'position', 'X'), 
-                getattr(self.row, 'position', 'X'), 
-                getattr(self.col, 'position', 'X'), 
+                tuple(set([self.row_start, self.row_end])), 
+                tuple(set([self.col_start, self.col_end])), 
                 self.position, 
                 self.text))
 

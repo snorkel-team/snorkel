@@ -1,6 +1,6 @@
 import numpy as np
 from collections import OrderedDict
-#from editdistance import eval as editdist
+from editdistance import eval as editdist
 import subprocess
 import os
 import cv2

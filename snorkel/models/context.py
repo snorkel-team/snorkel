@@ -239,8 +239,10 @@ class Cell(Context):
     table = relationship('Table', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=table_id)
     row = relationship('Row', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=row_id)
     col = relationship('Col', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=col_id)
-    row_num = Column(Integer)
-    col_num = Column(Integer)
+    row_start = Column(Integer)
+    row_end = Column(Integer)
+    col_start = Column(Integer)
+    col_end = Column(Integer)
     text = Column(Text, nullable=False)
     html_tag = Column(Text)
     if snorkel_postgres:
@@ -282,8 +284,10 @@ class Phrase(Context):
     col = relationship('Col', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=col_id)
     position = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
-    row_num = Column(Integer)
-    col_num = Column(Integer)
+    row_start = Column(Integer)
+    row_end = Column(Integer)
+    col_start = Column(Integer)
+    col_end = Column(Integer)
     html_tag = Column(Text)
     if snorkel_postgres:
         html_attrs = Column(postgresql.ARRAY(String))
@@ -323,8 +327,10 @@ class Phrase(Context):
             'phrase_id': self.phrase_id,
             'position': self.position,
             'text': self.text,
-            'row_num': self.row_num,
-            'col_num': self.col_num,
+            'row_start': self.row_start,
+            'row_end': self.row_end,
+            'col_start': self.col_start,
+            'col_end': self.col_end,
             'html_tag': self.html_tag,
             'html_attrs': self.html_attrs,
             'html_anc_tags': self.html_anc_tags,

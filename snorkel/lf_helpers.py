@@ -208,8 +208,10 @@ def same_row(c):
     Return True if all Spans in the given candidate are from the same Row.
     :param c: The candidate whose Spans are being compared
     """
-    return (all([c[i].parent.table is not None
-        and c[i].parent.row_num==c[0].parent.row_num for i in range(len(c.get_arguments()))]))
+    return (all([c[i].parent.table is not None and 
+        min_range_diff(c[0].parent.row_start, c[0].parent.row_end,
+                         c[i].parent.row_start, c[i].parent.row_end) == 0
+        for i in range(len(c.get_arguments()))]))
 
 
 def same_col(c):
@@ -217,8 +219,16 @@ def same_col(c):
     Return True if all Spans in the given candidate are from the same Col.
     :param c: The candidate whose Spans are being compared
     """
-    return (all([c[i].parent.table is not None
-        and c[i].parent.col_num==c[0].parent.col_num for i in range(len(c.get_arguments()))]))
+    return (all([c[i].parent.table is not None and 
+        min_range_diff(c[0].parent.col_start, c[0].parent.col_end,
+                         c[i].parent.col_start, c[i].parent.col_end) == 0
+        for i in range(len(c.get_arguments()))]))
+    # return (all([c[i].parent.table is not None and 
+    #     ((c[i].parent.col_start > c[0].parent.col_start and 
+    #      c[i].parent.col_start < c[0].parent.col_end) or
+    #      (c[0].parent.col_start > c[i].parent.col_start and 
+    #      c[0].parent.col_start < c[i].parent.col_end)
+    #      for i in range(len(c.get_arguments())))]))
 
 
 def same_cell(c):
@@ -302,12 +312,12 @@ def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=
     for span in spans:
         for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
             yield ngram
-        if span.parent.row_num is not None and span.parent.col_num is not None:
+        if span.parent.row_start is not None and span.parent.col_start is not None:
             root_cell = span.parent.cell
             for phrase in chain.from_iterable([root_cell.row.phrases, root_cell.col.phrases]):
-                row_diff = abs(phrase.row_num - root_cell.row.position)
-                col_diff = abs(phrase.col_num - root_cell.col.position)
-                if (row_diff or col_diff) and not (row_diff and col_diff) and row_diff + col_diff <= dist:
+                row_diff = min_range_diff(phrase.row_start, phrase.row_end, root_cell.row_start, root_cell.row_end, absolute=False) 
+                col_diff = min_range_diff(phrase.col_start, phrase.col_end, root_cell.col_start, root_cell.col_end, absolute=False) 
+                if (row_diff or col_diff) and not (row_diff and col_diff) and abs(row_diff) + abs(col_diff) <= dist:
                     if directions:
                         direction = ''
                         if col_diff==0:

@@ -316,8 +316,11 @@ class OmniParser(object):
                     parts['row'] = row
                     parts['col'] = col
                     parts['phrase_id'] = self.phrase_idx
-                    parts['row_num'] = row.position if row is not None else None
-                    parts['col_num'] = col.position if col is not None else None
+                    # for now, don't pay attention to rowspan/colspan
+                    parts['row_start'] = row.position if row is not None else None
+                    parts['row_end'] = parts['row_start']
+                    parts['col_start'] = col.position if col is not None else None
+                    parts['col_end'] = parts['col_start']
                     parts['html_tag'] = tag.name
                     parts['html_attrs'] = tag.attrs
                     parts['html_anc_tags'] = anc_tags
@@ -354,6 +357,10 @@ class OmniParser(object):
                     parts['table'] = table
                     parts['row'] = row
                     parts['col'] = col
+                    parts['row_start'] = row.position if row is not None else None
+                    parts['row_end'] = parts['row_start']
+                    parts['col_start'] = col.position if col is not None else None
+                    parts['col_end'] = parts['col_start']
                     parts['text'] = unicode(child)
                     parts['html_tag'] = child.name
                     parts['html_attrs'] = None #split_html_attrs(child.attrs.items())

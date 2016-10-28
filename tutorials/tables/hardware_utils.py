@@ -97,12 +97,11 @@ class OmniNgramsTemp(OmniNgrams):
                     position       = 0,
                     text           = temp,
                     words          = [temp],
-                    char_offsets   = ts.parent.char_offsets,
                     lemmas         = [temp],
-                    pos_tags       = [ts.parent.pos_tags[-1]],
-                    ner_tags       = [ts.parent.ner_tags[-1]],
-                    dep_parents    = [ts.parent.dep_parents[-1]],
-                    dep_labels     = [ts.parent.dep_labels[-1]],
+                    pos_tags       = [ts.get_attrib_tokens('pos_tags')[-1]],
+                    ner_tags       = [ts.get_attrib_tokens('ner_tags')[-1]],
+                    dep_parents    = [ts.get_attrib_tokens('dep_parents')[-1]],
+                    dep_labels     = [ts.get_attrib_tokens('dep_labels')[-1]],
                     meta           = None)
             else:
                 yield ts
@@ -147,12 +146,11 @@ class OmniNgramsPart(OmniNgrams):
                         position       = i,
                         text           = part_no,
                         words          = [part_no],
-                        char_offsets   = ts.parent.char_offsets,
                         lemmas         = [part_no],
-                        pos_tags       = [ts.parent.pos_tags[0]],
-                        ner_tags       = [ts.parent.ner_tags[0]],
-                        dep_parents    = [ts.parent.dep_parents[0]],
-                        dep_labels     = [ts.parent.dep_labels[0]],
+                        pos_tags       = [ts.get_attrib_tokens('pos_tags')[0]],
+                        ner_tags       = [ts.get_attrib_tokens('ner_tags')[0]],
+                        dep_parents    = [ts.get_attrib_tokens('dep_parents')[0]],
+                        dep_labels     = [ts.get_attrib_tokens('dep_labels')[0]],
                         meta           = None
                     )
 

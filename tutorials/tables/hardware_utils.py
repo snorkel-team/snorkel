@@ -104,10 +104,10 @@ class OmniNgramsTemp(OmniNgrams):
                     dep_parents    = [ts.get_attrib_tokens('dep_parents')[-1]],
                     dep_labels     = [ts.get_attrib_tokens('dep_labels')[-1]],
                     page           = [ts.parent.page],
-                    top            = [ts.parent.top[0]],
-                    left           = [ts.parent.left[0]],
-                    bottom         = [ts.parent.bottom[0]],
-                    right          = [ts.parent.right[0]],
+                    top            = [ts.get_attrib_tokens('top')[-1]],
+                    left           = [ts.get_attrib_tokens('left')[-1]],
+                    bottom         = [ts.get_attrib_tokens('bottom')[-1]],
+                    right          = [ts.get_attrib_tokens('right')[-1]],
                     meta           = None)
             else:
                 yield ts
@@ -544,21 +544,24 @@ def count_labels(entities, gold):
             F += 1
     return (T, F)
 
+
 def part_error_analysis(c):
     print "Doc: %s" % c.part.parent.document
     print "------------"
     part = c.get_arguments()[0]
     print "Part:"
     print part
-    table_info(part)
+    print_table_info(part)
     print "------------"
     attr = c.get_arguments()[1]
     print "Attr:"
     print attr
-    table_info(attr)
+    print_table_info(attr)
     print "------------"
 
-def table_info(span):
+
+def print_table_info(span):
+    print "------------"
     print "Table: %s" % span.parent.table
     if span.parent.cell:
         print "Row: %s" % span.parent.row_num

@@ -229,10 +229,10 @@ def pdf_to_img(pdf_file, page_num, page_width, page_height):
 
 def get_box(span):
     return (span.parent.page, 
-            span.parent.top[0], 
-            span.parent.left[0], 
-            span.parent.bottom[0],
-            span.parent.right[0])
+            min(span.get_attrib_tokens('top')),
+            max(span.get_attrib_tokens('left')),
+            min(span.get_attrib_tokens('bottom')),
+            max(span.get_attrib_tokens('right')))
 
 def display_boxes(pdf_file, boxes, page_num=1, page_width=612, page_height=792):
     """

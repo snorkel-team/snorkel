@@ -54,7 +54,7 @@ class VisualLinker():
         pdf_word_list = []
         coordinate_map= {}
         for i in range(1, int(num_pages)+1):
-            html_content = subprocess.check_output('pdftotext -f {} -l {} -bbox-layout {} -'.format(str(i), str(i), self.pdf_file), shell=True)
+            html_content = subprocess.check_output('pdftotext -f {} -l {} -bbox -layout {} -'.format(str(i), str(i), self.pdf_file), shell=True)
             pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(html_content, i)
             # TODO: this is a hack for testing; use a more permanent solution for tokenizing
             pdf_word_list_additions = []

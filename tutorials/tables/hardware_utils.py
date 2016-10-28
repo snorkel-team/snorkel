@@ -158,10 +158,10 @@ class OmniNgramsPart(OmniNgrams):
                         dep_parents    = [ts.get_attrib_tokens('dep_parents')[0]],
                         dep_labels     = [ts.get_attrib_tokens('dep_labels')[0]],
                         page           = [ts.parent.page],
-                        top            = [ts.parent.top[0]],
-                        left           = [ts.parent.left[0]],
-                        bottom         = [ts.parent.bottom[0]],
-                        right          = [ts.parent.right[0]],
+                        top            = [min(ts.get_attrib_tokens('top'))],
+                        left           = [max(ts.get_attrib_tokens('left'))],
+                        bottom         = [min(ts.get_attrib_tokens('bottom'))],
+                        right          = [max(ts.get_attrib_tokens('right'))],
                         meta           = None
                     )
 

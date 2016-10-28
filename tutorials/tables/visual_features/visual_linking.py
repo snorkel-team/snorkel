@@ -38,7 +38,7 @@ class VisualLinker():
         self.coordinate_map = coordinate_map
         print "Extracted %d pdf words" % len(self.pdf_word_list)
 
-    def _coordinates_from_HTML_(self, html_content, page_num):
+    def _coordinates_from_HTML(self, html_content, page_num):
         pdf_word_list = []
         coordinate_map = {}
         soup = BeautifulSoup(html_content, "html.parser")

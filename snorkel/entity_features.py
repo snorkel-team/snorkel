@@ -207,14 +207,13 @@ def tabledlib_binary_features(span1, span2, s1_idxs, s2_idxs):
 
 _Bbox = namedtuple('bbox', ['top','bottom','left','right'], verbose = False)
 def _bbox_from_span(span):
-    if hasattr(span, 'top') and len(span.top) == 1:
-        return _Bbox(span.top[0],span.bottom[0],span.left[0],span.right[0])
-    if not span.get_attrib_tokens('top'):
+    if hasattr(span, 'top') and span.top is not None:
+        return _Bbox(min(span.get_attrib_tokens('top')), 
+                    max(span.get_attrib_tokens('bottom')),
+                    min(span.get_attrib_tokens('left')),
+                    max(span.get_attrib_tokens('right')))
+    else:
         return None
-    return _Bbox(min(span.get_attrib_tokens('top')), 
-                max(span.get_attrib_tokens('bottom')),
-                min(span.get_attrib_tokens('left')),
-                max(span.get_attrib_tokens('right')))
 
 def visual_binary_features(span1, span2, s1_idxs = None, s2_idxs = None):
     '''
@@ -232,6 +231,7 @@ def visual_binary_features(span1, span2, s1_idxs = None, s2_idxs = None):
         yield 'Y_ALIGNED'
     
     v_aligned = False
+    if bbox1.left is None: import pdb; pdb.set_trace()
     if abs(bbox1.left - bbox2.left) < 1:
         v_aligned = True
         yield 'LEFT_ALIGNED'

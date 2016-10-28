@@ -1,0 +1,108 @@
+# Travis CI config for Snorkel, a lightweight platform for developing
+# information extraction systems using data programming.
+
+sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
+
+env:
+  global:
+    - NUMPY: 1.11
+    - SCIPY: 0.17
+
+language:
+  - python
+python:
+  - "2.7"
+jdk:
+  - oraclejdk8
+
+cache:
+  directories:
+    - download
+    - $HOME/.cache/pip
+#    - $HOME/miniconda/envs/test      # to avoid repetitively setting up Ana/Miniconda environment
+    - parser                         # to avoid repetitively downloading CoreNLP
+    - tutorials/disease_tagging/data # to avoid repetitively downloading CDR data
+
+addons:
+  apt:
+    packages:
+    # CoreNLP needs Java 8
+    - oracle-java8-installer
+
+# Following trick is necessary to get a binary distribution of numpy, scipy, etc. which takes too long to build every time
+# See: http://stackoverflow.com/q/30588634
+# See: https://github.com/Theano/Theano/blob/master/.travis.yml (for caching)
+# See: http://conda.pydata.org/docs/travis.html
+before_install:
+  - deactivate  # leaving Travis' virtualenv first since otherwise Jupyter/IPython gets confused with conda inside a virtualenv (See: https://github.com/ipython/ipython/issues/8898)
+  - mkdir -p download
+  - cd download
+  - travis_retry wget -c http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - bash miniconda.sh -b -f -p ~/miniconda
+  - cd ..
+  - export PATH=~/miniconda/bin:$PATH
+  - conda update --yes conda
+
+  # Make sure Java 8 is used
+  - export PATH="/usr/lib/jvm/java-8-oracle/bin:$PATH"
+  - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
+  - java -version
+
+  # Set environment variables
+  - source set_env.sh
+
+install:
+  # Install binary distribution of scientific python modules
+  - test -e ~/miniconda/envs/test/bin/activate || ( rm -rf ~/miniconda/envs/test; conda create --yes -n test python=$TRAVIS_PYTHON_VERSION )
+  - source activate test
+  - conda install --yes numpy=$NUMPY scipy=$SCIPY matplotlib pip
+
+  # Install all dependencies as per our README
+  - pip install -r python-package-requirement.txt
+  - test -e parser/corenlp.sh || ./install-parser.sh
+
+  # Downloads data for disease tagging tutorial
+  - cd tutorials/disease_tagging
+  - ./download_data.sh
+  - cd ../..
+
+  # Use runipy to run Jupyter/IPython notebooks from command-line
+  - pip install runipy
+
+  # Install theano
+  - conda install --yes theano
+
+  # Install programs for coverage
+  - pip install coverage
+  - pip install coveralls
+  - pip install codeclimate-test-reporter
+
+script:
+
+  # Runs intro tutorial notebooks
+  - cd tutorials
+  - travis_wait 45 runipy intro/Intro_Tutorial_1.ipynb
+  - travis_wait 45 runipy intro/Intro_Tutorial_2.ipynb
+  - travis_wait 45 runipy intro/Intro_Tutorial_3.ipynb
+  - travis_wait 45 runipy intro/Intro_Tutorial_4.ipynb
+  - travis_wait 45 runipy intro/Intro_Tutorial_5.ipynb
+
+  # Runs disease tagger tutorial notebooks
+  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_1.ipynb
+  - travis_wait 60 runipy disease_tagging/Disease_Tagging_Tutorial_2.ipynb
+  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_3.ipynb
+  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_4.ipynb
+  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_5.ipynb
+
+  # Run test modules
+#  - coverage run -p test/Tests.py
+#  - coverage combine
+
+  # TODO check outputs, upload results, etc.
+  # for more ideas, see: https://github.com/rossant/ipycache/issues/7
+
+after_success:
+  - codecov
+  - coveralls
+  - codeclimate-test-reporter

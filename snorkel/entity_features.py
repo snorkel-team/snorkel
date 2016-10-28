@@ -231,7 +231,6 @@ def visual_binary_features(span1, span2, s1_idxs = None, s2_idxs = None):
         yield 'Y_ALIGNED'
     
     v_aligned = False
-    if bbox1.left is None: import pdb; pdb.set_trace()
     if abs(bbox1.left - bbox2.left) < 1:
         v_aligned = True
         yield 'LEFT_ALIGNED'

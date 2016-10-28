@@ -587,8 +587,8 @@ class Span(Context, TemporarySpan):
 class TemporaryImplicitSpan(TemporarySpan):
     """The TemporaryContext version of ImplicitSpan"""
     def __init__(self, parent, char_start, char_end, expander_key, position, 
-            text, words, char_offsets, lemmas, pos_tags, ner_tags, dep_parents,
-            dep_labels, page, top, left, bottom, right, meta=None):
+            text, words, lemmas, pos_tags, ner_tags, dep_parents, dep_labels, 
+            page, top, left, bottom, right, meta=None):
         super(TemporarySpan, self).__init__()
         self.parent         = parent  # The parent Context of the Span
         self.char_start     = char_start
@@ -597,7 +597,6 @@ class TemporaryImplicitSpan(TemporarySpan):
         self.position       = position
         self.text           = text
         self.words          = words
-        self.char_offsets   = char_offsets
         self.lemmas         = lemmas
         self.pos_tags       = pos_tags
         self.ner_tags       = ner_tags
@@ -665,7 +664,6 @@ class TemporaryImplicitSpan(TemporarySpan):
             :position, 
             :text, 
             :words, 
-            :char_offsets, 
             :lemmas, 
             :pos_tags, 
             :ner_tags, 
@@ -686,7 +684,6 @@ class TemporaryImplicitSpan(TemporarySpan):
                 'position'      : self.position,
                 'text'          : self.text,
                 'words'         : self.words,
-                'char_offsets'  : self.char_offsets,
                 'lemmas'        : self.lemmas,
                 'pos_tags'      : self.pos_tags,
                 'ner_tags'      : self.ner_tags,
@@ -700,16 +697,12 @@ class TemporaryImplicitSpan(TemporarySpan):
                 'meta'          : self.meta
                 }
 
-    def get_n(self):
-        return len(self.words)
-
     def get_attrib_tokens(self, a='words'):
         """Get the tokens of sentence attribute _a_ over the range defined by word_offset, n"""
-        return self.__getattribute__(a)[self.get_word_start():self.get_word_end() + 1]
+        return self.__getattribute__(a)
 
     def get_attrib_span(self, a, sep=" "):
         """Get the span of sentence attribute _a_ over the range defined by word_offset, n"""
-        # NOTE: Special behavior for words currently (due to correspondence with char_offsets)
         if a == 'words':
             return self.text
         else:
@@ -729,8 +722,9 @@ class TemporaryImplicitSpan(TemporarySpan):
             else:
                 char_end = self.char_end + key.stop
             return self._get_instance(parent=self.parent, char_start=char_start, char_end=char_end, expander_key=expander_key,
-                position=position, text=text, words=words, char_offsets=char_offsets, lemmas=lemmas, pos_tags=pos_tags, 
-                ner_tags=ner_tags, dep_parents=dep_parents, dep_labels=dep_labels, meta=meta)
+                position=position, text=text, words=words, lemmas=lemmas, pos_tags=pos_tags, 
+                ner_tags=ner_tags, dep_parents=dep_parents, dep_labels=dep_labels, 
+                page=page, top=top, left=left, bottom=bottom, right=right, meta=meta)
         else:
             raise NotImplementedError()
 
@@ -765,7 +759,6 @@ class ImplicitSpan(Context, TemporaryImplicitSpan):
     page = Column(Integer)
     if snorkel_postgres:
         words = Column(postgresql.ARRAY(String), nullable=False)
-        char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
         lemmas = Column(postgresql.ARRAY(String))
         pos_tags = Column(postgresql.ARRAY(String))
         ner_tags = Column(postgresql.ARRAY(String))
@@ -777,7 +770,6 @@ class ImplicitSpan(Context, TemporaryImplicitSpan):
         right = Column(postgresql.ARRAY(Integer))
     else:
         words = Column(PickleType, nullable=False)
-        char_offsets = Column(PickleType, nullable=False)
         lemmas = Column(PickleType)
         pos_tags = Column(PickleType)
         ner_tags = Column(PickleType)

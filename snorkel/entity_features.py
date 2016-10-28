@@ -207,6 +207,10 @@ def tabledlib_binary_features(span1, span2, s1_idxs, s2_idxs):
 
 _Bbox = namedtuple('bbox', ['top','bottom','left','right'], verbose = False)
 def _bbox_from_span(span):
+    if hasattr(span, 'top') and len(span.top) == 1:
+        return _Bbox(span.top[0],span.bottom[0],span.left[0],span.right[0])
+    if not span.get_attrib_tokens('top'):
+        return None
     return _Bbox(min(span.get_attrib_tokens('top')), 
                 max(span.get_attrib_tokens('bottom')),
                 min(span.get_attrib_tokens('left')),
@@ -217,11 +221,12 @@ def visual_binary_features(span1, span2, s1_idxs = None, s2_idxs = None):
     Features about the relative positioning of two spans
     '''
     # Skip when coordinates are not available
-    if not span1.get_attrib_tokens('top') or not span2.get_attrib_tokens('top'):
-        return
     
     bbox1 = _bbox_from_span(span1)
     bbox2 = _bbox_from_span(span2)
+    
+    if not (bbox1 and bbox2): return
+    yield 'HAS_COORDS'
     
     if bbox1.top < bbox2.bottom and bbox2.top < bbox1.bottom:
         yield 'Y_ALIGNED'

@@ -2,23 +2,57 @@ import subprocess
 import os
 import cv2
 import numpy as np
+import pandas as pd
+from timeit import default_timer as timer
+from pprint import pprint
 from bs4 import BeautifulSoup
-from pandas import DataFrame, Series
 from collections import OrderedDict, defaultdict
 from editdistance import eval as editdist
 from snorkel.models import Phrase
 
 class VisualLinker():
-    def __init__(self, session):
-        self.session = session
+    def __init__(self, pdf_path, session):
+        self.session            = session
+        self.pdf_path           = pdf_path
+        self.pdf_file           = None
+        self.coordinate_map     = None
+        self.pdf_word_list      = None
+        self.html_word_list     = None
+        self.links              = None
 
-    def extract_pdf_words(self, pdf_file):
+    def visual_parse_and_link(self, document):
+        DEBUG = False
+        TIME = True
+        self.pdf_file = self.pdf_path + document.name + '.pdf'
+        if DEBUG: print self.pdf_file
+        
+        tic = timer()
+        self.extract_pdf_words()
+        if DEBUG: pprint(self.pdf_word_list[:5])
+        if DEBUG: pprint(self.coordinate_map.items()[:5])
+        if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
+        
+        tic = timer()
+        self.extract_html_words(document)
+        if DEBUG: pprint(self.html_word_list[:5])
+        if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
+        
+        tic = timer()
+        self.link_lists(searchMax=200)
+        if DEBUG: pd.set_option('display.max_rows', len(self.link_lists)); vizlink.display_links()
+        if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
+                    
+        tic = timer()
+        self.update_coordinates(document)
+        if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
+
+    def extract_pdf_words(self):
         num_pages = subprocess.check_output(
-            "pdfinfo {} | grep Pages  | sed 's/[^0-9]*//'".format(pdf_file), shell=True)
+            "pdfinfo {} | grep Pages  | sed 's/[^0-9]*//'".format(self.pdf_file), shell=True)
         pdf_word_list = []
         coordinate_map= {}
         for i in range(1, int(num_pages)+1):
-            html_content = subprocess.check_output('pdftotext -f {} -l {} -bbox-layout {} -'.format(str(i), str(i), pdf_file), shell=True)
+            html_content = subprocess.check_output('pdftotext -f {} -l {} -bbox-layout {} -'.format(str(i), str(i), self.pdf_file), shell=True)
             pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(html_content, i)
             # TODO: this is a hack for testing; use a more permanent solution for tokenizing
             pdf_word_list_additions = []
@@ -33,7 +67,6 @@ class VisualLinker():
             # sort pdf_word_list by page, then top, then left
             pdf_word_list += sorted(pdf_word_list_i, key=lambda (word_id,_): coordinate_map_i[word_id][0:3])
             coordinate_map.update(coordinate_map_i)
-        self.pdf_file = pdf_file
         self.pdf_word_list = pdf_word_list
         self.coordinate_map = coordinate_map
         print "Extracted %d pdf words" % len(self.pdf_word_list)
@@ -71,7 +104,6 @@ class VisualLinker():
         return pdf_word_list, coordinate_map
 
     def extract_html_words(self, document):
-        self.document = document
         html_word_list = []
         for phrase in document.phrases:
             for i, word in enumerate(phrase.words):
@@ -146,8 +178,6 @@ class VisualLinker():
             self.offsetHist = offsetHist
         self.links = links
         print "Linked %d words to %d bounding boxes" % (len(self.html_word_list), len(self.pdf_word_list))
-        self.update_coordinates()
-        print "Updated coordinates in snorkel.db"
 
     def _calculate_offset(self, listA, listB, seedSize, maxOffset):
         wordsA = zip(*listA[:seedSize])[1]
@@ -180,20 +210,21 @@ class VisualLinker():
             'j': j,
             'offset': self.offsetHist
         }
-        return DataFrame(data, columns=['i','html','pdf','j','offset'])
+        return pd.DataFrame(data, columns=['i','html','pdf','j','offset'])
 
-    def update_coordinates(self):
-        for phrase in self.document.phrases:
+    def update_coordinates(self, document):
+        for phrase in document.phrases:
             (page, top, left, bottom, right) = zip(
                 *[self.coordinate_map[self.links[((phrase.id), i)]] for i in range(len(phrase.words))])
             page = page[0]
             self.session.query(Phrase).filter(Phrase.id == phrase.id).update(
                 {"page": page, 
-                "top":  top, 
-                "left": left, 
-                "bottom": bottom, 
-                "right": right})
+                "top":  list(top), 
+                "left": list(left), 
+                "bottom": list(bottom), 
+                "right": list(right)})
         self.session.commit()
+        print "Updated coordinates in snorkel.db"
 
     def display_candidates(self, candidates, page_num=1, display=True, page_width=612, page_height=792):
         """

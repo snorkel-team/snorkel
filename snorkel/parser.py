@@ -2,6 +2,7 @@
 
 from .models import Corpus, Document, Sentence, Table, Row, Col, Cell, Phrase, construct_stable_id
 from .utils import ProgressBar, sort_X_on_Y, split_html_attrs
+from visual_linking import VisualLinker
 import atexit
 import warnings
 from bs4 import BeautifulSoup, NavigableString, Tag
@@ -290,9 +291,10 @@ class HTMLParser(DocParser):
 
 
 class OmniParser(object):
-    def __init__(self):
+    def __init__(self, pdf_path=None, session=None):
         self.delim = "<NC>" # NC = New Cell 
         self.corenlp_handler = CoreNLPHandler(delim=self.delim[1:-1])
+        self.vizlink = VisualLinker(pdf_path, session) if (pdf_path and session) else None
 
     def parse(self, document, text):
         soup = BeautifulSoup(text, 'lxml')
@@ -300,6 +302,9 @@ class OmniParser(object):
         self.phrase_idx = 0      
         for phrase in self.parse_tag(soup, document):
             yield phrase
+        if self.vizlink:
+            self.vizlink.session.commit()
+            self.vizlink.visual_parse_and_link(document) 
 
     def parse_tag(self, tag, document, table=None, row=None, col=None, cell=None, anc_tags=[], anc_attrs=[]):
         if any(isinstance(child, NavigableString) and unicode(child)!=u'\n' for child in tag.contents):

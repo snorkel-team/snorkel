@@ -204,3 +204,44 @@ def tabledlib_binary_features(span1, span2, s1_idxs, s2_idxs):
                 yield u"DIFF_TABLE_ROW_DIFF_[%s]" % row_diff
                 yield u"DIFF_TABLE_COL_DIFF_[%s]" % col_diff
                 yield u"DIFF_TABLE_MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff))
+
+_Bbox = namedtuple('bbox', ['top','bottom','left','right'], verbose = False)
+def _bbox_from_span(span):
+    if hasattr(span, 'top') and len(span.top) == 1:
+        return _Bbox(span.top[0],span.bottom[0],span.left[0],span.right[0])
+    if not span.get_attrib_tokens('top'):
+        return None
+    return _Bbox(min(span.get_attrib_tokens('top')), 
+                max(span.get_attrib_tokens('bottom')),
+                min(span.get_attrib_tokens('left')),
+                max(span.get_attrib_tokens('right')))
+
+def visual_binary_features(span1, span2, s1_idxs = None, s2_idxs = None):
+    '''
+    Features about the relative positioning of two spans
+    '''
+    # Skip when coordinates are not available
+    
+    bbox1 = _bbox_from_span(span1)
+    bbox2 = _bbox_from_span(span2)
+    
+    if not (bbox1 and bbox2): return
+    yield 'HAS_COORDS'
+    
+    if bbox1.top < bbox2.bottom and bbox2.top < bbox1.bottom:
+        yield 'Y_ALIGNED'
+    
+    v_aligned = False
+    if abs(bbox1.left - bbox2.left) < 1:
+        v_aligned = True
+        yield 'LEFT_ALIGNED'
+        
+    if abs(bbox1.right - bbox2.right) < 1:
+        v_aligned = True
+        yield 'RIGHT_ALIGNED'
+        
+    if abs((bbox1.left+bbox1.right)/2 - (bbox2.left+bbox2.right)/2) < 1:
+        v_aligned = True
+        yield 'CENTER_ALIGNED'
+
+    if v_aligned: yield 'X_ALIGNED'

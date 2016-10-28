@@ -57,5 +57,7 @@ def get_span_feats(candidate):
             if isinstance(span1.parent, Phrase) or isinstance(span2.parent, Phrase):
                 for f in get_tabledlib_feats(span1, span2, s1_idxs, s2_idxs):
                     yield 'TAB_' + f, 1
+                for f in visual_binary_features(span1, span2, s1_idxs, s2_idxs):
+                    yield 'VIZ_' + f, 1
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")

@@ -38,23 +38,36 @@ class VisualLinker():
         self.coordinate_map = coordinate_map
         print "Extracted %d pdf words" % len(self.pdf_word_list)
 
-    def _coordinates_from_HTML(self, html_content, page_num):
+    def _coordinates_from_HTML_(self, html_content, page_num):
         pdf_word_list = []
-        coordinate_map= {}
+        coordinate_map = {}
         soup = BeautifulSoup(html_content, "html.parser")
-        words = soup.find_all("word")
-        i = 0
-        for word in words:
-            xmin = int(float(word.get('xmin')))
-            xmax = int(float(word.get('xmax')))
-            ymin = int(float(word.get('ymin')))
-            ymax = int(float(word.get('ymax')))
-            content = word.getText()
-            if len(content) > 0: # Ignore white spaces
-                word_id = (page_num, i)
-                pdf_word_list.append((word_id, content))
-                coordinate_map[word_id] = (page_num, ymin, xmin, ymax, xmax) #TODO: check this order
-                i += 1
+        lines = soup.find_all('line')
+        i = 0  # counter for word_id in page_num
+        for line in lines:
+            j = 0  # counter for words within a line (words that are not whitespaces)
+            words = line.find_all("word")
+            y_min_line = int(float(words[0].get('ymin')))
+            y_max_line = 0
+            for word in words:
+                xmin = int(float(word.get('xmin')))
+                xmax = int(float(word.get('xmax')))
+                ymin = int(float(word.get('ymin')))
+                ymax = int(float(word.get('ymax')))
+                content = word.getText()
+                if len(content) > 0:  # Ignore white spaces
+                    if ymin < y_min_line:
+                        y_min_line = ymin
+                    if ymax > y_max_line:
+                        y_max_line = ymax
+                    word_id = (page_num, i)
+                    pdf_word_list.append((word_id, content))
+                    coordinate_map[word_id] = (page_num, xmin, xmax)  # TODO: check this order
+                    i += 1
+                    j +=1
+            for word_id, _ in pdf_word_list[-j:]:
+                page_num, xmin, xmax = coordinate_map[word_id]
+                coordinate_map[word_id] = (page_num, y_min_line, xmin, y_max_line, xmax)
         return pdf_word_list, coordinate_map
 
     def extract_html_words(self, document):

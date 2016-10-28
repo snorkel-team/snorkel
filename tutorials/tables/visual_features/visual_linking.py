@@ -66,6 +66,27 @@ class VisualLinker():
         self.html_word_list = html_word_list
         print "Extracted %d html words" % len(self.html_word_list)
 
+    def link_better(self):
+        N = len(self.html_word_list)
+        links = [None] * N
+        # make dicts of word -> id
+        html_dict = defaultdict(list)
+        pdf_dict = defaultdict(list)
+        for i, (uid, word) in enumerate(self.html_word_list):
+            html_dict[word].append((uid, i))
+        for j, (uid, word) in enumerate(self.pdf_word_list):
+            pdf_dict[word].append((uid, j))
+        for word, html_list in html_dict.items():
+            if len(html_list) == len(pdf_dict[word]):
+                pdf_list = pdf_dict[word]
+                for j, (uid, i) in enumerate(id_list):
+                    links[i] = pdf_list[j][0]
+        # what percent of links are None?
+
+        # convert list to dict
+        self.links = OrderedDict((self.html_word_list[i][0], links[i]) for i in range(N))
+
+
     def link_lists(self, searchMax=200, editCost=20, offsetCost=1, offsetInertia=5):
         DEBUG = True
         if DEBUG:

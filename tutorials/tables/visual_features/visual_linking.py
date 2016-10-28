@@ -15,6 +15,7 @@ class VisualLinker():
         self.session            = session
         self.pdf_path           = pdf_path
         self.pdf_file           = None
+        self.document           = None
         self.coordinate_map     = None
         self.pdf_word_list      = None
         self.html_word_list     = None
@@ -23,7 +24,8 @@ class VisualLinker():
     def visual_parse_and_link(self, document):
         DEBUG = False
         TIME = True
-        self.pdf_file = self.pdf_path + document.name + '.pdf'
+        self.document = document
+        self.pdf_file = self.pdf_path + self.document.name + '.pdf'
         if DEBUG: print self.pdf_file
         
         tic = timer()
@@ -33,17 +35,17 @@ class VisualLinker():
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
         
         tic = timer()
-        self.extract_html_words(document)
+        self.extract_html_words()
         if DEBUG: pprint(self.html_word_list[:5])
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
         
         tic = timer()
         self.link_lists(searchMax=200)
-        if DEBUG: pd.set_option('display.max_rows', len(self.link_lists)); vizlink.display_links()
+        if DEBUG: vizlink.display_links()
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
                     
         tic = timer()
-        self.update_coordinates(document)
+        self.update_coordinates()
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
 
     def extract_pdf_words(self):
@@ -103,9 +105,9 @@ class VisualLinker():
                 coordinate_map[word_id] = (page_num, y_min_line, xmin, y_max_line, xmax)
         return pdf_word_list, coordinate_map
 
-    def extract_html_words(self, document):
+    def extract_html_words(self):
         html_word_list = []
-        for phrase in document.phrases:
+        for phrase in self.document.phrases:
             for i, word in enumerate(phrase.words):
                 html_word_list.append(((phrase.id, i), word))
         self.html_word_list = html_word_list
@@ -190,7 +192,7 @@ class VisualLinker():
                 pass
         return int(np.median(offsets))
 
-    def display_links(self):
+    def display_links(self, max_rows=100):
         html = []
         pdf = []
         j = []
@@ -210,10 +212,12 @@ class VisualLinker():
             'j': j,
             'offset': self.offsetHist
         }
+        pd.set_option('display.max_rows', max_rows);
         return pd.DataFrame(data, columns=['i','html','pdf','j','offset'])
+        # pd.reset_option('display.max_rows');
 
-    def update_coordinates(self, document):
-        for phrase in document.phrases:
+    def update_coordinates(self):
+        for phrase in self.document.phrases:
             (page, top, left, bottom, right) = zip(
                 *[self.coordinate_map[self.links[((phrase.id), i)]] for i in range(len(phrase.words))])
             page = page[0]
@@ -226,43 +230,55 @@ class VisualLinker():
         self.session.commit()
         print "Updated coordinates in snorkel.db"
 
-    def display_candidates(self, candidates, page_num=1, display=True, page_width=612, page_height=792):
+    def display_candidates(self, candidates, page_num=1, display=True):
         """
         Displays the bounding boxes corresponding to candidates on an image of the pdf
         # boxes is a list of 5-tuples (page, top, left, bottom, right)
         """
+        boxes = [get_box(span) for c in candidates for span in c.get_arguments()]
+        self.display_boxes(boxes, page_num=page_num, display=display, alternate_colors=True)
+
+    def display_boxes(self, boxes, page_num=1, display=True, alternate_colors=False):
+        """
+        Displays each of the bounding boxes passed in 'boxes' on an image of the pdf
+        pointed to by pdf_file
+        # boxes is a list of 5-tuples (page, top, left, bottom, right)
+        """
         if display:
-            (img, img_path) = pdf_to_img(self.pdf_file, page_num, page_width, page_height)
-            colors = [(0,0,255), (255,0,0)]
+            (img, img_path) = pdf_to_img(self.pdf_file, page_num)
+            colors = [(255,0,0), (0,0,255)]
+        boxes_per_page = defaultdict(int)
         boxes_by_page = defaultdict(list)
-        drawn = 0
-        not_drawn = 0
-        total = 0
-        for c in candidates:
-            for i, span in enumerate(c.get_arguments()):
-                page, top, left, bottom, right = get_box(span)
-                if page == page_num and (top, left, bottom, right) not in boxes_by_page[page]:
-                    drawn += 1
-                    if display:
-                        cv2.rectangle(img, (left, top), (right, bottom), colors[i], 1)
-                else:
-                    not_drawn += 1
+        for i, (page, top, left, bottom, right) in enumerate(boxes):
+            boxes_per_page[page] += 1 
+            if (top, left, bottom, right) not in boxes_by_page[page]:
                 boxes_by_page[page].append((top, left, bottom, right))
-                total += 1
-        print "Drawn: %d" % drawn
-        print "Not drawn: %d" % not_drawn
-        print "Total: %d" % total
+                if page == page_num and display:
+                    color = colors[i % 2] if alternate_colors else colors[0]
+                    cv2.rectangle(img, (left, top), (right, bottom), color, 1)
         print "Boxes per page:"
-        for (page, boxes) in sorted(boxes_by_page.items()):
-            print "Page %d: %d (%d)" % (page, len(boxes), len(set(boxes)))
-        if display:
-            cv2.imshow('Bounding boxes', img)
-            cv2.waitKey() # press any key to exit the opencv output 
-            cv2.destroyAllWindows() 
-            os.system('rm {}'.format(img_path)) # delete image
+        for (page, count) in sorted(boxes_per_page.items()):
+            print "Page %d: %d (%d)" % (page, count, len(boxes_by_page[page]))
+        cv2.imshow('Bounding boxes', img)
+        cv2.waitKey() # press any key to exit the opencv output 
+        cv2.destroyAllWindows() 
+        os.system('rm {}'.format(img_path)) # delete image
 
+    def display_word(self, target, page_num=1):
+        boxes = []
+        for phrase in self.document.phrases:
+            for i, word in enumerate(phrase.words):
+                if word == target:
+                    boxes.append((
+                        phrase.page,
+                        phrase.top[i], 
+                        phrase.left[i],
+                        phrase.bottom[i],
+                        phrase.right[i]))
+        self.display_boxes(boxes, page_num)
+                
 
-def pdf_to_img(pdf_file, page_num, page_width, page_height):
+def pdf_to_img(pdf_file, page_num, page_width=612, page_height=792):
     basename = subprocess.check_output('basename {} .pdf'.format(pdf_file), shell=True)
     dirname = subprocess.check_output('dirname {}'.format(pdf_file), shell=True)
     img_path = dirname.rstrip() + '/' + basename.rstrip()
@@ -278,23 +294,6 @@ def get_box(span):
             min(span.get_attrib_tokens('bottom')),
             max(span.get_attrib_tokens('right')))
 
-def display_boxes(pdf_file, boxes, page_num=1, page_width=612, page_height=792):
-    """
-    Displays each of the bounding boxes passed in 'boxes' on an image of the pdf
-    pointed to by pdf_file
-    # boxes is a list of 5-tuples (page, top, left, bottom, right)
-    """
-    (img, img_path) = pdf_to_img(pdf_file, page_num, page_width, page_height)
-    boxes_per_page = defaultdict(int)
-    for page, top, left, bottom, right in boxes:
-        if page == page_num:
-            cv2.rectangle(img, (left, top), (right, bottom), (255,0,0), 1)
-        boxes_per_page[page] += 1
-    print "Boxes per page:"
-    for (page, count) in sorted(boxes_per_page.items()):
-        print "Page %d: %d" % (page, count)
-    cv2.imshow('Bounding boxes', img)
-    cv2.waitKey() # press any key to exit the opencv output 
-    cv2.destroyAllWindows() 
-    os.system('rm {}'.format(img_path)) # delete image
+
+
 

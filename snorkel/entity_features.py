@@ -209,93 +209,16 @@ def tabledlib_binary_features(span1, span2, s1_idxs, s2_idxs):
 ##################################################################################
 # Visual features
 ##################################################################################
-
-_Bbox = namedtuple('bbox', ['top','bottom','left','right'], verbose = False)
-def _bbox_from_span(span):
-    if isinstance(span, Phrase) and span.top:
-        return _Bbox(min(span.top), 
-                    max(span.bottom),
-                    min(span.left),
-                    max(span.right))
-    if span.get_attrib_tokens('top'):
-        return _Bbox(min(span.get_attrib_tokens('top')), 
-                    max(span.get_attrib_tokens('bottom')),
-                    min(span.get_attrib_tokens('left')),
-                    max(span.get_attrib_tokens('right')))
-    else:
-        return None
-
-def _assign_alignment_features(phrases_by_key, align_type):
-    for key, phrases in phrases_by_key.iteritems():
-        if len(phrases) == 1: continue
-        context_lemmas = set()
-#         print 'For group', align_type, '\t'.join(p.text for p in phrases)
-        for p in phrases:
-#             print 'Adding', context_lemmas, 'to', p
-            p._aligned_lemmas.update(context_lemmas)
-            # update lemma context for upcoming phrases in the group
-            if len(p.lemmas) < 7:
-                new_lemmas = [lemma.lower() for lemma in p.lemmas if lemma.isalpha()]
-#                 if new_lemmas: print '++Lemmas for\t', p, context_lemmas
-                context_lemmas.update(new_lemmas)
-                context_lemmas.update(align_type + lemma for lemma in new_lemmas)
-#         print context_lemmas
-    
-def _preprocess_visual_features(doc):    
-    if hasattr(doc, '_visual_features'): return
-    # cache flag
-    doc._visual_features = True
-    
-    phrase_by_page = defaultdict(list)
-    for phrase in doc.phrases: 
-        phrase_by_page[phrase.page].append(phrase)
-        phrase._aligned_lemmas = set()
-    
-    for page, phrases in phrase_by_page.iteritems():
-        # process per page alignments
-        yc_aligned = defaultdict(list)
-        x0_aligned = defaultdict(list)
-        xc_aligned = defaultdict(list)
-        x1_aligned = defaultdict(list)
-        for phrase in phrases:
-            phrase.bbox = _bbox_from_span(phrase)
-            phrase.yc = (phrase.bbox.top + phrase.bbox.bottom)/2
-            phrase.x0 = phrase.bbox.left
-            phrase.x1 = phrase.bbox.right
-            phrase.xc = (phrase.x0 + phrase.x1) / 2
-            # index current phrase by different alignment keys
-            yc_aligned[phrase.yc].append(phrase)
-            x0_aligned[phrase.x0].append(phrase)
-            x1_aligned[phrase.x1].append(phrase)
-            xc_aligned[phrase.xc].append(phrase)
-        for l in yc_aligned.itervalues(): l.sort(key=lambda p:p.yc)
-        for l in x0_aligned.itervalues(): l.sort(key=lambda p:p.x0)
-        for l in x1_aligned.itervalues(): l.sort(key=lambda p:p.x1)
-        for l in xc_aligned.itervalues(): l.sort(key=lambda p:p.xc)
-        _assign_alignment_features(yc_aligned, 'Y_')
-        _assign_alignment_features(x0_aligned, 'LEFT_')
-        _assign_alignment_features(x1_aligned, 'RIGHT_')
-        _assign_alignment_features(xc_aligned, 'CENTER_')
-    
-    
-def visual_unary_features(span):
-    phrase = span.parent
-    doc = phrase.document
-    # cache features for the entire document
-    _preprocess_visual_features(doc)
-    
-    for aligned_lemma in phrase._aligned_lemmas:
-        yield 'ALIGNED_' + aligned_lemma
-    
+from lf_helpers import _bbox_from_span    
     
 def visual_binary_features(span1, span2, s1_idxs = None, s2_idxs = None):
     '''
     Features about the relative positioning of two spans
     '''
-    for f in visual_unary_features(span1):
-        yield 'e1_' + f
-    for f in visual_unary_features(span2):
-        yield 'e2_' + f
+    for f in get_visual_aligned_lemmas(span1):
+        yield 'e1_ALIGNED_' + f
+    for f in get_visual_aligned_lemmas(span2):
+        yield 'e2_ALIGNED_' + f
     
     # Skip when coordinates are not available
     if span1.parent.page != span2.parent.page: return

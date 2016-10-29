@@ -49,13 +49,12 @@ class VisualLinker():
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
 
     def extract_pdf_words(self):
-        num_pages = subprocess.check_output(
-            "pdfinfo {} | grep Pages  | sed 's/[^0-9]*//'".format(self.pdf_file), shell=True)
+        html_content = subprocess.check_output('pdftotext -bbox-layout {} -'.format(self.pdf_file), shell=True)
         pdf_word_list = []
         coordinate_map= {}
-        for i in range(1, int(num_pages)+1):
-            html_content = subprocess.check_output('pdftotext -f {} -l {} -bbox-layout {} -'.format(str(i), str(i), self.pdf_file), shell=True)
-            pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(html_content, i)
+        soup = BeautifulSoup(html_content, "html.parser")
+        for i, page in enumerate(soup.find_all('page')):
+            pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(page, i + 1)
             # TODO: this is a hack for testing; use a more permanent solution for tokenizing
             pdf_word_list_additions = []
             for j, (word_id, word) in enumerate(pdf_word_list_i):
@@ -73,10 +72,9 @@ class VisualLinker():
         self.coordinate_map = coordinate_map
         print "Extracted %d pdf words" % len(self.pdf_word_list)
 
-    def _coordinates_from_HTML(self, html_content, page_num):
+    def _coordinates_from_HTML(self, soup, page_num):
         pdf_word_list = []
         coordinate_map = {}
-        soup = BeautifulSoup(html_content, "html.parser")
         lines = soup.find_all('line')
         i = 0  # counter for word_id in page_num
         for line in lines:

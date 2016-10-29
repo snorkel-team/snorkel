@@ -1,3 +1,4 @@
+from .models import Phrase
 import subprocess
 import os
 import cv2
@@ -8,7 +9,6 @@ from pprint import pprint
 from bs4 import BeautifulSoup
 from collections import OrderedDict, defaultdict
 from editdistance import eval as editdist
-from snorkel.models import Phrase
 
 class VisualLinker():
     def __init__(self, pdf_path, session):
@@ -54,7 +54,7 @@ class VisualLinker():
         pdf_word_list = []
         coordinate_map= {}
         for i in range(1, int(num_pages)+1):
-            html_content = subprocess.check_output('pdftotext -f {} -l {} -bbox -layout {} -'.format(str(i), str(i), self.pdf_file), shell=True)
+            html_content = subprocess.check_output('pdftotext -f {} -l {} -bbox-layout {} -'.format(str(i), str(i), self.pdf_file), shell=True)
             pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(html_content, i)
             # TODO: this is a hack for testing; use a more permanent solution for tokenizing
             pdf_word_list_additions = []
@@ -113,7 +113,7 @@ class VisualLinker():
         self.html_word_list = html_word_list
         print "Extracted %d html words" % len(self.html_word_list)
 
-    def link_better(self):
+    def link_better(self, searchMax=200):
         N = len(self.html_word_list)
         links = [None] * N
         # make dicts of word -> id
@@ -126,9 +126,10 @@ class VisualLinker():
         for word, html_list in html_dict.items():
             if len(html_list) == len(pdf_dict[word]):
                 pdf_list = pdf_dict[word]
-                for j, (uid, i) in enumerate(id_list):
+                for j, (uid, i) in enumerate(html_list):
                     links[i] = pdf_list[j][0]
-        # what percent of links are None?
+        # ~50% of links are anchored in bc546-d
+        import pdb; pdb.set_trace()
 
         # convert list to dict
         self.links = OrderedDict((self.html_word_list[i][0], links[i]) for i in range(N))
@@ -256,13 +257,14 @@ class VisualLinker():
                 if page == page_num and display:
                     color = colors[i % 2] if alternate_colors else colors[0]
                     cv2.rectangle(img, (left, top), (right, bottom), color, 1)
-        print "Boxes per page:"
+        print "Boxes per page: total (unique)"
         for (page, count) in sorted(boxes_per_page.items()):
             print "Page %d: %d (%d)" % (page, count, len(boxes_by_page[page]))
-        cv2.imshow('Bounding boxes', img)
-        cv2.waitKey() # press any key to exit the opencv output 
-        cv2.destroyAllWindows() 
-        os.system('rm {}'.format(img_path)) # delete image
+        if display:
+            cv2.imshow('Bounding boxes', img)
+            cv2.waitKey() # press any key to exit the opencv output 
+            cv2.destroyAllWindows() 
+            os.system('rm {}'.format(img_path)) # delete image
 
     def display_word(self, target, page_num=1):
         boxes = []

@@ -2,7 +2,7 @@
 
 from .models import Corpus, Document, Sentence, Table, Row, Col, Cell, Phrase, construct_stable_id
 from .utils import ProgressBar, sort_X_on_Y, split_html_attrs
-from visual_linking import VisualLinker
+from .visual import VisualLinker
 import atexit
 import warnings
 from bs4 import BeautifulSoup, NavigableString, Tag

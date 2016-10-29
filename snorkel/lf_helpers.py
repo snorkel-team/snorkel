@@ -523,6 +523,5 @@ def get_visual_aligned_lemmas(span):
     for aligned_lemma in phrase._aligned_lemmas:
         yield aligned_lemma
         
-def is_aligned_with_lemmas(span, lemmas):
-    aligned_lemmas = set(get_visual_aligned_lemmas(span))
-    return aligned_lemmas.intersection(l.lower for l in lemmas)
+def get_aligned_lemmas(span):
+    return set(get_visual_aligned_lemmas(span))

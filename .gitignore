@@ -9,7 +9,7 @@ parser/
 /stanford-corenlp-*
 *.db*
 downloads/
-
+.settings/
 # Sphinx
 docs/_build
 

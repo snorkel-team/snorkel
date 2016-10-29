@@ -8,11 +8,9 @@ from snorkel.candidates import OmniNgrams
 from snorkel.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, AnnotationKeySet, Label
 from snorkel.utils import ProgressBar
 from snorkel.loaders import create_or_fetch
-from snorkel.throttlers import Throttler
 from snorkel.lf_helpers import *
 
-
-class PartThrottler(Throttler):
+class PartThrottler(object):
     """
     Removes candidates unless the part is not in a table, or the part aligned
     temperature are not aligned.
@@ -36,7 +34,7 @@ class GainThrottler(PartThrottler):
         return (PartThrottler.apply(self, part_span, attr_span) and
             overlap(['dc', 'gain', 'hfe', 'fe'], list(get_row_ngrams(attr_span, infer=True))))
 
-class PartCurrentThrottler(Throttler):
+class PartCurrentThrottler(object):
     """
     Removes candidates unless the part is not in a table, or the part aligned
     temperature are not aligned.

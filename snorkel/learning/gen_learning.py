@@ -182,11 +182,11 @@ class GenerativeModel(object):
     optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
     dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
 
-    def train(self, L, deps=(), steps=100, step_size=0.001, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
+    def train(self, L, y=None, deps=(), epochs=100, step_size=0.001, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
               truncation=10, burn_in=50, timer=None):
         self._process_dependency_graph(L, deps)
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L)
-        fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=steps, stepsize=step_size, decay=decay,
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y)
+        fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
                        reg_param=reg_param, regularization=reg_type, truncation=truncation,
                        quiet=(not verbose), verbose=verbose, learn_non_evidence=True, burn_in=burn_in)
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
@@ -275,7 +275,7 @@ class GenerativeModel(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
-    def _compile(self, L):
+    def _compile(self, L, y):
         """
         Compiles a generative model based on L and the current labeling function dependencies.
         """
@@ -334,8 +334,8 @@ class GenerativeModel(object):
         # Compiles variable matrix
         #
         for i in range(m):
-            variable[i]['isEvidence'] = False
-            variable[i]['initialValue'] = self.rng.randrange(0, 2)
+            variable[i]['isEvidence'] = False if y is None else True
+            variable[i]['initialValue'] = self.rng.randrange(0, 2) if y is None else 1 if y[i] == 1 else 0
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = 2
 

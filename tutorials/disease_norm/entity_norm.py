@@ -108,9 +108,11 @@ class CanonDictVectorizer(Vectorizer):
     def _compile_dicts(self, cd, other_phrases):
         
         # Process the canonical dictionary cd
-        cids = set()
-        for term, cid in cd.iteritems():
-            cids.add(cid)
+        all_cids = set()
+        for term, cids in cd.iteritems():
+            for cid in cids:
+                all_cids.add(cid)
+
             for word in self._split(term):
 
                 # Add to word index
@@ -118,10 +120,11 @@ class CanonDictVectorizer(Vectorizer):
                     self.word_index[word] = len(self.word_index)
 
                 # Add cid to word_to_cid dict
-                self.word_to_cids[word].add(cid)
+                for cid in cids:
+                    self.word_to_cids[word].add(cid)
 
         # Compute word IDF scores **based on canonical ID not term counts!**
-        N = len(cids)
+        N = len(all_cids)
         for word in self.word_index.keys():
             self.word_idf[word] = np.log( N / float(len(self.word_to_cids[word])) )
 
@@ -242,3 +245,5 @@ class SSIModel(object):
             return self.d[s.col[s.data.argmax()]]
         else:
             return None
+
+

@@ -1,11 +1,146 @@
 import lxml.etree as et
 from snorkel.models import CandidateSet, split_stable_id
 from snorkel.candidates import TemporarySpan
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import os
 import codecs
 import csv
 import bz2
+import re
+import numpy as np
+from itertools import permutations
+from scipy.sparse import lil_matrix
+
+
+class CanonicalDictionary(object):
+    """Class for loading, pre-processing and storing the (merged) canonical dictionary for an entity type"""
+    def __init__(self, sid_to_cid_map):
+        """
+        Takes as input a pre-computed map from source ID (sid) to canonical ID (cid)
+        Any source ID not in this mapping is assumed to *not* be of the correct entity class, i.e. cid = -1
+        *However*, we still store the tree path of these non-entity SIDs for use in e.g. negative LFs
+        """
+        
+        # Take in a pre-computed mapping from canonical IDs to integer (> 0) ids to be used by system
+        # Also construct inverse map
+        self.sid_to_cid    = sid_to_cid_map
+        self.cid_to_sid    = {}
+        for sid, cid in sid_to_cid_map.iteritems():
+            self.cid_to_sid[cid] = sid
+
+        # Mapping from input terms to CID
+        self.term_to_sids = defaultdict(set)
+
+        # Also maintain an (ordered) list of terms, which will correspond to rows of a CD matrix
+        self.terms = []
+
+        # Mapping from CIDs to ontology trees (provided as lists of node IDs from the root)
+        self.tree_paths = defaultdict(list)
+
+    def add_term(self, term, sid, tree_paths=[]):
+        """Add a term, id, and *list of* tree paths (each one of which is a list)"""
+        terms = self._process_term(term)
+        for t in terms:
+            if len(self.term_to_sids[t]) == 0:
+                self.terms.append(t)
+            self.term_to_sids[t].add(sid)
+        
+        for tp in tree_paths:
+            if tp not in self.tree_paths[sid]:
+                self.tree_paths[sid].append(tp)
+
+    def _process_term(self, t, min_len=3):
+        """Takes in a raw string, returns a set of string terms"""
+        out = set()
+
+        # Lower-case
+        t = t.lower()
+
+        # Min-length thresholding
+        if len(t) < min_len:
+            return out
+
+        # Handle (x) entries?
+        # TODO
+
+        # Handle entries ending in r'(group )?\d'?
+        # TODO
+
+        # Transform comma-style entries
+        if ',' in t:
+            splits = t.split(',')
+            out.add(" ".join(s.strip() for s in splits[1:]) + " " + splits[0].strip())
+            out.add(" ".join(s.strip() for s in splits[1:][::-1]) + " " + splits[0].strip())
+        else:
+            out.add(t)
+        return out
+
+
+MEDICEntry = namedtuple('MEDICEntry', 'name, id, defn, alt_ids, parent_ids, tree_nums, parent_tree_nums, synonyms, categories')
+
+def split_pipe_delim(p):
+    if len(p) == 0:
+        return []
+    else:
+        return p.split('|')
+
+def load_MEDIC(filepath='data/CTD_diseases.csv'):
+    """Loads a list of MEDICEntry rows, and a mapping from MEDIC ids -> integer CIDS"""
+    MEDIC_to_CID = {}
+
+    # Note: need to delete the first 29 comment rows in the raw source file first!
+    medic_entries = []
+    with open(filepath, 'rb') as f:
+        reader = csv.reader(f)
+        for row in reader:
+
+            # Add to MEDIC -> CID mapping, leaving 0 reserved
+            if row[1] not in MEDIC_to_CID:
+                MEDIC_to_CID[row[1]] = len(MEDIC_to_CID) + 1
+                                                
+            entry = MEDICEntry(
+                name             = row[0],
+                id               = row[1],
+                defn             = row[2],
+                alt_ids          = split_pipe_delim(row[3]),
+                parent_ids       = split_pipe_delim(row[4]),
+                tree_nums        = split_pipe_delim(row[5]),
+                parent_tree_nums = split_pipe_delim(row[6]),
+                synonyms         = split_pipe_delim(row[7]),
+                categories       = split_pipe_delim(row[8])
+            )
+            medic_entries.append(entry)
+    
+    print "Loaded %s MEDIC entries" % len(medic_entries)
+    return medic_entries, MEDIC_to_CID
+
+
+def binarize_LF_matrix(X):
+    X_b = lil_matrix(X.shape)
+    for i, j in zip(*X.nonzero()):
+        X_b[i,j] = np.sign(X[i,j])
+    return X_b.tocsr()
+
+
+def get_binarized_score(predicted, gold):
+    tp = 0
+    pp = 0
+    p  = 0
+    for i in range(gold.shape[0]):
+        if gold[i] > 0:
+            p += 1
+                    
+        if predicted[i] == 1:
+            pp += 1
+            if gold[i] > 0:
+                tp += 1
+                    
+    prec   = tp / float(pp)
+    recall = tp / float(p)
+    f1     = (2*prec*recall) / (prec+recall)
+    print "P :\t", prec
+    print "R :\t", recall
+    print "F1:\t", f1
 
 
 def get_docs_xml(filepath, doc_path=".//document", id_path=".//id/text()"):

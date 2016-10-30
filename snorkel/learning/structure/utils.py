@@ -6,7 +6,9 @@ def get_deps(weights, expand=0.0):
     deps = []
     for dep_mat, dep in (
             (weights.dep_fixing, DEP_FIXING),
-            (weights.dep_reinforcing, DEP_REINFORCING)):
+            (weights.dep_reinforcing, DEP_REINFORCING),
+            (weights.dep_similar, DEP_SIMILAR),
+            (weights.dep_exclusive,  DEP_EXCLUSIVE)):
         for i in range(weights.n):
             for j in range(weights.n):
                 if dep_mat[i, j] != 0 or (random.random() < expand and i != j):
@@ -15,7 +17,7 @@ def get_deps(weights, expand=0.0):
     return deps
 
 
-def get_all_deps(n, dep_similar=False, dep_exclusive=False):
+def get_all_deps(n, dep_fixing=True, dep_reinforcing=True, dep_similar=False, dep_exclusive=False):
     """
     Convenience method for getting a list of all dependencies to consider learning for a given number of labeling
     functions.
@@ -45,7 +47,16 @@ def get_all_deps(n, dep_similar=False, dep_exclusive=False):
                 deps.append((i, j, dep))
 
     # Asymmetric dependencies
-    for dep in (DEP_FIXING, DEP_REINFORCING):
+    if dep_fixing and dep_reinforcing:
+        asym_deps = (DEP_FIXING, DEP_REINFORCING)
+    elif dep_fixing:
+        asym_deps = (DEP_FIXING,)
+    elif dep_reinforcing:
+        asym_deps = (DEP_REINFORCING,)
+    else:
+        asym_deps = ()
+
+    for dep in asym_deps:
         for i in range(n):
             for j in range(n):
                 if i != j:

@@ -22,41 +22,41 @@ def generate_model(n, dep_density, class_prior=False, lf_propensity=False, lf_pr
 
     if lf_prior:
         for i in range(n):
-            weights.lf_prior[i] = random.choice((2.0, -2.0))
+            weights.lf_prior[i] = random.choice((1.0, -1.0))
 
     if lf_class_propensity:
         for i in range(n):
-            weights.lf_class_propensity[i] = random.choice((2.0, -2.0))
+            weights.lf_class_propensity[i] = random.choice((1.0, -1.0))
 
     if dep_similar:
         for i in range(n):
             for j in range(i+1, n):
                 if random.random() < dep_density:
-                    weights.dep_similar[i, j] = random.choice((1.0, 2.0))
+                    weights.dep_similar[i, j] = random.choice((0.5, 1.0))
 
     if dep_fixing:
         for i in range(n):
             for j in range(i+1, n):
                 if random.random() < dep_density:
                     if random.random() < 0.5:
-                        weights.dep_fixing[i, j] = random.choice((1.0, 2.0))
+                        weights.dep_fixing[i, j] = random.choice((0.5, 1.0))
                     else:
-                        weights.dep_fixing[j, i] = random.choice((1.0, 2.0))
+                        weights.dep_fixing[j, i] = random.choice((0.5, 1.0))
 
     if dep_reinforcing:
         for i in range(n):
             for j in range(i+1, n):
                 if random.random() < dep_density:
                     if random.random() < 0.5:
-                        weights.dep_reinforcing[i, j] = random.choice((1.0, 2.0,))
+                        weights.dep_reinforcing[i, j] = random.choice((0.5, 1.0,))
                     else:
-                        weights.dep_reinforcing[j, i] = random.choice((1.0, 2.0))
+                        weights.dep_reinforcing[j, i] = random.choice((0.5, 1.0))
 
     if dep_exclusive:
         for i in range(n):
             for j in range(i+1, n):
                 if random.random() < dep_density:
-                    weights.dep_exclusive[i, j] = random.choice((1.0, 2.0))
+                    weights.dep_exclusive[i, j] = random.choice((0.5, 1.0))
 
     if force_dep and weights.dep_similar.getnnz() == 0 and weights.dep_fixing.getnnz() == 0 \
         and weights.dep_reinforcing.getnnz() == 0 and weights.dep_exclusive.getnnz() == 0:
@@ -265,6 +265,7 @@ def generate_label_matrix(weights, m):
         fg.burnIn(10, False)
         y[i] = 1 if fg.var_value[0, 0] == 1 else -1
         for j in range(weights.n):
-            L[i, j] = fg.var_value[0, 1 + j] - 1
+            if fg.var_value[0, 1 + j] != 1:
+                L[i, j] = fg.var_value[0, 1 + j] - 1
 
     return y, L

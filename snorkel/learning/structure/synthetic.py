@@ -32,31 +32,31 @@ def generate_model(n, dep_density, class_prior=False, lf_propensity=False, lf_pr
         for i in range(n):
             for j in range(i+1, n):
                 if random.random() < dep_density:
-                    weights.dep_similar[i, j] = random.choice((0.5, 1.0))
+                    weights.dep_similar[i, j] = 0.25
 
     if dep_fixing:
         for i in range(n):
             for j in range(i+1, n):
                 if random.random() < dep_density:
                     if random.random() < 0.5:
-                        weights.dep_fixing[i, j] = random.choice((0.5, 1.0))
+                        weights.dep_fixing[i, j] = 0.25
                     else:
-                        weights.dep_fixing[j, i] = random.choice((0.5, 1.0))
+                        weights.dep_fixing[j, i] = 0.25
 
     if dep_reinforcing:
         for i in range(n):
             for j in range(i+1, n):
                 if random.random() < dep_density:
                     if random.random() < 0.5:
-                        weights.dep_reinforcing[i, j] = random.choice((0.5, 1.0,))
+                        weights.dep_reinforcing[i, j] = 0.25
                     else:
-                        weights.dep_reinforcing[j, i] = random.choice((0.5, 1.0))
+                        weights.dep_reinforcing[j, i] = 0.25
 
     if dep_exclusive:
         for i in range(n):
             for j in range(i+1, n):
                 if random.random() < dep_density:
-                    weights.dep_exclusive[i, j] = random.choice((0.5, 1.0))
+                    weights.dep_exclusive[i, j] = 0.25
 
     if force_dep and weights.dep_similar.getnnz() == 0 and weights.dep_fixing.getnnz() == 0 \
         and weights.dep_reinforcing.getnnz() == 0 and weights.dep_exclusive.getnnz() == 0:

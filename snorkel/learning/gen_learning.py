@@ -192,7 +192,7 @@ class GenerativeModel(object):
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
         if timer is not None:
             timer.start()
-        fg.learning()
+        fg.learning(out=False)
         if timer is not None:
             timer.end()
         self._process_learned_weights(L, fg)

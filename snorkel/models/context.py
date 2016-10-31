@@ -195,6 +195,7 @@ class Cell(Context):
     row_end = Column(Integer)
     col_start = Column(Integer)
     col_end = Column(Integer)
+    position = Column(Integer)
     text = Column(Text, nullable=False)
     html_tag = Column(Text)
     if snorkel_postgres:
@@ -211,15 +212,16 @@ class Cell(Context):
     }
 
     __table_args__ = (
-        UniqueConstraint(document_id, table_id, row_id, col_id),
+        UniqueConstraint(document_id, table_id, position),
     )
 
     def __repr__(self):
-        return ("Cell(Doc: %s, Table: %s, Row: %s, Col: %s)" % 
+        return ("Cell(Doc: %s, Table: %s, Row: %s, Col: %s, Pos: %s)" % 
             (self.document.name, 
              self.table.position, 
              tuple(set([self.row_start, self.row_end])), 
-             tuple(set([self.col_start, self.col_end]))))
+             tuple(set([self.col_start, self.col_end])),
+             self.position))
 
 
 class Phrase(Context):
@@ -228,8 +230,6 @@ class Phrase(Context):
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
     table_id = Column(Integer, ForeignKey('table.id'))
-    row_id =  Column(Integer, ForeignKey('row.id'))
-    col_id =  Column(Integer, ForeignKey('col.id'))
     cell_id = Column(Integer, ForeignKey('cell.id'))
     phrase_id = Column(Integer, nullable=False)
     document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)

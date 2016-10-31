@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Sentence, Table, Row, Col, Cell, Phrase, construct_stable_id
+from .models import Corpus, Document, Sentence, Table, Cell, Phrase, construct_stable_id
 from .utils import ProgressBar, sort_X_on_Y, split_html_attrs
 import atexit
 import warnings
@@ -301,7 +301,7 @@ class OmniParser(object):
         for phrase in self.parse_tag(soup, document):
             yield phrase
 
-    def parse_tag(self, tag, document, table=None, row=None, col=None, cell=None, anc_tags=[], anc_attrs=[]):
+    def parse_tag(self, tag, document, table=None, cell=None, anc_tags=[], anc_attrs=[]):
         if any(isinstance(child, NavigableString) and unicode(child)!=u'\n' for child in tag.contents):
             # TODO/NOTE: do '?' replacement for hardware only
             text = tag.get_text(' ').replace('?','%')
@@ -313,13 +313,11 @@ class OmniParser(object):
                     parts['document'] = document
                     parts['table'] = table
                     parts['cell'] = cell
-                    parts['row'] = row
-                    parts['col'] = col
                     parts['phrase_id'] = self.phrase_idx
                     # for now, don't pay attention to rowspan/colspan
-                    parts['row_start'] = row.position if row is not None else None
+                    parts['row_start'] = self.row_num
                     parts['row_end'] = parts['row_start']
-                    parts['col_start'] = col.position if col is not None else None
+                    parts['col_start'] = self.col_num
                     parts['col_end'] = parts['col_start']
                     parts['html_tag'] = tag.name
                     parts['html_attrs'] = tag.attrs
@@ -332,46 +330,40 @@ class OmniParser(object):
                 # TODO: find replacement for this check to reset table to None
                 if "table" not in [parent.name for parent in child.parents]:
                     table = None
-                    row = None
-                    col = None
                     cell = None
+                    self.row_num = None
+                    self.col_num = None
                 if child.name == "table":
                     self.table_idx += 1
                     self.row_num = -1
+                    self.cell_idx = -1
                     stable_id = "%s::%s:%s:%s" % (document.name, 'table', self.table_idx, self.table_idx)
                     table = Table(document=document, stable_id=stable_id, position=self.table_idx, text=unicode(child))
                 elif child.name == "tr":
                     self.row_num += 1
-                    stable_id = "%s::%s:%s:%s" % (document.name, 'row', table.position, self.row_num)
-                    row = Row(document=document, table=table, stable_id=stable_id, position=self.row_num)
                     self.col_num = -1
                 elif child.name in ["td","th"]:
+                    self.cell_idx += 1
                     self.col_num += 1
-                    if len(table.cols) <= self.col_num:
-                        stable_id = "%s::%s:%s:%s" % (document.name, 'col', table.position, self.col_num)
-                        col = Col(document=document, table=table, stable_id=stable_id, position=self.col_num)
-                    else:
-                        col = table.cols[self.col_num]
                     parts = defaultdict(list)
                     parts['document'] = document
                     parts['table'] = table
-                    parts['row'] = row
-                    parts['col'] = col
-                    parts['row_start'] = row.position if row is not None else None
+                    parts['position'] = self.cell_idx
+                    parts['row_start'] = self.row_num
                     parts['row_end'] = parts['row_start']
-                    parts['col_start'] = col.position if col is not None else None
+                    parts['col_start'] = self.col_num
                     parts['col_end'] = parts['col_start']
                     parts['text'] = unicode(child)
                     parts['html_tag'] = child.name
                     parts['html_attrs'] = None #split_html_attrs(child.attrs.items())
                     parts['html_anc_tags'] = anc_tags 
                     parts['html_anc_attrs'] = None #anc_attrs
-                    parts['stable_id'] = "%s::%s:%s:%s:%s" % (document.name, 'cell', table.position, row.position, col.position)
+                    parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'cell', table.position, self.cell_idx)
                     cell = Cell(**parts)
                 # FIXME: making so many copies is hacky and wasteful; use a stack?
                 temp_anc_tags = copy.deepcopy(anc_tags)
                 temp_anc_tags.append(child.name)
                 temp_anc_attrs = None #copy.deepcopy(anc_attrs)
                 # temp_anc_attrs.extend(split_html_attrs(child.attrs.items()))
-                for phrase in self.parse_tag(child, document, table, row, col, cell, temp_anc_tags, temp_anc_attrs):
+                for phrase in self.parse_tag(child, document, table, cell, temp_anc_tags, temp_anc_attrs):
                     yield phrase

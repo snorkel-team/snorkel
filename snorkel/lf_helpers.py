@@ -1,6 +1,7 @@
 from .models import SnorkelSession, TemporarySpan, Span, Cell, Phrase
 from itertools import chain
 from utils import tokens_to_ngrams
+from table_utils import min_row_diff, min_col_diff, is_axis_aligned
 from collections import namedtuple
 import re
 
@@ -208,9 +209,7 @@ def same_row(c):
     Return True if all Spans in the given candidate are from the same Row.
     :param c: The candidate whose Spans are being compared
     """
-    return (all([c[i].parent.table is not None and 
-        min_range_diff(c[0].parent.row_start, c[0].parent.row_end,
-                         c[i].parent.row_start, c[i].parent.row_end) == 0
+    return (all([c[i].parent.table is not None and is_row_aligned(c[0].parent, c[i].parent)
         for i in range(len(c.get_arguments()))]))
 
 
@@ -219,9 +218,7 @@ def same_col(c):
     Return True if all Spans in the given candidate are from the same Col.
     :param c: The candidate whose Spans are being compared
     """
-    return (all([c[i].parent.table is not None and 
-        min_range_diff(c[0].parent.col_start, c[0].parent.col_end,
-                         c[i].parent.col_start, c[i].parent.col_end) == 0
+    return (all([c[i].parent.table is not None and is_col_aligned(c[0].parent, c[i].parent)
         for i in range(len(c.get_arguments()))]))
     # return (all([c[i].parent.table is not None and 
     #     ((c[i].parent.col_start > c[0].parent.col_start and 
@@ -314,9 +311,9 @@ def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=
             yield ngram
         if span.parent.row_start is not None and span.parent.col_start is not None:
             root_cell = span.parent.cell
-            for phrase in chain.from_iterable([root_cell.row.phrases, root_cell.col.phrases]):
-                row_diff = min_range_diff(phrase.row_start, phrase.row_end, root_cell.row_start, root_cell.row_end, absolute=False) 
-                col_diff = min_range_diff(phrase.col_start, phrase.col_end, root_cell.col_start, root_cell.col_end, absolute=False) 
+            for phrase in chain.from_iterable([_get_aligned_phrases(phrase, 'row'), _get_aligned_phrases(phrase, 'col')]):
+                row_diff = min_row_diff(phrase, root_cell, absolute=False) 
+                col_diff = min_col_diff(phrase, root_cell, absolute=False) 
                 if (row_diff or col_diff) and not (row_diff and col_diff) and abs(row_diff) + abs(col_diff) <= dist:
                     if directions:
                         direction = ''
@@ -403,7 +400,7 @@ def get_head_ngrams(c, axis=None, infer=False, attrib='words', n_min=1, n_max=1,
 def _get_head_cell(root_cell, axis, infer=False):
     other_axis = 'row' if axis=='col' else 'col'
     aligned_cells = _get_aligned_cells(root_cell, axis, direct=True, infer=infer)  
-    return sorted(aligned_cells, key=lambda x: getattr(x, other_axis + '_num'))[0] if aligned_cells else []
+    return sorted(aligned_cells, key=lambda x: getattr(x, other_axis + '_start'))[0] if aligned_cells else []
 
 
 def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
@@ -417,25 +414,24 @@ def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min
 
 def _get_aligned_cells(root_cell, axis, direct=True, infer=False):
     aligned_cells = [cell for cell in root_cell.table.cells
-        if getattr(cell, axis) == getattr(root_cell, axis)
+        if is_axis_aligned(root_cell, cell, axis=axis)
         and cell != root_cell]
     return [_infer_cell(cell, _other_axis(axis), direct=direct, infer=infer) \
         for cell in aligned_cells] if infer else aligned_cells
 
 
 def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False):
-    # TODO: There seems to be some discrepency in the order of this list comprehension.
-    # This is what is needed for Python 2.7.
-    return [phrase for cell in getattr(root_phrase, axis).cells \
+    return [phrase for cell in root_phrase.table.cells if is_axis_aligned(root_phrase, cell, axis=axis)\
                 for phrase in _infer_cell(cell, _other_axis(axis), direct, infer).phrases \
                     if phrase!=root_phrase]
+
 
 PhantomCell = namedtuple('PhantomCell','phrases')
 def _infer_cell(root_cell, axis, direct, infer):
     # NOTE: not defined for direct = False and infer = False
     # TODO: Fix this hack; checking for len(text)==9 checks if cell is "<td></td>"
     empty = len(root_cell.text) == 9
-    edge = getattr(root_cell, _other_axis(axis)).position == 0
+    edge = getattr(root_cell, _other_axis(axis) + '_start') == 0
     if direct and (not empty or edge or not infer):
         return root_cell
     else:

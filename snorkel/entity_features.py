@@ -4,7 +4,7 @@ import os
 # from templates import *
 from lf_helpers import *
 from utils import get_as_dict
-from table_utils import min_range_diff
+from table_utils import min_row_diff, min_col_diff
 from .models import ImplicitSpan
 
 sys.path.append(os.environ['SNORKELHOME'] + '/treedlib/treedlib')
@@ -189,12 +189,8 @@ def tabledlib_binary_features(span1, span2, s1_idxs, s2_idxs):
         if span1.parent.table == span2.parent.table:
             yield u"SAME_TABLE"
             if span1.parent.cell is not None and span2.parent.cell is not None:
-                row_diff = min_range_diff(
-                    span1.parent.row_start, span1.parent.row_end,
-                    span2.parent.row_start, span2.parent.row_end) 
-                col_diff = min_range_diff(
-                    span1.parent.col_start, span1.parent.col_end,
-                    span2.parent.col_start, span2.parent.col_end) 
+                row_diff = min_row_diff(span1.parent, span2.parent, absolute=False) 
+                col_diff = min_col_diff(span1.parent, span2.parent, absolute=False)  
                 yield u"SAME_TABLE_ROW_DIFF_[%s]" % row_diff
                 yield u"SAME_TABLE_COL_DIFF_[%s]" % col_diff
                 yield u"SAME_TABLE_MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff))

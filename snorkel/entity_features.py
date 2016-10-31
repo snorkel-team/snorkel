@@ -127,7 +127,7 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
                 yield "W_POS_L_" + str(i+1) + "_R_" + str(j+1) + "_[" + \
                     curr_left_pos_tags + "]_[" + curr_right_pos_tags + "]"
 
-def tabledlib_unary_features(span):
+def tablelib_unary_features(span):
     yield "SPAN_TYPE_[%s]" % ('IMPLICIT' if isinstance(span, ImplicitSpan) else 'EXPLICIT') 
     phrase = span.parent
     yield u"HTML_TAG_" + phrase.html_tag
@@ -174,14 +174,14 @@ def tabledlib_unary_features(span):
             #         except:
             #             pass
 
-def tabledlib_binary_features(span1, span2, s1_idxs, s2_idxs):
+def tablelib_binary_features(span1, span2, s1_idxs, s2_idxs):
     # for feat in get_ddlib_feats(get_as_dict(span1.parent), s1_idxs):
     #     yield "DDL_e1_" + feat
-    for feat in tabledlib_unary_features(span1):
+    for feat in tablelib_unary_features(span1):
         yield "e1_" + feat
     # for feat in get_ddlib_feats(get_as_dict(span2.parent), s2_idxs):
     #     yield "DDL_e2_" + feat
-    for feat in tabledlib_unary_features(span2):
+    for feat in tablelib_unary_features(span2):
         yield "e2_" + feat
     if span1.parent.table is not None and span2.parent.table is not None:
         if span1.parent.table == span2.parent.table:

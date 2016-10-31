@@ -525,3 +525,11 @@ def get_visual_aligned_lemmas(span):
         
 def get_aligned_lemmas(span):
     return set(get_visual_aligned_lemmas(span))
+
+def same_page(c):
+    # TODO
+    return
+
+def get_visual_header_ngrams(c, axis=None):
+    # TODO
+    return

@@ -514,7 +514,7 @@ def _preprocess_visual_features(doc):
         _assign_alignment_features(xc_aligned, 'CENTER_')
     
     
-def get_visual_aligned_lemmas(span):
+def get_visual_aligned_lemmas(span, a='lemmas'):
     phrase = span.parent
     doc = phrase.document
     # cache features for the entire document
@@ -531,5 +531,9 @@ def same_page(c):
     return
 
 def get_visual_header_ngrams(c, axis=None):
+    # TODO
+    return
+
+def get_visual_distance(c, axis=None):
     # TODO
     return

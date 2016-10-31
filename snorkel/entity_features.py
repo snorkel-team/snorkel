@@ -4,6 +4,7 @@ import os
 # from templates import *
 from lf_helpers import *
 from utils import get_as_dict
+from table_utils import min_row_diff, min_col_diff
 from .models import ImplicitSpan
 
 sys.path.append(os.environ['SNORKELHOME'] + '/treedlib/treedlib')
@@ -143,14 +144,16 @@ def tabledlib_unary_features(span):
             yield "LEFT_%s_[%s]" % (attrib.upper(), ngram)
         for ngram in get_right_ngrams(span, window=7, n_max=2, attrib=attrib):
             yield "RIGHT_%s_[%s]" % (attrib.upper(), ngram)
-        if phrase.row_num is None or phrase.col_num is None:
+        if phrase.row_start is None or phrase.col_start is None:
             for ngram in get_neighbor_phrase_ngrams(span, d=1, n_max=2, attrib=attrib):
                 yield "NEIGHBOR_PHRASE_%s_[%s]" % (attrib.upper(), ngram)
         else:
             for ngram in get_cell_ngrams(span, n_max=2, attrib=attrib):
                 yield "CELL_%s_[%s]" % (attrib.upper(), ngram)
-            yield u"ROW_NUM_[%s]" % phrase.row_num
-            yield u"COL_NUM_[%s]" % phrase.col_num
+            for row_num in range(phrase.row_start, phrase.row_end + 1):
+                yield u"ROW_NUM_[%s]" % row_num
+            for col_num in range(phrase.col_start, phrase.col_end + 1):
+                yield u"COL_NUM_[%s]" % col_num
             for axis in ['row', 'col']:
                 for ngram in get_head_ngrams(span, axis, n_max=2, attrib=attrib):
                     yield "%s_HEAD_%s_[%s]" % (axis.upper(), attrib.upper(), ngram)
@@ -186,8 +189,8 @@ def tabledlib_binary_features(span1, span2, s1_idxs, s2_idxs):
         if span1.parent.table == span2.parent.table:
             yield u"SAME_TABLE"
             if span1.parent.cell is not None and span2.parent.cell is not None:
-                row_diff = span1.parent.row_num - span2.parent.row_num
-                col_diff = span1.parent.col_num - span2.parent.col_num
+                row_diff = min_row_diff(span1.parent, span2.parent, absolute=False) 
+                col_diff = min_col_diff(span1.parent, span2.parent, absolute=False)  
                 yield u"SAME_TABLE_ROW_DIFF_[%s]" % row_diff
                 yield u"SAME_TABLE_COL_DIFF_[%s]" % col_diff
                 yield u"SAME_TABLE_MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff))
@@ -197,10 +200,10 @@ def tabledlib_binary_features(span1, span2, s1_idxs, s2_idxs):
                     yield u"CHAR_DIFF_[%s]" % (span1.char_start - span2.char_start)
                     if span1.parent == span2.parent:
                         yield u"SAME_PHRASE"
-        else:
-            if span1.parent.cell is not None and span2.parent.cell is not None:
-                row_diff = span1.parent.row_num - span2.parent.row_num
-                col_diff = span1.parent.col_num - span2.parent.col_num
-                yield u"DIFF_TABLE_ROW_DIFF_[%s]" % row_diff
-                yield u"DIFF_TABLE_COL_DIFF_[%s]" % col_diff
-                yield u"DIFF_TABLE_MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff))
+        # else:
+        #     if span1.parent.cell is not None and span2.parent.cell is not None:
+        #         row_diff = ?
+        #         col_diff = ?
+        #         yield u"DIFF_TABLE_ROW_DIFF_[%s]" % row_diff
+        #         yield u"DIFF_TABLE_COL_DIFF_[%s]" % col_diff
+        #         yield u"DIFF_TABLE_MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff))

@@ -183,64 +183,19 @@ class Table(Context):
         return "Table(Doc: %s, Position: %s)" % (self.document.name, self.position)
 
 
-class Row(Context):
-    """A row Context in a Document."""
-    __tablename__ = 'row'
-    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
-    document_id = Column(Integer, ForeignKey('document.id'))
-    table_id = Column(Integer, ForeignKey('table.id'))
-    document = relationship('Document', backref=backref('rows', cascade='all, delete-orphan'), foreign_keys=document_id)
-    table = relationship('Table', backref=backref('rows', cascade='all, delete-orphan'), foreign_keys=table_id)
-    position = Column(Integer, nullable=False)
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'row',
-    }
-
-    __table_args__ = (
-        UniqueConstraint(document_id, table_id, position),
-    )
-
-    def __repr__(self):
-        return "Row(Doc: %s, Table: %s, Position: %s)" % (self.document.name, self.table.position, self.position)
-
-
-class Col(Context):
-    """A column Context in a Document."""
-    __tablename__ = 'col'
-    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
-    document_id = Column(Integer, ForeignKey('document.id'))
-    table_id = Column(Integer, ForeignKey('table.id'))
-    document = relationship('Document', backref=backref('cols', cascade='all, delete-orphan'), foreign_keys=document_id)
-    table = relationship('Table', backref=backref('cols', cascade='all, delete-orphan'), foreign_keys=table_id)
-    position = Column(Integer, nullable=False)
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'col',
-    }
-
-    __table_args__ = (
-        UniqueConstraint(document_id, table_id, position),
-    )
-
-    def __repr__(self):
-        return "Col(Doc: %s, Table: %s, Position: %s)" % (self.document.name, self.table.position, self.position)
-
-
 class Cell(Context):
     """A cell Context in a Document."""
     __tablename__ = 'cell'
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
     table_id = Column(Integer, ForeignKey('table.id'))
-    row_id =  Column(Integer, ForeignKey('row.id'))
-    col_id =  Column(Integer, ForeignKey('col.id'))
     document = relationship('Document', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=document_id)
     table = relationship('Table', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=table_id)
-    row = relationship('Row', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=row_id)
-    col = relationship('Col', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=col_id)
-    row_num = Column(Integer)
-    col_num = Column(Integer)
+    row_start = Column(Integer)
+    row_end = Column(Integer)
+    col_start = Column(Integer)
+    col_end = Column(Integer)
+    position = Column(Integer)
     text = Column(Text, nullable=False)
     html_tag = Column(Text)
     if snorkel_postgres:
@@ -257,12 +212,16 @@ class Cell(Context):
     }
 
     __table_args__ = (
-        UniqueConstraint(document_id, table_id, row_id, col_id),
+        UniqueConstraint(document_id, table_id, position),
     )
 
     def __repr__(self):
-        return ("Cell(Doc: %s, Table: %s, Row: %s, Col: %s)" % 
-            (self.document.name, self.table.position, self.row.position, self.col.position))
+        return ("Cell(Doc: %s, Table: %s, Row: %s, Col: %s, Pos: %s)" % 
+            (self.document.name, 
+             self.table.position, 
+             tuple(set([self.row_start, self.row_end])), 
+             tuple(set([self.col_start, self.col_end])),
+             self.position))
 
 
 class Phrase(Context):
@@ -271,19 +230,17 @@ class Phrase(Context):
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
     table_id = Column(Integer, ForeignKey('table.id'))
-    row_id =  Column(Integer, ForeignKey('row.id'))
-    col_id =  Column(Integer, ForeignKey('col.id'))
     cell_id = Column(Integer, ForeignKey('cell.id'))
     phrase_id = Column(Integer, nullable=False)
     document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
     table = relationship('Table', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=table_id)
     cell = relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=cell_id)
-    row = relationship('Row', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=row_id)
-    col = relationship('Col', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=col_id)
     position = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
-    row_num = Column(Integer)
-    col_num = Column(Integer)
+    row_start = Column(Integer)
+    row_end = Column(Integer)
+    col_start = Column(Integer)
+    col_end = Column(Integer)
     page = Column(Integer)
     html_tag = Column(Text)
     if snorkel_postgres:
@@ -331,8 +288,11 @@ class Phrase(Context):
             'phrase_id'         : self.phrase_id,
             'position'          : self.position,
             'text'              : self.text,
-            'row_num'           : self.row_num,
-            'col_num'           : self.col_num,
+            'row_start'         : self.row_start,
+            'row_end'           : self.row_end,
+            'col_start'         : self.col_start,
+            'col_end'           : self.col_end,
+            'page'              : self.page,
             'html_tag'          : self.html_tag,
             'html_attrs'        : self.html_attrs,
             'html_anc_tags'     : self.html_anc_tags,
@@ -344,7 +304,6 @@ class Phrase(Context):
             'ner_tags'          : self.ner_tags,
             'dep_parents'       : self.dep_parents,
             'dep_labels'        : self.dep_labels,
-            'page'              : self.page,
             'top'               : self.top,
             'left'              : self.left,
             'bottom'            : self.bottom,
@@ -355,8 +314,8 @@ class Phrase(Context):
             return ("Phrase(Doc: %s, Table: %s, Row: %s, Col: %s, Position: %s, Text: %s)" % 
                 (self.document.name,
                 getattr(self.table, 'position', 'X'), 
-                getattr(self.row, 'position', 'X'), 
-                getattr(self.col, 'position', 'X'), 
+                tuple(set([self.row_start, self.row_end])), 
+                tuple(set([self.col_start, self.col_end])), 
                 self.position, 
                 self.text))
 

@@ -152,9 +152,12 @@ def tablelib_unary_features(span):
             for ngram in get_cell_ngrams(span, n_max=2, attrib=attrib):
                 yield "CELL_%s_[%s]" % (attrib.upper(), ngram)
             for row_num in range(phrase.row_start, phrase.row_end + 1):
-                yield u"ROW_NUM_[%s]" % row_num
+                yield "ROW_NUM_[%s]" % row_num
             for col_num in range(phrase.col_start, phrase.col_end + 1):
-                yield u"COL_NUM_[%s]" % col_num
+                yield "COL_NUM_[%s]" % col_num
+            # NOTE: These two features should be accounted for by HTML_ATTR_ 
+            yield "ROW_SPAN_[%d]" % num_rows(phrase)
+            yield "COL_SPAN_[%d]" % num_cols(phrase)
             for axis in ['row', 'col']:
                 for ngram in get_head_ngrams(span, axis, n_max=2, attrib=attrib):
                     yield "%s_HEAD_%s_[%s]" % (axis.upper(), attrib.upper(), ngram)

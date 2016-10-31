@@ -35,3 +35,9 @@ def is_axis_aligned(a, b, axis=None):
         return is_col_aligned(a, b)
     else:
         return is_row_aligned(a, b) or is_col_aligned(a, b)
+
+def num_rows(a):
+    return a.row_start - a.row_end + 1
+
+def num_cols(a):
+    return a.col_start - a.col_end + 1

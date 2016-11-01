@@ -142,7 +142,7 @@ def _fit_deps(m, n, j, L, weights, joint):
                         if L[i, j] == 1:
                             weights[n + k] += step_size * conditional_pos
                         elif L[i, j] == 0:
-                            weights[n + k] += step_size
+                            weights[n + k] += step_size * -1
 
                         # Outgoing reinforcement
                         weights[2 * n + k] -= step_size * joint[5]
@@ -157,7 +157,7 @@ def _fit_deps(m, n, j, L, weights, joint):
                         if L[i, j] == -1:
                             weights[n + k] += step_size * conditional_neg
                         elif L[i, j] == 0:
-                            weights[n + k] += step_size
+                            weights[n + k] += step_size * -1
 
                         # Outgoing reinforcement
                         weights[2 * n + k] -= step_size * joint[0]
@@ -169,7 +169,7 @@ def _fit_deps(m, n, j, L, weights, joint):
                         # Outgoing reinforcement
                         weights[2 * n + k] -= step_size * (-1 * joint[0] - joint[2] - joint[3] - joint[5])
                         if L[i, j] != 0:
-                            weights[2 * n + k] += step_size
+                            weights[2 * n + k] += step_size * -1
 
             # Third, takes regularization gradient step
             if random.random() < p_truncation:
@@ -211,8 +211,10 @@ def _fit_deps(m, n, j, L, weights, joint):
                         joint[4] -= weights[n + k]
 
                     else:
-                        joint[1] -= weights[2 * n + k]
-                        joint[4] -= weights[2 * n + k]
+                        joint[0] -= weights[2 * n + k]
+                        joint[2] -= weights[2 * n + k]
+                        joint[3] -= weights[2 * n + k]
+                        joint[5] -= weights[2 * n + k]
 
             joint = np.exp(joint)
             joint /= np.sum(joint)

@@ -268,4 +268,4 @@ def generate_label_matrix(weights, m):
             if fg.var_value[0, 1 + j] != 1:
                 L[i, j] = fg.var_value[0, 1 + j] - 1
 
-    return y, L
+    return y, L.tocsr()

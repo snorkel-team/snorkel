@@ -1,4 +1,4 @@
-#from .models import Phrase
+from .models import Phrase
 import os
 import re
 import subprocess

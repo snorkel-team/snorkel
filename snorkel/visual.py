@@ -39,8 +39,24 @@ class VisualLinker():
         if DEBUG: pprint(self.html_word_list[:5])
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
         
+        # TEMP
+        print len(self.pdf_word_list)
+        self.pdf_word_list = [x for x in self.pdf_word_list if x[1]]
+        print len(self.pdf_word_list)
+        html_words = [x[1] for x in self.html_word_list]
+        pdf_words  = [x[1] for x in self.pdf_word_list]
+        html_only = set(html_words) - set(pdf_words)
+        pdf_only = set(pdf_words) - set(html_words)
+        print (len(html_only), len(pdf_only))
+        # pprint(list(html_only))
+        # pprint(list(pdf_only))
+        pprint(zip(sorted(list(html_only)) + ([None] * (len(pdf_only)-len(html_only))), sorted(list(pdf_only))))
+        # pprint(zip([word[1] for word in self.html_word_list], [None]*5 + [word[1] for word in self.pdf_word_list]))
+        import pdb; pdb.set_trace()
+        # TEMP
+
         tic = timer()
-        self.link_lists(searchMax=200)
+        self.link_better(search_max=200)
         if DEBUG: vizlink.display_links()
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
                     
@@ -57,15 +73,16 @@ class VisualLinker():
             html_content = subprocess.check_output('pdftotext -f {} -l {} -bbox-layout {} -'.format(str(i), str(i), self.pdf_file), shell=True)
             pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(html_content, i)
             # TODO: this is a hack for testing; use a more permanent solution for tokenizing
+            # NOTE: re.split("([\(\)\,\'])", string)
             pdf_word_list_additions = []
             for j, (word_id, word) in enumerate(pdf_word_list_i):
-                if not word[-1].isalnum():
+                if len(word) >= 2 and not word[-1].isalnum():
                     pdf_word_list_i[j] = (word_id, word[:-1])
                     page, idx = word_id
                     new_word_id = (page, idx + 0.5)
                     pdf_word_list_additions.append((new_word_id, word[-1]))
                     coordinate_map_i[new_word_id] = coordinate_map_i[word_id]
-            pdf_word_list_i.extend(pdf_word_list_additions)
+            pdf_word_list_i += pdf_word_list_additions
             # sort pdf_word_list by page, then top, then left
             pdf_word_list += sorted(pdf_word_list_i, key=lambda (word_id,_): coordinate_map_i[word_id][0:3])
             coordinate_map.update(coordinate_map_i)
@@ -113,37 +130,59 @@ class VisualLinker():
         self.html_word_list = html_word_list
         print "Extracted %d html words" % len(self.html_word_list)
 
-    def link_better(self, searchMax=200):
+    def link_better(self, search_max=200):
+        # NOTE: there are probably some inefficiencies here from rehashing words 
+        # multiple times, but we're not going to worry about that for now
+        def link_matches(l, u, offset):
+            print (l, u), (l*word_ratio, u*word_ratio)
+            html_dict = defaultdict(list)
+            pdf_dict = defaultdict(list)
+            for i, (uid, word) in enumerate(self.html_word_list[l:u]):
+                html_dict[word].append((uid, i))
+            for j, (uid, word) in enumerate(self.pdf_word_list[offset+l:offset+u]):
+                pdf_dict[word].append((uid, j))
+                for word, html_list in html_dict.items():
+                    if len(html_list) == len(pdf_dict[word]):
+                        pdf_list = pdf_dict[word]
+                        for j, (uid, i) in enumerate(html_list):
+                            self.links[i] = pdf_list[j][0]
+        
         N = len(self.html_word_list)
-        links = [None] * N
-        # make dicts of word -> id
-        html_dict = defaultdict(list)
-        pdf_dict = defaultdict(list)
-        for i, (uid, word) in enumerate(self.html_word_list):
-            html_dict[word].append((uid, i))
-        for j, (uid, word) in enumerate(self.pdf_word_list):
-            pdf_dict[word].append((uid, j))
-        for word, html_list in html_dict.items():
-            if len(html_list) == len(pdf_dict[word]):
-                pdf_list = pdf_dict[word]
-                for j, (uid, i) in enumerate(html_list):
-                    links[i] = pdf_list[j][0]
+        self.links = [None] * N
+        search_radius = search_max/2
+        word_ratio = float(len(self.pdf_word_list))/len(self.html_word_list)
+
+        # first pass: global
+        link_matches(0, N, 0)
         # ~50% of links are anchored in bc546-d
+        
+        # second pass: local
+        for i in range(N/search_radius + 1):
+            offset = 0
+            link_matches(max(0, i*search_radius - search_radius), min(N, i*search_radius + search_radius), offset)
+
+        # third pass: edit distance matches
+
+
+        
+        # for link in links:
+        #     if link is None:
+
         import pdb; pdb.set_trace()
 
         # convert list to dict
-        self.links = OrderedDict((self.html_word_list[i][0], links[i]) for i in range(N))
+        self.links = OrderedDict((self.html_word_list[i][0], self.links[i]) for i in range(N))
 
 
-    def link_lists(self, searchMax=200, editCost=20, offsetCost=1, offsetInertia=5):
+    def link_lists(self, search_max=200, editCost=20, offsetCost=1, offsetInertia=5):
         DEBUG = True
         if DEBUG:
             offsetHist = []
             jHist = []
             editDistHist = 0
-        offset = self._calculate_offset(self.html_word_list, self.pdf_word_list, max(searchMax/10,5), searchMax)
+        offset = self._calculate_offset(self.html_word_list, self.pdf_word_list, max(search_max/10,5), search_max)
         offsets = [offset] * offsetInertia
-        searchOrder = np.array([(-1)**(i%2) * (i/2) for i in range(1, searchMax+1)])
+        searchOrder = np.array([(-1)**(i%2) * (i/2) for i in range(1, search_max+1)])
         links = OrderedDict()
         for i, a in enumerate(self.html_word_list):
             j = 0
@@ -164,7 +203,7 @@ class VisualLinker():
                 j += 1
             # If necessary, search for min edit distance
             if not matched:
-                cost = [0] * searchMax
+                cost = [0] * search_max
                 for k, m in enumerate(searchIndices):
                     cost[k] = (editdist(a[1],self.pdf_word_list[m][1]) * editCost +
                             k * offsetCost)

@@ -1,25 +1,28 @@
 from .models import Phrase
-import subprocess
 import os
+import re
+import subprocess
+from collections import OrderedDict, defaultdict
+from pprint import pprint
+from timeit import default_timer as timer
+
 import cv2
 import numpy as np
 import pandas as pd
-from timeit import default_timer as timer
-from pprint import pprint
 from bs4 import BeautifulSoup
-from collections import OrderedDict, defaultdict
 from editdistance import eval as editdist
+
 
 class VisualLinker():
     def __init__(self, pdf_path, session):
-        self.session            = session
-        self.pdf_path           = pdf_path
-        self.pdf_file           = None
-        self.document           = None
-        self.coordinate_map     = None
-        self.pdf_word_list      = None
-        self.html_word_list     = None
-        self.links              = None
+        self.session = session
+        self.pdf_path = pdf_path
+        self.pdf_file = None
+        self.document = None
+        self.coordinate_map = None
+        self.pdf_word_list = None
+        self.html_word_list = None
+        self.links = None
 
     def visual_parse_and_link(self, document):
         DEBUG = False
@@ -27,47 +30,38 @@ class VisualLinker():
         self.document = document
         self.pdf_file = self.pdf_path + self.document.name + '.pdf'
         if DEBUG: print self.pdf_file
-        
+
         tic = timer()
         self.extract_pdf_words()
         if DEBUG: pprint(self.pdf_word_list[:5])
         if DEBUG: pprint(self.coordinate_map.items()[:5])
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
-        
+
         tic = timer()
         self.extract_html_words()
         if DEBUG: pprint(self.html_word_list[:5])
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
-        
+
         tic = timer()
         self.link_lists(searchMax=200)
         if DEBUG: vizlink.display_links()
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
-                    
+
         tic = timer()
         self.update_coordinates()
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
 
     def extract_pdf_words(self):
         num_pages = subprocess.check_output(
-            "pdfinfo {} | grep Pages  | sed 's/[^0-9]*//'".format(self.pdf_file), shell=True)
+                "pdfinfo {} | grep Pages  | sed 's/[^0-9]*//'".format(self.pdf_file), shell=True)
         pdf_word_list = []
-        coordinate_map= {}
-        for i in range(1, int(num_pages)+1):
-            html_content = subprocess.check_output('pdftotext -f {} -l {} -bbox-layout {} -'.format(str(i), str(i), self.pdf_file), shell=True)
+        coordinate_map = {}
+        for i in range(1, int(num_pages) + 1):
+            html_content = subprocess.check_output(
+                'pdftotext -f {} -l {} -bbox-layout {} -'.format(str(i), str(i), self.pdf_file), shell=True)
             pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(html_content, i)
-            # TODO: this is a hack for testing; use a more permanent solution for tokenizing
-            pdf_word_list_additions = []
-            for j, (word_id, word) in enumerate(pdf_word_list_i):
-                if not word[-1].isalnum():
-                    pdf_word_list_i[j] = (word_id, word[:-1])
-                    page, idx = word_id
-                    new_word_id = (page, idx + 0.5)
-                    pdf_word_list_additions.append((new_word_id, word[-1]))
-                    coordinate_map_i[new_word_id] = coordinate_map_i[word_id]
-            pdf_word_list_i.extend(pdf_word_list_additions)
             # sort pdf_word_list by page, block top then block left, top, then left
-            pdf_word_list += sorted(pdf_word_list_i, key=lambda (word_id,_): coordinate_map_i[word_id][0:5])
+            pdf_word_list += sorted(pdf_word_list_i, key=lambda (word_id, _): coordinate_map_i[word_id][0:5])
             # update coordinate map
             for word_id in coordinate_map_i.keys():
                 page_num, y_min_block, x_min_block, y_min_line, xmin, y_max_line, xmax = coordinate_map_i[word_id]
@@ -93,12 +87,14 @@ class VisualLinker():
                 for word in words:
                     xmin = int(float(word.get('xmin')))
                     xmax = int(float(word.get('xmax')))
-                    content = word.getText()
-                    if len(content) > 0:  # Ignore empty characters
-                        word_id = (page_num, i)
-                        pdf_word_list.append((word_id, content))
-                        coordinate_map[word_id] = (page_num, y_min_block, x_min_block, y_min_line, xmin, y_max_line, xmax)   # TODO: check this order
-                        i += 1
+                    for content in re.split("([\(\)\,\'])", word.getText()):
+                        if len(content) > 0:  # Ignore empty characters
+                            word_id = (page_num, i)
+                            pdf_word_list.append((word_id, content))
+                            # TODO: add char width approximation
+                            coordinate_map[word_id] = (page_num, y_min_block, x_min_block, y_min_line, xmin, y_max_line,
+                                                       xmax)  # TODO: check this order
+                            i += 1
         return pdf_word_list, coordinate_map
 
     def extract_html_words(self):
@@ -125,11 +121,11 @@ class VisualLinker():
                 for j, (uid, i) in enumerate(html_list):
                     links[i] = pdf_list[j][0]
         # ~50% of links are anchored in bc546-d
-        import pdb; pdb.set_trace()
+        import pdb;
+        pdb.set_trace()
 
         # convert list to dict
         self.links = OrderedDict((self.html_word_list[i][0], links[i]) for i in range(N))
-
 
     def link_lists(self, searchMax=200, editCost=20, offsetCost=1, offsetInertia=5):
         DEBUG = True
@@ -137,13 +133,13 @@ class VisualLinker():
             offsetHist = []
             jHist = []
             editDistHist = 0
-        offset = self._calculate_offset(self.html_word_list, self.pdf_word_list, max(searchMax/10,5), searchMax)
+        offset = self._calculate_offset(self.html_word_list, self.pdf_word_list, max(searchMax / 10, 5), searchMax)
         offsets = [offset] * offsetInertia
-        searchOrder = np.array([(-1)**(i%2) * (i/2) for i in range(1, searchMax+1)])
+        searchOrder = np.array([(-1) ** (i % 2) * (i / 2) for i in range(1, searchMax + 1)])
         links = OrderedDict()
         for i, a in enumerate(self.html_word_list):
             j = 0
-            searchIndices = np.clip(offset + searchOrder, 0, len(self.pdf_word_list)-1)
+            searchIndices = np.clip(offset + searchOrder, 0, len(self.pdf_word_list) - 1)
             jMax = len(searchIndices)
             matched = False
             # Search first for exact matches
@@ -152,7 +148,7 @@ class VisualLinker():
                 if a[1] == b[1]:
                     links[a[0]] = b[0]
                     matched = True
-                    offsets[i % offsetInertia] = searchIndices[j]  + 1
+                    offsets[i % offsetInertia] = searchIndices[j] + 1
                     offset = int(np.median(offsets))
                     if DEBUG:
                         jHist.append(j)
@@ -162,9 +158,9 @@ class VisualLinker():
             if not matched:
                 cost = [0] * searchMax
                 for k, m in enumerate(searchIndices):
-                    cost[k] = (editdist(a[1],self.pdf_word_list[m][1]) * editCost +
-                            k * offsetCost)
-                nearest = np.argmin(cost)            
+                    cost[k] = (editdist(a[1], self.pdf_word_list[m][1]) * editCost +
+                               k * offsetCost)
+                nearest = np.argmin(cost)
                 links[a[0]] = self.pdf_word_list[searchIndices[nearest]][0]
                 if DEBUG:
                     jHist.append(nearest)
@@ -200,7 +196,7 @@ class VisualLinker():
                     pdf.append(b[1])
                     j.append(k)
                     break
-        assert(len(pdf) == len(html))
+        assert (len(pdf) == len(html))
 
         data = {
             'i': range(len(self.links)),
@@ -210,20 +206,20 @@ class VisualLinker():
             'offset': self.offsetHist
         }
         pd.set_option('display.max_rows', max_rows);
-        return pd.DataFrame(data, columns=['i','html','pdf','j','offset'])
+        return pd.DataFrame(data, columns=['i', 'html', 'pdf', 'j', 'offset'])
         # pd.reset_option('display.max_rows');
 
     def update_coordinates(self):
         for phrase in self.document.phrases:
             (page, top, left, bottom, right) = zip(
-                *[self.coordinate_map[self.links[((phrase.id), i)]] for i in range(len(phrase.words))])
+                    *[self.coordinate_map[self.links[((phrase.id), i)]] for i in range(len(phrase.words))])
             page = page[0]
             self.session.query(Phrase).filter(Phrase.id == phrase.id).update(
-                {"page": page, 
-                "top":  list(top), 
-                "left": list(left), 
-                "bottom": list(bottom), 
-                "right": list(right)})
+                    {"page": page,
+                     "top": list(top),
+                     "left": list(left),
+                     "bottom": list(bottom),
+                     "right": list(right)})
         self.session.commit()
         print "Updated coordinates in snorkel.db"
 
@@ -243,11 +239,11 @@ class VisualLinker():
         """
         if display:
             (img, img_path) = pdf_to_img(self.pdf_file, page_num)
-            colors = [(255,0,0), (0,0,255)]
+            colors = [(255, 0, 0), (0, 0, 255)]
         boxes_per_page = defaultdict(int)
         boxes_by_page = defaultdict(list)
         for i, (page, top, left, bottom, right) in enumerate(boxes):
-            boxes_per_page[page] += 1 
+            boxes_per_page[page] += 1
             if (top, left, bottom, right) not in boxes_by_page[page]:
                 boxes_by_page[page].append((top, left, bottom, right))
                 if page == page_num and display:
@@ -258,9 +254,9 @@ class VisualLinker():
             print "Page %d: %d (%d)" % (page, count, len(boxes_by_page[page]))
         if display:
             cv2.imshow('Bounding boxes', img)
-            cv2.waitKey() # press any key to exit the opencv output 
-            cv2.destroyAllWindows() 
-            os.system('rm {}'.format(img_path)) # delete image
+            cv2.waitKey()  # press any key to exit the opencv output
+            cv2.destroyAllWindows()
+            os.system('rm {}'.format(img_path))  # delete image
 
     def display_word(self, target, page_num=1):
         boxes = []
@@ -269,12 +265,12 @@ class VisualLinker():
                 if word == target:
                     boxes.append((
                         phrase.page,
-                        phrase.top[i], 
+                        phrase.top[i],
                         phrase.left[i],
                         phrase.bottom[i],
                         phrase.right[i]))
         self.display_boxes(boxes, page_num)
-                
+
 
 def pdf_to_img(pdf_file, page_num, page_width=612, page_height=792):
     basename = subprocess.check_output('basename {} .pdf'.format(pdf_file), shell=True)
@@ -285,13 +281,10 @@ def pdf_to_img(pdf_file, page_num, page_width=612, page_height=792):
     img = cv2.resize(cv2.imread(img_path), (page_width, page_height))
     return (img, img_path)
 
+
 def get_box(span):
-    return (span.parent.page, 
+    return (span.parent.page,
             min(span.get_attrib_tokens('top')),
             max(span.get_attrib_tokens('left')),
             min(span.get_attrib_tokens('bottom')),
             max(span.get_attrib_tokens('right')))
-
-
-
-

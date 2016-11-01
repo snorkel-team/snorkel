@@ -42,6 +42,13 @@ class VisualLinker():
         if DEBUG: pprint(self.html_word_list[:5])
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
 
+        # TEMP
+        print "HTML list length: ", len(self.html_word_list)
+        print "PDF list length: ", len(self.pdf_word_list)
+        pprint(zip([x[1] for x in self.html_word_list], [None]*5 + [x[1] for x in self.pdf_word_list]))
+        import pdb; pdb.set_trace()
+        # TEMP
+
         tic = timer()
         self.link_lists(searchMax=200)
         if DEBUG: vizlink.display_links()
@@ -85,7 +92,8 @@ class VisualLinker():
                 for word in words:
                     xmin = int(float(word.get('xmin')))
                     xmax = int(float(word.get('xmax')))
-                    for content in re.split("([\(\)\,\'])", word.getText()): # TODO: check extra characters in CoreNLP
+                    for content in re.split(
+                        "([\(\)\,\?\u201C\u201D\u2018\u2019\u00B0(?:\u00B0C)(?:\u00B0F)\u2212\'\\\])", word.getText()): # TODO: check extra characters in CoreNLP
                         if len(content) > 0:  # Ignore empty characters
                             word_id = (page_num, i)
                             pdf_word_list.append((word_id, content))

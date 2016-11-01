@@ -161,7 +161,7 @@ def _fit_deps(m, n, j, L, weights, joint):
 
                         # Outgoing reinforcement
                         weights[2 * n + k] -= step_size * joint[0]
-                        if L[i, j] == 1:
+                        if L[i, j] == -1:
                             weights[2 * n + k] += step_size * conditional_neg
                     else:
                         # No effect of incoming reinforcement

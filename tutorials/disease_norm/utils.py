@@ -32,7 +32,9 @@ class CanonicalDictionary(object):
         self.term_to_sids = defaultdict(set)
 
         # Also maintain an (ordered) list of terms, which will correspond to rows of a CD matrix
-        self.terms = []
+        self.terms     = []
+        self.pos_terms = []
+        self.neg_terms = []
 
         # Mapping from CIDs to ontology trees (provided as lists of node IDs from the root)
         self.tree_paths = defaultdict(list)
@@ -43,6 +45,14 @@ class CanonicalDictionary(object):
         for t in terms:
             if len(self.term_to_sids[t]) == 0:
                 self.terms.append(t)
+
+                # Keep a list (index) of positive and negative terms
+                # where this is again defined by sid_to_cid map
+                if sid in self.sid_to_cid:
+                    self.pos_terms.append(t)
+                else:
+                    self.neg_terms.append(t)
+
             self.term_to_sids[t].add(sid)
         
         for tp in tree_paths:

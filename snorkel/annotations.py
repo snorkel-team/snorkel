@@ -18,6 +18,41 @@ from .features import get_span_feats
 from sqlalchemy.orm.session import object_session
 
 
+def merge_annotations(ms):
+    """Given a list of csr_AnnotationMatrix objects, do the equivalent of hstack"""
+    candidate_set = ms[0].candidate_set
+    if any([candidate_set != m.candidate_set for m in ms]):
+        raise ValueError("Annotation matrices being merged must have same candidate set.")
+
+    # NOTE: Currently the key_set is not really used for anything... if it is though then this needs to
+    # be revamped!
+    key_set = ms[0].key_set
+
+    # Shift the col <-> key index maps
+    key_index = {}
+    offset    = 0
+    for m in ms:
+        for kid, j in m.key_index.iteritems():
+            key_index[kid] = j + offset
+        offset += len(m.key_index)
+    col_index = {}
+    offset    = 0
+    for m in ms:
+        for j, kid in m.col_index.iteritems():
+            col_index[j + offset] = kid
+        offset += len(m.col_index)
+    
+    # Use hstack to return
+    return csr_AnnotationMatrix(
+        sparse.hstack(ms), 
+        candidate_set=candidate_set,
+        candidate_index=ms[0].candidate_index,
+        row_index=ms[0].row_index,
+        key_set=key_set,
+        key_index=key_index,
+        col_index=col_index)
+
+
 class csr_AnnotationMatrix(sparse.csr_matrix):
     """
     An extension of the scipy.sparse.csr_matrix class for holding sparse annotation matrices

@@ -26,7 +26,12 @@ class DependencySelector(object):
         deps = {}
         weights = np.zeros((3 * n,))
         joint = np.zeros((6,))
-        conditional = np.zeros((6,))
+        # joint[0] = P(Y = -1, L_j = -1)
+        # joint[1] = P(Y = -1, L_j =  0)
+        # joint[2] = P(Y = -1, L_j =  1)
+        # joint[3] = P(Y =  1, L_j = -1)
+        # joint[4] = P(Y =  1, L_j =  0)
+        # joint[5] = P(Y =  1, L_j =  1)
 
         for j in range(n):
             # Initializes weights
@@ -36,24 +41,27 @@ class DependencySelector(object):
                 weights[k] = 0.0
 
             print weights
-            _fit_deps(m, n, j, L, weights, joint, conditional)
+            _fit_deps(m, n, j, L, weights, joint)
             print weights
 
             deps[j] = []
             for k in range(n):
-                if weights[n + k] > threshold:
+                if abs(weights[n + k]) > threshold:
                     deps[j].append((j, k, DEP_REINFORCING))
-                if weights[2 * n + k] > threshold:
+                if abs(weights[2 * n + k]) > threshold:
                     deps[j].append((k, j, DEP_REINFORCING))
-            break
 
         return deps
 
 
 @jit(nopython=True, cache=True, nogil=True)
-def _fit_deps(m, n, j, L, weights, joint, conditional):
+def _fit_deps(m, n, j, L, weights, joint):
     step_size = 1.0 / m
     epochs = 10
+    regularization = 0.1
+    truncation = 10
+    p_truncation = 1.0 / truncation
+    l1delta = regularization * step_size * truncation
 
     for _ in range(epochs):
         for i in range(m):
@@ -62,35 +70,41 @@ def _fit_deps(m, n, j, L, weights, joint, conditional):
             # First, computes joint and conditional distributions
             joint[:] = 0, 0, 0, 0, 0, 0
             for k in range(n):
-                if L[i, k] == 1:
-                    joint[0] -= weights[k]
-                    joint[1] -= weights[k]
-                    joint[2] -= weights[k]
-                    joint[3] += weights[k]
-                    joint[4] += weights[k]
-                    joint[5] += weights[k]
+                if j == k:
+                    joint[0] += weights[j]
+                    joint[5] += weights[j]
+                    joint[2] -= weights[j]
+                    joint[3] -= weights[j]
+                else:
+                    if L[i, k] == 1:
+                        joint[0] -= weights[k]
+                        joint[1] -= weights[k]
+                        joint[2] -= weights[k]
+                        joint[3] += weights[k]
+                        joint[4] += weights[k]
+                        joint[5] += weights[k]
 
-                    if j != k:
                         joint[5] += weights[n + k] + weights[2 * n + k]
                         joint[1] -= weights[n + k]
                         joint[4] -= weights[n + k]
 
-                elif L[i, k] == -1:
-                    joint[0] += weights[k]
-                    joint[1] += weights[k]
-                    joint[2] += weights[k]
-                    joint[3] -= weights[k]
-                    joint[4] -= weights[k]
-                    joint[5] -= weights[k]
+                    elif L[i, k] == -1:
+                        joint[0] += weights[k]
+                        joint[1] += weights[k]
+                        joint[2] += weights[k]
+                        joint[3] -= weights[k]
+                        joint[4] -= weights[k]
+                        joint[5] -= weights[k]
 
-                    if j != k:
                         joint[0] += weights[n + k] + weights[2 * n + k]
                         joint[1] -= weights[n + k]
                         joint[4] -= weights[n + k]
 
-                elif j != k:
-                    joint[1] -= weights[2 * n + k]
-                    joint[4] -= weights[2 * n + k]
+                    else:
+                        joint[0] -= weights[2 * n + k]
+                        joint[2] -= weights[2 * n + k]
+                        joint[3] -= weights[2 * n + k]
+                        joint[5] -= weights[2 * n + k]
 
             joint = np.exp(joint)
             joint /= np.sum(joint)
@@ -108,7 +122,7 @@ def _fit_deps(m, n, j, L, weights, joint, conditional):
                 conditional_pos = joint[4] / (joint[1] + joint[4])
                 conditional_neg = joint[1] / (joint[1] + joint[4])
 
-            # Second, takes gradient step
+            # Second, takes likelihood gradient step
 
             for k in range(n):
                 if j == k:
@@ -119,26 +133,95 @@ def _fit_deps(m, n, j, L, weights, joint, conditional):
                     elif L[i, j] == -1:
                         weights[j] += step_size * (conditional_neg - conditional_pos)
                 else:
-                    # Accuracy
                     if L[i, k] == 1:
+                        # Accuracy
                         weights[k] -= step_size * (marginal_pos - marginal_neg - conditional_pos + conditional_neg)
 
-                        for i in range(6):
-                            print joint[i]
-                        print
-                        print marginal_pos
-                        print marginal_neg
-                        print conditional_pos
-                        print conditional_neg
-                        return
+                        # Incoming reinforcement
+                        weights[n + k] -= step_size * (joint[5] - joint[1] - joint[4])
+                        if L[i, j] == 1:
+                            weights[n + k] += step_size * conditional_pos
+                        elif L[i, j] == 0:
+                            weights[n + k] += step_size
+
+                        # Outgoing reinforcement
+                        weights[2 * n + k] -= step_size * joint[5]
+                        if L[i, j] == 1:
+                            weights[2 * n + k] += step_size * conditional_pos
                     elif L[i, k] == -1:
+                        # Accuracy
                         weights[k] -= step_size * (marginal_neg - marginal_pos - conditional_neg + conditional_pos)
 
-                    # Incoming reinforcement
+                        # Incoming reinforcement
+                        weights[n + k] -= step_size * (joint[0] - joint[1] - joint[4])
+                        if L[i, j] == -1:
+                            weights[n + k] += step_size * conditional_neg
+                        elif L[i, j] == 0:
+                            weights[n + k] += step_size
 
-                    # Outgoing reinforcement
-                    pass
+                        # Outgoing reinforcement
+                        weights[2 * n + k] -= step_size * joint[0]
+                        if L[i, j] == 1:
+                            weights[2 * n + k] += step_size * conditional_neg
+                    else:
+                        # No effect of incoming reinforcement
 
+                        # Outgoing reinforcement
+                        weights[2 * n + k] -= step_size * (-1 * joint[0] - joint[2] - joint[3] - joint[5])
+                        if L[i, j] != 0:
+                            weights[2 * n + k] += step_size
 
+            # Third, takes regularization gradient step
+            if random.random() < p_truncation:
+                for k in range(3 * n):
+                    weights[k] = max(0, weights[k] - l1delta) if weights[k] > 0 else min(0, weights[k] + l1delta)
 
+        loss = 0.0
+        for i in range(m):
+            joint[:] = 0, 0, 0, 0, 0, 0
+            for k in range(n):
+                if j == k:
+                    joint[0] += weights[j]
+                    joint[5] += weights[j]
+                    joint[2] -= weights[j]
+                    joint[3] -= weights[j]
+                else:
+                    if L[i, k] == 1:
+                        joint[0] -= weights[k]
+                        joint[1] -= weights[k]
+                        joint[2] -= weights[k]
+                        joint[3] += weights[k]
+                        joint[4] += weights[k]
+                        joint[5] += weights[k]
+
+                        joint[5] += weights[n + k] + weights[2 * n + k]
+                        joint[1] -= weights[n + k]
+                        joint[4] -= weights[n + k]
+
+                    elif L[i, k] == -1:
+                        joint[0] += weights[k]
+                        joint[1] += weights[k]
+                        joint[2] += weights[k]
+                        joint[3] -= weights[k]
+                        joint[4] -= weights[k]
+                        joint[5] -= weights[k]
+
+                        joint[0] += weights[n + k] + weights[2 * n + k]
+                        joint[1] -= weights[n + k]
+                        joint[4] -= weights[n + k]
+
+                    else:
+                        joint[1] -= weights[2 * n + k]
+                        joint[4] -= weights[2 * n + k]
+
+            joint = np.exp(joint)
+            joint /= np.sum(joint)
+
+            if L[i, j] == -1:
+                loss -= np.log(joint[0] + joint[3])
+            elif L[i, j] == 1:
+                loss -= np.log(joint[2] + joint[5])
+            else:
+                loss -= np.log(joint[1] + joint[4])
+        print(loss)
 

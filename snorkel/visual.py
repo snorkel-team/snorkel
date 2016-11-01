@@ -1,4 +1,4 @@
-from .models import Phrase
+#from .models import Phrase
 import os
 import re
 import subprocess
@@ -60,12 +60,9 @@ class VisualLinker():
             html_content = subprocess.check_output(
                 'pdftotext -f {} -l {} -bbox-layout {} -'.format(str(i), str(i), self.pdf_file), shell=True)
             pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(html_content, i)
-            # sort pdf_word_list by page, block top then block left, top, then left
-            pdf_word_list += sorted(pdf_word_list_i, key=lambda (word_id, _): coordinate_map_i[word_id][0:5])
+            pdf_word_list += pdf_word_list_i
             # update coordinate map
-            for word_id in coordinate_map_i.keys():
-                page_num, y_min_block, x_min_block, y_min_line, xmin, y_max_line, xmax = coordinate_map_i[word_id]
-                coordinate_map[word_id] = (page_num, y_min_line, xmin, y_max_line, xmax)
+            coordinate_map.update(coordinate_map_i)
         self.pdf_word_list = pdf_word_list
         self.coordinate_map = coordinate_map
         print "Extracted %d pdf words" % len(self.pdf_word_list)
@@ -73,6 +70,7 @@ class VisualLinker():
     def _coordinates_from_HTML(self, html_content, page_num):
         pdf_word_list = []
         coordinate_map = {}
+        block_coordinates = {}
         soup = BeautifulSoup(html_content, "html.parser")
         blocks = soup.find_all('block')
         i = 0  # counter for word_id in page_num
@@ -87,14 +85,17 @@ class VisualLinker():
                 for word in words:
                     xmin = int(float(word.get('xmin')))
                     xmax = int(float(word.get('xmax')))
-                    for content in re.split("([\(\)\,\'])", word.getText()):
+                    for content in re.split("([\(\)\,\'])", word.getText()): # TODO: check extra characters in CoreNLP
                         if len(content) > 0:  # Ignore empty characters
                             word_id = (page_num, i)
                             pdf_word_list.append((word_id, content))
                             # TODO: add char width approximation
-                            coordinate_map[word_id] = (page_num, y_min_block, x_min_block, y_min_line, xmin, y_max_line,
+                            coordinate_map[word_id] = (page_num, y_min_line, xmin, y_max_line,
                                                        xmax)  # TODO: check this order
+                            block_coordinates[word_id] = (y_min_block, x_min_block)
                             i += 1
+        # sort pdf_word_list by page, block top then block left, top, then left
+        pdf_word_list = sorted(pdf_word_list, key=lambda (word_id, _): block_coordinates[word_id] + coordinate_map[word_id][1:3])
         return pdf_word_list, coordinate_map
 
     def extract_html_words(self):

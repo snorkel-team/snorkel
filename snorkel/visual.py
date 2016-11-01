@@ -56,7 +56,7 @@ class VisualLinker():
         # TEMP
 
         tic = timer()
-        self.link_better(search_max=200)
+        self.link_lists(search_max=200)
         if DEBUG: vizlink.display_links()
         if TIME:  print "Elapsed: %0.3f s" % (timer() - tic)
                     

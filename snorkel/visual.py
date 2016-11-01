@@ -45,14 +45,15 @@ class VisualLinker():
         # TEMP
         html_words = [x[1] for x in self.html_word_list]
         pdf_words  = [x[1] for x in self.pdf_word_list]
-        print "HTML words: ", len(html_words)
-        print "PDF words: ", len(pdf_words)
+        print "(HTML, PDF) words: ", len(html_words), len(pdf_words)
         html_only = set(html_words) - set(pdf_words)
         pdf_only = set(pdf_words) - set(html_words)
-        pprint(zip([x[1] for x in self.html_word_list], [None]*5 + [x[1] for x in self.pdf_word_list]))
+        print "(HTML, PDF) unique: ", (len(html_only), len(pdf_only))
+        # pprint(zip(html_words, [None]*5 + pdf_words))
         # pprint(list(html_only))
         # pprint(list(pdf_only))
-        # pprint(zip(sorted(list(html_only)) + ([None] * (len(pdf_only)-len(html_only))), sorted(list(pdf_only))))
+            #  + ([None] * (len(pdf_only)-len(html_only)))
+        pprint(zip(sorted(list(html_only)) + ([None] * (len(pdf_only)-len(html_only))), sorted(list(pdf_only))))
         # pprint(zip([word[1] for word in self.html_word_list], [None]*5 + [word[1] for word in self.pdf_word_list]))
         import pdb; pdb.set_trace()
 
@@ -99,8 +100,8 @@ class VisualLinker():
                 for word in words:
                     xmin = int(float(word.get('xmin')))
                     xmax = int(float(word.get('xmax')))
-                    for content in re.split(
-                        "([\(\)\,\?\u201C\u201D\u2018\u2019\u00B0(?:\u00B0C)(?:\u00B0F)\u2212\'\\\])", word.getText()): # TODO: check extra characters in CoreNLP
+                    for content in re.split(u"([\(\)\,\?\u2212\u201C\u201D\u2018\u2019\*\']|(?<!http):|\.$|\u00B0C|\u00B0F)", word.getText()):
+                        # import pdb; pdb.set_trace()
                         if len(content) > 0:  # Ignore empty characters
                             word_id = (page_num, i)
                             pdf_word_list.append((word_id, content))

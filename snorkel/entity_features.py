@@ -227,7 +227,7 @@ def visual_binary_features(span1, span2, s1_idxs = None, s2_idxs = None):
         yield 'e2_ALIGNED_' + f
     
     # Skip when coordinates are not available
-    if span1.parent.page != span2.parent.page: return
+    if not set(span1.parent.page) & set(span2.parent.page): return
     bbox1 = _bbox_from_span(span1)
     bbox2 = _bbox_from_span(span2)
     

@@ -3,7 +3,7 @@ import random
 
 
 def get_deps(weights, expand=0.0):
-    deps = []
+    deps = set()
     for dep_mat, dep in (
             (weights.dep_fixing, DEP_FIXING),
             (weights.dep_reinforcing, DEP_REINFORCING),
@@ -12,7 +12,7 @@ def get_deps(weights, expand=0.0):
         for i in range(weights.n):
             for j in range(weights.n):
                 if dep_mat[i, j] != 0 or (random.random() < expand and i != j):
-                    deps.append((i, j, dep))
+                    deps.add((i, j, dep))
 
     return deps
 

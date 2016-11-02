@@ -195,10 +195,10 @@ class VisualLinker():
             display_match_counts()
 
         # second pass: local search for exact matches
-        # if self.verbose:
-        #     print "Local exact matching:"
-        # for i in range((N+2)/search_radius + 1):
-        #     link_exact(max(0, i*search_radius - search_radius), min(N, i*search_radius + search_radius))
+        if self.verbose:
+            print "Local exact matching:"
+        for i in range((N+2)/search_radius + 1):
+            link_exact(max(0, i*search_radius - search_radius), min(N, i*search_radius + search_radius))
         
         # third pass: local search for approximate matches
         search_order = np.array([(-1)**(i%2) * (i/2) for i in range(1, search_max+1)])
@@ -319,14 +319,6 @@ class VisualLinker():
         self.session.commit()
         print "Updated coordinates in snorkel.db"
 
-    def display_candidates(self, candidates, page_num=1, display=True):
-        """
-        Displays the bounding boxes corresponding to candidates on an image of the pdf
-        # boxes is a list of 5-tuples (page, top, left, bottom, right)
-        """
-        boxes = [get_box(span) for c in candidates for span in c.get_arguments()]
-        self.display_boxes(boxes, page_num=page_num, display=display, alternate_colors=True)
-
     def display_boxes(self, boxes, page_num=1, display=True, alternate_colors=False):
         """
         Displays each of the bounding boxes passed in 'boxes' on an image of the pdf
@@ -337,14 +329,14 @@ class VisualLinker():
             (img, img_path) = pdf_to_img(self.pdf_file, page_num)
             colors = [(255, 0, 0), (0, 0, 255)]
         boxes_per_page = defaultdict(int)
-        boxes_by_page = defaultdict(list)
+        boxes_by_page = defaultdict(set)
         for i, (page, top, left, bottom, right) in enumerate(boxes):
             boxes_per_page[page] += 1
-            if (top, left, bottom, right) not in boxes_by_page[page]:
-                boxes_by_page[page].append((top, left, bottom, right))
-                if page == page_num and display:
-                    color = colors[i % 2] if alternate_colors else colors[0]
-                    cv2.rectangle(img, (left, top), (right, bottom), color, 1)
+            boxes_by_page[page].add((top, left, bottom, right))
+        if display:
+            for (top, left, bottom, right) in boxes_by_page[page_num]:
+                color = colors[i % 2] if alternate_colors else colors[0]
+                cv2.rectangle(img, (left, top), (right, bottom), color, 1)
         print "Boxes per page: total (unique)"
         for (page, count) in sorted(boxes_per_page.items()):
             print "Page %d: %d (%d)" % (page, count, len(boxes_by_page[page]))
@@ -354,18 +346,28 @@ class VisualLinker():
             cv2.destroyAllWindows()
             os.system('rm {}'.format(img_path))  # delete image
 
-    def display_word(self, target, page_num=1):
+
+    def display_candidates(self, candidates, page_num=1, display=True):
+        """
+        Displays the bounding boxes corresponding to candidates on an image of the pdf
+        # boxes is a list of 5-tuples (page, top, left, bottom, right)
+        """
+        boxes = [get_box(span) for c in candidates for span in c.get_arguments()]
+        self.display_boxes(boxes, page_num=page_num, display=display, alternate_colors=True)
+
+
+    def display_words(self, target=None, page_num=1, display=True):
         boxes = []
         for phrase in self.document.phrases:
             for i, word in enumerate(phrase.words):
-                if word == target:
+                if target is None or word == target:
                     boxes.append((
                         phrase.page,
                         phrase.top[i],
                         phrase.left[i],
                         phrase.bottom[i],
                         phrase.right[i]))
-        self.display_boxes(boxes, page_num)
+        self.display_boxes(boxes, page_num=page_num, display=display)
 
 
 def pdf_to_img(pdf_file, page_num, page_width=612, page_height=792):

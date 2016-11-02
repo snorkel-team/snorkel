@@ -28,7 +28,7 @@ class VisualLinker():
         self.links = None
         self.separators = re.compile(u"([\(\)\,\?\u2212\u201C\u201D\u2018\u2019\u00B0\*\']|(?<!http):|\.$|\.\.\.)")
 
-    def visual_parse_and_link(self, document):
+    def parse_visual(self, document):
         self.document = document
         self.pdf_file = self.pdf_path + self.document.name + '.pdf'
         if self.vverbose: print self.pdf_file

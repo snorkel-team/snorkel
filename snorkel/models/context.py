@@ -315,8 +315,8 @@ class Phrase(Context):
             return ("Phrase(Doc: %s, Table: %s, Row: %s, Col: %s, Position: %s, Text: %s)" % 
                 (self.document.name,
                 getattr(self.table, 'position', 'X'), 
-                tuple(set([self.row_start, self.row_end])), 
-                tuple(set([self.col_start, self.col_end])), 
+                tuple([self.row_start, self.row_end]), 
+                tuple([self.col_start, self.col_end]), 
                 self.position, 
                 self.text))
 

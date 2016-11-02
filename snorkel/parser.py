@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Sentence, Table, Cell, Phrase, construct_stable_id
+from .models import Corpus, Document, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
 from .utils import ProgressBar, sort_X_on_Y, split_html_attrs
 from .visual import VisualLinker
 import atexit
@@ -290,96 +290,275 @@ class HTMLParser(DocParser):
                 yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), unicode(text)
 
     def _can_read(self, fpath):
-        return fpath.endswith('.html')
+        return fpath.endswith('html') # includes both .html and .xhtml
 
 
 class OmniParser(object):
-    def __init__(self, pdf_path=None, session=None):
-        self.delim = "<NC>" # NC = New Cell 
+    def __init__(self, pdf_path=None, session=None, blacklist=None, whitelist=None):
+        self.delim = "<NN>" # NC = New Cell 
+        # TODO: change this back to 5000+
+        self.batch_size = 100 # TODO: error handling--what if this is smaller than a cell?
         self.corenlp_handler = CoreNLPHandler(delim=self.delim[1:-1])
         self.vizlink = VisualLinker(pdf_path, session) if (pdf_path and session) else None
+        if blacklist and whitelist:
+            raise UserWarning("Either a blacklist or a whitelist may be submitted---not both.")
+        self.blacklist = blacklist # TODO: add 'style' tag to default blacklist
+        self.whitelist = whitelist # TODO: let whitelist parse all children of a whitelist member
 
     def parse(self, document, text):
-        soup = BeautifulSoup(text, 'lxml')
-        self.table_idx = -1
-        self.phrase_idx = 0      
-        for phrase in self.parse_tag(soup, document):
+        for phrase in self.parse_structure(document, text):
             yield phrase
         if self.vizlink:
             self.vizlink.session.commit()
-            self.vizlink.visual_parse_and_link(document) 
+            self.vizlink.parse_visual(document) 
 
-    def parse_tag(self, tag, document, table=None, cell=None, anc_tags=[], anc_attrs=[]):
-        if any(isinstance(child, NavigableString) and unicode(child)!=u'\n' for child in tag.contents):
-            # TODO/NOTE: do '?' replacement for hardware only
-            text = tag.get_text(' ').replace('?','%')
-            tag.clear()
-            tag.string = text
-        for child in tag.contents:
+    def parse_structure(self, document, text):
+        # Setup
+        soup = BeautifulSoup(text, 'lxml')
+        self.table_idx = -1
+        self.cell_idx = 0 #TODO: can this be -1 as well?
+        self.row_idx = -1
+        self.col_idx = -1
+        self.phrase_idx = -1
+        self.contents = "" # formerly new_str
+        self.cell_sum_len = {}
+        self.bool_navigableString_added = {}
+        self.cell_sum_len[self.cell_idx] = 0
+        self.bool_navigableString_added[self.cell_idx] = False
+        self.nested_flag = False
+        self.nested_ctr = 0
+        self.cell = None
+        self.row_spans = {}
+        self.cell_parents = {}
+
+        # Parse contents and store in contents
+        self.parse_tag(soup, document)
+
+        self.contents += self.delim
+        max_len = len(self.contents)
+        self.cell_iter_idx = 1
+        # self.batch = self.contents[0:self.batch_size]
+        batch_end = 0
+        parsed = 0
+        while(parsed < max_len):
+            batch_end = parsed + self.contents[parsed:parsed + self.batch_size].rfind(self.delim) + len(self.delim)
+            for parts in self.corenlp_handler.parse(document, self.contents[parsed:batch_end]):
+                self.phrase_idx += 1
+                (_, _, _, char_end) = split_stable_id(parts['stable_id'])
+                while parsed + char_end > self.cell_sum_len[self.cell_iter_idx]:
+                    self.cell_iter_idx = self.cell_iter_idx + 1
+                cell = self.cell_parents[self.cell_iter_idx]
+                parts['document']       = document
+                parts['phrase_id']      = self.phrase_idx
+                if cell:
+                    parts['table']          = cell.table # TODO: track table information
+                    parts['cell']           = cell
+                    parts['row_start']      = cell.row_start
+                    parts['row_end']        = cell.row_end
+                    parts['col_start']      = cell.col_start
+                    parts['col_end']        = cell.col_end
+                    parts['html_tag']       = cell.html_tag # TODO: restore meaningful HTML attributes
+                    parts['html_attrs']     = cell.html_attrs
+                    parts['html_anc_tags']  = cell.html_anc_tags
+                    parts['html_anc_attrs'] = cell.html_anc_attrs
+                nWords = len(parts['words'])
+                parts['page']           = [None] * nWords
+                parts['top']            = [None] * nWords
+                parts['left']           = [None] * nWords
+                parts['bottom']         = [None] * nWords
+                parts['right']          = [None] * nWords
+                parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'phrase', self.phrase_idx, self.phrase_idx)
+                yield Phrase(**parts)
+            parsed = batch_end
+
+    def parse_tag(self, tag, document, table=None, cell=None):
+        if self.blacklist and tag.name in self.blacklist:
+            return
+        if self.whitelist and tag.name not in self.whitelist:
+            return
+        
+        if(self.nested_flag == False):
+            if any(isinstance(child, NavigableString) and unicode(child)!=u'\n' for child in tag.children):
+                self.nested_flag = True
+                self.nested_ctr = 0
+                if(self.cell_idx != 0):
+                    self.contents = self.contents+self.delim
+                    self.cell_sum_len[self.cell_idx] = self.cell_sum_len[self.cell_idx] + 4
+                self.cell_idx = self.cell_idx + 1
+                self.cell_parents[self.cell_idx] = cell
+                self.cell_sum_len[self.cell_idx] = self.cell_sum_len[self.cell_idx-1]
+                self.bool_navigableString_added[self.cell_idx] = False
+        
+        for child in tag.children:
             if isinstance(child, NavigableString):
-                for parts in self.corenlp_handler.parse(document, unicode(child)):
-                    parts['document'] = document
-                    parts['table'] = table
-                    parts['cell'] = cell
-                    parts['phrase_id'] = self.phrase_idx
-                    # for now, don't pay attention to rowspan/colspan
-                    parts['row_start'] = self.row_num
-                    parts['row_end'] = parts['row_start']
-                    parts['col_start'] = self.col_num
-                    parts['col_end'] = parts['col_start']
-                    parts['html_tag'] = tag.name
-                    parts['html_attrs'] = tag.attrs
-                    parts['html_anc_tags'] = anc_tags
-                    parts['html_anc_attrs'] = anc_attrs
-                    parts['page']   = [None] * len(parts['words'])
-                    parts['top']    = [None] * len(parts['words'])
-                    parts['left']   = [None] * len(parts['words'])
-                    parts['bottom'] = [None] * len(parts['words'])
-                    parts['right']  = [None] * len(parts['words'])
-                    parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'phrase', self.phrase_idx, self.phrase_idx)
-                    yield Phrase(**parts)
-                    self.phrase_idx += 1
+                self.cell_sum_len[self.cell_idx] = self.cell_sum_len[self.cell_idx] + len(child)
+                self.contents = self.contents + child.replace("?", "%")
+                self.bool_navigableString_added[self.cell_idx] = True
             else: # isinstance(child, Tag) = True
-                # TODO: find replacement for this check to reset table to None
-                if "table" not in [parent.name for parent in child.parents]:
-                    table = None
-                    cell = None
-                    self.row_num = None
-                    self.col_num = None
                 if child.name == "table":
                     self.table_idx += 1
-                    self.row_num = -1
-                    self.cell_idx = -1
+                    self.row_idx = -1
                     stable_id = "%s::%s:%s:%s" % (document.name, 'table', self.table_idx, self.table_idx)
                     table = Table(document=document, stable_id=stable_id, position=self.table_idx, text=unicode(child))
                 elif child.name == "tr":
-                    self.row_num += 1
-                    self.col_num = -1
+                    self.row_idx += 1
+                    if(len(self.row_spans)>0):
+                        for idx in self.row_spans:
+                            if(self.row_spans[idx]>=0):
+                                self.row_spans[idx] = self.row_spans[idx] - 1
+                    self.curr_row_spans = {}
+                    self.col_idx = -1
                 elif child.name in ["td","th"]:
-                    self.cell_idx += 1
-                    self.col_num += 1
+                    self.col_idx += 1
+                    
+                    col_idx_iter = self.col_idx
+                    for span_idx in self.row_spans:
+                        if(span_idx>col_idx_iter):
+                            break
+                        if(self.row_spans[span_idx]>0):
+                            col_idx_iter = col_idx_iter+1
+                    #initialize 
+                    col_start = col_idx_iter
+                    col_end = col_idx_iter
+                    row_start = self.row_idx
+                    row_end = self.row_idx
+                    
+                    #update
+                    if(child.has_attr("rowspan")):
+                        self.curr_row_spans[self.col_idx] = int(child["rowspan"])
+                        row_end = row_end + int(child["rowspan"])-1
+                    
+                    if(child.has_attr("colspan")):
+                        col_end = col_end + int(child["colspan"])-1
+                        self.col_idx = self.col_idx + int(child["colspan"])-1
+
                     parts = defaultdict(list)
                     parts['document'] = document
                     parts['table'] = table
-                    parts['position'] = self.cell_idx
-                    parts['row_start'] = self.row_num
-                    parts['row_end'] = parts['row_start']
-                    parts['col_start'] = self.col_num
-                    parts['col_end'] = parts['col_start']
+                    parts['row_start'] = row_start
+                    parts['row_end'] = row_end
+                    parts['col_start'] = col_start
+                    parts['col_end'] = col_end
                     parts['text'] = unicode(child)
                     parts['html_tag'] = child.name
-                    parts['html_attrs'] = None #split_html_attrs(child.attrs.items())
-                    parts['html_anc_tags'] = anc_tags 
-                    parts['html_anc_attrs'] = None #anc_attrs
-                    parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'cell', table.position, self.cell_idx)
+                    parts['html_attrs'] = [] #split_html_attrs(child.attrs.items())
+                    parts['html_anc_tags'] = [] #anc_tags 
+                    parts['html_anc_attrs'] = [] #anc_attrs
+                    parts['stable_id'] = "%s::%s:%s:%s:%s" % (document.name, 'cell', table.position, row_start, col_start)
                     cell = Cell(**parts)
-                # NOTE: recent addition; does this mess up counts?
-                elif child.name == "style":
-                    continue
-                # FIXME: making so many copies is hacky and wasteful; use a stack?
-                temp_anc_tags = copy.deepcopy(anc_tags)
-                temp_anc_tags.append(child.name)
-                temp_anc_attrs = None #copy.deepcopy(anc_attrs)
-                # temp_anc_attrs.extend(split_html_attrs(child.attrs.items()))
-                for phrase in self.parse_tag(child, document, table, cell, temp_anc_tags, temp_anc_attrs):
-                    yield phrase
+                
+                if(self.nested_flag == True):
+                    self.nested_ctr = self.nested_ctr + 1
+                    if(self.bool_navigableString_added[self.cell_idx] == True):
+                        self.contents = self.contents + " "
+                        self.cell_sum_len[self.cell_idx] = self.cell_sum_len[self.cell_idx] + 1
+                    
+                self.parse_tag(child, document, table, cell)
+
+                if(child.name in ["td","th"]):
+                    cell = None
+                elif(child.name == "tr"):
+                    for idx in self.curr_row_spans:
+                        self.row_spans[idx] = self.curr_row_spans[idx]
+                elif(child.name == "table"):
+                    table = None
+                if(self.nested_flag == True):
+                    if(self.nested_ctr == 0):
+                        self.nested_flag = False
+                    else:
+                        self.nested_ctr = self.nested_ctr - 1 
+                if(len(child.contents)!=0):
+                    if(self.nested_flag == True):
+                        self.contents = self.contents + " "
+                        self.cell_sum_len[self.cell_idx] = self.cell_sum_len[self.cell_idx] + 1
+
+# class OmniParser(object):
+#     def __init__(self, pdf_path=None, session=None):
+#         self.delim = "<NC>" # NC = New Cell 
+#         self.corenlp_handler = CoreNLPHandler(delim=self.delim[1:-1])
+#         self.vizlink = VisualLinker(pdf_path, session) if (pdf_path and session) else None
+
+#     def parse(self, document, text):
+#         soup = BeautifulSoup(text, 'lxml')
+#         self.table_idx = -1
+#         self.phrase_idx = 0      
+#         for phrase in self.parse_tag(soup, document):
+#             yield phrase
+#         if self.vizlink:
+#             self.vizlink.session.commit()
+#             self.vizlink.visual_parse_and_link(document) 
+
+#     def parse_tag(self, tag, document, table=None, cell=None, anc_tags=[], anc_attrs=[]):
+#         if any(isinstance(child, NavigableString) and unicode(child)!=u'\n' for child in tag.contents):
+#             # TODO/NOTE: do '?' replacement for hardware only
+#             text = tag.get_text(' ').replace('?','%')
+#             tag.clear()
+#             tag.string = text
+#         for child in tag.contents:
+#             if isinstance(child, NavigableString):
+#                 for parts in self.corenlp_handler.parse(document, unicode(child)):
+#                     parts['document'] = document
+#                     parts['table'] = table
+#                     parts['cell'] = cell
+#                     parts['phrase_id'] = self.phrase_idx
+#                     # for now, don't pay attention to rowspan/colspan
+#                     parts['row_start'] = self.row_num
+#                     parts['row_end'] = parts['row_start']
+#                     parts['col_start'] = self.col_num
+#                     parts['col_end'] = parts['col_start']
+#                     parts['html_tag'] = tag.name
+#                     parts['html_attrs'] = tag.attrs
+#                     parts['html_anc_tags'] = anc_tags
+#                     parts['html_anc_attrs'] = anc_attrs
+#                     parts['page']   = [None] * len(parts['words'])
+#                     parts['top']    = [None] * len(parts['words'])
+#                     parts['left']   = [None] * len(parts['words'])
+#                     parts['bottom'] = [None] * len(parts['words'])
+#                     parts['right']  = [None] * len(parts['words'])
+#                     parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'phrase', self.phrase_idx, self.phrase_idx)
+#                     yield Phrase(**parts)
+#                     self.phrase_idx += 1
+#             else: # isinstance(child, Tag) = True
+#                 # TODO: find replacement for this check to reset table to None
+#                 if "table" not in [parent.name for parent in child.parents]:
+#                     table = None
+#                     cell = None
+#                     self.row_num = None
+#                     self.col_num = None
+#                 if child.name == "table":
+#                     self.table_idx += 1
+#                     self.row_num = -1
+#                     self.cell_idx = -1
+#                     stable_id = "%s::%s:%s:%s" % (document.name, 'table', self.table_idx, self.table_idx)
+#                     table = Table(document=document, stable_id=stable_id, position=self.table_idx, text=unicode(child))
+#                 elif child.name == "tr":
+#                     self.row_num += 1
+#                     self.col_num = -1
+#                 elif child.name in ["td","th"]:
+#                     self.cell_idx += 1
+#                     self.col_num += 1
+#                     parts = defaultdict(list)
+#                     parts['document'] = document
+#                     parts['table'] = table
+#                     parts['position'] = self.cell_idx
+#                     parts['row_start'] = self.row_num
+#                     parts['row_end'] = parts['row_start']
+#                     parts['col_start'] = self.col_num
+#                     parts['col_end'] = parts['col_start']
+#                     parts['text'] = unicode(child)
+#                     parts['html_tag'] = child.name
+#                     parts['html_attrs'] = None #split_html_attrs(child.attrs.items())
+#                     parts['html_anc_tags'] = anc_tags 
+#                     parts['html_anc_attrs'] = None #anc_attrs
+#                     parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'cell', table.position, self.cell_idx)
+#                     cell = Cell(**parts)
+#                 # NOTE: recent addition; does this mess up counts?
+#                 elif child.name == "style":
+#                     continue
+#                 # FIXME: making so many copies is hacky and wasteful; use a stack?
+#                 temp_anc_tags = copy.deepcopy(anc_tags)
+#                 temp_anc_tags.append(child.name)
+#                 temp_anc_attrs = None #copy.deepcopy(anc_attrs)
+#                 # temp_anc_attrs.extend(split_html_attrs(child.attrs.items()))
+#                 for phrase in self.parse_tag(child, document, table, cell, temp_anc_tags, temp_anc_attrs):
+#                     yield phrase

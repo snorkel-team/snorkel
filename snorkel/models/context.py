@@ -241,7 +241,6 @@ class Phrase(Context):
     row_end = Column(Integer)
     col_start = Column(Integer)
     col_end = Column(Integer)
-    page = Column(Integer)
     html_tag = Column(Text)
     if snorkel_postgres:
         html_attrs = Column(postgresql.ARRAY(String))
@@ -254,6 +253,7 @@ class Phrase(Context):
         ner_tags = Column(postgresql.ARRAY(String))
         dep_parents = Column(postgresql.ARRAY(Integer))
         dep_labels = Column(postgresql.ARRAY(String))
+        page = Column(postgresql.ARRAY(Integer))
         top = Column(postgresql.ARRAY(Integer))
         left = Column(postgresql.ARRAY(Integer))
         bottom = Column(postgresql.ARRAY(Integer))
@@ -269,6 +269,7 @@ class Phrase(Context):
         ner_tags = Column(PickleType)
         dep_parents = Column(PickleType)
         dep_labels = Column(PickleType)
+        page = Column(PickleType)
         top = Column(PickleType)
         left = Column(PickleType)
         bottom = Column(PickleType)
@@ -292,7 +293,6 @@ class Phrase(Context):
             'row_end'           : self.row_end,
             'col_start'         : self.col_start,
             'col_end'           : self.col_end,
-            'page'              : self.page,
             'html_tag'          : self.html_tag,
             'html_attrs'        : self.html_attrs,
             'html_anc_tags'     : self.html_anc_tags,
@@ -304,6 +304,7 @@ class Phrase(Context):
             'ner_tags'          : self.ner_tags,
             'dep_parents'       : self.dep_parents,
             'dep_labels'        : self.dep_labels,
+            'page'              : self.page,
             'top'               : self.top,
             'left'              : self.left,
             'bottom'            : self.bottom,
@@ -715,7 +716,6 @@ class ImplicitSpan(Context, TemporaryImplicitSpan):
     expander_key = Column(String, nullable=False)
     position = Column(Integer, nullable=False)
     text = Column(String)
-    page = Column(Integer)
     if snorkel_postgres:
         words = Column(postgresql.ARRAY(String), nullable=False)
         lemmas = Column(postgresql.ARRAY(String))
@@ -723,6 +723,7 @@ class ImplicitSpan(Context, TemporaryImplicitSpan):
         ner_tags = Column(postgresql.ARRAY(String))
         dep_parents = Column(postgresql.ARRAY(Integer))
         dep_labels = Column(postgresql.ARRAY(String))
+        page = Column(postgresql.ARRAY(Integer))
         top = Column(postgresql.ARRAY(Integer))
         left = Column(postgresql.ARRAY(Integer))
         bottom = Column(postgresql.ARRAY(Integer))
@@ -734,6 +735,7 @@ class ImplicitSpan(Context, TemporaryImplicitSpan):
         ner_tags = Column(PickleType)
         dep_parents = Column(PickleType)
         dep_labels = Column(PickleType)
+        page = Column(PickleType)
         top = Column(PickleType)
         left = Column(PickleType)
         bottom = Column(PickleType)

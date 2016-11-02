@@ -289,6 +289,9 @@ class HTMLParser(DocParser):
                 stable_id = self.get_stable_id(name)
                 yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), unicode(text)
 
+    def _can_read(self, fpath):
+        return fpath.endswith('.html')
+
 
 class OmniParser(object):
     def __init__(self, pdf_path=None, session=None):
@@ -328,7 +331,7 @@ class OmniParser(object):
                     parts['html_attrs'] = tag.attrs
                     parts['html_anc_tags'] = anc_tags
                     parts['html_anc_attrs'] = anc_attrs
-                    parts['page']   = None
+                    parts['page']   = [None] * len(parts['words'])
                     parts['top']    = [None] * len(parts['words'])
                     parts['left']   = [None] * len(parts['words'])
                     parts['bottom'] = [None] * len(parts['words'])

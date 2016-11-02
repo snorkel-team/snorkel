@@ -14,35 +14,40 @@ from editdistance import eval as editdist
 
 
 class VisualLinker():
-    def __init__(self, pdf_path, session):
+    def __init__(self, pdf_path, session, time=False, verbose=False, very_verbose=False):
         self.session = session
         self.pdf_path = pdf_path
         self.pdf_file = None
+        self.verbose = verbose
+        self.vverbose = very_verbose
+        self.time = time
         self.document = None
         self.coordinate_map = None
         self.pdf_word_list = None
         self.html_word_list = None
         self.links = None
-        self.separators = re.compile(u"([\(\)\,\?\u2212\u201C\u201D\u2018\u2019\*\']|(?<!http):|\.$|\u00B0C|\u00B0F)")
+        self.separators = re.compile(u"([\(\)\,\?\u2212\u201C\u201D\u2018\u2019\u00B0\*\']|(?<!http):|\.$|\.\.\.)")
 
-    def visual_parse_and_link(self, document, time=False, verbose=False):
-        self.verbose = verbose
+    def visual_parse_and_link(self, document):
         self.document = document
         self.pdf_file = self.pdf_path + self.document.name + '.pdf'
-        if verbose: print self.pdf_file
+        if self.vverbose: print self.pdf_file
 
         tic = timer()
-        self.extract_pdf_words()
-        if verbose: 
+        try:
+            self.extract_pdf_words()
+        except:
+            return
+        if self.vverbose: 
             pprint(self.pdf_word_list[:5])
             pprint(self.coordinate_map.items()[:5])
-        if time:  
+        if self.time:  
             print "Elapsed: %0.3f s" % (timer() - tic)
 
         tic = timer()
         self.extract_html_words()
-        if verbose: pprint(self.html_word_list[:5])
-        if time:  print "Elapsed: %0.3f s" % (timer() - tic)
+        if self.vverbose: pprint(self.html_word_list[:5])
+        if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
         
         # TEMP
         # html_words = [x[1] for x in self.html_word_list]
@@ -58,28 +63,31 @@ class VisualLinker():
 
         tic = timer()
         self.link_lists(search_max=200)
-        if verbose: self.display_links()
-        if time:  print "Elapsed: %0.3f s" % (timer() - tic)
+        if self.vverbose: self.display_links()
+        if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
 
         tic = timer()
         self.update_coordinates()
-        if time:  print "Elapsed: %0.3f s" % (timer() - tic)
+        if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
 
     def extract_pdf_words(self):
         num_pages = subprocess.check_output(
-                "pdfinfo {} | grep Pages  | sed 's/[^0-9]*//'".format(self.pdf_file), shell=True)
+                "pdfinfo '{}' | grep Pages  | sed 's/[^0-9]*//'".format(self.pdf_file), shell=True)
         pdf_word_list = []
         coordinate_map = {}
         for i in range(1, int(num_pages) + 1):
             html_content = subprocess.check_output(
-                'pdftotext -f {} -l {} -bbox-layout {} -'.format(str(i), str(i), self.pdf_file), shell=True)
+                "pdftotext -f {} -l {} -bbox-layout '{}' -".format(str(i), str(i), self.pdf_file), shell=True)
             pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(html_content, i)
             pdf_word_list += pdf_word_list_i
             # update coordinate map
             coordinate_map.update(coordinate_map_i)
         self.pdf_word_list = pdf_word_list
         self.coordinate_map = coordinate_map
-        print "Extracted %d pdf words" % len(self.pdf_word_list)
+        if len(self.pdf_word_list) == 0:
+            raise RuntimeError("PDF does not have extractable words.")
+        if self.verbose:
+            print "Extracted %d pdf words" % len(self.pdf_word_list)
 
     def _coordinates_from_HTML(self, html_content, page_num):
         pdf_word_list = []
@@ -119,7 +127,8 @@ class VisualLinker():
             for i, word in enumerate(phrase.words):
                 html_word_list.append(((phrase.id, i), word))
         self.html_word_list = html_word_list
-        print "Extracted %d html words" % len(self.html_word_list)
+        if self.verbose:
+            print "Extracted %d html words" % len(self.html_word_list)
 
     def link_lists(self, search_max=100, edit_cost=20, offset_cost=1):
         # NOTE: there are probably some inefficiencies here from rehashing words 
@@ -130,10 +139,10 @@ class VisualLinker():
             html_dict = defaultdict(list)
             pdf_dict = defaultdict(list)
             for i, (_, word) in enumerate(self.html_word_list[l:u]):
-                if html_to_pdf[i] is None:
+                if html_to_pdf[l + i] is None:
                     html_dict[word].append(l + i)
             for j, (_, word) in enumerate(self.pdf_word_list[L:U]):
-                if pdf_to_html[j] is None:
+                if pdf_to_html[L + j] is None:
                     pdf_dict[word].append(L + j)
             for word, html_list in html_dict.items():
                 pdf_list = pdf_dict[word]
@@ -150,7 +159,10 @@ class VisualLinker():
             searchIndices = np.clip(offset + search_order, 0, M - 1)
             cost = [0] * search_max
             for j, k in enumerate(searchIndices):
-                other = self.pdf_word_list[k][1]
+                try:
+                    other = self.pdf_word_list[k][1]
+                except:
+                    import pdb; pdb.set_trace()
                 if (word.startswith(other) or word.endswith(other) or
                     other.startswith(word) or other.endswith(word)):
                     html_to_pdf[i] = k
@@ -184,36 +196,38 @@ class VisualLinker():
 
         N = len(self.html_word_list)
         M = len(self.pdf_word_list)
+        assert(N > 0 and M > 0)
         html_to_pdf = [None] * N
         pdf_to_html = [None] * M
         search_radius = search_max/2
 
         # first pass: global search for exact matches
         link_exact(0, N)
-        if self.verbose: 
+        if self.vverbose: 
             print "Global exact matching:"
             display_match_counts()
 
         # second pass: local search for exact matches
-        if self.verbose:
-            print "Local exact matching:"
         for i in range((N+2)/search_radius + 1):
             link_exact(max(0, i*search_radius - search_radius), min(N, i*search_radius + search_radius))
+        if self.vverbose:
+            print "Local exact matching:"
         
         # third pass: local search for approximate matches
         search_order = np.array([(-1)**(i%2) * (i/2) for i in range(1, search_max+1)])
         for i in range(len(html_to_pdf)):
             if html_to_pdf[i] is None:
                 link_fuzzy(i)
-        if self.verbose: 
+        if self.vverbose: 
             print "Local Approximate matching:"
             display_match_counts
 
         # convert list to dict
         matches = sum([html_to_pdf[i] is not None and 
             self.html_word_list[i][1] == self.pdf_word_list[html_to_pdf[i]][1] for i in range(len(self.html_word_list))])
-        total = len(self.html_word_list)        
-        print "Linked %d/%d (%d) html words exactly" % (matches, total, float(matches)/total)
+        total = len(self.html_word_list)
+        if self.verbose:        
+            print "Linked %d/%d (%0.2f) html words exactly" % (matches, total, float(matches)/total)
         self.links = OrderedDict((self.html_word_list[i][0], self.pdf_word_list[html_to_pdf[i]][0]) for i in range(len(self.html_word_list)))
 
     def link_lists_old(self, search_max=200, editCost=20, offsetCost=1, offsetInertia=5):
@@ -261,7 +275,8 @@ class VisualLinker():
             print editDistHist
             self.offsetHist = offsetHist
         self.links = links
-        print "Linked %d words to %d bounding boxes" % (len(self.html_word_list), len(self.pdf_word_list))
+        if self.verbose:
+            print "Linked %d words to %d bounding boxes" % (len(self.html_word_list), len(self.pdf_word_list))
 
     def _calculate_offset(self, listA, listB, seedSize, maxOffset):
         wordsA = zip(*listA[:seedSize])[1]
@@ -309,15 +324,15 @@ class VisualLinker():
         for phrase in self.document.phrases:
             (page, top, left, bottom, right) = zip(
                     *[self.coordinate_map[self.links[((phrase.id), i)]] for i in range(len(phrase.words))])
-            page = page[0]
             self.session.query(Phrase).filter(Phrase.id == phrase.id).update(
-                    {"page": page,
+                    {"page": list(page),
                      "top": list(top),
                      "left": list(left),
                      "bottom": list(bottom),
                      "right": list(right)})
         self.session.commit()
-        print "Updated coordinates in snorkel.db"
+        if self.verbose:
+            print "Updated coordinates in snorkel.db"
 
     def display_boxes(self, boxes, page_num=1, display=True, alternate_colors=False):
         """
@@ -362,7 +377,7 @@ class VisualLinker():
             for i, word in enumerate(phrase.words):
                 if target is None or word == target:
                     boxes.append((
-                        phrase.page,
+                        phrase.page[i],
                         phrase.top[i],
                         phrase.left[i],
                         phrase.bottom[i],
@@ -371,10 +386,10 @@ class VisualLinker():
 
 
 def pdf_to_img(pdf_file, page_num, page_width=612, page_height=792):
-    basename = subprocess.check_output('basename {} .pdf'.format(pdf_file), shell=True)
-    dirname = subprocess.check_output('dirname {}'.format(pdf_file), shell=True)
+    basename = subprocess.check_output("basename '{}' .pdf".format(pdf_file), shell=True)
+    dirname = subprocess.check_output("dirname '{}'".format(pdf_file), shell=True)
     img_path = dirname.rstrip() + '/' + basename.rstrip()
-    os.system('pdftoppm -f {} -l {} -jpeg {} {}'.format(page_num, page_num, pdf_file, img_path))
+    os.system("pdftoppm -f {} -l {} -jpeg '{}' '{}'".format(page_num, page_num, pdf_file, img_path))
     img_path += '-{}.jpg'.format(page_num)
     img = cv2.resize(cv2.imread(img_path), (page_width, page_height))
     return (img, img_path)

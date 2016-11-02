@@ -23,7 +23,7 @@ class DependencySelector(object):
         m, n = L.shape
 
         # Initializes data structures
-        deps = {}
+        deps = set()
         weights = np.zeros((3 * n,))
         joint = np.zeros((6,))
         # joint[0] = P(Y = -1, L_j = -1)
@@ -42,12 +42,11 @@ class DependencySelector(object):
 
             _fit_deps(m, n, j, L, weights, joint, threshold, truncation)
 
-            deps[j] = []
             for k in range(n):
                 if abs(weights[n + k]) > threshold:
-                    deps[j].append((j, k, DEP_REINFORCING))
+                    deps.add((j, k, DEP_REINFORCING))
                 if abs(weights[2 * n + k]) > threshold:
-                    deps[j].append((k, j, DEP_REINFORCING))
+                    deps.add((k, j, DEP_REINFORCING))
 
         return deps
 

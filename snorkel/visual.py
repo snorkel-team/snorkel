@@ -26,6 +26,7 @@ class VisualLinker():
         self.pdf_word_list = None
         self.html_word_list = None
         self.links = None
+        self.pdf_dim = None
         self.separators = re.compile(u"([\(\)\,\?\u2212\u201C\u201D\u2018\u2019\u00B0\*\']|(?<!http):|\.$|\.\.\.)")
 
     def parse_visual(self, document):
@@ -78,7 +79,9 @@ class VisualLinker():
         for i in range(1, int(num_pages) + 1):
             html_content = subprocess.check_output(
                 "pdftotext -f {} -l {} -bbox-layout '{}' -".format(str(i), str(i), self.pdf_file), shell=True)
-            pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(html_content, i)
+            soup = BeautifulSoup(html_content, "html.parser")
+            pages = soup.find_all('page')
+            pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(pages[0], i)
             pdf_word_list += pdf_word_list_i
             # update coordinate map
             coordinate_map.update(coordinate_map_i)
@@ -86,15 +89,17 @@ class VisualLinker():
         self.coordinate_map = coordinate_map
         if len(self.pdf_word_list) == 0:
             raise RuntimeError("PDF does not have extractable words.")
+        # take last page dimensions
+        page_width, page_height = int(float(pages[0].get('width'))), int(float(pages[0].get('height')))
+        self.pdf_dim = (page_width, page_height)
         if self.verbose:
             print "Extracted %d pdf words" % len(self.pdf_word_list)
 
-    def _coordinates_from_HTML(self, html_content, page_num):
+    def _coordinates_from_HTML(self, page, page_num):
         pdf_word_list = []
         coordinate_map = {}
         block_coordinates = {}
-        soup = BeautifulSoup(html_content, "html.parser")
-        blocks = soup.find_all('block')
+        blocks = page.find_all('block')
         i = 0  # counter for word_id in page_num
         for block in blocks:
             x_min_block = int(float(block.get('xmin')))
@@ -341,7 +346,7 @@ class VisualLinker():
         # boxes is a list of 5-tuples (page, top, left, bottom, right)
         """
         if display:
-            (img, img_path) = pdf_to_img(self.pdf_file, page_num)
+            (img, img_path) = self.pdf_to_img(page_num)
             colors = [(255, 0, 0), (0, 0, 255)]
         boxes_per_page = defaultdict(int)
         boxes_by_page = defaultdict(set)
@@ -361,7 +366,6 @@ class VisualLinker():
             cv2.destroyAllWindows()
             os.system('rm {}'.format(img_path))  # delete image
 
-
     def display_candidates(self, candidates, page_num=1, display=True):
         """
         Displays the bounding boxes corresponding to candidates on an image of the pdf
@@ -369,7 +373,6 @@ class VisualLinker():
         """
         boxes = [get_box(span) for c in candidates for span in c.get_arguments()]
         self.display_boxes(boxes, page_num=page_num, display=display, alternate_colors=True)
-
 
     def display_words(self, target=None, page_num=1, display=True):
         boxes = []
@@ -384,15 +387,15 @@ class VisualLinker():
                         phrase.right[i]))
         self.display_boxes(boxes, page_num=page_num, display=display)
 
-
-def pdf_to_img(pdf_file, page_num, page_width=612, page_height=792):
-    basename = subprocess.check_output("basename '{}' .pdf".format(pdf_file), shell=True)
-    dirname = subprocess.check_output("dirname '{}'".format(pdf_file), shell=True)
-    img_path = dirname.rstrip() + '/' + basename.rstrip()
-    os.system("pdftoppm -f {} -l {} -jpeg '{}' '{}'".format(page_num, page_num, pdf_file, img_path))
-    img_path += '-{}.jpg'.format(page_num)
-    img = cv2.resize(cv2.imread(img_path), (page_width, page_height))
-    return (img, img_path)
+    def pdf_to_img(self, page_num):
+        page_width, page_height = self.pdf_dim
+        basename = subprocess.check_output("basename '{}' .pdf".format(self.pdf_file), shell=True)
+        dirname = subprocess.check_output("dirname '{}'".format(self.pdf_file), shell=True)
+        img_path = dirname.rstrip() + '/' + basename.rstrip()
+        os.system("pdftoppm -f {} -l {} -singlefile -jpeg '{}' '{}'".format(page_num, page_num, self.pdf_file, img_path))
+        img_path += '.jpg'
+        img = cv2.resize(cv2.imread(img_path), (page_width, page_height))
+        return (img, img_path)
 
 
 def get_box(span):

@@ -167,8 +167,11 @@ class SSIModel(object):
         for i, cid in enumerate(self.d):
             self.cid_to_rows[cid].append(i)
     
-    def train(self, X, y, rate=1e-3, n_iter=3, n_iter_neg=10, sample_close_negs=True, verbose=True):
+    def train(self, X, Y, rate=1e-3, n_iter=3, n_iter_sample=10, n_iter_neg=3, sample_close_negs=True, verbose=True):
         """
+        X is an N x V sparse matrix of N vectorized disease mentions (V = vocab size) to be linked to CIDs
+        Y is an N x K sparse matrix of label *probabilities*, where K = |CIDs|
+
         If sample_close_negs = True, negative terms will be sampled only from "close"
         terms to the phrase, i.e. with _some_ direct word overlap.
         """
@@ -180,7 +183,7 @@ class SSIModel(object):
             M          = X * self.D.T
             close_negs = {}
             for i in range(N):
-                close_negs[i] = set([self.d[j] for j in M.getrow(i).nonzero()[1]]).difference([y[i]])
+                close_negs[i] = set([self.d[j] for j in M.getrow(i).nonzero()[1]])
 
         # Initialize W = I
         W = identity(self.V, format='csr')
@@ -201,27 +204,37 @@ class SSIModel(object):
                 # First pick x, a random training phrase
                 x = X.getrow(i)
 
-                # NOTE: Skip OOD training examples!
-                cid = y[i]
-                if cid not in self.cid_to_rows:
-                    continue
+                for si in range(n_iter_sample):
+                    
+                    # Sample the training example
+                    cids = Y.getrow(i).nonzero()[1]
+                    t    = random.random()
+                    for cid in cids:
+                        t -= Y[i,cid]
+                        if t < 0:
+                            break
 
-                # Next pick tp, a random dictionary term which maps to the correct CID for x
-                j  = random.choice(self.cid_to_rows[cid])
-                tp = self.D.getrow(j)
+                    # NOTE: Skip OOD training examples!
+                    if cid not in self.cid_to_rows:
+                        continue
 
-                # Next pick tp, a random dictionary term which maps to an *incorrect* CID for x
-                # Take multiple samples for this training example
-                neg_cids = close_negs[i] if sample_close_negs and len(close_negs[i]) > 0 else self.cids.difference([cid])
-                for itn in range(n_iter_neg):
-                    cid_neg  = random.sample(neg_cids, 1)[0]
-                    k        = random.choice(self.cid_to_rows[cid_neg])
-                    tn       = self.D.getrow(k)
+                    # Next pick tp, a random dictionary term which maps to the correct CID for x
+                    j  = random.choice(self.cid_to_rows[cid])
+                    tp = self.D.getrow(j)
 
-                    # Take gradient step
-                    if 1 - (x * W * tp.T)[0,0] - b*(x * tp.T)[0,0] + (x * W * tn.T)[0,0] + b*(x * tn.T)[0,0] > 0:
-                        W = W + rate * ( x.T * tp - x.T * tn )
-                        b = b + rate * ( (x * tp.T)[0,0] - (x * tn.T)[0,0])
+                    # Next pick tp, a random dictionary term which maps to an *incorrect* CID for x
+                    # Take multiple samples for this training example
+                    neg_cids = close_negs[i] if sample_close_negs and len(close_negs[i]) > 0 else self.cids
+                    neg_cids = neg_cids.difference([cid])
+                    for itn in range(n_iter_neg):
+                        cid_neg  = random.sample(neg_cids, 1)[0]
+                        k        = random.choice(self.cid_to_rows[cid_neg])
+                        tn       = self.D.getrow(k)
+
+                        # Take gradient step
+                        if 1 - (x*W*tp.T)[0,0] - b*(x * tp.T)[0,0] + (x * W * tn.T)[0,0] + b*(x * tn.T)[0,0] > 0:
+                            W = W + rate * ( x.T * tp - x.T * tn )
+                            b = b + rate * ( (x * tp.T)[0,0] - (x * tn.T)[0,0])
         print "\n"
         self.W = W
         self.b = b

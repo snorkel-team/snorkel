@@ -484,7 +484,7 @@ def _preprocess_visual_features(doc):
     
     phrase_by_page = defaultdict(list)
     for phrase in doc.phrases: 
-        phrase_by_page[phrase.page].append(phrase)
+        phrase_by_page[phrase.page[0]].append(phrase)
         phrase._aligned_lemmas = set()
     
     for page, phrases in phrase_by_page.iteritems():

@@ -11,6 +11,7 @@ import itertools
 import glob
 import json
 import lxml.etree as et
+import numpy as np
 import os
 import re
 import requests
@@ -295,15 +296,14 @@ class HTMLParser(DocParser):
 
 
 class OmniParser(object):
-    def __init__(self, pdf_path=None, session=None, blacklist=None, whitelist=None):
-        self.delim = "<NN>" # NC = New Cell 
-        # TODO: change this back to 5000+
-        self.batch_size = 5000 # TODO: error handling--what if this is smaller than a cell?
+    def __init__(self, pdf_path=None, session=None, blacklist=["style"], whitelist=None):
+        self.delim = "<NB>" # N = New Block 
+        self.batch_size = 7500 # TODO: error handling--what if this is smaller than a cell?
         self.corenlp_handler = CoreNLPHandler(delim=self.delim[1:-1])
         self.vizlink = VisualLinker(pdf_path, session) if (pdf_path and session) else None
-        if blacklist and whitelist:
-            raise UserWarning("Either a blacklist or a whitelist may be submitted---not both.")
-        self.blacklist = blacklist # TODO: add 'style' tag to default blacklist
+        # if blacklist and whitelist:
+        #     raise UserWarning("Either a blacklist or a whitelist may be submitted---not both.")
+        self.blacklist = blacklist
         self.whitelist = whitelist # TODO: let whitelist parse all children of a whitelist member
 
     def parse(self, document, text):
@@ -314,159 +314,131 @@ class OmniParser(object):
             self.vizlink.parse_visual(document) 
 
     def parse_structure(self, document, text):
-        parent_start = {0: 0}
-        phrase_parents = {}
-
-        def parse_tag(tag, document, table=None, cell=None):
-            if self.blacklist and tag.name in self.blacklist:
-                return
-            if self.whitelist and tag.name not in self.whitelist:
-                return
-            
-            if any(isinstance(child, NavigableString) and unicode(child) != u'\n' for child in tag.children):
-                text = tag.get_text(' ')
-                tag.clear()
-                tag.string = text
-            # if(self.nested_flag == False):        
-                    # self.nested_flag = True
-                    # self.nested_ctr = 0
-                    # if(self.cell_idx != 0):
-                    #     self.contents += self.delim
-                    #     parent_start[self.cell_idx] = parent_start[self.cell_idx] + len(self.delim)
-                    # self.cell_idx = self.cell_idx + 1
-                    # phrase_parents[self.cell_idx] = cell
-                    # parent_start[self.cell_idx] = parent_start[self.cell_idx-1]
-                    # self.bool_navigableString_added[self.cell_idx] = False
-            
-            for child in tag.children:
-                if isinstance(child, NavigableString):
-                    self.contents += child
-                    self.contents += self.delim
-                    parent_start[self.cell_idx] = parent_start[self.cell_idx] + len(child) + len(self.delim)
-                    # TODO: fix this; store generic parent (doc, table, or cell) 
-                        # AND where in the padded text block corresponds to it
-                else: # isinstance(child, Tag) = True
-                    if child.name == "table":
-                        self.table_grid = defaultdict(int)
-                        self.table_idx += 1
-                        self.row_idx = -1
-                        self.cell_position = -1
-                        stable_id = "%s::%s:%s:%s" % (document.name, 'table', self.table_idx, self.table_idx)
-                        table = Table(document=document, stable_id=stable_id, position=self.table_idx, text=unicode(child))
-                    elif child.name == "tr":
-                        self.row_idx += 1
-                        self.col_idx = -1
-                    elif child.name in ["td","th"]:
-                        self.col_idx += 1
-                        self.cell_idx += 1
-                        self.cell_position += 1
-
-                        # calculate row_start/col_start
-                        while self.table_grid[(self.row_idx, self.col_idx)]:
-                            self.col_idx += 1
-                        col_start = self.col_idx
-                        row_start = self.row_idx
-                        
-                        # calculate row_end/col_end
-                        row_end = row_start
-                        if child.has_attr("rowspan"):
-                            row_end += int(child["rowspan"]) - 1
-                        col_end = col_start
-                        if child.has_attr("colspan"):
-                            col_end += int(child["colspan"]) - 1
-
-                        # update table_grid with occupied cells
-                        for r, c in itertools.product(range(row_start, row_end+1), range(col_start, col_end+1)):
-                            self.table_grid[r,c] = 1
-
-                        # construct cell
-                        parts = defaultdict(list)
-                        parts['document']       = document
-                        parts['table']          = table
-                        parts['row_start']      = row_start
-                        parts['row_end']        = row_end
-                        parts['col_start']      = col_start
-                        parts['col_end']        = col_end
-                        parts['position']       = self.cell_position
-                        parts['text']           = unicode(child)
-                        parts['html_tag']       = child.name
-                        parts['html_attrs']     = [] #split_html_attrs(child.attrs.items())
-                        parts['html_anc_tags']  = [] #anc_tags 
-                        parts['html_anc_attrs'] = [] #anc_attrs
-                        parts['stable_id']      = "%s::%s:%s:%s:%s" % (document.name, 'cell', table.position, row_start, col_start)
-                        cell = Cell(**parts)
-
-                    # if(self.nested_flag == True):
-                    #     self.nested_ctr += 1
-                    #     if(self.bool_navigableString_added[self.cell_idx] == True):
-                    #         self.contents += " "
-                    #         parent_start[self.cell_idx] +=  1
-                        
-                    parse_tag(child, document, table, cell)
-
-                    # reset table, cell pointers
-                    # if(child.name in ["td","th"]):
-                    #     cell = None
-                    # elif(child.name == "table"):
-                    #     table = None
-
-                    # if(self.nested_flag == True):
-                    #     if(self.nested_ctr == 0):
-                    #         self.nested_flag = False
-                    #     else:
-                    #         self.nested_ctr = self.nested_ctr - 1 
-                    # if(len(child.contents) !=0):
-                    #     if(self.nested_flag == True):
-                    #         self.contents += " "
-                    #         parent_start[self.cell_idx] +=  1
-
         # Setup
-        self.nested_flag = False
-        self.table_idx = -1
-        self.cell_idx = 0 #TODO: can this be -1 as well?
-        self.row_idx = -1
-        self.col_idx = -1
-        self.contents = "" # formerly new_str
+        self.table_idx = 0
+        self.cell_idx = 0
+        self.row_idx = 0
+        self.col_idx = 0
+        self.contents = "" 
+        parents = []
+        block_lengths = []
 
-        # self.cell_len = []
+        def parse_tag(tag, document, table=None, cell=None, anc_tags=[]):
+                    if self.blacklist and tag.name in self.blacklist:
+                        return
+                    if self.whitelist and tag.name not in self.whitelist:
+                        return
+                    
+                    if any(isinstance(child, NavigableString) and unicode(child) != u'\n' for child in tag.children):
+                        text = tag.get_text(' ')
+                        tag.clear()
+                        tag.string = text
+                    for child in tag.children:
+                        if isinstance(child, NavigableString):
+                            self.contents += child
+                            self.contents += self.delim
+                            if cell:
+                                parent = cell 
+                            elif table:
+                                parent = table 
+                            else:
+                                parent = document
+                            parents.append(parent)
+                            block_lengths.append(len(child) + len(self.delim))
+                        else: # isinstance(child, Tag) = True
+                            if child.name == "table":
+                                self.table_grid = defaultdict(int)
+                                self.row_idx = 0
+                                self.cell_position = 0
+                                stable_id = "%s::%s:%s:%s" % (document.name, "table", self.table_idx, self.table_idx)
+                                table = Table(document=document, stable_id=stable_id, position=self.table_idx, text=unicode(child))
+                            elif child.name == "tr":
+                                self.col_idx = 0
+                            elif child.name in ["td","th"]:
+                                # calculate row_start/col_start
+                                while self.table_grid[(self.row_idx, self.col_idx)]:
+                                    self.col_idx += 1
+                                col_start = self.col_idx
+                                row_start = self.row_idx
+                                
+                                # calculate row_end/col_end
+                                row_end = row_start
+                                if child.has_attr("rowspan"):
+                                    row_end += int(child["rowspan"]) - 1
+                                col_end = col_start
+                                if child.has_attr("colspan"):
+                                    col_end += int(child["colspan"]) - 1
 
-        self.bool_navigableString_added = {}
-        self.bool_navigableString_added[self.cell_idx] = False
-        self.nested_ctr = 0
+                                # update table_grid with occupied cells
+                                for r, c in itertools.product(range(row_start, row_end+1), range(col_start, col_end+1)):
+                                    self.table_grid[r,c] = 1
+
+                                # construct cell
+                                parts = defaultdict(list)
+                                parts["document"]       = document
+                                parts["table"]          = table
+                                parts["row_start"]      = row_start
+                                parts["row_end"]        = row_end
+                                parts["col_start"]      = col_start
+                                parts["col_end"]        = col_end
+                                parts["position"]       = self.cell_position
+                                parts["text"]           = unicode(child)
+                                parts["html_tag"]       = child.name
+                                parts["html_attrs"]     = [] #split_html_attrs(child.attrs.items())
+                                parts["html_anc_tags"]  = list(anc_tags)
+                                parts["html_anc_attrs"] = [] #anc_attrs
+                                parts["stable_id"]      = "%s::%s:%s:%s:%s" % (document.name, "cell", table.position, row_start, col_start)
+                                cell = Cell(**parts)
+
+                            anc_tags.append(child.name)
+                            # print anc_tags
+                            parse_tag(child, document, table, cell, anc_tags)
+                            anc_tags.pop()
+
+                            # reset table, cell pointers
+                            if child.name in ["td","th"]:
+                                cell = None
+                                self.col_idx += 1
+                                self.cell_idx += 1
+                                self.cell_position += 1
+                            elif child.name == "tr":
+                                self.row_idx += 1  
+                            elif(child.name == "table"):
+                                table = None
+                                self.table_idx += 1
 
         # Parse document and store text in self.contents, padded with self.delim
         soup = BeautifulSoup(text, 'lxml')
         parse_tag(soup, document)
+        block_char_end = np.cumsum(block_lengths)
 
-        # cell_start = np.cumsum(cell_len)
-        max_len = len(self.contents)
-        parent_idx = 1
+        content_length = len(self.contents)
         parsed = 0
-        phrase_idx = -1
-        phrase_position = -1
-        while(parsed < max_len):
+        parent_idx = 0
+        phrase_idx = 0
+        phrase_position = 0
+        while(parsed < content_length):
             batch_end = parsed + self.contents[parsed:parsed + self.batch_size].rfind(self.delim) + len(self.delim)
             for parts in self.corenlp_handler.parse(document, self.contents[parsed:batch_end]):
-                phrase_idx += 1
                 (_, _, _, char_end) = split_stable_id(parts['stable_id'])
-                while parsed + char_end > parent_start[parent_idx]:
-                    parent_idx = parent_idx + 1
-                    phrase_position = -1
-                phrase_position += 1
-                parent = phrase_parents[parent_idx]
+                while parsed + char_end > block_char_end[parent_idx]:
+                    parent_idx += 1
+                    phrase_position = 0
+                parent = parents[parent_idx]
                 parts['document']           = document
                 parts['phrase_id']          = phrase_idx
                 parts['position']           = phrase_position
+                # parts['parent']           = parent
                 if isinstance(parent, Table):
                     parts['table']          = parent
-                if isinstance(parent, Cell):
-                    parts['table']          = parent.table # TODO: track table information
+                elif isinstance(parent, Cell):
+                    parts['table']          = parent.table 
                     parts['cell']           = parent
                     parts['row_start']      = parent.row_start
                     parts['row_end']        = parent.row_end
                     parts['col_start']      = parent.col_start
                     parts['col_end']        = parent.col_end
-                    parts['html_tag']       = parent.html_tag # TODO: restore meaningful HTML attributes
+                    parts['html_tag']       = parent.html_tag
                     parts['html_attrs']     = parent.html_attrs
                     parts['html_anc_tags']  = parent.html_anc_tags
                     parts['html_anc_attrs'] = parent.html_anc_attrs
@@ -478,6 +450,8 @@ class OmniParser(object):
                 parts['right']          = [None] * nWords
                 parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'phrase', phrase_idx, phrase_idx)
                 yield Phrase(**parts)
+                phrase_idx += 1
+                phrase_position += 1
             parsed = batch_end
 
 

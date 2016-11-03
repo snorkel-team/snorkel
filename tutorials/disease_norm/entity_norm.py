@@ -126,7 +126,8 @@ class CanonDictVectorizer(Vectorizer):
         # Compute word IDF scores **based on canonical ID not term counts!**
         N = len(all_cids)
         for word in self.word_index.keys():
-            self.word_idf[word] = np.log( N / float(len(self.word_to_cids[word])) )
+            if len(self.word_to_cids[word]) > 0:
+                self.word_idf[word] = np.log( N / float(len(self.word_to_cids[word])) )
 
         # Add other OOD phrases, e.g. from training set
         # TODO: How should these be weighted?

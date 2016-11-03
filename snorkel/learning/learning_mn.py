@@ -1,10 +1,6 @@
 import numpy as np
 import scipy.sparse as sparse
-from scipy.optimize import minimize
 import warnings
-from learning_utils import sparse_abs
-from lstm import LSTMModel
-from sklearn import linear_model
 
 DEFAULT_MU = 1e-6
 DEFAULT_RATE = 0.01
@@ -143,7 +139,7 @@ class LogReg(NoiseAwareModel):
             # Check for convergence
             wn     = np.linalg.norm(w, ord=2)
             g_size = np.linalg.norm(g, ord=2)
-            if step % 250 == 0 and verbose:
+            if step % 100 == 0 and verbose:
                 print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size)
             if (wn < 1e-12 or g_size / wn < tol) and step >= 10:
                 if verbose:

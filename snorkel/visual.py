@@ -379,8 +379,8 @@ def pdf_to_img(self, page_num):
     basename = subprocess.check_output('basename {} .pdf'.format(pdf_file), shell=True)
     dirname = subprocess.check_output('dirname {}'.format(pdf_file), shell=True)
     img_path = dirname.rstrip() + '/' + basename.rstrip()
-    os.system('pdftoppm -f {} -l {} -jpeg {} {}'.format(page_num, page_num, pdf_file, img_path))
-    img_path += '-{}.jpg'.format(page_num)
+    os.system('pdftoppm -f {} -l {} -singlefile -jpeg {} {}'.format(page_num, page_num, pdf_file, img_path))
+    img_path += '.jpg'
     img = cv2.resize(cv2.imread(img_path), (page_width, page_height))
     return (img, img_path)
 

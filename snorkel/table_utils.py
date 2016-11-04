@@ -1,12 +1,8 @@
-import itertools
-
 def _min_range_diff(a_start, a_end, b_start, b_end, absolute=True):
     # if absolute=True, return the absolute value of minimum magnitude difference
     # if absolute=False, return the raw value of minimum magnitude difference
-    f = lambda x: (abs(x) if absolute else x)
-    return min([f(ii[0] - ii[1]) for ii in itertools.product(
-        range(a_start, a_end + 1),
-        range(b_start, b_end + 1))], key=abs)
+    diff = min(a_end - b_start, b_end - a_start, key = abs)
+    return abs(diff) if absolute else diff
 
 def min_row_diff(a, b, absolute=True):
     return _min_range_diff(a.row_start, a.row_end, b.row_start, b.row_end, absolute=absolute)

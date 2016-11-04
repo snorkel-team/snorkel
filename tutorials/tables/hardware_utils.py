@@ -124,7 +124,6 @@ class OmniNgramsPart(OmniNgrams):
         # self.parts_by_doc = defaultdict(set)
         # for part in gold_parts:
         #     self.parts_by_doc[part[0]].add(part[1]) # TODO: change gold_parts to work with namedTuples
-        # import pdb; pdb.set_trace()
 
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
@@ -283,7 +282,7 @@ def entity_confusion_matrix(pred, gold):
     return (TP, FP, FN)
 
 
-def entity_level_total_recall(candidates, gold_file, attribute, relation=True, integerize=False):
+def entity_level_total_recall(candidates, gold_file, attribute, corpus=None, relation=True, integerize=False):
     """Checks entity-level recall of candidates compared to gold.
 
     Turns a CandidateSet into a normal set of entity-level tuples
@@ -296,7 +295,8 @@ def entity_level_total_recall(candidates, gold_file, attribute, relation=True, i
         gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
         entity_level_total_recall(candidates, gold_file, 'stg_temp_min')
     """
-    gold_set = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=relation, attrib=attribute, integerize=integerize)
+    docs = [(doc.name).upper() for doc in corpus.documents] if corpus else None
+    gold_set = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=True, val_on=relation, attrib=attribute, integerize=integerize)
     # Turn CandidateSet into set of tuples
     print "Preparing candidates..."
     pb = ProgressBar(len(candidates))
@@ -331,10 +331,8 @@ def entity_level_total_recall(candidates, gold_file, attribute, relation=True, i
 
 
 def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
-    docs = []
-    for doc in corpus:
-        docs.append((doc.name).upper())
-    gold_dict = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=True, attrib=attrib, docs=docs)
+    docs = [(doc.name).upper() for doc in corpus.documents] if corpus else None
+    gold_dict = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=True, val_on=True, attrib=attrib)
 
     TP = FP = TN = FN = 0
     pos = set([((c[0].parent.document.name).upper(),
@@ -527,9 +525,8 @@ def entity_to_candidates(entity, candidate_subset):
     matches = []
     for c in candidate_subset:
         # NOTE: should some 'upper' be going on here somewhere?
-        part = c.get_arguments()[0]
-        attr = c.get_arguments()[1]
-        if (part.parent.document.name, part.get_span(), attr.get_span()) == entity:
+        (part, attr) = c.get_arguments()
+        if (part.parent.document.name.upper(), part.get_span(), attr.get_span()) == entity:
             matches.append(c)
     return matches
 

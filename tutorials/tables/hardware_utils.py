@@ -101,7 +101,7 @@ class OmniNgramsTemp(OmniNgrams):
                     ner_tags       = [ts.get_attrib_tokens('ner_tags')[-1]],
                     dep_parents    = [ts.get_attrib_tokens('dep_parents')[-1]],
                     dep_labels     = [ts.get_attrib_tokens('dep_labels')[-1]],
-                    page           = [ts.parent.page],
+                    page           = [ts.get_attrib_tokens('page')[-1]],
                     top            = [ts.get_attrib_tokens('top')[-1]],
                     left           = [ts.get_attrib_tokens('left')[-1]],
                     bottom         = [ts.get_attrib_tokens('bottom')[-1]],
@@ -155,7 +155,7 @@ class OmniNgramsPart(OmniNgrams):
                         ner_tags       = [ts.get_attrib_tokens('ner_tags')[0]],
                         dep_parents    = [ts.get_attrib_tokens('dep_parents')[0]],
                         dep_labels     = [ts.get_attrib_tokens('dep_labels')[0]],
-                        page           = [ts.parent.page],
+                        page           = [min(ts.get_attrib_tokens('page'))],
                         top            = [min(ts.get_attrib_tokens('top'))],
                         left           = [max(ts.get_attrib_tokens('left'))],
                         bottom         = [min(ts.get_attrib_tokens('bottom'))],
@@ -203,11 +203,13 @@ def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None,
             if docs is None or doc.upper() in docs:
                 if attrib and attr != attrib:
                     continue
+                if not val:
+                    continue
                 else:
                     key = []
                     if doc_on:  key.append(doc.upper())
                     if part_on: key.append(part.upper())
-                    if val_on and val:
+                    if val_on:
                         if integerize:
                             key.append(int(float(val)))
                         else:

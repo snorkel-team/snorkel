@@ -1695,7 +1695,7 @@ bc546_diotec,BC546,NPN,polarity
 bc546_diotec,BC546,3,pin_count
 bc546_diotec,BC546,85,ce_v_max
 bc546_diotec,BC546,V,ce_v_unit
-bc546_diotec,BC546,85,cb_v_max
+bc546_diotec,BC546,80,cb_v_max
 bc546_diotec,BC546,V,cb_v_unit
 bc546_diotec,BC546,5,eb_v_max
 bc546_diotec,BC546,V,eb_v_unit
@@ -1714,7 +1714,7 @@ bc546_diotec,BC546A,NPN,polarity
 bc546_diotec,BC546A,3,pin_count
 bc546_diotec,BC546A,85,ce_v_max
 bc546_diotec,BC546A,V,ce_v_unit
-bc546_diotec,BC546A,85,cb_v_max
+bc546_diotec,BC546A,80,cb_v_max
 bc546_diotec,BC546A,V,cb_v_unit
 bc546_diotec,BC546A,5,eb_v_max
 bc546_diotec,BC546A,V,eb_v_unit
@@ -1733,7 +1733,7 @@ bc546_diotec,BC546B,NPN,polarity
 bc546_diotec,BC546B,3,pin_count
 bc546_diotec,BC546B,85,ce_v_max
 bc546_diotec,BC546B,V,ce_v_unit
-bc546_diotec,BC546B,85,cb_v_max
+bc546_diotec,BC546B,80,cb_v_max
 bc546_diotec,BC546B,V,cb_v_unit
 bc546_diotec,BC546B,5,eb_v_max
 bc546_diotec,BC546B,V,eb_v_unit

@@ -461,10 +461,10 @@ def _bbox_from_span(span):
 def _bbox_from_phrase(phrase):
     if isinstance(phrase, Phrase) and phrase.page:
         return _Bbox(
-                    min(span.top), 
-                    max(span.bottom),
-                    min(span.left),
-                    max(span.right))
+                    min(phrase.top), 
+                    max(phrase.bottom),
+                    min(phrase.left),
+                    max(phrase.right))
     else:
         return None
 

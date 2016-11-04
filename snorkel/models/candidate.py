@@ -79,6 +79,9 @@ class Candidate(SnorkelBase):
     def get_arguments(self):
         return tuple(getattr(self, name) for name in self.__argnames__)
 
+    def __len__(self):
+        return len(self.__argnames__)
+
     def __getitem__(self, key):
         return self.get_arguments()[key]
 

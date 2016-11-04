@@ -1,8 +1,7 @@
 def _min_range_diff(a_start, a_end, b_start, b_end, absolute=True):
     # if absolute=True, return the absolute value of minimum magnitude difference
     # if absolute=False, return the raw value of minimum magnitude difference
-    diff = min(a_end - b_start, b_end - a_start, key = abs)
-    return abs(diff) if absolute else diff
+    return max(0, max(a_end - b_start, b_end - a_start))
 
 def min_row_diff(a, b, absolute=True):
     return _min_range_diff(a.row_start, a.row_end, b.row_start, b.row_end, absolute=absolute)

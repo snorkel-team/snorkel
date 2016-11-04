@@ -311,6 +311,9 @@ class Phrase(Context):
             'right'             : self.right
         }
 
+    def has_visuals(self):
+        return self.page[0] is not None
+
     def __repr__(self):
             return ("Phrase(Doc: %s, Table: %s, Row: %s, Col: %s, Position: %s, Text: %s)" % 
                 (self.document.name,
@@ -474,6 +477,9 @@ class TemporarySpan(TemporaryContext):
 
     def get_span(self, sep=" "):
         return self.get_attrib_span('words', sep)
+
+    def has_visuals(self):
+        return self.get_attrib_tokens('page')[0] is not None
 
     def __contains__(self, other_span):
         return (self.parent == other_span.parent 

@@ -209,8 +209,10 @@ def same_row(c):
     Return True if all Spans in the given candidate are from the same Row.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(c[i].parent.row_start is not None and is_row_aligned(c[0].parent, c[i].parent)
-        for i in range(len(c))))
+    return (all(c[i].parent.row_start is not None and 
+                c[0].parent.table == c[i].parent.table and 
+                is_row_aligned(c[0].parent, c[i].parent)
+            for i in range(len(c))))
 
 
 def same_col(c):
@@ -218,8 +220,10 @@ def same_col(c):
     Return True if all Spans in the given candidate are from the same Col.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(c[i].parent.col_start is not None and is_col_aligned(c[0].parent, c[i].parent)
-        for i in range(len(c))))
+    return (all(c[i].parent.col_start is not None and 
+                c[0].parent.table == c[i].parent.table and 
+                is_col_aligned(c[0].parent, c[i].parent)
+            for i in range(len(c))))
 
 
 def same_cell(c):
@@ -227,8 +231,8 @@ def same_cell(c):
     Return True if all Spans in the given candidate are from the same Cell.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(c[i].parent.cell is not None
-        and c[i].parent.cell==c[0].parent.cell for i in range(len(c))))
+    return (all(c[i].parent.cell is not None and
+                c[0].parent.cell == c[i].parent.cell for i in range(len(c))))
 
 
 def same_phrase(c):
@@ -328,7 +332,7 @@ def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=
                             yield  ngram
 
 
-def get_row_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
+def get_row_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1, spread=[0,0], lower=True):
     """
     Get the ngrams from all Cells that are in the same row as the given span
     :param span: The span whose neighbor Cells are being searched
@@ -340,11 +344,12 @@ def get_row_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1
     """
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     for span in spans:
-        for ngram in _get_axis_ngrams(span, axis='row', direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+        for ngram in _get_axis_ngrams(span, axis='row', direct=direct, infer=infer, 
+            attrib=attrib, n_min=n_min, n_max=n_max, spread=spread, lower=lower):
             yield ngram
 
 
-def get_col_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
+def get_col_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1, spread=[0,0], lower=True):
     """
     Get the ngrams from all Cells that are in the same column as the given span
     :param span: The span whose neighbor Cells are being searched
@@ -356,11 +361,12 @@ def get_col_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1
     """
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     for span in spans:
-        for ngram in _get_axis_ngrams(span, axis='col', direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+        for ngram in _get_axis_ngrams(span, axis='col', direct=direct, infer=infer, 
+        attrib=attrib, n_min=n_min, n_max=n_max, spread=spread, lower=lower):
             yield ngram
 
 
-def get_aligned_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
+def get_aligned_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1, spread=[0,0], lower=True):
     """
     Get the ngrams from all Cells that are in the same row or column as the given span
     :param span: The span whose neighbor Cells are being searched
@@ -372,9 +378,11 @@ def get_aligned_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_m
     """
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     for span in spans:
-        for ngram in get_row_ngrams(span, direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+        for ngram in get_row_ngrams(span, direct=direct, infer=infer, attrib=attrib, 
+        n_min=n_min, n_max=n_max, spread=spread, lower=lower):
             yield ngram
-        for ngram in get_col_ngrams(span, direct=direct, infer=infer, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+        for ngram in get_col_ngrams(span, direct=direct, infer=infer, attrib=attrib, 
+        n_min=n_min, n_max=n_max, spread=spread, lower=lower):
             yield ngram
 
 
@@ -397,11 +405,11 @@ def _get_head_cell(root_cell, axis, infer=False):
     return sorted(aligned_cells, key=lambda x: getattr(x, other_axis + '_start'))[0] if aligned_cells else []
 
 
-def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
+def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min=1, n_max=1, spread=[0,0], lower=True):
     for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
         yield ngram
     if (span.parent.cell is not None):
-        for phrase in _get_aligned_phrases(span.parent, axis, direct=direct, infer=infer):
+        for phrase in _get_aligned_phrases(span.parent, axis, direct=direct, infer=infer, spread=spread):
             for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
                 yield ngram
 
@@ -414,8 +422,8 @@ def _get_aligned_cells(root_cell, axis, direct=True, infer=False):
         for cell in aligned_cells] if infer else aligned_cells
 
 
-def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False):
-    return [phrase for cell in root_phrase.table.cells if is_axis_aligned(root_phrase, cell, axis=axis)\
+def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False, spread=[0,0]):
+    return [phrase for cell in root_phrase.table.cells if is_axis_aligned(root_phrase, cell, axis=axis, spread=spread)\
                 for phrase in _infer_cell(cell, _other_axis(axis), direct, infer).phrases \
                     if phrase!=root_phrase]
 
@@ -440,15 +448,18 @@ def _infer_cell(root_cell, axis, direct, infer):
 def _other_axis(axis):
     return 'row' if axis=='col' else 'col'
 
-def overlap(A, B):
-    return not set(A).isdisjoint(B)
+def is_superset(a, b):
+    return set(a).issuperset(b)
+
+def overlap(a, b):
+    return not set(a).isdisjoint(b)
 
 ############################
 # Visual feature helpers
 ############################
 _Bbox = namedtuple('bbox', ['page', 'top','bottom','left','right'], verbose = False)
 def _bbox_from_span(span):
-    if isinstance(span, TemporarySpan) and span.get_attrib_tokens('page'):
+    if isinstance(span, TemporarySpan) and span.has_visuals():
         return _Bbox(
                     span.get_attrib_tokens('page')[0],
                     min(span.get_attrib_tokens('top')), 
@@ -459,12 +470,14 @@ def _bbox_from_span(span):
         return None
     
 def _bbox_from_phrase(phrase):
-    if isinstance(phrase, Phrase) and phrase.page:
+    # TODO: this may have issues where a phrase is linked to words on different pages
+    if isinstance(phrase, Phrase) and phrase.has_visuals():
         return _Bbox(
-                    min(span.top), 
-                    max(span.bottom),
-                    min(span.left),
-                    max(span.right))
+                    phrase.page[0],
+                    min(phrase.top), 
+                    max(phrase.bottom),
+                    min(phrase.left),
+                    max(phrase.right))
     else:
         return None
 
@@ -473,6 +486,7 @@ def _bbox_horz_aligned(box1, box2):
     Returns true if the vertical center point of either span is within the 
     vertical range of the other
     """
+    if not (box1 and box2): return False
     center1 = (box1.bottom + box1.top)/2.0
     center2 = (box2.bottom + box2.top)/2.0
     return ((center1 >= box2.top and center1 <= box2.bottom) or
@@ -483,6 +497,7 @@ def _bbox_vert_aligned(box1, box2):
     Returns true if the horizontal center point of either span is within the 
     horizontal range of the other
     """
+    if not (box1 and box2): return False
     center1 = (box1.right + box1.left)/2.0
     center2 = (box2.right + box2.left)/2.0
     return ((center1 >= box2.left and center1 <= box2.right) or
@@ -492,18 +507,21 @@ def _bbox_vert_aligned_left(box1, box2):
     """
     Returns true if the left boundary of both boxes is within 2 pts
     """
+    if not (box1 and box2): return False
     return abs(box1.left - box2.left) <= 2
 
 def _bbox_vert_aligned_right(box1, box2):
     """
     Returns true if the right boundary of both boxes is within 2 pts
     """
+    if not (box1 and box2): return False
     return abs(box1.right - box2.right) <= 2
 
 def _bbox_vert_aligned_center(box1, box2):
     """
     Returns true if the right boundary of both boxes is within 5 pts
     """
+    if not (box1 and box2): return False
     return abs((box1.right + box1.left)/2.0 - (box2.right + box2.left)/2.0) <= 5
 
 def is_horz_aligned(c):
@@ -535,6 +553,40 @@ def same_page(c):
     return (all([_bbox_from_span(c[i]).page is not None and 
                  _bbox_from_span(c[i]).page == _bbox_from_span(c[0]).page
                  for i in range(len(c))]))
+
+# def get_page_ngrams(c):
+#     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+#     pages = []
+#     for span in spans:
+#         if span.get_attrib_tokens('page') not in pages:
+#             for phrase in _get_page_phrases()
+#                 for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
+#                     yield ngram
+
+def get_horz_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
+    # TODO: this currently looks only in current table; 
+    #   precompute over the whole document/page instead
+    # TODO: this currently aligns based on phrases, not words
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+    for span in spans:
+        if span.parent.table is None: continue
+        for phrase in span.parent.table.phrases:
+            if (_bbox_horz_aligned(_bbox_from_phrase(phrase), _bbox_from_span(span)) and
+                 phrase is not span.parent):
+                for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
+                    yield ngram
+
+def get_vert_aligned_ngrams(c):
+    return
+
+def get_vert_aligned_left_ngrams(c):
+    return
+
+def get_vert_aligned_right_ngrams(c):
+    return
+
+def get_vert_aligned_center_ngrams(c):
+    return
 
 def get_visual_header_ngrams(c, axis=None):
     # TODO

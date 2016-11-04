@@ -22,19 +22,19 @@ def min_axis_diff(a, b, axis=None, absolute=True):
     else: 
         return min(min_row_diff(a, b, absolute), min_col_diff(a, b, absolute))
 
-def is_row_aligned(a, b):
-    return min_row_diff(a, b) == 0
+def is_row_aligned(a, b, spread=[0,0]):
+    return min_row_diff(a, b) in range(spread[0], spread[1] + 1)
 
-def is_col_aligned(a, b):
-    return min_col_diff(a, b) == 0
+def is_col_aligned(a, b, spread=[0,0]):
+    return min_col_diff(a, b) in range(spread[0], spread[1] + 1)
 
-def is_axis_aligned(a, b, axis=None):
+def is_axis_aligned(a, b, axis=None, spread=[0,0]):
     if axis == 'row':
-        return is_row_aligned(a, b)
+        return is_row_aligned(a, b, spread=spread)
     elif axis == 'col':
-        return is_col_aligned(a, b)
+        return is_col_aligned(a, b, spread=spread)
     else:
-        return is_row_aligned(a, b) or is_col_aligned(a, b)
+        return is_row_aligned(a, b, spread=spread) or is_col_aligned(a, b, spread=spread)
 
 def num_rows(a):
     return a.row_start - a.row_end + 1

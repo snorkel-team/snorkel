@@ -59,7 +59,6 @@ class VisualLinker():
         # print "(HTML, PDF) unique: ", (len(html_only), len(pdf_only))
         # pprint(zip(sorted(list(html_only)) + ([None] * (len(pdf_only)-len(html_only))), sorted(list(pdf_only))))
         # # pprint(zip(html_words, pdf_words))
-        # import pdb; pdb.set_trace()
         # TEMP
 
         tic = timer()
@@ -113,7 +112,6 @@ class VisualLinker():
                     xmin = int(float(word.get('xmin')))
                     xmax = int(float(word.get('xmax')))
                     for content in self.separators.split(word.getText()):
-                        # import pdb; pdb.set_trace()
                         if len(content) > 0:  # Ignore empty characters
                             word_id = (page_num, i)
                             pdf_word_list.append((word_id, content))
@@ -164,10 +162,7 @@ class VisualLinker():
             searchIndices = np.clip(offset + search_order, 0, M - 1)
             cost = [0] * search_max
             for j, k in enumerate(searchIndices):
-                try:
-                    other = self.pdf_word_list[k][1]
-                except:
-                    import pdb; pdb.set_trace()
+                other = self.pdf_word_list[k][1]
                 if (word.startswith(other) or word.endswith(other) or
                     other.startswith(word) or other.endswith(word)):
                     html_to_pdf[i] = k
@@ -404,6 +399,4 @@ def get_box(span):
             max(span.get_attrib_tokens('left')),
             min(span.get_attrib_tokens('bottom')),
             max(span.get_attrib_tokens('right')))
-    # if any([isinstance(a, list) for a in box]):
-    #     import pdb; pdb.set_trace()
     return box

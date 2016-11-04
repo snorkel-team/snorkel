@@ -4,7 +4,7 @@ import os
 # from templates import *
 from lf_helpers import *
 from utils import get_as_dict
-from table_utils import min_row_diff, min_col_diff
+from table_utils import min_row_diff, min_col_diff, num_rows, num_cols
 from .models import ImplicitSpan
 from collections import defaultdict
 
@@ -129,13 +129,18 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
                     curr_left_pos_tags + "]_[" + curr_right_pos_tags + "]"
 
 def tablelib_unary_features(span):
+    """
+    Table-/structure-related features for a single span 
+    """
     yield "SPAN_TYPE_[%s]" % ('IMPLICIT' if isinstance(span, ImplicitSpan) else 'EXPLICIT') 
     phrase = span.parent
-    yield u"HTML_TAG_" + phrase.html_tag
+    if phrase.html_tag:
+        yield u"HTML_TAG_" + phrase.html_tag
     # for attr in phrase.html_attrs:
     #     yield u"HTML_ATTR_[" + attr + "]"
-    for tag in phrase.html_anc_tags:
-        yield u"HTML_ANC_TAG_[" + tag + "]"
+    if phrase.html_anc_tags:
+        for tag in phrase.html_anc_tags:
+            yield u"HTML_ANC_TAG_[" + tag + "]"
     # for attr in phrase.html_anc_attrs:
         # yield u"HTML_ANC_ATTR_[" + attr + "]"
     for attrib in ['words']: #,'lemmas', 'pos_tags', 'ner_tags']:
@@ -180,13 +185,12 @@ def tablelib_unary_features(span):
             #         except:
             #             pass
 
-def tablelib_binary_features(span1, span2, s1_idxs, s2_idxs):
-    # for feat in get_ddlib_feats(get_as_dict(span1.parent), s1_idxs):
-    #     yield "DDL_e1_" + feat
+def tablelib_binary_features(span1, span2):
+    """
+    Table-/structure-related features for a pair of spans 
+    """
     for feat in tablelib_unary_features(span1):
         yield "e1_" + feat
-    # for feat in get_ddlib_feats(get_as_dict(span2.parent), s2_idxs):
-    #     yield "DDL_e2_" + feat
     for feat in tablelib_unary_features(span2):
         yield "e2_" + feat
     if span1.parent.table is not None and span2.parent.table is not None:
@@ -216,38 +220,40 @@ def tablelib_binary_features(span1, span2, s1_idxs, s2_idxs):
 # Visual features
 ##################################################################################
 from lf_helpers import _bbox_from_span    
-    
-def visual_binary_features(span1, span2, s1_idxs = None, s2_idxs = None):
-    '''
-    Features about the relative positioning of two spans
-    '''
-    for f in get_visual_aligned_lemmas(span1):
-        yield 'e1_ALIGNED_' + f
-    for f in get_visual_aligned_lemmas(span2):
-        yield 'e2_ALIGNED_' + f
-    
-    # Skip when coordinates are not available
-    if not set(span1.parent.page) & set(span2.parent.page): return
-    bbox1 = _bbox_from_span(span1)
-    bbox2 = _bbox_from_span(span2)
-    
-    if not (bbox1 and bbox2): return
-    yield 'HAS_COORDS'
-    
-    if abs(bbox1.top - bbox2.top) < 1 and abs(bbox2.bottom - bbox1.bottom) < 1:
-        yield 'Y_ALIGNED'
-    
-    v_aligned = False
-    if abs(bbox1.left - bbox2.left) < 1:
-        v_aligned = True
-        yield 'LEFT_ALIGNED'
-        
-    if abs(bbox1.right - bbox2.right) < 1:
-        v_aligned = True
-        yield 'RIGHT_ALIGNED'
-        
-    if abs((bbox1.left+bbox1.right)/2 - (bbox2.left+bbox2.right)/2) < 1:
-        v_aligned = True
-        yield 'CENTER_ALIGNED'
 
-    if v_aligned: yield 'X_ALIGNED'
+def vizlib_unary_features(span):
+    """
+    Visual-related features for a single span
+    """
+    for f in get_visual_aligned_lemmas(span):
+        yield 'ALIGNED_' + f
+    
+    for page in set(span.get_attrib_tokens('page')): 
+        yield "PAGE_[%d]" % page
+
+def vizlib_binary_features(span1, span2):
+    """
+    Visual-related features for a pair of spans
+    """
+    for feat in tablelib_unary_features(span1):
+        yield "e1_" + feat
+    for feat in tablelib_unary_features(span2):
+        yield "e2_" + feat
+
+    if same_page((span1, span2)):
+        yield "SAME_PAGE"
+
+        if is_horz_aligned((span1, span2)):
+            yield "HORZ_ALIGNED"
+        
+        if is_vert_aligned((span1, span2)):
+            yield "VERT_ALIGNED"
+
+        if is_vert_aligned_left((span1, span2)):
+            yield "VERT_ALIGNED_LEFT"
+
+        if is_vert_aligned_right((span1, span2)):
+            yield "VERT_ALIGNED_RIGHT"
+
+        if is_vert_aligned_center((span1, span2)):
+            yield "VERT_ALIGNED_CENTER"

@@ -18,7 +18,8 @@ def get_span_feats(candidate):
     # Unary candidates
     if len(args) == 1:
         get_tdl_feats = compile_entity_feature_generator()
-        get_tablelib_feats =  tablelib_unary_features
+        get_tablelib_feats = tablelib_unary_features
+        get_vizlib_feats = vizlib_unary_features
         span          = args[0]
         sent          = get_as_dict(span.parent)
         xmltree       = corenlp_to_xmltree(sent)
@@ -37,11 +38,14 @@ def get_span_feats(candidate):
             if isinstance(span.parent, Phrase):
                 for f in get_tablelib_feats(span):
                     yield 'TAB_' + f, 1
+                for f in get_vizlib_feats(span):
+                    yield 'VIZ_' + f, 1
 
     # Binary candidates
     elif len(args) == 2:
         get_tdl_feats = compile_relation_feature_generator()
         get_tablelib_feats = tablelib_binary_features
+        get_vizlib_feats = vizlib_binary_features
         span1, span2  = args
         xmltree       = corenlp_to_xmltree(get_as_dict(span1.parent))
         s1_idxs       = range(span1.get_word_start(), span1.get_word_end() + 1)
@@ -52,12 +56,14 @@ def get_span_feats(candidate):
             for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs):
                 yield 'TDL_' + f, 1
             
+            # TODO: add DDLib features for binary relations?
+
             # Add TableLib relation features (if applicable)
-            # NOTE: TableLib for relations calls DDLIB on entities internally
             if isinstance(span1.parent, Phrase) or isinstance(span2.parent, Phrase):
-                for f in get_tablelib_feats(span1, span2, s1_idxs, s2_idxs):
+                for f in get_tablelib_feats(span1, span2):
                     yield 'TAB_' + f, 1
-                for f in visual_binary_features(span1, span2, s1_idxs, s2_idxs):
+            if span1.has_visuals() or span2.has_visuals():
+                for f in get_vizlib_feats(span1, span2):
                     yield 'VIZ_' + f, 1
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")

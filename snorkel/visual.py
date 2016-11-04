@@ -349,17 +349,17 @@ class VisualLinker():
             (img, img_path) = self.pdf_to_img(page_num)
             colors = [(255, 0, 0), (0, 0, 255)]
         boxes_per_page = defaultdict(int)
-        boxes_by_page = defaultdict(set)
+        boxes_by_page = defaultdict(list)
         for i, (page, top, left, bottom, right) in enumerate(boxes):
             boxes_per_page[page] += 1
-            boxes_by_page[page].add((top, left, bottom, right))
+            boxes_by_page[page].append((top, left, bottom, right))
         if display:
-            for (top, left, bottom, right) in boxes_by_page[page_num]:
-                color = colors[i % 2] if alternate_colors else colors[0]
+            for j, (top, left, bottom, right) in enumerate(boxes_by_page[page_num]):
+                color = colors[j % 2] if alternate_colors else colors[0]
                 cv2.rectangle(img, (left, top), (right, bottom), color, 1)
         print "Boxes per page: total (unique)"
         for (page, count) in sorted(boxes_per_page.items()):
-            print "Page %d: %d (%d)" % (page, count, len(boxes_by_page[page]))
+            print "Page %d: %d (%d)" % (page, count, len(set(boxes_by_page[page])))
         if display:
             cv2.imshow('Bounding boxes', img)
             cv2.waitKey()  # press any key to exit the opencv output
@@ -399,8 +399,11 @@ class VisualLinker():
 
 
 def get_box(span):
-    return (span.parent.page,
+    box = (min(span.get_attrib_tokens('page')),
             min(span.get_attrib_tokens('top')),
             max(span.get_attrib_tokens('left')),
             min(span.get_attrib_tokens('bottom')),
             max(span.get_attrib_tokens('right')))
+    # if any([isinstance(a, list) for a in box]):
+    #     import pdb; pdb.set_trace()
+    return box

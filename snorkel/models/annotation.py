@@ -31,7 +31,7 @@ class AnnotationKeySet(SnorkelBase):
         self.keys.remove(key)
 
     def __repr__(self):
-        return "Annotation Key Set (" + str(self.name) + ")"
+        return "Annotation Key Set (" + self.name + ")"
 
     def __iter__(self):
         """Default iterator is over self.annotation_keys"""

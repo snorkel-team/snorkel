@@ -303,8 +303,12 @@ class OmniParser(object):
         self.vizlink = VisualLinker(pdf_path, session) if (pdf_path and session) else None
         # if blacklist and whitelist:
         #     raise UserWarning("Either a blacklist or a whitelist may be submitted---not both.")
+        if blacklist and not isinstance(blacklist, list):
+            raise ValueError("Argument blacklist must be of type <list>")
+        if whitelist and not isinstance(whitelist, list):
+            raise ValueError("Argument whitelist must be of type <list>")
         self.blacklist = blacklist
-        self.whitelist = whitelist # TODO: let whitelist parse all children of a whitelist member
+        self.whitelist = whitelist # TODO: whitelist is broken
 
     def parse(self, document, text):
         for phrase in self.parse_structure(document, text):
@@ -319,93 +323,107 @@ class OmniParser(object):
         self.cell_idx = 0
         self.row_idx = 0
         self.col_idx = 0
-        self.contents = "" 
+        self.white = 0
+        self.contents = ""
+        freebies = ['[document]', 'html']
         parents = []
         block_lengths = []
 
         def parse_tag(tag, document, table=None, cell=None, anc_tags=[]):
-                    if self.blacklist and tag.name in self.blacklist:
-                        return
-                    if self.whitelist and tag.name not in self.whitelist:
-                        return
-                    
-                    if any(isinstance(child, NavigableString) and unicode(child) != u'\n' for child in tag.children):
-                        text = tag.get_text(' ')
-                        tag.clear()
-                        tag.string = text
-                    for child in tag.children:
-                        if isinstance(child, NavigableString):
-                            self.contents += child
-                            self.contents += self.delim
-                            if cell:
-                                parent = cell 
-                            elif table:
-                                parent = table 
-                            else:
-                                parent = document
-                            parents.append(parent)
-                            block_lengths.append(len(child) + len(self.delim))
-                        else: # isinstance(child, Tag) = True
-                            if child.name == "table":
-                                self.table_grid = defaultdict(int)
-                                self.row_idx = 0
-                                self.cell_position = 0
-                                stable_id = "%s::%s:%s:%s" % (document.name, "table", self.table_idx, self.table_idx)
-                                table = Table(document=document, stable_id=stable_id, position=self.table_idx, text=unicode(child))
-                            elif child.name == "tr":
-                                self.col_idx = 0
-                            elif child.name in ["td","th"]:
-                                # calculate row_start/col_start
-                                while self.table_grid[(self.row_idx, self.col_idx)]:
-                                    self.col_idx += 1
-                                col_start = self.col_idx
-                                row_start = self.row_idx
-                                
-                                # calculate row_end/col_end
-                                row_end = row_start
-                                if child.has_attr("rowspan"):
-                                    row_end += int(child["rowspan"]) - 1
-                                col_end = col_start
-                                if child.has_attr("colspan"):
-                                    col_end += int(child["colspan"]) - 1
+            # print self.whitelist
+            # print tag.name
+            # print self.white
+            if self.blacklist and tag.name in self.blacklist:
+                return
+            if self.whitelist:
+                if tag.name in freebies:
+                    pass
+                elif tag.name in self.whitelist:
+                    self.white += 1
+                elif self.white == 0:
+                    return
+            # print (tag.name, self.white)
+            
+            if any(isinstance(child, NavigableString) and unicode(child) != u'\n' for child in tag.children):
+                text = tag.get_text(' ')
+                tag.clear()
+                tag.string = text
+            for child in tag.children:
+                if isinstance(child, NavigableString):
+                    self.contents += child
+                    self.contents += self.delim
+                    if cell:
+                        parent = cell 
+                    elif table:
+                        parent = table 
+                    else:
+                        parent = document
+                    parents.append(parent)
+                    block_lengths.append(len(child) + len(self.delim))
+                else: # isinstance(child, Tag) = True
+                    if child.name == "table":
+                        self.table_grid = defaultdict(int)
+                        self.row_idx = 0
+                        self.cell_position = 0
+                        stable_id = "%s::%s:%s:%s" % (document.name, "table", self.table_idx, self.table_idx)
+                        table = Table(document=document, stable_id=stable_id, position=self.table_idx, text=unicode(child))
+                    elif child.name == "tr":
+                        self.col_idx = 0
+                    elif child.name in ["td","th"]:
+                        # calculate row_start/col_start
+                        while self.table_grid[(self.row_idx, self.col_idx)]:
+                            self.col_idx += 1
+                        col_start = self.col_idx
+                        row_start = self.row_idx
+                        
+                        # calculate row_end/col_end
+                        row_end = row_start
+                        if child.has_attr("rowspan"):
+                            row_end += int(child["rowspan"]) - 1
+                        col_end = col_start
+                        if child.has_attr("colspan"):
+                            col_end += int(child["colspan"]) - 1
 
-                                # update table_grid with occupied cells
-                                for r, c in itertools.product(range(row_start, row_end+1), range(col_start, col_end+1)):
-                                    self.table_grid[r,c] = 1
+                        # update table_grid with occupied cells
+                        for r, c in itertools.product(range(row_start, row_end+1), range(col_start, col_end+1)):
+                            self.table_grid[r,c] = 1
 
-                                # construct cell
-                                parts = defaultdict(list)
-                                parts["document"]       = document
-                                parts["table"]          = table
-                                parts["row_start"]      = row_start
-                                parts["row_end"]        = row_end
-                                parts["col_start"]      = col_start
-                                parts["col_end"]        = col_end
-                                parts["position"]       = self.cell_position
-                                parts["text"]           = unicode(child)
-                                parts["html_tag"]       = child.name
-                                parts["html_attrs"]     = [] #split_html_attrs(child.attrs.items())
-                                parts["html_anc_tags"]  = list(anc_tags)
-                                parts["html_anc_attrs"] = [] #anc_attrs
-                                parts["stable_id"]      = "%s::%s:%s:%s:%s" % (document.name, "cell", table.position, row_start, col_start)
-                                cell = Cell(**parts)
+                        # construct cell
+                        parts = defaultdict(list)
+                        parts["document"]       = document
+                        parts["table"]          = table
+                        parts["row_start"]      = row_start
+                        parts["row_end"]        = row_end
+                        parts["col_start"]      = col_start
+                        parts["col_end"]        = col_end
+                        parts["position"]       = self.cell_position
+                        parts["text"]           = unicode(child)
+                        parts["html_tag"]       = child.name
+                        parts["html_attrs"]     = [] #split_html_attrs(child.attrs.items())
+                        parts["html_anc_tags"]  = list(anc_tags)
+                        parts["html_anc_attrs"] = [] #anc_attrs
+                        parts["stable_id"]      = "%s::%s:%s:%s:%s" % (document.name, "cell", table.position, row_start, col_start)
+                        cell = Cell(**parts)
 
-                            anc_tags.append(child.name)
-                            # print anc_tags
-                            parse_tag(child, document, table, cell, anc_tags)
-                            anc_tags.pop()
+                    anc_tags.append(child.name)
 
-                            # reset table, cell pointers
-                            if child.name in ["td","th"]:
-                                cell = None
-                                self.col_idx += 1
-                                self.cell_idx += 1
-                                self.cell_position += 1
-                            elif child.name == "tr":
-                                self.row_idx += 1  
-                            elif(child.name == "table"):
-                                table = None
-                                self.table_idx += 1
+                    parse_tag(child, document, table, cell, anc_tags)
+
+                    anc_tags.pop()
+
+                    # reset table, cell pointers
+                    if self.white and tag.name in self.whitelist:
+                        self.white -= 1
+                    if child.name in ["td","th"]:
+                        cell = None
+                        self.col_idx += 1
+                        self.cell_idx += 1
+                        self.cell_position += 1
+                    elif child.name == "tr":
+                        self.row_idx += 1  
+                    elif(child.name == "table"):
+                        table = None
+                        self.table_idx += 1
 
         # Parse document and store text in self.contents, padded with self.delim
         soup = BeautifulSoup(text, 'lxml')

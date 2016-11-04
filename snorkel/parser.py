@@ -447,8 +447,13 @@ class OmniParser(object):
                 parts['phrase_id']          = phrase_idx
                 parts['position']           = phrase_position
                 # parts['parent']           = parent
-                if isinstance(parent, Table):
+                if isinstance(parent, Document):
+                    parts['html_tag']       = 'html'
+                    parts['html_anc_tags']  = []
+                elif isinstance(parent, Table):
                     parts['table']          = parent
+                    parts['html_tag']       = 'table'
+                    parts['html_anc_tags']  = []
                 elif isinstance(parent, Cell):
                     parts['table']          = parent.table 
                     parts['cell']           = parent

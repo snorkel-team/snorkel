@@ -334,8 +334,8 @@ class GenerativeModel(object):
         # Compiles variable matrix
         #
         for i in range(m):
-            variable[i]['isEvidence'] = False if y is None else True
-            variable[i]['initialValue'] = self.rng.randrange(0, 2) if y is None else 1 if y[i] == 1 else 0
+            variable[i]['isEvidence'] = False if (y is None or i not in y) else True
+            variable[i]['initialValue'] = self.rng.randrange(0, 2) if (y is None or i not in y) else 1 if y[i] == 1 else 0
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = 2
 

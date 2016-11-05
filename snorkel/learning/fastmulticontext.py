@@ -46,7 +46,7 @@ def fmct_activation(z, hidden_embed, wo, wo_raw, wi_sub, x_ct, x_type, x_raw):
 
 
 @numba.jit(nopython=True, nogil=True)
-def fmct_update(wo, wo_raw, wi_sub, x_ct, x_type, x_raw, p, lr):
+def fmct_update(wo, wo_raw, wi_sub, x_ct, x_type, x_raw, p, lr, lambda_n):
     """
     JIT function for issuing SGD step of fmct
     """
@@ -72,19 +72,25 @@ def fmct_update(wo, wo_raw, wi_sub, x_ct, x_type, x_raw, p, lr):
     for k in xrange(n_classes):
         # Noise-aware gradient calculation
         # g(x) = [(1-p)\hat{p} - p(1-\hat{p})]x
-        alpha = lr * ((1-p[k])*z[k] - p[k]*(1-z[k]))
+        alpha = lr * ((1.0-p[k])*z[k] - p[k]*(1.0-z[k]))
         # Updates for embedded features
         for j in xrange(embed_size):
             grad[j] += alpha * wo[k][j]
+            # Apply regularization first
+            wo[k][j] *= (1.0 - lr * lambda_n)
             wo[k][j] -= alpha * hidden_embed[j]
         # Updates for raw features
         for r in xrange(raw_size):
+            # Apply regularization first
+            wo_raw[k][r] *= (1.0 - lr * lambda_n)
             wo_raw[k][r] -= alpha * x_raw[r]
     # Update embeddings
     for i in xrange(x_size):
         for j in xrange(dim):
             if x_ct[i] == 0:
                 continue
+            # Apply regularization first
+            wi_sub[i][j] *= (1.0 - lr * lambda_n)
             wi_sub[i][j] -= (grad[j + x_type[i]*dim] / x_ct[i])
     # Return loss
     pmx, lmx = 0.0, None
@@ -104,7 +110,7 @@ def print_status(progress, loss, n_examples, lr):
 
 
 @numba.jit(nopython=True, nogil=True)
-def fmct_sgd_thread(thread_n, wo, wo_raw, wi, marginals, epoch, n, lr, raw_xs,
+def fmct_sgd_thread(thread_n, wo, wo_raw, wi, marginals, lambda_n, epoch, n, lr, raw_xs,
                     n_print, feat_start, feat_end, f_cache, f_ct_cache, f_t_cache):
     
     loss, n_examples, lr_orig = 0, 0, lr
@@ -126,7 +132,8 @@ def fmct_sgd_thread(thread_n, wo, wo_raw, wi, marginals, epoch, n, lr, raw_xs,
         # Gradient step
         wi_sub = wi[feats]
         loss += fmct_update(
-            wo, wo_raw, wi_sub, feats_ct, feats_type, raw_feats, marginals[k], lr
+            wo, wo_raw, wi_sub, feats_ct, feats_type, raw_feats,
+            marginals[k], lr, lambda_n,
         )
         wi[feats, :] = wi_sub
         # Update learning rate and print status
@@ -166,7 +173,7 @@ class fastmulticontext(object):
         self.wi           = None
         self.preprocess_f = preprocess_function
         
-    def train(self, marginals, embed_xs, raw_xs=None, dim=50, lr=0.05,
+    def train(self, marginals, embed_xs, raw_xs=None, dim=50, lr=0.05, lambda_l2=1e-7,
               epoch=5, min_ct=1, n_print=10000, n_threads=16, seed=1701):
         """
         Train FMCT model
@@ -221,11 +228,13 @@ class fastmulticontext(object):
         self.wo_raw = np.zeros((self.n_classes, raw_xs.shape[1]))
         self.wi = np.random.uniform(-1.0 / dim, 1.0 / dim, (all_vocab_size, dim))
         marginals = np.array([[1.0 - float(p), float(p)] for p in marginals])
+        lambda_n = float(lambda_l2) / n
 
         s = time.time()
         fmct_sgd(
-            n_threads, self.wo, self.wo_raw, self.wi, marginals, epoch, n, lr, raw_xs,
-            n_print, feat_start, feat_end, feat_cache, feat_ct_cache, feat_type_cache
+            n_threads, self.wo, self.wo_raw, self.wi, marginals, lambda_n,
+            epoch, n, lr, raw_xs, n_print, feat_start, feat_end, feat_cache,
+            feat_ct_cache, feat_type_cache
         )
         print("Training time: {0:.3f} seconds".format(time.time() - s))
 

@@ -311,7 +311,7 @@ class Phrase(Context):
             'right'             : self.right
         }
 
-    def has_visuals(self):
+    def has_visual_features(self):
         return self.page[0] is not None
 
     def __repr__(self):
@@ -478,8 +478,11 @@ class TemporarySpan(TemporaryContext):
     def get_span(self, sep=" "):
         return self.get_attrib_span('words', sep)
 
-    def has_visuals(self):
+    def has_visual_features(self):
         return self.get_attrib_tokens('page')[0] is not None
+
+    def has_table_features(self):
+        return isinstance(self.parent, Phrase)
 
     def __contains__(self, other_span):
         return (self.parent == other_span.parent 

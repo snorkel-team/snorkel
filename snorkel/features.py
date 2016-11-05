@@ -36,8 +36,10 @@ def get_span_feats(candidate):
 
             # Add TableLib entity features (if applicable)
             if isinstance(span.parent, Phrase):
+            # if span.has_table_features():
                 for f in get_tablelib_feats(span):
                     yield 'TAB_' + f, 1
+            if span.has_visual_features():
                 for f in get_vizlib_feats(span):
                     yield 'VIZ_' + f, 1
 
@@ -60,9 +62,10 @@ def get_span_feats(candidate):
 
             # Add TableLib relation features (if applicable)
             if isinstance(span1.parent, Phrase) or isinstance(span2.parent, Phrase):
+            # if span1.has_table_features() or span2.has_table_features():
                 for f in get_tablelib_feats(span1, span2):
                     yield 'TAB_' + f, 1
-            if span1.has_visuals() or span2.has_visuals():
+            if span1.has_visual_features() or span2.has_visual_features():
                 for f in get_vizlib_feats(span1, span2):
                     yield 'VIZ_' + f, 1
     else:

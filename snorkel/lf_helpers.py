@@ -459,7 +459,7 @@ def overlap(a, b):
 ############################
 _Bbox = namedtuple('bbox', ['page', 'top','bottom','left','right'], verbose = False)
 def _bbox_from_span(span):
-    if isinstance(span, TemporarySpan) and span.has_visuals():
+    if isinstance(span, TemporarySpan) and span.has_visual_features():
         return _Bbox(
                     span.get_attrib_tokens('page')[0],
                     min(span.get_attrib_tokens('top')), 
@@ -471,7 +471,7 @@ def _bbox_from_span(span):
     
 def _bbox_from_phrase(phrase):
     # TODO: this may have issues where a phrase is linked to words on different pages
-    if isinstance(phrase, Phrase) and phrase.has_visuals():
+    if isinstance(phrase, Phrase) and phrase.has_visual_features():
         return _Bbox(
                     phrase.page[0],
                     min(phrase.top), 
@@ -568,15 +568,19 @@ def get_horz_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
                     yield ngram
 
 def get_vert_aligned_ngrams(c):
+    # TODO
     return
 
 def get_vert_aligned_left_ngrams(c):
+    # TODO
     return
 
 def get_vert_aligned_right_ngrams(c):
+    # TODO
     return
 
 def get_vert_aligned_center_ngrams(c):
+    # TODO
     return
 
 def get_visual_header_ngrams(c, axis=None):

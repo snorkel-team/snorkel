@@ -14,7 +14,7 @@ class DependencySelector(object):
         self.rng = random.Random()
         self.rng.seed(seed)
 
-    def select(self, L, threshold=0.1, truncation=10):
+    def select(self, L, propensity=False, threshold=0.05, truncation=10):
         try:
             L = L.todense()
         except AttributeError:
@@ -24,7 +24,7 @@ class DependencySelector(object):
 
         # Initializes data structures
         deps = set()
-        weights = np.zeros((3 * n,))
+        weights = np.zeros((3 * n + 1,)) if propensity else np.zeros((3 * n,))
         joint = np.zeros((6,))
         # joint[0] = P(Y = -1, L_j = -1)
         # joint[1] = P(Y = -1, L_j =  0)
@@ -40,7 +40,7 @@ class DependencySelector(object):
             for k in range(n, len(weights)):
                 weights[k] = 0.0
 
-            _fit_deps(m, n, j, L, weights, joint, threshold, truncation)
+            _fit_deps(m, n, j, L, weights, joint, propensity, threshold, truncation)
 
             for k in range(n):
                 if abs(weights[n + k]) > threshold:
@@ -52,7 +52,7 @@ class DependencySelector(object):
 
 
 @jit(nopython=True, cache=True, nogil=True)
-def _fit_deps(m, n, j, L, weights, joint, regularization, truncation):
+def _fit_deps(m, n, j, L, weights, joint, propensity, regularization, truncation):
     step_size = 1.0 / m
     epochs = 10
     p_truncation = 1.0 / truncation
@@ -100,6 +100,12 @@ def _fit_deps(m, n, j, L, weights, joint, regularization, truncation):
                         joint[2] -= weights[2 * n + k]
                         joint[3] -= weights[2 * n + k]
                         joint[5] -= weights[2 * n + k]
+
+            if propensity:
+                joint[0] += weights[3 * n + 1]
+                joint[2] += weights[3 * n + 1]
+                joint[3] += weights[3 * n + 1]
+                joint[5] += weights[3 * n + 1]
 
             joint = np.exp(joint)
             joint /= np.sum(joint)
@@ -166,7 +172,12 @@ def _fit_deps(m, n, j, L, weights, joint, regularization, truncation):
                         if L[i, j] != 0:
                             weights[2 * n + k] += step_size * -1
 
+            if propensity:
+                weights[3 * n] -= step_size * (joint[0] + joint[2] + joint[3] + joint[5])
+                if L[i, j] != 0:
+                    weights[3 * n] += step_size
+
             # Third, takes regularization gradient step
             if random.random() < p_truncation:
-                for k in range(3 * n):
+                for k in range(3 * n + 1 if propensity else 3 * n):
                     weights[k] = max(0, weights[k] - l1delta) if weights[k] > 0 else min(0, weights[k] + l1delta)

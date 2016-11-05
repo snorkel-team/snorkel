@@ -554,15 +554,6 @@ def same_page(c):
                  _bbox_from_span(c[i]).page == _bbox_from_span(c[0]).page
                  for i in range(len(c))]))
 
-# def get_page_ngrams(c):
-#     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
-#     pages = []
-#     for span in spans:
-#         if span.get_attrib_tokens('page') not in pages:
-#             for phrase in _get_page_phrases()
-#                 for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
-#                     yield ngram
-
 def get_horz_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     # TODO: this currently looks only in current table; 
     #   precompute over the whole document/page instead

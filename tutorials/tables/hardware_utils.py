@@ -524,9 +524,8 @@ def candidates_to_entities(candidates):
 def entity_to_candidates(entity, candidate_subset):
     matches = []
     for c in candidate_subset:
-        # NOTE: should some 'upper' be going on here somewhere?
         (part, attr) = c.get_arguments()
-        if (part.parent.document.name.upper(), part.get_span(), attr.get_span()) == entity:
+        if (part.parent.document.name.upper(), part.get_span().upper(), attr.get_span().upper()) == entity:
             matches.append(c)
     return matches
 

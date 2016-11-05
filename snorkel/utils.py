@@ -94,6 +94,7 @@ def matrix_accuracy(L, labels, label_class=None):
     accs = []
     for j in xrange(L.shape[1]):
         cov = np.ravel((L[:, j] != 0).todense())
+        cov *= (labels != 0)
         if label_class is not None:
             cov *= (labels == label_class)
         accs.append(np.mean(L[cov, j] == labels[cov]))
@@ -106,7 +107,7 @@ def matrix_tp(L, labels):
 
 def matrix_fp(L, labels):
     return np.ravel([
-        np.sum(np.ravel((L[:, j] == 1).todense()) * (labels != 1)) for j in xrange(L.shape[1])
+        np.sum(np.ravel((L[:, j] == 1).todense()) * (labels == -1)) for j in xrange(L.shape[1])
     ])
 
 def matrix_tn(L, labels):
@@ -116,7 +117,7 @@ def matrix_tn(L, labels):
 
 def matrix_fn(L, labels):
     return np.ravel([
-        np.sum(np.ravel((L[:, j] == -1).todense()) * (labels != -1)) for j in xrange(L.shape[1])
+        np.sum(np.ravel((L[:, j] == -1).todense()) * (labels == 1)) for j in xrange(L.shape[1])
     ])
 
 def get_as_dict(x):

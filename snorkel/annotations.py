@@ -78,7 +78,7 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
             d['fp']       = Series(data=matrix_fp(self, labels), index=lf_names)
             d['fn']       = Series(data=matrix_fn(self, labels), index=lf_names)
             d['tn']       = Series(data=matrix_tn(self, labels), index=lf_names)
-        return DataFrame(data=d, index=lf_names)[col_names]
+        return DataFrame(data=d, index=lf_names)[col_names].sort('accuracy')
 
 
 class AnnotationManager(object):

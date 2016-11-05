@@ -235,9 +235,9 @@ def vizlib_binary_features(span1, span2):
     """
     Visual-related features for a pair of spans
     """
-    for feat in tablelib_unary_features(span1):
+    for feat in vizlib_unary_features(span1):
         yield "e1_" + feat
-    for feat in tablelib_unary_features(span2):
+    for feat in vizlib_unary_features(span2):
         yield "e2_" + feat
 
     if same_page((span1, span2)):

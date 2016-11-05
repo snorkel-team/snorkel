@@ -167,7 +167,7 @@ class fastmulticontext(object):
         self.preprocess_f = preprocess_function
         
     def train(self, marginals, embed_xs, raw_xs=None, dim=50, lr=0.05,
-              epoch=5, min_ct=1, n_print=10000, n_threads=16):
+              epoch=5, min_ct=1, n_print=10000, n_threads=16, seed=1701):
         """
         Train FMCT model
         marginals: marginal probabilities for training examples (array)
@@ -179,6 +179,9 @@ class fastmulticontext(object):
         min_ct: minimum feature count for modeling
         n_print: how frequently to print updates
         """
+
+        if seed is not None:
+            np.random.seed(seed=seed)
 
         print("Processing data", end='\t\t')
         embed_xs = self.preprocess_f(embed_xs) if self.preprocess_f else embed_xs
@@ -273,6 +276,7 @@ class fastmulticontext(object):
             for feat, ct in count_dict.iteritems():
                 if ct >= min_ct[d]:
                     self.vocabs[d][feat] = len(self.vocabs[d])
+            print("Built vocab {0} of length {1}".format(d, len(self.vocabs[d])))
         self.vocab_slice = [0]
         for vocab in self.vocabs:
             self.vocab_slice.append(self.vocab_slice[-1] + len(vocab))

@@ -106,7 +106,7 @@ def print_status(progress, loss, n_examples, lr):
     print('-------------------')
     print(100. * progress)
     print(loss / n_examples)
-    print('-------------------\n')
+    print('-------------------')
 
 
 @numba.jit(nopython=True, nogil=True)
@@ -139,6 +139,7 @@ def fmct_sgd_thread(thread_n, wo, wo_raw, wi, marginals, lambda_n, epoch, n, lr,
         # Update learning rate and print status
         if thread_n == 0 and kt % n_print == 0:
             print_status(progress, loss, n_examples, lr)
+            
     if thread_n == 0:
         print_status(1, loss, n_examples, lr)
         print('\n')
@@ -234,7 +235,7 @@ class fastmulticontext(object):
         fmct_sgd(
             n_threads, self.wo, self.wo_raw, self.wi, marginals, lambda_n,
             epoch, n, lr, raw_xs, n_print, feat_start, feat_end, feat_cache,
-            feat_ct_cache, feat_type_cache
+            feat_ct_cache, feat_type_cache,
         )
         print("Training time: {0:.3f} seconds".format(time.time() - s))
 
@@ -254,7 +255,7 @@ class fastmulticontext(object):
             x, x_raw = embed_xs[k], raw_xs[k, :]
             feats, feats_ct, feats_type = self._get_vocab_index(x)
             if len(feats) + len(x_raw) == 0:
-                log_odds[k] = 0.5
+                log_odds[k] = 0.0
                 continue
             wi_sub = self.wi[feats, :]
             z = np.zeros(self.n_classes)

@@ -20,13 +20,13 @@ class CanonicalDictionary(object):
         Any source ID not in this mapping is assumed to *not* be of the correct entity class, i.e. cid = -1
         *However*, we still store the tree path of these non-entity SIDs for use in e.g. negative LFs
         """
-        
         # Take in a pre-computed mapping from canonical IDs to integer (> 0) ids to be used by system
-        # Also construct inverse map
         self.sid_to_cid    = sid_to_cid_map
-        self.cid_to_sid    = {}
+
+        # Note that sid -> cid is many to one!!!
+        self.cid_to_sids = defaultdict(set)
         for sid, cid in sid_to_cid_map.iteritems():
-            self.cid_to_sid[cid] = sid
+            self.cid_to_sids[cid].add(sid)
 
         # Mapping from input terms to CID
         self.term_to_sids = defaultdict(set)
@@ -151,6 +151,48 @@ def get_binarized_score(predicted, gold):
     print "P :\t", prec
     print "R :\t", recall
     print "F1:\t", f1
+
+
+def get_mn_score(predicted, gold, N_total_pos=None):
+    """Get P/R/F1 for positive integer label predictions"""
+    tp = 0
+    pp = 0
+    p  = 0
+    for i in range(gold.shape[0]):
+        if gold[i] > 0:
+            p += 1
+                    
+        if predicted[i] > 0:
+            pp += 1
+            if gold[i] == predicted[i]:
+                tp += 1
+
+    # Optionally override the count of total positives e.g. if we are iterating over a subset of the candidates
+    p = p if N_total_pos is None else N_total_pos
+                    
+    prec   = tp / float(pp)
+    recall = tp / float(p)
+    f1     = (2*prec*recall) / (prec+recall)
+    print "P :\t", prec
+    print "R :\t", recall
+    print "F1:\t", f1
+
+
+def get_pos_vector_matches(candidates, cd, cd_vectorizer, D_pos):
+    best_match = defaultdict(lambda : (0.0, -1))
+    for c in candidates:
+        p  = c.disease.get_span().lower()
+        cx = cd_vectorizer.vectorize_phrases([p])
+        m  = cx * D_pos.T
+        m  = m.tocoo()
+        for i, s in enumerate(m.data):
+            j    = m.col[i]
+            t    = cd.pos_terms[j]
+            sids = cd.term_to_sids[t]
+            cid  = list(set([cd.sid_to_cid[sid] for sid in sids if sid in cd.sid_to_cid]))[0]
+            if s > best_match[c.id][0]:
+                best_match[c.id] = (s, cid)
+    return best_match
 
 
 def get_docs_xml(filepath, doc_path=".//document", id_path=".//id/text()"):

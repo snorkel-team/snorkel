@@ -145,45 +145,34 @@ class CanonDictVectorizer(Vectorizer):
 
 
 class SSIModel(object):
-    """
-    Given:
-        * X, an N x V phrase matrix
-        * y, a corresponding N-length list of gold CIDs
-        * D, an M x V dictionary term matrix
-        * d, a corresponding M-length list of CIDs
-    Run SGD to learn the matrix of weights W
-
-    Just initialize with (D, d); then use self.train(X,y)
-    """
-    def __init__(self, D, d):
-        self.D = D
-        self.d = d
+    def __init__(self, D, cid_sets):
+        """
+        D is an M x V dictionary term matrix, where V is the vocabulary size
+        cid_sets is a corresponding M-length list of *sets* of CIDs
+        """
+        self.D        = D
+        self.cid_sets = cid_sets
         
-        self.cids = frozenset(d)
-        self.V    = D.shape[1]
+        #self.cids      = frozenset(d)
+        self.T, self.V = D.shape
         
         # Index the dictionary terms (D) by cid (d)
-        self.cid_to_rows = defaultdict(list)
-        for i, cid in enumerate(self.d):
-            self.cid_to_rows[cid].append(i)
+        self.cid_to_rows = defaultdict(set)
+        for i, cids in enumerate(self.cid_sets):
+            for cid in cids:
+                self.cid_to_rows[cid].add(i)
+        
+        # Store params from each iter
+        self.Ws = []
+        self.bs = []
     
-    def train(self, X, Y, rate=1e-3, n_iter=3, n_iter_sample=10, n_iter_neg=3, sample_close_negs=True, verbose=True):
+    def train(self, X, Y, rate=1e-3, n_iter=3, n_iter_sample=10, verbose=True):
         """
         X is an N x V sparse matrix of N vectorized disease mentions (V = vocab size) to be linked to CIDs
         Y is an N x K sparse matrix of label *probabilities*, where K = |CIDs|
-
-        If sample_close_negs = True, negative terms will be sampled only from "close"
-        terms to the phrase, i.e. with _some_ direct word overlap.
         """
-        N = X.shape[0]
-
-        # Build overlap matrix
-        if sample_close_negs:
-            print "Building close negatives dictionary..."
-            M          = X * self.D.T
-            close_negs = {}
-            for i in range(N):
-                close_negs[i] = set([self.d[j] for j in M.getrow(i).nonzero()[1]])
+        self.Ws = []
+        N       = X.shape[0]
 
         # Initialize W = I
         W = identity(self.V, format='csr')
@@ -193,20 +182,25 @@ class SSIModel(object):
 
         # Run SGD
         for it in range(n_iter):
-            sys.stdout.write("\rIteration: %s" % it)
+            print "Iteration: %s" % it
 
             # Iterate in random order through the training examples
             run = range(N)
             random.shuffle(run)
-            for i in run:
+            for count, i in enumerate(run):
+                if count % 250 == 0:
+                    sys.stdout.write("\r\t%s" % count)
 
                 # Randomly pick a tuple (x, t^+, t^-)
                 # First pick x, a random training phrase
                 x = X.getrow(i)
 
+                # Precompute the matches in the outer loop here
+                #matches = Z.data.argsort()
+                Z = self.D * x.T
+
+                # Sample the training CID label according to the training distribution from the gen. model
                 for si in range(n_iter_sample):
-                    
-                    # Sample the training example
                     cids = Y.getrow(i).nonzero()[1]
                     t    = random.random()
                     for cid in cids:
@@ -214,27 +208,51 @@ class SSIModel(object):
                         if t < 0:
                             break
 
-                    # NOTE: Skip OOD training examples!
+                    # Skip OOD training examples
                     if cid not in self.cid_to_rows:
                         continue
 
-                    # Next pick tp, a random dictionary term which maps to the correct CID for x
-                    j  = random.choice(self.cid_to_rows[cid])
-                    tp = self.D.getrow(j)
+                    # Of the terms in the dictionary corresponding to the label CID, pick the one
+                    # closest to x
+                    ps = list(self.cid_to_rows[cid])
+                    Zp = Z[ps]
+                    if Zp.nnz == 0:
+                        p = random.choice(ps)
+                    else:
+                        Zp = Zp.tocoo()
+                        p  = ps[Zp.row[Zp.data.argmax()]]
+                    tp = self.D.getrow(p)
 
-                    # Next pick tp, a random dictionary term which maps to an *incorrect* CID for x
-                    # Take multiple samples for this training example
-                    neg_cids = close_negs[i] if sample_close_negs and len(close_negs[i]) > 0 else self.cids
-                    neg_cids = neg_cids.difference([cid])
-                    for itn in range(n_iter_neg):
-                        cid_neg  = random.sample(neg_cids, 1)[0]
-                        k        = random.choice(self.cid_to_rows[cid_neg])
-                        tn       = self.D.getrow(k)
+                    # Of the other terms in the dictionary, pick the closest match as negative example
+                    ns = list(set(range(self.T)).difference(ps))
+                    Zn = Z[ns]
+                    if Zn.nnz == 0:
+                        n = random.choice(ns)
+                    else:
+                        Zn = Zn.tocoo()
+                        n  = ns[Zn.row[Zn.data.argmax()]]
+                    tn = self.D.getrow(n)
 
-                        # Take gradient step
-                        if 1 - (x*W*tp.T)[0,0] - b*(x * tp.T)[0,0] + (x * W * tn.T)[0,0] + b*(x * tn.T)[0,0] > 0:
-                            W = W + rate * ( x.T * tp - x.T * tn )
-                            b = b + rate * ( (x * tp.T)[0,0] - (x * tn.T)[0,0])
+                    # Take gradient step
+                    xtp = (x * tp.T)[0,0]
+                    xtn = (x * tn.T)[0,0]
+                    xw  = x * W
+                    d = 1 - (xw * tp.T)[0,0] - b * xtp + (xw * tn.T)[0,0] + b * xtn
+                    """
+                    print "\n"
+                    print "d=", d
+                    print "i:", i
+                    print "cid:", cid
+                    print "p:", p
+                    print "n:", n
+                    """
+                    if d > 0:
+                        W = W + rate * (x.T * tp - x.T * tn)
+                        b = b + rate * (xtp - xtn)
+
+            self.Ws.append(W)
+            self.bs.append(b)
+
         print "\n"
         self.W = W
         self.b = b
@@ -247,16 +265,17 @@ class SSIModel(object):
         W = self.W if W is None else W
         b = self.b if b is None else b
 
-        s = x * W * self.D.T + self.b * x * self.D.T
+        s = x * W * self.D.T + b * x * self.D.T
 
         if s.nnz == 0:
             return None
 
         # Note: We convert to COO format here so as to to do an OM-more efficient
         # argmax over the raw data
+        # TODO: Return set of tied top values -> pass to disambiguator!
         s = s.tocoo()
         if s.data.max() > 0.0:
-            return self.d[s.col[s.data.argmax()]]
+            return self.cid_sets[s.col[s.data.argmax()]]
         else:
             return None
 

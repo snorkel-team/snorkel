@@ -6,9 +6,43 @@ DEFAULT_MU = 1e-6
 DEFAULT_RATE = 0.01
 DEFAULT_ALPHA = 0.5
 
+
+def assemble_mn_format(L, mask=None):
+    N, M        = L.shape
+    mn_maps     = []
+    mn_inv_maps = []
+    nz_idxs     = []
+    Xs          = []
+    for i in range(N):
+        if mask is None or mask[i] > 0:
+            nz = L.getrow(i).nonzero()[1]
+            if len(nz) > 0:
+                nz_idxs.append(i)
+                    
+                # Construct the map from CID -> column index, and reverse
+                mn_map     = {}
+                mn_inv_map = []
+                for j in nz:
+                    label = L[i,j]
+                    if label not in mn_map:
+                        mn_map[label] = len(mn_map)
+                        mn_inv_map.append(label)
+                mn_maps.append(mn_map)
+                mn_inv_maps.append(mn_inv_map)
+                    
+                # Construct the candidate label matrix
+                X = np.zeros((M, len(mn_map)))
+                for j in nz:
+                    k       = mn_map[L[i,j]]
+                    X[j, k] = 1
+                Xs.append(X)
+    return Xs, mn_maps, mn_inv_maps, nz_idxs
+
+
 def log_odds(p):
     """This is the logit function"""
     return np.log(p / (1.0 - p))
+
 
 def odds_to_prob(l):
     """

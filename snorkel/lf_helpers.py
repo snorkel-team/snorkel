@@ -213,6 +213,14 @@ def same_row(c):
                 c[0].parent.table == c[i].parent.table and 
                 is_row_aligned(c[0].parent, c[i].parent)
             for i in range(len(c))))
+    
+def is_tabular_aligned(c):
+    """
+    Return True if all Spans in the given candidate are from the same Row
+    or Col
+    :param c: The candidate whose Spans are being compared
+    """
+    return same_table(c) and (same_col(c) or same_row(c))
 
 
 def same_col(c):

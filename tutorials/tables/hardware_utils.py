@@ -113,7 +113,7 @@ class OmniNgramsTemp(OmniNgrams):
 
 
 class OmniNgramsPart(OmniNgrams):
-    def __init__(self, parts_by_doc=None, n_max=5, split_tokens=None):
+    def __init__(self, parts_by_doc=None, suffixes_by_doc=None, n_max=5, split_tokens=None):
         # parts_by_doc is a dictionary d where d[document_name.upper()] = [partA, partB, ...]
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=None)
         self.link_parts = (parts_by_doc is not None)
@@ -126,6 +126,7 @@ class OmniNgramsPart(OmniNgrams):
         #     self.parts_by_doc[part[0]].add(part[1]) # TODO: change gold_parts to work with namedTuples
 
     def apply(self, context):
+        # TODO: Switch this to base in enumerated_parts, then add suffixes by doc.
         for ts in OmniNgrams.apply(self, context):
             enumerated_parts = [part_no for part_no in expand_part_range(ts.get_span())]
             if self.link_parts:

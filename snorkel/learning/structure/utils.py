@@ -2,7 +2,7 @@ from ..constants import *
 import random
 
 
-def get_deps(weights, expand=0.0):
+def get_deps(weights, threshold=0.05, expand=0.0):
     deps = set()
     for dep_mat, dep in (
             (weights.dep_fixing, DEP_FIXING),
@@ -11,13 +11,13 @@ def get_deps(weights, expand=0.0):
             (weights.dep_exclusive,  DEP_EXCLUSIVE)):
         for i in range(weights.n):
             for j in range(weights.n):
-                if dep_mat[i, j] != 0 or (random.random() < expand and i != j):
+                if abs(dep_mat[i, j]) > threshold or (random.random() < expand and i != j):
                     deps.add((i, j, dep))
 
     return deps
 
 
-def get_all_deps(n, dep_fixing=True, dep_reinforcing=True, dep_similar=False, dep_exclusive=False):
+def get_all_deps(n, dep_fixing=False, dep_reinforcing=False, dep_similar=False, dep_exclusive=False):
     """
     Convenience method for getting a list of all dependencies to consider learning for a given number of labeling
     functions.
@@ -26,6 +26,8 @@ def get_all_deps(n, dep_fixing=True, dep_reinforcing=True, dep_similar=False, de
     first case, (i, j, _) where i < j, is included.
 
     :param n: number of labeling functions
+    :param dep_fixing: whether to include DEP_FIXING dependencies. Default is False.
+    :param dep_reinforcing: whether to include DEP_REINFORCING dependencies. Default is False.
     :param dep_similar: whether to include DEP_SIMILAR dependencies. Default is False.
     :param dep_exclusive: whether to include DEP_DEP_EXCLUSIVE dependencies. Default is False.
     """

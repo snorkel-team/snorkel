@@ -248,13 +248,15 @@ class fastmulticontext(object):
         embed_xs = self.preprocess_f(embed_xs) if self.preprocess_f else embed_xs
         n = len(embed_xs)
         log_odds = np.zeros(n)
+        n_skipped = 0
         # If no raw features, add a bias term
         if raw_xs is None:
             raw_xs = np.ones((n, 1))
         for k in xrange(n):
             x, x_raw = embed_xs[k], raw_xs[k, :]
             feats, feats_ct, feats_type = self._get_vocab_index(x)
-            if len(feats) + len(x_raw) == 0:
+            if len(feats) + np.sum(x_raw) == 0:
+                n_skipped += 1
                 log_odds[k] = 0.0
                 continue
             wi_sub = self.wi[feats, :]
@@ -264,6 +266,7 @@ class fastmulticontext(object):
                 z, hidden_embed, self.wo, self.wo_raw, wi_sub, feats_ct, feats_type, x_raw
             )
             log_odds[k] = z[1]
+        print("Skipped {0} because no feats".format(n_skipped))
         return 1.0 / (1.0 + np.exp(-log_odds))        
     
     def _build_vocabs(self, embed_xs, min_ct):

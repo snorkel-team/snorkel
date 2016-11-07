@@ -2,6 +2,7 @@ from .models import Span
 from collections import defaultdict
 from functools import partial
 
+
 def get_token_count_feats(candidate, token_generator, attr='lemmas',
                           ngram=1, stopwords=None):
     args = candidate.get_arguments()
@@ -19,15 +20,19 @@ def get_token_count_feats(candidate, token_generator, attr='lemmas',
         if (not stopwords) or not all([t in stopwords for t in gram.split()]): 
             yield 'TOKEN_FEATS[' + gram + ']', counter[gram]
 
+
 def sentence_token_generator(candidate, attr):
     return (sent[attr] for sent in candidate.get_parent().get_sentence_generator())
+
 
 def doc_token_generator(candidate, attr):
     return (sent[attr] for sent in candidate.get_parent().parent.get_sentence_generator())
 
+
 def get_sentence_count_feats(stopwords, ngram=1, attr='lemmas'):
     return partial(get_token_count_feats, token_generator=sentence_token_generator,
         attr=attr, ngram=ngram, stopwords=stopwords)
+
 
 def get_doc_count_feats(stopwords, ngram=1, attr='lemmas'):
     return partial(get_token_count_feats, token_generator=doc_token_generator,

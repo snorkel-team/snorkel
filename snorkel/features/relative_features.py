@@ -3,9 +3,24 @@ import os, sys
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 
 from .models import Span
+from functools import partial
+from string import punctuation
 from tree_structs import corenlp_to_xmltree
 from treedlib import compile_relation_feature_generator
 from utils import get_as_dict
+
+
+def get_span_splits(candidate, stopwords=None):
+    split_pattern = r'[\s{}]+'.format(re.escape(punctuation))
+    for i, arg in enumerate(candidate.get_arguments()):
+        for token in re.split(split_pattern, s.get_span().lower()):
+            if stopwords is None or token not in stopwords:
+                yield 'SPAN_SPLIT[{0}][{1}]'.format(i, token), 1
+
+
+def get_span_splits_stopwords(stopwords):
+    return partial(get_span_splits, stopwords=stopwords)
+
 
 def get_span_feats(candidate, stopwords=None):
     args = candidate.get_arguments()
@@ -43,4 +58,8 @@ def get_span_feats(candidate, stopwords=None):
                 yield 'TDL_' + f, 1
     else:
         raise NotImplementedError("Only handles unary and binary candidates")
+
+
+def get_span_feats_stopwords(stopwords):
+    return partial(get_span_feats, stopwords=stopwords)
 

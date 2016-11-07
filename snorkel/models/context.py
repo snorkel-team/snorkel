@@ -91,6 +91,9 @@ class Context(SnorkelBase):
         'polymorphic_on': type
     }
 
+    def get_sentence_generator(self):
+        raise NotImplementedError()
+
 
 class Document(Context):
     """
@@ -105,6 +108,10 @@ class Document(Context):
         'polymorphic_identity': 'document',
     }
 
+    def get_sentence_generator(self):
+        for sentence in self.sentences:
+            yield sentence
+
     def __repr__(self):
         return "Document " + str(self.name)
 
@@ -115,6 +122,7 @@ class Sentence(Context):
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
     document = relationship('Document', backref=backref('sentences', cascade='all, delete-orphan'), foreign_keys=document_id)
+    parent = document
     position = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
     if snorkel_postgres:
@@ -156,6 +164,9 @@ class Sentence(Context):
             'dep_parents': self.dep_parents,
             'dep_labels': self.dep_labels
         }
+
+    def get_sentence_generator(self):
+        yield self
 
     def __repr__(self):
         return "Sentence" + str((self.document, self.position, self.text))

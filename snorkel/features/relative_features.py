@@ -3,6 +3,7 @@ import os, sys
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 
 from .models import Span
+from entity_features import compile_entity_feature_generator, get_ddlib_feats
 from functools import partial
 from string import punctuation
 from tree_structs import corenlp_to_xmltree
@@ -54,12 +55,44 @@ def get_span_feats(candidate, stopwords=None):
         if len(s1_idxs) > 0 and len(s2_idxs) > 0:
 
             # Apply TDL features
-            for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs, stopwords=stopwords):
+            for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs,
+                                   stopwords=stopwords):
                 yield 'TDL_' + f, 1
     else:
-        raise NotImplementedError("Only handles unary and binary candidates")
+        raise NotImplementedError("Only handles unary or binary candidates")
 
 
 def get_span_feats_stopwords(stopwords):
     return partial(get_span_feats, stopwords=stopwords)
 
+
+def get_first_document_span_feats(candidate, stopwords=None):
+    canonical_ids = candidate.get_canonical_ids()
+    for sentence in candidate.get_parent().parent.get_sentence_generator():
+        mention_idxs = [
+            get_entity_word_idxs(sentence, cid) for cid in canonical_ids
+        ]
+        if all(len(idxs) > 0 for idxs in mention_idxs):
+            break
+    if all(len(idxs) > 0 for idxs in mention_idxs):
+        if len(mention_idxs) == 1:
+            get_tdl_feats = compile_entity_feature_generator()
+            span          = args[0]
+            sent_dict     = get_as_dict(sentence)
+            xmltree       = corenlp_to_xmltree(sent_dict)
+            for f in get_ddlib_feats(sent_dict, mention_idxs[0]):
+                yield 'DDL_' + f, 1
+            for f in get_tdl_feats(xmltree.root, mention_idxs[0]):
+                yield 'TDL_' + f, 1
+        elif len(mention_idxs) == 2:
+            get_tdl_feats = compile_relation_feature_generator()
+            xmltree       = corenlp_to_xmltree(get_as_dict(sentence))
+            for f in get_tdl_feats(xmltree.root, mention_idxs[0], 
+                                   mention_idxs[1], stopwords=stopwords):
+                yield 'TDL_' + f, 1
+        else:
+            raise NotImplementedError("Only handles unary or binary candidates")
+
+
+def get_first_document_span_feats_stopwords(stopwords):
+    return partial(get_first_document_span_feats, stopwords=stopwords)

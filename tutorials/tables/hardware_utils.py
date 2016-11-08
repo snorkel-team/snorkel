@@ -128,7 +128,17 @@ class OmniNgramsPart(OmniNgrams):
     def apply(self, context):
         # TODO: Switch this to base in enumerated_parts, then add suffixes by doc.
         for ts in OmniNgrams.apply(self, context):
-            enumerated_parts = [part_no for part_no in expand_part_range(ts.get_span())]
+            text = ts.get_span()
+            mapping = [ (u'\u2010', '-'),
+                        (u'\u2011', '-'),
+                        (u'\u2012', '-'),
+                        (u'\u2013', '-'),
+                        (u'\u2014', '-'),
+                        (u'\u2212', '-'),
+                      ]
+            for k, v in mapping:
+                text = text.replace(k, v)
+            enumerated_parts = [part_no for part_no in expand_part_range(text)]
             if self.link_parts:
                 possible_parts =  self.parts_by_doc[ts.parent.document.name.upper()]
                 implicit_parts = set()
@@ -139,7 +149,7 @@ class OmniNgramsPart(OmniNgrams):
             else:
                 implicit_parts = set(enumerated_parts)
             for i, part_no in enumerate(implicit_parts):
-                if part_no == ts.get_span():
+                if part_no == text:
                     yield ts
                 else:
                     yield TemporaryImplicitSpan(

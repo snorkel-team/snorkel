@@ -325,7 +325,7 @@ class LogReg(NoiseAwareModel):
         weights = dict()
         for i in xrange(len(self.w)):
             if abs(self.w[i]) >= 0.000001:
-                weights[feature_matrix.get_key(i)] = float(self.w[i])
+                weights[feature_matrix.get_key(i).name] = float(self.w[i])
 
         if getDict: #optionally get access to the dictionary for easier searching
             return weights
@@ -333,7 +333,6 @@ class LogReg(NoiseAwareModel):
             # Sort by descending weight, code from epost:
             # (http://stackoverflow.com/questions/613183/sort-a-python-dictionary-by-value)
             return sorted(weights.items(), key=operator.itemgetter(1), reverse=reverse)
-
     
     def get_candidate_feature_weights(self, candidate, feature_matrix, feature_weights=None):
         if self.feature_weights is None:
@@ -342,9 +341,8 @@ class LogReg(NoiseAwareModel):
             else:
                 self.feature_weights = feature_weights
         feats = set(get_keys_by_candidate(candidate, feature_matrix))
-        return sorted([f_w for f_w in self.feature_weights if f_w[0] in feats], 
+        return sorted([(f.name, w) for (f, w) in self.feature_weights if f in feats], 
                     key=lambda x:abs(x[1]), reverse=True)
-
     
     def get_candidate_score(self, candidate, feature_matrix, feature_weights=None):
         score = 0

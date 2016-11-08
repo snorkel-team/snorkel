@@ -34,6 +34,6 @@ def get_sentence_count_feats(stopwords, ngram=1, attr='lemmas'):
         attr=attr, ngram=ngram, stopwords=stopwords)
 
 
-def get_doc_count_feats(stopwords, ngram=1, attr='lemmas'):
+def get_document_count_feats(stopwords, ngram=1, attr='lemmas'):
     return partial(get_token_count_feats, token_generator=doc_token_generator,
         attr=attr, ngram=ngram, stopwords=stopwords)

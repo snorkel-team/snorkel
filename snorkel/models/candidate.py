@@ -79,6 +79,9 @@ class Candidate(SnorkelBase):
     def get_arguments(self):
         return tuple(getattr(self, name) for name in self.__argnames__)
 
+    def get_canonical_ids(self):
+        pass
+
     def get_parent(self):
         # Assumes all arguments have the same parent
         return self.get_arguments()[0].parent

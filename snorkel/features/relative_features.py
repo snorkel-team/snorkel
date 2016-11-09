@@ -66,6 +66,10 @@ def get_span_feats_stopwords(stopwords):
     return partial(get_span_feats, stopwords=stopwords)
 
 
+def get_entity_word_idxs(sentence, canonical_id):
+    pass
+
+
 def get_first_document_span_feats(candidate, stopwords=None):
     canonical_ids = candidate.get_canonical_ids()
     for sentence in candidate.get_parent().parent.get_sentence_generator():
@@ -98,10 +102,18 @@ def get_first_document_span_feats_stopwords(stopwords):
     return partial(get_first_document_span_feats, stopwords=stopwords)
 
 
+def get_entity_type_max_counts(context):
+    pass
+
+
+def get_entity_counts(canonical_ids, context):
+    pass
+
+
 def get_relative_frequency_feats(candidate, context):
     max_counts = get_entity_type_max_counts(context)
     canonical_ids = candidate.get_canonical_ids()
-    entity_counts = get_entity_type_max_counts(canonical_ids, context)
+    entity_counts = get_entity_counts(canonical_ids, context)
     for i, (ct, max_ct) in enumerate(zip(entity_counts, max_counts)):
         yield "ENTITY_RELATIVE_FREQUENCY[{0}]".format(i), float(ct) / max_ct
 

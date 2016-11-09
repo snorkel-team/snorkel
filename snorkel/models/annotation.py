@@ -31,7 +31,7 @@ class AnnotationKeySet(SnorkelBase):
         self.keys.remove(key)
 
     def __repr__(self):
-        return "Annotation Key Set (" + self.name + ")"
+        return "Annotation Key Set (" + str(self.name) + ")"
 
     def __iter__(self):
         """Default iterator is over self.annotation_keys"""
@@ -105,7 +105,7 @@ class AnnotationMixin(object):
     # NOTE: What remains to be defined in the subclass is the **value**
 
     def __repr__(self):
-        return self.__class__.__name__ + " (" + str(self.key.name) + " = " + str(self.value) + ")"
+        return str(self.__class__.__name__) + " (" + self.key.name + " = " + str(self.value) + ")"
 
 
 class Label(AnnotationMixin, SnorkelBase):

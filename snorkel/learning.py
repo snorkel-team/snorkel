@@ -330,9 +330,7 @@ class LogReg(NoiseAwareModel):
         if getDict: #optionally get access to the dictionary for easier searching
             return weights
         else:
-            # Sort by descending weight, code from epost:
-            # (http://stackoverflow.com/questions/613183/sort-a-python-dictionary-by-value)
-            return sorted(weights.items(), key=operator.itemgetter(1), reverse=reverse)
+            return sorted(weights.items(), key=lambda x:abs(x[1]), reverse=reverse)
     
     def get_candidate_feature_weights(self, candidate, feature_matrix, feature_weights=None):
         if self.feature_weights is None:
@@ -341,6 +339,7 @@ class LogReg(NoiseAwareModel):
             else:
                 self.feature_weights = feature_weights
         feats = set(get_keys_by_candidate(candidate, feature_matrix))
+        # import pdb; pdb.set_trace()
         return sorted([(f.name, w) for (f, w) in self.feature_weights if f in feats], 
                     key=lambda x:abs(x[1]), reverse=True)
     

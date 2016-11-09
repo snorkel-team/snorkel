@@ -144,7 +144,7 @@ class OmniNgramsPart(OmniNgrams):
                 implicit_parts = set()
                 for base in enumerated_parts:
                     for part in possible_parts:
-                        if part.startswith(base):
+                        if part.startswith(base) and len(base) >= 4:
                             implicit_parts.add(part)
             else:
                 implicit_parts = set(enumerated_parts)
@@ -558,19 +558,20 @@ def part_error_analysis(c):
     part = c.get_arguments()[0]
     print "Part:"
     print part
-    print_table_info(part)
+    print part.parent
     print "------------"
     attr = c.get_arguments()[1]
     print "Attr:"
     print attr
-    print_table_info(attr)
+    print attr.parent
     print "------------"
 
 
 def print_table_info(span):
     print "------------"
-    print "Table: %s" % span.parent.table
+    if span.parent.table:
+        print "Table: %s" % span.parent.table
     if span.parent.cell:
-        print "Row: %s" % span.parent.row_num
-        print "Col: %s" % span.parent.col_num
+        print "Row: %s" % span.parent.row_start
+        print "Col: %s" % span.parent.col_start
     print "Phrase: %s" % span.parent

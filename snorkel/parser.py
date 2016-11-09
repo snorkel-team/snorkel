@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
+from .models import Corpus, Document, Webpage, Sentence, Table, Cell, Phrase, TablePhrase, construct_stable_id, split_stable_id
 from .utils import ProgressBar, sort_X_on_Y, split_html_attrs
 from .visual import VisualLinker
 import atexit
@@ -470,47 +470,51 @@ class OmniParser(object):
         parsed = 0
         parent_idx = 0
         phrase_idx = 0
-        phrase_position = 0
+        phrase_id = 0
         while(parsed < content_length):
             batch_end = parsed + self.contents[parsed:parsed + self.batch_size].rfind(self.delim) + len(self.delim)
             for parts in self.corenlp_handler.parse(document, self.contents[parsed:batch_end]):
                 (_, _, _, char_end) = split_stable_id(parts['stable_id'])
                 while parsed + char_end > block_char_end[parent_idx]:
                     parent_idx += 1
-                    phrase_position = 0
+                    phrase_idx = 0
                 parent = parents[parent_idx]
                 parts['document']           = document
-                parts['phrase_id']          = phrase_idx
-                parts['position']           = phrase_position
+                parts['phrase_idx']          = phrase_idx
+                parts['position']           = phrase_id
                 # parts['parent']           = parent
+                nWords = len(parts['words'])
+                parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'phrase', phrase_id, phrase_id)
                 if isinstance(parent, Document):
                     parts['html_tag']       = 'html'
                     parts['html_anc_tags']  = []
-                elif isinstance(parent, Table):
-                    parts['table']          = parent
-                    parts['html_tag']       = 'table'
-                    parts['html_anc_tags']  = []
-                elif isinstance(parent, Cell):
-                    parts['table']          = parent.table 
-                    parts['cell']           = parent
-                    parts['row_start']      = parent.row_start
-                    parts['row_end']        = parent.row_end
-                    parts['col_start']      = parent.col_start
-                    parts['col_end']        = parent.col_end
-                    parts['html_tag']       = parent.html_tag
-                    parts['html_attrs']     = parent.html_attrs
-                    parts['html_anc_tags']  = parent.html_anc_tags
-                    parts['html_anc_attrs'] = parent.html_anc_attrs
-                nWords = len(parts['words'])
-                parts['page']           = [None] * nWords
-                parts['top']            = [None] * nWords
-                parts['left']           = [None] * nWords
-                parts['bottom']         = [None] * nWords
-                parts['right']          = [None] * nWords
-                parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'phrase', phrase_idx, phrase_idx)
-                yield Phrase(**parts)
+                    yield Phrase(**parts)
+                elif type(parent) in [Table, Cell]:
+                    parts['page']           = [None] * nWords
+                    parts['top']            = [None] * nWords
+                    parts['left']           = [None] * nWords
+                    parts['bottom']         = [None] * nWords
+                    parts['right']          = [None] * nWords
+                    if isinstance(parent, Table):
+                        parts['table']          = parent
+                        parts['html_tag']       = 'table'
+                        parts['html_anc_tags']  = []
+                    elif isinstance(parent, Cell):
+                        parts['table']          = parent.table 
+                        parts['cell']           = parent
+                        parts['row_start']      = parent.row_start
+                        parts['row_end']        = parent.row_end
+                        parts['col_start']      = parent.col_start
+                        parts['col_end']        = parent.col_end
+                        parts['html_tag']       = parent.html_tag
+                        parts['html_attrs']     = parent.html_attrs
+                        parts['html_anc_tags']  = parent.html_anc_tags
+                        parts['html_anc_attrs'] = parent.html_anc_attrs
+                    yield TablePhrase(**parts)
+                else:
+                    raise NotImplementedError("Phrase parent must be Document, Table, or Cell")
                 phrase_idx += 1
-                phrase_position += 1
+                phrase_id += 1
             parsed = batch_end
 
 

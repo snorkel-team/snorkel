@@ -339,7 +339,6 @@ class LogReg(NoiseAwareModel):
             else:
                 self.feature_weights = feature_weights
         feats = set(get_keys_by_candidate(candidate, feature_matrix))
-        # import pdb; pdb.set_trace()
         return sorted([(f.name, w) for (f, w) in self.feature_weights if f in feats], 
                     key=lambda x:abs(x[1]), reverse=True)
     

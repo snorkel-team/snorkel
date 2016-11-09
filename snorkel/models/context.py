@@ -244,28 +244,125 @@ class Cell(Context):
              self.position))
 
 
-class Phrase(Sentence):
+class Phrase(Context):
     """A phrase Context in a Document."""
     __tablename__ = 'phrase'
-    id = Column(Integer, ForeignKey('sentence.id'), primary_key=True)
-    # document_id = Column(Integer, ForeignKey('document.id'))
-    table_id = Column(Integer, ForeignKey('table.id'))
-    cell_id = Column(Integer, ForeignKey('cell.id'))
-    phrase_id = Column(Integer, nullable=False)
-    # document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
-    table = relationship('Table', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=table_id)
-    cell = relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=cell_id)
-    position = Column(Integer, nullable=False)
-    # text = Column(Text, nullable=False)
-    row_start = Column(Integer)
-    row_end = Column(Integer)
-    col_start = Column(Integer)
-    col_end = Column(Integer)
+    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
+    document_id = Column(Integer, ForeignKey('document.id'))
+    # table_id = Column(Integer, ForeignKey('table.id'))
+    # cell_id = Column(Integer, ForeignKey('cell.id'))
+    phrase_idx = Column(Integer, nullable=False) # index of Phrase in its parsed chunk
+    document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
+    # table = relationship('Table', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=table_id)
+    # cell = relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=cell_id)
+    position = Column(Integer, nullable=False) # unique Phrase number per document
+    text = Column(Text, nullable=False)
+    # row_start = Column(Integer)
+    # row_end = Column(Integer)
+    # col_start = Column(Integer)
+    # col_end = Column(Integer)
     html_tag = Column(Text)
     if snorkel_postgres:
         html_attrs = Column(postgresql.ARRAY(String))
         html_anc_tags = Column(postgresql.ARRAY(String))
         html_anc_attrs = Column(postgresql.ARRAY(String))
+        words = Column(postgresql.ARRAY(String), nullable=False)
+        char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
+        lemmas = Column(postgresql.ARRAY(String))
+        pos_tags = Column(postgresql.ARRAY(String))
+        ner_tags = Column(postgresql.ARRAY(String))
+        dep_parents = Column(postgresql.ARRAY(Integer))
+        dep_labels = Column(postgresql.ARRAY(String))
+        # page = Column(postgresql.ARRAY(Integer))
+        # top = Column(postgresql.ARRAY(Integer))
+        # left = Column(postgresql.ARRAY(Integer))
+        # bottom = Column(postgresql.ARRAY(Integer))
+        # right = Column(postgresql.ARRAY(Integer))
+    else:
+        html_attrs = Column(PickleType)
+        html_anc_tags = Column(PickleType)
+        html_anc_attrs = Column(PickleType)
+        words = Column(PickleType, nullable=False)
+        char_offsets = Column(PickleType, nullable=False)
+        lemmas = Column(PickleType)
+        pos_tags = Column(PickleType)
+        ner_tags = Column(PickleType)
+        dep_parents = Column(PickleType)
+        dep_labels = Column(PickleType)
+        # page = Column(PickleType)
+        # top = Column(PickleType)
+        # left = Column(PickleType)
+        # bottom = Column(PickleType)
+        # right = Column(PickleType)
+    __mapper_args__ = {
+        'polymorphic_identity': 'phrase',
+    }
+
+    __table_args__ = (
+        UniqueConstraint(document_id, position),
+    )
+
+    def _asdict(self):
+        return {
+            'id'                : self.id,
+            'document'          : self.document,
+            'phrase_idx'         : self.phrase_idx,
+            'position'          : self.position,
+            'text'              : self.text,
+            'row_start'         : self.row_start,
+            'row_end'           : self.row_end,
+            'col_start'         : self.col_start,
+            'col_end'           : self.col_end,
+            'html_tag'          : self.html_tag,
+            'html_attrs'        : self.html_attrs,
+            'html_anc_tags'     : self.html_anc_tags,
+            'html_anc_attrs'    : self.html_anc_attrs,
+            'words'             : self.words,
+            'char_offsets'      : self.char_offsets,
+            'lemmas'            : self.lemmas,
+            'pos_tags'          : self.pos_tags,
+            'ner_tags'          : self.ner_tags,
+            'dep_parents'       : self.dep_parents,
+            'dep_labels'        : self.dep_labels #,
+            # 'page'              : self.page,
+            # 'top'               : self.top,
+            # 'left'              : self.left,
+            # 'bottom'            : self.bottom,
+            # 'right'             : self.right
+        }
+
+    def has_visual_features(self):
+        return False
+
+    def __repr__(self):
+            return ("Phrase(Doc: %s, Id: %s, Text: %s)" % 
+                (self.document.name,
+                self.position, 
+                self.text))
+
+
+class TablePhrase(Phrase):
+    """A phrase Context in a Document."""
+    __tablename__ = 'table_phrase'
+    id = Column(Integer, ForeignKey('phrase.id'), primary_key=True)
+    # document_id = Column(Integer, ForeignKey('document.id'))
+    table_id = Column(Integer, ForeignKey('table.id'))
+    cell_id = Column(Integer, ForeignKey('cell.id'))
+    # phrase_idx = Column(Integer, nullable=False) # index of Phrase in its parsed chunk
+    # document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
+    table = relationship('Table', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=table_id)
+    cell = relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=cell_id)
+    # position = Column(Integer, nullable=False) # unique Phrase number per document
+    # text = Column(Text, nullable=False)
+    row_start = Column(Integer)
+    row_end = Column(Integer)
+    col_start = Column(Integer)
+    col_end = Column(Integer)
+    # html_tag = Column(Text)
+    if snorkel_postgres:
+        # html_attrs = Column(postgresql.ARRAY(String))
+        # html_anc_tags = Column(postgresql.ARRAY(String))
+        # html_anc_attrs = Column(postgresql.ARRAY(String))
         # words = Column(postgresql.ARRAY(String), nullable=False)
         # char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
         # lemmas = Column(postgresql.ARRAY(String))
@@ -279,9 +376,9 @@ class Phrase(Sentence):
         bottom = Column(postgresql.ARRAY(Integer))
         right = Column(postgresql.ARRAY(Integer))
     else:
-        html_attrs = Column(PickleType)
-        html_anc_tags = Column(PickleType)
-        html_anc_attrs = Column(PickleType)
+        # html_attrs = Column(PickleType)
+        # html_anc_tags = Column(PickleType)
+        # html_anc_attrs = Column(PickleType)
         # words = Column(PickleType, nullable=False)
         # char_offsets = Column(PickleType, nullable=False)
         # lemmas = Column(PickleType)
@@ -295,18 +392,18 @@ class Phrase(Sentence):
         bottom = Column(PickleType)
         right = Column(PickleType)
     __mapper_args__ = {
-        'polymorphic_identity': 'phrase',
+        'polymorphic_identity': 'table_phrase',
     }
 
     # __table_args__ = (
-    #     UniqueConstraint(document_id, phrase_id),
+    #     UniqueConstraint(document_id, position),
     # )
 
     def _asdict(self):
         return {
             'id'                : self.id,
             'document'          : self.document,
-            'phrase_id'         : self.phrase_id,
+            'phrase_idx'        : self.phrase_idx,
             'position'          : self.position,
             'text'              : self.text,
             'row_start'         : self.row_start,
@@ -335,12 +432,12 @@ class Phrase(Sentence):
         return self.page[0] is not None
 
     def __repr__(self):
-            return ("Phrase(Doc: %s, Table: %s, Row: %s, Col: %s, Position: %s, Text: %s)" % 
+            return ("Phrase(Doc: %s, Table: %s, Row: %s, Col: %s, Index: %s, Text: %s)" % 
                 (self.document.name,
                 getattr(self.table, 'position', 'X'), 
                 tuple([self.row_start, self.row_end]), 
                 tuple([self.col_start, self.col_end]), 
-                self.position, 
+                self.phrase_idx, 
                 self.text))
 
 class TemporaryContext(object):

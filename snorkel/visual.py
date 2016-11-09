@@ -27,7 +27,9 @@ class VisualLinker():
         self.html_word_list = None
         self.links = None
         self.pdf_dim = None
-        self.separators = re.compile(u"([\(\)\,\?\u2212\u201C\u201D\u2018\u2019\u00B0\*\']|(?<!http):|\.$|\.\.\.)")
+        delimiters = u"([\(\)\,\?\u2212\u201C\u201D\u2018\u2019\u00B0\*\']|(?<!http):|\.$|\.\.\.)"
+        self.separators = re.compile(delimiters)
+
 
     def parse_visual(self, document):
         self.document = document

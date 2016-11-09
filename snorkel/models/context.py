@@ -107,8 +107,28 @@ class Document(Context):
     }
 
     def __repr__(self):
-        return "Document " + unicode(self.name)
+        return "Document " + self.name
 
+
+class Webpage(Document):
+    # Declares name for storage table
+    __tablename__ = 'webpage'
+    id = Column(Integer, ForeignKey('document.id'), primary_key=True)
+    # Connects NewType records to generic Context records
+    url = Column(String)
+    host = Column(String)
+    page_type = Column(String)
+    raw_content = Column(String)
+    crawltime = Column(String)
+    all = Column(String) 
+    # Polymorphism information for SQLAlchemy
+    __mapper_args__ = {
+        'polymorphic_identity': 'webpage',
+    }
+
+    # Rest of class definition here
+    def __repr__(self):
+        return "Webpage(id: %s..., url: %s...)" % (self.name[:10], self.url[8:23])
 
 class Sentence(Context):
     """A sentence Context in a Document."""
@@ -224,19 +244,19 @@ class Cell(Context):
              self.position))
 
 
-class Phrase(Context):
+class Phrase(Sentence):
     """A phrase Context in a Document."""
     __tablename__ = 'phrase'
-    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
-    document_id = Column(Integer, ForeignKey('document.id'))
+    id = Column(Integer, ForeignKey('sentence.id'), primary_key=True)
+    # document_id = Column(Integer, ForeignKey('document.id'))
     table_id = Column(Integer, ForeignKey('table.id'))
     cell_id = Column(Integer, ForeignKey('cell.id'))
     phrase_id = Column(Integer, nullable=False)
-    document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
+    # document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
     table = relationship('Table', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=table_id)
     cell = relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=cell_id)
     position = Column(Integer, nullable=False)
-    text = Column(Text, nullable=False)
+    # text = Column(Text, nullable=False)
     row_start = Column(Integer)
     row_end = Column(Integer)
     col_start = Column(Integer)
@@ -246,13 +266,13 @@ class Phrase(Context):
         html_attrs = Column(postgresql.ARRAY(String))
         html_anc_tags = Column(postgresql.ARRAY(String))
         html_anc_attrs = Column(postgresql.ARRAY(String))
-        words = Column(postgresql.ARRAY(String), nullable=False)
-        char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
-        lemmas = Column(postgresql.ARRAY(String))
-        pos_tags = Column(postgresql.ARRAY(String))
-        ner_tags = Column(postgresql.ARRAY(String))
-        dep_parents = Column(postgresql.ARRAY(Integer))
-        dep_labels = Column(postgresql.ARRAY(String))
+        # words = Column(postgresql.ARRAY(String), nullable=False)
+        # char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
+        # lemmas = Column(postgresql.ARRAY(String))
+        # pos_tags = Column(postgresql.ARRAY(String))
+        # ner_tags = Column(postgresql.ARRAY(String))
+        # dep_parents = Column(postgresql.ARRAY(Integer))
+        # dep_labels = Column(postgresql.ARRAY(String))
         page = Column(postgresql.ARRAY(Integer))
         top = Column(postgresql.ARRAY(Integer))
         left = Column(postgresql.ARRAY(Integer))
@@ -262,13 +282,13 @@ class Phrase(Context):
         html_attrs = Column(PickleType)
         html_anc_tags = Column(PickleType)
         html_anc_attrs = Column(PickleType)
-        words = Column(PickleType, nullable=False)
-        char_offsets = Column(PickleType, nullable=False)
-        lemmas = Column(PickleType)
-        pos_tags = Column(PickleType)
-        ner_tags = Column(PickleType)
-        dep_parents = Column(PickleType)
-        dep_labels = Column(PickleType)
+        # words = Column(PickleType, nullable=False)
+        # char_offsets = Column(PickleType, nullable=False)
+        # lemmas = Column(PickleType)
+        # pos_tags = Column(PickleType)
+        # ner_tags = Column(PickleType)
+        # dep_parents = Column(PickleType)
+        # dep_labels = Column(PickleType)
         page = Column(PickleType)
         top = Column(PickleType)
         left = Column(PickleType)
@@ -278,9 +298,9 @@ class Phrase(Context):
         'polymorphic_identity': 'phrase',
     }
 
-    __table_args__ = (
-        UniqueConstraint(document_id, phrase_id),
-    )
+    # __table_args__ = (
+    #     UniqueConstraint(document_id, phrase_id),
+    # )
 
     def _asdict(self):
         return {

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
+from .models import Corpus, Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
 from .utils import ProgressBar, sort_X_on_Y, split_html_attrs
 from .visual import VisualLinker
 import atexit
@@ -20,6 +20,8 @@ import codecs
 from subprocess import Popen
 import sys
 import copy
+import gzip
+import json
 
 
 class CorpusParser:
@@ -41,6 +43,7 @@ class CorpusParser:
                 if i == self.max_docs:
                     break
             corpus.append(doc)
+            # import pdb; pdb.set_trace()
             for _ in self.sent_parser.parse(doc, text):
                 pass
         if self.max_docs is not None:
@@ -100,6 +103,39 @@ class TSVDocParser(DocParser):
                 (doc_name, doc_text) = line.split('\t')
                 stable_id=self.get_stable_id(doc_name)
                 yield Document(name=doc_name, stable_id=stable_id, meta={'file_name' : file_name}), doc_text
+
+class MemexParser(DocParser):
+    """Simple parsing of JSON file with one (doc_name <tab> doc_text) per line"""
+    def parse_file(self, fp, file_name):
+        with gzip.open(fp, 'rt') as r:
+            for line in r:
+                obj = json.loads(line, encoding="utf-8", strict=True)
+                # if object does not have _id, we skip it
+                if not '_id' in obj: continue
+                id = obj['_id']
+
+                # if object does not have _source or _source.url, we skip it
+                if not '_source' in obj or not 'url' in obj['_source']: continue
+
+                # if it's not a escorts document, we skip it
+                # if obj['_type'] != 'escorts': continue
+                type = obj['_type']
+
+                # if we don't have a site module for it, we skip it
+                source = obj['_source']
+                url = source['url']
+
+                if 'crawl_data' in source and 'status' in source['crawl_data']:
+                    status = source['crawl_data']['status']
+                    if status == 403: continue
+
+                # if there's no raw content
+                if 'raw_content' not in source or source['raw_content'].strip() =='': continue
+
+                raw_content = source['raw_content']
+                crawltime = source['timestamp']
+                yield (Webpage(name=id, url=url, page_type=type, raw_content=raw_content, 
+                            crawltime=crawltime, all=line), raw_content)
 
 
 class TextDocParser(DocParser):

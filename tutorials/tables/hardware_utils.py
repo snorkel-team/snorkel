@@ -128,17 +128,7 @@ class OmniNgramsPart(OmniNgrams):
     def apply(self, context):
         # TODO: Switch this to base in enumerated_parts, then add suffixes by doc.
         for ts in OmniNgrams.apply(self, context):
-            text = ts.get_span()
-            mapping = [ (u'\u2010', '-'),
-                        (u'\u2011', '-'),
-                        (u'\u2012', '-'),
-                        (u'\u2013', '-'),
-                        (u'\u2014', '-'),
-                        (u'\u2212', '-'),
-                      ]
-            for k, v in mapping:
-                text = text.replace(k, v)
-            enumerated_parts = [part_no for part_no in expand_part_range(text)]
+            enumerated_parts = [part_no.replace(" ", '') for part_no in expand_part_range(ts.get_span())]
             if self.link_parts:
                 possible_parts =  self.parts_by_doc[ts.parent.document.name.upper()]
                 implicit_parts = set()
@@ -149,7 +139,7 @@ class OmniNgramsPart(OmniNgrams):
             else:
                 implicit_parts = set(enumerated_parts)
             for i, part_no in enumerate(implicit_parts):
-                if part_no == text:
+                if part_no == ts.get_span():
                     yield ts
                 else:
                     yield TemporaryImplicitSpan(
@@ -384,7 +374,7 @@ def expand_part_range(text, DEBUG=False):
     """
     ### Regex Patterns compile only once per function call.
     # This range pattern will find text that "looks like" a range.
-    range_pattern = re.compile(ur'^(?P<start>[\w\/]+)(?:\s*(\.{3,}|\~|\-+|to|thru|through|\u2013+|\u2014+|\u2012+|\u2212+)\s*)(?P<end>[\w\/]+)$', re.IGNORECASE | re.UNICODE)
+    range_pattern = re.compile(ur'^(?P<start>[\w\/]+)(?:\s*(\.{3,}|\~|\-+|to|thru|through|\u2011+|\u2012+|\u2013+|\u2014+|\u2012+|\u2212+)\s*)(?P<end>[\w\/]+)$', re.IGNORECASE | re.UNICODE)
     suffix_pattern = re.compile(ur'(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)')
     base_pattern = re.compile(ur'(?P<base>[\w\-]+)(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)?')
 

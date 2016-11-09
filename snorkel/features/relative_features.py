@@ -1,8 +1,10 @@
-import os, sys
+import os
+import sys
 
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 
 from .models import Span
+from collections import defaultdict
 from entity_features import compile_entity_feature_generator, get_ddlib_feats
 from functools import partial
 from string import punctuation
@@ -103,10 +105,12 @@ def get_first_document_span_feats_stopwords(stopwords):
 
 
 def get_entity_type_max_counts(context):
+    counts = defaultdict(int)
     pass
 
 
 def get_entity_counts(canonical_ids, context):
+    counts = {cid: 0 for cid in canonical_ids}
     pass
 
 

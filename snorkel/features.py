@@ -69,11 +69,18 @@ def get_token_count_feats(candidate, token_generator, ngram=1, stopwords=None):
 def span_token_generator(candidate):
     return [candidate[0].parent.lemmas]
 
+def title_token_generator(candidate):
+    return [candidate[0].parent.document.sentences[0].lemmas]
+
 def doc_token_generator(candidate):
     return [sent.lemmas for sent in candidate[0].parent.document.sentences]
 
 def get_span_lemma_feats_generator(stopwords, ngram=1):
     return partial(get_token_count_feats, token_generator=span_token_generator,
+        ngram=ngram, stopwords=stopwords)
+
+def get_title_lemma_feats_generator(stopwords, ngram=1):
+    return partial(get_token_count_feats, token_generator=title_token_generator,
         ngram=ngram, stopwords=stopwords)
 
 def get_doc_lemma_feats_generator(stopwords, ngram=1):

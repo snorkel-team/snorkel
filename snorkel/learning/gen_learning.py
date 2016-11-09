@@ -184,17 +184,23 @@ class GenerativeModel(object):
 
     def train(self, L, y=None, deps=(), init_acc = 1.0, epochs=100, step_size=0.001, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
               truncation=10, burn_in=50, timer=None):
+        print "Processing"
         self._process_dependency_graph(L, deps)
+        print "Compiling"
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc)
+        print "Initializing FG"
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
                        reg_param=reg_param, regularization=reg_type, truncation=truncation,
                        quiet=(not verbose), verbose=verbose, learn_non_evidence=True, burn_in=burn_in)
+        print "Loading FG"
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
         if timer is not None:
             timer.start()
+        print "Learning FG"
         fg.learning(out=False)
         if timer is not None:
             timer.end()
+        print "Processing weights"
         self._process_learned_weights(L, fg)
 
     def marginals(self, L):
@@ -311,6 +317,8 @@ class GenerativeModel(object):
         ftv = np.zeros(n_edges, FactorToVar)
         domain_mask = np.zeros(n_vars, np.bool)
 
+        print "\tInitialized"
+
         #
         # Compiles weight matrix
         #
@@ -330,6 +338,8 @@ class GenerativeModel(object):
             weight[i]['isFixed'] = False
             weight[i]['initialValue'] = np.float64(0.0)
 
+        print "\tWeight matrix set"
+
         #
         # Compiles variable matrix
         #
@@ -338,6 +348,8 @@ class GenerativeModel(object):
             variable[i]['initialValue'] = self.rng.randrange(0, 2) if (y is None or i not in y) else 1 if y[i] == 1 else 0
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = 2
+
+        print "\tVariable matrix step 1"
 
         for i in range(m):
             for j in range(n):
@@ -354,6 +366,8 @@ class GenerativeModel(object):
                                      "Valid values are 1, 0, and -1. " % i, j, L[i, j])
                 variable[index]["dataType"] = 0
                 variable[index]["cardinality"] = 3
+
+        print "\tVariable matrix step 2"
 
         #
         # Compiles factor and ftv matrices
@@ -378,6 +392,8 @@ class GenerativeModel(object):
             ftv_off = 0
             w_off = 0
 
+        print "\tPriors set"
+
         # Factors over labeling function outputs
         f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off, "DP_GEN_LF_ACCURACY",
                                                              (lambda m, n, i, j: i, lambda m, n, i, j: m + n * i + j))
@@ -400,6 +416,8 @@ class GenerativeModel(object):
                 f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off,
                                                                      optional_name_map[optional_name][0],
                                                                      optional_name_map[optional_name][1])
+
+        print "\tOutput factors set"
 
         # Factors for labeling function dependencies
         dep_name_map = {
@@ -430,6 +448,8 @@ class GenerativeModel(object):
                                                                   mat.row[i], mat.col[i],
                                                                   dep_name_map[dep_name][0],
                                                                   dep_name_map[dep_name][1])
+
+        print "\tDeps set"
 
         return weight, variable, factor, ftv, domain_mask, n_edges
 

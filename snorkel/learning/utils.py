@@ -1,10 +1,12 @@
+import math
+import matplotlib.pyplot as plt
 import numpy as np
+import scipy.sparse as sparse
+
 import matplotlib
 matplotlib.use('Agg')
 import warnings
 warnings.filterwarnings("ignore", module="matplotlib")
-import matplotlib.pyplot as plt
-import scipy.sparse as sparse
 
 
 def score(test_candidates, test_labels, test_pred, gold_candidate_set, train_marginals=None, test_marginals=None):
@@ -194,12 +196,14 @@ class Parameter(object):
         raise NotImplementedError()
     
     def draw_values(self, n):
-        return np.random.choice(self.get_all_values(), n)
+        # Multidim parameters can't use choice directly
+        v = self.get_all_values()
+        return [v[int(i)] for i in np.random.choice(len(v), n)]
     
 class ListParameter(Parameter):
     """List of parameter values for searching"""
     def __init__(self, name, parameter_list):
-        self.parameter_list = np.ravel(parameter_list)
+        self.parameter_list = np.array(parameter_list)
         super(ListParameter, self).__init__(name)
     
     def get_all_values(self):
@@ -245,7 +249,7 @@ class GridSearch(object):
     def search_space(self):
         return product(param.get_all_values() for param in self.params)
 
-    def fit(self, X_validation, validation_labels, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, **model_hyperparams):
+    def fit(self, X_validation, validation_labels, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
@@ -269,7 +273,7 @@ class GridSearch(object):
             self.model.train(self.X, self.training_marginals, **model_hyperparams)
 
             # Test the model
-            tp, fp, tn, fn = self.model.score(X_validation, validation_labels, gold_candidate_set, b, set_unlabeled_as_neg, display=False)
+            tp, fp, tn, fn = self.model.score(X_validation, validation_labels, gold_candidate_set, b, set_unlabeled_as_neg, display=False, **validation_kwargs)
             p, r, f1 = scores_from_counts(tp, fp, tn, fn)
             run_stats.append(list(param_vals) + [p, r, f1])
             if f1 > f1_opt:

@@ -306,17 +306,18 @@ class LSTMModel(object):
     """
     lstm_dict = {'__place_holder__':0, '__unknown__':1}
     words=[]
-    for c in self.training_set:
-      min_idx=min(c.idxs)
-      max_idx=max(c.idxs)+1
-      length=len(c.get_attrib('words'))
-      lw= range(max(0,min_idx-word_window_length), min_idx)
-      rw= range(max_idx,min(max_idx+word_window_length, length))
-      m=c.idxs
-      w=np.array(c.get_attrib('words'))
-      m=w[m] if contain_mention else []
-      seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m,w[rw]))]
-      words +=seq
+    for cs in self.training_set:
+      for c in cs:
+        min_idx=c.get_word_start()
+        max_idx=c.get_word_end()+1
+        length=len(c.parent.words)
+        lw= range(max(0,min_idx-word_window_length), min_idx)
+        rw= range(max_idx,min(max_idx+word_window_length, length))
+        m=range(min_idx, max_idx)
+        w=np.array(c.parent.words)
+        m=w[m] if contain_mention else []
+        seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m,w[rw]))]
+        words +=seq
     words = sorted(list(set(words)))
     for i in range(len(words)):
       lstm_dict[words[i]]=i+2
@@ -329,18 +330,19 @@ class LSTMModel(object):
     """
     lstm_X=[]
     words=[]
-    for c in data:
-      min_idx=min(c.idxs)
-      max_idx=max(c.idxs)+1
-      length=len(c.get_attrib('words'))
-      lw= range(max(0,min_idx-word_window_length), min_idx)
-      rw= range(max_idx,min(max_idx+word_window_length, length))
-      m=c.idxs
-      w=np.array(c.get_attrib('words'))
-      m=w[m] if contain_mention else ['__place_holder__']
-      seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m,w[rw]))]
-      x=[0]+[self.word_dict[j] if j in self.word_dict else 1 for j in seq]+[0]
-      lstm_X.append(x)
+    for cs in data:
+      for c in cs:
+        min_idx=c.get_word_start()
+        max_idx=c.get_word_end()+1
+        length=len(c.parent.words)
+        lw= range(max(0,min_idx-word_window_length), min_idx)
+        rw= range(max_idx,min(max_idx+word_window_length, length))
+        m=range(min_idx, max_idx)
+        w=np.array(c.parent.words)
+        m=w[m] if contain_mention else ['__place_holder__']
+        seq = [_.lower() if ignore_case else _ for _ in np.concatenate((w[lw],m,w[rw]))]
+        x=[0]+[self.word_dict[j] if j in self.word_dict else 1 for j in seq]+[0]
+        lstm_X.append(x)
     return lstm_X
 
   def train(self, **kwargs):
@@ -356,10 +358,13 @@ class LSTMModel(object):
     self.dropout = kwargs.get('dropout', True)
     self.verbose=kwargs.get('verbose', True)
 
+    print "Building dictionary"
     self.get_word_dict(contain_mention=self.contain_mention, word_window_length=self.word_window_length, \
                        ignore_case=self.ignore_case)
+    print "Mapping data"
     self.lstm_X = self.map_word_to_id(self.training_set, contain_mention=self.contain_mention, \
                                       word_window_length=self.word_window_length, ignore_case=self.ignore_case)
+    print "Training"
     self.lstm(dim=self.dim, batch_size=self.batch_size, learning_rate=self.learning_rate, epoch=self.epoch, \
               dropout=self.dropout, verbose=self.verbose, maxlen=self.maxlen)
     

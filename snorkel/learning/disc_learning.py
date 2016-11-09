@@ -238,7 +238,7 @@ class LogReg(NoiseAwareModel):
 
 class FMCT(NoiseAwareModel):
     """fastmulticontext"""
-    def __init__(self, embed_matrices):
+    def __init__(self, preprocess_function=None):
         self.fmct         = None
         self.w            = None
         self.X_train      = None

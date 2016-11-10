@@ -249,10 +249,10 @@ class PersonMatcher(RegexMatchEach):
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as a person.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, *children, **kwargs):
         kwargs['attrib'] = 'ner_tags'
         kwargs['rgx'] = 'PERSON'
-        super(PersonMatcher, self).__init__(**kwargs)
+        super(PersonMatcher, self).__init__(*children, **kwargs)
 
 
 class LocationMatcher(RegexMatchEach):
@@ -262,10 +262,10 @@ class LocationMatcher(RegexMatchEach):
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as a location.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, *children, **kwargs):
         kwargs['attrib'] = 'ner_tags'
         kwargs['rgx'] = 'LOCATION'
-        super(LocationMatcher, self).__init__(**kwargs)
+        super(LocationMatcher, self).__init__(*children, **kwargs)
 
 
 class OrganizationMatcher(RegexMatchEach):
@@ -275,10 +275,10 @@ class OrganizationMatcher(RegexMatchEach):
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as an organization.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, *children, **kwargs):
         kwargs['attrib'] = 'ner_tags'
         kwargs['rgx'] = 'ORGANIZATION'
-        super(OrganizationMatcher, self).__init__(**kwargs)
+        super(OrganizationMatcher, self).__init__(*children, **kwargs)
 
 
 class DateMatcher(RegexMatchEach):
@@ -288,10 +288,10 @@ class DateMatcher(RegexMatchEach):
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as a date.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, *children, **kwargs):
         kwargs['attrib'] = 'ner_tags'
         kwargs['rgx'] = 'DATE'
-        super(DateMatcher, self).__init__(**kwargs)
+        super(DateMatcher, self).__init__(*children, **kwargs)
 
 
 class NumberMatcher(RegexMatchEach):
@@ -301,10 +301,10 @@ class NumberMatcher(RegexMatchEach):
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as a number.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, *children, **kwargs):
         kwargs['attrib'] = 'ner_tags'
         kwargs['rgx'] = 'NUMBER'
-        super(NumberMatcher, self).__init__(**kwargs)
+        super(NumberMatcher, self).__init__(*children, **kwargs)
 
 
 class MiscMatcher(RegexMatchEach):
@@ -314,7 +314,7 @@ class MiscMatcher(RegexMatchEach):
     A convenience class for setting up a RegexMatchEach to match spans
     for which each token was tagged as miscellaneous.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, *children, **kwargs):
         kwargs['attrib'] = 'ner_tags'
         kwargs['rgx'] = 'MISC'
-        super(MiscMatcher, self).__init__(**kwargs)
+        super(MiscMatcher, self).__init__(*children, **kwargs)

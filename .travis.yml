@@ -58,7 +58,19 @@ install:
   - source activate test
   - conda install --yes numpy=$NUMPY scipy=$SCIPY matplotlib pip
 
-  # Install all dependencies as per our README
+  # Install theano
+  - conda install --yes theano
+
+  # Install Numba
+  - conda install --yes numba
+
+  # Install Numbskull
+  - git clone https://github.com/HazyResearch/numbskull.git
+  - cd numbskull
+  - pip install .
+  - cd ..
+
+  # Install all remaining dependencies as per our README
   - pip install -r python-package-requirement.txt
   - test -e parser/corenlp.sh || ./install-parser.sh
 
@@ -69,9 +81,6 @@ install:
 
   # Use runipy to run Jupyter/IPython notebooks from command-line
   - pip install runipy
-
-  # Install theano
-  - conda install --yes theano
 
   # Install programs for coverage
   - pip install coverage
@@ -94,10 +103,11 @@ script:
   - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_3.ipynb
   - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_4.ipynb
   - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_5.ipynb
+  - cd ..
 
   # Run test modules
-#  - coverage run -p test/Tests.py
-#  - coverage combine
+  - coverage run -p test/learning/test_gen_learning.py
+  - coverage combine
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

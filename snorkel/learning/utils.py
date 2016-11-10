@@ -1,18 +1,13 @@
-# Base Python
-import cPickle, json, os, sys, warnings
-from collections import defaultdict, OrderedDict, namedtuple
-import lxml.etree as et
-
-# Scientific modules
-import numpy as np
 import math
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.sparse as sparse
+
 import matplotlib
 matplotlib.use('Agg')
+import warnings
 warnings.filterwarnings("ignore", module="matplotlib")
-import matplotlib.pyplot as plt
-import scipy.sparse as sparse
-from itertools import product
-from pandas import DataFrame
+
 
 def score(test_candidates, test_labels, test_pred, gold_candidate_set, train_marginals=None, test_marginals=None):
     '''
@@ -148,9 +143,6 @@ def calibration_plots(train_marginals, test_marginals, gold_labels=None):
     plt.show()
 
 
-ValidatedFit = namedtuple('ValidatedFit', ['w', 'P', 'R', 'F1'])
-
-
 def grid_search_plot(w_fit, mu_opt, f1_opt):
     """ Plot validation set performance for logistic regression regularization """
     mu_seq = sorted(w_fit.keys())
@@ -204,12 +196,14 @@ class Parameter(object):
         raise NotImplementedError()
     
     def draw_values(self, n):
-        return np.random.choice(self.get_all_values(), n)
+        # Multidim parameters can't use choice directly
+        v = self.get_all_values()
+        return [v[int(i)] for i in np.random.choice(len(v), n)]
     
 class ListParameter(Parameter):
     """List of parameter values for searching"""
     def __init__(self, name, parameter_list):
-        self.parameter_list = np.ravel(parameter_list)
+        self.parameter_list = np.array(parameter_list)
         super(ListParameter, self).__init__(name)
     
     def get_all_values(self):
@@ -255,7 +249,7 @@ class GridSearch(object):
     def search_space(self):
         return product(param.get_all_values() for param in self.params)
 
-    def fit(self, X_validation, validation_labels, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, **model_hyperparams):
+    def fit(self, X_validation, validation_labels, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
@@ -279,7 +273,7 @@ class GridSearch(object):
             self.model.train(self.X, self.training_marginals, **model_hyperparams)
 
             # Test the model
-            tp, fp, tn, fn = self.model.score(X_validation, validation_labels, gold_candidate_set, b, set_unlabeled_as_neg, display=False)
+            tp, fp, tn, fn = self.model.score(X_validation, validation_labels, gold_candidate_set, b, set_unlabeled_as_neg, display=False, **validation_kwargs)
             p, r, f1 = scores_from_counts(tp, fp, tn, fn)
             run_stats.append(list(param_vals) + [p, r, f1])
             if f1 > f1_opt:
@@ -291,7 +285,7 @@ class GridSearch(object):
         self.model.w = w_opt
 
         # Return DataFrame of scores
-        self.results = DataFrame.from_records(run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1'])
+        self.results = DataFrame.from_records(run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1']).sort('F1', ascending=False)
         return self.results
     
     
@@ -300,6 +294,10 @@ class RandomSearch(GridSearch):
         """Search a random sample of size n from a parameter grid"""
         self.n = n
         super(RandomSearch, self).__init__(model, X, training_marginals, *parameters)
+
+        print "Initialized RandomSearch search of size {0}. Search space size = {1}.".format(
+            self.n, np.product([len(param.get_all_values()) for param in self.params])
+        )
         
     def search_space(self):
         return zip(*[param.draw_values(self.n) for param in self.params])
@@ -386,3 +384,74 @@ def training_set_summary_stats(L, return_vals=True, verbose=False):
         print "=" * 60
     if return_vals:
         return coverage, overlap, conflict
+
+def log_odds(p):
+  """This is the logit function"""
+  return np.log(p / (1.0 - p))
+
+def odds_to_prob(l):
+  """
+  This is the inverse logit function logit^{-1}:
+
+    l       = \log\frac{p}{1-p}
+    \exp(l) = \frac{p}{1-p}
+    p       = \frac{\exp(l)}{1 + \exp(l)}
+  """
+  # Threshold to prevent float rollover into infinity/zero
+  l[l > 25] = 25
+  l[l < -25] = -25
+  return np.exp(l) / (1.0 + np.exp(l))
+
+def sample_data(X, w, n_samples):
+  """
+  Here we do Gibbs sampling over the decision variables (representing our objects), o_j
+  corresponding to the columns of X
+  The model is just logistic regression, e.g.
+
+    P(o_j=1 | X_{*,j}; w) = logit^{-1}(w \dot X_{*,j})
+
+  This can be calculated exactly, so this is essentially a noisy version of the exact calc...
+  """
+  N, R = X.shape
+  t = np.zeros(N)
+  f = np.zeros(N)
+
+  # Take samples of random variables
+  idxs = np.round(np.random.rand(n_samples) * (N-1)).astype(int)
+  ct = np.bincount(idxs)
+
+  # Estimate probability of correct assignment
+  increment = np.random.rand(n_samples) < odds_to_prob(X[idxs, :].dot(w))
+  increment_f = -1. * (increment - 1)
+  t[idxs] = increment * ct[idxs]
+  f[idxs] = increment_f * ct[idxs]
+
+  return t, f
+
+def exact_data(X, w, evidence=None):
+  """
+  We calculate the exact conditional probability of the decision variables in
+  logistic regression; see sample_data
+  """
+  t = odds_to_prob(X.dot(w))
+  if evidence is not None:
+    t[evidence > 0.0] = 1.0
+    t[evidence < 0.0] = 0.0
+  return t, 1-t
+
+
+def transform_sample_stats(Xt, t, f, Xt_abs=None):
+  """
+  Here we calculate the expected accuracy of each LF/feature
+  (corresponding to the rows of X) wrt to the distribution of samples S:
+
+    E_S[ accuracy_i ] = E_(t,f)[ \frac{TP + TN}{TP + FP + TN + FN} ]
+                      = \frac{X_{i|x_{ij}>0}*t - X_{i|x_{ij}<0}*f}{t+f}
+                      = \frac12\left(\frac{X*(t-f)}{t+f} + 1\right)
+  """
+  if Xt_abs is None:
+    Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else abs(Xt)
+  n_pred = Xt_abs.dot(t+f)
+  m = (1. / (n_pred + 1e-8)) * (Xt.dot(t) - Xt.dot(f))
+  p_correct = (m + 1) / 2
+  return p_correct, n_pred

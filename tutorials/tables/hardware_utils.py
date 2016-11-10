@@ -139,6 +139,8 @@ class OmniNgramsPart(OmniNgrams):
             else:
                 implicit_parts = set(enumerated_parts)
             for i, part_no in enumerate(implicit_parts):
+                # if "/" in ts.get_span():
+                #     yield ts
                 if part_no == ts.get_span():
                     yield ts
                 else:
@@ -368,7 +370,7 @@ def expand_part_range(text, DEBUG=False):
     the original text. Two main operations are performed:
         1. Expanding ranges (X to Y; X ~ Y; X -- Y)
         2. Expanding suffixes (123X/Y/Z; 123X, Y, Z)
-    If no implicit terms are found, yields just the original string.
+    Also yields the original input string.
     To get the correct output from complex strings, this function should be fed
     many Ngrams from a particular phrase.
     """
@@ -434,6 +436,16 @@ def expand_part_range(text, DEBUG=False):
             expanded_parts.add(text)
     else:
         expanded_parts.add(text)
+        # Special case is when there is a single slack (e.g. BC337-16/BC338-16)
+        # and we want to output both halves of the slash, assuming that both
+        # halves are the same length
+        if text.count('/') == 1:
+            split = text.split('/')
+            if len(split[0]) == len(split[1]):
+                expanded_parts.add(split[0])
+                expanded_parts.add(split[1])
+
+
     if DEBUG: print "[debug]   Inferred Text: \n  " + str(sorted(expanded_parts))
 
     ### Step 2: Expand suffixes for each of the inferred phrases
@@ -463,6 +475,9 @@ def expand_part_range(text, DEBUG=False):
             if part and (not part.isspace()):
                 final_set.add(part) # no base was found with suffixes to expand
     if DEBUG: print "[debug]   Final Set: " + str(sorted(final_set))
+
+    # Also return the original input string
+    final_set.add(text)
 
     for part in final_set:
         yield part

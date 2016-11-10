@@ -351,7 +351,7 @@ class TemporaryContext(object):
                 for (key, val) in insert_args.items():
                     if isinstance(val, list):
                         if snorkel_postgres:
-                            raise NotImplementedError
+                            insert_args[key] = val
                         else:
                             insert_args[key] = pickle.dumps(val) #NOTE: this works for sqlite, not Postgres
                 session.execute(text(self._get_insert_query()), insert_args)

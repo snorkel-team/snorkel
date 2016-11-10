@@ -22,7 +22,6 @@ import sys
 import copy
 import gzip
 import json
-from timeit import default_timer as timer
 
 class CorpusParser:
     """Invokes a DocParser and runs the output through a ContextParser to produce a Corpus."""

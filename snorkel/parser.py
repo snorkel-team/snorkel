@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Webpage, Sentence, Table, Cell, Phrase, TablePhrase, construct_stable_id, split_stable_id
+from .models import Corpus, Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
 from .utils import ProgressBar, sort_X_on_Y, split_html_attrs
 from .visual import VisualLinker
 import atexit
 import warnings
-from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4 import BeautifulSoup, NavigableString, Tag, Comment
 from collections import defaultdict
 import itertools
 import glob
@@ -22,13 +22,13 @@ import sys
 import copy
 import gzip
 import json
-
+from timeit import default_timer as timer
 
 class CorpusParser:
-    """Invokes a DocParser and runs the output through a SentenceParser to produce a Corpus."""
-    def __init__(self, doc_parser, sent_parser, max_docs=None):
+    """Invokes a DocParser and runs the output through a ContextParser to produce a Corpus."""
+    def __init__(self, doc_parser, context_parser, max_docs=None):
         self.doc_parser = doc_parser
-        self.sent_parser = sent_parser
+        self.context_parser = context_parser
         self.max_docs = max_docs
 
     def parse_corpus(self, session, name):
@@ -43,8 +43,7 @@ class CorpusParser:
                 if i == self.max_docs:
                     break
             corpus.append(doc)
-            # import pdb; pdb.set_trace()
-            for _ in self.sent_parser.parse(doc, text):
+            for _ in self.context_parser.parse(doc, text):
                 pass
         if self.max_docs is not None:
             pb.close()
@@ -105,7 +104,7 @@ class TSVDocParser(DocParser):
                 yield Document(name=doc_name, stable_id=stable_id, meta={'file_name' : file_name}), doc_text
 
 class MemexParser(DocParser):
-    """Simple parsing of JSON file with one (doc_name <tab> doc_text) per line"""
+    """Simple parsing of JSON file with one (doc_name <tab> doc_text) per line"""    
     def parse_file(self, fp, file_name):
         with gzip.open(fp, 'rt') as r:
             for line in r:
@@ -134,8 +133,9 @@ class MemexParser(DocParser):
 
                 raw_content = source['raw_content']
                 crawltime = source['timestamp']
+                stable_id = self.get_stable_id(id)
                 yield (Webpage(name=id, url=url, page_type=type, raw_content=raw_content, 
-                            crawltime=crawltime, all=line), raw_content)
+                            crawltime=crawltime, all=line, stable_id=stable_id), raw_content)
 
 
 class TextDocParser(DocParser):
@@ -203,8 +203,8 @@ class XMLMultiDocParser(DocParser):
         return fpath.endswith('.xml')
 
 
-PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
-         '-RSB-': ']', '-LSB-': '['}
+PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{', '-RSB-': ']',
+       '-LSB-': '['}
 
 class CoreNLPHandler:
     def __init__(self, delim='', tok_whitespace=False):
@@ -213,17 +213,20 @@ class CoreNLPHandler:
         # Kill it when python exits.
         # This makes sure that we load the models only once.
         # In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
-        # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
+        # So it doesn't load e.g. coref models and the total (on-demand) initialization 
+        # takes only 7 sec.
         self.port = 12345
         self.tok_whitespace = tok_whitespace
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
-        cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
-               % (loc, self.port, 600000)]
+        cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer\
+               --port %d --timeout %d > /dev/null' % (loc, self.port, 600000)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
         props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
         props += "\"ssplit.htmlBoundariesToDiscard\": \"%s\"," % delim if delim else ""
-        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse,ner", "outputFormat": "json"}' % (self.port, props)
+        self.endpoint = 'http://127.0.0.1:%d/?properties={%s\
+                        "annotators": "tokenize,ssplit,pos,lemma,depparse,ner",\
+                        "outputFormat": "json"}' % (self.port, props)
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626
@@ -234,9 +237,9 @@ class CoreNLPHandler:
                         connect=20,
                         read=0,
                         backoff_factor=0.1,
-                        status_forcelist=[ 500, 502, 503, 504 ])
+                        status_forcelist=[500, 502, 503, 504])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
-    
+
     def _kill_pserver(self):
         if self.server_pid is not None:
             try:
@@ -292,7 +295,7 @@ class CoreNLPHandler:
                 diverged = True
                 #warnings.warn("CoreNLP parse has diverged from raw document text!")
             parts['position'] = position
-            
+
             # replace PennTreeBank tags with original forms
             parts['words'] = [PTB[w] if w in PTB else w for w in parts['words']]
             parts['lemmas'] = [PTB[w.upper()] if w.upper() in PTB else w for w in parts['lemmas']]
@@ -325,141 +328,168 @@ class HTMLParser(DocParser):
             for text in soup.find_all('html'):
                 name = os.path.basename(fp)[:os.path.basename(fp).rfind('.')]
                 stable_id = self.get_stable_id(name)
-                yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), unicode(text)
+                yield Document(name=name, stable_id=stable_id, 
+                               meta={'file_name' : file_name}), unicode(text)
 
     def _can_read(self, fpath):
         return fpath.endswith('html') # includes both .html and .xhtml
 
 
+class SimpleParser:
+    def __init__(self, delim):
+        self.delim = delim
+
+    def parse(self, document, contents):
+        i = 0
+        for text in contents.split(self.delim):
+            if not len(text.strip()): continue
+            stable_id = construct_stable_id(document, 'phrase', i, i)
+            yield {'text': text,
+                   'stable_id': stable_id}
+            i += 1
+
 class OmniParser(object):
-    def __init__(self, pdf_path=None, session=None, blacklist=["style"], whitelist=None):
-        self.delim = "<NB>" # N = New Block 
-        self.batch_size = 7500 # TODO: error handling--what if this is smaller than a cell?
-        self.corenlp_handler = CoreNLPHandler(delim=self.delim[1:-1])
-        self.vizlink = VisualLinker(pdf_path, session) if (pdf_path and session) else None
-        # if blacklist and whitelist:
-        #     raise UserWarning("Either a blacklist or a whitelist may be submitted---not both.")
-        if blacklist and not isinstance(blacklist, list):
-            raise ValueError("Argument blacklist must be of type <list>")
-        if whitelist and not isinstance(whitelist, list):
-            raise ValueError("Argument whitelist must be of type <list>")
+    def __init__(self, blacklist=["style"],   # html
+                 pdf_path=None, session=None, # visual
+                 lingual=True, tabular=True): # lingual, tabular
+        self.delim = "<NB>" # NB = New Block
+
+        # lingual setup
+        self.lingual = lingual
+        if self.lingual:
+            self.batch_size = 7500 # TODO: what if this is smaller than a cell?
+            self.lingual_parse = CoreNLPHandler(delim=self.delim[1:-1]).parse
+        else:
+            self.batch_size = 1000000
+            self.lingual_parse = SimpleParser(delim=self.delim).parse
+
+        # visual setup
+        self.visual = pdf_path and session
+        if self.visual:
+            self.vizlink = VisualLinker(pdf_path, session)
+
+        # tabular setup
+        self.tabular = tabular
+
+        # html setup
         self.blacklist = blacklist
-        self.whitelist = whitelist # TODO: whitelist is broken
+        if self.blacklist and not isinstance(blacklist, list):
+            raise ValueError("Argument blacklist must be of type <list>")
 
     def parse(self, document, text):
         for phrase in self.parse_structure(document, text):
             yield phrase
-        if self.vizlink:
+        if self.visual:
             self.vizlink.session.commit()
-            self.vizlink.parse_visual(document) 
+            self.vizlink.parse_visual(document)
 
     def parse_structure(self, document, text):
         # Setup
-        self.table_idx = 0
-        self.cell_idx = 0
-        self.row_idx = 0
-        self.col_idx = 0
-        self.white = 0
+        if self.tabular:
+            self.table = None
+            self.cell = None
+            self.anc_tags = []
+            self.table_idx = 0
+            self.cell_idx = 0
+            self.row_idx = 0
+            self.col_idx = 0
         self.contents = ""
-        freebies = ['[document]', 'html']
         parents = []
+        self.parent = document
         block_lengths = []
 
-        def parse_tag(tag, document, table=None, cell=None, anc_tags=[]):
-            # print self.whitelist
-            # print tag.name
-            # print self.white
+        def enter_tabular(child):
+            if child.name == "table":
+                self.table_grid = defaultdict(int)
+                self.row_idx = 0
+                self.cell_position = 0
+                stable_id = "%s::%s:%s:%s" % \
+                    (document.name, "table", self.table_idx, self.table_idx)
+                self.table = Table(document=document, stable_id=stable_id,
+                                   position=self.table_idx, text=unicode(child))
+                self.parent = self.table
+            elif child.name == "tr":
+                self.col_idx = 0
+            elif child.name in ["td", "th"]:
+                # calculate row_start/col_start
+                while self.table_grid[(self.row_idx, self.col_idx)]:
+                    self.col_idx += 1
+                col_start = self.col_idx
+                row_start = self.row_idx
+
+                # calculate row_end/col_end
+                row_end = row_start
+                if child.has_attr("rowspan"):
+                    row_end += int(child["rowspan"]) - 1
+                col_end = col_start
+                if child.has_attr("colspan"):
+                    col_end += int(child["colspan"]) - 1
+
+                # update table_grid with occupied cells
+                for r, c in itertools.product(range(row_start, row_end+1),
+                                              range(col_start, col_end+1)):
+                    self.table_grid[r, c] = 1
+
+                # construct cell
+                parts = defaultdict(list)
+                parts["document"] = document
+                parts["table"] = self.table
+                parts["row_start"] = row_start
+                parts["row_end"] = row_end
+                parts["col_start"] = col_start
+                parts["col_end"] = col_end
+                parts["position"] = self.cell_position
+                parts["text"] = unicode(child)
+                parts["html_tag"] = child.name
+                parts["html_attrs"] = [] #split_html_attrs(child.attrs.items())
+                # parts["html_anc_tags"] = list(self.anc_tags) # create a copy
+                parts["stable_id"] = "%s::%s:%s:%s:%s" % \
+                                     (document.name, "cell",
+                                      self.table.position, row_start, col_start)
+                self.cell = Cell(**parts)
+                self.parent = self.cell
+            self.anc_tags.append(child.name)
+
+        def exit_tabular(child):
+            self.anc_tags.pop()
+            if child.name == "table":
+                self.table = None
+                self.table_idx += 1
+                self.parent = document
+            elif child.name == "tr":
+                self.row_idx += 1
+            elif child.name in ["td", "th"]:
+                self.cell = None
+                self.col_idx += 1
+                self.cell_idx += 1
+                self.cell_position += 1
+                self.parent = self.table
+
+        def parse_tag(tag, document):
+            if isinstance(tag, Comment):
+                return
             if self.blacklist and tag.name in self.blacklist:
                 return
-            if self.whitelist:
-                if tag.name in freebies:
-                    pass
-                elif tag.name in self.whitelist:
-                    self.white += 1
-                elif self.white == 0:
-                    return
-            # print (tag.name, self.white)
-            
-            if any(isinstance(child, NavigableString) and unicode(child) != u'\n' for child in tag.children):
-                text = tag.get_text(' ')
-                tag.clear()
-                tag.string = text
+
+            # if any(type(child)==NavigableString and unicode(child) != u'\n' for child in tag.children):
+            #     text = tag.get_text(' ')
+            #     tag.clear()
+            #     tag.string = text
             for child in tag.children:
                 if isinstance(child, NavigableString):
                     self.contents += child
                     self.contents += self.delim
-                    if cell:
-                        parent = cell 
-                    elif table:
-                        parent = table 
-                    else:
-                        parent = document
-                    parents.append(parent)
+                    parents.append(self.parent)
+                    xpaths.append(tag.name)
                     block_lengths.append(len(child) + len(self.delim))
                 else: # isinstance(child, Tag) = True
-                    if child.name == "table":
-                        self.table_grid = defaultdict(int)
-                        self.row_idx = 0
-                        self.cell_position = 0
-                        stable_id = "%s::%s:%s:%s" % (document.name, "table", self.table_idx, self.table_idx)
-                        table = Table(document=document, stable_id=stable_id, position=self.table_idx, text=unicode(child))
-                    elif child.name == "tr":
-                        self.col_idx = 0
-                    elif child.name in ["td","th"]:
-                        # calculate row_start/col_start
-                        while self.table_grid[(self.row_idx, self.col_idx)]:
-                            self.col_idx += 1
-                        col_start = self.col_idx
-                        row_start = self.row_idx
-                        
-                        # calculate row_end/col_end
-                        row_end = row_start
-                        if child.has_attr("rowspan"):
-                            row_end += int(child["rowspan"]) - 1
-                        col_end = col_start
-                        if child.has_attr("colspan"):
-                            col_end += int(child["colspan"]) - 1
+                    if self.tabular:
+                        enter_tabular(child)
 
-                        # update table_grid with occupied cells
-                        for r, c in itertools.product(range(row_start, row_end+1), range(col_start, col_end+1)):
-                            self.table_grid[r,c] = 1
+                    parse_tag(child, document)
 
-                        # construct cell
-                        parts = defaultdict(list)
-                        parts["document"]       = document
-                        parts["table"]          = table
-                        parts["row_start"]      = row_start
-                        parts["row_end"]        = row_end
-                        parts["col_start"]      = col_start
-                        parts["col_end"]        = col_end
-                        parts["position"]       = self.cell_position
-                        parts["text"]           = unicode(child)
-                        parts["html_tag"]       = child.name
-                        parts["html_attrs"]     = [] #split_html_attrs(child.attrs.items())
-                        parts["html_anc_tags"]  = list(anc_tags)
-                        parts["html_anc_attrs"] = [] #anc_attrs
-                        parts["stable_id"]      = "%s::%s:%s:%s:%s" % (document.name, "cell", table.position, row_start, col_start)
-                        cell = Cell(**parts)
-
-                    anc_tags.append(child.name)
-
-                    parse_tag(child, document, table, cell, anc_tags)
-
-                    anc_tags.pop()
-
-                    # reset table, cell pointers
-                    if self.white and tag.name in self.whitelist:
-                        self.white -= 1
-                    if child.name in ["td","th"]:
-                        cell = None
-                        self.col_idx += 1
-                        self.cell_idx += 1
-                        self.cell_position += 1
-                    elif child.name == "tr":
-                        self.row_idx += 1  
-                    elif(child.name == "table"):
-                        table = None
-                        self.table_idx += 1
+                    if self.tabular:
+                        exit_tabular(child)
 
         # Parse document and store text in self.contents, padded with self.delim
         soup = BeautifulSoup(text, 'lxml')
@@ -469,52 +499,43 @@ class OmniParser(object):
         content_length = len(self.contents)
         parsed = 0
         parent_idx = 0
-        phrase_idx = 0
-        phrase_id = 0
-        while(parsed < content_length):
-            batch_end = parsed + self.contents[parsed:parsed + self.batch_size].rfind(self.delim) + len(self.delim)
-            for parts in self.corenlp_handler.parse(document, self.contents[parsed:batch_end]):
+        phrase_num = 0
+        position = 0
+        while parsed < content_length:
+            batch_end = parsed + \
+                        self.contents[parsed:parsed + self.batch_size].rfind(self.delim) + \
+                        len(self.delim)
+            for parts in self.lingual_parse(document, self.contents[parsed:batch_end]):
                 (_, _, _, char_end) = split_stable_id(parts['stable_id'])
                 while parsed + char_end > block_char_end[parent_idx]:
                     parent_idx += 1
-                    phrase_idx = 0
+                    position = 0
                 parent = parents[parent_idx]
-                parts['document']           = document
-                parts['phrase_idx']          = phrase_idx
-                parts['position']           = phrase_id
-                # parts['parent']           = parent
-                nWords = len(parts['words'])
-                parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'phrase', phrase_id, phrase_id)
+                parts['document'] = document
+                parts['phrase_num'] = phrase_num
+                parts['position'] = position
+                parts['stable_id'] = \
+                    "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
                 if isinstance(parent, Document):
-                    parts['html_tag']       = 'html'
-                    parts['html_anc_tags']  = []
-                    yield Phrase(**parts)
-                elif type(parent) in [Table, Cell]:
-                    parts['page']           = [None] * nWords
-                    parts['top']            = [None] * nWords
-                    parts['left']           = [None] * nWords
-                    parts['bottom']         = [None] * nWords
-                    parts['right']          = [None] * nWords
-                    if isinstance(parent, Table):
-                        parts['table']          = parent
-                        parts['html_tag']       = 'table'
-                        parts['html_anc_tags']  = []
-                    elif isinstance(parent, Cell):
-                        parts['table']          = parent.table 
-                        parts['cell']           = parent
-                        parts['row_start']      = parent.row_start
-                        parts['row_end']        = parent.row_end
-                        parts['col_start']      = parent.col_start
-                        parts['col_end']        = parent.col_end
-                        parts['html_tag']       = parent.html_tag
-                        parts['html_attrs']     = parent.html_attrs
-                        parts['html_anc_tags']  = parent.html_anc_tags
-                        parts['html_anc_attrs'] = parent.html_anc_attrs
-                    yield TablePhrase(**parts)
+                    parts['html_tag'] = 'html'
+                    # parts['html_attrs']     = parent.html_attrs
+                elif isinstance(parent, Table):
+                    parts['html_tag'] = 'table'
+                    parts['table'] = parent
+                elif isinstance(parent, Cell):
+                    parts['html_tag'] = parent.html_tag
+                    parts['table'] = parent.table
+                    parts['cell'] = parent
+                    parts['row_start'] = parent.row_start
+                    parts['row_end'] = parent.row_end
+                    parts['col_start'] = parent.col_start
+                    parts['col_end'] = parent.col_end
                 else:
+                    import pdb; pdb.set_trace()
                     raise NotImplementedError("Phrase parent must be Document, Table, or Cell")
-                phrase_idx += 1
-                phrase_id += 1
+                yield Phrase(**parts)
+                phrase_num += 1
+                position += 1
             parsed = batch_end
 
 

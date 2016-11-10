@@ -3,7 +3,6 @@ import os
 
 # from templates import *
 from lf_helpers import *
-from utils import get_as_dict
 from table_utils import min_row_diff, min_col_diff, num_rows, num_cols
 from .models import ImplicitSpan
 from collections import defaultdict

@@ -6,6 +6,7 @@ from sqlalchemy.types import PickleType
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.sql import select, text
+from sqlalchemy.ext.declarative import declared_attr
 import pickle
 import pandas as pd
 
@@ -52,24 +53,25 @@ class Corpus(SnorkelBase):
 
     def child_context_stats(self, parent_context):
         """
-        Given a parent context class, gets all the child context classes, and returns histograms of the number
-        of children per parent.
+        Given a parent context class, gets all the child context classes, and
+        returns histograms of the number of children per parent.
         """
         session = object_session(self)
         parent_name = parent_context.__table__.name
 
         # Get all the child context relationships
-        rels = [r for r in inspect(parent_context).relationships if r.back_populates == parent_name]
-        
+        rels = [r for r in inspect(parent_context).relationships
+                if r.back_populates == parent_name]
+
         # Print the histograms for each child context, and recurse!
         for rel in rels:
-            c  = rel.mapper.class_
+            c = rel.mapper.class_
             fk = list(rel._calculated_foreign_keys)[0]
-                
+
             # Query for average number of child contexts per parent context
             label = 'Number of %ss per %s' % (c.__table__.name, parent_name)
-            query = session.query(fk, func.count(c.id).label(label)).group_by(fk) 
-                
+            query = session.query(fk, func.count(c.id).label(label)).group_by(fk)
+
             # Render as panadas dataframe histogram
             df = pd.read_sql(query.statement, query.session.bind)
             df.hist(label)
@@ -107,15 +109,38 @@ class Document(Context):
     }
 
     def __repr__(self):
-        return "Document " + unicode(self.name)
+        return "Document " + self.name
 
+
+class Webpage(Document):
+    # Declares name for storage table
+    __tablename__ = 'webpage'
+    id = Column(Integer, ForeignKey('document.id'), primary_key=True)
+    # Connects NewType records to generic Context records
+    url = Column(String)
+    host = Column(String)
+    page_type = Column(String)
+    raw_content = Column(String)
+    crawltime = Column(String)
+    all = Column(String)
+    # Polymorphism information for SQLAlchemy
+    __mapper_args__ = {
+        'polymorphic_identity': 'webpage',
+    }
+
+    # Rest of class definition here
+    def __repr__(self):
+        return "Webpage(id: %s..., url: %s...)" % (self.name[:10], self.url[8:23])
 
 class Sentence(Context):
     """A sentence Context in a Document."""
     __tablename__ = 'sentence'
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
-    document = relationship('Document', backref=backref('sentences', cascade='all, delete-orphan'), foreign_keys=document_id)
+    document = \
+        relationship('Document',
+                     backref=backref('sentences', cascade='all, delete-orphan'),
+                     foreign_keys=document_id)
     position = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
     if snorkel_postgres:
@@ -167,7 +192,10 @@ class Table(Context):
     __tablename__ = 'table'
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
-    document = relationship('Document', backref=backref('tables', cascade='all, delete-orphan'), foreign_keys=document_id)
+    document = \
+        relationship('Document',
+                     backref=backref('tables', cascade='all, delete-orphan'),
+                     foreign_keys=document_id)
     position = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
 
@@ -189,8 +217,14 @@ class Cell(Context):
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
     table_id = Column(Integer, ForeignKey('table.id'))
-    document = relationship('Document', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=document_id)
-    table = relationship('Table', backref=backref('cells', cascade='all, delete-orphan'), foreign_keys=table_id)
+    document = \
+        relationship('Document',
+                     backref=backref('cells', cascade='all, delete-orphan'),
+                     foreign_keys=document_id)
+    table = \
+        relationship('Table',
+                     backref=backref('cells', cascade='all, delete-orphan'),
+                     foreign_keys=table_id)
     row_start = Column(Integer)
     row_end = Column(Integer)
     col_start = Column(Integer)
@@ -200,12 +234,12 @@ class Cell(Context):
     html_tag = Column(Text)
     if snorkel_postgres:
         html_attrs = Column(postgresql.ARRAY(String))
-        html_anc_tags = Column(postgresql.ARRAY(String))
-        html_anc_attrs = Column(postgresql.ARRAY(String))
+        # html_anc_tags = Column(postgresql.ARRAY(String))
+        # html_anc_attrs = Column(postgresql.ARRAY(String))
     else:
         html_attrs = Column(PickleType)
-        html_anc_tags = Column(PickleType)
-        html_anc_attrs = Column(PickleType)
+        # html_anc_tags = Column(PickleType)
+        # html_anc_attrs = Column(PickleType)
 
     __mapper_args__ = {
         'polymorphic_identity': 'cell',
@@ -216,112 +250,173 @@ class Cell(Context):
     )
 
     def __repr__(self):
-        return ("Cell(Doc: %s, Table: %s, Row: %s, Col: %s, Pos: %s)" % 
-            (self.document.name, 
-             self.table.position, 
-             tuple(set([self.row_start, self.row_end])), 
-             tuple(set([self.col_start, self.col_end])),
-             self.position))
+        return ("Cell(Doc: %s, Table: %s, Row: %s, Col: %s, Pos: %s)" %
+                (self.document.name,
+                 self.table.position,
+                 tuple(set([self.row_start, self.row_end])),
+                 tuple(set([self.col_start, self.col_end])),
+                 self.position))
 
 
-class Phrase(Context):
+class PhraseMixin(object):
     """A phrase Context in a Document."""
-    __tablename__ = 'phrase'
-    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
-    document_id = Column(Integer, ForeignKey('document.id'))
-    table_id = Column(Integer, ForeignKey('table.id'))
-    cell_id = Column(Integer, ForeignKey('cell.id'))
-    phrase_id = Column(Integer, nullable=False)
-    document = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
-    table = relationship('Table', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=table_id)
-    cell = relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=cell_id)
-    position = Column(Integer, nullable=False)
-    text = Column(Text, nullable=False)
+    def is_lingual(self):
+        return False
+
+    def is_visual(self):
+        return False
+
+    def is_tabular(self):
+        return False
+
+    def is_html(self):
+        return False
+
+    def __repr__(self):
+        return ("Phrase (Doc: %s, Index: %s, Text: %s)" %
+                (self.document.name,
+                 self.phrase_idx,
+                 self.text))
+
+class LingualMixin(object):
+    """A collection of lingual attributes."""
+    int_array_type = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
+    str_array_type = postgresql.ARRAY(String)  if snorkel_postgres else PickleType
+    words = Column(str_array_type)
+    char_offsets = Column(int_array_type)
+    lemmas = Column(str_array_type)
+    pos_tags = Column(str_array_type)
+    ner_tags = Column(str_array_type)
+    dep_parents = Column(int_array_type)
+    dep_labels = Column(str_array_type)
+
+    def is_lingual(self):
+        return True
+
+    def __repr__(self):
+        return ("LingualPhrase (Doc: %s, Index: %s, Text: %s)" %
+                (self.document.name,
+                 self.phrase_idx,
+                 self.text))
+
+class TabularMixin(object):
+    """A collection of tabular attributes."""
+    @declared_attr
+    def table_id(cls):
+        return Column('table_id', ForeignKey('table.id'))
+
+    @declared_attr
+    def table(cls):
+        return relationship('Table', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=lambda: cls.table_id)
+
+    @declared_attr
+    def cell_id(cls):
+        return Column('cell_id', ForeignKey('cell.id'))
+
+    @declared_attr
+    def cell(cls):
+        return relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=lambda: cls.cell_id)    
+    
     row_start = Column(Integer)
     row_end = Column(Integer)
     col_start = Column(Integer)
     col_end = Column(Integer)
-    html_tag = Column(Text)
-    if snorkel_postgres:
-        html_attrs = Column(postgresql.ARRAY(String))
-        html_anc_tags = Column(postgresql.ARRAY(String))
-        html_anc_attrs = Column(postgresql.ARRAY(String))
-        words = Column(postgresql.ARRAY(String), nullable=False)
-        char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
-        lemmas = Column(postgresql.ARRAY(String))
-        pos_tags = Column(postgresql.ARRAY(String))
-        ner_tags = Column(postgresql.ARRAY(String))
-        dep_parents = Column(postgresql.ARRAY(Integer))
-        dep_labels = Column(postgresql.ARRAY(String))
-        page = Column(postgresql.ARRAY(Integer))
-        top = Column(postgresql.ARRAY(Integer))
-        left = Column(postgresql.ARRAY(Integer))
-        bottom = Column(postgresql.ARRAY(Integer))
-        right = Column(postgresql.ARRAY(Integer))
-    else:
-        html_attrs = Column(PickleType)
-        html_anc_tags = Column(PickleType)
-        html_anc_attrs = Column(PickleType)
-        words = Column(PickleType, nullable=False)
-        char_offsets = Column(PickleType, nullable=False)
-        lemmas = Column(PickleType)
-        pos_tags = Column(PickleType)
-        ner_tags = Column(PickleType)
-        dep_parents = Column(PickleType)
-        dep_labels = Column(PickleType)
-        page = Column(PickleType)
-        top = Column(PickleType)
-        left = Column(PickleType)
-        bottom = Column(PickleType)
-        right = Column(PickleType)
+    position = Column(Integer)
+
+    def is_tabular(self):
+        return self.table is not None
+    
+    def is_cellular(self):
+        return self.cell is not None
+
+    def __repr__(self):
+        rows = tuple([self.row_start, self.row_end]) if self.row_start != self.row_end else self.row_start
+        cols = tuple([self.col_start, self.col_end]) if self.col_start != self.col_end else self.col_start
+        return ("TabularPhrase (Doc: %s, Table: %s, Row: %s, Col: %s, Index: %s, Text: %s)" % 
+            (self.document.name,
+            (lambda: cls.table).position, 
+            rows, 
+            cols, 
+            self.phrase_idx, 
+            self.text))
+
+
+class VisualMixin(object):
+    """ A collection of visual features"""
+    int_array_type = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
+    page    = Column(int_array_type)
+    top     = Column(int_array_type)
+    left    = Column(int_array_type)
+    bottom  = Column(int_array_type)
+    right   = Column(int_array_type)
+
+    def is_visual(self):
+        return self.page is not None and self.page[0] is not None
+
+    def __repr__(self):
+        return ("VisualPhrase (Doc: %s, Page: %s, (T,B,L,R): (%d,%d,%d,%d), Text: %s)" % 
+            (self.document.name,
+            self.page, self.top, self.bottom, self.left, self.right,
+            self.text))
+
+
+class HTMLMixin(object):
+    """ A collection of visual features"""
+    str_array_type = postgresql.ARRAY(String) if snorkel_postgres else PickleType
+    xpath      = Column(String)
+    html_tag   = Column(String)
+    html_attrs = Column(str_array_type)
+    hashid     = Column(String) # Keep for Memex application
+
+    def is_html(self):
+        return self.html_tag is not None
+
+    def __repr__(self):
+        return ("HTMLPhrase (Doc: %s, Tag: %s, Text: %s)" % 
+            (self.document.name,
+            self.html_tag,
+            self.text))
+
+
+# PhraseMixin must come last in arguments to not ovewrite is_* methods
+class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, HTMLMixin, PhraseMixin):
+    """A Phrase subclass with Lingual, Tabular, Visual, and HTML attributes."""
+    __tablename__ = 'phrase'
+    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
+    document_id = Column(Integer, ForeignKey('document.id'))
+    document = relationship('Document',
+                            backref=backref('phrases', cascade='all, delete-orphan'),
+                            foreign_keys=document_id)
+    phrase_num = Column(Integer, nullable=False) # unique Phrase number per document
+    text = Column(Text, nullable=False)
+
     __mapper_args__ = {
         'polymorphic_identity': 'phrase',
     }
 
     __table_args__ = (
-        UniqueConstraint(document_id, phrase_id),
+        UniqueConstraint(document_id, phrase_num),
     )
 
-    def _asdict(self):
-        return {
-            'id'                : self.id,
-            'document'          : self.document,
-            'phrase_id'         : self.phrase_id,
-            'position'          : self.position,
-            'text'              : self.text,
-            'row_start'         : self.row_start,
-            'row_end'           : self.row_end,
-            'col_start'         : self.col_start,
-            'col_end'           : self.col_end,
-            'html_tag'          : self.html_tag,
-            'html_attrs'        : self.html_attrs,
-            'html_anc_tags'     : self.html_anc_tags,
-            'html_anc_attrs'    : self.html_anc_attrs,
-            'words'             : self.words,
-            'char_offsets'      : self.char_offsets,
-            'lemmas'            : self.lemmas,
-            'pos_tags'          : self.pos_tags,
-            'ner_tags'          : self.ner_tags,
-            'dep_parents'       : self.dep_parents,
-            'dep_labels'        : self.dep_labels,
-            'page'              : self.page,
-            'top'               : self.top,
-            'left'              : self.left,
-            'bottom'            : self.bottom,
-            'right'             : self.right
-        }
-
-    def has_visual_features(self):
-        return self.page[0] is not None
-
     def __repr__(self):
-            return ("Phrase(Doc: %s, Table: %s, Row: %s, Col: %s, Position: %s, Text: %s)" % 
+        if self.is_tabular():
+            rows = tuple([self.row_start, self.row_end]) \
+                   if self.row_start != self.row_end else self.row_start
+            cols = tuple([self.col_start, self.col_end]) \
+                   if self.col_start != self.col_end else self.col_start
+            return ("Phrase (Doc: %s, Table: %s, Row: %s, Col: %s, Index: %s, Text: %s)" % 
+                   (self.document.name,
+                    self.table.position, 
+                    rows, 
+                    cols, 
+                    self.phrase_num, 
+                    self.text))
+        else:
+            return ("Phrase (Doc: %s, Index: %s, Text: %s)" % 
                 (self.document.name,
-                getattr(self.table, 'position', 'X'), 
-                tuple([self.row_start, self.row_end]), 
-                tuple([self.col_start, self.col_end]), 
-                self.position, 
+                self.phrase_num, 
                 self.text))
+
 
 class TemporaryContext(object):
     """
@@ -397,7 +492,7 @@ class TemporarySpan(TemporaryContext):
 
     def __eq__(self, other):
         try:
-            # TODO: add check that other is not an ImpliciSpan
+            # TODO: add check that other is not an ImplicitSpan
             return (self.parent == other.parent and 
                     self.char_start == other.char_start and 
                     self.char_end == other.char_end)
@@ -406,7 +501,7 @@ class TemporarySpan(TemporaryContext):
 
     def __ne__(self, other):
         try:
-            # TODO: add check that other is not an ImpliciSpan
+            # TODO: add check that other is not an ImplicitSpan
             return (self.parent != other.parent or 
                     self.char_start != other.char_start or 
                     self.char_end != other.char_end)

@@ -169,4 +169,4 @@ def tokens_to_ngrams(tokens, n_min=1, n_max=3, lower=False, delim=' '):
 
 def get_keys_by_candidate(candidate, annotation_matrix):
     (r,c,v) = sparse.find(annotation_matrix[annotation_matrix.get_row_index(candidate),:])
-    return [annotation_matrix.get_key(idx) for idx in c]
+    return [annotation_matrix.get_key(idx).name for idx in c]

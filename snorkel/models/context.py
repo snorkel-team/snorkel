@@ -363,10 +363,9 @@ class VisualMixin(object):
 class HTMLMixin(object):
     """ A collection of visual features"""
     str_array_type = postgresql.ARRAY(String) if snorkel_postgres else PickleType
-    xpath      = Column(String)
-    html_tag   = Column(String)
+    xpath = Column(String)
+    html_tag = Column(String)
     html_attrs = Column(str_array_type)
-    hashid     = Column(String) # Keep for Memex application
 
     def is_html(self):
         return self.html_tag is not None
@@ -406,10 +405,10 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, HTMLMixin, Phrase
                    if self.col_start != self.col_end else self.col_start
             return ("Phrase (Doc: %s, Table: %s, Row: %s, Col: %s, Index: %s, Text: %s)" % 
                    (self.document.name,
-                    self.table.position, 
-                    rows, 
-                    cols, 
-                    self.phrase_num, 
+                    self.table.position,
+                    rows,
+                    cols,
+                    self.phrase_num,
                     self.text))
         else:
             return ("Phrase (Doc: %s, Index: %s, Text: %s)" % 

@@ -10,66 +10,6 @@ from snorkel.utils import ProgressBar
 from snorkel.loaders import create_or_fetch
 from snorkel.lf_helpers import *
 
-class PartThrottler(object):
-    """
-    Removes candidates unless the part is not in a table, or the part aligned
-    temperature are not aligned.
-    """
-    def apply(self, part_span, attr_span):
-        """
-        Returns True is the tuple passes, False if it should be throttled
-        """
-        return part_span.parent.table is None or self.aligned(part_span, attr_span)
-
-    def aligned(self, span1, span2):
-        return (span1.parent.table == span2.parent.table and
-            (span1.parent.row_num == span2.parent.row_num or
-             span1.parent.col_num == span2.parent.col_num))
-
-class GainThrottler(PartThrottler):
-    def apply(self, part_span, attr_span):
-        """
-        Returns True is the tuple passes, False if it should be throttled
-        """
-        return (PartThrottler.apply(self, part_span, attr_span) and
-            overlap(['dc', 'gain', 'hfe', 'fe'], list(get_row_ngrams(attr_span, infer=True))))
-
-class PartCurrentThrottler(object):
-    """
-    Removes candidates unless the part is not in a table, or the part aligned
-    temperature are not aligned.
-    """
-    def apply(self, part_span, current_span):
-        """
-        Returns True is the tuple passes, False if it should be throttled
-        """
-        # if both are in the same table
-        if (part_span.parent.table is not None and current_span.parent.table is not None):
-            if (part_span.parent.table == current_span.parent.table):
-                return True
-
-        # if part is in header, current is in table
-        if (part_span.parent.table is None and current_span.parent.table is not None):
-            ngrams = set(get_row_ngrams(current_span))
-            # if True:
-            if ('collector' in ngrams and 'current' in ngrams):
-                return True
-
-        # if neither part or current is in table
-        if (part_span.parent.table is None and current_span.parent.table is None):
-            ngrams = set(get_phrase_ngrams(current_span))
-            num_numbers = list(get_phrase_ngrams(current_span, attrib="ner_tags")).count('number')
-            if ('collector' in ngrams and 'current' in ngrams and num_numbers <= 3):
-                return True
-
-        return False
-
-    def aligned(self, span1, span2):
-        ngrams = set(get_row_ngrams(span2))
-        return  (span1.parent.table == span2.parent.table and
-            (span1.parent.row_num == span2.parent.row_num or span1.parent.col_num == span2.parent.col_num))
-
-
 class OmniNgramsTemp(OmniNgrams):
     def __init__(self, n_max=5, split_tokens=None):
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=None)
@@ -580,3 +520,63 @@ def print_table_info(span):
         print "Row: %s" % span.parent.row_start
         print "Col: %s" % span.parent.col_start
     print "Phrase: %s" % span.parent
+
+# HOLD ON TO THESE FOR REFERENCE UNTIL HARDWARE NOTEBOOKS ARE UPDATED
+# class PartThrottler(object):
+#     """
+#     Removes candidates unless the part is not in a table, or the part aligned
+#     temperature are not aligned.
+#     """
+#     def apply(self, part_span, attr_span):
+#         """
+#         Returns True is the tuple passes, False if it should be throttled
+#         """
+#         return part_span.parent.table is None or self.aligned(part_span, attr_span)
+
+#     def aligned(self, span1, span2):
+#         return (span1.parent.table == span2.parent.table and
+#             (span1.parent.row_num == span2.parent.row_num or
+#              span1.parent.col_num == span2.parent.col_num))
+
+# class GainThrottler(PartThrottler):
+#     def apply(self, part_span, attr_span):
+#         """
+#         Returns True is the tuple passes, False if it should be throttled
+#         """
+#         return (PartThrottler.apply(self, part_span, attr_span) and
+#             overlap(['dc', 'gain', 'hfe', 'fe'], list(get_row_ngrams(attr_span, infer=True))))
+
+# class PartCurrentThrottler(object):
+#     """
+#     Removes candidates unless the part is not in a table, or the part aligned
+#     temperature are not aligned.
+#     """
+#     def apply(self, part_span, current_span):
+#         """
+#         Returns True is the tuple passes, False if it should be throttled
+#         """
+#         # if both are in the same table
+#         if (part_span.parent.table is not None and current_span.parent.table is not None):
+#             if (part_span.parent.table == current_span.parent.table):
+#                 return True
+
+#         # if part is in header, current is in table
+#         if (part_span.parent.table is None and current_span.parent.table is not None):
+#             ngrams = set(get_row_ngrams(current_span))
+#             # if True:
+#             if ('collector' in ngrams and 'current' in ngrams):
+#                 return True
+
+#         # if neither part or current is in table
+#         if (part_span.parent.table is None and current_span.parent.table is None):
+#             ngrams = set(get_phrase_ngrams(current_span))
+#             num_numbers = list(get_phrase_ngrams(current_span, attrib="ner_tags")).count('number')
+#             if ('collector' in ngrams and 'current' in ngrams and num_numbers <= 3):
+#                 return True
+
+#         return False
+
+#     def aligned(self, span1, span2):
+#         ngrams = set(get_row_ngrams(span2))
+#         return  (span1.parent.table == span2.parent.table and
+#             (span1.parent.row_num == span2.parent.row_num or span1.parent.col_num == span2.parent.col_num))

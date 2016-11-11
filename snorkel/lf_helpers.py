@@ -1,9 +1,10 @@
 import re
-from itertools import chain
 from collections import namedtuple, defaultdict
-from .models import SnorkelSession, TemporarySpan, Span, Cell, Phrase
+from itertools import chain
+
 from table_utils import min_row_diff, min_col_diff, is_axis_aligned, is_row_aligned, is_col_aligned
 from utils import tokens_to_ngrams
+from .models import TemporarySpan, Phrase
 
 
 def get_text_splits(c):

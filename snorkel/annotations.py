@@ -5,7 +5,7 @@ from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_ac
 from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
 from .models.annotation import annotation_key_set_annotation_key_association as assoc_table
 from .utils import get_ORM_instance, ProgressBar
-from .features import get_span_feats
+from snorkel.features.features import get_all_feats
 from sqlalchemy.orm.session import object_session
 
 
@@ -279,7 +279,7 @@ class LabelManager(AnnotationManager):
 class FeatureManager(AnnotationManager):
     """Apply feature generators to the candidates, generating Feature annotations"""
     def __init__(self):
-        super(FeatureManager, self).__init__(Feature, default_f=get_span_feats)
+        super(FeatureManager, self).__init__(Feature, default_f=get_all_feats)
 
 
 def _to_annotation_generator(fns):

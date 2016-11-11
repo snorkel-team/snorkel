@@ -350,7 +350,7 @@ class SimpleParser:
 class OmniParser(object):
     def __init__(self, blacklist=["style"],   # html
                  pdf_path=None, session=None, # visual
-                 lingual=True, tabular=True): # lingual, tabular
+                 lingual=True, tabular=True, visual=True): # lingual, tabular
         self.delim = "<NB>" # NB = New Block
 
         # lingual setup
@@ -363,9 +363,14 @@ class OmniParser(object):
             self.lingual_parse = SimpleParser(delim=self.delim).parse
 
         # visual setup
-        self.visual = pdf_path and session
+        self.visual = visual
         if self.visual:
-            self.vizlink = VisualLinker(pdf_path, session)
+            if not session or not pdf_path:
+                # raise error
+                pass
+            else:
+                # self.create_pdf = 
+                self.vizlink = VisualLinker(pdf_path, session)
 
         # tabular setup
         self.tabular = tabular
@@ -380,6 +385,8 @@ class OmniParser(object):
             yield phrase
         if self.visual:
             self.vizlink.session.commit()
+            # if self.create_pdf:
+                # create the pdf and put it in self.pdf_path
             self.vizlink.parse_visual(document)
 
     def parse_structure(self, document, text):
@@ -395,6 +402,9 @@ class OmniParser(object):
         self.contents = ""
         parents = []
         self.parent = document
+        # xpaths = []
+        # self.xpath = []
+        # xpath_counts = defaultdict(int)
         block_lengths = []
 
         def enter_tabular(child):

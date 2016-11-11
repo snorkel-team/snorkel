@@ -350,7 +350,7 @@ class SimpleParser:
 class OmniParser(object):
     def __init__(self, blacklist=["style"],   # html
                  pdf_path=None, session=None, # visual
-                 lingual=True, tabular=True, visual=True): # lingual, tabular
+                 lingual=True, tabular=True, visual=False): # lingual, tabular
         self.delim = "<NB>" # NB = New Block
 
         # lingual setup
@@ -489,7 +489,7 @@ class OmniParser(object):
                     self.contents += child
                     self.contents += self.delim
                     parents.append(self.parent)
-                    xpaths.append(tag.name)
+                    # xpaths.append(tag.name)
                     block_lengths.append(len(child) + len(self.delim))
                 else: # isinstance(child, Tag) = True
                     if self.tabular:

@@ -416,6 +416,37 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, HTMLMixin, Phrase
                 self.phrase_num, 
                 self.text))
 
+    def _asdict(self):
+        return {
+            # base
+            'id': self.id,
+            # 'document': self.document,
+            'phrase_num': self.phrase_num,
+            'text': self.text,
+            # tabular
+            # 'table': self.table,
+            # 'cell': self.cell,
+            'row_start': self.row_start,
+            'row_end': self.row_end,
+            'col_start': self.col_start,
+            'col_end': self.col_end,
+            'position': self.position,
+            # lingual
+            'words': self.words,
+            'char_offsets': self.char_offsets,
+            'lemmas': self.lemmas,
+            'pos_tags': self.pos_tags,
+            'ner_tags': self.ner_tags,
+            'dep_parents': self.dep_parents,
+            'dep_labels': self.dep_labels,
+            # visual
+            'page': self.page,
+            'top': self.top,
+            'bottom': self.bottom,
+            'left': self.left,
+            'right': self.right
+        }
+
 
 class TemporaryContext(object):
     """

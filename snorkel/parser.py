@@ -25,7 +25,7 @@ class CorpusParser:
         self.sent_parser = sent_parser
         self.max_docs = max_docs
 
-    def parse_corpus(self, session, name):
+    def parse_corpus(self, session, name, display=True):
         corpus = Corpus(name=name)
         if session is not None:
             session.add(corpus)
@@ -44,7 +44,8 @@ class CorpusParser:
             pb.close()
         if session is not None:
             session.commit()
-        corpus.stats()
+        if display:
+            corpus.stats()
         return corpus
 
 

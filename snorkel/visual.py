@@ -6,7 +6,9 @@ from collections import OrderedDict, defaultdict
 from pprint import pprint
 from timeit import default_timer as timer
 
-import cv2
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+from PIL import Image
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -30,7 +32,6 @@ class VisualLinker():
         delimiters = u"([\(\)\,\?\u2212\u201C\u201D\u2018\u2019\u00B0\*\']|(?<!http):|\.$|\.\.\.)"
         self.separators = re.compile(delimiters)
 
-
     def parse_visual(self, document):
         self.document = document
         self.pdf_file = self.pdf_path + self.document.name + '.pdf'
@@ -41,17 +42,17 @@ class VisualLinker():
             self.extract_pdf_words()
         except:
             return
-        if self.vverbose: 
+        if self.vverbose:
             pprint(self.pdf_word_list[:5])
             pprint(self.coordinate_map.items()[:5])
-        if self.time:  
+        if self.time:
             print "Elapsed: %0.3f s" % (timer() - tic)
 
         tic = timer()
         self.extract_html_words()
         if self.vverbose: pprint(self.html_word_list[:5])
         if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
-        
+
         # TEMP
         # html_words = [x[1] for x in self.html_word_list]
         # pdf_words  = [x[1] for x in self.pdf_word_list]
@@ -79,7 +80,7 @@ class VisualLinker():
         coordinate_map = {}
         for i in range(1, int(num_pages) + 1):
             html_content = subprocess.check_output(
-                "pdftotext -f {} -l {} -bbox-layout '{}' -".format(str(i), str(i), self.pdf_file), shell=True)
+                    "pdftotext -f {} -l {} -bbox-layout '{}' -".format(str(i), str(i), self.pdf_file), shell=True)
             soup = BeautifulSoup(html_content, "html.parser")
             pages = soup.find_all('page')
             pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(pages[0], i)
@@ -123,7 +124,8 @@ class VisualLinker():
                             block_coordinates[word_id] = (y_min_block, x_min_block)
                             i += 1
         # sort pdf_word_list by page, block top then block left, top, then left
-        pdf_word_list = sorted(pdf_word_list, key=lambda (word_id, _): block_coordinates[word_id] + coordinate_map[word_id][1:3])
+        pdf_word_list = sorted(pdf_word_list,
+                               key=lambda (word_id, _): block_coordinates[word_id] + coordinate_map[word_id][1:3])
         return pdf_word_list, coordinate_map
 
     def extract_html_words(self):
@@ -138,7 +140,7 @@ class VisualLinker():
     def link_lists(self, search_max=100, edit_cost=20, offset_cost=1):
         # NOTE: there are probably some inefficiencies here from rehashing words 
         # multiple times, but we're not going to worry about that for now
-        
+
         def link_exact(l, u):
             l, u, L, U = get_anchors(l, u)
             html_dict = defaultdict(list)
@@ -155,18 +157,18 @@ class VisualLinker():
                     for k in range(len(html_list)):
                         html_to_pdf[html_list[k]] = pdf_list[k]
                         pdf_to_html[pdf_list[k]] = html_list[k]
-    
+
         def link_fuzzy(i):
             (_, word) = self.html_word_list[i]
             l = u = i
             l, u, L, U = get_anchors(l, u)
-            offset = int(L + float(i - l)/(u - l) * (U - L))
+            offset = int(L + float(i - l) / (u - l) * (U - L))
             searchIndices = np.clip(offset + search_order, 0, M - 1)
             cost = [0] * search_max
             for j, k in enumerate(searchIndices):
                 other = self.pdf_word_list[k][1]
                 if (word.startswith(other) or word.endswith(other) or
-                    other.startswith(word) or other.endswith(word)):
+                        other.startswith(word) or other.endswith(word)):
                     html_to_pdf[i] = k
                     return
                 else:
@@ -174,7 +176,7 @@ class VisualLinker():
             html_to_pdf[i] = searchIndices[np.argmin(cost)]
             return
 
-        def get_anchors(l,u):
+        def get_anchors(l, u):
             while l >= 0 and html_to_pdf[l] is None: l -= 1
             while u < N and html_to_pdf[u] is None: u += 1
             if l < 0:
@@ -190,47 +192,50 @@ class VisualLinker():
             return l, u, L, U
 
         def display_match_counts():
-            matches = sum([html_to_pdf[i] is not None and 
-                self.html_word_list[i][1] == self.pdf_word_list[html_to_pdf[i]][1] for i in range(len(self.html_word_list))])
+            matches = sum([html_to_pdf[i] is not None and
+                           self.html_word_list[i][1] == self.pdf_word_list[html_to_pdf[i]][1] for i in
+                           range(len(self.html_word_list))])
             total = len(self.html_word_list)
-            print "(%d/%d) = %0.2f (%d)" % (matches, total, float(matches)/total)
+            print "(%d/%d) = %0.2f (%d)" % (matches, total, float(matches) / total)
             return matches
 
         N = len(self.html_word_list)
         M = len(self.pdf_word_list)
-        assert(N > 0 and M > 0)
+        assert (N > 0 and M > 0)
         html_to_pdf = [None] * N
         pdf_to_html = [None] * M
-        search_radius = search_max/2
+        search_radius = search_max / 2
 
         # first pass: global search for exact matches
         link_exact(0, N)
-        if self.vverbose: 
+        if self.vverbose:
             print "Global exact matching:"
             display_match_counts()
 
         # second pass: local search for exact matches
-        for i in range((N+2)/search_radius + 1):
-            link_exact(max(0, i*search_radius - search_radius), min(N, i*search_radius + search_radius))
+        for i in range((N + 2) / search_radius + 1):
+            link_exact(max(0, i * search_radius - search_radius), min(N, i * search_radius + search_radius))
         if self.vverbose:
             print "Local exact matching:"
-        
+
         # third pass: local search for approximate matches
-        search_order = np.array([(-1)**(i%2) * (i/2) for i in range(1, search_max+1)])
+        search_order = np.array([(-1) ** (i % 2) * (i / 2) for i in range(1, search_max + 1)])
         for i in range(len(html_to_pdf)):
             if html_to_pdf[i] is None:
                 link_fuzzy(i)
-        if self.vverbose: 
+        if self.vverbose:
             print "Local Approximate matching:"
             display_match_counts
 
         # convert list to dict
-        matches = sum([html_to_pdf[i] is not None and 
-            self.html_word_list[i][1] == self.pdf_word_list[html_to_pdf[i]][1] for i in range(len(self.html_word_list))])
+        matches = sum([html_to_pdf[i] is not None and
+                       self.html_word_list[i][1] == self.pdf_word_list[html_to_pdf[i]][1] for i in
+                       range(len(self.html_word_list))])
         total = len(self.html_word_list)
-        if self.verbose:        
-            print "Linked %d/%d (%0.2f) html words exactly" % (matches, total, float(matches)/total)
-        self.links = OrderedDict((self.html_word_list[i][0], self.pdf_word_list[html_to_pdf[i]][0]) for i in range(len(self.html_word_list)))
+        if self.verbose:
+            print "Linked %d/%d (%0.2f) html words exactly" % (matches, total, float(matches) / total)
+        self.links = OrderedDict((self.html_word_list[i][0], self.pdf_word_list[html_to_pdf[i]][0]) for i in
+                                 range(len(self.html_word_list)))
 
     def link_lists_old(self, search_max=200, editCost=20, offsetCost=1, offsetInertia=5):
         DEBUG = False
@@ -238,9 +243,9 @@ class VisualLinker():
             offsetHist = []
             jHist = []
             editDistHist = 0
-        offset = self._calculate_offset(self.html_word_list, self.pdf_word_list, max(search_max/10,5), search_max)
+        offset = self._calculate_offset(self.html_word_list, self.pdf_word_list, max(search_max / 10, 5), search_max)
         offsets = [offset] * offsetInertia
-        searchOrder = np.array([(-1)**(i%2) * (i/2) for i in range(1, search_max+1)])
+        searchOrder = np.array([(-1) ** (i % 2) * (i / 2) for i in range(1, search_max + 1)])
         links = OrderedDict()
         for i, a in enumerate(self.html_word_list):
             j = 0
@@ -310,7 +315,7 @@ class VisualLinker():
             total += 1
             if word == pdf[i]:
                 match += 1
-        print (match, total, float(match)/total)
+        print (match, total, float(match) / total)
 
         data = {
             # 'i': range(len(self.links)),
@@ -344,23 +349,24 @@ class VisualLinker():
         """
         if display:
             (img, img_path) = self.pdf_to_img(page_num)
-            colors = [(255, 0, 0), (0, 0, 255)]
+            colors = ['b', 'r']
         boxes_per_page = defaultdict(int)
         boxes_by_page = defaultdict(list)
         for i, (page, top, left, bottom, right) in enumerate(boxes):
             boxes_per_page[page] += 1
             boxes_by_page[page].append((top, left, bottom, right))
         if display:
+            fig, ax = plt.subplots(1)
             for j, (top, left, bottom, right) in enumerate(boxes_by_page[page_num]):
                 color = colors[j % 2] if alternate_colors else colors[0]
-                cv2.rectangle(img, (left, top), (right, bottom), color, 1)
+                rect = patches.Rectangle((left, top), right-left, bottom-top, edgecolor=color, fill=False)
+                ax.add_patch(rect)
         print "Boxes per page: total (unique)"
         for (page, count) in sorted(boxes_per_page.items()):
             print "Page %d: %d (%d)" % (page, count, len(set(boxes_by_page[page])))
         if display:
-            cv2.imshow('Bounding boxes', img)
-            cv2.waitKey()  # press any key to exit the opencv output
-            cv2.destroyAllWindows()
+            ax.imshow(img)
+            plt.show()
             os.system('rm {}'.format(img_path))  # delete image
 
     def display_candidates(self, candidates, page_num=1, display=True):
@@ -389,16 +395,17 @@ class VisualLinker():
         basename = subprocess.check_output("basename '{}' .pdf".format(self.pdf_file), shell=True)
         dirname = subprocess.check_output("dirname '{}'".format(self.pdf_file), shell=True)
         img_path = dirname.rstrip() + '/' + basename.rstrip()
-        os.system("pdftoppm -f {} -l {} -singlefile -jpeg '{}' '{}'".format(page_num, page_num, self.pdf_file, img_path))
+        os.system(
+            "pdftoppm -f {} -l {} -singlefile -jpeg '{}' '{}'".format(page_num, page_num, self.pdf_file, img_path))
         img_path += '.jpg'
-        img = cv2.resize(cv2.imread(img_path), (page_width, page_height))
-        return (img, img_path)
+        img = Image.open(img_path).resize((page_width, page_height))
+        return np.asarray(img), img_path
 
 
 def get_box(span):
     box = (min(span.get_attrib_tokens('page')),
-            min(span.get_attrib_tokens('top')),
-            max(span.get_attrib_tokens('left')),
-            min(span.get_attrib_tokens('bottom')),
-            max(span.get_attrib_tokens('right')))
+           min(span.get_attrib_tokens('top')),
+           max(span.get_attrib_tokens('left')),
+           min(span.get_attrib_tokens('bottom')),
+           max(span.get_attrib_tokens('right')))
     return box

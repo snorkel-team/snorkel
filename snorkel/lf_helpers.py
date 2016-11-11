@@ -37,7 +37,8 @@ def get_text_splits(c):
 
 def get_tagged_text(c):
     """
-    Returns the text of c's parent context with c's unary spans replaced with tags {{A}}, {{B}}, etc.
+    Returns the text of c's parent context with c's unary spans replaced with
+    tags {{A}}, {{B}}, etc.
     A convenience method for writing LFs based on e.g. regexes.
     """
     return "".join(get_text_splits(c))
@@ -58,7 +59,11 @@ def get_text_between(c):
 # TODO: replace in tutorials with get_between_ngrams and delete this
 def get_between_tokens(c, attrib='words', n_min=1, n_max=1, lower=True):
     """ An alias for get_between_ngrams maintained for backwards compatibility. """
-    return [ngram for ngram in get_between_ngrams(c, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower)]
+    return [ngram for ngram in get_between_ngrams(c,
+                                                  attrib=attrib,
+                                                  n_min=n_min,
+                                                  n_max=n_max,
+                                                  lower=lower)]
 
 def get_between_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     """
@@ -74,20 +79,30 @@ def get_between_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     span0 = c[0]
     span1 = c[1]
     if span0.parent != span1.parent:
-        raise ValueError("Only applicable to Candidates where both spans are from the same immediate Context.")
+        raise ValueError("Only applicable to Candidates where both spans are \
+                          from the same immediate Context.")
     distance = abs(span0.get_word_start() - span1.get_word_start())
     if span0.get_word_start() < span1.get_word_start():
-        for ngram in get_right_ngrams(span0, window=distance-1, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+        for ngram in get_right_ngrams(span0,
+                                      window=distance-1, attrib=attrib,
+                                      n_min=n_min, n_max=n_max,
+                                      lower=lower):
             yield ngram
     else: # span0.get_word_start() > span1.get_word_start()
-        for ngram in get_left_ngrams(span1, window=distance-1, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
+        for ngram in get_left_ngrams(span1,
+                                     window=distance-1, attrib=attrib,
+                                     n_min=n_min, n_max=n_max,
+                                     lower=lower):
             yield ngram
 
 
 # TODO: replace in tutorials with get_left_ngrams and delete this
 def get_left_tokens(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
     """ An alias for get_left_ngrams maintained for backwards compatibility. """
-    return [ngram for ngram in get_left_ngrams(c, window=window, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower)]
+    return [ngram for ngram in get_left_ngrams(c,
+                                               window=window, attrib=attrib,
+                                               n_min=n_min, n_max=n_max,
+                                               lower=lower)]
 
 
 def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
@@ -101,8 +116,10 @@ def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
     :param lower: If false, all ngrams will be returned in lower case
     """
     span = c if isinstance(c, TemporarySpan) else c[0]
-    i    = span.get_word_start()
-    for ngram in tokens_to_ngrams(span.parent._asdict()[attrib][max(0, i-window):i], n_min=n_min, n_max=n_max, lower=lower):
+    i = span.get_word_start()
+    for ngram in tokens_to_ngrams(getattr(span.parent, attrib)[max(0, i-window):i],
+                                  n_min=n_min, n_max=n_max,
+                                  lower=lower):
         yield ngram
 
 
@@ -124,7 +141,7 @@ def get_right_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
     """
     span = c if isinstance(c, TemporarySpan) else c[-1]
     i    = span.get_word_end()
-    for ngram in tokens_to_ngrams(span.parent._asdict()[attrib][i+1:i+1+window], n_min=n_min, n_max=n_max, lower=lower):
+    for ngram in tokens_to_ngrams(getattr(span.parent, attrib)[i+1:i+1+window], n_min=n_min, n_max=n_max, lower=lower):
         yield ngram
 
 
@@ -193,7 +210,7 @@ def same_document(c):
     :param c: The candidate whose Spans are being compared
     """
     return (all(c[i].parent.document is not None
-        and c[i].parent.document==c[0].parent.document for i in range(len(c))))
+        and c[i].parent.document == c[0].parent.document for i in range(len(c))))
 
 
 def same_table(c):
@@ -201,8 +218,8 @@ def same_table(c):
     Return True if all Spans in the given candidate are from the same Table.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(c[i].parent.table is not None
-        and c[i].parent.table==c[0].parent.table for i in range(len(c))))
+    return (all(isinstance(c[i], TablePhrase) and
+                c[i].parent.table == c[0].parent.table for i in range(len(c))))
 
 
 def same_row(c):
@@ -210,18 +227,10 @@ def same_row(c):
     Return True if all Spans in the given candidate are from the same Row.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(c[i].parent.row_start is not None and 
-                c[0].parent.table == c[i].parent.table and 
-                is_row_aligned(c[0].parent, c[i].parent)
+    return (all(isinstance(c[i], TablePhrase) and 
+                c[i].parent.table == c[0].parent.table and 
+                is_row_aligned(c[i].parent, c[0].parent)
             for i in range(len(c))))
-    
-def is_tabular_aligned(c):
-    """
-    Return True if all Spans in the given candidate are from the same Row
-    or Col
-    :param c: The candidate whose Spans are being compared
-    """
-    return same_table(c) and (same_col(c) or same_row(c))
 
 
 def same_col(c):
@@ -229,10 +238,20 @@ def same_col(c):
     Return True if all Spans in the given candidate are from the same Col.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(c[i].parent.col_start is not None and 
-                c[0].parent.table == c[i].parent.table and 
-                is_col_aligned(c[0].parent, c[i].parent)
+    return (all(isinstance(c[i], TablePhrase) and 
+                c[i].parent.table == c[0].parent.table and 
+                is_col_aligned(c[i].parent, c[0].parent)
             for i in range(len(c))))
+    
+
+def is_tabular_aligned(c):
+    """
+    Return True if all Spans in the given candidate are from the same Row
+    or Col
+    :param c: The candidate whose Spans are being compared
+    """
+    return same_table(c) and (is_col_aligned(c[i].parent, c[0].parent) or
+                              is_row_aligned(c[i].parent, c[0].parent))
 
 
 def same_cell(c):
@@ -240,8 +259,9 @@ def same_cell(c):
     Return True if all Spans in the given candidate are from the same Cell.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(c[i].parent.cell is not None and
-                c[0].parent.cell == c[i].parent.cell for i in range(len(c))))
+    return (all(isinstance(c[i], TablePhrase) and
+                c[i].parent.cell is not None and
+                c[i].parent.cell == c[0].parent.cell for i in range(len(c))))
 
 
 def same_phrase(c):
@@ -276,7 +296,7 @@ def get_neighbor_phrase_ngrams(c, d=1, attrib='words', n_min=1, n_max=1, lower=T
         for ngram in chain.from_iterable(
             [tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower)
             for phrase in span.parent.document.phrases 
-            if abs(phrase.phrase_id - span.parent.phrase_id) <= d and phrase != span.parent]):
+            if abs(phrase.position - span.parent.position) <= d and phrase != span.parent]):
             yield ngram
 
 
@@ -293,8 +313,8 @@ def get_cell_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     for span in spans:
         for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
             yield ngram
-        if span.parent.cell is not None:
-            for ngram in chain.from_iterable([tokens_to_ngrams(getattr(phrase,attrib), n_min=n_min, n_max=n_max, lower=lower) \
+        if isinstance(span.parent, TablePhrase) and span.parent.cell is not None:
+            for ngram in chain.from_iterable([tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower) \
                 for phrase in span.parent.cell.phrases if phrase != span.parent]):
                 yield ngram
         
@@ -316,7 +336,7 @@ def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=
     for span in spans:
         for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
             yield ngram
-        if span.parent.row_start is not None and span.parent.col_start is not None:
+        if isinstance(span.parent, TablePhrase) and span.parent.cell is not None:
             root_cell = span.parent.cell
             for phrase in chain.from_iterable([_get_aligned_phrases(phrase, 'row'), _get_aligned_phrases(phrase, 'col')]):
                 row_diff = min_row_diff(phrase, root_cell, absolute=False) 
@@ -450,8 +470,9 @@ def _infer_cell(root_cell, axis, direct, infer):
             return PhantomCell(phrases=[]) 
         else:
             neighbor_cells = [cell for cell in root_cell.table.cells
-                if getattr(cell, axis) == getattr(root_cell, axis)
-                and getattr(cell, _other_axis(axis)).position == getattr(root_cell, _other_axis(axis)).position - 1]
+                if getattr(cell, axis + '_start') == getattr(root_cell, axis + '_start')
+                and getattr(cell, _other_axis(axis) + '_start').position == \
+                    getattr(root_cell, _other_axis(axis) + '_start').position - 1]
             return _infer_cell(neighbor_cells[0], axis, direct=True, infer=True)
 
 def _other_axis(axis):

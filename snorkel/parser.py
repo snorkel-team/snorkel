@@ -366,10 +366,9 @@ class OmniParser(object):
         self.visual = visual
         if self.visual:
             if not session or not pdf_path:
-                # raise error
-                pass
+                raise ValueError("pdf_path must be specified")
             else:
-                # self.create_pdf = 
+                self.create_pdf = None
                 self.vizlink = VisualLinker(pdf_path, session)
 
         # tabular setup
@@ -385,9 +384,11 @@ class OmniParser(object):
             yield phrase
         if self.visual:
             self.vizlink.session.commit()
-            # if self.create_pdf:
-                # create the pdf and put it in self.pdf_path
-            self.vizlink.parse_visual(document)
+            if not self.create_pdf:
+                self.create_pdf = not os.path.isfile(self.vizlink.pdf_path + document.name + '.pdf')
+            if self.create_pdf:
+                self.vizlink.create_pdf(document.name, text)
+            self.vizlink.parse_visual(document)  # TODO: add warning if pdf file not created
 
     def parse_structure(self, document, text):
         # Setup

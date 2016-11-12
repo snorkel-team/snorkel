@@ -1,4 +1,4 @@
-from .models import Phrase
+#from .models import Phrase
 import os
 import re
 import subprocess
@@ -400,6 +400,14 @@ class VisualLinker():
         img_path += '.jpg'
         img = Image.open(img_path).resize((page_width, page_height))
         return np.asarray(img), img_path
+
+    def create_pdf(self, document_name, text):
+        input_html = self.pdf_path + document_name + '.html'
+        open(input_html, 'w').write(text)  # TODO: change this to avoid creating a file
+        pdf_file = self.pdf_path + document_name + '.pdf'
+        javascript_file = os.environ['SNORKELHOME'] + 'tutorials/tables/visual_features/rasterize.js '
+        command = 'phantomjs ' + javascript_file + '{} {} letter'.format(input_html, pdf_file)  #TODO: add width parameter
+        os.system(command)
 
 
 def get_box(span):

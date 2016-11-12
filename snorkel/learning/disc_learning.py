@@ -2,7 +2,7 @@ import numpy as np
 from ..models import Parameter, ParameterSet
 from .constants import *
 from .utils import score, odds_to_prob
-from fastmulticontext import fastmulticontext
+from fastmulticontext import fastmulticontext, get_matrix_keys
 from lstm import LSTMModel
 from scipy.optimize import minimize
 from sklearn import linear_model

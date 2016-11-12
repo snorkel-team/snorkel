@@ -348,9 +348,10 @@ class SimpleParser:
             i += 1
 
 class OmniParser(object):
-    def __init__(self, blacklist=["style"],   # html
-                 pdf_path=None, session=None, # visual
-                 lingual=True, tabular=True, visual=False): # lingual, tabular
+    def __init__(self, 
+                 flatten=False, blacklist=["style"], # html
+                 visual=False, pdf_path=None, session=None, # visual
+                 lingual=True, tabular=True, ): # lingual, tabular
         self.delim = "<NB>" # NB = New Block
 
         # lingual setup
@@ -376,6 +377,7 @@ class OmniParser(object):
         self.tabular = tabular
 
         # html setup
+        self.flatten = flatten
         self.blacklist = blacklist
         if self.blacklist and not isinstance(blacklist, list):
             raise ValueError("Argument blacklist must be of type <list>")
@@ -474,16 +476,46 @@ class OmniParser(object):
                 self.cell_position += 1
                 self.parent = self.table
 
+        def apply_tabular(parts, parent, position):
+            parts['position'] = position
+            if isinstance(parent, Document):
+                # parts['html_tag'] = 'html'
+                # parts['html_attrs']     = parent.html_attrs
+                pass
+            elif isinstance(parent, Table):
+                # parts['html_tag'] = 'table'
+                parts['table'] = parent
+            elif isinstance(parent, Cell):
+                # parts['html_tag'] = parent.html_tag
+                parts['table'] = parent.table
+                parts['cell'] = parent
+                parts['row_start'] = parent.row_start
+                parts['row_end'] = parent.row_end
+                parts['col_start'] = parent.col_start
+                parts['col_end'] = parent.col_end
+            else:
+                import pdb; pdb.set_trace()
+                raise NotImplementedError("Phrase parent must be Document, Table, or Cell")
+            return parts
+
+        def create_xpath(tags, counts):
+            xpath = '/'
+            for i, tag in enumerate(tags):
+                xpath += tag
+                if counts[i] != 1:
+                    xpath += '[%d]' % counts[i] - 1
+            return xpath
+
         def parse_tag(tag, document):
             if isinstance(tag, Comment):
                 return
             if self.blacklist and tag.name in self.blacklist:
                 return
 
-            # if any(type(child)==NavigableString and unicode(child) != u'\n' for child in tag.children):
-            #     text = tag.get_text(' ')
-            #     tag.clear()
-            #     tag.string = text
+            if self.flatten and any(type(child)==NavigableString and unicode(child) != u'\n' for child in tag.children):
+                text = tag.get_text(' ')
+                tag.clear()
+                tag.string = text
             for child in tag.children:
                 if isinstance(child, NavigableString):
                     self.contents += child
@@ -522,26 +554,10 @@ class OmniParser(object):
                 parent = parents[parent_idx]
                 parts['document'] = document
                 parts['phrase_num'] = phrase_num
-                parts['position'] = position
                 parts['stable_id'] = \
                     "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
-                if isinstance(parent, Document):
-                    parts['html_tag'] = 'html'
-                    # parts['html_attrs']     = parent.html_attrs
-                elif isinstance(parent, Table):
-                    parts['html_tag'] = 'table'
-                    parts['table'] = parent
-                elif isinstance(parent, Cell):
-                    parts['html_tag'] = parent.html_tag
-                    parts['table'] = parent.table
-                    parts['cell'] = parent
-                    parts['row_start'] = parent.row_start
-                    parts['row_end'] = parent.row_end
-                    parts['col_start'] = parent.col_start
-                    parts['col_end'] = parent.col_end
-                else:
-                    import pdb; pdb.set_trace()
-                    raise NotImplementedError("Phrase parent must be Document, Table, or Cell")
+                if self.tabular:
+                    parts = apply_tabular(parts, parent, position)
                 yield Phrase(**parts)
                 phrase_num += 1
                 position += 1

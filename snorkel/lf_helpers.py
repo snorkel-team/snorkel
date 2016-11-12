@@ -313,7 +313,7 @@ def get_cell_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     for span in spans:
         for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
             yield ngram
-        if isinstance(span.parent, TablePhrase) and span.parent.cell is not None:
+        if isinstance(span.parent, Phrase) and span.parent.cell is not None:
             for ngram in chain.from_iterable([tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower) \
                 for phrase in span.parent.cell.phrases if phrase != span.parent]):
                 yield ngram
@@ -501,7 +501,7 @@ def _bbox_from_span(span):
     
 def _bbox_from_phrase(phrase):
     # TODO: this may have issues where a phrase is linked to words on different pages
-    if isinstance(phrase, Phrase) and phrase.has_visual_features():
+    if isinstance(phrase, Phrase) and phrase.is_visual():
         return _Bbox(
                     phrase.page[0],
                     min(phrase.top), 

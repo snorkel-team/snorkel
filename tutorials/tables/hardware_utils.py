@@ -41,11 +41,11 @@ class OmniNgramsTemp(OmniNgrams):
                     ner_tags       = [ts.get_attrib_tokens('ner_tags')[-1]],
                     dep_parents    = [ts.get_attrib_tokens('dep_parents')[-1]],
                     dep_labels     = [ts.get_attrib_tokens('dep_labels')[-1]],
-                    page           = [ts.get_attrib_tokens('page')[-1]],
-                    top            = [ts.get_attrib_tokens('top')[-1]],
-                    left           = [ts.get_attrib_tokens('left')[-1]],
-                    bottom         = [ts.get_attrib_tokens('bottom')[-1]],
-                    right          = [ts.get_attrib_tokens('right')[-1]],
+                    page           = [ts.get_attrib_tokens('page')[-1]] if ts.parent.is_visual() else [None],
+                    top            = [ts.get_attrib_tokens('top')[-1]] if ts.parent.is_visual() else [None],
+                    left           = [ts.get_attrib_tokens('left')[-1]] if ts.parent.is_visual() else [None],
+                    bottom         = [ts.get_attrib_tokens('bottom')[-1]] if ts.parent.is_visual() else [None],
+                    right          = [ts.get_attrib_tokens('right')[-1]] if ts.parent.is_visual() else [None],
                     meta           = None)
             else:
                 yield ts
@@ -97,11 +97,11 @@ class OmniNgramsPart(OmniNgrams):
                         ner_tags       = [ts.get_attrib_tokens('ner_tags')[0]],
                         dep_parents    = [ts.get_attrib_tokens('dep_parents')[0]],
                         dep_labels     = [ts.get_attrib_tokens('dep_labels')[0]],
-                        page           = [min(ts.get_attrib_tokens('page'))],
-                        top            = [min(ts.get_attrib_tokens('top'))],
-                        left           = [max(ts.get_attrib_tokens('left'))],
-                        bottom         = [min(ts.get_attrib_tokens('bottom'))],
-                        right          = [max(ts.get_attrib_tokens('right'))],
+                        page           = [min(ts.get_attrib_tokens('page'))] if ts.parent.is_visual() else [None],
+                        top            = [min(ts.get_attrib_tokens('top'))] if ts.parent.is_visual() else [None],
+                        left           = [max(ts.get_attrib_tokens('left'))] if ts.parent.is_visual() else [None],
+                        bottom         = [min(ts.get_attrib_tokens('bottom'))] if ts.parent.is_visual() else [None],
+                        right          = [max(ts.get_attrib_tokens('right'))] if ts.parent.is_visual() else [None],
                         meta           = None
                     )
 

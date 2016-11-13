@@ -41,11 +41,12 @@ def tablelib_unary_features(span):
     phrase = span.parent
     if phrase.html_tag:
         yield u"HTML_TAG_" + phrase.html_tag, DEF_VALUE
+    # Comment out for now, we could calc it later.
     # for attr in phrase.html_attrs:
     #     yield u"HTML_ATTR_[" + attr + "]", DEF_V
-    if phrase.html_anc_tags:
-        for tag in phrase.html_anc_tags:
-            yield u"HTML_ANC_TAG_[" + tag + "]", DEF_VALUE
+    # if phrase.html_anc_tags:
+    #     for tag in phrase.html_anc_tags:
+    #         yield u"HTML_ANC_TAG_[" + tag + "]", DEF_VALUE
             # for attr in phrase.html_anc_attrs:
             # yield u"HTML_ANC_ATTR_[" + attr + "]"
     for attrib in ['words']:  # ,'lemmas', 'pos_tags', 'ner_tags']:

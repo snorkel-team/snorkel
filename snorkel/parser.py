@@ -529,6 +529,7 @@ class OmniParser(object):
         # Parse document and store text in self.contents, padded with self.delim
         root = fromstring(text) # lxml.html.fromstring()
         tree = etree.ElementTree(root)
+        document.text = text
         parse_node(root, document)
         block_char_end = np.cumsum(block_lengths)
 

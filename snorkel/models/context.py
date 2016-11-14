@@ -102,6 +102,7 @@ class Document(Context):
     __tablename__ = 'document'
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     name = Column(String, unique=True, nullable=False)
+    text = Column(String)
     meta = Column(PickleType)
 
     __mapper_args__ = {

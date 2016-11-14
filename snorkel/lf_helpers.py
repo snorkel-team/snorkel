@@ -1,6 +1,8 @@
 import re
 from collections import namedtuple, defaultdict
 from itertools import chain
+from lxml.html import fromstring
+from lxml import etree
 
 from table_utils import min_row_diff, min_col_diff, is_axis_aligned, is_row_aligned, is_col_aligned
 from utils import tokens_to_ngrams
@@ -686,3 +688,55 @@ def get_visual_aligned_lemmas(span):
 def get_aligned_lemmas(span):
     return set(get_visual_aligned_lemmas(span))
 
+############################
+# Arboreal feature helpers
+############################
+def get_tag(span):
+    return str(span.parent.html_tag)
+
+def _get_node(phrase):
+    return (etree.ElementTree(fromstring(phrase.document.text)).xpath(phrase.xpath))[0]
+
+def get_parent_tag(span):
+    i = _get_node(span.parent)
+    return str(i.getparent().tag) if i.getparent() is not None else None
+
+def get_prev_sibling_tags(span):
+    prev_sibling_tags = []
+    i = _get_node(span.parent)
+    while i.getprevious() is not None:
+        prev_sibling_tags.insert(0, str(i.getprevious().tag))
+        i = i.getprevious()
+    return prev_sibling_tags
+
+def get_next_sibling_tags(span):
+    next_sibling_tags = []
+    i = _get_node(span.parent)
+    while i.getnext() is not None:
+        next_sibling_tags.append(str(i.getnext().tag))
+        i = i.getnext()        
+    return next_sibling_tags
+
+def get_ancestor_class_names(span):
+    class_names = []
+    i = _get_node(span.parent)
+    while i is not None:
+        class_names.insert(0, i.get('class'))
+        i = i.getparent()
+    return class_names
+
+def get_ancestor_tag_names(span):
+    tag_names = []
+    i = _get_node(span.parent)
+    while i is not None:
+        tag_names.insert(0, i.tag)
+        i = i.getparent()
+    return tag_names
+
+def get_ancestor_id_names(span):
+    id_names = []
+    i = _get_node(span.parent)
+    while i is not None:
+        id_names.insert(0, i.get('id'))
+        i = i.getparent()
+    return id_names

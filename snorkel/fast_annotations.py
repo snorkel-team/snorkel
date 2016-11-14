@@ -280,3 +280,24 @@ class AnnotationGenerator(object):
     def __call__(self, arg):
         for fname, fn in self.fns:
             yield fname, fn(arg)
+
+def copy_psql(dbname, username):
+    '''
+    Writes raw rows into psql, bypassing ORM
+    '''
+    import subprocess
+    import csv
+    p = subprocess.Popen([
+        'psql', dbname, '-U', username,
+        '-c', '\COPY Feature(candidate_id, key_id, value) FROM STDIN',
+        '--set=ON_ERROR_STOP=true'
+        ], stdin=subprocess.PIPE
+    )
+    writer = csv.writer(p.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
+    for i in xrange(1, 1000):
+        candidate_id = 0
+        key_id = 0
+        value = 1
+        row = [candidate_id, key_id, value]
+        writer.writerow(row)
+    p.stdin.close()

@@ -23,3 +23,4 @@ def clear_database():
     '''
     metadata = MetaData(bind=snorkel_engine, reflect=True)
     metadata.drop_all()
+    metadata.create_all()

@@ -604,7 +604,7 @@ class TemporarySpan(TemporaryContext):
         return self.get_attrib_span('words', sep)
 
     def has_visual_features(self):
-        return self.get_attrib_tokens('page')[0] is not None
+        return self.parent.page is not None and self.get_attrib_tokens('page')[0] is not None
 
     def has_table_features(self):
         return isinstance(self.parent, Phrase)

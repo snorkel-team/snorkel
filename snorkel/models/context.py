@@ -408,7 +408,7 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, HTMLMixin, Phrase
                     self.table.position,
                     rows,
                     cols,
-                    self.phrase_num,
+                    self.position,
                     self.text))
         else:
             return ("Phrase (Doc: %s, Index: %s, Text: %s)" % 

@@ -2,7 +2,6 @@ import os
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import contextlib
 
 # We initialize the engine within the models module because models' schema can depend on
 # which data types are supported by the engine
@@ -19,12 +18,8 @@ SnorkelBase = declarative_base(name='SnorkelBase', cls=object)
 
 def clear_database():
     '''
-    Delete all table contents in the database while keeping the schemas
-    Useful before starting a fresh run to avoid constraint violations.
+    Drop all tables in database.
+    Useful before starting a fresh run to avoid conflicts.
     '''
     metadata = MetaData(bind=snorkel_engine, reflect=True)
-    with contextlib.closing(snorkel_engine.connect()) as con:
-        trans = con.begin()
-        for table in reversed(metadata.sorted_tables):
-            con.execute(table.delete())
-        trans.commit()
+    metadata.drop_all()

@@ -1,7 +1,7 @@
 import numpy as np
 from ..models import Parameter, ParameterSet
 from .constants import *
-from .utils import score, odds_to_prob
+from .utils import marginals_to_labels, MentionScorer, odds_to_prob
 from fastmulticontext import fastmulticontext, get_matrix_keys
 from lstm import LSTMModel
 from scipy.optimize import minimize
@@ -24,57 +24,17 @@ class NoiseAwareModel(object):
 
     def predict(self, X, b=0.5):
         """Return numpy array of elements in {-1,0,1} based on predicted marginal probabilities."""
-        return np.array([1 if p > b else -1 if p < b else 0 for p in self.marginals(X)])
+        return marginals_to_labels(self.marginals(X), b)
 
-    def score(self, X_test, L_test, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, display=True, **kwargs):
-        if L_test.shape[1] != 1:
-            raise ValueError("L_test must have exactly one column.")
-        predict = self.predict(X_test, b=b)
-        train_marginals = self.marginals(self.X_train) if hasattr(self, 'X_train') and self.X_train is not None else None
+    def score(self, X_test, test_labels, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True,
+              display=True, scorer=MentionScorer, **kwargs):
+        s = scorer([X_test.get_candidate(i) for i in xrange(X_test.shape[0])],
+                   test_labels, gold_candidate_set)
         test_marginals = self.marginals(X_test, **kwargs)
-
-        test_candidates = set()
-        test_labels = []
-        tp = set()
-        fp = set()
-        tn = set()
-        fn = set()
-
-        for i in range(X_test.shape[0]):
-            candidate = X_test.get_candidate(i)
-            test_candidates.add(candidate)
-            try:
-                L_test_index = L_test.get_row_index(candidate)
-                test_label   = L_test[L_test_index, 0]
-
-                # Set unlabeled examples to -1 by default
-                if test_label == 0 and set_unlabeled_as_neg:
-                    test_label = -1
-              
-                # Bucket the candidates for error analysis
-                test_labels.append(test_label)
-                if test_marginals[i] > b:
-                    if test_label == 1:
-                        tp.add(candidate)
-                    else:
-                        fp.add(candidate)
-                else:
-                    if test_label == -1:
-                        tn.add(candidate)
-                    else:
-                        fn.add(candidate)
-            except KeyError:
-                test_labels.append(-1)
-                if test_marginals[i] > b:
-                    fp.add(candidate)
-                else:
-                    tn.add(candidate)
-
-        # Print diagnostics chart and return error analysis candidate sets
-        if display:
-            score(test_candidates, np.asarray(test_labels), np.asarray(predict), gold_candidate_set,
-                  train_marginals=train_marginals, test_marginals=test_marginals)
-        return tp, fp, tn, fn
+        train_marginals = (self.marginals(self.X_train) if hasattr(self, 'X_train')
+                           and self.X_train is not None else None)
+        return s.score(test_marginals, train_marginals, b=b,
+                       set_unlabeled_as_neg=set_unlabeled_as_neg, display=display)
 
     def save(self, session, param_set_name):
         """Save the Parameter (weight) values, i.e. the model, as a new ParameterSet"""

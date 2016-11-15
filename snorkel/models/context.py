@@ -379,6 +379,7 @@ class HTMLMixin(object):
 
 
 # PhraseMixin must come last in arguments to not ovewrite is_* methods
+# class Phrase(Context, HTMLMixin, PhraseMixin): # Memex variant
 class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, HTMLMixin, PhraseMixin):
     """A Phrase subclass with Lingual, Tabular, Visual, and HTML attributes."""
     __tablename__ = 'phrase'

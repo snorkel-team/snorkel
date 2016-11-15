@@ -500,23 +500,25 @@ class OmniParser(object):
                 return
             if self.blacklist and node.tag in self.blacklist:
                 return
-
-            
-            if node.text is not None and len(node.text.strip()):
-                self.contents += node.text
-                self.contents += self.delim
-                block_lengths.append(len(node.text) + len(self.delim))
-            
-                if self.tabular:
-                    parents.append(self.parent)
+    
+            for field in ['text', 'tail']:
+                text = getattr(node, field)
+                # Only consider tail if it has text and node.text was empty
+                if text is not None and (field == 'text' or node.text is None):
+                    text_stripped = text.strip() 
+                    if len(text_stripped):
+                        self.contents += text_stripped
+                        self.contents += self.delim
+                        block_lengths.append(len(text_stripped) + len(self.delim))
                 
-                if self.arboreal:
-                    xpaths.append(tree.getpath(node))
-                    html_tags.append(node.tag)
-                    html_attrs.append(node.attrib.items())
+                        if self.tabular:
+                            parents.append(self.parent)
+                        
+                        if self.arboreal:
+                            xpaths.append(tree.getpath(node))
+                            html_tags.append(node.tag)
+                            html_attrs.append(node.attrib.items())
             
-            # if node.tail is not None and node.text is None and len(node.tail.strip()):
-
             if self.tabular:
                 enter_tabular(node)
             
@@ -525,6 +527,7 @@ class OmniParser(object):
 
             if self.tabular:
                 exit_tabular(node)
+
 
 
         # Parse document and store text in self.contents, padded with self.delim

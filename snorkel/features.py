@@ -13,7 +13,7 @@ from functools import partial
 import cPickle
 
 def get_span_feats(candidate, stopwords=None):
-    args = candidate.get_arguments()
+    args = candidate.get_contexts()
     if not isinstance(args[0], Span):
         raise ValueError("Accepts Span-type arguments, %s-type= found.")
 
@@ -51,7 +51,7 @@ def get_span_feats(candidate, stopwords=None):
 
 
 def get_token_count_feats(candidate, token_generator, ngram=1, stopwords=None):
-    args = candidate.get_arguments()
+    args = candidate.get_contexts()
     if not isinstance(args[0], Span):
         raise ValueError("Accepts Span-type arguments, %s-type found.")
 

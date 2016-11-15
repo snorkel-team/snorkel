@@ -11,7 +11,7 @@ def get_text_splits(c):
     NOTE: Currently assumes that these Spans are in the same Context
     """
     spans = []
-    for i, span in enumerate(c.get_arguments()):
+    for i, span in enumerate(c.get_contexts()):
         if not isinstance(span, Span):
             raise ValueError("Handles Span-type Candidate arguments only")
 
@@ -55,7 +55,7 @@ def get_between_tokens(c, attrib='words', n_max=1, case_sensitive=False):
     """
     TODO: write doc_string
     """
-    if len(c.get_arguments()) != 2:
+    if len(c.get_contexts()) != 2:
         raise ValueError("Only applicable to binary Candidates")
     span0 = c[0]
     span1 = c[1]
@@ -97,7 +97,7 @@ def contains_token(c, tok, attrib='words', case_sensitive=False):
     Checks if any of the contituent Spans contain a token
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
-    spans = [c] if isinstance(c, Span) else c.get_arguments()
+    spans = [c] if isinstance(c, Span) else c.get_contexts()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     return f(tok) in set(chain.from_iterable(map(f, span.get_attrib_tokens(attrib))
         for span in spans))

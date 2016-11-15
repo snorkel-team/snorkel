@@ -118,21 +118,25 @@ class Sentence(Context):
     position = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
     if snorkel_postgres:
-        words = Column(postgresql.ARRAY(String), nullable=False)
+        words        = Column(postgresql.ARRAY(String), nullable=False)
         char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
-        lemmas = Column(postgresql.ARRAY(String))
-        pos_tags = Column(postgresql.ARRAY(String))
-        ner_tags = Column(postgresql.ARRAY(String))
-        dep_parents = Column(postgresql.ARRAY(Integer))
-        dep_labels = Column(postgresql.ARRAY(String))
+        lemmas       = Column(postgresql.ARRAY(String))
+        pos_tags     = Column(postgresql.ARRAY(String))
+        ner_tags     = Column(postgresql.ARRAY(String))
+        dep_parents  = Column(postgresql.ARRAY(Integer))
+        dep_labels   = Column(postgresql.ARRAY(String))
+        entity_cids  = Column(postgresql.ARRAY(String))
+        entity_types = Column(postgresql.ARRAY(String))
     else:
-        words = Column(PickleType, nullable=False)
+        words        = Column(PickleType, nullable=False)
         char_offsets = Column(PickleType, nullable=False)
-        lemmas = Column(PickleType)
-        pos_tags = Column(PickleType)
-        ner_tags = Column(PickleType)
-        dep_parents = Column(PickleType)
-        dep_labels = Column(PickleType)
+        lemmas       = Column(PickleType)
+        pos_tags     = Column(PickleType)
+        ner_tags     = Column(PickleType)
+        dep_parents  = Column(PickleType)
+        dep_labels   = Column(PickleType)
+        entity_cids  = Column(PickleType)
+        entity_types = Column(PickleType)
 
     __mapper_args__ = {
         'polymorphic_identity': 'sentence',
@@ -154,7 +158,9 @@ class Sentence(Context):
             'pos_tags': self.pos_tags,
             'ner_tags': self.ner_tags,
             'dep_parents': self.dep_parents,
-            'dep_labels': self.dep_labels
+            'dep_labels': self.dep_labels,
+            'entity_cids': self.entity_cids,
+            'entity_types': self.entity_types
         }
 
     def __repr__(self):

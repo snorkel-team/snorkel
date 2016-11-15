@@ -261,6 +261,10 @@ class CoreNLPHandler:
             # Link the sentence to its parent document object
             parts['document'] = document
 
+            # Add null entity array
+            parts['entity_cids']  = [None for i in range(len(parts['words']))]
+            parts['entity_types'] = [None for i in range(len(parts['words']))]
+
             # Assign the stable id as document's stable id plus absolute character offset
             abs_sent_offset_end = abs_sent_offset + parts['char_offsets'][-1] + len(parts['words'][-1])
             parts['stable_id'] = construct_stable_id(document, 'sentence', abs_sent_offset, abs_sent_offset_end)

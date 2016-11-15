@@ -15,7 +15,7 @@ from utils import get_as_dict
 
 def get_span_splits(candidate, stopwords=None):
     split_pattern = r'[\s{}]+'.format(re.escape(punctuation))
-    for i, arg in enumerate(candidate.get_arguments()):
+    for i, arg in enumerate(candidate.get_contexts()):
         for token in re.split(split_pattern, s.get_span().lower()):
             if stopwords is None or token not in stopwords:
                 yield 'SPAN_SPLIT[{0}][{1}]'.format(i, token), 1
@@ -26,9 +26,9 @@ def get_span_splits_stopwords(stopwords):
 
 
 def get_span_feats(candidate, stopwords=None):
-    args = candidate.get_arguments()
+    args = candidate.get_contexts()
     if not isinstance(args[0], Span):
-        raise ValueError("Accepts Span-type arguments, %s-type= found.")
+        raise ValueError("Accepts Span-type arguments, %s-type found.")
 
     # Unary candidates
     if len(args) == 1:

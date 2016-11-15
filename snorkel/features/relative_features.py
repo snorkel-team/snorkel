@@ -74,7 +74,7 @@ def get_entity_word_idxs(sentence, canonical_id):
 
 def get_first_document_span_feats(candidate, stopwords=None):
     canonical_ids = candidate.get_cids()
-    for sentence in candidate.get_parent().parent.get_sentence_generator():
+    for sentence in candidate.get_parent().document.get_sentence_generator():
         mention_idxs = [
             get_entity_word_idxs(sentence, cid) for cid in canonical_ids
         ]
@@ -137,7 +137,7 @@ def get_relative_frequency_feats(candidate, context):
 
 
 def get_document_relative_frequency_feats(candidate):
-    doc = candidate.get_parent().parent
+    doc = candidate.get_parent().document
     return get_relative_frequency_feats(candidate, doc)
 
 

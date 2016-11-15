@@ -76,21 +76,23 @@ class Candidate(SnorkelBase):
         'polymorphic_on': type
     }
 
-    def get_arguments(self):
+    def get_contexts(self):
+        """Get a tuple of the consituent contexts making up this candidate"""
         return tuple(getattr(self, name) for name in self.__argnames__)
-
-    def get_canonical_ids(self):
-        pass
 
     def get_parent(self):
         # Assumes all arguments have the same parent
         return self.get_arguments()[0].parent
 
+    def get_cids(self):
+        """Get a tuple of the canonical IDs (CIDs) of the contexts making up this candidate"""
+        return tuple(getattr(self, name + "_cid") for name in self.__argnames__)
+
     def __getitem__(self, key):
-        return self.get_arguments()[key]
+        return self.get_contexts()[key]
 
     def __repr__(self):
-        return u"%s(%s)" % (self.__class__.__name__, u", ".join(map(unicode, self.get_arguments())))
+        return u"%s(%s)" % (self.__class__.__name__, u", ".join(map(unicode, self.get_contexts())))
 
 
 def candidate_subclass(class_name, args, table_name=None):
@@ -129,12 +131,17 @@ def candidate_subclass(class_name, args, table_name=None):
     # Create named arguments
     unique_con_args = []
     for arg in args:
-        class_attribs[arg + '_id'] = Column(Integer, ForeignKey('context.id'))
-        class_attribs[arg]         = relationship('Context',
+
+        # Primary arguments are constituent Contexts, and their ids
+        class_attribs[arg + '_id']  = Column(Integer, ForeignKey('context.id'))
+        class_attribs[arg]          = relationship('Context',
                                                   backref=backref(table_name + '_' + arg + 's', cascade_backrefs=False),
                                                   cascade_backrefs=False,
                                                   foreign_keys=class_attribs[arg + '_id'])
         unique_con_args.append(class_attribs[arg + '_id'])
+
+        # Canonical ids, to be set post-entity normalization stage
+        class_attribs[arg + '_cid'] = Column(Integer)
 
     class_attribs['__table_args__'] = (UniqueConstraint(*unique_con_args),)
 

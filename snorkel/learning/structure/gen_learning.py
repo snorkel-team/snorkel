@@ -102,10 +102,10 @@ def _fit_deps(m, n, j, L, weights, joint, propensity, regularization, truncation
                         joint[5] -= weights[2 * n + k]
 
             if propensity:
-                joint[0] += weights[3 * n + 1]
-                joint[2] += weights[3 * n + 1]
-                joint[3] += weights[3 * n + 1]
-                joint[5] += weights[3 * n + 1]
+                joint[0] += weights[3 * n]
+                joint[2] += weights[3 * n]
+                joint[3] += weights[3 * n]
+                joint[5] += weights[3 * n]
 
             joint = np.exp(joint)
             joint /= np.sum(joint)

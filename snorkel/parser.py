@@ -25,7 +25,7 @@ class CorpusParser:
         self.sent_parser = sent_parser
         self.max_docs = max_docs
 
-    def parse_corpus(self, session, name):
+    def parse_corpus(self, session, name, display=True):
         corpus = Corpus(name=name)
         if session is not None:
             session.add(corpus)
@@ -44,7 +44,8 @@ class CorpusParser:
             pb.close()
         if session is not None:
             session.commit()
-        corpus.stats()
+        if display:
+            corpus.stats()
         return corpus
 
 
@@ -220,7 +221,7 @@ class CoreNLPHandler:
         try:
             blocks = json.loads(content, strict=False)['sentences']
         except:
-            print "SKIPPED A MALFORMED SENTENCE!"
+            warnings.warn("CoreNLP skipped a malformed sentence.", RuntimeWarning)
             return
         position = 0
         diverged = False
@@ -259,6 +260,10 @@ class CoreNLPHandler:
 
             # Link the sentence to its parent document object
             parts['document'] = document
+
+            # Add null entity array
+            parts['entity_cids']  = [None for i in range(len(parts['words']))]
+            parts['entity_types'] = [None for i in range(len(parts['words']))]
 
             # Assign the stable id as document's stable id plus absolute character offset
             abs_sent_offset_end = abs_sent_offset + parts['char_offsets'][-1] + len(parts['words'][-1])

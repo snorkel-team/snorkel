@@ -1,12 +1,12 @@
 import numpy as np
-
 from ..models import Parameter, ParameterSet
 from .constants import *
 from .utils import score, odds_to_prob
-from fastmulticontext import fastmulticontext
+from fastmulticontext import fastmulticontext, get_matrix_keys
 from lstm import LSTMModel
 from scipy.optimize import minimize
 from sklearn import linear_model
+
 
 class NoiseAwareModel(object):
     """Simple abstract base class for a model."""
@@ -139,6 +139,9 @@ class LogReg(NoiseAwareModel):
              = sum_{x,y} P(y=1) log( 1 + exp(-x^Tw) ) + P(y=-1) log( 1 + exp(x^Tw) )
         """
         z = X.dot(w)
+        # Threshold to prevent float rollover into infinity/zero
+        z[z>25]  = 25
+        z[z<-25] = -25
         return m_t.dot(np.log(1 + np.exp(-z))) + (1 - m_t).dot(np.log(1 + np.exp(z))) \
                 + mu * (alpha*np.linalg.norm(w, ord=1) + (1-alpha)*np.linalg.norm(w, ord=2))
 

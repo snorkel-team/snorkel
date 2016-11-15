@@ -5,6 +5,7 @@ import numpy as np
 import scipy.sparse as sparse
 import warnings
 
+from pandas import DataFrame
 
 matplotlib.use('Agg')
 warnings.filterwarnings("ignore", module="matplotlib")
@@ -43,7 +44,7 @@ class MentionScorer(Scorer):
         tn = set()
         fn = set()
 
-        for i, candidates in enumerate(self.test_candidates):
+        for i, candidate in enumerate(self.test_candidates):
             try:
                 test_label_index = self.test_labels.get_row_index(candidate)
                 test_label   = self.test_labels[test_label_index, 0]
@@ -359,7 +360,8 @@ class GridSearch(object):
             self.model.train(self.X, self.training_marginals, **model_hyperparams)
 
             # Test the model
-            tp, fp, tn, fn = self.model.score(X_validation, validation_labels, gold_candidate_set, b, set_unlabeled_as_neg, display=False, **validation_kwargs)
+            tp, fp, tn, fn = self.model.score(X_validation, validation_labels, gold_candidate_set,
+                b, set_unlabeled_as_neg, False, self.scorer, **validation_kwargs)
             p, r, f1 = scores_from_counts(tp, fp, tn, fn)
             run_stats.append(list(param_vals) + [p, r, f1])
             if f1 > f1_opt:

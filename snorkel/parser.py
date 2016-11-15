@@ -414,19 +414,19 @@ class OmniParser(object):
             self.row_idx = 0
             self.col_idx = 0
 
-        def enter_tabular(child):
-            if child.tag == "table":
+        def enter_tabular(node):
+            if node.tag == "table":
                 self.table_grid = defaultdict(int)
                 self.row_idx = 0
                 self.cell_position = 0
                 stable_id = "%s::%s:%s:%s" % \
                     (document.name, "table", self.table_idx, self.table_idx)
                 self.table = Table(document=document, stable_id=stable_id,
-                                   position=self.table_idx, text=unicode(child))
+                                   position=self.table_idx, text=unicode(node))
                 self.parent = self.table
-            elif child.tag == "tr":
+            elif node.tag == "tr":
                 self.col_idx = 0
-            elif child.tag in ["td", "th"]:
+            elif node.tag in ["td", "th"]:
                 # calculate row_start/col_start
                 while self.table_grid[(self.row_idx, self.col_idx)]:
                     self.col_idx += 1
@@ -435,11 +435,11 @@ class OmniParser(object):
 
                 # calculate row_end/col_end
                 row_end = row_start
-                if "rowspan" in child.attrib:
-                    row_end += int(child.get("rowspan")) - 1
+                if "rowspan" in node.attrib:
+                    row_end += int(node.get("rowspan")) - 1
                 col_end = col_start
-                if "colspan" in child.attrib:
-                    col_end += int(child.get("colspan")) - 1
+                if "colspan" in node.attrib:
+                    col_end += int(node.get("colspan")) - 1
 
                 # update table_grid with occupied cells
                 for r, c in itertools.product(range(row_start, row_end+1),
@@ -455,23 +455,23 @@ class OmniParser(object):
                 parts["col_start"] = col_start
                 parts["col_end"] = col_end
                 parts["position"] = self.cell_position
-                parts["text"] = unicode(child)
+                parts["text"] = unicode(node)
                 parts["stable_id"] = "%s::%s:%s:%s:%s" % \
                                      (document.name, "cell",
                                       self.table.position, row_start, col_start)
                 self.cell = Cell(**parts)
                 self.parent = self.cell
-            self.anc_tags.append(child.tag)
+            self.anc_tags.append(node.tag)
 
-        def exit_tabular(child):
+        def exit_tabular(node):
             self.anc_tags.pop()
-            if child.tag == "table":
+            if node.tag == "table":
                 self.table = None
                 self.table_idx += 1
                 self.parent = document
-            elif child.tag == "tr":
+            elif node.tag == "tr":
                 self.row_idx += 1
-            elif child.tag in ["td", "th"]:
+            elif node.tag in ["td", "th"]:
                 self.cell = None
                 self.col_idx += 1
                 self.cell_idx += 1
@@ -495,42 +495,43 @@ class OmniParser(object):
                 raise NotImplementedError("Phrase parent must be Document, Table, or Cell")
             return parts
 
-        def parse_node(node, document):
+        def parse_node(node):
             if node.tag is etree.Comment:
                 return
             if self.blacklist and node.tag in self.blacklist:
                 return
 
-            for child in node:
+            
+            if node.text is not None and len(node.text.strip()):
+                self.contents += node.text
+                self.contents += self.delim
+                block_lengths.append(len(node.text) + len(self.delim))
+            
                 if self.tabular:
-                    enter_tabular(child)
+                    parents.append(self.parent)
                 
-                if child.text and child.text.strip():
-                    self.contents += child.text
-                    self.contents += self.delim
-                    block_lengths.append(len(child.text) + len(self.delim))
-                
-                    if self.arboreal:
-                        xpaths.append(tree.getpath(child))
-                        html_tags.append(child.tag)
-                        html_attrs.append(child.attrib.items())
+                if self.arboreal:
+                    xpaths.append(tree.getpath(node))
+                    html_tags.append(node.tag)
+                    html_attrs.append(node.attrib.items())
+            
+            # if node.tail is not None and node.text is None and len(node.tail.strip()):
 
-                    if self.tabular:
-                        parents.append(self.parent)
+            if self.tabular:
+                enter_tabular(node)
+            
+            for child in node:    
+                parse_node(child)
 
-                if len(child):
-                    parse_node(child, document)
-
-                if self.tabular:
-                    exit_tabular(child)
-
+            if self.tabular:
+                exit_tabular(node)
 
 
         # Parse document and store text in self.contents, padded with self.delim
         root = fromstring(text) # lxml.html.fromstring()
         tree = etree.ElementTree(root)
         document.text = text
-        parse_node(root, document)
+        parse_node(root)
         block_char_end = np.cumsum(block_lengths)
 
         content_length = len(self.contents)
@@ -557,10 +558,9 @@ class OmniParser(object):
                     parts['html_attrs'] = html_attrs[parent_idx]
                 if self.tabular:
                     parent = parents[parent_idx]
-                    # print parent
                     parts = apply_tabular(parts, parent, position)
-                yield Phrase(**parts)
-                yield None
+                yield Phrase(**parts) 
                 position += 1
                 phrase_num += 1
             parsed = batch_end
+    

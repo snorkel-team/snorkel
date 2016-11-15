@@ -10,11 +10,9 @@ from snorkel.parser import SentenceParser, Sentence
 
 def mesh_pairs_from_candidate(candidate):
     pubmed_id = candidate[0].parent.document.stable_id.split(':')[0]
-    chem_tokens = range(candidate[0].get_word_start(), candidate[0].get_word_end() + 1)
-    chem_mesh = list(set(sum([candidate[0].parent.ner_tags[t].split('|')[1:] for t in chem_tokens], [])))
-    dis_tokens = range(candidate[1].get_word_start(), candidate[1].get_word_end() + 1)
-    dis_mesh = list(set(sum([candidate[1].parent.ner_tags[t].split('|')[1:] for t in dis_tokens], [])))
-    return pubmed_id, product(chem_mesh, dis_mesh)
+    chem_mesh = candidate[0].parent.entity_cids[candidate[0].get_word_start()]
+    dis_mesh = candidate[1].parent.entity_cids[candidate[1].get_word_start()]
+    return pubmed_id, [(chem_mesh, dis_mesh)]
 
 
 def offsets_to_token(left, right, offset_array, lemmas, punc=set(string.punctuation)):
@@ -47,16 +45,20 @@ class TaggerOneSentenceParser(SentenceParser):
                 offsets = [offset + sent_start for offset in parts['char_offsets']]
                 toks = offsets_to_token(tag[1], tag[2], offsets, parts['lemmas'])
                 for tok in toks:
-                    parts['ner_tags'][tok] = tag[0]
+                    ts = tag[0].split('|')
+                    parts['entity_types'][tok] = ts[0]
+                    parts['entity_cids'][tok] = ts[1]
                     
             for i, word in enumerate(parts['words']):
-                tag = parts['ner_tags'][i]
-                if len(word) > 4 and not (tag.startswith('Chemical') or tag.startswith('Disease')):
+                tag = parts['entity_types'][i]
+                if len(word) > 4 and tag is None:
                     wl = word.lower()
                     if wl in self.dis_mesh_dict:
-                        parts['ner_tags'][i] = 'Disease|' + self.dis_mesh_dict[wl]
+                        parts['entity_types'][i] = 'Disease'
+                        parts['entity_cids'][i] = self.dis_mesh_dict[wl]
                     elif wl in self.chem_mesh_dict:
-                        parts['ner_tags'][i] = 'Chemical|' + self.chem_mesh_dict[wl]
+                        parts['entity_types'][i] = 'Chemical'
+                        parts['entity_cids'][i] = self.chem_mesh_dict[wl]
                         
             yield Sentence(**parts)
 
@@ -66,7 +68,6 @@ class CDRSentenceParser(SentenceParser):
     tag_dict = cPickle.load(open('data/unary_tags.pkl', 'rb'))
     
     def parse(self, doc, text):
-        possible_fixed = set()
         for parts in self.corenlp_handler.parse(doc, text):
             pubmed_id, _, _, sent_start, sent_end = parts['stable_id'].split(':')
             sent_start, sent_end = int(sent_start), int(sent_end)
@@ -77,7 +78,9 @@ class CDRSentenceParser(SentenceParser):
                 offsets = [offset + sent_start for offset in parts['char_offsets']]
                 toks = offsets_to_token(tag[1], tag[2], offsets, parts['lemmas'])
                 for tok in toks:
-                    parts['ner_tags'][tok] = tag[0]                        
+                    ts = tag[0].split('|')
+                    parts['entity_types'][tok] = ts[0]
+                    parts['entity_cids'][tok] = ts[1]
             yield Sentence(**parts)
 
             

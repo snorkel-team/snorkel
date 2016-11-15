@@ -122,7 +122,6 @@ class Sentence(Context):
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id'))
     document = relationship('Document', backref=backref('sentences', cascade='all, delete-orphan'), foreign_keys=document_id)
-    parent = document
     position = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
     if snorkel_postgres:

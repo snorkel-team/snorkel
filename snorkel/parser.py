@@ -500,11 +500,13 @@ class OmniParser(object):
                 return
             if self.blacklist and node.tag in self.blacklist:
                 return
+
+            if self.tabular:
+                enter_tabular(node)
     
             for field in ['text', 'tail']:
                 text = getattr(node, field)
-                # Only consider tail if it has text and node.text was empty
-                if text is not None and (field == 'text' or node.text is None):
+                if text is not None:
                     text_stripped = text.strip() 
                     if len(text_stripped):
                         self.contents += text_stripped
@@ -515,12 +517,10 @@ class OmniParser(object):
                             parents.append(self.parent)
                         
                         if self.arboreal:
-                            xpaths.append(tree.getpath(node))
-                            html_tags.append(node.tag)
-                            html_attrs.append(node.attrib.items())
-            
-            if self.tabular:
-                enter_tabular(node)
+                            context_node = node.getparent() if field=='tail' else node
+                            xpaths.append(tree.getpath(context_node))
+                            html_tags.append(context_node.tag)
+                            html_attrs.append(context_node.attrib.items())
             
             for child in node:    
                 parse_node(child)
@@ -548,22 +548,25 @@ class OmniParser(object):
                         len(self.delim)
             for parts in self.lingual_parse(document, self.contents[parsed:batch_end]):
                 (_, _, _, char_end) = split_stable_id(parts['stable_id'])
-                while parsed + char_end > block_char_end[parent_idx]:
-                    parent_idx += 1
-                    position = 0
-                parts['document'] = document
-                parts['phrase_num'] = phrase_num
-                parts['stable_id'] = \
-                    "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
-                if self.arboreal:
-                    parts['xpath'] =  xpaths[parent_idx]
-                    parts['html_tag'] = html_tags[parent_idx]
-                    parts['html_attrs'] = html_attrs[parent_idx]
-                if self.tabular:
-                    parent = parents[parent_idx]
-                    parts = apply_tabular(parts, parent, position)
-                yield Phrase(**parts) 
-                position += 1
-                phrase_num += 1
+                try:
+                    while parsed + char_end > block_char_end[parent_idx]:
+                        parent_idx += 1
+                        position = 0
+                    parts['document'] = document
+                    parts['phrase_num'] = phrase_num
+                    parts['stable_id'] = \
+                        "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
+                    if self.arboreal:
+                        parts['xpath'] =  xpaths[parent_idx]
+                        parts['html_tag'] = html_tags[parent_idx]
+                        parts['html_attrs'] = html_attrs[parent_idx]
+                    if self.tabular:
+                        parent = parents[parent_idx]
+                        parts = apply_tabular(parts, parent, position)
+                    yield Phrase(**parts) 
+                    position += 1
+                    phrase_num += 1
+                except:
+                    import pdb; pdb.set_trace()
             parsed = batch_end
     

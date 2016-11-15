@@ -69,11 +69,11 @@ def get_span_feats_stopwords(stopwords):
 
 
 def get_entity_word_idxs(sentence, canonical_id):
-    pass
+    return [i for i, cid in enumerate(sentence.entity_cids) if cid == canonical_id]
 
 
 def get_first_document_span_feats(candidate, stopwords=None):
-    canonical_ids = candidate.get_canonical_ids()
+    canonical_ids = candidate.get_cids()
     for sentence in candidate.get_parent().parent.get_sentence_generator():
         mention_idxs = [
             get_entity_word_idxs(sentence, cid) for cid in canonical_ids
@@ -104,22 +104,36 @@ def get_first_document_span_feats_stopwords(stopwords):
     return partial(get_first_document_span_feats, stopwords=stopwords)
 
 
-def get_entity_type_max_counts(context):
-    counts = defaultdict(int)
-    pass
+def get_entity_type_max_counts(context, entity_types):
+    type_counts = {et: defaultdict(int) for et in entity_types}
+    for sentence in context.get_sentence_generator():
+        for et, cid in zip(sentence.entity_types, sentence.entity_cids):
+            if et in type_counts:
+                type_counts[et][cid] += 1
+    for et in type_counts:
+        if len(type_counts[et]) == 0:
+            type_counts[et][0] = 1
+    return {et: max(type_counts[et].values()) for et in entity_types}
 
 
-def get_entity_counts(canonical_ids, context):
+def get_entity_counts(context, canonical_ids):
     counts = {cid: 0 for cid in canonical_ids}
-    pass
+    for sentence in context.get_sentence_generator():
+        for cid in sentence.entity_cids:
+            if cid in counts:
+                counts[cid] += 1
+    return counts
 
 
 def get_relative_frequency_feats(candidate, context):
-    max_counts = get_entity_type_max_counts(context)
-    canonical_ids = candidate.get_canonical_ids()
-    entity_counts = get_entity_counts(canonical_ids, context)
-    for i, (ct, max_ct) in enumerate(zip(entity_counts, max_counts)):
-        yield "ENTITY_RELATIVE_FREQUENCY[{0}]".format(i), float(ct) / max_ct
+    entity_types = [
+        c.get_attrib_tokens('entity_types')[0] for c in candidate.get_contexts
+    ]
+    max_counts = get_entity_type_max_counts(context, entity_types)
+    canonical_ids = candidate.get_cids()
+    entity_counts = get_entity_counts(context, canonical_ids)
+    for i, (ct, et) in enumerate(zip(entity_counts, entity_types)):
+        yield "ENTITY_RELATIVE_FREQUENCY[{0}]".format(i), float(ct) / max_counts[et]
 
 
 def get_document_relative_frequency_feats(candidate):

@@ -529,7 +529,6 @@ class OmniParser(object):
                 exit_tabular(node)
 
 
-
         # Parse document and store text in self.contents, padded with self.delim
         root = fromstring(text) # lxml.html.fromstring()
         tree = etree.ElementTree(root)
@@ -548,25 +547,22 @@ class OmniParser(object):
                         len(self.delim)
             for parts in self.lingual_parse(document, self.contents[parsed:batch_end]):
                 (_, _, _, char_end) = split_stable_id(parts['stable_id'])
-                try:
-                    while parsed + char_end > block_char_end[parent_idx]:
-                        parent_idx += 1
-                        position = 0
-                    parts['document'] = document
-                    parts['phrase_num'] = phrase_num
-                    parts['stable_id'] = \
-                        "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
-                    if self.arboreal:
-                        parts['xpath'] =  xpaths[parent_idx]
-                        parts['html_tag'] = html_tags[parent_idx]
-                        parts['html_attrs'] = html_attrs[parent_idx]
-                    if self.tabular:
-                        parent = parents[parent_idx]
-                        parts = apply_tabular(parts, parent, position)
-                    yield Phrase(**parts) 
-                    position += 1
-                    phrase_num += 1
-                except:
-                    import pdb; pdb.set_trace()
+                while parsed + char_end > block_char_end[parent_idx]:
+                    parent_idx += 1
+                    position = 0
+                parts['document'] = document
+                parts['phrase_num'] = phrase_num
+                parts['stable_id'] = \
+                    "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
+                if self.arboreal:
+                    parts['xpath'] =  xpaths[parent_idx]
+                    parts['html_tag'] = html_tags[parent_idx]
+                    parts['html_attrs'] = html_attrs[parent_idx]
+                if self.tabular:
+                    parent = parents[parent_idx]
+                    parts = apply_tabular(parts, parent, position)
+                yield Phrase(**parts) 
+                position += 1
+                phrase_num += 1
             parsed = batch_end
     

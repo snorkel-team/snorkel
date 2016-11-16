@@ -268,7 +268,7 @@ class PhraseMixin(object):
     def is_tabular(self):
         return False
 
-    def is_html(self):
+    def is_structural(self):
         return False
 
     def __repr__(self):
@@ -341,7 +341,7 @@ class TabularMixin(object):
 
 
 class VisualMixin(object):
-    """ A collection of visual features"""
+    """ A collection of visual attributes."""
     int_array_type = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
     page    = Column(int_array_type)
     top     = Column(int_array_type)
@@ -359,14 +359,14 @@ class VisualMixin(object):
             self.text))
 
 
-class HTMLMixin(object):
-    """ A collection of visual features"""
+class StructuralMixin(object):
+    """ A collection of structural attributes."""
     str_array_type = postgresql.ARRAY(String) if snorkel_postgres else PickleType
     xpath = Column(String)
     html_tag = Column(String)
     html_attrs = Column(str_array_type)
 
-    def is_html(self):
+    def is_structural(self):
         return self.html_tag is not None
 
     def __repr__(self):
@@ -377,8 +377,8 @@ class HTMLMixin(object):
 
 
 # PhraseMixin must come last in arguments to not ovewrite is_* methods
-# class Phrase(Context, HTMLMixin, PhraseMixin): # Memex variant
-class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, HTMLMixin, PhraseMixin):
+# class Phrase(Context, StructuralMixin, PhraseMixin): # Memex variant
+class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, PhraseMixin):
     """A Phrase subclass with Lingual, Tabular, Visual, and HTML attributes."""
     __tablename__ = 'phrase'
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)

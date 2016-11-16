@@ -351,14 +351,14 @@ class SimpleParser:
 
 class OmniParser(object):
     def __init__(self, 
-                 arboreal=True, blacklist=["style"], flatten=[],    # html (arboreal)
+                 structural=True, blacklist=["style"], flatten=[],    # html (structural)
                  visual=False, pdf_path=None, session=None,         # visual
                  lingual=True, strip=True,                          # lingual
                  tabular=True):                                     # tabular
         self.delim = "<NB>" # NB = New Block
 
-        # arboreal (html) setup
-        self.arboreal = arboreal
+        # structural (html) setup
+        self.structural = structural
         self.blacklist = blacklist if isinstance(blacklist, list) else [blacklist]
         self.flatten = flatten if isinstance(flatten, list) else [flatten]
 
@@ -402,7 +402,7 @@ class OmniParser(object):
         block_lengths = []
         self.parent = document
 
-        if self.arboreal:
+        if self.structural:
             xpaths = []
             html_attrs = []
             html_tags = []
@@ -463,7 +463,7 @@ class OmniParser(object):
                         if self.tabular:
                             parents.append(table_info.parent)
                         
-                        if self.arboreal:
+                        if self.structural:
                             context_node = node.getparent() if field=='tail' else node
                             xpaths.append(tree.getpath(context_node))
                             html_tags.append(context_node.tag)
@@ -503,7 +503,7 @@ class OmniParser(object):
                 parts['phrase_num'] = phrase_num
                 parts['stable_id'] = \
                     "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
-                if self.arboreal:
+                if self.structural:
                     parts['xpath'] =  xpaths[parent_idx]
                     parts['html_tag'] = html_tags[parent_idx]
                     parts['html_attrs'] = html_attrs[parent_idx]

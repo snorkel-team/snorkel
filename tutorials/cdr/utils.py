@@ -83,31 +83,6 @@ class CDRSentenceParser(SentenceParser):
                     parts['entity_cids'][tok] = ts[1]
             yield Sentence(**parts)
 
-            
-def gen_LF_text_btw(c, text, sign=1):
-    return sign if text in get_text_between(c) else 0
-
-def gen_LF_span(c, text, span=0, sign=1):
-    return sign if text in c[span].get_span().lower() else 0   
-
-def gen_LF_regex(c, pattern, sign):
-    return sign if re.search(pattern, get_tagged_text(c), flags=re.I) else 0
-    
-def gen_LF_regex_AB(c, pattern, sign):
-    return sign if re.search(r'{{A}}' + pattern + r'{{B}}', get_tagged_text(c), flags=re.I) else 0
-
-def gen_LF_regex_BA(c, pattern, sign):
-    return sign if re.search(r'{{B}}' + pattern + r'{{A}}', get_tagged_text(c), flags=re.I) else 0
-    
-def gen_LF_regex_A(c, pattern, sign):
-    return sign if re.search(pattern + r'{{A}}.*{{B}}', get_tagged_text(c), flags=re.I) else 0
-    
-def gen_LF_regex_B(c, pattern, sign):
-    return sign if re.search(pattern + r'{{B}}.*{{A}}', get_tagged_text(c), flags=re.I) else 0
-    
-def ltp(x):
-    return '(' + '|'.join(x) + ')'
-
 ###########################################################################################################
 from snorkel.learning import FMCT
 from snorkel.learning.utils import score, test_scores
@@ -115,7 +90,6 @@ from collections import defaultdict
 from pandas import DataFrame
 import numpy as np
 from itertools import product
-from cdr_feats import get_key_ents
 
 def get_doc_from_id(doc_id, corpus):
     for d in corpus:
@@ -133,7 +107,23 @@ def get_important_chems(doc_id, corpus):
         tag.split('|')[1] for tag in title_sent.ner_tags if tag.startswith('Chemical')
     ])
     if len(key_chems) == 0:
-        key_chems, _ = get_key_ents(doc)
+        chem_counts = defaultdict(int)
+        for sent in doc.sentences:
+            cur_chem = None
+            for i, (tag, cid) in enumerate(zip(sent.entity_types, entity_cids)):
+                if tag == 'Chemical':
+                    if cid != cur_chem and cur_chem is not None:
+                        chem_counts[cur_chem] += 1
+                    cur_chem = cid
+                else:
+                    if cur_chem is not None:
+                        chem_counts[cur_chem] += 1
+                    cur_chem = None
+        if len(chem_counts) == 0:
+            key_chems = set()
+        else:
+            m_chem = max(chem_counts.values())
+            key_chems = set([chem for chem, count in chem_counts.iteritems() if count == m_chem])
     return list(key_chems)
     
 def get_all_diseases(doc_id, corpus):

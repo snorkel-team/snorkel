@@ -76,10 +76,10 @@ def tablelib_unary_features(span):
                 yield "ROW_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
             for ngram in get_col_ngrams(span, n_max=2, attrib=attrib):
                 yield "COL_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
-            for ngram in get_row_ngrams(span, n_max=2, attrib=attrib, direct=False, infer=True):
-                yield "ROW_INFERRED_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
-            for ngram in get_col_ngrams(span, n_max=2, attrib=attrib, direct=False, infer=True):
-                yield "COL_INFERRED_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
+            # for ngram in get_row_ngrams(span, n_max=2, attrib=attrib, direct=False, infer=True):
+            #     yield "ROW_INFERRED_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
+            # for ngram in get_col_ngrams(span, n_max=2, attrib=attrib, direct=False, infer=True):
+            #     yield "COL_INFERRED_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
                 # for (ngram, direction) in get_neighbor_cell_ngrams(span, dist=2, directions=True, n_max=3, \
                 #  attrib=attrib):
                 #     yield "NEIGHBOR_%s_%s_[%s]" % (direction, attrib.upper(), ngram)

@@ -459,23 +459,24 @@ def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False, spread=[0,
                     if phrase!=root_phrase]
 
 
-PhantomCell = namedtuple('PhantomCell','phrases')
+# PhantomCell = namedtuple('PhantomCell','phrases')
+# TODO: fix this function and retest
 def _infer_cell(root_cell, axis, direct, infer):
     # NOTE: not defined for direct = False and infer = False
-    # TODO: Fix this hack; checking for len(text)==9 checks if cell is "<td></td>"
-    empty = len(root_cell.text) == 9
-    edge = getattr(root_cell, _other_axis(axis) + '_start') == 0
-    if direct and (not empty or edge or not infer):
-        return root_cell
-    else:
-        if edge or not empty:
-            return PhantomCell(phrases=[]) 
-        else:
-            neighbor_cells = [cell for cell in root_cell.table.cells
-                if getattr(cell, axis + '_start') == getattr(root_cell, axis + '_start')
-                and getattr(cell, _other_axis(axis) + '_start').position == \
-                    getattr(root_cell, _other_axis(axis) + '_start').position - 1]
-            return _infer_cell(neighbor_cells[0], axis, direct=True, infer=True)
+    # empty = len(root_cell.phrases) == 0 
+    # edge = getattr(root_cell, _other_axis(axis) + '_start') == 0
+    # if direct and (not empty or edge or not infer):
+    #     return root_cell
+    # else:
+    #     if edge or not empty:
+    #         return PhantomCell(phrases=[]) 
+    #     else:
+    #         neighbor_cells = [cell for cell in root_cell.table.cells
+    #             if is_axis_aligned(cell, root_cell, axis=axis)
+    #             and getattr(cell, _other_axis(axis) + '_start') == \
+    #                 getattr(root_cell, _other_axis(axis) + '_start') - 1]
+    #         return _infer_cell(neighbor_cells[0], axis, direct=True, infer=True)
+    return root_cell
 
 def _other_axis(axis):
     return 'row' if axis=='col' else 'col'
@@ -689,7 +690,7 @@ def get_aligned_lemmas(span):
     return set(get_visual_aligned_lemmas(span))
 
 ############################
-# Arboreal feature helpers
+# Structural feature helpers
 ############################
 def get_tag(span):
     return str(span.parent.html_tag)

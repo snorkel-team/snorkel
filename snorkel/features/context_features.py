@@ -1,6 +1,6 @@
-from .models import Span
 from collections import defaultdict
 from functools import partial
+from snorkel.models import Span
 
 
 def get_token_count_feats(candidate, context, attr, ngram, stopwords):

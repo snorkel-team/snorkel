@@ -30,10 +30,11 @@ class VisualLinker():
         delimiters = u"([\(\)\,\?\u2212\u201C\u201D\u2018\u2019\u00B0\*\']|(?<!http):|\.$|\.\.\.)"
         self.separators = re.compile(delimiters)
 
-
     def parse_visual(self, document):
         self.document = document
         self.pdf_file = self.pdf_path + self.document.name + '.pdf'
+        if not os.path.isfile(self.pdf_file):
+           self.pdf_file = self.pdf_file[:-3]+"PDF"
         if self.vverbose: print self.pdf_file
 
         tic = timer()
@@ -51,17 +52,6 @@ class VisualLinker():
         self.extract_html_words()
         if self.vverbose: pprint(self.html_word_list[:5])
         if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
-        
-        # TEMP
-        # html_words = [x[1] for x in self.html_word_list]
-        # pdf_words  = [x[1] for x in self.pdf_word_list]
-        # print "(HTML, PDF) words: ", len(html_words), len(pdf_words)
-        # html_only = set(html_words) - set(pdf_words)
-        # pdf_only = set(pdf_words) - set(html_words)
-        # print "(HTML, PDF) unique: ", (len(html_only), len(pdf_only))
-        # pprint(zip(sorted(list(html_only)) + ([None] * (len(pdf_only)-len(html_only))), sorted(list(pdf_only))))
-        # # pprint(zip(html_words, pdf_words))
-        # TEMP
 
         tic = timer()
         self.link_lists(search_max=200)

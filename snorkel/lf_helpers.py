@@ -220,7 +220,7 @@ def same_table(c):
     Return True if all Spans in the given candidate are from the same Table.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(isinstance(c[i], TablePhrase) and
+    return (all(isinstance(c[i], Phrase) and
                 c[i].parent.table == c[0].parent.table for i in range(len(c))))
 
 
@@ -229,7 +229,7 @@ def same_row(c):
     Return True if all Spans in the given candidate are from the same Row.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(isinstance(c[i], TablePhrase) and 
+    return (all(isinstance(c[i], Phrase) and 
                 c[i].parent.table == c[0].parent.table and 
                 is_row_aligned(c[i].parent, c[0].parent)
             for i in range(len(c))))
@@ -240,7 +240,7 @@ def same_col(c):
     Return True if all Spans in the given candidate are from the same Col.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(isinstance(c[i], TablePhrase) and 
+    return (all(isinstance(c[i], Phrase) and 
                 c[i].parent.table == c[0].parent.table and 
                 is_col_aligned(c[i].parent, c[0].parent)
             for i in range(len(c))))
@@ -261,7 +261,7 @@ def same_cell(c):
     Return True if all Spans in the given candidate are from the same Cell.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(isinstance(c[i], TablePhrase) and
+    return (all(isinstance(c[i], Phrase) and
                 c[i].parent.cell is not None and
                 c[i].parent.cell == c[0].parent.cell for i in range(len(c))))
 
@@ -338,7 +338,7 @@ def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=
     for span in spans:
         for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
             yield ngram
-        if isinstance(span.parent, TablePhrase) and span.parent.cell is not None:
+        if isinstance(span.parent, Phrase) and span.parent.cell is not None:
             root_cell = span.parent.cell
             for phrase in chain.from_iterable([_get_aligned_phrases(phrase, 'row'), _get_aligned_phrases(phrase, 'col')]):
                 row_diff = min_row_diff(phrase, root_cell, absolute=False) 

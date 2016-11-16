@@ -1,4 +1,4 @@
-#from .models import Phrase
+from .models import Phrase
 import os
 import re
 import subprocess
@@ -6,9 +6,7 @@ from collections import OrderedDict, defaultdict
 from pprint import pprint
 from timeit import default_timer as timer
 
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
-from PIL import Image
+from PIL import Image, ImageDraw
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -349,24 +347,22 @@ class VisualLinker():
         """
         if display:
             (img, img_path) = self.pdf_to_img(page_num)
-            colors = ['b', 'r']
+            colors = ['blue', 'red']
         boxes_per_page = defaultdict(int)
         boxes_by_page = defaultdict(list)
         for i, (page, top, left, bottom, right) in enumerate(boxes):
             boxes_per_page[page] += 1
             boxes_by_page[page].append((top, left, bottom, right))
         if display:
-            fig, ax = plt.subplots(1)
+            draw = ImageDraw.Draw(img)
             for j, (top, left, bottom, right) in enumerate(boxes_by_page[page_num]):
                 color = colors[j % 2] if alternate_colors else colors[0]
-                rect = patches.Rectangle((left, top), right-left, bottom-top, edgecolor=color, fill=False)
-                ax.add_patch(rect)
+                draw.rectangle(((left, top), (right, bottom)), outline=color)
         print "Boxes per page: total (unique)"
         for (page, count) in sorted(boxes_per_page.items()):
             print "Page %d: %d (%d)" % (page, count, len(set(boxes_by_page[page])))
         if display:
-            ax.imshow(img)
-            plt.show()
+            img.show()
             os.system('rm {}'.format(img_path))  # delete image
 
     def display_candidates(self, candidates, page_num=1, display=True):
@@ -396,17 +392,18 @@ class VisualLinker():
         dirname = subprocess.check_output("dirname '{}'".format(self.pdf_file), shell=True)
         img_path = dirname.rstrip() + '/' + basename.rstrip()
         os.system(
-            "pdftoppm -f {} -l {} -singlefile -jpeg '{}' '{}'".format(page_num, page_num, self.pdf_file, img_path))
+                "pdftoppm -f {} -l {} -singlefile -jpeg '{}' '{}'".format(page_num, page_num, self.pdf_file, img_path))
         img_path += '.jpg'
-        img = Image.open(img_path).resize((page_width, page_height))
-        return np.asarray(img), img_path
+        img = Image.open(img_path).resize((page_width, page_height), Image.ANTIALIAS)
+        return img, img_path
 
     def create_pdf(self, document_name, text):
         input_html = self.pdf_path + document_name + '.html'
         open(input_html, 'w').write(text)  # TODO: change this to avoid creating a file
         pdf_file = self.pdf_path + document_name + '.pdf'
         javascript_file = os.environ['SNORKELHOME'] + 'tutorials/tables/visual_features/rasterize.js '
-        command = 'phantomjs ' + javascript_file + '{} {} letter'.format(input_html, pdf_file)  #TODO: add width parameter
+        command = 'phantomjs ' + javascript_file + '{} {} letter'.format(input_html,
+                                                                         pdf_file)  # TODO: add width parameter
         os.system(command)
 
 

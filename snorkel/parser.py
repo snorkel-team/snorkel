@@ -351,17 +351,16 @@ class SimpleParser:
 
 class OmniParser(object):
     def __init__(self, 
-                 arboreal=True, blacklist=["style"],        # html (arboreal)
-                 visual=False, pdf_path=None, session=None, # visual
-                 lingual=True, strip=True,                  # lingual
-                 tabular=True):                             # tabular
+                 arboreal=True, blacklist=["style"], flatten=[],    # html (arboreal)
+                 visual=False, pdf_path=None, session=None,         # visual
+                 lingual=True, strip=True,                          # lingual
+                 tabular=True):                                     # tabular
         self.delim = "<NB>" # NB = New Block
 
         # arboreal (html) setup
         self.arboreal = arboreal
-        self.blacklist = blacklist
-        if self.blacklist and not isinstance(blacklist, list):
-            raise ValueError("Argument blacklist must be of type <list>")
+        self.blacklist = blacklist if isinstance(blacklist, list) else [blacklist]
+        self.flatten = flatten if isinstance(flatten, list) else [flatten]
 
         # visual setup
         self.visual = visual
@@ -377,7 +376,7 @@ class OmniParser(object):
         self.lingual = lingual
         self.strip = strip
         if self.lingual:
-            self.batch_size = 7000 # TODO: what if this is smaller than a cell?
+            self.batch_size = 7000 # TODO: what if this is smaller than a block?
             self.lingual_parse = CoreNLPHandler(delim=self.delim[1:-1]).parse
         else:
             self.batch_size = 1000000
@@ -414,22 +413,30 @@ class OmniParser(object):
         else:
             table_info = None
 
-        def apply_tabular(parts, parent, position):
-            parts['position'] = position
-            if isinstance(parent, Document):
-                pass
-            elif isinstance(parent, Table):
-                parts['table'] = parent
-            elif isinstance(parent, Cell):
-                parts['table'] = parent.table
-                parts['cell'] = parent
-                parts['row_start'] = parent.row_start
-                parts['row_end'] = parent.row_end
-                parts['col_start'] = parent.col_start
-                parts['col_end'] = parent.col_end
-            else:
-                raise NotImplementedError("Phrase parent must be Document, Table, or Cell")
-            return parts
+        def flatten(node):
+            # if a child of this node is in self.flatten, construct a string
+            # containing all text/tail results of the tree based on that child
+            # and append that to the tail of the previous child or head of node
+            
+            num_children = len(node)
+            for i, child in enumerate(node[::-1]):
+                if child.tag in self.flatten:
+                    j = num_children - 1 - i # child index walking backwards
+                    contents = ['']
+                    for descendant in child.getiterator():
+                        if descendant.text and descendant.text.strip():
+                            contents.append(descendant.text)
+                        if descendant.tail and descendant.tail.strip():
+                            contents.append(descendant.tail)
+                    if j == 0:
+                        if node.text is None:
+                            node.text = ''
+                        node.text += ' '.join(contents)
+                    else:
+                        if node[j-1].tail is None:
+                            node[j-1].tail = ''
+                        node[j-1].tail += ' '.join(contents)
+                    node.remove(child)
 
         def parse_node(node, table_info=None):
             if node.tag is etree.Comment:
@@ -439,6 +446,9 @@ class OmniParser(object):
 
             if self.tabular:
                 self.table_idx = table_info.enter_tabular(node, self.table_idx)
+
+            if self.flatten:
+                flatten(node) # flattens children of node that are in the 'flatten' list
 
             for field in ['text', 'tail']:
                 text = getattr(node, field)
@@ -499,7 +509,7 @@ class OmniParser(object):
                     parts['html_attrs'] = html_attrs[parent_idx]
                 if self.tabular:
                     parent = parents[parent_idx]
-                    parts = apply_tabular(parts, parent, position)
+                    parts = table_info.apply_tabular(parts, parent, position)
                 yield Phrase(**parts) 
                 position += 1
                 phrase_num += 1
@@ -529,7 +539,7 @@ class TableInfo():
             stable_id = "%s::%s:%s:%s" % \
                 (self.document.name, "table", table_idx, table_idx)
             self.table = Table(document=self.document, stable_id=stable_id,
-                                position=table_idx, text=unicode(node))
+                                position=table_idx)
             self.parent = self.table
         elif node.tag == "tr":
             self.col_idx = 0
@@ -562,7 +572,6 @@ class TableInfo():
             parts["col_start"] = col_start
             parts["col_end"] = col_end
             parts["position"] = self.cell_position
-            parts["text"] = unicode(node)
             parts["stable_id"] = "%s::%s:%s:%s:%s" % \
                                     (self.document.name, "cell",
                                      self.table.position, row_start, col_start)
@@ -582,3 +591,20 @@ class TableInfo():
             self.cell_idx += 1
             self.cell_position += 1
             self.parent = self.table
+
+    def apply_tabular(self, parts, parent, position):
+        parts['position'] = position
+        if isinstance(parent, Document):
+            pass
+        elif isinstance(parent, Table):
+            parts['table'] = parent
+        elif isinstance(parent, Cell):
+            parts['table'] = parent.table
+            parts['cell'] = parent
+            parts['row_start'] = parent.row_start
+            parts['row_end'] = parent.row_end
+            parts['col_start'] = parent.col_start
+            parts['col_end'] = parent.col_end
+        else:
+            raise NotImplementedError("Phrase parent must be Document, Table, or Cell")
+        return parts

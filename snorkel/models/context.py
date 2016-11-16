@@ -198,7 +198,6 @@ class Table(Context):
                      backref=backref('tables', cascade='all, delete-orphan'),
                      foreign_keys=document_id)
     position = Column(Integer, nullable=False)
-    text = Column(Text, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'table',
@@ -231,7 +230,6 @@ class Cell(Context):
     col_start = Column(Integer)
     col_end = Column(Integer)
     position = Column(Integer)
-    text = Column(Text, nullable=False)
     html_tag = Column(Text)
     if snorkel_postgres:
         html_attrs = Column(postgresql.ARRAY(String))

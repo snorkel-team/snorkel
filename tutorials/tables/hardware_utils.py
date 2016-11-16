@@ -16,7 +16,7 @@ class OmniNgramsTemp(OmniNgrams):
 
     def apply(self, context):
         for ts in OmniNgrams.apply(self, context):
-            m = re.match(r'^(\+|\-|\u2010|\u2011|\u2012|\u2013|\u2014|\u2212|\%)?(\s*)(\d+)$', ts.get_span())
+            m = re.match(u'^([\+\-\u2010\u2011\u2012\u2013\u2014\u2212\uf02d])?(\s*)(\d+)$', ts.get_span(), re.U)
             if m:
                 if m.group(1) is None:
                     temp = ''
@@ -24,7 +24,7 @@ class OmniNgramsTemp(OmniNgrams):
                     if m.group(2) != '':
                         continue # If bigram '+ 150' is seen, accept the unigram '150', not both
                     temp = ''
-                else:
+                else: # m.group(1) is a type of negative sign
                     # A bigram '- 150' is different from unigram '150', so we keep the implicit '-150'
                     temp = '-'
                 temp += m.group(3)

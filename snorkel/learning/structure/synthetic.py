@@ -262,7 +262,7 @@ def generate_label_matrix(weights, m):
     y = np.ndarray((m,), np.int64)
     L = sparse.lil_matrix((m, weights.n))
     for i in range(m):
-        fg.burnIn(100, False)
+        fg.burnIn(10, False)
         y[i] = 1 if fg.var_value[0, 0] == 1 else -1
         for j in range(weights.n):
             if fg.var_value[0, 1 + j] != 1:

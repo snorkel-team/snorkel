@@ -13,11 +13,11 @@ warnings.filterwarnings("ignore", module="matplotlib")
 
 class Scorer(object):
     """Abstract type for scorers"""
-    def __init__(self, test_candidates, test_labels, gold_candidate_set):
+    def __init__(self, test_candidates, test_labels, gold_candidate_set=None):
         """
-        test_candidates: candidates corresponding to test_labels
-        test_labels: ground truth labels for test candidates
-        gold_candidate_set: full set of gold labeled candidates
+        test_candidates:    A *list of Candidates* corresponding to test_labels
+        test_labels:        A *csrLabelMatrix* of ground truth labels for the test candidates
+        gold_candidate_set: [Optional] A *CandidateSet* containing the full set of gold labeled candidates
         """
         self.test_candidates = test_candidates
         self.test_labels     = test_labels
@@ -37,7 +37,6 @@ class MentionScorer(Scorer):
         set_unlabeled_as_neg: set marginals at b to negative?
         display: show calibration plots?
         """
-        test_candidates = set()
         test_label_array = []
         tp = set()
         fp = set()
@@ -45,16 +44,15 @@ class MentionScorer(Scorer):
         fn = set()
 
         for i, candidate in enumerate(self.test_candidates):
-            try:
-                test_label_index = self.test_labels.get_row_index(candidate)
-                test_label   = self.test_labels[test_label_index, 0]
+            test_label_index = self.test_labels.get_row_index(candidate)
+            test_label       = self.test_labels[test_label_index, 0]
 
-                # Set unlabeled examples to -1 by default
-                if test_label == 0 and set_unlabeled_as_neg:
-                    test_label = -1
-              
-                # Bucket the candidates for error analysis
-                test_label_array.append(test_label)
+            # Set unlabeled examples to -1 by default
+            test_label = -1 if test_label == 0 and set_unlabeled_as_neg else 0
+          
+            # Bucket the candidates for error analysis
+            test_label_array.append(test_label)
+            if test_label != 0:
                 if test_marginals[i] > b:
                     if test_label == 1:
                         tp.add(candidate)
@@ -65,19 +63,39 @@ class MentionScorer(Scorer):
                         tn.add(candidate)
                     else:
                         fn.add(candidate)
-            except KeyError:
-                test_label_array.append(-1)
-                if test_marginals[i] > b:
-                    fp.add(candidate)
-                else:
-                    tn.add(candidate)
-
-        # Print diagnostics chart and return error analysis candidate sets
         if display:
-            predict = marginals_to_labels(test_marginals, b)
-            score(self.test_candidates, np.asarray(test_label_array), np.asarray(predict), self.gold_cs,
-                  train_marginals=train_marginals, test_marginals=test_marginals)
+
+            # Calculate scores unadjusted for TPs not in our candidate set
+            print_scores(len(tp), len(fp), len(tn), len(fn), title="Scores (Un-adjusted)")
+
+            # If a gold candidate set is provided, also calculate recall-adjusted scores
+            if self.gold_candidate_set is not None:
+                gold_fn    = [c for c in self.gold_candidate_set if c not in self.test_candidates]
+                print "\n"
+                print_scores(len(tp), len(fp), len(tn), len(fn)+len(gold_fn),title="Corpus Recall-adjusted Scores")
+
+            # If training and test marginals provided, also print calibration plots
+            if train_marginals is not None and test_marginals is not None:
+                print "\nCalibration plot:"
+                calibration_plots(train_marginals, test_marginals, np.asarray(test_label_array))
         return tp, fp, tn, fn
+
+
+def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
+    prec = ntp / float(ntp + nfp)
+    rec  = ntp / float(ntp + nfn)
+    f1   = (2 * prec * rec) / (prec + rec)
+    print "========================================"
+    print title
+    print "========================================"
+    print "Pos. class accuracy: %s" % (ntp / float(ntp + nfn),)
+    print "Neg. class accuracy: %s" % (ntn / float(ntn + nfp),)
+    print "Precision            {:.3}".format(prec)
+    print "Recall               {:.3}".format(rec)
+    print "F1                   {:.3}".format(f1)
+    print "----------------------------------------"
+    print "TP: {} | FP: {} | TN: {} | FN: {}".format(ntp, nfp, ntn, nfn)
+    print "========================================\n"
 
 
 #TODO: update doc string

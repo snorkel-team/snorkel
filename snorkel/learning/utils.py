@@ -98,102 +98,10 @@ def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
     print "========================================\n"
 
 
-#TODO: update doc string
-def score(test_candidates, test_labels, test_pred, gold_candidate_set, train_marginals=None, test_marginals=None):
-    '''
-    Compute score with true recall
-    
-    :param candidates       candidate set
-    :param candidates_gold  candidate set gold (true candidate)
-    :param gold             true set gold
-    :param pred             model predictions 
-    
-    '''
-    # false negatives from complete gold set (missing from candidate set)
-    gold_fn = [c for c in gold_candidate_set if c not in test_candidates]
-
-    # Print calibration plots
-    if train_marginals is not None and test_marginals is not None:
-        print "Calibration plot:"
-        calibration_plots(train_marginals, test_marginals, test_labels)
-    
-    # candidate match sets
-    _, _, _, m_tp, m_fp, m_tn, m_fn, m_n_t = test_scores(test_pred, test_labels, return_vals=True, verbose=True)
-
-    # model scores, augmented by missing FN set
-    prec = m_tp / float(m_tp + m_fp)
-    rec  = m_tp / float(m_tp + m_fn + len(gold_fn))
-    f1 = 2.0 * (prec * rec) / (prec + rec)
-    
-    # Corrected FN
-    fn = m_fn + len(gold_fn)
-
-    print "========================================"
-    print "Recall-corrected Noise-aware Model"
-    print "========================================"
-    print "Pos. class accuracy: %s" % (m_tp/float(m_tp+fn),)
-    print "Neg. class accuracy: %s" % (m_tn/float(m_tn+m_fp),)
-    print "Corpus Precision {:.3}".format(prec)
-    print "Corpus Recall    {:.3}".format(rec)
-    print "Corpus F1        {:.3}".format(f1)
-    print "----------------------------------------"
-    print "TP: {} | FP: {} | TN: {} | FN: {}".format(m_tp, m_fp, m_tn, fn)
-    print "========================================\n"
-
-
 def marginals_to_labels(marginals, b=0.5):
     return np.array([1 if p > b else -1 if p < b else 0 for p in marginals])
 
 
-def precision(pred, gold):
-    tp = np.sum((pred == 1) * (gold == 1))
-    fp = np.sum((pred == 1) * (gold != 1))
-    return 0 if tp == 0 else float(tp) / float(tp + fp)
-
-
-def recall(pred, gold):
-    tp = np.sum((pred == 1) * (gold == 1))
-    p  = np.sum(gold == 1)
-    return 0 if tp == 0 else float(tp) / float(p)
-
-
-def f1_score(pred, gold):
-    prec = precision(pred, gold)
-    rec  = recall(pred, gold)
-    return 0 if (prec * rec == 0) else 2 * (prec * rec)/(prec + rec)
-
-
-def test_scores(pred, gold, return_vals=True, verbose=False):
-    """Returns: (precision, recall, f1_score, tp, fp, tn, fn, n_test)"""
-    n_t = len(gold)
-    if np.sum(gold == 1) + np.sum(gold == -1) != n_t:
-        raise ValueError("Gold labels must be in {-1,1}.")
-    tp   = np.sum((pred == 1) * (gold == 1))
-    fp   = np.sum((pred == 1) * (gold == -1))
-    tn   = np.sum((pred < 1) * (gold == -1))
-    fn   = np.sum((pred < 1) * (gold == 1))
-    prec = tp / float(tp + fp)
-    rec  = tp / float(tp + fn)
-    f1   = 2 * (prec * rec) / (prec + rec)
-
-    # Print simple report if verbose=True
-    if verbose:
-        print "=" * 40
-        print "Test set size:\t%s" % n_t
-        print "-" * 40
-        print "Pos. class accuracy: %s" % (tp/float(tp+fn),)
-        print "Neg. class accuracy: %s" % (tn/float(tn+fp),)
-        print "-" * 40
-        print "Precision:\t%s" % prec
-        print "Recall:\t\t%s" % rec
-        print "F1 Score:\t%s" % f1
-        print "-" * 40
-        print "TP: %s | FP: %s | TN: %s | FN: %s" % (tp,fp,tn,fn)
-        print "=" * 40
-    if return_vals:
-        return prec, rec, f1, tp, fp, tn, fn, n_t
-
-    
 def scores_from_counts(tp, fp, tn, fn):
     prec = float(len(tp)) / (len(tp) + len(fp)) if len(tp) > 0 else 0
     rec = float(len(tp)) / (len(tp) + len(fn)) if len(tp) > 0 else 0

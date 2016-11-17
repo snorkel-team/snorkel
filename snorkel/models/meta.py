@@ -13,7 +13,7 @@ if 'SNORKELDBNAME' in os.environ and os.environ['SNORKELDBNAME'] != '':
 
 if 'SNORKELDB' in os.environ and os.environ['SNORKELDB'] != '':
     snorkel_postgres = os.environ['SNORKELDB'].startswith('postgres')
-    connection =  os.environ['SNORKELDB']
+    connection = os.environ['SNORKELDB']
     while connection[-1] == '/':
         connection = connection[:-1]
     connection += '/' + DBNAME
@@ -26,11 +26,12 @@ SnorkelSession = sessionmaker(bind=snorkel_engine)
 
 SnorkelBase = declarative_base(name='SnorkelBase', cls=object)
 
+
 def clear_database():
-    '''
+    """
     Drop all tables in database.
     Useful before starting a fresh run to avoid conflicts.
-    '''
+    """
     metadata = MetaData(bind=snorkel_engine, reflect=True)
     metadata.drop_all()
     metadata.create_all()

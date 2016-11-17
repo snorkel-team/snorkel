@@ -5,12 +5,22 @@ from sqlalchemy.orm import sessionmaker
 
 # We initialize the engine within the models module because models' schema can depend on
 # which data types are supported by the engine
+
+DBNAME = 'snorkel.db'
+
+if 'SNORKELDBNAME' in os.environ and os.environ['SNORKELDBNAME'] != '':
+    DBNAME = os.environ['SNORKELDBNAME']
+
 if 'SNORKELDB' in os.environ and os.environ['SNORKELDB'] != '':
     snorkel_postgres = os.environ['SNORKELDB'].startswith('postgres')
-    snorkel_engine = create_engine(os.environ['SNORKELDB'])
+    connection =  os.environ['SNORKELDB']
+    while connection[-1] == '/':
+        connection = connection[:-1]
+    connection += '/' + DBNAME
+    snorkel_engine = create_engine(connection)
 else:
     snorkel_postgres = False
-    snorkel_engine = create_engine('sqlite:///snorkel.db')
+    snorkel_engine = create_engine('sqlite:///' + DBNAME)
 
 SnorkelSession = sessionmaker(bind=snorkel_engine)
 

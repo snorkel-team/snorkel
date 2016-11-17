@@ -7,8 +7,14 @@ def delete_labels(session, annotation_key_set_name):
     Deletes the AnnotationKeySet with the provided name,
     all AnnotationKeys within it, and all Labels associated with these AnnotationKeys.
     """
+    # Get AnnotationKeySet
+    try:
+        key_set = session.query(AnnotationKeySet).filter(AnnotationKeySet.name == annotation_key_set_name).one()
+    except NoResultFound:
+        print "AnnotationKeySet %s not found." % annotation_key_set_name
+        return False
+
     print "Deleting Labels..."
-    key_set = session.query(AnnotationKeySet).filter(AnnotationKeySet.name == annotation_key_set_name).one()
     keys_q  = session.query(AnnotationKey).filter(AnnotationKey.sets.contains(key_set))
     keys_sq = keys_q.subquery()
     for label in session.query(Label).filter(keys_sq.c.id.contains(Label.key_id)):

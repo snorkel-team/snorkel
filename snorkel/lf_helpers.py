@@ -1,3 +1,5 @@
+import re
+
 from .models import Span
 from itertools import chain
 from utils import tokens_to_ngrams
@@ -134,3 +136,32 @@ def get_matches(lf, candidate_set, match_values=[1,-1]):
             matches.append(c)
     print "%s matches" % len(matches)
     return matches
+
+
+def rule_text_btw(candidate, text, sign):
+    return sign if text in get_text_between(candidate) else 0
+
+
+def rule_text_in_span(candidate, text, span, sign):
+    return sign if text in candidate[span].get_span().lower() else 0   
+
+
+def rule_regex_search_tagged_text(candidate, pattern, sign):
+    return sign if re.search(pattern, get_tagged_text(candidate), flags=re.I) else 0
+ 
+
+def rule_regex_search_btw_AB(candidate, pattern, sign):
+    return sign if re.search(r'{{A}}' + pattern + r'{{B}}', get_tagged_text(candidate), flags=re.I) else 0
+
+
+def rule_regex_search_btw_BA(candidate, pattern, sign):
+    return sign if re.search(r'{{B}}' + pattern + r'{{A}}', get_tagged_text(candidate), flags=re.I) else 0
+
+    
+def rule_regex_search_before_A(candidate, pattern, sign):
+    return sign if re.search(pattern + r'{{A}}.*{{B}}', get_tagged_text(candidate), flags=re.I) else 0
+
+    
+def rule_regex_search_before_B(candidate, pattern, sign):
+    return sign if re.search(pattern + r'{{B}}.*{{A}}', get_tagged_text(candidate), flags=re.I) else 0
+

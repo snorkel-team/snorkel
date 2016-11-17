@@ -17,7 +17,7 @@ from snorkel.utils import get_as_dict
 def get_span_splits(candidate, stopwords=None):
     split_pattern = r'[\s{}]+'.format(re.escape(punctuation))
     for i, arg in enumerate(candidate.get_contexts()):
-        for token in re.split(split_pattern, s.get_span().lower()):
+        for token in re.split(split_pattern, arg.get_span().lower()):
             if stopwords is None or token not in stopwords:
                 yield 'SPAN_SPLIT[{0}][{1}]'.format(i, token), 1
 
@@ -74,10 +74,13 @@ def get_entity_word_idxs(sentence, canonical_id):
 
 
 def get_first_document_span_feats(candidate, stopwords=None):
-    canonical_ids = candidate.get_cids()
+    #entity_cids = candidate.get_cids()
+    entity_cids = [
+        c.get_attrib_tokens('entity_cids')[0] for c in candidate.get_contexts()
+    ]
     for sentence in candidate.get_parent().document.get_sentence_generator():
         mention_idxs = [
-            get_entity_word_idxs(sentence, cid) for cid in canonical_ids
+            get_entity_word_idxs(sentence, cid) for cid in entity_cids
         ]
         if all(len(idxs) > 0 for idxs in mention_idxs):
             break
@@ -105,36 +108,34 @@ def get_first_document_span_feats_stopwords(stopwords):
     return partial(get_first_document_span_feats, stopwords=stopwords)
 
 
-def get_entity_type_max_counts(context, entity_types):
+def get_entity_type_counts(context, entity_types):
     type_counts = {et: defaultdict(int) for et in entity_types}
     for sentence in context.get_sentence_generator():
+        cur_et, cur_cid = None, None
         for et, cid in zip(sentence.entity_types, sentence.entity_cids):
-            if et in type_counts:
-                type_counts[et][cid] += 1
-    for et in type_counts:
-        if len(type_counts[et]) == 0:
-            type_counts[et][0] = 1
-    return {et: max(type_counts[et].values()) for et in entity_types}
-
-
-def get_entity_counts(context, canonical_ids):
-    counts = {cid: 0 for cid in canonical_ids}
-    for sentence in context.get_sentence_generator():
-        for cid in sentence.entity_cids:
-            if cid in counts:
-                counts[cid] += 1
-    return counts
+            if et != cur_et or cid != cur_cid:
+                if cur_et in type_counts:
+                    type_counts[cur_et][cur_cid] += 1
+            cur_et, cur_cid = et, cid
+        if cur_et in type_counts:
+            type_counts[cur_et][cur_cid] += 1
+    return type_counts
 
 
 def get_relative_frequency_feats(candidate, context):
     entity_types = [
-        c.get_attrib_tokens('entity_types')[0] for c in candidate.get_contexts
+        c.get_attrib_tokens('entity_types')[0] for c in candidate.get_contexts()
     ]
-    max_counts = get_entity_type_max_counts(context, entity_types)
-    canonical_ids = candidate.get_cids()
-    entity_counts = get_entity_counts(context, canonical_ids)
-    for i, (ct, et) in enumerate(zip(entity_counts, entity_types)):
-        yield "ENTITY_RELATIVE_FREQUENCY[{0}]".format(i), float(ct) / max_counts[et]
+    #entity_cids = candidate.get_cids()
+    entity_cids = [
+        c.get_attrib_tokens('entity_cids')[0] for c in candidate.get_contexts()
+    ]
+    type_counts = get_entity_type_counts(context, entity_types)
+    max_counts = {et: max(1, max(type_counts[et].values())) for et in entity_types}
+    entity_counts = {cid: type_counts[et][cid] for et, cid in zip(entity_types, entity_cids)}
+    for i, (cid, et) in enumerate(zip(entity_cids, entity_types)):
+        p = float(entity_counts[cid]) / max_counts[et]
+        yield "ENTITY_RELATIVE_FREQUENCY[{0}]".format(i), p
 
 
 def get_document_relative_frequency_feats(candidate):

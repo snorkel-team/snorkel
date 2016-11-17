@@ -82,7 +82,7 @@ class Candidate(SnorkelBase):
 
     def get_parent(self):
         # Assumes all arguments have the same parent
-        return self.get_arguments()[0].parent
+        return self.get_contexts()[0].parent
 
     def get_cids(self):
         """Get a tuple of the canonical IDs (CIDs) of the contexts making up this candidate"""

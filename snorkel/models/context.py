@@ -603,11 +603,17 @@ class TemporarySpan(TemporaryContext):
     def get_span(self, sep=" "):
         return self.get_attrib_span('words', sep)
 
-    def has_visual_features(self):
-        return self.parent.page is not None and self.get_attrib_tokens('page')[0] is not None
+    def is_lingual(self):
+        return self.parent.is_lingual()
+    
+    def is_structural(self):
+        return self.parent.is_structural()
 
-    def has_table_features(self):
-        return isinstance(self.parent, Phrase)
+    def is_visual(self):
+        return self.parent.is_visual()
+
+    def is_tabular(self):
+        return self.parent.is_tabular()
 
     def __contains__(self, other_span):
         return (self.parent == other_span.parent 

@@ -11,19 +11,18 @@ def get_visual_feats(candidate):
 
     # Unary candidates
     if len(args) == 1:
-        get_vizlib_feats = vizlib_unary_features
         span = args[0]
         # Add VisualLib entity features (if applicable)
-        if span.has_visual_features():
-            for f, v in get_vizlib_feats(span):
+        if span.is_visual():
+            for f, v in vizlib_unary_features(span):
                 yield FEAT_PRE + f, v
+    
     # Binary candidates
     elif len(args) == 2:
-        get_vizlib_feats = vizlib_binary_features
         span1, span2 = args
         # Add VisualLib entity features (if applicable)
-        if span1.has_visual_features() or span2.has_visual_features():
-            for f, v in get_vizlib_feats(span1, span2):
+        if span1.is_visual() or span2.is_visual():
+            for f, v in vizlib_binary_features(span1, span2):
                 yield FEAT_PRE + f, v
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")
@@ -33,6 +32,8 @@ def vizlib_unary_features(span):
     """
     Visual-related features for a single span
     """
+    if not span.is_visual(): return
+    
     for f in get_visual_aligned_lemmas(span):
         yield 'ALIGNED_' + f, DEF_VALUE
 

@@ -6,12 +6,13 @@ from collections import OrderedDict, defaultdict
 from pprint import pprint
 from timeit import default_timer as timer
 
-from PIL import Image, ImageDraw
 import numpy as np
 import pandas as pd
+from PIL import Image, ImageDraw
 from bs4 import BeautifulSoup
 from editdistance import eval as editdist
-
+from selenium import webdriver
+from httplib import BadStatusLine
 
 class VisualLinker():
     def __init__(self, pdf_path, session, time=False, verbose=False, very_verbose=False):
@@ -398,13 +399,28 @@ class VisualLinker():
         return img, img_path
 
     def create_pdf(self, document_name, text):
-        input_html = self.pdf_path + document_name + '.html'
-        open(input_html, 'w').write(text)  # TODO: change this to avoid creating a file
         pdf_file = self.pdf_path + document_name + '.pdf'
-        javascript_file = os.environ['SNORKELHOME'] + 'tutorials/tables/visual_features/rasterize.js '
-        command = 'phantomjs ' + javascript_file + '{} {} letter'.format(input_html,
-                                                                         pdf_file)  # TODO: add width parameter
-        os.system(command)
+        # TODO : add width
+        jscode = """
+            var text = arguments[0];
+            var pdf_file = arguments[1];
+            var webPage = require("webpage");
+            var page = webPage.create();
+            page.viewportSize = { width: 1920, height: 1080 };
+            var expectedContent = text;
+            page.setContent(expectedContent, "");
+            page.render(pdf_file);
+            phantom.exit();
+        """
+        driver = webdriver.PhantomJS('phantomjs')
+        driver.command_executor._commands['executePhantomScript'] = (
+        'POST', '/session/{}/phantom/execute'.format(driver.session_id))
+        try:
+            driver.execute('executePhantomScript', {'script': jscode, 'args': [text, pdf_file]})
+            driver.close()
+        except BadStatusLine: # TODO: fix this
+            pass
+
 
 
 def get_box(span):

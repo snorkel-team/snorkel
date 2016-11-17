@@ -20,6 +20,7 @@ def delete_labels(session, annotation_key_set_name):
             
     print "Deleting AnnotationKeySet..."
     session.delete(key_set)
+    session.commit()
 
 
 def get_text_splits(c):

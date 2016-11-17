@@ -74,10 +74,13 @@ def get_entity_word_idxs(sentence, canonical_id):
 
 
 def get_first_document_span_feats(candidate, stopwords=None):
-    canonical_ids = candidate.get_cids()
+    #entity_cids = candidate.get_cids()
+    entity_cids = [
+        c.get_attrib_tokens('entity_cids')[0] for c in candidate.get_contexts()
+    ]
     for sentence in candidate.get_parent().document.get_sentence_generator():
         mention_idxs = [
-            get_entity_word_idxs(sentence, cid) for cid in canonical_ids
+            get_entity_word_idxs(sentence, cid) for cid in entity_cids
         ]
         if all(len(idxs) > 0 for idxs in mention_idxs):
             break

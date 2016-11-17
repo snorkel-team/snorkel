@@ -5,7 +5,7 @@ from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_ac
 from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
 from .models.annotation import annotation_key_set_annotation_key_association as assoc_table
 from .utils import get_ORM_instance, ProgressBar
-from snorkel.features.features import get_all_feats
+from .features.features import get_all_feats
 from sqlalchemy.orm.session import object_session
 
 

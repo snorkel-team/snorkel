@@ -425,6 +425,7 @@ def get_head_ngrams(c, axis=None, infer=False, attrib='words', n_min=1, n_max=1,
             return
         else:
             for axis in axes:
+                if getattr(span.parent, _other_axis(axis) + '_start')==0: return
                 for phrase in getattr(_get_head_cell(span.parent.cell, axis, infer=infer), 'phrases', []):
                     for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
                         yield ngram

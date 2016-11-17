@@ -43,7 +43,8 @@ class CandidateExtractor(object):
     :param symmetric_relations: Boolean indicating whether to extract symmetric Candidates, i.e., rel(A,B) and rel(B,A),
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
-    def __init__(self, candidate_class, cspaces, matchers, throttler=None, self_relations=False, nested_relations=False, symmetric_relations=True):
+    def __init__(self, candidate_class, cspaces, matchers, throttler=None, self_relations=False, nested_relations=False, 
+                 symmetric_relations=True, allow_duplicates=False):
         self.candidate_class     = candidate_class
         self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
@@ -51,6 +52,7 @@ class CandidateExtractor(object):
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations
         self.symmetric_relations = symmetric_relations
+        self.allow_duplicates    = allow_duplicates
 
         # Check that arity is same
         if len(self.candidate_spaces) != len(self.matchers):

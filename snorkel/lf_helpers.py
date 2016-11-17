@@ -493,7 +493,7 @@ def overlap(a, b):
 ############################
 _Bbox = namedtuple('bbox', ['page', 'top','bottom','left','right'], verbose = False)
 def _bbox_from_span(span):
-    if isinstance(span, TemporarySpan) and span.has_visual_features():
+    if isinstance(span, TemporarySpan) and span.is_visual():
         return _Bbox(
                     span.get_attrib_tokens('page')[0],
                     min(span.get_attrib_tokens('top')), 

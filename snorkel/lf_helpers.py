@@ -1,6 +1,8 @@
 from .models import Span, AnnotationKeySet, AnnotationKey, Label
 from itertools import chain
 from utils import tokens_to_ngrams
+from sqlalchemy.orm.exc import NoResultFound
+
 
 def delete_labels(session, annotation_key_set_name):
     """

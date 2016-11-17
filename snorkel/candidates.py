@@ -1,6 +1,6 @@
 from . import SnorkelSession
 from .utils import ProgressBar
-from .models import Candidate, CandidateSet, TemporarySpan
+from .models import Candidate, CandidateSet, TemporarySpan, Sentence
 from .models.candidate import candidate_set_candidate_association
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
@@ -250,3 +250,107 @@ class Ngrams(CandidateSpace):
                         if ts2 not in seen:
                             seen.add(ts2)
                             yield ts2
+
+
+class PretaggedCandidateExtractor(object):
+    """
+    An extractor for Sentences with entities pre-tagged, and stored in the entity_types and entity_cids
+    fields.
+    """
+    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=True):
+        self.candidate_class     = candidate_class
+        self.entity_types        = entity_types
+        self.arity               = len(entity_types)
+        self.self_relations      = self_relations
+        self.nested_relations    = nested_relations
+        self.symmetric_relations = symmetric_relations
+
+    def extract(self, contexts, name, session):
+        """Extract Candidates locally from each Context in a provided list of Contexts"""
+        # Create a candidate set
+        c = CandidateSet(name=name)
+        session.add(c)
+        session.commit()
+
+        # Run extraction
+        pb = ProgressBar(len(contexts))
+        for i, context in enumerate(contexts):
+            pb.bar(i)
+            self._extract_from_context(context, c, session)
+        pb.close()
+        session.commit()
+        return session.query(CandidateSet).filter(CandidateSet.name == name).one()
+
+    def _extract_from_context(self, context, c, session):
+        """
+        Extract Candidates from a Context, and add to CandidateSet c
+        Do so 
+        """
+        # For now, just handle Sentences
+        if not isinstance(context, Sentence):
+            raise NotImplementedError("%s is currently only implemented for Sentence contexts." % self.__name__)
+
+        # Create a dictionary for storing unique entities by type and CID
+        entity_spans = dict((et, {}) for et in set(self.entity_types))
+
+        # Do a pass through the sentence; when a new CID is found, find the full span and add to entity spans
+        # TODO
+        L = len(context.words)
+        for i in range(L):
+            if context.entity_types[i] is not None:
+                es = zip(context.entity_types[i].split("|"), context.entity_cids[i].split("|"))
+                es = filter(lambda et, cid : et == entity_type, es)
+                for et, cid in es:
+
+
+
+        
+        # For each entity type, do a pass over the Context and collect
+        L = len(context.words)
+        for entity_type in set(self.entity_types):
+            char_start = None
+            char_end   = None
+            prev_cids  = 
+            for i in range(L):
+
+                # Handle tokens that have multiple entity types and/or CIDS
+                if context.entity_types[i].split("|") is not None:
+                    es = zip(context.entity_types[i].split("|"), context.entity_cids[i].split("|"))
+                    es = filter(lambda et, cid : et == entity_type, es)
+                else:
+                    es = []
+
+                if len(es) == 0 and char_end is not None:
+                    entity_spans[entity_type].append(\
+                        TemporarySpan(char_start=char_start, char_end=char_end, parent=context))
+                    char_start = None
+                    char_end   = None
+                    prev_cid   = -1
+                elif len(es) > 0:
+                    for et, cid in es:
+
+
+
+                for et, 
+                # TODO
+
+                # An entity span ends when there is a new / null CID at the next token
+                if context.entity_cids[i] != prev_cid and char_end is not None:
+                    entity_spans[entity_type].append(\
+                        TemporarySpan(char_start=char_start, char_end=char_end, parent=context))
+                    char_start = None
+                    char_end   = None
+                    prev_cid   = -1
+
+                # See if this is the correct entity type
+                if context.entity_types[i] == entity_type:
+                    char_end = context.char_offsets[i] + len(context.words[i]) - 1
+                    
+                    # An entity span starts when there is a new non-null CID at the current token
+                    if context.entity_cids[i] != prev_cid:
+                        char_start = context.char_offsets[i]
+                        prev_cid   = context.entity_cids[i]
+        
+        # Create candidates and add to candidate set
+        # TODO
+        return entity_spans

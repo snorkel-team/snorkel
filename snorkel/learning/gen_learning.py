@@ -1,5 +1,6 @@
 from .constants import *
 from .disc_learning import NoiseAwareModel
+from .utils import marginals_to_labels, MentionScorer, odds_to_prob
 from numbskull import NumbSkull
 from numbskull.inference import FACTORS
 from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar

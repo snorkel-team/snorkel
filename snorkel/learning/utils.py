@@ -48,7 +48,8 @@ class MentionScorer(Scorer):
             test_label       = self.test_labels[test_label_index, 0]
 
             # Set unlabeled examples to -1 by default
-            test_label = -1 if test_label == 0 and set_unlabeled_as_neg else 0
+            if test_label == 0 and set_unlabeled_as_neg:
+                test_label = -1
           
             # Bucket the candidates for error analysis
             test_label_array.append(test_label)

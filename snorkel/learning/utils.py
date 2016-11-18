@@ -90,8 +90,8 @@ def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
     print "========================================"
     print title
     print "========================================"
-    print "Pos. class accuracy: %s" % (ntp / float(ntp + nfn),)
-    print "Neg. class accuracy: %s" % (ntn / float(ntn + nfp),)
+    print "Pos. class accuracy: {:.3}".format(pos_acc)
+    print "Neg. class accuracy: {:.3}".format(neg_acc)
     print "Precision            {:.3}".format(prec)
     print "Recall               {:.3}".format(rec)
     print "F1                   {:.3}".format(f1)

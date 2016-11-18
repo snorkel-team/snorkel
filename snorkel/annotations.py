@@ -17,7 +17,6 @@ from .utils import get_ORM_instance, ProgressBar
 from .features import get_span_feats
 from sqlalchemy.orm.session import object_session
 
-
 class csr_AnnotationMatrix(sparse.csr_matrix):
     """
     An extension of the scipy.sparse.csr_matrix class for holding sparse annotation matrices
@@ -59,7 +58,8 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
 
 
 class csr_LabelMatrix(csr_AnnotationMatrix):
-    def lf_stats(self, labels=None):
+
+    def lf_stats(self, labels=None, est_accs=None):
         """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
         lf_names = [self.get_key(j).name for j in range(self.shape[1])]
 
@@ -78,6 +78,10 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
             d['fp']       = Series(data=matrix_fp(self, labels), index=lf_names)
             d['fn']       = Series(data=matrix_fn(self, labels), index=lf_names)
             d['tn']       = Series(data=matrix_tn(self, labels), index=lf_names)
+
+        if est_accs is not None:
+            col_names.extend(['Learned Acc.'])
+            d['Learned Acc.'] = Series(data=est_accs, index=lf_names)
         return DataFrame(data=d, index=lf_names)[col_names]
 
 

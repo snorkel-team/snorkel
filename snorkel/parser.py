@@ -261,9 +261,9 @@ class CoreNLPHandler:
             # Link the sentence to its parent document object
             parts['document'] = document
 
-            # Add null entity array
-            parts['entity_cids']  = [None for i in range(len(parts['words']))]
-            parts['entity_types'] = [None for i in range(len(parts['words']))]
+            # Add null entity array (matching null for CoreNLP)
+            parts['entity_cids']  = ['O' for _ in parts['words']]
+            parts['entity_types'] = ['O' for _ in parts['words']]
 
             # Assign the stable id as document's stable id plus absolute character offset
             abs_sent_offset_end = abs_sent_offset + parts['char_offsets'][-1] + len(parts['words'][-1])

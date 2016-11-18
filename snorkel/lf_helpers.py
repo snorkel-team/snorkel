@@ -1,6 +1,34 @@
-from .models import Span
+from .models import Span, AnnotationKeySet, AnnotationKey, Label
 from itertools import chain
 from utils import tokens_to_ngrams
+from sqlalchemy.orm.exc import NoResultFound
+
+
+def delete_labels(session, annotation_key_set_name):
+    """
+    Deletes the AnnotationKeySet with the provided name,
+    all AnnotationKeys within it, and all Labels associated with these AnnotationKeys.
+    """
+    # Get AnnotationKeySet
+    try:
+        key_set = session.query(AnnotationKeySet).filter(AnnotationKeySet.name == annotation_key_set_name).one()
+    except NoResultFound:
+        print "AnnotationKeySet %s not found." % annotation_key_set_name
+        return False
+
+    print "Deleting Labels..."
+    keys_q  = session.query(AnnotationKey).filter(AnnotationKey.sets.contains(key_set))
+    keys_sq = keys_q.subquery()
+    for label in session.query(Label).filter(keys_sq.c.id.contains(Label.key_id)):
+        session.delete(label)
+            
+    print "Deleting AnnotationKeys..."
+    for key in keys_q:
+        session.delete(key)
+            
+    print "Deleting AnnotationKeySet..."
+    session.delete(key_set)
+    session.commit()
 
 
 def get_text_splits(c):

@@ -1,6 +1,6 @@
 from . import SnorkelSession
 from .utils import ProgressBar
-from .models import Candidate, CandidateSet, TemporarySpan, Sentence
+from .models import Candidate, CandidateSet, TemporarySpan, Sentence, Span
 from .models.candidate import candidate_set_candidate_association
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
@@ -8,6 +8,7 @@ from sqlalchemy.sql import select
 from Queue import Empty
 from copy import deepcopy
 import re
+from collections import defaultdict
 
 QUEUE_COLLECT_TIMEOUT = 5
 
@@ -257,13 +258,14 @@ class PretaggedCandidateExtractor(object):
     An extractor for Sentences with entities pre-tagged, and stored in the entity_types and entity_cids
     fields.
     """
-    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=True):
+    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=True, entity_sep='~@~'):
         self.candidate_class     = candidate_class
         self.entity_types        = entity_types
         self.arity               = len(entity_types)
         self.self_relations      = self_relations
         self.nested_relations    = nested_relations
         self.symmetric_relations = symmetric_relations
+        self.entity_sep          = entity_sep
 
     def extract(self, contexts, name, session):
         """Extract Candidates locally from each Context in a provided list of Contexts"""
@@ -281,7 +283,7 @@ class PretaggedCandidateExtractor(object):
         session.commit()
         return session.query(CandidateSet).filter(CandidateSet.name == name).one()
 
-    def _extract_from_context(self, context, c, session):
+    def _extract_from_context(self, context, candidate_set, session):
         """
         Extract Candidates from a Context, and add to CandidateSet c
         Do so 
@@ -290,67 +292,78 @@ class PretaggedCandidateExtractor(object):
         if not isinstance(context, Sentence):
             raise NotImplementedError("%s is currently only implemented for Sentence contexts." % self.__name__)
 
-        # Create a dictionary for storing unique entities by type and CID
-        entity_spans = dict((et, {}) for et in set(self.entity_types))
-
-        # Do a pass through the sentence; when a new CID is found, find the full span and add to entity spans
-        # TODO
+        # Do a first pass to collect all mentions by entity type / cid
+        entity_idxs = dict((et, defaultdict(list)) for et in set(self.entity_types))
         L = len(context.words)
         for i in range(L):
             if context.entity_types[i] is not None:
-                es = zip(context.entity_types[i].split("|"), context.entity_cids[i].split("|"))
-                es = filter(lambda et, cid : et == entity_type, es)
-                for et, cid in es:
+                ets  = context.entity_types[i].split(self.entity_sep)
+                cids = context.entity_cids[i].split(self.entity_sep)
+                for et, cid in zip(ets, cids):
+                    if et in entity_idxs:
+                        entity_idxs[et][cid].append(i)
 
+        # Form entity Spans
+        entity_spans = defaultdict(list)
+        entity_cids  = {}
+        for et, cid_idxs in entity_idxs.iteritems():
+            for cid, idxs in entity_idxs[et].iteritems():
+                while len(idxs) > 0:
+                    i          = idxs.pop(0)
+                    char_start = context.char_offsets[i]
+                    char_end   = char_start + len(context.words[i]) - 1
+                    while len(idxs) > 0 and idxs[0] == i + 1:
+                        i        = idxs.pop(0)
+                        char_end = context.char_offsets[i] + len(context.words[i]) - 1
 
+                    # Insert / load temporary span, also store map to entity CID
+                    tc = TemporarySpan(char_start=char_start, char_end=char_end, parent=context)
+                    tc.load_id_or_insert(session)
+                    entity_cids[tc.id] = cid
+                    entity_spans[et].append(tc)
 
-        
-        # For each entity type, do a pass over the Context and collect
-        L = len(context.words)
-        for entity_type in set(self.entity_types):
-            char_start = None
-            char_end   = None
-            prev_cids  = 
-            for i in range(L):
+        # Generates and persists candidates
+        parent_insert_query = Candidate.__table__.insert()
+        parent_insert_args = {'type': self.candidate_class.__mapper_args__['polymorphic_identity']}
+        arg_names = self.candidate_class.__argnames__
+        child_insert_query = self.candidate_class.__table__.insert()
+        child_args = {}
+        set_insert_query = candidate_set_candidate_association.insert()
+        set_insert_args = {'candidate_set_id': candidate_set.id}
+        for args in product(*[enumerate(entity_spans[et]) for et in self.entity_types]):
 
-                # Handle tokens that have multiple entity types and/or CIDS
-                if context.entity_types[i].split("|") is not None:
-                    es = zip(context.entity_types[i].split("|"), context.entity_cids[i].split("|"))
-                    es = filter(lambda et, cid : et == entity_type, es)
-                else:
-                    es = []
+            # Check for self-joins and "nested" joins (joins from span to its subspan)
+            if self.arity == 2 and not self.self_relations and args[0][1] == args[1][1]:
+                continue
 
-                if len(es) == 0 and char_end is not None:
-                    entity_spans[entity_type].append(\
-                        TemporarySpan(char_start=char_start, char_end=char_end, parent=context))
-                    char_start = None
-                    char_end   = None
-                    prev_cid   = -1
-                elif len(es) > 0:
-                    for et, cid in es:
+            # TODO: Make this work for higher-order relations
+            if self.arity == 2 and not self.nested_relations and (args[0][1] in args[1][1] or args[1][1] in args[0][1]):
+                continue
 
+            # Checks for symmetric relations
+            if self.arity == 2 and not self.symmetric_relations and args[0][0] > args[1][0]:
+                continue
 
+            # Set Candidate Spans
+            for i, arg_name in enumerate(arg_names):
+                child_args[arg_name + '_id'] = args[i][1].id
 
-                for et, 
-                # TODO
+            # Set Candidate CIDS
+            for i, arg_name in enumerate(arg_names):
+                child_args[arg_name + '_cid'] = entity_cids[args[i][1].id]
 
-                # An entity span ends when there is a new / null CID at the next token
-                if context.entity_cids[i] != prev_cid and char_end is not None:
-                    entity_spans[entity_type].append(\
-                        TemporarySpan(char_start=char_start, char_end=char_end, parent=context))
-                    char_start = None
-                    char_end   = None
-                    prev_cid   = -1
+            # See if candidate exists
+            q = select([self.candidate_class.id])
+            for key, value in child_args.items():
+                q = q.where(getattr(self.candidate_class, key) == value)
+            candidate_id = session.execute(q).first()
 
-                # See if this is the correct entity type
-                if context.entity_types[i] == entity_type:
-                    char_end = context.char_offsets[i] + len(context.words[i]) - 1
-                    
-                    # An entity span starts when there is a new non-null CID at the current token
-                    if context.entity_cids[i] != prev_cid:
-                        char_start = context.char_offsets[i]
-                        prev_cid   = context.entity_cids[i]
-        
-        # Create candidates and add to candidate set
-        # TODO
-        return entity_spans
+            # If candidate does not exist, persists it
+            if candidate_id is None:
+                candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
+                child_args['id'] = candidate_id[0]
+                session.execute(child_insert_query, child_args)
+                del child_args['id']
+
+            set_insert_args['candidate_id'] = candidate_id[0]
+            session.execute(set_insert_query, set_insert_args)

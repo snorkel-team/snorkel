@@ -1,5 +1,6 @@
 from .constants import *
 from .disc_learning import NoiseAwareModel
+from .utils import marginals_to_labels, MentionScorer, odds_to_prob
 from numbskull import NumbSkull
 from numbskull.inference import FACTORS
 from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
@@ -242,6 +243,14 @@ class GenerativeModel(object):
             marginals[i] = 1 / (1 + np.exp(logp_false - logp_true))
 
         return marginals
+
+    def score(self, X_test, test_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True,
+              display=True, scorer=MentionScorer, **kwargs):
+        s = scorer([X_test.get_candidate(i) for i in xrange(X_test.shape[0])],
+                   test_labels, gold_candidate_set)
+        test_marginals = self.marginals(X_test, **kwargs)
+        return s.score(test_marginals, train_marginals=None, b=b,
+                       set_unlabeled_as_neg=set_unlabeled_as_neg, display=display)
 
     def _process_dependency_graph(self, L, deps):
         """

@@ -85,6 +85,8 @@ def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
     prec    = ntp / float(ntp + nfp) if ntp + nfp > 0 else 0.0
     rec     = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
     f1      = (2 * prec * rec) / (prec + rec) if prec + rec > 0 else 0.0
+    pos_acc = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
+    neg_acc = ntn / float(ntn + nfp) if ntn + nfp > 0 else 0.0
     print "========================================"
     print title
     print "========================================"

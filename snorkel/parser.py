@@ -104,7 +104,7 @@ class TextDocParser(DocParser):
     """Simple parsing of raw text files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with codecs.open(fp, encoding=self.encoding) as f:
-            name      = re.sub(r'\..*$', '', os.path.basename(fp))
+            name = os.path.basename(fp).rsplit('.', 1)[0]
             stable_id = self.get_stable_id(name)
             yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), f.read()
 
@@ -116,7 +116,7 @@ class HTMLDocParser(DocParser):
             html = BeautifulSoup(f, 'lxml')
             txt = filter(self._cleaner, html.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
-            name = re.sub(r'\..*$', '', os.path.basename(fp))
+            name = os.path.basename(fp).rsplit('.', 1)[0]
             stable_id = self.get_stable_id(name)
             yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), txt
 

@@ -1,111 +1,123 @@
 import math
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sparse
-
-import matplotlib
-matplotlib.use('Agg')
 import warnings
+
+from pandas import DataFrame
+
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore", module="matplotlib")
 
 
-def score(test_candidates, test_labels, test_pred, gold_candidate_set, train_marginals=None, test_marginals=None):
-    '''
-    Compute score with true recall
-    
-    :param candidates       candidate set
-    :param candidates_gold  candidate set gold (true candidate)
-    :param gold             true set gold
-    :param pred             model predictions 
-    
-    '''
-    # false negatives from complete gold set (missing from candidate set)
-    gold_fn = [c for c in gold_candidate_set if c not in test_candidates]
+class Scorer(object):
+    """Abstract type for scorers"""
+    def __init__(self, test_candidates, test_labels, gold_candidate_set=None):
+        """
+        test_candidates:    A *list of Candidates* corresponding to test_labels
+        test_labels:        A *csrLabelMatrix* of ground truth labels for the test candidates
+        gold_candidate_set: [Optional] A *CandidateSet* containing the full set of gold labeled candidates
+        """
+        self.test_candidates    = test_candidates
+        self.test_labels        = test_labels
+        self.gold_candidate_set = gold_candidate_set
 
-    # Print calibration plots
-    if train_marginals is not None and test_marginals is not None:
-        print "Calibration plot:"
-        calibration_plots(train_marginals, test_marginals, test_labels)
-    
-    # candidate match sets
-    _, _, _, m_tp, m_fp, m_tn, m_fn, m_n_t = test_scores(test_pred, test_labels, return_vals=True, verbose=True)
+    def score(self, test_marginals, train_marginals=None, b=0.5, set_unlabeled_as_neg=True, display=True):
+        raise NotImplementedError()
 
-    # model scores, augmented by missing FN set
-    prec = m_tp / float(m_tp + m_fp)
-    rec  = m_tp / float(m_tp + m_fn + len(gold_fn))
-    f1 = 2.0 * (prec * rec) / (prec + rec)
-    
-    # Corrected FN
-    fn = m_fn + len(gold_fn)
 
+class MentionScorer(Scorer):
+    """Scorer for mention level assessment"""
+    def score(self, test_marginals, train_marginals=None, b=0.5, set_unlabeled_as_neg=True, display=True):
+        """
+        test_marginals: array of marginals for test candidates
+        train_marginals (optional): array of marginals for training candidates
+        b: threshold for labeling
+        set_unlabeled_as_neg: set marginals at b to negative?
+        display: show calibration plots?
+        """
+        test_label_array = []
+        tp = set()
+        fp = set()
+        tn = set()
+        fn = set()
+
+        for i, candidate in enumerate(self.test_candidates):
+            test_label_index = self.test_labels.get_row_index(candidate)
+            test_label       = self.test_labels[test_label_index, 0]
+
+            # Set unlabeled examples to -1 by default
+            if test_label == 0 and set_unlabeled_as_neg:
+                test_label = -1
+          
+            # Bucket the candidates for error analysis
+            test_label_array.append(test_label)
+            if test_label != 0:
+                if test_marginals[i] > b:
+                    if test_label == 1:
+                        tp.add(candidate)
+                    else:
+                        fp.add(candidate)
+                else:
+                    if test_label == -1:
+                        tn.add(candidate)
+                    else:
+                        fn.add(candidate)
+        if display:
+
+            # Calculate scores unadjusted for TPs not in our candidate set
+            print_scores(len(tp), len(fp), len(tn), len(fn), title="Scores (Un-adjusted)")
+
+            # If a gold candidate set is provided, also calculate recall-adjusted scores
+            if self.gold_candidate_set is not None:
+                gold_fn    = [c for c in self.gold_candidate_set if c not in self.test_candidates]
+                print "\n"
+                print_scores(len(tp), len(fp), len(tn), len(fn)+len(gold_fn),title="Corpus Recall-adjusted Scores")
+
+            # If training and test marginals provided, also print calibration plots
+            if train_marginals is not None and test_marginals is not None:
+                print "\nCalibration plot:"
+                calibration_plots(train_marginals, test_marginals, np.asarray(test_label_array))
+        return tp, fp, tn, fn
+
+
+def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
+    prec    = ntp / float(ntp + nfp) if ntp + nfp > 0 else 0.0
+    rec     = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
+    f1      = (2 * prec * rec) / (prec + rec) if prec + rec > 0 else 0.0
+    pos_acc = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
+    neg_acc = ntn / float(ntn + nfp) if ntn + nfp > 0 else 0.0
     print "========================================"
-    print "Recall-corrected Noise-aware Model"
+    print title
     print "========================================"
-    print "Pos. class accuracy: %s" % (m_tp/float(m_tp+fn),)
-    print "Neg. class accuracy: %s" % (m_tn/float(m_tn+m_fp),)
-    print "Corpus Precision {:.3}".format(prec)
-    print "Corpus Recall    {:.3}".format(rec)
-    print "Corpus F1        {:.3}".format(f1)
+    print "Pos. class accuracy: {:.3}".format(pos_acc)
+    print "Neg. class accuracy: {:.3}".format(neg_acc)
+    print "Precision            {:.3}".format(prec)
+    print "Recall               {:.3}".format(rec)
+    print "F1                   {:.3}".format(f1)
     print "----------------------------------------"
-    print "TP: {} | FP: {} | TN: {} | FN: {}".format(m_tp, m_fp, m_tn, fn)
+    print "TP: {} | FP: {} | TN: {} | FN: {}".format(ntp, nfp, ntn, nfn)
     print "========================================\n"
 
-def precision(pred, gold):
-    tp = np.sum((pred == 1) * (gold == 1))
-    fp = np.sum((pred == 1) * (gold != 1))
-    return 0 if tp == 0 else float(tp) / float(tp + fp)
 
-def recall(pred, gold):
-    tp = np.sum((pred == 1) * (gold == 1))
-    p  = np.sum(gold == 1)
-    return 0 if tp == 0 else float(tp) / float(p)
+def marginals_to_labels(marginals, b=0.5):
+    return np.array([1 if p > b else -1 if p < b else 0 for p in marginals])
 
-def f1_score(pred, gold):
-    prec = precision(pred, gold)
-    rec  = recall(pred, gold)
-    return 0 if (prec * rec == 0) else 2 * (prec * rec)/(prec + rec)
 
-def test_scores(pred, gold, return_vals=True, verbose=False):
-    """Returns: (precision, recall, f1_score, tp, fp, tn, fn, n_test)"""
-    n_t = len(gold)
-    if np.sum(gold == 1) + np.sum(gold == -1) != n_t:
-        raise ValueError("Gold labels must be in {-1,1}.")
-    tp   = np.sum((pred == 1) * (gold == 1))
-    fp   = np.sum((pred == 1) * (gold == -1))
-    tn   = np.sum((pred < 1) * (gold == -1))
-    fn   = np.sum((pred < 1) * (gold == 1))
-    prec = tp / float(tp + fp)
-    rec  = tp / float(tp + fn)
-    f1   = 2 * (prec * rec) / (prec + rec)
-
-    # Print simple report if verbose=True
-    if verbose:
-        print "=" * 40
-        print "Test set size:\t%s" % n_t
-        print "-" * 40
-        print "Pos. class accuracy: %s" % (tp/float(tp+fn),)
-        print "Neg. class accuracy: %s" % (tn/float(tn+fp),)
-        print "-" * 40
-        print "Precision:\t%s" % prec
-        print "Recall:\t\t%s" % rec
-        print "F1 Score:\t%s" % f1
-        print "-" * 40
-        print "TP: %s | FP: %s | TN: %s | FN: %s" % (tp,fp,tn,fn)
-        print "=" * 40
-    if return_vals:
-        return prec, rec, f1, tp, fp, tn, fn, n_t
-    
 def scores_from_counts(tp, fp, tn, fn):
     prec = float(len(tp)) / (len(tp) + len(fp)) if len(tp) > 0 else 0
     rec = float(len(tp)) / (len(tp) + len(fn)) if len(tp) > 0 else 0
     f1 = 2.0 * (prec * rec) / (prec + rec) if (prec + rec) > 0 else 0
     return prec, rec, f1    
 
+
 def plot_prediction_probability(probs):
     plt.hist(probs, bins=20, normed=False, facecolor='blue')
     plt.xlim((0,1.025))
     plt.xlabel("Probability")
     plt.ylabel("# Predictions")
+
 
 def plot_accuracy(probs, ground_truth):
     x = 0.1 * np.array(range(11))
@@ -119,6 +131,7 @@ def plot_accuracy(probs, ground_truth):
     plt.ylim((0,1))
     plt.xlabel("Probability")
     plt.ylabel("Accuracy")
+
 
 def calibration_plots(train_marginals, test_marginals, gold_labels=None):
     """Show classification accuracy and probability histogram plots"""
@@ -199,6 +212,7 @@ class Parameter(object):
         # Multidim parameters can't use choice directly
         v = self.get_all_values()
         return [v[int(i)] for i in np.random.choice(len(v), n)]
+
     
 class ListParameter(Parameter):
     """List of parameter values for searching"""
@@ -208,6 +222,7 @@ class ListParameter(Parameter):
     
     def get_all_values(self):
         return self.parameter_list
+
     
 class RangeParameter(Parameter):
     """
@@ -239,10 +254,11 @@ class GridSearch(object):
     Selects based on maximizing F1 score on a supplied validation set
     Specify search space with Parameter arguments
     """
-    def __init__(self, model, X, training_marginals, *parameters):
+    def __init__(self, model, X, training_marginals, scorer, *parameters):
         self.model              = model
         self.X                  = X
         self.training_marginals = training_marginals
+        self.scorer             = scorer
         self.params             = parameters
         self.param_names        = [param.name for param in parameters]
         
@@ -273,7 +289,8 @@ class GridSearch(object):
             self.model.train(self.X, self.training_marginals, **model_hyperparams)
 
             # Test the model
-            tp, fp, tn, fn = self.model.score(X_validation, validation_labels, gold_candidate_set, b, set_unlabeled_as_neg, display=False, **validation_kwargs)
+            tp, fp, tn, fn = self.model.score(X_validation, validation_labels, gold_candidate_set,
+                b, set_unlabeled_as_neg, False, self.scorer, **validation_kwargs)
             p, r, f1 = scores_from_counts(tp, fp, tn, fn)
             run_stats.append(list(param_vals) + [p, r, f1])
             if f1 > f1_opt:
@@ -302,6 +319,7 @@ class RandomSearch(GridSearch):
     def search_space(self):
         return zip(*[param.draw_values(self.n) for param in self.params])
 
+
 def sparse_abs(X):
     """Element-wise absolute value of sparse matrix- avoids casting to dense matrix!"""
     X_abs = X.copy()
@@ -323,6 +341,7 @@ def candidate_coverage(L):
     """
     return np.where(sparse_abs(L).sum(axis=1) != 0, 1, 0).sum() / float(L.shape[0])
 
+
 def LF_coverage(L):
     """
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
@@ -330,12 +349,14 @@ def LF_coverage(L):
     """
     return np.ravel(sparse_abs(L).sum(axis=0) / float(L.shape[0]))
 
+
 def candidate_overlap(L):
     """
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates which have > 1 (non-zero) labels.**
     """
     return np.where(sparse_abs(L).sum(axis=1) > 1, 1, 0).sum() / float(L.shape[0])
+
 
 def LF_overlaps(L):
     """
@@ -345,12 +366,14 @@ def LF_overlaps(L):
     L_abs = sparse_abs(L)
     return np.ravel(np.where(L_abs.sum(axis=1) > 1, 1, 0).T * L_abs / float(L.shape[0]))
 
+
 def candidate_conflict(L):
     """
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates which have > 1 (non-zero) labels _which are not equal_.**
     """
     return np.where(sparse_abs(L).sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).sum() / float(L.shape[0])
+
 
 def LF_conflicts(L):
     """
@@ -360,12 +383,14 @@ def LF_conflicts(L):
     L_abs = sparse_abs(L)
     return np.ravel(np.where(L_abs.sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).T * L_abs / float(L.shape[0]))
 
+
 def LF_accuracies(L, labels):
     """
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate, and labels {-1,1}
     Return the accuracy of each LF w.r.t. these labels
     """
     return np.ravel(0.5*(L.T.dot(labels) / sparse_abs(L).sum(axis=0) + 1))
+
 
 def training_set_summary_stats(L, return_vals=True, verbose=False):
     """
@@ -385,9 +410,11 @@ def training_set_summary_stats(L, return_vals=True, verbose=False):
     if return_vals:
         return coverage, overlap, conflict
 
+
 def log_odds(p):
   """This is the logit function"""
   return np.log(p / (1.0 - p))
+
 
 def odds_to_prob(l):
   """
@@ -401,6 +428,7 @@ def odds_to_prob(l):
   l[l > 25] = 25
   l[l < -25] = -25
   return np.exp(l) / (1.0 + np.exp(l))
+
 
 def sample_data(X, w, n_samples):
   """
@@ -427,6 +455,7 @@ def sample_data(X, w, n_samples):
   f[idxs] = increment_f * ct[idxs]
 
   return t, f
+
 
 def exact_data(X, w, evidence=None):
   """

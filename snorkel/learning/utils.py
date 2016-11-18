@@ -19,9 +19,9 @@ class Scorer(object):
         test_labels:        A *csrLabelMatrix* of ground truth labels for the test candidates
         gold_candidate_set: [Optional] A *CandidateSet* containing the full set of gold labeled candidates
         """
-        self.test_candidates = test_candidates
-        self.test_labels     = test_labels
-        self.gold_cs         = gold_candidate_set
+        self.test_candidates    = test_candidates
+        self.test_labels        = test_labels
+        self.gold_candidate_set = gold_candidate_set
 
     def score(self, test_marginals, train_marginals=None, b=0.5, set_unlabeled_as_neg=True, display=True):
         raise NotImplementedError()

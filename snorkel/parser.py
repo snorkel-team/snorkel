@@ -273,10 +273,12 @@ class CoreNLPHandler:
 
 
 class SentenceParser(object):
-    def __init__(self, tok_whitespace=False):
+    def __init__(self, tok_whitespace=False, fn=None):
         self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace)
+        self.fn              = fn
 
     def parse(self, doc, text):
         """Parse a raw document as a string into a list of sentences"""
         for parts in self.corenlp_handler.parse(doc, text):
+            parts = self.fn(parts) if self.fn is not None else parts
             yield Sentence(**parts)

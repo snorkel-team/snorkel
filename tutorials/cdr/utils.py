@@ -8,11 +8,8 @@ from snorkel.lf_helpers import get_tagged_text, get_text_between
 from snorkel.parser import SentenceParser, Sentence
 
 
-def mesh_pairs_from_candidate(candidate):
-    pubmed_id = candidate[0].parent.document.stable_id.split(':')[0]
-    chem_mesh = candidate[0].parent.entity_cids[candidate[0].get_word_start()]
-    dis_mesh = candidate[1].parent.entity_cids[candidate[1].get_word_start()]
-    return pubmed_id, [(chem_mesh, dis_mesh)]
+def pubmed_id_from_candidate(candidate):
+    return candidate[0].parent.document.stable_id.split(':')[0]
 
 
 def offsets_to_token(left, right, offset_array, lemmas, punc=set(string.punctuation)):
@@ -28,68 +25,53 @@ def offsets_to_token(left, right, offset_array, lemmas, punc=set(string.punctuat
     return range(token_start, token_end)
 
 
-class TaggerOneSentenceParser(SentenceParser):
+class CDRTagger(object):
+    
+    tag_dict = cPickle.load(open('data/unary_tags.pkl', 'rb'))
+
+    def tag(self, parts):
+        pubmed_id, _, _, sent_start, sent_end = parts['stable_id'].split(':')
+        sent_start, sent_end = int(sent_start), int(sent_end)
+        tags = self.tag_dict.get(pubmed_id, {})
+        for tag in tags:
+            if not (sent_start <= tag[1] <= sent_end):
+                continue
+            offsets = [offset + sent_start for offset in parts['char_offsets']]
+            toks = offsets_to_token(tag[1], tag[2], offsets, parts['lemmas'])
+            for tok in toks:
+                ts = tag[0].split('|')
+                parts['entity_types'][tok] = ts[0]
+                parts['entity_cids'][tok] = ts[1]
+        return parts
+
+
+class TaggerOneTagger(CDRTagger):
     
     tag_dict = cPickle.load(open('data/taggerone_unary_tags_cdr.pkl', 'rb'))
     chem_mesh_dict, dis_mesh_dict = cPickle.load(open('data/chem_dis_mesh_dicts.pkl', 'rb'))
-    
-    def parse(self, doc, text):
-        """Parse a raw document as a string into a list of sentences, subbing in TaggerOne tags"""
-        for parts in self.corenlp_handler.parse(doc, text):
-            pubmed_id, _, _, sent_start, sent_end = parts['stable_id'].split(':')
-            sent_start, sent_end = int(sent_start), int(sent_end)
-            tags = self.tag_dict.get(pubmed_id, {})
-            for tag in tags:
-                if not (sent_start <= tag[1] <= sent_end):
-                    continue
-                offsets = [offset + sent_start for offset in parts['char_offsets']]
-                toks = offsets_to_token(tag[1], tag[2], offsets, parts['lemmas'])
-                for tok in toks:
-                    ts = tag[0].split('|')
-                    parts['entity_types'][tok] = ts[0]
-                    parts['entity_cids'][tok] = ts[1]
-                    
-            for i, word in enumerate(parts['words']):
-                tag = parts['entity_types'][i]
-                if len(word) > 4 and tag is None:
-                    wl = word.lower()
-                    if wl in self.dis_mesh_dict:
-                        parts['entity_types'][i] = 'Disease'
-                        parts['entity_cids'][i] = self.dis_mesh_dict[wl]
-                    elif wl in self.chem_mesh_dict:
-                        parts['entity_types'][i] = 'Chemical'
-                        parts['entity_cids'][i] = self.chem_mesh_dict[wl]
-                        
-            yield Sentence(**parts)
 
-
-class CDRSentenceParser(SentenceParser):
-    
-    tag_dict = cPickle.load(open('data/unary_tags.pkl', 'rb'))
-    
-    def parse(self, doc, text):
-        for parts in self.corenlp_handler.parse(doc, text):
-            pubmed_id, _, _, sent_start, sent_end = parts['stable_id'].split(':')
-            sent_start, sent_end = int(sent_start), int(sent_end)
-            tags = self.tag_dict.get(pubmed_id, {})
-            for tag in tags:
-                if not (sent_start <= tag[1] <= sent_end):
-                    continue
-                offsets = [offset + sent_start for offset in parts['char_offsets']]
-                toks = offsets_to_token(tag[1], tag[2], offsets, parts['lemmas'])
-                for tok in toks:
-                    ts = tag[0].split('|')
-                    parts['entity_types'][tok] = ts[0]
-                    parts['entity_cids'][tok] = ts[1]
-            yield Sentence(**parts)
+    def tag(self, parts):
+        parts = super(TaggerOneTagger, self).tag(parts)
+        for i, word in enumerate(parts['words']):
+            tag = parts['entity_types'][i]
+            if len(word) > 4 and tag is None:
+                wl = word.lower()
+                if wl in self.dis_mesh_dict:
+                    parts['entity_types'][i] = 'Disease'
+                    parts['entity_cids'][i] = self.dis_mesh_dict[wl]
+                elif wl in self.chem_mesh_dict:
+                    parts['entity_types'][i] = 'Chemical'
+                    parts['entity_cids'][i] = self.chem_mesh_dict[wl]
+        return parts
 
 ###########################################################################################################
-from snorkel.learning import FMCT
-from snorkel.learning.utils import score, test_scores
-from collections import defaultdict
-from pandas import DataFrame
 import numpy as np
+
+from collections import defaultdict
 from itertools import product
+from pandas import DataFrame
+from snorkel.learning import FMCT
+from snorkel.learning.utils import print_scores, RandomSearch, Scorer
 
 def get_doc_from_id(doc_id, corpus):
     for d in corpus:
@@ -97,6 +79,7 @@ def get_doc_from_id(doc_id, corpus):
             return d
     print "Couldn't find candidate with doc id {0}".format(doc_id)
     return None
+
 
 def get_important_chems(doc_id, corpus):
     doc = get_doc_from_id(doc_id, corpus)
@@ -125,7 +108,8 @@ def get_important_chems(doc_id, corpus):
             m_chem = max(chem_counts.values())
             key_chems = set([chem for chem, count in chem_counts.iteritems() if count == m_chem])
     return list(key_chems)
-    
+
+
 def get_all_diseases(doc_id, corpus):
     doc = get_doc_from_id(doc_id, corpus)
     if doc is None:
@@ -133,7 +117,6 @@ def get_all_diseases(doc_id, corpus):
     return list(set([            
         tag.split('|')[1] for sent in doc.sentences for tag in sent.ner_tags if tag.startswith('Disease')
     ]))
-
 
 
 class CandidateHolder(object):
@@ -146,123 +129,99 @@ chem_filter_ratio = cPickle.load(open('data/train_dev_chem_filter.pkl', 'rb'))
 dis_filter_ratio = cPickle.load(open('data/train_dev_dis_filter.pkl', 'rb'))
 
 
-def cdr_doc_score(test_marginals, doc_relation_dict, gold_candidate_set, corpus, b=None, filt_p=5):
-    print "Scoring\t"
-    max_f1 = 0
-    p_path, r_path, f_path = [], [], []
-    bs = [0.4, 0.5, 0.6] if b is None else [b]
-    for b in bs:
+class CDRScorer(Scorer):
+    def score(self, test_marginals, train_marginals=None, b=0.5, set_unlabeled_as_neg=True, display=True):
+        max_f1 = 0
+        bs = [0.4, 0.5, 0.6] if b is None else [b]
+        for b in bs:
 
-        # Group test candidates by doc
-        ent_dict = defaultdict(dict)
-        for i, candidate in enumerate(gold_candidate_set):
-            pubmed_id, pairs = mesh_pairs_from_candidate(candidate)
-            # Record the maximum probability for the candidate found in the document
-            for c, d in pairs:
-                pair = (c, d)
-                if '|' in c or '|' in d or c == '-1' or d == '-1':
-                    continue
+            # Group test candidates by doc
+            ent_dict = defaultdict(dict)
+            for i, candidate in enumerate(gold_candidate_set):
+                pubmed_id, pair = pubmed_id_from_candidate(candidate), candidate.get_cids()
+                # Record the maximum probability for the candidate found in the document
                 holder = ent_dict[pubmed_id].get(pair, CandidateHolder())
                 holder.p = max(holder.p, test_marginals[i])
                 holder.candidates.add(candidate)
                 ent_dict[pubmed_id][pair] = holder
 
-        ##################################################################
-        # Recall increasing heuristic
-        rih_docs = []
-        for doc_id in doc_relation_dict:
-            if doc_id not in ent_dict:
-                rih_docs.append(doc_id)
-            else:
-                for holder in ent_dict[doc_id].values():
-                    if holder.p > b:
-                        break
-                else:
+            ##################################################################
+            # Recall increasing heuristic
+            rih_docs = []
+            for doc_id in doc_relation_dict:
+                if doc_id not in ent_dict:
                     rih_docs.append(doc_id)
-
-        n_up = 0
-        for doc_id in rih_docs:
-            chem_ids = get_important_chems(doc_id, corpus)
-            dis_ids = get_all_diseases(doc_id, corpus)
-            for c, d in product(chem_ids, dis_ids):
-                n_up += 1
-                pair = (c, d)
-                holder = ent_dict[doc_id].get(pair, CandidateHolder())
-                holder.p = 1.0
-                ent_dict[doc_id][pair] = holder 
-        ##################################################################
-
-        ##################################################################
-        # Filter
-        chem_filter = set(k for k,v in chem_filter_ratio.items() if v >= filt_p)
-        dis_filter = set(k for k,v in dis_filter_ratio.items() if v >= filt_p)
-        n_filt = 0
-        for doc_id in ent_dict:
-            for pair in ent_dict[doc_id]:
-                if pair[0] in chem_filter or pair[1] in dis_filter:
-                    ent_dict[doc_id][pair].p = 0
-                    n_filt += 1
-        ##################################################################
-
-
-        predict = []
-        test_labels = []
-        tp = set()
-        fp = set()
-        tn = set()
-        fn = set()
-        for pubmed_id, relation_entities in ent_dict.iteritems():
-            # Iterate over all relation entities in the doc
-            for rel, holder in relation_entities.iteritems():
-                marginal = holder.p
-                predict.append(1 if marginal > b else (-1 if marginal < b else 0))
-                if rel in doc_relation_dict[pubmed_id]:
-                    test_labels.append(1)
-                    if marginal > b:
-                        tp = tp.union(holder.candidates)
-                    else:
-                        fn = fn.union(holder.candidates)
                 else:
-                    test_labels.append(-1)
-                    if marginal > b:
-                        fp = fp.union(holder.candidates)
+                    for holder in ent_dict[doc_id].values():
+                        if holder.p > b:
+                            break
                     else:
-                        tn = tn.union(holder.candidates)
+                        rih_docs.append(doc_id)
 
-        gold_set = set((doc_key, rel) for doc_key, rels in doc_relation_dict.iteritems() for rel in rels)
-        cand_set = set((doc_key, rel_key) for doc_key, rels in ent_dict.iteritems() for rel_key in rels.keys())
-        extra_fn = len(gold_set.difference(cand_set))
+            for doc_id in rih_docs:
+                chem_ids = get_important_chems(doc_id, corpus)
+                dis_ids = get_all_diseases(doc_id, corpus)
+                for c, d in product(chem_ids, dis_ids):
+                    pair = (c, d)
+                    holder = ent_dict[doc_id].get(pair, CandidateHolder())
+                    holder.p = 1.0
+                    ent_dict[doc_id][pair] = holder 
+            ##################################################################
 
+            ##################################################################
+            # Filter
+            chem_filter = set(k for k,v in chem_filter_ratio.items() if v >= filt_p)
+            dis_filter = set(k for k,v in dis_filter_ratio.items() if v >= filt_p)
+            n_filt = 0
+            for doc_id in ent_dict:
+                for pair in ent_dict[doc_id]:
+                    if pair[0] in chem_filter or pair[1] in dis_filter:
+                        ent_dict[doc_id][pair].p = 0
+                        n_filt += 1
+            ##################################################################
 
+            predict = []
+            test_labels = []
+            tp = set()
+            fp = set()
+            tn = set()
+            fn = set()
+            for pubmed_id, relation_entities in ent_dict.iteritems():
+                # Iterate over all relation entities in the doc
+                for rel, holder in relation_entities.iteritems():
+                    marginal = holder.p
+                    predict.append(1 if marginal > b else (-1 if marginal < b else 0))
+                    if rel in doc_relation_dict[pubmed_id]:
+                        test_labels.append(1)
+                        if marginal > b:
+                            tp = tp.union(holder.candidates)
+                        else:
+                            fn = fn.union(holder.candidates)
+                    else:
+                        test_labels.append(-1)
+                        if marginal > b:
+                            fp = fp.union(holder.candidates)
+                        else:
+                            tn = tn.union(holder.candidates)
 
-        # Print diagnostics chart and return error analysis candidate sets
-        predict, test_labels = np.ravel(predict), np.ravel(test_labels)
-        _, _, _, m_tp, m_fp, m_tn, m_fn, m_n_t = test_scores(predict, test_labels, verbose=False)
-        mm_fn = m_fn + extra_fn
-        prec = m_tp / float(m_tp + m_fp)
-        rec  = m_tp / float(m_tp + mm_fn)
-        f1 = 2.0 * (prec * rec) / (prec + rec)
-        pos_acc = m_tp/float(m_tp+mm_fn)
-        neg_acc = m_tn/float(m_tn+m_fp)
+            gold_set = set((doc_key, rel) for doc_key, rels in doc_relation_dict.iteritems() for rel in rels)
+            cand_set = set((doc_key, rel_key) for doc_key, rels in ent_dict.iteritems() for rel_key in rels.keys())
+            extra_fn = len(gold_set.difference(cand_set))
+            prec = m_tp / float(m_tp + m_fp)
+            rec  = m_tp / float(m_tp + mm_fn)
+            f1 = 2.0 * (prec * rec) / (prec + rec)
+            if f1 > max_f1:
+                max_tp, max_fp, max_tn, max_fn, max_extra_fn = tp, fp, tn, fn, extra_fn
+                max_f1 = f1
 
-        if f1 >= max_f1:
-            max_tp, max_fp, max_tn, max_fn, max_prec, max_rec, max_f1 = tp, fp, tn, fn, prec, rec, f1
-            max_pos_acc, max_neg_acc, max_m_tp, max_m_fp, max_m_tn, max_mm_fn = pos_acc, neg_acc, m_tp, m_fp, m_tn, mm_fn
-            b_max, filt_p_max = b, filt_p
+        # Calculate scores unadjusted for TPs not in our candidate set
+        print_scores(len(max_tp), len(max_p), len(max_tn), len(max_fn), title="Scores (Un-adjusted)")
 
-    print "========================================================="
-    print "Recall-corrected Noise-aware Model @ b={0} and filter={1}".format(b_max, filt_p_max)
-    print "========================================================="
-    print "Pos. class accuracy: {:.3}".format(max_pos_acc)
-    print "Neg. class accuracy: {:.3}".format(max_neg_acc)
-    print "Corpus Precision {:.3}".format(max_prec)
-    print "Corpus Recall    {:.3}".format(max_rec)
-    print "Corpus F1        {:.3}".format(max_f1)
-    print "----------------------------------------"
-    print "TP: {} | FP: {} | TN: {} | FN: {}".format(max_m_tp, max_m_fp, max_m_tn, max_mm_fn)
-    print "========================================\n"
+        # If a gold candidate set is provided, also calculate recall-adjusted scores
+        print "\n"
+        print_scores(len(max_tp), len(max_fp), len(max_tn), len(max_fn)+max_extra_fn,title="Corpus Recall-adjusted Scores")
 
-    return max_tp, max_fp, max_tn, max_fn, max_prec, max_rec, max_f1
+        return tp, fp, tn, fn
 
 
 class CDRFMCT(FMCT):
@@ -270,9 +229,7 @@ class CDRFMCT(FMCT):
         print "Predicting\t",
         test_marginals = self.marginals(X_test, X_test_raw)
         return cdr_doc_score(test_marginals, doc_relation_dict, gold_candidate_set, corpus, b, filt_p)
-    
-    
-from snorkel.learning.utils import RandomSearch, ListParameter, RangeParameter
+
 
 class CDRRandomSearch(RandomSearch):
     def fit(self, X_validation, X_validation_raw, doc_relation_dict, gold_candidate_set, corpus, b=0.5, **model_hyperparams):

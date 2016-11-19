@@ -1,18 +1,18 @@
 import cPickle
-import lxml.etree as et
-import re
-import string
 
+from collections import defaultdict
 from itertools import product
-from snorkel.lf_helpers import get_tagged_text, get_text_between
-from snorkel.parser import SentenceParser, Sentence
+from pandas import DataFrame
+from snorkel.learning import FMCT
+from snorkel.learning.utils import print_scores, RandomSearch, Scorer
+from string import punctuation
 
 
 def pubmed_id_from_candidate(candidate):
     return candidate[0].parent.document.stable_id.split(':')[0]
 
 
-def offsets_to_token(left, right, offset_array, lemmas, punc=set(string.punctuation)):
+def offsets_to_token(left, right, offset_array, lemmas, punc=set(punctuation)):
     token_start, token_end = None, None
     for i, c in enumerate(offset_array):
         if left >= c:
@@ -64,14 +64,9 @@ class TaggerOneTagger(CDRTagger):
                     parts['entity_cids'][i] = self.chem_mesh_dict[wl]
         return parts
 
-###########################################################################################################
-import numpy as np
 
-from collections import defaultdict
-from itertools import product
-from pandas import DataFrame
-from snorkel.learning import FMCT
-from snorkel.learning.utils import print_scores, RandomSearch, Scorer
+###########################################################################################################
+
 
 def get_doc_from_id(doc_id, corpus):
     for d in corpus:
@@ -134,7 +129,6 @@ class CDRScorer(Scorer):
         max_f1 = 0
         bs = [0.4, 0.5, 0.6] if b is None else [b]
         for b in bs:
-
             # Group test candidates by doc
             ent_dict = defaultdict(dict)
             for i, candidate in enumerate(gold_candidate_set):
@@ -144,7 +138,6 @@ class CDRScorer(Scorer):
                 holder.p = max(holder.p, test_marginals[i])
                 holder.candidates.add(candidate)
                 ent_dict[pubmed_id][pair] = holder
-
             ##################################################################
             # Recall increasing heuristic
             rih_docs = []
@@ -157,7 +150,6 @@ class CDRScorer(Scorer):
                             break
                     else:
                         rih_docs.append(doc_id)
-
             for doc_id in rih_docs:
                 chem_ids = get_important_chems(doc_id, corpus)
                 dis_ids = get_all_diseases(doc_id, corpus)
@@ -165,8 +157,7 @@ class CDRScorer(Scorer):
                     pair = (c, d)
                     holder = ent_dict[doc_id].get(pair, CandidateHolder())
                     holder.p = 1.0
-                    ent_dict[doc_id][pair] = holder 
-            ##################################################################
+                    ent_dict[doc_id][pair] = holder
 
             ##################################################################
             # Filter
@@ -178,8 +169,7 @@ class CDRScorer(Scorer):
                     if pair[0] in chem_filter or pair[1] in dis_filter:
                         ent_dict[doc_id][pair].p = 0
                         n_filt += 1
-            ##################################################################
-
+            # Score after RIH and filter
             predict = []
             test_labels = []
             tp = set()
@@ -203,7 +193,7 @@ class CDRScorer(Scorer):
                             fp = fp.union(holder.candidates)
                         else:
                             tn = tn.union(holder.candidates)
-
+            # Report best score
             gold_set = set((doc_key, rel) for doc_key, rels in doc_relation_dict.iteritems() for rel in rels)
             cand_set = set((doc_key, rel_key) for doc_key, rels in ent_dict.iteritems() for rel_key in rels.keys())
             extra_fn = len(gold_set.difference(cand_set))
@@ -213,20 +203,16 @@ class CDRScorer(Scorer):
             if f1 > max_f1:
                 max_tp, max_fp, max_tn, max_fn, max_extra_fn = tp, fp, tn, fn, extra_fn
                 max_f1 = f1
-
         # Calculate scores unadjusted for TPs not in our candidate set
         print_scores(len(max_tp), len(max_p), len(max_tn), len(max_fn), title="Scores (Un-adjusted)")
-
         # If a gold candidate set is provided, also calculate recall-adjusted scores
         print "\n"
         print_scores(len(max_tp), len(max_fp), len(max_tn), len(max_fn)+max_extra_fn,title="Corpus Recall-adjusted Scores")
-
         return tp, fp, tn, fn
 
 
 class CDRFMCT(FMCT):
     def score(self, X_test, X_test_raw, doc_relation_dict, gold_candidate_set, corpus, b=None, filt_p=5):
-        print "Predicting\t",
         test_marginals = self.marginals(X_test, X_test_raw)
         return cdr_doc_score(test_marginals, doc_relation_dict, gold_candidate_set, corpus, b, filt_p)
 
@@ -235,20 +221,17 @@ class CDRRandomSearch(RandomSearch):
     def fit(self, X_validation, X_validation_raw, doc_relation_dict, gold_candidate_set, corpus, b=0.5, **model_hyperparams):
         # Iterate over the param values
         self.run_stats   = []
-        param_opts  = np.zeros(len(self.param_names))
+        param_opts  = None
         f1_opt      = -1.0
         for k, param_vals in enumerate(self.search_space()):
-
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
                 model_hyperparams[pn] = pv
             print "=" * 60
             print "{%d}: Testing %s" % (k+1, ', '.join(["{0} = {1}".format(pn,pv) for pn,pv in zip(self.param_names, param_vals)]))
             print "=" * 60
-
             # Train the model
             self.model.train(self.X, self.training_marginals, **model_hyperparams)
-
             # Test the model
             tp, fp, tn, fn, p, r, f1 = self.model.score(X_validation, X_validation_raw, doc_relation_dict, gold_candidate_set, corpus, b)
             self.run_stats.append(list(param_vals) + [p, r, f1])
@@ -256,10 +239,8 @@ class CDRRandomSearch(RandomSearch):
                 model_opt  = self.model.fmct
                 param_opts = param_vals
                 f1_opt     = f1
-
         # Set optimal parameter in the learner model
         self.model.fmct = model_opt
-
         # Return DataFrame of scores
         self.results = DataFrame.from_records(self.run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1']).sort('F1', ascending=False)
         return self.results

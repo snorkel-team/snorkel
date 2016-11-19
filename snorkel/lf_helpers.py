@@ -85,13 +85,11 @@ def get_between_tokens(c, attrib='words', n_max=1, case_sensitive=False):
     """
     if len(c.get_contexts()) != 2:
         raise ValueError("Only applicable to binary Candidates")
-    span0 = c[0]
-    span1 = c[1]
-    distance = abs(span0.get_word_start() - span1.get_word_start())
-    if span0.get_word_start() < span1.get_word_start():
-        return get_right_tokens(span0, window=distance-1, attrib=attrib, n_max=n_max, case_sensitive=case_sensitive)
-    else: # span0.get_word_start() > span1.get_word_start()
-        return get_left_tokens(span1, window=distance-1, attrib=attrib, n_max=n_max, case_sensitive=case_sensitive)
+    span0     = c[0]
+    span1     = c[1]
+    distance  = abs(span0.get_word_start() - span1.get_word_start())
+    left_span = span0 if span0.get_word_start() < span1.get_word_start() else span1
+    return get_right_tokens(left_span, window=distance-1, attrib=attrib, n_max=n_max, case_sensitive=case_sensitive)
 
 
 def get_left_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):

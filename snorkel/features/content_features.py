@@ -4,6 +4,7 @@ import os
 from snorkel.models import TemporarySpan
 from tree_structs import corenlp_to_xmltree
 from snorkel.utils import get_as_dict
+from snorkel.config import settings
 
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 from treedlib import compile_relation_feature_generator
@@ -110,7 +111,9 @@ def _get_seq_features(context, idxs):
     yield "DEP_SEQ_[" + " ".join(context['dep_labels'][i] for i in idxs) + "]"
 
 
-def _get_window_features(context, idxs, window=3, combinations=True, isolated=True):
+def _get_window_features(context, idxs, window=settings.featurization.content.window_feature.size,
+                         combinations=settings.featurization.content.window_feature.combinations,
+                         isolated=settings.featurization.content.window_feature.isolated):
     left_lemmas = []
     left_pos_tags = []
     right_lemmas = []

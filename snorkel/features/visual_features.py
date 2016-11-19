@@ -16,7 +16,7 @@ def get_visual_feats(candidate):
         if span.is_visual():
             for f, v in vizlib_unary_features(span):
                 yield FEAT_PRE + f, v
-    
+
     # Binary candidates
     elif len(args) == 2:
         span1, span2 = args
@@ -33,7 +33,7 @@ def vizlib_unary_features(span):
     Visual-related features for a single span
     """
     if not span.is_visual(): return
-    
+
     for f in get_visual_aligned_lemmas(span):
         yield 'ALIGNED_' + f, DEF_VALUE
 

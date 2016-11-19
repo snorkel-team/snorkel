@@ -57,6 +57,7 @@ def tablelib_unary_features(span):
         # for ngram in get_col_ngrams(span, n_max=2, attrib=attrib, direct=False, infer=True):
         #     yield "COL_INFERRED_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
 
+
 def tablelib_binary_features(span1, span2):
     """
     Table-/structure-related features for a pair of spans

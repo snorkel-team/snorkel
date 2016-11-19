@@ -10,66 +10,6 @@ from snorkel.utils import ProgressBar
 from snorkel.loaders import create_or_fetch
 from snorkel.lf_helpers import *
 
-class PartThrottler(object):
-    """
-    Removes candidates unless the part is not in a table, or the part aligned
-    temperature are not aligned.
-    """
-    def apply(self, part_span, attr_span):
-        """
-        Returns True is the tuple passes, False if it should be throttled
-        """
-        return part_span.parent.table is None or self.aligned(part_span, attr_span)
-
-    def aligned(self, span1, span2):
-        return (span1.parent.table == span2.parent.table and
-            (span1.parent.row_num == span2.parent.row_num or
-             span1.parent.col_num == span2.parent.col_num))
-
-class GainThrottler(PartThrottler):
-    def apply(self, part_span, attr_span):
-        """
-        Returns True is the tuple passes, False if it should be throttled
-        """
-        return (PartThrottler.apply(self, part_span, attr_span) and
-            overlap(['dc', 'gain', 'hfe', 'fe'], list(get_row_ngrams(attr_span, infer=True))))
-
-class PartCurrentThrottler(object):
-    """
-    Removes candidates unless the part is not in a table, or the part aligned
-    temperature are not aligned.
-    """
-    def apply(self, part_span, current_span):
-        """
-        Returns True is the tuple passes, False if it should be throttled
-        """
-        # if both are in the same table
-        if (part_span.parent.table is not None and current_span.parent.table is not None):
-            if (part_span.parent.table == current_span.parent.table):
-                return True
-
-        # if part is in header, current is in table
-        if (part_span.parent.table is None and current_span.parent.table is not None):
-            ngrams = set(get_row_ngrams(current_span))
-            # if True:
-            if ('collector' in ngrams and 'current' in ngrams):
-                return True
-
-        # if neither part or current is in table
-        if (part_span.parent.table is None and current_span.parent.table is None):
-            ngrams = set(get_phrase_ngrams(current_span))
-            num_numbers = list(get_phrase_ngrams(current_span, attrib="ner_tags")).count('number')
-            if ('collector' in ngrams and 'current' in ngrams and num_numbers <= 3):
-                return True
-
-        return False
-
-    def aligned(self, span1, span2):
-        ngrams = set(get_row_ngrams(span2))
-        return  (span1.parent.table == span2.parent.table and
-            (span1.parent.row_num == span2.parent.row_num or span1.parent.col_num == span2.parent.col_num))
-
-
 class OmniNgramsTemp(OmniNgrams):
     def __init__(self, n_max=5, split_tokens=None):
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=None)
@@ -195,6 +135,104 @@ def load_extended_parts_dict(filename):
 def get_gold_parts(filename, docs=None):
     return set(map(lambda x: x[0], get_gold_dict(filename, doc_on=False, part_on=True, val_on=False, docs=docs)))
 
+
+def merge_two_dicts(x, y):
+    '''Given two dicts, merge them into a new dict as a shallow copy.'''
+    # Code from http://stackoverflow.com/questions/38987/how-to-merge-two-python-dictionaries-in-a-single-expression
+    # Note that the entries of Y will replace X's values if there is overlap.
+    z = x.copy()
+    z.update(y)
+    return z
+
+def get_first_pass_dict(contexts, parts_matcher, part_ngrams, suffix_matcher, suffix_ngrams):
+    """
+    Seeks to replace get_gold_dict by going through a first pass of the document
+    and pull out valid part numbers.
+
+    Note that some throttling is done here, but may be moved to either a Throttler
+    class, or learned through using LFs. Throttling here just seeks to reduce
+    the number of candidates produced.
+
+    Note that part_ngrams should be at least 5-grams or else not all parts will
+    be found.
+    """
+    suffixes_by_doc = defaultdict(set)
+    parts_by_doc = defaultdict(set)
+    final_dict = defaultdict(set)
+    # Used to replace unicode dashes with normal dash
+    mapping = [ (u'\u2010', '-'),
+                (u'\u2011', '-'),
+                (u'\u2012', '-'),
+                (u'\u2013', '-'),
+                (u'\u2014', '-'),
+                (u'\u2212', '-'),
+              ]
+    pb = ProgressBar(len(contexts))
+    for i, context in enumerate(contexts):
+        pb.bar(i)
+        # Extract Suffixes
+        for ts in suffix_matcher.apply(suffix_ngrams.apply(context)):
+            row_ngrams = set(get_row_ngrams(ts, infer=True))
+            if ('classification' in row_ngrams or
+                'group' in row_ngrams or
+                'rank' in row_ngrams or
+                'grp.' in row_ngrams):
+                suffixes_by_doc[ts.parent.document.name.upper()].add(ts.get_span())
+
+        # extract parts
+        for ts in parts_matcher.apply(part_ngrams.apply(context)):
+            text = ts.get_span()
+
+            # Targetted at docs like ONSMS04099-1
+            # Don't add parts that are "replacements" or come from a giant table
+            col_ngrams = set(get_col_ngrams(ts))
+            if ('replacement' in col_ngrams or
+                (len(col_ngrams) > 25 and 'device' in col_ngrams)):
+                continue
+
+            # Try to avoid adding complementary parts
+            row_ngrams = set(get_row_ngrams(ts))
+            if ('complementary' in row_ngrams or
+                'empfohlene' in row_ngrams):
+                continue
+
+            # Change unicode to dashes/
+            for k, v in mapping:
+                text = text.replace(k, v)
+
+            # Throw away these two obviously invalid part cases that make
+            # it through the part regex.
+            if text.endswith('/') or text.endswith('-'):
+                continue
+            if "PNP" in text or "NPN" in text:
+                continue
+
+            parts_by_doc[ts.parent.document.name.upper()].add(text)
+
+    pb.close()
+
+    # Process suffixes and parts
+    for doc in parts_by_doc.keys():
+        for part in parts_by_doc[doc]:
+            final_dict[doc].add(part)
+            # TODO: This portion is really specific to our suffixes. Ideally
+            # this kind of logic can be pased on the suffix_matcher that is
+            # pass in. Or something like that...
+            # The goal of this code is just to append suffixes to part numbers
+            # that don't already have suffixes in a reasonable way.
+            for suffix in suffixes_by_doc[doc]:
+                if (suffix == "A" or suffix == "B" or suffix == "C"):
+                    if not any(x in part[2:] for x in ['A', 'B', 'C']):
+                        final_dict[doc].add(part + suffix)
+                else: # if it's 16/25/40
+                    if not suffix.startswith('-') and not any(x in part for x in ['16', '25', '40']):
+                        final_dict[doc].add(part + '-' + suffix)
+                    elif suffix.startswith('-') and not any(x in part for x in ['16', '25', '40']):
+                        final_dict[doc].add(part + suffix)
+
+    # TODO: Just return final_set. Temporarily returning the other two for
+    # easier debugging.
+    return final_dict, suffixes_by_doc, parts_by_doc
 
 def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None, docs=None, integerize=False):
     with codecs.open(filename, encoding="utf-8") as csvfile:

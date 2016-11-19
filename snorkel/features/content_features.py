@@ -35,16 +35,26 @@ def get_content_feats(candidate):
     elif len(args) == 2:
         get_tdl_feats = compile_relation_feature_generator()
         span1, span2 = args
+        sent1 = get_as_dict(span1.parent)
+        sent2 = get_as_dict(span2.parent)
         # TODO: check if span.is_lingual() is True for each span
         xmltree = corenlp_to_xmltree(get_as_dict(span1.parent))
         s1_idxs = range(span1.get_word_start(), span1.get_word_end() + 1)
         s2_idxs = range(span2.get_word_start(), span2.get_word_end() + 1)
         if len(s1_idxs) > 0 and len(s2_idxs) > 0:
+
+            # Add DDLIB entity features for relation
+            for f in get_ddlib_feats(sent1, s1_idxs):
+                yield 'DDL_e1_' + f, DEF_VALUE
+
+            for f in get_ddlib_feats(sent2, s2_idxs):
+                yield 'DDL_e2_' + f, DEF_VALUE
+
             # Apply TreeDLib relation features
             for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs):
                 yield 'TDL_' + f, DEF_VALUE
 
-            # TODO: add DDLib features for binary relations
+                # TODO: add DDLib features for binary relations
 
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")
@@ -163,28 +173,30 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
                             to_add = "None"
                         new_pos_tags.append(to_add)
                     curr_right_pos_tags = " ".join(new_pos_tags)
-                yield "W_LEMMA_L_" + str(i + 1) + "_R_" + str(j + 1) + "_[" + curr_left_lemmas + "]_[" + curr_right_lemmas + "]"
-                yield "W_POS_L_" + str(i + 1) + "_R_" + str(j + 1) + "_[" + curr_left_pos_tags + "]_[" + curr_right_pos_tags + "]"
+                yield "W_LEMMA_L_" + str(i + 1) + "_R_" + str(
+                    j + 1) + "_[" + curr_left_lemmas + "]_[" + curr_right_lemmas + "]"
+                yield "W_POS_L_" + str(i + 1) + "_R_" + str(
+                    j + 1) + "_[" + curr_left_pos_tags + "]_[" + curr_right_pos_tags + "]"
 
-# TODO:
-# yield "SPAN_TYPE_[%s]" % ('IMPLICIT' if isinstance(span, ImplicitSpan) else 'EXPLICIT'), 1
-#    if phrase.html_tag:
-#         yield u"HTML_TAG_" + phrase.html_tag, DEF_VALUE
-#     # Comment out for now, we could calc it later.
-#     # for attr in phrase.html_attrs:
-#     #     yield u"HTML_ATTR_[" + attr + "]", DEF_V
-#     # if phrase.html_anc_tags:
-#     #     for tag in phrase.html_anc_tags:
-#     #         yield u"HTML_ANC_TAG_[" + tag + "]", DEF_VALUE
-#             # for attr in phrase.html_anc_attrs:
-#             # yield u"HTML_ANC_ATTR_[" + attr + "]"
-#     for attrib in ['words']:  # ,'lemmas', 'pos_tags', 'ner_tags']:
-#         for ngram in span.get_attrib_tokens(attrib):
-#             yield "CONTAINS_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
-#         for ngram in get_left_ngrams(span, window=7, n_max=2, attrib=attrib):
-#             yield "LEFT_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
-#         for ngram in get_right_ngrams(span, window=7, n_max=2, attrib=attrib):
-#             yield "RIGHT_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
-#         if phrase.row_start is None or phrase.col_start is None:
-#             for ngram in get_neighbor_phrase_ngrams(span, d=1, n_max=2, attrib=attrib):
-#                 yield "NEIGHBOR_PHRASE_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
+                # TODO:
+                # yield "SPAN_TYPE_[%s]" % ('IMPLICIT' if isinstance(span, ImplicitSpan) else 'EXPLICIT'), 1
+                #    if phrase.html_tag:
+                #         yield u"HTML_TAG_" + phrase.html_tag, DEF_VALUE
+                #     # Comment out for now, we could calc it later.
+                #     # for attr in phrase.html_attrs:
+                #     #     yield u"HTML_ATTR_[" + attr + "]", DEF_V
+                #     # if phrase.html_anc_tags:
+                #     #     for tag in phrase.html_anc_tags:
+                #     #         yield u"HTML_ANC_TAG_[" + tag + "]", DEF_VALUE
+                #             # for attr in phrase.html_anc_attrs:
+                #             # yield u"HTML_ANC_ATTR_[" + attr + "]"
+                #     for attrib in ['words']:  # ,'lemmas', 'pos_tags', 'ner_tags']:
+                #         for ngram in span.get_attrib_tokens(attrib):
+                #             yield "CONTAINS_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
+                #         for ngram in get_left_ngrams(span, window=7, n_max=2, attrib=attrib):
+                #             yield "LEFT_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
+                #         for ngram in get_right_ngrams(span, window=7, n_max=2, attrib=attrib):
+                #             yield "RIGHT_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
+                #         if phrase.row_start is None or phrase.col_start is None:
+                #             for ngram in get_neighbor_phrase_ngrams(span, d=1, n_max=2, attrib=attrib):
+                #                 yield "NEIGHBOR_PHRASE_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE

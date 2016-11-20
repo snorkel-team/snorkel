@@ -3,6 +3,7 @@ from itertools import chain
 from utils import tokens_to_ngrams
 from collections import namedtuple
 import re
+from bs4 import BeautifulSoup as soup
 
 
 def get_text_splits(c):
@@ -417,6 +418,12 @@ def get_head_cell(root_cell, axis, infer=False):
     aligned_cells = _get_aligned_cells(root_cell, axis, direct=True, infer=infer)  
     return sorted(aligned_cells, key=lambda x: getattr(x, other_axis + '_num'))[0] if aligned_cells else []
 
+def cell_spans(cell, table, axis):
+    if axis == 'row' and len([c for c in table.cells if c.row == cell.row]) > 1:
+        return False
+    if axis == 'col' and len([c for c in table.cells if c.col == cell.col]) > 1:
+        return False
+    return True
 
 def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
     if not isinstance(span, TemporarySpan):
@@ -428,15 +435,17 @@ def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min
             for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
                 yield ngram
 
-
 def get_aligned_cells(root_cell, axis, direct=True, infer=False):
     aligned_cells = [cell for cell in root_cell.table.cells
         if getattr(cell, axis) == getattr(root_cell, axis)
         and cell != root_cell]
-    return [_infer_cell(cell, _other_axis(axis), direct=direct, infer=infer) \
-        for cell in aligned_cells] if infer else aligned_cells
+    if not infer: return aligned_cells
+    else:
+        inferred_cells = [ _infer_cell(cell, _other_axis(axis), direct=direct, infer=infer) \
+                           for cell in aligned_cells ]
+        return [ cell for cell in inferred_cells if isinstance(cell, Cell) ]
 
-
+PhantomCell = namedtuple('PhantomCell','phrases')
 def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False):
     # TODO: There seems to be some discrepency in the order of this list comprehension.
     # This is what is needed for Python 2.7.
@@ -444,7 +453,6 @@ def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False):
                 for phrase in _infer_cell(cell, _other_axis(axis), direct, infer).phrases \
                     if phrase!=root_phrase]
 
-PhantomCell = namedtuple('PhantomCell','phrases')
 def _infer_cell(root_cell, axis, direct, infer):
     if direct == False and infer == False: raise ValueError('Direct and infer cannot both be false')
     empty = _empty(root_cell)
@@ -466,7 +474,7 @@ def _infer_cell(root_cell, axis, direct, infer):
             return aligned_cells[0] if aligned_cells else PhantomCell
 
 def _empty(cell):
-    return True if not cell.text or cell.text.isspace() or cell.text == "<td></td>" else False
+    return True if not cell.text or cell.text.isspace() or not soup(cell.text).text or soup(cell.text).text.isspace() else False
 
 def _other_axis(axis):
     return 'row' if axis=='col' else 'col'

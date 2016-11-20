@@ -145,15 +145,15 @@ class AnnotatorLabel(SnorkelBase):
     A special secondary table for preserving labels created by *human annotators* (e.g. in the Viewer)
     in a stable format that does not cascade, and is independent of the Candidate ids.
     """
-    __tablename__ = 'annotator_label'
-    id                 = Column(Integer, primary_key=True)
-    stable_id          = Column(String, nullable=False)  # '~~'-concatenation of context_stable_ids + annotator
-    annotator          = Column(String, nullable=False)
-    value              = Column(Integer, nullable=False)
+    __tablename__  = 'annotator_label'
+    id             = Column(Integer, primary_key=True)
+    stable_id      = Column(String, nullable=False)  # '~~'-concatenation of context_stable_ids + annotator
+    annotator_name = Column(String, nullable=False)
+    value          = Column(Integer, nullable=False)
     if snorkel_postgres:
         context_stable_ids = Column(postgresql.ARRAY(String), nullable=False)
     else:
         context_stable_ids = Column(PickleType, nullable=False)
 
     def __repr__(self):
-        return "%s (%s : %s) [STABLE]" % (self.__class__.__name__, self.annotator, self.value)
+        return "%s (%s : %s) [STABLE]" % (self.__class__.__name__, self.annotator_name, self.value)

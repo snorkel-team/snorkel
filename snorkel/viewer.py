@@ -211,7 +211,7 @@ class Viewer(widgets.DOMWidget):
 
                 # Create stable AnnotatorLabel
                 stable_id = '~~'.join([c.stable_id for c in candidate.get_contexts()] + [self.annotator.name])
-                self.annotations_stable[cid] = AnnotatorLabel(stable_id=stable_id, annotator=self.annotator.name, value=value, context_stable_ids=[c.stable_id for c in candidate.get_contexts()])
+                self.annotations_stable[cid] = AnnotatorLabel(stable_id=stable_id, annotator_name=self.annotator.name, value=value, context_stable_ids=[c.stable_id for c in candidate.get_contexts()])
                 self.session.add(self.annotations_stable[cid])
 
                 self.session.commit()

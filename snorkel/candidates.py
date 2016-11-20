@@ -44,7 +44,7 @@ class CandidateExtractor(object):
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
     def __init__(self, candidate_class, cspaces, matchers, throttler=None, self_relations=False, nested_relations=False, 
-                 symmetric_relations=True, allow_duplicates=False):
+                 symmetric_relations=True, stop_on_duplicates=True):
         self.candidate_class     = candidate_class
         self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
@@ -52,7 +52,7 @@ class CandidateExtractor(object):
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations
         self.symmetric_relations = symmetric_relations
-        self.allow_duplicates    = allow_duplicates
+        self.stop_on_duplicates  = stop_on_duplicates
 
         # Check that arity is same
         if len(self.candidate_spaces) != len(self.matchers):
@@ -147,7 +147,10 @@ class CandidateExtractor(object):
                 session.execute(child_insert_query, child_args)
                 del child_args['id']
             else:
-                raise ValueError("Duplicate candidates found in %s." % candidate_set)
+                if self.stop_on_duplicates:
+                    raise ValueError("Duplicate candidates found in %s." % candidate_set)
+                else:
+                    continue
 
             # Add candidate to the given CandidateSet
             set_insert_args['candidate_id'] = candidate_id[0]

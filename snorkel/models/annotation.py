@@ -5,6 +5,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 from snorkel.utils import camel_to_under
 from sqlalchemy.orm.collections import attribute_mapped_collection
+from models.meta import snorkel_postgres
 
 
 annotation_key_set_annotation_key_association = \
@@ -144,8 +145,8 @@ class AnnotationVector(object):
     A vectorized representation for sparse key value pair annotation for a given candidate
     """
     
-    keys = Column(postgresql.ARRAY(String), nullable=False)
-    values = Column(postgresql.ARRAY(Float))
+    keys = Column(postgresql.ARRAY(String), nullable=False) if snorkel_postgres else Column(String)
+    values = Column(postgresql.ARRAY(Float)) if snorkel_postgres else Column(String)
 
     @declared_attr
     def __tablename__(self):

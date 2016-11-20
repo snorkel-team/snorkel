@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 DBURL = os.environ.get('SNORKELDB', 'sqlite:///')
 DBNAME = os.environ.get('SNORKELDBNAME', '')
 
-snorkel_postgres = DBURL.startswith('postgres') 
+snorkel_postgres = DBURL.startswith('postgres')
 if snorkel_postgres:
     connection = DBURL.rstrip('/') + '/' + DBNAME if DBNAME else DBURL
 else:
@@ -19,6 +19,7 @@ snorkel_engine = create_engine(connection)
 SnorkelSession = sessionmaker(bind=snorkel_engine)
 
 SnorkelBase = declarative_base(name='SnorkelBase', cls=object)
+
 
 def clear_database():
     """

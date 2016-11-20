@@ -55,8 +55,6 @@ def get_content_feats(candidate):
             for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs):
                 yield 'TDL_' + f, DEF_VALUE
 
-                # TODO: add DDLib features for binary relations
-
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")
 

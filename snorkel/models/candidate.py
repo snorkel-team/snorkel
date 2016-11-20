@@ -131,9 +131,11 @@ def candidate_subclass(class_name, args, table_name=None):
         # Primary arguments are constituent Contexts, and their ids
         class_attribs[arg + '_id']  = Column(Integer, ForeignKey('context.id'))
         class_attribs[arg]          = relationship('Context',
-                                                  backref=backref(table_name + '_' + arg + 's', cascade_backrefs=False),
-                                                  cascade_backrefs=False,
-                                                  foreign_keys=class_attribs[arg + '_id'])
+                                                      backref=backref(table_name + '_' + arg + 's',
+                                                                      cascade_backrefs=False,
+                                                                      cascade='all, delete-orphan'),
+                                                      cascade_backrefs=False,
+                                                      foreign_keys=class_attribs[arg + '_id'])
         unique_con_args.append(class_attribs[arg + '_id'])
 
         # Canonical ids, to be set post-entity normalization stage

@@ -10,10 +10,11 @@ class Throttler(object):
 
 class AlignmentThrottler(Throttler):
     """Filters spans that are not aligned"""
-    def __init__(self, axis=None, infer=False):
+    def __init__(self, axis=None, infer=False, infer_pivot=0):
         if axis not in ('row', 'col', None): raise ValueError('Invalid axis: %s' % axis)
         self.axis = axis
         self.infer = infer
+        self.infer_pivot = infer_pivot
 
     def __call__(self, argtuple):
         if self.infer:
@@ -31,13 +32,14 @@ class AlignmentThrottler(Throttler):
                 or span0.parent.cell.col.position == span1.parent.cell.col.position
 
     def _apply_infer(self, span0, span1):
-        # TODO: this needs to be made symmetric, or the induced span needs to be specified
+        pivot_span = span0 if self.infer_pivot == 0 else span1
+        other_span = span1 if self.infer_pivot == 0 else span0
         if self.axis in ('row', 'col'):
-            aligned_cells = get_aligned_cells(span0.parent.cell, self.axis, infer=True)
+            aligned_cells = get_aligned_cells(pivot_span.parent.cell, self.axis, infer=True)
         if self.axis is None:
-            aligned_cells = get_aligned_cells(span0.parent.cell, 'row', infer=True) \
-                          + get_aligned_cells(span0.parent.cell, 'col', infer=True)
-        return span1.parent.cell in aligned_cells
+            aligned_cells = get_aligned_cells(pivot_span.parent.cell, 'row', infer=True) \
+                          + get_aligned_cells(pivot_span.parent.cell, 'col', infer=True)
+        return other_span.parent.cell in aligned_cells
 
 class SeparatingSpanThrottler(Throttler):
     """Filter spans that are separated by spanning cells
@@ -73,10 +75,6 @@ class SeparatingSpanThrottler(Throttler):
             if axis == 'col' and len([c for c in table.cells if c.col == cell.col]) > 1:
                 return False
             return True
-
-        # print '!!!', span0, span0.parent.cell.row.position, span0.parent.cell.col.position, span1, span1.parent.cell.row.position, span1.parent.cell.col.position
-        # for c in middle_cells:
-        #     print c.text, c.row.position, c.col.position, len([d for d in span0.parent.table.cells if c.row == d.row]), _spans(c, span0.parent.table, sp_ax)
                              
         return False if any(_spans(c, span0.parent.table, sp_ax) for c in middle_cells) else True
 

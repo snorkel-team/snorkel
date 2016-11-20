@@ -104,7 +104,7 @@ class TextDocParser(DocParser):
     """Simple parsing of raw text files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with codecs.open(fp, encoding=self.encoding) as f:
-            name      = re.sub(r'\..*$', '', os.path.basename(fp))
+            name = os.path.basename(fp).rsplit('.', 1)[0]
             stable_id = self.get_stable_id(name)
             yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), f.read()
 
@@ -116,7 +116,7 @@ class HTMLDocParser(DocParser):
             html = BeautifulSoup(f, 'lxml')
             txt = filter(self._cleaner, html.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
-            name = re.sub(r'\..*$', '', os.path.basename(fp))
+            name = os.path.basename(fp).rsplit('.', 1)[0]
             stable_id = self.get_stable_id(name)
             yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), txt
 
@@ -261,9 +261,9 @@ class CoreNLPHandler:
             # Link the sentence to its parent document object
             parts['document'] = document
 
-            # Add null entity array
-            parts['entity_cids']  = [None for i in range(len(parts['words']))]
-            parts['entity_types'] = [None for i in range(len(parts['words']))]
+            # Add null entity array (matching null for CoreNLP)
+            parts['entity_cids']  = ['O' for _ in parts['words']]
+            parts['entity_types'] = ['O' for _ in parts['words']]
 
             # Assign the stable id as document's stable id plus absolute character offset
             abs_sent_offset_end = abs_sent_offset + parts['char_offsets'][-1] + len(parts['words'][-1])
@@ -273,10 +273,12 @@ class CoreNLPHandler:
 
 
 class SentenceParser(object):
-    def __init__(self, tok_whitespace=False):
+    def __init__(self, tok_whitespace=False, fn=None):
         self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace)
+        self.fn              = fn
 
     def parse(self, doc, text):
         """Parse a raw document as a string into a list of sentences"""
         for parts in self.corenlp_handler.parse(doc, text):
+            parts = self.fn(parts) if self.fn is not None else parts
             yield Sentence(**parts)

@@ -90,7 +90,7 @@ class AnnotationMixin(object):
 
     @declared_attr
     def key(cls):
-        return relationship('AnnotationKey', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all'))
+        return relationship('AnnotationKey', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all, delete-orphan'))
 
     # Every annotation is with respect to a candidate
     @declared_attr
@@ -99,7 +99,7 @@ class AnnotationMixin(object):
 
     @declared_attr
     def candidate(cls):
-        return relationship('Candidate', backref=backref(camel_to_under(cls.__name__) + 's', cascade_backrefs=False),
+        return relationship('Candidate', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all, delete-orphan', cascade_backrefs=False),
                             cascade_backrefs=False)
 
     # NOTE: What remains to be defined in the subclass is the **value**

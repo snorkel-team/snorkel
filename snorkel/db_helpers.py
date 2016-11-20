@@ -1,4 +1,4 @@
-from .models import Corpus, Document, Sentence
+from .models import Corpus, CandidateSet, AnnotationKeySet, ParameterSet
 from sqlalchemy.orm import object_session
 
 
@@ -17,7 +17,16 @@ def cascade_delete_set(s):
         for candidate in s:
             session.delete(candidate)
 
-    # TODO: AnnotationKeySet
+    # If an AnnotationKeySet, delete all AnnotationKeys, cascades down to Annotations, Parameters
+    elif isinstance(s, AnnotationKeySet):
+        for ak in s.keys:
+            session.delete(ak)
+
+    # ParameterSets already cascade to deleting all Parameters
+    elif isinstance(s, ParameterSet):
+        pass
+    else:
+        raise ValueError("Unhandled set type: " + s.__name__)
 
     # Finally, delete the set and commit
     session.delete(s)

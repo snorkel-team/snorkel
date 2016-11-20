@@ -65,7 +65,7 @@ class SeparatingSpanThrottler(Throttler):
         max_ax = getattr(bot_cell, ax).position
         middle_cells = [ c for c in span0.parent.table.cells 
                          if min_ax < getattr(c, ax).position < max_ax ]
-        if not middle_cells: return False
+        if not middle_cells: return True # cells are adjacent
 
         # if the two spans are separated by a spanning cell, we skip this pair
         sp_ax = 'row' if ax == 'col' else 'row'
@@ -77,6 +77,34 @@ class SeparatingSpanThrottler(Throttler):
             return True
                              
         return False if any(_spans(c, span0.parent.table, sp_ax) for c in middle_cells) else True
+
+class OrderingThrottler(Throttler):
+    """Filters pairs of spans according to which one comes first"""
+    def __init__(self, axis, first=0):
+        if axis not in ('row', 'col'): raise ValueError('Invalid axis: %s' % axis)
+        if first not in (0,1): raise ValueError('Invalid span index: %d' % first)
+        self.axis = axis
+        self.first = first
+
+    def __call__(self, argtuple):
+        # get the cells associated with each span
+        span0, span1 = argtuple
+        first_span = span0 if self.first == 0 else span1
+        second_span = span1 if self.first == 0 else span0
+
+        cell0, cell1 = first_span.parent.cell, second_span.parent.cell
+        ax = 'row' if self.axis == 'col' else 'col'
+
+        return True if getattr(cell0, ax).position <= getattr(cell1, ax).position \
+            else False
+
+class CombinedThrottler(Throttler):
+    """Filters pairs if they pass all given throttlers"""
+    def __init__(self, throttlers):
+        self.throttlers = throttlers
+
+    def __call__(self, argtuple):
+        return True if all(t(argtuple) for t in self.throttlers) else False
 
 # Reference derivative class (actual copy stored in hardware_utils.py)
 # class PartThrottler(Throttler):

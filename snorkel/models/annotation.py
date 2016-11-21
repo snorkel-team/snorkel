@@ -1,10 +1,9 @@
-from .meta import SnorkelBase
-import re
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint, Table
+from .meta import SnorkelBase, snorkel_postgres
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint, Table, PickleType
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.dialects import postgresql
 from snorkel.utils import camel_to_under
-from sqlalchemy.orm.collections import attribute_mapped_collection
 
 
 annotation_key_set_annotation_key_association = \
@@ -90,7 +89,7 @@ class AnnotationMixin(object):
 
     @declared_attr
     def key(cls):
-        return relationship('AnnotationKey', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all'))
+        return relationship('AnnotationKey', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all, delete-orphan'))
 
     # Every annotation is with respect to a candidate
     @declared_attr
@@ -99,7 +98,7 @@ class AnnotationMixin(object):
 
     @declared_attr
     def candidate(cls):
-        return relationship('Candidate', backref=backref(camel_to_under(cls.__name__) + 's', cascade_backrefs=False),
+        return relationship('Candidate', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all, delete-orphan', cascade_backrefs=False),
                             cascade_backrefs=False)
 
     # NOTE: What remains to be defined in the subclass is the **value**
@@ -137,3 +136,22 @@ class Prediction(AnnotationMixin, SnorkelBase):
     model with which ParameterSet.
     """
     value = Column(Float, nullable=False)
+
+
+class StableLabel(SnorkelBase):
+    """
+    A special secondary table for preserving labels created by *human annotators* (e.g. in the Viewer)
+    in a stable format that does not cascade, and is independent of the Candidate ids.
+    """
+    __tablename__  = 'annotator_label'
+    id             = Column(Integer, primary_key=True)
+    stable_id      = Column(String, nullable=False)  # '~~'-concatenation of context_stable_ids + annotator
+    annotator_name = Column(String, nullable=False)
+    value          = Column(Integer, nullable=False)
+    if snorkel_postgres:
+        context_stable_ids = Column(postgresql.ARRAY(String), nullable=False)
+    else:
+        context_stable_ids = Column(PickleType, nullable=False)
+
+    def __repr__(self):
+        return "%s (%s : %s) [STABLE]" % (self.__class__.__name__, self.annotator_name, self.value)

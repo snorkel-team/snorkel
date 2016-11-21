@@ -1,5 +1,5 @@
 from __future__ import print_function
-from .models import Label
+from .models import Label, StableLabel
 from .queries import get_or_create_single_key_set
 try:
     from IPython.core.display import display, Javascript
@@ -87,9 +87,12 @@ class Viewer(widgets.DOMWidget):
             pass
 
         # Loads existing annotations
-        self.annotations = [None] * len(self.candidates)
+        self.annotations        = [None] * len(self.candidates)
+        self.annotations_stable = [None] * len(self.candidates)
         init_labels_serialized = []
         for i, candidate in enumerate(self.candidates):
+
+            # First look for the annotation in the primary annotations table
             existing_annotation = self.session.query(Label) \
                 .filter(Label.key == self.annotator) \
                 .filter(Label.candidate == candidate) \
@@ -104,6 +107,13 @@ class Viewer(widgets.DOMWidget):
                     raise ValueError(str(existing_annotation) +
                                      ' has value not in {1, -1}, which Viewer does not support.')
                 init_labels_serialized.append(str(i) + '~~' + value_string)
+
+                # If the annotator label is in the main table, also get its stable version
+                stable_id = '~~'.join([c.stable_id for c in candidate.get_contexts()] + [self.annotator.name])
+                existing_annotation_stable = self.session.query(StableLabel) \
+                    .filter(StableLabel.stable_id == stable_id).one()
+                self.annotations_stable[i] = existing_annotation_stable
+
         self._labels_serialized = ','.join(init_labels_serialized)
 
         # Configures message handler
@@ -184,13 +194,26 @@ class Viewer(widgets.DOMWidget):
                 raise ValueError('Unexpected label returned from widget: ' + str(value) +
                                  '. Expected values are True and False.')
 
+            # If label already exists, just update value (in both Label and StableLabel)
             if self.annotations[cid] is not None:
                 if self.annotations[cid].value != value:
-                    self.annotations[cid].value = value
+                    self.annotations[cid].value        = value
+                    self.annotations_stable[cid].value = value
                     self.session.commit()
+
+            # Otherwise, create a Label *and a StableLabel*
             else:
-                self.annotations[cid] = Label(key=self.annotator, candidate=self.candidates[cid], value=value)
+                candidate = self.candidates[cid]
+
+                # Create Label
+                self.annotations[cid] = Label(key=self.annotator, candidate=candidate, value=value)
                 self.session.add(self.annotations[cid])
+
+                # Create StableLabel
+                stable_id = '~~'.join([c.stable_id for c in candidate.get_contexts()] + [self.annotator.name])
+                self.annotations_stable[cid] = StableLabel(stable_id=stable_id, annotator_name=self.annotator.name, value=value, context_stable_ids=[c.stable_id for c in candidate.get_contexts()])
+                self.session.add(self.annotations_stable[cid])
+
                 self.session.commit()
         elif content.get('event', '') == 'delete_label':
             cid = content.get('cid', None)

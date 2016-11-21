@@ -1,5 +1,5 @@
 from __future__ import print_function
-from .models import Label, AnnotatorLabel
+from .models import Label, StableLabel
 from .queries import get_or_create_single_key_set
 try:
     from IPython.core.display import display, Javascript
@@ -110,8 +110,8 @@ class Viewer(widgets.DOMWidget):
 
                 # If the annotator label is in the main table, also get its stable version
                 stable_id = '~~'.join([c.stable_id for c in candidate.get_contexts()] + [self.annotator.name])
-                existing_annotation_stable = self.session.query(AnnotatorLabel) \
-                    .filter(AnnotatorLabel.stable_id == stable_id).one()
+                existing_annotation_stable = self.session.query(StableLabel) \
+                    .filter(StableLabel.stable_id == stable_id).one()
                 self.annotations_stable[i] = existing_annotation_stable
 
         self._labels_serialized = ','.join(init_labels_serialized)
@@ -194,14 +194,14 @@ class Viewer(widgets.DOMWidget):
                 raise ValueError('Unexpected label returned from widget: ' + str(value) +
                                  '. Expected values are True and False.')
 
-            # If label already exists, just update value (in both Label and AnnotatorLabel)
+            # If label already exists, just update value (in both Label and StableLabel)
             if self.annotations[cid] is not None:
                 if self.annotations[cid].value != value:
                     self.annotations[cid].value        = value
                     self.annotations_stable[cid].value = value
                     self.session.commit()
 
-            # Otherwise, create a Label *and an AnnotatorLabel*
+            # Otherwise, create a Label *and a StableLabel*
             else:
                 candidate = self.candidates[cid]
 
@@ -209,9 +209,9 @@ class Viewer(widgets.DOMWidget):
                 self.annotations[cid] = Label(key=self.annotator, candidate=candidate, value=value)
                 self.session.add(self.annotations[cid])
 
-                # Create stable AnnotatorLabel
+                # Create StableLabel
                 stable_id = '~~'.join([c.stable_id for c in candidate.get_contexts()] + [self.annotator.name])
-                self.annotations_stable[cid] = AnnotatorLabel(stable_id=stable_id, annotator_name=self.annotator.name, value=value, context_stable_ids=[c.stable_id for c in candidate.get_contexts()])
+                self.annotations_stable[cid] = StableLabel(stable_id=stable_id, annotator_name=self.annotator.name, value=value, context_stable_ids=[c.stable_id for c in candidate.get_contexts()])
                 self.session.add(self.annotations_stable[cid])
 
                 self.session.commit()

@@ -1,11 +1,9 @@
 from .meta import SnorkelBase, snorkel_postgres
-import re
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint, Table
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint, Table, PickleType
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.dialects import postgresql
 from snorkel.utils import camel_to_under
-from sqlalchemy.orm.collections import attribute_mapped_collection
 
 
 annotation_key_set_annotation_key_association = \
@@ -140,7 +138,7 @@ class Prediction(AnnotationMixin, SnorkelBase):
     value = Column(Float, nullable=False)
 
 
-class AnnotatorLabel(SnorkelBase):
+class StableLabel(SnorkelBase):
     """
     A special secondary table for preserving labels created by *human annotators* (e.g. in the Viewer)
     in a stable format that does not cascade, and is independent of the Candidate ids.

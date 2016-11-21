@@ -1,4 +1,4 @@
-from .models import Corpus, CandidateSet, AnnotationKeySet, ParameterSet, AnnotatorLabel, Label, Context
+from .models import Corpus, CandidateSet, AnnotationKeySet, ParameterSet, StableLabel, Label, Context
 from .queries import get_or_create_single_key_set
 from sqlalchemy.orm import object_session
 
@@ -12,7 +12,7 @@ def reload_annotator_labels(session, candidate_class, annotator_name):
     
     labels = []
     missed = []
-    for al in session.query(AnnotatorLabel).filter(AnnotatorLabel.annotator_name == annotator_name).all():
+    for al in session.query(StableLabel).filter(StableLabel.annotator_name == annotator_name).all():
 
         # Check for labeled Contexts
         contexts = []

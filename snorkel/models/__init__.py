@@ -39,7 +39,7 @@ from .meta import SnorkelBase, SnorkelSession, snorkel_engine, snorkel_postgres
 from .context import Context, Corpus, Document, Sentence, TemporarySpan, Span
 from .context import construct_stable_id, split_stable_id
 from .candidate import Candidate, CandidateSet, candidate_subclass
-from .annotation import Feature, Label, Prediction, AnnotationKey, AnnotationKeySet, AnnotatorLabel
+from .annotation import Feature, Label, Prediction, AnnotationKey, AnnotationKeySet, StableLabel
 from .parameter import Parameter, ParameterSet
 
 # This call must be performed after all classes that extend SnorkelBase are

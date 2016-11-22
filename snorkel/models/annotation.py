@@ -1,11 +1,10 @@
-from .meta import SnorkelBase
+from .meta import SnorkelBase, snorkel_postgres
 import re
 from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint, Table
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 from snorkel.utils import camel_to_under
 from sqlalchemy.orm.collections import attribute_mapped_collection
-from models.meta import snorkel_postgres
 
 
 annotation_key_set_annotation_key_association = \

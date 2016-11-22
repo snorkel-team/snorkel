@@ -169,7 +169,7 @@ PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
          '-RSB-': ']', '-LSB-': '['}
 
 class CoreNLPHandler:
-    def __init__(self, tok_whitespace=False, split_newline=False):
+    def __init__(self, tok_whitespace=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
         # Kill it when python exits.
@@ -178,17 +178,12 @@ class CoreNLPHandler:
         # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
         self.port = 12345
         self.tok_whitespace = tok_whitespace
-        self.split_newline = split_newline
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
                % (loc, self.port, 600000)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
-        props = ''
-        if self.tok_whitespace:
-            props += '"tokenize.whitespace": "true", '
-        if self.split_newline:
-            props += '"ssplit.eolonly": "true", '
+        props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
         self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse,ner", "outputFormat": "json"}' % (self.port, props)
 
         # Following enables retries to cope with CoreNLP server boot-up latency
@@ -253,7 +248,7 @@ class CoreNLPHandler:
             # In these cases we go with CoreNLP so as not to cause downstream issues but throw a warning
             doc_text = text[block['tokens'][0]['characterOffsetBegin'] : block['tokens'][-1]['characterOffsetEnd']]
             L = len(block['tokens'])
-            parts['text'] = ''.join(t['originalText'] + t.get('after', '') if i < L - 1 else t['originalText'] for i,t in enumerate(block['tokens']))
+            parts['text'] = ''.join(t['originalText'] + t['after'] if i < L - 1 else t['originalText'] for i,t in enumerate(block['tokens']))
             if not diverged and doc_text != parts['text']:
                 diverged = True
                 #warnings.warn("CoreNLP parse has diverged from raw document text!")
@@ -278,10 +273,8 @@ class CoreNLPHandler:
 
 
 class SentenceParser(object):
-    def __init__(self, tok_whitespace=False, split_newline=False, fn=None):
-        self.corenlp_handler = CoreNLPHandler(
-            tok_whitespace=tok_whitespace, split_newline=split_newline
-        )
+    def __init__(self, tok_whitespace=False, fn=None):
+        self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace)
         self.fn              = fn
 
     def parse(self, doc, text):

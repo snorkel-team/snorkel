@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 from snorkel.utils import camel_to_under
 from sqlalchemy.orm.collections import attribute_mapped_collection
-
+from sqlalchemy.dialects import postgresql
 
 annotation_key_set_annotation_key_association = \
     Table('annotation_key_set_annotation_key_association', SnorkelBase.metadata,
@@ -137,8 +137,7 @@ class Prediction(AnnotationMixin, SnorkelBase):
     model with which ParameterSet.
     """
     value = Column(Float, nullable=False)
-    
-from sqlalchemy.dialects import postgresql    
+        
 class AnnotationVector(object):
     """
     A vectorized representation for sparse key value pair annotation for a given candidate
@@ -153,7 +152,8 @@ class AnnotationVector(object):
     # Every annotation is with respect to a candidate
     @declared_attr
     def candidate_id(self):
-        return Column('candidate_id', Integer, ForeignKey('candidate.id'), primary_key=True)
+        # return Column('candidate_id', Integer, ForeignKey('candidate.id'), primary_key=True)
+        return Column('candidate_id', Integer, primary_key=True)
 
 class FeatureVector(AnnotationVector, SnorkelBase):
     """

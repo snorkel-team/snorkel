@@ -3,9 +3,12 @@ import scipy.sparse as sparse
 from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy
 from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
 from .models.annotation import annotation_key_set_annotation_key_association as assoc_table
+from .models.meta import *
 from .utils import get_ORM_instance, ProgressBar
 from snorkel.features.features import get_all_feats
 from sqlalchemy.orm.session import object_session
+import subprocess
+import csv
 
 
 class csr_AnnotationMatrix(sparse.csr_matrix):
@@ -281,23 +284,30 @@ class AnnotationGenerator(object):
         for fname, fn in self.fns:
             yield fname, fn(arg)
 
-def copy_psql(dbname, username):
+def tsv_escape(s):
+    if s is None:
+        return '\\N'
+    if isinstance(s, list) or isinstance(s, set):
+        return '{'+','.join(tsv_escape(p) for p in s)+'}'
+    s = str(s)
+    return s.replace('\"','\\"')
+
+def copy_psql(args):
     '''
     Writes raw rows into psql, bypassing ORM
     '''
-    import subprocess
-    import csv
+    start, end = args
     p = subprocess.Popen([
-        'psql', dbname, '-U', username,
-        '-c', '\COPY Feature(candidate_id, key_id, value) FROM STDIN',
+        'psql', DBNAME, '-U', DBUSER,
+        '-c', '\COPY feature_vector(candidate_id, keys, values) FROM STDIN',
         '--set=ON_ERROR_STOP=true'
         ], stdin=subprocess.PIPE
     )
     writer = csv.writer(p.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
-    for i in xrange(1, 1000):
-        candidate_id = 0
-        key_id = 0
-        value = 1
-        row = [candidate_id, key_id, value]
+    for i in xrange(start, end):
+        candidate_id = i
+        keys = ['key1','feature1','feat2']
+        values = [1,1,1]
+        row = [candidate_id, tsv_escape(keys), tsv_escape(values)]
         writer.writerow(row)
     p.stdin.close()

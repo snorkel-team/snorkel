@@ -1,14 +1,17 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
-from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy
-from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
-from .models.annotation import annotation_key_set_annotation_key_association as assoc_table
-from .models.meta import *
-from .utils import get_ORM_instance, ProgressBar
-from snorkel.features.features import get_all_feats
+from utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy
+from models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
+from models.annotation import annotation_key_set_annotation_key_association as assoc_table
+from models.meta import *
+from utils import get_ORM_instance, ProgressBar
+from features.features import get_all_feats
 from sqlalchemy.orm.session import object_session
+from multiprocessing import Process
 import subprocess
 import csv
+import multiprocessing
+from models.annotation import FeatureVector
 
 
 class csr_AnnotationMatrix(sparse.csr_matrix):
@@ -292,22 +295,47 @@ def tsv_escape(s):
     s = str(s)
     return s.replace('\"','\\"')
 
-def copy_psql(args):
+def _annotate_worker(args):
     '''
-    Writes raw rows into psql, bypassing ORM
+    Writes raw rows into psql, bypassing ORM.
+    Pipes extraction results to the STDIN of a psql COPY process.
+    Efficient in terms both of memory and CPU utilization.
     '''
-    start, end = args
-    p = subprocess.Popen([
+    name, start, end = args
+    copy_process = subprocess.Popen([
         'psql', DBNAME, '-U', DBUSER,
         '-c', '\COPY feature_vector(candidate_id, keys, values) FROM STDIN',
         '--set=ON_ERROR_STOP=true'
         ], stdin=subprocess.PIPE
     )
-    writer = csv.writer(p.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
-    for i in xrange(start, end):
-        candidate_id = i
-        keys = ['key1','feature1','feat2']
-        values = [1,1,1]
-        row = [candidate_id, tsv_escape(keys), tsv_escape(values)]
+    # Create separate engine for each worker to prevent concurrent connection problems
+    engine = create_engine(connection)
+    WorkerSession = sessionmaker(bind=engine)
+    session = WorkerSession()
+    
+    # Computes and pipe rows to the COPY process
+    writer = csv.writer(copy_process.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
+    for candidate in session.query(CandidateSet).filter(CandidateSet.name==name).slice(start, end):
+        keys, values = zip(*list(get_all_feats(candidate)))
+        row = [candidate.id, tsv_escape(keys), tsv_escape(values)]
         writer.writerow(row)
-    p.stdin.close()
+    copy_process.stdin.close()
+    copy_process.kill()
+    
+def extract_features(candidates, feature_set_name):
+    '''
+    Extracts features for candidates in parallel
+    '''
+    # Plan workload for each worker
+    total_jobs = len(candidates)
+    worker_count = min(40, multiprocessing.cpu_count()/2)
+    avg_jobs = 1 + total_jobs / worker_count
+    worker_args = [(candidates.name, i * avg_jobs, (i+1) * avg_jobs) for i in xrange(worker_count)]
+    worker_args[-1] = ((worker_count-1)*avg_jobs, total_jobs)
+        
+    # Fan-out workload to child processes
+    ps = [Process(target = _annotate_worker, args=(arg,)) for arg in worker_args]
+    for p in ps: p.start()
+    for p in ps: p.join()
+    
+    

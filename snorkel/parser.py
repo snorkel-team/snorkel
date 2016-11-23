@@ -10,6 +10,7 @@ import glob
 import json
 import lxml.etree as et
 import os
+import random
 import re
 import requests
 import signal
@@ -50,10 +51,18 @@ class CorpusParser:
 
 
 class DocParser:
-    """Parse a file or directory of files into a set of Document objects."""
-    def __init__(self, path, encoding="utf-8"):
+    """
+    Parse a file or directory of files into a set of Document objects.
+
+    :param path: filesystem path to file or directory to parse
+    :param encoding: file encoding to use, default='utf-8'
+    :param keep: the size of the random fraction of Documents to parse, default=1.0, i.e., all Documents
+
+    """
+    def __init__(self, path, encoding="utf-8", keep=1.0):
         self.path = path
         self.encoding = encoding
+        self.keep = keep
 
     def parse(self):
         """
@@ -67,7 +76,8 @@ class DocParser:
             file_name = os.path.basename(fp)
             if self._can_read(file_name):
                 for doc, text in self.parse_file(fp, file_name):
-                    yield doc, text
+                    if random.random() < self.keep:
+                        yield doc, text
 
     def get_stable_id(self, doc_id):
         return "%s::document:0:0" % doc_id

@@ -1,9 +1,12 @@
+import os
 import re
 import warnings
-try:
-    from nltk.stem.porter import PorterStemmer
-except ImportError:
-    warnings.warn("nltk not installed- some default functionality may be absent.")
+# Travis will not import the PorterStemmer
+if 'CI' not in os.environ:
+    try:
+        from nltk.stem.porter import PorterStemmer
+    except ImportError:
+        warnings.warn("nltk not installed- some default functionality may be absent.")
 
 
 class Matcher(object):

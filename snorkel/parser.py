@@ -6,6 +6,8 @@ from .visual import VisualLinker
 import atexit
 import warnings
 from bs4 import BeautifulSoup, NavigableString, Tag, Comment
+from lxml.html import fromstring
+from lxml import etree
 from collections import defaultdict
 import itertools
 import glob
@@ -19,9 +21,9 @@ import signal
 import codecs
 from subprocess import Popen
 import sys
-import copy
 import gzip
 import json
+from timeit import default_timer as timer
 
 class CorpusParser:
     """Invokes a DocParser and runs the output through a ContextParser to produce a Corpus."""
@@ -348,19 +350,17 @@ class SimpleParser:
             i += 1
 
 class OmniParser(object):
-    def __init__(self, blacklist=["style"],   # html
-                 pdf_path=None, session=None, # visual
-                 lingual=True, tabular=True, visual=True): # lingual, tabular
+    def __init__(self, 
+                 structural=True, blacklist=["style"], flatten=[],    # html (structural)
+                 visual=False, pdf_path=None, session=None,         # visual
+                 lingual=True, strip=True,                          # lingual
+                 tabular=True):                                     # tabular
         self.delim = "<NB>" # NB = New Block
 
-        # lingual setup
-        self.lingual = lingual
-        if self.lingual:
-            self.batch_size = 7500 # TODO: what if this is smaller than a cell?
-            self.lingual_parse = CoreNLPHandler(delim=self.delim[1:-1]).parse
-        else:
-            self.batch_size = 1000000
-            self.lingual_parse = SimpleParser(delim=self.delim).parse
+        # structural (html) setup
+        self.structural = structural
+        self.blacklist = blacklist if isinstance(blacklist, list) else [blacklist]
+        self.flatten = flatten if isinstance(flatten, list) else [flatten]
 
         # visual setup
         self.visual = visual
@@ -370,14 +370,22 @@ class OmniParser(object):
             else:
                 self.create_pdf = None
                 self.vizlink = VisualLinker(pdf_path, session)
+        
+        # lingual setup
+        self.lingual = lingual
+        self.strip = strip
+        if self.lingual:
+            self.batch_size = 7000 # TODO: what if this is smaller than a block?
+            self.lingual_parse = CoreNLPHandler(delim=self.delim[1:-1]).parse
+        else:
+            self.batch_size = 1000000
+            self.lingual_parse = SimpleParser(delim=self.delim).parse
 
         # tabular setup
         self.tabular = tabular
+        if self.tabular:
+            self.table_idx = -1
 
-        # html setup
-        self.blacklist = blacklist
-        if self.blacklist and not isinstance(blacklist, list):
-            raise ValueError("Argument blacklist must be of type <list>")
 
     def parse(self, document, text):
         for phrase in self.parse_structure(document, text):
@@ -391,126 +399,98 @@ class OmniParser(object):
             self.vizlink.parse_visual(document)  # TODO: add warning if pdf file not created
 
     def parse_structure(self, document, text):
-        # Setup
-        if self.tabular:
-            self.table = None
-            self.cell = None
-            self.anc_tags = []
-            self.table_idx = 0
-            self.cell_idx = 0
-            self.row_idx = 0
-            self.col_idx = 0
         self.contents = ""
-        parents = []
-        self.parent = document
-        # xpaths = []
-        # self.xpath = []
-        # xpath_counts = defaultdict(int)
         block_lengths = []
+        self.parent = document
 
-        def enter_tabular(child):
-            if child.name == "table":
-                self.table_grid = defaultdict(int)
-                self.row_idx = 0
-                self.cell_position = 0
-                stable_id = "%s::%s:%s:%s" % \
-                    (document.name, "table", self.table_idx, self.table_idx)
-                self.table = Table(document=document, stable_id=stable_id,
-                                   position=self.table_idx, text=unicode(child))
-                self.parent = self.table
-            elif child.name == "tr":
-                self.col_idx = 0
-            elif child.name in ["td", "th"]:
-                # calculate row_start/col_start
-                while self.table_grid[(self.row_idx, self.col_idx)]:
-                    self.col_idx += 1
-                col_start = self.col_idx
-                row_start = self.row_idx
+        if self.structural:
+            xpaths = []
+            html_attrs = []
+            html_tags = []
 
-                # calculate row_end/col_end
-                row_end = row_start
-                if child.has_attr("rowspan"):
-                    row_end += int(child["rowspan"]) - 1
-                col_end = col_start
-                if child.has_attr("colspan"):
-                    col_end += int(child["colspan"]) - 1
+        if self.tabular:
+            table_info = TableInfo(document, parent=document)
+            parents = []
+        else:
+            table_info = None
 
-                # update table_grid with occupied cells
-                for r, c in itertools.product(range(row_start, row_end+1),
-                                              range(col_start, col_end+1)):
-                    self.table_grid[r, c] = 1
+        def flatten(node):
+            # if a child of this node is in self.flatten, construct a string
+            # containing all text/tail results of the tree based on that child
+            # and append that to the tail of the previous child or head of node
+            
+            num_children = len(node)
+            for i, child in enumerate(node[::-1]):
+                if child.tag in self.flatten:
+                    j = num_children - 1 - i # child index walking backwards
+                    contents = ['']
+                    for descendant in child.getiterator():
+                        if descendant.text and descendant.text.strip():
+                            contents.append(descendant.text)
+                        if descendant.tail and descendant.tail.strip():
+                            contents.append(descendant.tail)
+                    if j == 0:
+                        if node.text is None:
+                            node.text = ''
+                        node.text += ' '.join(contents)
+                    else:
+                        if node[j-1].tail is None:
+                            node[j-1].tail = ''
+                        node[j-1].tail += ' '.join(contents)
+                    node.remove(child)
 
-                # construct cell
-                parts = defaultdict(list)
-                parts["document"] = document
-                parts["table"] = self.table
-                parts["row_start"] = row_start
-                parts["row_end"] = row_end
-                parts["col_start"] = col_start
-                parts["col_end"] = col_end
-                parts["position"] = self.cell_position
-                parts["text"] = unicode(child)
-                parts["html_tag"] = child.name
-                parts["html_attrs"] = [] #split_html_attrs(child.attrs.items())
-                # parts["html_anc_tags"] = list(self.anc_tags) # create a copy
-                parts["stable_id"] = "%s::%s:%s:%s:%s" % \
-                                     (document.name, "cell",
-                                      self.table.position, row_start, col_start)
-                self.cell = Cell(**parts)
-                self.parent = self.cell
-            self.anc_tags.append(child.name)
-
-        def exit_tabular(child):
-            self.anc_tags.pop()
-            if child.name == "table":
-                self.table = None
-                self.table_idx += 1
-                self.parent = document
-            elif child.name == "tr":
-                self.row_idx += 1
-            elif child.name in ["td", "th"]:
-                self.cell = None
-                self.col_idx += 1
-                self.cell_idx += 1
-                self.cell_position += 1
-                self.parent = self.table
-
-        def parse_tag(tag, document):
-            if isinstance(tag, Comment):
+        def parse_node(node, table_info=None):
+            if node.tag is etree.Comment:
                 return
-            if self.blacklist and tag.name in self.blacklist:
+            if self.blacklist and node.tag in self.blacklist:
                 return
 
-            # if any(type(child)==NavigableString and unicode(child) != u'\n' for child in tag.children):
-            #     text = tag.get_text(' ')
-            #     tag.clear()
-            #     tag.string = text
-            for child in tag.children:
-                if isinstance(child, NavigableString):
-                    self.contents += child
-                    self.contents += self.delim
-                    parents.append(self.parent)
-                    xpaths.append(tag.name)
-                    block_lengths.append(len(child) + len(self.delim))
-                else: # isinstance(child, Tag) = True
-                    if self.tabular:
-                        enter_tabular(child)
+            if self.tabular:
+                self.table_idx = table_info.enter_tabular(node, self.table_idx)
 
-                    parse_tag(child, document)
+            if self.flatten:
+                flatten(node) # flattens children of node that are in the 'flatten' list
 
-                    if self.tabular:
-                        exit_tabular(child)
+            for field in ['text', 'tail']:
+                text = getattr(node, field)
+                if text is not None:
+                    if self.strip:
+                        text = text.strip()
+                    if len(text):
+                        self.contents += text
+                        self.contents += self.delim
+                        block_lengths.append(len(text) + len(self.delim))
+                
+                        if self.tabular:
+                            parents.append(table_info.parent)
+                        
+                        if self.structural:
+                            context_node = node.getparent() if field=='tail' else node
+                            xpaths.append(tree.getpath(context_node))
+                            html_tags.append(context_node.tag)
+                            html_attrs.append(context_node.attrib.items())
+            
+            for child in node:
+                if child.tag=='table':
+                    parse_node(child, TableInfo(document=table_info.document))
+                else:
+                    parse_node(child, table_info)
+            
+            if self.tabular:
+                table_info.exit_tabular(node)
 
         # Parse document and store text in self.contents, padded with self.delim
-        soup = BeautifulSoup(text, 'lxml')
-        parse_tag(soup, document)
+        root = fromstring(text) # lxml.html.fromstring()
+        tree = etree.ElementTree(root)
+        document.text = text
+        parse_node(root, table_info)
         block_char_end = np.cumsum(block_lengths)
 
         content_length = len(self.contents)
         parsed = 0
         parent_idx = 0
-        phrase_num = 0
         position = 0
+        phrase_num = 0
         while parsed < content_length:
             batch_end = parsed + \
                         self.contents[parsed:parsed + self.batch_size].rfind(self.delim) + \
@@ -520,122 +500,112 @@ class OmniParser(object):
                 while parsed + char_end > block_char_end[parent_idx]:
                     parent_idx += 1
                     position = 0
-                parent = parents[parent_idx]
                 parts['document'] = document
                 parts['phrase_num'] = phrase_num
-                parts['position'] = position
                 parts['stable_id'] = \
                     "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
-                if isinstance(parent, Document):
-                    parts['html_tag'] = 'html'
-                    # parts['html_attrs']     = parent.html_attrs
-                elif isinstance(parent, Table):
-                    parts['html_tag'] = 'table'
-                    parts['table'] = parent
-                elif isinstance(parent, Cell):
-                    parts['html_tag'] = parent.html_tag
-                    parts['table'] = parent.table
-                    parts['cell'] = parent
-                    parts['row_start'] = parent.row_start
-                    parts['row_end'] = parent.row_end
-                    parts['col_start'] = parent.col_start
-                    parts['col_end'] = parent.col_end
-                else:
-                    import pdb; pdb.set_trace()
-                    raise NotImplementedError("Phrase parent must be Document, Table, or Cell")
-                yield Phrase(**parts)
-                phrase_num += 1
+                if self.structural:
+                    parts['xpath'] =  xpaths[parent_idx]
+                    parts['html_tag'] = html_tags[parent_idx]
+                    parts['html_attrs'] = html_attrs[parent_idx]
+                if self.tabular:
+                    parent = parents[parent_idx]
+                    parts = table_info.apply_tabular(parts, parent, position)
+                yield Phrase(**parts) 
                 position += 1
+                phrase_num += 1
             parsed = batch_end
 
+class TableInfo():
+    def __init__(self, document,
+                 table=None, table_grid=defaultdict(int),
+                 cell=None, cell_idx=0,
+                 row_idx=0, col_idx=0,
+                 parent=None):
+        self.document = document
+        self.table = table
+        self.table_grid = table_grid
+        self.cell = cell
+        self.cell_idx = cell_idx
+        self.row_idx = row_idx
+        self.col_idx = col_idx
+        self.parent = parent
 
-# class OmniParser(object):
-#     def __init__(self, pdf_path=None, session=None):
-#         self.delim = "<NC>" # NC = New Cell 
-#         self.corenlp_handler = CoreNLPHandler(delim=self.delim[1:-1])
-#         self.vizlink = VisualLinker(pdf_path, session) if (pdf_path and session) else None
+    def enter_tabular(self, node, table_idx):
+        if node.tag == "table":
+            table_idx += 1
+            self.table_grid.clear()
+            self.row_idx = 0
+            self.cell_position = 0
+            stable_id = "%s::%s:%s:%s" % \
+                (self.document.name, "table", table_idx, table_idx)
+            self.table = Table(document=self.document, stable_id=stable_id,
+                                position=table_idx)
+            self.parent = self.table
+        elif node.tag == "tr":
+            self.col_idx = 0
+        elif node.tag in ["td", "th"]:
+            # calculate row_start/col_start
+            while self.table_grid[(self.row_idx, self.col_idx)]:
+                self.col_idx += 1
+            col_start = self.col_idx
+            row_start = self.row_idx
 
-#     def parse(self, document, text):
-#         soup = BeautifulSoup(text, 'lxml')
-#         self.table_idx = -1
-#         self.phrase_idx = 0      
-#         for phrase in self.parse_tag(soup, document):
-#             yield phrase
-#         if self.vizlink:
-#             self.vizlink.session.commit()
-#             self.vizlink.visual_parse_and_link(document) 
+            # calculate row_end/col_end
+            row_end = row_start
+            if "rowspan" in node.attrib:
+                row_end += int(node.get("rowspan")) - 1
+            col_end = col_start
+            if "colspan" in node.attrib:
+                col_end += int(node.get("colspan")) - 1
 
-#     def parse_tag(self, tag, document, table=None, cell=None, anc_tags=[], anc_attrs=[]):
-#         if any(isinstance(child, NavigableString) and unicode(child)!=u'\n' for child in tag.contents):
-#             # TODO/NOTE: do '?' replacement for hardware only
-#             text = tag.get_text(' ').replace('?','%')
-#             tag.clear()
-#             tag.string = text
-#         for child in tag.contents:
-#             if isinstance(child, NavigableString):
-#                 for parts in self.corenlp_handler.parse(document, unicode(child)):
-#                     parts['document'] = document
-#                     parts['table'] = table
-#                     parts['cell'] = cell
-#                     parts['phrase_id'] = self.phrase_idx
-#                     # for now, don't pay attention to rowspan/colspan
-#                     parts['row_start'] = self.row_num
-#                     parts['row_end'] = parts['row_start']
-#                     parts['col_start'] = self.col_num
-#                     parts['col_end'] = parts['col_start']
-#                     parts['html_tag'] = tag.name
-#                     parts['html_attrs'] = tag.attrs
-#                     parts['html_anc_tags'] = anc_tags
-#                     parts['html_anc_attrs'] = anc_attrs
-#                     parts['page']   = [None] * len(parts['words'])
-#                     parts['top']    = [None] * len(parts['words'])
-#                     parts['left']   = [None] * len(parts['words'])
-#                     parts['bottom'] = [None] * len(parts['words'])
-#                     parts['right']  = [None] * len(parts['words'])
-#                     parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'phrase', self.phrase_idx, self.phrase_idx)
-#                     yield Phrase(**parts)
-#                     self.phrase_idx += 1
-#             else: # isinstance(child, Tag) = True
-#                 # TODO: find replacement for this check to reset table to None
-#                 if "table" not in [parent.name for parent in child.parents]:
-#                     table = None
-#                     cell = None
-#                     self.row_num = None
-#                     self.col_num = None
-#                 if child.name == "table":
-#                     self.table_idx += 1
-#                     self.row_num = -1
-#                     self.cell_idx = -1
-#                     stable_id = "%s::%s:%s:%s" % (document.name, 'table', self.table_idx, self.table_idx)
-#                     table = Table(document=document, stable_id=stable_id, position=self.table_idx, text=unicode(child))
-#                 elif child.name == "tr":
-#                     self.row_num += 1
-#                     self.col_num = -1
-#                 elif child.name in ["td","th"]:
-#                     self.cell_idx += 1
-#                     self.col_num += 1
-#                     parts = defaultdict(list)
-#                     parts['document'] = document
-#                     parts['table'] = table
-#                     parts['position'] = self.cell_idx
-#                     parts['row_start'] = self.row_num
-#                     parts['row_end'] = parts['row_start']
-#                     parts['col_start'] = self.col_num
-#                     parts['col_end'] = parts['col_start']
-#                     parts['text'] = unicode(child)
-#                     parts['html_tag'] = child.name
-#                     parts['html_attrs'] = None #split_html_attrs(child.attrs.items())
-#                     parts['html_anc_tags'] = anc_tags 
-#                     parts['html_anc_attrs'] = None #anc_attrs
-#                     parts['stable_id'] = "%s::%s:%s:%s" % (document.name, 'cell', table.position, self.cell_idx)
-#                     cell = Cell(**parts)
-#                 # NOTE: recent addition; does this mess up counts?
-#                 elif child.name == "style":
-#                     continue
-#                 # FIXME: making so many copies is hacky and wasteful; use a stack?
-#                 temp_anc_tags = copy.deepcopy(anc_tags)
-#                 temp_anc_tags.append(child.name)
-#                 temp_anc_attrs = None #copy.deepcopy(anc_attrs)
-#                 # temp_anc_attrs.extend(split_html_attrs(child.attrs.items()))
-#                 for phrase in self.parse_tag(child, document, table, cell, temp_anc_tags, temp_anc_attrs):
-#                     yield phrase
+            # update table_grid with occupied cells
+            for r, c in itertools.product(range(row_start, row_end+1),
+                                            range(col_start, col_end+1)):
+                self.table_grid[r, c] = 1
+
+            # construct cell
+            parts = defaultdict(list)
+            parts["document"] = self.document
+            parts["table"] = self.table
+            parts["row_start"] = row_start
+            parts["row_end"] = row_end
+            parts["col_start"] = col_start
+            parts["col_end"] = col_end
+            parts["position"] = self.cell_position
+            parts["stable_id"] = "%s::%s:%s:%s:%s" % \
+                                    (self.document.name, "cell",
+                                     self.table.position, row_start, col_start)
+            self.cell = Cell(**parts)
+            self.parent = self.cell
+        return table_idx
+
+    def exit_tabular(self, node):
+        if node.tag == "table":
+            self.table = None
+            self.parent = self.document
+        elif node.tag == "tr":
+            self.row_idx += 1
+        elif node.tag in ["td", "th"]:
+            self.cell = None
+            self.col_idx += 1
+            self.cell_idx += 1
+            self.cell_position += 1
+            self.parent = self.table
+
+    def apply_tabular(self, parts, parent, position):
+        parts['position'] = position
+        if isinstance(parent, Document):
+            pass
+        elif isinstance(parent, Table):
+            parts['table'] = parent
+        elif isinstance(parent, Cell):
+            parts['table'] = parent.table
+            parts['cell'] = parent
+            parts['row_start'] = parent.row_start
+            parts['row_end'] = parent.row_end
+            parts['col_start'] = parent.col_start
+            parts['col_end'] = parent.col_end
+        else:
+            raise NotImplementedError("Phrase parent must be Document, Table, or Cell")
+        return parts

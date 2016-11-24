@@ -1,11 +1,11 @@
-from .meta import SnorkelBase
+from .meta import SnorkelBase, snorkel_postgres
 import re
 from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint, Table
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 from snorkel.utils import camel_to_under
 from sqlalchemy.orm.collections import attribute_mapped_collection
-
+from sqlalchemy.dialects import postgresql
 
 annotation_key_set_annotation_key_association = \
     Table('annotation_key_set_annotation_key_association', SnorkelBase.metadata,
@@ -62,7 +62,7 @@ class AnnotationMixin(object):
 
     An annotation is a value associated with a Candidate. Examples include labels, features,
     and predictions.
-
+    
     New types of annotations can be defined by creating an annotation class and corresponding annotation, for example:
 
     .. code-block:: python
@@ -137,3 +137,32 @@ class Prediction(AnnotationMixin, SnorkelBase):
     model with which ParameterSet.
     """
     value = Column(Float, nullable=False)
+        
+class AnnotationVector(object):
+    """
+    A vectorized representation for sparse key value pair annotation for a given candidate
+    """
+    
+    keys = Column(postgresql.ARRAY(String), nullable=False) if snorkel_postgres else Column(String)
+    values = Column(postgresql.ARRAY(Float)) if snorkel_postgres else Column(String)
+
+    @declared_attr
+    def __tablename__(self):
+        return camel_to_under(self.__name__)
+    # Every annotation is with respect to a candidate
+    @declared_attr
+    def candidate_id(self):
+        # return Column('candidate_id', Integer, ForeignKey('candidate.id'), primary_key=True)
+        return Column('candidate_id', Integer, primary_key=True)
+
+class FeatureVector(AnnotationVector, SnorkelBase):
+    """
+    Stores features for each candidate
+    """ 
+    pass
+
+class LabelVector(AnnotationVector, SnorkelBase):
+    """
+    Stores labels for each candidate
+    """ 
+    pass

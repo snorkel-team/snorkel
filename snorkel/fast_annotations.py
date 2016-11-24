@@ -1,11 +1,10 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
-from sqlalchemy.sql import bindparam, func, select
 from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy
 from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
 from .models.annotation import annotation_key_set_annotation_key_association as assoc_table
 from .utils import get_ORM_instance, ProgressBar
-from .features import get_span_feats
+from .features.features import get_all_feats
 from sqlalchemy.orm.session import object_session
 
 
@@ -260,7 +259,7 @@ class LabelManager(AnnotationManager):
 class FeatureManager(AnnotationManager):
     """Apply feature generators to the candidates, generating Feature annotations"""
     def __init__(self):
-        super(FeatureManager, self).__init__(Feature, default_f=get_span_feats)
+        super(FeatureManager, self).__init__(Feature, default_f=get_all_feats)
 
 
 def _to_annotation_generator(fns):
@@ -281,3 +280,24 @@ class AnnotationGenerator(object):
     def __call__(self, arg):
         for fname, fn in self.fns:
             yield fname, fn(arg)
+
+def copy_psql(dbname, username):
+    '''
+    Writes raw rows into psql, bypassing ORM
+    '''
+    import subprocess
+    import csv
+    p = subprocess.Popen([
+        'psql', dbname, '-U', username,
+        '-c', '\COPY Feature(candidate_id, key_id, value) FROM STDIN',
+        '--set=ON_ERROR_STOP=true'
+        ], stdin=subprocess.PIPE
+    )
+    writer = csv.writer(p.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
+    for i in xrange(1, 1000):
+        candidate_id = 0
+        key_id = 0
+        value = 1
+        row = [candidate_id, key_id, value]
+        writer.writerow(row)
+    p.stdin.close()

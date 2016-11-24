@@ -102,6 +102,7 @@ class Document(Context):
     __tablename__ = 'document'
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
     name = Column(String, unique=True, nullable=False)
+    text = Column(String)
     meta = Column(PickleType)
 
     __mapper_args__ = {
@@ -197,7 +198,6 @@ class Table(Context):
                      backref=backref('tables', cascade='all, delete-orphan'),
                      foreign_keys=document_id)
     position = Column(Integer, nullable=False)
-    text = Column(Text, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'table',
@@ -230,7 +230,6 @@ class Cell(Context):
     col_start = Column(Integer)
     col_end = Column(Integer)
     position = Column(Integer)
-    text = Column(Text, nullable=False)
     html_tag = Column(Text)
     if snorkel_postgres:
         html_attrs = Column(postgresql.ARRAY(String))
@@ -269,7 +268,7 @@ class PhraseMixin(object):
     def is_tabular(self):
         return False
 
-    def is_html(self):
+    def is_structural(self):
         return False
 
     def __repr__(self):
@@ -342,7 +341,7 @@ class TabularMixin(object):
 
 
 class VisualMixin(object):
-    """ A collection of visual features"""
+    """ A collection of visual attributes."""
     int_array_type = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
     page    = Column(int_array_type)
     top     = Column(int_array_type)
@@ -360,14 +359,14 @@ class VisualMixin(object):
             self.text))
 
 
-class HTMLMixin(object):
-    """ A collection of visual features"""
+class StructuralMixin(object):
+    """ A collection of structural attributes."""
     str_array_type = postgresql.ARRAY(String) if snorkel_postgres else PickleType
     xpath = Column(String)
     html_tag = Column(String)
     html_attrs = Column(str_array_type)
 
-    def is_html(self):
+    def is_structural(self):
         return self.html_tag is not None
 
     def __repr__(self):
@@ -378,7 +377,8 @@ class HTMLMixin(object):
 
 
 # PhraseMixin must come last in arguments to not ovewrite is_* methods
-class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, HTMLMixin, PhraseMixin):
+# class Phrase(Context, StructuralMixin, PhraseMixin): # Memex variant
+class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, PhraseMixin):
     """A Phrase subclass with Lingual, Tabular, Visual, and HTML attributes."""
     __tablename__ = 'phrase'
     id = Column(Integer, ForeignKey('context.id'), primary_key=True)
@@ -408,13 +408,44 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, HTMLMixin, Phrase
                     self.table.position,
                     rows,
                     cols,
-                    self.phrase_num,
+                    self.position,
                     self.text))
         else:
             return ("Phrase (Doc: %s, Index: %s, Text: %s)" % 
                 (self.document.name,
                 self.phrase_num, 
                 self.text))
+
+    def _asdict(self):
+        return {
+            # base
+            'id': self.id,
+            # 'document': self.document,
+            'phrase_num': self.phrase_num,
+            'text': self.text,
+            # tabular
+            # 'table': self.table,
+            # 'cell': self.cell,
+            'row_start': self.row_start,
+            'row_end': self.row_end,
+            'col_start': self.col_start,
+            'col_end': self.col_end,
+            'position': self.position,
+            # lingual
+            'words': self.words,
+            'char_offsets': self.char_offsets,
+            'lemmas': self.lemmas,
+            'pos_tags': self.pos_tags,
+            'ner_tags': self.ner_tags,
+            'dep_parents': self.dep_parents,
+            'dep_labels': self.dep_labels,
+            # visual
+            'page': self.page,
+            'top': self.top,
+            'bottom': self.bottom,
+            'left': self.left,
+            'right': self.right
+        }
 
 
 class TemporaryContext(object):
@@ -572,11 +603,17 @@ class TemporarySpan(TemporaryContext):
     def get_span(self, sep=" "):
         return self.get_attrib_span('words', sep)
 
-    def has_visual_features(self):
-        return self.get_attrib_tokens('page')[0] is not None
+    def is_lingual(self):
+        return self.parent.is_lingual()
+    
+    def is_structural(self):
+        return self.parent.is_structural()
 
-    def has_table_features(self):
-        return isinstance(self.parent, Phrase)
+    def is_visual(self):
+        return self.parent.is_visual()
+
+    def is_tabular(self):
+        return self.parent.is_tabular()
 
     def __contains__(self, other_span):
         return (self.parent == other_span.parent 

@@ -1,12 +1,17 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
-from sqlalchemy.sql import bindparam, func, select
-from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy
-from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
-from .models.annotation import annotation_key_set_annotation_key_association as assoc_table
-from .utils import get_ORM_instance, ProgressBar
-from .features.features import get_all_feats
+from utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy
+from models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
+from models.annotation import annotation_key_set_annotation_key_association as assoc_table
+from models.meta import *
+from utils import get_ORM_instance, ProgressBar
+from features.features import get_all_feats
 from sqlalchemy.orm.session import object_session
+from multiprocessing import Process
+import subprocess
+import csv
+import multiprocessing
+from models.annotation import FeatureVector
 
 
 class csr_AnnotationMatrix(sparse.csr_matrix):
@@ -147,61 +152,42 @@ class AnnotationManager(object):
             f = self.default_f
 
         # Prepares helpers
-        annotation_generator = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
+        annotation_generator = AnnotationGenerator(f) if hasattr(f, '__iter__') else f
 
-        # Prepares queries
-        key_select_query = select([AnnotationKey.id]).where(AnnotationKey.name == bindparam('name'))
-
-        key_insert_query = AnnotationKey.__table__.insert()
-
-        assoc_select_query = select([func.count()]).select_from(assoc_table)
-        assoc_select_query = assoc_select_query.where(assoc_table.c.annotation_key_set_id == bindparam('ksid'))
-        assoc_select_query = assoc_select_query.where(assoc_table.c.annotation_key_id == bindparam('kid'))
-
-        assoc_insert_query = assoc_table.insert()
-
-        anno_update_query = self.annotation_cls.__table__.update()
-        anno_update_query = anno_update_query.where(self.annotation_cls.candidate_id == bindparam('cid'))
-        anno_update_query = anno_update_query.where(self.annotation_cls.key_id == bindparam('kid'))
-        anno_update_query = anno_update_query.values(value=bindparam('value'))
-
-        anno_insert_query = self.annotation_cls.__table__.insert()
-
-        # Generates annotations for CandidateSet
-        print "Generating annotations for %d candidates..." % len(candidate_set)
+        # Load existing key_id of all annotation keys
+        key_ids = {aKey.name:aKey.id for aKey in session.query(AnnotationKey)}
+        # New id starts with max + 1 when added to the key count
+        key_id_offset = max(key_ids.itervalues()) + 1 - len(key_ids) if key_ids else 0 
+        annotations = []
+        
+        # print "Generating %s Annotations for CandidateSet %s..." % (key_set.name, candidate_set.name)
         pb = ProgressBar(len(candidate_set))
+        # Generates annotations for CandidateSetrc
         for i, candidate in enumerate(candidate_set):
             pb.bar(i)
+            # Each candidate have unique 
+            existing_key_ids = set()
             for key_name, value in annotation_generator(candidate):
-                # Check if the AnnotationKey already exists, and gets its id
-                key_id = session.execute(key_select_query, {'name': key_name}).first()
-                if key_id is not None:
-                    key_id = key_id[0]
-
-                # If expand_key_set is True, then we will always insert or update the Annotation
-                if expand_key_set:
-
-                    # If key_name does not exist in the database already, creates a new record
-                    if key_id is None:
-                        key_id = session.execute(key_insert_query, {'name': key_name}).inserted_primary_key[0]
-
-                    # Adds the AnnotationKey to the AnnotationKeySet
-                    if session.execute(assoc_select_query, {'ksid': key_set.id, 'kid': key_id}).scalar() == 0:
-                        session.execute(assoc_insert_query, {'annotation_key_set_id': key_set.id, 'annotation_key_id': key_id})
-
-                    # Updates the annotation value
-                    res = session.execute(anno_update_query, {'cid': candidate.id, 'kid': key_id, 'value': value})
-                    if res.rowcount == 0 and value != 0:
-                        session.execute(anno_insert_query, {'candidate_id': candidate.id, 'key_id': key_id, 'value': value})
-
-                # Else, if the key already exists in the database, we just update the annotation value
-                elif key_id is not None:
-                    res = session.execute(anno_update_query, {'cid': candidate.id, 'kid': key_id, 'value': value})
-                    if res.rowcount == 0 and value != 0:
-                        session.execute(anno_insert_query, {'candidate_id': candidate.id, 'key_id': key_id, 'value': value})
+                # Get if the AnnotationKey already exists, or assign a new id
+                key_id = key_ids.get(key_name, None)
+                if key_id is None:
+                    if not expand_key_set: continue
+                    key_id = key_id_offset + len(key_ids)
+                    key_ids[key_name] = key_id
+                    # These operations are fast; leave in inner loop for simplicity
+                    session.execute(AnnotationKey.__table__.insert(), {'id':key_id, 'name':key_name})
+                    session.execute(assoc_table.insert(),{'annotation_key_set_id': key_set.id, 'annotation_key_id': key_id})
+                if key_id in existing_key_ids: continue
+                # Record new annotation
+                existing_key_ids.add(key_id)
+                annotations.append({'candidate_id': candidate.id, 'key_id': key_id, 'value': value})
+            
         pb.close()
+        print 'Bulk upserting %d annotations...' % len(annotations)
+        # bulk insert candidate annotations
+        session.execute(self.annotation_cls.__table__.insert(), annotations)
+        print 'Done.'
         session.commit()
-
         print "Loading sparse %s matrix..." % self.annotation_cls.__name__
         return self.load(session, candidate_set, key_set)
 
@@ -291,3 +277,65 @@ def _to_annotation_generator(fns):
         for f in fns:
             yield f.__name__, f(c)
     return fn_gen
+
+class AnnotationGenerator(object):
+
+    def __init__(self, fns):
+        self.fns = [(fn.__name__, fn) for fn in fns]
+
+    def __call__(self, arg):
+        for fname, fn in self.fns:
+            yield fname, fn(arg)
+
+def tsv_escape(s):
+    if s is None:
+        return '\\N'
+    if isinstance(s, list) or isinstance(s, set):
+        return '{'+','.join(tsv_escape(p) for p in s)+'}'
+    s = str(s)
+    return s.replace('\"','\\"')
+
+def _annotate_worker(args):
+    '''
+    Writes raw rows into psql, bypassing ORM.
+    Pipes extraction results to the STDIN of a psql COPY process.
+    Efficient in terms both of memory and CPU utilization.
+    '''
+    name, start, end = args
+    copy_process = subprocess.Popen([
+        'psql', DBNAME, '-U', DBUSER,
+        '-c', '\COPY feature_vector(candidate_id, keys, values) FROM STDIN',
+        '--set=ON_ERROR_STOP=true'
+        ], stdin=subprocess.PIPE
+    )
+    # Create separate engine for each worker to prevent concurrent connection problems
+    engine = create_engine(connection)
+    WorkerSession = sessionmaker(bind=engine)
+    session = WorkerSession()
+    
+    # Computes and pipe rows to the COPY process
+    writer = csv.writer(copy_process.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
+    for candidate in session.query(CandidateSet).filter(CandidateSet.name==name).slice(start, end):
+        keys, values = zip(*list(get_all_feats(candidate)))
+        row = [candidate.id, tsv_escape(keys), tsv_escape(values)]
+        writer.writerow(row)
+    copy_process.stdin.close()
+    copy_process.kill()
+    
+def extract_features(candidates, feature_set_name):
+    '''
+    Extracts features for candidates in parallel
+    '''
+    # Plan workload for each worker
+    total_jobs = len(candidates)
+    worker_count = min(40, multiprocessing.cpu_count()/2)
+    avg_jobs = 1 + total_jobs / worker_count
+    worker_args = [(candidates.name, i * avg_jobs, (i+1) * avg_jobs) for i in xrange(worker_count)]
+    worker_args[-1] = ((worker_count-1)*avg_jobs, total_jobs)
+        
+    # Fan-out workload to child processes
+    ps = [Process(target = _annotate_worker, args=(arg,)) for arg in worker_args]
+    for p in ps: p.start()
+    for p in ps: p.join()
+    
+    

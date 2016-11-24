@@ -14,7 +14,7 @@ from wand.color import Color
 from bs4 import BeautifulSoup
 from editdistance import eval as editdist
 from selenium import webdriver
-from httplib import BadStatusLine
+import httplib
 
 class VisualLinker():
     def __init__(self, pdf_path, session, time=False, verbose=False, very_verbose=False):
@@ -119,9 +119,8 @@ class VisualLinker():
                         if len(content) > 0:  # Ignore empty characters
                             word_id = (page_num, i)
                             pdf_word_list.append((word_id, content))
-                            # TODO: add char width approximation
                             coordinate_map[word_id] = (page_num, y_min_line, xmin, y_max_line,
-                                                       xmax)  # TODO: check this order
+                                                       xmax)
                             block_coordinates[word_id] = (y_min_block, x_min_block)
                             i += 1
         # sort pdf_word_list by page, block top then block left, top, then left
@@ -375,7 +374,7 @@ class VisualLinker():
         # boxes is a list of 5-tuples (page, top, left, bottom, right)
         """
         boxes = [get_box(span) for c in candidates for span in c.get_arguments()]
-        self.display_boxes(boxes, page_num=page_num, display=display, alternate_colors=True)
+        self.display_boxes(boxes, page_num=page_num, display_img=display, alternate_colors=True)
 
     def display_words(self, target=None, page_num=1, display=True):
         boxes = []
@@ -388,37 +387,55 @@ class VisualLinker():
                         phrase.left[i],
                         phrase.bottom[i],
                         phrase.right[i]))
-        self.display_boxes(boxes, page_num=page_num, display=display)
+        self.display_boxes(boxes, page_num=page_num, display_img=display)
 
     def pdf_to_img(self, page_num):
+        """
+        :param page_num: page number to convert to wand image object
+        :return: wand Image
+        """
         img = Image(filename='{}[{}]'.format(self.pdf_file, page_num-1))
         page_width, page_height = self.pdf_dim
         img.resize(page_width, page_height)
         return img
 
-    def create_pdf(self, document_name, text):
+    def create_pdf(self, document_name, text, page_dim=None, split=True):
+        """
+        Creates a pdf file given an html string
+        :param document_name: html file to convert
+        :param split: if False, return pdf as one page
+        :param text: html content to convert to pdf
+        :param page_dim: pdf page dimensions in 'mm', 'cm', 'in' or 'px' (ex: page_dim=('5in', '7in')),
+        if not specified, Letter is the default format
+        """
         pdf_file = self.pdf_path + document_name + '.pdf'
-        # TODO : add width
         jscode = """
             var text = arguments[0];
             var pdf_file = arguments[1];
             var webPage = require("webpage");
             var page = webPage.create();
-            page.viewportSize = { width: 1920, height: 1080 };
+            {}
             var expectedContent = text;
             page.setContent(expectedContent, "");
             page.render(pdf_file);
             phantom.exit();
         """
+        if split:
+            if page_dim:
+                width, height = page_dim
+                jscode = jscode.format('page.paperSize = {{ width: "{}", height: "{}", margin: "1cm"}};'.format(width, height))
+            else:
+                jscode = jscode.format('page.paperSize = {format: "Letter", orientation: "portrait", margin: "1cm"};')
+        else:
+            jscode = jscode.format('')
         driver = webdriver.PhantomJS('phantomjs')
         driver.command_executor._commands['executePhantomScript'] = (
-        'POST', '/session/{}/phantom/execute'.format(driver.session_id))
+            'POST', '/session/{}/phantom/execute'.format(driver.session_id))
+        driver.execute('executePhantomScript', {'script': jscode, 'args': [text, pdf_file]})
         try:
-            driver.execute('executePhantomScript', {'script': jscode, 'args': [text, pdf_file]})
             driver.close()
-        except BadStatusLine: # TODO: fix this
+        except httplib.BadStatusLine:
             pass
-
 
 
 def get_box(span):

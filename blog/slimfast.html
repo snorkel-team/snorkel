@@ -1,0 +1,483 @@
+
+<!DOCTYPE html><html>
+
+<head>
+<meta charset="utf-8">
+<title>Data Reliability</title>
+<style type="text/css">
+body {
+  font-family: Helvetica, arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background-color: white;
+  padding: 30px; }
+
+body > *:first-child {
+  margin-top: 0 !important; }
+body > *:last-child {
+  margin-bottom: 0 !important; }
+
+a {
+  color: #4183C4; }
+a.absent {
+  color: #cc0000; }
+a.anchor {
+  display: block;
+  padding-left: 30px;
+  margin-left: -30px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0; }
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 20px 0 10px;
+  padding: 0;
+  font-weight: bold;
+  -webkit-font-smoothing: antialiased;
+  cursor: text;
+  position: relative; }
+
+h1:hover a.anchor, h2:hover a.anchor, h3:hover a.anchor, h4:hover a.anchor, h5:hover a.anchor, h6:hover a.anchor {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA09pVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoMTMuMCAyMDEyMDMwNS5tLjQxNSAyMDEyLzAzLzA1OjIxOjAwOjAwKSAgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OUM2NjlDQjI4ODBGMTFFMTg1ODlEODNERDJBRjUwQTQiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OUM2NjlDQjM4ODBGMTFFMTg1ODlEODNERDJBRjUwQTQiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo5QzY2OUNCMDg4MEYxMUUxODU4OUQ4M0REMkFGNTBBNCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo5QzY2OUNCMTg4MEYxMUUxODU4OUQ4M0REMkFGNTBBNCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PsQhXeAAAABfSURBVHjaYvz//z8DJYCRUgMYQAbAMBQIAvEqkBQWXI6sHqwHiwG70TTBxGaiWwjCTGgOUgJiF1J8wMRAIUA34B4Q76HUBelAfJYSA0CuMIEaRP8wGIkGMA54bgQIMACAmkXJi0hKJQAAAABJRU5ErkJggg==) no-repeat 10px center;
+  text-decoration: none; }
+
+h1 tt, h1 code {
+  font-size: inherit; }
+
+h2 tt, h2 code {
+  font-size: inherit; }
+
+h3 tt, h3 code {
+  font-size: inherit; }
+
+h4 tt, h4 code {
+  font-size: inherit; }
+
+h5 tt, h5 code {
+  font-size: inherit; }
+
+h6 tt, h6 code {
+  font-size: inherit; }
+
+h1 {
+  font-size: 28px;
+  color: black; }
+
+h2 {
+  font-size: 24px;
+  border-bottom: 1px solid #cccccc;
+  color: black; }
+
+h3 {
+  font-size: 18px; }
+
+h4 {
+  font-size: 16px; }
+
+h5 {
+  font-size: 14px; }
+
+h6 {
+  color: #777777;
+  font-size: 14px; }
+
+p, blockquote, ul, ol, dl, li, table, pre {
+  margin: 15px 0; }
+
+hr {
+  background: transparent url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAECAYAAACtBE5DAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBNYWNpbnRvc2giIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OENDRjNBN0E2NTZBMTFFMEI3QjRBODM4NzJDMjlGNDgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OENDRjNBN0I2NTZBMTFFMEI3QjRBODM4NzJDMjlGNDgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo4Q0NGM0E3ODY1NkExMUUwQjdCNEE4Mzg3MkMyOUY0OCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo4Q0NGM0E3OTY1NkExMUUwQjdCNEE4Mzg3MkMyOUY0OCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PqqezsUAAAAfSURBVHjaYmRABcYwBiM2QSA4y4hNEKYDQxAEAAIMAHNGAzhkPOlYAAAAAElFTkSuQmCC) repeat-x 0 0;
+  border: 0 none;
+  color: #cccccc;
+  height: 4px;
+  padding: 0;
+}
+
+body > h2:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+body > h1:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+  body > h1:first-child + h2 {
+    margin-top: 0;
+    padding-top: 0; }
+body > h3:first-child, body > h4:first-child, body > h5:first-child, body > h6:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+
+a:first-child h1, a:first-child h2, a:first-child h3, a:first-child h4, a:first-child h5, a:first-child h6 {
+  margin-top: 0;
+  padding-top: 0; }
+
+h1 p, h2 p, h3 p, h4 p, h5 p, h6 p {
+  margin-top: 0; }
+
+li p.first {
+  display: inline-block; }
+li {
+  margin: 0; }
+ul, ol {
+  padding-left: 30px; }
+
+ul :first-child, ol :first-child {
+  margin-top: 0; }
+
+dl {
+  padding: 0; }
+  dl dt {
+    font-size: 14px;
+    font-weight: bold;
+    font-style: italic;
+    padding: 0;
+    margin: 15px 0 5px; }
+    dl dt:first-child {
+      padding: 0; }
+    dl dt > :first-child {
+      margin-top: 0; }
+    dl dt > :last-child {
+      margin-bottom: 0; }
+  dl dd {
+    margin: 0 0 15px;
+    padding: 0 15px; }
+    dl dd > :first-child {
+      margin-top: 0; }
+    dl dd > :last-child {
+      margin-bottom: 0; }
+
+blockquote {
+  border-left: 4px solid #dddddd;
+  padding: 0 15px;
+  color: #777777; }
+  blockquote > :first-child {
+    margin-top: 0; }
+  blockquote > :last-child {
+    margin-bottom: 0; }
+
+table {
+  padding: 0;border-collapse: collapse; }
+  table tr {
+    border-top: 1px solid #cccccc;
+    background-color: white;
+    margin: 0;
+    padding: 0; }
+    table tr:nth-child(2n) {
+      background-color: #f8f8f8; }
+    table tr th {
+      font-weight: bold;
+      border: 1px solid #cccccc;
+      margin: 0;
+      padding: 6px 13px; }
+    table tr td {
+      border: 1px solid #cccccc;
+      margin: 0;
+      padding: 6px 13px; }
+    table tr th :first-child, table tr td :first-child {
+      margin-top: 0; }
+    table tr th :last-child, table tr td :last-child {
+      margin-bottom: 0; }
+
+img {
+  max-width: 100%; }
+
+span.frame {
+  display: block;
+  overflow: hidden; }
+  span.frame > span {
+    border: 1px solid #dddddd;
+    display: block;
+    float: left;
+    overflow: hidden;
+    margin: 13px 0 0;
+    padding: 7px;
+    width: auto; }
+  span.frame span img {
+    display: block;
+    float: left; }
+  span.frame span span {
+    clear: both;
+    color: #333333;
+    display: block;
+    padding: 5px 0 0; }
+span.align-center {
+  display: block;
+  overflow: hidden;
+  clear: both; }
+  span.align-center > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px auto 0;
+    text-align: center; }
+  span.align-center span img {
+    margin: 0 auto;
+    text-align: center; }
+span.align-right {
+  display: block;
+  overflow: hidden;
+  clear: both; }
+  span.align-right > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px 0 0;
+    text-align: right; }
+  span.align-right span img {
+    margin: 0;
+    text-align: right; }
+span.float-left {
+  display: block;
+  margin-right: 13px;
+  overflow: hidden;
+  float: left; }
+  span.float-left span {
+    margin: 13px 0 0; }
+span.float-right {
+  display: block;
+  margin-left: 13px;
+  overflow: hidden;
+  float: right; }
+  span.float-right > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px auto 0;
+    text-align: right; }
+
+code, tt {
+  margin: 0 2px;
+  padding: 0 5px;
+  white-space: nowrap;
+  border: 1px solid #eaeaea;
+  background-color: #f8f8f8;
+  border-radius: 3px; }
+
+pre code {
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  border: none;
+  background: transparent; }
+
+.highlight pre {
+  background-color: #f8f8f8;
+  border: 1px solid #cccccc;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px; }
+
+pre {
+  background-color: #f8f8f8;
+  border: 1px solid #cccccc;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px; }
+  pre code, pre tt {
+    background-color: transparent;
+    border: none; }
+
+sup {
+    font-size: 0.83em;
+    vertical-align: super;
+    line-height: 0;
+}
+* {
+	-webkit-print-color-adjust: exact;
+}
+@media screen and (min-width: 914px) {
+    body {
+        width: 854px;
+        margin:0 auto;
+    }
+}
+@media print {
+	table, pre {
+		page-break-inside: avoid;
+	}
+	pre {
+		word-wrap: break-word;
+	}
+}
+
+.top-banner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+}
+
+#top-banner-img {
+    opacity: 0.5;
+    max-width: none;
+    max-height: 350px;
+}
+
+#main-title {
+    position: relative;
+    margin-top: 100px;
+    margin-bottom: 100px;
+    padding: 10px;
+    font-size: 40px;
+    background: #333333;
+    color: #f8f8f8;
+    z-index: 10;
+}
+
+blockquote {
+    font-size: large;
+    font-weight: 300;
+}
+
+p.img {
+    text-align: center;
+}
+</style>
+</head>
+<body>
+<span class="top-banner">
+    <img id="top-banner-img" src="img/fake_data.jpg" alt="image alt text">
+</span>
+
+<p id="main-title">SLiMFast:<br />Assessing the Reliability of Data</p>
+<p><em>November 24, 2016</em></p>
+<p>Post by Theo Rekatsinas and Chris Ré </p>
+
+<p><em>And referencing work by other <a href="http://cs.stanford.edu/people/chrismre/#students">members of Hazy Research</a></em>.</p>
+
+<p><img src="img/dilbert.jpg" alt="image alt text"></p> 
+
+<p> Data has the ability to change the world like oil did in the early twentieth century. Like oil, poorly refined data can contain impurities. In data, these errors can range from stale information, like <q>Obama wins the election</q>, to malevolent fearmongering reports such as <q>10,000 NYC residents possibly exposed to Ebola.</q>
+</p>
+
+<p>
+The above situation has been getting a lot of attention lately as <a href="http://fortune.com/2016/11/19/zuckerberg-fake-news-facebook/">tech-giants</a> are looking for methods to identify fake news articles. This is a great opportunity to explore how methods that identify inaccurate data and estimate the reliability of data sources can help in the fight against fake news. Recently, we developed an incredibly simple method called <a href="https://arxiv.org/abs/1512.06474"><strong>SLiMFast</strong></a> (SIGMOD17) that has three key properties: 
+</p>
+
+<ul>
+<li><p>It is based on a simple and well-studied statistical model for estimating the reliability of data sources.</p></li>
+<li><p>Our approach allows users to leverage simple features, such as who the author of an article is or the number of curse words in a news article, to describe the reliability of data sources and assess the truthfulness of data.</p></li>
+<li><p>Our approach can scale to large corpora.</p></li>
+</ul>
+<p>SLiMFast can not only detect inaccuracies in data but also enables non-experts to obtain insights as to why sources might be unreliable. 
+</p>
+
+<h2 id="toc_0">Detecting Inaccurate Data and Hoax Sources</h2>
+<blockquote>
+  Estimating the accuracy of data sources is key to assessing the reliability of data. In SLiMFast we model source accuracy as the probability that the information reported by a data source is correct. 
+</blockquote>
+
+<p> In today's deluge of information, it is common that different sources provide data that describes the same object, e.g., a real-world event, crime rates, financial data, etc. When errors are not deliberate but accidental and random <i>plurality</i> allows us to detect and correct inaccurate data. Specifically, the collective wisdom of the <i>majority</i> suffices to identify the truth for different objects. However, reality can be quite different. Sources can report fake data on purpose. They may also collude and copy from each other. Under these circumstances, plurality does not work anymore since majority fails because <a href="https://www.buzzfeed.com/alexandrearagao/noticias-falsas-lava-jato-facebook-1?utm_term=.odRqndXKe#.bj2jGR1vo">fake news stories may be shared and replicated dramatically more often than actual news</a>. As a consequence, we need more sophisticated models to handle these scenarios.
+</p>
+
+<p><img src="img/features.jpg" alt="image alt text"></p> 
+
+<blockquote>
+  Simple features can help identify inaccurate data and unreliable sources. Consider news articles: The author, number of misspellings or the use of curse words may be enough to detect a hoax article.
+</blockquote>
+
+<p> In SLiMFast, we follow a very simple approach to identify the reliability of data: <i> We model the accuracy of a data source as the probability that the information reported by the source is correct. Then, we ask users to provide features they believe to be informative of the reliability of sources and use those to estimate the accuracy of data sources.</i>. Despite being simple, the observation that features of a data source can be indicative of its accuracy has been overlooked by previous approaches. Now, with all of the politically-charged talk about banning <q>fake news</q> sites, it seems appropriate to examine how reasoning about source features can help assess the reliability of media outlets and detect fake news stories.
+</p>
+
+<h3 id="toc_0">A Case Study: How to Spot Fake News?</h3> 
+<p>
+Hoax stories are not something new. However, given how fast social networking can make stories go viral and the fact that even humans may have trouble <a href="https://www.engadget.com/2016/11/21/students-have-trouble-spotting-fake-news/">spotting fake news</a>, how can one spot fake news? In general, detecting fake news stories can be difficult. However, there are cases where simple rules can help. Recent articles in reputable news portals such as <a href="https://www.washingtonpost.com/news/fact-checker/wp/2016/11/22/the-fact-checkers-guide-for-detecting-fake-news/">Washington Post</a>, <a href="http://www.nbcnews.com/news/us-news/five-tips-how-spot-fake-news-online-n687226">NBC News</a>, and <a href="https://medium.com/@timoreilly/how-i-detect-fake-news-ebe455d9d4a7#.bvsybtx0j">O'Reilly Media</a> list a few guidelines:
+</p>
+<p>(i) Consider the domain: Is it a newly registered web domain similar to an existing one? For example consider the hoax website <a href="http://abcnews.com.co/">abcnews.com.co</a> versus the reliable <a href="http://abcnews.go.com/">abcnews.go.com</a>.
+</p>
+<p>(ii) Check the author. A reputable and known journalist is less likely to publish a fake article.
+<p>(iii) Check the <q>Contact Us</q> information.</p>
+<p>(iv) Consider web-related statistics of the domain where an article was posted, e.g., how long has the site been around, or how often is it referenced by other sites that have been determined to be reputable.</p>
+<p>(v) Crosscheck the content of a source against reputable sources. For example, when a reputable fact-checking organization like <a href="http://www.snopes.com/">Snopes</a> or <a href="http://www.politifact.com/">Politifact</a> reports a story as false, that's a strong signal.
+</p>
+
+<p> All these features can be informative of the accuracy of sources and useful for detecting errors in data. In SLiMFast, we can support all these features and rely on classical statistical theory to combine them.
+</p>
+
+<h3 id="toc_0">Case Study Continued: Identifying False Demonstration-Reports in the News</h3>
+<p> In our paper, we used SLiMFast to identify false mentions of demonstrations in news articles. We considered a collection of articles from online news domains and blog posts reporting demonstrations in Africa from January, 2015 to April, 2015. Our goal was to identify if a reported demonstration occurred in reality.
+</p>
+
+<p><b><i> In our experiments we find that SLiMFast can very accurately distinguish correct demonstration reports from false ones with an accuracy of 90%. On the other hand state-of-the-art methods give results that are only 70% accurate. </i></b>
+</p>
+
+<p> For our analysis we used features corresponding to web-related traffic statistics of the domain publishing each of the articles. For each domain we obtained the following traffic statistics from Alexa.com: 
+<p>(i) Global rank and country rank</p>
+<p>(ii) Bounce rate, i.e., the percentage of visitors to a particular website who navigate away from the site after viewing only one page</p> 
+<p>(iii) Daily page views per visitor and daily time on site</p>
+<p>(iv) Search visits</p>
+<p>(v) Total sites linking in, a proxy for PageRank</p>
+</p>
+
+<p><b><i> We found that the most important features for identifying the accuracy of data sources correspond to daily usage statistics, such as the <q>Bounce Rate</q> (with low bounce rate implying higher accuracy), and the <q>Daily Time on Site</q> (with low implying low accuracy). On the other hand, the number of <q>Total Sites Linking In</q>, i.e., a proxy for PageRank, is not found to be important. The latter is rather controversial as PageRank is considered a strong signal of reliability by <a href="https://medium.com/@timoreilly/how-i-detect-fake-news-ebe455d9d4a7#.bvsybtx0j">many</a>.</i></b> 
+</p>
+
+<p>
+In our paper, we show that using source features to estimate the reliability of data is not only applicable to news but also extends to other domains including finance and crowdsourcing among others. SLiMFast not only beats state-of-the-art methods but also helps answer a series of open problems in data integration, such as how to estimate the accuracy of a source when no data has been obtained from it. All this is described in detail in our <a href="https://arxiv.org/abs/1512.06474"> SIGMOD 2017 paper</a>. 
+</p>
+
+<p> So what is happening under the hood? How are the different signals described above combined into a unified model?
+</p>
+
+<h2 id="toc_0">SLiMFast: Putting it All Together</h2>
+
+<p>For simplicity of exposition, we describe SLiMFast's model for the domain of fake news. A more  technical description is provided in our paper. Consider a collection of facts stated in news articles. Different news articles may report if a fact is correct or false. SLiMFast's goal is to estimate the truthfulness of each fact, i.e., if the fact is indeed correct or false. To do so, SLiMFast estimates the accuracy of each media outlet (viewed as a data source here) publishing each article that reports on a fact. Different articles can provide conflicting values for the same fact. Therefore, the true value of each fact is unknown. Moreover, the accuracy of each media outlet is unknown. To capture this uncertainty we associate each fact with a random variable and the accuracy of outlets with weight parameters in a statistical model over these random variables. This way we express the problem of finding the true value for each fact and the accuracy of each media outlet as a statistical learning and inference problem.
+</p>
+
+<blockquote>
+  In SLiMFast users only need to think of features and not algorithms.
+</blockquote>
+
+<p>
+The statistical model used in SLiMFast corresponds to a <em>probabilistic graphical model</em>, a standard tool for encoding probability distributions over complex domains. This model allows us to integrate features of the media outlets and the news articles they publish, as well as richer correlations across the media outlets, e.g., copying behavior. SLiMFast's probabilistic graphical model is implemented over <a href="http://deepdive.stanford.edu/">DeepDive</a>, our lab's <em> declarative probabilistic learning and inference framework</em>. As a result, SLiMFast is easily extensible. Users only need to specify features and do not have to worry about algorithms!
+
+
+<p>
+We find that in many cases relying only on source features allows SLiMFast to determine the true value of facts and estimate the accuracy of data sources very accurately. In these cases, SLiMFast's model corresponds to <em>a simple logistic regression model</em>. Logistic regression is a standard model from statistical theory that is used to predict whether a target variable (e.g., a fact here) is <q>True</q> or <q>False</q>, based on observed characteristics of the variable (e.g., which news media outlets reported the fact to be correct or false). Given such a logistic regression model we can estimate the truthfulness of a fact by computing the posterior Pr(Fact = <q>True</q> | Articles) as:
+</p>
+
+<p style="text-align:center"><img src="img/logreg.jpg" alt="image alt text" width="70%"> </p>
+ <p>where <i>Z</i> is a normalizing constant to obtain a valid probability distribution and I[] corresponds to the indicator function taking value one when its arguments evaluates to true. In this model, we assume that the accuracy of a news article is the same as the accuracy of the news media outlet that published that article.
+ </p>
+
+ <blockquote>
+  In many cases, SLiMFast uses a simple logistic regression model parameterized by source features to identify inaccurate data and estimate the accuracy of data sources. SLiMFast can support richer correlations as it is built on top of a probabilistic graphical model.
+</blockquote>
+
+<p> In the above logistic regression model the accuracy of the media outlets is unknown. This is where SLiMFast uses the features describing the media outlet to estimate the accuracy of each outlet. To do so we again use a simple logistic model:
+<p style="text-align:center"><img src="img/mediaacc.jpg" alt="image alt text" width="70%"> </p>
+ <p>where <i>W</i> is a weight vector capturing the effect of features on the accuracy of a media outlet. The estimated accuracies are then to parameterize the logistic regression model shown above. Since the accuracies are estimated via a logistic function over source features the overall model corresponds to logistic regression model parameterized by the media outlet features. The overall model is shown in the figure below.
+</p>
+
+ <p style="text-align:center"><img src="img/slimfast.jpg" alt="image alt text" width="40%"> </p>
+ <p><em>A schematic of SLiMFast's discriminative model. The target variables correspond to the latent truth for facts reported in the news. The model parameters are weights capturing the effect of features on the media outlet accuracies.</em></p>
+
+<p> 
+Now, all we need to do is just use some training data, e.g., facts from news articles labeled as correct or false, to train the logistic regression model. In our paper, we show that due to the presence of features describing data sources, <b><i>a surprisingly small amount of labeled data&mdash;of the order of features&mdash;suffices to estimate the accuracy of data sources and truthfulness of data with high confidence.</i></b>
+</p>
+
+<p style="text-align:center"><img src="img/accuracydemossimple.jpg" alt="image alt text" width="70%"></p> 
+<p><em>Comparing SLiMFast against a state-of-the-art method that does not consider source features: With a small number of training examples, SLiMFast can predict very accurately if the facts reported in news articles are correct or not. A detailed comparison against diverse baselines is reported in our paper.</em></p>
+
+<p> Even when no training data is available, we can obtain guarantees on SLiMFast's output. In our paper we characterize under which scenarios unsupervised learning methods can be used to estimate the accuracy of data sources and the reliability of data with high confidence. We show that in reality there is a trade-off between using supervised and unsupervised learning methods and design an optimizer that automatically identifies which of the two methods will yield a more accurate model.
+
+<p> Finally, handling scale is not a problem for SLiMFast. Since SLiMFast is implemented on top of <a href="http://deepdive.stanford.edu/">DeepDive</a>, we are able to rely on some of our lab members&#39; award-winning work on <a href="http://stanford.edu/%7Ecdesa/papers/icml2016_hogwild_gibbs.pdf">asynchronous Gibbs sampling</a> and DeepDive&#39;s <a href="https://arxiv.org/abs/1403.7550">efficient Gibbs sampler</a> to scale to large corpora. As for making the collection of source features and training examples easier, we are excited to explore how <a href="https://github.com/HazyResearch/snorkel"><strong>Snorkel</strong></a>, our lab's latest platform for <em>programmatic weak-supervision</em> and lightweight information extraction, can be used together with SLiMFast. This might be the secret to winning the fight against fake news!
+ </p>
+
+<h2 id="toc_0">Next Steps</h2>
+
+<p>A few things we are excited about:</p>
+
+<ul>
+<li><p>In our paper we report some exciting results on the domain of Genomics research. We are actively collaborating with some bio-friends to examine how SLiMFast can help assess the truthfulness of facts reported in the scientific literature at a large-scale.</p></li>
+<li><p>We aim to examine if SLiMFast can be applied to streaming domains such as monitoring social media, online news portals, etc.</p></li>
+<li><p>We are actively exploring how the principles behind SLiMFast can be extended to other problems in the data integration realm such as data cleaning.</p></li>
+</ul>
+
+
+</body>
+
+</html>

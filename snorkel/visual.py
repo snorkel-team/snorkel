@@ -1,6 +1,7 @@
 from .models import Phrase
 import re
 import subprocess
+import os
 from collections import OrderedDict, defaultdict
 from pprint import pprint
 from timeit import default_timer as timer
@@ -420,7 +421,7 @@ class VisualLinker():
                 jscode = jscode.format('page.paperSize = {format: "Letter", orientation: "portrait", margin: "1cm"};')
         else:
             jscode = jscode.format('')
-        driver = webdriver.PhantomJS('phantomjs')
+        driver = webdriver.PhantomJS('phantomjs', service_log_path=os.path.devnull)
         driver.command_executor._commands['executePhantomScript'] = (
             'POST', '/session/{}/phantom/execute'.format(driver.session_id))
         driver.execute('executePhantomScript', {'script': jscode, 'args': [text, pdf_file]})

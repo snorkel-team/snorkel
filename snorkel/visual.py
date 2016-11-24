@@ -55,7 +55,7 @@ class VisualLinker():
         self.extract_html_words()
         if self.vverbose: pprint(self.html_word_list[:5])
         if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
-        
+
 
         tic = timer()
         self.link_lists(search_max=200)

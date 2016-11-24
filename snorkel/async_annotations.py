@@ -1,7 +1,8 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
 from utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy
-from models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
+from models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet,\
+    meta
 from models.annotation import annotation_key_set_annotation_key_association as assoc_table
 from models.meta import *
 from utils import get_ORM_instance, ProgressBar
@@ -21,12 +22,12 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
     """
     def __init__(self, arg1, **kwargs):
         # Note: Currently these need to return None if unset, otherwise matrix copy operations break...
-        self.candidate_set   = kwargs.pop('candidate_set', None)
+        self.candidate_set = kwargs.pop('candidate_set', None)
         self.candidate_index = kwargs.pop('candidate_index', None)
-        self.row_index       = kwargs.pop('row_index', None)
-        self.key_set         = kwargs.pop('key_set', None)
-        self.key_index       = kwargs.pop('key_index', None)
-        self.col_index       = kwargs.pop('col_index', None)
+        self.row_index = kwargs.pop('row_index', None)
+        self.key_set = kwargs.pop('key_set', None)
+        self.key_index = kwargs.pop('key_index', None)
+        self.col_index = kwargs.pop('col_index', None)
 
         # Note that scipy relies on the first three letters of the class to define matrix type...
         super(csr_AnnotationMatrix, self).__init__(arg1, **kwargs)
@@ -115,7 +116,7 @@ class AnnotationManager(object):
         candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
         existing_key_set = session.query(AnnotationKeySet).filter(AnnotationKeySet.name == new_key_set).first()
         if existing_key_set is not None:
-            raise ValueError('AnnotationKeySet with name ' + new_key_set +
+            raise ValueError('AnnotationKeySet with name ' + new_key_set + 
                              ' already exists in the database. Please specify a new name.')
         key_set = AnnotationKeySet(name=new_key_set)
         session.add(key_set)
@@ -147,7 +148,7 @@ class AnnotationManager(object):
         """
         # Prepares arguments
         candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
-        key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
+        key_set = get_ORM_instance(AnnotationKeySet, session, key_set)
         if f is None:
             f = self.default_f
 
@@ -176,7 +177,7 @@ class AnnotationManager(object):
                     key_ids[key_name] = key_id
                     # These operations are fast; leave in inner loop for simplicity
                     session.execute(AnnotationKey.__table__.insert(), {'id':key_id, 'name':key_name})
-                    session.execute(assoc_table.insert(),{'annotation_key_set_id': key_set.id, 'annotation_key_id': key_id})
+                    session.execute(assoc_table.insert(), {'annotation_key_set_id': key_set.id, 'annotation_key_id': key_id})
                 if key_id in existing_key_ids: continue
                 # Record new annotation
                 existing_key_ids.add(key_id)
@@ -203,7 +204,7 @@ class AnnotationManager(object):
         :param key_set: Can either be an AnnotationKeySet instance or the name of one
         """
         candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
-        key_set       = get_ORM_instance(AnnotationKeySet, session, key_set)
+        key_set = get_ORM_instance(AnnotationKeySet, session, key_set)
 
         # Create sparse matrix in LIL format for incremental construction
         X = sparse.lil_matrix((len(candidate_set), len(key_set)))
@@ -218,7 +219,7 @@ class AnnotationManager(object):
 
                 # Create both mappings
                 cid_to_row[cid] = j
-                row_to_cid[j]   = cid
+                row_to_cid[j] = cid
 
         # Second, we query to construct the column index map
         kid_to_col = {}
@@ -230,7 +231,7 @@ class AnnotationManager(object):
 
                 # Create both mappings
                 kid_to_col[kid] = j
-                col_to_kid[j]   = kid
+                col_to_kid[j] = kid
 
         # Construct the query
         """
@@ -290,52 +291,63 @@ class AnnotationGenerator(object):
 def tsv_escape(s):
     if s is None:
         return '\\N'
-    if isinstance(s, list) or isinstance(s, set):
-        return '{'+','.join(tsv_escape(p) for p in s)+'}'
-    s = str(s)
-    return s.replace('\"','\\"')
+    # Make sure feature names are still uniquely encoded in ascii
+    s = unicode(s).encode('ascii','replace')
+    return s.replace('\"', '\\"')
 
-def _annotate_worker(args):
+def array_tsv_escape(vals):
+    return '{' + ','.join(tsv_escape(p) for p in vals) + '}'
+
+def _annotate_worker(name, start, end):
     '''
     Writes raw rows into psql, bypassing ORM.
     Pipes extraction results to the STDIN of a psql COPY process.
     Efficient in terms both of memory and CPU utilization.
     '''
-    name, start, end = args
     copy_process = subprocess.Popen([
         'psql', DBNAME, '-U', DBUSER,
         '-c', '\COPY feature_vector(candidate_id, keys, values) FROM STDIN',
         '--set=ON_ERROR_STOP=true'
-        ], stdin=subprocess.PIPE
+        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     # Create separate engine for each worker to prevent concurrent connection problems
-    engine = create_engine(connection)
+    engine = create_engine(meta.connection)
     WorkerSession = sessionmaker(bind=engine)
     session = WorkerSession()
     
     # Computes and pipe rows to the COPY process
     writer = csv.writer(copy_process.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
-    for candidate in session.query(CandidateSet).filter(CandidateSet.name==name).slice(start, end):
+    candidates = session.query(CandidateSet).filter(CandidateSet.name == name).one().candidates
+    for candidate in candidates.slice(start, end):
         keys, values = zip(*list(get_all_feats(candidate)))
-        row = [candidate.id, tsv_escape(keys), tsv_escape(values)]
+        row = [candidate.id, array_tsv_escape(keys), array_tsv_escape(values)]
         writer.writerow(row)
+    _out, err = copy_process.communicate()
+#     if _out:
+#         print "standard output of subprocess:"
+#         print _out
+    if err:
+        print "Error of the COPY subprocess:"
+        print err
     copy_process.stdin.close()
-    copy_process.kill()
     
-def extract_features(candidates, feature_set_name):
+def extract_features(candidates, parallel=0):
     '''
     Extracts features for candidates in parallel
     '''
     # Plan workload for each worker
     total_jobs = len(candidates)
-    worker_count = min(40, multiprocessing.cpu_count()/2)
+    worker_count = parallel if parallel else min(40, multiprocessing.cpu_count() / 2)
     avg_jobs = 1 + total_jobs / worker_count
-    worker_args = [(candidates.name, i * avg_jobs, (i+1) * avg_jobs) for i in xrange(worker_count)]
-    worker_args[-1] = ((worker_count-1)*avg_jobs, total_jobs)
+    worker_args = [(candidates.name, i * avg_jobs, (i + 1) * avg_jobs) for i in xrange(worker_count)]
+    worker_args[-1] = (candidates.name, (worker_count - 1) * avg_jobs, total_jobs)
         
-    # Fan-out workload to child processes
-    ps = [Process(target = _annotate_worker, args=(arg,)) for arg in worker_args]
-    for p in ps: p.start()
-    for p in ps: p.join()
-    
+    if worker_count == 1:
+        # Run without subprocess for easier debugging
+        _annotate_worker(*worker_args[0])
+    else:
+        # Fan-out workload to child processes
+        ps = [Process(target=_annotate_worker, args=arg) for arg in worker_args]
+        for p in ps: p.start()
+        for p in ps: p.join()
     

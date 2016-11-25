@@ -12,3 +12,5 @@ ipywidgets
 pandas
 sklearn
 wand
+selenium
+editdistance

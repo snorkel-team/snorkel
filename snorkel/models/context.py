@@ -91,6 +91,9 @@ class Context(SnorkelBase):
         'polymorphic_on': type
     }
 
+    def get_sentence_generator(self):
+        raise NotImplementedError()
+
 
 class Document(Context):
     """
@@ -104,6 +107,10 @@ class Document(Context):
     __mapper_args__ = {
         'polymorphic_identity': 'document',
     }
+
+    def get_sentence_generator(self):
+        for sentence in self.sentences:
+            yield sentence
 
     def __repr__(self):
         return "Document " + str(self.name)
@@ -162,6 +169,9 @@ class Sentence(Context):
             'entity_cids': self.entity_cids,
             'entity_types': self.entity_types
         }
+
+    def get_sentence_generator(self):
+        yield self
 
     def __repr__(self):
         return "Sentence" + str((self.document, self.position, self.text))

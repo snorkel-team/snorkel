@@ -13,4 +13,3 @@ pandas
 sklearn
 wand
 selenium
-editdistance

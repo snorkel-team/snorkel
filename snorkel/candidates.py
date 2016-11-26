@@ -280,3 +280,15 @@ class OmniNgrams(Ngrams):
         for phrase in context.phrases:
             for ts in Ngrams.apply(self, phrase):
                 yield ts
+
+
+class PhraseToSpan(CandidateSpace):
+    """
+    Defines the space of candidates as all Phrases in a Document _x_,
+    """
+
+    def apply(self, context):
+        if not isinstance(context, Document):
+            raise TypeError("Input Contexts to PhraseToSpan.apply() must be of type Document")
+        for phrase in context.phrases:
+            yield TemporarySpan(char_start=0, char_end=len(phrase.text)-1, parent=phrase)

@@ -42,6 +42,15 @@ class TestVisualFeatures(unittest.TestCase):
         # confirm that linking accuracy is above some reasonable threshold (70%?)
         pass
 
+    def test_create_pdf(self):
+        viz = VisualLinker(None, None)
+        document_name = 'BC337-D'
+        viz.pdf_path = DATA_PATH
+        with open(os.path.join(DATA_PATH, 'html_string.pkl'), 'rb') as f:
+            text = cPickle.load(f)
+        viz.create_pdf(document_name, text)
+        self.assertTrue(os.path.isfile(viz.pdf_path + document_name + '.pdf'))
+        os.system('rm {}'.format(viz.pdf_path + document_name + '.pdf'))
 
 if __name__ == '__main__':
     unittest.main()

@@ -476,8 +476,8 @@ class OmniParser(object):
                             context_node = node.getparent() if field=='tail' else node
                             xpaths.append(tree.getpath(context_node))
                             html_tags.append(context_node.tag)
-                            html_attrs.append(context_node.attrib.items())
-            
+                            html_attrs.append(map(lambda x: '='.join(x), context_node.attrib.items()))
+                            
             for child in node:
                 if child.tag=='table':
                     parse_node(child, TableInfo(document=table_info.document))

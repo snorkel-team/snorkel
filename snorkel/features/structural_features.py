@@ -34,6 +34,9 @@ def strlib_unary_features(span):
 
     yield "TAG_" + get_tag(span), DEF_VALUE
 
+    for attr in get_attributes(span):
+        yield "HTML_ATTR_" + attr, DEF_VALUE
+
     yield "PARENT_TAG_" + get_parent_tag(span), DEF_VALUE
 
     prev_tags = get_prev_sibling_tags(span)

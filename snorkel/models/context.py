@@ -281,8 +281,6 @@ class LingualMixin(object):
     """A collection of lingual attributes."""
     int_array_type = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
     str_array_type = postgresql.ARRAY(String)  if snorkel_postgres else PickleType
-    words = Column(str_array_type)
-    char_offsets = Column(int_array_type)
     lemmas = Column(str_array_type)
     pos_tags = Column(str_array_type)
     ner_tags = Column(str_array_type)
@@ -290,7 +288,7 @@ class LingualMixin(object):
     dep_labels = Column(str_array_type)
 
     def is_lingual(self):
-        return True
+        return self.lemmas is not None
 
     def __repr__(self):
         return ("LingualPhrase (Doc: %s, Index: %s, Text: %s)" %
@@ -388,6 +386,10 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, 
                             foreign_keys=document_id)
     phrase_num = Column(Integer, nullable=False) # unique Phrase number per document
     text = Column(Text, nullable=False)
+    str_array_type = postgresql.ARRAY(String)  if snorkel_postgres else PickleType
+    int_array_type = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
+    words = Column(str_array_type)
+    char_offsets = Column(int_array_type)
 
     __mapper_args__ = {
         'polymorphic_identity': 'phrase',

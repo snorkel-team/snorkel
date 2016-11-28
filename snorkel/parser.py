@@ -336,7 +336,11 @@ class HTMLParser(DocParser):
         return fpath.endswith('html') # includes both .html and .xhtml
 
 
-class SimpleParser:
+class SimpleTokenizer:
+    """
+    A trivial alternative to CoreNLP which parses (tokenizes) text on 
+    whitespace only using the split() command.
+    """
     def __init__(self, delim):
         self.delim = delim
 
@@ -344,8 +348,13 @@ class SimpleParser:
         i = 0
         for text in contents.split(self.delim):
             if not len(text.strip()): continue
+            words = text.split()
+            char_offsets = [0] + list(np.cumsum(map(lambda x: len(x) + 1, words)))[:-1]
+            text = ' '.join(words)
             stable_id = construct_stable_id(document, 'phrase', i, i)
             yield {'text': text,
+                   'words': words,
+                   'char_offsets': char_offsets,
                    'stable_id': stable_id}
             i += 1
 
@@ -379,8 +388,8 @@ class OmniParser(object):
             self.batch_size = 7000 # TODO: what if this is smaller than a block?
             self.lingual_parse = CoreNLPHandler(delim=self.delim[1:-1]).parse
         else:
-            self.batch_size = 1000000
-            self.lingual_parse = SimpleParser(delim=self.delim).parse
+            self.batch_size = int(1e6)
+            self.lingual_parse = SimpleTokenizer(delim=self.delim).parse
 
         # tabular setup
         self.tabular = tabular

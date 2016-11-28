@@ -4,6 +4,8 @@ featurization:
       size: 3
       combinations: True
       isolated: True
+    word_feature:
+      window: 7
   table:
     unary_features:
       attrib:

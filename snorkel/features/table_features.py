@@ -36,7 +36,8 @@ def tablelib_unary_features(span):
     if not span.is_tabular(): return
     phrase = span.parent
     for attrib in settings.featurization.table.unary_features.attrib:
-        for ngram in get_cell_ngrams(span, n_max=settings.featurization.table.unary_features.get_cell_ngrams.max,
+        for ngram in get_cell_ngrams(span, 
+                                     n_max=settings.featurization.table.unary_features.get_cell_ngrams.max,
                                      attrib=attrib):
             yield "CELL_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
         for row_num in range(phrase.row_start, phrase.row_end + 1):

@@ -1,9 +1,7 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
 from utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy
-from models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet,\
-    meta
-from models.annotation import annotation_key_set_annotation_key_association as assoc_table
+from models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
 from models.meta import *
 from utils import get_ORM_instance, ProgressBar
 from features.features import get_all_feats
@@ -13,6 +11,7 @@ import subprocess
 import csv
 import multiprocessing
 from models.annotation import FeatureVector
+from itertools import izip
 
 
 class csr_AnnotationMatrix(sparse.csr_matrix):
@@ -25,7 +24,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         self.candidate_set = kwargs.pop('candidate_set', None)
         self.candidate_index = kwargs.pop('candidate_index', None)
         self.row_index = kwargs.pop('row_index', None)
-        self.key_set = kwargs.pop('key_set', None)
+        self.keys = kwargs.pop('keys', None)
         self.key_index = kwargs.pop('key_index', None)
         self.col_index = kwargs.pop('col_index', None)
 
@@ -43,8 +42,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
 
     def get_key(self, j):
         """Return the AnnotationKey object corresponding to column j"""
-        return object_session(self.key_set).query(AnnotationKey)\
-                .filter(AnnotationKey.id == self.col_index[j]).one()
+        return self.keys[j]
 
     def get_col_index(self, key):
         """Return the cow index of the AnnotationKey"""
@@ -80,195 +78,6 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
 
         return DataFrame(data=d, index=lf_names)
 
-class AnnotationManager(object):
-    """
-    Abstract class for annotating candidates, saving these annotations to DB, and then reloading them as
-    sparse matrices; generic operation which covers Annotation subclasses:
-        * Feature
-        * Label
-    E.g. for features, LF labels, human annotator labels, etc.
-    """
-    def __init__(self, annotation_cls, matrix_cls=csr_AnnotationMatrix, default_f=None):
-        self.annotation_cls = annotation_cls
-        if not issubclass(matrix_cls, csr_AnnotationMatrix):
-            raise ValueError('matrix_cls must be a subclass of csr_AnnotationMatrix')
-        self.matrix_cls = matrix_cls
-        self.default_f = default_f
-
-    def create(self, session, candidate_set, new_key_set, f=None):
-        """
-        Generates annotations for candidates in a candidate set, and persists these to the database,
-        as well as returning a sparse matrix representation.
-
-        :param session: SnorkelSession for the database
-
-        :param candidate_set: Can either be a CandidateSet instance or the name of one
-
-        :param new_key_set: Name of a new AnnotationKeySet to create
-
-        :param f: Can be either:
-
-            * A function which maps a candidate to a generator key_name, value pairs.  Ex: A feature generator
-
-            * A list of functions, each of which maps from candidates to values; by default, the key_name
-                is the function.__name__.  Ex: A list of labeling functions
-        """
-        candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
-        existing_key_set = session.query(AnnotationKeySet).filter(AnnotationKeySet.name == new_key_set).first()
-        if existing_key_set is not None:
-            raise ValueError('AnnotationKeySet with name ' + new_key_set + 
-                             ' already exists in the database. Please specify a new name.')
-        key_set = AnnotationKeySet(name=new_key_set)
-        session.add(key_set)
-        session.commit()
-
-        return self.update(session, candidate_set, key_set, True, f)
-
-    def update(self, session, candidate_set, key_set, expand_key_set, f=None):
-        """
-        Generates annotations for candidates in a candidate set and *adds* them to an existing annotation set,
-        also adding the respective keys to the key set; returns a sparse matrix representation of the full
-        candidate x annotation_key set.
-
-        :param session: SnorkelSession for the database
-
-        :param candidate_set: Can either be a CandidateSet instance or the name of one
-
-        :param key_set: Can either be an AnnotationKeySet instance or the name of one
-
-        :param expand_key_set: If True, annotations with keys not in the given key set will be added, and the
-        key set will be expanded; if False, these annotations will be considered out-of-domain (OOD) and discarded.
-
-        :param f: Can be either:
-
-            * A function which maps a candidate to a generator key_name, value pairs.  Ex: A feature generator
-
-            * A list of functions, each of which maps from candidates to values; by default, the key_name
-                is the function.__name__.  Ex: A list of labeling functions
-        """
-        # Prepares arguments
-        candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
-        key_set = get_ORM_instance(AnnotationKeySet, session, key_set)
-        if f is None:
-            f = self.default_f
-
-        # Prepares helpers
-        annotation_generator = AnnotationGenerator(f) if hasattr(f, '__iter__') else f
-
-        # Load existing key_id of all annotation keys
-        key_ids = {aKey.name:aKey.id for aKey in session.query(AnnotationKey)}
-        # New id starts with max + 1 when added to the key count
-        key_id_offset = max(key_ids.itervalues()) + 1 - len(key_ids) if key_ids else 0 
-        annotations = []
-        
-        # print "Generating %s Annotations for CandidateSet %s..." % (key_set.name, candidate_set.name)
-        pb = ProgressBar(len(candidate_set))
-        # Generates annotations for CandidateSetrc
-        for i, candidate in enumerate(candidate_set):
-            pb.bar(i)
-            # Each candidate have unique 
-            existing_key_ids = set()
-            for key_name, value in annotation_generator(candidate):
-                # Get if the AnnotationKey already exists, or assign a new id
-                key_id = key_ids.get(key_name, None)
-                if key_id is None:
-                    if not expand_key_set: continue
-                    key_id = key_id_offset + len(key_ids)
-                    key_ids[key_name] = key_id
-                    # These operations are fast; leave in inner loop for simplicity
-                    session.execute(AnnotationKey.__table__.insert(), {'id':key_id, 'name':key_name})
-                    session.execute(assoc_table.insert(), {'annotation_key_set_id': key_set.id, 'annotation_key_id': key_id})
-                if key_id in existing_key_ids: continue
-                # Record new annotation
-                existing_key_ids.add(key_id)
-                annotations.append({'candidate_id': candidate.id, 'key_id': key_id, 'value': value})
-            
-        pb.close()
-        print 'Bulk upserting %d annotations...' % len(annotations)
-        # bulk insert candidate annotations
-        session.execute(self.annotation_cls.__table__.insert(), annotations)
-        print 'Done.'
-        session.commit()
-        print "Loading sparse %s matrix..." % self.annotation_cls.__name__
-        return self.load(session, candidate_set, key_set)
-
-    def load(self, session, candidate_set, key_set):
-        """
-        Returns the annotations corresponding to a CandidateSet with N members and an AnnotationKeySet with M
-        distinct keys as an N x M CSR sparse matrix.
-
-        :param session: SnorkelSession for the database
-
-        :param candidate_set: Can either be a CandidateSet instance or the name of one
-
-        :param key_set: Can either be an AnnotationKeySet instance or the name of one
-        """
-        candidate_set = get_ORM_instance(CandidateSet, session, candidate_set)
-        key_set = get_ORM_instance(AnnotationKeySet, session, key_set)
-
-        # Create sparse matrix in LIL format for incremental construction
-        X = sparse.lil_matrix((len(candidate_set), len(key_set)))
-
-        # First, we query to construct the row index map
-        cid_to_row = {}
-        row_to_cid = {}
-        q = session.query(Candidate.id).filter(Candidate.sets.contains(candidate_set)).order_by(Candidate.id).yield_per(1000)
-        for cid, in q.all():
-            if cid not in cid_to_row:
-                j = len(cid_to_row)
-
-                # Create both mappings
-                cid_to_row[cid] = j
-                row_to_cid[j] = cid
-
-        # Second, we query to construct the column index map
-        kid_to_col = {}
-        col_to_kid = {}
-        q = session.query(AnnotationKey.id).filter(AnnotationKey.sets.contains(key_set)).order_by(AnnotationKey.id).yield_per(1000)
-        for kid, in q.all():
-            if kid not in kid_to_col:
-                j = len(kid_to_col)
-
-                # Create both mappings
-                kid_to_col[kid] = j
-                col_to_kid[j] = kid
-
-        # Construct the query
-        """
-        q = session.query(self.annotation_cls.candidate_id, self.annotation_cls.key_id, self.annotation_cls.value)
-        q = q.join(Candidate, AnnotationKey)
-        q = q.filter(Candidate.sets.contains(candidate_set)).filter(AnnotationKey.sets.contains(key_set))
-        q = q.order_by(self.annotation_cls.candidate_id).yield_per(1000)
-        """
-
-        # NOTE: This is much faster as it allows us to skip the above join (which for some reason is
-        # unreasonably slow) by relying on our symbol tables from above; however this will get slower with
-        # The total number of annotations in DB which is weird behavior...
-        q = session.query(self.annotation_cls.candidate_id, self.annotation_cls.key_id, self.annotation_cls.value)
-        q = q.order_by(self.annotation_cls.candidate_id)
-
-        # Iteratively construct row index and output sparse matrix
-        for cid, kid, val in q.all():
-            if cid in cid_to_row and kid in kid_to_col:
-                X[cid_to_row[cid], kid_to_col[kid]] = val
-
-        # Return as an AnnotationMatrix
-        return self.matrix_cls(X, candidate_set=candidate_set, candidate_index=cid_to_row, row_index=row_to_cid,
-                               key_set=key_set, key_index=kid_to_col, col_index=col_to_kid)
-
-
-class LabelManager(AnnotationManager):
-    """Apply labeling functions to the candidates, generating Label annotations"""
-    def __init__(self):
-        super(LabelManager, self).__init__(Label, matrix_cls=csr_LabelMatrix)
-
-
-class FeatureManager(AnnotationManager):
-    """Apply feature generators to the candidates, generating Feature annotations"""
-    def __init__(self):
-        super(FeatureManager, self).__init__(Feature, default_f=get_all_feats)
-
-
 def _to_annotation_generator(fns):
     """"
     Generic method which takes a set of functions, and returns a generator that yields
@@ -293,14 +102,23 @@ def tsv_escape(s):
         return '\\N'
     # Make sure feature names are still uniquely encoded in ascii
     s = unicode(s).encode('ascii','replace')
+    # TODO: make sure new line and tab characters are properly escaped
     return s.replace('\"', '\\"')
 
 def array_tsv_escape(vals):
     return '{' + ','.join(tsv_escape(p) for p in vals) + '}'
 
+def _get_exec_plan(candidates, parallel):
+        # Plan workload for each extraction worker
+    num_jobs = len(candidates)
+    avg_jobs = 1 + num_jobs / parallel
+    worker_args = [(candidates.name, i * avg_jobs, (i + 1) * avg_jobs) for i in xrange(parallel)]
+    worker_args[-1] = (candidates.name, (parallel - 1) * avg_jobs, num_jobs)
+    return worker_args
+
 def _annotate_worker(name, start, end):
     '''
-    Writes raw rows into psql, bypassing ORM.
+    Writes raw rows via psql, bypassing ORM.
     Pipes extraction results to the STDIN of a psql COPY process.
     Efficient in terms both of memory and CPU utilization.
     '''
@@ -311,7 +129,7 @@ def _annotate_worker(name, start, end):
         ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     # Create separate engine for each worker to prevent concurrent connection problems
-    engine = create_engine(meta.connection)
+    engine = create_engine(connection)
     WorkerSession = sessionmaker(bind=engine)
     session = WorkerSession()
     
@@ -319,6 +137,7 @@ def _annotate_worker(name, start, end):
     writer = csv.writer(copy_process.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
     candidates = session.query(CandidateSet).filter(CandidateSet.name == name).one().candidates
     for candidate in candidates.slice(start, end):
+        # Runs the actual extraction function
         keys, values = zip(*list(get_all_feats(candidate)))
         row = [candidate.id, array_tsv_escape(keys), array_tsv_escape(values)]
         writer.writerow(row)
@@ -331,23 +150,67 @@ def _annotate_worker(name, start, end):
         print err
     copy_process.stdin.close()
     
-def extract_features(candidates, parallel=0):
+def extract_features(candidates, parallel=min(40, multiprocessing.cpu_count() / 2), expand_key_set = True):
     '''
     Extracts features for candidates in parallel
+    @var candidates: CandidateSet to extract features from
+    @var parallel: Number of processes to use for extraction
+    @var expand_key_set: loads new feature index from feature_vector table if True
+    otherwise use cached feature index 
     '''
-    # Plan workload for each worker
-    total_jobs = len(candidates)
-    worker_count = parallel if parallel else min(40, multiprocessing.cpu_count() / 2)
-    avg_jobs = 1 + total_jobs / worker_count
-    worker_args = [(candidates.name, i * avg_jobs, (i + 1) * avg_jobs) for i in xrange(worker_count)]
-    worker_args[-1] = (candidates.name, (worker_count - 1) * avg_jobs, total_jobs)
-        
-    if worker_count == 1:
+    with snorkel_engine.connect() as con:
+        con.execute('DELETE FROM feature_vector')
+
+    worker_args = _get_exec_plan(candidates, parallel)        
+    if parallel == 1:
         # Run without subprocess for easier debugging
         _annotate_worker(*worker_args[0])
     else:
+        print 'Using', parallel, 'threads'
         # Fan-out workload to child processes
         ps = [Process(target=_annotate_worker, args=arg) for arg in worker_args]
         for p in ps: p.start()
         for p in ps: p.join()
+        
+    key2ids = _generate_feature_ids(expand_key_set)
     
+    # Create sparse matrix in LIL format for incremental construction
+    lil_feat_matrix = sparse.lil_matrix((len(candidates), len(key2ids)))
+
+    session = SnorkelSession()
+    # TODO: change this to raw sql for more performance if this ORM layer is problematic
+    for i, fv in enumerate(session.query(FeatureVector).order_by(FeatureVector.candidate_id).yield_per(1000)):
+        key_indices = []
+        values = []
+        for key, value in izip(fv.keys, fv.values):
+            # Only keep known features
+            key_index = key2ids.get(key, None)
+            if key_index is not None:
+                key_indices.append(key_index)
+                values.append(value)
+        # bulk assignment for row
+        lil_feat_matrix[i, key_indices] = values
+        
+    return sparse.csr_matrix(lil_feat_matrix)
+#     unique_keys = snorkel_engine.execute()
+
+def _generate_feature_ids(expand_key_set = True):
+    '''
+    Get unique feature keys from all feature vectors, a reduction step
+    after the parallel extraction
+    @var expand_key_set: loads new feature index from feature_vector table if True
+    otherwise use cached feature index 
+    '''
+    # Build feature index, reuse the main session
+    with snorkel_engine.connect() as con:
+        if expand_key_set:
+            # TODO: Do we need to cache this table?
+            con.execute('DROP TABLE IF EXISTS features')
+            con.execute('CREATE TABLE features AS (SELECT DISTINCT UNNEST(keys) as key FROM feature_vector)')
+
+        # The result should be a list of all feature strings, small enough to hold in memory
+        # TODO: store the actual index in table in case row number is unstable between queries
+        keys = con.execute('SELECT * FROM features')
+        key2ids = {key[0]:i for i, key in enumerate(keys)}
+    return key2ids
+        

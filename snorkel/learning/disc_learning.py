@@ -1,11 +1,13 @@
-import numpy as np
+from fastmulticontext import fastmulticontext
 from ..models import Parameter, ParameterSet
-from .constants import *
+import numpy as np
+import os
 from .utils import marginals_to_labels, MentionScorer, odds_to_prob
-from fastmulticontext import fastmulticontext, get_matrix_keys
-from lstm import LSTMModel
-from scipy.optimize import minimize
-from sklearn import linear_model
+# Travis will not import the following
+if 'CI' not in os.environ:
+    from lstm import LSTMModel
+    from scipy.optimize import minimize
+    from sklearn import linear_model
 
 
 class NoiseAwareModel(object):

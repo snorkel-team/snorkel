@@ -119,3 +119,4 @@ def _get_window_features(context, idxs, window=3, combinations=True, isolated=Tr
                     curr_left_lemmas + "]_[" + curr_right_lemmas + "]"
                 yield "W_POS_L_" + str(i+1) + "_R_" + str(j+1) + "_[" + \
                     curr_left_pos_tags + "]_[" + curr_right_pos_tags + "]"
+

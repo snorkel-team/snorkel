@@ -85,6 +85,8 @@ class Candidate(SnorkelBase):
         p = [c.parent for c in self.get_contexts()]
         if p.count(p[0]) == len(p):
             return p[0]
+        else:
+            raise Exception("Contexts do not all have same parent")
 
     def get_cids(self):
         """Get a tuple of the canonical IDs (CIDs) of the contexts making up this candidate"""

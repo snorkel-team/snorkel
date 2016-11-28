@@ -355,6 +355,11 @@ class OmniParser(object):
                  visual=False, pdf_path=None, session=None,         # visual
                  lingual=True, strip=True,                          # lingual
                  tabular=True):                                     # tabular
+        """
+        :param visual: boolean, if True visual features are used in the model
+        :param pdf_path: directory where pdf are saved, if a pdf file is not found,
+        it will be created from the html document and saved in that directory
+        """
         self.delim = "<NB>" # NB = New Block
 
         # structural (html) setup
@@ -366,9 +371,9 @@ class OmniParser(object):
         self.visual = visual
         if self.visual:
             if not session or not pdf_path:
-                raise ValueError("pdf_path must be specified")
+                warnings.warn("pdf_path and session must be specified, visual features are not being used", RuntimeWarning)
             else:
-                self.create_pdf = None
+                self.create_pdf = False
                 self.vizlink = VisualLinker(pdf_path, session)
         
         # lingual setup
@@ -392,11 +397,10 @@ class OmniParser(object):
             yield phrase
         if self.visual:
             self.vizlink.session.commit()
-            if not self.create_pdf:
-                self.create_pdf = not os.path.isfile(self.vizlink.pdf_path + document.name + '.pdf')
-            if self.create_pdf:
+            self.create_pdf = not os.path.isfile(self.vizlink.pdf_path + document.name + '.pdf')
+            if self.create_pdf:  # PDF File does not exist
                 self.vizlink.create_pdf(document.name, text)
-            self.vizlink.parse_visual(document)  # TODO: add warning if pdf file not created
+            self.vizlink.parse_visual(document)
 
     def parse_structure(self, document, text):
         self.contents = ""

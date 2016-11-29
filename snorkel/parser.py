@@ -16,7 +16,6 @@ import signal
 import codecs
 from subprocess import Popen
 import sys
-import codecs
 import copy
 
 

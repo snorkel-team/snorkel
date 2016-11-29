@@ -187,7 +187,7 @@ def get_gold_parts(filename, docs=None):
     return set(map(lambda x: x[0], get_gold_dict(filename, doc_on=False, part_on=True, val_on=False, docs=docs)))
 
 
-def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None, docs=None):
+def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None, docs=None, integerize=False):
     with codecs.open(filename, encoding="utf-8") as csvfile:
         gold_reader = csv.reader(csvfile)
         gold_dict = set()
@@ -200,7 +200,11 @@ def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None,
                     key = []
                     if doc_on:  key.append(doc.upper())
                     if part_on: key.append(part.upper())
-                    if val_on:  key.append(val.upper())
+                    if val_on and val:
+                        if integerize:
+                            key.append(int(float(val)))
+                        else:
+                            key.append(val.upper())
                     gold_dict.add(tuple(key))
     return gold_dict
 
@@ -243,49 +247,6 @@ def load_hardware_labels(session, label_set_name, annotation_key_name, candidate
     return (candidate_set, annotation_key)
 
 
-def entity_level_total_recall(candidates, gold_file, attribute, relation=True):
-    """Checks entity-level recall of candidates compared to gold.
-
-    Turns a CandidateSet into a normal set of entity-level tuples
-    (doc, part, [attribute_value])
-    then compares this to the entity-level tuples found in the gold.
-
-    Example Usage:
-        from hardware_utils import entity_level_total_recall
-        candidates = # CandidateSet of all candidates you want to consider
-        gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
-        entity_level_total_recall(candidates, gold_file, 'stg_temp_min')
-    """
-    gold_set = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=relation, attrib=attribute)
-
-    # Turn CandidateSet into set of tuples
-    print "Preparing candidates..."
-    pb = ProgressBar(len(candidates))
-    entity_level_candidates = set()
-    for i, c in enumerate(candidates):
-        pb.bar(i)
-        part = c.get_arguments()[0].get_span().replace(' ', '')
-        doc = c.get_arguments()[0].parent.document.name
-        if relation:
-            val = c.get_arguments()[1].get_span().replace(' ', '')
-            entity_level_candidates.add((doc.upper(), part.upper(), val.upper()))
-        else:
-            entity_level_candidates.add((doc.upper(), part.upper()))
-    pb.close()
-
-    print "========================================"
-    print "Scoring on Entity-Level Total Recall"
-    print "========================================"
-    print "Entity-level Candidates extracted: %s " % (len(entity_level_candidates))
-    print "Entity-level Gold: %s" % (len(gold_set))
-    print "Intersection Candidates: %s" % (len(gold_set.intersection(entity_level_candidates)))
-    print "----------------------------------------"
-    print "Overlap with Gold:  %0.4f" % (len(gold_set.intersection(entity_level_candidates)) / float(len(gold_set)),)
-    print "========================================\n"
-
-    return entity_confusion_matrix(entity_level_candidates, gold_set)
-
-
 def most_common_document(candidates):
     """Returns the document that produced the most of the passed-in candidates"""
     # Turn CandidateSet into set of tuples
@@ -311,6 +272,53 @@ def entity_confusion_matrix(pred, gold):
     FP = pred.difference(gold)
     FN = gold.difference(pred)
     return (TP, FP, FN)
+
+
+def entity_level_total_recall(candidates, gold_file, attribute, relation=True, integerize=False):
+    """Checks entity-level recall of candidates compared to gold.
+
+    Turns a CandidateSet into a normal set of entity-level tuples
+    (doc, part, [attribute_value])
+    then compares this to the entity-level tuples found in the gold.
+
+    Example Usage:
+        from hardware_utils import entity_level_total_recall
+        candidates = # CandidateSet of all candidates you want to consider
+        gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
+        entity_level_total_recall(candidates, gold_file, 'stg_temp_min')
+    """
+    gold_set = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=relation, attrib=attribute, integerize=integerize)
+    # Turn CandidateSet into set of tuples
+    print "Preparing candidates..."
+    pb = ProgressBar(len(candidates))
+    entity_level_candidates = set()
+    for i, c in enumerate(candidates):
+        pb.bar(i)
+        part = c.get_arguments()[0].get_span().replace(' ', '')
+        doc = c.get_arguments()[0].parent.document.name
+        if relation:
+            if integerize:
+                val = int(float(c.get_arguments()[1].get_span().replace(' ', '')))
+                entity_level_candidates.add((doc.upper(), part.upper(), val))
+            else:
+                val = c.get_arguments()[1].get_span().replace(' ', '')
+                entity_level_candidates.add((doc.upper(), part.upper(), val.upper()))
+        else:
+            entity_level_candidates.add((doc.upper(), part.upper()))
+    pb.close()
+
+    # import pdb; pdb.set_trace()
+    print "========================================"
+    print "Scoring on Entity-Level Total Recall"
+    print "========================================"
+    print "Entity-level Candidates extracted: %s " % (len(entity_level_candidates))
+    print "Entity-level Gold: %s" % (len(gold_set))
+    print "Intersection Candidates: %s" % (len(gold_set.intersection(entity_level_candidates)))
+    print "----------------------------------------"
+    print "Overlap with Gold:  %0.4f" % (len(gold_set.intersection(entity_level_candidates)) / float(len(gold_set)),)
+    print "========================================\n"
+
+    return entity_confusion_matrix(entity_level_candidates, gold_set)
 
 
 def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
@@ -344,6 +352,7 @@ def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     print "========================================\n"
 
     return (TP_set, FP_set, FN_set)
+
 
 def expand_part_range(text, DEBUG=False):
     """
@@ -492,14 +501,39 @@ def char_range(a, b):
         yield chr(c)
 
 
+def candidates_to_entities(candidates):
+    entities = set()
+    pb = ProgressBar(len(candidates))
+    for i, c in enumerate(candidates):
+        pb.bar(i)
+        part = c.get_arguments()[0]
+        attr = c.get_arguments()[1]
+        doc  = part.parent.document.name
+        entities.add((doc.upper(), part.get_span().upper(), attr.get_span().upper()))
+    pb.close()
+    return entities
+
+
 def entity_to_candidates(entity, candidate_subset):
     matches = []
     for c in candidate_subset:
+        # NOTE: should some 'upper' be going on here somewhere?
         part = c.get_arguments()[0]
         attr = c.get_arguments()[1]
         if (part.parent.document.name, part.get_span(), attr.get_span()) == entity:
             matches.append(c)
     return matches
+
+
+def count_labels(entities, gold):
+    T = 0
+    F = 0
+    for e in entities:
+        if e in gold:
+            T += 1
+        else:
+            F += 1
+    return (T, F)
 
 def part_error_analysis(c):
     print "Doc: %s" % c.part.parent.document
@@ -513,6 +547,7 @@ def part_error_analysis(c):
     print "Attr:"
     print attr
     table_info(attr)
+    print "------------"
 
 def table_info(span):
     print "Table: %s" % span.parent.table

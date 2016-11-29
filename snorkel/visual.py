@@ -51,20 +51,20 @@ class VisualLinker():
         tic = timer()
         self.extract_html_words()
         if self.vverbose: pprint(self.html_word_list[:5])
-        if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
+        if self.time: print "Elapsed: %0.3f s" % (timer() - tic)
 
         tic = timer()
         self.link_lists(search_max=200)
         if self.vverbose: self.display_links()
-        if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
+        if self.time: print "Elapsed: %0.3f s" % (timer() - tic)
 
         tic = timer()
         self.update_coordinates()
-        if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
+        if self.time: print "Elapsed: %0.3f s" % (timer() - tic)
 
     def extract_pdf_words(self):
         num_pages = subprocess.check_output(
-                "pdfinfo '{}' | grep Pages  | sed 's/[^0-9]*//'".format(self.pdf_file), shell=True)
+                "pdfinfo '{}' | grep -a Pages | sed 's/[^0-9]*//'".format(self.pdf_file), shell=True)
         pdf_word_list = []
         coordinate_map = {}
         for i in range(1, int(num_pages) + 1):

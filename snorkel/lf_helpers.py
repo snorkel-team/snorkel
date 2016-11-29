@@ -445,7 +445,6 @@ def get_aligned_cells(root_cell, axis, direct=True, infer=False):
                            for cell in aligned_cells ]
         return [ cell for cell in inferred_cells if isinstance(cell, Cell) ]
 
-PhantomCell = namedtuple('PhantomCell','phrases')
 def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False):
     # TODO: There seems to be some discrepency in the order of this list comprehension.
     # This is what is needed for Python 2.7.
@@ -453,6 +452,7 @@ def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False):
                 for phrase in _infer_cell(cell, _other_axis(axis), direct, infer).phrases \
                     if phrase!=root_phrase]
 
+PhantomCell = namedtuple('PhantomCell','phrases')
 def _infer_cell(root_cell, axis, direct, infer):
     if direct == False and infer == False: raise ValueError('Direct and infer cannot both be false')
     empty = _empty(root_cell)

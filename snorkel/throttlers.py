@@ -98,6 +98,48 @@ class OrderingThrottler(Throttler):
         return True if getattr(cell0, ax).position <= getattr(cell1, ax).position \
             else False
 
+class OverlapThrottler(Throttler):
+    """Only keeps pairs of spans that overlap"""
+    def __init__(self):
+        pass
+
+    def __call__(self, argtuple):
+        # get the cells associated with each span
+        span0, span1 = argtuple
+
+        # if hasattr(span0.parent, 'cell') and hasattr(span1.parent, 'cell'):
+        #     if span0.parent.cell != span1.parent.cell: return False
+
+        if span0.parent != span1.parent: return False            
+        start0, end0 = span0.char_start, span0.char_end
+        start1, end1 = span1.char_start, span1.char_end
+        return True if start1 <= start0 <= end1 or start1 <= end0 <= end1 else False
+
+class WordLengthThrottler(Throttler):
+    """Filter spans by lnumber of words"""
+    def __init__(self, op, idx, lim):
+        if op not in ('min', 'max'): raise ValueError('Invalid operation: %s' % op)
+        if idx not in (0,1): raise ValueError('Invalid span index: %d' % idx)
+        self.op = op
+        self.idx = idx
+        self.lim = lim
+
+    def __call__(self, argtuple):
+        # get the cells associated with each span
+        span0, span1 = argtuple
+        span = span0 if self.idx == 0 else span1
+
+        if self.op == 'max':
+            if len(span.get_span().split()) >= self.lim: 
+                return False
+            else:
+                return True
+        elif self.op == 'min':
+            if len(span.get_span().split()) <= self.lim: 
+                return False
+            else:
+                return True
+
 class CombinedThrottler(Throttler):
     """Filters pairs if they pass all given throttlers"""
     def __init__(self, throttlers):

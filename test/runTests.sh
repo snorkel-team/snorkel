@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 TESTS_PATH=$SNORKELHOME/test
 
 if [ $# -eq 0 ]

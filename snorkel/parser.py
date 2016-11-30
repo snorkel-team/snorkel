@@ -360,14 +360,19 @@ class SimpleTokenizer:
 
 class OmniParser(object):
     def __init__(self, 
-                 structural=True, blacklist=["style"], flatten=[], flatten_delim=' ',   # structural
+                 structural=True, blacklist=["style"],              # structural
+                 flatten=[], flatten_delim=' ',   
                  visual=False, pdf_path=None, session=None,         # visual
                  lingual=True, strip=True,                          # lingual
+                 replacements=[(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]','-')],         
                  tabular=True):                                     # tabular
         """
         :param visual: boolean, if True visual features are used in the model
         :param pdf_path: directory where pdf are saved, if a pdf file is not found,
         it will be created from the html document and saved in that directory
+        :param replacements: a list of (_pattern_, _replace_) tuples where _pattern_ isinstance
+        a regex and _replace_ is a character string. All occurents of _pattern_ in the
+        text will be replaced by _replace_.
         """
         self.delim = "<NB>" # NB = New Block
 
@@ -389,6 +394,9 @@ class OmniParser(object):
         # lingual setup
         self.lingual = lingual
         self.strip = strip
+        self.replacements = []
+        for (pattern, replace) in replacements:
+            self.replacements.append((re.compile(pattern, flags=re.UNICODE), replace))
         if self.lingual:
             self.batch_size = 7000 # TODO: what if this is smaller than a block?
             self.lingual_parse = CoreNLPHandler(delim=self.delim[1:-1]).parse
@@ -470,6 +478,8 @@ class OmniParser(object):
                     if self.strip:
                         text = text.strip()
                     if len(text):
+                        for (rgx, replace) in self.replacements:
+                            text = rgx.sub(replace, text)
                         self.contents += text
                         self.contents += self.delim
                         block_lengths.append(len(text) + len(self.delim))

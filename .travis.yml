@@ -115,4 +115,8 @@ script:
 after_success:
   - codecov
   - coveralls
-# - codeclimate-test-reporter
+  - codeclimate-test-reporter
+  - killall java
+
+after_failure:
+  - killall java

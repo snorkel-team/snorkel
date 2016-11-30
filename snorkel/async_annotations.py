@@ -99,6 +99,9 @@ class Annotator(object):
     def __call__(self, arg):
         for fname, fn in self.fns:
             yield fname, fn(arg)
+    
+    def keys(self):
+        return [name for name, _fn in self.fns]
 
 def get_sql_name(text):
     '''
@@ -166,20 +169,21 @@ def _parallel_annotate(candidates, table_name, parallel, annotator):
     for p in ps: p.start()
     for p in ps: p.join()
 
-def annotate(candidates, parallel=0, expand_key_set=True, lfs = []):
+def annotate(candidates, parallel=0, keyset = None, lfs = []):
     '''
     Extracts features for candidates in parallel
     @var candidates: CandidateSet to extract features from
     @var parallel: Number of processes to use for extraction
-    @var expand_key_set: loads new feature index from feature_vector table if True
+    @var keyset: Name of the feature set to use, same as the candidate set name used.
     @var lfs: labeling functions used to annotate the current set of candidates
     otherwise use cached feature index 
     '''
-    table_name = get_sql_name(candidates.name) + '_labels' if lfs else '_features'
-    key_table_name = table_name + '_keys'
+    suffix = '_labels' if lfs else '_features'
+    table_name = get_sql_name(candidates.name) + suffix 
+    key_table_name = (get_sql_name(keyset) + suffix if keyset else table_name) + '_keys'
     with snorkel_engine.connect() as con:
         con.execute('DROP TABLE IF EXISTS %s' % table_name)
-        # Potential optimization: add primary key constraint later after copying are done
+        # TODO: make label table dense
         con.execute('CREATE TABLE %s(candidate_id integer, keys text[] NOT NULL, values real[] NOT NULL)' % table_name)
 
         # Assuming hyper-threaded cpus
@@ -189,7 +193,7 @@ def annotate(candidates, parallel=0, expand_key_set=True, lfs = []):
         _parallel_annotate(candidates, table_name, parallel, annotator)
         con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id)' % table_name)
         
-        if expand_key_set:
+        if keyset is None:
             # Recalculate unique keys for this set of candidates
             con.execute('DROP TABLE IF EXISTS %s' % key_table_name)
             con.execute('CREATE TABLE %s AS (SELECT DISTINCT UNNEST(keys) as key FROM %s)' % (key_table_name, table_name))

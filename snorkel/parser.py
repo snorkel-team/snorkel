@@ -360,7 +360,7 @@ class SimpleTokenizer:
 
 class OmniParser(object):
     def __init__(self, 
-                 structural=True, blacklist=["style"], flatten=[],    # html (structural)
+                 structural=True, blacklist=["style"], flatten=[], flatten_delim=' ',   # structural
                  visual=False, pdf_path=None, session=None,         # visual
                  lingual=True, strip=True,                          # lingual
                  tabular=True):                                     # tabular
@@ -370,6 +370,7 @@ class OmniParser(object):
         self.structural = structural
         self.blacklist = blacklist if isinstance(blacklist, list) else [blacklist]
         self.flatten = flatten if isinstance(flatten, list) else [flatten]
+        self.flatten_delim = flatten_delim
 
         # visual setup
         self.visual = visual
@@ -426,7 +427,6 @@ class OmniParser(object):
             # if a child of this node is in self.flatten, construct a string
             # containing all text/tail results of the tree based on that child
             # and append that to the tail of the previous child or head of node
-            
             num_children = len(node)
             for i, child in enumerate(node[::-1]):
                 if child.tag in self.flatten:
@@ -440,11 +440,11 @@ class OmniParser(object):
                     if j == 0:
                         if node.text is None:
                             node.text = ''
-                        node.text += ' '.join(contents)
+                        node.text += self.flatten_delim.join(contents)
                     else:
                         if node[j-1].tail is None:
                             node[j-1].tail = ''
-                        node[j-1].tail += ' '.join(contents)
+                        node[j-1].tail += self.flatten_delim.join(contents)
                     node.remove(child)
 
         def parse_node(node, table_info=None):

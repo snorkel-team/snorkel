@@ -47,7 +47,6 @@ class TestVisualParsers(unittest.TestCase):
     
     def test_flatten_entry_tags_handled(self):
         """Test if text within tags with flatten entry is parsed correctly - phrases are not split by flatten tags"""
-        
         #check a phrase with span tag gets parsed correctly
         phrase_last = self.doc2.phrases[-2]
         self.assertTrue("OutSpan" in phrase_last.words and "InSpan" in phrase_last.words)

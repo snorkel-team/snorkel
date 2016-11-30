@@ -3,10 +3,10 @@ import os
 import sys
 import unittest
 
-sys.path.append(os.environ['SNORKELHOME'] + 'snorkel/')
+sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'snorkel/'))
 from visual import VisualLinker
 
-DATA_PATH = os.environ['SNORKELHOME'] + 'test/data/table_test/'
+DATA_PATH = os.path.join(os.environ['SNORKELHOME'], 'test/data/table_test/')
 
 
 class TestVisualFeatures(unittest.TestCase):

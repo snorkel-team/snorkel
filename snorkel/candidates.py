@@ -108,6 +108,13 @@ class CandidateExtractor(object):
         set_insert_args = {'candidate_set_id': candidate_set.id}
         for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
 
+            # Apply throttler if one was given
+            # Accepts a tuple of Span objects (e.g., (Span, Span))
+            # (throttler returns whether or not proposed candidate passes throttling condition)
+            if self.throttler:
+                if not self.throttler(tuple([args[i][1] for i in range(self.arity)])):
+                    continue
+            
             # Check for self-joins and "nested" joins (joins from span to its subspan)
             if self.arity == 2 and not self.self_relations and args[0][1] == args[1][1]:
                 continue
@@ -119,12 +126,6 @@ class CandidateExtractor(object):
             # Check for symmetric relations
             if self.arity == 2 and not self.symmetric_relations and args[0][0] > args[1][0]:
                 continue
-
-            # Apply throttler if one was given 
-            # (throttler returns whether or not proposed candidate passes throttling condition)
-            if self.throttler:
-                if not self.throttler(tuple([args[i][1] for i in range(self.arity)])):
-                    continue
 
             for i, arg_name in enumerate(arg_names):
                 child_args[arg_name + '_id'] = args[i][1].id

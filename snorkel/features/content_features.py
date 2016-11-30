@@ -5,12 +5,12 @@ from snorkel.models import TemporarySpan
 from tree_structs import corenlp_to_xmltree
 from snorkel.utils import get_as_dict
 from snorkel.config import settings
+from snorkel.lf_helpers import get_left_ngrams, get_right_ngrams, tokens_to_ngrams
 
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 from treedlib import compile_relation_feature_generator
 
 DEF_VALUE = 1
-
 
 def get_content_feats(candidate):
     args = candidate.get_arguments()
@@ -19,41 +19,51 @@ def get_content_feats(candidate):
 
     # Unary candidates
     if len(args) == 1:
-        get_tdl_feats = compile_entity_feature_generator()
         span = args[0]
-        if not span.is_lingual(): return
-        sent = get_as_dict(span.parent)
-        xmltree = corenlp_to_xmltree(sent)
-        sidxs = range(span.get_word_start(), span.get_word_end() + 1)
-        if len(sidxs) > 0:
-            # Add DDLIB entity features
-            for f in get_ddlib_feats(sent, sidxs):
-                yield 'DDL_' + f, DEF_VALUE
-            # Add TreeDLib entity features
-            for f in get_tdl_feats(xmltree.root, sidxs):
-                yield 'TDL_' + f, DEF_VALUE
+        if span.is_lingual():
+            get_tdl_feats = compile_entity_feature_generator()
+            sent = get_as_dict(span.parent)
+            xmltree = corenlp_to_xmltree(sent)
+            sidxs = range(span.get_word_start(), span.get_word_end() + 1)
+            if len(sidxs) > 0:
+                # Add DDLIB entity features
+                for f in get_ddlib_feats(sent, sidxs):
+                    yield 'DDL_' + f, DEF_VALUE
+                # Add TreeDLib entity features
+                for f in get_tdl_feats(xmltree.root, sidxs):
+                    yield 'TDL_' + f, DEF_VALUE
+        else:
+            for f in get_word_feats(span):
+                yield 'BASIC_' + f, DEF_VALUE
+
     # Binary candidates
     elif len(args) == 2:
-        get_tdl_feats = compile_relation_feature_generator()
         span1, span2 = args
-        sent1 = get_as_dict(span1.parent)
-        sent2 = get_as_dict(span2.parent)
-        # TODO: check if span.is_lingual() is True for each span
-        xmltree = corenlp_to_xmltree(get_as_dict(span1.parent))
-        s1_idxs = range(span1.get_word_start(), span1.get_word_end() + 1)
-        s2_idxs = range(span2.get_word_start(), span2.get_word_end() + 1)
-        if len(s1_idxs) > 0 and len(s2_idxs) > 0:
+        if span1.is_lingual() and span2.is_lingual():
+            get_tdl_feats = compile_relation_feature_generator()
+            sent1 = get_as_dict(span1.parent)
+            sent2 = get_as_dict(span2.parent)
+            xmltree = corenlp_to_xmltree(get_as_dict(span1.parent))
+            s1_idxs = range(span1.get_word_start(), span1.get_word_end() + 1)
+            s2_idxs = range(span2.get_word_start(), span2.get_word_end() + 1)
+            if len(s1_idxs) > 0 and len(s2_idxs) > 0:
 
-            # Add DDLIB entity features for relation
-            for f in get_ddlib_feats(sent1, s1_idxs):
-                yield 'DDL_e1_' + f, DEF_VALUE
+                # Add DDLIB entity features for relation
+                for f in get_ddlib_feats(sent1, s1_idxs):
+                    yield 'DDL_e1_' + f, DEF_VALUE
 
-            for f in get_ddlib_feats(sent2, s2_idxs):
-                yield 'DDL_e2_' + f, DEF_VALUE
+                for f in get_ddlib_feats(sent2, s2_idxs):
+                    yield 'DDL_e2_' + f, DEF_VALUE
 
-            # Apply TreeDLib relation features
-            for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs):
-                yield 'TDL_' + f, DEF_VALUE
+                # Add TreeDLib relation features
+                for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs):
+                    yield 'TDL_' + f, DEF_VALUE
+        else:
+            for f in get_word_feats(span1):
+                yield 'BASIC_e1_' + f, DEF_VALUE
+            
+            for f in get_word_feats(span2):
+                yield 'BASIC_e2_' + f, DEF_VALUE        
 
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")
@@ -95,12 +105,6 @@ def get_ddlib_feats(context, idxs):
 
     for window_feat in _get_window_features(context, idxs):
         yield window_feat
-
-    if context['words'][idxs[0]][0].isupper():
-        yield "STARTS_WITH_CAPITAL"
-
-    yield "LENGTH_{}".format(len(idxs))
-
 
 def _get_seq_features(context, idxs):
     yield "WORD_SEQ_[" + " ".join(context['words'][i] for i in idxs) + "]"
@@ -179,25 +183,16 @@ def _get_window_features(context, idxs, window=settings.featurization.content.wi
                 yield "W_POS_L_" + str(i + 1) + "_R_" + str(
                     j + 1) + "_[" + curr_left_pos_tags + "]_[" + curr_right_pos_tags + "]"
 
-                # TODO:
-                # yield "SPAN_TYPE_[%s]" % ('IMPLICIT' if isinstance(span, ImplicitSpan) else 'EXPLICIT'), 1
-                #    if phrase.html_tag:
-                #         yield u"HTML_TAG_" + phrase.html_tag, DEF_VALUE
-                #     # Comment out for now, we could calc it later.
-                #     # for attr in phrase.html_attrs:
-                #     #     yield u"HTML_ATTR_[" + attr + "]", DEF_V
-                #     # if phrase.html_anc_tags:
-                #     #     for tag in phrase.html_anc_tags:
-                #     #         yield u"HTML_ANC_TAG_[" + tag + "]", DEF_VALUE
-                #             # for attr in phrase.html_anc_attrs:
-                #             # yield u"HTML_ANC_ATTR_[" + attr + "]"
-                #     for attrib in ['words']:  # ,'lemmas', 'pos_tags', 'ner_tags']:
-                #         for ngram in span.get_attrib_tokens(attrib):
-                #             yield "CONTAINS_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
-                #         for ngram in get_left_ngrams(span, window=7, n_max=2, attrib=attrib):
-                #             yield "LEFT_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
-                #         for ngram in get_right_ngrams(span, window=7, n_max=2, attrib=attrib):
-                #             yield "RIGHT_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
-                #         if phrase.row_start is None or phrase.col_start is None:
-                #             for ngram in get_neighbor_phrase_ngrams(span, d=1, n_max=2, attrib=attrib):
-                #                 yield "NEIGHBOR_PHRASE_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
+
+def get_word_feats(span):
+    attrib = 'words'
+    for ngram in tokens_to_ngrams(span.get_attrib_tokens(attrib), n_min=1, n_max=2):
+        yield "CONTAINS_%s_[%s]" % (attrib.upper(), ngram)
+    for ngram in get_left_ngrams(span, 
+                                 window=settings.featurization.content.word_feature.window, 
+                                 n_max=2, attrib=attrib):
+        yield "LEFT_%s_[%s]" % (attrib.upper(), ngram)
+    for ngram in get_right_ngrams(span, 
+                                  window=settings.featurization.content.word_feature.window, 
+                                  n_max=2, attrib=attrib):
+        yield "RIGHT_%s_[%s]" % (attrib.upper(), ngram)

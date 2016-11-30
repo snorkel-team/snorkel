@@ -165,8 +165,13 @@ class NoiseAwareModel(object):
 
         # Create and save a new set of Parameters- note that PK of params is (feature_key_id, param_set_id)
         # Note: We can switch to using bulk insert if this is too slow...
-        for j, v in enumerate(self.w):
-            session.add(Parameter(feature_key_id=self.X_train.col_index[j], set=param_set, value=v))
+        if hasattr(self.X_train, 'col_index'):
+            for j, v in enumerate(self.w):
+                session.add(Parameter(feature_key_id=self.X_train.col_index[j], set=param_set, value=v))
+        else:
+            for j, v in enumerate(self.w):
+                # TODO: parameter saving does not yet work due to foreign key missing
+                session.add(Parameter(feature_key_id=j, set=param_set, value=v))
         session.commit()
 
     def load(self, session, param_set_name):

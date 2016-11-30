@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
+ <head>
+ <style type="text/css"> * {margin:0; padding:0; text-indent:0; }</style>
+ </head>
+ <body>
+    <h1>Types of viruses, coughs, and colds</h1>
+    <p><br/></p>
+    <p><span>Brain Cancer</span></p>
+    <h1>See Table Below.</h1>
+    <h2>Common Ailments</h2>
+  <table>
+   <tbody>
+    <tr>
+     <th>Col 1</th>
+     <th>Col 2</th>
+     <th>Col 3</th>
+     <th>Col 4</th>
+    </tr>
+    <tr>
+     <td>Arthritis</td>
+     <td colspan="2">Pokemon Go</td>
+     <td>Free</td>
+    </tr>
+    <tr>
+     <td rowspan="2" colspan="2">Row Plus Col Span</td>
+     <td>Unicorns</td>
+     <td>$17.75</td>
+    </tr>
+    <tr>
+     <td>Fear</td>
+     <td>$100</td>
+    </tr>
+    <tr>
+     <td colspan="2">Col Span immediately after Row+Column Span</td>
+     <td rowspan="2">Fear in rowspan</td>
+     <td>$150</td>
+    </tr>
+    <tr>
+     <td>Row Plus Col Span</td>
+     <td>Anger</td>
+     <td>$200</td>
+    </tr>
+   </tbody>
+   <caption>
+    Table 1: Table to check Tabular Parsing
+   </caption>
+  </table>
+  <table name="table_check_attributes">
+    <tr name="row 1">
+      <td name="1.1">
+        <p name="1.1.p1">Row 1, Cell 1, Part 1</p><br/><p name="1.1.p2">Row 1, Cell 1, Part 2</p>
+      </td>
+      <td name="1.2">
+       <p name="1.2.p1">Row 1, Cell 2, Part 1</p><br/><p name="1.2.p2">Row 1, Cell 2, Part 2</p>
+      </td>
+    </tr>
+    <tr name="row 2">
+      <td name="2.1">
+        <p name="2.1.p1">Row 2, Cell 1, Part 1</p><br/><p name="2.1.p2">Row 2, Cell 1, Part 2</p>
+      </td>
+      <td name="2.2">
+       <p name="2.2.p1">Row 2, Cell 2, Part 1</p><br/><p name="2.2.p2">Row 2, Cell 2, Part 2</p>
+      </td>
+    </tr>
+  </table>
+  <p name="http_attr_1" title="http_attr_2" id="run:fast;jump:high"> Check multiple attributes! </p>
+  <table>
+  <tr><td><p>Row 1, Cell 1, Outside Table</p></td><td><p>Row 1, Cell 2, Outside Table</p></td></tr>
+  <tr><td><p>Row 2, Cell 1, Outside Table</p></td>
+  <td>
+  <p>This Cell contains a table</p>
+  <table><tr><td>A11 inner table</td><td>A12 inner table</td></tr><tr><td>A21 inner table</td><td>A22 inner table</td></tr></table>
+  </td>
+  </tr>
+  <tr><td><p>Row 3, Cell 1, After Nested Table</p></td><td><p>Row 3, Cell 2, After Nested Table</p></td></tr>
+  </table>
+  <p>OutSpan<span>InSpan</span>OutSpan</p>
+  <ul>
+   <li>False!</li>
+   <li>False!</li>
+  </ul>
+  <p>The content after 'ul' tag must be parsed</p>
+ </body>
+</html>

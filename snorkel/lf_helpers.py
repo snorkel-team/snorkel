@@ -732,6 +732,10 @@ def get_tag(span):
     return str(span.parent.html_tag)
 
 
+def get_attributes(span):
+    return span.parent.html_attrs
+
+
 # TODO: Too slow
 def _get_node(phrase):
     return (etree.ElementTree(fromstring(phrase.document.text)).xpath(phrase.xpath))[0]

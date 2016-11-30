@@ -11,3 +11,5 @@ sqlalchemy>=1.0.14
 ipywidgets
 pandas
 sklearn
+wand
+selenium

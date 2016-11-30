@@ -68,7 +68,7 @@ class OmniNgramsPart(OmniNgrams):
     def apply(self, context):
         # TODO: Switch this to base in enumerated_parts, then add suffixes by doc.
         for ts in OmniNgrams.apply(self, context):
-            enumerated_parts = [part_no.replace(" ", '') for part_no in expand_part_range(ts.get_span())]
+            enumerated_parts = [part_no.replace(' ', '') for part_no in expand_part_range(ts.get_span())]
             if self.link_parts:
                 possible_parts =  self.parts_by_doc[ts.parent.document.name.upper()]
                 implicit_parts = set()

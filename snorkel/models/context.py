@@ -15,6 +15,8 @@ corpus_document_association = Table('corpus_document_association', SnorkelBase.m
                                     Column('corpus_id', Integer, ForeignKey('corpus.id')),
                                     Column('document_id', Integer, ForeignKey('document.id')))
 
+INT_ARRAY_TYPE = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
+STR_ARRAY_TYPE = postgresql.ARRAY(String)  if snorkel_postgres else PickleType
 
 class Corpus(SnorkelBase):
     """
@@ -279,18 +281,14 @@ class PhraseMixin(object):
 
 class LingualMixin(object):
     """A collection of lingual attributes."""
-    int_array_type = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
-    str_array_type = postgresql.ARRAY(String)  if snorkel_postgres else PickleType
-    words = Column(str_array_type)
-    char_offsets = Column(int_array_type)
-    lemmas = Column(str_array_type)
-    pos_tags = Column(str_array_type)
-    ner_tags = Column(str_array_type)
-    dep_parents = Column(int_array_type)
-    dep_labels = Column(str_array_type)
+    lemmas = Column(STR_ARRAY_TYPE)
+    pos_tags = Column(STR_ARRAY_TYPE)
+    ner_tags = Column(STR_ARRAY_TYPE)
+    dep_parents = Column(INT_ARRAY_TYPE)
+    dep_labels = Column(STR_ARRAY_TYPE)
 
     def is_lingual(self):
-        return True
+        return self.lemmas is not None
 
     def __repr__(self):
         return ("LingualPhrase (Doc: %s, Index: %s, Text: %s)" %
@@ -342,12 +340,11 @@ class TabularMixin(object):
 
 class VisualMixin(object):
     """ A collection of visual attributes."""
-    int_array_type = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
-    page    = Column(int_array_type)
-    top     = Column(int_array_type)
-    left    = Column(int_array_type)
-    bottom  = Column(int_array_type)
-    right   = Column(int_array_type)
+    page    = Column(INT_ARRAY_TYPE)
+    top     = Column(INT_ARRAY_TYPE)
+    left    = Column(INT_ARRAY_TYPE)
+    bottom  = Column(INT_ARRAY_TYPE)
+    right   = Column(INT_ARRAY_TYPE)
 
     def is_visual(self):
         return self.page is not None and self.page[0] is not None
@@ -361,10 +358,9 @@ class VisualMixin(object):
 
 class StructuralMixin(object):
     """ A collection of structural attributes."""
-    str_array_type = postgresql.ARRAY(String) if snorkel_postgres else PickleType
     xpath = Column(String)
     html_tag = Column(String)
-    html_attrs = Column(str_array_type)
+    html_attrs = Column(STR_ARRAY_TYPE)
 
     def is_structural(self):
         return self.html_tag is not None
@@ -388,6 +384,8 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, 
                             foreign_keys=document_id)
     phrase_num = Column(Integer, nullable=False) # unique Phrase number per document
     text = Column(Text, nullable=False)
+    words = Column(STR_ARRAY_TYPE)
+    char_offsets = Column(INT_ARRAY_TYPE)
 
     __mapper_args__ = {
         'polymorphic_identity': 'phrase',

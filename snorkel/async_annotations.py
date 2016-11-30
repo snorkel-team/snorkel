@@ -10,9 +10,9 @@ from multiprocessing import Process
 import subprocess
 import csv
 import multiprocessing
-from models.annotation import FeatureVector
 from itertools import izip
 from collections import namedtuple
+import numpy as np
 
 # Used to conform to existing annotation key API call
 _TempKey = namedtuple('TempKey',['id', 'name'])
@@ -21,20 +21,20 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
     An extension of the scipy.sparse.csr_matrix class for holding sparse annotation matrices
     and related helper methods.
     """
-    def __init__(self, arg1, candidate_index, row_index, keys, key_index):
+    def __init__(self, arg1, **kwargs):
         # Note: Currently these need to return None if unset, otherwise matrix copy operations break...
         self.session = SnorkelSession()
         # Map candidate id to row id
-        self.candidate_index = candidate_index
+        self.candidate_index = kwargs.pop('candidate_index', {})
         # Map row id to candidate id
-        self.row_index = row_index
+        self.row_index = kwargs.pop('row_index', [])
         # Map col id to key str
-        self.keys = keys
+        self.keys = kwargs.pop('keys', [])
         # Map key str to col number
-        self.key_index = key_index
+        self.key_index = kwargs.pop('key_index', {})
 
         # Note that scipy relies on the first three letters of the class to define matrix type...
-        super(csr_AnnotationMatrix, self).__init__(arg1)
+        super(csr_AnnotationMatrix, self).__init__(arg1, **kwargs)
 
     def get_candidate(self, i):
         """Return the Candidate object corresponding to row i"""
@@ -57,11 +57,9 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         """Return summary stats about the annotations"""
         raise NotImplementedError()
 
-
-class csr_LabelMatrix(csr_AnnotationMatrix):
     def lf_stats(self, gold=None):
         """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
-        lf_names = [self.get_key(j).name for j in xrange(self.shape[1])]
+        lf_names = self.keys
 
         if gold is not None:
             d = {
@@ -167,8 +165,8 @@ def _parallel_annotate(candidates, table_name, parallel, annotator):
     ps = [Process(target=_annotate_worker, args=arg) for arg in worker_args]
     for p in ps: p.start()
     for p in ps: p.join()
-    
-def extract_features(candidates, parallel=0, expand_key_set=True, lfs = []):
+
+def annotate(candidates, parallel=0, expand_key_set=True, lfs = []):
     '''
     Extracts features for candidates in parallel
     @var candidates: CandidateSet to extract features from
@@ -201,14 +199,15 @@ def extract_features(candidates, parallel=0, expand_key_set=True, lfs = []):
         key_index = {key:i for i, key in enumerate(keys)}
         
         # Create sparse matrix in LIL format for incremental construction
-        lil_feat_matrix = sparse.lil_matrix((len(candidates), len(keys)))
+        lil_feat_matrix = sparse.lil_matrix((len(candidates), len(keys)), dtype = np.float32)
     
         row_index = []
         candidate_index = {}
         # Load annotations from database
-        # TODO: move this computation to database for automatic parallelization, avoid communication overhead etc.
-        for i, row in enumerate(con.execute('SELECT candidate_id, keys, values FROM %s ORDER BY candidate_id' % table_name)):
-            candidate_id, keys, values = row
+        # TODO: move this for-loop computation to database for automatic parallelization, 
+        # avoid communication overhead etc.
+        iterator_sql = 'SELECT candidate_id, keys, values FROM %s ORDER BY candidate_id' % table_name
+        for i, (candidate_id, keys, values) in enumerate(con.execute(iterator_sql)):
             candidate_index[candidate_id] = i
             row_index.append(candidate_id)
             for key, value in izip(keys, values):

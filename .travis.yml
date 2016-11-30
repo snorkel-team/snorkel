@@ -61,6 +61,7 @@ install:
   # Install all dependencies as per our README
   - pip install -r python-package-requirement.txt
   - test -e parser/corenlp.sh || ./install-parser.sh
+  - source install-phantomjs.sh
 
   # Downloads data for disease tagging tutorial
   - cd tutorials/disease_tagging

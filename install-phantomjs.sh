@@ -7,3 +7,4 @@ elif type wget &>/dev/null; then
 unzip $phantomjs.zip
 rm $phantomjs.zip
 mv $phantomjs phantomjs
+fi 

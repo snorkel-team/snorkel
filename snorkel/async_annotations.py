@@ -147,11 +147,14 @@ def _annotate_worker(name, table_name, start, end, annotator):
 #     writer = csv.writer(copy_process.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
     candidates = session.query(CandidateSet).filter(CandidateSet.name == name).one().candidates
     writer = codecs.getwriter('utf-8')(copy_process.stdin)
-    for candidate in candidates.slice(start, end):
+    pb = None if start else ProgressBar(end)
+    for i, candidate in enumerate(candidates.slice(start, end)):
+        if pb: pb.bar(i)
         # Runs the actual extraction function
         keys, values = zip(*list(annotator(candidate)))
         row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
         writer.write('\t'.join(row) + '\n')
+    if pb: pb.close()
 #         writer.writerow(row)
     _out, err = copy_process.communicate()
 #     if _out:

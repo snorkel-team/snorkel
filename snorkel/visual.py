@@ -8,7 +8,6 @@ from timeit import default_timer as timer
 
 import numpy as np
 import pandas as pd
-from wand.image import Image
 from wand.drawing import Drawing
 from wand.display import display
 from wand.color import Color
@@ -16,6 +15,8 @@ from bs4 import BeautifulSoup
 from editdistance import eval as editdist # Alternative library: python-levenshtein
 from selenium import webdriver
 import httplib
+
+from utils_visual import pdf_to_img
 
 class VisualLinker():
     def __init__(self, pdf_path, session, time=False, verbose=False, very_verbose=False):
@@ -341,7 +342,7 @@ class VisualLinker():
         # boxes is a list of 5-tuples (page, top, left, bottom, right)
         """
         if display_img:
-            img = self.pdf_to_img(page_num)
+            img = pdf_to_img(self.pdf_file, page_num)
             colors = [Color('blue'), Color('red')]
         boxes_per_page = defaultdict(int)
         boxes_by_page = defaultdict(list)
@@ -381,16 +382,6 @@ class VisualLinker():
                         phrase.bottom[i],
                         phrase.right[i]))
         self.display_boxes(boxes, page_num=page_num, display_img=display)
-
-    def pdf_to_img(self, page_num):
-        """
-        :param page_num: page number to convert to wand image object
-        :return: wand Image
-        """
-        img = Image(filename='{}[{}]'.format(self.pdf_file, page_num-1))
-        page_width, page_height = self.pdf_dim
-        img.resize(page_width, page_height)
-        return img
 
     def create_pdf(self, document_name, text, page_dim=None, split=True):
         """

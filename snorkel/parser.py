@@ -204,8 +204,8 @@ class XMLMultiDocParser(DocParser):
         return fpath.endswith('.xml')
 
 
-PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{', '-RSB-': ']',
-       '-LSB-': '['}
+PTB = {'-RRB-': u')', '-LRB-': u'(', '-RCB-': u'}', '-LCB-': u'{', '-RSB-': u']',
+       '-LSB-': u'['}
 
 class CoreNLPHandler:
     def __init__(self, delim='', tok_whitespace=False):
@@ -416,7 +416,7 @@ class OmniParser(object):
         if self.visual:
             self.vizlink.session.commit()
             self.create_pdf = not os.path.isfile(self.vizlink.pdf_path + document.name + '.pdf')
-            if self.create_pdf:  # PDF File does not exist
+            if self.create_pdf:  # PDF file does not exist
                 self.vizlink.create_pdf(document.name, text)
             self.vizlink.parse_visual(document)
 

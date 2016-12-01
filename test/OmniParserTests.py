@@ -1,22 +1,26 @@
-import os, requests, sys, unittest
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
 import cPickle
+import os
+import sys
+import unittest
+
 from snorkel.parser import *
 from snorkel.models import Corpus
 from snorkel import SnorkelSession
 
-os.environ['SNORKELHOME'] = '/home/pabajaj/snorkel'
-DATA_PATH = os.environ['SNORKELHOME']+'/test/data/table_test/unit_tests/'
-class TestVisualParsers(unittest.TestCase):
+# sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
+DATA_PATH = os.path.join(os.environ['SNORKELHOME'], 'test/data/table_test/unit_tests/')
+class TestOmniParser(unittest.TestCase):
     
     @classmethod
     def setUpClass(self):
-        from snorkel import SnorkelSession
+        # from snorkel import SnorkelSession
         self.session = SnorkelSession()
-        #os.remove('snorkel.db')
         
         self.doc_parser = HTMLParser(DATA_PATH)
-        self.sent_parser = OmniParser(pdf_path=DATA_PATH, blacklist=["style", "ul"], flatten=["span"], visual=True, session=self.session)
+        self.sent_parser = OmniParser(blacklist=["style", "ul"], 
+                                      flatten=["span"], 
+                                      visual=True, pdf_path=DATA_PATH, session=self.session)
         
         self.cp = CorpusParser(self.doc_parser, self.sent_parser, max_docs=2)
         self.corpus = self.cp.parse_corpus(name='Hardware', session=self.session)
@@ -30,6 +34,7 @@ class TestVisualParsers(unittest.TestCase):
     
     @classmethod
     def tearDownClass(self):
+        os.remove('snorkel.db')
         pass
     
     def test_phrase_page_and_coordinates(self):
@@ -47,7 +52,6 @@ class TestVisualParsers(unittest.TestCase):
     
     def test_flatten_entry_tags_handled(self):
         """Test if text within tags with flatten entry is parsed correctly - phrases are not split by flatten tags"""
-        
         #check a phrase with span tag gets parsed correctly
         phrase_last = self.doc2.phrases[-2]
         self.assertTrue("OutSpan" in phrase_last.words and "InSpan" in phrase_last.words)

@@ -464,15 +464,19 @@ def char_range(a, b):
         yield chr(c)
 
 
+def candidate_to_entity(candidate):
+    part = candidate.get_arguments()[0]
+    attr = candidate.get_arguments()[1]
+    doc  = part.parent.document.name
+    return (doc.upper(), part.get_span().upper(), attr.get_span().upper())
+
+
 def candidates_to_entities(candidates):
     entities = set()
     pb = ProgressBar(len(candidates))
     for i, c in enumerate(candidates):
         pb.bar(i)
-        part = c.get_arguments()[0]
-        attr = c.get_arguments()[1]
-        doc  = part.parent.document.name
-        entities.add((doc.upper(), part.get_span().upper(), attr.get_span().upper()))
+        entities.add(candidate_to_entity(c))
     pb.close()
     return entities
 

@@ -360,30 +360,43 @@ class SimpleTokenizer:
 
 class OmniParser(object):
     def __init__(self, 
-                 structural=True, blacklist=["style"], flatten=[],    # html (structural)
+                 structural=True, blacklist=["style"],              # structural
+                 flatten=[], flatten_delim=' ',   
                  visual=False, pdf_path=None, session=None,         # visual
                  lingual=True, strip=True,                          # lingual
+                 replacements=[(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]','-')],         
                  tabular=True):                                     # tabular
+        """
+        :param visual: boolean, if True visual features are used in the model
+        :param pdf_path: directory where pdf are saved, if a pdf file is not found,
+        it will be created from the html document and saved in that directory
+        :param replacements: a list of (_pattern_, _replace_) tuples where _pattern_ isinstance
+        a regex and _replace_ is a character string. All occurents of _pattern_ in the
+        text will be replaced by _replace_.
+        """
         self.delim = "<NB>" # NB = New Block
 
         # structural (html) setup
         self.structural = structural
         self.blacklist = blacklist if isinstance(blacklist, list) else [blacklist]
         self.flatten = flatten if isinstance(flatten, list) else [flatten]
+        self.flatten_delim = flatten_delim
 
         # visual setup
         self.visual = visual
         if self.visual:
             if not session or not pdf_path:
-                # raise error
-                pass
+                warnings.warn("pdf_path and session must be specified, visual features are not being used", RuntimeWarning)
             else:
-                # self.create_pdf = 
+                self.create_pdf = False
                 self.vizlink = VisualLinker(pdf_path, session)
         
         # lingual setup
         self.lingual = lingual
         self.strip = strip
+        self.replacements = []
+        for (pattern, replace) in replacements:
+            self.replacements.append((re.compile(pattern, flags=re.UNICODE), replace))
         if self.lingual:
             self.batch_size = 7000 # TODO: what if this is smaller than a block?
             self.lingual_parse = CoreNLPHandler(delim=self.delim[1:-1]).parse
@@ -402,8 +415,9 @@ class OmniParser(object):
             yield phrase
         if self.visual:
             self.vizlink.session.commit()
-            # if self.create_pdf:
-                # create the pdf and put it in self.pdf_path
+            self.create_pdf = not os.path.isfile(self.vizlink.pdf_path + document.name + '.pdf')
+            if self.create_pdf:  # PDF File does not exist
+                self.vizlink.create_pdf(document.name, text)
             self.vizlink.parse_visual(document)
 
     def parse_structure(self, document, text):
@@ -426,7 +440,6 @@ class OmniParser(object):
             # if a child of this node is in self.flatten, construct a string
             # containing all text/tail results of the tree based on that child
             # and append that to the tail of the previous child or head of node
-            
             num_children = len(node)
             for i, child in enumerate(node[::-1]):
                 if child.tag in self.flatten:
@@ -440,11 +453,11 @@ class OmniParser(object):
                     if j == 0:
                         if node.text is None:
                             node.text = ''
-                        node.text += ' '.join(contents)
+                        node.text += self.flatten_delim.join(contents)
                     else:
                         if node[j-1].tail is None:
                             node[j-1].tail = ''
-                        node[j-1].tail += ' '.join(contents)
+                        node[j-1].tail += self.flatten_delim.join(contents)
                     node.remove(child)
 
         def parse_node(node, table_info=None):
@@ -465,6 +478,8 @@ class OmniParser(object):
                     if self.strip:
                         text = text.strip()
                     if len(text):
+                        for (rgx, replace) in self.replacements:
+                            text = rgx.sub(replace, text)
                         self.contents += text
                         self.contents += self.delim
                         block_lengths.append(len(text) + len(self.delim))

@@ -1,5 +1,5 @@
 system=$(python -c "from sys import platform; print platform")
-
+rm -rf phantomjs
 if [ "$system" == "darwin" ]; then
     phantomjs="phantomjs-2.1.1-macosx"
 elif [ $system == "win32" ]; then

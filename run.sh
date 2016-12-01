@@ -15,6 +15,16 @@ if [ ! -f "$PARSER" ]; then
     esac
 fi
 
+# Make sure phantomjs is installed
+PHANTOMJS="phantomjs/bin/phantomjs"
+if [ ! -f "$PHANTOMJS" ]; then
+    read -p "phantomjs [default] not found- install now?  [y/n] " yn
+    case $yn in
+        [Yy]* ) echo "Installing phantomjs..."; ./install-phantomjs.sh;;
+        [Nn]* ) ;;
+    esac
+fi
+
 # Launch jupyter notebook!
 echo "Launching Jupyter Notebook..."
 jupyter notebook

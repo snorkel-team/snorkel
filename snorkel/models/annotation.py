@@ -34,7 +34,7 @@ class AnnotationKeySet(SnorkelBase):
 
     def __iter__(self):
         """Default iterator is over self.annotation_keys"""
-        for key in self.keys.itervalues():
+        for key in self.keys:
             yield key
 
     def __len__(self):

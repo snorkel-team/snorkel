@@ -38,7 +38,7 @@ class VisualLinker():
         self.document = document
         self.pdf_file = self.pdf_path + self.document.name + '.pdf'
         if not os.path.isfile(self.pdf_file):
-           self.pdf_file = self.pdf_file[:-3]+"PDF"
+            self.pdf_file = self.pdf_file[:-3]+"PDF"
         if self.vverbose: print self.pdf_file
 
         tic = timer()

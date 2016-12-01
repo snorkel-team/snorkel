@@ -6,6 +6,7 @@
 .ipynb_checkpoints
 *.pyc
 parser/
+phantomjs/
 /stanford-corenlp-*
 *.db*
 downloads/

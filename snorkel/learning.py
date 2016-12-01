@@ -178,7 +178,7 @@ class NoiseAwareModel(object):
         """Load the Parameters into self.w, given ParameterSet.name"""
         q = session.query(Parameter.value).join(ParameterSet).filter(ParameterSet.name == param_set_name)
         q = q.order_by(Parameter.feature_key_id)
-        self.w = np.array([res[0] for res in q.all()])
+        self.w = np.array([res[0] for res in q])
 
 
 class LogRegSKLearn(NoiseAwareModel):

@@ -3,11 +3,10 @@ import os
 import sys
 import unittest
 
-sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'snorkel/'))
-from visual import VisualLinker
+from snorkel.visual import VisualLinker
 
-DATA_PATH = os.path.join(os.environ['SNORKELHOME'], 'test/data/table_test/')
-
+ROOT = os.environ['SNORKELHOME']
+DATA_PATH = os.path.join(ROOT, 'test/data/table_test/')
 
 class TestVisualFeatures(unittest.TestCase):
     def test_get_visual_features_PDF_extension(self):

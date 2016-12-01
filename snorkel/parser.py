@@ -415,7 +415,8 @@ class OmniParser(object):
             yield phrase
         if self.visual:
             self.vizlink.session.commit()
-            self.create_pdf = not os.path.isfile(self.vizlink.pdf_path + document.name + '.pdf')
+            fname = self.vizlink.pdf_path + document.name
+            self.create_pdf = not os.path.isfile(fname + '.pdf') and not os.path.isfile(fname + '.PDF')
             if self.create_pdf:  # PDF File does not exist
                 self.vizlink.create_pdf(document.name, text)
             self.vizlink.parse_visual(document)

@@ -13,6 +13,7 @@ import multiprocessing
 from itertools import izip
 from collections import namedtuple
 import numpy as np
+import codecs
 
 # Used to conform to existing annotation key API call
 _TempKey = namedtuple('TempKey',['id', 'name'])
@@ -116,9 +117,11 @@ def tsv_escape(s):
     if s is None:
         return '\\N'
     # Make sure feature names are still uniquely encoded in ascii
-    s = unicode(s).encode('ascii','replace')
-    # TODO: make sure new line and tab characters are properly escaped
-    return s.replace('\"', '\\"')
+    s = unicode(s)
+    s = s.replace('\"', '\\"').replace('\t','\\t')
+    if any(c in ',{}' for c in s):
+        s = '"' + s + '"'
+    return s
 
 def array_tsv_escape(vals):
     return '{' + ','.join(tsv_escape(p) for p in vals) + '}'
@@ -141,13 +144,18 @@ def _annotate_worker(name, table_name, start, end, annotator):
     session = WorkerSession()
     
     # Computes and pipe rows to the COPY process
-    writer = csv.writer(copy_process.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
+#     writer = csv.writer(copy_process.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
     candidates = session.query(CandidateSet).filter(CandidateSet.name == name).one().candidates
-    for candidate in candidates.slice(start, end):
+    writer = codecs.getwriter('utf-8')(copy_process.stdin)
+    pb = None if start else ProgressBar(end)
+    for i, candidate in enumerate(candidates.slice(start, end)):
+        if pb: pb.bar(i)
         # Runs the actual extraction function
         keys, values = zip(*list(annotator(candidate)))
-        row = [candidate.id, array_tsv_escape(keys), array_tsv_escape(values)]
-        writer.writerow(row)
+        row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
+        writer.write('\t'.join(row) + '\n')
+    if pb: pb.close()
+#         writer.writerow(row)
     _out, err = copy_process.communicate()
 #     if _out:
 #         print "standard output of subprocess:"
@@ -211,10 +219,10 @@ def annotate(candidates, parallel=0, keyset = None, lfs = []):
         # TODO: move this for-loop computation to database for automatic parallelization, 
         # avoid communication overhead etc.
         iterator_sql = 'SELECT candidate_id, keys, values FROM %s ORDER BY candidate_id' % table_name
-        for i, (candidate_id, keys, values) in enumerate(con.execute(iterator_sql)):
+        for i, (candidate_id, c_keys, values) in enumerate(con.execute(iterator_sql)):
             candidate_index[candidate_id] = i
             row_index.append(candidate_id)
-            for key, value in izip(keys, values):
+            for key, value in izip(c_keys, values):
                 # Only keep known features
                 key_id = key_index.get(key, None)
                 if key_id is not None:

@@ -13,6 +13,7 @@ import multiprocessing
 from itertools import izip
 from collections import namedtuple
 import numpy as np
+import codecs
 
 # Used to conform to existing annotation key API call
 _TempKey = namedtuple('TempKey',['id', 'name'])
@@ -116,7 +117,7 @@ def tsv_escape(s):
     if s is None:
         return '\\N'
     # Make sure feature names are still uniquely encoded in ascii
-    s = unicode(s).encode('ascii','xmlcharrefreplace')
+    s = unicode(s)
     s = s.replace('\"', '\\"').replace('\t','\\t')
     if any(c in ',{}' for c in s):
         s = '"' + s + '"'
@@ -145,11 +146,12 @@ def _annotate_worker(name, table_name, start, end, annotator):
     # Computes and pipe rows to the COPY process
 #     writer = csv.writer(copy_process.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
     candidates = session.query(CandidateSet).filter(CandidateSet.name == name).one().candidates
+    writer = codecs.getwriter('utf-8')(copy_process.stdin)
     for candidate in candidates.slice(start, end):
         # Runs the actual extraction function
         keys, values = zip(*list(annotator(candidate)))
         row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
-        copy_process.stdin.write('\t'.join(row) + '\n')
+        writer.write('\t'.join(row) + '\n')
 #         writer.writerow(row)
     _out, err = copy_process.communicate()
 #     if _out:

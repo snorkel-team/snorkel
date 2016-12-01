@@ -27,3 +27,4 @@ fi
 unzip $phantomjs.zip
 rm $phantomjs.zip
 mv $phantomjs phantomjs
+

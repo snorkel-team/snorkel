@@ -1,80 +1,9 @@
 from .meta import SnorkelBase, snorkel_postgres
-from sqlalchemy import Column, String, Integer, Table, Text, ForeignKey, UniqueConstraint, func
+from sqlalchemy import Column, String, Integer, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.types import PickleType
-from sqlalchemy.inspection import inspect
-from sqlalchemy.orm.session import object_session
 from sqlalchemy.sql import select, text
-import pandas as pd
-
-
-corpus_document_association = Table('corpus_document_association', SnorkelBase.metadata,
-                                    Column('corpus_id', Integer, ForeignKey('corpus.id')),
-                                    Column('document_id', Integer, ForeignKey('document.id')))
-
-
-class Corpus(SnorkelBase):
-    """
-    A set of Documents, uniquely identified by a name.
-
-    Corpora have many-to-many relationships with Documents, so users can create new
-    subsets, supersets, etc.
-    """
-    __tablename__ = 'corpus'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    documents = relationship('Document', secondary=corpus_document_association, backref='corpora')
-    # TODO: What should the cascades be?
-
-    def append(self, item):
-        self.documents.append(item)
-
-    def remove(self, item):
-        self.documents.remove(item)
-
-    def __repr__(self):
-        return "Corpus (" + str(self.name) + ")"
-
-    def __iter__(self):
-        """Default iterator is over self.documents"""
-        for doc in self.documents:
-            yield doc
-
-    def __len__(self):
-        return len(self.documents)
-
-    def stats(self):
-        """Print summary / diagnostic stats about the corpus"""
-        print "Number of documents:", len(self.documents)
-        self.child_context_stats(Document)
-
-    def child_context_stats(self, parent_context):
-        """
-        Given a parent context class, gets all the child context classes, and returns histograms of the number
-        of children per parent.
-        """
-        session = object_session(self)
-        parent_name = parent_context.__table__.name
-
-        # Get all the child context relationships
-        rels = [r for r in inspect(parent_context).relationships if r.back_populates == parent_name]
-        
-        # Print the histograms for each child context, and recurse!
-        for rel in rels:
-            c  = rel.mapper.class_
-            fk = list(rel._calculated_foreign_keys)[0]
-                
-            # Query for average number of child contexts per parent context
-            label = 'Number of %ss per %s' % (c.__table__.name, parent_name)
-            query = session.query(fk, func.count(c.id).label(label)).group_by(fk) 
-                
-            # Render as panadas dataframe histogram
-            df = pd.read_sql(query.statement, query.session.bind)
-            df.hist(label)
-
-            # Recurse to grandhildren
-            self.child_context_stats(c)
 
 
 class Context(SnorkelBase):

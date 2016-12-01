@@ -6,41 +6,6 @@ from sqlalchemy.dialects import postgresql
 from snorkel.utils import camel_to_under
 
 
-annotation_key_set_annotation_key_association = \
-    Table('annotation_key_set_annotation_key_association', SnorkelBase.metadata,
-          Column('annotation_key_set_id', Integer, ForeignKey('annotation_key_set.id'), nullable=False),
-          Column('annotation_key_id', Integer, ForeignKey('annotation_key.id'), nullable=False),
-          UniqueConstraint('annotation_key_set_id', 'annotation_key_id',
-                           name='unique_annotation_key_set_annotation_key_association'))
-
-
-class AnnotationKeySet(SnorkelBase):
-    """A many-to-many set of AnnotationKeys."""
-    __tablename__ = 'annotation_key_set'
-    id            = Column(Integer, primary_key=True)
-    name          = Column(String, unique=True, nullable=False)
-    keys          = relationship('AnnotationKey',
-                                 secondary=annotation_key_set_annotation_key_association,
-                                 backref='sets')
-    
-    def append(self, key):
-        self.keys.append(key)
-
-    def remove(self, key):
-        self.keys.remove(key)
-
-    def __repr__(self):
-        return "Annotation Key Set (" + str(self.name) + ")"
-
-    def __iter__(self):
-        """Default iterator is over self.annotation_keys"""
-        for key in self.keys.itervalues():
-            yield key
-
-    def __len__(self):
-        return len(self.keys)
-
-
 class AnnotationKey(SnorkelBase):
     """
     The Annotation key table is a mapping from unique string names to integer id numbers.

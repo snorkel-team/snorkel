@@ -370,7 +370,7 @@ The above situation has been getting a lot of attention lately as <a href="http:
   Estimating the accuracy of data sources is key to assessing the reliability of data. In SLiMFast we model source accuracy as the probability that the information reported by a data source is correct. 
 </blockquote>
 
-<p> In today's deluge of information, it is common that different sources provide data that describes the same object, e.g., a real-world event, crime rates, financial data, etc. When errors are not deliberate but accidental and random <i>plurality</i> allows us to detect and correct inaccurate data. Specifically, the collective wisdom of the <i>majority</i> suffices to identify the truth for different objects. However, reality can be quite different. Sources can report fake data on purpose. They may also collude and copy from each other. Under these circumstances, plurality does not work anymore since majority fails because <a href="https://www.buzzfeed.com/alexandrearagao/noticias-falsas-lava-jato-facebook-1?utm_term=.odRqndXKe#.bj2jGR1vo">fake news stories may be shared and replicated dramatically more often than actual news</a>. As a consequence, we need more sophisticated models to handle these scenarios.
+<p> In today's deluge of information, it is common that different sources provide data that describes the same object, e.g., a real-world event, crime rates, financial data, etc. When errors are not deliberate but accidental and random <i>plurality</i> allows us to detect and correct inaccurate data. Specifically, the collective wisdom of the <i>majority</i> suffices to identify the truth for different objects. However, reality can be quite different. Sources can report fake data on purpose. They may also collude and copy from each other. Under these circumstances, plurality does not work anymore. For example, majority fails for online news because <a href="https://www.buzzfeed.com/alexandrearagao/noticias-falsas-lava-jato-facebook-1?utm_term=.odRqndXKe#.bj2jGR1vo">fake news stories may be shared and replicated dramatically more often than actual news</a>. As a consequence, we need more sophisticated models to handle these scenarios.
 </p>
 
 <p><img src="img/features.jpg" alt="image alt text"></p> 
@@ -379,7 +379,7 @@ The above situation has been getting a lot of attention lately as <a href="http:
   Simple features can help identify inaccurate data and unreliable sources. Consider news articles: The author, number of misspellings or the use of curse words may be enough to detect a hoax article.
 </blockquote>
 
-<p> In SLiMFast, we follow a very simple approach to identify the reliability of data: <i> We model the accuracy of a data source as the probability that the information reported by the source is correct. Then, we ask users to provide features they believe to be informative of the reliability of sources and use those to estimate the accuracy of data sources.</i>. Despite being simple, the observation that features of a data source can be indicative of its accuracy has been overlooked by previous approaches. Now, with all of the politically-charged talk about banning <q>fake news</q> sites, it seems appropriate to examine how reasoning about source features can help assess the reliability of media outlets and detect fake news stories.
+<p> In SLiMFast, we follow a very simple approach to identify the reliability of data: <i> We model the accuracy of a data source as the probability that the information reported by the source is correct. Then, we ask users to provide features they believe to be informative of the reliability of sources and use those to estimate the accuracy of data sources.</i> Despite being simple, the observation that features of a data source can be indicative of its accuracy has been overlooked by previous approaches. Now, with all of the politically-charged talk about banning <q>fake news</q> sites, it seems appropriate to examine how reasoning about source features can help assess the reliability of media outlets and detect fake news stories.
 </p>
 
 <h3 id="toc_0">A Case Study: How to Spot Fake News?</h3> 
@@ -476,6 +476,9 @@ Now, all we need to do is just use some training data, e.g., facts from news art
 <li><p>We aim to examine if SLiMFast can be applied to streaming domains such as monitoring social media, online news portals, etc.</p></li>
 <li><p>We are actively exploring how the principles behind SLiMFast can be extended to other problems in the data integration realm such as data cleaning.</p></li>
 </ul>
+
+<h2 id="toc_0">Acknowledgements</h2>
+We would like to thank <a href="https://snap.stanford.edu/people.html">Rok Sosic</a> for the exciting conversations that led to this blogpost.
 
 
 </body>

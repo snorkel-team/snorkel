@@ -13,7 +13,7 @@ from wand.drawing import Drawing
 from wand.display import display
 from wand.color import Color
 from bs4 import BeautifulSoup
-from editdistance import eval as editdist
+from editdistance import eval as editdist # Alternative library: python-levenshtein
 from selenium import webdriver
 import httplib
 
@@ -217,7 +217,7 @@ class VisualLinker():
             if html_to_pdf[i] is None:
                 link_fuzzy(i)
         if self.vverbose:
-            print "Local Approximate matching:"
+            print "Local approximate matching:"
             display_match_counts
 
         # convert list to dict

@@ -9,13 +9,13 @@ from sqlalchemy.orm import sessionmaker
 DBURL = os.environ.get('SNORKELDB', 'sqlite:///')
 DBPORT = os.environ.get('SNORKELDBPORT', '5432')
 DBUSER = os.environ.get('SNORKELDBUSER', getpass.getuser())
-DBNAME = os.environ.get('SNORKELDBNAME', '')
+DBNAME = os.environ.get('SNORKELDBNAME', 'snorkel.db')
 
 snorkel_postgres = DBURL.startswith('postgres')
 if snorkel_postgres:
     connection = DBURL.rstrip('/') + '/' + DBNAME if DBNAME else DBURL
 else:
-    connection = DBURL + (DBNAME if DBNAME else 'snorkel.db')
+    connection = DBURL + DBNAME
 
 snorkel_engine = create_engine(connection)
 

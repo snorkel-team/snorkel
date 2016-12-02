@@ -329,7 +329,7 @@ class HTMLParser(DocParser):
             for text in soup.find_all('html'):
                 name = os.path.basename(fp)[:os.path.basename(fp).rfind('.')]
                 stable_id = self.get_stable_id(name)
-                yield Document(name=name, stable_id=stable_id, 
+                yield Document(name=name, stable_id=stable_id, text=unicode(text),
                                meta={'file_name' : file_name}), unicode(text)
 
     def _can_read(self, fpath):
@@ -406,9 +406,6 @@ class OmniParser(object):
 
         # tabular setup
         self.tabular = tabular
-        if self.tabular:
-            self.table_idx = -1
-
 
     def parse(self, document, text):
         for phrase in self.parse_structure(document, text):
@@ -433,6 +430,7 @@ class OmniParser(object):
 
         if self.tabular:
             table_info = TableInfo(document, parent=document)
+            self.table_idx = -1
             parents = []
         else:
             table_info = None

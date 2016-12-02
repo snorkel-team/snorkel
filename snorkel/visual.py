@@ -332,21 +332,13 @@ class VisualLinker():
         if self.verbose:
             print "Updated coordinates in snorkel.db"
 
-    def display_boxes(self, boxes, page_num=1, display_img=True, alternate_colors=False):
-        """
-        Displays each of the bounding boxes passed in 'boxes' on an image of the pdf
-        pointed to by pdf_file
-        # boxes is a list of 5-tuples (page, top, left, bottom, right)
-        """
-        display_boxes(self.pdf_file, boxes, page_num, display_img, alternate_colors)
-
     def display_candidates(self, candidates, page_num=1, display=True):
         """
         Displays the bounding boxes corresponding to candidates on an image of the pdf
         # boxes is a list of 5-tuples (page, top, left, bottom, right)
         """
         boxes = [get_box(span) for c in candidates for span in c.get_arguments()]
-        self.display_boxes(boxes, page_num=page_num, display_img=display, alternate_colors=True)
+        display_boxes(self.pdf_file, boxes, page_num=page_num, display_img=display, alternate_colors=True)
 
     def display_words(self, target=None, page_num=1, display=True):
         boxes = []
@@ -359,7 +351,7 @@ class VisualLinker():
                         phrase.left[i],
                         phrase.bottom[i],
                         phrase.right[i]))
-        self.display_boxes(boxes, page_num=page_num, display_img=display)
+        display_boxes(self.pdf_file, boxes, page_num=page_num, display_img=display)
 
     def create_pdf(self, document_name, text, page_dim=None, split=True):
         """

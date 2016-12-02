@@ -27,7 +27,7 @@ fi
 
 # Make sure poppler is installed
 POPPLER="poppler"
-if [ ! -f "$POPPLER" ]; then
+if [ ! -d "$POPPLER" ]; then
     read -p "poppler not found- install now?  [y/n] " yn
     case $yn in
         [Yy]* ) echo "Installing poppler..."; ./install-poppler.sh;;

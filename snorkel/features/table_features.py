@@ -1,6 +1,6 @@
 from snorkel.lf_helpers import *
 from snorkel.models import ImplicitSpan
-from snorkel.table_utils import min_row_diff, min_col_diff, num_rows, num_cols
+from snorkel.utils_table import min_row_diff, min_col_diff, num_rows, num_cols
 from snorkel.config import settings
 
 FEAT_PRE = 'TAB_'

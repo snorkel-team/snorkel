@@ -7,6 +7,7 @@
 *.pyc
 parser/
 phantomjs/
+poppler/
 /stanford-corenlp-*
 *.db*
 downloads/

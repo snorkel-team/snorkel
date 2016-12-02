@@ -1,12 +1,13 @@
 import re
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 from itertools import chain
 from lxml.html import fromstring
 from lxml import etree
 import numpy as np
 
-from table_utils import min_row_diff, min_col_diff, is_axis_aligned, is_row_aligned, is_col_aligned
 from utils import tokens_to_ngrams
+from utils_table import *
+from utils_visual import *
 from .models import TemporarySpan, Phrase
 
 
@@ -224,7 +225,7 @@ def same_table(c):
     Return True if all Spans in the given candidate are from the same Table.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(isinstance(c[i], Phrase) and
+    return (all(c[i].is_tabular() and
                 c[i].parent.table == c[0].parent.table for i in range(len(c))))
 
 
@@ -233,9 +234,8 @@ def same_row(c):
     Return True if all Spans in the given candidate are from the same Row.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(isinstance(c[i], Phrase) and
-                c[i].parent.table == c[0].parent.table and
-                is_row_aligned(c[i].parent, c[0].parent)
+    return (same_table(c) and 
+            all(is_row_aligned(c[i].parent, c[0].parent)
                 for i in range(len(c))))
 
 
@@ -244,9 +244,8 @@ def same_col(c):
     Return True if all Spans in the given candidate are from the same Col.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(isinstance(c[i], Phrase) and
-                c[i].parent.table == c[0].parent.table and
-                is_col_aligned(c[i].parent, c[0].parent)
+    return (same_table(c) and
+            all(is_col_aligned(c[i].parent, c[0].parent)
                 for i in range(len(c))))
 
 
@@ -256,8 +255,10 @@ def is_tabular_aligned(c):
     or Col
     :param c: The candidate whose Spans are being compared
     """
-    return same_table(c) and (is_col_aligned(c[i].parent, c[0].parent) or
-                              is_row_aligned(c[i].parent, c[0].parent))
+    return (same_table(c) and 
+           (is_col_aligned(c[i].parent, c[0].parent) or
+            is_row_aligned(c[i].parent, c[0].parent)
+            for i in range(len(c))))
 
 
 def same_cell(c):
@@ -265,8 +266,7 @@ def same_cell(c):
     Return True if all Spans in the given candidate are from the same Cell.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(isinstance(c[i], Phrase) and
-                c[i].parent.cell is not None and
+    return (all(c[i].parent.cell is not None and
                 c[i].parent.cell == c[0].parent.cell for i in range(len(c))))
 
 
@@ -500,115 +500,39 @@ def overlap(a, b):
 ############################
 # Visual feature helpers
 ############################
-_Bbox = namedtuple('bbox', ['page', 'top', 'bottom', 'left', 'right'], verbose=False)
-
-
-def _bbox_from_span(span):
-    if isinstance(span, TemporarySpan) and span.is_visual():
-        return _Bbox(
-            span.get_attrib_tokens('page')[0],
-            min(span.get_attrib_tokens('top')),
-            max(span.get_attrib_tokens('bottom')),
-            min(span.get_attrib_tokens('left')),
-            max(span.get_attrib_tokens('right')))
-    else:
-        return None
-
-
-def _bbox_from_phrase(phrase):
-    # TODO: this may have issues where a phrase is linked to words on different pages
-    if isinstance(phrase, Phrase) and phrase.is_visual():
-        return _Bbox(
-            phrase.page[0],
-            min(phrase.top),
-            max(phrase.bottom),
-            min(phrase.left),
-            max(phrase.right))
-    else:
-        return None
-
-
-def _bbox_horz_aligned(box1, box2):
-    """
-    Returns true if the vertical center point of either span is within the 
-    vertical range of the other
-    """
-    if not (box1 and box2): return False
-    center1 = (box1.bottom + box1.top) / 2.0
-    center2 = (box2.bottom + box2.top) / 2.0
-    return ((center1 >= box2.top and center1 <= box2.bottom) or
-            (center2 >= box1.top and center2 <= box1.bottom))
-
-
-def _bbox_vert_aligned(box1, box2):
-    """
-    Returns true if the horizontal center point of either span is within the 
-    horizontal range of the other
-    """
-    if not (box1 and box2): return False
-    center1 = (box1.right + box1.left) / 2.0
-    center2 = (box2.right + box2.left) / 2.0
-    return ((center1 >= box2.left and center1 <= box2.right) or
-            (center2 >= box1.left and center2 <= box1.right))
-
-
-def _bbox_vert_aligned_left(box1, box2):
-    """
-    Returns true if the left boundary of both boxes is within 2 pts
-    """
-    if not (box1 and box2): return False
-    return abs(box1.left - box2.left) <= 2
-
-
-def _bbox_vert_aligned_right(box1, box2):
-    """
-    Returns true if the right boundary of both boxes is within 2 pts
-    """
-    if not (box1 and box2): return False
-    return abs(box1.right - box2.right) <= 2
-
-
-def _bbox_vert_aligned_center(box1, box2):
-    """
-    Returns true if the right boundary of both boxes is within 5 pts
-    """
-    if not (box1 and box2): return False
-    return abs((box1.right + box1.left) / 2.0 - (box2.right + box2.left) / 2.0) <= 5
-
-
 def is_horz_aligned(c):
-    return (all([_bbox_from_span(c[i]).page is not None and
-                 _bbox_horz_aligned(_bbox_from_span(c[i]), _bbox_from_span(c[0]))
+    return (all([c[i].is_visual() and
+                 bbox_horz_aligned(bbox_from_span(c[i]), bbox_from_span(c[0]))
                  for i in range(len(c))]))
 
 
 def is_vert_aligned(c):
-    return (all([_bbox_from_span(c[i]).page is not None and
-                 _bbox_vert_aligned(_bbox_from_span(c[i]), _bbox_from_span(c[0]))
+    return (all([c[i].is_visual() and
+                 bbox_vert_aligned(bbox_from_span(c[i]), bbox_from_span(c[0]))
                  for i in range(len(c))]))
 
 
 def is_vert_aligned_left(c):
-    return (all([_bbox_from_span(c[i]).page is not None and
-                 _bbox_vert_aligned_left(_bbox_from_span(c[i]), _bbox_from_span(c[0]))
+    return (all([c[i].is_visual() and
+                 bbox_vert_aligned_left(bbox_from_span(c[i]), bbox_from_span(c[0]))
                  for i in range(len(c))]))
 
 
 def is_vert_aligned_right(c):
-    return (all([_bbox_from_span(c[i]).page is not None and
-                 _bbox_vert_aligned_right(_bbox_from_span(c[i]), _bbox_from_span(c[0]))
+    return (all([c[i].is_visual() and
+                 bbox_vert_aligned_right(bbox_from_span(c[i]), bbox_from_span(c[0]))
                  for i in range(len(c))]))
 
 
 def is_vert_aligned_center(c):
-    return (all([_bbox_from_span(c[i]).page is not None and
-                 _bbox_vert_aligned_center(_bbox_from_span(c[i]), _bbox_from_span(c[0]))
+    return (all([c[i].is_visual() and
+                 bbox_vert_aligned_center(bbox_from_span(c[i]), bbox_from_span(c[0]))
                  for i in range(len(c))]))
 
 
 def same_page(c):
-    return (all([_bbox_from_span(c[i]).page is not None and
-                 _bbox_from_span(c[i]).page == _bbox_from_span(c[0]).page
+    return (all([c[i].is_visual() and
+                 bbox_from_span(c[i]).page == bbox_from_span(c[0]).page
                  for i in range(len(c))]))
 
 
@@ -620,7 +544,7 @@ def get_horz_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     for span in spans:
         if span.parent.table is None: continue
         for phrase in span.parent.table.phrases:
-            if (_bbox_horz_aligned(_bbox_from_phrase(phrase), _bbox_from_span(span)) and
+            if (bbox_horz_aligned(bbox_from_phrase(phrase), bbox_from_span(span)) and
                         phrase is not span.parent):
                 for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
                     yield ngram
@@ -691,7 +615,7 @@ def _preprocess_visual_features(doc):
         xc_aligned = defaultdict(list)
         x1_aligned = defaultdict(list)
         for phrase in phrases:
-            phrase.bbox = _bbox_from_phrase(phrase)
+            phrase.bbox = bbox_from_phrase(phrase)
             phrase.yc = (phrase.bbox.top + phrase.bbox.bottom) / 2
             phrase.x0 = phrase.bbox.left
             phrase.x1 = phrase.bbox.right

@@ -241,6 +241,8 @@ class CoreNLPHandler:
                         status_forcelist=[500, 502, 503, 504])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
 
+        self.ptb_rgx = re.compile(r'-[A-Z]{2}B-')
+
     def _kill_pserver(self):
         if self.server_pid is not None:
             try:
@@ -250,6 +252,11 @@ class CoreNLPHandler:
 
     def parse(self, document, text):
         """Parse a raw document as a string into a list of sentences"""
+        def ptb_clean(text):
+            for ptb_match in self.ptb_rgx.finditer(text): 
+                text = text.replace(ptb_match.group(0), PTB[ptb_match.group(0)])
+            return text
+        
         if len(text.strip()) == 0:
             return
         if isinstance(text, unicode):
@@ -267,13 +274,12 @@ class CoreNLPHandler:
             warnings.warn("CoreNLP skipped a malformed sentence.", RuntimeWarning)
             return
         position = 0
-        diverged = False
         for block in blocks:
             parts = defaultdict(list)
             dep_order, dep_par, dep_lab = [], [], []
             for tok, deps in zip(block['tokens'], block['basic-dependencies']):
-                parts['words'].append(tok['word'])
-                parts['lemmas'].append(tok['lemma'])
+                parts['words'].append(ptb_clean(tok['word']))
+                parts['lemmas'].append(ptb_clean(tok['lemma']))
                 parts['pos_tags'].append(tok['pos'])
                 parts['ner_tags'].append(tok['ner'])
                 parts['char_offsets'].append(tok['characterOffsetBegin'])
@@ -281,25 +287,14 @@ class CoreNLPHandler:
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])
 
+            parts['text'] = ''.join(t['originalText'] + t['after'] for t in block['tokens'])
+            
             # make char_offsets relative to start of sentence
             abs_sent_offset = parts['char_offsets'][0]
             parts['char_offsets'] = [p - abs_sent_offset for p in parts['char_offsets']]
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
-
-            # NOTE: We have observed weird bugs where CoreNLP diverges from raw document text (see Issue #368)
-            # In these cases we go with CoreNLP so as not to cause downstream issues but throw a warning
-            doc_text = text[block['tokens'][0]['characterOffsetBegin'] : block['tokens'][-1]['characterOffsetEnd']]
-            L = len(block['tokens'])
-            parts['text'] = ''.join(t['originalText'] + t['after'] if i < L - 1 else t['originalText'] for i,t in enumerate(block['tokens']))
-            if not diverged and doc_text != parts['text']:
-                diverged = True
-                #warnings.warn("CoreNLP parse has diverged from raw document text!")
             parts['position'] = position
-
-            # replace PennTreeBank tags with original forms
-            parts['words'] = [PTB[w] if w in PTB else w for w in parts['words']]
-            parts['lemmas'] = [PTB[w.upper()] if w.upper() in PTB else w for w in parts['lemmas']]
 
             # Link the sentence to its parent document object
             parts['document'] = document
@@ -386,7 +381,7 @@ class OmniParser(object):
         self.visual = visual
         if self.visual:
             if not session or not pdf_path:
-                warnings.warn("pdf_path and session must be specified, visual features are not being used", RuntimeWarning)
+                warnings.warn("Keyword visual=True; pdf_path and session must be specified for visual parsing", RuntimeWarning)
             else:
                 self.create_pdf = False
                 self.vizlink = VisualLinker(pdf_path, session)
@@ -519,23 +514,26 @@ class OmniParser(object):
                         len(self.delim)
             for parts in self.lingual_parse(document, self.contents[parsed:batch_end]):
                 (_, _, _, char_end) = split_stable_id(parts['stable_id'])
-                while parsed + char_end > block_char_end[parent_idx]:
-                    parent_idx += 1
-                    position = 0
-                parts['document'] = document
-                parts['phrase_num'] = phrase_num
-                parts['stable_id'] = \
-                    "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
-                if self.structural:
-                    parts['xpath'] =  xpaths[parent_idx]
-                    parts['html_tag'] = html_tags[parent_idx]
-                    parts['html_attrs'] = html_attrs[parent_idx]
-                if self.tabular:
-                    parent = parents[parent_idx]
-                    parts = table_info.apply_tabular(parts, parent, position)
-                yield Phrase(**parts) 
-                position += 1
-                phrase_num += 1
+                try:
+                    while parsed + char_end > block_char_end[parent_idx]:
+                        parent_idx += 1
+                        position = 0
+                    parts['document'] = document
+                    parts['phrase_num'] = phrase_num
+                    parts['stable_id'] = \
+                        "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
+                    if self.structural:
+                        parts['xpath'] =  xpaths[parent_idx]
+                        parts['html_tag'] = html_tags[parent_idx]
+                        parts['html_attrs'] = html_attrs[parent_idx]
+                    if self.tabular:
+                        parent = parents[parent_idx]
+                        parts = table_info.apply_tabular(parts, parent, position)
+                    yield Phrase(**parts) 
+                    position += 1
+                    phrase_num += 1
+                except:
+                    import pdb; pdb.set_trace()
             parsed = batch_end
 
 class TableInfo():

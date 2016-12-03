@@ -17,11 +17,10 @@ import httplib
 from utils_visual import display_boxes
 
 class VisualLinker():
-    def __init__(self, pdf_path, time=False, verbose=False, very_verbose=False):
+    def __init__(self, pdf_path, time=False, verbose=False):
         self.pdf_path = pdf_path
         self.pdf_file = None
         self.verbose = verbose
-        self.vverbose = very_verbose
         self.time = time
         self.coordinate_map = None
         self.pdf_word_list = None
@@ -180,14 +179,14 @@ class VisualLinker():
 
         # first pass: global search for exact matches
         link_exact(0, N)
-        if self.vverbose:
+        if self.verbose:
             print "Global exact matching:"
             display_match_counts()
 
         # second pass: local search for exact matches
         for i in range((N + 2) / search_radius + 1):
             link_exact(max(0, i * search_radius - search_radius), min(N, i * search_radius + search_radius))
-        if self.vverbose:
+        if self.verbose:
             print "Local exact matching:"
 
         # third pass: local search for approximate matches
@@ -195,7 +194,7 @@ class VisualLinker():
         for i in range(len(html_to_pdf)):
             if html_to_pdf[i] is None:
                 link_fuzzy(i)
-        if self.vverbose:
+        if self.verbose:
             print "Local approximate matching:"
             display_match_counts
 

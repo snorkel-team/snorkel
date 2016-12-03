@@ -5,6 +5,7 @@ import os
 from collections import OrderedDict, defaultdict
 from pprint import pprint
 from timeit import default_timer as timer
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -37,33 +38,15 @@ class VisualLinker():
         self.pdf_file = self.pdf_path + self.document.name + '.pdf'
         if not os.path.isfile(self.pdf_file):
             self.pdf_file = self.pdf_file[:-3]+"PDF"
-        if self.vverbose: print self.pdf_file
 
-        tic = timer()
         try:
             self.extract_pdf_words()
-        except:
+        except RuntimeError as e:
+            warnings.warn(e.message, RuntimeWarning)
             return
-        if self.vverbose:
-            pprint(self.pdf_word_list[:5])
-            pprint(self.coordinate_map.items()[:5])
-        if self.time:
-            print "Elapsed: %0.3f s" % (timer() - tic)
-
-        tic = timer()
         self.extract_html_words()
-        if self.vverbose: pprint(self.html_word_list[:5])
-        if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
-
-
-        tic = timer()
         self.link_lists(search_max=200)
-        if self.vverbose: self.display_links()
-        if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
-
-        tic = timer()
         self.update_coordinates()
-        if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
 
     def extract_pdf_words(self):
         num_pages = subprocess.check_output(
@@ -82,7 +65,7 @@ class VisualLinker():
         self.pdf_word_list = pdf_word_list
         self.coordinate_map = coordinate_map
         if len(self.pdf_word_list) == 0:
-            raise RuntimeError("PDF does not have extractable words.")
+            raise RuntimeError("Words could not be extracted from PDF: %s" % self.pdf_file)
         # take last page dimensions
         page_width, page_height = int(float(pages[0].get('width'))), int(float(pages[0].get('height')))
         self.pdf_dim = (page_width, page_height)

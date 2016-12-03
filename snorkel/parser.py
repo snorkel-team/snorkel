@@ -357,10 +357,10 @@ class OmniParser(object):
     def __init__(self, 
                  structural=True, blacklist=["style"],              # structural
                  flatten=[], flatten_delim=' ',   
-                 visual=False, pdf_path=None, session=None,         # visual
                  lingual=True, strip=True,                          # lingual
                  replacements=[(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]','-')],         
-                 tabular=True):                                     # tabular
+                 tabular=True,                                      # tabular
+                 visual=False, pdf_path=None):                      # visual
         """
         :param visual: boolean, if True visual features are used in the model
         :param pdf_path: directory where pdf are saved, if a pdf file is not found,
@@ -377,15 +377,6 @@ class OmniParser(object):
         self.flatten = flatten if isinstance(flatten, list) else [flatten]
         self.flatten_delim = flatten_delim
 
-        # visual setup
-        self.visual = visual
-        if self.visual:
-            if not session or not pdf_path:
-                warnings.warn("Keyword visual=True; pdf_path and session must be specified for visual parsing", RuntimeWarning)
-            else:
-                self.create_pdf = False
-                self.vizlink = VisualLinker(pdf_path, session)
-        
         # lingual setup
         self.lingual = lingual
         self.strip = strip
@@ -402,16 +393,28 @@ class OmniParser(object):
         # tabular setup
         self.tabular = tabular
 
-    def parse(self, document, text):
-        for phrase in self.parse_structure(document, text):
-            yield phrase
+        # visual setup
+        self.visual = visual
         if self.visual:
-            self.vizlink.session.commit()
-            fname = self.vizlink.pdf_path + document.name
-            self.create_pdf = not os.path.isfile(fname + '.pdf') and not os.path.isfile(fname + '.PDF')
-            if self.create_pdf:  # PDF file does not exist
+            if not pdf_path:
+                warnings.warn("Visual parsing failed: pdf_path is required", RuntimeWarning)
+            else:
+                self.vizlink = VisualLinker(pdf_path)
+
+    def parse(self, document, text):
+        if self.visual:
+            for _ in self.parse_structure(document, text):
+                pass
+            # Add visual attributes
+            filename = self.vizlink.pdf_path + document.name
+            create_pdf = not os.path.isfile(filename + '.pdf') and not os.path.isfile(filename + '.PDF')
+            if create_pdf:  # PDF file does not exist
                 self.vizlink.create_pdf(document.name, text)
-            self.vizlink.parse_visual(document)
+            for phrase in self.vizlink.parse_visual(document.name, document.phrases):
+                yield phrase
+        else:
+            for phrase in self.parse_structure(document, text):
+                yield phrase
 
     def parse_structure(self, document, text):
         self.contents = ""

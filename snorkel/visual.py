@@ -17,14 +17,12 @@ import httplib
 from utils_visual import display_boxes
 
 class VisualLinker():
-    def __init__(self, pdf_path, session, time=False, verbose=False, very_verbose=False):
-        self.session = session
+    def __init__(self, pdf_path, time=False, verbose=False, very_verbose=False):
         self.pdf_path = pdf_path
         self.pdf_file = None
         self.verbose = verbose
         self.vverbose = very_verbose
         self.time = time
-        self.document = None
         self.coordinate_map = None
         self.pdf_word_list = None
         self.html_word_list = None
@@ -33,12 +31,11 @@ class VisualLinker():
         delimiters = u"([\(\)\,\?\u2212\u201C\u201D\u2018\u2019\u00B0\*\']|(?<!http):|\.$|\.\.\.)"
         self.separators = re.compile(delimiters)
 
-    def parse_visual(self, document):
-        self.document = document
-        self.pdf_file = self.pdf_path + self.document.name + '.pdf'
+    def parse_visual(self, document_name, phrases):
+        self.phrases = phrases
+        self.pdf_file = self.pdf_path + document_name + '.pdf'
         if not os.path.isfile(self.pdf_file):
             self.pdf_file = self.pdf_file[:-3]+"PDF"
-
         try:
             self.extract_pdf_words()
         except RuntimeError as e:
@@ -46,7 +43,8 @@ class VisualLinker():
             return
         self.extract_html_words()
         self.link_lists(search_max=200)
-        self.update_coordinates()
+        for phrase in self.update_coordinates():
+            yield phrase
 
     def extract_pdf_words(self):
         num_pages = subprocess.check_output(
@@ -104,9 +102,9 @@ class VisualLinker():
 
     def extract_html_words(self):
         html_word_list = []
-        for phrase in self.document.phrases:
+        for phrase in self.phrases:
             for i, word in enumerate(phrase.words):
-                html_word_list.append(((phrase.id, i), word))
+                html_word_list.append(((phrase.stable_id, i), word))
         self.html_word_list = html_word_list
         if self.verbose:
             print "Extracted %d html words" % len(self.html_word_list)
@@ -302,16 +300,15 @@ class VisualLinker():
         pd.reset_option('display.max_rows');
 
     def update_coordinates(self):
-        for phrase in self.document.phrases:
+        for phrase in self.phrases:
             (page, top, left, bottom, right) = zip(
-                    *[self.coordinate_map[self.links[((phrase.id), i)]] for i in range(len(phrase.words))])
-            self.session.query(Phrase).filter(Phrase.id == phrase.id).update(
-                    {"page": list(page),
-                     "top": list(top),
-                     "left": list(left),
-                     "bottom": list(bottom),
-                     "right": list(right)})
-        self.session.commit()
+                    *[self.coordinate_map[self.links[((phrase.stable_id), i)]] for i in range(len(phrase.words))])
+            phrase.page = list(page)
+            phrase.top = list(top)
+            phrase.left = list(left)
+            phrase.bottom = list(bottom)
+            phrase.right = list(right)
+            yield phrase
         if self.verbose:
             print "Updated coordinates in snorkel.db"
 
@@ -325,7 +322,7 @@ class VisualLinker():
 
     def display_words(self, target=None, page_num=1, display=True):
         boxes = []
-        for phrase in self.document.phrases:
+        for phrase in self.phrases:
             for i, word in enumerate(phrase.words):
                 if target is None or word == target:
                     boxes.append((

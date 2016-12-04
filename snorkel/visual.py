@@ -47,12 +47,12 @@ class VisualLinker():
 
     def extract_pdf_words(self):
         num_pages = subprocess.check_output(
-                "pdfinfo '{}' | grep Pages  | sed 's/[^0-9]*//'".format(self.pdf_file), shell=True)
+                "pdfinfo '{}' | grep -a Pages | sed 's/[^0-9]*//'".format(self.pdf_file), shell=True)
         pdf_word_list = []
         coordinate_map = {}
         for i in range(1, int(num_pages) + 1):
             html_content = subprocess.check_output(
-                    "pdftotext -f {} -l {} -bbox-layout '{}' -".format(str(i), str(i), self.pdf_file), shell=True)
+                    "pdftotext -f {} -l {} -bbox -layout '{}' -".format(str(i), str(i), self.pdf_file), shell=True)
             soup = BeautifulSoup(html_content, "html.parser")
             pages = soup.find_all('page')
             pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(pages[0], i)

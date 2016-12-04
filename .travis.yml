@@ -62,6 +62,7 @@ install:
   - pip install -r python-package-requirement.txt
   - test -e parser/corenlp.sh || ./install-parser.sh
   - source install-phantomjs.sh
+  - source install-poppler.sh
 
   # Downloads data for disease tagging tutorial
   - cd tutorials/disease_tagging
@@ -82,23 +83,23 @@ install:
 script:
 
   # Runs intro tutorial notebooks
-  - cd tutorials
-  - travis_wait 45 runipy intro/Intro_Tutorial_1.ipynb
-  - travis_wait 45 runipy intro/Intro_Tutorial_2.ipynb
-  - travis_wait 45 runipy intro/Intro_Tutorial_3.ipynb
-  - travis_wait 45 runipy intro/Intro_Tutorial_4.ipynb
-  - travis_wait 45 runipy intro/Intro_Tutorial_5.ipynb
+  # - cd tutorials
+  # - travis_wait 45 runipy intro/Intro_Tutorial_1.ipynb
+  # - travis_wait 45 runipy intro/Intro_Tutorial_2.ipynb
+  # - travis_wait 45 runipy intro/Intro_Tutorial_3.ipynb
+  # - travis_wait 45 runipy intro/Intro_Tutorial_4.ipynb
+  # - travis_wait 45 runipy intro/Intro_Tutorial_5.ipynb
 
   # Runs disease tagger tutorial notebooks
-  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_1.ipynb
-  - travis_wait 60 runipy disease_tagging/Disease_Tagging_Tutorial_2.ipynb
-  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_3.ipynb
-  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_4.ipynb
-  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_5.ipynb
+  # - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_1.ipynb
+  # - travis_wait 60 runipy disease_tagging/Disease_Tagging_Tutorial_2.ipynb
+  # - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_3.ipynb
+  # - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_4.ipynb
+  # - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_5.ipynb
 
   # Run test modules
-#  - coverage run -p test/Tests.py
-#  - coverage combine
+ - coverage run -p test/Tests.py
+ - coverage combine
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

@@ -1,3 +1,5 @@
+source set_env.sh
+
 TESTS_PATH=$SNORKELHOME/test
 
 if [ $# -eq 0 ]

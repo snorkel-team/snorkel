@@ -20,7 +20,7 @@ class TestOmniParser(unittest.TestCase):
         self.doc_parser = HTMLParser(DATA_PATH)
         self.sent_parser = OmniParser(blacklist=["style", "ul"], 
                                       flatten=["span"], 
-                                      visual=True, pdf_path=DATA_PATH, session=self.session)
+                                      visual=True, pdf_path=DATA_PATH)
         
         self.cp = CorpusParser(self.doc_parser, self.sent_parser, max_docs=2)
         self.corpus = self.cp.parse_corpus(name='Hardware', session=self.session)

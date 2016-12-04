@@ -52,7 +52,7 @@ class VisualLinker():
         coordinate_map = {}
         for i in range(1, int(num_pages) + 1):
             html_content = subprocess.check_output(
-                    "pdftotext -f {} -l {} -bbox -layout '{}' -".format(str(i), str(i), self.pdf_file), shell=True)
+                    "pdftotext -f {} -l {} -bbox-layout '{}' -".format(str(i), str(i), self.pdf_file), shell=True)
             soup = BeautifulSoup(html_content, "html.parser")
             pages = soup.find_all('page')
             pdf_word_list_i, coordinate_map_i = self._coordinates_from_HTML(pages[0], i)

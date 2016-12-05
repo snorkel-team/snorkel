@@ -34,6 +34,10 @@ if [ ! -d "$POPPLER" ]; then
         [Nn]* ) ;;
     esac
 fi
+
+java -Xmx4g -cp "parser/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port $JAVANLPPORT --timeout 600000 > /dev/null &
+CORENLPPID=$!
 # Launch jupyter notebook!
 echo "Launching Jupyter Notebook..."
 jupyter notebook
+kill $CORENLPPID

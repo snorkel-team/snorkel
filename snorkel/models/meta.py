@@ -22,11 +22,16 @@ else:
     connection = DBURL + DBNAME
     connect_args={}
 
-snorkel_engine = create_engine(connection, connect_args = connect_args)
-
-SnorkelSession = scoped_session(sessionmaker(bind=snorkel_engine))
-
 SnorkelBase = declarative_base(name='SnorkelBase', cls=object)
+
+def new_engine():
+    return create_engine(connection, connect_args = connect_args)
+
+def new_session(engine):
+    return scoped_session(sessionmaker(bind=snorkel_engine))
+
+snorkel_engine = new_engine()
+SnorkelSession = new_session(snorkel_engine)
 
 
 def clear_database():

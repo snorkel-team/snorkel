@@ -31,8 +31,9 @@ import json
 from timeit import default_timer as timer
 from multiprocessing import Pool
 from parser import OmniParser
-from models.meta import SnorkelSession
+from models.meta import SnorkelSession, new_engine, new_session
 from utils import get_ORM_instance
+from itertools import repeat
 
 class DocParser:
     """Parse a file into a Document object."""
@@ -47,7 +48,8 @@ class DocParser:
         - Output: A Document object and its text
         """
         if self._can_read(fpath):
-            self._parse_file(fpath)
+            for doc in self._parse_file(fpath):
+                yield doc
 
     def get_stable_id(self, doc_id):
         return "%s::document:0:0" % doc_id
@@ -94,49 +96,55 @@ class AsyncOmniParser(OmniParser):
 
 _worker_session = None
 _worker_corpus = None
-class AsyncParser(object):
-    
-    def __init__(self, doc_parser, context_parser):
-        self.doc_parser = doc_parser
-        self.context_parser = context_parser
-    
-    def parse(self, fpath):
-        for document in self.doc_parser.parse(fpath):
-            _worker_corpus.add(document)
-            self.context_parser.parse(document)
-        # Indicate the job is done
-        _worker_session.commit()
-        return None
-
+_worker_doc_parser = None
+_worker_context_parser = None
 def _init_parse_worker(corpus_name):
     '''
     Per process initialization for parsing
     '''
     global _worker_corpus
     global _worker_session
-    _worker_session = SnorkelSession()
+    _worker_engine = new_engine()
+    _worker_session = new_session(_worker_engine)
     _worker_corpus = _worker_session.query(Corpus).filter(Corpus.name==corpus_name).one()
+    print 'Fetching corpus:%d' % id(_worker_corpus), 'for process', os.getpid()
+
+def _parallel_parse(fpath):
+    print fpath
+    for document in _worker_doc_parser.parse(fpath):
+        print document
+        _worker_corpus.append(document)
+        _worker_context_parser.parse(document)
+    # Indicate the job is done
+    _worker_session.commit()
+    return None
 
 def parse_corpus(session, corpus_name, path, doc_parser, context_parser, max_docs=None, parallel=1):
+    global _worker_doc_parser
+    global _worker_context_parser
+    _worker_doc_parser = doc_parser
+    _worker_context_parser = context_parser
     fpaths = _get_files(path)
     if max_docs is None: max_docs = len(fpaths)
     fpaths = fpaths[:min(max_docs, len(fpaths))]
+    args = fpaths
     # Actual jobs will assume the shorter of the two lists 
-    pb = ProgressBar(len(fpaths))
+    pb = ProgressBar(len(args))
     # Make sure the corpus exists so that we can add documents to it in workers
     corpus = Corpus(name=corpus_name)
     session.add(corpus)
     session.commit()
-    parser = AsyncParser(doc_parser, context_parser)
-    tick = 0
+    tick = [0]
     def pb_update(x):
-        pb.bar(tick)
-        tick += 1
+        pb.bar(tick[0])
+        tick[0] += 1
     # Asynchronously parse files        
     pool = Pool(parallel, initializer=_init_parse_worker,initargs=(corpus_name,))
-    pool.apply_async(parser.parse, fpaths, callback=pb_update)
+    #print 'Working on ', fpaths
+    res = pool.map_async(_parallel_parse, args, callback=pb_update)
+    print res.get()
     pool.close()
     pool.join()
-    pb.close()
+    #pb.close()
     # Load the updated corpus with all documents from workers
     return session.query(Corpus).filter(Corpus.name==corpus_name).one()

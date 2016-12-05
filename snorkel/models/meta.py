@@ -17,10 +17,12 @@ snorkel_postgres = DBURL.startswith('postgres')
 if snorkel_postgres:
     # Supports monolithic URL for unix socket connection for postgres
     connection = DBURL.rstrip('/') + '/' + PSQLDBNAME if PSQLDBNAME else DBURL
+    connect_args={'sslmode':'disable'}
 else:
     connection = DBURL + DBNAME
+    connect_args={}
 
-snorkel_engine = create_engine(connection, connect_args={'sslmode':'disable'})
+snorkel_engine = create_engine(connection, connect_args = connect_args)
 
 SnorkelSession = scoped_session(sessionmaker(bind=snorkel_engine))
 

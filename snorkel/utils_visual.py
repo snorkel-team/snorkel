@@ -11,14 +11,15 @@ from wand.color import Color
 
 Bbox = namedtuple('bbox', ['page', 'top', 'bottom', 'left', 'right'], verbose=False)
 
+
 def bbox_from_span(span):
     if isinstance(span, TemporarySpan) and span.is_visual():
         return Bbox(
-            span.get_attrib_tokens('page')[0],
-            min(span.get_attrib_tokens('top')),
-            max(span.get_attrib_tokens('bottom')),
-            min(span.get_attrib_tokens('left')),
-            max(span.get_attrib_tokens('right')))
+                span.get_attrib_tokens('page')[0],
+                min(span.get_attrib_tokens('top')),
+                max(span.get_attrib_tokens('bottom')),
+                min(span.get_attrib_tokens('left')),
+                max(span.get_attrib_tokens('right')))
     else:
         return None
 
@@ -27,11 +28,11 @@ def bbox_from_phrase(phrase):
     # TODO: this may have issues where a phrase is linked to words on different pages
     if isinstance(phrase, Phrase) and phrase.is_visual():
         return Bbox(
-            phrase.page[0],
-            min(phrase.top),
-            max(phrase.bottom),
-            min(phrase.left),
-            max(phrase.right))
+                phrase.page[0],
+                min(phrase.top),
+                max(phrase.bottom),
+                min(phrase.left),
+                max(phrase.right))
     else:
         return None
 
@@ -83,7 +84,9 @@ def bbox_vert_aligned_center(box1, box2):
     if not (box1 and box2): return False
     return abs((box1.right + box1.left) / 2.0 - (box2.right + box2.left) / 2.0) <= 5
 
+
 ### DISPLAY TOOLS
+
 
 def display_boxes(pdf_file, boxes, page_num=1, display_img=True, alternate_colors=False):
     """
@@ -113,18 +116,6 @@ def display_boxes(pdf_file, boxes, page_num=1, display_img=True, alternate_color
         display(img)
 
 
-def display_candidates(candidates, page_num=1, display=True):
-    """
-    Displays the bounding boxes corresponding to candidates on an image of the pdf
-    boxes is a list of 5-tuples (page, top, left, bottom, right)
-    """
-    pass
-
-
-def display_words(target=None, page_num=1, display=True):
-    pass
-
-
 def get_pdf_dim(pdf_file):
     html_content = subprocess.check_output(
             "pdftotext -f {} -l {} -bbox '{}' -".format('1', '1', pdf_file), shell=True)
@@ -148,3 +139,34 @@ def pdf_to_img(pdf_file, page_num, pdf_dim=None):
     img.resize(page_width, page_height)
     return img
 
+
+def get_box(span):
+    box = (min(span.get_attrib_tokens('page')),
+           min(span.get_attrib_tokens('top')),
+           max(span.get_attrib_tokens('left')),
+           min(span.get_attrib_tokens('bottom')),
+           max(span.get_attrib_tokens('right')))
+    return box
+
+
+def display_candidates(pdf_file, candidates, page_num=1, display=True):
+    """
+    Displays the bounding boxes corresponding to candidates on an image of the pdf
+    boxes is a list of 5-tuples (page, top, left, bottom, right)
+    """
+    boxes = [get_box(span) for c in candidates for span in c.get_arguments()]
+    display_boxes(pdf_file, boxes, page_num=page_num, display_img=display, alternate_colors=True)
+
+
+def display_words(pdf_file, phrases, target=None, page_num=1, display=True):
+    boxes = []
+    for phrase in phrases:
+        for i, word in enumerate(phrase.words):
+            if target is None or word == target:
+                boxes.append((
+                    phrase.page[i],
+                    phrase.top[i],
+                    phrase.left[i],
+                    phrase.bottom[i],
+                    phrase.right[i]))
+    display_boxes(pdf_file, boxes, page_num=page_num, display_img=display)

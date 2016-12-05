@@ -14,7 +14,6 @@ from editdistance import eval as editdist # Alternative library: python-levensht
 from selenium import webdriver
 import httplib
 
-from utils_visual import display_boxes
 
 class VisualLinker():
     def __init__(self, pdf_path, time=False, verbose=False):
@@ -311,27 +310,6 @@ class VisualLinker():
         if self.verbose:
             print "Updated coordinates in snorkel.db"
 
-    def display_candidates(self, candidates, page_num=1, display=True):
-        """
-        Displays the bounding boxes corresponding to candidates on an image of the pdf
-        # boxes is a list of 5-tuples (page, top, left, bottom, right)
-        """
-        boxes = [get_box(span) for c in candidates for span in c.get_arguments()]
-        display_boxes(self.pdf_file, boxes, page_num=page_num, display_img=display, alternate_colors=True)
-
-    def display_words(self, target=None, page_num=1, display=True):
-        boxes = []
-        for phrase in self.phrases:
-            for i, word in enumerate(phrase.words):
-                if target is None or word == target:
-                    boxes.append((
-                        phrase.page[i],
-                        phrase.top[i],
-                        phrase.left[i],
-                        phrase.bottom[i],
-                        phrase.right[i]))
-        display_boxes(self.pdf_file, boxes, page_num=page_num, display_img=display)
-
     def create_pdf(self, document_name, text, page_dim=None, split=True):
         """
         Creates a pdf file given an html string
@@ -369,12 +347,3 @@ class VisualLinker():
             driver.close()
         except httplib.BadStatusLine:
             pass
-
-
-def get_box(span):
-    box = (min(span.get_attrib_tokens('page')),
-           min(span.get_attrib_tokens('top')),
-           max(span.get_attrib_tokens('left')),
-           min(span.get_attrib_tokens('bottom')),
-           max(span.get_attrib_tokens('right')))
-    return box

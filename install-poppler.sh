@@ -10,9 +10,9 @@ fi
 tar -xf ${POPPLER}.tar.xz
 rm ${POPPLER}.tar.xz
 cd $POPPLER
-./configure # --enable-poppler-glib
+./configure --prefix="$PWD" # --enable-poppler-glib
 make
-sudo make install
+make install
 cd ..
 mv $POPPLER poppler
 

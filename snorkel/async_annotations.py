@@ -118,7 +118,7 @@ def tsv_escape(s):
         return '\\N'
     # Make sure feature names are still uniquely encoded in ascii
     s = unicode(s)
-    s = s.replace('\"', '\\"').replace('\t','\\t')
+    s = s.replace('\"', '\\\\"').replace('\t','\\t')
     if any(c in ',{}' for c in s):
         s = '"' + s + '"'
     return s
@@ -212,11 +212,11 @@ def annotate(candidates, parallel=0, keyset = None, lfs = []):
         
         # Create sparse matrix in LIL format for incremental construction
         lil_feat_matrix = sparse.lil_matrix((len(candidates), len(keys)), dtype = np.float32)
-    
+
         row_index = []
         candidate_index = {}
         # Load annotations from database
-        # TODO: move this for-loop computation to database for automatic parallelization, 
+        # TODO: move this for-loop computation to database for automatic parallelization,
         # avoid communication overhead etc.
         iterator_sql = 'SELECT candidate_id, keys, values FROM %s ORDER BY candidate_id' % table_name
         for i, (candidate_id, c_keys, values) in enumerate(con.execute(iterator_sql)):
@@ -230,6 +230,3 @@ def annotate(candidates, parallel=0, keyset = None, lfs = []):
             
         return csr_AnnotationMatrix(lil_feat_matrix, candidate_index = candidate_index,
                                     row_index = row_index, keys = keys, key_index = key_index)
-
-    
-        

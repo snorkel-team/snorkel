@@ -10,7 +10,7 @@ fi
 tar -xf ${POPPLER}.tar.xz
 rm ${POPPLER}.tar.xz
 cd $POPPLER
-./configure --enable-poppler-glib
+./configure # --enable-poppler-glib
 make
 sudo make install
 cd ..

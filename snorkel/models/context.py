@@ -366,7 +366,7 @@ class StructuralMixin(object):
         return self.html_tag is not None
 
     def __repr__(self):
-        return ("HTMLPhrase (Doc: %s, Tag: %s, Text: %s)" % 
+        return ("StructuralPhrase (Doc: %s, Tag: %s, Text: %s)" % 
             (self.document.name,
             self.html_tag,
             self.text))

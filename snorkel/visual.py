@@ -5,27 +5,22 @@ import os
 from collections import OrderedDict, defaultdict
 from pprint import pprint
 from timeit import default_timer as timer
+import warnings
 
 import numpy as np
 import pandas as pd
-from wand.image import Image
-from wand.drawing import Drawing
-from wand.display import display
-from wand.color import Color
 from bs4 import BeautifulSoup
-from editdistance import eval as editdist
+from editdistance import eval as editdist # Alternative library: python-levenshtein
 from selenium import webdriver
 import httplib
 
+
 class VisualLinker():
-    def __init__(self, pdf_path, session, time=False, verbose=False, very_verbose=False):
-        self.session = session
+    def __init__(self, pdf_path, time=False, verbose=False):
         self.pdf_path = pdf_path
         self.pdf_file = None
         self.verbose = verbose
-        self.vverbose = very_verbose
         self.time = time
-        self.document = None
         self.coordinate_map = None
         self.pdf_word_list = None
         self.html_word_list = None
@@ -34,42 +29,24 @@ class VisualLinker():
         delimiters = u"([\(\)\,\?\u2212\u201C\u201D\u2018\u2019\u00B0\*\']|(?<!http):|\.$|\.\.\.)"
         self.separators = re.compile(delimiters)
 
-    def parse_visual(self, document):
-        self.document = document
-        self.pdf_file = self.pdf_path + self.document.name + '.pdf'
+    def parse_visual(self, document_name, phrases):
+        self.phrases = phrases
+        self.pdf_file = self.pdf_path + document_name + '.pdf'
         if not os.path.isfile(self.pdf_file):
             self.pdf_file = self.pdf_file[:-3]+"PDF"
-        if self.vverbose: print self.pdf_file
-
-        tic = timer()
         try:
             self.extract_pdf_words()
-        except:
+        except RuntimeError as e:
+            warnings.warn(e.message, RuntimeWarning)
             return
-        if self.vverbose:
-            pprint(self.pdf_word_list[:5])
-            pprint(self.coordinate_map.items()[:5])
-        if self.time:
-            print "Elapsed: %0.3f s" % (timer() - tic)
-
-        tic = timer()
         self.extract_html_words()
-        if self.vverbose: pprint(self.html_word_list[:5])
-        if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
-
-
-        tic = timer()
         self.link_lists(search_max=200)
-        if self.vverbose: self.display_links()
-        if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
-
-        tic = timer()
-        self.update_coordinates()
-        if self.time:  print "Elapsed: %0.3f s" % (timer() - tic)
+        for phrase in self.update_coordinates():
+            yield phrase
 
     def extract_pdf_words(self):
         num_pages = subprocess.check_output(
-                "pdfinfo '{}' | grep Pages  | sed 's/[^0-9]*//'".format(self.pdf_file), shell=True)
+                "pdfinfo '{}' | grep -a Pages | sed 's/[^0-9]*//'".format(self.pdf_file), shell=True)
         pdf_word_list = []
         coordinate_map = {}
         for i in range(1, int(num_pages) + 1):
@@ -84,7 +61,7 @@ class VisualLinker():
         self.pdf_word_list = pdf_word_list
         self.coordinate_map = coordinate_map
         if len(self.pdf_word_list) == 0:
-            raise RuntimeError("PDF does not have extractable words.")
+            raise RuntimeError("Words could not be extracted from PDF: %s" % self.pdf_file)
         # take last page dimensions
         page_width, page_height = int(float(pages[0].get('width'))), int(float(pages[0].get('height')))
         self.pdf_dim = (page_width, page_height)
@@ -123,9 +100,9 @@ class VisualLinker():
 
     def extract_html_words(self):
         html_word_list = []
-        for phrase in self.document.phrases:
+        for phrase in self.phrases:
             for i, word in enumerate(phrase.words):
-                html_word_list.append(((phrase.id, i), word))
+                html_word_list.append(((phrase.stable_id, i), word))
         self.html_word_list = html_word_list
         if self.verbose:
             print "Extracted %d html words" % len(self.html_word_list)
@@ -201,14 +178,14 @@ class VisualLinker():
 
         # first pass: global search for exact matches
         link_exact(0, N)
-        if self.vverbose:
+        if self.verbose:
             print "Global exact matching:"
             display_match_counts()
 
         # second pass: local search for exact matches
         for i in range((N + 2) / search_radius + 1):
             link_exact(max(0, i * search_radius - search_radius), min(N, i * search_radius + search_radius))
-        if self.vverbose:
+        if self.verbose:
             print "Local exact matching:"
 
         # third pass: local search for approximate matches
@@ -216,8 +193,8 @@ class VisualLinker():
         for i in range(len(html_to_pdf)):
             if html_to_pdf[i] is None:
                 link_fuzzy(i)
-        if self.vverbose:
-            print "Local Approximate matching:"
+        if self.verbose:
+            print "Local approximate matching:"
             display_match_counts
 
         # convert list to dict
@@ -321,76 +298,17 @@ class VisualLinker():
         pd.reset_option('display.max_rows');
 
     def update_coordinates(self):
-        for phrase in self.document.phrases:
+        for phrase in self.phrases:
             (page, top, left, bottom, right) = zip(
-                    *[self.coordinate_map[self.links[((phrase.id), i)]] for i in range(len(phrase.words))])
-            self.session.query(Phrase).filter(Phrase.id == phrase.id).update(
-                    {"page": list(page),
-                     "top": list(top),
-                     "left": list(left),
-                     "bottom": list(bottom),
-                     "right": list(right)})
-        self.session.commit()
+                    *[self.coordinate_map[self.links[((phrase.stable_id), i)]] for i in range(len(phrase.words))])
+            phrase.page = list(page)
+            phrase.top = list(top)
+            phrase.left = list(left)
+            phrase.bottom = list(bottom)
+            phrase.right = list(right)
+            yield phrase
         if self.verbose:
             print "Updated coordinates in snorkel.db"
-
-    def display_boxes(self, boxes, page_num=1, display_img=True, alternate_colors=False):
-        """
-        Displays each of the bounding boxes passed in 'boxes' on an image of the pdf
-        pointed to by pdf_file
-        # boxes is a list of 5-tuples (page, top, left, bottom, right)
-        """
-        if display_img:
-            img = self.pdf_to_img(page_num)
-            colors = [Color('blue'), Color('red')]
-        boxes_per_page = defaultdict(int)
-        boxes_by_page = defaultdict(list)
-        for i, (page, top, left, bottom, right) in enumerate(boxes):
-            boxes_per_page[page] += 1
-            boxes_by_page[page].append((top, left, bottom, right))
-        if display_img:
-            draw = Drawing()
-            draw.fill_color = Color('rgba(0, 0, 0, 0.0)')
-            for j, (top, left, bottom, right) in enumerate(boxes_by_page[page_num]):
-                draw.stroke_color = colors[j % 2] if alternate_colors else colors[0]
-                draw.rectangle(left=left, top=top, right=right, bottom=bottom)
-            draw(img)
-        print "Boxes per page: total (unique)"
-        for (page, count) in sorted(boxes_per_page.items()):
-            print "Page %d: %d (%d)" % (page, count, len(set(boxes_by_page[page])))
-        if display_img:
-            display(img)
-
-    def display_candidates(self, candidates, page_num=1, display=True):
-        """
-        Displays the bounding boxes corresponding to candidates on an image of the pdf
-        # boxes is a list of 5-tuples (page, top, left, bottom, right)
-        """
-        boxes = [get_box(span) for c in candidates for span in c.get_arguments()]
-        self.display_boxes(boxes, page_num=page_num, display_img=display, alternate_colors=True)
-
-    def display_words(self, target=None, page_num=1, display=True):
-        boxes = []
-        for phrase in self.document.phrases:
-            for i, word in enumerate(phrase.words):
-                if target is None or word == target:
-                    boxes.append((
-                        phrase.page[i],
-                        phrase.top[i],
-                        phrase.left[i],
-                        phrase.bottom[i],
-                        phrase.right[i]))
-        self.display_boxes(boxes, page_num=page_num, display_img=display)
-
-    def pdf_to_img(self, page_num):
-        """
-        :param page_num: page number to convert to wand image object
-        :return: wand Image
-        """
-        img = Image(filename='{}[{}]'.format(self.pdf_file, page_num-1))
-        page_width, page_height = self.pdf_dim
-        img.resize(page_width, page_height)
-        return img
 
     def create_pdf(self, document_name, text, page_dim=None, split=True):
         """
@@ -429,12 +347,3 @@ class VisualLinker():
             driver.close()
         except httplib.BadStatusLine:
             pass
-
-
-def get_box(span):
-    box = (min(span.get_attrib_tokens('page')),
-           min(span.get_attrib_tokens('top')),
-           max(span.get_attrib_tokens('left')),
-           min(span.get_attrib_tokens('bottom')),
-           max(span.get_attrib_tokens('right')))
-    return box

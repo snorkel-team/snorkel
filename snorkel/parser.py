@@ -204,8 +204,8 @@ class XMLMultiDocParser(DocParser):
         return fpath.endswith('.xml')
 
 
-PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{', '-RSB-': ']',
-       '-LSB-': '['}
+PTB = {'-RRB-': u')', '-LRB-': u'(', '-RCB-': u'}', '-LCB-': u'{', '-RSB-': u']',
+       '-LSB-': u'['}
 
 class CoreNLPHandler:
     def __init__(self, delim='', tok_whitespace=False):
@@ -241,6 +241,8 @@ class CoreNLPHandler:
                         status_forcelist=[500, 502, 503, 504])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
 
+        self.ptb_rgx = re.compile(r'-[A-Z]{2}B-')
+
     def _kill_pserver(self):
         if self.server_pid is not None:
             try:
@@ -250,6 +252,11 @@ class CoreNLPHandler:
 
     def parse(self, document, text):
         """Parse a raw document as a string into a list of sentences"""
+        def ptb_clean(text):
+            for ptb_match in self.ptb_rgx.finditer(text): 
+                text = text.replace(ptb_match.group(0), PTB[ptb_match.group(0)])
+            return text
+        
         if len(text.strip()) == 0:
             return
         if isinstance(text, unicode):
@@ -267,13 +274,12 @@ class CoreNLPHandler:
             warnings.warn("CoreNLP skipped a malformed sentence.", RuntimeWarning)
             return
         position = 0
-        diverged = False
         for block in blocks:
             parts = defaultdict(list)
             dep_order, dep_par, dep_lab = [], [], []
             for tok, deps in zip(block['tokens'], block['basic-dependencies']):
-                parts['words'].append(tok['word'])
-                parts['lemmas'].append(tok['lemma'])
+                parts['words'].append(ptb_clean(tok['word']))
+                parts['lemmas'].append(ptb_clean(tok['lemma']))
                 parts['pos_tags'].append(tok['pos'])
                 parts['ner_tags'].append(tok['ner'])
                 parts['char_offsets'].append(tok['characterOffsetBegin'])
@@ -281,25 +287,14 @@ class CoreNLPHandler:
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])
 
+            parts['text'] = ''.join(t['originalText'] + t['after'] for t in block['tokens'])
+            
             # make char_offsets relative to start of sentence
             abs_sent_offset = parts['char_offsets'][0]
             parts['char_offsets'] = [p - abs_sent_offset for p in parts['char_offsets']]
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
-
-            # NOTE: We have observed weird bugs where CoreNLP diverges from raw document text (see Issue #368)
-            # In these cases we go with CoreNLP so as not to cause downstream issues but throw a warning
-            doc_text = text[block['tokens'][0]['characterOffsetBegin'] : block['tokens'][-1]['characterOffsetEnd']]
-            L = len(block['tokens'])
-            parts['text'] = ''.join(t['originalText'] + t['after'] if i < L - 1 else t['originalText'] for i,t in enumerate(block['tokens']))
-            if not diverged and doc_text != parts['text']:
-                diverged = True
-                #warnings.warn("CoreNLP parse has diverged from raw document text!")
             parts['position'] = position
-
-            # replace PennTreeBank tags with original forms
-            parts['words'] = [PTB[w] if w in PTB else w for w in parts['words']]
-            parts['lemmas'] = [PTB[w.upper()] if w.upper() in PTB else w for w in parts['lemmas']]
 
             # Link the sentence to its parent document object
             parts['document'] = document
@@ -329,7 +324,7 @@ class HTMLParser(DocParser):
             for text in soup.find_all('html'):
                 name = os.path.basename(fp)[:os.path.basename(fp).rfind('.')]
                 stable_id = self.get_stable_id(name)
-                yield Document(name=name, stable_id=stable_id, 
+                yield Document(name=name, stable_id=stable_id, text=unicode(text),
                                meta={'file_name' : file_name}), unicode(text)
 
     def _can_read(self, fpath):
@@ -362,10 +357,10 @@ class OmniParser(object):
     def __init__(self, 
                  structural=True, blacklist=["style"],              # structural
                  flatten=[], flatten_delim=' ',   
-                 visual=False, pdf_path=None, session=None,         # visual
                  lingual=True, strip=True,                          # lingual
                  replacements=[(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]','-')],         
-                 tabular=True):                                     # tabular
+                 tabular=True,                                      # tabular
+                 visual=False, pdf_path=None):                      # visual
         """
         :param visual: boolean, if True visual features are used in the model
         :param pdf_path: directory where pdf are saved, if a pdf file is not found,
@@ -382,15 +377,6 @@ class OmniParser(object):
         self.flatten = flatten if isinstance(flatten, list) else [flatten]
         self.flatten_delim = flatten_delim
 
-        # visual setup
-        self.visual = visual
-        if self.visual:
-            if not session or not pdf_path:
-                warnings.warn("pdf_path and session must be specified, visual features are not being used", RuntimeWarning)
-            else:
-                self.create_pdf = False
-                self.vizlink = VisualLinker(pdf_path, session)
-        
         # lingual setup
         self.lingual = lingual
         self.strip = strip
@@ -406,20 +392,29 @@ class OmniParser(object):
 
         # tabular setup
         self.tabular = tabular
-        if self.tabular:
-            self.table_idx = -1
 
+        # visual setup
+        self.visual = visual
+        if self.visual:
+            if not pdf_path:
+                warnings.warn("Visual parsing failed: pdf_path is required", RuntimeWarning)
+            else:
+                self.vizlink = VisualLinker(pdf_path)
 
     def parse(self, document, text):
-        for phrase in self.parse_structure(document, text):
-            yield phrase
         if self.visual:
-            self.vizlink.session.commit()
-            fname = self.vizlink.pdf_path + document.name
-            self.create_pdf = not os.path.isfile(fname + '.pdf') and not os.path.isfile(fname + '.PDF')
-            if self.create_pdf:  # PDF File does not exist
+            for _ in self.parse_structure(document, text):
+                pass
+            # Add visual attributes
+            filename = self.vizlink.pdf_path + document.name
+            create_pdf = not os.path.isfile(filename + '.pdf') and not os.path.isfile(filename + '.PDF')
+            if create_pdf:  # PDF file does not exist
                 self.vizlink.create_pdf(document.name, text)
-            self.vizlink.parse_visual(document)
+            for phrase in self.vizlink.parse_visual(document.name, document.phrases):
+                yield phrase
+        else:
+            for phrase in self.parse_structure(document, text):
+                yield phrase
 
     def parse_structure(self, document, text):
         self.contents = ""
@@ -433,6 +428,7 @@ class OmniParser(object):
 
         if self.tabular:
             table_info = TableInfo(document, parent=document)
+            self.table_idx = -1
             parents = []
         else:
             table_info = None
@@ -521,23 +517,26 @@ class OmniParser(object):
                         len(self.delim)
             for parts in self.lingual_parse(document, self.contents[parsed:batch_end]):
                 (_, _, _, char_end) = split_stable_id(parts['stable_id'])
-                while parsed + char_end > block_char_end[parent_idx]:
-                    parent_idx += 1
-                    position = 0
-                parts['document'] = document
-                parts['phrase_num'] = phrase_num
-                parts['stable_id'] = \
-                    "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
-                if self.structural:
-                    parts['xpath'] =  xpaths[parent_idx]
-                    parts['html_tag'] = html_tags[parent_idx]
-                    parts['html_attrs'] = html_attrs[parent_idx]
-                if self.tabular:
-                    parent = parents[parent_idx]
-                    parts = table_info.apply_tabular(parts, parent, position)
-                yield Phrase(**parts) 
-                position += 1
-                phrase_num += 1
+                try:
+                    while parsed + char_end > block_char_end[parent_idx]:
+                        parent_idx += 1
+                        position = 0
+                    parts['document'] = document
+                    parts['phrase_num'] = phrase_num
+                    parts['stable_id'] = \
+                        "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
+                    if self.structural:
+                        parts['xpath'] =  xpaths[parent_idx]
+                        parts['html_tag'] = html_tags[parent_idx]
+                        parts['html_attrs'] = html_attrs[parent_idx]
+                    if self.tabular:
+                        parent = parents[parent_idx]
+                        parts = table_info.apply_tabular(parts, parent, position)
+                    yield Phrase(**parts) 
+                    position += 1
+                    phrase_num += 1
+                except:
+                    import pdb; pdb.set_trace()
             parsed = batch_end
 
 class TableInfo():

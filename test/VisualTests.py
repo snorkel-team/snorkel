@@ -3,6 +3,7 @@ import os
 import sys
 import unittest
 
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from snorkel.visual import VisualLinker
 
 ROOT = os.environ['SNORKELHOME']

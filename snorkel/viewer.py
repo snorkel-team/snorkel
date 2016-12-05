@@ -111,7 +111,19 @@ class Viewer(widgets.DOMWidget):
                 # If the annotator label is in the main table, also get its stable version
                 stable_id = '~~'.join([c.stable_id for c in candidate.get_contexts()] + [self.annotator.name])
                 existing_annotation_stable = self.session.query(StableLabel) \
-                    .filter(StableLabel.stable_id == stable_id).one()
+                    .filter(StableLabel.stable_id == stable_id).first()
+
+                # If stable version is not available, create it here
+                # NOTE: This is for versioning issues, should be removed?
+                if existing_annotation_stable is None:
+                    context_stable_ids         = [c.stable_id for c in candidate.get_contexts()])
+                    existing_annotation_stable = StableLabel(stable_id=stable_id,\
+                                                             annotator_name=self.annotator.name,\
+                                                             value=existing_annotation.value,\
+                                                             context_stable_ids=context_stable_ids)
+                    self.session.add(existing_annotation_stable)
+                    self.session.commit()
+
                 self.annotations_stable[i] = existing_annotation_stable
 
         self._labels_serialized = ','.join(init_labels_serialized)

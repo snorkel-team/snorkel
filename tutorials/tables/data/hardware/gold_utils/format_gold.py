@@ -111,10 +111,10 @@ def test_normalizer(raw_gold_file):
 
 def main():
 	raw_gold = os.environ['SNORKELHOME']+ '/tutorials/tables/data/hardware/gold_raw/test_gold_raw.csv'
-	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/gold_raw/test_gold_formatted.csv'
+	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/hardware_test/hardware_test_gold.csv'
 	format_gold(raw_gold, formatted_gold)
 	raw_gold = os.environ['SNORKELHOME']+ '/tutorials/tables/data/hardware/gold_raw/old_dev_gold_raw.csv'
-	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/gold_raw/dev_gold_formatted.csv'
+	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/hardware_dev/hardware_dev_gold.csv'
 	format_old_dev_gold(raw_gold, formatted_gold)
 
 if __name__=='__main__':

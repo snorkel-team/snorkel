@@ -33,6 +33,5 @@ def gain_normalizer(gain):
 	gain = gain.replace("k","000")
 	return str(abs(round(float(gain.split(" ")[0]),1)))
 
-
-
-
+def old_dev_gain_normalizer(gain):
+    return str(abs(round(float(gain),1)))

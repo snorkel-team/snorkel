@@ -1,5 +1,6 @@
 from hardware_normalizers import *
 import csv
+import os
 
 def format_old_dev_gold(raw_gold_file, formatted_gold_file):
 	# NOTE: this is APPENDING to the gold file, and is meant to be called AFTER
@@ -112,6 +113,9 @@ def main():
 	raw_gold = os.environ['SNORKELHOME']+ '/tutorials/tables/data/hardware/gold_raw/test_gold_raw.csv'
 	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/gold_raw/test_gold_formatted.csv'
 	format_gold(raw_gold, formatted_gold)
+	raw_gold = os.environ['SNORKELHOME']+ '/tutorials/tables/data/hardware/gold_raw/old_dev_gold_raw.csv'
+	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/gold_raw/dev_gold_formatted.csv'
+	format_old_dev_gold(raw_gold, formatted_gold)
 
 if __name__=='__main__':
 	main()

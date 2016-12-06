@@ -5,7 +5,7 @@ import unittest
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from snorkel.visual import VisualLinker
-from snorkel.utils_visual import get_pdf_dim
+from snorkel.visualizer import get_pdf_dim
 
 ROOT = os.environ['SNORKELHOME']
 DATA_PATH = os.path.join(ROOT, 'test/data/table_test/')

@@ -319,7 +319,7 @@ class VisualLinker():
         :param page_dim: pdf page dimensions in 'mm', 'cm', 'in' or 'px' (ex: page_dim=('5in', '7in')),
         if not specified, Letter is the default format
         """
-        pdf_file = self.pdf_path + document_name + '.pdf'
+        pdf_file = os.path.join(self.pdf_path, document_name + '.pdf')
         jscode = """
             var text = arguments[0];
             var pdf_file = arguments[1];

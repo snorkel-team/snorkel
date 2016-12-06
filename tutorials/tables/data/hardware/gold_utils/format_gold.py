@@ -25,10 +25,11 @@ def format_gold(raw_gold_file, formatted_gold_file):
 				('stg_temp_max', stg_temp_max, temperature_normalizer),
 				('dc_gain_min', dc_gain_min, gain_normalizer)]
 			for name, attr, normalizer in name_attr_norm:
-				if attr != 'N/A':
+				if 'N/A' not in attr:
 					print part_num, attr
 					for a in attr.split(';'):
-						writer.writerow([doc_name, part_num, name, normalizer(attr)])
+						if len(a.strip())>0:
+							writer.writerow([doc_name, part_num, name, normalizer(attr)])
 
 			# if polarity != 'N/A':
 			# 	for p in polarity.split(delim):
@@ -55,7 +56,7 @@ def format_gold(raw_gold_file, formatted_gold_file):
 			# 	for gain in dev_gain.split(";"):
 			# 		if("@" in gain):
 			# 			writer.writerow([doc_name, part_num, "dc_gain_min", gain_normalizer(gain)])
-
+'''
 def test_normalizer(raw_gold_file):
 	with open(raw_gold_file, "r") as csvinput:
 		reader = csv.reader(csvinput)
@@ -70,10 +71,11 @@ def test_normalizer(raw_gold_file):
 				print polarity_normalizer(polarity)
 				# print temperature_normalizer(stg_temp_min)
 				# print temperature_normalizer(stg_temp_max)
+'''
 
 def main():
-	raw_gold = '/Users/bradenhancock/snorkel/tutorials/tables/data/hardware/gold_raw/test_gold_raw.csv'
-	formatted_gold = '/Users/bradenhancock/snorkel/tutorials/tables/data/hardware/gold_raw/test_gold_formatted.csv'
+	raw_gold = os.environ['SNORKELHOME']+ '/tutorials/tables/data/hardware/gold_raw/test_gold_raw.csv'
+	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/gold_raw/test_gold_formatted.csv'
 	format_gold(raw_gold, formatted_gold)
 
 if __name__=='__main__':

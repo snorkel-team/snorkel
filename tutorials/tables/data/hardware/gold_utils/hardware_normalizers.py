@@ -26,7 +26,7 @@ def voltage_normalizer(voltage):
 	return voltage.split(" ")[0].replace("-","")
 
 def gain_normalizer(gain):
-	(gain, conditions) = gain.split('@')
+	gain= gain.split('@')[0]
 	gain = gain.strip()
 	gain = gain.replace(",","")
 	gain = gain.replace("K","000")

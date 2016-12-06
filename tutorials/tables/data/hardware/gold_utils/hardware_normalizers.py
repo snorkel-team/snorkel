@@ -18,6 +18,8 @@ def dissipation_normalizer(dissipation):
 	return str(abs(round(float(dissipation.split(" ")[0]),1)))
 
 def current_normalizer(current):
+	if(current[0] == " "):
+		current = current[1:]
 	return str(abs(round(float(current.split(" ")[0]),1)))
 
 def voltage_normalizer(voltage):

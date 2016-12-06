@@ -29,7 +29,7 @@ def format_gold(raw_gold_file, formatted_gold_file):
 					print part_num, attr
 					for a in attr.split(';'):
 						if len(a.strip())>0:
-							writer.writerow([doc_name, part_num, name, normalizer(attr)])
+							writer.writerow([doc_name, part_num, name, normalizer(a)])
 
 			# if polarity != 'N/A':
 			# 	for p in polarity.split(delim):

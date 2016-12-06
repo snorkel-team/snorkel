@@ -10,13 +10,14 @@ DBURL = os.environ.get('SNORKELDB', 'sqlite:///')
 DBPORT = os.environ.get('SNORKELDBPORT', '5432')
 DBUSER = os.environ.get('SNORKELDBUSER', getpass.getuser())
 DBNAME = os.environ.get('SNORKELDBNAME', 'snorkel.db')
-# Use different default for postgres
-PSQLDBNAME = os.environ.get('SNORKELDBNAME', '')
 
 snorkel_postgres = DBURL.startswith('postgres')
 if snorkel_postgres:
-    # Supports monolithic URL for unix socket connection for postgres
-    connection = DBURL.rstrip('/') + '/' + PSQLDBNAME if PSQLDBNAME else DBURL
+    if '///' in DBURL:
+        # Supports monolithic URL for unix socket connection for postgres
+        connection = DBURL + DBNAME
+    else:
+        connection = DBURL.rstrip('/') + '/' + DBNAME
     connect_args={'sslmode':'disable'}
 else:
     connection = DBURL + DBNAME

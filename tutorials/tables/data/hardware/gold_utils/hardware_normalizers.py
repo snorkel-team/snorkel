@@ -18,6 +18,8 @@ def dissipation_normalizer(dissipation):
 	return str(abs(round(float(dissipation.split(" ")[0]),1)))
 
 def current_normalizer(current):
+	if(current[0] == " "):
+		current = current[1:]
 	return str(abs(round(float(current.split(" ")[0]),1)))
 
 def voltage_normalizer(voltage):
@@ -26,7 +28,7 @@ def voltage_normalizer(voltage):
 	return voltage.split(" ")[0].replace("-","")
 
 def gain_normalizer(gain):
-	(gain, conditions) = gain.split('@')
+	gain= gain.split('@')[0]
 	gain = gain.strip()
 	gain = gain.replace(",","")
 	gain = gain.replace("K","000")

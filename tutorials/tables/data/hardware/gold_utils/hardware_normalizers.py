@@ -1,7 +1,7 @@
 def temperature_normalizer(temperature):
 	try:
-		if(temperature.split(" ")[0].lstrip('-').replace('.','',1).isdigit()):
-			return temperature.split(" ")[0]
+		(temp, unit) = temperature.rsplit(' ', 1)
+		return int(temp)
 	except:
 		print "Incorrect Temperature Value"
 
@@ -26,8 +26,8 @@ def voltage_normalizer(voltage):
 	return voltage.split(" ")[0].replace("-","")
 
 def gain_normalizer(gain):
-	while(gain[0] == " "):
-		gain = gain[1:]
+	(gain, conditions) = gain.split('@')
+	gain = gain.strip()
 	gain = gain.replace(",","")
 	gain = gain.replace("K","000")
 	gain = gain.replace("k","000")

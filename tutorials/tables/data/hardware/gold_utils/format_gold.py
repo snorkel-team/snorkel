@@ -3,8 +3,6 @@ import csv
 import os
 
 def format_old_dev_gold(raw_gold_file, formatted_gold_file):
-	# NOTE: this is APPENDING to the gold file, and is meant to be called AFTER
-	# the format_gold function.
 	with open (raw_gold_file, 'r') as csvinput, open(formatted_gold_file, 'w') as csvoutput:
 		writer = csv.writer(csvoutput, lineterminator='\n')
 		reader = csv.reader(csvinput)
@@ -36,6 +34,38 @@ def format_old_dev_gold(raw_gold_file, formatted_gold_file):
 							writer.writerow([doc_name, part_num, name, normalizer(a)])
 					else:
 						writer.writerow([doc_name, part_num, name, normalizer(attr)])
+
+def format_new_dev_gold(raw_gold_file, formatted_gold_file):
+	# NOTE: this is APPENDING to the gold file, and is meant to be called AFTER
+	# the format_gold function.
+	delim = ';'
+	with open(raw_gold_file, "r") as csvinput, open(formatted_gold_file, "a") as csvoutput:
+		writer = csv.writer(csvoutput, lineterminator="\n")
+		reader = csv.reader(csvinput)
+		next(reader, None) # Skip header row
+		for line in reader:
+			(pdf_name, part_family, part_num, manufacturer,
+			polarity, ce_v_max, cb_v_max, eb_v_max, c_current_max,
+			dev_dissipation, stg_temp_min, stg_temp_max, dc_gain_min,
+			notes, annotator) = line
+			(doc_name, extension) = pdf_name.rsplit('.', 1)
+			part_num = part_num.replace(' ','').upper()
+			name_attr_norm = [
+				('polarity', polarity, polarity_normalizer),
+				('ce_v_max', ce_v_max, voltage_normalizer),
+				('cb_v_max', cb_v_max, voltage_normalizer),
+				('eb_v_max', eb_v_max, voltage_normalizer),
+				('c_current_max', c_current_max, current_normalizer),
+				('dev_dissipation', dev_dissipation, dissipation_normalizer),
+				('stg_temp_min', stg_temp_min, temperature_normalizer),
+				('stg_temp_max', stg_temp_max, temperature_normalizer),
+				('dc_gain_min', dc_gain_min, gain_normalizer)]
+			for name, attr, normalizer in name_attr_norm:
+				if 'N/A' not in attr:
+					print part_num, attr
+					for a in attr.split(';'):
+						if len(a.strip())>0:
+							writer.writerow([doc_name, part_num, name, normalizer(a)])
 
 def format_gold(raw_gold_file, formatted_gold_file):
 	delim = ';'
@@ -110,12 +140,18 @@ def test_normalizer(raw_gold_file):
 '''
 
 def main():
+    # Transform the test set
 	raw_gold = os.environ['SNORKELHOME']+ '/tutorials/tables/data/hardware/gold_raw/test_gold_raw.csv'
 	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/hardware_test/hardware_test_gold.csv'
 	format_gold(raw_gold, formatted_gold)
+
+    # Transform the dev set
 	raw_gold = os.environ['SNORKELHOME']+ '/tutorials/tables/data/hardware/gold_raw/old_dev_gold_raw.csv'
 	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/hardware_dev/hardware_dev_gold.csv'
 	format_old_dev_gold(raw_gold, formatted_gold)
+	raw_gold = os.environ['SNORKELHOME']+ '/tutorials/tables/data/hardware/gold_raw/new_dev_gold_raw.csv'
+	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/hardware_dev/hardware_dev_gold.csv'
+	format_new_dev_gold(raw_gold, formatted_gold)
 
 if __name__=='__main__':
 	main()

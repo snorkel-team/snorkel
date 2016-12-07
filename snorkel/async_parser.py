@@ -107,7 +107,6 @@ def _init_parse_worker(corpus_name):
     _worker_engine = new_engine()
     _worker_session = new_session(_worker_engine)()
     _worker_corpus = _worker_session.query(Corpus).filter(Corpus.name==corpus_name).one()
-    print 'Fetching corpus:%d' % id(_worker_corpus), 'for process', os.getpid()
 
 def _parallel_parse(fpath):
     for document in _worker_doc_parser.parse(fpath):

@@ -358,7 +358,7 @@ class SimpleTokenizer:
 class OmniParser(object):
     def __init__(self, 
                  structural=True, blacklist=["style"],              # structural
-                 flatten=[], flatten_delim=' ',   
+                 flatten=[], flatten_delim='',   
                  lingual=True, strip=True,                          # lingual
                  replacements=[(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]','-')],         
                  tabular=True,                                      # tabular

@@ -17,12 +17,13 @@ from snorkel.lf_helpers import *
 # others_matcher = RegexMatchSpan(rgx='((NSVBC|SMBT|MJ|MJE|MPS|MRF|RCA|TIP|ZTX|ZT|TIS|TIPL|DTC|MMBT|PZT){1}[\d]{2,4}[A-Z]{0,3}([-][A-Z0-9]{0,6})?([-][A-Z0-9]{0,1})?)')
 # part_matcher = Union(eeca_matcher, jedec_matcher, jis_matcher, others_matcher)
 
-def part_rgx():
-    eeca_rgx = '([b]{1}[ABCDEFKLNPQRUYZ]{1}[wxyz]?[0-9]{3,5}[A-Z\/]{0,5}[0-9]?[A-Z]?([-][A-Z0-9]{1,7})?([-][A-Z0-9]{1,2})?)'
-    jedec_rgx = '([123]N\d{3,4}[A-Z]{0,5}[0-9]?[A-Z]?)'
-    jis_rgx = '(2S[ABCDEFGHJKMQRSTVZ]{1}[\d]{2,4})'
-    others_rgx = '((NSVBC|SMBT|MJ|MJE|MPS|MRF|RCA|TIP|ZTX|ZT|TIS|TIPL|DTC|MMBT|PZT){1}[\d]{2,4}[A-Z]{0,3}([-][A-Z0-9]{0,6})?([-][A-Z0-9]{0,1})?)'
-    return '|'.join([eeca_rgx, jedec_rgx, jis_rgx, others_rgx])
+# NOTE: 12/6 only allow /DG, no other /
+def part_matcher():
+    eeca_matcher = RegexMatchSpan(rgx='([ABC][A-Z][WXYZ]?[0-9]{3,5}(?:[A-Z]){0,5}[0-9]?[A-Z]?(?:-[A-Z0-9]{1,7})?(?:[-][A-Z0-9]{1,2})?(?:\/DG)?)')
+    jedec_matcher = RegexMatchSpan(rgx='([123][N]\d{3,4}[A-Z]{0,5}[0-9]?[A-Z]?)')
+    jis_matcher = RegexMatchSpan(rgx='(2S[ABCDEFGHJKMQRSTVZ]{1}[\d]{2,4})')
+    others_matcher = RegexMatchSpan(rgx='((?:NSVBC|SMBT|MJ|MJE|MPS|MRF|RCA|TIP|ZTX|ZT|ZXT|TIS|TIPL|DTC|MMBT|SMMBT|PZT|FZT){1}[\d]{2,4}[A-Z]{0,3}(?:-[A-Z0-9]{0,6})?(?:[-][A-Z0-9]{0,1})?)')
+    return Union(eeca_matcher, jedec_matcher, jis_matcher, others_matcher)
 
 class OmniNgramsTemp(OmniNgrams):
     def __init__(self, n_max=5, split_tokens=None):
@@ -68,31 +69,24 @@ class OmniNgramsTemp(OmniNgrams):
 
 class OmniNgramsPart(OmniNgrams):
     def __init__(self, parts_by_doc=None, n_max=5, split_tokens=None):
-        # parts_by_doc is a dictionary d where d[document_name.upper()] = [partA, partB, ...]
+        """:param parts_by_doc: a dictionary d where d[document_name.upper()] = [partA, partB, ...]"""
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=None)
-        self.link_parts = (parts_by_doc is not None)
         self.parts_by_doc = parts_by_doc
-        # using gold dictionary
-        # gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
-        # gold_parts = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=False)
-        # self.parts_by_doc = defaultdict(set)
-        # for part in gold_parts:
-        #     self.parts_by_doc[part[0]].add(part[1]) # TODO: change gold_parts to work with namedTuples
 
     def apply(self, context):
-        # TODO: Switch this to base in enumerated_parts, then add suffixes by doc.
         for ts in OmniNgrams.apply(self, context):
-            enumerated_parts = [part.replace(' ','') for part in expand_part_range(ts.get_span())]
-            if self.link_parts:
+            enumerated_parts = [part.upper() for part in expand_part_range(ts.get_span())]
+            parts = set(enumerated_parts)
+            if self.parts_by_doc:
                 possible_parts =  self.parts_by_doc[ts.parent.document.name.upper()]
-                implicit_parts = set()
-                for base in enumerated_parts:
+                for base_part in enumerated_parts:
                     for part in possible_parts:
-                        if part.startswith(base) and len(base) >= 4:
-                            implicit_parts.add(part)
-            else:
-                implicit_parts = set(enumerated_parts)
-            for i, part in enumerate(implicit_parts):
+                        if part.startswith(base_part) and len(base_part) >= 4:
+                            parts.add(part)
+            for i, part in enumerate(parts):
+                if ' ' in part:
+                    continue # it won't pass the part_matcher
+                # TODO: Is this try/except necessary?
                 try:
                     part.decode('ascii')
                 except:
@@ -290,7 +284,7 @@ def entity_level_total_recall(candidates, gold_file, attribute, corpus=None, rel
 
 def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     docs = [(doc.name).upper() for doc in corpus.documents] if corpus else None
-    gold_dict = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=True, val_on=True, attrib=attrib)
+    gold_dict = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=(attrib is not None), val_on=True, attrib=attrib)
 
     TP = FP = TN = FN = 0
     pos = set([((c[0].parent.document.name).upper(),
@@ -315,9 +309,30 @@ def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     print "----------------------------------------"
     print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
     print "========================================\n"
-
     return (TP_set, FP_set, FN_set)
 
+def parts_f1(candidates, gold_parts):
+    pos = set([(c.part.parent.document.name.upper(), c.part.get_span()) for c in candidates])
+    # import pdb; pdb.set_trace()
+    TP_set = pos.intersection(gold_parts)
+    TP = len(TP_set)
+    FP_set = pos.difference(gold_parts)
+    FP = len(FP_set)
+    FN_set = gold_parts.difference(pos)
+    FN = len(FN_set)
+    prec = TP / float(TP + FP) if TP + FP > 0 else float('nan')
+    rec  = TP / float(TP + FN) if TP + FN > 0 else float('nan')
+    f1   = 2 * (prec * rec) / (prec + rec) if prec + rec > 0 else float('nan')
+    print "========================================"
+    print "Scoring on Entity-Level Gold Data"
+    print "========================================"
+    print "Corpus Precision {:.3}".format(prec)
+    print "Corpus Recall    {:.3}".format(rec)
+    print "Corpus F1        {:.3}".format(f1)
+    print "----------------------------------------"
+    print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
+    print "========================================\n"
+    return (list(TP_set), list(FP_set), list(FN_set))
 
 def expand_part_range(text, DEBUG=False):
     """

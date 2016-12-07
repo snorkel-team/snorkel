@@ -136,6 +136,20 @@ class Union(NgramMatcher):
                return True
        return False
 
+class Intersect(NgramMatcher):
+    """Takes the intersection of candidate sets returned by child operators"""
+    def f(self, c):
+        for child in self.children:
+            if not child.f(c):
+                return False
+        return True 
+
+class Inverse(NgramMatcher):
+    """Returns the opposite result of its child operator"""
+    # TODO: confirm that this only has one child
+    def f(self, c):
+        for child in self.children:
+            return not child.f(c)
 
 class Concat(NgramMatcher):
     """

@@ -149,6 +149,7 @@ def main():
 	raw_gold = os.environ['SNORKELHOME']+ '/tutorials/tables/data/hardware/gold_raw/old_dev_gold_raw.csv'
 	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/hardware_dev/hardware_dev_gold.csv'
 	format_old_dev_gold(raw_gold, formatted_gold)
+    # NOTE: This MUST come after format_old_dev_gold so it can append to the previous file.
 	raw_gold = os.environ['SNORKELHOME']+ '/tutorials/tables/data/hardware/gold_raw/new_dev_gold_raw.csv'
 	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/hardware_dev/hardware_dev_gold.csv'
 	format_new_dev_gold(raw_gold, formatted_gold)

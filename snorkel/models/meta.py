@@ -2,7 +2,7 @@ import os
 import getpass
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker
 
 # We initialize the engine within the models module because models' schema can depend on
 # which data types are supported by the engine
@@ -29,7 +29,7 @@ def new_engine():
     return create_engine(connection, connect_args = connect_args)
 
 def new_session(engine):
-    return scoped_session(sessionmaker(bind=snorkel_engine))
+    return sessionmaker(bind=engine)
 
 snorkel_engine = new_engine()
 SnorkelSession = new_session(snorkel_engine)

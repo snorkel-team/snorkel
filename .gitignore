@@ -33,7 +33,9 @@ tutorials/intro/data/articles-test.tsv
 tutorials/intro/data/articles-train.tsv
 tutorials/intro/data/gold_labels.tsv
 tutorials/intro/snorkel.db
-tutorials/tables/data/hardware/test_pdf/
-tutorials/tables/data/hardware/hardware*/
-tutorials/tables/data/hardware/deprecated/
-tutorials/long-tail/*
+tutorials/tables/data/hardware/dev/html/
+tutorials/tables/data/hardware/dev/pdf/
+tutorials/tables/data/hardware/test/html/
+tutorials/tables/data/hardware/test/pdf/
+tutorials/tables/data/hardware/train*/html/
+tutorials/tables/data/hardware/train*/pdf/

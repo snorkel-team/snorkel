@@ -6,9 +6,23 @@ from collections import defaultdict
 from difflib import SequenceMatcher
 from snorkel.candidates import OmniNgrams
 from snorkel.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, AnnotationKeySet, Label
+from snorkel.matchers import RegexMatchSpan, Union
 from snorkel.utils import ProgressBar
 from snorkel.loaders import create_or_fetch
 from snorkel.lf_helpers import *
+
+# eeca_matcher = RegexMatchSpan(rgx='([b]{1}[abcdefklnpqruyz]{1}[\swxyz]?[0-9]{3,5}[\s]?[A-Z\/]{0,5}[0-9]?[A-Z]?([-][A-Z0-9]{1,7})?([-][A-Z0-9]{1,2})?)')
+# jedec_matcher = RegexMatchSpan(rgx='([123]N\d{3,4}[A-Z]{0,5}[0-9]?[A-Z]?)')
+# jis_matcher = RegexMatchSpan(rgx='(2S[abcdefghjkmqrstvz]{1}[\d]{2,4})')
+# others_matcher = RegexMatchSpan(rgx='((NSVBC|SMBT|MJ|MJE|MPS|MRF|RCA|TIP|ZTX|ZT|TIS|TIPL|DTC|MMBT|PZT){1}[\d]{2,4}[A-Z]{0,3}([-][A-Z0-9]{0,6})?([-][A-Z0-9]{0,1})?)')
+# part_matcher = Union(eeca_matcher, jedec_matcher, jis_matcher, others_matcher)
+
+def part_rgx():
+    eeca_rgx = '([b]{1}[ABCDEFKLNPQRUYZ]{1}[wxyz]?[0-9]{3,5}[A-Z\/]{0,5}[0-9]?[A-Z]?([-][A-Z0-9]{1,7})?([-][A-Z0-9]{1,2})?)'
+    jedec_rgx = '([123]N\d{3,4}[A-Z]{0,5}[0-9]?[A-Z]?)'
+    jis_rgx = '(2S[ABCDEFGHJKMQRSTVZ]{1}[\d]{2,4})'
+    others_rgx = '((NSVBC|SMBT|MJ|MJE|MPS|MRF|RCA|TIP|ZTX|ZT|TIS|TIPL|DTC|MMBT|PZT){1}[\d]{2,4}[A-Z]{0,3}([-][A-Z0-9]{0,6})?([-][A-Z0-9]{0,1})?)'
+    return '|'.join([eeca_rgx, jedec_rgx, jis_rgx, others_rgx])
 
 class OmniNgramsTemp(OmniNgrams):
     def __init__(self, n_max=5, split_tokens=None):
@@ -53,7 +67,7 @@ class OmniNgramsTemp(OmniNgrams):
 
 
 class OmniNgramsPart(OmniNgrams):
-    def __init__(self, parts_by_doc=None, suffixes_by_doc=None, n_max=5, split_tokens=None):
+    def __init__(self, parts_by_doc=None, n_max=5, split_tokens=None):
         # parts_by_doc is a dictionary d where d[document_name.upper()] = [partA, partB, ...]
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=None)
         self.link_parts = (parts_by_doc is not None)
@@ -68,7 +82,7 @@ class OmniNgramsPart(OmniNgrams):
     def apply(self, context):
         # TODO: Switch this to base in enumerated_parts, then add suffixes by doc.
         for ts in OmniNgrams.apply(self, context):
-            enumerated_parts = [part_no.replace(' ', '') for part_no in expand_part_range(ts.get_span())]
+            enumerated_parts = [part.replace(' ','') for part in expand_part_range(ts.get_span())]
             if self.link_parts:
                 possible_parts =  self.parts_by_doc[ts.parent.document.name.upper()]
                 implicit_parts = set()
@@ -78,10 +92,12 @@ class OmniNgramsPart(OmniNgrams):
                             implicit_parts.add(part)
             else:
                 implicit_parts = set(enumerated_parts)
-            for i, part_no in enumerate(implicit_parts):
-                # if "/" in ts.get_span():
-                #     yield ts
-                if part_no == ts.get_span():
+            for i, part in enumerate(implicit_parts):
+                try:
+                    part.decode('ascii')
+                except:
+                    continue
+                if part == ts.get_span():
                     yield ts
                 else:
                     yield TemporaryImplicitSpan(
@@ -90,9 +106,9 @@ class OmniNgramsPart(OmniNgrams):
                         char_end       = ts.char_end,
                         expander_key   = u'part_expander',
                         position       = i,
-                        text           = part_no,
-                        words          = [part_no],
-                        lemmas         = [part_no],
+                        text           = part,
+                        words          = [part],
+                        lemmas         = [part],
                         pos_tags       = [ts.get_attrib_tokens('pos_tags')[0]],
                         ner_tags       = [ts.get_attrib_tokens('ner_tags')[0]],
                         dep_parents    = [ts.get_attrib_tokens('dep_parents')[0]],
@@ -104,7 +120,6 @@ class OmniNgramsPart(OmniNgrams):
                         right          = [max(ts.get_attrib_tokens('right'))] if ts.parent.is_visual() else [None],
                         meta           = None
                     )
-
 
 def load_hardware_doc_part_pairs(filename):
     with open(filename, 'r') as csvfile:
@@ -524,6 +539,94 @@ def print_table_info(span):
         print "Row: %s" % span.parent.row_start
         print "Col: %s" % span.parent.col_start
     print "Phrase: %s" % span.parent
+
+
+def merge_two_dicts(x, y):
+    '''Given two dicts, merge them into a new dict as a shallow copy.'''
+    # Code from http://stackoverflow.com/questions/38987/how-to-merge-two-python-dictionaries-in-a-single-expression
+    # Note that the entries of Y will replace X's values if there is overlap.
+    z = x.copy()
+    z.update(y)
+    return z
+
+def get_first_pass_dict(contexts, part_matcher, part_ngrams, suffix_matcher, suffix_ngrams):
+    """
+    Seeks to replace get_gold_dict by going through a first pass of the document
+    and pull out valid part numbers.
+
+    Note that some throttling is done here, but may be moved to either a Throttler
+    class, or learned through using LFs. Throttling here just seeks to reduce
+    the number of candidates produced.
+
+    Note that part_ngrams should be at least 5-grams or else not all parts will
+    be found.
+    """
+    suffixes_by_doc = defaultdict(set)
+    parts_by_doc = defaultdict(set)
+    final_dict = defaultdict(set)
+
+    pb = ProgressBar(len(contexts))
+    for i, context in enumerate(contexts):
+        pb.bar(i)
+        # Extract Suffixes
+        for ts in suffix_matcher.apply(suffix_ngrams.apply(context)):
+            row_ngrams = set(get_row_ngrams(ts, infer=True))
+            if ('classification' in row_ngrams or
+                'group' in row_ngrams or
+                'rank' in row_ngrams or
+                'grp.' in row_ngrams):
+                suffixes_by_doc[ts.parent.document.name.upper()].add(ts.get_span())
+
+        # extract parts
+        for ts in part_matcher.apply(part_ngrams.apply(context)):
+            text = ts.get_span()
+
+            # Targetted at docs like ONSMS04099-1
+            # Don't add parts that are "replacements" or come from a giant table
+            col_ngrams = set(get_col_ngrams(ts))
+            if ('replacement' in col_ngrams or
+                (len(col_ngrams) > 25 and 'device' in col_ngrams)):
+                continue
+
+            # Try to avoid adding complementary parts
+            row_ngrams = set(get_row_ngrams(ts))
+            if ('complementary' in row_ngrams or
+                'empfohlene' in row_ngrams):
+                continue
+
+            # Throw away these two obviously invalid part cases that make
+            # it through the part regex.
+            if text.endswith('/') or text.endswith('-'):
+                continue
+            if "PNP" in text or "NPN" in text:
+                continue
+
+            parts_by_doc[ts.parent.document.name.upper()].add(text)
+
+    pb.close()
+
+    # Process suffixes and parts
+    for doc in parts_by_doc.keys():
+        for part in parts_by_doc[doc]:
+            final_dict[doc].add(part)
+            # TODO: This portion is really specific to our suffixes. Ideally
+            # this kind of logic can be pased on the suffix_matcher that is
+            # pass in. Or something like that...
+            # The goal of this code is just to append suffixes to part numbers
+            # that don't already have suffixes in a reasonable way.
+            for suffix in suffixes_by_doc[doc]:
+                if (suffix == "A" or suffix == "B" or suffix == "C"):
+                    if not any(x in part[2:] for x in ['A', 'B', 'C']):
+                        final_dict[doc].add(part + suffix)
+                else: # if it's 16/25/40
+                    if not suffix.startswith('-') and not any(x in part for x in ['16', '25', '40']):
+                        final_dict[doc].add(part + '-' + suffix)
+                    elif suffix.startswith('-') and not any(x in part for x in ['16', '25', '40']):
+                        final_dict[doc].add(part + suffix)
+
+    # TODO: Just return final_set. Temporarily returning the other two for
+    # easier debugging.
+    return final_dict, suffixes_by_doc, parts_by_doc
 
 # HOLD ON TO THESE FOR REFERENCE UNTIL HARDWARE NOTEBOOKS ARE UPDATED
 # class PartThrottler(object):

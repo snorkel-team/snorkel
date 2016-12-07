@@ -105,17 +105,15 @@ def _init_parse_worker(corpus_name):
     global _worker_corpus
     global _worker_session
     _worker_engine = new_engine()
-    _worker_session = new_session(_worker_engine)
+    _worker_session = new_session(_worker_engine)()
     _worker_corpus = _worker_session.query(Corpus).filter(Corpus.name==corpus_name).one()
-    print 'Fetching corpus:%d' % id(_worker_corpus), 'for process', os.getpid()
 
 def _parallel_parse(fpath):
-    print fpath
     for document in _worker_doc_parser.parse(fpath):
-        print document
         _worker_corpus.append(document)
         _worker_context_parser.parse(document)
-    # Indicate the job is done
+    # Have to clean up after every doc since pool doesn't have 
+    # shutdown hook
     _worker_session.commit()
     return None
 
@@ -131,20 +129,21 @@ def parse_corpus(session, corpus_name, path, doc_parser, context_parser, max_doc
     # Actual jobs will assume the shorter of the two lists 
     pb = ProgressBar(len(args))
     # Make sure the corpus exists so that we can add documents to it in workers
-    corpus = Corpus(name=corpus_name)
-    session.add(corpus)
-    session.commit()
-    tick = [0]
-    def pb_update(x):
-        pb.bar(tick[0])
-        tick[0] += 1
-    # Asynchronously parse files        
+    corpus = session.query(Corpus).filter(Corpus.name==corpus_name).one_or_none()
+    if corpus is not None:
+        print 'Corpus', corpus_name, 'already exists. Not parsing'
+        return corpus
+    else:
+        corpus = Corpus(name=corpus_name)
+        session.add(corpus)
+        session.commit()
+    # Asynchronously parse files
     pool = Pool(parallel, initializer=_init_parse_worker,initargs=(corpus_name,))
     #print 'Working on ', fpaths
-    res = pool.map_async(_parallel_parse, args, callback=pb_update)
-    print res.get()
+    for i, _result in enumerate(pool.imap_unordered(_parallel_parse, args)):
+        pb.bar(i)
     pool.close()
     pool.join()
-    #pb.close()
+    pb.close()
     # Load the updated corpus with all documents from workers
     return session.query(Corpus).filter(Corpus.name==corpus_name).one()

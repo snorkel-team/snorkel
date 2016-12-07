@@ -14,6 +14,7 @@ from itertools import izip
 from collections import namedtuple
 import numpy as np
 import codecs
+from async_utils import run_in_parallel
 
 # Used to conform to existing annotation key API call
 _TempKey = namedtuple('TempKey',['id', 'name'])
@@ -126,7 +127,7 @@ def tsv_escape(s):
 def array_tsv_escape(vals):
     return '{' + ','.join(tsv_escape(p) for p in vals) + '}'
 
-def _annotate_worker(name, table_name, start, end, annotator):
+def _annotate_worker(start, end, name, table_name, annotator):
     '''
     Writes raw rows via psql, bypassing ORM.
     Pipes extraction results to the STDIN of a psql COPY process.
@@ -139,8 +140,8 @@ def _annotate_worker(name, table_name, start, end, annotator):
         ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     # Create separate engine for each worker to prevent concurrent connection problems
-    engine = create_engine(connection)
-    WorkerSession = sessionmaker(bind=engine)
+    engine = new_engine()
+    WorkerSession = new_session(engine)
     session = WorkerSession()
     
     # Computes and pipe rows to the COPY process
@@ -165,18 +166,6 @@ def _annotate_worker(name, table_name, start, end, annotator):
         print err
     copy_process.stdin.close()
     
-def _parallel_annotate(candidates, table_name, parallel, annotator):
-        # Plan workload for each extraction worker
-    num_jobs = len(candidates)
-    avg_jobs = 1 + num_jobs / parallel
-    worker_args = [(candidates.name, table_name, i * avg_jobs, (i + 1) * avg_jobs, annotator) for i in xrange(parallel)]
-    worker_args[-1] = (candidates.name, table_name, (parallel - 1) * avg_jobs, num_jobs, annotator)
-    print 'Using', parallel, 'workers'
-    # Fan-out workload to child processes
-    ps = [Process(target=_annotate_worker, args=arg) for arg in worker_args]
-    for p in ps: p.start()
-    for p in ps: p.join()
-
 def annotate(candidates, parallel=0, keyset = None, lfs = []):
     '''
     Extracts features for candidates in parallel
@@ -198,7 +187,8 @@ def annotate(candidates, parallel=0, keyset = None, lfs = []):
         if not parallel: parallel = min(40, multiprocessing.cpu_count() / 2)
         annotator = Annotator(lfs) if lfs else get_all_feats
         
-        _parallel_annotate(candidates, table_name, parallel, annotator)
+        copy_args = (candidates.name, table_name, annotator)
+        run_in_parallel(_annotate_worker, parallel, len(candidates), copy_args = copy_args)
         con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id)' % table_name)
         
         if keyset is None:

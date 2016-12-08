@@ -30,12 +30,15 @@ def get_part_throttler():
 def part_throttler((part, attr)):
     """throttle parts that are in tables of device/replacement parts"""
     col_ngrams = set(get_col_ngrams(part))
-    if (overlap(['replacement', 'marking', 'mark'], col_ngrams) or
-        ('device' in col_ngrams and len(col_ngrams) > 25) or
+    # if (overlap(['replacement', 'marking', 'mark'], col_ngrams) or
+    if (overlap(['replacement'], col_ngrams) or
+        (len(col_ngrams) > 25 and 'device' in col_ngrams) or # and part.parent.page > 2
         overlap(['complementary', 'complement', 'empfohlene'], 
                 chain.from_iterable([
                     get_left_ngrams(part, window=10),
                     get_row_ngrams(part)]))):
+        # if (len(col_ngrams) > 25 and part.parent.page > 2):
+        #     print part
         return False
     else:
         return True
@@ -581,17 +584,16 @@ def get_gold_parts_by_doc():
         parts_by_doc[part[0]].add(part[1])
     return parts_by_doc
 
-def get_manual_parts_by_doc(corpus):
-    eeca_suffix = '^(A|B|C|R|O|Y|-16|-25|-40|16|25|40)$'
+def get_manual_parts_by_doc(documents):
+    eeca_suffix = '^(A|B|C|R|O|Y|-?16|-?25|-?40)$'
     suffix_matcher = RegexMatchSpan(rgx=eeca_suffix, ignore_case=False)
     suffix_ngrams = OmniNgrams(n_max=1)
     part_ngrams = OmniNgramsPart(n_max=5)
-    parts_dev, s_dev, p_dev = get_first_pass_dict(corpus.documents, 
-                                                part_matcher=get_part_matcher(), 
-                                                part_ngrams=part_ngrams, 
-                                                suffix_matcher=suffix_matcher, 
-                                                suffix_ngrams=suffix_ngrams)      
-    return parts_dev
+    return generate_parts_by_doc(documents, 
+                                 part_matcher=get_part_matcher(), 
+                                 part_ngrams=part_ngrams, 
+                                 suffix_matcher=suffix_matcher, 
+                                 suffix_ngrams=suffix_ngrams)      
 
 
 def merge_two_dicts(x, y):
@@ -602,7 +604,7 @@ def merge_two_dicts(x, y):
     z.update(y)
     return z
 
-def get_first_pass_dict(contexts, part_matcher, part_ngrams, suffix_matcher, suffix_ngrams):
+def generate_parts_by_doc(contexts, part_matcher, part_ngrams, suffix_matcher, suffix_ngrams):
     """
     Seeks to replace get_gold_dict by going through a first pass of the document
     and pull out valid part numbers.
@@ -616,50 +618,35 @@ def get_first_pass_dict(contexts, part_matcher, part_ngrams, suffix_matcher, suf
     """
     suffixes_by_doc = defaultdict(set)
     parts_by_doc = defaultdict(set)
-    final_dict = defaultdict(set)
 
+    print "Finding part numbers..."
     pb = ProgressBar(len(contexts))
     for i, context in enumerate(contexts):
         pb.bar(i)
-        # Extract Suffixes
-        for ts in suffix_matcher.apply(suffix_ngrams.apply(context)):
-            row_ngrams = set(get_row_ngrams(ts, infer=True))
-            if ('classification' in row_ngrams or
-                'group' in row_ngrams or
-                'rank' in row_ngrams or
-                'grp.' in row_ngrams):
-                suffixes_by_doc[ts.parent.document.name.upper()].add(ts.get_span())
-
         # extract parts
-        for ts in part_matcher.apply(part_ngrams.apply(context)):
-            # text = ts.get_span()
+        for ts in part_ngrams.apply(context):
+            # identify parts
+            for pts in part_matcher.apply([ts]):
+                parts_by_doc[pts.parent.document.name.upper()].add(pts.get_span())
 
-            # # Targetted at docs like ONSMS04099-1
-            # # Don't add parts that are "replacements" or come from a giant table
-            # col_ngrams = set(get_col_ngrams(ts))
-            # if ('replacement' in col_ngrams or
-            #     (len(col_ngrams) > 25 and 'device' in col_ngrams)):
-            #     continue
-
-            # # Try to avoid adding complementary parts
-            # row_ngrams = set(get_row_ngrams(ts))
-            # if ('complementary' in row_ngrams or
-            #     'empfohlene' in row_ngrams):
-            #     continue
-
-            # # Throw away these two obviously invalid part cases that make
-            # # it through the part regex.
-            # if text.endswith('/') or text.endswith('-'):
-            #     continue
-            # if "PNP" in text or "NPN" in text:
-            #     continue
-
-            parts_by_doc[ts.parent.document.name.upper()].add(ts.get_span())
-
+            # identify suffixes
+            for sts in suffix_matcher.apply([ts]):
+                row_ngrams = set(get_row_ngrams(ts, infer=True))
+                if ('classification' in row_ngrams or
+                    'group' in row_ngrams or
+                    'rank' in row_ngrams or
+                    'grp.' in row_ngrams):
+                    suffixes_by_doc[sts.parent.document.name.upper()].add(sts.get_span())
     pb.close()
 
+    import pdb; pdb.set_trace()
+
     # Process suffixes and parts
+    print "Appending suffixes..."
+    final_dict = defaultdict(set)
+    pb = ProgressBar(len(parts_by_doc))
     for doc in parts_by_doc.keys():
+        pb.bar(i)
         for part in parts_by_doc[doc]:
             final_dict[doc].add(part)
             # TODO: This portion is really specific to our suffixes. Ideally
@@ -667,19 +654,25 @@ def get_first_pass_dict(contexts, part_matcher, part_ngrams, suffix_matcher, suf
             # pass in. Or something like that...
             # The goal of this code is just to append suffixes to part numbers
             # that don't already have suffixes in a reasonable way.
-            for suffix in suffixes_by_doc[doc]:
-                if (suffix == "A" or suffix == "B" or suffix == "C"):
-                    if not any(x in part[2:] for x in ['A', 'B', 'C']):
-                        final_dict[doc].add(part + suffix)
-                else: # if it's 16/25/40
-                    if not suffix.startswith('-') and not any(x in part for x in ['16', '25', '40']):
-                        final_dict[doc].add(part + '-' + suffix)
-                    elif suffix.startswith('-') and not any(x in part for x in ['16', '25', '40']):
-                        final_dict[doc].add(part + suffix)
-
-    # TODO: Just return final_set. Temporarily returning the other two for
-    # easier debugging.
-    return final_dict, suffixes_by_doc, parts_by_doc
+            suffixes = suffixes_by_doc[doc]
+            if not any(part.endswith(s) for s in suffixes):
+                for s in suffixes:
+                    final_dict[doc].add(part + s)
+            # for suffix in suffixes:
+            #     """
+            #     if the part has no suffix, add it
+            #     """
+            #     if 
+            #     if (suffix == "A" or suffix == "B" or suffix == "C"): # suffix.isalpha()?
+            #         if not any(x in part[2:] for x in ['A', 'B', 'C']):
+            #             final_dict[doc].add(part + suffix)
+            #     else: # if it's 16/25/40
+            #         if not suffix.startswith('-') and not any(x in part for x in ['16', '25', '40']):
+            #             final_dict[doc].add(part + '-' + suffix)
+            #         elif suffix.startswith('-') and not any(x in part for x in ['16', '25', '40']):
+            #             final_dict[doc].add(part + suffix)
+    pb.close()
+    return final_dict
 
 # HOLD ON TO THESE FOR REFERENCE UNTIL HARDWARE NOTEBOOKS ARE UPDATED
 # class PartThrottler(object):

@@ -29,15 +29,15 @@ def get_part_throttler():
 
 def part_throttler((part, attr)):
     """throttle parts that are in tables of device/replacement parts"""
-    col_ngrams = set(get_col_ngrams(part))
-    # if (overlap(['replacement', 'marking', 'mark'], col_ngrams) or
-    if (overlap(['replacement'], col_ngrams) or
-        (len(col_ngrams) > 25 and 'device' in col_ngrams) or # and part.parent.page > 2
+    aligned_ngrams = set(get_aligned_ngrams(part))
+    # if (overlap(['replacement', 'marking', 'mark'], aligned_ngrams) or
+    if (overlap(['replacement'], aligned_ngrams) or
+        (len(aligned_ngrams) > 25 and 'device' in aligned_ngrams) or # and part.parent.page > 2
         overlap(['complementary', 'complement', 'empfohlene'], 
                 chain.from_iterable([
                     get_left_ngrams(part, window=10),
                     get_row_ngrams(part)]))):
-        # if (len(col_ngrams) > 25 and part.parent.page > 2):
+        # if (len(aligned_ngrams) > 25 and part.parent.page > 2):
         #     print part
         return False
     else:
@@ -655,8 +655,9 @@ def generate_parts_by_doc(contexts, part_matcher, part_ngrams, suffix_matcher, s
             # The goal of this code is just to append suffixes to part numbers
             # that don't already have suffixes in a reasonable way.
             suffixes = suffixes_by_doc[doc]
-            if not any(part.endswith(s) for s in suffixes):
+            if not any(suffix in parts[2:] for s in suffixes):
                 for s in suffixes:
+                    if s.digit(): s = '-' + s
                     final_dict[doc].add(part + s)
             # for suffix in suffixes:
             #     """

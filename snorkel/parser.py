@@ -42,7 +42,7 @@ class CorpusParser:
             pb.close()
         if session is not None:
             session.commit()
-        print "Parsed %s docs." % i
+        print "Parsed %s docs." % (i+1,)
 
 
 class DocParser:

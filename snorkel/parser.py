@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Sentence, construct_stable_id
+from .models import Document, Sentence, construct_stable_id
 from .utils import ProgressBar, sort_X_on_Y
 import atexit
 import warnings
@@ -26,10 +26,7 @@ class CorpusParser:
         self.sent_parser = sent_parser
         self.max_docs = max_docs
 
-    def parse_corpus(self, session, name, display=True):
-        corpus = Corpus(name=name)
-        if session is not None:
-            session.add(corpus)
+    def parse_corpus(self, session):
         if self.max_docs is not None:
             pb = ProgressBar(self.max_docs)
         for i, (doc, text) in enumerate(self.doc_parser.parse()):
@@ -37,7 +34,7 @@ class CorpusParser:
                 pb.bar(i)
                 if i == self.max_docs:
                     break
-            corpus.append(doc)
+            session.add(doc)
             for _ in self.sent_parser.parse(doc, text):
                 pass
         if self.max_docs is not None:
@@ -45,9 +42,7 @@ class CorpusParser:
             pb.close()
         if session is not None:
             session.commit()
-        if display:
-            corpus.stats()
-        return corpus
+        print "Parsed %s docs." % i
 
 
 class DocParser:

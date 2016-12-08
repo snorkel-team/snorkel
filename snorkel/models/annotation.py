@@ -108,7 +108,7 @@ class StableLabel(SnorkelBase):
     A special secondary table for preserving labels created by *human annotators* (e.g. in the Viewer)
     in a stable format that does not cascade, and is independent of the Candidate ids.
     """
-    __tablename__  = 'annotator_label'
+    __tablename__  = 'stable_label'
     id             = Column(Integer, primary_key=True)
     stable_id      = Column(String, nullable=False)  # '~~'-concatenation of context_stable_ids + annotator
     annotator_name = Column(String, nullable=False)

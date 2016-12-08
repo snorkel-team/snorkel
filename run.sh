@@ -26,8 +26,9 @@ if [ ! -f "$PHANTOMJS" ]; then
 fi
 
 # Make sure poppler is installed
-POPPLER="poppler"
-if [ ! -d "$POPPLER" ]; then
+POPPLER=$(which pdfinfo)
+size=${#POPPLER}
+if [ $size -eq 0 ]; then
     read -p "poppler not found- install now?  [y/n] " yn
     case $yn in
         [Yy]* ) echo "Installing poppler..."; ./install-poppler.sh;;

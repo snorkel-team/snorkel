@@ -1,15 +1,16 @@
-import csv
-import codecs
-import re
-import os
-from collections import defaultdict
-from difflib import SequenceMatcher
 from snorkel.candidates import OmniNgrams
 from snorkel.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, AnnotationKeySet, Label
 from snorkel.matchers import RegexMatchSpan, Union
 from snorkel.utils import ProgressBar
 from snorkel.loaders import create_or_fetch
 from snorkel.lf_helpers import *
+import csv
+import codecs
+import re
+import os
+from collections import defaultdict
+from difflib import SequenceMatcher
+from itertools import chain
 
 # eeca_matcher = RegexMatchSpan(rgx='([b]{1}[abcdefklnpqruyz]{1}[\swxyz]?[0-9]{3,5}[\s]?[A-Z\/]{0,5}[0-9]?[A-Z]?([-][A-Z0-9]{1,7})?([-][A-Z0-9]{1,2})?)')
 # jedec_matcher = RegexMatchSpan(rgx='([123]N\d{3,4}[A-Z]{0,5}[0-9]?[A-Z]?)')
@@ -17,10 +18,31 @@ from snorkel.lf_helpers import *
 # others_matcher = RegexMatchSpan(rgx='((NSVBC|SMBT|MJ|MJE|MPS|MRF|RCA|TIP|ZTX|ZT|TIS|TIPL|DTC|MMBT|PZT){1}[\d]{2,4}[A-Z]{0,3}([-][A-Z0-9]{0,6})?([-][A-Z0-9]{0,1})?)')
 # part_matcher = Union(eeca_matcher, jedec_matcher, jis_matcher, others_matcher)
 
-# NOTE: 12/6 only allow /DG, no other /
-def part_matcher():
+def get_part_throttler_wrapper():
+    """get a part throttler wrapper to throttler unary candidates with the usual binary throttler"""
+    def part_throttler_wrapper(part):
+        return part_throttler((part[0], None))
+    return part_throttler_wrapper
+
+def get_part_throttler():
+    return part_throttler
+
+def part_throttler((part, attr)):
+    """throttle parts that are in tables of device/replacement parts"""
+    col_ngrams = set(get_col_ngrams(part))
+    if (overlap(['replacement', 'marking', 'mark'], col_ngrams) or
+        ('device' in col_ngrams and len(col_ngrams) > 25) or
+        overlap(['complementary', 'complement', 'empfohlene'], 
+                chain.from_iterable([
+                    get_left_ngrams(part, window=10),
+                    get_row_ngrams(part)]))):
+        return False
+    else:
+        return True
+
+def get_part_matcher():
     eeca_matcher = RegexMatchSpan(rgx='([ABC][A-Z][WXYZ]?[0-9]{3,5}(?:[A-Z]){0,5}[0-9]?[A-Z]?(?:-[A-Z0-9]{1,7})?(?:[-][A-Z0-9]{1,2})?(?:\/DG)?)')
-    jedec_matcher = RegexMatchSpan(rgx='([123][N]\d{3,4}[A-Z]{0,5}[0-9]?[A-Z]?)')
+    jedec_matcher = RegexMatchSpan(rgx='(2N\d{3,4}[A-Z]{0,5}[0-9]?[A-Z]?)')
     jis_matcher = RegexMatchSpan(rgx='(2S[ABCDEFGHJKMQRSTVZ]{1}[\d]{2,4})')
     others_matcher = RegexMatchSpan(rgx='((?:NSVBC|SMBT|MJ|MJE|MPS|MRF|RCA|TIP|ZTX|ZT|ZXT|TIS|TIPL|DTC|MMBT|SMMBT|PZT|FZT){1}[\d]{2,4}[A-Z]{0,3}(?:-[A-Z0-9]{0,6})?(?:[-][A-Z0-9]{0,1})?)')
     return Union(eeca_matcher, jedec_matcher, jis_matcher, others_matcher)
@@ -120,25 +142,9 @@ def load_hardware_doc_part_pairs(filename):
         gold_reader = csv.reader(csvfile)
         gold = set()
         for row in gold_reader:
-            (doc, part, val, attr) = row
+            (doc, part, attr, val) = row
             gold.add((doc.upper(), part.upper()))
         return gold
-
-
-# OBSOLETE:
-def load_extended_parts_dict(filename):
-    gold_pairs = load_hardware_doc_part_pairs(filename)
-    (gold_docs, gold_parts) = zip(*gold_pairs)
-    # make gold_parts_suffixed for matcher
-    gold_parts_extended = set()
-    for part in gold_parts:
-        for suffix in ['', 'A','B','C','-16','-25','-40']:
-            gold_parts_extended.add(''.join([part,suffix]))
-            if part.endswith(suffix):
-                gold_parts_extended.add(part[:-len(suffix)])
-                if part[:2].isalpha() and part[2:-1].isdigit() and part[-1].isalpha():
-                    gold_parts_extended.add(' '.join([part[:2], part[2:-1], part[-1]]))
-    return gold_parts_extended
 
 
 def get_gold_parts(filename, docs=None):
@@ -150,7 +156,7 @@ def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None,
         gold_reader = csv.reader(csvfile)
         gold_dict = set()
         for row in gold_reader:
-            (doc, part, val, attr) = row
+            (doc, part, attr, val) = row
             if docs is None or doc.upper() in docs:
                 if attrib and attr != attrib:
                     continue
@@ -249,6 +255,10 @@ def entity_level_total_recall(candidates, gold_file, attribute, corpus=None, rel
     """
     docs = [(doc.name).upper() for doc in corpus.documents] if corpus else None
     gold_set = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=True, val_on=relation, attrib=attribute, integerize=integerize)
+    if len(gold_set) == 0:
+        print "Gold set is empty."
+        import pdb; pdb.set_trace()
+        return
     # Turn CandidateSet into set of tuples
     print "Preparing candidates..."
     pb = ProgressBar(len(candidates))
@@ -268,7 +278,6 @@ def entity_level_total_recall(candidates, gold_file, attribute, corpus=None, rel
             entity_level_candidates.add((doc.upper(), part.upper()))
     pb.close()
 
-    # import pdb; pdb.set_trace()
     print "========================================"
     print "Scoring on Entity-Level Total Recall"
     print "========================================"
@@ -309,7 +318,7 @@ def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     print "----------------------------------------"
     print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
     print "========================================\n"
-    return (TP_set, FP_set, FN_set)
+    return map(lambda x: sorted(list(x)), [TP_set, FP_set, FN_set])
 
 def parts_f1(candidates, gold_parts):
     pos = set([(c.part.parent.document.name.upper(), c.part.get_span()) for c in candidates])
@@ -332,7 +341,7 @@ def parts_f1(candidates, gold_parts):
     print "----------------------------------------"
     print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
     print "========================================\n"
-    return (list(TP_set), list(FP_set), list(FN_set))
+    return map(lambda x: sorted(list(x)), [TP_set, FP_set, FN_set])
 
 def expand_part_range(text, DEBUG=False):
     """
@@ -401,7 +410,7 @@ def expand_part_range(text, DEBUG=False):
                     expanded_parts.add(new_part)
 
         # If we cannot identify a clear number or letter range, or if there are
-        # multple ranges being expressed, just ignore it.
+        # multiple ranges being expressed, just ignore it.
         if len(expanded_parts) == 0:
             expanded_parts.add(text)
     else:
@@ -430,6 +439,9 @@ def expand_part_range(text, DEBUG=False):
                 all_suffix_lengths = set()
                 # This is a bit inefficient but this first pass just is here
                 # to make sure that the suffixes are the same length
+                # first_suffix = first_match.group("suffix")
+                # if part.startswith('BC547'):
+                #     import pdb; pdb.set_trace()
                 for m in re.finditer(suffix_pattern, part):
                     suffix = m.group("suffix")
                     suffix_len = len(suffix)
@@ -439,8 +451,11 @@ def expand_part_range(text, DEBUG=False):
                         spacer = m.group("spacer")
                         suffix = m.group("suffix")
                         suffix_len = len(suffix)
-                        trimmed = base[:-suffix_len]
-                        final_set.add(trimmed+suffix)
+                        old_suffix = base[-suffix_len:]
+                        if ((suffix.isalpha() and old_suffix.isalpha()) or 
+                            (suffix.isnumeric() and old_suffix.isnumeric())):
+                            trimmed = base[:-suffix_len]
+                            final_set.add(trimmed+suffix)
         else:
             if part and (not part.isspace()):
                 final_set.add(part) # no base was found with suffixes to expand
@@ -514,8 +529,10 @@ def candidates_to_entities(candidates):
 def entity_to_candidates(entity, candidate_subset):
     matches = []
     for c in candidate_subset:
-        (part, attr) = c.get_arguments()
-        if (part.parent.document.name.upper(), part.get_span().upper(), attr.get_span().upper()) == entity:
+        c_entity = tuple([c[0].parent.document.name.upper()] + [c[i].get_span().upper() for i in range(len(c))])
+        if c_entity == entity:
+        # (part, attr) = c.get_arguments()
+        # if (c[0].parent.document.name.upper(), part.get_span().upper(), attr.get_span().upper()) == entity:
             matches.append(c)
     return matches
 
@@ -556,6 +573,27 @@ def print_table_info(span):
     print "Phrase: %s" % span.parent
 
 
+def get_gold_parts_by_doc():
+    gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/dev/hardware_dev_gold.csv'
+    gold_parts = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=False)
+    parts_by_doc = defaultdict(set)
+    for part in gold_parts:
+        parts_by_doc[part[0]].add(part[1])
+    return parts_by_doc
+
+def get_manual_parts_by_doc(corpus):
+    eeca_suffix = '^(A|B|C|R|O|Y|-16|-25|-40|16|25|40)$'
+    suffix_matcher = RegexMatchSpan(rgx=eeca_suffix, ignore_case=False)
+    suffix_ngrams = OmniNgrams(n_max=1)
+    part_ngrams = OmniNgramsPart(n_max=5)
+    parts_dev, s_dev, p_dev = get_first_pass_dict(corpus.documents, 
+                                                part_matcher=get_part_matcher(), 
+                                                part_ngrams=part_ngrams, 
+                                                suffix_matcher=suffix_matcher, 
+                                                suffix_ngrams=suffix_ngrams)      
+    return parts_dev
+
+
 def merge_two_dicts(x, y):
     '''Given two dicts, merge them into a new dict as a shallow copy.'''
     # Code from http://stackoverflow.com/questions/38987/how-to-merge-two-python-dictionaries-in-a-single-expression
@@ -594,29 +632,29 @@ def get_first_pass_dict(contexts, part_matcher, part_ngrams, suffix_matcher, suf
 
         # extract parts
         for ts in part_matcher.apply(part_ngrams.apply(context)):
-            text = ts.get_span()
+            # text = ts.get_span()
 
-            # Targetted at docs like ONSMS04099-1
-            # Don't add parts that are "replacements" or come from a giant table
-            col_ngrams = set(get_col_ngrams(ts))
-            if ('replacement' in col_ngrams or
-                (len(col_ngrams) > 25 and 'device' in col_ngrams)):
-                continue
+            # # Targetted at docs like ONSMS04099-1
+            # # Don't add parts that are "replacements" or come from a giant table
+            # col_ngrams = set(get_col_ngrams(ts))
+            # if ('replacement' in col_ngrams or
+            #     (len(col_ngrams) > 25 and 'device' in col_ngrams)):
+            #     continue
 
-            # Try to avoid adding complementary parts
-            row_ngrams = set(get_row_ngrams(ts))
-            if ('complementary' in row_ngrams or
-                'empfohlene' in row_ngrams):
-                continue
+            # # Try to avoid adding complementary parts
+            # row_ngrams = set(get_row_ngrams(ts))
+            # if ('complementary' in row_ngrams or
+            #     'empfohlene' in row_ngrams):
+            #     continue
 
-            # Throw away these two obviously invalid part cases that make
-            # it through the part regex.
-            if text.endswith('/') or text.endswith('-'):
-                continue
-            if "PNP" in text or "NPN" in text:
-                continue
+            # # Throw away these two obviously invalid part cases that make
+            # # it through the part regex.
+            # if text.endswith('/') or text.endswith('-'):
+            #     continue
+            # if "PNP" in text or "NPN" in text:
+            #     continue
 
-            parts_by_doc[ts.parent.document.name.upper()].add(text)
+            parts_by_doc[ts.parent.document.name.upper()].add(ts.get_span())
 
     pb.close()
 

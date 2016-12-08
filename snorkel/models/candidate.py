@@ -13,8 +13,9 @@ class Candidate(SnorkelBase):
     this class directly.
     """
     __tablename__ = 'candidate'
-    id = Column(Integer, primary_key=True)
-    type = Column(String, nullable=False)
+    id    = Column(Integer, primary_key=True)
+    type  = Column(String, nullable=False)
+    split = Column(Integer, default=0)
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',
@@ -94,6 +95,8 @@ def candidate_subclass(class_name, args, table_name=None):
         # Canonical ids, to be set post-entity normalization stage
         class_attribs[arg + '_cid'] = Column(Integer)
 
+    # Add the split to the unique constraint
+    unique_con_args.append('split')
     class_attribs['__table_args__'] = (UniqueConstraint(*unique_con_args),)
 
     # Create class

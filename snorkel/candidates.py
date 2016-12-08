@@ -54,27 +54,20 @@ class CandidateExtractor(object):
         # Track processes for multicore execution
         self.ps = []
 
-    def extract(self, contexts, name, session, parallelism=False):
-        # Create a candidate set
-        c = CandidateSet(name=name)
-        session.add(c)
-        session.commit()
-
-        # Run extraction
+    def extract(self, contexts, split, session, return_all=False):
         pb = ProgressBar(len(contexts))
-        if parallelism in [1, False]:
-            for i, context in enumerate(contexts):
-                pb.bar(i)
-                self._extract_from_context(context, c, session)
-        else:
-            raise NotImplementedError('Parallelism is not yet implemented.')
-            self._extract_multiprocess(contexts, c, parallelism)
-
+        for i, context in enumerate(contexts):
+            pb.bar(i)
+            self._extract_from_context(context, split, session)
         pb.close()
         session.commit()
-        return session.query(CandidateSet).filter(CandidateSet.name == name).one()
 
-    def _extract_from_context(self, context, candidate_set, session):
+        # Optionally return full set of candidates
+        if return_all:
+            return session.query(Candidate).filter(Candidate.split == split).all()
+
+
+    def _extract_from_context(self, context, split, session):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
         for i in range(self.arity):
@@ -89,8 +82,6 @@ class CandidateExtractor(object):
         arg_names = self.candidate_class.__argnames__
         child_insert_query = self.candidate_class.__table__.insert()
         child_args = {}
-        set_insert_query = candidate_set_candidate_association.insert()
-        set_insert_args = {'candidate_set_id': candidate_set.id}
         for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
 
             # Check for self-joins and "nested" joins (joins from span to its subspan)
@@ -118,73 +109,7 @@ class CandidateExtractor(object):
                 child_args['id'] = candidate_id[0]
                 session.execute(child_insert_query, child_args)
                 del child_args['id']
-
-            set_insert_args['candidate_id'] = candidate_id[0]
-            session.execute(set_insert_query, set_insert_args)
             
-    def _extract_multiprocess(self, contexts, candidate_set, parallelism):
-        contexts_in    = JoinableQueue()
-        candidates_out = Queue()
-
-        # Fill the in-queue with contexts
-        for context in contexts:
-            contexts_in.put(context)
-
-        # Start worker Processes
-        for i in range(parallelism):
-            session = SnorkelSession()
-            c = session.merge(candidate_set)
-            p = CandidateExtractorProcess(self._extract_from_context, session, contexts_in, candidates_out, c)
-            self.ps.append(p)
-
-        for p in self.ps:
-            p.start()
-        
-        # Join on JoinableQueue of contexts
-        contexts_in.join()
-        
-        # Collect candidates out
-        candidates = []
-        while True:
-            try:
-                candidates.append(candidates_out.get(True, QUEUE_COLLECT_TIMEOUT))
-            except Empty:
-                break
-        return candidates
-
-
-class CandidateExtractorProcess(Process):
-    def __init__(self, extractor, session, contexts_in, candidates_out, candidate_set, unary_set):
-        Process.__init__(self)
-        self.extractor      = extractor
-        self.session        = session
-        self.contexts_in    = contexts_in
-        self.candidates_out = candidates_out
-        self.candidate_set  = candidate_set
-        self.unary_set      = unary_set
-
-    def run(self):
-        c = self.candidate_set
-        u = self.unary_set if self.unary_set is not None else None
-
-        unique_candidates = set()
-        while True:
-            try:
-                context = self.session.merge(self.contexts_in.get(False))
-                for candidate in self.extractor(context, u):
-                    unique_candidates.add(candidate)
-
-                for candidate in unique_candidates:
-                    c.candidates.append(candidate)
-
-                unique_candidates.clear()
-                self.contexts_in.task_done()
-            except Empty:
-                break
-
-        self.session.commit()
-        self.session.close()
-
 
 class CandidateSpace(object):
     """
@@ -255,23 +180,20 @@ class PretaggedCandidateExtractor(object):
         self.symmetric_relations = symmetric_relations
         self.entity_sep          = entity_sep
 
-    def extract(self, contexts, name, session):
+    def extract(self, contexts, split, session, return_all=False):
         """Extract Candidates locally from each Context in a provided list of Contexts"""
-        # Create a candidate set
-        c = CandidateSet(name=name)
-        session.add(c)
-        session.commit()
-
-        # Run extraction
         pb = ProgressBar(len(contexts))
         for i, context in enumerate(contexts):
             pb.bar(i)
-            self._extract_from_context(context, c, session)
+            self._extract_from_context(context, split, session)
         pb.close()
         session.commit()
-        return session.query(CandidateSet).filter(CandidateSet.name == name).one()
 
-    def _extract_from_context(self, context, candidate_set, session):
+        # Optionally return full set of candidates
+        if return_all:
+            return session.query(Candidate).filter(Candidate.split == split).all()
+
+    def _extract_from_context(self, context, split, session):
         """
         Extract Candidates from a Context, and add to CandidateSet c
         Do so 
@@ -316,8 +238,6 @@ class PretaggedCandidateExtractor(object):
         arg_names = self.candidate_class.__argnames__
         child_insert_query = self.candidate_class.__table__.insert()
         child_args = {}
-        set_insert_query = candidate_set_candidate_association.insert()
-        set_insert_args = {'candidate_set_id': candidate_set.id}
         for args in product(*[enumerate(entity_spans[et]) for et in self.entity_types]):
 
             # Check for self-joins and "nested" joins (joins from span to its subspan)
@@ -352,6 +272,3 @@ class PretaggedCandidateExtractor(object):
                 child_args['id'] = candidate_id[0]
                 session.execute(child_insert_query, child_args)
                 del child_args['id']
-
-            set_insert_args['candidate_id'] = candidate_id[0]
-            session.execute(set_insert_query, set_insert_args)

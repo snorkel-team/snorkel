@@ -5,35 +5,15 @@ Created on Dec 4, 2016
 '''
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
-from .utils import ProgressBar, sort_X_on_Y, split_html_attrs
-from .visual import VisualLinker
-import atexit
-import warnings
-from bs4 import BeautifulSoup, NavigableString, Tag, Comment
-from lxml.html import fromstring
-from lxml import etree
-from collections import defaultdict
-import itertools
+from models import Corpus, Document
+from utils import ProgressBar
+from bs4 import BeautifulSoup
 import glob
-import json
-import lxml.etree as et
-import numpy as np
 import os
-import re
-import requests
-import signal
 import codecs
-from subprocess import Popen
-import sys
-import gzip
-import json
-from timeit import default_timer as timer
 from multiprocessing import Pool
 from parser import OmniParser
-from models.meta import SnorkelSession, new_engine, new_session
-from utils import get_ORM_instance
-from itertools import repeat
+from models.meta import new_engine, new_session
 
 class DocParser:
     """Parse a file into a Document object."""

@@ -15,7 +15,6 @@ class Candidate(SnorkelBase):
     __tablename__ = 'candidate'
     id    = Column(Integer, primary_key=True)
     type  = Column(String, nullable=False)
-    split = Column(Integer, default=0)
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',
@@ -68,8 +67,11 @@ def candidate_subclass(class_name, args, table_name=None):
         # Declares name for storage table
         '__tablename__' : table_name,
                 
-        # Connects ChemicalDisease records to generic Candidate records
+        # Connects candidate_subclass records to generic Candidate records
         'id' : Column(Integer, ForeignKey('candidate.id'), primary_key=True),
+
+        # Hold split information here
+        'split' : Column(Integer, default=0),
                 
         # Polymorphism information for SQLAlchemy
         '__mapper_args__' : {'polymorphic_identity': table_name},

@@ -54,20 +54,19 @@ class CandidateExtractor(object):
         # Track processes for multicore execution
         self.ps = []
 
-    def extract(self, contexts, split, session, return_all=False):
+    def extract(self, session, contexts, split=0, return_all=False):
         pb = ProgressBar(len(contexts))
         for i, context in enumerate(contexts):
             pb.bar(i)
-            self._extract_from_context(context, split, session)
+            self._extract_from_context(session, context, split)
         pb.close()
         session.commit()
 
         # Optionally return full set of candidates
         if return_all:
-            return session.query(Candidate).filter(Candidate.split == split).all()
+            return session.query(self.candidate_class).filter(self.candidate_class.split == split).all()
 
-
-    def _extract_from_context(self, context, split, session):
+    def _extract_from_context(self, session, context, split=0, check_for_existing=True):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
         for i in range(self.arity):
@@ -77,38 +76,38 @@ class CandidateExtractor(object):
                 self.child_context_sets[i].add(tc)
 
         # Generates and persists candidates
-        parent_insert_query = Candidate.__table__.insert()
-        parent_insert_args = {'type': self.candidate_class.__mapper_args__['polymorphic_identity']}
-        arg_names = self.candidate_class.__argnames__
-        child_insert_query = self.candidate_class.__table__.insert()
-        child_args = {}
+        candidate_args = {'split' : split}
         for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
 
-            # Check for self-joins and "nested" joins (joins from span to its subspan)
-            if self.arity == 2 and not self.self_relations and args[0][1] == args[1][1]:
-                continue
-
             # TODO: Make this work for higher-order relations
-            if self.arity == 2 and not self.nested_relations and (args[0][1] in args[1][1] or args[1][1] in args[0][1]):
-                continue
+            if self.arity == 2:
+                ai, a = args[0]
+                bi, b = args[1]
 
-            # Checks for symmetric relations
-            if self.arity == 2 and not self.symmetric_relations and args[0][0] > args[1][0]:
-                continue
+                # Check for self-joins, "nested" joins (joins from span to its subspan), and flipped duplicate
+                # "symmetric" relations
+                if not self.self_relations and a == b:
+                    continue
+                elif not self.nested_relations and (a in b or b in a):
+                    continue
+                elif not self.symmetric_relations and ai > bi:
+                    continue
 
-            for i, arg_name in enumerate(arg_names):
-                child_args[arg_name + '_id'] = args[i][1].id
-            q = select([self.candidate_class.id])
-            for key, value in child_args.items():
-                q = q.where(getattr(self.candidate_class, key) == value)
-            candidate_id = session.execute(q).first()
+            # Assemble candidate arguments
+            for i, arg_name in enumerate(self.candidate_class.__argnames__):
+                candidate_args[arg_name + '_id'] = args[i][1].id
 
-            # If candidate does not exist, persists it
-            if candidate_id is None:
-                candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
-                child_args['id'] = candidate_id[0]
-                session.execute(child_insert_query, child_args)
-                del child_args['id']
+            # Checking for existence
+            if check_for_existing:
+                q = select([self.candidate_class.id])
+                for key, value in candidate_args.items():
+                    q = q.where(getattr(self.candidate_class, key) == value)
+                candidate_id = session.execute(q).first()
+                if candidate_id is not None:
+                    continue
+
+            # Add Candidate to session
+            session.add(self.candidate_class(**candidate_args))
             
 
 class CandidateSpace(object):
@@ -180,12 +179,12 @@ class PretaggedCandidateExtractor(object):
         self.symmetric_relations = symmetric_relations
         self.entity_sep          = entity_sep
 
-    def extract(self, contexts, split, session, return_all=False):
+    def extract(self, session, contexts, split=0, return_all=False):
         """Extract Candidates locally from each Context in a provided list of Contexts"""
         pb = ProgressBar(len(contexts))
         for i, context in enumerate(contexts):
             pb.bar(i)
-            self._extract_from_context(context, split, session)
+            self._extract_from_context(session, context, split)
         pb.close()
         session.commit()
 
@@ -193,7 +192,7 @@ class PretaggedCandidateExtractor(object):
         if return_all:
             return session.query(Candidate).filter(Candidate.split == split).all()
 
-    def _extract_from_context(self, context, split, session):
+    def _extract_from_context(self, session, context, split=0):
         """
         Extract Candidates from a Context, and add to CandidateSet c
         Do so 
@@ -237,7 +236,7 @@ class PretaggedCandidateExtractor(object):
         parent_insert_args = {'type': self.candidate_class.__mapper_args__['polymorphic_identity']}
         arg_names = self.candidate_class.__argnames__
         child_insert_query = self.candidate_class.__table__.insert()
-        child_args = {}
+        child_args = {'split' : split}
         for args in product(*[enumerate(entity_spans[et]) for et in self.entity_types]):
 
             # Check for self-joins and "nested" joins (joins from span to its subspan)

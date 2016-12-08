@@ -1,6 +1,5 @@
 from __future__ import print_function
-from .models import Label, StableLabel
-from .queries import get_or_create_single_key_set
+from .models import Label, StableLabel, AnnotationKey
 try:
     from IPython.core.display import display, Javascript
 except:
@@ -63,11 +62,11 @@ class Viewer(widgets.DOMWidget):
         name = annotator_name if annotator_name is not None else getpass.getuser()
 
         # Sets up the AnnotationKey to use
-        try:
-            _, self.annotator = get_or_create_single_key_set(self.session, name)
-        except ValueError:
-            raise ValueError('annotator_name ' + unicode(name) + ' is already in use for an incompatible ' +
-                             'AnnotationKey and/or AnnotationKeySet. Please specify a new annotator_name.')
+        self.annotator = self.session.query(AnnotationKey).filter(AnnotationKey.name == name).first()
+        if self.annotator is None:
+            self.annotator = AnnotationKey(name=name)
+            session.add(self.annotator)
+            session.commit()
 
         # Viewer display configs
         self.n_per_page = n_per_page
@@ -76,7 +75,7 @@ class Viewer(widgets.DOMWidget):
         # Note that the candidates are not necessarily commited to the DB, so they *may not have* non-null ids
         # Hence, we index by their position in this list
         # We get the sorted candidates and all contexts required, either from unary or binary candidates
-        self.gold = list(gold)
+        self.gold       = list(gold)
         self.candidates = sorted(list(candidates), key=lambda c : c[0].char_start)
         self.contexts   = list(set(c[0].parent for c in self.candidates + self.gold))
         
@@ -89,7 +88,7 @@ class Viewer(widgets.DOMWidget):
         # Loads existing annotations
         self.annotations        = [None] * len(self.candidates)
         self.annotations_stable = [None] * len(self.candidates)
-        init_labels_serialized = []
+        init_labels_serialized  = []
         for i, candidate in enumerate(self.candidates):
 
             # First look for the annotation in the primary annotations table

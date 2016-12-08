@@ -108,9 +108,10 @@ class Viewer(widgets.DOMWidget):
                 init_labels_serialized.append(str(i) + '~~' + value_string)
 
                 # If the annotator label is in the main table, also get its stable version
-                stable_id = '~~'.join([c.stable_id for c in candidate.get_contexts()] + [self.annotator.name])
-                existing_annotation_stable = self.session.query(StableLabel) \
-                    .filter(StableLabel.stable_id == stable_id).one()
+                context_stable_ids         = '~~'.join([c.stable_id for c in candidate.get_contexts()])
+                existing_annotation_stable = self.session.query(StableLabel)\
+                                                 .filter(StableLabel.context_stable_ids == context_stable_ids)\
+                                                 .filter(StableLabel.annotator_name == name).one()
                 self.annotations_stable[i] = existing_annotation_stable
 
         self._labels_serialized = ','.join(init_labels_serialized)
@@ -209,8 +210,8 @@ class Viewer(widgets.DOMWidget):
                 self.session.add(self.annotations[cid])
 
                 # Create StableLabel
-                stable_id = '~~'.join([c.stable_id for c in candidate.get_contexts()] + [self.annotator.name])
-                self.annotations_stable[cid] = StableLabel(stable_id=stable_id, annotator_name=self.annotator.name, value=value, context_stable_ids=[c.stable_id for c in candidate.get_contexts()])
+                context_stable_ids = '~~'.join([c.stable_id for c in candidate.get_contexts()])
+                self.annotations_stable[cid] = StableLabel(context_stable_ids=context_stable_ids, annotator_name=self.annotator.name, value=value, split=candidate.split)
                 self.session.add(self.annotations_stable[cid])
 
                 self.session.commit()

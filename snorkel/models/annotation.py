@@ -109,14 +109,10 @@ class StableLabel(SnorkelBase):
     in a stable format that does not cascade, and is independent of the Candidate ids.
     """
     __tablename__  = 'stable_label'
-    id             = Column(Integer, primary_key=True)
-    stable_id      = Column(String, nullable=False)  # '~~'-concatenation of context_stable_ids + annotator
-    annotator_name = Column(String, nullable=False)
-    value          = Column(Integer, nullable=False)
-    if snorkel_postgres:
-        context_stable_ids = Column(postgresql.ARRAY(String), nullable=False)
-    else:
-        context_stable_ids = Column(PickleType, nullable=False)
+    context_stable_ids = Column(String, primary_key=True)  # ~~ delimited list
+    annotator_name     = Column(String, primary_key=True)
+    split              = Column(Integer, default=0)
+    value              = Column(Integer, nullable=False)
 
     def __repr__(self):
-        return "%s (%s : %s) [STABLE]" % (self.__class__.__name__, self.annotator_name, self.value)
+        return "%s (%s : %s)" % (self.__class__.__name__, self.annotator_name, self.value)

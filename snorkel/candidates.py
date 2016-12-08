@@ -1,7 +1,6 @@
 from . import SnorkelSession
 from .utils import ProgressBar
-from .models import Candidate, CandidateSet, TemporarySpan, Sentence, Span
-from .models.candidate import candidate_set_candidate_association
+from .models import Candidate, TemporarySpan, Sentence, Span
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
 from sqlalchemy.sql import select
@@ -11,17 +10,6 @@ import re
 from collections import defaultdict
 
 QUEUE_COLLECT_TIMEOUT = 5
-
-def gold_stats(candidates, gold):
-        """Return precision and recall relative to a "gold" CandidateSet"""
-        # TODO: Make this efficient via SQL
-        nc   = len(candidates)
-        ng   = len(gold)
-        both = len(gold.intersection(candidates.candidates))
-        print "# of gold annotations\t= %s" % ng
-        print "# of candidates\t\t= %s" % nc
-        print "Candidate recall\t= %0.3f" % (both / float(ng),)
-        print "Candidate precision\t= %0.3f" % (both / float(nc),)
 
 
 class CandidateExtractor(object):

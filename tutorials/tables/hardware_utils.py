@@ -243,7 +243,8 @@ def entity_confusion_matrix(pred, gold):
     return (TP, FP, FN)
 
 
-def entity_level_total_recall(candidates, gold_file, attribute, corpus=None, relation=True, integerize=False):
+def entity_level_total_recall(candidates, gold_file, attribute, corpus=None, 
+                              relation=True, parts_by_doc=None, integerize=False):
     """Checks entity-level recall of candidates compared to gold.
 
     Turns a CandidateSet into a normal set of entity-level tuples
@@ -260,7 +261,6 @@ def entity_level_total_recall(candidates, gold_file, attribute, corpus=None, rel
     gold_set = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=True, val_on=relation, attrib=attribute, integerize=integerize)
     if len(gold_set) == 0:
         print "Gold set is empty."
-        import pdb; pdb.set_trace()
         return
     # Turn CandidateSet into set of tuples
     print "Preparing candidates..."
@@ -268,17 +268,17 @@ def entity_level_total_recall(candidates, gold_file, attribute, corpus=None, rel
     entity_level_candidates = set()
     for i, c in enumerate(candidates):
         pb.bar(i)
-        part = c.get_arguments()[0].get_span().replace(' ', '')
-        doc = c.get_arguments()[0].parent.document.name
+        part = c.get_arguments()[0].get_span()
+        doc = part.parent.document.name.upper()
         if relation:
-            if integerize:
-                val = int(float(c.get_arguments()[1].get_span().replace(' ', '')))
-                entity_level_candidates.add((doc.upper(), part.upper(), val))
+            val = c.get_arguments()[1].get_span()
+            # if integerize:
+            #   val = int(float(c.get_arguments()[1].get_span().replace(' ', '')))
+        for p in get_implied_parts(part, doc, parts_by_doc):
+            if relation:
+                entity_level_candidates.add((doc, part, val))
             else:
-                val = c.get_arguments()[1].get_span().replace(' ', '')
-                entity_level_candidates.add((doc.upper(), part.upper(), val.upper()))
-        else:
-            entity_level_candidates.add((doc.upper(), part.upper()))
+                entity_level_candidates.add((doc, part))
     pb.close()
 
     print "========================================"
@@ -323,16 +323,20 @@ def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     print "========================================\n"
     return map(lambda x: sorted(list(x)), [TP_set, FP_set, FN_set])
 
+def get_implied_parts(part, doc, parts_by_doc):
+    yield part
+    if parts_by_doc:
+        for p in parts_by_doc[doc]:
+            if p.startswith(part) and len(part) >= 4:
+                yield p
+
 def parts_f1(candidates, gold_parts, parts_by_doc=None):
     parts = set()
     for c in candidates:
         doc = c.part.parent.document.name.upper()
-        part = c.part.get_span().upper()
-        parts.add((doc, part))
-        if parts_by_doc:
-            for p in parts_by_doc[doc]:
-                if p.startswith(part) and len(part) >= 4:
-                    parts.add((doc, p))
+        part = c.part.get_span()
+        for p in get_implied_parts(part, doc, parts_by_doc):
+            parts.add((doc, p))
     # parts = set([(c.part.parent.document.name.upper(), c.part.get_span()) for c in candidates])
     # import pdb; pdb.set_trace()
     TP_set = parts.intersection(gold_parts)

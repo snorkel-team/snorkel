@@ -276,9 +276,9 @@ def entity_level_total_recall(candidates, gold_file, attribute, corpus=None,
             #   val = int(float(c.get_arguments()[1].get_span().replace(' ', '')))
         for p in get_implied_parts(part, doc, parts_by_doc):
             if relation:
-                entity_level_candidates.add((doc, part, val))
+                entity_level_candidates.add((doc, p, val))
             else:
-                entity_level_candidates.add((doc, part))
+                entity_level_candidates.add((doc, p))
     pb.close()
 
     (TP_set, FP_set, FN_set) = entity_confusion_matrix(entity_level_candidates, gold_set)

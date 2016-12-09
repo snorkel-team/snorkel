@@ -32,13 +32,13 @@ def part_throttler((part, attr)):
     aligned_ngrams = set(get_aligned_ngrams(part))
     # if (overlap(['replacement', 'marking', 'mark'], aligned_ngrams) or
     if (overlap(['replacement'], aligned_ngrams) or
-        (len(aligned_ngrams) > 25 and 'device' in aligned_ngrams) or # and part.parent.page > 2
+        (len(aligned_ngrams) > 25 and 'device' in aligned_ngrams) or
+        # CentralSemiconductorCorp_2N4013.pdf:
+        get_prev_sibling_tags(part).count('p') > 25 or
         overlap(['complementary', 'complement', 'empfohlene'], 
                 chain.from_iterable([
                     get_left_ngrams(part, window=10),
-                    get_row_ngrams(part)]))):
-        # if (len(aligned_ngrams) > 25 and part.parent.page > 2):
-        #     print part
+                    get_aligned_ngrams(part)]))):
         return False
     else:
         return True
@@ -323,14 +323,23 @@ def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     print "========================================\n"
     return map(lambda x: sorted(list(x)), [TP_set, FP_set, FN_set])
 
-def parts_f1(candidates, gold_parts):
-    pos = set([(c.part.parent.document.name.upper(), c.part.get_span()) for c in candidates])
+def parts_f1(candidates, gold_parts, parts_by_doc=None):
+    parts = set()
+    for c in candidates:
+        doc = c.part.parent.document.name.upper()
+        part = c.part.get_span().upper()
+        parts.add((doc, part))
+        if parts_by_doc:
+            for p in parts_by_doc[doc]:
+                if p.startswith(part) and len(part) >= 4:
+                    parts.add((doc, p))
+    # parts = set([(c.part.parent.document.name.upper(), c.part.get_span()) for c in candidates])
     # import pdb; pdb.set_trace()
-    TP_set = pos.intersection(gold_parts)
+    TP_set = parts.intersection(gold_parts)
     TP = len(TP_set)
-    FP_set = pos.difference(gold_parts)
+    FP_set = parts.difference(gold_parts)
     FP = len(FP_set)
-    FN_set = gold_parts.difference(pos)
+    FN_set = gold_parts.difference(parts)
     FN = len(FN_set)
     prec = TP / float(TP + FP) if TP + FP > 0 else float('nan')
     rec  = TP / float(TP + FN) if TP + FN > 0 else float('nan')
@@ -639,7 +648,7 @@ def generate_parts_by_doc(contexts, part_matcher, part_ngrams, suffix_matcher, s
                     suffixes_by_doc[sts.parent.document.name.upper()].add(sts.get_span())
     pb.close()
 
-    import pdb; pdb.set_trace()
+    print suffixes_by_doc
 
     # Process suffixes and parts
     print "Appending suffixes..."
@@ -655,9 +664,9 @@ def generate_parts_by_doc(contexts, part_matcher, part_ngrams, suffix_matcher, s
             # The goal of this code is just to append suffixes to part numbers
             # that don't already have suffixes in a reasonable way.
             suffixes = suffixes_by_doc[doc]
-            if not any(suffix in parts[2:] for s in suffixes):
+            if not any(s in part[4:] for s in suffixes):
                 for s in suffixes:
-                    if s.digit(): s = '-' + s
+                    if s.isdigit(): s = '-' + s
                     final_dict[doc].add(part + s)
             # for suffix in suffixes:
             #     """

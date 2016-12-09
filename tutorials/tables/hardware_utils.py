@@ -269,7 +269,7 @@ def entity_level_total_recall(candidates, gold_file, attribute, corpus=None,
     for i, c in enumerate(candidates):
         pb.bar(i)
         part = c.get_arguments()[0].get_span()
-        doc = part.parent.document.name.upper()
+        doc = c.get_arguments()[0].parent.document.name.upper()
         if relation:
             val = c.get_arguments()[1].get_span()
             # if integerize:

@@ -281,17 +281,24 @@ def entity_level_total_recall(candidates, gold_file, attribute, corpus=None,
                 entity_level_candidates.add((doc, part))
     pb.close()
 
-    print "========================================"
-    print "Scoring on Entity-Level Total Recall"
-    print "========================================"
-    print "Entity-level Candidates extracted: %s " % (len(entity_level_candidates))
-    print "Entity-level Gold: %s" % (len(gold_set))
-    print "Intersection Candidates: %s" % (len(gold_set.intersection(entity_level_candidates)))
-    print "----------------------------------------"
-    print "Overlap with Gold:  %0.4f" % (len(gold_set.intersection(entity_level_candidates)) / float(len(gold_set)),)
-    print "========================================\n"
+    (TP_set, FP_set, FN_set) = entity_confusion_matrix(entity_level_candidates, gold_set)
+    TP = len(TP_set)
+    FP = len(FP_set)
+    FN = len(FN_set)
 
-    return entity_confusion_matrix(entity_level_candidates, gold_set)
+    prec = TP / float(TP + FP) if TP + FP > 0 else float('nan')
+    rec  = TP / float(TP + FN) if TP + FN > 0 else float('nan')
+    f1   = 2 * (prec * rec) / (prec + rec) if prec + rec > 0 else float('nan')
+    print "========================================"
+    print "Scoring on Entity-Level Gold Data"
+    print "========================================"
+    print "Corpus Precision {:.3}".format(prec)
+    print "Corpus Recall    {:.3}".format(rec)
+    print "Corpus F1        {:.3}".format(f1)
+    print "----------------------------------------"
+    print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
+    print "========================================\n"
+    return map(lambda x: sorted(list(x)), [TP_set, FP_set, FN_set])
 
 
 def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):

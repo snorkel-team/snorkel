@@ -94,6 +94,7 @@ def _parallel_parse(fpath):
         _worker_context_parser.parse(document)
     # Have to clean up after every doc since pool doesn't have 
     # shutdown hook
+    # TODO: potential performance bottleneck here due to synchronization
     _worker_session.commit()
     return None
 

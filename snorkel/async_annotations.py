@@ -149,7 +149,7 @@ def _annotate_worker(start, end, name, table_name, annotator):
     candidates = session.query(CandidateSet).filter(CandidateSet.name == name).one().candidates
     writer = codecs.getwriter('utf-8')(copy_process.stdin)
     pb = None if start else ProgressBar(end)
-    for i, candidate in enumerate(candidates.slice(start, end)):
+    for i, candidate in enumerate(candidates.order_by(Candidate.id).slice(start, end)):
         if pb: pb.bar(i)
         # Runs the actual extraction function
         keys, values = zip(*list(annotator(candidate)))

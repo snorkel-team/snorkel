@@ -172,7 +172,8 @@ def LF_other_minus_signs_in_row(c):
 
 stg_temp_min_lfs = stg_temp_lfs + [
     LF_to_right,
-    LF_positive_number_right
+    LF_positive_number_right,
+    LF_other_minus_signs_in_row
 ]
 
 ### VOLTAGE ###

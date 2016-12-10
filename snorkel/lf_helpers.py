@@ -279,6 +279,20 @@ def same_phrase(c):
                 and c[i].parent == c[0].parent for i in range(len(c))))
 
 
+def get_max_col_num(c):
+    span = [c] if isinstance(c, TemporarySpan) else c.get_arguments()[0]
+    if span.is_tabular():
+        return span.parent.cell.col_end
+    else:
+        return None
+
+def get_min_col_num(c):
+    span = [c] if isinstance(c, TemporarySpan) else c.get_arguments()[0]
+    if span.is_tabular():
+        return span.parent.cell.col_start
+    else:
+        return None
+
 def get_phrase_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     """
     Get the ngrams that are in the Phrase of the given span, not including itself.

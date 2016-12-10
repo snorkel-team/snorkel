@@ -20,14 +20,23 @@ def LF_part_complement(c):
                              get_neighbor_phrase_ngrams(c.part)])) else 0
 
 def LF_top_mark_col_part(c):
-    return -1 if overlap(['top','mark'],
+    return -1 if overlap(['top','mark','marking'],
                          get_col_ngrams(c.part)) else 0
+
+def LF_please_to_left(c):
+    # e.g., DiodesIncorporated_FZT651TC
+    return -1 if 'please' in get_left_ngrams(c.part, window=7) else 0
+
+def LF_part_num_in_high_col_num(c):
+    return -1 if get_max_col_num(c.part) > 4 else 0
 
 part_lfs = [
     LF_replacement_table,
     LF_many_p_siblings,
     LF_part_complement,
-    LF_top_mark_col_part
+    LF_top_mark_col_part,
+    LF_please_to_left,
+    LF_part_num_in_high_col_num
 ]
 
 ### POLARITY ###
@@ -115,6 +124,9 @@ def LF_complement_left_row(c):
         overlap(['complement','complementary'], 
         chain.from_iterable([get_row_ngrams(c.part), get_left_ngrams(c.part, window=10)]))) else 0
 
+def LF_temp_on_high_page_num(c):
+    return -1 if c.attr.get_attrib_tokens('page')[0] > 2 else 0
+
 stg_temp_lfs = [
     LF_storage_row,
     LF_operating_row,
@@ -129,7 +141,8 @@ stg_temp_lfs = [
     LF_voltage_row_part,
     LF_typ_row,
     LF_test_condition_aligned,
-    LF_complement_left_row
+    LF_complement_left_row,
+    LF_temp_on_high_page_num
 ]
 
 # STG_TEMP_MAX #

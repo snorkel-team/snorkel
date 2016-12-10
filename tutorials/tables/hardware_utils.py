@@ -20,31 +20,6 @@ from itertools import chain
 # others_matcher = RegexMatchSpan(rgx='((NSVBC|SMBT|MJ|MJE|MPS|MRF|RCA|TIP|ZTX|ZT|TIS|TIPL|DTC|MMBT|PZT){1}[\d]{2,4}[A-Z]{0,3}([-][A-Z0-9]{0,6})?([-][A-Z0-9]{0,1})?)')
 # part_matcher = Union(eeca_matcher, jedec_matcher, jis_matcher, others_matcher)
 
-def get_part_throttler_wrapper():
-    """get a part throttler wrapper to throttler unary candidates with the usual binary throttler"""
-    def part_throttler_wrapper(part):
-        return part_throttler((part[0], None))
-    return part_throttler_wrapper
-
-def get_part_throttler():
-    return part_throttler
-
-def part_throttler((part, attr)):
-    """throttle parts that are in tables of device/replacement parts"""
-    aligned_ngrams = set(get_aligned_ngrams(part))
-    # if (overlap(['replacement', 'marking', 'mark'], aligned_ngrams) or
-    if (overlap(['replacement'], aligned_ngrams) or
-        (len(aligned_ngrams) > 25 and 'device' in aligned_ngrams) or
-        # CentralSemiconductorCorp_2N4013.pdf:
-        get_prev_sibling_tags(part).count('p') > 25 or
-        overlap(['complementary', 'complement', 'empfohlene'], 
-                chain.from_iterable([
-                    get_left_ngrams(part, window=10),
-                    get_aligned_ngrams(part)]))):
-        return False
-    else:
-        return True
-
 def load_hardware_doc_part_pairs(filename):
     with open(filename, 'r') as csvfile:
         gold_reader = csv.reader(csvfile)

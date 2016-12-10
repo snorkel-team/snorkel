@@ -185,38 +185,42 @@ def annotate(candidates, parallel=0, keyset=None, lfs=[]):
         
         cmd = ('cat %s | psql %s -U %s -c "COPY %s(candidate_id, keys, values) '
                'FROM STDIN" --set=ON_ERROR_STOP=true') % (segment_file_blob, DBNAME, DBUSER, table_name)
-        print 'COPYing from postgres'
         _out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
         print _out
         remove_files(segment_file_blob)
         con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id)' % table_name)
         
-        if keyset is None:
-            # Recalculate unique keys for this set of candidates
-            con.execute('DROP TABLE IF EXISTS %s' % key_table_name)
-            con.execute('CREATE TABLE %s AS (SELECT DISTINCT UNNEST(keys) as key FROM %s)' % (key_table_name, table_name))
-        # The result should be a list of all feature strings, small enough to hold in memory
-        # TODO: store the actual index in table in case row number is unstable between queries
-        keys = [row[0] for row in con.execute('SELECT * FROM %s' % key_table_name)]
-        key_index = {key:i for i, key in enumerate(keys)}
+        return load_annotation_matrix(con, candidates, table_name, key_table_name, keyset)
         
-        # Create sparse matrix in LIL format for incremental construction
-        lil_feat_matrix = sparse.lil_matrix((len(candidates), len(keys)), dtype=np.float32)
+def load_annotation_matrix(con, candidates, table_name, key_table_name, keyset):
+    '''
+    Loads a sparse matrix from an annotation table
+    '''
+    if keyset is None:
+        # Recalculate unique keys for this set of candidates
+        con.execute('DROP TABLE IF EXISTS %s' % key_table_name)
+        con.execute('CREATE TABLE %s AS (SELECT DISTINCT UNNEST(keys) as key FROM %s)' % (key_table_name, table_name))
+    # The result should be a list of all feature strings, small enough to hold in memory
+    # TODO: store the actual index in table in case row number is unstable between queries
+    keys = [row[0] for row in con.execute('SELECT * FROM %s' % key_table_name)]
+    key_index = {key:i for i, key in enumerate(keys)}
+    # Create sparse matrix in LIL format for incremental construction
+    lil_feat_matrix = sparse.lil_matrix((len(candidates), len(keys)), dtype=np.float32)
 
-        row_index = []
-        candidate_index = {}
-        # Load annotations from database
-        # TODO: move this for-loop computation to database for automatic parallelization,
-        # avoid communication overhead etc.
-        iterator_sql = 'SELECT candidate_id, keys, values FROM %s ORDER BY candidate_id' % table_name
-        for i, (candidate_id, c_keys, values) in enumerate(con.execute(iterator_sql)):
-            candidate_index[candidate_id] = i
-            row_index.append(candidate_id)
-            for key, value in izip(c_keys, values):
-                # Only keep known features
-                key_id = key_index.get(key, None)
-                if key_id is not None:
-                    lil_feat_matrix[i, key_id] = value
-            
-        return csr_AnnotationMatrix(lil_feat_matrix, candidate_index=candidate_index,
+    row_index = []
+    candidate_index = {}
+    # Load annotations from database
+    # TODO: move this for-loop computation to database for automatic parallelization,
+    # avoid communication overhead etc. Try to avoid the log sorting factor using unnest
+    iterator_sql = 'SELECT candidate_id, keys, values FROM %s ORDER BY candidate_id' % table_name
+    for i, (candidate_id, c_keys, values) in enumerate(con.execute(iterator_sql)):
+        candidate_index[candidate_id] = i
+        row_index.append(candidate_id)
+        for key, value in izip(c_keys, values):
+            # Only keep known features
+            key_id = key_index.get(key, None)
+            if key_id is not None:
+                lil_feat_matrix[i, key_id] = value
+                
+    return csr_AnnotationMatrix(lil_feat_matrix, candidate_index=candidate_index,
                                     row_index=row_index, keys=keys, key_index=key_index)

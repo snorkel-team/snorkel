@@ -1,6 +1,7 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
-from utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy
+from utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy,\
+    remove_files
 from models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
 from models.meta import *
 from utils import get_ORM_instance, ProgressBar
@@ -17,7 +18,7 @@ import codecs
 from async_utils import run_in_parallel
 
 # Used to conform to existing annotation key API call
-_TempKey = namedtuple('TempKey',['id', 'name'])
+_TempKey = namedtuple('TempKey', ['id', 'name'])
 class csr_AnnotationMatrix(sparse.csr_matrix):
     """
     An extension of the scipy.sparse.csr_matrix class for holding sparse annotation matrices
@@ -119,7 +120,7 @@ def tsv_escape(s):
         return '\\N'
     # Make sure feature names are still uniquely encoded in ascii
     s = unicode(s)
-    s = s.replace('\"', '\\\\"').replace('\t','\\t')
+    s = s.replace('\"', '\\\\"').replace('\t', '\\t')
     if any(c in ',{}' for c in s):
         s = '"' + s + '"'
     return s
@@ -133,40 +134,28 @@ def _annotate_worker(start, end, name, table_name, annotator):
     Pipes extraction results to the STDIN of a psql COPY process.
     Efficient in terms both of memory and CPU utilization.
     '''
-    copy_process = subprocess.Popen([
-        'psql', DBNAME, '-U', DBUSER,
-        '-c', '\COPY %s(candidate_id, keys, values) FROM STDIN'%table_name,
-        '--set=ON_ERROR_STOP=true'
-        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
+
     # Create separate engine for each worker to prevent concurrent connection problems
     engine = new_engine()
     WorkerSession = new_session(engine)
     session = WorkerSession()
     
     # Computes and pipe rows to the COPY process
-#     writer = csv.writer(copy_process.stdin, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
     candidates = session.query(CandidateSet).filter(CandidateSet.name == name).one().candidates
-    writer = codecs.getwriter('utf-8')(copy_process.stdin)
-    pb = None if start else ProgressBar(end)
-    for i, candidate in enumerate(candidates.order_by(Candidate.id).slice(start, end)):
-        if pb: pb.bar(i)
-        # Runs the actual extraction function
-        keys, values = zip(*list(annotator(candidate)))
-        row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
-        writer.write('\t'.join(row) + '\n')
-    if pb: pb.close()
-#         writer.writerow(row)
-    _out, err = copy_process.communicate()
-#     if _out:
-#         print "standard output of subprocess:"
-#         print _out
-    if err:
-        print "Error of the COPY subprocess:"
-        print err
-    copy_process.stdin.close()
     
-def annotate(candidates, parallel=0, keyset = None, lfs = []):
+    segment_filename = os.path.join(os.environ.get('SNORKELHOME', '/tmp/'), '%s_%d-%d.tsv' % (table_name, start, end))
+    with codecs.open(segment_filename, 'w', encoding='utf-8') as writer:
+        pb = None if start else ProgressBar(end)
+        for i, candidate in enumerate(candidates.order_by(Candidate.id).slice(start, end)):
+            if pb: pb.bar(i)
+            # Runs the actual extraction function
+            keys, values = zip(*list(annotator(candidate)))
+            row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
+            writer.write('\t'.join(row) + '\n')
+        if pb: pb.close()
+
+    
+def annotate(candidates, parallel=0, keyset=None, lfs=[]):
     '''
     Extracts features for candidates in parallel
     @var candidates: CandidateSet to extract features from
@@ -186,9 +175,20 @@ def annotate(candidates, parallel=0, keyset = None, lfs = []):
         # Assuming hyper-threaded cpus
         if not parallel: parallel = min(40, multiprocessing.cpu_count() / 2)
         annotator = Annotator(lfs) if lfs else get_all_feats
+        segment_file_blob = os.path.join(os.environ.get('SNORKELHOME', '/tmp/'), table_name) + '*.tsv'
         
+        # Clear any previous run temp files if any
+        remove_files(segment_file_blob)
         copy_args = (candidates.name, table_name, annotator)
-        run_in_parallel(_annotate_worker, parallel, len(candidates), copy_args = copy_args)
+        run_in_parallel(_annotate_worker, parallel, len(candidates), copy_args=copy_args)
+        
+        
+        cmd = ('cat %s | psql %s -U %s -c "COPY %s(candidate_id, keys, values) '
+               'FROM STDIN" --set=ON_ERROR_STOP=true') % (segment_file_blob, DBNAME, DBUSER, table_name)
+        print 'COPYing from postgres'
+        _out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+        print _out
+        remove_files(segment_file_blob)
         con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id)' % table_name)
         
         if keyset is None:
@@ -197,11 +197,11 @@ def annotate(candidates, parallel=0, keyset = None, lfs = []):
             con.execute('CREATE TABLE %s AS (SELECT DISTINCT UNNEST(keys) as key FROM %s)' % (key_table_name, table_name))
         # The result should be a list of all feature strings, small enough to hold in memory
         # TODO: store the actual index in table in case row number is unstable between queries
-        keys = [row[0] for row in con.execute('SELECT * FROM %s'% key_table_name)]
+        keys = [row[0] for row in con.execute('SELECT * FROM %s' % key_table_name)]
         key_index = {key:i for i, key in enumerate(keys)}
         
         # Create sparse matrix in LIL format for incremental construction
-        lil_feat_matrix = sparse.lil_matrix((len(candidates), len(keys)), dtype = np.float32)
+        lil_feat_matrix = sparse.lil_matrix((len(candidates), len(keys)), dtype=np.float32)
 
         row_index = []
         candidate_index = {}
@@ -218,5 +218,5 @@ def annotate(candidates, parallel=0, keyset = None, lfs = []):
                 if key_id is not None:
                     lil_feat_matrix[i, key_id] = value
             
-        return csr_AnnotationMatrix(lil_feat_matrix, candidate_index = candidate_index,
-                                    row_index = row_index, keys = keys, key_index = key_index)
+        return csr_AnnotationMatrix(lil_feat_matrix, candidate_index=candidate_index,
+                                    row_index=row_index, keys=keys, key_index=key_index)

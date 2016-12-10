@@ -2,6 +2,7 @@ import re
 import sys
 import numpy as np
 import scipy.sparse as sparse
+import subprocess
 
 
 class ProgressBar(object):
@@ -170,3 +171,10 @@ def tokens_to_ngrams(tokens, n_min=1, n_max=3, lower=False, delim=' '):
 def get_keys_by_candidate(candidate, annotation_matrix):
     (r,c,v) = sparse.find(annotation_matrix[annotation_matrix.get_row_index(candidate),:])
     return [annotation_matrix.get_key(idx).name for idx in c]
+
+def remove_files(filename):
+    try:
+        subprocess.check_output('rm -f %s' % filename, shell = True)
+    except OSError as e:
+        print e
+        pass

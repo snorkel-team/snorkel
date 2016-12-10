@@ -1,5 +1,5 @@
 from snorkel.lf_helpers import *
-from hardware_matcher import get_matcher
+from hardware_matchers import get_matcher
 import re
 from itertools import chain
 
@@ -184,7 +184,7 @@ def LF_low_table_num(c):
 
 bad_keywords = set(['continuous', 'cut-off', 'gain'])
 def LF_bad_keywords_in_row(c):
-    return -1 if overlap(neg_keys, get_row_ngrams(c.attr)) else 0
+    return -1 if overlap(bad_keywords, get_row_ngrams(c.attr)) else 0
 
 def LF_equals_in_row(c):
     return -1 if overlap('=', get_row_ngrams(c.attr)) else 0
@@ -240,6 +240,8 @@ ce_v_max_lfs = voltage_lfs + [
 def get_lfs(attr):
     if attr == 'stg_temp_max':
         attr_lfs = stg_temp_max_lfs
+    elif attr == 'stg_temp_min':
+        attr_lfs = stg_temp_min_lfs
     elif attr == 'polarity':
         attr_lfs = polarity_lfs
     elif attr == 'ce_v_max':

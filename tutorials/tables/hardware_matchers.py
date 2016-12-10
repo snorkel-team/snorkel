@@ -10,6 +10,8 @@ part_rgx = '|'.join([eeca_rgx, jedec_rgx, jis_rgx, others_rgx])
 
 matchers['part'] = RegexMatchSpan(rgx=part_rgx, longest_match_only=False)
 matchers['stg_temp_max'] = RegexMatchSpan(rgx=r'(?:[1][5-9]|20)[05]', longest_match_only=False)
+matchers['stg_temp_min'] = RegexMatchSpan(rgx=r'-[56][05]', longest_match_only=False)
+matchers['polarity'] = RegexMatchSpan(rgx=r'NPN|PNP', longest_match_only=False, ignore_case=True)
 matchers['ce_v_max'] = RegexMatchSpan(rgx=r'\d{1,2}[05]', longest_match_only=False)
 
 def get_matcher(attr):

@@ -303,5 +303,5 @@ spaces['ce_v_max'] = OmniNgramsVolt(n_max=1)
 def get_space(attr):
     for a in ['part', 'stg_temp_max', 'stg_temp_min', 'polarity', 'ce_v_max']:
         if attr.startswith(a):
-            return spaces[attr]
+            return spaces[a]
     raise ValueError('Attribute name is invalid.')

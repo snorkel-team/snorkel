@@ -17,5 +17,5 @@ matchers['ce_v_max'] = RegexMatchSpan(rgx=r'\d{1,2}[05]', longest_match_only=Fal
 def get_matcher(attr):
     for a in ['part', 'stg_temp_max', 'stg_temp_min', 'polarity', 'ce_v_max']:
         if attr.startswith(a):
-            return matchers[attr]
+            return matchers[a]
     raise ValueError('Attribute name is invalid.')

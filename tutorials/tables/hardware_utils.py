@@ -659,8 +659,6 @@ def generate_parts_by_doc(contexts, part_matcher, part_ngrams, suffix_matcher, s
                     suffixes_by_doc[sts.parent.document.name.upper()].add(sts.get_span())
     pb.close()
 
-    print suffixes_by_doc
-
     # Process suffixes and parts
     print "Appending suffixes..."
     final_dict = defaultdict(set)

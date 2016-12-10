@@ -255,12 +255,12 @@ ce_v_max_lfs = voltage_lfs + [
 ### GETTER ###
 
 def get_lfs(attr):
-    if attr == 'stg_temp_max':
+    if attr.startswith('stg_temp_max'):
         attr_lfs = stg_temp_max_lfs
-    elif attr == 'stg_temp_min':
+    elif attr.startswith('stg_temp_min'):
         attr_lfs = stg_temp_min_lfs
-    elif attr == 'polarity':
+    elif attr.startswith('polarity'):
         attr_lfs = polarity_lfs
-    elif attr == 'ce_v_max':
+    elif attr.startswith('ce_v_max'):
         attr_lfs = ce_v_max_lfs
     return part_lfs + attr_lfs

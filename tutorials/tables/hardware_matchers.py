@@ -9,7 +9,7 @@ others_matcher = RegexMatchSpan(rgx='((?:NSVBC|SMBT|MJ|MJE|MPS|MRF|RCA|TIP|ZTX|Z
 
 matchers['part'] = Union(eeca_matcher, jedec_matcher, jis_matcher, others_matcher)
 matchers['stg_temp_max'] = RegexMatchSpan(rgx=r'(?:[1][5-9]|20)[05]', longest_match_only=False)
-matchers['ce_v_max'] = RegexMatchSpan(rgx=r'1?\d', longest_match_only=False)
+matchers['ce_v_max'] = RegexMatchSpan(rgx=r'1?\d(?:\.0)?', longest_match_only=False)
 
 def get_matcher(attr):
     return matchers[attr]

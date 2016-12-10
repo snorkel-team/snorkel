@@ -112,5 +112,13 @@ def main():
 	formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/dev/hardware_dev_gold.csv'
 	format_new_dev_gold(raw_gold, formatted_gold)
 
+	#Total Gold Data
+	#raw_gold = os.environ['SNORKELHOME']+ '/tutorials/tables/data/hardware/gold_raw/test_gold_raw.csv'
+	#formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/gold_parsed/new_total_gold.csv'
+	#format_gold(raw_gold, formatted_gold)
+	#raw_gold = os.environ['SNORKELHOME']+ '/tutorials/tables/data/hardware/gold_raw/new_dev_gold_raw.csv'
+	#formatted_gold = os.environ['SNORKELHOME']+'/tutorials/tables/data/hardware/gold_parsed/new_total_gold.csv'
+	#format_new_dev_gold(raw_gold, formatted_gold)
+
 if __name__=='__main__':
 	main()

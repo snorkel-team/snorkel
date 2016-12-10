@@ -51,10 +51,19 @@ def LF_polarity_complement_neighbor(c):
     return -1 if overlap(['complement','complementary'], 
                          get_neighbor_phrase_ngrams(c.attr)) else 0
 
+def LF_polarity_part_align(c):
+    return 1 if same_row(c) or same_col(c) else 0
+
+def LF_cheating_with_another_polarity(c):
+    return -1 if ((c.polarity.get_span()=='NPN' and 'PNP' in get_row_ngrams(c.part, lower=False))) or
+                  (c.polarity.get_span()=='PNP' and 'NPN' in get_row_ngrams(c.part, lower=False)))) else 0
+
 polarity_lfs = [
     LF_default_positive,
     LF_polarity_complement,
-    LF_polarity_complement_neighbor
+    LF_polarity_complement_neighbor,
+    LF_polarity_part_align,
+    LF_cheating_with_another_polarity
 ]
 
 

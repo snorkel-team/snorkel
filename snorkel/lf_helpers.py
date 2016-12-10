@@ -302,7 +302,7 @@ def get_neighbor_phrase_ngrams(c, d=1, attrib='words', n_min=1, n_max=1, lower=T
         for ngram in chain.from_iterable(
                 [tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower)
                  for phrase in span.parent.document.phrases
-                 if abs(phrase.position - span.parent.position) <= d and phrase != span.parent]):
+                 if abs(phrase.phrase_num - span.parent.phrase_num) <= d and phrase != span.parent]):
             yield ngram
 
 

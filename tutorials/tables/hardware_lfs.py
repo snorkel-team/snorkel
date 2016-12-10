@@ -167,6 +167,9 @@ def LF_to_right(c):
 def LF_positive_number_right(c):
     return 1 if any([re.match(r'\d+', ngram) for ngram in get_right_ngrams(c.attr, window=4)]) else 0
 
+def LF_other_minus_signs_in_row(c):
+    return -1 if '-' in get_row_ngrams(c.attr) else 0
+
 stg_temp_min_lfs = stg_temp_lfs + [
     LF_to_right,
     LF_positive_number_right

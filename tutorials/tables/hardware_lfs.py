@@ -5,9 +5,9 @@ from itertools import chain
 
 ### PART ###
 def LF_replacement_table(c):
-    aligned_ngrams = list(get_aligned_ngrams(c.part))
-    return -1 if (overlap(['replacement'], aligned_ngrams) or
-                 (len(aligned_ngrams) > 25 and 'device' in aligned_ngrams)) else 0
+    col_ngrams = list(get_col_ngrams(c.part))
+    return -1 if (overlap(['replacement'], col_ngrams) or
+                 (len(col_ngrams) > 25 and 'device' in col_ngrams)) else 0
 
 def LF_many_p_siblings(c):
     return -1 if get_prev_sibling_tags(c.part).count('p') > 25 else 0
@@ -25,7 +25,7 @@ def LF_top_mark_col_part(c):
 
 def LF_please_to_left(c):
     # e.g., DiodesIncorporated_FZT651TC
-    return -1 if 'please' in get_left_ngrams(c.part, window=7) else 0
+    return -1 if 'please' in get_left_ngrams(c.part, window=99) else 0
 
 def LF_part_num_in_high_col_num(c):
     return -1 if get_max_col_num(c.part) > 4 else 0
@@ -55,8 +55,8 @@ def LF_polarity_part_align(c):
     return 1 if same_row(c) or same_col(c) else 0
 
 def LF_cheating_with_another_polarity(c):
-    return -1 if ((c.polarity.get_span()=='NPN' and 'PNP' in get_row_ngrams(c.part, lower=False)) or
-                  (c.polarity.get_span()=='PNP' and 'NPN' in get_row_ngrams(c.part, lower=False))) else 0
+    return -1 if ((c.attr.get_span()=='NPN' and 'PNP' in get_row_ngrams(c.part, lower=False)) or
+                  (c.attr.get_span()=='PNP' and 'NPN' in get_row_ngrams(c.part, lower=False))) else 0
 
 polarity_lfs = [
     LF_default_positive,

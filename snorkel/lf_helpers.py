@@ -280,14 +280,14 @@ def same_phrase(c):
 
 
 def get_max_col_num(c):
-    span = [c] if isinstance(c, TemporarySpan) else c.get_arguments()[0]
+    span = c if isinstance(c, TemporarySpan) else c.get_arguments()[0]
     if span.is_tabular():
         return span.parent.cell.col_end
     else:
         return None
 
 def get_min_col_num(c):
-    span = [c] if isinstance(c, TemporarySpan) else c.get_arguments()[0]
+    span = c if isinstance(c, TemporarySpan) else c.get_arguments()[0]
     if span.is_tabular():
         return span.parent.cell.col_start
     else:

@@ -19,6 +19,7 @@ def run_in_parallel(worker, parallel, num_jobs, copy_args = ()):
     res = num_jobs % parallel
     worker_args = []
     start = 0
+    # Assign job range for each worker, residual work distributed uniformly
     for _ in xrange(parallel):
         end = start + avg
         if res:

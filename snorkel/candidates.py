@@ -9,6 +9,7 @@ from sqlalchemy.sql import select
 from Queue import Empty
 from copy import deepcopy
 import re
+from utils import get_ORM_instance
 
 QUEUE_COLLECT_TIMEOUT = 5
 
@@ -45,7 +46,8 @@ class CandidateExtractor(object):
     """
     def __init__(self, candidate_class, cspaces, matchers, throttler=None, self_relations=False, nested_relations=False, symmetric_relations=True):
         self.candidate_class     = candidate_class
-        self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
+        # Make sure the candidate spaces are different so generators aren't expended!
+        self.candidate_spaces    = deepcopy(cspaces if type(cspaces) in [list, tuple] else [cspaces])
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
         self.throttler           = throttler
         self.nested_relations    = nested_relations
@@ -58,22 +60,16 @@ class CandidateExtractor(object):
         else:
             self.arity = len(self.candidate_spaces)
 
-        # Make sure the candidate spaces are different so generators aren't expended!
-        self.candidate_spaces = map(deepcopy, self.candidate_spaces)
-
-        # Preallocates internal data structures
-        self.child_context_sets = [None] * self.arity
-        for i in range(self.arity):
-            self.child_context_sets[i] = set()
-
         # Track processes for multicore execution
         self.ps = []
 
     def extract(self, contexts, name, session, parallelism=False):
-        # Create a candidate set
-        c = CandidateSet(name=name)
-        session.add(c)
-        session.commit()
+        
+        c = get_ORM_instance(CandidateSet, session, name)
+        if c is None: # Create a candidate set
+            c = CandidateSet(name=name)
+            session.add(c)
+            session.commit()
 
         # Run extraction
         pb = ProgressBar(len(contexts))
@@ -92,11 +88,11 @@ class CandidateExtractor(object):
     def _extract_from_context(self, context, candidate_set, session):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
+        child_context_sets = [set() for _ in xrange(self.arity)]
         for i in range(self.arity):
-            self.child_context_sets[i].clear()
             for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
                 tc.load_id_or_insert(session)
-                self.child_context_sets[i].add(tc)
+                child_context_sets[i].add(tc)
 
         # Generates and persists candidates
         parent_insert_query = Candidate.__table__.insert()
@@ -106,7 +102,7 @@ class CandidateExtractor(object):
         child_args = {}
         set_insert_query = candidate_set_candidate_association.insert()
         set_insert_args = {'candidate_set_id': candidate_set.id}
-        for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
+        for args in product(*[enumerate(child_contexts) for child_contexts in child_context_sets]):
 
             # Apply throttler if one was given
             # Accepts a tuple of Span objects (e.g., (Span, Span))

@@ -264,7 +264,9 @@ ce_v_max_lfs = voltage_lfs + [
 ### GETTER ###
 
 def get_lfs(attr):
-    if   attr == ('stg_temp_max'):
+    if attr=='part':
+        attr_lfs = []
+    elif attr == ('stg_temp_max'):
         attr_lfs = stg_temp_max_lfs
     elif attr == ('stg_temp_min'):
         attr_lfs = stg_temp_min_lfs

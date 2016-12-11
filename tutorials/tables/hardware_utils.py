@@ -112,6 +112,21 @@ def most_common_document(candidates):
     return max_doc
 
 
+def separate_fns(fn, cfn):
+    unfound = set()
+    misclassified = set()
+    for c in fn:
+        (doc, part, attr) = c
+        if (doc, part) in cfn:
+            unfound.add(c)
+        else:
+            misclassified.add(c)
+    print "%d fns" % len(fn)
+    print "%d unfound" % len(unfound)
+    print "%d misclassified" % len(misclassified)
+    return unfound, misclassified
+
+
 def entity_confusion_matrix(pred, gold):
     if not isinstance(pred, set):
         pred = set(pred)

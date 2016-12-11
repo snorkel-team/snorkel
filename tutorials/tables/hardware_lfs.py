@@ -30,13 +30,20 @@ def LF_please_to_left(c):
 def LF_part_num_in_high_col_num(c):
     return -1 if get_max_col_num(c.part) > 4 else 0
 
+parts_rgx = get_matcher('part').rgx
+part_sniffer = re.compile(parts_rgx)
+def LF_cheating_with_another_part(c):
+    return -1 if (any(part_sniffer.match(x) for x in get_horz_aligned_ngrams(c.attr)) and 
+                     not is_horz_aligned(c)) else 0
+
 part_lfs = [
     LF_replacement_table,
     LF_many_p_siblings,
     LF_part_complement,
     LF_top_mark_col_part,
     LF_please_to_left,
-    LF_part_num_in_high_col_num
+    LF_part_num_in_high_col_num,
+    LF_cheating_with_another_part
 ]
 
 ### POLARITY ###
@@ -192,12 +199,6 @@ def LF_aligned_or_global(c):
                  is_horz_aligned(c) or
                  not c.part.is_tabular()) else -1
 
-parts_rgx = get_matcher('part').rgx
-part_sniffer = re.compile(parts_rgx)
-def LF_cheating_with_another_part(c):
-    return -1 if (any(part_sniffer.match(x) for x in get_horz_aligned_ngrams(c.attr)) and 
-                     not is_horz_aligned(c)) else 0
-
 def LF_same_table_must_align(c):
     return -1 if (same_table(c) and not is_horz_aligned(c)) else 0
 
@@ -224,7 +225,6 @@ def LF_too_many_numbers_row(c):
 
 voltage_lfs = [
     LF_aligned_or_global,
-    LF_cheating_with_another_part,
     LF_same_table_must_align,
     LF_low_table_num,
     LF_voltage_not_in_table,

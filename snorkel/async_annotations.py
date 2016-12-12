@@ -155,7 +155,7 @@ def _annotate_worker(start, end, name, table_name, annotator):
         if pb: pb.close()
 
     
-def annotate(candidates, parallel=0, keyset=None, lfs=[]):
+def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_all_feats):
     '''
     Extracts features for candidates in parallel
     @var candidates: CandidateSet to extract features from
@@ -174,7 +174,7 @@ def annotate(candidates, parallel=0, keyset=None, lfs=[]):
 
         # Assuming hyper-threaded cpus
         if not parallel: parallel = min(40, multiprocessing.cpu_count() / 2)
-        annotator = Annotator(lfs) if lfs else get_all_feats
+        annotator = Annotator(lfs) if lfs else feature_extractor
         segment_file_blob = os.path.join(os.environ.get('SNORKELHOME', '/tmp/'), table_name) + '*.tsv'
         
         # Clear any previous run temp files if any

@@ -43,3 +43,5 @@ tutorials/tables/data/hardware/train*/html/
 tutorials/tables/data/hardware/train*/pdf/
 tutorials/tables/data/hardware/gold_raw/digikey_raw/
 tutorials/tables/data/hardware/hardware100_*/
+
+*_features_*.csv

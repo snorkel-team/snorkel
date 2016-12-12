@@ -1,5 +1,5 @@
 from __future__ import print_function
-from .models import Label, StableLabel, AnnotationKey
+from .models import Label, StableLabel, LabelKey
 try:
     from IPython.core.display import display, Javascript
 except:
@@ -41,12 +41,7 @@ class Viewer(widgets.DOMWidget):
         """
         Initializes a Viewer.
 
-        The Viewer uses the keyword argument annotator_name to define an AnnotationKeySet with that name, containing
-        a single AnnotationKey of the same name. If it already exists, it will be resused, but if the AnnotationKeySet
-        already exists and contains other keys, the Viewer will raise an error.
-
-        This AnnotationKeySet can be used to retrieve the labels with a LabelManager, and corresponding AnnotationKeys
-        can be grouped into a new AnnotationKeySet to manage the work of multiple annotators simultaneously.
+        The Viewer uses the keyword argument annotator_name to define a LabelKey with that name.
 
         :param candidates: A Python container of Candidates (e.g., not a CandidateSet, but candidate_set.candidates)
         :param session: The SnorkelSession for the database backend
@@ -62,9 +57,9 @@ class Viewer(widgets.DOMWidget):
         name = annotator_name if annotator_name is not None else getpass.getuser()
 
         # Sets up the AnnotationKey to use
-        self.annotator = self.session.query(AnnotationKey).filter(AnnotationKey.name == name).first()
+        self.annotator = self.session.query(LabelKey).filter(LabelKey.name == name).first()
         if self.annotator is None:
-            self.annotator = AnnotationKey(name=name)
+            self.annotator = LabelKey(name=name)
             session.add(self.annotator)
             session.commit()
 

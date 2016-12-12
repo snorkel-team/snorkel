@@ -1,13 +1,13 @@
-from .models import StableLabel, Label, Context, AnnotationKey
+from .models import StableLabel, Label, Context, LabelKey
 from sqlalchemy.orm import object_session
 
 
 def reload_annotator_labels(session, candidate_class, annotator_name, split, filter_label_split=True, create_missing_cands=False):
     """Reloads stable annotator labels into the Label table"""
-    # Sets up the AnnotationKey to use
-    ak = session.query(AnnotationKey).filter(AnnotationKey.name == annotator_name).first()
+    # Sets up the LabelKey to use
+    ak = session.query(LabelKey).filter(LabelKey.name == annotator_name).first()
     if ak is None:
-        ak = AnnotationKey(name=annotator_name)
+        ak = LabelKey(name=annotator_name)
         session.add(ak)
         session.commit()
     

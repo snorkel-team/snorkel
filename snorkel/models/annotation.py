@@ -6,28 +6,54 @@ from sqlalchemy.dialects import postgresql
 from snorkel.utils import camel_to_under
 
 
-class AnnotationKey(SnorkelBase):
+class AnnotationKeyMixin(object):
     """
-    The Annotation key table is a mapping from unique string names to integer id numbers.
-    These strings uniquely identify who or what produced an annotation.
+    Mixin class for defining annotation key tables.
+    An AnnotationKey is the unique name associated with a set of Annotations, corresponding e.g. to a single
+    labeling or feature function.  An AnnotationKey may have an associated weight (Parameter) associated with it.
     """
-    __tablename__ = 'annotation_key'
-    id        = Column(Integer, primary_key=True)
-    name      = Column(String, unique=True, nullable=False)
+    @declared_attr
+    def __tablename__(cls):
+        return camel_to_under(cls.__name__)
+
+    @declared_attr
+    def id(cls):
+        return Column(Integer, primary_key=True)
+
+    @declared_attr
+    def name(cls):
+        return Column(String, nullable=False)
+
+    @declared_attr
+    def group(cls):
+        return Column(Integer, default=0)
+
+    @declared_attr
+    def __table_args__(cls):
+        return (UniqueConstraint('name', 'group'),)
 
     def __repr__(self):
         return str(self.__class__.__name__) + " (" + str(self.name) + ")"
 
 
-# TODO: Make this whole thing polymorphic instead now that only one AnnotationKey class?
+class LabelKey(AnnotationKeyMixin, SnorkelBase):
+    pass
+
+
+class FeatureKey(AnnotationKeyMixin, SnorkelBase):
+    pass
+
+
+class PredictionKey(AnnotationKeyMixin, SnorkelBase):
+    pass    
+
+
 class AnnotationMixin(object):
     """
-    Mixin class for defining annotation tables.
-
-    An annotation is a value associated with a Candidate. Examples include labels, features,
-    and predictions.
-
-    New types of annotations can be defined by creating an annotation class and corresponding annotation, for example:
+    Mixin class for defining annotation tables. An annotation is a value associated with a Candidate.
+    Examples include labels, features, and predictions.
+    New types of annotations can be defined by creating an annotation class and corresponding annotation,
+    for example:
 
     .. code-block:: python
 
@@ -50,11 +76,11 @@ class AnnotationMixin(object):
     # The key is the "name" or "type" of the Annotation- e.g. the name of a feature, or of a human annotator
     @declared_attr
     def key_id(cls):
-        return Column('key_id', Integer, ForeignKey('annotation_key.id'), primary_key=True)
+        return Column('key_id', Integer, ForeignKey('%s_key.id' % cls.__tablename__), primary_key=True)
 
     @declared_attr
     def key(cls):
-        return relationship('AnnotationKey', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all, delete-orphan'))
+        return relationship('%sKey' % cls.__name__, backref=backref(camel_to_under(cls.__name__) + 's', cascade='all, delete-orphan'))
 
     # Every annotation is with respect to a candidate
     @declared_attr
@@ -65,8 +91,6 @@ class AnnotationMixin(object):
     def candidate(cls):
         return relationship('Candidate', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all, delete-orphan', cascade_backrefs=False),
                             cascade_backrefs=False)
-
-    # NOTE: What remains to be defined in the subclass is the **value**
 
     def __repr__(self):
         return self.__class__.__name__ + " (" + str(self.key.name) + " = " + str(self.value) + ")"

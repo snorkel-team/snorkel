@@ -62,8 +62,8 @@ def LF_polarity_part_align(c):
     return 1 if same_row(c) or same_col(c) else 0
 
 def LF_cheating_with_another_polarity(c):
-    return -1 if ((c.attr.get_span()=='NPN' and 'PNP' in get_row_ngrams(c.part, lower=False)) or
-                  (c.attr.get_span()=='PNP' and 'NPN' in get_row_ngrams(c.part, lower=False))) else 0
+    return -1 if ((c.attr.get_span()=='NPN' and 'PNP' in get_horz_ngrams(c.part, lower=False)) or
+                  (c.attr.get_span()=='PNP' and 'NPN' in get_horz_ngrams(c.part, lower=False))) else 0
 
 polarity_lfs = [
     LF_default_positive,
@@ -264,7 +264,9 @@ ce_v_max_lfs = voltage_lfs + [
 ### GETTER ###
 
 def get_lfs(attr):
-    if   attr == ('stg_temp_max'):
+    if attr=='part':
+        attr_lfs = []
+    elif attr == ('stg_temp_max'):
         attr_lfs = stg_temp_max_lfs
     elif attr == ('stg_temp_min'):
         attr_lfs = stg_temp_min_lfs

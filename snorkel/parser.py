@@ -208,23 +208,13 @@ PTB = {'-RRB-': u')', '-LRB-': u'(', '-RCB-': u'}', '-LCB-': u'{', '-RSB-': u']'
        '-LSB-': u'['}
 
 class CoreNLPHandler:
-    
+    '''
+    Connects to an existing instance of CoreNLP server
+    '''
     def __init__(self, delim='', tok_whitespace=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
-        # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
-        # Kill it when python exits.
-        # This makes sure that we load the models only once.
-        # In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
-        # So it doesn't load e.g. coref models and the total (on-demand) initialization 
-        # takes only 7 sec.
         self.port = int(os.environ.get('JAVANLPPORT',12345))
         self.tok_whitespace = tok_whitespace
-#         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
-#         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer\
-#                --port %d --timeout %d > /dev/null' % (loc, self.port, 600000)]
-#         running_pid = CoreNLPHandler._get_already_running_pid()
-#         self.server_pid = running_pid if running_pid else Popen(cmd, shell=True).pid
-#         atexit.register(self._kill_pserver)
         props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
         props += "\"ssplit.htmlBoundariesToDiscard\": \"%s\"," % delim if delim else ""
         self.endpoint = 'http://127.0.0.1:%d/?properties={%s\
@@ -244,13 +234,6 @@ class CoreNLPHandler:
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
 
         self.ptb_rgx = re.compile(r'-[A-Z]{2}B-')
-
-#     def _kill_pserver(self):
-#         if self.server_pid is not None:
-#             try:
-#                 os.kill(self.server_pid, signal.SIGTERM)
-#             except:
-#                 sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
                 
     def parse(self, document, text):
         """Parse a raw document as a string into a list of sentences"""

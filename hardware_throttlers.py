@@ -36,11 +36,11 @@ def ce_v_max_throttler((part, attr)):
     # c = FakeCandidate(part, attr)
     return (part_throttler((part, attr)) and
             overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(attr, spread=[0,3], n_max=3)))
+            # and same_page and part in table and (aligned or global part)
 
 throttlers['ce_v_max'] = ce_v_max_throttler
 
 def get_throttler(attr):
-    for a in ['ce_v_max']:
-        if attr.startswith(a):
-            return throttlers[a]
+    if attr == 'ce_v_max':
+        return throttlers[attr]
     return throttlers['part']

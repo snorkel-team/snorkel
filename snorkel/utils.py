@@ -35,8 +35,8 @@ def get_ORM_instance(ORM_class, session, instance):
     Given an ORM class and *either an instance of this class, or the name attribute of an instance
     of this class*, return the instance
     """
-    if isinstance(instance, str):
-        return session.query(ORM_class).filter(ORM_class.name == instance).one()
+    if isinstance(instance, str) or isinstance(instance, unicode):
+        return session.query(ORM_class).filter(ORM_class.name == instance).one_or_none()
     else:
         return instance
 

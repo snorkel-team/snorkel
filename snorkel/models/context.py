@@ -28,7 +28,7 @@ class Corpus(SnorkelBase):
     __tablename__ = 'corpus'
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
-    documents = relationship('Document', secondary=corpus_document_association, backref='corpora')
+    documents = relationship('Document', secondary=corpus_document_association, backref='corpora', lazy='dynamic')
     # TODO: What should the cascades be?
 
     def append(self, item):
@@ -44,13 +44,16 @@ class Corpus(SnorkelBase):
         """Default iterator is over self.documents"""
         for doc in self.documents:
             yield doc
+            
+    def __getitem__(self, key):
+        return self.documents[key]
 
     def __len__(self):
-        return len(self.documents)
+        return self.documents.count()
 
     def stats(self):
         """Print summary / diagnostic stats about the corpus"""
-        print "Number of documents:", len(self.documents)
+        print "Number of documents:", self.__len__()
         self.child_context_stats(Document)
 
     def child_context_stats(self, parent_context):

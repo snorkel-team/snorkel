@@ -15,6 +15,7 @@ from itertools import izip
 from collections import namedtuple
 import numpy as np
 import codecs
+import uuid
 from async_utils import run_in_parallel
 
 # Used to conform to existing annotation key API call
@@ -128,7 +129,12 @@ def tsv_escape(s):
 def array_tsv_escape(vals):
     return '{' + ','.join(tsv_escape(p) for p in vals) + '}'
 
-def _annotate_worker(start, end, name, table_name, annotator):
+
+def _segment_filename(table_name, job_id, start = None, end = None):
+    suffix = '*' if start is None else '%d-%d' % (start, end)
+    return '%s_%s_%s.tsv' % (table_name, job_id, suffix)
+
+def _annotate_worker(start, end, name, table_name, job_id, annotator):
     '''
     Writes raw rows via psql, bypassing ORM.
     Pipes extraction results to the STDIN of a psql COPY process.
@@ -142,9 +148,9 @@ def _annotate_worker(start, end, name, table_name, annotator):
     
     # Computes and pipe rows to the COPY process
     candidates = session.query(CandidateSet).filter(CandidateSet.name == name).one().candidates
-    
-    segment_filename = os.path.join(os.environ.get('SNORKELHOME', '/tmp/'), '%s_%d-%d.tsv' % (table_name, start, end))
-    with codecs.open(segment_filename, 'w', encoding='utf-8') as writer:
+    segment_dir = os.environ.get('SNORKELHOME', '/tmp/')
+    segment_path = os.path.join(segment_dir, _segment_filename(table_name, job_id, start, end))
+    with codecs.open(segment_path, 'w', encoding='utf-8') as writer:
         pb = None if start else ProgressBar(end)
         for i, candidate in enumerate(candidates.order_by(Candidate.id).slice(start, end)):
             if pb: pb.bar(i)
@@ -175,14 +181,15 @@ def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_
         # Assuming hyper-threaded cpus
         if not parallel: parallel = min(40, multiprocessing.cpu_count() / 2)
         annotator = Annotator(lfs) if lfs else feature_extractor
-        segment_file_blob = os.path.join(os.environ.get('SNORKELHOME', '/tmp/'), table_name) + '*.tsv'
+        segment_dir = os.environ.get('SNORKELHOME', '/tmp/')
+        job_id = uuid.uuid4().hex
+        segment_file_blob = os.path.join(segment_dir,  _segment_filename(table_name, job_id))
         
         # Clear any previous run temp files if any
-        remove_files(segment_file_blob)
-        copy_args = (candidates.name, table_name, annotator)
+        copy_args = (candidates.name, table_name, job_id, annotator)
         run_in_parallel(_annotate_worker, parallel, len(candidates), copy_args=copy_args)
         
-        
+        print 'Copying %s to postgres' % table_name
         cmd = ('cat %s | psql %s -U %s -c "COPY %s(candidate_id, keys, values) '
                'FROM STDIN" --set=ON_ERROR_STOP=true') % (segment_file_blob, DBNAME, DBUSER, table_name)
         _out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)

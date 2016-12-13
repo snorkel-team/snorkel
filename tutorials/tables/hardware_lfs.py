@@ -52,7 +52,7 @@ part_lfs = [
 ### POLARITY ###
 
 def polarity_random():
-    return (random() < 0.2)
+    return int(random() < 0.2)
 
 def LF_default_positive(c):
     return 1 
@@ -202,7 +202,7 @@ stg_temp_min_lfs = stg_temp_lfs + [
 ### VOLTAGE ###
 
 def voltage_random():
-    return (random() < 0.2)
+    return int(random() < 0.2)
 
 def LF_aligned_or_global(c):
     return 1 if (same_row(c) or

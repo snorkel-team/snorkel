@@ -5,7 +5,7 @@ matchers = {}
 
 matchers['stg_temp_max'] = RegexMatchSpan(rgx=r'(?:[1][5-9]|20)[05]', longest_match_only=False)
 matchers['stg_temp_min'] = RegexMatchSpan(rgx=r'-[56][05]', longest_match_only=False)
-matchers['polarity'] = RegexMatchSpan(rgx=r'NPN|PNP', longest_match_only=False, ignore_case=True)
+
 
 ### PART ###
 eeca_rgx = '([ABC][A-Z][WXYZ]?[0-9]{3,5}(?:[A-Z]){0,5}[0-9]?[A-Z]?(?:-[A-Z0-9]{1,7})?(?:[-][A-Z0-9]{1,2})?(?:\/DG)?)'
@@ -48,6 +48,14 @@ ce_v_max_row_matcher = LambdaFunctionMatch(func=ce_v_max_conditions)
 matchers['ce_v_max_rgx'] = ce_v_max_rgx_matcher
 matchers['ce_v_max'] = Intersect(ce_v_max_rgx_matcher, attr_in_table_matcher, ce_v_max_row_matcher)
 # matchers['ce_v_max'] = ce_v_max_rgx_matcher
+
+### POLARITY ####
+polarity_rgx_matcher = RegexMatchSpan(rgx=r'NPN|PNP', longest_match_only=False, ignore_case=True)
+def polarity_conditions(attr):
+    return not overlap(['complement','complementary'], get_phrase_ngrams(attr))
+
+polarity_lambda_matcher = LambdaFunctionMatch(func=polarity_conditions)
+matchers['polarity'] = Intersect(polarity_rgx_matcher, polarity_labmda_matcher)
 
 ### GETTER ###
 def get_matcher(attr):

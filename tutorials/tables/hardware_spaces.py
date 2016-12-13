@@ -170,7 +170,7 @@ def char_range(a, b):
 
 
 class OmniNgramsPart(OmniNgrams):
-    def __init__(self, parts_by_doc=None, n_max=5, expand=True, split_tokens=None):
+    def __init__(self, parts_by_doc=None, n_max=3, expand=True, split_tokens=None):
         """:param parts_by_doc: a dictionary d where d[document_name.upper()] = [partA, partB, ...]"""
         OmniNgrams.__init__(self, n_max=n_max, split_tokens=None)
         self.parts_by_doc = parts_by_doc

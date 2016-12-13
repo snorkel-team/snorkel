@@ -29,8 +29,8 @@ def part_conditions(part):
                     get_left_ngrams(part, window=10),
                     get_aligned_ngrams(part)])))
 part_lambda_matcher = LambdaFunctionMatch(func=part_conditions)
-matchers['part'] = Intersect(part_rgx_matcher, part_lambda_matcher)
-# matchers['part'] = part_rgx_matcher
+# matchers['part'] = Intersect(part_rgx_matcher, part_lambda_matcher)
+matchers['part'] = part_rgx_matcher
 
 def attr_in_table(attr):
     return attr.is_tabular()

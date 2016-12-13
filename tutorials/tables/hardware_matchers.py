@@ -45,7 +45,7 @@ def ce_v_max_conditions(attr):
 ce_v_max_row_matcher = LambdaFunctionMatch(func=ce_v_max_conditions)
 
 
-matchers['ce_v_max'] = Intersect(ce_v_max_rgx_matcher, attr_in_table, ce_v_max_row_matcher)
+matchers['ce_v_max'] = Intersect(ce_v_max_rgx_matcher, attr_in_table_matcher, ce_v_max_row_matcher)
 # matchers['ce_v_max'] = ce_v_max_rgx_matcher
 
 ### GETTER ###

@@ -68,6 +68,33 @@ class Matcher(object):
                 yield c
 
 
+class Union(Matcher):
+    """Takes the union of candidate sets returned by child operators"""
+    def f(self, c):
+       for child in self.children:
+           if child.f(c) > 0:
+               return True
+       return False
+
+class Intersect(Matcher):
+    """Takes the intersection of candidate sets returned by child operators"""
+    def f(self, c):
+        for child in self.children:
+            try:
+                if not child.f(c):
+                    return False
+            except:
+                import pdb; pdb.set_trace()
+        return True 
+
+class Inverse(Matcher):
+    """Returns the opposite result of its child operator"""
+    # TODO: confirm that this only has one child
+    def f(self, c):
+        for child in self.children:
+            return not child.f(c)
+            
+
 WORDS = 'words'
 
 class NgramMatcher(Matcher):
@@ -127,29 +154,6 @@ class LambdaFunctionMatch(NgramMatcher):
         """The internal (non-composed) version of filter function f"""
         return self.func(c)
 
-
-class Union(NgramMatcher):
-    """Takes the union of candidate sets returned by child operators"""
-    def f(self, c):
-       for child in self.children:
-           if child.f(c) > 0:
-               return True
-       return False
-
-class Intersect(NgramMatcher):
-    """Takes the intersection of candidate sets returned by child operators"""
-    def f(self, c):
-        for child in self.children:
-            if not child.f(c):
-                return False
-        return True 
-
-class Inverse(NgramMatcher):
-    """Returns the opposite result of its child operator"""
-    # TODO: confirm that this only has one child
-    def f(self, c):
-        for child in self.children:
-            return not child.f(c)
 
 class Concat(NgramMatcher):
     """

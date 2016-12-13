@@ -11,7 +11,7 @@ throttlers = {}
 
 # Use this thin wrapper when using LFs that need 'part' and 'attr' attributes
 FakeCandidate = namedtuple('FakeCandidate', ['part', 'attr'])
-c = FakeCandidate(part, attr)
+# c = FakeCandidate(part, attr)
 
 def same_page_throttler((part, attr)):
     return same_page((part, attr))

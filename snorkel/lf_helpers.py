@@ -514,6 +514,10 @@ def overlap(a, b):
 ############################
 # Visual feature helpers
 ############################
+def get_page(c):
+    span = c if isinstance(c, TemporarySpan) else c.get_arguments()[0]
+    return span.get_attrib_tokens('page')[0]
+
 def is_horz_aligned(c):
     return (all([c[i].is_visual() and
                  bbox_horz_aligned(bbox_from_span(c[i]), bbox_from_span(c[0]))
@@ -602,6 +606,16 @@ def get_visual_distance(c, axis=None):
     # TODO
     return
 
+# Default dimensions for 8.5" x 11"
+DEFAULT_WIDTH = 612
+DEFAULT_HEIGHT = 792
+def get_page_vert_percentile(c, page_width=DEFAULT_WIDTH, page_height=DEFAULT_HEIGHT):
+    span = c if isinstance(c, TemporarySpan) else c.get_arguments()[0]
+    return float(bbox_from_span(span).top)/page_height
+
+def get_page_horz_percentile(c, page_width=DEFAULT_WIDTH, page_height=DEFAULT_HEIGHT):
+    span = c if isinstance(c, TemporarySpan) else c.get_arguments()[0]
+    return float(bbox_from_span(span).left)/page_width
 
 def _assign_alignment_features(phrases_by_key, align_type):
     for key, phrases in phrases_by_key.iteritems():

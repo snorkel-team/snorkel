@@ -51,22 +51,29 @@ part_lfs = [
 
 ### POLARITY ###
 
-def polarity_random():
-    return int(random() < 0.2)
+# def polarity_random():
+#     return int(random() < 0.2)
 
 def LF_default_positive(c):
     return 1 
 
+def LF_polarity_part_tabular_align(c):
+    return 1 if same_row(c) or same_col(c) else 0
+
+def LF_polarity_part_horz_align(c):
+    return 1 if is_horz_aligned(c) else 0
+
+def LF_both_in_top_third(c):
+    return 1 if (get_page(c.part) == 1 and 
+                 get_page(c.attr) == 1 and 
+                 get_page_vert_percentile(c.part) > 0.33 and 
+                 get_page_vert_percentile(c.attr) > 0.33) else 0
+
 def LF_polarity_complement(c):
     return -1 if overlap(['complement','complementary'], 
-                         get_phrase_ngrams(c.attr)) else polarity_random()
-
-def LF_polarity_complement_neighbor(c):
-    return -1 if overlap(['complement','complementary'], 
-                         get_neighbor_phrase_ngrams(c.attr)) else polarity_random()
-
-def LF_polarity_part_align(c):
-    return 1 if same_row(c) or same_col(c) else 0
+                         chain.from_iterable([
+                             get_phrase_ngrams(c.attr), 
+                             get_neighbor_phrase_ngrams(c.attr)])) else 0
 
 def LF_cheating_with_another_polarity(c):
     return -1 if ((c.attr.get_span()=='NPN' and 'PNP' in get_horz_ngrams(c.part, lower=False)) or
@@ -74,9 +81,10 @@ def LF_cheating_with_another_polarity(c):
 
 polarity_lfs = [
     LF_default_positive,
+    LF_polarity_part_tabular_align,
+    LF_polarity_part_horz_align,
+    LF_both_in_top_third,
     LF_polarity_complement,
-    LF_polarity_complement_neighbor,
-    LF_polarity_part_align,
     LF_cheating_with_another_polarity
 ]
 

@@ -152,7 +152,7 @@ def entity_level_total_recall(candidates, gold_file, attribute, corpus=None,
         gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
         entity_level_total_recall(candidates, gold_file, 'stg_temp_min')
     """
-    docs = [(doc.name).upper() for doc in corpus.documents] if corpus else None
+    docs = [(doc.name).upper() for doc in corpus.documents.all()] if corpus else None
     gold_set = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=True, val_on=relation, attrib=attribute, integerize=integerize)
     if len(gold_set) == 0:
         print "Gold set is empty."
@@ -197,7 +197,7 @@ def entity_level_total_recall(candidates, gold_file, attribute, corpus=None,
 
 
 def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
-    docs = [(doc.name).upper() for doc in corpus.documents] if corpus else None
+    docs = [(doc.name).upper() for doc in corpus.documents.all()] if corpus else None
     gold_dict = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=(attrib is not None), val_on=True, attrib=attrib)
 
     TP = FP = TN = FN = 0

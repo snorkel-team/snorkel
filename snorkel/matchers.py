@@ -114,7 +114,7 @@ class DictionaryMatch(NgramMatcher):
         return (not self.reverse) if p in self.d else self.reverse
 
 class LambdaFunctionMatch(NgramMatcher):
-    """Selects candidate Ngrams that match against a given list d"""
+    """Selects candidate Ngrams that pass a given lambda function"""
     def init(self):
         self.ignore_case = self.opts.get('ignore_case', True)
         self.attrib      = self.opts.get('attrib', WORDS)

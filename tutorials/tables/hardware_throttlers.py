@@ -30,17 +30,18 @@ def part_throttler((part, attr)):
 throttlers['part'] = part_throttler
 
 # FakeCandidate = namedtuple('FakeCandidate', ['part', 'attr'])
-ce_keywords = set(['collector emitter', 'collector-emitter', 'collector - emitter'])
-ce_abbrevs = set(['ceo', 'vceo'])
-def ce_v_max_throttler((part, attr)):
-    # c = FakeCandidate(part, attr)
-    return (part_throttler((part, attr)) and
-            overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(attr, spread=[0,3], n_max=3)))
+# c = FakeCandidate(part, attr)
+def same_page_throttler((part, attr)):
+    return same_page((part, attr))
             # and same_page and part in table and (aligned or global part)
 
-throttlers['ce_v_max'] = ce_v_max_throttler
+# throttlers['ce_v_max'] = ce_v_max_throttler
+throttlers['ce_v_max'] = same_page_throttler
+
 
 def get_throttler(attr):
+    # return None
     if attr == 'ce_v_max':
         return throttlers[attr]
-    return throttlers['part']
+    else:
+        return None

@@ -16,6 +16,7 @@ part_rgx = '|'.join([eeca_rgx, jedec_rgx, jis_rgx, others_rgx])
 # modifiers = '(?:[\/\-][A-Z]{,2})*'
 # part_rgx = '(' + '|'.join([eeca_rgx, jedec_rgx, jis_rgx, others_rgx]) + ')' + modifiers
 part_rgx_matcher = RegexMatchSpan(rgx=part_rgx, longest_match_only=False)
+matchers['part_rgx'] = part_rgx_matcher
 
 def part_conditions(part):
     """throttle parts that are in tables of device/replacement parts"""

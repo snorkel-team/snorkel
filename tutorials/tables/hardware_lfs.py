@@ -31,7 +31,7 @@ def LF_please_to_left(c):
 def LF_part_num_in_high_col_num(c):
     return -1 if get_max_col_num(c.part) > 4 else 0
 
-parts_rgx = get_matcher('part').rgx
+parts_rgx = get_matcher('part_rgx').rgx
 part_sniffer = re.compile(parts_rgx)
 def LF_cheating_with_another_part(c):
     return -1 if (any(part_sniffer.match(x) for x in get_horz_aligned_ngrams(c.attr)) and 

@@ -32,14 +32,20 @@ part_lambda_matcher = LambdaFunctionMatch(func=part_conditions)
 matchers['part'] = Intersect(part_rgx_matcher, part_lambda_matcher)
 # matchers['part'] = part_rgx_matcher
 
+def attr_in_table(attr):
+    return attr.is_tabular()
+attr_in_table_matcher = LambdaFunctionMatch(func=attr_in_table)
+
 ### CE_V_MAX ###
 ce_keywords = set(['collector emitter', 'collector-emitter', 'collector - emitter'])
 ce_abbrevs = set(['ceo', 'vceo'])
 ce_v_max_rgx_matcher = RegexMatchSpan(rgx=r'\d{1,2}[05]', longest_match_only=False)
 def ce_v_max_conditions(attr):
     return overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(attr, spread=[0,3], n_max=3))
-ce_v_max_lambda_matcher = LambdaFunctionMatch(func=ce_v_max_conditions)
-matchers['ce_v_max'] = Intersect(ce_v_max_rgx_matcher, ce_v_max_lambda_matcher)
+ce_v_max_row_matcher = LambdaFunctionMatch(func=ce_v_max_conditions)
+
+
+matchers['ce_v_max'] = Intersect(ce_v_max_rgx_matcher, attr_in_table, ce_v_max_row_matcher)
 # matchers['ce_v_max'] = ce_v_max_rgx_matcher
 
 ### GETTER ###

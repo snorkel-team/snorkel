@@ -550,7 +550,7 @@ def same_page(c):
                  for i in range(len(c))]))
 
 
-def get_horz_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
+def get_horz_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     # TODO: this currently looks only in current table; 
     #   precompute over the whole document/page instead
     # TODO: this currently aligns based on phrases, not words
@@ -564,7 +564,7 @@ def get_horz_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
                     yield ngram
 
 
-def get_vert_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
+def get_vert_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     # TODO: this currently looks only in current table;
     #   precompute over the whole document/page instead
     # TODO: this currently aligns based on phrases, not words
@@ -578,17 +578,17 @@ def get_vert_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
                     yield ngram
 
 
-def get_vert_aligned_left_ngrams(c):
+def get_vert_ngrams_left(c):
     # TODO
     return
 
 
-def get_vert_aligned_right_ngrams(c):
+def get_vert_ngrams_right(c):
     # TODO
     return
 
 
-def get_vert_aligned_center_ngrams(c):
+def get_vert_ngrams_center(c):
     # TODO
     return
 

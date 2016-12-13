@@ -5,12 +5,19 @@ from itertools import chain
 from random import random
 
 ### PART ###
+parts_rgx = get_matcher('part_rgx').rgx
+part_sniffer = re.compile(parts_rgx)
+def LF_cheating_with_another_part(c):
+    return -1 if (any(part_sniffer.match(x) for x in get_horz_ngrams(c.attr)) and 
+                     not is_horz_aligned(c)) else 0
+
 def LF_replacement_table(c):
     col_ngrams = list(get_col_ngrams(c.part))
     return -1 if (overlap(['replacement'], col_ngrams) or
                  (len(col_ngrams) > 25 and 'device' in col_ngrams)) else 0
 
 def LF_many_p_siblings(c):
+    # e.g., CentralSemiconductorCorp_2N4013.pdf
     return -1 if get_prev_sibling_tags(c.part).count('p') > 25 else 0
 
 def LF_part_complement(c):
@@ -31,20 +38,15 @@ def LF_please_to_left(c):
 def LF_part_num_in_high_col_num(c):
     return -1 if get_max_col_num(c.part) > 4 else 0
 
-parts_rgx = get_matcher('part_rgx').rgx
-part_sniffer = re.compile(parts_rgx)
-def LF_cheating_with_another_part(c):
-    return -1 if (any(part_sniffer.match(x) for x in get_horz_aligned_ngrams(c.attr)) and 
-                     not is_horz_aligned(c)) else 0
 
 part_lfs = [
+    LF_cheating_with_another_part,
     LF_replacement_table,
     LF_many_p_siblings,
     LF_part_complement,
     LF_top_mark_col_part,
     LF_please_to_left,
-    LF_part_num_in_high_col_num,
-    LF_cheating_with_another_part
+    LF_part_num_in_high_col_num
 ]
 
 ### POLARITY ###
@@ -245,14 +247,14 @@ def LF_ce_keywords_in_row(c):
     return 1 if overlap(ce_keywords, get_row_ngrams(c.attr, spread=[0,3], n_max=3)) else -1
 
 def LF_ce_keywords_horz(c):
-    return 1 if overlap(ce_keywords, get_horz_aligned_ngrams(c.attr)) else 0
+    return 1 if overlap(ce_keywords, get_horz_ngrams(c.attr)) else 0
 
 ce_abbrevs = set(['ceo', 'vceo']) # 'value', 'rating'
 def LF_ce_abbrevs_in_row(c):
     return 1 if overlap(ce_abbrevs, get_row_ngrams(c.attr, spread=[0,3])) else 0
 
 def LF_ce_abbrevs_horz(c):
-    return 1 if overlap(ce_abbrevs, get_horz_aligned_ngrams(c.attr)) else 0
+    return 1 if overlap(ce_abbrevs, get_horz_ngrams(c.attr)) else 0
 
 non_ce_voltage_keywords = set(['collector-base', 'collector - base', 'emitter-base', 'emitter - base'])
 def LF_non_ce_voltages_in_row(c):

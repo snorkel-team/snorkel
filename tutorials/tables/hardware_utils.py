@@ -138,8 +138,8 @@ def entity_confusion_matrix(pred, gold):
     return (TP, FP, FN)
 
 
-def entity_level_total_recall(candidates, gold_file, attribute, corpus=None, 
-                              relation=True, parts_by_doc=None, integerize=False):
+def entity_level_f1_from_candidates(candidates, gold_file, attribute, corpus=None, 
+                              relation=True, parts_by_doc=None):
     """Checks entity-level recall of candidates compared to gold.
 
     Turns a CandidateSet into a normal set of entity-level tuples
@@ -153,7 +153,7 @@ def entity_level_total_recall(candidates, gold_file, attribute, corpus=None,
         entity_level_total_recall(candidates, gold_file, 'stg_temp_min')
     """
     docs = [(doc.name).upper() for doc in corpus.documents.all()] if corpus else None
-    gold_set = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=True, val_on=relation, attrib=attribute, integerize=integerize)
+    gold_set = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=True, val_on=relation, attrib=attribute)
     if len(gold_set) == 0:
         print "Gold set is empty."
         return
@@ -167,8 +167,6 @@ def entity_level_total_recall(candidates, gold_file, attribute, corpus=None,
         doc = c.get_arguments()[0].parent.document.name.upper()
         if relation:
             val = c.get_arguments()[1].get_span()
-            # if integerize:
-            #   val = int(float(c.get_arguments()[1].get_span().replace(' ', '')))
         for p in get_implied_parts(part, doc, parts_by_doc):
             if relation:
                 entity_level_candidates.add((doc, p, val))
@@ -203,7 +201,7 @@ def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
     TP = FP = TN = FN = 0
     pos = set([((c[0].parent.document.name).upper(),
                 (c[0].get_span()).upper(),
-                (''.join(c[1].get_span().split())).upper()) for c in tp.union(fp)])
+                (c[1].get_span()).upper()) for c in tp.union(fp)])
     TP_set = pos.intersection(gold_dict)
     TP = len(TP_set)
     FP_set = pos.difference(gold_dict)

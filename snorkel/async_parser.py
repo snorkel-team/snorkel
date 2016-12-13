@@ -86,7 +86,8 @@ def _init_parse_worker(corpus_name):
     global _worker_session
     _worker_engine = new_engine()
     _worker_session = new_session(_worker_engine)()
-    _worker_corpus = _worker_session.query(Corpus).filter(Corpus.name==corpus_name).one()
+    if corpus_name:
+        _worker_corpus = _worker_session.query(Corpus).filter(Corpus.name==corpus_name).one()
 
 def _parallel_parse(fpath):
     for document in _worker_doc_parser.parse(fpath):
@@ -119,7 +120,7 @@ def parse_corpus(session, corpus_name, path, doc_parser, context_parser, max_doc
         session.add(corpus)
         session.commit()
     # Asynchronously parse files
-    pool = Pool(parallel, initializer=_init_parse_worker,initargs=(corpus_name,))
+    pool = Pool(parallel, initializer=_init_parse_worker, initargs=(corpus_name,))
     #print 'Working on ', fpaths
     for i, _result in enumerate(pool.imap_unordered(_parallel_parse, args)):
         pb.bar(i)

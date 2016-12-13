@@ -17,7 +17,7 @@ def _extract_worker(start, end, corpus_name, candidateset_name, extractor):
     corpus = get_ORM_instance(Corpus, session, corpus_name)
     candidate_set = get_ORM_instance(CandidateSet, session, candidateset_name)
     # Run extraction
-    pb = None if start else ProgressBar(end)
+    pb = None if start else ProgressBar(end-start)
     for i, context in enumerate(corpus.documents.order_by(Document.id).slice(start, end)):
         if pb: pb.bar(i)
         extractor._extract_from_context(context, candidate_set, session)

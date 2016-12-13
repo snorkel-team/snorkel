@@ -76,7 +76,7 @@ class CandidateExtractor(object):
         if parallelism in [1, False]:
             for i, context in enumerate(contexts):
                 pb.bar(i)
-                self._extract_from_context(context, c, session)
+                self._extract_from_context(context, c, session, check_duplicates = True)
         else:
             raise NotImplementedError('Parallelism is not yet implemented.')
             self._extract_multiprocess(contexts, c, parallelism)
@@ -85,7 +85,7 @@ class CandidateExtractor(object):
         session.commit()
         return session.query(CandidateSet).filter(CandidateSet.name == name).one()
 
-    def _extract_from_context(self, context, candidate_set, session):
+    def _extract_from_context(self, context, candidate_set, session, check_duplicates = False):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
         child_context_sets = [set() for _ in xrange(self.arity)]
@@ -108,7 +108,7 @@ class CandidateExtractor(object):
             # Accepts a tuple of Span objects (e.g., (Span, Span))
             # (throttler returns whether or not proposed candidate passes throttling condition)
             if self.throttler:
-                if not self.throttler(tuple([args[i][1] for i in range(self.arity)])):
+                if not self.throttler(tuple(args[i][1] for i in range(self.arity))):
                     continue
             
             # Check for self-joins and "nested" joins (joins from span to its subspan)
@@ -125,19 +125,20 @@ class CandidateExtractor(object):
 
             for i, arg_name in enumerate(arg_names):
                 child_args[arg_name + '_id'] = args[i][1].id
-            q = select([self.candidate_class.id])
-            for key, value in child_args.items():
-                q = q.where(getattr(self.candidate_class, key) == value)
-            candidate_id = session.execute(q).first()
+
+            if check_duplicates:
+                q = select([self.candidate_class.id])
+                for key, value in child_args.items():
+                    q = q.where(getattr(self.candidate_class, key) == value)
+                candidate_id = session.execute(q).first()
+                if candidate_id is not None:
+                    raise ValueError("Duplicate candidates found in %s." % candidate_set)
 
             # If candidate does not exist, persists it
-            if candidate_id is None:
-                candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
-                child_args['id'] = candidate_id[0]
-                session.execute(child_insert_query, child_args)
-                del child_args['id']
-            else:
-                raise ValueError("Duplicate candidates found in %s." % candidate_set)
+            candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
+            child_args['id'] = candidate_id[0]
+            session.execute(child_insert_query, child_args)
+                
 
             # Add candidate to the given CandidateSet
             set_insert_args['candidate_id'] = candidate_id[0]

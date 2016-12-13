@@ -16,7 +16,7 @@ from collections import namedtuple
 import numpy as np
 import codecs
 import uuid
-from async_utils import run_in_parallel
+from async_utils import run_in_parallel, copy_postgres
 
 # Used to conform to existing annotation key API call
 _TempKey = namedtuple('TempKey', ['id', 'name'])
@@ -134,6 +134,7 @@ def _segment_filename(table_name, job_id, start = None, end = None):
     suffix = '*' if start is None else '%d-%d' % (start, end)
     return '%s_%s_%s.tsv' % (table_name, job_id, suffix)
 
+segment_dir = os.environ.get('SNORKELHOME', '/tmp/')
 def _annotate_worker(start, end, name, table_name, job_id, annotator):
     '''
     Writes raw rows via psql, bypassing ORM.
@@ -148,7 +149,6 @@ def _annotate_worker(start, end, name, table_name, job_id, annotator):
     
     # Computes and pipe rows to the COPY process
     candidates = session.query(CandidateSet).filter(CandidateSet.name == name).one().candidates
-    segment_dir = os.environ.get('SNORKELHOME', '/tmp/')
     segment_path = os.path.join(segment_dir, _segment_filename(table_name, job_id, start, end))
     with codecs.open(segment_path, 'w', encoding='utf-8') as writer:
         pb = None if start else ProgressBar(end)
@@ -167,8 +167,9 @@ def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_
     @var candidates: CandidateSet to extract features from
     @var parallel: Number of processes to use for extraction
     @var keyset: Name of the feature set to use, same as the candidate set name used.
-    @var lfs: labeling functions used to annotate the current set of candidates
-    otherwise use cached feature index 
+    @var lfs: Labeling functions used to annotate the current set of candidates
+    @var feature_extractor: An extractor lambda that take a candidate and yield key-value
+    pairs
     '''
     suffix = '_labels' if lfs else '_features'
     table_name = get_sql_name(candidates.name) + suffix 
@@ -181,19 +182,14 @@ def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_
         # Assuming hyper-threaded cpus
         if not parallel: parallel = min(40, multiprocessing.cpu_count() / 2)
         annotator = Annotator(lfs) if lfs else feature_extractor
-        segment_dir = os.environ.get('SNORKELHOME', '/tmp/')
+        
         job_id = uuid.uuid4().hex
         segment_file_blob = os.path.join(segment_dir,  _segment_filename(table_name, job_id))
         
         # Clear any previous run temp files if any
         copy_args = (candidates.name, table_name, job_id, annotator)
         run_in_parallel(_annotate_worker, parallel, len(candidates), copy_args=copy_args)
-        
-        print 'Copying %s to postgres' % table_name
-        cmd = ('cat %s | psql %s -U %s -c "COPY %s(candidate_id, keys, values) '
-               'FROM STDIN" --set=ON_ERROR_STOP=true') % (segment_file_blob, DBNAME, DBUSER, table_name)
-        _out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-        print _out
+        copy_postgres(segment_file_blob, table_name, 'candidate_id, keys, values')
         remove_files(segment_file_blob)
         con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id)' % table_name)
         

@@ -86,8 +86,7 @@ def _init_parse_worker(corpus_name):
     global _worker_session
     _worker_engine = new_engine()
     _worker_session = new_session(_worker_engine)()
-    if corpus_name:
-        _worker_corpus = _worker_session.query(Corpus).filter(Corpus.name==corpus_name).one()
+    _worker_corpus = _worker_session.query(Corpus).filter(Corpus.name==corpus_name).one()
 
 def _parallel_parse(fpath):
     for document in _worker_doc_parser.parse(fpath):

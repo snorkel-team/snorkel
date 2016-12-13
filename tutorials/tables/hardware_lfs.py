@@ -77,7 +77,7 @@ def LF_polarity_complement(c):
 
 def LF_cheating_with_another_polarity(c):
     return -1 if ((c.attr.get_span()=='NPN' and 'PNP' in get_horz_ngrams(c.part, lower=False)) or
-                  (c.attr.get_span()=='PNP' and 'NPN' in get_horz_ngrams(c.part, lower=False))) else polarity_random()
+                  (c.attr.get_span()=='PNP' and 'NPN' in get_horz_ngrams(c.part, lower=False))) else 0
 
 polarity_lfs = [
     LF_default_positive,

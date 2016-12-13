@@ -55,7 +55,7 @@ def polarity_conditions(attr):
     return not overlap(['complement','complementary'], get_phrase_ngrams(attr))
 
 polarity_lambda_matcher = LambdaFunctionMatch(func=polarity_conditions)
-matchers['polarity'] = Intersect(polarity_rgx_matcher, polarity_labmda_matcher)
+matchers['polarity'] = Intersect(polarity_rgx_matcher, polarity_lambda_matcher)
 
 ### GETTER ###
 def get_matcher(attr):

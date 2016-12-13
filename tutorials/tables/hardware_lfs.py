@@ -5,6 +5,10 @@ from itertools import chain
 from random import random
 
 ### PART ###
+
+def LF_part_in_header_tag(c):
+    return 1 if get_tag(c.part).startswith('h') else 0
+
 parts_rgx = get_matcher('part_rgx').rgx
 part_sniffer = re.compile(parts_rgx)
 def LF_cheating_with_another_part(c):
@@ -27,9 +31,9 @@ def LF_part_complement(c):
                              get_aligned_ngrams(c.part),
                              get_neighbor_phrase_ngrams(c.part)])) else 0
 
-def LF_top_mark_col_part(c):
-    return -1 if overlap(['top','mark','marking'],
-                         get_col_ngrams(c.part)) else 0
+# def LF_top_mark_col_part(c):
+#     return -1 if overlap(['top','mark','marking'],
+#                          get_col_ngrams(c.part)) else 0
 
 def LF_please_to_left(c):
     # e.g., DiodesIncorporated_FZT651TC
@@ -40,11 +44,12 @@ def LF_part_num_in_high_col_num(c):
 
 
 part_lfs = [
+    LF_part_in_header_tag,
     LF_cheating_with_another_part,
     LF_replacement_table,
     LF_many_p_siblings,
     LF_part_complement,
-    LF_top_mark_col_part,
+    # LF_top_mark_col_part,
     LF_please_to_left,
     LF_part_num_in_high_col_num
 ]
@@ -69,6 +74,9 @@ def LF_both_in_top_third(c):
                  get_page_vert_percentile(c.part) > 0.33 and 
                  get_page_vert_percentile(c.attr) > 0.33) else 0
 
+def LF_polarity_in_header_tag(c):
+    return 1 if get_tag(c.attr).startswith('h') else 0
+
 def LF_polarity_complement(c):
     return -1 if overlap(['complement','complementary'], 
                          chain.from_iterable([
@@ -84,6 +92,7 @@ polarity_lfs = [
     LF_polarity_part_tabular_align,
     LF_polarity_part_horz_align,
     LF_both_in_top_third,
+    LF_polarity_in_header_tag,
     LF_polarity_complement,
     LF_cheating_with_another_polarity
 ]

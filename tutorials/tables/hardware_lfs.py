@@ -235,7 +235,7 @@ def LF_low_table_num(c):
 
 bad_keywords = set(['continuous', 'cut-off', 'gain', 'breakdown'])
 def LF_bad_keywords_in_row(c):
-    return -1 if overlap(bad_keywords, get_row_ngrams(c.attr), spread=[0,3]) else 0
+    return -1 if overlap(bad_keywords, get_row_ngrams(c.attr, spread=[0,3])) else 0
 
 def LF_equals_in_row(c):
     return -1 if overlap('=', get_row_ngrams(c.attr)) else 0

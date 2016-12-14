@@ -274,7 +274,7 @@ def LF_ce_abbrevs_in_row(c):
     return 1 if overlap(ce_abbrevs, get_row_ngrams(c.attr, spread=[0,3])) else 0
 
 def LF_head_ends_with_ceo(c):
-    return 1 if any(ngram.endswith('ceo') for ngram in get_head_ngrams(c.attr))
+    return 1 if any(ngram.endswith('ceo') for ngram in get_head_ngrams(c.attr)) else 0
 
 def LF_ce_abbrevs_horz(c):
     return 1 if overlap(ce_abbrevs, get_horz_ngrams(c.attr)) else 0

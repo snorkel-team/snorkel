@@ -49,8 +49,7 @@ def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attribute=No
                     key = []
                     if doc_on:  key.append(doc.upper())
                     if part_on: key.append(part.upper())
-                    if val_on:
-                        key.append(val.upper())
+                    if val_on:  key.append(val.upper())
                     gold_dict.add(tuple(key))
     return gold_dict
 
@@ -121,11 +120,12 @@ def separate_fns(fn, cfn):
     print "%d FNs" % len(fn)
     print "%d unfound" % len(unfound)
     print "%d misclassified" % len(misclassified)
-    return unfound, misclassified
+    return map(sorted(map(list, [unfound, misclassified])))
 
 
 def separate_fps(fp, corpus, gold_file):
-    gold_parts = get_gold_parts(gold_file, docs=corpus.documents.all())
+    gold_parts = get_gold_dict(gold_file, docs=[doc.name for doc in corpus.documents.all()],
+                               doc_on=True, part_on=True, val_on=False)
     bad_part = set()
     bad_relation = set()
     for c in fp:
@@ -137,7 +137,7 @@ def separate_fps(fp, corpus, gold_file):
     print "%d FPs" % len(fp)
     print "%d bad_part" % len(bad_part)
     print "%d bad_relation" % len(bad_relation)
-    return bad_part, bad_relation
+    return map(sorted, map(list, [bad_part, bad_relation]))
 
 def entity_confusion_matrix(pred, gold):
     if not isinstance(pred, set):

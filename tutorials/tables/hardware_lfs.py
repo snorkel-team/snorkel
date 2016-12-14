@@ -261,7 +261,7 @@ voltage_lfs = [
 # CE_V_MAX #
 ce_keywords = set(['collector emitter', 'collector-emitter', 'collector - emitter'])
 def LF_ce_keywords_in_row(c):
-    return 1 if overlap(ce_keywords, get_row_ngrams(c.attr, spread=[0,3], n_max=3)) else 0 # -1
+    return 1 if overlap(ce_keywords, get_row_ngrams(c.attr, spread=[0,3], n_max=3)) else -1
 
 def LF_ce_keywords_horz(c):
     return 1 if overlap(ce_keywords, get_horz_ngrams(c.attr)) else 0
@@ -281,7 +281,7 @@ def LF_non_ce_voltages_in_row(c):
     return -1 if overlap(non_ce_voltage_keywords, get_row_ngrams(c.attr, spread=[0,3], n_max=3)) else 0
 
 def LF_first_two_pages(c):
-    return 1 if get_page(c) in [1, 2] else 0 #-1
+    return 1 if get_page(c) in [1, 2] else -1
 
 ce_v_max_lfs = voltage_lfs + [
     LF_ce_keywords_in_row,

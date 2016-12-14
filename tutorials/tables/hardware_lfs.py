@@ -273,6 +273,9 @@ ce_abbrevs = set(['ceo', 'vceo']) # 'value', 'rating'
 def LF_ce_abbrevs_in_row(c):
     return 1 if overlap(ce_abbrevs, get_row_ngrams(c.attr, spread=[0,3])) else 0
 
+def LF_head_ends_with_ceo(c):
+    return 1 if any(ngram.endswith('ceo') for ngram in get_head_ngrams(c.attr))
+
 def LF_ce_abbrevs_horz(c):
     return 1 if overlap(ce_abbrevs, get_horz_ngrams(c.attr)) else 0
 
@@ -284,6 +287,7 @@ ce_v_max_lfs = voltage_lfs + [
     LF_ce_keywords_in_row,
     LF_ce_keywords_horz,
     LF_ce_abbrevs_in_row,
+    LF_head_ends_with_ceo,
     LF_ce_abbrevs_horz,
     LF_non_ce_voltages_in_row
 ]

@@ -120,7 +120,7 @@ def separate_fns(fn, cfn):
     print "%d FNs" % len(fn)
     print "%d unfound" % len(unfound)
     print "%d misclassified" % len(misclassified)
-    return map(sorted(map(list, [unfound, misclassified])))
+    return map(sorted, map(list, [unfound, misclassified]))
 
 
 def separate_fps(fp, corpus, gold_file):

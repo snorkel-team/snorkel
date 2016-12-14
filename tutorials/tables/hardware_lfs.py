@@ -283,8 +283,6 @@ def LF_non_ce_voltages_in_row(c):
 def LF_first_two_pages(c):
     return 1 if get_page(c) in [1, 2] else 0 #-1
 
-def LF_
-
 ce_v_max_lfs = voltage_lfs + [
     LF_ce_keywords_in_row,
     LF_ce_keywords_horz,

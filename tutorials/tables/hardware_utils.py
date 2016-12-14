@@ -34,14 +34,14 @@ def get_gold_parts(filename, docs=None):
     return set(map(lambda x: x[0], get_gold_dict(filename, doc_on=False, part_on=True, val_on=False, docs=docs)))
 
 
-def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None, docs=None, integerize=False):
+def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attribute=None, docs=None):
     with codecs.open(filename, encoding="utf-8") as csvfile:
         gold_reader = csv.reader(csvfile)
         gold_dict = set()
         for row in gold_reader:
             (doc, part, attr, val) = row
             if docs is None or doc.upper() in docs:
-                if attrib and attr != attrib:
+                if attribute and attr != attribute:
                     continue
                 if not val:
                     continue
@@ -50,16 +50,13 @@ def get_gold_dict(filename, doc_on=True, part_on=True, val_on=True, attrib=None,
                     if doc_on:  key.append(doc.upper())
                     if part_on: key.append(part.upper())
                     if val_on:
-                        if integerize:
-                            key.append(int(float(val)))
-                        else:
-                            key.append(val.upper())
+                        key.append(val.upper())
                     gold_dict.add(tuple(key))
     return gold_dict
 
 
 def count_hardware_labels(candidates, filename, attrib, attrib_class):
-    gold_dict = get_gold_dict(filename, attrib)
+    gold_dict = get_gold_dict(filename, attribute=attrib)
     gold_cand = defaultdict(int)
     pb = ProgressBar(len(candidates))
     for i, c in enumerate(candidates):
@@ -72,7 +69,7 @@ def count_hardware_labels(candidates, filename, attrib, attrib_class):
 
 
 def load_hardware_labels(session, label_set_name, annotation_key_name, candidates, filename, attrib):
-    gold_dict = get_gold_dict(filename, attrib=attrib)
+    gold_dict = get_gold_dict(filename, attribute=attrib)
     candidate_set   = create_or_fetch(session, CandidateSet, label_set_name)
     annotation_key  = create_or_fetch(session, AnnotationKey, annotation_key_name)
     key_set         = create_or_fetch(session, AnnotationKeySet, annotation_key_name)
@@ -153,8 +150,7 @@ def entity_confusion_matrix(pred, gold):
     return (TP, FP, FN)
 
 
-def entity_level_f1_from_candidates(candidates, gold_file, attribute, corpus=None, 
-                              relation=True, parts_by_doc=None):
+def entity_level_f1(candidates, gold_file, attribute=None, corpus=None, parts_by_doc=None):
     """Checks entity-level recall of candidates compared to gold.
 
     Turns a CandidateSet into a normal set of entity-level tuples
@@ -168,28 +164,30 @@ def entity_level_f1_from_candidates(candidates, gold_file, attribute, corpus=Non
         entity_level_total_recall(candidates, gold_file, 'stg_temp_min')
     """
     docs = [(doc.name).upper() for doc in corpus.documents.all()] if corpus else None
-    gold_set = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=True, val_on=relation, attrib=attribute)
+    val_on = (attribute is not None)
+    gold_set = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=True, 
+                             val_on=val_on, attribute=attribute)
     if len(gold_set) == 0:
         print "Gold set is empty."
         return
     # Turn CandidateSet into set of tuples
     print "Preparing candidates..."
     pb = ProgressBar(len(candidates))
-    entity_level_candidates = set()
+    entities = set()
     for i, c in enumerate(candidates):
         pb.bar(i)
         part = c.get_arguments()[0].get_span()
         doc = c.get_arguments()[0].parent.document.name.upper()
-        if relation:
+        if attribute:
             val = c.get_arguments()[1].get_span()
         for p in get_implied_parts(part, doc, parts_by_doc):
-            if relation:
-                entity_level_candidates.add((doc, p, val))
+            if attribute:
+                entities.add((doc, p, val))
             else:
-                entity_level_candidates.add((doc, p))
+                entities.add((doc, p))
     pb.close()
 
-    (TP_set, FP_set, FN_set) = entity_confusion_matrix(entity_level_candidates, gold_set)
+    (TP_set, FP_set, FN_set) = entity_confusion_matrix(entities, gold_set)
     TP = len(TP_set)
     FP = len(FP_set)
     FN = len(FN_set)
@@ -209,34 +207,36 @@ def entity_level_f1_from_candidates(candidates, gold_file, attribute, corpus=Non
     return map(lambda x: sorted(list(x)), [TP_set, FP_set, FN_set])
 
 
-def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
-    docs = [(doc.name).upper() for doc in corpus.documents.all()] if corpus else None
-    gold_dict = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=(attrib is not None), val_on=True, attrib=attrib)
+# def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
+#     docs = [(doc.name).upper() for doc in corpus.documents.all()] if corpus else None
+#     gold_dict = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=(attrib is not None), val_on=True, attribute=attrib)
 
-    TP = FP = TN = FN = 0
-    pos = set([((c[0].parent.document.name).upper(),
-                (c[0].get_span()).upper(),
-                (c[1].get_span()).upper()) for c in tp.union(fp)])
-    TP_set = pos.intersection(gold_dict)
-    TP = len(TP_set)
-    FP_set = pos.difference(gold_dict)
-    FP = len(FP_set)
-    FN_set = gold_dict.difference(pos)
-    FN = len(FN_set)
+#     TP = FP = TN = FN = 0
+#     pos = set()
+#     for c in tp.union(fp):
+#         (doc, part, attr) = candidate_to_entity(c)
+#         for p in get_implied_parts(part, doc, parts_by_doc):
+#             pos.add((doc, p, val))
+#     TP_set = pos.intersection(gold_dict)
+#     TP = len(TP_set)
+#     FP_set = pos.difference(gold_dict)
+#     FP = len(FP_set)
+#     FN_set = gold_dict.difference(pos)
+#     FN = len(FN_set)
 
-    prec = TP / float(TP + FP) if TP + FP > 0 else float('nan')
-    rec  = TP / float(TP + FN) if TP + FN > 0 else float('nan')
-    f1   = 2 * (prec * rec) / (prec + rec) if prec + rec > 0 else float('nan')
-    print "========================================"
-    print "Scoring on Entity-Level Gold Data"
-    print "========================================"
-    print "Corpus Precision {:.3}".format(prec)
-    print "Corpus Recall    {:.3}".format(rec)
-    print "Corpus F1        {:.3}".format(f1)
-    print "----------------------------------------"
-    print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
-    print "========================================\n"
-    return map(lambda x: sorted(list(x)), [TP_set, FP_set, FN_set])
+#     prec = TP / float(TP + FP) if TP + FP > 0 else float('nan')
+#     rec  = TP / float(TP + FN) if TP + FN > 0 else float('nan')
+#     f1   = 2 * (prec * rec) / (prec + rec) if prec + rec > 0 else float('nan')
+#     print "========================================"
+#     print "Scoring on Entity-Level Gold Data"
+#     print "========================================"
+#     print "Corpus Precision {:.3}".format(prec)
+#     print "Corpus Recall    {:.3}".format(rec)
+#     print "Corpus F1        {:.3}".format(f1)
+#     print "----------------------------------------"
+#     print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
+#     print "========================================\n"
+#     return map(lambda x: sorted(list(x)), [TP_set, FP_set, FN_set])
 
 def get_implied_parts(part, doc, parts_by_doc):
     yield part

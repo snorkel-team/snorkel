@@ -121,11 +121,26 @@ def separate_fns(fn, cfn):
             unfound.add(c)
         else:
             misclassified.add(c)
-    print "%d fns" % len(fn)
+    print "%d FNs" % len(fn)
     print "%d unfound" % len(unfound)
     print "%d misclassified" % len(misclassified)
     return unfound, misclassified
 
+
+def separate_fps(fp, corpus, gold_file):
+    gold_parts = get_gold_parts(gold_file, docs=corpus.documents.all())
+    bad_part = set()
+    bad_relation = set()
+    for c in fp:
+        (doc, part, attr) = c
+        if (doc, part) in gold_parts:
+            bad_relation.add(c)
+        else:
+            bad_part.add(c)
+    print "%d FPs" % len(fp)
+    print "%d bad_part" % len(bad_part)
+    print "%d bad_relation" % len(bad_relation)
+    return unfound, misclassified
 
 def entity_confusion_matrix(pred, gold):
     if not isinstance(pred, set):

@@ -6,7 +6,6 @@ matchers = {}
 matchers['stg_temp_max'] = RegexMatchSpan(rgx=r'(?:[1][5-9]|20)[05]', longest_match_only=False)
 matchers['stg_temp_min'] = RegexMatchSpan(rgx=r'-[56][05]', longest_match_only=False)
 
-
 ### PART ###
 eeca_rgx = '([ABC][A-Z][WXYZ]?[0-9]{3,5}(?:[A-Z]){0,5}[0-9]?[A-Z]?(?:-[A-Z0-9]{1,7})?(?:[-][A-Z0-9]{1,2})?(?:\/DG)?)'
 jedec_rgx = '(2N\d{3,4}[A-Z]{0,5}[0-9]?[A-Z]?)'
@@ -55,11 +54,6 @@ polarity_lambda_matcher = LambdaFunctionMatch(func=polarity_conditions)
 matchers['polarity'] = Intersect(polarity_rgx_matcher, polarity_lambda_matcher)
 
 ### GETTER ###
-matchers['part'] = RegexMatchSpan(rgx=part_rgx, longest_match_only=False)
-matchers['stg_temp_max'] = RegexMatchSpan(rgx=r'(?:[1][5-9]|20)[05]', longest_match_only=False)
-matchers['stg_temp_min'] = RegexMatchSpan(rgx=r'-[56][05]', longest_match_only=False)
-matchers['polarity'] = RegexMatchSpan(rgx=r'NPN|PNP', longest_match_only=False, ignore_case=True)
-matchers['ce_v_max'] = RegexMatchSpan(rgx=r'\d{1,2}[05]', longest_match_only=False)
 
 def get_digikey_parts_set(path):
     """

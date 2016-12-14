@@ -137,7 +137,7 @@ def separate_fps(fp, corpus, gold_file):
     print "%d FPs" % len(fp)
     print "%d bad_part" % len(bad_part)
     print "%d bad_relation" % len(bad_relation)
-    return unfound, misclassified
+    return bad_part, bad_relation
 
 def entity_confusion_matrix(pred, gold):
     if not isinstance(pred, set):
@@ -221,8 +221,6 @@ def parts_f1(candidates, gold_parts, parts_by_doc=None):
         part = c.part.get_span()
         for p in get_implied_parts(part, doc, parts_by_doc):
             parts.add((doc, p))
-    # parts = set([(c.part.parent.document.name.upper(), c.part.get_span()) for c in candidates])
-    # import pdb; pdb.set_trace()
     TP_set = parts.intersection(gold_parts)
     TP = len(TP_set)
     FP_set = parts.difference(gold_parts)

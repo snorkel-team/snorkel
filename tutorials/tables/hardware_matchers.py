@@ -16,7 +16,6 @@ part_rgx = '|'.join([eeca_rgx, jedec_rgx, jis_rgx, others_rgx])
 # modifiers = '(?:[\/\-][A-Z]{,2})*'
 # part_rgx = '(' + '|'.join([eeca_rgx, jedec_rgx, jis_rgx, others_rgx]) + ')' + modifiers
 part_rgx_matcher = RegexMatchSpan(rgx=part_rgx, longest_match_only=False)
-matchers['part_rgx'] = part_rgx_matcher
 
 def part_conditions(part):
     """throttle parts that are in tables of device/replacement parts"""
@@ -29,6 +28,7 @@ def part_conditions(part):
                     get_left_ngrams(part, window=10),
                     get_aligned_ngrams(part)])))
 part_lambda_matcher = LambdaFunctionMatch(func=part_conditions)
+matchers['part_rgx'] = part_rgx_matcher
 matchers['part'] = Intersect(part_rgx_matcher, part_lambda_matcher)
 
 def attr_in_table(attr):
@@ -43,10 +43,8 @@ def ce_v_max_conditions(attr):
     return overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(attr, spread=[0,3], n_max=3))
 ce_v_max_row_matcher = LambdaFunctionMatch(func=ce_v_max_conditions)
 
-
 matchers['ce_v_max_rgx'] = ce_v_max_rgx_matcher
 matchers['ce_v_max'] = Intersect(ce_v_max_rgx_matcher, attr_in_table_matcher, ce_v_max_row_matcher)
-# matchers['ce_v_max'] = ce_v_max_rgx_matcher
 
 ### POLARITY ####
 polarity_rgx_matcher = RegexMatchSpan(rgx=r'NPN|PNP', longest_match_only=False, ignore_case=True)

@@ -218,37 +218,34 @@ stg_temp_min_lfs = stg_temp_lfs + [
 
 ### VOLTAGE ###
 
-def voltage_random():
-    return int(random() < 0.2)
-
 def LF_aligned_or_global(c):
     return 1 if (same_row(c) or
                  is_horz_aligned(c) or
-                 not c.part.is_tabular()) else -1
+                 not c.part.is_tabular()) else 0 # -1
 
 def LF_same_table_must_align(c):
-    return -1 if (same_table(c) and not is_horz_aligned(c)) else voltage_random()
+    return -1 if (same_table(c) and not is_horz_aligned(c)) else 0
 
 def LF_voltage_not_in_table(c):
-    return -1 if c.attr.parent.table is None else voltage_random()
+    return -1 if c.attr.parent.table is None else 0
 
 def LF_low_table_num(c):
     return -1 if (c.attr.parent.table and
-        c.attr.parent.table.position > 2) else voltage_random()
+        c.attr.parent.table.position > 2) else 0
 
 bad_keywords = set(['continuous', 'cut-off', 'gain'])
 def LF_bad_keywords_in_row(c):
-    return -1 if overlap(bad_keywords, get_row_ngrams(c.attr)) else voltage_random()
+    return -1 if overlap(bad_keywords, get_row_ngrams(c.attr)) else 0
 
 def LF_equals_in_row(c):
-    return -1 if overlap('=', get_row_ngrams(c.attr)) else voltage_random()
+    return -1 if overlap('=', get_row_ngrams(c.attr)) else 0
 
 def LF_i_in_row(c):
-    return -1 if overlap('i', get_row_ngrams(c.attr)) else voltage_random()
+    return -1 if overlap('i', get_row_ngrams(c.attr)) else 0
 
 def LF_too_many_numbers_row(c):
     num_numbers = list(get_row_ngrams(c.attr, attrib="ner_tags")).count('number')
-    return -1 if num_numbers >= 4 else voltage_random()
+    return -1 if num_numbers >= 4 else 0
 
 voltage_lfs = [
     LF_aligned_or_global,
@@ -264,7 +261,7 @@ voltage_lfs = [
 # CE_V_MAX #
 ce_keywords = set(['collector emitter', 'collector-emitter', 'collector - emitter'])
 def LF_ce_keywords_in_row(c):
-    return 1 if overlap(ce_keywords, get_row_ngrams(c.attr, spread=[0,3], n_max=3)) else -1
+    return 1 if overlap(ce_keywords, get_row_ngrams(c.attr, spread=[0,3], n_max=3)) else 0 # -1
 
 def LF_ce_keywords_horz(c):
     return 1 if overlap(ce_keywords, get_horz_ngrams(c.attr)) else 0
@@ -283,13 +280,19 @@ non_ce_voltage_keywords = set(['collector-base', 'collector - base', 'emitter-ba
 def LF_non_ce_voltages_in_row(c):
     return -1 if overlap(non_ce_voltage_keywords, get_row_ngrams(c.attr, spread=[0,3], n_max=3)) else 0
 
+def LF_first_two_pages(c):
+    return 1 if get_page(c) in [1, 2] else 0 #-1
+
+def LF_
+
 ce_v_max_lfs = voltage_lfs + [
     LF_ce_keywords_in_row,
     LF_ce_keywords_horz,
     LF_ce_abbrevs_in_row,
     LF_head_ends_with_ceo,
     LF_ce_abbrevs_horz,
-    LF_non_ce_voltages_in_row
+    LF_non_ce_voltages_in_row,
+    LF_first_two_pages
 ]
 
 ### GETTER ###

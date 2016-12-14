@@ -87,5 +87,4 @@ def get_matcher(attr, dict_path=None):
             combined_matcher = Union(parts_dict_matcher, matchers[attr])
             print "Using combined matcher."
             return combined_matcher
-            # return parts_dict_matcher
     return matchers[attr]

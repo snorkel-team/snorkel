@@ -12,6 +12,9 @@ eeca_rgx = '([ABC][A-Z][WXYZ]?[0-9]{3,5}(?:[A-Z]){0,5}[0-9]?[A-Z]?(?:-[A-Z0-9]{1
 jedec_rgx = '(2N\d{3,4}[A-Z]{0,5}[0-9]?[A-Z]?)'
 jis_rgx = '(2S[ABCDEFGHJKMQRSTVZ]{1}[\d]{2,4})'
 others_rgx = '((?:NSVBC|SMBT|MJ|MJE|MPS|MRF|RCA|TIP|ZTX|ZT|ZXT|TIS|STD|BUV|TIPL|DTC|MMBT|SMMBT|PZT|FZT){1}[\d]{2,4}[A-Z]{0,3}(?:-[A-Z0-9]{0,6})?(?:[-][A-Z0-9]{0,1})?)'
+
+add_rgx = '^[A-Z0-9\-]{5,15}$'
+
 part_rgx = '|'.join([eeca_rgx, jedec_rgx, jis_rgx, others_rgx])
 # modifiers = '(?:[\/\-][A-Z]{,2})*'
 # part_rgx = '(' + '|'.join([eeca_rgx, jedec_rgx, jis_rgx, others_rgx]) + ')' + modifiers
@@ -61,6 +64,22 @@ matchers['stg_temp_min'] = RegexMatchSpan(rgx=r'-[56][05]', longest_match_only=F
 matchers['polarity'] = RegexMatchSpan(rgx=r'NPN|PNP', longest_match_only=False, ignore_case=True)
 matchers['ce_v_max'] = RegexMatchSpan(rgx=r'\d{1,2}[05]', longest_match_only=False)
 
+def common_prefix_length_diff(str1, str2):
+    for i in range(min(len(str1), len(str2))):
+        if str1[i] != str2[i]:
+            return min(len(str1), len(str2)) - i
+    return 0
+
+def part_file_name_conditions(attr):
+    file_name = attr.parent.document.name
+    if len(file_name.split('_')) != 2: return False
+    if attr.get_span()[0] == '-': return False
+    name = attr.get_span().replace('-', '')
+    return any(char.isdigit() for char in name) and any(char.isalpha() for char in name) and common_prefix_length_diff(file_name.split('_')[1], name) <= 2
+
+spart_file_name_lambda_matcher = LambdaFunctionMatch(func=part_file_name_conditions)
+matchers['file_part'] = Intersect(RegexMatchSpan(rgx=add_rgx, longest_match_only=True), spart_file_name_lambda_matcher)
+
 def get_digikey_parts_set(path):
     """
     Reads in the digikey part dictionary and yeilds each part.
@@ -81,7 +100,7 @@ def get_matcher(attr, dict_path=None):
         if dict_path:
             # If no path is provided, just get the normal parts matcher
             parts_dict_matcher = DictionaryMatch(d=get_digikey_parts_set(dict_path))
-            combined_matcher = Union(parts_dict_matcher, matchers[attr])
+            combined_matcher = Union(parts_dict_matcher, matchers[attr], matchers['file_part'])
             print "Using combined matcher."
             return combined_matcher
     return matchers[attr]

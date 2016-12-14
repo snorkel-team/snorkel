@@ -83,8 +83,9 @@ def get_matcher(attr, dict_path=None):
     if attr == "part":
         if dict_path:
             # If no path is provided, just get the normal parts matcher
-            parts_dict = DictionaryMatch(d=get_digikey_parts_set(dict_path))
-            combined_matcher = Union(parts_dict, matchers[attr])
+            parts_dict_matcher = DictionaryMatch(d=get_digikey_parts_set(dict_path))
+            combined_matcher = Union(parts_dict_matcher, matchers[attr])
             print "Using combined matcher."
             return combined_matcher
+            # return parts_dict_matcher
     return matchers[attr]

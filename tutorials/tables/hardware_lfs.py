@@ -244,7 +244,7 @@ def LF_current_in_row(c):
     return -1 if overlap(['i', 'ic', 'mA'], get_row_ngrams(c.attr)) else 0
 
 def LF_V_aligned(c):
-    return 1 if overlap('V', get_aligned_ngrams(c, lower=False))
+    return 1 if overlap('V', get_aligned_ngrams(c, lower=False)) else 0
 
 def LF_too_many_numbers_horz(c):
     num_numbers = list(get_horz_ngrams(c.attr, attrib="ner_tags")).count('number')
@@ -272,7 +272,7 @@ def LF_ce_keywords_horz(c):
 
 ce_abbrevs = set(['ceo', 'vceo']) # 'value', 'rating'
 def LF_ce_abbrevs_in_row(c):
-    return 1 if overlap(ce_abbrevs, get_row_ngrams(c.attr, spread=[0,3])) else 0
+    return 1 if overlap(ce_abbrevs, get_row_ngrams(c.attr)) else 0
 
 def LF_ce_abbrevs_horz(c):
     return 1 if overlap(ce_abbrevs, get_horz_ngrams(c.attr)) else 0

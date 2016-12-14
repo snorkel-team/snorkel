@@ -221,7 +221,7 @@ stg_temp_min_lfs = stg_temp_lfs + [
 def LF_aligned_or_global(c):
     return 1 if (same_row(c) or
                  is_horz_aligned(c) or
-                 not c.part.is_tabular()) else 0 # -1
+                 not c.part.is_tabular()) else -1
 
 def LF_same_table_must_align(c):
     return -1 if (same_table(c) and not is_horz_aligned(c)) else 0
@@ -233,19 +233,19 @@ def LF_low_table_num(c):
     return -1 if (c.attr.parent.table and
         c.attr.parent.table.position > 2) else 0
 
-bad_keywords = set(['continuous', 'cut-off', 'gain'])
+bad_keywords = set(['continuous', 'cut-off', 'gain', 'breakdown'])
 def LF_bad_keywords_in_row(c):
-    return -1 if overlap(bad_keywords, get_row_ngrams(c.attr)) else 0
+    return -1 if overlap(bad_keywords, get_row_ngrams(c.attr), spread=[0,3]) else 0
 
 def LF_equals_in_row(c):
     return -1 if overlap('=', get_row_ngrams(c.attr)) else 0
 
-def LF_i_in_row(c):
-    return -1 if overlap('i', get_row_ngrams(c.attr)) else 0
+def LF_current_in_row(c):
+    return -1 if overlap(['i', 'ic', 'mA'], get_row_ngrams(c.attr, spread=[0,3])) else 0
 
-def LF_too_many_numbers_row(c):
-    num_numbers = list(get_row_ngrams(c.attr, attrib="ner_tags")).count('number')
-    return -1 if num_numbers >= 4 else 0
+def LF_too_many_numbers_horz(c):
+    num_numbers = list(get_horz_ngrams(c.attr, attrib="ner_tags")).count('number')
+    return -1 if num_numbers > 3 else 0
 
 voltage_lfs = [
     LF_aligned_or_global,
@@ -254,8 +254,8 @@ voltage_lfs = [
     LF_voltage_not_in_table,
     LF_bad_keywords_in_row,
     LF_equals_in_row,
-    LF_i_in_row,
-    LF_too_many_numbers_row
+    LF_current_in_row,
+    LF_too_many_numbers_horz
 ]
 
 # CE_V_MAX #

@@ -77,7 +77,7 @@ def get_digikey_parts_set(path):
     return all_parts
 
 def get_matcher(attr, dict_path=None):
-    if attr == "part":
+    if attr.startswith("part"):
         if dict_path:
             # If no path is provided, just get the normal parts matcher
             parts_dict_matcher = DictionaryMatch(d=get_digikey_parts_set(dict_path))

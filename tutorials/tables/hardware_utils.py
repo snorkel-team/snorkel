@@ -207,37 +207,6 @@ def entity_level_f1(candidates, gold_file, attribute=None, corpus=None, parts_by
     return map(lambda x: sorted(list(x)), [TP_set, FP_set, FN_set])
 
 
-# def entity_level_f1(tp, fp, tn, fn, gold_file, corpus, attrib):
-#     docs = [(doc.name).upper() for doc in corpus.documents.all()] if corpus else None
-#     gold_dict = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=(attrib is not None), val_on=True, attribute=attrib)
-
-#     TP = FP = TN = FN = 0
-#     pos = set()
-#     for c in tp.union(fp):
-#         (doc, part, attr) = candidate_to_entity(c)
-#         for p in get_implied_parts(part, doc, parts_by_doc):
-#             pos.add((doc, p, val))
-#     TP_set = pos.intersection(gold_dict)
-#     TP = len(TP_set)
-#     FP_set = pos.difference(gold_dict)
-#     FP = len(FP_set)
-#     FN_set = gold_dict.difference(pos)
-#     FN = len(FN_set)
-
-#     prec = TP / float(TP + FP) if TP + FP > 0 else float('nan')
-#     rec  = TP / float(TP + FN) if TP + FN > 0 else float('nan')
-#     f1   = 2 * (prec * rec) / (prec + rec) if prec + rec > 0 else float('nan')
-#     print "========================================"
-#     print "Scoring on Entity-Level Gold Data"
-#     print "========================================"
-#     print "Corpus Precision {:.3}".format(prec)
-#     print "Corpus Recall    {:.3}".format(rec)
-#     print "Corpus F1        {:.3}".format(f1)
-#     print "----------------------------------------"
-#     print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
-#     print "========================================\n"
-#     return map(lambda x: sorted(list(x)), [TP_set, FP_set, FN_set])
-
 def get_implied_parts(part, doc, parts_by_doc):
     yield part
     if parts_by_doc:

@@ -29,7 +29,7 @@ matchers['part_rgx'] = part_rgx_matcher
 #                     get_left_ngrams(part, window=10),
 #                     get_aligned_ngrams(part)])))
 def part_conditions(part):
-    col_ngrmas = set(get_col_ngrams(part))
+    col_ngrams = set(get_col_ngrams(part))
     return not (overlap(['replacement'], col_ngrams) or
         (len(col_ngrams) > 25 and 'device' in col_ngrams) or 
         get_prev_sibling_tags(c.part).count('p') > 125 or

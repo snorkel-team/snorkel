@@ -80,11 +80,8 @@ class Intersect(Matcher):
     """Takes the intersection of candidate sets returned by child operators"""
     def f(self, c):
         for child in self.children:
-            try:
-                if not child.f(c):
-                    return False
-            except:
-                import pdb; pdb.set_trace()
+            if not child.f(c):
+                return False
         return True 
 
 class Inverse(Matcher):

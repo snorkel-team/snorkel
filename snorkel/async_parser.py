@@ -14,6 +14,7 @@ import codecs
 from multiprocessing import Pool
 from parser import OmniParser
 from models.meta import new_engine, new_session
+from async_utils import run_round_robin
 
 class DocParser:
     """Parse a file into a Document object."""
@@ -107,8 +108,6 @@ def parse_corpus(session, corpus_name, path, doc_parser, context_parser, max_doc
     if max_docs is None: max_docs = len(fpaths)
     fpaths = fpaths[:min(max_docs, len(fpaths))]
     args = fpaths
-    # Actual jobs will assume the shorter of the two lists 
-    pb = ProgressBar(len(args))
     # Make sure the corpus exists so that we can add documents to it in workers
     corpus = session.query(Corpus).filter(Corpus.name==corpus_name).one_or_none()
     if corpus is not None:
@@ -119,12 +118,6 @@ def parse_corpus(session, corpus_name, path, doc_parser, context_parser, max_doc
         session.add(corpus)
         session.commit()
     # Asynchronously parse files
-    pool = Pool(parallel, initializer=_init_parse_worker, initargs=(corpus_name,))
-    #print 'Working on ', fpaths
-    for i, _result in enumerate(pool.imap_unordered(_parallel_parse, args)):
-        pb.bar(i)
-    pool.close()
-    pool.join()
-    pb.close()
+    run_round_robin(_parallel_parse, parallel, args, _init_parse_worker, (corpus_name,))
     # Load the updated corpus with all documents from workers
     return session.query(Corpus).filter(Corpus.name==corpus_name).one()

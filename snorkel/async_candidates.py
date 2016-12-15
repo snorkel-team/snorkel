@@ -7,7 +7,7 @@ from models.meta import new_session, new_engine
 from utils import ProgressBar, get_ORM_instance
 from models import CandidateSet
 from models.context import Document, Corpus
-from async_utils import run_in_parallel
+from async_utils import run_in_parallel, run_round_robin
 from multiprocessing import Pool
 
 def _extract_worker(start, end, corpus_name, candidateset_name, extractor):
@@ -55,17 +55,10 @@ def parallel_extract(session, extractor, corpus, candidateset_name, parallel, dy
     if dynamic_schedule:
         _extractor = extractor
         _candidate_set = c
-        pb = ProgressBar(len(corpus))
-        pool = Pool(parallel, initializer=_init_extraction_worker)
         args = [doc.id for doc in corpus.documents]
-        #print 'Working on ', fpaths
-        for i, _result in enumerate(pool.imap_unordered(_extract_worker_rr, args)):
-            pb.bar(i)
-        pool.close()
-        pool.join()
-        pb.close()
+        run_round_robin(_extract_worker_rr, parallel, args, _init_extraction_worker)
     else:
         default_args = (corpus.name, candidateset_name, extractor)
         # Run extraction jobs
         run_in_parallel(_extract_worker, parallel, len(corpus), default_args)
-    return get_ORM_instance(CandidateSet, session, candidateset_name)  
+    return get_ORM_instance(CandidateSet, session, candidateset_name)

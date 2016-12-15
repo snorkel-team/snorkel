@@ -6,6 +6,10 @@ Created on Dec 7, 2016
 from multiprocessing.process import Process
 from models.meta import *
 import subprocess
+from utils import ProgressBar
+from multiprocessing.pool import Pool
+from time import sleep
+from threading import Thread
    
 def run_in_parallel(worker, parallel, num_jobs, copy_args = ()):
     '''
@@ -33,6 +37,36 @@ def run_in_parallel(worker, parallel, num_jobs, copy_args = ()):
     ps = [Process(target=worker, args=arg) for arg in worker_args]
     for p in ps: p.start()
     for p in ps: p.join()
+    
+def run_round_robin(worker, parallel, args, initializer=None, initargs = ()):
+    pb = ProgressBar(len(args))
+    pool = Pool(parallel, initializer=initializer, initargs=initargs)
+    for i, _result in enumerate(pool.imap_unordered(worker, args)):
+        pb.bar(i)
+    pool.close()
+    pool.join()
+    pb.close()
+    
+def run_queue(queue, worker, arg_func, parallel, jobs):
+    '''
+    Worker needs to check for None vals in queue for termination
+    '''
+    total = len(jobs)
+    pb = ProgressBar(total)
+    workers = [Process(target=worker, args=arg_func(i)) for i in xrange(parallel)]
+    for w in workers: w.start()
+    for i, j in enumerate(jobs):
+        queue.put(j)
+    for _ in workers: queue.put(None)
+    def pb_update():
+        while not queue.empty():
+            pb.bar(total-queue.qsize())
+            sleep(1)
+    pb_update_thread = Thread(target=pb_update)
+    pb_update_thread.start()
+    for w in workers: w.join()
+    pb_update_thread.join(timeout=1)
+    pb.close()
 
 def copy_postgres(segment_file_blob, table_name, tsv_columns):
     '''
@@ -47,3 +81,4 @@ def copy_postgres(segment_file_blob, table_name, tsv_columns):
             (segment_file_blob, DBNAME, DBUSER, table_name, tsv_columns)
     _out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
     print _out
+    

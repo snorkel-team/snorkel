@@ -16,7 +16,8 @@ from collections import namedtuple
 import numpy as np
 import codecs
 import uuid
-from async_utils import run_in_parallel, copy_postgres
+from async_utils import run_in_parallel, copy_postgres, run_queue
+from multiprocessing.queues import Queue
 
 # Used to conform to existing annotation key API call
 _TempKey = namedtuple('TempKey', ['id', 'name'])
@@ -160,8 +161,33 @@ def _annotate_worker(start, end, name, table_name, job_id, annotator):
             writer.write('\t'.join(row) + '\n')
         if pb: pb.close()
 
+
+_candidate_queue = None
+def _annotate_queue_worker(name, table_name, job_id, annotator, worker_id):
+    '''
+    Writes raw rows via psql, bypassing ORM.
+    Pipes extraction results to the STDIN of a psql COPY process.
+    Efficient in terms both of memory and CPU utilization.
+    '''
+
+    # Create separate engine for each worker to prevent concurrent connection problems
+    engine = new_engine()
+    WorkerSession = new_session(engine)
+    session = WorkerSession()
     
-def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_all_feats):
+    # Computes and pipe rows to the COPY process
+    segment_path = os.path.join(segment_dir, _segment_filename(table_name, job_id, worker_id, 0))
+    with codecs.open(segment_path, 'w', encoding='utf-8') as writer:
+        while True:
+            cid = _candidate_queue.get()
+            if cid is None: break
+            candidate = session.query(Candidate).filter(Candidate.id==cid).one()
+            # Runs the actual extraction function
+            keys, values = zip(*list(annotator(candidate)))
+            row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
+            writer.write('\t'.join(row) + '\n')
+    
+def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_all_feats, dynamic_scheduling=False):
     '''
     Extracts features for candidates in parallel
     @var candidates: CandidateSet to extract features from
@@ -171,6 +197,7 @@ def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_
     @var feature_extractor: An extractor lambda that take a candidate and yield key-value
     pairs
     '''
+    global _candidate_queue
     suffix = '_labels' if lfs else '_features'
     table_name = get_sql_name(candidates.name) + suffix 
     key_table_name = (get_sql_name(keyset) + suffix if keyset else table_name) + '_keys'
@@ -188,7 +215,12 @@ def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_
         
         # Clear any previous run temp files if any
         copy_args = (candidates.name, table_name, job_id, annotator)
-        run_in_parallel(_annotate_worker, parallel, len(candidates), copy_args=copy_args)
+        if dynamic_scheduling:
+            _candidate_queue = Queue()
+            arg_func = lambda i: copy_args+(i,)
+            run_queue(_candidate_queue, _annotate_queue_worker, arg_func, parallel, [c.id for c in candidates])
+        else:
+            run_in_parallel(_annotate_worker, parallel, len(candidates), copy_args=copy_args)
         copy_postgres(segment_file_blob, table_name, 'candidate_id, keys, values')
         remove_files(segment_file_blob)
         con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id)' % table_name)

@@ -32,14 +32,14 @@ def part_conditions(part):
     col_ngrams = set(get_col_ngrams(part))
     return not (overlap(['replacement'], col_ngrams) or
         (len(col_ngrams) > 25 and 'device' in col_ngrams) or 
-        get_prev_sibling_tags(c.part).count('p') > 125 or
+        get_prev_sibling_tags(part).count('p') > 125 or
         overlap(['complement','complementary', 'empfohlene'], 
                          chain.from_iterable([
-                             get_left_ngrams(c.part, window=10),
-                             get_aligned_ngrams(c.part),
-                             get_neighbor_phrase_ngrams(c.part)])) or
-        'please' in get_left_ngrams(c.part, window=99) or 
-        get_max_col_num(c.part) > 4)
+                             get_left_ngrams(part, window=10),
+                             get_aligned_ngrams(part),
+                             get_neighbor_phrase_ngrams(part)])) or
+        'please' in get_left_ngrams(part, window=99) or 
+        get_max_col_num(part) > 4)
 part_filter_matcher = LambdaFunctionMatch(func=part_conditions)
 
 def common_prefix_length_diff(str1, str2):

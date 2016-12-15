@@ -22,7 +22,7 @@ def LF_replacement_table(c):
 
 def LF_many_p_siblings(c):
     # e.g., CentralSemiconductorCorp_2N4013.pdf
-    return -1 if get_prev_sibling_tags(c.part).count('p') > 25 else 0
+    return -1 if get_prev_sibling_tags(c.part).count('p') > 125 else 0
 
 def LF_part_complement(c):
     return -1 if overlap(['complement','complementary', 'empfohlene'], 

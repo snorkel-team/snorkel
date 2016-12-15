@@ -8,7 +8,7 @@ matchers = {}
 eeca_rgx = '([ABC][A-Z][WXYZ]?[0-9]{3,5}(?:[A-Z]){0,5}[0-9]?[A-Z]?(?:-[A-Z0-9]{1,7})?(?:[-][A-Z0-9]{1,2})?(?:\/DG)?)'
 jedec_rgx = '(2N\d{3,4}[A-Z]{0,5}[0-9]?[A-Z]?)'
 jis_rgx = '(2S[ABCDEFGHJKMQRSTVZ]{1}[\d]{2,4})'
-others_rgx = '((?:NSVBC|SMBT|MJ|MJE|MPS|MRF|RCA|TIP|ZTX|ZT|ZXT|TIS|STD|BUV|TIPL|DTC|MMBT|SMMBT|PZT|FZT){1}[\d]{2,4}[A-Z]{0,3}(?:-[A-Z0-9]{0,6})?(?:[-][A-Z0-9]{0,1})?)'
+others_rgx = '((?:NSVBC|SMBT|MJ|MJE|MPS|MRF|RCA|TIP|ZTX|ZT|ZXT|TIS|TIPL|DTC|MMBT|SMMBT|PZT|FZT|STD|BUV|PBSS|KSC|CXT|FCX|CMPT){1}[\d]{2,4}[A-Z]{0,5}(?:-[A-Z0-9]{0,6})?(?:[-][A-Z0-9]{0,1})?)'
 
 add_rgx = '^[A-Z0-9\-]{5,15}$'
 
@@ -22,7 +22,7 @@ def part_conditions(part):
     aligned_ngrams = set(get_aligned_ngrams(part))
     return not (overlap(['replacement'], aligned_ngrams) or
         (len(aligned_ngrams) > 25 and 'device' in aligned_ngrams) or
-        get_prev_sibling_tags(part).count('p') > 25 or # CentralSemiconductorCorp_2N4013.pdf:
+        get_prev_sibling_tags(part).count('p') > 125 or # CentralSemiconductorCorp_2N4013.pdf:
         overlap(['complementary', 'complement', 'empfohlene'], 
                 chain.from_iterable([
                     get_left_ngrams(part, window=10),

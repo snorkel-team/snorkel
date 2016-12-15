@@ -70,8 +70,7 @@ ce_v_max_row_matcher = LambdaFunctionMatch(func=ce_v_max_conditions)
 matchers['ce_v_max_rgx'] = ce_v_max_rgx_matcher
 
 
-matchers['part'] = Union(part_rgx_matcher, part_file_name_matcher)
-# matchers['part'] = Intersect(part_rgx_matcher, part_file_name_matcher, part_filter_matcher)
+matchers['part'] = Intersect(Union(part_rgx_matcher, part_file_name_matcher), part_filter_matcher)
 matchers['stg_temp_max'] = RegexMatchSpan(rgx=r'(?:[1][5-9]|20)[05]', longest_match_only=False)
 matchers['stg_temp_min'] = RegexMatchSpan(rgx=r'-[56][05]', longest_match_only=False)
 matchers['polarity'] = Intersect(polarity_rgx_matcher, polarity_lambda_matcher)

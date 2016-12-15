@@ -16,6 +16,7 @@ part_rgx = '|'.join([eeca_rgx, jedec_rgx, jis_rgx, others_rgx])
 # modifiers = '(?:[\/\-][A-Z]{,2})*'
 # part_rgx = '(' + '|'.join([eeca_rgx, jedec_rgx, jis_rgx, others_rgx]) + ')' + modifiers
 part_rgx_matcher = RegexMatchSpan(rgx=part_rgx, longest_match_only=True)
+matchers['part_rgx'] = part_rgx_matcher
 
 def part_conditions(part):
     """throttle parts that are in tables of device/replacement parts"""
@@ -27,8 +28,7 @@ def part_conditions(part):
                 chain.from_iterable([
                     get_left_ngrams(part, window=10),
                     get_aligned_ngrams(part)])))
-part_lambda_matcher = LambdaFunctionMatch(func=part_conditions)
-matchers['part_rgx'] = part_rgx_matcher
+part_filter_matcher = LambdaFunctionMatch(func=part_conditions)
 
 def common_prefix_length_diff(str1, str2):
     for i in range(min(len(str1), len(str2))):
@@ -70,7 +70,7 @@ ce_v_max_row_matcher = LambdaFunctionMatch(func=ce_v_max_conditions)
 matchers['ce_v_max_rgx'] = ce_v_max_rgx_matcher
 
 
-matchers['part'] = Intersect(part_rgx_matcher, part_file_name_matcher, part_lambda_matcher)
+matchers['part'] = Intersect(part_rgx_matcher, part_file_name_matcher, part_filter_matcher)
 matchers['stg_temp_max'] = RegexMatchSpan(rgx=r'(?:[1][5-9]|20)[05]', longest_match_only=False)
 matchers['stg_temp_min'] = RegexMatchSpan(rgx=r'-[56][05]', longest_match_only=False)
 matchers['polarity'] = Intersect(polarity_rgx_matcher, polarity_lambda_matcher)

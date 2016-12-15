@@ -18,16 +18,28 @@ part_rgx = '|'.join([eeca_rgx, jedec_rgx, jis_rgx, others_rgx])
 part_rgx_matcher = RegexMatchSpan(rgx=part_rgx, longest_match_only=True)
 matchers['part_rgx'] = part_rgx_matcher
 
+# def part_conditions(part):
+#     """throttle parts that are in tables of device/replacement parts"""
+#     aligned_ngrams = set(get_aligned_ngrams(part))
+#     return not (overlap(['replacement'], aligned_ngrams) or
+#         (len(aligned_ngrams) > 25 and 'device' in aligned_ngrams) or
+#         get_prev_sibling_tags(part).count('p') > 125 or # CentralSemiconductorCorp_2N4013.pdf:
+#         overlap(['complementary', 'complement', 'empfohlene'], 
+#                 chain.from_iterable([
+#                     get_left_ngrams(part, window=10),
+#                     get_aligned_ngrams(part)])))
 def part_conditions(part):
-    """throttle parts that are in tables of device/replacement parts"""
-    aligned_ngrams = set(get_aligned_ngrams(part))
-    return not (overlap(['replacement'], aligned_ngrams) or
-        (len(aligned_ngrams) > 25 and 'device' in aligned_ngrams) or
-        get_prev_sibling_tags(part).count('p') > 125 or # CentralSemiconductorCorp_2N4013.pdf:
-        overlap(['complementary', 'complement', 'empfohlene'], 
-                chain.from_iterable([
-                    get_left_ngrams(part, window=10),
-                    get_aligned_ngrams(part)])))
+    col_ngrmas = set(get_col_ngrams(part))
+    return not (overlap(['replacement'], col_ngrams) or
+        (len(col_ngrams) > 25 and 'device' in col_ngrams) or 
+        get_prev_sibling_tags(c.part).count('p') > 125 or
+        overlap(['complement','complementary', 'empfohlene'], 
+                         chain.from_iterable([
+                             get_left_ngrams(c.part, window=10),
+                             get_aligned_ngrams(c.part),
+                             get_neighbor_phrase_ngrams(c.part)])) or
+        'please' in get_left_ngrams(c.part, window=99) or 
+        get_max_col_num(c.part) > 4)
 part_filter_matcher = LambdaFunctionMatch(func=part_conditions)
 
 def common_prefix_length_diff(str1, str2):

@@ -1,5 +1,3 @@
-rm -rf data/hardware
-
 echo "Downloading tables hardware data..."
 url=http://i.stanford.edu/hazy/share/hardware_data.tar.gz
 data_tar=hardware_data
@@ -10,8 +8,7 @@ elif type wget &>/dev/null; then
 fi
 
 echo "Unpacking tables hardware data..."
-tar -zxvf $data_tar.tar.gz
-mv $data_tar data/hardware
+tar -zxvf $data_tar.tar.gz -C data/hardware
 
 echo "Deleting tar file..."
 rm $data_tar.tar.gz

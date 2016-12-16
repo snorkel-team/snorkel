@@ -40,7 +40,7 @@ def part_conditions(part):
                              get_neighbor_phrase_ngrams(part)])) or
         'please' in get_left_ngrams(part, window=99) or 
         get_max_col_num(part) > 4)
-part_filter_matcher = LambdaFunctionMatch(func=part_conditions)
+part_filter= LambdaFunctionMatch(func=part_conditions)
 
 def common_prefix_length_diff(str1, str2):
     for i in range(min(len(str1), len(str2))):
@@ -81,8 +81,6 @@ ce_v_max_row_matcher = LambdaFunctionMatch(func=ce_v_max_conditions)
 
 matchers['ce_v_max_rgx'] = ce_v_max_rgx_matcher
 
-
-matchers['part'] = Intersect(Union(part_rgx_matcher, part_file_name_matcher), part_filter_matcher)
 matchers['stg_temp_max'] = RegexMatchSpan(rgx=r'(?:[1][5-9]|20)[05]', longest_match_only=False)
 matchers['stg_temp_min'] = RegexMatchSpan(rgx=r'-[56][05]', longest_match_only=False)
 matchers['polarity'] = Intersect(polarity_rgx_matcher, polarity_lambda_matcher)
@@ -103,10 +101,12 @@ def get_digikey_parts_set(path):
     return all_parts
 
 def get_matcher(attr, dict_path=None):
-    if attr.startswith("part") and dict_path:
-            # If no path is provided, just get the normal parts matcher
-            parts_dict_matcher = DictionaryMatch(d=get_digikey_parts_set(dict_path))
-            combined_matcher = Union(parts_dict_matcher, matchers[attr])
-            print "Using combined matcher."
-            return combined_matcher
+    if dict_path:
+        # If no path is provided, just get the normal parts matcher
+        part_dict_matcher = DictionaryMatch(d=get_digikey_parts_set(dict_path))
+        part_matchers = Union(part_rgx_matcher, part_dict_matcher, part_file_name_matcher)
+        print "Using combined matcher."
+    else:
+        part_matchers = Union(part_rgx_matcher, part_file_name_matcher)
+    matchers['part'] = Intersect(part_matchers, part_filter)
     return matchers[attr]

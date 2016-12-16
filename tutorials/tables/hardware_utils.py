@@ -360,15 +360,18 @@ def generate_parts_by_doc(contexts, part_matcher, part_ngrams, suffix_matcher, s
                     suffixes_by_doc[sts.parent.document.name.upper()].add(sts.get_span())
     pb.close()
 
-    # print parts_by_doc.values()
-    # print suffixes_by_doc.values()
-    # import pdb; pdb.set_trace()
-    # Restrict suffixes to full sets only
+    # Clean suffixes
     suffix_groups = [set(['A','B','C']), set(['R','O','Y']), set(['16','25','40']), set(['-16','-25','-40'])]
     for doc, suffixes in suffixes_by_doc.items():
+        parts = parts_by_doc[doc]
+        # Restrict suffixes to full sets only
         for sg in suffix_groups:
             if suffixes.intersection(sg) and suffixes.intersection(sg) != sg:
                 suffixes_by_doc[doc] = suffixes.difference(sg) 
+        # Only add suffixes to parts if no parts in the doc already have that suffix
+        for s in suffixes:
+            if any(s in part[5:] for part in parts):
+                suffixes_by_doc[doc] = suffixes_by_doc[doc].difference(s)
 
     # Process suffixes and parts
     print "Appending suffixes..."
@@ -378,28 +381,10 @@ def generate_parts_by_doc(contexts, part_matcher, part_ngrams, suffix_matcher, s
         pb.bar(i)
         for part in parts_by_doc[doc]:
             final_dict[doc].add(part)
-            # TODO: This portion is really specific to our suffixes. Ideally
-            # this kind of logic can be pased on the suffix_matcher that is
-            # pass in. Or something like that...
-            # The goal of this code is just to append suffixes to part numbers
-            # that don't already have suffixes in a reasonable way.
             suffixes = suffixes_by_doc[doc]
             if not any(s in part[4:] for s in suffixes):
                 for s in suffixes:
                     if s.isdigit(): s = '-' + s
                     final_dict[doc].add(part + s)
-            # for suffix in suffixes:
-            #     """
-            #     if the part has no suffix, add it
-            #     """
-            #     if 
-            #     if (suffix == "A" or suffix == "B" or suffix == "C"): # suffix.isalpha()?
-            #         if not any(x in part[2:] for x in ['A', 'B', 'C']):
-            #             final_dict[doc].add(part + suffix)
-            #     else: # if it's 16/25/40
-            #         if not suffix.startswith('-') and not any(x in part for x in ['16', '25', '40']):
-            #             final_dict[doc].add(part + '-' + suffix)
-            #         elif suffix.startswith('-') and not any(x in part for x in ['16', '25', '40']):
-            #             final_dict[doc].add(part + suffix)
     pb.close()
     return final_dict

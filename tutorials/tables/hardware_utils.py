@@ -360,6 +360,16 @@ def generate_parts_by_doc(contexts, part_matcher, part_ngrams, suffix_matcher, s
                     suffixes_by_doc[sts.parent.document.name.upper()].add(sts.get_span())
     pb.close()
 
+    print parts_by_doc.values()
+    print suffixes_by_doc.values()
+    import pdb; pdb.set_trace()
+    # Restrict suffixes to full sets only
+    suffix_groups = [set(['A','B','C']), set(['R','O','Y']), set(['16','25','40']), set(['-16','-25','-40'])]
+    for doc, suffixes in suffixes_by_doc.items():
+        for sg in suffix_groups:
+            if suffixes.intersection(sg) and suffixes.intersection(sg) != sg:
+                suffixes_by_doc[doc] = suffixes.difference(sg) 
+
     # Process suffixes and parts
     print "Appending suffixes..."
     final_dict = defaultdict(set)

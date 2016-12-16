@@ -32,6 +32,7 @@ def part_conditions(part):
     col_ngrams = set(get_col_ngrams(part))
     return not (overlap(['replacement'], col_ngrams) or
         (len(col_ngrams) > 25 and 'device' in col_ngrams) or 
+        ('top' in col_ngrams and 'mark' in col_ngrams) or
         get_prev_sibling_tags(part).count('p') > 125 or
         overlap(['complement','complementary', 'empfohlene'], 
                          chain.from_iterable([

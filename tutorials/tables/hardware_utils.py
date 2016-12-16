@@ -108,9 +108,9 @@ def most_common_document(candidates):
     return max_doc
 
 
-def separate_fns(FN, cfn):
+def separate_fns(FN, candidates):
     fn = set(FN)
-    unfound = fn.difference(set(cfn))
+    unfound = fn.difference(candidates)
     misclassified = fn.difference(unfound) 
     print "%d FNs" % len(fn)
     print "%d unfound" % len(unfound)
@@ -128,6 +128,7 @@ def separate_fps(fp, corpus, gold_file):
     print "%d bad_part" % len(bad_part)
     print "%d bad_relation" % len(bad_relation)
     return map(sorted, map(list, [bad_part, bad_relation]))
+
 
 def entity_confusion_matrix(pred, gold):
     if not isinstance(pred, set):

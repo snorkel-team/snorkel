@@ -108,15 +108,10 @@ def most_common_document(candidates):
     return max_doc
 
 
-def separate_fns(fn, cfn):
-    unfound = set()
-    misclassified = set()
-    for c in fn:
-        (doc, part, attr) = c
-        if (doc, part) in cfn:
-            unfound.add(c)
-        else:
-            misclassified.add(c)
+def separate_fns(FN, cfn):
+    fn = set(FN)
+    unfound = fn.difference(set(cfn))
+    misclassified = fn.difference(unfound) 
     print "%d FNs" % len(fn)
     print "%d unfound" % len(unfound)
     print "%d misclassified" % len(misclassified)
@@ -126,14 +121,9 @@ def separate_fns(fn, cfn):
 def separate_fps(fp, corpus, gold_file):
     gold_parts = get_gold_dict(gold_file, docs=[doc.name for doc in corpus.documents.all()],
                                doc_on=True, part_on=True, val_on=False)
-    bad_part = set()
-    bad_relation = set()
-    for c in fp:
-        (doc, part, attr) = c
-        if (doc, part) in gold_parts:
-            bad_relation.add(c)
-        else:
-            bad_part.add(c)
+    fp_parts = set((doc, part) for (doc, part, attr) in fp)
+    bad_relation = fp_parts.intersection(gold_parts)
+    bad_part = fp_parts.difference(bad_relation)
     print "%d FPs" % len(fp)
     print "%d bad_part" % len(bad_part)
     print "%d bad_relation" % len(bad_relation)

@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.sparse as sparse
 from scipy.optimize import minimize
-from learning_utils import score, sparse_abs
+from learning_utils import score, sparse_abs, calibration_plots
 from lstm import LSTMModel
 from sklearn import linear_model
 from .models import Parameter, ParameterSet
@@ -97,33 +97,34 @@ class NoiseAwareModel(object):
         """Return numpy array of elements in {-1,0,1} based on predicted marginal probabilities."""
         return np.array([1 if p > b else -1 if p < b else 0 for p in self.marginals(X)])
 
-    def score(self, X_test, L_test, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, display=True):
+    def score(self, X_test, L_test, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True, display=True):
         if L_test.shape[1] != 1:
             raise ValueError("L_test must have exactly one column.")
-        predict = self.predict(X_test, b=b)
-        train_marginals = self.marginals(self.X_train) if hasattr(self, 'X_train') and self.X_train is not None else None
-        test_marginals = self.marginals(X_test)
+        predict          = self.predict(X_test, b=b)
+        train_marginals  = self.marginals(self.X_train) if hasattr(self, 'X_train') and self.X_train is not None else None
+        test_marginals   = self.marginals(X_test)
+        test_candidates  = set()
+        test_labels      = []
+        test_predictions = []
 
-        test_candidates = set()
-        test_labels = []
+        # Collect error buckets
         tp = set()
         fp = set()
         tn = set()
         fn = set()
-
         for i in range(X_test.shape[0]):
             candidate = X_test.get_candidate(i)
             test_candidates.add(candidate)
-            try:
-                L_test_index = L_test.get_row_index(candidate)
-                test_label   = L_test[L_test_index, 0]
+            L_test_index = L_test.get_row_index(candidate)
+            test_label   = L_test[L_test_index, 0]
 
-                # Set unlabeled examples to -1 by default
-                if test_label == 0 and set_unlabeled_as_neg:
-                    test_label = -1
-              
-                # Bucket the candidates for error analysis
-                test_labels.append(test_label)
+            # Set unlabeled examples to -1 by default
+            if test_label == 0 and set_unlabeled_as_neg:
+                test_label = -1
+          
+            # Bucket the candidates for error analysis
+            test_labels.append(test_label)
+            if test_label != 0:
                 if test_marginals[i] > b:
                     if test_label == 1:
                         tp.add(candidate)
@@ -134,17 +135,22 @@ class NoiseAwareModel(object):
                         tn.add(candidate)
                     else:
                         fn.add(candidate)
-            except KeyError:
-                test_labels.append(-1)
-                if test_marginals[i] > b:
-                    fp.add(candidate)
-                else:
-                    tn.add(candidate)
 
-        # Print diagnostics chart and return error analysis candidate sets
         if display:
-            score(test_candidates, np.asarray(test_labels), np.asarray(predict), gold_candidate_set,
-                  train_marginals=train_marginals, test_marginals=test_marginals)
+
+            # Calculate scores unadjusted for TPs not in our candidate set
+            print_scores(len(tp), len(fp), len(tn), len(fn), title="Scores (Un-adjusted)")
+
+            # If a gold candidate set is provided, also calculate recall-adjusted scores
+            if gold_candidate_set is not None:
+                gold_fn = [c for c in gold_candidate_set if c not in test_candidates]
+                print "\n"
+                print_scores(len(tp), len(fp), len(tn), len(fn)+len(gold_fn), title="Corpus Recall-adjusted Scores")
+
+            # If training and test marginals provided, also print calibration plots
+            if train_marginals is not None and test_marginals is not None:
+                print "\nCalibration plot:"
+                calibration_plots(train_marginals, test_marginals, np.asarray(test_labels))
         return tp, fp, tn, fn
 
     def save(self, session, param_set_name):
@@ -169,6 +175,25 @@ class NoiseAwareModel(object):
         q = session.query(Parameter.value).join(ParameterSet).filter(ParameterSet.name == param_set_name)
         q = q.order_by(Parameter.feature_key_id)
         self.w = np.array([res[0] for res in q.all()])
+
+
+def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
+    prec    = ntp / float(ntp + nfp) if ntp + nfp > 0 else 0.0
+    rec     = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
+    f1      = (2 * prec * rec) / (prec + rec) if prec + rec > 0 else 0.0
+    pos_acc = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
+    neg_acc = ntn / float(ntn + nfp) if ntn + nfp > 0 else 0.0
+    print "========================================"
+    print title
+    print "========================================"
+    print "Pos. class accuracy: {:.3}".format(pos_acc)
+    print "Neg. class accuracy: {:.3}".format(neg_acc)
+    print "Precision            {:.3}".format(prec)
+    print "Recall               {:.3}".format(rec)
+    print "F1                   {:.3}".format(f1)
+    print "----------------------------------------"
+    print "TP: {} | FP: {} | TN: {} | FN: {}".format(ntp, nfp, ntn, nfn)
+    print "========================================\n"
 
 
 class LogRegSKLearn(NoiseAwareModel):

@@ -30,6 +30,12 @@ matchers['part_rgx'] = part_rgx_matcher
 #                     get_aligned_ngrams(part)])))
 def part_conditions(part):
     col_ngrams = set(get_col_ngrams(part))
+    if(part.parent.table != None):
+        for phrase in part.parent.document.phrases:
+            if(phrase.table != None):
+                if((phrase.table.position == part.parent.table.position-1) and (phrase.col_start == part.parent.col_start)):
+                    if('complement' in phrase.text):
+                        return False
     return not (overlap(['replacement'], col_ngrams) or
         (len(col_ngrams) > 25 and 'device' in col_ngrams) or 
         ('top' in col_ngrams and 'mark' in col_ngrams) or

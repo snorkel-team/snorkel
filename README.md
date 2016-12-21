@@ -38,6 +38,13 @@ pip install --requirement python-package-requirement.txt
 ```
 Note that `sudo` can be prepended to install dependencies system wide if this is an option and the above does not work.
 
+Snorkel currently relies on `numba`, which occasionally requires a bit more work to install! One option is to use [`conda`](https://www.continuum.io/downloads). If installing manually, you may just need to make sure the right version of `llvmlite` and LLVM is installed and used; for example on Ubuntu, run:
+```bash
+apt-get install llvm-3.8
+LLVM_CONFIG=/usr/bin/llvm-config-3.8 pip install llvmlite
+LLVM_CONFIG=/usr/bin/llvm-config-3.8 pip install numba
+```
+
 Finally, enable `ipywidgets`:
 ```bash
 jupyter nbextension enable --py widgetsnbextension --sys-prefix

@@ -101,6 +101,12 @@ class NaiveBayes(NoiseAwareModel):
 
     def marginals(self, X):
         return odds_to_prob(X.dot(self.w))
+    
+    def save(self, session, version):
+        raise NotImplementedError("Not implemented for generative model.")
+
+    def load(self, session, version):
+        raise NotImplementedError("Not implemented for generative model.")
 
 
 class GenerativeModelWeights(object):

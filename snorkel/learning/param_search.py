@@ -117,7 +117,7 @@ class GridSearch(object):
     def search_space(self):
         return product(param.get_all_values() for param in self.params)
 
-    def fit(self, X_validation, validation_labels, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, **model_hyperparams):
+    def fit(self, X_validation, validation_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True, **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1

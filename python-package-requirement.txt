@@ -6,7 +6,7 @@ lxml
 matplotlib
 nltk
 numba
-numbskull
+git+https://github.com/HazyResearch/numbskull@master
 numpy>=1.11
 pandas
 requests

@@ -1,5 +1,5 @@
 from fastmulticontext import fastmulticontext
-from ..models import Parameter, ParameterSet
+from ..models import Parameter
 import numpy as np
 import os
 from .utils import marginals_to_labels, MentionScorer, odds_to_prob
@@ -30,7 +30,7 @@ class NoiseAwareModel(object):
 
     def score(self, X_test, test_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True,
               display=True, scorer=MentionScorer, **kwargs):
-        s = scorer([X_test.get_candidate(i) for i in xrange(X_test.shape[0])],
+        s = scorer([X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])],
                    test_labels, gold_candidate_set)
         test_marginals = self.marginals(X_test, **kwargs)
         train_marginals = (self.marginals(self.X_train) if hasattr(self, 'X_train')
@@ -38,26 +38,22 @@ class NoiseAwareModel(object):
         return s.score(test_marginals, train_marginals, b=b,
                        set_unlabeled_as_neg=set_unlabeled_as_neg, display=display)
 
-    def save(self, session, param_set_name):
-        """Save the Parameter (weight) values, i.e. the model, as a new ParameterSet"""
+    def save(self, session, version=0):
+        """Save the Parameter (weight) values, i.e. the model"""
         # Check for X_train and w
         if not hasattr(self, 'X_train') or self.X_train is None or not hasattr(self, 'w') or self.w is None:
             name = self.__class__.__name__
             raise Exception("{0}.train() must be run, and must set {0}.X_train and {0}.w".format(name))
 
-        # Create new named ParameterSet
-        param_set = ParameterSet(name=param_set_name)
-        session.add(param_set)
-
         # Create and save a new set of Parameters- note that PK of params is (feature_key_id, param_set_id)
         # Note: We can switch to using bulk insert if this is too slow...
         for j, v in enumerate(self.w):
-            session.add(Parameter(feature_key_id=self.X_train.col_index[j], set=param_set, value=v))
+            session.add(Parameter(feature_key_id=self.X_train.col_index[j], value=v, version=version))
         session.commit()
 
-    def load(self, session, param_set_name):
-        """Load the Parameters into self.w, given ParameterSet.name"""
-        q = session.query(Parameter.value).join(ParameterSet).filter(ParameterSet.name == param_set_name)
+    def load(self, session, version=0):
+        """Load the Parameters into self.w, given parameter version"""
+        q = session.query(Parameter.value).filter(Parameter.version == version)
         q = q.order_by(Parameter.feature_key_id)
         self.w = np.array([res[0] for res in q.all()])
 

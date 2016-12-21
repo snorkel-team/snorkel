@@ -28,11 +28,15 @@ class NoiseAwareModel(object):
         """Return numpy array of elements in {-1,0,1} based on predicted marginal probabilities."""
         return marginals_to_labels(self.marginals(X), b)
 
-    def score(self, X_test, test_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True,
+    def score(self, session, X_test, test_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True,
               display=True, scorer=MentionScorer, **kwargs):
-        s = scorer([X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])],
-                   test_labels, gold_candidate_set)
-        test_marginals = self.marginals(X_test, **kwargs)
+        
+        # Get the test candidates
+        test_candidates = [X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])]
+
+        # Initialize scorer
+        s               = scorer(test_candidates, test_labels, gold_candidate_set)
+        test_marginals  = self.marginals(X_test, **kwargs)
         train_marginals = (self.marginals(self.X_train) if hasattr(self, 'X_train')
                            and self.X_train is not None else None)
         return s.score(test_marginals, train_marginals, b=b,

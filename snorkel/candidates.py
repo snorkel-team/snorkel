@@ -284,7 +284,6 @@ class PhraseToSpan(CandidateSpace):
     """
     Defines the space of candidates as all Phrases in a Document _x_,
     """
-
     def apply(self, context):
         if not isinstance(context, Document):
             raise TypeError("Input Contexts to PhraseToSpan.apply() must be of type Document")

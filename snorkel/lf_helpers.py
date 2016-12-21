@@ -9,6 +9,7 @@ from utils import tokens_to_ngrams
 from utils_table import *
 from utils_visual import *
 from .models import TemporarySpan, Phrase
+from candidates import Ngrams
 
 
 def get_text_splits(c):
@@ -555,32 +556,29 @@ def same_page(c):
 
 
 def get_horz_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
-    # TODO: this currently looks only in current table; 
-    #   precompute over the whole document/page instead
-    # TODO: this currently aligns based on phrases, not words
-    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
-    for span in spans:
-        if span.parent.table is None: continue
-        for phrase in span.parent.table.phrases:
-            if (bbox_horz_aligned(bbox_from_phrase(phrase), bbox_from_span(span)) and
-                        phrase is not span.parent):
-                for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
-                    yield ngram
+    for ngram in _get_direction_ngrams('horz', c, attrib, n_min, n_max, lower):
+        yield ngram
 
 
 def get_vert_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
+    for ngram in _get_direction_ngrams('vert', c, attrib, n_min, n_max, lower):
+        yield ngram
+
+
+def _get_direction_ngrams(direction, c, attrib, n_min, n_max, lower):
     # TODO: this currently looks only in current table;
     #   precompute over the whole document/page instead
-    # TODO: this currently aligns based on phrases, not words
+    bbox_direction_aligned = bbox_vert_aligned if direction == 'vert' else bbox_horz_aligned
+    ngrams_space = Ngrams(n_max=n_max, split_tokens=[])
+    f = (lambda w: w.lower()) if lower else (lambda w: w)
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     for span in spans:
-        if span.parent.table is None: continue
+        if not span.is_tabular() or not span.is_visual(): continue
         for phrase in span.parent.table.phrases:
-            if (bbox_vert_aligned(bbox_from_phrase(phrase), bbox_from_span(span)) and
-                        phrase is not span.parent):
-                for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
-                    yield ngram
-
+            for ts in ngrams_space.apply(phrase):
+                if (bbox_direction_aligned(bbox_from_span(ts), bbox_from_span(span)) and 
+                    not (phrase == span.parent and ts.get_span() in span.get_span())):
+                    yield ts.get_span()
 
 def get_vert_ngrams_left(c):
     # TODO

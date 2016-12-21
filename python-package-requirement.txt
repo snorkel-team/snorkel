@@ -14,3 +14,4 @@ sklearn
 wand
 selenium
 editdistance
+pyyaml

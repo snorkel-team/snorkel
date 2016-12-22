@@ -49,14 +49,16 @@ class UDFRunner(object):
         self.udf_kwargs = udf_kwargs
         self.udfs       = []
 
-    def run(self, xs, parallelism=None, progress_bar=True):
+    def apply(self, xs, parallelism=None, progress_bar=True):
         if parallelism is None or parallelism < 2:
-            self.run_st(xs, progress_bar=progress_bar)
+            self.apply_st(xs, progress_bar=progress_bar)
         else:
-            self.run_mt(xs, parallelism)
+            self.apply_mt(xs, parallelism)
 
-    def run_st(self, xs, progress_bar):
+    def apply_st(self, xs, progress_bar):
         """Run the UDF single-threaded, optionally with progress bar"""
+        udf = self.udf_class(**self.udf_kwargs)
+
         # Set up ProgressBar if possible
         pb = ProgressBar(len(xs)) if progress_bar and hasattr(xs, '__len__') else None
         
@@ -66,16 +68,16 @@ class UDFRunner(object):
                 pb.bar(i)
 
             # Apply UDF and add results to the session
-            for y in self.udf.apply(x):
-                self.udf.session.add(y)
+            for y in udf.apply(x):
+                udf.session.add(y)
 
         # Commit session and close progress bar if applicable
-        self.udf.session.commit()
+        udf.session.commit()
         if pb:
             pb.bar(len(xs))
             pb.close()
 
-    def run_mt(self, xs, parallelism):
+    def apply_mt(self, xs, parallelism):
         """Run the UDF multi-threaded using python multiprocessing"""
         # Fill a JoinableQueue with input objects
         # TODO: For low-memory scenarios, we'd want to limit total queue size here

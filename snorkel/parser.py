@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from .udf import UDF, UDFRunner
 from .models import Document, Sentence, construct_stable_id
 from .utils import ProgressBar, sort_X_on_Y
 import atexit
@@ -54,12 +54,10 @@ class DocParser:
     :param keep: the size of the random fraction of Documents to parse, default=1.0, i.e., all Documents
 
     """
-    def __init__(self, path, encoding="utf-8", keep=1.0):
-        self.path = path
+    def __init__(self, encoding="utf-8"):
         self.encoding = encoding
-        self.keep = keep
 
-    def parse(self):
+    def apply(self, path, keep=1.0):
         """
         Parse a file or directory of files into a set of Document objects.
 
@@ -67,11 +65,11 @@ class DocParser:
         - Output: A set of Document objects, which at least have a _text_ attribute,
                   and possibly a dictionary of other attributes.
         """
-        for fp in self._get_files():
+        for fp in self._get_files(path):
             file_name = os.path.basename(fp)
             if self._can_read(file_name):
                 for doc, text in self.parse_file(fp, file_name):
-                    if random.random() < self.keep:
+                    if random.random() < keep:
                         yield doc, text
 
     def get_stable_id(self, doc_id):
@@ -83,17 +81,17 @@ class DocParser:
     def _can_read(self, fpath):
         return True
 
-    def _get_files(self):
-        if os.path.isfile(self.path):
-            fpaths = [self.path]
-        elif os.path.isdir(self.path):
-            fpaths = [os.path.join(self.path, f) for f in os.listdir(self.path)]
+    def _get_files(self, path):
+        if os.path.isfile(path):
+            fpaths = [path]
+        elif os.path.isdir(path):
+            fpaths = [os.path.join(path, f) for f in os.listdir(path)]
         else:
-            fpaths = glob.glob(self.path)
+            fpaths = glob.glob(path)
         if len(fpaths) > 0:
             return fpaths
         else:
-            raise IOError("File or directory not found: %s" % (self.path,))
+            raise IOError("File or directory not found: %s" % (path,))
 
 class TSVDocParser(DocParser):
     """Simple parsing of TSV file with one (doc_name <tab> doc_text) per line"""
@@ -282,15 +280,16 @@ class CoreNLPHandler:
             yield parts
 
 
-class SentenceParser(object):
-    def __init__(self, tok_whitespace=False, split_newline=False, fn=None):
+class SentenceParser(UDF):
+    def __init__(self, tok_whitespace=False, split_newline=False, fn=None, x_queue=None):
         self.corenlp_handler = CoreNLPHandler(
-            tok_whitespace=tok_whitespace, split_newline=split_newline
-        )
-        self.fn              = fn
+            tok_whitespace=tok_whitespace, split_newline=split_newline)
+        self.fn = fn
+        super(SentenceParser, self).__init__(x_queue=x_queue)
 
-    def parse(self, doc, text):
-        """Parse a raw document as a string into a list of sentences"""
+    def apply(self, x):
+        """Given a Document object and its raw text, parse into preprocessed sentences"""
+        doc, text = x
         for parts in self.corenlp_handler.parse(doc, text):
             parts = self.fn(parts) if self.fn is not None else parts
             yield Sentence(**parts)

@@ -78,7 +78,7 @@ def get_between_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
-    :param lower: If false, all ngrams will be returned in lower case
+    :param lower: If true, all ngrams will be returned in lower case
     """
     if len(c) != 2:
         raise ValueError("Only applicable to binary Candidates")
@@ -119,7 +119,7 @@ def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
-    :param lower: If false, all ngrams will be returned in lower case
+    :param lower: If true, all ngrams will be returned in lower case
     """
     span = c if isinstance(c, TemporarySpan) else c[0]
     i = span.get_word_start()
@@ -143,7 +143,7 @@ def get_right_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
-    :param lower: If false, all ngrams will be returned in lower case
+    :param lower: If true, all ngrams will be returned in lower case
     """
     span = c if isinstance(c, TemporarySpan) else c[-1]
     i = span.get_word_end()
@@ -157,7 +157,7 @@ def contains_token(c, tok, attrib='words', lower=True):
     Return True if any of the contituent Spans contain the given token
     :param tok: The token being searched for
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
-    :param lower: If false, all ngrams will be returned in lower case
+    :param lower: If true, all ngrams will be returned in lower case
     """
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     f = (lambda w: w.lower()) if lower else (lambda w: w)
@@ -171,7 +171,7 @@ def contains_regex(c, rgx=None, attrib='words', sep=" ", ignore_case=True):
     :param rgx: The regex being searched for
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param sep: The separator to be used in concatening the retrieved tokens
-    :param lower: If false, all ngrams will be returned in lower case
+    :param lower: If true, all ngrams will be returned in lower case
     """
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     r = re.compile(rgx, flags=re.I if ignore_case else 0)
@@ -301,7 +301,7 @@ def get_phrase_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
-    :param lower: If false, all ngrams will be returned in lower case
+    :param lower: If true, all ngrams will be returned in lower case
     """
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     for span in spans:
@@ -328,7 +328,7 @@ def get_cell_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
-    :param lower: If false, all ngrams will be returned in lower case
+    :param lower: If true, all ngrams will be returned in lower case
     """
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     for span in spans:
@@ -350,7 +350,7 @@ def get_neighbor_cell_ngrams(c, dist=1, directions=False, attrib='words', n_min=
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
-    :param lower: If false, all ngrams will be returned in lower case
+    :param lower: If true, all ngrams will be returned in lower case
     """
     # TODO: Fix this to be more efficient (optimize with SQL query)
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
@@ -391,7 +391,7 @@ def get_row_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
-    :param lower: If false, all ngrams will be returned in lower case
+    :param lower: If true, all ngrams will be returned in lower case
     """
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     for span in spans:
@@ -408,7 +408,7 @@ def get_col_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_max=1
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
-    :param lower: If false, all ngrams will be returned in lower case
+    :param lower: If true, all ngrams will be returned in lower case
     """
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     for span in spans:
@@ -425,7 +425,7 @@ def get_aligned_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_m
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
-    :param lower: If false, all ngrams will be returned in lower case
+    :param lower: If true, all ngrams will be returned in lower case
     """
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     for span in spans:

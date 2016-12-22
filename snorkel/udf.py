@@ -8,16 +8,13 @@ from .models.meta import new_sessionmaker
 Q_GET_TIMEOUT = 5
 
 class UDF(Process):
-    def __init__(self, x_queue=None, y_queue=None):
+    def __init__(self, x_queue=None):
         """
         x_queue: A Queue of input objects to process; primarily for running in parallel
-        y_queue: A Queue to collect output objects to be added to a many-to-many set
-            * NOTE: This latter queue will no longer be needed when we get rid of many-to-many sets in v0.5...
         """
         Process.__init__(self)
         self.daemon  = True
         self.x_queue = x_queue
-        self.y_queue = y_queue
 
         # Each UDF starts its own Engine
         # See http://docs.sqlalchemy.org/en/latest/core/pooling.html#using-connection-pools-with-multiprocessing
@@ -34,12 +31,6 @@ class UDF(Process):
                 x = self.x_queue.get(True, Q_GET_TIMEOUT)
                 for y in self.apply(x):
                     self.session.add(y)
-
-                    # TODO: Why does this cause it to hang??
-                    if self.y_queue is not None:
-                        self.y_queue.put(y)
-
-                # Mark the object as processed
                 self.x_queue.task_done()
             except Empty:
                 break
@@ -51,19 +42,41 @@ class UDF(Process):
         raise NotImplementedError()
 
 
-class UDFRunnerMP(object):
+class UDFRunner(object):
     """Class to run UDFs in parallel using simple queue-based multiprocessing setup"""
     def __init__(self, udf_class, **udf_kwargs):
         self.udf_class  = udf_class
         self.udf_kwargs = udf_kwargs
         self.udfs       = []
 
-    def run(self, xs, parallelism=1, y_set=None):
+    def run(self, xs, parallelism=None, progress_bar=True):
+        if parallelism is None or parallelism < 2:
+            self.run_st(xs, progress_bar=progress_bar)
+        else:
+            self.run_mt(xs, parallelism)
 
-        # If y_set is provided, we need to collect the y objects and add them to the set on this thread...
-        # Note: another reason to get rid of many-to-many sets asap!
-        y_queue = Queue() if y_set is not None else None
+    def run_st(self, xs, progress_bar):
+        """Run the UDF single-threaded, optionally with progress bar"""
+        # Set up ProgressBar if possible
+        pb = ProgressBar(len(xs)) if progress_bar and hasattr(xs, '__len__') else None
+        
+        # Run single-thread
+        for i, x in enumerate(xs):
+            if pb:
+                pb.bar(i)
 
+            # Apply UDF and add results to the session
+            for y in self.udf.apply(x):
+                self.udf.session.add(y)
+
+        # Commit session and close progress bar if applicable
+        self.udf.session.commit()
+        if pb:
+            pb.bar(len(xs))
+            pb.close()
+
+    def run_mt(self, xs, parallelism):
+        """Run the UDF multi-threaded using python multiprocessing"""
         # Fill a JoinableQueue with input objects
         # TODO: For low-memory scenarios, we'd want to limit total queue size here
         x_queue = JoinableQueue()
@@ -72,7 +85,7 @@ class UDFRunnerMP(object):
 
         # Start UDF Processes
         for i in range(parallelism):
-            udf = self.udf_class(x_queue=x_queue, y_queue=y_queue, **self.udf_kwargs)
+            udf = self.udf_class(x_queue=x_queue, **self.udf_kwargs)
             self.udfs.append(udf)
 
         # Start the UDF processes, and then join on their completion
@@ -87,66 +100,3 @@ class UDFRunnerMP(object):
             sys.stdout.flush()
         print "\n"
         sys.stdout.flush()
-
-        # Collect the output objects and add to the set
-        if y_set is not None:
-            while True:
-                try:
-                    y_set.append(y_queue.get(False))
-                except Empty:
-                    break
-            session.commit()
-            return y_set
-
-
-class UDFRunner(object):
-    """Class to run a single UDF single-threaded"""
-    def __init__(self, udf_class):
-        self.udf = udf_class()
-
-    def run(self, xs, y_set=None, max_n=None):
-        
-        # Set up ProgressBar if possible
-        if hasattr(xs, '__len__') or max_n is not None:
-            N  = len(xs) if hasattr(xs, '__len__') else max_n
-            pb = ProgressBar(N)
-        else:
-            N = -1
-        
-        # Run single-thread
-        for i, x in enumerate(xs):
-
-            # If applicable, update progress bar
-            if N > 0:
-                pb.bar(i)
-                if i == max_n:
-                    break
-
-            # Apply the UDF and add to either the set or the session
-            for y in self.udf.apply(x):
-                if y_set is not None:
-                    add_to_collection(y_set, y)
-                else:
-                    self.udf.session.add(y)
-
-        # Commit
-        if self.udf.session is not None:
-            self.udf.session.commit()
-
-        # Close the progress bar if applicable
-        if N > 0:
-            pb.bar(N)
-            pb.close()
-
-
-def add_to_collection(c, x):
-    """Adds, appends or puts x into c"""
-    if hasattr(c, 'put'):
-        c.put(x)
-    elif hasattr(c, 'add'):
-        c.add(x)
-    elif hasattr(c, 'append'):
-        c.append(x)
-    else:
-        raise AttributeError("No put/add/append attribute found.")
-

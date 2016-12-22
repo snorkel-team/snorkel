@@ -98,7 +98,7 @@ script:
   - runipy intro/Intro_Tutorial_5.ipynb
 
   # Runs disease tagger tutorial notebooks
-  - runipy disease_tagging/Disease_Tagging_Tutorial_1.ipynb
+  # - runipy disease_tagging/Disease_Tagging_Tutorial_1.ipynb
   # - runipy disease_tagging/Disease_Tagging_Tutorial_2.ipynb
   # - runipy disease_tagging/Disease_Tagging_Tutorial_3.ipynb
   # - runipy disease_tagging/Disease_Tagging_Tutorial_4.ipynb

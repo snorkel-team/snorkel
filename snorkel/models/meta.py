@@ -15,3 +15,15 @@ else:
 SnorkelSession = sessionmaker(bind=snorkel_engine)
 
 SnorkelBase = declarative_base(name='SnorkelBase', cls=object)
+
+
+def new_sessionmaker():
+    if 'SNORKELDB' in os.environ and os.environ['SNORKELDB'] != '':
+        snorkel_postgres = os.environ['SNORKELDB'].startswith('postgres')
+        snorkel_engine = create_engine(os.environ['SNORKELDB'])
+    else:
+        snorkel_postgres = False
+        snorkel_engine = create_engine('sqlite:///snorkel.db')
+
+    SnorkelSession = sessionmaker(bind=snorkel_engine)
+    return SnorkelSession

@@ -13,8 +13,9 @@ class UDF(Process):
         x_queue: A Queue of input objects to process; primarily for running in parallel
         """
         Process.__init__(self)
-        self.daemon  = True
-        self.x_queue = x_queue
+        self.daemon       = True
+        self.x_queue      = x_queue
+        self.apply_kwargs = {}
 
         # Each UDF starts its own Engine
         # See http://docs.sqlalchemy.org/en/latest/core/pooling.html#using-connection-pools-with-multiprocessing
@@ -29,7 +30,7 @@ class UDF(Process):
         while True:
             try:
                 x = self.x_queue.get(True, Q_GET_TIMEOUT)
-                for y in self.apply(x):
+                for y in self.apply(x, **self.apply_kwargs):
                     self.session.add(y)
                 self.x_queue.task_done()
             except Empty:
@@ -49,13 +50,13 @@ class UDFRunner(object):
         self.udf_kwargs = udf_kwargs
         self.udfs       = []
 
-    def apply(self, xs, parallelism=None, progress_bar=True):
+    def apply(self, xs, parallelism=None, progress_bar=True, **kwargs):
         if parallelism is None or parallelism < 2:
-            self.apply_st(xs, progress_bar=progress_bar)
+            self.apply_st(xs, progress_bar=progress_bar, **kwargs)
         else:
-            self.apply_mt(xs, parallelism)
+            self.apply_mt(xs, parallelism, **kwargs)
 
-    def apply_st(self, xs, progress_bar):
+    def apply_st(self, xs, progress_bar, **kwargs):
         """Run the UDF single-threaded, optionally with progress bar"""
         udf = self.udf_class(**self.udf_kwargs)
 
@@ -68,7 +69,7 @@ class UDFRunner(object):
                 pb.bar(i)
 
             # Apply UDF and add results to the session
-            for y in udf.apply(x):
+            for y in udf.apply(x, **kwargs):
                 udf.session.add(y)
 
         # Commit session and close progress bar if applicable
@@ -77,7 +78,7 @@ class UDFRunner(object):
             pb.bar(len(xs))
             pb.close()
 
-    def apply_mt(self, xs, parallelism):
+    def apply_mt(self, xs, parallelism, **kwargs):
         """Run the UDF multi-threaded using python multiprocessing"""
         # Fill a JoinableQueue with input objects
         # TODO: For low-memory scenarios, we'd want to limit total queue size here
@@ -87,7 +88,8 @@ class UDFRunner(object):
 
         # Start UDF Processes
         for i in range(parallelism):
-            udf = self.udf_class(x_queue=x_queue, **self.udf_kwargs)
+            udf              = self.udf_class(x_queue=x_queue, **self.udf_kwargs)
+            udf.apply_kwargs = kwargs
             self.udfs.append(udf)
 
         # Start the UDF processes, and then join on their completion

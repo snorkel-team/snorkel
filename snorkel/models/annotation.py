@@ -36,6 +36,10 @@ class AnnotationKeyMixin(object):
         return str(self.__class__.__name__) + " (" + str(self.name) + ")"
 
 
+class AnnotatorLabelKey(AnnotationKeyMixin, SnorkelBase):
+    pass
+
+
 class LabelKey(AnnotationKeyMixin, SnorkelBase):
     pass
 
@@ -94,6 +98,11 @@ class AnnotationMixin(object):
 
     def __repr__(self):
         return self.__class__.__name__ + " (" + str(self.key.name) + " = " + str(self.value) + ")"
+
+
+class AnnotatorLabel(AnnotationMixin, SnorkelBase):
+    """A separate class for labels from human annotators"""
+    value = Column(Integer, nullable=False)
 
 
 class Label(AnnotationMixin, SnorkelBase):

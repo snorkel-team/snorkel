@@ -11,7 +11,7 @@ from .utils import (
     matrix_fn,
     matrix_tn
 )
-from .models import Label, LabelKey, Feature, FeatureKey, Candidate
+from .models import AnnotatorLabel, AnnotatorLabelKey, Label, LabelKey, Feature, FeatureKey, Candidate
 from .utils import ProgressBar
 from .features import get_span_feats
 from sqlalchemy.orm.session import object_session
@@ -178,7 +178,7 @@ class AnnotationManager(object):
         print "Loading sparse %s matrix..." % self.annotation_cls.__name__
         return self.load(session, split, key_group)
 
-    def load(self, session, split=None, key_group=None):
+    def load(self, session, split=None, key_group=None, key_names=None):
         """
         Returns the annotations corresponding to a split of candidates with N members
         and an AnnotationKey group with M distinct keys as an N x M CSR sparse matrix.
@@ -191,6 +191,8 @@ class AnnotationManager(object):
         keys_query = session.query(self.annotation_key_cls.id)
         if key_group is not None:
             keys_query = keys_query.filter(self.annotation_key_cls.group == key_group)
+        if key_names is not None:
+            keys_query = keys_query.filter(self.annotation_key_cls.name.in_(frozenset(key_names)))
         keys_query = keys_query.order_by(self.annotation_key_cls.id).yield_per(1000)
 
         # Create sparse matrix in LIL format for incremental construction
@@ -232,6 +234,17 @@ class AnnotationManager(object):
         # Return as an AnnotationMatrix
         return self.matrix_cls(X, candidate_index=cid_to_row, row_index=row_to_cid,\
                 annotation_key_cls=self.annotation_key_cls, key_index=kid_to_col, col_index=col_to_kid)
+
+
+class AnnotatorLabelManager(AnnotationManager):
+    """Manager for human annotated labels"""
+    def __init__(self, candidate_cls):
+        super(AnnotatorLabelManager, self).__init__(AnnotatorLabel, AnnotatorLabelKey, candidate_cls, matrix_cls=csr_LabelMatrix)
+        
+    def load(self, session, annotator_name, split=None):
+        """Load a single key only, i.e. labels from one annotator"""
+        # TODO: Should add fnality to load several annotators and reduce via e.g. union, majority vote, etc...
+        return super(AnnotatorLabelManager, self).load(session, split=split, key_names=[annotator_name])
 
 
 class LabelManager(AnnotationManager):

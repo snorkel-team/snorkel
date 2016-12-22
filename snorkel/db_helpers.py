@@ -1,13 +1,13 @@
-from .models import StableLabel, Label, Context, LabelKey
+from .models import StableLabel, AnnotatorLabel, Context, AnnotatorLabelKey
 from sqlalchemy.orm import object_session
 
 
 def reload_annotator_labels(session, candidate_class, annotator_name, split, filter_label_split=True, create_missing_cands=False):
-    """Reloads stable annotator labels into the Label table"""
-    # Sets up the LabelKey to use
-    ak = session.query(LabelKey).filter(LabelKey.name == annotator_name).first()
+    """Reloads stable annotator labels into the AnnotatorLabel table"""
+    # Sets up the AnnotatorLabelKey to use
+    ak = session.query(AnnotatorLabelKey).filter(AnnotatorLabelKey.name == annotator_name).first()
     if ak is None:
-        ak = LabelKey(name=annotator_name)
+        ak = AnnotatorLabelKey(name=annotator_name)
         session.add(ak)
         session.commit()
     
@@ -50,12 +50,12 @@ def reload_annotator_labels(session, candidate_class, annotator_name, split, fil
             missed.append(sl)
             continue
 
-        # Check for Label, otherwise create
-        label = session.query(Label).filter(Label.key == ak).filter(Label.candidate == candidate).first()
+        # Check for AnnotatorLabel, otherwise create
+        label = session.query(AnnotatorLabel).filter(AnnotatorLabel.key == ak).filter(AnnotatorLabel.candidate == candidate).first()
         if label is None:
-            label = Label(candidate=candidate, key=ak, value=sl.value)
+            label = AnnotatorLabel(candidate=candidate, key=ak, value=sl.value)
             session.add(label)
             labels.append(label)
 
     session.commit()
-    print "Labels created: %s" % (len(labels),)
+    print "AnnotatorLabels created: %s" % (len(labels),)

@@ -1,5 +1,5 @@
 from __future__ import print_function
-from .models import Label, StableLabel, LabelKey
+from .models import AnnotatorLabel, StableLabel, AnnotatorLabelKey
 try:
     from IPython.core.display import display, Javascript
 except:
@@ -41,7 +41,7 @@ class Viewer(widgets.DOMWidget):
         """
         Initializes a Viewer.
 
-        The Viewer uses the keyword argument annotator_name to define a LabelKey with that name.
+        The Viewer uses the keyword argument annotator_name to define a AnnotatorLabelKey with that name.
 
         :param candidates: A Python container of Candidates (e.g., not a CandidateSet, but candidate_set.candidates)
         :param session: The SnorkelSession for the database backend
@@ -57,9 +57,9 @@ class Viewer(widgets.DOMWidget):
         name = annotator_name if annotator_name is not None else getpass.getuser()
 
         # Sets up the AnnotationKey to use
-        self.annotator = self.session.query(LabelKey).filter(LabelKey.name == name).first()
+        self.annotator = self.session.query(AnnotatorLabelKey).filter(AnnotatorLabelKey.name == name).first()
         if self.annotator is None:
-            self.annotator = LabelKey(name=name)
+            self.annotator = AnnotatorLabelKey(name=name)
             session.add(self.annotator)
             session.commit()
 
@@ -87,9 +87,9 @@ class Viewer(widgets.DOMWidget):
         for i, candidate in enumerate(self.candidates):
 
             # First look for the annotation in the primary annotations table
-            existing_annotation = self.session.query(Label) \
-                .filter(Label.key == self.annotator) \
-                .filter(Label.candidate == candidate) \
+            existing_annotation = self.session.query(AnnotatorLabel) \
+                .filter(AnnotatorLabel.key == self.annotator) \
+                .filter(AnnotatorLabel.candidate == candidate) \
                 .first()
             if existing_annotation is not None:
                 self.annotations[i] = existing_annotation
@@ -189,19 +189,19 @@ class Viewer(widgets.DOMWidget):
                 raise ValueError('Unexpected label returned from widget: ' + str(value) +
                                  '. Expected values are True and False.')
 
-            # If label already exists, just update value (in both Label and StableLabel)
+            # If label already exists, just update value (in both AnnotatorLabel and StableLabel)
             if self.annotations[cid] is not None:
                 if self.annotations[cid].value != value:
                     self.annotations[cid].value        = value
                     self.annotations_stable[cid].value = value
                     self.session.commit()
 
-            # Otherwise, create a Label *and a StableLabel*
+            # Otherwise, create a AnnotatorLabel *and a StableLabel*
             else:
                 candidate = self.candidates[cid]
 
-                # Create Label
-                self.annotations[cid] = Label(key=self.annotator, candidate=candidate, value=value)
+                # Create AnnotatorLabel
+                self.annotations[cid] = AnnotatorLabel(key=self.annotator, candidate=candidate, value=value)
                 self.session.add(self.annotations[cid])
 
                 # Create StableLabel
@@ -214,6 +214,8 @@ class Viewer(widgets.DOMWidget):
             cid = content.get('cid', None)
             self.session.delete(self.annotations[cid])
             self.annotations[cid] = None
+            self.session.delete(self.annotations_stable[cid])
+            self.annotations_stable[cid] = None
             self.session.commit()
 
     def get_selected(self):

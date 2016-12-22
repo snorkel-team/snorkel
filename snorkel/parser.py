@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .udf import UDF, UDFRunner
+from .udf import UDF
 from .models import Document, Sentence, construct_stable_id
 from .utils import ProgressBar, sort_X_on_Y
 import atexit
@@ -17,32 +17,6 @@ import signal
 from subprocess import Popen
 import sys
 import codecs
-
-
-class CorpusParser:
-    """Invokes a DocParser and runs the output through a SentenceParser to produce a Corpus."""
-    def __init__(self, doc_parser, sent_parser, max_docs=None):
-        self.doc_parser = doc_parser
-        self.sent_parser = sent_parser
-        self.max_docs = max_docs
-
-    def parse_corpus(self, session):
-        if self.max_docs is not None:
-            pb = ProgressBar(self.max_docs)
-        for i, (doc, text) in enumerate(self.doc_parser.parse()):
-            if self.max_docs is not None:
-                pb.bar(i)
-                if i == self.max_docs:
-                    break
-            session.add(doc)
-            for _ in self.sent_parser.parse(doc, text):
-                pass
-        if self.max_docs is not None:
-            pb.bar(self.max_docs)
-            pb.close()
-        if session is not None:
-            session.commit()
-        print "Parsed %s docs." % (i+1,)
 
 
 class DocParser:

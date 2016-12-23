@@ -5,7 +5,7 @@ import sys
 from .models.meta import new_sessionmaker
 
 
-QUEUE_TIMEOUT = 5
+QUEUE_TIMEOUT = 3
 
 class UDF(Process):
     def __init__(self, in_queue=None, out_queue=None):
@@ -41,16 +41,9 @@ class UDF(Process):
                 self.in_queue.task_done()
             except Empty:
                 break
-
-        sys.stdout.write("Done with run loop!\n")
-        sys.stdout.flush()
-        
         self.session.commit()
         self.session.close()
 
-        sys.stdout.write("Done!\n")
-        sys.stdout.flush()
-    
     def apply(self, x):
         """This function takes in an object, and returns a generator / set / list"""
         raise NotImplementedError()
@@ -119,25 +112,21 @@ class UDFRunner(object):
         for udf in self.udfs:
             udf.start()
 
-        # Join on the processes all finishing!
-        nU = len(self.udfs)
-        for i, udf in enumerate(self.udfs):
-            udf.join()
-            sys.stdout.write("\r%s / %s threads done." % (i+1, nU))
-            sys.stdout.flush()
-        print "\n"
-        sys.stdout.flush()
-
         # If there is a reduce step, do now on this thread
         if hasattr(self.udf_class, 'reduce'):
-            print "Reducing..."
             udf = self.udf_class(**self.udf_kwargs)
-            while True:
-                try:
-                    y = out_queue.get(True, Q_GET_TIMEOUT)
-                    udf.reduce(y, **kwargs)
-                    out_queue.task_done()
-                except Empty:
-                    break
-            udf.session.commit()
+            while any([udf.is_alive() for udf in self.udfs]):
+                while True:
+                    try:
+                        y = out_queue.get(True, QUEUE_TIMEOUT)
+                        udf.reduce(y, **kwargs)
+                        out_queue.task_done()
+                    except Empty:
+                        break
+                udf.session.commit()
             udf.session.close()
+
+        # Otherwise just join on the UDF.apply actions
+        else:
+            for i, udf in enumerate(self.udfs):
+                udf.join()

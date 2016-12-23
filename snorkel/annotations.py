@@ -1,6 +1,7 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
 from sqlalchemy.sql import bindparam, func, select
+from .udf import UDF
 from .utils import (
     matrix_accuracy,
     matrix_conflicts,
@@ -81,6 +82,69 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
             col_names.extend(['Learned Acc.'])
             d['Learned Acc.'] = Series(data=est_accs, index=lf_names)
         return DataFrame(data=d, index=lf_names)[col_names]
+
+
+class Annotator(UDF):
+    """Abstract class for annotating candidates and persisting these annotations to DB"""
+    def __init__(self, candidate_subclass, annotation_cls, annotation_key_cls, f, in_queue=None, out_queue=None):
+        self.candidate_subclass = candidate_subclass
+        self.annotation_cls     = annotation_cls
+        self.annotation_key_cls = annotation_key_cls
+        self.anno_generator     = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
+
+        super(Annotator, self).__init__(in_queue=in_queue, out_queue=out_queue)
+    
+    def apply(self, cid):
+        """
+        Applies a given function to a Candidate, yielding a set of Annotations as key_name, value pairs
+
+        Note: Accepts a candidate _id_ as argument, because of issues with putting Candidate subclasses
+        into Queues (can't pickle...)
+        """
+        c = self.session.query(self.candidate_subclass).filter(self.candidate_subclass.id == cid).one()
+        for key_name, value in self.anno_generator(c):
+            yield cid, key_name, value
+
+    def reduce(self, y, add_new_keys=True, key_group=None, try_update=True):
+        """
+        Inserts Annotations into the database.
+        For Annotations with unseen AnnotationKeys (in key_group, if not None), either adds these
+        AnnotationKeys if add_new_keys is True, else skips these Annotations.
+        """
+        cid, key_name, value = y
+
+        # Prepares queries
+        key_select_query = select([self.annotation_key_cls.id]).where(self.annotation_key_cls.name == bindparam('name'))
+        if key_group is not None:
+            key_select_query = key_select_query.where(self.annotation_key_cls.group == key_group)
+
+        key_insert_query = self.annotation_key_cls.__table__.insert()
+
+        anno_update_query = self.annotation_cls.__table__.update()
+        anno_update_query = anno_update_query.where(self.annotation_cls.candidate_id == bindparam('cid'))
+        anno_update_query = anno_update_query.where(self.annotation_cls.key_id == bindparam('kid'))
+        anno_update_query = anno_update_query.values(value=bindparam('value'))
+
+        anno_insert_query = self.annotation_cls.__table__.insert()
+
+        # Check if the AnnotationKey already exists, and gets its id
+        key_id = self.session.execute(key_select_query, {'name': key_name}).first()
+        key_id = key_id[0] if key_id is not None else key_id
+
+        # If AnnotationKey does not exist and add_new_keys = False, skip
+        if key_id is not None or add_new_keys:
+
+            # If key_name does not exist in the database already, creates a new record
+            if key_id is None:
+                key_id = self.session.execute(key_insert_query, {'name': key_name}).inserted_primary_key[0]
+
+            # Updates the Annotation, assuming one might already exist, if try_update = True
+            if try_update:
+                res = self.session.execute(anno_update_query, {'cid': cid, 'kid': key_id, 'value': value})
+
+            # If Annotation does not exist, insert
+            if (not try_update or res.rowcount == 0) and value != 0:
+                self.session.execute(anno_insert_query, {'candidate_id': cid, 'key_id': key_id, 'value': value})
 
 
 class AnnotationManager(object):

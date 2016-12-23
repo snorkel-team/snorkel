@@ -255,11 +255,11 @@ class CoreNLPHandler:
 
 
 class SentenceParser(UDF):
-    def __init__(self, tok_whitespace=False, split_newline=False, fn=None, x_queue=None):
+    def __init__(self, tok_whitespace=False, split_newline=False, fn=None, in_queue=None):
         self.corenlp_handler = CoreNLPHandler(
             tok_whitespace=tok_whitespace, split_newline=split_newline)
         self.fn = fn
-        super(SentenceParser, self).__init__(x_queue=x_queue)
+        super(SentenceParser, self).__init__(in_queue=in_queue)
 
     def apply(self, x):
         """Given a Document object and its raw text, parse into preprocessed sentences"""

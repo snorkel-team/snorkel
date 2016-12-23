@@ -30,7 +30,7 @@ class CandidateExtractor(UDF):
     :param symmetric_relations: Boolean indicating whether to extract symmetric Candidates, i.e., rel(A,B) and rel(B,A),
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
-    def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=True, x_queue=None):
+    def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=True, in_queue=None):
         self.candidate_class     = candidate_class
         self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
@@ -52,7 +52,7 @@ class CandidateExtractor(UDF):
         for i in range(self.arity):
             self.child_context_sets[i] = set()
 
-        super(CandidateExtractor, self).__init__(x_queue=x_queue)
+        super(CandidateExtractor, self).__init__(in_queue=in_queue)
 
     def apply(self, context, split=0, check_for_existing=True):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
@@ -158,7 +158,7 @@ class PretaggedCandidateExtractor(UDF):
     An extractor for Sentences with entities pre-tagged, and stored in the entity_types and entity_cids
     fields.
     """
-    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=True, entity_sep='~@~', x_queue=None):
+    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=True, entity_sep='~@~', in_queue=None):
         self.candidate_class     = candidate_class
         self.entity_types        = entity_types
         self.arity               = len(entity_types)
@@ -167,7 +167,7 @@ class PretaggedCandidateExtractor(UDF):
         self.symmetric_relations = symmetric_relations
         self.entity_sep          = entity_sep
 
-        super(PretaggedCandidateExtractor, self).__init__(x_queue=x_queue)
+        super(PretaggedCandidateExtractor, self).__init__(in_queue=in_queue)
 
     def apply(self, context, split=0, check_for_existing=True):
         """

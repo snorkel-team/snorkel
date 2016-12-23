@@ -5,16 +5,17 @@ import sys
 from .models.meta import new_sessionmaker
 
 
-Q_GET_TIMEOUT = 5
+QUEUE_TIMEOUT = 5
 
 class UDF(Process):
-    def __init__(self, x_queue=None):
+    def __init__(self, in_queue=None, out_queue=None):
         """
-        x_queue: A Queue of input objects to process; primarily for running in parallel
+        in_queue: A Queue of input objects to process; primarily for running in parallel
         """
         Process.__init__(self)
         self.daemon       = True
-        self.x_queue      = x_queue
+        self.in_queue     = in_queue
+        self.out_queue    = out_queue
         self.apply_kwargs = {}
 
         # Each UDF starts its own Engine
@@ -29,14 +30,26 @@ class UDF(Process):
         """
         while True:
             try:
-                x = self.x_queue.get(True, Q_GET_TIMEOUT)
+                x = self.in_queue.get(True, QUEUE_TIMEOUT)
                 for y in self.apply(x, **self.apply_kwargs):
-                    self.session.add(y)
-                self.x_queue.task_done()
+
+                    # If an out_queue is provided, add to that, else add to session
+                    if self.out_queue is not None:
+                        self.out_queue.put(y, True, QUEUE_TIMEOUT)
+                    else:
+                        self.session.add(y)
+                self.in_queue.task_done()
             except Empty:
                 break
+
+        sys.stdout.write("Done with run loop!\n")
+        sys.stdout.flush()
+        
         self.session.commit()
         self.session.close()
+
+        sys.stdout.write("Done!\n")
+        sys.stdout.flush()
     
     def apply(self, x):
         """This function takes in an object, and returns a generator / set / list"""
@@ -70,7 +83,12 @@ class UDFRunner(object):
 
             # Apply UDF and add results to the session
             for y in udf.apply(x, **kwargs):
-                udf.session.add(y)
+                
+                # Uf UDF has a reduce step, this will take care of the insert; else add to session
+                if hasattr(self.udf_class, 'reduce'):
+                    udf.reduce(y, **kwargs)
+                else:
+                    udf.session.add(y)
 
         # Commit session and close progress bar if applicable
         udf.session.commit()
@@ -82,13 +100,18 @@ class UDFRunner(object):
         """Run the UDF multi-threaded using python multiprocessing"""
         # Fill a JoinableQueue with input objects
         # TODO: For low-memory scenarios, we'd want to limit total queue size here
-        x_queue = JoinableQueue()
+        in_queue = JoinableQueue()
         for x in xs:
-            x_queue.put(x)
+            in_queue.put(x)
+
+        # If the UDF has a reduce step, we collect the output of apply in a Queue
+        out_queue = None
+        if hasattr(self.udf_class, 'reduce'):
+            out_queue = JoinableQueue()
 
         # Start UDF Processes
         for i in range(parallelism):
-            udf              = self.udf_class(x_queue=x_queue, **self.udf_kwargs)
+            udf              = self.udf_class(in_queue=in_queue, out_queue=out_queue, **self.udf_kwargs)
             udf.apply_kwargs = kwargs
             self.udfs.append(udf)
 
@@ -104,3 +127,17 @@ class UDFRunner(object):
             sys.stdout.flush()
         print "\n"
         sys.stdout.flush()
+
+        # If there is a reduce step, do now on this thread
+        if hasattr(self.udf_class, 'reduce'):
+            print "Reducing..."
+            udf = self.udf_class(**self.udf_kwargs)
+            while True:
+                try:
+                    y = out_queue.get(True, Q_GET_TIMEOUT)
+                    udf.reduce(y, **kwargs)
+                    out_queue.task_done()
+                except Empty:
+                    break
+            udf.session.commit()
+            udf.session.close()

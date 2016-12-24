@@ -123,13 +123,14 @@ class Annotator(UDF):
         qa = self.session.query(self.annotation_cls)
         if not create_new_keyset:
             qa = qa.filter(self.annotation_cls.candidate_id.in_(frozenset(cids)))
-        qa.delete()
+        qa.delete(synchronize_session='fetch')
 
         # If we are creating a new key set, delete all old annoation keys
         if create_new_keyset:
             qk = self.session.query(self.annotation_key_cls)
             if key_group is not None:
                 qk = qk.filter(self.annotation_key_cls.group == key_group)
+            #qk.delete(synchronize_session='fetch')
             qk.delete()
         self.session.commit()
 

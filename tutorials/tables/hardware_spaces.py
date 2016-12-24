@@ -3,7 +3,7 @@ from snorkel.models import TemporaryImplicitSpan
 import re
 from difflib import SequenceMatcher
 
-def expand_part_range(input_text, DEBUG=False):
+def expand_part_range(text, DEBUG=False):
     """
     Given a string, generates strings that are potentially implied by
     the original text. Two main operations are performed:
@@ -18,9 +18,6 @@ def expand_part_range(input_text, DEBUG=False):
     range_pattern = re.compile(ur'^(?P<start>[\w\/]+)(?:\s*(\.{3,}|\~|\-+|to|thru|through|\u2011+|\u2012+|\u2013+|\u2014+|\u2012+|\u2212+)\s*)(?P<end>[\w\/]+)$', re.IGNORECASE | re.UNICODE)
     suffix_pattern = re.compile(ur'(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)')
     base_pattern = re.compile(ur'(?P<base>[\w\-]+)(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)?')
-
-    # Convert to UNICODE for isnumeric call later in this function
-    text = unicode(input_text, "utf-8")
 
     if DEBUG: print "\n[debug] Text: " + text
     expanded_parts = set()
@@ -116,7 +113,7 @@ def expand_part_range(input_text, DEBUG=False):
                         suffix_len = len(suffix)
                         old_suffix = base[-suffix_len:]
                         if ((suffix.isalpha() and old_suffix.isalpha()) or
-                            (suffix.isnumeric() and old_suffix.isnumeric())):
+                            (suffix.isdigit() and old_suffix.isdigit())):
                             trimmed = base[:-suffix_len]
                             final_set.add(trimmed+suffix)
         else:

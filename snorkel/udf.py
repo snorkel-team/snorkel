@@ -55,9 +55,15 @@ class UDFRunner(object):
         self.udf_class  = udf_class
         self.udf_kwargs = udf_kwargs
         self.udfs       = []
-        self.reducer    = self.udf_class(**self.udf_kwargs) if hasattr(self.udf_class, 'reduce') else None
+        self.udf0       = self.udf_class(**self.udf_kwargs) if hasattr(self.udf_class, 'reduce') else None
 
     def apply(self, xs, parallelism=None, progress_bar=True, **kwargs):
+
+        # Clear everything if UDF has this function
+        if hasattr(self.udf0, 'clear'):
+            self.udf0.clear(xs, **kwargs)
+
+        # Execute the UDF
         if parallelism is None or parallelism < 2:
             self.apply_st(xs, progress_bar=progress_bar, **kwargs)
         else:
@@ -119,12 +125,12 @@ class UDFRunner(object):
                 while True:
                     try:
                         y = out_queue.get(True, QUEUE_TIMEOUT)
-                        self.reducer.reduce(y, **kwargs)
+                        self.udf0.reduce(y, **kwargs)
                         out_queue.task_done()
                     except Empty:
                         break
-                self.reducer.session.commit()
-            self.reducer.session.close()
+                self.udf0.session.commit()
+            self.udf0.session.close()
 
         # Otherwise just join on the UDF.apply actions
         else:

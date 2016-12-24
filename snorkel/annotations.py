@@ -113,11 +113,31 @@ class Annotator(UDF):
                 seen.add((cid, key_name))
                 yield cid, key_name, value
 
-    def reduce(self, y, add_new_keys=True, key_group=None, clean_start=False, **extra_kwargs):
+    def clear(self, cids, create_new_keyset=True, key_group=None, **extra_kwargs):
+        """
+        Delete all the Annotations associated with the given Candidates (Candidate.ids supplied)
+        If create_new_keyset = True, also delete *all* AnnotationKeys of this class,
+        or just all AnnotationKeys in key_group if key_group is not None
+        """
+        # If we are creating a new key set, delete *all* annotations
+        qa = self.session.query(self.annotation_cls)
+        if not create_new_keyset:
+            qa = qa.filter(self.annotation_cls.candidate_id.in_(frozenset(cids)))
+        qa.delete()
+
+        # If we are creating a new key set, delete all old annoation keys
+        if create_new_keyset:
+            qk = self.session.query(self.annotation_key_cls)
+            if key_group is not None:
+                qk = qk.filter(self.annotation_key_cls.group == key_group)
+            qk.delete()
+        self.session.commit()
+
+    def reduce(self, y, create_new_keyset=True, key_group=None, clean_start=False, **extra_kwargs):
         """
         Inserts Annotations into the database.
         For Annotations with unseen AnnotationKeys (in key_group, if not None), either adds these
-        AnnotationKeys if add_new_keys is True, else skips these Annotations.
+        AnnotationKeys if create_new_keyset is True, else skips these Annotations.
         """
         cid, key_name, value = y
 
@@ -154,12 +174,12 @@ class Annotator(UDF):
                 key_id                   = key_id[0]
                 self.key_cache[key_name] = key_id
             
-            # Key not in cache or DB; add to both if add_new_keys = True
-            elif add_new_keys:
+            # Key not in cache or DB; add to both if create_new_keyset = True
+            elif create_new_keyset:
                 key_id   = self.session.execute(key_insert_query, key_args).inserted_primary_key[0]
                 self.key_cache[key_name] = key_id
 
-        # If AnnotationKey does not exist and add_new_keys = False, skip
+        # If AnnotationKey does not exist and create_new_keyset = False, skip
         if key_id is not None:
 
             # Updates the Annotation, assuming one might already exist, if try_update = True
@@ -171,180 +191,82 @@ class Annotator(UDF):
                 self.session.execute(anno_insert_query, {'candidate_id': cid, 'key_id': key_id, 'value': value})
 
 
-class AnnotationManager(object):
-    """
-    Abstract class for annotating candidates, saving these annotations to DB, and then reloading them as
-    sparse matrices; generic operation which covers Annotation subclasses:
-        * Feature
-        * Label
-    E.g. for features, LF labels, human annotator labels, etc.
-    """
-    def __init__(self, annotation_cls, annotation_key_cls, candidate_cls, matrix_cls=csr_AnnotationMatrix, default_f=None):
-        self.annotation_cls     = annotation_cls
-        self.annotation_key_cls = annotation_key_cls
-        self.candidate_cls      = candidate_cls
-        if not issubclass(matrix_cls, csr_AnnotationMatrix):
-            raise ValueError('matrix_cls must be a subclass of csr_AnnotationMatrix')
-        self.matrix_cls = matrix_cls
-        self.default_f = default_f
-    
-    # TODO: Delete / rename...
-    def create(self, session, f=None, split=None, key_group=None):
-        """
-        Generates annotations for candidates in a candidate set, and persists these to the database,
-        as well as returning a sparse matrix representation.
-
-        :param session: SnorkelSession for the database
-        
-        :param split: The split of the candidate set to use; if None, defaults to all candidates
-
-        :param key_group: The group to add the new keys to
-        
-        :param f: Can be either:
-
-            * A function which maps a candidate to a generator key_name, value pairs.  Ex: A feature generator
-
-            * A list of functions, each of which maps from candidates to values; by default, the key_name
-                is the function.__name__.  Ex: A list of labeling functions
-        """
-        return self.update(session, True, f=f, split=split, key_group=key_group)
-    
-    def update(self, session, expand_key_group, f=None, split=None, key_group=None):
-        """See create()"""
-        # Prepares arguments
-        candidates_query = session.query(self.candidate_cls)
-        if split is not None:
-            candidates_query = candidates_query.filter(self.candidate_cls.split == split)
-        if f is None:
-            f = self.default_f
-
-        # Prepares helpers
-        annotation_generator = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
-        pb = ProgressBar(candidates_query.count())
-
-        # Prepares queries
-        key_select_query = select([self.annotation_key_cls.id]).where(self.annotation_key_cls.name == bindparam('name'))
-        key_insert_query = self.annotation_key_cls.__table__.insert()
-
-        anno_update_query = self.annotation_cls.__table__.update()
-        anno_update_query = anno_update_query.where(self.annotation_cls.candidate_id == bindparam('cid'))
-        anno_update_query = anno_update_query.where(self.annotation_cls.key_id == bindparam('kid'))
-        anno_update_query = anno_update_query.values(value=bindparam('value'))
-
-        anno_insert_query = self.annotation_cls.__table__.insert()
-
-        # Generates annotations for CandidateSet
-        for i, candidate in enumerate(candidates_query.all()):
-            pb.bar(i)
-            for key_name, value in annotation_generator(candidate):
-
-                # Check if the AnnotationKey already exists, and gets its id
-                key_id = session.execute(key_select_query, {'name': key_name}).first()
-                if key_id is not None:
-                    key_id = key_id[0]
-
-                # If expand_key_group is True, then we will always insert or update the Annotation
-                if expand_key_group:
-
-                    # If key_name does not exist in the database already, creates a new record
-                    if key_id is None:
-                        key_id = session.execute(key_insert_query, {'name': key_name}).inserted_primary_key[0]
-
-                    # Updates the annotation value
-                    res = session.execute(anno_update_query, {'cid': candidate.id, 'kid': key_id, 'value': value})
-                    if res.rowcount == 0 and value != 0:
-                        session.execute(anno_insert_query, {'candidate_id': candidate.id, 'key_id': key_id, 'value': value})
-
-                # Else, if the key already exists in the database, we just update the annotation value
-                elif key_id is not None:
-                    res = session.execute(anno_update_query, {'cid': candidate.id, 'kid': key_id, 'value': value})
-                    if res.rowcount == 0 and value != 0:
-                        session.execute(anno_insert_query, {'candidate_id': candidate.id, 'key_id': key_id, 'value': value})
-        pb.close()
-        session.commit()
-
-        print "Loading sparse %s matrix..." % self.annotation_cls.__name__
-        return self.load(session, split, key_group)
-
-    def load(self, session, split=None, key_group=None, key_names=None):
-        """
-        Returns the annotations corresponding to a split of candidates with N members
-        and an AnnotationKey group with M distinct keys as an N x M CSR sparse matrix.
-        """
-        candidates_query = session.query(self.candidate_cls.id)
-        if split is not None:
-            candidates_query = candidates_query.filter(self.candidate_cls.split == split)
-        candidates_query = candidates_query.order_by(self.candidate_cls.id).yield_per(1000)
-
-        keys_query = session.query(self.annotation_key_cls.id)
-        if key_group is not None:
-            keys_query = keys_query.filter(self.annotation_key_cls.group == key_group)
-        if key_names is not None:
-            keys_query = keys_query.filter(self.annotation_key_cls.name.in_(frozenset(key_names)))
-        keys_query = keys_query.order_by(self.annotation_key_cls.id).yield_per(1000)
-
-        # Create sparse matrix in LIL format for incremental construction
-        X = sparse.lil_matrix((candidates_query.count(), keys_query.count()))
-
-        # First, we query to construct the row index map
-        cid_to_row = {}
-        row_to_cid = {}
-        for cid, in candidates_query.all():
-            if cid not in cid_to_row:
-                j = len(cid_to_row)
-
-                # Create both mappings
-                cid_to_row[cid] = j
-                row_to_cid[j]   = cid
-
-        # Second, we query to construct the column index map
-        kid_to_col = {}
-        col_to_kid = {}
-        for kid, in keys_query.all():
-            if kid not in kid_to_col:
-                j = len(kid_to_col)
-
-                # Create both mappings
-                kid_to_col[kid] = j
-                col_to_kid[j]   = kid
-
-        # NOTE: This is much faster as it allows us to skip the above join (which for some reason is
-        # unreasonably slow) by relying on our symbol tables from above; however this will get slower with
-        # The total number of annotations in DB which is weird behavior...
-        q = session.query(self.annotation_cls.candidate_id, self.annotation_cls.key_id, self.annotation_cls.value)
-        q = q.order_by(self.annotation_cls.candidate_id)
-        
-        # Iteratively construct row index and output sparse matrix
-        for cid, kid, val in q.all():
-            if cid in cid_to_row and kid in kid_to_col:
-                X[cid_to_row[cid], kid_to_col[kid]] = val
-
-        # Return as an AnnotationMatrix
-        return self.matrix_cls(X, candidate_index=cid_to_row, row_index=row_to_cid,\
-                annotation_key_cls=self.annotation_key_cls, key_index=kid_to_col, col_index=col_to_kid)
-
-
-class AnnotatorLabelManager(AnnotationManager):
-    """Manager for human annotated labels"""
-    def __init__(self, candidate_cls):
-        super(AnnotatorLabelManager, self).__init__(AnnotatorLabel, AnnotatorLabelKey, candidate_cls, matrix_cls=csr_LabelMatrix)
-        
-    def load(self, session, annotator_name, split=None):
-        """Load a single key only, i.e. labels from one annotator"""
-        # TODO: Should add fnality to load several annotators and reduce via e.g. union, majority vote, etc...
-        return super(AnnotatorLabelManager, self).load(session, split=split, key_names=[annotator_name])
-
-
-class LabelManager(AnnotationManager):
+class LabelAnnotator(Annotator):
     """Apply labeling functions to the candidates, generating Label annotations"""
-    def __init__(self, candidate_cls):
-        super(LabelManager, self).__init__(Label, LabelKey, candidate_cls, matrix_cls=csr_LabelMatrix)
+    def __init__(self, candidate_subclass, f, in_queue=None, out_queue=None):
+        super(LabelAnnotator, self).__init__(candidate_subclass, Label, LabelKey, f, in_queue=in_queue, out_queue=out_queue)
 
         
-class FeatureManager(AnnotationManager):
+class FeatureAnnotator(Annotator):
     """Apply feature generators to the candidates, generating Feature annotations"""
-    def __init__(self, candidate_cls):
-        super(FeatureManager, self).__init__(Feature, FeatureKey, candidate_cls, default_f=get_span_feats)
+    def __init__(self, candidate_subclass, f=get_span_feats, in_queue=None, out_queue=None):
+        super(FeatureAnnotator, self).__init__(candidate_subclass, Feature, FeatureKey, f, in_queue=in_queue, out_queue=out_queue)
+
+
+def load_matrix(matrix_cls, annotation_key_cls, annotation_cls, session, cids, key_group=None, key_names=None):
+    """
+    Returns the annotations corresponding to a split of candidates with N members
+    and an AnnotationKey group with M distinct keys as an N x M CSR sparse matrix.
+    """
+    keys_query = session.query(annotation_key_cls.id)
+    if key_group is not None:
+        keys_query = keys_query.filter(annotation_key_cls.group == key_group)
+    if key_names is not None:
+        keys_query = keys_query.filter(annotation_key_cls.name.in_(frozenset(key_names)))
+    keys_query = keys_query.order_by(annotation_key_cls.id).yield_per(1000)
+
+    # Create sparse matrix in LIL format for incremental construction
+    X = sparse.lil_matrix((len(cids), keys_query.count()))
+
+    # First, we query to construct the row index map
+    cids.sort()
+    cid_to_row = {}
+    row_to_cid = {}
+    for cid in cids:
+        if cid not in cid_to_row:
+            j = len(cid_to_row)
+
+            # Create both mappings
+            cid_to_row[cid] = j
+            row_to_cid[j]   = cid
+
+    # Second, we query to construct the column index map
+    kid_to_col = {}
+    col_to_kid = {}
+    for kid, in keys_query.all():
+        if kid not in kid_to_col:
+            j = len(kid_to_col)
+
+            # Create both mappings
+            kid_to_col[kid] = j
+            col_to_kid[j]   = kid
+
+    # NOTE: This is much faster as it allows us to skip the above join (which for some reason is
+    # unreasonably slow) by relying on our symbol tables from above; however this will get slower with
+    # The total number of annotations in DB which is weird behavior...
+    q = session.query(annotation_cls.candidate_id, annotation_cls.key_id, annotation_cls.value)
+    q = q.order_by(annotation_cls.candidate_id)
+    
+    # Iteratively construct row index and output sparse matrix
+    for cid, kid, val in q.all():
+        if cid in cid_to_row and kid in kid_to_col:
+            X[cid_to_row[cid], kid_to_col[kid]] = val
+
+    # Return as an AnnotationMatrix
+    return matrix_cls(X, candidate_index=cid_to_row, row_index=row_to_cid,\
+            annotation_key_cls=annotation_key_cls, key_index=kid_to_col, col_index=col_to_kid)
+
+
+def load_label_matrix(session, cids, key_group=None):
+    return load_matrix(csr_LabelMatrix, LabelKey, Label, session, cids, key_group=key_group)
+
+
+def load_feature_matrix(session, cids, key_group=None):
+    return load_matrix(csr_AnnotationMatrix, FeatureKey, Feature, session, cids, key_group=key_group)
+
+
+def load_annotator_labels(session, cids, annotator_name):
+    return load_matrix(csr_LabelMatrix, AnnotatorLabelKey, AnnotatorLabel, session, cids, key_names=[annotator_name])
 
 
 def _to_annotation_generator(fns):

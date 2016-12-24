@@ -30,12 +30,6 @@ matchers['part_rgx'] = part_rgx_matcher
 #                     get_aligned_ngrams(part)])))
 def part_conditions(part):
     col_ngrams = set(get_col_ngrams(part))
-    if(part.parent.table != None):
-        for phrase in part.parent.document.phrases:
-            if(phrase.table != None):
-                if((phrase.table.position == part.parent.table.position-1) and (phrase.col_start == part.parent.col_start)):
-                    if('complement' in phrase.text):
-                        return False
     return not (overlap(['replacement'], col_ngrams) or
         (len(col_ngrams) > 25 and 'device' in col_ngrams) or 
         ('top' in col_ngrams and 'mark' in col_ngrams) or
@@ -86,12 +80,31 @@ def ce_v_max_conditions(attr):
     return overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(attr, spread=[0,3], n_max=3))
 ce_v_max_row_matcher = LambdaFunctionMatch(func=ce_v_max_conditions)
 
+def ce_v_max_more_conditions1(attr):
+    text = attr.parent.text
+    if attr.char_start > 1 and text[attr.char_start - 1] == '-' and text[attr.char_start - 2] not in [' ', '='] : return False
+    return True
+
+def ce_v_max_more_conditions(attr):
+    text = attr.parent.text
+    if attr.char_start !=0 and text[attr.char_start - 1] == '/': return False
+    if attr.char_start > 1 and text[attr.char_start - 1] == '-' and text[attr.char_start - 2] not in [' ', '='] : return False
+    if 'vcb' in attr.parent.text.lower(): return False
+    for i in range(attr.char_end + 1, len(text)):
+        if text[i] == ' ': continue
+        if text[i].isdigit(): break
+        if text[i].upper() != 'V': return False
+        else: break
+    return True
+
+ce_v_whole_number = LambdaFunctionMatch(func=ce_v_max_more_conditions)
+
 matchers['ce_v_max_rgx'] = ce_v_max_rgx_matcher
 
 matchers['stg_temp_max'] = RegexMatchSpan(rgx=r'(?:[1][5-9]|20)[05]', longest_match_only=False)
 matchers['stg_temp_min'] = RegexMatchSpan(rgx=r'-[56][05]', longest_match_only=False)
 matchers['polarity'] = Intersect(polarity_rgx_matcher, polarity_lambda_matcher)
-matchers['ce_v_max'] = Intersect(ce_v_max_rgx_matcher, attr_in_table_matcher, ce_v_max_row_matcher)
+matchers['ce_v_max'] = Intersect(ce_v_max_rgx_matcher, attr_in_table_matcher, ce_v_max_row_matcher, ce_v_whole_number)
 
 ### GETTER ###
 

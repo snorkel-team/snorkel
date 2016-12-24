@@ -1,5 +1,6 @@
 from snorkel.lf_helpers import *
 from hardware_matchers import get_matcher
+from hardware_spaces import expand_part_range
 import re
 from itertools import chain
 from random import random
@@ -44,14 +45,14 @@ def LF_part_num_in_high_col_num(c):
 
 
 part_lfs = [
-    LF_part_in_header_tag,
+#    LF_part_in_header_tag, for ce_v_max
     LF_cheating_with_another_part,
     LF_replacement_table,
     LF_many_p_siblings,
     LF_part_complement,
     # LF_top_mark_col_part,
-    LF_please_to_left,
-    LF_part_num_in_high_col_num
+    LF_please_to_left
+#    LF_part_num_in_high_col_num
 ]
 
 ### POLARITY ###
@@ -251,15 +252,15 @@ def LF_too_many_numbers_horz(c):
     return -1 if num_numbers > 3 else 0
 
 voltage_lfs = [
-    LF_aligned_or_global,
-    LF_same_table_must_align,
-    LF_low_table_num,
+#    LF_aligned_or_global,
+#    LF_same_table_must_align,
+#    LF_low_table_num,
     LF_voltage_not_in_table,
     LF_bad_keywords_in_row,
-    LF_equals_in_row,
+#    LF_equals_in_row,
     LF_current_in_row,
-    LF_V_aligned,
-    LF_too_many_numbers_horz
+#    LF_V_aligned,
+#    LF_too_many_numbers_horz
 ]
 
 # CE_V_MAX #
@@ -280,22 +281,137 @@ def LF_ce_abbrevs_horz(c):
 def LF_head_ends_with_ceo(c):
     return 1 if any(ngram.endswith('ceo') for ngram in get_head_ngrams(c.attr)) else 0
 
-non_ce_voltage_keywords = set(['collector-base', 'collector - base', 'collector base', 'vceo', 'ceo',
-                               'emitter-base', 'emitter - base', 'emitter base', 'vebo', 'ebo'])
+non_ce_voltage_keywords = set(['collector-base', 'collector - base', 'collector base', 'vcbo', 'cbo', 'vces',
+                               'emitter-base', 'emitter - base', 'emitter base', 'vebo', 'ebo', 'breakdown voltage', 
+                               'emitter breakdown', 'emitter breakdown voltage', 'current'])
 def LF_non_ce_voltages_in_row(c):
     return -1 if overlap(non_ce_voltage_keywords, get_row_ngrams(c.attr, n_max=3)) else 0
 
 def LF_first_two_pages(c):
     return 1 if get_page(c) in [1, 2] else -1
 
+def filter_non_parts(c):
+    ret = set()
+    for _ in c:
+        for __ in expand_part_range(_):
+            if re.match("^([0-9]+[A-Z]+|[A-Z]+[0-9]+)[0-9A-Z]*$", __) and len(__) > 2:
+                ret.add(__)
+    return ret
+
+def LF_part_ce_keywords_in_rows(c):
+    return 1 if overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(c.attr, n_max=3)) and \
+        overlap(set([c[0].get_span().lower()]), get_row_ngrams(c.attr, n_max=3)) else 0 
+
+def LF_part_ce_keywords_in_rows_cols_prefix(c):
+    ngrams = set(list(get_row_ngrams(c.attr, n_max=3)))
+    ngrams = ngrams.union(set(list(get_col_ngrams(c.attr, n_max=3))))
+    ngrams_part = filter_non_parts(ngrams)
+#    print ngrams
+    return 1 if overlap(ce_keywords.union(ce_abbrevs), ngrams) and \
+        any([c[0].get_span().lower().startswith(_) for _ in ngrams_part]) else 0 
+
+def LF_part_ce_keywords_in_rows_cols_prefix_1(c):
+    ngrams = set(list(get_horz_ngrams(c.attr)))
+    ngrams = ngrams.union(set(list(get_vert_ngrams(c.attr))))
+    ngrams_part = filter_non_parts(ngrams)
+#    print ngrams
+    return 1 if overlap(ce_keywords.union(ce_abbrevs), ngrams) and \
+        any([c[0].get_span().lower().startswith(_) for _ in ngrams_part]) else 0 
+    
+def LF_part_ce_keywords_horz(c):
+    return 1 if overlap(ce_keywords.union(ce_abbrevs), get_horz_ngrams(c.attr)) and \
+        overlap(set([c[0].get_span().lower()]), get_horz_ngrams(c.attr)) else 0 
+
+def LF_part_ce_keywords_horz_prefix(c):
+    return 1 if overlap(ce_keywords.union(ce_abbrevs), get_horz_ngrams(c.attr)) and \
+        any([c[0].get_span().lower().startswith(_) for _ in get_horz_ngrams(c.attr)]) and \
+        not overlap(non_ce_voltage_keywords, get_horz_ngrams(c.attr)) else 0
+
+def LF_part_ce_keywords_in_row_prefix(c):
+    ngrams_part = filter_non_parts(get_row_ngrams(c.attr, n_max=3))
+
+    return 1 if overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(c.attr, n_max=3)) and \
+        any([c[0].get_span().lower().startswith(_) for _ in ngrams_part]) and \
+        not overlap(non_ce_voltage_keywords, get_row_ngrams(c.attr, n_max=3)) and \
+        not LF_current_in_row(c) else 0
+
+def LF_part_ce_keywords_in_row_prefix_same_table(c):
+    ngrams_part = filter_non_parts(get_row_ngrams(c.attr, n_max=3))
+
+    return 1 if same_table(c) and \
+        is_horz_aligned(c) and \
+        overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(c.attr, n_max=3)) and \
+        overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(c.part, n_max=3)) and \
+        any([c[0].get_span().lower().startswith(_) for _ in ngrams_part]) and \
+        not overlap(non_ce_voltage_keywords, get_row_ngrams(c.part, n_max=3)) and \
+        not overlap(non_ce_voltage_keywords, get_row_ngrams(c.attr, n_max=3)) and \
+        not LF_current_in_row(c) else 0
+
+def LF_part_ce_keywords_in_col_prefix_same_table(c):
+    ngrams_part = filter_non_parts(get_col_ngrams(c.attr, n_max=3))
+    
+    return 1 if same_table(c) and \
+        is_vert_aligned(c) and \
+        overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(c.attr, n_max=3)) and \
+        not overlap(non_ce_voltage_keywords, get_row_ngrams(c.attr, n_max=3)) and \
+        not LF_current_in_row(c) and \
+        bbox_from_span(c.part).top < bbox_from_span(c.attr).top else 0
+        
+def LF_ce_keywords_not_part_in_row_col_prefix(c):
+    ngrams_part = set(list(get_col_ngrams(c.attr, n_max=3)))
+    ngrams_part = filter_non_parts(ngrams_part.union(set(list(get_row_ngrams(c.attr, n_max=3)))))
+
+    return 1 if not same_table(c) and \
+        overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(c.attr, n_max=3)) and \
+        len(ngrams_part) == 0 and \
+        not overlap(non_ce_voltage_keywords, get_row_ngrams(c.part, n_max=3)) and \
+        not overlap(non_ce_voltage_keywords, get_row_ngrams(c.attr, n_max=3)) and \
+        not LF_current_in_row(c) else 0
+
+       
+def LF_part_miss_match(c):
+    ngrams_part = set(list(get_vert_ngrams(c[1], n_max=1)))
+    ngrams_part = filter_non_parts(ngrams_part.union(set(list(get_horz_ngrams(c[1], n_max=1)))))
+#    print '~~', ngrams_part
+    return 0 if len(ngrams_part) == 0 or any([c[0].get_span().lower().startswith(_.lower()) for _ in ngrams_part]) else -1
+
+        
+def LF_not_valid_value(c):
+#    ngrams_part = set(list(get_col_ngrams(c.attr, n_max=3)))
+#    ngrams_part = filter_non_parts(ngrams_part.union(set(list(get_row_ngrams(c.attr, n_max=3)))))
+
+    return -1 if not overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(c.attr, n_max=3)) else 0
+        
+def LF_ce_keywords_no_part_in_rows(c):
+    for _ in get_row_ngrams(c.attr, n_max=3):
+        if re.match("^([0-9]+[a-zA-Z]+|[a-zA-Z]+[0-9]+)[0-9a-zA-Z]*$", _):
+            return 0
+    return 1 if overlap(ce_keywords.union(ce_abbrevs), get_row_ngrams(c.attr, n_max=3)) else 0 
+
+def LF_ce_keywords_no_part_horz(c):
+    for _ in get_horz_ngrams(c.attr):
+        if re.match("^([0-9]+[a-zA-Z]+|[a-zA-Z]+[0-9]+)[0-9a-zA-Z]*$", _):
+            return 0
+    return 1 if overlap(ce_keywords.union(ce_abbrevs), get_horz_ngrams(c.attr)) else 0 
+
 ce_v_max_lfs = voltage_lfs + [
-    LF_ce_keywords_in_row,
-    LF_ce_keywords_horz,
-    LF_ce_abbrevs_in_row,
-    LF_ce_abbrevs_horz,
-    LF_head_ends_with_ceo,
+#    LF_ce_keywords_in_row,
+#    LF_ce_keywords_horz,
+#    LF_ce_abbrevs_in_row,
+#    LF_ce_abbrevs_horz,
+#    LF_head_ends_with_ceo,
     LF_non_ce_voltages_in_row,
-    LF_first_two_pages
+#    LF_first_two_pages
+#    LF_part_ce_keywords_in_rows_cols_prefix,
+    LF_part_ce_keywords_in_row_prefix_same_table,
+    LF_part_ce_keywords_in_col_prefix_same_table,
+    LF_part_miss_match
+#    LF_part_ce_keywords_in_row_prefix,
+#    LF_ce_keywords_not_part_in_row_col_prefix,
+#    LF_part_ce_keywords_horz_prefix
+#    LF_not_valid_value
+#    LF_ce_keywords_no_part_in_rows,
+#    LF_ce_keywords_no_part_horz
 ]
 
 ### GETTER ###

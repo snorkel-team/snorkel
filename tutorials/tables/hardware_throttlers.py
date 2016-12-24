@@ -1,5 +1,6 @@
 from snorkel.lf_helpers import *
 from collections import namedtuple
+from hardware_lfs import *
 
 """
 NOTE: Throttlers must operate on multiple component Spans of a candidate. If the body
@@ -14,8 +15,11 @@ FakeCandidate = namedtuple('FakeCandidate', ['part', 'attr'])
 # c = FakeCandidate(part, attr)
 
 def same_page_throttler((part, attr)):
-    return same_page((part, attr))
-
+#    if not same_page((part, attr)): return False
+    if same_table((part, attr)):
+        return (is_horz_aligned((part, attr)) or is_vert_aligned((part, attr)))
+    if LF_part_miss_match((part, attr)) < 0: return False
+    return True
 # aligned or part is global
 
 throttlers['ce_v_max'] = same_page_throttler

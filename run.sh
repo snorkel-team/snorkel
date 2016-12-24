@@ -36,7 +36,7 @@ if [ $size -eq 0 ]; then
     esac
 fi
 
-java -Xmx4g -cp "parser/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port $JAVANLPPORT --timeout 600000 > /dev/null &
+java -Xmx8g -cp "parser/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port $JAVANLPPORT --timeout 600000 > /dev/null &
 CORENLPPID=$!
 # Launch jupyter notebook!
 echo "Launching Jupyter Notebook..."

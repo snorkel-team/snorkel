@@ -24,6 +24,8 @@ import sys
 import gzip
 import json
 from timeit import default_timer as timer
+from requests.packages.urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 
 class CorpusParser:
     """Invokes a DocParser and runs the output through a ContextParser to produce a Corpus."""
@@ -223,8 +225,6 @@ class CoreNLPHandler:
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626
-        from requests.packages.urllib3.util.retry import Retry
-        from requests.adapters import HTTPAdapter
         self.requests_session = requests.Session()
         retries = Retry(total=None,
                         connect=20,

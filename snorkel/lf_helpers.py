@@ -1,5 +1,5 @@
 import re
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from itertools import chain
 from lxml.html import fromstring
 from lxml import etree
@@ -10,6 +10,8 @@ from utils_table import *
 from utils_visual import *
 from .models import TemporarySpan, Phrase
 from candidates import Ngrams
+
+from bs4 import BeautifulSoup as soup
 
 
 def get_text_splits(c):
@@ -151,6 +153,35 @@ def get_right_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
                                   lower=lower):
         yield ngram
 
+def left_text(c, window=None, attr='words'):
+    """
+    Outputs text immediately following a candidate span.
+    For higher-arity Candidates, defaults to the _first_ argument.
+    :param c: Candidate or TemporarySpan object
+    :param window: Number of tokens to return. If None, return all tokens.
+    :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    """
+    span = c if isinstance(c, TemporarySpan) else c[0]
+    if not window:
+        return getattr(span.parent, attr)[span.get_word_start()+1:]
+    else:
+        end_idx = span.get_word_start()+window+1
+        return getattr(span.parent, attr)[span.get_word_start()+1:end_idx]
+
+def right_text(c, window=None, attr='words'):
+    """
+    Outputs text immediately preceding a candidate span.
+    For higher-arity Candidates, defaults to the _last_ argument.
+    :param c: Candidate or TemporarySpan object
+    :param window: Number of tokens to return. If None, return all tokens.
+    :param attrib: The token attribute type (e.g. words, lemmas, poses)
+    """
+    span = c if isinstance(c, TemporarySpan) else c[-1]
+    if not window:
+        return getattr(span.parent, attr)[:span.get_word_start()]
+    else:
+        start_idx = max(span.get_word_start()-window, 0)
+        return getattr(span.parent, attr)[start_idx:span.get_word_start()]
 
 def contains_token(c, tok, attrib='words', lower=True):
     """
@@ -436,7 +467,6 @@ def get_aligned_ngrams(c, direct=True, infer=False, attrib='words', n_min=1, n_m
                                     n_min=n_min, n_max=n_max, spread=spread, lower=lower):
             yield ngram
 
-
 def get_head_ngrams(c, axis=None, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
     axes = [axis] if axis else ['row', 'col']
@@ -445,17 +475,21 @@ def get_head_ngrams(c, axis=None, infer=False, attrib='words', n_min=1, n_max=1,
             return
         else:
             for axis in axes:
-                if getattr(span.parent, _other_axis(axis) + '_start') == 0: return
-                for phrase in getattr(_get_head_cell(span.parent.cell, axis, infer=infer), 'phrases', []):
+                for phrase in getattr(get_head_cell(span.parent.cell, axis, infer=infer), 'phrases', []):
                     for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
                         yield ngram
 
 
-def _get_head_cell(root_cell, axis, infer=False):
+def get_head_cell(root_cell, axis, infer=False):
     other_axis = 'row' if axis == 'col' else 'col'
     aligned_cells = _get_aligned_cells(root_cell, axis, direct=True, infer=infer)
     return sorted(aligned_cells, key=lambda x: getattr(x, other_axis + '_start'))[0] if aligned_cells else []
 
+def cell_spans(cell, table, axis):
+    if len([c for c in table.cells if is_axis_aligned(c, cell, axis)]) > 1:
+        return False
+    else:
+        return True
 
 def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min=1, n_max=1, spread=[0, 0], lower=True):
     for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
@@ -465,40 +499,43 @@ def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min
             for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
                 yield ngram
 
-
-def _get_aligned_cells(root_cell, axis, direct=True, infer=False):
+def get_aligned_cells(root_cell, axis, direct=True, infer=False):
     aligned_cells = [cell for cell in root_cell.table.cells
                      if is_axis_aligned(root_cell, cell, axis=axis)
                      and cell != root_cell]
-    return [_infer_cell(cell, _other_axis(axis), direct=direct, infer=infer) \
+    inferred_cells = [_infer_cell(cell, _other_axis(axis), direct=direct, infer=infer) \
             for cell in aligned_cells] if infer else aligned_cells
-
+    return [ cell for cell in inferred_cells if isinstance(cell, Cell) ]
 
 def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False, spread=[0, 0]):
     return [phrase for cell in root_phrase.table.cells if is_axis_aligned(root_phrase, cell, axis=axis, spread=spread) \
             for phrase in _infer_cell(cell, _other_axis(axis), direct, infer).phrases \
             if phrase != root_phrase]
 
-
-# PhantomCell = namedtuple('PhantomCell','phrases')
+PhantomCell = namedtuple('PhantomCell','phrases')
 # TODO: fix this function and retest
 def _infer_cell(root_cell, axis, direct, infer):
-    # NOTE: not defined for direct = False and infer = False
-    # empty = len(root_cell.phrases) == 0 
-    # edge = getattr(root_cell, _other_axis(axis) + '_start') == 0
-    # if direct and (not empty or edge or not infer):
-    #     return root_cell
-    # else:
-    #     if edge or not empty:
-    #         return PhantomCell(phrases=[]) 
-    #     else:
-    #         neighbor_cells = [cell for cell in root_cell.table.cells
-    #             if is_axis_aligned(cell, root_cell, axis=axis)
-    #             and getattr(cell, _other_axis(axis) + '_start') == \
-    #                 getattr(root_cell, _other_axis(axis) + '_start') - 1]
-    #         return _infer_cell(neighbor_cells[0], axis, direct=True, infer=True)
-    return root_cell
+    if direct == False and infer == False: raise ValueError('Direct and infer cannot both be false')
+    empty = _empty(root_cell)
+    edge = getattr(root_cell, _other_axis(axis) + '_start') == 0
+    if direct and (not empty or edge or not infer):
+        return root_cell
+    else:
+        if edge or not empty:
+            return PhantomCell(phrases=[]) 
+        else:
+            # collect all aligned non-empty cells above (or to the right) of the root cell
+            aligned_cells = [cell for cell in root_cell.table.cells
+                if is_axis_aligned(root_cell, cell, axis=axis)
+                and getattr(cell, _other_axis(axis) + '_end') < getattr(root_cell, _other_axis(axis) + '_start')
+                and not _empty(cell)]
 
+            # pick the last cell among the ones identified above
+            aligned_cells = sorted(aligned_cells, key=lambda x: getattr(x,_other_axis(axis) +'_end'), reverse=True)
+            return aligned_cells[0] if aligned_cells else PhantomCell
+
+def _empty(cell):
+    return True if not cell.text or cell.text.isspace() or not soup(cell.text).text or soup(cell.text).text.isspace() else False
 
 def _other_axis(axis):
     return 'row' if axis == 'col' else 'col'

@@ -2,7 +2,7 @@ from . import SnorkelSession
 from .utils import ProgressBar
 from .models import Candidate, CandidateSet, TemporarySpan
 from .models.candidate import candidate_set_candidate_association
-from .models.context import Document, Phrase
+from .models.context import Document, Table, Cell, Phrase
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
 from sqlalchemy.sql import select
@@ -44,7 +44,8 @@ class CandidateExtractor(object):
     :param symmetric_relations: Boolean indicating whether to extract symmetric Candidates, i.e., rel(A,B) and rel(B,A),
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
-    def __init__(self, candidate_class, cspaces, matchers, throttler=None, self_relations=False, nested_relations=False, symmetric_relations=True):
+    def __init__(self, candidate_class, cspaces, matchers, throttler=None, self_relations=False, nested_relations=False, 
+                 symmetric_relations=True, stop_on_duplicates=True):
         self.candidate_class     = candidate_class
         # Make sure the candidate spaces are different so generators aren't expended!
         self.candidate_spaces    = deepcopy(cspaces if type(cspaces) in [list, tuple] else [cspaces])
@@ -53,6 +54,7 @@ class CandidateExtractor(object):
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations
         self.symmetric_relations = symmetric_relations
+        self.stop_on_duplicates  = stop_on_duplicates
 
         # Check that arity is same
         if len(self.candidate_spaces) != len(self.matchers):
@@ -88,6 +90,7 @@ class CandidateExtractor(object):
     def _extract_from_context(self, context, candidate_set, session, check_duplicates = False):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
+
         child_context_sets = [set() for _ in xrange(self.arity)]
         for i in range(self.arity):
             for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
@@ -138,7 +141,6 @@ class CandidateExtractor(object):
             candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
             child_args['id'] = candidate_id[0]
             session.execute(child_insert_query, child_args)
-                
 
             # Add candidate to the given CandidateSet
             set_insert_args['candidate_id'] = candidate_id[0]
@@ -279,7 +281,6 @@ class OmniNgrams(Ngrams):
             for ts in Ngrams.apply(self, phrase):
                 yield ts
 
-
 class PhraseToSpan(CandidateSpace):
     """
     Defines the space of candidates as all Phrases in a Document _x_,
@@ -289,3 +290,70 @@ class PhraseToSpan(CandidateSpace):
             raise TypeError("Input Contexts to PhraseToSpan.apply() must be of type Document")
         for phrase in context.phrases:
             yield TemporarySpan(char_start=0, char_end=len(phrase.text)-1, parent=phrase)
+
+class TableNgrams(Ngrams):
+    """
+    Defines the space of candidates as all n-grams (n <= n_max) in a Table _x_,
+    divided into Phrases inside of html elements.
+    """
+    def __init__(self, n_max=5, split_tokens=['-', '/']):
+        Ngrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
+
+    def apply(self, context):
+        if not isinstance(context, Table):
+            raise TypeError("Input Contexts to TableNgrams.apply() must be of type Table")
+        for phrase in context.phrases:
+            for ts in Ngrams.apply(self, phrase):
+                yield ts                
+
+class TableCells(CandidateSpace):
+    """Defines the space of candidates as the complete phrases in cells"""
+    def __init__(self):
+        CandidateSpace.__init__(self)
+
+    def apply(self, context):
+        if not isinstance(context, Table):
+            raise TypeError("Input Contexts to TableCells.apply() must be of type Table")
+        for phrase in context.phrases:
+            for temp_span in self._apply_to_phrase(phrase):
+                yield temp_span
+
+    def _apply_to_phrase(self, phrase):
+        L = len(phrase.char_offsets)
+        char_start = phrase.char_offsets[0]
+        cl = phrase.char_offsets[L-1] - phrase.char_offsets[0] + len(phrase.words[L-1])
+        char_end = phrase.char_offsets[0] + cl - 1
+        yield TemporarySpan(char_start=char_start, char_end=char_end, parent=phrase)
+
+class SpanningTableCells(CandidateSpace):
+    """Defines the space of candidates as the phrases in cells that span entire axis"""
+    def __init__(self, axis):
+        CandidateSpace.__init__(self)
+        if axis not in ('row', 'col'):
+            raise ValueError('Invalid axis: %s' % axis)
+        self.axis= axis
+
+    def apply(self, context):
+        if not isinstance(context, Table):
+            raise TypeError("Input Contexts to SpanningTableCells.apply() must be of type Table")
+
+        def _spans(cell, table, axis):
+            if axis == 'row' and len([c for c in table.cells if c.row == cell.row]) > 1:
+                return False
+            if axis == 'col' and len([c for c in table.cells if c.col == cell.col]) > 1:
+                return False
+            return True
+
+        spanning_cells = [cell for cell in context.cells if _spans(cell, context, self.axis)]
+        spanning_phrases = [phrase for cell in spanning_cells for phrase in cell.phrases]
+
+        for phrase in spanning_phrases:
+            for temp_span in self._apply_to_phrase(phrase):
+                yield temp_span
+
+    def _apply_to_phrase(self, phrase):
+        L = len(phrase.char_offsets)
+        char_start = phrase.char_offsets[0]
+        cl = phrase.char_offsets[L-1] - phrase.char_offsets[0] + len(phrase.words[L-1])
+        char_end = phrase.char_offsets[0] + cl - 1
+        yield TemporarySpan(char_start=char_start, char_end=char_end, parent=phrase)        

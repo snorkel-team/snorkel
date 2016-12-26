@@ -185,21 +185,23 @@ class XMLMultiDocParser(DocParser):
     **Note: Include the full document XML etree in the attribs dict with keep_xml_tree=True**
     """
     def __init__(self, path, doc='.//document', text='./text/text()', id='./id/text()',
-                    keep_xml_tree=False):
+                    keep_xml_tree=False, unicode=True):
         DocParser.__init__(self, path)
         self.doc = doc
         self.text = text
         self.id = id
         self.keep_xml_tree = keep_xml_tree
+        self.unicode = unicode
 
     def parse_file(self, f, file_name):
         for i,doc in enumerate(et.parse(f).xpath(self.doc)):
             doc_id = str(doc.xpath(self.id)[0])
-            text   = '\n'.join(filter(lambda t : t is not None, doc.xpath(self.text)))
+            text = '\n'.join([ et.tostring(elem) for elem in doc.xpath(self.text) if elem is not None])
             meta = {'file_name': str(file_name)}
             if self.keep_xml_tree:
                 meta['root'] = et.tostring(doc)
             stable_id = self.get_stable_id(doc_id)
+            text = unicode(text) if self.unicode else text
             yield Document(name=doc_id, stable_id=stable_id, meta=meta), text
 
     def _can_read(self, fpath):

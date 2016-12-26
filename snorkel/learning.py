@@ -446,6 +446,18 @@ class NaiveBayes(NoiseAwareModel):
     def marginals(self, X):
         return odds_to_prob(X.dot(self.w))
 
+    def predict_unw(self, X):
+        """Predict using _unweighted_ majority vote of *just the LFs*"""
+        return odds_to_prob(X.dot(np.ones(self.w.shape)))
+
+    def odds(self, X):
+        """Odds using _unweighted_ majority vote of *just the LFs*"""
+        return X.dot(self.w)
+
+    def odds_unw(self, X):
+        """Odds using _unweighted_ majority vote of *just the LFs*"""
+        return X.dot(np.ones(self.w.shape))
+
 
 class LSTM(NoiseAwareModel):
     """Long Short-Term Memory."""

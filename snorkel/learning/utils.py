@@ -200,7 +200,7 @@ def grid_search_plot(w_fit, mu_opt, f1_opt):
     plt.show()
 
     
-class Parameter(object):
+class Hyperparameter(object):
     """Base class for a grid search parameter"""
     def __init__(self, name):
         self.name = name
@@ -214,7 +214,7 @@ class Parameter(object):
         return [v[int(i)] for i in np.random.choice(len(v), n)]
 
     
-class ListParameter(Parameter):
+class ListParameter(Hyperparameter):
     """List of parameter values for searching"""
     def __init__(self, name, parameter_list):
         self.parameter_list = np.array(parameter_list)
@@ -224,7 +224,7 @@ class ListParameter(Parameter):
         return self.parameter_list
 
     
-class RangeParameter(Parameter):
+class RangeParameter(Hyperparameter):
     """
     Range of parameter values for searching.
     min_value and max_value are the ends of the search range
@@ -252,20 +252,21 @@ class GridSearch(object):
     Runs hyperparameter grid search over a model object with train and score methods,
     training data (X), and training_marginals
     Selects based on maximizing F1 score on a supplied validation set
-    Specify search space with Parameter arguments
+    Specify search space with Hyperparameter arguments
     """
-    def __init__(self, model, X, training_marginals, scorer, *parameters):
+    def __init__(self, session, model, X, training_marginals, parameters, scorer=MentionScorer):
+        self.session            = session
         self.model              = model
         self.X                  = X
         self.training_marginals = training_marginals
-        self.scorer             = scorer
         self.params             = parameters
         self.param_names        = [param.name for param in parameters]
+        self.scorer             = scorer
         
     def search_space(self):
         return product(param.get_all_values() for param in self.params)
 
-    def fit(self, X_validation, validation_labels, gold_candidate_set, b=0.5, set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
+    def fit(self, X_validation, validation_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
@@ -289,7 +290,7 @@ class GridSearch(object):
             self.model.train(self.X, self.training_marginals, **model_hyperparams)
 
             # Test the model
-            tp, fp, tn, fn = self.model.score(X_validation, validation_labels, gold_candidate_set,
+            tp, fp, tn, fn = self.model.score(self.session, X_validation, validation_labels, gold_candidate_set,
                 b, set_unlabeled_as_neg, False, self.scorer, **validation_kwargs)
             p, r, f1 = scores_from_counts(tp, fp, tn, fn)
             run_stats.append(list(param_vals) + [p, r, f1])
@@ -307,10 +308,10 @@ class GridSearch(object):
     
     
 class RandomSearch(GridSearch):
-    def __init__(self, model, X, training_marginals, n, *parameters):
+    def __init__(self, session, model, X, training_marginals, parameters, n=10, **kwargs):
         """Search a random sample of size n from a parameter grid"""
         self.n = n
-        super(RandomSearch, self).__init__(model, X, training_marginals, *parameters)
+        super(RandomSearch, self).__init__(session, model, X, training_marginals, parameters, **kwargs)
 
         print "Initialized RandomSearch search of size {0}. Search space size = {1}.".format(
             self.n, np.product([len(param.get_all_values()) for param in self.params])

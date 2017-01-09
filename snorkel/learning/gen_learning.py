@@ -101,6 +101,12 @@ class NaiveBayes(NoiseAwareModel):
 
     def marginals(self, X):
         return odds_to_prob(X.dot(self.w))
+    
+    def save(self, session, version):
+        raise NotImplementedError("Not implemented for generative model.")
+
+    def load(self, session, version):
+        raise NotImplementedError("Not implemented for generative model.")
 
 
 class GenerativeModelWeights(object):
@@ -244,11 +250,16 @@ class GenerativeModel(object):
 
         return marginals
 
-    def score(self, X_test, test_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True,
+    def score(self, session, X_test, test_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True,
               display=True, scorer=MentionScorer, **kwargs):
-        s = scorer([X_test.get_candidate(i) for i in xrange(X_test.shape[0])],
-                   test_labels, gold_candidate_set)
-        test_marginals = self.marginals(X_test, **kwargs)
+        
+        # Get the test candidates
+        test_candidates = [X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])]
+
+        # Initialize scorer
+        s               = scorer(test_candidates, test_labels, gold_candidate_set)
+        test_marginals  = self.marginals(X_test, **kwargs)
+
         return s.score(test_marginals, train_marginals=None, b=b,
                        set_unlabeled_as_neg=set_unlabeled_as_neg, display=display)
 

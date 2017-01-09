@@ -14,37 +14,70 @@ from subprocess import Popen
 import sys
 import warnings
 
-from .models import Document, Sentence, construct_stable_id
-from .udf import UDF
+from .models import Context, Document, Sentence, construct_stable_id
+from .udf import UDF, UDFRunner
 from .utils import sort_X_on_Y
 
 
-class DocParser:
+class CorpusParser(UDFRunner):
+    def __init__(self, clear=True, tok_whitespace=False, split_newline=False, parse_tree=False, fn=None, in_queue=None):
+        super(CorpusParser, self).__init__(clear,
+                                           CorpusParser.CorpusParserUDF,
+                                           tok_whitespace=tok_whitespace,
+                                           split_newline=split_newline,
+                                           parse_tree=parse_tree,
+                                           fn=fn,
+                                           in_queue=in_queue)
+
+    def apply(self, doc_preprocessor, **kwargs):
+        super(CorpusParser, self).apply(doc_preprocessor.generate(), **kwargs)
+
+    def clear(self, session):
+        session.query(Context).delete()
+
+    class CorpusParserUDF(UDF):
+        def __init__(self, tok_whitespace, split_newline, parse_tree, fn, in_queue):
+            self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace,
+                                                  split_newline=split_newline,
+                                                  parse_tree=parse_tree)
+            self.fn = fn
+            super(CorpusParser.CorpusParserUDF, self).__init__(in_queue=in_queue)
+
+        def apply(self, x):
+            """Given a Document object and its raw text, parse into processed Sentences"""
+            doc, text = x
+            for parts in self.corenlp_handler.parse(doc, text):
+                parts = self.fn(parts) if self.fn is not None else parts
+                yield Sentence(**parts)
+
+
+class DocPreprocessor(object):
     """
     Parses a file or directory of files into a set of Document objects.
 
     :param encoding: file encoding to use, default='utf-8'
+    :param path: filesystem path to file or directory to parse
+    :param max_docs: the maximum number of Documents to produce, default=float('inf')
 
     """
-    def __init__(self, encoding="utf-8"):
+    def __init__(self, path, encoding="utf-8", max_docs=float('inf')):
+        self.path = path
         self.encoding = encoding
+        self.max_docs = max_docs
 
-    def apply(self, path, max_docs=float('inf')):
+    def generate(self):
         """
         Parses a file or directory of files into a set of Document objects.
 
-        :param path: filesystem path to file or directory to parse
-        :param max_docs: the maximum number of Documents to produce, default=float('inf')
-
         """
         doc_count = 0
-        for fp in self._get_files(path):
+        for fp in self._get_files(self.path):
             file_name = os.path.basename(fp)
             if self._can_read(file_name):
                 for doc, text in self.parse_file(fp, file_name):
                     yield doc, text
                     doc_count += 1
-                    if doc_count >= max_docs:
+                    if doc_count >= self.max_docs:
                         return
 
     def get_stable_id(self, doc_id):
@@ -68,7 +101,8 @@ class DocParser:
         else:
             raise IOError("File or directory not found: %s" % (path,))
 
-class TSVDocParser(DocParser):
+
+class TSVDocPreprocessor(DocPreprocessor):
     """Simple parsing of TSV file with one (doc_name <tab> doc_text) per line"""
     def parse_file(self, fp, file_name):
         with codecs.open(fp, encoding=self.encoding) as tsv:
@@ -78,7 +112,7 @@ class TSVDocParser(DocParser):
                 yield Document(name=doc_name, stable_id=stable_id, meta={'file_name' : file_name}), doc_text
 
 
-class TextDocParser(DocParser):
+class TextDocPreprocessor(DocPreprocessor):
     """Simple parsing of raw text files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with codecs.open(fp, encoding=self.encoding) as f:
@@ -87,7 +121,7 @@ class TextDocParser(DocParser):
             yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), f.read()
 
 
-class HTMLDocParser(DocParser):
+class HTMLDocPreprocessor(DocPreprocessor):
     """Simple parsing of raw HTML files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with open(fp, 'rb') as f:
@@ -112,7 +146,7 @@ class HTMLDocParser(DocParser):
         return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
 
 
-class XMLMultiDocParser(DocParser):
+class XMLMultiDocPreprocessor(DocPreprocessor):
     """
     Parse an XML file _which contains multiple documents_ into a set of Document objects.
 
@@ -123,7 +157,7 @@ class XMLMultiDocParser(DocParser):
     """
     def __init__(self, path, doc='.//document', text='./text/text()', id='./id/text()',
                     keep_xml_tree=False):
-        DocParser.__init__(self, path)
+        DocPreprocessor.__init__(self, path)
         self.doc = doc
         self.text = text
         self.id = id
@@ -146,7 +180,8 @@ class XMLMultiDocParser(DocParser):
 PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
          '-RSB-': ']', '-LSB-': '['}
 
-class CoreNLPHandler:
+
+class CoreNLPHandler(object):
     def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
@@ -264,17 +299,3 @@ class CoreNLPHandler:
             position += 1
             yield parts
 
-
-class SentenceParser(UDF):
-    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False, fn=None, in_queue=None):
-        self.corenlp_handler = CoreNLPHandler(
-            tok_whitespace=tok_whitespace, split_newline=split_newline, parse_tree=parse_tree)
-        self.fn = fn
-        super(SentenceParser, self).__init__(in_queue=in_queue)
-
-    def apply(self, x):
-        """Given a Document object and its raw text, parse into preprocessed sentences"""
-        doc, text = x
-        for parts in self.corenlp_handler.parse(doc, text):
-            parts = self.fn(parts) if self.fn is not None else parts
-            yield Sentence(**parts)

@@ -97,6 +97,15 @@ script:
   - runipy intro/Intro_Tutorial_4.ipynb
   - runipy intro/Intro_Tutorial_5.ipynb
 
+  # Runs them some more. Tests running against an existing database.
+  - runipy intro/Intro_Tutorial_1.ipynb
+  - runipy intro/Intro_Tutorial_2.ipynb
+  - runipy intro/Intro_Tutorial_3.ipynb
+  - runipy intro/Intro_Tutorial_4.ipynb
+  # We do notebook 4 twice to test rerunning in the middle of the workflow
+  - runipy intro/Intro_Tutorial_4.ipynb
+  - runipy intro/Intro_Tutorial_5.ipynb
+
   # Runs disease tagger tutorial notebooks
   # - runipy disease_tagging/Disease_Tagging_Tutorial_1.ipynb
   # - runipy disease_tagging/Disease_Tagging_Tutorial_2.ipynb

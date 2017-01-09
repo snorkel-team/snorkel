@@ -7,7 +7,6 @@ import glob
 import json
 import lxml.etree as et
 import os
-import random
 import re
 import requests
 import signal
@@ -17,35 +16,36 @@ import warnings
 
 from .models import Document, Sentence, construct_stable_id
 from .udf import UDF
-from .utils import ProgressBar, sort_X_on_Y
+from .utils import sort_X_on_Y
 
 
 class DocParser:
     """
-    Parse a file or directory of files into a set of Document objects.
+    Parses a file or directory of files into a set of Document objects.
 
-    :param path: filesystem path to file or directory to parse
     :param encoding: file encoding to use, default='utf-8'
-    :param keep: the size of the random fraction of Documents to parse, default=1.0, i.e., all Documents
 
     """
     def __init__(self, encoding="utf-8"):
         self.encoding = encoding
 
-    def apply(self, path, keep=1.0):
+    def apply(self, path, max_docs=float('inf')):
         """
-        Parse a file or directory of files into a set of Document objects.
+        Parses a file or directory of files into a set of Document objects.
 
-        - Input: A file or directory path.
-        - Output: A set of Document objects, which at least have a _text_ attribute,
-                  and possibly a dictionary of other attributes.
+        :param path: filesystem path to file or directory to parse
+        :param max_docs: the maximum number of Documents to produce, default=float('inf')
+
         """
+        doc_count = 0
         for fp in self._get_files(path):
             file_name = os.path.basename(fp)
             if self._can_read(file_name):
                 for doc, text in self.parse_file(fp, file_name):
-                    if random.random() < keep:
-                        yield doc, text
+                    yield doc, text
+                    doc_count += 1
+                    if doc_count >= max_docs:
+                        return
 
     def get_stable_id(self, doc_id):
         return "%s::document:0:0" % doc_id

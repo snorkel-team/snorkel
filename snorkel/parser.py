@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-from .udf import UDF
-from .models import Document, Sentence, construct_stable_id
-from .utils import ProgressBar, sort_X_on_Y
 import atexit
-import warnings
 from bs4 import BeautifulSoup
+import codecs
 from collections import defaultdict
 import glob
 import json
@@ -16,7 +13,11 @@ import requests
 import signal
 from subprocess import Popen
 import sys
-import codecs
+import warnings
+
+from .models import Document, Sentence, construct_stable_id
+from .udf import UDF
+from .utils import ProgressBar, sort_X_on_Y
 
 
 class DocParser:
@@ -146,7 +147,7 @@ PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
          '-RSB-': ']', '-LSB-': '['}
 
 class CoreNLPHandler:
-    def __init__(self, tok_whitespace=False, split_newline=False):
+    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
         # Kill it when python exits.
@@ -156,6 +157,7 @@ class CoreNLPHandler:
         self.port = 12345
         self.tok_whitespace = tok_whitespace
         self.split_newline = split_newline
+        self.parse_tree = parse_tree
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
                % (loc, self.port, 600000)]
@@ -166,7 +168,12 @@ class CoreNLPHandler:
             props += '"tokenize.whitespace": "true", '
         if self.split_newline:
             props += '"ssplit.eolonly": "true", '
-        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse,ner", "outputFormat": "json"}' % (self.port, props)
+        annotators = '"tokenize,ssplit,pos,lemma,depparse,ner{0}"'.format(
+            ',parse' if self.parse_tree else ''
+        )
+        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": %s, "outputFormat": "json"}' % (
+            self.port, props, annotators
+        )
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626
@@ -226,6 +233,9 @@ class CoreNLPHandler:
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
 
+            # Add full dependency tree parse
+            parts['tree'] = ' '.join(block['parse'].split()) if self.parse_tree else ''
+
             # NOTE: We have observed weird bugs where CoreNLP diverges from raw document text (see Issue #368)
             # In these cases we go with CoreNLP so as not to cause downstream issues but throw a warning
             doc_text = text[block['tokens'][0]['characterOffsetBegin'] : block['tokens'][-1]['characterOffsetEnd']]
@@ -255,9 +265,9 @@ class CoreNLPHandler:
 
 
 class SentenceParser(UDF):
-    def __init__(self, tok_whitespace=False, split_newline=False, fn=None, in_queue=None):
+    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False, fn=None, in_queue=None):
         self.corenlp_handler = CoreNLPHandler(
-            tok_whitespace=tok_whitespace, split_newline=split_newline)
+            tok_whitespace=tok_whitespace, split_newline=split_newline, parse_tree=parse_tree)
         self.fn = fn
         super(SentenceParser, self).__init__(in_queue=in_queue)
 

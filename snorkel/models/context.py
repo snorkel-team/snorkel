@@ -53,6 +53,7 @@ class Sentence(Context):
     document = relationship('Document', backref=backref('sentences', cascade='all, delete-orphan'), foreign_keys=document_id)
     position = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
+    tree = Column(Text)
     if snorkel_postgres:
         words        = Column(postgresql.ARRAY(String), nullable=False)
         char_offsets = Column(postgresql.ARRAY(Integer), nullable=False)
@@ -95,6 +96,7 @@ class Sentence(Context):
             'ner_tags': self.ner_tags,
             'dep_parents': self.dep_parents,
             'dep_labels': self.dep_labels,
+            'tree': self.tree,
             'entity_cids': self.entity_cids,
             'entity_types': self.entity_types
         }

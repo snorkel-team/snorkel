@@ -54,6 +54,7 @@ Alternatively, `virtualenv` can be used by starting with:
 virtualenv -p python2.7 .virtualenv
 source .virtualenv/bin/activate
 ```
+Detailed installation instructions for Windows and Linux can be found [here.](Windows_Linux_Installation.txt)
 
 ## Running
 After installing (see below), just run:

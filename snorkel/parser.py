@@ -234,7 +234,8 @@ class CoreNLPHandler:
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
 
             # Add full dependency tree parse
-            parts['tree'] = ' '.join(block['parse'].split()) if self.parse_tree else ''
+            if self.parse_tree:
+                parts['tree'] = ' '.join(block['parse'].split())
 
             # NOTE: We have observed weird bugs where CoreNLP diverges from raw document text (see Issue #368)
             # In these cases we go with CoreNLP so as not to cause downstream issues but throw a warning

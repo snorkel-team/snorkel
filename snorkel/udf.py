@@ -18,8 +18,11 @@ class UDFRunner(object):
     def apply(self, xs, clear=True, parallelism=None, progress_bar=True, **kwargs):
 
         # Clear everything downstream of this UDF if requested
-        kwargs['clear'] = clear
         if clear:
+            # We make a copy of kwargs because clear() has a catchall for kwargs and UDF.apply() does not
+            clear_kwargs = kwargs.copy()
+            clear_kwargs['clear'] = clear
+
             SnorkelSession = new_sessionmaker()
             session = SnorkelSession()
             self.clear(session, **kwargs)

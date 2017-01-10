@@ -20,17 +20,13 @@ from .utils import sort_X_on_Y
 
 
 class CorpusParser(UDFRunner):
-    def __init__(self, clear=True, tok_whitespace=False, split_newline=False, parse_tree=False, fn=None, in_queue=None):
-        super(CorpusParser, self).__init__(clear,
-                                           CorpusParser.CorpusParserUDF,
+    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False, fn=None, in_queue=None):
+        super(CorpusParser, self).__init__(CorpusParser.CorpusParserUDF,
                                            tok_whitespace=tok_whitespace,
                                            split_newline=split_newline,
                                            parse_tree=parse_tree,
                                            fn=fn,
                                            in_queue=in_queue)
-
-    def apply(self, doc_preprocessor, **kwargs):
-        super(CorpusParser, self).apply(doc_preprocessor.generate(), **kwargs)
 
     def clear(self, session, **kwargs):
         session.query(Context).delete()
@@ -81,6 +77,9 @@ class DocPreprocessor(object):
                     doc_count += 1
                     if doc_count >= self.max_docs:
                         return
+
+    def __iter__(self):
+        return self.generate()
 
     def get_stable_id(self, doc_id):
         return "%s::document:0:0" % doc_id

@@ -15,7 +15,7 @@ class UDFRunner(object):
         self.udfs            = []
         self.udf0            = self.udf_class(**self.udf_init_kwargs) if hasattr(self.udf_class, 'reduce') else None
 
-    def apply(self, xs, clear=False, parallelism=None, progress_bar=True, **kwargs):
+    def apply(self, xs, clear=True, parallelism=None, progress_bar=True, **kwargs):
 
         # Clear everything downstream of this UDF if requested
         if clear:

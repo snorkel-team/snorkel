@@ -18,6 +18,7 @@ class UDFRunner(object):
     def apply(self, xs, clear=True, parallelism=None, progress_bar=True, **kwargs):
 
         # Clear everything downstream of this UDF if requested
+        kwargs['clear'] = clear
         if clear:
             SnorkelSession = new_sessionmaker()
             session = SnorkelSession()

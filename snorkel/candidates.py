@@ -65,7 +65,7 @@ class CandidateExtractor(UDFRunner):
 
             super(CandidateExtractor.CandidateExtractorUDF, self).__init__(in_queue=in_queue)
 
-        def apply(self, context, split=0, check_for_existing=True):
+        def apply(self, context, split=0, clear=True):
             # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
             # by the Matcher
             for i in range(self.arity):
@@ -97,7 +97,7 @@ class CandidateExtractor(UDFRunner):
                     candidate_args[arg_name + '_id'] = args[i][1].id
 
                 # Checking for existence
-                if check_for_existing:
+                if not clear:
                     q = select([self.candidate_class.id])
                     for key, value in candidate_args.items():
                         q = q.where(getattr(self.candidate_class, key) == value)

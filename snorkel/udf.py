@@ -9,35 +9,34 @@ QUEUE_TIMEOUT = 3
 
 class UDFRunner(object):
     """Class to run UDFs in parallel using simple queue-based multiprocessing setup"""
-    def __init__(self, clear, udf_class, **udf_kwargs):
-        self.clear_first = clear
-        self.udf_class   = udf_class
-        self.udf_kwargs  = udf_kwargs
-        self.udfs        = []
-        self.udf0        = self.udf_class(**self.udf_kwargs) if hasattr(self.udf_class, 'reduce') else None
+    def __init__(self, udf_class, **udf_init_kwargs):
+        self.udf_class       = udf_class
+        self.udf_init_kwargs = udf_init_kwargs
+        self.udfs            = []
+        self.udf0            = self.udf_class(**self.udf_init_kwargs) if hasattr(self.udf_class, 'reduce') else None
 
-    def apply(self, xs, parallelism=None, progress_bar=True):
+    def apply(self, xs, clear=False, parallelism=None, progress_bar=True, **kwargs):
 
         # Clear everything downstream of this UDF if requested
-        if self.clear_first:
+        if clear:
             SnorkelSession = new_sessionmaker()
             session = SnorkelSession()
-            self.clear(session)
+            self.clear(session, **kwargs)
             session.commit()
             session.close()
 
         # Execute the UDF
         if parallelism is None or parallelism < 2:
-            self.apply_st(xs, progress_bar=progress_bar)
+            self.apply_st(xs, progress_bar=progress_bar, **kwargs)
         else:
-            self.apply_mt(xs, parallelism)
+            self.apply_mt(xs, parallelism, **kwargs)
 
-    def clear(self, session):
+    def clear(self, session, **kwargs):
         raise NotImplementedError()
 
     def apply_st(self, xs, progress_bar, **kwargs):
         """Run the UDF single-threaded, optionally with progress bar"""
-        udf = self.udf_class(**self.udf_kwargs)
+        udf = self.udf_class(**self.udf_init_kwargs)
 
         # Set up ProgressBar if possible
         pb = ProgressBar(len(xs)) if progress_bar and hasattr(xs, '__len__') else None
@@ -77,7 +76,7 @@ class UDFRunner(object):
 
         # Start UDF Processes
         for i in range(parallelism):
-            udf              = self.udf_class(in_queue=in_queue, out_queue=out_queue, **self.udf_kwargs)
+            udf              = self.udf_class(in_queue=in_queue, out_queue=out_queue, **self.udf_init_kwargs)
             udf.apply_kwargs = kwargs
             self.udfs.append(udf)
 

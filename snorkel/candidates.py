@@ -1,19 +1,16 @@
-from . import SnorkelSession
-from .udf import UDF
-from .utils import ProgressBar
-from .models import Candidate, TemporarySpan, Sentence, Span
-from itertools import product
-from multiprocessing import Process, Queue, JoinableQueue
-from sqlalchemy.sql import select
-from Queue import Empty
-from copy import deepcopy
-import re
 from collections import defaultdict
+from copy import deepcopy
+from itertools import product
+import re
+from sqlalchemy.sql import select
+
+from .models import Candidate, TemporarySpan, Sentence
+from .udf import UDF, UDFRunner
 
 QUEUE_COLLECT_TIMEOUT = 5
 
 
-class CandidateExtractor(UDF):
+class CandidateExtractor(UDFRunner):
     """
     An operator to extract Candidate objects from a Context.
 
@@ -31,72 +28,86 @@ class CandidateExtractor(UDF):
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
     def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=True, in_queue=None):
-        self.candidate_class     = candidate_class
-        self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
-        self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
-        self.nested_relations    = nested_relations
-        self.self_relations      = self_relations
-        self.symmetric_relations = symmetric_relations
+        super(CandidateExtractor, self).__init__(CandidateExtractor.CandidateExtractorUDF,
+                                                 candidate_class=candidate_class,
+                                                 cspaces=cspaces,
+                                                 matchers=matchers,
+                                                 self_relations=self_relations,
+                                                 nested_relations=nested_relations,
+                                                 symmetric_relations=symmetric_relations,
+                                                 in_queue=in_queue)
 
-        # Check that arity is same
-        if len(self.candidate_spaces) != len(self.matchers):
-            raise ValueError("Mismatched arity of candidate space and matcher.")
-        else:
-            self.arity = len(self.candidate_spaces)
+    def clear(self, session, **kwargs):
+        session.query(Candidate).delete()
 
-        # Make sure the candidate spaces are different so generators aren't expended!
-        self.candidate_spaces = map(deepcopy, self.candidate_spaces)
+    class CandidateExtractorUDF(UDF):
+        def __init__(self, candidate_class, cspaces, matchers, self_relations, nested_relations, symmetric_relations, in_queue):
+            self.candidate_class     = candidate_class
+            self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
+            self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
+            self.nested_relations    = nested_relations
+            self.self_relations      = self_relations
+            self.symmetric_relations = symmetric_relations
 
-        # Preallocates internal data structures
-        self.child_context_sets = [None] * self.arity
-        for i in range(self.arity):
-            self.child_context_sets[i] = set()
+            # Check that arity is same
+            if len(self.candidate_spaces) != len(self.matchers):
+                raise ValueError("Mismatched arity of candidate space and matcher.")
+            else:
+                self.arity = len(self.candidate_spaces)
 
-        super(CandidateExtractor, self).__init__(in_queue=in_queue)
+            # Make sure the candidate spaces are different so generators aren't expended!
+            self.candidate_spaces = map(deepcopy, self.candidate_spaces)
 
-    def apply(self, context, split=0, check_for_existing=True):
-        # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
-        # by the Matcher
-        for i in range(self.arity):
-            self.child_context_sets[i].clear()
-            for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
-                tc.load_id_or_insert(self.session)
-                self.child_context_sets[i].add(tc)
+            # Preallocates internal data structures
+            self.child_context_sets = [None] * self.arity
+            for i in range(self.arity):
+                self.child_context_sets[i] = set()
 
-        # Generates and persists candidates
-        candidate_args = {'split' : split}
-        for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
+            super(CandidateExtractor.CandidateExtractorUDF, self).__init__(in_queue=in_queue)
 
-            # TODO: Make this work for higher-order relations
-            if self.arity == 2:
-                ai, a = args[0]
-                bi, b = args[1]
+        def apply(self, context, split=0, check_for_existing=True):
+            # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
+            # by the Matcher
+            for i in range(self.arity):
+                self.child_context_sets[i].clear()
+                for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
+                    tc.load_id_or_insert(self.session)
+                    self.child_context_sets[i].add(tc)
 
-                # Check for self-joins, "nested" joins (joins from span to its subspan), and flipped duplicate
-                # "symmetric" relations
-                if not self.self_relations and a == b:
-                    continue
-                elif not self.nested_relations and (a in b or b in a):
-                    continue
-                elif not self.symmetric_relations and ai > bi:
-                    continue
+            # Generates and persists candidates
+            candidate_args = {'split': split}
+            for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
 
-            # Assemble candidate arguments
-            for i, arg_name in enumerate(self.candidate_class.__argnames__):
-                candidate_args[arg_name + '_id'] = args[i][1].id
+                # TODO: Make this work for higher-order relations
+                if self.arity == 2:
+                    ai, a = args[0]
+                    bi, b = args[1]
 
-            # Checking for existence
-            if check_for_existing:
-                q = select([self.candidate_class.id])
-                for key, value in candidate_args.items():
-                    q = q.where(getattr(self.candidate_class, key) == value)
-                candidate_id = self.session.execute(q).first()
-                if candidate_id is not None:
-                    continue
+                    # Check for self-joins, "nested" joins (joins from span to its subspan), and flipped duplicate
+                    # "symmetric" relations
+                    if not self.self_relations and a == b:
+                        continue
+                    elif not self.nested_relations and (a in b or b in a):
+                        continue
+                    elif not self.symmetric_relations and ai > bi:
+                        continue
 
-            # Add Candidate to session
-            yield self.candidate_class(**candidate_args)
-            
+                # Assemble candidate arguments
+                for i, arg_name in enumerate(self.candidate_class.__argnames__):
+                    candidate_args[arg_name + '_id'] = args[i][1].id
+
+                # Checking for existence
+                if check_for_existing:
+                    q = select([self.candidate_class.id])
+                    for key, value in candidate_args.items():
+                        q = q.where(getattr(self.candidate_class, key) == value)
+                    candidate_id = self.session.execute(q).first()
+                    if candidate_id is not None:
+                        continue
+
+                # Add Candidate to session
+                yield self.candidate_class(**candidate_args)
+
 
 class CandidateSpace(object):
     """
@@ -115,7 +126,7 @@ class Ngrams(CandidateSpace):
     Defines the space of candidates as all n-grams (n <= n_max) in a Sentence _x_,
     indexing by **character offset**.
     """
-    def __init__(self, n_max=5, split_tokens=['-', '/']):
+    def __init__(self, n_max=5, split_tokens=('-', '/')):
         CandidateSpace.__init__(self)
         self.n_max     = n_max
         self.split_rgx = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None

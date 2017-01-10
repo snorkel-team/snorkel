@@ -14,7 +14,7 @@ from subprocess import Popen
 import sys
 import warnings
 
-from .models import Context, Document, Sentence, construct_stable_id
+from .models import Candidate, Context, Document, Sentence, construct_stable_id
 from .udf import UDF, UDFRunner
 from .utils import sort_X_on_Y
 
@@ -32,8 +32,10 @@ class CorpusParser(UDFRunner):
     def apply(self, doc_preprocessor, **kwargs):
         super(CorpusParser, self).apply(doc_preprocessor.generate(), **kwargs)
 
-    def clear(self, session):
+    def clear(self, session, **kwargs):
         session.query(Context).delete()
+        # We cannot cascade up from child contexts to parent Candidates, so we delete all Candidates too
+        session.query(Candidate).delete()
 
     class CorpusParserUDF(UDF):
         def __init__(self, tok_whitespace, split_newline, parse_tree, fn, in_queue):
@@ -53,7 +55,7 @@ class CorpusParser(UDFRunner):
 
 class DocPreprocessor(object):
     """
-    Parses a file or directory of files into a set of Document objects.
+    Processes a file or directory of files into a set of Document objects.
 
     :param encoding: file encoding to use, default='utf-8'
     :param path: filesystem path to file or directory to parse

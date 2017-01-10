@@ -23,7 +23,7 @@ define a new type of Context is:
         # Declares name for storage table
         __tablename__ = 'newtype'
         # Connects NewType records to generic Context records
-        id = Column(String, ForeignKey('context.id'))
+        id = Column(String, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
 
         # Polymorphism information for SQLAlchemy
         __mapper_args__ = {

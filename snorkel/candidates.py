@@ -38,7 +38,7 @@ class CandidateExtractor(UDFRunner):
                                                  in_queue=in_queue)
 
     def clear(self, session, **kwargs):
-        session.query(Candidate).delete()
+        session.query(Candidate).filter(Candidate.split == kwargs['split']).delete()
 
     class CandidateExtractorUDF(UDF):
         def __init__(self, candidate_class, cspaces, matchers, self_relations, nested_relations, symmetric_relations, in_queue):

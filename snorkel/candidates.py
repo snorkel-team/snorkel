@@ -65,7 +65,14 @@ class CandidateExtractor(UDFRunner):
 
             super(CandidateExtractor.CandidateExtractorUDF, self).__init__(in_queue=in_queue)
 
-        def apply(self, context, split=0, clear=True, **kwargs):
+        def apply(self, context, **kwargs):
+            if 'clear' in kwargs:
+                clear = kwargs['clear']
+            else:
+                raise ValueError('Keyword argument clear is required.')
+
+            split = kwargs['split'] if 'split' in kwargs else 0
+
             # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
             # by the Matcher
             for i in range(self.arity):

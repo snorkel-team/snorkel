@@ -28,7 +28,7 @@ class UDFRunner(object):
 
         # Execute the UDF
         if parallelism is None or parallelism < 2:
-            self.apply_st(xs, progress_bar=progress_bar, **kwargs)
+            self.apply_st(xs, progress_bar, **kwargs)
         else:
             self.apply_mt(xs, parallelism, **kwargs)
 
@@ -140,6 +140,6 @@ class UDF(Process):
         self.session.commit()
         self.session.close()
 
-    def apply(self, x):
+    def apply(self, x, **kwargs):
         """This function takes in an object, and returns a generator / set / list"""
         raise NotImplementedError()

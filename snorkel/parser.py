@@ -41,7 +41,7 @@ class CorpusParser(UDFRunner):
             self.fn = fn
             super(CorpusParser.CorpusParserUDF, self).__init__(in_queue=in_queue)
 
-        def apply(self, x):
+        def apply(self, x, **kwargs):
             """Given a Document object and its raw text, parse into processed Sentences"""
             doc, text = x
             for parts in self.corenlp_handler.parse(doc, text):

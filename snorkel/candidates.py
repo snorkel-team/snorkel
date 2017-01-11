@@ -65,7 +65,7 @@ class CandidateExtractor(UDFRunner):
 
             super(CandidateExtractor.CandidateExtractorUDF, self).__init__(in_queue=in_queue)
 
-        def apply(self, context, split=0, clear=True):
+        def apply(self, context, split=0, clear=True, **kwargs):
             # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
             # by the Matcher
             for i in range(self.arity):

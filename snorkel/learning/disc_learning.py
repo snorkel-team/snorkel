@@ -12,9 +12,8 @@ if 'CI' not in os.environ:
 
 class NoiseAwareModel(object):
     """Simple abstract base class for a model."""
-    def __init__(self, bias_term=False):
+    def __init__(self):
         self.w         = None
-        self.bias_term = bias_term
         self.X_train   = None
 
     def train(self, X, training_marginals, **hyperparams):
@@ -90,9 +89,8 @@ class LogRegSKLearn(NoiseAwareModel):
 
 
 class LogReg(NoiseAwareModel):
-    def __init__(self, bias_term=False):
-        self.w         = None
-        self.bias_term = bias_term
+    def __init__(self):
+        self.w = None
 
     def _loss(self, X, w, m_t, mu, alpha):
         """
@@ -108,7 +106,7 @@ class LogReg(NoiseAwareModel):
                 + mu * (alpha*np.linalg.norm(w, ord=1) + (1-alpha)*np.linalg.norm(w, ord=2))
 
     def train(self, X, training_marginals, method='GD', n_iter=1000, w0=None, rate=0.001, backtracking=False, beta=0.8,
-              mu=1e-6, alpha=0.5, rate_decay=0.999, hard_thresh=False):
+              mu=1e-6, alpha=0.5, rate_decay=0.999, hard_thresh=False, bias_term=False):
         self.X_train = X
 
         # First, we remove the rows (candidates) that have no LF coverage
@@ -188,7 +186,7 @@ class LogReg(NoiseAwareModel):
                 soft      = np.abs(w) - mu
                 ridge_pen = (1 + (1-alpha) * mu)
                 w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
-                if self.bias_term:
+                if bias_term:
                     w[-1] = w_bias
 
             # Return learned weights
@@ -207,7 +205,6 @@ class FMCT(NoiseAwareModel):
         self.fmct         = None
         self.w            = None
         self.X_train      = None
-        self.bias_term    = None
         self.preprocess_f = preprocess_function
 
     def train(self, training_marginals, embed_matrices, **hyperparams):

@@ -201,13 +201,13 @@ class Annotator(UDFRunner):
 class LabelAnnotator(Annotator):
     """Apply labeling functions to the candidates, generating Label annotations"""
     def __init__(self, f, in_queue=None, out_queue=None):
-        super(LabelAnnotator, self).__init__(Label, LabelKey, f, in_queue=in_queue, out_queue=out_queue)
+        super(LabelAnnotator, self).__init__(Label, LabelKey, f)
 
         
 class FeatureAnnotator(Annotator):
     """Apply feature generators to the candidates, generating Feature annotations"""
     def __init__(self, f=get_span_feats, in_queue=None, out_queue=None):
-        super(FeatureAnnotator, self).__init__(Feature, FeatureKey, f, in_queue=in_queue, out_queue=out_queue)
+        super(FeatureAnnotator, self).__init__(Feature, FeatureKey, f)
 
 
 def load_matrix(matrix_class, annotation_key_class, annotation_class, session, split=0, key_group=0, key_names=None):

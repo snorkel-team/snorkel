@@ -4,26 +4,27 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+# Sets connection string
+conn_string = os.environ['SNORKELDB'] if 'SNORKELDB' in os.environ and os.environ['SNORKELDB'] != '' \
+    else 'sqlite:///snorkel.db'
+
 
 # Sets global variable indicating whether we are using Postgres
-snorkel_postgres = 'SNORKELDB' in os.environ and os.environ['SNORKELDB'].startswith('postgres')
+snorkel_postgres = conn_string.startswith('postgres')
 
 
 # Automatically turns on foreign key enforcement for SQLite
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+    if conn_string.startswith('sqlite'):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 
 # Defines procedure for setting up a sessionmaker
 def new_sessionmaker():
-    if 'SNORKELDB' in os.environ and os.environ['SNORKELDB'] != '':
-        snorkel_engine = create_engine(os.environ['SNORKELDB'])
-    else:
-        snorkel_engine = create_engine('sqlite:///snorkel.db')
-
+    snorkel_engine = create_engine(conn_string)
     SnorkelSession = sessionmaker(bind=snorkel_engine)
     return SnorkelSession
 

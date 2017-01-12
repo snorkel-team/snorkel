@@ -86,15 +86,13 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
 
 class Annotator(UDFRunner):
     """Abstract class for annotating candidates and persisting these annotations to DB"""
-    def __init__(self, annotation_class, annotation_key_class, f, in_queue=None, out_queue=None):
+    def __init__(self, annotation_class, annotation_key_class, f):
         self.annotation_class     = annotation_class
         self.annotation_key_class = annotation_key_class
         super(Annotator, self).__init__(Annotator.AnnotatorUDF,
                                         annotation_class=annotation_class,
                                         annotation_key_class=annotation_key_class,
-                                        f=f,
-                                        in_queue=in_queue,
-                                        out_queue=out_queue)
+                                        f=f)
 
     def apply(self, split, key_group=0, replace_key_set=True, **kwargs):
         SnorkelSession = new_sessionmaker()
@@ -121,9 +119,9 @@ class Annotator(UDFRunner):
             self.anno_generator       = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
 
             # For caching key ids during the reduce step
-            self.key_cache  = {}
+            self.key_cache = {}
 
-            super(Annotator.AnnotatorUDF, self).__init__(in_queue=in_queue, out_queue=out_queue)
+            super(Annotator.AnnotatorUDF, self).__init__()
 
         def apply(self, cid, **kwargs):
             """

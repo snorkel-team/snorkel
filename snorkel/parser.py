@@ -20,13 +20,12 @@ from .utils import sort_X_on_Y
 
 
 class CorpusParser(UDFRunner):
-    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False, fn=None, in_queue=None):
+    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False, fn=None):
         super(CorpusParser, self).__init__(CorpusParser.CorpusParserUDF,
                                            tok_whitespace=tok_whitespace,
                                            split_newline=split_newline,
                                            parse_tree=parse_tree,
-                                           fn=fn,
-                                           in_queue=in_queue)
+                                           fn=fn)
 
     def clear(self, session, **kwargs):
         session.query(Context).delete()

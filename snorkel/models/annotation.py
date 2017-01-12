@@ -1,9 +1,9 @@
-from .meta import SnorkelBase, snorkel_postgres
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint, Table, PickleType
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.dialects import postgresql
-from snorkel.utils import camel_to_under
+
+from .meta import SnorkelBase
+from ..utils import camel_to_under
 
 
 class AnnotationKeyMixin(object):
@@ -26,7 +26,7 @@ class AnnotationKeyMixin(object):
 
     @declared_attr
     def group(cls):
-        return Column(Integer, default=0)
+        return Column(Integer, nullable=False, default=0)
 
     @declared_attr
     def __table_args__(cls):
@@ -36,7 +36,7 @@ class AnnotationKeyMixin(object):
         return str(self.__class__.__name__) + " (" + str(self.name) + ")"
 
 
-class AnnotatorLabelKey(AnnotationKeyMixin, SnorkelBase):
+class GoldLabelKey(AnnotationKeyMixin, SnorkelBase):
     pass
 
 
@@ -80,7 +80,7 @@ class AnnotationMixin(object):
     # The key is the "name" or "type" of the Annotation- e.g. the name of a feature, or of a human annotator
     @declared_attr
     def key_id(cls):
-        return Column('key_id', Integer, ForeignKey('%s_key.id' % cls.__tablename__), primary_key=True)
+        return Column('key_id', Integer, ForeignKey('%s_key.id' % cls.__tablename__, ondelete='CASCADE'), primary_key=True)
 
     @declared_attr
     def key(cls):
@@ -89,7 +89,7 @@ class AnnotationMixin(object):
     # Every annotation is with respect to a candidate
     @declared_attr
     def candidate_id(cls):
-        return Column('candidate_id', Integer, ForeignKey('candidate.id'), primary_key=True)
+        return Column('candidate_id', Integer, ForeignKey('candidate.id', ondelete='CASCADE'), primary_key=True)
 
     @declared_attr
     def candidate(cls):
@@ -100,8 +100,8 @@ class AnnotationMixin(object):
         return self.__class__.__name__ + " (" + str(self.key.name) + " = " + str(self.value) + ")"
 
 
-class AnnotatorLabel(AnnotationMixin, SnorkelBase):
-    """A separate class for labels from human annotators"""
+class GoldLabel(AnnotationMixin, SnorkelBase):
+    """A separate class for labels from human annotators or other gold standards."""
     value = Column(Integer, nullable=False)
 
 
@@ -109,9 +109,9 @@ class Label(AnnotationMixin, SnorkelBase):
     """
     A discrete label associated with a Candidate, indicating a target prediction value.
 
-    Labels are used to represent both human-provided annotations and the output of labeling functions.
+    Labels are used to represent the output of labeling functions.
 
-    A Label's annotation key identifies the person or labeling function that provided the Label.
+    A Label's annotation key identifies the labeling function that provided the Label.
     """
     value = Column(Integer, nullable=False)
 

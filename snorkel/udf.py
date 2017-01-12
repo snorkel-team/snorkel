@@ -16,21 +16,19 @@ class UDFRunner(object):
         self.udf0            = self.udf_class(**self.udf_init_kwargs) if hasattr(self.udf_class, 'reduce') else None
 
     def apply(self, xs, clear=True, parallelism=None, progress_bar=True, **kwargs):
-
         # Clear everything downstream of this UDF if requested
-        kwargs['clear'] = clear
         if clear:
             SnorkelSession = new_sessionmaker()
             session = SnorkelSession()
-            self.clear(session, **kwargs)
+            self.clear(session, clear=clear, **kwargs)
             session.commit()
             session.close()
 
         # Execute the UDF
         if parallelism is None or parallelism < 2:
-            self.apply_st(xs, progress_bar, **kwargs)
+            self.apply_st(xs, progress_bar, clear=clear, **kwargs)
         else:
-            self.apply_mt(xs, parallelism, **kwargs)
+            self.apply_mt(xs, parallelism, clear=clear, **kwargs)
 
     def clear(self, session, **kwargs):
         raise NotImplementedError()

@@ -1,5 +1,5 @@
 from __future__ import print_function
-from .models import AnnotatorLabel, StableLabel, AnnotatorLabelKey
+from .models import GoldLabel, StableLabel, GoldLabelKey
 try:
     from IPython.core.display import display, Javascript
 except:
@@ -57,9 +57,9 @@ class Viewer(widgets.DOMWidget):
         name = annotator_name if annotator_name is not None else getpass.getuser()
 
         # Sets up the AnnotationKey to use
-        self.annotator = self.session.query(AnnotatorLabelKey).filter(AnnotatorLabelKey.name == name).first()
+        self.annotator = self.session.query(GoldLabelKey).filter(GoldLabelKey.name == name).first()
         if self.annotator is None:
-            self.annotator = AnnotatorLabelKey(name=name)
+            self.annotator = GoldLabelKey(name=name)
             session.add(self.annotator)
             session.commit()
 
@@ -87,9 +87,9 @@ class Viewer(widgets.DOMWidget):
         for i, candidate in enumerate(self.candidates):
 
             # First look for the annotation in the primary annotations table
-            existing_annotation = self.session.query(AnnotatorLabel) \
-                .filter(AnnotatorLabel.key == self.annotator) \
-                .filter(AnnotatorLabel.candidate == candidate) \
+            existing_annotation = self.session.query(GoldLabel) \
+                .filter(GoldLabel.key == self.annotator) \
+                .filter(GoldLabel.candidate == candidate) \
                 .first()
             if existing_annotation is not None:
                 self.annotations[i] = existing_annotation
@@ -213,7 +213,7 @@ class Viewer(widgets.DOMWidget):
                 candidate = self.candidates[cid]
 
                 # Create AnnotatorLabel
-                self.annotations[cid] = AnnotatorLabel(key=self.annotator, candidate=candidate, value=value)
+                self.annotations[cid] = GoldLabel(key=self.annotator, candidate=candidate, value=value)
                 self.session.add(self.annotations[cid])
 
                 # Create StableLabel

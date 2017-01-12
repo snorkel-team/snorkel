@@ -37,8 +37,11 @@ class CandidateExtractor(UDFRunner):
                                                  symmetric_relations=symmetric_relations,
                                                  in_queue=in_queue)
 
-    def clear(self, session, **kwargs):
-        session.query(Candidate).filter(Candidate.split == kwargs['split']).delete()
+    def apply(self, xs, split=0, **kwargs):
+        super(CandidateExtractor, self).apply(xs, split=split, **kwargs)
+
+    def clear(self, session, split, **kwargs):
+        session.query(Candidate).filter(Candidate.split == split).delete()
 
     class CandidateExtractorUDF(UDF):
         def __init__(self, candidate_class, cspaces, matchers, self_relations, nested_relations, symmetric_relations, in_queue):
@@ -65,14 +68,7 @@ class CandidateExtractor(UDFRunner):
 
             super(CandidateExtractor.CandidateExtractorUDF, self).__init__(in_queue=in_queue)
 
-        def apply(self, context, **kwargs):
-            if 'clear' in kwargs:
-                clear = kwargs['clear']
-            else:
-                raise ValueError('Keyword argument clear is required.')
-
-            split = kwargs['split'] if 'split' in kwargs else 0
-
+        def apply(self, context, clear, split, **kwargs):
             # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
             # by the Matcher
             for i in range(self.arity):

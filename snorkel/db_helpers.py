@@ -1,13 +1,13 @@
-from .models import StableLabel, AnnotatorLabel, Context, AnnotatorLabelKey
+from .models import StableLabel, GoldLabel, Context, GoldLabelKey
 from sqlalchemy.orm import object_session
 
 
 def reload_annotator_labels(session, candidate_class, annotator_name, split, filter_label_split=True, create_missing_cands=False):
     """Reloads stable annotator labels into the AnnotatorLabel table"""
     # Sets up the AnnotatorLabelKey to use
-    ak = session.query(AnnotatorLabelKey).filter(AnnotatorLabelKey.name == annotator_name).first()
+    ak = session.query(GoldLabelKey).filter(GoldLabelKey.name == annotator_name).first()
     if ak is None:
-        ak = AnnotatorLabelKey(name=annotator_name)
+        ak = GoldLabelKey(name=annotator_name)
         session.add(ak)
         session.commit()
     
@@ -51,9 +51,9 @@ def reload_annotator_labels(session, candidate_class, annotator_name, split, fil
             continue
 
         # Check for AnnotatorLabel, otherwise create
-        label = session.query(AnnotatorLabel).filter(AnnotatorLabel.key == ak).filter(AnnotatorLabel.candidate == candidate).first()
+        label = session.query(GoldLabel).filter(GoldLabel.key == ak).filter(GoldLabel.candidate == candidate).first()
         if label is None:
-            label = AnnotatorLabel(candidate=candidate, key=ak, value=sl.value)
+            label = GoldLabel(candidate=candidate, key=ak, value=sl.value)
             session.add(label)
             labels.append(label)
 

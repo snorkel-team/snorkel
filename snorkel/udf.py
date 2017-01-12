@@ -13,7 +13,11 @@ class UDFRunner(object):
         self.udf_class       = udf_class
         self.udf_init_kwargs = udf_init_kwargs
         self.udfs            = []
-        self.udf0            = self.udf_class(**self.udf_init_kwargs) if hasattr(self.udf_class, 'reduce') else None
+
+        if hasattr(self.udf_class, 'reduce'):
+            self.udf0 = self.udf_class(in_queue=None, out_queue=None, **self.udf_init_kwargs)
+        else:
+            self.udf0 = None
 
     def apply(self, xs, clear=True, parallelism=None, progress_bar=True, **kwargs):
         # Clear everything downstream of this UDF if requested
@@ -35,7 +39,7 @@ class UDFRunner(object):
 
     def apply_st(self, xs, progress_bar, **kwargs):
         """Run the UDF single-threaded, optionally with progress bar"""
-        udf = self.udf_class(**self.udf_init_kwargs)
+        udf = self.udf_class(in_queue=None, out_queue=None, **self.udf_init_kwargs)
 
         # Set up ProgressBar if possible
         pb = ProgressBar(len(xs)) if progress_bar and hasattr(xs, '__len__') else None

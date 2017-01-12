@@ -113,7 +113,7 @@ class Annotator(UDFRunner):
             query.delete(synchronize_session='fetch')
 
     class AnnotatorUDF(UDF):
-        def __init__(self, annotation_class, annotation_key_class, f, in_queue, out_queue):
+        def __init__(self, annotation_class, annotation_key_class, f, **kwargs):
             self.annotation_class     = annotation_class
             self.annotation_key_class = annotation_key_class
             self.anno_generator       = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
@@ -121,7 +121,7 @@ class Annotator(UDFRunner):
             # For caching key ids during the reduce step
             self.key_cache = {}
 
-            super(Annotator.AnnotatorUDF, self).__init__()
+            super(Annotator.AnnotatorUDF, self).__init__(**kwargs)
 
         def apply(self, cid, **kwargs):
             """
@@ -200,13 +200,13 @@ class Annotator(UDFRunner):
 
 class LabelAnnotator(Annotator):
     """Apply labeling functions to the candidates, generating Label annotations"""
-    def __init__(self, f, in_queue=None, out_queue=None):
+    def __init__(self, f):
         super(LabelAnnotator, self).__init__(Label, LabelKey, f)
 
         
 class FeatureAnnotator(Annotator):
     """Apply feature generators to the candidates, generating Feature annotations"""
-    def __init__(self, f=get_span_feats, in_queue=None, out_queue=None):
+    def __init__(self, f=get_span_feats):
         super(FeatureAnnotator, self).__init__(Feature, FeatureKey, f)
 
 

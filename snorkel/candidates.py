@@ -43,7 +43,7 @@ class CandidateExtractor(UDFRunner):
         session.query(Candidate).filter(Candidate.split == split).delete()
 
     class CandidateExtractorUDF(UDF):
-        def __init__(self, candidate_class, cspaces, matchers, self_relations, nested_relations, symmetric_relations, in_queue):
+        def __init__(self, candidate_class, cspaces, matchers, self_relations, nested_relations, symmetric_relations, **kwargs):
             self.candidate_class     = candidate_class
             self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
             self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
@@ -65,7 +65,7 @@ class CandidateExtractor(UDFRunner):
             for i in range(self.arity):
                 self.child_context_sets[i] = set()
 
-            super(CandidateExtractor.CandidateExtractorUDF, self).__init__(in_queue=in_queue)
+            super(CandidateExtractor.CandidateExtractorUDF, self).__init__(**kwargs)
 
         def apply(self, context, clear, split, **kwargs):
             # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
@@ -171,7 +171,7 @@ class PretaggedCandidateExtractor(UDF):
     An extractor for Sentences with entities pre-tagged, and stored in the entity_types and entity_cids
     fields.
     """
-    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=True, entity_sep='~@~', in_queue=None):
+    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=True, entity_sep='~@~', **kwargs):
         self.candidate_class     = candidate_class
         self.entity_types        = entity_types
         self.arity               = len(entity_types)
@@ -180,7 +180,7 @@ class PretaggedCandidateExtractor(UDF):
         self.symmetric_relations = symmetric_relations
         self.entity_sep          = entity_sep
 
-        super(PretaggedCandidateExtractor, self).__init__(in_queue=in_queue)
+        super(PretaggedCandidateExtractor, self).__init__(**kwargs)
 
     def apply(self, context, split=0, check_for_existing=True):
         """

@@ -107,7 +107,7 @@ class UDFRunner(object):
 
 
 class UDF(Process):
-    def __init__(self, in_queue=None, out_queue=None):
+    def __init__(self, in_queue=None, out_queue=None, **kwargs):
         """
         in_queue: A Queue of input objects to process; primarily for running in parallel
         """

@@ -33,12 +33,12 @@ class CorpusParser(UDFRunner):
         session.query(Candidate).delete()
 
     class CorpusParserUDF(UDF):
-        def __init__(self, tok_whitespace, split_newline, parse_tree, fn, in_queue):
+        def __init__(self, tok_whitespace, split_newline, parse_tree, fn, **kwargs):
             self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace,
                                                   split_newline=split_newline,
                                                   parse_tree=parse_tree)
             self.fn = fn
-            super(CorpusParser.CorpusParserUDF, self).__init__(in_queue=in_queue)
+            super(CorpusParser.CorpusParserUDF, self).__init__(**kwargs)
 
         def apply(self, x, **kwargs):
             """Given a Document object and its raw text, parse into processed Sentences"""

@@ -24,7 +24,16 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 
 # Defines procedure for setting up a sessionmaker
 def new_sessionmaker():
-    snorkel_engine = create_engine(snorkel_conn_string)
+    
+    # Turning on autocommit for Postgres, see http://oddbird.net/2014/06/14/sqlalchemy-postgres-autocommit/
+    # Otherwise any e.g. query starts a transaction, locking tables... very bad for e.g. multiple notebooks
+    # open, multiple processes, etc.
+    if snorkel_postgres:
+        snorkel_engine = create_engine(snorkel_conn_string, isolation_level="AUTOCOMMIT")
+    else:
+        snorkel_engine = create_engine(snorkel_conn_string)
+
+    # New sessionmaker
     SnorkelSession = sessionmaker(bind=snorkel_engine)
     return SnorkelSession
 

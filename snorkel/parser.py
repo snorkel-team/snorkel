@@ -21,7 +21,7 @@ from .utils import sort_X_on_Y
 
 class CorpusParser(UDFRunner):
     def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False, fn=None):
-        super(CorpusParser, self).__init__(CorpusParser.CorpusParserUDF,
+        super(CorpusParser, self).__init__(CorpusParserUDF,
                                            tok_whitespace=tok_whitespace,
                                            split_newline=split_newline,
                                            parse_tree=parse_tree,
@@ -29,23 +29,25 @@ class CorpusParser(UDFRunner):
 
     def clear(self, session, **kwargs):
         session.query(Context).delete()
+        
         # We cannot cascade up from child contexts to parent Candidates, so we delete all Candidates too
         session.query(Candidate).delete()
 
-    class CorpusParserUDF(UDF):
-        def __init__(self, tok_whitespace, split_newline, parse_tree, fn, **kwargs):
-            self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace,
-                                                  split_newline=split_newline,
-                                                  parse_tree=parse_tree)
-            self.fn = fn
-            super(CorpusParser.CorpusParserUDF, self).__init__(**kwargs)
 
-        def apply(self, x, **kwargs):
-            """Given a Document object and its raw text, parse into processed Sentences"""
-            doc, text = x
-            for parts in self.corenlp_handler.parse(doc, text):
-                parts = self.fn(parts) if self.fn is not None else parts
-                yield Sentence(**parts)
+class CorpusParserUDF(UDF):
+    def __init__(self, tok_whitespace, split_newline, parse_tree, fn, **kwargs):
+        self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace,
+                                              split_newline=split_newline,
+                                              parse_tree=parse_tree)
+        self.fn = fn
+        super(CorpusParserUDF, self).__init__(**kwargs)
+
+    def apply(self, x, **kwargs):
+        """Given a Document object and its raw text, parse into processed Sentences"""
+        doc, text = x
+        for parts in self.corenlp_handler.parse(doc, text):
+            parts = self.fn(parts) if self.fn is not None else parts
+            yield Sentence(**parts)
 
 
 class DocPreprocessor(object):

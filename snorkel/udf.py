@@ -20,15 +20,21 @@ class UDFRunner(object):
             self.udf0 = None
 
     def apply(self, xs, clear=True, parallelism=None, progress_bar=True, count=None, **kwargs):
+        """
+        Apply the given UDF to the set of objects xs, either single or multi-threaded, 
+        and optionally calling clear() first.
+        """
         # Clear everything downstream of this UDF if requested
         if clear:
+            print "Clearing existing..."
             SnorkelSession = new_sessionmaker()
             session = SnorkelSession()
-            self.clear(session, clear=clear, **kwargs)
+            self.clear(session, **kwargs)
             session.commit()
             session.close()
 
         # Execute the UDF
+        print "Running UDF..."
         if parallelism is None or parallelism < 2:
             self.apply_st(xs, progress_bar, clear=clear, count=count, **kwargs)
         else:
@@ -66,7 +72,7 @@ class UDFRunner(object):
         if pb:
             pb.bar(n)
             pb.close()
-
+        
     def apply_mt(self, xs, parallelism, **kwargs):
         """Run the UDF multi-threaded using python multiprocessing"""
         # Fill a JoinableQueue with input objects

@@ -60,10 +60,21 @@ class reLSTM(NoiseAwareModel):
             x.insert(k, v)
         return x
 
-    def _preprocess_data(self, candidates):
-        pass
+    def _preprocess_data(self, candidates, word_dict, extend=False):
+        sentences = []
+        for c in candidates:
+            # Get arguments and lemma sequence
+            args = [
+                (c[0].get_word_start(), c[0].get_word_end(), 1),
+                (c[1].get_word_start(), c[1].get_word_end(), 2)
+            ]
+            s = mark_sentence([w.lower() for w in c.get_parent().lemmas], args)
+            # Either extend word table or retrieve from it
+            retrieve_fn = word_dict.get if extend else word_dict.lookup
+            sentences.append(np.array([retrieve_fn(w) for w in s]))
+        return sentences
 
-    def _make_tensor(self, x, y):
+    def _make_tensor(self, x, y=None):
         """Construct input tensor with padding"""
         batch_size = len(x)
         tx = np.zeros((self.mx_len, batch_size), dtype=np.int32)
@@ -75,7 +86,7 @@ class reLSTM(NoiseAwareModel):
             tx[0:lu, k] = u[0:lu]
             tx[lu:, k] = 0
             tlen[k] = lu
-        return tx, np.ravel(y), tlen
+        return tx, (np.zeros(len(tx)) if y is None else np.ravel(y)), tlen
 
     def _build_lstm(self, sents, sent_lens, labels, lr, n_hidden, dropout, n_v):
         """Get feed forward step, cost function, and optimizer for LSTM"""
@@ -117,7 +128,7 @@ class reLSTM(NoiseAwareModel):
         train_fn  = tf.train.RMSPropOptimizer(learning_rate=lr).minimize(cost)
         return prediction, cost, train_fn
 
-    def train(self, candidates, n_epochs=10, lr=0.01, n_hidden=20,
+    def train(self, candidates, y, n_epochs=10, lr=0.01, n_hidden=20,
         batch_size=100, rebalance=False, dropout_rate=None,
         max_sentence_length=None, n_print=50, model_name=None):
         """ Train LSTM model """
@@ -126,13 +137,16 @@ class reLSTM(NoiseAwareModel):
             print("[reLSTM] Layers={} LR={}".format(n_hidden, lr))
             print("[reLSTM] Begin preprocessing")
             st = time()
+        # TODO: standardize input labels
+        if any(yy not in [1, -1] for yy in y):
+            raise Exception("Labels should be {-1, 1}")
         # Text preprocessing
-        train_x, train_y, words, labels = self._preprocess_data(candidates)
+        train_x, train_y, word_dict = self._preprocess_data(candidates)
         # Build model
         dropout = None if dropout_rate is None else tf.constant(dropout_rate)
         self.prediction, cost, train_fn = build_lstm(
             self.sentences, self.sentence_length, self.labels, lr, n_hidden,
-            dropout, words.current_symbol + 1
+            dropout, word_dict.current_symbol + 1
         )
         # Get training counts 
         if rebalance:
@@ -164,8 +178,9 @@ class reLSTM(NoiseAwareModel):
             epoch_error = 0
             for i in range(0, len(train_x), batch_size):
                 # Get batch tensors
-                x_batch, y_batch, x_batch_lens = self._make_tensor(
-                    train_x[i:i+batch_size], train_y[i:i+batch_size],
+                y_batch = train_y[i:i+batch_size]
+                x_batch, x_batch_lens = self._make_tensor(
+                    train_x[i:i+batch_size]
                 )
                 # Run training step and evaluate cost function                  
                 epoch_error += self.session.run([cost, train_fn], {
@@ -189,11 +204,12 @@ class reLSTM(NoiseAwareModel):
         if any(z is None for z in [self.session, self.prediction]):
             raise Exception("[reLSTM] Model not defined")
         test_x, _, _, _ = self._preprocess_data(test_candidates)
-        x, _, x_lens = self._make_tensor(test_x, )
+        # Get input tensors with dummy labels
+        x, y, x_lens = self._make_tensor(test_x)
         return np.ravel(self.session.run([self.prediction], {
             self.sentences: x,
             self.sentence_length: x_lens,
-            self.labels: None
+            self.labels: y
         }))
 
     def save(self, model_name=None):
@@ -202,9 +218,8 @@ class reLSTM(NoiseAwareModel):
         saver = tf.train.Saver()
         saver.save(self.session, "./{0}.session".format(model_name))
         with open("./{0}.info".format(model_name)) as f:
-            # TODO: save input, prediction, mx_len
+            # TODO: save prediction, mx_len
             pass
-
 
     def load(self, model_name):
         """Load model"""

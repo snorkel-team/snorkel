@@ -50,8 +50,8 @@ class Sentence(Context):
     __tablename__ = 'sentence'
     id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id', ondelete='CASCADE'))
-    document = relationship('Document', backref=backref('sentences', cascade='all, delete-orphan'), foreign_keys=document_id)
     position = Column(Integer, nullable=False)
+    document = relationship('Document', backref=backref('sentences', order_by=position, cascade='all, delete-orphan'), foreign_keys=document_id)
     text = Column(Text, nullable=False)
     if snorkel_postgres:
         words        = Column(postgresql.ARRAY(String), nullable=False)

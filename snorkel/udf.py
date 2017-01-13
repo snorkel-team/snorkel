@@ -121,6 +121,9 @@ class UDF(Process):
         SnorkelSession = new_sessionmaker()
         self.session   = SnorkelSession()
 
+        # We use a workaround to pass in the apply kwargs
+        self.apply_kwargs = {}
+
     def run(self):
         """
         This method is called when the UDF is run as a Process in a multiprocess setting
@@ -129,7 +132,7 @@ class UDF(Process):
         while True:
             try:
                 x = self.in_queue.get(True, QUEUE_TIMEOUT)
-                for y in self.apply(x):
+                for y in self.apply(x, **self.apply_kwargs):
 
                     # If an out_queue is provided, add to that, else add to session
                     if self.out_queue is not None:

@@ -35,6 +35,7 @@ class reLSTM(NoiseAwareModel):
         self.mx_len     = None
         self.prediction = None
         self.session    = None
+        self.word_dict  = SymbolTable()
         # Define input layers
         self.sentences = tf.placeholder(tf.int32, [None, None])
         self.sentence_length = tf.placeholder(tf.int32, [None])
@@ -60,7 +61,7 @@ class reLSTM(NoiseAwareModel):
             x.insert(k, v)
         return x
 
-    def _preprocess_data(self, candidates, word_dict, extend=False):
+    def _preprocess_data(self, candidates, extend=False):
         sentences = []
         for c in candidates:
             # Get arguments and lemma sequence
@@ -70,8 +71,8 @@ class reLSTM(NoiseAwareModel):
             ]
             s = mark_sentence([w.lower() for w in c.get_parent().lemmas], args)
             # Either extend word table or retrieve from it
-            retrieve_fn = word_dict.get if extend else word_dict.lookup
-            sentences.append(np.array([retrieve_fn(w) for w in s]))
+            retriever = self.word_dict.get if extend else self.word_dict.lookup
+            sentences.append(np.array([retriever(w) for w in s]))
         return sentences
 
     def _make_tensor(self, x, y=None):
@@ -141,12 +142,12 @@ class reLSTM(NoiseAwareModel):
         if any(yy not in [1, -1] for yy in y):
             raise Exception("Labels should be {-1, 1}")
         # Text preprocessing
-        train_x, train_y, word_dict = self._preprocess_data(candidates)
+        train_x = self._preprocess_data(candidates)
         # Build model
         dropout = None if dropout_rate is None else tf.constant(dropout_rate)
         self.prediction, cost, train_fn = build_lstm(
             self.sentences, self.sentence_length, self.labels, lr, n_hidden,
-            dropout, word_dict.current_symbol + 1
+            dropout, self.word_dict.current_symbol + 1
         )
         # Get training counts 
         if rebalance:
@@ -196,14 +197,14 @@ class reLSTM(NoiseAwareModel):
         # Save model
         self.save(model_name)        
         if verbose:
-            print("[reLSTM] Training done ({0:.2f}s)")
+            print("[reLSTM] Training done ({0:.2f}s)".format(time.time() - st))
             print("[reLSTM] Model saved in file: {}".format(model_name))
 
     def marginals(self, test_candidates):
         """Feed forward step for marginals"""
         if any(z is None for z in [self.session, self.prediction]):
             raise Exception("[reLSTM] Model not defined")
-        test_x, _, _, _ = self._preprocess_data(test_candidates)
+        test_x = self._preprocess_data(test_candidates)
         # Get input tensors with dummy labels
         x, y, x_lens = self._make_tensor(test_x)
         return np.ravel(self.session.run([self.prediction], {

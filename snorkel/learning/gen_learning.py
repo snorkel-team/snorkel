@@ -114,12 +114,15 @@ class GenerativeModelWeights(object):
     def __init__(self, n):
         self.n = n
         self.class_prior = 0.0
-        self.lf_accuracy = np.zeros(n, dtype=np.float64)
+        self.lf_accuracy_log_odds = np.zeros(n, dtype=np.float64)
         for optional_name in GenerativeModel.optional_names:
             setattr(self, optional_name, np.zeros(n, dtype=np.float64))
 
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, sparse.lil_matrix((n, n), dtype=np.float64))
+
+    def lf_accuracy(self):
+	return 1.0 / (1.0 + np.exp(-self.lf_accuracy_log_odds)) 
 
     def is_sign_sparsistent(self, other, threshold=0.1):
         if self.n != other.n:
@@ -130,7 +133,7 @@ class GenerativeModelWeights(object):
 
         for i in range(self.n):
             if not self._weight_is_sign_sparsitent(
-                    self.lf_accuracy[i], other.lf_accuracy[i], threshold):
+                    self.lf_accuracy_log_odds[i], other.lf_accuracy_log_odds[i], threshold):
                 return False
 
         for name in GenerativeModel.optional_names:
@@ -218,13 +221,13 @@ class GenerativeModel(object):
 
             for _, j in zip(*L[i].nonzero()):
                 if L[i, j] == 1:
-                    logp_true  += self.weights.lf_accuracy[j]
-                    logp_false -= self.weights.lf_accuracy[j]
+                    logp_true  += self.weights.lf_accuracy_log_odds[j]
+                    logp_false -= self.weights.lf_accuracy_log_odds[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
                 elif L[i, j] == -1:
-                    logp_true  -= self.weights.lf_accuracy[j]
-                    logp_false += self.weights.lf_accuracy[j]
+                    logp_true  -= self.weights.lf_accuracy_log_odds[j]
+                    logp_false += self.weights.lf_accuracy_log_odds[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
                 else:
@@ -406,7 +409,7 @@ class GenerativeModel(object):
 
 
         # Factors over labeling function outputs
-        f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off, "DP_GEN_LF_ACCURACY",
+        f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off, "DP_GEN_lf_accuracy",
                                                              (lambda m, n, i, j: i, lambda m, n, i, j: m + n * i + j))
 
         optional_name_map = {
@@ -519,7 +522,7 @@ class GenerativeModel(object):
         else:
             w_off = 0
 
-        weights.lf_accuracy = np.copy(w[w_off:w_off + n])
+        weights.lf_accuracy_log_odds = np.copy(w[w_off:w_off + n])
         w_off += n
 
         for optional_name in GenerativeModel.optional_names:

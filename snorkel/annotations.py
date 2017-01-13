@@ -89,16 +89,20 @@ class Annotator(UDFRunner):
     def __init__(self, annotation_class, annotation_key_class, f):
         self.annotation_class     = annotation_class
         self.annotation_key_class = annotation_key_class
-        super(Annotator, self).__init__(Annotator.AnnotatorUDF,
+        super(Annotator, self).__init__(AnnotatorUDF,
                                         annotation_class=annotation_class,
                                         annotation_key_class=annotation_key_class,
                                         f=f)
 
     def apply(self, split, key_group=0, replace_key_set=True, **kwargs):
+
+        # Get the cids based on the split, and also the count
         SnorkelSession = new_sessionmaker()
-        session = SnorkelSession()
-        cids = session.query(Candidate.id).filter(Candidate.split == split).yield_per(1000)
-        super(Annotator, self).apply(cids, split=split, key_group=key_group, replace_key_set=replace_key_set, **kwargs)
+        session        = SnorkelSession()
+        cids_query     = session.query(Candidate.id).filter(Candidate.split == split)
+        
+        # Run the Annotator
+        super(Annotator, self).apply(cids_query.yield_per(1000), split=split, key_group=key_group, replace_key_set=replace_key_set, count=cids_query.count(), **kwargs)
         session.close()
 
     def clear(self, session, split, key_group, replace_key_set, **kwargs):
@@ -112,90 +116,91 @@ class Annotator(UDFRunner):
             query = query.filter(self.annotation_key_class.group == key_group)
             query.delete(synchronize_session='fetch')
 
-    class AnnotatorUDF(UDF):
-        def __init__(self, annotation_class, annotation_key_class, f, **kwargs):
-            self.annotation_class     = annotation_class
-            self.annotation_key_class = annotation_key_class
-            self.anno_generator       = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
 
-            # For caching key ids during the reduce step
-            self.key_cache = {}
+class AnnotatorUDF(UDF):
+    def __init__(self, annotation_class, annotation_key_class, f, **kwargs):
+        self.annotation_class     = annotation_class
+        self.annotation_key_class = annotation_key_class
+        self.anno_generator       = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
 
-            super(Annotator.AnnotatorUDF, self).__init__(**kwargs)
+        # For caching key ids during the reduce step
+        self.key_cache = {}
 
-        def apply(self, cid, **kwargs):
-            """
-            Applies a given function to a Candidate, yielding a set of Annotations as key_name, value pairs
+        super(AnnotatorUDF, self).__init__(**kwargs)
 
-            Note: Accepts a candidate _id_ as argument, because of issues with putting Candidate subclasses
-            into Queues (can't pickle...)
-            """
-            seen = set()
-            cid = cid[0]
-            c    = self.session.query(Candidate).filter(Candidate.id == cid).one()
-            for key_name, value in self.anno_generator(c):
+    def apply(self, cid, **kwargs):
+        """
+        Applies a given function to a Candidate, yielding a set of Annotations as key_name, value pairs
 
-                # Note: Make sure no duplicates emitted here!
-                if (cid, key_name) not in seen:
-                    seen.add((cid, key_name))
-                    yield cid, key_name, value
+        Note: Accepts a candidate _id_ as argument, because of issues with putting Candidate subclasses
+        into Queues (can't pickle...)
+        """
+        seen = set()
+        cid = cid[0]
+        c    = self.session.query(Candidate).filter(Candidate.id == cid).one()
+        for key_name, value in self.anno_generator(c):
 
-        def reduce(self, y, clear, key_group, replace_key_set, **kwargs):
-            """
-            Inserts Annotations into the database.
-            For Annotations with unseen AnnotationKeys (in key_group, if not None), either adds these
-            AnnotationKeys if create_new_keyset is True, else skips these Annotations.
-            """
-            cid, key_name, value = y
+            # Note: Make sure no duplicates emitted here!
+            if (cid, key_name) not in seen:
+                seen.add((cid, key_name))
+                yield cid, key_name, value
 
-            # Prepares queries
-            # Key selection & annotation updating only needs to be done if Annotations / AnnotationKeys already exist
+    def reduce(self, y, clear, key_group, replace_key_set, **kwargs):
+        """
+        Inserts Annotations into the database.
+        For Annotations with unseen AnnotationKeys (in key_group, if not None), either adds these
+        AnnotationKeys if create_new_keyset is True, else skips these Annotations.
+        """
+        cid, key_name, value = y
+
+        # Prepares queries
+        # Key selection & annotation updating only needs to be done if Annotations / AnnotationKeys already exist
+        if not clear:
+            key_select_query = select([self.annotation_key_class.id])\
+                                .where(self.annotation_key_class.name == bindparam('name'))
+            if key_group is not None:
+                key_select_query = key_select_query.where(self.annotation_key_class.group == key_group)
+
+            anno_update_query = self.annotation_class.__table__.update()
+            anno_update_query = anno_update_query.where(self.annotation_class.candidate_id == bindparam('cid'))
+            anno_update_query = anno_update_query.where(self.annotation_class.key_id == bindparam('kid'))
+            anno_update_query = anno_update_query.values(value=bindparam('value'))
+
+        key_insert_query = self.annotation_key_class.__table__.insert()
+
+        anno_insert_query = self.annotation_class.__table__.insert()
+
+        # Check if the AnnotationKey already exists, and gets its id
+        key_id = None
+        if key_name in self.key_cache:
+            key_id = self.key_cache[key_name]
+        else:
+            key_args = {'name': key_name, 'group': key_group} if key_group else {'name': key_name}
+
+            # If AnnotationKeys may exist in DB, check there
             if not clear:
-                key_select_query = select([self.annotation_key_class.id])\
-                                    .where(self.annotation_key_class.name == bindparam('name'))
-                if key_group is not None:
-                    key_select_query = key_select_query.where(self.annotation_key_class.group == key_group)
+                key_id = self.session.execute(key_select_query, key_args).first()
 
-                anno_update_query = self.annotation_class.__table__.update()
-                anno_update_query = anno_update_query.where(self.annotation_class.candidate_id == bindparam('cid'))
-                anno_update_query = anno_update_query.where(self.annotation_class.key_id == bindparam('kid'))
-                anno_update_query = anno_update_query.values(value=bindparam('value'))
-
-            key_insert_query = self.annotation_key_class.__table__.insert()
-
-            anno_insert_query = self.annotation_class.__table__.insert()
-
-            # Check if the AnnotationKey already exists, and gets its id
-            key_id = None
-            if key_name in self.key_cache:
-                key_id = self.key_cache[key_name]
-            else:
-                key_args = {'name': key_name, 'group': key_group} if key_group else {'name': key_name}
-
-                # If AnnotationKeys may exist in DB, check there
-                if not clear:
-                    key_id = self.session.execute(key_select_query, key_args).first()
-
-                # Key not in cache but exists in DB; add to cache
-                if key_id is not None:
-                    key_id                   = key_id[0]
-                    self.key_cache[key_name] = key_id
-
-                # Key not in cache or DB; add to both if create_new_keyset = True
-                elif replace_key_set:
-                    key_id   = self.session.execute(key_insert_query, key_args).inserted_primary_key[0]
-                    self.key_cache[key_name] = key_id
-
-            # If AnnotationKey does not exist and create_new_keyset = False, skip
+            # Key not in cache but exists in DB; add to cache
             if key_id is not None:
+                key_id                   = key_id[0]
+                self.key_cache[key_name] = key_id
 
-                # Updates the Annotation, assuming one might already exist, if try_update = True
-                if not clear:
-                    res = self.session.execute(anno_update_query, {'cid': cid, 'kid': key_id, 'value': value})
+            # Key not in cache or DB; add to both if create_new_keyset = True
+            elif replace_key_set:
+                key_id   = self.session.execute(key_insert_query, key_args).inserted_primary_key[0]
+                self.key_cache[key_name] = key_id
 
-                # If Annotation does not exist, insert
-                if (clear or res.rowcount == 0) and value != 0:
-                    self.session.execute(anno_insert_query, {'candidate_id': cid, 'key_id': key_id, 'value': value})
+        # If AnnotationKey does not exist and create_new_keyset = False, skip
+        if key_id is not None:
+
+            # Updates the Annotation, assuming one might already exist, if try_update = True
+            if not clear:
+                res = self.session.execute(anno_update_query, {'cid': cid, 'kid': key_id, 'value': value})
+
+            # If Annotation does not exist, insert
+            if (clear or res.rowcount == 0) and value != 0:
+                self.session.execute(anno_insert_query, {'candidate_id': cid, 'key_id': key_id, 'value': value})
 
 
 class LabelAnnotator(Annotator):

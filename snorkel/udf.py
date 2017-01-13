@@ -19,7 +19,7 @@ class UDFRunner(object):
         else:
             self.udf0 = None
 
-    def apply(self, xs, clear=True, parallelism=None, progress_bar=True, **kwargs):
+    def apply(self, xs, clear=True, parallelism=None, progress_bar=True, count=None, **kwargs):
         # Clear everything downstream of this UDF if requested
         if clear:
             SnorkelSession = new_sessionmaker()
@@ -30,19 +30,22 @@ class UDFRunner(object):
 
         # Execute the UDF
         if parallelism is None or parallelism < 2:
-            self.apply_st(xs, progress_bar, clear=clear, **kwargs)
+            self.apply_st(xs, progress_bar, clear=clear, count=count, **kwargs)
         else:
             self.apply_mt(xs, parallelism, clear=clear, **kwargs)
 
     def clear(self, session, **kwargs):
         raise NotImplementedError()
 
-    def apply_st(self, xs, progress_bar, **kwargs):
+    def apply_st(self, xs, progress_bar, count, **kwargs):
         """Run the UDF single-threaded, optionally with progress bar"""
         udf = self.udf_class(**self.udf_init_kwargs)
 
         # Set up ProgressBar if possible
-        pb = ProgressBar(len(xs)) if progress_bar and hasattr(xs, '__len__') else None
+        pb = None
+        if progress_bar and hasattr(xs, '__len__') or count is not None:
+            n = count if count is not None else len(xs)
+            pb = ProgressBar(n)
         
         # Run single-thread
         for i, x in enumerate(xs):
@@ -61,7 +64,7 @@ class UDFRunner(object):
         # Commit session and close progress bar if applicable
         udf.session.commit()
         if pb:
-            pb.bar(len(xs))
+            pb.bar(n)
             pb.close()
 
     def apply_mt(self, xs, parallelism, **kwargs):

@@ -69,12 +69,10 @@ After installing (see below), just run:
 ```
 
 ## Learning how to use Snorkel
-There are currently two tutorials for Snorkel, an [introductory tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro)
-and a more advanced [disease tagging tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/disease_tagging).
-The tutorials are available in the following directories:
+The [introductory tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro) covers the entire Snorkel workflow, showing how to extract spouse relations from news articles.
+The tutorial is available in the following directory:
 ```
 tutorials/intro
-tutorials/disease_tagger
 ```
 
 ## Issues

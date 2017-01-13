@@ -105,6 +105,11 @@ class UDFRunner(object):
             for i, udf in enumerate(self.udfs):
                 udf.join()
 
+        # Terminate and flush the processes
+        for udf in self.udfs:
+            udf.terminate()
+        self.udfs = []
+
 
 class UDF(Process):
     def __init__(self, in_queue=None, out_queue=None):

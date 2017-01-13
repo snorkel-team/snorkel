@@ -28,7 +28,7 @@ class CandidateExtractor(UDFRunner):
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
     def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=True):
-        super(CandidateExtractor, self).__init__(CandidateExtractor.CandidateExtractorUDF,
+        super(CandidateExtractor, self).__init__(CandidateExtractorUDF,
                                                  candidate_class=candidate_class,
                                                  cspaces=cspaces,
                                                  matchers=matchers,
@@ -42,73 +42,74 @@ class CandidateExtractor(UDFRunner):
     def clear(self, session, split, **kwargs):
         session.query(Candidate).filter(Candidate.split == split).delete()
 
-    class CandidateExtractorUDF(UDF):
-        def __init__(self, candidate_class, cspaces, matchers, self_relations, nested_relations, symmetric_relations, **kwargs):
-            self.candidate_class     = candidate_class
-            self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
-            self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
-            self.nested_relations    = nested_relations
-            self.self_relations      = self_relations
-            self.symmetric_relations = symmetric_relations
 
-            # Check that arity is same
-            if len(self.candidate_spaces) != len(self.matchers):
-                raise ValueError("Mismatched arity of candidate space and matcher.")
-            else:
-                self.arity = len(self.candidate_spaces)
+class CandidateExtractorUDF(UDF):
+    def __init__(self, candidate_class, cspaces, matchers, self_relations, nested_relations, symmetric_relations, **kwargs):
+        self.candidate_class     = candidate_class
+        self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
+        self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
+        self.nested_relations    = nested_relations
+        self.self_relations      = self_relations
+        self.symmetric_relations = symmetric_relations
 
-            # Make sure the candidate spaces are different so generators aren't expended!
-            self.candidate_spaces = map(deepcopy, self.candidate_spaces)
+        # Check that arity is same
+        if len(self.candidate_spaces) != len(self.matchers):
+            raise ValueError("Mismatched arity of candidate space and matcher.")
+        else:
+            self.arity = len(self.candidate_spaces)
 
-            # Preallocates internal data structures
-            self.child_context_sets = [None] * self.arity
-            for i in range(self.arity):
-                self.child_context_sets[i] = set()
+        # Make sure the candidate spaces are different so generators aren't expended!
+        self.candidate_spaces = map(deepcopy, self.candidate_spaces)
 
-            super(CandidateExtractor.CandidateExtractorUDF, self).__init__(**kwargs)
+        # Preallocates internal data structures
+        self.child_context_sets = [None] * self.arity
+        for i in range(self.arity):
+            self.child_context_sets[i] = set()
 
-        def apply(self, context, clear, split, **kwargs):
-            # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
-            # by the Matcher
-            for i in range(self.arity):
-                self.child_context_sets[i].clear()
-                for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
-                    tc.load_id_or_insert(self.session)
-                    self.child_context_sets[i].add(tc)
+        super(CandidateExtractorUDF, self).__init__(**kwargs)
 
-            # Generates and persists candidates
-            candidate_args = {'split': split}
-            for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
+    def apply(self, context, clear, split, **kwargs):
+        # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
+        # by the Matcher
+        for i in range(self.arity):
+            self.child_context_sets[i].clear()
+            for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
+                tc.load_id_or_insert(self.session)
+                self.child_context_sets[i].add(tc)
 
-                # TODO: Make this work for higher-order relations
-                if self.arity == 2:
-                    ai, a = args[0]
-                    bi, b = args[1]
+        # Generates and persists candidates
+        candidate_args = {'split': split}
+        for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
 
-                    # Check for self-joins, "nested" joins (joins from span to its subspan), and flipped duplicate
-                    # "symmetric" relations
-                    if not self.self_relations and a == b:
-                        continue
-                    elif not self.nested_relations and (a in b or b in a):
-                        continue
-                    elif not self.symmetric_relations and ai > bi:
-                        continue
+            # TODO: Make this work for higher-order relations
+            if self.arity == 2:
+                ai, a = args[0]
+                bi, b = args[1]
 
-                # Assemble candidate arguments
-                for i, arg_name in enumerate(self.candidate_class.__argnames__):
-                    candidate_args[arg_name + '_id'] = args[i][1].id
+                # Check for self-joins, "nested" joins (joins from span to its subspan), and flipped duplicate
+                # "symmetric" relations
+                if not self.self_relations and a == b:
+                    continue
+                elif not self.nested_relations and (a in b or b in a):
+                    continue
+                elif not self.symmetric_relations and ai > bi:
+                    continue
 
-                # Checking for existence
-                if not clear:
-                    q = select([self.candidate_class.id])
-                    for key, value in candidate_args.items():
-                        q = q.where(getattr(self.candidate_class, key) == value)
-                    candidate_id = self.session.execute(q).first()
-                    if candidate_id is not None:
-                        continue
+            # Assemble candidate arguments
+            for i, arg_name in enumerate(self.candidate_class.__argnames__):
+                candidate_args[arg_name + '_id'] = args[i][1].id
 
-                # Add Candidate to session
-                yield self.candidate_class(**candidate_args)
+            # Checking for existence
+            if not clear:
+                q = select([self.candidate_class.id])
+                for key, value in candidate_args.items():
+                    q = q.where(getattr(self.candidate_class, key) == value)
+                candidate_id = self.session.execute(q).first()
+                if candidate_id is not None:
+                    continue
+
+            # Add Candidate to session
+            yield self.candidate_class(**candidate_args)
 
 
 class CandidateSpace(object):

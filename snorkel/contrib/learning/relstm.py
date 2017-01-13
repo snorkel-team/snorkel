@@ -78,7 +78,44 @@ class reLSTM(NoiseAwareModel):
         return tx, np.ravel(y), tlen
 
     def _build_lstm(self, sents, sent_lens, labels, lr, n_hidden, dropout, n_v):
-        pass
+        """Get feed forward step, cost function, and optimizer for LSTM"""
+        # Get simple architecture
+        cell = tf.nn.rnn_cell.BasicLSTMCell(n_hidden, state_is_tuple=True)
+        batch_size = tf.shape(sents)[1]
+        # Set input layers
+        with tf.device("/cpu:0"):
+            embedding = tf.get_variable(
+                "embedding", (n_v, n_hidden), dtype=tf.float32
+            )
+            inputs = tf.nn.embedding_lookup(embedding, sents)
+        # Set RNN
+        initial_state = cell.zero_state(batch_size, tf.float32)
+        rnn_outputs, _ = tf.nn.dynamic_rnn(
+            cell, inputs, initial_state=initial_state, time_major=True
+        )
+        # Take mean across sentences
+        summary_vector = tf.transpose(
+            tf.transpose(tf.reduce_sum(rnn_outputs, 0), (1,0)) / 
+            tf.cast(sent_lens, tf.float32), (1,0)
+        )
+        # Dropout regularization
+        if dropout is not None:
+            summary_vector = tf.nn.dropout(summary_vector, dropout)
+        # Sigmoid over embedding layer
+        W = tf.Variable(tf.truncated_normal((n_hidden, 1), stddev=1e-2))
+        b = tf.Variable(tf.truncated_normal([1], stddev=1e-2))
+        u = tf.reshape(tf.matmul(summary_vector, W), [-1])
+        # Unroll {-1, 1} hard labels
+        unrolled_labels = tf.reshape(labels, [-1])            
+        # Positive class marginal
+        prediction = tf.nn.sigmoid(u + b) 
+        # Set log loss cost function
+        cost = -tf.reduce_mean(tf.log(tf.nn.sigmoid(
+            tf.mul(u + b, tf.cast(unrolled_labels, tf.float32))
+        )))
+        # Backprop trainer
+        train_fn  = tf.train.RMSPropOptimizer(learning_rate=lr).minimize(cost)
+        return prediction, cost, train_fn
 
     def train(self, candidates, n_epochs=10, lr=0.01, n_hidden=20,
         batch_size=100, rebalance=False, dropout_rate=None,
@@ -113,8 +150,6 @@ class reLSTM(NoiseAwareModel):
         # Get max sentence size
         self.mx_len = max(train_x, lambda x: len(x))
         self.mx_len = int(min(self.mx_len, max_sentence_length or float('Inf')))
-        # Get eval set
-        #(tx,ty,t_lus) = make_our_tensor(train_x[0:args.max_eval_set], train_y[0:args.max_eval_set], max_sentence)
         # Run mini-batch SGD
         batch_size = min(batch_size, len(train_x))
         self.session = tf.Session()
@@ -133,11 +168,11 @@ class reLSTM(NoiseAwareModel):
                     train_x[i:i+batch_size], train_y[i:i+batch_size],
                 )
                 # Run training step and evaluate cost function                  
-                epoch_error, _ += self.session.run([cost, train_fn], {
+                epoch_error += self.session.run([cost, train_fn], {
                     self.sentences: x_batch,
                     self.sentence_length: x_batch_lens,
                     self.labels: y_batch,
-                })
+                })[0]
             # Print training stats
             if verbose and (t % n_print == 0 or t == (n_epochs - 1)):
                 print("[reLSTM] Epoch {0} ({1:.2f}s)\tError={2:.6f}".format(
@@ -150,14 +185,15 @@ class reLSTM(NoiseAwareModel):
             print("[reLSTM] Model saved in file: {}".format(model_name))
 
     def marginals(self, test_candidates):
+        """Feed forward step for marginals"""
         if any(z is None for z in [self.session, self.prediction]):
             raise Exception("[reLSTM] Model not defined")
         test_x, _, _, _ = self._preprocess_data(test_candidates)
         x, _, x_lens = self._make_tensor(test_x, )
         return np.ravel(self.session.run([self.prediction], {
-            self.sentences = x,
-            self.sentence_length = x_lens,
-            self.labels = None
+            self.sentences: x,
+            self.sentence_length: x_lens,
+            self.labels: None
         }))
 
     def save(self, model_name=None):

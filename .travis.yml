@@ -21,7 +21,6 @@ cache:
     - $HOME/.cache/pip
     - $HOME/miniconda/envs/test      # to avoid repetitively setting up Ana/Miniconda environment
     - parser                         # to avoid repetitively downloading CoreNLP
-    - tutorials/disease_tagging/data # to avoid repetitively downloading CDR data
 
 addons:
   apt:
@@ -74,11 +73,6 @@ install:
   - pip install -r python-package-requirement.txt
   - test -e parser/corenlp.sh || ./install-parser.sh
 
-  # Downloads data for disease tagging tutorial
-  - cd tutorials/disease_tagging
-  - ./download_data.sh
-  - cd ../..
-
   # Use runipy to run Jupyter/IPython notebooks from command-line
   - pip install runipy
 
@@ -97,12 +91,15 @@ script:
   - runipy intro/Intro_Tutorial_4.ipynb
   - runipy intro/Intro_Tutorial_5.ipynb
 
-  # Runs disease tagger tutorial notebooks
-  # - runipy disease_tagging/Disease_Tagging_Tutorial_1.ipynb
-  # - runipy disease_tagging/Disease_Tagging_Tutorial_2.ipynb
-  # - runipy disease_tagging/Disease_Tagging_Tutorial_3.ipynb
-  # - runipy disease_tagging/Disease_Tagging_Tutorial_4.ipynb
-  # - runipy disease_tagging/Disease_Tagging_Tutorial_5.ipynb
+  # Runs them some more. Tests running against an existing database.
+  - runipy intro/Intro_Tutorial_1.ipynb
+  - runipy intro/Intro_Tutorial_2.ipynb
+  - runipy intro/Intro_Tutorial_3.ipynb
+  - runipy intro/Intro_Tutorial_4.ipynb
+  # We do notebook 4 twice to test rerunning in the middle of the workflow
+  - runipy intro/Intro_Tutorial_4.ipynb
+  - runipy intro/Intro_Tutorial_5.ipynb
+
   - cd ..
 
   # Run test modules

@@ -29,7 +29,7 @@ class Document(Context):
     A root Context.
     """
     __tablename__ = 'document'
-    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
     name = Column(String, unique=True, nullable=False)
     meta = Column(PickleType)
 
@@ -48,10 +48,10 @@ class Document(Context):
 class Sentence(Context):
     """A sentence Context in a Document."""
     __tablename__ = 'sentence'
-    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
-    document_id = Column(Integer, ForeignKey('document.id'))
-    document = relationship('Document', backref=backref('sentences', cascade='all, delete-orphan'), foreign_keys=document_id)
+    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    document_id = Column(Integer, ForeignKey('document.id', ondelete='CASCADE'))
     position = Column(Integer, nullable=False)
+    document = relationship('Document', backref=backref('sentences', order_by=position, cascade='all, delete-orphan'), foreign_keys=document_id)
     text = Column(Text, nullable=False)
     if snorkel_postgres:
         words        = Column(postgresql.ARRAY(String), nullable=False)
@@ -281,8 +281,8 @@ class Span(Context, TemporarySpan):
     char_offsets are **relative to the Context start**
     """
     __tablename__ = 'span'
-    id = Column(Integer, ForeignKey('context.id'), primary_key=True)
-    parent_id = Column(Integer, ForeignKey('context.id'))
+    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    parent_id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'))
     char_start = Column(Integer, nullable=False)
     char_end = Column(Integer, nullable=False)
     meta = Column(PickleType)

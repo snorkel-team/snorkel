@@ -1,8 +1,9 @@
-from .meta import SnorkelBase
 from sqlalchemy import Column, String, Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
-from snorkel.models import snorkel_engine
-from snorkel.utils import camel_to_under
+
+from .meta import SnorkelBase
+from ..models import snorkel_engine
+from ..utils import camel_to_under
 
 
 class Candidate(SnorkelBase):
@@ -15,6 +16,7 @@ class Candidate(SnorkelBase):
     __tablename__ = 'candidate'
     id    = Column(Integer, primary_key=True)
     type  = Column(String, nullable=False)
+    split = Column(Integer, nullable=False, default=0, index=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',
@@ -68,10 +70,7 @@ def candidate_subclass(class_name, args, table_name=None):
         '__tablename__' : table_name,
                 
         # Connects candidate_subclass records to generic Candidate records
-        'id' : Column(Integer, ForeignKey('candidate.id'), primary_key=True),
-
-        # Hold split information here
-        'split' : Column(Integer, default=0),
+        'id' : Column(Integer, ForeignKey('candidate.id', ondelete='CASCADE'), primary_key=True),
                 
         # Polymorphism information for SQLAlchemy
         '__mapper_args__' : {'polymorphic_identity': table_name},
@@ -85,7 +84,7 @@ def candidate_subclass(class_name, args, table_name=None):
     for arg in args:
 
         # Primary arguments are constituent Contexts, and their ids
-        class_attribs[arg + '_id']  = Column(Integer, ForeignKey('context.id'))
+        class_attribs[arg + '_id']  = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'))
         class_attribs[arg]          = relationship('Context',
                                                       backref=backref(table_name + '_' + arg + 's',
                                                                       cascade_backrefs=False,
@@ -97,8 +96,6 @@ def candidate_subclass(class_name, args, table_name=None):
         # Canonical ids, to be set post-entity normalization stage
         class_attribs[arg + '_cid'] = Column(Integer)
 
-    # Add the split to the unique constraint
-    unique_con_args.append('split')
     class_attribs['__table_args__'] = (UniqueConstraint(*unique_con_args),)
 
     # Create class

@@ -1,4 +1,4 @@
-import cPickle as pkl
+import cPickle
 import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
@@ -39,14 +39,14 @@ class reLSTM(NoiseAwareModel):
         # Define input layers
         self.sentences = tf.placeholder(tf.int32, [None, None])
         self.sentence_length = tf.placeholder(tf.int32, [None])
-        self.labels = tf.placeholder(tf.int32, [None])
+        self.y = tf.placeholder(tf.float32, [None])
         # Load model
         if save_file is not None:
             self.load(save_file)
         # Super constructor
         super(reLSTM, self).__init__(**kwargs)
 
-    def _gen_marks(self, l, h, idx):
+    def _mark(self, l, h, idx):
         """Produce markers based on argument positions"""
         return [(l, "{}{}".format('[[', idx)), (h+1, "{}{}".format(idx, ']]'))]
 
@@ -69,13 +69,13 @@ class reLSTM(NoiseAwareModel):
                 (c[0].get_word_start(), c[0].get_word_end(), 1),
                 (c[1].get_word_start(), c[1].get_word_end(), 2)
             ]
-            s = mark_sentence([w.lower() for w in c.get_parent().lemmas], args)
+            s = self._mark_sentence([w.lower() for w in c.get_parent().lemmas], args)
             # Either extend word table or retrieve from it
             retriever = self.word_dict.get if extend else self.word_dict.lookup
             sentences.append(np.array([retriever(w) for w in s]))
         return sentences
 
-    def _make_tensor(self, x, y=None):
+    def _make_tensor(self, x):
         """Construct input tensor with padding"""
         batch_size = len(x)
         tx = np.zeros((self.mx_len, batch_size), dtype=np.int32)
@@ -87,17 +87,17 @@ class reLSTM(NoiseAwareModel):
             tx[0:lu, k] = u[0:lu]
             tx[lu:, k] = 0
             tlen[k] = lu
-        return tx, (np.zeros(len(tx)) if y is None else np.ravel(y)), tlen
+        return tx, tlen
 
-    def _build_lstm(self, sents, sent_lens, labels, lr, n_hidden, dropout, n_v):
+    def _build_lstm(self, sents, sent_lens, marginals, lr, dim, dropout, n_v):
         """Get feed forward step, cost function, and optimizer for LSTM"""
         # Get simple architecture
-        cell = tf.nn.rnn_cell.BasicLSTMCell(n_hidden, state_is_tuple=True)
+        cell = tf.nn.rnn_cell.BasicLSTMCell(dim, state_is_tuple=True)
         batch_size = tf.shape(sents)[1]
         # Set input layers
         with tf.device("/cpu:0"):
             embedding = tf.get_variable(
-                "embedding", (n_v, n_hidden), dtype=tf.float32
+                "embedding", (n_v, dim), dtype=tf.float32
             )
             inputs = tf.nn.embedding_lookup(embedding, sents)
         # Set RNN
@@ -114,56 +114,59 @@ class reLSTM(NoiseAwareModel):
         if dropout is not None:
             summary_vector = tf.nn.dropout(summary_vector, dropout)
         # Sigmoid over embedding layer
-        W = tf.Variable(tf.truncated_normal((n_hidden, 1), stddev=1e-2))
+        W = tf.Variable(tf.truncated_normal((dim, 1), stddev=1e-2))
         b = tf.Variable(tf.truncated_normal([1], stddev=1e-2))
         u = tf.reshape(tf.matmul(summary_vector, W), [-1])
-        # Unroll {-1, 1} hard labels
-        unrolled_labels = tf.reshape(labels, [-1])            
+        # Unroll [0, 1] marginals
+        unrolled_marginals = tf.reshape(marginals, [-1])            
         # Positive class marginal
         prediction = tf.nn.sigmoid(u + b) 
         # Set log loss cost function
-        cost = -tf.reduce_mean(tf.log(tf.nn.sigmoid(
-            tf.mul(u + b, tf.cast(unrolled_labels, tf.float32))
-        )))
+        cost = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(u + b, unrolled_marginals)
+        )
         # Backprop trainer
         train_fn  = tf.train.RMSPropOptimizer(learning_rate=lr).minimize(cost)
         return prediction, cost, train_fn
 
-    def train(self, candidates, y, n_epochs=10, lr=0.01, n_hidden=20,
+    def train(self, candidates, marginals, n_epochs=25, lr=0.01, dim=20,
         batch_size=100, rebalance=False, dropout_rate=None,
-        max_sentence_length=None, n_print=50, model_name=None):
+        max_sentence_length=None, n_print=5, model_name=None):
         """ Train LSTM model """
+        # Check input sizes
+        if len(candidates) != len(marginals):
+            raise Exception("{0} candidates and {1} marginals".format(
+                len(candidates), len(marginals))
+            )
+        # Starter message
         verbose = n_print > 0
         if verbose:
-            print("[reLSTM] Layers={} LR={}".format(n_hidden, lr))
+            print("[reLSTM]  Dimension={}  LR={}".format(dim, lr))
             print("[reLSTM] Begin preprocessing")
             st = time()
-        # TODO: standardize input labels
-        if any(yy not in [1, -1] for yy in y):
-            raise Exception("Labels should be {-1, 1}")
         # Text preprocessing
-        train_x = self._preprocess_data(candidates)
+        train_x = self._preprocess_data(candidates, extend=True)
         # Build model
         dropout = None if dropout_rate is None else tf.constant(dropout_rate)
-        self.prediction, cost, train_fn = build_lstm(
-            self.sentences, self.sentence_length, self.labels, lr, n_hidden,
-            dropout, self.word_dict.current_symbol + 1
+        self.prediction, cost, train_fn = self._build_lstm(
+            self.sentences, self.sentence_length, self.y, lr, dim,
+            dropout, self.word_dict.s + 1
         )
-        # Get training counts 
+        # Get training counts
         if rebalance:
-            pos, neg = np.where(train_y == 1)[0], np.where(train_y == -1)[0]
+            pos, neg = np.where(marginals > 0.5)[0], np.where(marginals < 0.5)[0]
             k = min(len(pos), len(neg))
             idxs = np.concatenate((
                 np.random.choice(pos, size=k, replace=False),
                 np.random.choice(neg, size=k, replace=False)
             ))
         else:
-            idxs = np.ravel(xrange(len(train_y)))
+            idxs = np.ravel(np.where(np.abs(marginals - 0.5) > 1e-6)[0])
         # Shuffle training data
         np.random.shuffle(idxs)
-        train_x, train_y = [train_x[j] for j in idxs], train_y[idxs]
+        train_x, y = [train_x[j] for j in idxs], marginals[idxs]
         # Get max sentence size
-        self.mx_len = max(train_x, lambda x: len(x))
+        self.mx_len = max(len(x) for x in train_x)
         self.mx_len = int(min(self.mx_len, max_sentence_length or float('Inf')))
         # Run mini-batch SGD
         batch_size = min(batch_size, len(train_x))
@@ -171,58 +174,65 @@ class reLSTM(NoiseAwareModel):
         if verbose:
             print("[reLSTM] Preprocessing done ({0:.2f}s)".format(time()-st))
             st = time()
-            print("[reLSTM] Begin training\tEpochs={0}\tBatch={1}".format(
+            print("[reLSTM] Begin training  Epochs={0}  Batch={1}".format(
                 n_epochs, batch_size
             ))
         self.session.run(tf.global_variables_initializer())
         for t in range(n_epochs):
-            epoch_error = 0
+            epoch_loss = 0.0
             for i in range(0, len(train_x), batch_size):
                 # Get batch tensors
-                y_batch = train_y[i:i+batch_size]
+                y_batch = y[i:i+batch_size]
                 x_batch, x_batch_lens = self._make_tensor(
                     train_x[i:i+batch_size]
                 )
                 # Run training step and evaluate cost function                  
-                epoch_error += self.session.run([cost, train_fn], {
+                epoch_loss += self.session.run([cost, train_fn], {
                     self.sentences: x_batch,
                     self.sentence_length: x_batch_lens,
-                    self.labels: y_batch,
+                    self.y: y_batch,
                 })[0]
             # Print training stats
-            if verbose and (t % n_print == 0 or t == (n_epochs - 1)):
-                print("[reLSTM] Epoch {0} ({1:.2f}s)\tError={2:.6f}".format(
-                    t, time.time() - st, epoch_error
+            if verbose and ((t+1) % n_print == 0 or t == (n_epochs-1)):
+                print("[reLSTM] Epoch {0} ({1:.2f}s)\tLoss={2:.6f}".format(
+                    t+1, time() - st, epoch_loss
                 ))
         # Save model
-        self.save(model_name)        
         if verbose:
-            print("[reLSTM] Training done ({0:.2f}s)".format(time.time() - st))
-            print("[reLSTM] Model saved in file: {}".format(model_name))
+            print("[reLSTM] Training done ({0:.2f}s)".format(time() - st))
+        self.save(dim, model_name, verbose)
 
     def marginals(self, test_candidates):
         """Feed forward step for marginals"""
         if any(z is None for z in [self.session, self.prediction]):
             raise Exception("[reLSTM] Model not defined")
-        test_x = self._preprocess_data(test_candidates)
-        # Get input tensors with dummy labels
-        x, y, x_lens = self._make_tensor(test_x)
+        test_x = self._preprocess_data(test_candidates, extend=False)
+        # Get input tensors with dummy marginals
+        x, x_lens = self._make_tensor(test_x)
         return np.ravel(self.session.run([self.prediction], {
             self.sentences: x,
             self.sentence_length: x_lens,
-            self.labels: y
+            self.y: np.empty(len(x))
         }))
 
-    def save(self, model_name=None):
+    def save(self, dim, model_name=None, verbose=False):
         """Save model"""
         model_name = model_name or ("relstm_" + time_str())
         saver = tf.train.Saver()
-        saver.save(self.session, "./{0}.session".format(model_name))
-        with open("./{0}.info".format(model_name)) as f:
-            # TODO: save prediction, mx_len
-            pass
+        saver.save(self.session, model_name)
+        with open("{0}.info".format(model_name), 'wb') as f:
+            cPickle.dump((dim, self.mx_len, self.word_dict), f)
+        print("[reLSTM] Model saved. To load, use name\n\t\t{0}".format(model_name))
 
     def load(self, model_name):
         """Load model"""
-        # TODO: load info and session file
-        pass
+        with open("{0}.info".format(model_name), 'rb') as f:
+            dim, self.mx_len, self.word_dict = cPickle.load(f)
+        self.prediction, _, _ = self._build_lstm(
+            self.sentences, self.sentence_length, self.y, 0.0, dim,
+            None, self.word_dict.s + 1
+        )
+        saver = tf.train.Saver()
+        self.session = tf.Session()
+        saver.restore(self.session, '{0}.meta'.model_name)
+        print("[reLSTM] Successfully loaded model <{0}>".format(model_name))

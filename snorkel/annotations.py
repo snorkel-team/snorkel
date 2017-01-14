@@ -109,7 +109,9 @@ class Annotator(UDFRunner):
         
         # Run the Annotator
         super(Annotator, self).apply(cids, split=split, key_group=key_group, replace_key_set=replace_key_set, count=cids_count, **kwargs)
-        session.close()
+
+        # Load the matrix
+        return self.load_matrix(session, split=split, key_group=key_group)
 
     def clear(self, session, split, key_group, replace_key_set, **kwargs):
         query = session.query(Candidate.id).filter(Candidate.split == split).subquery()
@@ -121,6 +123,13 @@ class Annotator(UDFRunner):
             query = session.query(self.annotation_key_class)
             query = query.filter(self.annotation_key_class.group == key_group)
             query.delete(synchronize_session='fetch')
+
+    def apply_existing(self, split, key_group=0, **kwargs):
+        """Alias for apply that emphasizes we are using an existing AnnotatorKey set."""
+        self.apply(split, key_group=key_group, replace_key_set=False, **kwargs)
+
+    def load_matrix(self, session, split, key_group=0, **kwargs):
+        raise NotImplementedError()
 
 
 class AnnotatorUDF(UDF):
@@ -209,18 +218,6 @@ class AnnotatorUDF(UDF):
                 self.session.execute(anno_insert_query, {'candidate_id': cid, 'key_id': key_id, 'value': value})
 
 
-class LabelAnnotator(Annotator):
-    """Apply labeling functions to the candidates, generating Label annotations"""
-    def __init__(self, f):
-        super(LabelAnnotator, self).__init__(Label, LabelKey, f)
-
-        
-class FeatureAnnotator(Annotator):
-    """Apply feature generators to the candidates, generating Feature annotations"""
-    def __init__(self, f=get_span_feats):
-        super(FeatureAnnotator, self).__init__(Feature, FeatureKey, f)
-
-
 def load_matrix(matrix_class, annotation_key_class, annotation_class, session, split=0, key_group=0, key_names=None):
     """
     Returns the annotations corresponding to a split of candidates with N members
@@ -287,6 +284,24 @@ def load_feature_matrix(session, **kwargs):
 
 def load_gold_labels(session, annotator_name, **kwargs):
     return load_matrix(csr_LabelMatrix, GoldLabelKey, GoldLabel, session, key_names=[annotator_name], **kwargs)
+
+
+class LabelAnnotator(Annotator):
+    """Apply labeling functions to the candidates, generating Label annotations"""
+    def __init__(self, f):
+        super(LabelAnnotator, self).__init__(Label, LabelKey, f)
+
+    def load_matrix(self, session, split, **kwargs):
+        return load_label_matrix(session, split=split, **kwargs)
+
+        
+class FeatureAnnotator(Annotator):
+    """Apply feature generators to the candidates, generating Feature annotations"""
+    def __init__(self, f=get_span_feats):
+        super(FeatureAnnotator, self).__init__(Feature, FeatureKey, f)
+
+    def load_matrix(self, session, split, key_group=0, **kwargs):
+        return load_feature_matrix(session, split=split, key_group=key_group, **kwargs)
 
 
 def _to_annotation_generator(fns):

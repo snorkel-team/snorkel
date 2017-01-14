@@ -100,9 +100,15 @@ class Annotator(UDFRunner):
         SnorkelSession = new_sessionmaker()
         session        = SnorkelSession()
         cids_query     = session.query(Candidate.id).filter(Candidate.split == split)
+
+        # Note: In the current UDFRunner implementation, we load all these into memory and fill a
+        # multiprocessing JoinableQueue with them before starting... so might as well load them here and pass in.
+        # Also, if we try to pass in a query iterator instead, with AUTOCOMMIT on, we get a TXN error...
+        cids       = cids_query.all()
+        cids_count = len(cids)
         
         # Run the Annotator
-        super(Annotator, self).apply(cids_query.yield_per(1000), split=split, key_group=key_group, replace_key_set=replace_key_set, count=cids_query.count(), **kwargs)
+        super(Annotator, self).apply(cids, split=split, key_group=key_group, replace_key_set=replace_key_set, count=cids_count, **kwargs)
         session.close()
 
     def clear(self, session, split, key_group, replace_key_set, **kwargs):
@@ -222,13 +228,13 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session, s
     """
     cid_query = session.query(Candidate.id)
     cid_query = cid_query.filter(Candidate.split == split)
-    cid_query.order_by(Candidate.id).yield_per(1000)
+    cid_query = cid_query.order_by(Candidate.id)
 
     keys_query = session.query(annotation_key_class.id)
     keys_query = keys_query.filter(annotation_key_class.group == key_group)
     if key_names is not None:
         keys_query = keys_query.filter(annotation_key_class.name.in_(frozenset(key_names)))
-    keys_query = keys_query.order_by(annotation_key_class.id).yield_per(1000)
+    keys_query = keys_query.order_by(annotation_key_class.id)
 
     # First, we query to construct the row index map
     cid_to_row = {}

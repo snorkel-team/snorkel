@@ -76,7 +76,6 @@ class UDFRunner(object):
     def apply_mt(self, xs, parallelism, **kwargs):
         """Run the UDF multi-threaded using python multiprocessing"""
         # Fill a JoinableQueue with input objects
-        # TODO: For low-memory scenarios, we'd want to limit total queue size here
         in_queue = JoinableQueue()
         for x in xs:
             in_queue.put(x)

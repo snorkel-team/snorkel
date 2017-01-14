@@ -126,7 +126,7 @@ class Annotator(UDFRunner):
 
     def apply_existing(self, split, key_group=0, **kwargs):
         """Alias for apply that emphasizes we are using an existing AnnotatorKey set."""
-        self.apply(split, key_group=key_group, replace_key_set=False, **kwargs)
+        return self.apply(split, key_group=key_group, replace_key_set=False, **kwargs)
 
     def load_matrix(self, session, split, key_group=0, **kwargs):
         raise NotImplementedError()

@@ -46,7 +46,7 @@ class NoiseAwareModel(object):
 
 class TFNoiseAwareModel(NoiseAwareModel):
 
-    def __init__(self, name='TFModel'):
+    def __init__(self, save_file=None, name='TFModel'):
         """Interface for a TensorFlow model
         The train_fn, loss, and prediction fields should
         be populated by build()
@@ -56,11 +56,13 @@ class TFNoiseAwareModel(NoiseAwareModel):
         self.loss       = None
         self.prediction = None
         self.session    = tf.Session()
+        # Load model
+        if save_file is not None:
+            self.load(save_file)
 
     def _build(self, **kwargs):
         """Builds the TensorFlow model
-        Returns a triple of a training function, loss variable, 
-        and prediction function
+        Populates @train_fn, @loss, @prediction
         """
         raise NotImplementedError()
 
@@ -70,20 +72,38 @@ class TFNoiseAwareModel(NoiseAwareModel):
     def load_info(self, model_name, **kwargs):
         pass
 
-    def save(self, model_name=None, **kwargs):
+    def save(self, save_dict, model_name=None, verbose=False):
         model_name = model_name or self.name
-        self.save_info(model_name, **kwargs)
-        saver = tf.train.Saver()
-        saver.save(self.session, model_name)
-        if kwargs.get('verbose', False):
-             print("[{0}] Model saved. To load, use name\n\t\t{1}".format(
+        self.save_info(model_name)
+        saver = tf.train.Saver(save_dict)
+        saver.save(self.session, './' + model_name, global_step=0)
+        if verbose:
+            print("[{0}] Model saved. To load, use name\n\t\t{1}".format(
                 self.name, model_name
             ))
 
-    def load(self, model_name, **kwargs):
-        self.load_info(model_name, **kwargs)
-        self._build(**kwargs)
-        saver = tf.train.Saver()
-        saver.restore(self.session, '{0}.meta'.format(model_name))
-        if kwargs.get('verbose', False):
-            print("[{0}] Loaded model <{1}>".format(self.name, model_name))
+    def load(self, model_name, verbose=False):
+        self.load_info(model_name)
+        load_dict = self._build()
+        saver = tf.train.Saver(load_dict)
+        ckpt = tf.train.get_checkpoint_state('./')
+        if ckpt and ckpt.model_checkpoint_path:
+            saver.restore(self.session, ckpt.model_checkpoint_path)
+            if verbose:
+                print("[{0}] Loaded model <{1}>".format(self.name, model_name))
+        else:
+            raise Exception("[{0}] No model found at <{1}>".format(
+                self.name, model_name
+            ))
+
+
+def get_train_idxs(marginals, rebalance=False, split_lo=0.5, split_hi=0.5):
+    pos = np.where(marginals < (split_lo - 1e-6))[0]
+    neg = np.where(marginals > (split_hi + 1e-6))[0]
+    if rebalance:
+        k = min(len(pos), len(neg))
+        pos = np.random.choice(pos, size=k, replace=False)
+        neg = np.random.choice(neg, size=k, replace=False)
+    idxs = np.concatenate([pos, neg])
+    np.random.shuffle(idxs)
+    return idxs

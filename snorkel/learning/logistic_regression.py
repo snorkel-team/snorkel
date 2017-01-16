@@ -22,11 +22,11 @@ class LogisticRegression(TFNoiseAwareModel):
         # TODO: switch to sparse variables
         self.X = tf.placeholder(tf.float32, (None, self.d))
         self.Y = tf.placeholder(tf.float32, (None, 1))
-        w = tf.Variable(tf.random_normal((self.d, 1), mean=0, stddev=2.0))
-        b = tf.Variable(tf.random_normal((1, 1), mean=0, stddev=2.0))
+        w = tf.Variable(tf.random_normal((self.d, 1), mean=0, stddev=0.01))
+        b = tf.Variable(tf.random_normal((1, 1), mean=0, stddev=0.01))
         h = tf.add(tf.matmul(self.X, w), b)
         # Build model
-        self.loss = tf.reduce_mean(
+        self.loss = tf.reduce_sum(
             tf.nn.sigmoid_cross_entropy_with_logits(h, self.Y)
         )
         self.train_fn = tf.train.ProximalGradientDescentOptimizer(

@@ -63,6 +63,7 @@ class TFNoiseAwareModel(NoiseAwareModel):
     def _build(self, **kwargs):
         """Builds the TensorFlow model
         Populates @train_fn, @loss, @prediction
+        Returns dictionary of variables to save
         """
         raise NotImplementedError()
 

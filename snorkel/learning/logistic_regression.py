@@ -19,10 +19,11 @@ class LogisticRegression(TFNoiseAwareModel):
         super(LogisticRegression, self).__init__(save_file=save_file, name=name)
 
     def _build(self):
-        self.X = tf.placeholder(tf.float32, (None, self.d), name='X')
-        self.Y = tf.placeholder(tf.float32, (None, 1), name='Y')
-        w = tf.Variable(tf.random_normal((self.d, 1), mean=0, stddev=2.0), name='w')
-        b = tf.Variable(tf.random_normal((1, 1), mean=0, stddev=2.0), name='b')
+        # TODO: switch to sparse variables
+        self.X = tf.placeholder(tf.float32, (None, self.d))
+        self.Y = tf.placeholder(tf.float32, (None, 1))
+        w = tf.Variable(tf.random_normal((self.d, 1), mean=0, stddev=2.0))
+        b = tf.Variable(tf.random_normal((1, 1), mean=0, stddev=2.0))
         h = tf.add(tf.matmul(self.X, w), b)
         # Build model
         self.loss = tf.reduce_mean(

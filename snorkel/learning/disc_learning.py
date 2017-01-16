@@ -48,8 +48,8 @@ class TFNoiseAwareModel(NoiseAwareModel):
 
     def __init__(self, save_file=None, name='TFModel'):
         """Interface for a TensorFlow model
-        The train_fn, loss, and prediction fields should
-        be populated by build()
+        The @train_fn, @loss, and @prediction fields should
+        be populated by @_build()
         """
         super(TFNoiseAwareModel, self).__init__(name)
         self.train_fn   = None
@@ -74,6 +74,11 @@ class TFNoiseAwareModel(NoiseAwareModel):
         pass
 
     def save(self, save_dict, model_name=None, verbose=False):
+        """Save current TensorFlow model
+            @save_dict: returned from @_build
+            @model_name: save file names
+            @verbose: be talkative?
+        """
         model_name = model_name or self.name
         self.save_info(model_name)
         saver = tf.train.Saver(save_dict)
@@ -84,6 +89,10 @@ class TFNoiseAwareModel(NoiseAwareModel):
             ))
 
     def load(self, model_name, verbose=False):
+        """Load TensorFlow model from file
+            @model_name: save file names
+            @verbose: be talkative?
+        """
         self.load_info(model_name)
         load_dict = self._build()
         saver = tf.train.Saver(load_dict)
@@ -98,6 +107,7 @@ class TFNoiseAwareModel(NoiseAwareModel):
             ))
 
 
+# Get training indexes outside of split range and optionally rebalanced
 def get_train_idxs(marginals, rebalance=False, split_lo=0.5, split_hi=0.5):
     pos = np.where(marginals < (split_lo - 1e-6))[0]
     neg = np.where(marginals > (split_hi + 1e-6))[0]

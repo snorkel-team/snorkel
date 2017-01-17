@@ -11,14 +11,20 @@ class Context(SnorkelBase):
     A piece of content from which Candidates are composed.
     """
     __tablename__ = 'context'
-    id = Column(Integer, primary_key=True)
-    type = Column(String, nullable=False)
-    stable_id = Column(String, unique=True, nullable=False)
+    id            = Column(Integer, primary_key=True)
+    type          = Column(String, nullable=False)
+    stable_id     = Column(String, unique=True, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'context',
         'polymorphic_on': type
     }
+
+    def get_parent(self):
+        raise NotImplementedError()
+
+    def get_children(self):
+        raise NotImplementedError()
 
     def get_sentence_generator(self):
         raise NotImplementedError()
@@ -36,6 +42,12 @@ class Document(Context):
     __mapper_args__ = {
         'polymorphic_identity': 'document',
     }
+
+    def get_parent(self):
+        return None
+
+    def get_children(self):
+        return self.sentences
 
     def get_sentence_generator(self):
         for sentence in self.sentences:
@@ -81,6 +93,12 @@ class Sentence(Context):
     __table_args__ = (
         UniqueConstraint(document_id, position),
     )
+
+    def get_parent(self):
+        return self.document
+
+    def get_children(self):
+        return self.spans
 
     def _asdict(self):
         return {
@@ -296,7 +314,13 @@ class Span(Context, TemporarySpan):
         'inherit_condition': (id == Context.id)
     }
 
-    parent = relationship('Context', backref=backref('spans', cascade='all, delete-orphan'), foreign_keys=parent_id)
+    parent = relationship('Context', backref=backref('spans', cascade='all, delete-orphan'), order_by=char_start, foreign_keys=parent_id)
+
+    def get_parent(self):
+        return self.parent
+
+    def get_children(self):
+        return None
 
     def _get_instance(self, **kwargs):
         return Span(**kwargs)

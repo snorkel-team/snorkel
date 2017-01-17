@@ -114,8 +114,17 @@ class Annotator(UDFRunner):
         return self.load_matrix(session, split=split, key_group=key_group)
 
     def clear(self, session, split, key_group, replace_key_set, **kwargs):
-        query = session.query(Candidate.id).filter(Candidate.split == split).subquery()
-        query = session.query(self.annotation_class).filter(self.annotation_class.candidate_id.in_(query))
+        """
+        Deletes the Annotations for the Candidates in the given split.
+        If replace_key_set=True, deletes *all* Annotations (of this Annotation sub-class)
+        and also deletes all AnnotationKeys (of this sub-class)
+        """
+        query = session.query(self.annotation_class)
+        
+        # If replace_key_set=False, then we just delete the annotations for candidates in our split
+        if not replace_key_set:
+            sub_query = session.query(Candidate.id).filter(Candidate.split == split).subquery()
+            query     = query.filter(self.annotation_class.candidate_id.in_(sub_query))
         query.delete(synchronize_session='fetch')
 
         # If we are creating a new key set, delete all old annotation keys
@@ -169,19 +178,26 @@ class AnnotatorUDF(UDF):
         cid, key_name, value = y
 
         # Prepares queries
-        # Key selection & annotation updating only needs to be done if Annotations / AnnotationKeys already exist
+        # Annoation updating only needs to be done if clear=False
         if not clear:
-            key_select_query = select([self.annotation_key_class.id])\
-                                .where(self.annotation_key_class.name == bindparam('name'))
-            if key_group is not None:
-                key_select_query = key_select_query.where(self.annotation_key_class.group == key_group)
-
             anno_update_query = self.annotation_class.__table__.update()
             anno_update_query = anno_update_query.where(self.annotation_class.candidate_id == bindparam('cid'))
             anno_update_query = anno_update_query.where(self.annotation_class.key_id == bindparam('kid'))
             anno_update_query = anno_update_query.values(value=bindparam('value'))
+        
+        # We only need to insert AnnotationKeys if replace_key_set=True
+        # Note that in current configuration, we never update AnnotationKeys!
+        if replace_key_set:
+            key_insert_query = self.annotation_key_class.__table__.insert()
 
-        key_insert_query = self.annotation_key_class.__table__.insert()
+        # If we are replacing the AnnotationKeys (replace_key_set=True), then we assume they will
+        # all have been handled by *this* reduce thread, and hence be in the cache already
+        # So we only need key select queries if replace_key_set=False
+        else:
+            key_select_query = select([self.annotation_key_class.id])\
+                                .where(self.annotation_key_class.name == bindparam('name'))
+            if key_group is not None:
+                key_select_query = key_select_query.where(self.annotation_key_class.group == key_group)
 
         anno_insert_query = self.annotation_class.__table__.insert()
 
@@ -192,8 +208,9 @@ class AnnotatorUDF(UDF):
         else:
             key_args = {'name': key_name, 'group': key_group} if key_group else {'name': key_name}
 
-            # If AnnotationKeys may exist in DB, check there
-            if not clear:
+            # If we are replacing the AnnotationKeys (replace_key_set=True), then we assume they will
+            # all have been handled by *this* reduce thread, and hence be in the cache already
+            if not replace_key_set:
                 key_id = self.session.execute(key_select_query, key_args).first()
 
             # Key not in cache but exists in DB; add to cache

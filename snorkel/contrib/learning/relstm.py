@@ -11,12 +11,13 @@ class reLSTM(TFNoiseAwareModel):
     def __init__(self, save_file=None, name='reLSTM'):
         """LSTM for relation extraction"""
         # Define metadata
-        self.mx_len          = None
-        self.word_dict       = SymbolTable()
-        self.dim             = None
-        self.n_v             = None
-        self.lr              = None
-        self.dropout         = None
+        self.mx_len          = None # Max sentence length
+        self.dim             = None # Embedding dimension
+        self.n_v             = None # Vocabulary size
+        self.lr              = None # Learning rate
+        self.dropout         = None # Dropout rate
+        self.tokens          = None # Token type for sentences (e.g. lemmas)
+        self.word_dict       = SymbolTable() # Symbol table for dictionary
         # Define input layers
         self.sentences       = None
         self.sentence_length = None
@@ -25,22 +26,32 @@ class reLSTM(TFNoiseAwareModel):
         super(reLSTM, self).__init__(save_file=save_file, name=name)
 
     def _mark(self, l, h, idx):
-        """Produce markers based on argument positions"""
+        """Produce markers based on argument positions
+            @l: sentence position of first word in argument
+            @h: sentence position of last word in argument
+            @idx: argument index (0 or 1)
+        """
         return [(l, "{}{}".format('[[', idx)), (h+1, "{}{}".format(idx, ']]'))]
 
-    def _mark_sentence(self, s, mids):
+    def _mark_sentence(self, s, args):
         """Insert markers around relation arguments in word sequence
+            @s: list of tokens in sentence
+            @args: list of triples (l, h, idx) as per @_mark(...) corresponding
+                   to relation arguments
         Example: Then Barack married Michelle.  
-             ->  Then [[0 Barack 0]] married [[1 Michelle 1]].
+             ->  Then [[1 Barack 1]] married [[2 Michelle 2]].
         """
-        marks = sorted([y for m in mids for y in self._mark(*m)], reverse=True)
+        marks = sorted([y for m in args for y in self._mark(*m)], reverse=True)
         x = list(s)
         for k, v in marks:
             x.insert(k, v)
         return x
 
     def _preprocess_data(self, candidates, extend=False):
-        """Convert candidate sentences to lookup sequences"""
+        """Convert candidate sentences to lookup sequences
+            @candidates: candidates to process
+            @extend: extend symbol table for tokens (train), or lookup (test)?
+        """
         sentences = []
         for c in candidates:
             # Get arguments and lemma sequence
@@ -49,7 +60,7 @@ class reLSTM(TFNoiseAwareModel):
                 (c[1].get_word_start(), c[1].get_word_end(), 2)
             ]
             s = self._mark_sentence(
-                [w.lower() for w in c.get_parent().lemmas], args
+                [w.lower() for w in c.get_parent().__dict__[self.tokens]], args
             )
             # Either extend word table or retrieve from it
             retriever = self.word_dict.get if extend else self.word_dict.lookup
@@ -62,7 +73,9 @@ class reLSTM(TFNoiseAwareModel):
         tx = np.zeros((self.mx_len, batch_size), dtype=np.int32)
         tlen = np.zeros(batch_size, dtype=np.int32)
         # Pad or trim each x
-        # TODO: fix for arguments outside max length
+        # TODO: fix for arguments outside max sentence length
+        #       ex: if @mx_len==10 and a relation argument is at position 20,
+        #           we should try to include the second argument information
         for k, u in enumerate(x):
             lu = min(len(u), self.mx_len)
             tx[0:lu, k] = u[0:lu]
@@ -97,7 +110,7 @@ class reLSTM(TFNoiseAwareModel):
                 x.name: x for x in tf.get_collection(
                 tf.GraphKeys.GLOBAL_VARIABLES, scope=scope.name)
             }
-        # Take mean across sentences
+        # Embed sentence by computing word means
         summary_vector = tf.transpose(
             tf.transpose(tf.reduce_sum(rnn_outputs, 0), (1,0)) / 
             tf.cast(self.sentence_length, tf.float32), (1,0)
@@ -126,7 +139,7 @@ class reLSTM(TFNoiseAwareModel):
 
     def train(self, candidates, training_marginals, n_epochs=25, lr=0.01,
         dim=20, batch_size=100, rebalance=False, dropout_rate=None,
-        max_sentence_length=None, print_freq=5):
+        tokens='lemmas', max_sentence_length=None, print_freq=5):
         """Train LSTM model
             @candidates: candidate objects to train on
             @training_marginals: array of marginals for candidates
@@ -146,13 +159,14 @@ class reLSTM(TFNoiseAwareModel):
             print("[{0}] Begin preprocessing".format(self.name))
             st = time()
         # Text preprocessing
+        self.tokens = tokens
         x_train = self._preprocess_data(candidates, extend=True)
         # Build model
         self.dim = dim
         self.lr = lr
         self.dropout = tf.constant(dropout_rate) if dropout_rate else None
         self.n_v = self.word_dict.s + 1
-        save_dict = self._build()
+        self._build()
         # Get training indices
         train_idxs = get_train_idxs(training_marginals, rebalance=rebalance)
         x_train = [x_train[j] for j in train_idxs]
@@ -205,14 +219,14 @@ class reLSTM(TFNoiseAwareModel):
 
     def save_info(self, model_name):
         z = (self.mx_len, self.word_dict, self.dim,
-             self.n_v, self.lr, self.dropout)
+             self.tokens, self.n_v, self.lr, self.dropout)
         with open('{0}.info'.format(model_name), 'wb') as f:
             cPickle.dump(z, f)
 
     def load_info(self, model_name):
         with open('{0}.info'.format(model_name), 'rb') as f:
-            (self.mx_len, self.word_dict, self.dim,
-             self.n_v, self.lr, self.dropout) = cPickle.load(f)
+            (self.mx_len, self.word_dict, self.dim, 
+             self.tokens, self.n_v, self.lr, self.dropout) = cPickle.load(f)
 
 
 class SymbolTable:

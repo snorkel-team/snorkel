@@ -10,7 +10,6 @@ class NoiseAwareModel(object):
 
     def __init__(self, name):
         self.name = name
-        super(NoiseAwareModel, self).__init__()
 
     def train(self, X, training_marginals, **hyperparams):
         """Trains the model"""
@@ -20,22 +19,23 @@ class NoiseAwareModel(object):
         raise NotImplementedError()
 
     def predict(self, X, b=0.5):
-        """Return numpy array of elements in {-1,0,1} based on predicted marginal probabilities."""
+        """Return numpy array of elements in {-1,0,1}
+        based on predicted marginal probabilities.
+        """
         return marginals_to_labels(self.marginals(X), b)
 
-    def score(self, session, X_test, test_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True,
-              display=True, scorer=MentionScorer, **kwargs):
-        
+    def score(self, session, X_test, test_labels, gold_candidate_set=None, 
+        b=0.5, set_unlabeled_as_neg=True, display=True, scorer=MentionScorer,
+        **kwargs):
         # Get the test candidates
-        test_candidates = [X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])]
-
+        test_candidates = [
+            X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])
+        ]
         # Initialize scorer
-        s               = scorer(test_candidates, test_labels, gold_candidate_set)
+        s = scorer(test_candidates, test_labels, gold_candidate_set)
         test_marginals  = self.marginals(X_test, **kwargs)
-        train_marginals = (self.marginals(self.X_train) if hasattr(self, 'X_train')
-                           and self.X_train is not None else None)
-        return s.score(test_marginals, train_marginals, b=b,
-                       set_unlabeled_as_neg=set_unlabeled_as_neg, display=display)
+        return s.score(test_marginals, None, b=b, display=display
+                       set_unlabeled_as_neg=set_unlabeled_as_neg)
 
     def save(self):
         raise NotImplementedError()

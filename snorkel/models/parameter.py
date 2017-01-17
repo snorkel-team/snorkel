@@ -10,7 +10,7 @@ from sqlalchemy.orm import relationship, backref
 class Parameter(SnorkelBase):
     __tablename__ = 'parameter'
 
-    feature_key_id = Column(Integer, ForeignKey('feature_key.id'), primary_key=True)
+    feature_key_id = Column(Integer, ForeignKey('feature_key.id', ondelete='CASCADE'), primary_key=True)
     feature_key    = relationship('FeatureKey', backref=backref('parameters', cascade='all, delete-orphan', cascade_backrefs=False), cascade_backrefs=False)
     value          = Column(Float, nullable=False)
     version        = Column(Integer, default=0)

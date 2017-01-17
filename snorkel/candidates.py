@@ -1,19 +1,16 @@
-from . import SnorkelSession
-from .udf import UDF
-from .utils import ProgressBar
-from .models import Candidate, TemporarySpan, Sentence, Span
-from itertools import product
-from multiprocessing import Process, Queue, JoinableQueue
-from sqlalchemy.sql import select
-from Queue import Empty
-from copy import deepcopy
-import re
 from collections import defaultdict
+from copy import deepcopy
+from itertools import product
+import re
+from sqlalchemy.sql import select
+
+from .models import Candidate, TemporarySpan, Sentence
+from .udf import UDF, UDFRunner
 
 QUEUE_COLLECT_TIMEOUT = 5
 
 
-class CandidateExtractor(UDF):
+class CandidateExtractor(UDFRunner):
     """
     An operator to extract Candidate objects from a Context.
 
@@ -30,7 +27,24 @@ class CandidateExtractor(UDF):
     :param symmetric_relations: Boolean indicating whether to extract symmetric Candidates, i.e., rel(A,B) and rel(B,A),
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
-    def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=True, in_queue=None):
+    def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=True):
+        super(CandidateExtractor, self).__init__(CandidateExtractorUDF,
+                                                 candidate_class=candidate_class,
+                                                 cspaces=cspaces,
+                                                 matchers=matchers,
+                                                 self_relations=self_relations,
+                                                 nested_relations=nested_relations,
+                                                 symmetric_relations=symmetric_relations)
+
+    def apply(self, xs, split=0, **kwargs):
+        super(CandidateExtractor, self).apply(xs, split=split, **kwargs)
+
+    def clear(self, session, split, **kwargs):
+        session.query(Candidate).filter(Candidate.split == split).delete()
+
+
+class CandidateExtractorUDF(UDF):
+    def __init__(self, candidate_class, cspaces, matchers, self_relations, nested_relations, symmetric_relations, **kwargs):
         self.candidate_class     = candidate_class
         self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
@@ -52,9 +66,9 @@ class CandidateExtractor(UDF):
         for i in range(self.arity):
             self.child_context_sets[i] = set()
 
-        super(CandidateExtractor, self).__init__(in_queue=in_queue)
+        super(CandidateExtractorUDF, self).__init__(**kwargs)
 
-    def apply(self, context, split=0, check_for_existing=True):
+    def apply(self, context, clear, split, **kwargs):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
         for i in range(self.arity):
@@ -64,7 +78,7 @@ class CandidateExtractor(UDF):
                 self.child_context_sets[i].add(tc)
 
         # Generates and persists candidates
-        candidate_args = {'split' : split}
+        candidate_args = {'split': split}
         for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
 
             # TODO: Make this work for higher-order relations
@@ -86,7 +100,7 @@ class CandidateExtractor(UDF):
                 candidate_args[arg_name + '_id'] = args[i][1].id
 
             # Checking for existence
-            if check_for_existing:
+            if not clear:
                 q = select([self.candidate_class.id])
                 for key, value in candidate_args.items():
                     q = q.where(getattr(self.candidate_class, key) == value)
@@ -96,7 +110,7 @@ class CandidateExtractor(UDF):
 
             # Add Candidate to session
             yield self.candidate_class(**candidate_args)
-            
+
 
 class CandidateSpace(object):
     """
@@ -115,7 +129,7 @@ class Ngrams(CandidateSpace):
     Defines the space of candidates as all n-grams (n <= n_max) in a Sentence _x_,
     indexing by **character offset**.
     """
-    def __init__(self, n_max=5, split_tokens=['-', '/']):
+    def __init__(self, n_max=5, split_tokens=('-', '/')):
         CandidateSpace.__init__(self)
         self.n_max     = n_max
         self.split_rgx = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
@@ -158,7 +172,7 @@ class PretaggedCandidateExtractor(UDF):
     An extractor for Sentences with entities pre-tagged, and stored in the entity_types and entity_cids
     fields.
     """
-    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=True, entity_sep='~@~', in_queue=None):
+    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=True, entity_sep='~@~', **kwargs):
         self.candidate_class     = candidate_class
         self.entity_types        = entity_types
         self.arity               = len(entity_types)
@@ -167,7 +181,7 @@ class PretaggedCandidateExtractor(UDF):
         self.symmetric_relations = symmetric_relations
         self.entity_sep          = entity_sep
 
-        super(PretaggedCandidateExtractor, self).__init__(in_queue=in_queue)
+        super(PretaggedCandidateExtractor, self).__init__(**kwargs)
 
     def apply(self, context, split=0, check_for_existing=True):
         """

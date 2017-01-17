@@ -1,6 +1,7 @@
-# Travis CI config for Snorkel, a lightweight platform for developing
-# information extraction systems using data programming.
+# Travis CI config for Snorkel, a training data creation and management
+# system focused on information extraction
 
+dist: trusty
 sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
 
 env:

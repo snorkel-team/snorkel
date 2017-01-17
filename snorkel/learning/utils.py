@@ -332,7 +332,7 @@ class GridSearch(object):
         # Return DataFrame of scores
         self.results = DataFrame.from_records(
             run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1']
-        ).sort('F1', ascending=False)
+        ).sort_values(by='F1', ascending=False)
         return self.results
     
     

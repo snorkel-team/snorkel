@@ -40,7 +40,7 @@ class LogisticRegression(TFNoiseAwareModel):
 
     def train(self, X, training_marginals, n_epochs=10, lr=0.01,
         batch_size=100, l1_penalty=0.0, l2_penalty=0.0, print_freq=5,
-        rebalance=False, model_name=None):
+        rebalance=False):
         """Train elastic net logistic regression model using TensorFlow
             @X: SciPy or NumPy feature matrix
             @training_marginals: array of marginals for examples in X

@@ -40,6 +40,7 @@ class reLSTM(TFNoiseAwareModel):
         return x
 
     def _preprocess_data(self, candidates, extend=False):
+        """Convert candidate sentences to lookup sequences"""
         sentences = []
         for c in candidates:
             # Get arguments and lemma sequence
@@ -96,7 +97,6 @@ class reLSTM(TFNoiseAwareModel):
                 x.name: x for x in tf.get_collection(
                 tf.GraphKeys.GLOBAL_VARIABLES, scope=scope.name)
             }
-        
         # Take mean across sentences
         summary_vector = tf.transpose(
             tf.transpose(tf.reduce_sum(rnn_outputs, 0), (1,0)) / 
@@ -128,7 +128,19 @@ class reLSTM(TFNoiseAwareModel):
     def train(self, candidates, training_marginals, n_epochs=25, lr=0.01,
         dim=20, batch_size=100, rebalance=False, dropout_rate=None,
         max_sentence_length=None, print_freq=5, model_name=None):
-        """Train LSTM model"""
+        """Train LSTM model
+            @candidates: candidate objects to train on
+            @training_marginals: array of marginals for candidates
+            @n_epochs: number of training epochs
+            @lr: learning rate
+            @dim: embedding dimension
+            @batch_size: batch size for mini-batch SGD
+            @rebalance: rebalance training examples?
+            @dropout_rate: rate for tensorflow.nn.dropout(...)
+            @max_sentence_length: maximum sentence length for candidates
+            @print_freq: number of epochs after which to print status
+            @model_name: name of model for logging and saving
+        """
         verbose = print_freq > 0
         if verbose:
             print("[{0}] Dimension={1}  LR={2}".format(self.name, dim, lr))

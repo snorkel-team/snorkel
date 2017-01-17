@@ -29,12 +29,13 @@ class Scorer(object):
 
 class MentionScorer(Scorer):
     """Scorer for mention level assessment"""
-    def score(self, test_marginals, train_marginals=None, b=0.5, set_unlabeled_as_neg=True, display=True):
+    def score(self, test_marginals, train_marginals=None, b=0.5, set_unlabeled_as_neg=True, set_at_thresh_as_neg=True, display=True):
         """
         test_marginals: array of marginals for test candidates
         train_marginals (optional): array of marginals for training candidates
         b: threshold for labeling
-        set_unlabeled_as_neg: set marginals at b to negative?
+        set_unlabeled_as_neg: set test labels at the decision threshold of b as negative labels
+        set_at_b_as_neg: set marginals at the decision threshold exactly as negative predictions
         display: show calibration plots?
         """
         test_label_array = []
@@ -59,7 +60,7 @@ class MentionScorer(Scorer):
                         tp.add(candidate)
                     else:
                         fp.add(candidate)
-                else:
+                elif test_marginals[i] < b or set_at_thresh_as_neg:
                     if test_label == -1:
                         tn.add(candidate)
                     else:

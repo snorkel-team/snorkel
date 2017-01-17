@@ -15,9 +15,9 @@ class UDFRunner(object):
         self.udfs            = []
 
         if hasattr(self.udf_class, 'reduce'):
-            self.udf0 = self.udf_class(**self.udf_init_kwargs)
+            self.reducer = self.udf_class(**self.udf_init_kwargs)
         else:
-            self.udf0 = None
+            self.reducer = None
 
     def apply(self, xs, clear=True, parallelism=None, progress_bar=True, count=None, **kwargs):
         """
@@ -101,12 +101,12 @@ class UDFRunner(object):
                 while True:
                     try:
                         y = out_queue.get(True, QUEUE_TIMEOUT)
-                        self.udf0.reduce(y, **kwargs)
+                        self.reducer.reduce(y, **kwargs)
                         out_queue.task_done()
                     except Empty:
                         break
-                self.udf0.session.commit()
-            self.udf0.session.close()
+                self.reducer.session.commit()
+            self.reducer.session.close()
 
         # Otherwise just join on the UDF.apply actions
         else:

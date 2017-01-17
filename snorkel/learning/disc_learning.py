@@ -34,7 +34,7 @@ class NoiseAwareModel(object):
         # Initialize scorer
         s = scorer(test_candidates, test_labels, gold_candidate_set)
         test_marginals  = self.marginals(X_test, **kwargs)
-        return s.score(test_marginals, None, b=b, display=display
+        return s.score(test_marginals, None, b=b, display=display,
                        set_unlabeled_as_neg=set_unlabeled_as_neg)
 
     def save(self):

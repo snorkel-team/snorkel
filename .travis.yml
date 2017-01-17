@@ -77,11 +77,6 @@ install:
   # Use runipy to run Jupyter/IPython notebooks from command-line
   - pip install runipy
 
-  # Install programs for coverage
-  - pip install coverage
-  - pip install coveralls
-  - pip install codeclimate-test-reporter
-
 script:
 
   # Runs intro tutorial notebooks
@@ -104,16 +99,12 @@ script:
   - cd ..
 
   # Run test modules
-  - coverage run -p test/learning/test_gen_learning.py
-  - coverage combine
+  - python test/learning/test_gen_learning.py
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7
 
 after_success:
-  - codecov
-  - coveralls
-  - codeclimate-test-reporter
   - killall java
 
 after_failure:

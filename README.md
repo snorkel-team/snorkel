@@ -95,12 +95,3 @@ A more convenient option is to add these lines to your IPython config file, in `
 c.InteractiveShellApp.extensions = ['autoreload']     
 c.InteractiveShellApp.exec_lines = ['%autoreload 2']
 ```
-
-## More badges...
-[![Coverage Status](https://coveralls.io/repos/github/HazyResearch/snorkel/badge.svg?branch=master)](https://coveralls.io/github/HazyResearch/snorkel?branch=master)
-
-[![Code Climate](https://codeclimate.com/github/HazyResearch/snorkel/badges/gpa.svg)](https://codeclimate.com/github/HazyResearch/snorkel)
-
-[![Test Coverage](https://codeclimate.com/github/HazyResearch/snorkel/badges/coverage.svg)](https://codeclimate.com/github/HazyResearch/snorkel/coverage)
-
-[![Issue Count](https://codeclimate.com/github/HazyResearch/snorkel/badges/issue_count.svg)](https://codeclimate.com/github/HazyResearch/snorkel)

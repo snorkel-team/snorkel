@@ -73,7 +73,7 @@ class TFNoiseAwareModel(NoiseAwareModel):
     def load_info(self, model_name, **kwargs):
         pass
 
-    def save(self, model_name=None, verbose=False):
+    def save(self, model_name=None, verbose=True):
         """Save current TensorFlow model
             @model_name: save file names
             @verbose: be talkative?
@@ -88,7 +88,7 @@ class TFNoiseAwareModel(NoiseAwareModel):
                 self.name, model_name
             ))
 
-    def load(self, model_name, verbose=False):
+    def load(self, model_name, verbose=True):
         """Load TensorFlow model from file
             @model_name: save file names
             @verbose: be talkative?
@@ -106,16 +106,3 @@ class TFNoiseAwareModel(NoiseAwareModel):
             raise Exception("[{0}] No model found at <{1}>".format(
                 self.name, model_name
             ))
-
-
-# Get training indexes outside of split range and optionally rebalanced
-def get_train_idxs(marginals, rebalance=False, split_lo=0.5, split_hi=0.5):
-    pos = np.where(marginals < (split_lo - 1e-6))[0]
-    neg = np.where(marginals > (split_hi + 1e-6))[0]
-    if rebalance:
-        k = min(len(pos), len(neg))
-        pos = np.random.choice(pos, size=k, replace=False)
-        neg = np.random.choice(neg, size=k, replace=False)
-    idxs = np.concatenate([pos, neg])
-    np.random.shuffle(idxs)
-    return idxs

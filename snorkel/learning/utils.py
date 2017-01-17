@@ -112,6 +112,19 @@ def scores_from_counts(tp, fp, tn, fn):
     return prec, rec, f1    
 
 
+# Get training indexes outside of split range and optionally rebalanced
+def get_train_idxs(marginals, rebalance=False, split_lo=0.5, split_hi=0.5):
+    pos = np.where(marginals < (split_lo - 1e-6))[0]
+    neg = np.where(marginals > (split_hi + 1e-6))[0]
+    if rebalance:
+        k = min(len(pos), len(neg))
+        pos = np.random.choice(pos, size=k, replace=False)
+        neg = np.random.choice(neg, size=k, replace=False)
+    idxs = np.concatenate([pos, neg])
+    np.random.shuffle(idxs)
+    return idxs
+
+
 def plot_prediction_probability(probs):
     plt.hist(probs, bins=20, normed=False, facecolor='blue')
     plt.xlim((0,1.025))

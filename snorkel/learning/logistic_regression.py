@@ -2,9 +2,10 @@ import cPickle
 import numpy as np
 import tensorflow as tf
 
-from disc_learning import get_train_idxs, TFNoiseAwareModel
+from disc_learning import TFNoiseAwareModel
 from scipy.sparse import issparse
 from time import time
+from utils import get_train_idxs
 
 
 class LogisticRegression(TFNoiseAwareModel):

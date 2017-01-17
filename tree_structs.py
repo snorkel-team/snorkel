@@ -97,6 +97,9 @@ def corenlp_to_xmltree(s, prune_root=True):
       root = root.findall("./*")[0]
   return XMLTree(root, words=s['words'])
 
+def scrub(s):
+    return ''.join(c for c in s if ord(c) < 128)
+
 def corenlp_to_xmltree_sub(s, dep_parents, rid=0):
   i = rid - 1
   attrib = {}
@@ -106,8 +109,7 @@ def corenlp_to_xmltree_sub(s, dep_parents, rid=0):
   if i >= 0:
     for k,v in filter(lambda t : type(t[1]) == list and len(t[1]) == N, s.iteritems()):
       if v[i] is not None:
-        content = v[i].encode('ascii','ignore') if hasattr(v[i], 'encode') else str(v[i])
-        attrib[singular(k)] = ''.join(c for c in content if ord(c) < 128)
+        attrib[singular(k)] = scrub(v[i]).encode('ascii','ignore') if hasattr(v[i], 'encode') else str(v[i])
 
     # Add word_idx if not present
     if 'word_idx' not in attrib:

@@ -72,7 +72,7 @@ class Viewer(widgets.DOMWidget):
         # We get the sorted candidates and all contexts required, either from unary or binary candidates
         self.gold       = list(gold)
         self.candidates = sorted(list(candidates), key=lambda c : c[0].char_start)
-        self.contexts   = list(set(c[0].parent for c in self.candidates + self.gold))
+        self.contexts   = list(set(c[0].get_parent() for c in self.candidates + self.gold))
         
         # If committed, sort contexts by id
         try:
@@ -159,7 +159,7 @@ class Viewer(widgets.DOMWidget):
                 context = self.contexts[j]
 
                 # Get the candidates in this context
-                candidates = [c for c in self.candidates if c[0].parent == context]
+                candidates = [c for c in self.candidates if c[0].get_parent() == context]
                 gold = [g for g in self.gold if g.context_id == context.id]
 
                 # Construct the <li> and page view elements

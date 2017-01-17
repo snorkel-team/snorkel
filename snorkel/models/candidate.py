@@ -29,7 +29,7 @@ class Candidate(SnorkelBase):
 
     def get_parent(self):
         # Fails if both contexts don't have same parent
-        p = [c.parent for c in self.get_contexts()]
+        p = [c.get_parent() for c in self.get_contexts()]
         if p.count(p[0]) == len(p):
             return p[0]
         else:

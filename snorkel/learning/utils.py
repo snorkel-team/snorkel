@@ -157,7 +157,7 @@ def calibration_plots(train_marginals, test_marginals, gold_labels=None):
 
 
 def grid_search_plot(w_fit, mu_opt, f1_opt):
-    """ Plot validation set performance for logistic regression regularization """
+    """Plot validation set performance for logistic regression regularization"""
     mu_seq = sorted(w_fit.keys())
     p = np.ravel([w_fit[mu].P for mu in mu_seq])
     r = np.ravel([w_fit[mu].R for mu in mu_seq])
@@ -189,14 +189,18 @@ def grid_search_plot(w_fit, mu_opt, f1_opt):
     
     # Shrink plot for legend
     box1 = ax1.get_position()
-    ax1.set_position([box1.x0, box1.y0+box1.height*0.1, box1.width, box1.height*0.9])
+    ax1.set_position(
+        [box1.x0, box1.y0+box1.height*0.1, box1.width, box1.height*0.9]
+    )
     box2 = ax2.get_position()
-    ax2.set_position([box2.x0, box2.y0+box2.height*0.1, box2.width, box2.height*0.9])
+    ax2.set_position(
+        [box2.x0, box2.y0+box2.height*0.1, box2.width, box2.height*0.9]
+    )
     plt.title("Validation for logistic regression learning")
     lns1, lbs1 = ax1.get_legend_handles_labels()
     lns2, lbs2 = ax2.get_legend_handles_labels()
-    ax1.legend(lns1+lns2, lbs1+lbs2, loc='upper center', bbox_to_anchor=(0.5,-0.05),
-               scatterpoints=1, fontsize=10, markerscale=0.5)
+    ax1.legend(lns1+lns2, lbs1+lbs2, loc='upper center', scatterpoints=1,
+        bbox_to_anchor=(0.5,-0.05),  fontsize=10, markerscale=0.5)
     plt.show()
 
     
@@ -244,7 +248,9 @@ class RangeParameter(Hyperparameter):
             max_exp = math.log(self.max_value, self.log_base)
             exps = np.arange(min_exp, max_exp + self.step, step=self.step)
             return np.power(self.log_base, exps)
-        return np.arange(self.min_value, self.max_value + self.step, step=self.step)
+        return np.arange(
+            self.min_value, self.max_value + self.step, step=self.step
+        )
         
 
 class GridSearch(object):
@@ -254,7 +260,8 @@ class GridSearch(object):
     Selects based on maximizing F1 score on a supplied validation set
     Specify search space with Hyperparameter arguments
     """
-    def __init__(self, session, model, X, training_marginals, parameters, scorer=MentionScorer):
+    def __init__(self, session, model, X, training_marginals,
+        parameters, scorer=MentionScorer):
         self.session            = session
         self.model              = model
         self.X                  = X
@@ -266,7 +273,9 @@ class GridSearch(object):
     def search_space(self):
         return product(param.get_all_values() for param in self.params)
 
-    def fit(self, X_validation, validation_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
+    def fit(self, X_validation, validation_labels, gold_candidate_set=None,
+        b=0.5, set_unlabeled_as_neg=True, validation_kwargs={},
+        **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
@@ -274,36 +283,43 @@ class GridSearch(object):
           Non-search parameters are set using model_hyperparamters
         """
         # Iterate over the param values
-        run_stats   = []
-        param_opts  = np.zeros(len(self.param_names))
-        f1_opt      = -1.0
+        run_stats       = []
+        f1_opt          = -1.0
+        base_model_name = self.model.name
+        model_k         = 0
         for param_vals in self.search_space():
-
+            model_name = '{0}_{1}'.format(base_model_name, model_k)
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
                 model_hyperparams[pn] = pv
             print "=" * 60
-            print "Testing %s" % ', '.join(["%s = %0.2e" % (pn,pv) for pn,pv in zip(self.param_names, param_vals)])
+            print "Testing %s" % ', '.join([
+                "%s = %0.2e" % (pn,pv)
+                for pn,pv in zip(self.param_names, param_vals)
+            ])
             print "=" * 60
-
             # Train the model
-            self.model.train(self.X, self.training_marginals, **model_hyperparams)
-
+            self.model.train(
+                self.X, self.training_marginals, **model_hyperparams
+            )
             # Test the model
-            tp, fp, tn, fn = self.model.score(self.session, X_validation, validation_labels, gold_candidate_set,
-                b, set_unlabeled_as_neg, False, self.scorer, **validation_kwargs)
+            tp, fp, tn, fn = self.model.score(
+                self.session, X_validation, validation_labels,
+                gold_candidate_set, b, set_unlabeled_as_neg, False, self.scorer,
+                **validation_kwargs
+            )
             p, r, f1 = scores_from_counts(tp, fp, tn, fn)
             run_stats.append(list(param_vals) + [p, r, f1])
             if f1 > f1_opt:
-                w_opt      = self.model.w
-                param_opts = param_vals
-                f1_opt     = f1
-
+                self.model.save(model_name)
+                opt_model = model_name
+                f1_opt    = f1
         # Set optimal parameter in the learner model
-        self.model.w = w_opt
-
+        self.model.load(opt_model)
         # Return DataFrame of scores
-        self.results = DataFrame.from_records(run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1']).sort('F1', ascending=False)
+        self.results = DataFrame.from_records(
+            run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1']
+        ).sort('F1', ascending=False)
         return self.results
     
     
@@ -311,7 +327,9 @@ class RandomSearch(GridSearch):
     def __init__(self, session, model, X, training_marginals, parameters, n=10, **kwargs):
         """Search a random sample of size n from a parameter grid"""
         self.n = n
-        super(RandomSearch, self).__init__(session, model, X, training_marginals, parameters, **kwargs)
+        super(RandomSearch, self).__init__(
+            session, model, X, training_marginals, parameters, **kwargs
+        )
 
         print "Initialized RandomSearch search of size {0}. Search space size = {1}.".format(
             self.n, np.product([len(param.get_all_values()) for param in self.params])

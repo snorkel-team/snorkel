@@ -30,12 +30,12 @@ class LogisticRegression(TFNoiseAwareModel):
             tf.nn.sigmoid_cross_entropy_with_logits(h, self.Y)
         )
         self.train_fn = tf.train.ProximalGradientDescentOptimizer(
-            learning_rate=self.lr,
-            l1_regularization_strength=self.l1_penalty,
-            l2_regularization_strength=self.l2_penalty,
+            learning_rate=tf.cast(self.lr, dtype=tf.float32),
+            l1_regularization_strength=tf.cast(self.l1_penalty, tf.float32),
+            l2_regularization_strength=tf.cast(self.l2_penalty, tf.float32),
         ).minimize(self.loss)
         self.prediction = tf.nn.sigmoid(h)
-        return {'w': w, 'b': b}
+        self.save_dict = {'w': w, 'b': b}
 
     def train(self, X, training_marginals, n_epochs=10, lr=0.01,
         batch_size=100, l1_penalty=0.0, l2_penalty=0.0, print_freq=5,
@@ -50,7 +50,6 @@ class LogisticRegression(TFNoiseAwareModel):
             @l2_penalty: l2 regularization strength
             @print_freq: number of epochs after which to print status
             @rebalance: rebalance training examples?
-            @model_name: name of model for logging and saving
         """
         # Build model
         verbose = print_freq > 0
@@ -63,7 +62,7 @@ class LogisticRegression(TFNoiseAwareModel):
         self.lr         = lr
         self.l1_penalty = l1_penalty
         self.l2_penalty = l2_penalty
-        save_dict = self._build()
+        self._build()
         # Get training indices
         train_idxs = get_train_idxs(training_marginals, rebalance=rebalance)
         X_train = X[train_idxs, :]
@@ -95,10 +94,8 @@ class LogisticRegression(TFNoiseAwareModel):
                 print("[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
                     self.name, t, time() - st, epoch_loss / n
                 ))
-        # Save model
         if verbose:
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))
-        self.save(save_dict, model_name, verbose=verbose)
 
     def marginals(self, X_test):
         X = X_test.todense() if issparse(X_test) else X_test

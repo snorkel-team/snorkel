@@ -93,7 +93,7 @@ class reLSTM(TFNoiseAwareModel):
                 cell, inputs, initial_state=initial_state, time_major=True
             )
             # Get LSTM variables
-            v = {
+            self.save_dict = {
                 x.name: x for x in tf.get_collection(
                 tf.GraphKeys.GLOBAL_VARIABLES, scope=scope.name)
             }
@@ -120,14 +120,13 @@ class reLSTM(TFNoiseAwareModel):
         # Backprop trainer
         self.train_fn = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
         # Populate linear layer and input variables
-        v['W'] = W
-        v['b'] = b
-        v['embedding'] = embedding
-        return v
+        self.save_dict['W'] = W
+        self.save_dict['b'] = b
+        self.save_dict['embedding'] = embedding
 
     def train(self, candidates, training_marginals, n_epochs=25, lr=0.01,
         dim=20, batch_size=100, rebalance=False, dropout_rate=None,
-        max_sentence_length=None, print_freq=5, model_name=None):
+        max_sentence_length=None, print_freq=5):
         """Train LSTM model
             @candidates: candidate objects to train on
             @training_marginals: array of marginals for candidates
@@ -192,10 +191,8 @@ class reLSTM(TFNoiseAwareModel):
                 print("[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
                     self.name, t, time() - st, epoch_loss / n
                 ))
-        # Save model
         if verbose:
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))
-        self.save(save_dict, model_name, verbose=verbose)
 
     def marginals(self, test_candidates):
         """Feed forward step for marginals"""

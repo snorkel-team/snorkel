@@ -48,13 +48,14 @@ class TFNoiseAwareModel(NoiseAwareModel):
 
     def __init__(self, save_file=None, name='TFModel'):
         """Interface for a TensorFlow model
-        The @train_fn, @loss, and @prediction fields should
-        be populated by @_build()
+        The @train_fn, @loss, @prediction, and @save_dict
+        fields should be populated by @_build()
         """
         super(TFNoiseAwareModel, self).__init__(name)
         self.train_fn   = None
         self.loss       = None
         self.prediction = None
+        self.save_dict  = None
         self.session    = tf.Session()
         # Load model
         if save_file is not None:
@@ -62,8 +63,7 @@ class TFNoiseAwareModel(NoiseAwareModel):
 
     def _build(self, **kwargs):
         """Builds the TensorFlow model
-        Populates @train_fn, @loss, @prediction
-        Returns dictionary of variables to save
+        Populates @train_fn, @loss, @prediction, @save_dict
         """
         raise NotImplementedError()
 
@@ -73,14 +73,14 @@ class TFNoiseAwareModel(NoiseAwareModel):
     def load_info(self, model_name, **kwargs):
         pass
 
-    def save(self, save_dict, model_name=None, verbose=False):
+    def save(self, model_name=None, verbose=False):
         """Save current TensorFlow model
-            @save_dict: returned from @_build
             @model_name: save file names
             @verbose: be talkative?
         """
         model_name = model_name or self.name
         self.save_info(model_name)
+        save_dict = self.save_dict or tf.global_variables()
         saver = tf.train.Saver(save_dict)
         saver.save(self.session, './' + model_name, global_step=0)
         if verbose:
@@ -94,7 +94,8 @@ class TFNoiseAwareModel(NoiseAwareModel):
             @verbose: be talkative?
         """
         self.load_info(model_name)
-        load_dict = self._build()
+        self._build()
+        load_dict = self.save_dict or tf.global_variables()
         saver = tf.train.Saver(load_dict)
         ckpt = tf.train.get_checkpoint_state('./')
         if ckpt and ckpt.model_checkpoint_path:

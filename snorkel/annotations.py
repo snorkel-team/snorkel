@@ -96,6 +96,10 @@ class Annotator(UDFRunner):
 
     def apply(self, split, key_group=0, replace_key_set=True, **kwargs):
 
+        # If we are replacing the key set, make sure the reducer key id cache is cleared!
+        if replace_key_set:
+            self.reducer.key_cache = {}
+
         # Get the cids based on the split, and also the count
         SnorkelSession = new_sessionmaker()
         session        = SnorkelSession()

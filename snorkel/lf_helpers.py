@@ -21,7 +21,7 @@ def get_text_splits(c):
     spans.sort()
 
     # NOTE: Assume all Spans in same parent Context
-    text = span.parent.text
+    text = span.get_parent().text
 
     # Get text chunks
     chunks = [text[:spans[0][0]], "{{%s}}" % spans[0][2]]
@@ -79,7 +79,7 @@ def get_left_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
     span = c if isinstance(c, Span) else c[0] 
     i    = span.get_word_start()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return [ngram for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][max(0, i-window):i]), n_max=n_max)]
+    return [ngram for ngram in tokens_to_ngrams(map(f, span.get_parent()._asdict()[attrib][max(0, i-window):i]), n_max=n_max)]
 
 
 def get_right_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
@@ -92,7 +92,7 @@ def get_right_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False)
     span = c if isinstance(c, Span) else c[-1]
     i    = span.get_word_end()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return [ngram for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][i+1:i+1+window]), n_max=n_max)]
+    return [ngram for ngram in tokens_to_ngrams(map(f, span.get_parent()._asdict()[attrib][i+1:i+1+window]), n_max=n_max)]
 
 
 def contains_token(c, tok, attrib='words', case_sensitive=False):
@@ -112,7 +112,7 @@ def get_doc_candidate_spans(c):
     arguments of Candidates.
     """
     # TODO: Fix this to be more efficient and properly general!!
-    spans = list(chain.from_iterable(s.spans for s in c[0].parent.document.sentences))
+    spans = list(chain.from_iterable(s.spans for s in c[0].get_parent().document.sentences))
     return [s for s in spans if s != c[0]]
 
 
@@ -122,7 +122,7 @@ def get_sent_candidate_spans(c):
     arguments of Candidates.
     """
     # TODO: Fix this to be more efficient and properly general!!
-    return [s for s in c[0].parent.spans if s != c[0]]
+    return [s for s in c[0].get_parent().spans if s != c[0]]
 
 
 def get_matches(lf, candidate_set, match_values=[1,-1]):

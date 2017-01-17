@@ -147,7 +147,7 @@ class Ngrams(CandidateSpace):
                 w     = context.words[i+l-1]
                 start = offsets[i]
                 end   = offsets[i+l-1] + len(w) - 1
-                ts    = TemporarySpan(char_start=start, char_end=end, parent=context)
+                ts    = TemporarySpan(char_start=start, char_end=end, sentence=context)
                 if ts not in seen:
                     seen.add(ts)
                     yield ts
@@ -157,11 +157,11 @@ class Ngrams(CandidateSpace):
                 if l == 1 and self.split_rgx is not None:
                     m = re.search(self.split_rgx, context.text[start-offsets[0]:end-offsets[0]+1])
                     if m is not None and l < self.n_max + 1:
-                        ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, parent=context)
+                        ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, sentence=context)
                         if ts1 not in seen:
                             seen.add(ts1)
                             yield ts
-                        ts2 = TemporarySpan(char_start=start + m.end(1), char_end=end, parent=context)
+                        ts2 = TemporarySpan(char_start=start + m.end(1), char_end=end, sentence=context)
                         if ts2 not in seen:
                             seen.add(ts2)
                             yield ts2
@@ -215,7 +215,7 @@ class PretaggedCandidateExtractor(UDF):
                         char_end = context.char_offsets[i] + len(context.words[i]) - 1
 
                     # Insert / load temporary span, also store map to entity CID
-                    tc = TemporarySpan(char_start=char_start, char_end=char_end, parent=context)
+                    tc = TemporarySpan(char_start=char_start, char_end=char_end, sentence=context)
                     tc.load_id_or_insert(self.session)
                     entity_cids[tc.id] = cid
                     entity_spans[et].append(tc)

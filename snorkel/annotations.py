@@ -8,7 +8,6 @@ from .models import GoldLabel, GoldLabelKey, Label, LabelKey, Feature, FeatureKe
 from .models.meta import new_sessionmaker
 from .udf import UDF, UDFRunner
 from .utils import (
-    matrix_accuracy,
     matrix_conflicts,
     matrix_coverage,
     matrix_overlaps,
@@ -72,17 +71,18 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
             'Conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
         }
         if labels is not None:
-            col_names.extend(['tp', 'fp', 'fn', 'tn', 'Empirical Acc.'])
-            tp = matrix_tp(self, labels), index=lf_names)
-            fp = matrix_fp(self, labels), index=lf_names)
-            fn = matrix_fn(self, labels), index=lf_names)
-            tn = matrix_tn(self, labels), index=lf_names)
-            ac = (tp+tn) / (tp+tn+fp+fn)
+            col_names.extend(['TP', 'FP', 'FN', 'TN', 'Empirical Acc.'])
+            ls = np.ravel(labels.todense() if sparse.issparse(labels) else labels)
+            tp = matrix_tp(self, ls)
+            fp = matrix_fp(self, ls)
+            fn = matrix_fn(self, ls)
+            tn = matrix_tn(self, ls)
+            ac = (tp+tn).astype(float) / (tp+tn+fp+fn)
             d['Empirical Acc.'] = Series(data=ac, index=lf_names)
-            d['tp']             = Series(data=tp, index=lf_names)
-            d['fp']             = Series(data=fp, index=lf_names)
-            d['fn']             = Series(data=fn, index=lf_names)
-            d['tn']             = Series(data=tn, index=lf_names)
+            d['TP']             = Series(data=tp, index=lf_names)
+            d['FP']             = Series(data=fp, index=lf_names)
+            d['FN']             = Series(data=fn, index=lf_names)
+            d['TN']             = Series(data=tn, index=lf_names)
 
         if est_accs is not None:
             col_names.append('Learned Acc.')

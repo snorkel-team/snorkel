@@ -301,17 +301,17 @@ class GridSearch(object):
         f1_opt          = -1.0
         base_model_name = self.model.name
         model_k         = 0
-        for param_vals in self.search_space():
+        for k, param_vals in enumerate(self.search_space()):
             model_name = '{0}_{1}'.format(base_model_name, model_k)
             model_k += 1
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
                 model_hyperparams[pn] = pv
             print "=" * 60
-            print "Testing %s" % ', '.join([
+            print "[%d] Testing %s" % (k+1, ', '.join([
                 "%s = %0.2e" % (pn,pv)
                 for pn,pv in zip(self.param_names, param_vals)
-            ])
+            ]))
             print "=" * 60
             # Train the model
             self.model.train(

@@ -5,7 +5,7 @@ import tensorflow as tf
 from disc_learning import TFNoiseAwareModel
 from scipy.sparse import issparse
 from time import time
-from utils import get_train_idxs
+from utils import LabelBalancer
 
 
 class LogisticRegression(TFNoiseAwareModel):
@@ -71,7 +71,7 @@ class LogisticRegression(TFNoiseAwareModel):
             @l1_penalty: l1 regularization strength
             @l2_penalty: l2 regularization strength
             @print_freq: number of epochs after which to print status
-            @rebalance: rebalance training examples?
+            @rebalance: bool or fraction of positive examples desired
         """
         # Build model
         X = self._check_input(X)
@@ -87,7 +87,7 @@ class LogisticRegression(TFNoiseAwareModel):
         self.l2_penalty = l2_penalty
         self._build()
         # Get training indices
-        train_idxs = get_train_idxs(training_marginals, rebalance=rebalance)
+        train_idxs = LabelBalancer(training_marginals).get_train_idxs(rebalance)
         X_train = X[train_idxs, :]
         y_train = np.ravel(training_marginals)[train_idxs]
         # Run mini-batch SGD

@@ -156,8 +156,8 @@ class SparseLogisticRegression(LogisticRegression):
 
     def _batch_sparse_data(self, X):
         """Convert sparse batch matrix to sparse inputs for embedding lookup"""
-        if not issparse(X_test):
-            raise Exception("Matrix X_test must be scipy.sparse type")
+        if not issparse(X):
+            raise Exception("Matrix X must be scipy.sparse type")
         X_lil = X.tolil()
         indices, ids, weights = [], [], []
         max_len = 0

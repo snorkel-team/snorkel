@@ -12,5 +12,5 @@ from .gen_learning import (
     GenerativeModelWeights,
     NaiveBayes,
 )
+from .logistic_regression import LogisticRegression, SparseLogisticRegression
 from .utils import *
-from logistic_regression import LogisticRegression

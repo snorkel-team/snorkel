@@ -122,7 +122,7 @@ class GenerativeModelWeights(object):
             setattr(self, dep_name, sparse.lil_matrix((n, n), dtype=np.float64))
 
     def lf_accuracy(self):
-	return 1.0 / (1.0 + np.exp(-self.lf_accuracy_log_odds)) 
+	    return 1.0 / (1.0 + np.exp(-self.lf_accuracy_log_odds)) 
 
     def is_sign_sparsistent(self, other, threshold=0.1):
         if self.n != other.n:

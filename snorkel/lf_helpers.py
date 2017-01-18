@@ -142,13 +142,6 @@ def get_matches(lf, candidate_set, match_values=[1,-1]):
     return matches
 
 
-def bool_to_marginal(x):
-    if x:
-        return 1.0
-    else:
-        return 0.5 if x is None else 0.0
-
-
 def test_LF(session, lf, split, annotator_name):
     """
     Gets the accuracy of a single LF on a split of the candidates, w.r.t. annotator labels,
@@ -157,5 +150,5 @@ def test_LF(session, lf, split, annotator_name):
     test_candidates = session.query(Candidate).filter(Candidate.split == split).all()
     test_labels     = load_gold_labels(session, annotator_name=annotator_name, split=split)
     scorer          = MentionScorer(test_candidates, test_labels)
-    test_marginals  = np.array([bool_to_marginal(lf(c)) for c in test_candidates])
+    test_marginals  = np.array([0.5 * (lf(c) + 1) for c in test_candidates])
     return scorer.score(test_marginals, set_unlabeled_as_neg=False, set_at_thresh_as_neg=False)

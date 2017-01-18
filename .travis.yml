@@ -1,6 +1,7 @@
-# Travis CI config for Snorkel, a lightweight platform for developing
-# information extraction systems using data programming.
+# Travis CI config for Snorkel, a training data creation and management
+# system focused on information extraction
 
+dist: trusty
 sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
 
 env:
@@ -19,9 +20,8 @@ cache:
   directories:
     - download
     - $HOME/.cache/pip
-#    - $HOME/miniconda/envs/test      # to avoid repetitively setting up Ana/Miniconda environment
+    - $HOME/miniconda/envs/test      # to avoid repetitively setting up Ana/Miniconda environment
     - parser                         # to avoid repetitively downloading CoreNLP
-    - tutorials/disease_tagging/data # to avoid repetitively downloading CDR data
 
 addons:
   apt:
@@ -58,51 +58,54 @@ install:
   - source activate test
   - conda install --yes numpy=$NUMPY scipy=$SCIPY matplotlib pip
 
-  # Install all dependencies as per our README
-  - pip install -r python-package-requirement.txt
-  - test -e parser/corenlp.sh || ./install-parser.sh
-
-  # Downloads data for disease tagging tutorial
-  - cd tutorials/disease_tagging
-  - ./download_data.sh
-  - cd ../..
-
-  # Use runipy to run Jupyter/IPython notebooks from command-line
-  - pip install runipy
-
   # Install theano
   - conda install --yes theano
 
-  # Install programs for coverage
-  - pip install coverage
-  - pip install coveralls
-  - pip install codeclimate-test-reporter
+  # Install Numba
+  - conda install --yes numba
+
+  # Install Numbskull
+  - git clone https://github.com/HazyResearch/numbskull.git
+  - cd numbskull
+  - pip install .
+  - cd ..
+
+  # Install all remaining dependencies as per our README
+  - pip install -r python-package-requirement.txt
+  - test -e parser/corenlp.sh || ./install-parser.sh
+
+  # Use runipy to run Jupyter/IPython notebooks from command-line
+  - pip install runipy
 
 script:
 
   # Runs intro tutorial notebooks
   - cd tutorials
-  - travis_wait 45 runipy intro/Intro_Tutorial_1.ipynb
-  - travis_wait 45 runipy intro/Intro_Tutorial_2.ipynb
-  - travis_wait 45 runipy intro/Intro_Tutorial_3.ipynb
-  - travis_wait 45 runipy intro/Intro_Tutorial_4.ipynb
-  - travis_wait 45 runipy intro/Intro_Tutorial_5.ipynb
+  - runipy intro/Intro_Tutorial_1.ipynb
+  - runipy intro/Intro_Tutorial_2.ipynb
+  - runipy intro/Intro_Tutorial_3.ipynb
+  - runipy intro/Intro_Tutorial_4.ipynb
+  - runipy intro/Intro_Tutorial_5.ipynb
 
-  # Runs disease tagger tutorial notebooks
-  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_1.ipynb
-  - travis_wait 60 runipy disease_tagging/Disease_Tagging_Tutorial_2.ipynb
-  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_3.ipynb
-  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_4.ipynb
-  - travis_wait 45 runipy disease_tagging/Disease_Tagging_Tutorial_5.ipynb
+  # Runs them some more. Tests running against an existing database.
+  - runipy intro/Intro_Tutorial_1.ipynb
+  - runipy intro/Intro_Tutorial_2.ipynb
+  - runipy intro/Intro_Tutorial_3.ipynb
+  - runipy intro/Intro_Tutorial_4.ipynb
+  # We do notebook 4 twice to test rerunning in the middle of the workflow
+  - runipy intro/Intro_Tutorial_4.ipynb
+  - runipy intro/Intro_Tutorial_5.ipynb
+
+  - cd ..
 
   # Run test modules
-#  - coverage run -p test/Tests.py
-#  - coverage combine
+  - python test/learning/test_gen_learning.py
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7
 
 after_success:
-  - codecov
-  - coveralls
-  - codeclimate-test-reporter
+  - killall java
+
+after_failure:
+  - killall java

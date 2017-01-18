@@ -1,6 +1,10 @@
-from .models import Span
+import numpy as np
+from .models import Span, Label, Candidate
 from itertools import chain
 from utils import tokens_to_ngrams
+from sqlalchemy.orm.exc import NoResultFound
+from .annotations import load_gold_labels
+from .learning.utils import MentionScorer
 
 
 def get_text_splits(c):
@@ -11,7 +15,7 @@ def get_text_splits(c):
     NOTE: Currently assumes that these Spans are in the same Context
     """
     spans = []
-    for i, span in enumerate(c.get_arguments()):
+    for i, span in enumerate(c.get_contexts()):
         if not isinstance(span, Span):
             raise ValueError("Handles Span-type Candidate arguments only")
 
@@ -20,7 +24,7 @@ def get_text_splits(c):
     spans.sort()
 
     # NOTE: Assume all Spans in same parent Context
-    text = span.parent.text
+    text = span.get_parent().text
 
     # Get text chunks
     chunks = [text[:spans[0][0]], "{{%s}}" % spans[0][2]]
@@ -62,15 +66,17 @@ def get_between_tokens(c, attrib='words', n_max=1, case_sensitive=False):
     """
     TODO: write doc_string
     """
-    if len(c.get_arguments()) != 2:
+    if len(c.get_contexts()) != 2:
         raise ValueError("Only applicable to binary Candidates")
     span0 = c[0]
     span1 = c[1]
-    distance = abs(span0.get_word_start() - span1.get_word_start())
     if span0.get_word_start() < span1.get_word_start():
-        return get_right_tokens(span0, window=distance-1, attrib=attrib, n_max=n_max, case_sensitive=case_sensitive)
-    else: # span0.get_word_start() > span1.get_word_start()
-        return get_left_tokens(span1, window=distance-1, attrib=attrib, n_max=n_max, case_sensitive=case_sensitive)
+        left_span = span0
+        dist_btwn = span1.get_word_start() - span0.get_word_end() - 1
+    else:
+        left_span = span1
+        dist_btwn = span0.get_word_start() - span1.get_word_end() - 1
+    return get_right_tokens(left_span, window=dist_btwn, attrib=attrib, n_max=n_max, case_sensitive=case_sensitive)
 
 
 def get_left_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
@@ -83,7 +89,7 @@ def get_left_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
     span = c if isinstance(c, Span) else c[0] 
     i    = span.get_word_start()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return [ngram for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][max(0, i-window):i]), n_max=n_max)]
+    return [ngram for ngram in tokens_to_ngrams(map(f, span.get_parent()._asdict()[attrib][max(0, i-window):i]), n_max=n_max)]
 
 
 def get_right_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
@@ -96,7 +102,7 @@ def get_right_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False)
     span = c if isinstance(c, Span) else c[-1]
     i    = span.get_word_end()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return [ngram for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][i+1:i+1+window]), n_max=n_max)]
+    return [ngram for ngram in tokens_to_ngrams(map(f, span.get_parent()._asdict()[attrib][i+1:i+1+window]), n_max=n_max)]
 
 
 def contains_token(c, tok, attrib='words', case_sensitive=False):
@@ -104,7 +110,7 @@ def contains_token(c, tok, attrib='words', case_sensitive=False):
     Checks if any of the contituent Spans contain a token
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
-    spans = [c] if isinstance(c, Span) else c.get_arguments()
+    spans = [c] if isinstance(c, Span) else c.get_contexts()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     return f(tok) in set(chain.from_iterable(map(f, span.get_attrib_tokens(attrib))
         for span in spans))
@@ -116,7 +122,7 @@ def get_doc_candidate_spans(c):
     arguments of Candidates.
     """
     # TODO: Fix this to be more efficient and properly general!!
-    spans = list(chain.from_iterable(s.spans for s in c[0].parent.document.sentences))
+    spans = list(chain.from_iterable(s.spans for s in c[0].get_parent().document.sentences))
     return [s for s in spans if s != c[0]]
 
 
@@ -126,7 +132,7 @@ def get_sent_candidate_spans(c):
     arguments of Candidates.
     """
     # TODO: Fix this to be more efficient and properly general!!
-    return [s for s in c[0].parent.spans if s != c[0]]
+    return [s for s in c[0].get_parent().spans if s != c[0]]
 
 
 def get_matches(lf, candidate_set, match_values=[1,-1]):
@@ -141,3 +147,15 @@ def get_matches(lf, candidate_set, match_values=[1,-1]):
             matches.append(c)
     print "%s matches" % len(matches)
     return matches
+
+
+def test_LF(session, lf, split, annotator_name):
+    """
+    Gets the accuracy of a single LF on a split of the candidates, w.r.t. annotator labels,
+    and also returns the error buckets of the candidates.
+    """
+    test_candidates = session.query(Candidate).filter(Candidate.split == split).all()
+    test_labels     = load_gold_labels(session, annotator_name=annotator_name, split=split)
+    scorer          = MentionScorer(test_candidates, test_labels)
+    test_marginals  = np.array([0.5 * (lf(c) + 1) for c in test_candidates])
+    return scorer.score(test_marginals, set_unlabeled_as_neg=False, set_at_thresh_as_neg=False)

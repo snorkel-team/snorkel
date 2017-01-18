@@ -1,69 +1,63 @@
-from .meta import SnorkelBase
-import re
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint, Table
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
-from snorkel.utils import camel_to_under
-from sqlalchemy.orm.collections import attribute_mapped_collection
+
+from .meta import SnorkelBase
+from ..utils import camel_to_under
 
 
-annotation_key_set_annotation_key_association = \
-    Table('annotation_key_set_annotation_key_association', SnorkelBase.metadata,
-          Column('annotation_key_set_id', Integer, ForeignKey('annotation_key_set.id'), nullable=False),
-          Column('annotation_key_id', Integer, ForeignKey('annotation_key.id'), nullable=False),
-          UniqueConstraint('annotation_key_set_id', 'annotation_key_id',
-                           name='unique_annotation_key_set_annotation_key_association'))
-
-
-class AnnotationKeySet(SnorkelBase):
-    """A many-to-many set of AnnotationKeys."""
-    __tablename__ = 'annotation_key_set'
-    id            = Column(Integer, primary_key=True)
-    name          = Column(String, unique=True, nullable=False)
-    keys          = relationship('AnnotationKey',
-                                 secondary=annotation_key_set_annotation_key_association,
-                                 backref='sets')
-    
-    def append(self, key):
-        self.keys.append(key)
-
-    def remove(self, key):
-        self.keys.remove(key)
-
-    def __repr__(self):
-        return "Annotation Key Set (" + str(self.name) + ")"
-
-    def __iter__(self):
-        """Default iterator is over self.annotation_keys"""
-        for key in self.keys.itervalues():
-            yield key
-
-    def __len__(self):
-        return len(self.keys)
-
-
-class AnnotationKey(SnorkelBase):
+class AnnotationKeyMixin(object):
     """
-    The Annotation key table is a mapping from unique string names to integer id numbers.
-    These strings uniquely identify who or what produced an annotation.
+    Mixin class for defining annotation key tables.
+    An AnnotationKey is the unique name associated with a set of Annotations, corresponding e.g. to a single
+    labeling or feature function.  An AnnotationKey may have an associated weight (Parameter) associated with it.
     """
-    __tablename__ = 'annotation_key'
-    id        = Column(Integer, primary_key=True)
-    name      = Column(String, unique=True, nullable=False)
+    @declared_attr
+    def __tablename__(cls):
+        return camel_to_under(cls.__name__)
+
+    @declared_attr
+    def id(cls):
+        return Column(Integer, primary_key=True)
+
+    @declared_attr
+    def name(cls):
+        return Column(String, nullable=False)
+
+    @declared_attr
+    def group(cls):
+        return Column(Integer, nullable=False, default=0)
+
+    @declared_attr
+    def __table_args__(cls):
+        return (UniqueConstraint('name', 'group'),)
 
     def __repr__(self):
         return str(self.__class__.__name__) + " (" + str(self.name) + ")"
 
 
-# TODO: Make this whole thing polymorphic instead now that only one AnnotationKey class?
+class GoldLabelKey(AnnotationKeyMixin, SnorkelBase):
+    pass
+
+
+class LabelKey(AnnotationKeyMixin, SnorkelBase):
+    pass
+
+
+class FeatureKey(AnnotationKeyMixin, SnorkelBase):
+    pass
+
+
+class PredictionKey(AnnotationKeyMixin, SnorkelBase):
+    pass    
+
+
 class AnnotationMixin(object):
     """
-    Mixin class for defining annotation tables.
-
-    An annotation is a value associated with a Candidate. Examples include labels, features,
-    and predictions.
-
-    New types of annotations can be defined by creating an annotation class and corresponding annotation, for example:
+    Mixin class for defining annotation tables. An annotation is a value associated with a Candidate.
+    Examples include labels, features, and predictions.
+    New types of annotations can be defined by creating an annotation class and corresponding annotation,
+    for example:
 
     .. code-block:: python
 
@@ -86,35 +80,38 @@ class AnnotationMixin(object):
     # The key is the "name" or "type" of the Annotation- e.g. the name of a feature, or of a human annotator
     @declared_attr
     def key_id(cls):
-        return Column('key_id', Integer, ForeignKey('annotation_key.id'), primary_key=True)
+        return Column('key_id', Integer, ForeignKey('%s_key.id' % cls.__tablename__, ondelete='CASCADE'), primary_key=True)
 
     @declared_attr
     def key(cls):
-        return relationship('AnnotationKey', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all'))
+        return relationship('%sKey' % cls.__name__, backref=backref(camel_to_under(cls.__name__) + 's', cascade='all, delete-orphan'))
 
     # Every annotation is with respect to a candidate
     @declared_attr
     def candidate_id(cls):
-        return Column('candidate_id', Integer, ForeignKey('candidate.id'), primary_key=True)
+        return Column('candidate_id', Integer, ForeignKey('candidate.id', ondelete='CASCADE'), primary_key=True)
 
     @declared_attr
     def candidate(cls):
-        return relationship('Candidate', backref=backref(camel_to_under(cls.__name__) + 's', cascade_backrefs=False),
+        return relationship('Candidate', backref=backref(camel_to_under(cls.__name__) + 's', cascade='all, delete-orphan', cascade_backrefs=False),
                             cascade_backrefs=False)
-
-    # NOTE: What remains to be defined in the subclass is the **value**
 
     def __repr__(self):
         return self.__class__.__name__ + " (" + str(self.key.name) + " = " + str(self.value) + ")"
+
+
+class GoldLabel(AnnotationMixin, SnorkelBase):
+    """A separate class for labels from human annotators or other gold standards."""
+    value = Column(Integer, nullable=False)
 
 
 class Label(AnnotationMixin, SnorkelBase):
     """
     A discrete label associated with a Candidate, indicating a target prediction value.
 
-    Labels are used to represent both human-provided annotations and the output of labeling functions.
+    Labels are used to represent the output of labeling functions.
 
-    A Label's annotation key identifies the person or labeling function that provided the Label.
+    A Label's annotation key identifies the labeling function that provided the Label.
     """
     value = Column(Integer, nullable=False)
 
@@ -137,3 +134,18 @@ class Prediction(AnnotationMixin, SnorkelBase):
     model with which ParameterSet.
     """
     value = Column(Float, nullable=False)
+
+
+class StableLabel(SnorkelBase):
+    """
+    A special secondary table for preserving labels created by *human annotators* (e.g. in the Viewer)
+    in a stable format that does not cascade, and is independent of the Candidate ids.
+    """
+    __tablename__  = 'stable_label'
+    context_stable_ids = Column(String, primary_key=True)  # ~~ delimited list
+    annotator_name     = Column(String, primary_key=True)
+    split              = Column(Integer, default=0)
+    value              = Column(Integer, nullable=False)
+
+    def __repr__(self):
+        return "%s (%s : %s)" % (self.__class__.__name__, self.annotator_name, self.value)

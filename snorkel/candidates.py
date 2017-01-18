@@ -1,31 +1,18 @@
-from . import SnorkelSession
-from .utils import ProgressBar
-from .models import Candidate, CandidateSet, TemporarySpan
-from .models.candidate import candidate_set_candidate_association
-from itertools import product
-from multiprocessing import Process, Queue, JoinableQueue
-from sqlalchemy.sql import select
-from Queue import Empty
+from collections import defaultdict
 from copy import deepcopy
+from itertools import product
 import re
+from sqlalchemy.sql import select
+
+from .models import Candidate, TemporarySpan, Sentence
+from .udf import UDF, UDFRunner
 
 QUEUE_COLLECT_TIMEOUT = 5
 
-def gold_stats(candidates, gold):
-        """Return precision and recall relative to a "gold" CandidateSet"""
-        # TODO: Make this efficient via SQL
-        nc   = len(candidates)
-        ng   = len(gold)
-        both = len(gold.intersection(candidates.candidates))
-        print "# of gold annotations\t= %s" % ng
-        print "# of candidates\t\t= %s" % nc
-        print "Candidate recall\t= %0.3f" % (both / float(ng),)
-        print "Candidate precision\t= %0.3f" % (both / float(nc),)
 
-
-class CandidateExtractor(object):
+class CandidateExtractor(UDFRunner):
     """
-    An operator to extract Candidate objects from Context objects.
+    An operator to extract Candidate objects from a Context.
 
     :param candidate_class: The type of relation to extract, defined using
                             :func:`snorkel.models.candidate_subclass <snorkel.models.candidate.candidate_subclass>`
@@ -41,6 +28,23 @@ class CandidateExtractor(object):
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
     def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=True):
+        super(CandidateExtractor, self).__init__(CandidateExtractorUDF,
+                                                 candidate_class=candidate_class,
+                                                 cspaces=cspaces,
+                                                 matchers=matchers,
+                                                 self_relations=self_relations,
+                                                 nested_relations=nested_relations,
+                                                 symmetric_relations=symmetric_relations)
+
+    def apply(self, xs, split=0, **kwargs):
+        super(CandidateExtractor, self).apply(xs, split=split, **kwargs)
+
+    def clear(self, session, split, **kwargs):
+        session.query(Candidate).filter(Candidate.split == split).delete()
+
+
+class CandidateExtractorUDF(UDF):
+    def __init__(self, candidate_class, cspaces, matchers, self_relations, nested_relations, symmetric_relations, **kwargs):
         self.candidate_class     = candidate_class
         self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
@@ -62,139 +66,50 @@ class CandidateExtractor(object):
         for i in range(self.arity):
             self.child_context_sets[i] = set()
 
-        # Track processes for multicore execution
-        self.ps = []
+        super(CandidateExtractorUDF, self).__init__(**kwargs)
 
-    def extract(self, contexts, name, session, parallelism=False):
-        # Create a candidate set
-        c = CandidateSet(name=name)
-        session.add(c)
-        session.commit()
-
-        # Run extraction
-        pb = ProgressBar(len(contexts))
-        if parallelism in [1, False]:
-            for i, context in enumerate(contexts):
-                pb.bar(i)
-                self._extract_from_context(context, c, session)
-        else:
-            raise NotImplementedError('Parallelism is not yet implemented.')
-            self._extract_multiprocess(contexts, c, parallelism)
-
-        pb.close()
-        session.commit()
-        return session.query(CandidateSet).filter(CandidateSet.name == name).one()
-
-    def _extract_from_context(self, context, candidate_set, session):
+    def apply(self, context, clear, split, **kwargs):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
         for i in range(self.arity):
             self.child_context_sets[i].clear()
             for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
-                tc.load_id_or_insert(session)
+                tc.load_id_or_insert(self.session)
                 self.child_context_sets[i].add(tc)
 
         # Generates and persists candidates
-        parent_insert_query = Candidate.__table__.insert()
-        parent_insert_args = {'type': self.candidate_class.__mapper_args__['polymorphic_identity']}
-        arg_names = self.candidate_class.__argnames__
-        child_insert_query = self.candidate_class.__table__.insert()
-        child_args = {}
-        set_insert_query = candidate_set_candidate_association.insert()
-        set_insert_args = {'candidate_set_id': candidate_set.id}
+        candidate_args = {'split': split}
         for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
 
-            # Check for self-joins and "nested" joins (joins from span to its subspan)
-            if self.arity == 2 and not self.self_relations and args[0][1] == args[1][1]:
-                continue
-
             # TODO: Make this work for higher-order relations
-            if self.arity == 2 and not self.nested_relations and (args[0][1] in args[1][1] or args[1][1] in args[0][1]):
-                continue
+            if self.arity == 2:
+                ai, a = args[0]
+                bi, b = args[1]
 
-            # Checks for symmetric relations
-            if self.arity == 2 and not self.symmetric_relations and args[0][0] > args[1][0]:
-                continue
+                # Check for self-joins, "nested" joins (joins from span to its subspan), and flipped duplicate
+                # "symmetric" relations
+                if not self.self_relations and a == b:
+                    continue
+                elif not self.nested_relations and (a in b or b in a):
+                    continue
+                elif not self.symmetric_relations and ai > bi:
+                    continue
 
-            for i, arg_name in enumerate(arg_names):
-                child_args[arg_name + '_id'] = args[i][1].id
-            q = select([self.candidate_class.id])
-            for key, value in child_args.items():
-                q = q.where(getattr(self.candidate_class, key) == value)
-            candidate_id = session.execute(q).first()
+            # Assemble candidate arguments
+            for i, arg_name in enumerate(self.candidate_class.__argnames__):
+                candidate_args[arg_name + '_id'] = args[i][1].id
 
-            # If candidate does not exist, persists it
-            if candidate_id is None:
-                candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
-                child_args['id'] = candidate_id[0]
-                session.execute(child_insert_query, child_args)
-                del child_args['id']
+            # Checking for existence
+            if not clear:
+                q = select([self.candidate_class.id])
+                for key, value in candidate_args.items():
+                    q = q.where(getattr(self.candidate_class, key) == value)
+                candidate_id = self.session.execute(q).first()
+                if candidate_id is not None:
+                    continue
 
-            set_insert_args['candidate_id'] = candidate_id[0]
-            session.execute(set_insert_query, set_insert_args)
-            
-    def _extract_multiprocess(self, contexts, candidate_set, parallelism):
-        contexts_in    = JoinableQueue()
-        candidates_out = Queue()
-
-        # Fill the in-queue with contexts
-        for context in contexts:
-            contexts_in.put(context)
-
-        # Start worker Processes
-        for i in range(parallelism):
-            session = SnorkelSession()
-            c = session.merge(candidate_set)
-            p = CandidateExtractorProcess(self._extract_from_context, session, contexts_in, candidates_out, c)
-            self.ps.append(p)
-
-        for p in self.ps:
-            p.start()
-        
-        # Join on JoinableQueue of contexts
-        contexts_in.join()
-        
-        # Collect candidates out
-        candidates = []
-        while True:
-            try:
-                candidates.append(candidates_out.get(True, QUEUE_COLLECT_TIMEOUT))
-            except Empty:
-                break
-        return candidates
-
-
-class CandidateExtractorProcess(Process):
-    def __init__(self, extractor, session, contexts_in, candidates_out, candidate_set, unary_set):
-        Process.__init__(self)
-        self.extractor      = extractor
-        self.session        = session
-        self.contexts_in    = contexts_in
-        self.candidates_out = candidates_out
-        self.candidate_set  = candidate_set
-        self.unary_set      = unary_set
-
-    def run(self):
-        c = self.candidate_set
-        u = self.unary_set if self.unary_set is not None else None
-
-        unique_candidates = set()
-        while True:
-            try:
-                context = self.session.merge(self.contexts_in.get(False))
-                for candidate in self.extractor(context, u):
-                    unique_candidates.add(candidate)
-
-                for candidate in unique_candidates:
-                    c.candidates.append(candidate)
-
-                unique_candidates.clear()
-                self.contexts_in.task_done()
-            except Empty:
-                break
-
-        self.session.commit()
-        self.session.close()
+            # Add Candidate to session
+            yield self.candidate_class(**candidate_args)
 
 
 class CandidateSpace(object):
@@ -214,7 +129,7 @@ class Ngrams(CandidateSpace):
     Defines the space of candidates as all n-grams (n <= n_max) in a Sentence _x_,
     indexing by **character offset**.
     """
-    def __init__(self, n_max=5, split_tokens=['-', '/']):
+    def __init__(self, n_max=5, split_tokens=('-', '/')):
         CandidateSpace.__init__(self)
         self.n_max     = n_max
         self.split_rgx = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
@@ -232,7 +147,7 @@ class Ngrams(CandidateSpace):
                 w     = context.words[i+l-1]
                 start = offsets[i]
                 end   = offsets[i+l-1] + len(w) - 1
-                ts    = TemporarySpan(char_start=start, char_end=end, parent=context)
+                ts    = TemporarySpan(char_start=start, char_end=end, sentence=context)
                 if ts not in seen:
                     seen.add(ts)
                     yield ts
@@ -242,11 +157,100 @@ class Ngrams(CandidateSpace):
                 if l == 1 and self.split_rgx is not None:
                     m = re.search(self.split_rgx, context.text[start-offsets[0]:end-offsets[0]+1])
                     if m is not None and l < self.n_max + 1:
-                        ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, parent=context)
+                        ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, sentence=context)
                         if ts1 not in seen:
                             seen.add(ts1)
                             yield ts
-                        ts2 = TemporarySpan(char_start=start + m.end(1), char_end=end, parent=context)
+                        ts2 = TemporarySpan(char_start=start + m.end(1), char_end=end, sentence=context)
                         if ts2 not in seen:
                             seen.add(ts2)
                             yield ts2
+
+
+class PretaggedCandidateExtractor(UDF):
+    """
+    An extractor for Sentences with entities pre-tagged, and stored in the entity_types and entity_cids
+    fields.
+    """
+    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=True, entity_sep='~@~', **kwargs):
+        self.candidate_class     = candidate_class
+        self.entity_types        = entity_types
+        self.arity               = len(entity_types)
+        self.self_relations      = self_relations
+        self.nested_relations    = nested_relations
+        self.symmetric_relations = symmetric_relations
+        self.entity_sep          = entity_sep
+
+        super(PretaggedCandidateExtractor, self).__init__(**kwargs)
+
+    def apply(self, context, split=0, check_for_existing=True):
+        """
+        Extract Candidates from a Context"""
+        # For now, just handle Sentences
+        if not isinstance(context, Sentence):
+            raise NotImplementedError("%s is currently only implemented for Sentence contexts." % self.__name__)
+
+        # Do a first pass to collect all mentions by entity type / cid
+        entity_idxs = dict((et, defaultdict(list)) for et in set(self.entity_types))
+        L = len(context.words)
+        for i in range(L):
+            if context.entity_types[i] is not None:
+                ets  = context.entity_types[i].split(self.entity_sep)
+                cids = context.entity_cids[i].split(self.entity_sep)
+                for et, cid in zip(ets, cids):
+                    if et in entity_idxs:
+                        entity_idxs[et][cid].append(i)
+
+        # Form entity Spans
+        entity_spans = defaultdict(list)
+        entity_cids  = {}
+        for et, cid_idxs in entity_idxs.iteritems():
+            for cid, idxs in entity_idxs[et].iteritems():
+                while len(idxs) > 0:
+                    i          = idxs.pop(0)
+                    char_start = context.char_offsets[i]
+                    char_end   = char_start + len(context.words[i]) - 1
+                    while len(idxs) > 0 and idxs[0] == i + 1:
+                        i        = idxs.pop(0)
+                        char_end = context.char_offsets[i] + len(context.words[i]) - 1
+
+                    # Insert / load temporary span, also store map to entity CID
+                    tc = TemporarySpan(char_start=char_start, char_end=char_end, sentence=context)
+                    tc.load_id_or_insert(self.session)
+                    entity_cids[tc.id] = cid
+                    entity_spans[et].append(tc)
+
+        # Generates and persists candidates
+        candidate_args = {'split' : split}
+        for args in product(*[enumerate(entity_spans[et]) for et in self.entity_types]):
+
+            # TODO: Make this work for higher-order relations
+            if self.arity == 2:
+                ai, a = args[0]
+                bi, b = args[1]
+
+                # Check for self-joins, "nested" joins (joins from span to its subspan), and flipped duplicate
+                # "symmetric" relations
+                if not self.self_relations and a == b:
+                    continue
+                elif not self.nested_relations and (a in b or b in a):
+                    continue
+                elif not self.symmetric_relations and ai > bi:
+                    continue
+
+            # Assemble candidate arguments
+            for i, arg_name in enumerate(self.candidate_class.__argnames__):
+                candidate_args[arg_name + '_id'] = args[i][1].id
+                candidate_args[arg_name + '_cid'] = entity_cids[args[i][1].id]
+
+            # Checking for existence
+            if check_for_existing:
+                q = select([self.candidate_class.id])
+                for key, value in candidate_args.items():
+                    q = q.where(getattr(self.candidate_class, key) == value)
+                candidate_id = self.session.execute(q).first()
+                if candidate_id is not None:
+                    continue
+
+            # Add Candidate to session
+            yield self.candidate_class(**candidate_args)

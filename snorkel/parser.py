@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-
-from .models import Corpus, Document, Sentence, construct_stable_id
-from .utils import ProgressBar, sort_X_on_Y
 import atexit
-import warnings
 from bs4 import BeautifulSoup
+import codecs
 from collections import defaultdict
 import glob
 import json
@@ -15,58 +12,75 @@ import requests
 import signal
 from subprocess import Popen
 import sys
-import codecs
+import warnings
+
+from .models import Candidate, Context, Document, Sentence, construct_stable_id
+from .udf import UDF, UDFRunner
+from .utils import sort_X_on_Y
 
 
-class CorpusParser:
-    """Invokes a DocParser and runs the output through a SentenceParser to produce a Corpus."""
-    def __init__(self, doc_parser, sent_parser, max_docs=None):
-        self.doc_parser = doc_parser
-        self.sent_parser = sent_parser
-        self.max_docs = max_docs
+class CorpusParser(UDFRunner):
+    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False, fn=None):
+        super(CorpusParser, self).__init__(CorpusParserUDF,
+                                           tok_whitespace=tok_whitespace,
+                                           split_newline=split_newline,
+                                           parse_tree=parse_tree,
+                                           fn=fn)
 
-    def parse_corpus(self, session, name):
-        corpus = Corpus(name=name)
-        if session is not None:
-            session.add(corpus)
-        if self.max_docs is not None:
-            pb = ProgressBar(self.max_docs)
-        for i, (doc, text) in enumerate(self.doc_parser.parse()):
-            if self.max_docs is not None:
-                pb.bar(i)
-                if i == self.max_docs:
-                    break
-            corpus.append(doc)
-            for _ in self.sent_parser.parse(doc, text):
-                pass
-        if self.max_docs is not None:
-            pb.bar(self.max_docs)
-            pb.close()
-        if session is not None:
-            session.commit()
-        corpus.stats()
-        return corpus
+    def clear(self, session, **kwargs):
+        session.query(Context).delete()
+        
+        # We cannot cascade up from child contexts to parent Candidates, so we delete all Candidates too
+        session.query(Candidate).delete()
 
 
-class DocParser:
-    """Parse a file or directory of files into a set of Document objects."""
-    def __init__(self, path, encoding="utf-8"):
+class CorpusParserUDF(UDF):
+    def __init__(self, tok_whitespace, split_newline, parse_tree, fn, **kwargs):
+        self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace,
+                                              split_newline=split_newline,
+                                              parse_tree=parse_tree)
+        self.fn = fn
+        super(CorpusParserUDF, self).__init__(**kwargs)
+
+    def apply(self, x, **kwargs):
+        """Given a Document object and its raw text, parse into processed Sentences"""
+        doc, text = x
+        for parts in self.corenlp_handler.parse(doc, text):
+            parts = self.fn(parts) if self.fn is not None else parts
+            yield Sentence(**parts)
+
+
+class DocPreprocessor(object):
+    """
+    Processes a file or directory of files into a set of Document objects.
+
+    :param encoding: file encoding to use, default='utf-8'
+    :param path: filesystem path to file or directory to parse
+    :param max_docs: the maximum number of Documents to produce, default=float('inf')
+
+    """
+    def __init__(self, path, encoding="utf-8", max_docs=float('inf')):
         self.path = path
         self.encoding = encoding
+        self.max_docs = max_docs
 
-    def parse(self):
+    def generate(self):
         """
-        Parse a file or directory of files into a set of Document objects.
+        Parses a file or directory of files into a set of Document objects.
 
-        - Input: A file or directory path.
-        - Output: A set of Document objects, which at least have a _text_ attribute,
-                  and possibly a dictionary of other attributes.
         """
-        for fp in self._get_files():
+        doc_count = 0
+        for fp in self._get_files(self.path):
             file_name = os.path.basename(fp)
             if self._can_read(file_name):
                 for doc, text in self.parse_file(fp, file_name):
                     yield doc, text
+                    doc_count += 1
+                    if doc_count >= self.max_docs:
+                        return
+
+    def __iter__(self):
+        return self.generate()
 
     def get_stable_id(self, doc_id):
         return "%s::document:0:0" % doc_id
@@ -77,19 +91,20 @@ class DocParser:
     def _can_read(self, fpath):
         return True
 
-    def _get_files(self):
-        if os.path.isfile(self.path):
-            fpaths = [self.path]
-        elif os.path.isdir(self.path):
-            fpaths = [os.path.join(self.path, f) for f in os.listdir(self.path)]
+    def _get_files(self, path):
+        if os.path.isfile(path):
+            fpaths = [path]
+        elif os.path.isdir(path):
+            fpaths = [os.path.join(path, f) for f in os.listdir(path)]
         else:
-            fpaths = glob.glob(self.path)
+            fpaths = glob.glob(path)
         if len(fpaths) > 0:
             return fpaths
         else:
-            raise IOError("File or directory not found: %s" % (self.path,))
+            raise IOError("File or directory not found: %s" % (path,))
 
-class TSVDocParser(DocParser):
+
+class TSVDocPreprocessor(DocPreprocessor):
     """Simple parsing of TSV file with one (doc_name <tab> doc_text) per line"""
     def parse_file(self, fp, file_name):
         with codecs.open(fp, encoding=self.encoding) as tsv:
@@ -99,7 +114,7 @@ class TSVDocParser(DocParser):
                 yield Document(name=doc_name, stable_id=stable_id, meta={'file_name' : file_name}), doc_text
 
 
-class TextDocParser(DocParser):
+class TextDocPreprocessor(DocPreprocessor):
     """Simple parsing of raw text files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with codecs.open(fp, encoding=self.encoding) as f:
@@ -108,7 +123,7 @@ class TextDocParser(DocParser):
             yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), f.read()
 
 
-class HTMLDocParser(DocParser):
+class HTMLDocPreprocessor(DocPreprocessor):
     """Simple parsing of raw HTML files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with open(fp, 'rb') as f:
@@ -133,7 +148,7 @@ class HTMLDocParser(DocParser):
         return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
 
 
-class XMLMultiDocParser(DocParser):
+class XMLMultiDocPreprocessor(DocPreprocessor):
     """
     Parse an XML file _which contains multiple documents_ into a set of Document objects.
 
@@ -144,7 +159,7 @@ class XMLMultiDocParser(DocParser):
     """
     def __init__(self, path, doc='.//document', text='./text/text()', id='./id/text()',
                     keep_xml_tree=False):
-        DocParser.__init__(self, path)
+        DocPreprocessor.__init__(self, path)
         self.doc = doc
         self.text = text
         self.id = id
@@ -167,8 +182,9 @@ class XMLMultiDocParser(DocParser):
 PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
          '-RSB-': ']', '-LSB-': '['}
 
-class CoreNLPHandler:
-    def __init__(self, tok_whitespace=False):
+
+class CoreNLPHandler(object):
+    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
         # Kill it when python exits.
@@ -177,13 +193,24 @@ class CoreNLPHandler:
         # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
         self.port = 12345
         self.tok_whitespace = tok_whitespace
+        self.split_newline = split_newline
+        self.parse_tree = parse_tree
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
                % (loc, self.port, 600000)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
-        props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
-        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": "tokenize,ssplit,pos,lemma,depparse,ner", "outputFormat": "json"}' % (self.port, props)
+        props = ''
+        if self.tok_whitespace:
+            props += '"tokenize.whitespace": "true", '
+        if self.split_newline:
+            props += '"ssplit.eolonly": "true", '
+        annotators = '"tokenize,ssplit,pos,lemma,depparse,ner{0}"'.format(
+            ',parse' if self.parse_tree else ''
+        )
+        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": %s, "outputFormat": "json"}' % (
+            self.port, props, annotators
+        )
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626
@@ -220,7 +247,7 @@ class CoreNLPHandler:
         try:
             blocks = json.loads(content, strict=False)['sentences']
         except:
-            print "SKIPPED A MALFORMED SENTENCE!"
+            warnings.warn("CoreNLP skipped a malformed sentence.", RuntimeWarning)
             return
         position = 0
         diverged = False
@@ -243,11 +270,15 @@ class CoreNLPHandler:
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
 
+            # Add full dependency tree parse
+            if self.parse_tree:
+                parts['tree'] = ' '.join(block['parse'].split())
+
             # NOTE: We have observed weird bugs where CoreNLP diverges from raw document text (see Issue #368)
             # In these cases we go with CoreNLP so as not to cause downstream issues but throw a warning
             doc_text = text[block['tokens'][0]['characterOffsetBegin'] : block['tokens'][-1]['characterOffsetEnd']]
             L = len(block['tokens'])
-            parts['text'] = ''.join(t['originalText'] + t['after'] if i < L - 1 else t['originalText'] for i,t in enumerate(block['tokens']))
+            parts['text'] = ''.join(t['originalText'] + t.get('after', '') if i < L - 1 else t['originalText'] for i,t in enumerate(block['tokens']))
             if not diverged and doc_text != parts['text']:
                 diverged = True
                 #warnings.warn("CoreNLP parse has diverged from raw document text!")
@@ -260,18 +291,13 @@ class CoreNLPHandler:
             # Link the sentence to its parent document object
             parts['document'] = document
 
+            # Add null entity array (matching null for CoreNLP)
+            parts['entity_cids']  = ['O' for _ in parts['words']]
+            parts['entity_types'] = ['O' for _ in parts['words']]
+
             # Assign the stable id as document's stable id plus absolute character offset
             abs_sent_offset_end = abs_sent_offset + parts['char_offsets'][-1] + len(parts['words'][-1])
             parts['stable_id'] = construct_stable_id(document, 'sentence', abs_sent_offset, abs_sent_offset_end)
             position += 1
             yield parts
 
-
-class SentenceParser(object):
-    def __init__(self, tok_whitespace=False):
-        self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace)
-
-    def parse(self, doc, text):
-        """Parse a raw document as a string into a list of sentences"""
-        for parts in self.corenlp_handler.parse(doc, text):
-            yield Sentence(**parts)

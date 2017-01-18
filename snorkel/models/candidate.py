@@ -1,63 +1,9 @@
-from .meta import SnorkelSession, SnorkelBase
-from .context import Context
-from sqlalchemy import Table, Column, String, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
-from snorkel.models import snorkel_engine
-from snorkel.utils import camel_to_under
 
-
-candidate_set_candidate_association = Table('candidate_set_candidate_association', SnorkelBase.metadata,
-                                            Column('candidate_set_id', Integer, ForeignKey('candidate_set.id')),
-                                            Column('candidate_id', Integer, ForeignKey('candidate.id')))
-
-
-class CandidateSet(SnorkelBase):
-    """
-    A set of Candidates, uniquely identified by a name.
-
-    CandidateSets have many-to-many relationships with Candidates, so users can create new
-    subsets, supersets, etc.
-    """
-    __tablename__ = 'candidate_set'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    candidates = relationship('Candidate', secondary=candidate_set_candidate_association, backref='sets', \
-                    lazy='dynamic')
-
-    def append(self, item):
-        self.candidates.append(item)
-
-    def remove(self, item):
-        self.candidates.remove(item)
-
-    def __repr__(self):
-        return "Candidate Set (" + str(self.name) + ")"
-
-    def __iter__(self):
-        """Default iterator is over self.candidates"""
-        for candidate in self.candidates:
-            yield candidate
-
-    def __getitem__(self, key):
-        return self.candidates[key]
-
-    def __len__(self):
-        return self.candidates.count()
-
-    def stats(self, gold_set=None):
-        """Print diagnostic stats about CandidateSet."""
-        session = SnorkelSession.object_session(self)
-
-        # NOTE: This is the number of contexts that had non-zero number of candidates!
-        nc = session.query(Context.id).join(Candidate).filter(CandidateSet.name == self.name).distinct().count()
-        print "=" * 80
-        print "%s candidates in %s contexts" % (self.__len__(), nc)
-        print "Avg. # of candidates / context*: %0.1f" % (self.__len__() / float(nc),)
-        if gold_set is not None:
-            print "-" * 80
-            print "Overlaps with %0.2f%% of gold set" % (len(gold_set.intersection(self)) / float(len(gold_set)),)
-        print "=" * 80
-        print "*Only counting contexts with non-zero number of candidates."
+from .meta import SnorkelBase
+from ..models import snorkel_engine
+from ..utils import camel_to_under
 
 
 class Candidate(SnorkelBase):
@@ -68,22 +14,37 @@ class Candidate(SnorkelBase):
     this class directly.
     """
     __tablename__ = 'candidate'
-    id = Column(Integer, primary_key=True)
-    type = Column(String, nullable=False)
+    id                = Column(Integer, primary_key=True)
+    type              = Column(String, nullable=False)
+    split             = Column(Integer, nullable=False, default=0, index=True)
+    training_marginal = Column(Float, nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',
         'polymorphic_on': type
     }
 
-    def get_arguments(self):
+    def get_contexts(self):
+        """Get a tuple of the consituent contexts making up this candidate"""
         return tuple(getattr(self, name) for name in self.__argnames__)
 
+    def get_parent(self):
+        # Fails if both contexts don't have same parent
+        p = [c.get_parent() for c in self.get_contexts()]
+        if p.count(p[0]) == len(p):
+            return p[0]
+        else:
+            raise Exception("Contexts do not all have same parent")
+
+    def get_cids(self):
+        """Get a tuple of the canonical IDs (CIDs) of the contexts making up this candidate"""
+        return tuple(getattr(self, name + "_cid") for name in self.__argnames__)
+
     def __getitem__(self, key):
-        return self.get_arguments()[key]
+        return self.get_contexts()[key]
 
     def __repr__(self):
-        return u"%s(%s)" % (self.__class__.__name__, u", ".join(map(unicode, self.get_arguments())))
+        return u"%s(%s)" % (self.__class__.__name__, u", ".join(map(unicode, self.get_contexts())))
 
 
 def candidate_subclass(class_name, args, table_name=None):
@@ -109,8 +70,8 @@ def candidate_subclass(class_name, args, table_name=None):
         # Declares name for storage table
         '__tablename__' : table_name,
                 
-        # Connects ChemicalDisease records to generic Candidate records
-        'id' : Column(Integer, ForeignKey('candidate.id'), primary_key=True),
+        # Connects candidate_subclass records to generic Candidate records
+        'id' : Column(Integer, ForeignKey('candidate.id', ondelete='CASCADE'), primary_key=True),
                 
         # Polymorphism information for SQLAlchemy
         '__mapper_args__' : {'polymorphic_identity': table_name},
@@ -122,12 +83,19 @@ def candidate_subclass(class_name, args, table_name=None):
     # Create named arguments
     unique_con_args = []
     for arg in args:
-        class_attribs[arg + '_id'] = Column(Integer, ForeignKey('context.id'))
-        class_attribs[arg]         = relationship('Context',
-                                                  backref=backref(table_name + '_' + arg + 's', cascade_backrefs=False),
-                                                  cascade_backrefs=False,
-                                                  foreign_keys=class_attribs[arg + '_id'])
+
+        # Primary arguments are constituent Contexts, and their ids
+        class_attribs[arg + '_id']  = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'))
+        class_attribs[arg]          = relationship('Context',
+                                                      backref=backref(table_name + '_' + arg + 's',
+                                                                      cascade_backrefs=False,
+                                                                      cascade='all, delete-orphan'),
+                                                      cascade_backrefs=False,
+                                                      foreign_keys=class_attribs[arg + '_id'])
         unique_con_args.append(class_attribs[arg + '_id'])
+
+        # Canonical ids, to be set post-entity normalization stage
+        class_attribs[arg + '_cid'] = Column(Integer)
 
     class_attribs['__table_args__'] = (UniqueConstraint(*unique_con_args),)
 

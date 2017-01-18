@@ -1,3 +1,4 @@
+import numpy as np
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
 from sqlalchemy.sql import bindparam, select
@@ -339,3 +340,24 @@ def _to_annotation_generator(fns):
         for f in fns:
             yield f.__name__, f(c)
     return fn_gen
+
+
+def save_marginals(session, L, marginals):
+    """Save the marginal probs. for the Candidates corresponding to the rows of L in the Candidate table."""
+    # Prepare bulk UPDATE query
+    q = Candidate.__table__.update().\
+            where(Candidate.id == bindparam('cid')).\
+            values(training_marginal=bindparam('tm'))
+
+    # Prepare values
+    update_vals = [{'cid': L.get_candidate(session, i).id, 'tm': marginals[i]} for i in range(len(marginals))]
+
+    # Execute update
+    session.execute(q, update_vals)
+    session.commit()
+    print "Saved %s training marginals" % len(marginals)
+
+
+def load_marginals(session, split):
+    """Load the marginal probs. for a given split of Candidates"""
+    return np.array([c[0] for c in session.query(Candidate.training_marginal).filter(Candidate.split == split).all()])

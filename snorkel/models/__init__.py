@@ -23,7 +23,7 @@ define a new type of Context is:
         # Declares name for storage table
         __tablename__ = 'newtype'
         # Connects NewType records to generic Context records
-        id = Column(String, ForeignKey('context.id'))
+        id = Column(String, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
 
         # Polymorphism information for SQLAlchemy
         __mapper_args__ = {
@@ -36,11 +36,11 @@ define a new type of Context is:
     import snorkel.models
 """
 from .meta import SnorkelBase, SnorkelSession, snorkel_engine, snorkel_postgres
-from .context import Context, Corpus, Document, Sentence, TemporarySpan, Span
+from .context import Context, Document, Sentence, TemporarySpan, Span
 from .context import construct_stable_id, split_stable_id
-from .candidate import Candidate, CandidateSet, candidate_subclass
-from .annotation import Feature, Label, Prediction, AnnotationKey, AnnotationKeySet
-from .parameter import Parameter, ParameterSet
+from .candidate import Candidate, candidate_subclass
+from .annotation import Feature, FeatureKey, Label, LabelKey, GoldLabel, GoldLabelKey, StableLabel, Prediction, PredictionKey
+from .parameter import Parameter
 
 # This call must be performed after all classes that extend SnorkelBase are
 # declared to ensure the storage schema is initialized

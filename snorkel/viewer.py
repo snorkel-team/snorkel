@@ -1,6 +1,5 @@
 from __future__ import print_function
-from .models import Label
-from .queries import get_or_create_single_key_set
+from .models import GoldLabel, StableLabel, GoldLabelKey
 try:
     from IPython.core.display import display, Javascript
 except:
@@ -42,12 +41,7 @@ class Viewer(widgets.DOMWidget):
         """
         Initializes a Viewer.
 
-        The Viewer uses the keyword argument annotator_name to define an AnnotationKeySet with that name, containing
-        a single AnnotationKey of the same name. If it already exists, it will be resused, but if the AnnotationKeySet
-        already exists and contains other keys, the Viewer will raise an error.
-
-        This AnnotationKeySet can be used to retrieve the labels with a LabelManager, and corresponding AnnotationKeys
-        can be grouped into a new AnnotationKeySet to manage the work of multiple annotators simultaneously.
+        The Viewer uses the keyword argument annotator_name to define a AnnotatorLabelKey with that name.
 
         :param candidates: A Python container of Candidates (e.g., not a CandidateSet, but candidate_set.candidates)
         :param session: The SnorkelSession for the database backend
@@ -63,11 +57,11 @@ class Viewer(widgets.DOMWidget):
         name = annotator_name if annotator_name is not None else getpass.getuser()
 
         # Sets up the AnnotationKey to use
-        try:
-            _, self.annotator = get_or_create_single_key_set(self.session, name)
-        except ValueError:
-            raise ValueError('annotator_name ' + unicode(name) + ' is already in use for an incompatible ' +
-                             'AnnotationKey and/or AnnotationKeySet. Please specify a new annotator_name.')
+        self.annotator = self.session.query(GoldLabelKey).filter(GoldLabelKey.name == name).first()
+        if self.annotator is None:
+            self.annotator = GoldLabelKey(name=name)
+            session.add(self.annotator)
+            session.commit()
 
         # Viewer display configs
         self.n_per_page = n_per_page
@@ -76,9 +70,9 @@ class Viewer(widgets.DOMWidget):
         # Note that the candidates are not necessarily commited to the DB, so they *may not have* non-null ids
         # Hence, we index by their position in this list
         # We get the sorted candidates and all contexts required, either from unary or binary candidates
-        self.gold = list(gold)
+        self.gold       = list(gold)
         self.candidates = sorted(list(candidates), key=lambda c : c[0].char_start)
-        self.contexts   = list(set(c[0].parent for c in self.candidates + self.gold))
+        self.contexts   = list(set(c[0].get_parent() for c in self.candidates + self.gold))
         
         # If committed, sort contexts by id
         try:
@@ -87,12 +81,15 @@ class Viewer(widgets.DOMWidget):
             pass
 
         # Loads existing annotations
-        self.annotations = [None] * len(self.candidates)
-        init_labels_serialized = []
+        self.annotations        = [None] * len(self.candidates)
+        self.annotations_stable = [None] * len(self.candidates)
+        init_labels_serialized  = []
         for i, candidate in enumerate(self.candidates):
-            existing_annotation = self.session.query(Label) \
-                .filter(Label.key == self.annotator) \
-                .filter(Label.candidate == candidate) \
+
+            # First look for the annotation in the primary annotations table
+            existing_annotation = self.session.query(GoldLabel) \
+                .filter(GoldLabel.key == self.annotator) \
+                .filter(GoldLabel.candidate == candidate) \
                 .first()
             if existing_annotation is not None:
                 self.annotations[i] = existing_annotation
@@ -104,6 +101,26 @@ class Viewer(widgets.DOMWidget):
                     raise ValueError(str(existing_annotation) +
                                      ' has value not in {1, -1}, which Viewer does not support.')
                 init_labels_serialized.append(str(i) + '~~' + value_string)
+
+                # If the annotator label is in the main table, also get its stable version
+                context_stable_ids = '~~'.join([c.stable_id for c in candidate.get_contexts()] + [self.annotator.name])
+                existing_annotation_stable = self.session.query(StableLabel) \
+                                                 .filter(StableLabel.context_stable_ids == context_stable_ids)\
+                                                 .filter(StableLabel.annotator_name == name).one_or_none()
+
+                # If stable version is not available, create it here
+                # NOTE: This is for versioning issues, should be removed?
+                if existing_annotation_stable is None:
+                    context_stable_ids         = [c.stable_id for c in candidate.get_contexts()]
+                    existing_annotation_stable = StableLabel(stable_id=stable_id,\
+                                                             annotator_name=self.annotator.name,\
+                                                             value=existing_annotation.value,\
+                                                             context_stable_ids=context_stable_ids)
+                    self.session.add(existing_annotation_stable)
+                    self.session.commit()
+
+                self.annotations_stable[i] = existing_annotation_stable
+
         self._labels_serialized = ','.join(init_labels_serialized)
 
         # Configures message handler
@@ -142,7 +159,7 @@ class Viewer(widgets.DOMWidget):
                 context = self.contexts[j]
 
                 # Get the candidates in this context
-                candidates = [c for c in self.candidates if c[0].parent == context]
+                candidates = [c for c in self.candidates if c[0].get_parent() == context]
                 gold = [g for g in self.gold if g.context_id == context.id]
 
                 # Construct the <li> and page view elements
@@ -184,18 +201,33 @@ class Viewer(widgets.DOMWidget):
                 raise ValueError('Unexpected label returned from widget: ' + str(value) +
                                  '. Expected values are True and False.')
 
+            # If label already exists, just update value (in both AnnotatorLabel and StableLabel)
             if self.annotations[cid] is not None:
                 if self.annotations[cid].value != value:
-                    self.annotations[cid].value = value
+                    self.annotations[cid].value        = value
+                    self.annotations_stable[cid].value = value
                     self.session.commit()
+
+            # Otherwise, create a AnnotatorLabel *and a StableLabel*
             else:
-                self.annotations[cid] = Label(key=self.annotator, candidate=self.candidates[cid], value=value)
+                candidate = self.candidates[cid]
+
+                # Create AnnotatorLabel
+                self.annotations[cid] = GoldLabel(key=self.annotator, candidate=candidate, value=value)
                 self.session.add(self.annotations[cid])
+
+                # Create StableLabel
+                context_stable_ids = '~~'.join([c.stable_id for c in candidate.get_contexts()])
+                self.annotations_stable[cid] = StableLabel(context_stable_ids=context_stable_ids, annotator_name=self.annotator.name, value=value, split=candidate.split)
+                self.session.add(self.annotations_stable[cid])
+
                 self.session.commit()
         elif content.get('event', '') == 'delete_label':
             cid = content.get('cid', None)
             self.session.delete(self.annotations[cid])
             self.annotations[cid] = None
+            self.session.delete(self.annotations_stable[cid])
+            self.annotations_stable[cid] = None
             self.session.commit()
 
     def get_selected(self):

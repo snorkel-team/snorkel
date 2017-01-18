@@ -195,6 +195,8 @@ class SparseLogisticRegression(LogisticRegression):
     def marginals(self, X_test):
         if not issparse(X_test):
             raise Exception("Matrix X_test must be scipy.sparse type")
+        if X_test.shape[0] == 0:
+            return np.ravel([])
         indices, shape, ids, weights = self._batch_sparse_data(X_test)
         return np.ravel(self.session.run([self.prediction], {
             self.indices: indices,

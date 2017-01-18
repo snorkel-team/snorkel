@@ -219,30 +219,34 @@ class GenerativeModel(object):
             logp_true = self.weights.class_prior
             logp_false = -1 * self.weights.class_prior
 
-            for _, j in zip(*L[i].nonzero()):
-                if L[i, j] == 1:
+            l_i = L[i].tocoo()
+
+            for l_index1 in range(l_i.nnz):
+                data_j, j = l_i.data[l_index1], l_i.col[l_index1]
+                if data_j == 1:
                     logp_true  += self.weights.lf_accuracy_log_odds[j]
                     logp_false -= self.weights.lf_accuracy_log_odds[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
-                elif L[i, j] == -1:
+                elif data_j == -1:
                     logp_true  -= self.weights.lf_accuracy_log_odds[j]
                     logp_false += self.weights.lf_accuracy_log_odds[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
                 else:
-                    ValueError("Illegal value at %d, %d: %d. Must be in {-1, 0, 1}." % (i, j, L[i, j]))
+                    ValueError("Illegal value at %d, %d: %d. Must be in {-1, 0, 1}." % (i, j, data_j))
 
-                for _, k in zip(*L[i].nonzero()):
+                for l_index2 in range(l_i.nnz):
+                    data_k, k = l_i.data[l_index2], l_i.col[l_index2]
                     if j != k:
-                        if L[i, j] == -1 and L[i, k] == 1:
+                        if data_j == -1 and data_k == 1:
                             logp_true += self.weights.dep_fixing[j, k]
-                        elif L[i, j] == 1 and L[i, k] == -1:
+                        elif data_j == 1 and data_k == -1:
                             logp_false += self.weights.dep_fixing[j, k]
 
-                        if L[i, j] == 1 and L[i, k] == 1:
+                        if data_j == 1 and data_k == 1:
                             logp_true += self.weights.dep_reinforcing[j, k]
-                        elif L[i, j] == -1 and L[i, k] == -1:
+                        elif data_j == -1 and data_k == -1:
                             logp_false += self.weights.dep_reinforcing[j, k]
 
             marginals[i] = 1 / (1 + np.exp(logp_false - logp_true))

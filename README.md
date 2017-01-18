@@ -44,6 +44,12 @@ apt-get install llvm-3.8
 LLVM_CONFIG=/usr/bin/llvm-config-3.8 pip install llvmlite
 LLVM_CONFIG=/usr/bin/llvm-config-3.8 pip install numba
 ```
+and on Mac OSX, one option is to use homebrew as follows:
+```
+brew install llvm38 --with-rtti
+LLVM_CONFIG=/usr/local/Cellar/llvm\@3.8/3.8.1/bin/llvm-config-3.8 pip install llvmlite
+LLVM_CONFIG=/usr/local/Cellar/llvm\@3.8/3.8.1/bin/llvm-config-3.8 pip install numba
+```
 
 Finally, enable `ipywidgets`:
 ```bash

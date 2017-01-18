@@ -29,12 +29,13 @@ class Scorer(object):
 
 class MentionScorer(Scorer):
     """Scorer for mention level assessment"""
-    def score(self, test_marginals, train_marginals=None, b=0.5, set_unlabeled_as_neg=True, display=True):
+    def score(self, test_marginals, train_marginals=None, b=0.5, set_unlabeled_as_neg=True, set_at_thresh_as_neg=True, display=True):
         """
         test_marginals: array of marginals for test candidates
         train_marginals (optional): array of marginals for training candidates
         b: threshold for labeling
-        set_unlabeled_as_neg: set marginals at b to negative?
+        set_unlabeled_as_neg: set test labels at the decision threshold of b as negative labels
+        set_at_b_as_neg: set marginals at the decision threshold exactly as negative predictions
         display: show calibration plots?
         """
         test_label_array = []
@@ -59,7 +60,7 @@ class MentionScorer(Scorer):
                         tp.add(candidate)
                     else:
                         fp.add(candidate)
-                else:
+                elif test_marginals[i] < b or set_at_thresh_as_neg:
                     if test_label == -1:
                         tn.add(candidate)
                     else:
@@ -300,17 +301,17 @@ class GridSearch(object):
         f1_opt          = -1.0
         base_model_name = self.model.name
         model_k         = 0
-        for param_vals in self.search_space():
+        for k, param_vals in enumerate(self.search_space()):
             model_name = '{0}_{1}'.format(base_model_name, model_k)
             model_k += 1
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
                 model_hyperparams[pn] = pv
             print "=" * 60
-            print "Testing %s" % ', '.join([
+            print "[%d] Testing %s" % (k+1, ', '.join([
                 "%s = %0.2e" % (pn,pv)
                 for pn,pv in zip(self.param_names, param_vals)
-            ])
+            ]))
             print "=" * 60
             # Train the model
             self.model.train(

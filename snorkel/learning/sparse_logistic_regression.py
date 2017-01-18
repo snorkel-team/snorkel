@@ -82,4 +82,4 @@ class SparseLogisticRegression(LogisticRegression):
             self.shape:   shape,
             self.ids:     ids,
             self.weights: weights,
-        })
+        }))

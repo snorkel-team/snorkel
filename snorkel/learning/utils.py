@@ -302,6 +302,7 @@ class GridSearch(object):
         model_k         = 0
         for param_vals in self.search_space():
             model_name = '{0}_{1}'.format(base_model_name, model_k)
+            model_k += 1
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
                 model_hyperparams[pn] = pv

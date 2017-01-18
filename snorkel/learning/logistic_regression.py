@@ -17,6 +17,7 @@ class LogisticRegression(TFNoiseAwareModel):
         self.lr         = None
         self.l1_penalty = None
         self.l2_penalty = None
+        self.nnz        = None
         super(LogisticRegression, self).__init__(save_file=save_file, name=name)
 
     def _build(self):
@@ -37,6 +38,10 @@ class LogisticRegression(TFNoiseAwareModel):
         ).minimize(self.loss)
         self.prediction = tf.nn.sigmoid(h)
         self.save_dict = {'w': w, 'b': b}
+        # Get nnz operation
+        self.nnz = tf.reduce_sum(tf.cast(
+            tf.not_equal(w, tf.constant(0, tf.float32)), tf.int32
+        ))
 
     def _run_batch(self, X_train, y_train, i, r):
         """Run a single batch update"""
@@ -45,9 +50,9 @@ class LogisticRegression(TFNoiseAwareModel):
         x_batch = X_train[i:r, :].todense() if sparse else X_train[i:r, :]
         y_batch = y_train[i:r].reshape((r-i, 1))
         # Run training step and evaluate loss function                  
-        return self.session.run([self.loss, self.train_fn], {
+        return self.session.run([self.loss, self.train_fn, self.nnz], {
             self.X: x_batch, self.Y: y_batch,
-        })[0]
+        })
 
     def train(self, X, training_marginals, n_epochs=10, lr=0.01,
         batch_size=100, l1_penalty=0.0, l2_penalty=0.0, print_freq=5,
@@ -92,12 +97,12 @@ class LogisticRegression(TFNoiseAwareModel):
             epoch_loss = 0.0
             for i in range(0, n, batch_size):
                 r = min(n-1, i+batch_size)
-                epoch_loss += self._run_batch(X_train, y_train, i, r)
+                loss, _, nnz = self._run_batch(X_train, y_train, i, r)
+                epoch_loss += loss
             # Print training stats
             if verbose and (t % print_freq == 0 or t in [0, (n_epochs-1)]):
-                print("[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
-                    self.name, t, time() - st, epoch_loss / n
-                ))
+                msg = "[{0}] Epoch {1} ({2:.2f}s)\tAvg. loss={3:.6f}\tNNZ={4}"
+                print(msg.format(self.name, t, time()-st, epoch_loss/n, nnz))
         if verbose:
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))
 
@@ -153,6 +158,11 @@ class SparseLogisticRegression(LogisticRegression):
         ).minimize(self.loss)
         self.prediction = tf.nn.sigmoid(h)
         self.save_dict = {'w': w, 'b': b}
+        # Return nnz operation
+        # Get nnz operation
+        self.nnz = tf.reduce_sum(tf.cast(
+            tf.not_equal(w, tf.constant(0, tf.float32)), tf.int32
+        ))
 
     def _batch_sparse_data(self, X):
         """Convert sparse batch matrix to sparse inputs for embedding lookup"""
@@ -175,13 +185,13 @@ class SparseLogisticRegression(LogisticRegression):
         indices, shape, ids, weights = self._batch_sparse_data(X_train[i:r, :])
         y_batch = y_train[i:r].reshape((r-i, 1))
         # Run training step and evaluate loss function                  
-        return self.session.run([self.loss, self.train_fn], {
+        return self.session.run([self.loss, self.train_fn, self.nnz], {
             self.indices: indices,
             self.shape:   shape,
             self.ids:     ids,
             self.weights: weights,
             self.Y:       y_batch,
-        })[0]
+        })
 
     def marginals(self, X_test):
         if not issparse(X_test):

@@ -1,6 +1,6 @@
 from .constants import *
 from .disc_learning import NoiseAwareModel
-from .utils import marginals_to_labels, MentionScorer, odds_to_prob
+from .utils import MentionScorer
 from numbskull import NumbSkull
 from numbskull.inference import FACTORS
 from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
@@ -194,8 +194,8 @@ class GenerativeModel(object):
 
     def train(self, L, y=None, deps=(), init_acc = 1.0, epochs=100, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
               truncation=10, burn_in=50, timer=None):
-	step_size = step_size or 1.0 / L.shape[0]
-	reg_param_scaled = reg_param / L.shape[0]
+        step_size = step_size or 1.0 / L.shape[0]
+        reg_param_scaled = reg_param / L.shape[0]
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
@@ -366,23 +366,25 @@ class GenerativeModel(object):
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = 2
 
+        for index in range(m, m + m * n):
+            variable[index]["isEvidence"] = 1
+            variable[index]["initialValue"] = 1
+            variable[index]["dataType"] = 0
+            variable[index]["cardinality"] = 3
 
-        for i in range(m):
-            for j in range(n):
-                index = m + n * i + j
-                variable[index]["isEvidence"] = 1
-                if L[i, j] == 1:
-                    variable[index]["initialValue"] = 2
-                elif L[i, j] == 0:
-                    variable[index]["initialValue"] = 1
-                elif L[i, j] == -1:
-                    variable[index]["initialValue"] = 0
-                else:
-                    raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
-                                     "Valid values are 1, 0, and -1. " % i, j, L[i, j])
-                variable[index]["dataType"] = 0
-                variable[index]["cardinality"] = 3
-
+        L_coo = L.tocoo()
+        for L_index in range(L_coo.nnz):
+            data, i, j = L_coo.data[L_index], L_coo.row[L_index], L_coo.col[L_index]
+            index = m + n * i + j
+            if data == 1:
+                variable[index]["initialValue"] = 2
+            elif data == 0:
+                variable[index]["initialValue"] = 1
+            elif data == -1:
+                variable[index]["initialValue"] = 0
+            else:
+                raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
+                                 "Valid values are 1, 0, and -1. " % (i, j, data))
 
         #
         # Compiles factor and ftv matrices

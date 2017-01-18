@@ -55,6 +55,13 @@ def get_text_between(c):
         raise ValueError("Only applicable to binary Candidates")
 
 
+def is_inverted(c):
+    """Returns True if the ordering of the candidates in the sentence is inverted."""
+    if len(c.get_arguments()) != 2:
+        raise ValueError("Only applicable to binary Candidates")
+    return c[0].get_word_start() > c[1].get_word_start()
+
+
 def get_between_tokens(c, attrib='words', n_max=1, case_sensitive=False):
     """
     TODO: write doc_string

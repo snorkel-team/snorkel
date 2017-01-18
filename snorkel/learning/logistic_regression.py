@@ -43,6 +43,11 @@ class LogisticRegression(TFNoiseAwareModel):
             tf.not_equal(w, tf.constant(0, tf.float32)), tf.int32
         ))
 
+    def _check_input(self, X):
+        if issparse(X):
+            raise Exception("Sparse input matrix. Use SparseLogisticRegression")
+        return X
+
     def _run_batch(self, X_train, y_train, i, r):
         """Run a single batch update"""
         # Get batch tensors
@@ -69,6 +74,7 @@ class LogisticRegression(TFNoiseAwareModel):
             @rebalance: rebalance training examples?
         """
         # Build model
+        X = self._check_input(X)
         verbose = print_freq > 0
         if verbose:
             print("[{0}] lr={1} l1={2} l2={3}".format(
@@ -107,7 +113,7 @@ class LogisticRegression(TFNoiseAwareModel):
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))
 
     def marginals(self, X_test):
-        X = X_test.todense() if issparse(X_test) else X_test
+        X_test = self._check_input(X_test)
         return np.ravel(self.session.run([self.prediction], {self.X: X}))
 
     def save_info(self, model_name):
@@ -163,6 +169,12 @@ class SparseLogisticRegression(LogisticRegression):
             tf.not_equal(w, tf.constant(0, tf.float32)), tf.int32
         ))
 
+    def _check_input(self, X):
+        if not issparse(X):
+            msg = "Dense input matrix. Cast to sparse or use LogisticRegression"
+            raise Exception(msg)
+        return X.tocsr()
+
     def _batch_sparse_data(self, X):
         """Convert sparse batch matrix to sparse inputs for embedding lookup"""
         if not issparse(X):
@@ -193,8 +205,7 @@ class SparseLogisticRegression(LogisticRegression):
         })
 
     def marginals(self, X_test):
-        if not issparse(X_test):
-            raise Exception("Matrix X_test must be scipy.sparse type")
+        X_test = self._check_input(X_test)
         indices, shape, ids, weights = self._batch_sparse_data(X_test)
         return np.ravel(self.session.run([self.prediction], {
             self.indices: indices,

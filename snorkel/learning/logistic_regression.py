@@ -20,7 +20,7 @@ class LogisticRegression(TFNoiseAwareModel):
         super(LogisticRegression, self).__init__(save_file=save_file, name=name)
 
     def _build(self):
-        # TODO: switch to sparse variables
+        # Define inputs and variables
         self.X = tf.placeholder(tf.float32, (None, self.d))
         self.Y = tf.placeholder(tf.float32, (None, 1))
         w = tf.Variable(tf.random_normal((self.d, 1), mean=0, stddev=0.01))
@@ -37,6 +37,17 @@ class LogisticRegression(TFNoiseAwareModel):
         ).minimize(self.loss)
         self.prediction = tf.nn.sigmoid(h)
         self.save_dict = {'w': w, 'b': b}
+
+    def _run_batch(self, X_train, y_train, i, r):
+        """Run a single batch update"""
+        # Get batch tensors
+        sparse  = issparse(X_train)
+        x_batch = X_train[i:r, :].todense() if sparse else X_train[i:r, :]
+        y_batch = y_train[i:r].reshape((r-i, 1))
+        # Run training step and evaluate loss function                  
+        return self.session.run([self.loss, self.train_fn], {
+            self.X: x_batch, self.Y: y_batch,
+        })[0]
 
     def train(self, X, training_marginals, n_epochs=10, lr=0.01,
         batch_size=100, l1_penalty=0.0, l2_penalty=0.0, print_freq=5,
@@ -80,16 +91,8 @@ class LogisticRegression(TFNoiseAwareModel):
         for t in xrange(n_epochs):
             epoch_loss = 0.0
             for i in range(0, n, batch_size):
-                # Get batch tensors
                 r = min(n-1, i+batch_size)
-                x_batch = X_train[i:r, :].todense()
-                y_batch = y_train[i:r]
-                y_batch = y_batch.reshape((len(y_batch), 1))
-                # Run training step and evaluate loss function                  
-                epoch_loss += self.session.run([self.loss, self.train_fn], {
-                    self.X: x_batch,
-                    self.Y: y_batch,
-                })[0]
+                epoch_loss += self._run_batch(X_train, y_train, i, r)
             # Print training stats
             if verbose and (t % print_freq == 0 or t in [0, (n_epochs-1)]):
                 print("[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(

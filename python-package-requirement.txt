@@ -13,4 +13,5 @@ requests
 scipy>=0.18
 sklearn
 sqlalchemy>=1.0.14
+tensorflow>=0.12.1
 theano>=0.8.2

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 
 from .meta import SnorkelBase
@@ -14,9 +14,10 @@ class Candidate(SnorkelBase):
     this class directly.
     """
     __tablename__ = 'candidate'
-    id    = Column(Integer, primary_key=True)
-    type  = Column(String, nullable=False)
-    split = Column(Integer, nullable=False, default=0, index=True)
+    id                = Column(Integer, primary_key=True)
+    type              = Column(String, nullable=False)
+    split             = Column(Integer, nullable=False, default=0, index=True)
+    training_marginal = Column(Float, nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',

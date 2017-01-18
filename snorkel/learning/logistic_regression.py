@@ -158,7 +158,6 @@ class SparseLogisticRegression(LogisticRegression):
         ).minimize(self.loss)
         self.prediction = tf.nn.sigmoid(h)
         self.save_dict = {'w': w, 'b': b}
-        # Return nnz operation
         # Get nnz operation
         self.nnz = tf.reduce_sum(tf.cast(
             tf.not_equal(w, tf.constant(0, tf.float32)), tf.int32

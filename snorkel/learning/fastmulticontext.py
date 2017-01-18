@@ -1,15 +1,38 @@
 from __future__ import print_function
 
 import concurrent.futures
-import numpy as np
 import numba
+import numpy as np
+import time
 
 from collections import defaultdict
+from disc_learning import NoiseAwareModel
 from math import exp, log
-import time
 
 
 MIN_LR = 1e-6
+
+
+class FMCT(NoiseAwareModel):
+    """fastmulticontext"""
+    def __init__(self, preprocess_function=None):
+        self.fmct         = None
+        self.w            = None
+        self.X_train      = None
+        self.preprocess_f = preprocess_function
+
+    def train(self, training_marginals, embed_matrices, **hyperparams):
+        """
+        Train method for fastmulticontext
+        training_marginals: marginal probabilities for training examples
+        embed_matrices: list of matrices to embed
+        hyperparams: fmct hyperparams, including raw_xs
+        """
+        self.fmct = fastmulticontext(self.preprocess_f)
+        self.fmct.train(training_marginals, embed_matrices, **hyperparams)
+
+    def marginals(self, embed_matrices, raw_xs=None):
+        return self.fmct.predict(embed_matrices, raw_xs)
 
 
 def get_matrix_keys(matrices):

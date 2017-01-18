@@ -29,13 +29,13 @@ def get_token_count_feats(candidate, context, attr, ngram, stopwords):
 
 def get_document_token_count_feats_base(candidate, attr, ngram, stopwords):
     """Apply @get_token_count_feats over the parent @Document of @candidate"""
-    doc = candidate.get_parent().parent
+    doc = candidate.get_parent().get_parent()
     return get_token_count_feats(candidate, doc, attr, ngram, stopwords)
 
 
 def get_sentence_token_count_feats_base(candidate, attr, ngram, stopwords):
     """Apply @get_token_count_feats over the parent @Sentence of @candidate"""
-    sentence = candidate.get_parent().parent
+    sentence = candidate.get_parent().get_parent()
     return get_token_count_feats(candidate, sentence, attr, ngram, stopwords)
 
 

@@ -1,7 +1,8 @@
-from .utils import ProgressBar
 from multiprocessing import Process, JoinableQueue
 from Queue import Empty
-from .models.meta import new_sessionmaker
+
+from .models.meta import new_sessionmaker, snorkel_conn_string
+from .utils import ProgressBar
 
 
 QUEUE_TIMEOUT = 3
@@ -75,6 +76,10 @@ class UDFRunner(object):
         
     def apply_mt(self, xs, parallelism, **kwargs):
         """Run the UDF multi-threaded using python multiprocessing"""
+        if snorkel_conn_string.startswith('sqlite'):
+            raise ValueError('Multiprocessing with SQLite is not supported. Please use a different database backend,'
+                             ' such as PostgreSQL.')
+
         # Fill a JoinableQueue with input objects
         in_queue = JoinableQueue()
         for x in xs:

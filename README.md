@@ -28,7 +28,8 @@ Surprisingly, by modeling a noisy training set creation process in this way, we 
 ### References
 * _Data Programming: Creating Large Training Sets, Quickly_, ([NIPS 2016](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly))
 * _Data Programming with DDLite: Putting Humans in a Different Part of the Loop_, ([HILDA @ SIGMOD 2016](http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf))
-* Data Programming: ML with Weak Supervision([blog](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html))
+* _Snorkel: A System for Lightweight Extraction_, ([CIDR 2017](http://cidrdb.org/cidr2017/gongshow/abstracts/cidr2017_73.pdf))
+* Data Programming: ML with Weak Supervision ([blog](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html))
 
 ## Installation / dependencies
 

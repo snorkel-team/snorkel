@@ -95,8 +95,9 @@ class LogisticRegression(TFNoiseAwareModel):
         batch_size = min(batch_size, n)
         if verbose:
             st = time()
-            print("[{0}] Training model  #epochs={1}  batch={2}".format(
-                self.name, n_epochs, batch_size
+            print("[{0}] Training model".format(self.name))
+            print("[{0}] #examples={1}  #epochs={2}  batch size={3}".format(
+                self.name, n, n_epochs, batch_size
             ))
         self.session.run(tf.global_variables_initializer())
         for t in xrange(n_epochs):

@@ -1,6 +1,6 @@
 from .constants import *
 from .disc_learning import NoiseAwareModel
-from .utils import marginals_to_labels, MentionScorer, odds_to_prob
+from .utils import MentionScorer
 from numbskull import NumbSkull
 from numbskull.inference import FACTORS
 from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
@@ -194,8 +194,8 @@ class GenerativeModel(object):
 
     def train(self, L, y=None, deps=(), init_acc = 1.0, epochs=100, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
               truncation=10, burn_in=50, timer=None):
-	step_size = step_size or 1.0 / L.shape[0]
-	reg_param_scaled = reg_param / L.shape[0]
+        step_size = step_size or 1.0 / L.shape[0]
+        reg_param_scaled = reg_param / L.shape[0]
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
@@ -219,30 +219,34 @@ class GenerativeModel(object):
             logp_true = self.weights.class_prior
             logp_false = -1 * self.weights.class_prior
 
-            for _, j in zip(*L[i].nonzero()):
-                if L[i, j] == 1:
+            l_i = L[i].tocoo()
+
+            for l_index1 in range(l_i.nnz):
+                data_j, j = l_i.data[l_index1], l_i.col[l_index1]
+                if data_j == 1:
                     logp_true  += self.weights.lf_accuracy_log_odds[j]
                     logp_false -= self.weights.lf_accuracy_log_odds[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
-                elif L[i, j] == -1:
+                elif data_j == -1:
                     logp_true  -= self.weights.lf_accuracy_log_odds[j]
                     logp_false += self.weights.lf_accuracy_log_odds[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
                 else:
-                    ValueError("Illegal value at %d, %d: %d. Must be in {-1, 0, 1}." % (i, j, L[i, j]))
+                    ValueError("Illegal value at %d, %d: %d. Must be in {-1, 0, 1}." % (i, j, data_j))
 
-                for _, k in zip(*L[i].nonzero()):
+                for l_index2 in range(l_i.nnz):
+                    data_k, k = l_i.data[l_index2], l_i.col[l_index2]
                     if j != k:
-                        if L[i, j] == -1 and L[i, k] == 1:
+                        if data_j == -1 and data_k == 1:
                             logp_true += self.weights.dep_fixing[j, k]
-                        elif L[i, j] == 1 and L[i, k] == -1:
+                        elif data_j == 1 and data_k == -1:
                             logp_false += self.weights.dep_fixing[j, k]
 
-                        if L[i, j] == 1 and L[i, k] == 1:
+                        if data_j == 1 and data_k == 1:
                             logp_true += self.weights.dep_reinforcing[j, k]
-                        elif L[i, j] == -1 and L[i, k] == -1:
+                        elif data_j == -1 and data_k == -1:
                             logp_false += self.weights.dep_reinforcing[j, k]
 
             marginals[i] = 1 / (1 + np.exp(logp_false - logp_true))
@@ -366,23 +370,25 @@ class GenerativeModel(object):
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = 2
 
+        for index in range(m, m + m * n):
+            variable[index]["isEvidence"] = 1
+            variable[index]["initialValue"] = 1
+            variable[index]["dataType"] = 0
+            variable[index]["cardinality"] = 3
 
-        for i in range(m):
-            for j in range(n):
-                index = m + n * i + j
-                variable[index]["isEvidence"] = 1
-                if L[i, j] == 1:
-                    variable[index]["initialValue"] = 2
-                elif L[i, j] == 0:
-                    variable[index]["initialValue"] = 1
-                elif L[i, j] == -1:
-                    variable[index]["initialValue"] = 0
-                else:
-                    raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
-                                     "Valid values are 1, 0, and -1. " % i, j, L[i, j])
-                variable[index]["dataType"] = 0
-                variable[index]["cardinality"] = 3
-
+        L_coo = L.tocoo()
+        for L_index in range(L_coo.nnz):
+            data, i, j = L_coo.data[L_index], L_coo.row[L_index], L_coo.col[L_index]
+            index = m + n * i + j
+            if data == 1:
+                variable[index]["initialValue"] = 2
+            elif data == 0:
+                variable[index]["initialValue"] = 1
+            elif data == -1:
+                variable[index]["initialValue"] = 0
+            else:
+                raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
+                                 "Valid values are 1, 0, and -1. " % (i, j, data))
 
         #
         # Compiles factor and ftv matrices

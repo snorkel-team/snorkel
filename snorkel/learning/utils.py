@@ -11,6 +11,51 @@ matplotlib.use('Agg')
 warnings.filterwarnings("ignore", module="matplotlib")
 
 
+class LabelBalancer(object):
+    def __init__(self, y):
+        """Utility class to rebalance training labels
+        For example, to get the indices of a training set
+        with labels y and around 90 percent negative examples,
+            LabelBalancer(y).get_train_idxs(rebalance=0.1)
+        """
+        self.y = np.ravel(y)
+    
+    def _get_pos(self, split):
+        return np.where(self.y > (split + 1e-6))[0]
+
+    def _get_neg(self, split):
+        return np.where(self.y < (split - 1e-6))[0]
+    
+    def _try_frac(self, m, n, pn):
+        # Return (a, b) s.t. a <= m, b <= n
+        # and b / a is as close to pn as possible
+        r = int(round(float(pn * m) / (1.0-pn)))
+        s = int(round(float((1.0-pn) * n) / pn))
+        return (m,r) if r <= n else ((s,n) if s <= m else (m,n))
+
+    def _get_counts(self, nneg, npos, frac_pos):
+        if frac_pos > 0.5:
+            return self._try_frac(nneg, npos, frac_pos)
+        else:
+            return self._try_frac(npos, nneg, 1.0-frac_pos)[::-1]
+
+    def get_train_idxs(self, rebalance=False, split=0.5):
+        """Get training indices based on @y
+            @rebalance: bool or fraction of positive examples desired
+                        If True, fraction is 0.5. If False, no balancing.
+            @split: Split point for positive and negative classes
+        """
+        pos, neg = self._get_pos(split), self._get_neg(split)
+        if rebalance:
+            p = 0.5 if rebalance == True else rebalance
+            n_neg, n_pos = self._get_counts(len(neg), len(pos), p)
+            pos = np.random.choice(pos, size=n_pos, replace=False)
+            neg = np.random.choice(neg, size=n_neg, replace=False)
+        idxs = np.concatenate([pos, neg])
+        np.random.shuffle(idxs)
+        return idxs
+
+
 class Scorer(object):
     """Abstract type for scorers"""
     def __init__(self, test_candidates, test_labels, gold_candidate_set=None):
@@ -110,20 +155,7 @@ def scores_from_counts(tp, fp, tn, fn):
     prec = float(len(tp)) / (len(tp) + len(fp)) if len(tp) > 0 else 0
     rec = float(len(tp)) / (len(tp) + len(fn)) if len(tp) > 0 else 0
     f1 = 2.0 * (prec * rec) / (prec + rec) if (prec + rec) > 0 else 0
-    return prec, rec, f1    
-
-
-# Get training indexes outside of split range and optionally rebalanced
-def get_train_idxs(marginals, rebalance=False, split_lo=0.5, split_hi=0.5):
-    pos = np.where(marginals < (split_lo - 1e-6))[0]
-    neg = np.where(marginals > (split_hi + 1e-6))[0]
-    if rebalance:
-        k = min(len(pos), len(neg))
-        pos = np.random.choice(pos, size=k, replace=False)
-        neg = np.random.choice(neg, size=k, replace=False)
-    idxs = np.concatenate([pos, neg])
-    np.random.shuffle(idxs)
-    return idxs
+    return prec, rec, f1
 
 
 def plot_prediction_probability(probs):

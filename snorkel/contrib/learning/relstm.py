@@ -2,7 +2,7 @@ import cPickle
 import numpy as np
 import tensorflow as tf
 
-from snorkel.learning import get_train_idxs, TFNoiseAwareModel
+from snorkel.learning import LabelBalancer, TFNoiseAwareModel
 from time import time
 
 
@@ -147,7 +147,9 @@ class reLSTM(TFNoiseAwareModel):
             @lr: learning rate
             @dim: embedding dimension
             @batch_size: batch size for mini-batch SGD
-            @rebalance: rebalance training examples?
+            @rebalance: bool or fraction of positive examples desired
+                        If True, defaults to standard 0.5 class balance.
+                        If False, no class balancing.
             @dropout_rate: rate for tensorflow.nn.dropout(...)
             @max_sentence_length: maximum sentence length for candidates
             @print_freq: number of epochs after which to print status
@@ -168,7 +170,7 @@ class reLSTM(TFNoiseAwareModel):
         self.n_v = self.word_dict.s + 1
         self._build()
         # Get training indices
-        train_idxs = get_train_idxs(training_marginals, rebalance=rebalance)
+        train_idxs = LabelBalancer(training_marginals).get_train_idxs(rebalance)
         x_train = [x_train[j] for j in train_idxs]
         y_train = np.ravel(training_marginals)[train_idxs]
         # Get max sentence size

@@ -148,6 +148,8 @@ class reLSTM(TFNoiseAwareModel):
             @dim: embedding dimension
             @batch_size: batch size for mini-batch SGD
             @rebalance: bool or fraction of positive examples desired
+                        If True, defaults to standard 0.5 class balance.
+                        If False, no class balancing.
             @dropout_rate: rate for tensorflow.nn.dropout(...)
             @max_sentence_length: maximum sentence length for candidates
             @print_freq: number of epochs after which to print status

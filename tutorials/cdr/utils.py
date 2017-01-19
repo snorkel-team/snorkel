@@ -3,7 +3,7 @@ import cPickle
 from collections import defaultdict
 from itertools import product
 from pandas import DataFrame
-from snorkel.learning import FMCT
+from snorkel.learning.fastmulticontext import FMCT
 from snorkel.learning.utils import print_scores, RandomSearch, Scorer
 from string import punctuation
 
@@ -26,8 +26,10 @@ def offsets_to_token(left, right, offset_array, lemmas, punc=set(punctuation)):
 
 
 class CDRTagger(object):
-    
-    tag_dict = cPickle.load(open('data/unary_tags.pkl', 'rb'))
+
+    def __init__(self, fname='data/unary_tags.pkl'):   
+        with open(fname, 'rb') as f:
+            self.tag_dict = cPickle.load(f)
 
     def tag(self, parts):
         pubmed_id, _, _, sent_start, sent_end = parts['stable_id'].split(':')
@@ -47,8 +49,12 @@ class CDRTagger(object):
 
 class TaggerOneTagger(CDRTagger):
     
-    tag_dict = cPickle.load(open('data/taggerone_unary_tags_cdr.pkl', 'rb'))
-    chem_mesh_dict, dis_mesh_dict = cPickle.load(open('data/chem_dis_mesh_dicts.pkl', 'rb'))
+    def __init__(self, fname_tags='data/taggerone_unary_tags_cdr.pkl',
+        fname_mesh='data/chem_dis_mesh_dicts.pkl'):
+        with open(fname_tags, 'rb') as f:
+            self.tag_dict = cPickle.load(f)
+        with open(fname_mesh, 'rb') as f:
+            self.chem_mesh_dict, self.dis_mesh_dict = cPickle.load(f)
 
     def tag(self, parts):
         parts = super(TaggerOneTagger, self).tag(parts)
@@ -65,7 +71,7 @@ class TaggerOneTagger(CDRTagger):
         return parts
 
 
-###########################################################################################################
+################################################################################
 
 
 def get_doc_from_id(doc_id, corpus):

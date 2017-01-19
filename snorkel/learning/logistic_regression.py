@@ -72,6 +72,8 @@ class LogisticRegression(TFNoiseAwareModel):
             @l2_penalty: l2 regularization strength
             @print_freq: number of epochs after which to print status
             @rebalance: bool or fraction of positive examples desired
+                        If True, defaults to standard 0.5 class balance.
+                        If False, no class balancing.
         """
         # Build model
         X = self._check_input(X)

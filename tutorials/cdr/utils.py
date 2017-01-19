@@ -1,3 +1,4 @@
+import bz2
 import cPickle
 import numpy as np
 
@@ -28,8 +29,8 @@ def offsets_to_token(left, right, offset_array, lemmas, punc=set(punctuation)):
 
 class CDRTagger(object):
 
-    def __init__(self, fname='data/unary_tags.pkl'):   
-        with open(fname, 'rb') as f:
+    def __init__(self, fname='data/unary_tags.pkl.bz2'):   
+        with bz2.BZ2File(fname, 'rb') as f:
             self.tag_dict = cPickle.load(f)
 
     def tag(self, parts):
@@ -50,11 +51,11 @@ class CDRTagger(object):
 
 class TaggerOneTagger(CDRTagger):
     
-    def __init__(self, fname_tags='data/taggerone_unary_tags_cdr.pkl',
-        fname_mesh='data/chem_dis_mesh_dicts.pkl'):
-        with open(fname_tags, 'rb') as f:
+    def __init__(self, fname_tags='data/taggerone_unary_tags_cdr.pkl.bz2',
+        fname_mesh='data/chem_dis_mesh_dicts.pkl.bz2'):
+        with bz2.BZ2File(fname_tags, 'rb') as f:
             self.tag_dict = cPickle.load(f)
-        with open(fname_mesh, 'rb') as f:
+        with bz2.BZ2File(fname_mesh, 'rb') as f:
             self.chem_mesh_dict, self.dis_mesh_dict = cPickle.load(f)
 
     def tag(self, parts):

@@ -167,7 +167,25 @@ class Ngrams(CandidateSpace):
                             yield ts2
 
 
-class PretaggedCandidateExtractor(UDF):
+class PretaggedCandidateExtractor(UDFRunner):
+    """UDFRunner for PretaggedCandidateExtractorUDF"""
+    def __init__(self, candidate_class, entity_types, self_relations=False,
+     nested_relations=False, symmetric_relations=True, entity_sep='~@~'):
+        super(PretaggedCandidateExtractor, self).__init__(
+            PretaggedCandidateExtractorUDF, candidate_class=candidate_class,
+            entity_types=entity_types, self_relations=self_relations,
+            nested_relations=nested_relations, entity_sep=entity_sep,
+            symmetric_relations=symmetric_relations,
+        )
+
+    def apply(self, xs, split=0, **kwargs):
+        super(PretaggedCandidateExtractor, self).apply(xs, split=split, **kwargs)
+
+    def clear(self, session, split, **kwargs):
+        session.query(Candidate).filter(Candidate.split == split).delete()
+
+
+class PretaggedCandidateExtractorUDF(UDF):
     """
     An extractor for Sentences with entities pre-tagged, and stored in the entity_types and entity_cids
     fields.
@@ -181,11 +199,10 @@ class PretaggedCandidateExtractor(UDF):
         self.symmetric_relations = symmetric_relations
         self.entity_sep          = entity_sep
 
-        super(PretaggedCandidateExtractor, self).__init__(**kwargs)
+        super(PretaggedCandidateExtractorUDF, self).__init__(**kwargs)
 
-    def apply(self, context, split=0, check_for_existing=True):
-        """
-        Extract Candidates from a Context"""
+    def apply(self, context, clear, split, check_for_existing=True, **kwargs):
+        """Extract Candidates from a Context"""
         # For now, just handle Sentences
         if not isinstance(context, Sentence):
             raise NotImplementedError("%s is currently only implemented for Sentence contexts." % self.__name__)

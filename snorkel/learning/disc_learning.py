@@ -6,6 +6,10 @@ from .utils import marginals_to_labels, MentionScorer
 class NoiseAwareModel(object):
     """Simple abstract base class for a model."""
 
+    # Set this class variable to True if train, marginals, predict, and score,
+    # take a list of @Candidates as the first argument
+    representation = False
+
     def __init__(self, name):
         self.name = name
 
@@ -28,7 +32,7 @@ class NoiseAwareModel(object):
         # Get the test candidates
         test_candidates = [
             X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])
-        ]
+        ] if not self.representation else X_test
         # Initialize scorer
         s = scorer(test_candidates, test_labels, gold_candidate_set)
         test_marginals  = self.marginals(X_test, **kwargs)

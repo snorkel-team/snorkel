@@ -8,6 +8,8 @@ from time import time
 
 class reLSTM(TFNoiseAwareModel):
 
+    representation = True
+
     def __init__(self, save_file=None, name='reLSTM'):
         """LSTM for relation extraction"""
         # Define metadata

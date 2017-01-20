@@ -96,6 +96,11 @@ script:
   - runipy intro/Intro_Tutorial_4.ipynb
   - runipy intro/Intro_Tutorial_5.ipynb
 
+  # Run CDR tutorials
+  - runipy cdr/CDR_Tutorial_1.ipynb
+  - runipy cdr/CDR_Tutorial_2.ipynb
+  - runipy cdr/CDR_Tutorial_3.ipynb
+
   - cd ..
 
   # Run test modules

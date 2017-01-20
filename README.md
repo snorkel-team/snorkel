@@ -37,6 +37,10 @@ Snorkel uses Python 2.7 and requires [a few python packages](python-package-requ
 ```bash
 pip install --requirement python-package-requirement.txt
 ```
+If a package installation fails, then all of the packages below it in `python-package-requirement.txt` will fail to install as well. This can be avoided by running the following command instead of the above:
+```bash
+cat python-package-requirement.txt | xargs -n 1 pip install
+```
 Note that you may have to run `pip2` if you have Python3 installed on your system, and that `sudo` can be prepended to install dependencies system wide if this is an option and the above does not work.
 For some pointers on difficulties in using `source` in shell, see [Issue 506](https://github.com/HazyResearch/snorkel/issues/506).
 

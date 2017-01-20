@@ -1,0 +1,1553 @@
+<?xml version='1.0' encoding='UTF-8'?><!DOCTYPE collection SYSTEM 'BioC.dtd'>
+<collection>
+<source>PubTator</source>
+<date>0/0/0</date>
+<key>PubTator.key</key>
+<document>
+<id>227508</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>Naloxone reverses the antihypertensive effect of clonidine.</text>
+<annotation id='0'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D009270</infon>
+<location offset='0' length='8' />
+<text>Naloxone</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D003000</infon>
+<location offset='49' length='9' />
+<text>clonidine</text>
+</annotation>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>60</offset>
+<text>In unanesthetized, spontaneously hypertensive rats the decrease in blood pressure and heart rate produced by intravenous clonidine, 5 to 20 micrograms/kg, was inhibited or reversed by nalozone, 0.2 to 2 mg/kg. The hypotensive effect of 100 mg/kg alpha-methyldopa was also partially reversed by naloxone. Naloxone alone did not affect either blood pressure or heart rate. In brain membranes from spontaneously hypertensive rats clonidine, 10(-8) to 10(-5) M, did not influence stereoselective binding of [3H]-naloxone (8 nM), and naloxone, 10(-8) to 10(-4) M, did not influence clonidine-suppressible binding of [3H]-dihydroergocryptine (1 nM). These findings indicate that in spontaneously hypertensive rats the effects of central alpha-adrenoceptor stimulation involve activation of opiate receptors. As naloxone and clonidine do not appear to interact with the same receptor site, the observed functional antagonism suggests the release of an endogenous opiate by clonidine or alpha-methyldopa and the possible role of the opiate in the central control of sympathetic tone.</text>
+<annotation id='2'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D006973</infon>
+<location offset='93' length='12' />
+<text>hypertensive</text>
+</annotation>
+<annotation id='3'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D003000</infon>
+<location offset='181' length='9' />
+<text>clonidine</text>
+</annotation>
+<annotation id='4'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">-1</infon>
+<location offset='244' length='8' />
+<text>nalozone</text>
+</annotation>
+<annotation id='5'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D007022</infon>
+<location offset='274' length='11' />
+<text>hypotensive</text>
+</annotation>
+<annotation id='6'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008750</infon>
+<location offset='306' length='16' />
+<text>alpha-methyldopa</text>
+</annotation>
+<annotation id='7'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D009270</infon>
+<location offset='354' length='8' />
+<text>naloxone</text>
+</annotation>
+<annotation id='8'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D009270</infon>
+<location offset='364' length='8' />
+<text>Naloxone</text>
+</annotation>
+<annotation id='9'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D006973</infon>
+<location offset='469' length='12' />
+<text>hypertensive</text>
+</annotation>
+<annotation id='10'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D003000</infon>
+<location offset='487' length='9' />
+<text>clonidine</text>
+</annotation>
+<annotation id='11'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">-1</infon>
+<location offset='563' length='13' />
+<text>[3H]-naloxone</text>
+</annotation>
+<annotation id='12'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D009270</infon>
+<location offset='589' length='8' />
+<text>naloxone</text>
+</annotation>
+<annotation id='13'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D003000</infon>
+<location offset='637' length='9' />
+<text>clonidine</text>
+</annotation>
+<annotation id='14'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">-1</infon>
+<location offset='671' length='24' />
+<text>[3H]-dihydroergocryptine</text>
+</annotation>
+<annotation id='15'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D006973</infon>
+<location offset='750' length='12' />
+<text>hypertensive</text>
+</annotation>
+<annotation id='16'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D009270</infon>
+<location offset='865' length='8' />
+<text>naloxone</text>
+</annotation>
+<annotation id='17'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D003000</infon>
+<location offset='878' length='9' />
+<text>clonidine</text>
+</annotation>
+<annotation id='18'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D003000</infon>
+<location offset='1026' length='9' />
+<text>clonidine</text>
+</annotation>
+<annotation id='19'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008750</infon>
+<location offset='1039' length='16' />
+<text>alpha-methyldopa</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D008750</infon>
+<infon key="Disease">D007022</infon>
+</relation>
+</document>
+<document>
+<id>354896</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>Lidocaine-induced cardiac asystole.</text>
+<annotation id='0'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008012</infon>
+<location offset='0' length='9' />
+<text>Lidocaine</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D006323</infon>
+<location offset='18' length='16' />
+<text>cardiac asystole</text>
+</annotation>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>36</offset>
+<text>Intravenous administration of a single 50-mg bolus of lidocaine in a 67-year-old man resulted in profound depression of the activity of the sinoatrial and atrioventricular nodal pacemakers. The patient had no apparent associated conditions which might have predisposed him to the development of bradyarrhythmias; and, thus, this probably represented a true idiosyncrasy to lidocaine.</text>
+<annotation id='2'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008012</infon>
+<location offset='90' length='9' />
+<text>lidocaine</text>
+</annotation>
+<annotation id='3'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D003866</infon>
+<location offset='142' length='10' />
+<text>depression</text>
+</annotation>
+<annotation id='4'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D001919</infon>
+<location offset='331' length='16' />
+<text>bradyarrhythmias</text>
+</annotation>
+<annotation id='5'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008012</infon>
+<location offset='409' length='9' />
+<text>lidocaine</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D008012</infon>
+<infon key="Disease">D006323</infon>
+</relation>
+</document>
+<document>
+<id>435349</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>Suxamethonium infusion rate and observed fasciculations. A dose-response study.</text>
+<annotation id='0'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D013390</infon>
+<location offset='0' length='13' />
+<text>Suxamethonium</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D005207</infon>
+<location offset='41' length='14' />
+<text>fasciculations</text>
+</annotation>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>80</offset>
+<text>Suxamethonium chloride (Sch) was administered i.v. to 36 adult males at six rates: 0.25 mg s-1 to 20 mg s-1. The infusion was discontinued either when there was no muscular response to tetanic stimulation of the ulnar nerve or when Sch 120 mg was exceeded. Six additional patients received a 30-mg i.v. bolus dose. Fasciculations in six areas of the body were scored from 0 to 3 and summated as a total fasciculation score. The times to first fasciculation, twitch suppression and tetanus suppression were inversely related to the infusion rates. Fasciculations in the six areas and the total fasciculation score were related directly to the rate of infusion. Total fasciculation scores in the 30-mg bolus group and the 5-mg s-1 and 20-mg s-1 infusion groups were not significantly different.</text>
+<annotation id='2'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D013390</infon>
+<location offset='80' length='22' />
+<text>Suxamethonium chloride</text>
+</annotation>
+<annotation id='3'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D013390</infon>
+<location offset='104' length='3' />
+<text>Sch</text>
+</annotation>
+<annotation id='4'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D013746</infon>
+<location offset='265' length='7' />
+<text>tetanic</text>
+</annotation>
+<annotation id='5'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D013390</infon>
+<location offset='312' length='3' />
+<text>Sch</text>
+</annotation>
+<annotation id='6'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D005207</infon>
+<location offset='395' length='14' />
+<text>Fasciculations</text>
+</annotation>
+<annotation id='7'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D005207</infon>
+<location offset='483' length='13' />
+<text>fasciculation</text>
+</annotation>
+<annotation id='8'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D005207</infon>
+<location offset='523' length='13' />
+<text>fasciculation</text>
+</annotation>
+<annotation id='9'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D013746</infon>
+<location offset='538' length='6' />
+<text>twitch</text>
+</annotation>
+<annotation id='10'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D013746</infon>
+<location offset='561' length='7' />
+<text>tetanus</text>
+</annotation>
+<annotation id='11'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D005207</infon>
+<location offset='627' length='14' />
+<text>Fasciculations</text>
+</annotation>
+<annotation id='12'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D005207</infon>
+<location offset='673' length='13' />
+<text>fasciculation</text>
+</annotation>
+<annotation id='13'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D005207</infon>
+<location offset='746' length='13' />
+<text>fasciculation</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D013390</infon>
+<infon key="Disease">D005207</infon>
+</relation>
+</document>
+<document>
+<id>603022</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>Galanthamine hydrobromide, a longer acting anticholinesterase drug, in the treatment of the central effects of scopolamine (Hyoscine).</text>
+<annotation id='0'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D005702</infon>
+<location offset='0' length='25' />
+<text>Galanthamine hydrobromide</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D012601</infon>
+<location offset='111' length='11' />
+<text>scopolamine</text>
+</annotation>
+<annotation id='2'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D012601</infon>
+<location offset='124' length='8' />
+<text>Hyoscine</text>
+</annotation>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>135</offset>
+<text>Galanthamine hydrobromide, an anticholinesterase drug capable of penetrating the blood-brain barrier, was used in a patient demonstrating central effects of scopolamine (hyoscine) overdosage. It is longer acting than physostigmine and is used in anaesthesia to reverse the non-depolarizing neuromuscular block. However, studies into the dose necessary to combating scopolamine intoxication are indicated.</text>
+<annotation id='3'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D005702</infon>
+<location offset='135' length='25' />
+<text>Galanthamine hydrobromide</text>
+</annotation>
+<annotation id='4'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D012601</infon>
+<location offset='292' length='11' />
+<text>scopolamine</text>
+</annotation>
+<annotation id='5'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D012601</infon>
+<location offset='305' length='8' />
+<text>hyoscine</text>
+</annotation>
+<annotation id='6'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D062787</infon>
+<location offset='315' length='10' />
+<text>overdosage</text>
+</annotation>
+<annotation id='7'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D010830</infon>
+<location offset='352' length='13' />
+<text>physostigmine</text>
+</annotation>
+<annotation id='8'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D012601</infon>
+<location offset='500' length='11' />
+<text>scopolamine</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D012601</infon>
+<infon key="Disease">D062787</infon>
+</relation>
+</document>
+<document>
+<id>1378968</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>Effects of uninephrectomy and high protein feeding on lithium-induced chronic renal failure in rats.</text>
+<annotation id='0'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='54' length='7' />
+<text>lithium</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D007676</infon>
+<location offset='70' length='21' />
+<text>chronic renal failure</text>
+</annotation>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>101</offset>
+<text>Rats with lithium-induced nephropathy were subjected to high protein (HP) feeding, uninephrectomy (NX) or a combination of these, in an attempt to induce glomerular hyperfiltration and further progression of renal failure. Newborn female Wistar rats were fed a lithium-containing diet (50 mmol/kg) for 8 weeks and then randomized to normal diet, HP diet (40 vs. 19%), NX or HP+NX for another 8 weeks. Corresponding non-lithium pretreated groups were generated. When comparing all lithium treated versus non-lithium-treated groups, lithium caused a reduction in glomerular filtration rate (GFR) without significant changes in effective renal plasma flow (as determined by a marker secreted into the proximal tubules) or lithium clearance. Consequently, lithium pretreatment caused a fall in filtration fraction and an increase in fractional Li excretion. Lithium also caused proteinuria and systolic hypertension in absence of glomerulosclerosis. HP failed to accentuante progression of renal failure and in fact tended to increase GFR and decrease plasma creatinine levels in lithium pretreated rats. NX caused an additive deterioration in GFR which, however, was ameliorated by HP. NX+HP caused a further rise in blood pressure in Li-pretreated rats. The results indicate that Li-induced nephropathy, even when the GFR is only modestly reduced, is associated with proteinuria and arterial systolic hypertension. In this model of chronic renal failure the decline in GFR is not accompanied by a corresponding fall in effective renal plasma flow, which may be the functional expression of the formation of nonfiltrating atubular glomeruli. The fractional reabsorption of tubular fluid by the proximal tubules is reduced, leaving the distal delivery unchanged.(ABSTRACT TRUNCATED AT 250 WORDS)</text>
+<annotation id='2'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='111' length='7' />
+<text>lithium</text>
+</annotation>
+<annotation id='3'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D007674</infon>
+<location offset='127' length='11' />
+<text>nephropathy</text>
+</annotation>
+<annotation id='4'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D051437</infon>
+<location offset='309' length='13' />
+<text>renal failure</text>
+</annotation>
+<annotation id='5'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='362' length='7' />
+<text>lithium</text>
+</annotation>
+<annotation id='6'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='520' length='7' />
+<text>lithium</text>
+</annotation>
+<annotation id='7'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='581' length='7' />
+<text>lithium</text>
+</annotation>
+<annotation id='8'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='608' length='7' />
+<text>lithium</text>
+</annotation>
+<annotation id='9'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='632' length='7' />
+<text>lithium</text>
+</annotation>
+<annotation id='10'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='820' length='7' />
+<text>lithium</text>
+</annotation>
+<annotation id='11'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='853' length='7' />
+<text>lithium</text>
+</annotation>
+<annotation id='12'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='941' length='2' />
+<text>Li</text>
+</annotation>
+<annotation id='13'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='955' length='7' />
+<text>Lithium</text>
+</annotation>
+<annotation id='14'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D011507</infon>
+<location offset='975' length='11' />
+<text>proteinuria</text>
+</annotation>
+<annotation id='15'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D006973</infon>
+<location offset='1000' length='12' />
+<text>hypertension</text>
+</annotation>
+<annotation id='16'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D005921</infon>
+<location offset='1027' length='18' />
+<text>glomerulosclerosis</text>
+</annotation>
+<annotation id='17'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D051437</infon>
+<location offset='1087' length='13' />
+<text>renal failure</text>
+</annotation>
+<annotation id='18'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D003404</infon>
+<location offset='1156' length='10' />
+<text>creatinine</text>
+</annotation>
+<annotation id='19'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='1177' length='7' />
+<text>lithium</text>
+</annotation>
+<annotation id='20'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='1333' length='2' />
+<text>Li</text>
+</annotation>
+<annotation id='21'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008094</infon>
+<location offset='1379' length='2' />
+<text>Li</text>
+</annotation>
+<annotation id='22'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D007674</infon>
+<location offset='1390' length='11' />
+<text>nephropathy</text>
+</annotation>
+<annotation id='23'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D011507</infon>
+<location offset='1466' length='11' />
+<text>proteinuria</text>
+</annotation>
+<annotation id='24'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D006973</infon>
+<location offset='1500' length='12' />
+<text>hypertension</text>
+</annotation>
+<annotation id='25'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D007676</infon>
+<location offset='1531' length='21' />
+<text>chronic renal failure</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D008094</infon>
+<infon key="Disease">D006973</infon>
+</relation>
+<relation id='R1'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D008094</infon>
+<infon key="Disease">D011507</infon>
+</relation>
+<relation id='R2'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D008094</infon>
+<infon key="Disease">D007676</infon>
+</relation>
+</document>
+<document>
+<id>1420741</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>Treatment of Crohn&apos;s disease with fusidic acid: an antibiotic with immunosuppressive properties similar to cyclosporin.</text>
+<annotation id='0'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D003424</infon>
+<location offset='13' length='15' />
+<text>Crohn&apos;s disease</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D005672</infon>
+<location offset='34' length='12' />
+<text>fusidic acid</text>
+</annotation>
+<annotation id='2'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D016572</infon>
+<location offset='107' length='11' />
+<text>cyclosporin</text>
+</annotation>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>120</offset>
+<text>Fusidic acid is an antibiotic with T-cell specific immunosuppressive effects similar to those of cyclosporin. Because of the need for the development of new treatments for Crohn&apos;s disease, a pilot study was undertaken to estimate the pharmacodynamics and tolerability of fusidic acid treatment in chronic active, therapy-resistant patients. Eight Crohn&apos;s disease patients were included. Fusidic acid was administered orally in a dose of 500 mg t.d.s. and the treatment was planned to last 8 weeks. The disease activity was primarily measured by a modified individual grading score. Five of 8 patients (63%) improved during fusidic acid treatment: 3 at two weeks and 2 after four weeks. There were no serious clinical side effects, but dose reduction was required in two patients because of nausea. Biochemically, an increase in alkaline phosphatases was noted in 5 of 8 cases (63%), and the greatest increases were seen in those who had elevated levels prior to treatment. All reversed to pre-treatment levels after cessation of treatment. The results of this pilot study suggest that fusidic acid may be of benefit in selected chronic active Crohn&apos;s disease patients in whom conventional treatment is ineffective. Because there seems to exist a scientific rationale for the use of fusidic acid at the cytokine level in inflammatory bowel disease, we suggest that the role of this treatment should be further investigated.</text>
+<annotation id='3'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D016572</infon>
+<location offset='217' length='11' />
+<text>cyclosporin</text>
+</annotation>
+<annotation id='4'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D003424</infon>
+<location offset='292' length='15' />
+<text>Crohn&apos;s disease</text>
+</annotation>
+<annotation id='5'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D005672</infon>
+<location offset='391' length='12' />
+<text>fusidic acid</text>
+</annotation>
+<annotation id='6'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D003424</infon>
+<location offset='467' length='15' />
+<text>Crohn&apos;s disease</text>
+</annotation>
+<annotation id='7'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D005672</infon>
+<location offset='507' length='12' />
+<text>Fusidic acid</text>
+</annotation>
+<annotation id='8'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D005672</infon>
+<location offset='743' length='12' />
+<text>fusidic acid</text>
+</annotation>
+<annotation id='9'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D009325</infon>
+<location offset='910' length='6' />
+<text>nausea</text>
+</annotation>
+<annotation id='10'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D005672</infon>
+<location offset='1205' length='12' />
+<text>fusidic acid</text>
+</annotation>
+<annotation id='11'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D003424</infon>
+<location offset='1263' length='15' />
+<text>Crohn&apos;s disease</text>
+</annotation>
+<annotation id='12'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D005672</infon>
+<location offset='1402' length='12' />
+<text>fusidic acid</text>
+</annotation>
+<annotation id='13'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D015212</infon>
+<location offset='1440' length='26' />
+<text>inflammatory bowel disease</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D005672</infon>
+<infon key="Disease">D009325</infon>
+</relation>
+</document>
+<document>
+<id>9041081</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>Effect of myopic excimer laser photorefractive keratectomy on the electrophysiologic function of the retina and optic nerve.</text>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>125</offset>
+<text>PURPOSE: To assess by electrophysiologic testing the effect of photorefractive keratectomy (PRK) on the retina and optic nerve. SETTING: Eye Clinic, S. Salvatore Hospital, L&apos;Aquila University, Italy. METHODS: Standard pattern electroretinograms (P-ERGs) and standard pattern visual evoked potentials (P-VEPs) were done in 25 eyes of 25 patients who had myopic PRK for an attempted correction between 5.00 and 15.00 diopters (D) (mean 8.00 D). Testing was done preoperatively and 3, 6, 12, and 18 months postoperatively. The contralateral eyes served as controls. During the follow-up, 3 patients (12%) developed steroid-induced elevated intraocular pressure (IOP) that resolved after corticosteroid therapy was discontinued. RESULTS: No statistically significant differences were seen between treated and control eyes nor between treated eyes preoperatively and postoperatively. CONCLUSION: Myopic excimer laser PRK did not seem to affect the posterior segment. The transient steroid-induced IOP rise did not seem to cause functional impairment.</text>
+<annotation id='0'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D013256</infon>
+<location offset='737' length='7' />
+<text>steroid</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D009798</infon>
+<location offset='753' length='29' />
+<text>elevated intraocular pressure</text>
+</annotation>
+<annotation id='2'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000305</infon>
+<location offset='809' length='14' />
+<text>corticosteroid</text>
+</annotation>
+<annotation id='3'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D013256</infon>
+<location offset='1101' length='7' />
+<text>steroid</text>
+</annotation>
+<annotation id='4'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D009798</infon>
+<location offset='1117' length='8' />
+<text>IOP rise</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D000305</infon>
+<infon key="Disease">D009798</infon>
+</relation>
+</document>
+<document>
+<id>19139001</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>Longitudinal assessment of air conduction audiograms in a phase III clinical trial of difluoromethylornithine and sulindac for prevention of sporadic colorectal adenomas.</text>
+<annotation id='0'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000518</infon>
+<location offset='86' length='23' />
+<text>difluoromethylornithine</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D013467</infon>
+<location offset='114' length='8' />
+<text>sulindac</text>
+</annotation>
+<annotation id='2'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D015179</infon>
+<location offset='150' length='19' />
+<text>colorectal adenomas</text>
+</annotation>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>171</offset>
+<text>A phase III clinical trial assessed the recurrence of adenomatous polyps after treatment for 36 months with difluoromethylornithine (DFMO) plus sulindac or matched placebos. Temporary hearing loss is a known toxicity of treatment with DFMO, thus a comprehensive approach was developed to analyze serial air conduction audiograms. The generalized estimating equation method estimated the mean difference between treatment arms with regard to change in air conduction pure tone thresholds while accounting for within-subject correlation due to repeated measurements at frequencies. Based on 290 subjects, there was an average difference of 0.50 dB between subjects treated with DFMO plus sulindac compared with those treated with placebo (95% confidence interval, -0.64 to 1.63 dB; P = 0.39), adjusted for baseline values, age, and frequencies. In the normal speech range of 500 to 3,000 Hz, an estimated difference of 0.99 dB (-0.17 to 2.14 dB; P = 0.09) was detected. Dose intensity did not add information to models. There were 14 of 151 (9.3%) in the DFMO plus sulindac group and 4 of 139 (2.9%) in the placebo group who experienced at least 15 dB hearing reduction from baseline in 2 or more consecutive frequencies across the entire range tested (P = 0.02). Follow-up air conduction done at least 6 months after end of treatment showed an adjusted mean difference in hearing thresholds of 1.08 dB (-0.81 to 2.96 dB; P = 0.26) between treatment arms. There was no significant difference in the proportion of subjects in the DFMO plus sulindac group who experienced clinically significant hearing loss compared with the placebo group. The estimated attributable risk of ototoxicity from exposure to the drug is 8.4% (95% confidence interval, -2.0% to 18.8%; P = 0.12). There is a &lt;2 dB difference in mean threshold for patients treated with DFMO plus sulindac compared with those treated with placebo.</text>
+<annotation id='3'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D018256</infon>
+<location offset='225' length='18' />
+<text>adenomatous polyps</text>
+</annotation>
+<annotation id='4'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000518</infon>
+<location offset='279' length='23' />
+<text>difluoromethylornithine</text>
+</annotation>
+<annotation id='5'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000518</infon>
+<location offset='304' length='4' />
+<text>DFMO</text>
+</annotation>
+<annotation id='6'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D013467</infon>
+<location offset='315' length='8' />
+<text>sulindac</text>
+</annotation>
+<annotation id='7'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D034381</infon>
+<location offset='355' length='12' />
+<text>hearing loss</text>
+</annotation>
+<annotation id='8'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D064420</infon>
+<location offset='379' length='8' />
+<text>toxicity</text>
+</annotation>
+<annotation id='9'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000518</infon>
+<location offset='406' length='4' />
+<text>DFMO</text>
+</annotation>
+<annotation id='10'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000518</infon>
+<location offset='847' length='4' />
+<text>DFMO</text>
+</annotation>
+<annotation id='11'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D013467</infon>
+<location offset='857' length='8' />
+<text>sulindac</text>
+</annotation>
+<annotation id='12'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000518</infon>
+<location offset='1224' length='4' />
+<text>DFMO</text>
+</annotation>
+<annotation id='13'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D013467</infon>
+<location offset='1234' length='8' />
+<text>sulindac</text>
+</annotation>
+<annotation id='14'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000518</infon>
+<location offset='1698' length='4' />
+<text>DFMO</text>
+</annotation>
+<annotation id='15'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D013467</infon>
+<location offset='1708' length='8' />
+<text>sulindac</text>
+</annotation>
+<annotation id='16'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D034381</infon>
+<location offset='1762' length='12' />
+<text>hearing loss</text>
+</annotation>
+<annotation id='17'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D006311</infon>
+<location offset='1843' length='11' />
+<text>ototoxicity</text>
+</annotation>
+<annotation id='18'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000518</infon>
+<location offset='2014' length='4' />
+<text>DFMO</text>
+</annotation>
+<annotation id='19'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D013467</infon>
+<location offset='2024' length='8' />
+<text>sulindac</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D013467</infon>
+<infon key="Disease">D034381</infon>
+</relation>
+</document>
+<document>
+<id>8841157</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>Valsartan, a new angiotensin II antagonist for the treatment of essential hypertension: a comparative study of the efficacy and safety against amlodipine.</text>
+<annotation id='0'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">C081489</infon>
+<location offset='0' length='9' />
+<text>Valsartan</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000804</infon>
+<location offset='17' length='14' />
+<text>angiotensin II</text>
+</annotation>
+<annotation id='2'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D006973</infon>
+<location offset='74' length='12' />
+<text>hypertension</text>
+</annotation>
+<annotation id='3'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D017311</infon>
+<location offset='143' length='10' />
+<text>amlodipine</text>
+</annotation>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>155</offset>
+<text>OBJECTIVE: To compare the antihypertensive efficacy of a new angiotensin II antagonist, valsartan, with a reference therapy, amlodipine. METHODS: One hundred sixty-eight adult outpatients with mild to moderate hypertension were randomly allocated in double-blind fashion and equal number to receive 80 mg valsartan or 5 mg amlodipine for 12 weeks. After 8 weeks of therapy, in patients whose blood pressure remained uncontrolled, 5 mg amlodipine was added to the initial therapy. Patients were assessed at 4, 8, and 12 weeks. The primary efficacy variable was change from baseline in mean sitting diastolic blood pressure at 8 weeks. Secondary variables included change in sitting systolic blood pressure and responder rates. RESULTS: Both valsartan and amlodipine were effective at lowering blood pressure at 4, 8, and 12 weeks. Similar decreases were observed in both groups, with no statistically significant differences between the groups for any variable analyzed. For the primary variable the difference was 0.5 mm Hg in favor of valsartan (p = 0.68; 95% confidence interval, -2.7 to 1.7). Responder rates at 8 weeks were 66.7% for valsartan and 60.2% for amlodipine (p = 0.39). Both treatments were well tolerated. The incidence of drug-related dependent edema was somewhat higher in the amlodipine group, particularly at a dose of 10 mg per day (2.4% for 80 mg valsartan; 3.6% for 5 mg amlodipine; 0% for valsartan plus 5 mg amlodipine; 14.3% for 10 mg amlodipine). CONCLUSIONS: The data show that valsartan is at least as effective as amlodipine in the treatment of mild to moderate hypertension. The results also show valsartan to be well tolerated and suggest that it is not associated with side effects characteristic of this comparator class, dihydropyridine calcium antagonists.</text>
+<annotation id='4'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000804</infon>
+<location offset='216' length='14' />
+<text>angiotensin II</text>
+</annotation>
+<annotation id='5'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">C081489</infon>
+<location offset='243' length='9' />
+<text>valsartan</text>
+</annotation>
+<annotation id='6'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D017311</infon>
+<location offset='280' length='10' />
+<text>amlodipine</text>
+</annotation>
+<annotation id='7'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D006973</infon>
+<location offset='365' length='12' />
+<text>hypertension</text>
+</annotation>
+<annotation id='8'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">C081489</infon>
+<location offset='460' length='9' />
+<text>valsartan</text>
+</annotation>
+<annotation id='9'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D017311</infon>
+<location offset='478' length='10' />
+<text>amlodipine</text>
+</annotation>
+<annotation id='10'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D017311</infon>
+<location offset='590' length='10' />
+<text>amlodipine</text>
+</annotation>
+<annotation id='11'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">C081489</infon>
+<location offset='895' length='9' />
+<text>valsartan</text>
+</annotation>
+<annotation id='12'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D017311</infon>
+<location offset='909' length='10' />
+<text>amlodipine</text>
+</annotation>
+<annotation id='13'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">C081489</infon>
+<location offset='1191' length='9' />
+<text>valsartan</text>
+</annotation>
+<annotation id='14'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">C081489</infon>
+<location offset='1293' length='9' />
+<text>valsartan</text>
+</annotation>
+<annotation id='15'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D017311</infon>
+<location offset='1317' length='10' />
+<text>amlodipine</text>
+</annotation>
+<annotation id='16'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D004487</infon>
+<location offset='1417' length='5' />
+<text>edema</text>
+</annotation>
+<annotation id='17'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D017311</infon>
+<location offset='1450' length='10' />
+<text>amlodipine</text>
+</annotation>
+<annotation id='18'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">C081489</infon>
+<location offset='1524' length='9' />
+<text>valsartan</text>
+</annotation>
+<annotation id='19'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D017311</infon>
+<location offset='1549' length='10' />
+<text>amlodipine</text>
+</annotation>
+<annotation id='20'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">C081489</infon>
+<location offset='1568' length='9' />
+<text>valsartan</text>
+</annotation>
+<annotation id='21'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D017311</infon>
+<location offset='1588' length='10' />
+<text>amlodipine</text>
+</annotation>
+<annotation id='22'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D017311</infon>
+<location offset='1616' length='10' />
+<text>amlodipine</text>
+</annotation>
+<annotation id='23'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">C081489</infon>
+<location offset='1661' length='9' />
+<text>valsartan</text>
+</annotation>
+<annotation id='24'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D017311</infon>
+<location offset='1699' length='10' />
+<text>amlodipine</text>
+</annotation>
+<annotation id='25'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D006973</infon>
+<location offset='1747' length='12' />
+<text>hypertension</text>
+</annotation>
+<annotation id='26'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">C081489</infon>
+<location offset='1783' length='9' />
+<text>valsartan</text>
+</annotation>
+<annotation id='27'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">C038806</infon>
+<location offset='1911' length='15' />
+<text>dihydropyridine</text>
+</annotation>
+<annotation id='28'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D002118</infon>
+<location offset='1927' length='7' />
+<text>calcium</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">C081489</infon>
+<infon key="Disease">D004487</infon>
+</relation>
+<relation id='R1'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D017311</infon>
+<infon key="Disease">D004487</infon>
+</relation>
+</document>
+<document>
+<id>8701013</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>Famotidine-associated delirium. A series of six cases.</text>
+<annotation id='0'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D015738</infon>
+<location offset='0' length='10' />
+<text>Famotidine</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D003693</infon>
+<location offset='22' length='8' />
+<text>delirium</text>
+</annotation>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>55</offset>
+<text>Famotidine is a histamine H2-receptor antagonist used in inpatient settings for prevention of stress ulcers and is showing increasing popularity because of its low cost. Although all of the currently available H2-receptor antagonists have shown the propensity to cause delirium, only two previously reported cases have been associated with famotidine. The authors report on six cases of famotidine-associated delirium in hospitalized patients who cleared completely upon removal of famotidine. The pharmacokinetics of famotidine are reviewed, with no change in its metabolism in the elderly population seen. The implications of using famotidine in elderly persons are discussed.</text>
+<annotation id='2'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D015738</infon>
+<location offset='55' length='10' />
+<text>Famotidine</text>
+</annotation>
+<annotation id='3'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D014456</infon>
+<location offset='156' length='6' />
+<text>ulcers</text>
+</annotation>
+<annotation id='4'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D003693</infon>
+<location offset='324' length='8' />
+<text>delirium</text>
+</annotation>
+<annotation id='5'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D015738</infon>
+<location offset='395' length='10' />
+<text>famotidine</text>
+</annotation>
+<annotation id='6'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D015738</infon>
+<location offset='442' length='10' />
+<text>famotidine</text>
+</annotation>
+<annotation id='7'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D003693</infon>
+<location offset='464' length='8' />
+<text>delirium</text>
+</annotation>
+<annotation id='8'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D015738</infon>
+<location offset='537' length='10' />
+<text>famotidine</text>
+</annotation>
+<annotation id='9'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D015738</infon>
+<location offset='573' length='10' />
+<text>famotidine</text>
+</annotation>
+<annotation id='10'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D015738</infon>
+<location offset='689' length='10' />
+<text>famotidine</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D015738</infon>
+<infon key="Disease">D003693</infon>
+</relation>
+</document>
+<document>
+<id>439781</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>Indomethacin induced hypotension in sodium and volume depleted rats.</text>
+<annotation id='0'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D007213</infon>
+<location offset='0' length='12' />
+<text>Indomethacin</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D007022</infon>
+<location offset='21' length='11' />
+<text>hypotension</text>
+</annotation>
+<annotation id='2'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D012964</infon>
+<location offset='36' length='6' />
+<text>sodium</text>
+</annotation>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>69</offset>
+<text>After a single oral dose of 4 mg/kg indomethacin (IDM) to sodium and volume depleted rats plasma renin activity (PRA) and systolic blood pressure fell significantly within four hours. In sodium repleted animals indomethacin did not change systolic blood pressure (BP) although plasma renin activity was decreased. Thus, indomethacin by inhibition of prostaglandin synthesis may diminish the blood pressure maintaining effect of the stimulated renin-angiotensin system in sodium and volume depletion.</text>
+<annotation id='3'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D007213</infon>
+<location offset='105' length='12' />
+<text>indomethacin</text>
+</annotation>
+<annotation id='4'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D007213</infon>
+<location offset='119' length='3' />
+<text>IDM</text>
+</annotation>
+<annotation id='5'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D012964</infon>
+<location offset='127' length='6' />
+<text>sodium</text>
+</annotation>
+<annotation id='6'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D012964</infon>
+<location offset='256' length='6' />
+<text>sodium</text>
+</annotation>
+<annotation id='7'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D007213</infon>
+<location offset='280' length='12' />
+<text>indomethacin</text>
+</annotation>
+<annotation id='8'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D007213</infon>
+<location offset='389' length='12' />
+<text>indomethacin</text>
+</annotation>
+<annotation id='9'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D011453</infon>
+<location offset='419' length='13' />
+<text>prostaglandin</text>
+</annotation>
+<annotation id='10'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000809</infon>
+<location offset='518' length='11' />
+<text>angiotensin</text>
+</annotation>
+<annotation id='11'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D012964</infon>
+<location offset='540' length='6' />
+<text>sodium</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D007213</infon>
+<infon key="Disease">D007022</infon>
+</relation>
+</document>
+<document>
+<id>22836123</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>Late-onset scleroderma renal crisis induced by tacrolimus and prednisolone: a case report.</text>
+<annotation id='0'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D007674</infon>
+<location offset='11' length='24' />
+<text>scleroderma renal crisis</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D016559</infon>
+<location offset='47' length='10' />
+<text>tacrolimus</text>
+</annotation>
+<annotation id='2'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D011239</infon>
+<location offset='62' length='12' />
+<text>prednisolone</text>
+</annotation>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>91</offset>
+<text>Scleroderma renal crisis (SRC) is a rare complication of systemic sclerosis (SSc) but can be severe enough to require temporary or permanent renal replacement therapy. Moderate to high dose corticosteroid use is recognized as a major risk factor for SRC. Furthermore, there have been reports of thrombotic microangiopathy precipitated by cyclosporine in patients with SSc. In this article, we report a patient with SRC induced by tacrolimus and corticosteroids. The aim of this work is to call attention to the risk of tacrolimus use in patients with SSc.</text>
+<annotation id='3'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D007674</infon>
+<location offset='91' length='24' />
+<text>Scleroderma renal crisis</text>
+</annotation>
+<annotation id='4'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D007674</infon>
+<location offset='117' length='3' />
+<text>SRC</text>
+</annotation>
+<annotation id='5'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D012595</infon>
+<location offset='148' length='18' />
+<text>systemic sclerosis</text>
+</annotation>
+<annotation id='6'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D012595</infon>
+<location offset='168' length='3' />
+<text>SSc</text>
+</annotation>
+<annotation id='7'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000305</infon>
+<location offset='281' length='14' />
+<text>corticosteroid</text>
+</annotation>
+<annotation id='8'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D007674</infon>
+<location offset='341' length='3' />
+<text>SRC</text>
+</annotation>
+<annotation id='9'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D057049</infon>
+<location offset='386' length='26' />
+<text>thrombotic microangiopathy</text>
+</annotation>
+<annotation id='10'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D016572</infon>
+<location offset='429' length='12' />
+<text>cyclosporine</text>
+</annotation>
+<annotation id='11'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D012595</infon>
+<location offset='459' length='3' />
+<text>SSc</text>
+</annotation>
+<annotation id='12'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D007674</infon>
+<location offset='506' length='3' />
+<text>SRC</text>
+</annotation>
+<annotation id='13'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D016559</infon>
+<location offset='521' length='10' />
+<text>tacrolimus</text>
+</annotation>
+<annotation id='14'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D000305</infon>
+<location offset='536' length='15' />
+<text>corticosteroids</text>
+</annotation>
+<annotation id='15'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D016559</infon>
+<location offset='610' length='10' />
+<text>tacrolimus</text>
+</annotation>
+<annotation id='16'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D012595</infon>
+<location offset='642' length='3' />
+<text>SSc</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D016572</infon>
+<infon key="Disease">D057049</infon>
+</relation>
+<relation id='R1'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D000305</infon>
+<infon key="Disease">D012595</infon>
+</relation>
+<relation id='R2'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D016559</infon>
+<infon key="Disease">D012595</infon>
+</relation>
+</document>
+<document>
+<id>23433219</id>
+<passage>
+<infon key="type">title</infon>
+<offset>0</offset>
+<text>The risk and associated factors of methamphetamine psychosis in methamphetamine-dependent patients in Malaysia.</text>
+<annotation id='0'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008694</infon>
+<location offset='35' length='15' />
+<text>methamphetamine</text>
+</annotation>
+<annotation id='1'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D011605</infon>
+<location offset='51' length='9' />
+<text>psychosis</text>
+</annotation>
+<annotation id='2'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008694</infon>
+<location offset='64' length='15' />
+<text>methamphetamine</text>
+</annotation>
+</passage>
+<passage>
+<infon key="type">abstract</infon>
+<offset>112</offset>
+<text>OBJECTIVE: The objective of this study was to determine the risk of lifetime and current methamphetamine-induced psychosis in patients with methamphetamine dependence. The association between psychiatric co-morbidity and methamphetamine-induced psychosis was also studied. METHODS: This was a cross-sectional study conducted concurrently at a teaching hospital and a drug rehabilitation center in Malaysia. Patients with the diagnosis of methamphetamine based on DSM-IV were interviewed using the Mini International Neuropsychiatric Interview (M.I.N.I.) for methamphetamine-induced psychosis and other Axis I psychiatric disorders. The information on sociodemographic background and drug use history was obtained from interview or medical records. RESULTS: Of 292 subjects, 47.9% of the subjects had a past history of psychotic symptoms and 13.0% of the patients were having current psychotic symptoms. Co-morbid major depressive disorder (OR=7.18, 95 CI=2.612-19.708), bipolar disorder (OR=13.807, 95 CI=5.194-36.706), antisocial personality disorder (OR=12.619, 95 CI=6.702-23.759) and heavy methamphetamine uses were significantly associated with lifetime methamphetamine-induced psychosis after adjusted for other factors. Major depressive disorder (OR=2.870, CI=1.154-7.142) and antisocial personality disorder (OR=3.299, 95 CI=1.375-7.914) were the only factors associated with current psychosis. CONCLUSION: There was a high risk of psychosis in patients with methamphetamine dependence. It was associated with co-morbid affective disorder, antisocial personality, and heavy methamphetamine use. It is recommended that all cases of methamphetamine dependence should be screened for psychotic symptoms.</text>
+<annotation id='3'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008694</infon>
+<location offset='201' length='15' />
+<text>methamphetamine</text>
+</annotation>
+<annotation id='4'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D011605</infon>
+<location offset='225' length='9' />
+<text>psychosis</text>
+</annotation>
+<annotation id='5'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008694</infon>
+<location offset='252' length='15' />
+<text>methamphetamine</text>
+</annotation>
+<annotation id='6'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008694</infon>
+<location offset='333' length='15' />
+<text>methamphetamine</text>
+</annotation>
+<annotation id='7'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D011605</infon>
+<location offset='357' length='9' />
+<text>psychosis</text>
+</annotation>
+<annotation id='8'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008694</infon>
+<location offset='550' length='15' />
+<text>methamphetamine</text>
+</annotation>
+<annotation id='9'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008694</infon>
+<location offset='670' length='15' />
+<text>methamphetamine</text>
+</annotation>
+<annotation id='10'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D011605</infon>
+<location offset='694' length='9' />
+<text>psychosis</text>
+</annotation>
+<annotation id='11'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D001523</infon>
+<location offset='721' length='21' />
+<text>psychiatric disorders</text>
+</annotation>
+<annotation id='12'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D011605</infon>
+<location offset='930' length='18' />
+<text>psychotic symptoms</text>
+</annotation>
+<annotation id='13'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D011605</infon>
+<location offset='995' length='18' />
+<text>psychotic symptoms</text>
+</annotation>
+<annotation id='14'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D003866</infon>
+<location offset='1031' length='19' />
+<text>depressive disorder</text>
+</annotation>
+<annotation id='15'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D001714</infon>
+<location offset='1082' length='16' />
+<text>bipolar disorder</text>
+</annotation>
+<annotation id='16'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D000987</infon>
+<location offset='1132' length='31' />
+<text>antisocial personality disorder</text>
+</annotation>
+<annotation id='17'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008694</infon>
+<location offset='1206' length='15' />
+<text>methamphetamine</text>
+</annotation>
+<annotation id='18'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008694</infon>
+<location offset='1271' length='15' />
+<text>methamphetamine</text>
+</annotation>
+<annotation id='19'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D011605</infon>
+<location offset='1295' length='9' />
+<text>psychosis</text>
+</annotation>
+<annotation id='20'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D003865</infon>
+<location offset='1339' length='25' />
+<text>Major depressive disorder</text>
+</annotation>
+<annotation id='21'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D000987</infon>
+<location offset='1396' length='31' />
+<text>antisocial personality disorder</text>
+</annotation>
+<annotation id='22'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D011605</infon>
+<location offset='1504' length='9' />
+<text>psychosis</text>
+</annotation>
+<annotation id='23'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D011605</infon>
+<location offset='1552' length='9' />
+<text>psychosis</text>
+</annotation>
+<annotation id='24'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008694</infon>
+<location offset='1579' length='15' />
+<text>methamphetamine</text>
+</annotation>
+<annotation id='25'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D019964</infon>
+<location offset='1640' length='18' />
+<text>affective disorder</text>
+</annotation>
+<annotation id='26'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D000987</infon>
+<location offset='1660' length='22' />
+<text>antisocial personality</text>
+</annotation>
+<annotation id='27'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008694</infon>
+<location offset='1694' length='15' />
+<text>methamphetamine</text>
+</annotation>
+<annotation id='28'>
+<infon key="type">Chemical</infon>
+<infon key="MESH">D008694</infon>
+<location offset='1751' length='15' />
+<text>methamphetamine</text>
+</annotation>
+<annotation id='29'>
+<infon key="type">Disease</infon>
+<infon key="MESH">D011605</infon>
+<location offset='1801' length='18' />
+<text>psychotic symptoms</text>
+</annotation>
+</passage>
+<relation id='R0'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D008694</infon>
+<infon key="Disease">D011605</infon>
+</relation>
+<relation id='R1'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D008694</infon>
+<infon key="Disease">D001714</infon>
+</relation>
+<relation id='R2'>
+<infon key="relation">CID</infon>
+<infon key="Chemical">D008694</infon>
+<infon key="Disease">D000987</infon>
+</relation>
+</document>
+</collection>

@@ -18,11 +18,10 @@ We develop a more advanced set of labeling functions, based on text patterns and
 supervision. These labeling functions also have dependencies between them, and we model
 these automatically. Finally, we train a generative model with the learned dependencies.
 
-3. **Learning an Extraction Model[[CDR_Tutorial_3](CDR_Tutorial_3.ipynb)]:**
-Here, we go through the process of writing _labeling functions_, learning a generative
-model over them, using the generative model to train a _noise-aware_ discriminative
-model to make predictions over the candidates, and evaluating the discriminative model
-on the development candidate set.
+3. **Learning an Extraction Model [[CDR_Tutorial_3](CDR_Tutorial_3.ipynb)]:**
+Using the noise-aware training label set we generated in the second notebook,
+we learn an end exraction model. Here, we'll use an LSTM neural network rather than
+a linear model as in the intro tutorial.
 
 ## Example
 

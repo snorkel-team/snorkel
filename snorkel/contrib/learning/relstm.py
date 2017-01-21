@@ -124,13 +124,19 @@ class reLSTM(TFNoiseAwareModel):
         W = tf.Variable(tf.random_normal((self.dim, 1), mean=0, stddev=0.01))
         b = tf.Variable(tf.random_normal([1], mean=0, stddev=0.01))
         h = tf.add(tf.reshape(tf.matmul(summary_vector, W), [-1]), b)
+        # Batch normalization
+        batch_mean, batch_var = tf.nn.moments(h, [0], keep_dims=True)
+        h_bn = tf.nn.batch_normalization(
+            x=h, mean=batch_mean, variance=batch_var, offset=None,
+            scale=None, variance_epsilon=1e-8,
+        )
         # Unroll [0, 1] marginals
         unrolled_marginals = tf.reshape(self.y, [-1])
         # Positive class marginal
-        self.prediction = tf.nn.sigmoid(h) 
+        self.prediction = tf.nn.sigmoid(h)
         # Set log loss function
         self.loss = tf.reduce_sum(
-            tf.nn.sigmoid_cross_entropy_with_logits(h, unrolled_marginals)
+            tf.nn.sigmoid_cross_entropy_with_logits(h_bn, unrolled_marginals)
         )
         # Backprop trainer
         self.train_fn = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)

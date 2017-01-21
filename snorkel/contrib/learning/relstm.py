@@ -88,7 +88,7 @@ class reLSTM(TFNoiseAwareModel):
     def _build(self):
         """Get feed forward step, loss function, and optimizer for LSTM"""
         # Define input layers
-        self.keep_prob = tf.placeholder(tf.float32, (1,))
+        self.keep_prob = tf.placeholder(tf.float32)
         self.sentences = tf.placeholder(tf.int32, [None, None])
         self.sentence_length = tf.placeholder(tf.int32, [None])
         self.y = tf.placeholder(tf.float32, [None])
@@ -192,8 +192,9 @@ class reLSTM(TFNoiseAwareModel):
                 self.name, time() - st
             ))
             st = time()
-            print("[{0}] Begin training  Epochs={1}  Batch={2}".format(
-                self.name, n_epochs, batch_size
+            print("[{0}] Training model".format(self.name))
+            print("[{0}] #examples={1}  #epochs={2}  batch size={3}".format(
+                self.name, n, n_epochs, batch_size
             ))
         self.session.run(tf.global_variables_initializer())
         for t in range(n_epochs):
@@ -205,7 +206,7 @@ class reLSTM(TFNoiseAwareModel):
                 x_batch, x_batch_lens = self._make_tensor(x_train[i:r])
                 # Run training step and evaluate loss function                  
                 epoch_loss += self.session.run([self.loss, self.train_fn], {
-                    self.keep_prob: dropout_rate or 1.0
+                    self.keep_prob: dropout_rate or 1.0,
                     self.sentences: x_batch,
                     self.sentence_length: x_batch_lens,
                     self.y: y_batch,

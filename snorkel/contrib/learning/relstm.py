@@ -17,10 +17,10 @@ class reLSTM(TFNoiseAwareModel):
         self.dim             = None # Embedding dimension
         self.n_v             = None # Vocabulary size
         self.lr              = None # Learning rate
-        self.dropout         = None # Dropout rate
         self.tokens          = None # Token type for sentences (e.g. lemmas)
         self.word_dict       = SymbolTable() # Symbol table for dictionary
         # Define input layers
+        self.keep_prob       = None
         self.sentences       = None
         self.sentence_length = None
         self.y               = None
@@ -88,6 +88,7 @@ class reLSTM(TFNoiseAwareModel):
     def _build(self):
         """Get feed forward step, loss function, and optimizer for LSTM"""
         # Define input layers
+        self.keep_prob = tf.placeholder(tf.float32)
         self.sentences = tf.placeholder(tf.int32, [None, None])
         self.sentence_length = tf.placeholder(tf.int32, [None])
         self.y = tf.placeholder(tf.float32, [None])
@@ -118,19 +119,24 @@ class reLSTM(TFNoiseAwareModel):
             tf.cast(self.sentence_length, tf.float32), (1,0)
         )
         # Dropout regularization
-        if self.dropout is not None:
-            summary_vector = tf.nn.dropout(summary_vector, self.dropout)
+        summary_vector = tf.nn.dropout(summary_vector, self.keep_prob)
         # Sigmoid over embedding layer
         W = tf.Variable(tf.random_normal((self.dim, 1), mean=0, stddev=0.01))
         b = tf.Variable(tf.random_normal([1], mean=0, stddev=0.01))
         h = tf.add(tf.reshape(tf.matmul(summary_vector, W), [-1]), b)
+        # Batch normalization
+        batch_mean, batch_var = tf.nn.moments(h, [0], keep_dims=True)
+        h_bn = tf.nn.batch_normalization(
+            x=h, mean=batch_mean, variance=batch_var, offset=None,
+            scale=None, variance_epsilon=1e-8,
+        )
         # Unroll [0, 1] marginals
         unrolled_marginals = tf.reshape(self.y, [-1])
         # Positive class marginal
-        self.prediction = tf.nn.sigmoid(h) 
+        self.prediction = tf.nn.sigmoid(h)
         # Set log loss function
         self.loss = tf.reduce_sum(
-            tf.nn.sigmoid_cross_entropy_with_logits(h, unrolled_marginals)
+            tf.nn.sigmoid_cross_entropy_with_logits(h_bn, unrolled_marginals)
         )
         # Backprop trainer
         self.train_fn = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
@@ -152,7 +158,7 @@ class reLSTM(TFNoiseAwareModel):
             @rebalance: bool or fraction of positive examples desired
                         If True, defaults to standard 0.5 class balance.
                         If False, no class balancing.
-            @dropout_rate: rate for tensorflow.nn.dropout(...)
+            @dropout_rate: rate for tensorflow.nn.dropout(...) or None
             @max_sentence_length: maximum sentence length for candidates
             @print_freq: number of epochs after which to print status
             @model_name: name of model for logging and saving
@@ -168,7 +174,6 @@ class reLSTM(TFNoiseAwareModel):
         # Build model
         self.dim = dim
         self.lr = lr
-        self.dropout = tf.constant(dropout_rate) if dropout_rate else None
         self.n_v = self.word_dict.s + 1
         self._build()
         # Get training indices
@@ -187,8 +192,9 @@ class reLSTM(TFNoiseAwareModel):
                 self.name, time() - st
             ))
             st = time()
-            print("[{0}] Begin training  Epochs={1}  Batch={2}".format(
-                self.name, n_epochs, batch_size
+            print("[{0}] Training model".format(self.name))
+            print("[{0}] #examples={1}  #epochs={2}  batch size={3}".format(
+                self.name, n, n_epochs, batch_size
             ))
         self.session.run(tf.global_variables_initializer())
         for t in range(n_epochs):
@@ -200,6 +206,7 @@ class reLSTM(TFNoiseAwareModel):
                 x_batch, x_batch_lens = self._make_tensor(x_train[i:r])
                 # Run training step and evaluate loss function                  
                 epoch_loss += self.session.run([self.loss, self.train_fn], {
+                    self.keep_prob: dropout_rate or 1.0,
                     self.sentences: x_batch,
                     self.sentence_length: x_batch_lens,
                     self.y: y_batch,
@@ -217,20 +224,21 @@ class reLSTM(TFNoiseAwareModel):
         x_test = self._preprocess_data(test_candidates, extend=False)
         x, x_lens = self._make_tensor(x_test)
         return np.ravel(self.session.run([self.prediction], {
+            self.keep_prob: 1.0,
             self.sentences: x,
             self.sentence_length: x_lens,
         }))
 
     def save_info(self, model_name):
         z = (self.mx_len, self.word_dict, self.dim,
-             self.tokens, self.n_v, self.lr, self.dropout)
+             self.tokens, self.n_v, self.lr)
         with open('{0}.info'.format(model_name), 'wb') as f:
             cPickle.dump(z, f)
 
     def load_info(self, model_name):
         with open('{0}.info'.format(model_name), 'rb') as f:
-            (self.mx_len, self.word_dict, self.dim, 
-             self.tokens, self.n_v, self.lr, self.dropout) = cPickle.load(f)
+            (self.mx_len, self.word_dict, 
+             self.dim, self.tokens, self.n_v, self.lr) = cPickle.load(f)
 
 
 class SymbolTable:

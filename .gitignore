@@ -20,6 +20,9 @@ docs/_build
 *.data*
 *.index
 
+# Embedding models
+*.mm
+
 # Tutorial
 tutorial/data/CDR_*.BioC.xml
 tutorial/data/dicts

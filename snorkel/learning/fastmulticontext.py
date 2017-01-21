@@ -7,7 +7,7 @@ import time
 
 from collections import defaultdict
 from disc_learning import NoiseAwareModel
-from math import copysign, exp, log
+from math import exp, log
 
 
 MIN_LR = 1e-6
@@ -41,9 +41,7 @@ def get_matrix_keys(matrices):
     for k, matrix in enumerate(matrices):
         matrix_coo = matrix.tocoo(copy=True)
         for i, j, ct in zip(matrix_coo.row, matrix_coo.col, matrix_coo.data):
-            embed_xs[i][k].extend(
-                'FEATURE_{0}_{1}'.format(k, j) for _ in xrange(int(ct))
-            )
+            embed_xs[i][k].extend('FEATURE_{0}_{1}'.format(k, j) for _ in xrange(int(ct)))
         print("Processed {0} matrices".format(k))
     return embed_xs
 
@@ -71,7 +69,7 @@ def fmct_activation(z, hidden_embed, wo, wo_raw, wi_sub, x_ct, x_type, x_raw):
 
 
 @numba.jit(nopython=True, nogil=True)
-def fmct_update(wo, wo_raw, wi_sub, x_ct, x_type, x_raw, p, lr, l2_n, l1_n):
+def fmct_update(wo, wo_raw, wi_sub, x_ct, x_type, x_raw, p, lr, lambda_n):
     """
     JIT function for issuing SGD step of fmct
     """
@@ -101,21 +99,21 @@ def fmct_update(wo, wo_raw, wi_sub, x_ct, x_type, x_raw, p, lr, l2_n, l1_n):
         # Updates for embedded features
         for j in xrange(embed_size):
             grad[j] += alpha * wo[k][j]
-            # Proximal l1 gradient step for embedding weights
+            # Apply regularization first
+            wo[k][j] *= (1.0 - lr * lambda_n)
             wo[k][j] -= alpha * hidden_embed[j]
-            w_abs = abs(wo[k][j])
-            wo[k][j] = copysign(w_abs - lr*l1_n, wo[k][j]) * (w_abs > lr*l1_n)
         # Updates for raw features
         for r in xrange(raw_size):
-            # Proximal l2 gradient step for raw weights
+            # Apply regularization first
+            wo_raw[k][r] *= (1.0 - lr * lambda_n)
             wo_raw[k][r] -= alpha * x_raw[r]
-            wo_raw[k][r] *= (1.0 - lr * l2_n)
     # Update embeddings
     for i in xrange(x_size):
         for j in xrange(dim):
             if x_ct[i] == 0:
                 continue
-            # Do not regularize embeddings
+            # Apply regularization first
+            wi_sub[i][j] *= (1.0 - lr * lambda_n)
             wi_sub[i][j] -= (grad[j + x_type[i]*dim] / x_ct[i])
     # Return loss
     pmx, lmx = 0.0, None
@@ -135,9 +133,8 @@ def print_status(progress, loss, n_examples, lr):
 
 
 @numba.jit(nopython=True, nogil=True)
-def fmct_sgd_thread(thread_n, wo, wo_raw, wi, marginals, lambda_l2_n,
-    lambda_l1_n, epoch, n, lr, raw_xs, n_print, feat_start, feat_end,
-    f_cache, f_ct_cache, f_t_cache):
+def fmct_sgd_thread(thread_n, wo, wo_raw, wi, marginals, lambda_n, epoch, n, lr, raw_xs,
+                    n_print, feat_start, feat_end, f_cache, f_ct_cache, f_t_cache):
     
     loss, n_examples, lr_orig = 0, 0, lr
 
@@ -159,7 +156,7 @@ def fmct_sgd_thread(thread_n, wo, wo_raw, wi, marginals, lambda_l2_n,
         wi_sub = wi[feats]
         loss += fmct_update(
             wo, wo_raw, wi_sub, feats_ct, feats_type, raw_feats,
-            marginals[k], lr, lambda_l2_n, lambda_l1_n,
+            marginals[k], lr, lambda_n,
         )
         wi[feats, :] = wi_sub
         # Update learning rate and print status
@@ -177,8 +174,7 @@ def fmct_sgd(n_threads, *args):
     else:
         threadpool = concurrent.futures.ThreadPoolExecutor(n_threads)
         threads = [
-            threadpool.submit(fmct_sgd_thread, i, *args)
-            for i in xrange(n_threads)
+            threadpool.submit(fmct_sgd_thread, i, *args) for i in xrange(n_threads)
         ]
         concurrent.futures.wait(threads)
         for thread in threads:
@@ -190,7 +186,7 @@ class fastmulticontext(object):
     def __init__(self, preprocess_function=get_matrix_keys):
         """
         Initialize fastmulticontext model
-        preprocess_function: function returning features for embedding seq
+        preprocess_function: function returning features for embedding sequence
         """
         self.vocabs       = []
         self.n_classes    = None
@@ -199,11 +195,10 @@ class fastmulticontext(object):
         self.wo           = None
         self.wo_raw       = None
         self.wi           = None
-        self.preprocess = preprocess_function
+        self.preprocess_f = preprocess_function
         
-    def train(self, marginals, embed_xs, raw_xs=None, dim=100, lr=0.05,
-        lambda_l2=1e-7, lambda_l1=1e-7, epoch=10, min_ct=1,  n_print=10000,
-        n_threads=4, seed=1701):
+    def train(self, marginals, embed_xs, raw_xs=None, dim=50, lr=0.05, lambda_l2=1e-7,
+              epoch=5, min_ct=1, n_print=10000, n_threads=16, seed=1701):
         """
         Train FMCT model
         marginals: marginal probabilities for training examples (array)
@@ -220,7 +215,7 @@ class fastmulticontext(object):
             np.random.seed(seed=seed)
 
         print("Processing data", end='\t\t')
-        embed_xs = self.preprocess(embed_xs) if self.preprocess else embed_xs
+        embed_xs = self.preprocess_f(embed_xs) if self.preprocess_f else embed_xs
         self.n_classes = 2 # Hardcode binary classification for now
         n = len(embed_xs)
 
@@ -255,16 +250,15 @@ class fastmulticontext(object):
         print("Training")
         self.wo = np.zeros((self.n_classes, dim * self.n_embed))
         self.wo_raw = np.zeros((self.n_classes, raw_xs.shape[1]))
-        self.wi = np.random.uniform(-1.0/dim, 1.0/dim, (all_vocab_size, dim))
+        self.wi = np.random.uniform(-1.0 / dim, 1.0 / dim, (all_vocab_size, dim))
         marginals = np.array([[1.0 - float(p), float(p)] for p in marginals])
-        lambda_l2_n = float(lambda_l2) / n
-        lambda_l1_n = float(lambda_l1) / n
+        lambda_n = float(lambda_l2) / n
 
         s = time.time()
         fmct_sgd(
-            n_threads, self.wo, self.wo_raw, self.wi, marginals, lambda_l2_n,
-            lambda_l1_n, epoch, n, lr, raw_xs, n_print, feat_start, feat_end,
-            feat_cache, feat_ct_cache, feat_type_cache,
+            n_threads, self.wo, self.wo_raw, self.wi, marginals, lambda_n,
+            epoch, n, lr, raw_xs, n_print, feat_start, feat_end, feat_cache,
+            feat_ct_cache, feat_type_cache,
         )
         print("Training time: {0:.3f} seconds".format(time.time() - s))
 
@@ -274,7 +268,7 @@ class fastmulticontext(object):
         embed_xs: embedded features
         raw_xs: raw features
         """
-        embed_xs = self.preprocess(embed_xs) if self.preprocess else embed_xs
+        embed_xs = self.preprocess_f(embed_xs) if self.preprocess_f else embed_xs
         n = len(embed_xs)
         log_odds = np.zeros(n)
         n_skipped = 0
@@ -292,8 +286,7 @@ class fastmulticontext(object):
             z = np.zeros(self.n_classes)
             hidden_embed = np.zeros(self.wo.shape[1])
             fmct_activation(
-                z, hidden_embed, self.wo, self.wo_raw, wi_sub,
-                feats_ct, feats_type, x_raw
+                z, hidden_embed, self.wo, self.wo_raw, wi_sub, feats_ct, feats_type, x_raw
             )
             log_odds[k] = z[1]
         print("Skipped {0} because no feats".format(n_skipped))
@@ -319,7 +312,7 @@ class fastmulticontext(object):
             for feat, ct in count_dict.iteritems():
                 if ct >= min_ct[d]:
                     self.vocabs[d][feat] = len(self.vocabs[d])
-            print("Built vocab {0} (size={1})".format(d, len(self.vocabs[d]))),
+            print("Built vocab {0} of length {1}".format(d, len(self.vocabs[d])))
         self.vocab_slice = [0]
         for vocab in self.vocabs:
             self.vocab_slice.append(self.vocab_slice[-1] + len(vocab))
@@ -345,15 +338,11 @@ class fastmulticontext(object):
             feat_cts[s : s+len(vc)] = len(vc)
             feat_type[s : s+len(vc)] = i
             s += len(vc)
-        return (
-            feat_idxs.astype(int), feat_cts.astype(int), feat_type.astype(int)
-        )
+        return feat_idxs.astype(int), feat_cts.astype(int), feat_type.astype(int)
     
     def _print_status(self, progress, loss, n_examples, lr):
         """ Print training progress and loss """
-        sys.stdout.write(
-            "\rProgress: {0:06.3f}%\tLoss: {1:.6f}\tLR={2:.6f}".format(
-                100. * progress, loss / n_examples, lr
-            )
-        )
+        sys.stdout.write("\rProgress: {0:06.3f}%\tLoss: {1:.6f}\tLR={2:.6f}".format(
+            100. * progress, loss / n_examples, lr
+        ))
         sys.stdout.flush()

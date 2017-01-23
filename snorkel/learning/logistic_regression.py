@@ -117,7 +117,7 @@ class LogisticRegression(TFNoiseAwareModel):
 
     def marginals(self, X_test):
         X_test = self._check_input(X_test)
-        return np.ravel(self.session.run([self.prediction], {self.X: X}))
+        return np.ravel(self.session.run([self.prediction], {self.X: X_test}))
 
     def save_info(self, model_name):
         with open('{0}.info'.format(model_name), 'wb') as f:

@@ -46,6 +46,9 @@ class Candidate(SnorkelBase):
     def __repr__(self):
         return u"%s(%s)" % (self.__class__.__name__, u", ".join(map(unicode, self.get_contexts())))
 
+    def __len__(self):
+        return len(self.__argnames__)
+
 
 def candidate_subclass(class_name, args, table_name=None):
     """
@@ -101,7 +104,7 @@ def candidate_subclass(class_name, args, table_name=None):
 
     # Create class
     C = type(class_name, (Candidate,), class_attribs)
-        
+
     # Create table in DB
     if not snorkel_engine.dialect.has_table(snorkel_engine, table_name):
         C.__table__.create(bind=snorkel_engine)

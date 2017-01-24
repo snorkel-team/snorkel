@@ -6,27 +6,52 @@ from sklearn.decomposition import PCA
 from string import punctuation
 
 
+STOPWORDS = set([
+	'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he',
+	'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to', 'was', 'were',
+	'will', 'with',
+])
+DEFAULT_STOPS = STOPWORDS | set(punctuation)
+
+
+def strip_special(w):
+	"""Remove weird characters from strings"""
+	return ''.join(c for c in w if ord(c) < 128)
+
+
 class SnorkelGensimCorpus(gensim.interfaces.CorpusABC):
 
-	def __init__(self, documents, tokens='words', stopwords=set(punctuation)):
+	def __init__(self, documents, tokens='words', stopwords=DEFAULT_STOPS,
+				 bigrams=False):
 		"""Converts Snorkel Documents to a Gensim corpus"""
 		self.documents  = documents
 		self.tokens     = tokens
 		self.stopwords  = stopwords
 		self.dictionary = gensim.corpora.dictionary.Dictionary()
 		self.token_ct   = defaultdict(int)
+		self.bigrams    = bigrams
 		self._process_tokens()
 
+	def _gen_grams(self, tokens):
+		"""Generate unigrams or bigrams from a unigram sequence"""
+		if not self.bigrams:
+			return tokens
+		grams = list(tokens)
+		for i in xrange(len(tokens) - 1):
+			grams.append('{0} {1}'.format(grams[i], grams[i+1]))
+		return grams
+
 	def _filter(self, tokens):
-		"""Filter out stopwords from a word sequence"""
-		return filter(lambda w: len(w) > 1 and w not in self.stopwords, tokens)
+		"""Filter out stopwords and single-characters from a word sequence"""
+		z = filter(lambda w: len(w) > 1 and w not in self.stopwords, tokens)
+		return [strip_special(w) for w in z]
 
 	def _token_seq_generator(self):
 		"""Iterator over documents producing iterators over their tokens"""
 		for document in self.documents:
 			yield [
-				tok.lower() for sentence in document.sentences 
-				for tok in self._filter(sentence.__dict__[self.tokens])
+				tok.lower() for sentence in document.sentences for tok in
+				self._gen_grams(self._filter(sentence.__dict__[self.tokens]))
 			]		
 
 	def _process_tokens(self):

@@ -1,0 +1,73 @@
+Tested on Windows 10(host), VirtualBox 5.1.10(VM), Ubuntu Desktop 16.04.1 LTS(guest)
+
+Setup linux VM (for Windows users):
+1. Ensure hardware virtualization enabled on host machine
+   Snorkel must be run on a 64bit OS which VirtualBox only supports on machines with hardware virtualization
+   On Windows 8 & 10 virtualization status can be detected by the Task Manager
+       Manager -> Performance -> CPU
+   On Windows 7 and earlier, Microsoft provides a detection tool:
+       https://www.microsoft.com/en-us/download/details.aspx?id=592
+   Enabling virtualization varies by computer but is usually done in the BIOS.
+   Note: not all systems support virtualization.
+
+
+2. Download 64bit Linux desktop image
+   Snorkel requires a 64bit OS and uses a GUI
+
+
+3. Install VirtualBox and create VM
+   Use 64bit Linux option
+   On first start, select downloaded Linux image
+
+
+4. Install Guest Additions (optional)
+   This enables transferring files between guest and host
+   On the VM, "click Devices" -> "insert Guest Editions CD image" and run the installer
+   In a terminal on the guest, type "sudo adduser xxxx vboxsf" where xxxx is your user name
+   Restart guest   
+
+
+Install dependencies:
+1. Install required packages from package manager.
+
+   sudo apt-get update && sudo apt-get -y upgrade
+   sudo apt-get install -y git default-jre
+
+
+2. Install Miniconda to manage python packages.
+   Several of the packages used by Snorkel recommend installation through Conda.
+
+   wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+   bash Miniconda2-latest-Linux-x86_64.sh
+   rm Miniconda2-latest-Linux-x86_64.sh
+
+   Enter "yes" to add the Miniconda directory to your path
+
+
+3. Close and reopen terminal.
+
+
+4. Install python packages.
+
+   conda upgrade pip
+   pip install bs4 sklearn Theano git+https://github.com/HazyResearch/numbskull@master
+   conda install -y futures ipywidgets jupyter llvmlite lxml matplotlib mkl nltk nose numba numpy pandas pyzmq requests scipy sqlalchemy
+   conda install -y --channel anaconda-nb-extensions nbbrowserpdf
+
+
+5. Enable ipywidgets.
+
+   jupyter nbextension enable --py widgetsnbextension --sys-prefix
+
+
+6. Clone Snorkel.
+
+   git clone https://github.com/HazyResearch/snorkel.git
+
+
+7. Run Snorkel.
+
+   ./run.sh
+
+   Enter "yes" to install CoreNLP
+

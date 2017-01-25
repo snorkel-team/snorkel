@@ -122,6 +122,38 @@ class TextDocPreprocessor(DocPreprocessor):
             stable_id = self.get_stable_id(name)
             yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), f.read()
 
+class TextMultiDocParser(DocParser):
+    """Parses text files containing multiple documents.
+       Takes flag REGEX to signal start or end of document and offset from flag."""
+    def __init__(self, path, flag, offset):
+        DocParser.__init__(self, path)
+        self.flag = flag
+        self.offset = offset
+
+    def parse_file(self, fp, file_name):
+        with codecs.open(fp, encoding=self.encoding) as f:
+            docs = f.readlines()
+            if len(docs) > 1:
+                docs = self.parse_docs(docs)
+            for i, doc in enumerate(docs):
+                name = os.path.basename(fp).rsplit('.', 1)[0] + "_" + str(i)
+                stable_id = self.get_stable_id(name)
+                yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), docs[i]
+
+    def parse_docs(self, lines):
+        lineNums = []
+        docs = []
+        previous = 0
+        for i, line in enumerate(lines[1:]):
+            if re.search(self.flag, line):
+                lineNums.append(i + self.offset + 1)
+        if lineNums[-1] != len(lines)-1:
+            lineNums.append(len(lines)-1)
+        for lineNum in lineNums:
+            docs.append("".join(lines[previous:lineNum]))
+            previous = lineNum
+        return docs
+
 
 class HTMLDocPreprocessor(DocPreprocessor):
     """Simple parsing of raw HTML files, assuming one document per file"""

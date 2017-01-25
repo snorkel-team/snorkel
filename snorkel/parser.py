@@ -178,10 +178,7 @@ class XMLMultiDocPreprocessor(DocPreprocessor):
     def _can_read(self, fpath):
         return fpath.endswith('.xml')
 
-
-PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
-         '-RSB-': ']', '-LSB-': '['}
-
+PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{','-RSB-': ']', '-LSB-': '['}
 
 class CoreNLPHandler(object):
     def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False):
@@ -224,8 +221,6 @@ class CoreNLPHandler(object):
                         status_forcelist=[ 500, 502, 503, 504 ])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
         
-        # Use this for recongizing PTB tokens
-        self.ptb_rgx = re.compile(r'-[A-Z]{2}B-')
 
     def _kill_pserver(self):
         if self.server_pid is not None:
@@ -236,10 +231,6 @@ class CoreNLPHandler(object):
 
     def parse(self, document, text):
         """Parse a raw document as a string into a list of sentences"""
-        def ptb_clean(text):
-            for ptb_match in self.ptb_rgx.finditer(text): 
-                text = text.replace(ptb_match.group(0), PTB[ptb_match.group(0)])
-            return text
 
         if len(text.strip()) == 0:
             return
@@ -262,8 +253,9 @@ class CoreNLPHandler(object):
             parts = defaultdict(list)
             dep_order, dep_par, dep_lab = [], [], []
             for tok, deps in zip(block['tokens'], block['basic-dependencies']):
-                parts['words'].append(ptb_clean(tok['word']))
-                parts['lemmas'].append(ptb_clean(tok['lemma']))
+                # Convert PennTreeBank symbols back into characters for words/lemmas
+                parts['words'].append(PTB.get(tok['word'], tok['word']))
+                parts['lemmas'].append(PTB.get(tok['lemma'], tok['lemma']))
                 parts['pos_tags'].append(tok['pos'])
                 parts['ner_tags'].append(tok['ner'])
                 parts['char_offsets'].append(tok['characterOffsetBegin'])

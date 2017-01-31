@@ -2,21 +2,7 @@ import gensim
 import numpy as np
 
 from collections import defaultdict
-from sklearn.decomposition import PCA
-from string import punctuation
-
-
-STOPWORDS = set([
-	'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he',
-	'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to', 'was', 'were',
-	'will', 'with',
-])
-DEFAULT_STOPS = STOPWORDS | set(punctuation)
-
-
-def strip_special(w):
-	"""Remove weird characters from strings"""
-	return ''.join(c for c in w if ord(c) < 128)
+from embedding_utils import DEFAULT_STOPS, Embedder, strip_special
 
 
 class SnorkelGensimCorpus(gensim.interfaces.CorpusABC):
@@ -100,19 +86,15 @@ class SnorkelGensimCorpus(gensim.interfaces.CorpusABC):
 		return len(self.documents)
 
 
-class LSAEmbedder(object):
+class LSAEmbedder(Embedder):
 
 	def __init__(self, corpus):
 		"""Embed words and sentences based on latent semantic analysis
 			@corpus: Gensim-style corpus (see SnorkelGensimCorpus)
-
 		LSA is run on @corpus to get word embeddings
-		Sentence embeddings are computed by an implementation of
-			https://openreview.net/pdf?id=SyK00v5xx
 		"""
-		self.corpus     = corpus
+		super(LSAEmbedder, self).__init__(corpus, corpus.token_ct)
 		self.dictionary = corpus.dictionary
-		self.token_ct   = corpus.token_ct
 		self.fname      = 'lsa_snorkel'
 		self.tfidf_mm   = None
 		self.lsa        = None
@@ -145,37 +127,7 @@ class LSAEmbedder(object):
 			corpus=self.tfidf_mm, id2word=self.dictionary, num_topics=n_topics
 		)
 
-	def marginal_estimates(self):
-		s = sum(self.token_ct.values())
-		marginals = np.zeros(len(self.token_ct))
-		for k, v in self.token_ct.iteritems():
-			marginals[k] = float(v) / s
-		return marginals
-
 	def word_embeddings(self, scaled=False):
 		if scaled:
 			return (1.0 / self.lsa.projection.s) * self.lsa.projection.u
 		return self.lsa.projection.u
-
-	def embed_sentences(self, a=1e-2, scaled=False):
-		X = []
-		# Get word embeddings and corpus marginals
-		U = self.word_embeddings(scaled)
-		p = self.marginal_estimates()
-		for sentence in self.corpus.iter_sentences():
-			# Get token indices
-			w = np.ravel(sentence)
-			if len(w) == 0:
-				X.append(np.zeros(U.shape[1]))
-				continue
-			# Normalizer
-			z = 1.0 / len(w)
-			# Embed sentence
-			q = np.sum((a / (a + p[w])).reshape((len(w), 1)) * U[w, :], axis=0)
-			X.append(z * q)
-		# Compute first principal component
-		X = np.array(X)
-		pca = PCA(n_components=1, whiten=False, svd_solver='randomized')
-		pca.fit(X)
-		K = np.dot(pca.components_.T, pca.components_)
-		return X - np.dot(X, K)

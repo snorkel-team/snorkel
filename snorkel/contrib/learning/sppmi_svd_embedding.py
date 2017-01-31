@@ -126,4 +126,4 @@ class SPPMISVDEmbedder(Embedder):
 		)
 
 	def word_embeddings(self, p=0.5):
-		return self.U * np.diag(np.power(self.S, eig))
+		return self.U * np.diag(np.power(self.S, p))

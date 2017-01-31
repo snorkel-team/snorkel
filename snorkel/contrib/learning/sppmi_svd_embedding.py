@@ -2,9 +2,8 @@ import gensim
 import numpy as np
 
 from collections import defaultdict
-from embedding_utils import DEFAULT_STOPS, strip_special
+from embedding_utils import DEFAULT_STOPS, Embedder, strip_special
 from scipy import sparse
-from sklearn.decomposition import PCA
 
 
 class SnorkelSentenceGensimCorpus(gensim.interfaces.CorpusABC):
@@ -106,11 +105,15 @@ class SPPMISVDEmbedder(Embedder):
 					D[(word, sent[j])] += 1
 		return D, W, C, ct
 		
-	def run_sppmi_svd(self, rank=50, smoothing=0.75, k=1):
-		"""Generate embeddings from SPPMI matrix"""
+	def run_sppmi_svd(self, rank=50, alpha_cds=0.75, k=1):
+		"""Generate embeddings from SPPMI matrix
+			@rank:      dimensionality of the word embeddings
+			@alpha_cds: alpha parameter for context distribution smoothing
+			@k:         log shift parameter (number of negative samples)
+		"""
 		# Context distribution smoothing
-		C_cds = {k: float(v**cds) for k, v in self.C.iteritems()}
-		t_cds = sum(C_cds.values())
+		C_cds = {k: v**alpha_cds for k, v in self.C.iteritems()}
+		t_cds = float(sum(C_cds.values()))
 		C_cds = {k: v / t_cds for k, v in C_cds.iteritems()}
 		# Construct SPPMI matrix
 		M = sparse.lil_matrix((len(self.dictionary), len(self.dictionary)))

@@ -102,7 +102,7 @@ class SPPMISVDEmbedder(Embedder):
 				ct[word] += 1
 				# Iterate over context window
 				for j in range(max(0, c-self.w), min(len(sent), c+self.w+1)):
-					if j == 0:
+					if j == c:
 						continue
 					W[ word          ] += 1
 					C[       sent[j] ] += 1
@@ -118,12 +118,14 @@ class SPPMISVDEmbedder(Embedder):
 		# Context distribution smoothing
 		C_cds = {k: v**alpha_cds for k, v in self.C.iteritems()}
 		t_cds = float(sum(C_cds.values()))
-		C_cds = {k: v / t_cds for k, v in C_cds.iteritems()}
 		# Construct SPPMI matrix
 		M = sparse.lil_matrix((len(self.dictionary), len(self.dictionary)))
 		neg = np.log(k)
 		for (w, c), v in self.D.iteritems():
-			M[w, c] = max(np.log(v / (self.W[w] * C_cds[c])) - neg, 0.0)
+			# Be safe about assigning zeros to sparse matrix
+			spmi = np.log((v * t_cds) / (self.W[w] * C_cds[c])) - neg
+			if spmi > 0:
+				M[w, c] = spmi
 		# Sparse SVD
 		self.U, self.S, _ = sparse.linalg.svds(
 			M, k=rank, tol=1e-12, return_singular_vectors='u'

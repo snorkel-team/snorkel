@@ -7,8 +7,8 @@ import warnings
 
 from pandas import DataFrame
 
-matplotlib.use('Agg')
 warnings.filterwarnings("ignore", module="matplotlib")
+matplotlib.use('Agg')
 
 
 class Scorer(object):

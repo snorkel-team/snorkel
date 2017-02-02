@@ -30,6 +30,6 @@ tutorials/intro/data/articles-test.tsv
 tutorials/intro/data/articles-train.tsv
 tutorials/intro/data/gold_labels.tsv
 tutorials/intro/snorkel.db
-tutorials/intro/SparseLR*
+tutorials/*/SparseLR*
 
 tutorials/tables/data/hardware/

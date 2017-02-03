@@ -179,13 +179,22 @@ class SparseLogisticRegression(LogisticRegression):
         return X.tocsr()
 
     def _batch_sparse_data(self, X):
-        """Convert sparse batch matrix to sparse inputs for embedding lookup"""
+        """Convert sparse batch matrix to sparse inputs for embedding lookup
+            Notes: https://github.com/tensorflow/tensorflow/issues/342
+        """
         if not issparse(X):
             raise Exception("Matrix X must be scipy.sparse type")
         X_lil = X.tolil()
         indices, ids, weights = [], [], []
         max_len = 0
         for i, (row, data) in enumerate(zip(X_lil.rows, X_lil.data)):
+            # Dummy weight for all-zero row
+            if len(row) == 0:
+                indices.append((i, 0))
+                ids.append(0)
+                weights.append(0.0)
+                continue
+            # Update indices by position
             max_len = max(max_len, len(row))
             indices.extend((i, t) for t in xrange(len(row)))
             ids.extend(row)

@@ -40,6 +40,9 @@ class Candidate(SnorkelBase):
         """Get a tuple of the canonical IDs (CIDs) of the contexts making up this candidate"""
         return tuple(getattr(self, name + "_cid") for name in self.__argnames__)
 
+    def __len__(self):
+        return len(self.__argnames__)
+
     def __getitem__(self, key):
         return self.get_contexts()[key]
 

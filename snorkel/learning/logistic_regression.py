@@ -186,6 +186,13 @@ class SparseLogisticRegression(LogisticRegression):
         indices, ids, weights = [], [], []
         max_len = 0
         for i, (row, data) in enumerate(zip(X_lil.rows, X_lil.data)):
+            # Dummy weight for all-zero row
+            if len(row) == 0:
+                indices.append((i, 0))
+                ids.append(0)
+                weights.append(0.0)
+                continue
+            # Update indices by position
             max_len = max(max_len, len(row))
             indices.extend((i, t) for t in xrange(len(row)))
             ids.extend(row)

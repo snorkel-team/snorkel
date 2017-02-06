@@ -9,7 +9,7 @@ from scipy import sparse
 class SnorkelSentenceGensimCorpus(gensim.interfaces.CorpusABC):
 
 	def __init__(self, documents, tokens='words', stopwords=DEFAULT_STOPS,
-				 subsample_t=1e-5, min_count=5):
+				 subsample_t=1e-5, min_count=2):
 		"""Converts Snorkel Documents to a Gensim corpus"""
 		self.documents  = documents
 		self.tokens     = tokens
@@ -17,7 +17,9 @@ class SnorkelSentenceGensimCorpus(gensim.interfaces.CorpusABC):
 		self.t          = subsample_t
 		self.min_count  = min_count
 		self.dictionary = gensim.corpora.dictionary.Dictionary(prune_at=None)
+		print "Processing corpus with {0} documents".format(len(documents))
 		self._process_tokens()
+		print "Corpus processing done!"
 
 	def _filter(self, tokens, lower=True):
 		"""Filter out stopwords and single-characters from a word sequence
@@ -45,6 +47,7 @@ class SnorkelSentenceGensimCorpus(gensim.interfaces.CorpusABC):
 			for token in sent_tokens:
 				counts[token] += 1
 		# Remove infrequent words
+		print "\t{0} words in corpus".format(len(self.dictionary.token2id))
 		self.dictionary.filter_extremes(
 			no_below=self.min_count, no_above=1.0, keep_n=None
 		)
@@ -52,11 +55,12 @@ class SnorkelSentenceGensimCorpus(gensim.interfaces.CorpusABC):
 		keys, s = self.dictionary.token2id.keys(), sum(counts.values())
 		f = np.ravel([counts[k] for k in keys]) / float(s)
 		p = 1.0 - np.sqrt(self.t / f)
-		keep = (np.random.random(len(keys)) > p)
+		keep = (np.random.random(len(keys)) < p)
 		bad_ids = [
 			self.dictionary.token2id[k] for k, y in zip(keys, keep) if not y
 		]
 		self.dictionary.filter_tokens(bad_ids=bad_ids)
+		print "\t{0} words after filter".format(len(self.dictionary.token2id))
 
 	def iter_sentences(self):
 		for sent_tokens in self._token_seq_generator():
@@ -98,7 +102,7 @@ class SPPMISVDEmbedder(Embedder):
 				ct[word] += 1
 				# Iterate over context window
 				for j in range(max(0, c-self.w), min(len(sent), c+self.w+1)):
-					if j == 0:
+					if j == c:
 						continue
 					W[ word          ] += 1
 					C[       sent[j] ] += 1
@@ -114,16 +118,18 @@ class SPPMISVDEmbedder(Embedder):
 		# Context distribution smoothing
 		C_cds = {k: v**alpha_cds for k, v in self.C.iteritems()}
 		t_cds = float(sum(C_cds.values()))
-		C_cds = {k: v / t_cds for k, v in C_cds.iteritems()}
 		# Construct SPPMI matrix
 		M = sparse.lil_matrix((len(self.dictionary), len(self.dictionary)))
 		neg = np.log(k)
 		for (w, c), v in self.D.iteritems():
-			M[w, c] = max(np.log(v / (self.W[w] * C_cds[c])) - neg, 0.0)
+			# Be safe about assigning zeros to sparse matrix
+			spmi = np.log((v * t_cds) / (self.W[w] * C_cds[c])) - neg
+			if spmi > 0:
+				M[w, c] = spmi
 		# Sparse SVD
 		self.U, self.S, _ = sparse.linalg.svds(
 			M, k=rank, tol=1e-12, return_singular_vectors='u'
 		)
 
 	def word_embeddings(self, p=0.5):
-		return self.U * np.diag(np.power(self.S, p))
+		return np.dot(self.U, np.diag(np.power(self.S, p)))

@@ -48,7 +48,7 @@ class LogisticRegression(TFNoiseAwareModel):
             raise Exception("Sparse input matrix. Use SparseLogisticRegression")
         return X
 
-    def _run_batch(self, X_train, y_train, i, r):
+    def _run_batch(self, X_train, y_train, i, r, *args):
         """Run a single batch update"""
         # Get batch tensors
         sparse  = issparse(X_train)
@@ -95,6 +95,7 @@ class LogisticRegression(TFNoiseAwareModel):
         # Run mini-batch SGD
         n = X_train.shape[0]
         batch_size = min(batch_size, n)
+        nnz = 0
         if verbose:
             st = time()
             print("[{0}] Training model".format(self.name))
@@ -106,7 +107,7 @@ class LogisticRegression(TFNoiseAwareModel):
             epoch_loss = 0.0
             for i in range(0, n, batch_size):
                 r = min(n-1, i+batch_size)
-                loss, _, nnz = self._run_batch(X_train, y_train, i, r)
+                loss, _, nnz = self._run_batch(X_train, y_train, i, r, nnz)
                 epoch_loss += loss
             # Print training stats
             if verbose and (t % print_freq == 0 or t in [0, (n_epochs-1)]):
@@ -202,12 +203,14 @@ class SparseLogisticRegression(LogisticRegression):
         shape = (len(X_lil.rows), max_len)
         return indices, shape, ids, weights
 
-    def _run_batch(self, X_train, y_train, i, r):
+    def _run_batch(self, X_train, y_train, i, r, last_nnz):
         """Run a single batch update"""
         # Get batch sparse tensor data
         indices, shape, ids, weights = self._batch_sparse_data(X_train[i:r, :])
         y_batch = y_train[i:r].reshape((r-i, 1))
-        # Run training step and evaluate loss function                  
+        # Run training step and evaluate loss function
+        if len(indices) == 0:
+            return 0.0, None, last_nnz   
         return self.session.run([self.loss, self.train_fn, self.nnz], {
             self.indices: indices,
             self.shape:   shape,

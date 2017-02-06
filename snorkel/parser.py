@@ -178,10 +178,7 @@ class XMLMultiDocPreprocessor(DocPreprocessor):
     def _can_read(self, fpath):
         return fpath.endswith('.xml')
 
-
-PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
-         '-RSB-': ']', '-LSB-': '['}
-
+PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{','-RSB-': ']', '-LSB-': '['}
 
 class CoreNLPHandler(object):
     def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False):
@@ -223,7 +220,8 @@ class CoreNLPHandler(object):
                         backoff_factor=0.1,
                         status_forcelist=[ 500, 502, 503, 504 ])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
-    
+        
+
     def _kill_pserver(self):
         if self.server_pid is not None:
             try:
@@ -233,6 +231,7 @@ class CoreNLPHandler(object):
 
     def parse(self, document, text):
         """Parse a raw document as a string into a list of sentences"""
+
         if len(text.strip()) == 0:
             return
         if isinstance(text, unicode):
@@ -250,13 +249,13 @@ class CoreNLPHandler(object):
             warnings.warn("CoreNLP skipped a malformed sentence.", RuntimeWarning)
             return
         position = 0
-        diverged = False
         for block in blocks:
             parts = defaultdict(list)
             dep_order, dep_par, dep_lab = [], [], []
             for tok, deps in zip(block['tokens'], block['basic-dependencies']):
-                parts['words'].append(tok['word'])
-                parts['lemmas'].append(tok['lemma'])
+                # Convert PennTreeBank symbols back into characters for words/lemmas
+                parts['words'].append(PTB.get(tok['word'], tok['word']))
+                parts['lemmas'].append(PTB.get(tok['lemma'], tok['lemma']))
                 parts['pos_tags'].append(tok['pos'])
                 parts['ner_tags'].append(tok['ner'])
                 parts['char_offsets'].append(tok['characterOffsetBegin'])
@@ -264,29 +263,17 @@ class CoreNLPHandler(object):
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])
 
+            parts['text'] = ''.join(t['originalText'] + t['after'] for t in block['tokens'])
             # make char_offsets relative to start of sentence
             abs_sent_offset = parts['char_offsets'][0]
             parts['char_offsets'] = [p - abs_sent_offset for p in parts['char_offsets']]
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
+            parts['position'] = position
 
             # Add full dependency tree parse
             if self.parse_tree:
                 parts['tree'] = ' '.join(block['parse'].split())
-
-            # NOTE: We have observed weird bugs where CoreNLP diverges from raw document text (see Issue #368)
-            # In these cases we go with CoreNLP so as not to cause downstream issues but throw a warning
-            doc_text = text[block['tokens'][0]['characterOffsetBegin'] : block['tokens'][-1]['characterOffsetEnd']]
-            L = len(block['tokens'])
-            parts['text'] = ''.join(t['originalText'] + t.get('after', '') if i < L - 1 else t['originalText'] for i,t in enumerate(block['tokens']))
-            if not diverged and doc_text != parts['text']:
-                diverged = True
-                #warnings.warn("CoreNLP parse has diverged from raw document text!")
-            parts['position'] = position
-            
-            # replace PennTreeBank tags with original forms
-            parts['words'] = [PTB[w] if w in PTB else w for w in parts['words']]
-            parts['lemmas'] = [PTB[w.upper()] if w.upper() in PTB else w for w in parts['lemmas']]
 
             # Link the sentence to its parent document object
             parts['document'] = document

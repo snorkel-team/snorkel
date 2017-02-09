@@ -14,7 +14,7 @@ class DependencySelector(object):
         self.rng = random.Random()
         self.rng.seed(seed)
 
-    def select(self, L, propensity=False, threshold=0.05, truncation=10):
+    def select(self, L, higher_order=False, propensity=False, threshold=0.05, truncation=10):
         try:
             L = L.todense()
         except AttributeError:
@@ -24,7 +24,12 @@ class DependencySelector(object):
 
         # Initializes data structures
         deps = set()
-        weights = np.zeros((5 * n + 1,)) if propensity else np.zeros((5 * n,))
+        n_weights = 2 * n
+        if higher_order:
+            n_weights += 4 * n
+        if propensity:
+            n_weights += 1
+        weights = np.zeros((n_weights,))
         joint = np.zeros((6,))
         # joint[0] = P(Y = -1, L_j = -1)
         # joint[1] = P(Y = -1, L_j =  0)
@@ -42,29 +47,31 @@ class DependencySelector(object):
             if propensity:
                 weights[5 * n] = -2.0
 
-            _fit_deps(m, n, j, L, weights, joint, propensity, threshold, truncation)
+            _fit_deps(m, n, j, L, weights, joint, higher_order, propensity,  threshold, truncation)
 
             for k in range(n):
                 if abs(weights[n + k]) > threshold:
-                    deps.add((j, k, DEP_REINFORCING))
-                if abs(weights[2 * n + k]) > threshold:
-                    deps.add((k, j, DEP_REINFORCING))
-                if abs(weights[3 * n + k]) > threshold:
-                    deps.add((j, k, DEP_FIXING))
-                if abs(weights[4 * n + k]) > threshold:
-                    deps.add((k, j, DEP_FIXING))
+                    deps.add((j, k, DEP_SIMILAR) if j < k else (k, j, DEP_SIMILAR))
+                if higher_order:
+                    if abs(weights[2 * n + k]) > threshold:
+                        deps.add((j, k, DEP_REINFORCING))
+                    if abs(weights[3 * n + k]) > threshold:
+                        deps.add((k, j, DEP_REINFORCING))
+                    if abs(weights[4 * n + k]) > threshold:
+                        deps.add((j, k, DEP_FIXING))
+                    if abs(weights[5 * n + k]) > threshold:
+                        deps.add((k, j, DEP_FIXING))
 
         return deps
 
 
 @jit(nopython=True, cache=True, nogil=True)
-def _fit_deps(m, n, j, L, weights, joint, propensity, regularization, truncation):
+def _fit_deps(m, n, j, L, weights, joint, higher_order, propensity, regularization, truncation):
     step_size = 1.0 / m
     epochs = 10
-    p_truncation = 1.0 / truncation
     l1delta = regularization * step_size * truncation
 
-    for _ in range(epochs):
+    for t in range(epochs):
         for i in range(m):
             # Processes a training example
 
@@ -87,16 +94,17 @@ def _fit_deps(m, n, j, L, weights, joint, propensity, regularization, truncation
                         joint[4] += weights[k]
                         joint[5] += weights[k]
 
-                        # Reinforcement
-                        joint[5] += weights[n + k] + weights[2 * n + k]
-                        joint[1] -= weights[n + k]
-                        joint[4] -= weights[n + k]
+                        if higher_order:
+                            # Reinforcement
+                            joint[5] += weights[2 * n + k] + weights[3 * n + k]
+                            joint[1] -= weights[2 * n + k]
+                            joint[4] -= weights[2 * n + k]
 
-                        # Fixing
-                        joint[3] += weights[3 * n + k]
-                        joint[1] -= weights[3 * n + k]
-                        joint[4] -= weights[3 * n + k]
-                        joint[0] += weights[4 * n + k]
+                            # Fixing
+                            joint[3] += weights[4 * n + k]
+                            joint[1] -= weights[4 * n + k]
+                            joint[4] -= weights[4 * n + k]
+                            joint[0] += weights[5 * n + k]
 
                     elif L[i, k] == -1:
                         # Accuracy
@@ -107,35 +115,37 @@ def _fit_deps(m, n, j, L, weights, joint, propensity, regularization, truncation
                         joint[4] -= weights[k]
                         joint[5] -= weights[k]
 
-                        # Reinforcement
-                        joint[0] += weights[n + k] + weights[2 * n + k]
-                        joint[1] -= weights[n + k]
-                        joint[4] -= weights[n + k]
+                        if higher_order:
+                            # Reinforcement
+                            joint[0] += weights[2 * n + k] + weights[3 * n + k]
+                            joint[1] -= weights[2 * n + k]
+                            joint[4] -= weights[2 * n + k]
 
-                        # Fixing
-                        joint[2] += weights[3 * n + k]
-                        joint[1] -= weights[3 * n + k]
-                        joint[4] -= weights[3 * n + k]
-                        joint[5] += weights[4 * n + k]
+                            # Fixing
+                            joint[2] += weights[4 * n + k]
+                            joint[1] -= weights[4 * n + k]
+                            joint[4] -= weights[4 * n + k]
+                            joint[5] += weights[5 * n + k]
 
                     else:
-                        # Reinforcement
-                        joint[0] -= weights[2 * n + k]
-                        joint[2] -= weights[2 * n + k]
-                        joint[3] -= weights[2 * n + k]
-                        joint[5] -= weights[2 * n + k]
+                        if higher_order:
+                            # Reinforcement
+                            joint[0] -= weights[3 * n + k]
+                            joint[2] -= weights[3 * n + k]
+                            joint[3] -= weights[3 * n + k]
+                            joint[5] -= weights[3 * n + k]
 
-                        # Fixing
-                        joint[0] -= weights[4 * n + k]
-                        joint[2] -= weights[4 * n + k]
-                        joint[3] -= weights[4 * n + k]
-                        joint[5] -= weights[4 * n + k]
+                            # Fixing
+                            joint[0] -= weights[5 * n + k]
+                            joint[2] -= weights[5 * n + k]
+                            joint[3] -= weights[5 * n + k]
+                            joint[5] -= weights[5 * n + k]
 
             if propensity:
-                joint[0] += weights[5 * n]
-                joint[2] += weights[5 * n]
-                joint[3] += weights[5 * n]
-                joint[5] += weights[5 * n]
+                joint[0] += weights[6 * n]
+                joint[2] += weights[6 * n]
+                joint[3] += weights[6 * n]
+                joint[5] += weights[6 * n]
 
             joint = np.exp(joint)
             joint /= np.sum(joint)
@@ -168,77 +178,80 @@ def _fit_deps(m, n, j, L, weights, joint, propensity, regularization, truncation
                         # Accuracy
                         weights[k] -= step_size * (marginal_pos - marginal_neg - conditional_pos + conditional_neg)
 
-                        # Incoming reinforcement
-                        weights[n + k] -= step_size * (joint[5] - joint[1] - joint[4])
-                        if L[i, j] == 1:
-                            weights[n + k] += step_size * conditional_pos
-                        elif L[i, j] == 0:
-                            weights[n + k] += step_size * -1
+                        if higher_order:
+                            # Incoming reinforcement
+                            weights[2 * n + k] -= step_size * (joint[5] - joint[1] - joint[4])
+                            if L[i, j] == 1:
+                                weights[2 * n + k] += step_size * conditional_pos
+                            elif L[i, j] == 0:
+                                weights[2 * n + k] += step_size * -1
 
-                        # Outgoing reinforcement
-                        weights[2 * n + k] -= step_size * joint[5]
-                        if L[i, j] == 1:
-                            weights[2 * n + k] += step_size * conditional_pos
+                            # Outgoing reinforcement
+                            weights[3 * n + k] -= step_size * joint[5]
+                            if L[i, j] == 1:
+                                weights[3 * n + k] += step_size * conditional_pos
 
-                        # Incoming fixing
-                        weights[3 * n + k] -= step_size * (joint[3] - joint[1] - joint[4])
-                        if L[i, j] == -1:
-                            weights[3 * n + k] += step_size * conditional_pos
-                        elif L[i, j] == 0:
-                            weights[3 * n + k] += step_size * -1
+                            # Incoming fixing
+                            weights[4 * n + k] -= step_size * (joint[3] - joint[1] - joint[4])
+                            if L[i, j] == -1:
+                                weights[4 * n + k] += step_size * conditional_pos
+                            elif L[i, j] == 0:
+                                weights[4 * n + k] += step_size * -1
 
-                        # Outgoing fixing
-                        weights[4 * n + k] -= step_size * joint[0]
-                        if L[i, j] == -1:
-                            weights[4 * n + k] += step_size * conditional_neg
+                            # Outgoing fixing
+                            weights[5 * n + k] -= step_size * joint[0]
+                            if L[i, j] == -1:
+                                weights[5 * n + k] += step_size * conditional_neg
                     elif L[i, k] == -1:
                         # Accuracy
                         weights[k] -= step_size * (marginal_neg - marginal_pos - conditional_neg + conditional_pos)
 
-                        # Incoming reinforcement
-                        weights[n + k] -= step_size * (joint[0] - joint[1] - joint[4])
-                        if L[i, j] == -1:
-                            weights[n + k] += step_size * conditional_neg
-                        elif L[i, j] == 0:
-                            weights[n + k] += step_size * -1
+                        if higher_order:
+                            # Incoming reinforcement
+                            weights[2 * n + k] -= step_size * (joint[0] - joint[1] - joint[4])
+                            if L[i, j] == -1:
+                                weights[2 * n + k] += step_size * conditional_neg
+                            elif L[i, j] == 0:
+                                weights[2 * n + k] += step_size * -1
 
-                        # Outgoing reinforcement
-                        weights[2 * n + k] -= step_size * joint[0]
-                        if L[i, j] == -1:
-                            weights[2 * n + k] += step_size * conditional_neg
+                            # Outgoing reinforcement
+                            weights[3 * n + k] -= step_size * joint[0]
+                            if L[i, j] == -1:
+                                weights[3 * n + k] += step_size * conditional_neg
 
-                        # Incoming fixing
-                        weights[3 * n + k] -= step_size * (joint[2] - joint[1] - joint[4])
-                        if L[i, j] == 1:
-                            weights[3 * n + k] += step_size * conditional_neg
-                        elif L[i, j] == 0:
-                            weights[3 * n + k] += step_size * -1
+                            # Incoming fixing
+                            weights[4 * n + k] -= step_size * (joint[2] - joint[1] - joint[4])
+                            if L[i, j] == 1:
+                                weights[4 * n + k] += step_size * conditional_neg
+                            elif L[i, j] == 0:
+                                weights[4 * n + k] += step_size * -1
 
-                        # Outgoing fixing
-                        weights[4 * n + k] -= step_size * joint[5]
-                        if L[i, j] == 1:
-                            weights[4 * n + k] += step_size * conditional_pos
+                            # Outgoing fixing
+                            weights[5 * n + k] -= step_size * joint[5]
+                            if L[i, j] == 1:
+                                weights[5 * n + k] += step_size * conditional_pos
                     else:
-                        # No effect of incoming reinforcement
+                        if higher_order:
+                            # No effect of incoming reinforcement
 
-                        # Outgoing reinforcement
-                        weights[2 * n + k] -= step_size * (-1 * joint[0] - joint[2] - joint[3] - joint[5])
-                        if L[i, j] != 0:
-                            weights[2 * n + k] += step_size * -1
+                            # Outgoing reinforcement
+                            weights[3 * n + k] -= step_size * (-1 * joint[0] - joint[2] - joint[3] - joint[5])
+                            if L[i, j] != 0:
+                                weights[3 * n + k] += step_size * -1
 
-                        # No effect of incoming fixing
+                            # No effect of incoming fixing
 
-                        # Outgoing fixing
-                        weights[4 * n + k] -= step_size * (-1 * joint[0] - joint[2] - joint[3] - joint[5])
-                        if L[i, j] != 0:
-                            weights[4 * n + k] += step_size * -1
+                            # Outgoing fixing
+                            weights[5 * n + k] -= step_size * (-1 * joint[0] - joint[2] - joint[3] - joint[5])
+                            if L[i, j] != 0:
+                                weights[5 * n + k] += step_size * -1
 
             if propensity:
-                weights[5 * n] -= step_size * (joint[0] + joint[2] + joint[3] + joint[5])
+                weights[6 * n] -= step_size * (joint[0] + joint[2] + joint[3] + joint[5])
                 if L[i, j] != 0:
-                    weights[5 * n] += step_size
+                    weights[6 * n] += step_size
 
             # Third, takes regularization gradient step
-            if random.random() < p_truncation:
-                for k in range(5 * n + 1 if propensity else 5 * n):
+            if (t * m + i) % truncation == 0:
+                for k in range(len(weights)):
                     weights[k] = max(0, weights[k] - l1delta) if weights[k] > 0 else min(0, weights[k] + l1delta)

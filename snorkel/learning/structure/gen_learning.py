@@ -94,6 +94,10 @@ def _fit_deps(m, n, j, L, weights, joint, higher_order, propensity, regularizati
                         joint[4] += weights[k]
                         joint[5] += weights[k]
 
+                        # Similar
+                        joint[2] += weights[n + k]
+                        joint[5] += weights[n + k]
+
                         if higher_order:
                             # Reinforcement
                             joint[5] += weights[2 * n + k] + weights[3 * n + k]
@@ -115,6 +119,10 @@ def _fit_deps(m, n, j, L, weights, joint, higher_order, propensity, regularizati
                         joint[4] -= weights[k]
                         joint[5] -= weights[k]
 
+                        # Similar
+                        joint[0] += weights[n + k]
+                        joint[3] += weights[n + k]
+
                         if higher_order:
                             # Reinforcement
                             joint[0] += weights[2 * n + k] + weights[3 * n + k]
@@ -128,6 +136,10 @@ def _fit_deps(m, n, j, L, weights, joint, higher_order, propensity, regularizati
                             joint[5] += weights[5 * n + k]
 
                     else:
+                        # Similar
+                        joint[1] += weights[n + k]
+                        joint[4] += weights[n + k]
+
                         if higher_order:
                             # Reinforcement
                             joint[0] -= weights[3 * n + k]
@@ -178,6 +190,11 @@ def _fit_deps(m, n, j, L, weights, joint, higher_order, propensity, regularizati
                         # Accuracy
                         weights[k] -= step_size * (marginal_pos - marginal_neg - conditional_pos + conditional_neg)
 
+                        # Similar
+                        weights[n + k] -= step_size * (joint[2] + joint[5])
+                        if L[i, j] == 1:
+                            weights[n + k] += step_size
+
                         if higher_order:
                             # Incoming reinforcement
                             weights[2 * n + k] -= step_size * (joint[5] - joint[1] - joint[4])
@@ -206,6 +223,11 @@ def _fit_deps(m, n, j, L, weights, joint, higher_order, propensity, regularizati
                         # Accuracy
                         weights[k] -= step_size * (marginal_neg - marginal_pos - conditional_neg + conditional_pos)
 
+                        # Similar
+                        weights[n + k] -= step_size * (joint[0] + joint[3])
+                        if L[i, j] == -1:
+                            weights[n + k] += step_size
+
                         if higher_order:
                             # Incoming reinforcement
                             weights[2 * n + k] -= step_size * (joint[0] - joint[1] - joint[4])
@@ -231,6 +253,11 @@ def _fit_deps(m, n, j, L, weights, joint, higher_order, propensity, regularizati
                             if L[i, j] == 1:
                                 weights[5 * n + k] += step_size * conditional_pos
                     else:
+                        # Similar
+                        weights[n + k] -= step_size * (joint[1] + joint[4])
+                        if L[i, j] == 0:
+                            weights[n + k] += step_size
+
                         if higher_order:
                             # No effect of incoming reinforcement
 

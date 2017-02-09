@@ -223,7 +223,7 @@ def generate_label_matrix(weights, m):
             for j in range(weights.n):
                 if getattr(weights, dep_name)[i, j] != 0.0:
                     if dep_name == 'dep_similar' or dep_name == 'dep_exclusive':
-                        factor[f_off]["factorFunction"] = FACTORS["EQUAL"] if dep_name == 'dep_similar' else FACTORS["DP_GEN_DEP_EXCLUSIVE"]
+                        factor[f_off]["factorFunction"] = FACTORS["DP_GEN_DEP_SIMILAR"] if dep_name == 'dep_similar' else FACTORS["DP_GEN_DEP_EXCLUSIVE"]
                         factor[f_off]["weightId"] = f_off
                         factor[f_off]["featureValue"] = 1
                         factor[f_off]["arity"] = 2

@@ -441,7 +441,7 @@ class GenerativeModel(object):
         # Factors for labeling function dependencies
         dep_name_map = {
             'dep_similar':
-                ('EQUAL', (
+                ('DP_GEN_DEP_SIMILAR', (
                     lambda m, n, i, j, k: m + n * i + j,
                     lambda m, n, i, j, k: m + n * i + k)),
             'dep_fixing':

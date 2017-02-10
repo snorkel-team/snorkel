@@ -204,7 +204,7 @@ class TestGenLearning(unittest.TestCase):
         f_offset = 30
         ftv_offset = 45
         for i in range(5):
-            self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["EQUAL"])
+            self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["DP_GEN_DEP_SIMILAR"])
             self.assertEqual(factor[f_offset + i]["weightId"], 6)
             self.assertEqual(factor[f_offset + i]["featureValue"], 1)
             self.assertEqual(factor[f_offset + i]["arity"], 2)
@@ -213,7 +213,7 @@ class TestGenLearning(unittest.TestCase):
         f_offset = 35
         ftv_offset = 55
         for i in range(5):
-            self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["EQUAL"])
+            self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["DP_GEN_DEP_SIMILAR"])
             self.assertEqual(factor[f_offset + i]["weightId"], 7)
             self.assertEqual(factor[f_offset + i]["featureValue"], 1)
             self.assertEqual(factor[f_offset + i]["arity"], 2)

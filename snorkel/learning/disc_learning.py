@@ -48,7 +48,7 @@ class NoiseAwareModel(object):
 
 class TFNoiseAwareModel(NoiseAwareModel):
 
-    def __init__(self, save_file=None, name='TFModel'):
+    def __init__(self, save_file=None, name='TFModel', n_threads=None):
         """Interface for a TensorFlow model
         The @train_fn, @loss, @prediction, and @save_dict
         fields should be populated by @_build()
@@ -58,7 +58,12 @@ class TFNoiseAwareModel(NoiseAwareModel):
         self.loss       = None
         self.prediction = None
         self.save_dict  = None
-        self.session    = tf.Session()
+        self.session    = tf.Session(
+            config=tf.ConfigProto(
+                intra_op_parallelism_threads=n_threads,
+                inter_op_parallelism_threads=n_threads
+            )
+        ) if n_threads is not None else tf.Session()
         # Load model
         if save_file is not None:
             self.load(save_file)

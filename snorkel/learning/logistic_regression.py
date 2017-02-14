@@ -27,7 +27,7 @@ class LogisticRegression(TFNoiseAwareModel):
         # Define inputs and variables
         self.X = tf.placeholder(tf.float32, (None, self.d))
         self.Y = tf.placeholder(tf.float32, (None, 1))
-        s1, s2 = self.seed, self.seed + 1
+        s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
         w = tf.Variable(tf.random_normal((self.d, 1), stddev=0.01, seed=s1))
         b = tf.Variable(tf.random_normal((1, 1), stddev=0.01, seed=s2))
         h = tf.add(tf.matmul(self.X, w), b)
@@ -156,7 +156,7 @@ class SparseLogisticRegression(LogisticRegression):
         # Define training variables
         sparse_ids = tf.SparseTensor(self.indices, self.ids, self.shape)
         sparse_vals = tf.SparseTensor(self.indices, self.weights, self.shape)
-        s1, s2 = self.seed, self.seed + 1
+        s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
         w = tf.Variable(tf.random_normal((self.d, 1), stddev=0.01, seed=s1))
         b = tf.Variable(tf.random_normal((1, 1), stddev=0.01, seed=s2))
         z = tf.nn.embedding_lookup_sparse(

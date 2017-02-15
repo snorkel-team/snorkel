@@ -358,7 +358,7 @@ class GenerativeModel(object):
         w_off += n
         for i in range(w_off, weight.shape[0]):
             weight[i]['isFixed'] = False
-            weight[i]['initialValue'] = np.float64(0.0)
+            weight[i]['initialValue'] = np.float64(0.5)
 
 
         #

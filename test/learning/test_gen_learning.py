@@ -156,7 +156,7 @@ class TestGenLearning(unittest.TestCase):
             self.assertTrue(0.9 <= weight[i]['initialValue'] <= 1.1)
         for i in range(3, 11):
             self.assertFalse(weight[i]['isFixed'])
-            self.assertEqual(weight[i]['initialValue'], 0.0)
+            self.assertEqual(weight[i]['initialValue'], 0.5)
 
         #
         # Variables

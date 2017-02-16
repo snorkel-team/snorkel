@@ -102,7 +102,7 @@ class reLSTM(TFNoiseAwareModel):
         batch_size = tf.shape(self.sentences)[1]
         with tf.variable_scope("LSTM") as scope:
             # LSTM architecture
-            cell = tf.nn.rnn_cell.BasicLSTMCell(self.dim, state_is_tuple=True)
+            cell = tf.contrib.rnn.BasicLSTMCell(self.dim, state_is_tuple=True)
             # Set RNN
             initial_state = cell.zero_state(batch_size, tf.float32)
             rnn_outputs, _ = tf.nn.dynamic_rnn(
@@ -136,7 +136,9 @@ class reLSTM(TFNoiseAwareModel):
         self.prediction = tf.nn.sigmoid(h)
         # Set log loss function
         self.loss = tf.reduce_sum(
-            tf.nn.sigmoid_cross_entropy_with_logits(h_bn, unrolled_marginals)
+            tf.nn.sigmoid_cross_entropy_with_logits(
+                logits=h_bn, labels=unrolled_marginals
+            )
         )
         # Backprop trainer
         self.train_fn = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)

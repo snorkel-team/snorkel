@@ -2,7 +2,7 @@ bs4
 futures
 ipywidgets
 jupyter
-lxml
+lxml==3.6.4
 matplotlib
 nltk
 numba
@@ -12,4 +12,4 @@ pandas
 requests
 scipy>=0.18
 sqlalchemy>=1.0.14
-tensorflow>=0.12.1
+tensorflow>=1.0

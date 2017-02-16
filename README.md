@@ -9,8 +9,10 @@
 <img src="figs/darpa.JPG" width="80" height="80" align="middle" />
 <img src="figs/ONR.jpg" width="100" height="80" align="middle" />
 <img src="figs/moore_logo.png" width="100" height="60" align="middle" />
+<img src="figs/nih_logo.png" width="80" height="60" align="middle" />
+<img src="figs/mobilize_logo.png" width="100" height="60" align="middle" />
 
-*Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043.*
+*Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043 and also by the NIH through the [Mobilize Center](http://mobilize.stanford.edu/) under grant number U54EB020405.*
 
 ## Getting Started
 

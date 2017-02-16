@@ -10,32 +10,36 @@ from utils import LabelBalancer
 
 class LogisticRegression(TFNoiseAwareModel):
 
-    def __init__(self, save_file=None, name='LR'):
+    def __init__(self, save_file=None, name='LR', n_threads=None):
         """Noise-aware logistic regression in TensorFlow"""
         self.d          = None
         self.X          = None
+        self.Y          = None
         self.lr         = None
         self.l1_penalty = None
         self.l2_penalty = None
         self.nnz        = None
-        super(LogisticRegression, self).__init__(save_file=save_file, name=name)
+        super(LogisticRegression, self).__init__(
+            save_file=save_file, name=name, n_threads=n_threads
+        )
 
     def _build(self):
         # Define inputs and variables
         self.X = tf.placeholder(tf.float32, (None, self.d))
         self.Y = tf.placeholder(tf.float32, (None, 1))
-        w = tf.Variable(tf.random_normal((self.d, 1), mean=0, stddev=0.01))
-        b = tf.Variable(tf.random_normal((1, 1), mean=0, stddev=0.01))
+        s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
+        w = tf.Variable(tf.random_normal((self.d, 1), stddev=0.01, seed=s1))
+        b = tf.Variable(tf.random_normal((1, 1), stddev=0.01, seed=s2))
         h = tf.add(tf.matmul(self.X, w), b)
-        # Build model
+        # Noise-aware loss
         self.loss = tf.reduce_sum(
-            tf.nn.sigmoid_cross_entropy_with_logits(h, self.Y)
+            tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
         )
-        self.train_fn = tf.train.ProximalGradientDescentOptimizer(
-            learning_rate=tf.cast(self.lr, dtype=tf.float32),
-            l1_regularization_strength=tf.cast(self.l1_penalty, tf.float32),
-            l2_regularization_strength=tf.cast(self.l2_penalty, tf.float32),
-        ).minimize(self.loss)
+        # Add L1 and L2 penalties
+        self.loss += self.l1_penalty * tf.reduce_sum(tf.abs(w))
+        self.loss += self.l2_penalty * tf.nn.l2_loss(w)
+        # Build model
+        self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
         self.prediction = tf.nn.sigmoid(h)
         self.save_dict = {'w': w, 'b': b}
         # Get nnz operation
@@ -61,7 +65,7 @@ class LogisticRegression(TFNoiseAwareModel):
 
     def train(self, X, training_marginals, n_epochs=10, lr=0.01,
         batch_size=100, l1_penalty=0.0, l2_penalty=0.0, print_freq=5,
-        rebalance=False):
+        rebalance=False, seed=None):
         """Train elastic net logistic regression model using TensorFlow
             @X: SciPy or NumPy feature matrix
             @training_marginals: array of marginals for examples in X
@@ -87,6 +91,7 @@ class LogisticRegression(TFNoiseAwareModel):
         self.lr         = lr
         self.l1_penalty = l1_penalty
         self.l2_penalty = l2_penalty
+        self.seed       = seed
         self._build()
         # Get training indices
         train_idxs = LabelBalancer(training_marginals).get_train_idxs(rebalance)
@@ -131,14 +136,14 @@ class LogisticRegression(TFNoiseAwareModel):
 
 class SparseLogisticRegression(LogisticRegression):
 
-    def __init__(self, save_file=None, name='SparseLR'):
+    def __init__(self, save_file=None, name='SparseLR', n_threads=None):
         """Sparse noise-aware logistic regression in TensorFlow"""
         self.indices = None
         self.shape   = None
         self.ids     = None
         self.weights = None
         super(SparseLogisticRegression, self).__init__(
-            save_file=save_file, name=name
+            save_file=save_file, name=name, n_threads=n_threads
         )
 
     def _build(self):
@@ -151,21 +156,22 @@ class SparseLogisticRegression(LogisticRegression):
         # Define training variables
         sparse_ids = tf.SparseTensor(self.indices, self.ids, self.shape)
         sparse_vals = tf.SparseTensor(self.indices, self.weights, self.shape)
-        w = tf.Variable(tf.random_normal((self.d, 1), mean=0, stddev=0.01))
-        b = tf.Variable(tf.random_normal((1, 1), mean=0, stddev=0.01))
+        s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
+        w = tf.Variable(tf.random_normal((self.d, 1), stddev=0.01, seed=s1))
+        b = tf.Variable(tf.random_normal((1, 1), stddev=0.01, seed=s2))
         z = tf.nn.embedding_lookup_sparse(
             params=w, sp_ids=sparse_ids, sp_weights=sparse_vals, combiner='sum'
         )
         h = tf.add(z, b)
-        # Build model
+        # Noise-aware loss
         self.loss = tf.reduce_sum(
-            tf.nn.sigmoid_cross_entropy_with_logits(h, self.Y)
+            tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
         )
-        self.train_fn = tf.train.ProximalGradientDescentOptimizer(
-            learning_rate=tf.cast(self.lr, dtype=tf.float32),
-            l1_regularization_strength=tf.cast(self.l1_penalty, tf.float32),
-            l2_regularization_strength=tf.cast(self.l2_penalty, tf.float32),
-        ).minimize(self.loss)
+        # Add L1 and L2 penalties
+        self.loss += self.l1_penalty * tf.reduce_sum(tf.abs(w))
+        self.loss += self.l2_penalty * tf.nn.l2_loss(w)
+        # Build model
+        self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
         self.prediction = tf.nn.sigmoid(h)
         self.save_dict = {'w': w, 'b': b}
         # Get nnz operation

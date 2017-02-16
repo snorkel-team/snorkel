@@ -4,11 +4,6 @@
 dist: trusty
 sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
 
-env:
-  global:
-    - NUMPY: 1.11
-    - SCIPY: 0.17
-
 language:
   - python
 python:
@@ -56,10 +51,7 @@ install:
   # Install binary distribution of scientific python modules
   - test -e ~/miniconda/envs/test/bin/activate || ( rm -rf ~/miniconda/envs/test; conda create --yes -n test python=$TRAVIS_PYTHON_VERSION )
   - source activate test
-  - conda install --yes numpy=$NUMPY scipy=$SCIPY matplotlib pip
-
-  # Install theano
-  - conda install --yes theano
+  - conda install --yes numpy scipy matplotlib pip
 
   # Install Numba
   - conda install --yes numba

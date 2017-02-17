@@ -74,6 +74,51 @@ class Scorer(object):
 
 class MentionScorer(Scorer):
     """Scorer for mention level assessment"""
+
+    def score_b(self, test_marginals, b, get_candidates=False, set_unlabeled_as_neg=True, set_at_thresh_as_neg=True):
+        test_label_array = []
+        tp, fp, tn, fn = set(), set(), set(), set()
+        it = self.test_candidates if get_candidates else self.test_labels
+        for i, x in enumerate(it):
+            idx = self.test_labels.get_row_index(x) if get_candidates else i
+            label = self.test_labels[idx, 0]
+
+            # Set unlabeled examples to -1 by default
+            if label == 0 and set_unlabeled_as_neg:
+                label = -1
+          
+            # Bucket the candidates for error analysis
+            test_label_array.append(label)
+            if label != 0:
+                if test_marginals[i] > b:
+                    if label == 1:
+                        tp.add(x if get_candidates else i)
+                    else:
+                        fp.add(x if get_candidates else i)
+                elif test_marginals[i] < b or set_at_thresh_as_neg:
+                    if label == -1:
+                        tn.add(x if get_candidates else i)
+                    else:
+                        fn.add(x if get_candidates else i)
+
+        return (tp, fp, tn, fn, test_label_array)
+
+    def pr_curve(self, test_marginals, set_unlabeled_as_neg=True, set_at_thresh_as_neg=True):
+        """Display a precision-recall curve for various threshold values"""
+        bxr = np.linspace(0, 1.0, 21)
+        cts = [self.score_b(test_marginals, b, False, set_unlabeled_as_neg, set_at_thresh_as_neg)[:4] for b in bxr]
+        p, r, f1 = zip(*[scores_from_counts(*x) for x in cts])
+        with plt.style.context('fivethirtyeight'):
+            plt.plot(p, r)
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.0])
+            plt.xlabel("Precision")
+            plt.ylabel("Recall")
+            plt.title("Maximum F1={0:.3f} at b={1:.2f}".format(
+                np.max(f1), bxr[np.argmax(f1)]
+            ))
+        plt.show()
+
     def score(self, test_marginals, train_marginals=None, b=0.5, set_unlabeled_as_neg=True, set_at_thresh_as_neg=True, display=True):
         """
         test_marginals: array of marginals for test candidates
@@ -83,35 +128,11 @@ class MentionScorer(Scorer):
         set_at_b_as_neg: set marginals at the decision threshold exactly as negative predictions
         display: show calibration plots?
         """
-        test_label_array = []
-        tp = set()
-        fp = set()
-        tn = set()
-        fn = set()
+        tp, fp, tn, fn, test_label_array = self.score_b(
+            test_marginals, b, True, set_unlabeled_as_neg, set_at_thresh_as_neg
+        )
 
-        for i, candidate in enumerate(self.test_candidates):
-            test_label_index = self.test_labels.get_row_index(candidate)
-            test_label       = self.test_labels[test_label_index, 0]
-
-            # Set unlabeled examples to -1 by default
-            if test_label == 0 and set_unlabeled_as_neg:
-                test_label = -1
-          
-            # Bucket the candidates for error analysis
-            test_label_array.append(test_label)
-            if test_label != 0:
-                if test_marginals[i] > b:
-                    if test_label == 1:
-                        tp.add(candidate)
-                    else:
-                        fp.add(candidate)
-                elif test_marginals[i] < b or set_at_thresh_as_neg:
-                    if test_label == -1:
-                        tn.add(candidate)
-                    else:
-                        fn.add(candidate)
         if display:
-
             # Calculate scores unadjusted for TPs not in our candidate set
             print_scores(len(tp), len(fp), len(tn), len(fn), title="Scores (Un-adjusted)")
 

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import atexit
 from bs4 import BeautifulSoup
+from bs4 import element
 import codecs
 from collections import defaultdict
 import glob
 import json
 import lxml.etree as et
 import os
-import re
 import requests
 import signal
 from subprocess import Popen
@@ -140,7 +140,7 @@ class HTMLDocPreprocessor(DocPreprocessor):
     def _cleaner(self, s):
         if s.parent.name in ['style', 'script', '[document]', 'head', 'title']:
             return False
-        elif re.match('<!--.*-->', unicode(s)):
+        elif isinstance(s, element.Comment):
             return False
         return True
 

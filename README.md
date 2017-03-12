@@ -39,6 +39,7 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 * _Data Programming with DDLite: Putting Humans in a Different Part of the Loop_, ([HILDA @ SIGMOD 2016](http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf))
 * _Snorkel: A System for Lightweight Extraction_, ([CIDR 2017](http://cidrdb.org/cidr2017/gongshow/abstracts/cidr2017_73.pdf))
 * Data Programming: ML with Weak Supervision ([blog](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html))
+* _Learning the Structure of Generative Models without Labeled Data_, ([preprint](https://arxiv.org/abs/1703.00854))
 
 ## Installation / dependencies
 

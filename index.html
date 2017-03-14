@@ -17,7 +17,7 @@
       <header>
         <!--<h1>Snorkel</h1>-->
         <img src="figs/logo_01.png" width="100"/>
-        <p>A lightweight platform for developing information extraction systems using data programming</p>
+        <p>A training data creation and management system focused on information extraction</p>
 
         <p class="view"><a href="https://github.com/HazyResearch/snorkel">View the Project on GitHub <small>HazyResearch/snorkel</small></a></p>
 
@@ -68,21 +68,34 @@
 <h2>
 <a id="motivation" class="anchor" href="#motivation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Motivation</h2>
 
-<p>Snorkel is intended to be a lightweight but powerful framework for developing <strong>structured information extraction applications</strong> for domains in which large labeled training sets are not available or easy to obtain, using the <em>data programming</em> paradigm.</p>
+<p>
+Snorkel is a system for rapidly <b>creating, modeling, and managing training data</b>, currently focused on accelerating the development of <i>structured or "dark" data extraction applications</i> for domains in which large labeled training sets are not available or easy to obtain.
+</p>
 
-<p>In the data programming approach to developing a machine learning system, the developer focuses on writing a set of <em>labeling functions</em>, which create a large but noisy training set. Snorkel then learns a generative model of this noise—learning, essentially, which labeling functions are more accurate than others—and uses this to train a discriminative classifier.</p>
+<p>
+Today's state-of-the-art machine learning models require <i>massive</i> labeled training sets--which usually do not exist for real-world applications. Instead, Snorkel is based around the new <a href="https://arxiv.org/abs/1605.07723">data programming</a> paradigm, in which the developer focuses on writing a set of <i>labeling functions</i>, which are just scripts that programmatically label data. The resulting labels are noisy, but Snorkel automatically models this process—learning, essentially, which labeling functions are more accurate than others—and then uses this to train an end model (for example, a deep neural network in TensorFlow).
+</p>
 
-<p>At a high level, the idea is that developers can focus on writing labeling functions—which are just (Python) functions that provide a label for some subset of data points—and not think about algorithms <em>or</em> features!</p>
+<p>
+<i>Surprisingly</i>, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models. We see Snorkel as providing a general framework for many <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">weak supervision</a> techniques, and as defining a new <i>programming model for weakly-supervised machine learning systems</i>.
+</p>
 
-<p><strong><em>Snorkel is very much a work in progress</em></strong>, but some people have already begun developing applications with it, and initial feedback has been positive... let us know what you think, and how we can improve it, in the <a href="https://github.com/HazyResearch/snorkel/issues">Issues</a> section!</p>
+<h3>
+<a id="users" class="anchor" href="#users" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Users</h3>
+We're lucky to have some amazing collaborators who are currently using Snorkel!
+<img src="figs/user_logos.png" width="500" height="200" align="middle" />
 
 <h3>
 <a id="references" class="anchor" href="#references" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>References</h3>
 
 <ul>
-<li>Data Programming, to appear at NIPS 2016: <a href="https://arxiv.org/abs/1605.07723">https://arxiv.org/abs/1605.07723</a>
+<li><a href="https://arxiv.org/abs/1605.07723">Data Programming: Creating Large Training Sets, Quickly</a> (NIPS 2016)
 </li>
-<li>Workshop paper from HILDA 2016 (note Snorkel was previously <em>DDLite</em>): <a href="http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf">here</a>
+<li><a href="http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf">Data Programming with DDLite: Putting Humans in a Different Part of the Loop</a> (HILDA @ SIGMOD 2016; note Snorkel was previously <em>DDLite</em>)
+</li>
+<li><a href="https://arxiv.org/abs/1703.00854">Learning the Structure of Generative Models without Labeled Data</a> (preprint)
+</li>
+<li><a href="https://arxiv.org/abs/1610.08123">Socratic Learning: Correcting Misspecified Generative Models using Discriminative Models</a> (preprint)
 </li>
 </ul>
 

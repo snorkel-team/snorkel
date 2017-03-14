@@ -352,11 +352,11 @@ p.img {
 
 <ul>
 <li><p>Collecting <em>hand-labeled</em> training data is not an option for most real-world applications.</p></li>
-<li><p>Users can create <em>lower quality</em> training data to <em>weakly supervise</em> their models.</p></li>
+<li><p>Users can programmatically create <em>lower quality</em> training data to <em>weakly supervise</em> their models.</p></li>
 <li><p>We can use generative models to denoise this noisy training data, resulting in competitive performance without <em>any</em> hand-labeled training data!</p></li>
 </ul>
 
-<p>We describe our new <a href="https://arxiv.org/abs/1605.07723"><strong>data programming</strong></a> approach (to appear at NIPS 2016), and our new open-source framework for lightweight information extraction, <a href="https://github.com/HazyResearch/snorkel"><strong>Snorkel</strong></a>, which we use to beat our previous distant supervision-based systems and <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/disease_tagging">match a benchmark disease-tagging system</a>.</p>
+<p>We describe our new <a href="https://arxiv.org/abs/1605.07723"><strong>data programming</strong></a> approach (NIPS 2016), and our new open-source framework for <i>training data creation and management</i>, <a href="https://github.com/HazyResearch/snorkel"><strong>Snorkel</strong></a>, which we use to beat both directly-supervised and distant supervision-based systems on information extraction tasks.</p>
 </blockquote>
 
 <p><img src="new-new-banner.png" alt="image alt text"></p>
@@ -443,9 +443,16 @@ p.img {
 
 <p>So far, Snorkel seems to be convenient and intuitive for users, as we outlined in a <a href="http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf">workshop paper at HILDA 2016</a> (back when it was called DDLite).  More recently, as another example, we were able to come within 1 point F1 score of a benchmark for disease tagging <em><a href="https://github.com/HazyResearch/snorkel/tree/master/tutorial">without using any hand-labeled data</a></em>, and have released this as one of our tutorial examples.</p>
 
-<h2 id="toc_5">Next-Step Goals</h2>
+<h2 id="toc_5">Newest Additions [2/24/17]</h2>
+Recently, we've worked on two big extensions to the above method of weakly-supervising machine learning systems:
+<ul>
+<li><b>Socratic Learning:</b> Even though it is fairly simple to write labeling functions, it's not always simple for developers to write them optimally.  For example, certain labeling functions might be far more accurate on some parts of the data then on others.  <i>Socratic learning</i> passes back information from the discriminative model to better specify the generative model in cases like these, leading to performance gains and ultimately a better development process.  For more detail, see the <a href="http://hazyresearch.github.io/snorkel/blog/socratic_learning.html">blog post</a>!</li>
+<li><b>Structure Learning:</b> Labeling functions written by users, and the weak supervision sources they may leverage, will naturally have correlations between them.  While data programming allows users to manually specify such dependencies, this is often a tough and subtle task.  Luckily, it turns out that we can learn these dependencies automatically!  This feature is already integrated into Snorkel; for more detail, see the <a href="https://arxiv.org/abs/1703.00854">preprint</a>!</li>
+</ul>
 
-<p>Some things we’re currently excited about working on, in the more near term, in no particular order:</p>
+<h2 id="toc_6">Next-Step Goals</h2>
+
+<p>Some other things we’re currently excited about working on, in the more near term, in no particular order:</p>
 
 <ul>
 <li><p>We recently collaborated with some bio-friends to <a href="http://www.nature.com/articles/ncomms12474">beat human pathologists at some lung cancer prognosis prediction tasks</a>.  We’d like to extend this result to other tasks and domains where there is less training data.</p></li>

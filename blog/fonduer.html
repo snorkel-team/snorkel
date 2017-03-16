@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Fonduer</title>
+    <style type="text/css">
+        .effectfront {
+            border: none;
+            margin: 0 auto;
+        }
+
+        .effectfront:hover {
+            -webkit-transform: scale(1.2);
+            -moz-transform: scale(1.2);
+            -o-transform: scale(1.2);
+            transform: scale(1.2);
+            transition: all 0.3s;
+            -webkit-transition: all 0.3s;
+        }
+
+        body {
+            font-family: Helvetica, arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            background-color: white;
+            padding: 30px;
+        }
+
+        body>*:first-child {
+            margin-top: 0 !important;
+        }
+
+        body>*:last-child {
+            margin-bottom: 0 !important;
+        }
+
+        a {
+            color: #4183C4;
+        }
+
+        a.absent {
+            color: #cc0000;
+        }
+
+        a.anchor {
+            display: block;
+            padding-left: 30px;
+            margin-left: -30px;
+            cursor: pointer;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            margin: 20px 0 10px;
+            padding: 0;
+            font-weight: bold;
+            -webkit-font-smoothing: antialiased;
+            cursor: text;
+            position: relative;
+        }
+
+        h1:hover a.anchor,
+        h2:hover a.anchor,
+        h3:hover a.anchor,
+        h4:hover a.anchor,
+        h5:hover a.anchor,
+        h6:hover a.anchor {
+            background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA09pVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoMTMuMCAyMDEyMDMwNS5tLjQxNSAyMDEyLzAzLzA1OjIxOjAwOjAwKSAgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OUM2NjlDQjI4ODBGMTFFMTg1ODlEODNERDJBRjUwQTQiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OUM2NjlDQjM4ODBGMTFFMTg1ODlEODNERDJBRjUwQTQiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo5QzY2OUNCMDg4MEYxMUUxODU4OUQ4M0REMkFGNTBBNCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo5QzY2OUNCMTg4MEYxMUUxODU4OUQ4M0REMkFGNTBBNCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PsQhXeAAAABfSURBVHjaYvz//z8DJYCRUgMYQAbAMBQIAvEqkBQWXI6sHqwHiwG70TTBxGaiWwjCTGgOUgJiF1J8wMRAIUA34B4Q76HUBelAfJYSA0CuMIEaRP8wGIkGMA54bgQIMACAmkXJi0hKJQAAAABJRU5ErkJggg==) no-repeat 10px center;
+            text-decoration: none;
+        }
+
+        h1 tt,
+        h1 code {
+            font-size: inherit;
+        }
+
+        h2 tt,
+        h2 code {
+            font-size: inherit;
+        }
+
+        h3 tt,
+        h3 code {
+            font-size: inherit;
+        }
+
+        h4 tt,
+        h4 code {
+            font-size: inherit;
+        }
+
+        h5 tt,
+        h5 code {
+            font-size: inherit;
+        }
+
+        h6 tt,
+        h6 code {
+            font-size: inherit;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: black;
+        }
+
+        h2 {
+            font-size: 24px;
+            border-bottom: 1px solid #cccccc;
+            color: black;
+        }
+
+        h3 {
+            font-size: 18px;
+        }
+
+        h4 {
+            font-size: 16px;
+        }
+
+        h5 {
+            font-size: 14px;
+        }
+
+        h6 {
+            color: #777777;
+            font-size: 14px;
+        }
+
+        p,
+        blockquote,
+        ul,
+        ol,
+        dl,
+        li,
+        table,
+        pre {
+            margin: 15px 0;
+        }
+
+        hr {
+            background: transparent url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAECAYAAACtBE5DAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBNYWNpbnRvc2giIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OENDRjNBN0E2NTZBMTFFMEI3QjRBODM4NzJDMjlGNDgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OENDRjNBN0I2NTZBMTFFMEI3QjRBODM4NzJDMjlGNDgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo4Q0NGM0E3ODY1NkExMUUwQjdCNEE4Mzg3MkMyOUY0OCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo4Q0NGM0E3OTY1NkExMUUwQjdCNEE4Mzg3MkMyOUY0OCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PqqezsUAAAAfSURBVHjaYmRABcYwBiM2QSA4y4hNEKYDQxAEAAIMAHNGAzhkPOlYAAAAAElFTkSuQmCC) repeat-x 0 0;
+            border: 0 none;
+            color: #cccccc;
+            height: 4px;
+            padding: 0;
+        }
+
+        body>h2:first-child {
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        body>h1:first-child {
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        body>h1:first-child+h2 {
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        body>h3:first-child,
+        body>h4:first-child,
+        body>h5:first-child,
+        body>h6:first-child {
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        a:first-child h1,
+        a:first-child h2,
+        a:first-child h3,
+        a:first-child h4,
+        a:first-child h5,
+        a:first-child h6 {
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        h1 p,
+        h2 p,
+        h3 p,
+        h4 p,
+        h5 p,
+        h6 p {
+            margin-top: 0;
+        }
+
+        li p.first {
+            display: inline-block;
+        }
+
+        li {
+            margin: 0;
+        }
+
+        ul,
+        ol {
+            padding-left: 30px;
+        }
+
+        ul :first-child,
+        ol :first-child {
+            margin-top: 0;
+        }
+
+        dl {
+            padding: 0;
+        }
+
+        dl dt {
+            font-size: 14px;
+            font-weight: bold;
+            font-style: italic;
+            padding: 0;
+            margin: 15px 0 5px;
+        }
+
+        dl dt:first-child {
+            padding: 0;
+        }
+
+        dl dt> :first-child {
+            margin-top: 0;
+        }
+
+        dl dt> :last-child {
+            margin-bottom: 0;
+        }
+
+        dl dd {
+            margin: 0 0 15px;
+            padding: 0 15px;
+        }
+
+        dl dd> :first-child {
+            margin-top: 0;
+        }
+
+        dl dd> :last-child {
+            margin-bottom: 0;
+        }
+
+        blockquote {
+            border-left: 4px solid #dddddd;
+            padding: 0 15px;
+            color: #777777;
+        }
+
+        blockquote> :first-child {
+            margin-top: 0;
+        }
+
+        blockquote> :last-child {
+            margin-bottom: 0;
+        }
+
+        table {
+            padding: 0;
+            border-collapse: collapse;
+        }
+
+        table tr {
+            border-top: 1px solid #cccccc;
+            background-color: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        table tr:nth-child(2n) {
+            background-color: #f8f8f8;
+        }
+
+        table tr th {
+            font-weight: bold;
+            border: 1px solid #cccccc;
+            margin: 0;
+            padding: 6px 13px;
+        }
+
+        table tr td {
+            border: 1px solid #cccccc;
+            margin: 0;
+            padding: 6px 13px;
+        }
+
+        table tr th :first-child,
+        table tr td :first-child {
+            margin-top: 0;
+        }
+
+        table tr th :last-child,
+        table tr td :last-child {
+            margin-bottom: 0;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        span.frame {
+            display: block;
+            overflow: hidden;
+        }
+
+        span.frame>span {
+            border: 1px solid #dddddd;
+            display: block;
+            float: left;
+            overflow: hidden;
+            margin: 13px 0 0;
+            padding: 7px;
+            width: auto;
+        }
+
+        span.frame span img {
+            display: block;
+            float: left;
+        }
+
+        span.frame span span {
+            clear: both;
+            color: #333333;
+            display: block;
+            padding: 5px 0 0;
+        }
+
+        span.align-center {
+            display: block;
+            overflow: hidden;
+            clear: both;
+        }
+
+        span.align-center>span {
+            display: block;
+            overflow: hidden;
+            margin: 13px auto 0;
+            text-align: center;
+        }
+
+        span.align-center span img {
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        span.align-right {
+            display: block;
+            overflow: hidden;
+            clear: both;
+        }
+
+        span.align-right>span {
+            display: block;
+            overflow: hidden;
+            margin: 13px 0 0;
+            text-align: right;
+        }
+
+        span.align-right span img {
+            margin: 0;
+            text-align: right;
+        }
+
+        span.float-left {
+            display: block;
+            margin-right: 13px;
+            overflow: hidden;
+            float: left;
+        }
+
+        span.float-left span {
+            margin: 13px 0 0;
+        }
+
+        span.float-right {
+            display: block;
+            margin-left: 13px;
+            overflow: hidden;
+            float: right;
+        }
+
+        span.float-right>span {
+            display: block;
+            overflow: hidden;
+            margin: 13px auto 0;
+            text-align: right;
+        }
+
+        code,
+        tt {
+            margin: 0 2px;
+            padding: 0 5px;
+            white-space: nowrap;
+            border: 1px solid #eaeaea;
+            background-color: #f8f8f8;
+            border-radius: 3px;
+        }
+
+        pre code {
+            margin: 0;
+            padding: 0;
+            white-space: pre;
+            border: none;
+            background: transparent;
+        }
+
+        .highlight pre {
+            background-color: #f8f8f8;
+            border: 1px solid #cccccc;
+            font-size: 13px;
+            line-height: 19px;
+            overflow: auto;
+            padding: 6px 10px;
+            border-radius: 3px;
+        }
+
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #cccccc;
+            font-size: 13px;
+            line-height: 19px;
+            overflow: auto;
+            padding: 6px 10px;
+            border-radius: 3px;
+        }
+
+        pre code,
+        pre tt {
+            background-color: transparent;
+            border: none;
+        }
+
+        sup {
+            font-size: 0.83em;
+            vertical-align: super;
+            line-height: 0;
+        }
+
+        * {
+            -webkit-print-color-adjust: exact;
+        }
+
+        @media screen and (min-width: 914px) {
+            body {
+                width: 854px;
+                margin: 0 auto;
+            }
+        }
+
+        @media print {
+            table,
+            pre {
+                page-break-inside: avoid;
+            }
+            pre {
+                word-wrap: break-word;
+            }
+        }
+
+        .top-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            width: 100%;
+        }
+
+        #top-banner-img {
+            opacity: 0.5;
+            width: 100%;
+            max-height: 350px;
+        }
+
+        #main-title {
+            position: relative;
+            margin-top: 100px;
+            margin-bottom: 100px;
+            padding: 10px;
+            font-size: 40px;
+            background: #333333;
+            color: #f8f8f8;
+            z-index: 10;
+        }
+
+        blockquote {
+            font-size: large;
+            font-weight: 300;
+        }
+
+        p.img {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <span class="top-banner">
+    <img id="top-banner-img" src="fonduer_img/fondue_banner.jpg">
+</span>
+
+    <p id="main-title">Fonduer: Knowledge Base Construction from <br> Richly Formatted Data</p>
+
+    <p>Post by <a href="https://stanford.edu/~senwu/" target="_blank">Sen Wu</a>, <a href="https://stanford.edu/~lwhsiao/" target="_blank">Luke Hsiao</a>, and <a href="https://cs.stanford.edu/people/chrismre/" target="_blank">Chris Ré</a></p>
+
+    <p><em>And referencing work by many other <a href="http://cs.stanford.edu/people/chrismre/#students" target="_blank">members of Hazy Research</a></em></p>
+
+    <p>
+        How much money does Tesla burn on research and development each quarter? What are the epicenters and magnitudes of all the earthquakes in California? The answers to these types of questions can be tedious and difficult to extract from openly available
+        documents. Why? These answers are often not found in unstructured text. Instead, they are often locked away in troves of <b>richly formatted</b> data, where information is conveyed via combinations of textual, structural, tabular, and
+        visual expressions, as seen in webpages, business reports, product specifications, and scientific literature. We walk through a <a href="#case_study">case study</a> on Tesla's spending below.
+    </p>
+    <p class="img"><img src="fonduer_img/rfd.png" /></p>
+    <blockquote>
+        <p>
+            We describe <a href="https://arxiv.org/abs/1703.05028" target="_blank">Fonduer</a>, the first knowledge base construction framework for richly formatted information extraction. Using Fonduer, our users have achieve high quality knowledge base
+            construction from richly formatted data in a wide variety of domains.
+        </p>
+    </blockquote>
+
+    <h1>The Key Ingredients of Richly Formatted Data</h1>
+
+    <p>
+        As shown above, these documents contain tabular information, figures, text, and other rich formatting that is designed for human readers. Richly formatted data is particularly challenging for computers to understand due to three major challenges: (1)
+        <i>document-level context</i>, (2) <i>multimodality</i>, and (3) <i>data variety</i>. Previous work has applied both heuristic and machine learning techniques on richly formatted data, but none of these previous systems fully address the challenges
+        associated with this task in a user-friendly framework. Let's explore these challenges in the context of delicious food:
+    </p>
+
+    <ul>
+        <li>
+            <p>
+                <b>Document-Level Context:</b> Information extraction from unstructured text is a lot like eating grilled cheese sandwiches. Both sentences and sandwiches are small, self-contained packages. In contrast, richly formatted information is
+                more like fondue, where a delectable assortment of ingredients can be combined to form hundreds of unique, flavorful bites. When extracting information from richly formatted data, mentions in a relation can span entire documents, and considering
+                document-level context results in far more interesting combinations than considering sentences alone.
+            </p>
+        </li>
+        <p class="img"><img src="fonduer_img/document_level.png" height="200px" /></p>
+    </ul>
+    <ul>
+        <li>
+            <p>
+                <b>Multimodality:</b> Fondue is much less appealing if you imagine eating isolated ingredients. It's the process of eating brilliantly flavorful fusions of these ingredients <i>together</i> that makes fondue special. The same is true for
+                richly formatted data. Unlike unstructured text, richly formatted data relies on semantics that are expressed through multiple modalities: the textual contents, structure of a document, tabular organization of information, and even the
+                visual presentation of fonts, alignments, and figures. Each modality alone is not particularly interesting, but together, they form a rich meal of information that requires new models to fully appreciate.
+            </p>
+        </li>
+        <p class="img"><img src="fonduer_img/multimodality.png" height="200px" /></p>
+    </ul>
+    <ul>
+        <li>
+            <p>
+                <b>Data Variety:</b> There aren't many variations when it comes to grilled cheese, you can change the bread, you can change the cheese, but after that, it
+                <a href="https://www.reddit.com/r/grilledcheese/comments/2or1p3/you_people_make_me_sick/"
+                    target="_blank">ceases to be grilled cheese</a>. Fondue, on the other hand, comes in immense varieties such as cheese, chocolate, and meat, each with a limitless variety of dipping ingredients. Similarly, unstructured text is, well, unstructured text.
+                    Richly formatted data, however, comes in a variety of formats from a variety of domains. Even within a single domain, there can be immensely different ways to format and present information.
+            </p>
+        </li>
+        <p class="img"><img src="fonduer_img/data_variety.png" width="700px" /></p>
+    </ul>
+
+
+    <h1>The Fonduer Approach</h1>
+    <blockquote>
+        <p>
+            Fonduer automatically encodes richly formatted data into its unified data model, which preserves semantics from different modalities, and uses an iterative, human-in-the-loop paradigm that allows users to convert domain expertise into weak supervision
+            signals that guide the knowledge base construction process.
+        </p>
+    </blockquote>
+    <p>
+        To account for the variability of richly formatted data, Fonduer automatically encodes documents of heterogeneous formats into its <i>unified data model</i>—the key ingredient that preserves structural and semantic information across different
+        modalities of the data. This unified data model provides the formalism that enables Fonduer to use a machine learning approach to construct a knowledge base with facts from the input documents. Fonduer, like other machine learning systems, operates
+        on (1) <i>candidates</i>, which are potential entries in a target knowledge base; (2) <i>features</i>, which describe candidates and serve as signals for a <i>classifier</i> to distinguish between true and false candidates; and (3) <i>training data</i>,
+        which is ground truth information on a subset of candidates that is used to train the classifier.
+    </p>
+    <p>
+        Fonduer uses a human-in-the-loop paradigm for training machine learning systems called <i><a href="https://arxiv.org/abs/1605.07723" target="_blank">data programming</a></i>. Data programming softens the burden of traditional supervision by only
+        asking users to provide lightweight functions that programmatically assign (potentially noisy) labels to the input data. By utilizing its unified data model, and applying data programming, Fonduer is the first knowledge base construction framework
+        for richly formatted data that allows users to solely focus on iteratively converting domain expertise into valuable programmatic sources of weak supervision which are then used to train machine learning models.
+    </p>
+
+    <h1 id="case_study">Case Study: How much does Tesla burn on R&amp;D per quarter?</h1>
+
+    <p class="img"><img src="fonduer_img/burn-money.png" height="330px" align="middle" alt="Tesla expenses"></p>
+
+    <blockquote>
+        <p>We use a toy example to explore how Fonduer extracts information from richly formatted data. We ran Fonduer on real relation extraction tasks in many domains and report results in the <a href="https://arxiv.org/abs/1703.05028" target="_blank">paper</a>.</p>
+    </blockquote>
+    When Elon Musk described his <a href="https://www.tesla.com/blog/master-plan-part-deux" target="_blank">master plan for Tesla</a>, it went something like this: (1) build a sports car, (2) invest the profits to build an affordable car, and (3) repeat
+    to build an even more affordable car. Tesla has been built around the idea of investing cash back into R&amp;D to drive down the costs of their new products. In fact,
+    <a href="https://evannex.com/blogs/news/innovation-culture-tesla-r-d-spending-versus-other-automakers"
+        target="_blank">this emphasis in R&amp;D stands out from other car makers in interesting ways</a>. In our toy example, we show how you could use Fonduer to build a knowledge base of Telsa's real quarterly R&amp;D expenses. Companies publish their quarterly financial
+        information in a variety of ways, through press conferences, reports, summary tables, or official government forms. The amount of money that Tesla spends on R&amp;D can be found in 10-Q forms that are
+        <a href="http://ir.tesla.com/sec.cfm?view=all"
+            target="_blank">published for their investors</a>. Using Fonduer, we can construct a knowledge base of the amount of money that is spent on R&amp;D each quarter by collecting a corpus of these 10-Q PDFs/webpages and performing KBC using Fonduer. Specifically,
+            we show the process of extracting a knowledge base of each quarter's R&amp;D spending as (quarter, amount) tuples.
+
+            <h2 id="toc_1">Candidate Generation &amp; Multimodal Featurization</h2>
+            <blockquote>
+                <p>
+                    Unlike unstructured text, candidates are drawn from different areas of a document, and require multimodal features to provide sufficient evidence on whether they are true or false.
+                </p>
+            </blockquote>
+
+            <p class="img"><img class="effectfront" src="fonduer_img/candidates.png" width="900px" /></p>
+
+            <p>
+                In 10-Q forms, expenses are published in tabular form as shown in above. However, notice that all the challenges and characteristics of richly formatted data come into play. Candidates can be found from all over this example page. In addition, interpreting
+                candidates rely on a variety of multimodal features. For example, in the table above, the words that are aligned with each numerical value are particularly important to what each value represents, as is realizing that all values are in
+                thousands as the caption subtly states.
+            </p>
+
+            <p>
+                Fonduer allows users to define how candidates are matched and generated from anywhere on a document, and allows users to define functions to prune excess candidates to control the combinatorial explosion of possible candidates. In addition, each candidate
+                is automatically featurized using a baseline set of multimodal features that include textual features (e.g. traditional NLP tags), structural features (e.g. HTML tag attributes or font styles), tabular features (e.g. row and column numbers
+                and header information), and visual features (e.g. position on a page and visual alignments).
+            </p>
+
+            <h2 id="toc_2">Probabilistic Relation Classification using Multiple Supervision Sources</h2>
+
+            <blockquote>
+                <p>
+                    With richly formatted data, traditional labeled training data is often not available. Instead, properly training machine learning models requires supervision from a variety of multimodal sources to identify patterns across modalities, which are  sparse
+                    and hidden in non-textual signals.
+                </p>
+            </blockquote>
+
+            <p class="img"><img class="effectfront" src="fonduer_img/supervision.png" width="850px" /></p>
+
+            <p>
+                In richly formatted data, useful patterns for classifying whether or not a candidate is true or false are more sparse than in unstructured text. Furthermore, they are hidden in non-textual signals, which motivates the need to exploit overlap and repetition
+                in a variety of patterns over multiple modalities. In the 10-Q form, we see that information from many modalities can provide useful signals in determining whether a candidate is true or false. For example, tabular alignment with keywords
+                like "research" may indicate a true relation, as does being visually aligned with the quarter's end date. Textual information, such as the magnitude of the numerical value itself, can also be a good indication of a candidate's classification—investors
+                who know Tesla would expect over a million dollars to be spent on R&amp;D. Fonduer's unified data model allows users to directly express these types of intuitive rules called <i>labeling functions</i>.
+            </p>
+
+            <p>
+                In Fonduer, labeling functions take the form of simple Python functions (as shown in the figure above) that can label candidates based on multimodal characteristics. It is expected that these labeling functions may conflict or overlap. In our example,
+                we see that the positive labeling functions for being vertically aligned with the date and having the word "research" in the same row overlap. Data programming relies on a generative probabilistic model to estimate the accuracy of each
+                labeling function by reasoning about the conflicts and overlap between them. Fonduer provides the required candidates, features, and labels as input to <a href="http://snorkel.stanford.edu" target="_blank">Snorkel</a>,
+                a data programming engine developed by our lab, which assigns a marginal probability for each candidate.
+            </p>
+
+            <h2 id="toc_3">Iterative Knowledge Base Construction</h2>
+
+            <blockquote>
+                <p>The Fonduer programming model allows users to iteratively improve the quality of their labeling functions through error analysis, without executing the full pipeline as in previous techniques like
+                    <a href="https://arxiv.org/abs/1502.00731"
+                        target="_blank">incremental knowledge base construction</a>.</p>
+            </blockquote>
+
+            <p class="img"><img class="effectfront" src="fonduer_img/iterative.png" width="850px" /></p>
+
+            <p>
+
+            </p>
+
+            <p>
+                Traditionally, iterative knowledge base construction involves time consuming feature engineering, tuning learning algorithms, or even acquiring additional training data. However, under Fonduer's programming model, we simplify and restrict these adjustments
+                to changing the set of labeling functions, which lets users incorporate domain knowledge in a templated, generic way at the data level, instead of the feature or system level. Using the three labeling functions shown in the previous step,
+                a user would notice that the amount spent on R&amp;D in 2014 Q2 is classified with a high probability of being true. Inspecting this candidate shows that it is actually the cost of services for the quarter. A user can simply add another
+                labeling function to negatively label candidates that have numerical values aligned with the word "services", which targets a new set of signals, and rerun classification.
+            </p>
+
+            <p>
+                Fonduer allows users to perform iterations of KBC quality improvement by adjusting their set of labeling functions according to the results of error analysis, while avoiding rerunning candidate generation and multimodal featurization. Fonduer provides
+                two resources for users to perform error analysis: (1) labeling function metrics such as conflict, empirical accuracy, coverage, and overlap; and (2) an interface for inspecting the resulting candidates to understand categorical errors.
+                Our users have found that less than 20 rapid iterations on labeling functions allows them to achieve sufficiently high quality for their applications.
+            </p>
+
+            <h2 id="toc_6">Next-step Goals</h2>
+
+            <p>Some other things we've pushed into our queue:</p>
+
+            <ul>
+                <li>
+                    <p>We will continue to work with our collaborators to build high quality knowledge bases in a variety of domains.</p>
+                </li>
+                <li>
+                    <p>We are actively collaborating with experts from other domains to examine how Fonduer can speed up the KBC process.</p>
+                </li>
+                <li>
+                    <p>We are excited to work on extracting other modalities of richly formatted data, such as images, videos, etc.</p>
+                </li>
+
+            </ul>
+
+
+</body>
+
+</html>

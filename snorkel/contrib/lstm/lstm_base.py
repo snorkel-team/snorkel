@@ -93,13 +93,15 @@ class LSTMBase(TFNoiseAwareModel):
         # Get prediction
         self.prediction = tf.nn.sigmoid(h)
 
-    def train(self, candidates, marginals, n_epochs=25, lr=0.01, dim=50,
-        batch_size=64, max_sentence_length=None, rebalance=False, print_freq=5):
+    def train(self, candidates, marginals, n_epochs=25, lr=0.01, dropout=0.5,
+        dim=50, batch_size=64, max_sentence_length=None, rebalance=False,
+        print_freq=5):
         """Train LSTM model
             @candidates: list Candidate objects for training
             @marginals:  array of marginal probabilities for each Candidate
             @n_epochs: number of training epochs
             @lr: learning rate
+            @dropout: keep probability for dropout layer; if None, no dropout
             @dim: embedding dimension
             @batch_size: batch size for mini-batch SGD
             @max_sentence_length: maximum sentence length for candidates
@@ -150,7 +152,7 @@ class LSTMBase(TFNoiseAwareModel):
                     self.sentences:       x_b,
                     self.sentence_length: len_b,
                     self.marginals:       y_b,
-                    self.keep_prob:       0.5,
+                    self.keep_prob:       dropout or 1.0,
                 })[0]
             # Print training stats
             if verbose and (t % print_freq == 0 or t in [0, (n_epochs-1)]):

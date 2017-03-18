@@ -40,6 +40,7 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 * _Snorkel: A System for Lightweight Extraction_, ([CIDR 2017](http://cidrdb.org/cidr2017/gongshow/abstracts/cidr2017_73.pdf))
 * Data Programming: ML with Weak Supervision ([blog](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html))
 * _Learning the Structure of Generative Models without Labeled Data_, ([preprint](https://arxiv.org/abs/1703.00854))
+* _Fonduer: Knowledge Base Construction from Richly Formatted Data_, ([preprint](https://arxiv.org/abs/1703.05028), [blog](https://hazyresearch.github.io/snorkel/blog/fonduer.html))
 
 ## Installation / dependencies
 

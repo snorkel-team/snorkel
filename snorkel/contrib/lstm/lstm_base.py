@@ -21,7 +21,7 @@ class LSTMBase(TFNoiseAwareModel):
         # Define input layers
         self.sentences       = None
         self.sentence_length = None
-        self.marginals       = None
+        self.train_marginals = None
         self.keep_prob       = None
         self.seed            = seed
         # Super constructor
@@ -37,7 +37,7 @@ class LSTMBase(TFNoiseAwareModel):
         batch_size = len(x)
         x_batch    = np.zeros((batch_size, self.mx_len), dtype=np.int32)
         len_batch  = np.zeros(batch_size, dtype=np.int32)
-        for j, (token_ids, marginal) in enumerate(x):
+        for j, token_ids in enumerate(x):
             t               = min(len(token_ids), self.mx_len)
             x_batch[j, 0:t] = token_ids[0:t]
             len_batch[j]    = t
@@ -51,7 +51,7 @@ class LSTMBase(TFNoiseAwareModel):
         # Define input layers
         self.sentences       = tf.placeholder(tf.int32, [None, None])
         self.sentence_length = tf.placeholder(tf.int32, [None])
-        self.marginals       = tf.placeholder(tf.float32, [None])
+        self.train_marginals = tf.placeholder(tf.float32, [None])
         self.keep_prob       = tf.placeholder(tf.float32)
         # Seeds
         s               = self.seed
@@ -83,18 +83,18 @@ class LSTMBase(TFNoiseAwareModel):
         potentials_dropout = tf.nn.dropout(potentials, self.keep_prob)
         W = tf.Variable(tf.random_normal((2*self.dim, 1), stddev=0.1, seed=s3))
         b = tf.Variable(tf.random_normal((1,), stddev=0.1, seed=s4))
-        h = tf.squeeze(tf.matmul(potentials_dropout, W)) + b
+        h_dropout = tf.squeeze(tf.matmul(potentials_dropout, W)) + b
         # Noise-aware loss
-        self.loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(
-            labels=self.marginals, logits=h
+        self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+            labels=self.train_marginals, logits=h_dropout
         ))
         # Backprop trainer
         self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
         # Get prediction
-        self.prediction = tf.nn.sigmoid(h)
+        self.prediction = tf.nn.sigmoid(h_dropout)
 
     def train(self, candidates, marginals, n_epochs=25, lr=0.01, dropout=0.5,
-        dim=50, batch_size=64, max_sentence_length=None, rebalance=False,
+        dim=50, batch_size=256, max_sentence_length=None, rebalance=False,
         print_freq=5):
         """Train LSTM model
             @candidates: list Candidate objects for training
@@ -129,7 +129,8 @@ class LSTMBase(TFNoiseAwareModel):
         self.n_v = self.word_dict.len()
         self._build()
         # Run mini-batch SGD
-        batch_size = min(batch_size, len(x_train))
+        n = len(x_train)
+        batch_size = min(batch_size, n)
         if verbose:
             print("[{0}] Preprocessing done ({1:.2f}s)".format(
                 self.name, time() - st
@@ -141,23 +142,22 @@ class LSTMBase(TFNoiseAwareModel):
             ))
         self.session.run(tf.global_variables_initializer())
         for t in range(n_epochs):
-            epoch_loss = 0.0
-            for i in range(0, len(x_train), batch_size):
+            epoch_loss = []
+            for i in range(0, n, batch_size):
                 # Get batch tensors
-                r          = min(n, i+batch_size)
-                x_b, len_b = self._make_tensor(x_train[i:r])
-                y_b        = y_train[i:r]
+                x_b, len_b = self._make_tensor(x_train[i:i+batch_size])
+                y_b        = y_train[i:i+batch_size]
                 # Run training step and evaluate loss function                  
-                epoch_loss += self.session.run([self.loss, self.train_fn], {
+                epoch_loss.append(self.session.run([self.loss, self.train_fn], {
                     self.sentences:       x_b,
                     self.sentence_length: len_b,
-                    self.marginals:       y_b,
+                    self.train_marginals: y_b,
                     self.keep_prob:       dropout or 1.0,
-                })[0]
+                })[0])
             # Print training stats
             if verbose and (t % print_freq == 0 or t in [0, (n_epochs-1)]):
                 print("[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
-                    self.name, t, time() - st, epoch_loss / n
+                    self.name, t, time() - st, np.mean(epoch_loss)
                 ))
         if verbose:
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))

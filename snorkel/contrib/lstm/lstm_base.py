@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from snorkel.learning import LabelBalancer, TFNoiseAwareModel
-from utils import get_bi_rnn_output
+from utils import get_bi_rnn_output, SymbolTable
 
 
 class LSTMBase(TFNoiseAwareModel):

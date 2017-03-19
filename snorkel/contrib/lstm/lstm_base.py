@@ -123,7 +123,7 @@ class LSTMBase(TFNoiseAwareModel):
         x_train    = [train_data[j] for j in train_idxs]
         y_train    = np.ravel(marginals)[train_idxs]
         # Get max sentence size
-        self.mx_len = max_sentence_length or max(len(x[0]) for x in x_train)
+        self.mx_len = max_sentence_length or max(len(x) for x in x_train)
         # Build model
         self.dim = dim
         self.lr  = lr

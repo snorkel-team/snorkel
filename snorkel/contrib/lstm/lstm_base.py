@@ -3,6 +3,7 @@ import tensorflow as tf
 
 from snorkel.learning import LabelBalancer, TFNoiseAwareModel
 from utils import get_bi_rnn_output, SymbolTable
+from time import time
 
 
 class LSTMBase(TFNoiseAwareModel):

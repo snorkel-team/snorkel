@@ -53,17 +53,18 @@ class LSTMBase(TFNoiseAwareModel):
         self.sentence_length = tf.placeholder(tf.int32, [None])
         self.marginals       = tf.placeholder(tf.float32, [None])
         self.keep_prob       = tf.placeholder(tf.float32)
+        # Seeds
+        s               = self.seed
+        s1, s2, s3, s4  = [s, s+1, s+2, s+3] if s is not None else [None] * 4
         # Embedding layer
-        s         = self.seed
-        emb_var   = tf.cast(tf.Variable(self._embedding_init(s)), tf.float32)
-        s         += 1
+        emb_var   = tf.cast(tf.Variable(self._embedding_init(s1)), tf.float32)
         embedding = tf.concat([tf.zeros([1, self.dim]), emb_var], axis=0)
         inputs    = tf.nn.embedding_lookup(embedding, self.sentences)
         # Build RNN graph
         batch_size = tf.shape(self.sentences)[0]
         with tf.variable_scope("LSTM") as scope:
-            tf.set_random_seed(s)
-            s += 1
+            if s2 is not None:
+                tf.set_random_seed(s2)
             # Build LSTM cells
             fw_cell = tf.contrib.rnn.BasicLSTMCell(self.dim)
             bw_cell = tf.contrib.rnn.BasicLSTMCell(self.dim)
@@ -76,14 +77,12 @@ class LSTMBase(TFNoiseAwareModel):
                 initial_state_bw=initial_state_bw,
                 time_major=False               
             )
-            s += 1
         # Get potentials
         potentials = get_bi_rnn_output(rnn_out, self.dim, self.sentence_length)
         # Compute activation
         potentials_dropout = tf.nn.dropout(potentials, self.keep_prob)
-        W = tf.Variable(tf.random_normal((2*self.dim, 1), stddev=0.1, seed=s))
-        s += 1
-        b = tf.Variable(tf.random_normal((1,), stddev=0.1, seed=s))
+        W = tf.Variable(tf.random_normal((2*self.dim, 1), stddev=0.1, seed=s3))
+        b = tf.Variable(tf.random_normal((1,), stddev=0.1, seed=s4))
         h = tf.squeeze(tf.matmul(potentials_dropout, W)) + b
         # Noise-aware loss
         self.loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(

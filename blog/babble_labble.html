@@ -433,7 +433,7 @@ Why would anyone want to supervise from natural language? Here are a few reasons
 </li>
 </ol>
 
-<p class="img"><img src="img_babble/reading_robot.jpg" width="300px" /></p>
+<p class="img"><img src="img_babble/robot_reading.jpg" width="300px" /></p>
 
 <h4>How it works</h4>
 The core component of Babble Labble is a semantic parser. Semantic parsers convert natural language explanations into formal programs (or in our case, labeling functions). Part of the reason why programs are written in programming languages instead of natural languages is because natural language can be ambiguous. This means that a single explanation may map to many different possible LFs. In a traditional approach, one might use a bunch of labeled data to “train” the semantic parser and learn which of the generated LFs is most likely to be the correct one. But we’re trying to use Babble Labble to create a bunch of labeled data, not consume them. How do we get past this apparent “chicken and egg” paradox? Just like how we found that we can use a larger set of “accurate enough” labels to train the discriminative model in data programming, we propose that we can use a larger set of “accurate enough” labeling functions to train the generative model in data programming. This may seem a little cavalier of us, but there are reasons to be optimistic. 

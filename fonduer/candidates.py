@@ -1,5 +1,5 @@
 from . import SnorkelSession
-from .utils import ProgressBar
+from snorkel.utils import ProgressBar
 from .models import Candidate, CandidateSet, TemporarySpan
 from .models.candidate import candidate_set_candidate_association
 from .models.context import Document, Phrase

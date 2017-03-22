@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .models import Corpus, Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
-from .utils import ProgressBar, sort_X_on_Y, split_html_attrs
+from snorkel.utils import ProgressBar, sort_X_on_Y, split_html_attrs
 from .visual import VisualLinker
 import atexit
 import warnings

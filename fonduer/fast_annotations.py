@@ -1,9 +1,8 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
-from .utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy
+from snorkel.utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy, get_ORM_instance, ProgressBar
 from .models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
 from .models.annotation import annotation_key_set_annotation_key_association as assoc_table
-from .utils import get_ORM_instance, ProgressBar
 from .features.features import get_all_feats
 from sqlalchemy.orm.session import object_session
 

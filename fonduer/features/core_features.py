@@ -1,4 +1,4 @@
-from snorkel.models import TemporarySpan, ImplicitSpan
+from fonduer.models import TemporarySpan, ImplicitSpan
 
 DEF_VALUE = 1
 

@@ -2,7 +2,7 @@ from .meta import SnorkelSession, SnorkelBase
 from .context import Context
 from sqlalchemy import Table, Column, String, Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
-from snorkel.models import snorkel_engine
+from fonduer.models import snorkel_engine
 from snorkel.utils import camel_to_under
 
 

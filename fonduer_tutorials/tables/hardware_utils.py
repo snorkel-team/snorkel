@@ -1,9 +1,9 @@
-from snorkel.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, AnnotationKeySet, Label
-from snorkel.matchers import RegexMatchSpan, Union
+from fonduer.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, AnnotationKeySet, Label
+from fonduer.matchers import RegexMatchSpan, Union
 from snorkel.utils import ProgressBar
-from snorkel.loaders import create_or_fetch
-from snorkel.lf_helpers import *
-from snorkel.candidates import OmniNgrams
+from fonduer.loaders import create_or_fetch
+from fonduer.lf_helpers import *
+from fonduer.candidates import OmniNgrams
 from hardware_spaces import OmniNgramsPart
 from hardware_matchers import get_matcher
 import csv
@@ -298,7 +298,7 @@ def print_table_info(span):
 
 
 def get_gold_parts_by_doc():
-    gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/dev/hardware_dev_gold.csv'
+    gold_file = os.environ['SNORKELHOME'] + '/fonduer_tutorials/tables/data/hardware/dev/hardware_dev_gold.csv'
     gold_parts = get_gold_dict(gold_file, doc_on=True, part_on=True, val_on=False)
     parts_by_doc = defaultdict(set)
     for part in gold_parts:

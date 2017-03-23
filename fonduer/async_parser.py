@@ -6,7 +6,7 @@ Created on Dec 4, 2016
 # -*- coding: utf-8 -*-
 
 from models import Corpus, Document
-from utils import ProgressBar
+from snorkel.utils import ProgressBar
 from bs4 import BeautifulSoup
 import glob
 import os

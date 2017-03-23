@@ -1,4 +1,4 @@
-from snorkel.lf_helpers import *
+from fonduer.lf_helpers import *
 from collections import namedtuple
 from hardware_lfs import *
 

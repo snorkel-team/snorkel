@@ -1,10 +1,10 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
-from utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy,\
+from snorkel.utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy,\
     remove_files
 from models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
 from models.meta import *
-from utils import get_ORM_instance, ProgressBar
+from snorkel.utils import get_ORM_instance, ProgressBar
 from features.features import get_all_feats
 from sqlalchemy.orm.session import object_session
 from multiprocessing import Process
@@ -27,8 +27,8 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
     and related helper methods.
     """
     def __init__(self, arg1, **kwargs):
-        # Note: Currently these need to return None if unset, otherwise matrix copy operations break...
-        self.session = SnorkelSession()
+        # # Note: Currently these need to return None if unset, otherwise matrix copy operations break...
+        # self.session = SnorkelSession()
         # Map candidate id to row id
         self.candidate_index = kwargs.pop('candidate_index', {})
         # Map row id to candidate id
@@ -41,9 +41,9 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         # Note that scipy relies on the first three letters of the class to define matrix type...
         super(csr_AnnotationMatrix, self).__init__(arg1, **kwargs)
 
-    def get_candidate(self, i):
+    def get_candidate(self, session, i):
         """Return the Candidate object corresponding to row i"""
-        return self.session.query(Candidate)\
+        return session.query(Candidate)\
                 .filter(Candidate.id == self.row_index[i]).one()
 
     def get_row_index(self, candidate):

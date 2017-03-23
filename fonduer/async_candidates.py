@@ -4,7 +4,7 @@ Created on Dec 10, 2016
 @author: xiao
 '''
 from models.meta import new_session, new_engine
-from utils import ProgressBar, get_ORM_instance
+from snorkel.utils import ProgressBar, get_ORM_instance
 from models import CandidateSet
 from models.context import Document, Corpus
 from async_utils import run_in_parallel, run_round_robin

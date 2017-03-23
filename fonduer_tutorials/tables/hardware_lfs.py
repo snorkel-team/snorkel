@@ -1,4 +1,4 @@
-from snorkel.lf_helpers import *
+from fonduer.lf_helpers import *
 from hardware_matchers import get_matcher
 from hardware_spaces import expand_part_range
 import re

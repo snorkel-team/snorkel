@@ -1,5 +1,5 @@
-from snorkel.matchers import *
-from snorkel.lf_helpers import *
+from fonduer.matchers import *
+from fonduer.lf_helpers import *
 import csv
 matchers = {}
 

@@ -1,11 +1,11 @@
 import sys
 import os
 
-from snorkel.models import TemporarySpan
+from fonduer.models import TemporarySpan
 from tree_structs import corenlp_to_xmltree
 from snorkel.utils import get_as_dict
-from snorkel.config import settings
-from snorkel.lf_helpers import get_left_ngrams, get_right_ngrams, tokens_to_ngrams
+from fonduer.config import settings
+from fonduer.lf_helpers import get_left_ngrams, get_right_ngrams, tokens_to_ngrams
 
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 from treedlib import compile_relation_feature_generator

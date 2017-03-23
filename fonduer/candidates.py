@@ -9,7 +9,7 @@ from sqlalchemy.sql import select
 from Queue import Empty
 from copy import deepcopy
 import re
-from utils import get_ORM_instance
+from snorkel.utils import get_ORM_instance
 
 QUEUE_COLLECT_TIMEOUT = 5
 

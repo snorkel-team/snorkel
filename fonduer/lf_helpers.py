@@ -5,7 +5,7 @@ from lxml.html import fromstring
 from lxml import etree
 import numpy as np
 
-from utils import tokens_to_ngrams
+from snorkel.utils import tokens_to_ngrams
 from utils_table import *
 from utils_visual import *
 from .models import TemporarySpan, Phrase

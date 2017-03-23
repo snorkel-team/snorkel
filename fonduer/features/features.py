@@ -1,8 +1,8 @@
-from snorkel.features.core_features import *
-from snorkel.features.content_features import *
-from snorkel.features.structural_features import *
-from snorkel.features.table_features import *
-from snorkel.features.visual_features import *
+from fonduer.features.core_features import *
+from fonduer.features.content_features import *
+from fonduer.features.structural_features import *
+from fonduer.features.table_features import *
+from fonduer.features.visual_features import *
 
 
 def get_all_feats(candidate):

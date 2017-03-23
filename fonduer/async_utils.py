@@ -6,7 +6,7 @@ Created on Dec 7, 2016
 from multiprocessing.process import Process
 from models.meta import *
 import subprocess
-from utils import ProgressBar
+from snorkel.utils import ProgressBar
 from multiprocessing.pool import Pool
 from time import sleep
 from threading import Thread

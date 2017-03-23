@@ -496,7 +496,7 @@ Just like how we found that we can use a larger set of “accurate enough” lab
   <p>What if one particularly ambiguous explanation generates a whole bunch of LFs that pass the filters and all agree with each other despite being wrong&mdash;won’t that falsely boost their learned accuracies? It would...if we believed that all LFs label independently. But because we are able to automatically <a href=https://arxiv.org/abs/1703.00854>learn the dependencies</a> between the LFs in data programming, this mob behavior can be recognized for what it is and voting power of all the LFs participating in this “echo chamber” can be reduced accordingly.
 </ul>
 
-<p><b>Reason #3.</b> Spurious LFs are sometimes still helpful</p>
+<p><b>Reason #3.</b> Spurious LFs can be sometimes even helpful!</p>
 The labeler’s explanation describes a very specific signal for the learner to pay attention to. In the extremely high dimensional space of all possible features, minor parsing inaccuracies may still result in a relevant signal making it through. For example, the latter half of Joe’s explanation may be misinterpreted by the semantic parser as “the words ‘their daughter’ occur anywhere in the sentence”. While not as specific as the intended explanation, it may end up correctly labeling all of the same examples as the intended function as well as new examples such as “Following the birth of their daughter, Beyoncé and Jay-Z took to Twitter to celebrate.” 
 
 <h2>Case Study: Classifying Disease-Causing Chemicals</h2>

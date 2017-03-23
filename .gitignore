@@ -37,4 +37,4 @@ tutorials/intro/data/articles-train.tsv
 tutorials/intro/data/gold_labels.tsv
 tutorials/intro/snorkel.db
 
-tutorials/tables/data/hardware/
+tutorials/fonduer/data/

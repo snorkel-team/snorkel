@@ -1,0 +1,105 @@
+PDF Name,Part Family [Y/N],Part Number,Manufacturer,Polarity,Collector-Emitter Voltage (MAX) (Vceo),Collector-Base Voltage (MAX),Emitter-Base Voltage (MAX),Collector Current Continuous (MAX),Total Device Dissipation,Storage Temp MIN,Storage Temp MAX,DC Current Gain (MIN),Notes,Annotator
+Sanken_STD01N.pdf,N,STD01N,Sanken,NPN,150 V,150 V,5 V,10 A,100 W,-55 C,150 C,5000 @ 4 V 6 A,,Braden
+Sanken_STD01N.pdf,N,STD01P,Sanken,PNP,150 V,150 V,5 V,10 A,100 W,-55 C,150 C,5000 @ 4 V 6 A,,Braden
+DiodesIncorporated_FCX491ATA.pdf,N,FCX491A,Diodes Incorporated,NPN,40 V,40 V,7 V,1 A,1 W,-65 C,150 C,300 @ 5 V 1 mA; 300 @ 5 V 500 mA; 200 @ 5 V 1 A; 35 @ 5 V 2 A,,Braden
+TTElectronicsOptekTechnology_2N2222AUATXV.pdf,Y,2N2222AUA,TT Electronics,NPN,50 V,75 V,6.0 V,800 mA,1.16 W,-65 C,200 C,50 @ 10 V 0.1 mA; 75 @ 10 V 1.0 mA; 100 @ 10 V 10 mA; 100 @ 10 V 150 mA; 30 @ 10 V 500 mA; 35 @ 10 V 10 mA,,Braden
+TTElectronicsOptekTechnology_2N2222AUATXV.pdf,N,2N2222AUATX,TT Electronics,NPN,50 V,75 V,6.0 V,800 mA,1.16 W,-65 C,200 C,50 @ 10 V 0.1 mA; 75 @ 10 V 1.0 mA; 100 @ 10 V 10 mA; 100 @ 10 V 150 mA; 30 @ 10 V 500 mA; 35 @ 10 V 10 mA,,Braden
+TTElectronicsOptekTechnology_2N2222AUATXV.pdf,N,2N2222AUATXV,TT Electronics,NPN,50 V,75 V,6.0 V,800 mA,1.16 W,-65 C,200 C,50 @ 10 V 0.1 mA; 75 @ 10 V 1.0 mA; 100 @ 10 V 10 mA; 100 @ 10 V 150 mA; 30 @ 10 V 500 mA; 35 @ 10 V 10 mA,,Braden
+DiodesIncorporated_ZTX953STZ.pdf,N,ZTX953,Diodes Incorporated,PNP,-100 V,-140 V,-6 V,-3.5 A,1.2 W,-55 C,200 C,100 @ -1 V -10 mA; 100 @ -1 V -1 A; 50 @ -1 V -3 A; 30 @ -1 V -4 A,,Holly
+NXPUSAInc_PBSS5360PASX.pdf,N,PBSS5360PAS,NXP Semiconductors,PNP,-60 V,-80 V,-8 V,-3 A,0.6 W; 1.2 W; 1.5 W; 2.5 W,-65 C,175 C,150 @ -5 V -50 mA; 130 @ -5 V -500 mA; 120 @ -5 V -500 mA; 100 @ -5 V -2 A; 80 @ -5 V -3 A,,Holly
+DiodesIncorporated_FZT651TC.pdf,Y,FZT651,Diodes Incorporated,NPN,60 V,80 V,7 V,3 A,2 W; 3 W,-55 C,150 C,70 @ 2V 50mA; 100 @ 2V 500 mA; 80 @ 2V 1A; 40 @ 2V 2A,,Holly
+DiodesIncorporated_FZT651TC.pdf,N,FZT651TA,Diodes Incorporated,NPN,60 V,80 V,7 V,3 A,2 W; 3 W,-55 C,150 C,70 @ 2V 50mA; 100 @ 2V 500 mA; 80 @ 2V 1A; 40 @ 2V 2A,,Holly
+DiodesIncorporated_FZT651TC.pdf,N,FZT651TC,Diodes Incorporated,NPN,60 V,80 V,7 V,3 A,2 W; 3 W,-55 C,150 C,70 @ 2V 50 mA; 100 @ 2V 500 mA; 80 @ 2V 1A; 40 @ 2V 2A,,Holly
+DiodesIncorporated_ZTX789ASTZ.pdf,N,ZTX789A,Diodes Incorporated,PNP,-25 V,-25 V,-5 V,-3 A,1 W,-55 C,200 C,300 @ -2 V -10 mA; 250 @ -2 V -1 A; 200 @ -2 V -2 A; 100 @ -2 V -6 A,,Holly
+Sanken_2SC4886.pdf,N,2SC4886,Sanken,NPN,150 V,150 V,5 V,14 A,80 W,-55 C,150 C,50 @ 4 V 5 A,,Holly
+DiodesIncorporated_ZXT690BKTC.pdf,Y,ZXT690BK,Diodes Incorporated,NPN,45 V,60 V,7 V,3 A,4.0 W; 3.4 W; 2.1 W; 1.6 W,-55 C,150 C,500 @ 2 V 100 mA; 400 @ 2 V 1 A; 150 @ 2 V 2 A; 60 @ 2 V 3 A,,Luke
+DiodesIncorporated_ZXT690BKTC.pdf,N,ZXT690BKTC,Diodes Incorporated,NPN,45 V,60 V,7 V,3 A,4.0 W; 3.4 W; 2.1 W; 1.6 W,-55 C,150 C,500 @ 2 V 100 mA; 400 @ 2 V 1 A; 150 @ 2 V 2 A; 60 @ 2 V 3 A,,Luke
+DiodesIncorporated_ZXT690BKTC.pdf,N,ZXT690BKQTC,Diodes Incorporated,NPN,45 V,60 V,7 V,3 A,4.0 W; 3.4 W; 2.1 W; 1.6 W,-55 C,150 C,500 @ 2 V 100 mA; 400 @ 2 V 1 A; 150 @ 2 V 2 A; 60 @ 2 V 3 A,,Luke
+Sanken_2SD2643.pdf,N,2SD2643,Sanken,NPN,110 V,110 V,5 V,6 A,60 W,-55 C,150 C,5000 @ 4 V 5 A,,Luke
+FairchildSemiconductor_KSC2310YTA.pdf,Y,KSC2310,Fairchild Semiconductor,NPN,150 V,200 V,5 V,50 mA,800 mW,-55 C,150 C,40 @ 5 V 10 mA,,Luke
+FairchildSemiconductor_KSC2310YTA.pdf,N,KSC2310R,Fairchild Semiconductor,NPN,150 V,200 V,5 V,50 mA,800 mW,-55 C,150 C,40 @ 5 V 10 mA,,Luke
+FairchildSemiconductor_KSC2310YTA.pdf,N,KSC2310O,Fairchild Semiconductor,NPN,150 V,200 V,5 V,50 mA,800 mW,-55 C,150 C,70 @ 5 V 10 mA,,Luke
+FairchildSemiconductor_KSC2310YTA.pdf,N,KSC2310Y,Fairchild Semiconductor,NPN,150 V,200 V,5 V,50 mA,800 mW,-55 C,150 C,120 @ 5 V 10 mA,,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3576,Central Semiconductor,PNP,N/A,N/A,N/A,N/A,N/A,N/A,N/A,40,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3672,Central Semiconductor,PNP,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,75,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3700,Central Semiconductor,NPN,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,100,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3701,Central Semiconductor,NPN,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,40,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3798A,Central Semiconductor,PNP,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,150,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3799A,Central Semiconductor,PNP,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,300,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3829,Central Semiconductor,PNP,N/A,N/A,N/A,N/A,N/A,N/A,N/A,30,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3946,Central Semiconductor,NPN,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,20,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3947,Central Semiconductor,NPN,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,40,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3962,Central Semiconductor,PNP,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,100,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3963,Central Semiconductor,PNP,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,100,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3964,Central Semiconductor,PNP,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,250,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N3965,Central Semiconductor,PNP,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,250,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4013,Central Semiconductor,NPN,N/A,N/A,N/A,1.7 uA,N/A,N/A,N/A,60,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4014,Central Semiconductor,NPN,N/A,N/A,N/A,1.7 uA,N/A,N/A,N/A,60,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4026,Central Semiconductor,PNP,N/A,N/A,N/A,N/A,N/A,N/A,N/A,40,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4027,Central Semiconductor,PNP,N/A,N/A,N/A,0.05 uA,N/A,N/A,N/A,40,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4028,Central Semiconductor,PNP,N/A,N/A,N/A,0.05 uA,N/A,N/A,N/A,100,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4029,Central Semiconductor,PNP,N/A,N/A,N/A,0.05 uA,N/A,N/A,N/A,100,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4034,Central Semiconductor,PNP,N/A,N/A,N/A,0.015 uA,N/A,N/A,N/A,70,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4035,Central Semiconductor,PNP,N/A,N/A,N/A,0.015 uA,N/A,N/A,N/A,150,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4068,Central Semiconductor,NPN,N/A,N/A,N/A,0.05 uA,N/A,N/A,N/A,30,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4137,Central Semiconductor,NPN,N/A,N/A,N/A,N/A,N/A,N/A,N/A,40,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4207,Central Semiconductor,PNP,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,50,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4208,Central Semiconductor,PNP,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,30,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4209,Central Semiconductor,PNP,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,50,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4269,Central Semiconductor,NPN,N/A,N/A,N/A,1.0 uA,N/A,N/A,N/A,40,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4359,Central Semiconductor,PNP,N/A,N/A,N/A,N/A,N/A,N/A,N/A,50,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4384,Central Semiconductor,NPN,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,100,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4386,Central Semiconductor,NPN,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,40,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4390,Central Semiconductor,NPN,N/A,N/A,N/A,N/A,N/A,N/A,N/A,20,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4413A,Central Semiconductor,PNP,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,100,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4415A,Central Semiconductor,PNP,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,40,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4962,Central Semiconductor,NPN,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,100,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N4963,Central Semiconductor,NPN,N/A,N/A,N/A,0.01 uA,N/A,N/A,N/A,100,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N5056,Central Semiconductor,PNP,N/A,N/A,N/A,N/A,N/A,N/A,N/A,100,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,2N5057,Central Semiconductor,PNP,N/A,N/A,N/A,N/A,N/A,N/A,N/A,100,Summary sheet,Luke
+CentralSemiconductorCorp_2N4013.pdf,N,CM4209,Central Semiconductor,PNP,N/A,N/A,N/A,N/A,N/A,N/A,N/A,120,Summary sheet,Luke
+DiodesIncorporated_ZTX688BSTZ.pdf,N,ZTX688B,Diodes Incorporated,NPN,12 V,12 V,5 V,3 A,1 W,-55 C,200 C,500 @ 2 V 0.1 A; 400 @ 2 V 3 A; 100 @ 2 V 10 A,,Sen
+STMicroelectronics_STI130051.pdf,N,STI13005-1,ST Microelectronics,NPN,400 V,,18 V,3 A,30 W,-65 C,150 C,15 @ 2 V 500 uA; 24 @ 2 V 425 uA; 10 @ 5 V 1 A; 8 @ 5 V 2 A,,Sen
+STMicroelectronics_BUV48A.pdf,N,BUV48A,ST Microelectronics,NPN,450 V,,7 V,15 A,125 W,-65 C,150 C,8 @ 5 V 8 A,,Sen
+CentralSemiconductorCorp_CENU45.pdf,N,CEN-U45,Central Semiconductor Corp,NPN,40 V,50 V,12 V,2.0 A,2.0 W,-65 C,150 C,25K @ 5.0 V 200 mA; 15K @ 5.0 V 500 mA; 4.0K @ 5.0 V 1.0 A,,Sen
+CentralSemiconductorCorp_CXT4033TR.pdf,N,CXT4033,Central Semiconductor Corp,PNP,80 V,80 V,5.0 V,1.0 A,1.2 W,-65 C,150 C,75 @ 5.0 V 0.1 mA; 100 @ 5.0 V 100 mA; 70 @ 5.0 V 1.0 A,,Sen
+MicrosemiCorporation_2N2484UB.pdf,Y,2N2484UB,Microsemi Corporation,NPN,60 Vdc,60 Vdc,6.0 Vdc,50 mAdc,360 mW,-65 C,200 C,45 @ 5.0 Vdc 1.0 μAdc; 200 @ 5.0 Vdc 10 μAdc; 225 @ 5.0 Vdc 100 μAdc; 250 @ 5.0 Vdc 500 μAdc; 250 @ 5.0 Vdc 1.0 mAdc; 225 @ 5.0 Vdc 10 mAdc,,Sen
+MicrosemiCorporation_2N2484UB.pdf,N,2N2484UA,Microsemi Corporation,NPN,60 Vdc,60 Vdc,6.0 Vdc,50 mAdc,360 mW,-65 C,200 C,45 @ 5.0 Vdc 1.0 μAdc; 200 @ 5.0 Vdc 10 μAdc; 225 @ 5.0 Vdc 100 μAdc; 250 @ 5.0 Vdc 500 μAdc; 250 @ 5.0 Vdc 1.0 mAdc; 225 @ 5.0 Vdc 10 mAdc,,Sen
+MicrosemiCorporation_2N2484UB.pdf,N,2N2484UBC,Microsemi Corporation,NPN,60 Vdc,60 Vdc,6.0 Vdc,50 mAdc,360 mW,-65 C,200 C,45 @ 5.0 Vdc 1.0 μAdc; 200 @ 5.0 Vdc 10 μAdc; 225 @ 5.0 Vdc 100 μAdc; 250 @ 5.0 Vdc 500 μAdc; 250 @ 5.0 Vdc 1.0 mAdc; 225 @ 5.0 Vdc 10 mAdc,,Sen
+BournsInc_BD246BS.pdf,Y,BD246,Bourns,PNP,-45 V,N/A,-5 V,-10 A,80 W; 3 W,-65 C,150 C,N/A,Collector Current Continuous inconsistent sign,Xiao
+BournsInc_BD246BS.pdf,N,BD246A,Bourns,PNP,-60 V,N/A,-5 V,-10 A,80 W; 3 W,-65 C,150 C,N/A,Collector Current Continuous inconsistent sign,Xiao
+BournsInc_BD246BS.pdf,N,BD246B,Bourns,PNP,-80 V,N/A,-5 V,-10 A,80 W; 3 W,-65 C,150 C,N/A,Collector Current Continuous inconsistent sign,Xiao
+BournsInc_BD246BS.pdf,N,BD246C,Bourns,PNP,-100 V,N/A,-5 V,-10 A,80 W; 3 W,-65 C,150 C,N/A,Collector Current Continuous inconsistent sign,Xiao
+CentralSemiconductorCorp_CMPT5401ETR.pdf,N,CMPT5401E,Central Semiconductor,PNP,220 V,250 V,7.0 V,600 mA,350 mW,-65 C,150 C,100 @ 5.0 V 1.0 mA; 100 @ 5.0 V 10 mA; 75 @ 5.0 V 50 mA; 25 @ 10 V 150 mA,,Xiao
+DiodesIncorporated_2DD26527.pdf,Y,2DD2652-7,Diodes,NPN,12 V,15 V,6 V,1.5 A,300 mW; 500 mW,-55 C,150 C,270 @ 2 V 200 mA,,Xiao
+DiodesIncorporated_2DD26527.pdf,N,2DD2652,Diodes,NPN,12 V,15 V,6 V,1.5 A,300 mW; 500 mW,-55 C,150 C,270 @ 2 V 200 mA,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,Y,TIP29,Micro Commercial Components,NPN,40 V,40 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP29A,Micro Commercial Components,NPN,60 V,60 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP29B,Micro Commercial Components,NPN,80 V,80 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP29C,Micro Commercial Components,NPN,100 V,100 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP29A-BP,Micro Commercial Components,NPN,60 V,60 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP29B-BP,Micro Commercial Components,NPN,80 V,80 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP29C-BP,Micro Commercial Components,NPN,100 V,100 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP29A-BP-HF,Micro Commercial Components,NPN,60 V,60 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP29B-BP-HF,Micro Commercial Components,NPN,80 V,80 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP29C-BP-HF,Micro Commercial Components,NPN,100 V,100 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,Y,TIP30,Micro Commercial Components,PNP,40 V,40 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP30A,Micro Commercial Components,PNP,60 V,60 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP30B,Micro Commercial Components,PNP,80 V,80 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP30C,Micro Commercial Components,PNP,100 V,100 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP30A-BP,Micro Commercial Components,PNP,60 V,60 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP30B-BP,Micro Commercial Components,PNP,80 V,80 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP30C-BP,Micro Commercial Components,PNP,100 V,100 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP30A-BP-HF,Micro Commercial Components,PNP,60 V,60 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP30B-BP-HF,Micro Commercial Components,PNP,80 V,80 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+MicroCommercialCo_TIP29ABP.pdf,N,TIP30C-BP-HF,Micro Commercial Components,PNP,100 V,100 V,5.0 V,1.0 A,30 W,-55 C,150 C,40 @ 4.0 Vdc 0.2 Adc; 15 @ 4.0 Vdc 1.0 Adc,,Xiao
+ONSemiconductor_MMBT6521LT1.pdf,N,MMBT6521LT1G,On Semiconductor,NPN,25 Vdc,40 Vdc,4.0 Vdc,100 mAdc,225 mW; 300 mW,-55 C,150 C,150 @ 10 Vdc 100 uAdc; 300 @ 10 Vdc 2.0 mAdc,,Xiao
+ONSemiconductor_MMBT6521LT1.pdf,N,SMMBT6521LT1G,On Semiconductor,NPN,25 Vdc,40 Vdc,4.0 Vdc,100 mAdc,225 mW; 300 mW,-55 C,150 C,150 @ 10 Vdc 100 uAdc; 300 @ 10 Vdc 2.0 mAdc,,Xiao
+BournsInc_TIP152S.pdf,N,TIP150,Bourns Inc,NPN,300 V,300 V,8 V,7 A,80 W; 2 W,-65 C,150 C,150 @ 5 V 2.5 A; 50 @ 5 V 5 A; 15 @ 5 V 7 A,,Payal
+BournsInc_TIP152S.pdf,N,TIP151,Bourns Inc,NPN,350 V,350 V,8 V,7 A,80 W; 2 W,-65 C,150 C,150 @ 5 V 2.5 A; 50 @ 5 V 5 A; 15 @ 5 V 7 A,,Payal
+BournsInc_TIP152S.pdf,N,TIP152,Bourns Inc,NPN,400 V,400 V,8 V,7 A,80 W; 2 W,-65 C,150 C,150 @ 5 V 2.5 A; 50 @ 5 V 5 A; 15 @ 5 V 7 A,,Payal
+MicroCommercialCo_2N3904AP.pdf,Y,2N3904,Micro Commercial Components,NPN,N/A,N/A,N/A,200 mA,625 mW,-55 C,150 C,40 @ 0.1 mAdc 1.0 Vdc; 70 @ 1.0 mAdc 1.0 Vdc; 100 @ 10 mAdc 1.0 Vdc; 60 @ 50 mAdc 1.0 Vdc; 30 @ 100 mAdc 1.0 Vdc,,Payal
+MicroCommercialCo_2N3904AP.pdf,N,2N3904-AP,Micro Commercial Components,NPN,N/A,N/A,N/A,200 mA,625 mW,-55 C,150 C,40 @ 0.1 mAdc 1.0 Vdc; 70 @ 1.0 mAdc 1.0 Vdc; 100 @ 10 mAdc 1.0 Vdc; 60 @ 50 mAdc 1.0 Vdc; 30 @ 100 mAdc 1.0 Vdc,,Payal
+MicroCommercialCo_2N3904AP.pdf,N,2N3904-AP-HF,Micro Commercial Components,NPN,N/A,N/A,N/A,200 mA,625 mW,-55 C,150 C,40 @ 0.1 mAdc 1.0 Vdc; 70 @ 1.0 mAdc 1.0 Vdc; 100 @ 10 mAdc 1.0 Vdc; 60 @ 50 mAdc 1.0 Vdc; 30 @ 100 mAdc 1.0 Vdc,,Payal
+MicroCommercialCo_2N3904AP.pdf,N,2N3904-BP,Micro Commercial Components,NPN,N/A,N/A,N/A,200 mA,625 mW,-55 C,150 C,40 @ 0.1 mAdc 1.0 Vdc; 70 @ 1.0 mAdc 1.0 Vdc; 100 @ 10 mAdc 1.0 Vdc; 60 @ 50 mAdc 1.0 Vdc; 30 @ 100 mAdc 1.0 Vdc,,Payal
+MicroCommercialCo_2N3904AP.pdf,N,2N3904-BP-HF,Micro Commercial Components,NPN,N/A,N/A,N/A,200 mA,625 mW,-55 C,150 C,40 @ 0.1 mAdc 1.0 Vdc; 70 @ 1.0 mAdc 1.0 Vdc; 100 @ 10 mAdc 1.0 Vdc; 60 @ 50 mAdc 1.0 Vdc; 30 @ 100 mAdc 1.0 Vdc,,Payal

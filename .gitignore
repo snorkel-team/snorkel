@@ -38,3 +38,10 @@ tutorials/intro/data/gold_labels.tsv
 tutorials/intro/snorkel.db
 
 tutorials/tables/data/hardware/
+fonduer_tutorials/tables/data/hardware/dev/html/
+fonduer_tutorials/tables/data/hardware/dev/pdf/
+fonduer_tutorials/tables/data/hardware/test/html/
+fonduer_tutorials/tables/data/hardware/test/pdf/
+fonduer_tutorials/tables/data/hardware/train*/html/
+fonduer_tutorials/tables/data/hardware/train*/pdf/
+fonduer_tutorials/tables/data/hardware/gold_raw/digikey_raw/

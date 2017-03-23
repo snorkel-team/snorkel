@@ -342,86 +342,120 @@ p.img {
     <img id="top-banner-img" src="img_babble/boggle_banner.jpeg" alt="image alt text">
 </span>
 
-<p id="main-title">Babble Labble:<br />Enabling Natural Language Supervision</p>
+<p id="main-title">Babble Labble:<br />Learning from Natural Language Explanations</p>
 
 <p>Post by Braden Hancock, Percy Liang and Chris Ré</p>
 
 <p><em>And referencing work by many other <a href="http://cs.stanford.edu/people/chrismre/#students">members of Hazy Research</a></em></p>
 
-<blockquote>
-<p>Powerful models with lots of parameters need lots of training data, but labeling training examples one by one is wasteful and expensive. <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">Data programming</a> allows training data to be created programmatically, but requires the user to write simple programs, which many would-be labelers (e.g., Mechanical Turkers or domain experts) cannot do. We describe the <b>Babble Labble</b> approach, which allows labelers to supervise complex machine learning models using <i>natural language</i>. 
+<!--<blockquote>
+<p>Powerful machine learning models that automate feature extraction (such as deep neural nets) need <em>lots</em> of training data, but labeling training examples one by one is expensive and slow. <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">Data programming</a> allows training data to be created programmatically, but requires the user to write simple programs, which many would-be labelers (e.g., Mechanical Turkers or domain experts) cannot do. We describe the <b>Babble Labble</b> approach, which allows labelers to supervise complex machine learning models using <i>natural language</i>. 
 <ul>
   <li><p> Instead of providing many labels on individual training examples, labelers give <em>explanations</em> for why they would label certain examples one way or another.</p></li>
   <li><p> Natural language explanations are automatically semantically parsed into executable functions, which feed a data programming application and ultimately train a powerful downstream classifier for a given task.</p></li>
   <li><p>By learning from natural language explanations of labeling decisions, we achieve comparable quality to fully supervised approaches while using 30x less labeled data.</p></li>
 </ul>
+</blockquote>-->
+
+<!--(Take your pick from these <a href=https://medium.com/intuitionmachine/the-ultimate-deep-learning-applications-list-434d1425da1d#.mhlnixpk1>40 examples</a>)-->
+
+<blockquote>
+<p>
+Modern machine learning models that automate feature extraction (such as deep neural nets) can do incredible things with enough labeled training data! The hard part is <em>getting</em> enough labeled training data to properly train their thousands (or millions!) of parameters. And in the age where "<a href=https://www.domo.com/blog/data-never-sleeps-4-0/>data never sleeps</a>", the bottleneck isn’t getting the data&mdash; it’s getting the labels.
+</p>
+
+<p>
+We propose <b>Babble Labble</b>, a framework for generating labels for large training sets from <em>natural language explanations</em>. In this framework, a semantic parser converts explanations into executable functions, which feed a <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">data programming</a> application and ultimately train a powerful downstream classifier for a given task. By learning from natural language explanations of labeling decisions, we achieve comparable quality to fully supervised approaches while using 30x less labeled data.
 </blockquote>
+
+<!--<p>Labeling examples one by one is expensive and slow. Previous work from our lab introduced the data programming paradigm, which allows for the programmatic generation of large training sets using user-provided functions, but this requires -->
 
 <center><p><img src="img_babble/explain_yourself.png" alt="image alt text" width=400px></p></center>
 
-<h2 id="toc_0">The Wastefulness of Hand-Labeled Training Data</h2>
+<h2 id="toc_0">How Should I Label My Data?</h2>
+<p>
+Imagine you’re building a classifier to predict whether or not two people mentioned in a sentence are married. You've collected a few million sentences to draw from, and you've hired some Mechanical Turkers (humans online who perform simple tasks for money) to help you collect some labels. How you should have them label your data?
+</p>
 
+<h3>Option 1: With Labels (One by One)</h3>
 <blockquote>
 <p>In traditional supervision, labelers find reasons for giving certain labels, return only the labels, then make algorithms work to rediscover the reasons.</p>
 </blockquote>
 
-<p>
-Modern machine learning models (such as deep neural nets) can do incredible things with enough labeled training data! (Take your pick from these <a href=https://medium.com/intuitionmachine/the-ultimate-deep-learning-applications-list-434d1425da1d#.mhlnixpk1>40 examples</a>). The hard part is getting <em>enough labeled training data</em> to properly train their thousands (or millions!) of parameters. (And in the age where "<a href=https://www.domo.com/blog/data-never-sleeps-4-0/>data never sleeps</a>", the bottleneck isn’t getting the data&mdash;it’s getting the labels). Now consider with us the tragedy that is the wastefulness in the way we currently tend to gather labels:
-</p>
+Imagine a Turker (let's call him Joe) who sees the following example:
 
-<p>
-Imagine you’re building a classifier to predict whether or not two people mentioned in a sentence are married. You’ve set up a HIT on Mechanical Turk and your Turker (let’s name him Joe) sees the following:
-</p>
+<center><p><img src="img_babble/hit_supervised.png" alt="image alt text" width=600px></p></center>
 
-<center><p><img src="img_babble/hit_original.png" alt="image alt text" width=600px></p></center>
+<p>Joe reads the sentence. He looks at the words Barack and Michelle, and the words around them. He decides that because Barack and Michelle have the word ‘and’ between them, and the words ‘their daughter’ occur later in the sentence, they’re likely married. Having found a solid reason for labeling True, Joe marks “True”. As Joe goes through the data set, specific reasons for labeling examples one way or another come up over and over again, but all we ever collect is the binary label “True” or “False”.</p>
+
+<p>Downstream, you'd like your classifier to look at this example and others like it and learn to use some of the same reasons--or *features*--that Joe found, but instead of conveying these reasons directly, we expect the classifier to learn them from scratch using nothing but "True"s and "False"s. (It’s like the classifier keeps asking for directions and instead of pointing exactly where to go, the Turkers just tease it with a vague “you’re getting warmer” or “you’re getting colder”!). Especially in situations where large sets of labels aren't readily available, this seems like an incredibly wasteful process!</p>
+
+<!--You’ve set up a HIT on Mechanical Turk and your Turker (let’s name him Joe) sees the following:
+
+Now consider with us the tragedy that is the wastefulness in the way we currently tend to gather labels:
 
 <p>
 Joe reads the sentence. He looks at the words Barack and Michelle, and the words around them. He decides that because Barack and Michelle have the word ‘and’ between them, and they’re visiting some place together, and the words ‘their daughter’ occur later in the sentence, they’re likely married. Having found his reasons for labeling True, Joe marks “True”. Downstream, you’d like your classifier that’s using these labels to look at this labeled example and many others and eventually learn things like “when two people have the word ‘and’ between them and the words ‘their daughter’ after them, that’s a good indicator that they’re married.” As Joe (and other Turkers) go through the data set, their reasons for labeling examples one way or another will come up over and over again, but all we’ll ever collect is the binary label “True” or “False”, and then hope that our classifier can re-learn these reasons on its own. (It’s like our classifier keeps asking for directions and instead of pointing exactly where to go, the Turkers just tease it with a vague “you’re getting warmer” or “you’re getting colder”!).
-</p>
+</p>-->
 
 <center><p><img src="img_babble/blindfolded.jpg" alt="image alt text" width=500px></p></center>
 
-<p>
+<!--<p>
 “But wouldn’t using heuristics like Joe’s result in a relatively brittle rule-based system that doesn’t generalize well to new examples?” We’re glad you asked. This is where data programming comes in! 
-</p>
+</p>-->
 
-<h2 id="toc_1">Data Programming</h2>
+<h3 id="toc_1">Option 2: With Labeling Functions (via Data Programming)</h3>
 
 <blockquote>
-<p>Data programming leverages a variety of weak supervision signals to programmatically generate large training sets with noise-aware (approximate) labels.</p>
+<p>In data programming, users write labeling functions that are used to assign noise-aware labels to unlabeled data.</p>
 </blockquote>
 
 <p>
-The data programming approach leverages a variety of sources of weak supervision (supervision signals that don’t necessarily have perfect recall or precision, and which may overlap and conflict with one another), to apply noise-aware labels to unlabeled training examples. Basically, we interpret our collection of supervision sources (called “<em>labeling functions</em>” or LFs) as implicitly describing a generative model for assigning labels to training examples. </p>
+In a <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">data programming</a> approach, instead of providing binary labels, Joe writes functions (called "labeling functions" or LFs) that label data "accurately enough". These functions don't necessarily have perfect recall or precision, and they are allowed to overlap and conflict with one another.
+</p>
+
+<center><p><img src="img_babble/hit_dp.png" alt="image alt text" width=600px></p></center>
+
+<p>
+By looking at how often the labeling functions agree or disagree with one another, we learn estimated accuracies for each supervision source (e.g., an LF that all the other LFs tend to agree with will have a high learned accuracy, whereas an LF that seems to be disagreeing with all the others whenever they vote on the same example will have a low learned accuracy). And by combining the votes of all the labeling functions (weighted by their estimated accuracies), we’re able to assign each example a fuzzy "noise-aware" label (between 0 and 1) instead of a hard label (either 0 or 1).
+</p>
+
+<!--, (with 0 meaning “This is definitely a negative example,” 1 meaning “This is definitely a positive example”, and 0.5 meaning “I have no idea, so don’t waste too much time trying to label me correctly, Mr. Classifier”). Additionally, recent work from our lab has shown that we can also <a href="https://arxiv.org/abs/1703.00854">learn the structure of the generative model</a> (i.e., the dependencies between LFs) without any labeled data, which improves our model’s accuracy further.-->
 
 <p class="img"><img src="img_babble/majority_vote.png" width="500px" /></p>
 
-<p>
-By looking at how often the labeling functions agree or disagree with one another, we learn estimated accuracies for each supervision source (e.g., an LF that all the other LFs tend to agree with will have a high learned accuracy, whereas an LF that seems to be disagreeing with all the others whenever they vote on the same example will have a low learned accuracy). And by combining the votes of all the labeling functions (weighted by their estimated accuracies), we’re able to assign each example a “noise-aware” label between 0 and 1, (with 0 meaning “This is definitely a negative example,” 1 meaning “This is definitely a positive example”, and 0.5 meaning “I have no idea, so don’t waste too much time trying to label me correctly, Mr. Classifier”). Additionally, recent work from our lab has shown that we can also <a href="https://arxiv.org/abs/1703.00854">learn the structure of the generative model</a> (i.e., the dependencies between LFs) without any labeled data, which improves our model’s accuracy further.
-</p>
+<!--The data programming approach leverages a variety of sources of weak supervision (supervision signals that don’t necessarily have perfect recall or precision, and which may overlap and conflict with one another), to apply noise-aware labels to unlabeled training examples. Basically, we interpret our collection of supervision sources (called “<em>labeling functions</em>” or LFs) as implicitly describing a generative model for assigning labels to training examples. -->
 
 <p>
-Two big benefits of this approach are:
+Three big pros of this approach are:
 <ol>
-<li> We now have a use for unlabeled data. We can apply our labeling functions on all the unlabeled examples to create a whole lot of not perfect, but “good enough” labels for a potentially huge training data set.</li> 
-<li> These labels can be used to train a powerful discriminative classifier with a large feature set that <em>does</em> generalize well. (So even if our labeling functions only referred to a grand total of a hundred different “features”, the examples they labeled may each have thousands of features whose weights are learned by the discriminative classifier).</li> 
+<li><p>We've improved the scalability of our labeling approach: each LF can contribute label information to tens, hundreds, or thousands of examples--not just one.</p></li>
+<li><p>We now have a use for unlabeled data. We can apply our LFs on all the unlabeled examples to create a whole lot of not perfect, but “good enough” labels for a potentially huge training data set.</p></li> 
+<li><p>These labels can be used to train a powerful discriminative classifier with a large feature set that generalizes beyond the reasons directly addressed by the LFs. (So even if we only use 100 LFs, the examples they label may each have thousands of features whose weights are learned by the discriminative classifier).</p></li> 
 </ol>
 </p>
 
 <p>
+One big con of this approach is:
+<ol>
+<li> Joe can't program! He is, after all, just your average Joe.</li>
+</ol>
+
+<!--<p>
 “But wait,” you say, “you promised I could use natural language and data programming uses functions! What gives?” Read on, gentle reader!
-</p>
+</p>-->
 
-<h2 id="toc_2">Babble Labble</h2>
+<!--<h2 id="toc_2">Babble Labble</h2>-->
 
+<h3 id="toc_1">Option 3: With Explanations (via Babble Labble)</h3>
 <blockquote>
 <p>The Babble Labble approach uses a semantic parser to convert natural language explanations into “accurate enough” labeling functions for use with data programming.</p>
 </blockquote>
 
-<p>Babble Labble converts natural language (babble) into labels (or labbles&mdash;we've heard it both ways).</p>
+<p>Babble Labble converts natural language (babble) into labels (or labbles&mdash;we've heard it both ways). Now, Joe's labeling interface looks like this: </p> 
+<p class="img"><img src="img_babble/hit_babble.png" width=600px/></p>
 
-<h4>Why it matters</h4>
-Why would anyone want to supervise from natural language? Here are a few reasons:
+What are the benefits of having a natural language interface? Here are a few:
 <ol>
 <li>Ease of use
   <p>The world is moving to conversational interfaces. Sure, I can type, but sometimes I prefer to just say “Hey Google/Siri/Alexa” and talk to my computer/phone/television/toaster.</p></li>
@@ -435,38 +469,35 @@ Why would anyone want to supervise from natural language? Here are a few reasons
 
 <p class="img"><img src="img_babble/robot_reading.jpg" width="300px" /></p>
 
-<h4>How it works</h4>
-The core component of Babble Labble is a semantic parser. Semantic parsers convert natural language explanations into formal programs (or in our case, labeling functions). Part of the reason why programs are written in programming languages instead of natural languages is because natural language can be ambiguous. This means that a single explanation may map to many different possible LFs. In a traditional approach, one might use a bunch of labeled data to “train” the semantic parser and learn which of the generated LFs is most likely to be the correct one. But we’re trying to use Babble Labble to create a bunch of labeled data, not consume them. How do we get past this apparent “chicken and egg” paradox? Just like how we found that we can use a larger set of “accurate enough” labels to train the discriminative model in data programming, we propose that we can use a larger set of “accurate enough” labeling functions to train the generative model in data programming. This may seem a little cavalier of us, but there are reasons to be optimistic. 
+<h2>Babble Labble</h2>
+<p>The core component of Babble Labble is a semantic parser. Semantic parsers convert natural language explanations into formal programs (or in our case, labeling functions). Part of the reason why programs are written in programming languages instead of natural languages is because natural language can be ambiguous. This means that a single explanation often maps to many different possible LFs--one that was intended and others that are spurious!</p>
 
-<p><b>Reason #1.</b> The target function space is restricted</a>
-<p>The space of all possible programs is HUGE (read “infinite”). But the space of functions that we’re trying to map to is noticeably smaller. Consider the slightly modified HIT from above and Joe’s provided explanation:</p>
+<!--TODO: image here; maybe of many to one?-->
 
-<p class="img"><img src="img_babble/hit_modified.png" width=600px/></p>
+In a traditional approach, one might use a bunch of labeled data to “train” the semantic parser and learn which of the generated LFs is most likely to be the correct one. But fortunately, in this framework with a downstream application that was made to handle noise, we don't need a perfect parser to still get great results!
 
-Let’s say our labeling functions should return +1 if the label is true, -1 if the label is false, or 0 if the LF abstains. Any feedback received in the form of the sample HIT above can be converted to a labeling function of the following form:
+Just like how we found that we can use a larger set of “accurate enough” labels to train the discriminative model in data programming, we propose that we can use a larger set of “accurate enough” labeling functions to train the generative model in data programming. This may seem a little cavalier of us, but there are reasons for believin':
 
-<p class="img"><img src="img_babble/babble_lf.png"/></p>
-
-where ‘Label’ is True or False and ‘Explanation’ is a function which accepts an ‘Example’ and returns a Boolean. So every Explanation boils down to a function that returns either True or False.
-
-<p><b>Reason #2.</b> Incorrect parses may still be useful</p>
-The labeler’s explanation describes a very specific signal for the learner to pay attention to. In the extremely high dimensional space of all possible features, minor parsing inaccuracies may still result in a relevant signal being described. For example, the latter half of Joe’s explanation may be misinterpreted by the semantic parser as “the words ‘their daughter’ occur anywhere in the sentence”. While not as specific as the intended explanation, it may end up correctly labeling all of the same examples as the intended function as well as new examples such as “Following the birth of their daughter, Beyoncé and Jay-Z took to Twitter to celebrate.”
-
-<p><b>Reason #3.</b> Common sense filters can remove many incorrect parses</p>
+<p><b>Reason #1.</b> Common sense filters catch many spurious LFs</p>
 <ul>
 <li> Filter 1: example contradiction
-  <p>In the format described above, each labeling function comes from an explanation that is tied to a specific example. If the LF’s explanation doesn’t agree with the label given to its own corresponding example, then we can confidently toss it.</p>
+  <p>With the labeling interface Joe used, each LF comes from an explanation that is tied to a specific example. If the LF’s explanation doesn’t agree with the label given to its own corresponding example, then we can confidently toss it.</p>
 <li> Filter 2: uniform labels
   <p> If an LF does correctly label its corresponding example, but it does so by naively labeling all examples as True or all as False, then it provides no useful signal and can also be tossed.</p>
 <li> Filter 3: redundant signature
   <p> Suppose one explanation yielded three LFs that label identically every single example in the large training set extracted from the unlabeled data. While the three LFs may in fact be unique in some way, their semantic difference is small enough that they provide redundant information for our application, and all but one can be tossed.</p>
 </ul>
 
-<p><b>Reason #4.</b> We model the LFs' accuracies</p>
-In the data programming paradigm, labeling functions don’t need to be perfectly accurate to be useful. If a mistake in the semantic parser results in a labeling function that is less accurate than it was intended to be, the generative model will have the opportunity to recognize this when it sees its disagreement with other LFs and reduce its estimated accuracy accordingly.
+<p><b>Reason #2.</b> Data programming mitigates the negative effects of spurious LFs</p>
+<ul>
+<li> Model the LFs' accuracies
+  <p>In the data programming paradigm, labeling functions don’t need to be perfectly accurate to be useful. If a mistake in the semantic parser results in a labeling function that is less accurate than it was intended to be, the generative model will have the opportunity to recognize this when it sees its disagreement with other LFs and reduce its estimated accuracy accordingly.
+<li> Model the LFs' dependencies
+  <p>What if one particularly ambiguous explanation generates a whole bunch of LFs that pass the filters and all agree with each other despite being wrong&mdash;won’t that falsely boost their learned accuracies? It would...if we believed that all LFs label independently. But because we are able to automatically <a href=https://arxiv.org/abs/1703.00854>learn the dependencies</a> between the LFs in data programming, this mob behavior can be recognized for what it is and voting power of all the LFs participating in this “echo chamber” can be reduced accordingly.
+</ul>
 
-<p><b>Reason #5.</b> We model the LFs' dependencies</p>
-What if one particularly ambiguous explanation generates a whole bunch of LFs that pass the filters and all agree with each other despite being wrong&mdash;won’t that falsely boost their learned accuracies? It would...if we believed that all LFs label independently. But because we are able to model the dependencies between the LFs, this mob behavior can be recognized for what it is and voting power of all the LFs participating in this “echo chamber” can be reduced accordingly.
+<p><b>Reason #3.</b> Spurious LFs are sometimes still helpful</p>
+The labeler’s explanation describes a very specific signal for the learner to pay attention to. In the extremely high dimensional space of all possible features, minor parsing inaccuracies may still result in a relevant signal making it through. For example, the latter half of Joe’s explanation may be misinterpreted by the semantic parser as “the words ‘their daughter’ occur anywhere in the sentence”. While not as specific as the intended explanation, it may end up correctly labeling all of the same examples as the intended function as well as new examples such as “Following the birth of their daughter, Beyoncé and Jay-Z took to Twitter to celebrate.” 
 
 <h2>Case Study: Classifying Disease-Causing Chemicals</h2>
 
@@ -474,13 +505,13 @@ Consider the task of extracting chemical-disease pairs from the scientific liter
 
 <p class="img"><img src="img_babble/cdr_explanations.png" width=600px/></p>
 
-The 32 explanations were parsed into 83 LFs. Applying the example contradiction filter brought this number down to 63, and the redundant signature filter further reduced this to 39 LFs (a “spurious LF” rate of only 18%). The data programming platform, Snorkel, identified 11 dependencies among the LFs, and in one case, a “spurious” LF ended up having a higher empirical accuracy than the intended one. On this very difficult task:
+The 32 explanations were parsed into 83 LFs. Applying the example contradiction filter (using example/explanation pairs) brought this number down to 63, and the redundant signature filter further reduced this to 39 LFs (a “spurious LF” rate of only 18%). The data programming platform, Snorkel, identified 11 dependencies among the LFs, and in one case, a “spurious” LF ended up having a higher empirical accuracy than the intended one. On this very difficult task:
 <ul> 
   <li>Traditional supervision with 1k gold labels achieves an F1 score of 0.52.</li> 
-  <li>Data programming with 32 programmed LFs and a training set of ~8k unlabeled examples achieves an F1 score of 0.53.</li>
-  <li>Babble Labble with 32 labeled examples/explanation pairs (resulting in 39 natural-language-based LFs) and the same unlabeled training set achieves an F1 score of 0.52.
+  <li>Data programming with 32 programmed LFs and a training set of 8k unlabeled examples achieves an F1 score of 0.53.</li>
+  <li>Babble Labble with 32 labeled example/explanation pairs (resulting in 39 natural-language-based LFs) and the same unlabeled training set achieves an F1 score of 0.52.
 </ul>
-That is, <b>by utilizing natural language explanations corresponding to 32 labeled examples, we were able to achieve the same quality as a fully supervised system while using 30x fewer gold training examples</b>.
+That is, by utilizing natural language explanations corresponding to 32 labeled examples, we were able to achieve the same quality as a fully supervised system while using <b>30x fewer gold training examples</b>.
 
 <p class="img"><img src="img_babble/cdr_results.png"/></p>
 

@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 import glob
 import os
 import codecs
+import uuid
 from multiprocessing import Pool
 from parser import OmniParser
 from models.meta import new_engine, new_session
@@ -68,13 +69,6 @@ def _get_files(path):
     else:
         raise IOError("File or directory not found: %s" % (path,))
     
-class AsyncOmniParser(OmniParser):
-    # TODO move omni parser to async parse and change this API to document only
-    # This is just for forcing the evaluation of yield statements
-    def parse(self, document):
-        for _phrase in super(AsyncOmniParser, self).parse(document, document.text):
-            continue
-
 _worker_session = None
 _worker_corpus = None
 _worker_doc_parser = None
@@ -121,3 +115,15 @@ def parse_corpus(session, corpus_name, path, doc_parser, context_parser, max_doc
     run_round_robin(_parallel_parse, parallel, args, _init_parse_worker, (corpus_name,))
     # Load the updated corpus with all documents from workers
     return session.query(Corpus).filter(Corpus.name==corpus_name).one()
+
+class AsyncOmniParser(OmniParser):
+    # TODO move omni parser to async parse and change this API to document only
+    # This is just for forcing the evaluation of yield statements
+    def parse(self, document):
+        for _phrase in super(AsyncOmniParser, self).parse(document, document.text):
+            continue
+        
+    def apply(self, doc_parser, docs_path, pdf_path, session, corpus_name=None, max_docs=None, parallel=1):
+        self.pdf_path = pdf_path
+        if corpus_name is None: corpus_name = uuid.uuid4().hex
+        return parse_corpus(session, corpus_name, docs_path, doc_parser, self, max_docs, parallel)

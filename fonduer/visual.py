@@ -16,8 +16,7 @@ import httplib
 
 
 class VisualLinker():
-    def __init__(self, pdf_path, time=False, verbose=False):
-        self.pdf_path = pdf_path
+    def __init__(self, time=False, verbose=False):
         self.pdf_file = None
         self.verbose = verbose
         self.time = time
@@ -29,9 +28,9 @@ class VisualLinker():
         delimiters = u"([\(\)\,\?\u2212\u201C\u201D\u2018\u2019\u00B0\*\']|(?<!http):|\.$|\.\.\.)"
         self.separators = re.compile(delimiters)
 
-    def parse_visual(self, document_name, phrases):
+    def parse_visual(self, document_name, phrases, pdf_path):
         self.phrases = phrases
-        self.pdf_file = self.pdf_path + document_name + '.pdf'
+        self.pdf_file = pdf_path + document_name + '.pdf'
         if not os.path.isfile(self.pdf_file):
             self.pdf_file = self.pdf_file[:-3]+"PDF"
         try:

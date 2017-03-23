@@ -381,21 +381,20 @@ class OmniParser(object):
         # visual setup
         self.visual = visual
         if self.visual:
-            if not pdf_path:
-                warnings.warn("Visual parsing failed: pdf_path is required", RuntimeWarning)
-            else:
-                self.vizlink = VisualLinker(pdf_path)
+            self.vizlink = VisualLinker()
 
     def parse(self, document, text):
         if self.visual:
+            if not self.pdf_path:
+                warnings.warn("Visual parsing failed: pdf_path is required", RuntimeWarning)
             for _ in self.parse_structure(document, text):
                 pass
             # Add visual attributes
-            filename = self.vizlink.pdf_path + document.name
+            filename = self.pdf_path + document.name
             create_pdf = not os.path.isfile(filename + '.pdf') and not os.path.isfile(filename + '.PDF')
             if create_pdf:  # PDF file does not exist
                 self.vizlink.create_pdf(document.name, text)
-            for phrase in self.vizlink.parse_visual(document.name, document.phrases):
+            for phrase in self.vizlink.parse_visual(document.name, document.phrases, self.pdf_path):
                 yield phrase
         else:
             for phrase in self.parse_structure(document, text):

@@ -186,8 +186,12 @@ def _annotate_queue_worker(name, table_name, job_id, annotator, worker_id):
             keys, values = zip(*list(annotator(candidate)))
             row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
             writer.write('\t'.join(row) + '\n')
+            
+def table_exists(con, name):
+    cur = con.execute("select exists(select * from information_schema.tables where table_name=%s)", (name,))
+    return cur.fetchone()[0]
     
-def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_all_feats, dynamic_scheduling=False, storage=None):
+def annotate(candidates, parallel=0, keyset=None, update=False, lfs=[], feature_extractor=get_all_feats, dynamic_scheduling=False, storage=None):
     '''
     Extracts features for candidates in parallel
     @var candidates: CandidateSet to extract features from
@@ -203,10 +207,16 @@ def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_
     key_table_name = (get_sql_name(keyset) + suffix if keyset else table_name) + '_keys'
     # Default to COO for labeling functions
     if storage is None and lfs: storage = 'COO'
+    old_table_name = None
     with snorkel_engine.connect() as con:
-        con.execute('DROP TABLE IF EXISTS %s' % table_name)
-        # TODO: make label table dense
-        con.execute('CREATE TABLE %s(candidate_id integer, keys text[] NOT NULL, values real[] NOT NULL)' % table_name)
+        if not update:
+            con.execute('DROP TABLE IF EXISTS %s' % table_name)
+        else:
+            # Now we extract under a temporary name for merging
+            if table_exists(con, table_name):
+                old_table_name = table_name
+                table_name += '_updates'
+        con.execute('CREATE TABLE %s(candidate_id integer, keys text[] NOT NULL, values real[] NOT NULL)' % table_name)    
 
         # Assuming hyper-threaded cpus
         if not parallel: parallel = min(40, multiprocessing.cpu_count() / 2)
@@ -232,9 +242,23 @@ def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_
             con.execute('CREATE TABLE %s AS (SELECT candidate_id, UNNEST(keys) as key, UNNEST(values) as value from %s)' % (temp_coo_table, table_name))
             con.execute('DROP TABLE %s'%table_name)
             con.execute('ALTER TABLE %s RENAME TO %s' % (temp_coo_table, table_name))
-        else:
+            con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id, key)' % table_name)
+            # Update old table
+            if old_table_name:
+                con.execute('INSERT INTO %s SELECT * FROM %s ON CONFLICT(candidate_id, key) '
+                            'DO UPDATE SET value=EXCLUDED.value'%(old_table_name, table_name))
+                con.execute('DROP TABLE %s' % table_name)
+        else:# LIL
             con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id)' % table_name)
+            # Update old table
+            if old_table_name:
+                con.execute('INSERT INTO %s AS old SELECT * FROM %s ON CONFLICT(candidate_id) '
+                            'DO UPDATE SET '
+                            'values=old.values || EXCLUDED.values,'
+                            'keys=old.keys || EXCLUDED.keys'%(old_table_name, table_name))
+                con.execute('DROP TABLE %s' % table_name)
         
+        if old_table_name: table_name = old_table_name
         return load_annotation_matrix(con, candidates, table_name, key_table_name, keyset, storage)
         
 def load_annotation_matrix(con, candidates, table_name, key_table_name, keyset, storage):
@@ -278,7 +302,7 @@ def load_annotation_matrix(con, candidates, table_name, key_table_name, keyset, 
             if key_id is not None:
                 lil_feat_matrix[i, key_id] = value
 
-    else:    
+    else:
         iterator_sql = 'SELECT candidate_id, keys, values FROM %s ORDER BY candidate_id' % table_name
         for i, (candidate_id, c_keys, values) in enumerate(con.execute(iterator_sql)):
             candidate_index[candidate_id] = i

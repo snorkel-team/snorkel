@@ -187,7 +187,7 @@ def _annotate_queue_worker(name, table_name, job_id, annotator, worker_id):
             row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
             writer.write('\t'.join(row) + '\n')
     
-def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_all_feats, dynamic_scheduling=False):
+def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_all_feats, dynamic_scheduling=False, storage=None):
     '''
     Extracts features for candidates in parallel
     @var candidates: CandidateSet to extract features from
@@ -201,6 +201,8 @@ def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_
     suffix = '_labels' if lfs else '_features'
     table_name = get_sql_name(candidates.name) + suffix 
     key_table_name = (get_sql_name(keyset) + suffix if keyset else table_name) + '_keys'
+    # Default to COO for labeling functions
+    if storage is None and lfs: storage = 'COO'
     with snorkel_engine.connect() as con:
         con.execute('DROP TABLE IF EXISTS %s' % table_name)
         # TODO: make label table dense
@@ -223,18 +225,29 @@ def annotate(candidates, parallel=0, keyset=None, lfs=[], feature_extractor=get_
             run_in_parallel(_annotate_worker, parallel, len(candidates), copy_args=copy_args)
         copy_postgres(segment_file_blob, table_name, 'candidate_id, keys, values')
         remove_files(segment_file_blob)
-        con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id)' % table_name)
         
-        return load_annotation_matrix(con, candidates, table_name, key_table_name, keyset)
+        # Replace the LIL table with COO if requested
+        if storage == 'COO':
+            temp_coo_table = table_name + '_COO'
+            con.execute('CREATE TABLE %s AS (SELECT candidate_id, UNNEST(keys) as key, UNNEST(values) as value from %s)' % (temp_coo_table, table_name))
+            con.execute('DROP TABLE %s'%table_name)
+            con.execute('ALTER TABLE %s RENAME TO %s' % (temp_coo_table, table_name))
+        else:
+            con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id)' % table_name)
         
-def load_annotation_matrix(con, candidates, table_name, key_table_name, keyset):
+        return load_annotation_matrix(con, candidates, table_name, key_table_name, keyset, storage)
+        
+def load_annotation_matrix(con, candidates, table_name, key_table_name, keyset, storage):
     '''
     Loads a sparse matrix from an annotation table
     '''
     if keyset is None:
         # Recalculate unique keys for this set of candidates
         con.execute('DROP TABLE IF EXISTS %s' % key_table_name)
-        con.execute('CREATE TABLE %s AS (SELECT DISTINCT UNNEST(keys) as key FROM %s)' % (key_table_name, table_name))
+        if storage == 'COO':
+            con.execute('CREATE TABLE %s AS (SELECT DISTINCT key FROM %s)' % (key_table_name, table_name))
+        else:
+            con.execute('CREATE TABLE %s AS (SELECT DISTINCT UNNEST(keys) as key FROM %s)' % (key_table_name, table_name))
     # The result should be a list of all feature strings, small enough to hold in memory
     # TODO: store the actual index in table in case row number is unstable between queries
     keys = [row[0] for row in con.execute('SELECT * FROM %s' % key_table_name)]
@@ -247,15 +260,34 @@ def load_annotation_matrix(con, candidates, table_name, key_table_name, keyset):
     # Load annotations from database
     # TODO: move this for-loop computation to database for automatic parallelization,
     # avoid communication overhead etc. Try to avoid the log sorting factor using unnest
-    iterator_sql = 'SELECT candidate_id, keys, values FROM %s ORDER BY candidate_id' % table_name
-    for i, (candidate_id, c_keys, values) in enumerate(con.execute(iterator_sql)):
-        candidate_index[candidate_id] = i
-        row_index.append(candidate_id)
-        for key, value in izip(c_keys, values):
+    if storage == 'COO':
+        print 'key size', len(keys)
+        print 'candidate size', len(candidates)
+        iterator_sql = 'SELECT candidate_id, key, value FROM %s ORDER BY candidate_id' % table_name
+        prev_id = None
+        i = -1
+        for _, (candidate_id, key, value) in enumerate(con.execute(iterator_sql)):
+            # Update candidate index tracker
+            if candidate_id != prev_id:
+                i += 1
+                candidate_index[candidate_id] = i
+                row_index.append(candidate_id)
+                prev_id = candidate_id
             # Only keep known features
             key_id = key_index.get(key, None)
             if key_id is not None:
                 lil_feat_matrix[i, key_id] = value
+
+    else:    
+        iterator_sql = 'SELECT candidate_id, keys, values FROM %s ORDER BY candidate_id' % table_name
+        for i, (candidate_id, c_keys, values) in enumerate(con.execute(iterator_sql)):
+            candidate_index[candidate_id] = i
+            row_index.append(candidate_id)
+            for key, value in izip(c_keys, values):
+                # Only keep known features
+                key_id = key_index.get(key, None)
+                if key_id is not None:
+                    lil_feat_matrix[i, key_id] = value
                 
     return csr_AnnotationMatrix(lil_feat_matrix, candidate_index=candidate_index,
                                     row_index=row_index, keys=keys, key_index=key_index)

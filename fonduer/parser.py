@@ -1,31 +1,28 @@
 # -*- coding: utf-8 -*-
 
-from .models import Corpus, Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
-from snorkel.utils import ProgressBar, sort_X_on_Y, split_html_attrs
-from .visual import VisualLinker
-import atexit
-import warnings
-from bs4 import BeautifulSoup, NavigableString, Tag, Comment
-from lxml.html import fromstring
-from lxml import etree
-from collections import defaultdict
-import itertools
+import codecs
 import glob
+import gzip
+import itertools
 import json
-import lxml.etree as et
-import numpy as np
 import os
 import re
+import warnings
+from collections import defaultdict
+
+import bs4
+import lxml.etree as et
+import numpy as np
 import requests
-import signal
-import codecs
-from subprocess import Popen
-import sys
-import gzip
-import json
-from timeit import default_timer as timer
-from requests.packages.urllib3.util.retry import Retry
+from lxml import etree
+from lxml.html import fromstring
 from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
+from snorkel.utils import ProgressBar, sort_X_on_Y
+from .models import Corpus, Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
+from .visual import VisualLinker
+
 
 class CorpusParser:
     """Invokes a DocParser and runs the output through a ContextParser to produce a Corpus."""
@@ -154,7 +151,7 @@ class HTMLDocParser(DocParser):
     """Simple parsing of raw HTML files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with open(fp, 'rb') as f:
-            html = BeautifulSoup(f, 'lxml')
+            html = bs4.BeautifulSoup(f, 'lxml')
             txt = filter(self._cleaner, html.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
             name = re.sub(r'\..*$', '', os.path.basename(fp))
@@ -305,7 +302,7 @@ class HTMLParser(DocParser):
     """Simple parsing of files into html documents"""
     def parse_file(self, fp, file_name):
         with codecs.open(fp, encoding=self.encoding) as f:
-            soup = BeautifulSoup(f, 'lxml')
+            soup = bs4.BeautifulSoup(f, 'lxml')
             for text in soup.find_all('html'):
                 name = os.path.basename(fp)[:os.path.basename(fp).rfind('.')]
                 stable_id = self.get_stable_id(name)

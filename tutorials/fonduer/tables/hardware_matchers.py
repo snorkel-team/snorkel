@@ -1,4 +1,4 @@
-from fonduer.matchers import *
+from snorkel.matchers import *
 from fonduer.lf_helpers import *
 import csv
 matchers = {}

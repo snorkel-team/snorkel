@@ -1,5 +1,5 @@
 from fonduer.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, AnnotationKeySet, Label
-from fonduer.matchers import RegexMatchSpan, Union
+from snorkel.matchers import RegexMatchSpan, Union
 from snorkel.utils import ProgressBar
 from fonduer.loaders import create_or_fetch
 from fonduer.lf_helpers import *

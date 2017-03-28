@@ -476,7 +476,7 @@ What are the benefits of having a natural language interface? Here are a few:
 
 In a traditional approach, one might use a bunch of labeled data to “train” the semantic parser and learn which of the generated LFs is most likely to be the correct one. But fortunately, in this framework with a downstream application that was made to handle noise, we don't need a perfect parser to still get great results!
 
-Just like how we found that we can use a larger set of “accurate enough” labels to train the discriminative model in data programming, we propose that we can use a larger set of “accurate enough” labeling functions to train the generative model in data programming. This may seem a little cavalier of us, but there are reasons for believin':
+Just like how we found that we can use a larger set of “accurate enough” labels to train the discriminative model in data programming, we propose that we can use a larger set of “accurate enough” labeling functions to train the generative model in data programming. This may seem a little cavalier of us, but there are reasons for believing this just might work:
 
 <p><b>Reason #1.</b> Common sense filters catch many spurious LFs</p>
 <ul>
@@ -497,7 +497,7 @@ Just like how we found that we can use a larger set of “accurate enough” lab
 </ul>
 
 <p><b>Reason #3.</b> Spurious LFs can be sometimes even helpful!</p>
-The labeler’s explanation describes a very specific signal for the learner to pay attention to. In the extremely high dimensional space of all possible features, minor parsing inaccuracies may still result in a relevant signal making it through. For example, the latter half of Joe’s explanation may be misinterpreted by the semantic parser as “the words ‘their daughter’ occur anywhere in the sentence”. While not as specific as the intended explanation, it may end up correctly labeling all of the same examples as the intended function as well as new examples such as “Following the birth of their daughter, Beyoncé and Jay-Z took to Twitter to celebrate.” 
+The labeler’s explanation describes a very specific signal for the learner to pay attention to. In the extremely high dimensional space of all possible features, minor parsing inaccuracies may still result in a relevant signal making it through. For example, the latter half of Joe’s explanation may be misinterpreted by the semantic parser as “the words ‘their daughter’ occur anywhere in the sentence”. While not as specific as the intended explanation, it may end up correctly labeling all of the same examples as the intended function as well as new examples such as “Following the birth of their daughter, Beyoncé and Jay-Z took to Twitter to celebrate.” The key here is that most of what Joe was trying to convey in this case is captured in the string "their daughter"; many imperfect parses will still result in that most important signal getting through just fine.
 
 <h2>Case Study: Classifying Disease-Causing Chemicals</h2>
 

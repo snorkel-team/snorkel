@@ -20,7 +20,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
 from snorkel.utils import ProgressBar, sort_X_on_Y
-from .models import Corpus, Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
+from .models import Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
 from .visual import VisualLinker
 
 

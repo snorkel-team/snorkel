@@ -5,7 +5,7 @@ Created on Dec 4, 2016
 '''
 # -*- coding: utf-8 -*-
 
-from models import Corpus, Document
+from models import Document
 from snorkel.utils import ProgressBar
 from bs4 import BeautifulSoup
 import glob
@@ -70,10 +70,9 @@ def _get_files(path):
         raise IOError("File or directory not found: %s" % (path,))
     
 _worker_session = None
-_worker_corpus = None
 _worker_doc_parser = None
 _worker_context_parser = None
-def _init_parse_worker(corpus_name):
+def _init_parse_worker():
     '''
     Per process initialization for parsing
     '''
@@ -81,11 +80,9 @@ def _init_parse_worker(corpus_name):
     global _worker_session
     _worker_engine = new_engine()
     _worker_session = new_session(_worker_engine)()
-    _worker_corpus = _worker_session.query(Corpus).filter(Corpus.name==corpus_name).one()
 
 def _parallel_parse(fpath):
     for document in _worker_doc_parser.parse(fpath):
-        _worker_corpus.append(document)
         _worker_context_parser.parse(document)
     # Have to clean up after every doc since pool doesn't have 
     # shutdown hook
@@ -93,7 +90,7 @@ def _parallel_parse(fpath):
     _worker_session.commit()
     return None
 
-def parse_corpus(session, corpus_name, path, doc_parser, context_parser, max_docs=None, parallel=1):
+def parse_corpus(session, path, doc_parser, context_parser, max_docs=None, parallel=1):
     global _worker_doc_parser
     global _worker_context_parser
     _worker_doc_parser = doc_parser
@@ -102,28 +99,17 @@ def parse_corpus(session, corpus_name, path, doc_parser, context_parser, max_doc
     if max_docs is None: max_docs = len(fpaths)
     fpaths = fpaths[:min(max_docs, len(fpaths))]
     args = fpaths
-    # Make sure the corpus exists so that we can add documents to it in workers
-    corpus = session.query(Corpus).filter(Corpus.name==corpus_name).one_or_none()
-    if corpus is not None:
-        print 'Corpus', corpus_name, 'already exists. Not parsing'
-        return corpus
-    else:
-        corpus = Corpus(name=corpus_name)
-        session.add(corpus)
-        session.commit()
     # Asynchronously parse files
-    run_round_robin(_parallel_parse, parallel, args, _init_parse_worker, (corpus_name,))
-    # Load the updated corpus with all documents from workers
-    return session.query(Corpus).filter(Corpus.name==corpus_name).one()
+    run_round_robin(_parallel_parse, parallel, args, _init_parse_worker, ())
 
 class AsyncOmniParser(OmniParser):
     # TODO move omni parser to async parse and change this API to document only
     # This is just for forcing the evaluation of yield statements
     def parse(self, document):
+        raise NotImplementedError('Fonduer parser API need access to raw document text, "document.text" does not work under the snorkel sentence model')
         for _phrase in super(AsyncOmniParser, self).parse(document, document.text):
             continue
         
-    def apply(self, doc_parser, docs_path, pdf_path, session, corpus_name=None, max_docs=None, parallel=1):
+    def apply(self, doc_parser, docs_path, pdf_path, session, max_docs=None, parallel=1):
         self.pdf_path = pdf_path
-        if corpus_name is None: corpus_name = uuid.uuid4().hex
-        return parse_corpus(session, corpus_name, docs_path, doc_parser, self, max_docs, parallel)
+        return parse_corpus(session, docs_path, doc_parser, self, max_docs, parallel)

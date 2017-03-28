@@ -192,12 +192,12 @@ class GenerativeModel(object):
     optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
     dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
 
-    def train(self, L, y=None, deps=(), init_acc = 1.0, init_acc_deps=1.0, epochs=100, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
+    def train(self, L, y=None, deps=(), init_acc = 1.0, init_deps=1.0, init_class_prior=-1.0, epochs=100, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
               truncation=10, burn_in=50, timer=None):
         step_size = step_size or 1.0 / L.shape[0]
         reg_param_scaled = reg_param / L.shape[0]
         self._process_dependency_graph(L, deps)
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc, init_acc_deps)
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc, init_deps, init_class_prior)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
                        reg_param=reg_param_scaled, regularization=reg_type, truncation=truncation,
                        quiet=(not verbose), verbose=verbose, learn_non_evidence=True, burn_in=burn_in)
@@ -304,7 +304,7 @@ class GenerativeModel(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
-    def _compile(self, L, y, init_acc, init_acc_deps):
+    def _compile(self, L, y, init_acc, init_deps, init_class_prior):
         """
         Compiles a generative model based on L and the current labeling function dependencies.
         """
@@ -346,19 +346,19 @@ class GenerativeModel(object):
         #
         if self.class_prior:
             weight[0]['isFixed'] = False
-            weight[0]['initialValue'] = np.float64(0)
+            weight[0]['initialValue'] = np.float64(init_class_prior)
             w_off = 1
         else:
             w_off = 0
 
         for i in range(w_off, w_off + n):
             weight[i]['isFixed'] = False
-            weight[i]['initialValue'] = np.float64(init_acc + .1 - .2 * self.rng.random())
+            weight[i]['initialValue'] = np.float64(init_acc)
 
         w_off += n
         for i in range(w_off, weight.shape[0]):
             weight[i]['isFixed'] = False
-            weight[i]['initialValue'] = np.float64(init_acc_deps + .1 - .2 * self.rng.random())
+            weight[i]['initialValue'] = np.float64(init_deps)
 
 
         #

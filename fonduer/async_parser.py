@@ -83,7 +83,9 @@ def _init_parse_worker():
 
 def _parallel_parse(fpath):
     for document in _worker_doc_parser.parse(fpath):
-        _worker_context_parser.parse(document)
+        for p in _worker_context_parser.parse(document):
+            _worker_session.add(p)
+        _worker_session.add(document)
     # Have to clean up after every doc since pool doesn't have 
     # shutdown hook
     # TODO: potential performance bottleneck here due to synchronization
@@ -107,7 +109,7 @@ class AsyncOmniParser(OmniParser):
     # This is just for forcing the evaluation of yield statements
     def parse(self, document):
         for _phrase in super(AsyncOmniParser, self).parse(document, document.text):
-            continue
+            yield _phrase
         
     def apply(self, doc_parser, docs_path, pdf_path, session, max_docs=None, parallel=1):
         self.pdf_path = pdf_path

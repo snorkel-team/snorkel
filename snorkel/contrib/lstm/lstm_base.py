@@ -72,8 +72,8 @@ class LSTMBase(TFNoiseAwareModel):
         init = tf.contrib.layers.xavier_initializer(seed=s2)
         with tf.variable_scope(rand_name, reuse=False, initializer=init):
             # Build LSTM cells
-            fw_cell = rnn.BasicLSTMCell(self.dim, reuse=False)
-            bw_cell = rnn.BasicLSTMCell(self.dim, reuse=False)
+            fw_cell = rnn.BasicLSTMCell(self.dim)
+            bw_cell = rnn.BasicLSTMCell(self.dim)
             # Add attention if needed
             if self.attn:
                 fw_cell = rnn.AttentionCellWrapper(fw_cell, self.attn)

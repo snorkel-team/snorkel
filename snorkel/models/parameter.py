@@ -1,6 +1,8 @@
-from .meta import SnorkelBase
-from sqlalchemy import Column, String, Integer, Float, ForeignKey
+from sqlalchemy import Column, Integer, Float, ForeignKey
 from sqlalchemy.orm import relationship, backref
+
+from .meta import SnorkelBase
+
 
 # Development note:
 # Without a single AnnotationKey class (either by only having one such table, or via polymorphism), we

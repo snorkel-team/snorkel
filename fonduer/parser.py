@@ -202,9 +202,7 @@ class XMLMultiDocParser(DocParser):
     def _can_read(self, fpath):
         return fpath.endswith('.xml')
 
-
-PTB = {'-RRB-': u')', '-LRB-': u'(', '-RCB-': u'}', '-LCB-': u'{', '-RSB-': u']',
-       '-LSB-': u'['}
+PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{','-RSB-': ']', '-LSB-': '['}
 
 class CoreNLPHandler:
     '''
@@ -230,15 +228,9 @@ class CoreNLPHandler:
                         status_forcelist=[500, 502, 503, 504])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
 
-        self.ptb_rgx = re.compile(r'-[A-Z]{2}B-')
-                
     def parse(self, document, text):
         """Parse a raw document as a string into a list of sentences"""
-        def ptb_clean(text):
-            for ptb_match in self.ptb_rgx.finditer(text): 
-                text = text.replace(ptb_match.group(0), PTB[ptb_match.group(0)])
-            return text
-        
+
         if len(text.strip()) == 0:
             return
         if isinstance(text, unicode):
@@ -260,8 +252,9 @@ class CoreNLPHandler:
             parts = defaultdict(list)
             dep_order, dep_par, dep_lab = [], [], []
             for tok, deps in zip(block['tokens'], block['basic-dependencies']):
-                parts['words'].append(ptb_clean(tok['word']))
-                parts['lemmas'].append(ptb_clean(tok['lemma']))
+                # Convert PennTreeBank symbols back into characters for words/lemmas
+                parts['words'].append(PTB.get(tok['word'], tok['word']))
+                parts['lemmas'].append(PTB.get(tok['lemma'], tok['lemma']))
                 parts['pos_tags'].append(tok['pos'])
                 parts['ner_tags'].append(tok['ner'])
                 parts['char_offsets'].append(tok['characterOffsetBegin'])
@@ -269,8 +262,7 @@ class CoreNLPHandler:
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])
 
-            parts['text'] = ''.join(t['originalText'] + t['after'] for t in block['tokens'])
-            
+            parts['text'] = ''.join(t['originalText'] + t.get('after', '') for t in block['tokens'])
             # make char_offsets relative to start of sentence
             abs_sent_offset = parts['char_offsets'][0]
             parts['char_offsets'] = [p - abs_sent_offset for p in parts['char_offsets']]
@@ -280,6 +272,10 @@ class CoreNLPHandler:
 
             # Link the sentence to its parent document object
             parts['document'] = document
+
+            # Add null entity array (matching null for CoreNLP)
+            parts['entity_cids']  = ['O' for _ in parts['words']]
+            parts['entity_types'] = ['O' for _ in parts['words']]
 
             # Assign the stable id as document's stable id plus absolute character offset
             abs_sent_offset_end = abs_sent_offset + parts['char_offsets'][-1] + len(parts['words'][-1])

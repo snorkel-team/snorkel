@@ -35,9 +35,9 @@ class Document(Context):
     A root Context.
     """
     __tablename__ = 'document'
-    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    meta = Column(PickleType)
+    id            = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    name          = Column(String, unique=True, nullable=False)
+    meta          = Column(PickleType)
 
     __mapper_args__ = {
         'polymorphic_identity': 'document',
@@ -182,7 +182,7 @@ class TemporarySpan(TemporaryContext):
     """The TemporaryContext version of Span"""
     def __init__(self, sentence, char_start, char_end, meta=None):
         super(TemporarySpan, self).__init__()
-        self.sentence     = sentence  # The sentence Context of the Span
+        self.sentence   = sentence  # The sentence Context of the Span
         self.char_end   = char_end
         self.char_start = char_start
         self.meta       = meta
@@ -299,11 +299,11 @@ class Span(Context, TemporarySpan):
     char_offsets are **relative to the Context start**
     """
     __tablename__ = 'span'
-    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
-    sentence_id = Column(Integer, ForeignKey('sentence.id', ondelete='CASCADE'))
-    char_start = Column(Integer, nullable=False)
-    char_end = Column(Integer, nullable=False)
-    meta = Column(PickleType)
+    id            = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    sentence_id   = Column(Integer, ForeignKey('sentence.id', ondelete='CASCADE'))
+    char_start    = Column(Integer, nullable=False)
+    char_end      = Column(Integer, nullable=False)
+    meta          = Column(PickleType)
 
     __table_args__ = (
         UniqueConstraint(sentence_id, char_start, char_end),

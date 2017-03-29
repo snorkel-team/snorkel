@@ -44,6 +44,7 @@ class Document(Context):
     __tablename__ = 'document'
     id            = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
     name          = Column(String, unique=True, nullable=False)
+    text          = Column(String)
     meta          = Column(PickleType)
 
     __mapper_args__ = {
@@ -339,6 +340,8 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, 
     text          = Column(Text, nullable=False)
     words         = Column(STR_ARRAY_TYPE)
     char_offsets  = Column(INT_ARRAY_TYPE)
+    entity_cids   = Column(STR_ARRAY_TYPE)
+    entity_types  = Column(STR_ARRAY_TYPE)
 
     __mapper_args__ = {
         'polymorphic_identity': 'phrase',
@@ -374,6 +377,8 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, 
             # 'document': self.document,
             'phrase_num': self.phrase_num,
             'text': self.text,
+            'entity_cids': self.entity_cids,
+            'entity_types': self.entity_types,
             # tabular
             # 'table': self.table,
             # 'cell': self.cell,

@@ -106,7 +106,6 @@ class AsyncOmniParser(OmniParser):
     # TODO move omni parser to async parse and change this API to document only
     # This is just for forcing the evaluation of yield statements
     def parse(self, document):
-        raise NotImplementedError('Fonduer parser API need access to raw document text, "document.text" does not work under the snorkel sentence model')
         for _phrase in super(AsyncOmniParser, self).parse(document, document.text):
             continue
         

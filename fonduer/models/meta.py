@@ -12,12 +12,15 @@ DBUSER = os.environ.get('SNORKELDBUSER', getpass.getuser())
 DBNAME = os.environ.get('SNORKELDBNAME', 'snorkel.db')
 
 snorkel_postgres = DBURL.startswith('postgres')
+snorkel_conn_string = ''
 if snorkel_postgres:
     if '///' in DBURL:
         # Supports monolithic URL for unix socket connection for postgres
         connection = DBURL + DBNAME
+        snorkel_conn_string = connection
     else:
         connection = DBURL.rstrip('/') + '/' + DBNAME
+        snorkel_conn_string = connection
     connect_args={'sslmode':'disable'}
 else:
     connection = DBURL + DBNAME
@@ -31,9 +34,16 @@ def new_engine():
 def new_session(engine):
     return sessionmaker(bind=engine)
 
+
+def new_sessionmaker():
+    snorkel_engine = create_engine(snorkel_conn_string)
+
+    # New sessionmaker
+    SnorkelSession = sessionmaker(bind=snorkel_engine)
+    return SnorkelSession
+
 snorkel_engine = new_engine()
 SnorkelSession = new_session(snorkel_engine)
-
 
 def clear_database():
     """

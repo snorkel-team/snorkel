@@ -606,7 +606,7 @@ class Span(Context, TemporarySpan):
     """
     __tablename__ = 'span'
     id            = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
-    sentence_id   = Column(Integer, ForeignKey('sentence.id', ondelete='CASCADE'))
+    sentence_id   = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'))
     char_start    = Column(Integer, nullable=False)
     char_end      = Column(Integer, nullable=False)
     meta          = Column(PickleType)
@@ -620,7 +620,7 @@ class Span(Context, TemporarySpan):
         'inherit_condition': (id == Context.id)
     }
 
-    sentence = relationship('Sentence', backref=backref('spans', cascade='all, delete-orphan'), order_by=char_start, foreign_keys=sentence_id)
+    sentence = relationship('Context', backref=backref('spans', cascade='all, delete-orphan'), foreign_keys=sentence_id)
 
     def get_parent(self):
         return self.sentence

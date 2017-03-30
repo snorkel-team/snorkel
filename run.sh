@@ -37,11 +37,11 @@ if [ $size -eq 0 ]; then
 fi
 
 # Launch Stanford CoreNLP Server
-java -Xmx8g -cp "parser/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port $JAVANLPPORT --timeout 600000 > /dev/null &
+#java -Xmx8g -cp "parser/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port $JAVANLPPORT --timeout 600000 > /dev/null &
 
 # Launch jupyter notebook!
 echo "Launching Jupyter Notebook..."
 jupyter notebook
 
 # Shut down Stanford CoreNLP Server
-wget "localhost:$JAVANLPPORT/shutdown?key=`cat /tmp/corenlp.shutdown`" -O -
+#wget "localhost:$JAVANLPPORT/shutdown?key=`cat /tmp/corenlp.shutdown`" -O -

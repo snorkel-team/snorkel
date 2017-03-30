@@ -81,6 +81,13 @@ class CandidateExtractorUDF(UDF):
         candidate_args = {'split': split}
         for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
 
+            # Apply throttler if one was given
+            # Accepts a tuple of Span objects (e.g., (Span, Span))
+            # (throttler returns whether or not proposed candidate passes throttling condition)
+            if self.throttler:
+                if not self.throttler(tuple(args[i][1] for i in range(self.arity))):
+                    continue
+
             # TODO: Make this work for higher-order relations
             if self.arity == 2:
                 ai, a = args[0]
@@ -133,7 +140,7 @@ class Ngrams(CandidateSpace):
         CandidateSpace.__init__(self)
         self.n_max     = n_max
         self.split_rgx = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
-    
+
     def apply(self, context):
 
         # These are the character offset--**relative to the sentence start**--for each _token_

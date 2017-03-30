@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import atexit
 import codecs
 import glob
 import gzip
@@ -7,71 +7,88 @@ import itertools
 import json
 import os
 import re
+import signal
+import sys
 import warnings
 from collections import defaultdict
+from subprocess import Popen
 
-import bs4
 import lxml.etree as et
 import numpy as np
 import requests
+from bs4 import BeautifulSoup
 from lxml import etree
 from lxml.html import fromstring
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
 
-from snorkel.utils import ProgressBar, sort_X_on_Y
-from .models import Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
+from snorkel.utils import sort_X_on_Y
+from .models import Candidate, Context, Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, \
+    split_stable_id
+from .udf import UDF, UDFRunner
 from .visual import VisualLinker
 
 
-class CorpusParser:
-    """Invokes a DocParser and runs the output through a ContextParser to produce a Corpus."""
-    def __init__(self, doc_parser, context_parser, max_docs=None):
-        self.doc_parser = doc_parser
-        self.context_parser = context_parser
-        self.max_docs = max_docs
+class CorpusParser(UDFRunner):
+    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False, fn=None):
+        super(CorpusParser, self).__init__(CorpusParserUDF,
+                                           tok_whitespace=tok_whitespace,
+                                           split_newline=split_newline,
+                                           parse_tree=parse_tree,
+                                           fn=fn)
 
-    def parse_corpus(self, session, name):
-        corpus = Corpus(name=name)
-        if session is not None:
-            session.add(corpus)
-        if self.max_docs is not None:
-            pb = ProgressBar(self.max_docs)
-        for i, (doc, text) in enumerate(self.doc_parser.parse()):
-            if self.max_docs is not None:
-                pb.bar(i)
-                if i == self.max_docs:
-                    break
-            corpus.append(doc)
-            for _ in self.context_parser.parse(doc, text):
-                pass
-        if self.max_docs is not None:
-            pb.close()
-        if session is not None:
-            session.commit()
-        # corpus.stats() # Note: corpus.stats breaks with OmniParser
-        return corpus
+    def clear(self, session, **kwargs):
+        session.query(Context).delete()
+
+        # We cannot cascade up from child contexts to parent Candidates, so we delete all Candidates too
+        session.query(Candidate).delete()
 
 
-class DocParser:
-    """Parse a file or directory of files into a set of Document objects."""
-    def __init__(self, path, encoding="utf-8"):
+class CorpusParserUDF(UDF):
+    def __init__(self, tok_whitespace, split_newline, parse_tree, fn, **kwargs):
+        self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace,
+                                              split_newline=split_newline,
+                                              parse_tree=parse_tree)
+        self.fn = fn
+        super(CorpusParserUDF, self).__init__(**kwargs)
+
+    def apply(self, x, **kwargs):
+        """Given a Document object and its raw text, parse into processed Sentences"""
+        doc, text = x
+        for parts in self.corenlp_handler.parse(doc, text):
+            parts = self.fn(parts) if self.fn is not None else parts
+            yield Sentence(**parts)
+
+
+class DocPreprocessor(object):
+    """
+    Processes a file or directory of files into a set of Document objects.
+
+    :param encoding: file encoding to use, default='utf-8'
+    :param path: filesystem path to file or directory to parse
+    :param max_docs: the maximum number of Documents to produce, default=float('inf')
+
+    """
+    def __init__(self, path, encoding="utf-8", max_docs=float('inf')):
         self.path = path
         self.encoding = encoding
+        self.max_docs = max_docs
 
-    def parse(self):
+    def generate(self):
         """
-        Parse a file or directory of files into a set of Document objects.
+        Parses a file or directory of files into a set of Document objects.
 
-        - Input: A file or directory path.
-        - Output: A set of Document objects, which at least have a _text_ attribute,
-                  and possibly a dictionary of other attributes.
         """
-        for fp in self._get_files():
+        doc_count = 0
+        for fp in self._get_files(self.path):
             file_name = os.path.basename(fp)
             if self._can_read(file_name):
                 for doc, text in self.parse_file(fp, file_name):
                     yield doc, text
+                    doc_count += 1
+                    if doc_count >= self.max_docs:
+                        return
+
+    def __iter__(self):
+        return self.generate()
 
     def get_stable_id(self, doc_id):
         return "%s::document:0:0" % doc_id
@@ -82,19 +99,20 @@ class DocParser:
     def _can_read(self, fpath):
         return True
 
-    def _get_files(self):
-        if os.path.isfile(self.path):
-            fpaths = [self.path]
-        elif os.path.isdir(self.path):
-            fpaths = [os.path.join(self.path, f) for f in os.listdir(self.path)]
+    def _get_files(self, path):
+        if os.path.isfile(path):
+            fpaths = [path]
+        elif os.path.isdir(path):
+            fpaths = [os.path.join(path, f) for f in os.listdir(path)]
         else:
-            fpaths = glob.glob(self.path)
+            fpaths = glob.glob(path)
         if len(fpaths) > 0:
             return fpaths
         else:
-            raise IOError("File or directory not found: %s" % (self.path,))
+            raise IOError("File or directory not found: %s" % (path,))
 
-class TSVDocParser(DocParser):
+
+class TSVDocPreprocessor(DocPreprocessor):
     """Simple parsing of TSV file with one (doc_name <tab> doc_text) per line"""
     def parse_file(self, fp, file_name):
         with codecs.open(fp, encoding=self.encoding) as tsv:
@@ -103,7 +121,7 @@ class TSVDocParser(DocParser):
                 stable_id=self.get_stable_id(doc_name)
                 yield Document(name=doc_name, stable_id=stable_id, meta={'file_name' : file_name}), doc_text
 
-class MemexParser(DocParser):
+class MemexParser(DocPreprocessor):
     """Simple parsing of JSON file with one (doc_name <tab> doc_text) per line"""    
     def parse_file(self, fp, file_name):
         with gzip.open(fp, 'rt') as r:
@@ -138,23 +156,23 @@ class MemexParser(DocParser):
                             crawltime=crawltime, all=line, stable_id=stable_id), raw_content)
 
 
-class TextDocParser(DocParser):
+class TextDocPreprocessor(DocPreprocessor):
     """Simple parsing of raw text files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with codecs.open(fp, encoding=self.encoding) as f:
-            name      = re.sub(r'\..*$', '', os.path.basename(fp))
+            name = os.path.basename(fp).rsplit('.', 1)[0]
             stable_id = self.get_stable_id(name)
             yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), f.read()
 
 
-class HTMLDocParser(DocParser):
+class HTMLDocPreprocessor(DocPreprocessor):
     """Simple parsing of raw HTML files, assuming one document per file"""
     def parse_file(self, fp, file_name):
         with open(fp, 'rb') as f:
-            html = bs4.BeautifulSoup(f, 'lxml')
+            html = BeautifulSoup(f, 'lxml')
             txt = filter(self._cleaner, html.findAll(text=True))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
-            name = re.sub(r'\..*$', '', os.path.basename(fp))
+            name = os.path.basename(fp).rsplit('.', 1)[0]
             stable_id = self.get_stable_id(name)
             yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), txt
 
@@ -172,7 +190,7 @@ class HTMLDocParser(DocParser):
         return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
 
 
-class XMLMultiDocParser(DocParser):
+class XMLMultiDocPreprocessor(DocPreprocessor):
     """
     Parse an XML file _which contains multiple documents_ into a set of Document objects.
 
@@ -183,7 +201,7 @@ class XMLMultiDocParser(DocParser):
     """
     def __init__(self, path, doc='.//document', text='./text/text()', id='./id/text()',
                     keep_xml_tree=False):
-        DocParser.__init__(self, path)
+        DocPreprocessor.__init__(self, path)
         self.doc = doc
         self.text = text
         self.id = id
@@ -204,29 +222,57 @@ class XMLMultiDocParser(DocParser):
 
 PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{','-RSB-': ']', '-LSB-': '['}
 
-class CoreNLPHandler:
-    '''
-    Connects to an existing instance of CoreNLP server
-    '''
-    def __init__(self, delim='', tok_whitespace=False):
+class CoreNLPHandler(object):
+    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False, delim=None):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
-        self.port = int(os.environ.get('JAVANLPPORT',12345))
+        # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
+        # Kill it when python exits.
+        # This makes sure that we load the models only once.
+        # In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
+        # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
+        self.port = 12345
         self.tok_whitespace = tok_whitespace
-        props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
-        props += "\"ssplit.htmlBoundariesToDiscard\": \"%s\"," % delim if delim else ""
-        self.endpoint = 'http://127.0.0.1:%d/?properties={%s\
-                        "annotators": "tokenize,ssplit,pos,lemma,depparse,ner",\
-                        "outputFormat": "json"}' % (self.port, props)
+        self.split_newline = split_newline
+        self.parse_tree = parse_tree
+        self.delim = delim
+        loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
+        cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
+               % (loc, self.port, 600000)]
+        self.server_pid = Popen(cmd, shell=True).pid
+        atexit.register(self._kill_pserver)
+        props = ''
+        if self.tok_whitespace:
+            props += '"tokenize.whitespace": "true", '
+        if self.split_newline:
+            props += '"ssplit.eolonly": "true", '
+        if delim:
+            props += "\"ssplit.htmlBoundariesToDiscard\": \"%s\"," % delim
+        annotators = '"tokenize,ssplit,pos,lemma,depparse,ner{0}"'.format(
+            ',parse' if self.parse_tree else ''
+        )
+        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": %s, "outputFormat": "json"}' % (
+            self.port, props, annotators
+        )
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626
+        from requests.packages.urllib3.util.retry import Retry
+        from requests.adapters import HTTPAdapter
         self.requests_session = requests.Session()
         retries = Retry(total=None,
                         connect=20,
                         read=0,
                         backoff_factor=0.1,
-                        status_forcelist=[500, 502, 503, 504])
+                        status_forcelist=[ 500, 502, 503, 504 ])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
+        
+
+    def _kill_pserver(self):
+        if self.server_pid is not None:
+            try:
+                os.kill(self.server_pid, signal.SIGTERM)
+            except:
+                sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
 
     def parse(self, document, text):
         """Parse a raw document as a string into a list of sentences"""
@@ -270,6 +316,10 @@ class CoreNLPHandler:
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['position'] = position
 
+            # Add full dependency tree parse
+            if self.parse_tree:
+                parts['tree'] = ' '.join(block['parse'].split())
+
             # Link the sentence to its parent document object
             parts['document'] = document
 
@@ -294,11 +344,11 @@ class SentenceParser(object):
             yield Sentence(**parts)
 
 
-class HTMLParser(DocParser):
+class HTMLPreprocessor(DocPreprocessor):
     """Simple parsing of files into html documents"""
     def parse_file(self, fp, file_name):
         with codecs.open(fp, encoding=self.encoding) as f:
-            soup = bs4.BeautifulSoup(f, 'lxml')
+            soup = BeautifulSoup(f, 'lxml')
             for text in soup.find_all('html'):
                 name = os.path.basename(fp)[:os.path.basename(fp).rfind('.')]
                 stable_id = self.get_stable_id(name)
@@ -331,14 +381,50 @@ class SimpleTokenizer:
                    'stable_id': stable_id}
             i += 1
 
-class OmniParser(object):
-    def __init__(self, 
-                 structural=True, blacklist=["style"],              # structural
-                 flatten=[], flatten_delim='',   
-                 lingual=True, strip=True,                          # lingual
-                 replacements=[(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]','-')],         
-                 tabular=True,                                      # tabular
-                 visual=False, pdf_path=None):                      # visual
+
+class OmniParser(UDFRunner):
+    def __init__(self,
+                 structural=True,                    # structural
+                 blacklist=["style"],
+                 flatten=['span', 'br'],
+                 flatten_delim='',
+                 lingual=True,                       # lingual
+                 strip=True,
+                 replacements=[(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]','-')],
+                 tabular=True,                       # tabular
+                 visual=False,
+                 pdf_path=None):
+        super(OmniParser, self).__init__(OmniParserUDF,
+                                         structural=structural,
+                                         blacklist=blacklist,
+                                         flatten=flatten,
+                                         flatten_delim=flatten_delim,
+                                         lingual=lingual, strip=strip,
+                                         replacements=replacements,
+                                         tabular=tabular,
+                                         visual=visual,
+                                         pdf_path=pdf_path)
+
+    def clear(self, session, **kwargs):
+        session.query(Context).delete()
+
+        # We cannot cascade up from child contexts to parent Candidates, so we delete all Candidates too
+        session.query(Candidate).delete()
+
+
+class OmniParserUDF(UDF):
+    def __init__(self,
+                 structural,              # structural
+                 blacklist,
+                 flatten,
+                 flatten_delim,
+                 lingual,                 # lingual
+                 strip,
+                 replacements,
+                 tabular,                 # tabular
+                 visual,                  # visual
+                 pdf_path,
+                 **kwargs):
         """
         :param visual: boolean, if True visual features are used in the model
         :param pdf_path: directory where pdf are saved, if a pdf file is not found,
@@ -347,6 +433,8 @@ class OmniParser(object):
         a regex and _replace_ is a character string. All occurents of _pattern_ in the
         text will be replaced by _replace_.
         """
+        super(OmniParserUDF, self).__init__(**kwargs)
+
         self.delim = "<NB>" # NB = New Block
 
         # structural (html) setup
@@ -374,9 +462,11 @@ class OmniParser(object):
         # visual setup
         self.visual = visual
         if self.visual:
+            self.pdf_path = pdf_path
             self.vizlink = VisualLinker()
 
-    def parse(self, document, text):
+    def apply(self, x, **kwargs):
+        document, text = x
         if self.visual:
             if not self.pdf_path:
                 warnings.warn("Visual parsing failed: pdf_path is required", RuntimeWarning)

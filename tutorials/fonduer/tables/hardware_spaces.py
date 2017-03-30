@@ -198,7 +198,7 @@ class OmniNgramsPart(OmniNgrams):
                     yield ts
                 else:
                     yield TemporaryImplicitSpan(
-                        parent         = ts.parent,
+                        sentence         = ts.sentence,
                         char_start     = ts.char_start,
                         char_end       = ts.char_end,
                         expander_key   = u'part_expander',
@@ -210,11 +210,11 @@ class OmniNgramsPart(OmniNgrams):
                         ner_tags       = [ts.get_attrib_tokens('ner_tags')[0]],
                         dep_parents    = [ts.get_attrib_tokens('dep_parents')[0]],
                         dep_labels     = [ts.get_attrib_tokens('dep_labels')[0]],
-                        page           = [min(ts.get_attrib_tokens('page'))] if ts.parent.is_visual() else [None],
-                        top            = [min(ts.get_attrib_tokens('top'))] if ts.parent.is_visual() else [None],
-                        left           = [max(ts.get_attrib_tokens('left'))] if ts.parent.is_visual() else [None],
-                        bottom         = [min(ts.get_attrib_tokens('bottom'))] if ts.parent.is_visual() else [None],
-                        right          = [max(ts.get_attrib_tokens('right'))] if ts.parent.is_visual() else [None],
+                        page           = [min(ts.get_attrib_tokens('page'))] if ts.sentence.is_visual() else [None],
+                        top            = [min(ts.get_attrib_tokens('top'))] if ts.sentence.is_visual() else [None],
+                        left           = [max(ts.get_attrib_tokens('left'))] if ts.sentence.is_visual() else [None],
+                        bottom         = [min(ts.get_attrib_tokens('bottom'))] if ts.sentence.is_visual() else [None],
+                        right          = [max(ts.get_attrib_tokens('right'))] if ts.sentence.is_visual() else [None],
                         meta           = None
                     )
 
@@ -238,7 +238,7 @@ class OmniNgramsTemp(OmniNgrams):
                     temp = '-'
                 temp += m.group(3)
                 yield TemporaryImplicitSpan(
-                    parent         = ts.parent,
+                    sentence         = ts.sentence,
                     char_start     = ts.char_start,
                     char_end       = ts.char_end,
                     expander_key   = u'temp_expander',
@@ -250,11 +250,11 @@ class OmniNgramsTemp(OmniNgrams):
                     ner_tags       = [ts.get_attrib_tokens('ner_tags')[-1]],
                     dep_parents    = [ts.get_attrib_tokens('dep_parents')[-1]],
                     dep_labels     = [ts.get_attrib_tokens('dep_labels')[-1]],
-                    page           = [ts.get_attrib_tokens('page')[-1]] if ts.parent.is_visual() else [None],
-                    top            = [ts.get_attrib_tokens('top')[-1]] if ts.parent.is_visual() else [None],
-                    left           = [ts.get_attrib_tokens('left')[-1]] if ts.parent.is_visual() else [None],
-                    bottom         = [ts.get_attrib_tokens('bottom')[-1]] if ts.parent.is_visual() else [None],
-                    right          = [ts.get_attrib_tokens('right')[-1]] if ts.parent.is_visual() else [None],
+                    page           = [ts.get_attrib_tokens('page')[-1]] if ts.sentence.is_visual() else [None],
+                    top            = [ts.get_attrib_tokens('top')[-1]] if ts.sentence.is_visual() else [None],
+                    left           = [ts.get_attrib_tokens('left')[-1]] if ts.sentence.is_visual() else [None],
+                    bottom         = [ts.get_attrib_tokens('bottom')[-1]] if ts.sentence.is_visual() else [None],
+                    right          = [ts.get_attrib_tokens('right')[-1]] if ts.sentence.is_visual() else [None],
                     meta           = None)
             else:
                 yield ts
@@ -269,7 +269,7 @@ class OmniNgramsVolt(OmniNgrams):
             if ts.get_span().endswith('.0'):
                 value = ts.get_span()[:-2]
                 yield TemporaryImplicitSpan(
-                    parent         = ts.parent,
+                    sentence         = ts.sentence,
                     char_start     = ts.char_start,
                     char_end       = ts.char_end,
                     expander_key   = u'volt_expander',
@@ -281,11 +281,11 @@ class OmniNgramsVolt(OmniNgrams):
                     ner_tags       = [ts.get_attrib_tokens('ner_tags')[-1]],
                     dep_parents    = [ts.get_attrib_tokens('dep_parents')[-1]],
                     dep_labels     = [ts.get_attrib_tokens('dep_labels')[-1]],
-                    page           = [ts.get_attrib_tokens('page')[-1]] if ts.parent.is_visual() else [None],
-                    top            = [ts.get_attrib_tokens('top')[-1]] if ts.parent.is_visual() else [None],
-                    left           = [ts.get_attrib_tokens('left')[-1]] if ts.parent.is_visual() else [None],
-                    bottom         = [ts.get_attrib_tokens('bottom')[-1]] if ts.parent.is_visual() else [None],
-                    right          = [ts.get_attrib_tokens('right')[-1]] if ts.parent.is_visual() else [None],
+                    page           = [ts.get_attrib_tokens('page')[-1]] if ts.sentence.is_visual() else [None],
+                    top            = [ts.get_attrib_tokens('top')[-1]] if ts.sentence.is_visual() else [None],
+                    left           = [ts.get_attrib_tokens('left')[-1]] if ts.sentence.is_visual() else [None],
+                    bottom         = [ts.get_attrib_tokens('bottom')[-1]] if ts.sentence.is_visual() else [None],
+                    right          = [ts.get_attrib_tokens('right')[-1]] if ts.sentence.is_visual() else [None],
                     meta           = None)
             else:
                 yield ts

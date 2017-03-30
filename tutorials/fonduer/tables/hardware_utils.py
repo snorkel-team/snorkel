@@ -1,7 +1,7 @@
-from fonduer.models import TemporaryImplicitSpan, CandidateSet, AnnotationKey, AnnotationKeySet, Label
+from fonduer.models import TemporaryImplicitSpan, Label
 from snorkel.matchers import RegexMatchSpan, Union
 from snorkel.utils import ProgressBar
-from fonduer.loaders import create_or_fetch
+# from fonduer.loaders import create_or_fetch
 from fonduer.lf_helpers import *
 from fonduer.candidates import OmniNgrams
 from hardware_spaces import OmniNgramsPart
@@ -67,29 +67,29 @@ def count_hardware_labels(candidates, filename, attrib, attrib_class):
     return gold_cand
 
 
-def load_hardware_labels(session, label_set_name, annotation_key_name, candidates, filename, attrib):
-    gold_dict = get_gold_dict(filename, attribute=attrib)
-    candidate_set   = create_or_fetch(session, CandidateSet, label_set_name)
-    annotation_key  = create_or_fetch(session, AnnotationKey, annotation_key_name)
-    key_set         = create_or_fetch(session, AnnotationKeySet, annotation_key_name)
-    if annotation_key not in key_set.keys:
-        key_set.append(annotation_key)
-    session.commit()
-
-    cand_total = len(candidates)
-    print 'Loading', cand_total, 'candidate labels'
-    pb = ProgressBar(cand_total)
-    for i, c in enumerate(candidates):
-        pb.bar(i)
-        doc = (c[0].parent.document.name).upper()
-        part = (c[0].get_span()).upper()
-        val = (''.join(c[1].get_span().split())).upper()
-        if (doc, part, val) in gold_dict:
-            candidate_set.append(c)
-            session.add(Label(key=annotation_key, candidate=c, value=1))
-    session.commit()
-    pb.close()
-    return (candidate_set, annotation_key)
+# def load_hardware_labels(session, label_set_name, annotation_key_name, candidates, filename, attrib):
+#     gold_dict = get_gold_dict(filename, attribute=attrib)
+#     candidate_set   = create_or_fetch(session, CandidateSet, label_set_name)
+#     annotation_key  = create_or_fetch(session, AnnotationKey, annotation_key_name)
+#     key_set         = create_or_fetch(session, AnnotationKeySet, annotation_key_name)
+#     if annotation_key not in key_set.keys:
+#         key_set.append(annotation_key)
+#     session.commit()
+#
+#     cand_total = len(candidates)
+#     print 'Loading', cand_total, 'candidate labels'
+#     pb = ProgressBar(cand_total)
+#     for i, c in enumerate(candidates):
+#         pb.bar(i)
+#         doc = (c[0].parent.document.name).upper()
+#         part = (c[0].get_span()).upper()
+#         val = (''.join(c[1].get_span().split())).upper()
+#         if (doc, part, val) in gold_dict:
+#             candidate_set.append(c)
+#             session.add(Label(key=annotation_key, candidate=c, value=1))
+#     session.commit()
+#     pb.close()
+#     return (candidate_set, annotation_key)
 
 
 def most_common_document(candidates):
@@ -154,7 +154,7 @@ def entity_level_f1(candidates, gold_file, attribute=None, corpus=None, parts_by
         gold_file = os.environ['SNORKELHOME'] + '/tutorials/tables/data/hardware/hardware_gold.csv'
         entity_level_total_recall(candidates, gold_file, 'stg_temp_min')
     """
-    docs = [(doc.name).upper() for doc in corpus.documents.all()] if corpus else None
+    docs = [(doc.name).upper() for doc in corpus] if corpus else None
     val_on = (attribute is not None)
     gold_set = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=True, 
                              val_on=val_on, attribute=attribute)
@@ -167,10 +167,10 @@ def entity_level_f1(candidates, gold_file, attribute=None, corpus=None, parts_by
     entities = set()
     for i, c in enumerate(candidates):
         pb.bar(i)
-        part = c.get_arguments()[0].get_span()
-        doc = c.get_arguments()[0].parent.document.name.upper()
+        part = c[0].get_span()
+        doc = c[0].sentence.document.name.upper()
         if attribute:
-            val = c.get_arguments()[1].get_span()
+            val = c[1].get_span()
         for p in get_implied_parts(part, doc, parts_by_doc):
             if attribute:
                 entities.add((doc, p, val))

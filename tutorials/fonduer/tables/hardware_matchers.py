@@ -50,7 +50,7 @@ def common_prefix_length_diff(str1, str2):
     return 0
 
 def part_file_name_conditions(attr):
-    file_name = attr.parent.document.name
+    file_name = attr.sentence.document.name
     if len(file_name.split('_')) != 2: return False
     if attr.get_span()[0] == '-': return False
     name = attr.get_span().replace('-', '')
@@ -81,15 +81,15 @@ def ce_v_max_conditions(attr):
 ce_v_max_row_matcher = LambdaFunctionMatch(func=ce_v_max_conditions)
 
 def ce_v_max_more_conditions1(attr):
-    text = attr.parent.text
+    text = attr.sentence.text
     if attr.char_start > 1 and text[attr.char_start - 1] == '-' and text[attr.char_start - 2] not in [' ', '='] : return False
     return True
 
 def ce_v_max_more_conditions(attr):
-    text = attr.parent.text
+    text = attr.sentence.text
     if attr.char_start !=0 and text[attr.char_start - 1] == '/': return False
     if attr.char_start > 1 and text[attr.char_start - 1] == '-' and text[attr.char_start - 2] not in [' ', '='] : return False
-    if 'vcb' in attr.parent.text.lower(): return False
+    if 'vcb' in attr.sentence.text.lower(): return False
     for i in range(attr.char_end + 1, len(text)):
         if text[i] == ' ': continue
         if text[i].isdigit(): break

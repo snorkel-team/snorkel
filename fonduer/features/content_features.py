@@ -13,7 +13,7 @@ from treedlib import compile_relation_feature_generator
 DEF_VALUE = 1
 
 def get_content_feats(candidate):
-    args = candidate.get_arguments()
+    args = candidate.get_contexts()
     if not (isinstance(args[0], TemporarySpan)):
         raise ValueError("Accepts Span-type arguments, %s-type found." % type(candidate))
 
@@ -41,9 +41,9 @@ def get_content_feats(candidate):
         span1, span2 = args
         if span1.is_lingual() and span2.is_lingual():
             get_tdl_feats = compile_relation_feature_generator()
-            sent1 = get_as_dict(span1.parent)
-            sent2 = get_as_dict(span2.parent)
-            xmltree = corenlp_to_xmltree(get_as_dict(span1.parent))
+            sent1 = get_as_dict(span1.sentence)
+            sent2 = get_as_dict(span2.sentence)
+            xmltree = corenlp_to_xmltree(get_as_dict(span1.sentence))
             s1_idxs = range(span1.get_word_start(), span1.get_word_end() + 1)
             s2_idxs = range(span2.get_word_start(), span2.get_word_end() + 1)
             if len(s1_idxs) > 0 and len(s2_idxs) > 0:

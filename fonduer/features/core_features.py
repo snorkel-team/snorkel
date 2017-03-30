@@ -3,7 +3,7 @@ from fonduer.models import TemporarySpan, ImplicitSpan
 DEF_VALUE = 1
 
 def get_core_feats(candidate):
-    args = candidate.get_arguments()
+    args = candidate.get_contexts()
     if not (isinstance(args[0], TemporarySpan)):
         raise ValueError("Accepts Span-type arguments, %s-type found." % type(candidate))
 

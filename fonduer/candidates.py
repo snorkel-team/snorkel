@@ -1,33 +1,19 @@
-from . import SnorkelSession
-from snorkel.utils import ProgressBar
-from .models import Candidate, CandidateSet, TemporarySpan
-from .models.candidate import candidate_set_candidate_association
-from .models.context import Document, Phrase
-from itertools import product
-from multiprocessing import Process, Queue, JoinableQueue
-from sqlalchemy.sql import select
-from Queue import Empty
-from copy import deepcopy
 import re
-from snorkel.utils import get_ORM_instance
+from copy import deepcopy
+from itertools import product
+
+from sqlalchemy.sql import select
+
+from fonduer.udf import UDFRunner, UDF
+from .models import Candidate, TemporarySpan
+from .models.context import Document
 
 QUEUE_COLLECT_TIMEOUT = 5
 
-def gold_stats(candidates, gold):
-        """Return precision and recall relative to a "gold" CandidateSet"""
-        # TODO: Make this efficient via SQL
-        nc   = len(candidates)
-        ng   = len(gold)
-        both = len(gold.intersection(candidates.candidates))
-        print "# of gold annotations\t= %s" % ng
-        print "# of candidates\t\t= %s" % nc
-        print "Candidate recall\t= %0.3f" % (both / float(ng),)
-        print "Candidate precision\t= %0.3f" % (both / float(nc),)
 
-
-class CandidateExtractor(object):
+class CandidateExtractor(UDFRunner):
     """
-    An operator to extract Candidate objects from Context objects.
+    An operator to extract Candidate objects from a Context.
 
     :param candidate_class: The type of relation to extract, defined using
                             :func:`snorkel.models.candidate_subclass <snorkel.models.candidate.candidate_subclass>`
@@ -45,9 +31,26 @@ class CandidateExtractor(object):
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
     def __init__(self, candidate_class, cspaces, matchers, throttler=None, self_relations=False, nested_relations=False, symmetric_relations=True):
+        super(CandidateExtractor, self).__init__(CandidateExtractorUDF,
+                                                 candidate_class=candidate_class,
+                                                 cspaces=cspaces,
+                                                 matchers=matchers,
+                                                 throttler=throttler,
+                                                 self_relations=self_relations,
+                                                 nested_relations=nested_relations,
+                                                 symmetric_relations=symmetric_relations)
+
+    def apply(self, xs, split=0, **kwargs):
+        super(CandidateExtractor, self).apply(xs, split=split, **kwargs)
+
+    def clear(self, session, split, **kwargs):
+        session.query(Candidate).filter(Candidate.split == split).delete()
+
+
+class CandidateExtractorUDF(UDF):
+    def __init__(self, candidate_class, cspaces, matchers, throttler, self_relations, nested_relations, symmetric_relations, **kwargs):
         self.candidate_class     = candidate_class
-        # Make sure the candidate spaces are different so generators aren't expended!
-        self.candidate_spaces    = deepcopy(cspaces if type(cspaces) in [list, tuple] else [cspaces])
+        self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
         self.throttler           = throttler
         self.nested_relations    = nested_relations
@@ -60,49 +63,28 @@ class CandidateExtractor(object):
         else:
             self.arity = len(self.candidate_spaces)
 
-        # Track processes for multicore execution
-        self.ps = []
+        # Make sure the candidate spaces are different so generators aren't expended!
+        self.candidate_spaces = map(deepcopy, self.candidate_spaces)
 
-    def extract(self, contexts, name, session, parallelism=False):
-        
-        c = get_ORM_instance(CandidateSet, session, name)
-        if c is None: # Create a candidate set
-            c = CandidateSet(name=name)
-            session.add(c)
-            session.commit()
+        # Preallocates internal data structures
+        self.child_context_sets = [None] * self.arity
+        for i in range(self.arity):
+            self.child_context_sets[i] = set()
 
-        # Run extraction
-        pb = ProgressBar(len(contexts))
-        if parallelism in [1, False]:
-            for i, context in enumerate(contexts):
-                pb.bar(i)
-                self._extract_from_context(context, c, session, check_duplicates = True)
-        else:
-            raise NotImplementedError('Parallelism is not yet implemented.')
-            self._extract_multiprocess(contexts, c, parallelism)
+        super(CandidateExtractorUDF, self).__init__(**kwargs)
 
-        pb.close()
-        session.commit()
-        return session.query(CandidateSet).filter(CandidateSet.name == name).one()
-
-    def _extract_from_context(self, context, candidate_set, session, check_duplicates = False):
+    def apply(self, context, clear, split, **kwargs):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
-        child_context_sets = [set() for _ in xrange(self.arity)]
         for i in range(self.arity):
+            self.child_context_sets[i].clear()
             for tc in self.matchers[i].apply(self.candidate_spaces[i].apply(context)):
-                tc.load_id_or_insert(session)
-                child_context_sets[i].add(tc)
+                tc.load_id_or_insert(self.session)
+                self.child_context_sets[i].add(tc)
 
         # Generates and persists candidates
-        parent_insert_query = Candidate.__table__.insert()
-        parent_insert_args = {'type': self.candidate_class.__mapper_args__['polymorphic_identity']}
-        arg_names = self.candidate_class.__argnames__
-        child_insert_query = self.candidate_class.__table__.insert()
-        child_args = {}
-        set_insert_query = candidate_set_candidate_association.insert()
-        set_insert_args = {'candidate_set_id': candidate_set.id}
-        for args in product(*[enumerate(child_contexts) for child_contexts in child_context_sets]):
+        candidate_args = {'split': split}
+        for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
 
             # Apply throttler if one was given
             # Accepts a tuple of Span objects (e.g., (Span, Span))
@@ -110,103 +92,36 @@ class CandidateExtractor(object):
             if self.throttler:
                 if not self.throttler(tuple(args[i][1] for i in range(self.arity))):
                     continue
-            
-            # Check for self-joins and "nested" joins (joins from span to its subspan)
-            if self.arity == 2 and not self.self_relations and args[0][1] == args[1][1]:
-                continue
 
             # TODO: Make this work for higher-order relations
-            if self.arity == 2 and not self.nested_relations and (args[0][1] in args[1][1] or args[1][1] in args[0][1]):
-                continue
+            if self.arity == 2:
+                ai, a = args[0]
+                bi, b = args[1]
 
-            # Check for symmetric relations
-            if self.arity == 2 and not self.symmetric_relations and args[0][0] > args[1][0]:
-                continue
+                # Check for self-joins, "nested" joins (joins from span to its subspan), and flipped duplicate
+                # "symmetric" relations
+                if not self.self_relations and a == b:
+                    continue
+                elif not self.nested_relations and (a in b or b in a):
+                    continue
+                elif not self.symmetric_relations and ai > bi:
+                    continue
 
-            for i, arg_name in enumerate(arg_names):
-                child_args[arg_name + '_id'] = args[i][1].id
+            # Assemble candidate arguments
+            for i, arg_name in enumerate(self.candidate_class.__argnames__):
+                candidate_args[arg_name + '_id'] = args[i][1].id
 
-            if check_duplicates:
+            # Checking for existence
+            if not clear:
                 q = select([self.candidate_class.id])
-                for key, value in child_args.items():
+                for key, value in candidate_args.items():
                     q = q.where(getattr(self.candidate_class, key) == value)
-                candidate_id = session.execute(q).first()
+                candidate_id = self.session.execute(q).first()
                 if candidate_id is not None:
-                    raise ValueError("Duplicate candidates found in %s." % candidate_set)
+                    continue
 
-            # If candidate does not exist, persists it
-            candidate_id = session.execute(parent_insert_query, parent_insert_args).inserted_primary_key
-            child_args['id'] = candidate_id[0]
-            session.execute(child_insert_query, child_args)
-                
-
-            # Add candidate to the given CandidateSet
-            set_insert_args['candidate_id'] = candidate_id[0]
-            session.execute(set_insert_query, set_insert_args)
-
-
-    def _extract_multiprocess(self, contexts, candidate_set, parallelism):
-        contexts_in    = JoinableQueue()
-        candidates_out = Queue()
-
-        # Fill the in-queue with contexts
-        for context in contexts:
-            contexts_in.put(context)
-
-        # Start worker Processes
-        for i in range(parallelism):
-            session = SnorkelSession()
-            c = session.merge(candidate_set)
-            p = CandidateExtractorProcess(self._extract_from_context, session, contexts_in, candidates_out, c)
-            self.ps.append(p)
-
-        for p in self.ps:
-            p.start()
-
-        # Join on JoinableQueue of contexts
-        contexts_in.join()
-
-        # Collect candidates out
-        candidates = []
-        while True:
-            try:
-                candidates.append(candidates_out.get(True, QUEUE_COLLECT_TIMEOUT))
-            except Empty:
-                break
-        return candidates
-
-
-class CandidateExtractorProcess(Process):
-    def __init__(self, extractor, session, contexts_in, candidates_out, candidate_set, unary_set):
-        Process.__init__(self)
-        self.extractor      = extractor
-        self.session        = session
-        self.contexts_in    = contexts_in
-        self.candidates_out = candidates_out
-        self.candidate_set  = candidate_set
-        self.unary_set      = unary_set
-
-    def run(self):
-        c = self.candidate_set
-        u = self.unary_set if self.unary_set is not None else None
-
-        unique_candidates = set()
-        while True:
-            try:
-                context = self.session.merge(self.contexts_in.get(False))
-                for candidate in self.extractor(context, u):
-                    unique_candidates.add(candidate)
-
-                for candidate in unique_candidates:
-                    c.candidates.append(candidate)
-
-                unique_candidates.clear()
-                self.contexts_in.task_done()
-            except Empty:
-                break
-
-        self.session.commit()
-        self.session.close()
+            # Add Candidate to session
+            yield self.candidate_class(**candidate_args)
 
 
 class CandidateSpace(object):
@@ -226,7 +141,7 @@ class Ngrams(CandidateSpace):
     Defines the space of candidates as all n-grams (n <= n_max) in a Sentence _x_,
     indexing by **character offset**.
     """
-    def __init__(self, n_max=5, split_tokens=['-', '/']):
+    def __init__(self, n_max=5, split_tokens=('-', '/')):
         CandidateSpace.__init__(self)
         self.n_max     = n_max
         self.split_rgx = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
@@ -244,7 +159,7 @@ class Ngrams(CandidateSpace):
                 w     = context.words[i+l-1]
                 start = offsets[i]
                 end   = offsets[i+l-1] + len(w) - 1
-                ts    = TemporarySpan(char_start=start, char_end=end, parent=context)
+                ts    = TemporarySpan(char_start=start, char_end=end, sentence=context)
                 if ts not in seen:
                     seen.add(ts)
                     yield ts
@@ -254,11 +169,11 @@ class Ngrams(CandidateSpace):
                 if l == 1 and self.split_rgx is not None:
                     m = re.search(self.split_rgx, context.text[start-offsets[0]:end-offsets[0]+1])
                     if m is not None and l < self.n_max + 1:
-                        ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, parent=context)
+                        ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, sentence=context)
                         if ts1 not in seen:
                             seen.add(ts1)
                             yield ts
-                        ts2 = TemporarySpan(char_start=start + m.end(1), char_end=end, parent=context)
+                        ts2 = TemporarySpan(char_start=start + m.end(1), char_end=end, sentence=context)
                         if ts2 not in seen:
                             seen.add(ts2)
                             yield ts2

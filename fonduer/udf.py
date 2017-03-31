@@ -92,7 +92,7 @@ class UDFRunner(object):
 
         # Start UDF Processes
         for i in range(parallelism):
-            udf              = self.udf_class(in_queue=in_queue, out_queue=out_queue, **self.udf_init_kwargs)
+            udf              = self.udf_class(in_queue=in_queue, out_queue=out_queue, worker_id = i, **self.udf_init_kwargs)
             udf.apply_kwargs = kwargs
             self.udfs.append(udf)
 
@@ -125,7 +125,7 @@ class UDFRunner(object):
 
 
 class UDF(Process):
-    def __init__(self, in_queue=None, out_queue=None):
+    def __init__(self, in_queue=None, out_queue=None, worker_id=0):
         """
         in_queue: A Queue of input objects to process; primarily for running in parallel
         """
@@ -133,6 +133,7 @@ class UDF(Process):
         self.daemon       = True
         self.in_queue     = in_queue
         self.out_queue    = out_queue
+        self.worker_id    = worker_id
 
         # Each UDF starts its own Engine
         # See http://docs.sqlalchemy.org/en/latest/core/pooling.html#using-connection-pools-with-multiprocessing

@@ -1,13 +1,11 @@
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
-from snorkel.utils import matrix_conflicts, matrix_coverage, matrix_overlaps, matrix_accuracy,\
-    remove_files
-from models import Label, Feature, AnnotationKey, AnnotationKeySet, Candidate, CandidateSet
+from snorkel.utils import remove_files
+from models import Candidate 
 from models.meta import *
 from snorkel.utils import get_ORM_instance, ProgressBar
 from features.features import get_all_feats
 from sqlalchemy.orm.session import object_session
-from multiprocessing import Process
 import subprocess
 import csv
 import multiprocessing
@@ -18,8 +16,24 @@ import codecs
 import uuid
 from async_utils import run_in_parallel, copy_postgres, run_queue
 from multiprocessing.queues import Queue
+import tempfile
+from fonduer.udf import UDF, UDFRunner
+from fonduer.annotations import _to_annotation_generator, FeatureAnnotator
+from fonduer.models.meta import new_engine
+from fonduer.features.features import get_all_feats
+from snorkel.utils import (
+    matrix_conflicts,
+    matrix_coverage,
+    matrix_overlaps,
+    matrix_tp,
+    matrix_fp,
+    matrix_fn,
+    matrix_tn
+)
 
 # Used to conform to existing annotation key API call
+# Note that this anontation matrix class can not be replaced with snorkel one
+# since we do not have ORM-backed key objects but rather a simple python list.
 _TempKey = namedtuple('TempKey', ['id', 'name'])
 class csr_AnnotationMatrix(sparse.csr_matrix):
     """
@@ -62,7 +76,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         """Return summary stats about the annotations"""
         raise NotImplementedError()
 
-    def lf_stats(self, gold=None):
+    def lf_stats_legacy(self, gold=None):
         """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
         lf_names = self.keys
 
@@ -72,7 +86,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
                 'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
                 'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
                 'conflicts' : Series(data=matrix_conflicts(self), index=lf_names),
-                'accuracy'  : Series(data=matrix_accuracy(self, gold), index=lf_names),
+                #'accuracy'  : Series(data=matrix_accuracy(self, gold), index=lf_names),
             }
         else:
             # Default LF stats
@@ -85,29 +99,39 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
 
 
         return DataFrame(data=d, index=lf_names)
-
-def _to_annotation_generator(fns):
-    """"
-    Generic method which takes a set of functions, and returns a generator that yields
-    function.__name__, function result pairs.
-    """
-    def fn_gen(c):
-        for f in fns:
-            yield f.__name__, f(c)
-    return fn_gen
-
-class Annotator(object):
-
-    def __init__(self, fns):
-        self.fns = [(fn.__name__, fn) for fn in fns]
-
-    def __call__(self, arg):
-        for fname, fn in self.fns:
-            yield fname, fn(arg)
     
-    def keys(self):
-        return [name for name, _fn in self.fns]
+    def lf_stats(self, session, labels=None, est_accs=None):
+        """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
+        lf_names = [self.get_key(session, j).name for j in range(self.shape[1])]
 
+        # Default LF stats
+        col_names = ['j', 'Coverage', 'Overlaps', 'Conflicts']
+        d = {
+            'j'         : range(self.shape[1]),
+            'Coverage'  : Series(data=matrix_coverage(self), index=lf_names),
+            'Overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
+            'Conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
+        }
+        if labels is not None:
+            col_names.extend(['TP', 'FP', 'FN', 'TN', 'Empirical Acc.'])
+            ls = np.ravel(labels.todense() if sparse.issparse(labels) else labels)
+            tp = matrix_tp(self, ls)
+            fp = matrix_fp(self, ls)
+            fn = matrix_fn(self, ls)
+            tn = matrix_tn(self, ls)
+            ac = (tp+tn).astype(float) / (tp+tn+fp+fn)
+            d['Empirical Acc.'] = Series(data=ac, index=lf_names)
+            d['TP']             = Series(data=tp, index=lf_names)
+            d['FP']             = Series(data=fp, index=lf_names)
+            d['FN']             = Series(data=fn, index=lf_names)
+            d['TN']             = Series(data=tn, index=lf_names)
+
+        if est_accs is not None:
+            col_names.append('Learned Acc.')
+            d['Learned Acc.'] = Series(data=est_accs, index=lf_names)
+        return DataFrame(data=d, index=lf_names)[col_names]
+
+segment_dir = tempfile.gettempdir()
 def get_sql_name(text):
     '''
     Create valid SQL identifier as part of a feature storage table name
@@ -130,142 +154,251 @@ def tsv_escape(s):
 def array_tsv_escape(vals):
     return '{' + ','.join(tsv_escape(p) for p in vals) + '}'
 
-
 def _segment_filename(table_name, job_id, start = None, end = None):
-    suffix = '*' if start is None else '%d-%d' % (start, end)
+    suffix = '*'
+    if start is not None:
+        suffix = str(start)
+        if end is not None:
+            suffix += '-' + str(end)
     return '%s_%s_%s.tsv' % (table_name, job_id, suffix)
 
-segment_dir = os.environ.get('SNORKELHOME', '/tmp/')
-def _annotate_worker(start, end, name, table_name, job_id, annotator):
-    '''
-    Writes raw rows via psql, bypassing ORM.
-    Pipes extraction results to the STDIN of a psql COPY process.
-    Efficient in terms both of memory and CPU utilization.
-    '''
+class COOFeatureAnnotator(FeatureAnnotator):
+    def __init__(self, f=get_all_feats, **kwargs):
+        super(COOFeatureAnnotator, f, **kwargs)
+        
+class BatchAnnotatorUDF(UDF):
+    def __init__(self, f, **kwargs):
+        self.anno_generator  = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
+        super(BatchAnnotatorUDF, self).__init__(**kwargs)
 
-    # Create separate engine for each worker to prevent concurrent connection problems
-    engine = new_engine()
-    WorkerSession = new_session(engine)
-    session = WorkerSession()
-    
-    # Computes and pipe rows to the COPY process
-    candidates = session.query(CandidateSet).filter(CandidateSet.name == name).one().candidates
-    segment_path = os.path.join(segment_dir, _segment_filename(table_name, job_id, start, end))
-    with codecs.open(segment_path, 'w', encoding='utf-8') as writer:
-        pb = None if start else ProgressBar(end)
-        for i, candidate in enumerate(candidates.order_by(Candidate.id).slice(start, end)):
-            if pb: pb.bar(i)
-            # Runs the actual extraction function
-            keys, values = zip(*list(annotator(candidate)))
-            row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
-            writer.write('\t'.join(row) + '\n')
-        if pb: pb.close()
+    def apply(self, batch_range, table_name, split, **kwargs):
+        """
+        Applies a given function to a range of candidates
 
+        Note: Accepts a id_range as argument, because of issues with putting Candidate subclasses
+        into Queues (can't pickle...)
+        """
+        start, end = batch_range
+        file_name  = _segment_filename(table_name, split, self.worker_id)
+        segment_path = os.path.join(segment_dir, file_name)
+        candidates = self.session.query(Candidate).filter(Candidate.split == split).order_by(Candidate.id).slice(start, end)
+        with codecs.open(segment_path, 'a+', encoding='utf-8') as writer:
+            for i, candidate in enumerate(candidates):
+                # Runs the actual extraction function
+                keys, values = zip(*list(self.anno_generator(candidate)))
+                row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
+                writer.write('\t'.join(row) + '\n')
+        return
+        yield
 
-_candidate_queue = None
-def _annotate_queue_worker(name, table_name, job_id, annotator, worker_id):
-    '''
-    Writes raw rows via psql, bypassing ORM.
-    Pipes extraction results to the STDIN of a psql COPY process.
-    Efficient in terms both of memory and CPU utilization.
-    '''
-
-    # Create separate engine for each worker to prevent concurrent connection problems
-    engine = new_engine()
-    WorkerSession = new_session(engine)
-    session = WorkerSession()
-    
-    # Computes and pipe rows to the COPY process
-    segment_path = os.path.join(segment_dir, _segment_filename(table_name, job_id, worker_id, 0))
-    with codecs.open(segment_path, 'w', encoding='utf-8') as writer:
-        while True:
-            cid = _candidate_queue.get()
-            if cid is None: break
-            candidate = session.query(Candidate).filter(Candidate.id==cid).one()
-            # Runs the actual extraction function
-            keys, values = zip(*list(annotator(candidate)))
-            row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
-            writer.write('\t'.join(row) + '\n')
+class BatchAnnotator(UDFRunner):
+    """Abstract class for annotating candidates and persisting these annotations to DB"""
+    def __init__(self, candidate_type, annotation_type, f, batch_size = 50):
+        if isinstance(candidate_type, type): candidate_type = candidate_type.__name__
+        self.table_name = get_sql_name(candidate_type) + '_' + annotation_type
+        self.key_table_name = self.table_name + '_keys'
+        self.annotation_type = annotation_type
+        self.batch_size = batch_size
+        super(BatchAnnotator, self).__init__(BatchAnnotatorUDF, f=f)
+        
+    def apply(self, split, key_group=0, replace_key_set=True, update_existing=False, storage=None, **kwargs):
             
+        # Get the cids based on the split, and also the count
+        SnorkelSession = new_sessionmaker()
+        session   = SnorkelSession()
+        # Note: In the current UDFRunner implementation, we load all these into memory and fill a
+        # multiprocessing JoinableQueue with them before starting... so might as well load them here and pass in.
+        # Also, if we try to pass in a query iterator instead, with AUTOCOMMIT on, we get a TXN error...
+        candidates = session.query(Candidate).filter(Candidate.split == split).all()
+        cids_count = len(candidates)
+
+        # Setting up job batches        
+        chunks    = cids_count / self.batch_size
+        batch_range = [(i * self.batch_size, (i + 1) * self.batch_size) for i in xrange(chunks)]
+        remainder = cids_count % self.batch_size
+        if remainder:
+            batch_range.append((chunks * self.batch_size, cids_count))
+            
+        old_table_name = None
+        table_name = self.table_name
+        # Run the Annotator
+        with snorkel_engine.connect() as con: 
+            if not update_existing:
+                con.execute('DROP TABLE IF EXISTS %s' % table_name)
+            else:
+                # Now we extract under a temporary name for merging
+                if table_exists(con, table_name):
+                    old_table_name = table_name
+                    table_name += '_updates'
+            
+            segment_file_blob = os.path.join(segment_dir, _segment_filename(self.table_name, split))
+            remove_files(segment_file_blob)
+            super(BatchAnnotator, self).apply(batch_range, table_name = self.table_name, split=split, **kwargs)
+            
+            # Insert and update keys
+            con.execute('CREATE TABLE %s(candidate_id integer, keys text[] NOT NULL, values real[] NOT NULL)' % table_name)
+            copy_postgres(segment_file_blob, table_name, 'candidate_id, keys, values')
+            remove_files(segment_file_blob)
+        
+            # Replace the LIL table with COO if requested
+            if storage == 'COO':
+                temp_coo_table = table_name + '_COO'
+                con.execute('CREATE TABLE %s AS '
+                            '(SELECT candidate_id, UNNEST(keys) as key, UNNEST(values) as value from %s)' % (temp_coo_table, table_name))
+                con.execute('DROP TABLE %s'%table_name)
+                con.execute('ALTER TABLE %s RENAME TO %s' % (temp_coo_table, table_name))
+                con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id, key)' % table_name)
+                # Update old table
+                if old_table_name:
+                    con.execute('INSERT INTO %s SELECT * FROM %s ON CONFLICT(candidate_id, key) '
+                                'DO UPDATE SET value=EXCLUDED.value'%(old_table_name, table_name))
+                    con.execute('DROP TABLE %s' % table_name)
+            else:# LIL
+                con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id)' % table_name)
+                # Update old table
+                if old_table_name:
+                    con.execute('INSERT INTO %s AS old SELECT * FROM %s ON CONFLICT(candidate_id) '
+                                'DO UPDATE SET '
+                                'values=old.values || EXCLUDED.values,'
+                                'keys=old.keys || EXCLUDED.keys'%(old_table_name, table_name))
+                    con.execute('DROP TABLE %s' % table_name)
+            
+            if old_table_name: table_name = old_table_name
+            # Load the matrix
+            key_table_name = self.key_table_name
+            if key_group:
+                key_table_name = get_sql_name(key_group) + '_' + self.annotation_type + '_keys'
+                
+            return load_annotation_matrix(con, candidates, table_name, key_table_name, replace_key_set, storage)
+
+    def clear(self, session, replace_key_set = True, **kwargs):
+        """
+        Deletes the Annotations for the Candidates in the given split.
+        If replace_key_set=True, deletes *all* Annotations (of this Annotation sub-class)
+        and also deletes all AnnotationKeys (of this sub-class)
+        """
+        with snorkel_engine.connect() as con:
+            con.execute('DROP TABLE IF EXISTS %s' % self.table_name)
+            if replace_key_set:
+                con.execute('DROP TABLE IF EXISTS %s' % self.key_table_name)
+
+    def apply_existing(self, split, key_group=0, **kwargs):
+        """Alias for apply that emphasizes we are using an existing AnnotatorKey set."""
+        return self.apply(split, key_group=key_group, replace_key_set=False, **kwargs)
+
+
+class BatchFeatureAnnotator(BatchAnnotator):
+    def __init__(self, candidate_type):
+        super(BatchFeatureAnnotator, self).__init__(candidate_type, annotation_type='feature', f=get_all_feats)
+        
+class BatchLabelAnnotator(BatchAnnotator):
+    def __init__(self, candidate_type, lfs):
+        super(BatchLabelAnnotator, self).__init__(candidate_type, annotation_type='label', f=lfs)
+
+# def _annotate_worker(start, end, name, table_name, job_id, annotator):
+#     '''
+#     Writes raw rows via psql, bypassing ORM.
+#     Pipes extraction results to the STDIN of a psql COPY process.
+#     Efficient in terms both of memory and CPU utilization.
+#     '''
+# 
+#     # Create separate engine for each worker to prevent concurrent connection problems
+#     engine = new_engine()
+#     WorkerSession = new_session(engine)
+#     session = WorkerSession()
+#     
+#     # Computes and pipe rows to the COPY process
+#     #candidates = session.query(CandidateSet).filter(CandidateSet.name == name).one().candidates
+#     segment_path = os.path.join(segment_dir, _segment_filename(table_name, job_id, start, end))
+#     with codecs.open(segment_path, 'w', encoding='utf-8') as writer:
+#         pb = None if start else ProgressBar(end)
+#         for i, candidate in enumerate(candidates.order_by(Candidate.id).slice(start, end)):
+#             if pb: pb.bar(i)
+#             # Runs the actual extraction function
+#             keys, values = zip(*list(annotator(candidate)))
+#             row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
+#             writer.write('\t'.join(row) + '\n')
+#         if pb: pb.close()
+
 def table_exists(con, name):
     cur = con.execute("select exists(select * from information_schema.tables where table_name=%s)", (name,))
     return cur.fetchone()[0]
     
-def annotate(candidates, parallel=0, keyset=None, update=False, lfs=[], feature_extractor=get_all_feats, dynamic_scheduling=False, storage=None):
-    '''
-    Extracts features for candidates in parallel
-    @var candidates: CandidateSet to extract features from
-    @var parallel: Number of processes to use for extraction
-    @var keyset: Name of the feature set to use, same as the candidate set name used.
-    @var lfs: Labeling functions used to annotate the current set of candidates
-    @var feature_extractor: An extractor lambda that take a candidate and yield key-value
-    pairs
-    '''
-    global _candidate_queue
-    suffix = '_labels' if lfs else '_features'
-    table_name = get_sql_name(candidates.name) + suffix 
-    key_table_name = (get_sql_name(keyset) + suffix if keyset else table_name) + '_keys'
-    # Default to COO for labeling functions
-    if storage is None and lfs: storage = 'COO'
-    old_table_name = None
-    with snorkel_engine.connect() as con:
-        if not update:
-            con.execute('DROP TABLE IF EXISTS %s' % table_name)
-        else:
-            # Now we extract under a temporary name for merging
-            if table_exists(con, table_name):
-                old_table_name = table_name
-                table_name += '_updates'
-        con.execute('CREATE TABLE %s(candidate_id integer, keys text[] NOT NULL, values real[] NOT NULL)' % table_name)    
-
-        # Assuming hyper-threaded cpus
-        if not parallel: parallel = min(40, multiprocessing.cpu_count() / 2)
-        annotator = Annotator(lfs) if lfs else feature_extractor
+# def annotate(candidates, parallel=0, keyset=None, update=False, lfs=[], \
+#              feature_extractor=get_all_feats, dynamic_scheduling=False, \
+#              storage=None):
+#     '''
+#     Extracts features for candidates in parallel
+#     @var candidates: CandidateSet to extract features from
+#     @var parallel: Number of processes to use for extraction
+#     @var keyset: Name of the feature set to use, same as the candidate set name used.
+#     @var lfs: Labeling functions used to annotate the current set of candidates
+#     @var feature_extractor: An extractor lambda that take a candidate and yield key-value
+#     pairs
+#     '''
+#     global _candidate_queue
+#     suffix = '_labels' if lfs else '_features'
+#     table_name = get_sql_name(candidates.name) + suffix 
+#     key_table_name = (get_sql_name(keyset) + suffix if keyset else table_name) + '_keys'
+#     # Default to COO for labeling functions
+#     if storage is None and lfs: storage = 'COO'
+#     old_table_name = None
+#     with snorkel_engine.connect() as con:
+#         if not update:
+#             con.execute('DROP TABLE IF EXISTS %s' % table_name)
+#         else:
+#             # Now we extract under a temporary name for merging
+#             if table_exists(con, table_name):
+#                 old_table_name = table_name
+#                 table_name += '_updates'
+#         con.execute('CREATE TABLE %s(candidate_id integer, keys text[] NOT NULL, values real[] NOT NULL)' % table_name)    
+# 
+#         # Assuming hyper-threaded cpus
+#         if not parallel: parallel = min(40, multiprocessing.cpu_count() / 2)
+#         annotator = Annotator(lfs) if lfs else feature_extractor
+#         
+#         job_id = uuid.uuid4().hex
+#         segment_file_blob = os.path.join(segment_dir,  _segment_filename(table_name, job_id))
+#         
+#         # Clear any previous run temp files if any
+#         copy_args = (candidates.name, table_name, job_id, annotator)
+# 
+#         run_in_parallel(_annotate_worker, parallel, len(candidates), copy_args=copy_args)
+#         
+#         copy_postgres(segment_file_blob, table_name, 'candidate_id, keys, values')
+#         remove_files(segment_file_blob)
+#         
+#         # Replace the LIL table with COO if requested
+#         if storage == 'COO':
+#             temp_coo_table = table_name + '_COO'
+#             con.execute('CREATE TABLE %s AS '
+#                         '(SELECT candidate_id, UNNEST(keys) as key, UNNEST(values) as value from %s)' % (temp_coo_table, table_name))
+#             con.execute('DROP TABLE %s'%table_name)
+#             con.execute('ALTER TABLE %s RENAME TO %s' % (temp_coo_table, table_name))
+#             con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id, key)' % table_name)
+#             # Update old table
+#             if old_table_name:
+#                 con.execute('INSERT INTO %s SELECT * FROM %s ON CONFLICT(candidate_id, key) '
+#                             'DO UPDATE SET value=EXCLUDED.value'%(old_table_name, table_name))
+#                 con.execute('DROP TABLE %s' % table_name)
+#         else:# LIL
+#             con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id)' % table_name)
+#             # Update old table
+#             if old_table_name:
+#                 con.execute('INSERT INTO %s AS old SELECT * FROM %s ON CONFLICT(candidate_id) '
+#                             'DO UPDATE SET '
+#                             'values=old.values || EXCLUDED.values,'
+#                             'keys=old.keys || EXCLUDED.keys'%(old_table_name, table_name))
+#                 con.execute('DROP TABLE %s' % table_name)
+#         
+#         if old_table_name: table_name = old_table_name
+#         return load_annotation_matrix(con, candidates, table_name, key_table_name, keyset, storage)
         
-        job_id = uuid.uuid4().hex
-        segment_file_blob = os.path.join(segment_dir,  _segment_filename(table_name, job_id))
-        
-        # Clear any previous run temp files if any
-        copy_args = (candidates.name, table_name, job_id, annotator)
-        if dynamic_scheduling:
-            _candidate_queue = Queue()
-            arg_func = lambda i: copy_args+(i,)
-            run_queue(_candidate_queue, _annotate_queue_worker, arg_func, parallel, [c.id for c in candidates])
-        else:
-            run_in_parallel(_annotate_worker, parallel, len(candidates), copy_args=copy_args)
-        copy_postgres(segment_file_blob, table_name, 'candidate_id, keys, values')
-        remove_files(segment_file_blob)
-        
-        # Replace the LIL table with COO if requested
-        if storage == 'COO':
-            temp_coo_table = table_name + '_COO'
-            con.execute('CREATE TABLE %s AS (SELECT candidate_id, UNNEST(keys) as key, UNNEST(values) as value from %s)' % (temp_coo_table, table_name))
-            con.execute('DROP TABLE %s'%table_name)
-            con.execute('ALTER TABLE %s RENAME TO %s' % (temp_coo_table, table_name))
-            con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id, key)' % table_name)
-            # Update old table
-            if old_table_name:
-                con.execute('INSERT INTO %s SELECT * FROM %s ON CONFLICT(candidate_id, key) '
-                            'DO UPDATE SET value=EXCLUDED.value'%(old_table_name, table_name))
-                con.execute('DROP TABLE %s' % table_name)
-        else:# LIL
-            con.execute('ALTER TABLE %s ADD PRIMARY KEY(candidate_id)' % table_name)
-            # Update old table
-            if old_table_name:
-                con.execute('INSERT INTO %s AS old SELECT * FROM %s ON CONFLICT(candidate_id) '
-                            'DO UPDATE SET '
-                            'values=old.values || EXCLUDED.values,'
-                            'keys=old.keys || EXCLUDED.keys'%(old_table_name, table_name))
-                con.execute('DROP TABLE %s' % table_name)
-        
-        if old_table_name: table_name = old_table_name
-        return load_annotation_matrix(con, candidates, table_name, key_table_name, keyset, storage)
-        
-def load_annotation_matrix(con, candidates, table_name, key_table_name, keyset, storage):
+def load_annotation_matrix(con, candidates, table_name, key_table_name, replace_key_set, storage):
     '''
     Loads a sparse matrix from an annotation table
     '''
-    if keyset is None:
+    if replace_key_set:
         # Recalculate unique keys for this set of candidates
         con.execute('DROP TABLE IF EXISTS %s' % key_table_name)
         if storage == 'COO':
@@ -312,6 +445,6 @@ def load_annotation_matrix(con, candidates, table_name, key_table_name, keyset, 
                 key_id = key_index.get(key, None)
                 if key_id is not None:
                     lil_feat_matrix[i, key_id] = value
-                
+
     return csr_AnnotationMatrix(lil_feat_matrix, candidate_index=candidate_index,
                                     row_index=row_index, keys=keys, key_index=key_index)

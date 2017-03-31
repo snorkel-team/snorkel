@@ -14,7 +14,6 @@ from collections import namedtuple
 import numpy as np
 import codecs
 import uuid
-from async_utils import run_in_parallel, copy_postgres, run_queue
 from multiprocessing.queues import Queue
 import tempfile
 from fonduer.udf import UDF, UDFRunner
@@ -153,6 +152,24 @@ def tsv_escape(s):
 
 def array_tsv_escape(vals):
     return '{' + ','.join(tsv_escape(p) for p in vals) + '}'
+
+def table_exists(con, name):
+    cur = con.execute("select exists(select * from information_schema.tables where table_name=%s)", (name,))
+    return cur.fetchone()[0]
+
+def copy_postgres(segment_file_blob, table_name, tsv_columns):
+    '''
+    @var segment_file_blob: e.g. "segment_*.tsv"
+    @var table_name: The SQL table name to copy into
+    @var tsv_columns: a string listing column names in the segment files
+    separated by comma. e.g. "name, age, income"
+    '''
+    print 'Copying %s to postgres' % table_name
+    cmd = ('cat %s | psql %s -U %s -c "COPY %s(%s) '
+            'FROM STDIN" --set=ON_ERROR_STOP=true') % \
+            (segment_file_blob, DBNAME, DBUSER, table_name, tsv_columns)
+    _out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+    print _out
 
 def _segment_filename(table_name, job_id, start = None, end = None):
     suffix = '*'
@@ -320,9 +337,7 @@ class BatchLabelAnnotator(BatchAnnotator):
 #             writer.write('\t'.join(row) + '\n')
 #         if pb: pb.close()
 
-def table_exists(con, name):
-    cur = con.execute("select exists(select * from information_schema.tables where table_name=%s)", (name,))
-    return cur.fetchone()[0]
+
     
 # def annotate(candidates, parallel=0, keyset=None, update=False, lfs=[], \
 #              feature_extractor=get_all_feats, dynamic_scheduling=False, \

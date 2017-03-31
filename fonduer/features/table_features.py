@@ -74,28 +74,28 @@ def tablelib_binary_features(span1, span2):
     for feat, v in tablelib_unary_features(span2):
         yield "e2_" + feat, v
     if span1.is_tabular() and span2.is_tabular():
-        if span1.parent.table == span2.parent.table:
+        if span1.sentence.table == span2.sentence.table:
             yield u"SAME_TABLE", DEF_VALUE
-            if span1.parent.cell is not None and span2.parent.cell is not None:
-                row_diff = min_row_diff(span1.parent, span2.parent,
+            if span1.sentence.cell is not None and span2.sentence.cell is not None:
+                row_diff = min_row_diff(span1.sentence, span2.sentence,
                                         absolute=settings.featurization.table.binary_features.min_row_diff.absolute)
-                col_diff = min_col_diff(span1.parent, span2.parent,
+                col_diff = min_col_diff(span1.sentence, span2.sentence,
                                         absolute=settings.featurization.table.binary_features.min_col_diff.absolute)
                 yield u"SAME_TABLE_ROW_DIFF_[%s]" % row_diff, DEF_VALUE
                 yield u"SAME_TABLE_COL_DIFF_[%s]" % col_diff, DEF_VALUE
                 yield u"SAME_TABLE_MANHATTAN_DIST_[%s]" % str(abs(row_diff) + abs(col_diff)), DEF_VALUE
-                if span1.parent.cell == span2.parent.cell:
+                if span1.sentence.cell == span2.sentence.cell:
                     yield u"SAME_CELL", DEF_VALUE
                     yield u"WORD_DIFF_[%s]" % (span1.get_word_start() - span2.get_word_start()), DEF_VALUE
                     yield u"CHAR_DIFF_[%s]" % (span1.char_start - span2.char_start), DEF_VALUE
-                    if span1.parent == span2.parent:
+                    if span1.sentence == span2.sentence:
                         yield u"SAME_PHRASE", DEF_VALUE
         else:
-            if span1.parent.cell is not None and span2.parent.cell is not None:
+            if span1.sentence.cell is not None and span2.sentence.cell is not None:
                 yield u"DIFF_TABLE", DEF_VALUE
-                row_diff = min_row_diff(span1.parent, span2.parent,
+                row_diff = min_row_diff(span1.sentence, span2.sentence,
                                         absolute=settings.featurization.table.binary_features.min_row_diff.absolute)
-                col_diff = min_col_diff(span1.parent, span2.parent,
+                col_diff = min_col_diff(span1.sentence, span2.sentence,
                                         absolute=settings.featurization.table.binary_features.min_col_diff.absolute)
                 yield u"DIFF_TABLE_ROW_DIFF_[%s]" % row_diff, DEF_VALUE
                 yield u"DIFF_TABLE_COL_DIFF_[%s]" % col_diff, DEF_VALUE

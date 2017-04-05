@@ -159,7 +159,7 @@ class SparseLogisticRegression(LogisticRegression):
         h = tf.add(z, b)
         # Build model
         self.loss = tf.reduce_sum(
-            tf.nn.sigmoid_cross_entropy_with_logits(h, self.Y)
+            tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
         )
         self.train_fn = tf.train.ProximalGradientDescentOptimizer(
             learning_rate=tf.cast(self.lr, dtype=tf.float32),

@@ -67,29 +67,41 @@ def count_hardware_labels(candidates, filename, attrib, attrib_class):
     return gold_cand
 
 
-# def load_hardware_labels(session, label_set_name, annotation_key_name, candidates, filename, attrib):
-#     gold_dict = get_gold_dict(filename, attribute=attrib)
-#     candidate_set   = create_or_fetch(session, CandidateSet, label_set_name)
-#     annotation_key  = create_or_fetch(session, AnnotationKey, annotation_key_name)
-#     key_set         = create_or_fetch(session, AnnotationKeySet, annotation_key_name)
-#     if annotation_key not in key_set.keys:
-#         key_set.append(annotation_key)
-#     session.commit()
-#
-#     cand_total = len(candidates)
-#     print 'Loading', cand_total, 'candidate labels'
-#     pb = ProgressBar(cand_total)
-#     for i, c in enumerate(candidates):
-#         pb.bar(i)
-#         doc = (c[0].parent.document.name).upper()
-#         part = (c[0].get_span()).upper()
-#         val = (''.join(c[1].get_span().split())).upper()
-#         if (doc, part, val) in gold_dict:
-#             candidate_set.append(c)
-#             session.add(Label(key=annotation_key, candidate=c, value=1))
-#     session.commit()
-#     pb.close()
-#     return (candidate_set, annotation_key)
+from snorkel.db_helpers import reload_annotator_labels
+from fonduer.models import GoldLabel, GoldLabelKey
+
+
+def load_hardware_labels(session, candidate_class, filename, attrib, annotator_name='gold'):
+
+    ak = session.query(GoldLabelKey).filter(GoldLabelKey.name == annotator_name).first()
+    if ak is None:
+        ak = GoldLabelKey(name=annotator_name)
+        session.add(ak)
+        session.commit()
+    
+    candidates = session.query(candidate_class).all()
+    gold_dict = get_gold_dict(filename, attribute=attrib)
+    cand_total = len(candidates)
+    print 'Loading', cand_total, 'candidate labels'
+    pb = ProgressBar(cand_total)
+    labels=[]
+    for i, c in enumerate(candidates):
+        pb.bar(i)
+        doc = (c[0].sentence.document.name).upper()
+        part = (c[0].get_span()).upper()
+        val = (''.join(c[1].get_span().split())).upper()
+        context_stable_ids = '~~'.join([i.stable_id for i in c.get_contexts()])
+        if (doc, part, val) in gold_dict:
+            label = session.query(GoldLabel).filter(GoldLabel.key == ak).filter(GoldLabel.candidate == c).first()
+            if label is None:
+                label = GoldLabel(candidate=c, key=ak, value=1)
+                session.add(label)
+                labels.append(label)
+    session.commit()
+    pb.close()
+
+    session.commit()
+    print "AnnotatorLabels created: %s" % (len(labels),)
 
 
 def most_common_document(candidates):

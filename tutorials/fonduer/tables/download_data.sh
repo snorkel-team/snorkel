@@ -8,7 +8,7 @@ elif type wget &>/dev/null; then
 fi
 
 echo "Unpacking tables hardware data..."
-tar -zxvf $data_tar.tar.gz -C data/hardware
+tar -zxvf $data_tar.tar.gz -C data
 
 echo "Deleting tar file..."
 rm $data_tar.tar.gz

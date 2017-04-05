@@ -361,7 +361,7 @@ p.img {
 <h2 id="toc_0">Protecting Your Generative Model from "Yes People"</h2>
 
 <blockquote>
-<p>In data programming, correlated supervision sources are like &quot;yes people.&quot; Just because they agree doesn't mean they're correct. The generative model should account for correlation!</p>
+<p>In data programming, correlated supervision sources are like &quot;yes people&quot;. Just because they agree doesn't mean they're correct. The generative model should account for correlation!</p>
 </blockquote>
 
 <p>Nobody likes a &quot;yes person&quot;. If someone isn't giving you their independent opinion, then you can't fully trust what they say. Trusting correlated sources can lead to disaster. You'll be overconfident, thinking that you're correct because so many sources agree. Take this case study from <a href="https://en.wikipedia.org/wiki/Monty_Python">a British team of management consultants</a> as an example:</p>
@@ -372,7 +372,7 @@ p.img {
 
 <p>What does this generative model look like? They all start with the same basic skeleton. There's a latent variable—the true class—that generates the outputs of each labeling function. If we stop there and only have one dependency connecting each labeling function with the true label, then we have an independent, or Naive Bayes, model. This structure makes a strong assumption: each labeling function provides conditionally independent information about the class label.</p>
 
-<p>The independent model is susceptible to "yes people." If multiple labeling functions are actually correlated, independent of the true label, then the maximum likelihood estimate of the parameters will overweight the labeling functions accuracies. It's exactly the same problem the Hollywood producer has: the sources of information seem trustworthy because they agree with each other.</p>
+<p>The independent model is susceptible to "yes people". If multiple labeling functions are actually correlated, independent of the true label, then the maximum likelihood estimate of the parameters will overweight the labeling functions accuracies. It's exactly the same problem the Hollywood producer has: the sources of information seem trustworthy because they agree with each other.</p>
 
 <p><center><img width="60%" src="structure_learning_img/people_agreeing_with_themselves.jpg" alt="I agree with them!"></center></p>
 

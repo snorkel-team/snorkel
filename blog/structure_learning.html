@@ -1,0 +1,459 @@
+<!DOCTYPE html><html>
+
+<head>
+<meta charset="utf-8">
+<title>Structure Learning</title>
+<style type="text/css">
+body {
+  font-family: Helvetica, arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background-color: white;
+  padding: 30px; }
+
+body > *:first-child {
+  margin-top: 0 !important; }
+body > *:last-child {
+  margin-bottom: 0 !important; }
+
+a {
+  color: #4183C4; }
+a.absent {
+  color: #cc0000; }
+a.anchor {
+  display: block;
+  padding-left: 30px;
+  margin-left: -30px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0; }
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 20px 0 10px;
+  padding: 0;
+  font-weight: bold;
+  -webkit-font-smoothing: antialiased;
+  cursor: text;
+  position: relative; }
+
+h1:hover a.anchor, h2:hover a.anchor, h3:hover a.anchor, h4:hover a.anchor, h5:hover a.anchor, h6:hover a.anchor {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA09pVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoMTMuMCAyMDEyMDMwNS5tLjQxNSAyMDEyLzAzLzA1OjIxOjAwOjAwKSAgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OUM2NjlDQjI4ODBGMTFFMTg1ODlEODNERDJBRjUwQTQiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OUM2NjlDQjM4ODBGMTFFMTg1ODlEODNERDJBRjUwQTQiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo5QzY2OUNCMDg4MEYxMUUxODU4OUQ4M0REMkFGNTBBNCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo5QzY2OUNCMTg4MEYxMUUxODU4OUQ4M0REMkFGNTBBNCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PsQhXeAAAABfSURBVHjaYvz//z8DJYCRUgMYQAbAMBQIAvEqkBQWXI6sHqwHiwG70TTBxGaiWwjCTGgOUgJiF1J8wMRAIUA34B4Q76HUBelAfJYSA0CuMIEaRP8wGIkGMA54bgQIMACAmkXJi0hKJQAAAABJRU5ErkJggg==) no-repeat 10px center;
+  text-decoration: none; }
+
+h1 tt, h1 code {
+  font-size: inherit; }
+
+h2 tt, h2 code {
+  font-size: inherit; }
+
+h3 tt, h3 code {
+  font-size: inherit; }
+
+h4 tt, h4 code {
+  font-size: inherit; }
+
+h5 tt, h5 code {
+  font-size: inherit; }
+
+h6 tt, h6 code {
+  font-size: inherit; }
+
+h1 {
+  font-size: 28px;
+  color: black; }
+
+h2 {
+  font-size: 24px;
+  border-bottom: 1px solid #cccccc;
+  color: black; }
+
+h3 {
+  font-size: 18px; }
+
+h4 {
+  font-size: 16px; }
+
+h5 {
+  font-size: 14px; }
+
+h6 {
+  color: #777777;
+  font-size: 14px; }
+
+p, blockquote, ul, ol, dl, li, table, pre {
+  margin: 15px 0; }
+
+hr {
+  background: transparent url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAECAYAAACtBE5DAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBNYWNpbnRvc2giIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OENDRjNBN0E2NTZBMTFFMEI3QjRBODM4NzJDMjlGNDgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OENDRjNBN0I2NTZBMTFFMEI3QjRBODM4NzJDMjlGNDgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo4Q0NGM0E3ODY1NkExMUUwQjdCNEE4Mzg3MkMyOUY0OCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo4Q0NGM0E3OTY1NkExMUUwQjdCNEE4Mzg3MkMyOUY0OCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PqqezsUAAAAfSURBVHjaYmRABcYwBiM2QSA4y4hNEKYDQxAEAAIMAHNGAzhkPOlYAAAAAElFTkSuQmCC) repeat-x 0 0;
+  border: 0 none;
+  color: #cccccc;
+  height: 4px;
+  padding: 0;
+}
+
+body > h2:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+body > h1:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+  body > h1:first-child + h2 {
+    margin-top: 0;
+    padding-top: 0; }
+body > h3:first-child, body > h4:first-child, body > h5:first-child, body > h6:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+
+a:first-child h1, a:first-child h2, a:first-child h3, a:first-child h4, a:first-child h5, a:first-child h6 {
+  margin-top: 0;
+  padding-top: 0; }
+
+h1 p, h2 p, h3 p, h4 p, h5 p, h6 p {
+  margin-top: 0; }
+
+li p.first {
+  display: inline-block; }
+li {
+  margin: 0; }
+ul, ol {
+  padding-left: 30px; }
+
+ul :first-child, ol :first-child {
+  margin-top: 0; }
+
+dl {
+  padding: 0; }
+  dl dt {
+    font-size: 14px;
+    font-weight: bold;
+    font-style: italic;
+    padding: 0;
+    margin: 15px 0 5px; }
+    dl dt:first-child {
+      padding: 0; }
+    dl dt > :first-child {
+      margin-top: 0; }
+    dl dt > :last-child {
+      margin-bottom: 0; }
+  dl dd {
+    margin: 0 0 15px;
+    padding: 0 15px; }
+    dl dd > :first-child {
+      margin-top: 0; }
+    dl dd > :last-child {
+      margin-bottom: 0; }
+
+blockquote {
+  border-left: 4px solid #dddddd;
+  padding: 0 15px;
+  color: #777777; }
+  blockquote > :first-child {
+    margin-top: 0; }
+  blockquote > :last-child {
+    margin-bottom: 0; }
+
+table {
+  padding: 0;border-collapse: collapse; }
+  table tr {
+    border-top: 1px solid #cccccc;
+    background-color: white;
+    margin: 0;
+    padding: 0; }
+    table tr:nth-child(2n) {
+      background-color: #f8f8f8; }
+    table tr th {
+      font-weight: bold;
+      border: 1px solid #cccccc;
+      margin: 0;
+      padding: 6px 13px; }
+    table tr td {
+      border: 1px solid #cccccc;
+      margin: 0;
+      padding: 6px 13px; }
+    table tr th :first-child, table tr td :first-child {
+      margin-top: 0; }
+    table tr th :last-child, table tr td :last-child {
+      margin-bottom: 0; }
+
+img {
+  max-width: 100%; }
+
+span.frame {
+  display: block;
+  overflow: hidden; }
+  span.frame > span {
+    border: 1px solid #dddddd;
+    display: block;
+    float: left;
+    overflow: hidden;
+    margin: 13px 0 0;
+    padding: 7px;
+    width: auto; }
+  span.frame span img {
+    display: block;
+    float: left; }
+  span.frame span span {
+    clear: both;
+    color: #333333;
+    display: block;
+    padding: 5px 0 0; }
+span.align-center {
+  display: block;
+  overflow: hidden;
+  clear: both; }
+  span.align-center > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px auto 0;
+    text-align: center; }
+  span.align-center span img {
+    margin: 0 auto;
+    text-align: center; }
+span.align-right {
+  display: block;
+  overflow: hidden;
+  clear: both; }
+  span.align-right > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px 0 0;
+    text-align: right; }
+  span.align-right span img {
+    margin: 0;
+    text-align: right; }
+span.float-left {
+  display: block;
+  margin-right: 13px;
+  overflow: hidden;
+  float: left; }
+  span.float-left span {
+    margin: 13px 0 0; }
+span.float-right {
+  display: block;
+  margin-left: 13px;
+  overflow: hidden;
+  float: right; }
+  span.float-right > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px auto 0;
+    text-align: right; }
+
+code, tt {
+  margin: 0 2px;
+  padding: 0 5px;
+  white-space: nowrap;
+  border: 1px solid #eaeaea;
+  background-color: #f8f8f8;
+  border-radius: 3px; }
+
+pre code {
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  border: none;
+  background: transparent; }
+
+.highlight pre {
+  background-color: #f8f8f8;
+  border: 1px solid #cccccc;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px; }
+
+pre {
+  background-color: #f8f8f8;
+  border: 1px solid #cccccc;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px; }
+  pre code, pre tt {
+    background-color: transparent;
+    border: none; }
+
+sup {
+    font-size: 0.83em;
+    vertical-align: super;
+    line-height: 0;
+}
+* {
+	-webkit-print-color-adjust: exact;
+}
+@media screen and (min-width: 914px) {
+    body {
+        width: 854px;
+        margin:0 auto;
+    }
+}
+@media print {
+	table, pre {
+		page-break-inside: avoid;
+	}
+	pre {
+		word-wrap: break-word;
+	}
+}
+
+.top-banner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    text-align: center;
+}
+
+#top-banner-img {
+    opacity: 0.5;
+    width: 100%;
+    height: 350px;
+}
+
+#main-title {
+    position: relative;
+    margin-top: 100px;
+    margin-bottom: 100px;
+    padding: 10px;
+    font-size: 40px;
+    background: #333333;
+    color: #f8f8f8;
+    z-index: 10;
+}
+
+blockquote {
+    font-size: large;
+    font-weight: 300;
+}
+
+p.img {
+    text-align: center;
+}
+</style>
+</head>
+<body>
+<span class="top-banner">
+    <img id="top-banner-img" src="structure_learning_img/banner.jpg" alt="Yes People">
+</span>
+
+<p id="main-title">Structure Learning: Are your Sources Only Telling You What You Want to Hear?</p>
+
+<p>Post by Stephen Bach, Bryan He, Alex Ratner, and Chris Ré</p>
+
+<p><em>And referencing work by many other <a href="http://cs.stanford.edu/people/chrismre/#students">members of Hazy Research</a></em></p>
+
+<blockquote>
+<p>In <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">data programming</a> we use a generative model to synthesize training labels from weak supervision sources. The model's dependency structure directly affects the quality of the results. We've <a href="https://arxiv.org/abs/1703.00854">introduced a method</a> to learn the structure <em>without any labeled training data</em>. Highlights include:</p>
+
+<ul>
+<li><p>Sublinear sample complexity in the number of possible dependencies for many model classes.</p></li>
+<li><p>100x faster than maximum likelihood parameter estimation on all possible dependencies.</p></li>
+<li><p>Average 1.5 F1 point boost on existing applications over naive Bayes generative model.</p></li>
+</ul>
+</blockquote>
+
+<h2 id="toc_0">Protecting your Generative Model from "Yes People"</h2>
+
+<blockquote>
+<p>In data programming, correlated supervision sources are like &quot;yes people.&quot; Just because they agree doesn't mean they're correct. The generative model should account for correlation!</p>
+</blockquote>
+
+<p>Nobody likes a &quot;yes person.&quot; If someone isn't giving you their independent opinion, then you can't fully trust what they say. Trusting correlated sources can lead to disaster. You'll be overconfident, thinking that you're correct because so many sources agree. Take this case study from <a href="https://en.wikipedia.org/wiki/Monty_Python">a British team of management consultants</a> for example:</p>
+
+<center><object width="425" height="344"><param name="movie" value="http://swf.tubechop.com/tubechop.swf?vurl=gLrxdkStd_U&start=7&end=238&cid=9022805"></param><embed src="http://swf.tubechop.com/tubechop.swf?vurl=gLrxdkStd_U&start=0&end=347&cid=9022805" type="application/x-shockwave-flash" allowfullscreen="true" width="425" height="344"></embed></object></center>
+
+<p>In data programming, our sources of information aren't Hollywood movie writers; they're labeling functions. Recall that each labeling function is a little function written in code that votes (or abstains) on the true label for a data point. We want to combine their votes into an estimate of the true labels so that we can train machine learning models without hand-labeled data. Of course, these functions are noisy, so we use a generative model to estimate their accuracies and denoise their outputs.</p>
+
+<p>What does this generative model look like? They all start with the same basic skeleton. There's a latent variable, the true class, that generates the outputs of each labeling function. If we stop there and only have one dependency connecting each labeling function with the true label, then we have an independent, or Naive Bayes, model. This structure makes a strong assumption: that each labeling function provides conditionally independent information about the class label.</p>
+
+<p>The independent model is susceptible to "yes people." If multiple labeling functions are actually correlated, independent of the true label, then the maximum likelihood estimate of the parameters will overweight the labeling functions accuracies. It's exactly the same problem the Hollywood producer has: the sources of information seem trustworthy because they agree with each other.</p>
+
+<p><center><img width="60%" src="structure_learning_img/people_agreeing_with_themselves.jpg" alt="I agree with them!"></center></p>
+
+<p>Of course, labeling functions aren't correlated because they're trying to please you and avoid getting fired. But they can be correlated for lots of other reasons. A few examples we often see with users are:
+<ol>
+<li>Labeling functions that are variations on a theme, such as looking for keywords within different sized windows of text.
+<li>Applying the same heuristic to correlated inputs, such as one that runs on the raw tokens of a sentence and another that runs on the lemmatized tokens.
+<li>Using correlated sources of external domain knowledge, such as distantly supervising with knowledge bases that cover overlapping topics.
+</ol>
+If we don't model these correlations, we're going to overestimate the accuracies of these labeling functions, which directly affects the quality of the trained discriminative model.
+</p>
+
+<h2 id="toc_1">Learning the Structure of Generative Models without Labeled Data</h2>
+
+<blockquote>
+<p>Adding all possible dependencies to the independent model and finding the maximum likelihood parameters is intractable. Instead, we identify which dependencies help us predict a single labeling function in isolation, marginalizing out our certainty about the true class label.</p>
+</blockquote>
+
+<p>How can we identify dependencies like correlations between labeling functions? We need to be able to do it quickly, because users want to iterate rapidly on their labeling functions and get performance feedback fast. On top of that, we need to be able to do it without any labeled data.</p>
+
+<p>One thing we could do is add all possible dependencies to the independent model and try to learn the parameters via maximum likelihood estimation. This is the same procedure as learning the parameters of the independent model, but it's going to be much slower when all possible dependencies are included. To see why, consider the structure of the model when we consider all possible correlations, illustrated as a factor graph:
+
+<center><img width="50%" src="structure_learning_img/mle.png" alt="Possible correlations that could be added to conditionally independent model."></center>
+
+The number of possible correlations ("Cor") grows quadratically in the number of labeling functions. Maximizing the marginal likelihood of the target variables will become expensive because computing the gradient of the objective for a general factor graph requires Gibbs sampling (or some other approximation). Can we select which dependencies beyond the accuracy ("Acc") factors are worth including without computing the likelihood gradient over all these possible correlations? We can!</p>
+
+<p>We propose maximizing a <em>pseudolikelihood</em> objective instead. The idea is to maximize the likelihood of each labeling function's output as a separate target, conditioned on the others' outputs. We use l1-regularization and include the dependencies with sufficiently large weights in the final model. A <a href="https://projecteuclid.org/euclid.aos/1268056617">related approach by Pradeep Ravikumar et al.</a> works well for fully supervised problems. In data programming, the fact that the true class label is latent complicates matters. Here, each pseudolikelihood maximization is equivalent to maximum likelihood estimation of the parameters of a factor graph that looks like this:
+
+<center><img width="50%" src="structure_learning_img/mple.png" alt="Maximum pseudolikelihood estimator for correlations for a single labeling function."></center>
+
+This model structure gives us a computational advantage: with only one target variable and one latent variable, we can compute the gradient of the objective exactly in polynomial time. Recall that for factor graphs with latent variables, the gradient of the maximum likelihood objective is the difference between the expected value of the feature function conditioned on the target variables and the expected value without conditioning. We can compute these expectations exactly because of the simplified distribution structure.
+
+<h2 id="toc_2">Theoretical Guarantees and Experiments</h2>
+
+<blockquote>
+<p>Structure learning is more challenging than in the supervised case because the objective is nonconvex, but we show that it works under reasonable assumptions. It also is 100x faster than a maximum likelihood approach and gives a nice performance boost on existing applications.</p>
+</blockquote>
+
+<p>In our paper, we analyze the probability that this structure learning methods succeeds, i.e., returns exactly the correct dependency structure. Our analysis shows that for n labeling functions, O(n log n) samples are sufficient to learn models with pairwise dependencies between labeling functions with high probability. (For higher-order dependencies, the sample complexity is O(n<sup>2</sup> log n)) In contrast, in the supervised setting, the known guarantee is O(d<sup>3</sup> log n), where d is the maximum variable degree in the true factor graph. The difference is that the supervised case admits an analysis using Lagrangian duality, enabling the bound to depend on the true distribution's sparsity structure. Since the objective for a generative model with a latent variable is nonconvex, we cannot apply this analysis.</p>
+
+<p>We also measure the running time of our approach versus a maximum likelihood approach, for increasing numbers of labeling functions.
+
+<center><img width="40%" src="structure_learning_img/time.png" alt="Structure learning is two orders of mangitude faster than a maximum likelihood approach."></center>
+
+We find that our approach is two orders of magnitude faster.</p>
+
+<p>Finally, we tested structure learning on a number of existing data programming applications. We find that it gives an average 1.5 F1 boost.</p>
+
+<h2 id="toc_3">How to Use Structure Learning in Snorkel</h2>
+<blockquote>
+<p>Structure learning is implemented in Snorkel and easy to use.</p>
+</blockquote>
+
+<p>You can easily try out structure learning in <a href="http://snorkel.stanford.edu">Snorkel</a>. An example is in the <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/cdr">CDR tutorial</a>. You can also easily add structure learning to your own Snorkel application. Before you train your generative model, apply the dependency selector to your label matrix as follows:
+<pre><code>from snorkel.learning.structure import DependencySelector
+ds = DependencySelector()
+deps = ds.select(L, threshold=.1)
+</code></pre>
+where <code>L</code> is the label matrix produced by a <code>LabelManager</code>. A few notes:
+<ul>
+<li>The <code>deps</code> object is a collection of tuples specifying which labeling functions are related by which types of dependencies.</li>
+<li>The keyword argument <code>threshold</code> is a positive float that indicates how strong the dependency has to be for it to be returned in the collection. Too many dependencies? Turn it up. Too few? Turn it down.</li>
+<li>By default, the <code>DependencySelector</code> looks for pairwise correlations between labeling functions. Pass the keyword argument <code>higher_order=True</code> to the constructor to also look for reinforcing and fixing dependencies (described in the <a href="https://arxiv.org/abs/1605.07723">data programming paper</a>).</li>
+</ul>
+To incorporate the selected dependencies into your generative model, just pass them in as a keyword argument:
+<pre><code>from snorkel.learning import GenerativeModel
+gen_model = GenerativeModel()
+gen_model.train(L, deps=deps)
+</code></pre>
+That's all there is to it!</p>
+
+<h2 id="toc_4">Next Steps</h2>
+
+<p>We're excited to continue research on automatically learning the structure of generative models for weak supervision. A few next steps:
+<ul>
+<li>Can we strengthen the theoretical guarantees for structure learning to depend only on the sparsity of the true dependency structure, perhaps to match the guarantees known in the supervised case? We find in practice that structure learning scales linearly in the maximum labeling function degree of the true factor graph and logarithmically in the number of possible dependencies, analogous to the bounds known for the supervised case.</li>
+<li>Can we automatically tune the selection threshold for optimal performance. "Optimal" depends on both the degree to which the labeling functions are correlated and compute budget of the user. We're developing an optimizer to set the threshold automatically.</li>
+<li>We want to learn what other types of dependencies that can exist among labeling functions are useful to model. Which ones have the biggest impact on data set quality?</li>
+</ul>
+</p>
+
+</body>
+
+</html>

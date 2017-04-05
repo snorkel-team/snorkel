@@ -342,35 +342,35 @@ p.img {
     <img id="top-banner-img" src="structure_learning_img/banner.jpg" alt="Yes People">
 </span>
 
-<p id="main-title">Structure Learning: Are your Sources Only Telling You What You Want to Hear?</p>
+<p id="main-title">Structure Learning: Are Your Sources Only Telling You What You Want to Hear?</p>
 
 <p>Post by Stephen Bach, Bryan He, Alex Ratner, and Chris Ré</p>
 
 <p><em>And referencing work by many other <a href="http://cs.stanford.edu/people/chrismre/#students">members of Hazy Research</a></em></p>
 
 <blockquote>
-<p>In <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">data programming</a> we use a generative model to synthesize training labels from weak supervision sources. The model's dependency structure directly affects the quality of the results. We've <a href="https://arxiv.org/abs/1703.00854">introduced a method</a> to learn the structure <em>without any labeled training data</em>. Highlights include:</p>
+<p>In <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">data programming</a>, we use a generative model to synthesize training labels from weak supervision sources. The model's dependency structure directly affects the quality of the results. We've introduced a <a href="https://arxiv.org/abs/1703.00854">method</a> to learn the structure <em>without any labeled training data</em>. Highlights include:</p>
 
 <ul>
 <li><p>Sublinear sample complexity in the number of possible dependencies for many model classes.</p></li>
-<li><p>100x faster than maximum likelihood parameter estimation on all possible dependencies.</p></li>
-<li><p>Average 1.5 F1 point boost on existing applications over naive Bayes generative model.</p></li>
+<li><p>100× faster than maximum likelihood parameter estimation on all possible dependencies.</p></li>
+<li><p>Average 1.5 F1 point boost on existing applications over a naive Bayes generative model.</p></li>
 </ul>
 </blockquote>
 
-<h2 id="toc_0">Protecting your Generative Model from "Yes People"</h2>
+<h2 id="toc_0">Protecting Your Generative Model from "Yes People"</h2>
 
 <blockquote>
 <p>In data programming, correlated supervision sources are like &quot;yes people.&quot; Just because they agree doesn't mean they're correct. The generative model should account for correlation!</p>
 </blockquote>
 
-<p>Nobody likes a &quot;yes person.&quot; If someone isn't giving you their independent opinion, then you can't fully trust what they say. Trusting correlated sources can lead to disaster. You'll be overconfident, thinking that you're correct because so many sources agree. Take this case study from <a href="https://en.wikipedia.org/wiki/Monty_Python">a British team of management consultants</a> for example:</p>
+<p>Nobody likes a &quot;yes person&quot;. If someone isn't giving you their independent opinion, then you can't fully trust what they say. Trusting correlated sources can lead to disaster. You'll be overconfident, thinking that you're correct because so many sources agree. Take this case study from <a href="https://en.wikipedia.org/wiki/Monty_Python">a British team of management consultants</a> as an example:</p>
 
 <center><object width="425" height="344"><param name="movie" value="http://swf.tubechop.com/tubechop.swf?vurl=gLrxdkStd_U&start=7&end=238&cid=9022805"></param><embed src="http://swf.tubechop.com/tubechop.swf?vurl=gLrxdkStd_U&start=0&end=347&cid=9022805" type="application/x-shockwave-flash" allowfullscreen="true" width="425" height="344"></embed></object></center>
 
 <p>In data programming, our sources of information aren't Hollywood movie writers; they're labeling functions. Recall that each labeling function is a little function written in code that votes (or abstains) on the true label for a data point. We want to combine their votes into an estimate of the true labels so that we can train machine learning models without hand-labeled data. Of course, these functions are noisy, so we use a generative model to estimate their accuracies and denoise their outputs.</p>
 
-<p>What does this generative model look like? They all start with the same basic skeleton. There's a latent variable, the true class, that generates the outputs of each labeling function. If we stop there and only have one dependency connecting each labeling function with the true label, then we have an independent, or Naive Bayes, model. This structure makes a strong assumption: that each labeling function provides conditionally independent information about the class label.</p>
+<p>What does this generative model look like? They all start with the same basic skeleton. There's a latent variable—the true class—that generates the outputs of each labeling function. If we stop there and only have one dependency connecting each labeling function with the true label, then we have an independent, or Naive Bayes, model. This structure makes a strong assumption: each labeling function provides conditionally independent information about the class label.</p>
 
 <p>The independent model is susceptible to "yes people." If multiple labeling functions are actually correlated, independent of the true label, then the maximum likelihood estimate of the parameters will overweight the labeling functions accuracies. It's exactly the same problem the Hollywood producer has: the sources of information seem trustworthy because they agree with each other.</p>
 
@@ -399,7 +399,7 @@ If we don't model these correlations, we're going to overestimate the accuracies
 
 The number of possible correlations ("Cor") grows quadratically in the number of labeling functions. Maximizing the marginal likelihood of the target variables will become expensive because computing the gradient of the objective for a general factor graph requires Gibbs sampling (or some other approximation). Can we select which dependencies beyond the accuracy ("Acc") factors are worth including without computing the likelihood gradient over all these possible correlations? We can!</p>
 
-<p>We propose maximizing a <em>pseudolikelihood</em> objective instead. The idea is to maximize the likelihood of each labeling function's output as a separate target, conditioned on the others' outputs. We use l1-regularization and include the dependencies with sufficiently large weights in the final model. A <a href="https://projecteuclid.org/euclid.aos/1268056617">related approach by Pradeep Ravikumar et al.</a> works well for fully supervised problems. In data programming, the fact that the true class label is latent complicates matters. Here, each pseudolikelihood maximization is equivalent to maximum likelihood estimation of the parameters of a factor graph that looks like this:
+<p>We propose maximizing a <em>pseudolikelihood</em> objective instead. The idea is to maximize the likelihood of each labeling function's output as a separate target, conditioned on the others' outputs. We use ℓ1-regularization and include the dependencies with sufficiently large weights in the final model. A <a href="https://projecteuclid.org/euclid.aos/1268056617">related approach by Pradeep Ravikumar et al.</a> works well for fully supervised problems. In data programming, the fact that the true class label is latent complicates matters. Here, each pseudolikelihood maximization is equivalent to maximum likelihood estimation of the parameters of a factor graph that looks like this:
 
 <center><img width="50%" src="structure_learning_img/mple.png" alt="Maximum pseudolikelihood estimator for correlations for a single labeling function."></center>
 
@@ -408,10 +408,10 @@ This model structure gives us a computational advantage: with only one target va
 <h2 id="toc_2">Theoretical Guarantees and Experiments</h2>
 
 <blockquote>
-<p>Structure learning is more challenging than in the supervised case because the objective is nonconvex, but we show that it works under reasonable assumptions. It also is 100x faster than a maximum likelihood approach and gives a nice performance boost on existing applications.</p>
+<p>Structure learning is more challenging than in the supervised case because the objective is nonconvex, but we show that it works under reasonable assumptions. It also is 100× faster than a maximum likelihood approach and gives a nice performance boost on existing applications.</p>
 </blockquote>
 
-<p>In our paper, we analyze the probability that this structure learning methods succeeds, i.e., returns exactly the correct dependency structure. Our analysis shows that for n labeling functions, O(n log n) samples are sufficient to learn models with pairwise dependencies between labeling functions with high probability. (For higher-order dependencies, the sample complexity is O(n<sup>2</sup> log n)) In contrast, in the supervised setting, the known guarantee is O(d<sup>3</sup> log n), where d is the maximum variable degree in the true factor graph. The difference is that the supervised case admits an analysis using Lagrangian duality, enabling the bound to depend on the true distribution's sparsity structure. Since the objective for a generative model with a latent variable is nonconvex, we cannot apply this analysis.</p>
+<p>In our paper, we analyze the probability that this structure learning methods succeeds, i.e., returns exactly the correct dependency structure. Our analysis shows that for n labeling functions, O(n log n) samples are sufficient to learn models with pairwise dependencies between labeling functions with high probability. (For higher-order dependencies, the sample complexity is O(n<sup>2</sup> log n).) In contrast, in the supervised setting, the known guarantee is O(d<sup>3</sup> log n), where d is the maximum variable degree in the true factor graph. The difference is that the supervised case admits an analysis using Lagrangian duality, enabling the bound to depend on the true distribution's sparsity structure. Since the objective for a generative model with a latent variable is nonconvex, we cannot apply this analysis.</p>
 
 <p>We also measure the running time of our approach versus a maximum likelihood approach, for increasing numbers of labeling functions.
 
@@ -429,7 +429,7 @@ We find that our approach is two orders of magnitude faster.</p>
 <p>You can easily try out structure learning in <a href="http://snorkel.stanford.edu">Snorkel</a>. An example is in the <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/cdr">CDR tutorial</a>. You can also easily add structure learning to your own Snorkel application. Before you train your generative model, apply the dependency selector to your label matrix as follows:
 <pre><code>from snorkel.learning.structure import DependencySelector
 ds = DependencySelector()
-deps = ds.select(L, threshold=.1)
+deps = ds.select(L, threshold=0.1)
 </code></pre>
 where <code>L</code> is the label matrix produced by a <code>LabelManager</code>. A few notes:
 <ul>

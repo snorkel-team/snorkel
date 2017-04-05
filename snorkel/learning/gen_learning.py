@@ -302,7 +302,7 @@ class GenerativeModel(object):
             dep_mat[lf1, lf2] = 1
 
         for dep_name in GenerativeModel.dep_names:
-            setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
+            setattr(self, dep_name, getattr(self, dep_name).tocoo())
 
     def _compile(self, L, y, init_acc, init_deps, init_class_prior):
         """
@@ -545,6 +545,6 @@ class GenerativeModel(object):
                     weight_mat[mat.row[i], mat.col[i]] = w[w_off]
                 w_off += 1
 
-            setattr(weights, dep_name, weight_mat.tocsr(copy=True))
+            setattr(weights, dep_name, weight_mat.tocsr())
 
         self.weights = weights

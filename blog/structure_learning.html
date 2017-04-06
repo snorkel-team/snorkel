@@ -398,7 +398,7 @@ If we don't model these correlations, we're going to overestimate the accuracies
 <h2 id="toc_1">Learning the Structure of Generative Models without Labeled Data</h2>
 
 <blockquote>
-<p>Adding all possible dependencies to the independent model and finding the maximum likelihood parameters is intractable. Instead, we identify which dependencies help us predict a single labeling function in isolation, marginalizing out our certainty about the true class label.</p>
+<p>Adding all possible dependencies to the independent model and finding the maximum likelihood parameters is intractable. Instead, we identify which dependencies help us predict a single labeling function in isolation, marginalizing out our uncertainty about the true class label.</p>
 </blockquote>
 
 <p>How can we identify dependencies like correlations between labeling functions? We need to be able to do it quickly, because users want to iterate rapidly on their labeling functions and get performance feedback fast. On top of that, we need to be able to do it without any labeled data.</p>

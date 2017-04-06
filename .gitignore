@@ -37,11 +37,5 @@ tutorials/intro/data/articles-train.tsv
 tutorials/intro/data/gold_labels.tsv
 tutorials/intro/snorkel.db
 
-tutorials/tables/data/hardware/
-tutorials/fonduer/tables/data/hardware/dev/html/
-tutorials/fonduer/tables/data/hardware/dev/pdf/
-tutorials/fonduer/tables/data/hardware/test/html/
-tutorials/fonduer/tables/data/hardware/test/pdf/
-tutorials/fonduer/tables/data/hardware/train*/html/
-tutorials/fonduer/tables/data/hardware/train*/pdf/
-tutorials/fonduer/tables/data/hardware/gold_raw/digikey_raw/
+tutorials/fonduer/hardware/data/html/
+tutorials/fonduer/hardware/data/pdf/

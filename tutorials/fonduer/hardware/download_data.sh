@@ -1,13 +1,13 @@
-echo "Downloading tables hardware data..."
-url=http://i.stanford.edu/hazy/share/hardware_data.tar.gz
-data_tar=hardware_data
+echo "Downloading hardware tutorial data..."
+url=http://i.stanford.edu/hazy/share/hardware_tutorial_data.tar.gz
+data_tar=hardware_tutorial_data
 if type curl &>/dev/null; then
     curl -RLO $url
 elif type wget &>/dev/null; then
     wget -N -nc $url
 fi
 
-echo "Unpacking tables hardware data..."
+echo "Unpacking hardware tutorial data..."
 tar -zxvf $data_tar.tar.gz -C data
 
 echo "Deleting tar file..."

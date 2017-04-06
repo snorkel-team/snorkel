@@ -288,17 +288,17 @@ def count_labels(entities, gold):
 
 
 def part_error_analysis(c):
-    print "Doc: %s" % c.part.parent.document
+    print "Doc: %s" % c.part.sentence.document
     print "------------"
-    part = c.get_arguments()[0]
+    part = c.get_contexts()[0]
     print "Part:"
     print part
-    print part.parent
+    print part.sentence
     print "------------"
-    attr = c.get_arguments()[1]
+    attr = c.get_contexts()[1]
     print "Attr:"
     print attr
-    print attr.parent
+    print attr.sentence
     print "------------"
 
 

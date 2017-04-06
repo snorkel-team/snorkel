@@ -8,8 +8,8 @@ import numpy as np
 from snorkel.utils import tokens_to_ngrams
 from utils_table import *
 from utils_visual import *
-from .models import TemporarySpan, Phrase
-from candidates import Ngrams
+from snorkel.models import TemporarySpan, Phrase
+from snorkel.candidates import Ngrams
 
 
 def get_text_splits(c):

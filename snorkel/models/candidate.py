@@ -82,7 +82,7 @@ def candidate_subclass(class_name, args, table_name=None):
         # Helper method to get argument names
         '__argnames__' : args
     }
-        
+
     # Create named arguments
     unique_con_args = []
     for arg in args:
@@ -104,7 +104,7 @@ def candidate_subclass(class_name, args, table_name=None):
 
     # Create class
     C = type(class_name, (Candidate,), class_attribs)
-        
+
     # Create table in DB
     if not snorkel_engine.dialect.has_table(snorkel_engine, table_name):
         C.__table__.create(bind=snorkel_engine)

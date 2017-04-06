@@ -1,9 +1,9 @@
-from fonduer.models import TemporaryImplicitSpan, Label
+from snorkel.models import TemporaryImplicitSpan, Label
 from snorkel.matchers import RegexMatchSpan, Union
 from snorkel.utils import ProgressBar
 # from fonduer.loaders import create_or_fetch
-from fonduer.lf_helpers import *
-from fonduer.candidates import OmniNgrams
+from snorkel.contrib.fonduer.lf_helpers import *
+from snorkel.candidates import OmniNgrams
 from hardware_spaces import OmniNgramsPart
 from hardware_matchers import get_matcher
 import csv
@@ -13,6 +13,12 @@ import os
 from collections import defaultdict
 
 from itertools import chain
+
+
+from snorkel.db_helpers import reload_annotator_labels
+from snorkel.models import GoldLabel, GoldLabelKey
+
+
 
 # eeca_matcher = RegexMatchSpan(rgx='([b]{1}[abcdefklnpqruyz]{1}[\swxyz]?[0-9]{3,5}[\s]?[A-Z\/]{0,5}[0-9]?[A-Z]?([-][A-Z0-9]{1,7})?([-][A-Z0-9]{1,2})?)')
 # jedec_matcher = RegexMatchSpan(rgx='([123]N\d{3,4}[A-Z]{0,5}[0-9]?[A-Z]?)')
@@ -66,9 +72,6 @@ def count_hardware_labels(candidates, filename, attrib, attrib_class):
     pb.close()
     return gold_cand
 
-
-from snorkel.db_helpers import reload_annotator_labels
-from fonduer.models import GoldLabel, GoldLabelKey
 
 
 def load_hardware_labels(session, candidate_class, filename, attrib, annotator_name='gold'):

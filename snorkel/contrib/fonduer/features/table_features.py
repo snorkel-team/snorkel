@@ -1,7 +1,6 @@
-from fonduer.lf_helpers import *
-from fonduer.models import ImplicitSpan
-from fonduer.utils_table import min_row_diff, min_col_diff, num_rows, num_cols
-from fonduer.config import settings
+from ..lf_helpers import *
+from ..utils_table import min_row_diff, min_col_diff, num_rows, num_cols
+from ..config import settings
 
 FEAT_PRE = 'TAB_'
 DEF_VALUE = 1

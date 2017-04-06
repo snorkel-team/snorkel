@@ -1,25 +1,17 @@
-from pandas import DataFrame, Series
-import scipy.sparse as sparse
-from snorkel.utils import remove_files
-from models import Candidate 
-from models.meta import *
-from snorkel.utils import get_ORM_instance, ProgressBar
-from features.features import get_all_feats
-from sqlalchemy.orm.session import object_session
-import subprocess
-import csv
-import multiprocessing
-from itertools import izip
-from collections import namedtuple
-import numpy as np
 import codecs
-import uuid
-from multiprocessing.queues import Queue
+import subprocess
 import tempfile
-from fonduer.udf import UDF, UDFRunner
-from fonduer.annotations import _to_annotation_generator, FeatureAnnotator
-from fonduer.models.meta import new_engine
-from fonduer.features.features import get_all_feats
+from collections import namedtuple
+from itertools import izip
+
+import numpy as np
+import scipy.sparse as sparse
+from pandas import DataFrame, Series
+
+from snorkel.annotations import _to_annotation_generator, FeatureAnnotator
+from snorkel.models import Candidate
+from snorkel.models.meta import *
+from snorkel.udf import UDF, UDFRunner
 from snorkel.utils import (
     matrix_conflicts,
     matrix_coverage,
@@ -29,6 +21,8 @@ from snorkel.utils import (
     matrix_fn,
     matrix_tn
 )
+from snorkel.utils import remove_files
+from .features.features import get_all_feats
 
 # Used to conform to existing annotation key API call
 # Note that this anontation matrix class can not be replaced with snorkel one

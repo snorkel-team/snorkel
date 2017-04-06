@@ -4,6 +4,7 @@ from itertools import product
 import re
 from sqlalchemy.sql import select
 
+from .models import Document
 from .models import Candidate, TemporarySpan, Sentence
 from .udf import UDF, UDFRunner
 
@@ -20,6 +21,8 @@ class CandidateExtractor(UDFRunner):
                     Contexts to consider
     :param matchers: one or list of :class:`snorkel.matchers.Matcher` objects, one for each relation argument. Only tuples of
                      Contexts for which each element is accepted by the corresponding Matcher will be returned as Candidates
+    :param throttler: an optional function for filtering out candidates which returns a Boolean expressing whether or not
+                      the candidate should be instantiated.
     :param self_relations: Boolean indicating whether to extract Candidates that relate the same context.
                            Only applies to binary relations. Default is False.
     :param nested_relations: Boolean indicating whether to extract Candidates that relate one Context with another
@@ -27,11 +30,12 @@ class CandidateExtractor(UDFRunner):
     :param symmetric_relations: Boolean indicating whether to extract symmetric Candidates, i.e., rel(A,B) and rel(B,A),
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
-    def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=True):
+    def __init__(self, candidate_class, cspaces, matchers, throttler=None, self_relations=False, nested_relations=False, symmetric_relations=True):
         super(CandidateExtractor, self).__init__(CandidateExtractorUDF,
                                                  candidate_class=candidate_class,
                                                  cspaces=cspaces,
                                                  matchers=matchers,
+                                                 throttler=throttler,
                                                  self_relations=self_relations,
                                                  nested_relations=nested_relations,
                                                  symmetric_relations=symmetric_relations)
@@ -44,10 +48,11 @@ class CandidateExtractor(UDFRunner):
 
 
 class CandidateExtractorUDF(UDF):
-    def __init__(self, candidate_class, cspaces, matchers, self_relations, nested_relations, symmetric_relations, **kwargs):
+    def __init__(self, candidate_class, cspaces, matchers, throttler, self_relations, nested_relations, symmetric_relations, **kwargs):
         self.candidate_class     = candidate_class
         self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
+        self.throttler           = throttler
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations
         self.symmetric_relations = symmetric_relations
@@ -278,3 +283,30 @@ class PretaggedCandidateExtractorUDF(UDF):
 
             # Add Candidate to session
             yield self.candidate_class(**candidate_args)
+
+
+class OmniNgrams(Ngrams):
+    """
+    Defines the space of candidates as all n-grams (n <= n_max) in a Document _x_,
+    divided into Phrases inside of html elements (such as table cells).
+    """
+    def __init__(self, n_max=5, split_tokens=['-', '/']):
+        Ngrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
+
+    def apply(self, context):
+        if not isinstance(context, Document):
+            raise TypeError("Input Contexts to OmniNgrams.apply() must be of type Document")
+        for phrase in context.phrases:
+            for ts in Ngrams.apply(self, phrase):
+                yield ts
+
+
+class PhraseToSpan(CandidateSpace):
+    """
+    Defines the space of candidates as all Phrases in a Document _x_,
+    """
+    def apply(self, context):
+        if not isinstance(context, Document):
+            raise TypeError("Input Contexts to PhraseToSpan.apply() must be of type Document")
+        for phrase in context.phrases:
+            yield TemporarySpan(char_start=0, char_end=len(phrase.text)-1, parent=phrase)

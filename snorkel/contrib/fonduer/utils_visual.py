@@ -1,4 +1,4 @@
-from .models import Phrase, TemporarySpan
+from snorkel.models import Phrase, TemporarySpan
 from collections import namedtuple
 
 

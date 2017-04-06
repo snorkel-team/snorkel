@@ -121,7 +121,7 @@ class Sentence(Context):
         yield self
 
     def __repr__(self):
-        return "Sentence" + str((self.document, self.position, self.text))
+        return "Sentence(%s,%s,%s)" % (self.document, self.position, self.text.encode('utf-8'))
 
 
 class TemporaryContext(object):
@@ -284,8 +284,8 @@ class TemporarySpan(TemporaryContext):
             raise NotImplementedError()
 
     def __repr__(self):
-        return u'%s("%s", sentence=%s, chars=[%s,%s], words=[%s,%s])' \
-            % (self.__class__.__name__, self.get_span(), self.sentence.id, self.char_start, self.char_end,
+        return '%s("%s", sentence=%s, chars=[%s,%s], words=[%s,%s])' \
+            % (self.__class__.__name__, self.get_span().encode('utf-8'), self.sentence.id, self.char_start, self.char_end,
                self.get_word_start(), self.get_word_end())
 
     def _get_instance(self, **kwargs):

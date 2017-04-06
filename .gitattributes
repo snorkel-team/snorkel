@@ -1,3 +1,2 @@
 *.html linguist-vendored
 *.txt  linguist-vendored
-gene_tag_example/data/* linguist-vendored

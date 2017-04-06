@@ -47,7 +47,7 @@ class Candidate(SnorkelBase):
         return self.get_contexts()[key]
 
     def __repr__(self):
-        return u"%s(%s)" % (self.__class__.__name__, u", ".join(map(unicode, self.get_contexts())))
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(map(str, self.get_contexts())))
 
 
 def candidate_subclass(class_name, args, table_name=None):

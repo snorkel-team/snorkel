@@ -9,8 +9,10 @@
 <img src="figs/darpa.JPG" width="80" height="80" align="middle" />
 <img src="figs/ONR.jpg" width="100" height="80" align="middle" />
 <img src="figs/moore_logo.png" width="100" height="60" align="middle" />
+<img src="figs/nih_logo.png" width="80" height="60" align="middle" />
+<img src="figs/mobilize_logo.png" width="100" height="60" align="middle" />
 
-*Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043.*
+*Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043 and also by the NIH through the [Mobilize Center](http://mobilize.stanford.edu/) under grant number U54EB020405.*
 
 ## Getting Started
 
@@ -19,19 +21,26 @@
 * Documentation [here](http://snorkel.readthedocs.io/en/latest/)
 
 ## Motivation
-Snorkel is a system for rapidly _creating, modeling, and managing_ training data, currently focused on accelerating the development of **structured information extraction applications** for domains in which large labeled training sets are not available or easy to obtain.
+Snorkel is a system for rapidly **creating, modeling, and managing training data**, currently focused on accelerating the development of _structured or "dark" data extraction applications_ for domains in which large labeled training sets are not available or easy to obtain.
 
-Today's state-of-the-art machine learning models, such as deep learning ones, largely automate the onerous task of feature engineering&mdash;but at the cost of requiring **massive labeled training sets.** Snorkel is based around the _data programming_ paradigm, which provides a _faster_ way to generate training data. In this approach, the developer focuses on writing a set of _labeling functions_ which generate a large but noisy set of training labels. Snorkel then learns a generative model of this noisy labeling process&mdash;learning, essentially, which labeling functions are more accurate than others&mdash;and uses this to train any simple or state-of-the-art end model (for example, a deep neural network in [TensorFlow](https://www.tensorflow.org).
+Today's state-of-the-art machine learning models require massive labeled training sets--which usually do not exist for real-world applications. Instead, Snorkel is based around the new [data programming](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly) paradigm, in which the developer focuses on writing a set of labeling functions, which are just scripts that programmatically label data. The resulting labels are noisy, but Snorkel automatically models this process—learning, essentially, which labeling functions are more accurate than others—and then uses this to train an end model (for example, a deep neural network in TensorFlow).
 
-Surprisingly, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models! Snorkel also can be seen as providing a unifying framework for various [_weak supervision_](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html) techniques, allowing the developer to leverage all available supervision _resources_ to train their model.
+_Surprisingly_, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models. We see Snorkel as providing a general framework for many [_weak supervision_](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html) techniques, and as defining a new programming model for weakly-supervised machine learning systems.
 
-**_Snorkel is very much a work in progress_**, but some people have already begun developing applications with it... let us know what you think, and how we can improve it, in the [Issues](https://github.com/HazyResearch/snorkel/issues) section!
+### Users
+We're lucky to have some amazing collaborators who are currently using Snorkel!
+
+<img src="figs/user_logos.png" width="500" height="200" align="middle" />
+
+However, **_Snorkel is very much a work in progress_**, so we're eager for any and all feedback... let us know what you think and how we can improve Snorkel in the [Issues](https://github.com/HazyResearch/snorkel/issues) section!
 
 ### References
 * _Data Programming: Creating Large Training Sets, Quickly_, ([NIPS 2016](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly))
 * _Data Programming with DDLite: Putting Humans in a Different Part of the Loop_, ([HILDA @ SIGMOD 2016](http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf))
 * _Snorkel: A System for Lightweight Extraction_, ([CIDR 2017](http://cidrdb.org/cidr2017/gongshow/abstracts/cidr2017_73.pdf))
 * Data Programming: ML with Weak Supervision ([blog](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html))
+* _Learning the Structure of Generative Models without Labeled Data_, ([preprint](https://arxiv.org/abs/1703.00854))
+* _Fonduer: Knowledge Base Construction from Richly Formatted Data_, ([preprint](https://arxiv.org/abs/1703.05028), [blog](https://hazyresearch.github.io/snorkel/blog/fonduer.html))
 
 ## Installation / dependencies
 

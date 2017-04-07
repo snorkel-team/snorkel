@@ -216,7 +216,8 @@ class BatchAnnotator(UDFRunner):
         self.batch_size = batch_size
         super(BatchAnnotator, self).__init__(BatchAnnotatorUDF, f=f, **kwargs)
         
-    def apply(self, split, key_group=0, replace_key_set=True, update_keys=True, update_values=True, storage=None, ignore_keys=[], **kwargs):
+    def apply(self, split, key_group=0, replace_key_set=True, update_keys=False, update_values=True, storage=None, ignore_keys=[], **kwargs):
+        if update_keys: replace_key_set = False
         # Get the cids based on the split, and also the count
         SnorkelSession = new_sessionmaker()
         session   = SnorkelSession()

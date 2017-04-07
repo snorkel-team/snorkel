@@ -216,7 +216,7 @@ class BatchAnnotator(UDFRunner):
         self.batch_size = batch_size
         super(BatchAnnotator, self).__init__(BatchAnnotatorUDF, f=f, **kwargs)
         
-    def apply(self, split, key_group=0, replace_key_set=True, update_existing=False, storage=None, ignore_keys=[], **kwargs):
+    def apply(self, split, key_group=0, replace_key_set=True, update_keys=True, update_values=True, storage=None, ignore_keys=[], **kwargs):
         # Get the cids based on the split, and also the count
         SnorkelSession = new_sessionmaker()
         session   = SnorkelSession()
@@ -240,7 +240,7 @@ class BatchAnnotator(UDFRunner):
         # Run the Annotator
         with snorkel_engine.connect() as con:
             table_already_exists = table_exists(con, table_name)
-            if update_existing and table_already_exists:
+            if update_values and table_already_exists:
                 # Now we extract under a temporary name for merging
                 old_table_name = table_name
                 table_name += '_updates'
@@ -281,9 +281,9 @@ class BatchAnnotator(UDFRunner):
             # Load the matrix
             key_table_name = self.key_table_name
             if key_group:
-                key_table_name = get_sql_name(key_group) + '_' + self.annotation_type + '_keys'
+                key_table_name = self.key_table_name + '_' + get_sql_name(key_group)
                 
-            return load_annotation_matrix(con, candidates, split, table_name, key_table_name, replace_key_set, storage, ignore_keys)
+            return load_annotation_matrix(con, candidates, split, table_name, key_table_name, replace_key_set, storage, update_keys, ignore_keys)
 
     def clear(self, session, split, replace_key_set = False, **kwargs):
         """
@@ -313,14 +313,14 @@ class BatchLabelAnnotator(BatchAnnotator):
     def __init__(self, candidate_type, lfs, **kwargs):
         super(BatchLabelAnnotator, self).__init__(candidate_type, annotation_type='label', f=lfs, **kwargs)
 
-def load_annotation_matrix(con, candidates, split, table_name, key_table_name, replace_key_set, storage, ignore_keys=[]):
+def load_annotation_matrix(con, candidates, split, table_name, key_table_name, replace_key_set, storage, update_keys, ignore_keys):
     '''
     Loads a sparse matrix from an annotation table
     '''
     if replace_key_set:
         # Recalculate unique keys for this set of candidates
         con.execute('DROP TABLE IF EXISTS %s' % key_table_name)
-    if not table_exists(con, key_table_name):
+    if replace_key_set or not table_exists(con, key_table_name):
         if storage == 'COO':
             con.execute('CREATE TABLE %s AS '
                         '(SELECT DISTINCT key FROM %s)' % (key_table_name, table_name))
@@ -328,7 +328,7 @@ def load_annotation_matrix(con, candidates, split, table_name, key_table_name, r
             con.execute('CREATE TABLE %s AS '
                         '(SELECT DISTINCT UNNEST(keys) as key FROM %s)' % (key_table_name, table_name))
         con.execute('ALTER TABLE %s ADD PRIMARY KEY(key)' % key_table_name)
-    else:
+    elif update_keys:
         if storage == 'COO':
             con.execute('INSERT INTO %s SELECT DISTINCT key FROM %s '
                         'ON CONFLICT(key) DO NOTHING' % (key_table_name, table_name))

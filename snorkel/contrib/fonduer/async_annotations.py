@@ -196,7 +196,7 @@ class BatchAnnotatorUDF(UDF):
         with codecs.open(segment_path, 'a+', encoding='utf-8') as writer:
             for i, candidate in enumerate(candidates):
                 # Runs the actual extraction function
-                keys, values = zip(*list(self.anno_generator(candidate)))
+                keys, values = zip(*list((k,v) for k,v in self.anno_generator(candidate) if v != 0))
                 row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
                 writer.write('\t'.join(row) + '\n')
         return
@@ -212,7 +212,7 @@ class BatchAnnotator(UDFRunner):
         self.batch_size = batch_size
         super(BatchAnnotator, self).__init__(BatchAnnotatorUDF, f=f, **kwargs)
         
-    def apply(self, split, key_group=0, replace_key_set=True, update_existing=False, storage=None, **kwargs):
+    def apply(self, split, key_group=0, replace_key_set=True, update_existing=False, storage=None, ignore_keys=[], **kwargs):
         # Get the cids based on the split, and also the count
         SnorkelSession = new_sessionmaker()
         session   = SnorkelSession()
@@ -221,8 +221,10 @@ class BatchAnnotator(UDFRunner):
         # Also, if we try to pass in a query iterator instead, with AUTOCOMMIT on, we get a TXN error...
         candidates = session.query(Candidate).filter(Candidate.split == split).all()
         cids_count = len(candidates)
+        if cids_count == 0:
+            raise ValueError('No candidates in current split')
 
-        # Setting up job batches        
+        # Setting up job batches
         chunks    = cids_count / self.batch_size
         batch_range = [(i * self.batch_size, (i + 1) * self.batch_size) for i in xrange(chunks)]
         remainder = cids_count % self.batch_size
@@ -233,7 +235,7 @@ class BatchAnnotator(UDFRunner):
         table_name = self.table_name
         # Run the Annotator
         with snorkel_engine.connect() as con:
-            table_already_exists = table_exists(con, table_name)  
+            table_already_exists = table_exists(con, table_name)
             if update_existing and table_already_exists:
                 # Now we extract under a temporary name for merging
                 old_table_name = table_name
@@ -277,7 +279,7 @@ class BatchAnnotator(UDFRunner):
             if key_group:
                 key_table_name = get_sql_name(key_group) + '_' + self.annotation_type + '_keys'
                 
-            return load_annotation_matrix(con, candidates, split, table_name, key_table_name, replace_key_set, storage)
+            return load_annotation_matrix(con, candidates, split, table_name, key_table_name, replace_key_set, storage, ignore_keys)
 
     def clear(self, session, split, replace_key_set = False, **kwargs):
         """
@@ -307,7 +309,7 @@ class BatchLabelAnnotator(BatchAnnotator):
     def __init__(self, candidate_type, lfs, **kwargs):
         super(BatchLabelAnnotator, self).__init__(candidate_type, annotation_type='label', f=lfs, **kwargs)
 
-def load_annotation_matrix(con, candidates, split, table_name, key_table_name, replace_key_set, storage):
+def load_annotation_matrix(con, candidates, split, table_name, key_table_name, replace_key_set, storage, ignore_keys=[]):
     '''
     Loads a sparse matrix from an annotation table
     '''
@@ -331,7 +333,8 @@ def load_annotation_matrix(con, candidates, split, table_name, key_table_name, r
                 
     # The result should be a list of all feature strings, small enough to hold in memory
     # TODO: store the actual index in table in case row number is unstable between queries
-    keys = [row[0] for row in con.execute('SELECT * FROM %s' % key_table_name)]
+    ignore_keys = set(ignore_keys)
+    keys = [row[0] for row in con.execute('SELECT * FROM %s' % key_table_name) if row[0] not in ignore_keys]
     key_index = {key:i for i, key in enumerate(keys)}
     # Create sparse matrix in LIL format for incremental construction
     lil_feat_matrix = sparse.lil_matrix((len(candidates), len(keys)), dtype=np.float32)

@@ -211,7 +211,7 @@ class BatchAnnotator(UDFRunner):
         self.annotation_type = annotation_type
         self.batch_size = batch_size
         super(BatchAnnotator, self).__init__(BatchAnnotatorUDF, f=f)
-        self.cleanup(None)
+        if clear_existing: self.cleanup(None)
         
     def apply(self, split, key_group=0, replace_key_set=True, update_existing=False, storage=None, **kwargs):
             

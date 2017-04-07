@@ -196,9 +196,11 @@ class BatchAnnotatorUDF(UDF):
         with codecs.open(segment_path, 'a+', encoding='utf-8') as writer:
             for i, candidate in enumerate(candidates):
                 # Runs the actual extraction function
-                keys, values = zip(*[(k,v) for k,v in self.anno_generator(candidate) if v != 0])
-                row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
-                writer.write('\t'.join(row) + '\n')
+                nonzero_kvs = [(k,v) for k,v in self.anno_generator(candidate) if v != 0]
+                if nonzero_kvs:
+                    keys, values = zip(*nonzero_kvs)
+                    row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
+                    writer.write('\t'.join(row) + '\n')
         return
         yield
 

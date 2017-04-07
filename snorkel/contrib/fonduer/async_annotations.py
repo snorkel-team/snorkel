@@ -199,8 +199,10 @@ class BatchAnnotatorUDF(UDF):
                 nonzero_kvs = [(k,v) for k,v in self.anno_generator(candidate) if v != 0]
                 if nonzero_kvs:
                     keys, values = zip(*nonzero_kvs)
-                    row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
-                    writer.write('\t'.join(row) + '\n')
+                else:
+                    keys = values = []
+                row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
+                writer.write('\t'.join(row) + '\n')
         return
         yield
 

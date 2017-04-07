@@ -327,6 +327,7 @@ def load_annotation_matrix(con, candidates, split, table_name, key_table_name, r
         else:
             con.execute('CREATE TABLE %s AS '
                         '(SELECT DISTINCT UNNEST(keys) as key FROM %s)' % (key_table_name, table_name))
+        con.execute('ALTER TABLE %s ADD PRIMARY KEY(key)' % key_table_name)
     else:
         if storage == 'COO':
             con.execute('INSERT INTO %s SELECT DISTINCT key FROM %s '

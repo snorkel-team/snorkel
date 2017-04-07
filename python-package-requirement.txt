@@ -17,3 +17,4 @@ wand
 selenium
 editdistance
 pyyaml
+psycopg2

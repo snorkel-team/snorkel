@@ -204,13 +204,14 @@ class BatchAnnotatorUDF(UDF):
 
 class BatchAnnotator(UDFRunner):
     """Abstract class for annotating candidates and persisting these annotations to DB"""
-    def __init__(self, candidate_type, annotation_type, f, batch_size = 50):
+    def __init__(self, candidate_type, annotation_type, f, clear_existing=False, batch_size = 50):
         if isinstance(candidate_type, type): candidate_type = candidate_type.__name__
         self.table_name = get_sql_name(candidate_type) + '_' + annotation_type
         self.key_table_name = self.table_name + '_keys'
         self.annotation_type = annotation_type
         self.batch_size = batch_size
         super(BatchAnnotator, self).__init__(BatchAnnotatorUDF, f=f)
+        self.cleanup(None)
         
     def apply(self, split, key_group=0, replace_key_set=True, update_existing=False, storage=None, **kwargs):
             
@@ -244,7 +245,7 @@ class BatchAnnotator(UDFRunner):
             
             segment_file_blob = os.path.join(segment_dir, _segment_filename(self.table_name, split))
             remove_files(segment_file_blob)
-            super(BatchAnnotator, self).apply(batch_range, table_name = self.table_name, split=split, **kwargs)
+            super(BatchAnnotator, self).apply(batch_range, table_name = self.table_name, split=split, clear=False, **kwargs)
             
             # Insert and update keys
             con.execute('CREATE TABLE %s(candidate_id integer, keys text[] NOT NULL, values real[] NOT NULL)' % table_name)
@@ -282,7 +283,7 @@ class BatchAnnotator(UDFRunner):
                 
             return load_annotation_matrix(con, candidates, table_name, key_table_name, replace_key_set, storage)
 
-    def clear(self, session, replace_key_set = True, **kwargs):
+    def cleanup(self, session, replace_key_set = True, **kwargs):
         """
         Deletes the Annotations for the Candidates in the given split.
         If replace_key_set=True, deletes *all* Annotations (of this Annotation sub-class)
@@ -299,12 +300,12 @@ class BatchAnnotator(UDFRunner):
 
 
 class BatchFeatureAnnotator(BatchAnnotator):
-    def __init__(self, candidate_type):
-        super(BatchFeatureAnnotator, self).__init__(candidate_type, annotation_type='feature', f=get_all_feats)
+    def __init__(self, candidate_type, **kwargs):
+        super(BatchFeatureAnnotator, self).__init__(candidate_type, annotation_type='feature', f=get_all_feats, **kwargs)
         
 class BatchLabelAnnotator(BatchAnnotator):
-    def __init__(self, candidate_type, lfs):
-        super(BatchLabelAnnotator, self).__init__(candidate_type, annotation_type='label', f=lfs)
+    def __init__(self, candidate_type, lfs, **kwargs):
+        super(BatchLabelAnnotator, self).__init__(candidate_type, annotation_type='label', f=lfs, **kwargs)
 
 # def _annotate_worker(start, end, name, table_name, job_id, annotator):
 #     '''

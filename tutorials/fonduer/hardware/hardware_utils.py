@@ -94,12 +94,14 @@ def load_hardware_labels(session, candidate_class, filename, attrib, annotator_n
         part = (c[0].get_span()).upper()
         val = (''.join(c[1].get_span().split())).upper()
         context_stable_ids = '~~'.join([i.stable_id for i in c.get_contexts()])
-        if (doc, part, val) in gold_dict:
-            label = session.query(GoldLabel).filter(GoldLabel.key == ak).filter(GoldLabel.candidate == c).first()
-            if label is None:
+        label = session.query(GoldLabel).filter(GoldLabel.key == ak).filter(GoldLabel.candidate == c).first()
+        if label is None:
+            if (doc, part, val) in gold_dict:
                 label = GoldLabel(candidate=c, key=ak, value=1)
-                session.add(label)
-                labels.append(label)
+            else:
+                label = GoldLabel(candidate=c, key=ak, value=-1)
+            session.add(label)
+            labels.append(label)
     session.commit()
     pb.close()
 

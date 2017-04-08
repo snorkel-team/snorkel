@@ -69,33 +69,9 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         """Return summary stats about the annotations"""
         raise NotImplementedError()
 
-    def lf_stats_legacy(self, gold=None):
+    def lf_stats(self, labels=None, est_accs=None):
         """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
         lf_names = self.keys
-
-        if gold is not None:
-            d = {
-                'j'         : range(self.shape[1]),
-                'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
-                'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
-                'conflicts' : Series(data=matrix_conflicts(self), index=lf_names),
-                #'accuracy'  : Series(data=matrix_accuracy(self, gold), index=lf_names),
-            }
-        else:
-            # Default LF stats
-            d = {
-                'j'         : range(self.shape[1]),
-                'coverage'  : Series(data=matrix_coverage(self), index=lf_names),
-                'overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
-                'conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
-            }
-
-
-        return DataFrame(data=d, index=lf_names)
-    
-    def lf_stats(self, session, labels=None, est_accs=None):
-        """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
-        lf_names = [self.get_key(session, j).name for j in range(self.shape[1])]
 
         # Default LF stats
         col_names = ['j', 'Coverage', 'Overlaps', 'Conflicts']

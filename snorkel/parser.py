@@ -298,16 +298,6 @@ class CoreNLPHandler(object):
             yield parts
 
 
-class SentenceParser(object):
-    def __init__(self, tok_whitespace=False):
-        self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace)
-
-    def parse(self, doc, text):
-        """Parse a raw document as a string into a list of sentences"""
-        for parts in self.corenlp_handler.parse(doc, text):
-            yield Sentence(**parts)
-
-
 class HTMLPreprocessor(DocPreprocessor):
     """Simple parsing of files into html documents"""
     def parse_file(self, fp, file_name):

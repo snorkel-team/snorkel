@@ -542,6 +542,7 @@ class OmniParserUDF(UDF):
         parent_idx = 0
         position = 0
         phrase_num = 0
+        abs_phrase_offset = 0
         while parsed < content_length:
             batch_end = parsed + \
                         self.contents[parsed:parsed + self.batch_size].rfind(self.delim) + \
@@ -554,8 +555,9 @@ class OmniParserUDF(UDF):
                         position = 0
                     parts['document'] = document
                     parts['phrase_num'] = phrase_num
-                    parts['stable_id'] = \
-                        "%s::%s:%s:%s" % (document.name, 'phrase', phrase_num, phrase_num)
+                    abs_phrase_offset_end = abs_phrase_offset + parts['char_offsets'][-1] + len(parts['words'][-1])
+                    parts['stable_id'] = construct_stable_id(document, 'phrase', abs_phrase_offset, abs_phrase_offset_end)
+                    abs_phrase_offset = abs_phrase_offset_end
                     if self.structural:
                         parts['xpath'] =  xpaths[parent_idx]
                         parts['html_tag'] = html_tags[parent_idx]

@@ -881,10 +881,3 @@ def construct_stable_id(parent_context, polymorphic_type, relative_char_offset_s
     start = parent_doc_char_start + relative_char_offset_start
     end   = parent_doc_char_start + relative_char_offset_end
     return "%s::%s:%s:%s" % (doc_id, polymorphic_type, start, end)
-
-# def construct_stable_id(parent_context, polymorphic_type, relative_char_offset_start, relative_char_offset_end):
-#     """Contruct a stable ID for a Context given its parent and its character offsets relative to the parent"""
-#     doc_id, _, parent_doc_char_start, _ = split_stable_id(parent_context.stable_id)
-#     start = parent_doc_char_start + relative_char_offset_start
-#     end   = parent_doc_char_start + relative_char_offset_end
-#     return "%s::%s:%s:%s" % (doc_id, polymorphic_type, start, end)

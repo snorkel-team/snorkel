@@ -1,18 +1,15 @@
-from .models import Phrase
+import httplib
+import os
 import re
 import subprocess
-import os
-from collections import OrderedDict, defaultdict
-from pprint import pprint
-from timeit import default_timer as timer
 import warnings
+from collections import OrderedDict, defaultdict
 
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
-from editdistance import eval as editdist # Alternative library: python-levenshtein
+from editdistance import eval as editdist  # Alternative library: python-levenshtein
 from selenium import webdriver
-import httplib
 
 
 class VisualLinker():

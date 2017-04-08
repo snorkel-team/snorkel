@@ -22,7 +22,7 @@ from lxml.html import fromstring
 from .models import Candidate, Context, Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
 from .udf import UDF, UDFRunner
 from .utils import sort_X_on_Y
-from .visual import VisualLinker
+from .contrib.fonduer.visual import VisualLinker
 
 
 class CorpusParser(UDFRunner):

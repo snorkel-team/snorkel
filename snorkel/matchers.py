@@ -77,11 +77,11 @@ class NgramMatcher(Matcher):
     """Matcher base class for Ngram objects"""
     def _is_subspan(self, c, span):
         """Tests if candidate c is subspan of span, where span is defined specific to candidate type"""
-        return c.char_start >= span[0] and c.char_end <= span[1]
+        return c.sentence.id == span[0] and c.char_start >= span[1] and c.char_end <= span[2]
 
     def _get_span(self, c):
         """Gets a tuple that identifies a span for the specific candidate class that c belongs to"""
-        return (c.char_start, c.char_end)
+        return (c.sentence.id, c.char_start, c.char_end)
 
 
 class DictionaryMatch(NgramMatcher):

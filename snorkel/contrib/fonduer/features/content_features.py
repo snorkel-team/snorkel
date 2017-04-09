@@ -12,6 +12,7 @@ from treedlib import compile_relation_feature_generator
 
 DEF_VALUE = 1
 
+
 def get_content_feats(candidate):
     args = candidate.get_contexts()
     if not (isinstance(args[0], TemporarySpan)):
@@ -61,9 +62,9 @@ def get_content_feats(candidate):
         else:
             for f in get_word_feats(span1):
                 yield 'BASIC_e1_' + f, DEF_VALUE
-            
+
             for f in get_word_feats(span2):
-                yield 'BASIC_e2_' + f, DEF_VALUE        
+                yield 'BASIC_e2_' + f, DEF_VALUE
 
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")
@@ -105,6 +106,7 @@ def get_ddlib_feats(context, idxs):
 
     for window_feat in _get_window_features(context, idxs):
         yield window_feat
+
 
 def _get_seq_features(context, idxs):
     yield "WORD_SEQ_[" + " ".join(context['words'][i] for i in idxs) + "]"
@@ -188,11 +190,11 @@ def get_word_feats(span):
     attrib = 'words'
     for ngram in tokens_to_ngrams(span.get_attrib_tokens(attrib), n_min=1, n_max=2):
         yield "CONTAINS_%s_[%s]" % (attrib.upper(), ngram)
-    for ngram in get_left_ngrams(span, 
-                                 window=settings.featurization.content.word_feature.window, 
+    for ngram in get_left_ngrams(span,
+                                 window=settings.featurization.content.word_feature.window,
                                  n_max=2, attrib=attrib):
         yield "LEFT_%s_[%s]" % (attrib.upper(), ngram)
-    for ngram in get_right_ngrams(span, 
-                                  window=settings.featurization.content.word_feature.window, 
+    for ngram in get_right_ngrams(span,
+                                  window=settings.featurization.content.word_feature.window,
                                   n_max=2, attrib=attrib):
         yield "RIGHT_%s_[%s]" % (attrib.upper(), ngram)

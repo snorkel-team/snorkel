@@ -53,7 +53,7 @@ class Visualizer():
         if not pdf_file:
             pdf_file = os.path.join(self.pdf_path, candidates[0][0].sentence.document.name + '.pdf')
         boxes = [get_box(span) for c in candidates for span in c.get_contexts()]
-        imgs =  self.display_boxes(pdf_file, boxes, alternate_colors=True)
+        imgs = self.display_boxes(pdf_file, boxes, alternate_colors=True)
         return display(*imgs)
 
     def display_words(self, phrases, target=None, pdf_file=None):

@@ -235,7 +235,7 @@ def same_row(c):
     Return True if all Spans in the given candidate are from the same Row.
     :param c: The candidate whose Spans are being compared
     """
-    return (same_table(c) and 
+    return (same_table(c) and
             all(is_row_aligned(c[i].sentence, c[0].sentence)
                 for i in range(len(c))))
 
@@ -256,10 +256,10 @@ def is_tabular_aligned(c):
     or Col
     :param c: The candidate whose Spans are being compared
     """
-    return (same_table(c) and 
-           (is_col_aligned(c[i].sentence, c[0].sentence) or
-            is_row_aligned(c[i].sentence, c[0].sentence)
-            for i in range(len(c))))
+    return (same_table(c) and
+            (is_col_aligned(c[i].sentence, c[0].sentence) or
+             is_row_aligned(c[i].sentence, c[0].sentence)
+             for i in range(len(c))))
 
 
 def same_cell(c):
@@ -287,12 +287,14 @@ def get_max_col_num(c):
     else:
         return None
 
+
 def get_min_col_num(c):
     span = c if isinstance(c, TemporarySpan) else c.get_arguments()[0]
     if span.is_tabular():
         return span.sentence.cell.col_start
     else:
         return None
+
 
 def get_phrase_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
     """
@@ -519,6 +521,7 @@ def get_page(c):
     span = c if isinstance(c, TemporarySpan) else c.get_arguments()[0]
     return span.get_attrib_tokens('page')[0]
 
+
 def is_horz_aligned(c):
     return (all([c[i].is_visual() and
                  bbox_horz_aligned(bbox_from_span(c[i]), bbox_from_span(c[0]))
@@ -576,9 +579,10 @@ def _get_direction_ngrams(direction, c, attrib, n_min, n_max, lower):
         if not span.is_tabular() or not span.is_visual(): continue
         for phrase in span.sentence.table.phrases:
             for ts in ngrams_space.apply(phrase):
-                if (bbox_direction_aligned(bbox_from_span(ts), bbox_from_span(span)) and 
-                    not (phrase == span.sentence and ts.get_span() in span.get_span())):
+                if (bbox_direction_aligned(bbox_from_span(ts), bbox_from_span(span)) and
+                        not (phrase == span.sentence and ts.get_span() in span.get_span())):
                     yield ts.get_span()
+
 
 def get_vert_ngrams_left(c):
     # TODO
@@ -604,24 +608,27 @@ def get_visual_distance(c, axis=None):
     # TODO
     return
 
+
 # Default dimensions for 8.5" x 11"
 DEFAULT_WIDTH = 612
 DEFAULT_HEIGHT = 792
+
+
 def get_page_vert_percentile(c, page_width=DEFAULT_WIDTH, page_height=DEFAULT_HEIGHT):
     span = c if isinstance(c, TemporarySpan) else c.get_arguments()[0]
-    return float(bbox_from_span(span).top)/page_height
+    return float(bbox_from_span(span).top) / page_height
+
 
 def get_page_horz_percentile(c, page_width=DEFAULT_WIDTH, page_height=DEFAULT_HEIGHT):
     span = c if isinstance(c, TemporarySpan) else c.get_arguments()[0]
-    return float(bbox_from_span(span).left)/page_width
+    return float(bbox_from_span(span).left) / page_width
+
 
 def _assign_alignment_features(phrases_by_key, align_type):
     for key, phrases in phrases_by_key.iteritems():
         if len(phrases) == 1: continue
         context_lemmas = set()
-        #         print 'For group', align_type, '\t'.join(p.text for p in phrases)
         for p in phrases:
-            #             print 'Adding', context_lemmas, 'to', p
             p._aligned_lemmas.update(context_lemmas)
             # update lemma context for upcoming phrases in the group
             if len(p.lemmas) < 7:
@@ -630,8 +637,6 @@ def _assign_alignment_features(phrases_by_key, align_type):
                 context_lemmas.update(new_lemmas)
                 context_lemmas.update(align_type + lemma for lemma in new_lemmas)
 
-
-# print context_lemmas
 
 def _preprocess_visual_features(doc):
     if hasattr(doc, '_visual_features'): return

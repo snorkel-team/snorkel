@@ -2,6 +2,7 @@ from snorkel.models import TemporarySpan, ImplicitSpan
 
 DEF_VALUE = 1
 
+
 def get_core_feats(candidate):
     args = candidate.get_contexts()
     if not (isinstance(args[0], TemporarySpan)):
@@ -21,6 +22,7 @@ def get_core_feats(candidate):
             yield 'CORE_e2_' + f, DEF_VALUE         
     else:
         raise NotImplementedError("Only handles unary and binary candidates currently")
+
 
 def _generate_core_feats(span):
     yield "SPAN_TYPE_[%s]" % ('IMPLICIT' if isinstance(span, ImplicitSpan) else 'EXPLICIT')

@@ -102,9 +102,9 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
 
 segment_dir = tempfile.gettempdir()
 def get_sql_name(text):
-    '''
+    """
     Create valid SQL identifier as part of a feature storage table name
-    '''
+    """
     # Normalize identifier
     text = ''.join(c.lower() if c.isalnum() else ' ' for c in text)
     text = '_'.join(text.split())
@@ -128,12 +128,12 @@ def table_exists(con, name):
     return cur.fetchone()[0]
 
 def copy_postgres(segment_file_blob, table_name, tsv_columns):
-    '''
+    """
     @var segment_file_blob: e.g. "segment_*.tsv"
     @var table_name: The SQL table name to copy into
     @var tsv_columns: a string listing column names in the segment files
     separated by comma. e.g. "name, age, income"
-    '''
+    """
     print 'Copying %s to postgres' % table_name
     cmd = ('cat %s | psql %s -U %s -c "COPY %s(%s) '
             'FROM STDIN" --set=ON_ERROR_STOP=true') % \
@@ -291,9 +291,9 @@ class BatchLabelAnnotator(BatchAnnotator):
         super(BatchLabelAnnotator, self).__init__(candidate_type, annotation_type='label', f=lfs, **kwargs)
 
 def load_annotation_matrix(con, candidates, split, table_name, key_table_name, replace_key_set, storage, update_keys, ignore_keys):
-    '''
+    """
     Loads a sparse matrix from an annotation table
-    '''
+    """
     if replace_key_set:
         # Recalculate unique keys for this set of candidates
         con.execute('DROP TABLE IF EXISTS %s' % key_table_name)

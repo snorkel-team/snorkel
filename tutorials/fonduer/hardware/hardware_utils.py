@@ -270,7 +270,10 @@ def candidates_to_entities(candidates):
 def entity_to_candidates(entity, candidate_subset):
     matches = []
     for c in candidate_subset:
-        c_entity = tuple([c[0].parent.document.name.upper()] + [c[i].get_span().upper() for i in range(len(c))])
+        c_entity = tuple([c[0].sentence.document.name.upper()] + [c[i].get_span().upper() for i in range(len(c))])
+        c_entity = tuple([x.encode('utf8') for x in c_entity])
+        # import pdb; pdb.set_trace()
+        print str(c_entity) + " " + str(entity)
         if c_entity == entity:
         # (part, attr) = c.get_arguments()
         # if (c[0].parent.document.name.upper(), part.get_span().upper(), attr.get_span().upper()) == entity:

@@ -6,7 +6,7 @@ import random
 
 class DependencySelector(object):
     """
-    Heuristic for identifying dependencies among labeling functions.
+    Fast method for identifying dependencies among labeling functions.
 
     :param seed: seed for initializing state of Numbskull variables
     """
@@ -15,6 +15,21 @@ class DependencySelector(object):
         self.rng.seed(seed)
 
     def select(self, L, higher_order=False, propensity=False, threshold=0.05, truncation=10):
+        """
+        Identifies a dependency structure among labeling functions for a given data set.
+
+        By default searches for correlations, i.e., the DEP_SIMILAR dependency type.
+
+        :param L: labeling function output matrix
+        :param higher_order: bool indicating whether to additionally search for higher order
+                             fixing and reinforcing dependencies (DEP_FIXING and DEP_REINFORCING)
+        :param propensity: bool indicating whether to include LF propensity dependencies during learning
+        :param threshold: minimum magnitude weight a dependency must have to be returned (in log scale), also
+                          regularization strength
+        :param truncation: number of iterations between truncation step for regularization
+        :return: collection of tuples of the format (LF 1 index, LF 2 index, dependency type),
+                 see snorkel.learning.constants
+        """
         try:
             L = L.todense()
         except AttributeError:

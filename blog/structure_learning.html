@@ -376,7 +376,7 @@ p.img {
 
 <p>Nobody likes a &quot;yes person.&quot; If someone isn't giving you their independent opinion, then you can't fully trust what they say. Trusting correlated sources can lead to disaster. You'll be overconfident, thinking that you're correct because so many sources agree. Take this case study from <a href="https://en.wikipedia.org/wiki/Monty_Python">a British team of management consultants</a> as an example:</p>
 
-<center><object width="425" height="344"><param name="movie" value="http://swf.tubechop.com/tubechop.swf?vurl=gLrxdkStd_U&start=7&end=238&cid=9022805"></param><embed src="http://swf.tubechop.com/tubechop.swf?vurl=gLrxdkStd_U&start=0&end=347&cid=9022805" type="application/x-shockwave-flash" allowfullscreen="true" width="425" height="344"></embed></object></center>
+<center><iframe width="560" height="315" src="https://www.youtube.com/embed/gLrxdkStd_U?start=7&end=238" frameborder="0" allowfullscreen></iframe></center>
 
 <p>In data programming, our sources of information aren't Hollywood movie writers; they're labeling functions. Recall that each labeling function is a little function written in code that votes (or abstains) on the true label for a data point. We want to combine their votes into an estimate of the true labels so that we can train machine learning models without hand-labeled data. Of course, these functions are noisy, so we use a generative model to estimate their accuracies and denoise their outputs.</p>
 
@@ -423,13 +423,13 @@ This model structure gives us a computational advantage: with only one target va
 
 <p>In our paper, we analyze the probability that this structure learning methods succeeds, i.e., returns exactly the correct dependency structure. Our analysis shows that for n labeling functions, O(n log n) samples are sufficient to learn models with pairwise dependencies between labeling functions with high probability. (For higher-order dependencies, the sample complexity is O(n<sup>2</sup> log n).) In contrast, in the supervised setting, the known guarantee is O(d<sup>3</sup> log n), where d is the maximum variable degree in the true factor graph. The difference is that the supervised case admits an analysis using Lagrangian duality, enabling the bound to depend on the true distribution's sparsity structure. Since the objective for a generative model with a latent variable is nonconvex, we cannot apply this analysis.</p>
 
-<p>We also measure the running time of our approach versus a maximum likelihood approach, for increasing numbers of labeling functions.
+<p>We also measure the running time of our approach versus a brute-force maximum likelihood approach, for increasing numbers of labeling functions.
 
 <center><img width="40%" src="structure_learning_img/time.png" alt="Structure learning is two orders of mangitude faster than a maximum likelihood approach."></center>
 
 We find that our approach is two orders of magnitude faster.</p>
 
-<p>Finally, we tested structure learning on a number of existing data programming applications. We find that it gives an average 1.5 F1 boost.</p>
+<p>Finally, we tested structure learning on a number of existing data programming applications like disease tagging and chemical-disease relation extraction in <a href="https://www.ncbi.nlm.nih.gov/pubmed/">PubMed</a>, and extracting information from tables in hardware manufacturers' spec. sheets. We find that it gives an average 1.5 F1 boost.</p>
 
 <h2 id="toc_3">How to Use Structure Learning in Snorkel</h2>
 <blockquote>
@@ -445,7 +445,7 @@ where <code>L</code> is the label matrix produced by a <code>LabelManager</code>
 <ul>
 <li>The <code>deps</code> object is a collection of tuples specifying which labeling functions are related by which types of dependencies.</li>
 <li>The keyword argument <code>threshold</code> is a positive float that indicates how strong the dependency has to be for it to be returned in the collection. Too many dependencies? Turn it up. Too few? Turn it down.</li>
-<li>By default, the <code>DependencySelector</code> looks for pairwise correlations between labeling functions. Pass the keyword argument <code>higher_order=True</code> to the constructor to also look for reinforcing and fixing dependencies (described in the <a href="https://arxiv.org/abs/1605.07723">data programming paper</a>).</li>
+<li>By default, the <code>DependencySelector</code> looks for pairwise correlations between labeling functions. Pass the keyword argument <code>higher_order=True</code> to the <code>select</code> method to also look for reinforcing and fixing dependencies (described in the <a href="https://arxiv.org/abs/1605.07723">data programming paper</a>).</li>
 </ul>
 To incorporate the selected dependencies into your generative model, just pass them in as a keyword argument:
 <pre><code>from snorkel.learning import GenerativeModel
@@ -460,7 +460,7 @@ That's all there is to it!</p>
 <ul>
 <li>Can we strengthen the theoretical guarantees for structure learning to depend only on the sparsity of the true dependency structure, perhaps to match the guarantees known in the supervised case? We find in practice that structure learning scales linearly in the maximum labeling function degree of the true factor graph and logarithmically in the number of possible dependencies, analogous to the bounds known for the supervised case.</li>
 <li>Can we automatically tune the selection threshold for optimal performance. "Optimal" depends on both the degree to which the labeling functions are correlated and compute budget of the user. We're developing an optimizer to set the threshold automatically.</li>
-<li>We want to learn what other types of dependencies that can exist among labeling functions are useful to model. Which ones have the biggest impact on data set quality?</li>
+<li>We want to learn what other types of dependencies that can exist among labeling functions are useful to model. Which ones have the biggest impact on end quality?</li>
 </ul>
 </p>
 

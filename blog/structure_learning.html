@@ -382,7 +382,7 @@ p.img {
 
 <p>What do these generative models look like? They all start with the same basic skeleton. There's a latent variable—the true class—that generates the outputs of each labeling function. If we stop there and only have one dependency connecting each labeling function with the true label, then we have an independent, or Naive Bayes, model. This structure makes a strong assumption: each labeling function provides conditionally independent information about the class label.</p>
 
-<p>The independent model is susceptible to &quot;yes people.&quot; If multiple labeling functions are actually correlated, independent of the true label, then the maximum likelihood estimate of the parameters will overweight the labeling functions accuracies. It's exactly the same problem the Hollywood producer has: the sources of information seem trustworthy because they agree with each other.</p>
+<p>The independent model is susceptible to &quot;yes people.&quot; If multiple labeling functions are actually correlated, independent of the true label, then the maximum likelihood estimate of the parameters will overweight the labeling functions' accuracies. It's exactly the same problem the Hollywood producer has: the sources of information seem trustworthy because they agree with each other.</p>
 
 <p><center><img width="60%" src="structure_learning_img/people_agreeing_with_themselves.jpg" alt="I agree with them!"></center></p>
 
@@ -409,7 +409,7 @@ If we don't model these correlations, we're going to overestimate the accuracies
 
 The number of possible correlations ("Cor") grows quadratically in the number of labeling functions. Maximizing the marginal likelihood of the target variables will become expensive because computing the gradient of the objective for a general factor graph requires Gibbs sampling (or some other approximation). Can we select which dependencies beyond the accuracy ("Acc") factors are worth including without computing the likelihood gradient over all these possible correlations? We can!</p>
 
-<p>We propose maximizing a <em>pseudolikelihood</em> objective instead. The idea is to maximize the likelihood of each labeling function's output as a separate target, conditioned on the others' outputs. We use ℓ1-regularization and include the dependencies with sufficiently large weights in the final model. A <a href="https://projecteuclid.org/euclid.aos/1268056617">related approach by Pradeep Ravikumar et al.</a> works well for fully supervised problems. In data programming, the fact that the true class label is latent complicates matters. Here, each pseudolikelihood maximization is equivalent to maximum likelihood estimation of the parameters of a factor graph that looks like this:
+<p>We propose maximizing a <em>pseudolikelihood</em> objective instead. The idea is to maximize the likelihood of each labeling function's output as a separate optimization, conditioned on the others' outputs. We use ℓ1-regularization and include the dependencies with sufficiently large weights in the final model. A <a href="https://projecteuclid.org/euclid.aos/1268056617">related approach by Pradeep Ravikumar et al.</a> works well for fully supervised problems. In data programming, the fact that the true class label is latent complicates matters. Here, each pseudolikelihood maximization is equivalent to maximum likelihood estimation of the parameters of a factor graph that looks like this:
 
 <center><img width="60%" src="structure_learning_img/mple.png" alt="Maximum pseudolikelihood estimator for correlations for a single labeling function."></center>
 
@@ -459,7 +459,7 @@ That's all there is to it!</p>
 <p>We're excited to continue research on automatically learning the structure of generative models for weak supervision. A few next steps:
 <ul>
 <li>Can we strengthen the theoretical guarantees for structure learning to depend only on the sparsity of the true dependency structure, perhaps to match the guarantees known in the supervised case? We find in practice that structure learning scales linearly in the maximum labeling function degree of the true factor graph and logarithmically in the number of possible dependencies, analogous to the bounds known for the supervised case.</li>
-<li>Can we automatically tune the selection threshold for optimal performance. "Optimal" depends on both the degree to which the labeling functions are correlated and compute budget of the user. We're developing an optimizer to set the threshold automatically.</li>
+<li>Can we automatically tune the selection threshold for optimal performance? "Optimal" depends on both the degree to which the labeling functions are correlated and compute budget of the user. We're developing an optimizer to set the threshold automatically.</li>
 <li>We want to learn what other types of dependencies that can exist among labeling functions are useful to model. Which ones have the biggest impact on end quality?</li>
 </ul>
 </p>

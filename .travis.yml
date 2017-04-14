@@ -11,6 +11,9 @@ python:
 jdk:
   - oraclejdk8
 
+services:
+  - postgresql
+
 cache:
   directories:
     - download
@@ -68,6 +71,9 @@ install:
 
   # Use runipy to run Jupyter/IPython notebooks from command-line
   - pip install runipy
+
+before_script:
+  - psql -c 'create database stg_temp_max;' -U postgres
 
 script:
 

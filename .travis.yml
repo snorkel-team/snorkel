@@ -26,6 +26,7 @@ addons:
     packages:
     # CoreNLP needs Java 8
     - oracle-java8-installer
+  postgresql: "9.4"
 
 # Following trick is necessary to get a binary distribution of numpy, scipy, etc. which takes too long to build every time
 # See: http://stackoverflow.com/q/30588634
@@ -77,8 +78,16 @@ before_script:
 
 script:
 
-  # Runs intro tutorial notebooks
   - cd tutorials
+
+  # Run Fonduer Tutorial
+  - cd fonduer/hardware
+  - bash download_data.sh
+  - cd ../..
+  - ls fonduer/hardware/data/pdf
+  - runipy fonduer/hardware/max_storage_temp_tutorial.ipynb
+
+  # Runs intro tutorial notebooks
   - runipy intro/Intro_Tutorial_1.ipynb
   - runipy intro/Intro_Tutorial_2.ipynb
   - runipy intro/Intro_Tutorial_3.ipynb
@@ -99,11 +108,7 @@ script:
   - runipy cdr/CDR_Tutorial_2.ipynb
   - runipy cdr/CDR_Tutorial_3.ipynb
 
-  # Run Fonduer Tutorial
-  - cd fonduer/hardware
-  - bash download_data.sh
-  - cd ../..
-  - runipy fonduer/hardware/max_storage_temp_tutorial.ipynb
+
 
   - cd ..
 

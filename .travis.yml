@@ -88,7 +88,7 @@ script:
   - bash download_data.sh
   - cd ../..
   - ls fonduer/hardware/data/
-  - runipy fonduer/hardware/max_storage_temp_tutorial.ipynb
+  - travis_wait 30 runipy fonduer/hardware/max_storage_temp_tutorial.ipynb
 
   # Runs intro tutorial notebooks
   - runipy intro/Intro_Tutorial_1.ipynb

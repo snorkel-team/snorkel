@@ -26,6 +26,7 @@ addons:
     packages:
     # CoreNLP needs Java 8
     - oracle-java8-installer
+    - poppler-utils
   postgresql: "9.4"
 
 # Following trick is necessary to get a binary distribution of numpy, scipy, etc. which takes too long to build every time

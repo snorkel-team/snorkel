@@ -93,6 +93,12 @@ script:
   - runipy cdr/CDR_Tutorial_2.ipynb
   - runipy cdr/CDR_Tutorial_3.ipynb
 
+  # Run Fonduer Tutorial
+  - cd fonduer/hardware
+  - bash download_data.sh
+  - cd ../..
+  - runipy fonduer/hardware/max_stg_temp_tutorial.ipynb
+
   - cd ..
 
   # Run test modules

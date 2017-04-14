@@ -26,7 +26,6 @@ addons:
     packages:
     # CoreNLP needs Java 8
     - oracle-java8-installer
-    - poppler-utils
   postgresql: "9.4"
 
 # Following trick is necessary to get a binary distribution of numpy, scipy, etc. which takes too long to build every time
@@ -70,12 +69,15 @@ install:
   # Install all remaining dependencies as per our README
   - pip install -r python-package-requirement.txt
   - test -e parser/corenlp.sh || ./install-parser.sh
+  - bash install-phantomjs.sh
+  - bash install-poppler.sh
 
   # Use runipy to run Jupyter/IPython notebooks from command-line
   - pip install runipy
 
 before_script:
   - psql -c 'create database stg_temp_max;' -U postgres
+
 
 script:
 

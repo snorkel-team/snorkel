@@ -97,7 +97,7 @@ script:
   - cd fonduer/hardware
   - bash download_data.sh
   - cd ../..
-  - runipy fonduer/hardware/max_stg_temp_tutorial.ipynb
+  - runipy fonduer/hardware/max_storage_temp_tutorial.ipynb
 
   - cd ..
 

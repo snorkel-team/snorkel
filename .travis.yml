@@ -85,7 +85,7 @@ script:
   - cd fonduer/hardware
   - bash download_data.sh
   - cd ../..
-  - ls fonduer/hardware/data/pdf
+  - ls fonduer/hardware/data/
   - runipy fonduer/hardware/max_storage_temp_tutorial.ipynb
 
   # Runs intro tutorial notebooks

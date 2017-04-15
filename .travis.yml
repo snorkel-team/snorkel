@@ -83,13 +83,6 @@ script:
 
   - cd tutorials
 
-  # Run Fonduer Tutorial
-  - cd fonduer/hardware
-  - bash download_data.sh
-  - cd ../..
-  - ls fonduer/hardware/data/
-  - travis_wait 30 runipy fonduer/hardware/max_storage_temp_tutorial.ipynb
-
   # Runs intro tutorial notebooks
   - runipy intro/Intro_Tutorial_1.ipynb
   - runipy intro/Intro_Tutorial_2.ipynb
@@ -110,7 +103,13 @@ script:
   - runipy cdr/CDR_Tutorial_1.ipynb
   - runipy cdr/CDR_Tutorial_2.ipynb
   - runipy cdr/CDR_Tutorial_3.ipynb
-
+  
+  # Run Fonduer Tutorial
+  - cd fonduer/hardware
+  - bash download_data.sh
+  - cd ../..
+  - ls fonduer/hardware/data/
+  - travis_wait 30 runipy fonduer/hardware/max_storage_temp_tutorial.ipynb
 
 
   - cd ..

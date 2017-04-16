@@ -166,6 +166,33 @@ class CSVPathsPreprocessor(DocPreprocessor):
         return self.parser.parse_file(fp, file_name)
 
 
+class TikaPreprocessor(DocPreprocessor):
+    """
+    This preprocessor use `Apache Tika <http://tika.apache.org>`_ parser to retrieve text content from
+    complex file types such as DOCX, HTML and PDFs.
+
+    Documentation for customizing Tika is `here <https://github.com/chrismattmann/tika-python>`_
+
+    Example::
+
+        !find pdf_dir -name *.pdf > input.csv # list of files
+        from snorkel.parser import TikaPreprocessor, CSVPathsPreprocessor, CorpusParser
+        CorpusParser().apply(CSVPathsPreprocessor('input.csv', parser_factory=TikaPreprocessor))
+    """
+    # Tika is conditionally imported here
+    import tika
+    tika.initVM()   # automatically downloads tika jar and starts a JVM process if no REST API is configured in ENV
+    from tika import parser as tk_parser
+    parser = tk_parser
+
+    def parse_file(self, fp, file_name):
+        parsed = type(self).parser.from_file(fp)
+        txt = parsed['content']
+        name = os.path.basename(fp).rsplit('.', 1)[0]
+        stable_id = self.get_stable_id(name)
+        yield Document(name=name, stable_id=stable_id, meta={'file_name': file_name}), txt
+
+
 class HTMLDocPreprocessor(DocPreprocessor):
     """Simple parsing of raw HTML files, assuming one document per file"""
     def parse_file(self, fp, file_name):

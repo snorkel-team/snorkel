@@ -11,18 +11,19 @@ from time import time
 SD = 0.1
 
 
-class LSTMBase(TFNoiseAwareModel):
+class RNNBase(TFNoiseAwareModel):
 
     representation = True
 
-    def __init__(self, save_file=None, name='LSTMBase', seed=None, n_threads=4):
-        """Base class for LSTM"""
+    def __init__(self, save_file=None, name='RNNBase', seed=None, n_threads=4):
+        """Base class for bidirectional RNN"""
         # Define metadata
         self.mx_len    = None # Max sentence length
         self.dim       = None # Embedding dimension
         self.n_v       = None # Vocabulary size
         self.lr        = None # Learning rate
         self.attn      = None # Attention window
+        self.cell      = None # RNN cell type
         self.word_dict = SymbolTable() # Symbol table for dictionary
         # Define input layers
         self.sentences        = None
@@ -31,15 +32,30 @@ class LSTMBase(TFNoiseAwareModel):
         self.keep_prob        = None
         self.seed             = seed
         # Super constructor
-        super(LSTMBase, self).__init__(
+        super(RNNBase, self).__init__(
             n_threads=n_threads, save_file=save_file, name=name
         )
 
     def _preprocess_data(self, candidates, extend):
+        """Build @self.word_dict to encode and process data for extraction
+            Return list of encoded sentences and list of last index of arguments
+        """
         raise NotImplementedError()
 
+    def _check_max_sentence_length(self, ends):
+        """Check that extraction arguments are within @self.mx_len"""
+        mx = self.mx_len
+        for i, end in enumerate(ends):
+            if end >= mx:
+                w = "Candidate {0} has argument past max length for model:"
+                info = "[arg ends at index {0}; max len {1}]".format(end, mx)
+                warnings.warn('\t'.join(w.format(i), info))
+
     def _make_tensor(self, x):
-        """Construct input tensor with padding"""
+        """Construct input tensor with padding
+            Builds a matrix of symbols corresponding to @self.word_dict for the
+            current batch and an array of true sentence lengths
+        """
         batch_size = len(x)
         x_batch    = np.zeros((batch_size, self.mx_len), dtype=np.int32)
         len_batch  = np.zeros(batch_size, dtype=np.int32)
@@ -50,10 +66,11 @@ class LSTMBase(TFNoiseAwareModel):
         return x_batch, len_batch
 
     def _embedding_init(self, s):
+        """Random initialization for embedding table"""
         return tf.random_normal((self.n_v-1, self.dim), stddev=SD, seed=s)
 
     def _build(self):
-        """Get feed forward step, loss function, and optimizer for LSTM"""
+        """Get feed forward step, loss function, and optimizer for RNN"""
         # Define input layers
         self.sentences        = tf.placeholder(tf.int32, [None, None])
         self.sentence_lengths = tf.placeholder(tf.int32, [None])
@@ -68,12 +85,12 @@ class LSTMBase(TFNoiseAwareModel):
         inputs    = tf.nn.embedding_lookup(embedding, self.sentences)
         # Build RNN graph
         batch_size = tf.shape(self.sentences)[0]
-        rand_name  = "LSTM_{0}".format(random.randint(0, 1e12)) # Obscene hack
+        rand_name  = "RNN_{0}".format(random.randint(0, 1e12)) # Obscene hack
         init = tf.contrib.layers.xavier_initializer(seed=s2)
         with tf.variable_scope(rand_name, reuse=False, initializer=init):
-            # Build LSTM cells
-            fw_cell = rnn.BasicLSTMCell(self.dim, reuse=False)
-            bw_cell = rnn.BasicLSTMCell(self.dim, reuse=False)
+            # Build RNN cells
+            fw_cell = self.cell(self.dim, reuse=False)
+            bw_cell = self.cell(self.dim, reuse=False)
             # Add attention if needed
             if self.attn:
                 fw_cell = rnn.AttentionCellWrapper(fw_cell, self.attn)
@@ -105,9 +122,10 @@ class LSTMBase(TFNoiseAwareModel):
         self.prediction = tf.nn.sigmoid(h_dropout)
 
     def train(self, candidates, marginals, n_epochs=25, lr=0.01, dropout=0.5,
-        dim=50, attn_window=None, batch_size=256, max_sentence_length=None,
-        rebalance=False, dev_candidates=None, dev_labels=None, print_freq=5):
-        """Train LSTM model
+        dim=50, attn_window=None, cell_type=rnn.BasicLSTMCell, batch_size=256,
+        max_sentence_length=None, rebalance=False, dev_candidates=None,
+        dev_labels=None, print_freq=5):
+        """Train bidirectional RNN model for binary classification
             @candidates: list of Candidate objects for training
             @marginals: array of marginal probabilities for each Candidate
             @n_epochs: number of training epochs
@@ -115,6 +133,7 @@ class LSTMBase(TFNoiseAwareModel):
             @dropout: keep probability for dropout layer (no dropout if None)
             @dim: embedding dimension
             @attn_window: attention window length (no attention if 0 or None)
+            @cell_type: subclass of tensorflow.python.ops.rnn_cell_impl._RNNCell
             @batch_size: batch size for mini-batch SGD
             @max_sentence_length: maximum sentence length for candidates
             @rebalance: bool or fraction of positive examples for training
@@ -130,7 +149,7 @@ class LSTMBase(TFNoiseAwareModel):
             print("[{0}] Begin preprocessing".format(self.name))
             st = time()
         # Text preprocessing
-        train_data = self._preprocess_data(candidates, extend=True)
+        train_data, ends = self._preprocess_data(candidates, extend=True)
         # Get training indices
         np.random.seed(self.seed)
         train_idxs = LabelBalancer(marginals).get_train_idxs(rebalance)
@@ -138,16 +157,18 @@ class LSTMBase(TFNoiseAwareModel):
         y_train    = np.ravel(marginals)[train_idxs]
         # Get max sentence size
         self.mx_len = max_sentence_length or max(len(x) for x in x_train)
+        self._check_max_sentence_length(ends)
         # Build model
         self.dim  = dim
         self.lr   = lr
         self.n_v  = self.word_dict.len()
         self.attn = attn_window
+        self.cell = cell_type
         self._build()
         # Get dev data
         dev_data, dev_gold = None, None
         if dev_candidates is not None and dev_labels is not None:
-            dev_data = self._preprocess_data(dev_candidates, extend=False)
+            dev_data, _ = self._preprocess_data(dev_candidates, extend=False)
             dev_gold = np.ravel(dev_labels)
             if not ((dev_gold >= 0).all() and (dev_gold <= 1).all()):
                 raise Exception("Dev labels should be in [0, 1]")
@@ -194,6 +215,7 @@ class LSTMBase(TFNoiseAwareModel):
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))
 
     def _marginals_preprocessed(self, test_data):
+        """Get marginals from preprocessed data"""
         x, x_len = self._make_tensor(test_data)
         return np.ravel(self.session.run(self.prediction, {
             self.sentences:        x,
@@ -205,5 +227,6 @@ class LSTMBase(TFNoiseAwareModel):
         """Get likelihood of tagged sequences represented by test_candidates
             @test_candidates: list of lists representing test sentence
         """
-        test_data = self._preprocess_data(test_candidates, extend=False)
+        test_data, ends = self._preprocess_data(test_candidates, extend=False)
+        self._check_max_sentence_length(ends)
         return self._marginals_preprocessed(test_data)

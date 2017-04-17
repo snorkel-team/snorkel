@@ -1,6 +1,6 @@
 import numpy as np
 
-from lstm_base import LSTMBase
+from lstm_base import RNNBase
 from utils import candidate_to_tokens
 
 
@@ -21,13 +21,13 @@ def tag(seq, labels):
     return seq_new
 
 
-class TagLSTM(LSTMBase):
+class TagRNN(RNNBase):
 
     OPEN, CLOSE = '~~[[~~', '~~]]~~'
 
-    def __init__(self, save_file=None, name='TagLSTM', seed=None, n_threads=4):
-        """TagLSTM for sequence tagging"""
-        super(TagLSTM, self).__init__(
+    def __init__(self, save_file=None, name='TagRNN', seed=None, n_threads=4):
+        """TagRNN for sequence tagging"""
+        super(TagRNN, self).__init__(
             n_threads=n_threads, save_file=save_file, name=name, seed=seed
         )
 
@@ -36,7 +36,7 @@ class TagLSTM(LSTMBase):
             @candidates: candidates to process
             @extend: extend symbol table for tokens (train), or lookup (test)?
         """
-        data = []
+        data, ends = [], []
         for candidate in candidates:
             # Read sentence data
             tokens = candidate_to_tokens(candidate)
@@ -48,4 +48,5 @@ class TagLSTM(LSTMBase):
             # Either extend word table or retrieve from it
             f = self.word_dict.get if extend else self.word_dict.lookup
             data.append(np.array(map(f, s)))
-        return data
+            ends.append(c[0].get_word_end())
+        return data, ends

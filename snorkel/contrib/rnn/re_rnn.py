@@ -1,6 +1,6 @@
 import numpy as np
 
-from lstm_base import LSTMBase
+from lstm_base import RNNBase
 from utils import candidate_to_tokens
 
 
@@ -28,11 +28,11 @@ def mark_sentence(s, args):
     return x
 
 
-class reLSTM(LSTMBase):
+class reRNN(RNNBase):
 
-    def __init__(self, save_file=None, name='reLSTM', seed=None, n_threads=4):
-        """reLSTM for relation extraction"""
-        super(reLSTM, self).__init__(
+    def __init__(self, save_file=None, name='reRNN', seed=None, n_threads=4):
+        """reRNN for relation extraction"""
+        super(reRNN, self).__init__(
             n_threads=n_threads, save_file=save_file, name=name, seed=seed
         )
 
@@ -41,7 +41,7 @@ class reLSTM(LSTMBase):
             @candidates: candidates to process
             @extend: extend symbol table for tokens (train), or lookup (test)?
         """
-        data = []
+        data, ends = [], []
         for candidate in candidates:
             # Mark sentence
             args = [
@@ -52,4 +52,5 @@ class reLSTM(LSTMBase):
             # Either extend word table or retrieve from it
             f = self.word_dict.get if extend else self.word_dict.lookup
             data.append(np.array(map(f, s)))
-        return data
+            ends.append(max(candidate[i].get_word_end() for i in [0, 1]))
+        return data, ends

@@ -89,8 +89,8 @@ class RNNBase(TFNoiseAwareModel):
         init = tf.contrib.layers.xavier_initializer(seed=s2)
         with tf.variable_scope(rand_name, reuse=False, initializer=init):
             # Build RNN cells
-            fw_cell = self.cell(self.dim, reuse=False)
-            bw_cell = self.cell(self.dim, reuse=False)
+            fw_cell = self.cell(self.dim)
+            bw_cell = self.cell(self.dim)
             # Add attention if needed
             if self.attn:
                 fw_cell = rnn.AttentionCellWrapper(fw_cell, self.attn)

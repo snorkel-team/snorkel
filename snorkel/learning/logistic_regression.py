@@ -8,6 +8,9 @@ from time import time
 from utils import LabelBalancer
 
 
+SD = 0.1
+
+
 class LogisticRegression(TFNoiseAwareModel):
 
     def __init__(self, save_file=None, name='LR', n_threads=None):
@@ -18,6 +21,8 @@ class LogisticRegression(TFNoiseAwareModel):
         self.lr         = None
         self.l1_penalty = None
         self.l2_penalty = None
+        self.w          = None
+        self.b          = None
         self.nnz        = None
         super(LogisticRegression, self).__init__(
             save_file=save_file, name=name, n_threads=n_threads
@@ -28,23 +33,23 @@ class LogisticRegression(TFNoiseAwareModel):
         self.X = tf.placeholder(tf.float32, (None, self.d))
         self.Y = tf.placeholder(tf.float32, (None, 1))
         s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
-        w = tf.Variable(tf.random_normal((self.d, 1), stddev=0.01, seed=s1))
-        b = tf.Variable(tf.random_normal((1, 1), stddev=0.01, seed=s2))
-        h = tf.add(tf.matmul(self.X, w), b)
+        self.w = tf.Variable(tf.random_normal((self.d, 1), stddev=SD, seed=s1))
+        self.b = tf.Variable(tf.random_normal((1, 1), stddev=SD, seed=s2))
+        h = tf.nn.bias_add(tf.matmul(self.X, self.w), self.b)
         # Noise-aware loss
         self.loss = tf.reduce_sum(
             tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
         )
         # Add L1 and L2 penalties
-        self.loss += self.l1_penalty * tf.reduce_sum(tf.abs(w))
-        self.loss += self.l2_penalty * tf.nn.l2_loss(w)
+        self.loss += self.l1_penalty * tf.reduce_sum(tf.abs(self.w))
+        self.loss += self.l2_penalty * tf.nn.l2_loss(self.w)
         # Build model
         self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
         self.prediction = tf.nn.sigmoid(h)
-        self.save_dict = {'w': w, 'b': b}
+        self.save_dict = {'w': self.w, 'b': self.b}
         # Get nnz operation
         self.nnz = tf.reduce_sum(tf.cast(
-            tf.not_equal(w, tf.constant(0, tf.float32)), tf.int32
+            tf.not_equal(self.w, tf.constant(0, tf.float32)), tf.int32
         ))
 
     def _check_input(self, X):
@@ -125,6 +130,11 @@ class LogisticRegression(TFNoiseAwareModel):
         X_test = self._check_input(X_test)
         return np.ravel(self.session.run([self.prediction], {self.X: X_test}))
 
+    def get_weights(self):
+        """Get model weights and bias"""
+        w, b = self.session.run([self.w, self.b])
+        return np.ravel(w), np.ravel(b)
+
     def save_info(self, model_name):
         with open('{0}.info'.format(model_name), 'wb') as f:
             cPickle.dump((self.d, self.lr, self.l1_penalty, self.l2_penalty), f)
@@ -157,23 +167,22 @@ class SparseLogisticRegression(LogisticRegression):
         sparse_ids = tf.SparseTensor(self.indices, self.ids, self.shape)
         sparse_vals = tf.SparseTensor(self.indices, self.weights, self.shape)
         s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
-        w = tf.Variable(tf.random_normal((self.d, 1), stddev=0.01, seed=s1))
-        b = tf.Variable(tf.random_normal((1, 1), stddev=0.01, seed=s2))
-        z = tf.nn.embedding_lookup_sparse(
-            params=w, sp_ids=sparse_ids, sp_weights=sparse_vals, combiner='sum'
-        )
-        h = tf.add(z, b)
+        self.w = tf.Variable(tf.random_normal((self.d, 1), stddev=SD, seed=s1))
+        self.b = tf.Variable(tf.random_normal((1, 1), stddev=SD, seed=s2))
+        z = tf.nn.embedding_lookup_sparse(params=self.w, sp_ids=sparse_ids,
+            sp_weights=sparse_vals, combiner='sum')
+        h = tf.nn.bias_add(z, self.b)
         # Noise-aware loss
         self.loss = tf.reduce_sum(
             tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
         )
         # Add L1 and L2 penalties
-        self.loss += self.l1_penalty * tf.reduce_sum(tf.abs(w))
-        self.loss += self.l2_penalty * tf.nn.l2_loss(w)
+        self.loss += self.l1_penalty * tf.reduce_sum(tf.abs(self.w))
+        self.loss += self.l2_penalty * tf.nn.l2_loss(self.w)
         # Build model
         self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
         self.prediction = tf.nn.sigmoid(h)
-        self.save_dict = {'w': w, 'b': b}
+        self.save_dict = {'w': self.w, 'b': self.b}
         # Get nnz operation
         self.nnz = tf.reduce_sum(tf.cast(
             tf.not_equal(w, tf.constant(0, tf.float32)), tf.int32

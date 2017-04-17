@@ -31,10 +31,10 @@ class LogisticRegression(TFNoiseAwareModel):
     def _build(self):
         # Define inputs and variables
         self.X = tf.placeholder(tf.float32, (None, self.d))
-        self.Y = tf.placeholder(tf.float32, (None, 1))
+        self.Y = tf.placeholder(tf.float32, (None,))
         s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
-        self.w = tf.Variable(tf.random_normal((self.d, 1), stddev=SD, seed=s1))
-        self.b = tf.Variable(tf.random_normal((1, 1), stddev=SD, seed=s2))
+        self.w = tf.Variable(tf.random_normal((self.d,), stddev=SD, seed=s1))
+        self.b = tf.Variable(tf.random_normal((1,), stddev=SD, seed=s2))
         h = tf.nn.bias_add(tf.matmul(self.X, self.w), self.b)
         # Noise-aware loss
         self.loss = tf.reduce_sum(
@@ -62,7 +62,7 @@ class LogisticRegression(TFNoiseAwareModel):
         # Get batch tensors
         sparse  = issparse(X_train)
         x_batch = X_train[i:r, :].todense() if sparse else X_train[i:r, :]
-        y_batch = y_train[i:r].reshape((r-i, 1))
+        y_batch = y_train[i:r]
         # Run training step and evaluate loss function                  
         return self.session.run([self.loss, self.train_fn, self.nnz], {
             self.X: x_batch, self.Y: y_batch,
@@ -162,13 +162,13 @@ class SparseLogisticRegression(LogisticRegression):
         self.shape   = tf.placeholder(tf.int64, (2,))
         self.ids     = tf.placeholder(tf.int64)
         self.weights = tf.placeholder(tf.float32)
-        self.Y       = tf.placeholder(tf.float32, (None, 1))
+        self.Y       = tf.placeholder(tf.float32, (None,))
         # Define training variables
         sparse_ids = tf.SparseTensor(self.indices, self.ids, self.shape)
         sparse_vals = tf.SparseTensor(self.indices, self.weights, self.shape)
         s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
-        self.w = tf.Variable(tf.random_normal((self.d, 1), stddev=SD, seed=s1))
-        self.b = tf.Variable(tf.random_normal((1, 1), stddev=SD, seed=s2))
+        self.w = tf.Variable(tf.random_normal((self.d,), stddev=SD, seed=s1))
+        self.b = tf.Variable(tf.random_normal((1,), stddev=SD, seed=s2))
         z = tf.nn.embedding_lookup_sparse(params=self.w, sp_ids=sparse_ids,
             sp_weights=sparse_vals, combiner='sum')
         h = tf.nn.bias_add(z, self.b)
@@ -222,7 +222,7 @@ class SparseLogisticRegression(LogisticRegression):
         """Run a single batch update"""
         # Get batch sparse tensor data
         indices, shape, ids, weights = self._batch_sparse_data(X_train[i:r, :])
-        y_batch = y_train[i:r].reshape((r-i, 1))
+        y_batch = y_train[i:r]
         # Run training step and evaluate loss function
         if len(indices) == 0:
             return 0.0, None, last_nnz   
@@ -245,3 +245,4 @@ class SparseLogisticRegression(LogisticRegression):
             self.ids:     ids,
             self.weights: weights,
         }))
+

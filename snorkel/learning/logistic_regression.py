@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 from disc_learning import TFNoiseAwareModel
-from scipy.sparse import issparse
+from scipy.sparse import csr_matrix, issparse
 from time import time
 from utils import LabelBalancer
 
@@ -33,9 +33,9 @@ class LogisticRegression(TFNoiseAwareModel):
         self.X = tf.placeholder(tf.float32, (None, self.d))
         self.Y = tf.placeholder(tf.float32, (None,))
         s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
-        self.w = tf.Variable(tf.random_normal((self.d,), stddev=SD, seed=s1))
+        self.w = tf.Variable(tf.random_normal((self.d, 1), stddev=SD, seed=s1))
         self.b = tf.Variable(tf.random_normal((1,), stddev=SD, seed=s2))
-        h = tf.nn.bias_add(tf.matmul(self.X, self.w), self.b)
+        h = tf.squeeze(tf.nn.bias_add(tf.matmul(self.X, self.w), self.b))
         # Noise-aware loss
         self.loss = tf.reduce_sum(
             tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
@@ -167,11 +167,11 @@ class SparseLogisticRegression(LogisticRegression):
         sparse_ids = tf.SparseTensor(self.indices, self.ids, self.shape)
         sparse_vals = tf.SparseTensor(self.indices, self.weights, self.shape)
         s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
-        self.w = tf.Variable(tf.random_normal((self.d,), stddev=SD, seed=s1))
+        self.w = tf.Variable(tf.random_normal((self.d, 1), stddev=SD, seed=s1))
         self.b = tf.Variable(tf.random_normal((1,), stddev=SD, seed=s2))
         z = tf.nn.embedding_lookup_sparse(params=self.w, sp_ids=sparse_ids,
             sp_weights=sparse_vals, combiner='sum')
-        h = tf.nn.bias_add(z, self.b)
+        h = tf.squeeze(tf.nn.bias_add(z, self.b))
         # Noise-aware loss
         self.loss = tf.reduce_sum(
             tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
@@ -185,7 +185,7 @@ class SparseLogisticRegression(LogisticRegression):
         self.save_dict = {'w': self.w, 'b': self.b}
         # Get nnz operation
         self.nnz = tf.reduce_sum(tf.cast(
-            tf.not_equal(w, tf.constant(0, tf.float32)), tf.int32
+            tf.not_equal(self.w, tf.constant(0, tf.float32)), tf.int32
         ))
 
     def _check_input(self, X):
@@ -245,4 +245,18 @@ class SparseLogisticRegression(LogisticRegression):
             self.ids:     ids,
             self.weights: weights,
         }))
+
+
+if __name__ == '__main__':
+    # Generate data
+    n, d = 50, 5
+    X = np.round(np.random.rand(n, d))
+    y = np.random.rand(n)
+    # Test logistic regression
+    F = LogisticRegression()
+    F.train(X, y, 3, 0.01, 10, 1e-4, 1e-4, 1, True, 1701)
+    # Test sparse logistic regression
+    X_sp = csr_matrix(X)
+    F = SparseLogisticRegression()
+    F.train(X_sp, y, 3, 0.01, 10, 1e-4, 1e-4, 1, True, 1701)
 

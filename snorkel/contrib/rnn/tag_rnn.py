@@ -1,6 +1,6 @@
 import numpy as np
 
-from lstm_base import RNNBase
+from rnn_base import RNNBase
 from utils import candidate_to_tokens
 
 

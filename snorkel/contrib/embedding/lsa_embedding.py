@@ -2,7 +2,7 @@ import gensim
 import numpy as np
 
 from collections import defaultdict
-from embedding_utils import DEFAULT_STOPS, Embedder, strip_special
+from utils import DEFAULT_STOPS, Embedder, strip_special
 
 
 class SnorkelGensimCorpus(gensim.interfaces.CorpusABC):

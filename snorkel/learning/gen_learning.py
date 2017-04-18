@@ -192,12 +192,37 @@ class GenerativeModel(object):
     optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
     dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
 
-    def train(self, L, y=None, deps=(), init_acc = 1.0, epochs=100, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
+    def train(self, L, y=None, deps=(), init_acc = 1.0, init_deps=1.0, init_class_prior=-1.0, epochs=100, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
               truncation=10, burn_in=50, timer=None):
+        """
+        Fits the parameters of the model to a data set. By default, learns a conditionally independent model.
+        Additional unary dependencies can be set to be included in the constructor. Additional pairwise and higher-order
+        dependencies can be included as an argument.
+
+        Results are stored as a member named weights, instance of snorkel.learning.gen_learning.GenerativeModelWeights.
+
+        :param L: labeling function output matrix
+        :param y: optional ground truth labels
+        :param deps: collection of dependencies to include in the model, each element is a tuple of the form
+                     (LF 1 index, LF 2 index, dependency type), see snorkel.learning.constants
+        :param init_acc: initial weight for accuracy dependencies (in log scale)
+        :param init_deps: initial weight for additional dependencies, except class prior (in log scale)
+        :param init_class_prior: initial class prior (in log scale), note only used if class_prior=True in constructor
+        :param epochs: number of training epochs
+        :param step_size: gradient step size
+        :param decay: multiplicative decay of step size, step_size_(t+1) = step_size_(t) * decay
+        :param reg_param: regularization strength
+        :param reg_type: 1 = L1 regularization, 2 = L2 regularization
+        :param verbose: whether to write debugging info to stdout
+        :param truncation: number of iterations between truncation step for L1 regularization
+        :param burn_in: number of burn-in samples to take before beginning learning
+        :param timer: stopwatch for profiling, must implement start() and end()
+        """
+
         step_size = step_size or 1.0 / L.shape[0]
         reg_param_scaled = reg_param / L.shape[0]
         self._process_dependency_graph(L, deps)
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc)
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc, init_deps, init_class_prior)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
                        reg_param=reg_param_scaled, regularization=reg_type, truncation=truncation,
                        quiet=(not verbose), verbose=verbose, learn_non_evidence=True, burn_in=burn_in)
@@ -304,7 +329,7 @@ class GenerativeModel(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
-    def _compile(self, L, y, init_acc):
+    def _compile(self, L, y, init_acc, init_deps, init_class_prior):
         """
         Compiles a generative model based on L and the current labeling function dependencies.
         """
@@ -346,19 +371,19 @@ class GenerativeModel(object):
         #
         if self.class_prior:
             weight[0]['isFixed'] = False
-            weight[0]['initialValue'] = np.float64(0)
+            weight[0]['initialValue'] = np.float64(init_class_prior)
             w_off = 1
         else:
             w_off = 0
 
         for i in range(w_off, w_off + n):
             weight[i]['isFixed'] = False
-            weight[i]['initialValue'] = np.float64(init_acc + .1 - .2 * self.rng.random())
+            weight[i]['initialValue'] = np.float64(init_acc)
 
         w_off += n
         for i in range(w_off, weight.shape[0]):
             weight[i]['isFixed'] = False
-            weight[i]['initialValue'] = np.float64(0.0)
+            weight[i]['initialValue'] = np.float64(init_deps)
 
 
         #
@@ -441,7 +466,7 @@ class GenerativeModel(object):
         # Factors for labeling function dependencies
         dep_name_map = {
             'dep_similar':
-                ('EQUAL', (
+                ('DP_GEN_DEP_SIMILAR', (
                     lambda m, n, i, j, k: m + n * i + j,
                     lambda m, n, i, j, k: m + n * i + k)),
             'dep_fixing':

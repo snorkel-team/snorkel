@@ -20,11 +20,12 @@ from .utils import sort_X_on_Y
 
 
 class CorpusParser(UDFRunner):
-    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False, fn=None):
+    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False, strict_ptb=False, fn=None):
         super(CorpusParser, self).__init__(CorpusParserUDF,
                                            tok_whitespace=tok_whitespace,
                                            split_newline=split_newline,
                                            parse_tree=parse_tree,
+                                           strict_ptb=strict_ptb,
                                            fn=fn)
 
     def clear(self, session, **kwargs):
@@ -35,9 +36,10 @@ class CorpusParser(UDFRunner):
 
 
 class CorpusParserUDF(UDF):
-    def __init__(self, tok_whitespace, split_newline, parse_tree, fn, **kwargs):
+    def __init__(self, tok_whitespace, split_newline, parse_tree, strict_ptb, fn, **kwargs):
         self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace,
                                               split_newline=split_newline,
+                                              strict_ptb=strict_ptb,
                                               parse_tree=parse_tree)
         self.fn = fn
         super(CorpusParserUDF, self).__init__(**kwargs)
@@ -179,9 +181,16 @@ class XMLMultiDocPreprocessor(DocPreprocessor):
         return fpath.endswith('.xml')
 
 PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{','-RSB-': ']', '-LSB-': '['}
+CORE_ANNOTATORS = ['tokenize', 'ssplit']
 
 class CoreNLPHandler(object):
-    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False):
+
+    def __init__(self, tok_whitespace=False, split_newline=False,
+                 strict_ptb=True, parse_tree=False):
+
+        # annotators=['pos', 'lemma', 'depparse', 'ner']
+        #self.annotators = CORE_ANNOTATORS + annotators
+
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
         # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
         # Kill it when python exits.
@@ -192,22 +201,47 @@ class CoreNLPHandler(object):
         self.tok_whitespace = tok_whitespace
         self.split_newline = split_newline
         self.parse_tree = parse_tree
+        self.strict_ptb = strict_ptb
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
         cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
                % (loc, self.port, 600000)]
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
-        props = ''
+
+        props = "\"tokenize.whitespace\": \"true\"," if self.tok_whitespace else ""
+
+        # disable all the penn tree bank replacement tokens
+        # nlp.stanford.edu/software/tokenizer.html
+        tokenizer_opts = {"normalizeParentheses": False,
+                          "normalizeCurrency": False,
+                          "normalizeFractions": False,
+                          "normalizeParentheses": False,
+                          "normalizeOtherBrackets": False,
+                          "asciiQuotes": False,
+                          "latexQuotes": False,
+                          "ptb3Ellipsis": False,
+                          "ptb3Dashes": False,
+                          "escapeForwardSlashAsterisk": False,
+                          "strictTreebank3": True}
+
+        t_opts = ["{}={}".format(key, str(value).lower()) for key, value in tokenizer_opts.items()]
+        tokenizer_options = "," + '"tokenize.options":"{}"'.format(",".join(t_opts)) if self.strict_ptb else ""
+
         if self.tok_whitespace:
             props += '"tokenize.whitespace": "true", '
+
         if self.split_newline:
-            props += '"ssplit.eolonly": "true", '
+            sentence_options = ',"ssplit.newlineIsSentenceBreak":"always"'
+            # sentence_options = ', "ssplit.eolonly"="true"'
+        else:
+            sentence_options = ""
+
         annotators = '"tokenize,ssplit,pos,lemma,depparse,ner{0}"'.format(
             ',parse' if self.parse_tree else ''
         )
-        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": %s, "outputFormat": "json"}' % (
-            self.port, props, annotators
-        )
+
+        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": %s, "outputFormat": "json" %s %s}' % (
+            self.port, props, annotators, tokenizer_options, sentence_options)
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626

@@ -1,0 +1,470 @@
+
+<!DOCTYPE html><html>
+
+<head>
+<meta charset="utf-8">
+<title>Data Repairing</title>
+<style type="text/css">
+body {
+  font-family: Helvetica, arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background-color: white;
+  padding: 30px; }
+
+body > *:first-child {
+  margin-top: 0 !important; }
+body > *:last-child {
+  margin-bottom: 0 !important; }
+
+a {
+  color: #4183C4; }
+a.absent {
+  color: #cc0000; }
+a.anchor {
+  display: block;
+  padding-left: 30px;
+  margin-left: -30px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0; }
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 20px 0 10px;
+  padding: 0;
+  font-weight: bold;
+  -webkit-font-smoothing: antialiased;
+  cursor: text;
+  position: relative; }
+
+h1:hover a.anchor, h2:hover a.anchor, h3:hover a.anchor, h4:hover a.anchor, h5:hover a.anchor, h6:hover a.anchor {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA09pVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoMTMuMCAyMDEyMDMwNS5tLjQxNSAyMDEyLzAzLzA1OjIxOjAwOjAwKSAgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OUM2NjlDQjI4ODBGMTFFMTg1ODlEODNERDJBRjUwQTQiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OUM2NjlDQjM4ODBGMTFFMTg1ODlEODNERDJBRjUwQTQiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo5QzY2OUNCMDg4MEYxMUUxODU4OUQ4M0REMkFGNTBBNCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo5QzY2OUNCMTg4MEYxMUUxODU4OUQ4M0REMkFGNTBBNCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PsQhXeAAAABfSURBVHjaYvz//z8DJYCRUgMYQAbAMBQIAvEqkBQWXI6sHqwHiwG70TTBxGaiWwjCTGgOUgJiF1J8wMRAIUA34B4Q76HUBelAfJYSA0CuMIEaRP8wGIkGMA54bgQIMACAmkXJi0hKJQAAAABJRU5ErkJggg==) no-repeat 10px center;
+  text-decoration: none; }
+
+h1 tt, h1 code {
+  font-size: inherit; }
+
+h2 tt, h2 code {
+  font-size: inherit; }
+
+h3 tt, h3 code {
+  font-size: inherit; }
+
+h4 tt, h4 code {
+  font-size: inherit; }
+
+h5 tt, h5 code {
+  font-size: inherit; }
+
+h6 tt, h6 code {
+  font-size: inherit; }
+
+h1 {
+  font-size: 28px;
+  color: black; }
+
+h2 {
+  font-size: 24px;
+  border-bottom: 1px solid #cccccc;
+  color: black; }
+
+h3 {
+  font-size: 18px; }
+
+h4 {
+  font-size: 16px; }
+
+h5 {
+  font-size: 14px; }
+
+h6 {
+  color: #777777;
+  font-size: 14px; }
+
+p, blockquote, ul, ol, dl, li, table, pre {
+  margin: 15px 0; }
+
+hr {
+  background: transparent url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAECAYAAACtBE5DAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBNYWNpbnRvc2giIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OENDRjNBN0E2NTZBMTFFMEI3QjRBODM4NzJDMjlGNDgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OENDRjNBN0I2NTZBMTFFMEI3QjRBODM4NzJDMjlGNDgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo4Q0NGM0E3ODY1NkExMUUwQjdCNEE4Mzg3MkMyOUY0OCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo4Q0NGM0E3OTY1NkExMUUwQjdCNEE4Mzg3MkMyOUY0OCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PqqezsUAAAAfSURBVHjaYmRABcYwBiM2QSA4y4hNEKYDQxAEAAIMAHNGAzhkPOlYAAAAAElFTkSuQmCC) repeat-x 0 0;
+  border: 0 none;
+  color: #cccccc;
+  height: 4px;
+  padding: 0;
+}
+
+body > h2:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+body > h1:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+  body > h1:first-child + h2 {
+    margin-top: 0;
+    padding-top: 0; }
+body > h3:first-child, body > h4:first-child, body > h5:first-child, body > h6:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+
+a:first-child h1, a:first-child h2, a:first-child h3, a:first-child h4, a:first-child h5, a:first-child h6 {
+  margin-top: 0;
+  padding-top: 0; }
+
+h1 p, h2 p, h3 p, h4 p, h5 p, h6 p {
+  margin-top: 0; }
+
+li p.first {
+  display: inline-block; }
+li {
+  margin: 0; }
+ul, ol {
+  padding-left: 30px; }
+
+ul :first-child, ol :first-child {
+  margin-top: 0; }
+
+dl {
+  padding: 0; }
+  dl dt {
+    font-size: 14px;
+    font-weight: bold;
+    font-style: italic;
+    padding: 0;
+    margin: 15px 0 5px; }
+    dl dt:first-child {
+      padding: 0; }
+    dl dt > :first-child {
+      margin-top: 0; }
+    dl dt > :last-child {
+      margin-bottom: 0; }
+  dl dd {
+    margin: 0 0 15px;
+    padding: 0 15px; }
+    dl dd > :first-child {
+      margin-top: 0; }
+    dl dd > :last-child {
+      margin-bottom: 0; }
+
+blockquote {
+  border-left: 4px solid #dddddd;
+  padding: 0 15px;
+  color: #777777; }
+  blockquote > :first-child {
+    margin-top: 0; }
+  blockquote > :last-child {
+    margin-bottom: 0; }
+
+table {
+  padding: 0;border-collapse: collapse; }
+  table tr {
+    border-top: 1px solid #cccccc;
+    background-color: white;
+    margin: 0;
+    padding: 0; }
+    table tr:nth-child(2n) {
+      background-color: #f8f8f8; }
+    table tr th {
+      font-weight: bold;
+      border: 1px solid #cccccc;
+      margin: 0;
+      padding: 6px 13px; }
+    table tr td {
+      border: 1px solid #cccccc;
+      margin: 0;
+      padding: 6px 13px; }
+    table tr th :first-child, table tr td :first-child {
+      margin-top: 0; }
+    table tr th :last-child, table tr td :last-child {
+      margin-bottom: 0; }
+
+img {
+  max-width: 100%; }
+
+span.frame {
+  display: block;
+  overflow: hidden; }
+  span.frame > span {
+    border: 1px solid #dddddd;
+    display: block;
+    float: left;
+    overflow: hidden;
+    margin: 13px 0 0;
+    padding: 7px;
+    width: auto; }
+  span.frame span img {
+    display: block;
+    float: left; }
+  span.frame span span {
+    clear: both;
+    color: #333333;
+    display: block;
+    padding: 5px 0 0; }
+span.align-center {
+  display: block;
+  overflow: hidden;
+  clear: both; }
+  span.align-center > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px auto 0;
+    text-align: center; }
+  span.align-center span img {
+    margin: 0 auto;
+    text-align: center; }
+span.align-right {
+  display: block;
+  overflow: hidden;
+  clear: both; }
+  span.align-right > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px 0 0;
+    text-align: right; }
+  span.align-right span img {
+    margin: 0;
+    text-align: right; }
+span.float-left {
+  display: block;
+  margin-right: 13px;
+  overflow: hidden;
+  float: left; }
+  span.float-left span {
+    margin: 13px 0 0; }
+span.float-right {
+  display: block;
+  margin-left: 13px;
+  overflow: hidden;
+  float: right; }
+  span.float-right > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px auto 0;
+    text-align: right; }
+
+code, tt {
+  margin: 0 2px;
+  padding: 0 5px;
+  white-space: nowrap;
+  border: 1px solid #eaeaea;
+  background-color: #f8f8f8;
+  border-radius: 3px; }
+
+pre code {
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  border: none;
+  background: transparent; }
+
+.highlight pre {
+  background-color: #f8f8f8;
+  border: 1px solid #cccccc;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px; }
+
+pre {
+  background-color: #f8f8f8;
+  border: 1px solid #cccccc;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px; }
+  pre code, pre tt {
+    background-color: transparent;
+    border: none; }
+
+sup {
+    font-size: 0.83em;
+    vertical-align: super;
+    line-height: 0;
+}
+* {
+	-webkit-print-color-adjust: exact;
+}
+@media screen and (min-width: 914px) {
+    body {
+        width: 854px;
+        margin:0 auto;
+    }
+}
+@media print {
+	table, pre {
+		page-break-inside: avoid;
+	}
+	pre {
+		word-wrap: break-word;
+	}
+}
+
+.top-banner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+}
+
+#top-banner-img {
+    opacity: 0.5;
+    max-width: none;
+    max-height: 350px;
+}
+
+#main-title {
+    position: relative;
+    margin-top: 100px;
+    margin-bottom: 100px;
+    padding: 10px;
+    font-size: 40px;
+    background: #333333;
+    color: #f8f8f8;
+    z-index: 10;
+}
+
+blockquote {
+    font-size: large;
+    font-weight: 300;
+}
+
+p.img {
+    text-align: center;
+}
+</style>
+</head>
+<body>
+<span class="top-banner">
+    <img id="top-banner-img" src="holoclean_img/dataclean.jpg" alt="Dirty!">
+</span>
+
+<p id="main-title">HoloClean:<br />Weakly Supervised Data Repairing</p>
+<p>Post by Theo Rekatsinas, Ihab Ilyas, and Chris Ré<br /><a href="http://snorkel.stanford.edu">Snorkel Blog</a></p>
+
+<p><em>And referencing work by other <a href="http://cs.stanford.edu/people/chrismre/#students">members of Hazy Research</a></em>.</p>
+
+<blockquote>
+  Data cleaning and repairing acount for about 60% of the work of data scientists. 
+</blockquote>
+
+<p>
+Noisy and erroneous data is a major bottleneck in analytics. Data cleaning and repairing account for about 60% of the work of data scientists. To address this bottleneck, we recently introduced <a href="https://arxiv.org/abs/1702.00820">HoloClean</a>, a semi-automated data repairing framework that relies on statistical learning and inference to repair errors in structured data. In HoloClean, we build upon the paradigm of <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">weak supervision</a> and demonstrate how to leverage diverse signals, including user-defined heuristic rules and external dictionaries, to repair erroneous data.
+</p>
+
+
+<p>HoloClean has three key properties: 
+</p>
+<ul>
+<li><p>HoloClean is the first data cleaning framework that combines a variety of heterogeneous signals, such as integrity constraints, external knowledge, and quantitative statistics, in a unified framework.</p></li>
+<li><p>It is the first holistic data cleaning framework driven by probabilistic inference. Users only need to provide a dataset to be cleaned and describe high-level domain specific signals.</p></li>
+<li><p>HoloClean can scale to large real-world dirty datasets and perform automatic repairs that are twice more accurate than state-of-the-art methods.</p></li>
+</ul>
+
+<h2 id="toc_0">Detecting and Repairing Erroneous Data</h2>
+<blockquote>
+  HoloClean can fix diverse errors in structured datasets, ranging from conflicting and mispelled values to outliers and null entries. 
+</blockquote>
+All too often, the data collected by companies, organizations, and researchers is filled with mistakes, errors, and incomplete values. This is referred to as <i>dirty data</i>, and it can represent a formidable obstacle to downstream applications. Take for example a snippet from the <a href="https://data.cityofchicago.org/Health-Human-Services/Food-Inspections/4ijn-s7e5/data">Food Inspections dataset</a> published by the City of Chicago:
+
+<p><center><img width="70%" src="holoclean_img/errors_chicago.jpg" alt="Errors can vary!"></center></p>
+
+Errors in this dataset range from mispelled entries (e.g., "Chicago" is spelled "Chicago") and conflicting Zip code values for the same address (e.g., "60608" versus "60609" for the same address in Chicago) to outlier values for key attributes (e.g., "Johnnyo's" instead of "John Veliotis Sr.").</p>
+
+<p>In HoloClean, we focus on <b><i>structured datasets</i></b> as the one shown above. Our goal is to identify and repair all cells whose initial, <b><i>observed value</i></b> is different from their <b><i> true value</i></b>, which is unknown. We term those <b><i>erroneous cells</i></b>. Given the above, data cleaning is separated into two tasks: (i) <b><i>error detection</i></b>, whose goal is to identify erroneous cells, and (ii) <b><i>data repairing</i></b>, whose goal is to infer the true value of detected erroneous cells.</p>
+
+<blockquote>
+  Data cleaning is a statistical learning and inference problem.
+</blockquote>
+
+<p>HoloClean casts data cleaning as a statistical learning and inference problem. Each cell of an input, dirty dataset is associated with a random variable. That random variable can either have a <b><i>fixed value</i></b> if the corresponding cell was not detected to be erroneous, or an <b><i>unknown value</i></b>, if the corresponding cell was detected to be erroneous. HoloClean uses random variables with fixed values as <b><i>training data</i></b> to learn a probabilistic model for repairing erroneous cells, whose random variables have uknown values.
+</p>
+
+<h2 id="toc_0">Data Cleaning via Weak Supervision.</h2>
+<p> 
+How can we train a probabilistic model for data cleaning efficiently? As with any other large-scale machine learning problem, users cannot afford iterating over all cells in a dataset with millions of tuples to identify erroneous cells and suggest repairs. This is where <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">weak supervision</a> shines! 
+</p>
+
+<blockquote>In HoloClean, users only need to specify high-level assertions that capture their domain-expertise with respect to invariants that the input data needs to sattisfy. No other supervision is required!
+</blockquote>
+
+<p><center><img width="70%" src="holoclean_img/inputs.jpg" alt="Inputs!"></center></p>
+HoloClean leverages a variety of weak signals to address error detection and data repairing:
+<ul>
+<li><p>
+In HoloClean, users can specify <a href="https://www.cse.buffalo.edu/~chomicki/papers-ic05.pdf">denial constraints</a>, a general form of integrity constraints, to detect tuples that report conflicting information. For example, in the Food Inspections dataset, the functional dependency <b>City, State, Address &rarr; Zip</b>, can be used to identify that the information provided by Tuple t1 is in conflict with the information of Tuples t2 and t3. Denial constraints are high-level first-order logic rules that capture the user's domain-expertise.
+</p></li>
+<li><p>
+Users also have the option to use <a href="http://dl.acm.org/citation.cfm?id=1687674">external datasets or dictionaries</a> and specify high-level rules that match the data provided by a trusted external dataset to the input dataset to be cleaned. 
+</p></li>
+<li><p>
+HoloClean uses state-of-the-art <a href="http://dl.acm.org/citation.cfm?id=1281219">outlier detection methods</a> that leverage <i>quantitative statistics</i> to find cells whose value does not obey overall distributional properties of the input data. Outlier detection is run automatically and no input is required by the user.
+</p></li>
+</ul>
+
+<blockquote>
+  HoloClean unifies heterogeneous weak signals that provide evidence on the correct value of structured data to detect and repair errors. 
+</blockquote>
+
+All signals described above are used to automatically generate a probabilistic model for data cleaning:
+<ul>
+<li><p>
+Denial constrains introduce correlations over sets of random variables. For example, if the random variables for cells Address, City, and State in Tuples t1 and t2 have matching values then the random variables for t1.Zip and t2.Zip should take the same value.
+</p></li>
+<li><p>
+External data determine priors on the correct value of different cells. For example, the fact that address "3465 S Morgan St, Chicago, IL" is assigned to Zip Code "60608" in an external dataset provides evidence that the initially observed Zip Code of "60609" is wrong. 
+</p></li>
+<li><p>
+Finally, HoloClean uses the available labeled data (generated via the weak signals described above) to learn a series of quantitative statistics over the input data (e.g., co-occurence statistics over pairs of attribute values). Quantitative statistics are used to form priors over the assignment of random variables that correspond to erroneous cells.
+</p></li>
+</ul> 
+
+<p><center><img width="100%" src="holoclean_img/holoclean.jpg" alt="holoclean"></center></p>
+
+<p>Overall, HoloClean is a compiler that takes as input a dirty dataset, a collection of integrity constraints, and potentially a collection of external data and forms a probabilistic model for data cleaning. HoloClean builds upon <a href="http://deepdive.stanford.edu/">DeepDive</a>, our in-house general purpose inference engine, to execute learning and inference over its model. For each random variable HoloClean estimate its maximum a posteriori assignment as well as the marginal distribution over the values in its domain. The latter can be used to identify repairs with low confidence and solicit additional user-feedback in a principled manner.
+</p>
+
+<h3 id="toc_0">HoloClean in Practice</h3> 
+<p>In our paper we evaluate HoloClean over a variety of real-world datasets, including the Food Inspections dataset presented above. We compare HoloClean with various state-of-the-art data cleaning methods. All prior methods are designed to use each of the signals presented above in isolation. On the other hand, due to the flexibility and extensibility of probabilistic models, HoloClean can combine all signals in a unified framework.</p>
+
+<p><center><img width="70%" src="holoclean_img/f1_overview.jpg" alt="f1-score"></center></p>
+
+<p>In our experiments we find that HoloClean finds data repairs with an average precision of ~90%
+and an average recall of above ~76% across a diverse array of datasets exhibiting different types of errors.
+This yields an average F1 improvement of more than 2x against state-of-the-art methods.</p>
+
+
+<h2 id="toc_0">Scaling Probabilistic Inference</h2>
+<blockquote>
+  Hard constraints (e.g., integrity constraints) lead to complex and non-scalable repairing models.
+</blockquote>
+<p>The main technical challenge in HoloClean is scaling inference over the probabilistic model used for data cleaning. It is well-known that inference in the presence of constraints is <a href="https://en.wikipedia.org/wiki/Sharp-P-complete">#P-complete</a>. This is because during inference one needs to consider all possible joint assigments over sets of random variables that are correlated. For example, consider the dataset shown in the figure below:
+</p>
+
+<p><center><img width="70%" src="holoclean_img/relax.jpg" alt="relaxed model"></center></p>
+
+<p>The user-specified integrity constraint shown in the Example introduces a correlation across the four random variables corresponding to the cells of Tuples t1 and t3. If we naively encode this correlation by converting the integrity constraint to a first-order logic constraint, we need to enumerate all possible assignments over these four random variables. It is easy to see that for complex constraints and data cleaning instances with millions of tuples and random variables with large domains this naive approach does not scale.</p>
+
+<blockquote>
+  HoloClean relaxes constraints over sets of data cells to simple features over individual data cells. This gives a scalable repairing model with independent random variables alone.
+</blockquote>
+
+<p>To ensure scalability, HoloClean applies integrity constraints over the input dataset to identify tuples that provide conflicting information and uses integrity constraints to learn <b><i>features</i></b> over the random variables associated with the cells corresponding to these tuples. The final probabilistic model generated by HoloClean corresponds to a <b><i>voting model over independent random variables</i></b> that ensures the local consistency of the values assigned to different cells.</p>
+
+<p>In our paper, we empirically find that when there is sufficient redundancy in observing the correct value of cells in a dataset, HoloClean's approximate model obtains more accurate repairs and is more robust to misspecifications of the domain of random variables in its probabilistic model.</p>
+
+<h2 id="toc_0">Next Steps</h2>
+
+<p>A few things we are excited about:</p>
+<ul>
+<li><p>We are actively exploring the connections between HoloClean's relaxed model and other structured prediction tasks where constraints are used to guarantee globally consistent models, but locally consistent models are sufficient due to redundancy in the observed data. In fact, trading-off constraints for features has been an <a href="http://theory.stanford.edu/~tim/papers/statrec.pdf">open area of study in the area of probabilistic inference over structured models</a>.</p></li>
+<li><p>We are working on combining HoloClean with <a href="http://hazyresearch.github.io/snorkel/">Snorkel</a>, our new data-programming engine, to provide users with an interactive way of specifying and revising weak signas for constructing data cleaning models.</p></li>
+<li><p>We are working on a code release for HoloClean; so stay tuned!</p></li>
+</ul>
+
+</body>
+
+</html>

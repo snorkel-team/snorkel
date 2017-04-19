@@ -158,7 +158,7 @@ class BatchAnnotatorUDF(UDF):
         self.anno_generator  = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
         super(BatchAnnotatorUDF, self).__init__(**kwargs)
 
-    def apply(self, batch_range, table_name, split, **kwargs):
+    def apply(self, batch_range, table_name, split, cache, **kwargs):
         """
         Applies a given function to a range of candidates
 
@@ -166,19 +166,33 @@ class BatchAnnotatorUDF(UDF):
         into Queues (can't pickle...)
         """
         start, end = batch_range
-        file_name  = _segment_filename(table_name, split, self.worker_id)
+        file_name = _segment_filename(table_name, split, self.worker_id)
         segment_path = os.path.join(segment_dir, file_name)
         candidates = self.session.query(Candidate).filter(Candidate.split == split).order_by(Candidate.id).slice(start, end)
         with codecs.open(segment_path, 'a+', encoding='utf-8') as writer:
-            for i, candidate in enumerate(candidates):
-                # Runs the actual extraction function
-                nonzero_kvs = [(k,v) for k,v in self.anno_generator(candidate) if v != 0]
-                if nonzero_kvs:
-                    keys, values = zip(*nonzero_kvs)
-                else:
-                    keys = values = []
-                row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
-                writer.write('\t'.join(row) + '\n')
+            if not cache:
+                for i, candidate in enumerate(candidates):
+                    # Runs the actual extraction function
+                    nonzero_kvs = [(k,v) for k, v in self.anno_generator(candidate) if v != 0]
+                    if nonzero_kvs:
+                        keys, values = zip(*nonzero_kvs)
+                    else:
+                        keys = values = []
+                    row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
+                    writer.write('\t'.join(row) + '\n')
+            else:
+                nonzero_kv_dict = {}
+                for id, k, v in self.anno_generator(list(candidates)):
+                    if id not in nonzero_kv_dict: nonzero_kv_dict[id] = []
+                    if v != 0: nonzero_kv_dict[id].append((k, v))
+                for i, candidate in enumerate(candidates):
+                    nonzero_kvs = nonzero_kv_dict[candidate.id]
+                    if nonzero_kvs:
+                        keys, values = zip(*nonzero_kvs)
+                    else:
+                        keys = values = []
+                    row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
+                    writer.write('\t'.join(row) + '\n')
         return
         yield
 
@@ -224,7 +238,8 @@ class BatchAnnotator(UDFRunner):
             
             segment_file_blob = os.path.join(segment_dir, _segment_filename(self.table_name, split))
             remove_files(segment_file_blob)
-            super(BatchAnnotator, self).apply(batch_range, table_name = self.table_name, split=split, **kwargs)
+            cache = True if self.annotation_type == 'feature' else False
+            super(BatchAnnotator, self).apply(batch_range, table_name = self.table_name, split=split, cache=cache, **kwargs)
             
             # Insert and update keys
             if not table_already_exists or old_table_name:

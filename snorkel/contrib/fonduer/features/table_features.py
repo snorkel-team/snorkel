@@ -5,27 +5,50 @@ from ..config import settings
 FEAT_PRE = 'TAB_'
 DEF_VALUE = 1
 
+unary_tablelib_feats = {}
+binary_tablelib_feats = {}
 
-def get_table_feats(candidate):
-    args = candidate.get_contexts()
-    if not (isinstance(args[0], TemporarySpan)):
-        raise ValueError("Accepts Span-type arguments, %s-type found." % type(candidate))
 
-    # Unary candidates
-    if len(args) == 1:
-        span = args[0]
-        for f, v in tablelib_unary_features(span):
-            yield FEAT_PRE + f, v
+def get_table_feats(candidates):
+    candidates = candidates if isinstance(candidates, list) else [candidates]
+    for candidate in candidates:
+        args = candidate.get_contexts()
+        if not (isinstance(args[0], TemporarySpan)):
+            raise ValueError("Accepts Span-type arguments, %s-type found." % type(candidate))
 
-    # Binary candidates
-    elif len(args) == 2:
-        span1, span2 = args
-        # Add TableLib relation features (if applicable)
-        if span1.is_tabular() or span2.is_tabular():
-            for f, v in tablelib_binary_features(span1, span2):
-                yield FEAT_PRE + f, v
-    else:
-        raise NotImplementedError("Only handles unary and binary candidates currently")
+        # Unary candidates
+        if len(args) == 1:
+            span = args[0]
+            if span.stable_id not in unary_tablelib_feats:
+                unary_tablelib_feats[span.stable_id] = set()
+                for f, v in tablelib_unary_features(span):
+                    unary_tablelib_feats[span.stable_id].add((f, v))
+
+            for f, v in unary_tablelib_feats[span.stable_id]:
+                yield candidate.id, FEAT_PRE + f, v
+
+        # Binary candidates
+        elif len(args) == 2:
+            span1, span2 = args
+            if span1.is_tabular() or span2.is_tabular():
+                for span, pre in [(span1, "e1_"), (span2, "e2_")]:
+                    if span.stable_id not in unary_tablelib_feats:
+                        unary_tablelib_feats[span.stable_id] = set()
+                        for f, v in tablelib_unary_features(span):
+                            unary_tablelib_feats[span.stable_id].add((f, v))
+
+                    for f, v in unary_tablelib_feats[span.stable_id]:
+                        yield candidate.id, FEAT_PRE + pre + f, v
+
+                if candidate.id not in binary_tablelib_feats:
+                    binary_tablelib_feats[candidate.id] = set()
+                    for f, v in tablelib_binary_features(span1, span2):
+                        binary_tablelib_feats[candidate.id].add((f, v))
+
+                for f, v in binary_tablelib_feats[candidate.id]:
+                    yield candidate.id, FEAT_PRE + f, v
+        else:
+            raise NotImplementedError("Only handles unary and binary candidates currently")
 
 
 def tablelib_unary_features(span):
@@ -35,7 +58,7 @@ def tablelib_unary_features(span):
     if not span.is_tabular(): return
     phrase = span.sentence
     for attrib in settings.featurization.table.unary_features.attrib:
-        for ngram in get_cell_ngrams(span, 
+        for ngram in get_cell_ngrams(span,
                                      n_max=settings.featurization.table.unary_features.get_cell_ngrams.max,
                                      attrib=attrib):
             yield "CELL_%s_[%s]" % (attrib.upper(), ngram), DEF_VALUE
@@ -68,10 +91,6 @@ def tablelib_binary_features(span1, span2):
     """
     Table-/structure-related features for a pair of spans
     """
-    for feat, v in tablelib_unary_features(span1):
-        yield "e1_" + feat, v
-    for feat, v in tablelib_unary_features(span2):
-        yield "e2_" + feat, v
     if span1.is_tabular() and span2.is_tabular():
         if span1.sentence.table == span2.sentence.table:
             yield u"SAME_TABLE", DEF_VALUE

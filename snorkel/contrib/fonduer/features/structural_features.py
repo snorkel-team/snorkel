@@ -3,27 +3,52 @@ from ..lf_helpers import *
 FEAT_PRE = 'STR_'
 DEF_VALUE = 1
 
+unary_strlib_feats = {}
+binary_strlib_feats = {}
 
-def get_structural_feats(candidate):
-    args = candidate.get_contexts()
-    if not (isinstance(args[0], TemporarySpan)):
-        raise ValueError("Accepts Span-type arguments, %s-type found." % type(candidate))
 
-    # Unary candidates
-    if len(args) == 1:
-        span = args[0]
-        if span.is_structural():
-            for f, v in strlib_unary_features(span):
-                yield FEAT_PRE + f, v
+def get_structural_feats(candidates):
+    candidates = candidates if isinstance(candidates, list) else [candidates]
+    for candidate in candidates:
+        args = candidate.get_contexts()
+        if not (isinstance(args[0], TemporarySpan)):
+            raise ValueError("Accepts Span-type arguments, %s-type found." % type(candidate))
 
-    # Binary candidates
-    elif len(args) == 2:
-        span1, span2 = args
-        if span1.is_structural() or span2.is_structural():
-            for f, v in strlib_binary_features(span1, span2):
-                yield FEAT_PRE + f, v
-    else:
-        raise NotImplementedError("Only handles unary and binary candidates currently")
+        # Unary candidates
+        if len(args) == 1:
+            span = args[0]
+            if span.is_structural():
+                if span.stable_id not in unary_strlib_feats:
+                    unary_strlib_feats[span.stable_id] = set()
+                    for f, v in strlib_unary_features(span):
+                        unary_tdl_feats[span.stable_id].add((f, v))
+
+                for f, v in unary_strlib_feats[span.stable_id]:
+                    yield candidate.id, FEAT_PRE + f, v
+
+
+        # Binary candidates
+        elif len(args) == 2:
+            span1, span2 = args
+            if span1.is_structural() or span2.is_structural():
+                for span, pre in [(span1, "e1_"), (span2, "e2_")]:
+                    if span.stable_id not in unary_strlib_feats:
+                        unary_strlib_feats[span.stable_id] = set()
+                        for f, v in strlib_unary_features(span):
+                            unary_strlib_feats[span.stable_id].add((f, v))
+
+                    for f, v in unary_strlib_feats[span.stable_id]:
+                        yield candidate.id, FEAT_PRE + pre + f, v
+
+                if candidate.id not in binary_strlib_feats:
+                    binary_strlib_feats[candidate.id] = set()
+                    for f, v in strlib_binary_features(span1, span2):
+                        binary_strlib_feats[candidate.id].add((f, v))
+
+                for f, v in binary_strlib_feats[candidate.id]:
+                    yield candidate.id, FEAT_PRE + f, v
+        else:
+            raise NotImplementedError("Only handles unary and binary candidates currently")
 
 
 def strlib_unary_features(span):
@@ -63,11 +88,6 @@ def strlib_binary_features(span1, span2):
     """
     Structural-related features for a pair of spans
     """
-    for feat, v in strlib_unary_features(span1):
-        yield "e1_" + feat, v
-    for feat, v in strlib_unary_features(span2):
-        yield "e2_" + feat, v
-
     yield "COMMON_ANCESTOR_[%s]" % " ".join(common_ancestor((span1, span2))), DEF_VALUE
 
     yield "LOWEST_ANCESTOR_DEPTH_[%d]" % lowest_common_ancestor_depth((span1, span2)), DEF_VALUE

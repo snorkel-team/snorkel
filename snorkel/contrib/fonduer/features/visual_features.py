@@ -3,29 +3,53 @@ from ..lf_helpers import *
 FEAT_PRE = 'VIZ_'
 DEF_VALUE = 1
 
+unary_vizlib_feats = {}
+binary_vizlib_feats = {}
 
-def get_visual_feats(candidate):
-    args = candidate.get_contexts()
-    if not (isinstance(args[0], TemporarySpan)):
-        raise ValueError("Accepts Span-type arguments, %s-type found." % type(candidate))
 
-    # Unary candidates
-    if len(args) == 1:
-        span = args[0]
-        # Add VisualLib entity features (if applicable)
-        if span.is_visual():
-            for f, v in vizlib_unary_features(span):
-                yield FEAT_PRE + f, v
+def get_visual_feats(candidates):
+    candidates = candidates if isinstance(candidates, list) else [candidates]
+    for candidate in candidates:
+        args = candidate.get_contexts()
+        if not (isinstance(args[0], TemporarySpan)):
+            raise ValueError("Accepts Span-type arguments, %s-type found." % type(candidate))
 
-    # Binary candidates
-    elif len(args) == 2:
-        span1, span2 = args
-        # Add VisualLib entity features (if applicable)
-        if span1.is_visual() or span2.is_visual():
-            for f, v in vizlib_binary_features(span1, span2):
-                yield FEAT_PRE + f, v
-    else:
-        raise NotImplementedError("Only handles unary and binary candidates currently")
+        # Unary candidates
+        if len(args) == 1:
+            span = args[0]
+            # Add VisualLib entity features (if applicable)
+            if span.is_visual():
+                if span.stable_id not in unary_vizlib_feats:
+                    unary_vizlib_feats[span.stable_id] = set()
+                    for f, v in vizlib_unary_features(span):
+                        unary_vizlib_feats[span.stable_id].add((f, v))
+
+                for f, v in unary_vizlib_feats[span.stable_id]:
+                    yield candidate.id, FEAT_PRE + f, v
+
+        # Binary candidates
+        elif len(args) == 2:
+            span1, span2 = args
+            # Add VisualLib entity features (if applicable)
+            if span1.is_visual() or span2.is_visual():
+                for span, pre in [(span1, "e1_"), (span2, "e2_")]:
+                    if span.stable_id not in unary_vizlib_feats:
+                        unary_vizlib_feats[span.stable_id] = set()
+                        for f, v in vizlib_unary_features(span):
+                            unary_vizlib_feats[span.stable_id].add((f, v))
+
+                    for f, v in unary_vizlib_feats[span.stable_id]:
+                        yield candidate.id, FEAT_PRE + pre + f, v
+
+                if candidate.id not in binary_vizlib_feats:
+                    binary_vizlib_feats[candidate.id] = set()
+                    for f, v in vizlib_binary_features(span1, span2):
+                        binary_vizlib_feats[candidate.id].add((f, v))
+
+                for f, v in binary_vizlib_feats[candidate.id]:
+                    yield candidate.id, FEAT_PRE + f, v
+        else:
+            raise NotImplementedError("Only handles unary and binary candidates currently")
 
 
 def vizlib_unary_features(span):
@@ -45,11 +69,6 @@ def vizlib_binary_features(span1, span2):
     """
     Visual-related features for a pair of spans
     """
-    for feat, v in vizlib_unary_features(span1):
-        yield "e1_" + feat, v
-    for feat, v in vizlib_unary_features(span2):
-        yield "e2_" + feat, v
-
     if same_page((span1, span2)):
         yield "SAME_PAGE", DEF_VALUE
 

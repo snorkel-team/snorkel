@@ -127,21 +127,6 @@ def expand_part_range(text, DEBUG=False):
     for part in final_set:
         yield part
 
-    # Add common part suffixes on each discovered part number
-    # part_suffixes = ['-16','-25','-40','A','B','C']
-    # for part in final_set:
-    #     base = part
-    #     for suffix in part_suffixes:
-    #         if part.endswith(suffix):
-    #             base = part[:-len(suffix)].replace(' ', '') # e.g., for parts in SIEMS01215-1
-    #             break
-    #     if base:
-    #         yield base
-    #         for suffix in part_suffixes:
-    #             yield base + suffix
-    #     else:
-    #         yield part
-
     # NOTE: We make a few assumptions (e.g. suffixes must be same length), but
     # one important unstated assumption is that if there is a single suffix,
     # (e.g. BC546A/B), the single suffix will be swapped in no matter what.

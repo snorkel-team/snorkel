@@ -4,7 +4,6 @@ from snorkel.utils import ProgressBar
 from snorkel.contrib.fonduer.lf_helpers import *
 from snorkel.candidates import OmniNgrams
 from hardware_spaces import OmniNgramsPart
-from hardware_matchers import get_matcher
 import csv
 import codecs
 import re

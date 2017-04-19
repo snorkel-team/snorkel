@@ -18,3 +18,4 @@ selenium
 editdistance
 pyyaml
 psycopg2
+tika

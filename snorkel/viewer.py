@@ -72,7 +72,7 @@ class Viewer(widgets.DOMWidget):
         # We get the sorted candidates and all contexts required, either from unary or binary candidates
         self.gold       = list(gold)
         self.candidates = sorted(list(candidates), key=lambda c : c[0].char_start)
-        self.contexts   = list(set(c[0].parent for c in self.candidates + self.gold))
+        self.contexts   = list(set(c[0].get_parent() for c in self.candidates + self.gold))
         
         # If committed, sort contexts by id
         try:
@@ -103,7 +103,10 @@ class Viewer(widgets.DOMWidget):
                 init_labels_serialized.append(str(i) + '~~' + value_string)
 
                 # If the annotator label is in the main table, also get its stable version
+<<<<<<< HEAD
                 #context_stable_ids = '~~'.join([c.stable_id for c in candidate.get_contexts()] + [self.annotator.name])
+=======
+>>>>>>> master
                 context_stable_ids = '~~'.join([c.stable_id for c in candidate.get_contexts()])
                 existing_annotation_stable = self.session.query(StableLabel) \
                                                  .filter(StableLabel.context_stable_ids == context_stable_ids)\
@@ -112,6 +115,7 @@ class Viewer(widgets.DOMWidget):
                 # If stable version is not available, create it here
                 # NOTE: This is for versioning issues, should be removed?
                 if existing_annotation_stable is None:
+<<<<<<< HEAD
                     #context_stable_ids         = [c.stable_id for c in candidate.get_contexts()]
                     context_stable_ids         = '~~'.join([c.stable_id for c in candidate.get_contexts()])
 
@@ -120,6 +124,13 @@ class Viewer(widgets.DOMWidget):
                                                              value=existing_annotation.value,\
                                                              split=candidate.split)
 
+=======
+                    context_stable_ids         = '~~'.join([c.stable_id for c in candidate.get_contexts()])
+                    existing_annotation_stable = StableLabel(context_stable_ids=context_stable_ids,\
+                                                             annotator_name=self.annotator.name,\
+                                                             split=candidate.split,\
+                                                             value=existing_annotation.value)
+>>>>>>> master
                     self.session.add(existing_annotation_stable)
                     self.session.commit()
 
@@ -163,7 +174,7 @@ class Viewer(widgets.DOMWidget):
                 context = self.contexts[j]
 
                 # Get the candidates in this context
-                candidates = [c for c in self.candidates if c[0].parent == context]
+                candidates = [c for c in self.candidates if c[0].get_parent() == context]
                 gold = [g for g in self.gold if g.context_id == context.id]
 
                 # Construct the <li> and page view elements
@@ -221,11 +232,14 @@ class Viewer(widgets.DOMWidget):
                 self.session.add(self.annotations[cid])
 
                 # Create StableLabel
-                context_stable_ids = '~~'.join([c.stable_id for c in candidate.get_contexts()])
-                self.annotations_stable[cid] = StableLabel(context_stable_ids=context_stable_ids, annotator_name=self.annotator.name, value=value, split=candidate.split)
+                context_stable_ids           = '~~'.join([c.stable_id for c in candidate.get_contexts()])
+                self.annotations_stable[cid] = StableLabel(context_stable_ids=context_stable_ids,\
+                                                           annotator_name=self.annotator.name,\
+                                                           value=value,\
+                                                           split=candidate.split)
                 self.session.add(self.annotations_stable[cid])
-
                 self.session.commit()
+
         elif content.get('event', '') == 'delete_label':
             cid = content.get('cid', None)
             self.session.delete(self.annotations[cid])

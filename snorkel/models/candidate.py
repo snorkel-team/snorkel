@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 
 from .meta import SnorkelBase
@@ -14,9 +14,10 @@ class Candidate(SnorkelBase):
     this class directly.
     """
     __tablename__ = 'candidate'
-    id    = Column(Integer, primary_key=True)
-    type  = Column(String, nullable=False)
-    split = Column(Integer, nullable=False, default=0, index=True)
+    id                = Column(Integer, primary_key=True)
+    type              = Column(String, nullable=False)
+    split             = Column(Integer, nullable=False, default=0, index=True)
+    training_marginal = Column(Float, nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',
@@ -29,7 +30,7 @@ class Candidate(SnorkelBase):
 
     def get_parent(self):
         # Fails if both contexts don't have same parent
-        p = [c.parent for c in self.get_contexts()]
+        p = [c.get_parent() for c in self.get_contexts()]
         if p.count(p[0]) == len(p):
             return p[0]
         else:
@@ -39,11 +40,14 @@ class Candidate(SnorkelBase):
         """Get a tuple of the canonical IDs (CIDs) of the contexts making up this candidate"""
         return tuple(getattr(self, name + "_cid") for name in self.__argnames__)
 
+    def __len__(self):
+        return len(self.__argnames__)
+
     def __getitem__(self, key):
         return self.get_contexts()[key]
 
     def __repr__(self):
-        return u"%s(%s)" % (self.__class__.__name__, u", ".join(map(unicode, self.get_contexts())))
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(map(str, self.get_contexts())))
 
 
 def candidate_subclass(class_name, args, table_name=None):

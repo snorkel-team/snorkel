@@ -1,7 +1,11 @@
-from .models import Span, Label
+import numpy as np
+import re
+
+from .annotations import load_gold_labels
+from .learning.utils import MentionScorer
+from .models import Span, Label, Candidate
 from itertools import chain
 from utils import tokens_to_ngrams
-from sqlalchemy.orm.exc import NoResultFound
 
 
 def get_text_splits(c):
@@ -21,7 +25,7 @@ def get_text_splits(c):
     spans.sort()
 
     # NOTE: Assume all Spans in same parent Context
-    text = span.parent.text
+    text = span.get_parent().text
 
     # Get text chunks
     chunks = [text[:spans[0][0]], "{{%s}}" % spans[0][2]]
@@ -52,11 +56,18 @@ def get_text_between(c):
         raise ValueError("Only applicable to binary Candidates")
 
 
+def is_inverted(c):
+    """Returns True if the ordering of the candidates in the sentence is inverted."""
+    if len(c) != 2:
+        raise ValueError("Only applicable to binary Candidates")
+    return c[0].get_word_start() > c[1].get_word_start()
+
+
 def get_between_tokens(c, attrib='words', n_max=1, case_sensitive=False):
     """
     TODO: write doc_string
     """
-    if len(c.get_contexts()) != 2:
+    if len(c) != 2:
         raise ValueError("Only applicable to binary Candidates")
     span0 = c[0]
     span1 = c[1]
@@ -79,7 +90,7 @@ def get_left_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
     span = c if isinstance(c, Span) else c[0] 
     i    = span.get_word_start()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return [ngram for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][max(0, i-window):i]), n_max=n_max)]
+    return [ngram for ngram in tokens_to_ngrams(map(f, span.get_parent()._asdict()[attrib][max(0, i-window):i]), n_max=n_max)]
 
 
 def get_right_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
@@ -92,7 +103,7 @@ def get_right_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False)
     span = c if isinstance(c, Span) else c[-1]
     i    = span.get_word_end()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return [ngram for ngram in tokens_to_ngrams(map(f, span.parent._asdict()[attrib][i+1:i+1+window]), n_max=n_max)]
+    return [ngram for ngram in tokens_to_ngrams(map(f, span.get_parent()._asdict()[attrib][i+1:i+1+window]), n_max=n_max)]
 
 
 def contains_token(c, tok, attrib='words', case_sensitive=False):
@@ -112,7 +123,7 @@ def get_doc_candidate_spans(c):
     arguments of Candidates.
     """
     # TODO: Fix this to be more efficient and properly general!!
-    spans = list(chain.from_iterable(s.spans for s in c[0].parent.document.sentences))
+    spans = list(chain.from_iterable(s.spans for s in c[0].get_parent().document.sentences))
     return [s for s in spans if s != c[0]]
 
 
@@ -122,7 +133,7 @@ def get_sent_candidate_spans(c):
     arguments of Candidates.
     """
     # TODO: Fix this to be more efficient and properly general!!
-    return [s for s in c[0].parent.spans if s != c[0]]
+    return [s for s in c[0].get_parent().spans if s != c[0]]
 
 
 def get_matches(lf, candidate_set, match_values=[1,-1]):
@@ -137,3 +148,41 @@ def get_matches(lf, candidate_set, match_values=[1,-1]):
             matches.append(c)
     print "%s matches" % len(matches)
     return matches
+
+def rule_text_btw(candidate, text, sign):
+    return sign if text in get_text_between(candidate) else 0
+
+
+def rule_text_in_span(candidate, text, span, sign):
+    return sign if text in candidate[span].get_span().lower() else 0   
+
+
+def rule_regex_search_tagged_text(candidate, pattern, sign):
+    return sign if re.search(pattern, get_tagged_text(candidate), flags=re.I) else 0
+ 
+
+def rule_regex_search_btw_AB(candidate, pattern, sign):
+    return sign if re.search(r'{{A}}' + pattern + r'{{B}}', get_tagged_text(candidate), flags=re.I) else 0
+
+
+def rule_regex_search_btw_BA(candidate, pattern, sign):
+    return sign if re.search(r'{{B}}' + pattern + r'{{A}}', get_tagged_text(candidate), flags=re.I) else 0
+
+    
+def rule_regex_search_before_A(candidate, pattern, sign):
+    return sign if re.search(pattern + r'{{A}}.*{{B}}', get_tagged_text(candidate), flags=re.I) else 0
+
+    
+def rule_regex_search_before_B(candidate, pattern, sign):
+    return sign if re.search(pattern + r'{{B}}.*{{A}}', get_tagged_text(candidate), flags=re.I) else 0
+
+def test_LF(session, lf, split, annotator_name):
+    """
+    Gets the accuracy of a single LF on a split of the candidates, w.r.t. annotator labels,
+    and also returns the error buckets of the candidates.
+    """
+    test_candidates = session.query(Candidate).filter(Candidate.split == split).all()
+    test_labels     = load_gold_labels(session, annotator_name=annotator_name, split=split)
+    scorer          = MentionScorer(test_candidates, test_labels)
+    test_marginals  = np.array([0.5 * (lf(c) + 1) for c in test_candidates])
+    return scorer.score(test_marginals, set_unlabeled_as_neg=False, set_at_thresh_as_neg=False)

@@ -1,12 +1,8 @@
-# Travis CI config for Snorkel, a lightweight platform for developing
-# information extraction systems using data programming.
+# Travis CI config for Snorkel, a training data creation and management
+# system focused on information extraction
 
+dist: trusty
 sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
-
-env:
-  global:
-    - NUMPY: 1.11
-    - SCIPY: 0.17
 
 language:
   - python
@@ -55,10 +51,7 @@ install:
   # Install binary distribution of scientific python modules
   - test -e ~/miniconda/envs/test/bin/activate || ( rm -rf ~/miniconda/envs/test; conda create --yes -n test python=$TRAVIS_PYTHON_VERSION )
   - source activate test
-  - conda install --yes numpy=$NUMPY scipy=$SCIPY matplotlib pip
-
-  # Install theano
-  - conda install --yes theano
+  - conda install --yes numpy scipy matplotlib pip
 
   # Install Numba
   - conda install --yes numba
@@ -75,11 +68,6 @@ install:
 
   # Use runipy to run Jupyter/IPython notebooks from command-line
   - pip install runipy
-
-  # Install programs for coverage
-  - pip install coverage
-  - pip install coveralls
-  - pip install codeclimate-test-reporter
 
 script:
 
@@ -100,19 +88,20 @@ script:
   - runipy intro/Intro_Tutorial_4.ipynb
   - runipy intro/Intro_Tutorial_5.ipynb
 
+  # Run CDR tutorials
+  - runipy cdr/CDR_Tutorial_1.ipynb
+  - runipy cdr/CDR_Tutorial_2.ipynb
+  - runipy cdr/CDR_Tutorial_3.ipynb
+
   - cd ..
 
   # Run test modules
-  - coverage run -p test/learning/test_gen_learning.py
-  - coverage combine
+  - python test/learning/test_gen_learning.py
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7
 
 after_success:
-  - codecov
-  - coveralls
-  - codeclimate-test-reporter
   - killall java
 
 after_failure:

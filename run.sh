@@ -8,7 +8,7 @@ git submodule update --init --recursive
 # Make sure parser is installed
 PARSER="parser/stanford-corenlp-3.6.0.jar"
 if [ ! -f "$PARSER" ]; then
-    read -p "CoreNLP [default] parser not found- install now?   " yn
+    read -p "CoreNLP [default] parser not found- install now?  [y/n] " yn
     case $yn in
         [Yy]* ) echo "Installing parser..."; ./install-parser.sh;;
         [Nn]* ) ;;
@@ -26,9 +26,8 @@ if [ ! -f "$PHANTOMJS" ]; then
 fi
 
 # Make sure poppler is installed
-POPPLER=$(which pdfinfo)
-size=${#POPPLER}
-if [ $size -eq 0 ]; then
+POPPLER="poppler/bin/pdftotext"
+if [ ! -f "$POPPLER" ]; then
     read -p "poppler not found- install now?  [y/n] " yn
     case $yn in
         [Yy]* ) echo "Installing poppler..."; ./install-poppler.sh;;

@@ -89,7 +89,7 @@ class Webpage(Document):
 
     # Rest of class definition here
     def __repr__(self):
-        return "Webpage(id: %s..., url: %s...)" % (self.name[:10], self.url[8:23])
+        return "Webpage(id: %s..., url: %s...)" % (self.name[:10].encode('utf-8'), self.url[8:23].encode('utf-8'))
 
 class Sentence(Context):
     """A sentence Context in a Document."""
@@ -176,7 +176,7 @@ class Table(Context):
 
     def __repr__(self):
         return "Table(Doc: %s, Position: %s)" % (self.document.name.encode('utf-8'), self.position)
-    
+
     def __gt__(self, other):
         # Allow sorting by comparing the string representations of each
         return self.__repr__() > other.__repr__()
@@ -219,7 +219,7 @@ class Cell(Context):
                  tuple(set([self.row_start, self.row_end])),
                  tuple(set([self.col_start, self.col_end])),
                  self.position))
-    
+
     def __gt__(self, other):
         # Allow sorting by comparing the string representations of each
         return self.__repr__() > other.__repr__()
@@ -242,7 +242,7 @@ class PhraseMixin(object):
         return ("Phrase (Doc: %s, Index: %s, Text: %s)" %
                 (self.document.name.encode('utf-8'),
                  self.phrase_idx,
-                 self.text))
+                 self.text.encode('utf-8')))
 
 class LingualMixin(object):
     """A collection of lingual attributes."""
@@ -259,7 +259,7 @@ class LingualMixin(object):
         return ("LingualPhrase (Doc: %s, Index: %s, Text: %s)" %
                 (self.document.name.encode('utf-8'),
                  self.phrase_idx,
-                 self.text))
+                 self.text.encode('utf-8')))
 
 class TabularMixin(object):
     """A collection of tabular attributes."""
@@ -277,8 +277,8 @@ class TabularMixin(object):
 
     @declared_attr
     def cell(cls):
-        return relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=lambda: cls.cell_id)    
-    
+        return relationship('Cell', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=lambda: cls.cell_id)
+
     row_start = Column(Integer)
     row_end   = Column(Integer)
     col_start = Column(Integer)
@@ -287,20 +287,20 @@ class TabularMixin(object):
 
     def is_tabular(self):
         return self.table is not None
-    
+
     def is_cellular(self):
         return self.cell is not None
 
     def __repr__(self):
         rows = tuple([self.row_start, self.row_end]) if self.row_start != self.row_end else self.row_start
         cols = tuple([self.col_start, self.col_end]) if self.col_start != self.col_end else self.col_start
-        return ("TabularPhrase (Doc: %s, Table: %s, Row: %s, Col: %s, Index: %s, Text: %s)" % 
+        return ("TabularPhrase (Doc: %s, Table: %s, Row: %s, Col: %s, Index: %s, Text: %s)" %
             (self.document.name.encode('utf-8'),
-            (lambda: cls.table).position, 
-            rows, 
-            cols, 
-            self.phrase_idx, 
-            self.text))
+            (lambda: cls.table).position,
+            rows,
+            cols,
+            self.phrase_idx,
+            self.text.encode('utf-8')))
 
 
 class VisualMixin(object):
@@ -315,10 +315,10 @@ class VisualMixin(object):
         return self.page is not None and self.page[0] is not None
 
     def __repr__(self):
-        return ("VisualPhrase (Doc: %s, Page: %s, (T,B,L,R): (%d,%d,%d,%d), Text: %s)" % 
+        return ("VisualPhrase (Doc: %s, Page: %s, (T,B,L,R): (%d,%d,%d,%d), Text: %s)" %
             (self.document.name.encode('utf-8'),
             self.page, self.top, self.bottom, self.left, self.right,
-            self.text))
+            self.text.encode('utf-8')))
 
 
 class StructuralMixin(object):
@@ -331,10 +331,10 @@ class StructuralMixin(object):
         return self.html_tag is not None
 
     def __repr__(self):
-        return ("StructuralPhrase (Doc: %s, Tag: %s, Text: %s)" % 
+        return ("StructuralPhrase (Doc: %s, Tag: %s, Text: %s)" %
             (self.document.name.encode('utf-8'),
             self.html_tag,
-            self.text))
+            self.text.encode('utf-8')))
 
 
 # PhraseMixin must come last in arguments to not ovewrite is_* methods
@@ -366,7 +366,7 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, 
                    if self.row_start != self.row_end else self.row_start
             cols = tuple([self.col_start, self.col_end]) \
                    if self.col_start != self.col_end else self.col_start
-            return ("Phrase (Doc: %s, Table: %s, Row: %s, Col: %s, Index: %s, Text: %s)" % 
+            return ("Phrase (Doc: %s, Table: %s, Row: %s, Col: %s, Index: %s, Text: %s)" %
                    (self.document.name.encode('utf-8'),
                     self.table.position,
                     rows,
@@ -374,9 +374,9 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, 
                     self.position,
                     self.text.encode('utf-8')))
         else:
-            return ("Phrase (Doc: %s, Index: %s, Text: %s)" % 
+            return ("Phrase (Doc: %s, Index: %s, Text: %s)" %
                 (self.document.name.encode('utf-8'),
-                self.phrase_num, 
+                self.phrase_num,
                 self.text.encode('utf-8')))
 
     def _asdict(self):
@@ -411,7 +411,11 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, 
             'left': self.left,
             'right': self.right
         }
-    
+
+    def __gt__(self, other):
+        # Allow sorting by comparing the string representations of each
+        return self.__repr__() > other.__repr__()
+
     def __gt__(self, other):
         # Allow sorting by comparing the string representations of each
         return self.__repr__() > other.__repr__()
@@ -564,7 +568,7 @@ class TemporarySpan(TemporaryContext):
 
     def is_lingual(self):
         return self.sentence.is_lingual()
-    
+
     def is_structural(self):
         return self.sentence.is_structural()
 
@@ -576,7 +580,7 @@ class TemporarySpan(TemporaryContext):
 
     def __contains__(self, other_span):
         return (self.sentence == other_span.sentence
-            and other_span.char_start >= self.char_start 
+            and other_span.char_start >= self.char_start
             and other_span.char_end <= self.char_end)
 
     def __getitem__(self, key):
@@ -652,7 +656,7 @@ class Span(Context, TemporarySpan):
 class TemporaryImplicitSpan(TemporarySpan):
     """The TemporaryContext version of ImplicitSpan"""
     def __init__(self, sentence, char_start, char_end, expander_key, position,
-            text, words, lemmas, pos_tags, ner_tags, dep_parents, dep_labels, 
+            text, words, lemmas, pos_tags, ner_tags, dep_parents, dep_labels,
             page, top, left, bottom, right, meta=None):
         super(TemporarySpan, self).__init__()
         self.sentence       = sentence  # The sentence Context of the Span
@@ -680,9 +684,9 @@ class TemporaryImplicitSpan(TemporarySpan):
     def __eq__(self, other):
         try:
             return (self.sentence == other.sentence and
-                    self.char_start == other.char_start and 
+                    self.char_start == other.char_start and
                     self.char_end == other.char_end and
-                    self.expander_key == other.expander_key and 
+                    self.expander_key == other.expander_key and
                     self.position == other.position)
         except AttributeError:
             return False
@@ -690,9 +694,9 @@ class TemporaryImplicitSpan(TemporarySpan):
     def __ne__(self, other):
         try:
             return (self.sentence != other.sentence or
-                    self.char_start != other.char_start or 
-                    self.char_end != other.char_end or 
-                    self.expander_key != other.expander_key or 
+                    self.char_start != other.char_start or
+                    self.char_end != other.char_end or
+                    self.expander_key != other.expander_key or
                     self.position != other.position)
         except AttributeError:
             return True
@@ -706,11 +710,11 @@ class TemporaryImplicitSpan(TemporarySpan):
         #     + ':%s:%s' % (self.expander_key, self.position))
         return '%s::%s:%s:%s:%s:%s:%s' % (
             self.sentence.document.name,
-            self._get_polymorphic_identity(),                             
+            self._get_polymorphic_identity(),
             self.sentence.id,
-            self.char_start, 
-            self.char_end, 
-            self.expander_key, 
+            self.char_start,
+            self.char_end,
+            self.expander_key,
             self.position)
 
     def _get_table_name(self):
@@ -721,19 +725,19 @@ class TemporaryImplicitSpan(TemporarySpan):
 
     def _get_insert_query(self):
         return """INSERT INTO implicit_span VALUES(
-            :id, 
+            :id,
             :sentence_id,
-            :char_start, 
-            :char_end, 
-            :expander_key, 
-            :position, 
-            :text, 
-            :words, 
-            :lemmas, 
-            :pos_tags, 
-            :ner_tags, 
-            :dep_parents, 
-            :dep_labels, 
+            :char_start,
+            :char_end,
+            :expander_key,
+            :position,
+            :text,
+            :words,
+            :lemmas,
+            :pos_tags,
+            :ner_tags,
+            :dep_parents,
+            :dep_labels,
             :page,
             :top,
             :left,
@@ -787,15 +791,15 @@ class TemporaryImplicitSpan(TemporarySpan):
             else:
                 char_end = self.char_end + key.stop
             return self._get_instance(sentence=self.sentence, char_start=char_start, char_end=char_end, expander_key=expander_key,
-                position=position, text=text, words=words, lemmas=lemmas, pos_tags=pos_tags, 
-                ner_tags=ner_tags, dep_parents=dep_parents, dep_labels=dep_labels, 
+                position=position, text=text, words=words, lemmas=lemmas, pos_tags=pos_tags,
+                ner_tags=ner_tags, dep_parents=dep_parents, dep_labels=dep_labels,
                 page=page, top=top, left=left, bottom=bottom, right=right, meta=meta)
         else:
             raise NotImplementedError()
 
     def __repr__(self):
         return '%s("%s", sentence=%s, words=[%s,%s], position=[%s])' \
-            % (self.__class__.__name__, self.get_span(), self.sentence.id,
+            % (self.__class__.__name__, self.get_span().encode('utf-8'), self.sentence.id,
                self.get_word_start(), self.get_word_end(), self.position)
 
     def _get_instance(self, **kwargs):
@@ -805,9 +809,9 @@ class TemporaryImplicitSpan(TemporarySpan):
 class ImplicitSpan(Context, TemporaryImplicitSpan):
     """
     A span of characters that may not have appeared verbatim in the source text.
-    It is identified by Context id, character-index start and end (inclusive), 
-    as well as a key representing what 'expander' function drew the ImplicitSpan 
-    from an  existing Span, and a position (where position=0 corresponds to the 
+    It is identified by Context id, character-index start and end (inclusive),
+    as well as a key representing what 'expander' function drew the ImplicitSpan
+    from an  existing Span, and a position (where position=0 corresponds to the
     first ImplicitSpan produced from the expander function).
 
     The character-index start and end point to the segment of text that was

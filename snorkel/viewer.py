@@ -103,10 +103,6 @@ class Viewer(widgets.DOMWidget):
                 init_labels_serialized.append(str(i) + '~~' + value_string)
 
                 # If the annotator label is in the main table, also get its stable version
-<<<<<<< HEAD
-                #context_stable_ids = '~~'.join([c.stable_id for c in candidate.get_contexts()] + [self.annotator.name])
-=======
->>>>>>> master
                 context_stable_ids = '~~'.join([c.stable_id for c in candidate.get_contexts()])
                 existing_annotation_stable = self.session.query(StableLabel) \
                                                  .filter(StableLabel.context_stable_ids == context_stable_ids)\
@@ -115,22 +111,11 @@ class Viewer(widgets.DOMWidget):
                 # If stable version is not available, create it here
                 # NOTE: This is for versioning issues, should be removed?
                 if existing_annotation_stable is None:
-<<<<<<< HEAD
-                    #context_stable_ids         = [c.stable_id for c in candidate.get_contexts()]
-                    context_stable_ids         = '~~'.join([c.stable_id for c in candidate.get_contexts()])
-
-                    existing_annotation_stable = StableLabel(context_stable_ids=context_stable_ids,\
-                                                             annotator_name=self.annotator.name,\
-                                                             value=existing_annotation.value,\
-                                                             split=candidate.split)
-
-=======
                     context_stable_ids         = '~~'.join([c.stable_id for c in candidate.get_contexts()])
                     existing_annotation_stable = StableLabel(context_stable_ids=context_stable_ids,\
                                                              annotator_name=self.annotator.name,\
                                                              split=candidate.split,\
                                                              value=existing_annotation.value)
->>>>>>> master
                     self.session.add(existing_annotation_stable)
                     self.session.commit()
 

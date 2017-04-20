@@ -20,25 +20,30 @@ from .utils import sort_X_on_Y
 
 
 class CorpusParser(UDFRunner):
-    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False, fn=None):
+    def __init__(self, tokenize_whitespace=False, split_newline=False, parse_tree=False,
+                 strict_ptb=False, ptb3_escaping=True, fn=None):
         super(CorpusParser, self).__init__(CorpusParserUDF,
-                                           tok_whitespace=tok_whitespace,
+                                           tokenize_whitespace=tokenize_whitespace,
                                            split_newline=split_newline,
                                            parse_tree=parse_tree,
+                                           strict_ptb=strict_ptb,
+                                           ptb3_escaping=ptb3_escaping,
                                            fn=fn)
 
     def clear(self, session, **kwargs):
         session.query(Context).delete()
-        
+
         # We cannot cascade up from child contexts to parent Candidates, so we delete all Candidates too
         session.query(Candidate).delete()
 
 
 class CorpusParserUDF(UDF):
-    def __init__(self, tok_whitespace, split_newline, parse_tree, fn, **kwargs):
-        self.corenlp_handler = CoreNLPHandler(tok_whitespace=tok_whitespace,
+    def __init__(self, tokenize_whitespace, split_newline, parse_tree, strict_ptb, ptb3_escaping, fn, **kwargs):
+        self.corenlp_handler = CoreNLPHandler(tokenize_whitespace=tokenize_whitespace,
                                               split_newline=split_newline,
-                                              parse_tree=parse_tree)
+                                              parse_tree=parse_tree,
+                                              strict_ptb=strict_ptb,
+                                              ptb3_escaping=ptb3_escaping)
         self.fn = fn
         super(CorpusParserUDF, self).__init__(**kwargs)
 
@@ -59,6 +64,7 @@ class DocPreprocessor(object):
     :param max_docs: the maximum number of Documents to produce, default=float('inf')
 
     """
+
     def __init__(self, path, encoding="utf-8", max_docs=float('inf')):
         self.path = path
         self.encoding = encoding
@@ -106,21 +112,23 @@ class DocPreprocessor(object):
 
 class TSVDocPreprocessor(DocPreprocessor):
     """Simple parsing of TSV file with one (doc_name <tab> doc_text) per line"""
+
     def parse_file(self, fp, file_name):
         with codecs.open(fp, encoding=self.encoding) as tsv:
             for line in tsv:
                 (doc_name, doc_text) = line.split('\t')
-                stable_id=self.get_stable_id(doc_name)
-                yield Document(name=doc_name, stable_id=stable_id, meta={'file_name' : file_name}), doc_text
+                stable_id = self.get_stable_id(doc_name)
+                yield Document(name=doc_name, stable_id=stable_id, meta={'file_name': file_name}), doc_text
 
 
 class TextDocPreprocessor(DocPreprocessor):
     """Simple parsing of raw text files, assuming one document per file"""
+
     def parse_file(self, fp, file_name):
         with codecs.open(fp, encoding=self.encoding) as f:
             name = os.path.basename(fp).rsplit('.', 1)[0]
             stable_id = self.get_stable_id(name)
-            yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), f.read()
+            yield Document(name=name, stable_id=stable_id, meta={'file_name': file_name}), f.read()
 
 
 class CSVPathsPreprocessor(DocPreprocessor):
@@ -181,7 +189,7 @@ class TikaPreprocessor(DocPreprocessor):
     """
     # Tika is conditionally imported here
     import tika
-    tika.initVM()   # automatically downloads tika jar and starts a JVM process if no REST API is configured in ENV
+    tika.initVM()  # automatically downloads tika jar and starts a JVM process if no REST API is configured in ENV
     from tika import parser as tk_parser
     parser = tk_parser
 
@@ -195,6 +203,7 @@ class TikaPreprocessor(DocPreprocessor):
 
 class HTMLDocPreprocessor(DocPreprocessor):
     """Simple parsing of raw HTML files, assuming one document per file"""
+
     def parse_file(self, fp, file_name):
         with open(fp, 'rb') as f:
             html = BeautifulSoup(f, 'lxml')
@@ -202,7 +211,7 @@ class HTMLDocPreprocessor(DocPreprocessor):
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
             name = os.path.basename(fp).rsplit('.', 1)[0]
             stable_id = self.get_stable_id(name)
-            yield Document(name=name, stable_id=stable_id, meta={'file_name' : file_name}), txt
+            yield Document(name=name, stable_id=stable_id, meta={'file_name': file_name}), txt
 
     def _can_read(self, fpath):
         return fpath.endswith('.html')
@@ -215,7 +224,7 @@ class HTMLDocPreprocessor(DocPreprocessor):
         return True
 
     def _strip_special(self, s):
-        return (''.join(c for c in s if ord(c) < 128)).encode('ascii','ignore')
+        return (''.join(c for c in s if ord(c) < 128)).encode('ascii', 'ignore')
 
 
 class XMLMultiDocPreprocessor(DocPreprocessor):
@@ -227,8 +236,9 @@ class XMLMultiDocPreprocessor(DocPreprocessor):
 
     **Note: Include the full document XML etree in the attribs dict with keep_xml_tree=True**
     """
+
     def __init__(self, path, doc='.//document', text='./text/text()', id='./id/text()',
-                    keep_xml_tree=False):
+                 keep_xml_tree=False):
         DocPreprocessor.__init__(self, path)
         self.doc = doc
         self.text = text
@@ -236,9 +246,9 @@ class XMLMultiDocPreprocessor(DocPreprocessor):
         self.keep_xml_tree = keep_xml_tree
 
     def parse_file(self, f, file_name):
-        for i,doc in enumerate(et.parse(f).xpath(self.doc)):
+        for i, doc in enumerate(et.parse(f).xpath(self.doc)):
             doc_id = str(doc.xpath(self.id)[0])
-            text   = '\n'.join(filter(lambda t : t is not None, doc.xpath(self.text)))
+            text = '\n'.join(filter(lambda t: t is not None, doc.xpath(self.text)))
             meta = {'file_name': str(file_name)}
             if self.keep_xml_tree:
                 meta['root'] = et.tostring(doc)
@@ -248,36 +258,74 @@ class XMLMultiDocPreprocessor(DocPreprocessor):
     def _can_read(self, fpath):
         return fpath.endswith('.xml')
 
-PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{','-RSB-': ']', '-LSB-': '['}
+
+PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{', '-RSB-': ']', '-LSB-': '['}
+
 
 class CoreNLPHandler(object):
-    def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False):
-        # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
-        # Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
-        # Kill it when python exits.
-        # This makes sure that we load the models only once.
-        # In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
-        # So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
-        self.port = 12345
-        self.tok_whitespace = tok_whitespace
+    '''
+    See http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
+
+    Spawn a StanfordCoreNLPServer process that accepts parsing requests at an HTTP port.
+    Kill it when python exits.
+    This makes sure that we load the models only once.
+    In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
+    So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
+    '''
+
+    def __init__(self, tokenize_whitespace=False, split_newline=False,
+                 parse_tree=False, strict_ptb=False, ptb3_escaping=True,
+                 annotators=['tokenize', 'ssplit', 'pos', 'lemma', 'depparse', 'ner'],
+                 annotater_opts={},
+                 java_xmx='4g', port=12345):
+        '''
+        Common configs:
+            1 sentence per line: ssplit.eolonly=True, tokenize.whitespace true
+
+        Advanced options can be passed in as a dictionary annotater_opts
+
+        :param tokenize_whitespace:
+        :param split_newline:
+        :param parse_tree:
+        :param strict_ptb:      (default:False) disable PTBTokenizer hacks
+        :param ptb3_escaping:    (default:True) enable PTB normalization
+        :param annotators:
+        :param annotater_opts:
+        :param java_xmx:
+        :param port:
+        '''
+        self.tok_whitespace = tokenize_whitespace
         self.split_newline = split_newline
         self.parse_tree = parse_tree
+        self.strict_ptb = strict_ptb
+        self.annotators = annotators if not parse_tree else list(set(annotators + ['parse']))
+        self.annotater_opts = annotater_opts
+        self.port = port
+        self.timeout = 600000
+
+        # launch command
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
-        cmd = ['java -Xmx4g -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
-               % (loc, self.port, 600000)]
+        cmd = 'java -Xmx%s -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
+        cmd = [cmd % (java_xmx, loc, self.port, self.timeout)]
+
         self.server_pid = Popen(cmd, shell=True).pid
         atexit.register(self._kill_pserver)
-        props = ''
+
+        # ------------------
+        # override annotation options if simple flags aren't set to defaults
+        if strict_ptb or not ptb3_escaping:
+            annotater_opts['tokenize'] = self._tokenize_opts(ptb3_escaping, strict_ptb)
+
+        props = [self._get_props(self.annotators, self.annotater_opts)]
         if self.tok_whitespace:
-            props += '"tokenize.whitespace": "true", '
-        if self.split_newline:
-            props += '"ssplit.eolonly": "true", '
-        annotators = '"tokenize,ssplit,pos,lemma,depparse,ner{0}"'.format(
-            ',parse' if self.parse_tree else ''
-        )
-        self.endpoint = 'http://127.0.0.1:%d/?properties={%s"annotators": %s, "outputFormat": "json"}' % (
-            self.port, props, annotators
-        )
+            props += ['"tokenize.whitespace": "true"']
+        if self.split_newline and 'ssplit' not in annotater_opts:
+            props += ['"ssplit.eolonly": "true"']
+        props = ",".join(props)
+
+        self.endpoint = 'http://127.0.0.1:%d/?properties=' % (self.port)
+        self.endpoint += '{%s}' % (props)
+        # ------------------
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626
@@ -288,9 +336,79 @@ class CoreNLPHandler(object):
                         connect=20,
                         read=0,
                         backoff_factor=0.1,
-                        status_forcelist=[ 500, 502, 503, 504 ])
+                        status_forcelist=[500, 502, 503, 504])
         self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
-        
+
+    def _get_props(self, annotators, annotator_opts):
+        '''
+        Enable advanced configuration options for CoreNLP
+        Options are configured by each separate annotator
+
+        :param opts: options dictionary
+        :return:
+        '''
+        opts = []
+        for name in annotator_opts:
+            if not annotator_opts[name]:
+                continue
+            props = ["{}={}".format(key, str(value).lower()) for key, value in annotator_opts[name].items()]
+            opts.append('"{}.options":"{}"'.format(name, ",".join(props)))
+
+        props = []
+        props += ['"annotators": {}'.format('"{}"'.format(",".join(annotators)))]
+        props += ['"outputFormat": "json"']
+        props += [" ".join(opts)] if opts else []
+        return ",".join(props)
+
+    def _ssplit_opts(self, split_newline=False, newline_sent_break="two"):
+        '''
+        Sentence splitter options
+
+        ssplit.eolonly
+        ssplit.isOneSentence
+        ssplit.newlineIsSentenceBreak  # "always", "never", or "two"
+        ssplit.boundaryMultiTokenRegex
+        ssplit.boundaryTokenRegex
+        ssplit.boundariesToDiscard
+        ssplit.htmlBoundariesToDiscard
+        ssplit.tokenPatternsToDiscard
+
+        :return:
+        '''
+        opts = {"newlineIsSentenceBreak": newline_sent_break}
+        return opts
+
+    def _tokenize_opts(self, ptb3_escaping=True, strict_ptb=False):
+        '''
+        PTBTokenizer has some behaviors we might want to disable
+        (1) Add "." to the end of sentences that end with an abbrv, e.g., Corp.
+        (2) Adds a non-breaking space to fractions 5 1/2
+        (3) Normalize tokens to PTB standards
+
+        :param ptb3Escaping: True = enable all PTB normalization
+        :param strict_ptb:   False = use PTBTokenizer behavior
+        :return:
+        '''
+
+        opts = {"normalizeParentheses": False,
+                "normalizeFractions": False,
+                "normalizeParentheses": False,
+                "normalizeOtherBrackets": False,
+                "normalizeCurrency": False,
+                "asciiQuotes": True,
+                "latexQuotes": False,
+                "ptb3Ellipsis": False,
+                "ptb3Dashes": False,
+                "escapeForwardSlashAsterisk": False,
+                "strictTreebank3": True}
+
+        # default PTB normalization
+        if ptb3_escaping:
+            return {"ptb3Escaping": True} if not strict_ptb else {"ptb3Escaping": True, "strictTreebank3": True}
+        elif strict_ptb:
+            return opts
+        else:
+            return {}
 
     def _kill_pserver(self):
         if self.server_pid is not None:
@@ -341,15 +459,18 @@ class CoreNLPHandler(object):
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['position'] = position
 
-            # Add full dependency tree parse
+            # Add full dependency tree parse to document meta
             if self.parse_tree:
-                parts['tree'] = ' '.join(block['parse'].split())
+                tree = ' '.join(block['parse'].split())
+                if 'tree' not in document.meta:
+                    document.meta['tree'] = {}
+                document.meta['tree'][position] = tree
 
             # Link the sentence to its parent document object
             parts['document'] = document
 
             # Add null entity array (matching null for CoreNLP)
-            parts['entity_cids']  = ['O' for _ in parts['words']]
+            parts['entity_cids'] = ['O' for _ in parts['words']]
             parts['entity_types'] = ['O' for _ in parts['words']]
 
             # Assign the stable id as document's stable id plus absolute character offset

@@ -21,13 +21,14 @@ from .utils import sort_X_on_Y
 
 class CorpusParser(UDFRunner):
     def __init__(self, tokenize_whitespace=False, split_newline=False, parse_tree=False,
-                 strict_ptb=False, ptb3_escaping=True, fn=None):
+                 strict_ptb=False, ptb3_escaping=True, annotator_opts={}, fn=None):
         super(CorpusParser, self).__init__(CorpusParserUDF,
                                            tokenize_whitespace=tokenize_whitespace,
                                            split_newline=split_newline,
                                            parse_tree=parse_tree,
                                            strict_ptb=strict_ptb,
                                            ptb3_escaping=ptb3_escaping,
+                                           annotator_opts=annotator_opts,
                                            fn=fn)
 
     def clear(self, session, **kwargs):
@@ -38,12 +39,14 @@ class CorpusParser(UDFRunner):
 
 
 class CorpusParserUDF(UDF):
-    def __init__(self, tokenize_whitespace, split_newline, parse_tree, strict_ptb, ptb3_escaping, fn, **kwargs):
+    def __init__(self, tokenize_whitespace, split_newline, parse_tree, strict_ptb, ptb3_escaping,
+                 annotator_opts, fn, **kwargs):
         self.corenlp_handler = CoreNLPHandler(tokenize_whitespace=tokenize_whitespace,
                                               split_newline=split_newline,
                                               parse_tree=parse_tree,
                                               strict_ptb=strict_ptb,
-                                              ptb3_escaping=ptb3_escaping)
+                                              ptb3_escaping=ptb3_escaping,
+                                              annotator_opts=annotator_opts)
         self.fn = fn
         super(CorpusParserUDF, self).__init__(**kwargs)
 
@@ -276,7 +279,7 @@ class CoreNLPHandler(object):
     def __init__(self, tokenize_whitespace=False, split_newline=False,
                  parse_tree=False, strict_ptb=False, ptb3_escaping=True,
                  annotators=['tokenize', 'ssplit', 'pos', 'lemma', 'depparse', 'ner'],
-                 annotater_opts={},
+                 annotator_opts={},
                  java_xmx='4g', port=12345):
         '''
         Common configs:
@@ -294,12 +297,12 @@ class CoreNLPHandler(object):
         :param java_xmx:
         :param port:
         '''
-        self.tok_whitespace = tokenize_whitespace
+        self.tokenize_whitespace = tokenize_whitespace
         self.split_newline = split_newline
         self.parse_tree = parse_tree
         self.strict_ptb = strict_ptb
         self.annotators = annotators if not parse_tree else list(set(annotators + ['parse']))
-        self.annotater_opts = annotater_opts
+        self.annotater_opts = annotator_opts
         self.port = port
         self.timeout = 600000
 
@@ -314,12 +317,12 @@ class CoreNLPHandler(object):
         # ------------------
         # override annotation options if simple flags aren't set to defaults
         if strict_ptb or not ptb3_escaping:
-            annotater_opts['tokenize'] = self._tokenize_opts(ptb3_escaping, strict_ptb)
+            annotator_opts['tokenize'] = self._tokenize_opts(ptb3_escaping, strict_ptb)
 
         props = [self._get_props(self.annotators, self.annotater_opts)]
-        if self.tok_whitespace:
+        if self.tokenize_whitespace:
             props += ['"tokenize.whitespace": "true"']
-        if self.split_newline and 'ssplit' not in annotater_opts:
+        if self.split_newline and 'ssplit' not in annotator_opts:
             props += ['"ssplit.eolonly": "true"']
         props = ",".join(props)
 
@@ -357,7 +360,7 @@ class CoreNLPHandler(object):
         props = []
         props += ['"annotators": {}'.format('"{}"'.format(",".join(annotators)))]
         props += ['"outputFormat": "json"']
-        props += [" ".join(opts)] if opts else []
+        props += [",".join(opts)] if opts else []
         return ",".join(props)
 
     def _ssplit_opts(self, split_newline=False, newline_sent_break="two"):
@@ -390,7 +393,8 @@ class CoreNLPHandler(object):
         :return:
         '''
 
-        opts = {"normalizeParentheses": False,
+        opts = {"invertible": True,
+                "normalizeParentheses": False,
                 "normalizeFractions": False,
                 "normalizeParentheses": False,
                 "normalizeOtherBrackets": False,

@@ -48,6 +48,10 @@ class Candidate(SnorkelBase):
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, ", ".join(map(str, self.get_contexts())))
+    
+    def __gt__(self, other_cand):
+        # Allow sorting by comparing the string representations of each
+        return self.__repr__() > other_cand.__repr__()
 
 
 def candidate_subclass(class_name, args, table_name=None):

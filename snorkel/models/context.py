@@ -62,8 +62,11 @@ class Document(Context):
             yield sentence
 
     def __repr__(self):
-        return "Document " + str(self.name)
+        return "Document " + str(self.name.encode('utf-8'))
 
+    def __gt__(self, other):
+        # Allow sorting by comparing the string representations of each
+        return self.__repr__() > other.__repr__()
 
 class Webpage(Document):
     """
@@ -172,8 +175,11 @@ class Table(Context):
     )
 
     def __repr__(self):
-        return "Table(Doc: %s, Position: %s)" % (self.document.name, self.position)
-
+        return "Table(Doc: %s, Position: %s)" % (self.document.name.encode('utf-8'), self.position)
+    
+    def __gt__(self, other):
+        # Allow sorting by comparing the string representations of each
+        return self.__repr__() > other.__repr__()
 
 class Cell(Context):
     """A cell Context in a Document."""
@@ -208,12 +214,15 @@ class Cell(Context):
 
     def __repr__(self):
         return ("Cell(Doc: %s, Table: %s, Row: %s, Col: %s, Pos: %s)" %
-                (self.document.name,
+                (self.document.name.encode('utf-8'),
                  self.table.position,
                  tuple(set([self.row_start, self.row_end])),
                  tuple(set([self.col_start, self.col_end])),
                  self.position))
-
+    
+    def __gt__(self, other):
+        # Allow sorting by comparing the string representations of each
+        return self.__repr__() > other.__repr__()
 
 class PhraseMixin(object):
     """A phrase Context in a Document."""
@@ -231,7 +240,7 @@ class PhraseMixin(object):
 
     def __repr__(self):
         return ("Phrase (Doc: %s, Index: %s, Text: %s)" %
-                (self.document.name,
+                (self.document.name.encode('utf-8'),
                  self.phrase_idx,
                  self.text))
 
@@ -248,7 +257,7 @@ class LingualMixin(object):
 
     def __repr__(self):
         return ("LingualPhrase (Doc: %s, Index: %s, Text: %s)" %
-                (self.document.name,
+                (self.document.name.encode('utf-8'),
                  self.phrase_idx,
                  self.text))
 
@@ -286,7 +295,7 @@ class TabularMixin(object):
         rows = tuple([self.row_start, self.row_end]) if self.row_start != self.row_end else self.row_start
         cols = tuple([self.col_start, self.col_end]) if self.col_start != self.col_end else self.col_start
         return ("TabularPhrase (Doc: %s, Table: %s, Row: %s, Col: %s, Index: %s, Text: %s)" % 
-            (self.document.name,
+            (self.document.name.encode('utf-8'),
             (lambda: cls.table).position, 
             rows, 
             cols, 
@@ -307,7 +316,7 @@ class VisualMixin(object):
 
     def __repr__(self):
         return ("VisualPhrase (Doc: %s, Page: %s, (T,B,L,R): (%d,%d,%d,%d), Text: %s)" % 
-            (self.document.name,
+            (self.document.name.encode('utf-8'),
             self.page, self.top, self.bottom, self.left, self.right,
             self.text))
 
@@ -323,7 +332,7 @@ class StructuralMixin(object):
 
     def __repr__(self):
         return ("StructuralPhrase (Doc: %s, Tag: %s, Text: %s)" % 
-            (self.document.name,
+            (self.document.name.encode('utf-8'),
             self.html_tag,
             self.text))
 
@@ -358,17 +367,17 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, 
             cols = tuple([self.col_start, self.col_end]) \
                    if self.col_start != self.col_end else self.col_start
             return ("Phrase (Doc: %s, Table: %s, Row: %s, Col: %s, Index: %s, Text: %s)" % 
-                   (self.document.name,
+                   (self.document.name.encode('utf-8'),
                     self.table.position,
                     rows,
                     cols,
                     self.position,
-                    self.text))
+                    self.text.encode('utf-8')))
         else:
             return ("Phrase (Doc: %s, Index: %s, Text: %s)" % 
-                (self.document.name,
+                (self.document.name.encode('utf-8'),
                 self.phrase_num, 
-                self.text))
+                self.text.encode('utf-8')))
 
     def _asdict(self):
         return {
@@ -402,6 +411,10 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, 
             'left': self.left,
             'right': self.right
         }
+    
+    def __gt__(self, other):
+        # Allow sorting by comparing the string representations of each
+        return self.__repr__() > other.__repr__()
 
 
 class TemporaryContext(object):

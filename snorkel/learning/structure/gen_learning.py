@@ -15,8 +15,6 @@ class DependencySelector(object):
         self.rng.seed(seed)
 
     def select(self, L, higher_order=False, propensity=False, threshold=0.05, truncation=10):
-<<<<<<< HEAD
-=======
         """
         Identifies a dependency structure among labeling functions for a given data set.
 
@@ -32,7 +30,6 @@ class DependencySelector(object):
         :return: collection of tuples of the format (LF 1 index, LF 2 index, dependency type),
                  see snorkel.learning.constants
         """
->>>>>>> master
         try:
             L = L.todense()
         except AttributeError:

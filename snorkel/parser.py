@@ -429,7 +429,7 @@ class CoreNLPHandler(object):
             return
 
         # clean non-breaking characters
-        text = text.replace(u"\x00"," ")
+        text = text.replace(u"\xa0"," ")
 
         if isinstance(text, unicode):
             text = text.encode('utf-8', 'error')
@@ -453,6 +453,11 @@ class CoreNLPHandler(object):
                 # Convert PennTreeBank symbols back into characters for words/lemmas
                 parts['words'].append(PTB.get(tok['word'], tok['word']))
                 parts['lemmas'].append(PTB.get(tok['lemma'], tok['lemma']))
+
+                # replace any non-breaking characters
+                parts['words'].append(tok['word'].replace(u"\x00"," "))
+                parts['lemma'].append(tok['lemma'].replace(u"\x00"," "))
+
                 parts['pos_tags'].append(tok['pos'])
                 parts['ner_tags'].append(tok['ner'])
                 parts['char_offsets'].append(tok['characterOffsetBegin'])

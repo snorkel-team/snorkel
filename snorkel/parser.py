@@ -425,7 +425,12 @@ class CoreNLPHandler(object):
         """Parse a raw document as a string into a list of sentences"""
 
         if len(text.strip()) == 0:
+            print>>sys.stderr,"Warning, empty document passed to CoreNLP"
             return
+
+        # clean non-breaking characters
+        text = text.replace(u"\x00"," ")
+
         if isinstance(text, unicode):
             text = text.encode('utf-8', 'error')
         resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)

@@ -9,19 +9,9 @@ elif type wget &>/dev/null; then
 fi
 tar -xf ${POPPLER}.tar.xz
 rm ${POPPLER}.tar.xz
-cd $POPPLER
+mv $POPPLER poppler
+cd poppler
 ./configure --prefix="$PWD"
 make
 make install
 cd ..
-mv $POPPLER poppler
-
-
-#system=$(python -c "from sys import platform; print platform")
-#if [ "$system" == "darwin" ]; then
-#    brew update
-#    brew install poppler
-#else
-#    sudo apt-get update
-#    sudo apt-get install poppler-utils
-#fi

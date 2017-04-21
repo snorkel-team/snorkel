@@ -425,11 +425,11 @@ class CoreNLPHandler(object):
         """Parse a raw document as a string into a list of sentences"""
 
         if len(text.strip()) == 0:
-            print>>sys.stderr,"Warning, empty document passed to CoreNLP"
+            print>>sys.stderr,"Warning, empty document {0} passed to CoreNLP".format(document.name)
             return
 
         # clean non-breaking characters
-        text = text.replace(u"\xa0"," ")
+        #text = text.replace(u"\xa0"," ")
 
         if isinstance(text, unicode):
             text = text.encode('utf-8', 'error')
@@ -456,7 +456,7 @@ class CoreNLPHandler(object):
 
                 # replace any non-breaking characters
                 parts['words'].append(tok['word'].replace(u"\x00"," "))
-                parts['lemma'].append(tok['lemma'].replace(u"\x00"," "))
+                parts['lemmas'].append(tok['lemma'].replace(u"\x00"," "))
 
                 parts['pos_tags'].append(tok['pos'])
                 parts['ner_tags'].append(tok['ner'])

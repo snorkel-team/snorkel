@@ -455,13 +455,8 @@ class CoreNLPHandler(object):
                 parts['lemmas'].append(PTB.get(tok['lemma'], tok['lemma']))
 
                 # replace any non-breaking characters
-<<<<<<< HEAD
                 parts['words'].append(tok['word'].replace(u"\x00"," "))
                 parts['lemma'].append(tok['lemma'].replace(u"\x00"," "))
-=======
-                #parts['words'].append(tok['word'].replace(u"\x00"," "))
-                #parts['lemma'].append(tok['lemma'].replace(u"\x00"," "))
->>>>>>> d6ebcdf6ce2d062724653cec260f39231a22bb2e
 
                 parts['pos_tags'].append(tok['pos'])
                 parts['ner_tags'].append(tok['ner'])

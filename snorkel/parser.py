@@ -316,8 +316,8 @@ class CoreNLPHandler(object):
 
         # ------------------
         # override annotation options if simple flags aren't set to defaults
-        if strict_ptb or not ptb3_escaping:
-            annotator_opts['tokenize'] = self._tokenize_opts(ptb3_escaping, strict_ptb)
+        #if strict_ptb or not ptb3_escaping:
+        #    annotator_opts['tokenize'] = self._tokenize_opts(ptb3_escaping, strict_ptb)
 
         props = [self._get_props(self.annotators, self.annotater_opts)]
         if self.tokenize_whitespace:
@@ -329,6 +329,7 @@ class CoreNLPHandler(object):
         self.endpoint = 'http://127.0.0.1:%d/?properties=' % (self.port)
         self.endpoint += '{%s}' % (props)
         # ------------------
+        print self.endpoint
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626
@@ -406,13 +407,9 @@ class CoreNLPHandler(object):
                 "escapeForwardSlashAsterisk": False,
                 "strictTreebank3": True}
 
-        # default PTB normalization
-        if ptb3_escaping:
-            return {"ptb3Escaping": True} if not strict_ptb else {"ptb3Escaping": True, "strictTreebank3": True}
-        elif strict_ptb:
-            return opts
-        else:
-            return {}
+        if not ptb3_escaping:
+            return {"ptb3_escaping":ptb3_escaping, "strictTreebank3": strict_ptb }
+
 
     def _kill_pserver(self):
         if self.server_pid is not None:
@@ -428,9 +425,6 @@ class CoreNLPHandler(object):
             print>>sys.stderr,"Warning, empty document {0} passed to CoreNLP".format(document.name)
             return
 
-        # clean non-breaking characters
-        #text = text.replace(u"\xa0"," ")
-
         if isinstance(text, unicode):
             text = text.encode('utf-8', 'error')
         resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
@@ -443,27 +437,30 @@ class CoreNLPHandler(object):
         try:
             blocks = json.loads(content, strict=False)['sentences']
         except:
-            warnings.warn("CoreNLP skipped a malformed sentence.", RuntimeWarning)
+            warnings.warn("CoreNLP skipped a malformed sentence.\n{}".format(text), RuntimeWarning)
             return
+
+        print blocks
         position = 0
         for block in blocks:
             parts = defaultdict(list)
             dep_order, dep_par, dep_lab = [], [], []
-            for tok, deps in zip(block['tokens'], block['basic-dependencies']):
+            for tok, deps in zip(block['tokens'], block['basicDependencies']):
                 # Convert PennTreeBank symbols back into characters for words/lemmas
                 parts['words'].append(PTB.get(tok['word'], tok['word']))
                 parts['lemmas'].append(PTB.get(tok['lemma'], tok['lemma']))
-
-                # replace any non-breaking characters
-                parts['words'].append(tok['word'].replace(u"\x00"," "))
-                parts['lemmas'].append(tok['lemma'].replace(u"\x00"," "))
-
                 parts['pos_tags'].append(tok['pos'])
                 parts['ner_tags'].append(tok['ner'])
                 parts['char_offsets'].append(tok['characterOffsetBegin'])
                 dep_par.append(deps['governor'])
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])
+
+            for t in block['tokens']:
+                print t
+
+            print [t.get('after', '') for t in block['tokens']]
+            print [t.get('originalText', '') for t in block['tokens']]
 
             parts['text'] = ''.join(t['originalText'] + t.get('after', '') for t in block['tokens'])
             # make char_offsets relative to start of sentence

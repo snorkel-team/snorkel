@@ -10,7 +10,7 @@ import os
 import re
 import requests
 import signal
-from subprocess import Popen
+from subprocess import Popen,PIPE
 import sys
 import warnings
 
@@ -21,7 +21,7 @@ from .utils import sort_X_on_Y
 
 class CorpusParser(UDFRunner):
     def __init__(self, tokenize_whitespace=False, split_newline=False, parse_tree=False,
-                 strict_ptb=False, ptb3_escaping=True, annotator_opts={}, fn=None):
+                 strict_ptb=False, ptb3_escaping=True, annotator_opts={}, num_threads=8, verbose=False, fn=None):
         super(CorpusParser, self).__init__(CorpusParserUDF,
                                            tokenize_whitespace=tokenize_whitespace,
                                            split_newline=split_newline,
@@ -29,6 +29,8 @@ class CorpusParser(UDFRunner):
                                            strict_ptb=strict_ptb,
                                            ptb3_escaping=ptb3_escaping,
                                            annotator_opts=annotator_opts,
+                                           num_threads=num_threads,
+                                           verbose=verbose,
                                            fn=fn)
 
     def clear(self, session, **kwargs):
@@ -39,14 +41,22 @@ class CorpusParser(UDFRunner):
 
 
 class CorpusParserUDF(UDF):
+
+    # pseudo-singleton class for CoreNLP server
+    corenlp_handler = None
+
     def __init__(self, tokenize_whitespace, split_newline, parse_tree, strict_ptb, ptb3_escaping,
-                 annotator_opts, fn, **kwargs):
-        self.corenlp_handler = CoreNLPHandler(tokenize_whitespace=tokenize_whitespace,
-                                              split_newline=split_newline,
-                                              parse_tree=parse_tree,
-                                              strict_ptb=strict_ptb,
-                                              ptb3_escaping=ptb3_escaping,
-                                              annotator_opts=annotator_opts)
+                 annotator_opts, num_threads, verbose, fn, **kwargs):
+
+        if not CorpusParserUDF.corenlp_handler:
+            CorpusParserUDF.corenlp_handler = CoreNLPHandler(tokenize_whitespace=tokenize_whitespace,
+                                                              split_newline=split_newline,
+                                                              parse_tree=parse_tree,
+                                                              strict_ptb=strict_ptb,
+                                                              ptb3_escaping=ptb3_escaping,
+                                                              annotator_opts=annotator_opts,
+                                                              num_threads=num_threads,
+                                                              verbose=verbose)
         self.fn = fn
         super(CorpusParserUDF, self).__init__(**kwargs)
 
@@ -275,12 +285,11 @@ class CoreNLPHandler(object):
     In addition, it appears that StanfordCoreNLPServer loads only required models on demand.
     So it doesn't load e.g. coref models and the total (on-demand) initialization takes only 7 sec.
     '''
-
     def __init__(self, tokenize_whitespace=False, split_newline=False,
                  parse_tree=False, strict_ptb=False, ptb3_escaping=True,
                  annotators=['tokenize', 'ssplit', 'pos', 'lemma', 'depparse', 'ner'],
                  annotator_opts={},
-                 java_xmx='4g', port=12345):
+                 java_xmx='4g', port=12345, num_threads=8, verbose=False):
         '''
         Common configs:
             1 sentence per line: ssplit.eolonly=True, tokenize.whitespace true
@@ -297,27 +306,34 @@ class CoreNLPHandler(object):
         :param java_xmx:
         :param port:
         '''
-        self.tokenize_whitespace = tokenize_whitespace
-        self.split_newline = split_newline
+        # shortcut config flags
         self.parse_tree = parse_tree
         self.strict_ptb = strict_ptb
+
+        # advanced config
+        self.tokenize_whitespace = tokenize_whitespace
+        self.split_newline = split_newline
         self.annotators = annotators if not parse_tree else list(set(annotators + ['parse']))
         self.annotater_opts = annotator_opts
+
         self.port = port
         self.timeout = 600000
+        self.num_threads = num_threads
+        self.verbose = verbose
 
         # launch command
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
-        cmd = 'java -Xmx%s -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d > /dev/null'
-        cmd = [cmd % (java_xmx, loc, self.port, self.timeout)]
+        cmd = 'java -Xmx%s -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d --threads %d > /dev/null'
+        cmd = [cmd % (java_xmx, loc, self.port, self.timeout, self.num_threads)]
 
-        self.server_pid = Popen(cmd, shell=True).pid
-        atexit.register(self._kill_pserver)
-
+        # Setting shell=True returns the pid of the screen, not any spawned processes
+        # to kill child processes correctly, we need a process group
+        # http://stackoverflow.com/questions/4789837/how-to-terminate-a-python-subprocess-launched-with-shell-true
+        self.process_group = Popen(cmd, stdout=PIPE, shell=True, preexec_fn=os.setsid)
         # ------------------
         # override annotation options if simple flags aren't set to defaults
-        #if strict_ptb or not ptb3_escaping:
-        #    annotator_opts['tokenize'] = self._tokenize_opts(ptb3_escaping, strict_ptb)
+        if not self.annotater_opts and (strict_ptb or not ptb3_escaping):
+            annotator_opts['tokenize'] = self._tokenize_opts(ptb3_escaping, strict_ptb)
 
         props = [self._get_props(self.annotators, self.annotater_opts)]
         if self.tokenize_whitespace:
@@ -328,8 +344,15 @@ class CoreNLPHandler(object):
 
         self.endpoint = 'http://127.0.0.1:%d/?properties=' % (self.port)
         self.endpoint += '{%s}' % (props)
+
+        if self.verbose:
+            print "CoreNLP Server started..."
+            print self.endpoint
+            print "pid:", self.process_group.pid
+            print "Port:", self.port
+            print "Timeout:", self.timeout
+            print "Threads:", self.num_threads, '\n'
         # ------------------
-        print self.endpoint
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626
@@ -379,23 +402,35 @@ class CoreNLPHandler(object):
 
         :return:
         '''
-        opts = {"newlineIsSentenceBreak": newline_sent_break}
-        return opts
+        return {"newlineIsSentenceBreak": newline_sent_break}
+
+    def _ner_opts(self):
+        '''
+        See https://stanfordnlp.github.io/CoreNLP/ner.html
+
+        ner.useSUTime
+        ner.model
+        ner.applyNumericClassifiers
+        sutime.markTimeRanges
+        sutime.includeRange
+
+        :return:
+        '''
+        return {}
 
     def _tokenize_opts(self, ptb3_escaping=True, strict_ptb=False):
         '''
         PTBTokenizer has some behaviors we might want to disable
+
+        strict_ptb
         (1) Add "." to the end of sentences that end with an abbrv, e.g., Corp.
         (2) Adds a non-breaking space to fractions 5 1/2
-        (3) Normalize tokens to PTB standards
 
-        :param ptb3Escaping: True = enable all PTB normalization
-        :param strict_ptb:   False = use PTBTokenizer behavior
-        :return:
-        '''
+        ptb3_escaping
+        (1) Normalize tokens to PTB standards
 
+        # options format
         opts = {"invertible": True,
-                "normalizeParentheses": False,
                 "normalizeFractions": False,
                 "normalizeParentheses": False,
                 "normalizeOtherBrackets": False,
@@ -407,20 +442,36 @@ class CoreNLPHandler(object):
                 "escapeForwardSlashAsterisk": False,
                 "strictTreebank3": True}
 
-        if not ptb3_escaping:
-            return {"ptb3_escaping":ptb3_escaping, "strictTreebank3": strict_ptb }
+        :param ptb3_escaping: True = enable all PTB normalization
+        :param strict_ptb:    False = use PTBTokenizer behavior
+        :return:
+        '''
+        return {"ptb3Escaping":ptb3_escaping, "strictTreebank3": strict_ptb}
 
-
-    def _kill_pserver(self):
-        if self.server_pid is not None:
+    def close(self):
+        '''
+        Kill the process group linked with this server.
+        :return:
+        '''
+        if self.verbose:
+            print "Killing CoreNLP server [{}]...".format(self.process_group.pid)
+        if self.process_group is not None:
             try:
-                os.kill(self.server_pid, signal.SIGTERM)
+                os.killpg(os.getpgid(self.process_group.pid), signal.SIGTERM)
             except:
-                sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
+                sys.stderr.write('Could not kill CoreNLP server (might already be closed)...\n'.format(self.process_group.pid))
+
+    def __del__(self):
+        self.close()
 
     def parse(self, document, text):
-        """Parse a raw document as a string into a list of sentences"""
+        '''
+        Parse a raw document as a string into a list of sentences
 
+        :param document:
+        :param text:
+        :return:
+        '''
         if len(text.strip()) == 0:
             print>>sys.stderr,"Warning, empty document {0} passed to CoreNLP".format(document.name)
             return
@@ -455,13 +506,18 @@ class CoreNLPHandler(object):
                 dep_lab.append(deps['dep'])
                 dep_order.append(deps['dependent'])
 
-            # for t in block['tokens']:
-            #     print t
-            #
-            # print [t.get('after', '') for t in block['tokens']]
-            # print [t.get('originalText', '') for t in block['tokens']]
+            # enabling whitespace tokenization removes the 'before'/'after' fields in output JSON (TODO: WHY?)
+            # so instead, we use 'characterOffsetEnd' and 'characterOffsetBegin' to recreate the text string
+            if not [t for t in block['tokens'] if t.get('after', None)]:
+                text = ""
+                for t in block['tokens']:
+                    # shift to start of local sentence offset
+                    i = t['characterOffsetBegin'] - block['tokens'][0]['characterOffsetBegin']
+                    text += (' ' * (i - len(text))) + t['originalText'] if len(text) != i else t['originalText']
+                parts['text'] = text
+            else:
+                parts['text'] = ''.join(t['originalText'] + t.get('after', '') for t in block['tokens'])
 
-            parts['text'] = ''.join(t['originalText'] + t.get('after', '') for t in block['tokens'])
             # make char_offsets relative to start of sentence
             abs_sent_offset = parts['char_offsets'][0]
             parts['char_offsets'] = [p - abs_sent_offset for p in parts['char_offsets']]

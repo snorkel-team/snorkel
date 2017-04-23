@@ -574,7 +574,7 @@ def _get_direction_ngrams(direction, c, attrib, n_min, n_max, lower):
     bbox_direction_aligned = bbox_vert_aligned if direction == 'vert' else bbox_horz_aligned
     ngrams_space = Ngrams(n_max=n_max, split_tokens=[])
     f = (lambda w: w.lower()) if lower else (lambda w: w)
-    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_contexts()
     for span in spans:
         if not span.is_tabular() or not span.is_visual(): continue
         for phrase in span.sentence.table.phrases:
@@ -582,6 +582,34 @@ def _get_direction_ngrams(direction, c, attrib, n_min, n_max, lower):
                 if (bbox_direction_aligned(bbox_from_span(ts), bbox_from_span(span)) and
                         not (phrase == span.sentence and ts.get_span() in span.get_span())):
                     yield ts.get_span()
+
+def get_horz_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
+    # TODO: this currently looks only in current table; 
+    #   precompute over the whole document/page instead
+    # TODO: this currently aligns based on phrases, not words
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+    for span in spans:
+        if span.sentence.table is None: continue
+        for phrase in span.sentence.table.phrases:
+            if (bbox_horz_aligned(bbox_from_phrase(phrase), bbox_from_span(span)) and
+                        phrase is not span.sentence):
+                for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
+                    yield ngram
+
+
+def get_vert_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
+    # TODO: this currently looks only in current table;
+    #   precompute over the whole document/page instead
+    # TODO: this currently aligns based on phrases, not words
+    spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
+    for span in spans:
+        if span.sentence.table is None: continue
+        for phrase in span.sentence.table.phrases:
+            if (bbox_vert_aligned(bbox_from_phrase(phrase), bbox_from_span(span)) and
+                        phrase is not span.sentence):
+                for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
+                    yield ngram
+
 
 
 def get_vert_ngrams_left(c):

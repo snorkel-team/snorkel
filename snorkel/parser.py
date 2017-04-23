@@ -289,7 +289,7 @@ class CoreNLPHandler(object):
                  parse_tree=False, strict_ptb=False, ptb3_escaping=True,
                  annotators=['tokenize', 'ssplit', 'pos', 'lemma', 'depparse', 'ner'],
                  annotator_opts={},
-                 java_xmx='4g', port=12345, num_threads=8, verbose=False):
+                 java_xmx='4g', port=12345, num_threads=8, verbose=False, version='3.6.0'):
         '''
         Common configs:
             1 sentence per line: ssplit.eolonly=True, tokenize.whitespace true
@@ -320,6 +320,8 @@ class CoreNLPHandler(object):
         self.timeout = 600000
         self.num_threads = num_threads
         self.verbose = verbose
+        self.version = version
+        self.block_elem = 'basicDependencies' if self.version == '3.7.0' else 'basic-dependencies'
 
         # launch command
         loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
@@ -348,10 +350,11 @@ class CoreNLPHandler(object):
         if self.verbose:
             print "CoreNLP Server started..."
             print self.endpoint
-            print "pid:", self.process_group.pid
-            print "Port:", self.port
-            print "Timeout:", self.timeout
-            print "Threads:", self.num_threads, '\n'
+            print "version:", self.version
+            print "shell pid:", self.process_group.pid
+            print "port:", self.port
+            print "timeout:", self.timeout
+            print "threads:", self.num_threads, '\n'
         # ------------------
 
         # Following enables retries to cope with CoreNLP server boot-up latency
@@ -495,7 +498,7 @@ class CoreNLPHandler(object):
         for block in blocks:
             parts = defaultdict(list)
             dep_order, dep_par, dep_lab = [], [], []
-            for tok, deps in zip(block['tokens'], block['basicDependencies']):
+            for tok, deps in zip(block['tokens'], block[self.block_elem]):
                 # Convert PennTreeBank symbols back into characters for words/lemmas
                 parts['words'].append(PTB.get(tok['word'], tok['word']))
                 parts['lemmas'].append(PTB.get(tok['lemma'], tok['lemma']))

@@ -20,18 +20,42 @@ from .utils import sort_X_on_Y
 
 
 class CorpusParser(UDFRunner):
-    def __init__(self, tokenize_whitespace=False, split_newline=False, parse_tree=False,
-                 strict_ptb=False, ptb3_escaping=True, annotator_opts={}, num_threads=8, verbose=False, fn=None):
+
+    def __init__(self, parser=None, fn=None):
+
+        self.parser = self._init_parser(parser)
         super(CorpusParser, self).__init__(CorpusParserUDF,
-                                           tokenize_whitespace=tokenize_whitespace,
-                                           split_newline=split_newline,
-                                           parse_tree=parse_tree,
-                                           strict_ptb=strict_ptb,
-                                           ptb3_escaping=ptb3_escaping,
-                                           annotator_opts=annotator_opts,
-                                           num_threads=num_threads,
-                                           verbose=verbose,
+                                           parser=self.parser,
                                            fn=fn)
+
+    def _init_parser(self,parser):
+        '''
+        Assumes CoreNLP server. Initialization forces all
+        preloading of models
+
+        :param parser:
+        :return:
+        '''
+        if not parser:
+            parser = self._default_parser_handler()
+
+        print "CorpusParserUDF: Launching {} server...".format(parser.name)
+        # Block until CoreNLP server loads all required models
+        parser.force_model_preloading()
+        print "CorpusParserUDF: Server ready."
+        return parser
+
+    def _default_parser_handler(self):
+        '''
+        Create default CoreNLP server instance
+        :return:
+        '''
+        parser_handler = CoreNLPServer(tokenize_whitespace=False, split_newline=False,
+                                        parse_tree=False, strict_ptb=False,
+                                        ptb3_escaping=True,annotator_opts={},
+                                        num_threads=8, verbose=False, version='3.6.0')
+        return parser_handler
+
 
     def clear(self, session, **kwargs):
         session.query(Context).delete()
@@ -42,28 +66,17 @@ class CorpusParser(UDFRunner):
 
 class CorpusParserUDF(UDF):
 
-    # pseudo-singleton class for CoreNLP server
-    corenlp_handler = None
-
-    def __init__(self, tokenize_whitespace, split_newline, parse_tree, strict_ptb, ptb3_escaping,
-                 annotator_opts, num_threads, verbose, fn, **kwargs):
-
-        if not CorpusParserUDF.corenlp_handler:
-            CorpusParserUDF.corenlp_handler = CoreNLPHandler(tokenize_whitespace=tokenize_whitespace,
-                                                              split_newline=split_newline,
-                                                              parse_tree=parse_tree,
-                                                              strict_ptb=strict_ptb,
-                                                              ptb3_escaping=ptb3_escaping,
-                                                              annotator_opts=annotator_opts,
-                                                              num_threads=num_threads,
-                                                              verbose=verbose)
-        self.fn = fn
+    def __init__(self, parser, fn, **kwargs):
         super(CorpusParserUDF, self).__init__(**kwargs)
+        self.parser = parser
+        self.req_handler = CoreNLPRequestHander(parser)
+        self.fn = fn
+
 
     def apply(self, x, **kwargs):
         """Given a Document object and its raw text, parse into processed Sentences"""
         doc, text = x
-        for parts in self.corenlp_handler.parse(doc, text):
+        for parts in self.req_handler.parse(doc, text):
             parts = self.fn(parts) if self.fn is not None else parts
             yield Sentence(**parts)
 
@@ -275,7 +288,112 @@ class XMLMultiDocPreprocessor(DocPreprocessor):
 PTB = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{', '-RSB-': ']', '-LSB-': '['}
 
 
-class CoreNLPHandler(object):
+class CoreNLPRequestHander(object):
+    '''
+    Generate a separate Session object per-thread
+    (session object not threadsafe)
+    '''
+    def __init__(self, server):
+
+        self.server = server
+        self.endpoint = self.server.endpoint
+        self.block_elem = self.server.block_elem
+
+        # Following enables retries to cope with CoreNLP server boot-up latency
+        # See: http://stackoverflow.com/a/35504626
+        from requests.packages.urllib3.util.retry import Retry
+        from requests.adapters import HTTPAdapter
+        self.requests_session = requests.Session()
+        retries = Retry(total=None,
+                        connect=20,
+                        read=0,
+                        backoff_factor=0.1,
+                        status_forcelist=[500, 502, 503, 504])
+        self.requests_session.mount('http://', HTTPAdapter(max_retries=retries))
+
+    def parse(self, document, text):
+        '''
+        Parse a raw document as a string into a list of sentences
+
+        :param document:
+        :param text:
+        :return:
+        '''
+        if len(text.strip()) == 0:
+            print>>sys.stderr,"Warning, empty document {0} passed to CoreNLP".format(document.name)
+            return
+
+        if isinstance(text, unicode):
+            text = text.encode('utf-8', 'error')
+        resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
+        text = text.decode('utf-8')
+        content = resp.content.strip()
+        if content.startswith("Request is too long"):
+            raise ValueError("File {} too long. Max character count is 100K.".format(document.name))
+        if content.startswith("CoreNLP request timed out"):
+            raise ValueError("CoreNLP request timed out on file {}.".format(document.name))
+        try:
+            blocks = json.loads(content, strict=False)['sentences']
+        except:
+            warnings.warn("CoreNLP skipped a malformed sentence.\n{}".format(text), RuntimeWarning)
+            return
+
+        position = 0
+        for block in blocks:
+            parts = defaultdict(list)
+            dep_order, dep_par, dep_lab = [], [], []
+            for tok, deps in zip(block['tokens'], block[self.block_elem]):
+                # Convert PennTreeBank symbols back into characters for words/lemmas
+                parts['words'].append(PTB.get(tok['word'], tok['word']))
+                parts['lemmas'].append(PTB.get(tok['lemma'], tok['lemma']))
+                parts['pos_tags'].append(tok['pos'])
+                parts['ner_tags'].append(tok['ner'])
+                parts['char_offsets'].append(tok['characterOffsetBegin'])
+                dep_par.append(deps['governor'])
+                dep_lab.append(deps['dep'])
+                dep_order.append(deps['dependent'])
+
+            # enabling whitespace tokenization removes the 'before'/'after' fields in output JSON (TODO: WHY?)
+            # so instead, we use 'characterOffsetEnd' and 'characterOffsetBegin' to recreate the text string
+            if not [t for t in block['tokens'] if t.get('after', None)]:
+                text = ""
+                for t in block['tokens']:
+                    # shift to start of local sentence offset
+                    i = t['characterOffsetBegin'] - block['tokens'][0]['characterOffsetBegin']
+                    text += (' ' * (i - len(text))) + t['originalText'] if len(text) != i else t['originalText']
+                parts['text'] = text
+            else:
+                parts['text'] = ''.join(t['originalText'] + t.get('after', '') for t in block['tokens'])
+
+            # make char_offsets relative to start of sentence
+            abs_sent_offset = parts['char_offsets'][0]
+            parts['char_offsets'] = [p - abs_sent_offset for p in parts['char_offsets']]
+            parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
+            parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
+            parts['position'] = position
+
+            # Add full dependency tree parse to document meta
+            if 'parse' in block: #self.parse_tree:
+                tree = ' '.join(block['parse'].split())
+                if 'tree' not in document.meta:
+                    document.meta['tree'] = {}
+                document.meta['tree'][position] = tree
+
+            # Link the sentence to its parent document object
+            parts['document'] = document
+
+            # Add null entity array (matching null for CoreNLP)
+            parts['entity_cids'] = ['O' for _ in parts['words']]
+            parts['entity_types'] = ['O' for _ in parts['words']]
+
+            # Assign the stable id as document's stable id plus absolute character offset
+            abs_sent_offset_end = abs_sent_offset + parts['char_offsets'][-1] + len(parts['words'][-1])
+            parts['stable_id'] = construct_stable_id(document, 'sentence', abs_sent_offset, abs_sent_offset_end)
+            position += 1
+            yield parts
+
+
+class CoreNLPServer(object):
     '''
     See http://stanfordnlp.github.io/CoreNLP/corenlp-server.html
 
@@ -306,6 +424,8 @@ class CoreNLPHandler(object):
         :param java_xmx:
         :param port:
         '''
+        self.name = "CoreNLP"
+
         # shortcut config flags
         self.parse_tree = parse_tree
         self.strict_ptb = strict_ptb
@@ -332,7 +452,7 @@ class CoreNLPHandler(object):
         # to kill child processes correctly, we need a process group
         # http://stackoverflow.com/questions/4789837/how-to-terminate-a-python-subprocess-launched-with-shell-true
         self.process_group = Popen(cmd, stdout=PIPE, shell=True, preexec_fn=os.setsid)
-        # ------------------
+
         # override annotation options if simple flags aren't set to defaults
         if not self.annotater_opts and (strict_ptb or not ptb3_escaping):
             annotator_opts['tokenize'] = self._tokenize_opts(ptb3_escaping, strict_ptb)
@@ -348,14 +468,14 @@ class CoreNLPHandler(object):
         self.endpoint += '{%s}' % (props)
 
         if self.verbose:
-            print "CoreNLP Server started..."
+            print "------------------------------------"
             print self.endpoint
             print "version:", self.version
             print "shell pid:", self.process_group.pid
             print "port:", self.port
             print "timeout:", self.timeout
-            print "threads:", self.num_threads, '\n'
-        # ------------------
+            print "threads:", self.num_threads
+            print "------------------------------------"
 
         # Following enables retries to cope with CoreNLP server boot-up latency
         # See: http://stackoverflow.com/a/35504626
@@ -467,6 +587,27 @@ class CoreNLPHandler(object):
     def __del__(self):
         self.close()
 
+    def force_model_preloading(self):
+        '''
+        Force server to load models
+        :return:
+        '''
+        text = u"Forcing server to load default models."
+        resp = self.requests_session.post(self.endpoint, data=text, allow_redirects=True)
+        text = text.decode('utf-8')
+        content = resp.content.strip()
+        if content.startswith("Request is too long"):
+            raise ValueError("Max character count is 100K.")
+        if content.startswith("CoreNLP request timed out"):
+            raise ValueError("CoreNLP request timed out.")
+        try:
+            blocks = json.loads(content, strict=False)['sentences']
+        except:
+            warnings.warn("CoreNLP skipped a malformed sentence.\n{}".format(text), RuntimeWarning)
+            return
+
+        return 1
+
     def parse(self, document, text):
         '''
         Parse a raw document as a string into a list of sentences
@@ -529,7 +670,7 @@ class CoreNLPHandler(object):
             parts['position'] = position
 
             # Add full dependency tree parse to document meta
-            if self.parse_tree:
+            if 'parse' in block: #self.parse_tree:
                 tree = ' '.join(block['parse'].split())
                 if 'tree' not in document.meta:
                     document.meta['tree'] = {}

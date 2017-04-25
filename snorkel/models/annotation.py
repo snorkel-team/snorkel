@@ -142,7 +142,6 @@ class StableLabel(SnorkelBase):
     in a stable format that does not cascade, and is independent of the Candidate ids.
     """
     __tablename__  = 'stable_label'
-
     context_stable_ids = Column(String, primary_key=True)  # ~~ delimited list of the context stable ids
     annotator_name     = Column(String, primary_key=True)
     split              = Column(Integer, default=0)

@@ -1,5 +1,5 @@
 set -eu
-PARSER="stanford-corenlp-full-2016-10-31"
+PARSER="stanford-corenlp-full-2015-12-09"
 rm -rf parser
 url=http://nlp.stanford.edu/software/${PARSER}.zip
 if type curl &>/dev/null; then

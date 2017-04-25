@@ -296,7 +296,8 @@ class URLParserConnection(ParserConnection):
     '''
     URL parser connection
     '''
-    def __init__(self, parser):
+    def __init__(self, parser, retries=20):
+        self.retries = retries
         self.parser = parser
         self.request = self._connection()
 
@@ -312,7 +313,7 @@ class URLParserConnection(ParserConnection):
         from requests.packages.urllib3.util.retry import Retry
         from requests.adapters import HTTPAdapter
         requests_session = requests.Session()
-        retries = Retry(total=0,
+        retries = Retry(total=self.retries,
                         connect=20,
                         read=0,
                         backoff_factor=0.1,
@@ -321,8 +322,8 @@ class URLParserConnection(ParserConnection):
         # Mac OS bug -- without this setting multiprocessing requests will fail
         # when the server has boot-up latency associated with model loading
         # See: http://stackoverflow.com/questions/30453152/python-multiprocessing-and-requests
-        requests_session.trust_env = False # Don't read proxy settings from OS
-
+        if sys.platform in ['darwin']:
+            requests_session.trust_env = False
         requests_session.mount('http://', HTTPAdapter(max_retries=retries))
         return requests_session
 
@@ -481,7 +482,7 @@ class StanfordCoreNLPServer(Parser):
         if self.verbose:
             self.summary()
 
-    def _start_server(self,force_load=True):
+    def _start_server(self,force_load=False):
         '''
         Launch CoreNLP server
         :param force_load:  Force server to pre-load models vs. on-demand
@@ -497,7 +498,9 @@ class StanfordCoreNLPServer(Parser):
         self.process_group = Popen(cmd, stdout=PIPE, shell=True, preexec_fn=os.setsid)
 
         if force_load:
-            pass
+            conn = self.connect()
+            text = "This forces the server to preload all models."
+            parts = list(conn.parse(None, text))
 
     def _conn_opts(self, annotators, annotator_opts, tokenize_whitespace, split_newline):
         '''
@@ -538,6 +541,13 @@ class StanfordCoreNLPServer(Parser):
         props += [",".join(opts)] if opts else []
         return ",".join(props)
 
+    def __del__(self):
+        '''
+        Clean-up this object by forcing the server process to shut-down
+        :return:
+        '''
+        self.close()
+
     def summary(self):
         '''
         Print server parameters
@@ -572,13 +582,6 @@ class StanfordCoreNLPServer(Parser):
             except:
                 sys.stderr.write('Could not kill CoreNLP server (might already be closed)...\n'.format(self.process_group.pid))
 
-    def __del__(self):
-        '''
-        Clean-up this object by forcing the server process to shut-down
-        :return:
-        '''
-        self.close()
-
     def parse(self, document, text, conn):
         '''
         Parse CoreNLP JSON results. Requires an external connection/request object to remain threadsafe
@@ -589,7 +592,7 @@ class StanfordCoreNLPServer(Parser):
         :return:
         '''
         if len(text.strip()) == 0:
-            print>> sys.stderr, "Warning, empty document {0} passed to CoreNLP".format(document.name)
+            print>> sys.stderr, "Warning, empty document {0} passed to CoreNLP".format(document.name if document else "?")
             return
 
         if isinstance(text, unicode):
@@ -644,14 +647,14 @@ class StanfordCoreNLPServer(Parser):
             parts['position'] = position
 
             # Add full dependency tree parse to document meta
-            if 'parse' in block:  # self.parse_tree:
+            if 'parse' in block and document:
                 tree = ' '.join(block['parse'].split())
                 if 'tree' not in document.meta:
                     document.meta['tree'] = {}
                 document.meta['tree'][position] = tree
 
             # Link the sentence to its parent document object
-            parts['document'] = document
+            parts['document'] = document if document else None
 
             # Add null entity array (matching null for CoreNLP)
             parts['entity_cids'] = ['O' for _ in parts['words']]
@@ -659,7 +662,8 @@ class StanfordCoreNLPServer(Parser):
 
             # Assign the stable id as document's stable id plus absolute character offset
             abs_sent_offset_end = abs_sent_offset + parts['char_offsets'][-1] + len(parts['words'][-1])
-            parts['stable_id'] = construct_stable_id(document, 'sentence', abs_sent_offset, abs_sent_offset_end)
+            if document:
+                parts['stable_id'] = construct_stable_id(document, 'sentence', abs_sent_offset, abs_sent_offset_end)
             position += 1
             yield parts
 

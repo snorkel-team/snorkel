@@ -1,5 +1,5 @@
 # Build from source
-POPPLER="poppler-0.44.0"
+POPPLER="poppler-0.53.0"
 rm -rf poppler
 url=https://poppler.freedesktop.org/${POPPLER}.tar.xz
 if type curl &>/dev/null; then

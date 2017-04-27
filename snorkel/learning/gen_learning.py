@@ -192,8 +192,8 @@ class GenerativeModel(object):
     optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
     dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
 
-    def train(self, L, y=None, deps=(), init_acc = 1.0, init_deps=1.0, init_class_prior=-1.0, epochs=100, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
-              truncation=10, burn_in=50, timer=None):
+    def train(self, L, y=None, deps=(), init_acc = 1.0, init_deps=1.0, init_class_prior=-1.0, epochs=10, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
+              truncation=10, burn_in=5, timer=None):
         """
         Fits the parameters of the model to a data set. By default, learns a conditionally independent model.
         Additional unary dependencies can be set to be included in the constructor. Additional pairwise and higher-order
@@ -209,7 +209,7 @@ class GenerativeModel(object):
         :param init_deps: initial weight for additional dependencies, except class prior (in log scale)
         :param init_class_prior: initial class prior (in log scale), note only used if class_prior=True in constructor
         :param epochs: number of training epochs
-        :param step_size: gradient step size
+        :param step_size: gradient step size, default is 1 / L.shape[0]
         :param decay: multiplicative decay of step size, step_size_(t+1) = step_size_(t) * decay
         :param reg_param: regularization strength
         :param reg_type: 1 = L1 regularization, 2 = L2 regularization

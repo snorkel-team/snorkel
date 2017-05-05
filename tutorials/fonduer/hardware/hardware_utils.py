@@ -1,7 +1,7 @@
 from snorkel.models import TemporaryImplicitSpan, Label
 from snorkel.matchers import RegexMatchSpan, Union
 from snorkel.utils import ProgressBar
-from snorkel.contrib.fonduer.lf_helpers import *
+from fonduer.lf_helpers import *
 from snorkel.candidates import OmniNgrams
 from hardware_spaces import OmniNgramsPart
 import csv

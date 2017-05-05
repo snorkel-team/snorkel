@@ -13,4 +13,9 @@ requests
 scipy>=0.18
 sqlalchemy>=1.0.14
 tensorflow>=1.0
+wand
+selenium
+editdistance
+pyyaml
+psycopg2
 tika

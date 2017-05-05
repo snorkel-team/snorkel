@@ -1,17 +1,13 @@
-.project
-.pydevproject
 *.sw[opnm]
 .DS_Store
 /.virtualenv
 .ipynb_checkpoints
 *.pyc
 parser/
-phantomjs/
-poppler/
 /stanford-corenlp-*
 *.db*
 downloads/
-.settings/
+
 # Sphinx
 docs/_build
 
@@ -35,7 +31,3 @@ tutorials/intro/data/articles-dev.tsv
 tutorials/intro/data/articles-test.tsv
 tutorials/intro/data/articles-train.tsv
 tutorials/intro/data/gold_labels.tsv
-tutorials/intro/snorkel.db
-
-tutorials/fonduer/hardware/data/html/
-tutorials/fonduer/hardware/data/pdf/

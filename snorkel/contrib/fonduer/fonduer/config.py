@@ -17,5 +17,5 @@ def dict2obj(d):
         return d
 
 
-with open(os.environ.get('SNORKELHOME', '') + "/snorkel/contrib/fonduer/" + "settings.yaml", "r") as f:
+with open(os.environ.get('FONDUERHOME', '') + "/" + "settings.yaml", "r") as f:
     settings = dict2obj(yaml.load(f))

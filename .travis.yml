@@ -11,9 +11,6 @@ python:
 jdk:
   - oraclejdk8
 
-services:
-  - postgresql
-
 cache:
   directories:
     - download
@@ -26,7 +23,6 @@ addons:
     packages:
     # CoreNLP needs Java 8
     - oracle-java8-installer
-  postgresql: "9.6"
 
 # Following trick is necessary to get a binary distribution of numpy, scipy, etc. which takes too long to build every time
 # See: http://stackoverflow.com/q/30588634
@@ -69,21 +65,14 @@ install:
   # Install all remaining dependencies as per our README
   - pip install -r python-package-requirement.txt
   - test -e parser/corenlp.sh || ./install-parser.sh
-  - bash install-phantomjs.sh
-  - bash install-poppler.sh
 
   # Use runipy to run Jupyter/IPython notebooks from command-line
   - pip install runipy
 
-before_script:
-  - psql -c 'create database stg_temp_max;' -U postgres
-
-
 script:
 
-  - cd tutorials
-
   # Runs intro tutorial notebooks
+  - cd tutorials
   - runipy intro/Intro_Tutorial_1.ipynb
   - runipy intro/Intro_Tutorial_2.ipynb
   - runipy intro/Intro_Tutorial_3.ipynb
@@ -103,14 +92,6 @@ script:
   - runipy cdr/CDR_Tutorial_1.ipynb
   - runipy cdr/CDR_Tutorial_2.ipynb
   - runipy cdr/CDR_Tutorial_3.ipynb
-  
-  # Run Fonduer Tutorial
-  - cd fonduer/hardware
-  - bash download_data.sh
-  - cd ../..
-  - ls fonduer/hardware/data/
-  - travis_wait 30 runipy fonduer/hardware/max_storage_temp_tutorial.ipynb
-
 
   - cd ..
 

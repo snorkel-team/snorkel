@@ -7,26 +7,26 @@ import subprocess
 
 class ProgressBar(object):
     def __init__(self, N, length=40):
-        self.N = max(1, N)
-        self.nf = float(self.N)
+        # Protect against division by zero (N = 0 results in full bar being printed)
+        self.N      = max(1, N)
+        self.nf     = float(self.N)
         self.length = length
-        self.update_interval = self.nf / 100
-        self.current_tick = 0
+        # Precalculate the i values that should trigger a write operation
+        self.ticks = set([round(i/100.0 * N) for i in range(101)])
+        self.ticks.add(N-1)
         self.bar(0)
 
     def bar(self, i):
         """Assumes i ranges through [0, N-1]"""
-        new_tick = i / self.update_interval
-        # print new_tick, np.floor(new_tick), np.ceil(self.current_tick)
-        if int(new_tick) != int(self.current_tick):
-            b = int(np.ceil((i / self.nf) * self.length))
-            sys.stdout.write("\r[%s%s] %d%%" % ("=" * b, " " * (self.length - b), int(100 * (i / self.nf))))
+        if i in self.ticks:
+            b = int(np.ceil(((i+1) / self.nf) * self.length))
+            sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), int(100*((i+1) / self.nf))))
             sys.stdout.flush()
-        self.current_tick = new_tick
 
     def close(self):
-        b = self.length
-        sys.stdout.write("\r[%s%s] %d%%\n" % ("=" * b, " " * (self.length - b), 100))
+        # Move the bar to 100% before closing
+        self.bar(self.N-1)
+        sys.stdout.write("\n\n")
         sys.stdout.flush()
 
 
@@ -95,56 +95,28 @@ def matrix_conflicts(L):
     return np.ravel(np.where(L_abs.sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).T * L_abs / float(L.shape[0]))
 
 
-def matrix_accuracy(L, G):
-    """
-    Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate
-    and a set of gold candidates:
-    Return the accuracy of each LF compared to the gold.
-    Accuracy is defined as: (# correct non-zero labels) / (# non-zero labels)
-    """
-    N, M = L.shape
-    pb = ProgressBar(len(G))
-    # Create N x 1 vector to compare against
-    gold_labels = np.ndarray((N, 1))
-    gold_labels.fill(-1)
-    count = 0
-    for c in G:
-        pb.bar(count)
-        count += 1
-        index = L.get_row_index(c)  # NOTE: Assumes G is a subset of L
-        gold_labels[index] = [1]
-
-    pb.close()
-    gold_label_matrix = np.repeat(gold_labels, M, axis=1)
-    correct_labels = np.clip(np.multiply(gold_label_matrix, L.toarray()), 0, 1)
-    # Calculate accuracy of each LF
-    non_zero_cols = (L.toarray() != 0).sum(axis=0)  # count non-zero elements of each col
-    accuracy = np.divide(np.sum(correct_labels, axis=0), non_zero_cols)
-    return np.ravel(accuracy)
-
-
 def matrix_tp(L, labels):
     return np.ravel([
-                        np.sum(np.ravel((L[:, j] == 1).todense()) * (labels == 1)) for j in xrange(L.shape[1])
-                        ])
+        np.sum(np.ravel((L[:, j] == 1).todense()) * (labels == 1)) for j in xrange(L.shape[1])
+    ])
 
 
 def matrix_fp(L, labels):
     return np.ravel([
-                        np.sum(np.ravel((L[:, j] == 1).todense()) * (labels == -1)) for j in xrange(L.shape[1])
-                        ])
+        np.sum(np.ravel((L[:, j] == 1).todense()) * (labels == -1)) for j in xrange(L.shape[1])
+    ])
 
 
 def matrix_tn(L, labels):
     return np.ravel([
-                        np.sum(np.ravel((L[:, j] == -1).todense()) * (labels == -1)) for j in xrange(L.shape[1])
-                        ])
+        np.sum(np.ravel((L[:, j] == -1).todense()) * (labels == -1)) for j in xrange(L.shape[1])
+    ])
 
 
 def matrix_fn(L, labels):
     return np.ravel([
-                        np.sum(np.ravel((L[:, j] == -1).todense()) * (labels == 1)) for j in xrange(L.shape[1])
-                        ])
+        np.sum(np.ravel((L[:, j] == -1).todense()) * (labels == 1)) for j in xrange(L.shape[1])
+    ])
 
 
 def get_as_dict(x):
@@ -159,7 +131,7 @@ def get_as_dict(x):
 
 
 def sort_X_on_Y(X, Y):
-    return [x for (y, x) in sorted(zip(Y, X), key=lambda t: t[0])]
+    return [x for (y,x) in sorted(zip(Y,X), key=lambda t : t[0])]
 
 
 def corenlp_cleaner(words):

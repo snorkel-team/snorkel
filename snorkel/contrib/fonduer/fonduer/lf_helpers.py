@@ -8,7 +8,8 @@ import numpy as np
 from snorkel.utils import tokens_to_ngrams
 from utils_table import *
 from utils_visual import *
-from snorkel.models import TemporarySpan, Phrase
+from ....models.context import TemporarySpan
+from .models import Phrase
 from snorkel.candidates import Ngrams
 
 
@@ -226,7 +227,7 @@ def same_table(c):
     Return True if all Spans in the given candidate are from the same Table.
     :param c: The candidate whose Spans are being compared
     """
-    return (all(c[i].is_tabular() and
+    return (all(c[i].sentence.is_tabular() and
                 c[i].sentence.table == c[0].sentence.table for i in range(len(c))))
 
 
@@ -282,7 +283,7 @@ def same_phrase(c):
 
 def get_max_col_num(c):
     span = c if isinstance(c, TemporarySpan) else c.get_arguments()[0]
-    if span.is_tabular():
+    if span.sentence.is_tabular():
         return span.sentence.cell.col_end
     else:
         return None
@@ -290,7 +291,7 @@ def get_max_col_num(c):
 
 def get_min_col_num(c):
     span = c if isinstance(c, TemporarySpan) else c.get_arguments()[0]
-    if span.is_tabular():
+    if span.sentence.is_tabular():
         return span.sentence.cell.col_start
     else:
         return None
@@ -523,37 +524,37 @@ def get_page(c):
 
 
 def is_horz_aligned(c):
-    return (all([c[i].is_visual() and
+    return (all([c[i].sentence.is_visual() and
                  bbox_horz_aligned(bbox_from_span(c[i]), bbox_from_span(c[0]))
                  for i in range(len(c))]))
 
 
 def is_vert_aligned(c):
-    return (all([c[i].is_visual() and
+    return (all([c[i].sentence.is_visual() and
                  bbox_vert_aligned(bbox_from_span(c[i]), bbox_from_span(c[0]))
                  for i in range(len(c))]))
 
 
 def is_vert_aligned_left(c):
-    return (all([c[i].is_visual() and
+    return (all([c[i].sentence.is_visual() and
                  bbox_vert_aligned_left(bbox_from_span(c[i]), bbox_from_span(c[0]))
                  for i in range(len(c))]))
 
 
 def is_vert_aligned_right(c):
-    return (all([c[i].is_visual() and
+    return (all([c[i].sentence.is_visual() and
                  bbox_vert_aligned_right(bbox_from_span(c[i]), bbox_from_span(c[0]))
                  for i in range(len(c))]))
 
 
 def is_vert_aligned_center(c):
-    return (all([c[i].is_visual() and
+    return (all([c[i].sentence.is_visual() and
                  bbox_vert_aligned_center(bbox_from_span(c[i]), bbox_from_span(c[0]))
                  for i in range(len(c))]))
 
 
 def same_page(c):
-    return (all([c[i].is_visual() and
+    return (all([c[i].sentence.is_visual() and
                  bbox_from_span(c[i]).page == bbox_from_span(c[0]).page
                  for i in range(len(c))]))
 
@@ -576,7 +577,7 @@ def _get_direction_ngrams(direction, c, attrib, n_min, n_max, lower):
     f = (lambda w: w.lower()) if lower else (lambda w: w)
     spans = [c] if isinstance(c, TemporarySpan) else c.get_contexts()
     for span in spans:
-        if not span.is_tabular() or not span.is_visual(): continue
+        if not span.sentence.is_tabular() or not span.sentence.is_visual(): continue
         for phrase in span.sentence.table.phrases:
             for ts in ngrams_space.apply(phrase):
                 if (bbox_direction_aligned(bbox_from_span(ts), bbox_from_span(span)) and

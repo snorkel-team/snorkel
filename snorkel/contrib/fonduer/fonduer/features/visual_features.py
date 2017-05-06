@@ -18,7 +18,7 @@ def get_visual_feats(candidates):
         if len(args) == 1:
             span = args[0]
             # Add VisualLib entity features (if applicable)
-            if span.is_visual():
+            if span.sentence.is_visual():
                 if span.stable_id not in unary_vizlib_feats:
                     unary_vizlib_feats[span.stable_id] = set()
                     for f, v in vizlib_unary_features(span):
@@ -31,7 +31,7 @@ def get_visual_feats(candidates):
         elif len(args) == 2:
             span1, span2 = args
             # Add VisualLib entity features (if applicable)
-            if span1.is_visual() or span2.is_visual():
+            if span1.sentence.is_visual() or span2.sentence.is_visual():
                 for span, pre in [(span1, "e1_"), (span2, "e2_")]:
                     if span.stable_id not in unary_vizlib_feats:
                         unary_vizlib_feats[span.stable_id] = set()
@@ -56,7 +56,7 @@ def vizlib_unary_features(span):
     """
     Visual-related features for a single span
     """
-    if not span.is_visual(): return
+    if not span.sentence.is_visual(): return
 
     for f in get_visual_aligned_lemmas(span):
         yield 'ALIGNED_' + f, DEF_VALUE

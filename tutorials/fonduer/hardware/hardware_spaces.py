@@ -1,5 +1,7 @@
 from snorkel.candidates import OmniNgrams
-from snorkel.models import TemporaryImplicitSpan
+from snorkel.contrib.fonduer.fonduer.models import TemporaryImplicitSpan
+
+
 import re
 from difflib import SequenceMatcher
 

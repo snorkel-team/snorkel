@@ -1,4 +1,5 @@
-from snorkel.models import Phrase, TemporarySpan
+from ....models.context import TemporarySpan
+from .models import Phrase
 from collections import namedtuple
 
 
@@ -6,7 +7,7 @@ Bbox = namedtuple('bbox', ['page', 'top', 'bottom', 'left', 'right'], verbose=Fa
 
 
 def bbox_from_span(span):
-    if isinstance(span, TemporarySpan) and span.is_visual():
+    if isinstance(span, TemporarySpan) and span.sentence.is_visual():
         return Bbox(
                 span.get_attrib_tokens('page')[0],
                 min(span.get_attrib_tokens('top')),

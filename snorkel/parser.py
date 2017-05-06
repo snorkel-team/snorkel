@@ -19,7 +19,9 @@ import numpy as np
 from lxml import etree
 from lxml.html import fromstring
 
-from .models import Candidate, Context, Document, Webpage, Sentence, Table, Cell, Phrase, construct_stable_id, split_stable_id
+from .models import Candidate, Context, Document, Sentence, construct_stable_id, split_stable_id
+from .contrib.fonduer.fonduer.models import Webpage, Table, Cell, Phrase
+
 from .udf import UDF, UDFRunner
 from .utils import sort_X_on_Y
 from .contrib.fonduer.fonduer.visual import VisualLinker

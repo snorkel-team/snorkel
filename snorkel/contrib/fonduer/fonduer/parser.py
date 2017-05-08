@@ -19,8 +19,8 @@ import numpy as np
 from lxml import etree
 from lxml.html import fromstring
 
-from ....models import Candidate, Context, Sentence, construct_stable_id, split_stable_id
-from .models import Webpage, Table, Cell, Phrase, FonduerDocument
+from ....models import Candidate, Context, Document, Sentence, construct_stable_id, split_stable_id
+from .models import Webpage, Table, Cell, Phrase
 
 from ....udf import UDF, UDFRunner
 from ....utils import sort_X_on_Y
@@ -37,7 +37,7 @@ class HTMLPreprocessor(DocPreprocessor):
             for text in soup.find_all('html'):
                 name = os.path.basename(fp)[:os.path.basename(fp).rfind('.')]
                 stable_id = self.get_stable_id(name)
-                yield FonduerDocument(name=name, stable_id=stable_id, text=unicode(text),
+                yield Document(name=name, stable_id=stable_id, text=unicode(text),
                                meta={'file_name' : file_name}), unicode(text)
 
     def _can_read(self, fpath):
@@ -372,7 +372,7 @@ class TableInfo():
 
     def apply_tabular(self, parts, parent, position):
         parts['position'] = position
-        if isinstance(parent, FonduerDocument):
+        if isinstance(parent, Document):
             pass
         elif isinstance(parent, Table):
             parts['table'] = parent
@@ -384,5 +384,5 @@ class TableInfo():
             parts['col_start'] = parent.col_start
             parts['col_end'] = parent.col_end
         else:
-            raise NotImplementedError("Phrase parent must be FonduerDocument, Table, or Cell")
+            raise NotImplementedError("Phrase parent must be Document, Table, or Cell")
         return parts

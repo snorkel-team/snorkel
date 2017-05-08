@@ -14,10 +14,6 @@ from .....models.context import Context, Document, Sentence, TemporarySpan, Span
 INT_ARRAY_TYPE = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
 STR_ARRAY_TYPE = postgresql.ARRAY(String)  if snorkel_postgres else PickleType
 
-class FonduerDocument(Document):
-    text          = Column(String)
-    def __repr__(self):
-        return "FonduerDocument " + str(self.name.encode('utf-8'))
 
 class Webpage(Document):
     """

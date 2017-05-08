@@ -50,7 +50,7 @@ class RNNBase(TFNoiseAwareModel):
             if end >= mx:
                 w = "Candidate {0} has argument past max length for model:"
                 info = "[arg ends at index {0}; max len {1}]".format(end, mx)
-                warnings.warn('\t'.join(w.format(i), info))
+                warnings.warn('\t'.join([w.format(i), info]))
 
     def _make_tensor(self, x):
         """Construct input tensor with padding

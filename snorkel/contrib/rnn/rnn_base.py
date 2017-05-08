@@ -2,6 +2,7 @@ import numpy as np
 import random
 import tensorflow as tf
 import tensorflow.contrib.rnn as rnn
+import warnings
 
 from snorkel.learning import LabelBalancer, TFNoiseAwareModel
 from utils import f1_score, get_bi_rnn_output, SymbolTable
@@ -93,8 +94,12 @@ class RNNBase(TFNoiseAwareModel):
             bw_cell = self.cell(self.dim)
             # Add attention if needed
             if self.attn:
-                fw_cell = rnn.AttentionCellWrapper(fw_cell, self.attn)
-                bw_cell = rnn.AttentionCellWrapper(bw_cell, self.attn)
+                fw_cell = rnn.AttentionCellWrapper(
+                    fw_cell, self.attn, state_is_tuple=True
+                )
+                bw_cell = rnn.AttentionCellWrapper(
+                    bw_cell, self.attn, state_is_tuple=True
+                )
             # Construct RNN
             initial_state_fw = fw_cell.zero_state(batch_size, tf.float32)
             initial_state_bw = bw_cell.zero_state(batch_size, tf.float32)

@@ -345,14 +345,14 @@ p.img {
 <p id="main-title">HoloClean:<br />Weakly Supervised Data Repairing</p>
 <p>Post by Theo Rekatsinas, Ihab Ilyas, and Chris Ré</p>
 
-<p><em>And referencing work by other members of <a href="http://cs.stanford.edu/people/chrismre/#students">Hazy Research</a> and <a href="http://dsg.uwaterloo.ca/">the Data Systems Group at University of Waterloo</a>.</em> </p>
+<p><em>And referencing work by other members of <a href="http://cs.stanford.edu/people/chrismre/#students">Hazy Research</a> and <a href="https://cs.uwaterloo.ca/~ilyas/">the Data Systems Group at University of Waterloo</a>.</em> </p>
 
 <blockquote>
   Data cleaning and repairing acount for about 60% of the work of data scientists. 
 </blockquote>
 
 <p>
-Noisy and erroneous data is a major bottleneck in analytics. Data cleaning and repairing account for about <a href="https://www.forbes.com/sites/gilpress/2016/03/23/data-preparation-most-time-consuming-least-enjoyable-data-science-task-survey-says/#259a5d256f63">60% of the work of data scientists</a>. To address this bottleneck, we recently introduced <a href="https://arxiv.org/abs/1702.00820">HoloClean</a>, a semi-automated data repairing framework that relies on statistical learning and inference to repair errors in structured data. In HoloClean, we build upon the paradigm of <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">weak supervision</a> and demonstrate how to leverage diverse signals, including user-defined heuristic rules and external dictionaries, to repair erroneous data.
+Noisy and erroneous data is a major bottleneck in analytics. Data cleaning and repairing account for about <a href="https://www.forbes.com/sites/gilpress/2016/03/23/data-preparation-most-time-consuming-least-enjoyable-data-science-task-survey-says/#259a5d256f63">60% of the work of data scientists</a>. To address this bottleneck, we recently introduced <a href="https://arxiv.org/abs/1702.00820">HoloClean</a>, a semi-automated data repairing framework that relies on statistical learning and inference to repair errors in structured data. In HoloClean, we build upon the paradigm of <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">weak supervision</a> and demonstrate how to leverage diverse signals, including user-defined heuristic rules (such as <a href="http://dl.acm.org/citation.cfm?id=2511233">generalized data integrity constraints</a>) and external dictionaries, to repair erroneous data.
 </p>
 
 
@@ -395,7 +395,7 @@ How can we train a probabilistic model for data cleaning efficiently? As with an
 HoloClean leverages a variety of weak signals to address error detection and data repairing:
 <ul>
 <li><p>
-In HoloClean, users can specify <a href="https://www.cse.buffalo.edu/~chomicki/papers-ic05.pdf">denial constraints</a>, a general form of integrity constraints, to detect tuples that report conflicting information. For example, in the Food Inspections dataset, the functional dependency <b>City, State, Address &rarr; Zip</b>, can be used to identify that the information provided by Tuple t1 is in conflict with the information of Tuples t2 and t3. Denial constraints are high-level first-order logic rules that capture the user's domain-expertise.
+In HoloClean, users can specify <a href="https://www.cse.buffalo.edu/~chomicki/papers-ic05.pdf">denial constraints</a>, a general form of integrity constraints, to detect tuples that report conflicting information. For example, in the Food Inspections dataset, the functional dependency <b>City, State, Address &rarr; Zip</b>, can be used to identify that the information provided by Tuple t1 is in conflict with the information of Tuples t2 and t3. Denial constraints are high-level first-order logic rules that capture the user's domain-expertise. These rules can be specified by the user or even discovered <a href="http://dl.acm.org/citation.cfm?id=2536262">automatically</a>.
 </p></li>
 <li><p>
 Users also have the option to use <a href="http://dl.acm.org/citation.cfm?id=1687674">external datasets or dictionaries</a> and specify high-level rules that match the data provided by a trusted external dataset to the input dataset to be cleaned. 

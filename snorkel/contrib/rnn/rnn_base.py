@@ -2,7 +2,7 @@ import numpy as np
 import random
 import tensorflow as tf
 import tensorflow.contrib.rnn as rnn
-import warning
+import warnings
 
 from snorkel.learning import LabelBalancer, TFNoiseAwareModel
 from utils import f1_score, get_bi_rnn_output, SymbolTable

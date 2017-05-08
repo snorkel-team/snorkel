@@ -2,7 +2,6 @@ import pickle
 
 from sqlalchemy import Column, String, Integer, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import select, text
 from sqlalchemy.types import PickleType

@@ -1,29 +1,20 @@
 # -*- coding: utf-8 -*-
-import atexit
 from bs4 import BeautifulSoup
 import codecs
 from collections import defaultdict
-import glob
-import json
-import lxml.etree as et
 import itertools
 import os
 import re
-import requests
-import signal
-from subprocess import Popen
-import sys
 import warnings
 
-import numpy as np
 from lxml import etree
 from lxml.html import fromstring
+import numpy as np
 
-from ....models import Candidate, Context, Document, Sentence, construct_stable_id, split_stable_id
-from .models import Webpage, Table, Cell, Phrase
+from ....models import Candidate, Context, Document, construct_stable_id, split_stable_id
+from .models import Table, Cell, Phrase
 
 from ....udf import UDF, UDFRunner
-from ....utils import sort_X_on_Y
 from .visual import VisualLinker
 
 from ....parser import DocPreprocessor, CoreNLPHandler
@@ -41,10 +32,10 @@ class HTMLPreprocessor(DocPreprocessor):
                                meta={'file_name' : file_name}), unicode(text)
 
     def _can_read(self, fpath):
-        return fpath.endswith('html') # includes both .html and .xhtml
+        return fpath.endswith('html')  # includes both .html and .xhtml
 
 
-class SimpleTokenizer:
+class SimpleTokenizer(object):
     """
     A trivial alternative to CoreNLP which parses (tokenizes) text on
     whitespace only using the split() command.
@@ -55,7 +46,8 @@ class SimpleTokenizer:
     def parse(self, document, contents):
         i = 0
         for text in contents.split(self.delim):
-            if not len(text.strip()): continue
+            if not len(text.strip()):
+                continue
             words = text.split()
             char_offsets = [0] + list(np.cumsum(map(lambda x: len(x) + 1, words)))[:-1]
             text = ' '.join(words)
@@ -75,7 +67,7 @@ class OmniParser(UDFRunner):
                  flatten_delim='',
                  lingual=True,                       # lingual
                  strip=True,
-                 replacements=[(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]','-')],
+                 replacements=[(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]', '-')],
                  tabular=True,                       # tabular
                  visual=False,
                  pdf_path=None):
@@ -120,7 +112,7 @@ class OmniParserUDF(UDF):
         """
         super(OmniParserUDF, self).__init__(**kwargs)
 
-        self.delim = "<NB>" # NB = New Block
+        self.delim = "<NB>"  # NB = New Block
 
         # structural (html) setup
         self.structural = structural
@@ -135,7 +127,7 @@ class OmniParserUDF(UDF):
         for (pattern, replace) in replacements:
             self.replacements.append((re.compile(pattern, flags=re.UNICODE), replace))
         if self.lingual:
-            self.batch_size = 7000 # TODO: what if this is smaller than a block?
+            self.batch_size = 7000  # TODO(bhancock8): what if this is smaller than a block?
             self.lingual_parse = CoreNLPHandler(delim=self.delim[1:-1]).parse
         else:
             self.batch_size = int(1e6)
@@ -192,7 +184,7 @@ class OmniParserUDF(UDF):
             num_children = len(node)
             for i, child in enumerate(node[::-1]):
                 if child.tag in self.flatten:
-                    j = num_children - 1 - i # child index walking backwards
+                    j = num_children - 1 - i  # child index walking backwards
                     contents = ['']
                     for descendant in child.getiterator():
                         if descendant.text and descendant.text.strip():
@@ -204,9 +196,9 @@ class OmniParserUDF(UDF):
                             node.text = ''
                         node.text += self.flatten_delim.join(contents)
                     else:
-                        if node[j-1].tail is None:
-                            node[j-1].tail = ''
-                        node[j-1].tail += self.flatten_delim.join(contents)
+                        if node[j - 1].tail is None:
+                            node[j - 1].tail = ''
+                        node[j - 1].tail += self.flatten_delim.join(contents)
                     node.remove(child)
 
         def parse_node(node, table_info=None):
@@ -219,7 +211,7 @@ class OmniParserUDF(UDF):
                 self.table_idx = table_info.enter_tabular(node, self.table_idx)
 
             if self.flatten:
-                flatten(node) # flattens children of node that are in the 'flatten' list
+                flatten(node)  # flattens children of node that are in the 'flatten' list
 
             for field in ['text', 'tail']:
                 text = getattr(node, field)
@@ -237,13 +229,13 @@ class OmniParserUDF(UDF):
                             parents.append(table_info.parent)
 
                         if self.structural:
-                            context_node = node.getparent() if field=='tail' else node
+                            context_node = node.getparent() if field == 'tail' else node
                             xpaths.append(tree.getpath(context_node))
                             html_tags.append(context_node.tag)
                             html_attrs.append(map(lambda x: '='.join(x), context_node.attrib.items()))
 
             for child in node:
-                if child.tag=='table':
+                if child.tag == 'table':
                     parse_node(child, TableInfo(document=table_info.document))
                 else:
                     parse_node(child, table_info)
@@ -252,7 +244,7 @@ class OmniParserUDF(UDF):
                 table_info.exit_tabular(node)
 
         # Parse document and store text in self.contents, padded with self.delim
-        root = fromstring(text) # lxml.html.fromstring()
+        root = fromstring(text)  # lxml.html.fromstring()
         tree = etree.ElementTree(root)
         document.text = text
         parse_node(root, table_info)
@@ -280,7 +272,7 @@ class OmniParserUDF(UDF):
                     parts['stable_id'] = construct_stable_id(document, 'phrase', abs_phrase_offset, abs_phrase_offset_end)
                     abs_phrase_offset = abs_phrase_offset_end
                     if self.structural:
-                        parts['xpath'] =  xpaths[parent_idx]
+                        parts['xpath'] = xpaths[parent_idx]
                         parts['html_tag'] = html_tags[parent_idx]
                         parts['html_attrs'] = html_attrs[parent_idx]
                     if self.tabular:
@@ -289,11 +281,13 @@ class OmniParserUDF(UDF):
                     yield Phrase(**parts)
                     position += 1
                     phrase_num += 1
-                except:
-                    import pdb; pdb.set_trace()
+                except Exception:
+                    import pdb
+                    pdb.set_trace()
             parsed = batch_end
 
-class TableInfo():
+
+class TableInfo(object):
     def __init__(self, document,
                  table=None, table_grid=defaultdict(int),
                  cell=None, cell_idx=0,
@@ -337,8 +331,8 @@ class TableInfo():
                 col_end += int(node.get("colspan")) - 1
 
             # update table_grid with occupied cells
-            for r, c in itertools.product(range(row_start, row_end+1),
-                                            range(col_start, col_end+1)):
+            for r, c in itertools.product(range(row_start, row_end + 1),
+                                            range(col_start, col_end + 1)):
                 self.table_grid[r, c] = 1
 
             # construct cell

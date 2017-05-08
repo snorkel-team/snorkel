@@ -1,14 +1,12 @@
-import pickle
-
 from sqlalchemy import Column, String, Integer, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.sql import select, text
+from sqlalchemy.sql import text
 from sqlalchemy.types import PickleType
 
-from .....models.meta import SnorkelBase, snorkel_postgres
-from .....models.context import Context, Document, Sentence, TemporarySpan, Span
+from .....models.meta import snorkel_postgres
+from .....models.context import Context, Document, TemporarySpan
 
 
 INT_ARRAY_TYPE = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
@@ -16,9 +14,7 @@ STR_ARRAY_TYPE = postgresql.ARRAY(String)  if snorkel_postgres else PickleType
 
 
 class Webpage(Document):
-    """
-    Declares name for storage table.
-    """
+    """Declares name for storage table."""
     __tablename__ = 'webpage'
     id            = Column(Integer, ForeignKey('document.id', ondelete='CASCADE'), primary_key=True)
     # Connects NewType records to generic Context records
@@ -37,6 +33,7 @@ class Webpage(Document):
     # Rest of class definition here
     def __repr__(self):
         return "Webpage(id: %s..., url: %s...)" % (self.name[:10].encode('utf-8'), self.url[8:23].encode('utf-8'))
+
 
 class Table(Context):
     """A table Context in a Document."""
@@ -61,6 +58,7 @@ class Table(Context):
         # Allow sorting by comparing the string representations of each
         return self.__repr__() > other.__repr__()
 
+
 class Cell(Context):
     """A cell Context in a Document."""
     __tablename__ = 'cell'
@@ -69,7 +67,7 @@ class Cell(Context):
     table_id      = Column(Integer, ForeignKey('table.id'))
     position      = Column(Integer, nullable=False)
     document      = relationship('Document', backref=backref('cells', order_by=position, cascade='all, delete-orphan'), foreign_keys=document_id)
-    table         = relationship('Table', backref = backref('cells', order_by=position, cascade='all, delete-orphan'), foreign_keys = table_id)
+    table         = relationship('Table', backref=backref('cells', order_by=position, cascade='all, delete-orphan'), foreign_keys=table_id)
     row_start = Column(Integer)
     row_end = Column(Integer)
     col_start = Column(Integer)
@@ -104,6 +102,7 @@ class Cell(Context):
         # Allow sorting by comparing the string representations of each
         return self.__repr__() > other.__repr__()
 
+
 class PhraseMixin(object):
     """A phrase Context in a Document."""
     def is_lingual(self):
@@ -124,6 +123,7 @@ class PhraseMixin(object):
                  self.phrase_idx,
                  self.text.encode('utf-8')))
 
+
 class LingualMixin(object):
     """A collection of lingual attributes."""
     lemmas      = Column(STR_ARRAY_TYPE)
@@ -140,6 +140,7 @@ class LingualMixin(object):
                 (self.document.name.encode('utf-8'),
                  self.phrase_idx,
                  self.text.encode('utf-8')))
+
 
 class TabularMixin(object):
     """A collection of tabular attributes."""
@@ -174,17 +175,19 @@ class TabularMixin(object):
     def __repr__(self):
         rows = tuple([self.row_start, self.row_end]) if self.row_start != self.row_end else self.row_start
         cols = tuple([self.col_start, self.col_end]) if self.col_start != self.col_end else self.col_start
-        return ("TabularPhrase (Doc: %s, Table: %s, Row: %s, Col: %s, Index: %s, Text: %s)" %
+        return (
+            "TabularPhrase (Doc: %s, Table: %s, Row: %s, Col: %s, Index: %s, Text: %s)" %
             (self.document.name.encode('utf-8'),
             (lambda: cls.table).position,
             rows,
             cols,
             self.phrase_idx,
-            self.text.encode('utf-8')))
+            self.text.encode('utf-8'))
+        )
 
 
 class VisualMixin(object):
-    """ A collection of visual attributes."""
+    """A collection of visual attributes."""
     page   = Column(INT_ARRAY_TYPE)
     top    = Column(INT_ARRAY_TYPE)
     left   = Column(INT_ARRAY_TYPE)
@@ -202,7 +205,7 @@ class VisualMixin(object):
 
 
 class StructuralMixin(object):
-    """ A collection of structural attributes."""
+    """A collection of structural attributes."""
     xpath      = Column(String)
     html_tag   = Column(String)
     html_attrs = Column(STR_ARRAY_TYPE)
@@ -225,7 +228,7 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, 
     id            = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
     document_id   = Column(Integer, ForeignKey('document.id'))
     document      = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
-    phrase_num    = Column(Integer, nullable=False) # unique Phrase number per document
+    phrase_num    = Column(Integer, nullable=False)  # unique Phrase number per document
     text          = Column(Text, nullable=False)
     words         = Column(STR_ARRAY_TYPE)
     char_offsets  = Column(INT_ARRAY_TYPE)
@@ -296,9 +299,6 @@ class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, 
         # Allow sorting by comparing the string representations of each
         return self.__repr__() > other.__repr__()
 
-    def __gt__(self, other):
-        # Allow sorting by comparing the string representations of each
-        return self.__repr__() > other.__repr__()
 
 class TemporaryImplicitSpan(TemporarySpan):
     """The TemporaryContext version of ImplicitSpan"""
@@ -326,7 +326,7 @@ class TemporaryImplicitSpan(TemporarySpan):
         self.meta           = meta
 
     def __len__(self):
-        return sum(map(len, words))
+        return sum(map(len, self.words))
 
     def __eq__(self, other):
         try:
@@ -425,8 +425,8 @@ class TemporaryImplicitSpan(TemporarySpan):
             return sep.join(self.get_attrib_tokens(a))
 
     def __getitem__(self, key):
-        """
-        Slice operation returns a new candidate sliced according to **char index**
+        """Slice operation returns a new candidate sliced according to **char index**.
+
         Note that the slicing is w.r.t. the candidate range (not the abs. sentence char indexing)
         """
         if isinstance(key, slice):
@@ -437,10 +437,10 @@ class TemporaryImplicitSpan(TemporarySpan):
                 char_end = self.char_start + key.stop - 1
             else:
                 char_end = self.char_end + key.stop
-            return self._get_instance(sentence=self.sentence, char_start=char_start, char_end=char_end, expander_key=expander_key,
-                position=position, text=text, words=words, lemmas=lemmas, pos_tags=pos_tags,
-                ner_tags=ner_tags, dep_parents=dep_parents, dep_labels=dep_labels,
-                page=page, top=top, left=left, bottom=bottom, right=right, meta=meta)
+            return self._get_instance(sentence=self.sentence, char_start=char_start, char_end=char_end, expander_key=self.expander_key,
+                position=self.position, text=text, words=self.words, lemmas=self.lemmas, pos_tags=self.pos_tags,
+                ner_tags=self.ner_tags, dep_parents=self.dep_parents, dep_labels=self.dep_labels,
+                page=self.page, top=self.top, left=self.left, bottom=self.bottom, right=self.right, meta=self.meta)
         else:
             raise NotImplementedError()
 
@@ -454,8 +454,8 @@ class TemporaryImplicitSpan(TemporarySpan):
 
 
 class ImplicitSpan(Context, TemporaryImplicitSpan):
-    """
-    A span of characters that may not have appeared verbatim in the source text.
+    """A span of characters that may not have appeared verbatim in the source text.
+
     It is identified by Context id, character-index start and end (inclusive),
     as well as a key representing what 'expander' function drew the ImplicitSpan
     from an  existing Span, and a position (where position=0 corresponds to the

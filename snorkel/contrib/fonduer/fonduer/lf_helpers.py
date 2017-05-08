@@ -1,9 +1,9 @@
-import re
 from collections import defaultdict
 from itertools import chain
-from lxml.html import fromstring
 from lxml import etree
+from lxml.html import fromstring
 import numpy as np
+import re
 
 from snorkel.utils import tokens_to_ngrams
 from utils_table import *
@@ -64,7 +64,7 @@ def get_text_between(c):
 
 # TODO: replace in tutorials with get_between_ngrams and delete this
 def get_between_tokens(c, attrib='words', n_min=1, n_max=1, lower=True):
-    """ An alias for get_between_ngrams maintained for backwards compatibility. """
+    """An alias for get_between_ngrams maintained for backwards compatibility. """
     return [ngram for ngram in get_between_ngrams(c,
                                                   attrib=attrib,
                                                   n_min=n_min,
@@ -105,7 +105,7 @@ def get_between_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
 
 # TODO: replace in tutorials with get_left_ngrams and delete this
 def get_left_tokens(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
-    """ An alias for get_left_ngrams maintained for backwards compatibility. """
+    """An alias for get_left_ngrams maintained for backwards compatibility. """
     return [ngram for ngram in get_left_ngrams(c,
                                                window=window, attrib=attrib,
                                                n_min=n_min, n_max=n_max,
@@ -113,8 +113,8 @@ def get_left_tokens(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
 
 
 def get_left_ngrams(c, window=3, attrib='words', n_min=1, n_max=1, lower=True):
-    """
-    Get the ngrams within a window to the _left_ of the Candidate from its sentence Context.
+    """Get the ngrams within a window to the _left_ of the Candidate from its sentence Context.
+
     For higher-arity Candidates, defaults to the _first_ argument.
     :param window: The number of tokens to the left of the first argument to return
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
@@ -487,13 +487,13 @@ def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False, spread=[0,
 # TODO: fix this function and retest
 def _infer_cell(root_cell, axis, direct, infer):
     # NOTE: not defined for direct = False and infer = False
-    # empty = len(root_cell.phrases) == 0 
+    # empty = len(root_cell.phrases) == 0
     # edge = getattr(root_cell, _other_axis(axis) + '_start') == 0
     # if direct and (not empty or edge or not infer):
     #     return root_cell
     # else:
     #     if edge or not empty:
-    #         return PhantomCell(phrases=[]) 
+    #         return PhantomCell(phrases=[])
     #     else:
     #         neighbor_cells = [cell for cell in root_cell.table.cells
     #             if is_axis_aligned(cell, root_cell, axis=axis)
@@ -584,8 +584,9 @@ def _get_direction_ngrams(direction, c, attrib, n_min, n_max, lower):
                         not (phrase == span.sentence and ts.get_span() in span.get_span())):
                     yield ts.get_span()
 
+
 def get_horz_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
-    # TODO: this currently looks only in current table; 
+    # TODO: this currently looks only in current table;
     #   precompute over the whole document/page instead
     # TODO: this currently aligns based on phrases, not words
     spans = [c] if isinstance(c, TemporarySpan) else c.get_arguments()
@@ -610,7 +611,6 @@ def get_vert_aligned_ngrams(c, attrib='words', n_min=1, n_max=1, lower=True):
                         phrase is not span.sentence):
                 for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
                     yield ngram
-
 
 
 def get_vert_ngrams_left(c):

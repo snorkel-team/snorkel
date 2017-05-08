@@ -5,10 +5,5 @@ from .....models.annotation import Feature, FeatureKey, Label, LabelKey, GoldLab
 from .....models.parameter import Parameter
 from .context import Webpage, Table, Cell, Phrase, TemporaryImplicitSpan, ImplicitSpan, Document
 
-
-# SnorkelBase is initialized by snorkel.models.
-#
-# Now, we want to add tables for the new context types used by Fonduer, and
-# override some of the default tables (e.g. Document) with new fields.
-# SnorkelBase.metadata.drop_all(snorkel_engine)
+# Use sqlalchemy to create tables for the new context types used by Fonduer
 SnorkelBase.metadata.create_all(snorkel_engine)

@@ -1,4 +1,4 @@
-from snorkel.candidates import OmniNgrams
+from snorkel.contrib.fonduer.fonduer.candidates import OmniNgrams
 from snorkel.contrib.fonduer.fonduer.models import TemporaryImplicitSpan
 
 

@@ -3,7 +3,7 @@ from snorkel.models import Label
 from snorkel.matchers import RegexMatchSpan, Union
 from snorkel.utils import ProgressBar
 from snorkel.contrib.fonduer.fonduer.lf_helpers import *
-from snorkel.candidates import OmniNgrams
+from snorkel.contrib.fonduer.fonduer.candidates import OmniNgrams
 from hardware_spaces import OmniNgramsPart
 import csv
 import codecs

@@ -348,7 +348,7 @@ p.img {
 <p><em>And referencing work by other members of <a href="http://cs.stanford.edu/people/chrismre/#students">Hazy Research</a> and <a href="https://cs.uwaterloo.ca/~ilyas/">the Data Systems Group at University of Waterloo</a>.</em> </p>
 
 <blockquote>
-  Data cleaning and repairing acount for about 60% of the work of data scientists. 
+  Data cleaning and repairing account for about 60% of the work of data scientists. 
 </blockquote>
 
 <p>
@@ -366,13 +366,13 @@ Noisy and erroneous data is a major bottleneck in analytics. Data cleaning and r
 
 <h2 id="toc_0">Detecting and Repairing Erroneous Data</h2>
 <blockquote>
-  HoloClean can fix diverse errors in structured datasets, ranging from conflicting and mispelled values to outliers and null entries. 
+  HoloClean can fix diverse errors in structured datasets, ranging from conflicting and misspelled values to outliers and null entries. 
 </blockquote>
 All too often, the data collected by companies, organizations, and researchers is filled with mistakes, errors, and incomplete values. This is referred to as <i>dirty data</i>, and it can represent a formidable obstacle to downstream applications. Take for example a snippet from the <a href="https://data.cityofchicago.org/Health-Human-Services/Food-Inspections/4ijn-s7e5/data">Food Inspections dataset</a> published by the City of Chicago:
 
 <p><center><img width="70%" src="holoclean_img/errors_chicago.jpg" alt="Errors can vary!"></center></p>
 
-Errors in this dataset range from mispelled entries (e.g., "Chicago" is spelled "Cicago") and conflicting Zip code values for the same address (e.g., "60608" versus "60609" for the same address in Chicago) to outlier values for key attributes (e.g., "Johnnyo's" instead of "John Veliotis Sr.").</p>
+Errors in this dataset range from misspelled entries (e.g., "Chicago" is spelled "Cicago") and conflicting Zip code values for the same address (e.g., "60608" versus "60609" for the same address in Chicago) to outlier values for key attributes (e.g., "Johnnyo's" instead of "John Veliotis Sr.").</p>
 
 <p>In HoloClean, we focus on <b><i>structured datasets</i></b> such as the one shown above. Our goal is to identify and repair all cells whose initial, <b><i>observed value</i></b> is different from their <b><i> true value</i></b>, which is unknown. We term these <b><i>erroneous cells</i></b>. Given the above, data cleaning is separated into two tasks: (i) <b><i>error detection</i></b>, whose goal is to identify erroneous cells, and (ii) <b><i>data repairing</i></b>, whose goal is to infer the true value of detected erroneous cells.</p>
 
@@ -418,7 +418,7 @@ Denial constrains introduce correlations over sets of random variables. For exam
 External data determine priors on the correct value of different cells. For example, the fact that address "3465 S Morgan St, Chicago, IL" is assigned to Zip Code "60608" in an external dataset provides evidence that the initially observed Zip Code of "60609" is wrong. 
 </p></li>
 <li><p>
-Finally, HoloClean uses the available labeled data (generated via the weak signals described above) to learn a series of quantitative statistics over the input data (e.g., co-occurence statistics over pairs of attribute values). Quantitative statistics are used to form priors over the assignment of random variables that correspond to erroneous cells.
+Finally, HoloClean uses the available labeled data (generated via the weak signals described above) to learn a series of quantitative statistics over the input data (e.g., co-occurrence statistics over pairs of attribute values). Quantitative statistics are used to form priors over the assignment of random variables that correspond to erroneous cells.
 </p></li>
 </ul> 
 
@@ -441,7 +441,7 @@ This yields an average F1 improvement of more than 2x against state-of-the-art m
 <blockquote>
   Hard constraints (e.g., integrity constraints) lead to complex and non-scalable repairing models.
 </blockquote>
-<p>The main technical challenge in HoloClean is scaling inference over the probabilistic model used for data cleaning. It is well-known that inference in the presence of constraints is <a href="https://en.wikipedia.org/wiki/Sharp-P-complete">#P-complete</a>. This is because during inference one needs to consider all possible joint assigments over sets of random variables that are correlated. For example, consider the dataset shown in the figure below:
+<p>The main technical challenge in HoloClean is scaling inference over the probabilistic model used for data cleaning. It is well-known that inference in the presence of constraints is <a href="https://en.wikipedia.org/wiki/Sharp-P-complete">#P-complete</a>. This is because during inference one needs to consider all possible joint assignments over sets of random variables that are correlated. For example, consider the dataset shown in the figure below:
 </p>
 
 <p><center><img width="70%" src="holoclean_img/relax.jpg" alt="relaxed model"></center></p>
@@ -454,7 +454,7 @@ This yields an average F1 improvement of more than 2x against state-of-the-art m
 
 <p>To ensure scalability, HoloClean applies integrity constraints over the input dataset to identify tuples that provide conflicting information and uses integrity constraints to learn <b><i>features</i></b> over the random variables associated with the cells corresponding to these tuples. The final probabilistic model generated by HoloClean corresponds to a <b><i>voting model over independent random variables</i></b> that ensures the local consistency of the values assigned to different cells.</p>
 
-<p>In our paper, we empirically find that when there is sufficient redundancy in observing the correct value of cells in a dataset, HoloClean's approximate model obtains more accurate repairs and is more robust to misspecifications of the domain of random variables in its probabilistic model.</p>
+<p>In our paper, we empirically find that when there is sufficient redundancy in observing the correct value of cells in a dataset, HoloClean's approximate model obtains more accurate repairs and is more robust to misspecification of the domain of random variables in its probabilistic model.</p>
 
 <h2 id="toc_0">Next Steps</h2>
 

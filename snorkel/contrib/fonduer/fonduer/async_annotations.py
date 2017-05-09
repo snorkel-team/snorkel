@@ -28,6 +28,8 @@ from .features.features import get_all_feats
 # Note that this anontation matrix class can not be replaced with snorkel one
 # since we do not have ORM-backed key objects but rather a simple python list.
 _TempKey = namedtuple('TempKey', ['id', 'name'])
+
+
 class csr_AnnotationMatrix(sparse.csr_matrix):
     """
     An extension of the scipy.sparse.csr_matrix class for holding sparse annotation matrices
@@ -101,6 +103,8 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         return DataFrame(data=d, index=lf_names)[col_names]
 
 segment_dir = tempfile.gettempdir()
+
+
 def get_sql_name(text):
     """
     Create valid SQL identifier as part of a feature storage table name
@@ -109,6 +113,7 @@ def get_sql_name(text):
     text = ''.join(c.lower() if c.isalnum() else ' ' for c in text)
     text = '_'.join(text.split())
     return text
+
 
 def tsv_escape(s):
     if s is None:
@@ -120,12 +125,15 @@ def tsv_escape(s):
         s = '"' + s + '"'
     return s
 
+
 def array_tsv_escape(vals):
     return '{' + ','.join(tsv_escape(p) for p in vals) + '}'
+
 
 def table_exists(con, name):
     cur = con.execute("select exists(select * from information_schema.tables where table_name=%s)", (name,))
     return cur.fetchone()[0]
+
 
 def copy_postgres(segment_file_blob, table_name, tsv_columns):
     """
@@ -141,18 +149,21 @@ def copy_postgres(segment_file_blob, table_name, tsv_columns):
     _out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
     print _out
 
-def _segment_filename(table_name, job_id, start = None, end = None):
+
+def _segment_filename(db_name, table_name, job_id, start = None, end = None):
     suffix = '*'
     if start is not None:
         suffix = str(start)
         if end is not None:
             suffix += '-' + str(end)
-    return '%s_%s_%s.tsv' % (table_name, job_id, suffix)
+    return '%s_%s_%s_%s.tsv' % (db_name, table_name, job_id, suffix)
+
 
 class COOFeatureAnnotator(FeatureAnnotator):
     def __init__(self, f=get_all_feats, **kwargs):
         super(COOFeatureAnnotator, f, **kwargs)
-        
+
+
 class BatchAnnotatorUDF(UDF):
     def __init__(self, f, **kwargs):
         self.anno_generator  = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
@@ -166,7 +177,7 @@ class BatchAnnotatorUDF(UDF):
         into Queues (can't pickle...)
         """
         start, end = batch_range
-        file_name = _segment_filename(table_name, split, self.worker_id)
+        file_name = _segment_filename(DBNAME, table_name, split, self.worker_id)
         segment_path = os.path.join(segment_dir, file_name)
         candidates = self.session.query(Candidate).filter(Candidate.split == split).order_by(Candidate.id).slice(start, end)
         with codecs.open(segment_path, 'a+', encoding='utf-8') as writer:
@@ -195,6 +206,7 @@ class BatchAnnotatorUDF(UDF):
                     writer.write('\t'.join(row) + '\n')
         return
         yield
+
 
 class BatchAnnotator(UDFRunner):
     """Abstract class for annotating candidates and persisting these annotations to DB"""
@@ -236,7 +248,7 @@ class BatchAnnotator(UDFRunner):
                 old_table_name = table_name
                 table_name += '_updates'
             
-            segment_file_blob = os.path.join(segment_dir, _segment_filename(self.table_name, split))
+            segment_file_blob = os.path.join(segment_dir, _segment_filename(DBNAME, self.table_name, split))
             remove_files(segment_file_blob)
             cache = True if self.annotation_type == 'feature' else False
             super(BatchAnnotator, self).apply(batch_range, table_name = self.table_name, split=split, cache=cache, **kwargs)
@@ -307,10 +319,12 @@ class BatchAnnotator(UDFRunner):
 class BatchFeatureAnnotator(BatchAnnotator):
     def __init__(self, candidate_type, **kwargs):
         super(BatchFeatureAnnotator, self).__init__(candidate_type, annotation_type='feature', f=get_all_feats, **kwargs)
-        
+
+
 class BatchLabelAnnotator(BatchAnnotator):
     def __init__(self, candidate_type, lfs, **kwargs):
         super(BatchLabelAnnotator, self).__init__(candidate_type, annotation_type='label', f=lfs, **kwargs)
+
 
 def load_annotation_matrix(con, candidates, split, table_name, key_table_name, replace_key_set, storage, update_keys, ignore_keys):
     """

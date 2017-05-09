@@ -359,8 +359,8 @@ Noisy and erroneous data is a major bottleneck in analytics. Data cleaning and r
 <p>HoloClean has three key properties: 
 </p>
 <ul>
-<li><p>It is the first data cleaning framework that combines a variety of heterogeneous signals, such as integrity constraints, external knowledge, and quantitative statistics, in a unified framework.</p></li>
-<li><p>It is the first holistic data cleaning framework driven by probabilistic inference. Users only need to provide a dataset to be cleaned and describe high-level domain specific signals.</p></li>
+<li><p>It is the first holistic data cleaning framework that combines a variety of heterogeneous signals, such as integrity constraints, external knowledge, and quantitative statistics, in a unified framework.</p></li>
+<li><p>It is the first data cleaning framework driven by probabilistic inference. Users only need to provide a dataset to be cleaned and describe high-level domain specific signals.</p></li>
 <li><p>It can scale to large real-world dirty datasets and perform automatic repairs that are two times more accurate than state-of-the-art methods.</p></li>
 </ul>
 
@@ -368,7 +368,7 @@ Noisy and erroneous data is a major bottleneck in analytics. Data cleaning and r
 <blockquote>
   HoloClean can fix diverse errors in structured datasets, ranging from conflicting and misspelled values to outliers and null entries. 
 </blockquote>
-All too often, the data collected by companies, organizations, and researchers is filled with mistakes, errors, and incomplete values. This is referred to as <i>dirty data</i>, and it can represent a formidable obstacle to downstream applications. Take for example a snippet from the <a href="https://data.cityofchicago.org/Health-Human-Services/Food-Inspections/4ijn-s7e5/data">Food Inspections dataset</a> published by the City of Chicago:
+All too often, the data collected by companies, organizations, and researchers is filled with mistakes, errors, and incomplete values. This is referred to as <i>dirty data</i>, and it can represent a formidable obstacle to downstream applications. Take for example a snippet from the <a href="https://data.cityofchicago.org/Health-Human-Services/Food-Inspections/4ijn-s7e5/">Food Inspections dataset</a> published by the City of Chicago:
 
 <p><center><img width="70%" src="holoclean_img/errors_chicago.jpg" alt="Errors can vary!"></center></p>
 
@@ -384,14 +384,18 @@ Errors in this dataset range from misspelled entries (e.g., "Chicago" is spelled
 </p>
 
 <h2 id="toc_0">Data Cleaning via Weak Supervision</h2>
+<blockquote>In HoloClean, users only need to specify high-level assertions that capture their domain-expertise with respect to invariants that the input data needs to satisfy. No other supervision is required!
+</blockquote>
+
 <p> 
 How can we train a probabilistic model for data cleaning efficiently? As with any other large-scale machine learning problem, users cannot afford to iterate over all cells in a dataset with millions of tuples to identify erroneous cells and suggest repairs. This is where <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">weak supervision</a> shines! 
 </p>
 
-<blockquote>In HoloClean, users only need to specify high-level assertions that capture their domain-expertise with respect to invariants that the input data needs to satisfy. No other supervision is required!
+<p><center><img width="70%" src="holoclean_img/inputs.jpg" alt="Inputs!"></center></p>
+<blockquote>
+  HoloClean unifies heterogeneous weak signals that provide evidence on the correct value of structured data to detect and repair errors. 
 </blockquote>
 
-<p><center><img width="70%" src="holoclean_img/inputs.jpg" alt="Inputs!"></center></p>
 HoloClean leverages a variety of weak signals to address error detection and data repairing:
 <ul>
 <li><p>
@@ -404,10 +408,6 @@ Users also have the option to use <a href="http://dl.acm.org/citation.cfm?id=168
 HoloClean uses state-of-the-art <a href="http://dl.acm.org/citation.cfm?id=1281219">outlier detection methods</a> that leverage <i>quantitative statistics</i> to find cells whose value does not obey overall distributional properties of the input data. Outlier detection is run automatically and requires no input by the user.
 </p></li>
 </ul>
-
-<blockquote>
-  HoloClean unifies heterogeneous weak signals that provide evidence on the correct value of structured data to detect and repair errors. 
-</blockquote>
 
 All signals described above are used to automatically generate a probabilistic model for data cleaning:
 <ul>
@@ -424,7 +424,7 @@ Finally, HoloClean uses the available labeled data (generated via the weak signa
 
 <p><center><img width="100%" src="holoclean_img/holoclean.jpg" alt="holoclean"></center></p>
 
-<p>Overall, HoloClean is a data cleaning framework that takes as input a dirty dataset, a collection of integrity constraints, and potentially a collection of external data and forms a probabilistic model for data cleaning. HoloClean builds upon <a href="http://deepdive.stanford.edu/">DeepDive</a>, our in-house general purpose inference engine, to execute learning and inference over its model. For each random variable HoloClean estimates its maximum a posteriori assignment as well as the marginal distribution over the values in its domain. The latter can be used to identify repairs with low confidence and solicit additional user-feedback in a principled manner.
+<p>Overall, HoloClean is a data cleaning framework that takes as input a dirty dataset, a collection of integrity constraints, and potentially a collection of external data and forms a probabilistic model for data cleaning. HoloClean builds upon <a href="http://deepdive.stanford.edu/">DeepDive</a>, our in-house general-purpose inference engine, to execute learning and inference over its model. For each random variable HoloClean estimates its maximum a posteriori assignment as well as the marginal distribution over the values in its domain. The latter can be used to identify repairs with low confidence and solicit additional user-feedback in a principled manner.
 </p>
 
 <h3 id="toc_0">HoloClean in Practice</h3> 
@@ -460,8 +460,8 @@ This yields an average F1 improvement of more than 2x against state-of-the-art m
 
 <p>A few things we are excited about:</p>
 <ul>
-<li><p>We are actively exploring the connections between HoloClean's relaxed model and other structured prediction tasks where constraints are used to guarantee globally consistent models, but locally consistent models are sufficient due to redundancy in the observed data. In fact, trading off constraints for features has been an <a href="http://theory.stanford.edu/~tim/papers/statrec.pdf">open area of study in the area of probabilistic inference over structured models</a>.</p></li>
-<li><p>We are working on combining HoloClean with <a href="http://hazyresearch.github.io/snorkel/">Snorkel</a>, our new data-programming engine, and our <a href="http://dl.acm.org/citation.cfm?id=2536262">automated denial constraint discovery techniques</a> to provide users with an interactive way of specifying and revising weak signals for constructing data cleaning models.</p></li>
+<li><p>We are actively exploring the connections between HoloClean's relaxed model and other structured prediction tasks. Specifically, we are focusing on cases where globally consistent constraints can be replaced with locally consistent priors due to redundancy in the observed data. In fact, trading off constraints for features has been an <a href="http://theory.stanford.edu/~tim/papers/statrec.pdf">open area of study in the area of probabilistic inference over structured models</a>.</p></li>
+<li><p>We are working on combining HoloClean with <a href="http://hazyresearch.github.io/snorkel/">Snorkel</a>, our new data-programming engine, to provide users with an interactive way of specifying and revising weak signals for constructing data cleaning models.</p></li>
 <li><p>We are working on a code release for HoloClean; so stay tuned!</p></li>
 </ul>
 

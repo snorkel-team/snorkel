@@ -296,6 +296,13 @@ class BatchAnnotator(UDFRunner):
         """Alias for apply that emphasizes we are using an existing AnnotatorKey set."""
         return self.apply(split, key_group=key_group, replace_key_set=False, **kwargs)
 
+    def load_matrix(self, split, ignore_keys=[]):
+        SnorkelSession = new_sessionmaker()
+        session   = SnorkelSession()
+        candidates = session.query(Candidate).filter(Candidate.split == split).all()
+        with snorkel_engine.connect() as con:
+            return load_annotation_matrix(con, candidates, split, self.table_name, self.key_table_name, False, None, False, ignore_keys)
+
 
 class BatchFeatureAnnotator(BatchAnnotator):
     def __init__(self, candidate_type, **kwargs):

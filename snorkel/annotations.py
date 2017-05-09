@@ -313,8 +313,12 @@ def load_feature_matrix(session, **kwargs):
     return load_matrix(csr_AnnotationMatrix, FeatureKey, Feature, session, **kwargs)
 
 
-def load_gold_labels(session, annotator_name, **kwargs):
-    return load_matrix(csr_LabelMatrix, GoldLabelKey, GoldLabel, session, key_names=[annotator_name], **kwargs)
+def load_gold_labels(session, annotator_name, load_as_array=False, **kwargs):
+    L = load_matrix(
+        csr_LabelMatrix, GoldLabelKey, GoldLabel, session,
+        key_names=[annotator_name], **kwargs
+    )
+    return np.ravel(L.todense()) if load_as_array else L
 
 
 class LabelAnnotator(Annotator):

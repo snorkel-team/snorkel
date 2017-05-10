@@ -1,4 +1,6 @@
-from snorkel.models import TemporarySpan, ImplicitSpan
+from snorkel.models import TemporarySpan
+from ..models import ImplicitSpan
+
 
 FEAT_PRE = "CORE_"
 DEF_VALUE = 1

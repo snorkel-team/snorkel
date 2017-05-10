@@ -28,7 +28,7 @@ def get_content_feats(candidates):
         # Unary candidates
         if len(args) == 1:
             span = args[0]
-            if span.is_lingual():
+            if span.sentence.is_lingual():
                 get_tdl_feats = compile_entity_feature_generator()
                 sent = get_as_dict(span.parent)
                 xmltree = corenlp_to_xmltree(sent)
@@ -51,7 +51,7 @@ def get_content_feats(candidates):
         # Binary candidates
         elif len(args) == 2:
             span1, span2 = args
-            if span1.is_lingual() and span2.is_lingual():
+            if span1.sentence.is_lingual() and span2.sentence.is_lingual():
                 get_tdl_feats = compile_relation_feature_generator()
                 sent1 = get_as_dict(span1.sentence)
                 sent2 = get_as_dict(span2.sentence)

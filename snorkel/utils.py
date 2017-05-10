@@ -7,26 +7,25 @@ import subprocess
 
 class ProgressBar(object):
     def __init__(self, N, length=40):
-        # Protect against division by zero (N = 0 results in full bar being printed)
         self.N      = max(1, N)
         self.nf     = float(self.N)
         self.length = length
-        # Precalculate the i values that should trigger a write operation
-        self.ticks = set([round(i/100.0 * N) for i in range(101)])
-        self.ticks.add(N-1)
+        self.update_interval = self.nf/100
+        self.current_tick = 0
         self.bar(0)
 
     def bar(self, i):
         """Assumes i ranges through [0, N-1]"""
-        if i in self.ticks:
-            b = int(np.ceil(((i+1) / self.nf) * self.length))
-            sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), int(100*((i+1) / self.nf))))
+        new_tick = i/self.update_interval
+        if int(new_tick) != int(self.current_tick):
+            b = int(np.ceil((i / self.nf) * self.length))
+            sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), int(100*(i / self.nf))))
             sys.stdout.flush()
+        self.current_tick = new_tick
 
     def close(self):
-        # Move the bar to 100% before closing
-        self.bar(self.N-1)
-        sys.stdout.write("\n\n")
+        b = self.length
+        sys.stdout.write("\r[%s%s] %d%%\n" % ("="*b, " "*(self.length-b), 100))
         sys.stdout.flush()
 
 

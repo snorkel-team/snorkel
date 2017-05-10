@@ -17,7 +17,7 @@ def get_structural_feats(candidates):
         # Unary candidates
         if len(args) == 1:
             span = args[0]
-            if span.is_structural():
+            if span.sentence.is_structural():
                 if span.stable_id not in unary_strlib_feats:
                     unary_strlib_feats[span.stable_id] = set()
                     for f, v in strlib_unary_features(span):
@@ -30,7 +30,7 @@ def get_structural_feats(candidates):
         # Binary candidates
         elif len(args) == 2:
             span1, span2 = args
-            if span1.is_structural() or span2.is_structural():
+            if span1.sentence.is_structural() or span2.sentence.is_structural():
                 for span, pre in [(span1, "e1_"), (span2, "e2_")]:
                     if span.stable_id not in unary_strlib_feats:
                         unary_strlib_feats[span.stable_id] = set()
@@ -55,7 +55,7 @@ def strlib_unary_features(span):
     """
     Structural-related features for a single span
     """
-    if not span.is_structural(): return
+    if not span.sentence.is_structural(): return
 
     yield "TAG_" + get_tag(span), DEF_VALUE
 

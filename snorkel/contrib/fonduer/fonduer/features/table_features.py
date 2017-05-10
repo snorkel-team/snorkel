@@ -30,7 +30,7 @@ def get_table_feats(candidates):
         # Binary candidates
         elif len(args) == 2:
             span1, span2 = args
-            if span1.is_tabular() or span2.is_tabular():
+            if span1.sentence.is_tabular() or span2.sentence.is_tabular():
                 for span, pre in [(span1, "e1_"), (span2, "e2_")]:
                     if span.stable_id not in unary_tablelib_feats:
                         unary_tablelib_feats[span.stable_id] = set()
@@ -55,7 +55,7 @@ def tablelib_unary_features(span):
     """
     Table-/structure-related features for a single span
     """
-    if not span.is_tabular(): return
+    if not span.sentence.is_tabular(): return
     phrase = span.sentence
     for attrib in settings.featurization.table.unary_features.attrib:
         for ngram in get_cell_ngrams(span,
@@ -91,7 +91,7 @@ def tablelib_binary_features(span1, span2):
     """
     Table-/structure-related features for a pair of spans
     """
-    if span1.is_tabular() and span2.is_tabular():
+    if span1.sentence.is_tabular() and span2.sentence.is_tabular():
         if span1.sentence.table == span2.sentence.table:
             yield u"SAME_TABLE", DEF_VALUE
             if span1.sentence.cell is not None and span2.sentence.cell is not None:

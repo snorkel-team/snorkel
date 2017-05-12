@@ -1,6 +1,6 @@
 from collections import defaultdict
 from snorkel.models import construct_stable_id
-from snorkel.parsers import Parser, ParserConnection
+from snorkel.parser import Parser, ParserConnection
 
 
 class SpaCy(Parser):

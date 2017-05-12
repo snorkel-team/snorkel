@@ -1,14 +1,6 @@
-# -*- coding: utf-8 -*-
-import sys
-
-try:
-    import spacy
-except:
-    print>>sys.stderr,"Warning, unable to load 'spaCy' module"
-
 from collections import defaultdict
-from ..parsers import Parser, ParserConnection
-from ..models import Candidate, Context, Document, Sentence, construct_stable_id
+from snorkel.models import construct_stable_id
+from snorkel.parser import Parser, ParserConnection
 
 
 class SpaCy(Parser):
@@ -16,14 +8,19 @@ class SpaCy(Parser):
     spaCy
     https://spacy.io/
 
-    Minimal (buggy) implementation to show how alternate parsers can be added to Snorkel.
-    Models for each target language needs to be downloaded using the following command:
+    Minimal (buggy) implementation to show how alternate parsers can
+    be added to Snorkel.
+    Models for each target language needs to be downloaded using the
+    following command:
 
     python -m spacy download en
 
     '''
     def __init__(self,lang='en'):
-
+        try:
+            import spacy
+        except:
+            raise Exception("spacy not installed. Use `pip install spacy`.")
         super(SpaCy, self).__init__(name="spaCy")
         self.model = spacy.load('en')
 
@@ -69,7 +66,9 @@ class SpaCy(Parser):
 
             # make char_offsets relative to start of sentence
             abs_sent_offset = parts['char_offsets'][0]
-            parts['char_offsets'] = [p - abs_sent_offset for p in parts['char_offsets']]
+            parts['char_offsets'] = [
+                p - abs_sent_offset for p in parts['char_offsets']
+            ]
             parts['dep_parents'] = dep_par #sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = dep_lab #sort_X_on_Y(dep_lab, dep_order)
             parts['position'] = position
@@ -77,8 +76,12 @@ class SpaCy(Parser):
             # Add full dependency tree parse to document meta
             # TODO
 
-            # Assign the stable id as document's stable id plus absolute character offset
-            abs_sent_offset_end = abs_sent_offset + parts['char_offsets'][-1] + len(parts['words'][-1])
-            parts['stable_id'] = construct_stable_id(document, 'sentence', abs_sent_offset, abs_sent_offset_end)
+            # Assign the stable id as document's stable id plus absolute
+            # character offset
+            abs_sent_offset_end = (abs_sent_offset + parts['char_offsets'][-1] +
+                len(parts['words'][-1]))
+            parts['stable_id'] = construct_stable_id(
+                document, 'sentence', abs_sent_offset, abs_sent_offset_end
+            )
             position += 1
             yield parts

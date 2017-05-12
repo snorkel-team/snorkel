@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
 import os
 import sys
 import json
 import signal
 import warnings
 
-from subprocess import Popen,PIPE
+from subprocess import Popen, PIPE
 from collections import defaultdict
 
 from .parser import Parser, URLParserConnection
-from ..models import Candidate, Context, Document, Sentence, construct_stable_id
+from ..models import construct_stable_id
 from ..utils import sort_X_on_Y
 
 

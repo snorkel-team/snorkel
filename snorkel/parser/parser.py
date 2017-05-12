@@ -1,6 +1,39 @@
-# -*- coding: utf-8 -*-
 import sys
 import requests
+
+from .corenlp import StanfordCoreNLPServer
+from ..models import Candidate, Context, Sentence
+from ..udf import UDF, UDFRunner
+
+
+class CorpusParser(UDFRunner):
+
+    def __init__(self, parser=None, fn=None):
+        self.parser = StanfordCoreNLPServer() if not parser else parser
+        super(CorpusParser, self).__init__(CorpusParserUDF,
+                                           parser=self.parser,
+                                           fn=fn)
+    def clear(self, session, **kwargs):
+        session.query(Context).delete()
+        # We cannot cascade up from child contexts to parent Candidates,
+        # so we delete all Candidates too
+        session.query(Candidate).delete()
+
+
+class CorpusParserUDF(UDF):
+
+    def __init__(self, parser, fn, **kwargs):
+        super(CorpusParserUDF, self).__init__(**kwargs)
+        self.parser = parser
+        self.req_handler = parser.connect()
+        self.fn = fn
+
+    def apply(self, x, **kwargs):
+        """Given a Document object and its raw text, parse into Sentences"""
+        doc, text = x
+        for parts in self.req_handler.parse(doc, text):
+            parts = self.fn(parts) if self.fn is not None else parts
+            yield Sentence(**parts)
 
 
 class Parser(object):
@@ -13,14 +46,14 @@ class Parser(object):
         Return connection object for this parser type
         :return:
         '''
-        raise NotImplemented
+        raise NotImplementedError()
 
     def close(self):
         '''
         Kill this parser
         :return:
         '''
-        raise NotImplemented
+        raise NotImplementedError()
 
 
 class ParserConnection(object):
@@ -31,7 +64,7 @@ class ParserConnection(object):
         self.parser = parser
 
     def _connection(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def parse(self, document, text):
         yield self.parser.parse(document, text)
@@ -66,7 +99,7 @@ class URLParserConnection(ParserConnection):
 
         # Mac OS bug -- without this setting multiprocessing requests will fail
         # when the server has boot-up latency associated with model loading
-        # See: http://stackoverflow.com/questions/30453152/python-multiprocessing-and-requests
+        # See: http://stackoverflow.com/questions/30453152
         if sys.platform in ['darwin']:
             requests_session.trust_env = False
         requests_session.mount('http://', HTTPAdapter(max_retries=retries))
@@ -80,8 +113,3 @@ class URLParserConnection(ParserConnection):
         :return:
         '''
         return self.parser.parse(document, text, self.request)
-
-
-
-
-

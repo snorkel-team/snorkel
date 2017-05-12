@@ -199,7 +199,7 @@ class StanfordCoreNLPServer(Parser):
         :return:
         '''
         if len(text.strip()) == 0:
-            print>> sys.stderr, "Warning, empty document {0} passed to CoreNLP".format(document.name if document else "?")
+            print>> sys.stderr, u"Warning, empty document {0} passed to CoreNLP".format(document.name if document else "?")
             return
 
         if isinstance(text, unicode):
@@ -214,7 +214,7 @@ class StanfordCoreNLPServer(Parser):
         try:
             blocks = json.loads(content, strict=False)['sentences']
         except:
-            warnings.warn("CoreNLP skipped a malformed sentence.\n{}".format(text), RuntimeWarning)
+            warnings.warn(u"CoreNLP skipped a malformed sentence.", RuntimeWarning)
             return
 
         position = 0
@@ -241,7 +241,7 @@ class StanfordCoreNLPServer(Parser):
                 # shift to start of local sentence offset
                 i = t['characterOffsetBegin'] - block['tokens'][0]['characterOffsetBegin']
                 # add whitespace based on offsets of originalText
-                text += (' ' * (i - len(text))) + t['originalText'] if len(text) != i else t['originalText']
+                text += (u' ' * (i - len(text))) + t['originalText'] if len(text) != i else t['originalText']
             parts['text'] = text
             #else:
             #parts['text'] = ''.join(t['originalText'] + t.get('after', '') for t in block['tokens'])

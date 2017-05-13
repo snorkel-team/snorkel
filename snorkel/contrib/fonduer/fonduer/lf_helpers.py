@@ -298,7 +298,7 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
             yield ngram
         if isinstance(span.sentence, Phrase) and span.sentence.cell is not None:
             root_cell = span.sentence.cell
-            for phrase in chain.from_iterable([_get_aligned_phrases(phrase, 'row'), _get_aligned_phrases(phrase, 'col')]):
+            for phrase in chain.from_iterable([_get_aligned_phrases(root_cell, 'row'), _get_aligned_phrases(root_cell, 'col')]):
                 row_diff = min_row_diff(phrase, root_cell, absolute=False)
                 col_diff = min_col_diff(phrase, root_cell, absolute=False)
                 if (row_diff or col_diff) and not (row_diff and col_diff) and abs(row_diff) + abs(col_diff) <= dist:
@@ -321,13 +321,12 @@ def get_neighbor_cell_ngrams(span, dist=1, directions=False, attrib='words', n_m
                             yield ngram
 
 
-def get_row_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_max=1, spread=[0, 0], lower=True):
+def get_row_ngrams(span, attrib='words', n_min=1, n_max=1, spread=[0, 0], lower=True):
     """Get the ngrams from all Cells that are in the same row as the given Span.
 
     Note that if a candidate is passed in, all of its Spans will be searched.
 
     :param span: The span whose row Cells are being searched
-    :param infer: If True, then if a Cell is empty, use the contents from the first non-empty Cell above it
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
@@ -336,18 +335,17 @@ def get_row_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_ma
     """
     spans = [span] if isinstance(span, TemporarySpan) else span.get_contexts()
     for span in spans:
-        for ngram in _get_axis_ngrams(span, axis='row', direct=direct, infer=infer,
-                                      attrib=attrib, n_min=n_min, n_max=n_max, spread=spread, lower=lower):
+        for ngram in _get_axis_ngrams(span, axis='row', attrib=attrib, 
+                                      n_min=n_min, n_max=n_max, spread=spread, lower=lower):
             yield ngram
 
 
-def get_col_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_max=1, spread=[0, 0], lower=True):
+def get_col_ngrams(span, attrib='words', n_min=1, n_max=1, spread=[0, 0], lower=True):
     """Get the ngrams from all Cells that are in the same column as the given Span.
 
     Note that if a candidate is passed in, all of its Spans will be searched.
 
     :param span: The span whose column Cells are being searched
-    :param infer: If True, then if a Cell is empty, use the contents from the first non-empty Cell to the left of it
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
@@ -356,18 +354,18 @@ def get_col_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_ma
     """
     spans = [span] if isinstance(span, TemporarySpan) else span.get_contexts()
     for span in spans:
-        for ngram in _get_axis_ngrams(span, axis='col', direct=direct, infer=infer,
-                                      attrib=attrib, n_min=n_min, n_max=n_max, spread=spread, lower=lower):
+        for ngram in _get_axis_ngrams(span, axis='col', attrib=attrib, 
+                                      n_min=n_min, n_max=n_max, spread=spread, 
+                                      lower=lower):
             yield ngram
 
 
-def get_aligned_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, n_max=1, spread=[0, 0], lower=True):
+def get_aligned_ngrams(span, attrib='words', n_min=1, n_max=1, spread=[0, 0], lower=True):
     """Get the ngrams from all Cells that are in the same row or column as the given Span.
 
     Note that if a candidate is passed in, all of its Spans will be searched.
 
     :param span: The span whose row and column Cells are being searched
-    :param infer: If True, then if a Cell is empty, use the contents from the first non-empty Cell to the left of it
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
@@ -376,15 +374,15 @@ def get_aligned_ngrams(span, direct=True, infer=False, attrib='words', n_min=1, 
     """
     spans = [span] if isinstance(span, TemporarySpan) else span.get_contexts()
     for span in spans:
-        for ngram in get_row_ngrams(span, direct=direct, infer=infer, attrib=attrib,
-                                    n_min=n_min, n_max=n_max, spread=spread, lower=lower):
+        for ngram in get_row_ngrams(span, attrib=attrib, n_min=n_min, 
+                                    n_max=n_max, spread=spread, lower=lower):
             yield ngram
-        for ngram in get_col_ngrams(span, direct=direct, infer=infer, attrib=attrib,
-                                    n_min=n_min, n_max=n_max, spread=spread, lower=lower):
+        for ngram in get_col_ngrams(span, attrib=attrib, n_min=n_min, 
+                                    n_max=n_max, spread=spread, lower=lower):
             yield ngram
 
 
-def get_head_ngrams(span, axis=None, infer=False, attrib='words', n_min=1, n_max=1, lower=True):
+def get_head_ngrams(span, axis=None, attrib='words', n_min=1, n_max=1, lower=True):
     """Get the ngrams from the cell in the head of the row or column.
 
     More specifically, this returns the ngrams in the leftmost cell in a row and/or the
@@ -394,7 +392,6 @@ def get_head_ngrams(span, axis=None, infer=False, attrib='words', n_min=1, n_max
 
     :param span: The span whose head Cells are being returned
     :param axis: Which axis {'row', 'col'} to search. If None, then both row and col are searched.
-    :param infer: If True, then if a Cell is empty, use the contents from the first non-empty Cell to the left of it
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     :param n_min: The minimum n of the ngrams that should be returned
     :param n_max: The maximum n of the ngrams that should be returned
@@ -410,59 +407,37 @@ def get_head_ngrams(span, axis=None, infer=False, attrib='words', n_min=1, n_max
             for axis in axes:
                 if getattr(span.sentence, _other_axis(axis) + '_start') == 0:
                     return
-                for phrase in getattr(_get_head_cell(span.sentence.cell, axis, infer=infer), 'phrases', []):
+                for phrase in getattr(_get_head_cell(span.sentence.cell, axis), 'phrases', []):
                     for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
                         yield ngram
 
 
-def _get_head_cell(root_cell, axis, infer=False):
+def _get_head_cell(root_cell, axis):
     other_axis = 'row' if axis == 'col' else 'col'
     aligned_cells = _get_aligned_cells(
-        root_cell, axis, direct=True, infer=infer)
+        root_cell, axis)
     return sorted(aligned_cells, key=lambda x: getattr(x, other_axis + '_start'))[0] if aligned_cells else []
 
 
-def _get_axis_ngrams(span, axis, direct=True, infer=False, attrib='words', n_min=1, n_max=1, spread=[0, 0], lower=True):
+def _get_axis_ngrams(span, axis, attrib='words', n_min=1, n_max=1, spread=[0, 0], lower=True):
     for ngram in get_phrase_ngrams(span, attrib=attrib, n_min=n_min, n_max=n_max, lower=lower):
         yield ngram
     if (span.sentence.cell is not None):
-        for phrase in _get_aligned_phrases(span.sentence, axis, direct=direct, infer=infer, spread=spread):
+        for phrase in _get_aligned_phrases(span.sentence, axis, spread=spread):
             for ngram in tokens_to_ngrams(getattr(phrase, attrib), n_min=n_min, n_max=n_max, lower=lower):
                 yield ngram
 
 
-def _get_aligned_cells(root_cell, axis, direct=True, infer=False):
+def _get_aligned_cells(root_cell, axis):
     aligned_cells = [cell for cell in root_cell.table.cells
                      if is_axis_aligned(root_cell, cell, axis=axis)
                      and cell != root_cell]
-    return [_infer_cell(cell, _other_axis(axis), direct=direct, infer=infer)
-            for cell in aligned_cells] if infer else aligned_cells
+    return aligned_cells
 
 
-def _get_aligned_phrases(root_phrase, axis, direct=True, infer=False, spread=[0, 0]):
+def _get_aligned_phrases(root_phrase, axis, spread=[0, 0]):
     return [phrase for cell in root_phrase.table.cells if is_axis_aligned(root_phrase, cell, axis=axis, spread=spread)
-            for phrase in _infer_cell(cell, _other_axis(axis), direct, infer).phrases
-            if phrase != root_phrase]
-
-
-# PhantomCell = namedtuple('PhantomCell','phrases')
-# TODO: fix this function and retest
-def _infer_cell(root_cell, axis, direct, infer):
-    # NOTE: not defined for direct = False and infer = False
-    # empty = len(root_cell.phrases) == 0
-    # edge = getattr(root_cell, _other_axis(axis) + '_start') == 0
-    # if direct and (not empty or edge or not infer):
-    #     return root_cell
-    # else:
-    #     if edge or not empty:
-    #         return PhantomCell(phrases=[])
-    #     else:
-    #         neighbor_cells = [cell for cell in root_cell.table.cells
-    #             if is_axis_aligned(cell, root_cell, axis=axis)
-    #             and getattr(cell, _other_axis(axis) + '_start') == \
-    #                 getattr(root_cell, _other_axis(axis) + '_start') - 1]
-    # return _infer_cell(neighbor_cells[0], axis, direct=True, infer=True)
-    return root_cell
+            for phrase in cell.phrases if phrase != root_phrase]
 
 
 def _other_axis(axis):

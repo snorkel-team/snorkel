@@ -1,6 +1,6 @@
-import cPickle
 import numpy as np
 from collections import defaultdict
+from six.moves.cPickle import dump
 
 def cdr_doc_split(
     train_fname='data/CDR_TrainingSet.BioC.xml',
@@ -32,7 +32,7 @@ def cdr_doc_split(
     )))
     # Save to file
     with open(out_fname, 'wb') as f:
-        cPickle.dump((id_dict['train'], id_dict['dev'], id_dict['test']), f)
+        dump((id_dict['train'], id_dict['dev'], id_dict['test']), f)
 
 if __name__ == '__main__':
 	cdr_doc_split()

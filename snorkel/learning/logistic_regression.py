@@ -1,10 +1,10 @@
-import six.moves.cPickle
 import numpy as np
 import tensorflow as tf
 
 from snorkel.learning.disc_learning import TFNoiseAwareModel
 from scipy.sparse import csr_matrix, issparse
 from time import time
+from six.moves.cPickle import dump, load
 from snorkel.learning.utils import LabelBalancer
 
 
@@ -137,11 +137,11 @@ class LogisticRegression(TFNoiseAwareModel):
 
     def save_info(self, model_name):
         with open('{0}.info'.format(model_name), 'wb') as f:
-            cPickle.dump((self.d, self.lr, self.l1_penalty, self.l2_penalty), f)
+            dump((self.d, self.lr, self.l1_penalty, self.l2_penalty), f)
 
     def load_info(self, model_name):
         with open('{0}.info'.format(model_name), 'rb') as f:
-            self.d, self.lr, self.l1_penalty, self.l2_penalty = cPickle.load(f)
+            self.d, self.lr, self.l1_penalty, self.l2_penalty = load(f)
 
 
 class SparseLogisticRegression(LogisticRegression):

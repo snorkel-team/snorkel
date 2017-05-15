@@ -202,11 +202,9 @@ class StanfordCoreNLPServer(Parser):
             print(u"Warning, empty document {0} passed to CoreNLP".format(document.name if document else "?"), file=sys.stderr)
             return
 
-        if isinstance(text, unicode):
-            text = text.encode('utf-8', 'error')
+        text = text.encode('utf-8', 'error')
         resp = conn.post(self.endpoint, data=text, allow_redirects=True)
-        text = text.decode('utf-8')
-        content = resp.content.strip()
+        content = resp.content.strip().decode('utf-8')
 
         # check for parsing error messages
         StanfordCoreNLPServer.validate_response(content)

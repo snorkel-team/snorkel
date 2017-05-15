@@ -49,7 +49,7 @@ class NoiseAwareModel(object):
         # Execute update
         session.execute(q, update_vals)
         session.commit()
-        print "Saved %s predicted marginals" % len(marginals)
+        print("Saved %s predicted marginals" % len(marginals))
 
     def predict(self, X, b=0.5):
         """Return numpy array of elements in {-1,0,1}

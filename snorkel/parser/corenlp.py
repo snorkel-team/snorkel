@@ -159,14 +159,14 @@ class StanfordCoreNLPServer(Parser):
         Print server parameters
         :return:
         '''
-        print "------------------------------------"
-        print self.endpoint
-        print "version:", self.version
-        print "shell pid:", self.process_group.pid
-        print "port:", self.port
-        print "timeout:", self.timeout
-        print "threads:", self.num_threads
-        print "------------------------------------"
+        print("------------------------------------")
+        print(self.endpoint)
+        print("version:", self.version)
+        print("shell pid:", self.process_group.pid)
+        print("port:", self.port)
+        print("timeout:", self.timeout)
+        print("threads:", self.num_threads)
+        print("------------------------------------")
 
     def connect(self):
         '''
@@ -181,7 +181,7 @@ class StanfordCoreNLPServer(Parser):
         :return:
         '''
         if self.verbose:
-            print "Killing CoreNLP server [{}]...".format(self.process_group.pid)
+            print("Killing CoreNLP server [{}]...".format(self.process_group.pid))
         if self.process_group is not None:
             try:
                 os.killpg(os.getpgid(self.process_group.pid), signal.SIGTERM)

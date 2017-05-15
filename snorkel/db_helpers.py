@@ -58,4 +58,4 @@ def reload_annotator_labels(session, candidate_class, annotator_name, split, fil
             labels.append(label)
 
     session.commit()
-    print "AnnotatorLabels created: %s" % (len(labels),)
+    print("AnnotatorLabels created: %s" % (len(labels),))

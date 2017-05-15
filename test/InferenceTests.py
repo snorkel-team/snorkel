@@ -24,19 +24,19 @@ class TestInference(unittest.TestCase):
         self.assertGreater(np.mean(np.sign(X.dot(l.w)) == gt), 0.85)
     
     def test_ridge_logistic_regression_small_1(self):
-        print "Running small ridge logistic regression test 1"
+        print("Running small ridge logistic regression test 1")
         self.logistic_regression_small(self.ridge, 1e-6)
         
     def test_lasso_logistic_regression_small_1(self):
-        print "Running small lasso logistic regression test 1"
+        print("Running small lasso logistic regression test 1")
         self.logistic_regression_small(self.lasso, 1e-6)
         
     def test_ridge_logistic_regression_small_2(self):
-        print "Running small ridge logistic regression test 2"
+        print("Running small ridge logistic regression test 2")
         self.logistic_regression_small(self.ridge, 1e-4)
         
     def test_lasso_logistic_regression_small_2(self):
-        print "Running small lasso logistic regression test 2"
+        print("Running small lasso logistic regression test 2")
         self.logistic_regression_small(self.lasso, 1e-4)
 
     def logistic_regression_large(self, alpha, mu):
@@ -50,23 +50,23 @@ class TestInference(unittest.TestCase):
         self.assertGreater(np.mean(np.sign(X.dot(l.w)) == gt), 0.85)
         
     def test_ridge_logistic_regression_large_1(self):
-        print "Running large ridge logistic regression test 1"
+        print("Running large ridge logistic regression test 1")
         self.logistic_regression_large(self.ridge, 1e-6)
         
     def test_lasso_logistic_regression_large_1(self):
-        print "Running large lasso logistic regression test 1"
+        print("Running large lasso logistic regression test 1")
         self.logistic_regression_large(self.lasso, 1e-6)
         
     def test_ridge_logistic_regression_large_2(self):
-        print "Running large ridge logistic regression test 2"
+        print("Running large ridge logistic regression test 2")
         self.logistic_regression_large(self.ridge, 1e-4)
         
     def test_lasso_logistic_regression_large_2(self):
-        print "Running large lasso logistic regression test 2"
+        print("Running large lasso logistic regression test 2")
         self.logistic_regression_large(self.lasso, 1e-4)
         
     def test_logistic_regression_sample(self):
-        print "Running logistic regression test with sparse operations"
+        print("Running logistic regression test with sparse operations")
         X, w0, gt = self._problem(n=500, nlf=75, lf_prior=0.3, lf_mean=0.7,
                                   lf_sd=0.25, nf=1000, f_prior=0.1, f_mean=0.6,
                                   f_sd=0.25)

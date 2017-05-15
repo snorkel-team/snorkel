@@ -1,13 +1,12 @@
 from .constants import *
 from .disc_learning import NoiseAwareModel
-from .utils import MentionScorer
+from .utils import MentionScorer, exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
 from numbskull import NumbSkull
 from numbskull.inference import FACTORS
 from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
 import numpy as np
 import random
 import scipy.sparse as sparse
-from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
 
 
 class NaiveBayes(NoiseAwareModel):

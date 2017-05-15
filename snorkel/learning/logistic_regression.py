@@ -1,11 +1,11 @@
-import cPickle
+import six.moves.cPickle
 import numpy as np
 import tensorflow as tf
 
-from disc_learning import TFNoiseAwareModel
+from snorkel.learning.disc_learning import TFNoiseAwareModel
 from scipy.sparse import csr_matrix, issparse
 from time import time
-from utils import LabelBalancer
+from snorkel.learning.utils import LabelBalancer
 
 
 SD = 0.1

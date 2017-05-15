@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import sys
 import json
@@ -198,7 +199,7 @@ class StanfordCoreNLPServer(Parser):
         :return:
         '''
         if len(text.strip()) == 0:
-            print>> sys.stderr, u"Warning, empty document {0} passed to CoreNLP".format(document.name if document else "?")
+            print(u"Warning, empty document {0} passed to CoreNLP".format(document.name if document else "?"), file=sys.stderr)
             return
 
         if isinstance(text, unicode):

@@ -2,8 +2,8 @@ import tensorflow as tf
 
 from sqlalchemy.sql import bindparam, select
 
-from .utils import marginals_to_labels, MentionScorer
-from ..models import Candidate
+from snorkel.learning.utils import marginals_to_labels, MentionScorer
+from snorkel.models import Candidate
 
 
 class NoiseAwareModel(object):

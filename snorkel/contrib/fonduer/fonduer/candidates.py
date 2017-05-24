@@ -1,16 +1,12 @@
 from ....candidates import Ngrams
 from ....models.context import Document
 
-from collections import defaultdict
 from copy import deepcopy
 from itertools import product
-import re
 from sqlalchemy.sql import select
 
-from ....models import Candidate, TemporarySpan, Sentence
+from ....models import Candidate
 from ....udf import UDF, UDFRunner
-
-QUEUE_COLLECT_TIMEOUT = 5
 
 
 class CandidateExtractor(UDFRunner):
@@ -31,6 +27,7 @@ class CandidateExtractor(UDFRunner):
     :param symmetric_relations: Boolean indicating whether to extract symmetric Candidates, i.e., rel(A,B) and rel(B,A),
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
+
     def __init__(self, candidate_class, cspaces, matchers, candidate_filter=None, self_relations=False, nested_relations=False, symmetric_relations=True):
         """Initialize the CandidateExtractor."""
         super(CandidateExtractor, self).__init__(CandidateExtractorUDF,
@@ -43,14 +40,19 @@ class CandidateExtractor(UDFRunner):
                                                  symmetric_relations=symmetric_relations)
 
     def apply(self, xs, split=0, **kwargs):
+        """Call the CandidateExtractorUDF."""
         super(CandidateExtractor, self).apply(xs, split=split, **kwargs)
 
     def clear(self, session, split, **kwargs):
+        """Delete Candidates from given split the database."""
         session.query(Candidate).filter(Candidate.split == split).delete()
 
 
 class CandidateExtractorUDF(UDF):
+    """UDF for performing candidate extraction."""
+
     def __init__(self, candidate_class, cspaces, matchers, candidate_filter, self_relations, nested_relations, symmetric_relations, **kwargs):
+        """Initialize the CandidateExtractorUDF."""
         self.candidate_class     = candidate_class
         self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
         self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
@@ -134,58 +136,18 @@ class CandidateExtractorUDF(UDF):
 
 
 class CandidateSpace(object):
-    """
-    Defines the **space** of candidate objects
+    """Define the **space** of candidate objects.
+
     Calling _apply(x)_ given an object _x_ returns a generator over candidates in _x_.
     """
+
     def __init__(self):
+        """Stub initialization."""
         pass
 
     def apply(self, x):
+        """Inheriting classes must implement apply."""
         raise NotImplementedError()
-
-
-class Ngrams(CandidateSpace):
-    """
-    Defines the space of candidates as all n-grams (n <= n_max) in a Sentence _x_,
-    indexing by **character offset**.
-    """
-    def __init__(self, n_max=5, split_tokens=('-', '/')):
-        CandidateSpace.__init__(self)
-        self.n_max     = n_max
-        self.split_rgx = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
-
-    def apply(self, context):
-
-        # These are the character offset--**relative to the sentence start**--for each _token_
-        offsets = context.char_offsets
-
-        # Loop over all n-grams in **reverse** order (to facilitate longest-match semantics)
-        L    = len(offsets)
-        seen = set()
-        for l in range(1, self.n_max+1)[::-1]:
-            for i in range(L-l+1):
-                w     = context.words[i+l-1]
-                start = offsets[i]
-                end   = offsets[i+l-1] + len(w) - 1
-                ts    = TemporarySpan(char_start=start, char_end=end, sentence=context)
-                if ts not in seen:
-                    seen.add(ts)
-                    yield ts
-
-                # Check for split
-                # NOTE: For simplicity, we only split single tokens right now!
-                if l == 1 and self.split_rgx is not None:
-                    m = re.search(self.split_rgx, context.text[start-offsets[0]:end-offsets[0]+1])
-                    if m is not None and l < self.n_max + 1:
-                        ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, sentence=context)
-                        if ts1 not in seen:
-                            seen.add(ts1)
-                            yield ts
-                        ts2 = TemporarySpan(char_start=start + m.end(1), char_end=end, sentence=context)
-                        if ts2 not in seen:
-                            seen.add(ts2)
-                            yield ts2
 
 
 class OmniNgrams(Ngrams):
@@ -196,9 +158,11 @@ class OmniNgrams(Ngrams):
     """
 
     def __init__(self, n_max=5, split_tokens=['-', '/']):
+        """Initialize OmniNgrams."""
         Ngrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
 
     def apply(self, session, context):
+        """Generate OmniNgrams from a Document by parsing all of its Phrases."""
         if not isinstance(context, Document):
             raise TypeError(
                 "Input Contexts to OmniNgrams.apply() must be of type Document")

@@ -163,12 +163,12 @@ class OmniNgramsPart(OmniNgrams):
         self.parts_by_doc = parts_by_doc
         self.expander = expand_part_range if expand else (lambda x: [x])
 
-    def apply(self, context):
-        for ts in OmniNgrams.apply(self, context):
+    def apply(self, session, context):
+        for ts in OmniNgrams.apply(self, session, context):
             enumerated_parts = [part.upper() for part in expand_part_range(ts.get_span())]
             parts = set(enumerated_parts)
             if self.parts_by_doc:
-                possible_parts =  self.parts_by_doc[ts.parent.document.name.upper()]
+                possible_parts = self.parts_by_doc[ts.parent.document.name.upper()]
                 for base_part in enumerated_parts:
                     for part in possible_parts:
                         if part.startswith(base_part) and len(base_part) >= 4:
@@ -185,7 +185,7 @@ class OmniNgramsPart(OmniNgrams):
                     yield ts
                 else:
                     yield TemporaryImplicitSpan(
-                        sentence         = ts.sentence,
+                        sentence       = ts.sentence,
                         char_start     = ts.char_start,
                         char_end       = ts.char_end,
                         expander_key   = u'part_expander',
@@ -210,8 +210,8 @@ class OmniNgramsTemp(OmniNgrams):
     # def __init__(self, n_max=2, split_tokens=None):
     #     OmniNgrams.__init__(self, n_max=n_max, split_tokens=None)
 
-    def apply(self, context):
-        for ts in OmniNgrams.apply(self, context):
+    def apply(self, session, context):
+        for ts in OmniNgrams.apply(self, session, context):
             m = re.match(u'^([\+\-\u2010\u2011\u2012\u2013\u2014\u2212\uf02d])?(\s*)(\d+)$', ts.get_span(), re.U)
             if m:
                 if m.group(1) is None:
@@ -233,6 +233,37 @@ class OmniNgramsTemp(OmniNgrams):
                     text           = temp,
                     words          = [temp],
                     lemmas         = [temp],
+                    pos_tags       = [ts.get_attrib_tokens('pos_tags')[-1]],
+                    ner_tags       = [ts.get_attrib_tokens('ner_tags')[-1]],
+                    dep_parents    = [ts.get_attrib_tokens('dep_parents')[-1]],
+                    dep_labels     = [ts.get_attrib_tokens('dep_labels')[-1]],
+                    page           = [ts.get_attrib_tokens('page')[-1]] if ts.sentence.is_visual() else [None],
+                    top            = [ts.get_attrib_tokens('top')[-1]] if ts.sentence.is_visual() else [None],
+                    left           = [ts.get_attrib_tokens('left')[-1]] if ts.sentence.is_visual() else [None],
+                    bottom         = [ts.get_attrib_tokens('bottom')[-1]] if ts.sentence.is_visual() else [None],
+                    right          = [ts.get_attrib_tokens('right')[-1]] if ts.sentence.is_visual() else [None],
+                    meta           = None)
+            else:
+                yield ts
+
+
+class OmniNgramsVolt(OmniNgrams):
+    # def __init__(self, n_max=1, split_tokens=None):
+    #     OmniNgrams.__init__(self, n_max=n_max, split_tokens=None)
+
+    def apply(self, session, context):
+        for ts in OmniNgrams.apply(self, session, context):
+            if ts.get_span().endswith('.0'):
+                value = ts.get_span()[:-2]
+                yield TemporaryImplicitSpan(
+                    sentence         = ts.sentence,
+                    char_start     = ts.char_start,
+                    char_end       = ts.char_end,
+                    expander_key   = u'volt_expander',
+                    position       = 0,
+                    text           = value,
+                    words          = [value],
+                    lemmas         = [value],
                     pos_tags       = [ts.get_attrib_tokens('pos_tags')[-1]],
                     ner_tags       = [ts.get_attrib_tokens('ner_tags')[-1]],
                     dep_parents    = [ts.get_attrib_tokens('dep_parents')[-1]],

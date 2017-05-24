@@ -20,7 +20,8 @@ from .fonduer.async_annotations import BatchFeatureAnnotator, BatchLabelAnnotato
 from .fonduer import models
 from .fonduer import lf_helpers
 from .fonduer import visualizer
+from .fonduer import candidates
 
-for module in [models, lf_helpers, visualizer]:
+for module in [models, lf_helpers, visualizer, candidates]:
     full_name = '{}.{}'.format(__package__, module.__name__.rsplit('.')[-1])
     sys.modules[full_name] = sys.modules[module.__name__]

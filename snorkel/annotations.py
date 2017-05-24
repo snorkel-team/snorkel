@@ -37,7 +37,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
     def get_candidate(self, session, i):
         """Return the Candidate object corresponding to row i"""
         return session.query(Candidate).filter(Candidate.id == self.row_index[i]).one()
-    
+
     def get_row_index(self, candidate):
         """Return the row index of the Candidate"""
         return self.candidate_index[candidate.id]
@@ -116,7 +116,7 @@ class Annotator(UDFRunner):
         # Also, if we try to pass in a query iterator instead, with AUTOCOMMIT on, we get a TXN error...
         cids       = cids_query.all()
         cids_count = len(cids)
-        
+
         # Run the Annotator
         super(Annotator, self).apply(cids, split=split, key_group=key_group, replace_key_set=replace_key_set, count=cids_count, **kwargs)
 
@@ -124,13 +124,14 @@ class Annotator(UDFRunner):
         return self.load_matrix(session, split=split, key_group=key_group)
 
     def clear(self, session, split, key_group, replace_key_set, **kwargs):
-        """
-        Deletes the Annotations for the Candidates in the given split.
+        """Delete the Annotations for the Candidates in the given split.
+
         If replace_key_set=True, deletes *all* Annotations (of this Annotation sub-class)
         and also deletes all AnnotationKeys (of this sub-class)
         """
+
         query = session.query(self.annotation_class)
-        
+
         # If replace_key_set=False, then we just delete the annotations for candidates in our split
         if not replace_key_set:
             sub_query = session.query(Candidate.id).filter(Candidate.split == split).subquery()
@@ -194,7 +195,7 @@ class AnnotatorUDF(UDF):
             anno_update_query = anno_update_query.where(self.annotation_class.candidate_id == bindparam('cid'))
             anno_update_query = anno_update_query.where(self.annotation_class.key_id == bindparam('kid'))
             anno_update_query = anno_update_query.values(value=bindparam('value'))
-        
+
         # We only need to insert AnnotationKeys if replace_key_set=True
         # Note that in current configuration, we never update AnnotationKeys!
         if replace_key_set:
@@ -290,7 +291,7 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session, s
     # The total number of annotations in DB which is weird behavior...
     q = session.query(annotation_class.candidate_id, annotation_class.key_id, annotation_class.value)
     q = q.order_by(annotation_class.candidate_id)
-    
+
     # Iteratively construct row index and output sparse matrix
     for cid, kid, val in q.all():
         if cid in cid_to_row and kid in kid_to_col:
@@ -321,7 +322,7 @@ class LabelAnnotator(Annotator):
     def load_matrix(self, session, split, **kwargs):
         return load_label_matrix(session, split=split, **kwargs)
 
-        
+
 class FeatureAnnotator(Annotator):
     """Apply feature generators to the candidates, generating Feature annotations"""
     def __init__(self, f=get_span_feats):

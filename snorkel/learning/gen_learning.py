@@ -192,12 +192,12 @@ class GenerativeModel(object):
     optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
     dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
 
-    def train(self, L, y=None, deps=(), init_acc = 1.0, epochs=100, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
+    def train(self, L, y=None, deps=(), init_acc = 1.0, epochs=100, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, LF_priors=None, is_fixed=None, verbose=False,
               truncation=10, burn_in=50, timer=None):
         step_size = step_size or 1.0 / L.shape[0]
         reg_param_scaled = reg_param / L.shape[0]
         self._process_dependency_graph(L, deps)
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc)
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc, LF_priors, is_fixed)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
                        reg_param=reg_param_scaled, regularization=reg_type, truncation=truncation,
                        quiet=(not verbose), verbose=verbose, learn_non_evidence=True, burn_in=burn_in)
@@ -304,7 +304,7 @@ class GenerativeModel(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
-    def _compile(self, L, y, init_acc):
+    def _compile(self, L, y, init_acc, LF_priors, is_fixed):
         """
         Compiles a generative model based on L and the current labeling function dependencies.
         """
@@ -312,7 +312,17 @@ class GenerativeModel(object):
 
         n_weights = 1 if self.class_prior else 0
 
-        n_weights += n
+        if LF_priors == None:
+            LF_priors = [0.5 for i in range(n)]
+
+        if is_fixed == None:
+            is_fixed = [False for i in range(n)]
+
+        nPrior = sum([i != 0.5 for i in LF_priors])
+        nFixed = sum([not i for i in is_fixed])
+
+        n_weights += nPrior
+        n_weights += nFixed
         for optional_name in GenerativeModel.optional_names:
             if getattr(self, optional_name):
                 n_weights += n
@@ -351,11 +361,21 @@ class GenerativeModel(object):
         else:
             w_off = 0
 
-        for i in range(w_off, w_off + n):
-            weight[i]['isFixed'] = False
-            weight[i]['initialValue'] = np.float64(init_acc + .1 - .2 * self.rng.random())
+        for i in range(n):
+            # Prior on LF acc
+            if (LF_priors[i] != 0.5):
+                weight[w_off]['isFixed'] = True
+                weight[w_off]['initialValue'] = np.float64(0.5 * np.log(LF_priors[i] / (1 - LF_priors[i])))
+                w_off += 1
+            # Learnable acc for LF
+            if (not is_fixed[i]):
+                weight[w_off]['isFixed'] = False
+                if LF_priors[i] == 0.5:
+                    weight[w_off]['initialValue'] = np.float64(init_acc + .1 - .2 * self.rng.random())
+                else:
+                    weight[w_off]['initialValue'] = np.float64(0)
+                w_off += 1
 
-        w_off += n
         for i in range(w_off, weight.shape[0]):
             weight[i]['isFixed'] = False
             weight[i]['initialValue'] = np.float64(0.0)

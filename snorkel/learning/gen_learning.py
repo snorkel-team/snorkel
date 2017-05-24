@@ -196,6 +196,15 @@ class GenerativeModel(object):
               truncation=10, burn_in=50, timer=None):
         step_size = step_size or 1.0 / L.shape[0]
         reg_param_scaled = reg_param / L.shape[0]
+
+        m, n = L.shape
+
+        if LF_priors == None:
+            LF_priors = [0.5 for i in range(n)]
+
+        if is_fixed == None:
+            is_fixed = [False for i in range(n)]
+
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc, LF_priors, is_fixed)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
@@ -207,7 +216,7 @@ class GenerativeModel(object):
         fg.learning(out=False)
         if timer is not None:
             timer.end()
-        self._process_learned_weights(L, fg)
+        self._process_learned_weights(L, fg, LF_priors, is_fixed)
 
     def marginals(self, L):
         if self.weights is None:
@@ -312,12 +321,6 @@ class GenerativeModel(object):
 
         n_weights = 1 if self.class_prior else 0
 
-        if LF_priors == None:
-            LF_priors = [0.5 for i in range(n)]
-
-        if is_fixed == None:
-            is_fixed = [False for i in range(n)]
-
         nPrior = sum([i != 0.5 for i in LF_priors])
         nFixed = sum([not i for i in is_fixed])
 
@@ -333,7 +336,7 @@ class GenerativeModel(object):
         n_factors = m * n_weights
 
         n_edges = 1 if self.class_prior else 0
-        n_edges += 2 * n
+        n_edges += 2 * (nPrior + nFixed)
         if self.lf_prior:
             n_edges += n
         if self.lf_propensity:
@@ -435,8 +438,9 @@ class GenerativeModel(object):
 
 
         # Factors over labeling function outputs
+        nfactors_for_lf = [((LF_priors[i] != 0.5) + (not is_fixed[i])) for i in range(n)]
         f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off, "DP_GEN_LF_ACCURACY",
-                                                             (lambda m, n, i, j: i, lambda m, n, i, j: m + n * i + j))
+                                                             (lambda m, n, i, j: i, lambda m, n, i, j: m + n * i + j), nfactors_for_lf)
 
         optional_name_map = {
             'lf_prior':
@@ -491,28 +495,36 @@ class GenerativeModel(object):
 
         return weight, variable, factor, ftv, domain_mask, n_edges
 
-    def _compile_output_factors(self, L, factors, factors_offset, ftv, ftv_offset, weight_offset, factor_name, vid_funcs):
+    def _compile_output_factors(self, L, factors, factors_offset, ftv, ftv_offset, weight_offset, factor_name, vid_funcs, nfactors_for_lf=None):
         """
         Compiles factors over the outputs of labeling functions, i.e., for which there is one weight per labeling
         function and one factor per labeling function-candidate pair.
         """
         m, n = L.shape
 
+        if nfactors_for_lf == None:
+            nfactors_for_lf = [1 for i in range(n)]
+
+        factors_index = factors_offset
+        ftv_index = ftv_offset
         for i in range(m):
+            w_off = weight_offset
             for j in range(n):
-                factors_index = factors_offset + n * i + j
-                ftv_index = ftv_offset + len(vid_funcs) * (n * i + j)
+                for k in range(nfactors_for_lf[j]):
+                    factors[factors_index]["factorFunction"] = FACTORS[factor_name]
+                    factors[factors_index]["weightId"] = w_off
+                    factors[factors_index]["featureValue"] = 1
+                    factors[factors_index]["arity"] = len(vid_funcs)
+                    factors[factors_index]["ftv_offset"] = ftv_index
 
-                factors[factors_index]["factorFunction"] = FACTORS[factor_name]
-                factors[factors_index]["weightId"] = weight_offset + j
-                factors[factors_index]["featureValue"] = 1
-                factors[factors_index]["arity"] = len(vid_funcs)
-                factors[factors_index]["ftv_offset"] = ftv_index
+                    factors_index += 1
+                    w_off += 1
 
-                for i_var, vid_func in enumerate(vid_funcs):
-                    ftv[ftv_index + i_var]["vid"] = vid_func(m, n, i, j)
+                    for vid_func in vid_funcs:
+                        ftv[ftv_index]["vid"] = vid_func(m, n, i, j)
+                        ftv_index += 1
 
-        return factors_offset + m * n, ftv_offset + len(vid_funcs) * m * n, weight_offset + n
+        return factors_index, ftv_index, w_off
 
     def _compile_dep_factors(self, L, factors, factors_offset, ftv, ftv_offset, weight_offset, j, k, factor_name, vid_funcs):
         """
@@ -536,7 +548,7 @@ class GenerativeModel(object):
 
         return factors_offset + m, ftv_offset + len(vid_funcs) * m, weight_offset + 1
 
-    def _process_learned_weights(self, L, fg):
+    def _process_learned_weights(self, L, fg, LF_priors, is_fixed):
         _, n = L.shape
 
         w = fg.getFactorGraph().getWeights()
@@ -548,8 +560,16 @@ class GenerativeModel(object):
         else:
             w_off = 0
 
-        weights.lf_accuracy_log_odds = np.copy(w[w_off:w_off + n])
-        w_off += n
+        weights.lf_accuracy_log_odds = np.zeros((n,))
+        for i in range(n):
+            # Prior on LF acc
+            if (LF_priors[i] != 0.5):
+                weights.lf_accuracy_log_odds[i] += w[w_off]
+                w_off += 1
+            # Learnable acc for LF
+            if (not is_fixed[i]):
+                weights.lf_accuracy_log_odds[i] += w[w_off]
+                w_off += 1
 
         for optional_name in GenerativeModel.optional_names:
             if getattr(self, optional_name):

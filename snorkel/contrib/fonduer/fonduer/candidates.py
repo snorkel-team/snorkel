@@ -135,21 +135,6 @@ class CandidateExtractorUDF(UDF):
             yield self.candidate_class(**candidate_args)
 
 
-class CandidateSpace(object):
-    """Define the **space** of candidate objects.
-
-    Calling _apply(x)_ given an object _x_ returns a generator over candidates in _x_.
-    """
-
-    def __init__(self):
-        """Stub initialization."""
-        pass
-
-    def apply(self, x):
-        """Inheriting classes must implement apply."""
-        raise NotImplementedError()
-
-
 class OmniNgrams(Ngrams):
     """Defines the space of candidates.
 

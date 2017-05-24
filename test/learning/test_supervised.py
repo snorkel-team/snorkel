@@ -38,6 +38,16 @@ class TestSupervised(unittest.TestCase):
             if random.random() < 0.05 or L[i, 4] != 0:
                 L[i, 5] = y
 
+        # Test with priors
+        gen_model = GenerativeModel(lf_propensity=True)
+        gen_model.train(L, LF_priors=[0.75, 0.75, 0.75, 0.75, 0.9, 0.99], is_fixed=[False, False, False, False, False, True], reg_type=2, reg_param=1, epochs=0)
+        print(gen_model.weights.lf_accuracy())
+        print(gen_model.weights.lf_propensity)
+
+        gen_model.train(L, LF_priors=[0.75, 0.75, 0.75, 0.75, 0.9, 0.99], is_fixed=[False, False, False, False, False, True], reg_type=2, reg_param=1)
+        print(gen_model.weights.lf_accuracy())
+        print(gen_model.weights.lf_propensity)
+
         # Test without supervised
         gen_model = GenerativeModel(lf_propensity=True)
         gen_model.train(L, reg_type=0)

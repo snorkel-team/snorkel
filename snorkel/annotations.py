@@ -4,7 +4,10 @@ import scipy.sparse as sparse
 from sqlalchemy.sql import bindparam, select
 
 from .features import get_span_feats
-from .models import GoldLabel, GoldLabelKey, Label, LabelKey, Feature, FeatureKey, Candidate
+from .models import (
+    GoldLabel, GoldLabelKey, Label, LabelKey, Feature, FeatureKey, Candidate,
+    Marginal
+)
 from .models.meta import new_sessionmaker
 from .udf import UDF, UDFRunner
 from .utils import (
@@ -347,20 +350,35 @@ def _to_annotation_generator(fns):
     return fn_gen
 
 
-def save_marginals(session, L, marginals):
-    """Save the marginal probs. for the Candidates corresponding to the rows of L in the Candidate table."""
-    # Prepare bulk UPDATE query
-    q = Candidate.__table__.update().\
-            where(Candidate.id == bindparam('cid')).\
-            values(training_marginal=bindparam('tm'))
+def save_marginals(session, L, marginals, training=True):
+    """Save the marginal probs. for the Candidates corresponding to the rows of 
+    L in the Candidate table."""
+    # TODO: Currently the below code is written assuming `marginals` is a list
+    # of (value, probability) tuples; modify to take in (sparse?) matrix
+    # instead?
+    marginal_tuples = marginals
+
+    # NOTE: This will delete all existing marginals of type `training`
+    session.query(Marginal).filter(Marginal.training = training).\
+        delete(synchronize_session='fetch')
+
+    # Prepare bulk INSERT query
+    q = Marginal.__table__.insert()
 
     # Prepare values
-    update_vals = [{'cid': L.get_candidate(session, i).id, 'tm': marginals[i]} for i in range(len(marginals))]
+    insert_vals = [
+        {
+            'candidate_id': L.get_candidate(session, i).id,
+            'training': training,
+            'value': m[0],
+            'probability': m[1]
+        } for i, m in enumerate(marginal_tuples)
+    ]
 
     # Execute update
     session.execute(q, update_vals)
     session.commit()
-    print "Saved %s training marginals" % len(marginals)
+    print "Saved %s marginals" % len(marginals)
 
 
 def load_marginals(session, split):

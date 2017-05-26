@@ -65,7 +65,7 @@ class TestSupervised(unittest.TestCase):
         self.assertTrue(np.linalg.norm(accs - priors) < 1e-5)
 
         # Now test that estimated LF accs are not too far off
-        tol = 0.2
+        tol = 0.1
         print("\nTesting estimated LF accs (TOL=%s)" % tol)
         gen_model.train(
             L,
@@ -73,16 +73,14 @@ class TestSupervised(unittest.TestCase):
             labels=labels,
             label_prior=label_prior,
             reg_type=2,
-            reg_param=1,
-            epochs=100,
-            step_size=0.0001
+            reg_param=1
         )
         accs = gen_model.weights.lf_accuracy()
         priors = np.array(LF_priors + [label_prior])
         print(accs)
         print(np.abs(accs - priors))
         print(gen_model.weights.lf_propensity)
-        #self.assertTrue(np.all(np.abs(accs - priors) < tol))
+        self.assertTrue(np.all(np.abs(accs - priors) < tol))
 
         # Test without supervised
         print("\nTesting without supervised")

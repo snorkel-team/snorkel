@@ -8,6 +8,7 @@ import numpy as np
 import random
 import scipy.sparse as sparse
 from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
+from copy import copy
 
 
 class NaiveBayes(NoiseAwareModel):
@@ -223,7 +224,7 @@ class GenerativeModel(object):
         if LF_priors is None:
             LF_priors = [0.5 for _ in range(n)]
         else:
-            LF_priors = list(np.copy(LF_priors))
+            LF_priors = list(copy(LF_priors))
 
         # LF weights are un-fixed
         is_fixed = [False for _ in range(n)]
@@ -231,7 +232,7 @@ class GenerativeModel(object):
         # If supervised labels are provided, add them as a fixed LF with prior
         if labels is not None:
             labels = labels.reshape(m, 1)
-            L = sparse.hstack([L, labels])
+            L = sparse.hstack([L.copy(), labels])
             is_fixed.append(True)
             LF_priors.append(label_prior)
 

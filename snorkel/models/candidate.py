@@ -20,7 +20,6 @@ class Candidate(SnorkelBase):
     id          = Column(Integer, primary_key=True)
     type        = Column(String, nullable=False)
     split       = Column(Integer, nullable=False, default=0, index=True)
-    cardinality = Column(Integer, nullable=False, default=2)
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',
@@ -57,7 +56,8 @@ class Candidate(SnorkelBase):
         )
 
 
-def candidate_subclass(class_name, args, table_name=None, cardinality=2):
+def candidate_subclass(class_name, args, table_name=None, cardinality=None,
+    values=None):
     """
     Creates and returns a Candidate subclass with provided argument names, 
     which are Context type. Creates the table in DB if does not exist yet.
@@ -80,6 +80,21 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=2):
     """
     if table_name is None:
         table_name = camel_to_under(class_name)
+
+    # If cardinality and values are None, default to binary classification
+    if cardinality is None and values is None:
+        values = [True, False]
+    # If cardinality is specified but not values, fill in with ints
+    elif values is None:
+        values = range(cardinality)
+    elif cardinality is None:
+        cardinality = len(values)
+    
+    # Check for invalid input
+    if len(values) != cardinality:
+        raise ValueError("Number of values must match cardinality.")
+    if None in values:
+        raise ValueError("`None` is a protected value.")
     
     # Set the class attributes == the columns in the database
     class_attribs = {
@@ -93,6 +108,10 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=2):
             ForeignKey('candidate.id', ondelete='CASCADE'),
             primary_key=True
         ),
+
+        # Store values & cardinality information in the class only
+        'values' : values,
+        'cardinality' : cardinality,
                 
         # Polymorphism information for SQLAlchemy
         '__mapper_args__' : {'polymorphic_identity': table_name},
@@ -134,9 +153,7 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=2):
     # Create table in DB
     if not snorkel_engine.dialect.has_table(snorkel_engine, table_name):
         C.__table__.create(bind=snorkel_engine)
-    
-    # Return with cardinality fixed
-    return partial(C, cardinality=cardinality)
+    return C
 
 
 class Marginal(SnorkelBase):
@@ -158,7 +175,7 @@ class Marginal(SnorkelBase):
     probability  = Column(Float, nullable=False, default=0.0)
     
     __table_args__ = (
-        UniqueConstraint(candidate_id, training, value)
+        UniqueConstraint(candidate_id, training, value),
     )
 
     def __repr__(self):

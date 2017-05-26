@@ -245,7 +245,8 @@ class AnnotatorUDF(UDF):
                 self.session.execute(anno_insert_query, {'candidate_id': cid, 'key_id': key_id, 'value': value})
 
 
-def load_matrix(matrix_class, annotation_key_class, annotation_class, session, split=0, key_group=0, key_names=None):
+def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
+    split=0, key_group=0, key_names=None, zero_one=False, load_as_array=False):
     """
     Returns the annotations corresponding to a split of candidates with N members
     and an AnnotationKey group with M distinct keys as an N x M CSR sparse matrix.
@@ -294,11 +295,15 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session, s
     # Iteratively construct row index and output sparse matrix
     for cid, kid, val in q.all():
         if cid in cid_to_row and kid in kid_to_col:
+            # Optionally restricts val range to {0,1}, mapping -1 -> 0
+            if zero_one:
+                val = 1 if val == 1 else 0
             X[cid_to_row[cid], kid_to_col[kid]] = val
 
     # Return as an AnnotationMatrix
-    return matrix_class(X, candidate_index=cid_to_row, row_index=row_to_cid,
+    Xr = matrix_class(X, candidate_index=cid_to_row, row_index=row_to_cid,
                         annotation_key_cls=annotation_key_class, key_index=kid_to_col, col_index=col_to_kid)
+    return np.squeeze(Xr.toarray()) if load_as_array else Xr
 
 
 def load_label_matrix(session, **kwargs):

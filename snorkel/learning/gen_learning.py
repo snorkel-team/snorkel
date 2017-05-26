@@ -201,10 +201,11 @@ class GenerativeModel(object):
         'dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive'
     )
 
-    def train(self, L, deps=(), LF_priors=None, labels=None, 
-        label_prior=0.95, init_acc = 1.0, init_deps=1.0, init_class_prior=-1.0,
-        epochs=10, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, 
-        verbose=False, truncation=10, burn_in=5, timer=None):
+    def train(self, L, deps=(), LF_priors=None, LF_prior_default=0.7, 
+        labels=None, label_prior=0.95, init_acc=1.0, init_deps=1.0, 
+        init_class_prior=-1.0, epochs=10, step_size=None, decay=0.99, 
+        reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
+        timer=None):
         """
         Fits the parameters of the model to a data set. By default, learns a 
         conditionally independent model. Additional unary dependencies can be 
@@ -219,7 +220,8 @@ class GenerativeModel(object):
                      element is a tuple of the form 
                      (LF 1 index, LF 2 index, dependency type),
                      see snorkel.learning.constants
-        :param LF_priors: Priors on the LF accuracies; default is 0.5
+        :param LF_priors: Priors on the LF accuracies
+        :param LF_prior_default: Default prior for the LFs
         :param labels: Optional ground truth labels
         :param label_prior: Prior on the optional ground truth labels
         :param init_acc: initial weight for accuracy dependencies (in log scale)
@@ -244,9 +246,11 @@ class GenerativeModel(object):
         step_size = step_size or 1.0 / L.shape[0]
         reg_param_scaled = reg_param / L.shape[0]
 
-        # Priors for LFs default to 0.5
+        # Priors for LFs default to fixed prior value
+        # NOTE: Setting default != 0.5 creates a (fixed) factor which increases
+        # runtime (by ~0.5x that of a non-fixed factor)...
         if LF_priors is None:
-            LF_priors = [0.5 for _ in range(n)]
+            LF_priors = [LF_prior_default for _ in range(n)]
         else:
             LF_priors = list(copy(LF_priors))
 
@@ -428,10 +432,11 @@ class GenerativeModel(object):
             # Learnable acc for LF
             if (not is_fixed[i]):
                 weight[w_off]['isFixed'] = False
-                if LF_priors[i] == 0.5:
-                    weight[w_off]['initialValue'] = np.float64(init_acc + .1 - .2 * self.rng.random())
-                else:
-                    weight[w_off]['initialValue'] = np.float64(0)
+
+                # Note: Because we're not doing exact gradient descent, don't
+                # need to add any random noise to initial values here
+                # Setting to 0 = setting to prior value
+                weight[w_off]['initialValue'] = np.float64(0)
                 w_off += 1
 
         for i in range(w_off, weight.shape[0]):

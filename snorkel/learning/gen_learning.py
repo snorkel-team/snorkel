@@ -170,11 +170,14 @@ class GenerativeModel(object):
 
     :param class_prior: whether to include class label prior factors
     :param lf_prior: whether to include labeling function prior factors
-    :param lf_propensity: whether to include labeling function propensity factors
-    :param lf_class_propensity: whether to include class-specific labeling function propensity factors
+    :param lf_propensity: whether to include labeling function propensity 
+        factors
+    :param lf_class_propensity: whether to include class-specific labeling 
+        function propensity factors
     :param seed: seed for initializing state of Numbskull variables
     """
-    def __init__(self, class_prior=False, lf_prior=False, lf_propensity=False, lf_class_propensity=False, seed=271828):
+    def __init__(self, class_prior=False, lf_prior=False, lf_propensity=False, 
+        lf_class_propensity=False, seed=271828):
         self.class_prior = class_prior
         self.lf_prior = lf_prior
         self.lf_propensity = lf_propensity
@@ -184,26 +187,53 @@ class GenerativeModel(object):
         self.rng = random.Random()
         self.rng.seed(seed)
 
-    # These names of factor types are for the convenience of several methods that perform the same operations over
-    # multiple types, but this class's behavior is not fully specified here. Other methods, such as marginals(),
-    # as well as maps defined within methods, require manual adjustments to implement changes.
+    # These names of factor types are for the convenience of several methods 
+    # that perform the same operations over multiple types, but this class's 
+    # behavior is not fully specified here. Other methods, such as marginals(),
+    # as well as maps defined within methods, require manual adjustments to 
+    # implement changes.
     #
-    # These names are also used by other related classes, such as GenerativeModelParameters
+    # These names are also used by other related classes, such as 
+    # GenerativeModelParameters
     optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
-    dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
+    dep_names = (
+        'dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive'
+    )
 
-    def train(self, L, y=None, deps=(), init_acc = 1.0, epochs=100, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, LF_priors=None, is_fixed=None, verbose=False,
-              truncation=10, burn_in=50, timer=None):
+    def train(self, L, y=None, deps=(), LF_priors=None, labels=None, 
+        label_prior=0.95, init_acc=1.0, epochs=100, step_size=None, decay=0.99, 
+        reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=50, 
+        timer=None):
+        """Trains the generative model
+
+        @L: M x N labeling function matrix
+        @y: TODO: What is this for?
+        @deps: List of dependency edges to include in the model
+        @LF_priors: A list of prior probabilities for the LFs; 0.5 by default
+        @labels: A vector of supervised labels
+        @label_prior: The prior probability to assign to the supervised labels
+
+        TODO: Fill in the rest here...
+        """
+        m, n = L.shape
         step_size = step_size or 1.0 / L.shape[0]
         reg_param_scaled = reg_param / L.shape[0]
 
-        m, n = L.shape
+        # Priors for LFs default to 0.5
+        if LF_priors is None:
+            LF_priors = [0.5 for _ in range(n)]
+        else:
+            LF_priors = list(np.copy(LF_priors))
 
-        if LF_priors == None:
-            LF_priors = [0.5 for i in range(n)]
+        # LF weights are un-fixed
+        is_fixed = [False for _ in range(n)]
 
-        if is_fixed == None:
-            is_fixed = [False for i in range(n)]
+        # If supervised labels are provided, add them as a fixed LF with prior
+        if labels is not None:
+            labels = labels.reshape(m, 1)
+            L = sparse.hstack([L, labels])
+            is_fixed.append(True)
+            LF_priors.append(label_prior)
 
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc, LF_priors, is_fixed)
@@ -322,10 +352,10 @@ class GenerativeModel(object):
         n_weights = 1 if self.class_prior else 0
 
         nPrior = sum([i != 0.5 for i in LF_priors])
-        nFixed = sum([not i for i in is_fixed])
+        nUnFixed = sum([not i for i in is_fixed])
 
         n_weights += nPrior
-        n_weights += nFixed
+        n_weights += nUnFixed
         for optional_name in GenerativeModel.optional_names:
             if getattr(self, optional_name):
                 n_weights += n
@@ -336,7 +366,7 @@ class GenerativeModel(object):
         n_factors = m * n_weights
 
         n_edges = 1 if self.class_prior else 0
-        n_edges += 2 * (nPrior + nFixed)
+        n_edges += 2 * (nPrior + nUnFixed)
         if self.lf_prior:
             n_edges += n
         if self.lf_propensity:

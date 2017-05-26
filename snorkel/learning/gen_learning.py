@@ -201,35 +201,43 @@ class GenerativeModel(object):
         'dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive'
     )
 
-    def train(self, L, y=None, deps=(), LF_priors=None, labels=None, 
+    def train(self, L, deps=(), LF_priors=None, labels=None, 
         label_prior=0.95, init_acc = 1.0, init_deps=1.0, init_class_prior=-1.0,
         epochs=10, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, 
         verbose=False, truncation=10, burn_in=5, timer=None):
         """
-        Fits the parameters of the model to a data set. By default, learns a conditionally independent model.
-        Additional unary dependencies can be set to be included in the constructor. Additional pairwise and higher-order
-        dependencies can be included as an argument.
+        Fits the parameters of the model to a data set. By default, learns a 
+        conditionally independent model. Additional unary dependencies can be 
+        set to be included in the constructor. Additional pairwise and 
+        higher-order dependencies can be included as an argument.
 
-        Results are stored as a member named weights, instance of snorkel.learning.gen_learning.GenerativeModelWeights.
+        Results are stored as a member named weights, instance of 
+        snorkel.learning.gen_learning.GenerativeModelWeights.
 
         :param L: labeling function output matrix
-        :param y: optional ground truth labels
-        :param deps: collection of dependencies to include in the model, each element is a tuple of the form
-                     (LF 1 index, LF 2 index, dependency type), see snorkel.learning.constants
+        :param deps: collection of dependencies to include in the model, each 
+                     element is a tuple of the form 
+                     (LF 1 index, LF 2 index, dependency type),
+                     see snorkel.learning.constants
         :param LF_priors: Priors on the LF accuracies; default is 0.5
         :param labels: Optional ground truth labels
         :param label_prior: Prior on the optional ground truth labels
         :param init_acc: initial weight for accuracy dependencies (in log scale)
-        :param init_deps: initial weight for additional dependencies, except class prior (in log scale)
-        :param init_class_prior: initial class prior (in log scale), note only used if class_prior=True in constructor
+        :param init_deps: initial weight for additional dependencies, except
+                          class prior (in log scale)
+        :param init_class_prior: initial class prior (in log scale), note only
+                                 used if class_prior=True in constructor
         :param epochs: number of training epochs
         :param step_size: gradient step size, default is 1 / L.shape[0]
-        :param decay: multiplicative decay of step size, step_size_(t+1) = step_size_(t) * decay
+        :param decay: multiplicative decay of step size, 
+                      step_size_(t+1) = step_size_(t) * decay
         :param reg_param: regularization strength
         :param reg_type: 1 = L1 regularization, 2 = L2 regularization
         :param verbose: whether to write debugging info to stdout
-        :param truncation: number of iterations between truncation step for L1 regularization
-        :param burn_in: number of burn-in samples to take before beginning learning
+        :param truncation: number of iterations between truncation step for L1 
+                           regularization
+        :param burn_in: number of burn-in samples to take before beginning 
+                        learning
         :param timer: stopwatch for profiling, must implement start() and end()
         """
         m, n = L.shape
@@ -253,7 +261,7 @@ class GenerativeModel(object):
             LF_priors.append(label_prior)
 
         self._process_dependency_graph(L, deps)
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc, init_deps, init_class_prior, LF_priors, is_fixed)
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, init_acc, init_deps, init_class_prior, LF_priors, is_fixed)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
                        reg_param=reg_param_scaled, regularization=reg_type, truncation=truncation,
                        quiet=(not verbose), verbose=verbose, learn_non_evidence=True, burn_in=burn_in)
@@ -360,7 +368,7 @@ class GenerativeModel(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
-    def _compile(self, L, y, init_acc, init_deps, init_class_prior, LF_priors, is_fixed):
+    def _compile(self, L, init_acc, init_deps, init_class_prior, LF_priors, is_fixed):
         """
         Compiles a generative model based on L and the current labeling function dependencies.
         """
@@ -435,8 +443,9 @@ class GenerativeModel(object):
         # Compiles variable matrix
         #
         for i in range(m):
-            variable[i]['isEvidence'] = False if (y is None or i not in y) else True
-            variable[i]['initialValue'] = self.rng.randrange(0, 2) if (y is None or i not in y) else 1 if y[i] == 1 else 0
+            variable[i]['isEvidence'] = False
+            # TODO: Change this to range (0, cardinality)!
+            variable[i]['initialValue'] = self.rng.randrange(0, 2)
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = 2
 

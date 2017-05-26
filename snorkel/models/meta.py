@@ -1,10 +1,10 @@
-import os
 import getpass
+import os
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
+from urlparse import urlparse
 
 # Sets connection string
 snorkel_conn_string = os.environ['SNORKELDB'] if 'SNORKELDB' in os.environ and os.environ['SNORKELDB'] != '' \
@@ -12,7 +12,7 @@ snorkel_conn_string = os.environ['SNORKELDB'] if 'SNORKELDB' in os.environ and o
 
 DBNAME = snorkel_conn_string.split('/')[-1]
 DBUSER = os.environ.get('SNORKELDBUSER', getpass.getuser())
-
+DBPORT = urlparse(snorkel_conn_string).port
 
 # Sets global variable indicating whether we are using Postgres
 snorkel_postgres = snorkel_conn_string.startswith('postgres')

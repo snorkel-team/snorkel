@@ -143,9 +143,14 @@ def copy_postgres(segment_file_blob, table_name, tsv_columns):
     separated by comma. e.g. "name, age, income"
     """
     print 'Copying %s to postgres' % table_name
-    cmd = ('cat %s | psql %s -U %s -c "COPY %s(%s) '
-            'FROM STDIN" --set=ON_ERROR_STOP=true') % \
-            (segment_file_blob, DBNAME, DBUSER, table_name, tsv_columns)
+    if DBPORT:
+        cmd = ('cat %s | psql -p %s %s -U %s -c "COPY %s(%s) '
+                'FROM STDIN" --set=ON_ERROR_STOP=true') % \
+                (segment_file_blob, DBPORT, DBNAME, DBUSER, table_name, tsv_columns)
+    else:
+        cmd = ('cat %s | psql %s -U %s -c "COPY %s(%s) '
+                'FROM STDIN" --set=ON_ERROR_STOP=true') % \
+                (segment_file_blob, DBNAME, DBUSER, table_name, tsv_columns)
     _out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
     print _out
 
@@ -217,7 +222,7 @@ class BatchAnnotator(UDFRunner):
         self.annotation_type = annotation_type
         self.batch_size = batch_size
         super(BatchAnnotator, self).__init__(BatchAnnotatorUDF, f=f, **kwargs)
-        
+
     def apply(self, split, key_group=0, replace_key_set=True, update_keys=False, update_values=True, storage=None, ignore_keys=[], **kwargs):
         if update_keys: replace_key_set = False
         # Get the cids based on the split, and also the count
@@ -237,7 +242,7 @@ class BatchAnnotator(UDFRunner):
         remainder = cids_count % self.batch_size
         if remainder:
             batch_range.append((chunks * self.batch_size, cids_count))
-            
+
         old_table_name = None
         table_name = self.table_name
         # Run the Annotator
@@ -247,18 +252,18 @@ class BatchAnnotator(UDFRunner):
                 # Now we extract under a temporary name for merging
                 old_table_name = table_name
                 table_name += '_updates'
-            
+
             segment_file_blob = os.path.join(segment_dir, _segment_filename(DBNAME, self.table_name, split))
             remove_files(segment_file_blob)
             cache = True if self.annotation_type == 'feature' else False
             super(BatchAnnotator, self).apply(batch_range, table_name = self.table_name, split=split, cache=cache, **kwargs)
-            
+
             # Insert and update keys
             if not table_already_exists or old_table_name:
                 con.execute('CREATE TABLE %s(candidate_id integer PRIMARY KEY, keys text[] NOT NULL, values real[] NOT NULL)' % table_name)
             copy_postgres(segment_file_blob, table_name, 'candidate_id, keys, values')
             remove_files(segment_file_blob)
-        
+
             # Replace the LIL table with COO if requested
             if storage == 'COO':
                 temp_coo_table = table_name + '_COO'
@@ -280,13 +285,13 @@ class BatchAnnotator(UDFRunner):
                                 'values=old.values || EXCLUDED.values,'
                                 'keys=old.keys || EXCLUDED.keys'%(old_table_name, table_name))
                     con.execute('DROP TABLE %s' % table_name)
-            
+
             if old_table_name: table_name = old_table_name
             # Load the matrix
             key_table_name = self.key_table_name
             if key_group:
                 key_table_name = self.key_table_name + '_' + get_sql_name(key_group)
-                
+
             return load_annotation_matrix(con, candidates, split, table_name, key_table_name, replace_key_set, storage, update_keys, ignore_keys)
 
     def clear(self, session, split, replace_key_set = False, **kwargs):
@@ -348,7 +353,7 @@ def load_annotation_matrix(con, candidates, split, table_name, key_table_name, r
         else:
             con.execute('INSERT INTO %s SELECT DISTINCT UNNEST(keys) as key FROM %s '
                         'ON CONFLICT(key) DO NOTHING' % (key_table_name, table_name))
-                
+
     # The result should be a list of all feature strings, small enough to hold in memory
     # TODO: store the actual index in table in case row number is unstable between queries
     ignore_keys = set(ignore_keys)

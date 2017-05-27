@@ -280,7 +280,7 @@ class GenerativeModel(object):
         self._process_learned_weights(L, fg, LF_priors, is_fixed)
 
         # Store info from factor graph
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(sparse.coo_matrix((1, n), L.dtype), y, init_acc, init_deps, init_class_prior, LF_priors, is_fixed)
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(sparse.coo_matrix((1, n), L.dtype), init_acc, init_deps, init_class_prior, LF_priors, is_fixed)
 
         weight["isFixed"] = True
         weight["initialValue"] = fg.factorGraphs[0].weight_value

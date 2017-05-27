@@ -483,7 +483,7 @@ class GenerativeModel(object):
         else:
             w_off = 0
 
-        for i in range(w_off, w_off + n):
+        for i in range(n):
             # Prior on LF acc
             if (LF_priors[i] != 0.5):
                 weight[w_off]['isFixed'] = True

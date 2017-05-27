@@ -20,10 +20,10 @@ class TestSupervised(unittest.TestCase):
     def test_supervised(self):
         # A set of true priors
         LF_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
-        label_prior = 0.99
+        label_prior = 0.999
 
         # Defines a label matrix
-        n = 1000
+        n = 10000
         L = sparse.lil_matrix((n, 5))
 
         # Store the supervised gold labels separately
@@ -37,13 +37,12 @@ class TestSupervised(unittest.TestCase):
             L[i, 2] = y * (2 * (random.random() < LF_priors[2]) - 1)
             L[i, 3] = y * (2 * (random.random() < LF_priors[3]) - 1)
 
-            # The fifth LF is very accurate and essentially corrects the first two
-            if L[i, 0] != y and L[i, 1] != y:
+            # The fifth LF is very accurate but has a much smaller coverage
+            if random.random() < 0.2:
                 L[i, 4] = y * (2 * (random.random() < LF_priors[4]) - 1)
 
             # The sixth LF is a small supervised set
-            # Random 5% are labeled, along with things the correcting LF marked
-            if random.random() < 0.05 or L[i, 4] != 0:
+            if random.random() < 0.1:
                 labels[i] = y
 
         # Test with priors -- first check init vals are correct
@@ -59,9 +58,9 @@ class TestSupervised(unittest.TestCase):
             epochs=0
         )
         accs = gen_model.weights.lf_accuracy()
-        priors = np.array(LF_priors + [label_prior])
         print(accs)
         print(gen_model.weights.lf_propensity)
+        priors = np.array(LF_priors + [label_prior])
         self.assertTrue(np.linalg.norm(accs - priors) < 1e-5)
 
         # Now test that estimated LF accs are not too far off
@@ -72,26 +71,30 @@ class TestSupervised(unittest.TestCase):
             LF_priors=LF_priors,
             labels=labels,
             label_prior=label_prior,
-            reg_type=2,
-            reg_param=1
+            reg_type=0,
+            reg_param=0.0,
         )
-        accs = gen_model.weights.lf_accuracy()
-        priors = np.array(LF_priors + [label_prior])
+        diag = gen_model.diagnostics()
+        accs = [d["Accuracy"] for d in diag]
+        coverage = [d["Coverage"] for d in diag]
         print(accs)
-        print(np.abs(accs - priors))
-        print(gen_model.weights.lf_propensity)
+        print(coverage)
+        priors = np.array(LF_priors + [label_prior])
         self.assertTrue(np.all(np.abs(accs - priors) < tol))
+        self.assertTrue(np.all(np.abs(coverage - np.array([1, 1, 1, 1, 0.2, 0.1]) < tol)))
 
         # Test without supervised
         print("\nTesting without supervised")
         gen_model = GenerativeModel(lf_propensity=True)
         gen_model.train(L, reg_type=0)
-        accs = gen_model.weights.lf_accuracy()
-        priors = np.array(LF_priors)
+        diag = gen_model.diagnostics()
+        accs = [d["Accuracy"] for d in diag]
+        coverage = [d["Coverage"] for d in diag]
         print(accs)
-        print(np.abs(accs - priors))
-        print(gen_model.weights.lf_propensity)
-        # self.assertTrue(np.all(np.abs(accs - priors) < tol))
+        print(coverage)
+        priors = np.array(LF_priors)
+        self.assertTrue(np.all(np.abs(accs - priors) < tol))
+        self.assertTrue(np.all(np.abs(coverage - np.array([1, 1, 1, 1, 0.2]) < tol)))
 
         # Test with supervised
         print("\nTesting with supervised, without priors")
@@ -102,12 +105,44 @@ class TestSupervised(unittest.TestCase):
             label_prior=label_prior,
             reg_type=0
         )
-        accs = gen_model.weights.lf_accuracy()
-        priors = np.array(LF_priors + [label_prior])
+        diag = gen_model.diagnostics()
+        accs = [d["Accuracy"] for d in diag]
+        coverage = [d["Coverage"] for d in diag]
         print(accs)
-        print(np.abs(accs - priors))
-        print(gen_model.weights.lf_propensity)
-        self.assertTrue(accs[4] > 0.6)
+        print(coverage)
+        priors = np.array(LF_priors + [label_prior])
+        self.assertTrue(np.all(np.abs(accs - priors) < tol))
+        self.assertTrue(np.all(np.abs(coverage - np.array([1, 1, 1, 1, 0.2, 0.1]) < tol)))
+
+        # Test without supervised, and (intentionally) bad priors, but weak strength
+        print("\nTesting without supervised, with bad priors (weak)")
+        gen_model = GenerativeModel(lf_propensity=True)
+        bad_prior = [0.9, 0.8, 0.7, 0.6, 0.5]
+        gen_model.train(
+            L,
+            LF_priors=bad_prior,
+            reg_type=0,
+        )
+        diag = gen_model.diagnostics()
+        accs = [d["Accuracy"] for d in diag]
+        coverage = [d["Coverage"] for d in diag]
+        print(accs)
+        print(coverage)
+        priors = np.array(LF_priors)
+        self.assertTrue(np.all(np.abs(accs - priors) < tol))
+
+        # Test without supervised, and (intentionally) bad priors
+        print("\nTesting without supervised, with bad priors (strong)")
+        gen_model = GenerativeModel(lf_propensity=True)
+        gen_model.train(
+            L,
+            LF_priors=bad_prior,
+            reg_type=2,
+            reg_param=100 * n,
+        )
+        accs = gen_model.weights.lf_accuracy()
+        print accs
+        self.assertTrue(np.all(np.abs(accs - np.array(bad_prior)) < tol))
 
 if __name__ == '__main__':
     unittest.main()

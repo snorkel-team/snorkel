@@ -203,7 +203,7 @@ class GenerativeModel(object):
 
     def train(self, L, deps=(), LF_priors=None, LF_prior_default=0.7, 
         labels=None, label_prior=0.95, init_acc=1.0, init_deps=1.0, 
-        init_class_prior=-1.0, epochs=10, step_size=None, decay=0.99, 
+        init_class_prior=-1.0, epochs=100, step_size=None, decay=0.99, 
         reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
         timer=None):
         """
@@ -263,6 +263,7 @@ class GenerativeModel(object):
             L = sparse.hstack([L.copy(), labels])
             is_fixed.append(True)
             LF_priors.append(label_prior)
+            n += 1
 
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, init_acc, init_deps, init_class_prior, LF_priors, is_fixed)
@@ -270,12 +271,71 @@ class GenerativeModel(object):
                        reg_param=reg_param_scaled, regularization=reg_type, truncation=truncation,
                        quiet=(not verbose), verbose=verbose, learn_non_evidence=True, burn_in=burn_in)
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
+
         if timer is not None:
             timer.start()
         fg.learning(out=False)
         if timer is not None:
             timer.end()
         self._process_learned_weights(L, fg, LF_priors, is_fixed)
+
+        # Store info from factor graph
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(sparse.coo_matrix((1, n), L.dtype), y, init_acc, init_deps, init_class_prior, LF_priors, is_fixed)
+
+        weight["isFixed"] = True
+        weight["initialValue"] = fg.factorGraphs[0].weight_value
+
+        fg.factorGraphs = []
+        fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
+
+        self.fg = fg
+        self.nlf = n
+
+    def diagnostics(self):
+        """
+        Provides a summary of what the model has learned about the labeling
+        functions. For each labeling function, estimates of the following 
+        are provided:
+
+            True  Positive (TP)
+            False Positive (FP)
+            True  Negative (TN)
+            False Negative (FN)
+            Abstain
+
+            Accuracy
+            Coverage
+
+        WARNING: This uses Gibbs sampling to estimate these values. This will
+                 tend to mix poorly when there are many very accurate labeling
+                 functions. In this case, thi function will assume that the
+                 classes are approximately balanced.
+        """
+        if self.fg is None:
+            raise ValueError("Must fit model with train() before computing diagnostics.")
+
+        burnin = 500
+        trials = 5000
+        count = np.zeros((self.nlf, 2, 3))
+
+        for true_label in range(2):
+            self.fg.factorGraphs[0].var_value[0, 0] = true_label
+            self.fg.factorGraphs[0].inference(burnin, 0, True)
+            for i in range(trials):
+                self.fg.factorGraphs[0].inference(0, 1, True)
+                for j in range(self.nlf):
+                    y = self.fg.factorGraphs[0].var_value[0, 0]
+                    lf = self.fg.factorGraphs[0].var_value[0, j + 1]
+                    count[j, y, lf] += 1
+        count /= 2 * trials
+        return [{"TP": count[i, 1, 2],
+                 "FP": count[i, 0, 2],
+                 "TN": count[i, 0, 0],
+                 "FN": count[i, 1, 0],
+                 "Abstain": count[i, 0, 1] + count[i, 0, 1],
+                 "Accuracy": (count[i, 1, 2] + count[i, 0, 0]) / (count[i, 1, 2] + count[i, 0, 2] + count[i, 1, 0] + count[i, 0, 0]),
+                 "Coverage": count[i, 1, 2] + count[i, 0, 2] + count[i, 1, 0] + count[i, 0, 0]}
+                for i in range(self.nlf)]
 
     def marginals(self, L):
         if self.weights is None:

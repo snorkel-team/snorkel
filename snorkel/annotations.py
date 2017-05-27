@@ -2,6 +2,7 @@ import numpy as np
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
 from sqlalchemy.sql import bindparam, select
+import inspect
 
 from .features import get_span_feats
 from .models import (
@@ -155,10 +156,16 @@ class Annotator(UDFRunner):
 
 
 class AnnotatorUDF(UDF):
-    def __init__(self, annotation_class, annotation_key_class, f, **kwargs):
+    def __init__(self, annotation_class, annotation_key_class, f_gen, **kwargs):
         self.annotation_class     = annotation_class
         self.annotation_key_class = annotation_key_class
-        self.anno_generator       = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
+
+        # AnnotatorUDF relies on a generator function which yields annotations
+        # given a candidate input
+        if inspect.isgeneratorfunction(f_gen):
+            self.anno_generator = f_gen
+        else:
+            raise ValueError("AnnotatorUDF requires a generator function.")
 
         # For caching key ids during the reduce step
         self.key_cache = {}
@@ -322,9 +329,38 @@ def load_gold_labels(session, annotator_name, **kwargs):
 
 
 class LabelAnnotator(Annotator):
-    """Apply labeling functions to the candidates, generating Label annotations"""
-    def __init__(self, f):
-        super(LabelAnnotator, self).__init__(Label, LabelKey, f)
+    """Apply labeling functions to the candidates, generating Label annotations
+    
+    :param lfs: A _list_ of labeling functions (LFs)
+    """
+    def __init__(self, lfs):
+        # Convert lfs to a generator function
+        # In particular, catch verbose values and convert to integer ones
+        def f_gen(c):
+            for lf in lfs:
+                label = lf(c)
+                # Note: We assume if the LF output is an int, it is already
+                # mapped correctly
+                if type(label) == int:
+                    yield lf.__name__, label
+                # None is a protected LF output value corresponding to 0,
+                # representing LF abstaining
+                elif label is None:
+                    yield lf.__name__, 0
+                elif label in c.values:
+                    if c.cardinality > 2:
+                        yield lf.__name__, c.values.index(label)
+                    # Note: Would be nice to not special-case here, but for
+                    # consistency we leave binary LF range as {-1,0,1}
+                    else:
+                        val = 1 if c.values.index(label) == 0 else -1
+                        yield lf.__name__, val
+                else:
+                    raise ValueError("""
+                        Unable to parse label with value %s
+                        for candidate with values %s""" % (label, c.values))
+
+        super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen)
 
     def load_matrix(self, session, split, **kwargs):
         return load_label_matrix(session, split=split, **kwargs)
@@ -337,17 +373,6 @@ class FeatureAnnotator(Annotator):
 
     def load_matrix(self, session, split, key_group=0, **kwargs):
         return load_feature_matrix(session, split=split, key_group=key_group, **kwargs)
-
-
-def _to_annotation_generator(fns):
-    """"
-    Generic method which takes a set of functions, and returns a generator that yields
-    function.__name__, function result pairs.
-    """
-    def fn_gen(c):
-        for f in fns:
-            yield f.__name__, f(c)
-    return fn_gen
 
 
 def save_marginals(session, L, marginals, training=True):

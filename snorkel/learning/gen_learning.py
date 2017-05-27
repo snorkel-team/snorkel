@@ -202,7 +202,7 @@ class GenerativeModel(object):
     )
 
     def train(self, L, deps=(), LF_priors=None, LF_prior_default=0.7, 
-        labels=None, label_prior=0.95, init_acc=1.0, init_deps=1.0, 
+        labels=None, label_prior=0.95, init_deps=1.0, 
         init_class_prior=-1.0, epochs=100, step_size=None, decay=0.99, 
         reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
         timer=None):
@@ -224,7 +224,6 @@ class GenerativeModel(object):
         :param LF_prior_default: Default prior for the LFs
         :param labels: Optional ground truth labels
         :param label_prior: Prior on the optional ground truth labels
-        :param init_acc: initial weight for accuracy dependencies (in log scale)
         :param init_deps: initial weight for additional dependencies, except
                           class prior (in log scale)
         :param init_class_prior: initial class prior (in log scale), note only
@@ -266,7 +265,7 @@ class GenerativeModel(object):
             n += 1
 
         self._process_dependency_graph(L, deps)
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, init_acc, init_deps, init_class_prior, LF_priors, is_fixed)
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, init_deps, init_class_prior, LF_priors, is_fixed)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
                        reg_param=reg_param_scaled, regularization=reg_type, truncation=truncation,
                        quiet=(not verbose), verbose=verbose, learn_non_evidence=True, burn_in=burn_in)
@@ -280,7 +279,7 @@ class GenerativeModel(object):
         self._process_learned_weights(L, fg, LF_priors, is_fixed)
 
         # Store info from factor graph
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(sparse.coo_matrix((1, n), L.dtype), init_acc, init_deps, init_class_prior, LF_priors, is_fixed)
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps, init_class_prior, LF_priors, is_fixed)
 
         weight["isFixed"] = True
         weight["initialValue"] = fg.factorGraphs[0].weight_value
@@ -432,7 +431,7 @@ class GenerativeModel(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
-    def _compile(self, L, init_acc, init_deps, init_class_prior, LF_priors, is_fixed):
+    def _compile(self, L, init_deps, init_class_prior, LF_priors, is_fixed):
         """
         Compiles a generative model based on L and the current labeling function dependencies.
         """

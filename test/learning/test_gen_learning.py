@@ -3,6 +3,7 @@ from numbskull.inference import FACTORS
 from scipy import sparse
 from snorkel.learning.gen_learning import GenerativeModel, DEP_EXCLUSIVE, DEP_REINFORCING, DEP_FIXING, DEP_SIMILAR
 import unittest
+import numpy as np
 
 
 class TestGenLearning(unittest.TestCase):
@@ -36,19 +37,29 @@ class TestGenLearning(unittest.TestCase):
         # Tests compilation
         gen_model = GenerativeModel(class_prior=True, lf_prior=False, lf_propensity=False, lf_class_propensity=False)
         gen_model._process_dependency_graph(L, ())
-        weight, variable, factor, ftv, domain_mask, n_edges = gen_model._compile(L, None, 1.0, 0.5, 0.0)
+        m, n = L.shape
+        LF_priors = [0.7 for _ in range(n)]
+        is_fixed = [False for _ in range(n)]
+        weight, variable, factor, ftv, domain_mask, n_edges = gen_model._compile(L, 0.5, 0.0, LF_priors, is_fixed)
 
         #
         # Weights
         #
-        self.assertEqual(len(weight), 4)
+        # Should now be 3 factors for LFs + 3 fixed factors for LF priors + 1
+        self.assertEqual(len(weight), 7)
 
         self.assertFalse(weight[0]['isFixed'])
         self.assertEqual(weight[0]['initialValue'], 0.0)
 
-        for i in range(1, 4):
+        # The LF priors
+        for i in range(1,7,2):
+            self.assertTrue(weight[i]['isFixed'])
+            self.assertEqual(weight[i]['initialValue'], np.float64(0.5 * np.log(0.7 / (1 - 0.7))))
+
+        # The LF weights
+        for i in range(2,7,2):
             self.assertFalse(weight[i]['isFixed'])
-            self.assertTrue(0.9 <= weight[i]['initialValue'] <= 1.1)
+            self.assertEqual(weight[i]['initialValue'], 0.0)
 
         #
         # Variables
@@ -71,7 +82,8 @@ class TestGenLearning(unittest.TestCase):
         #
         # Factors
         #
-        self.assertEqual(len(factor), 20)
+        # 5 * 3 LF acc factors + 5 * 3 LF prior factors + 5 class prior factors
+        self.assertEqual(len(factor), 35)
 
         for i in range(5):
             self.assertEqual(factor[i]["factorFunction"], FACTORS["DP_GEN_CLASS_PRIOR"])
@@ -81,38 +93,42 @@ class TestGenLearning(unittest.TestCase):
             self.assertEqual(factor[i]["ftv_offset"], i)
 
         for i in range(5):
-            for j in range(3):
-                self.assertEqual(factor[5 + i * 3 + j]["factorFunction"], FACTORS["DP_GEN_LF_ACCURACY"])
-                self.assertEqual(factor[5 + i * 3 + j]["weightId"], j + 1)
-                self.assertEqual(factor[5 + i * 3 + j]["featureValue"], 1)
-                self.assertEqual(factor[5 + i * 3 + j]["arity"], 2)
-                self.assertEqual(factor[5 + i * 3 + j]["ftv_offset"], 5 + 2 * (i * 3 + j))
+            for j in range(6):
+                self.assertEqual(factor[5 + i * 6 + j]["factorFunction"], FACTORS["DP_GEN_LF_ACCURACY"])
+                self.assertEqual(factor[5 + i * 6 + j]["weightId"], j + 1)
+                self.assertEqual(factor[5 + i * 6 + j]["featureValue"], 1)
+                self.assertEqual(factor[5 + i * 6 + j]["arity"], 2)
+                self.assertEqual(factor[5 + i * 6 + j]["ftv_offset"], 5 + 2 * (i * 6 + j))
 
         #
         # Factor to Var
         #
-        self.assertEqual(len(ftv), 35)
+        self.assertEqual(len(ftv), 65)
 
         for i in range(5):
             self.assertEqual(ftv[i]["vid"], i)
             self.assertEqual(ftv[i]["dense_equal_to"], 0)
 
+        # for i in range(65):
+        #     print ftv[i]["vid"]
+
         for i in range(5):
             for j in range(3):
-                self.assertEqual(ftv[5 + 2 * (i * 3 + j)]["vid"], i)
-                self.assertEqual(ftv[6 + 2 * (i * 3 + j)]["vid"], 5 + i * 3 + j)
-                self.assertEqual(ftv[5 + 2 * (i * 3 + j)]["dense_equal_to"], 0)
-                self.assertEqual(ftv[6 + 2 * (i * 3 + j)]["dense_equal_to"], 0)
+                for _ in range(2):
+                    self.assertEqual(ftv[5 + i * 6 + j]["vid"], i)
+                    self.assertEqual(ftv[6 + i * 6 + j]["vid"], 5 + i * 6 + j)
+                    self.assertEqual(ftv[5 + i * 6 + j]["dense_equal_to"], 0)
+                    self.assertEqual(ftv[6 + i * 6 + j]["dense_equal_to"], 0)
 
         #
         # Domain mask
         #
-        self.assertEqual(len(domain_mask), 20)
+        self.assertEqual(len(domain_mask), 35)
         for i in range(20):
             self.assertFalse(domain_mask[i])
 
         # n_edges
-        self.assertEqual(n_edges, 35)
+        self.assertEqual(n_edges, 65)
 
     def test_compile_with_deps(self):
         # Defines a label matrix
@@ -144,7 +160,11 @@ class TestGenLearning(unittest.TestCase):
         # Tests compilation
         gen_model = GenerativeModel(class_prior=False, lf_prior=False, lf_propensity=True, lf_class_propensity=False)
         gen_model._process_dependency_graph(L, deps)
-        weight, variable, factor, ftv, domain_mask, n_edges = gen_model._compile(L, None, 1.0, 0.5, -1.0)
+        m, n = L.shape
+        LF_priors = [0.7 for _ in range(n)]
+        is_fixed = [False for _ in range(n)]
+        weight, variable, factor, ftv, domain_mask, n_edges = gen_model._compile(L, 0.5, -1.0, LF_priors, is_fixed)
+        # weight, variable, factor, ftv, domain_mask, n_edges = gen_model._compile(L, None, 1.0, 0.5, -1.0)
 
         #
         # Weights

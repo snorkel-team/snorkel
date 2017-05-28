@@ -45,7 +45,7 @@ class TestGenLearning(unittest.TestCase):
         #
         # Weights
         #
-        # Should now be 3 factors for LFs + 3 fixed factors for LF priors + 1
+        # Should now be 3 for LFs + 3 (fixed) for LF priors + 1 class prior
         self.assertEqual(len(weight), 7)
 
         self.assertFalse(weight[0]['isFixed'])
@@ -105,25 +105,26 @@ class TestGenLearning(unittest.TestCase):
         #
         self.assertEqual(len(ftv), 65)
 
+        # Class prior factor - var edges
         for i in range(5):
             self.assertEqual(ftv[i]["vid"], i)
             self.assertEqual(ftv[i]["dense_equal_to"], 0)
 
-        # for i in range(65):
-        #     print ftv[i]["vid"]
-
+        # LF *and LF prior* factor - var edges
         for i in range(5):
             for j in range(3):
-                for _ in range(2):
-                    self.assertEqual(ftv[5 + i * 6 + j]["vid"], i)
-                    self.assertEqual(ftv[6 + i * 6 + j]["vid"], 5 + i * 6 + j)
-                    self.assertEqual(ftv[5 + i * 6 + j]["dense_equal_to"], 0)
-                    self.assertEqual(ftv[6 + i * 6 + j]["dense_equal_to"], 0)
+                # Each LF has one weight factor and one prior factor here
+                for k in range(2):
+                    idx = 4 * (i * 3 + j) + 2 * k
+                    self.assertEqual(ftv[5 + idx]["vid"], i)
+                    self.assertEqual(ftv[6 + idx]["vid"], 5 + i * 3 + j)
+                    self.assertEqual(ftv[5 + idx]["dense_equal_to"], 0)
+                    self.assertEqual(ftv[6 + idx]["dense_equal_to"], 0)
 
         #
         # Domain mask
         #
-        self.assertEqual(len(domain_mask), 35)
+        self.assertEqual(len(domain_mask), 20)
         for i in range(20):
             self.assertFalse(domain_mask[i])
 
@@ -169,12 +170,22 @@ class TestGenLearning(unittest.TestCase):
         #
         # Weights
         #
-        self.assertEqual(len(weight), 11)
+        # Should now be 3 for LFs + 3 fixed for LF priors + 3 for LF propensity
+        # + 5 for deps
+        self.assertEqual(len(weight), 14)
+        
+        # The LF priors
+        for i in range(0,6,2):
+            self.assertTrue(weight[i]['isFixed'])
+            self.assertEqual(weight[i]['initialValue'], np.float64(0.5 * np.log(0.7 / (1 - 0.7))))
 
-        for i in range(3):
+        # The LF weights
+        for i in range(1,6,2):
             self.assertFalse(weight[i]['isFixed'])
-            self.assertEqual(weight[i]['initialValue'], 1.0)
-        for i in range(3, 11):
+            self.assertEqual(weight[i]['initialValue'], 0.0)
+
+        # The dep weights
+        for i in range(6, 14):
             self.assertFalse(weight[i]['isFixed'])
             self.assertEqual(weight[i]['initialValue'], 0.5)
 
@@ -199,69 +210,69 @@ class TestGenLearning(unittest.TestCase):
         #
         # Factors
         #
-        self.assertEqual(len(factor), 55)
+        self.assertEqual(len(factor), 70)
 
         f_offset = 0
         ftv_offset = 0
         for i in range(5):
-            for j in range(3):
-                self.assertEqual(factor[f_offset + i * 3 + j]["factorFunction"], FACTORS["DP_GEN_LF_ACCURACY"])
-                self.assertEqual(factor[f_offset + i * 3 + j]["weightId"], j)
-                self.assertEqual(factor[f_offset + i * 3 + j]["featureValue"], 1)
-                self.assertEqual(factor[f_offset + i * 3 + j]["arity"], 2)
-                self.assertEqual(factor[f_offset + i * 3 + j]["ftv_offset"], ftv_offset + 2 * (i * 3 + j))
+            for j in range(6):
+                self.assertEqual(factor[f_offset + i * 6+ j]["factorFunction"], FACTORS["DP_GEN_LF_ACCURACY"])
+                self.assertEqual(factor[f_offset + i * 6 + j]["weightId"], j)
+                self.assertEqual(factor[f_offset + i * 6 + j]["featureValue"], 1)
+                self.assertEqual(factor[f_offset + i * 6 + j]["arity"], 2)
+                self.assertEqual(factor[f_offset + i * 6 + j]["ftv_offset"], ftv_offset + 2 * (i * 6 + j))
 
-        f_offset = 15
-        ftv_offset = 30
+        f_offset = 30
+        ftv_offset = 60
         for i in range(5):
             for j in range(3):
                 self.assertEqual(factor[f_offset + i * 3 + j]["factorFunction"], FACTORS["DP_GEN_LF_PROPENSITY"])
-                self.assertEqual(factor[f_offset + i * 3 + j]["weightId"], 3 + j)
+                self.assertEqual(factor[f_offset + i * 3 + j]["weightId"], 6 + j)
                 self.assertEqual(factor[f_offset + i * 3 + j]["featureValue"], 1)
                 self.assertEqual(factor[f_offset + i * 3 + j]["arity"], 1)
                 self.assertEqual(factor[f_offset + i * 3 + j]["ftv_offset"], ftv_offset + (i * 3 + j))
 
-        f_offset = 30
-        ftv_offset = 45
-        for i in range(5):
-            self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["DP_GEN_DEP_SIMILAR"])
-            self.assertEqual(factor[f_offset + i]["weightId"], 6)
-            self.assertEqual(factor[f_offset + i]["featureValue"], 1)
-            self.assertEqual(factor[f_offset + i]["arity"], 2)
-            self.assertEqual(factor[f_offset + i]["ftv_offset"], ftv_offset + 2 * i)
-
-        f_offset = 35
-        ftv_offset = 55
-        for i in range(5):
-            self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["DP_GEN_DEP_SIMILAR"])
-            self.assertEqual(factor[f_offset + i]["weightId"], 7)
-            self.assertEqual(factor[f_offset + i]["featureValue"], 1)
-            self.assertEqual(factor[f_offset + i]["arity"], 2)
-            self.assertEqual(factor[f_offset + i]["ftv_offset"], ftv_offset + 2 * i)
-
-        f_offset = 40
-        ftv_offset = 65
-        for i in range(5):
-            self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["DP_GEN_DEP_FIXING"])
-            self.assertEqual(factor[f_offset + i]["weightId"], 8)
-            self.assertEqual(factor[f_offset + i]["featureValue"], 1)
-            self.assertEqual(factor[f_offset + i]["arity"], 3)
-            self.assertEqual(factor[f_offset + i]["ftv_offset"], ftv_offset + 3 * i)
-
         f_offset = 45
-        ftv_offset = 80
+        ftv_offset = 75
         for i in range(5):
-            self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["DP_GEN_DEP_REINFORCING"])
+            self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["DP_GEN_DEP_SIMILAR"])
             self.assertEqual(factor[f_offset + i]["weightId"], 9)
             self.assertEqual(factor[f_offset + i]["featureValue"], 1)
+            self.assertEqual(factor[f_offset + i]["arity"], 2)
+            self.assertEqual(factor[f_offset + i]["ftv_offset"], ftv_offset + 2 * i)
+
+        f_offset = 50
+        ftv_offset = 85
+        for i in range(5):
+            self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["DP_GEN_DEP_SIMILAR"])
+            self.assertEqual(factor[f_offset + i]["weightId"], 10)
+            self.assertEqual(factor[f_offset + i]["featureValue"], 1)
+            self.assertEqual(factor[f_offset + i]["arity"], 2)
+            self.assertEqual(factor[f_offset + i]["ftv_offset"], ftv_offset + 2 * i)
+
+        f_offset = 55
+        ftv_offset = 95
+        for i in range(5):
+            self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["DP_GEN_DEP_FIXING"])
+            self.assertEqual(factor[f_offset + i]["weightId"], 11)
+            self.assertEqual(factor[f_offset + i]["featureValue"], 1)
             self.assertEqual(factor[f_offset + i]["arity"], 3)
             self.assertEqual(factor[f_offset + i]["ftv_offset"], ftv_offset + 3 * i)
 
-        f_offset = 50
-        ftv_offset = 95
+        f_offset = 60
+        ftv_offset = 110
+        for i in range(5):
+            self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["DP_GEN_DEP_REINFORCING"])
+            self.assertEqual(factor[f_offset + i]["weightId"], 12)
+            self.assertEqual(factor[f_offset + i]["featureValue"], 1)
+            self.assertEqual(factor[f_offset + i]["arity"], 3)
+            self.assertEqual(factor[f_offset + i]["ftv_offset"], ftv_offset + 3 * i)
+
+        f_offset = 65
+        ftv_offset = 125
         for i in range(5):
             self.assertEqual(factor[f_offset + i]["factorFunction"], FACTORS["DP_GEN_DEP_EXCLUSIVE"])
-            self.assertEqual(factor[f_offset + i]["weightId"], 10)
+            self.assertEqual(factor[f_offset + i]["weightId"], 13)
             self.assertEqual(factor[f_offset + i]["featureValue"], 1)
             self.assertEqual(factor[f_offset + i]["arity"], 2)
             self.assertEqual(factor[f_offset + i]["ftv_offset"], ftv_offset + 2 * i)
@@ -269,23 +280,24 @@ class TestGenLearning(unittest.TestCase):
         #
         # Factor to Var
         #
-        self.assertEqual(len(ftv), 105)
+        self.assertEqual(len(ftv), 135)
 
         ftv_offset = 0
         for i in range(5):
             for j in range(3):
-                self.assertEqual(ftv[ftv_offset + 2 * (i * 3 + j)]["vid"], i)
-                self.assertEqual(ftv[ftv_offset + 2 * (i * 3 + j)]["dense_equal_to"], 0)
-                self.assertEqual(ftv[ftv_offset + 2 * (i * 3 + j) + 1]["vid"], 5 + i * 3 + j)
-                self.assertEqual(ftv[ftv_offset + 2 * (i * 3 + j) + 1]["dense_equal_to"], 0)
+                for k in range(2):
+                    self.assertEqual(ftv[ftv_offset + 4 * (i * 3 + j) + 2 * k]["vid"], i)
+                    self.assertEqual(ftv[ftv_offset + 4 * (i * 3 + j) + 2 * k]["dense_equal_to"], 0)
+                    self.assertEqual(ftv[ftv_offset + 4 * (i * 3 + j) + 2 * k + 1]["vid"], 5 + i * 3 + j)
+                    self.assertEqual(ftv[ftv_offset + 4 * (i * 3 + j) + 2 * k + 1]["dense_equal_to"], 0)
 
-        ftv_offset = 30
+        ftv_offset = 60
         for i in range(5):
             for j in range(3):
                 self.assertEqual(ftv[ftv_offset + (i * 3 + j)]["vid"], 5 + i * 3 + j)
                 self.assertEqual(ftv[ftv_offset + (i * 3 + j)]["dense_equal_to"], 0)
 
-        ftv_offset = 45
+        ftv_offset = 75
         for i in range(5):
             self.assertEqual(ftv[ftv_offset + 2 * i]["vid"], 5 + i * 3)
             self.assertEqual(ftv[ftv_offset + 2 * i]["dense_equal_to"], 0)
@@ -293,7 +305,7 @@ class TestGenLearning(unittest.TestCase):
             self.assertEqual(ftv[ftv_offset + 2 * i + 1]["vid"], 5 + i * 3 + 1)
             self.assertEqual(ftv[ftv_offset + 2 * i + 1]["dense_equal_to"], 0)
 
-        ftv_offset = 55
+        ftv_offset = 85
         for i in range(5):
             self.assertEqual(ftv[ftv_offset + 2 * i]["vid"], 5 + i * 3)
             self.assertEqual(ftv[ftv_offset + 2 * i]["dense_equal_to"], 0)
@@ -301,7 +313,7 @@ class TestGenLearning(unittest.TestCase):
             self.assertEqual(ftv[ftv_offset + 2 * i + 1]["vid"], 5 + i * 3 + 2)
             self.assertEqual(ftv[ftv_offset + 2 * i + 1]["dense_equal_to"], 0)
 
-        ftv_offset = 65
+        ftv_offset = 95
         for i in range(5):
             self.assertEqual(ftv[ftv_offset + 3 * i]["vid"], i)
             self.assertEqual(ftv[ftv_offset + 3 * i]["dense_equal_to"], 0)
@@ -312,7 +324,7 @@ class TestGenLearning(unittest.TestCase):
             self.assertEqual(ftv[ftv_offset + 3 * i + 2]["vid"], 5 + i * 3 + 1)
             self.assertEqual(ftv[ftv_offset + 3 * i + 2]["dense_equal_to"], 0)
 
-        ftv_offset = 80
+        ftv_offset = 110
         for i in range(5):
             self.assertEqual(ftv[ftv_offset + 3 * i]["vid"], i)
             self.assertEqual(ftv[ftv_offset + 3 * i]["dense_equal_to"], 0)
@@ -323,7 +335,7 @@ class TestGenLearning(unittest.TestCase):
             self.assertEqual(ftv[ftv_offset + 3 * i + 2]["vid"], 5 + i * 3 + 2)
             self.assertEqual(ftv[ftv_offset + 3 * i + 2]["dense_equal_to"], 0)
 
-        ftv_offset = 95
+        ftv_offset = 125
         for i in range(5):
             self.assertEqual(ftv[ftv_offset + 2 * i]["vid"], 5 + i * 3 + 1)
             self.assertEqual(ftv[ftv_offset + 2 * i]["dense_equal_to"], 0)
@@ -339,7 +351,7 @@ class TestGenLearning(unittest.TestCase):
             self.assertFalse(domain_mask[i])
 
         # n_edges
-        self.assertEqual(n_edges, 105)
+        self.assertEqual(n_edges, 135)
 
 if __name__ == '__main__':
     unittest.main()

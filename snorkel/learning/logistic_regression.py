@@ -135,7 +135,7 @@ class LogisticRegression(TFNoiseAwareModel):
             self.k = shape[1]
 
             # If k = 2, make sure is M-dim array
-            if self.k = 2:
+            if self.k == 2:
                 training_marginals = training_marginals[:,1].reshape(-1)
 
         # Build model

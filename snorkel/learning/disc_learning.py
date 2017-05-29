@@ -3,6 +3,7 @@ import tensorflow as tf
 from sqlalchemy.sql import bindparam, select
 
 from .utils import marginals_to_labels, MentionScorer
+from ..annotations import save_marginals
 from ..models import Candidate
 
 
@@ -26,30 +27,7 @@ class NoiseAwareModel(object):
 
     def save_marginals(self, session, X):
         """Save the predicted marginal probabilitiess for the Candidates X."""
-        if self.representation:
-            X = list(X)
-
-        # Prepare bulk UPDATE query
-        q = Candidate.__table__.update().\
-                where(Candidate.id == bindparam('cid')).\
-                values(predicted_marginal=bindparam('pm'))
-
-        # Get marginals
-        marginals = self.marginals(X)
-
-        # Prepare values
-        update_vals = []
-        for i, m in enumerate(marginals):
-            if self.representation:
-                cid = X[i].id
-            else:
-                cid = X.get_candidate(session, i).id
-            update_vals.append({'cid': cid, 'pm': m})
-
-        # Execute update
-        session.execute(q, update_vals)
-        session.commit()
-        print "Saved %s predicted marginals" % len(marginals)
+        save_marginals(session, X, self.marginals(X), training=False)
 
     def predict(self, X, b=0.5):
         """Return numpy array of elements in {-1,0,1}

@@ -375,11 +375,12 @@ class FeatureAnnotator(Annotator):
         return load_feature_matrix(session, split=split, key_group=key_group, **kwargs)
 
 
-def save_marginals(session, L, marginals, training=True):
+def save_marginals(session, X, marginals, training=True):
     """Save marginal probabilities for a set of Candidates to db.
 
-    :param L: M x N csr_AnnotationMatrix-class label matrix, where M is number 
-        of candidates, N number of LFs.
+    :param X: Either an M x N csr_AnnotationMatrix-class matrix, where M 
+        is number of candidates, N number of LFs/features; OR a list of 
+        arbitrary objects with candidate ids accessible via a .id attrib
     :param marginals: A dense M x K matrix of marginal probabilities, where
         K is the cardinality of the candidates, OR a M-dim list/array if K=2.
     :param training: If True, these are training marginals / labels; else they
@@ -413,15 +414,21 @@ def save_marginals(session, L, marginals, training=True):
     # Prepare bulk INSERT query
     q = Marginal.__table__.insert()
 
+    # Check whether X is an AnnotationMatrix or not
+    anno_matrix = isinstance(X, csr_AnnotationMatrix)
+    if not anno_matrix:
+        X = list(X)
+
     # Prepare values
-    insert_vals = [
-        {
-            'candidate_id': L.get_candidate(session, i).id,
+    insert_vals = []
+    for i, k, p in marginal_tuples:
+        cid = X.get_candidate(session, i).id if anno_matrix else X[i].id
+        insert_vals.append({
+            'candidate_id': cid,
             'training': training,
             'value': k,
             'probability': p
-        } for i, k, p in marginal_tuples
-    ]
+        })
 
     # Execute update
     session.execute(q, insert_vals)

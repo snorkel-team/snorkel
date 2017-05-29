@@ -29,28 +29,64 @@ class LogisticRegression(TFNoiseAwareModel):
         )
 
     def _build(self):
-        # Define inputs and variables
-        self.X = tf.placeholder(tf.float32, (None, self.d))
-        self.Y = tf.placeholder(tf.float32, (None,))
-        s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
-        self.w = tf.Variable(tf.random_normal((self.d, 1), stddev=SD, seed=s1))
-        self.b = tf.Variable(tf.random_normal((1,), stddev=SD, seed=s2))
-        h = tf.squeeze(tf.nn.bias_add(tf.matmul(self.X, self.w), self.b))
-        # Noise-aware loss
-        self.loss = tf.reduce_sum(
-            tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
-        )
+        # Build network, loss, and prediction ops
+        if self.k > 2:
+            self._build_softmax()
+        else:
+            self._build_sigmoid()
+        
         # Add L1 and L2 penalties
         self.loss += self.l1_penalty * tf.reduce_sum(tf.abs(self.w))
         self.loss += self.l2_penalty * tf.nn.l2_loss(self.w)
+        
         # Build model
         self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
-        self.prediction = tf.nn.sigmoid(h)
+        
+        # Save operation
         self.save_dict = {'w': self.w, 'b': self.b}
+        
         # Get nnz operation
         self.nnz = tf.reduce_sum(tf.cast(
             tf.not_equal(self.w, tf.constant(0, tf.float32)), tf.int32
         ))
+
+    def _build_sigmoid(self):
+        s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
+
+        # Define inputs and variables
+        self.X = tf.placeholder(tf.float32, (None, self.d))
+        self.Y = tf.placeholder(tf.float32, (None,))
+        self.w = tf.Variable(tf.random_normal((self.d, 1), stddev=SD, seed=s1))
+        self.b = tf.Variable(tf.random_normal((1,), stddev=SD, seed=s2))
+        h = tf.squeeze(tf.nn.bias_add(tf.matmul(self.X, self.w), self.b))
+        
+        # Noise-aware loss op
+        self.loss = tf.reduce_sum(
+            tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
+        )
+        
+        # Get prediction op
+        self.prediction = tf.nn.sigmoid(h)
+
+    def _build_softmax(self):
+        """Build for the categorical setting."""
+        s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
+
+        # Define inputs and variables
+        self.X = tf.placeholder(tf.float32, (None, self.d))
+        self.Y = tf.placeholder(tf.float32, (None, self.k))
+        self.w = tf.Variable(tf.random_normal((self.d, self.k), stddev=SD, 
+            seed=s1))
+        self.b = tf.Variable(tf.random_normal((self.k,), stddev=SD, seed=s2))
+        h = tf.nn.bias_add(tf.matmul(self.X, self.w), self.b)
+        
+        # Noise-aware loss op
+        self.loss = tf.reduce_sum(
+            tf.nn.softmax_cross_entropy_with_logits(logits=h, labels=self.Y)
+        )
+
+        # Get prediction op
+        self.prediction = tf.nn.softmax(h)
 
     def _check_input(self, X):
         if issparse(X):
@@ -73,7 +109,8 @@ class LogisticRegression(TFNoiseAwareModel):
         rebalance=False, seed=None):
         """Train elastic net logistic regression model using TensorFlow
             @X: SciPy or NumPy feature matrix
-            @training_marginals: array of marginals for examples in X
+            @training_marginals: N x K array of marginals for examples in X,
+                where K \in {0,1,2} for binary and > 2 for categorical
             @n_epochs: number of training epochs
             @lr: learning rate
             @batch_size: batch size for mini-batch SGD
@@ -84,6 +121,23 @@ class LogisticRegression(TFNoiseAwareModel):
                         If True, defaults to standard 0.5 class balance.
                         If False, no class balancing.
         """
+        # Make sure training marginals are a numpy array first
+        try:
+            shape = training_marginals.shape
+        except:
+            training_marginals = np.array(training_marginals)
+            shape = training_marginals.shape
+        
+        # Set cardinality + marginals in proper format for binary v. categorical
+        if len(shape) == 1:
+            self.k = 2
+        else:
+            self.k = shape[1]
+
+            # If k = 2, make sure is M-dim array
+            if self.k = 2:
+                training_marginals = training_marginals[:,1].reshape(-1)
+
         # Build model
         X = self._check_input(X)
         verbose = print_freq > 0

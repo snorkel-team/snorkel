@@ -286,13 +286,6 @@ class GenerativeModel(object):
         weight["isFixed"] = True
         weight["initialValue"] = fg.factorGraphs[0].weight_value
 
-        print(weight)
-        print(variable)
-        print(factor)
-        print(ftv)
-        print(domain_mask)
-        print(n_edges)
-
         fg.factorGraphs = []
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
 

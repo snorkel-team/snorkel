@@ -102,7 +102,7 @@ class NaiveBayes(NoiseAwareModel):
 
     def marginals(self, X):
         return odds_to_prob(X.dot(self.w))
-    
+
     def save(self, session, version):
         raise NotImplementedError("Not implemented for generative model.")
 
@@ -171,13 +171,13 @@ class GenerativeModel(object):
 
     :param class_prior: whether to include class label prior factors
     :param lf_prior: whether to include labeling function prior factors
-    :param lf_propensity: whether to include labeling function propensity 
+    :param lf_propensity: whether to include labeling function propensity
         factors
-    :param lf_class_propensity: whether to include class-specific labeling 
+    :param lf_class_propensity: whether to include class-specific labeling
         function propensity factors
     :param seed: seed for initializing state of Numbskull variables
     """
-    def __init__(self, class_prior=False, lf_prior=False, lf_propensity=False, 
+    def __init__(self, class_prior=False, lf_prior=False, lf_propensity=False,
         lf_class_propensity=False, seed=271828):
         self.class_prior = class_prior
         self.lf_prior = lf_prior
@@ -188,36 +188,36 @@ class GenerativeModel(object):
         self.rng = random.Random()
         self.rng.seed(seed)
 
-    # These names of factor types are for the convenience of several methods 
-    # that perform the same operations over multiple types, but this class's 
+    # These names of factor types are for the convenience of several methods
+    # that perform the same operations over multiple types, but this class's
     # behavior is not fully specified here. Other methods, such as marginals(),
-    # as well as maps defined within methods, require manual adjustments to 
+    # as well as maps defined within methods, require manual adjustments to
     # implement changes.
     #
-    # These names are also used by other related classes, such as 
+    # These names are also used by other related classes, such as
     # GenerativeModelParameters
     optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
     dep_names = (
         'dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive'
     )
 
-    def train(self, L, deps=(), LF_priors=None, LF_prior_default=0.7, 
-        labels=None, label_prior=0.95, init_deps=1.0, 
-        init_class_prior=-1.0, epochs=100, step_size=None, decay=0.99, 
+    def train(self, L, deps=(), LF_priors=None, LF_prior_default=0.7,
+        labels=None, label_prior=0.95, init_deps=1.0,
+        init_class_prior=-1.0, epochs=10, step_size=None, decay=0.99,
         reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
-        timer=None):
+        cardinality=2, timer=None):
         """
-        Fits the parameters of the model to a data set. By default, learns a 
-        conditionally independent model. Additional unary dependencies can be 
-        set to be included in the constructor. Additional pairwise and 
+        Fits the parameters of the model to a data set. By default, learns a
+        conditionally independent model. Additional unary dependencies can be
+        set to be included in the constructor. Additional pairwise and
         higher-order dependencies can be included as an argument.
 
-        Results are stored as a member named weights, instance of 
+        Results are stored as a member named weights, instance of
         snorkel.learning.gen_learning.GenerativeModelWeights.
 
         :param L: labeling function output matrix
-        :param deps: collection of dependencies to include in the model, each 
-                     element is a tuple of the form 
+        :param deps: collection of dependencies to include in the model, each
+                     element is a tuple of the form
                      (LF 1 index, LF 2 index, dependency type),
                      see snorkel.learning.constants
         :param LF_priors: Priors on the LF accuracies
@@ -230,15 +230,16 @@ class GenerativeModel(object):
                                  used if class_prior=True in constructor
         :param epochs: number of training epochs
         :param step_size: gradient step size, default is 1 / L.shape[0]
-        :param decay: multiplicative decay of step size, 
+        :param decay: multiplicative decay of step size,
                       step_size_(t+1) = step_size_(t) * decay
         :param reg_param: regularization strength
         :param reg_type: 1 = L1 regularization, 2 = L2 regularization
         :param verbose: whether to write debugging info to stdout
-        :param truncation: number of iterations between truncation step for L1 
+        :param truncation: number of iterations between truncation step for L1
                            regularization
-        :param burn_in: number of burn-in samples to take before beginning 
+        :param burn_in: number of burn-in samples to take before beginning
                         learning
+        :param cardinality: number of possible classes (defaults to binary)
         :param timer: stopwatch for profiling, must implement start() and end()
         """
         m, n = L.shape
@@ -265,7 +266,7 @@ class GenerativeModel(object):
             n += 1
 
         self._process_dependency_graph(L, deps)
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, init_deps, init_class_prior, LF_priors, is_fixed)
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, init_deps, init_class_prior, LF_priors, is_fixed, cardinality)
         fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
                        reg_param=reg_param_scaled, regularization=reg_type, truncation=truncation,
                        quiet=(not verbose), verbose=verbose, learn_non_evidence=True, burn_in=burn_in)
@@ -279,7 +280,7 @@ class GenerativeModel(object):
         self._process_learned_weights(L, fg, LF_priors, is_fixed)
 
         # Store info from factor graph
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps, init_class_prior, LF_priors, is_fixed)
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps, init_class_prior, LF_priors, is_fixed, cardinality)
 
         weight["isFixed"] = True
         weight["initialValue"] = fg.factorGraphs[0].weight_value
@@ -289,11 +290,12 @@ class GenerativeModel(object):
 
         self.fg = fg
         self.nlf = n
+        self.cardinality = cardinality
 
     def diagnostics(self):
         """
         Provides a summary of what the model has learned about the labeling
-        functions. For each labeling function, estimates of the following 
+        functions. For each labeling function, estimates of the following
         are provided:
 
             True  Positive (TP)
@@ -315,9 +317,9 @@ class GenerativeModel(object):
 
         burnin = 500
         trials = 5000
-        count = np.zeros((self.nlf, 2, 3))
+        count = np.zeros((self.nlf, self.cardinality, self.cardinality + 1))
 
-        for true_label in range(2):
+        for true_label in range(self.cardinality):
             self.fg.factorGraphs[0].var_value[0, 0] = true_label
             self.fg.factorGraphs[0].inference(burnin, 0, True)
             for i in range(trials):
@@ -382,7 +384,7 @@ class GenerativeModel(object):
 
     def score(self, session, X_test, test_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True,
               display=True, scorer=MentionScorer, **kwargs):
-        
+
         # Get the test candidates
         test_candidates = [X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])]
 
@@ -431,7 +433,7 @@ class GenerativeModel(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
-    def _compile(self, L, init_deps, init_class_prior, LF_priors, is_fixed):
+    def _compile(self, L, init_deps, init_class_prior, LF_priors, is_fixed, cardinality):
         """
         Compiles a generative model based on L and the current labeling function dependencies.
         """
@@ -506,18 +508,22 @@ class GenerativeModel(object):
         #
         # Compiles variable matrix
         #
+        # Internal representation:
+        #   True Class:         0 to (cardinality - 1) are the classes
+        #   Labeling functions: 0 to (cardinality - 1) are the classes
+        #                       cardinality is abstain
         for i in range(m):
             variable[i]['isEvidence'] = False
             # TODO: Change this to range (0, cardinality)!
-            variable[i]['initialValue'] = self.rng.randrange(0, 2)
+            variable[i]['initialValue'] = self.rng.randrange(0, cardinality)
             variable[i]["dataType"] = 0
-            variable[i]["cardinality"] = 2
+            variable[i]["cardinality"] = cardinality
 
         for index in range(m, m + m * n):
             variable[index]["isEvidence"] = 1
-            variable[index]["initialValue"] = 1
+            variable[index]["initialValue"] = cardinality # default to abstain
             variable[index]["dataType"] = 0
-            variable[index]["cardinality"] = 3
+            variable[index]["cardinality"] = cardinality + 1
 
         L_coo = L.tocoo()
         for L_index in range(L_coo.nnz):

@@ -376,12 +376,35 @@ class FeatureAnnotator(Annotator):
 
 
 def save_marginals(session, L, marginals, training=True):
-    """Save the marginal probs. for the Candidates corresponding to the rows of 
-    L in the Candidate table."""
-    # TODO: Currently the below code is written assuming `marginals` is a list
-    # of (value, probability) tuples; modify to take in (sparse?) matrix
-    # instead?
-    marginal_tuples = marginals
+    """Save marginal probabilities for a set of Candidates to db.
+
+    :param L: M x N csr_AnnotationMatrix-class label matrix, where M is number 
+        of candidates, N number of LFs.
+    :param marginals: A dense M x K matrix of marginal probabilities, where
+        K is the cardinality of the candidates, OR a M-dim list/array if K=2.
+    :param training: If True, these are training marginals / labels; else they
+        are saved as end model predictions.
+
+    Note: The marginals for k=0 are not stored, only for k = 1,...,K
+    """
+    # Make sure that we are working with a numpy array
+    try:
+        shape = marginals.shape
+    except:
+        marginals = np.array(marginals)
+        shape = marginals.shape
+
+    # Handle binary input as M x 1-dim array; assume elements represent 
+    # poksitive (k=1) class values
+    if len(shape) == 1:
+        marginals = np.vstack([1-marginals, marginals]).T
+
+    # Only add values for classes k=1,...,K
+    marginal_tuples = []
+    for i in range(shape[0]):
+        for k in range(1, shape[1]):
+            if marginals[i, k] > 0:
+                marginal_tuples.append((i, k, marginals[i, k]))
 
     # NOTE: This will delete all existing marginals of type `training`
     session.query(Marginal).filter(Marginal.training == training).\
@@ -395,17 +418,17 @@ def save_marginals(session, L, marginals, training=True):
         {
             'candidate_id': L.get_candidate(session, i).id,
             'training': training,
-            'value': m[0],
-            'probability': m[1]
-        } for i, m in enumerate(marginal_tuples)
+            'value': k,
+            'probability': p
+        } for i, k, p in marginal_tuples
     ]
 
     # Execute update
-    session.execute(q, update_vals)
+    session.execute(q, insert_vals)
     session.commit()
     print "Saved %s marginals" % len(marginals)
 
 
 def load_marginals(session, split):
     """Load the marginal probs. for a given split of Candidates"""
-    return np.array([c[0] for c in session.query(Candidate.training_marginal).filter(Candidate.split == split).all()])
+    pass

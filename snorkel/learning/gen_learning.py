@@ -585,6 +585,8 @@ class GenerativeModel(object):
 
         # Class prior
         if self.class_prior:
+            if cardinality != 2:
+                raise NotImplementedError("Class Prior not implemented for categoricals.")
             for i in range(m):
                 factor[i]["factorFunction"] = FACTORS["DP_GEN_CLASS_PRIOR"]
                 factor[i]["weightId"] = 0
@@ -623,6 +625,8 @@ class GenerativeModel(object):
 
         for optional_name in GenerativeModel.optional_names:
             if getattr(self, optional_name):
+                if optional_name != 'lf_propensity' and cardinality != 2:
+                    raise NotImplementedError(optional_name + " not implemented for categoricals.")
                 f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off,
                                                                      optional_name_map[optional_name][0],
                                                                      optional_name_map[optional_name][1])
@@ -651,6 +655,8 @@ class GenerativeModel(object):
         }
 
         for dep_name in GenerativeModel.dep_names:
+            if dep_name != 'dep_similar' and dep_name != 'dep_exclusive' and cardinality != 2:
+                raise NotImplementedError(dep_name + " not implemented for categoricals.")
             mat = getattr(self, dep_name)
             for i in range(len(mat.data)):
                 f_off, ftv_off, w_off = self._compile_dep_factors(L, factor, f_off, ftv, ftv_off, w_off,

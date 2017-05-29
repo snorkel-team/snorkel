@@ -199,9 +199,9 @@ class GenerativeModel(object):
     )
 
     def train(self, L, deps=(), LF_acc_priors=None, LF_acc_prior_default=0.7, 
-        labels=None, label_prior=0.95, init_deps=1.0, 
-        init_class_prior=-1.0, epochs=100, step_size=None, decay=0.99, 
-        reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
+        labels=None, label_prior=0.99, init_deps=0.0,
+        init_class_prior=-1.0, epochs=30, step_size=None, decay=1.0,
+        reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=1,
         timer=None):
         """
         Fits the parameters of the model to a data set. By default, learns a 
@@ -243,7 +243,7 @@ class GenerativeModel(object):
         :param timer: stopwatch for profiling, must implement start() and end()
         """
         m, n = L.shape
-        step_size = step_size or 1.0 / L.shape[0]
+        step_size = step_size or 0.0001
         reg_param_scaled = reg_param / L.shape[0]
 
         # Priors for LFs default to fixed prior value

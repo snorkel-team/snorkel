@@ -201,7 +201,7 @@ class GenerativeModel(object):
     def train(self, L, deps=(), LF_acc_priors=None, LF_acc_prior_default=0.7, 
         labels=None, label_prior=0.99, init_deps=0.0,
         init_class_prior=-1.0, epochs=30, step_size=None, decay=1.0,
-        reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=1,
+        reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
         timer=None):
         """
         Fits the parameters of the model to a data set. By default, learns a 

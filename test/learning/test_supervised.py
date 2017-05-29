@@ -19,6 +19,7 @@ class TestSupervised(unittest.TestCase):
 
     def test_supervised(self):
         # A set of true priors
+        tol = 0.1
         LF_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
         label_prior = 0.999
 
@@ -57,14 +58,14 @@ class TestSupervised(unittest.TestCase):
             reg_param=1,
             epochs=0
         )
-        accs = gen_model.weights.lf_accuracy()
+        diag = gen_model.diagnostics()
+        accs = [d["Accuracy"] for d in diag]
         print(accs)
         print(gen_model.weights.lf_propensity)
         priors = np.array(LF_priors + [label_prior])
-        self.assertTrue(np.linalg.norm(accs - priors) < 1e-5)
+        self.assertTrue(np.linalg.norm(accs - priors) < tol)
 
         # Now test that estimated LF accs are not too far off
-        tol = 0.1
         print("\nTesting estimated LF accs (TOL=%s)" % tol)
         gen_model.train(
             L,
@@ -140,8 +141,10 @@ class TestSupervised(unittest.TestCase):
             reg_type=2,
             reg_param=100 * n,
         )
-        accs = gen_model.weights.lf_accuracy()
-        print accs
+        diag = gen_model.diagnostics()
+        accs = [d["Accuracy"] for d in diag]
+        coverage = [d["Coverage"] for d in diag]
+        print(accs)
         self.assertTrue(np.all(np.abs(accs - np.array(bad_prior)) < tol))
 
 if __name__ == '__main__':

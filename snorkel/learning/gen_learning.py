@@ -115,7 +115,7 @@ class GenerativeModelWeights(object):
     def __init__(self, n):
         self.n = n
         self.class_prior = 0.0
-        self.lf_accuracy_log_odds = np.zeros(n, dtype=np.float64)
+        self.lf_accuracy = np.zeros(n, dtype=np.float64)
         for optional_name in GenerativeModel.optional_names:
             setattr(self, optional_name, np.zeros(n, dtype=np.float64))
 
@@ -131,7 +131,7 @@ class GenerativeModelWeights(object):
 
         for i in range(self.n):
             if not self._weight_is_sign_sparsitent(
-                    self.lf_accuracy_log_odds[i], other.lf_accuracy_log_odds[i], threshold):
+                    self.lf_accuracy[i], other.lf_accuracy[i], threshold):
                 return False
 
         for name in GenerativeModel.optional_names:
@@ -198,7 +198,7 @@ class GenerativeModel(object):
         'dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive'
     )
 
-    def train(self, L, deps=(), LF_priors=None, LF_prior_default=0.7, 
+    def train(self, L, deps=(), LF_acc_priors=None, LF_acc_prior_default=0.7, 
         labels=None, label_prior=0.95, init_deps=1.0, 
         init_class_prior=-1.0, epochs=100, step_size=None, decay=0.99, 
         reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
@@ -218,10 +218,10 @@ class GenerativeModel(object):
                      element is a tuple of the form 
                      (LF 1 index, LF 2 index, dependency type),
                      see snorkel.learning.constants
-        :param LF_priors: An N-element list of prior probabilities for the LF
+        :param LF_acc_priors: An N-element list of prior probabilities for the LF
             accuracies
-        :param LF_prior_default: Default prior probability for each LF accuracy;
-            if LF_priors is unset, each LF will have this prior
+        :param LF_acc_prior_default: Default prior probability for each LF accuracy;
+            if LF_acc_priors is unset, each LF will have this prior
         :param labels: Optional ground truth labels
         :param label_prior: The prior probability that the ground truth labels
             (if provided) are correct
@@ -249,10 +249,10 @@ class GenerativeModel(object):
         # Priors for LFs default to fixed prior value
         # NOTE: Setting default != 0.5 creates a (fixed) factor which increases
         # runtime (by ~0.5x that of a non-fixed factor)...
-        if LF_priors is None:
-            LF_priors = [LF_prior_default for _ in range(n)]
+        if LF_acc_priors is None:
+            LF_acc_priors = [LF_acc_prior_default for _ in range(n)]
         else:
-            LF_priors = list(copy(LF_priors))
+            LF_acc_priors = list(copy(LF_acc_priors))
 
         # LF weights are un-fixed
         is_fixed = [False for _ in range(n)]
@@ -262,7 +262,7 @@ class GenerativeModel(object):
             labels = labels.reshape(m, 1)
             L = sparse.hstack([L.copy(), labels])
             is_fixed.append(True)
-            LF_priors.append(label_prior)
+            LF_acc_priors.append(label_prior)
             n += 1
 
         # Shuffle the data points
@@ -275,7 +275,7 @@ class GenerativeModel(object):
         # Compile factor graph
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges =\
-            self._compile(L, init_deps, init_class_prior, LF_priors, is_fixed)
+            self._compile(L, init_deps, init_class_prior, LF_acc_priors, is_fixed)
         fg = NumbSkull(
             n_inference_epoch=0,
             n_learning_epoch=epochs, 
@@ -296,12 +296,12 @@ class GenerativeModel(object):
         fg.learning(out=False)
         if timer is not None:
             timer.end()
-        self._process_learned_weights(L, fg, LF_priors, is_fixed)
+        self._process_learned_weights(L, fg, LF_acc_priors, is_fixed)
 
         # Store info from factor graph
         weight, variable, factor, ftv, domain_mask, n_edges =\
             self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps,
-                init_class_prior, LF_priors, is_fixed)
+                init_class_prior, LF_acc_priors, is_fixed)
 
         weight["isFixed"] = True
         weight["initialValue"] = fg.factorGraphs[0].weight_value
@@ -373,13 +373,13 @@ class GenerativeModel(object):
             for l_index1 in range(l_i.nnz):
                 data_j, j = l_i.data[l_index1], l_i.col[l_index1]
                 if data_j == 1:
-                    logp_true  += self.weights.lf_accuracy_log_odds[j]
-                    logp_false -= self.weights.lf_accuracy_log_odds[j]
+                    logp_true  += self.weights.lf_accuracy[j]
+                    logp_false -= self.weights.lf_accuracy[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
                 elif data_j == -1:
-                    logp_true  -= self.weights.lf_accuracy_log_odds[j]
-                    logp_false += self.weights.lf_accuracy_log_odds[j]
+                    logp_true  -= self.weights.lf_accuracy[j]
+                    logp_false += self.weights.lf_accuracy[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
                 else:
@@ -453,7 +453,7 @@ class GenerativeModel(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
-    def _compile(self, L, init_deps, init_class_prior, LF_priors, is_fixed):
+    def _compile(self, L, init_deps, init_class_prior, LF_acc_priors, is_fixed):
         """
         Compiles a generative model based on L and the current labeling function dependencies.
         """
@@ -461,7 +461,7 @@ class GenerativeModel(object):
 
         n_weights = 1 if self.class_prior else 0
 
-        nPrior = sum([i != 0.5 for i in LF_priors])
+        nPrior = sum([i != 0.5 for i in LF_acc_priors])
         nUnFixed = sum([not i for i in is_fixed])
 
         n_weights += nPrior
@@ -506,9 +506,9 @@ class GenerativeModel(object):
 
         for i in range(n):
             # Prior on LF acc
-            if (LF_priors[i] != 0.5):
+            if (LF_acc_priors[i] != 0.5):
                 weight[w_off]['isFixed'] = True
-                weight[w_off]['initialValue'] = np.float64(0.5 * np.log(LF_priors[i] / (1 - LF_priors[i])))
+                weight[w_off]['initialValue'] = np.float64(0.5 * np.log(LF_acc_priors[i] / (1 - LF_acc_priors[i])))
                 w_off += 1
             # Learnable acc for LF
             if (not is_fixed[i]):
@@ -579,7 +579,7 @@ class GenerativeModel(object):
 
 
         # Factors over labeling function outputs
-        nfactors_for_lf = [((LF_priors[i] != 0.5) + (not is_fixed[i])) for i in range(n)]
+        nfactors_for_lf = [((LF_acc_priors[i] != 0.5) + (not is_fixed[i])) for i in range(n)]
         f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off, "DP_GEN_LF_ACCURACY",
                                                              (lambda m, n, i, j: i, lambda m, n, i, j: m + n * i + j), nfactors_for_lf)
 
@@ -689,7 +689,7 @@ class GenerativeModel(object):
 
         return factors_offset + m, ftv_offset + len(vid_funcs) * m, weight_offset + 1
 
-    def _process_learned_weights(self, L, fg, LF_priors, is_fixed):
+    def _process_learned_weights(self, L, fg, LF_acc_priors, is_fixed):
         _, n = L.shape
 
         w = fg.getFactorGraph().getWeights()
@@ -701,15 +701,15 @@ class GenerativeModel(object):
         else:
             w_off = 0
 
-        weights.lf_accuracy_log_odds = np.zeros((n,))
+        weights.lf_accuracy = np.zeros((n,))
         for i in range(n):
             # Prior on LF acc
-            if (LF_priors[i] != 0.5):
-                weights.lf_accuracy_log_odds[i] += w[w_off]
+            if (LF_acc_priors[i] != 0.5):
+                weights.lf_accuracy[i] += w[w_off]
                 w_off += 1
             # Learnable acc for LF
             if (not is_fixed[i]):
-                weights.lf_accuracy_log_odds[i] += w[w_off]
+                weights.lf_accuracy[i] += w[w_off]
                 w_off += 1
 
         for optional_name in GenerativeModel.optional_names:

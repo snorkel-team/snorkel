@@ -269,7 +269,8 @@ class GenerativeModel(object):
         # NOTE: This only works for dense or CSR-sparse matrices
         idxs = range(m)
         np.random.shuffle(idxs)
-        L = np.copy(L)[idxs, :]
+        L = sparse.csr_matrix(L)
+        L = L[idxs, :]
 
         # Compile factor graph
         self._process_dependency_graph(L, deps)

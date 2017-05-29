@@ -429,6 +429,24 @@ def save_marginals(session, L, marginals, training=True):
     print "Saved %s marginals" % len(marginals)
 
 
-def load_marginals(session, split):
+def load_marginals(session, L, split=0, training=True):
     """Load the marginal probs. for a given split of Candidates"""
-    pass
+    # Load marginal tuples from db
+    marginal_tuples = session.query(
+        Marginal.candidate_id,
+        Marginal.value,
+        Marginal.probability
+    ).filter(Candidate.split == split).\
+    filter(Marginal.training == training).all()
+
+    # Assemble cols 1,...,K of marginals matrix
+    cardinality = L.get_candidate(session, 0).cardinality
+    marginals = np.zeros((L.shape[0], cardinality))
+    for cid, k, p in marginal_tuples:
+        marginals[L.candidate_index[cid], k] = p
+
+    # Add first column
+    row_sums = marginals.sum(axis=1)
+    for i in range(marginals.shape[0]):
+        marginals[i, 0] = 1 - row_sums[i]
+    return marginals

@@ -282,6 +282,7 @@ class GenerativeModel(object):
         # Store info from factor graph
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps, init_class_prior, LF_priors, is_fixed, cardinality)
 
+        variable["isEvidence"] = False
         weight["isFixed"] = True
         weight["initialValue"] = fg.factorGraphs[0].weight_value
 
@@ -328,14 +329,15 @@ class GenerativeModel(object):
                     y = self.fg.factorGraphs[0].var_value[0, 0]
                     lf = self.fg.factorGraphs[0].var_value[0, j + 1]
                     count[j, y, lf] += 1
-        count /= 2 * trials
-        return [{"TP": count[i, 1, 2],
-                 "FP": count[i, 0, 2],
+        count /= self.cardinality * trials
+
+        return [{"TP": count[i, 1, 1],
+                 "FP": count[i, 0, 1],
                  "TN": count[i, 0, 0],
                  "FN": count[i, 1, 0],
-                 "Abstain": count[i, 0, 1] + count[i, 0, 1],
-                 "Accuracy": (count[i, 1, 2] + count[i, 0, 0]) / (count[i, 1, 2] + count[i, 0, 2] + count[i, 1, 0] + count[i, 0, 0]),
-                 "Coverage": count[i, 1, 2] + count[i, 0, 2] + count[i, 1, 0] + count[i, 0, 0]}
+                 "Abstain": count[i, 0, 1] + count[i, 1, 0],
+                 "Accuracy": (count[i, 0, 0] + count[i, 1, 1]) / (count[i, 0, 0] + count[i, 0, 1] + count[i, 1, 0] + count[i, 1, 1]),
+                 "Coverage": count[i, 0, 0] + count[i, 0, 1] + count[i, 1, 0] + count[i, 1, 1]}
                 for i in range(self.nlf)]
 
     def marginals(self, L):
@@ -514,7 +516,6 @@ class GenerativeModel(object):
         #                       cardinality is abstain
         for i in range(m):
             variable[i]['isEvidence'] = False
-            # TODO: Change this to range (0, cardinality)!
             variable[i]['initialValue'] = self.rng.randrange(0, cardinality)
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = cardinality

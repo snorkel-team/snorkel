@@ -199,9 +199,9 @@ class GenerativeModel(object):
     )
 
     def train(self, L, deps=(), LF_acc_priors=None, LF_acc_prior_default=0.7, 
-        labels=None, label_prior=0.95, init_deps=1.0, 
-        init_class_prior=-1.0, epochs=100, step_size=None, decay=0.99, 
-        reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
+        labels=None, label_prior=0.99, init_deps=0.0,
+        init_class_prior=-1.0, epochs=30, step_size=None, decay=1.0,
+        reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=1,
         cardinality=2, timer=None):
         """
         Fits the parameters of the model to a data set. By default, learns a
@@ -244,7 +244,7 @@ class GenerativeModel(object):
         :param timer: stopwatch for profiling, must implement start() and end()
         """
         m, n = L.shape
-        step_size = step_size or 1.0 / L.shape[0]
+        step_size = step_size or 0.0001
         reg_param_scaled = reg_param / L.shape[0]
 
         # Priors for LFs default to fixed prior value
@@ -374,43 +374,63 @@ class GenerativeModel(object):
         if self.weights is None:
             raise ValueError("Must fit model with train() before computing marginal probabilities.")
 
-        marginals = np.ndarray(L.shape[0], dtype=np.float64)
+        if self.cardinality == 2:
+            marginals = np.ndarray(L.shape[0], dtype=np.float64)
 
-        for i in range(L.shape[0]):
-            logp_true = self.weights.class_prior
-            logp_false = -1 * self.weights.class_prior
+            for i in range(L.shape[0]):
+                logp_true = self.weights.class_prior
+                logp_false = -1 * self.weights.class_prior
 
-            l_i = L[i].tocoo()
+                l_i = L[i].tocoo()
 
-            for l_index1 in range(l_i.nnz):
-                data_j, j = l_i.data[l_index1], l_i.col[l_index1]
-                if data_j == 1:
-                    logp_true  += self.weights.lf_accuracy[j]
-                    logp_false -= self.weights.lf_accuracy[j]
-                    logp_true  += self.weights.lf_class_propensity[j]
-                    logp_false -= self.weights.lf_class_propensity[j]
-                elif data_j == -1:
-                    logp_true  -= self.weights.lf_accuracy[j]
-                    logp_false += self.weights.lf_accuracy[j]
-                    logp_true  += self.weights.lf_class_propensity[j]
-                    logp_false -= self.weights.lf_class_propensity[j]
-                else:
-                    ValueError("Illegal value at %d, %d: %d. Must be in {-1, 0, 1}." % (i, j, data_j))
+                for l_index1 in range(l_i.nnz):
+                    data_j, j = l_i.data[l_index1], l_i.col[l_index1]
+                    if data_j == 1:
+                        logp_true  += self.weights.lf_accuracy[j]
+                        logp_false -= self.weights.lf_accuracy[j]
+                        logp_true  += self.weights.lf_class_propensity[j]
+                        logp_false -= self.weights.lf_class_propensity[j]
+                    elif data_j == -1:
+                        logp_true  -= self.weights.lf_accuracy[j]
+                        logp_false += self.weights.lf_accuracy[j]
+                        logp_true  += self.weights.lf_class_propensity[j]
+                        logp_false -= self.weights.lf_class_propensity[j]
+                    else:
+                        ValueError("Illegal value at %d, %d: %d. Must be in {-1, 0, 1}." % (i, j, data_j))
 
-                for l_index2 in range(l_i.nnz):
-                    data_k, k = l_i.data[l_index2], l_i.col[l_index2]
-                    if j != k:
-                        if data_j == -1 and data_k == 1:
-                            logp_true += self.weights.dep_fixing[j, k]
-                        elif data_j == 1 and data_k == -1:
-                            logp_false += self.weights.dep_fixing[j, k]
+                    for l_index2 in range(l_i.nnz):
+                        data_k, k = l_i.data[l_index2], l_i.col[l_index2]
+                        if j != k:
+                            if data_j == -1 and data_k == 1:
+                                logp_true += self.weights.dep_fixing[j, k]
+                            elif data_j == 1 and data_k == -1:
+                                logp_false += self.weights.dep_fixing[j, k]
 
-                        if data_j == 1 and data_k == 1:
-                            logp_true += self.weights.dep_reinforcing[j, k]
-                        elif data_j == -1 and data_k == -1:
-                            logp_false += self.weights.dep_reinforcing[j, k]
+                            if data_j == 1 and data_k == 1:
+                                logp_true += self.weights.dep_reinforcing[j, k]
+                            elif data_j == -1 and data_k == -1:
+                                logp_false += self.weights.dep_reinforcing[j, k]
 
-            marginals[i] = 1 / (1 + np.exp(logp_false - logp_true))
+                marginals[i] = 1 / (1 + np.exp(logp_false - logp_true))
+        else:
+            marginals = np.ndarray((L.shape[0], self.cardinality), dtype=np.float64)
+
+            for i in range(L.shape[0]):
+                # NB: class priors not available for categoricals
+                marginals[i, :] = 0
+
+                l_i = L[i].tocoo()
+
+                for l_index1 in range(l_i.nnz):
+                    data_j, j = l_i.data[l_index1], l_i.col[l_index1]
+                    if (data_j != 0):
+                        if 1 <= data_j <= self.cardinality:
+                            marginals[i, :] -= self.weights.lf_accuracy[j]
+                            marginals[i, data_j - 1] += 2 * self.weights.lf_accuracy[j]
+                        else:
+                            raise ValueError("Illegal value at %d, %d: %d. Must be in 0 to %d." % (i, j, data_j, self.cardinality))
+
+                    # NB: fixing and reinforcing not available for categoricals
 
         return marginals
 

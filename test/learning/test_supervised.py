@@ -25,7 +25,7 @@ class TestSupervised(unittest.TestCase):
 
         # Defines a label matrix
         n = 10000
-        L = sparse.lil_matrix((n, 5))
+        L = sparse.lil_matrix((n, 5), dtype=np.int64)
 
         # Store the supervised gold labels separately
         labels = np.zeros(n)

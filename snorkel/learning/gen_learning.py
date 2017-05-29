@@ -215,15 +215,19 @@ class GenerativeModel(object):
         Results are stored as a member named weights, instance of 
         snorkel.learning.gen_learning.GenerativeModelWeights.
 
-        :param L: labeling function output matrix
+        :param L: M x N label matrix, where there are M candidates labeled
+            by N labeling functions (LFs)
         :param deps: collection of dependencies to include in the model, each 
                      element is a tuple of the form 
                      (LF 1 index, LF 2 index, dependency type),
                      see snorkel.learning.constants
-        :param LF_priors: Priors on the LF accuracies
-        :param LF_prior_default: Default prior for the LFs
+        :param LF_priors: An N-element list of prior probabilities for the LF
+            accuracies
+        :param LF_prior_default: Default prior probability for each LF accuracy;
+            if LF_priors is unset, each LF will have this prior
         :param labels: Optional ground truth labels
-        :param label_prior: Prior on the optional ground truth labels
+        :param label_prior: The prior probability that the ground truth labels
+            (if provided) are correct
         :param init_deps: initial weight for additional dependencies, except
                           class prior (in log scale)
         :param init_class_prior: initial class prior (in log scale), note only
@@ -508,7 +512,6 @@ class GenerativeModel(object):
         #
         for i in range(m):
             variable[i]['isEvidence'] = False
-            # TODO: Change this to range (0, cardinality)!
             variable[i]['initialValue'] = self.rng.randrange(0, 2)
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = 2

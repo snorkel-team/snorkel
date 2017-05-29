@@ -508,18 +508,22 @@ class GenerativeModel(object):
         #
         # Compiles variable matrix
         #
+        # Internal representation:
+        #   True Class:         0 to (cardinality - 1) are the classes
+        #   Labeling functions: 0 to (cardinality - 1) are the classes
+        #                       cardinality is abstain
         for i in range(m):
             variable[i]['isEvidence'] = False
             # TODO: Change this to range (0, cardinality)!
-            variable[i]['initialValue'] = self.rng.randrange(0, 2)
+            variable[i]['initialValue'] = self.rng.randrange(0, cardinality)
             variable[i]["dataType"] = 0
-            variable[i]["cardinality"] = 2
+            variable[i]["cardinality"] = cardinality
 
         for index in range(m, m + m * n):
             variable[index]["isEvidence"] = 1
-            variable[index]["initialValue"] = 1
+            variable[index]["initialValue"] = cardinality # default to abstain
             variable[index]["dataType"] = 0
-            variable[index]["cardinality"] = 3
+            variable[index]["cardinality"] = cardinality + 1
 
         L_coo = L.tocoo()
         for L_index in range(L_coo.nnz):

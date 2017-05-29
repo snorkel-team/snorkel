@@ -20,7 +20,7 @@ class TestSupervised(unittest.TestCase):
     def test_supervised(self):
         # A set of true priors
         tol = 0.1
-        LF_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
+        LF_acc_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
         label_prior = 0.999
 
         # Defines a label matrix
@@ -33,14 +33,14 @@ class TestSupervised(unittest.TestCase):
         for i in range(n):
             y = 2 * random.randint(0, 1) - 1
             # First four LFs always vote, and have decent acc
-            L[i, 0] = y * (2 * (random.random() < LF_priors[0]) - 1)
-            L[i, 1] = y * (2 * (random.random() < LF_priors[1]) - 1)
-            L[i, 2] = y * (2 * (random.random() < LF_priors[2]) - 1)
-            L[i, 3] = y * (2 * (random.random() < LF_priors[3]) - 1)
+            L[i, 0] = y * (2 * (random.random() < LF_acc_priors[0]) - 1)
+            L[i, 1] = y * (2 * (random.random() < LF_acc_priors[1]) - 1)
+            L[i, 2] = y * (2 * (random.random() < LF_acc_priors[2]) - 1)
+            L[i, 3] = y * (2 * (random.random() < LF_acc_priors[3]) - 1)
 
             # The fifth LF is very accurate but has a much smaller coverage
             if random.random() < 0.2:
-                L[i, 4] = y * (2 * (random.random() < LF_priors[4]) - 1)
+                L[i, 4] = y * (2 * (random.random() < LF_acc_priors[4]) - 1)
 
             # The sixth LF is a small supervised set
             if random.random() < 0.1:
@@ -51,7 +51,7 @@ class TestSupervised(unittest.TestCase):
         gen_model = GenerativeModel(lf_propensity=True)
         gen_model.train(
             L,
-            LF_priors=LF_priors,
+            LF_acc_priors=LF_acc_priors,
             labels=labels,
             label_prior=label_prior,
             reg_type=2,
@@ -62,14 +62,14 @@ class TestSupervised(unittest.TestCase):
         accs = [d["Accuracy"] for d in diag]
         print(accs)
         print(gen_model.weights.lf_propensity)
-        priors = np.array(LF_priors + [label_prior])
+        priors = np.array(LF_acc_priors + [label_prior])
         self.assertTrue(np.linalg.norm(accs - priors) < tol)
 
         # Now test that estimated LF accs are not too far off
         print("\nTesting estimated LF accs (TOL=%s)" % tol)
         gen_model.train(
             L,
-            LF_priors=LF_priors,
+            LF_acc_priors=LF_acc_priors,
             labels=labels,
             label_prior=label_prior,
             reg_type=0,
@@ -80,7 +80,7 @@ class TestSupervised(unittest.TestCase):
         coverage = [d["Coverage"] for d in diag]
         print(accs)
         print(coverage)
-        priors = np.array(LF_priors + [label_prior])
+        priors = np.array(LF_acc_priors + [label_prior])
         self.assertTrue(np.all(np.abs(accs - priors) < tol))
         self.assertTrue(np.all(np.abs(coverage - np.array([1, 1, 1, 1, 0.2, 0.1]) < tol)))
 
@@ -93,7 +93,7 @@ class TestSupervised(unittest.TestCase):
         coverage = [d["Coverage"] for d in diag]
         print(accs)
         print(coverage)
-        priors = np.array(LF_priors)
+        priors = np.array(LF_acc_priors)
         self.assertTrue(np.all(np.abs(accs - priors) < tol))
         self.assertTrue(np.all(np.abs(coverage - np.array([1, 1, 1, 1, 0.2]) < tol)))
 
@@ -111,7 +111,7 @@ class TestSupervised(unittest.TestCase):
         coverage = [d["Coverage"] for d in diag]
         print(accs)
         print(coverage)
-        priors = np.array(LF_priors + [label_prior])
+        priors = np.array(LF_acc_priors + [label_prior])
         self.assertTrue(np.all(np.abs(accs - priors) < tol))
         self.assertTrue(np.all(np.abs(coverage - np.array([1, 1, 1, 1, 0.2, 0.1]) < tol)))
 
@@ -121,7 +121,7 @@ class TestSupervised(unittest.TestCase):
         bad_prior = [0.9, 0.8, 0.7, 0.6, 0.5]
         gen_model.train(
             L,
-            LF_priors=bad_prior,
+            LF_acc_priors=bad_prior,
             reg_type=0,
         )
         diag = gen_model.diagnostics()
@@ -129,7 +129,7 @@ class TestSupervised(unittest.TestCase):
         coverage = [d["Coverage"] for d in diag]
         print(accs)
         print(coverage)
-        priors = np.array(LF_priors)
+        priors = np.array(LF_acc_priors)
         self.assertTrue(np.all(np.abs(accs - priors) < tol))
 
         # Test without supervised, and (intentionally) bad priors
@@ -137,7 +137,7 @@ class TestSupervised(unittest.TestCase):
         gen_model = GenerativeModel(lf_propensity=True)
         gen_model.train(
             L,
-            LF_priors=bad_prior,
+            LF_acc_priors=bad_prior,
             reg_type=2,
             reg_param=100 * n,
         )

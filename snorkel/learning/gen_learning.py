@@ -122,9 +122,6 @@ class GenerativeModelWeights(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, sparse.lil_matrix((n, n), dtype=np.float64))
 
-    def lf_accuracy(self):
-	    return 1.0 / (1.0 + np.exp(-2 * self.lf_accuracy_log_odds))
-
     def is_sign_sparsistent(self, other, threshold=0.1):
         if self.n != other.n:
             raise ValueError("Dimension mismatch. %d versus %d" % (self.n, other.n))

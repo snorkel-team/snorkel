@@ -529,15 +529,24 @@ class GenerativeModel(object):
         for L_index in range(L_coo.nnz):
             data, i, j = L_coo.data[L_index], L_coo.row[L_index], L_coo.col[L_index]
             index = m + n * i + j
-            if data == 1:
-                variable[index]["initialValue"] = 2
-            elif data == 0:
-                variable[index]["initialValue"] = 1
-            elif data == -1:
-                variable[index]["initialValue"] = 0
+            if (cardinality == 2):
+                if data == 1:
+                    variable[index]["initialValue"] = 1
+                elif data == 0:
+                    variable[index]["initialValue"] = 2
+                elif data == -1:
+                    variable[index]["initialValue"] = 0
+                else:
+                    raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
+                                     "Valid values are 1, 0, and -1. " % (i, j, data))
             else:
-                raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
-                                 "Valid values are 1, 0, and -1. " % (i, j, data))
+                if data == 0:
+                    variable[index]["initialValue"] = cardinality
+                elif data <= cardinality:
+                    variable[index]["initialValue"] = data - 1
+                else:
+                    raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
+                                     "Valid values are 0 to %d. " % (i, j, data, cardinality))
 
         #
         # Compiles factor and ftv matrices

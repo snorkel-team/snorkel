@@ -96,13 +96,13 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
 
 class Annotator(UDFRunner):
     """Abstract class for annotating candidates and persisting these annotations to DB"""
-    def __init__(self, annotation_class, annotation_key_class, f):
+    def __init__(self, annotation_class, annotation_key_class, f_gen):
         self.annotation_class     = annotation_class
         self.annotation_key_class = annotation_key_class
         super(Annotator, self).__init__(AnnotatorUDF,
                                         annotation_class=annotation_class,
                                         annotation_key_class=annotation_key_class,
-                                        f=f)
+                                        f_gen=f_gen)
 
     def apply(self, split, key_group=0, replace_key_set=True, **kwargs):
 
@@ -349,7 +349,7 @@ class LabelAnnotator(Annotator):
                     yield lf.__name__, 0
                 elif label in c.values:
                     if c.cardinality > 2:
-                        yield lf.__name__, c.values.index(label)
+                        yield lf.__name__, c.values.index(label) + 1
                     # Note: Would be nice to not special-case here, but for
                     # consistency we leave binary LF range as {-1,0,1}
                     else:
@@ -384,7 +384,7 @@ def save_marginals(session, L, marginals, training=True):
     marginal_tuples = marginals
 
     # NOTE: This will delete all existing marginals of type `training`
-    session.query(Marginal).filter(Marginal.training = training).\
+    session.query(Marginal).filter(Marginal.training == training).\
         delete(synchronize_session='fetch')
 
     # Prepare bulk INSERT query

@@ -319,9 +319,10 @@ class GenerativeModel(object):
 
         burnin = 500
         trials = 5000
-        count = np.zeros((self.nlf, self.cardinality, self.cardinality + 1))
+        cardinality = self.cardinality
+        count = np.zeros((self.nlf, self.cardinality, cardinality + 1))
 
-        for true_label in range(self.cardinality):
+        for true_label in range(cardinality):
             self.fg.factorGraphs[0].var_value[0, 0] = true_label
             self.fg.factorGraphs[0].inference(burnin, 0, True)
             for i in range(trials):
@@ -330,9 +331,9 @@ class GenerativeModel(object):
                     y = self.fg.factorGraphs[0].var_value[0, 0]
                     lf = self.fg.factorGraphs[0].var_value[0, j + 1]
                     count[j, y, lf] += 1
-        count /= self.cardinality * trials
+        count /= cardinality * trials
 
-        if self.cardinality == 2:
+        if cardinality == 2:
             return [{"TP": count[i, 1, 1],
                      "FP": count[i, 0, 1],
                      "TN": count[i, 0, 0],

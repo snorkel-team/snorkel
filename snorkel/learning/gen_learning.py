@@ -215,8 +215,8 @@ class GenerativeModel(object):
         Results are stored as a member named weights, instance of 
         snorkel.learning.gen_learning.GenerativeModelWeights.
 
-        :param L: M x N label matrix, where there are M candidates labeled
-            by N labeling functions (LFs)
+        :param L: M x N csr_AnnotationMatrix-type label matrix, where there are 
+            M candidates labeled by N labeling functions (LFs)
         :param deps: collection of dependencies to include in the model, each 
                      element is a tuple of the form 
                      (LF 1 index, LF 2 index, dependency type),
@@ -268,11 +268,29 @@ class GenerativeModel(object):
             LF_priors.append(label_prior)
             n += 1
 
+        # Shuffle the data points
+        # NOTE: This only works for dense or CSR-sparse matrices
+        idxs = range(m)
+        np.random.shuffle(idxs)
+        L = np.copy(L)[idxs, :]
+
+        # Compile factor graph
         self._process_dependency_graph(L, deps)
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, init_deps, init_class_prior, LF_priors, is_fixed)
-        fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
-                       reg_param=reg_param_scaled, regularization=reg_type, truncation=truncation,
-                       quiet=(not verbose), verbose=verbose, learn_non_evidence=True, burn_in=burn_in)
+        weight, variable, factor, ftv, domain_mask, n_edges =\
+            self._compile(L, init_deps, init_class_prior, LF_priors, is_fixed)
+        fg = NumbSkull(
+            n_inference_epoch=0,
+            n_learning_epoch=epochs, 
+            stepsize=step_size,
+            decay=decay,
+            reg_param=reg_param_scaled,
+            regularization=reg_type,
+            truncation=truncation,
+            quiet=(not verbose),
+            verbose=verbose, 
+            learn_non_evidence=True,
+            burn_in=burn_in
+        )
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
 
         if timer is not None:
@@ -283,7 +301,9 @@ class GenerativeModel(object):
         self._process_learned_weights(L, fg, LF_priors, is_fixed)
 
         # Store info from factor graph
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps, init_class_prior, LF_priors, is_fixed)
+        weight, variable, factor, ftv, domain_mask, n_edges =\
+            self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps,
+                init_class_prior, LF_priors, is_fixed)
 
         weight["isFixed"] = True
         weight["initialValue"] = fg.factorGraphs[0].weight_value

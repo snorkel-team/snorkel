@@ -203,7 +203,7 @@ class GenerativeModel(object):
 
     def train(self, L, deps=(), LF_priors=None, LF_prior_default=0.7,
         labels=None, label_prior=0.95, init_deps=1.0,
-        init_class_prior=-1.0, epochs=10, step_size=None, decay=0.99,
+        init_class_prior=-1.0, epochs=100, step_size=None, decay=0.99,
         reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
         cardinality=2, timer=None):
         """
@@ -286,6 +286,13 @@ class GenerativeModel(object):
         weight["isFixed"] = True
         weight["initialValue"] = fg.factorGraphs[0].weight_value
 
+        print(weight)
+        print(variable)
+        print(factor)
+        print(ftv)
+        print(domain_mask)
+        print(n_edges)
+
         fg.factorGraphs = []
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
 
@@ -299,14 +306,15 @@ class GenerativeModel(object):
         functions. For each labeling function, estimates of the following
         are provided:
 
+            Abstain
+            Accuracy
+            Coverage
+
+            [Following are only available for binary tasks]
             True  Positive (TP)
             False Positive (FP)
             True  Negative (TN)
             False Negative (FN)
-            Abstain
-
-            Accuracy
-            Coverage
 
         WARNING: This uses Gibbs sampling to estimate these values. This will
                  tend to mix poorly when there are many very accurate labeling
@@ -331,14 +339,20 @@ class GenerativeModel(object):
                     count[j, y, lf] += 1
         count /= self.cardinality * trials
 
-        return [{"TP": count[i, 1, 1],
-                 "FP": count[i, 0, 1],
-                 "TN": count[i, 0, 0],
-                 "FN": count[i, 1, 0],
-                 "Abstain": count[i, 0, 1] + count[i, 1, 0],
-                 "Accuracy": (count[i, 0, 0] + count[i, 1, 1]) / (count[i, 0, 0] + count[i, 0, 1] + count[i, 1, 0] + count[i, 1, 1]),
-                 "Coverage": count[i, 0, 0] + count[i, 0, 1] + count[i, 1, 0] + count[i, 1, 1]}
-                for i in range(self.nlf)]
+        if cardinality == 2:
+            return [{"TP": count[i, 1, 1],
+                     "FP": count[i, 0, 1],
+                     "TN": count[i, 0, 0],
+                     "FN": count[i, 1, 0],
+                     "Abstain": count[i, 0, 2] + count[i, 1, 2],
+                     "Accuracy": (count[i, 0, 0] + count[i, 1, 1]) / (count[i, 0, 0] + count[i, 0, 1] + count[i, 1, 0] + count[i, 1, 1]),
+                     "Coverage": count[i, 0, 0] + count[i, 0, 1] + count[i, 1, 0] + count[i, 1, 1]}
+                    for i in range(self.nlf)]
+        else:
+            return [{"Abstain": sum([count[i, j, 2] for j in range(cardinality)]),
+                     "Accuracy": sum([count[i, j, j] for j in range(cardinality)]) / sum([count[i, j, k] for j in range(cardinality) for k in range(cardinality)]),
+                     "Coverage": 1 - sum([count[i, j, 2] for j in range(cardinality)])}
+                    for i in range(self.nlf)]
 
     def marginals(self, L):
         if self.weights is None:

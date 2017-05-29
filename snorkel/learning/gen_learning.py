@@ -115,7 +115,7 @@ class GenerativeModelWeights(object):
     def __init__(self, n):
         self.n = n
         self.class_prior = 0.0
-        self.lf_accuracy_log_odds = np.zeros(n, dtype=np.float64)
+        self.lf_accuracy = np.zeros(n, dtype=np.float64)
         for optional_name in GenerativeModel.optional_names:
             setattr(self, optional_name, np.zeros(n, dtype=np.float64))
 
@@ -131,7 +131,7 @@ class GenerativeModelWeights(object):
 
         for i in range(self.n):
             if not self._weight_is_sign_sparsitent(
-                    self.lf_accuracy_log_odds[i], other.lf_accuracy_log_odds[i], threshold):
+                    self.lf_accuracy[i], other.lf_accuracy[i], threshold):
                 return False
 
         for name in GenerativeModel.optional_names:
@@ -372,13 +372,13 @@ class GenerativeModel(object):
             for l_index1 in range(l_i.nnz):
                 data_j, j = l_i.data[l_index1], l_i.col[l_index1]
                 if data_j == 1:
-                    logp_true  += self.weights.lf_accuracy_log_odds[j]
-                    logp_false -= self.weights.lf_accuracy_log_odds[j]
+                    logp_true  += self.weights.lf_accuracy[j]
+                    logp_false -= self.weights.lf_accuracy[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
                 elif data_j == -1:
-                    logp_true  -= self.weights.lf_accuracy_log_odds[j]
-                    logp_false += self.weights.lf_accuracy_log_odds[j]
+                    logp_true  -= self.weights.lf_accuracy[j]
+                    logp_false += self.weights.lf_accuracy[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
                 else:
@@ -700,15 +700,15 @@ class GenerativeModel(object):
         else:
             w_off = 0
 
-        weights.lf_accuracy_log_odds = np.zeros((n,))
+        weights.lf_accuracy = np.zeros((n,))
         for i in range(n):
             # Prior on LF acc
             if (LF_acc_priors[i] != 0.5):
-                weights.lf_accuracy_log_odds[i] += w[w_off]
+                weights.lf_accuracy[i] += w[w_off]
                 w_off += 1
             # Learnable acc for LF
             if (not is_fixed[i]):
-                weights.lf_accuracy_log_odds[i] += w[w_off]
+                weights.lf_accuracy[i] += w[w_off]
                 w_off += 1
 
         for optional_name in GenerativeModel.optional_names:

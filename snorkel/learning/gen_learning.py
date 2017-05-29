@@ -339,7 +339,7 @@ class GenerativeModel(object):
                     count[j, y, lf] += 1
         count /= self.cardinality * trials
 
-        if cardinality == 2:
+        if self.cardinality == 2:
             return [{"TP": count[i, 1, 1],
                      "FP": count[i, 0, 1],
                      "TN": count[i, 0, 0],

@@ -8,6 +8,8 @@ import numpy as np
 import random
 import scipy.sparse as sparse
 from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
+from copy import copy
+from pandas import DataFrame, Series
 
 
 class NaiveBayes(NoiseAwareModel):
@@ -114,15 +116,12 @@ class GenerativeModelWeights(object):
     def __init__(self, n):
         self.n = n
         self.class_prior = 0.0
-        self.lf_accuracy_log_odds = np.zeros(n, dtype=np.float64)
+        self.lf_accuracy = np.zeros(n, dtype=np.float64)
         for optional_name in GenerativeModel.optional_names:
             setattr(self, optional_name, np.zeros(n, dtype=np.float64))
 
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, sparse.lil_matrix((n, n), dtype=np.float64))
-
-    def lf_accuracy(self):
-	    return 1.0 / (1.0 + np.exp(-self.lf_accuracy_log_odds)) 
 
     def is_sign_sparsistent(self, other, threshold=0.1):
         if self.n != other.n:
@@ -133,7 +132,7 @@ class GenerativeModelWeights(object):
 
         for i in range(self.n):
             if not self._weight_is_sign_sparsitent(
-                    self.lf_accuracy_log_odds[i], other.lf_accuracy_log_odds[i], threshold):
+                    self.lf_accuracy[i], other.lf_accuracy[i], threshold):
                 return False
 
         for name in GenerativeModel.optional_names:
@@ -170,11 +169,14 @@ class GenerativeModel(object):
 
     :param class_prior: whether to include class label prior factors
     :param lf_prior: whether to include labeling function prior factors
-    :param lf_propensity: whether to include labeling function propensity factors
-    :param lf_class_propensity: whether to include class-specific labeling function propensity factors
+    :param lf_propensity: whether to include labeling function propensity 
+        factors
+    :param lf_class_propensity: whether to include class-specific labeling 
+        function propensity factors
     :param seed: seed for initializing state of Numbskull variables
     """
-    def __init__(self, class_prior=False, lf_prior=False, lf_propensity=False, lf_class_propensity=False, seed=271828):
+    def __init__(self, class_prior=False, lf_prior=False, lf_propensity=False, 
+        lf_class_propensity=False, seed=271828):
         self.class_prior = class_prior
         self.lf_prior = lf_prior
         self.lf_propensity = lf_propensity
@@ -184,55 +186,188 @@ class GenerativeModel(object):
         self.rng = random.Random()
         self.rng.seed(seed)
 
-    # These names of factor types are for the convenience of several methods that perform the same operations over
-    # multiple types, but this class's behavior is not fully specified here. Other methods, such as marginals(),
-    # as well as maps defined within methods, require manual adjustments to implement changes.
+    # These names of factor types are for the convenience of several methods 
+    # that perform the same operations over multiple types, but this class's 
+    # behavior is not fully specified here. Other methods, such as marginals(),
+    # as well as maps defined within methods, require manual adjustments to 
+    # implement changes.
     #
-    # These names are also used by other related classes, such as GenerativeModelParameters
+    # These names are also used by other related classes, such as 
+    # GenerativeModelParameters
     optional_names = ('lf_prior', 'lf_propensity', 'lf_class_propensity')
-    dep_names = ('dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive')
+    dep_names = (
+        'dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive'
+    )
 
-    def train(self, L, y=None, deps=(), init_acc = 1.0, init_deps=1.0, init_class_prior=-1.0, epochs=10, step_size=None, decay=0.99, reg_param=0.1, reg_type=2, verbose=False,
-              truncation=10, burn_in=5, timer=None):
+    def train(self, L, deps=(), LF_acc_priors=None, LF_acc_prior_default=0.7, 
+        labels=None, label_prior=0.99, init_deps=0.0,
+        init_class_prior=-1.0, epochs=30, step_size=None, decay=1.0,
+        reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
+        timer=None):
         """
-        Fits the parameters of the model to a data set. By default, learns a conditionally independent model.
-        Additional unary dependencies can be set to be included in the constructor. Additional pairwise and higher-order
-        dependencies can be included as an argument.
+        Fits the parameters of the model to a data set. By default, learns a 
+        conditionally independent model. Additional unary dependencies can be 
+        set to be included in the constructor. Additional pairwise and 
+        higher-order dependencies can be included as an argument.
 
-        Results are stored as a member named weights, instance of snorkel.learning.gen_learning.GenerativeModelWeights.
+        Results are stored as a member named weights, instance of 
+        snorkel.learning.gen_learning.GenerativeModelWeights.
 
-        :param L: labeling function output matrix
-        :param y: optional ground truth labels
-        :param deps: collection of dependencies to include in the model, each element is a tuple of the form
-                     (LF 1 index, LF 2 index, dependency type), see snorkel.learning.constants
-        :param init_acc: initial weight for accuracy dependencies (in log scale)
-        :param init_deps: initial weight for additional dependencies, except class prior (in log scale)
-        :param init_class_prior: initial class prior (in log scale), note only used if class_prior=True in constructor
+        :param L: M x N csr_AnnotationMatrix-type label matrix, where there are 
+            M candidates labeled by N labeling functions (LFs)
+        :param deps: collection of dependencies to include in the model, each 
+                     element is a tuple of the form 
+                     (LF 1 index, LF 2 index, dependency type),
+                     see snorkel.learning.constants
+        :param LF_acc_priors: An N-element list of prior probabilities for the LF
+            accuracies
+        :param LF_acc_prior_default: Default prior probability for each LF accuracy;
+            if LF_acc_priors is unset, each LF will have this prior
+        :param labels: Optional ground truth labels
+        :param label_prior: The prior probability that the ground truth labels
+            (if provided) are correct
+        :param init_deps: initial weight for additional dependencies, except
+                          class prior (in log scale)
+        :param init_class_prior: initial class prior (in log scale), note only
+                                 used if class_prior=True in constructor
         :param epochs: number of training epochs
         :param step_size: gradient step size, default is 1 / L.shape[0]
-        :param decay: multiplicative decay of step size, step_size_(t+1) = step_size_(t) * decay
+        :param decay: multiplicative decay of step size, 
+                      step_size_(t+1) = step_size_(t) * decay
         :param reg_param: regularization strength
         :param reg_type: 1 = L1 regularization, 2 = L2 regularization
         :param verbose: whether to write debugging info to stdout
-        :param truncation: number of iterations between truncation step for L1 regularization
-        :param burn_in: number of burn-in samples to take before beginning learning
+        :param truncation: number of iterations between truncation step for L1 
+                           regularization
+        :param burn_in: number of burn-in samples to take before beginning 
+                        learning
         :param timer: stopwatch for profiling, must implement start() and end()
         """
-
-        step_size = step_size or 1.0 / L.shape[0]
+        m, n = L.shape
+        step_size = step_size or 0.0001
         reg_param_scaled = reg_param / L.shape[0]
+
+        # Priors for LFs default to fixed prior value
+        # NOTE: Setting default != 0.5 creates a (fixed) factor which increases
+        # runtime (by ~0.5x that of a non-fixed factor)...
+        if LF_acc_priors is None:
+            LF_acc_priors = [LF_acc_prior_default for _ in range(n)]
+        else:
+            LF_acc_priors = list(copy(LF_acc_priors))
+
+        # LF weights are un-fixed
+        is_fixed = [False for _ in range(n)]
+
+        # If supervised labels are provided, add them as a fixed LF with prior
+        # Note: For large L this column stack operation could be very
+        # inefficient, can consider refactoring...
+        if labels is not None:
+            labels = labels.reshape(m, 1)
+            L = sparse.hstack([L.copy(), labels])
+            is_fixed.append(True)
+            LF_acc_priors.append(label_prior)
+            n += 1
+
+        # Shuffle the data points
+        idxs = range(m)
+        np.random.shuffle(idxs)
+        if not isinstance(L, sparse.csr_matrix):
+            L = sparse.csr_matrix(L)
+        L = L[idxs, :]
+
+        # Compile factor graph
         self._process_dependency_graph(L, deps)
-        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(L, y, init_acc, init_deps, init_class_prior)
-        fg = NumbSkull(n_inference_epoch=0, n_learning_epoch=epochs, stepsize=step_size, decay=decay,
-                       reg_param=reg_param_scaled, regularization=reg_type, truncation=truncation,
-                       quiet=(not verbose), verbose=verbose, learn_non_evidence=True, burn_in=burn_in)
+        weight, variable, factor, ftv, domain_mask, n_edges =\
+            self._compile(L, init_deps, init_class_prior, LF_acc_priors, is_fixed)
+        fg = NumbSkull(
+            n_inference_epoch=0,
+            n_learning_epoch=epochs, 
+            stepsize=step_size,
+            decay=decay,
+            reg_param=reg_param_scaled,
+            regularization=reg_type,
+            truncation=truncation,
+            quiet=(not verbose),
+            verbose=verbose, 
+            learn_non_evidence=True,
+            burn_in=burn_in
+        )
         fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
+
         if timer is not None:
             timer.start()
         fg.learning(out=False)
         if timer is not None:
             timer.end()
-        self._process_learned_weights(L, fg)
+        self._process_learned_weights(L, fg, LF_acc_priors, is_fixed)
+
+        # Store info from factor graph
+        weight, variable, factor, ftv, domain_mask, n_edges =\
+            self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps,
+                init_class_prior, LF_acc_priors, is_fixed)
+
+        weight["isFixed"] = True
+        weight["initialValue"] = fg.factorGraphs[0].weight_value
+
+        fg.factorGraphs = []
+        fg.loadFactorGraph(weight, variable, factor, ftv, domain_mask, n_edges)
+
+        self.fg = fg
+        self.nlf = n
+
+    def learned_lf_stats(self):
+        """
+        Provides a summary of what the model has learned about the labeling
+        functions. For each labeling function, estimates of the following 
+        are provided:
+
+            True  Positive (TP)
+            False Positive (FP)
+            True  Negative (TN)
+            False Negative (FN)
+            Abstain
+
+            Accuracy
+            Coverage
+
+        WARNING: This uses Gibbs sampling to estimate these values. This will
+                 tend to mix poorly when there are many very accurate labeling
+                 functions. In this case, this function will assume that the
+                 classes are approximately balanced.
+        """
+        if self.fg is None:
+            raise ValueError("Must fit model with train() before computing diagnostics.")
+
+        burnin = 500
+        trials = 5000
+        count = np.zeros((self.nlf, 2, 3))
+
+        for true_label in range(2):
+            self.fg.factorGraphs[0].var_value[0, 0] = true_label
+            self.fg.factorGraphs[0].inference(burnin, 0, True)
+            for i in range(trials):
+                self.fg.factorGraphs[0].inference(0, 1, True)
+                for j in range(self.nlf):
+                    y = self.fg.factorGraphs[0].var_value[0, 0]
+                    lf = self.fg.factorGraphs[0].var_value[0, j + 1]
+                    count[j, y, lf] += 1
+        count /= 2 * trials
+
+        # Compute summary stats to return to user
+        stats = []
+        for i in range(self.nlf):
+            tp = count[i, 1, 2]
+            fp = count[i, 0, 2]
+            tn = count[i, 0, 0]
+            fn = count[i, 1, 0]
+            abstain = count[i, 0, 1] + count[i, 1, 1]
+            stats.append({
+                "Precision": tp / (tp + fp),
+                "Recall": tp / count[i, 1, :].sum(),
+                "Accuracy": (tp + tn) / (1 - abstain),
+                "Coverage": 1 - abstain
+                })
+        return DataFrame(stats)
 
     def marginals(self, L):
         if self.weights is None:
@@ -249,13 +384,13 @@ class GenerativeModel(object):
             for l_index1 in range(l_i.nnz):
                 data_j, j = l_i.data[l_index1], l_i.col[l_index1]
                 if data_j == 1:
-                    logp_true  += self.weights.lf_accuracy_log_odds[j]
-                    logp_false -= self.weights.lf_accuracy_log_odds[j]
+                    logp_true  += self.weights.lf_accuracy[j]
+                    logp_false -= self.weights.lf_accuracy[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
                 elif data_j == -1:
-                    logp_true  -= self.weights.lf_accuracy_log_odds[j]
-                    logp_false += self.weights.lf_accuracy_log_odds[j]
+                    logp_true  -= self.weights.lf_accuracy[j]
+                    logp_false += self.weights.lf_accuracy[j]
                     logp_true  += self.weights.lf_class_propensity[j]
                     logp_false -= self.weights.lf_class_propensity[j]
                 else:
@@ -329,7 +464,7 @@ class GenerativeModel(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
-    def _compile(self, L, y, init_acc, init_deps, init_class_prior):
+    def _compile(self, L, init_deps, init_class_prior, LF_acc_priors, is_fixed):
         """
         Compiles a generative model based on L and the current labeling function dependencies.
         """
@@ -337,7 +472,11 @@ class GenerativeModel(object):
 
         n_weights = 1 if self.class_prior else 0
 
-        n_weights += n
+        nPrior = sum([i != 0.5 for i in LF_acc_priors])
+        nUnFixed = sum([not i for i in is_fixed])
+
+        n_weights += nPrior
+        n_weights += nUnFixed
         for optional_name in GenerativeModel.optional_names:
             if getattr(self, optional_name):
                 n_weights += n
@@ -348,7 +487,7 @@ class GenerativeModel(object):
         n_factors = m * n_weights
 
         n_edges = 1 if self.class_prior else 0
-        n_edges += 2 * n
+        n_edges += 2 * (nPrior + nUnFixed)
         if self.lf_prior:
             n_edges += n
         if self.lf_propensity:
@@ -376,11 +515,22 @@ class GenerativeModel(object):
         else:
             w_off = 0
 
-        for i in range(w_off, w_off + n):
-            weight[i]['isFixed'] = False
-            weight[i]['initialValue'] = np.float64(init_acc)
+        for i in range(n):
+            # Prior on LF acc
+            if (LF_acc_priors[i] != 0.5):
+                weight[w_off]['isFixed'] = True
+                weight[w_off]['initialValue'] = np.float64(0.5 * np.log(LF_acc_priors[i] / (1 - LF_acc_priors[i])))
+                w_off += 1
+            # Learnable acc for LF
+            if (not is_fixed[i]):
+                weight[w_off]['isFixed'] = False
 
-        w_off += n
+                # Note: Because we're not doing exact gradient descent, don't
+                # need to add any random noise to initial values here
+                # Setting to 0 = setting to prior value
+                weight[w_off]['initialValue'] = np.float64(0)
+                w_off += 1
+
         for i in range(w_off, weight.shape[0]):
             weight[i]['isFixed'] = False
             weight[i]['initialValue'] = np.float64(init_deps)
@@ -390,8 +540,8 @@ class GenerativeModel(object):
         # Compiles variable matrix
         #
         for i in range(m):
-            variable[i]['isEvidence'] = False if (y is None or i not in y) else True
-            variable[i]['initialValue'] = self.rng.randrange(0, 2) if (y is None or i not in y) else 1 if y[i] == 1 else 0
+            variable[i]['isEvidence'] = False
+            variable[i]['initialValue'] = self.rng.randrange(0, 2)
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = 2
 
@@ -440,8 +590,9 @@ class GenerativeModel(object):
 
 
         # Factors over labeling function outputs
+        nfactors_for_lf = [((LF_acc_priors[i] != 0.5) + (not is_fixed[i])) for i in range(n)]
         f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off, "DP_GEN_LF_ACCURACY",
-                                                             (lambda m, n, i, j: i, lambda m, n, i, j: m + n * i + j))
+                                                             (lambda m, n, i, j: i, lambda m, n, i, j: m + n * i + j), nfactors_for_lf)
 
         optional_name_map = {
             'lf_prior':
@@ -496,28 +647,36 @@ class GenerativeModel(object):
 
         return weight, variable, factor, ftv, domain_mask, n_edges
 
-    def _compile_output_factors(self, L, factors, factors_offset, ftv, ftv_offset, weight_offset, factor_name, vid_funcs):
+    def _compile_output_factors(self, L, factors, factors_offset, ftv, ftv_offset, weight_offset, factor_name, vid_funcs, nfactors_for_lf=None):
         """
         Compiles factors over the outputs of labeling functions, i.e., for which there is one weight per labeling
         function and one factor per labeling function-candidate pair.
         """
         m, n = L.shape
 
+        if nfactors_for_lf == None:
+            nfactors_for_lf = [1 for i in range(n)]
+
+        factors_index = factors_offset
+        ftv_index = ftv_offset
         for i in range(m):
+            w_off = weight_offset
             for j in range(n):
-                factors_index = factors_offset + n * i + j
-                ftv_index = ftv_offset + len(vid_funcs) * (n * i + j)
+                for k in range(nfactors_for_lf[j]):
+                    factors[factors_index]["factorFunction"] = FACTORS[factor_name]
+                    factors[factors_index]["weightId"] = w_off
+                    factors[factors_index]["featureValue"] = 1
+                    factors[factors_index]["arity"] = len(vid_funcs)
+                    factors[factors_index]["ftv_offset"] = ftv_index
 
-                factors[factors_index]["factorFunction"] = FACTORS[factor_name]
-                factors[factors_index]["weightId"] = weight_offset + j
-                factors[factors_index]["featureValue"] = 1
-                factors[factors_index]["arity"] = len(vid_funcs)
-                factors[factors_index]["ftv_offset"] = ftv_index
+                    factors_index += 1
+                    w_off += 1
 
-                for i_var, vid_func in enumerate(vid_funcs):
-                    ftv[ftv_index + i_var]["vid"] = vid_func(m, n, i, j)
+                    for vid_func in vid_funcs:
+                        ftv[ftv_index]["vid"] = vid_func(m, n, i, j)
+                        ftv_index += 1
 
-        return factors_offset + m * n, ftv_offset + len(vid_funcs) * m * n, weight_offset + n
+        return factors_index, ftv_index, w_off
 
     def _compile_dep_factors(self, L, factors, factors_offset, ftv, ftv_offset, weight_offset, j, k, factor_name, vid_funcs):
         """
@@ -541,7 +700,7 @@ class GenerativeModel(object):
 
         return factors_offset + m, ftv_offset + len(vid_funcs) * m, weight_offset + 1
 
-    def _process_learned_weights(self, L, fg):
+    def _process_learned_weights(self, L, fg, LF_acc_priors, is_fixed):
         _, n = L.shape
 
         w = fg.getFactorGraph().getWeights()
@@ -553,8 +712,16 @@ class GenerativeModel(object):
         else:
             w_off = 0
 
-        weights.lf_accuracy_log_odds = np.copy(w[w_off:w_off + n])
-        w_off += n
+        weights.lf_accuracy = np.zeros((n,))
+        for i in range(n):
+            # Prior on LF acc
+            if (LF_acc_priors[i] != 0.5):
+                weights.lf_accuracy[i] += w[w_off]
+                w_off += 1
+            # Learnable acc for LF
+            if (not is_fixed[i]):
+                weights.lf_accuracy[i] += w[w_off]
+                w_off += 1
 
         for optional_name in GenerativeModel.optional_names:
             if getattr(self, optional_name):

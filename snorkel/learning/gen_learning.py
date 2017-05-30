@@ -356,11 +356,11 @@ class GenerativeModel(object):
         # Compute summary stats to return to user
         stats = []
         for i in range(self.nlf):
-            tp = count[i, 1, 1]
-            fp = count[i, 0, 1]
+            tp = count[i, 1, 2]
+            fp = count[i, 0, 2]
             tn = count[i, 0, 0]
             fn = count[i, 1, 0]
-            abstain = count[i, 0, 2] + count[i, 1, 2]
+            abstain = count[i, 0, 1] + count[i, 1, 1]
             stats.append({
                 "Precision": tp / (tp + fp),
                 "Recall": tp / count[i, 1, :].sum(),

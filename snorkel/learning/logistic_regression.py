@@ -153,9 +153,15 @@ class LogisticRegression(TFNoiseAwareModel):
         self.seed       = seed
         self._build()
         # Get training indices
-        train_idxs = LabelBalancer(training_marginals).get_train_idxs(rebalance)
-        X_train = X[train_idxs, :]
-        y_train = np.ravel(training_marginals)[train_idxs]
+        # Note: Currently we only do label balancing for binary setting
+        if self.k == 2:
+            train_idxs = LabelBalancer(training_marginals).\
+                get_train_idxs(rebalance)
+            X_train = X[train_idxs, :]
+            y_train = np.ravel(training_marginals)[train_idxs]
+        else:
+            X_train = X
+            y_train = training_marginals
         # Run mini-batch SGD
         n = X_train.shape[0]
         batch_size = min(batch_size, n)

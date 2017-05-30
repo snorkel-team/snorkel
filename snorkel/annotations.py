@@ -160,12 +160,12 @@ class AnnotatorUDF(UDF):
         self.annotation_class     = annotation_class
         self.annotation_key_class = annotation_key_class
 
-        # AnnotatorUDF relies on a generator function which yields annotations
+        # AnnotatorUDF relies on a *generator function* which yields annotations
         # given a candidate input
-        if inspect.isgeneratorfunction(f_gen):
-            self.anno_generator = f_gen
-        else:
-            raise ValueError("AnnotatorUDF requires a generator function.")
+        # NB: inspect.isgeneratorfunction is not sufficient to check if f_ger
+        # is a generator (does not work with fns that wrap gen, e.g. partial)
+        # So no check here at the moment...
+        self.anno_generator = f_gen
 
         # For caching key ids during the reduce step
         self.key_cache = {}

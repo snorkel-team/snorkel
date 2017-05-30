@@ -96,6 +96,7 @@ script:
   # Run test modules
   - python test/learning/test_gen_learning.py
   - python test/learning/test_supervised.py
+  - python test/learning/test_categorical.py
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

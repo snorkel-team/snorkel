@@ -273,9 +273,12 @@ class GenerativeModel(object):
                     for i in range(self.nlf)]
 
     def marginals(self, L):
+        m, n = L.shape
         if self.weights is None:
-            raise ValueError("Must fit model with train() before computing marginal probabilities.")
+            raise ValueError("""Must fit model with train() before computing 
+                marginal probabilities.""")
 
+        # Binary classification setting
         if self.cardinality == 2:
             marginals = np.ndarray(L.shape[0], dtype=np.float64)
 
@@ -298,7 +301,8 @@ class GenerativeModel(object):
                         logp_true  += self.weights.lf_class_propensity[j]
                         logp_false -= self.weights.lf_class_propensity[j]
                     else:
-                        ValueError("Illegal value at %d, %d: %d. Must be in {-1, 0, 1}." % (i, j, data_j))
+                        ValueError("""Illegal value at %d, %d: %d.
+                            Must be in {-1, 0, 1}.""" % (i, j, data_j))
 
                     for l_index2 in range(l_i.nnz):
                         data_k, k = l_i.data[l_index2], l_i.col[l_index2]
@@ -314,25 +318,28 @@ class GenerativeModel(object):
                                 logp_false += self.weights.dep_reinforcing[j, k]
 
                 marginals[i] = 1 / (1 + np.exp(logp_false - logp_true))
+
+        # Categorical setting
         else:
-            marginals = np.ndarray((L.shape[0], self.cardinality), dtype=np.float64)
-
-            for i in range(L.shape[0]):
-                # NB: class priors not available for categoricals
-                marginals[i, :] = 0
-
+            marginals = np.zeros((m, self.cardinality), dtype=np.float64)
+            for i in range(m):
+                # NB: class priors not currently available for categoricals
                 l_i = L[i].tocoo()
-
                 for l_index1 in range(l_i.nnz):
                     data_j, j = l_i.data[l_index1], l_i.col[l_index1]
                     if (data_j != 0):
-                        if 1 <= data_j <= self.cardinality:
-                            marginals[i, :] -= self.weights.lf_accuracy[j]
-                            marginals[i, data_j - 1] += 2 * self.weights.lf_accuracy[j]
-                        else:
-                            raise ValueError("Illegal value at %d, %d: %d. Must be in 0 to %d." % (i, j, data_j, self.cardinality))
-
-                    # NB: fixing and reinforcing not available for categoricals
+                        if not 1 <= data_j <= self.cardinality:
+                            raise ValueError(
+                                """Illegal value at %d, %d: %d. Must be in 0 to 
+                                %d.""" % (i, j, data_j, self.cardinality))
+                        # NB: LF class propensity not currently available
+                        # for categoricals
+                        marginals[i, data_j - 1] += self.weights.lf_accuracy[j]
+                            
+                # NB: fixing and reinforcing not available for categoricals
+                # Get softmax
+                exps = np.exp(marginals[i, :])
+                marginals[i, :] = exps / exps.sum()
 
         return marginals
 

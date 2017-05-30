@@ -259,6 +259,8 @@ class GenerativeModel(object):
         is_fixed = [False for _ in range(n)]
 
         # If supervised labels are provided, add them as a fixed LF with prior
+        # Note: For large L this column stack operation could be very
+        # inefficient, can consider refactoring...
         if labels is not None:
             labels = labels.reshape(m, 1)
             L = sparse.hstack([L.copy(), labels])
@@ -267,10 +269,10 @@ class GenerativeModel(object):
             n += 1
 
         # Shuffle the data points
-        # NOTE: This only works for dense or CSR-sparse matrices
         idxs = range(m)
         np.random.shuffle(idxs)
-        L = sparse.csr_matrix(L)
+        if not isinstance(L, sparse.csr_matrix):
+            L = sparse.csr_matrix(L)
         L = L[idxs, :]
 
         # Compile factor graph

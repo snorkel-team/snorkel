@@ -710,8 +710,9 @@ class NaiveBayes(NoiseAwareModel):
         self.w         = None
         self.bias_term = bias_term
 
-    def train(self, X, n_iter=1000, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, mu=DEFAULT_MU,
-            sample=False, n_samples=100, evidence=None, warm_starts=False, tol=1e-6, verbose=True):
+    def train(self, X, n_iter=1000, w0=None, rate=0.01, alpha=0.5, mu=1e-6,
+            sample=False, n_samples=100, evidence=None, warm_starts=False, 
+            tol=1e-6, verbose=True):
         """
         Perform SGD wrt the weights w
         * n_iter:      Number of steps of SGD

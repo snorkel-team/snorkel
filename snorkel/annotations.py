@@ -403,7 +403,7 @@ def save_marginals(session, X, marginals, training=True):
     # Only add values for classes k=1,...,K
     marginal_tuples = []
     for i in range(shape[0]):
-        for k in range(1, shape[1]):
+        for k in range(1, shape[1] if len(shape) > 1 else 2):
             if marginals[i, k] > 0:
                 marginal_tuples.append((i, k, marginals[i, k]))
 
@@ -436,7 +436,7 @@ def save_marginals(session, X, marginals, training=True):
     print "Saved %s marginals" % len(marginals)
 
 
-def load_marginals(session, L, split=0, training=True):
+def load_marginals(session, X, split=0, training=True):
     """Load the marginal probs. for a given split of Candidates"""
     # Load marginal tuples from db
     marginal_tuples = session.query(
@@ -447,13 +447,16 @@ def load_marginals(session, L, split=0, training=True):
     filter(Marginal.training == training).all()
 
     # Assemble cols 1,...,K of marginals matrix
-    cardinality = L.get_candidate(session, 0).cardinality
-    marginals = np.zeros((L.shape[0], cardinality))
+    cardinality = X.get_candidate(session, 0).cardinality
+    marginals = np.zeros((X.shape[0], cardinality))
     for cid, k, p in marginal_tuples:
-        marginals[L.candidate_index[cid], k] = p
+        marginals[X.candidate_index[cid], k] = p
 
-    # Add first column
-    row_sums = marginals.sum(axis=1)
-    for i in range(marginals.shape[0]):
-        marginals[i, 0] = 1 - row_sums[i]
+    # Add first column if k > 2, else ravel
+    if cardinality > 2:
+        row_sums = marginals.sum(axis=1)
+        for i in range(marginals.shape[0]):
+            marginals[i, 0] = 1 - row_sums[i]
+    else:
+        marginals = np.ravel(marginals[:, 1])
     return marginals

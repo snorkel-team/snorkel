@@ -330,7 +330,7 @@ class SparseLogisticRegression(LogisticRegression):
     def marginals(self, X_test):
         X_test = self._check_input(X_test)
         if X_test.shape[0] == 0:
-            return None
+            return np.array([])
         indices, shape, ids, weights = self._batch_sparse_data(X_test)
         return self.session.run(self.prediction, {
             self.indices: indices,

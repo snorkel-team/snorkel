@@ -48,8 +48,8 @@ class NoiseAwareModel(object):
 
         # Initialize and return scorer
         s = scorer(test_candidates, test_labels, gold_candidate_set)          
-        return s.score(test_marginals, None, b=b, display=display,
-                       set_unlabeled_as_neg=set_unlabeled_as_neg)
+        return s.score(test_marginals, train_marginals=None, b=b,
+            display=display, set_unlabeled_as_neg=set_unlabeled_as_neg)
 
     def save(self):
         raise NotImplementedError()

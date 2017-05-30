@@ -79,23 +79,12 @@ class Scorer(object):
             cardinality = marginals.shape[1]
         return cardinality
 
-    def score(self, test_marginals, train_marginals=None, b=0.5, 
-        set_unlabeled_as_neg=True, display=True):
+    def score(self, test_marginals, **kwargs):
         cardinality = self._get_cardinality(test_marginals)
         if cardinality == 2:
-            return self._score_binary(
-                test_marginals,
-                train_marginals=train_marginals,
-                b=b, 
-                set_unlabeled_as_neg=set_unlabeled_as_neg,
-                display=display
-            )
+            return self._score_binary(test_marginals, **kwargs)
         else:
-            return self._score_categorical(
-                test_marginals,
-                train_marginals=train_marginals,
-                display=display
-            )
+            return self._score_categorical(test_marginals, **kwargs)
 
     def _score_binary(self, test_marginals, train_marginals=None, b=0.5, 
         set_unlabeled_as_neg=True, display=True):
@@ -109,7 +98,8 @@ class Scorer(object):
 class MentionScorer(Scorer):
     """Scorer for mention level assessment"""
     def _score_binary(self, test_marginals, train_marginals=None, b=0.5,
-        set_unlabeled_as_neg=True, set_at_thresh_as_neg=True, display=True):
+        set_unlabeled_as_neg=True, set_at_thresh_as_neg=True, display=True,
+        **kwargs):
         """
         Return scoring metric for the provided marginals, as well as candidates
         in error buckets.
@@ -178,7 +168,7 @@ class MentionScorer(Scorer):
         return tp, fp, tn, fn
 
     def _score_categorical(self, test_marginals, train_marginals=None,
-        display=True):
+        display=True, **kwargs):
         """
         Return scoring metric for the provided marginals, as well as candidates
         in error buckets.

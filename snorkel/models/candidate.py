@@ -84,6 +84,7 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
     # If cardinality and values are None, default to binary classification
     if cardinality is None and values is None:
         values = [True, False]
+        cardinality = 2
     # If cardinality is specified but not values, fill in with ints
     elif values is None:
         values = range(cardinality)

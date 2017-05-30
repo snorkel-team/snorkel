@@ -88,6 +88,10 @@ script:
   - runipy intro/Intro_Tutorial_4.ipynb
   - runipy intro/Intro_Tutorial_5.ipynb
 
+  # Run Categorical notebook
+  - rm intro/snorkel.db
+  - runipy intro/Intro_tutorial_categorical.ipynb
+
   # Run CDR tutorials
   - runipy cdr/CDR_Tutorial_1.ipynb
   - runipy cdr/CDR_Tutorial_2.ipynb

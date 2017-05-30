@@ -334,7 +334,8 @@ class GenerativeModel(object):
                                 %d.""" % (i, j, data_j, self.cardinality))
                         # NB: LF class propensity not currently available
                         # for categoricals
-                        marginals[i, data_j - 1] += self.weights.lf_accuracy[j]
+                        marginals[i, data_j - 1] += \
+                            2 * self.weights.lf_accuracy[j]
                             
                 # NB: fixing and reinforcing not available for categoricals
                 # Get softmax

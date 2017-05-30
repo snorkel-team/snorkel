@@ -1,4 +1,3 @@
-from .constants import *
 from .disc_learning import NoiseAwareModel
 from .utils import MentionScorer
 from numbskull import NumbSkull
@@ -9,6 +8,7 @@ import random
 import scipy.sparse as sparse
 from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
 from copy import copy
+from pandas import DataFrame, Series
 
 
 class GenerativeModelWeights(object):
@@ -119,10 +119,10 @@ class GenerativeModel(object):
                      element is a tuple of the form 
                      (LF 1 index, LF 2 index, dependency type),
                      see snorkel.learning.constants
-        :param LF_acc_priors: An N-element list of prior probabilities for the LF
-            accuracies
-        :param LF_acc_prior_default: Default prior probability for each LF accuracy;
-            if LF_acc_priors is unset, each LF will have this prior
+        :param LF_acc_priors: An N-element list of prior probabilities for the
+            LF accuracies
+        :param LF_acc_prior_default: Default prior probability for each LF 
+            accuracy; if LF_acc_priors is unset, each LF will have this prior
         :param labels: Optional ground truth labels
         :param label_prior: The prior probability that the ground truth labels
             (if provided) are correct
@@ -174,6 +174,8 @@ class GenerativeModel(object):
         is_fixed = [False for _ in range(n)]
 
         # If supervised labels are provided, add them as a fixed LF with prior
+        # Note: For large L this column stack operation could be very
+        # inefficient, can consider refactoring...
         if labels is not None:
             labels = labels.reshape(m, 1)
             L = sparse.hstack([L.copy(), labels])
@@ -182,10 +184,10 @@ class GenerativeModel(object):
             n += 1
 
         # Shuffle the data points
-        # NOTE: This only works for dense or CSR-sparse matrices
         idxs = range(m)
         np.random.shuffle(idxs)
-        L = sparse.csr_matrix(L)
+        if not isinstance(L, sparse.csr_matrix):
+            L = sparse.csr_matrix(L)
         L = L[idxs, :]
 
         # Compile factor graph
@@ -231,7 +233,7 @@ class GenerativeModel(object):
         self.nlf = n
         self.cardinality = cardinality
 
-    def diagnostics(self):
+    def learned_lf_stats(self):
         """
         Provides a summary of what the model has learned about the labeling
         functions. For each labeling function, estimates of the following
@@ -249,11 +251,12 @@ class GenerativeModel(object):
 
         WARNING: This uses Gibbs sampling to estimate these values. This will
                  tend to mix poorly when there are many very accurate labeling
-                 functions. In this case, thi function will assume that the
+                 functions. In this case, this function will assume that the
                  classes are approximately balanced.
         """
         if self.fg is None:
-            raise ValueError("Must fit model with train() before computing diagnostics.")
+            raise ValueError(
+                "Must fit model with train() before computing diagnostics.")
 
         burnin = 500
         trials = 5000
@@ -269,22 +272,34 @@ class GenerativeModel(object):
                     y = self.fg.factorGraphs[0].var_value[0, 0]
                     lf = self.fg.factorGraphs[0].var_value[0, j + 1]
                     count[j, y, lf] += 1
+
         count /= cardinality * trials
 
-        if cardinality == 2:
-            return [{"TP": count[i, 1, 1],
-                     "FP": count[i, 0, 1],
-                     "TN": count[i, 0, 0],
-                     "FN": count[i, 1, 0],
-                     "Abstain": count[i, 0, 2] + count[i, 1, 2],
-                     "Accuracy": (count[i, 0, 0] + count[i, 1, 1]) / (count[i, 0, 0] + count[i, 0, 1] + count[i, 1, 0] + count[i, 1, 1]),
-                     "Coverage": count[i, 0, 0] + count[i, 0, 1] + count[i, 1, 0] + count[i, 1, 1]}
-                    for i in range(self.nlf)]
-        else:
-            return [{"Abstain": sum([count[i, j, 2] for j in range(cardinality)]),
-                     "Accuracy": sum([count[i, j, j] for j in range(cardinality)]) / sum([count[i, j, k] for j in range(cardinality) for k in range(cardinality)]),
-                     "Coverage": 1 - sum([count[i, j, 2] for j in range(cardinality)])}
-                    for i in range(self.nlf)]
+        # Compute summary stats to return to user
+        stats = []
+        for i in range(self.nlf):
+            if cardinality == 2:
+                tp = count[i, 1, 1]
+                fp = count[i, 0, 1]
+                tn = count[i, 0, 0]
+                fn = count[i, 1, 0]
+                coverage = 1 - count[i, 0, 2] + count[i, 1, 2]
+                stats.append({
+                    "Precision": tp / (tp + fp),
+                    "Recall": tp / count[i, 1, :].sum(),
+                    "Accuracy": (tp + tn) / coverage,
+                    "Coverage": coverage
+                    })
+            else:
+                correct = sum([count[i, j, j] for j in range(cardinality)])
+                coverage = 1 - sum([count[i, j, cardinality] 
+                    for j in range(cardinality)])
+                stats.append({
+                    "Accuracy": correct / (1 - coverage),
+                    "Coverage": coverage
+                })
+
+        return DataFrame(stats)
 
     def marginals(self, L):
         m, n = L.shape

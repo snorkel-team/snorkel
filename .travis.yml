@@ -56,12 +56,6 @@ install:
   # Install Numba
   - conda install --yes numba
 
-  # Install Numbskull
-  - git clone https://github.com/HazyResearch/numbskull.git
-  - cd numbskull
-  - pip install .
-  - cd ..
-
   # Install all remaining dependencies as per our README
   - pip install -r python-package-requirement.txt
   - test -e parser/corenlp.sh || ./install-parser.sh

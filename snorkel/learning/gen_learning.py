@@ -11,105 +11,6 @@ from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, t
 from copy import copy
 
 
-class NaiveBayes(NoiseAwareModel):
-    def __init__(self, bias_term=False):
-        self.w         = None
-        self.bias_term = bias_term
-
-    def train(self, X, n_iter=1000, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, mu=DEFAULT_MU,
-            sample=False, n_samples=100, evidence=None, warm_starts=False, tol=1e-6, verbose=True):
-        """
-        Perform SGD wrt the weights w
-        * n_iter:      Number of steps of SGD
-        * w0:          Initial value for weights w
-        * rate:        I.e. the SGD step size
-        * alpha:       Elastic net penalty mixing parameter (0=ridge, 1=lasso)
-        * mu:          Elastic net penalty
-        * sample:      Whether to sample or not
-        * n_samples:   Number of samples per SGD step
-        * evidence:    Ground truth to condition on
-        * warm_starts:
-        * tol:         For testing for SGD convergence, i.e. stopping threshold
-        """
-        self.X_train = X
-
-        # Set up stuff
-        N, M   = X.shape
-        print "="*80
-        print "Training marginals (!= 0.5):\t%s" % N
-        print "Features:\t\t\t%s" % M
-        print "="*80
-        Xt     = X.transpose()
-        Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else np.abs(Xt)
-        w0     = w0 if w0 is not None else np.ones(M)
-
-        # Initialize training
-        w = w0.copy()
-        g = np.zeros(M)
-        l = np.zeros(M)
-        g_size = 0
-
-        # Gradient descent
-        if verbose:
-            print "Begin training for rate={}, mu={}".format(rate, mu)
-        for step in range(n_iter):
-
-            # Get the expected LF accuracy
-            t,f = sample_data(X, w, n_samples=n_samples) if sample else exact_data(X, w, evidence)
-            p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
-
-            # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
-            l = np.clip(log_odds(p_correct), -10, 10)
-
-            # SGD step with normalization by the number of samples
-            g0 = (n_pred*(w - l)) / np.sum(n_pred)
-
-            # Momentum term for faster training
-            g = 0.95*g0 + 0.05*g
-
-            # Check for convergence
-            wn     = np.linalg.norm(w, ord=2)
-            g_size = np.linalg.norm(g, ord=2)
-            if step % 250 == 0 and verbose:
-                print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size)
-            if (wn < 1e-12 or g_size / wn < tol) and step >= 10:
-                if verbose:
-                    print "SGD converged for mu={} after {} steps".format(mu, step)
-                break
-
-            # Update weights
-            w -= rate * g
-
-            # Apply elastic net penalty
-            w_bias    = w[-1]
-            soft      = np.abs(w) - mu
-            ridge_pen = (1 + (1-alpha) * mu)
-
-            #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
-            w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
-
-            # Don't regularize the bias term
-            if self.bias_term:
-                w[-1] = w_bias
-
-        # SGD did not converge
-        else:
-            if verbose:
-                print "Final gradient magnitude for rate={}, mu={}: {:.3f}".format(rate, mu, g_size)
-
-        # Return learned weights
-        self.w = w
-
-    def marginals(self, X):
-        return odds_to_prob(X.dot(self.w))
-
-    def save(self, session, version):
-        raise NotImplementedError("Not implemented for generative model.")
-
-    def load(self, session, version):
-        raise NotImplementedError("Not implemented for generative model.")
-
-
 class GenerativeModelWeights(object):
 
     def __init__(self, n):
@@ -276,7 +177,8 @@ class GenerativeModel(object):
         # Compile factor graph
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges =\
-            self._compile(L, init_deps, init_class_prior, LF_acc_priors, is_fixed, cardinality)
+            self._compile(L, init_deps, init_class_prior, LF_acc_priors, 
+                is_fixed, cardinality)
         fg = NumbSkull(
             n_inference_epoch=0,
             n_learning_epoch=epochs, 
@@ -525,7 +427,6 @@ class GenerativeModel(object):
         ftv = np.zeros(n_edges, FactorToVar)
         domain_mask = np.zeros(n_vars, np.bool)
 
-
         #
         # Compiles weight matrix
         #
@@ -555,7 +456,6 @@ class GenerativeModel(object):
         for i in range(w_off, weight.shape[0]):
             weight[i]['isFixed'] = False
             weight[i]['initialValue'] = np.float64(init_deps)
-
 
         #
         # Compiles variable matrix
@@ -602,7 +502,6 @@ class GenerativeModel(object):
         #
         # Compiles factor and ftv matrices
         #
-
         # Class prior
         if self.class_prior:
             if cardinality != 2:
@@ -623,7 +522,6 @@ class GenerativeModel(object):
             f_off = 0
             ftv_off = 0
             w_off = 0
-
 
         # Factors over labeling function outputs
         nfactors_for_lf = [((LF_acc_priors[i] != 0.5) + (not is_fixed[i])) for i in range(n)]
@@ -651,7 +549,6 @@ class GenerativeModel(object):
                                                                      optional_name_map[optional_name][0],
                                                                      optional_name_map[optional_name][1])
 
-
         # Factors for labeling function dependencies
         dep_name_map = {
             'dep_similar':
@@ -674,23 +571,27 @@ class GenerativeModel(object):
                     lambda m, n, i, j, k: m + n * i + k))
         }
 
+        CATEGORICAL_DEPS = ['dep_similar', 'dep_exclusive']
         for dep_name in GenerativeModel.dep_names:
-            if dep_name != 'dep_similar' and dep_name != 'dep_exclusive' and cardinality != 2:
-                raise NotImplementedError(dep_name + " not implemented for categoricals.")
             mat = getattr(self, dep_name)
-            for i in range(len(mat.data)):
-                f_off, ftv_off, w_off = self._compile_dep_factors(L, factor, f_off, ftv, ftv_off, w_off,
-                                                                  mat.row[i], mat.col[i],
-                                                                  dep_name_map[dep_name][0],
-                                                                  dep_name_map[dep_name][1])
-
+            if mat.nnz > 0:
+                if dep_name not in CATEGORICAL_DEPS and cardinality != 2:
+                    raise NotImplementedError(
+                        dep_name + " not implemented for categoricals.")
+                for i in range(len(mat.data)):
+                    f_off, ftv_off, w_off = self._compile_dep_factors(L, factor, 
+                        f_off, ftv, ftv_off, w_off, mat.row[i], mat.col[i],
+                        dep_name_map[dep_name][0], dep_name_map[dep_name][1])
 
         return weight, variable, factor, ftv, domain_mask, n_edges
 
-    def _compile_output_factors(self, L, factors, factors_offset, ftv, ftv_offset, weight_offset, factor_name, vid_funcs, nfactors_for_lf=None):
+    def _compile_output_factors(self, L, factors, factors_offset, ftv, 
+        ftv_offset, weight_offset, factor_name, vid_funcs,
+        nfactors_for_lf=None):
         """
-        Compiles factors over the outputs of labeling functions, i.e., for which there is one weight per labeling
-        function and one factor per labeling function-candidate pair.
+        Compiles factors over the outputs of labeling functions, i.e., for which
+        there is one weight per labeling function and one factor per labeling 
+        function-candidate pair.
         """
         m, n = L.shape
 
@@ -780,3 +681,102 @@ class GenerativeModel(object):
             setattr(weights, dep_name, weight_mat.tocsr(copy=True))
 
         self.weights = weights
+
+
+class NaiveBayes(NoiseAwareModel):
+    def __init__(self, bias_term=False):
+        self.w         = None
+        self.bias_term = bias_term
+
+    def train(self, X, n_iter=1000, w0=None, rate=DEFAULT_RATE, alpha=DEFAULT_ALPHA, mu=DEFAULT_MU,
+            sample=False, n_samples=100, evidence=None, warm_starts=False, tol=1e-6, verbose=True):
+        """
+        Perform SGD wrt the weights w
+        * n_iter:      Number of steps of SGD
+        * w0:          Initial value for weights w
+        * rate:        I.e. the SGD step size
+        * alpha:       Elastic net penalty mixing parameter (0=ridge, 1=lasso)
+        * mu:          Elastic net penalty
+        * sample:      Whether to sample or not
+        * n_samples:   Number of samples per SGD step
+        * evidence:    Ground truth to condition on
+        * warm_starts:
+        * tol:         For testing for SGD convergence, i.e. stopping threshold
+        """
+        self.X_train = X
+
+        # Set up stuff
+        N, M   = X.shape
+        print "="*80
+        print "Training marginals (!= 0.5):\t%s" % N
+        print "Features:\t\t\t%s" % M
+        print "="*80
+        Xt     = X.transpose()
+        Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else np.abs(Xt)
+        w0     = w0 if w0 is not None else np.ones(M)
+
+        # Initialize training
+        w = w0.copy()
+        g = np.zeros(M)
+        l = np.zeros(M)
+        g_size = 0
+
+        # Gradient descent
+        if verbose:
+            print "Begin training for rate={}, mu={}".format(rate, mu)
+        for step in range(n_iter):
+
+            # Get the expected LF accuracy
+            t,f = sample_data(X, w, n_samples=n_samples) if sample else exact_data(X, w, evidence)
+            p_correct, n_pred = transform_sample_stats(Xt, t, f, Xt_abs)
+
+            # Get the "empirical log odds"; NB: this assumes one is correct, clamp is for sampling...
+            l = np.clip(log_odds(p_correct), -10, 10)
+
+            # SGD step with normalization by the number of samples
+            g0 = (n_pred*(w - l)) / np.sum(n_pred)
+
+            # Momentum term for faster training
+            g = 0.95*g0 + 0.05*g
+
+            # Check for convergence
+            wn     = np.linalg.norm(w, ord=2)
+            g_size = np.linalg.norm(g, ord=2)
+            if step % 250 == 0 and verbose:
+                print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size)
+            if (wn < 1e-12 or g_size / wn < tol) and step >= 10:
+                if verbose:
+                    print "SGD converged for mu={} after {} steps".format(mu, step)
+                break
+
+            # Update weights
+            w -= rate * g
+
+            # Apply elastic net penalty
+            w_bias    = w[-1]
+            soft      = np.abs(w) - mu
+            ridge_pen = (1 + (1-alpha) * mu)
+
+            #          \ell_1 penalty by soft thresholding        |  \ell_2 penalty
+            w = (np.sign(w)*np.select([soft>0], [soft], default=0)) / ridge_pen
+
+            # Don't regularize the bias term
+            if self.bias_term:
+                w[-1] = w_bias
+
+        # SGD did not converge
+        else:
+            if verbose:
+                print "Final gradient magnitude for rate={}, mu={}: {:.3f}".format(rate, mu, g_size)
+
+        # Return learned weights
+        self.w = w
+
+    def marginals(self, X):
+        return odds_to_prob(X.dot(self.w))
+
+    def save(self, session, version):
+        raise NotImplementedError("Not implemented for generative model.")
+
+    def load(self, session, version):
+        raise NotImplementedError("Not implemented for generative model.")        

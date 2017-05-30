@@ -38,13 +38,16 @@ class NoiseAwareModel(object):
     def score(self, session, X_test, test_labels, gold_candidate_set=None, 
         b=0.5, set_unlabeled_as_neg=True, display=True, scorer=MentionScorer,
         **kwargs):
+        # Compute the marginals
+        test_marginals = self.marginals(X_test, **kwargs)
+
         # Get the test candidates
         test_candidates = [
             X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])
         ] if not self.representation else X_test
-        # Initialize scorer
-        s = scorer(test_candidates, test_labels, gold_candidate_set)
-        test_marginals  = self.marginals(X_test, **kwargs)
+
+        # Initialize and return scorer
+        s = scorer(test_candidates, test_labels, gold_candidate_set)          
         return s.score(test_marginals, None, b=b, display=display,
                        set_unlabeled_as_neg=set_unlabeled_as_neg)
 

@@ -188,7 +188,7 @@ class LogisticRegression(TFNoiseAwareModel):
 
     def marginals(self, X_test):
         X_test = self._check_input(X_test)
-        return np.ravel(self.session.run([self.prediction], {self.X: X_test}))
+        return self.session.run(self.prediction, {self.X: X_test})
 
     def get_weights(self):
         """Get model weights and bias"""
@@ -330,14 +330,14 @@ class SparseLogisticRegression(LogisticRegression):
     def marginals(self, X_test):
         X_test = self._check_input(X_test)
         if X_test.shape[0] == 0:
-            return np.ravel([])
+            return None
         indices, shape, ids, weights = self._batch_sparse_data(X_test)
-        return np.ravel(self.session.run([self.prediction], {
+        return self.session.run(self.prediction, {
             self.indices: indices,
             self.shape:   shape,
             self.ids:     ids,
             self.weights: weights,
-        }))
+        })
 
 
 if __name__ == '__main__':

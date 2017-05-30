@@ -103,7 +103,7 @@ class GenerativeModel(object):
         labels=None, label_prior=0.99, init_deps=0.0,
         init_class_prior=-1.0, epochs=30, step_size=None, decay=1.0,
         reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
-        cardinality=2, timer=None):
+        cardinality=None, timer=None):
         """
         Fits the parameters of the model to a data set. By default, learns a
         conditionally independent model. Additional unary dependencies can be
@@ -141,12 +141,26 @@ class GenerativeModel(object):
                            regularization
         :param burn_in: number of burn-in samples to take before beginning
                         learning
-        :param cardinality: number of possible classes (defaults to binary)
+        :param cardinality: number of possible classes; by default is inferred
+            from the label matrix L
         :param timer: stopwatch for profiling, must implement start() and end()
         """
         m, n = L.shape
         step_size = step_size or 0.0001
         reg_param_scaled = reg_param / L.shape[0]
+
+        # Automatically infer cardinality
+        # Binary: Values in {-1, 0, 1} [Default]
+        # Categorical: Values in {0, 1, ..., K}
+        if cardinality is None:
+            if L.max() > 2:
+                cardinality = L.max()
+            elif L.max() < 2:
+                cardinality = 2
+            else:
+                raise ValueError(
+                    "L.max() == %s, cannot infer cardinality." % L.max())
+            print("Infered cardinality: %s" % cardinality)
 
         # Priors for LFs default to fixed prior value
         # NOTE: Setting default != 0.5 creates a (fixed) factor which increases

@@ -9,6 +9,7 @@ import random
 import scipy.sparse as sparse
 from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
 from copy import copy
+from pandas import DataFrame, Series
 
 
 class NaiveBayes(NoiseAwareModel):
@@ -312,7 +313,7 @@ class GenerativeModel(object):
         self.fg = fg
         self.nlf = n
 
-    def diagnostics(self):
+    def learned_lf_stats(self):
         """
         Provides a summary of what the model has learned about the labeling
         functions. For each labeling function, estimates of the following 
@@ -329,7 +330,7 @@ class GenerativeModel(object):
 
         WARNING: This uses Gibbs sampling to estimate these values. This will
                  tend to mix poorly when there are many very accurate labeling
-                 functions. In this case, thi function will assume that the
+                 functions. In this case, this function will assume that the
                  classes are approximately balanced.
         """
         if self.fg is None:
@@ -349,14 +350,22 @@ class GenerativeModel(object):
                     lf = self.fg.factorGraphs[0].var_value[0, j + 1]
                     count[j, y, lf] += 1
         count /= 2 * trials
-        return [{"TP": count[i, 1, 2],
-                 "FP": count[i, 0, 2],
-                 "TN": count[i, 0, 0],
-                 "FN": count[i, 1, 0],
-                 "Abstain": count[i, 0, 1] + count[i, 0, 1],
-                 "Accuracy": (count[i, 1, 2] + count[i, 0, 0]) / (count[i, 1, 2] + count[i, 0, 2] + count[i, 1, 0] + count[i, 0, 0]),
-                 "Coverage": count[i, 1, 2] + count[i, 0, 2] + count[i, 1, 0] + count[i, 0, 0]}
-                for i in range(self.nlf)]
+
+        # Compute summary stats to return to user
+        stats = []
+        for i in range(self.nlf):
+            tp = count[i, 1, 1]
+            fp = count[i, 0, 1]
+            tn = count[i, 0, 0]
+            fn = count[i, 1, 0]
+            abstain = count[i, 0, 2] + count[i, 1, 2]
+            stats.append({
+                "Precision": tp / (tp + fp),
+                "Recall": tp / count[i, 1, :].sum(),
+                "Accuracy": (tp + tn) / (1 - abstain),
+                "Coverage": 1 - abstain
+                })
+        return DataFrame(stats)
 
     def marginals(self, L):
         if self.weights is None:

@@ -216,33 +216,66 @@ class SparseLogisticRegression(LogisticRegression):
             save_file=save_file, name=name, n_threads=n_threads
         )
 
-    def _build(self):
-        # Define input placeholders
-        self.indices = tf.placeholder(tf.int64) 
-        self.shape   = tf.placeholder(tf.int64, (2,))
-        self.ids     = tf.placeholder(tf.int64)
-        self.weights = tf.placeholder(tf.float32)
-        self.Y       = tf.placeholder(tf.float32, (None,))
-        # Define training variables
-        sparse_ids = tf.SparseTensor(self.indices, self.ids, self.shape)
-        sparse_vals = tf.SparseTensor(self.indices, self.weights, self.shape)
+    def _build_sigmoid(self, sparse_ids, sparse_vals):
+        """Build network for the binary setting."""
+        self.Y = tf.placeholder(tf.float32, (None,))
+        
+        # Define model params
         s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
         self.w = tf.Variable(tf.random_normal((self.d, 1), stddev=SD, seed=s1))
         self.b = tf.Variable(tf.random_normal((1,), stddev=SD, seed=s2))
         z = tf.nn.embedding_lookup_sparse(params=self.w, sp_ids=sparse_ids,
             sp_weights=sparse_vals, combiner='sum')
         h = tf.squeeze(tf.nn.bias_add(z, self.b))
-        # Noise-aware loss
+        
+        # Noise-aware loss and prediction ops
         self.loss = tf.reduce_sum(
             tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
         )
+        self.prediction = tf.nn.sigmoid(h)
+
+    def _build_softmax(self, sparse_ids, sparse_vals):
+        """Build network for the categorical setting."""
+        self.Y = tf.placeholder(tf.float32, (None, self.k))
+        
+        # Define model params
+        s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
+        self.w = tf.Variable(tf.random_normal((self.d, self.k), stddev=SD, 
+            seed=s1))
+        self.b = tf.Variable(tf.random_normal((self.k,), stddev=SD, seed=s2))
+        z = tf.nn.embedding_lookup_sparse(params=self.w, sp_ids=sparse_ids,
+            sp_weights=sparse_vals, combiner='sum')
+        h = tf.nn.bias_add(z, self.b)
+        
+        # Noise-aware loss and prediction ops
+        self.loss = tf.reduce_sum(
+            tf.nn.softmax_cross_entropy_with_logits(logits=h, labels=self.Y)
+        )
+        self.prediction = tf.nn.softmax(h)
+
+    def _build(self):
+        # Define sparse input placeholders + sparse tensors
+        self.indices = tf.placeholder(tf.int64) 
+        self.shape   = tf.placeholder(tf.int64, (2,))
+        self.ids     = tf.placeholder(tf.int64)
+        self.weights = tf.placeholder(tf.float32)
+        sparse_ids   = tf.SparseTensor(self.indices, self.ids, self.shape)
+        sparse_vals  = tf.SparseTensor(self.indices, self.weights, self.shape)
+
+        # Build network, loss, and prediction ops
+        if self.k > 2:
+            self._build_softmax(sparse_ids, sparse_vals)
+        else:
+            self._build_sigmoid(sparse_ids, sparse_vals)
+
         # Add L1 and L2 penalties
         self.loss += self.l1_penalty * tf.reduce_sum(tf.abs(self.w))
         self.loss += self.l2_penalty * tf.nn.l2_loss(self.w)
-        # Build model
+        
+        # Build training and save param ops
         self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
-        self.prediction = tf.nn.sigmoid(h)
         self.save_dict = {'w': self.w, 'b': self.b}
+        
         # Get nnz operation
         self.nnz = tf.reduce_sum(tf.cast(
             tf.not_equal(self.w, tf.constant(0, tf.float32)), tf.int32

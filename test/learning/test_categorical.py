@@ -27,7 +27,7 @@ class TestCategorical(unittest.TestCase):
         def get_lf(label, cardinality, acc):
             if random.random() < acc:
                 return label + 1
-            lf = random.randint(0, cardinality - 1)
+            lf = random.randint(0, cardinality - 2)
             if (lf >= label):
                 lf += 1
             return lf + 1
@@ -40,7 +40,7 @@ class TestCategorical(unittest.TestCase):
         labels = np.zeros(n)
 
         for i in range(n):
-            y = random.randint(0, cardinality)
+            y = random.randint(0, cardinality - 1)
             # First four LFs always vote, and have decent acc
             L[i, 0] = get_lf(y, cardinality, LF_acc_priors[0])
             L[i, 1] = get_lf(y, cardinality, LF_acc_priors[1])

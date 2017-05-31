@@ -442,7 +442,9 @@ class GenerativeModel(object):
 
         n_weights = 1 if self.class_prior else 0
 
-        nPrior = sum([i != 0.5 for i in LF_acc_priors])
+        hasPrior = [(abs(i - 1.0 / cardinality) > 0.01) for i in LF_acc_priors]
+        self.hasPrior = hasPrior
+        nPrior = sum(hasPrior)
         nUnFixed = sum([not i for i in is_fixed])
 
         n_weights += nPrior
@@ -486,7 +488,7 @@ class GenerativeModel(object):
 
         for i in range(n):
             # Prior on LF acc
-            if (abs(LF_acc_priors[i] - 1.0 / cardinality) > 0.01):
+            if hasPrior[i]:
                 weight[w_off]['isFixed'] = True
                 weight[w_off]['initialValue'] = np.float64(0.5 * np.log((cardinality - 1) * LF_acc_priors[i] / (1 - LF_acc_priors[i])))
                 w_off += 1
@@ -540,7 +542,7 @@ class GenerativeModel(object):
             else:
                 if data == 0:
                     variable[index]["initialValue"] = cardinality
-                elif data <= cardinality:
+                elif 1 <= data <= cardinality:
                     variable[index]["initialValue"] = data - 1
                 else:
                     raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
@@ -571,7 +573,7 @@ class GenerativeModel(object):
             w_off = 0
 
         # Factors over labeling function outputs
-        nfactors_for_lf = [((LF_acc_priors[i] != 0.5) + (not is_fixed[i])) for i in range(n)]
+        nfactors_for_lf = [(hasPrior[i] + (not is_fixed[i])) for i in range(n)]
         f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off, "DP_GEN_LF_ACCURACY",
                                                              (lambda m, n, i, j: i, lambda m, n, i, j: m + n * i + j), nfactors_for_lf)
 
@@ -703,7 +705,7 @@ class GenerativeModel(object):
         weights.lf_accuracy = np.zeros((n,))
         for i in range(n):
             # Prior on LF acc
-            if (LF_acc_priors[i] != 0.5):
+            if self.hasPrior[i]:
                 weights.lf_accuracy[i] += w[w_off]
                 w_off += 1
             # Learnable acc for LF

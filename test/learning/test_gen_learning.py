@@ -35,12 +35,14 @@ class TestGenLearning(unittest.TestCase):
         # The third LF always abstains
 
         # Tests compilation
-        gen_model = GenerativeModel(class_prior=True, lf_prior=False, lf_propensity=False, lf_class_propensity=False)
+        gen_model = GenerativeModel(class_prior=True, lf_prior=False,
+            lf_propensity=False, lf_class_propensity=False)
         gen_model._process_dependency_graph(L, ())
         m, n = L.shape
         LF_priors = [0.7 for _ in range(n)]
         is_fixed = [False for _ in range(n)]
-        weight, variable, factor, ftv, domain_mask, n_edges = gen_model._compile(L, 0.5, 0.0, LF_priors, is_fixed)
+        weight, variable, factor, ftv, domain_mask, n_edges =\
+            gen_model._compile(L, 0.5, 0.0, LF_priors, is_fixed, 2)
 
         #
         # Weights
@@ -159,13 +161,14 @@ class TestGenLearning(unittest.TestCase):
         deps.append((1, 2, DEP_EXCLUSIVE))
 
         # Tests compilation
-        gen_model = GenerativeModel(class_prior=False, lf_prior=False, lf_propensity=True, lf_class_propensity=False)
+        gen_model = GenerativeModel(class_prior=False, lf_prior=False,
+            lf_propensity=True, lf_class_propensity=False)
         gen_model._process_dependency_graph(L, deps)
         m, n = L.shape
         LF_priors = [0.7 for _ in range(n)]
         is_fixed = [False for _ in range(n)]
-        weight, variable, factor, ftv, domain_mask, n_edges = gen_model._compile(L, 0.5, -1.0, LF_priors, is_fixed)
-        # weight, variable, factor, ftv, domain_mask, n_edges = gen_model._compile(L, None, 1.0, 0.5, -1.0)
+        weight, variable, factor, ftv, domain_mask, n_edges =\
+            gen_model._compile(L, 0.5, -1.0, LF_priors, is_fixed, 2)
 
         #
         # Weights

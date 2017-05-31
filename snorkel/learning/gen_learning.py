@@ -158,13 +158,18 @@ class GenerativeModel(object):
         # Binary: Values in {-1, 0, 1} [Default]
         # Categorical: Values in {0, 1, ..., K}
         if cardinality is None:
-            if L.max() > 2:
-                cardinality = L.max()
-            elif L.max() < 2:
+            # This is just an annoying hack for LIL sparse matrices...
+            try:
+                lmax = L.max()
+            except AttributeError:
+                lmax = L.tocoo().max()
+            if lmax > 2:
+                cardinality = lmax
+            elif lmax < 2:
                 cardinality = 2
             else:
                 raise ValueError(
-                    "L.max() == %s, cannot infer cardinality." % L.max())
+                    "L.max() == %s, cannot infer cardinality." % lmax)
             print("Infered cardinality: %s" % cardinality)
 
         # Priors for LFs default to fixed prior value

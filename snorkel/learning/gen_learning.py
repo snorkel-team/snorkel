@@ -293,7 +293,7 @@ class GenerativeModel(object):
                 fp = count[i, 0, 1]
                 tn = count[i, 0, 0]
                 fn = count[i, 1, 0]
-                coverage = 1 - count[i, 0, 2] + count[i, 1, 2]
+                coverage = 1 - (count[i, 0, 2] + count[i, 1, 2])
                 stats.append({
                     "Precision": tp / (tp + fp),
                     "Recall": tp / count[i, 1, :].sum(),

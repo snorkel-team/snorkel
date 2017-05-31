@@ -1,7 +1,9 @@
 import math
 from numbskull.inference import FACTORS
 from scipy import sparse
-from snorkel.learning.gen_learning import GenerativeModel, DEP_EXCLUSIVE, DEP_REINFORCING, DEP_FIXING, DEP_SIMILAR
+from snorkel.learning.gen_learning import (
+    GenerativeModel, DEP_EXCLUSIVE, DEP_REINFORCING, DEP_FIXING, DEP_SIMILAR
+)
 import unittest
 import random
 import numpy as np
@@ -19,7 +21,7 @@ class TestSupervised(unittest.TestCase):
 
     def test_supervised(self):
         # A set of true priors
-        tol = 0.2
+        tol = 0.1
         LF_acc_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
         label_prior = 0.999
 

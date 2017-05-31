@@ -19,7 +19,7 @@ class TestCategorical(unittest.TestCase):
 
     def test_categorical(self):
         # A set of true priors
-        tol = 0.2
+        tol = 0.1
         LF_acc_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
         label_prior = 0.999
         cardinality = 4

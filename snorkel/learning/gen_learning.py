@@ -305,7 +305,7 @@ class GenerativeModel(object):
                 coverage = 1 - sum([count[i, j, cardinality] 
                     for j in range(cardinality)])
                 stats.append({
-                    "Accuracy": correct / (1 - coverage),
+                    "Accuracy": correct / coverage,
                     "Coverage": coverage
                 })
 

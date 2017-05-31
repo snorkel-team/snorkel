@@ -170,7 +170,7 @@ class GenerativeModel(object):
             else:
                 raise ValueError(
                     "L.max() == %s, cannot infer cardinality." % lmax)
-            print("Infered cardinality: %s" % cardinality)
+            print("Inferred cardinality: %s" % cardinality)
 
         # Priors for LFs default to fixed prior value
         # NOTE: Setting default != 0.5 creates a (fixed) factor which increases

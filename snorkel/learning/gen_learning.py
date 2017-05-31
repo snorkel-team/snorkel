@@ -1,5 +1,6 @@
 from .disc_learning import NoiseAwareModel
 from .utils import MentionScorer
+import numbskull
 from numbskull import NumbSkull
 from numbskull.inference import FACTORS
 from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
@@ -9,6 +10,7 @@ import scipy.sparse as sparse
 from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
 from copy import copy
 from pandas import DataFrame, Series
+from distutils.version import StrictVersion
 
 DEP_SIMILAR = 0
 DEP_FIXING = 1
@@ -82,6 +84,14 @@ class GenerativeModel(object):
     """
     def __init__(self, class_prior=False, lf_prior=False, lf_propensity=False,
         lf_class_propensity=False, seed=271828):
+
+        numbskull_version = numbskull.__version__
+        numbskull_require = "0.1"
+
+        if StrictVersion(numbskull_version) < StrictVersion(numbskull_require):
+            raise ValueError(
+                "Snorkel requires Numbskull version %s, but version %s is installed." % (numbskull_require, numbskull_version))
+
         self.class_prior = class_prior
         self.lf_prior = lf_prior
         self.lf_propensity = lf_propensity

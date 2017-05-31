@@ -488,7 +488,7 @@ class GenerativeModel(object):
             # Prior on LF acc
             if (LF_acc_priors[i] != 0.5):
                 weight[w_off]['isFixed'] = True
-                weight[w_off]['initialValue'] = np.float64(0.5 * np.log(LF_acc_priors[i] / (1 - LF_acc_priors[i])))
+                weight[w_off]['initialValue'] = np.float64(0.5 * np.log((cardinality - 1) * LF_acc_priors[i] / (1 - LF_acc_priors[i])))
                 w_off += 1
             # Learnable acc for LF
             if (not is_fixed[i]):

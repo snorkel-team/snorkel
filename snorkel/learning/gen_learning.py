@@ -10,6 +10,11 @@ from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, t
 from copy import copy
 from pandas import DataFrame, Series
 
+DEP_SIMILAR = 0
+DEP_FIXING = 1
+DEP_REINFORCING = 2
+DEP_EXCLUSIVE = 3
+
 
 class GenerativeModelWeights(object):
 

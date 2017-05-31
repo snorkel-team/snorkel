@@ -84,7 +84,7 @@ script:
 
   # Run Categorical notebook
   - rm intro/snorkel.db
-  - runipy intro/Intro_tutorial_categorical.ipynb
+  - runipy intro/Intro_Tutorial_Categorical.ipynb
 
   # Run CDR tutorials
   - runipy cdr/CDR_Tutorial_1.ipynb

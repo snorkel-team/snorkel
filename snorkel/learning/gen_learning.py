@@ -486,7 +486,7 @@ class GenerativeModel(object):
 
         for i in range(n):
             # Prior on LF acc
-            if (LF_acc_priors[i] != 0.5):
+            if (abs(LF_acc_priors[i] - 1.0 / cardinality) > 0.01):
                 weight[w_off]['isFixed'] = True
                 weight[w_off]['initialValue'] = np.float64(0.5 * np.log((cardinality - 1) * LF_acc_priors[i] / (1 - LF_acc_priors[i])))
                 w_off += 1

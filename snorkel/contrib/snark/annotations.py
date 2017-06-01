@@ -1,3 +1,4 @@
+from snorkel.annotations import load_label_matrix
 from snorkel.models.annotation import Label, LabelKey
 from snorkel.models.meta import snorkel_conn_string
 from snorkel.models.views import create_serialized_candidate_view
@@ -43,21 +44,24 @@ class SparkLabelAnnotator:
         if split not in self.split_cache:
             self._load_candidates(split)
 
+        key_query = LabelKey.__table__.insert()
+        label_query = Label.__table__.insert()
+
         for lf in LFs:
-            # TODO: Create annotation key
-            lf_id = None
+            lf_id = self.snorkel_session.execute(key_query, {'name': lf.__name__, 'group': 0}).inserted_primary_key[0]
 
             labels = self.split_cache[split].map(lambda c: (c.id, lf(c)))
             labels.filter(lambda l: l[1] != 0 and l[1] is not None)
-            labels.collect().foreach(lambda y: self._insert_label((y[0], lf_id, y[1])))
+            labels.collect().foreach(lambda y: self.snorkel_session.execute(
+                    label_query, {'cid': y[0], 'kid': lf_id, 'value': y[1]}))
 
-        # TODO: Return label matrix
+        return load_label_matrix(self.snorkel_session, split=split)
 
     def _clear_labels(self):
         """
         Clears the database of labels
         """
-        self.snorkel_session.session.query(Label).delete(synchronize_session='fetch')
+        self.snorkel_session.query(Label).delete(synchronize_session='fetch')
 
         query = self.snorkel_session.query(LabelKey).filter(LabelKey.group == 0)
         query.delete(synchronize_session='fetch')
@@ -77,17 +81,6 @@ class SparkLabelAnnotator:
         rdd = jdbcDF.rdd.map(wrap_candidate)
         rdd = rdd.setName("Snorkel Candidates, Split " + split + " (" + self.candidate_class.__name__ + ")")
         self.split_cache[split] = rdd.cache()
-
-    def _insert_label(self, candidate_id, lf_id, value):
-        """
-        Writes label record back to database connected to by snorkel_session.
-
-        :param candidate_id: internal id of the candidate
-        :param lf_id: internal id of the labeling function (LabelKey.id)
-        :param value: the label value
-        """
-        # TODO
-        pass
 
 
 def wrap_candidate(row):

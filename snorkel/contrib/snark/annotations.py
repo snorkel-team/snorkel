@@ -27,7 +27,7 @@ class SparkLabelAnnotator:
         self.split_cache = {}
 
         # TODO: Either check for existence or change method to be forgiving
-        create_serialized_candidate_view(snorkel_session, candidate_class, verbose=False)
+        #create_serialized_candidate_view(snorkel_session, candidate_class, verbose=False)
 
     def apply(self, LFs, split):
         """
@@ -51,9 +51,9 @@ class SparkLabelAnnotator:
             lf_id = self.snorkel_session.execute(key_query, {'name': lf.__name__, 'group': 0}).inserted_primary_key[0]
 
             labels = self.split_cache[split].map(lambda c: (c.id, lf(c)))
-            labels.filter(lambda l: l[1] != 0 and l[1] is not None)
-            labels.collect().foreach(lambda y: self.snorkel_session.execute(
-                    label_query, {'cid': y[0], 'kid': lf_id, 'value': y[1]}))
+            labels.filter(lambda (_, value): value != 0 and value is not None)
+            for cid, value in labels.toLocalIterator():
+                self.snorkel_session.execute(label_query, {'candidate_id': cid, 'key_id': lf_id, 'value': value})
 
         return load_label_matrix(self.snorkel_session, split=split)
 
@@ -79,7 +79,7 @@ class SparkLabelAnnotator:
             .load()
 
         rdd = jdbcDF.rdd.map(wrap_candidate)
-        rdd = rdd.setName("Snorkel Candidates, Split " + split + " (" + self.candidate_class.__name__ + ")")
+        rdd = rdd.setName("Snorkel Candidates, Split " + str(split) + " (" + self.candidate_class.__name__ + ")")
         self.split_cache[split] = rdd.cache()
 
 

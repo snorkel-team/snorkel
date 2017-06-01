@@ -222,7 +222,7 @@ class PubtatorSentenceParser(SentenceParser):
                             matched_annos.append(i)
                             continue
 
-            s =  Sentence(**sentence_parts)
+            s = Sentence(**sentence_parts)
             sents.append(s)
             yield s
 

@@ -1,2 +1,0 @@
-class SparkUDF(object):
-    pass

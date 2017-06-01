@@ -1,0 +1,2 @@
+class SparkModel(object):
+    pass

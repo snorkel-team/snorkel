@@ -185,6 +185,7 @@ class GenerativeModel(object):
                 raise ValueError(
                     "L.max() == %s, cannot infer cardinality." % lmax)
             print("Inferred cardinality: %s" % cardinality)
+        self.cardinality = cardinality
 
         # Priors for LFs default to fixed prior value
         # NOTE: Setting default != 0.5 creates a (fixed) factor which increases
@@ -219,14 +220,21 @@ class GenerativeModel(object):
         # only relevant values are sampled during learning and inference
         # (e.g. for cases where the cardinaltiy is very large, but the effective
         # support set for any candidate is fairly small)
+        # Note: Either way we create a list of cardinality for each candidate
         if scoped_categorical:
+            if self.cardinality == 2:
+                raise ValueError(
+                    "Cannot set scoped_categorical=True in binary setting!")
             L, mappings = self._remap_label_matrix(L)
+            # Note this turns cardinality from an int -> a list
+            self.cardinalities = map(len, mappings)
+        else:
+            self.cardinalities = self.cardinality * np.ones(m)
 
         # Compile factor graph
         self._process_dependency_graph(L, deps)
-        weight, variable, factor, ftv, domain_mask, n_edges =\
-            self._compile(L, init_deps, init_class_prior, LF_acc_priors, 
-                is_fixed, cardinality)
+        weight, variable, factor, ftv, domain_mask, n_edges = self._compile(
+            L, init_deps, init_class_prior, LF_acc_priors, is_fixed)
         fg = NumbSkull(
             n_inference_epoch=0,
             n_learning_epoch=epochs, 
@@ -456,15 +464,16 @@ class GenerativeModel(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
-    def _compile(self, L, init_deps, init_class_prior, LF_acc_priors, is_fixed, cardinality):
-        """
-        Compiles a generative model based on L and the current labeling function dependencies.
+    def _compile(self, L, init_deps, init_class_prior, LF_acc_priors, is_fixed):
+        """Compiles a generative model based on L and the current labeling function
+        dependencies.
         """
         m, n = L.shape
 
         n_weights = 1 if self.class_prior else 0
 
-        hasPrior = [(abs(i - 1.0 / cardinality) > 0.01) for i in LF_acc_priors]
+        hasPrior = [(abs(p - 1.0 / self.cardinalities[i]) > 0.01) 
+                    for i, p in enumerate(LF_acc_priors)]
         self.hasPrior = hasPrior
         nPrior = sum(hasPrior)
         nUnFixed = sum([not i for i in is_fixed])
@@ -512,7 +521,9 @@ class GenerativeModel(object):
             # Prior on LF acc
             if hasPrior[i]:
                 weight[w_off]['isFixed'] = True
-                weight[w_off]['initialValue'] = np.float64(0.5 * np.log((cardinality - 1) * LF_acc_priors[i] / (1 - LF_acc_priors[i])))
+                weight[w_off]['initialValue'] = \
+                    np.float64(0.5 * np.log((self.cardinalities[i] - 1) \
+                    * LF_acc_priors[i] / (1 - LF_acc_priors[i])))
                 w_off += 1
             # Learnable acc for LF
             if (not is_fixed[i]):
@@ -535,23 +546,28 @@ class GenerativeModel(object):
         #   True Class:         0 to (cardinality - 1) are the classes
         #   Labeling functions: 0 to (cardinality - 1) are the classes
         #                       cardinality is abstain
+        # Candidates (variables)
         for i in range(m):
             variable[i]['isEvidence'] = False
-            variable[i]['initialValue'] = self.rng.randrange(0, cardinality)
+            variable[i]['initialValue'] = self.rng.randrange(0, self.cardinalities[i])
             variable[i]["dataType"] = 0
-            variable[i]["cardinality"] = cardinality
+            variable[i]["cardinality"] = self.cardinalities[i]
 
-        for index in range(m, m + m * n):
-            variable[index]["isEvidence"] = 1
-            variable[index]["initialValue"] = cardinality # default to abstain
-            variable[index]["dataType"] = 0
-            variable[index]["cardinality"] = cardinality + 1
-
+        # LF labels
         L_coo = L.tocoo()
         for L_index in range(L_coo.nnz):
             data, i, j = L_coo.data[L_index], L_coo.row[L_index], L_coo.col[L_index]
             index = m + n * i + j
-            if (cardinality == 2):
+
+            # Set basic variable attributes for LF labels
+            variable[index]["isEvidence"] = 1
+            variable[index]["dataType"] = 0
+            variable[index]["cardinality"] = self.cardinalities[i] + 1
+
+            # Note: Here we need to use the overall cardinality to handle, since
+            # with scoped_categorical=True and self.cardinality > 2, some
+            # candidates could have cardinality == 2...
+            if (self.cardinality == 2):
                 if data == 1:
                     variable[index]["initialValue"] = 1
                 elif data == 0:
@@ -563,8 +579,8 @@ class GenerativeModel(object):
                                      "Valid values are 1, 0, and -1. " % (i, j, data))
             else:
                 if data == 0:
-                    variable[index]["initialValue"] = cardinality
-                elif 1 <= data <= cardinality:
+                    variable[index]["initialValue"] = self.cardinalities[i]
+                elif 1 <= data <= self.cardinalities[i]:
                     variable[index]["initialValue"] = data - 1
                 else:
                     raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
@@ -575,7 +591,7 @@ class GenerativeModel(object):
         #
         # Class prior
         if self.class_prior:
-            if cardinality != 2:
+            if self.cardinality != 2:
                 raise NotImplementedError("Class Prior not implemented for categorical classes.")
             for i in range(m):
                 factor[i]["factorFunction"] = FACTORS["DP_GEN_CLASS_PRIOR"]
@@ -614,7 +630,7 @@ class GenerativeModel(object):
 
         for optional_name in GenerativeModel.optional_names:
             if getattr(self, optional_name):
-                if optional_name != 'lf_propensity' and cardinality != 2:
+                if optional_name != 'lf_propensity' and self.cardinality != 2:
                     raise NotImplementedError(optional_name + " not implemented for categorical classes.")
                 f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off,
                                                                      optional_name_map[optional_name][0],
@@ -646,7 +662,7 @@ class GenerativeModel(object):
         for dep_name in GenerativeModel.dep_names:
             mat = getattr(self, dep_name)
             if mat.nnz > 0:
-                if dep_name not in CATEGORICAL_DEPS and cardinality != 2:
+                if dep_name not in CATEGORICAL_DEPS and self.cardinality != 2:
                     raise NotImplementedError(
                         dep_name + " not implemented for categorical classes.")
                 for i in range(len(mat.data)):
@@ -775,6 +791,10 @@ class GenerativeModel(object):
         return L, mappings
 
 
+
+###
+### Old generative model class
+###
 class NaiveBayes(NoiseAwareModel):
     def __init__(self, bias_term=False):
         self.w         = None

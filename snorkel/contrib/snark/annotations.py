@@ -2,7 +2,7 @@ from snorkel.annotations import load_label_matrix
 from snorkel.models.annotation import Label, LabelKey
 from snorkel.models.meta import snorkel_conn_string
 from snorkel.models.views import create_serialized_candidate_view
-from models.candidate import candidate_subclass
+from models.candidate import Candidate
 from models.context import Sentence, Span
 from functools import partial
 
@@ -129,6 +129,9 @@ def wrap_candidate(row, class_name='Candidate', argnames=[]):
         spans.append(span)
 
     # Create candidate object
-    Candidate = candidate_subclass(class_name, argnames)
-    attrib_names = ['id'] + argnames
-    return Candidate(**dict(zip(attrib_names, [row[0]] + spans)))
+    return Candidate(
+        id=row[0],
+        context_names=argnames,
+        contexts=spans,
+        name=class_name
+    )

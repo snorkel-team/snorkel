@@ -2,9 +2,12 @@ from . import SparkModel
 
 class Candidate(SparkModel):
     """An abstract candidate relation."""
-    def __init__(self, **kwargs):
-        for k, v in kwargs.iteritems():
-            setattr(self, k, v)
+    def __init__(self, id, context_names, contexts, name='Candidate'):
+        self.id = id
+        self.name = name
+        self.__argnames__ = context_names
+        for name, context in zip(context_names, contexts):
+            setattr(self, name, context)
 
     def get_contexts(self):
         """Get a tuple of the consituent contexts making up this candidate"""
@@ -31,33 +34,4 @@ class Candidate(SparkModel):
         return self.get_contexts()[key]
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, ", ".join(
-            map(str, self.get_contexts())))
-
-
-def candidate_subclass(class_name, args):
-    """
-    Creates and returns a Candidate subclass with provided argument names, which
-    are Context type.
-    Creates the table in DB if does not exist yet.
-
-    :param class_name: The name of the class, should be "camel case" e.g. 
-        NewCandidateClass
-    :param args: A list of names of consituent arguments, which refer to the 
-        Contexts--representing mentions--that comprise the candidate.
-    """
-    class_attribs = {
-        'id': None,
-
-        # Helper method to get argument names
-        '__argnames__' : args
-    }
-        
-    # Create named arguments
-    for arg in args:
-        class_attribs[arg + '_id'] = None
-        class_attribs[arg] = None
-        class_attribs[arg + '_cid'] = None
-
-    # Create class
-    return type(class_name, (Candidate,), class_attribs)
+        return "%s(%s)" % (self.name, ", ".join(map(str, self.get_contexts())))

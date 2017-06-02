@@ -17,7 +17,7 @@ def create_serialized_candidate_view(session, C, verbose=True):
         joins.append("{0}.{1}_id = span{2}.id".format(C.__tablename__, arg, i))
 
     sql = """
-    CREATE VIEW {0}_serialized AS
+    CREATE VIEW IF NOT EXISTS {0}_serialized AS
         SELECT
             candidate.id,
             candidate.split,

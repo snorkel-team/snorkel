@@ -1,10 +1,12 @@
+from functools import partial
+from pickle import loads
+
+from models.candidate import Candidate
+from models.context import Sentence, Span
 from snorkel.annotations import load_label_matrix
 from snorkel.models.annotation import Label, LabelKey
 from snorkel.models.meta import snorkel_conn_string
 from snorkel.models.views import create_serialized_candidate_view
-from models.candidate import Candidate
-from models.context import Sentence, Span
-from functools import partial
 
 
 class SparkLabelAnnotator:
@@ -118,13 +120,17 @@ def wrap_candidate(row, class_name='Candidate', argnames=None):
     # Order of columns is id | split | span1.cid | span1.* | ... | sent.*
 
     # Create Sentence object
-    sent = Sentence(**dict(zip(SENTENCE_COLS, row[-len(SENTENCE_COLS):])))
+    args = dict(zip(SENTENCE_COLS, row[-len(SENTENCE_COLS):]))
+    args = {k: loads(v) if isinstance(v, bytearray) else v for k, v in args.iteritems()}
+    sent = Sentence(**args)
 
     # Create the Span objects
     spans, cids = [], []
     for i in range(arity):
         j = CONTEXT_OFFSET + i * (len(SPAN_COLS) + 1)
-        span = Span(**dict(zip(SPAN_COLS, row[j+1:j+len(SPAN_COLS)])))
+        args = dict(zip(SPAN_COLS, row[j+1:j+len(SPAN_COLS)]))
+        args = {k: loads(v) if isinstance(v, bytearray) else v for k, v in args.iteritems()}
+        span = Span(**args)
         # Store the Sentence in the Span
         span.sentence = sent
         spans.append(span)

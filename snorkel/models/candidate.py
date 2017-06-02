@@ -99,7 +99,7 @@ def candidate_subclass(class_name, args, table_name=None):
         unique_con_args.append(class_attribs[arg + '_id'])
 
         # Canonical ids, to be set post-entity normalization stage
-        class_attribs[arg + '_cid'] = Column(Integer)
+        class_attribs[arg + '_cid'] = Column(String)
 
     class_attribs['__table_args__'] = (UniqueConstraint(*unique_con_args),)
 

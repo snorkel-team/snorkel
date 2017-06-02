@@ -81,7 +81,7 @@ class Span(Context, TemporarySpan):
         self.id = kwargs.get('id', None)
         self.sentence = kwargs.get('sentence', None)
         self.char_start = kwargs.get('char_start', -1)
-        self.char_end = kwargs.get('char_start', -1)
+        self.char_end = kwargs.get('char_end', -1)
         self.meta = kwargs.get('meta', {})
 
     def get_parent(self):

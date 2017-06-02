@@ -221,13 +221,14 @@ class GenerativeModel(object):
         # (e.g. for cases where the cardinaltiy is very large, but the effective
         # support set for any candidate is fairly small)
         # Note: Either way we create a list of cardinality for each candidate
-        if scoped_categorical:
+        self.scoped_categorical = scoped_categorical
+        if self.scoped_categorical:
             if self.cardinality == 2:
                 raise ValueError(
                     "Cannot set scoped_categorical=True in binary setting!")
-            L, mappings = self._remap_label_matrix(L)
+            L, self.mappings = self._remap_label_matrix(L)
             # Note this turns cardinality from an int -> a list
-            self.cardinalities = map(len, mappings)
+            self.cardinalities = map(len, self.mappings)
         else:
             self.cardinalities = self.cardinality * np.ones(m)
 
@@ -390,28 +391,41 @@ class GenerativeModel(object):
 
         # Categorical setting
         else:
-            marginals = np.zeros((m, self.cardinality), dtype=np.float64)
+            all_marginals = []
+
+            # Get the marginal (posterior) probability for each candidate
             for i in range(m):
+                marginals = np.zeros(self.cardinalities[i], dtype=np.float64)
                 # NB: class priors not currently available for categoricals
                 l_i = L[i].tocoo()
                 for l_index1 in range(l_i.nnz):
                     data_j, j = l_i.data[l_index1], l_i.col[l_index1]
                     if (data_j != 0):
-                        if not 1 <= data_j <= self.cardinality:
+                        if not 1 <= data_j <= self.cardinalities[i]:
                             raise ValueError(
                                 """Illegal value at %d, %d: %d. Must be in 0 to 
-                                %d.""" % (i, j, data_j, self.cardinality))
+                                %d.""" % (i, j, data_j, self.cardinalities[i]))
                         # NB: LF class propensity not currently available
                         # for categoricals
-                        marginals[i, int(data_j - 1)] += \
+                        marginals[int(data_j - 1)] += \
                             2 * self.weights.lf_accuracy[j]
                             
                 # NB: fixing and reinforcing not available for categoricals
                 # Get softmax
-                exps = np.exp(marginals[i, :])
-                marginals[i, :] = exps / exps.sum()
+                exps = np.exp(marginals)
+                marginals = exps / exps.sum()
+                all_marginals.append(marginals)
 
-        return marginals
+            # If scoped_categorical=True, remap back to original values and
+            # return as sparse matrix
+            if self.scoped_categorical:
+                M = sparse.coo_matrix((m, self.cardinality), dtype=np.float64)
+                for i, marginals in enumerate(all_marginals):
+                    for j, p in enumerate(marginals):
+                        M[i, self.mappings[j-1]] = p
+            else:
+                M = np.vstack(all_marginals)
+        return M
 
     def score(self, session, X_test, test_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True,
               display=True, scorer=MentionScorer, **kwargs):

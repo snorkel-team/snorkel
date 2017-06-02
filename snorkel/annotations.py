@@ -332,8 +332,14 @@ class LabelAnnotator(Annotator):
     """Apply labeling functions to the candidates, generating Label annotations
     
     :param lfs: A _list_ of labeling functions (LFs)
+    :param scoped_categorical: If True, remap the values of a categorical
+        label matrix so that the support for each candidate is a contiguous
+        range, so that only relevant values are sampled during learning / 
+        inference.
     """
-    def __init__(self, lfs):
+    def __init__(self, lfs, scoped_categorical=False):
+        self.scoped_categorical = scoped_categorical
+
         # Convert lfs to a generator function
         # In particular, catch verbose values and convert to integer ones
         def f_gen(c):
@@ -363,24 +369,39 @@ class LabelAnnotator(Annotator):
         super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen)
 
     def _remap(self, L):
-        """Remaps values of label matrix L for each row (candidate) so that
-        each candidate has dense support. Optionally takes a list of
-        pre-computed support sets for each candidate.
+        """Remaps values of a categorical label matrix L for each row 
+        (candidate) so that the support for each candidate is a contiguous
+        range.
 
         Simple example:
         L = [[0, 5, 10, 5], [1, 4, 200, 1, 1]]
         
         gets mapped to:
         L = [[0,1,2,1], [1,2,3,1,1]], maps = [[5,10], [1,4,200]].
+
+        :param support_sets: If provided, 
         """
-        # TODO
-        return L, []
+        mappings = []
+        for i in range(L.shape[0]):
+            mapping = sorted(set(L[i].data))
+            mappings.append(vals)
+            for j in range(L[i].data.shape[0]):
+                L[i, L[i].indices[j]] = mapping.index(L[i].data[j]) + 1
+        return L, mappings
 
     def load_matrix(self, session, split, **kwargs):
-        L, maps = self._remap(load_label_matrix(session, split=split, **kwargs))
+        L = load_label_matrix(session, split=split, **kwargs)
 
-        # TODO: Store maps in db?
-        return L
+        # Optionally remap the label matrix entries so that support is dense
+        if self.scoped_categorical:
+            L, mappings = self._remap(L)
+
+            # Note: L is stored in pre-remapped format in the DB, and the
+            # remapping operation is deterministic- therefore we don't need to
+            # store the mappings in the DB
+            return L, mappings
+        else:
+            return L
 
         
 class FeatureAnnotator(Annotator):

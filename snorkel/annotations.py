@@ -362,8 +362,25 @@ class LabelAnnotator(Annotator):
 
         super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen)
 
+    def _remap(self, L):
+        """Remaps values of label matrix L for each row (candidate) so that
+        each candidate has dense support. Optionally takes a list of
+        pre-computed support sets for each candidate.
+
+        Simple example:
+        L = [[0, 5, 10, 5], [1, 4, 200, 1, 1]]
+        
+        gets mapped to:
+        L = [[0,1,2,1], [1,2,3,1,1]], maps = [[5,10], [1,4,200]].
+        """
+        # TODO
+        return L, []
+
     def load_matrix(self, session, split, **kwargs):
-        return load_label_matrix(session, split=split, **kwargs)
+        L, maps = self._remap(load_label_matrix(session, split=split, **kwargs))
+
+        # TODO: Store maps in db?
+        return L
 
         
 class FeatureAnnotator(Annotator):

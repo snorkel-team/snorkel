@@ -98,7 +98,7 @@ SENTENCE_COLS = ['id', 'document_id', 'position', 'text', 'words',
     'char_offsets', 'lemmas', 'pos_tags', 'ner_tags', 'dep_parents',
     'dep_labels', 'entity_cids', 'entity_types']
 
-def wrap_candidate(row, class_name='Candidate', argnames=[]):
+def wrap_candidate(row, class_name='Candidate', argnames=None):
     """
     Wraps raw tuple from <candidate_classname>_serialized table with object data
     structure
@@ -107,7 +107,7 @@ def wrap_candidate(row, class_name='Candidate', argnames=[]):
     :return: candidate object
     """
     # Infer arity from size of row
-    arity = float(len(row) - 2 - len(SENTENCE_COLS)) / len(SPAN_COLS)
+    arity = float(len(row) - 2 - len(SENTENCE_COLS)) / (len(SPAN_COLS) + 1)
     assert int(arity) == arity
     arity = int(arity)
 
@@ -115,23 +115,27 @@ def wrap_candidate(row, class_name='Candidate', argnames=[]):
     # Sentence -> (Spans)
     # Should make more general. Also note that we assume only the local context
     # subtree (Sentence + k Spans comprising the candidate) are provided.
+    # Order of columns is id | split | span1.cid | span1.* | ... | sent.*
 
     # Create Sentence object
     sent = Sentence(**dict(zip(SENTENCE_COLS, row[-len(SENTENCE_COLS):])))
 
     # Create the Span objects
-    spans = []
+    spans, cids = [], []
     for i in range(arity):
-        j = CONTEXT_OFFSET + i * len(SPAN_COLS)
-        span = Span(**dict(zip(SPAN_COLS, row[j:j + len(SPAN_COLS)])))
+        j = CONTEXT_OFFSET + i * (len(SPAN_COLS) + 1)
+        span = Span(**dict(zip(SPAN_COLS, row[j+1:j+len(SPAN_COLS)])))
         # Store the Sentence in the Span
         span.sentence = sent
         spans.append(span)
+        # Get the CID as well
+        cids.append(row[j])
 
     # Create candidate object
     return Candidate(
         id=row[0],
         context_names=argnames,
         contexts=spans,
+        cids=cids,
         name=class_name
     )

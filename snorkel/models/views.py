@@ -1,5 +1,4 @@
 
-
 def create_serialized_candidate_view(session, C, verbose=True):
     """Creates a view in the database for a Candidate sub-class C defined over
     Span contexts, which are direct children of a single sentence.
@@ -12,6 +11,9 @@ def create_serialized_candidate_view(session, C, verbose=True):
     """
     selects, froms, joins = [], [], []
     for i, arg in enumerate(C.__argnames__):
+        # Select the context CID
+        selects.append("{0}.{1}_cid".format(C.__tablename__, arg))
+        # Then all of its span columns
         selects.append("span{0}.*".format(i))
         froms.append("span AS span{0}".format(i))
         joins.append("{0}.{1}_id = span{2}.id".format(C.__tablename__, arg, i))

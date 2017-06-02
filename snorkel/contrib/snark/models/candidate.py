@@ -2,12 +2,13 @@ from . import SparkModel
 
 class Candidate(SparkModel):
     """An abstract candidate relation."""
-    def __init__(self, id, context_names, contexts, name='Candidate'):
+    def __init__(self, id, context_names, contexts, cids, name='Candidate'):
         self.id = id
         self.name = name
         self.__argnames__ = context_names
-        for name, context in zip(context_names, contexts):
-            setattr(self, name, context)
+        for i, name in enumerate(context_names):
+            setattr(self, name, contexts[i])
+            setattr(self, name + '_cid', cids[i])
 
     def get_contexts(self):
         """Get a tuple of the consituent contexts making up this candidate"""

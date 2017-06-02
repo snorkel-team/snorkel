@@ -1,4 +1,5 @@
 from . import SparkModel
+from snorkel.models import TemporarySpan
 
 
 class Context(SparkModel):
@@ -69,7 +70,7 @@ class Sentence(Context):
             self.text.encode('utf-8'))
 
 
-class Span(Context):
+class Span(Context, TemporarySpan):
     """
     A span of characters, identified by Context id and character-index start,
     end (inclusive).

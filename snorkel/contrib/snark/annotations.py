@@ -29,8 +29,7 @@ class SparkLabelAnnotator:
 
         self.split_cache = {}
 
-        # TODO: Either check for existence or change method to be forgiving
-        #create_serialized_candidate_view(snorkel_session, candidate_class, verbose=False)
+        create_serialized_candidate_view(snorkel_session, candidate_class, verbose=False)
 
     def apply(self, LFs, split):
         """
@@ -97,6 +96,7 @@ SPAN_COLS = ['id', 'sentence', 'char_start', 'char_end', 'meta']
 SENTENCE_COLS = ['id', 'document_id', 'position', 'text', 'words', 
     'char_offsets', 'lemmas', 'pos_tags', 'ner_tags', 'dep_parents',
     'dep_labels', 'entity_cids', 'entity_types']
+
 
 def wrap_candidate(row, class_name='Candidate', argnames=None):
     """

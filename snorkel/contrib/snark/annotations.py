@@ -2,6 +2,9 @@ from snorkel.annotations import load_label_matrix
 from snorkel.models.annotation import Label, LabelKey
 from snorkel.models.meta import snorkel_conn_string
 from snorkel.models.views import create_serialized_candidate_view
+from models.candidate import candidate_subclass
+from models.context import Sentence, Span
+from functools import partial
 
 
 class SparkLabelAnnotator:
@@ -78,17 +81,54 @@ class SparkLabelAnnotator:
             .option("dbtable", self.candidate_class.__tablename__ + "_serialized") \
             .load()
 
-        rdd = jdbcDF.rdd.map(wrap_candidate)
+        rdd = jdbcDF.rdd.map(partial(
+            wrap_candidate,
+            class_name=self.candidate_class.__name__,
+            argnames=self.candidate_class.__argnames__
+        ))
         rdd = rdd.setName("Snorkel Candidates, Split " + str(split) + " (" + self.candidate_class.__name__ + ")")
         self.split_cache[split] = rdd.cache()
 
 
-def wrap_candidate(row):
+# Note: This should ideally not be hard-coded...
+CONTEXT_OFFSET = 2
+# Note: We store the sentence here, not the sentence_id
+SPAN_COLS = ['id', 'sentence', 'char_start', 'char_end', 'meta']
+SENTENCE_COLS = ['id', 'document_id', 'position', 'text', 'words', 
+    'char_offsets', 'lemmas', 'pos_tags', 'ner_tags', 'dep_parents',
+    'dep_labels', 'entity_cids', 'entity_types']
+
+def wrap_candidate(row, class_name='Candidate', argnames=[]):
     """
-    Wraps raw tuple from <candidate_classname>_serialized table with object data structure
+    Wraps raw tuple from <candidate_classname>_serialized table with object data
+    structure
 
     :param row: raw tuple
     :return: candidate object
     """
-    # TODO
-    return row
+    # Infer arity from size of row
+    arity = float(len(row) - 2 - len(SENTENCE_COLS)) / len(SPAN_COLS)
+    assert int(arity) == arity
+    arity = int(arity)
+
+    # NB: We hardcode in an assumed Context hierarchy here:
+    # Sentence -> (Spans)
+    # Should make more general. Also note that we assume only the local context
+    # subtree (Sentence + k Spans comprising the candidate) are provided.
+
+    # Create Sentence object
+    sent = Sentence(**dict(zip(SENTENCE_COLS, row[-len(SENTENCE_COLS):])))
+
+    # Create the Span objects
+    spans = []
+    for i in range(arity):
+        j = CONTEXT_OFFSET + i * len(SPAN_COLS)
+        span = Span(**dict(zip(SPAN_COLS, row[j:j + len(SPAN_COLS)])))
+        # Store the Sentence in the Span
+        span.sentence = sent
+        spans.append(span)
+
+    # Create candidate object
+    Candidate = candidate_subclass(class_name, argnames)
+    attrib_names = ['id'] + argnames
+    return Candidate(**dict(zip(attrib_names, [row[0]] + spans)))

@@ -65,12 +65,14 @@ class Sentence(Context):
         yield self
 
     def __repr__(self):
-        return "Sentence(%s,%s,%s)" % (self.document, self.position, self.text.encode('utf-8'))
+        return "Sentence(%s,%s,%s)" % (self.document, self.position,
+            self.text.encode('utf-8'))
 
 
 class Span(Context):
     """
-    A span of characters, identified by Context id and character-index start, end (inclusive).
+    A span of characters, identified by Context id and character-index start,
+    end (inclusive).
 
     char_offsets are **relative to the Context start**
     """

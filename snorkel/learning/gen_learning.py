@@ -118,7 +118,7 @@ class GenerativeModel(object):
         labels=None, label_prior=0.99, init_deps=0.0,
         init_class_prior=-1.0, epochs=30, step_size=None, decay=1.0,
         reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
-        cardinality=None, timer=None):
+        cardinality=None, timer=None, scoped_categorical=False):
         """
         Fits the parameters of the model to a data set. By default, learns a
         conditionally independent model. Additional unary dependencies can be
@@ -159,6 +159,10 @@ class GenerativeModel(object):
         :param cardinality: number of possible classes; by default is inferred
             from the label matrix L
         :param timer: stopwatch for profiling, must implement start() and end()
+        :param scoped_categorical: If True, remap the values of a categorical
+        label matrix so that the support for each candidate is a contiguous
+        range, so that only relevant values are sampled during learning / 
+        inference.
         """
         m, n = L.shape
         step_size = step_size or 0.0001
@@ -209,6 +213,14 @@ class GenerativeModel(object):
         if not isinstance(L, sparse.csr_matrix):
             L = sparse.csr_matrix(L)
         L = L[idxs, :]
+
+        # Optionally: Remap the values of L (in categorical setting) so that the
+        # support for each candidate is a contiguous range of values, so that
+        # only relevant values are sampled during learning and inference
+        # (e.g. for cases where the cardinaltiy is very large, but the effective
+        # support set for any candidate is fairly small)
+        if scoped_categorical:
+            L, mappings = self._remap_label_matrix(L)
 
         # Compile factor graph
         self._process_dependency_graph(L, deps)
@@ -740,6 +752,27 @@ class GenerativeModel(object):
             setattr(weights, dep_name, weight_mat.tocsr(copy=True))
 
         self.weights = weights
+
+    def _remap_label_matrix(self, L):
+        """Remaps values of a categorical label matrix L for each row 
+        (candidate) so that the support for each candidate is a contiguous
+        range.
+
+        Simple example:
+        L = [[0, 5, 10, 5], [1, 4, 200, 1, 1]]
+        
+        gets mapped to:
+        L = [[0,1,2,1], [1,2,3,1,1]], maps = [[5,10], [1,4,200]].
+
+        :param support_sets: If provided, 
+        """
+        mappings = []
+        for i in range(L.shape[0]):
+            mapping = sorted(set(L[i].data))
+            mappings.append(vals)
+            for j in range(L[i].data.shape[0]):
+                L[i, L[i].indices[j]] = mapping.index(L[i].data[j]) + 1
+        return L, mappings
 
 
 class NaiveBayes(NoiseAwareModel):

@@ -250,11 +250,11 @@ class RNNBase(TFNoiseAwareModel):
     def _marginals_preprocessed(self, test_data):
         """Get marginals from preprocessed data"""
         x, x_len = self._make_tensor(test_data)
-        return np.ravel(self.session.run(self.prediction, {
+        return self.session.run(self.prediction, {
             self.sentences:        x,
             self.sentence_lengths: x_len,
             self.keep_prob:        1.0,
-        }))
+        })
 
     def marginals(self, test_candidates):
         """Get likelihood of tagged sequences represented by test_candidates

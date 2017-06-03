@@ -214,7 +214,7 @@ class GenerativeModel(object):
         # Store info from factor graph
         weight, variable, factor, ftv, domain_mask, n_edges =\
             self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps,
-                init_class_prior, LF_acc_priors, is_fixed, cardinality)
+                init_class_prior, LF_acc_priors, is_fixed)
 
         variable["isEvidence"] = False
         weight["isFixed"] = True
@@ -439,8 +439,21 @@ class GenerativeModel(object):
 
         n_weights = 1 if self.class_prior else 0
 
-        hasPrior = [(abs(p - 1.0 / self.cardinalities[i]) > 0.01) 
-                    for i, p in enumerate(LF_acc_priors)]
+        if (all(self.cardinalities == self.cardinalities[0])):
+            # This is an optimization to reduce the number of factors
+            # In the case that all of the cardinalities are the same
+            # (ie. not the scoped categoricals case), then only priors
+            # that do not correspond to 0 weights are included.
+
+            # Note that this optimization can be applied to scoped
+            # categoricals, but modifications to the compiler are required
+            # to handle slightly different sub-graphs for each data point.
+            hasPrior = [(abs(p - 1.0 / self.cardinalities[i]) > 0.01) 
+                        for i, p in enumerate(LF_acc_priors)]
+        else:
+            # Scoped categoricals:
+            # Put in all priors (even those close to 0)
+            hasPrior = [True for i in range(len(LF_acc_priors))]
         self.hasPrior = hasPrior
         nPrior = sum(hasPrior)
         nUnFixed = sum([not i for i in is_fixed])

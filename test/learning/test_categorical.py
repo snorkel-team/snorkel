@@ -17,12 +17,11 @@ class TestCategorical(unittest.TestCase):
     def tearDownClass(cls):
         pass
 
-    def test_categorical(self):
+    def _test_categorical(self, scoped_categorical=False, cardinality=4):
         # A set of true priors
         tol = 0.1
         LF_acc_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
         label_prior = 0.999
-        cardinality = 4
 
         def get_lf(label, cardinality, acc):
             if random.random() < acc:
@@ -65,7 +64,8 @@ class TestCategorical(unittest.TestCase):
             label_prior=label_prior,
             reg_type=2,
             reg_param=1,
-            epochs=0
+            epochs=0,
+            scoped_categorical=scoped_categorical
         )
         stats = gen_model.learned_lf_stats()
         accs = stats["Accuracy"]
@@ -82,7 +82,8 @@ class TestCategorical(unittest.TestCase):
             labels=labels,
             label_prior=label_prior,
             reg_type=0,
-            reg_param=0.0
+            reg_param=0.0,
+            scoped_categorical=scoped_categorical
         )
         stats = gen_model.learned_lf_stats()
         accs = stats["Accuracy"]
@@ -96,7 +97,7 @@ class TestCategorical(unittest.TestCase):
         # Test without supervised
         print("\nTesting without supervised")
         gen_model = GenerativeModel(lf_propensity=True)
-        gen_model.train(L, reg_type=0)
+        gen_model.train(L, reg_type=0, scoped_categorical=scoped_categorical)
         stats = gen_model.learned_lf_stats()
         accs = stats["Accuracy"]
         coverage = stats["Coverage"]
@@ -113,7 +114,8 @@ class TestCategorical(unittest.TestCase):
             L,
             labels=labels,
             label_prior=label_prior,
-            reg_type=0
+            reg_type=0,
+            scoped_categorical=scoped_categorical
         )
         stats = gen_model.learned_lf_stats()
         accs = stats["Accuracy"]
@@ -131,7 +133,8 @@ class TestCategorical(unittest.TestCase):
         gen_model.train(
             L,
             LF_acc_priors=bad_prior,
-            reg_type=0
+            reg_type=0,
+            scoped_categorical=scoped_categorical
         )
         stats = gen_model.learned_lf_stats()
         accs = stats["Accuracy"]
@@ -148,13 +151,24 @@ class TestCategorical(unittest.TestCase):
             L,
             LF_acc_priors=bad_prior,
             reg_type=2,
-            reg_param=100 * n
+            reg_param=100 * n,
+            scoped_categorical=scoped_categorical
         )
         stats = gen_model.learned_lf_stats()
         accs = stats["Accuracy"]
         coverage = stats["Coverage"]
         print(accs)
         self.assertTrue(np.all(np.abs(accs - np.array(bad_prior)) < tol))
+
+    def test_categorical(self):
+        self._test_categorical()
+
+    def test_scoped_categorical(self):
+        # Repeat previous tests with scoped_categorical=True
+        print("\n\nTesting scoped categorical with cardinality=4")
+        self._test_categorical(scoped_categorical=True)
+        print("\n\nTesting scoped categorical with cardinality=100")
+        self._test_categorical(scoped_categorical=True, cardinality=100)
 
 if __name__ == '__main__':
     unittest.main()

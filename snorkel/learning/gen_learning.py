@@ -771,7 +771,7 @@ class GenerativeModel(object):
         mappings = []
         for i in range(L.shape[0]):
             mapping = sorted(set(L[i].data))
-            mappings.append(vals)
+            mappings.append(mapping)
             for j in range(L[i].data.shape[0]):
                 L[i, L[i].indices[j]] = mapping.index(L[i].data[j]) + 1
         return L, mappings

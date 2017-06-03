@@ -35,7 +35,10 @@ class GenerativeModel(object):
     def __init__(self, class_prior=False, lf_prior=False, lf_propensity=False,
         lf_class_propensity=False, seed=271828):
 
-        numbskull_version = numbskull.__version__
+        try:
+            numbskull_version = numbskull.__version__
+        except:
+            numbskull_version = "0.0"
         numbskull_require = "0.1"
 
         if StrictVersion(numbskull_version) < StrictVersion(numbskull_require):

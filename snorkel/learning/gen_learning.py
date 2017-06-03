@@ -18,56 +18,6 @@ DEP_REINFORCING = 2
 DEP_EXCLUSIVE = 3
 
 
-class GenerativeModelWeights(object):
-
-    def __init__(self, n):
-        self.n = n
-        self.class_prior = 0.0
-        self.lf_accuracy = np.zeros(n, dtype=np.float64)
-        for optional_name in GenerativeModel.optional_names:
-            setattr(self, optional_name, np.zeros(n, dtype=np.float64))
-
-        for dep_name in GenerativeModel.dep_names:
-            setattr(self, dep_name, sparse.lil_matrix((n, n), dtype=np.float64))
-
-    def is_sign_sparsistent(self, other, threshold=0.1):
-        if self.n != other.n:
-            raise ValueError("Dimension mismatch. %d versus %d" % (self.n, other.n))
-
-        if not self._weight_is_sign_sparsitent(self.class_prior, other.class_prior, threshold):
-            return False
-
-        for i in range(self.n):
-            if not self._weight_is_sign_sparsitent(
-                    self.lf_accuracy[i], other.lf_accuracy[i], threshold):
-                return False
-
-        for name in GenerativeModel.optional_names:
-            for i in range(self.n):
-                if not self._weight_is_sign_sparsitent(
-                        getattr(self, name)[i], getattr(other, name)[i], threshold):
-                    return False
-
-        for name in GenerativeModel.dep_names:
-            for i in range(self.n):
-                for j in range(self.n):
-                    if not self._weight_is_sign_sparsitent(
-                            getattr(self, name)[i, j], getattr(other, name)[i, j], threshold):
-                        return False
-
-        return True
-
-    def _weight_is_sign_sparsitent(self, w1, w2, threshold):
-        if abs(w1) <= threshold and abs(w2) <= threshold:
-            return True
-        elif w1 > threshold and w2 > threshold:
-            return True
-        elif w1 < -1 * threshold and w2 < -1 * threshold:
-            return True
-        else:
-            return False
-
-
 class GenerativeModel(object):
     """
     A generative model for data programming for binary classification.
@@ -567,16 +517,22 @@ class GenerativeModel(object):
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = self.cardinalities[i]
 
-        # LF labels
+        # LF label variables -- initial loop to set all variables
+        for i in range(m):
+            for j in range(n):
+                index = m + n * i + j
+                variable[index]["isEvidence"] = 1
+                variable[index]["dataType"] = 0
+                variable[index]["cardinality"] = self.cardinalities[i] + 1
+                
+                # Default to abstain
+                variable[index]["initialValue"] = self.cardinalities[i]
+
+        # LF labels -- now set the non-zero labels
         L_coo = L.tocoo()
         for L_index in range(L_coo.nnz):
             data, i, j = L_coo.data[L_index], L_coo.row[L_index], L_coo.col[L_index]
             index = m + n * i + j
-
-            # Set basic variable attributes for LF labels
-            variable[index]["isEvidence"] = 1
-            variable[index]["dataType"] = 0
-            variable[index]["cardinality"] = self.cardinalities[i] + 1
 
             # Note: Here we need to use the overall cardinality to handle, since
             # with scoped_categorical=True and self.cardinality > 2, some
@@ -804,6 +760,55 @@ class GenerativeModel(object):
                 L[i, L[i].indices[j]] = mapping.index(L[i].data[j]) + 1
         return L, mappings
 
+
+class GenerativeModelWeights(object):
+
+    def __init__(self, n):
+        self.n = n
+        self.class_prior = 0.0
+        self.lf_accuracy = np.zeros(n, dtype=np.float64)
+        for optional_name in GenerativeModel.optional_names:
+            setattr(self, optional_name, np.zeros(n, dtype=np.float64))
+
+        for dep_name in GenerativeModel.dep_names:
+            setattr(self, dep_name, sparse.lil_matrix((n, n), dtype=np.float64))
+
+    def is_sign_sparsistent(self, other, threshold=0.1):
+        if self.n != other.n:
+            raise ValueError("Dimension mismatch. %d versus %d" % (self.n, other.n))
+
+        if not self._weight_is_sign_sparsitent(self.class_prior, other.class_prior, threshold):
+            return False
+
+        for i in range(self.n):
+            if not self._weight_is_sign_sparsitent(
+                    self.lf_accuracy[i], other.lf_accuracy[i], threshold):
+                return False
+
+        for name in GenerativeModel.optional_names:
+            for i in range(self.n):
+                if not self._weight_is_sign_sparsitent(
+                        getattr(self, name)[i], getattr(other, name)[i], threshold):
+                    return False
+
+        for name in GenerativeModel.dep_names:
+            for i in range(self.n):
+                for j in range(self.n):
+                    if not self._weight_is_sign_sparsitent(
+                            getattr(self, name)[i, j], getattr(other, name)[i, j], threshold):
+                        return False
+
+        return True
+
+    def _weight_is_sign_sparsitent(self, w1, w2, threshold):
+        if abs(w1) <= threshold and abs(w2) <= threshold:
+            return True
+        elif w1 > threshold and w2 > threshold:
+            return True
+        elif w1 < -1 * threshold and w2 < -1 * threshold:
+            return True
+        else:
+            return False
 
 
 ###

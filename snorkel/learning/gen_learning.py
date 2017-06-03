@@ -258,12 +258,13 @@ class GenerativeModel(object):
         count = np.zeros((self.nlf, self.cardinality, cardinality + 1))
 
         for true_label in range(cardinality):
-            self.fg.factorGraphs[0].var_value[0, 0] = true_label
+            for i in range(self.nlf + 1):
+                self.fg.factorGraphs[0].var_value[0, i] = true_label
             self.fg.factorGraphs[0].inference(burnin, 0, True)
             for i in range(trials):
                 self.fg.factorGraphs[0].inference(0, 1, True)
+                y = self.fg.factorGraphs[0].var_value[0, 0]
                 for j in range(self.nlf):
-                    y = self.fg.factorGraphs[0].var_value[0, 0]
                     lf = self.fg.factorGraphs[0].var_value[0, j + 1]
                     count[j, y, lf] += 1
 

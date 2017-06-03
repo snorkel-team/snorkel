@@ -183,7 +183,7 @@ class GenerativeModel(object):
             # Note this turns cardinality from an int -> a list
             self.cardinalities = map(len, self.mappings)
         else:
-            self.cardinalities = self.cardinality * np.ones(m)
+            self.cardinalities = self.cardinality * np.ones(m, np.int64)
 
         # Compile factor graph
         self._process_dependency_graph(L, deps)

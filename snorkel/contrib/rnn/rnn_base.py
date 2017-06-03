@@ -115,18 +115,18 @@ class RNNBase(TFNoiseAwareModel):
         # Compute activation
         potentials_dropout = tf.nn.dropout(potentials, self.keep_prob, seed=s3)
         if self.k > 2:
-            self._build_softmax(potentials_dropout)
+            self._build_softmax(potentials_dropout, s4)
         else:
-            self._build_sigmoid(potentials_dropout)
+            self._build_sigmoid(potentials_dropout, s4)
 
         # Backprop trainer
         self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
 
-    def _build_sigmoid(self, potentials_dropout):
+    def _build_sigmoid(self, potentials, seed):
         self.train_marginals = tf.placeholder(tf.float32, [None])
-        W = tf.Variable(tf.random_normal((2*self.dim, 1), stddev=SD, seed=s4))
+        W = tf.Variable(tf.random_normal((2*self.dim, 1), stddev=SD, seed=seed))
         b = tf.Variable(0., dtype=tf.float32)
-        h_dropout = tf.squeeze(tf.matmul(potentials_dropout, W)) + b
+        h_dropout = tf.squeeze(tf.matmul(potentials, W)) + b
         # Noise-aware loss
         self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
             labels=self.train_marginals, logits=h_dropout
@@ -134,12 +134,12 @@ class RNNBase(TFNoiseAwareModel):
         # Get prediction
         self.prediction = tf.nn.sigmoid(h_dropout)
 
-    def _build_softmax(self, potentials_dropout):
+    def _build_softmax(self, potentials, seed):
         self.train_marginals = tf.placeholder(tf.float32, [None, self.k])
         W = tf.Variable(tf.random_normal((2*self.dim, self.k), stddev=SD, 
-            seed=s4))
+            seed=seed))
         b = tf.Variable(np.zeros(self.k), dtype=tf.float32)
-        h_dropout = tf.matmul(potentials_dropout, W) + b
+        h_dropout = tf.matmul(potentials, W) + b
         # Noise-aware loss
         self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
             labels=self.train_marginals, logits=h_dropout

@@ -254,8 +254,8 @@ class GenerativeModel(object):
 
         burnin = 500
         trials = 5000
-        cardinality = self.cardinality
-        count = np.zeros((self.nlf, self.cardinality, cardinality + 1))
+        cardinality = max(self.cardinalities)
+        count = np.zeros((self.nlf, cardinality, cardinality + 1))
 
         for true_label in range(cardinality):
             for i in range(self.nlf + 1):

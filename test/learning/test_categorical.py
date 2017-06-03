@@ -20,8 +20,10 @@ class TestCategorical(unittest.TestCase):
     def _test_categorical(self, scoped_categorical=False, cardinality=4):
         # A set of true priors
         tol = 0.1
+        cardinality = 4
         LF_acc_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
-        label_prior = 0.999
+        LF_acc_prior_weights = map(lambda x: 0.5 * np.log((cardinality - 1.0) * x / (1 - x)), LF_acc_priors)
+        label_prior = 1
 
         def get_lf(label, cardinality, acc):
             if random.random() < acc:
@@ -59,9 +61,8 @@ class TestCategorical(unittest.TestCase):
         gen_model = GenerativeModel(lf_propensity=True)
         gen_model.train(
             L,
-            LF_acc_priors=LF_acc_priors,
+            LF_acc_prior_weights=LF_acc_prior_weights,
             labels=labels,
-            label_prior=label_prior,
             reg_type=2,
             reg_param=1,
             epochs=0,
@@ -78,9 +79,8 @@ class TestCategorical(unittest.TestCase):
         print("\nTesting estimated LF accs (TOL=%s)" % tol)
         gen_model.train(
             L,
-            LF_acc_priors=LF_acc_priors,
+            LF_acc_prior_weights=LF_acc_prior_weights,
             labels=labels,
-            label_prior=label_prior,
             reg_type=0,
             reg_param=0.0,
             scoped_categorical=scoped_categorical
@@ -113,7 +113,6 @@ class TestCategorical(unittest.TestCase):
         gen_model.train(
             L,
             labels=labels,
-            label_prior=label_prior,
             reg_type=0,
             scoped_categorical=scoped_categorical
         )
@@ -130,9 +129,10 @@ class TestCategorical(unittest.TestCase):
         print("\nTesting without supervised, with bad priors (weak)")
         gen_model = GenerativeModel(lf_propensity=True)
         bad_prior = [0.9, 0.8, 0.7, 0.6, 0.5]
+        bad_prior_weights = map(lambda x: 0.5 * np.log((cardinality - 1.0) * x / (1 - x)), bad_prior)
         gen_model.train(
             L,
-            LF_acc_priors=bad_prior,
+            LF_acc_prior_weights=bad_prior_weights,
             reg_type=0,
             scoped_categorical=scoped_categorical
         )
@@ -149,7 +149,7 @@ class TestCategorical(unittest.TestCase):
         gen_model = GenerativeModel(lf_propensity=True)
         gen_model.train(
             L,
-            LF_acc_priors=bad_prior,
+            LF_acc_prior_weights=bad_prior_weights,
             reg_type=2,
             reg_param=100 * n,
             scoped_categorical=scoped_categorical

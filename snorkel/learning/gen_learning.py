@@ -67,8 +67,8 @@ class GenerativeModel(object):
         'dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive'
     )
 
-    def train(self, L, deps=(), LF_acc_priors=None, LF_acc_prior_default=0.7, 
-        labels=None, label_prior=0.99, init_deps=0.0,
+    def train(self, L, deps=(), LF_acc_prior_weights=None, LF_acc_prior_weight_default=1,
+        labels=None, label_prior_weight=5, init_deps=0.0,
         init_class_prior=-1.0, epochs=30, step_size=None, decay=1.0,
         reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
         cardinality=None, timer=None, scoped_categorical=False):
@@ -87,12 +87,12 @@ class GenerativeModel(object):
                      element is a tuple of the form 
                      (LF 1 index, LF 2 index, dependency type),
                      see snorkel.learning.constants
-        :param LF_acc_priors: An N-element list of prior probabilities for the
+        :param LF_acc_prior_weights: An N-element list of prior weights for the
             LF accuracies
-        :param LF_acc_prior_default: Default prior probability for each LF 
-            accuracy; if LF_acc_priors is unset, each LF will have this prior
+        :param LF_acc_prior_weight_default: Default prior for the weight of each LF
+            accuracy; if LF_acc_prior_weights is unset, each LF will have this
         :param labels: Optional ground truth labels
-        :param label_prior: The prior probability that the ground truth labels
+        :param label_prior_weight: The prior probability that the ground truth labels
             (if provided) are correct
         :param init_deps: initial weight for additional dependencies, except
                           class prior (in log scale)
@@ -143,10 +143,10 @@ class GenerativeModel(object):
         # Priors for LFs default to fixed prior value
         # NOTE: Setting default != 0.5 creates a (fixed) factor which increases
         # runtime (by ~0.5x that of a non-fixed factor)...
-        if LF_acc_priors is None:
-            LF_acc_priors = [LF_acc_prior_default for _ in range(n)]
+        if LF_acc_prior_weights is None:
+            LF_acc_prior_weights = [LF_acc_prior_weight_default for _ in range(n)]
         else:
-            LF_acc_priors = list(copy(LF_acc_priors))
+            LF_acc_prior_weights = list(copy(LF_acc_prior_weights))
 
         # LF weights are un-fixed
         is_fixed = [False for _ in range(n)]
@@ -158,7 +158,7 @@ class GenerativeModel(object):
             labels = labels.reshape(m, 1)
             L = sparse.hstack([L.copy(), labels])
             is_fixed.append(True)
-            LF_acc_priors.append(label_prior)
+            LF_acc_prior_weights.append(label_prior_weight)
             n += 1
 
         # Shuffle the data points
@@ -188,7 +188,7 @@ class GenerativeModel(object):
         # Compile factor graph
         self._process_dependency_graph(L, deps)
         weight, variable, factor, ftv, domain_mask, n_edges = self._compile(
-            L, init_deps, init_class_prior, LF_acc_priors, is_fixed)
+            L, init_deps, init_class_prior, LF_acc_prior_weights, is_fixed, self.cardinalities)
         fg = NumbSkull(
             n_inference_epoch=0,
             n_learning_epoch=epochs, 
@@ -209,12 +209,12 @@ class GenerativeModel(object):
         fg.learning(out=False)
         if timer is not None:
             timer.end()
-        self._process_learned_weights(L, fg, LF_acc_priors, is_fixed)
+        self._process_learned_weights(L, fg, LF_acc_prior_weights, is_fixed)
 
         # Store info from factor graph
         weight, variable, factor, ftv, domain_mask, n_edges =\
             self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps,
-                init_class_prior, LF_acc_priors, is_fixed)
+                init_class_prior, LF_acc_prior_weights, is_fixed, [max(self.cardinalities)])
 
         variable["isEvidence"] = False
         weight["isFixed"] = True
@@ -431,7 +431,7 @@ class GenerativeModel(object):
         for dep_name in GenerativeModel.dep_names:
             setattr(self, dep_name, getattr(self, dep_name).tocoo(copy=True))
 
-    def _compile(self, L, init_deps, init_class_prior, LF_acc_priors, is_fixed):
+    def _compile(self, L, init_deps, init_class_prior, LF_acc_prior_weights, is_fixed, cardinalities):
         """Compiles a generative model based on L and the current labeling function
         dependencies.
         """
@@ -439,23 +439,8 @@ class GenerativeModel(object):
 
         n_weights = 1 if self.class_prior else 0
 
-        if (all(self.cardinalities == self.cardinalities[0])):
-            # This is an optimization to reduce the number of factors
-            # In the case that all of the cardinalities are the same
-            # (ie. not the scoped categoricals case), then only priors
-            # that do not correspond to 0 weights are included.
-
-            # Note that this optimization can be applied to scoped
-            # categoricals, but modifications to the compiler are required
-            # to handle slightly different sub-graphs for each data point.
-            hasPrior = [(abs(p - 1.0 / self.cardinalities[i]) > 0.01) 
-                        for i, p in enumerate(LF_acc_priors)]
-        else:
-            # Scoped categoricals:
-            # Put in all priors (even those close to 0)
-            hasPrior = [True for i in range(len(LF_acc_priors))]
-        self.hasPrior = hasPrior
-        nPrior = sum(hasPrior)
+        self.hasPrior = [i != 0 for i in LF_acc_prior_weights]
+        nPrior = sum(self.hasPrior)
         nUnFixed = sum([not i for i in is_fixed])
 
         n_weights += nPrior
@@ -499,11 +484,9 @@ class GenerativeModel(object):
 
         for i in range(n):
             # Prior on LF acc
-            if hasPrior[i]:
+            if self.hasPrior[i]:
                 weight[w_off]['isFixed'] = True
-                weight[w_off]['initialValue'] = \
-                    np.float64(0.5 * np.log((self.cardinalities[i] - 1) \
-                    * LF_acc_priors[i] / (1 - LF_acc_priors[i])))
+                weight[w_off]['initialValue'] = LF_acc_prior_weights[i]
                 w_off += 1
             # Learnable acc for LF
             if (not is_fixed[i]):
@@ -529,9 +512,9 @@ class GenerativeModel(object):
         # Candidates (variables)
         for i in range(m):
             variable[i]['isEvidence'] = False
-            variable[i]['initialValue'] = self.rng.randrange(0, self.cardinalities[i])
+            variable[i]['initialValue'] = self.rng.randrange(0, cardinalities[i])
             variable[i]["dataType"] = 0
-            variable[i]["cardinality"] = self.cardinalities[i]
+            variable[i]["cardinality"] = cardinalities[i]
 
         # LF label variables -- initial loop to set all variables
         for i in range(m):
@@ -539,10 +522,10 @@ class GenerativeModel(object):
                 index = m + n * i + j
                 variable[index]["isEvidence"] = 1
                 variable[index]["dataType"] = 0
-                variable[index]["cardinality"] = self.cardinalities[i] + 1
+                variable[index]["cardinality"] = cardinalities[i] + 1
                 
                 # Default to abstain
-                variable[index]["initialValue"] = self.cardinalities[i]
+                variable[index]["initialValue"] = cardinalities[i]
 
         # LF labels -- now set the non-zero labels
         L_coo = L.tocoo()
@@ -565,12 +548,12 @@ class GenerativeModel(object):
                                      "Valid values are 1, 0, and -1. " % (i, j, data))
             else:
                 if data == 0:
-                    variable[index]["initialValue"] = self.cardinalities[i]
-                elif 1 <= data <= self.cardinalities[i]:
+                    variable[index]["initialValue"] = cardinalities[i]
+                elif 1 <= data <= cardinalities[i]:
                     variable[index]["initialValue"] = data - 1
                 else:
                     raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
-                                     "Valid values are 0 to %d. " % (i, j, data, cardinality))
+                                     "Valid values are 0 to %d. " % (i, j, data, self.cardinality))
 
         #
         # Compiles factor and ftv matrices
@@ -597,7 +580,7 @@ class GenerativeModel(object):
             w_off = 0
 
         # Factors over labeling function outputs
-        nfactors_for_lf = [(hasPrior[i] + (not is_fixed[i])) for i in range(n)]
+        nfactors_for_lf = [(int(self.hasPrior[i]) + int(not is_fixed[i])) for i in range(n)]
         f_off, ftv_off, w_off = self._compile_output_factors(L, factor, f_off, ftv, ftv_off, w_off, "DP_GEN_LF_ACCURACY",
                                                              (lambda m, n, i, j: i, lambda m, n, i, j: m + n * i + j), nfactors_for_lf)
 
@@ -714,7 +697,7 @@ class GenerativeModel(object):
 
         return factors_offset + m, ftv_offset + len(vid_funcs) * m, weight_offset + 1
 
-    def _process_learned_weights(self, L, fg, LF_acc_priors, is_fixed):
+    def _process_learned_weights(self, L, fg, LF_acc_prior_weights, is_fixed):
         _, n = L.shape
 
         w = fg.getFactorGraph().getWeights()

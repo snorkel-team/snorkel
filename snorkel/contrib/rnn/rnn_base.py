@@ -4,7 +4,7 @@ import tensorflow as tf
 import tensorflow.contrib.rnn as rnn
 import warnings
 
-from snorkel.learning import LabelBalancer, TFNoiseAwareModel
+from snorkel.learning import LabelBalancer, TFNoiseAwareModel, get_cardinality
 from utils import f1_score, get_bi_rnn_output, SymbolTable
 from time import time
 
@@ -75,7 +75,6 @@ class RNNBase(TFNoiseAwareModel):
         # Define input layers
         self.sentences        = tf.placeholder(tf.int32, [None, None])
         self.sentence_lengths = tf.placeholder(tf.int32, [None])
-        self.train_marginals  = tf.placeholder(tf.float32, [None])
         self.keep_prob        = tf.placeholder(tf.float32)
         # Seeds
         s = self.seed
@@ -112,8 +111,19 @@ class RNNBase(TFNoiseAwareModel):
             )
         # Get potentials
         potentials = get_bi_rnn_output(rnn_out, self.dim, self.sentence_lengths)
+        
         # Compute activation
         potentials_dropout = tf.nn.dropout(potentials, self.keep_prob, seed=s3)
+        if self.k > 2:
+            self._build_softmax(potentials_dropout)
+        else:
+            self._build_sigmoid(potentials_dropout)
+
+        # Backprop trainer
+        self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
+
+    def _build_sigmoid(self, potentials_dropout):
+        self.train_marginals = tf.placeholder(tf.float32, [None])
         W = tf.Variable(tf.random_normal((2*self.dim, 1), stddev=SD, seed=s4))
         b = tf.Variable(0., dtype=tf.float32)
         h_dropout = tf.squeeze(tf.matmul(potentials_dropout, W)) + b
@@ -121,10 +131,21 @@ class RNNBase(TFNoiseAwareModel):
         self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
             labels=self.train_marginals, logits=h_dropout
         ))
-        # Backprop trainer
-        self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
         # Get prediction
         self.prediction = tf.nn.sigmoid(h_dropout)
+
+    def _build_softmax(self, potentials_dropout):
+        self.train_marginals = tf.placeholder(tf.float32, [None, self.k])
+        W = tf.Variable(tf.random_normal((2*self.dim, self.k), stddev=SD, 
+            seed=s4))
+        b = tf.Variable(np.zeros(self.k), dtype=tf.float32)
+        h_dropout = tf.matmul(potentials_dropout, W) + b
+        # Noise-aware loss
+        self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+            labels=self.train_marginals, logits=h_dropout
+        ))
+        # Get prediction
+        self.prediction = tf.nn.softmax(h_dropout)
 
     def train(self, candidates, marginals, n_epochs=25, lr=0.01, dropout=0.5,
         dim=50, attn_window=None, cell_type=rnn.BasicLSTMCell, batch_size=256,
@@ -148,6 +169,7 @@ class RNNBase(TFNoiseAwareModel):
             @dev_labels: array of labels for each dev Candidate
             @print_freq: number of epochs after which to print status
         """
+        marginals, self.k = get_cardinality(marginals)
         verbose = print_freq > 0
         if verbose:
             print("[{0}] Dimension={1}  LR={2}".format(self.name, dim, lr))
@@ -157,9 +179,15 @@ class RNNBase(TFNoiseAwareModel):
         train_data, ends = self._preprocess_data(candidates, extend=True)
         # Get training indices
         np.random.seed(self.seed)
-        train_idxs = LabelBalancer(marginals).get_train_idxs(rebalance)
-        x_train    = [train_data[j] for j in train_idxs]
-        y_train    = np.ravel(marginals)[train_idxs]
+        # Get training indices
+        # Note: Currently we only do label balancing for binary setting
+        if self.k == 2:
+            train_idxs = LabelBalancer(marginals).get_train_idxs(rebalance)
+            x_train    = [train_data[j] for j in train_idxs]
+            y_train    = np.ravel(marginals)[train_idxs]
+        else:
+            x_train = train_data
+            y_train = marginals
         # Get max sentence size
         self.mx_len = max_sentence_length or max(len(x) for x in x_train)
         self._check_max_sentence_length(ends)

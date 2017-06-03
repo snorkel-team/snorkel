@@ -11,6 +11,27 @@ matplotlib.use('Agg')
 warnings.filterwarnings("ignore", module="matplotlib")
 
 
+def get_cardinality(marginals):
+    """Returns cardinality and (potentially) re-shaped marginals as np array"""
+    # Make sure training marginals are a numpy array first
+    try:
+        shape = marginals.shape
+    except:
+        marginals = np.array(marginals)
+        shape = marginals.shape
+    
+    # Set cardinality + marginals in proper format for binary v. categorical
+    if len(shape) == 1:
+        cardinality = 2
+    else:
+        cardinality = shape[1]
+
+        # If k = 2, make sure is M-dim array
+        if cardinality == 2:
+            marginals = marginals[:,1].reshape(-1)
+    return marginals, cardinality
+
+
 class LabelBalancer(object):
     def __init__(self, y):
         """Utility class to rebalance training labels

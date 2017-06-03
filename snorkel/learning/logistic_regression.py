@@ -5,7 +5,7 @@ import tensorflow as tf
 from disc_learning import TFNoiseAwareModel
 from scipy.sparse import csr_matrix, issparse
 from time import time
-from utils import LabelBalancer
+from utils import LabelBalancer, get_cardinality
 
 
 SD = 0.1
@@ -121,22 +121,8 @@ class LogisticRegression(TFNoiseAwareModel):
                         If True, defaults to standard 0.5 class balance.
                         If False, no class balancing.
         """
-        # Make sure training marginals are a numpy array first
-        try:
-            shape = training_marginals.shape
-        except:
-            training_marginals = np.array(training_marginals)
-            shape = training_marginals.shape
-        
-        # Set cardinality + marginals in proper format for binary v. categorical
-        if len(shape) == 1:
-            self.k = 2
-        else:
-            self.k = shape[1]
-
-            # If k = 2, make sure is M-dim array
-            if self.k == 2:
-                training_marginals = training_marginals[:,1].reshape(-1)
+        # Make sure training marginals are a numpy array + get cardinality
+        training_marginals, self.k = get_cardinality(training_marginals)
 
         # Build model
         X = self._check_input(X)

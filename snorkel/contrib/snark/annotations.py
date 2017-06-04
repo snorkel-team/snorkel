@@ -1,7 +1,7 @@
 from functools import partial
 from pickle import loads
 
-from models.candidate import Candidate
+from models.candidate import Candidate, wrap_candidate
 from models.context import Sentence, Span
 from snorkel.annotations import load_label_matrix
 from snorkel.models.annotation import Label, LabelKey
@@ -11,11 +11,8 @@ from snorkel.models.views import create_serialized_candidate_view
 
 class SparkLabelAnnotator:
     """
-    Distributes candidates to a Spark cluster and applies labeling functions over them.
-
-    Distributed candidate sets are cached by split for the annotator, so repeated calls to apply() will
-    operate over the same split of candidates as the first call for that split, regardless of how the
-    underlying database changes. To reload a candidate set split, construct a new SparkLabelAnnotator.
+    Distributes candidates to a Spark cluster and applies labeling functions 
+    over them.
     """
     def __init__(self, snorkel_session, spark_session, candidate_class):
         """
@@ -31,9 +28,9 @@ class SparkLabelAnnotator:
 
         self.split_cache = {}
 
-        create_serialized_candidate_view(snorkel_session, candidate_class, verbose=False)
+        create_serialized_candidate_view(snorkel_session, candidate_class)
 
-    def apply(self, LFs, split):
+    def apply(self, LFs, split, use_cached=True):
         """
         Applies a collection of labeling functions to a split of candidates.
 
@@ -41,24 +38,38 @@ class SparkLabelAnnotator:
 
         :param LFs: collection of labeling functions
         :param split: the split of candidates to label
+        :param use_cached: If True, distributed candidate sets are cached by 
+            split for the annotator, so  repeated calls to apply() will operate 
+            over the same split of candidates as the first call for that split,
+            regardless of how the underlying database changes. Intended for e.g.
+            usage during iterative development of LFs given fixed Candidate set.
+
         :return: a csr_LabelMatrix of the resulting labels
         """
         self._clear_labels()
 
-        if split not in self.split_cache:
+        if split not in self.split_cache or not use_cached:
             self._load_candidates(split)
+        else:
+            print("Using cached Candidate set for split %s" % split)
 
+        # Bulk insert the LF labels (output values)
         key_query = LabelKey.__table__.insert()
-        label_query = Label.__table__.insert()
-
+        label_tuples = []
         for lf in LFs:
-            lf_id = self.snorkel_session.execute(key_query, {'name': lf.__name__, 'group': 0}).inserted_primary_key[0]
+            lf_id = self.snorkel_session.execute(key_query,
+                {'name': lf.__name__, 'group': 0}).inserted_primary_key[0]
 
             labels = self.split_cache[split].map(lambda c: (c.id, lf(c)))
             labels.filter(lambda (_, value): value != 0 and value is not None)
             for cid, value in labels.toLocalIterator():
-                self.snorkel_session.execute(label_query, {'candidate_id': cid, 'key_id': lf_id, 'value': value})
+                label_tuples.append({
+                    'candidate_id': cid, 'key_id': lf_id, 'value': value})
 
+        # Bulk insert the labels
+        self.snorkel_session.execute(Label.__table__.insert(), label_tuples)
+
+        # Return label matrix from the Snorkel DB
         return load_label_matrix(self.snorkel_session, split=split)
 
     def _clear_labels(self):
@@ -90,58 +101,3 @@ class SparkLabelAnnotator:
         rdd = rdd.setName("Snorkel Candidates, Split " + str(split) + " (" + self.candidate_class.__name__ + ")")
         self.split_cache[split] = rdd.cache()
 
-
-# Note: This should ideally not be hard-coded...
-CONTEXT_OFFSET = 2
-# Note: We store the sentence here, not the sentence_id
-SPAN_COLS = ['id', 'sentence', 'char_start', 'char_end', 'meta']
-SENTENCE_COLS = ['id', 'document_id', 'position', 'text', 'words', 
-    'char_offsets', 'lemmas', 'pos_tags', 'ner_tags', 'dep_parents',
-    'dep_labels', 'entity_cids', 'entity_types']
-
-
-def wrap_candidate(row, class_name='Candidate', argnames=None):
-    """
-    Wraps raw tuple from <candidate_classname>_serialized table with object data
-    structure
-
-    :param row: raw tuple
-    :return: candidate object
-    """
-    # Infer arity from size of row
-    arity = float(len(row) - 2 - len(SENTENCE_COLS)) / (len(SPAN_COLS) + 1)
-    assert int(arity) == arity
-    arity = int(arity)
-
-    # NB: We hardcode in an assumed Context hierarchy here:
-    # Sentence -> (Spans)
-    # Should make more general. Also note that we assume only the local context
-    # subtree (Sentence + k Spans comprising the candidate) are provided.
-    # Order of columns is id | split | span1.cid | span1.* | ... | sent.*
-
-    # Create Sentence object
-    args = dict(zip(SENTENCE_COLS, row[-len(SENTENCE_COLS):]))
-    args = {k: loads(v) if isinstance(v, bytearray) else v for k, v in args.iteritems()}
-    sent = Sentence(**args)
-
-    # Create the Span objects
-    spans, cids = [], []
-    for i in range(arity):
-        j = CONTEXT_OFFSET + i * (len(SPAN_COLS) + 1)
-        args = dict(zip(SPAN_COLS, row[j+1:j+len(SPAN_COLS)]))
-        args = {k: loads(v) if isinstance(v, bytearray) else v for k, v in args.iteritems()}
-        span = Span(**args)
-        # Store the Sentence in the Span
-        span.sentence = sent
-        spans.append(span)
-        # Get the CID as well
-        cids.append(row[j])
-
-    # Create candidate object
-    return Candidate(
-        id=row[0],
-        context_names=argnames,
-        contexts=spans,
-        cids=cids,
-        name=class_name
-    )

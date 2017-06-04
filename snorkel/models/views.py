@@ -1,5 +1,5 @@
 
-def create_serialized_candidate_view(session, C, verbose=True):
+def create_serialized_candidate_view(session, C, verbose=False):
     """Creates a view in the database for a Candidate sub-class C defined over
     Span contexts, which are direct children of a single sentence.
 

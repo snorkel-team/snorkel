@@ -36,3 +36,61 @@ class Candidate(SparkModel):
 
     def __repr__(self):
         return "%s(%s)" % (self.name, ", ".join(map(str, self.get_contexts())))
+
+
+# Note: This should ideally not be hard-coded...
+CONTEXT_OFFSET = 2
+# Note: We store the sentence here, not the sentence_id
+SPAN_COLS = ['id', 'sentence', 'char_start', 'char_end', 'meta']
+SENTENCE_COLS = ['id', 'document_id', 'position', 'text', 'words', 
+    'char_offsets', 'lemmas', 'pos_tags', 'ner_tags', 'dep_parents',
+    'dep_labels', 'entity_cids', 'entity_types']
+
+
+def wrap_candidate(row, class_name='Candidate', argnames=None):
+    """
+    Wraps raw tuple from <candidate_classname>_serialized table with object data
+    structure
+
+    :param row: raw tuple
+    :return: candidate object
+    """
+    # Infer arity from size of row
+    arity = float(len(row) - 2 - len(SENTENCE_COLS)) / (len(SPAN_COLS) + 1)
+    assert int(arity) == arity
+    arity = int(arity)
+
+    # NB: We hardcode in an assumed Context hierarchy here:
+    # Sentence -> (Spans)
+    # Should make more general. Also note that we assume only the local context
+    # subtree (Sentence + k Spans comprising the candidate) are provided.
+    # Order of columns is id | split | span1.cid | span1.* | ... | sent.*
+
+    # Create Sentence object
+    args = dict(zip(SENTENCE_COLS, row[-len(SENTENCE_COLS):]))
+    args = {k: loads(v) if isinstance(v, bytearray) else v 
+            for k, v in args.iteritems()}
+    sent = Sentence(**args)
+
+    # Create the Span objects
+    spans, cids = [], []
+    for i in range(arity):
+        j = CONTEXT_OFFSET + i * (len(SPAN_COLS) + 1)
+        args = dict(zip(SPAN_COLS, row[j+1:j+len(SPAN_COLS)]))
+        args = {k: loads(v) if isinstance(v, bytearray) else v 
+                for k, v in args.iteritems()}
+        span = Span(**args)
+        # Store the Sentence in the Span
+        span.sentence = sent
+        spans.append(span)
+        # Get the CID as well
+        cids.append(row[j])
+
+    # Create candidate object
+    return Candidate(
+        id=row[0],
+        context_names=argnames,
+        contexts=spans,
+        cids=cids,
+        name=class_name
+    )

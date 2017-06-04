@@ -9,10 +9,44 @@ from snorkel.models.meta import snorkel_conn_string
 from snorkel.models.views import create_serialized_candidate_view
 
 
+class SparkCorpusParser:
+    """
+    Distributes raw documents to a Spark cluster and applies a parser to them,
+    returning a hierarchy of Context objects. See snorkel.parser.CorpusParser.
+
+    NOTE: Currently just a stub.
+    """
+    def __init__(self, snorkel_session, spark_session, parser, fn=None):
+        """
+        Constructor
+
+        :param snorkel_session: the SnorkelSession for the Snorkel application
+        :param spark_session: a PySpark SparkSession
+        :param parser: See snorkel.parser.Parser
+        :param fn: Function to apply to parser output
+        """
+        self.snorkel_session = snorkel_session
+        self.spark_session = spark_session
+        self.parser = parser
+        self.fn = fn
+
+    def apply(self, docs, **kwargs):
+        # TODO: Need to be able to start a Parser server on each server...
+        pass
+
+    def _clear(self):
+        # TODO
+        # session.query(Context).delete()
+        # # We cannot cascade up from child contexts to parent Candidates,
+        # # so we delete all Candidates too
+        # session.query(Candidate).delete()
+        pass
+
+
 class SparkLabelAnnotator:
     """
     Distributes candidates to a Spark cluster and applies labeling functions 
-    over them.
+    over them. See snorkel.annotations.LabelAnnotator.
     """
     def __init__(self, snorkel_session, spark_session, candidate_class):
         """
@@ -83,14 +117,16 @@ class SparkLabelAnnotator:
 
     def _load_candidates(self, split):
         """
-        Loads a set of candidates as a Spark RDD and caches the results as self.split_cache[split]
+        Loads a set of candidates as a Spark RDD and caches the results as 
+        self.split_cache[split]
 
         :param split: the split of candidates to load
         """
         jdbcDF = self.spark_session.read \
             .format("jdbc") \
             .option("url", "jdbc:" + snorkel_conn_string) \
-            .option("dbtable", self.candidate_class.__tablename__ + "_serialized") \
+            .option("dbtable", 
+                self.candidate_class.__tablename__ + "_serialized") \
             .load()
 
         rdd = jdbcDF.rdd.map(partial(
@@ -98,6 +134,7 @@ class SparkLabelAnnotator:
             class_name=self.candidate_class.__name__,
             argnames=self.candidate_class.__argnames__
         ))
-        rdd = rdd.setName("Snorkel Candidates, Split " + str(split) + " (" + self.candidate_class.__name__ + ")")
+        rdd = rdd.setName("Snorkel Candidates, Split " + str(split) + \
+            " (" + self.candidate_class.__name__ + ")")
         self.split_cache[split] = rdd.cache()
 

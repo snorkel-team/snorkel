@@ -38,7 +38,7 @@ class TestCategorical(unittest.TestCase):
         L = sparse.lil_matrix((n, 5), dtype=np.int64)
 
         # Store the supervised gold labels separately
-        labels = np.zeros(n)
+        labels = np.zeros(n, np.int64)
 
         for i in range(n):
             y = random.randint(0, cardinality - 1)

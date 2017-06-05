@@ -1,15 +1,13 @@
 import math
 from numbskull.inference import FACTORS
 from scipy import sparse
-from snorkel.learning.gen_learning import (
-    GenerativeModel, DEP_EXCLUSIVE, DEP_REINFORCING, DEP_FIXING, DEP_SIMILAR
-)
+from snorkel.learning.gen_learning import GenerativeModel, DEP_EXCLUSIVE, DEP_REINFORCING, DEP_FIXING, DEP_SIMILAR
 import unittest
 import random
 import numpy as np
 
 
-class TestSupervised(unittest.TestCase):
+class TestCategorical(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -19,11 +17,20 @@ class TestSupervised(unittest.TestCase):
     def tearDownClass(cls):
         pass
 
-    def test_supervised(self):
+    def test_categorical(self):
         # A set of true priors
         tol = 0.1
         LF_acc_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
         label_prior = 0.999
+        cardinality = 4
+
+        def get_lf(label, cardinality, acc):
+            if random.random() < acc:
+                return label + 1
+            lf = random.randint(0, cardinality - 2)
+            if (lf >= label):
+                lf += 1
+            return lf + 1
 
         # Defines a label matrix
         n = 10000
@@ -33,20 +40,20 @@ class TestSupervised(unittest.TestCase):
         labels = np.zeros(n)
 
         for i in range(n):
-            y = 2 * random.randint(0, 1) - 1
+            y = random.randint(0, cardinality - 1)
             # First four LFs always vote, and have decent acc
-            L[i, 0] = y * (2 * (random.random() < LF_acc_priors[0]) - 1)
-            L[i, 1] = y * (2 * (random.random() < LF_acc_priors[1]) - 1)
-            L[i, 2] = y * (2 * (random.random() < LF_acc_priors[2]) - 1)
-            L[i, 3] = y * (2 * (random.random() < LF_acc_priors[3]) - 1)
+            L[i, 0] = get_lf(y, cardinality, LF_acc_priors[0])
+            L[i, 1] = get_lf(y, cardinality, LF_acc_priors[1])
+            L[i, 2] = get_lf(y, cardinality, LF_acc_priors[2])
+            L[i, 3] = get_lf(y, cardinality, LF_acc_priors[3])
 
             # The fifth LF is very accurate but has a much smaller coverage
             if random.random() < 0.2:
-                L[i, 4] = y * (2 * (random.random() < LF_acc_priors[4]) - 1)
+                L[i, 4] = get_lf(y, cardinality, LF_acc_priors[4])
 
             # The sixth LF is a small supervised set
             if random.random() < 0.1:
-                labels[i] = y
+                labels[i] = y + 1
 
         # Test with priors -- first check init vals are correct
         print("Testing init:")
@@ -75,7 +82,7 @@ class TestSupervised(unittest.TestCase):
             labels=labels,
             label_prior=label_prior,
             reg_type=0,
-            reg_param=0.0,
+            reg_param=0.0
         )
         stats = gen_model.learned_lf_stats()
         accs = stats["Accuracy"]
@@ -124,7 +131,7 @@ class TestSupervised(unittest.TestCase):
         gen_model.train(
             L,
             LF_acc_priors=bad_prior,
-            reg_type=0,
+            reg_type=0
         )
         stats = gen_model.learned_lf_stats()
         accs = stats["Accuracy"]
@@ -141,7 +148,7 @@ class TestSupervised(unittest.TestCase):
             L,
             LF_acc_priors=bad_prior,
             reg_type=2,
-            reg_param=100 * n,
+            reg_param=100 * n
         )
         stats = gen_model.learned_lf_stats()
         accs = stats["Accuracy"]

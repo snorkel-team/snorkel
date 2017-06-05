@@ -294,7 +294,7 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
             col_to_kid[j]   = kid
 
     # Create sparse matrix in LIL format for incremental construction
-    X = sparse.lil_matrix((len(cid_to_row), len(kid_to_col)))
+    X = sparse.lil_matrix((len(cid_to_row), len(kid_to_col)), dtype=np.int64)
 
     # NOTE: This is much faster as it allows us to skip the above join (which for some reason is
     # unreasonably slow) by relying on our symbol tables from above; however this will get slower with
@@ -308,7 +308,7 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
             # Optionally restricts val range to {0,1}, mapping -1 -> 0
             if zero_one:
                 val = 1 if val == 1 else 0
-            X[cid_to_row[cid], kid_to_col[kid]] = val
+            X[cid_to_row[cid], kid_to_col[kid]] = int(val)
 
     # Return as an AnnotationMatrix
     Xr = matrix_class(X, candidate_index=cid_to_row, row_index=row_to_cid,
@@ -333,33 +333,39 @@ class LabelAnnotator(Annotator):
     
     :param lfs: A _list_ of labeling functions (LFs)
     """
-    def __init__(self, lfs):
+    def __init__(self, lfs=None, label_generator=None):
+        if lfs is not None:
+            labels = lambda c : [(lf.__name__, lf(c)) for lf in lfs]
+        elif label_generator is not None:
+            labels = lambda c : label_generator(c)
+        else:
+            raise ValueError("Must provide lfs or label_generator kwarg.")
+
         # Convert lfs to a generator function
         # In particular, catch verbose values and convert to integer ones
         def f_gen(c):
-            for lf in lfs:
-                label = lf(c)
+            for lf_key, label in labels(c):
                 # Note: We assume if the LF output is an int, it is already
                 # mapped correctly
                 if type(label) == int:
-                    yield lf.__name__, label
+                    yield lf_key, label
                 # None is a protected LF output value corresponding to 0,
                 # representing LF abstaining
                 elif label is None:
-                    yield lf.__name__, 0
+                    yield lf_key, 0
                 elif label in c.values:
                     if c.cardinality > 2:
-                        yield lf.__name__, c.values.index(label) + 1
+                        yield lf_key, c.values.index(label) + 1
                     # Note: Would be nice to not special-case here, but for
                     # consistency we leave binary LF range as {-1,0,1}
                     else:
                         val = 1 if c.values.index(label) == 0 else -1
-                        yield lf.__name__, val
+                        yield lf_key, val
                 else:
                     raise ValueError("""
                         Unable to parse label with value %s
                         for candidate with values %s""" % (label, c.values))
-
+        
         super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen)
 
     def load_matrix(self, session, split, **kwargs):

@@ -227,7 +227,10 @@ class GenerativeModel(object):
         self._process_learned_weights(L, fg, LF_acc_prior_weights, is_fixed)
 
         # Store info from factor graph
-        self.cardinality_for_stats = max(map(lambda x: len(x), self.mappings))
+        if self.scoped_categorical:
+            self.cardinality_for_stats = max(map(lambda x: len(x), self.mappings))
+        else:
+            self.cardinality_for_stats = self.cardinality
         self.learned_weights = fg.factorGraphs[0].weight_value
         weight, variable, factor, ftv, domain_mask, n_edges =\
             self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps,

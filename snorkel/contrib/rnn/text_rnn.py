@@ -3,11 +3,11 @@ import numpy as np
 from rnn_base import RNNBase
 
 
-class textRNN(RNNBase):
+class TextRNN(RNNBase):
 
     def __init__(self, save_file=None, name='textRNN', seed=None, n_threads=4):
         """reRNN for relation extraction"""
-        super(textRNN, self).__init__(
+        super(TextRNN, self).__init__(
             n_threads=n_threads, save_file=save_file, name=name, seed=seed
         )
 

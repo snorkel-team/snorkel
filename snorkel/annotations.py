@@ -294,7 +294,7 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
             col_to_kid[j]   = kid
 
     # Create sparse matrix in LIL format for incremental construction
-    X = sparse.lil_matrix((len(cid_to_row), len(kid_to_col)))
+    X = sparse.lil_matrix((len(cid_to_row), len(kid_to_col)), dtype=np.int64)
 
     # NOTE: This is much faster as it allows us to skip the above join (which for some reason is
     # unreasonably slow) by relying on our symbol tables from above; however this will get slower with
@@ -308,7 +308,7 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
             # Optionally restricts val range to {0,1}, mapping -1 -> 0
             if zero_one:
                 val = 1 if val == 1 else 0
-            X[cid_to_row[cid], kid_to_col[kid]] = val
+            X[cid_to_row[cid], kid_to_col[kid]] = int(val)
 
     # Return as an AnnotationMatrix
     Xr = matrix_class(X, candidate_index=cid_to_row, row_index=row_to_cid,

@@ -181,7 +181,7 @@ class GenerativeModel(object):
                     "Cannot set scoped_categorical=True in binary setting!")
             L, self.mappings = self._remap_label_matrix(L)
             # Note this turns cardinality from an int -> a list
-            self.cardinalities = map(lambda x: len(x) + 1, self.mappings)
+            self.cardinalities = map(lambda x: max(len(x) + 1, 3), self.mappings)
             # NB: this artificially increases the cardinality of all data points by 1
             #     Ideally, we would like the potential cardinality of each data point
             #     to be specified by the user. Because this is not available, we
@@ -227,9 +227,11 @@ class GenerativeModel(object):
         self._process_learned_weights(L, fg, LF_acc_prior_weights, is_fixed)
 
         # Store info from factor graph
+        self.cardinality_for_stats = max(map(lambda x: len(x), self.mappings))
+        self.learned_weights = fg.factorGraphs[0].weight_value
         weight, variable, factor, ftv, domain_mask, n_edges =\
             self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps,
-                init_class_prior, LF_acc_prior_weights, is_fixed, [max(self.cardinalities)])
+                init_class_prior, LF_acc_prior_weights, is_fixed, [self.cardinality_for_stats])
 
         variable["isEvidence"] = False
         weight["isFixed"] = True
@@ -258,6 +260,9 @@ class GenerativeModel(object):
             True  Negative (TN)
             False Negative (FN)
 
+        For scoped categoricals, the information provided is for the maximum
+        observed cardinality of any single data point.
+
         WARNING: This uses Gibbs sampling to estimate these values. This will
                  tend to mix poorly when there are many very accurate labeling
                  functions. In this case, this function will assume that the
@@ -269,7 +274,7 @@ class GenerativeModel(object):
 
         burnin = 500
         trials = 5000
-        cardinality = max(self.cardinalities)
+        cardinality = self.cardinality_for_stats
         count = np.zeros((self.nlf, cardinality, cardinality + 1))
 
         for true_label in range(cardinality):
@@ -302,7 +307,7 @@ class GenerativeModel(object):
                     })
             else:
                 correct = sum([count[i, j, j] for j in range(cardinality)])
-                coverage = 1 - sum([count[i, j, cardinality] 
+                coverage = 1 - sum([count[i, j, cardinality]
                     for j in range(cardinality)])
                 stats.append({
                     "Accuracy": correct / coverage,

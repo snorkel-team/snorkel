@@ -333,33 +333,39 @@ class LabelAnnotator(Annotator):
     
     :param lfs: A _list_ of labeling functions (LFs)
     """
-    def __init__(self, lfs):
+    def __init__(self, lfs=None, label_generator=None):
+        if lfs is not None:
+            labels = lambda c : [(lf.__name__, lf(c)) for lf in lfs]
+        elif label_generator is not None:
+            labels = lambda c : label_generator(c)
+        else:
+            raise ValueError("Must provide lfs or label_generator kwarg.")
+
         # Convert lfs to a generator function
         # In particular, catch verbose values and convert to integer ones
         def f_gen(c):
-            for lf in lfs:
-                label = lf(c)
+            for lf_key, label in labels(c):
                 # Note: We assume if the LF output is an int, it is already
                 # mapped correctly
                 if type(label) == int:
-                    yield lf.__name__, label
+                    yield lf_key, label
                 # None is a protected LF output value corresponding to 0,
                 # representing LF abstaining
                 elif label is None:
-                    yield lf.__name__, 0
+                    yield lf_key, 0
                 elif label in c.values:
                     if c.cardinality > 2:
-                        yield lf.__name__, c.values.index(label) + 1
+                        yield lf_key, c.values.index(label) + 1
                     # Note: Would be nice to not special-case here, but for
                     # consistency we leave binary LF range as {-1,0,1}
                     else:
                         val = 1 if c.values.index(label) == 0 else -1
-                        yield lf.__name__, val
+                        yield lf_key, val
                 else:
                     raise ValueError("""
                         Unable to parse label with value %s
                         for candidate with values %s""" % (label, c.values))
-
+        
         super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen)
 
     def load_matrix(self, session, split, **kwargs):

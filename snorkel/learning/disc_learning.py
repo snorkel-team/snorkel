@@ -66,9 +66,15 @@ class NoiseAwareModel(object):
         ] if not self.representation else X_test
         # Initialize scorer
         s = scorer(test_candidates, test_labels, gold_candidate_set)
-        test_marginals  = self.marginals(X_test, **kwargs)
+        test_marginals = self.marginals(X_test, **kwargs)
         return s.score(test_marginals, None, b=b, display=display,
                        set_unlabeled_as_neg=set_unlabeled_as_neg)
+
+    def pr_curve(self, X_test, test_labels, set_unlabeled_as_neg=True, 
+        scorer=MentionScorer, **kwargs):
+        s = scorer(None, test_labels, None)
+        test_marginals = self.marginals(X_test, **kwargs)
+        s.pr_curve(test_marginals, set_unlabeled_as_neg=set_unlabeled_as_neg)
 
     def save(self):
         raise NotImplementedError()

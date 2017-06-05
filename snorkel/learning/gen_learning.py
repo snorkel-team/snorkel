@@ -365,6 +365,7 @@ class GenerativeModel(object):
                                 logp_false += self.weights.dep_reinforcing[j, k]
 
                 marginals[i] = 1 / (1 + np.exp(logp_false - logp_true))
+            return marginals
 
         # Categorical setting
         else:
@@ -402,7 +403,7 @@ class GenerativeModel(object):
                         M[i, self.mappings[j-1]] = p
             else:
                 M = np.vstack(all_marginals)
-        return M
+            return M
 
     def score(self, session, X_test, test_labels, gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True,
               display=True, scorer=MentionScorer, **kwargs):

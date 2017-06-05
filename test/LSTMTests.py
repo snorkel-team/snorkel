@@ -20,7 +20,7 @@ class TestLSTM(unittest.TestCase):
       feats = cPickle.load(f)
 
     DDL = DDLiteModel(E, feats)
-    print "Extracted {} features for each of {} mentions".format(DDL.num_feats(), DDL.num_candidates())
+    print("Extracted {} features for each of {} mentions".format(DDL.num_feats(), DDL.num_candidates()))
 
     with open(os.path.join(ROOT, 'test/data/lstm_test/gt/uids.pkl'), 'rb') as f:
       uids = cPickle.load(f)

@@ -98,19 +98,19 @@ class LSAEmbedder(Embedder):
 		self.fname      = 'lsa_snorkel'
 		self.tfidf_mm   = None
 		self.lsa        = None
-		print "Processing corpus"
+		print("Processing corpus")
 		self._process_corpus()
-		print "Corpus processed!"
+		print("Corpus processed!")
 
 	def _process_corpus(self):
 		# Get MatrixMarket format corpus
-		print "\tConverting corpus"
+		print("\tConverting corpus")
 		gensim.corpora.MmCorpus.serialize(
 			self.fname + '.mm', self.corpus, progress_cnt=100
 		)
 		mm_corpus = gensim.corpora.MmCorpus(self.fname + '.mm')
 		# Get TF-IDF model
-		print "\tComputing TF-IDF"
+		print("\tComputing TF-IDF")
 		tfidf = gensim.models.TfidfModel(
 			mm_corpus, id2word=self.dictionary, normalize=True
 		)
@@ -118,7 +118,7 @@ class LSAEmbedder(Embedder):
 			self.fname + '_tfidf.mm', tfidf[mm_corpus], progress_cnt=100
 		)
 		# Reload as Matrix Market format
-		print "\tConverting TF-IDF"
+		print("\tConverting TF-IDF")
 		self.tfidf_mm = gensim.corpora.MmCorpus(self.fname + '_tfidf.mm')
 
 	def run_lsa(self, n_topics=200):

@@ -118,12 +118,12 @@ class MentionScorer(Scorer):
             # If a gold candidate set is provided, also calculate recall-adjusted scores
             if self.gold_candidate_set is not None:
                 gold_fn    = [c for c in self.gold_candidate_set if c not in self.test_candidates]
-                print "\n"
+                print("\n")
                 print_scores(len(tp), len(fp), len(tn), len(fn)+len(gold_fn),title="Corpus Recall-adjusted Scores")
 
             # If training and test marginals provided, also print calibration plots
             if train_marginals is not None and test_marginals is not None:
-                print "\nCalibration plot:"
+                print("\nCalibration plot:")
                 calibration_plots(train_marginals, test_marginals, np.asarray(test_label_array))
         return tp, fp, tn, fn
 
@@ -134,17 +134,17 @@ def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
     f1      = (2 * prec * rec) / (prec + rec) if prec + rec > 0 else 0.0
     pos_acc = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
     neg_acc = ntn / float(ntn + nfp) if ntn + nfp > 0 else 0.0
-    print "========================================"
-    print title
-    print "========================================"
-    print "Pos. class accuracy: {:.3}".format(pos_acc)
-    print "Neg. class accuracy: {:.3}".format(neg_acc)
-    print "Precision            {:.3}".format(prec)
-    print "Recall               {:.3}".format(rec)
-    print "F1                   {:.3}".format(f1)
-    print "----------------------------------------"
-    print "TP: {} | FP: {} | TN: {} | FN: {}".format(ntp, nfp, ntn, nfn)
-    print "========================================\n"
+    print("========================================")
+    print(title)
+    print("========================================")
+    print("Pos. class accuracy: {:.3}".format(pos_acc))
+    print("Neg. class accuracy: {:.3}".format(neg_acc))
+    print("Precision            {:.3}".format(prec))
+    print("Recall               {:.3}".format(rec))
+    print("F1                   {:.3}".format(f1))
+    print("----------------------------------------")
+    print("TP: {} | FP: {} | TN: {} | FN: {}".format(ntp, nfp, ntn, nfn))
+    print("========================================\n")
 
 
 def marginals_to_labels(marginals, b=0.5):
@@ -339,12 +339,12 @@ class GridSearch(object):
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
                 model_hyperparams[pn] = pv
-            print "=" * 60
-            print "[%d] Testing %s" % (k+1, ', '.join([
+            print("=" * 60)
+            print("[%d] Testing %s" % (k+1, ', '.join([
                 "%s = %0.2e" % (pn,pv)
                 for pn,pv in zip(self.param_names, param_vals)
-            ]))
-            print "=" * 60
+            ])))
+            print("=" * 60)
             # Train the model
             self.model.train(
                 self.X, self.training_marginals, **model_hyperparams
@@ -378,8 +378,8 @@ class RandomSearch(GridSearch):
             session, model, X, training_marginals, parameters, **kwargs
         )
 
-        print "Initialized RandomSearch search of size {0}. Search space size = {1}.".format(
-            self.n, np.product([len(param.get_all_values()) for param in self.params])
+        print("Initialized RandomSearch search of size {0}. Search space size = {1}.".format(
+            self.n, np.product([len(param.get_all_values()) for param in self.params]))
         )
         
     def search_space(self):
@@ -466,13 +466,13 @@ def training_set_summary_stats(L, return_vals=True, verbose=False):
     N, M = L.shape
     coverage, overlap, conflict = candidate_coverage(L), candidate_overlap(L), candidate_conflict(L)
     if verbose:
-        print "=" * 60
-        print "LF Summary Statistics: %s LFs applied to %s candidates" % (M, N)
-        print "-" * 60
-        print "Coverage (candidates w/ > 0 labels):\t\t%0.2f%%" % (coverage*100,)
-        print "Overlap (candidates w/ > 1 labels):\t\t%0.2f%%" % (overlap*100,)
-        print "Conflict (candidates w/ conflicting labels):\t%0.2f%%" % (conflict*100,)
-        print "=" * 60
+        print("=" * 60)
+        print("LF Summary Statistics: %s LFs applied to %s candidates" % (M, N))
+        print("-" * 60)
+        print("Coverage (candidates w/ > 0 labels):\t\t%0.2f%%" % (coverage*100,))
+        print("Overlap (candidates w/ > 1 labels):\t\t%0.2f%%" % (overlap*100,))
+        print("Conflict (candidates w/ conflicting labels):\t%0.2f%%" % (conflict*100,))
+        print("=" * 60)
     if return_vals:
         return coverage, overlap, conflict
 

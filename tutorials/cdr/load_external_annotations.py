@@ -1,4 +1,4 @@
-import cPickle
+from six.moves.cPickle import load
 
 from snorkel.db_helpers import reload_annotator_labels
 from snorkel.models import StableLabel
@@ -8,7 +8,7 @@ def load_external_labels(session, candidate_class, split, annotator='gold',
     label_fname='data/cdr_relations_gold.pkl', id_fname='data/doc_ids.pkl'):
     # Load document-level relation annotations
     with open(label_fname, 'rb') as f:
-        relations = cPickle.load(f)
+        relations = load(f)
     # Get split candidates
     candidates = session.query(candidate_class).filter(
         candidate_class.split == split

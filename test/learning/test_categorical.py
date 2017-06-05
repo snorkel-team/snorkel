@@ -20,6 +20,8 @@ class TestCategorical(unittest.TestCase):
     def _test_categorical(self, scoped_categorical=False, cardinality=4):
         # A set of true priors
         tol = 0.1
+        if scoped_categorical:
+            tol = 0.15
         cardinality = 4
         LF_acc_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
         LF_acc_prior_weights = map(lambda x: 0.5 * np.log((cardinality - 1.0) * x / (1 - x)), LF_acc_priors)

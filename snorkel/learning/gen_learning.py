@@ -181,7 +181,22 @@ class GenerativeModel(object):
                     "Cannot set scoped_categorical=True in binary setting!")
             L, self.mappings = self._remap_label_matrix(L)
             # Note this turns cardinality from an int -> a list
-            self.cardinalities = map(len, self.mappings)
+            self.cardinalities = map(lambda x: len(x) + 1, self.mappings)
+            # NB: this artificially increases the cardinality of all data points by 1
+            #     Ideally, we would like the potential cardinality of each data point
+            #     to be specified by the user. Because this is not available, we
+            #     have to infer the data point. However, this typically will
+            #     result in a smaller inferred cardinality than the true cardinality.
+            #
+            # The following issue can show up:
+            #     You have one fairly accurate LF (~0.9 accuracy) and a complete
+            #     set of supervised labels. In the 90% of the dataset where the
+            #     LF is correct, you get an inferred cardinality of 1. For these
+            #     data points, learning on the factor graph does not increase
+            #     the weight on the accuracy factor -- because there is only
+            #     one option, being correct is meaningless. Then, the remaining
+            #     10% have a cardinality of 2, and the LF is always wrong, so
+            #     you get a learned accuracy of close to 0, rather than 0.9.
         else:
             self.cardinalities = self.cardinality * np.ones(m, np.int64)
 

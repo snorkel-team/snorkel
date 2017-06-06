@@ -168,12 +168,14 @@ class GenerativeModel(object):
         # inefficient, can consider refactoring...
         if labels is not None:
             labels = labels.reshape(m, 1)
-            L = sparse.hstack([L.copy(), labels])
+            L = sparse.hstack([L, labels])
             is_fixed.append(True)
             LF_acc_prior_weights.append(label_prior_weight)
             n += 1
 
         # Make sure is CSR sparse matrix
+        # NB: Can clean up all this copying / etc but is necessary at least once
+        L = L.copy()
         if not isinstance(L, sparse.csr_matrix):
             L = sparse.csr_matrix(L)
 

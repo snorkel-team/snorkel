@@ -17,13 +17,13 @@ class TestCategorical(unittest.TestCase):
     def tearDownClass(cls):
         pass
 
-    def _test_categorical(self, candidate_ranges=None, cardinality=4, tol=0.1,
-        n=10000):
-        # A set of true priors
-        LF_acc_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
-        LF_acc_prior_weights = map(lambda x: 0.5 * np.log((cardinality - 1.0) * x / (1 - x)), LF_acc_priors)
-        label_prior = 1
+    def _generate_L(self, LF_acc_priors, cardinality=4, n=10000):
+        """
+        Generate label matrix and ground truth labels given LF acc prior 
+        probabilities, a fixed cardinality, and number of candidates.
 
+        Returns a CSR_sparse label matrix L and supervised labels array.
+        """
         def get_lf(label, cardinality, acc):
             if random.random() < acc:
                 return label + 1
@@ -54,7 +54,60 @@ class TestCategorical(unittest.TestCase):
             if random.random() < 0.1:
                 labels[i] = y + 1
 
-        L = sparse.csr_matrix(L)
+        # Return as CSR sparse matrix
+        return sparse.csr_matrix(L), labels
+
+    def _generate_L_scoped_categorical(self, LF_acc_priors,
+        per_candidate_cardinality=4, full_cardinality=4, n=10000):
+        """
+        Generate label matrix and ground truth labels given LF acc prior 
+        probabilities, a "full" cardinality of the problem, and a per-candidate
+        cardinality.
+
+        Returns a CSR_sparse label matrix L and supervised labels array. 
+        Generates and returns a random set of candidate_ranges as well.
+        """
+        L = sparse.lil_matrix((n, 5), dtype=np.int64)
+        labels = np.zeros(n, np.int64)
+        candidate_ranges = []
+        for i in range(n):
+            # Generate a random support set
+            c_range = list(range(1, full_cardinality + 1))
+            np.random.shuffle(c_range)
+            c_range = c_range[:per_candidate_cardinality]
+            candidate_ranges.append(c_range)
+
+            # Generate a true label
+            y = c_range[random.randint(0, per_candidate_cardinality - 1)]
+
+            # Generate the labels same as in self._generate_L
+            for j in range(5):
+                # LF 5 has smaller coverage
+                if j == 4 and random.random() > 0.2:
+                    continue
+                label = y
+                # Some probability of being incorrect
+                if random.random() > LF_acc_priors[j]:
+                    while label == y:
+                        label = c_range[
+                            random.randint(0, per_candidate_cardinality - 1)]
+                L[i, j] = label
+
+            # Small supervised training set
+            if random.random() < 0.1:
+                labels[i] = y
+
+        # Return as CSR sparse matrix
+        return sparse.csr_matrix(L), labels, candidate_ranges
+
+    def _test_categorical(self, L, LF_acc_priors, labels, label_prior=1, 
+        candidate_ranges=None, cardinality=4, tol=0.1, n=10000):
+        """Run a suite of tests."""
+        # Map to log scale weights
+        LF_acc_prior_weights = map(
+            lambda x: 0.5 * np.log((cardinality - 1.0) * x / (1 - x)),
+            LF_acc_priors
+        )
 
         # Test with priors -- first check init vals are correct
         print("Testing init:")
@@ -161,18 +214,29 @@ class TestCategorical(unittest.TestCase):
         self.assertTrue(np.all(np.abs(accs - np.array(bad_prior)) < tol))
 
     def test_categorical(self):
-        self._test_categorical()
+        LF_acc_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
+        print("Generating L...")
+        L, labels = self._generate_L(LF_acc_priors)
+        print("Running tests for categorical (K=4)...")
+        self._test_categorical(L, LF_acc_priors, labels)
 
-    def test_scoped_categorical(self):
-        n=10000
+    def test_scoped_categorical_small(self):
+        LF_acc_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
+        print("Generating L...")
+        L, labels, candidate_ranges = self._generate_L_scoped_categorical(
+            LF_acc_priors)
+        print("Running tests for scoped-categorical (K=4)...")
+        self._test_categorical(L, LF_acc_priors, labels,
+            candidate_ranges=candidate_ranges)
 
-        # # Test 1: Simple direct remapping
-        candidate_ranges = [range(1, 5) for _ in range(n)]
-        print("\n\nTesting scoped categorical with cardinality=4")
-        self._test_categorical(candidate_ranges=candidate_ranges, n=n)
-
-        # Test 2 : Large cardinality scoped categorical
-        # TODO: Write this test!
+    def test_scoped_categorical_large(self):
+        LF_acc_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
+        print("Generating L...")
+        L, labels, candidate_ranges = self._generate_L_scoped_categorical(
+            LF_acc_priors, full_cardinality=100)
+        print("Running tests for scoped-categorical (K=100)...")
+        self._test_categorical(L, LF_acc_priors, labels,
+            candidate_ranges=candidate_ranges)
 
 if __name__ == '__main__':
     unittest.main()

@@ -30,27 +30,6 @@ class Context(SnorkelBase):
         raise NotImplementedError()
 
 
-class RawText(Context):
-    """A simple Context class representing a blob of text."""
-    __tablename__ = 'raw_text'
-    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    text = Column(String, nullable=False)
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'raw_text',
-    }
-
-    def get_parent(self):
-        return None
-
-    def get_children(self):
-        return None
-
-    def __repr__(self):
-        return "Raw Text " + str(self.text)
-
-
 class Document(Context):
     """
     A root Context.

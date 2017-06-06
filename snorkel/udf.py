@@ -1,5 +1,8 @@
 from multiprocessing import Process, JoinableQueue
-from queue import Empty
+try:
+    from queue import Empty
+except:
+    from Queue import Empty
 
 from .models.meta import new_sessionmaker, snorkel_conn_string
 from .utils import ProgressBar

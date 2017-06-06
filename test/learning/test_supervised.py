@@ -23,14 +23,16 @@ class TestSupervised(unittest.TestCase):
         # A set of true priors
         tol = 0.1
         LF_acc_priors = [0.75, 0.75, 0.75, 0.75, 0.9]
-        label_prior = 0.999
+        cardinality = 2
+        LF_acc_prior_weights = map(lambda x: 0.5 * np.log((cardinality - 1.0) * x / (1 - x)), LF_acc_priors)
+        label_prior = 1
 
         # Defines a label matrix
         n = 10000
         L = sparse.lil_matrix((n, 5), dtype=np.int64)
 
         # Store the supervised gold labels separately
-        labels = np.zeros(n)
+        labels = np.zeros(n, np.int64)
 
         for i in range(n):
             y = 2 * random.randint(0, 1) - 1
@@ -53,9 +55,8 @@ class TestSupervised(unittest.TestCase):
         gen_model = GenerativeModel(lf_propensity=True)
         gen_model.train(
             L,
-            LF_acc_priors=LF_acc_priors,
+            LF_acc_prior_weights=LF_acc_prior_weights,
             labels=labels,
-            label_prior=label_prior,
             reg_type=2,
             reg_param=1,
             epochs=0
@@ -71,9 +72,8 @@ class TestSupervised(unittest.TestCase):
         print("\nTesting estimated LF accs (TOL=%s)" % tol)
         gen_model.train(
             L,
-            LF_acc_priors=LF_acc_priors,
+            LF_acc_prior_weights=LF_acc_prior_weights,
             labels=labels,
-            label_prior=label_prior,
             reg_type=0,
             reg_param=0.0,
         )
@@ -105,7 +105,6 @@ class TestSupervised(unittest.TestCase):
         gen_model.train(
             L,
             labels=labels,
-            label_prior=label_prior,
             reg_type=0
         )
         stats = gen_model.learned_lf_stats()
@@ -121,9 +120,10 @@ class TestSupervised(unittest.TestCase):
         print("\nTesting without supervised, with bad priors (weak)")
         gen_model = GenerativeModel(lf_propensity=True)
         bad_prior = [0.9, 0.8, 0.7, 0.6, 0.5]
+        bad_prior_weights = map(lambda x: 0.5 * np.log((cardinality - 1.0) * x / (1 - x)), bad_prior)
         gen_model.train(
             L,
-            LF_acc_priors=bad_prior,
+            LF_acc_prior_weights=bad_prior_weights,
             reg_type=0,
         )
         stats = gen_model.learned_lf_stats()
@@ -139,7 +139,7 @@ class TestSupervised(unittest.TestCase):
         gen_model = GenerativeModel(lf_propensity=True)
         gen_model.train(
             L,
-            LF_acc_priors=bad_prior,
+            LF_acc_prior_weights=bad_prior_weights,
             reg_type=2,
             reg_param=100 * n,
         )

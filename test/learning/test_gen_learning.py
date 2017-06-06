@@ -39,11 +39,13 @@ class TestGenLearning(unittest.TestCase):
             lf_propensity=False, lf_class_propensity=False)
         gen_model._process_dependency_graph(L, ())
         m, n = L.shape
-        LF_priors = [0.7 for _ in range(n)]
+        LF_acc_prior_weights = [1.0 for _ in range(n)]
         is_fixed = [False for _ in range(n)]
+        gen_model.cardinality = 2
+        cardinalities = 2 * np.ones(5)
         weight, variable, factor, ftv, domain_mask, n_edges =\
-            gen_model._compile(L, 0.5, 0.0, LF_priors, is_fixed, 2)
-
+            gen_model._compile(L, 0.5, 0.0, LF_acc_prior_weights, is_fixed, 
+                cardinalities)
         #
         # Weights
         #
@@ -56,7 +58,7 @@ class TestGenLearning(unittest.TestCase):
         # The LF priors
         for i in range(1,7,2):
             self.assertTrue(weight[i]['isFixed'])
-            self.assertEqual(weight[i]['initialValue'], np.float64(0.5 * np.log(0.7 / (1 - 0.7))))
+            self.assertEqual(weight[i]['initialValue'], 1.0)
 
         # The LF weights
         for i in range(2,7,2):
@@ -172,10 +174,13 @@ class TestGenLearning(unittest.TestCase):
             lf_propensity=True, lf_class_propensity=False)
         gen_model._process_dependency_graph(L, deps)
         m, n = L.shape
-        LF_priors = [0.7 for _ in range(n)]
+        LF_acc_prior_weights = [1.0 for _ in range(n)]
         is_fixed = [False for _ in range(n)]
+        gen_model.cardinality = 2
+        cardinalities = 2 * np.ones(5)
         weight, variable, factor, ftv, domain_mask, n_edges =\
-            gen_model._compile(L, 0.5, -1.0, LF_priors, is_fixed, 2)
+            gen_model._compile(L, 0.5, -1.0, LF_acc_prior_weights, is_fixed,
+                cardinalities)
 
         #
         # Weights
@@ -187,7 +192,7 @@ class TestGenLearning(unittest.TestCase):
         # The LF priors
         for i in range(0,6,2):
             self.assertTrue(weight[i]['isFixed'])
-            self.assertEqual(weight[i]['initialValue'], np.float64(0.5 * np.log(0.7 / (1 - 0.7))))
+            self.assertEqual(weight[i]['initialValue'], 1.0)
 
         # The LF weights
         for i in range(1,6,2):

@@ -21,29 +21,37 @@
 
         <p class="view"><a href="https://github.com/HazyResearch/snorkel">View the Project on GitHub <small>HazyResearch/snorkel</small></a></p>
 
+        <h2><a href="blog.html">Snorkel Blog</a></h2>
 
+        <!--
         <ul>
           <li><a href="https://github.com/HazyResearch/snorkel/zipball/master">Download <strong>ZIP File</strong></a></li>
           <li><a href="https://github.com/HazyResearch/snorkel/tarball/master">Download <strong>TAR Ball</strong></a></li>
           <li><a href="https://github.com/HazyResearch/snorkel">View On <strong>GitHub</strong></a></li>
         </ul>
+        -->
       </header>
       <section>
 
-<!-- BLOG -->
 <h2>
-    <a id="blog" class="anchor" href="#blog" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Blog</h2>
-    <ul>
-        <li>[9/19/2016] <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">Data Programming: ML with Weak Supervision</a></li>
-        <li>[10/24/2016] <a href="http://hazyresearch.github.io/snorkel/blog/socratic_learning.html">Socratic Learning: Debugging ML Models</a></li>
-        <li>[11/24/2016] <a href="http://hazyresearch.github.io/snorkel/blog/slimfast.html">SLiMFast: Assessing the Reliability of Data</a></li>
-        <li>[12/15/2016] <a href="http://hazyresearch.github.io/snorkel/blog/dp_with_tf_blog_post.html">Data Programming + TensorFlow Tutorial</a> (<a href="http://hazyresearch.github.io/snorkel/blog/DataProgrammingTensorFlow-v2.ipynb">notebook version</a>)</li>
-        <li>[03/16/2017] <a href="https://hazyresearch.github.io/snorkel/blog/fonduer.html">Fonduer: Knowledge Base Construction from Richly Formatted Data</a></li>
-        <li>[03/21/2017] <a href="https://hazyresearch.github.io/snorkel/blog/babble_labble.html">Babble Labble: Learning from Natural Language Explanations</a></li>
-        <li>[04/17/2017] <a href="https://hazyresearch.github.io/snorkel/blog/structure_learning.html">Structure Learning: Are Your Sources Only Telling You What You Want to Hear?</a></li>
-        <li>[05/08/2017] <a href="https://hazyresearch.github.io/snorkel/blog/holoclean.html">HoloClean: Weakly Supervised Data Repairing</a></li>
-        <li>[06/05/2017] <a href="https://hazyresearch.github.io/snorkel/blog/snark.html">Scaling Up Snorkel with Snark</a></li>
-    </ul>
+<a id="motivation" class="anchor" href="#motivation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Snorkel: A System for Fast Training Data Creation</h2>
+
+<p>
+Snorkel is a system for rapidly <b>creating, modeling, and managing training data</b>, currently focused on accelerating the development of <i>structured or "dark" data extraction applications</i> for domains in which large labeled training sets are not available or easy to obtain.
+</p>
+
+<p>
+Today's state-of-the-art machine learning models require <i>massive</i> labeled training sets--which usually do not exist for real-world applications. Instead, Snorkel is based around the new <a href="https://arxiv.org/abs/1605.07723">data programming</a> paradigm, in which the developer focuses on writing a set of <i>labeling functions</i>, which are just scripts that programmatically label data. The resulting labels are noisy, but Snorkel automatically models this process—learning, essentially, which labeling functions are more accurate than others—and then uses this to train an end model (for example, a deep neural network in TensorFlow).
+</p>
+
+<p>
+<i>Surprisingly</i>, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models. We see Snorkel as providing a general framework for many <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">weak supervision</a> techniques, and as defining a new <i>programming model for weakly-supervised machine learning systems</i>.
+</p>
+
+<h2>
+<a id="users" class="anchor" href="#users" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Users</h2>
+We're lucky to have some amazing collaborators who are currently using Snorkel!
+<img src="figs/user_logos.png" width="500" height="200" align="middle" />
 
 <h2>
 <a id="acknowledgements" class="anchor" href="#acknowledgements" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Acknowledgements</h2>
@@ -70,28 +78,9 @@
 </li>
 </ul>
 
+
 <h2>
-<a id="motivation" class="anchor" href="#motivation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Motivation</h2>
-
-<p>
-Snorkel is a system for rapidly <b>creating, modeling, and managing training data</b>, currently focused on accelerating the development of <i>structured or "dark" data extraction applications</i> for domains in which large labeled training sets are not available or easy to obtain.
-</p>
-
-<p>
-Today's state-of-the-art machine learning models require <i>massive</i> labeled training sets--which usually do not exist for real-world applications. Instead, Snorkel is based around the new <a href="https://arxiv.org/abs/1605.07723">data programming</a> paradigm, in which the developer focuses on writing a set of <i>labeling functions</i>, which are just scripts that programmatically label data. The resulting labels are noisy, but Snorkel automatically models this process—learning, essentially, which labeling functions are more accurate than others—and then uses this to train an end model (for example, a deep neural network in TensorFlow).
-</p>
-
-<p>
-<i>Surprisingly</i>, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models. We see Snorkel as providing a general framework for many <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">weak supervision</a> techniques, and as defining a new <i>programming model for weakly-supervised machine learning systems</i>.
-</p>
-
-<h3>
-<a id="users" class="anchor" href="#users" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Users</h3>
-We're lucky to have some amazing collaborators who are currently using Snorkel!
-<img src="figs/user_logos.png" width="500" height="200" align="middle" />
-
-<h3>
-<a id="references" class="anchor" href="#references" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>References</h3>
+<a id="references" class="anchor" href="#references" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>References</h2>
 
 <ul>
 <li><a href="https://arxiv.org/abs/1605.07723">Data Programming: Creating Large Training Sets, Quickly</a> (NIPS 2016)
@@ -106,6 +95,18 @@ We're lucky to have some amazing collaborators who are currently using Snorkel!
 </li>
 <li><a href="https://arxiv.org/abs/1703.05028" target="_blank">Fonduer: Knowledge Base Construction from Richly Formatted Data</a> (preprint)
 </li>
+</ul>
+
+<h2>
+<a id="references" class="anchor" href="#references" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contributors</h2>
+<ul>
+<li><a href="https://scholar.google.com/citations?user=rfwwtFYAAAAJ&hl=en">Alex Ratner</a></li>
+<li><a href="http://stephenbach.net/">Stephen Bach</a></li>
+<li>Henry Ehrenberg</li>
+<li><a href="http://ai.stanford.edu/~bryanhe/">Bryan He</a></li>
+<li><a href="http://nmbl.stanford.edu/people/jason-fries/">Jason Fries</a></li>
+<li><a href="https://stanford.edu/~senwu/">Sen Wu</a></li>
+<li><i>And many other members of <a href="https://cs.stanford.edu/people/chrismre/#students">Hazy Research</a></i></li>
 </ul>
 
 <h3>

@@ -2,8 +2,9 @@ import tensorflow as tf
 
 from sqlalchemy.sql import bindparam, select
 
-from snorkel.learning.utils import marginals_to_labels, MentionScorer
-from snorkel.models import Candidate
+from .utils import marginals_to_labels, MentionScorer
+from ..annotations import save_marginals
+from ..models import Candidate
 
 
 class NoiseAwareModel(object):
@@ -26,30 +27,7 @@ class NoiseAwareModel(object):
 
     def save_marginals(self, session, X):
         """Save the predicted marginal probabilitiess for the Candidates X."""
-        if self.representation:
-            X = list(X)
-
-        # Prepare bulk UPDATE query
-        q = Candidate.__table__.update().\
-                where(Candidate.id == bindparam('cid')).\
-                values(predicted_marginal=bindparam('pm'))
-
-        # Get marginals
-        marginals = self.marginals(X)
-
-        # Prepare values
-        update_vals = []
-        for i, m in enumerate(marginals):
-            if self.representation:
-                cid = X[i].id
-            else:
-                cid = X.get_candidate(session, i).id
-            update_vals.append({'cid': cid, 'pm': m})
-
-        # Execute update
-        session.execute(q, update_vals)
-        session.commit()
-        print("Saved %s predicted marginals" % len(marginals))
+        save_marginals(session, X, self.marginals(X), training=False)
 
     def predict(self, X, b=0.5):
         """Return numpy array of elements in {-1,0,1}
@@ -60,15 +38,18 @@ class NoiseAwareModel(object):
     def score(self, session, X_test, test_labels, gold_candidate_set=None, 
         b=0.5, set_unlabeled_as_neg=True, display=True, scorer=MentionScorer,
         **kwargs):
+        # Compute the marginals
+        test_marginals = self.marginals(X_test, **kwargs)
+
         # Get the test candidates
         test_candidates = [
             X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])
         ] if not self.representation else X_test
-        # Initialize scorer
-        s = scorer(test_candidates, test_labels, gold_candidate_set)
-        test_marginals  = self.marginals(X_test, **kwargs)
-        return s.score(test_marginals, None, b=b, display=display,
-                       set_unlabeled_as_neg=set_unlabeled_as_neg)
+
+        # Initialize and return scorer
+        s = scorer(test_candidates, test_labels, gold_candidate_set)          
+        return s.score(test_marginals, train_marginals=None, b=b,
+            display=display, set_unlabeled_as_neg=set_unlabeled_as_neg)
 
     def save(self):
         raise NotImplementedError()

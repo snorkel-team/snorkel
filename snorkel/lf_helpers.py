@@ -10,18 +10,21 @@ from utils import tokens_to_ngrams
 
 def get_text_splits(c):
     """
-    Given a k-arity Candidate defined over k Spans, return the chunked parent context (e.g. Sentence)
-    split around the k constituent Spans.
+    Given a k-arity Candidate defined over k Spans, return the chunked parent
+    context (e.g. Sentence) split around the k constituent Spans.
 
     NOTE: Currently assumes that these Spans are in the same Context
     """
     spans = []
     for i, span in enumerate(c.get_contexts()):
-        if not isinstance(span, Span):
-            raise ValueError("Handles Span-type Candidate arguments only")
 
-        # Note: {{0}}, {{1}}, etc. does not work as an un-escaped regex pattern, hence A, B, ...
-        spans.append((span.char_start, span.char_end, chr(65+i)))
+        # Note: {{0}}, {{1}}, etc. does not work as an un-escaped regex pattern,
+        # hence A, B, ...
+        try:
+            spans.append((span.char_start, span.char_end, chr(65+i)))
+        except AttributeError:
+            raise ValueError(
+                "Only handles Contexts with char_start, char_end attributes.")
     spans.sort()
 
     # NOTE: Assume all Spans in same parent Context
@@ -38,16 +41,17 @@ def get_text_splits(c):
 
 def get_tagged_text(c):
     """
-    Returns the text of c's parent context with c's unary spans replaced with tags {{A}}, {{B}}, etc.
-    A convenience method for writing LFs based on e.g. regexes.
+    Returns the text of c's parent context with c's unary spans replaced with 
+    tags {{A}}, {{B}}, etc. A convenience method for writing LFs based on e.g. 
+    regexes.
     """
     return "".join(get_text_splits(c))
 
 
 def get_text_between(c):
     """
-    Returns the text between the two unary Spans of a binary-Span Candidate, where
-    both are in the same Sentence.
+    Returns the text between the two unary Spans of a binary-Span Candidate,
+    where both are in the same Sentence.
     """
     chunks = get_text_splits(c)
     if len(chunks) == 5:
@@ -57,7 +61,8 @@ def get_text_between(c):
 
 
 def is_inverted(c):
-    """Returns True if the ordering of the candidates in the sentence is inverted."""
+    """Returns True if the ordering of the candidates in the sentence is 
+    inverted."""
     if len(c) != 2:
         raise ValueError("Only applicable to binary Candidates")
     return c[0].get_word_start() > c[1].get_word_start()
@@ -77,33 +82,47 @@ def get_between_tokens(c, attrib='words', n_max=1, case_sensitive=False):
     else:
         left_span = span1
         dist_btwn = span0.get_word_start() - span1.get_word_end() - 1
-    return get_right_tokens(left_span, window=dist_btwn, attrib=attrib, n_max=n_max, case_sensitive=case_sensitive)
+    return get_right_tokens(left_span, window=dist_btwn, attrib=attrib,
+        n_max=n_max, case_sensitive=case_sensitive)
 
 
 def get_left_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
     """
     Return the tokens within a window to the _left_ of the Candidate.
     For higher-arity Candidates, defaults to the _first_ argument.
-    :param window: The number of tokens to the left of the first argument to return
+    :param window: The number of tokens to the left of the first argument to 
+        return
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
-    span = c if isinstance(c, Span) else c[0] 
-    i    = span.get_word_start()
+    try:
+        span = c
+        i = span.get_word_start()
+    except:
+        span = c[0]
+        i = span.get_word_start()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return [ngram for ngram in tokens_to_ngrams(map(f, span.get_parent()._asdict()[attrib][max(0, i-window):i]), n_max=n_max)]
+    return tokens_to_ngrams(map(f,
+        span.get_parent()._asdict()[attrib][max(0, i-window):i]), n_max=n_max)
 
 
-def get_right_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
+def get_right_tokens(c, window=3, attrib='words', n_max=1,
+    case_sensitive=False):
     """
     Return the tokens within a window to the _right_ of the Candidate.
     For higher-arity Candidates, defaults to the _last_ argument.
-    :param window: The number of tokens to the right of the last argument to return
+    :param window: The number of tokens to the right of the last argument to 
+        return
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
-    span = c if isinstance(c, Span) else c[-1]
-    i    = span.get_word_end()
+    try:
+        span = c
+        i = span.get_word_end()
+    except:
+        span = c[-1]
+        i = span.get_word_end()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return [ngram for ngram in tokens_to_ngrams(map(f, span.get_parent()._asdict()[attrib][i+1:i+1+window]), n_max=n_max)]
+    return tokens_to_ngrams(map(f,
+        span.get_parent()._asdict()[attrib][i+1:i+1+window]), n_max=n_max)
 
 
 def contains_token(c, tok, attrib='words', case_sensitive=False):
@@ -111,7 +130,10 @@ def contains_token(c, tok, attrib='words', case_sensitive=False):
     Checks if any of the contituent Spans contain a token
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
-    spans = [c] if isinstance(c, Span) else c.get_contexts()
+    try:
+        spans = c.get_contexts()
+    except:
+        spans = [c]
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
     return f(tok) in set(chain.from_iterable(map(f, span.get_attrib_tokens(attrib))
         for span in spans))

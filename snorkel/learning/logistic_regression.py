@@ -5,8 +5,7 @@ from snorkel.learning.disc_learning import TFNoiseAwareModel
 from scipy.sparse import csr_matrix, issparse
 from time import time
 from six.moves.cPickle import dump, load
-from snorkel.learning.utils import LabelBalancer
-
+from snorkel.learning.utils import LabelBalancer, get_cardinality
 
 SD = 0.1
 
@@ -29,28 +28,64 @@ class LogisticRegression(TFNoiseAwareModel):
         )
 
     def _build(self):
-        # Define inputs and variables
-        self.X = tf.placeholder(tf.float32, (None, self.d))
-        self.Y = tf.placeholder(tf.float32, (None,))
-        s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
-        self.w = tf.Variable(tf.random_normal((self.d, 1), stddev=SD, seed=s1))
-        self.b = tf.Variable(tf.random_normal((1,), stddev=SD, seed=s2))
-        h = tf.squeeze(tf.nn.bias_add(tf.matmul(self.X, self.w), self.b))
-        # Noise-aware loss
-        self.loss = tf.reduce_sum(
-            tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
-        )
+        # Build network, loss, and prediction ops
+        if self.k > 2:
+            self._build_softmax()
+        else:
+            self._build_sigmoid()
+        
         # Add L1 and L2 penalties
         self.loss += self.l1_penalty * tf.reduce_sum(tf.abs(self.w))
         self.loss += self.l2_penalty * tf.nn.l2_loss(self.w)
+        
         # Build model
         self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
-        self.prediction = tf.nn.sigmoid(h)
+        
+        # Save operation
         self.save_dict = {'w': self.w, 'b': self.b}
+        
         # Get nnz operation
         self.nnz = tf.reduce_sum(tf.cast(
             tf.not_equal(self.w, tf.constant(0, tf.float32)), tf.int32
         ))
+
+    def _build_sigmoid(self):
+        s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
+
+        # Define inputs and variables
+        self.X = tf.placeholder(tf.float32, (None, self.d))
+        self.Y = tf.placeholder(tf.float32, (None,))
+        self.w = tf.Variable(tf.random_normal((self.d, 1), stddev=SD, seed=s1))
+        self.b = tf.Variable(tf.random_normal((1,), stddev=SD, seed=s2))
+        h = tf.squeeze(tf.nn.bias_add(tf.matmul(self.X, self.w), self.b))
+        
+        # Noise-aware loss op
+        self.loss = tf.reduce_sum(
+            tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
+        )
+        
+        # Get prediction op
+        self.prediction = tf.nn.sigmoid(h)
+
+    def _build_softmax(self):
+        """Build for the categorical setting."""
+        s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
+
+        # Define inputs and variables
+        self.X = tf.placeholder(tf.float32, (None, self.d))
+        self.Y = tf.placeholder(tf.float32, (None, self.k))
+        self.w = tf.Variable(tf.random_normal((self.d, self.k), stddev=SD, 
+            seed=s1))
+        self.b = tf.Variable(tf.random_normal((self.k,), stddev=SD, seed=s2))
+        h = tf.nn.bias_add(tf.matmul(self.X, self.w), self.b)
+        
+        # Noise-aware loss op
+        self.loss = tf.reduce_sum(
+            tf.nn.softmax_cross_entropy_with_logits(logits=h, labels=self.Y)
+        )
+
+        # Get prediction op
+        self.prediction = tf.nn.softmax(h)
 
     def _check_input(self, X):
         if issparse(X):
@@ -73,7 +108,8 @@ class LogisticRegression(TFNoiseAwareModel):
         rebalance=False, seed=None):
         """Train elastic net logistic regression model using TensorFlow
             @X: SciPy or NumPy feature matrix
-            @training_marginals: array of marginals for examples in X
+            @training_marginals: N x K array of marginals for examples in X,
+                where K \in {0,1,2} for binary and > 2 for categorical
             @n_epochs: number of training epochs
             @lr: learning rate
             @batch_size: batch size for mini-batch SGD
@@ -84,6 +120,9 @@ class LogisticRegression(TFNoiseAwareModel):
                         If True, defaults to standard 0.5 class balance.
                         If False, no class balancing.
         """
+        # Make sure training marginals are a numpy array + get cardinality
+        training_marginals, self.k = get_cardinality(training_marginals)
+
         # Build model
         X = self._check_input(X)
         verbose = print_freq > 0
@@ -99,9 +138,15 @@ class LogisticRegression(TFNoiseAwareModel):
         self.seed       = seed
         self._build()
         # Get training indices
-        train_idxs = LabelBalancer(training_marginals).get_train_idxs(rebalance)
-        X_train = X[train_idxs, :]
-        y_train = np.ravel(training_marginals)[train_idxs]
+        # Note: Currently we only do label balancing for binary setting
+        if self.k == 2:
+            train_idxs = LabelBalancer(training_marginals).\
+                get_train_idxs(rebalance)
+            X_train = X[train_idxs, :]
+            y_train = np.ravel(training_marginals)[train_idxs]
+        else:
+            X_train = X
+            y_train = training_marginals
         # Run mini-batch SGD
         n = X_train.shape[0]
         batch_size = min(batch_size, n)
@@ -128,7 +173,7 @@ class LogisticRegression(TFNoiseAwareModel):
 
     def marginals(self, X_test):
         X_test = self._check_input(X_test)
-        return np.ravel(self.session.run([self.prediction], {self.X: X_test}))
+        return self.session.run(self.prediction, {self.X: X_test})
 
     def get_weights(self):
         """Get model weights and bias"""
@@ -156,33 +201,66 @@ class SparseLogisticRegression(LogisticRegression):
             save_file=save_file, name=name, n_threads=n_threads
         )
 
-    def _build(self):
-        # Define input placeholders
-        self.indices = tf.placeholder(tf.int64) 
-        self.shape   = tf.placeholder(tf.int64, (2,))
-        self.ids     = tf.placeholder(tf.int64)
-        self.weights = tf.placeholder(tf.float32)
-        self.Y       = tf.placeholder(tf.float32, (None,))
-        # Define training variables
-        sparse_ids = tf.SparseTensor(self.indices, self.ids, self.shape)
-        sparse_vals = tf.SparseTensor(self.indices, self.weights, self.shape)
+    def _build_sigmoid(self, sparse_ids, sparse_vals):
+        """Build network for the binary setting."""
+        self.Y = tf.placeholder(tf.float32, (None,))
+        
+        # Define model params
         s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
         self.w = tf.Variable(tf.random_normal((self.d, 1), stddev=SD, seed=s1))
         self.b = tf.Variable(tf.random_normal((1,), stddev=SD, seed=s2))
         z = tf.nn.embedding_lookup_sparse(params=self.w, sp_ids=sparse_ids,
             sp_weights=sparse_vals, combiner='sum')
         h = tf.squeeze(tf.nn.bias_add(z, self.b))
-        # Noise-aware loss
+        
+        # Noise-aware loss and prediction ops
         self.loss = tf.reduce_sum(
             tf.nn.sigmoid_cross_entropy_with_logits(logits=h, labels=self.Y)
         )
+        self.prediction = tf.nn.sigmoid(h)
+
+    def _build_softmax(self, sparse_ids, sparse_vals):
+        """Build network for the categorical setting."""
+        self.Y = tf.placeholder(tf.float32, (None, self.k))
+        
+        # Define model params
+        s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
+        self.w = tf.Variable(tf.random_normal((self.d, self.k), stddev=SD, 
+            seed=s1))
+        self.b = tf.Variable(tf.random_normal((self.k,), stddev=SD, seed=s2))
+        z = tf.nn.embedding_lookup_sparse(params=self.w, sp_ids=sparse_ids,
+            sp_weights=sparse_vals, combiner='sum')
+        h = tf.nn.bias_add(z, self.b)
+        
+        # Noise-aware loss and prediction ops
+        self.loss = tf.reduce_sum(
+            tf.nn.softmax_cross_entropy_with_logits(logits=h, labels=self.Y)
+        )
+        self.prediction = tf.nn.softmax(h)
+
+    def _build(self):
+        # Define sparse input placeholders + sparse tensors
+        self.indices = tf.placeholder(tf.int64) 
+        self.shape   = tf.placeholder(tf.int64, (2,))
+        self.ids     = tf.placeholder(tf.int64)
+        self.weights = tf.placeholder(tf.float32)
+        sparse_ids   = tf.SparseTensor(self.indices, self.ids, self.shape)
+        sparse_vals  = tf.SparseTensor(self.indices, self.weights, self.shape)
+
+        # Build network, loss, and prediction ops
+        if self.k > 2:
+            self._build_softmax(sparse_ids, sparse_vals)
+        else:
+            self._build_sigmoid(sparse_ids, sparse_vals)
+
         # Add L1 and L2 penalties
         self.loss += self.l1_penalty * tf.reduce_sum(tf.abs(self.w))
         self.loss += self.l2_penalty * tf.nn.l2_loss(self.w)
-        # Build model
+        
+        # Build training and save param ops
         self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
-        self.prediction = tf.nn.sigmoid(h)
         self.save_dict = {'w': self.w, 'b': self.b}
+        
         # Get nnz operation
         self.nnz = tf.reduce_sum(tf.cast(
             tf.not_equal(self.w, tf.constant(0, tf.float32)), tf.int32
@@ -237,14 +315,14 @@ class SparseLogisticRegression(LogisticRegression):
     def marginals(self, X_test):
         X_test = self._check_input(X_test)
         if X_test.shape[0] == 0:
-            return np.ravel([])
+            return np.array([])
         indices, shape, ids, weights = self._batch_sparse_data(X_test)
-        return np.ravel(self.session.run([self.prediction], {
+        return self.session.run(self.prediction, {
             self.indices: indices,
             self.shape:   shape,
             self.ids:     ids,
             self.weights: weights,
-        }))
+        })
 
 
 if __name__ == '__main__':

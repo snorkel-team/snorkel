@@ -2,9 +2,13 @@ import numpy as np
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
 from sqlalchemy.sql import bindparam, select
+import inspect
 
 from .features import get_span_feats
-from .models import GoldLabel, GoldLabelKey, Label, LabelKey, Feature, FeatureKey, Candidate
+from .models import (
+    GoldLabel, GoldLabelKey, Label, LabelKey, Feature, FeatureKey, Candidate,
+    Marginal
+)
 from .models.meta import new_sessionmaker
 from .udf import UDF, UDFRunner
 from .utils import (
@@ -92,13 +96,13 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
 
 class Annotator(UDFRunner):
     """Abstract class for annotating candidates and persisting these annotations to DB"""
-    def __init__(self, annotation_class, annotation_key_class, f):
+    def __init__(self, annotation_class, annotation_key_class, f_gen):
         self.annotation_class     = annotation_class
         self.annotation_key_class = annotation_key_class
         super(Annotator, self).__init__(AnnotatorUDF,
                                         annotation_class=annotation_class,
                                         annotation_key_class=annotation_key_class,
-                                        f=f)
+                                        f_gen=f_gen)
 
     def apply(self, split, key_group=0, replace_key_set=True, **kwargs):
 
@@ -152,10 +156,16 @@ class Annotator(UDFRunner):
 
 
 class AnnotatorUDF(UDF):
-    def __init__(self, annotation_class, annotation_key_class, f, **kwargs):
+    def __init__(self, annotation_class, annotation_key_class, f_gen, **kwargs):
         self.annotation_class     = annotation_class
         self.annotation_key_class = annotation_key_class
-        self.anno_generator       = _to_annotation_generator(f) if hasattr(f, '__iter__') else f
+
+        # AnnotatorUDF relies on a *generator function* which yields annotations
+        # given a candidate input
+        # NB: inspect.isgeneratorfunction is not sufficient to check if f_ger
+        # is a generator (does not work with fns that wrap gen, e.g. partial)
+        # So no check here at the moment...
+        self.anno_generator = f_gen
 
         # For caching key ids during the reduce step
         self.key_cache = {}
@@ -284,7 +294,7 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
             col_to_kid[j]   = kid
 
     # Create sparse matrix in LIL format for incremental construction
-    X = sparse.lil_matrix((len(cid_to_row), len(kid_to_col)))
+    X = sparse.lil_matrix((len(cid_to_row), len(kid_to_col)), dtype=np.int64)
 
     # NOTE: This is much faster as it allows us to skip the above join (which for some reason is
     # unreasonably slow) by relying on our symbol tables from above; however this will get slower with
@@ -298,7 +308,7 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
             # Optionally restricts val range to {0,1}, mapping -1 -> 0
             if zero_one:
                 val = 1 if val == 1 else 0
-            X[cid_to_row[cid], kid_to_col[kid]] = val
+            X[cid_to_row[cid], kid_to_col[kid]] = int(val)
 
     # Return as an AnnotationMatrix
     Xr = matrix_class(X, candidate_index=cid_to_row, row_index=row_to_cid,
@@ -319,9 +329,44 @@ def load_gold_labels(session, annotator_name, **kwargs):
 
 
 class LabelAnnotator(Annotator):
-    """Apply labeling functions to the candidates, generating Label annotations"""
-    def __init__(self, f):
-        super(LabelAnnotator, self).__init__(Label, LabelKey, f)
+    """Apply labeling functions to the candidates, generating Label annotations
+    
+    :param lfs: A _list_ of labeling functions (LFs)
+    """
+    def __init__(self, lfs=None, label_generator=None):
+        if lfs is not None:
+            labels = lambda c : [(lf.__name__, lf(c)) for lf in lfs]
+        elif label_generator is not None:
+            labels = lambda c : label_generator(c)
+        else:
+            raise ValueError("Must provide lfs or label_generator kwarg.")
+
+        # Convert lfs to a generator function
+        # In particular, catch verbose values and convert to integer ones
+        def f_gen(c):
+            for lf_key, label in labels(c):
+                # Note: We assume if the LF output is an int, it is already
+                # mapped correctly
+                if type(label) == int:
+                    yield lf_key, label
+                # None is a protected LF output value corresponding to 0,
+                # representing LF abstaining
+                elif label is None:
+                    yield lf_key, 0
+                elif label in c.values:
+                    if c.cardinality > 2:
+                        yield lf_key, c.values.index(label) + 1
+                    # Note: Would be nice to not special-case here, but for
+                    # consistency we leave binary LF range as {-1,0,1}
+                    else:
+                        val = 1 if c.values.index(label) == 0 else -1
+                        yield lf_key, val
+                else:
+                    raise ValueError("""
+                        Unable to parse label with value %s
+                        for candidate with values %s""" % (label, c.values))
+        
+        super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen)
 
     def load_matrix(self, session, split, **kwargs):
         return load_label_matrix(session, split=split, **kwargs)
@@ -336,33 +381,88 @@ class FeatureAnnotator(Annotator):
         return load_feature_matrix(session, split=split, key_group=key_group, **kwargs)
 
 
-def _to_annotation_generator(fns):
-    """"
-    Generic method which takes a set of functions, and returns a generator that yields
-    function.__name__, function result pairs.
+def save_marginals(session, X, marginals, training=True):
+    """Save marginal probabilities for a set of Candidates to db.
+
+    :param X: Either an M x N csr_AnnotationMatrix-class matrix, where M 
+        is number of candidates, N number of LFs/features; OR a list of 
+        arbitrary objects with candidate ids accessible via a .id attrib
+    :param marginals: A dense M x K matrix of marginal probabilities, where
+        K is the cardinality of the candidates, OR a M-dim list/array if K=2.
+    :param training: If True, these are training marginals / labels; else they
+        are saved as end model predictions.
+
+    Note: The marginals for k=0 are not stored, only for k = 1,...,K
     """
-    def fn_gen(c):
-        for f in fns:
-            yield f.__name__, f(c)
-    return fn_gen
+    # Make sure that we are working with a numpy array
+    try:
+        shape = marginals.shape
+    except:
+        marginals = np.array(marginals)
+        shape = marginals.shape
 
+    # Handle binary input as M x 1-dim array; assume elements represent 
+    # poksitive (k=1) class values
+    if len(shape) == 1:
+        marginals = np.vstack([1-marginals, marginals]).T
 
-def save_marginals(session, L, marginals):
-    """Save the marginal probs. for the Candidates corresponding to the rows of L in the Candidate table."""
-    # Prepare bulk UPDATE query
-    q = Candidate.__table__.update().\
-            where(Candidate.id == bindparam('cid')).\
-            values(training_marginal=bindparam('tm'))
+    # Only add values for classes k=1,...,K
+    marginal_tuples = []
+    for i in range(shape[0]):
+        for k in range(1, shape[1] if len(shape) > 1 else 2):
+            if marginals[i, k] > 0:
+                marginal_tuples.append((i, k, marginals[i, k]))
+
+    # NOTE: This will delete all existing marginals of type `training`
+    session.query(Marginal).filter(Marginal.training == training).\
+        delete(synchronize_session='fetch')
+
+    # Prepare bulk INSERT query
+    q = Marginal.__table__.insert()
+
+    # Check whether X is an AnnotationMatrix or not
+    anno_matrix = isinstance(X, csr_AnnotationMatrix)
+    if not anno_matrix:
+        X = list(X)
 
     # Prepare values
-    update_vals = [{'cid': L.get_candidate(session, i).id, 'tm': marginals[i]} for i in range(len(marginals))]
+    insert_vals = []
+    for i, k, p in marginal_tuples:
+        cid = X.get_candidate(session, i).id if anno_matrix else X[i].id
+        insert_vals.append({
+            'candidate_id': cid,
+            'training': training,
+            'value': k,
+            'probability': p
+        })
 
     # Execute update
-    session.execute(q, update_vals)
+    session.execute(q, insert_vals)
     session.commit()
-    print("Saved %s training marginals" % len(marginals))
+    print "Saved %s marginals" % len(marginals)
 
 
-def load_marginals(session, split):
+def load_marginals(session, X, split=0, training=True):
     """Load the marginal probs. for a given split of Candidates"""
-    return np.array([c[0] for c in session.query(Candidate.training_marginal).filter(Candidate.split == split).all()])
+    # Load marginal tuples from db
+    marginal_tuples = session.query(
+        Marginal.candidate_id,
+        Marginal.value,
+        Marginal.probability
+    ).filter(Candidate.split == split).\
+    filter(Marginal.training == training).all()
+
+    # Assemble cols 1,...,K of marginals matrix
+    cardinality = X.get_candidate(session, 0).cardinality
+    marginals = np.zeros((X.shape[0], cardinality))
+    for cid, k, p in marginal_tuples:
+        marginals[X.candidate_index[cid], k] = p
+
+    # Add first column if k > 2, else ravel
+    if cardinality > 2:
+        row_sums = marginals.sum(axis=1)
+        for i in range(marginals.shape[0]):
+            marginals[i, 0] = 1 - row_sums[i]
+    else:
+        marginals = np.ravel(marginals[:, 1])
+    return marginals

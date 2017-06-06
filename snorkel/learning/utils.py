@@ -11,6 +11,27 @@ matplotlib.use('Agg')
 warnings.filterwarnings("ignore", module="matplotlib")
 
 
+def get_cardinality(marginals):
+    """Returns cardinality and (potentially) re-shaped marginals as np array"""
+    # Make sure training marginals are a numpy array first
+    try:
+        shape = marginals.shape
+    except:
+        marginals = np.array(marginals)
+        shape = marginals.shape
+    
+    # Set cardinality + marginals in proper format for binary v. categorical
+    if len(shape) == 1:
+        cardinality = 2
+    else:
+        cardinality = shape[1]
+
+        # If k = 2, make sure is M-dim array
+        if cardinality == 2:
+            marginals = marginals[:,1].reshape(-1)
+    return marginals, cardinality
+
+
 class LabelBalancer(object):
     def __init__(self, y):
         """Utility class to rebalance training labels
@@ -60,28 +81,59 @@ class Scorer(object):
     """Abstract type for scorers"""
     def __init__(self, test_candidates, test_labels, gold_candidate_set=None):
         """
-        test_candidates:    A *list of Candidates* corresponding to test_labels
-        test_labels:        A *csrLabelMatrix* of ground truth labels for the test candidates
-        gold_candidate_set: [Optional] A *CandidateSet* containing the full set of gold labeled candidates
+        :param test_candidates: A *list of Candidates* corresponding to 
+            test_labels
+        :param test_labels: A *csrLabelMatrix* of ground truth labels for the 
+            test candidates
+        :param gold_candidate_set: (optional) A *CandidateSet* containing the 
+            full set of gold labeled candidates
         """
         self.test_candidates    = test_candidates
         self.test_labels        = test_labels
         self.gold_candidate_set = gold_candidate_set
 
-    def score(self, test_marginals, train_marginals=None, b=0.5, set_unlabeled_as_neg=True, display=True):
+    def _get_cardinality(self, marginals):
+        """Get the cardinality based on the marginals returned by the model."""
+        if len(marginals.shape) == 1 or marginals.shape[1] < 3:
+            cardinality = 2
+        else:
+            cardinality = marginals.shape[1]
+        return cardinality
+
+    def score(self, test_marginals, **kwargs):
+        cardinality = self._get_cardinality(test_marginals)
+        if cardinality == 2:
+            return self._score_binary(test_marginals, **kwargs)
+        else:
+            return self._score_categorical(test_marginals, **kwargs)
+
+    def _score_binary(self, test_marginals, train_marginals=None, b=0.5, 
+        set_unlabeled_as_neg=True, display=True):
+        raise NotImplementedError()
+
+    def _score_categorical(self, test_marginals, train_marginals=None, 
+        display=True):
         raise NotImplementedError()
 
 
 class MentionScorer(Scorer):
     """Scorer for mention level assessment"""
-    def score(self, test_marginals, train_marginals=None, b=0.5, set_unlabeled_as_neg=True, set_at_thresh_as_neg=True, display=True):
+    def _score_binary(self, test_marginals, train_marginals=None, b=0.5,
+        set_unlabeled_as_neg=True, set_at_thresh_as_neg=True, display=True,
+        **kwargs):
         """
-        test_marginals: array of marginals for test candidates
-        train_marginals (optional): array of marginals for training candidates
-        b: threshold for labeling
-        set_unlabeled_as_neg: set test labels at the decision threshold of b as negative labels
-        set_at_b_as_neg: set marginals at the decision threshold exactly as negative predictions
-        display: show calibration plots?
+        Return scoring metric for the provided marginals, as well as candidates
+        in error buckets.
+
+        :param test_marginals: array of marginals for test candidates
+        :param train_marginals (optional): array of marginals for training 
+            candidates
+        :param b: threshold for labeling
+        :param set_unlabeled_as_neg: set test labels at the decision threshold 
+            of b as negative labels
+        :param set_at_b_as_neg: set marginals at the decision threshold exactly
+            as negative predictions
+        :param display: show calibration plots?
         """
         test_label_array = []
         tp = set()
@@ -90,8 +142,13 @@ class MentionScorer(Scorer):
         fn = set()
 
         for i, candidate in enumerate(self.test_candidates):
-            test_label_index = self.test_labels.get_row_index(candidate)
-            test_label       = self.test_labels[test_label_index, 0]
+            # Handle either a LabelMatrix or else assume test_labels array is in
+            # correct order i.e. same order as test_candidates
+            try:
+                test_label_index = self.test_labels.get_row_index(candidate)
+                test_label = self.test_labels[test_label_index, 0]
+            except AttributeError:
+                test_label = self.test_labels[i]
 
             # Set unlabeled examples to -1 by default
             if test_label == 0 and set_unlabeled_as_neg:
@@ -113,19 +170,67 @@ class MentionScorer(Scorer):
         if display:
 
             # Calculate scores unadjusted for TPs not in our candidate set
-            print_scores(len(tp), len(fp), len(tn), len(fn), title="Scores (Un-adjusted)")
+            print_scores(len(tp), len(fp), len(tn), len(fn), 
+                title="Scores (Un-adjusted)")
 
-            # If a gold candidate set is provided, also calculate recall-adjusted scores
+            # If gold candidate set is provided calculate recall-adjusted scores
             if self.gold_candidate_set is not None:
-                gold_fn    = [c for c in self.gold_candidate_set if c not in self.test_candidates]
-                print("\n")
-                print_scores(len(tp), len(fp), len(tn), len(fn)+len(gold_fn),title="Corpus Recall-adjusted Scores")
+                gold_fn = [c for c in self.gold_candidate_set
+                    if c not in self.test_candidates]
+                print "\n"
+                print_scores(len(tp), len(fp), len(tn), len(fn)+len(gold_fn), 
+                    title="Corpus Recall-adjusted Scores")
 
-            # If training and test marginals provided, also print calibration plots
+            # If training and test marginals provided print calibration plots
             if train_marginals is not None and test_marginals is not None:
-                print("\nCalibration plot:")
-                calibration_plots(train_marginals, test_marginals, np.asarray(test_label_array))
+                print "\nCalibration plot:"
+                calibration_plots(train_marginals, test_marginals, 
+                    np.asarray(test_label_array))
         return tp, fp, tn, fn
+
+    def _score_categorical(self, test_marginals, train_marginals=None,
+        display=True, **kwargs):
+        """
+        Return scoring metric for the provided marginals, as well as candidates
+        in error buckets.
+
+        :param test_marginals: array of marginals for test candidates
+        :param train_marginals (optional): array of marginals for training 
+            candidates
+        :param display: show calibration plots?
+        """
+        test_label_array = []
+        correct = set()
+        incorrect = set()
+
+        # Get predictions
+        test_pred = test_marginals.argmax(axis=1) + 1
+
+        # Bucket the candidates for error analysis
+        for i, candidate in enumerate(self.test_candidates):
+            # Handle either a LabelMatrix or else assume test_labels array is in
+            # correct order i.e. same order as test_candidates
+            try:
+                test_label_index = self.test_labels.get_row_index(candidate)
+                test_label = self.test_labels[test_label_index, 0]
+            except AttributeError:
+                test_label = self.test_labels[i]  
+            test_label_array.append(test_label)
+            if test_label != 0:
+                if test_pred[i] == test_label:
+                    correct.add(candidate)
+                else:
+                    incorrect.add(candidate)
+        if display:
+            nc, ni = len(correct), len(incorrect)
+            print "Accuracy:", nc / float(nc + ni)
+
+            # If gold candidate set is provided calculate recall-adjusted scores
+            if self.gold_candidate_set is not None:
+                gold_missed = [c for c in self.gold_candidate_set
+                    if c not in self.test_candidates]
+                print "Coverage:", (nc + ni) / (nc + ni + len(gold_missed))
+        return correct, incorrect
 
 
 def print_scores(ntp, nfp, ntn, nfn, title='Scores'):

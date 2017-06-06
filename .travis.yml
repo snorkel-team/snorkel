@@ -56,12 +56,6 @@ install:
   # Install Numba
   - conda install --yes numba
 
-  # Install Numbskull
-  - git clone https://github.com/HazyResearch/numbskull.git
-  - cd numbskull
-  - pip install .
-  - cd ..
-
   # Install all remaining dependencies as per our README
   - pip install -r python-package-requirement.txt
   - test -e parser/corenlp.sh || ./install-parser.sh
@@ -70,6 +64,11 @@ install:
   - pip install runipy
 
 script:
+
+  # Run test modules
+  - python test/learning/test_gen_learning.py
+  - python test/learning/test_supervised.py
+  - python test/learning/test_categorical.py
 
   # Runs intro tutorial notebooks
   - cd tutorials
@@ -88,15 +87,14 @@ script:
   - runipy intro/Intro_Tutorial_4.ipynb
   - runipy intro/Intro_Tutorial_5.ipynb
 
+  # Run Categorical notebook
+  - rm intro/snorkel.db
+  - runipy intro/Intro_Tutorial_Categorical.ipynb
+
   # Run CDR tutorials
   - runipy cdr/CDR_Tutorial_1.ipynb
   - runipy cdr/CDR_Tutorial_2.ipynb
   - runipy cdr/CDR_Tutorial_3.ipynb
-
-  - cd ..
-
-  # Run test modules
-  - python test/learning/test_gen_learning.py
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

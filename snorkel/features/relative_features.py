@@ -5,7 +5,7 @@ import sys
 sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
 
 from collections import defaultdict
-from entity_features import compile_entity_feature_generator, get_ddlib_feats
+from snorkel.features.entity_features import compile_entity_feature_generator, get_ddlib_feats
 from functools import partial
 from snorkel.models import Span
 from snorkel.utils import get_as_dict

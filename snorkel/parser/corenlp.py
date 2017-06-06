@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import sys
 import json
@@ -159,14 +160,14 @@ class StanfordCoreNLPServer(Parser):
         Print server parameters
         :return:
         '''
-        print "------------------------------------"
-        print self.endpoint
-        print "version:", self.version
-        print "shell pid:", self.process_group.pid
-        print "port:", self.port
-        print "timeout:", self.timeout
-        print "threads:", self.num_threads
-        print "------------------------------------"
+        print("------------------------------------")
+        print(self.endpoint)
+        print("version:", self.version)
+        print("shell pid:", self.process_group.pid)
+        print("port:", self.port)
+        print("timeout:", self.timeout)
+        print("threads:", self.num_threads)
+        print("------------------------------------")
 
     def connect(self):
         '''
@@ -181,7 +182,7 @@ class StanfordCoreNLPServer(Parser):
         :return:
         '''
         if self.verbose:
-            print "Killing CoreNLP server [{}]...".format(self.process_group.pid)
+            print("Killing CoreNLP server [{}]...".format(self.process_group.pid))
         if self.process_group is not None:
             try:
                 os.killpg(os.getpgid(self.process_group.pid), signal.SIGTERM)
@@ -198,14 +199,12 @@ class StanfordCoreNLPServer(Parser):
         :return:
         '''
         if len(text.strip()) == 0:
-            print>> sys.stderr, u"Warning, empty document {0} passed to CoreNLP".format(document.name if document else "?")
+            print(u"Warning, empty document {0} passed to CoreNLP".format(document.name if document else "?"), file=sys.stderr)
             return
 
-        if isinstance(text, unicode):
-            text = text.encode('utf-8', 'error')
+        text = text.encode('utf-8', 'error')
         resp = conn.post(self.endpoint, data=text, allow_redirects=True)
-        text = text.decode('utf-8')
-        content = resp.content.strip()
+        content = resp.content.strip().decode('utf-8')
 
         # check for parsing error messages
         StanfordCoreNLPServer.validate_response(content)

@@ -59,7 +59,7 @@ class CandidateExtractorUDF(UDF):
             self.arity = len(self.candidate_spaces)
 
         # Make sure the candidate spaces are different so generators aren't expended!
-        self.candidate_spaces = map(deepcopy, self.candidate_spaces)
+        self.candidate_spaces = list(map(deepcopy, self.candidate_spaces))
 
         # Preallocates internal data structures
         self.child_context_sets = [None] * self.arity
@@ -78,6 +78,7 @@ class CandidateExtractorUDF(UDF):
                 self.child_context_sets[i].add(tc)
 
         # Generates and persists candidates
+        extracted = set()
         candidate_args = {'split': split}
         for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
 
@@ -92,8 +93,11 @@ class CandidateExtractorUDF(UDF):
                     continue
                 elif not self.nested_relations and (a in b or b in a):
                     continue
-                elif not self.symmetric_relations and ai > bi:
+                elif not self.symmetric_relations and (b, a) in extracted:
                     continue
+
+                # Keep track of extracted
+                extracted.add((a,b))
 
             # Assemble candidate arguments
             for i, arg_name in enumerate(self.candidate_class.__argnames__):

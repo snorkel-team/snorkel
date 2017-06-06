@@ -34,8 +34,7 @@ class SpaCy(Parser):
         :param text:
         :return:
         '''
-        if isinstance(text, unicode):
-            text = text.encode('utf-8', 'error')
+        text = text.encode('utf-8', 'error')
         text = text.decode('utf-8')
 
         doc = self.model(text)
@@ -46,7 +45,7 @@ class SpaCy(Parser):
             parts = defaultdict(list)
             dep_order, dep_par, dep_lab = [], [], []
             for token in sent:
-                parts['words'].append(unicode(token))
+                parts['words'].append(str(token))
                 parts['lemmas'].append(token.lemma_)
                 parts['pos_tags'].append(token.tag_)
                 parts['ner_tags'].append(token.ent_type_)

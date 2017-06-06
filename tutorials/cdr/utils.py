@@ -1,5 +1,5 @@
 import bz2
-import cPickle
+from six.moves.cPickle import load
 
 from string import punctuation
 
@@ -21,7 +21,7 @@ class CDRTagger(object):
 
     def __init__(self, fname='data/unary_tags.pkl.bz2'):   
         with bz2.BZ2File(fname, 'rb') as f:
-            self.tag_dict = cPickle.load(f)
+            self.tag_dict = load(f)
 
     def tag(self, parts):
         pubmed_id, _, _, sent_start, sent_end = parts['stable_id'].split(':')
@@ -44,9 +44,9 @@ class TaggerOneTagger(CDRTagger):
     def __init__(self, fname_tags='data/taggerone_unary_tags_cdr.pkl.bz2',
         fname_mesh='data/chem_dis_mesh_dicts.pkl.bz2'):
         with bz2.BZ2File(fname_tags, 'rb') as f:
-            self.tag_dict = cPickle.load(f)
+            self.tag_dict = load(f)
         with bz2.BZ2File(fname_mesh, 'rb') as f:
-            self.chem_mesh_dict, self.dis_mesh_dict = cPickle.load(f)
+            self.chem_mesh_dict, self.dis_mesh_dict = load(f)
 
     def tag(self, parts):
         parts = super(TaggerOneTagger, self).tag(parts)

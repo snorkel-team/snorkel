@@ -17,7 +17,6 @@ DEP_FIXING = 1
 DEP_REINFORCING = 2
 DEP_EXCLUSIVE = 3
 
-
 class GenerativeModel(object):
     """
     A generative model for data programming for binary classification.

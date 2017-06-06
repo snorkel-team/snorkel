@@ -168,7 +168,7 @@ def get_matches(lf, candidate_set, match_values=[1,-1]):
         label = lf(c)
         if label in match_values:
             matches.append(c)
-    print "%s matches" % len(matches)
+    print("%s matches" % len(matches))
     return matches
 
 def rule_text_btw(candidate, text, sign):

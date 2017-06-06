@@ -243,7 +243,7 @@ class RNNBase(TFNoiseAwareModel):
                     dev_p    = self._marginals_preprocessed(dev_data)
                     f1, _, _ = f1_score(dev_p, dev_gold)
                     msg     += '\tDev F1={0:.2f}'.format(100. * f1)
-                print msg
+                print(msg)
         if verbose:
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))
 

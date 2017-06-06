@@ -67,11 +67,11 @@ class GenerativeModel(object):
         'dep_similar', 'dep_fixing', 'dep_reinforcing', 'dep_exclusive'
     )
 
-    def train(self, L, deps=(), LF_acc_prior_weights=None, LF_acc_prior_weight_default=1,
-        labels=None, label_prior_weight=5, init_deps=0.0,
-        init_class_prior=-1.0, epochs=30, step_size=None, decay=1.0,
-        reg_param=0.1, reg_type=2, verbose=False, truncation=10, burn_in=5,
-        cardinality=None, timer=None, scoped_categorical=False):
+    def train(self, L, deps=(), LF_acc_prior_weights=None,
+        LF_acc_prior_weight_default=1, labels=None, label_prior_weight=5,
+        init_deps=0.0, init_class_prior=-1.0, epochs=30, step_size=None, 
+        decay=1.0, reg_param=0.1, reg_type=2, verbose=False, truncation=10, 
+        burn_in=5, cardinality=None, timer=None, candidate_ranges=None):
         """
         Fits the parameters of the model to a data set. By default, learns a
         conditionally independent model. Additional unary dependencies can be
@@ -88,14 +88,15 @@ class GenerativeModel(object):
                      (LF 1 index, LF 2 index, dependency type),
                      see snorkel.learning.constants
         :param LF_acc_prior_weights: An N-element list of prior weights for the
-            LF accuracies
-        :param LF_acc_prior_weight_default: Default prior for the weight of each LF
-            accuracy; if LF_acc_prior_weights is unset, each LF will have this
+            LF accuracies (log scale)
+        :param LF_acc_prior_weight_default: Default prior for the weight of each 
+            LF accuracy; if LF_acc_prior_weights is unset, each LF will have 
+            this accuracy prior weight (log scale)
         :param labels: Optional ground truth labels
-        :param label_prior_weight: The prior probability that the ground truth labels
-            (if provided) are correct
+        :param label_prior_weight: The prior probability that the ground truth 
+            labels (if provided) are correct (log scale)
         :param init_deps: initial weight for additional dependencies, except
-                          class prior (in log scale)
+                          class prior (log scale)
         :param init_class_prior: initial class prior (in log scale), note only
                                  used if class_prior=True in constructor
         :param epochs: number of training epochs
@@ -112,10 +113,11 @@ class GenerativeModel(object):
         :param cardinality: number of possible classes; by default is inferred
             from the label matrix L
         :param timer: stopwatch for profiling, must implement start() and end()
-        :param scoped_categorical: If True, remap the values of a categorical
-        label matrix so that the support for each candidate is a contiguous
-        range, so that only relevant values are sampled during learning / 
-        inference.
+        :param candidate_ranges: Optionally, a list of M sets of integer values,
+            representing the possible categorical values that each of the M
+            candidates can take. If a label is outside of this range throws an
+            error. If None, then each candidate can take any value from 0 to
+            cardinality.
         """
         m, n = L.shape
         step_size = step_size or 0.0001
@@ -125,18 +127,23 @@ class GenerativeModel(object):
         # Binary: Values in {-1, 0, 1} [Default]
         # Categorical: Values in {0, 1, ..., K}
         if cardinality is None:
-            # This is just an annoying hack for LIL sparse matrices...
-            try:
-                lmax = L.max()
-            except AttributeError:
-                lmax = L.tocoo().max()
-            if lmax > 2:
-                cardinality = lmax
-            elif lmax < 2:
-                cardinality = 2
+            # If candidate_ranges is provided, use this to determine cardinality
+            if candidate_ranges is not None:
+                cardinality = max(map(max, candidate_ranges))
             else:
-                raise ValueError(
-                    "L.max() == %s, cannot infer cardinality." % lmax)
+                # This is just an annoying hack for LIL sparse matrices...
+                try:
+                    lmax = L.max()
+                except AttributeError:
+                    lmax = L.tocoo().max()
+
+                if lmax > 2:
+                    cardinality = lmax
+                elif lmax < 2:
+                    cardinality = 2
+                else:
+                    raise ValueError(
+                        "L.max() == %s, cannot infer cardinality." % lmax)
             print("Inferred cardinality: %s" % cardinality)
         self.cardinality = cardinality
 
@@ -161,44 +168,45 @@ class GenerativeModel(object):
             LF_acc_prior_weights.append(label_prior_weight)
             n += 1
 
-        # Shuffle the data points
-        idxs = range(m)
-        np.random.shuffle(idxs)
+        # Make sure is CSR sparse matrix
         if not isinstance(L, sparse.csr_matrix):
             L = sparse.csr_matrix(L)
-        L = L[idxs, :]
 
-        # Optionally: Remap the values of L (in categorical setting) so that the
-        # support for each candidate is a contiguous range of values, so that
-        # only relevant values are sampled during learning and inference
-        # (e.g. for cases where the cardinaltiy is very large, but the effective
-        # support set for any candidate is fairly small)
-        # Note: Either way we create a list of cardinality for each candidate
-        self.scoped_categorical = scoped_categorical
-        if self.scoped_categorical:
-            if self.cardinality == 2:
-                raise ValueError(
-                    "Cannot set scoped_categorical=True in binary setting!")
-            L, self.mappings = self._remap_label_matrix(L)
-            # Note this turns cardinality from an int -> a list
-            self.cardinalities = map(lambda x: max(len(x) + 1, 3), self.mappings)
-            # NB: this artificially increases the cardinality of all data points by 1
-            #     Ideally, we would like the potential cardinality of each data point
-            #     to be specified by the user. Because this is not available, we
-            #     have to infer the data point. However, this typically will
-            #     result in a smaller inferred cardinality than the true cardinality.
-            #
-            # The following issue can show up:
-            #     You have one fairly accurate LF (~0.9 accuracy) and a complete
-            #     set of supervised labels. In the 90% of the dataset where the
-            #     LF is correct, you get an inferred cardinality of 1. For these
-            #     data points, learning on the factor graph does not increase
-            #     the weight on the accuracy factor -- because there is only
-            #     one option, being correct is meaningless. Then, the remaining
-            #     10% have a cardinality of 2, and the LF is always wrong, so
-            #     you get a learned accuracy of close to 0, rather than 0.9.
-        else:
-            self.cardinalities = self.cardinality * np.ones(m, np.int64)
+        # If candidate_ranges is provided, remap the values of L using
+        # candidate_ranges. This "scoped categorical" approach allows learning
+        # and inference to be efficient even with very large cardinality, as
+        # we only sample relevant values for each candidate. Also set
+        # per-candidate cardinalities according to candidate_ranges if not None,
+        # else as constant value.
+        self.cardinalities = self.cardinality * np.ones(m, dtype=np.int64)
+        self.candidate_ranges = candidate_ranges
+        if candidate_ranges is not None:
+            for i in range(m):
+                c_range = candidate_ranges[i]
+
+                # Confirm that the candidate range has only unique values
+                assert len(c_range) == len(set(c_range))
+                self.cardinalities[i] = len(c_range)
+
+                # Re-map the values of L[i, :]
+                # Assumes L is csr_sparse format at this point
+                for j in range(L[i].data.shape[0]):
+                    val = L[i].data[j]
+                    if val not in c_range:
+                        raise ValueError("""Value {0} is not in supplied range 
+                            for candidate at index {1}""".format(val, i))
+                    L[i, L[i].indices[j]] = c_range.index(val) + 1
+
+        # Shuffle the data points, cardinalities, and candidate_ranges
+        idxs = range(m)
+        np.random.shuffle(idxs)
+        L = L[idxs, :]
+        if candidate_ranges is not None:
+            self.cardinalities = self.cardinalities[idxs]
+            c_ranges_reshuffled = []
+            for i in idxs:
+                c_ranges_reshuffled.append(self.candidate_ranges[i])
+            self.candidate_ranges = c_ranges_reshuffled
 
         # Compile factor graph
         self._process_dependency_graph(L, deps)
@@ -227,14 +235,15 @@ class GenerativeModel(object):
         self._process_learned_weights(L, fg, LF_acc_prior_weights, is_fixed)
 
         # Store info from factor graph
-        if self.scoped_categorical:
-            self.cardinality_for_stats = max(map(lambda x: len(x), self.mappings))
+        if self.candidate_ranges is not None:
+            self.cardinality_for_stats = max(self.cardinalities)
         else:
             self.cardinality_for_stats = self.cardinality
         self.learned_weights = fg.factorGraphs[0].weight_value
         weight, variable, factor, ftv, domain_mask, n_edges =\
             self._compile(sparse.coo_matrix((1, n), L.dtype), init_deps,
-                init_class_prior, LF_acc_prior_weights, is_fixed, [self.cardinality_for_stats])
+                init_class_prior, LF_acc_prior_weights, is_fixed,
+                [self.cardinality_for_stats])
 
         variable["isEvidence"] = False
         weight["isFixed"] = True
@@ -320,6 +329,23 @@ class GenerativeModel(object):
         return DataFrame(stats)
 
     def marginals(self, L):
+        """
+        Given an M x N label matrix, returns marginal probabilities for each
+        candidate, depending on classification setting:
+
+            - Binary: Returns M-dim array representing the marginal probability
+                of each candidate being True
+
+            - Categorical (cardinality = K): Returns M x K dense matrix
+                representing the marginal probabilities of each candidate being
+                each class.
+
+            - Scoped Categorical (cardinality = K, cardinality_ranges not None):
+                Returns an M x K *sparse* matrix of marginals.
+
+        In the categorical setting, the K values (columns in the marginals
+        matrix) correspond to indices of the Candidate values defined.
+        """
         m, n = L.shape
         if self.weights is None:
             raise ValueError("""Must fit model with train() before computing 
@@ -394,9 +420,9 @@ class GenerativeModel(object):
                 marginals = exps / exps.sum()
                 all_marginals.append(marginals)
 
-            # If scoped_categorical=True, remap back to original values and
+            # If candidate_ranges not None, remap back to original values and
             # return as sparse matrix
-            if self.scoped_categorical:
+            if self.candidate_ranges is not None:
                 M = sparse.coo_matrix((m, self.cardinality), dtype=np.float64)
                 for i, marginals in enumerate(all_marginals):
                     for j, p in enumerate(marginals):
@@ -559,7 +585,7 @@ class GenerativeModel(object):
             index = m + n * i + j
 
             # Note: Here we need to use the overall cardinality to handle, since
-            # with scoped_categorical=True and self.cardinality > 2, some
+            # with candidate_ranges not None and self.cardinality > 2, some
             # candidates could have cardinality == 2...
             if (self.cardinality == 2):
                 if data == 1:
@@ -762,27 +788,6 @@ class GenerativeModel(object):
             setattr(weights, dep_name, weight_mat.tocsr(copy=True))
 
         self.weights = weights
-
-    def _remap_label_matrix(self, L):
-        """Remaps values of a categorical label matrix L for each row 
-        (candidate) so that the support for each candidate is a contiguous
-        range.
-
-        Simple example:
-        L = [[0, 5, 10, 5], [1, 4, 200, 1, 1]]
-        
-        gets mapped to:
-        L = [[0,1,2,1], [1,2,3,1,1]], maps = [[5,10], [1,4,200]].
-
-        :param support_sets: If provided, 
-        """
-        mappings = []
-        for i in range(L.shape[0]):
-            mapping = sorted(set(L[i].data))
-            mappings.append(mapping)
-            for j in range(L[i].data.shape[0]):
-                L[i, L[i].indices[j]] = mapping.index(L[i].data[j]) + 1
-        return L, mappings
 
 
 class GenerativeModelWeights(object):

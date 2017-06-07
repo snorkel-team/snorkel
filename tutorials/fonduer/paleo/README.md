@@ -1,7 +1,7 @@
 # Extracting Formation Measurements from Paleontological Publications
 
 In this advanced tutorial, we will build a `Fonduer` application to tackle the
-challenging task of formation measurements from paleontological publications.
+challenging task of extracting formation measurements from paleontological publications.
 This is an example of knowledge base construction from _richly formatted data_.
 
 The entire tutorial can be found in

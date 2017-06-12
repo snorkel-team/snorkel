@@ -95,7 +95,7 @@ LLVM_CONFIG=/usr/local/Cellar/llvm\@3.8/3.8.1/bin/llvm-config-3.8 pip install nu
 ```
 Finally, once `numba` is installed, re-run the `numbskull` install from the `python-package-requirement.txt` script:
 ```
-pip install git+https://github.com/HazyResearch/numbskull@master
+pip install git+https://github.com/HazyResearch/numbskull@dev
 ```
 ### Using virtualenv
 Alternatively, `virtualenv` can be used by starting with:

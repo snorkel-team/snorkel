@@ -1,25 +1,41 @@
-import requests
+# -*- coding: utf-8 -*-
 import sys
+import requests
+
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 
 class Parser(object):
 
-    def __init__(self,name):
+    def __init__(self, name, encoding='utf-8'):
         self.name = name
+        self.encoding = encoding
+
+    def to_unicode(self, text):
+        '''
+        Convert char encoding to unicode
+        :param text:
+        :return:
+        '''
+        text = text.encode('utf-8', 'error')
+        text = text.decode('string_escape', errors='ignore')
+        text = text.decode('utf-8')
+        return text
 
     def connect(self):
         '''
         Return connection object for this parser type
         :return:
         '''
-        raise NotImplementedError()
+        raise NotImplemented
 
     def close(self):
         '''
         Kill this parser
         :return:
         '''
-        raise NotImplementedError()
+        raise NotImplemented
 
 
 class ParserConnection(object):
@@ -30,17 +46,17 @@ class ParserConnection(object):
         self.parser = parser
 
     def _connection(self):
-        raise NotImplementedError()
+        raise NotImplemented
 
     def parse(self, document, text):
-        yield self.parser.parse(document, text)
+        return self.parser.parse(document, text)
 
 
 class URLParserConnection(ParserConnection):
     '''
     URL parser connection
     '''
-    def __init__(self, parser, retries=20):
+    def __init__(self, parser, retries=5):
         self.retries = retries
         self.parser = parser
         self.request = self._connection()
@@ -54,22 +70,32 @@ class URLParserConnection(ParserConnection):
 
         :return:
         '''
-        from requests.packages.urllib3.util.retry import Retry
-        from requests.adapters import HTTPAdapter
         requests_session = requests.Session()
         retries = Retry(total=self.retries,
-                        connect=20,
-                        read=0,
+                        connect=self.retries,
+                        read=self.retries,
                         backoff_factor=0.1,
                         status_forcelist=[500, 502, 503, 504])
 
         # Mac OS bug -- without this setting multiprocessing requests will fail
         # when the server has boot-up latency associated with model loading
-        # See: http://stackoverflow.com/questions/30453152
+        # See: http://stackoverflow.com/questions/30453152/python-multiprocessing-and-requests
         if sys.platform in ['darwin']:
             requests_session.trust_env = False
         requests_session.mount('http://', HTTPAdapter(max_retries=retries))
         return requests_session
+
+    def post(self, url, data, allow_redirects=True):
+        '''
+
+        :param url:
+        :param data:
+        :param allow_redirects:
+        :param timeout:
+        :return:
+        '''
+        resp = self.request.post(url, data=data, allow_redirects=allow_redirects)
+        return resp.content.strip()
 
     def parse(self, document, text):
         '''
@@ -78,4 +104,9 @@ class URLParserConnection(ParserConnection):
         :param text:
         :return:
         '''
-        return self.parser.parse(document, text, self.request)
+        return self.parser.parse(document, text, self)
+
+
+
+
+

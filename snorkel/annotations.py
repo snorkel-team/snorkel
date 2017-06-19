@@ -2,7 +2,8 @@ import numpy as np
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
 from sqlalchemy.sql import bindparam, select
-import inspect
+import cloud
+from time import strftime
 
 from .features import get_span_feats
 from .models import (
@@ -336,16 +337,37 @@ def load_gold_labels(session, annotator_name, **kwargs):
     return load_matrix(csr_LabelMatrix, GoldLabelKey, GoldLabel, session, key_names=[annotator_name], **kwargs)
 
 
-class LabelAnnotator(Annotator):
-    """Apply labeling functions to the candidates, generating Label annotations
-    
-    :param lfs: A _list_ of labeling functions (LFs)
+def save_function_pkl(f, file_path):
+    """Convenience wrapper for saving pickle of function or object (e.g. list of
+    functions) including all dependenices, using the cloud lib.
+
+    Can be reloading using standard pickle.load function.
     """
+    cloud.serialization.cloudpickle.dump(f, open(file_path, 'w'))
+
+
+class LabelAnnotator(Annotator):
+    """Apply labeling functions to candidates, generating Label annotations."""
     def __init__(self):
         super(LabelAnnotator, self).__init__(Label, LabelKey)
 
-    def apply(self, split, lfs=None, label_generator=None, **kwargs):
-        """Compile LF generator then apply."""
+    def apply(self, split, lfs=None, label_generator=None, save_lf_pkl=False,
+        **kwargs):
+        """
+        Compile LF generator then apply.
+
+        :param lfs: A _list_ of labeling functions (LFs)
+        :param save_lf_pkl: Optionally saves pkl of LFs / LF generator plus all
+            dependencies needed to re-run.
+        """
+        # If saving LFs / LF generator, save now
+        if save_lf_pkl:
+            save_function_pkl(
+                lfs or label_generator,
+                'label_fn.{0}.pkl'.format(strftime("%Y_%m_%d_%H_%M_%S"))
+            )
+
+        # Use either list of LF functions or single label generator
         if lfs is not None:
             labels = lambda c : [(lf.__name__, lf(c)) for lf in lfs]
         elif label_generator is not None:

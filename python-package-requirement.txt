@@ -16,3 +16,4 @@ six
 sqlalchemy>=1.0.14
 tensorflow>=1.0
 tika
+cloud

@@ -96,15 +96,22 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
 
 class Annotator(UDFRunner):
     """Abstract class for annotating candidates and persisting these annotations to DB"""
-    def __init__(self, annotation_class, annotation_key_class, f_gen):
+    def __init__(self, annotation_class, annotation_key_class):
         self.annotation_class     = annotation_class
         self.annotation_key_class = annotation_key_class
         super(Annotator, self).__init__(AnnotatorUDF,
                                         annotation_class=annotation_class,
-                                        annotation_key_class=annotation_key_class,
-                                        f_gen=f_gen)
+                                        annotation_key_class=annotation_key_class)
 
-    def apply(self, split, key_group=0, replace_key_set=True, **kwargs):
+    def apply(self, split, annotation_generator=None, key_group=0, 
+        replace_key_set=True, **kwargs):
+        """
+        Executes the candidate ids query, then runs AnnotatorUDF(s), passing
+        along :param annotation_generator: as kwarg in UDFRunner.apply call.
+
+        Note that annotation_generator can be configured / compiled in a
+        sub-class.
+        """
 
         # If we are replacing the key set, make sure the reducer key id cache is cleared!
         if replace_key_set:
@@ -122,7 +129,15 @@ class Annotator(UDFRunner):
         cids_count = len(cids)
         
         # Run the Annotator
-        super(Annotator, self).apply(cids, split=split, key_group=key_group, replace_key_set=replace_key_set, count=cids_count, **kwargs)
+        super(Annotator, self).apply(
+            cids, 
+            split=split,
+            key_group=key_group, 
+            replace_key_set=replace_key_set,
+            count=cids_count,
+            annotation_generator=annotation_generator,
+            **kwargs
+        )
 
         # Load the matrix
         return self.load_matrix(session, split=split, key_group=key_group)
@@ -156,23 +171,16 @@ class Annotator(UDFRunner):
 
 
 class AnnotatorUDF(UDF):
-    def __init__(self, annotation_class, annotation_key_class, f_gen, **kwargs):
+    def __init__(self, annotation_class, annotation_key_class, **kwargs):
         self.annotation_class     = annotation_class
         self.annotation_key_class = annotation_key_class
-
-        # AnnotatorUDF relies on a *generator function* which yields annotations
-        # given a candidate input
-        # NB: inspect.isgeneratorfunction is not sufficient to check if f_ger
-        # is a generator (does not work with fns that wrap gen, e.g. partial)
-        # So no check here at the moment...
-        self.anno_generator = f_gen
 
         # For caching key ids during the reduce step
         self.key_cache = {}
 
         super(AnnotatorUDF, self).__init__(**kwargs)
 
-    def apply(self, cid, **kwargs):
+    def apply(self, cid, annotation_generator=None, **kwargs):
         """
         Applies a given function to a Candidate, yielding a set of Annotations as key_name, value pairs
 
@@ -182,7 +190,7 @@ class AnnotatorUDF(UDF):
         seen = set()
         cid = cid[0]
         c    = self.session.query(Candidate).filter(Candidate.id == cid).one()
-        for key_name, value in self.anno_generator(c):
+        for key_name, value in annotation_generator(c):
 
             # Note: Make sure no duplicates emitted here!
             if (cid, key_name) not in seen:
@@ -333,7 +341,11 @@ class LabelAnnotator(Annotator):
     
     :param lfs: A _list_ of labeling functions (LFs)
     """
-    def __init__(self, lfs=None, label_generator=None):
+    def __init__(self):
+        super(LabelAnnotator, self).__init__(Label, LabelKey)
+
+    def apply(self, split, lfs=None, label_generator=None, **kwargs):
+        """Compile LF generator then apply."""
         if lfs is not None:
             labels = lambda c : [(lf.__name__, lf(c)) for lf in lfs]
         elif label_generator is not None:
@@ -343,7 +355,7 @@ class LabelAnnotator(Annotator):
 
         # Convert lfs to a generator function
         # In particular, catch verbose values and convert to integer ones
-        def f_gen(c):
+        def annotation_generator(c):
             for lf_key, label in labels(c):
                 # Note: We assume if the LF output is an int, it is already
                 # mapped correctly
@@ -366,7 +378,8 @@ class LabelAnnotator(Annotator):
                         Unable to parse label with value %s
                         for candidate with values %s""" % (label, c.values))
         
-        super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen)
+        return super(LabelAnnotator, self).apply(split, 
+            annotation_generator=annotation_generator, **kwargs)
 
     def load_matrix(self, session, split, **kwargs):
         return load_label_matrix(session, split=split, **kwargs)
@@ -374,8 +387,12 @@ class LabelAnnotator(Annotator):
         
 class FeatureAnnotator(Annotator):
     """Apply feature generators to the candidates, generating Feature annotations"""
-    def __init__(self, f=get_span_feats):
-        super(FeatureAnnotator, self).__init__(Feature, FeatureKey, f)
+    def __init__(self):
+        super(FeatureAnnotator, self).__init__(Feature, FeatureKey)
+
+    def apply(self, split, annotation_generator=get_span_feats, **kwargs):
+        return super(FeatureAnnotator, self).apply(split, 
+            annotation_generator=annotation_generator, **kwargs)
 
     def load_matrix(self, session, split, key_group=0, **kwargs):
         return load_feature_matrix(session, split=split, key_group=key_group, **kwargs)

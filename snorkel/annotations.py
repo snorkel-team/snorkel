@@ -453,10 +453,18 @@ def load_marginals(session, X, split=0, training=True):
     filter(Marginal.training == training).all()
 
     # Assemble cols 1,...,K of marginals matrix
-    cardinality = X.get_candidate(session, 0).cardinality
-    marginals = np.zeros((X.shape[0], cardinality))
-    for cid, k, p in marginal_tuples:
-        marginals[X.candidate_index[cid], k] = p
+    # For now, handle feature matrix vs. list of objects with try / except
+    try:
+        cardinality = X.get_candidate(session, 0).cardinality
+        marginals = np.zeros((X.shape[0], cardinality))
+        for cid, k, p in marginal_tuples:
+            marginals[X.candidate_index[cid], k] = p
+    except:
+        cardinality = X[0].cardinality
+        marginals = np.zeros((len(X), cardinality))
+        candidate_index = dict([(x.id, i) for i, x in enumerate(X)])
+        for cid, k, p in marginal_tuples:
+            marginals[candidate_index[cid], k] = p
 
     # Add first column if k > 2, else ravel
     if cardinality > 2:

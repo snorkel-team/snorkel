@@ -1,13 +1,55 @@
+# -*- coding: utf-8 -*-
+import atexit
 import codecs
 import glob
+import json
 import os
 import re
+import signal
+import sys
+import warnings
+import requests
 import lxml.etree as et
 
+try:
+    import spacy
+except:
+    print>>sys.stderr,"Warning, unable to load 'spaCy' module"
+
 from bs4 import BeautifulSoup
+from .corenlp import StanfordCoreNLPServer
+from ..models import Candidate, Context, Document, Sentence, construct_stable_id
+from ..udf import UDF, UDFRunner
 
-from ..models import Document
 
+class CorpusParser(UDFRunner):
+
+    def __init__(self, parser=None, fn=None):
+        self.parser = StanfordCoreNLPServer() if not parser else parser
+        super(CorpusParser, self).__init__(CorpusParserUDF,
+                                           parser=self.parser,
+                                           fn=fn)
+    def clear(self, session, **kwargs):
+        session.query(Context).delete()
+        # We cannot cascade up from child contexts to parent Candidates, so we delete all Candidates too
+        session.query(Candidate).delete()
+
+
+class CorpusParserUDF(UDF):
+
+    def __init__(self, parser, fn, **kwargs):
+        super(CorpusParserUDF, self).__init__(**kwargs)
+        self.parser = parser
+        # each thread has its own connection object
+        self.conn = parser.connect()
+        self.fn = fn
+
+    def apply(self, x, **kwargs):
+        """Given a Document object and its raw text, parse into processed Sentences"""
+        doc, text = x
+        for parts in self.conn.parse(doc, text):
+            parts = self.fn(parts) if self.fn is not None else parts
+            yield Sentence(**parts)
 
 class DocPreprocessor(object):
     """
@@ -15,8 +57,7 @@ class DocPreprocessor(object):
 
     :param encoding: file encoding to use, default='utf-8'
     :param path: filesystem path to file or directory to parse
-    :param max_docs: the maximum number of Documents to produce,
-        default=float('inf')
+    :param max_docs: the maximum number of Documents to produce, default=float('inf')
 
     """
 
@@ -31,7 +72,9 @@ class DocPreprocessor(object):
 
         """
         doc_count = 0
-        for fp in self._get_files(self.path):
+        file_path = self._get_files(self.path) if type(self.path) is str else self.path
+
+        for fp in file_path:
             file_name = os.path.basename(fp)
             if self._can_read(file_name):
                 for doc, text in self.parse_file(fp, file_name):
@@ -73,11 +116,7 @@ class TSVDocPreprocessor(DocPreprocessor):
             for line in tsv:
                 (doc_name, doc_text) = line.split('\t')
                 stable_id = self.get_stable_id(doc_name)
-                doc = Document(
-                    name=doc_name, stable_id=stable_id,
-                    meta={'file_name': file_name}
-                )
-                yield doc, doc_text
+                yield Document(name=doc_name, stable_id=stable_id, meta={'file_name': file_name}), doc_text
 
 
 class TextDocPreprocessor(DocPreprocessor):
@@ -87,10 +126,7 @@ class TextDocPreprocessor(DocPreprocessor):
         with codecs.open(fp, encoding=self.encoding) as f:
             name = os.path.basename(fp).rsplit('.', 1)[0]
             stable_id = self.get_stable_id(name)
-            doc = Document(
-                name=name, stable_id=stable_id, meta={'file_name': file_name}
-            )
-            yield doc, f.read()
+            yield Document(name=name, stable_id=stable_id, meta={'file_name': file_name}), f.read()
 
 
 class CSVPathsPreprocessor(DocPreprocessor):
@@ -99,13 +135,11 @@ class CSVPathsPreprocessor(DocPreprocessor):
 
      **Defaults and Customization:**
 
-     * The input file is treated as a simple text file having one path per file.
-       However, if the input is a CSV file, a pair of ``column`` and ``delim``
-       parameters may be used to retrieve the desired value as reference path.
+     * The input file is treated as a simple text file having one path per file. However, if the input is a CSV file,
+       a pair of ``column`` and ``delim`` parameters may be used to retrieve the desired value as reference path.
 
-     * The referenced documents are treated as text document and hence parsed
-       using ``TextDocPreprocessor``. However, if the referenced files are
-       complex, an advanced parser may be used by specifying ``parser_factory``
+     * The referenced documents are treated as text document and hence parsed using ``TextDocPreprocessor``.
+       However, if the referenced files are complex, an advanced parser may be used by specifying ``parser_factory``
        parameter to constructor.
      """
 
@@ -113,8 +147,8 @@ class CSVPathsPreprocessor(DocPreprocessor):
                  delim=',', *args, **kwargs):
         """
         :param path: input file having paths
-        :param parser_factory: The parser class to be used to parse the
-            referenced files. default = TextDocPreprocessor
+        :param parser_factory: The parser class to be used to parse the referenced files.
+                                default = TextDocPreprocessor
         :param column: index of the column which references path.
                  default=None, which implies that each line has only one column
         :param delim: delimiter to be used to separate columns when file has
@@ -140,27 +174,20 @@ class CSVPathsPreprocessor(DocPreprocessor):
 
 class TikaPreprocessor(DocPreprocessor):
     """
-    This preprocessor use `Apache Tika <http://tika.apache.org>`_ parser to 
-    retrieve text content from complex file types such as DOCX, HTML and PDFs.
+    This preprocessor use `Apache Tika <http://tika.apache.org>`_ parser to retrieve text content from
+    complex file types such as DOCX, HTML and PDFs.
 
-    Documentation for customizing Tika is 
-    `here <https://github.com/chrismattmann/tika-python>`_
+    Documentation for customizing Tika is `here <https://github.com/chrismattmann/tika-python>`_
 
     Example::
 
         !find pdf_dir -name *.pdf > input.csv # list of files
-        from snorkel.parser import (
-            TikaPreprocessor, CSVPathsPreprocessor, CorpusParser
-        )
-        CorpusParser().apply(
-            CSVPathsPreprocessor('input.csv', parser_factory=TikaPreprocessor)
-        )
+        from snorkel.parser import TikaPreprocessor, CSVPathsPreprocessor, CorpusParser
+        CorpusParser().apply(CSVPathsPreprocessor('input.csv', parser_factory=TikaPreprocessor))
     """
     # Tika is conditionally imported here
     import tika
-    # automatically downloads tika jar and starts a JVM processif no REST API
-    # is configured in ENV
-    tika.initVM()  
+    tika.initVM()  # automatically downloads tika jar and starts a JVM process if no REST API is configured in ENV
     from tika import parser as tk_parser
     parser = tk_parser
 
@@ -169,10 +196,7 @@ class TikaPreprocessor(DocPreprocessor):
         txt = parsed['content']
         name = os.path.basename(fp).rsplit('.', 1)[0]
         stable_id = self.get_stable_id(name)
-        doc = Document(
-            name=name, stable_id=stable_id, meta={'file_name': file_name}
-        )
-        yield doc, txt
+        yield Document(name=name, stable_id=stable_id, meta={'file_name': file_name}), txt
 
 
 class HTMLDocPreprocessor(DocPreprocessor):
@@ -185,10 +209,7 @@ class HTMLDocPreprocessor(DocPreprocessor):
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
             name = os.path.basename(fp).rsplit('.', 1)[0]
             stable_id = self.get_stable_id(name)
-            doc = Document(
-                name=name, stable_id=stable_id, meta={'file_name': file_name}
-            )
-            yield doc, txt
+            yield Document(name=name, stable_id=stable_id, meta={'file_name': file_name}), txt
 
     def _can_read(self, fpath):
         return fpath.endswith('.html')
@@ -206,18 +227,16 @@ class HTMLDocPreprocessor(DocPreprocessor):
 
 class XMLMultiDocPreprocessor(DocPreprocessor):
     """
-    Parse an XML file _which contains multiple documents_ into a set of Document
-    objects.
+    Parse an XML file _which contains multiple documents_ into a set of Document objects.
 
-    Use XPath queries to specify a _document_ object, and then for each
-    document, a set of _text_ sections and an _id_.
+    Use XPath queries to specify a _document_ object, and then for each document,
+    a set of _text_ sections and an _id_.
 
-    **Note: Include the full document XML etree in the attribs dict with
-    keep_xml_tree=True**
+    **Note: Include the full document XML etree in the attribs dict with keep_xml_tree=True**
     """
 
-    def __init__(self, path, doc='.//document', text='./text/text()',
-        id='./id/text()', keep_xml_tree=False):
+    def __init__(self, path, doc='.//document', text='./text/text()', id='./id/text()',
+                 keep_xml_tree=False):
         DocPreprocessor.__init__(self, path)
         self.doc = doc
         self.text = text
@@ -227,9 +246,7 @@ class XMLMultiDocPreprocessor(DocPreprocessor):
     def parse_file(self, f, file_name):
         for i, doc in enumerate(et.parse(f).xpath(self.doc)):
             doc_id = str(doc.xpath(self.id)[0])
-            text = '\n'.join(
-                filter(lambda t: t is not None, doc.xpath(self.text))
-            )
+            text = '\n'.join(filter(lambda t: t is not None, doc.xpath(self.text)))
             meta = {'file_name': str(file_name)}
             if self.keep_xml_tree:
                 meta['root'] = et.tostring(doc)

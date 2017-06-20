@@ -85,20 +85,21 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
     if cardinality is None and values is None:
         values = [True, False]
         cardinality = 2
-    # If cardinality is specified but not values, fill in with ints
-    elif values is None:
-        values = range(cardinality)
-    elif cardinality is None:
+    
+    # Else use values if present, and validate proper input
+    elif values is not None:
+        if cardinality is not None and len(values) != cardinality:
+            raise ValueError("Number of values must match cardinality.")
+        if None in values:
+            raise ValueError("`None` is a protected value.")
+        if any([type(v) == int for v in values]):
+            raise ValueError("Values cannot be integers.")
         cardinality = len(values)
-    
-    # Check for invalid input for the values
-    if len(values) != cardinality:
-        raise ValueError("Number of values must match cardinality.")
-    if None in values:
-        raise ValueError("`None` is a protected value.")
-    if any([type(v) == int for v in values]):
-        raise ValueError("Values cannot be integers.")
-    
+
+    # If cardinality is specified but not values, fill in with ints
+    elif cardinality is not None:
+        values = range(cardinality)
+
     # Set the class attributes == the columns in the database
     class_attribs = {
 

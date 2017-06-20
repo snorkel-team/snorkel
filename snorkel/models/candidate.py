@@ -1,5 +1,6 @@
 from sqlalchemy import (
-    Column, String, Integer, Float, Boolean, ForeignKey, UniqueConstraint
+    Column, String, Integer, Float, Boolean, ForeignKey, UniqueConstraint,
+    MetaData
 )
 from sqlalchemy.orm import relationship, backref
 from functools import partial
@@ -25,6 +26,8 @@ class Candidate(SnorkelBase):
         'polymorphic_identity': 'candidate',
         'polymorphic_on': type
     }
+
+    # __table_args__ = {"extend_existing" : True}
 
     def get_contexts(self):
         """Get a tuple of the consituent contexts making up this candidate"""
@@ -121,7 +124,7 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
         '__mapper_args__' : {'polymorphic_identity': table_name},
 
         # Helper method to get argument names
-        '__argnames__' : args
+        '__argnames__' : args,
     }
         
     # Create named arguments, i.e. the entity mentions comprising the relation 
@@ -149,7 +152,11 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
         class_attribs[arg + '_cid'] = Column(String)
 
     # Add unique constraints to the arguments
-    class_attribs['__table_args__'] = (UniqueConstraint(*unique_args),)
+    class_attribs['__table_args__'] = (
+        UniqueConstraint(*unique_args),
+        # Note: This still doesn't fix issue...
+        {'keep_existing' : True}
+    )
 
     # Create class
     C = type(class_name, (Candidate,), class_attribs)

@@ -15,11 +15,20 @@ class NoiseAwareModel(object):
     # otherwise assume X is an AnnotationMatrix
     representation = False
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, cardinality=2, name=None):
+        self.name = name or self.__class__.__name__
+        self.cardinality = cardinality
 
     def train(self, X, training_marginals, **hyperparams):
-        """Trains the model"""
+        """Trains the model: wrapper which checks, prints basic stats, etc."""
+        x = X[0] if self.representation else X.get_candidate(session, 0)
+        if x.cardinality != self.cardinality:
+            raise ValueError("Candidate cardinality ({0}) does not match model"
+                "cardinality ({1}).".format(x.cardinality, self.cardinality))
+        self._train(X, training_marginals, **hyperparams)
+
+    def _train(self, X, training_marginals, **hyperparams):
+        """Trains the model."""
         raise NotImplementedError()
 
     def marginals(self, X, **kwargs):
@@ -60,12 +69,12 @@ class NoiseAwareModel(object):
 
 class TFNoiseAwareModel(NoiseAwareModel):
 
-    def __init__(self, save_file=None, name='TFModel', n_threads=None):
+    def __init__(self, n_threads=None, **kwargs):
         """Interface for a TensorFlow model
         The @train_fn, @loss, @prediction, and @save_dict
         fields should be populated by @_build()
         """
-        super(TFNoiseAwareModel, self).__init__(name)
+        super(TFNoiseAwareModel, self).__init__(**kwargs)
         self.train_fn   = None
         self.loss       = None
         self.prediction = None
@@ -76,9 +85,6 @@ class TFNoiseAwareModel(NoiseAwareModel):
                 inter_op_parallelism_threads=n_threads
             )
         ) if n_threads is not None else tf.Session()
-        # Load model
-        if save_file is not None:
-            self.load(save_file)
 
     def _build(self, **kwargs):
         """Builds the TensorFlow model
@@ -92,7 +98,7 @@ class TFNoiseAwareModel(NoiseAwareModel):
     def load_info(self, model_name, **kwargs):
         pass
 
-    def save(self, model_name=None, verbose=True):
+    def save(self, save_file=None, model_name=None, verbose=True):
         """Save current TensorFlow model
             @model_name: save file names
             @verbose: be talkative?
@@ -107,7 +113,7 @@ class TFNoiseAwareModel(NoiseAwareModel):
                 self.name, model_name
             ))
 
-    def load(self, model_name, verbose=True):
+    def load(self, model_name, save_file=None, verbose=True):
         """Load TensorFlow model from file
             @model_name: save file names
             @verbose: be talkative?

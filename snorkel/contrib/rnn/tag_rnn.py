@@ -22,14 +22,8 @@ def tag(seq, labels):
 
 
 class TagRNN(RNNBase):
-
+    """TagRNN for sequence tagging"""
     OPEN, CLOSE = '~~[[~~', '~~]]~~'
-
-    def __init__(self, save_file=None, name='TagRNN', seed=None, n_threads=4):
-        """TagRNN for sequence tagging"""
-        super(TagRNN, self).__init__(
-            n_threads=n_threads, save_file=save_file, name=name, seed=seed
-        )
 
     def _preprocess_data(self, candidates, extend):
         """Convert candidate sentences to tagged symbol sequences

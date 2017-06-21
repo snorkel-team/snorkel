@@ -13,10 +13,9 @@ SD = 0.1
 
 
 class RNNBase(TFNoiseAwareModel):
-
     representation = True
 
-    def __init__(self, save_file=None, name='RNNBase', seed=None, n_threads=4):
+    def __init__(self, seed=None, **kwargs):
         """Base class for bidirectional RNN"""
         # Define metadata
         self.mx_len    = None # Max sentence length
@@ -33,9 +32,7 @@ class RNNBase(TFNoiseAwareModel):
         self.keep_prob        = None
         self.seed             = seed
         # Super constructor
-        super(RNNBase, self).__init__(
-            n_threads=n_threads, save_file=save_file, name=name
-        )
+        super(RNNBase, self).__init__(**kwargs)
 
     def _preprocess_data(self, candidates, extend):
         """Build @self.word_dict to encode and process data for extraction
@@ -147,7 +144,7 @@ class RNNBase(TFNoiseAwareModel):
         # Get prediction
         self.prediction = tf.nn.softmax(h_dropout)
 
-    def train(self, candidates, marginals, n_epochs=25, lr=0.01, dropout=0.5,
+    def _train(self, candidates, marginals, n_epochs=25, lr=0.01, dropout=0.5,
         dim=50, attn_window=None, cell_type=rnn.BasicLSTMCell, batch_size=256,
         max_sentence_length=None, rebalance=False, dev_candidates=None,
         dev_labels=None, print_freq=5):

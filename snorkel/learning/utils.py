@@ -436,7 +436,7 @@ class GridSearch(object):
         """
         # Iterate over the param values
         run_stats       = []
-        f1_opt          = -1.0
+        run_score_opt          = -1.0
         base_model_name = self.model.name
         model_k         = 0
         for k, param_vals in enumerate(self.search_space()):
@@ -456,23 +456,37 @@ class GridSearch(object):
                 self.X, self.training_marginals, **model_hyperparams
             )
             # Test the model
-            tp, fp, tn, fn = self.model.score(
+            error_sets = self.model.score(
                 self.session, X_validation, validation_labels,
                 gold_candidate_set, b, set_unlabeled_as_neg, False, self.scorer,
                 **validation_kwargs
             )
-            p, r, f1 = scores_from_counts(tp, fp, tn, fn)
-            run_stats.append(list(param_vals) + [p, r, f1])
-            if f1 > f1_opt:
+            if self.model.cardinality > 2:
+                nc, ninc = map(len, error_sets)
+                acc = nc / float(nc + ninc)
+                run_scores = [acc]
+                run_score, run_score_label = acc, "Accuracy"
+            else:
+                p, r, f1 = scores_from_counts(*error_sets)
+                run_scores = [p, r, f1]
+                run_score, run_score_label = f1, "F1 Score"
+            # Add scores to running stats, print, and set as optimal if best
+            print("[{0}] {1}: {2}".format(self.model.name, run_score_label,
+                run_score))
+            run_stats.append(list(param_vals) + run_scores)
+            if run_score > run_score_opt:
                 self.model.save(model_name)
                 opt_model = model_name
-                f1_opt    = f1
+                run_score_opt = run_score
         # Set optimal parameter in the learner model
         self.model.load(opt_model)
         # Return DataFrame of scores
+        run_score_labels = ['Acc.'] if self.model.cardinality > 2 else \
+            ['Prec.', 'Rec.', 'F1']
+        sort_by = 'Acc.' if self.model.cardinality > 2 else 'F1'
         self.results = DataFrame.from_records(
-            run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1']
-        ).sort_values(by='F1', ascending=False)
+            run_stats, columns=self.param_names + run_score_labels
+        ).sort_values(by=sort_by, ascending=False)
         return self.results
     
     

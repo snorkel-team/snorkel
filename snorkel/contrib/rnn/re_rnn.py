@@ -29,13 +29,7 @@ def mark_sentence(s, args):
 
 
 class reRNN(RNNBase):
-
-    def __init__(self, save_file=None, name='reRNN', seed=None, n_threads=4):
-        """reRNN for relation extraction"""
-        super(reRNN, self).__init__(
-            n_threads=n_threads, save_file=save_file, name=name, seed=seed
-        )
-
+    """reRNN for relation extraction"""
     def _preprocess_data(self, candidates, extend):
         """Convert candidate sentences to lookup sequences
             @candidates: candidates to process

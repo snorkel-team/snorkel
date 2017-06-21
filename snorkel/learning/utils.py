@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sparse
 import warnings
+from itertools import product
 
 from pandas import DataFrame
 
@@ -422,7 +423,7 @@ class GridSearch(object):
         self.scorer             = scorer
         
     def search_space(self):
-        return product(param.get_all_values() for param in self.params)
+        return product(*[param.get_all_values() for param in self.params])
 
     def fit(self, X_validation, validation_labels, gold_candidate_set=None,
         b=0.5, set_unlabeled_as_neg=True, validation_kwargs={},

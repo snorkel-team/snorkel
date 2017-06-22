@@ -5,7 +5,7 @@ from snorkel.learning.disc_learning import TFNoiseAwareModel
 from scipy.sparse import csr_matrix, issparse
 from time import time
 from six.moves.cPickle import dump, load
-from snorkel.learning.utils import LabelBalancer, get_cardinality
+from snorkel.learning.utils import LabelBalancer, reshape_marginals
 
 SD = 0.1
 

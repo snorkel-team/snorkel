@@ -12,8 +12,8 @@ matplotlib.use('Agg')
 warnings.filterwarnings("ignore", module="matplotlib")
 
 
-def get_cardinality(marginals):
-    """Returns cardinality and (potentially) re-shaped marginals as np array"""
+def reshape_marginals(marginals):
+    """Returns correctly shaped marginals as np array"""
     # Make sure training marginals are a numpy array first
     try:
         shape = marginals.shape
@@ -22,15 +22,11 @@ def get_cardinality(marginals):
         shape = marginals.shape
     
     # Set cardinality + marginals in proper format for binary v. categorical
-    if len(shape) == 1:
-        cardinality = 2
-    else:
-        cardinality = shape[1]
-
+    if len(shape) != 1:
         # If k = 2, make sure is M-dim array
-        if cardinality == 2:
+        if shape[1] == 2:
             marginals = marginals[:,1].reshape(-1)
-    return marginals, cardinality
+    return marginals
 
 
 class LabelBalancer(object):
@@ -475,7 +471,7 @@ class GridSearch(object):
                 run_score))
             run_stats.append(list(param_vals) + run_scores)
             if run_score > run_score_opt:
-                self.model.save(model_name)
+                self.model.save(model_name=model_name)
                 opt_model = model_name
                 run_score_opt = run_score
         # Set optimal parameter in the learner model

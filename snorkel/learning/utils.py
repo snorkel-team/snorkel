@@ -97,7 +97,7 @@ class Scorer(object):
             cardinality = marginals.shape[1]
         return cardinality
 
-    def score(self, test_marginals, **kwargs):
+    def score(self, test_marginals, display=True, **kwargs):
         cardinality = self._get_cardinality(test_marginals)
         if cardinality == 2:
             return self._score_binary(test_marginals, **kwargs)
@@ -111,6 +111,11 @@ class Scorer(object):
     def _score_categorical(self, test_marginals, train_marginals=None, 
         display=True):
         raise NotImplementedError()
+
+    def summary_score(self, test_marginals, **kwargs):
+        """Return the F1 score (for binary) or accuracy (for categorical)."""
+        raise NotImplementedError()
+
 
 
 class MentionScorer(Scorer):
@@ -229,11 +234,34 @@ class MentionScorer(Scorer):
                 print "Coverage:", (nc + ni) / (nc + ni + len(gold_missed))
         return correct, incorrect
 
+    def summary_score(self, test_marginals, **kwargs):
+        """
+        Return the F1 score (for binary) or accuracy (for categorical).
+        Also return the label as second argument.
+        """
+        error_sets = self.score(test_marginals, display=False, **kwargs)
+        if len(error_sets) == 4:
+            _, _, f1 = binary_scores_from_counts(*map(len, error_sets))
+            return f1, "F1 Score"
+        else:
+            nc, ninc = map(len, error_sets)
+            return nc / float(nc + ninc), "Accuracy"
+
+
+def binary_scores_from_counts(ntp, nfp, ntn, nfn):
+    """
+    Precision, recall, and F1 scores from counts of TP, FP, TN, FN.
+    Example usage:
+        p, r, f1 = binary_scores_from_counts(*map(len, error_sets))
+    """
+    prec = ntp / float(ntp + nfp) if ntp + nfp > 0 else 0.0
+    rec  = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
+    f1   = (2 * prec * rec) / (prec + rec) if prec + rec > 0 else 0.0
+    return prec, rec, f1
+
 
 def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
-    prec    = ntp / float(ntp + nfp) if ntp + nfp > 0 else 0.0
-    rec     = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
-    f1      = (2 * prec * rec) / (prec + rec) if prec + rec > 0 else 0.0
+    prec, rec, f1 = binary_scores_from_counts(ntp, nfp, ntn, nfn)
     pos_acc = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
     neg_acc = ntn / float(ntn + nfp) if ntn + nfp > 0 else 0.0
     print("========================================")
@@ -247,17 +275,6 @@ def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
     print("----------------------------------------")
     print("TP: {} | FP: {} | TN: {} | FN: {}".format(ntp, nfp, ntn, nfn))
     print("========================================\n")
-
-
-def marginals_to_labels(marginals, b=0.5):
-    return np.array([1 if p > b else -1 if p < b else 0 for p in marginals])
-
-
-def scores_from_counts(tp, fp, tn, fn):
-    prec = float(len(tp)) / (len(tp) + len(fp)) if len(tp) > 0 else 0
-    rec = float(len(tp)) / (len(tp) + len(fn)) if len(tp) > 0 else 0
-    f1 = 2.0 * (prec * rec) / (prec + rec) if (prec + rec) > 0 else 0
-    return prec, rec, f1
 
 
 def plot_prediction_probability(probs):
@@ -463,7 +480,7 @@ class GridSearch(object):
                 run_scores = [acc]
                 run_score, run_score_label = acc, "Accuracy"
             else:
-                p, r, f1 = scores_from_counts(*error_sets)
+                p, r, f1 = binary_scores_from_counts(*map(len, error_sets))
                 run_scores = [p, r, f1]
                 run_score, run_score_label = f1, "F1 Score"
             # Add scores to running stats, print, and set as optimal if best

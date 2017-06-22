@@ -5,7 +5,7 @@ import tensorflow.contrib.rnn as rnn
 import warnings
 
 from snorkel.learning import LabelBalancer, TFNoiseAwareModel
-from utils import f1_score, get_bi_rnn_output, SymbolTable
+from utils import get_bi_rnn_output, SymbolTable
 from time import time
 
 
@@ -123,7 +123,7 @@ class RNNBase(TFNoiseAwareModel):
             self._build_sigmoid(potentials_dropout, s4)
 
         # Backprop trainer
-        self.train_fn = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
+        self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss_op)
 
     def _build_sigmoid(self, potentials, seed):
         self.train_marginals = tf.placeholder(tf.float32, [None])
@@ -131,11 +131,11 @@ class RNNBase(TFNoiseAwareModel):
         b = tf.Variable(0., dtype=tf.float32)
         h_dropout = tf.squeeze(tf.matmul(potentials, W)) + b
         # Noise-aware loss
-        self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+        self.loss_op = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
             labels=self.train_marginals, logits=h_dropout
         ))
         # Get prediction
-        self.prediction = tf.nn.sigmoid(h_dropout)
+        self.prediction_op = tf.nn.sigmoid(h_dropout)
 
     def _build_softmax(self, potentials, seed):
         self.train_marginals = tf.placeholder(tf.float32,
@@ -145,30 +145,45 @@ class RNNBase(TFNoiseAwareModel):
         b = tf.Variable(np.zeros(self.cardinality), dtype=tf.float32)
         h_dropout = tf.matmul(potentials, W) + b
         # Noise-aware loss
-        self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+        self.loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
             labels=self.train_marginals, logits=h_dropout
         ))
         # Get prediction
-        self.prediction = tf.nn.softmax(h_dropout)
+        self.prediction_op = tf.nn.softmax(h_dropout)
 
-    def train(self, X_train, Y_train, max_sentence_length=None, **kwargs):
+    def _construct_feed_dict(self, X_b, Y_b, lr=0.01, dropout=None, **kwargs):
+        X_b, len_b = self._make_tensor(X_b)
+        return {
+            self.sentences:        X_b,
+            self.sentence_lengths: len_b,
+            self.train_marginals:  Y_b,
+            self.keep_prob:        dropout or 1.0,
+            self.lr:               lr
+        }
+
+    def train(self, X_train, Y_train, X_dev=None, max_sentence_length=None, 
+        **kwargs):
         """
         Perform preprocessing of data, construct dataset-specific model, then
         train.
         """
         # Text preprocessing
         X_train, ends = self._preprocess_data(X_train, extend=True)
+        if X_dev is not None:
+            X_dev, _ = self._preprocess_data(X_dev, extend=False)
+        
         # Get max sentence size
         self.mx_len = max_sentence_length or max(len(x) for x in X_train)
         self._check_max_sentence_length(ends)
         self.n_v = self.word_dict.len()
+        
         # Train model
-        super(RNNBase, self).train(X_train, Y_train, **kwargs)
+        super(RNNBase, self).train(X_train, Y_train, X_dev=X_dev, **kwargs)
 
     def _marginals_preprocessed(self, test_data):
         """Get marginals from preprocessed data"""
         x, x_len = self._make_tensor(test_data)
-        return self.session.run(self.prediction, {
+        return self.session.run(self.prediction_op, {
             self.sentences:        x,
             self.sentence_lengths: x_len,
             self.keep_prob:        1.0,

@@ -4,7 +4,7 @@ from time import time
 
 from sqlalchemy.sql import bindparam, select
 
-from .utils import marginals_to_labels, MentionScorer, reshape_marginals
+from .utils import MentionScorer, reshape_marginals
 from ..annotations import save_marginals
 from ..models import Candidate
 
@@ -32,11 +32,15 @@ class NoiseAwareModel(object):
         """Save the predicted marginal probabilitiess for the Candidates X."""
         save_marginals(session, X, self.marginals(X), training=False)
 
-    def predict(self, X, b=0.5):
+    def predictions(self, X, b=0.5):
         """Return numpy array of elements in {-1,0,1}
         based on predicted marginal probabilities.
         """
-        return marginals_to_labels(self.marginals(X), b)
+        if self.cardinality > 2:
+            return self.marginals(X).argmax(axis=0) + 1
+        else:
+            return np.array([1 if p > b else -1 if p < b else 0 
+                for p in self.marginals(X)])
 
     def score(self, session, X_test, test_labels, gold_candidate_set=None, 
         b=0.5, set_unlabeled_as_neg=True, display=True, scorer=MentionScorer,
@@ -63,15 +67,69 @@ class NoiseAwareModel(object):
 
 class TFNoiseAwareModel(NoiseAwareModel):
     """Generic NoiseAwareModel class for TensorFlow models."""
-    def _make_tensor(self, X, **kwargs):
-        return X
+    # TODO: Merge save / load info into save / load
+    # TODO: Save model_params (and training_params?)... e.g. rewrite save_info
+    # TODO: Actually save / load model_kwargs to / from disk!
+    # TODO: Pass on model kwargs in GridSearch!
+    # TODO: Clean up scoring function in general!
+    # TODO: Test + update LogisticRegression (move this to contrib/end_models)?
 
-    def _preprocess_data(self, X, **kwargs):
-        return X
+    def _build(self, **model_kwargs):
+        """
+        Builds the TensorFlow Operations for the model and training procedure.
+        Must set the following ops:
+            @self.loss_op: Loss function
+            @self.train_op: Training operation
+            @self.prediction_op: Prediction of the network
+
+        Additional ops must be set depending on whether the default
+        self._construct_feed_dict method below is used, or a custom one.
+
+        Note that _build is called in the train method, allowing for the network
+        to be constructed dynamically depending on the training set (e.g., the
+        size of the vocabulary for a text LSTM model)
+        """
+        raise NotImplementedError()
+
+    def _construct_feed_dict(self, X_b, Y_b, lr=0.01, dropout=None, **kwargs):
+        """
+        Given a batch of data and labels, and other necessary hyperparams,
+        construct a python dictionary to use in the training step as feed_dict.
+
+        This method can be overwritten when non-standard arguments are needed.
+
+        NOTE: Using a feed_dict is obviously not the fastest way to pass in data
+            if running a large-scale dataset on a GPU, see Issue #679.
+        """
+        # Note: The below arguments need to be constructed by self._build!
+        return {
+            self.X: X_b,
+            self.Y: Y_b,
+            self.keep_prob: dropout or 1.0,
+            self.lr: lr
+        }
+
+    def _new_graph_and_session(self, n_threads=None, **model_kwargs):
+        """Creates new graph, builds network, and sets new session."""
+        # Create new computation graph
+        self.graph = tf.Graph()
+
+        # Build network here in the graph
+        with self.graph.as_default():
+            self._build(**model_kwargs)
+
+        # Create new session
+        self.session = tf.Session(
+            config=tf.ConfigProto(
+                intra_op_parallelism_threads=n_threads,
+                inter_op_parallelism_threads=n_threads
+            ),
+            graph=self.graph
+        ) if n_threads is not None else tf.Session(graph=self.graph)
 
     def train(self, X_train, Y_train, n_epochs=25, lr=0.01, dropout=0.5, 
-        batch_size=256, rebalance=False, dev_candidates=None, dev_labels=None, 
-        print_freq=5, n_threads=None, **model_kwargs):
+        batch_size=256, rebalance=False, X_dev=None, Y_dev=None, print_freq=5, 
+        n_threads=None, scorer=MentionScorer, **model_kwargs):
         """
         Generic training procedure for TF model
 
@@ -86,19 +144,10 @@ class TFNoiseAwareModel(NoiseAwareModel):
         @rebalance: Bool or fraction of positive examples for training
                     - if True, defaults to standard 0.5 class balance
                     - if False, no class balancing
-        @dev_candidates: list of Candidate objects for evaluation
-        @dev_labels: array of labels for each dev Candidate
+        @X_dev: Candidates for evaluation, same format as X_train
+        @Y_dev: Labels for evaluation, same format as Y_train
         @print_freq: number of epochs after which to print status
         """
-        # TODO: Change dev_* -> X_dev
-        # TOOD: Clean up _make_tensor, _preprocess_data
-        # TODO: train_fn -> train_op, clean up names and add to build docstring
-        # TODO: Generic run_args constructor!
-        # TODO: Clean up data preprocessing / train call in RNNBase?
-        # TODO: Save model_params (and training_params?)... e.g. rewrite save_info
-        # TODO: Make session / graph building a sub-class
-        # TODO: Actually save / load model_kwargs to / from disk!
-        # TODO: Pass on model kwargs in GridSearch!
         np.random.seed(self.seed)
         verbose = print_freq > 0
 
@@ -110,40 +159,22 @@ class TFNoiseAwareModel(NoiseAwareModel):
         # Make sure marginals are in correct default format
         Y_train = reshape_marginals(Y_train)
 
-        # Create new computation graph
-        self.graph = tf.Graph()
-        
-        # Get training indices
-        # Note: Currently we only do label balancing for binary setting
+        # Rebalance training set (only for binary setting currently)
         if self.cardinality == 2:
             train_idxs = LabelBalancer(Y_train).get_train_idxs(rebalance)
             X_train = [X_train[j] for j in train_idxs] if self.representation \
                 else X_train[train_idxs,]
             Y_train = np.ravel(Y_train)[train_idxs]
-        
-        # Build network here in the graph
-        with self.graph.as_default():
-            self._build(**model_kwargs)
 
-        # Create new session
-        self.session = tf.Session(
-            config=tf.ConfigProto(
-                intra_op_parallelism_threads=n_threads,
-                inter_op_parallelism_threads=n_threads
-            ),
-            graph=self.graph
-        ) if n_threads is not None else tf.Session(graph=self.graph)
+        # Create new graph, build network, and start session
+        self._new_graph_and_session(n_threads=n_threads, **model_kwargs)
 
-        # Get dev data
-        dev_data, dev_gold = None, None
-        if dev_candidates is not None and dev_labels is not None:
-            dev_data, _ = self._preprocess_data(dev_candidates, extend=False)
-            dev_gold = np.ravel(dev_labels)
-            if not ((dev_gold >= 0).all() and (dev_gold <= 1).all()):
-                raise Exception("Dev labels should be in [0, 1]")
-            print("[{0}] Loaded {1} candidates for evaluation".format(
-                self.name, len(dev_data)
-            ))
+        # Process the dev set if provided
+        if X_dev is not None and Y_dev is not None:
+            Y_dev = np.ravel(Y_dev) if self.cardinality == 2 else Y_dev
+            if not ((Y_dev >= 0).all() and (Y_dev <= 1).all()):
+                raise Exception("Y_dev elements should be in [0, 1]")
+            dev_scorer = scorer(X_dev, Y_dev)
         
         # Initialize variables
         with self.graph.as_default():
@@ -159,36 +190,32 @@ class TFNoiseAwareModel(NoiseAwareModel):
                 self.name, n, n_epochs, batch_size
             ))
         for t in range(n_epochs):
-            epoch_loss = []
+            epoch_losses = []
             for i in range(0, n, batch_size):
-                # Get batch tensors
-                # TODO: Put this in run_ops constructor!
-                X_b, len_b = self._make_tensor(X_train[i:i+batch_size])
-                Y_b        = Y_train[i:i+batch_size]
-                # Run training step and evaluate loss function                  
-                epoch_loss.append(self.session.run([self.loss, self.train_fn], {
-                    self.sentences:        X_b,
-                    self.sentence_lengths: len_b,
-                    self.train_marginals:  Y_b,
-                    self.keep_prob:        dropout or 1.0,
-                    self.lr:               lr
-                })[0])
+                feed_dict = self._construct_feed_dict(
+                    X_train[i:i+batch_size],
+                    Y_train[i:i+batch_size],
+                    lr=lr,
+                    dropout=dropout
+                )
+                # Run training step and evaluate loss function    
+                epoch_loss, _ = self.session.run(
+                    [self.loss_op, self.train_op], feed_dict=feed_dict)
+                epoch_losses.append(epoch_loss)
+            
             # Print training stats
             if verbose and (t % print_freq == 0 or t in [0, (n_epochs-1)]):
                 msg = "[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
-                    self.name, t, time() - st, np.mean(epoch_loss)
-                )
-                if dev_data is not None:
-                    dev_p    = self._marginals_preprocessed(dev_data)
-                    f1, _, _ = f1_score(dev_p, dev_gold)
-                    msg     += '\tDev F1={0:.2f}'.format(100. * f1)
+                    self.name, t, time() - st, np.mean(epoch_losses))
+                if X_dev is not None:
+                    score, score_label = dev_scorer.summary_score(
+                        self._marginals_preprocessed(X_dev))
+                    msg += '\tDev {0}={1:.2f}'.format(score_label, 100. * score)
                 print(msg)
+        
+        # Conclude training
         if verbose:
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))
-
-    def _build(self, **model_kwargs):
-        """Builds the TensorFlow network"""
-        raise NotImplementedError()
 
     def save_info(self, model_name, **kwargs):
         pass
@@ -221,19 +248,8 @@ class TFNoiseAwareModel(NoiseAwareModel):
         """
         self.load_info(model_name)
         
-        # Create new computation graph
-        self.graph = tf.Graph()
-        # Build network here in the graph
-        with self.graph.as_default():
-            self._build(**model_kwargs)
-        # Create new session
-        self.session = tf.Session(
-            config=tf.ConfigProto(
-                intra_op_parallelism_threads=n_threads,
-                inter_op_parallelism_threads=n_threads
-            ),
-            graph=self.graph
-        ) if n_threads is not None else tf.Session(graph=self.graph)
+        # Create new graph, build network, and start session
+        self._new_graph_and_session(n_threads=n_threads, **model_kwargs)
 
         # Load saved checkpoint
         with self.graph.as_default():

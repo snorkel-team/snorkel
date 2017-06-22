@@ -1,13 +1,13 @@
+from __future__ import print_function 
 import math
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sparse
-import warnings
-
 from pandas import DataFrame
 
-matplotlib.use('Agg')
+import warnings
 warnings.filterwarnings("ignore", module="matplotlib")
 
 
@@ -177,13 +177,13 @@ class MentionScorer(Scorer):
             if self.gold_candidate_set is not None:
                 gold_fn = [c for c in self.gold_candidate_set
                     if c not in self.test_candidates]
-                print "\n"
+                print("\n")
                 print_scores(len(tp), len(fp), len(tn), len(fn)+len(gold_fn), 
                     title="Corpus Recall-adjusted Scores")
 
             # If training and test marginals provided print calibration plots
             if train_marginals is not None and test_marginals is not None:
-                print "\nCalibration plot:"
+                print("\nCalibration plot:")
                 calibration_plots(train_marginals, test_marginals, 
                     np.asarray(test_label_array))
         return tp, fp, tn, fn
@@ -223,13 +223,13 @@ class MentionScorer(Scorer):
                     incorrect.add(candidate)
         if display:
             nc, ni = len(correct), len(incorrect)
-            print "Accuracy:", nc / float(nc + ni)
+            print("Accuracy:", nc / float(nc + ni))
 
             # If gold candidate set is provided calculate recall-adjusted scores
             if self.gold_candidate_set is not None:
                 gold_missed = [c for c in self.gold_candidate_set
                     if c not in self.test_candidates]
-                print "Coverage:", (nc + ni) / (nc + ni + len(gold_missed))
+                print("Coverage:", (nc + ni) / (nc + ni + len(gold_missed)))
         return correct, incorrect
 
 

@@ -6,5 +6,4 @@ from .gen_learning import (
     GenerativeModel,
     GenerativeModelWeights
 )
-from .logistic_regression import LogisticRegression, SparseLogisticRegression
 from .utils import *

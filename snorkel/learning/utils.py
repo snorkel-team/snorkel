@@ -400,9 +400,9 @@ class RangeParameter(Hyperparameter):
     If log_base is specified, scale the search range in the log base
     step is range step size or exponent step size
     """
-    def __init__(self, name, min_value, max_value, step=1, log_base=None):
-        self.min_value = min_value
-        self.max_value = max_value
+    def __init__(self, name, v1, v2, step=1, log_base=None):
+        self.min_value = min(v1, v2)
+        self.max_value = max(v1, v2)
         self.step = step
         self.log_base = log_base
         super(RangeParameter, self).__init__(name)

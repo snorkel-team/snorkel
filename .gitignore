@@ -7,6 +7,8 @@ parser/
 /stanford-corenlp-*
 *.db*
 downloads/
+*.model_kwargs
+**/checkpoint
 
 # Sphinx
 docs/_build

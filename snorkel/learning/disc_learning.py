@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as np
 from time import time
+import os
+from six.moves.cPickle import dump, load
 
 from sqlalchemy.sql import bindparam, select
 
@@ -66,13 +68,18 @@ class NoiseAwareModel(object):
 
 
 class TFNoiseAwareModel(NoiseAwareModel):
-    """Generic NoiseAwareModel class for TensorFlow models."""
-    # TODO: Merge save / load info into save / load
-    # TODO: Save model_params (and training_params?)... e.g. rewrite save_info
-    # TODO: Actually save / load model_kwargs to / from disk!
+    """
+    Generic NoiseAwareModel class for TensorFlow models.
+    Note that the actual network is built when train is called (to allow for
+    model architectures which depend on the training data, e.g. vocab size).
+    @n_threads: Parallelism to use; single-threaded if None
+    """
     # TODO: Pass on model kwargs in GridSearch!
     # TODO: Clean up scoring function in general!
     # TODO: Test + update LogisticRegression (move this to contrib/end_models)?
+    def __init__(self, n_threads=None, **kwargs):
+        self.n_threads = n_threads
+        super(TFNoiseAwareModel, self).__init__(**kwargs)
 
     def _build(self, **model_kwargs):
         """
@@ -109,8 +116,10 @@ class TFNoiseAwareModel(NoiseAwareModel):
             self.lr: lr
         }
 
-    def _new_graph_and_session(self, n_threads=None, **model_kwargs):
+    def _build_session(self, **model_kwargs):
         """Creates new graph, builds network, and sets new session."""
+        self.model_kwargs = model_kwargs
+
         # Create new computation graph
         self.graph = tf.Graph()
 
@@ -121,15 +130,15 @@ class TFNoiseAwareModel(NoiseAwareModel):
         # Create new session
         self.session = tf.Session(
             config=tf.ConfigProto(
-                intra_op_parallelism_threads=n_threads,
-                inter_op_parallelism_threads=n_threads
+                intra_op_parallelism_threads=self.n_threads,
+                inter_op_parallelism_threads=self.n_threads
             ),
             graph=self.graph
-        ) if n_threads is not None else tf.Session(graph=self.graph)
+        ) if self.n_threads is not None else tf.Session(graph=self.graph)
 
     def train(self, X_train, Y_train, n_epochs=25, lr=0.01, dropout=0.5, 
         batch_size=256, rebalance=False, X_dev=None, Y_dev=None, print_freq=5, 
-        n_threads=None, scorer=MentionScorer, **model_kwargs):
+        scorer=MentionScorer, **model_kwargs):
         """
         Generic training procedure for TF model
 
@@ -141,12 +150,17 @@ class TFNoiseAwareModel(NoiseAwareModel):
         @n_epochs: Number of training epochs
         @lr: Learning rate
         @dropout: Keep probability for dropout layer (no dropout if None)
+        @batch_size: Batch size for SGD
         @rebalance: Bool or fraction of positive examples for training
                     - if True, defaults to standard 0.5 class balance
                     - if False, no class balancing
         @X_dev: Candidates for evaluation, same format as X_train
         @Y_dev: Labels for evaluation, same format as Y_train
-        @print_freq: number of epochs after which to print status
+        @print_freq: number of epochs at which to print status
+        @scorer: Scorer class to use for dev set evaluations (if provided)
+        @model_kwargs: Model hyperparameters that change how the graph is built;
+            these must be saved and re-used to re-load model (vs. other keyword
+            args in train, which only affect how the model is trained).
         """
         np.random.seed(self.seed)
         verbose = print_freq > 0
@@ -167,7 +181,7 @@ class TFNoiseAwareModel(NoiseAwareModel):
             Y_train = np.ravel(Y_train)[train_idxs]
 
         # Create new graph, build network, and start session
-        self._new_graph_and_session(n_threads=n_threads, **model_kwargs)
+        self._build_session(**model_kwargs)
 
         # Process the dev set if provided
         if X_dev is not None and Y_dev is not None:
@@ -217,50 +231,42 @@ class TFNoiseAwareModel(NoiseAwareModel):
         if verbose:
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))
 
-    def save_info(self, model_name, **kwargs):
-        pass
-
-    def load_info(self, model_name, **kwargs):
-        pass
-
-    def save(self, model_name=None, save_file=None, verbose=True, 
-        save_dict=None):
-        """Save current TensorFlow model
-            @model_name: save file names
-            @verbose: be talkative?
-        """
+    def save(self, model_name=None, save_dir='./', verbose=True):
+        """Save current model."""
         model_name = model_name or self.name
-        self.save_info(model_name)
-        with self.graph.as_default():
-            save_dict = save_dict or tf.global_variables()
-            saver = tf.train.Saver(save_dict)
-        saver.save(self.session, './' + model_name, global_step=0)
-        if verbose:
-            print("[{0}] Model saved. To load, use name\n\t\t{1}".format(
-                self.name, model_name
-            ))
 
-    def load(self, model_name, model_kwargs={}, save_file=None, verbose=True, 
-        save_dict=None, n_threads=None):
-        """Load TensorFlow model from file
-            @model_name: save file names
-            @verbose: be talkative?
-        """
-        self.load_info(model_name)
+        # Create Saver
+        with self.graph.as_default():
+            saver = tf.train.Saver(tf.global_variables())
+
+        # Save model kwargs needed to rebuild model
+        mk_path = os.path.join(save_dir, "{0}.model_kwargs".format(model_name))
+        with open(mk_path, 'wb') as f:
+            dump(self.model_kwargs, f)
+
+        # Save graph and report if verbose
+        saver.save(self.session, os.path.join(save_dir, model_name))
+        if verbose:
+            print("[{0}] Model saved as <{1}>".format(self.name, model_name))
+
+    def load(self, model_name, save_dir='./', verbose=True):
+        """Load model from file and rebuild in new graph / session."""
+        # Load model kwargs needed to rebuild model
+        mk_path = os.path.join(save_dir, "{0}.model_kwargs".format(model_name))
+        with open(mk_path, 'rb') as f:
+            model_kwargs = load(f)
         
         # Create new graph, build network, and start session
-        self._new_graph_and_session(n_threads=n_threads, **model_kwargs)
+        self._build_session(**model_kwargs)
 
-        # Load saved checkpoint
+        # Load saved checkpoint to populate trained parameters
         with self.graph.as_default():
-            load_dict = save_dict or tf.global_variables()
-            saver = tf.train.Saver(load_dict)
-            ckpt = tf.train.get_checkpoint_state('./')
+            saver = tf.train.Saver(tf.global_variables())
+            ckpt = tf.train.get_checkpoint_state(save_dir)
         if ckpt and ckpt.model_checkpoint_path:
             saver.restore(self.session, ckpt.model_checkpoint_path)
             if verbose:
                 print("[{0}] Loaded model <{1}>".format(self.name, model_name))
         else:
             raise Exception("[{0}] No model found at <{1}>".format(
-                self.name, model_name
-            ))
+                self.name, model_name))

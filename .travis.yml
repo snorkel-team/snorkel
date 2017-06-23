@@ -69,6 +69,7 @@ script:
   - python test/learning/test_gen_learning.py
   - python test/learning/test_supervised.py
   - python test/learning/test_categorical.py
+  - runipy test/learning/test_TF_notebook.ipynb
 
   # Runs intro tutorial notebooks
   - cd tutorials

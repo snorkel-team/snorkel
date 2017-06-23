@@ -19,9 +19,10 @@ class NoiseAwareModel(object):
     # otherwise assume X is an AnnotationMatrix
     representation = False
 
-    def __init__(self, cardinality=2, name=None):
+    def __init__(self, cardinality=2, name=None, seed=None):
         self.name = name or self.__class__.__name__
         self.cardinality = cardinality
+        self.seed = seed
 
     def train(self, X, training_marginals, **training_kwargs):
         """Trains the model."""
@@ -207,8 +208,8 @@ class TFNoiseAwareModel(NoiseAwareModel):
             epoch_losses = []
             for i in range(0, n, batch_size):
                 feed_dict = self._construct_feed_dict(
-                    X_train[i:i+batch_size],
-                    Y_train[i:i+batch_size],
+                    X_train[i:min(n, i+batch_size)],
+                    Y_train[i:min(n, i+batch_size)],
                     lr=lr,
                     dropout=dropout
                 )

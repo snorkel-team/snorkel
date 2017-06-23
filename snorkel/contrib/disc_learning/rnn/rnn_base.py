@@ -15,12 +15,6 @@ SD = 0.1
 class RNNBase(TFNoiseAwareModel):
     representation = True
 
-    def __init__(self, seed=None, **kwargs):
-        """Base class for bidirectional RNN"""
-        self.seed   = seed
-        # Super constructor
-        super(RNNBase, self).__init__(**kwargs)
-
     def _preprocess_data(self, candidates, extend, word_dict=SymbolTable()):
         """Build @self.word_dict to encode and process data for extraction
             Return list of encoded sentences, list of last index of arguments,

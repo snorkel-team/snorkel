@@ -74,9 +74,6 @@ class TFNoiseAwareModel(NoiseAwareModel):
     model architectures which depend on the training data, e.g. vocab size).
     @n_threads: Parallelism to use; single-threaded if None
     """
-    # TODO: Pass on model kwargs in GridSearch!
-    # TODO: Clean up scoring function in general!
-    # TODO: Test + update LogisticRegression (move this to contrib/end_models)?
     def __init__(self, n_threads=None, **kwargs):
         self.n_threads = n_threads
         super(TFNoiseAwareModel, self).__init__(**kwargs)
@@ -158,9 +155,12 @@ class TFNoiseAwareModel(NoiseAwareModel):
         @Y_dev: Labels for evaluation, same format as Y_train
         @print_freq: number of epochs at which to print status
         @scorer: Scorer class to use for dev set evaluations (if provided)
-        @model_kwargs: Model hyperparameters that change how the graph is built;
-            these must be saved and re-used to re-load model (vs. other keyword
-            args in train, which only affect how the model is trained).
+        @model_kwargs: All hyperparameters that change how the graph is built 
+            must be passed through here to be saved and reloaded to save /
+            reload model (vs. other keyword args in train, which only affect how
+            the model is trained). *NOTE: If a parameter needed to build the 
+            network and/or is needed at test time is not included here, the
+            model will not be able to be reloaded!*
         """
         np.random.seed(self.seed)
         verbose = print_freq > 0

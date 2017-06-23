@@ -17,31 +17,20 @@ class RNNBase(TFNoiseAwareModel):
 
     def __init__(self, seed=None, **kwargs):
         """Base class for bidirectional RNN"""
-        # Define metadata
-        self.mx_len    = None # Max sentence length
-        self.dim       = None # Embedding dimension
-        self.n_v       = None # Vocabulary size
-        self.lr        = None # Learning rate
-        self.attn      = None # Attention window
-        self.word_dict = SymbolTable() # Symbol table for dictionary
-        # Define input layers
-        self.sentences        = None
-        self.sentence_lengths = None
-        self.train_marginals  = None
-        self.keep_prob        = None
-        self.seed             = seed
+        self.seed   = seed
         # Super constructor
         super(RNNBase, self).__init__(**kwargs)
 
-    def _preprocess_data(self, candidates, extend):
+    def _preprocess_data(self, candidates, extend, word_dict=SymbolTable()):
         """Build @self.word_dict to encode and process data for extraction
-            Return list of encoded sentences and list of last index of arguments
+            Return list of encoded sentences, list of last index of arguments,
+            and the word dictionary (extended if extend=True)
         """
         raise NotImplementedError()
 
-    def _check_max_sentence_length(self, ends):
-        """Check that extraction arguments are within @self.mx_len"""
-        mx = self.mx_len
+    def _check_max_sentence_length(self, ends, max_len=None):
+        """Check that extraction arguments are within @self.max_len"""
+        mx = max_len or self.max_len
         for i, end in enumerate(ends):
             if end >= mx:
                 w = "Candidate {0} has argument past max length for model:"
@@ -54,27 +43,34 @@ class RNNBase(TFNoiseAwareModel):
             current batch and an array of true sentence lengths
         """
         batch_size = len(x)
-        x_batch    = np.zeros((batch_size, self.mx_len), dtype=np.int32)
+        x_batch    = np.zeros((batch_size, self.max_len), dtype=np.int32)
         len_batch  = np.zeros(batch_size, dtype=np.int32)
         for j, token_ids in enumerate(x):
-            t               = min(len(token_ids), self.mx_len)
+            t               = min(len(token_ids), self.max_len)
             x_batch[j, 0:t] = token_ids[0:t]
             len_batch[j]    = t
         return x_batch, len_batch
 
-    def _embedding_init(self, s):
-        """Random initialization for embedding table"""
-        return tf.random_normal((self.n_v-1, self.dim), stddev=SD, seed=s)
-
-    def _build(self, dim=50, attn_window=None, cell_type=rnn.BasicLSTMCell):
+    def _build(self, dim=50, attn_window=None, cell_type=rnn.BasicLSTMCell, 
+        word_dict=SymbolTable(), max_len=20):
         """
         Get feed forward step, loss function, and optimizer for RNN
+
+        Note: Parameters which affect how network is built and/or which are
+        needed at test time *must* be passed in here as keyword arguments, via 
+        the train method, to be saved / reloaded!
+
         @dim: embedding dimension
         @attn_window: attention window length (no attention if 0 or None)
         @cell_type: subclass of tensorflow.python.ops.rnn_cell_impl._RNNCell
         @batch_size: batch size for mini-batch SGD
+        @vocab_size: Vocab size for determining size of word embeddings tensor
         """
-        self.dim = dim
+        # Set the word dictionary passed in as the word_dict for the instance
+        self.max_len = max_len
+        self.word_dict = word_dict
+        vocab_size = word_dict.len()
+
         # Define input layers
         self.sentences        = tf.placeholder(tf.int32, [None, None])
         self.sentence_lengths = tf.placeholder(tf.int32, [None])
@@ -84,16 +80,17 @@ class RNNBase(TFNoiseAwareModel):
         s = self.seed
         s1, s2, s3, s4 = [None] * 4 if s is None else [s+i for i in range(4)]
         # Embedding layer
-        emb_var   = tf.Variable(self._embedding_init(s1))
-        embedding = tf.concat([tf.zeros([1, self.dim]), emb_var], axis=0)
+        emb_var = tf.Variable(
+            tf.random_normal((vocab_size - 1, dim), stddev=SD, seed=s1))
+        embedding = tf.concat([tf.zeros([1, dim]), emb_var], axis=0)
         inputs    = tf.nn.embedding_lookup(embedding, self.sentences)
         # Build RNN graph
         batch_size = tf.shape(self.sentences)[0]
         init = tf.contrib.layers.xavier_initializer(seed=s2)
         with tf.variable_scope(self.name, reuse=False, initializer=init):
             # Build RNN cells
-            fw_cell = cell_type(self.dim)
-            bw_cell = cell_type(self.dim)
+            fw_cell = cell_type(dim)
+            bw_cell = cell_type(dim)
             # Add attention if needed
             if attn_window:
                 fw_cell = rnn.AttentionCellWrapper(
@@ -113,21 +110,21 @@ class RNNBase(TFNoiseAwareModel):
                 time_major=False               
             )
         # Get potentials
-        potentials = get_bi_rnn_output(rnn_out, self.dim, self.sentence_lengths)
+        potentials = get_bi_rnn_output(rnn_out, dim, self.sentence_lengths)
         
         # Compute activation
         potentials_dropout = tf.nn.dropout(potentials, self.keep_prob, seed=s3)
         if self.cardinality > 2:
-            self._build_softmax(potentials_dropout, s4)
+            self._build_softmax(potentials_dropout, dim, s4)
         else:
-            self._build_sigmoid(potentials_dropout, s4)
+            self._build_sigmoid(potentials_dropout, dim, s4)
 
         # Backprop trainer
         self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss_op)
 
-    def _build_sigmoid(self, potentials, seed):
+    def _build_sigmoid(self, potentials, dim, seed):
         self.train_marginals = tf.placeholder(tf.float32, [None])
-        W = tf.Variable(tf.random_normal((2*self.dim, 1), stddev=SD, seed=seed))
+        W = tf.Variable(tf.random_normal((2 * dim, 1), stddev=SD, seed=seed))
         b = tf.Variable(0., dtype=tf.float32)
         h_dropout = tf.squeeze(tf.matmul(potentials, W)) + b
         # Noise-aware loss
@@ -137,10 +134,10 @@ class RNNBase(TFNoiseAwareModel):
         # Get prediction
         self.prediction_op = tf.nn.sigmoid(h_dropout)
 
-    def _build_softmax(self, potentials, seed):
+    def _build_softmax(self, potentials, dim, seed):
         self.train_marginals = tf.placeholder(tf.float32,
             [None, self.cardinality])
-        W = tf.Variable(tf.random_normal((2*self.dim, self.cardinality), 
+        W = tf.Variable(tf.random_normal((2 * dim, self.cardinality), 
             stddev=SD, seed=seed))
         b = tf.Variable(np.zeros(self.cardinality), dtype=tf.float32)
         h_dropout = tf.matmul(potentials, W) + b
@@ -168,17 +165,18 @@ class RNNBase(TFNoiseAwareModel):
         train.
         """
         # Text preprocessing
-        X_train, ends = self._preprocess_data(X_train, extend=True)
+        X_train, ends, word_dict = self._preprocess_data(X_train, extend=True)
         if X_dev is not None:
-            X_dev, _ = self._preprocess_data(X_dev, extend=False)
+            X_dev, _, _ = self._preprocess_data(X_dev, word_dict=word_dict, 
+                extend=False)
         
         # Get max sentence size
-        self.mx_len = max_sentence_length or max(len(x) for x in X_train)
-        self._check_max_sentence_length(ends)
-        self.n_v = self.word_dict.len()
+        max_len = max_sentence_length or max(len(x) for x in X_train)
+        self._check_max_sentence_length(ends, max_len=max_len)
         
         # Train model
-        super(RNNBase, self).train(X_train, Y_train, X_dev=X_dev, **kwargs)
+        super(RNNBase, self).train(X_train, Y_train, X_dev=X_dev,
+            word_dict=word_dict, max_len=max_len, **kwargs)
 
     def _marginals_preprocessed(self, test_data):
         """Get marginals from preprocessed data"""
@@ -193,6 +191,6 @@ class RNNBase(TFNoiseAwareModel):
         """Get likelihood of tagged sequences represented by test_candidates
             @test_candidates: list of lists representing test sentence
         """
-        test_data, ends = self._preprocess_data(test_candidates, extend=False)
+        X_test, ends, _ = self._preprocess_data(test_candidates, extend=False)
         self._check_max_sentence_length(ends)
-        return self._marginals_preprocessed(test_data)
+        return self._marginals_preprocessed(X_test)

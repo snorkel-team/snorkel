@@ -1,7 +1,7 @@
 import numpy as np
 
 from rnn_base import RNNBase
-from utils import candidate_to_tokens
+from utils import candidate_to_tokens, SymbolTable
 
 
 def tag(seq, labels):
@@ -25,7 +25,7 @@ class TagRNN(RNNBase):
     """TagRNN for sequence tagging"""
     OPEN, CLOSE = '~~[[~~', '~~]]~~'
 
-    def _preprocess_data(self, candidates, extend):
+    def _preprocess_data(self, candidates, extend, word_dict=SymbolTable()):
         """Convert candidate sentences to tagged symbol sequences
             @candidates: candidates to process
             @extend: extend symbol table for tokens (train), or lookup (test)?
@@ -40,7 +40,7 @@ class TagRNN(RNNBase):
             # Tag sequence
             s = tag(tokens, labels)
             # Either extend word table or retrieve from it
-            f = self.word_dict.get if extend else self.word_dict.lookup
+            f = word_dict.get if extend else word_dict.lookup
             data.append(np.array(map(f, s)))
             ends.append(c[0].get_word_end())
-        return data, ends
+        return data, ends, word_dict

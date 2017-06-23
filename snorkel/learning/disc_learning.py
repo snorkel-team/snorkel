@@ -6,7 +6,7 @@ from six.moves.cPickle import dump, load
 
 from sqlalchemy.sql import bindparam, select
 
-from .utils import MentionScorer, reshape_marginals
+from .utils import MentionScorer, reshape_marginals, LabelBalancer
 from ..annotations import save_marginals
 from ..models import Candidate
 

@@ -167,7 +167,8 @@ class TFNoiseAwareModel(NoiseAwareModel):
         verbose = print_freq > 0
 
         # Check that the cardinality of the training marginals and model agree
-        if Y_train.shape[1] != self.cardinality:
+        cardinality = Y_train.shape[1] if len(Y_train.shape) > 1 else 2
+        if cardinality != self.cardinality:
             raise ValueError("Training marginals cardinality ({0}) does not"
                 "match model cardinality ({1}).".format(Y_train.shape[1], 
                     self.cardinality))

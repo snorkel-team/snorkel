@@ -40,14 +40,69 @@ class NoiseAwareModel(object):
         based on predicted marginal probabilities.
         """
         if self.cardinality > 2:
-            return self.marginals(X).argmax(axis=0) + 1
+            return self.marginals(X).argmax(axis=1) + 1
         else:
             return np.array([1 if p > b else -1 if p < b else 0 
                 for p in self.marginals(X)])
 
-    def score(self, session, X_test, test_labels, gold_candidate_set=None, 
-        b=0.5, set_unlabeled_as_neg=True, display=True, scorer=MentionScorer,
-        **kwargs):
+    def score(self, X_test, Y_test, b=0.5, set_unlabeled_as_neg=True):
+        """
+        Returns the summary scores:
+            * For binary: precision, recall, F1 score
+            * For categorical: accuracy
+        @X_test: The input test candidates, as a list or annotation matrix
+        @Y_test: The input test labels, as a list or annotation matrix
+        @b: Decision boundary *for binary setting only*
+        @set_unlabeled_as_neg: Whether to map 0 labels -> -1, *binary setting.*
+
+        Note: Unlike in self.error_analysis, this method assumes X_test and
+        Y_test are properly collated!
+        """
+        predictions = self.predictions(X_test, b=b)
+
+        # Convert Y_test to dense numpy array
+        try:
+            Y_test = np.array(Y_test.todense()).reshape(-1)
+        except:
+            Y_test = np.array(Y_test)
+
+        # Compute accuracy for categorical, or P/R/F1 for binary settings
+        if self.cardinality > 2:
+            # Compute and return accuracy
+            correct = np.where([predictions == Y_test])[0].shape[0]
+            return correct / float(Y_test.shape[0])
+        else:
+            # Either remap or filter out unlabeled (0-valued) test labels
+            if set_unlabeled_as_neg:
+                Y_test[Y_test == 0] = -1
+            else:
+                predictions = predictions[Y_test != 0]
+                Y_test = Y_test[Y_test != 0]
+            
+            # Compute and return precision, recall, and F1 score
+            tp = (0.5 * (predictions * Y_test + 1))[predictions == 1].sum()
+            precision = tp / predictions[predictions == 1].sum()
+            recall = tp / Y_test[Y_test == 1].sum()
+            f1 = (2 * precision * recall) / (precision + recall)
+            return precision, recall, f1
+
+    def error_analysis(self, session, X_test, Y_test, 
+        gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True, display=True,
+        scorer=MentionScorer, **kwargs):
+        """
+        Prints full score analysis using the Scorer class, and then returns the
+        a tuple of sets conatining the test candidates bucketed for error 
+        analysis, i.e.:
+            * For binary: TP, FP, TN, FN
+            * For categorical: correct, incorrect
+        @X_test: The input test candidates, as a list or annotation matrix
+        @Y_test: The input test labels, as a list or annotation matrix
+        @gold_candidate_set: Full set of TPs in the test set
+        @b: Decision boundary *for binary setting only*
+        @set_unlabeled_as_neg: Whether to map 0 labels -> -1, *binary setting*
+        @display: Print score report
+        @scorer: The Scorer sub-class to use
+        """
         # Compute the marginals
         test_marginals = self.marginals(X_test, **kwargs)
 
@@ -57,7 +112,7 @@ class NoiseAwareModel(object):
         ] if not self.representation else X_test
 
         # Initialize and return scorer
-        s = scorer(test_candidates, test_labels, gold_candidate_set)          
+        s = scorer(test_candidates, Y_test, gold_candidate_set)          
         return s.score(test_marginals, train_marginals=None, b=b,
             display=display, set_unlabeled_as_neg=set_unlabeled_as_neg)
 
@@ -136,7 +191,7 @@ class TFNoiseAwareModel(NoiseAwareModel):
 
     def train(self, X_train, Y_train, n_epochs=25, lr=0.01, dropout=0.5, 
         batch_size=256, rebalance=False, X_dev=None, Y_dev=None, print_freq=5, 
-        scorer=MentionScorer, **model_kwargs):
+        **model_kwargs):
         """
         Generic training procedure for TF model
 
@@ -155,7 +210,6 @@ class TFNoiseAwareModel(NoiseAwareModel):
         @X_dev: Candidates for evaluation, same format as X_train
         @Y_dev: Labels for evaluation, same format as Y_train
         @print_freq: number of epochs at which to print status
-        @scorer: Scorer class to use for dev set evaluations (if provided)
         @model_kwargs: All hyperparameters that change how the graph is built 
             must be passed through here to be saved and reloaded to save /
             reload model (vs. other keyword args in train, which only affect how
@@ -188,9 +242,6 @@ class TFNoiseAwareModel(NoiseAwareModel):
         # Process the dev set if provided
         if X_dev is not None and Y_dev is not None:
             Y_dev = np.ravel(Y_dev) if self.cardinality == 2 else Y_dev
-            if not ((Y_dev >= 0).all() and (Y_dev <= 1).all()):
-                raise Exception("Y_dev elements should be in [0, 1]")
-            dev_scorer = scorer(X_dev, Y_dev)
         
         # Initialize variables
         with self.graph.as_default():
@@ -224,8 +275,8 @@ class TFNoiseAwareModel(NoiseAwareModel):
                 msg = "[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
                     self.name, t, time() - st, np.mean(epoch_losses))
                 if X_dev is not None:
-                    score, score_label = dev_scorer.summary_score(
-                        self._marginals_preprocessed(X_dev))
+                    score = self.score(X_dev, Y_dev)
+                    score_label = "Acc." if self.cardinality > 2 else "F1"
                     msg += '\tDev {0}={1:.2f}'.format(score_label, 100. * score)
                 print(msg)
         

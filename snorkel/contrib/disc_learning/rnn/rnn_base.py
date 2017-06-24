@@ -5,6 +5,7 @@ import tensorflow.contrib.rnn as rnn
 import warnings
 
 from snorkel.learning import LabelBalancer, TFNoiseAwareModel
+from snorkel.models import Candidate
 from utils import get_bi_rnn_output, SymbolTable
 from time import time
 
@@ -172,19 +173,22 @@ class RNNBase(TFNoiseAwareModel):
         super(RNNBase, self).train(X_train, Y_train, X_dev=X_dev,
             word_dict=word_dict, max_len=max_len, **kwargs)
 
-    def _marginals_preprocessed(self, test_data):
-        """Get marginals from preprocessed data"""
-        x, x_len = self._make_tensor(test_data)
+    def marginals(self, test_candidates):
+        """Get likelihood of tagged sequences represented by test_candidates
+            @test_candidates: list of lists representing test sentence
+        """
+        # Preprocess if not already preprocessed
+        if isinstance(test_candidates[0], Candidate):
+            X_test, ends, _ = self._preprocess_data(test_candidates, 
+                extend=False)
+            self._check_max_sentence_length(ends)
+        else:
+            X_test = test_candidates
+
+        # Make tensor and run prediction op
+        x, x_len = self._make_tensor(X_test)
         return self.session.run(self.prediction_op, {
             self.sentences:        x,
             self.sentence_lengths: x_len,
             self.keep_prob:        1.0,
         })
-
-    def marginals(self, test_candidates):
-        """Get likelihood of tagged sequences represented by test_candidates
-            @test_candidates: list of lists representing test sentence
-        """
-        X_test, ends, _ = self._preprocess_data(test_candidates, extend=False)
-        self._check_max_sentence_length(ends)
-        return self._marginals_preprocessed(X_test)

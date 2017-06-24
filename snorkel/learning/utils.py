@@ -438,9 +438,8 @@ class GridSearch(object):
     def search_space(self):
         return product(*[param.get_all_values() for param in self.params])
 
-    def fit(self, X_validation, validation_labels, gold_candidate_set=None,
-        b=0.5, set_unlabeled_as_neg=True, validation_kwargs={},
-        **model_hyperparams):
+    def fit(self, X_validation, validation_labels, b=0.5,
+        set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
@@ -449,7 +448,7 @@ class GridSearch(object):
         """
         # Iterate over the param values
         run_stats       = []
-        run_score_opt          = -1.0
+        run_score_opt   = -1.0
         base_model_name = self.model.name
         model_k         = 0
         for k, param_vals in enumerate(self.search_space()):
@@ -466,27 +465,19 @@ class GridSearch(object):
             print("=" * 60)
             # Train the model
             self.model.train(
-                self.X, self.training_marginals, **model_hyperparams
-            )
+                self.X, self.training_marginals, **model_hyperparams)
             # Test the model
-            error_sets = self.model.score(
-                self.session, X_validation, validation_labels,
-                gold_candidate_set, b, set_unlabeled_as_neg, False, self.scorer,
-                **validation_kwargs
-            )
+            run_scores = self.model.score(X_validation, validation_labels, b=b,
+                set_unlabeled_as_neg=set_unlabeled_as_neg)
             if self.model.cardinality > 2:
-                nc, ninc = map(len, error_sets)
-                acc = nc / float(nc + ninc)
-                run_scores = [acc]
-                run_score, run_score_label = acc, "Accuracy"
+                run_score, run_score_label = run_scores, "Accuracy"
+                run_scores = [run_score]
             else:
-                p, r, f1 = binary_scores_from_counts(*map(len, error_sets))
-                run_scores = [p, r, f1]
-                run_score, run_score_label = f1, "F1 Score"
+                run_score, run_score_label = run_scores[-1], "F1 Score"
             # Add scores to running stats, print, and set as optimal if best
             print("[{0}] {1}: {2}".format(self.model.name, run_score_label,
                 run_score))
-            run_stats.append(list(param_vals) + run_scores)
+            run_stats.append(list(param_vals) + list(run_scores))
             if run_score > run_score_opt:
                 self.model.save(model_name=model_name)
                 opt_model = model_name

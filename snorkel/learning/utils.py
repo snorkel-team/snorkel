@@ -478,7 +478,7 @@ class GridSearch(object):
             print("[{0}] {1}: {2}".format(self.model.name, run_score_label,
                 run_score))
             run_stats.append(list(param_vals) + list(run_scores))
-            if run_score > run_score_opt:
+            if run_score > run_score_opt or k == 0:
                 self.model.save(model_name=model_name)
                 opt_model = model_name
                 run_score_opt = run_score

@@ -32,7 +32,7 @@ class NoiseAwareModel(object):
         raise NotImplementedError()
 
     def save_marginals(self, session, X):
-        """Save the predicted marginal probabilitiess for the Candidates X."""
+        """Save the predicted marginal probabilities for the Candidates X."""
         save_marginals(session, X, self.marginals(X), training=False)
 
     def predictions(self, X, b=0.5):
@@ -320,38 +320,43 @@ class TFNoiseAwareModel(NoiseAwareModel):
         """Save current model."""
         model_name = model_name or self.name
 
-        # Create the save directory if does not exist
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
+        # Note: Model checkpoints need to be saved in separate directories!
+        model_dir = os.path.join(save_dir, model_name)
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
 
         # Create Saver
         with self.graph.as_default():
             saver = tf.train.Saver(tf.global_variables())
 
         # Save model kwargs needed to rebuild model
-        mk_path = os.path.join(save_dir, "{0}.model_kwargs".format(model_name))
-        with open(mk_path, 'wb') as f:
+        with open(os.path.join(model_dir, "model_kwargs.pkl"), 'wb') as f:
             dump(self.model_kwargs, f)
 
         # Save graph and report if verbose
-        saver.save(self.session, os.path.join(save_dir, model_name))
+        saver.save(self.session, os.path.join(model_dir, model_name))
         if verbose:
             print("[{0}] Model saved as <{1}>".format(self.name, model_name))
 
     def load(self, model_name, save_dir='checkpoints', verbose=True):
         """Load model from file and rebuild in new graph / session."""
+        model_dir = os.path.join(save_dir, model_name)
+
         # Load model kwargs needed to rebuild model
-        mk_path = os.path.join(save_dir, "{0}.model_kwargs".format(model_name))
-        with open(mk_path, 'rb') as f:
+        with open(os.path.join(model_dir, "model_kwargs.pkl"), 'rb') as f:
             model_kwargs = load(f)
         
         # Create new graph, build network, and start session
         self._build_new_graph_session(**model_kwargs)
 
+        # Initialize variables
+        with self.graph.as_default():
+            self.session.run(tf.global_variables_initializer())
+
         # Load saved checkpoint to populate trained parameters
         with self.graph.as_default():
             saver = tf.train.Saver(tf.global_variables())
-            ckpt = tf.train.get_checkpoint_state(save_dir)
+            ckpt = tf.train.get_checkpoint_state(model_dir)
         if ckpt and ckpt.model_checkpoint_path:
             saver.restore(self.session, ckpt.model_checkpoint_path)
             if verbose:

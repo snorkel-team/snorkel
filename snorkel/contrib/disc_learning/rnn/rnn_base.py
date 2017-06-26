@@ -46,15 +46,10 @@ class RNNBase(TFNoiseAwareModel):
             len_batch[j]    = t
         return x_batch, len_batch
 
-    def _build(self, dim=50, attn_window=None, cell_type=rnn.BasicLSTMCell, 
-        word_dict=SymbolTable(), max_len=20):
+    def _build_model(self, dim=50, attn_window=None, max_len=20,
+        cell_type=rnn.BasicLSTMCell, word_dict=SymbolTable(), **kwargs):
         """
-        Get feed forward step, loss function, and optimizer for RNN
-
-        Note: Parameters which affect how network is built and/or which are
-        needed at test time *must* be passed in here as keyword arguments, via 
-        the train method, to be saved / reloaded!
-
+        Build RNN model
         @dim: embedding dimension
         @attn_window: attention window length (no attention if 0 or None)
         @cell_type: subclass of tensorflow.python.ops.rnn_cell_impl._RNNCell
@@ -69,16 +64,17 @@ class RNNBase(TFNoiseAwareModel):
         # Define input layers
         self.sentences        = tf.placeholder(tf.int32, [None, None])
         self.sentence_lengths = tf.placeholder(tf.int32, [None])
-        self.keep_prob        = tf.placeholder(tf.float32)
-        self.lr               = tf.placeholder(tf.float32)
+
         # Seeds
         s = self.seed
         s1, s2, s3, s4 = [None] * 4 if s is None else [s+i for i in range(4)]
+
         # Embedding layer
         emb_var = tf.Variable(
             tf.random_normal((vocab_size - 1, dim), stddev=SD, seed=s1))
         embedding = tf.concat([tf.zeros([1, dim]), emb_var], axis=0)
-        inputs    = tf.nn.embedding_lookup(embedding, self.sentences)
+        inputs = tf.nn.embedding_lookup(embedding, self.sentences)
+        
         # Build RNN graph
         batch_size = tf.shape(self.sentences)[0]
         init = tf.contrib.layers.xavier_initializer(seed=s2)
@@ -104,51 +100,33 @@ class RNNBase(TFNoiseAwareModel):
                 initial_state_bw=initial_state_bw,
                 time_major=False               
             )
-        # Get potentials
         potentials = get_bi_rnn_output(rnn_out, dim, self.sentence_lengths)
         
-        # Compute activation
+        # Add dropout layer
+        self.keep_prob = tf.placeholder(tf.float32)
         potentials_dropout = tf.nn.dropout(potentials, self.keep_prob, seed=s3)
+
+        # Build activation layer
         if self.cardinality > 2:
-            self._build_softmax(potentials_dropout, dim, s4)
+            self.Y = tf.placeholder(tf.float32, [None, self.cardinality])
+            W = tf.Variable(tf.random_normal((2*dim, self.cardinality), 
+                stddev=SD, seed=s4))
+            b = tf.Variable(np.zeros(self.cardinality), dtype=tf.float32)
+            self.logits = tf.matmul(potentials, W) + b
+            self.marginals_op = tf.nn.softmax(self.logits)
         else:
-            self._build_sigmoid(potentials_dropout, dim, s4)
-
-        # Backprop trainer
-        self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss_op)
-
-    def _build_sigmoid(self, potentials, dim, seed):
-        self.train_marginals = tf.placeholder(tf.float32, [None])
-        W = tf.Variable(tf.random_normal((2 * dim, 1), stddev=SD, seed=seed))
-        b = tf.Variable(0., dtype=tf.float32)
-        h_dropout = tf.squeeze(tf.matmul(potentials, W)) + b
-        # Noise-aware loss
-        self.loss_op = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-            labels=self.train_marginals, logits=h_dropout
-        ))
-        # Get prediction
-        self.prediction_op = tf.nn.sigmoid(h_dropout)
-
-    def _build_softmax(self, potentials, dim, seed):
-        self.train_marginals = tf.placeholder(tf.float32,
-            [None, self.cardinality])
-        W = tf.Variable(tf.random_normal((2 * dim, self.cardinality), 
-            stddev=SD, seed=seed))
-        b = tf.Variable(np.zeros(self.cardinality), dtype=tf.float32)
-        h_dropout = tf.matmul(potentials, W) + b
-        # Noise-aware loss
-        self.loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-            labels=self.train_marginals, logits=h_dropout
-        ))
-        # Get prediction
-        self.prediction_op = tf.nn.softmax(h_dropout)
+            self.Y = tf.placeholder(tf.float32, [None])
+            W = tf.Variable(tf.random_normal((2*dim, 1), stddev=SD, seed=s4))
+            b = tf.Variable(0., dtype=tf.float32)
+            self.logits = tf.squeeze(tf.matmul(potentials, W)) + b
+            self.marginals_op = tf.nn.sigmoid(self.logits)
 
     def _construct_feed_dict(self, X_b, Y_b, lr=0.01, dropout=None, **kwargs):
         X_b, len_b = self._make_tensor(X_b)
         return {
             self.sentences:        X_b,
             self.sentence_lengths: len_b,
-            self.train_marginals:  Y_b,
+            self.Y:                Y_b,
             self.keep_prob:        dropout or 1.0,
             self.lr:               lr
         }
@@ -187,7 +165,7 @@ class RNNBase(TFNoiseAwareModel):
 
         # Make tensor and run prediction op
         x, x_len = self._make_tensor(X_test)
-        return self.session.run(self.prediction_op, {
+        return self.session.run(self.marginals_op, {
             self.sentences:        x,
             self.sentence_lengths: x_len,
             self.keep_prob:        1.0,

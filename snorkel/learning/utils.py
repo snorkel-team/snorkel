@@ -60,11 +60,15 @@ class LabelBalancer(object):
     def get_train_idxs(self, rebalance=False, split=0.5):
         """Get training indices based on @y
             @rebalance: bool or fraction of positive examples desired
-                        If True, fraction is 0.5. If False, no balancing.
+                        If True, default fraction is 0.5. If False no balancing.
             @split: Split point for positive and negative classes
         """
         pos, neg = self._get_pos(split), self._get_neg(split)
         if rebalance:
+            if len(pos) == 0:
+                raise ValueError("No positive labels.")
+            if len(neg) == 0:
+                raise ValueError("No negative labels.")
             p = 0.5 if rebalance == True else rebalance
             n_neg, n_pos = self._get_counts(len(neg), len(pos), p)
             pos = np.random.choice(pos, size=n_pos, replace=False)

@@ -166,7 +166,7 @@ class TFNoiseAwareModel(NoiseAwareModel):
         if self.cardinality == 2:
             train_idxs = LabelBalancer(Y_train).get_train_idxs(rebalance)
             X_train = [X_train[j] for j in train_idxs] if self.representation \
-                else X_train[train_idxs,]
+                else X_train[train_idxs, :]
             Y_train = np.ravel(Y_train)[train_idxs]
 
         # Create new graph, build network, and start session

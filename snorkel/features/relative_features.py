@@ -55,7 +55,6 @@ def get_binary_span_feats(sidxs, sentence, stopwords):
         # Apply TDL features
         for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs,
                                stopwords=stopwords):
-            print(f)
             yield 'TDL_' + f, 1
 
 

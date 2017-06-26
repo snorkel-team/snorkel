@@ -156,6 +156,11 @@ class TFNoiseAwareModel(NoiseAwareModel):
                     self.cardinality))
         # Make sure marginals are in correct default format
         Y_train = reshape_marginals(Y_train)
+        # Make sure marginals are in [0,1] (v.s e.g. [-1, 1])
+        if self.cardinality > 2 and not np.all(Y_train.sum(axis=1) - 1 < 1e-10):
+            raise ValueError("Y_train must be row-stochastic (rows sum to 1).")
+        if not np.all(Y_train >= 0):
+            raise ValueError("Y_train must have values in [0,1].")
 
         # Rebalance training set (only for binary setting currently)
         if self.cardinality == 2:

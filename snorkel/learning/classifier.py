@@ -6,6 +6,11 @@ from ..annotations import save_marginals
 class Classifier(object):
     """Simple abstract base class for a probabilistic classifier."""
 
+    # Set this class variable to True if train, marginals, predict, and score,
+    # take a list of @Candidates as the first argument X;
+    # otherwise assume X is an AnnotationMatrix
+    representation = False
+
     def marginals(self, X, **kwargs):
         raise NotImplementedError()
 

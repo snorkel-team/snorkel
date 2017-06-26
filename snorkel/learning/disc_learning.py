@@ -10,12 +10,6 @@ from .utils import reshape_marginals, LabelBalancer
 
 class NoiseAwareModel(Classifier):
     """Simple abstract base class for a model."""
-
-    # Set this class variable to True if train, marginals, predict, and score,
-    # take a list of @Candidates as the first argument X;
-    # otherwise assume X is an AnnotationMatrix
-    representation = False
-
     def __init__(self, cardinality=2, name=None, seed=None):
         self.name = name or self.__class__.__name__
         self.cardinality = cardinality

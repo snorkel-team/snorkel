@@ -64,8 +64,7 @@ class UDFRunner(object):
 
             # Apply UDF and add results to the session
             for y in udf.apply(x, **kwargs):
-                
-                # Uf UDF has a reduce step, this will take care of the insert; else add to session
+                # If UDF has a reduce step, this will take care of the insert; else add to session
                 if hasattr(self.udf_class, 'reduce'):
                     udf.reduce(y, **kwargs)
                 else:

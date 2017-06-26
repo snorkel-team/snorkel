@@ -1,4 +1,4 @@
-from __future__ import print_function 
+from __future__ import print_function
 import math
 import matplotlib
 matplotlib.use('Agg')

@@ -1,6 +1,5 @@
 import numpy as np
 import tensorflow as tf
-
 from snorkel.learning.disc_learning import TFNoiseAwareModel
 from scipy.sparse import csr_matrix, issparse
 from time import time
@@ -158,7 +157,7 @@ class LogisticRegression(TFNoiseAwareModel):
                 self.name, n, n_epochs, batch_size
             ))
         self.session.run(tf.global_variables_initializer())
-        for t in xrange(n_epochs):
+        for t in range(n_epochs):
             epoch_loss = 0.0
             for i in range(0, n, batch_size):
                 r = min(n-1, i+batch_size)
@@ -244,6 +243,7 @@ class SparseLogisticRegression(LogisticRegression):
         self.shape   = tf.placeholder(tf.int64, (2,))
         self.ids     = tf.placeholder(tf.int64)
         self.weights = tf.placeholder(tf.float32)
+
         sparse_ids   = tf.SparseTensor(self.indices, self.ids, self.shape)
         sparse_vals  = tf.SparseTensor(self.indices, self.weights, self.shape)
 
@@ -290,7 +290,7 @@ class SparseLogisticRegression(LogisticRegression):
                 continue
             # Update indices by position
             max_len = max(max_len, len(row))
-            indices.extend((i, t) for t in xrange(len(row)))
+            indices.extend((i, t) for t in range(len(row)))
             ids.extend(row)
             weights.extend(data)
         shape = (len(X_lil.rows), max_len)
@@ -303,7 +303,7 @@ class SparseLogisticRegression(LogisticRegression):
         y_batch = y_train[i:r]
         # Run training step and evaluate loss function
         if len(indices) == 0:
-            return 0.0, None, last_nnz   
+            return 0.0, None, last_nnz
         return self.session.run([self.loss, self.train_fn, self.nnz], {
             self.indices: indices,
             self.shape:   shape,

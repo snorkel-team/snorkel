@@ -55,6 +55,7 @@ def get_binary_span_feats(sidxs, sentence, stopwords):
         # Apply TDL features
         for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs,
                                stopwords=stopwords):
+            print(f)
             yield 'TDL_' + f, 1
 
 
@@ -64,6 +65,7 @@ def get_span_feats(candidate, stopwords=None):
     stopwords: @set of stopwords to filter out from dependency path
     """
     args = candidate.get_contexts()
+    #print(args)
     if not isinstance(args[0], Span):
         raise ValueError("Accepts Span-type arguments, %s-type found.")
     # Unary candidates

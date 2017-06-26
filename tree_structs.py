@@ -103,7 +103,7 @@ def scrub(s):
 def corenlp_to_xmltree_sub(s, dep_parents, rid=0):
   i = rid - 1
   attrib = {}
-  N = len(dep_parents)
+  N = len(list(dep_parents))
 
   # Add all attributes that have the same shape as dep_parents
   if i >= 0:

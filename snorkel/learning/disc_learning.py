@@ -209,6 +209,12 @@ class TFNoiseAwareModel(NoiseAwareModel):
                 epoch_loss, _ = self.session.run(
                     [self.loss, self.optimizer], feed_dict=feed_dict)
                 epoch_losses.append(epoch_loss)
+
+            # Reshuffle training data
+            train_idxs = range(n)
+            np.random.shuffle(train_idxs)
+            X_train = X_train[train_idxs]
+            Y_train = Y_train[train_idxs]
             
             # Print training stats
             if verbose and (t % print_freq == 0 or t in [0, (n_epochs-1)]):

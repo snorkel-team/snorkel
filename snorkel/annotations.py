@@ -441,7 +441,7 @@ def save_marginals(session, X, marginals, training=True):
     print "Saved %s marginals" % len(marginals)
 
 
-def load_marginals(session, split=0, training=True, X=None):
+def load_marginals(session, X=None, split=0, training=True):
     """Load the marginal probs. for a given split of Candidates"""
 
     # Load marginal tuples from db

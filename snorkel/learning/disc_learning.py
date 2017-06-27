@@ -109,7 +109,8 @@ class TFNoiseAwareModel(NoiseAwareModel):
         pass
 
     def train(self, X_train, Y_train, n_epochs=25, lr=0.01, batch_size=256, 
-        rebalance=False, X_dev=None, Y_dev=None, print_freq=5, **kwargs):
+        rebalance=False, X_dev=None, Y_dev=None, print_freq=5, dev_ckpt=True,
+        dev_ckpt_delay=0.6, save_dir='checkpoints', **kwargs):
         """
         Generic training procedure for TF model
 
@@ -126,7 +127,14 @@ class TFNoiseAwareModel(NoiseAwareModel):
                     - if False, no class balancing
         @X_dev: Candidates for evaluation, same format as X_train
         @Y_dev: Labels for evaluation, same format as Y_train
-        @print_freq: number of epochs at which to print status
+        @print_freq: number of epochs at which to print status, and if present,
+            evaluate the dev set (X_dev, Y_dev).
+        @dev_ckpt: If True, save a checkpoint whenever highest score
+            on (X_dev, Y_dev) reached. Note: currently only evaluates at
+            every @print_freq epochs.
+        @dev_ckpt_delay: Start dev checkpointing after this portion
+            of n_epochs.
+        @save_dir: Save dir path for checkpointing.
         @kwargs: All hyperparameters that change how the graph is built 
             must be passed through here to be saved and reloaded to save /
             reload model. *NOTE: If a parameter needed to build the 
@@ -156,8 +164,8 @@ class TFNoiseAwareModel(NoiseAwareModel):
         if not np.all(Y_train >= 0):
             raise ValueError("Y_train must have values in [0,1].")
 
-        # Remove unlabeled examples e.g. P(X=k) == 1 / cardinality for all k and
-        # rebalance training set
+        # Remove unlabeled examples (i.e. P(X=k) == 1 / cardinality for all k)
+        # and optionally rebalance training set
         # Note: rebalancing only for binary setting currently
         if self.cardinality == 2:
             # This removes unlabeled examples and optionally rebalances
@@ -196,6 +204,7 @@ class TFNoiseAwareModel(NoiseAwareModel):
             print("[{0}] n_train={1}  #epochs={2}  batch size={3}".format(
                 self.name, n, n_epochs, batch_size
             ))
+        dev_score_opt = 0.0
         for t in range(n_epochs):
             epoch_losses = []
             for i in range(0, n, batch_size):
@@ -213,10 +222,11 @@ class TFNoiseAwareModel(NoiseAwareModel):
             # Reshuffle training data
             train_idxs = range(n)
             np.random.shuffle(train_idxs)
-            X_train = X_train[train_idxs]
+            X_train = [X_train[j] for j in train_idxs] if self.representation \
+                else X_train[train_idxs, :]
             Y_train = Y_train[train_idxs]
             
-            # Print training stats
+            # Print training stats and optionally checkpoint model
             if verbose and (t % print_freq == 0 or t in [0, (n_epochs-1)]):
                 msg = "[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
                     self.name, t, time() - st, np.mean(epoch_losses))
@@ -226,12 +236,24 @@ class TFNoiseAwareModel(NoiseAwareModel):
                     score_label = "Acc." if self.cardinality > 2 else "F1"
                     msg += '\tDev {0}={1:.2f}'.format(score_label, 100. * score)
                 print(msg)
+                    
+                # If best score on dev set so far and dev checkpointing is
+                # active, save checkpoint
+                if X_dev is not None and dev_ckpt and \
+                    t > dev_ckpt_delay * n_epochs and score > dev_score_opt:
+                    dev_score_opt = score
+                    self.save(save_dir=save_dir, global_step=t)
         
         # Conclude training
         if verbose:
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))
 
-    def save(self, model_name=None, save_dir='checkpoints', verbose=True):
+        # If checkpointing on, load last checkpoint (i.e. best on dev set)
+        if dev_ckpt and X_dev is not None and verbose:
+            self.load(save_dir=save_dir)
+
+    def save(self, model_name=None, save_dir='checkpoints', verbose=True,
+        global_step=0):
         """Save current model."""
         model_name = model_name or self.name
 
@@ -249,12 +271,17 @@ class TFNoiseAwareModel(NoiseAwareModel):
             dump(self.model_kwargs, f)
 
         # Save graph and report if verbose
-        saver.save(self.session, os.path.join(model_dir, model_name))
+        saver.save(
+            self.session,
+            os.path.join(model_dir, model_name),
+            global_step=global_step
+        )
         if verbose:
             print("[{0}] Model saved as <{1}>".format(self.name, model_name))
 
-    def load(self, model_name, save_dir='checkpoints', verbose=True):
+    def load(self, model_name=None, save_dir='checkpoints', verbose=True):
         """Load model from file and rebuild in new graph / session."""
+        model_name = model_name or self.name
         model_dir = os.path.join(save_dir, model_name)
 
         # Load model kwargs needed to rebuild model

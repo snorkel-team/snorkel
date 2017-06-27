@@ -156,12 +156,19 @@ class TFNoiseAwareModel(NoiseAwareModel):
         if not np.all(Y_train >= 0):
             raise ValueError("Y_train must have values in [0,1].")
 
-        # Rebalance training set (only for binary setting currently)
+        # Remove unlabeled examples e.g. P(X=k) == 1 / cardinality for all k and
+        # rebalance training set
+        # Note: rebalancing only for binary setting currently
         if self.cardinality == 2:
+            # This removes unlabeled examples and optionally rebalances
             train_idxs = LabelBalancer(Y_train).get_train_idxs(rebalance)
-            X_train = [X_train[j] for j in train_idxs] if self.representation \
-                else X_train[train_idxs, :]
-            Y_train = np.ravel(Y_train)[train_idxs]
+        else:
+            # In categorical setting, just remove unlabeled
+            diffs = Y_train.max(axis=1) - Y_train.min(axis=1)
+            train_idxs = np.where(diffs > 1e-6)[0]
+        X_train = [X_train[j] for j in train_idxs] if self.representation \
+            else X_train[train_idxs, :]
+        Y_train = Y_train[train_idxs]
 
         # Create new graph, build network, and start session
         self._build_new_graph_session(**kwargs)

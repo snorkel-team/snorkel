@@ -1,4 +1,5 @@
 from .disc_learning import NoiseAwareModel
+from .classifier import Classifier
 from .utils import MentionScorer
 import numbskull
 from numbskull import NumbSkull
@@ -17,7 +18,7 @@ DEP_FIXING = 1
 DEP_REINFORCING = 2
 DEP_EXCLUSIVE = 3
 
-class GenerativeModel(object):
+class GenerativeModel(Classifier):
     """
     A generative model for data programming for binary classification.
 

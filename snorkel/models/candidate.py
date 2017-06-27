@@ -1,5 +1,6 @@
 from sqlalchemy import (
-    Column, String, Integer, Float, Boolean, ForeignKey, UniqueConstraint
+    Column, String, Integer, Float, Boolean, ForeignKey, UniqueConstraint,
+    MetaData
 )
 from sqlalchemy.orm import relationship, backref
 from functools import partial
@@ -25,6 +26,8 @@ class Candidate(SnorkelBase):
         'polymorphic_identity': 'candidate',
         'polymorphic_on': type
     }
+
+    # __table_args__ = {"extend_existing" : True}
 
     def get_contexts(self):
         """Get a tuple of the consituent contexts making up this candidate"""
@@ -85,20 +88,21 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
     if cardinality is None and values is None:
         values = [True, False]
         cardinality = 2
-    # If cardinality is specified but not values, fill in with ints
-    elif values is None:
-        values = range(cardinality)
-    elif cardinality is None:
+    
+    # Else use values if present, and validate proper input
+    elif values is not None:
+        if cardinality is not None and len(values) != cardinality:
+            raise ValueError("Number of values must match cardinality.")
+        if None in values:
+            raise ValueError("`None` is a protected value.")
+        if any([type(v) == int for v in values]):
+            raise ValueError("Values cannot be integers.")
         cardinality = len(values)
-    
-    # Check for invalid input for the values
-    if len(values) != cardinality:
-        raise ValueError("Number of values must match cardinality.")
-    if None in values:
-        raise ValueError("`None` is a protected value.")
-    if any([type(v) == int for v in values]):
-        raise ValueError("Values cannot be integers.")
-    
+
+    # If cardinality is specified but not values, fill in with ints
+    elif cardinality is not None:
+        values = range(cardinality)
+
     # Set the class attributes == the columns in the database
     class_attribs = {
 
@@ -120,7 +124,7 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
         '__mapper_args__' : {'polymorphic_identity': table_name},
 
         # Helper method to get argument names
-        '__argnames__' : args
+        '__argnames__' : args,
     }
         
     # Create named arguments, i.e. the entity mentions comprising the relation 
@@ -148,7 +152,11 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
         class_attribs[arg + '_cid'] = Column(String)
 
     # Add unique constraints to the arguments
-    class_attribs['__table_args__'] = (UniqueConstraint(*unique_args),)
+    class_attribs['__table_args__'] = (
+        UniqueConstraint(*unique_args),
+        # Note: This still doesn't fix issue...
+        {'keep_existing' : True}
+    )
 
     # Create class
     C = type(class_name, (Candidate,), class_attribs)

@@ -52,12 +52,3 @@ def get_bi_rnn_output(output, dim, lengths):
     index      = tf.range(0, batch_size) * max_length + (lengths - 1)
     flat       = tf.reshape(c_output, [-1, 2 * dim])
     return tf.gather(flat, index)
-
-def f1_score(marginals, labels, b=0.5):
-    tp = np.sum((marginals > b) * (labels > b))
-    fp = np.sum((marginals > b) * (labels <= b))
-    fn = np.sum((marginals <= b) * (labels > b))
-    p  = float(tp) / (tp + fp) if tp > 0 else 0.
-    r  = float(tp) / (tp + fn) if tp > 0 else 0.
-    f1 = 2 * p * r / (p + r) if tp > 0 else 0.
-    return f1, p, r

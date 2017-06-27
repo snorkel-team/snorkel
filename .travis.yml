@@ -69,23 +69,18 @@ script:
   - python test/learning/test_gen_learning.py
   - python test/learning/test_supervised.py
   - python test/learning/test_categorical.py
+  - runipy test/learning/test_TF_notebook.ipynb
 
   # Runs intro tutorial notebooks
   - cd tutorials
   - runipy intro/Intro_Tutorial_1.ipynb
   - runipy intro/Intro_Tutorial_2.ipynb
   - runipy intro/Intro_Tutorial_3.ipynb
-  - runipy intro/Intro_Tutorial_4.ipynb
-  - runipy intro/Intro_Tutorial_5.ipynb
 
   # Runs them some more. Tests running against an existing database.
   - runipy intro/Intro_Tutorial_1.ipynb
   - runipy intro/Intro_Tutorial_2.ipynb
   - runipy intro/Intro_Tutorial_3.ipynb
-  - runipy intro/Intro_Tutorial_4.ipynb
-  # We do notebook 4 twice to test rerunning in the middle of the workflow
-  - runipy intro/Intro_Tutorial_4.ipynb
-  - runipy intro/Intro_Tutorial_5.ipynb
 
   # Run Categorical notebook
   - rm intro/snorkel.db

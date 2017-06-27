@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sparse
 import warnings
+from itertools import product
 
 from pandas import DataFrame
 
@@ -11,8 +12,8 @@ matplotlib.use('Agg')
 warnings.filterwarnings("ignore", module="matplotlib")
 
 
-def get_cardinality(marginals):
-    """Returns cardinality and (potentially) re-shaped marginals as np array"""
+def reshape_marginals(marginals):
+    """Returns correctly shaped marginals as np array"""
     # Make sure training marginals are a numpy array first
     try:
         shape = marginals.shape
@@ -21,15 +22,11 @@ def get_cardinality(marginals):
         shape = marginals.shape
     
     # Set cardinality + marginals in proper format for binary v. categorical
-    if len(shape) == 1:
-        cardinality = 2
-    else:
-        cardinality = shape[1]
-
+    if len(shape) != 1:
         # If k = 2, make sure is M-dim array
-        if cardinality == 2:
+        if shape[1] == 2:
             marginals = marginals[:,1].reshape(-1)
-    return marginals, cardinality
+    return marginals
 
 
 class LabelBalancer(object):
@@ -63,11 +60,15 @@ class LabelBalancer(object):
     def get_train_idxs(self, rebalance=False, split=0.5):
         """Get training indices based on @y
             @rebalance: bool or fraction of positive examples desired
-                        If True, fraction is 0.5. If False, no balancing.
+                        If True, default fraction is 0.5. If False no balancing.
             @split: Split point for positive and negative classes
         """
         pos, neg = self._get_pos(split), self._get_neg(split)
         if rebalance:
+            if len(pos) == 0:
+                raise ValueError("No positive labels.")
+            if len(neg) == 0:
+                raise ValueError("No negative labels.")
             p = 0.5 if rebalance == True else rebalance
             n_neg, n_pos = self._get_counts(len(neg), len(pos), p)
             pos = np.random.choice(pos, size=n_pos, replace=False)
@@ -100,7 +101,7 @@ class Scorer(object):
             cardinality = marginals.shape[1]
         return cardinality
 
-    def score(self, test_marginals, **kwargs):
+    def score(self, test_marginals, display=True, **kwargs):
         cardinality = self._get_cardinality(test_marginals)
         if cardinality == 2:
             return self._score_binary(test_marginals, **kwargs)
@@ -114,6 +115,11 @@ class Scorer(object):
     def _score_categorical(self, test_marginals, train_marginals=None, 
         display=True):
         raise NotImplementedError()
+
+    def summary_score(self, test_marginals, **kwargs):
+        """Return the F1 score (for binary) or accuracy (for categorical)."""
+        raise NotImplementedError()
+
 
 
 class MentionScorer(Scorer):
@@ -232,11 +238,34 @@ class MentionScorer(Scorer):
                 print "Coverage:", (nc + ni) / (nc + ni + len(gold_missed))
         return correct, incorrect
 
+    def summary_score(self, test_marginals, **kwargs):
+        """
+        Return the F1 score (for binary) or accuracy (for categorical).
+        Also return the label as second argument.
+        """
+        error_sets = self.score(test_marginals, display=False, **kwargs)
+        if len(error_sets) == 4:
+            _, _, f1 = binary_scores_from_counts(*map(len, error_sets))
+            return f1, "F1 Score"
+        else:
+            nc, ninc = map(len, error_sets)
+            return nc / float(nc + ninc), "Accuracy"
+
+
+def binary_scores_from_counts(ntp, nfp, ntn, nfn):
+    """
+    Precision, recall, and F1 scores from counts of TP, FP, TN, FN.
+    Example usage:
+        p, r, f1 = binary_scores_from_counts(*map(len, error_sets))
+    """
+    prec = ntp / float(ntp + nfp) if ntp + nfp > 0 else 0.0
+    rec  = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
+    f1   = (2 * prec * rec) / (prec + rec) if prec + rec > 0 else 0.0
+    return prec, rec, f1
+
 
 def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
-    prec    = ntp / float(ntp + nfp) if ntp + nfp > 0 else 0.0
-    rec     = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
-    f1      = (2 * prec * rec) / (prec + rec) if prec + rec > 0 else 0.0
+    prec, rec, f1 = binary_scores_from_counts(ntp, nfp, ntn, nfn)
     pos_acc = ntp / float(ntp + nfn) if ntp + nfn > 0 else 0.0
     neg_acc = ntn / float(ntn + nfp) if ntn + nfp > 0 else 0.0
     print("========================================")
@@ -250,17 +279,6 @@ def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
     print("----------------------------------------")
     print("TP: {} | FP: {} | TN: {} | FN: {}".format(ntp, nfp, ntn, nfn))
     print("========================================\n")
-
-
-def marginals_to_labels(marginals, b=0.5):
-    return np.array([1 if p > b else -1 if p < b else 0 for p in marginals])
-
-
-def scores_from_counts(tp, fp, tn, fn):
-    prec = float(len(tp)) / (len(tp) + len(fp)) if len(tp) > 0 else 0
-    rec = float(len(tp)) / (len(tp) + len(fn)) if len(tp) > 0 else 0
-    f1 = 2.0 * (prec * rec) / (prec + rec) if (prec + rec) > 0 else 0
-    return prec, rec, f1
 
 
 def plot_prediction_probability(probs):
@@ -386,9 +404,9 @@ class RangeParameter(Hyperparameter):
     If log_base is specified, scale the search range in the log base
     step is range step size or exponent step size
     """
-    def __init__(self, name, min_value, max_value, step=1, log_base=None):
-        self.min_value = min_value
-        self.max_value = max_value
+    def __init__(self, name, v1, v2, step=1, log_base=None):
+        self.min_value = min(v1, v2)
+        self.max_value = max(v1, v2)
         self.step = step
         self.log_base = log_base
         super(RangeParameter, self).__init__(name)
@@ -422,11 +440,10 @@ class GridSearch(object):
         self.scorer             = scorer
         
     def search_space(self):
-        return product(param.get_all_values() for param in self.params)
+        return product(*[param.get_all_values() for param in self.params])
 
-    def fit(self, X_validation, validation_labels, gold_candidate_set=None,
-        b=0.5, set_unlabeled_as_neg=True, validation_kwargs={},
-        **model_hyperparams):
+    def fit(self, X_validation, validation_labels, b=0.5,
+        set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
@@ -435,7 +452,7 @@ class GridSearch(object):
         """
         # Iterate over the param values
         run_stats       = []
-        f1_opt          = -1.0
+        run_score_opt   = -1.0
         base_model_name = self.model.name
         model_k         = 0
         for k, param_vals in enumerate(self.search_space()):
@@ -452,26 +469,32 @@ class GridSearch(object):
             print("=" * 60)
             # Train the model
             self.model.train(
-                self.X, self.training_marginals, **model_hyperparams
-            )
+                self.X, self.training_marginals, **model_hyperparams)
             # Test the model
-            tp, fp, tn, fn = self.model.score(
-                self.session, X_validation, validation_labels,
-                gold_candidate_set, b, set_unlabeled_as_neg, False, self.scorer,
-                **validation_kwargs
-            )
-            p, r, f1 = scores_from_counts(tp, fp, tn, fn)
-            run_stats.append(list(param_vals) + [p, r, f1])
-            if f1 > f1_opt:
-                self.model.save(model_name)
+            run_scores = self.model.score(X_validation, validation_labels, b=b,
+                set_unlabeled_as_neg=set_unlabeled_as_neg)
+            if self.model.cardinality > 2:
+                run_score, run_score_label = run_scores, "Accuracy"
+                run_scores = [run_score]
+            else:
+                run_score, run_score_label = run_scores[-1], "F1 Score"
+            # Add scores to running stats, print, and set as optimal if best
+            print("[{0}] {1}: {2}".format(self.model.name, run_score_label,
+                run_score))
+            run_stats.append(list(param_vals) + list(run_scores))
+            if run_score > run_score_opt or k == 0:
+                self.model.save(model_name=model_name)
                 opt_model = model_name
-                f1_opt    = f1
+                run_score_opt = run_score
         # Set optimal parameter in the learner model
         self.model.load(opt_model)
         # Return DataFrame of scores
+        run_score_labels = ['Acc.'] if self.model.cardinality > 2 else \
+            ['Prec.', 'Rec.', 'F1']
+        sort_by = 'Acc.' if self.model.cardinality > 2 else 'F1'
         self.results = DataFrame.from_records(
-            run_stats, columns=self.param_names + ['Prec.', 'Rec.', 'F1']
-        ).sort_values(by='F1', ascending=False)
+            run_stats, columns=self.param_names + run_score_labels
+        ).sort_values(by=sort_by, ascending=False)
         return self.results
     
     

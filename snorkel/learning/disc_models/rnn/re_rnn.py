@@ -1,7 +1,7 @@
 import numpy as np
 
 from rnn_base import RNNBase
-from utils import candidate_to_tokens
+from utils import candidate_to_tokens, SymbolTable
 
 
 def mark(l, h, idx):
@@ -29,14 +29,8 @@ def mark_sentence(s, args):
 
 
 class reRNN(RNNBase):
-
-    def __init__(self, save_file=None, name='reRNN', seed=None, n_threads=4):
-        """reRNN for relation extraction"""
-        super(reRNN, self).__init__(
-            n_threads=n_threads, save_file=save_file, name=name, seed=seed
-        )
-
-    def _preprocess_data(self, candidates, extend):
+    """reRNN for relation extraction"""
+    def _preprocess_data(self, candidates, extend, word_dict=SymbolTable()):
         """Convert candidate sentences to lookup sequences
             @candidates: candidates to process
             @extend: extend symbol table for tokens (train), or lookup (test)?
@@ -50,7 +44,7 @@ class reRNN(RNNBase):
             ]
             s = mark_sentence(candidate_to_tokens(candidate), args)
             # Either extend word table or retrieve from it
-            f = self.word_dict.get if extend else self.word_dict.lookup
+            f = word_dict.get if extend else word_dict.lookup
             data.append(np.array(map(f, s)))
             ends.append(max(candidate[i].get_word_end() for i in [0, 1]))
-        return data, ends
+        return data, ends, word_dict

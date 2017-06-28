@@ -55,6 +55,29 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         """Return the cow index of the AnnotationKey"""
         return self.key_index[key.id]
 
+    def _get_sliced_indexes(self, s, axis, index):
+        idxs = np.arange(self.shape[axis])[s]
+        index_new, inv_index_new = {}, {}
+        for i, k in index.iteritems():
+            if i in idxs:
+                i_new = np.where(idxs == i)[0][0]
+                index_new[i_new] = k
+                inv_index_new[k] = i_new
+        return index_new, inv_index_new
+
+    def _get_submatrix(self, row_slice, col_slice):
+        # Get the slice of the matrix
+        X = super(csr_AnnotationMatrix, self)._get_submatrix(row_slice, 
+            col_slice)
+        X.annotation_key_cls = self.annotation_key_cls
+
+        # Remap the row and column indexes
+        X.row_index, X.candidate_index = self._get_sliced_indexes(
+            row_slice, 0, self.row_index)
+        X.col_index, X.key_index = self._get_sliced_indexes(
+            col_slice, 1, self.col_index)
+        return X
+
     def stats(self):
         """Return summary stats about the annotations"""
         raise NotImplementedError()

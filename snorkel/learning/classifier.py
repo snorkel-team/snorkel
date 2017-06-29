@@ -64,9 +64,11 @@ class Classifier(object):
             
             # Compute and return precision, recall, and F1 score
             tp = (0.5 * (predictions * Y_test + 1))[predictions == 1].sum()
-            precision = tp / predictions[predictions == 1].sum()
-            recall = tp / Y_test[Y_test == 1].sum()
-            f1 = (2 * precision * recall) / (precision + recall)
+            pred_pos = predictions[predictions == 1].sum()
+            prec = tp / float(pred_pos) if pred_pos > 0 else 0.0
+            pos = Y_test[Y_test == 1].sum()
+            rec = tp / float(pos) if pos > 0 else 0.0
+            f1 = (2 * prec * rec) / (prec + rec) if prec + rec > 0 else 0.0
             return precision, recall, f1
 
     def error_analysis(self, session, X_test, Y_test, 

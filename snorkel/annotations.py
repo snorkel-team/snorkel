@@ -128,7 +128,8 @@ class Annotator(UDFRunner):
             count=cids_count, **kwargs)
 
         # Load the matrix
-        return self.load_matrix(session, split=split, key_group=key_group)
+        return self.load_matrix(session, split=split, cids_query=cids_query, 
+            key_group=key_group)
 
     def clear(self, session, split=0, key_group=0, replace_key_set=True,
         cids_query=None, **kwargs):
@@ -158,7 +159,8 @@ class Annotator(UDFRunner):
         return self.apply(split=split, key_group=key_group,
             replace_key_set=False, cids_query=cids_query, **kwargs)
 
-    def load_matrix(self, session, split, key_group=0, **kwargs):
+    def load_matrix(self, session, split=0, key_group=0, cids_query=None, 
+        **kwargs):
         raise NotImplementedError()
 
 
@@ -263,13 +265,14 @@ class AnnotatorUDF(UDF):
 
 
 def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
-    split=0, key_group=0, key_names=None, zero_one=False, load_as_array=False):
+    split=0, cids_query=None, key_group=0, key_names=None, zero_one=False,
+    load_as_array=False):
     """
     Returns the annotations corresponding to a split of candidates with N members
     and an AnnotationKey group with M distinct keys as an N x M CSR sparse matrix.
     """
-    cid_query = session.query(Candidate.id)
-    cid_query = cid_query.filter(Candidate.split == split)
+    cid_query = cids_query or session.query(Candidate.id)\
+                                     .filter(Candidate.split == split)
     cid_query = cid_query.order_by(Candidate.id)
 
     keys_query = session.query(annotation_key_class.id)
@@ -375,8 +378,8 @@ class LabelAnnotator(Annotator):
         
         super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen)
 
-    def load_matrix(self, session, split, **kwargs):
-        return load_label_matrix(session, split=split, **kwargs)
+    def load_matrix(self, session, **kwargs):
+        return load_label_matrix(session, **kwargs)
 
         
 class FeatureAnnotator(Annotator):
@@ -384,8 +387,8 @@ class FeatureAnnotator(Annotator):
     def __init__(self, f=get_span_feats):
         super(FeatureAnnotator, self).__init__(Feature, FeatureKey, f)
 
-    def load_matrix(self, session, split, key_group=0, **kwargs):
-        return load_feature_matrix(session, split=split, key_group=key_group, **kwargs)
+    def load_matrix(self, session, **kwargs):
+        return load_feature_matrix(session, **kwargs)
 
 
 def save_marginals(session, X, marginals, training=True):

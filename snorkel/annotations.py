@@ -89,7 +89,8 @@ class csr_LabelMatrix(csr_AnnotationMatrix):
 
         if est_accs is not None:
             col_names.append('Learned Acc.')
-            d['Learned Acc.'] = Series(data=est_accs, index=lf_names)
+            d['Learned Acc.'] = est_accs
+            d['Learned Acc.'].index = lf_names
         return DataFrame(data=d, index=lf_names)[col_names]
 
 

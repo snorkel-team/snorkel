@@ -69,7 +69,7 @@ class Classifier(object):
             pos = Y_test[Y_test == 1].sum()
             rec = tp / float(pos) if pos > 0 else 0.0
             f1 = (2 * prec * rec) / (prec + rec) if prec + rec > 0 else 0.0
-            return precision, recall, f1
+            return prec, rec, f1
 
     def error_analysis(self, session, X_test, Y_test, 
         gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True, display=True,

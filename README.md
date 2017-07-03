@@ -45,7 +45,7 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 * _Learning the Structure of Generative Models without Labeled Data_, ([preprint](https://arxiv.org/abs/1703.00854))
 * _Fonduer: Knowledge Base Construction from Richly Formatted Data_, ([preprint](https://arxiv.org/abs/1703.05028), [blog](https://hazyresearch.github.io/snorkel/blog/fonduer.html))
 
-## Installation / dependencies
+## Installation
 
 Snorkel uses Python 2.7 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
 
@@ -60,7 +60,7 @@ And then run the correct environment:
 source activate py2Env
 ```
 
-### Installing packages
+### Installing dependencies
 First install [NUMBA](https://numba.pydata.org/), a package for high-performance numeric computing in Python via Conda:
 ```bash
 conda install numba

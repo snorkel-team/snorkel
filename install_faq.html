@@ -1,0 +1,27 @@
+<h1>Snorkel Installation FAQ</h1>
+
+<h2>How do I ensure that I'm using the correct version of <code>llvmlite</code>?</h2>
+
+If installing NUMBA manually, you may just need to make sure the right version of <code>llvmlite</code> and LLVM is installed and used; for example on Ubuntu, run:
+
+<pre><code>apt-get install llvm-3.8
+LLVM_CONFIG=/usr/bin/llvm-config-3.8 pip install llvmlite
+LLVM_CONFIG=/usr/bin/llvm-config-3.8 pip install numba</code></pre>
+
+and on Mac OSX, one option is to use homebrew as follows:
+
+<pre><code>brew install llvm38 --with-rtti
+LLVM_CONFIG=/usr/local/Cellar/llvm\@3.8/3.8.1/bin/llvm-config-3.8 pip install llvmlite
+LLVM_CONFIG=/usr/local/Cellar/llvm\@3.8/3.8.1/bin/llvm-config-3.8 pip install numba</code></pre>
+
+Finally, once <code>numba</code> is installed, re-run the <code>numbskull</code> install from the <code>python-package-requirement.txt</code> script:
+
+<pre><code>pip install git+https://github.com/HazyResearch/numbskull@master</code></pre>
+
+<h2>How do I skip failed packages during installation?</h2>
+
+If a package installation fails, then all of the packages below it in <code>python-package-requirement.txt</code> will fail to install as well. This can be avoided by running the following command instead of the above:
+<code><pre>cat python-package-requirement.txt | xargs -n 1 pip install</code></pre>
+
+Note that you may have to run <code>pip2</code> if you have Python3 installed on your system, and that <code>sudo</code> can be prepended to install dependencies system wide if this is an option and the above does not work.
+For some pointers on difficulties in using <code>source</code> in shell, see <a href="https://github.com/HazyResearch/snorkel/issues/506">Issue 506</a>.

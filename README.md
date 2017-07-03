@@ -47,16 +47,29 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 
 ## Installation / dependencies
 
-Snorkel uses Python 2.7 and requires [a few python packages](python-package-requirement.txt) which can be installed using `pip`:
+Snorkel uses Python 2.7 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
+
+### Setting Up Conda
+Installation is easiest if you download and install [`conda`](https://www.continuum.io/downloads).
+If you are running multiple version of Python, you might need to run:
+```
+conda create -n py2Env python=2.7 anaconda
+```
+And then run the correct environment:
+```
+source activate py2Env
+```
+
+### Installing packages
+First install [NUMBA](https://numba.pydata.org/), a package for high-performance numeric computing in Python via Conda:
+```bash
+conda install numba
+```
+
+Then install the remaining package requirements:
 ```bash
 pip install --requirement python-package-requirement.txt
 ```
-If a package installation fails, then all of the packages below it in `python-package-requirement.txt` will fail to install as well. This can be avoided by running the following command instead of the above:
-```bash
-cat python-package-requirement.txt | xargs -n 1 pip install
-```
-Note that you may have to run `pip2` if you have Python3 installed on your system, and that `sudo` can be prepended to install dependencies system wide if this is an option and the above does not work.
-For some pointers on difficulties in using `source` in shell, see [Issue 506](https://github.com/HazyResearch/snorkel/issues/506).
 
 Finally, enable `ipywidgets`:
 ```bash
@@ -67,36 +80,11 @@ _Note: Currently the `Viewer` is supported on the following versions:_
 * `jupyter`: 4.1
 * `jupyter notebook`: 4.2
 
-By default (e.g. in the tutorials, etc.) we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
+In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
 
-### Working with Conda
-One great option, which can make installation and use easier, is to use [`conda`](https://www.continuum.io/downloads).
-If you are running multiple version of Python, you might need to run:
-```
-conda create -n py2Env python=2.7 anaconda
-```
-And then run the correct environment:
-```
-source activate py2Env
-```
+### Installing without Conda
+See [this FAQ](https://hazyresearch.github.io/snorkel/install_faq.html) for help with common questions that arise.
 
-### Installing Numbskull + NUMBA
-Snorkel currently relies on [`numbskull`](https://github.com/HazyResearch/numbskull) and `numba`, which occasionally requires a bit more work to install! One option is to use [`conda`](https://www.continuum.io/downloads) as above. If installing manually, you may just need to make sure the right version of `llvmlite` and LLVM is installed and used; for example on Ubuntu, run:
-```bash
-apt-get install llvm-3.8
-LLVM_CONFIG=/usr/bin/llvm-config-3.8 pip install llvmlite
-LLVM_CONFIG=/usr/bin/llvm-config-3.8 pip install numba
-```
-and on Mac OSX, one option is to use homebrew as follows:
-```
-brew install llvm38 --with-rtti
-LLVM_CONFIG=/usr/local/Cellar/llvm\@3.8/3.8.1/bin/llvm-config-3.8 pip install llvmlite
-LLVM_CONFIG=/usr/local/Cellar/llvm\@3.8/3.8.1/bin/llvm-config-3.8 pip install numba
-```
-Finally, once `numba` is installed, re-run the `numbskull` install from the `python-package-requirement.txt` script:
-```
-pip install git+https://github.com/HazyResearch/numbskull@dev
-```
 ### Using virtualenv
 Alternatively, `virtualenv` can be used by starting with:
 ```bash
@@ -107,7 +95,7 @@ If you have issues using Jupyter notebooks with virualenv, see [this tutorial](h
 
 
 ## Running
-After installing (see below), just run:
+After installing, just run:
 ```
 ./run.sh
 ```

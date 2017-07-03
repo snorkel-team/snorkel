@@ -3,6 +3,7 @@ import os
 import sys
 import json
 import signal
+import socket
 import warnings
 
 from subprocess import Popen, PIPE
@@ -199,12 +200,22 @@ class StanfordCoreNLPServer(Parser):
         :return:
         '''
         if len(text.strip()) == 0:
-            print(u"Warning, empty document {0} passed to CoreNLP".format(document.name if document else "?"), file=sys.stderr)
+            print >> sys.stderr, "Warning, empty document {0} passed to CoreNLP".format(
+                document.name if document else "?")
             return
 
-        text = text.encode('utf-8', 'error')
-        resp = conn.post(self.endpoint, data=text, allow_redirects=True)
-        content = resp.content.strip().decode('utf-8')
+        # handle encoding (force to unicode)
+        if isinstance(text, unicode):
+            text = text.encode('utf-8', 'error')
+
+        # POST request to CoreNLP Server
+        try:
+            content = conn.post(self.endpoint, text)
+            content = content.decode(self.encoding)
+
+        except socket.error, e:
+            print >> sys.stderr, "Socket error"
+            raise ValueError("Socket Error")
 
         # check for parsing error messages
         StanfordCoreNLPServer.validate_response(content)
@@ -212,7 +223,7 @@ class StanfordCoreNLPServer(Parser):
         try:
             blocks = json.loads(content, strict=False)['sentences']
         except:
-            warnings.warn(u"CoreNLP skipped a malformed sentence.", RuntimeWarning)
+            warnings.warn("CoreNLP skipped a malformed document.", RuntimeWarning)
             return
 
         position = 0

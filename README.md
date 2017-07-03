@@ -82,17 +82,8 @@ _Note: Currently the `Viewer` is supported on the following versions:_
 
 In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
 
-### Installing without Conda
-See [this FAQ](https://hazyresearch.github.io/snorkel/install_faq.html) for help with common questions that arise.
-
-### Using virtualenv
-Alternatively, `virtualenv` can be used by starting with:
-```bash
-virtualenv -p python2.7 .virtualenv
-source .virtualenv/bin/activate
-```
-If you have issues using Jupyter notebooks with virualenv, see [this tutorial](http://help.pythonanywhere.com/pages/IPythonNotebookVirtualenvs)
-
+### Frequently Asked Questions
+See [this FAQ](https://hazyresearch.github.io/snorkel/install_faq) for help with common questions that arise.
 
 ## Running
 After installing, just run:

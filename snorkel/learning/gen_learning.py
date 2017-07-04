@@ -12,6 +12,7 @@ from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, t
 from copy import copy
 from pandas import DataFrame, Series
 from distutils.version import StrictVersion
+from six.moves.cPickle import dump, load
 
 DEP_SIMILAR = 0
 DEP_FIXING = 1
@@ -798,6 +799,24 @@ class GenerativeModel(Classifier):
             setattr(weights, dep_name, weight_mat.tocsr(copy=True))
 
         self.weights = weights
+
+    def save(self, model_name=None, save_dir='checkpoints', verbose=True):
+        """Save current model."""
+        model_name = model_name or self.name
+        save_path = os.path.join(save_dir, "{0}.weights.pkl".format(model_name))
+        with open(save_path, 'wb') as f:
+            dump(self.weights, f)
+        if verbose:
+            print("[{0}] Model saved as <{1}>.".format(self.name, model_name))
+
+    def load(self, model_name=None, save_dir='checkpoints', verbose=True):
+        """Load model."""
+        model_name = model_name or self.name
+        save_path = os.path.join(save_dir, "{0}.weights.pkl".format(model_name))
+        with open(save_path, 'rb') as f:
+            self.weights = load(self.weights, f)
+        if verbose:
+            print("[{0}] Model <{1}> loaded.".format(self.name, model_name))
 
 
 class GenerativeModelWeights(object):

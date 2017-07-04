@@ -429,15 +429,14 @@ class GridSearch(object):
     Selects based on maximizing F1 score on a supplied validation set
     Specify search space with Hyperparameter arguments
     """
-    def __init__(self, session, model, X, training_marginals,
-        parameters, scorer=MentionScorer):
+    def __init__(self, session, model, X, training_marginals=None,
+        parameters=[]):
         self.session            = session
         self.model              = model
         self.X                  = X
         self.training_marginals = training_marginals
         self.params             = parameters
         self.param_names        = [param.name for param in parameters]
-        self.scorer             = scorer
         
     def search_space(self):
         return product(*[param.get_all_values() for param in self.params])
@@ -468,8 +467,11 @@ class GridSearch(object):
             ])))
             print("=" * 60)
             # Train the model
-            self.model.train(
-                self.X, self.training_marginals, **model_hyperparams)
+            if self.training_marginals is not None:
+                self.model.train(
+                    self.X, self.training_marginals, **model_hyperparams)
+            else:
+                self.model.train(self.X, **model_hyperparams)
             # Test the model
             run_scores = self.model.score(X_validation, validation_labels, b=b,
                 set_unlabeled_as_neg=set_unlabeled_as_neg)

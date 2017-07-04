@@ -8,19 +8,7 @@ from .classifier import Classifier
 from .utils import reshape_marginals, LabelBalancer
 
 
-class NoiseAwareModel(Classifier):
-    """Simple abstract base class for a model."""
-    def __init__(self, cardinality=2, name=None, seed=None):
-        self.name = name or self.__class__.__name__
-        self.cardinality = cardinality
-        self.seed = seed
-
-    def train(self, X, training_marginals, **training_kwargs):
-        """Trains the model using probabilistic labels (training marginals)."""
-        raise NotImplementedError()
-
-
-class TFNoiseAwareModel(NoiseAwareModel):
+class TFNoiseAwareModel(Classifier):
     """
     Generic NoiseAwareModel class for TensorFlow models.
     Note that the actual network is built when train is called (to allow for

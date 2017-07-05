@@ -40,9 +40,9 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 ### References
 * _Data Programming: Creating Large Training Sets, Quickly_ ([NIPS 2016](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly), [blog](https://hazyresearch.github.io/snorkel/blog/weak_supervision.html))
 * _Snorkel: Fast Training Set Generation for Information Extraction_ ([SIGMOD Demo 2017](http://hazyresearch.github.io/snorkel/pdfs/snorkel_demo.pdf))
-* _Data Programming with DDLite: Putting Humans in a Different Part of the Loop_ ([HILDA @ SIGMOD 2016](http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf))
 * _Learning the Structure of Generative Models without Labeled Data_ ([ICML 2017](https://arxiv.org/abs/1703.00854), [blog](https://hazyresearch.github.io/snorkel/blog/structure_learning.html))
-* _Fonduer: Knowledge Base Construction from Richly Formatted Data_, ([preprint](https://arxiv.org/abs/1703.05028), [blog](https://hazyresearch.github.io/snorkel/blog/fonduer.html))
+* _Data Programming with DDLite: Putting Humans in a Different Part of the Loop_ ([HILDA @ SIGMOD 2016](http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf))
+* _Fonduer: Knowledge Base Construction from Richly Formatted Data_, ([ArXiv](https://arxiv.org/abs/1703.05028), [blog](https://hazyresearch.github.io/snorkel/blog/fonduer.html))
 
 ## Installation
 

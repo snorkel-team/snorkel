@@ -10,6 +10,7 @@ downloads/
 *.model_kwargs
 **/checkpoint
 **/checkpoints/
+__pycache__
 
 # Sphinx
 docs/_build

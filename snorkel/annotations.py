@@ -36,7 +36,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         self.col_index          = kwargs.pop('col_index', None)
 
         # Note that scipy relies on the first three letters of the class to define matrix type...
-        super(csr_AnnotationMatrix, self).__init__(arg1, **kwargs)
+        super().__init__(arg1, **kwargs)
 
     def get_candidate(self, session, i):
         """Return the Candidate object corresponding to row i"""
@@ -71,7 +71,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
 
     def _get_submatrix(self, row_slice, col_slice):
         # Get the slice of the matrix
-        X = super(csr_AnnotationMatrix, self)._get_submatrix(row_slice,
+        X = super()._get_submatrix(row_slice,
             col_slice)
         X.annotation_key_cls = self.annotation_key_cls
 
@@ -126,7 +126,7 @@ class Annotator(UDFRunner):
     def __init__(self, annotation_class, annotation_key_class, f_gen):
         self.annotation_class     = annotation_class
         self.annotation_key_class = annotation_key_class
-        super(Annotator, self).__init__(AnnotatorUDF,
+        super().__init__(AnnotatorUDF,
                                         annotation_class=annotation_class,
                                         annotation_key_class=annotation_key_class,
                                         f_gen=f_gen)
@@ -149,7 +149,7 @@ class Annotator(UDFRunner):
         cids_count = len(cids)
 
         # Run the Annotator
-        super(Annotator, self).apply(cids, split=split, key_group=key_group, replace_key_set=replace_key_set, count=cids_count, **kwargs)
+        super().apply(cids, split=split, key_group=key_group, replace_key_set=replace_key_set, count=cids_count, **kwargs)
 
         # Load the matrix
         return self.load_matrix(session, split=split, key_group=key_group)
@@ -197,7 +197,7 @@ class AnnotatorUDF(UDF):
         # For caching key ids during the reduce step
         self.key_cache = {}
 
-        super(AnnotatorUDF, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def apply(self, cid, **kwargs):
         """
@@ -393,7 +393,7 @@ class LabelAnnotator(Annotator):
                         Unable to parse label with value %s
                         for candidate with values %s""" % (label, c.values))
 
-        super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen)
+        super().__init__(Label, LabelKey, f_gen)
 
     def load_matrix(self, session, split, **kwargs):
         return load_label_matrix(session, split=split, **kwargs)
@@ -402,7 +402,7 @@ class LabelAnnotator(Annotator):
 class FeatureAnnotator(Annotator):
     """Apply feature generators to the candidates, generating Feature annotations"""
     def __init__(self, f=get_span_feats):
-        super(FeatureAnnotator, self).__init__(Feature, FeatureKey, f)
+        super().__init__(Feature, FeatureKey, f)
 
     def load_matrix(self, session, split, key_group=0, **kwargs):
         return load_feature_matrix(session, split=split, key_group=key_group, **kwargs)

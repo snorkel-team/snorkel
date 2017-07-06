@@ -83,8 +83,7 @@ script:
   - runipy intro/Intro_Tutorial_3.ipynb
 
   # Run Categorical notebook
-  - rm intro/snorkel.db
-  - runipy intro/Intro_Tutorial_Categorical.ipynb
+  - runipy advanced/Categorical_Classes.ipynb
 
   # Run CDR tutorials
   - runipy cdr/CDR_Tutorial_1.ipynb

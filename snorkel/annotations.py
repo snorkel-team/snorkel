@@ -62,7 +62,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         else:
             idxs = np.array([s])
         index_new, inv_index_new = {}, {}
-        for i, k in index.iteritems():
+        for i, k in index.items():
             if i in idxs:
                 i_new = np.where(idxs == i)[0][0]
                 index_new[i_new] = k

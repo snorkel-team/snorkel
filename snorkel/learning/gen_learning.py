@@ -442,7 +442,7 @@ class GenerativeModel(object):
               display=True, scorer=MentionScorer, **kwargs):
 
         # Get the test candidates
-        test_candidates = [X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])]
+        test_candidates = [X_test.get_candidate(session, i) for i in range(X_test.shape[0])]
 
         # Initialize scorer
         s               = scorer(test_candidates, test_labels, gold_candidate_set)

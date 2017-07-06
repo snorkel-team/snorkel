@@ -95,22 +95,22 @@ def matrix_conflicts(L):
 
 def matrix_tp(L, labels):
     return np.ravel([
-        np.sum(np.ravel((L[:, j] == 1).todense()) * (labels == 1)) for j in xrange(L.shape[1])
+        np.sum(np.ravel((L[:, j] == 1).todense()) * (labels == 1)) for j in range(L.shape[1])
     ])
 
 def matrix_fp(L, labels):
     return np.ravel([
-        np.sum(np.ravel((L[:, j] == 1).todense()) * (labels == -1)) for j in xrange(L.shape[1])
+        np.sum(np.ravel((L[:, j] == 1).todense()) * (labels == -1)) for j in range(L.shape[1])
     ])
 
 def matrix_tn(L, labels):
     return np.ravel([
-        np.sum(np.ravel((L[:, j] == -1).todense()) * (labels == -1)) for j in xrange(L.shape[1])
+        np.sum(np.ravel((L[:, j] == -1).todense()) * (labels == -1)) for j in range(L.shape[1])
     ])
 
 def matrix_fn(L, labels):
     return np.ravel([
-        np.sum(np.ravel((L[:, j] == -1).todense()) * (labels == 1)) for j in xrange(L.shape[1])
+        np.sum(np.ravel((L[:, j] == -1).todense()) * (labels == 1)) for j in range(L.shape[1])
     ])
 
 def get_as_dict(x):

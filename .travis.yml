@@ -77,11 +77,6 @@ script:
   - runipy intro/Intro_Tutorial_2.ipynb
   - runipy intro/Intro_Tutorial_3.ipynb
 
-  # Runs them some more. Tests running against an existing database.
-  - runipy intro/Intro_Tutorial_1.ipynb
-  - runipy intro/Intro_Tutorial_2.ipynb
-  - runipy intro/Intro_Tutorial_3.ipynb
-
   # Run advanced notebooks
   - runipy advanced/Categorical_Classes.ipynb
   - runipy advanced/Structure_Learning.ipynb

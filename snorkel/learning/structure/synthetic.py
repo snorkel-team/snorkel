@@ -260,7 +260,7 @@ def generate_label_matrix(weights, m):
     fg = ns.getFactorGraph()
 
     y = np.ndarray((m,), np.int64)
-    L = sparse.lil_matrix((m, weights.n))
+    L = sparse.lil_matrix((m, weights.n), dtype=np.int64)
     for i in range(m):
         fg.burnIn(10, False)
         y[i] = 1 if fg.var_value[0, 0] == 0 else -1

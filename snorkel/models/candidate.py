@@ -58,6 +58,10 @@ class Candidate(SnorkelBase):
             ", ".join(map(str, self.get_contexts()))
         )
 
+# This global dictionary contains all classes that have been declared in this Python environment,
+# that candidate_subclass() can return a class if it already exists and is identical in specification
+# to the requested class
+candidate_subclasses = {}
 
 def candidate_subclass(class_name, args, table_name=None, cardinality=None,
     values=None):
@@ -103,68 +107,77 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
     elif cardinality is not None:
         values = range(cardinality)
 
-    # Set the class attributes == the columns in the database
-    class_attribs = {
+    class_spec = (args, table_name, cardinality, values)
+    if class_name in candidate_subclasses:
+        if class_spec == candidate_subclasses[class_name][1]:
+            return candidate_subclasses[class_name][0]
+        else:
+            raise ValueError('Candidate subclass ' + class_name + ' already exists in memory with incompatible ' +
+                             'specification: ' + str(candidate_subclasses[class_name][1]))
+    else:
+        # Set the class attributes == the columns in the database
+        class_attribs = {
 
-        # Declares name for storage table
-        '__tablename__' : table_name,
-                
-        # Connects candidate_subclass records to generic Candidate records
-        'id' : Column(
-            Integer,
-            ForeignKey('candidate.id', ondelete='CASCADE'),
-            primary_key=True
-        ),
+            # Declares name for storage table
+            '__tablename__' : table_name,
 
-        # Store values & cardinality information in the class only
-        'values' : values,
-        'cardinality' : cardinality,
-                
-        # Polymorphism information for SQLAlchemy
-        '__mapper_args__' : {'polymorphic_identity': table_name},
-
-        # Helper method to get argument names
-        '__argnames__' : args,
-    }
-        
-    # Create named arguments, i.e. the entity mentions comprising the relation 
-    # mention
-    # For each entity mention: id, cid ("canonical id"), and pointer to Context
-    unique_args = []
-    for arg in args:
-
-        # Primary arguments are constituent Contexts, and their ids
-        class_attribs[arg + '_id'] = Column(
-            Integer, ForeignKey('context.id', ondelete='CASCADE'))
-        class_attribs[arg] = relationship(
-            'Context',
-            backref=backref(
-                table_name + '_' + arg + 's',
-                cascade_backrefs=False,
-                cascade='all, delete-orphan'
+            # Connects candidate_subclass records to generic Candidate records
+            'id' : Column(
+                Integer,
+                ForeignKey('candidate.id', ondelete='CASCADE'),
+                primary_key=True
             ),
-            cascade_backrefs=False,
-            foreign_keys=class_attribs[arg + '_id']
+
+            # Store values & cardinality information in the class only
+            'values' : values,
+            'cardinality' : cardinality,
+
+            # Polymorphism information for SQLAlchemy
+            '__mapper_args__' : {'polymorphic_identity': table_name},
+
+            # Helper method to get argument names
+            '__argnames__' : args,
+        }
+
+        # Create named arguments, i.e. the entity mentions comprising the relation
+        # mention
+        # For each entity mention: id, cid ("canonical id"), and pointer to Context
+        unique_args = []
+        for arg in args:
+
+            # Primary arguments are constituent Contexts, and their ids
+            class_attribs[arg + '_id'] = Column(
+                Integer, ForeignKey('context.id', ondelete='CASCADE'))
+            class_attribs[arg] = relationship(
+                'Context',
+                backref=backref(
+                    table_name + '_' + arg + 's',
+                    cascade_backrefs=False,
+                    cascade='all, delete-orphan'
+                ),
+                cascade_backrefs=False,
+                foreign_keys=class_attribs[arg + '_id']
+            )
+            unique_args.append(class_attribs[arg + '_id'])
+
+            # Canonical ids, to be set post-entity normalization stage
+            class_attribs[arg + '_cid'] = Column(String)
+
+        # Add unique constraints to the arguments
+        class_attribs['__table_args__'] = (
+            UniqueConstraint(*unique_args),
         )
-        unique_args.append(class_attribs[arg + '_id'])
 
-        # Canonical ids, to be set post-entity normalization stage
-        class_attribs[arg + '_cid'] = Column(String)
+        # Create class
+        C = type(class_name, (Candidate,), class_attribs)
 
-    # Add unique constraints to the arguments
-    class_attribs['__table_args__'] = (
-        UniqueConstraint(*unique_args),
-        # Note: This still doesn't fix issue...
-        {'keep_existing' : True}
-    )
+        # Create table in DB
+        if not snorkel_engine.dialect.has_table(snorkel_engine, table_name):
+            C.__table__.create(bind=snorkel_engine)
 
-    # Create class
-    C = type(class_name, (Candidate,), class_attribs)
-        
-    # Create table in DB
-    if not snorkel_engine.dialect.has_table(snorkel_engine, table_name):
-        C.__table__.create(bind=snorkel_engine)
-    return C
+        candidate_subclasses[class_name] = C, class_spec
+
+        return C
 
 
 class Marginal(SnorkelBase):

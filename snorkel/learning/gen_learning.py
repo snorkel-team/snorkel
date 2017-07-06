@@ -7,7 +7,7 @@ from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
 import numpy as np
 import random
 import scipy.sparse as sparse
-from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
+from .utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
 from copy import copy
 from pandas import DataFrame, Series
 from distutils.version import StrictVersion

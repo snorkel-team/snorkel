@@ -68,8 +68,8 @@ class GenerativeModel(object):
 
     def train(self, L, deps=(), LF_acc_prior_weights=None,
         LF_acc_prior_weight_default=1, labels=None, label_prior_weight=5,
-        init_deps=0.0, init_class_prior=-1.0, epochs=30, step_size=None, 
-        decay=1.0, reg_param=0.1, reg_type=2, verbose=False, truncation=10, 
+        init_deps=0.0, init_class_prior=-1.0, epochs=30, step_size=None,
+        decay=1.0, reg_param=0.1, reg_type=2, verbose=False, truncation=10,
         burn_in=5, cardinality=None, timer=None, candidate_ranges=None):
         """
         Fits the parameters of the model to a data set. By default, learns a
@@ -80,19 +80,19 @@ class GenerativeModel(object):
         Results are stored as a member named weights, instance of
         snorkel.learning.gen_learning.GenerativeModelWeights.
 
-        :param L: M x N csr_AnnotationMatrix-type label matrix, where there are 
+        :param L: M x N csr_AnnotationMatrix-type label matrix, where there are
             M candidates labeled by N labeling functions (LFs)
-        :param deps: collection of dependencies to include in the model, each 
-                     element is a tuple of the form 
+        :param deps: collection of dependencies to include in the model, each
+                     element is a tuple of the form
                      (LF 1 index, LF 2 index, dependency type),
                      see snorkel.learning.constants
         :param LF_acc_prior_weights: An N-element list of prior weights for the
             LF accuracies (log scale)
-        :param LF_acc_prior_weight_default: Default prior for the weight of each 
-            LF accuracy; if LF_acc_prior_weights is unset, each LF will have 
+        :param LF_acc_prior_weight_default: Default prior for the weight of each
+            LF accuracy; if LF_acc_prior_weights is unset, each LF will have
             this accuracy prior weight (log scale)
         :param labels: Optional ground truth labels
-        :param label_prior_weight: The prior probability that the ground truth 
+        :param label_prior_weight: The prior probability that the ground truth
             labels (if provided) are correct (log scale)
         :param init_deps: initial weight for additional dependencies, except
                           class prior (log scale)
@@ -125,7 +125,7 @@ class GenerativeModel(object):
         # Check to make sure matrix is int-valued
         element_type = type(L[0,0])
         if not element_type in [np.int64, np.int32, int]:
-            raise ValueError("""Label matrix must have int-type elements, 
+            raise ValueError("""Label matrix must have int-type elements,
                 but elements have type %s""" % element_type)
 
         # Automatically infer cardinality
@@ -200,7 +200,7 @@ class GenerativeModel(object):
                 for j in range(L[i].data.shape[0]):
                     val = L[i].data[j]
                     if val not in c_range:
-                        raise ValueError("""Value {0} is not in supplied range 
+                        raise ValueError("""Value {0} is not in supplied range
                             for candidate at index {1}""".format(val, i))
                     L[i, L[i].indices[j]] = c_range.index(val) + 1
 
@@ -221,14 +221,14 @@ class GenerativeModel(object):
             L, init_deps, init_class_prior, LF_acc_prior_weights, is_fixed, self.cardinalities)
         fg = NumbSkull(
             n_inference_epoch=0,
-            n_learning_epoch=epochs, 
+            n_learning_epoch=epochs,
             stepsize=step_size,
             decay=decay,
             reg_param=reg_param_scaled,
             regularization=reg_type,
             truncation=truncation,
             quiet=(not verbose),
-            verbose=verbose, 
+            verbose=verbose,
             learn_non_evidence=True,
             burn_in=burn_in
         )
@@ -355,7 +355,7 @@ class GenerativeModel(object):
         """
         m, n = L.shape
         if self.weights is None:
-            raise ValueError("""Must fit model with train() before computing 
+            raise ValueError("""Must fit model with train() before computing
                 marginal probabilities.""")
 
         # Binary classification setting
@@ -414,13 +414,13 @@ class GenerativeModel(object):
                     if (data_j != 0):
                         if not 1 <= data_j <= self.cardinalities[i]:
                             raise ValueError(
-                                """Illegal value at %d, %d: %d. Must be in 0 to 
+                                """Illegal value at %d, %d: %d. Must be in 0 to
                                 %d.""" % (i, j, data_j, self.cardinalities[i]))
                         # NB: LF class propensity not currently available
                         # for categoricals
                         marginals[int(data_j - 1)] += \
                             2 * self.weights.lf_accuracy[j]
-                            
+
                 # NB: fixing and reinforcing not available for categoricals
                 # Get softmax
                 exps = np.exp(marginals)
@@ -581,7 +581,7 @@ class GenerativeModel(object):
                 variable[index]["isEvidence"] = 1
                 variable[index]["dataType"] = 0
                 variable[index]["cardinality"] = cardinalities[i] + 1
-                
+
                 # Default to abstain
                 variable[index]["initialValue"] = cardinalities[i]
 
@@ -693,18 +693,18 @@ class GenerativeModel(object):
                     raise NotImplementedError(
                         dep_name + " not implemented for categorical classes.")
                 for i in range(len(mat.data)):
-                    f_off, ftv_off, w_off = self._compile_dep_factors(L, factor, 
+                    f_off, ftv_off, w_off = self._compile_dep_factors(L, factor,
                         f_off, ftv, ftv_off, w_off, mat.row[i], mat.col[i],
                         dep_name_map[dep_name][0], dep_name_map[dep_name][1])
 
         return weight, variable, factor, ftv, domain_mask, n_edges
 
-    def _compile_output_factors(self, L, factors, factors_offset, ftv, 
+    def _compile_output_factors(self, L, factors, factors_offset, ftv,
         ftv_offset, weight_offset, factor_name, vid_funcs,
         nfactors_for_lf=None):
         """
         Compiles factors over the outputs of labeling functions, i.e., for which
-        there is one weight per labeling function and one factor per labeling 
+        there is one weight per labeling function and one factor per labeling
         function-candidate pair.
         """
         m, n = L.shape
@@ -856,7 +856,7 @@ class NaiveBayes(NoiseAwareModel):
         self.bias_term = bias_term
 
     def train(self, X, n_iter=1000, w0=None, rate=0.01, alpha=0.5, mu=1e-6,
-            sample=False, n_samples=100, evidence=None, warm_starts=False, 
+            sample=False, n_samples=100, evidence=None, warm_starts=False,
             tol=1e-6, verbose=True):
         """
         Perform SGD wrt the weights w
@@ -875,10 +875,10 @@ class NaiveBayes(NoiseAwareModel):
 
         # Set up stuff
         N, M   = X.shape
-        print "="*80
-        print "Training marginals (!= 0.5):\t%s" % N
-        print "Features:\t\t\t%s" % M
-        print "="*80
+        print("="*80)
+        print("Training marginals (!= 0.5):\t%s" % N)
+        print("Features:\t\t\t%s" % M)
+        print("="*80)
         Xt     = X.transpose()
         Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else np.abs(Xt)
         w0     = w0 if w0 is not None else np.ones(M)
@@ -891,7 +891,7 @@ class NaiveBayes(NoiseAwareModel):
 
         # Gradient descent
         if verbose:
-            print "Begin training for rate={}, mu={}".format(rate, mu)
+            print("Begin training for rate={}, mu={}".format(rate, mu))
         for step in range(n_iter):
 
             # Get the expected LF accuracy
@@ -911,10 +911,10 @@ class NaiveBayes(NoiseAwareModel):
             wn     = np.linalg.norm(w, ord=2)
             g_size = np.linalg.norm(g, ord=2)
             if step % 250 == 0 and verbose:
-                print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size)
+                print("\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size))
             if (wn < 1e-12 or g_size / wn < tol) and step >= 10:
                 if verbose:
-                    print "SGD converged for mu={} after {} steps".format(mu, step)
+                    print("SGD converged for mu={} after {} steps".format(mu, step))
                 break
 
             # Update weights
@@ -935,7 +935,7 @@ class NaiveBayes(NoiseAwareModel):
         # SGD did not converge
         else:
             if verbose:
-                print "Final gradient magnitude for rate={}, mu={}: {:.3f}".format(rate, mu, g_size)
+                print("Final gradient magnitude for rate={}, mu={}: {:.3f}".format(rate, mu, g_size))
 
         # Return learned weights
         self.w = w
@@ -947,4 +947,4 @@ class NaiveBayes(NoiseAwareModel):
         raise NotImplementedError("Not implemented for generative model.")
 
     def load(self, session, version):
-        raise NotImplementedError("Not implemented for generative model.")        
+        raise NotImplementedError("Not implemented for generative model.")

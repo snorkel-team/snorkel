@@ -206,7 +206,7 @@ class GenerativeModel(object):
 
         # Shuffle the data points, cardinalities, and candidate_ranges
         idxs = range(m)
-        np.random.shuffle(idxs)
+        np.random.shuffle(list(idxs))
         L = L[idxs, :]
         if candidate_ranges is not None:
             self.cardinalities = self.cardinalities[idxs]

@@ -429,14 +429,12 @@ class GridSearch(object):
     Selects based on maximizing F1 score on a supplied validation set
     Specify search space with Hyperparameter arguments
     """
-    def __init__(self, session, model, X, training_marginals=None,
-        parameters=[]):
-        self.session            = session
+    def __init__(self, model, parameters, X, training_marginals=None):
         self.model              = model
-        self.X                  = X
-        self.training_marginals = training_marginals
         self.params             = parameters
         self.param_names        = [param.name for param in parameters]
+        self.X                  = X
+        self.training_marginals = training_marginals
         
     def search_space(self):
         return product(*[param.get_all_values() for param in self.params])
@@ -501,16 +499,14 @@ class GridSearch(object):
     
     
 class RandomSearch(GridSearch):
-    def __init__(self, session, model, X, training_marginals, parameters, n=10, **kwargs):
+    def __init__(self, model, parameters, X, training_marginals=None, n=10, 
+        **kwargs):
         """Search a random sample of size n from a parameter grid"""
         self.n = n
-        super(RandomSearch, self).__init__(
-            session, model, X, training_marginals, parameters, **kwargs
-        )
-
+        super(RandomSearch, self).__init__(model, parameters, X, 
+            training_marginals=training_marginals, **kwargs)
         print("Initialized RandomSearch search of size {0}. Search space size = {1}.".format(
-            self.n, np.product([len(param.get_all_values()) for param in self.params]))
-        )
+            self.n, np.product([len(param.get_all_values()) for param in self.params])))
         
     def search_space(self):
         return zip(*[param.draw_values(self.n) for param in self.params])

@@ -13,7 +13,8 @@ class TFNoiseAwareModel(Classifier):
     Generic NoiseAwareModel class for TensorFlow models.
     Note that the actual network is built when train is called (to allow for
     model architectures which depend on the training data, e.g. vocab size).
-    @n_threads: Parallelism to use; single-threaded if None
+    
+    :param n_threads: Parallelism to use; single-threaded if None
     """
     def __init__(self, n_threads=None, **kwargs):
         self.n_threads = n_threads
@@ -22,10 +23,10 @@ class TFNoiseAwareModel(Classifier):
     def _build_model(self, **model_kwargs):
         """
         Builds the TensorFlow Operations for the model. Must set the following:
-            @self.logits: The un-normalized potentials for the variables
+            - self.logits: The un-normalized potentials for the variables
                 ("logits" in keeping with TensorFlow terminology)
-            @Y: The training marginals to fit to
-            @self.marginals_op: Normalized predicted marginals for the variables
+            - self.Y: The training marginals to fit to
+            - self.marginals_op: Normalized predicted marginals for the vars
 
         Additional ops must be set depending on whether the default
         self._construct_feed_dict method below is used, or a custom one.
@@ -45,8 +46,8 @@ class TFNoiseAwareModel(Classifier):
         """
         Builds the TensorFlow Operations for the training procedure. Must set 
         the following:
-            @self.loss: Loss function
-            @self.optimizer: Training operation
+            - self.loss: Loss function
+            - self.optimizer: Training operation
         """
         # Define loss and marginals ops
         if self.cardinality > 2:
@@ -102,28 +103,28 @@ class TFNoiseAwareModel(Classifier):
         """
         Generic training procedure for TF model
 
-        @X_train: The training Candidates. If self.representation is True, then
+        :param X_train: The training Candidates. If self.representation is True, then
             this is a list of Candidate objects; else is a csr_AnnotationMatrix
             with rows corresponding to training candidates and columns 
             corresponding to features.
-        @Y_train: Array of marginal probabilities for each Candidate
-        @n_epochs: Number of training epochs
-        @lr: Learning rate
-        @batch_size: Batch size for SGD
-        @rebalance: Bool or fraction of positive examples for training
+        :param Y_train: Array of marginal probabilities for each Candidate
+        :param n_epochs: Number of training epochs
+        :param lr: Learning rate
+        :param batch_size: Batch size for SGD
+        :param rebalance: Bool or fraction of positive examples for training
                     - if True, defaults to standard 0.5 class balance
                     - if False, no class balancing
-        @X_dev: Candidates for evaluation, same format as X_train
-        @Y_dev: Labels for evaluation, same format as Y_train
-        @print_freq: number of epochs at which to print status, and if present,
+        :param X_dev: Candidates for evaluation, same format as X_train
+        :param Y_dev: Labels for evaluation, same format as Y_train
+        :param print_freq: number of epochs at which to print status, and if present,
             evaluate the dev set (X_dev, Y_dev).
-        @dev_ckpt: If True, save a checkpoint whenever highest score
+        :param dev_ckpt: If True, save a checkpoint whenever highest score
             on (X_dev, Y_dev) reached. Note: currently only evaluates at
             every @print_freq epochs.
-        @dev_ckpt_delay: Start dev checkpointing after this portion
+        :param dev_ckpt_delay: Start dev checkpointing after this portion
             of n_epochs.
-        @save_dir: Save dir path for checkpointing.
-        @kwargs: All hyperparameters that change how the graph is built 
+        :param save_dir: Save dir path for checkpointing.
+        :param kwargs: All hyperparameters that change how the graph is built 
             must be passed through here to be saved and reloaded to save /
             reload model. *NOTE: If a parameter needed to build the 
             network and/or is needed at test time is not included here, the

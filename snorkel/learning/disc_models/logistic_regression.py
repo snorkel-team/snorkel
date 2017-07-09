@@ -16,7 +16,8 @@ class LogisticRegression(TFNoiseAwareModel):
     def _build_model(self, d=None, **kwargs):
         """
         Build model, setting logits and marginals ops.
-        @d: Number of features
+        
+        :param d: Number of features
         """
         s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
 
@@ -40,8 +41,9 @@ class LogisticRegression(TFNoiseAwareModel):
     def _build_training_ops(self, l1_penalty=0.0, l2_penalty=0.0, **kwargs):
         """
         Build training ops, setting loss and train ops
-        @l1_penalty: L1 reg. coefficient
-        @l2_penalty: L2 reg. coefficient
+        
+        :param l1_penalty: L1 reg. coefficient
+        :param l2_penalty: L2 reg. coefficient
         """
         super(LogisticRegression, self)._build_training_ops()   
         

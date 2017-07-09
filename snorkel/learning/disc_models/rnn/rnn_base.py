@@ -52,11 +52,12 @@ class RNNBase(TFNoiseAwareModel):
         **kwargs):
         """
         Build RNN model
-        @dim: embedding dimension
-        @attn_window: attention window length (no attention if 0 or None)
-        @cell_type: subclass of tensorflow.python.ops.rnn_cell_impl._RNNCell
-        @batch_size: batch size for mini-batch SGD
-        @vocab_size: Vocab size for determining size of word embeddings tensor
+        
+        :param dim: embedding dimension
+        :param attn_window: attention window length (no attention if 0 or None)
+        :param cell_type: subclass of tensorflow.python.ops.rnn_cell_impl._RNNCell
+        :param batch_size: batch size for mini-batch SGD
+        :param vocab_size: Vocab size for determining size of word embeddings tensor
         """
         # Set the word dictionary passed in as the word_dict for the instance
         self.max_len = max_len

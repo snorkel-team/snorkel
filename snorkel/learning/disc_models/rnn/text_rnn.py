@@ -8,8 +8,9 @@ class TextRNN(RNNBase):
     """TextRNN for strings of text."""
     def _preprocess_data(self, candidates, extend, word_dict=SymbolTable()):
         """Convert candidate sentences to lookup sequences
-            @candidates: candidates to process
-            @extend: extend symbol table for tokens (train), or lookup (test)?
+        
+        :param candidates: candidates to process
+        :param extend: extend symbol table for tokens (train), or lookup (test)?
         """
         data, ends = [], []
         for candidate in candidates:

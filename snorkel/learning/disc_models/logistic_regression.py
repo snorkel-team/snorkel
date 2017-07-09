@@ -21,13 +21,13 @@ class LogisticRegression(TFNoiseAwareModel):
         s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
 
         # Define inputs
-        self.X = tf.placeholder(tf.float32, (None, self.d))
+        self.X = tf.placeholder(tf.float32, (None, d))
         self.Y = tf.placeholder(tf.float32, (None, self.cardinality)) \
             if self.cardinality > 2 else tf.placeholder(tf.float32, (None,))
 
         # Define parameters and logits
         k = self.cardinality if self.cardinality > 2 else 1
-        self.w = tf.Variable(tf.random_normal((self.d, k), stddev=SD, seed=s1))
+        self.w = tf.Variable(tf.random_normal((d, k), stddev=SD, seed=s1))
         self.b = tf.Variable(tf.random_normal((k,), stddev=SD, seed=s2))
         self.logits = tf.nn.bias_add(tf.matmul(self.X, self.w), self.b)
         if self.cardinality == 2:
@@ -86,7 +86,7 @@ class SparseLogisticRegression(LogisticRegression):
         # Define parameters and logits
         s1, s2 = self.seed, (self.seed + 1 if self.seed is not None else None)
         k = self.cardinality if self.cardinality > 2 else 1
-        self.w = tf.Variable(tf.random_normal((self.d, k), stddev=SD, seed=s1))
+        self.w = tf.Variable(tf.random_normal((d, k), stddev=SD, seed=s1))
         self.b = tf.Variable(tf.random_normal((k,), stddev=SD, seed=s2))
         z = tf.nn.embedding_lookup_sparse(params=self.w, sp_ids=sparse_ids,
             sp_weights=sparse_vals, combiner='sum')

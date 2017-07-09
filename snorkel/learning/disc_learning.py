@@ -136,7 +136,7 @@ class TFNoiseAwareModel(Classifier):
         # If the data passed in is a feature matrix (representation=False),
         # set the dimensionality here; else assume this is done by sub-class
         if not self.representation:
-            self.d = X_train.shape[1]
+            kwargs['d'] = X_train.shape[1]
 
         # Check that the cardinality of the training marginals and model agree
         cardinality = Y_train.shape[1] if len(Y_train.shape) > 1 else 2

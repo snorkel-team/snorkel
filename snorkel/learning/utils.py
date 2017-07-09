@@ -585,6 +585,10 @@ class GridSearch(object):
                 except Empty:
                     break
 
+        # Terminate the processes
+        for p in ps:
+            p.terminate()
+
         # Load best model; assume score is last element
         k_opt = np.argmax([s[-1] for s in run_stats])
         model = self.model_class(**self.model_class_params)

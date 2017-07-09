@@ -792,9 +792,17 @@ class GenerativeModel(Classifier):
         model_name = model_name or self.name
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
+        
+        # Save generative model weights
         save_path = os.path.join(save_dir, "{0}.weights.pkl".format(model_name))
         with open(save_path, 'wb') as f:
             dump(self.weights, f)
+
+        # Save other model hyperparameters needed to rebuild model
+        save_path2 = os.path.join(save_dir, "{0}.hps.pkl".format(model_name))
+        with open(save_path2, 'wb') as f:
+            dump({'cardinality': self.cardinality}, f)
+
         if verbose:
             print("[{0}] Model saved as <{1}>.".format(self.name, model_name))
 
@@ -804,6 +812,10 @@ class GenerativeModel(Classifier):
         save_path = os.path.join(save_dir, "{0}.weights.pkl".format(model_name))
         with open(save_path, 'rb') as f:
             self.weights = load(f)
+        save_path2 = os.path.join(save_dir, "{0}.hps.pkl".format(model_name))
+        with open(save_path2, 'rb') as f:
+            hps = load(f)
+            self.cardinality = hps['cardinality']
         if verbose:
             print("[{0}] Model <{1}> loaded.".format(self.name, model_name))
 

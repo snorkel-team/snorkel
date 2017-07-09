@@ -1,14 +1,51 @@
 Learning
 ========
 
-Core Data Models
-----------------
+In the Snorkel pipeline, the user writes labeling functions (LFs) and then uses
+the generative model to unify and denoise their labels. Then, the marginal
+predictions of this model are used as probabilistic training labels for the
+discriminative model. Currently we provide bindings for TensorFlow models, and
+two basic models: Logistic regression and an LSTM. See tutorials for a more
+in-depth explanation.
 
-.. automodule:: snorkel.models.parameter
+Base Classifier Class
+---------------------
+
+.. automodule:: snorkel.learning.classifier
     :members:
 
-Core Objects for Learning + Inference
--------------------------------------
 
-.. automodule:: snorkel.learning
+Generative Model
+----------------
+
+.. automodule:: snorkel.learning.gen_learning
+    :members:
+
+
+Discriminative Models
+---------------------
+
+.. automodule:: snorkel.learning.disc_learning
+    :members:
+
+.. automodule:: snorkel.learning.disc_models.logistic_regression
+    :members:
+
+.. automodule:: snorkel.learning.disc_models.rnn.rnn_base
+    :members:
+
+.. automodule:: snorkel.learning.disc_models.rnn.re_rnn
+    :members:
+
+.. automodule:: snorkel.learning.disc_models.rnn.tag_rnn
+    :members:
+
+.. automodule:: snorkel.learning.disc_models.rnn.text_rnn
+    :members:
+
+
+Learning Utilities
+------------------
+
+.. automodule:: snorkel.learning.utils
     :members:

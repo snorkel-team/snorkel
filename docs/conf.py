@@ -24,9 +24,11 @@ sys.path.insert(0, os.path.abspath('..'))
 # See: http://blog.rtwilson.com/how-to-make-your-sphinx-documentation-compile-with-readthedocs-when-youre-using-numpy-and-scipy/
 import mock
  
-MOCK_MODULES = ['numpy', 'scipy']
+MOCK_MODULES = ['numpy', 'scipy', 'tensorflow', 'numbskull', 'numbskull']
 for mod_name in MOCK_MODULES:
   sys.modules[mod_name] = mock.Mock()
+
+sys.modules['np'] = 'numpy'
 
 # -- General configuration ------------------------------------------------
 

@@ -38,10 +38,11 @@ class Classifier(object):
         Returns the summary scores:
             * For binary: precision, recall, F1 score
             * For categorical: accuracy
-        @X_test: The input test candidates, as a list or annotation matrix
-        @Y_test: The input test labels, as a list or annotation matrix
-        @b: Decision boundary *for binary setting only*
-        @set_unlabeled_as_neg: Whether to map 0 labels -> -1, *binary setting.*
+        
+        :param X_test: The input test candidates, as a list or annotation matrix
+        :param Y_test: The input test labels, as a list or annotation matrix
+        :param b: Decision boundary *for binary setting only*
+        :param set_unlabeled_as_neg: Whether to map 0 labels -> -1, *binary setting.*
 
         Note: Unlike in self.error_analysis, this method assumes X_test and
         Y_test are properly collated!
@@ -85,13 +86,14 @@ class Classifier(object):
         analysis, i.e.:
             * For binary: TP, FP, TN, FN
             * For categorical: correct, incorrect
-        @X_test: The input test candidates, as a list or annotation matrix
-        @Y_test: The input test labels, as a list or annotation matrix
-        @gold_candidate_set: Full set of TPs in the test set
-        @b: Decision boundary *for binary setting only*
-        @set_unlabeled_as_neg: Whether to map 0 labels -> -1, *binary setting*
-        @display: Print score report
-        @scorer: The Scorer sub-class to use
+        
+        :param X_test: The input test candidates, as a list or annotation matrix
+        :param Y_test: The input test labels, as a list or annotation matrix
+        :param gold_candidate_set: Full set of TPs in the test set
+        :param b: Decision boundary *for binary setting only*
+        :param set_unlabeled_as_neg: Whether to map 0 labels -> -1, *binary setting*
+        :param display: Print score report
+        :param scorer: The Scorer sub-class to use
         """
         # Compute the marginals
         test_marginals = self.marginals(X_test, **kwargs)

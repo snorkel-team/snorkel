@@ -13,39 +13,54 @@ Base Classifier Class
 
 .. automodule:: snorkel.learning.classifier
     :members:
-
+    :undoc-members:
+    :inherited-members:
 
 Generative Model
 ----------------
 
 .. automodule:: snorkel.learning.gen_learning
     :members:
-
+    :undoc-members:
+    :inherited-members:
 
 Discriminative Models
 ---------------------
 
 .. automodule:: snorkel.learning.disc_learning
     :members:
+    :undoc-members:
+    :inherited-members:
 
 .. automodule:: snorkel.learning.disc_models.logistic_regression
     :members:
+    :undoc-members:
+    :inherited-members:
 
 .. automodule:: snorkel.learning.disc_models.rnn.rnn_base
     :members:
+    :undoc-members:
+    :inherited-members:
 
 .. automodule:: snorkel.learning.disc_models.rnn.re_rnn
     :members:
+    :undoc-members:
+    :inherited-members:
 
 .. automodule:: snorkel.learning.disc_models.rnn.tag_rnn
     :members:
+    :undoc-members:
+    :inherited-members:
 
 .. automodule:: snorkel.learning.disc_models.rnn.text_rnn
     :members:
-
+    :undoc-members:
+    :inherited-members:
 
 Learning Utilities
 ------------------
 
 .. automodule:: snorkel.learning.utils
     :members:
+    :undoc-members:
+    :inherited-members:

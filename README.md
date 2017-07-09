@@ -44,6 +44,21 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 * _Data Programming with DDLite: Putting Humans in a Different Part of the Loop_ ([HILDA @ SIGMOD 2016](http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf))
 * _Fonduer: Knowledge Base Construction from Richly Formatted Data_, ([ArXiv](https://arxiv.org/abs/1703.05028), [blog](https://hazyresearch.github.io/snorkel/blog/fonduer.html))
 
+## Release Notes
+### Major changes in v0.6:
+* Support for categorical classification, including "dynamically-scoped" or _blocked_ categoricals (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/advanced/Categorical_Classes.ipynb))
+* Support for structure learning (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/advanced/Structure_Learning.ipynb), ICML 2017 paper)
+* Support for labeled data in generative model
+* Refactor of TensorFlow bindings; fixes grid search and model saving / reloading issues (see `snorkel/learning`)
+* New, simplified Intro tutorial ([here](https://github.com/HazyResearch/snorkel/tree/new_intro/tutorials/intro))
+* Refactored parser class and support for [spacy](https://spacy.io/) as new defaul parser
+* Support for easy use of the [BRAT annotation tool](http://brat.nlplab.org/) (see [tutorial](#))
+* Initial Spark integration, for scale out of LF application (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/snark/Snark%20Tutorial.ipynb))
+* Tutorial on using crowdsourced data [here](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/crowdsourcing/Crowdsourced_Sentiment_Analysis.ipynb)
+* Integration with Apache Tika
+* And many more fixes, additions, and new material!
+
+
 ## Installation
 
 Snorkel uses Python 2.7 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.

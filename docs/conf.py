@@ -28,7 +28,7 @@ MOCK_MODULES = ['numpy', 'scipy', 'tensorflow', 'numbskull', 'numbskull']
 for mod_name in MOCK_MODULES:
   sys.modules[mod_name] = mock.Mock()
 
-sys.modules['np'] = 'numpy'
+sys.modules['np'] = mock.Mock()
 
 # -- General configuration ------------------------------------------------
 

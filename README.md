@@ -47,8 +47,8 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 * Support for labeled data in generative model
 * Refactor of TensorFlow bindings; fixes grid search and model saving / reloading issues (see `snorkel/learning`)
 * New, simplified Intro tutorial ([here](https://github.com/HazyResearch/snorkel/tree/new_intro/tutorials/intro))
-* Refactored parser class and support for [spacy](https://spacy.io/) as new defaul parser
-* Support for easy use of the [BRAT annotation tool](http://brat.nlplab.org/) (see [tutorial](#))
+* Refactored parser class and support for [spaCy](https://spacy.io/) as new default parser
+* Support for easy use of the [BRAT annotation tool](http://brat.nlplab.org/) (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro_brat/tutorials/advanced/BRAT_Annotations.ipynb))
 * Initial Spark integration, for scale out of LF application (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/snark/Snark%20Tutorial.ipynb))
 * Tutorial on using crowdsourced data [here](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/crowdsourcing/Crowdsourced_Sentiment_Analysis.ipynb)
 * Integration with Apache Tika

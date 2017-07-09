@@ -87,7 +87,7 @@ class StanfordCoreNLPServer(Parser):
         if self.verbose:
             self.summary()
 
-    def _start_server(self,force_load=False):
+    def _start_server(self, force_load=False):
         '''
         Launch CoreNLP server
         :param force_load:  Force server to pre-load models vs. on-demand
@@ -224,7 +224,6 @@ class StanfordCoreNLPServer(Parser):
             blocks = json.loads(content, strict=False)['sentences']
         except:
             warnings.warn("CoreNLP skipped a malformed document.", RuntimeWarning)
-            return
 
         position = 0
         for block in blocks:

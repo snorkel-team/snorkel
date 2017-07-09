@@ -5,7 +5,7 @@ from .annotations import load_gold_labels
 from .learning.utils import MentionScorer
 from .models import Span, Label, Candidate
 from itertools import chain
-from utils import tokens_to_ngrams
+from .utils import tokens_to_ngrams
 
 
 def get_text_splits(c):

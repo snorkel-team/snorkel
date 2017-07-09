@@ -74,14 +74,14 @@ def corenlp_to_xmltree(s, prune_root=True):
   if not('dep_parents' in s and type(s['dep_parents']) == list):
     raise ValueError("Input CoreNLP object must have a 'dep_parents' attribute which is a list")
   try:
-    dep_parents = map(int, s['dep_parents'])
+    dep_parents = list(map(int, s['dep_parents']))
   except:
     raise ValueError("'dep_parents' attribute must be a list of ints")
 
   # Also ensure that we are using CoreNLP-native indexing (root=0, 1-base word indexes)!
   b = min(dep_parents)
   if b != 0:
-    dep_parents = map(lambda j : j - b, dep_parents)
+    dep_parents = list(map(lambda j: j - b, dep_parents))
 
   # Parse recursively
   root = corenlp_to_xmltree_sub(s, dep_parents, 0)
@@ -103,11 +103,11 @@ def scrub(s):
 def corenlp_to_xmltree_sub(s, dep_parents, rid=0):
   i = rid - 1
   attrib = {}
-  N = len(dep_parents)
+  N = len(list(dep_parents))
 
   # Add all attributes that have the same shape as dep_parents
   if i >= 0:
-    for k,v in filter(lambda t : type(t[1]) == list and len(t[1]) == N, s.iteritems()):
+    for k,v in filter(lambda t : type(t[1]) == list and len(t[1]) == N, s.items()):
       if v[i] is not None:
         attrib[singular(k)] = scrub(v[i]).encode('ascii','ignore') if hasattr(v[i], 'encode') else str(v[i])
 

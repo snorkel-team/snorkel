@@ -4,8 +4,8 @@ from snorkel.db_helpers import reload_annotator_labels
 
 FPATH = 'data/gold_labels.tsv'
 
-def load_external_labels(session, candidate_class, annotator_name='gold'):
-    gold_labels = pd.read_csv(FPATH, sep="\t")
+def load_external_labels(session, candidate_class, annotator_name='gold', fp=''):
+    gold_labels = pd.read_csv(fp+FPATH, sep="\t")
     for index, row in gold_labels.iterrows():    
 
         # We check if the label already exists, in case this cell was already executed

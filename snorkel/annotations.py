@@ -1,8 +1,9 @@
+from __future__ import print_function
+from builtins import range
 import numpy as np
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
 from sqlalchemy.sql import bindparam, select
-import inspect
 
 from .features import get_span_feats
 from .models import (
@@ -148,7 +149,7 @@ class Annotator(UDFRunner):
         # Also, if we try to pass in a query iterator instead, with AUTOCOMMIT on, we get a TXN error...
         cids       = cids_query.all()
         cids_count = len(cids)
-        
+
         # Run the Annotator
         super(Annotator, self).apply(cids, split=split, key_group=key_group,
             replace_key_set=replace_key_set, cids_query=cids_query, 
@@ -217,9 +218,9 @@ class AnnotatorUDF(UDF):
         """
         seen = set()
         cid = cid[0]
-        c    = self.session.query(Candidate).filter(Candidate.id == cid).one()
-        for key_name, value in self.anno_generator(c):
 
+        c = self.session.query(Candidate).filter(Candidate.id == cid).one()
+        for key_name, value in self.anno_generator(c):
             # Note: Make sure no duplicates emitted here!
             if (cid, key_name) not in seen:
                 seen.add((cid, key_name))
@@ -476,7 +477,7 @@ def save_marginals(session, X, marginals, training=True):
     # Execute update
     session.execute(q, insert_vals)
     session.commit()
-    print "Saved %s marginals" % len(marginals)
+    print("Saved %s marginals" % len(marginals))
 
 
 def load_marginals(session, X, split=0, training=True):

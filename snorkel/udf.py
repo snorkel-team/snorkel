@@ -53,10 +53,10 @@ class UDFRunner(object):
 
         # Set up ProgressBar if possible
         pb = None
-        if progress_bar and hasattr(xs, '__len__') or count is not None:
+        if progress_bar and (hasattr(xs, '__len__') or count is not None):
             n = count if count is not None else len(xs)
             pb = ProgressBar(n)
-        
+
         # Run single-thread
         for i, x in enumerate(xs):
             if pb:
@@ -64,8 +64,7 @@ class UDFRunner(object):
 
             # Apply UDF and add results to the session
             for y in udf.apply(x, **kwargs):
-                
-                # Uf UDF has a reduce step, this will take care of the insert; else add to session
+                # If UDF has a reduce step, this will take care of the insert; else add to session
                 if hasattr(self.udf_class, 'reduce'):
                     udf.reduce(y, **kwargs)
                 else:

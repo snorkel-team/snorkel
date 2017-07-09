@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import range
 from .disc_learning import NoiseAwareModel
 from .utils import MentionScorer
 import numbskull
@@ -7,7 +9,7 @@ from numbskull.numbskulltypes import Weight, Variable, Factor, FactorToVar
 import numpy as np
 import random
 import scipy.sparse as sparse
-from utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
+from .utils import exact_data, log_odds, odds_to_prob, sample_data, sparse_abs, transform_sample_stats
 from copy import copy
 from pandas import DataFrame, Series
 from distutils.version import StrictVersion
@@ -205,7 +207,7 @@ class GenerativeModel(object):
                     L[i, L[i].indices[j]] = c_range.index(val) + 1
 
         # Shuffle the data points, cardinalities, and candidate_ranges
-        idxs = range(m)
+        idxs = list(range(m))
         np.random.shuffle(idxs)
         L = L[idxs, :]
         if candidate_ranges is not None:
@@ -442,7 +444,7 @@ class GenerativeModel(object):
               display=True, scorer=MentionScorer, **kwargs):
 
         # Get the test candidates
-        test_candidates = [X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])]
+        test_candidates = [X_test.get_candidate(session, i) for i in range(X_test.shape[0])]
 
         # Initialize scorer
         s               = scorer(test_candidates, test_labels, gold_candidate_set)
@@ -875,10 +877,10 @@ class NaiveBayes(NoiseAwareModel):
 
         # Set up stuff
         N, M   = X.shape
-        print "="*80
-        print "Training marginals (!= 0.5):\t%s" % N
-        print "Features:\t\t\t%s" % M
-        print "="*80
+        print("="*80)
+        print("Training marginals (!= 0.5):\t%s" % N)
+        print("Features:\t\t\t%s" % M)
+        print("="*80)
         Xt     = X.transpose()
         Xt_abs = sparse_abs(Xt) if sparse.issparse(Xt) else np.abs(Xt)
         w0     = w0 if w0 is not None else np.ones(M)
@@ -891,7 +893,7 @@ class NaiveBayes(NoiseAwareModel):
 
         # Gradient descent
         if verbose:
-            print "Begin training for rate={}, mu={}".format(rate, mu)
+            print("Begin training for rate={}, mu={}".format(rate, mu))
         for step in range(n_iter):
 
             # Get the expected LF accuracy
@@ -911,10 +913,10 @@ class NaiveBayes(NoiseAwareModel):
             wn     = np.linalg.norm(w, ord=2)
             g_size = np.linalg.norm(g, ord=2)
             if step % 250 == 0 and verbose:
-                print "\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size)
+                print("\tLearning epoch = {}\tGradient mag. = {:.6f}".format(step, g_size))
             if (wn < 1e-12 or g_size / wn < tol) and step >= 10:
                 if verbose:
-                    print "SGD converged for mu={} after {} steps".format(mu, step)
+                    print("SGD converged for mu={} after {} steps".format(mu, step))
                 break
 
             # Update weights
@@ -935,7 +937,7 @@ class NaiveBayes(NoiseAwareModel):
         # SGD did not converge
         else:
             if verbose:
-                print "Final gradient magnitude for rate={}, mu={}: {:.3f}".format(rate, mu, g_size)
+                print("Final gradient magnitude for rate={}, mu={}: {:.3f}".format(rate, mu, g_size))
 
         # Return learned weights
         self.w = w

@@ -64,6 +64,7 @@ def get_span_feats(candidate, stopwords=None):
     stopwords: @set of stopwords to filter out from dependency path
     """
     args = candidate.get_contexts()
+    #print(args)
     if not isinstance(args[0], Span):
         raise ValueError("Accepts Span-type arguments, %s-type found.")
     # Unary candidates

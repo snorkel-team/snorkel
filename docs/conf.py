@@ -23,12 +23,14 @@ sys.path.insert(0, os.path.abspath('..'))
 # Mock imports for troublesome modules (i.e. any that use C code)
 # See: http://blog.rtwilson.com/how-to-make-your-sphinx-documentation-compile-with-readthedocs-when-youre-using-numpy-and-scipy/
 import mock
- 
-MOCK_MODULES = ['numpy', 'scipy', 'tensorflow', 'numbskull', 'numbskull']
+MOCK_MODULES = [
+  'numpy', 'np', 'matplotlib', 'matplotlib.pyplot', 'plt', 'scipy', 
+  'scipy.sparse', 'sparse', 'pandas', 'tensorflow', 'tensorflow.contrib.rnn',
+  'sparse.csr_matrix', 'numbskull', 'numba', 'numbskull.inference', 
+  'numbskull.numbskulltypes'
+]
 for mod_name in MOCK_MODULES:
   sys.modules[mod_name] = mock.Mock()
-
-sys.modules['np'] = mock.Mock()
 
 # -- General configuration ------------------------------------------------
 

@@ -59,39 +59,46 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         raise NotImplementedError()
 
 
-class csr_LabelMatrix(csr_AnnotationMatrix):
+try:
+    class csr_LabelMatrix(csr_AnnotationMatrix):
 
-    def lf_stats(self, session, labels=None, est_accs=None):
-        """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
-        lf_names = [self.get_key(session, j).name for j in range(self.shape[1])]
+        def lf_stats(self, session, labels=None, est_accs=None):
+            """Returns a pandas DataFrame with the LFs and various per-LF statistics"""
+            lf_names = [self.get_key(session, j).name for j in range(self.shape[1])]
 
-        # Default LF stats
-        col_names = ['j', 'Coverage', 'Overlaps', 'Conflicts']
-        d = {
-            'j'         : range(self.shape[1]),
-            'Coverage'  : Series(data=matrix_coverage(self), index=lf_names),
-            'Overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
-            'Conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
-        }
-        if labels is not None:
-            col_names.extend(['TP', 'FP', 'FN', 'TN', 'Empirical Acc.'])
-            ls = np.ravel(labels.todense() if sparse.issparse(labels) else labels)
-            tp = matrix_tp(self, ls)
-            fp = matrix_fp(self, ls)
-            fn = matrix_fn(self, ls)
-            tn = matrix_tn(self, ls)
-            ac = (tp+tn).astype(float) / (tp+tn+fp+fn)
-            d['Empirical Acc.'] = Series(data=ac, index=lf_names)
-            d['TP']             = Series(data=tp, index=lf_names)
-            d['FP']             = Series(data=fp, index=lf_names)
-            d['FN']             = Series(data=fn, index=lf_names)
-            d['TN']             = Series(data=tn, index=lf_names)
+            # Default LF stats
+            col_names = ['j', 'Coverage', 'Overlaps', 'Conflicts']
+            d = {
+                'j'         : range(self.shape[1]),
+                'Coverage'  : Series(data=matrix_coverage(self), index=lf_names),
+                'Overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
+                'Conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
+            }
+            if labels is not None:
+                col_names.extend(['TP', 'FP', 'FN', 'TN', 'Empirical Acc.'])
+                ls = np.ravel(labels.todense() if sparse.issparse(labels) else labels)
+                tp = matrix_tp(self, ls)
+                fp = matrix_fp(self, ls)
+                fn = matrix_fn(self, ls)
+                tn = matrix_tn(self, ls)
+                ac = (tp+tn).astype(float) / (tp+tn+fp+fn)
+                d['Empirical Acc.'] = Series(data=ac, index=lf_names)
+                d['TP']             = Series(data=tp, index=lf_names)
+                d['FP']             = Series(data=fp, index=lf_names)
+                d['FN']             = Series(data=fn, index=lf_names)
+                d['TN']             = Series(data=tn, index=lf_names)
 
-        if est_accs is not None:
-            col_names.append('Learned Acc.')
-            d['Learned Acc.'] = est_accs
-            d['Learned Acc.'].index = lf_names
-        return DataFrame(data=d, index=lf_names)[col_names]
+            if est_accs is not None:
+                col_names.append('Learned Acc.')
+                d['Learned Acc.'] = est_accs
+                d['Learned Acc.'].index = lf_names
+            return DataFrame(data=d, index=lf_names)[col_names]
+
+# This is a hack for getting the documentation to build...
+except:
+    class csr_LabelMatrix(object):
+        def lf_stats(self, session, labels=None, est_accs=None):   
+            return None 
 
 
 class Annotator(UDFRunner):

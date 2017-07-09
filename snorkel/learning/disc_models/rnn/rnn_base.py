@@ -1,7 +1,7 @@
 import numpy as np
 import random
 import tensorflow as tf
-import tensorflow.contrib.rnn as rnn
+# import tensorflow.contrib.rnn as rnn
 import warnings
 
 from snorkel.learning.utils import LabelBalancer
@@ -48,7 +48,8 @@ class RNNBase(TFNoiseAwareModel):
         return x_batch, len_batch
 
     def _build_model(self, dim=50, attn_window=None, max_len=20,
-        cell_type=rnn.BasicLSTMCell, word_dict=SymbolTable(), **kwargs):
+        cell_type=tf.contrib.rnn.BasicLSTMCell, word_dict=SymbolTable(), 
+        **kwargs):
         """
         Build RNN model
         @dim: embedding dimension
@@ -85,10 +86,10 @@ class RNNBase(TFNoiseAwareModel):
             bw_cell = cell_type(dim)
             # Add attention if needed
             if attn_window:
-                fw_cell = rnn.AttentionCellWrapper(
+                fw_cell = tf.contrib.rnn.AttentionCellWrapper(
                     fw_cell, attn_window, state_is_tuple=True
                 )
-                bw_cell = rnn.AttentionCellWrapper(
+                bw_cell = tf.contrib.rnn.AttentionCellWrapper(
                     bw_cell, attn_window, state_is_tuple=True
                 )
             # Construct RNN

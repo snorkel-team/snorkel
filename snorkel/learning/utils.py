@@ -8,8 +8,8 @@ from itertools import product
 
 from pandas import DataFrame
 
-matplotlib.use('Agg')
-warnings.filterwarnings("ignore", module="matplotlib")
+# matplotlib.use('Agg')
+# warnings.filterwarnings("ignore", module="matplotlib")
 
 
 def reshape_marginals(marginals):

@@ -5,6 +5,11 @@ import numpy as np
 import scipy.sparse as sparse
 import warnings
 from itertools import product
+from multiprocessing import Process, Queue, JoinableQueue
+try:
+    from queue import Empty
+except:
+    from Queue import Empty
 
 from pandas import DataFrame
 
@@ -420,7 +425,133 @@ class RangeParameter(Hyperparameter):
         return np.arange(
             self.min_value, self.max_value + self.step, step=self.step
         )
+
+
+QUEUE_TIMEOUT = 3
+
+class ModelTester(Process):
+    def __init__(self, model_class, model_class_params, params_queue, 
+        scores_queue, X_train, X_valid, Y_valid, Y_train=None, b=0.5, 
+        set_unlabeled_as_neg=True):
+        Process.__init__(self)
+        self.model = model_class(**model_class_params)
+        self.params_queue = params_queue
+        self.scores_queue = scores_queue
+        self.X_train = X_train
+        self.Y_train = Y_train
+        self.X_valid = X_valid
+        self.Y_valid = Y_valid
+        self.scorer_params = {
+            'b': b, 
+            'set_unlabeled_as_neg': set_unlabeled_as_neg
+        }
+
+    def run(self):
+        while True:
+            # Get a new configuration from the queue
+            try:
+                k, hps = self.params_queue.get(True, QUEUE_TIMEOUT)
+                model_name = '{0}_{1}'.format(self.model.name, k)
+
+                # Train model with given hyperparameters
+                if self.Y_train is not None:
+                    self.model.train(self.X_train, self.Y_train, **hps)
+                else:
+                    self.model.train(self.X_train, **hps)
+
+                # Save the model
+                # NOTE: Currently, we have to save every model because we are
+                # testing asynchronously. This is obviously memory inefficient,
+                # although probably not that much of a problem in practice...
+                self.model.save(model_name=model_name)
+
+                # Test the model
+                run_scores = list(self.model.score(self.X_valid, self.Y_valid, 
+                    **self.scorer_params))
+
+                # Append score to out queue
+                self.scores_queue.put([k] + run_scores, True, QUEUE_TIMEOUT)
+            except Empty:
+                break
+
+class GridSearchMP(object):
+    """
+    Runs hyperparameter grid search over a model object with train and score methods,
+    training data (X), and training_marginals
+    Selects based on maximizing F1 score on a supplied validation set
+    Specify search space with Hyperparameter arguments
+    """
+    def __init__(self, model_class, parameters, X_train, Y_train=None, 
+        **model_class_params):
+        self.model_class        = model_class
+        self.params             = parameters
+        self.param_names        = [param.name for param in parameters]
+        self.X_train            = X_train
+        self.Y_train            = Y_train
+        self.model_class_params = model_class_params
         
+    def search_space(self):
+        return product(*[param.get_all_values() for param in self.params])
+
+    def fit(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True, 
+        validation_kwargs={}, n_threads=2, **model_hyperparams):
+        """
+        Basic method to start grid search, returns DataFrame table of results
+          b specifies the positive class threshold for calculating f1
+          set_unlabeled_as_neg is used to decide class of unlabeled cases for f1
+          Non-search parameters are set using model_hyperparamters
+        """
+        # Create queue of hyperparameters to test
+        params_queue = JoinableQueue()
+        param_val_sets = []
+        for k, param_vals in enumerate(self.search_space()):
+            param_val_sets.append(param_vals)
+            hps = model_hyperparams.copy()
+            for pn, pv in zip(self.param_names, param_vals):
+                hps[pn] = pv
+            params_queue.put((k, hps))
+
+        # Create a queue to store output results
+        scores_queue = JoinableQueue()
+
+        # Start UDF Processes
+        ps = []
+        for i in range(n_threads):
+            p = ModelTester(self.model_class, self.model_class_params, 
+                    params_queue, scores_queue, self.X_train, X_valid, Y_valid,
+                    Y_train=self.Y_train, b=b, 
+                    set_unlabeled_as_neg=set_unlabeled_as_neg)
+            p.start()
+            ps.append(p)
+
+        # Collect scores
+        run_stats = []
+        while any([p.is_alive() for p in ps]):
+            while True:
+                try:
+                    scores = scores_queue.get(True, QUEUE_TIMEOUT)
+                    k = scores[0]
+                    param_vals = param_val_sets[k]
+                    run_stats.append([k] + list(param_vals) + list(scores[1:]))
+                    print("Model {0} Done; score: {1}".format(k, scores[-1]))
+                    scores_queue.task_done()
+                except Empty:
+                    break
+
+        # Load best model; assume score is last element
+        k_opt = np.argmax([s[-1] for s in run_stats])
+        model = self.model_class(**self.model_class_params)
+        model.load('{0}_{1}'.format(model.name, k_opt))
+
+        # Return model and DataFrame of scores
+        categorical = (len(scores) == 1)
+        labels = ['Acc.'] if categorical else ['Prec.', 'Rec.', 'F1']
+        sort_by = 'Acc.' if categorical else 'F1'
+        self.results = DataFrame.from_records(
+            run_stats, columns=["Model"] + self.param_names + labels
+        ).sort_values(by=sort_by, ascending=False)
+        return model, self.results 
+
 
 class GridSearch(object):
     """

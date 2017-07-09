@@ -288,9 +288,6 @@ class BratAnnotator(object):
         y_true = [1 if c in mapped_cands else 0 for c in subset_cands]
         y_pred = [1 if marginals[c.id] > b else 0 for c in subset_cands]
 
-        print y_true
-        print y_pred
-
         missed = 0 if not recall_correction else missed
         title = "{} BRAT Scores ({} Documents)".format("Unadjusted" if not recall_correction else "Adjusted",
                                                        len(doc_names))

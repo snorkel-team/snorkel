@@ -33,7 +33,7 @@ def mark_sentence(s, args):
 
 class reRNN(RNNBase):
     """reRNN for relation extraction"""
-    def _preprocess_data(self, candidates, extend, word_dict=SymbolTable()):
+    def _preprocess_data(self, candidates, extend):
         """Convert candidate sentences to lookup sequences
         
         :param candidates: candidates to process
@@ -48,7 +48,7 @@ class reRNN(RNNBase):
             ]
             s = mark_sentence(candidate_to_tokens(candidate), args)
             # Either extend word table or retrieve from it
-            f = word_dict.get if extend else word_dict.lookup
+            f = self.word_dict.get if extend else self.word_dict.lookup
             data.append(np.array(map(f, s)))
             ends.append(max(candidate[i].get_word_end() for i in [0, 1]))
-        return data, ends, word_dict
+        return data, ends

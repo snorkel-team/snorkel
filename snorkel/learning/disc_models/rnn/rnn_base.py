@@ -17,7 +17,7 @@ SD = 0.1
 class RNNBase(TFNoiseAwareModel):
     representation = True
 
-    def _preprocess_data(self, candidates, extend, word_dict=SymbolTable()):
+    def _preprocess_data(self, candidates, extend):
         """Build @self.word_dict to encode and process data for extraction
             Return list of encoded sentences, list of last index of arguments,
             and the word dictionary (extended if extend=True)
@@ -141,18 +141,18 @@ class RNNBase(TFNoiseAwareModel):
         train.
         """
         # Text preprocessing
-        X_train, ends, word_dict = self._preprocess_data(X_train, extend=True)
+        self.word_dict = SymbolTable()
+        X_train, ends = self._preprocess_data(X_train, extend=True)
         if X_dev is not None:
-            X_dev, _, _ = self._preprocess_data(X_dev, word_dict=word_dict, 
-                extend=False)
+            X_dev, _ = self._preprocess_data(X_dev, extend=False)
         
         # Get max sentence size
         max_len = max_sentence_length or max(len(x) for x in X_train)
         self._check_max_sentence_length(ends, max_len=max_len)
         
-        # Train model
+        # Train model- note we pass word_dict through here so it gets saved...
         super(RNNBase, self).train(X_train, Y_train, X_dev=X_dev,
-            word_dict=word_dict, max_len=max_len, **kwargs)
+            word_dict=self.word_dict, max_len=max_len, **kwargs)
 
     def marginals(self, test_candidates):
         """Get likelihood of tagged sequences represented by test_candidates
@@ -160,8 +160,7 @@ class RNNBase(TFNoiseAwareModel):
         """
         # Preprocess if not already preprocessed
         if isinstance(test_candidates[0], Candidate):
-            X_test, ends, _ = self._preprocess_data(test_candidates, 
-                extend=False)
+            X_test, ends = self._preprocess_data(test_candidates, extend=False)
             self._check_max_sentence_length(ends)
         else:
             X_test = test_candidates

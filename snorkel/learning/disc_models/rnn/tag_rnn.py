@@ -25,7 +25,7 @@ class TagRNN(RNNBase):
     """TagRNN for sequence tagging"""
     OPEN, CLOSE = '~~[[~~', '~~]]~~'
 
-    def _preprocess_data(self, candidates, extend, word_dict=SymbolTable()):
+    def _preprocess_data(self, candidates, extend):
         """Convert candidate sentences to tagged symbol sequences
             @candidates: candidates to process
             @extend: extend symbol table for tokens (train), or lookup (test)?
@@ -40,7 +40,7 @@ class TagRNN(RNNBase):
             # Tag sequence
             s = tag(tokens, labels)
             # Either extend word table or retrieve from it
-            f = word_dict.get if extend else word_dict.lookup
+            f = self.word_dict.get if extend else self.word_dict.lookup
             data.append(np.array(map(f, s)))
             ends.append(c[0].get_word_end())
-        return data, ends, word_dict
+        return data, ends

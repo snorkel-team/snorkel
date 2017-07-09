@@ -474,10 +474,11 @@ class ModelTester(Process):
             except Empty:
                 break
 
-class GridSearchMP(object):
+
+class GridSearch(object):
     """
-    Runs hyperparameter grid search over a model object with train and score methods,
-    training data (X), and training_marginals
+    Runs hyperparameter grid search over a model object with train and score 
+    methods, training data (X), and training_marginals
     Selects based on maximizing F1 score on a supplied validation set
     Specify search space with Hyperparameter arguments
     """
@@ -494,6 +495,82 @@ class GridSearchMP(object):
         return product(*[param.get_all_values() for param in self.params])
 
     def fit(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True, 
+        validation_kwargs={}, n_threads=1, **model_hyperparams):
+        if n_threads > 1:
+            opt_model, run_stats = self._fit_mt(X_valid, Y_valid, b=b,
+                set_unlabeled_as_neg=set_unlabeled_as_neg,
+                validation_kwargs=validation_kwargs, n_threads=n_threads,
+                **model_hyperparams)
+        else:
+            opt_model, run_stats = self._fit_st(X_valid, Y_valid, b=b,
+                set_unlabeled_as_neg=set_unlabeled_as_neg,
+                validation_kwargs=validation_kwargs,
+                **model_hyperparams)
+        return opt_model, run_stats
+
+    def _fit_st(self, X_valid, Y_valid, b=0.5,
+        set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
+        """
+        Basic method to start grid search, returns DataFrame table of results
+          b specifies the positive class threshold for calculating f1
+          set_unlabeled_as_neg is used to decide class of unlabeled cases for f1
+          Non-search parameters are set using model_hyperparamters
+        """
+        self.model = self.model_class(**self.model_class_params)
+
+        # Iterate over the param values
+        run_stats = []
+        run_score_opt = -1.0
+        for k, param_vals in enumerate(self.search_space()):
+            model_name = '{0}_{1}'.format(self.model.name, k)
+
+            # Set the new hyperparam configuration to test
+            for pn, pv in zip(self.param_names, param_vals):
+                model_hyperparams[pn] = pv
+            print("=" * 60)
+            print("[%d] Testing %s" % (k+1, ', '.join([
+                "%s = %0.2e" % (pn,pv)
+                for pn,pv in zip(self.param_names, param_vals)
+            ])))
+            print("=" * 60)
+            
+            # Train the model
+            if self.Y_train is not None:
+                self.model.train(self.X_train,self.Y_train,**model_hyperparams)
+            else:
+                self.model.train(self.X_train, **model_hyperparams)
+            
+            # Test the model
+            run_scores = self.model.score(X_valid, Y_valid, b=b,
+                set_unlabeled_as_neg=set_unlabeled_as_neg)
+            if self.model.cardinality > 2:
+                run_score, run_score_label = run_scores, "Accuracy"
+                run_scores = [run_score]
+            else:
+                run_score, run_score_label = run_scores[-1], "F1 Score"
+            
+            # Add scores to running stats, print, and set as optimal if best
+            print("[{0}] {1}: {2}".format(self.model.name, run_score_label,
+                run_score))
+            run_stats.append(list(param_vals) + list(run_scores))
+            if run_score > run_score_opt or k == 0:
+                self.model.save(model_name=model_name)
+                opt_model = model_name
+                run_score_opt = run_score
+        
+        # Set optimal parameter in the learner model
+        self.model.load(opt_model)
+        
+        # Return optimal model & DataFrame of scores
+        run_score_labels = ['Acc.'] if self.model.cardinality > 2 else \
+            ['Prec.', 'Rec.', 'F1']
+        sort_by = 'Acc.' if self.model.cardinality > 2 else 'F1'
+        self.results = DataFrame.from_records(
+            run_stats, columns=self.param_names + run_score_labels
+        ).sort_values(by=sort_by, ascending=False)
+        return self.model, self.results
+
+    def _fit_mt(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True, 
         validation_kwargs={}, n_threads=2, **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
@@ -551,91 +628,15 @@ class GridSearchMP(object):
             run_stats, columns=["Model"] + self.param_names + labels
         ).sort_values(by=sort_by, ascending=False)
         return model, self.results 
-
-
-class GridSearch(object):
-    """
-    Runs hyperparameter grid search over a model object with train and score methods,
-    training data (X), and training_marginals
-    Selects based on maximizing F1 score on a supplied validation set
-    Specify search space with Hyperparameter arguments
-    """
-    def __init__(self, model, parameters, X, training_marginals=None):
-        self.model              = model
-        self.params             = parameters
-        self.param_names        = [param.name for param in parameters]
-        self.X                  = X
-        self.training_marginals = training_marginals
-        
-    def search_space(self):
-        return product(*[param.get_all_values() for param in self.params])
-
-    def fit(self, X_validation, validation_labels, b=0.5,
-        set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
-        """
-        Basic method to start grid search, returns DataFrame table of results
-          b specifies the positive class threshold for calculating f1
-          set_unlabeled_as_neg is used to decide class of unlabeled cases for f1
-          Non-search parameters are set using model_hyperparamters
-        """
-        # Iterate over the param values
-        run_stats       = []
-        run_score_opt   = -1.0
-        base_model_name = self.model.name
-        model_k         = 0
-        for k, param_vals in enumerate(self.search_space()):
-            model_name = '{0}_{1}'.format(base_model_name, model_k)
-            model_k += 1
-            # Set the new hyperparam configuration to test
-            for pn, pv in zip(self.param_names, param_vals):
-                model_hyperparams[pn] = pv
-            print("=" * 60)
-            print("[%d] Testing %s" % (k+1, ', '.join([
-                "%s = %0.2e" % (pn,pv)
-                for pn,pv in zip(self.param_names, param_vals)
-            ])))
-            print("=" * 60)
-            # Train the model
-            if self.training_marginals is not None:
-                self.model.train(
-                    self.X, self.training_marginals, **model_hyperparams)
-            else:
-                self.model.train(self.X, **model_hyperparams)
-            # Test the model
-            run_scores = self.model.score(X_validation, validation_labels, b=b,
-                set_unlabeled_as_neg=set_unlabeled_as_neg)
-            if self.model.cardinality > 2:
-                run_score, run_score_label = run_scores, "Accuracy"
-                run_scores = [run_score]
-            else:
-                run_score, run_score_label = run_scores[-1], "F1 Score"
-            # Add scores to running stats, print, and set as optimal if best
-            print("[{0}] {1}: {2}".format(self.model.name, run_score_label,
-                run_score))
-            run_stats.append(list(param_vals) + list(run_scores))
-            if run_score > run_score_opt or k == 0:
-                self.model.save(model_name=model_name)
-                opt_model = model_name
-                run_score_opt = run_score
-        # Set optimal parameter in the learner model
-        self.model.load(opt_model)
-        # Return DataFrame of scores
-        run_score_labels = ['Acc.'] if self.model.cardinality > 2 else \
-            ['Prec.', 'Rec.', 'F1']
-        sort_by = 'Acc.' if self.model.cardinality > 2 else 'F1'
-        self.results = DataFrame.from_records(
-            run_stats, columns=self.param_names + run_score_labels
-        ).sort_values(by=sort_by, ascending=False)
-        return self.results
     
     
 class RandomSearch(GridSearch):
-    def __init__(self, model, parameters, X, training_marginals=None, n=10, 
-        **kwargs):
+    def __init__(self, model_class, parameters, X_train, Y_train=None, n=10,
+        **model_class_params):
         """Search a random sample of size n from a parameter grid"""
         self.n = n
-        super(RandomSearch, self).__init__(model, parameters, X, 
-            training_marginals=training_marginals, **kwargs)
+        super(RandomSearch, self).__init__(model_class, parameters, X_train,
+            Y_train=Y_train, **model_class_params)
         print("Initialized RandomSearch search of size {0}. Search space size = {1}.".format(
             self.n, np.product([len(param.get_all_values()) for param in self.params])))
         

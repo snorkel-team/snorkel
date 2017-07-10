@@ -483,7 +483,7 @@ def save_marginals(session, X, marginals, training=True):
     # Execute update
     session.execute(q, insert_vals)
     session.commit()
-    print "Saved %s marginals" % len(marginals)
+    print("Saved %s marginals" % len(marginals))
 
 
 def load_marginals(session, X=None, split=0, training=True):

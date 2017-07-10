@@ -26,19 +26,27 @@ Today's state-of-the-art machine learning models require massive labeled trainin
 
 _Surprisingly_, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models. We see Snorkel as providing a general framework for many [_weak supervision_](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html) techniques, and as defining a new programming model for weakly-supervised machine learning systems.
 
-### Users
+## Users
 We're lucky to have some amazing collaborators who are currently using Snorkel!
 
 <img src="figs/user_logos.png" width="500" height="200" align="middle" />
 
 However, **_Snorkel is very much a work in progress_**, so we're eager for any and all feedback... let us know what you think and how we can improve Snorkel in the [Issues](https://github.com/HazyResearch/snorkel/issues) section!
 
-### References
-* _Data Programming: Creating Large Training Sets, Quickly_ ([NIPS 2016](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly), [blog](https://hazyresearch.github.io/snorkel/blog/weak_supervision.html))
-* _Snorkel: Fast Training Set Generation for Information Extraction_ ([SIGMOD Demo 2017](http://hazyresearch.github.io/snorkel/pdfs/snorkel_demo.pdf))
-* _Learning the Structure of Generative Models without Labeled Data_ ([ICML 2017](https://arxiv.org/abs/1703.00854), [blog](https://hazyresearch.github.io/snorkel/blog/structure_learning.html))
-* _Data Programming with DDLite: Putting Humans in a Different Part of the Loop_ ([HILDA @ SIGMOD 2016](http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf))
-* _Fonduer: Knowledge Base Construction from Richly Formatted Data_, ([ArXiv](https://arxiv.org/abs/1703.05028), [blog](https://hazyresearch.github.io/snorkel/blog/fonduer.html))
+## References
+* _[Data Programming: Creating Large Training Sets, Quickly](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly)_ (NIPS 2016)
+* _[Snorkel: Fast Training Set Generation for Information Extraction](http://hazyresearch.github.io/snorkel/pdfs/snorkel_demo.pdf)_ (SIGMOD DEMO 2017)
+* _[Learning the Structure of Generative Models without Labeled Data](https://arxiv.org/abs/1703.00854)_ (ICML 2017)
+* _[Data Programming with DDLite: Putting Humans in a Different Part of the Loop](http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf)_ (HILDA @ SIGMOD 2016; note Snorkel was previously <em>DDLite</em>)
+* _[Socratic Learning: Correcting Misspecified Generative Models using Discriminative Models](https://arxiv.org/abs/1610.08123)_
+* _[Fonduer: Knowledge Base Construction from Richly Formatted Data](https://arxiv.org/abs/1703.05028)_
+
+## Learning how to use Snorkel
+The [introductory tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro) covers the entire Snorkel workflow, showing how to extract spouse relations from news articles.
+The tutorial is available in the following directory:
+```
+tutorials/intro
+```
 
 ## Release Notes
 ### Major changes in v0.6:
@@ -54,9 +62,7 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 * Integration with Apache Tika
 * And many more fixes, additions, and new material!
 
-
 ## Installation
-
 Snorkel uses Python 2.7 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
 
 ### Setting Up Conda
@@ -99,13 +105,6 @@ See [this FAQ](https://hazyresearch.github.io/snorkel/install_faq) for help with
 After installing, just run:
 ```
 ./run.sh
-```
-
-## Learning how to use Snorkel
-The [introductory tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro) covers the entire Snorkel workflow, showing how to extract spouse relations from news articles.
-The tutorial is available in the following directory:
-```
-tutorials/intro
 ```
 
 ## Issues

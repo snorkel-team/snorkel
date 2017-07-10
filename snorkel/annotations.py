@@ -138,16 +138,17 @@ class Annotator(UDFRunner):
                                         annotation_key_class=annotation_key_class,
                                         f_gen=f_gen)
 
-    def apply(self, split, key_group=0, replace_key_set=True, **kwargs):
-
+    def apply(self, split=0, key_group=0, replace_key_set=True, cids_query=None,
+        **kwargs):
         # If we are replacing the key set, make sure the reducer key id cache is cleared!
         if replace_key_set:
             self.reducer.key_cache = {}
 
         # Get the cids based on the split, and also the count
         SnorkelSession = new_sessionmaker()
-        session        = SnorkelSession()
-        cids_query     = session.query(Candidate.id).filter(Candidate.split == split)
+        session = SnorkelSession()
+        cids_query = cids_query or session.query(Candidate.id)\
+                                          .filter(Candidate.split == split)
 
         # Note: In the current UDFRunner implementation, we load all these into memory and fill a
         # multiprocessing JoinableQueue with them before starting... so might as well load them here and pass in.
@@ -156,12 +157,16 @@ class Annotator(UDFRunner):
         cids_count = len(cids)
         
         # Run the Annotator
-        super(Annotator, self).apply(cids, split=split, key_group=key_group, replace_key_set=replace_key_set, count=cids_count, **kwargs)
+        super(Annotator, self).apply(cids, split=split, key_group=key_group,
+            replace_key_set=replace_key_set, cids_query=cids_query, 
+            count=cids_count, **kwargs)
 
         # Load the matrix
-        return self.load_matrix(session, split=split, key_group=key_group)
+        return self.load_matrix(session, split=split, cids_query=cids_query, 
+            key_group=key_group)
 
-    def clear(self, session, split, key_group, replace_key_set, **kwargs):
+    def clear(self, session, split=0, key_group=0, replace_key_set=True,
+        cids_query=None, **kwargs):
         """
         Deletes the Annotations for the Candidates in the given split.
         If replace_key_set=True, deletes *all* Annotations (of this Annotation sub-class)
@@ -171,8 +176,10 @@ class Annotator(UDFRunner):
         
         # If replace_key_set=False, then we just delete the annotations for candidates in our split
         if not replace_key_set:
-            sub_query = session.query(Candidate.id).filter(Candidate.split == split).subquery()
-            query     = query.filter(self.annotation_class.candidate_id.in_(sub_query))
+            sub_query = cids_query or session.query(Candidate.id)\
+                                             .filter(Candidate.split == split)
+            sub_query = sub_query.subquery()
+            query = query.filter(self.annotation_class.candidate_id.in_(sub_query))
         query.delete(synchronize_session='fetch')
 
         # If we are creating a new key set, delete all old annotation keys
@@ -181,11 +188,13 @@ class Annotator(UDFRunner):
             query = query.filter(self.annotation_key_class.group == key_group)
             query.delete(synchronize_session='fetch')
 
-    def apply_existing(self, split, key_group=0, **kwargs):
+    def apply_existing(self, split=0, key_group=0, cids_query=None, **kwargs):
         """Alias for apply that emphasizes we are using an existing AnnotatorKey set."""
-        return self.apply(split, key_group=key_group, replace_key_set=False, **kwargs)
+        return self.apply(split=split, key_group=key_group,
+            replace_key_set=False, cids_query=cids_query, **kwargs)
 
-    def load_matrix(self, session, split, key_group=0, **kwargs):
+    def load_matrix(self, session, split=0, key_group=0, cids_query=None, 
+        **kwargs):
         raise NotImplementedError()
 
 
@@ -290,13 +299,14 @@ class AnnotatorUDF(UDF):
 
 
 def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
-    split=0, key_group=0, key_names=None, zero_one=False, load_as_array=False):
+    split=0, cids_query=None, key_group=0, key_names=None, zero_one=False,
+    load_as_array=False):
     """
     Returns the annotations corresponding to a split of candidates with N members
     and an AnnotationKey group with M distinct keys as an N x M CSR sparse matrix.
     """
-    cid_query = session.query(Candidate.id)
-    cid_query = cid_query.filter(Candidate.split == split)
+    cid_query = cids_query or session.query(Candidate.id)\
+                                     .filter(Candidate.split == split)
     cid_query = cid_query.order_by(Candidate.id)
 
     keys_query = session.query(annotation_key_class.id)
@@ -402,8 +412,8 @@ class LabelAnnotator(Annotator):
         
         super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen)
 
-    def load_matrix(self, session, split, **kwargs):
-        return load_label_matrix(session, split=split, **kwargs)
+    def load_matrix(self, session, **kwargs):
+        return load_label_matrix(session, **kwargs)
 
         
 class FeatureAnnotator(Annotator):
@@ -411,8 +421,8 @@ class FeatureAnnotator(Annotator):
     def __init__(self, f=get_span_feats):
         super(FeatureAnnotator, self).__init__(Feature, FeatureKey, f)
 
-    def load_matrix(self, session, split, key_group=0, **kwargs):
-        return load_feature_matrix(session, split=split, key_group=key_group, **kwargs)
+    def load_matrix(self, session, **kwargs):
+        return load_feature_matrix(session, **kwargs)
 
 
 def save_marginals(session, X, marginals, training=True):

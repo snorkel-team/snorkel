@@ -4,7 +4,7 @@
 **_v0.6.0_**
 
 
-[![Documentation](https://readthedocs.org/projects/snorkel/badge/?version=master)](http://snorkel.readthedocs.io/en/latest/)
+[![Documentation](https://readthedocs.org/projects/snorkel/badge/?version=master)](http://snorkel.readthedocs.io/en/master/)
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
@@ -17,7 +17,7 @@
 
 * Installation instructions [below](#installation--dependencies)
 * Get started with the tutorials [below](#learning-how-to-use-snorkel)
-* Documentation [here](http://snorkel.readthedocs.io/en/latest/)
+* Documentation [here](http://snorkel.readthedocs.io/en/master/)
 
 ## Motivation
 Snorkel is a system for rapidly **creating, modeling, and managing training data**, currently focused on accelerating the development of _structured or "dark" data extraction applications_ for domains in which large labeled training sets are not available or easy to obtain.
@@ -50,7 +50,7 @@ tutorials/intro
 
 ## Release Notes
 ### Major changes in v0.6:
-* Support for categorical classification, including "dynamically-scoped" or _blocked_ categoricals (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/advanced/Categorical_Classes.ipynb))
+* Support for categorical classification, including "dynamically-scoped" or _blocked_ categoricals (see [tutorial](tutorials/advanced/Categorical_Classes.ipynb))
 * Support for structure learning (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/advanced/Structure_Learning.ipynb), ICML 2017 paper)
 * Support for labeled data in generative model
 * Refactor of TensorFlow bindings; fixes grid search and model saving / reloading issues (see `snorkel/learning`)

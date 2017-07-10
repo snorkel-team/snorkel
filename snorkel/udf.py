@@ -74,7 +74,6 @@ class UDFRunner(object):
         # Commit session and close progress bar if applicable
         udf.session.commit()
         if pb:
-            pb.bar(n)
             pb.close()
         
     def apply_mt(self, xs, parallelism, **kwargs):

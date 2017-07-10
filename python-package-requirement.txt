@@ -7,7 +7,7 @@ lxml==3.6.4
 matplotlib
 nltk
 numba
-git+https://github.com/HazyResearch/numbskull@dev
+git+https://github.com/HazyResearch/numbskull@master
 numpy>=1.11
 pandas
 requests
@@ -16,3 +16,4 @@ six
 sqlalchemy>=1.0.14
 tensorflow>=1.0
 tika
+spacy

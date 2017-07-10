@@ -11,7 +11,7 @@ def generate_model(n, dep_density, class_prior=False, lf_propensity=False, lf_pr
                    dep_similar=False, dep_reinforcing=False, dep_fixing=False, dep_exclusive=False, force_dep=False):
     weights = GenerativeModelWeights(n)
     for i in range(n):
-        weights.lf_accuracy_log_odds[i] = 1.1 - 0.2 * random.random()
+        weights.lf_accuracy[i] = 1.1 - 0.2 * random.random()
 
     if class_prior:
         weights.class_prior = random.choice((-1.0, -2.0))
@@ -97,7 +97,7 @@ def generate_label_matrix(weights, m):
         w_off = 0
 
     for i in range(weights.n):
-        weight[w_off + i]['initialValue'] = np.float64(weights.lf_accuracy_log_odds[i])
+        weight[w_off + i]['initialValue'] = np.float64(weights.lf_accuracy[i])
     w_off += weights.n
 
     for optional_name in GenerativeModel.optional_names:
@@ -260,12 +260,12 @@ def generate_label_matrix(weights, m):
     fg = ns.getFactorGraph()
 
     y = np.ndarray((m,), np.int64)
-    L = sparse.lil_matrix((m, weights.n))
+    L = sparse.lil_matrix((m, weights.n), dtype=np.int64)
     for i in range(m):
         fg.burnIn(10, False)
-        y[i] = 1 if fg.var_value[0, 0] == 1 else -1
+        y[i] = 1 if fg.var_value[0, 0] == 0 else -1
         for j in range(weights.n):
-            if fg.var_value[0, 1 + j] != 1:
-                L[i, j] = fg.var_value[0, 1 + j] - 1
+            if fg.var_value[0, 1 + j] != 2:
+                L[i, j] = 1 if fg.var_value[0, 1 + j] == 0 else -1
 
     return y, L.tocsr()

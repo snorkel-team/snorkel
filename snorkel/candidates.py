@@ -27,7 +27,7 @@ class CandidateExtractor(UDFRunner):
     :param symmetric_relations: Boolean indicating whether to extract symmetric Candidates, i.e., rel(A,B) and rel(B,A),
                                 where A and B are Contexts. Only applies to binary relations. Default is True.
     """
-    def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=True):
+    def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=False):
         super(CandidateExtractor, self).__init__(CandidateExtractorUDF,
                                                  candidate_class=candidate_class,
                                                  cspaces=cspaces,

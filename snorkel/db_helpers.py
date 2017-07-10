@@ -10,7 +10,7 @@ def reload_annotator_labels(session, candidate_class, annotator_name, split, fil
         ak = GoldLabelKey(name=annotator_name)
         session.add(ak)
         session.commit()
-    
+
     labels = []
     missed = []
     sl_query = session.query(StableLabel).filter(StableLabel.annotator_name == annotator_name)
@@ -19,7 +19,7 @@ def reload_annotator_labels(session, candidate_class, annotator_name, split, fil
         context_stable_ids = sl.context_stable_ids.split('~~')
 
         # Check for labeled Contexts
-        # TODO: Does not create the Contexts if they do not yet exist! 
+        # TODO: Does not create the Contexts if they do not yet exist!
         contexts = []
         for stable_id in context_stable_ids:
             context = session.query(Context).filter(Context.stable_id == stable_id).first()
@@ -37,7 +37,7 @@ def reload_annotator_labels(session, candidate_class, annotator_name, split, fil
 
         # Assemble query and check
         candidate_query = session.query(candidate_class)
-        for k, v in candidate_args.iteritems():
+        for k, v in candidate_args.items():
             candidate_query = candidate_query.filter(getattr(candidate_class, k) == v)
         candidate = candidate_query.first()
 

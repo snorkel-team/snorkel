@@ -40,7 +40,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
     def get_candidate(self, session, i):
         """Return the Candidate object corresponding to row i"""
         return session.query(Candidate).filter(Candidate.id == self.row_index[i]).one()
-    
+
     def get_row_index(self, candidate):
         """Return the row index of the Candidate"""
         return self.candidate_index[candidate.id]
@@ -61,7 +61,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         else:
             idxs = np.array([s])
         index_new, inv_index_new = {}, {}
-        for i, k in index.iteritems():
+        for i, k in index.items():
             if i in idxs:
                 i_new = np.where(idxs == i)[0][0]
                 index_new[i_new] = k
@@ -70,7 +70,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
 
     def _get_submatrix(self, row_slice, col_slice):
         # Get the slice of the matrix
-        X = super(csr_AnnotationMatrix, self)._get_submatrix(row_slice, 
+        X = super(csr_AnnotationMatrix, self)._get_submatrix(row_slice,
             col_slice)
         X.annotation_key_cls = self.annotation_key_cls
 
@@ -124,8 +124,8 @@ try:
 # This is a hack for getting the documentation to build...
 except:
     class csr_LabelMatrix(object):
-        def lf_stats(self, session, labels=None, est_accs=None):   
-            return None 
+        def lf_stats(self, session, labels=None, est_accs=None):
+            return None
 
 
 class Annotator(UDFRunner):
@@ -155,14 +155,14 @@ class Annotator(UDFRunner):
         # Also, if we try to pass in a query iterator instead, with AUTOCOMMIT on, we get a TXN error...
         cids       = cids_query.all()
         cids_count = len(cids)
-        
+
         # Run the Annotator
         super(Annotator, self).apply(cids, split=split, key_group=key_group,
-            replace_key_set=replace_key_set, cids_query=cids_query, 
+            replace_key_set=replace_key_set, cids_query=cids_query,
             count=cids_count, **kwargs)
 
         # Load the matrix
-        return self.load_matrix(session, split=split, cids_query=cids_query, 
+        return self.load_matrix(session, split=split, cids_query=cids_query,
             key_group=key_group)
 
     def clear(self, session, split=0, key_group=0, replace_key_set=True,
@@ -173,7 +173,7 @@ class Annotator(UDFRunner):
         and also deletes all AnnotationKeys (of this sub-class)
         """
         query = session.query(self.annotation_class)
-        
+
         # If replace_key_set=False, then we just delete the annotations for candidates in our split
         if not replace_key_set:
             sub_query = cids_query or session.query(Candidate.id)\
@@ -193,7 +193,7 @@ class Annotator(UDFRunner):
         return self.apply(split=split, key_group=key_group,
             replace_key_set=False, cids_query=cids_query, **kwargs)
 
-    def load_matrix(self, session, split=0, key_group=0, cids_query=None, 
+    def load_matrix(self, session, split=0, key_group=0, cids_query=None,
         **kwargs):
         raise NotImplementedError()
 
@@ -247,7 +247,7 @@ class AnnotatorUDF(UDF):
             anno_update_query = anno_update_query.where(self.annotation_class.candidate_id == bindparam('cid'))
             anno_update_query = anno_update_query.where(self.annotation_class.key_id == bindparam('kid'))
             anno_update_query = anno_update_query.values(value=bindparam('value'))
-        
+
         # We only need to insert AnnotationKeys if replace_key_set=True
         # Note that in current configuration, we never update AnnotationKeys!
         if replace_key_set:
@@ -345,7 +345,7 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
     # The total number of annotations in DB which is weird behavior...
     q = session.query(annotation_class.candidate_id, annotation_class.key_id, annotation_class.value)
     q = q.order_by(annotation_class.candidate_id)
-    
+
     # Iteratively construct row index and output sparse matrix
     for cid, kid, val in q.all():
         if cid in cid_to_row and kid in kid_to_col:
@@ -374,7 +374,7 @@ def load_gold_labels(session, annotator_name, **kwargs):
 
 class LabelAnnotator(Annotator):
     """Apply labeling functions to the candidates, generating Label annotations
-    
+
     :param lfs: A _list_ of labeling functions (LFs)
     """
     def __init__(self, lfs=None, label_generator=None):
@@ -409,13 +409,13 @@ class LabelAnnotator(Annotator):
                     raise ValueError("""
                         Unable to parse label with value %s
                         for candidate with values %s""" % (label, c.values))
-        
+
         super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen)
 
     def load_matrix(self, session, **kwargs):
         return load_label_matrix(session, **kwargs)
 
-        
+
 class FeatureAnnotator(Annotator):
     """Apply feature generators to the candidates, generating Feature annotations"""
     def __init__(self, f=get_span_feats):
@@ -428,8 +428,8 @@ class FeatureAnnotator(Annotator):
 def save_marginals(session, X, marginals, training=True):
     """Save marginal probabilities for a set of Candidates to db.
 
-    :param X: Either an M x N csr_AnnotationMatrix-class matrix, where M 
-        is number of candidates, N number of LFs/features; OR a list of 
+    :param X: Either an M x N csr_AnnotationMatrix-class matrix, where M
+        is number of candidates, N number of LFs/features; OR a list of
         arbitrary objects with candidate ids accessible via a .id attrib
     :param marginals: A dense M x K matrix of marginal probabilities, where
         K is the cardinality of the candidates, OR a M-dim list/array if K=2.
@@ -445,7 +445,7 @@ def save_marginals(session, X, marginals, training=True):
         marginals = np.array(marginals)
         shape = marginals.shape
 
-    # Handle binary input as M x 1-dim array; assume elements represent 
+    # Handle binary input as M x 1-dim array; assume elements represent
     # poksitive (k=1) class values
     if len(shape) == 1:
         marginals = np.vstack([1-marginals, marginals]).T

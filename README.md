@@ -51,14 +51,14 @@ tutorials/intro
 ## Release Notes
 ### Major changes in v0.6:
 * Support for categorical classification, including "dynamically-scoped" or _blocked_ categoricals (see [tutorial](tutorials/advanced/Categorical_Classes.ipynb))
-* Support for structure learning (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/advanced/Structure_Learning.ipynb), ICML 2017 paper)
+* Support for structure learning (see [tutorial](tutorials/advanced/Structure_Learning.ipynb), ICML 2017 paper)
 * Support for labeled data in generative model
 * Refactor of TensorFlow bindings; fixes grid search and model saving / reloading issues (see `snorkel/learning`)
-* New, simplified Intro tutorial ([here](https://github.com/HazyResearch/snorkel/tree/new_intro/tutorials/intro))
+* New, simplified Intro tutorial ([here](tutorials/intro))
 * Refactored parser class and support for [spaCy](https://spacy.io/) as new default parser
-* Support for easy use of the [BRAT annotation tool](http://brat.nlplab.org/) (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro_brat/tutorials/advanced/BRAT_Annotations.ipynb))
-* Initial Spark integration, for scale out of LF application (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/snark/Snark%20Tutorial.ipynb))
-* Tutorial on using crowdsourced data [here](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/crowdsourcing/Crowdsourced_Sentiment_Analysis.ipynb)
+* Support for easy use of the [BRAT annotation tool](http://brat.nlplab.org/) (see [tutorial](tutorials/advanced/BRAT_Annotations.ipynb))
+* Initial Spark integration, for scale out of LF application (see [tutorial](tutorials/snark/Snark%20Tutorial.ipynb))
+* Tutorial on using crowdsourced data [here](tutorials/crowdsourcing/Crowdsourced_Sentiment_Analysis.ipynb)
 * Integration with Apache Tika
 * And many more fixes, additions, and new material!
 

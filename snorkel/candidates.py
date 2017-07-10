@@ -158,7 +158,7 @@ class Ngrams(CandidateSpace):
 
                 # Check for split
                 # NOTE: For simplicity, we only split single tokens right now!
-                if l == 1 and self.split_rgx is not None:
+                if l == 1 and self.split_rgx is not None and end - start > 0:
                     m = re.search(self.split_rgx, context.text[start-offsets[0]:end-offsets[0]+1])
                     if m is not None and l < self.n_max + 1:
                         ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, sentence=context)

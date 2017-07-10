@@ -10,6 +10,7 @@ try:
 except:
     raise Exception("spaCy not installed. Use `pip install spacy`.")
 
+
 class Spacy(Parser):
     '''
     spaCy
@@ -57,8 +58,6 @@ class Spacy(Parser):
     def model_installed(name):
         '''
         Check if spaCy language model is installed
-        lang_name = util.get_lang_class(name).lang
-
         :param name:
         :return:
         '''
@@ -108,20 +107,16 @@ class Spacy(Parser):
         for sent in doc.sents:
             parts = defaultdict(list)
             text = sent.text
-            sent = [t for t in sent]
-            abs_i = min([t.i for t in sent])
-            dep_order, dep_par, dep_lab = [], [], []
-            for token in sent:
+
+            for i,token in enumerate(sent):
                 parts['words'].append(str(token))
                 parts['lemmas'].append(token.lemma_)
                 parts['pos_tags'].append(token.tag_)
                 parts['ner_tags'].append(token.ent_type_ if token.ent_type_ else 'O')
                 parts['char_offsets'].append(token.idx)
                 parts['abs_char_offsets'].append(token.idx)
-
-                deps = [t.i for t in list(token.ancestors)]
-                parent = deps[0] - abs_i + 1 if deps else 1
-                parts['dep_parents'].append(parent)
+                head_idx = 0 if token.head is token else token.head.i - sent[0].i + 1
+                parts['dep_parents'].append(head_idx)
                 parts['dep_labels'].append(token.dep_)
 
             # Add null entity array (matching null for CoreNLP)

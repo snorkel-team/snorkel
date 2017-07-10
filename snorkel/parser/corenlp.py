@@ -5,7 +5,6 @@ import json
 import signal
 import socket
 import string
-import logging
 import warnings
 
 from subprocess import Popen,PIPE
@@ -15,9 +14,6 @@ from .parser import Parser, URLParserConnection
 from ..models import Candidate, Context, Document, Sentence, construct_stable_id
 from ..utils import sort_X_on_Y
 
-
-logging.basicConfig(filename='corenlp.log',level=logging.DEBUG)
-logger = logging.getLogger('StanfordCoreNLPServer')
 
 class StanfordCoreNLPServer(Parser):
     '''
@@ -55,8 +51,7 @@ class StanfordCoreNLPServer(Parser):
 
     def __init__(self, annotators=['tokenize', 'ssplit', 'pos', 'lemma', 'depparse', 'ner'],
                  annotator_opts={}, tokenize_whitespace=False, split_newline=False, encoding="utf-8",
-                 java_xmx='4g', port=12345, num_threads=1, verbose=False, version='3.6.0',
-                 logging=True):
+                 java_xmx='4g', port=12345, num_threads=1, verbose=False, version='3.6.0'):
         '''
         Create CoreNLP server instance.
         :param annotators:
@@ -83,8 +78,6 @@ class StanfordCoreNLPServer(Parser):
         self.verbose = verbose
         self.version = version
 
-        self.logging = logging
-
         # configure connection request options
         opts = self._conn_opts(annotators, annotator_opts, tokenize_whitespace, split_newline)
         self.endpoint = 'http://127.0.0.1:%d/?%s' % (self.port, opts)
@@ -94,7 +87,7 @@ class StanfordCoreNLPServer(Parser):
         if self.verbose:
             self.summary()
 
-    def _start_server(self,force_load=False):
+    def _start_server(self, force_load=False):
         '''
         Launch CoreNLP server
         :param force_load:  Force server to pre-load models vs. on-demand
@@ -231,7 +224,6 @@ class StanfordCoreNLPServer(Parser):
             blocks = json.loads(content, strict=False)['sentences']
         except:
             warnings.warn("CoreNLP skipped a malformed document.", RuntimeWarning)
-            return
 
         position = 0
         for block in blocks:

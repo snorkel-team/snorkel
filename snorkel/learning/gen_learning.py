@@ -70,7 +70,7 @@ class GenerativeModel(Classifier):
     def train(self, L, deps=(), LF_acc_prior_weights=None,
         LF_acc_prior_weight_default=1, labels=None, label_prior_weight=5,
         init_deps=0.0, init_class_prior=-1.0, epochs=30, step_size=None, 
-        decay=1.0, reg_param=0.1, reg_type=2, verbose=False, truncation=10, 
+        decay=1.0, reg_param=0.1, reg_type=2, verbose=False, truncation=10, save_dir='checkpoints',
         burn_in=5, cardinality=None, timer=None, candidate_ranges=None, threads=1):
         """
         Fits the parameters of the model to a data set. By default, learns a
@@ -108,6 +108,7 @@ class GenerativeModel(Classifier):
         :param verbose: whether to write debugging info to stdout
         :param truncation: number of iterations between truncation step for L1
                            regularization
+        :param save_dir: Optional directory for saving/loading model checkpoints
         :param burn_in: number of burn-in samples to take before beginning
                         learning
         :param cardinality: number of possible classes; by default is inferred

@@ -1,15 +1,17 @@
-from __future__ import print_function
+# -*- coding: utf-8 -*-
 import os
 import sys
 import json
 import signal
+import socket
+import string
 import warnings
 
-from subprocess import Popen, PIPE
+from subprocess import Popen,PIPE
 from collections import defaultdict
 
 from .parser import Parser, URLParserConnection
-from ..models import construct_stable_id
+from ..models import Candidate, Context, Document, Sentence, construct_stable_id
 from ..utils import sort_X_on_Y
 
 
@@ -48,7 +50,7 @@ class StanfordCoreNLPServer(Parser):
     BLOCK_DEFS = {"3.6.0":"basic-dependencies", "3.7.0":"basicDependencies"}
 
     def __init__(self, annotators=['tokenize', 'ssplit', 'pos', 'lemma', 'depparse', 'ner'],
-                 annotator_opts={}, tokenize_whitespace=False, split_newline=False,
+                 annotator_opts={}, tokenize_whitespace=False, split_newline=False, encoding="utf-8",
                  java_xmx='4g', port=12345, num_threads=1, verbose=False, version='3.6.0'):
         '''
         Create CoreNLP server instance.
@@ -62,7 +64,7 @@ class StanfordCoreNLPServer(Parser):
         :param verbose:
         :param version:
         '''
-        super(StanfordCoreNLPServer,self).__init__(name="CoreNLP")
+        super(StanfordCoreNLPServer, self).__init__(name="CoreNLP", encoding=encoding)
 
         self.tokenize_whitespace = tokenize_whitespace
         self.split_newline = split_newline
@@ -85,7 +87,7 @@ class StanfordCoreNLPServer(Parser):
         if self.verbose:
             self.summary()
 
-    def _start_server(self,force_load=False):
+    def _start_server(self, force_load=False):
         '''
         Launch CoreNLP server
         :param force_load:  Force server to pre-load models vs. on-demand
@@ -160,14 +162,14 @@ class StanfordCoreNLPServer(Parser):
         Print server parameters
         :return:
         '''
-        print("------------------------------------")
-        print(self.endpoint)
-        print("version:", self.version)
-        print("shell pid:", self.process_group.pid)
-        print("port:", self.port)
-        print("timeout:", self.timeout)
-        print("threads:", self.num_threads)
-        print("------------------------------------")
+        print "-" * 40
+        print self.endpoint
+        print "version:", self.version
+        print "shell pid:", self.process_group.pid
+        print "port:", self.port
+        print "timeout:", self.timeout
+        print "threads:", self.num_threads
+        print "-" * 40
 
     def connect(self):
         '''
@@ -182,7 +184,7 @@ class StanfordCoreNLPServer(Parser):
         :return:
         '''
         if self.verbose:
-            print("Killing CoreNLP server [{}]...".format(self.process_group.pid))
+            print "Killing CoreNLP server [{}]...".format(self.process_group.pid)
         if self.process_group is not None:
             try:
                 os.killpg(os.getpgid(self.process_group.pid), signal.SIGTERM)
@@ -195,16 +197,25 @@ class StanfordCoreNLPServer(Parser):
 
         :param document:
         :param text:
-        :param conn: server URL+properties string
+        :param conn: server connection
         :return:
         '''
         if len(text.strip()) == 0:
-            print(u"Warning, empty document {0} passed to CoreNLP".format(document.name if document else "?"), file=sys.stderr)
+            print>> sys.stderr, "Warning, empty document {0} passed to CoreNLP".format(document.name if document else "?")
             return
 
-        text = text.encode('utf-8', 'error')
-        resp = conn.post(self.endpoint, data=text, allow_redirects=True)
-        content = resp.content.strip().decode('utf-8')
+        # handle encoding (force to unicode)
+        if isinstance(text, unicode):
+            text = text.encode('utf-8', 'error')
+
+        # POST request to CoreNLP Server
+        try:
+            content = conn.post(self.endpoint, text)
+            content = content.decode(self.encoding)
+
+        except socket.error, e:
+            print>>sys.stderr,"Socket error"
+            raise ValueError("Socket Error")
 
         # check for parsing error messages
         StanfordCoreNLPServer.validate_response(content)
@@ -212,8 +223,7 @@ class StanfordCoreNLPServer(Parser):
         try:
             blocks = json.loads(content, strict=False)['sentences']
         except:
-            warnings.warn(u"CoreNLP skipped a malformed sentence.", RuntimeWarning)
-            return
+            warnings.warn("CoreNLP skipped a malformed document.", RuntimeWarning)
 
         position = 0
         for block in blocks:
@@ -233,20 +243,18 @@ class StanfordCoreNLPServer(Parser):
             # certain configuration options remove 'before'/'after' fields in output JSON (TODO: WHY?)
             # In order to create the 'text' field with correct character offsets we use
             # 'characterOffsetEnd' and 'characterOffsetBegin' to build our string from token input
-            #if not [t for t in block['tokens'] if t.get('after', None)]:
             text = ""
             for t in block['tokens']:
                 # shift to start of local sentence offset
                 i = t['characterOffsetBegin'] - block['tokens'][0]['characterOffsetBegin']
                 # add whitespace based on offsets of originalText
-                text += (u' ' * (i - len(text))) + t['originalText'] if len(text) != i else t['originalText']
+                text += (' ' * (i - len(text))) + t['originalText'] if len(text) != i else t['originalText']
             parts['text'] = text
-            #else:
-            #parts['text'] = ''.join(t['originalText'] + t.get('after', '') for t in block['tokens'])
 
             # make char_offsets relative to start of sentence
             abs_sent_offset = parts['char_offsets'][0]
             parts['char_offsets'] = [p - abs_sent_offset for p in parts['char_offsets']]
+            parts['abs_char_offsets'] = [p for p in parts['char_offsets']]
             parts['dep_parents'] = sort_X_on_Y(dep_par, dep_order)
             parts['dep_labels'] = sort_X_on_Y(dep_lab, dep_order)
             parts['position'] = position
@@ -258,11 +266,6 @@ class StanfordCoreNLPServer(Parser):
                     document.meta['tree'] = {}
                 document.meta['tree'][position] = tree
 
-            # store absolute sentence offsets
-            if 'abs_sent_offset' not in document.meta:
-                document.meta['abs_sent_offset'] = {}
-            document.meta['abs_sent_offset'][position] = abs_sent_offset
-
             # Link the sentence to its parent document object
             parts['document'] = document if document else None
 
@@ -272,10 +275,15 @@ class StanfordCoreNLPServer(Parser):
 
             # Assign the stable id as document's stable id plus absolute character offset
             abs_sent_offset_end = abs_sent_offset + parts['char_offsets'][-1] + len(parts['words'][-1])
+
             if document:
                 parts['stable_id'] = construct_stable_id(document, 'sentence', abs_sent_offset, abs_sent_offset_end)
             position += 1
             yield parts
+
+    @staticmethod
+    def strip_non_printing_chars(s):
+        return "".join([c for c in s if c in string.printable])
 
     @staticmethod
     def validate_response(content):

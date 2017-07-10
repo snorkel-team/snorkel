@@ -20,7 +20,7 @@ LI_HTML = u"""
 """
 
 PAGE_HTML = u"""
-<div class="viewer-page" id="viewer-page-{pid}">
+<div class="viewer-page" id="viewer-page-{pid}"{etc}>
     <ul class="list-group">{data}</ul>
 </div>
 """
@@ -168,7 +168,11 @@ class Viewer(widgets.DOMWidget):
                 page_cids.append([self.candidates.index(c) for c in candidates])
 
             # Assemble the page...
-            pages.append(PAGE_HTML.format(pid=pid, data=''.join(lis)))
+            pages.append(PAGE_HTML.format(
+                pid=pid,
+                data=''.join(lis),
+                etc=' style="display: block;"' if i == 0 else ''
+            ))
             cids.append(page_cids)
             pid += 1
 

@@ -194,7 +194,7 @@ class PretaggedCandidateExtractorUDF(UDF):
     An extractor for Sentences with entities pre-tagged, and stored in the entity_types and entity_cids
     fields.
     """
-    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=True, entity_sep='~@~', **kwargs):
+    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=False, entity_sep='~@~', **kwargs):
         self.candidate_class     = candidate_class
         self.entity_types        = entity_types
         self.arity               = len(entity_types)

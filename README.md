@@ -1,7 +1,7 @@
 <img src="figs/logo_01.png" width="150"/>
 
 
-**_v0.5.0_**
+**_v0.6.0_**
 
 
 [![Documentation](https://readthedocs.org/projects/snorkel/badge/?version=master)](http://snorkel.readthedocs.io/en/latest/)
@@ -9,11 +9,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Acknowledgements
-<img src="figs/darpa.JPG" width="80" height="80" align="middle" />
-<img src="figs/ONR.jpg" width="100" height="80" align="middle" />
-<img src="figs/moore_logo.png" width="100" height="60" align="middle" />
-<img src="figs/nih_logo.png" width="80" height="60" align="middle" />
-<img src="figs/mobilize_logo.png" width="100" height="60" align="middle" />
+<img src="figs/darpa.JPG" width="80" height="80" align="middle" /> <img src="figs/ONR.jpg" width="100" height="80" align="middle" /> <img src="figs/moore_logo.png" width="100" height="60" align="middle" /> <img src="figs/nih_logo.png" width="80" height="60" align="middle" /> <img src="figs/mobilize_logo.png" width="100" height="60" align="middle" />
 
 *Sponsored in part by DARPA as part of the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043 and also by the NIH through the [Mobilize Center](http://mobilize.stanford.edu/) under grant number U54EB020405.*
 
@@ -30,14 +26,14 @@ Today's state-of-the-art machine learning models require massive labeled trainin
 
 _Surprisingly_, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models. We see Snorkel as providing a general framework for many [_weak supervision_](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html) techniques, and as defining a new programming model for weakly-supervised machine learning systems.
 
-### Users
+## Users
 We're lucky to have some amazing collaborators who are currently using Snorkel!
 
 <img src="figs/user_logos.png" width="500" height="200" align="middle" />
 
 However, **_Snorkel is very much a work in progress_**, so we're eager for any and all feedback... let us know what you think and how we can improve Snorkel in the [Issues](https://github.com/HazyResearch/snorkel/issues) section!
 
-### References
+## References
 * _[Data Programming: Creating Large Training Sets, Quickly](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly)_ (NIPS 2016)
 * _[Snorkel: Fast Training Set Generation for Information Extraction](http://hazyresearch.github.io/snorkel/pdfs/snorkel_demo.pdf)_ (SIGMOD DEMO 2017)
 * _[Learning the Structure of Generative Models without Labeled Data](https://arxiv.org/abs/1703.00854)_ (ICML 2017)
@@ -45,18 +41,51 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 * _[Socratic Learning: Correcting Misspecified Generative Models using Discriminative Models](https://arxiv.org/abs/1610.08123)_
 * _[Fonduer: Knowledge Base Construction from Richly Formatted Data](https://arxiv.org/abs/1703.05028)_
 
-## Installation / dependencies
+## Learning how to use Snorkel
+The [introductory tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro) covers the entire Snorkel workflow, showing how to extract spouse relations from news articles.
+The tutorial is available in the following directory:
+```
+tutorials/intro
+```
 
-Snorkel uses Python 2.7 and requires [a few python packages](python-package-requirement.txt) which can be installed using `pip`:
+## Release Notes
+### Major changes in v0.6:
+* Support for categorical classification, including "dynamically-scoped" or _blocked_ categoricals (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/advanced/Categorical_Classes.ipynb))
+* Support for structure learning (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/advanced/Structure_Learning.ipynb), ICML 2017 paper)
+* Support for labeled data in generative model
+* Refactor of TensorFlow bindings; fixes grid search and model saving / reloading issues (see `snorkel/learning`)
+* New, simplified Intro tutorial ([here](https://github.com/HazyResearch/snorkel/tree/new_intro/tutorials/intro))
+* Refactored parser class and support for [spaCy](https://spacy.io/) as new default parser
+* Support for easy use of the [BRAT annotation tool](http://brat.nlplab.org/) (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro_brat/tutorials/advanced/BRAT_Annotations.ipynb))
+* Initial Spark integration, for scale out of LF application (see [tutorial](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/snark/Snark%20Tutorial.ipynb))
+* Tutorial on using crowdsourced data [here](https://github.com/HazyResearch/snorkel/blob/new_intro/tutorials/crowdsourcing/Crowdsourced_Sentiment_Analysis.ipynb)
+* Integration with Apache Tika
+* And many more fixes, additions, and new material!
+
+## Installation
+Snorkel uses Python 2.7 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
+
+### Setting Up Conda
+Installation is easiest if you download and install [`conda`](https://www.continuum.io/downloads).
+If you are running multiple version of Python, you might need to run:
+```
+conda create -n py2Env python=2.7 anaconda
+```
+And then run the correct environment:
+```
+source activate py2Env
+```
+
+### Installing dependencies
+First install [NUMBA](https://numba.pydata.org/), a package for high-performance numeric computing in Python via Conda:
+```bash
+conda install numba
+```
+
+Then install the remaining package requirements:
 ```bash
 pip install --requirement python-package-requirement.txt
 ```
-If a package installation fails, then all of the packages below it in `python-package-requirement.txt` will fail to install as well. This can be avoided by running the following command instead of the above:
-```bash
-cat python-package-requirement.txt | xargs -n 1 pip install
-```
-Note that you may have to run `pip2` if you have Python3 installed on your system, and that `sudo` can be prepended to install dependencies system wide if this is an option and the above does not work.
-For some pointers on difficulties in using `source` in shell, see [Issue 506](https://github.com/HazyResearch/snorkel/issues/506).
 
 Finally, enable `ipywidgets`:
 ```bash
@@ -67,56 +96,15 @@ _Note: Currently the `Viewer` is supported on the following versions:_
 * `jupyter`: 4.1
 * `jupyter notebook`: 4.2
 
-By default (e.g. in the tutorials, etc.) we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
+In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
 
-### Working with Conda
-One great option, which can make installation and use easier, is to use [`conda`](https://www.continuum.io/downloads).
-If you are running multiple version of Python, you might need to run:
-```
-conda create -n py2Env python=2.7 anaconda
-```
-And then run the correct environment:
-```
-source activate py2Env
-```
-
-### Installing Numbskull + NUMBA
-Snorkel currently relies on [`numbskull`](https://github.com/HazyResearch/numbskull) and `numba`, which occasionally requires a bit more work to install! One option is to use [`conda`](https://www.continuum.io/downloads) as above. If installing manually, you may just need to make sure the right version of `llvmlite` and LLVM is installed and used; for example on Ubuntu, run:
-```bash
-apt-get install llvm-3.8
-LLVM_CONFIG=/usr/bin/llvm-config-3.8 pip install llvmlite
-LLVM_CONFIG=/usr/bin/llvm-config-3.8 pip install numba
-```
-and on Mac OSX, one option is to use homebrew as follows:
-```
-brew install llvm38 --with-rtti
-LLVM_CONFIG=/usr/local/Cellar/llvm\@3.8/3.8.1/bin/llvm-config-3.8 pip install llvmlite
-LLVM_CONFIG=/usr/local/Cellar/llvm\@3.8/3.8.1/bin/llvm-config-3.8 pip install numba
-```
-Finally, once `numba` is installed, re-run the `numbskull` install from the `python-package-requirement.txt` script:
-```
-pip install git+https://github.com/HazyResearch/numbskull@dev
-```
-### Using virtualenv
-Alternatively, `virtualenv` can be used by starting with:
-```bash
-virtualenv -p python2.7 .virtualenv
-source .virtualenv/bin/activate
-```
-If you have issues using Jupyter notebooks with virualenv, see [this tutorial](http://help.pythonanywhere.com/pages/IPythonNotebookVirtualenvs)
-
+### Frequently Asked Questions
+See [this FAQ](https://hazyresearch.github.io/snorkel/install_faq) for help with common questions that arise.
 
 ## Running
-After installing (see below), just run:
+After installing, just run:
 ```
 ./run.sh
-```
-
-## Learning how to use Snorkel
-The [introductory tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro) covers the entire Snorkel workflow, showing how to extract spouse relations from news articles.
-The tutorial is available in the following directory:
-```
-tutorials/intro
 ```
 
 ## Issues

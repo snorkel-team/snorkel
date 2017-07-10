@@ -477,7 +477,8 @@ def save_marginals(session, X, marginals, training=True):
             'candidate_id': cid,
             'training': training,
             'value': k,
-            'probability': p
+            # We cast p in case its a numpy type, which psycopg2 does not handle
+            'probability': float(p)
         })
 
     # Execute update

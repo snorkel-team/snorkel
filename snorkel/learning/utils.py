@@ -603,8 +603,11 @@ class GridSearch(object):
         for p in ps:
             p.terminate()
 
-        # Load best model; assume score is last element
-        k_opt = np.argmax([s[-1] for s in run_stats])
+        # Load best model; first element in each row of run_stats is the model
+        # index, last one is the score to sort by
+        # Note: the models may be returned out of order!
+        i_opt = np.argmax([s[-1] for s in run_stats])
+        k_opt = run_stats[i_opt][0]
         model = self.model_class(**self.model_class_params)
         model.load('{0}_{1}'.format(model.name, k_opt))
 

@@ -499,9 +499,10 @@ class GridSearch(object):
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
                 model_hyperparams[pn] = pv
+
             print("=" * 60)
             print("[%d] Testing %s" % (k+1, ', '.join([
-                "%s = %0.2e" % (pn,pv)
+                "%s = %s" % (pn, ("%0.2e" % pv) if type(pv) in [float, int, np.float64] else pv)
                 for pn,pv in zip(self.param_names, param_vals)
             ])))
             print("=" * 60)

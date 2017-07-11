@@ -422,6 +422,7 @@ class ModelTester(Process):
             try:
                 k, hps = self.params_queue.get(True, QUEUE_TIMEOUT)
                 model_name = '{0}_{1}'.format(self.model.name, k)
+                save_dir = "checkpoints" if not 'save_dir' in hps else hps["save_dir"]
 
                 # Train model with given hyperparameters
                 if self.Y_train is not None:
@@ -433,7 +434,7 @@ class ModelTester(Process):
                 # NOTE: Currently, we have to save every model because we are
                 # testing asynchronously. This is obviously memory inefficient,
                 # although probably not that much of a problem in practice...
-                self.model.save(model_name=model_name)
+                self.model.save(model_name=model_name, save_dir=save_dir)
 
                 # Test the model
                 run_scores = list(self.model.score(self.X_valid, self.Y_valid, 
@@ -487,6 +488,7 @@ class GridSearch(object):
           Non-search parameters are set using model_hyperparamters
         """
         self.model = self.model_class(**self.model_class_params)
+        save_dir = "checkpoints" if not 'save_dir' in model_hyperparams else model_hyperparams["save_dir"]
 
         # Iterate over the param values
         run_stats = []
@@ -497,9 +499,10 @@ class GridSearch(object):
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
                 model_hyperparams[pn] = pv
+
             print("=" * 60)
             print("[%d] Testing %s" % (k+1, ', '.join([
-                "%s = %0.2e" % (pn,pv)
+                "%s = %s" % (pn, ("%0.2e" % pv) if type(pv) in [float, int, np.float64] else pv)
                 for pn,pv in zip(self.param_names, param_vals)
             ])))
             print("=" * 60)
@@ -524,12 +527,12 @@ class GridSearch(object):
                 run_score))
             run_stats.append(list(param_vals) + list(run_scores))
             if run_score > run_score_opt or k == 0:
-                self.model.save(model_name=model_name)
+                self.model.save(model_name=model_name, save_dir=save_dir)
                 opt_model = model_name
                 run_score_opt = run_score
         
         # Set optimal parameter in the learner model
-        self.model.load(opt_model)
+        self.model.load(opt_model, save_dir=save_dir)
         
         # Return optimal model & DataFrame of scores
         run_score_labels = ['Acc.'] if self.model.cardinality > 2 else \
@@ -592,7 +595,9 @@ class GridSearch(object):
         # Load best model; assume score is last element
         k_opt = np.argmax([s[-1] for s in run_stats])
         model = self.model_class(**self.model_class_params)
-        model.load('{0}_{1}'.format(model.name, k_opt))
+
+        save_dir = model_hyperparams['save_dir'] if 'save_dir' in model_hyperparams else "checkpoints"
+        model.load('{0}_{1}'.format(model.name, k_opt), save_dir=save_dir)
 
         # Return model and DataFrame of scores
         categorical = (len(scores) == 1)

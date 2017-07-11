@@ -1,6 +1,6 @@
 from .models import StableLabel, GoldLabel, Context, GoldLabelKey
 from sqlalchemy.orm import object_session
-
+from future.utils import iteritems
 
 def reload_annotator_labels(session, candidate_class, annotator_name, split, filter_label_split=True, create_missing_cands=False):
     """Reloads stable annotator labels into the AnnotatorLabel table"""
@@ -10,7 +10,7 @@ def reload_annotator_labels(session, candidate_class, annotator_name, split, fil
         ak = GoldLabelKey(name=annotator_name)
         session.add(ak)
         session.commit()
-    
+
     labels = []
     missed = []
     sl_query = session.query(StableLabel).filter(StableLabel.annotator_name == annotator_name)
@@ -19,7 +19,7 @@ def reload_annotator_labels(session, candidate_class, annotator_name, split, fil
         context_stable_ids = sl.context_stable_ids.split('~~')
 
         # Check for labeled Contexts
-        # TODO: Does not create the Contexts if they do not yet exist! 
+        # TODO: Does not create the Contexts if they do not yet exist!
         contexts = []
         for stable_id in context_stable_ids:
             context = session.query(Context).filter(Context.stable_id == stable_id).first()

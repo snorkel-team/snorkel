@@ -402,7 +402,7 @@ QUEUE_TIMEOUT = 3
 class ModelTester(Process):
     def __init__(self, model_class, model_class_params, params_queue, 
         scores_queue, X_train, X_valid, Y_valid, Y_train=None, b=0.5, 
-        set_unlabeled_as_neg=True):
+        set_unlabeled_as_neg=True, save_dir='checkpoints'):
         Process.__init__(self)
         self.model = model_class(**model_class_params)
         self.params_queue = params_queue
@@ -415,6 +415,7 @@ class ModelTester(Process):
             'b': b, 
             'set_unlabeled_as_neg': set_unlabeled_as_neg
         }
+        self.save_dir = save_dir
 
     def run(self):
         while True:
@@ -433,7 +434,7 @@ class ModelTester(Process):
                 # NOTE: Currently, we have to save every model because we are
                 # testing asynchronously. This is obviously memory inefficient,
                 # although probably not that much of a problem in practice...
-                self.model.save(model_name=model_name)
+                self.model.save(model_name=model_name, save_dir=self.save_dir)
 
                 # Test the model
                 run_scores = self.model.score(self.X_valid, self.Y_valid, 
@@ -467,20 +468,21 @@ class GridSearch(object):
         return product(*[param.get_all_values() for param in self.params])
 
     def fit(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True, 
-        validation_kwargs={}, n_threads=1, **model_hyperparams):
+        validation_kwargs={}, n_threads=1, save_dir='checkpoints',
+        **model_hyperparams):
         if n_threads > 1:
             opt_model, run_stats = self._fit_mt(X_valid, Y_valid, b=b,
                 set_unlabeled_as_neg=set_unlabeled_as_neg,
                 validation_kwargs=validation_kwargs, n_threads=n_threads,
-                **model_hyperparams)
+                save_dir=save_dir, **model_hyperparams)
         else:
             opt_model, run_stats = self._fit_st(X_valid, Y_valid, b=b,
                 set_unlabeled_as_neg=set_unlabeled_as_neg,
-                validation_kwargs=validation_kwargs,
+                validation_kwargs=validation_kwargs, save_dir=save_dir, 
                 **model_hyperparams)
         return opt_model, run_stats
 
-    def _fit_st(self, X_valid, Y_valid, b=0.5,
+    def _fit_st(self, X_valid, Y_valid, b=0.5, save_dir='checkpoints',
         set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
@@ -526,7 +528,7 @@ class GridSearch(object):
                 run_score))
             run_stats.append(list(param_vals) + list(run_scores))
             if run_score > run_score_opt or k == 0:
-                self.model.save(model_name=model_name)
+                self.model.save(model_name=model_name, save_dir=save_dir)
                 opt_model = model_name
                 run_score_opt = run_score
         
@@ -543,7 +545,8 @@ class GridSearch(object):
         return self.model, self.results
 
     def _fit_mt(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True, 
-        validation_kwargs={}, n_threads=2, **model_hyperparams):
+        validation_kwargs={}, n_threads=2, save_dir='checkpoints',
+        **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
@@ -568,7 +571,7 @@ class GridSearch(object):
         for i in range(n_threads):
             p = ModelTester(self.model_class, self.model_class_params, 
                     params_queue, scores_queue, self.X_train, X_valid, Y_valid,
-                    Y_train=self.Y_train, b=b, 
+                    Y_train=self.Y_train, b=b, save_dir=save_dir,
                     set_unlabeled_as_neg=set_unlabeled_as_neg)
             p.start()
             ps.append(p)

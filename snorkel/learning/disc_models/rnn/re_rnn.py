@@ -39,6 +39,8 @@ class reRNN(RNNBase):
         :param candidates: candidates to process
         :param extend: extend symbol table for tokens (train), or lookup (test)?
         """
+        if not hasattr(self, 'word_dict'):
+            self.word_dict = SymbolTable()
         data, ends = [], []
         for candidate in candidates:
             # Mark sentence

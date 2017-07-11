@@ -70,6 +70,7 @@ script:
   - python test/learning/test_supervised.py
   - python test/learning/test_categorical.py
   - runipy test/learning/test_TF_notebook.ipynb
+  - runipy test/learning/test_parallel_grid_search.ipynb
 
   # Runs intro tutorial notebooks
   - cd tutorials

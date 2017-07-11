@@ -30,6 +30,8 @@ class TagRNN(RNNBase):
             @candidates: candidates to process
             @extend: extend symbol table for tokens (train), or lookup (test)?
         """
+        if not hasattr(self, 'word_dict'):
+            self.word_dict = SymbolTable()
         data, ends = [], []
         for candidate in candidates:
             # Read sentence data

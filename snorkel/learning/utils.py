@@ -503,7 +503,7 @@ class GridSearch(object):
                 model_hyperparams[pn] = pv
             print("=" * 60)
             print("[%d] Testing %s" % (k+1, ', '.join([
-                "%s = %0.2e" % (pn,pv)
+                "%s = %s" % (pn, ("%0.2e" % pv) if type(pv) in [float, int, np.float64] else pv)
                 for pn,pv in zip(self.param_names, param_vals)
             ])))
             print("=" * 60)
@@ -553,7 +553,16 @@ class GridSearch(object):
           set_unlabeled_as_neg is used to decide class of unlabeled cases for f1
           Non-search parameters are set using model_hyperparamters
         """
+        # First do a preprocessing pass over the data to make sure it is all
+        # non-lazily loaded
+        # TODO: Better way to go about it than this!!
+        print("Loading data...")
+        model = self.model_class(**self.model_class_params)
+        _ = model._preprocess_data(self.X_train)
+        _ = model._preprocess_data(X_valid)
+
         # Create queue of hyperparameters to test
+        print("Launching jobs...")
         params_queue = JoinableQueue()
         param_val_sets = []
         for k, param_vals in enumerate(self.search_space()):

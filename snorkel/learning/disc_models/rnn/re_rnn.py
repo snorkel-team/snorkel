@@ -33,7 +33,7 @@ def mark_sentence(s, args):
 
 class reRNN(RNNBase):
     """reRNN for relation extraction"""
-    def _preprocess_data(self, candidates, extend):
+    def _preprocess_data(self, candidates, extend=False):
         """Convert candidate sentences to lookup sequences
         
         :param candidates: candidates to process

@@ -19,7 +19,7 @@ from .utils import (
     matrix_fn,
     matrix_tn
 )
-
+from future.utils import iteritems
 
 class csr_AnnotationMatrix(sparse.csr_matrix):
     """
@@ -61,7 +61,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         else:
             idxs = np.array([s])
         index_new, inv_index_new = {}, {}
-        for i, k in index.items():
+        for i, k in index.iteritems():
             if i in idxs:
                 i_new = np.where(idxs == i)[0][0]
                 index_new[i_new] = k

@@ -533,7 +533,7 @@ class GridSearch(object):
                 run_score_opt = run_score
         
         # Set optimal parameter in the learner model
-        self.model.load(opt_model)
+        self.model.load(opt_model, save_dir=save_dir)
         
         # Return optimal model & DataFrame of scores
         run_score_labels = ['Acc.'] if self.model.cardinality > 2 else \
@@ -609,7 +609,7 @@ class GridSearch(object):
         i_opt = np.argmax([s[-1] for s in run_stats])
         k_opt = run_stats[i_opt][0]
         model = self.model_class(**self.model_class_params)
-        model.load('{0}_{1}'.format(model.name, k_opt))
+        model.load('{0}_{1}'.format(model.name, k_opt), save_dir=save_dir)
 
         # Return model and DataFrame of scores
         # Test for categorical vs. binary in hack-ey way for now...

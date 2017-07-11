@@ -213,7 +213,7 @@ class StanfordCoreNLPServer(Parser):
             content = conn.post(self.endpoint, text)
             content = content.decode(self.encoding)
 
-        except (socket.error, e):
+        except socket.error as e:
             print>>sys.stderr,"Socket error"
             raise ValueError("Socket Error")
 

@@ -436,8 +436,10 @@ class ModelTester(Process):
                 self.model.save(model_name=model_name)
 
                 # Test the model
-                run_scores = list(self.model.score(self.X_valid, self.Y_valid, 
-                    **self.scorer_params))
+                run_scores = self.model.score(self.X_valid, self.Y_valid, 
+                    **self.scorer_params)
+                run_scores = [run_scores] if self.model.cardinality > 2 else \
+                    list(run_scores)
 
                 # Append score to out queue
                 self.scores_queue.put([k] + run_scores, True, QUEUE_TIMEOUT)
@@ -595,7 +597,8 @@ class GridSearch(object):
         model.load('{0}_{1}'.format(model.name, k_opt))
 
         # Return model and DataFrame of scores
-        categorical = (len(scores) == 1)
+        # Test for categorical vs. binary in hack-ey way for now...
+        categorical = (len(scores) == 2)
         labels = ['Acc.'] if categorical else ['Prec.', 'Rec.', 'F1']
         sort_by = 'Acc.' if categorical else 'F1'
         self.results = DataFrame.from_records(

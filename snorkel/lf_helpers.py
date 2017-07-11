@@ -5,7 +5,7 @@ from .annotations import load_gold_labels
 from .learning.utils import MentionScorer
 from .models import Span, Label, Candidate
 from itertools import chain
-from utils import tokens_to_ngrams
+from .utils import tokens_to_ngrams
 
 
 def get_text_splits(c):
@@ -41,8 +41,8 @@ def get_text_splits(c):
 
 def get_tagged_text(c):
     """
-    Returns the text of c's parent context with c's unary spans replaced with 
-    tags {{A}}, {{B}}, etc. A convenience method for writing LFs based on e.g. 
+    Returns the text of c's parent context with c's unary spans replaced with
+    tags {{A}}, {{B}}, etc. A convenience method for writing LFs based on e.g.
     regexes.
     """
     return "".join(get_text_splits(c))
@@ -61,7 +61,7 @@ def get_text_between(c):
 
 
 def is_inverted(c):
-    """Returns True if the ordering of the candidates in the sentence is 
+    """Returns True if the ordering of the candidates in the sentence is
     inverted."""
     if len(c) != 2:
         raise ValueError("Only applicable to binary Candidates")
@@ -90,7 +90,7 @@ def get_left_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
     """
     Return the tokens within a window to the _left_ of the Candidate.
     For higher-arity Candidates, defaults to the _first_ argument.
-    :param window: The number of tokens to the left of the first argument to 
+    :param window: The number of tokens to the left of the first argument to
         return
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
@@ -110,7 +110,7 @@ def get_right_tokens(c, window=3, attrib='words', n_max=1,
     """
     Return the tokens within a window to the _right_ of the Candidate.
     For higher-arity Candidates, defaults to the _last_ argument.
-    :param window: The number of tokens to the right of the last argument to 
+    :param window: The number of tokens to the right of the last argument to
         return
     :param attrib: The token attribute type (e.g. words, lemmas, poses)
     """
@@ -176,12 +176,12 @@ def rule_text_btw(candidate, text, sign):
 
 
 def rule_text_in_span(candidate, text, span, sign):
-    return sign if text in candidate[span].get_span().lower() else 0   
+    return sign if text in candidate[span].get_span().lower() else 0
 
 
 def rule_regex_search_tagged_text(candidate, pattern, sign):
     return sign if re.search(pattern, get_tagged_text(candidate), flags=re.I) else 0
- 
+
 
 def rule_regex_search_btw_AB(candidate, pattern, sign):
     return sign if re.search(r'{{A}}' + pattern + r'{{B}}', get_tagged_text(candidate), flags=re.I) else 0
@@ -190,11 +190,11 @@ def rule_regex_search_btw_AB(candidate, pattern, sign):
 def rule_regex_search_btw_BA(candidate, pattern, sign):
     return sign if re.search(r'{{B}}' + pattern + r'{{A}}', get_tagged_text(candidate), flags=re.I) else 0
 
-    
+
 def rule_regex_search_before_A(candidate, pattern, sign):
     return sign if re.search(pattern + r'{{A}}.*{{B}}', get_tagged_text(candidate), flags=re.I) else 0
 
-    
+
 def rule_regex_search_before_B(candidate, pattern, sign):
     return sign if re.search(pattern + r'{{B}}.*{{A}}', get_tagged_text(candidate), flags=re.I) else 0
 

@@ -29,7 +29,7 @@ def reshape_marginals(marginals):
     except:
         marginals = np.array(marginals)
         shape = marginals.shape
-    
+
     # Set cardinality + marginals in proper format for binary v. categorical
     if len(shape) != 1:
         # If k = 2, make sure is M-dim array
@@ -46,13 +46,13 @@ class LabelBalancer(object):
             LabelBalancer(y).get_train_idxs(rebalance=0.1)
         """
         self.y = np.ravel(y)
-    
+
     def _get_pos(self, split):
         return np.where(self.y > (split + 1e-6))[0]
 
     def _get_neg(self, split):
         return np.where(self.y < (split - 1e-6))[0]
-    
+
     def _try_frac(self, m, n, pn):
         # Return (a, b) s.t. a <= m, b <= n
         # and b / a is as close to pn as possible
@@ -96,11 +96,11 @@ class Scorer(object):
     """Abstract type for scorers"""
     def __init__(self, test_candidates, test_labels, gold_candidate_set=None):
         """
-        :param test_candidates: A *list of Candidates* corresponding to 
+        :param test_candidates: A *list of Candidates* corresponding to
             test_labels
-        :param test_labels: A *csrLabelMatrix* of ground truth labels for the 
+        :param test_labels: A *csrLabelMatrix* of ground truth labels for the
             test candidates
-        :param gold_candidate_set: (optional) A *CandidateSet* containing the 
+        :param gold_candidate_set: (optional) A *CandidateSet* containing the
             full set of gold labeled candidates
         """
         self.test_candidates    = test_candidates
@@ -122,11 +122,11 @@ class Scorer(object):
         else:
             return self._score_categorical(test_marginals, **kwargs)
 
-    def _score_binary(self, test_marginals, train_marginals=None, b=0.5, 
+    def _score_binary(self, test_marginals, train_marginals=None, b=0.5,
         set_unlabeled_as_neg=True, display=True):
         raise NotImplementedError()
 
-    def _score_categorical(self, test_marginals, train_marginals=None, 
+    def _score_categorical(self, test_marginals, train_marginals=None,
         display=True):
         raise NotImplementedError()
 
@@ -145,10 +145,10 @@ class MentionScorer(Scorer):
         in error buckets.
 
         :param test_marginals: array of marginals for test candidates
-        :param train_marginals (optional): array of marginals for training 
+        :param train_marginals (optional): array of marginals for training
             candidates
         :param b: threshold for labeling
-        :param set_unlabeled_as_neg: set test labels at the decision threshold 
+        :param set_unlabeled_as_neg: set test labels at the decision threshold
             of b as negative labels
         :param set_at_b_as_neg: set marginals at the decision threshold exactly
             as negative predictions
@@ -172,7 +172,7 @@ class MentionScorer(Scorer):
             # Set unlabeled examples to -1 by default
             if test_label == 0 and set_unlabeled_as_neg:
                 test_label = -1
-          
+
             # Bucket the candidates for error analysis
             test_label_array.append(test_label)
             if test_label != 0:
@@ -189,21 +189,21 @@ class MentionScorer(Scorer):
         if display:
 
             # Calculate scores unadjusted for TPs not in our candidate set
-            print_scores(len(tp), len(fp), len(tn), len(fn), 
+            print_scores(len(tp), len(fp), len(tn), len(fn),
                 title="Scores (Un-adjusted)")
 
             # If gold candidate set is provided calculate recall-adjusted scores
             if self.gold_candidate_set is not None:
                 gold_fn = [c for c in self.gold_candidate_set
                     if c not in self.test_candidates]
-                print "\n"
-                print_scores(len(tp), len(fp), len(tn), len(fn)+len(gold_fn), 
+                print("\n")
+                print_scores(len(tp), len(fp), len(tn), len(fn)+len(gold_fn),
                     title="Corpus Recall-adjusted Scores")
 
             # If training and test marginals provided print calibration plots
             if train_marginals is not None and test_marginals is not None:
-                print "\nCalibration plot:"
-                calibration_plots(train_marginals, test_marginals, 
+                print("\nCalibration plot:")
+                calibration_plots(train_marginals, test_marginals,
                     np.asarray(test_label_array))
         return tp, fp, tn, fn
 
@@ -214,7 +214,7 @@ class MentionScorer(Scorer):
         in error buckets.
 
         :param test_marginals: array of marginals for test candidates
-        :param train_marginals (optional): array of marginals for training 
+        :param train_marginals (optional): array of marginals for training
             candidates
         :param display: show calibration plots?
         """
@@ -233,7 +233,7 @@ class MentionScorer(Scorer):
                 test_label_index = self.test_labels.get_row_index(candidate)
                 test_label = self.test_labels[test_label_index, 0]
             except AttributeError:
-                test_label = self.test_labels[i]  
+                test_label = self.test_labels[i]
             test_label_array.append(test_label)
             if test_label != 0:
                 if test_pred[i] == test_label:
@@ -242,13 +242,13 @@ class MentionScorer(Scorer):
                     incorrect.add(candidate)
         if display:
             nc, ni = len(correct), len(incorrect)
-            print "Accuracy:", nc / float(nc + ni)
+            print("Accuracy:", nc / float(nc + ni))
 
             # If gold candidate set is provided calculate recall-adjusted scores
             if self.gold_candidate_set is not None:
                 gold_missed = [c for c in self.gold_candidate_set
                     if c not in self.test_candidates]
-                print "Coverage:", (nc + ni) / (nc + ni + len(gold_missed))
+                print("Coverage:", (nc + ni) / (nc + ni + len(gold_missed)))
         return correct, incorrect
 
     def summary_score(self, test_marginals, **kwargs):
@@ -323,7 +323,7 @@ def plot_accuracy(probs, ground_truth):
 def calibration_plots(train_marginals, test_marginals, gold_labels=None):
     """Show classification accuracy and probability histogram plots"""
     n_plots = 3 if gold_labels is not None else 1
-    
+
     # Whole set histogram
     plt.subplot(1,n_plots,1)
     plot_prediction_probability(train_marginals)
@@ -347,31 +347,31 @@ def calibration_plots(train_marginals, test_marginals, gold_labels=None):
 ############################################################
 ### Grid search
 ############################################################
-    
+
 class Hyperparameter(object):
     """Base class for a grid search parameter"""
     def __init__(self, name):
         self.name = name
-    
+
     def get_all_values(self):
         raise NotImplementedError()
-    
+
     def draw_values(self, n):
         # Multidim parameters can't use choice directly
         v = self.get_all_values()
         return [v[int(i)] for i in np.random.choice(len(v), n)]
 
-    
+
 class ListParameter(Hyperparameter):
     """List of parameter values for searching"""
     def __init__(self, name, parameter_list):
         self.parameter_list = np.array(parameter_list)
         super(ListParameter, self).__init__(name)
-    
+
     def get_all_values(self):
         return self.parameter_list
 
-    
+
 class RangeParameter(Hyperparameter):
     """
     Range of parameter values for searching.
@@ -385,7 +385,7 @@ class RangeParameter(Hyperparameter):
         self.step = step
         self.log_base = log_base
         super(RangeParameter, self).__init__(name)
-        
+
     def get_all_values(self):
         if self.log_base:
             min_exp = math.log(self.min_value, self.log_base)
@@ -400,8 +400,8 @@ class RangeParameter(Hyperparameter):
 QUEUE_TIMEOUT = 3
 
 class ModelTester(Process):
-    def __init__(self, model_class, model_class_params, params_queue, 
-        scores_queue, X_train, X_valid, Y_valid, Y_train=None, b=0.5, 
+    def __init__(self, model_class, model_class_params, params_queue,
+        scores_queue, X_train, X_valid, Y_valid, Y_train=None, b=0.5,
         set_unlabeled_as_neg=True):
         Process.__init__(self)
         self.model = model_class(**model_class_params)
@@ -412,7 +412,7 @@ class ModelTester(Process):
         self.X_valid = X_valid
         self.Y_valid = Y_valid
         self.scorer_params = {
-            'b': b, 
+            'b': b,
             'set_unlabeled_as_neg': set_unlabeled_as_neg
         }
 
@@ -436,7 +436,7 @@ class ModelTester(Process):
                 self.model.save(model_name=model_name)
 
                 # Test the model
-                run_scores = list(self.model.score(self.X_valid, self.Y_valid, 
+                run_scores = list(self.model.score(self.X_valid, self.Y_valid,
                     **self.scorer_params))
 
                 # Append score to out queue
@@ -447,12 +447,12 @@ class ModelTester(Process):
 
 class GridSearch(object):
     """
-    Runs hyperparameter grid search over a model object with train and score 
+    Runs hyperparameter grid search over a model object with train and score
     methods, training data (X), and training_marginals
     Selects based on maximizing F1 score on a supplied validation set
     Specify search space with Hyperparameter arguments
     """
-    def __init__(self, model_class, parameters, X_train, Y_train=None, 
+    def __init__(self, model_class, parameters, X_train, Y_train=None,
         **model_class_params):
         self.model_class        = model_class
         self.params             = parameters
@@ -460,11 +460,11 @@ class GridSearch(object):
         self.X_train            = X_train
         self.Y_train            = Y_train
         self.model_class_params = model_class_params
-        
+
     def search_space(self):
         return product(*[param.get_all_values() for param in self.params])
 
-    def fit(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True, 
+    def fit(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True,
         validation_kwargs={}, n_threads=1, **model_hyperparams):
         if n_threads > 1:
             opt_model, run_stats = self._fit_mt(X_valid, Y_valid, b=b,
@@ -503,13 +503,13 @@ class GridSearch(object):
                 for pn,pv in zip(self.param_names, param_vals)
             ])))
             print("=" * 60)
-            
+
             # Train the model
             if self.Y_train is not None:
                 self.model.train(self.X_train,self.Y_train,**model_hyperparams)
             else:
                 self.model.train(self.X_train, **model_hyperparams)
-            
+
             # Test the model
             run_scores = self.model.score(X_valid, Y_valid, b=b,
                 set_unlabeled_as_neg=set_unlabeled_as_neg)
@@ -518,7 +518,7 @@ class GridSearch(object):
                 run_scores = [run_score]
             else:
                 run_score, run_score_label = run_scores[-1], "F1 Score"
-            
+
             # Add scores to running stats, print, and set as optimal if best
             print("[{0}] {1}: {2}".format(self.model.name, run_score_label,
                 run_score))
@@ -527,10 +527,10 @@ class GridSearch(object):
                 self.model.save(model_name=model_name)
                 opt_model = model_name
                 run_score_opt = run_score
-        
+
         # Set optimal parameter in the learner model
         self.model.load(opt_model)
-        
+
         # Return optimal model & DataFrame of scores
         run_score_labels = ['Acc.'] if self.model.cardinality > 2 else \
             ['Prec.', 'Rec.', 'F1']
@@ -540,7 +540,7 @@ class GridSearch(object):
         ).sort_values(by=sort_by, ascending=False)
         return self.model, self.results
 
-    def _fit_mt(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True, 
+    def _fit_mt(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True,
         validation_kwargs={}, n_threads=2, **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
@@ -564,9 +564,9 @@ class GridSearch(object):
         # Start UDF Processes
         ps = []
         for i in range(n_threads):
-            p = ModelTester(self.model_class, self.model_class_params, 
+            p = ModelTester(self.model_class, self.model_class_params,
                     params_queue, scores_queue, self.X_train, X_valid, Y_valid,
-                    Y_train=self.Y_train, b=b, 
+                    Y_train=self.Y_train, b=b,
                     set_unlabeled_as_neg=set_unlabeled_as_neg)
             p.start()
             ps.append(p)
@@ -601,9 +601,9 @@ class GridSearch(object):
         self.results = DataFrame.from_records(
             run_stats, columns=["Model"] + self.param_names + labels
         ).sort_values(by=sort_by, ascending=False)
-        return model, self.results 
-    
-    
+        return model, self.results
+
+
 class RandomSearch(GridSearch):
     def __init__(self, model_class, parameters, X_train, Y_train=None, n=10,
         **model_class_params):
@@ -613,7 +613,7 @@ class RandomSearch(GridSearch):
             Y_train=Y_train, **model_class_params)
         print("Initialized RandomSearch search of size {0}. Search space size = {1}.".format(
             self.n, np.product([len(param.get_all_values()) for param in self.params])))
-        
+
     def search_space(self):
         return zip(*[param.draw_values(self.n) for param in self.params])
 

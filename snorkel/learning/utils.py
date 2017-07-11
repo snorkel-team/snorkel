@@ -592,15 +592,19 @@ class GridSearch(object):
         for p in ps:
             p.terminate()
 
-        # Load best model; assume score is last element
-        k_opt = np.argmax([s[-1] for s in run_stats])
+        # Load best model; first element in each row of run_stats is the model
+        # index, last one is the score to sort by
+        # Note: the models may be returned out of order!
+        i_opt = np.argmax([s[-1] for s in run_stats])
+        k_opt = run_stats[i_opt][0]
+
         model = self.model_class(**self.model_class_params)
 
         save_dir = model_hyperparams['save_dir'] if 'save_dir' in model_hyperparams else "checkpoints"
         model.load('{0}_{1}'.format(model.name, k_opt), save_dir=save_dir)
 
         # Return model and DataFrame of scores
-        categorical = (len(scores) == 1)
+        categorical = (len(scores) == 2)
         labels = ['Acc.'] if categorical else ['Prec.', 'Rec.', 'F1']
         sort_by = 'Acc.' if categorical else 'F1'
         self.results = DataFrame.from_records(

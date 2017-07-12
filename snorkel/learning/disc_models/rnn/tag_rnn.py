@@ -25,11 +25,13 @@ class TagRNN(RNNBase):
     """TagRNN for sequence tagging"""
     OPEN, CLOSE = '~~[[~~', '~~]]~~'
 
-    def _preprocess_data(self, candidates, extend):
+    def _preprocess_data(self, candidates, extend=False):
         """Convert candidate sentences to tagged symbol sequences
             @candidates: candidates to process
             @extend: extend symbol table for tokens (train), or lookup (test)?
         """
+        if not hasattr(self, 'word_dict'):
+            self.word_dict = SymbolTable()
         data, ends = [], []
         for candidate in candidates:
             # Read sentence data

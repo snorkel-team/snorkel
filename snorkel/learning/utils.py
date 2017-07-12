@@ -400,9 +400,9 @@ class RangeParameter(Hyperparameter):
 QUEUE_TIMEOUT = 3
 
 class ModelTester(Process):
-    def __init__(self, model_class, model_class_params, params_queue,
-        scores_queue, X_train, X_valid, Y_valid, Y_train=None, b=0.5,
-        set_unlabeled_as_neg=True):
+    def __init__(self, model_class, model_class_params, params_queue, 
+        scores_queue, X_train, X_valid, Y_valid, Y_train=None, b=0.5, 
+        set_unlabeled_as_neg=True, save_dir='checkpoints'):
         Process.__init__(self)
         self.model = model_class(**model_class_params)
         self.params_queue = params_queue
@@ -415,6 +415,7 @@ class ModelTester(Process):
             'b': b,
             'set_unlabeled_as_neg': set_unlabeled_as_neg
         }
+        self.save_dir = save_dir
 
     def run(self):
         while True:
@@ -433,11 +434,13 @@ class ModelTester(Process):
                 # NOTE: Currently, we have to save every model because we are
                 # testing asynchronously. This is obviously memory inefficient,
                 # although probably not that much of a problem in practice...
-                self.model.save(model_name=model_name)
+                self.model.save(model_name=model_name, save_dir=self.save_dir)
 
                 # Test the model
-                run_scores = list(self.model.score(self.X_valid, self.Y_valid,
-                    **self.scorer_params))
+                run_scores = self.model.score(self.X_valid, self.Y_valid, 
+                    **self.scorer_params)
+                run_scores = [run_scores] if self.model.cardinality > 2 else \
+                    list(run_scores)
 
                 # Append score to out queue
                 self.scores_queue.put([k] + run_scores, True, QUEUE_TIMEOUT)
@@ -464,21 +467,22 @@ class GridSearch(object):
     def search_space(self):
         return product(*[param.get_all_values() for param in self.params])
 
-    def fit(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True,
-        validation_kwargs={}, n_threads=1, **model_hyperparams):
+    def fit(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True, 
+        validation_kwargs={}, n_threads=1, save_dir='checkpoints',
+        **model_hyperparams):
         if n_threads > 1:
             opt_model, run_stats = self._fit_mt(X_valid, Y_valid, b=b,
                 set_unlabeled_as_neg=set_unlabeled_as_neg,
                 validation_kwargs=validation_kwargs, n_threads=n_threads,
-                **model_hyperparams)
+                save_dir=save_dir, **model_hyperparams)
         else:
             opt_model, run_stats = self._fit_st(X_valid, Y_valid, b=b,
                 set_unlabeled_as_neg=set_unlabeled_as_neg,
-                validation_kwargs=validation_kwargs,
+                validation_kwargs=validation_kwargs, save_dir=save_dir, 
                 **model_hyperparams)
         return opt_model, run_stats
 
-    def _fit_st(self, X_valid, Y_valid, b=0.5,
+    def _fit_st(self, X_valid, Y_valid, b=0.5, save_dir='checkpoints',
         set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
@@ -499,7 +503,7 @@ class GridSearch(object):
                 model_hyperparams[pn] = pv
             print("=" * 60)
             print("[%d] Testing %s" % (k+1, ', '.join([
-                "%s = %0.2e" % (pn,pv)
+                "%s = %s" % (pn, ("%0.2e" % pv) if type(pv) in [float, int, np.float64] else pv)
                 for pn,pv in zip(self.param_names, param_vals)
             ])))
             print("=" * 60)
@@ -524,13 +528,13 @@ class GridSearch(object):
                 run_score))
             run_stats.append(list(param_vals) + list(run_scores))
             if run_score > run_score_opt or k == 0:
-                self.model.save(model_name=model_name)
+                self.model.save(model_name=model_name, save_dir=save_dir)
                 opt_model = model_name
                 run_score_opt = run_score
 
         # Set optimal parameter in the learner model
-        self.model.load(opt_model)
-
+        self.model.load(opt_model, save_dir=save_dir)
+        
         # Return optimal model & DataFrame of scores
         run_score_labels = ['Acc.'] if self.model.cardinality > 2 else \
             ['Prec.', 'Rec.', 'F1']
@@ -540,15 +544,25 @@ class GridSearch(object):
         ).sort_values(by=sort_by, ascending=False)
         return self.model, self.results
 
-    def _fit_mt(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True,
-        validation_kwargs={}, n_threads=2, **model_hyperparams):
+    def _fit_mt(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True, 
+        validation_kwargs={}, n_threads=2, save_dir='checkpoints',
+        **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
           set_unlabeled_as_neg is used to decide class of unlabeled cases for f1
           Non-search parameters are set using model_hyperparamters
         """
+        # First do a preprocessing pass over the data to make sure it is all
+        # non-lazily loaded
+        # TODO: Better way to go about it than this!!
+        print("Loading data...")
+        model = self.model_class(**self.model_class_params)
+        _ = model._preprocess_data(self.X_train)
+        _ = model._preprocess_data(X_valid)
+
         # Create queue of hyperparameters to test
+        print("Launching jobs...")
         params_queue = JoinableQueue()
         param_val_sets = []
         for k, param_vals in enumerate(self.search_space()):
@@ -566,7 +580,7 @@ class GridSearch(object):
         for i in range(n_threads):
             p = ModelTester(self.model_class, self.model_class_params,
                     params_queue, scores_queue, self.X_train, X_valid, Y_valid,
-                    Y_train=self.Y_train, b=b,
+                    Y_train=self.Y_train, b=b, save_dir=save_dir,
                     set_unlabeled_as_neg=set_unlabeled_as_neg)
             p.start()
             ps.append(p)
@@ -589,13 +603,17 @@ class GridSearch(object):
         for p in ps:
             p.terminate()
 
-        # Load best model; assume score is last element
-        k_opt = np.argmax([s[-1] for s in run_stats])
+        # Load best model; first element in each row of run_stats is the model
+        # index, last one is the score to sort by
+        # Note: the models may be returned out of order!
+        i_opt = np.argmax([s[-1] for s in run_stats])
+        k_opt = run_stats[i_opt][0]
         model = self.model_class(**self.model_class_params)
-        model.load('{0}_{1}'.format(model.name, k_opt))
+        model.load('{0}_{1}'.format(model.name, k_opt), save_dir=save_dir)
 
         # Return model and DataFrame of scores
-        categorical = (len(scores) == 1)
+        # Test for categorical vs. binary in hack-ey way for now...
+        categorical = (len(scores) == 2)
         labels = ['Acc.'] if categorical else ['Prec.', 'Rec.', 'F1']
         sort_by = 'Acc.' if categorical else 'F1'
         self.results = DataFrame.from_records(

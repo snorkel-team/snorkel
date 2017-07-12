@@ -1,0 +1,7 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    "python.pythonPath": "/anaconda/envs/py2Env/bin/python",
+    "python.linting.pep8Enabled": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false
+}

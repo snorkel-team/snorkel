@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Alex Ratner, Stephen Bach, Paroma Varma, Chris Ré And referencing work by many other members of Hazy Research" />
+  <title>Weak Supervision: The New Programming Paradigm for Machine Learning</title>
+  <link rel="stylesheet" href="blog.css">
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+</head>
+<body>
+<div id="header">
+<h1 class="title">Weak Supervision: The New Programming Paradigm for Machine Learning</h1>
+Alex Ratner, Stephen Bach, Paroma Varma, Chris Ré<br />
+<em>And referencing work by many other members of Hazy Research</em><br />
+<a href="https://snorkel.stanford.edu">Back to the Snorkel Blog</a>
+</div>
+<p>Getting labeled training data has become <em>the</em> key development bottleneck in supervised machine learning. We provide a broad, high-level overview of recent <em>weak supervision</em> approaches, where <em>noisier</em> or <em>higher-level</em> supervision is used as a more expedient and flexible way to get supervision signal, in particular from subject matter experts (SMEs). We provide a simple, broad definition of weak supervision as being comprised of one or more noisy conditional distributions over unlabeled data, and focus on the key technical challenge of unifying and modeling these sources.</p>
+<h1 id="the-training-data-bottleneck">The Training Data Bottleneck</h1>
+<p>In recent years, the real-world impact of machine learning has grown in leaps and bounds. In large part, this is due to the advent of deep learning models, which allow practitioners to get state-of-the-art scores on benchmark datasets without any hand-engineered features. Whereas building an image classification model five years ago might have required advanced knowledge of tools like Sobel operators and Fourier analysis to craft an adequate set of features for a model, now deep learning models learn such representations automatically. Moreover, given the availability of multiple professional-quality open-source machine learning frameworks like TensorFlow and PyTorch, and an abundance of available state-of-the-art models (with fancy anthropomorphic names to boot), it can be argued that high-quality machine learning models are almost a commoditized resource now. The dream of democratizing ML has never seemed closer!</p>
+<p>There is a hidden catch, however: the reliance of these models on massive sets of hand-labeled training data. This dependence of machine learning on labeled training sets is nothing new, and arguably has been the primary driver of new advances for many years <span class="citation">(spacemachine.net 2016)</span>. But deep learning models are massively more complex than most traditional models–many standard deep learning models today have hundreds of millions of free parameters–and thus require commensurately more labeled training data. These hand-labeled training sets are expensive and time-consuming to create–taking months or years for large benchmark sets, or when domain expertise is required–and cannot be practically repurposed for new objectives. In practice, the cost and inflexibility of hand-labeling such training sets is the key bottleneck to actually deploying machine learning.</p>
+<p>That’s why in practice today, most large ML systems actually use some form of <em>weak supervision</em>: noisier, lower-quality, but larger-scale training sets constructed via strategies such as using cheaper annotators, programmatic scripts, or more creative and high-level input from domain experts, to name a few common techniques. The goal of this blog post is to provide a simple, unified view of these techniques along with a summary of some core technical challenges and opportunities in this new regime. We’ll proceed in three main parts:</p>
+<ol>
+<li><p>We’ll review some other areas of machine learning research similarly motivated by <strong>the problem of labeled training data</strong>;</p></li>
+<li><p>We’ll provide a <strong>simple, working definition</strong> of weak supervision;</p></li>
+<li><p>We’ll discuss <strong>the key technical challenge</strong> of integrating and modeling diverse sets of weak supervision signals.</p></li>
+</ol>
+<h1 id="our-ai-is-hungry-now-what">Our AI is Hungry: Now What?</h1>
+<p>Many traditional lines of research in machine learning are similarly motivated by the insatiable appetite of modern machine learning models for labeled training data. We start by drawing the core distinction between these other approaches and weak supervision at a high-level: <strong>weak supervision is about leveraging higher-level and/or noisier input from subject matter experts (SMEs).</strong></p>
+<p>For simplicity, we can start by considering the categorical classification setting: we have data points <span class="math inline">\(x \in X\)</span> that each have some label <span class="math inline">\(y \in Y = {1,...,K}\)</span>, and we wish to learn a classifier <span class="math inline">\(h : X \rightarrow Y\)</span>. For example, <span class="math inline">\(X\)</span> might be mammogram images, and <span class="math inline">\(Y\)</span> a tumor grade classification. We choose a model class <span class="math inline">\(h_\theta\)</span>–for example a CNN–and then pose our learning problem as one of parameter estimation, with our goal being to minimize the expected loss, e.g. on a new unseen test set of labeled data points <span class="math inline">\((x_i, y_i)\)</span>. In the standard supervised learning setting, we then would get a training set of data points with ground-truth labels <span class="math inline">\(T = {(x_1, y_1), ..., (x_N, y_N)}\)</span>–traditionally, hand-labeled by SME annotators, e.g. radiologists in our example–define a loss function <span class="math inline">\(L(h(x), y)\)</span>, and minimize the aggregate loss on the training set using an optimization procedure like SGD.</p>
+<div class="figure">
+<img src="figs/WS_mapping.png" alt="Many areas of machine learning are motivated by the bottleneck of labeled training data, but are divided at a high-level by what information they leverage instead." />
+<p class="caption"><b><i>Many areas of machine learning are motivated by the bottleneck of labeled training data, but are divided at a high-level by what information they leverage instead.</i></b></p>
+</div>
+<p>The problem is that this is expensive: for example, unlike grad students, radiologists don’t generally accept payment in burritos and free T-shirts! Thus, many well-studied lines of work in machine learning are motivated by the bottleneck of getting labeled training data:</p>
+<ul>
+<li><p>In <strong>active learning</strong>, the goal is to make use of subject matter experts more efficiently by having them label data points which are estimated to be most valuable to the model. Traditionally, applied to the standard supervised learning setting, this means selecting new data points to be labeled–for example, we might select mammograms that lie close to the current model decision boundary, and ask radiologists to label only these. However, we could also just ask for weaker supervision pertinent to these data points, in which case active learning is perfectly complementary with weak supervision; as one example of this, see <span class="citation">(Druck, Settles, and McCallum 2009)</span>.</p></li>
+<li><p>In the <strong>semi-supervised learning</strong> setting, we have a small labeled training set and a much larger unlabeled data set. At a high level, we then use assumptions about smoothness, low dimensional structure, or distance metrics to leverage the unlabeled data (either as part of a generative model, as a regularizer for a discriminative model, or to learn a compact data representation); for a good survey see <span class="citation">(Chapelle, Scholkopf, and Zien 2009)</span>. More recent methods use adversarial generative <span class="citation">(Salimans et al. 2016)</span>, heuristic transformation models <span class="citation">(Laine and Aila 2016)</span>, and other generative approaches to effectively help regularize decision boundaries. Broadly, rather than soliciting more input from subject matter experts, the idea in semi-supervised learning is to leverage domain- and task-agnostic assumptions to exploit the unlabeled data that is often cheaply available in large quantities.</p></li>
+<li><p>In the standard <strong>transfer learning</strong> setting, our goal is to take one or more models already trained on a different dataset and apply them to our dataset and task; for a good overview see <span class="citation">(Pan and Yang 2010)</span>. For example, we might have a large training set for tumors in another part of the body, and classifiers trained on this set, and wish to apply these somehow to our mammography task. A common transfer learning approach in the deep learning community today is to “pre-train” a model on one large dataset, and then “fine-tune” it on the task of interest. Another related line of work is <em>multi-task learning</em>, where several tasks are learned jointly <span class="citation">(Caruna 1993; Augenstein, Vlachos, and Maynard 2015)</span>. Some transfer learning approaches take one or more pre-trained models (potentially with some heuristic conditioning of when they are each applied) and use these to train a new model for the task of interest; in this case, we can actually consider transfer learning as a type of weak supervision.</p></li>
+</ul>
+<p>The above paradigms potentially allow us to avoid asking our SME collaborators for additional training labels. But what if–either in addition, or instead–we could ask them for various types of higher-level, or otherwise less precise, forms of supervision, which would be faster and easier to provide? For example, what if our radiologists could spend an afternoon specifying a set of heuristics or other resources, that–if handled properly–could effectively replace thousands of training labels? This is the key practical motivation for <strong>weak supervision</strong> approaches, which we describe next.</p>
+<h1 id="weak-supervision-a-simple-definition">Weak Supervision: A Simple Definition</h1>
+<p>In the <strong>weak supervision setting</strong>, our objective is the same as in the supervised setting, however instead of a ground-truth labeled training set we have:</p>
+<ul>
+<li><p>Unlabeled data <span class="math inline">\(X_u = x_1, …, x_N\)</span>;</p></li>
+<li><p>One or more weak supervision sources <span class="math inline">\(\tilde{p}_i(y | x), i=1:M\)</span> provided by a human subject matter expert (SME), such that each one has:</p>
+<ul>
+<li><p>A <em>coverage set</em> <span class="math inline">\(C_i\)</span>, which is the set of points <span class="math inline">\(x\)</span> over which it is defined</p></li>
+<li><p>An accuracy, defined as the expected probability of the true label <span class="math inline">\(y^*\)</span> over its coverage set, which we assume is <span class="math inline">\(&lt; 1.0\)</span></p></li>
+</ul></li>
+</ul>
+<p>In general, we are motivated by the setting where these weak label distributions serve as a way for human supervision to be provided more cheaply and efficiently: either by providing <strong>higher-level, less precise</strong> supervision (e.g. heuristic rules, expected label distributions), <strong>cheaper, lower-quality</strong> supervision (e.g. crowdsourcing), or taking opportunistic advantage of <strong>existing resources</strong> (e.g. knowledge bases, pre-trained models). These weak label distributions could thus take one of many well-explored forms:</p>
+<ul>
+<li><p><strong>Weak Labels:</strong> The weak label distributions could be deterministic functions–in other words, we might just have a set of noisy labels for each data point in <span class="math inline">\(C_i\)</span>. These could come from <strong>crowd workers</strong>, be the output of <strong>heuristic rules</strong> <span class="math inline">\(f_i(x)\)</span>, or the result of <strong>distant supervision</strong> <span class="citation">(Mintz et al. 2009)</span>, where an external knowledge base is heuristically mapped onto <span class="math inline">\(X_u\)</span>. These could also be the output of <strong>other classifiers</strong> which only yield MAP estimates, or which are combined with heuristic rules to output discrete labels.</p></li>
+<li><p><strong>Constraints:</strong> We can also consider <strong>constraints</strong> represented as weak label distributions. Though straying outside of the simple categorical setting we are considering here, the structured prediction setting leads to a wide range of very interesting constraint types, such as physics-based constraints on output trajectories <span class="citation">(Stewart and Ermon 2017)</span> or output constraints on execution of logical forms <span class="citation">(Clarke et al. 2010; Guu et al. 2017)</span>, which encode various forms of domain expertise and/or cheaper supervision from e.g. lay annotators.</p></li>
+<li><p><strong>Distributions:</strong> We might also have direct access to a probability distribution. For example, we could have the posterior distributions of one or more <strong>weak (i.e. low accuracy/coverage) or biased classifiers</strong>, such as classifiers trained on different data distributions as in the transfer learning setting. We could also have one or more user-provided <strong>label or feature expectations or measurements</strong> <span class="citation">(Mann and McCallum 2010; Liang, Jordan, and Klein 2009)</span>, i.e. an expected distribution <span class="math inline">\(p_i(y)\)</span> or <span class="math inline">\(p_i(y|f(x))\)</span> (where <span class="math inline">\(f(x)\)</span> is some feature of <span class="math inline">\(x\)</span>) provided by a domain expert as in e.g. <span class="citation">(Druck, Settles, and McCallum 2009)</span>.</p></li>
+<li><p><strong>Invariances:</strong> Finally, given a small set of labeled data, we can express functional invariances as weak label distributions–e.g., extend the coverage of the labeled distribution to all transformations of <span class="math inline">\(t(x)\)</span> or <span class="math inline">\(x\)</span>, and set <span class="math inline">\(p_i(y|t(x)) = p_i(y|x)\)</span>. In this way we view techniques such as <strong>data augmentation</strong> as a form of weak supervision as well.</p></li>
+</ul>
+<div class="figure">
+<img src="figs/WS_diagram.png" alt="A high-level schematic of the basic weak supervision pipeline: We start with one or more weak supervision sources: for example crowdsourced data, heuristic rules, distant supervision, and/or weak classifiers provided by an SME. The core technical challenge is to unify and model these disparate sources, which we discuss in the next section. Then, this must be used to train the end model–in the standard ERM context, we can imagine changing either the training set T, loss function L, or model f to accomplish this." />
+<p class="caption"><b><i>A high-level schematic of the basic weak supervision “pipeline”: We start with one or more weak supervision sources: for example crowdsourced data, heuristic rules, distant supervision, and/or weak classifiers provided by an SME. The core technical challenge is to unify and model these disparate sources, which we discuss in the next section. Then, this must be used to train the end model–in the standard ERM context, we can imagine changing either the training set <span class="math inline">\(T\)</span>, loss function <span class="math inline">\(L\)</span>, or model <span class="math inline">\(f\)</span> to accomplish this.</i></b></p>
+</div>
+<p>Given a potentially heterogenous set of such weak supervision sources, we can conceptually break the technical challenges of weak supervision into two components. First, we need to deal with the fact that our weak sources are noisy and conflicting–we view this as the core lurking technical challenge of weak supervision, and discuss it more further on. Second, we need to then modify the traditional empirical risk minimization (ERM) framework to accept our weak supervision.</p>
+<p>In some approaches, such as in our data programming work <span class="citation">(A. J. Ratner et al. 2016)</span>, we explicitly approach these as two separate steps, first unifying and modeling our weak supervision sources as a single model <span class="math inline">\(p(y|x)\)</span>, in which case we can then simply minimize the expected loss with respect to this distribution (i.e. the cross-entropy). However, many other approaches either do not deal with the problem of integrating multiple weak supervision sources, or do so jointly with training an end model, and thus primarily highlight the latter component. For example, researchers have considered expectation criteria <span class="citation">(Mann and McCallum 2010)</span>, learning with constraints <span class="citation">(Becker and Hinton 1992; Stewart and Ermon 2017)</span>, building task-specific noise models <span class="citation">(Mnih and Hinton 2012)</span>, and learning noise models simultaneously during training <span class="citation">(Xiao et al. 2015)</span>.</p>
+<h1 id="wait-but-why-weak-supervision-again">Wait, But Why Weak Supervision Again?</h1>
+<p>At this point, it’s useful to revisit and explicitly frame why we might want to use the outlined approach of weak supervision at all. Though heretical-sounding, non-ML approaches are adequate for many simple tasks, as are simple models trained on small hand-labeled training sets! Roughly, there are three principal reasons to motivate a weak supervision approach:</p>
+<ol>
+<li><p>If we are approaching a challenging task that <strong>requires a complex model</strong> (i.e. one that has a large number of parameters) then we generally need a training set too large to conveniently label by hand. Most state-of-the-art models for tasks like natural language and image processing today are massively complex (e.g. <span class="math inline">\(|\theta| = 100M+\)</span>), and thus are a good fit for weak supervision!</p></li>
+<li><p>In some simple cases, the weak supervision sources described above (or a unified model of them, as we’ll discuss in the next section) might be a good enough classifier on their own. However, in most cases <strong>we want to generalize beyond the coverage of our weak supervision sources</strong>. For example, we might have a set of precise but overly narrow rules, or pre-trained classifiers defined over features not always available at test time (such as models trained over text radiology reports, when our goal is to train an image classifier)–thus we aim to train an end model that can learn a more general representation.</p></li>
+<li><p>While other areas of work are also motivated by the bottleneck of labeled training data as discussed, <strong>if we have domain expertise to leverage</strong>, then weak supervision provides a simple, model-agnostic way to integrate it into our model. In particular, we are motivated by the idea of soliciting domain expert input in a more compact (and thus perhaps noisier) form; e.g. quickly getting a few dozen rules, or high-level constraints, or distant supervision sources, rather than a few million single-bit labels from subject matter experts.</p></li>
+</ol>
+<p>Now that we’ve defined and situated weak supervision, on to the core technical challenges of how to actually model it!</p>
+<h1 id="the-lurking-technical-challenge-learning-a-unified-weak-supervision-model">The Lurking Technical Challenge: Learning a Unified Weak Supervision Model</h1>
+<p>Given a set of multiple weak supervision sources, the key technical challenge is how to unify and de-noise them, given that they are each noisy, may disagree with each other, may be correlated, and have arbitrary (unknown) accuracies which may depend on the subset of the dataset being labeled. We can phrase this task very generally as that of defining and learning a single weak supervision model, <span class="math inline">\(\tilde{p}(y|x, …)\)</span>, defined over the weak supervision sources. We can then think of breaking this down into three standard modeling tasks:</p>
+<ol>
+<li><p><strong>Learning accuracies:</strong> Given some model structure, and no labeled data, how can we learn the weights of this model (which in the basic independent case would represent the accuracies of each weak supervision source)?</p></li>
+<li><p><strong>Modeling correlations:</strong> What structure should we model between the weak supervision sources?</p></li>
+<li><p><strong>Modeling “expertise”:</strong> How should we condition the model–e.g. the estimates of how accurate each weak supervision source is–on the data point <span class="math inline">\(x\)</span>? For example, should we learn that certain weak supervision sources are more accurate on certain subsets of the feature space?</p></li>
+</ol>
+<p>Techniques for learning the accuracies of noisy supervision sources (1) in the absence of ground-truth data have been explored in the crowdsourcing setting, i.e. with a large number of deterministic label sources each having small coverage <span class="citation">(Berend and Kontorovich 2014; Zhang et al. 2014; Dalvi et al. 2013; Dawid and Skene 1979; Karger, Oh, and Shah 2011)</span>. In the natural language processing community, the technique of distant supervision–heuristically mapping an external knowledge base onto the input data to generate noisy labels–has been used extensively, with various problem-specific modeling solutions to the challenge of resolving and denoising this input <span class="citation">(Alfonseca et al. 2012; Takamatsu, Sato, and Nakagawa 2012; B. Roth and Klakow 2013)</span>. Our work on Data Programming <span class="citation">(A. J. Ratner et al. 2016)</span> builds on these settings, considering the case of deterministic weak supervision sources which we characterize as being produced by black-box labeling functions <span class="math inline">\(\lambda_i(x)\)</span>, where we learn a generative model to resolve and model the output of these labeling functions. Similar approaches have been explored recently <span class="citation">(Platanios, Dubey, and Mitchell 2016)</span>, as well as in classic settings such as co-training <span class="citation">(Blum and Mitchell 1998)</span> and boosting <span class="citation">(Schapire and Freund 2012)</span>, and in the simplified context of learning from a single source of noisy labels <span class="citation">(Bootkrajang and Kabán 2012)</span>.</p>
+<p>For the same Data Programming setting, we also recently addressed the modeling task (2) of learning correlations and other dependencies between the labeling functions based on data <span class="citation">(Bach et al. 2017)</span>. Modeling these dependencies is important because, without them, we might misestimate the accuracies of the weak signals and therefore misestimate the true label <span class="math inline">\(y\)</span>. For example, not accounting for the fact that two weak signals are highly correlated could lead to a double counting problem. While structure learning for probabilistic graphical models is well-studied in the fully supervised case <span class="citation">(Perkins, Lacker, and Theiler 2003; Tibshirani 1996; Ravikumar et al. 2010; Elidan and Friedman 2005)</span>, with generative models for weak supervision the problem is more challenging. The reason is that we have to deal with our uncertainty about the latent class label <span class="math inline">\(y\)</span>.</p>
+<p>Finally, the question of modeling expertise or conditioning a weak supervision model can also be viewed as learning local models or a combination of models for a single dataset, such as mixture-of-models and locally-weighted support vector machines. Using local predictors is also relevant in the area of interpretable machine learning as described in <span class="citation">(Ribeiro, Singh, and Guestrin 2016)</span>. Local predictors that are specialized for different subsets of data have also been studied for time series prediction models <span class="citation">(Lau and Wu 2008)</span>. In cases where ground truth labels are not available, modeling “expertise” has been studied in the crowdsourcing setting <span class="citation">(Ruvolo, Whitehill, and Movellan 2013)</span>, where a probabilistic model is used to aggregate crowdsourced labels with the assumption that certain people are better at particular kinds of data and not others. Extending this to the weak supervision setting, our work in <span class="citation">(Varma et al. 2016)</span> automatically finds subsets in the data that should be modeled separately by using information from the discriminative model.</p>
+<h1 id="next-steps-vision-a-new-programming-paradigm-for-supervising-ml">Next Steps Vision: A New Programming Paradigm for Supervising ML</h1>
+<p>The most exciting opportunity opened up by the perspective of weak supervision, in our opinion, is that by accepting supervision that is weaker–and handling this using the appropriate methods behind the scenes–we can allow users to provide higher-level, more expressive input, and be robust to inevitable lack of precision, coverage, or conflict resolution in this input. In other words, we can define flexible, efficient, and interpretable paradigms for how to interact with, supervise, and essentially “program” machine learning models! On the systems side, we’ve started down this path with Snorkel (<a href="snorkel.stanford.edu" class="uri">snorkel.stanford.edu</a>), where users encode weak supervision sources as deterministic <em>labeling functions</em>; other weakly-supervised frameworks include programming via generalized expectation criteria <span class="citation">(Druck, Settles, and McCallum 2009)</span>, annotator rationales <span class="citation">(Zaidan and Eisner 2008)</span>, and many others. We believe the best is yet to come, and are very excited about how weak supervision approaches continue to be translated into more efficient, more flexible, and ultimately more usable systems for ML!</p>
+<h1 id="weak-supervision-reading-group-stanford">Weak Supervision Reading Group @ Stanford</h1>
+<p>Our goal is to grow and expand the above description of weak supervision, and to help with this we’ve started a weak supervision reading group at Stanford. We’ll keep this post updated with what we’re reading, with links to notes when available (coming soon). Please let us know if there are papers we should be reading in the below comments section!</p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://snorkel-stanford-edu.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+                            
+
+<h1 id="references" class="unnumbered">References</h1>
+<div id="refs" class="references">
+<div id="ref-alfonseca2012pattern">
+<p>Alfonseca, Enrique, Katja Filippova, Jean-Yves Delort, and Guillermo Garrido. 2012. “Pattern Learning for Relation Extraction with a Hierarchical Topic Model.” In <em>Proceedings of the 50th Annual Meeting of the Association for Computational Linguistics: Short Papers-Volume 2</em>, 54–59. Association for Computational Linguistics.</p>
+</div>
+<div id="ref-augenstein2015extracting">
+<p>Augenstein, Isabelle, Andreas Vlachos, and Diana Maynard. 2015. “Extracting Relations Between Non-Standard Entities Using Distant Supervision and Imitation Learning.” In <em>Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing</em>, 747–57. Association for Computational Linguistics.</p>
+</div>
+<div id="ref-bach2017learning">
+<p>Bach, Stephen H, Bryan He, Alexander Ratner, and Christopher Ré. 2017. “Learning the Structure of Generative Models Without Labeled Data.” <em>arXiv Preprint arXiv:1703.00854</em>.</p>
+</div>
+<div id="ref-becker1992self">
+<p>Becker, Suzanna, and Geoffrey E Hinton. 1992. “Self-Organizing Neural Network That Discovers Surfaces in Random-Dot Stereograms.” <em>Nature</em> 355 (6356). Nature Publishing Group: 161.</p>
+</div>
+<div id="ref-NIPS20145253">
+<p>Berend, Daniel, and Aryeh Kontorovich. 2014. “Consistency of Weighted Majority Votes.” In <em>NIPS 2014</em>.</p>
+</div>
+<div id="ref-blum1998combining">
+<p>Blum, Avrim, and Tom Mitchell. 1998. “Combining Labeled and Unlabeled Data with Co-Training.” In <em>Proceedings of the Eleventh Annual Conference on Computational Learning Theory</em>, 92–100. ACM.</p>
+</div>
+<div id="ref-bootkrajang2012label">
+<p>Bootkrajang, Jakramate, and Ata Kabán. 2012. “Label-Noise Robust Logistic Regression and Its Applications.” In <em>Joint European Conference on Machine Learning and Knowledge Discovery in Databases</em>, 143–58. Springer.</p>
+</div>
+<div id="ref-caruna1993multitask">
+<p>Caruna, R. 1993. “Multitask Learning: A Knowledge-Based Source of Inductive Bias.” In <em>Machine Learning: Proceedings of the Tenth International Conference</em>, 41–48.</p>
+</div>
+<div id="ref-chapelle2009semi">
+<p>Chapelle, Olivier, Bernhard Scholkopf, and Alexander Zien. 2009. “Semi-Supervised Learning (Chapelle, O. et Al., Eds.; 2006)[book Reviews].” <em>IEEE Transactions on Neural Networks</em> 20 (3). IEEE: 542–42.</p>
+</div>
+<div id="ref-clarke2010driving">
+<p>Clarke, James, Dan Goldwasser, Ming-Wei Chang, and Dan Roth. 2010. “Driving Semantic Parsing from the World’s Response.” In <em>Proceedings of the Fourteenth Conference on Computational Natural Language Learning</em>, 18–27. Association for Computational Linguistics.</p>
+</div>
+<div id="ref-Dalvi">
+<p>Dalvi, Nilesh, Anirban Dasgupta, Ravi Kumar, and Vibhor Rastogi. 2013. “Aggregating Crowdsourced Binary Ratings.” In <em>Proceedings of the 22Nd International Conference on World Wide Web</em>, 285–94. WWW ’13. doi:<a href="https://doi.org/10.1145/2488388.2488414">10.1145/2488388.2488414</a>.</p>
+</div>
+<div id="ref-dawid1979maximum">
+<p>Dawid, Alexander Philip, and Allan M Skene. 1979. “Maximum Likelihood Estimation of Observer Error-Rates Using the Em Algorithm.” <em>Applied Statistics</em>. JSTOR, 20–28.</p>
+</div>
+<div id="ref-druck2009active">
+<p>Druck, Gregory, Burr Settles, and Andrew McCallum. 2009. “Active Learning by Labeling Features.” In <em>Proceedings of the 2009 Conference on Empirical Methods in Natural Language Processing: Volume 1-Volume 1</em>, 81–90. Association for Computational Linguistics.</p>
+</div>
+<div id="ref-elidan2005learning">
+<p>Elidan, Gal, and Nir Friedman. 2005. “Learning Hidden Variable Networks: The Information Bottleneck Approach.” <em>Journal of Machine Learning Research</em> 6 (Jan): 81–127.</p>
+</div>
+<div id="ref-guu2017language">
+<p>Guu, Kelvin, Panupong Pasupat, Evan Zheran Liu, and Percy Liang. 2017. “From Language to Programs: Bridging Reinforcement Learning and Maximum Marginal Likelihood.” <em>arXiv Preprint arXiv:1704.07926</em>.</p>
+</div>
+<div id="ref-karger2011iterative">
+<p>Karger, David R, Sewoong Oh, and Devavrat Shah. 2011. “Iterative Learning for Reliable Crowdsourcing Systems.” In <em>Advances in Neural Information Processing Systems</em>, 1953–61.</p>
+</div>
+<div id="ref-laine2016temporal">
+<p>Laine, Samuli, and Timo Aila. 2016. “Temporal Ensembling for Semi-Supervised Learning.” <em>arXiv Preprint arXiv:1610.02242</em>.</p>
+</div>
+<div id="ref-lau2008local">
+<p>Lau, KW, and QH Wu. 2008. “Local Prediction of Non-Linear Time Series Using Support Vector Regression.” <em>Pattern Recognition</em> 41 (5). Elsevier: 1539–47.</p>
+</div>
+<div id="ref-liang2009learning">
+<p>Liang, Percy, Michael I Jordan, and Dan Klein. 2009. “Learning from Measurements in Exponential Families.” In <em>Proceedings of the 26th Annual International Conference on Machine Learning</em>, 641–48. ACM.</p>
+</div>
+<div id="ref-mann2010generalized">
+<p>Mann, Gideon S, and Andrew McCallum. 2010. “Generalized Expectation Criteria for Semi-Supervised Learning with Weakly Labeled Data.” <em>Journal of Machine Learning Research</em> 11 (Feb): 955–84.</p>
+</div>
+<div id="ref-Mintz2009">
+<p>Mintz, Mike, Steven Bills, Rion Snow, and Dan Jurafsky. 2009. “Distant Supervision for Relation Extraction Without Labeled Data.” In <em>Proceedings of the Joint Conference of the 47th Annual Meeting of the Acl</em>. <a href="http://dl.acm.org/citation.cfm?id=1690219.1690287" class="uri">http://dl.acm.org/citation.cfm?id=1690219.1690287</a>.</p>
+</div>
+<div id="ref-mnih2012learning">
+<p>Mnih, Volodymyr, and Geoffrey E Hinton. 2012. “Learning to Label Aerial Images from Noisy Data.” In <em>Proceedings of the 29th International Conference on Machine Learning (Icml-12)</em>, 567–74.</p>
+</div>
+<div id="ref-pan2010survey">
+<p>Pan, Sinno Jialin, and Qiang Yang. 2010. “A Survey on Transfer Learning.” <em>IEEE Transactions on Knowledge and Data Engineering</em> 22 (10). IEEE: 1345–59.</p>
+</div>
+<div id="ref-perkins2003grafting">
+<p>Perkins, Simon, Kevin Lacker, and James Theiler. 2003. “Grafting: Fast, Incremental Feature Selection by Gradient Descent in Function Space.” <em>Journal of Machine Learning Research</em> 3 (Mar): 1333–56.</p>
+</div>
+<div id="ref-platanios2016estimating">
+<p>Platanios, Emmanouil Antonios, Avinava Dubey, and Tom Mitchell. 2016. “Estimating Accuracy from Unlabeled Data: A Bayesian Approach.” In <em>International Conference on Machine Learning</em>, 1416–25.</p>
+</div>
+<div id="ref-ratner2016data">
+<p>Ratner, Alexander J, Christopher M De Sa, Sen Wu, Daniel Selsam, and Christopher Ré. 2016. “Data Programming: Creating Large Training Sets, Quickly.” In <em>Advances in Neural Information Processing Systems</em>, 3567–75.</p>
+</div>
+<div id="ref-ravikumar2010high">
+<p>Ravikumar, Pradeep, Martin J Wainwright, John D Lafferty, and others. 2010. “High-Dimensional Ising Model Selection Using ℓ1-Regularized Logistic Regression.” <em>The Annals of Statistics</em> 38 (3). Institute of Mathematical Statistics: 1287–1319.</p>
+</div>
+<div id="ref-ribeiro2016should">
+<p>Ribeiro, Marco Tulio, Sameer Singh, and Carlos Guestrin. 2016. “Why Should I Trust You?: Explaining the Predictions of Any Classifier.” In <em>Proceedings of the 22nd Acm Sigkdd International Conference on Knowledge Discovery and Data Mining</em>, 1135–44. ACM.</p>
+</div>
+<div id="ref-roth2013combining">
+<p>Roth, Benjamin, and Dietrich Klakow. 2013. “Combining Generative and Discriminative Model Scores for Distant Supervision.” In <em>EMNLP</em>, 24–29.</p>
+</div>
+<div id="ref-ruvolo2013exploiting">
+<p>Ruvolo, Paul, Jacob Whitehill, and Javier R Movellan. 2013. “Exploiting Commonality and Interaction Effects in Crowd Sourcing Tasks Using Latent Factor Models.” In <em>Proc. Neural Inf. Process. Syst.</em>, 1–9.</p>
+</div>
+<div id="ref-salimans2016improved">
+<p>Salimans, Tim, Ian Goodfellow, Wojciech Zaremba, Vicki Cheung, Alec Radford, and Xi Chen. 2016. “Improved Techniques for Training Gans.” In <em>Advances in Neural Information Processing Systems</em>, 2234–42.</p>
+</div>
+<div id="ref-schapire2012boosting">
+<p>Schapire, Robert E, and Yoav Freund. 2012. <em>Boosting: Foundations and Algorithms</em>. MIT press.</p>
+</div>
+<div id="ref-datasetsoveralgs">
+<p>spacemachine.net. 2016. “Datasets over Algorithms.” http://www.spacemachine.net/views/2016/3/datasets-over-algorithms.</p>
+</div>
+<div id="ref-stewart2017label">
+<p>Stewart, Russell, and Stefano Ermon. 2017. “Label-Free Supervision of Neural Networks with Physics and Domain Knowledge.” In <em>AAAI</em>, 2576–82.</p>
+</div>
+<div id="ref-takamatsu2012reducing">
+<p>Takamatsu, Shingo, Issei Sato, and Hiroshi Nakagawa. 2012. “Reducing Wrong Labels in Distant Supervision for Relation Extraction.” In <em>Proceedings of the 50th Annual Meeting of the Association for Computational Linguistics: Long Papers-Volume 1</em>, 721–29. Association for Computational Linguistics.</p>
+</div>
+<div id="ref-tibshirani1996regression">
+<p>Tibshirani, Robert. 1996. “Regression Shrinkage and Selection via the Lasso.” <em>Journal of the Royal Statistical Society. Series B (Methodological)</em>. JSTOR, 267–88.</p>
+</div>
+<div id="ref-varma2016socratic">
+<p>Varma, Paroma, Rose Yu, Dan Iter, Christopher De Sa, and Christopher Ré. 2016. “Socratic Learning: Empowering the Generative Model.” <em>arXiv Preprint arXiv:1610.08123</em>.</p>
+</div>
+<div id="ref-xiao2015learning">
+<p>Xiao, Tong, Tian Xia, Yi Yang, Chang Huang, and Xiaogang Wang. 2015. “Learning from Massive Noisy Labeled Data for Image Classification.” In <em>Proceedings of the Ieee Conference on Computer Vision and Pattern Recognition</em>, 2691–9.</p>
+</div>
+<div id="ref-zaidan2008modeling">
+<p>Zaidan, Omar F, and Jason Eisner. 2008. “Modeling Annotators: A Generative Approach to Learning from Annotator Rationales.” In <em>Proceedings of the Conference on Empirical Methods in Natural Language Processing</em>, 31–40. Association for Computational Linguistics.</p>
+</div>
+<div id="ref-NIPS20145431">
+<p>Zhang, Yuchen, Xi Chen, Denny Zhou, and Michael I Jordan. 2014. “Spectral Methods Meet Em: A Provably Optimal Algorithm for Crowdsourcing.” In <em>Advances in Neural Information Processing Systems 27</em>, 1260–8. <a href="http://papers.nips.cc/paper/5431-spectral-methods-meet-em-a-provably-optimal-algorithm-for-crowdsourcing.pdf" class="uri">http://papers.nips.cc/paper/5431-spectral-methods-meet-em-a-provably-optimal-algorithm-for-crowdsourcing.pdf</a>.</p>
+</div>
+</div>
+</body>
+</html>

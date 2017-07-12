@@ -141,7 +141,6 @@ class RNNBase(TFNoiseAwareModel):
         train.
         """
         # Text preprocessing
-        self.word_dict = SymbolTable()
         X_train, ends = self._preprocess_data(X_train, extend=True)
         if X_dev is not None:
             X_dev, _ = self._preprocess_data(X_dev, extend=False)

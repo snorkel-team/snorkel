@@ -6,12 +6,14 @@ from utils import SymbolTable
 
 class TextRNN(RNNBase):
     """TextRNN for strings of text."""
-    def _preprocess_data(self, candidates, extend):
+    def _preprocess_data(self, candidates, extend=False):
         """Convert candidate sentences to lookup sequences
         
         :param candidates: candidates to process
         :param extend: extend symbol table for tokens (train), or lookup (test)?
         """
+        if not hasattr(self, 'word_dict'):
+            self.word_dict = SymbolTable()
         data, ends = [], []
         for candidate in candidates:
             toks = candidate.get_contexts()[0].text.split()

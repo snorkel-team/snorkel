@@ -1,7 +1,7 @@
 {
     "version": "0.2.0",
-    "configurations": [
-        {
+    "configurations": 
+    [{
         "name": "Revere",
         "type": "python",
         "request": "launch",
@@ -18,6 +18,5 @@
             "WaitOnNormalExit",
             "RedirectOutput"
         ]
-    }
-    ]
+    }]
 }

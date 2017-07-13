@@ -87,7 +87,7 @@ Then install the remaining package requirements:
 pip install --requirement python-package-requirement.txt
 ```
 
-Finally, enable `ipywidgets`:
+Enable `ipywidgets`:
 ```bash
 jupyter nbextension enable --py widgetsnbextension --sys-prefix
 ```
@@ -96,15 +96,23 @@ _Note: Currently the `Viewer` is supported on the following versions:_
 * `jupyter`: 4.1
 * `jupyter notebook`: 4.2
 
-In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
+In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text. To install the Core NLP parser, run 
+```bash
+./install-parser.sh
+```
 
 ### Frequently Asked Questions
 See [this FAQ](https://hazyresearch.github.io/snorkel/install_faq) for help with common questions that arise.
 
 ## Running
-After installing, just run:
+To run the tutorials:
 ```
 ./run.sh
+```
+
+To run via VS Code:
+```
+python revere.py
 ```
 
 ## Issues

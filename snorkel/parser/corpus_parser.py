@@ -10,6 +10,7 @@ class CorpusParser(UDFRunner):
         super(CorpusParser, self).__init__(CorpusParserUDF,
                                            parser=self.parser,
                                            fn=fn)
+
     def clear(self, session, **kwargs):
         session.query(Context).delete()
         # We cannot cascade up from child contexts to parent Candidates,

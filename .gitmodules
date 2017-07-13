@@ -2,3 +2,7 @@
 	path = treedlib
 	url = https://www.github.com/HazyResearch/treedlib.git
 	branch = master
+[submodule "pymetamap"]
+	path = pymetamap
+	url = https://github.com/AnthonyMRios/pymetamap.git
+	branch = master

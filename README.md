@@ -66,7 +66,7 @@ tutorials/intro
 Snorkel uses Python 2.7 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
 
 ### Setting Up Conda
-Installation is easiest if you download and install [`conda`](https://www.continuum.io/downloads).
+Installation is easiest if you download and install [`conda`](https://www.continuum.io/downloads) - the Python 2.7 version.
 If you are running multiple version of Python, you might need to run:
 ```
 conda create -n py2Env python=2.7 anaconda
@@ -99,6 +99,11 @@ _Note: Currently the `Viewer` is supported on the following versions:_
 In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text. To install the Core NLP parser, run 
 ```bash
 ./install-parser.sh
+```
+
+Finally, install [PostgreSQL](https://www.postgresql.org) and create an empty datbase called `snorkel_revere`
+```sql
+ CREATE DATABASE snorkel_revere;
 ```
 
 ### Frequently Asked Questions

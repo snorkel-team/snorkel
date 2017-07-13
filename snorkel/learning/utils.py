@@ -488,7 +488,7 @@ class GridSearch(object):
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
           set_unlabeled_as_neg is used to decide class of unlabeled cases for f1
-          Non-search parameters are set using model_hyperparamters
+          Non-search parameters are set using model_hyperparameters
         """
         self.model = self.model_class(**self.model_class_params)
 
@@ -551,7 +551,7 @@ class GridSearch(object):
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
           set_unlabeled_as_neg is used to decide class of unlabeled cases for f1
-          Non-search parameters are set using model_hyperparamters
+          Non-search parameters are set using model_hyperparameters
         """
         # First do a preprocessing pass over the data to make sure it is all
         # non-lazily loaded

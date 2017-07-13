@@ -115,9 +115,9 @@ To run the tutorials:
 ./run.sh
 ```
 
-To run via VS Code:
+To run via VS Code, from the menu:
 ```
-python revere.py
+Debug -> Start Debugging || Start Without Debugging
 ```
 
 ## Issues

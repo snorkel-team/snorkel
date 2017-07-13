@@ -6,7 +6,7 @@ from snorkel.parser import CorpusParser
 from utils import TaggerOneTagger
 from snorkel.models import Document, Sentence
 
-data_file_path = 'tutorials/cdr/data/CDR.RevereTest.BioC.xml'
+data_file_path = 'tutorials/cdr/data/CDR.BioC.xml'
 
 SNORKEL_SESSION = SnorkelSession()
 

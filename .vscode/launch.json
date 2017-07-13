@@ -6,13 +6,12 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "program": "revere.py",
+            "program": "${workspaceRoot}/revere.py",
             "cwd": "${workspaceRoot}",
             "env": {
                 "SNORKELDB": "postgres:///snorkel_revere",
                 "SNORKELHOME": "${workspaceRoot}"
             },
-            "console": "none",
             "debugOptions": [
                 "WaitOnAbnormalExit",
                 "WaitOnNormalExit",

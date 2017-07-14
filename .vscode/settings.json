@@ -12,5 +12,13 @@
     "editor.formatOnSave": true,
     "editor.rulers": [
         80
-    ]
+    ],
+    "python.unitTest.unittestArgs": [
+        "-v",
+        "-s",
+        ".",
+        "-p",
+        "*_test.py"
+    ],
+    "python.unitTest.unittestEnabled": true
 }

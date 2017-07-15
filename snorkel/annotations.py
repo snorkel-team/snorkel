@@ -54,18 +54,26 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         """Return the cow index of the AnnotationKey"""
         return self.key_index[key.id]
 
-    def _get_sliced_indexes(self, s, axis, index):
+    def _get_sliced_indexes(self, s, axis, index, inv_index):
+        """
+        Remaps the indexes between matrix rows/cols and candidates/keys.
+        Note: This becomes a massive performance bottleneck if not implemented
+        properly, so be careful of changing!
+        """
         if isinstance(s, slice):
-            idxs = np.arange(self.shape[axis])[s]
+            # Check for empty slice
+            if s.start is None and s.stop is None:
+                return index, inv_index
+            else:
+                idxs = np.arange(self.shape[axis])[s]
         # csr_matrix._get_submatrix only handles slice or int, so this is int
         else:
             idxs = np.array([s])
         index_new, inv_index_new = {}, {}
-        for i, k in index.iteritems():
-            if i in idxs:
-                i_new = np.where(idxs == i)[0][0]
-                index_new[i_new] = k
-                inv_index_new[k] = i_new
+        for i_new, i in enumerate(idxs):
+            k = index[i]
+            index_new[i_new] = k
+            inv_index_new[k] = i_new
         return index_new, inv_index_new
 
     def _get_submatrix(self, row_slice, col_slice):
@@ -74,11 +82,11 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
             col_slice)
         X.annotation_key_cls = self.annotation_key_cls
 
-        # Remap the row and column indexes
+        # # Remap the row and column indexes
         X.row_index, X.candidate_index = self._get_sliced_indexes(
-            row_slice, 0, self.row_index)
+            row_slice, 0, self.row_index, self.candidate_index)
         X.col_index, X.key_index = self._get_sliced_indexes(
-            col_slice, 1, self.col_index)
+            col_slice, 1, self.col_index, self.key_index)
         return X
 
     def stats(self):

@@ -1,15 +1,19 @@
-"""Extracting symptoms from diseases
+""" Example Snorkel project that uses MetaMap
+    to identify symptoms as entities.
 """
+
+
 from snorkel import SnorkelSession
 from snorkel.parser import XMLMultiDocPreprocessor
 from snorkel.parser import CorpusParser
-from metamap import MetaMapAPI
+from metamap_api import MetaMapAPI
 from snorkel.models import Document, Sentence
 
-data_file_path = 'tutorials/cdr/data/CDR.BioC.xml'
+data_file_path = 'tutorials/cdr/data/CDR.BioC.small.xml'
 
 SNORKEL_SESSION = SnorkelSession()
 
+# print sys.path
 doc_preprocessor = XMLMultiDocPreprocessor(
     path=data_file_path,
     doc='.//document',

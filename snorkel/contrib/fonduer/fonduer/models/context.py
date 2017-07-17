@@ -6,8 +6,7 @@ from sqlalchemy.sql import text
 from sqlalchemy.types import PickleType
 
 from .....models.meta import snorkel_postgres
-from .....models.context import Context, Document, TemporarySpan
-
+from .....models.context import Context, Document, TemporarySpan, split_stable_id
 
 INT_ARRAY_TYPE = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
 STR_ARRAY_TYPE = postgresql.ARRAY(String)  if snorkel_postgres else PickleType
@@ -353,14 +352,14 @@ class TemporaryImplicitSpan(TemporarySpan):
                 + hash(self.expander_key) + hash(self.position))
 
     def get_stable_id(self):
+        doc_id, _, parent_doc_char_start, _ = split_stable_id(self.sentence.stable_id)
         # return (construct_stable_id(self.sentence, self._get_polymorphic_identity(), self.char_start, self.char_end)
         #     + ':%s:%s' % (self.expander_key, self.position))
-        return '%s::%s:%s:%s:%s:%s:%s' % (
+        return '%s::%s:%s:%s:%s:%s' % (
             self.sentence.document.name,
             self._get_polymorphic_identity(),
-            self.sentence.id,
-            self.char_start,
-            self.char_end,
+            parent_doc_char_start + self.char_start,
+            parent_doc_char_start + self.char_end,
             self.expander_key,
             self.position)
 

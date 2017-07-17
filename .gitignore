@@ -19,6 +19,11 @@ docs/_build
 # PyCharm
 .idea
 
+# VS Code
+.vscode/*
+!.vscode/launch.json
+!.vscode/settings.json
+
 # TF models
 *.info
 *.meta

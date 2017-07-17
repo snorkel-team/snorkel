@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Revere",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "program": "${workspaceRoot}/revere.py",
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "SNORKELDB": "postgres:///snorkel_revere",
+                "SNORKELHOME": "${workspaceRoot}"
+            },
+            "debugOptions": [
+                "WaitOnAbnormalExit",
+                "WaitOnNormalExit",
+                "RedirectOutput"
+            ]
+        }
+    ]
+}

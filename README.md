@@ -1,7 +1,7 @@
 <img src="figs/logo_01.png" width="150"/>
 
 
-**_v0.6.1_**
+**_v0.6.2_**
 
 
 [![Documentation](https://readthedocs.org/projects/snorkel/badge/?version=master)](http://snorkel.readthedocs.io/en/master/)

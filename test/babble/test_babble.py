@@ -19,18 +19,18 @@ class TestBabble(unittest.TestCase):
 
         # Create initial snorkel.db
         session = SnorkelSession()
-        # test_article_path = os.environ['SNORKELHOME'] + '/test/babble/test_article.tsv'
-        # doc_preprocessor = TSVDocPreprocessor(test_article_path)
-        # corpus_parser = CorpusParser(parser=Spacy())
-        # corpus_parser.apply(doc_preprocessor)
+        test_article_path = os.environ['SNORKELHOME'] + '/test/babble/test_article.tsv'
+        doc_preprocessor = TSVDocPreprocessor(test_article_path)
+        corpus_parser = CorpusParser(parser=Spacy())
+        corpus_parser.apply(doc_preprocessor)
         Spouse = candidate_subclass('Spouse', ['person1', 'person2'])
-        # ngrams         = Ngrams(n_max=2)
-        # person_matcher = PersonMatcher(longest_match_only=True)
-        # cand_extractor = CandidateExtractor(Spouse, [ngrams, ngrams], [person_matcher, person_matcher])
-        # docs = session.query(Document).order_by(Document.name).all()
-        # sents = [s for doc in docs for s in doc.sentences]
-        # cand_extractor.apply(sents, split=0)
-        # cls.candidate = None
+        ngrams         = Ngrams(n_max=2)
+        person_matcher = PersonMatcher(longest_match_only=True)
+        cand_extractor = CandidateExtractor(Spouse, [ngrams, ngrams], [person_matcher, person_matcher])
+        docs = session.query(Document).order_by(Document.name).all()
+        sents = [s for doc in docs for s in doc.sentences]
+        cand_extractor.apply(sents, split=0)
+        cls.candidate = None
         for candidate in session.query(Spouse).all():
             if candidate[0].get_span().startswith('Daniel'):
                 cls.candidate = candidate

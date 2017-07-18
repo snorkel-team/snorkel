@@ -57,6 +57,9 @@ class Candidate(SnorkelBase):
             self.__class__.__name__,
             ", ".join(map(str, self.get_contexts()))
         )
+    
+    def __hash__(self):
+        return hash(tuple(c.stable_id for c in self.get_contexts()))
 
 # This global dictionary contains all classes that have been declared in this Python environment, so
 # that candidate_subclass() can return a class if it already exists and is identical in specification

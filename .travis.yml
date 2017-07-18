@@ -66,6 +66,8 @@ install:
 script:
 
   # Run test modules
+  - python test/learning/test_babble.py
+ 
   - python test/learning/test_gen_learning.py
   - python test/learning/test_supervised.py
   - python test/learning/test_categorical.py

@@ -42,8 +42,8 @@ lexical_rules = (
     [Rule('$Exists', w) for w in ['exist', 'exists']] +
     [Rule('$Int', w, ('.int', 0)) for w in ['no']] +
     [Rule('$Int', w,  ('.int', 1)) for w in ['immediately', 'right']] +
-    # Rule('$AtLeastOne', 'a', ('.geq', ('.int', 1))),
-    # Rule('$Int', 'a', ('.int', 1)),
+    [Rule('$AtLeastOne', 'a', ('.geq', ('.int', 1)))] +
+    # [Rule('$Int', 'a', ('.int', 1))] +
     [Rule('$Because', w) for w in ['because', 'since', 'if']] +
     [Rule('$Upper', w, '.upper') for w in ['upper', 'uppercase', 'upper case', 'all caps', 'all capitalized']] +
     [Rule('$Lower', w, '.lower') for w in ['lower', 'lowercase', 'lower case']] +
@@ -276,18 +276,35 @@ compositional_rules = [
             # "there are at least two nouns to the left..."
     Rule('$Bool', '$Exists $IntToBool $TokenList', lambda sems: ('.call', sems[1], ('.count', sems[2]))),
     
+    # NER/POS
     Rule('$PhraseList', '$POS $PhraseList', lambda sems: ('.filter_by_attr', sems[1], ('.string', 'pos_tags'), sems[0])),
     Rule('$PhraseList', '$NER $PhraseList', lambda sems: ('.filter_by_attr', sems[1], ('.string', 'ner_tags'), sems[0])),
     Rule('$TokenList', '$PhraseList', lambda sems: ('.filter_to_tokens', sems[0])),
     Rule('$StringList', '$PhraseList', lambda sems: ('.extract_text', sems[0])),
 
+    # Arg lists
     Rule('$String', '$ArgToString $ArgX', lambda (func_, arg_): ('.call', func_, arg_)),
     Rule('$String', '$ArgX $ArgToString', lambda (arg_, func_): ('.call', func_, arg_)),
     Rule('$StringListAnd', '$ArgToString $ArgXAnd', lambda (func_, args_): ('.map', func_, args_)),
     Rule('$StringListAnd', '$ArgXAnd $ArgToString', lambda (args_, func_): ('.map', func_, args_)),
+    
+    # Tuples
     Rule('$StringTuple', '$Tuple $StringListAnd', sems_in_order),
-    Rule('$TupleToBool', '$In $List', sems_in_order),
-    Rule('$Bool', '$StringTuple $TupleToBool', lambda (tup_, func_): ('.call', func_, tup_)),
+    Rule('$StringTupleToBool', '$In $List', sems_in_order),
+    Rule('$Bool', '$StringTuple $StringTupleToBool', lambda (tup_, func_): ('.call', func_, tup_)),
+
+    Rule('$StringTupleListStub', '$StringTuple ?$Separator $StringTuple', lambda sems: ('.list', sems[0], sems[2])),
+    Rule('$StringTupleListStub', '$StringTupleListStub ?$Separator $StringTuple', lambda sems: tuple((list(sems[0]) + [sems[2]]))),
+    
+    Rule('$StringTupleListOr', '$StringTuple ?$Separator $Or $StringTuple', lambda sems: ('.list', sems[0], sems[3])),
+    Rule('$StringTupleListOr', '$StringTupleListStub ?$Separator $Or $StringTuple', lambda sems: tuple(list(sems[0]) + [sems[3]])),
+
+    Rule('$StringTupleListAnd', '$StringTuple ?$Separator $And $StringTuple', lambda sems: ('.list', sems[0], sems[3])),
+    Rule('$StringTupleListAnd', '$StringTupleListStub ?$Separator $And $StringTuple', lambda sems: tuple(list(sems[0]) + [sems[3]])),
+
+    Rule('$Bool', '$StringTuple $Not $StringTupleToBool', lambda (tup_, not_, func_): (not_, ('.call', func_, tup_))),
+    Rule('$Bool', '$StringTupleListOr $StringTupleToBool', lambda (tuplist_, func_): ('.any', ('.map', func_, tuplist_))),
+    Rule('$Bool', '$StringTupleListAnd $StringTupleToBool', lambda (tuplist_, func_): ('.all', ('.map', func_, tuplist_))),
 ]
 
 snorkel_rules = lexical_rules + unary_rules + compositional_rules

@@ -47,16 +47,18 @@ class TestBabble(unittest.TestCase):
     def tearDownClass(cls):
         pass
 
-    def test_trivial(self):
-        self.assertTrue(True)
-
     def check_examples(self, examples):
+        self.assertTrue(len(examples))
         for e in examples:
             if e.candidate and not isinstance(e.candidate, tuple):
                 e.candidate = self.candidate_hash[e.candidate]
-            LFs = self.sp.parse_and_evaluate(e)
-            self.assertTrue(len(LFs['correct']) + len(LFs['passing']) > 0)
-            self.assertTrue(len(LFs['correct']) + len(LFs['passing']) <= 3)
+            LF_dict = self.sp.parse_and_evaluate(e, show_everything=True)
+            if e.semantics:
+                self.assertTrue(len(LF_dict['correct']) > 0)
+            else:
+                self.assertTrue(len(LF_dict['passing']) > 0)
+            self.assertTrue(len(LF_dict['correct']) + len(LF_dict['passing']) <= 3)
+
 
     def test_logic(self):
         self.check_examples(unittest_examples.logic)
@@ -93,6 +95,10 @@ class TestBabble(unittest.TestCase):
 
     def test_inversion(self):
         self.check_examples(unittest_examples.inversion)
+
+    def test_tuples(self):
+        self.check_examples(unittest_examples.tuples)
+
 
 if __name__ == '__main__':
     unittest.main()

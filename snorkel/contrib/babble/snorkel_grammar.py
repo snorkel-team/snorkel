@@ -164,12 +164,14 @@ compositional_rules = [
         # building string lists
     Rule('$StringListStub', '$String ?$Separator $String', lambda sems: ('.list', sems[0], sems[2])),
     Rule('$StringListStub', '$StringListStub ?$Separator $String', lambda sems: tuple((list(sems[0]) + [sems[2]]))),
-    
+
     Rule('$StringListOr', '$String ?$Separator $Or $String', lambda sems: ('.list', sems[0], sems[3])),
     Rule('$StringListOr', '$StringListStub ?$Separator $Or $String', lambda sems: tuple(list(sems[0]) + [sems[3]])),
+    Rule('$StringListOr', '$OpenParen $StringListStub $CloseParen', sems1),
 
     Rule('$StringListAnd', '$String ?$Separator $And $String', lambda sems: ('.list', sems[0], sems[3])),
     Rule('$StringListAnd', '$StringListStub ?$Separator $And $String', lambda sems: tuple(list(sems[0]) + [sems[3]])),
+    Rule('$StringListAnd', '$OpenParen $StringListStub $CloseParen', sems1),
 
         # applying $StringToBool functions
     Rule('$Bool', '$String $StringToBool', lambda (str_, func_): ('.call', func_, str_)),
@@ -291,6 +293,7 @@ compositional_rules = [
     # Tuples
     Rule('$StringTuple', '$Tuple $StringListAnd', sems_in_order),
     Rule('$StringTupleToBool', '$In $List', sems_in_order),
+    Rule('$StringTupleToBool', '$Equals $StringTuple', sems_in_order),
     Rule('$Bool', '$StringTuple $StringTupleToBool', lambda (tup_, func_): ('.call', func_, tup_)),
 
     Rule('$StringTupleListStub', '$StringTuple ?$Separator $StringTuple', lambda sems: ('.list', sems[0], sems[2])),

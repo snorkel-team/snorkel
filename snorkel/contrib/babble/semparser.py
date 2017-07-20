@@ -91,7 +91,7 @@ class SemanticParser():
                            show_erroring=False,
                            show_unknown=False,
                            pseudo_python=False,
-                           remove_paren=True,
+                           remove_paren=False,
                            paraphrases=False,
                            only=[]):
         """

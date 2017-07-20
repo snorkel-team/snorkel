@@ -417,9 +417,18 @@ inversion = [
         semantics=None),
 ]
 
+tuples = [
+    # Tuple
+    Example(
+        explanation="label True because the pair (arg 1, arg 2) is the same as the tuple ('foo', 'bar')",
+        candidate=('foo', 'bar'),
+        denotation=1,
+        semantics=('.root', ('.label', ('.bool', True), ('.call', ('.eq', ('.tuple', ('.list', ('.string', u'foo'), ('.string', u'bar')))), ('.tuple', ('.list', ('.arg_to_string', ('.arg', ('.int', 1))), ('.arg_to_string', ('.arg', ('.int', 2))))))))),
+]
+
 examples = (logic + grouping + integers + strings + lists + candidate_helpers + 
             index_comparisons + pos_ner + count + absorption + anaphora + 
-            inversion)
+            inversion + tuples)
 
 # TODO: re-add the following:
 #     # # Index OrList right

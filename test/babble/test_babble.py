@@ -56,6 +56,7 @@ class TestBabble(unittest.TestCase):
                 e.candidate = self.candidate_hash[e.candidate]
             LFs = self.sp.parse_and_evaluate(e)
             self.assertTrue(len(LFs['correct']) + len(LFs['passing']) > 0)
+            self.assertTrue(len(LFs['correct']) + len(LFs['passing']) <= 3)
 
     def test_logic(self):
         self.check_examples(unittest_examples.logic)

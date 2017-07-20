@@ -102,12 +102,14 @@ class SemanticParser():
         assert(not (show_everything and show_nothing))
         if show_everything:
             show_explanation = show_candidate = show_sentence = show_parse = show_semantics = True
+            print("Note: show_everything = True. This will override all other show_ commands.")
         if show_semantics:
             show_correct = show_passing = show_failing = True
             show_redundant = show_erroring = show_unknown = True
         if show_nothing:
             show_explanation = show_candidate = show_sentence = show_parse = show_semantics = False
             show_correct = show_passing = show_failing = show_redundant = show_erroring = show_unknown = False
+            print("Note: show_nothing = True. This will override all other show_ commands.")
         self.explanation_counter = 0
         examples = examples if isinstance(examples, list) else [examples]
         col_names = ['Correct', 'Passing', 'Failing', 'Redundant', 'Erroring', 'Unknown','Index']

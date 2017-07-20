@@ -1,12 +1,13 @@
 from snorkel.contrib.babble import Example
 
-user_lists = {
-    'colors':['red','green','blue'],
-    'bluebird':['blue','bird','fly'],
-    'greek':['alpha','beta','gamma'],
-    'letters':['a','B','C'],
-    'smalls':['a','b','c','d'],
-    'spouse':['wife','husband','spouse']}
+def get_user_lists():
+    return {
+        'colors':['red','green','blue'],
+        'bluebird':['blue','bird','fly'],
+        'greek':['alpha','beta','gamma'],
+        'letters':['a','B','C'],
+        'smalls':['a','b','c','d'],
+        'spouse':['wife','husband','spouse']}
 
 # Test candidate (hash: 668761641257950361):
 # "City land records show that GM President [Daniel Ammann] and his wife, 

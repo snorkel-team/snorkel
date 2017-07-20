@@ -16,6 +16,10 @@ def link_example_candidates(examples, candidates):
     else:
         print("Collected {} target candidate hashes from {} examples.".format(
             len(candidate_hash_set), len(examples)))
+    if not candidate_hash_set:
+        print("No candidate hashes were provided. Skipping linking.")
+        return examples
+
     
     candidate_hash_map = {}
     print("Gathering desired candidates...")

@@ -166,23 +166,20 @@ class Annotator(UDFRunner):
 
         # Run the Annotator
         super(Annotator, self).apply(cids, split=split, key_group=key_group,
-            replace_key_set=replace_key_set, cids_query=cids_query,
-            count=cids_count, **kwargs)
+                                     replace_key_set=replace_key_set,
+                                     cids_query=cids_query,
+                                     count=cids_count,
+                                     **kwargs)
 
         # Load the matrix
         return self.load_matrix(session, split=split, cids_query=cids_query,
-            key_group=key_group)
+                                key_group=key_group)
 
-<<<<<<< HEAD
-    def clear(self, session, split, key_group, replace_key_set, **kwargs):
-        """Delete the Annotations for the Candidates in the given split.
-
-=======
     def clear(self, session, split=0, key_group=0, replace_key_set=True,
-        cids_query=None, **kwargs):
+              cids_query=None, **kwargs):
         """
         Deletes the Annotations for the Candidates in the given split.
->>>>>>> master
+
         If replace_key_set=True, deletes *all* Annotations (of this Annotation sub-class)
         and also deletes all AnnotationKeys (of this sub-class)
         """
@@ -195,6 +192,7 @@ class Annotator(UDFRunner):
                                              .filter(Candidate.split == split)
             sub_query = sub_query.subquery()
             query = query.filter(self.annotation_class.candidate_id.in_(sub_query))
+
         query.delete(synchronize_session='fetch')
 
         # If we are creating a new key set, delete all old annotation keys
@@ -248,10 +246,11 @@ class AnnotatorUDF(UDF):
                 yield cid, key_name, value
 
     def reduce(self, y, clear, key_group, replace_key_set, **kwargs):
-        """
-        Inserts Annotations into the database.
-        For Annotations with unseen AnnotationKeys (in key_group, if not None), either adds these
-        AnnotationKeys if create_new_keyset is True, else skips these Annotations.
+        """Insert Annotations into the database.
+
+        For Annotations with unseen AnnotationKeys (in key_group, if not None),
+        either adds these AnnotationKeys if create_new_keyset is True, else
+        skips these Annotations.
         """
         cid, key_name, value = y
 
@@ -431,10 +430,6 @@ class LabelAnnotator(Annotator):
         return load_label_matrix(session, **kwargs)
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> master
 class FeatureAnnotator(Annotator):
     """Apply feature generators to the candidates, generating Feature annotations"""
     def __init__(self, f=get_span_feats):

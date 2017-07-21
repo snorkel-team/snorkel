@@ -175,10 +175,6 @@ class TFNoiseAwareModel(Classifier):
         # would be separated but no negative effect
         with self.graph.as_default():
             self._build_training_ops(**kwargs)
-
-        # Process the dev set if provided
-        if X_dev is not None and Y_dev is not None:
-            Y_dev = np.ravel(Y_dev) if self.cardinality == 2 else Y_dev
         
         # Initialize variables
         with self.graph.as_default():

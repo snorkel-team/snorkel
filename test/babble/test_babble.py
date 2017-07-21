@@ -22,16 +22,16 @@ class TestBabble(unittest.TestCase):
         session = SnorkelSession()
         Spouse = candidate_subclass('Spouse', ['person1', 'person2'])
 
-        # test_article_path = os.environ['SNORKELHOME'] + '/test/babble/test_article.tsv'
-        # doc_preprocessor = TSVDocPreprocessor(test_article_path)
-        # corpus_parser = CorpusParser(parser=Spacy())
-        # corpus_parser.apply(doc_preprocessor)
-        # ngrams         = Ngrams(n_max=2)
-        # person_matcher = PersonMatcher(longest_match_only=True)
-        # cand_extractor = CandidateExtractor(Spouse, [ngrams, ngrams], [person_matcher, person_matcher], symmetric_relations=True)
-        # docs = session.query(Document).order_by(Document.name).all()
-        # sents = [s for doc in docs for s in doc.sentences]
-        # cand_extractor.apply(sents, split=0)
+        test_article_path = os.environ['SNORKELHOME'] + '/test/babble/test_article.tsv'
+        doc_preprocessor = TSVDocPreprocessor(test_article_path)
+        corpus_parser = CorpusParser(parser=Spacy())
+        corpus_parser.apply(doc_preprocessor)
+        ngrams         = Ngrams(n_max=2)
+        person_matcher = PersonMatcher(longest_match_only=True)
+        cand_extractor = CandidateExtractor(Spouse, [ngrams, ngrams], [person_matcher, person_matcher], symmetric_relations=True)
+        docs = session.query(Document).order_by(Document.name).all()
+        sents = [s for doc in docs for s in doc.sentences]
+        cand_extractor.apply(sents, split=0)
 
         cls.candidate_hash = {hash(c): c for c in session.query(Spouse).all()}
         
@@ -52,7 +52,7 @@ class TestBabble(unittest.TestCase):
         for e in examples:
             if e.candidate and not isinstance(e.candidate, tuple):
                 e.candidate = self.candidate_hash[e.candidate]
-            LF_dict = self.sp.parse_and_evaluate(e, show_everything=True)
+            LF_dict = self.sp.parse_and_evaluate(e, show_nothing=True)
             if e.semantics:
                 self.assertTrue(len(LF_dict['correct']) > 0)
             else:

@@ -1,18 +1,8 @@
 """
 Subpackage for all built-in Snorkel data models.
 
-To ensure correct behavior, this subpackage should always be treated as a single module (with one exception
-described below). This rule means that all data models should be imported from this subpackage,
-not directly from individual submodules. For example, the correct way to import the Corpus class is
-
-.. code-block:: python
-
-    from snorkel.models import Corpus
-
-The only exception is importing SnorkelBase or other classes in order to extend Snorkel's data models.
-To ensure that any additional data models are included in the storage backend, these must be imported
-and the extending subtypes defined before importing `snorkel.models`. For example, the correct way to
-define a new type of Context is:
+After creating additional models that extend snorkel.models.meta.SnorkelBase, they must be added to the database schema.
+For example, the correct way to define a new type of Context is:
 
 .. code-block:: python
 
@@ -32,15 +22,18 @@ define a new type of Context is:
 
         # Rest of class definition here
 
-    # The entire storage schema, including NewType, can now be initialized with the following import
-    import snorkel.models
+    # Adds the corresponding table to the underlying database's schema
+    from snorkel.models.meta import SnorkelBase, snorkel_engine
+    SnorkelBase.metadata.create_all(snorkel_engine)
 """
 from .meta import SnorkelBase, SnorkelSession, snorkel_engine, snorkel_postgres
 from .context import Context, Document, Sentence, TemporarySpan, Span
 from .context import construct_stable_id, split_stable_id
-from .candidate import Candidate, candidate_subclass
-from .annotation import Feature, FeatureKey, Label, LabelKey, GoldLabel, GoldLabelKey, StableLabel, Prediction, PredictionKey
-from .parameter import Parameter
+from .candidate import Candidate, candidate_subclass, Marginal
+from .annotation import (
+    Feature, FeatureKey, Label, LabelKey, GoldLabel, GoldLabelKey, StableLabel,
+    Prediction, PredictionKey
+)
 
 # This call must be performed after all classes that extend SnorkelBase are
 # declared to ensure the storage schema is initialized

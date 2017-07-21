@@ -1,5 +1,5 @@
 Annotations
-==========
+===========
 
 One of the core operations in Snorkel is _annotating_ the candidates in various ways.
 We can think of generating features for the candidates as annotating them (creating a `Feature` object),

@@ -1,4 +1,4 @@
-from ..constants import *
+from .constants import *
 import random
 
 

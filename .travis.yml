@@ -66,7 +66,6 @@ install:
 script:
 
   # Run test modules
-  # - python test/babble/test_babble.py
  
   - python test/learning/test_gen_learning.py
   - python test/learning/test_supervised.py
@@ -89,6 +88,7 @@ script:
   - runipy cdr/CDR_Tutorial_2.ipynb
   - runipy cdr/CDR_Tutorial_3.ipynb
 
+  - python test/babble/test_babble.py
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7
 

@@ -9,7 +9,7 @@ from snorkel.models.views import create_serialized_candidate_view
 
 class SparkLabelAnnotator:
     """
-    Distributes candidates to a Spark cluster and applies labeling functions 
+    Distributes candidates to a Spark cluster and applies labeling functions
     over them. See snorkel.annotations.LabelAnnotator.
     """
     def __init__(self, snorkel_session, spark_session, candidate_class):
@@ -36,8 +36,8 @@ class SparkLabelAnnotator:
 
         :param LFs: collection of labeling functions
         :param split: the split of candidates to label
-        :param use_cached: If True, distributed candidate sets are cached by 
-            split for the annotator, so  repeated calls to apply() will operate 
+        :param use_cached: If True, distributed candidate sets are cached by
+            split for the annotator, so  repeated calls to apply() will operate
             over the same split of candidates as the first call for that split,
             regardless of how the underlying database changes. Intended for e.g.
             usage during iterative development of LFs given fixed Candidate set.
@@ -50,6 +50,7 @@ class SparkLabelAnnotator:
             self._load_candidates(split)
         else:
             print("Using cached Candidate set for split %s" % split)
+        print('Applying labelling functions to %d candidates' % self.split_cache[split].count())
 
         # Bulk insert the LF labels (output values)
         key_query = LabelKey.__table__.insert()
@@ -68,7 +69,6 @@ class SparkLabelAnnotator:
                 if len(label_tuples) >= 100000:
                     self.snorkel_session.execute(Label.__table__.insert(), label_tuples)
                     label_tuples = []
-
         # Flushes the remaining labels
         self.snorkel_session.execute(Label.__table__.insert(), label_tuples)
 
@@ -86,7 +86,7 @@ class SparkLabelAnnotator:
 
     def _load_candidates(self, split):
         """
-        Loads a set of candidates as a Spark RDD and caches the results as 
+        Loads a set of candidates as a Spark RDD and caches the results as
         self.split_cache[split]
 
         :param split: the split of candidates to load
@@ -94,7 +94,7 @@ class SparkLabelAnnotator:
         jdbcDF = self.spark_session.read \
             .format("jdbc") \
             .option("url", "jdbc:" + snorkel_conn_string) \
-            .option("dbtable", 
+            .option("dbtable",
                 self.candidate_class.__tablename__ + "_serialized") \
             .load()
 
@@ -106,4 +106,3 @@ class SparkLabelAnnotator:
         rdd = rdd.setName("Snorkel Candidates, Split " + str(split) + \
             " (" + self.candidate_class.__name__ + ")")
         self.split_cache[split] = rdd.cache()
-

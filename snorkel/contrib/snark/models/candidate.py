@@ -1,4 +1,8 @@
+import pickle
+
+from snorkel.models import Sentence, Span
 from . import SparkModel
+
 
 class Candidate(SparkModel):
     """An abstract candidate relation."""
@@ -23,7 +27,7 @@ class Candidate(SparkModel):
             raise Exception("Contexts do not all have same parent")
 
     def get_cids(self):
-        """Get a tuple of the canonical IDs (CIDs) of the contexts making up 
+        """Get a tuple of the canonical IDs (CIDs) of the contexts making up
         this candidate.
         """
         return tuple(getattr(self, name + "_cid") for name in self.__argnames__)
@@ -41,8 +45,8 @@ class Candidate(SparkModel):
 # Note: This should ideally not be hard-coded...
 CONTEXT_OFFSET = 2
 # Note: We store the sentence here, not the sentence_id
-SPAN_COLS = ['id', 'sentence', 'char_start', 'char_end', 'meta']
-SENTENCE_COLS = ['id', 'document_id', 'position', 'text', 'words', 
+SPAN_COLS = ['id', 'sentence_id', 'char_start', 'char_end', 'meta']
+SENTENCE_COLS = ['id', 'document_id', 'position', 'text', 'words',
     'char_offsets', 'lemmas', 'pos_tags', 'ner_tags', 'dep_parents',
     'dep_labels', 'entity_cids', 'entity_types']
 
@@ -67,19 +71,20 @@ def wrap_candidate(row, class_name='Candidate', argnames=None):
     # Order of columns is id | split | span1.cid | span1.* | ... | sent.*
 
     # Create Sentence object
-    args = dict(zip(SENTENCE_COLS, row[-len(SENTENCE_COLS):]))
-    args = {k: loads(v) if isinstance(v, bytearray) else v 
-            for k, v in args.iteritems()}
-    sent = Sentence(**args)
+    # Arrays are stored as BLOBs so need to be converted to Python using Pickle
+    sentence_args = dict(zip(SENTENCE_COLS, row[-len(SENTENCE_COLS):]))
+    sentence_args = {k: pickle.loads(v) if isinstance(v, bytearray) else v
+                     for k, v in sentence_args.iteritems()}
+    sent = Sentence(**sentence_args)
 
     # Create the Span objects
     spans, cids = [], []
     for i in range(arity):
         j = CONTEXT_OFFSET + i * (len(SPAN_COLS) + 1)
-        args = dict(zip(SPAN_COLS, row[j+1:j+len(SPAN_COLS)]))
-        args = {k: loads(v) if isinstance(v, bytearray) else v 
-                for k, v in args.iteritems()}
-        span = Span(**args)
+        span_args = dict(zip(SPAN_COLS, row[j+1:j+len(SPAN_COLS)]))
+        span_args = {k: pickle.loads(v) if isinstance(v, bytearray) else v
+                for k, v in span_args.iteritems()}
+        span = Span(**span_args)
         # Store the Sentence in the Span
         span.sentence = sent
         spans.append(span)
@@ -87,10 +92,12 @@ def wrap_candidate(row, class_name='Candidate', argnames=None):
         cids.append(row[j])
 
     # Create candidate object
-    return Candidate(
+    candidate = Candidate(
         id=row[0],
         context_names=argnames,
         contexts=spans,
         cids=cids,
         name=class_name
     )
+
+    return candidate

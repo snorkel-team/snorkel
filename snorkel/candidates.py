@@ -4,7 +4,6 @@ from itertools import product
 import re
 from sqlalchemy.sql import select
 
-from .models import Document
 from .models import Candidate, TemporarySpan, Sentence
 from .udf import UDF, UDFRunner
 
@@ -28,9 +27,9 @@ class CandidateExtractor(UDFRunner):
     :param nested_relations: Boolean indicating whether to extract Candidates that relate one Context with another
                              that contains it. Only applies to binary relations. Default is False.
     :param symmetric_relations: Boolean indicating whether to extract symmetric Candidates, i.e., rel(A,B) and rel(B,A),
-                                where A and B are Contexts. Only applies to binary relations. Default is True.
+                                where A and B are Contexts. Only applies to binary relations. Default is False.
     """
-    def __init__(self, candidate_class, cspaces, matchers, candidate_filter=None, self_relations=False, nested_relations=False, symmetric_relations=True):
+    def __init__(self, candidate_class, cspaces, matchers, candidate_filter=None, self_relations=False, nested_relations=False, symmetric_relations=False):
         super(CandidateExtractor, self).__init__(CandidateExtractorUDF,
                                                  candidate_class=candidate_class,
                                                  cspaces=cspaces,
@@ -64,7 +63,7 @@ class CandidateExtractorUDF(UDF):
             self.arity = len(self.candidate_spaces)
 
         # Make sure the candidate spaces are different so generators aren't expended!
-        self.candidate_spaces = map(deepcopy, self.candidate_spaces)
+        self.candidate_spaces = list(map(deepcopy, self.candidate_spaces))
 
         # Preallocates internal data structures
         self.child_context_sets = [None] * self.arity
@@ -83,6 +82,7 @@ class CandidateExtractorUDF(UDF):
                 self.child_context_sets[i].add(tc)
 
         # Generates and persists candidates
+        extracted = set()
         candidate_args = {'split': split}
         for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
 
@@ -99,13 +99,18 @@ class CandidateExtractorUDF(UDF):
                 bi, b = args[1]
 
                 # Check for self-joins, "nested" joins (joins from span to its subspan), and flipped duplicate
-                # "symmetric" relations
+                # "symmetric" relations. For symmetric relations, if mentions are of the same type, maintain
+                # their order in the sentence.
                 if not self.self_relations and a == b:
                     continue
                 elif not self.nested_relations and (a in b or b in a):
                     continue
-                elif not self.symmetric_relations and ai > bi:
+                elif not self.symmetric_relations and ((b, a) in extracted or
+                    (self.matchers[0] == self.matchers[1] and a.char_start > b.char_start)):
                     continue
+
+                # Keep track of extracted
+                extracted.add((a,b))
 
             # Assemble candidate arguments
             for i, arg_name in enumerate(self.candidate_class.__argnames__):
@@ -166,7 +171,7 @@ class Ngrams(CandidateSpace):
 
                 # Check for split
                 # NOTE: For simplicity, we only split single tokens right now!
-                if l == 1 and self.split_rgx is not None:
+                if l == 1 and self.split_rgx is not None and end - start > 0:
                     m = re.search(self.split_rgx, context.text[start-offsets[0]:end-offsets[0]+1])
                     if m is not None and l < self.n_max + 1:
                         ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, sentence=context)
@@ -202,7 +207,7 @@ class PretaggedCandidateExtractorUDF(UDF):
     An extractor for Sentences with entities pre-tagged, and stored in the entity_types and entity_cids
     fields.
     """
-    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=True, entity_sep='~@~', **kwargs):
+    def __init__(self, candidate_class, entity_types, self_relations=False, nested_relations=False, symmetric_relations=False, entity_sep='~@~', **kwargs):
         self.candidate_class     = candidate_class
         self.entity_types        = entity_types
         self.arity               = len(entity_types)
@@ -283,14 +288,3 @@ class PretaggedCandidateExtractorUDF(UDF):
 
             # Add Candidate to session
             yield self.candidate_class(**candidate_args)
-
-
-class PhraseToSpan(CandidateSpace):
-    """
-    Defines the space of candidates as all Phrases in a Document _x_,
-    """
-    def apply(self, context):
-        if not isinstance(context, Document):
-            raise TypeError("Input Contexts to PhraseToSpan.apply() must be of type Document")
-        for phrase in context.phrases:
-            yield TemporarySpan(char_start=0, char_end=len(phrase.text)-1, parent=phrase)

@@ -7,6 +7,11 @@ parser/
 /stanford-corenlp-*
 *.db*
 downloads/
+*.model_kwargs
+**/checkpoint
+**/checkpoints/
+__pycache__
+*corenlp.log
 
 # Sphinx
 docs/_build
@@ -24,8 +29,8 @@ docs/_build
 *.mm
 
 # Tutorial
-tutorial/data/CDR_*.BioC.xml
-tutorial/data/dicts
+tutorials/cdr/data/CDR*.BioC.xml
+tutorials/cdr/data/dicts
 
 tutorials/intro/data/articles-dev.tsv
 tutorials/intro/data/articles-test.tsv

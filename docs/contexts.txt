@@ -13,5 +13,11 @@ Core Data Models
 Core Objects for Preprocessing and Loading
 ------------------------------------------
 
-.. automodule:: snorkel.parser
+.. automodule:: snorkel.parser.corpus_parser
+    :members:
+
+.. automodule:: snorkel.parser.doc_preprocessors
+    :members:
+
+.. automodule:: snorkel.parser.parser
     :members:

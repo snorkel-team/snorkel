@@ -1,14 +1,66 @@
 Learning
 ========
 
-Core Data Models
+In the Snorkel pipeline, the user writes labeling functions (LFs) and then uses
+the generative model to unify and denoise their labels. Then, the marginal
+predictions of this model are used as probabilistic training labels for the
+discriminative model. Currently we provide bindings for TensorFlow models, and
+two basic models: Logistic regression and an LSTM. See tutorials for a more
+in-depth explanation.
+
+Base Classifier Class
+---------------------
+
+.. automodule:: snorkel.learning.classifier
+    :members:
+    :undoc-members:
+    :inherited-members:
+
+Generative Model
 ----------------
 
-.. automodule:: snorkel.models.parameter
+.. automodule:: snorkel.learning.gen_learning
     :members:
+    :undoc-members:
+    :inherited-members:
 
-Core Objects for Learning + Inference
--------------------------------------
+Discriminative Models
+---------------------
 
-.. automodule:: snorkel.learning
+.. automodule:: snorkel.learning.disc_learning
     :members:
+    :undoc-members:
+    :inherited-members:
+
+.. automodule:: snorkel.learning.disc_models.logistic_regression
+    :members:
+    :undoc-members:
+    :inherited-members:
+
+.. automodule:: snorkel.learning.disc_models.rnn.rnn_base
+    :members:
+    :undoc-members:
+    :inherited-members:
+
+.. automodule:: snorkel.learning.disc_models.rnn.re_rnn
+    :members:
+    :undoc-members:
+    :inherited-members:
+
+.. automodule:: snorkel.learning.disc_models.rnn.tag_rnn
+    :members:
+    :undoc-members:
+    :inherited-members:
+
+.. automodule:: snorkel.learning.disc_models.rnn.text_rnn
+    :members:
+    :undoc-members:
+    :inherited-members:
+
+Learning Utilities
+------------------
+
+.. automodule:: snorkel.learning.utils
+    :members:
+    :undoc-members:
+    :inherited-members:

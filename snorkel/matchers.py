@@ -31,7 +31,7 @@ class Matcher(object):
         NOTE: Must be called _after_ init()
         """
         for opt in self.opts.keys():
-            if not self.__dict__.has_key(opt):
+            if not opt in self.__dict__:
                 raise Exception("Unsupported option: %s" % opt)
 
     def _f(self, c):

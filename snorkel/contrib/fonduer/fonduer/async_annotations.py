@@ -8,7 +8,7 @@ import numpy as np
 import scipy.sparse as sparse
 from pandas import DataFrame, Series
 
-from snorkel.annotations import _to_annotation_generator, FeatureAnnotator
+from snorkel.annotations import FeatureAnnotator
 from snorkel.models import Candidate
 from snorkel.models.meta import *
 from snorkel.udf import UDF, UDFRunner
@@ -29,6 +29,15 @@ from .features.features import get_all_feats
 # since we do not have ORM-backed key objects but rather a simple python list.
 _TempKey = namedtuple('TempKey', ['id', 'name'])
 
+def _to_annotation_generator(fns):
+    """"
+    Generic method which takes a set of functions, and returns a generator that yields
+    function.__name__, function result pairs.
+    """
+    def fn_gen(c):
+        for f in fns:
+            yield f.__name__, f(c)
+    return fn_gen
 
 class csr_AnnotationMatrix(sparse.csr_matrix):
     """

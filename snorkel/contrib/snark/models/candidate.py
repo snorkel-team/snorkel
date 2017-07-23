@@ -6,8 +6,9 @@ from . import SparkModel
 
 class Candidate(SparkModel):
     """An abstract candidate relation."""
-    def __init__(self, id, context_names, contexts, cids, name='Candidate'):
+    def __init__(self, id, split, context_names, contexts, cids, name='Candidate'):
         self.id = id
+        self.split = split
         self.name = name
         self.__argnames__ = context_names
         for i, name in enumerate(context_names):
@@ -47,7 +48,7 @@ CONTEXT_OFFSET = 2
 # Note: We store the sentence here, not the sentence_id
 SPAN_COLS = ['id', 'sentence_id', 'char_start', 'char_end', 'meta']
 SENTENCE_COLS = ['id', 'document_id', 'position', 'text', 'words',
-    'char_offsets', 'lemmas', 'pos_tags', 'ner_tags', 'dep_parents',
+    'char_offsets', 'abs_char_offsets', 'lemmas', 'pos_tags', 'ner_tags', 'dep_parents',
     'dep_labels', 'entity_cids', 'entity_types']
 
 
@@ -61,7 +62,8 @@ def wrap_candidate(row, class_name='Candidate', argnames=None):
     """
     # Infer arity from size of row
     arity = float(len(row) - 2 - len(SENTENCE_COLS)) / (len(SPAN_COLS) + 1)
-    assert int(arity) == arity
+    assert int(arity) == arity, "%d is not a multiple of %d" % (len(row) - 2 - len(SENTENCE_COLS),
+                                                                len(SPAN_COLS) + 1)
     arity = int(arity)
 
     # NB: We hardcode in an assumed Context hierarchy here:
@@ -94,6 +96,7 @@ def wrap_candidate(row, class_name='Candidate', argnames=None):
     # Create candidate object
     candidate = Candidate(
         id=row[0],
+        split=row[1],
         context_names=argnames,
         contexts=spans,
         cids=cids,

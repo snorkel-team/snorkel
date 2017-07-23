@@ -102,7 +102,8 @@ class SparkLabelAnnotator:
             wrap_candidate,
             class_name=self.candidate_class.__name__,
             argnames=self.candidate_class.__argnames__
-        ))
+        )).filter(lambda c: c.split == split)
+
         rdd = rdd.setName("Snorkel Candidates, Split " + str(split) + \
             " (" + self.candidate_class.__name__ + ")")
         self.split_cache[split] = rdd.cache()

@@ -37,6 +37,10 @@ class Grammar(object):
         """
         input = input.lower()
         tokens = [t for t in self.corenlp.parse(input)] # Assumes a single sentence
+        # SPACY: (Couldn't use because doesn't normalize numbers)
+        # parse = self.parser.parse(None, input).next()
+        # tokens = map(lambda x: dict(zip(['word', 'pos', 'ner'], x)), 
+        #              zip(parse['words'], parse['pos_tags'], parse['entity_types']))
         # Add start and stop after parsing to not confuse the CoreNLP parser
         start = {'word': '<START>', 'pos': '<START>', 'ner': '<START>'}
         stop = {'word': '<STOP>', 'pos': '<STOP>', 'ner': '<STOP>'}

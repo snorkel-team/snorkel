@@ -16,8 +16,8 @@ def number_of_people(sentence):
     return count
 
 
-def load_external_labels(session, candidate_class, annotator_name='gold'):
-    gold_labels = pd.read_csv(FPATH, sep="\t")
+def load_external_labels(session, candidate_class, annotator_name='gold', path=FPATH):
+    gold_labels = pd.read_csv(path, sep="\t")
     for index, row in gold_labels.iterrows():    
 
         # We check if the label already exists, in case this cell was already executed

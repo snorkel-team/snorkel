@@ -4,25 +4,43 @@ from annotator import *
 
 from pandas import DataFrame, Series
 
-class Example(object):
-    def __init__(self, name=None, explanation=None, paraphrase=None,
-                 candidate=None, denotation=None, semantics=None):
-        self.name = name
-        self.explanation = explanation
-        self.paraphrase = paraphrase
+class Explanation(object):
+    def __init__(self, condition, label, candidate=None, name=None, 
+                 semantics=None, paraphrase=None):
+        """
+        Constructs an Explanation object.
+
+        :param condition: A string explanation that expresses a Boolean 
+            condition (e.g., "The sentence is at least 5 words long.")
+        :param label: The label {-1, 1} to apply to candidates for which the 
+            condition evaluates to True.
+        :param candidate: A candidate that the explanation is consistent with.
+        :param name: The name of this explanation.
+        :param semantics: The intended semantic representation of the 
+            explanation (if known).
+        :param paraphrase: A paraphrase of the explanation.
+        """
+        assert(isinstance(condition, basestring))
+        self.condition = condition
+        assert(label in [-1, 1])
+        self.label = label
         self.candidate = candidate
-        self.denotation = denotation  # True label on this candidate
+        self.name = name
         self.semantics = semantics
+        self.paraphrase = paraphrase
 
     def __str__(self):
-        return 'Example("%s")' % (self.explanation)
+        if self.name:
+            return 'Explanation("%s: %s, %s")' % (self.name, self.label, self.condition)
+        else:
+            return 'Explanation("%s, %s")' % (self.label, self.condition)
     
     def display(self):
-        print 'Example'
-        print('%-12s %s' % ('name', self.name))
-        print('%-12s %s' % ('explanation', self.explanation))
+        print 'Explanation'
+        print('%-12s %s' % ('condition', self.condition))
+        print('%-12s %d' % ('label', self.label))
         print('%-12s %s' % ('candidate', self.candidate))
-        print('%-12s %d' % ('denotation', self.denotation))
+        print('%-12s %s' % ('name', self.name))
         print('%-12s %s' % ('semantics', self.semantics))
 
 
@@ -39,21 +57,23 @@ class SemanticParser():
         self.explanation_counter = 0
         self.LFs = tuple([None] * 6)
 
-    def preprocess(self, explanations):
-        for explanation in explanations:
-            explanation = explanation.replace("'", '"')
-            yield explanation
+    def preprocess(self, string):
+        return string.replace("'", '"')
 
     def parse(self, explanations, names=None, verbose=False, return_parses=False):
         """
-        Converts natural language explanations into labeling functions.
+        Converts Explanation objects into labeling functions.
+
+        :param explanations: An instance or list of Explanation objects
         """
         LFs = []
         parses = []
         explanations = explanations if isinstance(explanations, list) else [explanations]
         names = names if isinstance(names, list) else [names]
-        for i, exp in enumerate(self.preprocess(explanations)):
-            exp_parses = self.grammar.parse_input(exp)
+        for i, exp in enumerate(explanations):
+            exp.condition = self.preprocess(exp.condition)
+            rule = 'Label {} if {}'.format(exp.label, exp.condition)
+            exp_parses = self.grammar.parse_string(rule)
             for j, parse in enumerate(exp_parses):
                 # print(parse.semantics)
                 lf = self.grammar.evaluate(parse)
@@ -63,7 +83,7 @@ class SemanticParser():
                 if len(names) > i and names[i]:
                     lf.__name__ = "{}_{}".format(names[i], j)
                 else:
-                    lf.__name__ = "exp%d_%d" % (self.explanation_counter, j)
+                    lf.__name__ = "exp{}_{}".format(self.explanation_counter, j)
                 LFs.append(lf)
             self.explanation_counter += 1
         if return_parses:
@@ -76,7 +96,7 @@ class SemanticParser():
             return LFs
 
     def parse_and_evaluate(self, 
-                           examples, 
+                           explanations, 
                            show_everything=False,
                            show_nothing=False,
                            show_explanation=False, 
@@ -114,18 +134,18 @@ class SemanticParser():
             show_explanation = show_candidate = show_sentence = show_parse = show_semantics = False
             show_correct = show_passing = show_failing = show_redundant = show_erroring = show_unknown = False
         self.explanation_counter = 0
-        examples = examples if isinstance(examples, list) else [examples]
+        explanations = explanations if isinstance(explanations, list) else [explanations]
         col_names = ['Correct', 'Passing', 'Failing', 'Redundant', 'Erroring', 'Unknown','Index']
         d = {}
-        example_names = []
+        explanation_names = []
         indices = []
 
-        nCorrect = [0] * len(examples)
-        nPassing = [0] * len(examples)
-        nFailing = [0] * len(examples)
-        nRedundant = [0] * len(examples)
-        nErroring = [0] * len(examples)
-        nUnknown = [0] * len(examples)
+        nCorrect = [0] * len(explanations)
+        nPassing = [0] * len(explanations)
+        nFailing = [0] * len(explanations)
+        nRedundant = [0] * len(explanations)
+        nErroring = [0] * len(explanations)
+        nUnknown = [0] * len(explanations)
 
         LFs = {
             'correct'  : [],
@@ -136,30 +156,27 @@ class SemanticParser():
             'unknown'  : [],
         }
         
-        for i, example in enumerate(examples):
+        for i, explanation in enumerate(explanations):
             if only and i not in only:
                 continue
-            # if example.explanation is None or (paraphrases and example.paraphrase is None):
-            #     continue
             indices.append(i)
-            if paraphrases and not example.paraphrase:
+            if paraphrases and not explanation.paraphrase:
                 raise Exception('Keyword argument paraphrases == True '
-                                'but Example has no paraphrase.')
-            explanation = example.explanation if not paraphrases else example.paraphrase
-            if show_explanation: 
-                print("Example {}: {}\n".format(i, explanation))
-            if show_candidate:
-                print("CANDIDATE: {}\n".format(example.candidate))
-            if show_sentence and not isinstance(example.candidate[0], str):
-                print("SENTENCE: {}\n".format(example.candidate[0].get_parent()._asdict()['text']))
-            semantics = set()
+                                'but explanation has no paraphrase.')
             # TODO: remove remove_paren keyword and code
             if remove_paren:
-                explanation = explanation.replace('(', '')
-                explanation = explanation.replace(')', '')
+                condition = explanation.replace('(', '')
+                condition = explanation.replace(')', '')
+            if show_explanation: 
+                print("Explanation {}: {}\n".format(i, explanation))
+            if show_candidate:
+                print("CANDIDATE: {}\n".format(explanation.candidate))
+            if show_sentence and not isinstance(explanation.candidate[0], str):
+                print("SENTENCE: {}\n".format(explanation.candidate[0].get_parent()._asdict()['text']))
+            semantics = set()
             parses = self.parse(
                         explanation, 
-                        example.name,
+                        explanation.name,
                         return_parses=True)
             for parse in parses:
                 if show_parse:
@@ -174,18 +191,18 @@ class SemanticParser():
                 semantics.add(parse.semantics)
                 # ERRORING
                 try:
-                    denotation = parse.function(example.candidate)
+                    label = parse.function(explanation.candidate)
                 except:
                     if show_erroring: 
                         print("E: {}\n".format(semantics_))
                         print parse.semantics
-                        print parse.function(example.candidate) #to display traceback
+                        print parse.function(explanation.candidate) #to display traceback
                         import pdb; pdb.set_trace()
                     nErroring[i] += 1 
                     LFs['erroring'].append(parse.function)
                     continue
                 # CORRECT             
-                if example.semantics and parse.semantics==example.semantics:
+                if explanation.semantics and parse.semantics==explanation.semantics:
                     if show_correct: print("C: {}\n".format(semantics_))
                     nCorrect[i] += 1
                     LF = parse.function
@@ -193,7 +210,7 @@ class SemanticParser():
                     LFs['correct'].append(parse.function)
                     continue
                 # PASSING
-                if denotation==example.denotation:
+                if label==explanation.label:
                     if show_passing: print("P: {}\n".format(semantics_))
                     nPassing[i] += 1
                     LFs['passing'].append(parse.function)
@@ -205,7 +222,7 @@ class SemanticParser():
                     LFs['failing'].append(parse.function)
                     continue
                 # UNKNOWN
-                if example.candidate is None:
+                if explanation.candidate is None:
                     nUnknown[i] += 1
                     LFs['unknown'].append(parse.function)
                     continue
@@ -215,18 +232,18 @@ class SemanticParser():
                 print("WARNING: No correct or passing parses found for the following explanation:")
                 print("EXPLANATION {}: {}\n".format(i, explanation))
 
-            if example.name:
-                example_names.append(example.name)
+            if explanation.name:
+                explanation_names.append(explanation.name)
             else:
-                example_names.append("Example{}".format(i))
+                explanation_names.append("Explanation{}".format(i))
 
-        d['Correct'] = Series(data=[nCorrect[i] for i in indices], index=example_names)
-        d['Passing'] = Series(data=[nPassing[i] for i in indices], index=example_names)
-        d['Failing'] = Series(data=[nFailing[i] for i in indices], index=example_names)
-        d['Redundant'] = Series(data=[nRedundant[i] for i in indices], index=example_names)
-        d['Erroring'] = Series(data=[nErroring[i] for i in indices], index=example_names)
-        d['Unknown'] = Series(data=[nUnknown[i] for i in indices], index=example_names)
-        d['Index'] = Series(data=indices, index=example_names)
+        d['Correct'] = Series(data=[nCorrect[i] for i in indices], index=explanation_names)
+        d['Passing'] = Series(data=[nPassing[i] for i in indices], index=explanation_names)
+        d['Failing'] = Series(data=[nFailing[i] for i in indices], index=explanation_names)
+        d['Redundant'] = Series(data=[nRedundant[i] for i in indices], index=explanation_names)
+        d['Erroring'] = Series(data=[nErroring[i] for i in indices], index=explanation_names)
+        d['Unknown'] = Series(data=[nUnknown[i] for i in indices], index=explanation_names)
+        d['Index'] = Series(data=indices, index=explanation_names)
         
-        self.results = DataFrame(data=d, index=example_names)[col_names]
+        self.results = DataFrame(data=d, index=explanation_names)[col_names]
         return LFs

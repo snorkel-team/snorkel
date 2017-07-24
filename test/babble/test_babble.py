@@ -7,7 +7,7 @@ from snorkel.parser import TSVDocPreprocessor, CorpusParser
 from snorkel.parser.spacy_parser import Spacy
 from snorkel.candidates import Ngrams, CandidateExtractor
 from snorkel.matchers import PersonMatcher
-from snorkel.contrib.babble import SemanticParser, Example
+from snorkel.contrib.babble import SemanticParser
 import unittest_examples
 
 class TestBabble(unittest.TestCase):

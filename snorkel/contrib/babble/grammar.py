@@ -30,15 +30,17 @@ class Grammar(object):
         print('Created grammar with %d rules' % \
             (len(self.lexical_rules) + len(self.unary_rules) + len(self.binary_rules)))
 
-    def parse_input(self, input):
+    def parse_string(self, string):
         """
-        Returns the list of parses for the given input which can be derived
+        Returns the list of parses for the given string which can be derived
         using this grammar.
+
+        :param string:
         """
-        input = input.lower()
-        tokens = [t for t in self.corenlp.parse(input)] # Assumes a single sentence
+        string = string.lower()
+        tokens = [t for t in self.corenlp.parse(string)] # Assumes a single sentence
         # SPACY: (Couldn't use because doesn't normalize numbers)
-        # parse = self.parser.parse(None, input).next()
+        # parse = self.parser.parse(None, string).next()
         # tokens = map(lambda x: dict(zip(['word', 'pos', 'ner'], x)), 
         #              zip(parse['words'], parse['pos_tags'], parse['entity_types']))
         # Add start and stop after parsing to not confuse the CoreNLP parser

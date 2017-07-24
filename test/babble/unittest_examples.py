@@ -1,4 +1,4 @@
-from snorkel.contrib.babble import Example
+from snorkel.contrib.babble import Explanation
 
 def get_user_lists():
     return {
@@ -16,482 +16,482 @@ def get_user_lists():
 
 logic = [
     # Base
-    Example(
-        explanation="label True because True",
+    Explanation(
+        condition="because True",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # And
-    Example(
-        explanation="label True because True and True",
+    Explanation(
+        condition="because True and True",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Or
-    Example(
-        explanation="label True because False or True",
+    Explanation(
+        condition="because False or True",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Not boolean
-    Example(
-        explanation="label True because not False",
+    Explanation(
+        condition="because not False",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Not function
-    Example(
-        explanation="label True because 'blue' is not in all caps",
+    Explanation(
+        condition="because 'blue' is not in all caps",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # All
-    Example(
-        explanation='label True because all of the colors are lowercase',
+    Explanation(
+        condition='because all of the colors are lowercase',
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Any
-    Example(
-        explanation='label True because any of the letters are lowercase',
+    Explanation(
+        condition='because any of the letters are lowercase',
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # None
-    Example(
-        explanation='label True because none of the smalls are capitalized',
+    Explanation(
+        condition='because none of the smalls are capitalized',
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),                
 ]
 
 grouping = [
     # Parentheses
-    Example(
-        explanation="label True because True or (True and False)",
+    Explanation(
+        condition="because True or (True and False)",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
 ]
 
 integers = [
     # Equals (Int)
-    Example(
-        explanation="label True because 1 is equal to 1",
+    Explanation(
+        condition="because 1 is equal to 1",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Integers (digit or text)
-    Example(
-        explanation="label True because 1 is equal to one",
+    Explanation(
+        condition="because 1 is equal to one",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Less than
-    Example(
-        explanation="label True because 1 is less than 2",
+    Explanation(
+        condition="because 1 is less than 2",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # At most
-    Example(
-        explanation="label True because 2 is less than or equal to 2",
+    Explanation(
+        condition="because 2 is less than or equal to 2",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Greater than
-    Example(
-        explanation="label True because 2 > 1",
+    Explanation(
+        condition="because 2 > 1",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # At least
-    Example(
-        explanation="label True because 2 is at least 2",
+    Explanation(
+        condition="because 2 is at least 2",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),    
 ]
 
 strings = [
     # Equals (String)
-    Example(
-        explanation="label True because 'yes' equals 'yes'",
+    Explanation(
+        condition="because 'yes' equals 'yes'",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Lowercase
-    Example(
-        explanation="label True because arg 1 is lowercase",
+    Explanation(
+        condition="because arg 1 is lowercase",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Uppercase
-    Example(
-        explanation="label True because arg 1 is upper case",
+    Explanation(
+        condition="because arg 1 is upper case",
+        label=True,
         candidate=('FOO', 'bar'),
-        denotation=1,
         semantics=None),
     # Capitalized
-    Example(
-        explanation="label True because arg 1 is capitalized",
+    Explanation(
+        condition="because arg 1 is capitalized",
+        label=True,
         candidate=('Foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Starts with
-    Example(
-        explanation="label True because the word 'blueberry' starts with 'blue'",
+    Explanation(
+        condition="because the word 'blueberry' starts with 'blue'",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Ends with
-    Example(
-        explanation="label True because the word 'blueberry' ends with 'berry'",
+    Explanation(
+        condition="because the word 'blueberry' ends with 'berry'",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
 ]
 
 lists = [
     # In
-    Example(
-        explanation="label True because 'bar' is in 'foobarbaz'",
+    Explanation(
+        condition="because 'bar' is in 'foobarbaz'",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Contains
-    Example(
-        explanation="label True because the word 'foobarbaz' contains 'oobarba'",
+    Explanation(
+        condition="because the word 'foobarbaz' contains 'oobarba'",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # List
-    Example(
-        explanation="label True because 'bar' equals 'foo', 'bar', or 'baz'",
+    Explanation(
+        condition="because 'bar' equals 'foo', 'bar', or 'baz'",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # UserList
-    Example(
-        explanation="label True because 'blue' in colors",
+    Explanation(
+        condition="because 'blue' in colors",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # OrList left
-    Example(
-        explanation="label True because 'blue' or 'shmoo' is in colors",
+    Explanation(
+        condition="because 'blue' or 'shmoo' is in colors",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # OrList right
-    Example(
-        explanation="label True because 'blue' ends with 'moe' or 'lue'",
+    Explanation(
+        condition="because 'blue' ends with 'moe' or 'lue'",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # AndList left
-    Example(
-        explanation="label True because 'blue' and 'red' are in colors",
+    Explanation(
+        condition="because 'blue' and 'red' are in colors",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # AndList right
-    Example(
-        explanation="label True because 'blue' contains 'l' and 'u'",
+    Explanation(
+        condition="because 'blue' contains 'l' and 'u'",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),    
 ]
 
 candidate_helpers = [
     # Candidate as string
-    Example(
-        explanation="label True because argument 1 is 'foo'",
+    Explanation(
+        condition="because argument 1 is 'foo'",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None),
     # Left words (list)
-    Example(
-        explanation="label True because 'wife' is in the words left of arg 2",
+    Explanation(
+        condition="because 'wife' is in the words left of arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None), 
     # Right words (list)
-    Example(
-        explanation="label True because 'wife' is in the words to the right of arg 1",
+    Explanation(
+        condition="because 'wife' is in the words to the right of arg 1",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None), 
     # Between words (list)
-    Example(
-        explanation="label True because 'wife' is in the words between arg 1 and arg 2",
+    Explanation(
+        condition="because 'wife' is in the words between arg 1 and arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None), 
     # Sentence (list)
-    Example(
-        explanation='label True because "wife" is in the sentence',
+    Explanation(
+        condition='because "wife" is in the sentence',
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),    
 ]
 
 index_comparisons = [
     # Index left
-    Example(
-        explanation="label True because arg 1 is left of arg 2",
+    Explanation(
+        condition="because arg 1 is left of arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Index right
-    Example(
-        explanation="label True because arg 2 is right of arg 1",
+    Explanation(
+        condition="because arg 2 is right of arg 1",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Between
-    Example(
-        explanation="label True because 'wife' is between arg 1 and arg 2",
+    Explanation(
+        condition="because 'wife' is between arg 1 and arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Index left equality
-    Example(
-        explanation="label True because 'wife' is two words to the left of arg 2",
+    Explanation(
+        condition="because 'wife' is two words to the left of arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Index left inequality 0
-    Example(
-        explanation="label True because arg 1 is more than three words to the left of arg 2",
+    Explanation(
+        condition="because arg 1 is more than three words to the left of arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Index left inequality 1
-    Example(
-        explanation="label True because not arg 1 is more than fifty words to the left of arg 2",
+    Explanation(
+        condition="because not arg 1 is more than fifty words to the left of arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Index left inequality 2
-    Example(
-        explanation="label True because ',' is immediately to the left of arg 2",
+    Explanation(
+        condition="because ',' is immediately to the left of arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Index left inequality 3
-    Example(
-        explanation="label True because ',' is right before arg 2",
+    Explanation(
+        condition="because ',' is right before arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),                      
     # Index within (<=)
-    Example(
-        explanation="label True because 'wife' is within three words to the left of arg 2",
+    Explanation(
+        condition="because 'wife' is within three words to the left of arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Index OrList left
-    Example(
-        explanation="label True because 'husband' or 'wife' is within three words to the left of arg 2",
+    Explanation(
+        condition="because 'husband' or 'wife' is within three words to the left of arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Index AndList left
-    Example(
-        explanation="label True because not 'husband' and 'wife' are within three words to the left of arg 2",
+    Explanation(
+        condition="because not 'husband' and 'wife' are within three words to the left of arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Characters0
-    Example(
-        explanation="label True because 'wife' is less than 10 characters to the left of arg 2",
+    Explanation(
+        condition="because 'wife' is less than 10 characters to the left of arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Characters1
-    Example(
-        explanation="label True because 'wife' is more than 5 characters to the right of arg 1",
+    Explanation(
+        condition="because 'wife' is more than 5 characters to the right of arg 1",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),       
 ]
 
 pos_ner = [
     # Tokens
-    Example(
-        explanation="label True because at least one word to the left of arg 1 is lower case",
+    Explanation(
+        condition="because at least one word to the left of arg 1 is lower case",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None), 
     # POS
-    Example(
-        explanation="label True because at least one noun exists between arg 1 and arg 2",
+    Explanation(
+        condition="because at least one noun exists between arg 1 and arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # NER
-    Example(
-        explanation="label True because there are no people between arg 1 and arg 2",
+    Explanation(
+        condition="because there are no people between arg 1 and arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),     
 ]
 
 count = [
     # Count0
-    Example(
-        explanation="label True because there are not three people in the sentence",
+    Explanation(
+        condition="because there are not three people in the sentence",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Count1
-    Example(
-        explanation="label True because the number of words between arg 1 and arg 2 is less than 25",
+    Explanation(
+        condition="because the number of words between arg 1 and arg 2 is less than 25",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Count2
-    Example(
-        explanation="label True because there are more than 3 words between arg 1 and arg 2",
+    Explanation(
+        condition="because there are more than 3 words between arg 1 and arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Count3
-    Example(
-        explanation="label True because at least one word exists between arg 1 and arg 2",
+    Explanation(
+        condition="because at least one word exists between arg 1 and arg 2",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Count4
-    Example(
-        explanation="label True because there are two nouns to the left of arg 1",
+    Explanation(
+        condition="because there are two nouns to the left of arg 1",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Count5
-    Example(
-        explanation="label True because there are less than three nouns to the left of arg 1",
+    Explanation(
+        condition="because there are less than three nouns to the left of arg 1",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Count6
-    Example(
-        explanation="label True because there are not more than two nouns to the left of arg 1",
+    Explanation(
+        condition="because there are not more than two nouns to the left of arg 1",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # Count7
-    Example(
-        explanation="label True because at least one word to the left of arg 2 starts with a spouse word",
+    Explanation(
+        condition="because at least one word to the left of arg 2 starts with a spouse word",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),    
 ]
 
 absorption = [
     # Partially unparseable
-    Example(
-        explanation="label True because 1 is less than 2 and the moon is full",
+    Explanation(
+        condition="because 1 is less than 2 and the moon is full",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=None)
 ]
 
 anaphora = [
     # Them
-    Example(
-        explanation="label True because 'wife' is between arg 1 and arg 2 and 'divorced' is not between them",
+    Explanation(
+        condition="because 'wife' is between arg 1 and arg 2 and 'divorced' is not between them",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
     # TODO: he/she, his/her, him/her
 ]
 
 inversion = [
     # Inverted sentence
-    Example(
-        explanation="label True because to the left of arg 2 is a spouse word",
+    Explanation(
+        condition="because to the left of arg 2 is a spouse word",
+        label=True,
         candidate=668761641257950361,
-        denotation=1,
         semantics=None),
 ]
 
 tuples = [
     # Tuple
-    Example(
-        explanation="label True because the pair (arg 1, arg 2) is the same as the tuple ('foo', 'bar')",
+    Explanation(
+        condition="because the pair (arg 1, arg 2) is the same as the tuple ('foo', 'bar')",
+        label=True,
         candidate=('foo', 'bar'),
-        denotation=1,
         semantics=('.root', ('.label', ('.bool', True), ('.call', ('.eq', ('.tuple', ('.list', ('.string', u'foo'), ('.string', u'bar')))), ('.tuple', ('.list', ('.arg_to_string', ('.arg', ('.int', 1))), ('.arg_to_string', ('.arg', ('.int', 2))))))))),
 ]
 
-examples = (logic + grouping + integers + strings + lists + candidate_helpers + 
+Explanations = (logic + grouping + integers + strings + lists + candidate_helpers + 
             index_comparisons + pos_ner + count + absorption + anaphora + 
             inversion + tuples)
 
 # TODO: re-add the following:
 #     # # Index OrList right
-#     # Example(
-#     #     explanation="label True because 'wife' is less than three words to the left of arg 1 or arg2",
+#     # Explanation(
+#     #     condition="because 'wife' is less than three words to the left of arg 1 or arg2",
 #     #     candidate=668761641257950361,
 #     #     denotation=1,
 #     # semantics=None),
 #     # # Index within
-#     # Example(
-#     #     explanation="label True because 'wife' is within three words of arg 1",
+#     # Explanation(
+#     #     condition="because 'wife' is within three words of arg 1",
 #     #     candidate=668761641257950361,
 #     #     denotation=1,
 #     # semantics=None),
 #     # # Index without
-#     # Example(
-#     #     explanation="label True because arg 1 is not within 5 words of arg 2",
+#     # Explanation(
+#     #     condition="because arg 1 is not within 5 words of arg 2",
 #     #     candidate=668761641257950361,
 #     #     denotation=1,
 #     # semantics=None),
 
     # # Intersection0
-    # Example(
-    #     explanation="label True because there is at least one word from colors in the bluebird words",
+    # Explanation(
+    #     condition="because there is at least one word from colors in the bluebird words",
     #     candidate=('foo', 'bar'),
     #     denotation=1,
     # semantics=None),
     # # Intersection1
-    # Example(
-    #     explanation="label True because less than two colors words are in bluebird",
+    # Explanation(
+    #     condition="because less than two colors words are in bluebird",
     #     candidate=('foo', 'bar'),
     #     denotation=1,
     # semantics=None),
     # # Disjoint
-    # Example(
-    #     explanation="label True because there are no colors words in the greek words",
+    # Explanation(
+    #     condition="because there are no colors words in the greek words",
     #     candidate=('foo', 'bar'),
     #     denotation=1,
     # semantics=None),
 
     # #     # Composition0
-# #     Example(
-# #         explanation="label True because 'wife' is between arg 1 and arg 2 and 'years' is to the left of arg 1",
+# #     Explanation(
+# #         condition="because 'wife' is between arg 1 and arg 2 and 'years' is to the left of arg 1",
+        # # label=True,
 # #         candidate=668761641257950361,
-# #         denotation=1,
 # # semantics=None),
 # #     # Composition1
-# #     Example(
-# #         explanation="label True because arg 1 is identical to arg 2",
+# #     Explanation(
+# #         condition="because arg 1 is identical to arg 2",
+        # # label=True,
 # #         candidate=('foo', 'foo'),
-# #         denotation=1,
 # # semantics=None),
 # #     # Composition2
-# #     Example(
-# #         explanation="label True because there is at least one spouse word between arg 1 and arg 2",
+# #     Explanation(
+# #         condition="because there is at least one spouse word between arg 1 and arg 2",
+        # # label=True,
 # #         candidate=668761641257950361,
-# #         denotation=1,
 # # semantics=None),
 # #     # Composition3
-# #     Example(
-# #         explanation="label True because there is at least one spouse word within two words to the left of arg 1 or arg 2",
+# #     Explanation(
+# #         condition="because there is at least one spouse word within two words to the left of arg 1 or arg 2",
+        # # label=True,
 # #         candidate=668761641257950361,
-# #         denotation=1,
 # # semantics=None),
 
 
@@ -501,7 +501,7 @@ examples = (logic + grouping + integers + strings + lists + candidate_helpers +
 # from snorkel.parser.spacy_parser import Spacy
 # from snorkel.candidates import Ngrams, CandidateExtractor
 # from snorkel.matchers import PersonMatcher
-# from snorkel.contrib.babble import SemanticParser, Example
+# from snorkel.contrib.babble import SemanticParser, Explanation
 
 # test_article_path = os.environ['SNORKELHOME'] + '/test/babble/test_article.tsv'
 # doc_preprocessor = TSVDocPreprocessor(test_article_path)

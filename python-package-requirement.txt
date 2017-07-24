@@ -18,3 +18,4 @@ tensorflow>=1.0
 tika
 spacy
 psycopg2
+py4j

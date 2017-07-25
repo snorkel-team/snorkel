@@ -434,16 +434,17 @@ class GenerativeModel(Classifier):
 
             # Get the marginal (posterior) probability for each candidate
             for i in range(m):
-                marginals = np.zeros(cardinalities[i], dtype=np.float64)
+                cardinality = int(cardinalities[i])
+                marginals = np.zeros(cardinality, dtype=np.float64)
                 # NB: class priors not currently available for categoricals
                 l_i = L[i].tocoo()
                 for l_index1 in range(l_i.nnz):
                     data_j, j = l_i.data[l_index1], l_i.col[l_index1]
                     if (data_j != 0):
-                        if not 1 <= data_j <= cardinalities[i]:
+                        if not 1 <= data_j <= cardinality:
                             raise ValueError(
                                 """Illegal value at %d, %d: %d. Must be in 0 to 
-                                %d.""" % (i, j, data_j, cardinalities[i]))
+                                %d.""" % (i, j, data_j, cardinality))
                         # NB: LF class propensity not currently available
                         # for categoricals
                         marginals[int(data_j - 1)] += \

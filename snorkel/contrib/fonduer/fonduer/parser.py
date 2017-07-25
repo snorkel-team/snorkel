@@ -72,7 +72,9 @@ class OmniParser(UDFRunner):
                  visual=False,
                  pdf_path=None):
 
-        self.lingual_parser = StanfordCoreNLPServer()
+        self.delim = "<NB>"  # NB = New Block
+
+        self.lingual_parser = StanfordCoreNLPServer(delimiter=self.delim[1:-1])
 
         super(OmniParser, self).__init__(OmniParserUDF,
                                          structural=structural,

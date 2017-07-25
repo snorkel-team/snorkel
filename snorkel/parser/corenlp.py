@@ -50,8 +50,10 @@ class StanfordCoreNLPServer(Parser):
     BLOCK_DEFS = {"3.6.0":"basic-dependencies", "3.7.0":"basicDependencies"}
 
     def __init__(self, annotators=['tokenize', 'ssplit', 'pos', 'lemma', 'depparse', 'ner'],
-                 annotator_opts={}, tokenize_whitespace=False, split_newline=False, encoding="utf-8",
-                 java_xmx='4g', port=12345, num_threads=1, verbose=False, version='3.6.0'):
+                 annotator_opts={}, tokenize_whitespace=False,
+                 split_newline=False, encoding="utf-8", java_xmx='4g',
+                 port=12345, num_threads=1, delimiter=None, verbose=False,
+                 version='3.6.0'):
         '''
         Create CoreNLP server instance.
         :param annotators:
@@ -77,9 +79,10 @@ class StanfordCoreNLPServer(Parser):
         self.num_threads = num_threads
         self.verbose = verbose
         self.version = version
+        self.delimiter = delimiter
 
         # configure connection request options
-        opts = self._conn_opts(annotators, annotator_opts, tokenize_whitespace, split_newline)
+        opts = self._conn_opts(annotators, annotator_opts, tokenize_whitespace, split_newline, delimiter)
         self.endpoint = 'http://127.0.0.1:%d/?%s' % (self.port, opts)
 
         self._start_server()
@@ -107,7 +110,7 @@ class StanfordCoreNLPServer(Parser):
             text = "This forces the server to preload all models."
             parts = list(conn.parse(None, text))
 
-    def _conn_opts(self, annotators, annotator_opts, tokenize_whitespace, split_newline):
+    def _conn_opts(self, annotators, annotator_opts, tokenize_whitespace, split_newline, delimiter):
         '''
         Server connection properties
 
@@ -126,6 +129,8 @@ class StanfordCoreNLPServer(Parser):
             props += ['"ssplit.eolonly": "true"']
         if ssplit_opts and 'newlineIsSentenceBreak' in ssplit_opts:
             props += ['"ssplit.newlineIsSentenceBreak": "{}"'.format(ssplit_opts['newlineIsSentenceBreak'])]
+        if delimiter:
+            props += ["\"ssplit.htmlBoundariesToDiscard\": \"%s\"" % delimiter]
         props = ",".join(props)
         return 'properties={%s}' % (props)
 

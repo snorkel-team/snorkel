@@ -1,4 +1,4 @@
-from ..constants import *
+from .constants import *
 from numba import jit
 import numpy as np
 import random

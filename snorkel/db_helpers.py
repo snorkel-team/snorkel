@@ -1,6 +1,5 @@
 from .models import StableLabel, GoldLabel, Context, GoldLabelKey
 from sqlalchemy.orm import object_session
-from future.utils import iteritems
 
 def reload_annotator_labels(session, candidate_class, annotator_name, split, filter_label_split=True, create_missing_cands=False):
     """Reloads stable annotator labels into the AnnotatorLabel table"""

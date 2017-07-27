@@ -19,7 +19,6 @@ from .utils import (
     matrix_fn,
     matrix_tn
 )
-from future.utils import iteritems
 
 class csr_AnnotationMatrix(sparse.csr_matrix):
     """

@@ -41,6 +41,9 @@ class Candidate(SnorkelBase):
         else:
             raise Exception("Contexts do not all have same parent")
 
+    def get_stable_id(self):
+        return '~~'.join([context.stable_id for context in self.get_contexts()])
+
     def get_cids(self):
         """Get a tuple of the canonical IDs (CIDs) of the contexts making up 
         this candidate"""

@@ -22,14 +22,14 @@ class Explanation(object):
         """
         assert(isinstance(condition, basestring))
         self.condition = condition
-        assert(label in [-1, 1])
+        assert(label in [-1, 0, 1])
         self.label = label
         self.candidate = candidate
         self.name = name
         self.semantics = semantics
         self.paraphrase = paraphrase
 
-    def __str__(self):
+    def __repr__(self):
         if self.name:
             return 'Explanation("%s: %s, %s")' % (self.name, self.label, self.condition)
         else:

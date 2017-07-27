@@ -426,7 +426,7 @@ tuples = [
         semantics=('.root', ('.label', ('.bool', True), ('.call', ('.eq', ('.tuple', ('.list', ('.string', u'foo'), ('.string', u'bar')))), ('.tuple', ('.list', ('.arg_to_string', ('.arg', ('.int', 1))), ('.arg_to_string', ('.arg', ('.int', 2))))))))),
 ]
 
-Explanations = (logic + grouping + integers + strings + lists + candidate_helpers + 
+explanations = (logic + grouping + integers + strings + lists + candidate_helpers + 
             index_comparisons + pos_ner + count + absorption + anaphora + 
             inversion + tuples)
 

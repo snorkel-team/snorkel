@@ -403,7 +403,7 @@ advanced = [
         semantics=None),
 ]
 
-examples = basic # + redundant + advanced
+explanations = basic # + redundant + advanced
 
 # DEPRECATED
 # def load_examples(domain, candidates):

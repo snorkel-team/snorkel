@@ -120,4 +120,4 @@ additional = [
         semantics=None),
 ]
 
-examples = basic + distant + additional
+explanations = basic + distant + additional

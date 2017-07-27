@@ -55,7 +55,7 @@ lexical_rules = (
     [Rule('$MoreThan', w, '.gt') for w in ['more than', 'greater than', 'larger than', '>']] + 
     [Rule('$Within', w, '.within') for w in ['within']] +
     [Rule('$In', w, '.in') for w in ['in']] +
-    [Rule('$Contains', w, '.contains') for w in ['contains', 'contain', 'containing']] +
+    [Rule('$Contains', w, '.contains') for w in ['contains', 'contain', 'containing', 'include', 'includes']] +
     [Rule('$StartsWith', w, '.startswith') for w in ['starts with', 'start with', 'starting with']] +
     [Rule('$EndsWith', w, '.endswith') for w in ['ends with', 'end with', 'ending with']] +
     [Rule('$Left', w, '.left') for w in ['left', 'before', 'precedes', 'preceding', 'followed by']] +

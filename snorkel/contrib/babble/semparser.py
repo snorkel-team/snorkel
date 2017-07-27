@@ -45,7 +45,7 @@ class Explanation(object):
 
 
 class SemanticParser(object):
-    def __init__(self, candidate_class, user_lists={}, beam_width=None, top_k=None):
+    def __init__(self, candidate_class, user_lists={}, beam_width=10, top_k=-1):
         annotators = [TokenAnnotator(), PunctuationAnnotator(), IntegerAnnotator()]
         self.grammar = Grammar(rules=snorkel_rules, 
                                ops=snorkel_ops, 
@@ -56,6 +56,18 @@ class SemanticParser(object):
                                top_k=top_k)
         self.explanation_counter = 0
         self.LFs = tuple([None] * 6)
+
+    def name_explanations(self, explanations, names):
+        if names:
+            if len(names) != len(explanations):
+                raise Exception("If argument _names_ is provided, _names_ and "
+                    "_explanations_ must have same length.")
+            else:
+                for exp, name in zip(explanations, names):
+                    exp.name = name
+        else:
+            for i, exp in enumerate(explanations):
+                exp.name = "Explanation{}".format(i)
 
     def preprocess(self, string):
         return string.replace("'", '"')
@@ -69,7 +81,7 @@ class SemanticParser(object):
         LFs = []
         parses = []
         explanations = explanations if isinstance(explanations, list) else [explanations]
-        names = names if isinstance(names, list) else [names]
+        self.name_explanations(explanations, names)
         for i, exp in enumerate(explanations):
             exp.condition = self.preprocess(exp.condition)
             rule = 'Label {} if {}'.format(exp.label, exp.condition)
@@ -80,10 +92,7 @@ class SemanticParser(object):
                 if return_parses:
                     parse.function = lf
                     parses.append(parse)
-                if len(names) > i and names[i]:
-                    lf.__name__ = "{}_{}".format(names[i], j)
-                else:
-                    lf.__name__ = "exp{}_{}".format(self.explanation_counter, j)
+                lf.__name__ = "{}_{}".format(exp.name, j)
                 LFs.append(lf)
             self.explanation_counter += 1
         if return_parses:
@@ -136,8 +145,7 @@ class SemanticParser(object):
         self.explanation_counter = 0
         explanations = explanations if isinstance(explanations, list) else [explanations]
         col_names = ['Correct', 'Passing', 'Failing', 'Redundant', 'Erroring', 'Unknown','Index']
-        d = {}
-        explanation_names = []
+        dataframe = {}
         indices = []
 
         nCorrect = [0] * len(explanations)
@@ -232,18 +240,14 @@ class SemanticParser(object):
                 print("WARNING: No correct or passing parses found for the following explanation:")
                 print("EXPLANATION {}: {}\n".format(i, explanation))
 
-            if explanation.name:
-                explanation_names.append(explanation.name)
-            else:
-                explanation_names.append("Explanation{}".format(i))
-
-        d['Correct'] = Series(data=[nCorrect[i] for i in indices], index=explanation_names)
-        d['Passing'] = Series(data=[nPassing[i] for i in indices], index=explanation_names)
-        d['Failing'] = Series(data=[nFailing[i] for i in indices], index=explanation_names)
-        d['Redundant'] = Series(data=[nRedundant[i] for i in indices], index=explanation_names)
-        d['Erroring'] = Series(data=[nErroring[i] for i in indices], index=explanation_names)
-        d['Unknown'] = Series(data=[nUnknown[i] for i in indices], index=explanation_names)
-        d['Index'] = Series(data=indices, index=explanation_names)
+        explanation_names = [exp.name for exp in explanations]
+        dataframe['Correct'] = Series(data=[nCorrect[i] for i in indices], index=explanation_names)
+        dataframe['Passing'] = Series(data=[nPassing[i] for i in indices], index=explanation_names)
+        dataframe['Failing'] = Series(data=[nFailing[i] for i in indices], index=explanation_names)
+        dataframe['Redundant'] = Series(data=[nRedundant[i] for i in indices], index=explanation_names)
+        dataframe['Erroring'] = Series(data=[nErroring[i] for i in indices], index=explanation_names)
+        dataframe['Unknown'] = Series(data=[nUnknown[i] for i in indices], index=explanation_names)
+        dataframe['Index'] = Series(data=indices, index=explanation_names)
         
-        self.results = DataFrame(data=d, index=explanation_names)[col_names]
+        self.results = DataFrame(data=dataframe, index=explanation_names)[col_names]
         return LFs

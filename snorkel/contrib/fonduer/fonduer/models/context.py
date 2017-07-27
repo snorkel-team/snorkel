@@ -223,16 +223,17 @@ class StructuralMixin(object):
 # class Phrase(Context, StructuralMixin, PhraseMixin): # Memex variant
 class Phrase(Context, TabularMixin, LingualMixin, VisualMixin, StructuralMixin, PhraseMixin):
     """A Phrase subclass with Lingual, Tabular, Visual, and HTML attributes."""
-    __tablename__ = 'phrase'
-    id            = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
-    document_id   = Column(Integer, ForeignKey('document.id'))
-    document      = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
-    phrase_num    = Column(Integer, nullable=False)  # unique Phrase number per document
-    text          = Column(Text, nullable=False)
-    words         = Column(STR_ARRAY_TYPE)
-    char_offsets  = Column(INT_ARRAY_TYPE)
-    entity_cids   = Column(STR_ARRAY_TYPE)
-    entity_types  = Column(STR_ARRAY_TYPE)
+    __tablename__    = 'phrase'
+    id               = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    document_id      = Column(Integer, ForeignKey('document.id'))
+    document         = relationship('Document', backref=backref('phrases', cascade='all, delete-orphan'), foreign_keys=document_id)
+    phrase_num       = Column(Integer, nullable=False)  # unique Phrase number per document
+    text             = Column(Text, nullable=False)
+    words            = Column(STR_ARRAY_TYPE)
+    char_offsets     = Column(INT_ARRAY_TYPE)
+    entity_cids      = Column(STR_ARRAY_TYPE)
+    entity_types     = Column(STR_ARRAY_TYPE)
+    abs_char_offsets = Column(INT_ARRAY_TYPE)
 
     __mapper_args__ = {
         'polymorphic_identity': 'phrase',

@@ -1,16 +1,12 @@
 """
 Subpackage for Snorkel machine learning modules.
 """
-from .constants import *
-from .disc_learning import NoiseAwareModel, TFNoiseAwareModel
-from .gen_learning import (
-    DEP_EXCLUSIVE,
-    DEP_FIXING,
-    DEP_REINFORCING,
-    DEP_SIMILAR,
-    GenerativeModel,
-    GenerativeModelWeights,
-    NaiveBayes,
-)
-from .logistic_regression import LogisticRegression, SparseLogisticRegression
 from .utils import *
+from .disc_models.rnn import reRNN, TagRNN, TextRNN
+from .disc_models.logistic_regression import (
+	LogisticRegression, SparseLogisticRegression
+)
+from .gen_learning import (
+    GenerativeModel,
+    GenerativeModelWeights
+)

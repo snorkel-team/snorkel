@@ -17,7 +17,7 @@ from .models import Table, Cell, Phrase
 from ....udf import UDF, UDFRunner
 from .visual import VisualLinker
 
-from ....parser import DocPreprocessor, CoreNLPHandler
+from ....parser import DocPreprocessor, StanfordCoreNLPServer
 
 
 class HTMLPreprocessor(DocPreprocessor):
@@ -71,6 +71,11 @@ class OmniParser(UDFRunner):
                  tabular=True,                       # tabular
                  visual=False,
                  pdf_path=None):
+
+        self.delim = "<NB>"  # NB = New Block
+
+        self.lingual_parser = StanfordCoreNLPServer(delimiter=self.delim[1:-1])
+
         super(OmniParser, self).__init__(OmniParserUDF,
                                          structural=structural,
                                          blacklist=blacklist,
@@ -80,7 +85,9 @@ class OmniParser(UDFRunner):
                                          replacements=replacements,
                                          tabular=tabular,
                                          visual=visual,
-                                         pdf_path=pdf_path)
+                                         pdf_path=pdf_path,
+                                         lingual_parser=self.lingual_parser)
+
 
     def clear(self, session, **kwargs):
         session.query(Context).delete()
@@ -101,6 +108,7 @@ class OmniParserUDF(UDF):
                  tabular,                 # tabular
                  visual,                  # visual
                  pdf_path,
+                 lingual_parser,
                  **kwargs):
         """
         :param visual: boolean, if True visual features are used in the model
@@ -128,7 +136,10 @@ class OmniParserUDF(UDF):
             self.replacements.append((re.compile(pattern, flags=re.UNICODE), replace))
         if self.lingual:
             self.batch_size = 7000  # TODO(bhancock8): what if this is smaller than a block?
-            self.lingual_parse = CoreNLPHandler(delim=self.delim[1:-1]).parse
+            self.lingual_parser = lingual_parser
+            self.req_handler = lingual_parser.connect()
+            self.lingual_parse = self.req_handler.parse
+
         else:
             self.batch_size = int(1e6)
             self.lingual_parse = SimpleTokenizer(delim=self.delim).parse
@@ -260,7 +271,8 @@ class OmniParserUDF(UDF):
             batch_end = parsed + \
                         self.contents[parsed:parsed + self.batch_size].rfind(self.delim) + \
                         len(self.delim)
-            for parts in self.lingual_parse(document, self.contents[parsed:batch_end]):
+            for parts in self.lingual_parse(document,
+                                            self.contents[parsed:batch_end]):
                 (_, _, _, char_end) = split_stable_id(parts['stable_id'])
                 try:
                     while parsed + char_end > block_char_end[parent_idx]:
@@ -281,11 +293,11 @@ class OmniParserUDF(UDF):
                     yield Phrase(**parts)
                     position += 1
                     phrase_num += 1
-                except Exception:
+                except Exception as e:
+                    print("[ERROR]" + str(e))
                     import pdb
                     pdb.set_trace()
             parsed = batch_end
-
 
 class TableInfo(object):
     def __init__(self, document,

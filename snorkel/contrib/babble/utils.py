@@ -1,26 +1,25 @@
-def link_example_candidates(examples, candidates):
+def link_explanation_candidates(explanations, candidates):
     """Doc string goes here."""
 
     candidate_hash_set = set()
     linked = 0
     print("Building list of target candidate hashes...")
-    for e in examples:
+    for e in explanations:
         if isinstance(e.candidate, int):
             candidate_hash_set.add(e.candidate)
         elif e.candidate:
             linked += 1
-    if linked == len(examples):
-        print("All {} examples are already linked to candidates.".format(
-            len(examples)))
-        return examples
+    if linked == len(explanations):
+        print("All {} explanations are already linked to candidates.".format(
+            len(explanations)))
+        return explanations
     else:
-        print("Collected {} target candidate hashes from {} examples.".format(
-            len(candidate_hash_set), len(examples)))
+        print("Collected {} target candidate hashes from {} explanations.".format(
+            len(candidate_hash_set), len(explanations)))
     if not candidate_hash_set:
         print("No candidate hashes were provided. Skipping linking.")
-        return examples
+        return explanations
 
-    
     candidate_hash_map = {}
     print("Gathering desired candidates...")
     for candidate in candidates:
@@ -29,8 +28,8 @@ def link_example_candidates(examples, candidates):
     print("Found {}/{} desired candidates".format(
         len(candidate_hash_set), len(candidate_hash_map)))
     
-    print("Linking examples to candidates...")
-    for e in examples:
+    print("Linking explanations to candidates...")
+    for e in explanations:
         if isinstance(e.candidate, int):
             try:
                 e.candidate = candidate_hash_map[e.candidate]
@@ -39,6 +38,6 @@ def link_example_candidates(examples, candidates):
                     e.candidate))
             linked += 1
 
-    print("Linked {}/{} examples".format(linked, len(examples)))
+    print("Linked {}/{} explanations".format(linked, len(explanations)))
 
-    return examples
+    return explanations

@@ -495,17 +495,19 @@ def save_marginals(session, X, marginals, training=True):
     print("Saved %s marginals" % len(marginals))
 
 
-def load_marginals(session, X=None, split=0, training=True):
+def load_marginals(session, X=None, split=0, cids_query=None, training=True):
     """Load the marginal probs. for a given split of Candidates"""
+    # For candidate ids subquery
+    sub_query = cids_query or session.query(Candidate.id) \
+                                     .filter(Candidate.split == split)
+    sub_query = sub_query.subquery('cids')
 
     # Load marginal tuples from db
-    marginal_tuples = session.query(
-        Marginal.candidate_id,
-        Marginal.value,
-        Marginal.probability
-    ).join(Candidate)\
-        .filter(Candidate.split == split)\
-        .filter(Marginal.training == training).all()
+    marginal_tuples = session.query(Marginal.candidate_id, Marginal.value, 
+        Marginal.probability) \
+        .filter(Marginal.candidate_id == sub_query.c.id) \
+        .filter(Marginal.training == training) \
+        .all()
 
     # Assemble cols 1,...,K of marginals matrix
     if X is not None:

@@ -337,7 +337,38 @@ class BatchFeatureAnnotator(BatchAnnotator):
 
 class BatchLabelAnnotator(BatchAnnotator):
     def __init__(self, candidate_type, lfs, **kwargs):
-        super(BatchLabelAnnotator, self).__init__(candidate_type, annotation_type='label', f=lfs, **kwargs)
+        if lfs is not None:
+            labels = lambda c : [(lf.__name__, lf(c)) for lf in lfs]
+        elif label_generator is not None:
+            labels = lambda c : label_generator(c)
+        else:
+            raise ValueError("Must provide lfs or label_generator kwarg.")
+
+        # Convert lfs to a generator function
+        # In particular, catch verbose values and convert to integer ones
+        def f_gen(c):
+            for lf_key, label in labels(c):
+                # Note: We assume if the LF output is an int, it is already
+                # mapped correctly
+                if type(label) == int:
+                    yield lf_key, label
+                # None is a protected LF output value corresponding to 0,
+                # representing LF abstaining
+                elif label is None:
+                    yield lf_key, 0
+                elif label in c.values:
+                    if c.cardinality > 2:
+                        yield lf_key, c.values.index(label) + 1
+                    # Note: Would be nice to not special-case here, but for
+                    # consistency we leave binary LF range as {-1,0,1}
+                    else:
+                        val = 1 if c.values.index(label) == 0 else -1
+                        yield lf_key, val
+                else:
+                    raise ValueError("""
+                        Unable to parse label with value %s
+                        for candidate with values %s""" % (label, c.values))
+        super(BatchLabelAnnotator, self).__init__(candidate_type, annotation_type='label', f=f_gen, **kwargs)
 
 
 def load_annotation_matrix(con, candidates, split, table_name, key_table_name, replace_key_set, storage, update_keys, ignore_keys):
@@ -369,7 +400,7 @@ def load_annotation_matrix(con, candidates, split, table_name, key_table_name, r
     keys = [row[0] for row in con.execute('SELECT * FROM %s' % key_table_name) if row[0] not in ignore_keys]
     key_index = {key:i for i, key in enumerate(keys)}
     # Create sparse matrix in LIL format for incremental construction
-    lil_feat_matrix = sparse.lil_matrix((len(candidates), len(keys)), dtype=np.float32)
+    lil_feat_matrix = sparse.lil_matrix((len(candidates), len(keys)), dtype=np.int64)
 
     row_index = []
     candidate_index = {}
@@ -395,7 +426,7 @@ def load_annotation_matrix(con, candidates, split, table_name, key_table_name, r
             # Only keep known features
             key_id = key_index.get(key, None)
             if key_id is not None:
-                lil_feat_matrix[i, key_id] = value
+                lil_feat_matrix[i, key_id] = int(value)
 
     else:
         iterator_sql = '''SELECT candidate_id, keys, values FROM %s
@@ -409,7 +440,7 @@ def load_annotation_matrix(con, candidates, split, table_name, key_table_name, r
                 # Only keep known features
                 key_id = key_index.get(key, None)
                 if key_id is not None:
-                    lil_feat_matrix[i, key_id] = value
+                    lil_feat_matrix[i, key_id] = int(value)
 
     return csr_AnnotationMatrix(lil_feat_matrix, candidate_index=candidate_index,
                                     row_index=row_index, keys=keys, key_index=key_index)

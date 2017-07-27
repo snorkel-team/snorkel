@@ -44,7 +44,7 @@ class Explanation(object):
         print('%-12s %s' % ('semantics', self.semantics))
 
 
-class SemanticParser():
+class SemanticParser(object):
     def __init__(self, candidate_class, user_lists={}, beam_width=None, top_k=None):
         annotators = [TokenAnnotator(), PunctuationAnnotator(), IntegerAnnotator()]
         self.grammar = Grammar(rules=snorkel_rules, 

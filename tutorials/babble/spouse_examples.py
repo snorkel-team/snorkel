@@ -1,7 +1,7 @@
 import bz2
 import os
 
-from snorkel.contrib.babble import Example
+from snorkel.contrib.babble import Explanation
 
 def get_user_lists():
     def strip_special(s):
@@ -34,89 +34,89 @@ def get_user_lists():
     return user_lists
 
 basic = [
-    Example(
+    Explanation(
         name='LF_spouse_between',
-        explanation="Label true because there is at least one spouse word in the words between arg 1 and arg 2",
+        condition="Label true because there is at least one spouse word in the words between arg 1 and arg 2",
         candidate=-7068856930834066321,
-        denotation=1,
+        label=1,
         semantics=None),
-    Example(
+    Explanation(
         name='LF_spouse_to_left',
-        explanation="Label true because there is at least one spouse word within two words to the left of arg 1 or arg 2",
+        condition="Label true because there is at least one spouse word within two words to the left of arg 1 or arg 2",
         candidate=164897408906223198,
-        denotation=1,
+        label=1,
         semantics=None),
-    # Example(
+    # Explanation(
     #     name='LF_same_last_name',
-    #     explanation="Label true because the last word of arg 1 is the same as the last word of arg 2",
+    #     condition="Label true because the last word of arg 1 is the same as the last word of arg 2",
     #     candidate=None
-    #     denotation=1,
+    #     label=1,
     #     semantics=None),        
-    Example(
+    Explanation(
         name='LF_no_spouse_in_sentence',
-        explanation="Label false because there are no spouse words in the sentence",
+        condition="Label false because there are no spouse words in the sentence",
         candidate=-2695529595395795063,
-        denotation=-1,
+        label=-1,
         semantics=None),
-    Example(
+    Explanation(
         name='LF_arg1_and_arg2_married',
-        explanation="Label true because the word 'and' is between arg 1 and arg 2 and 'married' is in the sentence",
+        condition="Label true because the word 'and' is between arg 1 and arg 2 and 'married' is in the sentence",
         candidate=-4636660390324264964,
-        denotation=1,
+        label=1,
         semantics=None),
-    Example(
+    Explanation(
         name='LF_family_between',
-        explanation="Label false because there is at least one family word between arg 1 and arg 2",
+        condition="Label false because there is at least one family word between arg 1 and arg 2",
         candidate=4207243625790983703,
-        denotation=-1,
+        label=-1,
         semantics=None),
-    Example(
+    Explanation(
         name='LF_family_to_left',
-        explanation="Label false because there is at least one family word within three words to the left of arg 1 or arg 2",
+        condition="Label false because there is at least one family word within three words to the left of arg 1 or arg 2",
         candidate=5598460573200470481,
-        denotation=-1,
+        label=-1,
         semantics=None),
-    Example(
+    Explanation(
         name='LF_other_between',
-        explanation="Label false because there is an other word between arg 1 and arg 2",
+        condition="Label false because there is an other word between arg 1 and arg 2",
         candidate=8943619341736037326,
-        denotation=-1,
+        label=-1,
         semantics=None),
 ]
 
 distant = [
-    Example(
+    Explanation(
             name='LF_distant',
-            explanation="Label true because either the pair of arg 1 and arg 2 or the pair arg 2 and arg 1 is in known_spouses",
+            condition="Label true because either the pair of arg 1 and arg 2 or the pair arg 2 and arg 1 is in known_spouses",
             candidate=-2597662937532403956,
-            denotation=1,
+            label=1,
             semantics=None),    
-    # Example(
+    # Explanation(
     #         name='LF_distant_last_names',
-    #         explanation="Label true because the arg 1 is not arg 2 and the pair of the last word of arg 1 and the last word of arg 2 is in last_names or the pair of the last word of arg 2 and the last word of arg 1 is in last_names",
+    #         condition="Label true because the arg 1 is not arg 2 and the pair of the last word of arg 1 and the last word of arg 2 is in last_names or the pair of the last word of arg 2 and the last word of arg 1 is in last_names",
     #         candidate=6734564861298611614,
-    #         denotation=1,
+    #         label=1,
     #         semantics=None),    
 ]
 
 additional = [
-    Example(
+    Explanation(
         name='LF_too_far_apart',
-        explanation="Label false because the number of words between arg 1 and arg 2 is larger than 10",
+        condition="Label false because the number of words between arg 1 and arg 2 is larger than 10",
         candidate=-350026044943837397,
-        denotation=-1,
+        label=-1,
         semantics=None),
-    Example(
+    Explanation(
         name='LF_third_wheel',
-        explanation="Label false because there is a person between arg 1 and arg 2",
+        condition="Label false because there is a person between arg 1 and arg 2",
         candidate=4045249959449521689,
-        denotation=-1,
+        label=-1,
         semantics=None),
-    Example(
+    Explanation(
         name='LF_identical_args',
-        explanation="Label false because arg 1 is identical to arg 2",
+        condition="Label false because arg 1 is identical to arg 2",
         candidate=-8721107193035604739,
-        denotation=-1,
+        label=-1,
         semantics=None),
 ]
 

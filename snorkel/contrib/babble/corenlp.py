@@ -7,6 +7,8 @@ import requests
 import warnings
 import json
 
+
+
 class CoreNLPHandler(object):
     def __init__(self, tok_whitespace=False, split_newline=False, parse_tree=False):
         # http://stanfordnlp.github.io/CoreNLP/corenlp-server.html

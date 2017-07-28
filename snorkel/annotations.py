@@ -68,8 +68,8 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
                 idxs = np.arange(self.shape[axis])[s]
         elif isinstance(s, int):
             idxs = np.array([s])
-        elif isinstance(np.ndarray):
-            # s is array of ints
+        else:
+            # s is an array of ints
             idxs = s
         index_new, inv_index_new = {}, {}
         for i_new, i in enumerate(idxs):

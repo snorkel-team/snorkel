@@ -205,8 +205,7 @@ class TFNoiseAwareModel(Classifier):
                 epoch_losses.append(epoch_loss)
 
             # Reshuffle training data
-            train_idxs = range(n)
-            np.random.shuffle(train_idxs)
+            train_idxs = np.random.permutation(n)
             X_train = [X_train[j] for j in train_idxs] if self.representation \
                 else X_train[train_idxs, :]
             Y_train = Y_train[train_idxs]

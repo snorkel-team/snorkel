@@ -1,7 +1,9 @@
+import re
+
 from collections import defaultdict
 from copy import deepcopy
 from itertools import product
-import re
+from six import iteritems
 from sqlalchemy.sql import select
 
 from .models import Candidate, TemporarySpan, Sentence
@@ -227,8 +229,8 @@ class PretaggedCandidateExtractorUDF(UDF):
         # Form entity Spans
         entity_spans = defaultdict(list)
         entity_cids  = {}
-        for et, cid_idxs in entity_idxs.iteritems():
-            for cid, idxs in entity_idxs[et].iteritems():
+        for et, cid_idxs in iteritems(entity_idxs):
+            for cid, idxs in iteritems(entity_idxs[et]):
                 while len(idxs) > 0:
                     i          = idxs.pop(0)
                     char_start = context.char_offsets[i]

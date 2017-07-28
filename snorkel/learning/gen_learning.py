@@ -194,7 +194,7 @@ class GenerativeModel(Classifier):
                 self.candidate_ranges)
 
         # Shuffle the data points, cardinalities, and candidate_ranges
-        idxs = range(m)
+        idxs = list(range(m))
         np.random.shuffle(idxs)
         L = L[idxs, :]
         if candidate_ranges is not None:

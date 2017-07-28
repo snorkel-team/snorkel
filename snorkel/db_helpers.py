@@ -1,6 +1,6 @@
 from .models import StableLabel, GoldLabel, Context, GoldLabelKey
+from six import iteritems
 from sqlalchemy.orm import object_session
-from future.utils import iteritems
 
 def reload_annotator_labels(session, candidate_class, annotator_name, split, filter_label_split=True, create_missing_cands=False):
     """Reloads stable annotator labels into the AnnotatorLabel table"""
@@ -37,7 +37,7 @@ def reload_annotator_labels(session, candidate_class, annotator_name, split, fil
 
         # Assemble query and check
         candidate_query = session.query(candidate_class)
-        for k, v in candidate_args.iteritems():
+        for k, v in iteritems(candidate_args):
             candidate_query = candidate_query.filter(getattr(candidate_class, k) == v)
         candidate = candidate_query.first()
 

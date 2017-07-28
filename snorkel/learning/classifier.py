@@ -1,4 +1,7 @@
 import numpy as np
+
+from six.moves import range
+
 from .utils import MentionScorer
 from ..annotations import save_marginals
 
@@ -100,7 +103,7 @@ class Classifier(object):
 
         # Get the test candidates
         test_candidates = [
-            X_test.get_candidate(session, i) for i in xrange(X_test.shape[0])
+            X_test.get_candidate(session, i) for i in range(X_test.shape[0])
         ] if not self.representation else X_test
 
         # Initialize and return scorer

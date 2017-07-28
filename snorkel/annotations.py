@@ -66,9 +66,11 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
                 return index, inv_index
             else:
                 idxs = np.arange(self.shape[axis])[s]
-        # csr_matrix._get_submatrix only handles slice or int, so this is int
-        else:
+        elif isinstance(s, int):
             idxs = np.array([s])
+        elif isinstance(np.ndarray):
+            # s is array of ints
+            idxs = s
         index_new, inv_index_new = {}, {}
         for i_new, i in enumerate(idxs):
             k = index[i]
@@ -76,13 +78,13 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
             inv_index_new[k] = i_new
         return index_new, inv_index_new
 
-    def _get_submatrix(self, row_slice, col_slice):
+    def __getitem__(self, key):
         # Get the slice of the matrix
-        X = super(csr_AnnotationMatrix, self)._get_submatrix(row_slice,
-            col_slice)
+        X = super(csr_AnnotationMatrix, self).__getitem__(key)
         X.annotation_key_cls = self.annotation_key_cls
+        row_slice, col_slice = self._unpack_index(key)
 
-        # # Remap the row and column indexes
+        # Remap the row and column indexes
         X.row_index, X.candidate_index = self._get_sliced_indexes(
             row_slice, 0, self.row_index, self.candidate_index)
         X.col_index, X.key_index = self._get_sliced_indexes(

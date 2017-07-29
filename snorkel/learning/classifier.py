@@ -33,16 +33,18 @@ class Classifier(object):
             return np.array([1 if p > b else -1 if p < b else 0 
                 for p in self.marginals(X)])
 
-    def score(self, X_test, Y_test, b=0.5, set_unlabeled_as_neg=True):
+    def score(self, X_test, Y_test, b=0.5, set_unlabeled_as_neg=True, beta=1):
         """
         Returns the summary scores:
-            * For binary: precision, recall, F1 score
+            * For binary: precision, recall, F-beta score
             * For categorical: accuracy
         
         :param X_test: The input test candidates, as a list or annotation matrix
         :param Y_test: The input test labels, as a list or annotation matrix
         :param b: Decision boundary *for binary setting only*
-        :param set_unlabeled_as_neg: Whether to map 0 labels -> -1, *binary setting.*
+        :param set_unlabeled_as_neg: Whether to map 0 labels -> -1, 
+            *binary setting.*
+        :param beta: For F-beta score; by default beta = 1 => F-1 score.
 
         Note: Unlike in self.error_analysis, this method assumes X_test and
         Y_test are properly collated!
@@ -71,11 +73,16 @@ class Classifier(object):
             # Compute and return precision, recall, and F1 score
             tp = (0.5 * (predictions * Y_test + 1))[predictions == 1].sum()
             pred_pos = predictions[predictions == 1].sum()
-            prec = tp / float(pred_pos) if pred_pos > 0 else 0.0
+            p = tp / float(pred_pos) if pred_pos > 0 else 0.0
             pos = Y_test[Y_test == 1].sum()
-            rec = tp / float(pos) if pos > 0 else 0.0
-            f1 = (2 * prec * rec) / (prec + rec) if prec + rec > 0 else 0.0
-            return prec, rec, f1
+            r = tp / float(pos) if pos > 0 else 0.0
+
+            # Compute general F-beta score
+            if p + r > 0:
+                f_beta = (1 + beta**2) * ((p * r) / (((beta**2) * p) + r))
+            else:
+                f_beta = 0.0
+            return p, r, f_beta
 
     def error_analysis(self, session, X_test, Y_test, 
         gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True, display=True,

@@ -81,8 +81,10 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
     def __getitem__(self, key):
         # Get the slice of the matrix
         X = super(csr_AnnotationMatrix, self).__getitem__(key)
-        X.annotation_key_cls = self.annotation_key_cls
         row_slice, col_slice = self._unpack_index(key)
+        if isinstance(row_slice, int) and isinstance(col_slice, int):
+            return X
+        X.annotation_key_cls = self.annotation_key_cls
 
         # Remap the row and column indexes
         X.row_index, X.candidate_index = self._get_sliced_indexes(

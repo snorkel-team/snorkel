@@ -28,7 +28,8 @@ def shuffle_lists(a, b):
 
 class MTurkHelper(object):
     def __init__(self, candidates, labels=[], num_hits=25, candidates_per_hit=4, 
-        workers_per_hit=3, shuffle=True, pct_positive=None):
+        workers_per_hit=3, shuffle=True, pct_positive=None, seed=1234):
+        np.random.seed(seed)
         if pct_positive:
             assert(0 < pct_positive and pct_positive < 1)
         if shuffle:
@@ -139,8 +140,8 @@ class MTurkHelper(object):
             # prep data structures
             explanations_by_candidate = collections.defaultdict(list)
             label_converter = {
-                'TRUE': 1,
-                'FALSE': -1,
+                'true': 1,
+                'false': -1,
                 'not_person': 0,
             }
             hits = collections.Counter()
@@ -152,6 +153,7 @@ class MTurkHelper(object):
             for row in csvreader:
                 span1s = []
                 span2s = []
+                goldlabels = []
                 explanations = []
                 labels = []
                 for i, field in enumerate(row):
@@ -173,8 +175,8 @@ class MTurkHelper(object):
                         labels.append(field)
 
                 for (span1, span2, explanation, label) in zip(span1s, span2s, explanations, labels):
-                    candidate_stable_id = '~~'.join([span1, span2])
-                    label = label_converter[label]
+                    candidate_stable_id = u'~~'.join([span1, span2])
+                    label = label_converter[label.lower()]
                     exp = Explanation(explanation, label, candidate=candidate_stable_id)
                     explanations_by_candidate[candidate_stable_id].append(exp)
             

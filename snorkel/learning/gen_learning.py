@@ -122,7 +122,6 @@ class GenerativeModel(Classifier):
         """
         m, n = L.shape
         step_size = step_size or 0.0001
-        reg_param_scaled = reg_param / L.shape[0]
 
         # Check to make sure matrix is int-valued
         element_type = type(L[0,0])
@@ -213,7 +212,7 @@ class GenerativeModel(Classifier):
             n_learning_epoch=epochs, 
             stepsize=step_size,
             decay=decay,
-            reg_param=reg_param_scaled,
+            reg_param=reg_param,
             regularization=reg_type,
             truncation=truncation,
             quiet=(not verbose),

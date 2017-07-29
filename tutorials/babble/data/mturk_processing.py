@@ -12,19 +12,71 @@ function:
 """
 import collections
 import csv
+import random
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from snorkel.contrib.babble import Explanation
 
+def shuffle_lists(a, b):
+    combined = zip(a, b)
+    random.shuffle(combined)
+    a, b = zip(*combined)
+    return a, b
+
 
 class MTurkHelper(object):
-    def __init__(self, candidates, num_hits=25, candidates_per_hit=4, workers_per_hit=3):
+    def __init__(self, candidates, labels=[], num_hits=25, candidates_per_hit=4, 
+        workers_per_hit=3, shuffle=True, pct_positive=None):
+        if pct_positive:
+            assert(0 < pct_positive and pct_positive < 1)
+        if shuffle:
+            if labels:
+                candidates, labels = shuffle_lists(candidates, labels)
+            else:
+                random.shuffle(candidates)
+        if pct_positive:
+            if not labels:
+                raise Exception("Must provide labels to obtain target pct_positive.")
+            total_candidates = num_hits * candidates_per_hit
+            candidates, labels = self.balance_labels(candidates, labels, 
+                total_candidates, pct_positive)
         self.candidates = candidates
+        self.labels = labels
         self.num_hits = num_hits
         self.candidates_per_hit = candidates_per_hit
         self.workers_per_hit = workers_per_hit
+
+    def balance_labels(self, candidates, labels, num_candidates, pct_positive):
+        target_positive = int(num_candidates * pct_positive)
+        target_negative = num_candidates - target_positive
+        positive_candidates = []
+        negative_candidates = []
+        unknown_candidates = []
+        for i, c in enumerate(candidates):
+            if labels[i] == 1:
+                positive_candidates.append(c)
+            elif labels[i] == -1:
+                negative_candidates.append(c)
+            else:
+                unknown_candidates.append(c)
+        print("Found {} positive, {} negative, {} unknown candidates.".format(
+            len(positive_candidates), len(negative_candidates), len(unknown_candidates)))
+        if len(positive_candidates) < target_positive:
+            raise Exception('Not enough positive candidates ({}) to satisfy '
+                'target number of {} ({}%)'.format(len(positive_candidates),
+                target_positive, pct_positive * 100))
+        if len(negative_candidates) < target_negative:
+            raise Exception('Not enough negative candidates ({}) to satisfy '
+                'target number of {} ({}%)'.format(len(negative_candidates),
+                target_negative, (1 - pct_positive) * 100))
+        balanced_candidates = (positive_candidates[:target_positive] + 
+                               negative_candidates[:target_negative])
+        balanced_labels = [1] * target_positive + [-1] * target_negative
+        print("Using {} positive, {} negative candidates.".format(
+            target_positive, target_negative))
+        return shuffle_lists(balanced_candidates, balanced_labels)
 
     def preprocess(self, csvpath):
         """
@@ -42,24 +94,37 @@ class MTurkHelper(object):
             csvwriter = csv.writer(csvfile)
             # write header row
             header = []
+            contents = []
+            spans = []
+            labels = []
             for i in range(1, self.candidates_per_hit + 1):
-                header.append('content{}'.format(i))
-                header.append('span1_{}'.format(i))
-                header.append('span2_{}'.format(i))
+                contents.append('content{}'.format(i))
+                spans.append('span1_{}'.format(i))
+                spans.append('span2_{}'.format(i))
+                labels.append('goldlabel_{}'.format(i))
+            header = spans + contents + labels
             csvwriter.writerow(header)
 
             # write data rows
             batcher = batch_iter(self.candidates, self.candidates_per_hit)
+            i_candidate = 0
             for i_hit in range(self.num_hits):
                 hit = []
+                contents = []
+                spans = []
+                labels = []
                 batch = batcher.next()
                 for candidate in batch:
                     content = candidate.get_parent().text.strip()
                     for span in sorted(candidate.get_contexts(), key=lambda x: x.char_start, reverse=True):
                         content = content[:span.char_start] + highlighted(span.get_span()) + content[span.char_end + 1:]
-                    hit.append(content.encode('utf-8'))
+                    contents.append(content.encode('utf-8'))
                     for span in candidate.get_contexts():
-                        hit.append(span.stable_id)
+                        spans.append(span.stable_id)
+                    if self.labels:
+                        labels.append(self.labels[i_candidate])
+                    i_candidate += 1
+                hit = spans + contents + labels
                 csvwriter.writerow(hit)
         print("Wrote {} HITs with {} candidates per HIT".format(self.num_hits, self.candidates_per_hit))
 
@@ -74,8 +139,8 @@ class MTurkHelper(object):
             # prep data structures
             explanations_by_candidate = collections.defaultdict(list)
             label_converter = {
-                'true': 1,
-                'false': -1,
+                'TRUE': 1,
+                'FALSE': -1,
                 'not_person': 0,
             }
             hits = collections.Counter()
@@ -100,6 +165,8 @@ class MTurkHelper(object):
                         span1s.append(field)
                     elif header[i].startswith('Input.span2'):
                         span2s.append(field)
+                    elif header[i].startswith('Input.goldlabel'):
+                        goldlabels.append(field)
                     elif header[i].startswith('Answer.explanation'):
                         explanations.append(field)
                     elif header[i].startswith('Answer.label'):
@@ -138,6 +205,9 @@ class MTurkHelper(object):
                 if stable_id in explanations_by_candidate:
                     for exp in explanations_by_candidate[stable_id]:
                         exp.candidate = candidate
+                else:
+                    import pdb; pdb.set_trace()
+                    raise Exception("Could not find candidate to link.")
 
             # Filter and merge data
             num_unanimous = 0

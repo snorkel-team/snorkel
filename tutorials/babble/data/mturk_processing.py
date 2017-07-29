@@ -206,7 +206,6 @@ class MTurkHelper(object):
                     for exp in explanations_by_candidate[stable_id]:
                         exp.candidate = candidate
                 else:
-                    import pdb; pdb.set_trace()
                     raise Exception("Could not find candidate to link.")
 
             # Filter and merge data

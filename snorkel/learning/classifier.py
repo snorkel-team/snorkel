@@ -16,24 +16,25 @@ class Classifier(object):
         self.cardinality = cardinality
         self.seed = seed
 
-    def marginals(self, X, **kwargs):
+    def marginals(self, X, batch_size=None, **kwargs):
         raise NotImplementedError()
 
     def save_marginals(self, session, X, training=False):
         """Save the predicted marginal probabilities for the Candidates X."""
         save_marginals(session, X, self.marginals(X), training=training)
 
-    def predictions(self, X, b=0.5):
+    def predictions(self, X, b=0.5, batch_size=None):
         """Return numpy array of elements in {-1,0,1}
         based on predicted marginal probabilities.
         """
         if self.cardinality > 2:
-            return self.marginals(X).argmax(axis=1) + 1
+            return self.marginals(X, batch_size=batch_size).argmax(axis=1) + 1
         else:
             return np.array([1 if p > b else -1 if p < b else 0 
-                for p in self.marginals(X)])
+                for p in self.marginals(X, batch_size=batch_size)])
 
-    def score(self, X_test, Y_test, b=0.5, set_unlabeled_as_neg=True, beta=1):
+    def score(self, X_test, Y_test, b=0.5, set_unlabeled_as_neg=True, beta=1,
+        batch_size=None):
         """
         Returns the summary scores:
             * For binary: precision, recall, F-beta score
@@ -49,7 +50,7 @@ class Classifier(object):
         Note: Unlike in self.error_analysis, this method assumes X_test and
         Y_test are properly collated!
         """
-        predictions = self.predictions(X_test, b=b)
+        predictions = self.predictions(X_test, b=b, batch_size=batch_size)
 
         # Convert Y_test to dense numpy array
         try:

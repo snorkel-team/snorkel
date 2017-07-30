@@ -216,7 +216,7 @@ class TFNoiseAwareModel(Classifier):
                 msg = "[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
                     self.name, t, time() - st, np.mean(epoch_losses))
                 if X_dev is not None:
-                    scores = self.score(X_dev, Y_dev)
+                    scores = self.score(X_dev, Y_dev, batch_size=batch_size)
                     score = scores if self.cardinality > 2 else scores[-1]
                     score_label = "Acc." if self.cardinality > 2 else "F1"
                     msg += '\tDev {0}={1:.2f}'.format(score_label, 100. * score)

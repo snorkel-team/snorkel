@@ -237,20 +237,23 @@ class TFNoiseAwareModel(Classifier):
         if dev_ckpt and X_dev is not None and verbose and dev_score_opt > 0:
             self.load(save_dir=save_dir)
 
-    def marginals(self, X, batch_size=256):
+    def marginals(self, X, batch_size=None):
         """
         Compute the marginals for the given candidates X.
-        Split into batches to avoid OOM errors, then call _marginals_batch.
+        Split into batches to avoid OOM errors, then call _marginals_batch;
+        defaults to no batching.
         """
-        N = len(X) if self.representation else X.shape[0]
-        n_batches = int(np.floor(N / batch_size))
+        if batch_size is None:
+            return self._marginals_batch(X)
+        else:
+            N = len(X) if self.representation else X.shape[0]
+            n_batches = int(np.floor(N / batch_size))
 
-        # Iterate over batches
-        batch_marginals = []
-        for i, b in enumerate(range(0, N, batch_size)):
-            X_batch = X[b:min(n, b+batch_size)]
-            batch_marginals.append(self._marginals_batch(X_batch))
-        return np.concatenate(batch_marginals)
+            # Iterate over batches
+            batch_marginals = []
+            for b in range(0, N, batch_size):
+                batch_marginals.append(self._marginals_batch(X[b:b+batch_size]))
+            return np.concatenate(batch_marginals)
 
     def save(self, model_name=None, save_dir='checkpoints', verbose=True,
         global_step=0):

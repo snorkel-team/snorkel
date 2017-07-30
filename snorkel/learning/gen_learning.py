@@ -354,7 +354,7 @@ class GenerativeModel(Classifier):
 
         return DataFrame(stats)
 
-    def marginals(self, L, candidate_ranges=None):
+    def marginals(self, L, candidate_ranges=None, batch_size=None):
         """
         Given an M x N label matrix, returns marginal probabilities for each
         candidate, depending on classification setting:

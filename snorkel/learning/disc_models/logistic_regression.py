@@ -61,7 +61,7 @@ class LogisticRegression(TFNoiseAwareModel):
             raise Exception("Sparse input matrix. Use SparseLogisticRegression")
         return X
 
-    def marginals(self, X_test):
+    def _marginals_batch(self, X_test):
         X_test = self._check_input(X_test)
         return self.session.run(self.marginals_op, {self.X: X_test})
 
@@ -142,7 +142,7 @@ class SparseLogisticRegression(LogisticRegression):
             self.lr:      lr
         }
 
-    def marginals(self, X_test):
+    def _marginals_batch(self, X_test):
         X_test = self._check_input(X_test)
         if X_test.shape[0] == 0:
             return np.array([])

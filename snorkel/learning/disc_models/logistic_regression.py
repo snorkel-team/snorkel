@@ -142,7 +142,7 @@ class SparseLogisticRegression(LogisticRegression):
             self.lr:      lr
         }
 
-    def marginals(self, X_test):
+    def _marginals_batch(self, X_test):
         X_test = self._check_input(X_test)
         if X_test.shape[0] == 0:
             return np.array([])

@@ -116,7 +116,7 @@ class DictionaryMatch(NgramMatcher):
         p = self._stem(p) if self.stemmer is not None else p
         return (not self.reverse) if p in self.d else self.reverse
 
-class LambdaFunctionMatch(NgramMatcher):
+class LambdaFunctionMatcher(NgramMatcher):
     """Selects candidate Ngrams that output True when input to a function f."""
     def init(self):
         self.ignore_case = self.opts.get('ignore_case', True)

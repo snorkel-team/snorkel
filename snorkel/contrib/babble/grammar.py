@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from util import CoreNLPHandler
+from corenlp import CoreNLPHandler
 from helpers import lf_helpers
 
 from collections import defaultdict, namedtuple, Iterable

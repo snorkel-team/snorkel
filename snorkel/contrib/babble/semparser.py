@@ -67,7 +67,8 @@ class SemanticParser(object):
                     exp.name = name
         else:
             for i, exp in enumerate(explanations):
-                exp.name = "Explanation{}".format(i)
+                if not exp.name:
+                    exp.name = "Explanation{}".format(i)
 
     def preprocess(self, string):
         return string.replace("'", '"')

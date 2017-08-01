@@ -17,4 +17,5 @@ fi
 
 # Launch jupyter notebook!
 echo "Launching Jupyter Notebook..."
-jupyter notebook
+
+jupyter notebook --port=8887 --ip=0.0.0.0 --allow-root

@@ -1,0 +1,93 @@
+############################################################
+# Dockerfile to build things... like Snorkel
+# Based on phusion's Ubuntu baseimage
+############################################################
+
+# Set the base image to Ubuntu
+FROM phusion/baseimage
+
+# File Author / Maintainer
+MAINTAINER Phillip Rogers (phillip.h.rogers@accenture.com)
+
+# Use baseimage-docker's init system.
+CMD ["/sbin/my_init"]
+
+# Update and install
+RUN apt-get update && apt-get install -y \
+    sudo \
+    nano \
+    git \
+    wget \
+    bzip2 \
+    unzip \
+    gcc \
+    ca-certificates \
+    libglib2.0-0 \
+    libxext6 \
+    libsm6 \
+    font-manager \
+    libxrender1
+
+#get Miniconda
+RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
+    wget --quiet https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p /opt/conda && \
+    rm ~/miniconda.sh
+
+ENV PATH /opt/conda/bin:$PATH
+#Install python stuff
+
+RUN conda config --add channels conda-forge
+
+RUN conda install -y \
+    numba \
+    pip \
+    pandas \
+    matplotlib \
+    jupyter \
+    seaborn \
+    spacy
+
+RUN python -m spacy download en
+
+RUN pip install --upgrade pip
+
+RUN pip install \
+    bs4 \
+    future \
+    futures \
+    ipywidgets \
+    lxml==3.6.4 \
+    nltk \
+    git+https://github.com/HazyResearch/numbskull@master \
+    numpy>=1.11 \
+    pandas \
+    requests \
+    scipy>=0.18 \
+    six \
+    sqlalchemy>=1.0.14 \
+    tensorflow>=1.0 \
+    tika \
+    psycopg2
+
+RUN jupyter nbextension enable --py widgetsnbextension --sys-prefix
+RUN git clone https://github.com/DrPinkACN/snorkel.git /home
+
+EXPOSE 8887
+
+# Clean up APT when done.
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+
+# $> docker build app -t snocker:0.6.2a
+
+###########
+# run app #
+###########
+
+# $> docker run -it --name snocker -p 8887:8887 -v ~/some/local/dir/mapped/to/home:/home snocker:0.6.2a
+# key: ctrl+p+q
+# $> docker exec -it snocker bash
+# $> cd /home/snorkel
+# $> ./run.sh
+# make sure to copy the token for accessing the notebooks

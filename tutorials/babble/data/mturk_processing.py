@@ -12,6 +12,7 @@ function:
 """
 import collections
 import csv
+import itertools
 import random
 
 import matplotlib.pyplot as plt
@@ -29,7 +30,7 @@ def shuffle_lists(a, b):
 class MTurkHelper(object):
     def __init__(self, candidates, labels=[], num_hits=25, candidates_per_hit=4, 
         workers_per_hit=3, shuffle=True, pct_positive=None, seed=1234):
-        np.random.seed(seed)
+        random.seed(seed)
         if pct_positive:
             assert(0 < pct_positive and pct_positive < 1)
         if shuffle:
@@ -129,10 +130,11 @@ class MTurkHelper(object):
                 csvwriter.writerow(hit)
         print("Wrote {} HITs with {} candidates per HIT".format(self.num_hits, self.candidates_per_hit))
 
-    def postprocess(self, csvpath, verbose=False):
+    def postprocess(self, csvpath, candidates=None, verbose=False):
         """
         Assumptions:
         HITs are sorted by HITId
+        For v0.2 only, pass original candidate list again; otherwise, no need.
         """
         with open(csvpath, 'rb') as csvfile:
             csvreader = csv.reader(csvfile)
@@ -202,13 +204,20 @@ class MTurkHelper(object):
                 plt.show()
 
             # Link candidates
+            if candidates:
+                self.candidates = candidates
             for candidate in self.candidates:
                 stable_id = candidate.get_stable_id()
                 if stable_id in explanations_by_candidate:
                     for exp in explanations_by_candidate[stable_id]:
                         exp.candidate = candidate
-                else:
-                    raise Exception("Could not find candidate to link.")
+                elif not candidates:
+                    # If candidates was not passed, all candidate should have match.
+                    raise Exception("Could not find explanation for candidate {}.".format(candidate))
+            if candidates:
+                for exp in itertools.chain(explanations_by_candidate.values()[0]):
+                    if isinstance(exp.candidate, basestring):
+                        raise Exception("Could not find candidate for explanation {}".format(exp))
 
             # Filter and merge data
             num_unanimous = 0

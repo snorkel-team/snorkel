@@ -71,7 +71,7 @@ RUN pip install \
     psycopg2
 
 RUN jupyter nbextension enable --py widgetsnbextension --sys-prefix
-RUN git clone https://github.com/DrPinkACN/snorkel.git /home
+RUN git clone https://github.com/DrPinkACN/snorkel.git
 
 EXPOSE 8887
 

@@ -1,3 +1,14 @@
+## Containerized Snorkel
+This fork of the snorkel repo has been modified slightly to be build and deployed in a Docker container. No clone of this repository is necessary, that will be performed in a the Docker image build. Just download the app in the *snocker* directory or create a docker file.
+
+Make sure Docker is installed on your run environment and that the Dockerfile is available on the run envinment in a directory named app. Then build the image.
+
+```
+$> docker build app -t snocker:0.6.2a
+```
+
+***work in progress...***
+
 <img src="figs/logo_01.png" width="150"/>
 
 

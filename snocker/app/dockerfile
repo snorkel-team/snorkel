@@ -88,6 +88,6 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 # $> docker run -it --name snocker -p 8887:8887 -v ~/some/local/dir/mapped/to/home:/home snocker:0.6.2a
 # key: ctrl+p+q
 # $> docker exec -it snocker bash
-# $> cd /home/snorkel
+# $> cd /snorkel
 # $> ./run.sh
 # make sure to copy the token for accessing the notebooks

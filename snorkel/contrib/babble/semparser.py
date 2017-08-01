@@ -1,8 +1,11 @@
-from grammar import Grammar
-from snorkel_grammar import snorkel_rules, snorkel_ops, sem_to_str
-from annotator import *
-
+import matplotlib.pyplot as plt
 from pandas import DataFrame, Series
+
+from annotator import *
+from grammar import Grammar
+from helpers import lf_helpers
+from snorkel_grammar import snorkel_rules, snorkel_ops, sem_to_str
+
 
 class Explanation(object):
     def __init__(self, condition, label, candidate=None, name=None, 
@@ -12,7 +15,7 @@ class Explanation(object):
 
         :param condition: A string explanation that expresses a Boolean 
             condition (e.g., "The sentence is at least 5 words long.")
-        :param label: The label {-1, 1} to apply to candidates for which the 
+        :param label: The Boolean label to apply to candidates for which the 
             condition evaluates to True.
         :param candidate: A candidate that the explanation is consistent with.
         :param name: The name of this explanation.
@@ -22,7 +25,7 @@ class Explanation(object):
         """
         assert(isinstance(condition, basestring))
         self.condition = condition
-        assert(label in [-1, 0, 1])
+        assert(isinstance(label, bool))
         self.label = label
         self.candidate = candidate
         self.name = name
@@ -52,10 +55,11 @@ class SemanticParser(object):
                                candidate_class=candidate_class,
                                annotators=annotators,
                                user_lists=user_lists,
+                               lf_helpers=lf_helpers(),
                                beam_width=beam_width,
                                top_k=top_k)
         self.explanation_counter = 0
-        self.LFs = tuple([None] * 6)
+        self.num_parses_by_exp = []
 
     def name_explanations(self, explanations, names):
         if names:
@@ -86,7 +90,10 @@ class SemanticParser(object):
         for i, exp in enumerate(explanations):
             exp.condition = self.preprocess(exp.condition)
             rule = 'Label {} if {}'.format(exp.label, exp.condition)
+            # print(rule)
             exp_parses = self.grammar.parse_string(rule)
+            # print(len(exp_parses))
+            self.num_parses_by_exp.append(len(exp_parses))
             for j, parse in enumerate(exp_parses):
                 # print(parse.semantics)
                 lf = self.grammar.evaluate(parse)
@@ -96,13 +103,22 @@ class SemanticParser(object):
                 lf.__name__ = "{}_{}".format(exp.name, j)
                 LFs.append(lf)
             self.explanation_counter += 1
+        if verbose:
+            return_object = 'parses' if return_parses else "LFs"
+            print("{} {} created from {} out of {} explanation(s)".format(
+                len(LFs), return_object, 
+                len(explanations) - self.num_parses_by_exp.count(0), len(explanations)))
         if return_parses:
-            if verbose:
-                print("{} parses created from {} explanations".format(len(LFs), len(explanations)))
             return parses
         else:
             if verbose:
-                print("{} LFs created from {} explanations".format(len(LFs), len(explanations)))
+                plt.hist(self.num_parses_by_exp, 
+                    bins=range(max(self.num_parses_by_exp) + 2), align='left')
+                plt.xticks(range(max(self.num_parses_by_exp) + 2))
+                plt.xlabel("# of LFs")
+                plt.ylabel("# of Explanations")
+                plt.title('# LFs per Explanation')
+                plt.show()
             return LFs
 
     def parse_and_evaluate(self, 
@@ -205,7 +221,7 @@ class SemanticParser(object):
                     if show_erroring: 
                         print("E: {}\n".format(semantics_))
                         print parse.semantics
-                        print parse.function(explanation.candidate) #to display traceback
+                        print parse.function(explanation.candidate)  # to display traceback
                         import pdb; pdb.set_trace()
                     nErroring[i] += 1 
                     LFs['erroring'].append(parse.function)

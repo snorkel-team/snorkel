@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from pdb import set_trace as t
+
 from grammar import Rule
 
 # Helpers ======================================================================
@@ -55,12 +56,12 @@ lexical_rules = (
     [Rule('$MoreThan', w, '.gt') for w in ['more than', 'greater than', 'larger than', '>']] + 
     [Rule('$Within', w, '.within') for w in ['within']] +
     [Rule('$In', w, '.in') for w in ['in']] +
-    [Rule('$Contains', w, '.contains') for w in ['contains', 'contain', 'containing', 'include', 'includes']] +
+    [Rule('$Contains', w, '.contains') for w in ['contains', 'contain', 'containing', 'include', 'includes', 'says', 'states']] +
     [Rule('$StartsWith', w, '.startswith') for w in ['starts with', 'start with', 'starting with']] +
     [Rule('$EndsWith', w, '.endswith') for w in ['ends with', 'end with', 'ending with']] +
     [Rule('$Left', w, '.left') for w in ['left', 'before', 'precedes', 'preceding', 'followed by']] +
     [Rule('$Right', w, '.right') for w in ['right', 'after', 'preceded by', 'follows', 'following']] +
-    [Rule('$Sentence', w, '.sentence') for w in ['sentence']] +
+    [Rule('$Sentence', w, '.sentence') for w in ['sentence', 'text', 'it']] +
     [Rule('$Between', w, '.between') for w in ['between', 'inbetween', 'sandwiched', 'enclosed']] +
     [Rule('$Separator', w) for w in [',', ';', '/']] +
     [Rule('$Count', w, '.count') for w in ['number', 'length', 'count']] +

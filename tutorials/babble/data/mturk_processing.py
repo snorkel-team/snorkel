@@ -142,9 +142,9 @@ class MTurkHelper(object):
             # prep data structures
             explanations_by_candidate = collections.defaultdict(list)
             label_converter = {
-                'true': 1,
-                'false': -1,
-                'not_person': 0,
+                'true': True,
+                'false': False,
+                'not_person': None,
             }
             hits = collections.Counter()
             times = []
@@ -179,6 +179,8 @@ class MTurkHelper(object):
                 for (span1, span2, explanation, label) in zip(span1s, span2s, explanations, labels):
                     candidate_stable_id = u'~~'.join([span1, span2])
                     label = label_converter[label.lower()]
+                    if label is None:
+                        continue
                     exp = Explanation(explanation, label, candidate=candidate_stable_id)
                     explanations_by_candidate[candidate_stable_id].append(exp)
             
@@ -211,9 +213,6 @@ class MTurkHelper(object):
                 if stable_id in explanations_by_candidate:
                     for exp in explanations_by_candidate[stable_id]:
                         exp.candidate = candidate
-                elif not candidates:
-                    # If candidates was not passed, all candidate should have match.
-                    raise Exception("Could not find explanation for candidate {}.".format(candidate))
             if candidates:
                 for exp in itertools.chain(explanations_by_candidate.values()[0]):
                     if isinstance(exp.candidate, basestring):
@@ -228,10 +227,10 @@ class MTurkHelper(object):
             for _, explanations in explanations_by_candidate.items():
                 labels = [exp.label for exp in explanations]
                 consensus = None
-                if 0 in labels:
+                if len(labels) < self.workers_per_hit:
                     num_bad += 1
                     continue
-                for option in [-1, 1]:
+                for option in [True, False]:
                     if labels.count(option) == self.workers_per_hit:
                         consensus = option
                         num_unanimous += 1
@@ -242,8 +241,8 @@ class MTurkHelper(object):
                     num_split += 1
                 else:  # Conensus was found for 1 or -1
                     valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
-            assert(all([len(responses) == self.workers_per_hit 
-                for responses in explanations_by_candidate.values()]))
+            # assert(all([len(responses) == self.workers_per_hit 
+            #     for responses in explanations_by_candidate.values()]))
             assert(num_unanimous + num_majority + num_split + num_bad == self.num_hits * self.candidates_per_hit)
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))

@@ -231,7 +231,7 @@ def get_between_phrases(span0, span1, n_min=1, n_max=4):
             phrases.append(build_phrase(sent, i, L))
     return phrases
 
-def get_sentence_phrases(span, n_min=1, n_max=10):
+def get_sentence_phrases(span, n_min=1, n_max=5):
     phrases = []
     k = span.get_word_start()
     sent = span.get_parent()._asdict()

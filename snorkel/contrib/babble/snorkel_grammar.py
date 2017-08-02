@@ -79,7 +79,9 @@ lexical_rules = (
     [Rule('$ChemicalEntity', w, ('.string', 'Chemical')) for w in ['chemical', 'chemicals']] +
     [Rule('$DiseaseEntity', w, ('.string', 'Disease')) for w in ['disease', 'diseases']] +
     [Rule('$CID', w, '.cid') for w in ['cid', 'cids', 'canonical id', 'canonical ids']] +
-    [Rule('$ArgXAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['them']]
+    [Rule('$ArgXAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['them']] +
+    [Rule('$Arg', w, '.arg') for w in ['person']] +
+    [Rule('$ArgXAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['people', 'persons']]
     # FIXME
 )
 

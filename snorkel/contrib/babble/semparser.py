@@ -59,7 +59,6 @@ class SemanticParser(object):
                                beam_width=beam_width,
                                top_k=top_k)
         self.explanation_counter = 0
-        self.num_parses_by_exp = []
 
     def name_explanations(self, explanations, names):
         if names:
@@ -85,6 +84,7 @@ class SemanticParser(object):
         """
         LFs = []
         parses = []
+        num_parses_by_exp = []
         explanations = explanations if isinstance(explanations, list) else [explanations]
         self.name_explanations(explanations, names)
         for i, exp in enumerate(explanations):
@@ -93,7 +93,7 @@ class SemanticParser(object):
             # print(rule)
             exp_parses = self.grammar.parse_string(rule)
             # print(len(exp_parses))
-            self.num_parses_by_exp.append(len(exp_parses))
+            num_parses_by_exp.append(len(exp_parses))
             for j, parse in enumerate(exp_parses):
                 # print(parse.semantics)
                 lf = self.grammar.evaluate(parse)
@@ -107,14 +107,14 @@ class SemanticParser(object):
             return_object = 'parses' if return_parses else "LFs"
             print("{} {} created from {} out of {} explanation(s)".format(
                 len(LFs), return_object, 
-                len(explanations) - self.num_parses_by_exp.count(0), len(explanations)))
+                len(explanations) - num_parses_by_exp.count(0), len(explanations)))
         if return_parses:
             return parses
         else:
             if verbose:
-                plt.hist(self.num_parses_by_exp, 
-                    bins=range(max(self.num_parses_by_exp) + 2), align='left')
-                plt.xticks(range(max(self.num_parses_by_exp) + 2))
+                plt.hist(num_parses_by_exp, 
+                    bins=range(max(num_parses_by_exp) + 2), align='left')
+                plt.xticks(range(max(num_parses_by_exp) + 2))
                 plt.xlabel("# of LFs")
                 plt.ylabel("# of Explanations")
                 plt.title('# LFs per Explanation')

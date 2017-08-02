@@ -1,4 +1,4 @@
-from .babbler import Babbler
+from .babble import Babbler
 from .grammar import Rule, Grammar, Parse
 from .helpers import *
 from .model import CDRModel

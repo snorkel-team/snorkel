@@ -175,10 +175,6 @@ class TFNoiseAwareModel(Classifier):
         # would be separated but no negative effect
         with self.graph.as_default():
             self._build_training_ops(**kwargs)
-
-        # Process the dev set if provided
-        if X_dev is not None and Y_dev is not None:
-            Y_dev = np.ravel(Y_dev) if self.cardinality == 2 else Y_dev
         
         # Initialize variables
         with self.graph.as_default():
@@ -220,7 +216,7 @@ class TFNoiseAwareModel(Classifier):
                 msg = "[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
                     self.name, t, time() - st, np.mean(epoch_losses))
                 if X_dev is not None:
-                    scores = self.score(X_dev, Y_dev)
+                    scores = self.score(X_dev, Y_dev, batch_size=batch_size)
                     score = scores if self.cardinality > 2 else scores[-1]
                     score_label = "Acc." if self.cardinality > 2 else "F1"
                     msg += '\tDev {0}={1:.2f}'.format(score_label, 100. * score)
@@ -240,6 +236,24 @@ class TFNoiseAwareModel(Classifier):
         # If checkpointing on, load last checkpoint (i.e. best on dev set)
         if dev_ckpt and X_dev is not None and verbose and dev_score_opt > 0:
             self.load(save_dir=save_dir)
+
+    def marginals(self, X, batch_size=None):
+        """
+        Compute the marginals for the given candidates X.
+        Split into batches to avoid OOM errors, then call _marginals_batch;
+        defaults to no batching.
+        """
+        if batch_size is None:
+            return self._marginals_batch(X)
+        else:
+            N = len(X) if self.representation else X.shape[0]
+            n_batches = int(np.floor(N / batch_size))
+
+            # Iterate over batches
+            batch_marginals = []
+            for b in range(0, N, batch_size):
+                batch_marginals.append(self._marginals_batch(X[b:b+batch_size]))
+            return np.concatenate(batch_marginals)
 
     def save(self, model_name=None, save_dir='checkpoints', verbose=True,
         global_step=0):

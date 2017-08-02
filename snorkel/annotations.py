@@ -81,7 +81,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
     def __getitem__(self, key):
         X = super(csr_AnnotationMatrix, self).__getitem__(key)
 
-        # Remap the row and column indexes if applicable
+        # Remap the row and column indexes if applicable.
         if hasattr(X, 'row_index') and hasattr(X, 'col_index'):
             X.annotation_key_cls = self.annotation_key_cls
             

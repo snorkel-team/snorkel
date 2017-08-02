@@ -130,6 +130,44 @@ class MTurkHelper(object):
                 csvwriter.writerow(hit)
         print("Wrote {} HITs with {} candidates per HIT".format(self.num_hits, self.candidates_per_hit))
 
+    def preprocess_visual(self, csvpath):
+        """
+        Converts candidates into a csv file input for MTurk for non candidate tasks
+        """
+        def batch_iter(iterable, batch_size):
+            n = len(iterable)
+            for i in range(0, n, batch_size):
+                yield iterable[i:min(i + batch_size, n)]
+
+        def image_template(id):
+            return '<img class="img-responsive center-block" src="http://paroma.github.io/turk_images/train_' + str(id) + '.png" />'
+
+        with open(csvpath, 'wb') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            # write header row
+            header = []
+            contents = []
+            for i in range(1, self.candidates_per_hit + 1):
+                contents.append('content{}'.format(i))
+            header = contents
+            csvwriter.writerow(header)
+
+            # write data rows
+            batcher = batch_iter(self.candidates, self.candidates_per_hit)
+            i_candidate = 0
+            for i_hit in range(self.num_hits):
+                hit = []
+                contents = []
+                labels = []
+                batch = batcher.next()
+                for candidate in batch:
+                    content = image_template(candidate)
+                    contents.append(content.encode('utf-8'))
+                    i_candidate += 1
+                hit = contents
+                csvwriter.writerow(hit)
+        print("Wrote {} HITs with {} candidates per HIT".format(self.num_hits, self.candidates_per_hit))
+
     def postprocess(self, csvpath, candidates=None, verbose=False):
         """
         Assumptions:

@@ -191,14 +191,14 @@ class MTurkHelper(object):
             assert(all([n == self.workers_per_hit for n in hits.values()]))
 
             # Analyze worker distribution
-            if verbose or 'worker_distribution' in display:
+            if verbose:
                 responses_by_worker = collections.Counter(workers)
                 plt.hist(responses_by_worker.values(), bins='auto')
                 plt.title('# Responses Per Worker')
                 plt.show()
 
             # Analyze time distribution
-            if verbose or 'time_distribution' in display:
+            if verbose:
                 median_time = int(np.median(times))
                 print("Median # seconds/HIT: {:d} ({:.1f} s/explanation)".format(
                     median_time, median_time/self.candidates_per_hit))

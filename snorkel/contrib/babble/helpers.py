@@ -149,7 +149,12 @@ def build_phrase(sent, i, L):
         if f == 'word_offsets':
             contents.append(range(i, i+L))
         elif f == 'text':
-            contents.append(sent['text'][sent['char_offsets'][i]:sent['char_offsets'][i+L]].strip())
+            char_start = sent['char_offsets'][i]
+            if i + L >= len(sent['char_offsets']):
+                contents.append(sent['text'][char_start:].strip())
+            else:
+                char_end = sent['char_offsets'][i+L]
+                contents.append(sent['text'][char_start:char_end].strip())
         else:
             contents.append(sent[f][i:i+L])
     return Phrase(*contents)
@@ -226,14 +231,13 @@ def get_between_phrases(span0, span1, n_min=1, n_max=4):
             phrases.append(build_phrase(sent, i, L))
     return phrases
 
-def get_sentence_phrases(span, n_min=1, n_max=4):
+def get_sentence_phrases(span, n_min=1, n_max=10):
     phrases = []
     k = span.get_word_start()
     sent = span.get_parent()._asdict()
     for L in range(n_min, n_max+1):
-        for i in range(0, len(sent['words'])-L):
+        for i in range(0, len(sent['words']) - L + 1):
             phrases.append(build_phrase(sent, i, L))
-    # import pdb; pdb.set_trace()
     return phrases
 
 def lf_helpers():

@@ -174,11 +174,11 @@ class Babbler(object):
             self.filter_duplicate_signatures()
         return self.label_matrix
 
-    def get_explanations():
+    def get_explanations(self):
         exp_names = set()
         for lf in self.lfs:
             exp_names.add(extract_exp_name(lf))
-        return [exp for exp in self.explanations if exp in exp_names]
+        return [exp for exp in self.explanations if exp.name in exp_names]
 
     def display_lf_distribution(self):
         def count_parses_by_exp(lfs):

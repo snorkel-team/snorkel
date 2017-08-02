@@ -60,8 +60,13 @@ All tests were done with logistic regression. Moving to the LSTM may improve num
 - "is in the first 10 words of the sentence"
 - "is the fifth word of the sentence"
 - "is the last word in the sentence"
+- "is within the last five words of the sentence"
 - "there is a punctuation mark between x and y"
 - recognize 'comma', 'period', 'semicolon', 'dash', etc.
+- 'the last word of arg 1 is'
+- 'the second to last word of arg 1 is'
+- for each candidate that is fed, add two temporary rules mapping candidate 
+    mentions' text to arg 1 and arg 2
 
 7) System changes:
 - Use 'stanza' for python interface to CoreNLP?

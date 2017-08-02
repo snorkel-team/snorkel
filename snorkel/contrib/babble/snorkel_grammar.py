@@ -326,7 +326,7 @@ snorkel_ops = {
     '.list': lambda *x: lambda c: [z(c) for z in x],
     '.user_list': lambda x: lambda c: c['user_lists'][x(c)],
         # apply a function x to elements in list y
-    '.map': lambda x, y: lambda cxy: [x(cxy)(lambda c: yi)(cxy) for yi in y(cxy)],
+    '.map': lambda func_, list_: lambda cxy: [func_(cxy)(lambda c: yi)(cxy) for yi in list_(cxy)],
         # call a 'hungry' evaluated function on one or more arguments
     '.call': lambda *x: lambda c: x[0](c)(x[1])(c), #TODO: extend to more than one argument?
         # apply an element to a list of functions (then call 'any' or 'all' to convert to boolean)
@@ -362,14 +362,14 @@ snorkel_ops = {
     # context
     '.arg': lambda x: lambda c: c['candidate'][x(c) - 1],
         # NOTE: For ease of testing, temporarily allow tuples of strings in place of legitimate candidates
-    '.arg_to_string': lambda x: lambda c: x(c) if isinstance(x(c), basestring) else x(c).get_span(),
+    '.arg_to_string': lambda x: lambda c: x(c).strip() if isinstance(x(c), basestring) else x(c).get_span().strip(),
     '.cid': lambda c: lambda arg: lambda cx: arg(cx).get_attrib_tokens(a='entity_cids')[0], # take the first token's CID
     # sets
     '.left': lambda *x: lambda cx: cx['lf_helpers']['get_left_phrases'](*[xi(cx) for xi in x]),
     '.right': lambda *x: lambda cx: cx['lf_helpers']['get_right_phrases'](*[xi(cx) for xi in x]),
     '.between': lambda x: lambda c: c['lf_helpers']['get_between_phrases'](*[xi for xi in x(c)]),
     '.sentence': lambda c: c['lf_helpers']['get_sentence_phrases'](c['candidate'][0]),
-    '.extract_text': lambda phrlist: lambda c: [getattr(p, 'text') for p in phrlist(c)],
+    '.extract_text': lambda phrlist: lambda c: [getattr(p, 'text').strip() for p in phrlist(c)],
     '.filter_by_attr': lambda phrlist, attr, val: lambda c: [p for p in phrlist(c) if getattr(p, attr(c))[0] == val(c)],
     '.filter_to_tokens': lambda phrlist: lambda c: [p for p in phrlist(c) if len(getattr(p, 'words')) == 1],
     }
@@ -396,10 +396,14 @@ def sem_to_str(sem):
         '.any': lambda x: "any({})".format(recurse(x)),
         '.none': lambda x: "not any({})".format(recurse(x)),
 
+        # '.composite_and': lambda func_, list_: "all(map({}, {}))".format(recurse(func_), recurse(list_)),
+        # '.composite_or':  lambda x, y, z: lambda cz: any([x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)]),
+
+        '.eq': lambda x: "(= {})".format(recurse(x)),
         '.geq': lambda x: "(>= {})".format(recurse(x)),
 
         '.arg': lambda int_: "arg{}".format(int_),
-        '.arg_to_string': lambda arg_: "text({})".format(recurse(arg_)),
+        '.arg_to_string': lambda arg_: "text({}).strip()".format(recurse(arg_)),
         '.cid': lambda arg_: "cid({})".format(recurse(arg_)),
 
         '.in': lambda rhs: "in {}".format(recurse(rhs)),
@@ -410,10 +414,10 @@ def sem_to_str(sem):
         '.between': lambda list_: "between({})".format(recurse(list_)),
         '.right': lambda *args_: "right({})".format(','.join(recurse(x) for x in args_)),
         '.left': lambda *args_: "left({})".format(','.join(recurse(x) for x in args_)),
-        '.sentence': "sentence",
+        '.sentence': "sentence.phrases",
 
         '.filter_to_tokens': lambda list_: "tokens({})".format(list_),
-        '.extract_text': lambda list_: "text({})".format(list_),
+        '.extract_text': lambda list_: "[p.text.strip() for p in {}]".format(list_),
     }
     def recurse(sem):
         if isinstance(sem, tuple):

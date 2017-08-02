@@ -86,6 +86,7 @@ class SemanticParser(object):
         parses = []
         num_parses_by_exp = []
         explanations = explanations if isinstance(explanations, list) else [explanations]
+        names = names if isinstance(names, list) or names is None else [names]
         self.name_explanations(explanations, names)
         for i, exp in enumerate(explanations):
             exp.condition = self.preprocess(exp.condition)

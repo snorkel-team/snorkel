@@ -54,7 +54,7 @@ class CoreNLPHandler(object):
             try:
                 os.kill(self.server_pid, signal.SIGTERM)
             except:
-                sys.stderr.write('Could not kill CoreNLP server. Might already got killt...\n')
+                sys.stderr.write('Could not kill CoreNLP server. May have already been killed...\n')
 
     def parse(self, text):
         """Parse a raw document as a string into a list of sentences"""

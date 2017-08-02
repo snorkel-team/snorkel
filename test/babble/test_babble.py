@@ -8,7 +8,7 @@ from snorkel.parser.spacy_parser import Spacy
 from snorkel.candidates import Ngrams, CandidateExtractor
 from snorkel.matchers import PersonMatcher
 from snorkel.contrib.babble import SemanticParser
-import unittest_examples
+import unittest_explanations
 
 class TestBabble(unittest.TestCase):
 
@@ -40,16 +40,16 @@ class TestBabble(unittest.TestCase):
         # [Pernilla Ammann], bought the 15-bedroom mansion on Balmoral Drive in 
         # the upscale historic neighborhood on July 31."
 
-        cls.sp = SemanticParser(Spouse, unittest_examples.get_user_lists(), 
+        cls.sp = SemanticParser(Spouse, unittest_explanations.get_user_lists(), 
                                 beam_width=10, top_k=-1)
 
     @classmethod
     def tearDownClass(cls):
         pass
 
-    def check_examples(self, examples):
-        self.assertTrue(len(examples))
-        for e in examples:
+    def check_explanations(self, explanations):
+        self.assertTrue(len(explanations))
+        for e in explanations:
             if e.candidate and not isinstance(e.candidate, tuple):
                 e.candidate = self.candidate_hash[e.candidate]
             LF_dict = self.sp.parse_and_evaluate(e, show_nothing=True)
@@ -61,43 +61,43 @@ class TestBabble(unittest.TestCase):
 
 
     def test_logic(self):
-        self.check_examples(unittest_examples.logic)
+        self.check_explanations(unittest_explanations.logic)
 
     def test_grouping(self):
-        self.check_examples(unittest_examples.grouping)
+        self.check_explanations(unittest_explanations.grouping)
 
     def test_integers(self):
-        self.check_examples(unittest_examples.integers)
+        self.check_explanations(unittest_explanations.integers)
 
     def test_strings(self):
-        self.check_examples(unittest_examples.strings)
+        self.check_explanations(unittest_explanations.strings)
 
     def test_lists(self):
-        self.check_examples(unittest_examples.lists)
+        self.check_explanations(unittest_explanations.lists)
 
     def test_candidate_helpers(self):
-        self.check_examples(unittest_examples.candidate_helpers)
+        self.check_explanations(unittest_explanations.candidate_helpers)
 
     def test_index_comparisons(self):
-        self.check_examples(unittest_examples.index_comparisons)
+        self.check_explanations(unittest_explanations.index_comparisons)
 
     def test_pos_ner(self):
-        self.check_examples(unittest_examples.pos_ner)
+        self.check_explanations(unittest_explanations.pos_ner)
 
     def test_count(self):
-        self.check_examples(unittest_examples.count)
+        self.check_explanations(unittest_explanations.count)
 
     def test_absorption(self):
-        self.check_examples(unittest_examples.absorption)
+        self.check_explanations(unittest_explanations.absorption)
 
     def test_anaphora(self):
-        self.check_examples(unittest_examples.anaphora)
+        self.check_explanations(unittest_explanations.anaphora)
 
     def test_inversion(self):
-        self.check_examples(unittest_examples.inversion)
+        self.check_explanations(unittest_explanations.inversion)
 
     def test_tuples(self):
-        self.check_examples(unittest_examples.tuples)
+        self.check_explanations(unittest_explanations.tuples)
 
 
 if __name__ == '__main__':

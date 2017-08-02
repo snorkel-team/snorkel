@@ -37,6 +37,8 @@ class Babbler(object):
         if len(explanations) != len(set([exp.name for exp in explanations])):
             raise Exception("All Explanations must have unique names.")
         self.explanations = explanations
+        self.explanations_by_name = {}
+        self.update_explanation_map(explanations)
         self.do_filter_duplicate_semantics = do_filter_duplicate_semantics, 
         self.do_filter_consistency = do_filter_consistency, 
         self.do_filter_duplicate_signatures = do_filter_duplicate_signatures, 
@@ -53,6 +55,11 @@ class Babbler(object):
             raise Exception("Argument to add_explanations() must be an Explanation "
                 "object or list of Explanations.")
         self.explanations.extend(new_explanations)
+        self.update_explanation_map(new_explanations)
+
+    def update_explanation_map(self, explanations):
+        for exp in explanations:
+            self.explanations_by_name[exp.name] = exp
     
     def add_user_lists(self, new_lists):
         new_lists = new_lists if isinstance(new_lists, list) else [new_lists]
@@ -175,10 +182,17 @@ class Babbler(object):
         return self.label_matrix
 
     def get_explanations(self):
-        exp_names = set()
+        exp_names = []
         for lf in self.lfs:
-            exp_names.add(extract_exp_name(lf))
-        return [exp for exp in self.explanations if exp.name in exp_names]
+            exp_names.append(extract_exp_name(lf))
+        return sorted([self.explanations_by_name[exp_name] for exp_name in exp_names],
+            key=lambda x: x.name)
+
+    def get_parses(self):
+        return sorted(self.parses, key=lambda x: extract_exp_name(x.function))
+
+    def get_lfs(self):
+        return [parse.function for parse in self.get_parses()]
 
     def display_lf_distribution(self):
         def count_parses_by_exp(lfs):

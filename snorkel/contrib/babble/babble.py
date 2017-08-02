@@ -25,9 +25,10 @@ from snorkel.annotations import LabelAnnotator
 class Babbler(object):
     # TODO: convert to UDFRunner 
     def __init__(self, candidate_class, explanations=[], exp_names=[], user_lists={}, 
-                 apply_consistency_filter=True, 
-                 apply_duplicate_filter=True, 
-                 apply_uniform_filter=True,
+                 do_filter_duplicate_semantics=True, 
+                 do_filter_consistency=True, 
+                 do_filter_duplicate_signatures=True, 
+                 do_filter_uniform_signatures=True,
                  verbose=True):
         self.candidate_class = candidate_class
         self.user_lists = user_lists
@@ -36,9 +37,10 @@ class Babbler(object):
         if len(explanations) != len(set([exp.name for exp in explanations])):
             raise Exception("All Explanations must have unique names.")
         self.explanations = explanations
-        self.apply_consistency_filter = apply_consistency_filter
-        self.apply_duplicate_filter = apply_duplicate_filter
-        self.apply_uniform_filter = apply_uniform_filter
+        self.do_filter_duplicate_semantics = do_filter_duplicate_semantics, 
+        self.do_filter_consistency = do_filter_consistency, 
+        self.do_filter_duplicate_signatures = do_filter_duplicate_signatures, 
+        self.do_filter_uniform_signatures = do_filter_uniform_signatures,
         self.verbose = verbose
         self.lfs = []
         self.label_matrix = None
@@ -71,6 +73,22 @@ class Babbler(object):
         #     len(self.lfs), len(self.explanations)))
         return self.lfs
 
+    def filter_duplicate_semantics(self):
+        """Filters out LFs with identical logical forms (keeping one)."""
+        seen = set()
+        duplicates = []
+        non_duplicates = []
+        for parse in self.parses:
+            if hash(parse.semantics) not in seen:
+                non_duplicates.append(parse)
+                seen.add(hash(parse.semantics))
+            else:
+                duplicates.append(parse)
+        self.parses = non_duplicates
+        self.lfs = [parse.function for parse in self.parses]
+        print("Filtered to {} LFs with duplicate semantics filter ({} filtered).".format(
+            len(non_duplicates), len(duplicates)))
+
     def filter_consistency(self):
         """Filters out LFs that incorrectly label their accompanying candidate."""
         if not self.lfs:
@@ -81,20 +99,20 @@ class Babbler(object):
                 raise TypeError("Expected type {}, got {} for candidate {}.".format(
                     self.candidate_class, type(exp.candidate), candidate))
             explanation_dict[exp.name] = exp
-        consistent_lfs = []
-        inconsistent_lfs = []
-        for lf in self.lfs:
-            exp_name = lf.__name__[:lf.__name__.rindex('_')]
+        consistent = []
+        inconsistent = []
+        for parse in self.parses:
+            lf = parse.function
+            exp_name = extract_exp_name(lf)
             exp = explanation_dict[exp_name]
             if lf(exp.candidate) == exp.label:
-                consistent_lfs.append(lf)
+                consistent.append(parse)
             else:
-                inconsistent_lfs.append(lf)
+                inconsistent.append(parse)
         print("Filtered to {} LFs with consistency filter ({} filtered).".format(
-            len(consistent_lfs), len(inconsistent_lfs)))
-        self.lfs = consistent_lfs
-        if self.verbose:
-            self.display_lf_distribution()
+            len(consistent), len(inconsistent)))
+        self.parses = consistent
+        self.lfs = [parse.function for parse in self.parses]
 
     def generate_label_matrix(self, split=0, parallelism=1):
         if not self.lfs:
@@ -109,7 +127,7 @@ class Babbler(object):
         self.label_matrix = self.labeler.load_matrix(session, split=split)
         return self.label_matrix
 
-    def filter_uniform(self):
+    def filter_uniform_signatures(self):
         """Filters out LFs with uniform labeling signatures."""
         if self.label_matrix is None:
             raise Exception("Could not find label_matrix.")
@@ -119,10 +137,12 @@ class Babbler(object):
             if abs(np.sum(self.label_matrix[:,i])) not in [0, self.label_matrix.shape[0]]:
                 non_uniform.append(i)
         self.label_matrix = self.label_matrix[:, non_uniform]
-        print("Filtered to {} LFs with uniform filter ({} filtered).".format(
+        self.parses = [parse for i, parse in enumerate(self.parses) if i in set(non_uniform)]
+        self.lfs = [parse.function for parse in self.parses]
+        print("Filtered to {} LFs with uniform signatures filter ({} filtered).".format(
             len(non_uniform), num_lfs - len(non_uniform)))
 
-    def filter_duplicates(self):
+    def filter_duplicate_signatures(self):
         """Filters out LFs with identical labeling signatures (keeping one)."""
         if self.label_matrix is None:
             raise Exception("Could not find label_matrix.")
@@ -134,28 +154,37 @@ class Babbler(object):
             if h not in duplicate_hashes:
                 non_duplicates.append(i)
                 duplicate_hashes.add(h)
-        print("Filtered to {} LFs with uniform filter ({} filtered).".format(
-            len(non_duplicates), num_lfs - len(non_duplicates)))                
         self.label_matrix = self.label_matrix[:, non_duplicates]
+        self.parses = [parse for i, parse in enumerate(self.parses) if i in set(non_duplicates)]
+        self.lfs = [parse.function for parse in self.parses]
+        print("Filtered to {} LFs with duplicate signatures filter ({} filtered).".format(
+            len(non_duplicates), num_lfs - len(non_duplicates)))                
 
     def apply(self, split=0, parallelism=1):
         """Applies entire Babble Labble pipeline: convert, label, filter."""
         self.generate_lfs()
-        if self.apply_consistency_filter: 
+        if self.do_filter_duplicate_semantics:
+            self.filter_duplicate_semantics()
+        if self.do_filter_consistency: 
             self.filter_consistency()
         self.generate_label_matrix(split=split, parallelism=parallelism)
-        if self.apply_uniform_filter:
-            self.filter_uniform()
-        if self.apply_duplicate_filter:
-            self.filter_duplicates()
+        if self.do_filter_uniform_signatures:
+            self.filter_uniform_signatures()
+        if self.do_filter_duplicate_signatures:
+            self.filter_duplicate_signatures()
         return self.label_matrix
 
-    def display_lf_distribution(self):
+    def get_explanations():
+        exp_names = set()
+        for lf in self.lfs:
+            exp_names.add(extract_exp_name(lf))
+        return [exp for exp in self.explanations if exp in exp_names]
 
+    def display_lf_distribution(self):
         def count_parses_by_exp(lfs):
             num_parses_by_exp = collections.defaultdict(int)
             for lf in lfs:
-                exp_name = lf.__name__[:lf.__name__.rindex('_')]
+                exp_name = extract_exp_name(lf)
                 num_parses_by_exp[exp_name] += 1
             return num_parses_by_exp.values()
 
@@ -172,3 +201,6 @@ class Babbler(object):
         plt.ylabel("# of Explanations")
         plt.title('# LFs per Explanation')
         plt.show()
+
+def extract_exp_name(lf):
+    return lf.__name__[:lf.__name__.rindex('_')]

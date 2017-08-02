@@ -180,8 +180,9 @@ class MTurkHelper(object):
                     candidate_stable_id = u'~~'.join([span1, span2])
                     label = label_converter[label.lower()]
                     if label is None:
-                        continue
-                    exp = Explanation(explanation, label, candidate=candidate_stable_id)
+                        exp = None
+                    else:
+                        exp = Explanation(explanation, label, candidate=candidate_stable_id)
                     explanations_by_candidate[candidate_stable_id].append(exp)
             
             # Sanity check
@@ -212,7 +213,8 @@ class MTurkHelper(object):
                 stable_id = candidate.get_stable_id()
                 if stable_id in explanations_by_candidate:
                     for exp in explanations_by_candidate[stable_id]:
-                        exp.candidate = candidate
+                        if exp is not None:
+                            exp.candidate = candidate
             if candidates:
                 for exp in itertools.chain(explanations_by_candidate.values()[0]):
                     if isinstance(exp.candidate, basestring):
@@ -225,11 +227,11 @@ class MTurkHelper(object):
             num_bad = 0
             valid_explanations = []
             for _, explanations in explanations_by_candidate.items():
-                labels = [exp.label for exp in explanations]
-                consensus = None
-                if len(labels) < self.workers_per_hit:
+                if None in explanations:
+                    consensus = None
                     num_bad += 1
                     continue
+                labels = [exp.label for exp in explanations]
                 for option in [True, False]:
                     if labels.count(option) == self.workers_per_hit:
                         consensus = option
@@ -237,10 +239,8 @@ class MTurkHelper(object):
                     elif labels.count(option) >= np.floor(self.workers_per_hit/2.0 + 1):
                         consensus = option
                         num_majority += 1
-                if consensus is None:  # No consensus was found.
-                    num_split += 1
-                else:  # Conensus was found for 1 or -1
-                    valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
+                assert(consensus is not None)
+                valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
             # assert(all([len(responses) == self.workers_per_hit 
             #     for responses in explanations_by_candidate.values()]))
             assert(num_unanimous + num_majority + num_split + num_bad == self.num_hits * self.candidates_per_hit)

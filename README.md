@@ -1,5 +1,5 @@
-## Containerized Snorkel
-This fork of the snorkel repo has been modified slightly to be build and deployed in a Docker container. No clone of this repository is necessary, that will be performed in a the Docker image build. Just download the app in the *snocker* directory or create a docker file.
+## Containerized snorkel
+This fork of the snorkel repo has been modified slightly to be build and deployed in a Docker container. No clone of this repository is necessary, that will be performed in a the Docker image build. Just download the app in the [*snocker* directory](https://github.com/DrPinkACN/snorkel/tree/master/snocker/app) or create a local dockerfile and copy the contents into that file.
 
 Make sure Docker is installed on your run environment and that the Dockerfile is available on the run envinment in a directory named app. Then build the image.
 
@@ -7,7 +7,37 @@ Make sure Docker is installed on your run environment and that the Dockerfile is
 $> docker build app -t snocker:0.6.2a
 ```
 
-***work in progress...***
+Now you can run the app. Link the home directory to somewhere easy to find.
+
+```
+$> docker run -it --name snocker -p 8887:8887 -v ~/some/local/dir/mapped/to/home:/home snocker:0.6.2a
+## hit esc key sequence: ctrl+p+q
+```
+
+You can now execute a bash command in the running container, move the snorkel directory, and run snorkel.
+
+```
+$> docker exec -it snocker bash
+#> mv /snorkel /home
+#> cd /home/snorkel
+#> ./run.sh
+```
+
+Feel free to install CoreNLP if you plan to use that parser instead of spaCy. After the install runs, Jupyter Notebook will start and you will be prompted with a dialog asking you to copy and paste a url... something like this:
+
+```
+    Copy/paste this URL into your browser when you connect for the first time,
+    to login with a token:
+        http://0.0.0.0:8887/?token=b40203286f7c49e021c0dc0767239129f6865ce83b93a559
+```
+
+**Copy just the token and direct your web browser to port 8887 on the server running Docker**. If running on your local machine, this will look something like this: `http://localhost:8887/`
+
+You will be prompted to paste the token in as a password the first time you visit this Jupyter Notebook instance. After that the running container will remeber you.
+
+That's pretty much it.
+
+I find the [Docker cheatsheet](https://www.docker.com/sites/default/files/Docker_CheatSheet_08.09.2016_0.pdf) to be a pretty useful reference.
 
 <img src="figs/logo_01.png" width="150"/>
 
@@ -24,7 +54,6 @@ The Hazy Research group at Stanford University is the initial source of [this re
 
 ## Getting Started
 
-* Installation instructions [below](#installation--dependencies)
 * Get started with the tutorials [below](#learning-how-to-use-snorkel)
 * Documentation [here](http://snorkel.readthedocs.io/en/master/)
 
@@ -65,38 +94,13 @@ tutorials/intro
 * And many more fixes, additions, and new material!
 
 ## Installation
-Snorkel uses Python 2.7 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
+This is taken care of with the Dockerfile instructions above
 
-### Setting Up Conda
-Installation is easiest if you download and install [`conda`](https://www.continuum.io/downloads).
-If you are running multiple version of Python, you might need to run:
-```
-conda create -n py2Env python=2.7 anaconda
-```
-And then run the correct environment:
-```
-source activate py2Env
-```
-
-### Installing dependencies
-First install [NUMBA](https://numba.pydata.org/), a package for high-performance numeric computing in Python via Conda:
-```bash
-conda install numba
-```
-
-Then install the remaining package requirements:
-```bash
-pip install --requirement python-package-requirement.txt
-```
-
-Finally, enable `ipywidgets`:
-```bash
-jupyter nbextension enable --py widgetsnbextension --sys-prefix
-```
-
-_Note: Currently the `Viewer` is supported on the following versions:_
+_Note: Currently the `Viewer` is supported on the following versions:_ **Sooooo this might not work**
 * `jupyter`: 4.1
 * `jupyter notebook`: 4.2
+
+If you want to view and annotate you can use Brat. In addition, I will be documenting some directions on how to do this with library I built on top of spaCy called [capsule](https://github.com/DrPinkACN/Capsule).
 
 In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
 

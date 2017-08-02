@@ -28,8 +28,9 @@ class PunctuationAnnotator(Annotator):
 
 class IntegerAnnotator(Annotator):
     def annotate(self, tokens):
-        if len(tokens) <= 3:
-            if all(hasattr(token, 'normalizedNER') for token in tokens):
+        if len(tokens) == 1:
+            # if all(hasattr(token, 'normalizedNER') for token in tokens): # Failed attempt
+            if all(token['ner'] in ['NUMBER', 'ORDINAL'] for token in tokens):
                 ner_number = tokens[0]['normalizedNER']
                 number = re.sub('[^\d\.]','', ner_number)
                 value = int(float(number))

@@ -105,7 +105,7 @@ class Babbler(object):
             lf = parse.function
             exp_name = extract_exp_name(lf)
             exp = explanation_dict[exp_name]
-            if lf(exp.candidate) == exp.label:
+            if lf(exp.candidate):
                 consistent.append(parse)
             else:
                 inconsistent.append(parse)

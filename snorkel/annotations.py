@@ -66,12 +66,14 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
                 return index, inv_index
             else:
                 idxs = np.arange(self.shape[axis])[s]
-        # csr_matrix._get_submatrix only handles slice or int, so this is int
         elif isinstance(s, int):
             idxs = np.array([s])
-        else:
-            # s is array of ints
+        else: # s is an array of ints
             idxs = s
+            # If s is the entire slice, skip the remapping step
+            if idxs == range(len(idxs)):
+                return index, inv_index
+
         index_new, inv_index_new = {}, {}
         for i_new, i in enumerate(idxs):
             k = index[i]
@@ -82,15 +84,19 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
     def __getitem__(self, key):
         X = super(csr_AnnotationMatrix, self).__getitem__(key)
 
-        # Remap the row and column indexes if applicable
-        if hasattr(X, 'row_index') and hasattr(X, 'col_index'):
-            X.annotation_key_cls = self.annotation_key_cls
-            
-            row_slice, col_slice = self._unpack_index(key)
-            X.row_index, X.candidate_index = self._get_sliced_indexes(
-                row_slice, 0, self.row_index, self.candidate_index)
-            X.col_index, X.key_index = self._get_sliced_indexes(
-                col_slice, 1, self.col_index, self.key_index)
+        # If X is an integer, just return it
+        if isinstance(X, int):
+            return X
+        # If X is a matrix, make sure it stays a csr_AnnotationMatrix
+        elif not isinstance(X, csr_AnnotationMatrix):
+            X = csr_AnnotationMatrix(X)
+        # X must be a matrix, so update appropriate csr_AnnotationMatrix fields
+        X.annotation_key_cls = self.annotation_key_cls
+        row_slice, col_slice = self._unpack_index(key)
+        X.row_index, X.candidate_index = self._get_sliced_indexes(
+            row_slice, 0, self.row_index, self.candidate_index)
+        X.col_index, X.key_index = self._get_sliced_indexes(
+            col_slice, 1, self.col_index, self.key_index)
         return X
 
     def stats(self):

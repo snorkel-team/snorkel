@@ -1,4 +1,5 @@
 import math
+import itertools
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -434,6 +435,7 @@ class ModelTester(Process):
                 # NOTE: Currently, we have to save every model because we are
                 # testing asynchronously. This is obviously memory inefficient,
                 # although probably not that much of a problem in practice...
+                print "ModelTester", self.save_dir
                 self.model.save(model_name=model_name, save_dir=self.save_dir)
 
                 # Test the model
@@ -510,9 +512,9 @@ class GridSearch(object):
 
             # Train the model
             if self.Y_train is not None:
-                self.model.train(self.X_train,self.Y_train,**model_hyperparams)
+                self.model.train(self.X_train,self.Y_train, save_dir=save_dir, **model_hyperparams)
             else:
-                self.model.train(self.X_train, **model_hyperparams)
+                self.model.train(self.X_train, save_dir=save_dir, **model_hyperparams)
 
             # Test the model
             run_scores = self.model.score(X_valid, Y_valid, b=b,
@@ -623,18 +625,21 @@ class GridSearch(object):
 
 
 class RandomSearch(GridSearch):
-    def __init__(self, model_class, parameters, X_train, Y_train=None, n=10,
+    def __init__(self, model_class, parameters, X_train, Y_train=None, n=10, seed=1701,
         **model_class_params):
         """Search a random sample of size n from a parameter grid"""
         self.n = n
+        self.seed = seed
         super(RandomSearch, self).__init__(model_class, parameters, X_train,
             Y_train=Y_train, **model_class_params)
         print("Initialized RandomSearch search of size {0}. Search space size = {1}.".format(
             self.n, np.product([len(param.get_all_values()) for param in self.params])))
 
     def search_space(self):
-        return zip(*[param.draw_values(self.n) for param in self.params])
-
+        np.random.seed(self.seed)
+        param_grid = [s for s in itertools.product(*[param.get_all_values() for param in self.params])]
+        np.random.shuffle(param_grid)
+        return param_grid[:self.n+1]
 
 
 ############################################################

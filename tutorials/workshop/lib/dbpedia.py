@@ -10,7 +10,7 @@ def strip_special(s):
     return ''.join(c for c in s if ord(c) < 128)
 
 # Read in known spouse pairs and save as set of tuples
-with bz2.BZ2File('data/spouses_dbpedia_workshop.csv.bz2', 'rb') as f:
+with bz2.BZ2File('data/spouses_dbpedia.csv.bz2', 'rb') as f:
     known_spouses = set(
         tuple(strip_special(x).strip().split(',')) for x in f.readlines()
     )

@@ -1,12 +1,12 @@
 from snorkel.contrib.babble import Explanation
 
-boxes = {
-    # Name
+boxes = [
+    # Bottom Edge
     Explanation(
-        condition="True",
-        label=True,
-        candidate=('foo', 'bar'),
+        condition="bottom edge of Box 3 is below bottom edge of Box 5",
+        label=False,
+        candidate=11,
         semantics=None),
-}
+]
 
 explanations = (boxes)

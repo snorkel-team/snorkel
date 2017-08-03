@@ -68,12 +68,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
                 idxs = np.arange(self.shape[axis])[s]
         elif isinstance(s, int):
             idxs = np.array([s])
-<<<<<<< HEAD
-        else:
-            # s is an array of ints
-=======
         else: # s is an array of ints
->>>>>>> 9b25520e... Make csr_AnnotationMatrix.__getitem__ return an int or a csr_AnnotationMatrix.
             idxs = s
             # If s is the entire slice, skip the remapping step
             if idxs == range(len(idxs)):
@@ -89,17 +84,6 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
     def __getitem__(self, key):
         X = super(csr_AnnotationMatrix, self).__getitem__(key)
 
-<<<<<<< HEAD
-        # Remap the row and column indexes if applicable.
-        if hasattr(X, 'row_index') and hasattr(X, 'col_index'):
-            X.annotation_key_cls = self.annotation_key_cls
-            
-            row_slice, col_slice = self._unpack_index(key)
-            X.row_index, X.candidate_index = self._get_sliced_indexes(
-                row_slice, 0, self.row_index, self.candidate_index)
-            X.col_index, X.key_index = self._get_sliced_indexes(
-                col_slice, 1, self.col_index, self.key_index)
-=======
         # If X is an integer, just return it
         if isinstance(X, int):
             return X
@@ -113,7 +97,6 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
             row_slice, 0, self.row_index, self.candidate_index)
         X.col_index, X.key_index = self._get_sliced_indexes(
             col_slice, 1, self.col_index, self.key_index)
->>>>>>> 9b25520e... Make csr_AnnotationMatrix.__getitem__ return an int or a csr_AnnotationMatrix.
         return X
 
     def stats(self):

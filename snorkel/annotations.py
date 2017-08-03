@@ -71,7 +71,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         else: # s is an array of ints
             idxs = s
             # If s is the entire slice, skip the remapping step
-            if idxs == range(len(idxs)):
+            if np.array_equal(idxs, range(len(idxs))):
                 return index, inv_index
 
         index_new, inv_index_new = {}, {}

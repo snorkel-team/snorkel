@@ -153,7 +153,7 @@ class RNNBase(TFNoiseAwareModel):
         super(RNNBase, self).train(X_train, Y_train, X_dev=X_dev,
             word_dict=self.word_dict, max_len=max_len, **kwargs)
 
-    def marginals(self, test_candidates):
+    def _marginals_batch(self, test_candidates):
         """Get likelihood of tagged sequences represented by test_candidates
             @test_candidates: list of lists representing test sentence
         """

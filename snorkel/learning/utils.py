@@ -401,8 +401,9 @@ QUEUE_TIMEOUT = 3
 
 class ModelTester(Process):
     def __init__(self, model_class, model_class_params, params_queue, 
-        scores_queue, X_train, X_valid, Y_valid, Y_train=None, b=0.5, 
-        set_unlabeled_as_neg=True, save_dir='checkpoints'):
+        scores_queue, X_train, X_valid, Y_valid, Y_train=None, b=0.5, beta=1,
+        set_unlabeled_as_neg=True, save_dir='checkpoints', 
+        eval_batch_size=None):
         Process.__init__(self)
         self.model = model_class(**model_class_params)
         self.params_queue = params_queue
@@ -413,7 +414,9 @@ class ModelTester(Process):
         self.Y_valid = Y_valid
         self.scorer_params = {
             'b': b,
-            'set_unlabeled_as_neg': set_unlabeled_as_neg
+            'beta': beta,
+            'set_unlabeled_as_neg': set_unlabeled_as_neg,
+            'batch_size': eval_batch_size
         }
         self.save_dir = save_dir
 
@@ -467,23 +470,25 @@ class GridSearch(object):
     def search_space(self):
         return product(*[param.get_all_values() for param in self.params])
 
-    def fit(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True, 
+    def fit(self, X_valid, Y_valid, b=0.5, beta=1, set_unlabeled_as_neg=True, 
         validation_kwargs={}, n_threads=1, save_dir='checkpoints',
-        **model_hyperparams):
+        eval_batch_size=None, **model_hyperparams):
         if n_threads > 1:
             opt_model, run_stats = self._fit_mt(X_valid, Y_valid, b=b,
-                set_unlabeled_as_neg=set_unlabeled_as_neg,
+                beta=beta, set_unlabeled_as_neg=set_unlabeled_as_neg,
                 validation_kwargs=validation_kwargs, n_threads=n_threads,
-                save_dir=save_dir, **model_hyperparams)
-        else:
-            opt_model, run_stats = self._fit_st(X_valid, Y_valid, b=b,
-                set_unlabeled_as_neg=set_unlabeled_as_neg,
-                validation_kwargs=validation_kwargs, save_dir=save_dir, 
+                save_dir=save_dir, eval_batch_size=eval_batch_size,
                 **model_hyperparams)
+        else:
+            opt_model, run_stats = self._fit_st(X_valid, Y_valid, b=b, 
+                beta=beta, set_unlabeled_as_neg=set_unlabeled_as_neg,
+                validation_kwargs=validation_kwargs, save_dir=save_dir, 
+                eval_batch_size=eval_batch_size, **model_hyperparams)
         return opt_model, run_stats
 
-    def _fit_st(self, X_valid, Y_valid, b=0.5, save_dir='checkpoints',
-        set_unlabeled_as_neg=True, validation_kwargs={}, **model_hyperparams):
+    def _fit_st(self, X_valid, Y_valid, b=0.5, beta=1, save_dir='checkpoints',
+        set_unlabeled_as_neg=True, validation_kwargs={}, eval_batch_size=None,
+        **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
@@ -515,13 +520,15 @@ class GridSearch(object):
                 self.model.train(self.X_train, **model_hyperparams)
 
             # Test the model
-            run_scores = self.model.score(X_valid, Y_valid, b=b,
-                set_unlabeled_as_neg=set_unlabeled_as_neg)
+            run_scores = self.model.score(X_valid, Y_valid, b=b, beta=beta,
+                set_unlabeled_as_neg=set_unlabeled_as_neg,
+                batch_size=eval_batch_size)
             if self.model.cardinality > 2:
                 run_score, run_score_label = run_scores, "Accuracy"
                 run_scores = [run_score]
             else:
-                run_score, run_score_label = run_scores[-1], "F1 Score"
+                run_score  = run_scores[-1]
+                run_score_label = "F-{0} Score".format(beta)
 
             # Add scores to running stats, print, and set as optimal if best
             print("[{0}] {1}: {2}".format(self.model.name, run_score_label,
@@ -536,17 +543,18 @@ class GridSearch(object):
         self.model.load(opt_model, save_dir=save_dir)
         
         # Return optimal model & DataFrame of scores
+        f_score = 'F-{0}'.format(beta)
         run_score_labels = ['Acc.'] if self.model.cardinality > 2 else \
-            ['Prec.', 'Rec.', 'F1']
-        sort_by = 'Acc.' if self.model.cardinality > 2 else 'F1'
+            ['Prec.', 'Rec.', f_score]
+        sort_by = 'Acc.' if self.model.cardinality > 2 else f_score
         self.results = DataFrame.from_records(
             run_stats, columns=self.param_names + run_score_labels
         ).sort_values(by=sort_by, ascending=False)
         return self.model, self.results
 
-    def _fit_mt(self, X_valid, Y_valid, b=0.5, set_unlabeled_as_neg=True, 
-        validation_kwargs={}, n_threads=2, save_dir='checkpoints',
-        **model_hyperparams):
+    def _fit_mt(self, X_valid, Y_valid, b=0.5, beta=1, 
+        set_unlabeled_as_neg=True, validation_kwargs={}, n_threads=2, 
+        save_dir='checkpoints', eval_batch_size=None, **model_hyperparams):
         """
         Basic method to start grid search, returns DataFrame table of results
           b specifies the positive class threshold for calculating f1
@@ -581,7 +589,8 @@ class GridSearch(object):
             p = ModelTester(self.model_class, self.model_class_params,
                     params_queue, scores_queue, self.X_train, X_valid, Y_valid,
                     Y_train=self.Y_train, b=b, save_dir=save_dir,
-                    set_unlabeled_as_neg=set_unlabeled_as_neg)
+                    set_unlabeled_as_neg=set_unlabeled_as_neg,
+                    eval_batch_size=eval_batch_size)
             p.start()
             ps.append(p)
 
@@ -613,9 +622,10 @@ class GridSearch(object):
 
         # Return model and DataFrame of scores
         # Test for categorical vs. binary in hack-ey way for now...
+        f_score = 'F-{0}'.format(beta)
         categorical = (len(scores) == 2)
-        labels = ['Acc.'] if categorical else ['Prec.', 'Rec.', 'F1']
-        sort_by = 'Acc.' if categorical else 'F1'
+        labels = ['Acc.'] if categorical else ['Prec.', 'Rec.', f_score]
+        sort_by = 'Acc.' if categorical else f_score
         self.results = DataFrame.from_records(
             run_stats, columns=["Model"] + self.param_names + labels
         ).sort_values(by=sort_by, ascending=False)

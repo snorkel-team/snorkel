@@ -175,11 +175,8 @@ class GenerativeModel(Classifier):
             LF_acc_prior_weights.append(label_prior_weight)
             n += 1
 
-        # Make sure is CSR sparse matrix
-        # NB: Can clean up all this copying / etc but is necessary at least once
-        L = L.copy()
-        if not isinstance(L, sparse.csr_matrix):
-            L = sparse.csr_matrix(L)
+        # Reduce overhead of tracking indices by converting L to a CSR sparse matrix.
+        L = sparse.csr_matrix(L).copy()
 
         # If candidate_ranges is provided, remap the values of L using
         # candidate_ranges. This "scoped categorical" approach allows learning

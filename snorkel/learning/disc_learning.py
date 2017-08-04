@@ -7,7 +7,7 @@ import scipy.sparse as sparse
 
 from .classifier import Classifier
 from .utils import reshape_marginals, LabelBalancer
-from ...models import csr_AnnotationMatrix
+from ..annotations import csr_AnnotationMatrix
 
 class TFNoiseAwareModel(Classifier):
     """

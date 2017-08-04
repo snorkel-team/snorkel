@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from snorkel.contrib.babble import Explanation
+from temp_box_class import BBox
 
 def shuffle_lists(a, b):
     combined = zip(a, b)
@@ -29,7 +30,7 @@ def shuffle_lists(a, b):
 
 class MTurkHelper(object):
     def __init__(self, candidates, labels=[], num_hits=25, candidates_per_hit=4, 
-        workers_per_hit=3, shuffle=True, pct_positive=None, seed=1234):
+        workers_per_hit=3, shuffle=True, pct_positive=None, seed=1234, domain=None):
         random.seed(seed)
         if pct_positive:
             assert(0 < pct_positive and pct_positive < 1)
@@ -49,6 +50,10 @@ class MTurkHelper(object):
         self.num_hits = num_hits
         self.candidates_per_hit = candidates_per_hit
         self.workers_per_hit = workers_per_hit
+        
+        if domain == 'vg':
+            anns = np.load('/dfs/scratch0/paroma/coco/annotations/train_anns.npy')
+            self.anns = list(anns)
 
     def balance_labels(self, candidates, labels, num_candidates, pct_positive):
         target_positive = int(num_candidates * pct_positive)
@@ -168,6 +173,141 @@ class MTurkHelper(object):
                 csvwriter.writerow(hit)
         print("Wrote {} HITs with {} candidates per HIT".format(self.num_hits, self.candidates_per_hit))
 
+        
+        
+    def postprocess_visual(self, csvpath, candidates=None, verbose=False):
+        """
+        Assumptions:
+        HITs are sorted by HITId
+        Don't need to pass original candidate list, parsed from $content
+        """
+        
+        def create_candidate(img_idx, p_idx, b_idx):
+            """
+            Create a BBox tuple with bbox p_idx and b_idx from image img_idx
+            """
+            anns_img = self.anns[img_idx]
+            p_bbox = BBox(anns_img[p_idx],img_idx)
+            b_bbox = BBox(anns_img[b_idx],img_idx)
+            
+            return (p_bbox, b_bbox)
+      
+            
+        with open(csvpath, 'rb') as csvfile:
+            csvreader = csv.reader(csvfile)
+            
+            # prep data structures
+            explanations_by_candidate = collections.defaultdict(list)
+            label_converter = {
+                'true': True,
+                'false': False,
+                'not_person': None,
+            }
+            hits = collections.Counter()
+            times = []
+            workers = []
+
+            # read data
+            header = csvreader.next()
+            for row in csvreader:
+                img_indices = []             
+                p_indices = []
+                b_indices = []
+                explanations = []
+                labels = []
+                for i, field in enumerate(row):
+                    if header[i] == 'HITId':
+                        hits.update([field])
+                    elif header[i] == 'WorkTimeInSeconds':
+                        times.append(int(field))
+                    elif header[i] == 'WorkerId':
+                        workers.append(field)
+                    elif header[i].startswith('Input.content'):
+                        #The HTML Parsing!
+                        parsed_url = field.split('_')
+                        img_indices.append(int(parsed_url[2]))
+                        p_indices.append(int(parsed_url[3]))
+                        b_indices.append(int(parsed_url[4].split('.')[0]))
+                        
+                    elif header[i].startswith('Answer.explanation'):
+                        explanations.append(field)
+                    elif header[i].startswith('Answer.label'):
+                        labels.append(field)
+
+                for (img_idx, p_idx, b_idx, explanation, label) in zip(img_indices, p_indices, b_indices, explanations, labels):
+                    candidate_tuple = create_candidate(img_idx, p_idx, b_idx)
+                    label = label_converter[label.lower()]
+                    if label is None:
+                        exp = None
+                    else:
+                        exp = Explanation(explanation, label, candidate=candidate_tuple)
+                    explanations_by_candidate[candidate_tuple].append(exp)
+                
+            # Sanity check
+            print("Num HITs unique: {}".format(len(hits)))
+            print("Num HITs total: {}".format(sum(hits.values())))
+            #assert(all([n == self.workers_per_hit for n in hits.values()]))
+
+            # Analyze worker distribution
+            if verbose:
+                responses_by_worker = collections.Counter(workers)
+                plt.hist(responses_by_worker.values(), bins='auto')
+                plt.title('# Responses Per Worker')
+                plt.show()
+
+            # Analyze time distribution
+            if verbose:
+                median_time = int(np.median(times))
+                print("Median # seconds/HIT: {:d} ({:.1f} s/explanation)".format(
+                    median_time, median_time/self.candidates_per_hit))
+                plt.hist(times, bins='auto')
+                plt.title('Seconds per HIT')
+                plt.show()
+
+
+            # Filter and merge data
+            num_unanimous = 0
+            num_majority = 0
+            num_split = 0
+            num_bad = 0
+            valid_explanations = []
+            for _, explanations in explanations_by_candidate.items():
+                if None in explanations:
+                    consensus = None
+                    num_bad += 1
+                    continue
+                    
+                labels = [exp.label for exp in explanations]
+                for option in [True, False]:
+                    if labels.count(option) == self.workers_per_hit:
+                        consensus = option
+                        num_unanimous += 1
+                    elif labels.count(option) >= np.floor(self.workers_per_hit/2.0 + 1):
+                        consensus = option
+                        num_majority += 1
+                #assert(consensus is not None)
+                #valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
+            # assert(all([len(responses) == self.workers_per_hit 
+            #     for responses in explanations_by_candidate.values()]))
+            #assert(num_unanimous + num_majority + num_split + num_bad == self.num_hits * self.candidates_per_hit)
+            print("Unanimous: {}".format(num_unanimous))
+            print("Majority: {}".format(num_majority))
+            print("Split: {}".format(num_split))
+            print("Bad: {}".format(num_bad))
+
+            # Link candidates
+            return valid_explanations
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     def postprocess(self, csvpath, candidates=None, verbose=False):
         """
         Assumptions:

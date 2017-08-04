@@ -38,8 +38,8 @@ lexical_rules = (
     [Rule('$Contains', w, '.contains') for w in ['contains', 'contain', 'containing', 'include', 'includes', 'says', 'states']] +
     [Rule('$StartsWith', w, '.startswith') for w in ['starts with', 'start with', 'starting with']] +
     [Rule('$EndsWith', w, '.endswith') for w in ['ends with', 'end with', 'ending with']] +
-    [Rule('$Left', w, '.left') for w in ['left', 'before', 'precedes', 'preceding', 'followed by']] +
-    [Rule('$Right', w, '.right') for w in ['right', 'after', 'preceded by', 'follows', 'following']] +
+    # [Rule('$Left', w, '.left') for w in ['left', 'before', 'precedes', 'preceding', 'followed by']] +
+    # [Rule('$Right', w, '.right') for w in ['right', 'after', 'preceded by', 'follows', 'following']] +
     [Rule('$Sentence', w, '.sentence') for w in ['sentence', 'text', 'it']] +
     [Rule('$Between', w, '.between') for w in ['between', 'inbetween', 'sandwiched', 'enclosed']] +
     [Rule('$Separator', w) for w in [',', ';', '/']] +
@@ -73,6 +73,8 @@ unary_rules = [
     Rule('$Bool', '$BoolLit', sems0),
     Rule('$BoolLit', '$True', sems0),
     Rule('$BoolLit', '$False', sems0),
+    Rule('$Num', '$Int', sems0),
+    Rule('$Num', '$Float', sems0),
     Rule('$Conj', '$And', sems0),
     Rule('$Conj', '$Or', sems0),
     Rule('$Exists', '$Is'),
@@ -104,7 +106,7 @@ unary_rules = [
     Rule('$BinaryStringToBool', '$In', sems0),
     Rule('$BinaryStringToBool', '$Contains', sems0),
     Rule('$BinaryStringToBool', '$Equals', sems0),
-    Rule('$IntToBool', '$AtLeastOne', sems0),
+    Rule('$NumToBool', '$AtLeastOne', sems0),
     # ArgX may be treated as an object or a string (referring to its textual contents)
     Rule('$String', '$ArgX', lambda sems: ('.arg_to_string', sems[0])),
     Rule('$ArgToString', '$CID', lambda sems: (sems[0],)),
@@ -183,10 +185,10 @@ compositional_rules = [
     Rule('$StringToBool', '$BinaryStringToBool $UserList', lambda sems: ('.composite_or',  (sems[0],), sems[1])),
     
     ### Integers ###
-        # applying $IntoToBool functions
-    Rule('$Bool', '$Int $IntToBool', lambda sems: ('.call', sems[1], sems[0])),
-    Rule('$BoolList', '$IntList $IntToBool', lambda sems: ('.map', sems[1], sems[0])),
-    Rule('$IntToBool', '$Compare $Int', sems_in_order),
+        # applying $NumToBool functions
+    Rule('$Bool', '$Num $NumToBool', lambda sems: ('.call', sems[1], sems[0])),
+    Rule('$BoolList', '$NumList $NumToBool', lambda sems: ('.map', sems[1], sems[0])),
+    Rule('$NumToBool', '$Compare $Num', sems_in_order),
 
         # flipping inequalities
     Rule('$AtMost', '$Not $MoreThan', '.leq'),
@@ -194,11 +196,11 @@ compositional_rules = [
     Rule('$LessThan', '$Not $AtLeast', '.lt'),
     Rule('$MoreThan', '$Not $AtMost', '.gt'),
     Rule('$NotEquals', '$Not $Equals', '.neq'),
-    Rule('$NotEquals', '$Equals $Not', '.neq'), # necessary because 'not' requires a bool, not an IntToBool
-    Rule('$Without', '$Not $Within', '.without'), # necessary because 'not' requires a bool, not an IntToBool
+    Rule('$NotEquals', '$Equals $Not', '.neq'), # necessary because 'not' requires a bool, not an NumToBool
+    Rule('$Without', '$Not $Within', '.without'), # necessary because 'not' requires a bool, not an NumToBool
     
         # "more than five of X words are upper"
-    Rule('$Bool', '$IntToBool $BoolList', lambda (func_,boollist_): ('.call', func_, ('.sum', boollist_))),
+    Rule('$Bool', '$NumToBool $BoolList', lambda (func_,boollist_): ('.call', func_, ('.sum', boollist_))),
 
     ### Context ###
     Rule('$ArgX', '$Arg $Int', sems_in_order),
@@ -246,20 +248,20 @@ compositional_rules = [
             # "the number of (words left of arg 1) is 5"
     Rule('$Int', '$Count $TokenList', sems_in_order),
             # "at least one word is to the left..."
-    Rule('$Bool', '$IntToBool $Word $Exists $TokenList', lambda (func_, word_, exist_, list_): 
+    Rule('$Bool', '$NumToBool $Word $Exists $TokenList', lambda (func_, word_, exist_, list_): 
         ('.call', func_, ('.count', list_))),
             # "at least one noun is to the left..."
-    Rule('$Bool', '$IntToBool $POS $Exists $TokenList', lambda sems: 
+    Rule('$Bool', '$NumToBool $POS $Exists $TokenList', lambda sems: 
         ('.call', sems[0], ('.count', ('.filter_by_attr', sems[3], ('.string', 'pos_tags'), sems[1])))),
             # "at least one person is to the left..."
-    Rule('$Bool', '$IntToBool $NER $Exists $TokenList', lambda sems: 
+    Rule('$Bool', '$NumToBool $NER $Exists $TokenList', lambda sems: 
         ('.call', sems[0], ('.count', ('.filter_by_attr', sems[3], ('.string', 'ner_tags'), sems[1])))), 
             # "there are not three people to the left..."
     Rule('$Bool', '$Exists $Not $Int $TokenList', lambda sems: ('.call', ('.neq', sems[2]), ('.count', sems[3]))), 
             # "there are three nouns to the left..."
     Rule('$Bool', '$Exists $Int $TokenList', lambda sems: ('.call', ('.eq', sems[1]), ('.count', sems[2]))), 
             # "there are at least two nouns to the left..."
-    Rule('$Bool', '$Exists $IntToBool $TokenList', lambda sems: ('.call', sems[1], ('.count', sems[2]))),
+    Rule('$Bool', '$Exists $NumToBool $TokenList', lambda sems: ('.call', sems[1], ('.count', sems[2]))),
     
     # NER/POS
     Rule('$PhraseList', '$POS $PhraseList', lambda sems: ('.filter_by_attr', sems[1], ('.string', 'pos_tags'), sems[0])),

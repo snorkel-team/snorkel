@@ -3,10 +3,11 @@ import numpy as np
 from time import time
 import os
 from six.moves.cPickle import dump, load
+import scipy.sparse as sparse
 
 from .classifier import Classifier
 from .utils import reshape_marginals, LabelBalancer
-
+from ...models import csr_AnnotationMatrix
 
 class TFNoiseAwareModel(Classifier):
     """
@@ -165,6 +166,8 @@ class TFNoiseAwareModel(Classifier):
             train_idxs = np.where(diffs > 1e-6)[0]
         X_train = [X_train[j] for j in train_idxs] if self.representation \
             else X_train[train_idxs, :]
+        if isinstance(X_train, csr_AnnotationMatrix):
+            X_train = sparse.csr_matrix(X_train[train_idxs, :])
         Y_train = Y_train[train_idxs]
 
         # Create new graph, build network, and start session

@@ -3,6 +3,7 @@ import numpy as np
 from time import time
 import os
 from six.moves.cPickle import dump, load
+import scipy.sparse as sparse
 
 from .classifier import Classifier
 from .utils import reshape_marginals, LabelBalancer

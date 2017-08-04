@@ -61,7 +61,7 @@ def is_right(point1, point2):
 def is_left(point1, point2):
     return not is_left(point1,point2)
 
-def is_near(point1, point2,thresh=20.0):
+def is_near(point1, point2,thresh=30.0):
     coord1 = (point1.x,point1.y)
     coord2 = (point2.x,point2.y)
     
@@ -79,8 +79,8 @@ def is_far(point1, point2):
 
 
 #BBox Comparison Helper Functions
-def is_aligned(bbox1,bbox2):
-    pass
+def is_aligned(bbox1,bbox2,thresh=10.):
+    thresh = 10
 
 def is_within(bbox1,bbox2):
     pass

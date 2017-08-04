@@ -7,8 +7,9 @@ import socket
 import string
 import warnings
 
-from subprocess import Popen,PIPE
 from collections import defaultdict
+from six import text_type
+from subprocess import Popen,PIPE
 
 from .parser import Parser, URLParserConnection
 from ..models import Candidate, Context, Document, Sentence, construct_stable_id
@@ -205,7 +206,7 @@ class StanfordCoreNLPServer(Parser):
             return
 
         # handle encoding (force to unicode)
-        if isinstance(text, unicode):
+        if isinstance(text, text_type):
             text = text.encode('utf-8', 'error')
 
         # POST request to CoreNLP Server

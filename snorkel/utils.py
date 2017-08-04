@@ -137,6 +137,7 @@ def corenlp_cleaner(words):
 
 
 def tokens_to_ngrams(tokens, n_max=3, delim=' '):
+    tokens = list(tokens)
     N = len(tokens)
     for root in range(N):
         for n in range(min(n_max, N - root)):

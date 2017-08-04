@@ -52,7 +52,11 @@ class TestBabbleImages(unittest.TestCase):
                 image = Image_Candidate(idx=e.candidate,coco_ids=self.train_mscoco,coco_anns=self.train_anns)
                 e.candidate = (image.bboxes[2], image.bboxes[4])
             LF_dict = self.sp.parse_and_evaluate(e, show_erroring=True) # show_nothing=True
-            # import pdb; pdb.set_trace()
+            if not len(LF_dict['correct']) + len(LF_dict['passing']) > 0:
+                print(LF_dict)
+                self.sp.grammar.print_chart()
+                parses = self.sp.parse(e, return_parses=True)
+                import pdb; pdb.set_trace()
             # parses = self.sp.parse(e, return_parses=True)
             if e.semantics:
                 self.assertTrue(len(LF_dict['correct']) > 0)
@@ -65,6 +69,9 @@ class TestBabbleImages(unittest.TestCase):
 
     def test_corners(self):
         self.check_explanations(image_explanations.points)
+ 
+    def test_comparisons(self):
+        self.check_explanations(image_explanations.comparisons)
 
 if __name__ == '__main__':
     unittest.main()

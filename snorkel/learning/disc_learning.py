@@ -7,7 +7,6 @@ from six.moves.cPickle import dump, load
 from .classifier import Classifier
 from .utils import reshape_marginals, LabelBalancer
 
-
 class TFNoiseAwareModel(Classifier):
     """
     Generic NoiseAwareModel class for TensorFlow models.

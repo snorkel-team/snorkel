@@ -15,6 +15,8 @@ lexical_rules = (
 )
 
 unary_rules = [
+    Rule('$Direction', '$Left', sems0),
+    Rule('$Direction', '$Right', sems0),
     Rule('$POS', '$NounPOS', sems0),
     Rule('$POS', '$NumberPOS', sems0),
     Rule('$NER', '$DateNER', sems0),

@@ -39,9 +39,7 @@ def extract_center(bbox):
     coordy = (getattr(bbox,'top') + getattr(bbox,'bottom')/2.0)
     return Point(coordx,coordy)
 
-
-
-
+  
 #Point Comparison Helper Functions
 def is_below(point1, point2):
     if None in (point1.y,point2.y):
@@ -84,9 +82,8 @@ def is_aligned(bbox1,bbox2,thresh=10.):
 
 def is_within(bbox1,bbox2):
     pass
-              
-        
-        
+
+  
 helpers = {
     'extract_edge': extract_edge,
     'extract_corner': extract_corner,

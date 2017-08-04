@@ -60,9 +60,11 @@ class TestBabbleImages(unittest.TestCase):
                 self.assertTrue(len(LF_dict['passing']) > 0)
             self.assertTrue(len(LF_dict['correct']) + len(LF_dict['passing']) <= 3)
 
-    def test_boxes(self):
-        self.check_explanations(image_explanations.boxes)
+    def test_edges(self):
+        self.check_explanations(image_explanations.edges)
 
+    def test_corners(self):
+        self.check_explanations(image_explanations.points)
 
 if __name__ == '__main__':
     unittest.main()

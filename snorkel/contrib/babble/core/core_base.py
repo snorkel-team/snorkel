@@ -76,8 +76,6 @@ unary_rules = [
     Rule('$Compare', '$AtLeast', sems0),
     Rule('$WithIO', '$Within', sems0),
     Rule('$WithIO', '$Without', sems0),
-    Rule('$Direction', '$Left', sems0),
-    Rule('$Direction', '$Right', sems0),
     Rule('$Unit', '$Word', sems0),
     Rule('$Unit', '$Char', sems0),
     Rule('$StringList', '$UserList', sems0),

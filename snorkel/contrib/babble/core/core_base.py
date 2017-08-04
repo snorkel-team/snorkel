@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 from ..grammar import GrammarMixin, Rule, sems0, sems1, sems_in_order, sems_reversed, flip_dir
-from core_helpers import helpers
 from core_annotators import annotators
 
 # Rules ======================================================================
@@ -38,20 +37,10 @@ lexical_rules = (
     [Rule('$Contains', w, '.contains') for w in ['contains', 'contain', 'containing', 'include', 'includes', 'says', 'states']] +
     [Rule('$StartsWith', w, '.startswith') for w in ['starts with', 'start with', 'starting with']] +
     [Rule('$EndsWith', w, '.endswith') for w in ['ends with', 'end with', 'ending with']] +
-    # [Rule('$Left', w, '.left') for w in ['left', 'before', 'precedes', 'preceding', 'followed by']] +
-    # [Rule('$Right', w, '.right') for w in ['right', 'after', 'preceded by', 'follows', 'following']] +
-    [Rule('$Sentence', w, '.sentence') for w in ['sentence', 'text', 'it']] +
-    [Rule('$Between', w, '.between') for w in ['between', 'inbetween', 'sandwiched', 'enclosed']] +
     [Rule('$Separator', w) for w in [',', ';', '/']] +
     [Rule('$Count', w, '.count') for w in ['number', 'length', 'count']] +
     [Rule('$Word', w, 'words') for w in ['word', 'words', 'term', 'terms', 'phrase', 'phrases']] + 
     [Rule('$Char', w, 'chars') for w in ['character', 'characters', 'letter', 'letters']] + 
-    [Rule('$NounPOS', w, ('.string', 'NN')) for w in ['noun', 'nouns']] +
-    [Rule('$DateNER', w, ('.string', 'DATE')) for w in ['date', 'dates']] +
-    [Rule('$NumberPOS', w, ('.string', 'CD')) for w in ['number', 'numbers']] +
-    [Rule('$PersonNER', w, ('.string', 'PERSON')) for w in ['person', 'people']] +
-    [Rule('$LocationNER', w, ('.string', 'LOCATION')) for w in ['location', 'locations', 'place', 'places']] +
-    [Rule('$OrganizationNER', w, ('.string', 'ORGANIZATION')) for w in ['organization', 'organizations']] +
     [Rule('$Punctuation', w) for w in ['.', ',', ';', '!', '?']] +
     [Rule('$Tuple', w, '.tuple') for w in ['pair', 'tuple']] +
 
@@ -89,12 +78,6 @@ unary_rules = [
     Rule('$WithIO', '$Without', sems0),
     Rule('$Direction', '$Left', sems0),
     Rule('$Direction', '$Right', sems0),
-    Rule('$POS', '$NounPOS', sems0),
-    Rule('$POS', '$NumberPOS', sems0),
-    Rule('$NER', '$DateNER', sems0),
-    Rule('$NER', '$PersonNER', sems0),
-    Rule('$NER', '$LocationNER', sems0),
-    Rule('$NER', '$OrganizationNER', sems0),
     Rule('$Unit', '$Word', sems0),
     Rule('$Unit', '$Char', sems0),
     Rule('$StringList', '$UserList', sems0),
@@ -262,12 +245,6 @@ compositional_rules = [
     Rule('$Bool', '$Exists $Int $TokenList', lambda sems: ('.call', ('.eq', sems[1]), ('.count', sems[2]))), 
             # "there are at least two nouns to the left..."
     Rule('$Bool', '$Exists $NumToBool $TokenList', lambda sems: ('.call', sems[1], ('.count', sems[2]))),
-    
-    # NER/POS
-    Rule('$PhraseList', '$POS $PhraseList', lambda sems: ('.filter_by_attr', sems[1], ('.string', 'pos_tags'), sems[0])),
-    Rule('$PhraseList', '$NER $PhraseList', lambda sems: ('.filter_by_attr', sems[1], ('.string', 'ner_tags'), sems[0])),
-    Rule('$TokenList', '$PhraseList', lambda sems: ('.filter_to_tokens', sems[0])),
-    Rule('$StringList', '$PhraseList', lambda sems: ('.extract_text', sems[0])),
 
     # Arg lists
     Rule('$String', '$ArgToString $ArgX', lambda (func_, arg_): ('.call', func_, arg_)),
@@ -348,14 +325,6 @@ ops = {
         # NOTE: For ease of testing, temporarily allow tuples of strings in place of legitimate candidates
     '.arg_to_string': lambda x: lambda c: x(c).strip() if isinstance(x(c), basestring) else x(c).get_span().strip(),
     '.cid': lambda c: lambda arg: lambda cx: arg(cx).get_attrib_tokens(a='entity_cids')[0], # take the first token's CID
-    # sets
-    '.left': lambda *x: lambda cx: cx['helpers']['get_left_phrases'](*[xi(cx) for xi in x]),
-    '.right': lambda *x: lambda cx: cx['helpers']['get_right_phrases'](*[xi(cx) for xi in x]),
-    '.between': lambda x: lambda c: c['helpers']['get_between_phrases'](*[xi for xi in x(c)]),
-    '.sentence': lambda c: c['helpers']['get_sentence_phrases'](c['candidate'][0]),
-    '.extract_text': lambda phrlist: lambda c: [getattr(p, 'text').strip() for p in phrlist(c)],
-    '.filter_by_attr': lambda phrlist, attr, val: lambda c: [p for p in phrlist(c) if getattr(p, attr(c))[0] == val(c)],
-    '.filter_to_tokens': lambda phrlist: lambda c: [p for p in phrlist(c) if len(getattr(p, 'words')) == 1],
     }
 
 
@@ -420,6 +389,6 @@ def sem_to_str(sem):
 core_grammar = GrammarMixin(
     rules=rules,
     ops=ops,
-    helpers=helpers,
+    helpers={},
     annotators=annotators
 )

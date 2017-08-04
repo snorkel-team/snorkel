@@ -1,1 +1,1 @@
-from image_base import image_grammar
+from text_base import text_grammar

@@ -9,7 +9,7 @@ import image_explanations
 
 from temp_image_class import *
 
-class TestBabbleImages(unittest.TestCase):
+class TestBabbleImage(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -73,5 +73,5 @@ class TestBabbleImages(unittest.TestCase):
     def test_comparisons(self):
         self.check_explanations(image_explanations.comparisons)
 
-if __name__ == '__main__':
-    unittest.main()
+suite = unittest.TestLoader().loadTestsFromTestCase(TestBabbleImage)
+unittest.TextTestRunner(verbosity=2).run(suite)

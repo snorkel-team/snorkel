@@ -2,14 +2,6 @@ import re
 
 from ..grammar import Annotator
 
-class TokenAnnotator(Annotator):
-    def annotate(self, tokens):
-        # Quotation marks are hard stops to prevent merging of multiple strings
-        if len(tokens) == 1 and tokens[0]['pos'] not in ["``", "\'\'"]:
-            return [('$QueryToken', tokens[0]['word'])]
-        else:
-            return []
-
 class PunctuationAnnotator(Annotator):
     def annotate(self, tokens):
         if len(tokens) == 1:
@@ -32,4 +24,4 @@ class IntegerAnnotator(Annotator):
                 return [('$Int', ('.int', value))]
         return []
 
-annotators = [TokenAnnotator(), PunctuationAnnotator(), IntegerAnnotator()]
+annotators = [PunctuationAnnotator(), IntegerAnnotator()]

@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 from ..grammar import GrammarMixin, Rule, sems0, sems1, sems_in_order, sems_reversed, flip_dir
-from core_helpers import helpers
 from core_annotators import annotators
 
 # Rules ======================================================================
@@ -38,20 +37,10 @@ lexical_rules = (
     [Rule('$Contains', w, '.contains') for w in ['contains', 'contain', 'containing', 'include', 'includes', 'says', 'states']] +
     [Rule('$StartsWith', w, '.startswith') for w in ['starts with', 'start with', 'starting with']] +
     [Rule('$EndsWith', w, '.endswith') for w in ['ends with', 'end with', 'ending with']] +
-    [Rule('$Left', w, '.left') for w in ['left', 'before', 'precedes', 'preceding', 'followed by']] +
-    [Rule('$Right', w, '.right') for w in ['right', 'after', 'preceded by', 'follows', 'following']] +
-    [Rule('$Sentence', w, '.sentence') for w in ['sentence', 'text', 'it']] +
-    [Rule('$Between', w, '.between') for w in ['between', 'inbetween', 'sandwiched', 'enclosed']] +
     [Rule('$Separator', w) for w in [',', ';', '/']] +
     [Rule('$Count', w, '.count') for w in ['number', 'length', 'count']] +
     [Rule('$Word', w, 'words') for w in ['word', 'words', 'term', 'terms', 'phrase', 'phrases']] + 
     [Rule('$Char', w, 'chars') for w in ['character', 'characters', 'letter', 'letters']] + 
-    [Rule('$NounPOS', w, ('.string', 'NN')) for w in ['noun', 'nouns']] +
-    [Rule('$DateNER', w, ('.string', 'DATE')) for w in ['date', 'dates']] +
-    [Rule('$NumberPOS', w, ('.string', 'CD')) for w in ['number', 'numbers']] +
-    [Rule('$PersonNER', w, ('.string', 'PERSON')) for w in ['person', 'people']] +
-    [Rule('$LocationNER', w, ('.string', 'LOCATION')) for w in ['location', 'locations', 'place', 'places']] +
-    [Rule('$OrganizationNER', w, ('.string', 'ORGANIZATION')) for w in ['organization', 'organizations']] +
     [Rule('$Punctuation', w) for w in ['.', ',', ';', '!', '?']] +
     [Rule('$Tuple', w, '.tuple') for w in ['pair', 'tuple']] +
 
@@ -73,6 +62,8 @@ unary_rules = [
     Rule('$Bool', '$BoolLit', sems0),
     Rule('$BoolLit', '$True', sems0),
     Rule('$BoolLit', '$False', sems0),
+    Rule('$Num', '$Int', sems0),
+    Rule('$Num', '$Float', sems0),
     Rule('$Conj', '$And', sems0),
     Rule('$Conj', '$Or', sems0),
     Rule('$Exists', '$Is'),
@@ -87,12 +78,6 @@ unary_rules = [
     Rule('$WithIO', '$Without', sems0),
     Rule('$Direction', '$Left', sems0),
     Rule('$Direction', '$Right', sems0),
-    Rule('$POS', '$NounPOS', sems0),
-    Rule('$POS', '$NumberPOS', sems0),
-    Rule('$NER', '$DateNER', sems0),
-    Rule('$NER', '$PersonNER', sems0),
-    Rule('$NER', '$LocationNER', sems0),
-    Rule('$NER', '$OrganizationNER', sems0),
     Rule('$Unit', '$Word', sems0),
     Rule('$Unit', '$Char', sems0),
     Rule('$StringList', '$UserList', sems0),
@@ -104,7 +89,7 @@ unary_rules = [
     Rule('$BinaryStringToBool', '$In', sems0),
     Rule('$BinaryStringToBool', '$Contains', sems0),
     Rule('$BinaryStringToBool', '$Equals', sems0),
-    Rule('$IntToBool', '$AtLeastOne', sems0),
+    Rule('$NumToBool', '$AtLeastOne', sems0),
     # ArgX may be treated as an object or a string (referring to its textual contents)
     Rule('$String', '$ArgX', lambda sems: ('.arg_to_string', sems[0])),
     Rule('$ArgToString', '$CID', lambda sems: (sems[0],)),
@@ -183,10 +168,10 @@ compositional_rules = [
     Rule('$StringToBool', '$BinaryStringToBool $UserList', lambda sems: ('.composite_or',  (sems[0],), sems[1])),
     
     ### Integers ###
-        # applying $IntoToBool functions
-    Rule('$Bool', '$Int $IntToBool', lambda sems: ('.call', sems[1], sems[0])),
-    Rule('$BoolList', '$IntList $IntToBool', lambda sems: ('.map', sems[1], sems[0])),
-    Rule('$IntToBool', '$Compare $Int', sems_in_order),
+        # applying $NumToBool functions
+    Rule('$Bool', '$Num $NumToBool', lambda sems: ('.call', sems[1], sems[0])),
+    Rule('$BoolList', '$NumList $NumToBool', lambda sems: ('.map', sems[1], sems[0])),
+    Rule('$NumToBool', '$Compare $Num', sems_in_order),
 
         # flipping inequalities
     Rule('$AtMost', '$Not $MoreThan', '.leq'),
@@ -194,11 +179,11 @@ compositional_rules = [
     Rule('$LessThan', '$Not $AtLeast', '.lt'),
     Rule('$MoreThan', '$Not $AtMost', '.gt'),
     Rule('$NotEquals', '$Not $Equals', '.neq'),
-    Rule('$NotEquals', '$Equals $Not', '.neq'), # necessary because 'not' requires a bool, not an IntToBool
-    Rule('$Without', '$Not $Within', '.without'), # necessary because 'not' requires a bool, not an IntToBool
+    Rule('$NotEquals', '$Equals $Not', '.neq'), # necessary because 'not' requires a bool, not an NumToBool
+    Rule('$Without', '$Not $Within', '.without'), # necessary because 'not' requires a bool, not an NumToBool
     
         # "more than five of X words are upper"
-    Rule('$Bool', '$IntToBool $BoolList', lambda (func_,boollist_): ('.call', func_, ('.sum', boollist_))),
+    Rule('$Bool', '$NumToBool $BoolList', lambda (func_,boollist_): ('.call', func_, ('.sum', boollist_))),
 
     ### Context ###
     Rule('$ArgX', '$Arg $Int', sems_in_order),
@@ -246,26 +231,20 @@ compositional_rules = [
             # "the number of (words left of arg 1) is 5"
     Rule('$Int', '$Count $TokenList', sems_in_order),
             # "at least one word is to the left..."
-    Rule('$Bool', '$IntToBool $Word $Exists $TokenList', lambda (func_, word_, exist_, list_): 
+    Rule('$Bool', '$NumToBool $Word $Exists $TokenList', lambda (func_, word_, exist_, list_): 
         ('.call', func_, ('.count', list_))),
             # "at least one noun is to the left..."
-    Rule('$Bool', '$IntToBool $POS $Exists $TokenList', lambda sems: 
+    Rule('$Bool', '$NumToBool $POS $Exists $TokenList', lambda sems: 
         ('.call', sems[0], ('.count', ('.filter_by_attr', sems[3], ('.string', 'pos_tags'), sems[1])))),
             # "at least one person is to the left..."
-    Rule('$Bool', '$IntToBool $NER $Exists $TokenList', lambda sems: 
+    Rule('$Bool', '$NumToBool $NER $Exists $TokenList', lambda sems: 
         ('.call', sems[0], ('.count', ('.filter_by_attr', sems[3], ('.string', 'ner_tags'), sems[1])))), 
             # "there are not three people to the left..."
     Rule('$Bool', '$Exists $Not $Int $TokenList', lambda sems: ('.call', ('.neq', sems[2]), ('.count', sems[3]))), 
             # "there are three nouns to the left..."
     Rule('$Bool', '$Exists $Int $TokenList', lambda sems: ('.call', ('.eq', sems[1]), ('.count', sems[2]))), 
             # "there are at least two nouns to the left..."
-    Rule('$Bool', '$Exists $IntToBool $TokenList', lambda sems: ('.call', sems[1], ('.count', sems[2]))),
-    
-    # NER/POS
-    Rule('$PhraseList', '$POS $PhraseList', lambda sems: ('.filter_by_attr', sems[1], ('.string', 'pos_tags'), sems[0])),
-    Rule('$PhraseList', '$NER $PhraseList', lambda sems: ('.filter_by_attr', sems[1], ('.string', 'ner_tags'), sems[0])),
-    Rule('$TokenList', '$PhraseList', lambda sems: ('.filter_to_tokens', sems[0])),
-    Rule('$StringList', '$PhraseList', lambda sems: ('.extract_text', sems[0])),
+    Rule('$Bool', '$Exists $NumToBool $TokenList', lambda sems: ('.call', sems[1], ('.count', sems[2]))),
 
     # Arg lists
     Rule('$String', '$ArgToString $ArgX', lambda (func_, arg_): ('.call', func_, arg_)),
@@ -346,14 +325,6 @@ ops = {
         # NOTE: For ease of testing, temporarily allow tuples of strings in place of legitimate candidates
     '.arg_to_string': lambda x: lambda c: x(c).strip() if isinstance(x(c), basestring) else x(c).get_span().strip(),
     '.cid': lambda c: lambda arg: lambda cx: arg(cx).get_attrib_tokens(a='entity_cids')[0], # take the first token's CID
-    # sets
-    '.left': lambda *x: lambda cx: cx['helpers']['get_left_phrases'](*[xi(cx) for xi in x]),
-    '.right': lambda *x: lambda cx: cx['helpers']['get_right_phrases'](*[xi(cx) for xi in x]),
-    '.between': lambda x: lambda c: c['helpers']['get_between_phrases'](*[xi for xi in x(c)]),
-    '.sentence': lambda c: c['helpers']['get_sentence_phrases'](c['candidate'][0]),
-    '.extract_text': lambda phrlist: lambda c: [getattr(p, 'text').strip() for p in phrlist(c)],
-    '.filter_by_attr': lambda phrlist, attr, val: lambda c: [p for p in phrlist(c) if getattr(p, attr(c))[0] == val(c)],
-    '.filter_to_tokens': lambda phrlist: lambda c: [p for p in phrlist(c) if len(getattr(p, 'words')) == 1],
     }
 
 
@@ -418,6 +389,6 @@ def sem_to_str(sem):
 core_grammar = GrammarMixin(
     rules=rules,
     ops=ops,
-    helpers=helpers,
+    helpers={},
     annotators=annotators
 )

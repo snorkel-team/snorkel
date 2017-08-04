@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from pandas import DataFrame, Series
 
 from core import core_grammar
+from text import text_grammar
 from image import image_grammar
 from grammar import Grammar, validate_semantics
 from snorkel_grammar import sem_to_str  # core_rules, snorkel_ops,
@@ -61,7 +62,7 @@ class SemanticParser(object):
             beam_width=10, top_k=-1):
         grammar_mixins = [core_grammar]
         if mode == 'text':
-            pass
+            grammar_mixins.append(text_grammar)
         elif mode == 'image':
             grammar_mixins.append(image_grammar)
         elif mode == 'table':

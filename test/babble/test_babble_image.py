@@ -49,8 +49,10 @@ class TestBabbleImages(unittest.TestCase):
         self.assertTrue(len(explanations))
         for e in explanations:
             if e.candidate and not isinstance(e.candidate, tuple):
-                e.candidate = Image_Candidate(idx=e.candidate,coco_ids=self.train_mscoco,coco_anns=self.train_anns)
+                image = Image_Candidate(idx=e.candidate,coco_ids=self.train_mscoco,coco_anns=self.train_anns)
+                e.candidate = (image.bboxes[2], image.bboxes[4])
             LF_dict = self.sp.parse_and_evaluate(e, show_erroring=True) # show_nothing=True
+            # import pdb; pdb.set_trace()
             # parses = self.sp.parse(e, return_parses=True)
             if e.semantics:
                 self.assertTrue(len(LF_dict['correct']) > 0)

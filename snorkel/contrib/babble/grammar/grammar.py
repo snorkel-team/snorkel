@@ -12,29 +12,50 @@ from parse import Parse
 import utils
 
 
-class Grammar(object):
-    def __init__(self, rules=[], ops={}, candidate_class=None, annotators=[], 
-                 user_lists={}, lf_helpers={}, beam_width=None, top_k=None, 
-                 start_symbol='$ROOT'):
+class GrammarMixin(object):
+    def __init__(self, rules, ops, helpers, annotators):
+        self.rules = rules
         self.ops = ops
+        self.helpers = helpers
         self.annotators = annotators
+
+
+class Grammar(object):
+    def __init__(self, bases, candidate_class=None, user_lists={}, 
+            beam_width=None, top_k=None, start_symbol='$ROOT'):
+       
+        # Extract from bases
+        bases = bases if isinstance(bases, list) else [bases]
+        rules = []
+        self.ops = {}
+        self.helpers = {}
+        self.annotators = []
+        for base in bases:
+            rules += base.rules
+            self.ops.update(base.ops)
+            self.helpers.update(base.helpers)
+            self.annotators += base.annotators
+       
+        # Add candidate-specific rules and user_lists
+        if candidate_class:
+            for i, arg in enumerate(candidate_class.__argnames__):
+                rules.append(Rule('$ArgX', arg, ('.arg', ('.int', i + 1))))
+        self.candidate_class = candidate_class
         self.user_lists = user_lists
-        self.lf_helpers = lf_helpers
+
+        # Set parameters
         self.beam_width = beam_width
         self.top_k = top_k
+        
+        # Initialize
         self.categories = set()
         self.lexical_rules = defaultdict(list)
         self.unary_rules = defaultdict(list)
         self.binary_rules = defaultdict(list)
         self.start_symbol = start_symbol
         self.corenlp = CoreNLPHandler()
-        if candidate_class:
-            for i, arg in enumerate(candidate_class.__argnames__):
-                rules.append(Rule('$ArgX', arg, ('.arg', ('.int', i + 1))))
         for rule in rules:
             self.add_rule(rule)
-
-        self.candidate_class = candidate_class # candidate_class.__argnames__ = ['chemical', 'disease']
         print('Created grammar with %d rules' % \
             (len(self.lexical_rules) + len(self.unary_rules) + len(self.binary_rules)))
 
@@ -240,7 +261,7 @@ class Grammar(object):
             else:
                 return semantics
         LF = recurse(parse.semantics)
-        return lambda candidate: LF({'lf_helpers': self.lf_helpers, 'user_lists': self.user_lists, 'candidate': candidate})
+        return lambda candidate: LF({'helpers': self.helpers, 'user_lists': self.user_lists, 'candidate': candidate})
 
     def print_grammar(self):
         def all_rules(rule_index):

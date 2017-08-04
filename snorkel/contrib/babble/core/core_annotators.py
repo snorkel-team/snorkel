@@ -1,11 +1,6 @@
-from grammar import Rule
 import re
 
-class Annotator:
-    """A base class for annotators."""
-    def annotate(self, tokens):
-        """Returns a list of pairs, each a category and a semantic representation."""
-        return []
+from ..grammar import Annotator
 
 class TokenAnnotator(Annotator):
     def annotate(self, tokens):
@@ -36,3 +31,5 @@ class IntegerAnnotator(Annotator):
                 value = int(float(number))
                 return [('$Int', ('.int', value))]
         return []
+
+annotators = [TokenAnnotator(), PunctuationAnnotator(), IntegerAnnotator()]

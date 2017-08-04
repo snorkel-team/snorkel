@@ -78,3 +78,8 @@ class Parse(object):
         output = StringIO()
         helper(self, indent, output)
         return output.getvalue()[:-1]  # trim final newline
+
+
+def validate_semantics(self):
+    # TODO: write this function.
+    assert True

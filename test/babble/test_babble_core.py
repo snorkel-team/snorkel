@@ -40,7 +40,7 @@ class TestBabble(unittest.TestCase):
         # [Pernilla Ammann], bought the 15-bedroom mansion on Balmoral Drive in 
         # the upscale historic neighborhood on July 31."
 
-        cls.sp = SemanticParser(Spouse, unittest_explanations.get_user_lists(), 
+        cls.sp = SemanticParser(candidate_class=Spouse, user_lists=unittest_explanations.get_user_lists(), 
                                 beam_width=10, top_k=-1)
 
     @classmethod
@@ -52,7 +52,7 @@ class TestBabble(unittest.TestCase):
         for e in explanations:
             if e.candidate and not isinstance(e.candidate, tuple):
                 e.candidate = self.candidate_hash[e.candidate]
-            LF_dict = self.sp.parse_and_evaluate(e, show_nothing=True)
+            LF_dict = self.sp.parse_and_evaluate(e, show_erroring=True)
             if e.semantics:
                 self.assertTrue(len(LF_dict['correct']) > 0)
             else:
@@ -99,6 +99,10 @@ class TestBabble(unittest.TestCase):
     def test_tuples(self):
         self.check_explanations(unittest_explanations.tuples)
 
+    def test_pseudocode(self):
+        semantics = ('.root', ('.label', ('.bool', True), ('.and', ('.bool', True), ('.bool', True))))
+        pseudocode = 'return 1 if (True and True) else 0'
+        self.assertEqual(self.sp.semantics_to_pseudocode(semantics), pseudocode)
 
 if __name__ == '__main__':
     unittest.main()

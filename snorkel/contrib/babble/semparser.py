@@ -1,11 +1,10 @@
 import matplotlib.pyplot as plt
 from pandas import DataFrame, Series
 
-from annotator import *
-from grammar import Grammar
-from helpers import lf_helpers
-from snorkel_grammar import snorkel_rules, snorkel_ops, sem_to_str
-
+from core import core_grammar
+from image import image_grammar
+from grammar import Grammar, validate_semantics
+from snorkel_grammar import sem_to_str  # core_rules, snorkel_ops,
 
 class Explanation(object):
     def __init__(self, condition, label, candidate=None, name=None, 
@@ -48,16 +47,34 @@ class Explanation(object):
 
 
 class SemanticParser(object):
-    def __init__(self, candidate_class, user_lists={}, beam_width=10, top_k=-1):
-        annotators = [TokenAnnotator(), PunctuationAnnotator(), IntegerAnnotator()]
-        self.grammar = Grammar(rules=snorkel_rules, 
-                               ops=snorkel_ops, 
+    """
+    SemanticParser varies based on:
+    --domain: [spouse, cdr, coco]
+        candidate_class
+        user_lists
+        domain-specific rules
+        annotators
+    --mode: [text/image/table]
+        mode-specific rules
+    """
+    def __init__(self, mode='text', candidate_class=None, user_lists={}, 
+            beam_width=10, top_k=-1):
+        grammar_mixins = [core_grammar]
+        if mode == 'text':
+            pass
+        elif mode == 'image':
+            grammar_mixins.append(image_grammar)
+        elif mode == 'table':
+            pass
+        else:
+            raise Exception("You must specify a mode in ['text', 'image', 'table']")
+
+        self.grammar = Grammar(grammar_mixins,
                                candidate_class=candidate_class,
-                               annotators=annotators,
                                user_lists=user_lists,
-                               lf_helpers=lf_helpers(),
                                beam_width=beam_width,
                                top_k=top_k)
+        # self.pseudocode_ops = pseudocode_ops
         self.explanation_counter = 0
 
     def name_explanations(self, explanations, names):
@@ -269,3 +286,19 @@ class SemanticParser(object):
         
         self.results = DataFrame(data=dataframe, index=explanation_names)[col_names]
         return LFs
+
+    def semantics_to_pseudocode(self, sem):
+        """Converts a parse's semantics into a pseudocode string."""
+        validate_semantics(sem)
+        return sem_to_str(sem)
+        # def recurse(sem):
+        #     if isinstance(sem, tuple):
+        #         if sem[0] in self.pseudocode_ops:
+        #             op = self.pseudocode_ops[sem[0]]
+        #             args_ = [recurse(arg) for arg in sem[1:]]
+        #             return op(*args_) if args_ else op
+        #         else:
+        #             return str(sem)
+        #     else:
+        #         return str(sem)
+        # return recurse(sem)

@@ -2,18 +2,20 @@ import numpy as np
 import os
 import sys
 
-sys.path.append('/dfs/scratch0/paroma/coco')
-sys.path.append('/dfs/scratch0/paroma/coco/PythonAPI/')
+# sys.path.append('/dfs/scratch0/paroma/coco')
+# sys.path.append('/dfs/scratch0/paroma/coco/PythonAPI/')
 
-from pycocotools.coco import COCO
-import skimage.io as io
-import pylab
-import cv2
+# from pycocotools.coco import COCO
+# import skimage.io as io
+# import pylab
+# import cv2
 
+train_mscoco = np.load('./train_mscoco.npy')
+train_anns = np.load('./train_anns.npy')
 
 class Image_Candidate(object):
     
-    def __init__(self, idx=-1,coco_ids=train_mscoco,coco_anns=train_anns):
+    def __init__(self, idx=-1, coco_ids=train_mscoco, coco_anns=train_anns):
         if idx <= -1 or idx >= 903 :
             print 'Invalid Train Image Index'
         

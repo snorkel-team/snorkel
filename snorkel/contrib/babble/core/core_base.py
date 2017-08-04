@@ -1,29 +1,8 @@
 from __future__ import print_function
 
-from pdb import set_trace as t
-
-from grammar import Rule
-
-# Helpers ======================================================================
-def sems0(sems):
-    return sems[0]
-
-def sems1(sems):
-    return sems[1]
-
-def sems_in_order(sems):
-    return tuple(sems)
-
-def sems_reversed(sems):
-    return tuple(reversed(sems))
-
-def flip_dir(dir_):
-    if dir_ == '.right':
-        return '.left'
-    elif dir_ == '.left':
-        return '.right'
-    else:
-        raise Exception
+from ..grammar import GrammarMixin, Rule, sems0, sems1, sems_in_order, sems_reversed, flip_dir
+from core_helpers import helpers
+from core_annotators import annotators
 
 # Rules ======================================================================
 lexical_rules = (
@@ -75,6 +54,7 @@ lexical_rules = (
     [Rule('$OrganizationNER', w, ('.string', 'ORGANIZATION')) for w in ['organization', 'organizations']] +
     [Rule('$Punctuation', w) for w in ['.', ',', ';', '!', '?']] +
     [Rule('$Tuple', w, '.tuple') for w in ['pair', 'tuple']] +
+
     # FIXME: Temporary hardcode
     [Rule('$ChemicalEntity', w, ('.string', 'Chemical')) for w in ['chemical', 'chemicals']] +
     [Rule('$DiseaseEntity', w, ('.string', 'Disease')) for w in ['disease', 'diseases']] +
@@ -313,9 +293,9 @@ compositional_rules = [
     Rule('$Bool', '$StringTupleListAnd $StringTupleToBool', lambda (tuplist_, func_): ('.all', ('.map', func_, tuplist_))),
 ]
 
-snorkel_rules = lexical_rules + unary_rules + compositional_rules
+rules = lexical_rules + unary_rules + compositional_rules
 
-snorkel_ops = {
+ops = {
     # root
     '.root': lambda x: lambda c: x(c),
     '.label': lambda x, y: lambda c: (1 if x(c)==True else -1) if y(c)==True else 0,
@@ -367,17 +347,17 @@ snorkel_ops = {
     '.arg_to_string': lambda x: lambda c: x(c).strip() if isinstance(x(c), basestring) else x(c).get_span().strip(),
     '.cid': lambda c: lambda arg: lambda cx: arg(cx).get_attrib_tokens(a='entity_cids')[0], # take the first token's CID
     # sets
-    '.left': lambda *x: lambda cx: cx['lf_helpers']['get_left_phrases'](*[xi(cx) for xi in x]),
-    '.right': lambda *x: lambda cx: cx['lf_helpers']['get_right_phrases'](*[xi(cx) for xi in x]),
-    '.between': lambda x: lambda c: c['lf_helpers']['get_between_phrases'](*[xi for xi in x(c)]),
-    '.sentence': lambda c: c['lf_helpers']['get_sentence_phrases'](c['candidate'][0]),
+    '.left': lambda *x: lambda cx: cx['helpers']['get_left_phrases'](*[xi(cx) for xi in x]),
+    '.right': lambda *x: lambda cx: cx['helpers']['get_right_phrases'](*[xi(cx) for xi in x]),
+    '.between': lambda x: lambda c: c['helpers']['get_between_phrases'](*[xi for xi in x(c)]),
+    '.sentence': lambda c: c['helpers']['get_sentence_phrases'](c['candidate'][0]),
     '.extract_text': lambda phrlist: lambda c: [getattr(p, 'text').strip() for p in phrlist(c)],
     '.filter_by_attr': lambda phrlist, attr, val: lambda c: [p for p in phrlist(c) if getattr(p, attr(c))[0] == val(c)],
     '.filter_to_tokens': lambda phrlist: lambda c: [p for p in phrlist(c) if len(getattr(p, 'words')) == 1],
     }
 
+
 def sem_to_str(sem):
-    # NOTE: only partially complete, many ops still missing
     str_ops = {
         '.root': lambda LF: recurse(LF),
         '.label': lambda label, cond: "return {} if {} else 0".format(1 if recurse(label)=='True' else -1, recurse(cond)),
@@ -421,6 +401,7 @@ def sem_to_str(sem):
         '.filter_to_tokens': lambda list_: "tokens({})".format(list_),
         '.extract_text': lambda list_: "[p.text.strip() for p in {}]".format(list_),
     }
+    # NOTE: only partially complete, many ops still missing
     def recurse(sem):
         if isinstance(sem, tuple):
             if sem[0] in str_ops:
@@ -432,3 +413,11 @@ def sem_to_str(sem):
         else:
             return str(sem)
     return recurse(sem)
+
+
+core_grammar = GrammarMixin(
+    rules=rules,
+    ops=ops,
+    helpers=helpers,
+    annotators=annotators
+)

@@ -32,7 +32,7 @@ class Babbler(object):
                  verbose=True):
         self.candidate_class = candidate_class
         self.user_lists = user_lists
-        self.semparser = SemanticParser(candidate_class, user_lists)
+        self.semparser = SemanticParser(candidate_class=candidate_class, user_lists=user_lists)
         self.semparser.name_explanations(explanations, exp_names)
         if len(explanations) != len(set([exp.name for exp in explanations])):
             raise Exception("All Explanations must have unique names.")

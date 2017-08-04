@@ -1,5 +1,123 @@
 from collections import namedtuple
 
+fields = ['words', 'char_offsets', 'word_offsets', 'pos_tags', 'ner_tags', 'entity_types', 'text']
+Phrase = namedtuple('Phrase', fields)
+
+inequalities = {
+    '.lt': lambda x, y: x < y,
+    '.leq': lambda x, y: x <= y,
+    '.eq': lambda x, y: x == y, # if the index is not exact, continue
+    '.geq': lambda x, y: x >= y,
+    '.gt': lambda x, y: x > y,
+}
+
+def build_phrase(sent, i, L):
+    contents = []
+    for f in fields:
+        if f == 'word_offsets':
+            contents.append(range(i, i+L))
+        elif f == 'text':
+            char_start = sent['char_offsets'][i]
+            if i + L >= len(sent['char_offsets']):
+                contents.append(sent['text'][char_start:].strip())
+            else:
+                char_end = sent['char_offsets'][i+L]
+                contents.append(sent['text'][char_start:char_end].strip())
+        else:
+            contents.append(sent[f][i:i+L])
+    return Phrase(*contents)
+
+def get_left_phrases(span, cmp='.gt', num=0, unit='words', n_min=1, n_max=4):
+    """
+    "at least 40 characters to the left of X" => (X, .geq, 40, chars)
+    Note: Bases distances on the starts of words/chars
+    """
+    phrases = []
+    k = span.get_word_start()
+    sent = span.get_parent()._asdict()
+    for L in range(n_min, n_max+1): # how long is the n-gram
+        for i in range(0, k-L+1): # where does it start
+            if unit=='words':
+                if not inequalities[cmp](-i, -k + num):
+                    continue
+            else:
+                I = span.word_to_char_index(i)
+                K = span.word_to_char_index(k)
+                if not inequalities[cmp](-I, -K + num):
+                    continue
+            phrases.append(build_phrase(sent, i, L))
+    return phrases
+
+def get_right_phrases(span, cmp='.gt', num=0, unit='words', n_min=1, n_max=4):
+    phrases = []
+    k = span.get_word_end()
+    sent = span.get_parent()._asdict()
+    for L in range(n_min, n_max+1):
+        for i in range(k+1, len(sent['words'])-L):
+            if unit=='words':
+                if not inequalities[cmp](i, k + num):
+                    continue
+            else:
+                I = span.word_to_char_index(i)
+                K = span.word_to_char_index(k) + len(sent['words'][k])
+                if not inequalities[cmp](I, K + num):
+                    continue
+            phrases.append(build_phrase(sent, i, L))
+    return phrases
+
+def get_within_phrases(span):
+    pass
+#     phrases = []
+#     ks = span.get_word_start()
+#     ke = span.get_word_end()
+#     sent = span.get_parent()._asdict()
+#     for L in range(n_min, n_max+1):
+#         for i in range(k+1, len(sent['words'])-L):
+#             if unit=='words':
+#                 if not inequalities[cmp](i, k + num):
+#                     continue
+#             else:
+#                 I = span.word_to_char_index(i)
+#                 K = span.word_to_char_index(k) + len(sent['words'][k])
+#                 if not inequalities[cmp](I, K + num):
+#                     continue
+#             phrases.append(build_phrase(sent, i, L))
+#     return phrases    
+
+def get_between_phrases(span0, span1, n_min=1, n_max=4):
+    phrases = []
+    if span0.get_word_start() < span1.get_word_start():
+        left_span = span0
+        dist_btwn = span1.get_word_start() - span0.get_word_end() - 1
+    else:
+        left_span = span1
+        dist_btwn = span0.get_word_start() - span1.get_word_end() - 1
+    k = left_span.get_word_end()
+    sent = span0.get_parent()._asdict()
+    for L in range(n_min, n_max+1):
+        for i in range(k+1, k+dist_btwn-L+2):
+            phrases.append(build_phrase(sent, i, L))
+    return phrases
+
+def get_sentence_phrases(span, n_min=1, n_max=5):
+    phrases = []
+    k = span.get_word_start()
+    sent = span.get_parent()._asdict()
+    for L in range(n_min, n_max+1):
+        for i in range(0, len(sent['words']) - L + 1):
+            phrases.append(build_phrase(sent, i, L))
+    return phrases
+
+
+helpers = {
+    'get_left_phrases': get_left_phrases,
+    'get_right_phrases': get_right_phrases,
+    'get_within_phrases': get_within_phrases,
+    'get_between_phrases': get_between_phrases,
+    'get_sentence_phrases': get_sentence_phrases,
+}
+
+
 # VERSION 1
 
 # def get_left_tokens(span, attrib='words'):
@@ -131,122 +249,3 @@ from collections import namedtuple
 #     for i in range(k+1, len(sent['words'])):
 #         phrases.append(Phrase(*[[sent[field][i]] for field in fields]))
 #     return phrases
-
-fields = ['words', 'char_offsets', 'word_offsets', 'pos_tags', 'ner_tags', 'entity_types', 'text']
-Phrase = namedtuple('Phrase', fields)
-
-inequalities = {
-    '.lt': lambda x, y: x < y,
-    '.leq': lambda x, y: x <= y,
-    '.eq': lambda x, y: x == y, # if the index is not exact, continue
-    '.geq': lambda x, y: x >= y,
-    '.gt': lambda x, y: x > y,
-}
-
-def build_phrase(sent, i, L):
-    contents = []
-    for f in fields:
-        if f == 'word_offsets':
-            contents.append(range(i, i+L))
-        elif f == 'text':
-            char_start = sent['char_offsets'][i]
-            if i + L >= len(sent['char_offsets']):
-                contents.append(sent['text'][char_start:].strip())
-            else:
-                char_end = sent['char_offsets'][i+L]
-                contents.append(sent['text'][char_start:char_end].strip())
-        else:
-            contents.append(sent[f][i:i+L])
-    return Phrase(*contents)
-
-def get_left_phrases(span, cmp='.gt', num=0, unit='words', n_min=1, n_max=4):
-    """
-    "at least 40 characters to the left of X" => (X, .geq, 40, chars)
-    Note: Bases distances on the starts of words/chars
-    """
-    phrases = []
-    k = span.get_word_start()
-    sent = span.get_parent()._asdict()
-    for L in range(n_min, n_max+1): # how long is the n-gram
-        for i in range(0, k-L+1): # where does it start
-            if unit=='words':
-                if not inequalities[cmp](-i, -k + num):
-                    continue
-            else:
-                I = span.word_to_char_index(i)
-                K = span.word_to_char_index(k)
-                if not inequalities[cmp](-I, -K + num):
-                    continue
-            phrases.append(build_phrase(sent, i, L))
-    return phrases
-
-def get_right_phrases(span, cmp='.gt', num=0, unit='words', n_min=1, n_max=4):
-    phrases = []
-    k = span.get_word_end()
-    sent = span.get_parent()._asdict()
-    for L in range(n_min, n_max+1):
-        for i in range(k+1, len(sent['words'])-L):
-            if unit=='words':
-                if not inequalities[cmp](i, k + num):
-                    continue
-            else:
-                I = span.word_to_char_index(i)
-                K = span.word_to_char_index(k) + len(sent['words'][k])
-                if not inequalities[cmp](I, K + num):
-                    continue
-            phrases.append(build_phrase(sent, i, L))
-    return phrases
-
-def get_within_phrases(span):
-    pass
-#     phrases = []
-#     ks = span.get_word_start()
-#     ke = span.get_word_end()
-#     sent = span.get_parent()._asdict()
-#     for L in range(n_min, n_max+1):
-#         for i in range(k+1, len(sent['words'])-L):
-#             if unit=='words':
-#                 if not inequalities[cmp](i, k + num):
-#                     continue
-#             else:
-#                 I = span.word_to_char_index(i)
-#                 K = span.word_to_char_index(k) + len(sent['words'][k])
-#                 if not inequalities[cmp](I, K + num):
-#                     continue
-#             phrases.append(build_phrase(sent, i, L))
-#     return phrases    
-
-def get_between_phrases(span0, span1, n_min=1, n_max=4):
-    phrases = []
-    if span0.get_word_start() < span1.get_word_start():
-        left_span = span0
-        dist_btwn = span1.get_word_start() - span0.get_word_end() - 1
-    else:
-        left_span = span1
-        dist_btwn = span0.get_word_start() - span1.get_word_end() - 1
-    k = left_span.get_word_end()
-    sent = span0.get_parent()._asdict()
-    for L in range(n_min, n_max+1):
-        for i in range(k+1, k+dist_btwn-L+2):
-            phrases.append(build_phrase(sent, i, L))
-    return phrases
-
-def get_sentence_phrases(span, n_min=1, n_max=5):
-    phrases = []
-    k = span.get_word_start()
-    sent = span.get_parent()._asdict()
-    for L in range(n_min, n_max+1):
-        for i in range(0, len(sent['words']) - L + 1):
-            phrases.append(build_phrase(sent, i, L))
-    return phrases
-
-def lf_helpers():
-    return {
-            # 'get_phrase_from_text': get_phrase_from_text,
-            # 'get_phrase_from_span': get_phrase_from_span,
-            'get_left_phrases': get_left_phrases,
-            'get_right_phrases': get_right_phrases,
-            'get_within_phrases': get_within_phrases,
-            'get_between_phrases': get_between_phrases,
-            'get_sentence_phrases': get_sentence_phrases,
-            }

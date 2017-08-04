@@ -164,7 +164,7 @@ class TFNoiseAwareModel(Classifier):
             diffs = Y_train.max(axis=1) - Y_train.min(axis=1)
             train_idxs = np.where(diffs > 1e-6)[0]
         X_train = [X_train[j] for j in train_idxs] if self.representation \
-            else X_train[train_idxs, :]
+            else sparse.csr_matrix(X_train[train_idxs, :])
         Y_train = Y_train[train_idxs]
 
         # Create new graph, build network, and start session

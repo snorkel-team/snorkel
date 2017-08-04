@@ -4,35 +4,63 @@ from temp_image_class import BBox
 
 # Box X = Person (category_id = 1)
 # Box Y = Bike (category_id = 2)
-A = BBox({'bbox': (100, 100, 50, 25), 'category_id': 1}, None)
-B = BBox({'bbox': (100, 125, 50, 75), 'category_id': 2}, None)
+A = BBox({'bbox': (100, 100, 100, 100), 'category_id': 1}, None)
+B = BBox({'bbox': (150, 150, 100, 100), 'category_id': 2}, None)
 
-x_below_y = (B, A)
+"""
+----------
+| A       |
+|     ----|-----
+|    |    |    |
+-----|----     |
+     |       B |
+     __________
+"""
 
-boxes = [
-    # Boxes
+a_and_b = (A, B)
+
+edges = [
+    # Edges of same box
     Explanation(
-        condition="box X is not box Y",
+        condition="the bottom of box x is below the top of box x",
         label=True,
-        candidate=11,
+        candidate=a_and_b,
         semantics=None),
-    # Edges
+    # Edges of different boxes
     Explanation(
-        condition="the top of box x is not the bottom of box y",
+        condition="the top of box y is below the top of box x",
         label=True,
-        candidate=11,
+        candidate=a_and_b,
         semantics=None),
+]
+
+points = [
+    # Corner to Corner
     Explanation(
-        condition="the left of box x is not the right of box y",
+        condition="the bottom right corner of box x, is below the left top corner of box x",
         label=True,
-        candidate=11,
+        candidate=a_and_b,
         semantics=None),
-    # Edge Comparison
+    # Center to Center
     Explanation(
-        condition="bottom edge of Box X is below bottom edge of Box Y",
-        label=False,
-        candidate=x_below_y,
+        condition="the center of box y is below the center of box x",
+        label=True,
+        candidate=a_and_b,
         semantics=None),
+    # Center to Corner
+    Explanation(
+        condition="the center of box y is below the top right corner of box x",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+    # Center to Edge
+    Explanation(
+        condition="the center of box y is below the top edge of box x",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+]
+
     # Explanation(
     #     condition="bottom edge of Box X is below bottom edge of Box Y",
     #     label=False,
@@ -44,6 +72,5 @@ boxes = [
     #     label=False,
     #     candidate=11,
     #     semantics=None),
-]
 
-explanations = (boxes)
+explanations = (edges + points)

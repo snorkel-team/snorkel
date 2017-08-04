@@ -22,15 +22,10 @@ lexical_rules = (
 unary_rules = [
     Rule('$BoxId', '$X', sems0),
     Rule('$BoxId', '$Y', sems0),
-    Rule('$Side', '$Top', sems0),
-    Rule('$Side', '$Bottom', sems0),
     Rule('$Side', '$Left', sems0),
     Rule('$Side', '$Right', sems0),
-
-    Rule('$Point', '$Center', sems0),
-    Rule('$Point', '$Corner', sems0),
-    Rule('$Geometry', '$Point', sems0),
-    Rule('$Geometry', '$Edge', sems0),
+    Rule('$Side', '$Top', sems0),
+    Rule('$Side', '$Bottom', sems0),
 
     Rule('$DirectionCompare', '$Below', sems0),
     Rule('$DirectionCompare', '$Above', sems0),
@@ -38,24 +33,22 @@ unary_rules = [
     
 compositional_rules = [
     Rule('$Bbox', '$Box $BoxId', sems_in_order),
-    Rule('$Edge', '$Side $Bbox', lambda (edge, bbox): ('.edge', bbox, edge)),
+    Rule('$Point', '$Side $Bbox', lambda (side, bbox): ('.edge', bbox, side)),
+    Rule('$Point', '$Center $Bbox', lambda (side, bbox): ('.center', bbox)),
+    Rule('$Point', '$Side $Side $Corner $Bbox', lambda (s1, s2, _, bbox): ('.corner', bbox, s1, s2)),
     
-    Rule('$GeometryToBool', '$DirectionCompare $Geometry', sems_in_order),
-    Rule('$Bool', '$Geometry $GeometryToBool', lambda (geom, cmp): ('.call', cmp, geom)),
-
-    Rule('$BboxToBool', '$Equals $Bbox', sems_in_order),
-    Rule('$BboxToBool', '$NotEquals $Bbox', sems_in_order),
-    Rule('$Bool', '$Bbox $BboxToBool', lambda (bbox, func_): ('.call', func_, bbox)),
+    Rule('$PointToBool', '$DirectionCompare $Point', sems_in_order),
+    Rule('$Bool', '$Point $PointToBool', lambda (geom, cmp): ('.call', cmp, geom)),
 ]
 
 rules = lexical_rules + unary_rules + compositional_rules
 
 ops = {
     '.box': lambda int_: lambda c: c['candidate'][int_(c)],
+    
     '.edge': lambda bbox_, side_: lambda c: c['helpers']['extract_edge'](bbox_(c), side_(c)),
     '.center': lambda bbox_: lambda c: c['helpers']['extract_center'](bbox_(c)),
-    '.corner': lambda bbox_, s1, s2: lambda c: c['helpers']['extract_center'](bbox_(c), s1(c), s2(c)),
-
+    '.corner': lambda bbox_, horz, vert: lambda c: c['helpers']['extract_corner'](bbox_(c), horz(c), vert(c)),
 
     '.below': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_below'](g1(c1), g2(c2)),
 }

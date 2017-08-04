@@ -32,6 +32,17 @@ def extract_corner(bbox, side1, side2):
 
         
 def extract_center(bbox):
-    coordx = (getattr(bbox,'left') + getattr(bbox,'right')/2.
-    coordy = (getattr(bbox,'top') + getattr(bbox,'bottom')/2.
+    coordx = (getattr(bbox,'left') + getattr(bbox,'right')/2.0)
+    coordy = (getattr(bbox,'top') + getattr(bbox,'bottom')/2.0)
     return Point(coordx,coordy)
+
+
+def is_below(point1, point2):
+    return point1.y > point2.y
+
+helpers = {
+    'extract_edge': extract_edge,
+    'extract_corner': extract_corner,
+    'extract_center': extract_center,
+    'is_below': is_below,
+}

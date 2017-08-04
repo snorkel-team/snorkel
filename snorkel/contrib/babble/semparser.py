@@ -217,7 +217,7 @@ class SemanticParser(object):
                 semantics.add(parse.semantics)
                 # ERRORING
                 try:
-                    label = parse.function(explanation.candidate)
+                    condition_passes = parse.function(explanation.candidate)
                 except:
                     if show_erroring: 
                         print("E: {}\n".format(semantics_))
@@ -228,7 +228,7 @@ class SemanticParser(object):
                     LFs['erroring'].append(parse.function)
                     continue
                 # CORRECT             
-                if explanation.semantics and parse.semantics==explanation.semantics:
+                if explanation.semantics and parse.semantics == explanation.semantics:
                     if show_correct: print("C: {}\n".format(semantics_))
                     nCorrect[i] += 1
                     LF = parse.function
@@ -236,7 +236,7 @@ class SemanticParser(object):
                     LFs['correct'].append(parse.function)
                     continue
                 # PASSING
-                if label==explanation.label:
+                if condition_passes:
                     if show_passing: print("P: {}\n".format(semantics_))
                     nPassing[i] += 1
                     LFs['passing'].append(parse.function)

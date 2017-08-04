@@ -140,7 +140,7 @@ class MTurkHelper(object):
                 yield iterable[i:min(i + batch_size, n)]
 
         def image_template(id):
-            return '<img class="img-responsive center-block" src="http://paroma.github.io/turk_images/train_' + str(id) + '.png" />'
+            return '<img class="img-responsive center-block" src="http://paroma.github.io/turk_images/' + id + '" />'
 
         with open(csvpath, 'wb') as csvfile:
             csvwriter = csv.writer(csvfile)

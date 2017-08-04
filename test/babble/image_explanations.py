@@ -61,6 +61,19 @@ points = [
         semantics=None),
 ]
 
+comparisons = [
+    Explanation(
+        condition="the top of box x is above the top of box y",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+    Explanation(
+        condition="the bottom of box y is below the bottom of box y",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+]
+
     # Explanation(
     #     condition="bottom edge of Box X is below bottom edge of Box Y",
     #     label=False,
@@ -73,4 +86,4 @@ points = [
     #     candidate=11,
     #     semantics=None),
 
-explanations = (edges + points)
+explanations = (edges + points + comparisons)

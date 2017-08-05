@@ -6,7 +6,7 @@ from itertools import product
 from six import StringIO
 from types import FunctionType
 
-from corenlp import CoreNLPHandler
+from snorkel.parser.spacy_parser import Spacy
 from rule import Rule
 from parse import Parse
 import utils
@@ -53,7 +53,7 @@ class Grammar(object):
         self.unary_rules = defaultdict(list)
         self.binary_rules = defaultdict(list)
         self.start_symbol = start_symbol
-        self.corenlp = CoreNLPHandler()
+        self.parser = Spacy()
         for rule in rules:
             self.add_rule(rule)
         print('Created grammar with %d rules' % \
@@ -67,11 +67,9 @@ class Grammar(object):
         :param string:
         """
         string = string.lower()
-        tokens = [t for t in self.corenlp.parse(string)] # Assumes a single sentence
-        # SPACY: (Couldn't use because doesn't normalize numbers)
-        # parse = self.parser.parse(None, string).next()
-        # tokens = map(lambda x: dict(zip(['word', 'pos', 'ner'], x)), 
-        #              zip(parse['words'], parse['pos_tags'], parse['entity_types']))
+        output = self.parser.parse(None, string).next()
+        tokens = map(lambda x: dict(zip(['word', 'pos', 'ner'], x)), 
+                     zip(output['words'], output['pos_tags'], output['ner_tags']))
         # Add start and stop after parsing to not confuse the CoreNLP parser
         start = {'word': '<START>', 'pos': '<START>', 'ner': '<START>'}
         stop = {'word': '<STOP>', 'pos': '<STOP>', 'ner': '<STOP>'}

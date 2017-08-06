@@ -512,7 +512,7 @@ class GridSearch(object):
 
             # Train the model
             if self.Y_train is not None:
-                self.model.train(self.X_train,self.Y_train, save_dir=save_dir, **model_hyperparams)
+                self.model.train(self.X_train, self.Y_train, save_dir=save_dir, **model_hyperparams)
             else:
                 self.model.train(self.X_train, save_dir=save_dir, **model_hyperparams)
 

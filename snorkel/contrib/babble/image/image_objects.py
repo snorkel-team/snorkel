@@ -2,12 +2,13 @@ import numpy as np
 import os
 import sys
 
-train_mscoco = np.load('./train_mscoco.npy')
-train_anns = np.load('./train_anns.npy')
-
 class Image_Candidate(object):
     
-    def __init__(self, idx=-1, coco_ids=train_mscoco, coco_anns=train_anns):
+    def __init__(self, idx=-1, coco_ids=None, coco_anns=None):
+        if not coco_ids:
+            coco_ids = np.load('./train_mscoco.npy')
+        if not coco_ans:
+            coco_anns = np.load('./train_anns.npy')
         if idx <= -1 or idx >= 903 :
             print 'Invalid Train Image Index'
         

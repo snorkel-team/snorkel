@@ -1,6 +1,5 @@
 from snorkel.contrib.babble import Explanation
-
-from temp_image_class import BBox
+from snorkel.contrib.babble.image import BBox
 
 # Box X = Person (category_id = 1)
 # Box Y = Bike (category_id = 2)
@@ -9,13 +8,20 @@ B = BBox({'bbox': (150, 150, 100, 100), 'category_id': 2}, None)
 C = BBox({'bbox': (300, 300, 50, 50), 'category_id': 2}, None)
 
 """
-----------
-| A       |
-|     ----|-----
-|    |    |    |
------|----     |
-     |       B |
-     __________
+
+
+        ----------
+        | A       |
+        |     ----|-----
+        |    |    |    |
+        -----|----     |
+             |       B |
+             __________
+
+
+                             ----
+                            | C  |
+                             ----
 """
 
 a_and_b = (A, B)

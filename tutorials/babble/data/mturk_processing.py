@@ -235,7 +235,8 @@ class MTurkHelper(object):
                         labels.append(field)
 
                 for (img_idx, p_idx, b_idx, explanation, label) in zip(img_indices, p_indices, b_indices, explanations, labels):
-                    candidate_tuple = create_candidate(img_idx, p_idx, b_idx)
+                    #candidate_tuple = create_candidate(img_idx, p_idx, b_idx)
+                    candidate_tuple = (img_idx, p_idx, b_idx)
                     label = label_converter[label.lower()]
                     if label is None:
                         exp = None
@@ -285,11 +286,12 @@ class MTurkHelper(object):
                     elif labels.count(option) >= np.floor(self.workers_per_hit/2.0 + 1):
                         consensus = option
                         num_majority += 1
-                #assert(consensus is not None)
-                #valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
-            # assert(all([len(responses) == self.workers_per_hit 
-            #     for responses in explanations_by_candidate.values()]))
-            #assert(num_unanimous + num_majority + num_split + num_bad == self.num_hits * self.candidates_per_hit)
+                     
+                assert(consensus is not None)
+                valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
+            assert(all([len(responses) == self.workers_per_hit 
+                 for responses in explanations_by_candidate.values()]))
+            assert(num_unanimous + num_majority + num_split + num_bad == self.num_hits * self.candidates_per_hit)
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
             print("Split: {}".format(num_split))

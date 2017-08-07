@@ -38,49 +38,49 @@ basic = [
         name='LF_spouse_between',
         condition="Label true because there is at least one spouse word in the words between arg 1 and arg 2",
         candidate=-7068856930834066321,
-        label=1,
+        label=True,
         semantics=None),
     Explanation(
         name='LF_spouse_to_left',
         condition="Label true because there is at least one spouse word within two words to the left of arg 1 or arg 2",
         candidate=164897408906223198,
-        label=1,
+        label=True,
         semantics=None),
     # Explanation(
     #     name='LF_same_last_name',
     #     condition="Label true because the last word of arg 1 is the same as the last word of arg 2",
     #     candidate=None
-    #     label=1,
+    #     label=True,
     #     semantics=None),        
     Explanation(
         name='LF_no_spouse_in_sentence',
         condition="Label false because there are no spouse words in the sentence",
         candidate=-2695529595395795063,
-        label=-1,
+        label=False,
         semantics=None),
     Explanation(
         name='LF_arg1_and_arg2_married',
         condition="Label true because the word 'and' is between arg 1 and arg 2 and 'married' is in the sentence",
         candidate=-4636660390324264964,
-        label=1,
+        label=True,
         semantics=None),
     Explanation(
         name='LF_family_between',
         condition="Label false because there is at least one family word between arg 1 and arg 2",
         candidate=4207243625790983703,
-        label=-1,
+        label=False,
         semantics=None),
     Explanation(
         name='LF_family_to_left',
         condition="Label false because there is at least one family word within three words to the left of arg 1 or arg 2",
         candidate=5598460573200470481,
-        label=-1,
+        label=False,
         semantics=None),
     Explanation(
         name='LF_other_between',
         condition="Label false because there is an other word between arg 1 and arg 2",
         candidate=8943619341736037326,
-        label=-1,
+        label=False,
         semantics=None),
 ]
 
@@ -89,13 +89,13 @@ distant = [
             name='LF_distant',
             condition="Label true because either the pair of arg 1 and arg 2 or the pair arg 2 and arg 1 is in known_spouses",
             candidate=-2597662937532403956,
-            label=1,
+            label=True,
             semantics=None),    
     # Explanation(
     #         name='LF_distant_last_names',
     #         condition="Label true because the arg 1 is not arg 2 and the pair of the last word of arg 1 and the last word of arg 2 is in last_names or the pair of the last word of arg 2 and the last word of arg 1 is in last_names",
     #         candidate=6734564861298611614,
-    #         label=1,
+    #         label=True,
     #         semantics=None),    
 ]
 
@@ -104,19 +104,19 @@ additional = [
         name='LF_too_far_apart',
         condition="Label false because the number of words between arg 1 and arg 2 is larger than 10",
         candidate=-350026044943837397,
-        label=-1,
+        label=False,
         semantics=None),
     Explanation(
         name='LF_third_wheel',
         condition="Label false because there is a person between arg 1 and arg 2",
         candidate=4045249959449521689,
-        label=-1,
+        label=False,
         semantics=None),
     Explanation(
         name='LF_identical_args',
         condition="Label false because arg 1 is identical to arg 2",
         candidate=-8721107193035604739,
-        label=-1,
+        label=False,
         semantics=None),
 ]
 

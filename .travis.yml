@@ -67,7 +67,8 @@ script:
 
   # Run test modules
   - python test/babble/test_babble_core.py
-  # - python test/babble/test_babble_image.py
+  - python test/babble/test_babble_text.py
+  - python test/babble/test_babble_image.py
 
   - python test/learning/test_gen_learning.py
   - python test/learning/test_supervised.py

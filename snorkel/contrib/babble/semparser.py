@@ -1,11 +1,10 @@
 import matplotlib.pyplot as plt
 from pandas import DataFrame, Series
 
-from core import core_grammar
+from core import core_grammar, sem_to_str
 from text import text_grammar
 from image import image_grammar
 from grammar import Grammar, validate_semantics
-from snorkel_grammar import sem_to_str  # core_rules, snorkel_ops,
 
 class Explanation(object):
     def __init__(self, condition, label, candidate=None, name=None, 

@@ -102,23 +102,30 @@ class Babbler(object):
             raise Exception("Could not find lfs.")
         explanation_dict = {}
         for exp in self.explanations:
-            if not isinstance(exp.candidate, self.candidate_class):
+            if exp.candidate and not isinstance(exp.candidate, self.candidate_class):
                 raise TypeError("Expected type {}, got {} for candidate {}.".format(
                     self.candidate_class, type(exp.candidate), candidate))
             explanation_dict[exp.name] = exp
         consistent = []
         inconsistent = []
+        unknown = []
         for parse in self.parses:
             lf = parse.function
             exp_name = extract_exp_name(lf)
             exp = explanation_dict[exp_name]
-            if lf(exp.candidate):
-                consistent.append(parse)
+            if exp.candidate:
+                if lf(exp.candidate):
+                    consistent.append(parse)
+                else:
+                    inconsistent.append(parse)
             else:
-                inconsistent.append(parse)
+                unknown.append(parse)
+        if unknown:
+            print("Note: {} LFs did not have candidates and therefore could "
+                  "not be filtered.".format(len(unknown)))
         print("Filtered to {} LFs with consistency filter ({} filtered).".format(
-            len(consistent), len(inconsistent)))
-        self.parses = consistent
+            len(consistent) + len(unknown), len(inconsistent)))
+        self.parses = consistent + unknown
         self.lfs = [parse.function for parse in self.parses]
 
     def generate_label_matrix(self, split=0, parallelism=1):

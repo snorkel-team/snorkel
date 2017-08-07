@@ -34,12 +34,12 @@ def get_user_lists():
     return user_lists
 
 basic = [
-    Explanation(
-        name='LF_spouse_between',
-        condition="Label true because there is at least one spouse word in the words between arg 1 and arg 2",
-        candidate=-7068856930834066321,
-        label=True,
-        semantics=None),
+    # Explanation(
+    #     name='LF_spouse_between',
+    #     condition="Label true because there is at least one spouse word in the words between arg 1 and arg 2",
+    #     candidate=-7068856930834066321,
+    #     label=True,
+    #     semantics=None),
     Explanation(
         name='LF_spouse_to_left',
         condition="Label true because there is at least one spouse word within two words to the left of arg 1 or arg 2",
@@ -64,12 +64,12 @@ basic = [
         candidate=-4636660390324264964,
         label=True,
         semantics=None),
-    Explanation(
-        name='LF_family_between',
-        condition="Label false because there is at least one family word between arg 1 and arg 2",
-        candidate=4207243625790983703,
-        label=False,
-        semantics=None),
+    # Explanation(
+    #     name='LF_family_between',
+    #     condition="Label false because there is at least one family word between arg 1 and arg 2",
+    #     candidate=4207243625790983703,
+    #     label=False,
+    #     semantics=None),
     Explanation(
         name='LF_family_to_left',
         condition="Label false because there is at least one family word within three words to the left of arg 1 or arg 2",

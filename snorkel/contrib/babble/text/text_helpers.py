@@ -3,6 +3,20 @@ from collections import namedtuple
 fields = ['words', 'char_offsets', 'word_offsets', 'pos_tags', 'ner_tags', 'entity_types', 'text']
 Phrase = namedtuple('Phrase', fields)
 
+# class Phrase(object):
+#     def __init__(self, words, char_offsets, word_offsets, pos_tags, ner_tags,
+#                  entity_types, text):
+#         self.words = words
+#         self.char_offsets = char_offsets
+#         self.word_offsets = word_offsets
+#         self.pos_tags = pos_tags
+#         self.ner_tags = ner_tags
+#         self.entity_types = entity_types
+#         self.text = text
+
+#     def __hash__(self):
+#         return hash(self.text)
+
 inequalities = {
     '.lt': lambda x, y: x < y,
     '.leq': lambda x, y: x <= y,

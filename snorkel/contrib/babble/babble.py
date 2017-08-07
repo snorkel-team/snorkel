@@ -24,7 +24,7 @@ from snorkel.annotations import LabelAnnotator
 
 class Babbler(object):
     # TODO: convert to UDFRunner 
-    def __init__(self, candidate_class, explanations=[], exp_names=[], user_lists={}, 
+    def __init__(self, mode, candidate_class=None, explanations=[], exp_names=[], user_lists={}, 
                  do_filter_duplicate_semantics=True, 
                  do_filter_consistency=True, 
                  do_filter_duplicate_signatures=True, 
@@ -32,7 +32,7 @@ class Babbler(object):
                  verbose=True):
         self.candidate_class = candidate_class
         self.user_lists = user_lists
-        self.semparser = SemanticParser(candidate_class=candidate_class, user_lists=user_lists)
+        self.semparser = SemanticParser(mode=mode, candidate_class=candidate_class, user_lists=user_lists)
         self.semparser.name_explanations(explanations, exp_names)
         if len(explanations) != len(set([exp.name for exp in explanations])):
             raise Exception("All Explanations must have unique names.")

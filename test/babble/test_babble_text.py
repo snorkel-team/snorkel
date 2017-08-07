@@ -40,7 +40,8 @@ class TestBabbleText(unittest.TestCase):
         # [Pernilla Ammann], bought the 15-bedroom mansion on Balmoral Drive in 
         # the upscale historic neighborhood on July 31."
 
-        cls.sp = SemanticParser(candidate_class=Spouse, 
+        cls.sp = SemanticParser(mode='text',
+                                candidate_class=Spouse, 
                                 user_lists=text_explanations.get_user_lists(), 
                                 beam_width=10, 
                                 top_k=-1)

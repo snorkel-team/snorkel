@@ -21,7 +21,9 @@ class SemanticParser(object):
     def __init__(self, mode='text', candidate_class=None, user_lists={}, 
             beam_width=10, top_k=-1):
         grammar_mixins = [core_grammar]
-        if mode == 'text':
+        if mode == 'core':
+            pass
+        elif mode == 'text':
             grammar_mixins.append(text_grammar)
         elif mode == 'image':
             grammar_mixins.append(image_grammar)

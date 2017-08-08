@@ -19,12 +19,12 @@ lexical_rules = (
     [Rule('$Above', w, '.above') for w in ['above', 'on top of']] +
     [Rule('$Left', w, '.left') for w in ['left']] +
     [Rule('$Right', w, '.right') for w in ['right']] +
-    [Rule('$Near', w, '.near') for w in ['near', 'nearby', 'close']] +
+    [Rule('$Near', w, '.near') for w in ['near', 'nearby', 'close', 'over']] +
     [Rule('$Far', w, '.far') for w in ['far', 'distant']] +
 
     [Rule('$Smaller', w, '.smaller') for w in ['smaller', 'tinier']] +
     [Rule('$Larger', w, '.larger') for w in ['larger', 'bigger']] +
-    [Rule('$Within', w, '.within') for w in ['within', 'inside']] 
+    [Rule('$Within', w, '.within') for w in ['within', 'inside', 'encloses', 'enclosed', 'enveloped', 'envelopes', 'includes']] 
 )
 
 unary_rules = [

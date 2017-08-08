@@ -152,55 +152,19 @@ class CDRModel(SnorkelModel):
             print("Running generate_lfs() first...")
             self.generate_lfs()
 
-        while True:
-            labeler = LabelAnnotator(f=self.LFs)
-            for split in self.config['splits']:
-                if split==TEST:
-                    continue
-                nCandidates = self.session.query(self.candidate_class).filter(self.candidate_class.split == split).count()
-                if nCandidates > 0:
-                    L = SnorkelModel.label(self, labeler, split)
-                    if split==TRAIN:
-                        L_train = L
-                    nCandidates, nLabels = L.shape
-                    if self.config['verbose']:
-                        print("\nLabeled split {}: ({},{}) sparse (nnz = {})".format(split, nCandidates, nLabels, L.nnz))
-                        training_set_summary_stats(L, return_vals=False, verbose=True)
-            self.labeler = labeler
+        labeler = LabelAnnotator(f=self.LFs)
+        for split in self.config['splits']:
+            if split==TEST:
+                continue
+            nCandidates = self.session.query(self.candidate_class).filter(self.candidate_class.split == split).count()
+            if nCandidates > 0:
+                L = SnorkelModel.label(self, labeler, split)
+                if split==TRAIN:
+                    L_train = L
+                nCandidates, nLabels = L.shape
+                if self.config['verbose']:
+                    print("\nLabeled split {}: ({},{}) sparse (nnz = {})".format(split, nCandidates, nLabels, L.nnz))
+                    training_set_summary_stats(L, return_vals=False, verbose=True)
+        self.labeler = labeler
 
-            lf_useless = set()
-            if self.config['filter_uniform_labels']:
-                for i in range(L_train.shape[1]):
-                    if abs(np.sum(L_train[:,i])) == L_train.shape[0]:
-                        lf_useless.add(self.LFs[i])
-                
-            lf_twins = set()
-            if self.config['filter_redundant_signatures']:
-                signatures = set()
-                L_train_coo = coo_matrix(L_train)
-                row = L_train_coo.row
-                col = L_train_coo.col
-                data = L_train_coo.data
-                for i in range(L_train.shape[1]):
-                    signature = hash((hash(tuple(row[col==i])),hash(tuple(data[col==i]))))
-                    if signature in signatures:
-                        lf_twins.add(self.LFs[i])
-                    else:
-                        signatures.add(signature)
-                lf_twins = lf_twins.difference(lf_useless)
-            
-            """
-            NOTE: This method of removal is a total hack. Far better would be
-            to create a sane slice method for the csr_AnnotationMatrix class and
-            use that to simply slice only the relevant LFs.
-            """
-            lf_remove = lf_useless.union(lf_twins)
-            if len(lf_remove) == 0:
-                break
-            else:
-                print("Uniform labels filter found {} LFs".format(len(lf_useless)))
-                print("Redundant signature filter found {} LFs".format(len(lf_twins)))
-                self.LFs = [lf for lf in self.LFs if lf not in lf_remove]
-                print("Filters removed a total of {} LFs".format(len(lf_remove)))
-                print("Running label step again with {} LFs...\n".format(len(self.LFs)))
 

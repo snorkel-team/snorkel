@@ -29,7 +29,7 @@ def shuffle_lists(a, b):
 
 
 class MTurkHelper(object):
-    def __init__(self, candidates, labels=[], num_hits=25, candidates_per_hit=4, 
+    def __init__(self, candidates, labels=[], num_hits=None, candidates_per_hit=4, 
         workers_per_hit=3, shuffle=True, pct_positive=None, seed=1234, domain=None, 
         anns_path='/dfs/scratch0/paroma/coco/annotations/train_anns.npy'):
         random.seed(seed)
@@ -271,7 +271,6 @@ class MTurkHelper(object):
             # Filter and merge data
             num_unanimous = 0
             num_majority = 0
-            num_split = 0
             num_bad = 0
             valid_explanations = []
             for _, explanations in explanations_by_candidate.items():
@@ -293,25 +292,15 @@ class MTurkHelper(object):
                 valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
             assert(all([len(responses) == self.workers_per_hit 
                  for responses in explanations_by_candidate.values()]))
-            assert(num_unanimous + num_majority + num_split + num_bad == self.num_hits * self.candidates_per_hit)
+            if self.num_hits:
+                assert(num_unanimous + num_majority + num_bad == self.num_hits * self.candidates_per_hit)
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
-            print("Split: {}".format(num_split))
             print("Bad: {}".format(num_bad))
 
-            # Link candidates
             return valid_explanations
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     def postprocess(self, csvpath, candidates=None, verbose=False):
         """
         Assumptions:
@@ -397,15 +386,25 @@ class MTurkHelper(object):
                     for exp in explanations_by_candidate[stable_id]:
                         if exp is not None:
                             exp.candidate = candidate
+            unlinked = 0
+            total = 0
             if candidates:
-                for exp in itertools.chain(explanations_by_candidate.values()[0]):
-                    if isinstance(exp.candidate, basestring):
-                        raise Exception("Could not find candidate for explanation {}".format(exp))
+                for exp_list in itertools.chain(explanations_by_candidate.values()):
+                    for exp in exp_list:
+                        if exp is None:
+                            continue
+                        total +=1
+                        if isinstance(exp.candidate, basestring):
+                            unlinked += 1
+            if unlinked:
+                print("Warning: {} out of {} non-None explanations could not be "
+                    "linked to candidates.".format(unlinked, total))
+                if unlinked == total:
+                    raise Exception("Candidate linking failed.")
 
             # Filter and merge data
             num_unanimous = 0
             num_majority = 0
-            num_split = 0
             num_bad = 0
             valid_explanations = []
             for _, explanations in explanations_by_candidate.items():
@@ -425,11 +424,12 @@ class MTurkHelper(object):
                 valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
             # assert(all([len(responses) == self.workers_per_hit 
             #     for responses in explanations_by_candidate.values()]))
-            assert(num_unanimous + num_majority + num_split + num_bad == self.num_hits * self.candidates_per_hit)
+            if self.num_hits:
+                assert(num_unanimous + num_majority + num_bad == self.num_hits * self.candidates_per_hit)
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
-            print("Split: {}".format(num_split))
             print("Bad: {}".format(num_bad))
 
             # Link candidates
+            print("Total explanations: {}".format(len(valid_explanations)))
             return valid_explanations

@@ -12,6 +12,7 @@ from scipy.sparse import coo_matrix
 # Snorkel
 from snorkel.models import Document, Sentence, candidate_subclass
 from snorkel.parser import CorpusParser, TSVDocPreprocessor, XMLMultiDocPreprocessor
+from snorkel.parser.spacy_parser import Spacy
 from snorkel.candidates import Ngrams, CandidateExtractor
 from snorkel.matchers import PersonMatcher
 from snorkel.annotations import (FeatureAnnotator, LabelAnnotator, 
@@ -20,6 +21,8 @@ from snorkel.learning import GenerativeModel, SparseLogisticRegression
 from snorkel.learning import RandomSearch, ListParameter, RangeParameter
 from snorkel.learning.utils import MentionScorer, training_set_summary_stats
 from snorkel.learning.structure import DependencySelector
+from snorkel.learning.disc_models.rnn import reRNN
+
 
 TRAIN = 0
 DEV = 1
@@ -41,8 +44,12 @@ class SnorkelModel(object):
         self.labeler = None
         self.featurizer = None
 
-    def parse(self, doc_preprocessor, fn=None, clear=True):
-        corpus_parser = CorpusParser(fn=fn)
+    def get_candidates(split):
+        self.session.query(self.candidate_class).filter(
+                self.candidate_class.split == split).order_by(self.candidate_class.id).all()
+
+    def parse(self, doc_preprocessor, parser=Spacy(), fn=None, clear=True):
+        corpus_parser = CorpusParser(parser=parser, fn=fn)
         corpus_parser.apply(doc_preprocessor, count=doc_preprocessor.max_docs, 
                             parallelism=self.config['parallelism'], clear=clear)
         if self.config['verbose']:
@@ -80,7 +87,7 @@ class SnorkelModel(object):
             self.config = config
 
         if not self.labeler:
-            self.labeler = LabelAnnotator(f=None)
+            self.labeler = LabelAnnotator(lfs=None)
         L_train = self.labeler.load_matrix(self.session, split=TRAIN)
 
         if self.config['traditional']:
@@ -102,13 +109,13 @@ class SnorkelModel(object):
             
                 gen_model = GenerativeModel(lf_propensity=True)
                 gen_model.train(
-                    L_train, deps=deps, epochs=20, decay=0.95, 
-                    step_size=0.1/L_train.shape[0], init_acc=2.0, reg_param=0.0)
+                    L_train, deps=deps, epochs=100, decay=0.95, 
+                    step_size=0.1/L_train.shape[0], reg_param=1e-6)
 
                 train_marginals = gen_model.marginals(L_train)
                 
             if self.config['majority_vote']:
-                self.LF_stats = None
+                self.lf_stats = None
             else:
                 if self.config['verbose']:
                     if self.config['empirical_from_train']:
@@ -117,7 +124,7 @@ class SnorkelModel(object):
                     else:
                         L = self.labeler.load_matrix(self.session, split=DEV)
                         L_gold = load_gold_labels(self.session, annotator_name='gold', split=DEV)
-                    self.LF_stats = L.lf_stats(self.session, L_gold, gen_model.weights.lf_accuracy())
+                    self.lf_stats = L.lf_stats(self.session, L_gold, gen_model.weights.lf_accuracy())
                     if self.config['display_correlation']:
                         self.display_accuracy_correlation()
             
@@ -143,7 +150,7 @@ class SnorkelModel(object):
         if TEST in self.config['splits']:
             L_gold_test = load_gold_labels(self.session, annotator_name='gold', split=TEST)
 
-        if self.config['model']=='logreg':
+        if self.config['disc_model']=='logreg':
             disc_model = SparseLogisticRegression()
             self.model = disc_model
 
@@ -162,7 +169,7 @@ class SnorkelModel(object):
                 train_marginals = train_marginals[:train_size]
                 print("Using {0} hard-labeled examples for supervision\n".format(train_marginals.shape[0]))
 
-            if self.config['n_search'] > 1:
+            if self.config['num_search'] > 1:
                 lr_min, lr_max = min(self.config['lr']), max(self.config['lr'])
                 l1_min, l1_max = min(self.config['l1_penalty']), max(self.config['l1_penalty'])
                 l2_min, l2_max = min(self.config['l2_penalty']), max(self.config['l2_penalty'])
@@ -173,11 +180,11 @@ class SnorkelModel(object):
                 searcher = RandomSearch(self.session, disc_model, 
                                         F_train, train_marginals, 
                                         [lr_param, l1_param, l2_param], 
-                                        n=self.config['n_search'])
+                                        n=self.config['num_search'])
 
                 print("\nRandom Search:")
                 search_stats = searcher.fit(F_dev, L_gold_dev, 
-                                            n_epochs=self.config['n_epochs'], 
+                                            n_epochs=self.config['num_epochs'], 
                                             rebalance=self.config['rebalance'],
                                             print_freq=self.config['print_freq'],
                                             seed=self.config['seed'])
@@ -195,7 +202,7 @@ class SnorkelModel(object):
                                  lr=lr, 
                                  l1_penalty=l1_penalty, 
                                  l2_penalty=l2_penalty,
-                                 n_epochs=self.config['n_epochs'], 
+                                 n_epochs=self.config['num_epochs'], 
                                  rebalance=self.config['rebalance'],
                                  seed=self.config['seed'])
             
@@ -207,14 +214,40 @@ class SnorkelModel(object):
                 print("\nTest:")
                 TP, FP, TN, FN = disc_model.score(self.session, F_test, L_gold_test, train_marginals=train_marginals, b=self.config['b'])
 
+        elif self.config['disc_model'] == 'lstm':
+            print("Warning: LSTM params are currently hardcoded!")
+            train_cands = self.get_candidates(TRAIN)
+            dev_cands = self.get_candidates(DEV)
+            test_cands = self.get_candidates(TEST)
+            
+            train_kwargs = {
+                'lr':         0.01,
+                'dim':        50,
+                'n_epochs':   10,
+                'dropout':    0.25,
+                'print_freq': 1,
+                'max_sentence_length': 100
+            }
+            lstm = reRNN(seed=1701, n_threads=None)
+            lstm.train(train_cands, train_marginals, X_dev=dev_cands, Y_dev=L_gold_dev, **train_kwargs)
+
+            if TEST in self.config['splits']:
+                print("\nTest:")
+                p, r, f1 = lstm.score(test_cands, L_gold_test)
+                print("Prec: {0:.3f}, Recall: {1:.3f}, F1 Score: {2:.3f}".format(p, r, f1))
+
+                tp, fp, tn, fn = lstm.error_analysis(self.session, test_cands, L_gold_test)
+
+            self.disc_model = lstm
+
         else:
             raise NotImplementedError
 
     def display_accuracy_correlation(self):
         """Displays ..."""
-        empirical = self.LF_stats['Empirical Acc.'].get_values()
-        learned = self.LF_stats['Learned Acc.'].get_values()
-        conflict = self.LF_stats['Conflicts'].get_values()
+        empirical = self.lf_stats['Empirical Acc.'].get_values()
+        learned = self.lf_stats['Learned Acc.'].get_values()
+        conflict = self.lf_stats['Conflicts'].get_values()
         N = len(learned)
         colors = np.random.rand(N)
         area = np.pi * (30 * conflict)**2  # 0 to 30 point radii
@@ -234,17 +267,17 @@ class SnorkelModel(object):
         if not self.lfs:
             self.generate_lfs()
             print("Running generate_lfs() first...")   
-        LF_names = {i:lf.__name__ for i, lf in enumerate(self.lfs)}
+        lf_names = {i:lf.__name__ for i, lf in enumerate(self.lfs)}
         deps_decoded = []
         for dep in deps_encoded:
             (lf1, lf2, d) = dep
-            deps_decoded.append((LF_names[lf1], LF_names[lf2], dep_names[d]))
+            deps_decoded.append((lf_names[lf1], lf_names[lf2], dep_names[d]))
         for dep in sorted(deps_decoded):
             (lf1, lf2, d) = dep
             print('{:16}: ({}, {})'.format(d, lf1, lf2))
 
             # lfs = sorted([lf1, lf2])
-            # deps_decoded.append((LF_names[lfs[0]], LF_names[lfs[1]], dep_names[d]))
+            # deps_decoded.append((lf_names[lfs[0]], lf_names[lfs[1]], dep_names[d]))
         # for dep in sorted(list(set(deps_decoded))):
         #     (lf1, lf2, d) = dep
         #     print('{:16}: ({}, {})'.format(d, lf1, lf2))

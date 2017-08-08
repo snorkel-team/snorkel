@@ -1,13 +1,13 @@
 configuration = {
-    # General
+    # GENERAL
     'domain': None,
     'parallelism': 1,
-    'max_docs': 1500,
-    'splits': [0,1],
+    'max_docs': None,
+    'splits': [0, 1, 2],
     'verbose': True,
     'seed': 0,
 
-    # Supervision
+    # SUPERVISON
     # source
     'source': 'py', # {'py', 'nl'}
     'include': ['correct', 'passing'],
@@ -15,11 +15,6 @@ configuration = {
     # settings
     'model_dep': False,
     'majority_vote': False,
-    # filters
-    'beam_width': 10,
-    'top_k': -1,
-    'filter_redundant_signatures': True,
-    'filter_uniform_labels': True,
     # restrictions
     'max_lfs': None,
     'max_train': None,
@@ -33,13 +28,21 @@ configuration = {
     # testing
     'traditional': False, # e.g, 1000
     'empirical_from_train': False,
-    # babbler
-    'babbler_split': 0,
 
-    # Classification,
-    'model': 'logreg',
-    'n_search': 10,
-    'n_epochs': 50,
+    # BABBLER
+    'babbler_split': 1,
+    'beam_width': 10,
+    'top_k': -1,
+    # filters
+    'do_filter_duplicate_semantics': True, 
+    'do_filter_consistency': True, 
+    'do_filter_duplicate_signatures': True, 
+    'do_filter_uniform_signatures': True,
+
+    # CLASSIFICATION,
+    'disc_model': 'lstm',
+    'num_search': 10,
+    'num_epochs': 50,
     'rebalance': True,
     'b': 0.5,
     'lr': [1e-5, 1e-2],

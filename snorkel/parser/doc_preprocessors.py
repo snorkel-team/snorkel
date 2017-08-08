@@ -37,7 +37,7 @@ class DocPreprocessor(object):
                 for doc, text in self.parse_file(fp, file_name):
                     yield doc, text
                     doc_count += 1
-                    if doc_count >= self.max_docs:
+                    if self.max_docs and doc_count >= self.max_docs:
                         return
 
     def __iter__(self):

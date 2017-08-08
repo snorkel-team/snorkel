@@ -6,6 +6,7 @@ from snorkel.contrib.babble.image import BBox
 A = BBox({'bbox': (100, 100, 100, 100), 'category_id': 1}, None)
 B = BBox({'bbox': (150, 150, 100, 100), 'category_id': 2}, None)
 C = BBox({'bbox': (300, 300, 50, 50), 'category_id': 2}, None)
+D = BBox({'bbox': (250, 250, 200, 200), 'category_id': 1}, None)
 
 """
 
@@ -18,14 +19,18 @@ C = BBox({'bbox': (300, 300, 50, 50), 'category_id': 2}, None)
              |       B |
              __________
 
-
-                             ----
-                            | C  |
-                             ----
+                       -----------------
+                       | D             |
+                       |      ----     |
+                       |     | C  |    |
+                       |      ----     |
+                       -----------------
+      
 """
 
 a_and_b = (A, B)
 a_and_c = (A, C)
+d_and_c = (D,C)
 
 
 edges = [
@@ -179,6 +184,36 @@ quantified = [
     #     label=True,
     #     candidate=a_and_c,
     #     semantics=None),
+    # Taller
+    Explanation(
+        condition="box x is taller than box y",
+        label=True,
+        candidate=a_and_c,
+        semantics=None),
+    # Skinnier
+    Explanation(
+        condition="box y is skinnier than box x",
+        label=True,
+        candidate=a_and_c,
+        semantics=None),
+    # Overlaps (0.25 thresh)
+    Explanation(
+        condition="box x overlaps with box y",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+    # Within
+    Explanation(
+        condition="box y is within with box x",
+        label=True,
+        candidate=d_and_c,
+        semantics=None),
+    # Surrounds
+    Explanation(
+        condition="box x surrounds box y",
+        label=True,
+        candidate=d_and_c,
+        semantics=None),
 ]
 
 explanations = (edges + points + comparisons + boxes + quantified)

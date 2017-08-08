@@ -39,30 +39,30 @@ logic = [
         label=True,
         candidate=('foo', 'bar'),
         semantics=None),
-    # Not function
-    Explanation(
-        condition="'blue' is not in all caps",
-        label=True,
-        candidate=('foo', 'bar'),
-        semantics=None),
-    # All
-    Explanation(
-        condition='all of the colors are lowercase',
-        label=True,
-        candidate=('foo', 'bar'),
-        semantics=None),
-    # Any
-    Explanation(
-        condition='any of the letters are lowercase',
-        label=True,
-        candidate=('foo', 'bar'),
-        semantics=None),
-    # None
-    Explanation(
-        condition='none of the smalls are capitalized',
-        label=True,
-        candidate=('foo', 'bar'),
-        semantics=None),                
+    # # Not function
+    # Explanation(
+    #     condition="'blue' is not in all caps",
+    #     label=True,
+    #     candidate=('foo', 'bar'),
+    #     semantics=None),
+    # # All
+    # Explanation(
+    #     condition='all of the colors are lowercase',
+    #     label=True,
+    #     candidate=('foo', 'bar'),
+    #     semantics=None),
+    # # Any
+    # Explanation(
+    #     condition='any of the letters are lowercase',
+    #     label=True,
+    #     candidate=('foo', 'bar'),
+    #     semantics=None),
+    # # None
+    # Explanation(
+    #     condition='none of the smalls are capitalized',
+    #     label=True,
+    #     candidate=('foo', 'bar'),
+    #     semantics=None),                
 ]
 
 grouping = [

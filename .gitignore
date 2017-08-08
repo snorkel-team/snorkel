@@ -38,3 +38,7 @@ tutorials/intro/data/articles-train.tsv
 tutorials/intro/data/gold_labels.tsv
 
 tutorials/tables/data/hardware/
+
+#Babble Labble Image
+*.csv
+*.log

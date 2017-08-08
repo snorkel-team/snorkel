@@ -8,7 +8,7 @@ from snorkel.parser import TSVDocPreprocessor
 from tutorials.intro import load_external_labels, number_of_people
 
 from snorkel.contrib.babble import Babbler
-from babble_model import BabbleModel
+from snorkel.contrib.babble.models import BabbleModel
 
 class SpouseModel(BabbleModel):
     def parse(self, 

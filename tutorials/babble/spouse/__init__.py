@@ -1,0 +1,1 @@
+from spouse_model import SpouseModel

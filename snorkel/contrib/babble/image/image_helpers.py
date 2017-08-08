@@ -1,6 +1,6 @@
 import numpy as np
 
-from image_objects import Point
+from image_objects import Point, BBox
 # Point takes in x and y (left/right and top/bottom)
 
 # Extractor Helper Functions
@@ -39,31 +39,47 @@ def extract_center(bbox):
     coordy = (getattr(bbox, 'top') + getattr(bbox, 'bottom'))/2.0
     return Point(coordx, coordy)
 
+
+def geoms_to_points(geoms, side):
+    for i, geom in enumerate(geoms):
+        if isinstance(geom, BBox):
+            if side == 'center':
+                geoms[i] = extract_center(geom)
+            else:
+                geoms[i] = extract_edge(geom, side)
+    return geoms
+
+
   
 # Point Comparison Helper Functions
-def is_below(point1, point2):
+def is_below(geom1, geom2):
+    point1, point2 = geoms_to_points([geom1, geom2], 'bottom')
     if None in (point1.y, point2.y):
         raise Exception('Invalid Comparison')
     else:
         return point1.y > point2.y
 
 
-def is_above(point1, point2):
+def is_above(geom1, geom2):
+    point1, point2 = geoms_to_points([geom1, geom2], 'top')
     return not is_below(point1, point2)
 
 
-def is_right(point1, point2):
+def is_right(geom1, geom2):
+    point1, point2 = geoms_to_points([geom1, geom2], 'right')
     if None in (point1.x, point2.x):
         raise Exception('Invalid Comparison')
     else:
         return point1.x > point2.x
 
 
-def is_left(point1, point2):
+def is_left(geom1, geom2):
+    point1, point2 = geoms_to_points([geom1, geom2], 'left')
     return not is_right(point1, point2)
 
 
-def is_near(point1, point2, thresh=30.0):
+def is_near(geom1, geom2, thresh=30.0):
+    point1, point2 = geoms_to_points([geom1, geom2], 'center')
     coord1 = (point1.x, point1.y)
     coord2 = (point2.x, point2.y)
     
@@ -74,19 +90,33 @@ def is_near(point1, point2, thresh=30.0):
         return dist <= thresh
 
 
-def is_far(point1, point2):
-    return not is_near(point1, point2, thresh=100.0)
+def is_far(geom1, geom2):
+    return not is_near(geom1, geom2, thresh=100.0)
 
 
 # BBox Comparison Helper Functions
-def is_aligned(bbox1, bbox2, thresh=10.):
-    thresh = 10
+def is_smaller(bbox1, bbox2, mult=1.0):
+    return bbox1.area() < bbox2.area() / mult
+
+
+def is_larger(bbox1, bbox2, mult=1.0):
+    return bbox1.area() > bbox2.area() * mult
 
 
 def is_within(bbox1, bbox2):
-    pass
+    if bbox1.area() > bbox2.area():
+        return False
+    return (
+        is_below(bbox2, bbox1) and 
+        is_above(bbox2, bbox1) and 
+        is_right(bbox2, bbox1) and 
+        is_left(bbox2, bbox1))
 
-  
+def is_aligned(bbox1, bbox2, thresh=10.):
+    thresh = 10
+    raise NotImplementedError
+
+
 helpers = {
     'extract_edge': extract_edge, 
     'extract_corner': extract_corner, 
@@ -97,6 +127,8 @@ helpers = {
     'is_left': is_left, 
     'is_near': is_near, 
     'is_far': is_far, 
+    'is_smaller': is_smaller,
+    'is_larger': is_larger,
     'is_aligned': is_aligned, 
     'is_within': is_within, 
 }

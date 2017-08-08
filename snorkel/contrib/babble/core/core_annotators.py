@@ -25,7 +25,6 @@ class IntegerAnnotator(Annotator):
                     try:
                         value = text2int(token)
                     except:
-                        import pdb; pdb.set_trace()
                         pass
                 if value:
                     return [('$Int', ('.int', value))]

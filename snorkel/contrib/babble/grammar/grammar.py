@@ -35,7 +35,6 @@ class Grammar(object):
             self.ops.update(base.ops)
             self.helpers.update(base.helpers)
             self.annotators += base.annotators
-       
         # Add candidate-specific rules and user_lists
         if candidate_class:
             for i, arg in enumerate(candidate_class.__argnames__):

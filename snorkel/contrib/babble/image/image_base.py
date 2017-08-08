@@ -12,6 +12,9 @@ lexical_rules = (
     [Rule('$LeftEdge', w, ('.string', 'left')) for w in ['left']] +
     [Rule('$RightEdge', w, ('.string', 'right')) for w in ['right']] +
 
+    [Rule('$Center', w, '.center') for w in ['center', 'middle']] +
+    [Rule('$Corner', w, '.corner') for w in ['corner']] +
+
     [Rule('$Below', w, '.below') for w in ['below', 'under']] +
     [Rule('$Above', w, '.above') for w in ['above', 'on top of']] +
     [Rule('$Left', w, '.left') for w in ['left']] +
@@ -19,8 +22,9 @@ lexical_rules = (
     [Rule('$Near', w, '.near') for w in ['near', 'nearby', 'close']] +
     [Rule('$Far', w, '.far') for w in ['far', 'distant']] +
 
-    [Rule('$Center', w, '.center') for w in ['center', 'middle']] +
-    [Rule('$Corner', w, '.corner') for w in ['corner']]
+    [Rule('$Smaller', w, '.smaller') for w in ['smaller', 'tinier']] +
+    [Rule('$Larger', w, '.larger') for w in ['larger', 'bigger']] +
+    [Rule('$Within', w, '.within') for w in ['within', 'inside']] 
 )
 
 unary_rules = [
@@ -37,6 +41,10 @@ unary_rules = [
     Rule('$PointCompare', '$Right', sems0),
     Rule('$PointCompare', '$Near', sems0),
     Rule('$PointCompare', '$Far', sems0),
+
+    Rule('$BoxCompare', '$Smaller', sems0),
+    Rule('$BoxCompare', '$Larger', sems0),
+    Rule('$BoxCompare', '$Within', sems0),
 ]
     
 compositional_rules = [
@@ -45,8 +53,13 @@ compositional_rules = [
     Rule('$Point', '$Center $Bbox', lambda (side, bbox): ('.center', bbox)),
     Rule('$Point', '$Side $Side $Corner $Bbox', lambda (s1, s2, _, bbox): ('.corner', bbox, s1, s2)),
     
-    Rule('$PointToBool', '$PointCompare $Point', sems_in_order),
-    Rule('$Bool', '$Point $PointToBool', lambda (geom, cmp): ('.call', cmp, geom)),
+    Rule('$PointToBool', '$PointCompare $Point', sems_in_order), # "is below the center of Box X"
+    Rule('$PointToBool', '$PointCompare $Bbox', sems_in_order), # "is below Box X (use smart edge choice)"
+    Rule('$Bool', '$Point $PointToBool', lambda (point, cmp): ('.call', cmp, point)),
+
+    Rule('$BboxToBool', '$PointCompare $Bbox', sems_in_order), # "is below Box X (use smart edge choice)"
+    Rule('$BboxToBool', '$BoxCompare $Bbox', sems_in_order), # "is smaller than Box X"
+    Rule('$Bool', '$Bbox $BboxToBool', lambda (point, cmp): ('.call', cmp, point)),
 ]
 
 rules = lexical_rules + unary_rules + compositional_rules
@@ -64,6 +77,10 @@ ops = {
     '.right': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_right'](g1(c1), g2(c2)),
     '.near': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_near'](g1(c1), g2(c2)),
     '.far': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_far'](g1(c1), g2(c2)),
+
+    '.smaller': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_smaller'](g1(c1), g2(c2)),
+    '.larger': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_larger'](g1(c1), g2(c2)),
+    '.within': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_within'](g1(c1), g2(c2)),
 }
 
 image_grammar = GrammarMixin(

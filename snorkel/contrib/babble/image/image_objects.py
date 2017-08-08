@@ -42,26 +42,26 @@ class BBox(object):
         self.bottom = self.top+h
         self.right = self.left+w
         
-        def area(self):
-            return self.width*self.height
+    def area(self):
+        return self.width*self.height
+    
+    def perimeter(self):
+        return 2*(self.width+self.height)
+    
+    def top_edge(self):
+        return self.top
         
-        def perimeter(self):
-            return 2*(self.width+self.height)
-        
-        def top_edge(self):
-            return self.top
-            
-        def bottom_edge(self):
-            pass
-        
-        def left_edge(self):
-            pass
-        
-        def right_edge(self):
-            pass
-        
-        def bottom_edge(self):
-            pass
+    def bottom_edge(self):
+        pass
+    
+    def left_edge(self):
+        pass
+    
+    def right_edge(self):
+        pass
+    
+    def bottom_edge(self):
+        pass
 
 class Point(object):
     

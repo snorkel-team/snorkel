@@ -18,7 +18,7 @@ class SemanticParser(object):
     --mode: [text/image/table]
         mode-specific rules
     """
-    def __init__(self, mode='text', candidate_class=None, user_lists={}, 
+    def __init__(self, mode='core', candidate_class=None, user_lists={}, 
             beam_width=10, top_k=-1):
         grammar_mixins = [core_grammar]
         if mode == 'core':
@@ -31,7 +31,6 @@ class SemanticParser(object):
             pass
         else:
             raise Exception("You must specify a mode in ['text', 'image', 'table']")
-
         self.grammar = Grammar(grammar_mixins,
                                candidate_class=candidate_class,
                                user_lists=user_lists,

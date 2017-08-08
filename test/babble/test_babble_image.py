@@ -38,8 +38,14 @@ class TestBabbleImage(unittest.TestCase):
     def test_corners(self):
         self.check_explanations(image_explanations.points)
  
+    def test_boxes(self):
+        self.check_explanations(image_explanations.boxes)
+
     def test_comparisons(self):
         self.check_explanations(image_explanations.comparisons)
+
+    def test_quantified(self):
+        self.check_explanations(image_explanations.quantified)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBabbleImage)
 unittest.TextTestRunner(verbosity=2).run(suite)

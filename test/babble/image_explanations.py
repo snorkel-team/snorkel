@@ -70,6 +70,51 @@ points = [
         semantics=None),
 ]
 
+boxes = [
+    # Box above
+    Explanation(
+        condition="box x is above box y",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+    # Box below
+    Explanation(
+        condition="box y is below box x",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+    # Box left
+    Explanation(
+        condition="box x is left of box y",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+    # Box right
+    Explanation(
+        condition="box y is right of box x",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+    # Box near
+    Explanation(
+        condition="box x is near the top left corner of box y",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+    # Box far
+    Explanation(
+        condition="box x is far away from box y",
+        label=True,
+        candidate=a_and_c,
+        semantics=None),
+    # Box within
+    Explanation(
+        condition="not box x is within box y", #TODO: FIX ME!
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+]
+
 comparisons = [
     # Top
     Explanation(
@@ -107,24 +152,27 @@ comparisons = [
         label=True,
         candidate=a_and_b,
         semantics=None),
-    # # Larger
-    # Explanation(
-    #     condition="box x is larger than box y",
-    #     label=True,
-    #     candidate=a_and_c,
-    #     semantics=None),
-    # # Much Larger
+]
+
+quantified = [
+    # Larger
+    Explanation(
+        condition="box x is larger than box y",
+        label=True,
+        candidate=a_and_c,
+        semantics=None),
+    # Much Larger
     # Explanation(
     #     condition="box x is much larger than box y",
     #     label=True,
     #     candidate=a_and_c,
     #     semantics=None),
-    # # Smaller
-    # Explanation(
-    #     condition="box y is smaller than box x",
-    #     label=True,
-    #     candidate=a_and_c,
-    #     semantics=None),
+    # Smaller
+    Explanation(
+        condition="box y is smaller than box x",
+        label=True,
+        candidate=a_and_c,
+        semantics=None),
     # # Smaller
     # Explanation(
     #     condition="box y is much smaller than box x",
@@ -133,4 +181,4 @@ comparisons = [
     #     semantics=None),
 ]
 
-explanations = (edges + points + comparisons)
+explanations = (edges + points + comparisons + boxes + quantified)

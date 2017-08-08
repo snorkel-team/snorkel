@@ -24,7 +24,17 @@ lexical_rules = (
 
     [Rule('$Smaller', w, '.smaller') for w in ['smaller', 'tinier']] +
     [Rule('$Larger', w, '.larger') for w in ['larger', 'bigger']] +
-    [Rule('$Within', w, '.within') for w in ['within', 'inside', 'encloses', 'enclosed', 'enveloped', 'envelopes', 'includes']] 
+    
+    [Rule('$Wider', w, '.wider') for w in ['wider', 'broader']] +
+    [Rule('$Taller', w, '.taller') for w in ['taller', 'longer']] +
+    [Rule('$Skinnier', w, '.skinnier') for w in ['skinnier', 'slimmer']] +
+    [Rule('$Shorter', w, '.shorter') for w in ['shorter']] +
+    
+    [Rule('$Overlaps', w, '.overlaps') for w in ['overlaps', 'intersects', 'bisects']] +
+    
+    [Rule('$Surrounds', w, '.surrounds') for w in ['encloses', 'envelopes', 'surrounds', 'around']] +
+    [Rule('$Within', w, '.within') for w in ['within', 'inside', 'enclosed', 'enveloped', 'fits', 'surrounded']] 
+    
 )
 
 unary_rules = [
@@ -44,6 +54,15 @@ unary_rules = [
 
     Rule('$BoxCompare', '$Smaller', sems0),
     Rule('$BoxCompare', '$Larger', sems0),
+    
+    Rule('$BoxCompare', '$Taller', sems0),
+    Rule('$BoxCompare', '$Wider', sems0),
+    Rule('$BoxCompare', '$Skinnier', sems0),
+    Rule('$BoxCompare', '$Shorter', sems0),
+    
+    Rule('$BoxCompare', '$Overlaps', sems0),
+    
+    Rule('$BoxCompare', '$Surrounds', sems0),
     Rule('$BoxCompare', '$Within', sems0),
 ]
     
@@ -80,6 +99,15 @@ ops = {
 
     '.smaller': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_smaller'](g1(c1), g2(c2)),
     '.larger': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_larger'](g1(c1), g2(c2)),
+    
+    '.wider': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_wider'](g1(c1), g2(c2)),
+    '.taller': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_taller'](g1(c1), g2(c2)),
+    '.skinnier': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_skinnier'](g1(c1), g2(c2)),
+    '.shorter': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_shorter'](g1(c1), g2(c2)),
+    
+    '.overlaps': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_overlaps'](g1(c1), g2(c2)),
+    
+    '.surrounds': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_surrounds'](g1(c1), g2(c2)),
     '.within': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_within'](g1(c1), g2(c2)),
 }
 

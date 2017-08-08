@@ -98,10 +98,35 @@ def is_far(geom1, geom2):
 def is_smaller(bbox1, bbox2, mult=1.0):
     return bbox1.area() < bbox2.area() / mult
 
-
 def is_larger(bbox1, bbox2, mult=1.0):
     return bbox1.area() > bbox2.area() * mult
 
+def is_wider(bbox1, bbox2, mult=1.0):
+    return bbox1.width > bbox2.width * mult
+
+def is_taller(bbox1, bbox2, mult=1.0):
+    return bbox1.height > bbox2.height * mult
+
+def is_skinnier(bbox1, bbox2, mult=1.0):
+    return bbox1.width < bbox2.width / mult
+
+def is_shorter(bbox1, bbox2, mult=1.0):
+    return bbox1.height < bbox2.height / mult
+
+def is_overlaps(bbox1, bbox2, thresh=0.25):
+    top = max(bbox1.top,bbox2.top)
+    bottom = min(bbox1.bottom,bbox2.bottom)
+    left = max(bbox1.left, bbox2.left)
+    right = min(bbox1.right, bbox2.right)
+    
+    h = abs(top - bottom)
+    w = abs(left - right)
+    overlap_area = h*w
+    
+    return overlap_area >= thresh*max(bbox1.area(), bbox2.area())
+
+def is_surrounds(bbox1, bbox2):
+    return is_within(bbox2, bbox1)
 
 def is_within(bbox1, bbox2):
     if bbox1.area() > bbox2.area():
@@ -112,6 +137,7 @@ def is_within(bbox1, bbox2):
         is_right(bbox2, bbox1) and 
         is_left(bbox2, bbox1))
 
+    
 def is_aligned(bbox1, bbox2, thresh=10.):
     thresh = 10
     raise NotImplementedError
@@ -129,6 +155,12 @@ helpers = {
     'is_far': is_far, 
     'is_smaller': is_smaller,
     'is_larger': is_larger,
+    'is_wider': is_wider,
+    'is_taller': is_taller,
+    'is_skinnier': is_skinnier,
+    'is_shorter': is_shorter,
     'is_aligned': is_aligned, 
+    'is_overlaps': is_overlaps,
+    'is_surrounds': is_surrounds,
     'is_within': is_within, 
 }

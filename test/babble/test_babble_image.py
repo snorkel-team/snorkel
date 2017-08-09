@@ -46,6 +46,9 @@ class TestBabbleImage(unittest.TestCase):
 
     def test_quantified(self):
         self.check_explanations(image_explanations.quantified)
+        
+    def test_parser(self):
+        self.check_explanations(image_explanations.parser)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBabbleImage)
 unittest.TextTestRunner(verbosity=2).run(suite)

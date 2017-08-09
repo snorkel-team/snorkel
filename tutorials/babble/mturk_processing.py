@@ -410,30 +410,17 @@ class MTurkHelper(object):
                      
                 assert(consensus is not None)
                 valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
-<<<<<<< HEAD:tutorials/babble/mturk_processing.py
             assert(all([len(responses) == self.workers_per_hit 
                  for responses in explanations_by_candidate.values()]))
             if self.num_hits:
                 assert(num_unanimous + num_majority + num_bad == self.num_hits * self.candidates_per_hit)
-=======
-            #assert(all([len(responses) == self.workers_per_hit 
-                 #for responses in explanations_by_candidate.values()]))
-            #assert(num_unanimous + num_majority + num_split + num_bad == self.num_hits * self.candidates_per_hit)
->>>>>>> d279ce7077d4281be0d546436e93f68b39c55a79:tutorials/babble/data/mturk_processing.py
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
             print("Bad: {}".format(num_bad))
 
             return valid_explanations
-<<<<<<< HEAD:tutorials/babble/mturk_processing.py
     
 
-=======
-     
-    
-    
-    
->>>>>>> d279ce7077d4281be0d546436e93f68b39c55a79:tutorials/babble/data/mturk_processing.py
     def postprocess(self, csvpath, candidates=None, verbose=False):
         """
         Assumptions:

@@ -121,7 +121,7 @@ def is_overlaps(bbox1, bbox2, thresh=0.25):
     
     h = abs(top - bottom)
     w = abs(left - right)
-    overlap_area = h*w
+    overlap_area = h * w
     
     return overlap_area >= thresh*max(bbox1.area(), bbox2.area())
 

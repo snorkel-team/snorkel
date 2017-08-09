@@ -24,14 +24,14 @@ Alex Ratner, Henry Ehrenberg, Zeshan Hussain, Jared Dunnmon, Chris Ré<br />
 <blockquote>
 <p><b>Data augmentation</b> is a technique for increasing the size of labeled training sets by applying class-preserving transformations.
 In the image domain, it is a crucial factor in <i>almost every</i> state-of-the-art result today.
-However, the particular types, parameterizations, and composition of transformations applied can have a <i>large</i> effect on performance, and are tricky and time-consuming to tune by hand for a new dataset or task.</p>
+However, the choice of types, parameterizations, and composition of transformations applied can have a <i>large</i> effect on performance, and are tricky and time-consuming to tune by hand for a new dataset or task.</p>
 
 <p>In this blog post we describe our new automated method for data augmentation:</p>
 
 <ul>
-	<li>We start by representing transformations as <b>sequences of incremental black-box operations</b></li>
+	<li>We start by representing transformations as <b>sequences of incremental black-box operations</b>.</li>
 	<li>We then learn a <b>generative sequence model</b> that produces realistic, class-preserving augmentations using unlabeled data and adversarial techniques.</li>
-	<li>We get <b>strong gains over heuristic approaches</b>--3.9 pts. improvement on CIFAR-10, 1.4 F1 pts. on an ACE relation extraction task, and 3.4 pts. on a mammograpy task--and demonstrate <b>robustness to user misspecification.</b></li>
+	<li>We get <b>strong gains over heuristic approaches</b>—3.9 point boost on CIFAR-10, 1.4 F1 point boost on a relation extraction task, and 3.4 point boost on a mammograpy task—and demonstrate <b>robustness to user misspecification</b>.</li>
 </ul>
 
 <p><b>You can also check out our <a href="#">paper</a> for detail and references, and our <a href="#">code</a> to give it a spin!</b></p>
@@ -232,7 +232,7 @@ However, in more chhallenging variants--e.g. 10% or 1% subsampled MNIST--data au
 
 
 
-<h2 id="learning-how-to-augment-data">Learning how to augment data</h2>
+<h2 id="learning-how-to-augment-data">Learning How to Augment Data</h2>
 
 <p>We model the process of data augmentation as applying a series of TFs, each representing an incremental transformation (such as a small image rotation). This is illustrated for image recognition, natural language processing, and computer-assisted detection in the figure below. Our goal is to automatically compose and parameterize a set of TFs in ways that produce realistic and diverse augmented data points.</p>
 
@@ -262,7 +262,7 @@ However, in more chhallenging variants--e.g. 10% or 1% subsampled MNIST--data au
 
 <p>The training procedure for <span class="math inline">\(G_{\theta}\)</span> is completely decoupled from the end task. As a result, we can use <span class="math inline">\(G_{\theta}\)</span> to augment data for use with <em>any</em> end classifier <span class="math inline">\(D^{f}\)</span>.
 
-<h1 id="our-results-with-tanda">Our results with TANDA</h1>
+<h2 id="our-results-with-tanda">Our Results with TANDA</h2>
 
 <p>Our experiments with TANDA thus far have been focused on pragmatics. Does learning an augmentation model produce better end classifier results than heuristic data augmentation approaches? To tackle this question, we evaluated on <a href="https://www.cs.toronto.edu/~kriz/cifar.html">CIFAR-10</a>, <a href="yann.lecun.com/exdb/mnist/">MNIST</a>, and a subset of <a href="http://marathon.csee.usf.edu/Mammography/Database.html">DDSM</a> with mass segmentations. Here are the TFs we used for each of these tasks:</p>
 

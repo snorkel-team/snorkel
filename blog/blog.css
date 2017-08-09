@@ -328,3 +328,7 @@ blockquote {
 p.img {
     text-align: center;
 }
+
+.dense-table td {
+  padding: 3px 3px;
+}

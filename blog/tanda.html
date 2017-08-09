@@ -1,0 +1,408 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Alex Ratner, Henry Ehrenberg, Zeshan Hussain, Jared Dunnmon, Chris Ré" />
+  <title>Learning to Compose Domain-Specific Transformations for Data Augmentation</title>
+  <link rel="stylesheet" href="blog.css">
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+</head>
+<body>
+<div id="header">
+<h1 class="title">Learning to Compose Domain-Specific Transformations for Data Augmentation</h1>
+Alex Ratner, Henry Ehrenberg, Zeshan Hussain, Jared Dunnmon, Chris Ré<br />
+<em>And referencing work by many other members of Hazy Research</em><br />
+<a href="https://snorkel.stanford.edu">Back to the Snorkel Blog</a>
+</div>
+
+<div class="figure">
+<img src="tanda_figs/data_aug_basic.png" alt="Basic data augmentation."/>
+</div>
+
+<blockquote>
+<p><b>Data augmentation</b> is a technique for increasing the size of labeled training sets by applying class-preserving transformations.
+In the image domain, it is a crucial factor in <i>almost every</i> state-of-the-art result today.
+However, the choice of types, parameterizations, and composition of transformations applied can have a <i>large</i> effect on performance, and are tricky and time-consuming to tune by hand for a new dataset or task.</p>
+
+<p>In this blog post we describe our new automated method for data augmentation:</p>
+
+<ul>
+	<li>We start by representing transformations as <b>sequences of incremental black-box operations</b>.</li>
+	<li>We then learn a <b>generative sequence model</b> that produces realistic, class-preserving augmentations using unlabeled data and adversarial techniques.</li>
+	<li>We get <b>strong gains over heuristic approaches</b>—3.9 point boost on CIFAR-10, 1.4 F1 point boost on a relation extraction task, and 3.4 point boost on a mammograpy task—and demonstrate <b>robustness to user misspecification</b>.</li>
+</ul>
+
+<p><b>You can also check out our <a href="#">paper</a> for detail and references, and our <a href="#">code</a> to give it a spin!</b></p>
+</blockquote>
+
+<h2 id="intro">Automating the Art of Data Augmentation</h2>
+
+<p>Modern machine learning models, such as deep neural networks, may have billions of free parameters and accordingly require massive labeled training sets—which are often not available.
+The technique of artificially expanding labeled training sets by transforming data points in ways which preserve class labels—known as <i>data augmentation</i>—has quickly become a critical and effective tool for combatting this labeled data scarcity problem.
+And indeed, data augmentation is cited as essential to nearly every state-of-the-art result in image classification (<a href="#background-in-practice">see below</a>), and is becoming increasingly common in other modalities as well.</p>
+
+<p>For being such a simple technique, data augmentation leads to remarkable gains. But like everything in machine learning, there's a hidden cost: the time required to develop data augmentation pipelines.
+Even though it's often simple to formulate individual transformation operations, it's generally time-consuming and difficult to find the right parameterizations and compositions of them.
+And these choices are critical. Many transformation operations will have vastly different effects based on parameterization, the set of other transformations they are applied with, and even their particular order of composition.
+For example, a brightness shift might produce realistic images when applied with a small rotation, but produce a garbage image when applied along with a saturation enhancement.
+This problem is only exacerbated for a new task or domain, where performant data augmentation strategies have not been worked out by the community over time.
+In general, practitioners generally revert to random application of heuristically tuned transformations, which, while helpful, is far from optimal.</p>
+
+<p>In our view, data augmentation can be seen as an important form of <i><a href="https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html">weak supervision</a></i>, providing a way for subject matter experts (SMEs) to leverage their knowledge of invariances in a task or domain to improve model performance even given limited labeled training data.
+As such, our goal is to make it easy enough to deploy for any new, real-world task with its own specific types of invariances and transformation operations—without requiring days or weeks of tuning and tweaking.
+Moreover, an ideal data augmentation system should permit arbitrary, black-box transformation operations—thus serving as a flexible, model-agnostic way for SMEs to inject domain knowledge into machine learning pipelines.
+</p>
+
+<p>In <b><a href="#learning-how-to-augment-data">our proposed system</a></b>, users provide a set of arbitrary, black-box transformation functions (TFs)—representing <i>incremental</i> transformation operations—which need not be differentiable nor deterministic, and an unlabeled dataset.
+We then automatically learn a generative sequence model over the TFs using adversarial techniques, so that the generated transformation sequences produce realistic augmented data points.
+Finally, the generative model can be used to improve the performance of any end discriminative model.</p>
+
+<p>In this blog post, we'll start by reviewing the prevalence of heuristic data augmentation in practice, then outline our proposed approach, and finally review our empirical results.</p>
+
+
+<h2 id="background-in-practice">Heuristic Data Augmentation in Practice</h2>
+
+<p>Data augmentation is the secret sauce in today's state-of-the-art pipelines for benchmark image recognition tasks.
+To underscore both the omnipresence and diversity of heuristic data augmentation in practice, we compiled a list of the top ten models for the well documented CIFAR-10 and CIFAR-100 tasks. 
+The takeaway? <b>10 out of 10 of the top CIFAR-10 results</b> and <b>9 out of 10 of the top CIFAR-100 results</b> use data augmentation, for average boosts (when reported) of <b>3.71</b> and <b>13.39</b> points in accuracy, respectively.
+Moreover, we see that while some sets of papers inherit a simple data augmentation strategy from prior work (in particular, all the recent ResNet variants), there are still a large variety of approaches. And in general, the particular choice of data augmentation strategy is widely reported to have large effects on performance.</p>
+
+<p><i>Disclaimer: the below table is compiled from <a href="http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html">this wonderful list</a> or from the latest <a href="https://arxiv.org/pdf/1608.06993.pdf">CVPR best paper</a> (indicated by a *) which achieves new state-of-the-art results. However, we compile it for illustrative purposes and it is not necessarily comprehensive.</i></p>
+
+<table class="dense-table" style="width:100%; font-size: 10px;">
+  	<tr>
+	    <th>Dataset</th>
+		<th>Pos</th>
+		<th>Name</th>
+		<th>Err.w/ DA</th>
+		<th>Err. w/oDA</th>
+		<th>DA Types / notes</th>
+	</tr>
+	<tr>
+		<td rowspan="10">CIFAR-10</td>
+		<td>1</td>
+		<td>DenseNet</td>
+		<td>3.46</td>
+		<td>-</td>
+		<td>Random shifts, flips</td>
+	</tr>
+	<tr>
+		<td>2</td>
+		<td>Fractional Max-Pooling</td>
+		<td>3.47</td>
+		<td>-</td>
+		<td>Randomized mix of translations, rotations, reflections, stretching, shearing, and random RGB color shift operations</td>
+	</tr>
+	<tr>
+		<td>3*</td>
+		<td>Wide ResNet</td>
+		<td>4.17</td>
+		<td>-</td>
+		<td>Random shifts, flips</td>
+	</tr>
+	<tr>
+		<td>4</td>
+		<td>Striving for Simplicity: The All Convolutional Net</td>
+		<td>4.41</td>
+		<td>9.08</td>
+		<td>“Heavy” augmentation: images expanded, then scaled, rotated, color shifted randomly</td>
+	</tr>
+	<tr>
+		<td>5*</td>
+		<td>FractalNet</td>
+		<td>4.60</td>
+		<td>7.33</td>
+		<td>Random shifts, flips</td>
+	</tr>
+	<tr>
+		<td>6*</td>
+		<td>ResNet (1001-Layer)</td>
+		<td>4.62</td>
+		<td>10.56</td>
+		<td>Random shifts, flips</td>
+	</tr>
+	<tr>
+		<td>7*</td>
+		<td>ResNet with Stochastic Depth (1202-Layer)</td>
+		<td>4.91</td>
+		<td>-</td>
+		<td>Random shifts, flips</td>
+	</tr>
+	<tr>
+		<td>8</td>
+		<td>All You Need is a Good Init</td>
+		<td>5.84</td>
+		<td>-</td>
+		<td>Random shifts, flips</td>
+	</tr>
+	<tr>
+		<td>9</td>
+		<td>Generalizing Pooling Functions in Convolutional Neural Networks: Mixed, Gated, and Tree</td>
+		<td>6.05</td>
+		<td>7.62</td>
+		<td>Flips, random shifts, other simple ones.</td>
+	</tr>
+	<tr>
+		<td>10</td>
+		<td>Spatially-Sparse Convolutional Neural Networks</td>
+		<td>6.28</td>
+		<td>-</td>
+		<td>Affine transformations</td>
+	</tr>
+	<tr>
+		<td rowspan="10">CIFAR-100</td>
+		<td>1*</td>
+		<td>DenseNet</td>
+		<td>17.18</td>
+		<td>-</td>
+		<td>Random shifts, flips</td>
+	</tr>
+	<tr>
+		<td>2*</td>
+		<td>Wide ResNets</td>
+		<td>20.50</td>
+		<td>-</td>
+		<td>Random shifts, flips</td>
+	</tr>
+	<tr>
+		<td>3*</td>
+		<td>ResNet (1001-Layer)</td>
+		<td>22.71</td>
+		<td>33.47</td>
+		<td>Random shifts, flips</td>
+	</tr>
+	<tr>
+		<td>4*</td>
+		<td>FractalNet</td>
+		<td>23.30</td>
+		<td>35.34</td>
+		<td>Random shifts, flips</td>
+	</tr>
+	<tr>
+		<td>5</td>
+		<td>Fast and Accurate Deep Network Learning by Exponential Linear Units</td>
+		<td>-</td>
+		<td>24.28</td>
+		<td></td>
+	</tr>
+	<tr>
+		<td>6</td>
+		<td>Spatially-Sparse Convolutional Neural Networks</td>
+		<td>24.3</td>
+		<td>-</td>
+		<td>Affine transformations</td>
+	</tr>
+	<tr>
+		<td>7*</td>
+		<td>ResNet with Stochastic Depth (1202-Layer)</td>
+		<td>24.58</td>
+		<td>37.80</td>
+		<td>Random shifts, flips</td>
+	</tr>
+	<tr>
+		<td>8</td>
+		<td>Fractional Max-Pooling</td>
+		<td>26.39</td>
+		<td>-</td>
+		<td>Randomized mix of translations, rotations, reflections, stretching, and shearing operations, and random RGB color shifts</td>
+	</tr>
+	<tr>
+		<td>9*</td>
+		<td>ResNet (110-Layer)</td>
+		<td>27.22</td>
+		<td>44.74</td>
+		<td>Random shifts, flips</td>
+	</tr>
+	<tr>
+		<td>10</td>
+		<td>Scalable Bayesian Optimization Using Deep Neural Networks</td>
+		<td>27.4</td>
+		<td>-</td>
+		<td>Hue, saturation, scalings, horizontal flips</td>
+	</tr>
+</table>
+
+<!--<p>We note that CIFAR-10/100 was selected as a representative mid-range image classification task wich is open and well-documented.
+On the high extreme of task complexity--for example ImageNet--competition winning systems are often highly-complex and reported very opaquely, so it is difficult to comprehensively review the use and type of data augmentation strategy as above; however, the importance of data augmentation for these tasks is widely reported in practice.
+On the other extreme--for example MNIST--many systems in fact do not use data augmentation, given the simplicity of the task.
+However, in more challenging variants--e.g. 10% or 1% subsampled MNIST--data augmentation is used extensively.</p>-->
+
+
+<h2 id="learning-how-to-augment-data">Learning to Compose Domain-Specific Transformations</h2>
+
+<p>In our setup, we make the novel choice to model data augmentation operations as <b>sequences of black-box user-provided <i>transformation functions (TFs)</i></b>, which we do not assume to be either differentiable or deterministic.
+This representation will allow us to have fine-grained control over both the (discretized) parameterization and order of composition of these TFs, and allows for a wide variety of TFs such as the below examples from our experiments with image recognition and natural language processing tasks.
+Our goal is then to <b>learn a TF sequence generator</b> that results in  realistic and diverse augmented data points.
+</p>
+
+<div class="figure">
+<img src="tanda_figs/example_tfs.png" alt="Example TFs."/>
+</div>
+
+
+<h3>Weakening the Class-Invariance Assumption</h3>
+<p>The core assumption behind standard data augmentation in practice is that <em>any</em> sequence of transformation operations applied to <em>any</em> data point will produce an augmented point in the same class. Of course, this is unrealistic and many real-world data augmentation pipelines violate this assumption. Instead, we make a weaker modeling assumption: <b>a sequence of transformation operations applied to a data point will produce an augmented point either in the same class or in a <i>null class</i> outside the distribution of interest.</b>
+That is, we can reasonably assume that we won't turn an image of a plane into one of a dog, but we might turn it into an indistiguishable garbage image! This critical assumption allows us to use unlabeled data to train our augmentation model.</p>
+
+<div class="figure">
+<img src="tanda_figs/fig3.png" alt="Figure 3"/>
+</div>
+
+<p>For example, in the above figure panel (a), we demonstrate the intuition behind this modeling assumption by taking images from CIFAR-10 (each row) and searching for a transformation sequence that maps them to a different class (each column) according to a trained discriminative model.
+We see that the transformed images <i>do not</i> look much like the class they are being mapped to, but often <i>do</i> look like garbage.
+In contrast, we also show the images transformed via our method in (b).</p>
+
+
+<h3>Learning a TF Sequence Model Adversarially from Unlabeled Data</h3>
+
+<p>Armed with our weaker invariance assumption, we can now <b>leverage unlabeled data</b> to train a TF sequence generator, using <b>adversarial techniques</b>.</p>
+
+<div class="figure">
+<img src="tanda_figs/fig2.png" alt="Figure 2"/>
+</div>
+
+<p>Our modeling setup is summarized in Figure 2. Given a set of TFs <span class="math inline">\(h_1,...,h_K\)</span>, our objective is to learn a TF sequence generator <span class="math inline">\(G_{\theta}\)</span> which generates sequences of TF indices <span class="math inline">\(\tau\in\{1,K\}^L\)</span> with fixed length <span class="math inline">\(L\)</span> so that the augmented data point <span class="math inline">\(h_{\tau_{L}} \circ ... \circ h_{\tau_{1}}(x)\)</span> is realistic, i.e. not in the null class. In order to estimate whether or not the augmented point is in the null class, we use a generative adversarial network (GAN) setup and simultaneously train a discriminator <span class="math inline">\(D^{\phi}_{\emptyset}\)</span>. The discriminator's job is to produce values close to 1 for data points in the original training set and values close to 0 for augmented data points. We can write out our objective term as</p>
+
+<span class="math">$$J_{\emptyset} = \mathbb{E}_{\tau\sim G_{\theta}} \mathbb{E}_{x\sim\mathcal{U}}\left[ \log(1 - D_\phi^\emptyset(h_{\tau_L}\circ ...\circ h_{\tau_1}(x)))\right] + \mathbb{E}_{x'\sim\mathcal{U}}\left[ \log(D_\phi^\emptyset(x')) \right]$$</span>
+
+<p>where <span class="math inline">\(\mathcal{U}\)</span> is a distribution of unlabeled data (our unlabeled training set). We use an alternating optimization scheme, minimizing <span class="math inline">\(J_{\emptyset}\)</span> with respect to <span class="math inline">\(\theta\)</span> and maximizing with respect to <span class="math inline">\(\phi\)</span>. We also include a diversity term in the objective to ensure that the original data point and augmented data point aren't too similar. Since the TFs can be non-differentiable and/or non-deterministic, we cannot backpropagate through all of the parameters of <span class="math inline">\(G_{\theta}\)</span> as normal and instead use a recurrent policy gradient.</p>
+
+<p>We evaluated two model classes for <span class="math inline">\(G_{\theta}\)</span>:</p>
+
+<ul>
+	<li><strong>Mean field</strong>: each sequential TF is chosen independently, reducing the task to learning the <span class="math inline">\(K\)</span> sampling frequencies of the TFs</li>
+	<li><strong>Long short-term memory network (LSTM)</strong>: the input to each cell is a one-hot vector of the previously sampled TF, and the output from each cell of the network is a sampling distribution for the next TF. Making state-based decisions is critical when TFs are lossy when applied together, or are non-commutative.</li>
+</ul>
+
+
+<h2 id="experimental-results">Experimental Results on Image and Text Data</h2>
+
+<p>Our experiments thus far have been focused on pragmatics. Does learning an augmentation model produce better end classifier results than heuristic data augmentation approaches? To tackle this question, we evaluated on <a href="https://www.cs.toronto.edu/~kriz/cifar.html">CIFAR-10</a>, <a href="yann.lecun.com/exdb/mnist/">MNIST</a>, and a subset of <a href="http://marathon.csee.usf.edu/Mammography/Database.html">DDSM</a> with mass segmentations.</p>
+
+<p>For CIFAR-10, we used a wide range of standard TFs (incremental rotations, shears, swirls, deformations, hue, saturation, and contrast shifts, and horizontal flips).
+For MNIST, we used a similar set but also included erosion and dilation operators.
+For the DDSM mammogram tumor classification task, we used some generic TFs along with two  domain-specific ones developed by radiological experts: A brightness enhancer which only shifts brightness levels to those attainable by the mammography imaging process, and a structure translator which moves segmented masses, resamples the background tissue, and then fills in gaps using Poisson blending. Due to the intricacy of these domain-specific TFs in particular, many random augmentation sequences resulted in non-realistic images, punctuating the need for a learned augmentation model.</p>
+
+<p>We also ventured outside of the imaging domain into natural language processing, where data augmentation recieves less attention. We augmented sentences in the <a href="https://www.ldc.upenn.edu/collaborations/past-projects/ace">ACE corpus</a> for a relation classification task. The TFs were based on swapping out words via sampling replacements from a trigram language model, specifying parts-of-speech and/or position with relation to the entities. For example, one TF swapped verbs in between the entity mentions.</p>
+
+<table class="dense-table" style="width: 100%;">
+	<tr>
+		<th>Task</th>
+		<th>% of Labeled Data</th>
+		<th>None</th>
+		<th>Basic</th>
+		<th>Heuristic</th>
+		<th>MF</th>
+		<th>LSTM</th>
+	</tr>
+	<tr>
+		<td rowspan="2">MNIST</td>
+		<td>1</td>
+		<td>90.2</td>
+		<td>95.3</td>
+		<td>95.9</td>
+		<td>96.5</td>
+		<td><b>96.7</b></td>
+	</tr>
+	<tr>
+		<td>10</td>
+		<td>97.3</td>
+		<td>98.7</td>
+		<td>99.0</td>
+		<td><b>99.2</b></td>
+		<td>99.1</td>
+	</tr>
+	<tr>
+		<td rowspan="2">CIFAR-10</td>
+		<td>10</td>
+		<td>66.0</td>
+		<td>73.1</td>
+		<td>77.5</td>
+		<td>79.8</td>
+		<td><b>81.5</b></td>
+	</tr>
+	<tr>
+		<td>100</td>
+		<td>87.8</td>
+		<td>91.9</td>
+		<td>92.3</td>
+		<td><b>94.4</b></td>
+		<td>94.0</td>
+	</tr>
+	<tr>
+		<td>ACE (F1 Score)</td>
+		<td>100</td>
+		<td>62.7</td>
+		<td>59.9</td>
+		<td>62.8</td>
+		<td>62.9</td>
+		<td><b>64.2</b></td>
+	</tr>
+	<tr>
+		<td>DDSM</td>
+		<td rowspan="2">10</td>
+		<td rowspan="2">57.6</td>
+		<td rowspan="2">58.8</td>
+		<td>59.3</td>
+		<td>58.2</td>
+		<td>61.0</td>
+	</tr>
+	<tr>
+		<td>DDSM + DS</td>
+		<td>53.7</td>
+		<td>59.9</td>
+		<td>62.7</td>
+	</tr>
+</table>
+
+<p>The above table contains our primary results, showing end model performance on subsampled labeled data using no augmentation (<i>None</i>), simple random crops or equivalent (<i>Basic</i>), heuristic random sequences of TFs (<i>Heur.</i>), or one of our two trained generators.
+We used off-the-shelf models as our end classifiers in order to focus on relative gains from learning composition models. We used a standard 56-layer ResNet for CIFAR-10, and much simpler convolutional neural networks for MNIST and DDSM. For ACE, we used a bidirectional long short-term memory network with word-level attention.
+In particular we notice:
+<ul>
+	<li>We get strong relative gains over heuristic (random) data augmentation</li>
+	<li>In most cases, modeling the sequences with an LSTM helps!</li>
+	<li>In the DDSM case, we show both with and without the domain specific (DS) TFs; we see that without learning how to apply them, they actually hurt performance- but with our method, they help!</li>
+</ul>
+</p>
+
+<p>We also investigated the robustness of our method to buggy or poorly specified TFs by intentionally including some in the MNIST pipeline. The frequencies for these TFs learned by the mean field model as training progresses are shown in (a) below. Finally, we validated our claim that longer TF sequences lead to better results (especially when we learn an augmentation model) in (b).</p>
+
+<div class="figure">
+<img src="tanda_figs/fig4.png" alt="Figure 4"/>
+</div>
+
+
+<h2 id="tanda">Using the Approach: TANDA</h2>
+
+<p>Does it sound like learning data augmentation models could help your machine learning pipeline?
+We've open-sourced a TensorFlow-based implementation of our approach, <a href="https://github.com/HazyResearch/tanda">TANDA</a> (Transformation Adversarial Networks for Data Augmentation)
+Try it out and let us know what you think!
+We hope that this code not only helps to improve model performance on a variety of new and existing tasks, but also helps the exploration of exciting next-step directions such as adding in more advanced transformation regularization, exploring applications to other modalities, and advancing theoretical understanding of data augmentation!
+</p>
+
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://snorkel-stanford-edu.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+                            
+</body>
+</html>

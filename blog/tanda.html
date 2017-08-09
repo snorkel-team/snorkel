@@ -240,11 +240,27 @@ Additionally, we show empirical results suggesting that the proposed approach is
 <img src="tanda_figs/example_tfs.png" alt="Example TFs."/>
 </div>
 
-Fig. 2
-Short paragraph: 2.1, 2.2, Fig. 3
-Short paragraph + one equation: 2.3
-Two quick bullet pts.: 2.4
-Short paragraph + one equation: 3
+<p>Intro intro intro</p>
+
+<p>The core assumption behind standard data augmentation is <em>any</em> sequence of transformation operations applied to <em>any</em> data point will produce an augmented point in the same class. Of course, this is unrealistic and many real-world data augmentation pipelines violate this assumption. Instead, we make a weaker modeling assumption: a sequence of transformation operations applied to a data point will produce an augmented point either in the same class or in a null class outside the distribution of interest. That is, we can reasonably assume that we won't turn an image of a plane into one of a dog, but we might turn it into an indistiguishable garbage image. This critical assumption allows us to use unlabeled data to train our augmentation model.</p>
+
+<div class="figure">
+<img src="tanda_figs/fig2.png" alt="Figure 2"/>
+</div>
+
+<p>Our modeling setup is summarized in Figure 2. The objective is to learn a model <span class="math inline">\(G_{\theta}\)</span> which generates sequences of TF indices <span class="math inline">\(\tau\in\{1,K\}^L\)</span> with fixed length <span class="math inline">\(L\)</span> so that the augmented data point <span class="math inline">\(h_{\tau_{L}} \circ ... \circ h_{\tau_{1}}(x)\)</span> is realistic, i.e. not in the null class. In order to estimate whether or not the augmented point is in the null class, we use a generative adversarial network (GAN) setup and simultaneously train a discriminator <span class="math inline">\(D_{\phi}^{\emptyset}\)</span>. The discriminator's job is to produce values close to 1 for data points in the original training set and values close to 0 for augmented data points. We can write out our objective term as</p>
+
+<span class="math">$$J_{\emptyset} = \mathbb{E}_{\tau\sim G_{\theta}} \mathbb{E}_{x\sim\mathcal{U}}\left[ \log(1 - D_\phi^\emptyset(h_{\tau_L}\circ\hdots\circ h_{\tau_1}(x)))\right] + \mathbb{E}_{x'\sim\mathcal{U}}\left[ \log(D_\phi^\emptyset(x')) \right]$$</span>
+
+<p>where <span class="math inline">\(\mathcal{U}\)</span> is a distribution of unlabeled data (our unlabeled training set). We use an alternating optimization scheme, minimizing with respect to <span class="math inline">\(\theta\)</span> and maximizing with respect to <span class="math inline">\(\phi\)</span>. We also include a diversity term in the objective to ensure that the original data point and augmented data point aren't too similar. Since the TFs can be non-differentiable and/or non-deterministic, we cannot backpropagate through all of the parameters of <span class="math inline">\(G_{\theta}\)</span> as normal and instead use a recurrent policy gradient.</p>
+
+<p>We evaluated two model classes for <span class="math inline">\(G_{\theta}\)</span>:</p>
+
+<ul>
+	<li><strong>Mean field<strong>: each sequential TF is chosen independently, reducing the task to learning the <span class="math inline">\(K\)</span> sampling frequencies of the TFs</li>
+	<li><strong>Long short-term memory network (LSTM)<strong>: the input to each cell is a one-hot vector of the previously sampled TF, and the output from each cell of the network is a sampling distribution for the next TF. Making state-based decisions is critical when TFs are lossy when applied together, or are non-commutative.</li>
+</ul>
+
 
 <h1 id="our-results-with-tanda">Our results with TANDA</h1>
 
@@ -292,11 +308,11 @@ Short paragraph + one equation: 3
 <p>We also investigated the robustness of our method to buggy or poorly specified TFs by intentionally including some in the MNIST pipeline. The frequencies for these TFs learned by the mean field model as training progresses are shown in Figure 4a. Finally, we validated our claim that longer TF sequences lead to better results (especially when we learn an augmentation model) in Figure 4b.</p>
 
 <div class="figure">
-<img src="figs/tanda/table12.png" alt="Tables 1 and 2"/>
+<img src="tanda_figs/table12.png" alt="Tables 1 and 2"/>
 </div>
 
 <div class="figure">
-<img src="figs/tanda/fig4.png" alt="Figure 4"/>
+<img src="tanda_figs/fig4.png" alt="Figure 4"/>
 </div>
 
 <h1 id="tanda">The TANDA library</h1>

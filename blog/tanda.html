@@ -237,15 +237,15 @@ Finally, these can be used to improve the performance of any end discriminative 
 
 <p>Our modeling setup is summarized in Figure 2. The objective is to learn a model <span class="math inline">\(G_{\theta}\)</span> which generates sequences of TF indices <span class="math inline">\(\tau\in\{1,K\}^L\)</span> with fixed length <span class="math inline">\(L\)</span> so that the augmented data point <span class="math inline">\(h_{\tau_{L}} \circ ... \circ h_{\tau_{1}}(x)\)</span> is realistic, i.e. not in the null class. In order to estimate whether or not the augmented point is in the null class, we use a generative adversarial network (GAN) setup and simultaneously train a discriminator <span class="math inline">\(D_{\phi}^{\emptyset}\)</span>. The discriminator's job is to produce values close to 1 for data points in the original training set and values close to 0 for augmented data points. We can write out our objective term as</p>
 
-<span class="math">$$J_{\emptyset} = \mathbb{E}_{\tau\sim G_{\theta}} \mathbb{E}_{x\sim\mathcal{U}}\left[ \log(1 - D_\phi^\emptyset(h_{\tau_L}\circ\hdots\circ h_{\tau_1}(x)))\right] + \mathbb{E}_{x'\sim\mathcal{U}}\left[ \log(D_\phi^\emptyset(x')) \right]$$</span>
+<span class="math">$$J_{\emptyset} = \mathbb{E}_{\tau\sim G_{\theta}} \mathbb{E}_{x\sim\mathcal{U}}\left[ \log(1 - D_\phi^\emptyset(h_{\tau_L}\circ ...\circ h_{\tau_1}(x)))\right] + \mathbb{E}_{x'\sim\mathcal{U}}\left[ \log(D_\phi^\emptyset(x')) \right]$$</span>
 
-<p>where <span class="math inline">\(\mathcal{U}\)</span> is a distribution of unlabeled data (our unlabeled training set). We use an alternating optimization scheme, minimizing with respect to <span class="math inline">\(\theta\)</span> and maximizing with respect to <span class="math inline">\(\phi\)</span>. We also include a diversity term in the objective to ensure that the original data point and augmented data point aren't too similar. Since the TFs can be non-differentiable and/or non-deterministic, we cannot backpropagate through all of the parameters of <span class="math inline">\(G_{\theta}\)</span> as normal and instead use a recurrent policy gradient.</p>
+<p>where <span class="math inline">\(\mathcal{U}\)</span> is a distribution of unlabeled data (our unlabeled training set). We use an alternating optimization scheme, minimizing <span class="math inline">\(J_{\emptyset}\)</span> with respect to <span class="math inline">\(\theta\)</span> and maximizing with respect to <span class="math inline">\(\phi\)</span>. We also include a diversity term in the objective to ensure that the original data point and augmented data point aren't too similar. Since the TFs can be non-differentiable and/or non-deterministic, we cannot backpropagate through all of the parameters of <span class="math inline">\(G_{\theta}\)</span> as normal and instead use a recurrent policy gradient.</p>
 
 <p>We evaluated two model classes for <span class="math inline">\(G_{\theta}\)</span>:</p>
 
 <ul>
-	<li><strong>Mean field<strong>: each sequential TF is chosen independently, reducing the task to learning the <span class="math inline">\(K\)</span> sampling frequencies of the TFs</li>
-	<li><strong>Long short-term memory network (LSTM)<strong>: the input to each cell is a one-hot vector of the previously sampled TF, and the output from each cell of the network is a sampling distribution for the next TF. Making state-based decisions is critical when TFs are lossy when applied together, or are non-commutative.</li>
+	<li><strong>Mean field</strong>: each sequential TF is chosen independently, reducing the task to learning the <span class="math inline">\(K\)</span> sampling frequencies of the TFs</li>
+	<li><strong>Long short-term memory network (LSTM)</strong>: the input to each cell is a one-hot vector of the previously sampled TF, and the output from each cell of the network is a sampling distribution for the next TF. Making state-based decisions is critical when TFs are lossy when applied together, or are non-commutative.</li>
 </ul>
 
 
@@ -261,28 +261,48 @@ Finally, these can be used to improve the performance of any end discriminative 
   </tr>
   <tr>
     <td>Rotation (&plusmn;2.5&deg;, &plusmn;5&deg;)</td>
-    <td>Shear (&plusmn;0.1 rad., &plusmn;0.25 rad.)</td> 
-    <td>Swirl (&plusmn;0.1, &plusmn;0.25)</td>
-    <td>Elastic deformation (&alpha;=1.0,1.25,1.5)</td>
-    <td>Hue shift (&plusmn;0.1, &plusmn;0.25)</td>
-    <td>Saturation enhance (0.5, 0.75, 1.25, 1.5)</td>
-    <td>Contrast enhance (0.5, 0.75, 1.25, 1.5)</td>
-    <td>Brightness enhance (0.5, 0.75, 1.25, 1.5)</td>
-    <td>Horizontal flip</td>
-  </tr>
-  <tr>
     <td>Rotation (&plusmn;2.5&deg;, &plusmn;5&deg;)</td>
-    <td>Shear (&plusmn;0.1 rad., &plusmn;0.25 rad.)</td> 
-    <td>Swirl (&plusmn;0.1, &plusmn;0.25)</td>
-    <td>Elastic deformation (&alpha;=1.0,1.25,1.5)</td>
-    <td>Erode (1 pixel)</td>
-    <td>Dilate (1 pixel)</td>
+    <td>Rotation (&plusmn;2.5&deg;, &plusmn;5&deg;)</td>
   </tr>
   <tr>
-  	<td>Rotation (&plusmn;2.5&deg;, &plusmn;5&deg;)</td>
-  	<td>Contrast enhance (1.05, 1.15)</td>
+    <td>Shear (&plusmn;0.1 rad., &plusmn;0.25 rad.)</td>
+    <td>Shear (&plusmn;0.1 rad., &plusmn;0.25 rad.)</td>
+    <td>Contrast enhance (1.05, 1.15)</td>
+  </tr>
+  <tr>
+  	<td>Swirl (&plusmn;0.1, &plusmn;0.25)</td>
+  	<td>Swirl (&plusmn;0.1, &plusmn;0.25)</td>
   	<td>Mammographic brightness enhance (1.25, 1.5)</td>
+  </tr>
+  <tr>
+  	<td>Elastic deformation (&alpha;=1.0,1.25,1.5)</td>
+  	<td>Elastic deformation (&alpha;=1.0,1.25,1.5)</td>
   	<td>Translate segmented structure</td>
+  </tr>
+  <tr>
+  	<td>Hue shift (&plusmn;0.1, &plusmn;0.25)</td>
+  	<td>Erode (1 pixel)</td>
+  	<td></td>
+  </tr>
+  <tr>
+  	<td>Saturation enhance (0.5, 0.75, 1.25, 1.5)</td>
+  	<td>Dilate (1 pixel)</td>
+  	<td></td>
+  </tr>
+  <tr>
+  	<td>Contrast enhance (0.5, 0.75, 1.25, 1.5)</td>
+  	<td></td>
+  	<td></td>
+  </tr>
+  <tr>
+  	<td>Brightness enhance (0.5, 0.75, 1.25, 1.5)</td>
+  	<td></td>
+  	<td></td>
+  </tr>
+  <tr>
+  	<td>Horizontal flip</td>
+  	<td></td>
+  	<td></td>
   </tr>
 </table>
 

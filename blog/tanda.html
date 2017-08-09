@@ -4,8 +4,8 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta name="generator" content="pandoc" />
-  <meta name="author" content="Alex Ratner, Stephen Bach, Paroma Varma, Chris Ré And referencing work by many other members of Hazy Research" />
-  <title>Weak Supervision: The New Programming Paradigm for Machine Learning</title>
+  <meta name="author" content="Alex Ratner, Henry Ehrenberg, Zeshan Hussain, Jared Dunnmon, Chris Ré" />
+  <title>Learning to Compose Domain-Specific Transformations for Data Augmentation</title>
   <link rel="stylesheet" href="blog.css">
   <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
 </head>
@@ -26,57 +26,44 @@ Alex Ratner, Henry Ehrenberg, Zeshan Hussain, Jared Dunnmon, Chris Ré<br />
 In the image domain, it is a crucial factor in <i>almost every</i> state-of-the-art result today.
 However, the particular types, parameterizations, and composition of transformations applied can have a <i>large</i> effect on performance, and are tricky and time-consuming to tune by hand for a new dataset or task.</p>
 
-<!--<p>At its core, we view data augmentation as a simple, model-agnostic way of <b>specifying invariances</b> and as a valuable form of <b><a href="https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html">weak supervision</a></b>, which we should make <i>easier</i> and <i>faster</i> to provide.-->
 <p>In this blog post we describe our new automated method for data augmentation:</p>
 
 <ul>
 	<li>We start by representing transformations as <b>sequences of incremental black-box operations</b></li>
 	<li>We then learn a <b>generative sequence model</b> that produces realistic, class-preserving augmentations using unlabeled data and adversarial techniques.</li>
-	<li>We get <b>strong gains over heuristic approaches</b>--3.9 pts. improvement on CIFAR-10, 1.4 F1 pts. on an ACE relation extraction task, and 2.4 pts. on a mammograpy task--and demonstrate <b>robustness to user misspecification.</b></li>
+	<li>We get <b>strong gains over heuristic approaches</b>--3.9 pts. improvement on CIFAR-10, 1.4 F1 pts. on an ACE relation extraction task, and 3.4 pts. on a mammograpy task--and demonstrate <b>robustness to user misspecification.</b></li>
 </ul>
 
 <p><b>You can also check out our <a href="#">paper</a> for detail and references, and our <a href="#">code</a> to give it a spin!</b></p>
 </blockquote>
 
-<h1 id="intro">Data Augmentation as Weak Supervision</h1>
+<h2 id="intro">Automating the Art of Data Augmentation</h2>
 
-<p>Modern machine learning models, such as deep neural networks, may have billions of free parameters and accordingly require massive labeled data sets for training.
-In most settings, labeled data is not available in sufficient quantities to avoid overfitting to the training set.
-The technique of artificially expanding labeled training sets by transforming data points in ways which preserve class labels -- known as \textit{data augmentation} -- has quickly become a critical and effective tool for combatting this labeled data scarcity problem.
-Data augmentation can be seen as a form of \textit{weak supervision}, providing a way for practitioners to leverage their knowledge of invariances in a task or domain.
-And indeed, data augmentation is cited as essential to nearly every state-of-the-art result in image classification~\cite{ciresan80deep,dosovitskiy2015discriminative,graham2014fractional,SajjadiJT16a}, and is becoming increasingly common in other modalities as well~\cite{lu2006enhancing}.</p>
+<p>Modern machine learning models, such as deep neural networks, may have billions of free parameters and accordingly require massive labeled training sets--which are not usually available.
+The technique of artificially expanding labeled training sets by transforming data points in ways which preserve class labels--known as <i>data augmentation</i>--has quickly become a critical and effective tool for combatting this labeled data scarcity problem.
+And indeed, data augmentation is cited as essential to nearly every state-of-the-art result in image classification (see below), and is becoming increasingly common in other modalities as well.</p>
 
-<p>These gains are remarkable for such a simple technique. But like everything in machine learning, there's a hidden cost: the time required to develop data augmentation pipelines. It's often simple to formulate a large set of primitive transformation operations (like small image rotations or shears), but there's no consensus on best practices for finding the parameterizations and compositions of them needed for state-of-the-art results. Moreover, the choice of data augmentation strategy can cause large variances in end performance even on well studied tasks like CIFAR-10 and MNIST. Of course, it's fairly easy to dig up previously developed, performant data augmentation pipelines for benchmarks tasks. But for new tasks, practitioners are left to heuristically pick through hand-tuned augmentation strategies. In fact, most revert to the de facto norm: applying several composed transformations with random order and parameterization. This leads to frustrating development cycles and/or subpar results.</p>
-
-<p>Data augmentation a powerful medium for directly leveraging domain knowledge in the form of transformation operations, but it's challenging to apply it in a high performing manner. In response to this, we developed a new method for data augmentation that automates the process of composing and parameterizing user-specified transformation operations. These operators, which we refer to as transformation functions (TFs), need not be differentiable nor deterministic. Essentially, they can be anything. This presents a flexible and powerful programming model for subject matter experts to inject domain knowledge into machine learning pipelines, acting as a form of <a href="https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html">weak supervision</a>. But with this flexibility comes an interesting learning problem. In the next section, we give an overview of our approach to learning augmentation models.</p>
-
-<!--
-<h1 id="paper-intro">Paper intro / scraps</h1>
-
-<i>Even on well studied benchmark tasks, however, the choice of data augmentation strategy is known to cause large variances in end performance and be difficult to select~\cite{graham2014fractional,dosovitskiy2015discriminative}, with papers often reporting their heuristically found parameter ranges~\cite{ciresan80deep}.
-In practice, it is often simple to formulate a large set of primitive transformation operations, but time-consuming and difficult to find the parameterizations and compositions of them needed for state-of-the-art results.
+<p>These gains are remarkable for such a simple technique. But like everything in machine learning, there's a hidden cost: the time required to develop data augmentation pipelines.
+For while it's often simple to formulate individual transformation operations, it's generally time-consuming and difficult to find the right parameterizations and compositions of them.
 In particular, many transformation operations will have vastly different effects based on parameterization, the set of other transformations they are applied with, and even their particular order of composition.
-For example, brightness and saturation enhancements might be destructive when applied together, but produce realistic images when applied with only geometric transformations.
+For example, a brightness operation might produce realistic images when applied with a small rotation, but produce a garbage image when applied along with a saturation enhancement.
+This problem is only exacerbated for a new task or domain, where optimal data augmentation strategies have not been worked out by the community over time.
+In general, practitioners generally revert to random application of heuristically-tuned transformations, which while helpful, is far from optimal--and occasionally disastrous!</p>
 
-Given the difficulty of searching over this configuration space, the de facto norm in practice consists of applying several composed transformations with random order and parameterization.
-Recent lines of work attempt to automate data augmentation entirely, but either rely on large quantities of labeled data~\cite{baluja2017adversarial,mirza2014conditional}, restricted sets of simple transformations~\cite{fawzi2016adaptive,hauberg2016dreaming}, or consider only local perturbations that are not informed by domain knowledge~\cite{baluja2017adversarial,miyato2015distributional} (see Section~\ref{sec:related-work}).
-In contrast, we have observed that domain experts rarely have access to large quantities of labeled data,
-but can easily formulate transformation operations that, while often complex and non-differentiable, can have a large impact on performance.
+<p>So coming up with an optimal data augmentation pipeline is tricky... but how often do we need to do this anyway?
+In our view, data augmentation can be seen as an important form of <i><a href="https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html">weak supervision</a></i>, providing a way for subject matter experts (SMEs) to leverage their knowledge of invariances in a task or domain to improve model performance even given limited labeled training data.
+As such, our goal is to make it easy enough to deploy for any new, real-world task with its own specific types of invariances and transformation operations--without requiring days or weeks of tuning and tweaking.
+Moreover, an ideal data augmentation system should permit arbitrary, black-box transformation operations--thus serving as a flexible, model-agnostic way for SMEs to inject domain knowledge into machine learning pipelines.
+</p>
 
-In this paper, we present a new method for data augmentation that directly leverages user domain knowledge in the form of transformation operations, and automates the difficult process of composing and parameterizing them.
-We formulate the problem as one of learning a generative sequence model over black-box \textit{transformation functions (TFs)}: user-specified operators representing incremental transformations to data points that need not be differentiable nor deterministic.
-For example, TFs could rotate an image by a small degree, swap a word in a sentence, or translate a segmented structure in an image (Fig. \ref{fig:tfs}). We then design a generative adversarial objective~\cite{goodfellow2014generative} which allows us to train the sequence model to produce transformed data points which are still within the data distribution of interest, using unlabeled data.
-Because the TFs can be stochastic or non-differentiable, we present a reinforcement learning-based training strategy for this model.
-The learned model can then be used to perform data augmentation on labeled training data for any end discriminative model.
+<p>In <b><a href="#">our proposed system</a></b>, users provide a set of arbitrary, black-box transformation functions (TFs)--representing <i>incremental</i> transformation operations--which need not be differentiable or deterministic, and an unlabeled dataset.
+We the automatically learn a generative sequence model over the TFs, using the unlabeled data and adversarial techniques, so that the generated transformation sequences produce realistic, class-preserving transformations.
+Finally, these can be used to improve the performance of any end discriminative model!</p>
 
-Given the flexibility of our representation of the data augmentation process, we can apply our approach in many different domains, and on different modalities including both text and images.
-On a real-world mammography image task, we achieve a 3.4 accuracy point boost above randomly composed augmentation by learning to appropriately combine standard image TFs with domain-specific TFs derived in collaboration with radiology experts.
-Using novel language model-based TFs, we see a 1.4 F1 boost over heuristic augmentation on a text relation extraction task from the ACE corpus.
-And on a 10\%-subsample of the CIFAR-10 dataset, we achieve a 3.9 accuracy point gain over a standard heuristic augmentation approach and are competitive with comparable semi-supervised approaches.
-Additionally, we show empirical results suggesting that the proposed approach is robust to misspecified  TFs.</i>
--->
+<p>In this blog post, we'll start by reviewing the prevalence of heuristic data augmentation in practice, then outline our proposed approach, and finally review our empirical results.</p>
 
-<h1 id="background-in-practice">Heuristic Data Augmentation in Practice</h1>
+
+<h2 id="background-in-practice">Heuristic Data Augmentation in Practice</h2>
 
 <p>Data augmentation is the secret sauce in today's state-of-the-art pipelines for benchmark image recognition tasks: it's not the star of the show, but your results won't be nearly as good without it. Here's an overview of top scoring models for CIFAR-10 and CIFAR-100, with and without data augmentation:</p>
 

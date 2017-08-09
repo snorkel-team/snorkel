@@ -223,13 +223,15 @@ Finally, these can be used to improve the performance of any end discriminative 
 
 
 <h1 id="learning-how-to-augment-data">Learning how to augment data</h1>
+
+<p>We model the process of data augmentation as applying a series of TFs, each representing an incremental transformation (such as a small image rotation). This is illustrated for image recognition, natural language processing, and computer-assisted detection in the figure below. Our goal is to automatically compose and parameterize a set of TFs in ways that produce realistic and diverse augmented data points.</p>
+
 <div class="figure">
 <img src="tanda_figs/example_tfs.png" alt="Example TFs."/>
+<p class="caption"><i>Figure 1: Examples of transformation functions for different domains.</i></p>
 </div>
 
-<p>Intro intro intro</p>
-
-<p>The core assumption behind standard data augmentation is <em>any</em> sequence of transformation operations applied to <em>any</em> data point will produce an augmented point in the same class. Of course, this is unrealistic and many real-world data augmentation pipelines violate this assumption. Instead, we make a weaker modeling assumption: a sequence of transformation operations applied to a data point will produce an augmented point either in the same class or in a null class outside the distribution of interest. That is, we can reasonably assume that we won't turn an image of a plane into one of a dog, but we might turn it into an indistiguishable garbage image. This critical assumption allows us to use unlabeled data to train our augmentation model.</p>
+<p>The core assumption behind standard data augmentation is <em>any</em> sequence of transformation operations applied to <em>any</em> data point will produce an augmented point in the same class. Of course, this is unrealistic and many real-world data augmentation pipelines violate this assumption. Instead, we make a weaker modeling assumption: a sequence of TFs applied to a data point will produce an augmented point either in the same class or in a null class outside the distribution of interest. That is, we can reasonably assume that we won't turn an image of a plane into one of a dog, but we might turn an image of a plane into an indistiguishable garbage image. This critical assumption allows us to use unlabeled data to train our augmentation model.</p>
 
 <div class="figure">
 <img src="tanda_figs/fig2.png" alt="Figure 2"/>
@@ -248,6 +250,7 @@ Finally, these can be used to improve the performance of any end discriminative 
 	<li><strong>Long short-term memory network (LSTM)</strong>: the input to each cell is a one-hot vector of the previously sampled TF, and the output from each cell of the network is a sampling distribution for the next TF. Making state-based decisions is critical when TFs are lossy when applied together, or are non-commutative.</li>
 </ul>
 
+<p>The training procedure for <span class="math inline">\(G_{\theta}\)</span> is completely decoupled from the end task. As a result, we can use <span class="math inline">\(G_{\theta}\)</span> to augment data for use with <em>any</em> end classifier <span class="math inline">\(D^{f}\)</span>.
 
 <h1 id="our-results-with-tanda">Our results with TANDA</h1>
 

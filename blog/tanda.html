@@ -22,27 +22,23 @@ Alex Ratner, Henry Ehrenberg, Zeshan Hussain, Jared Dunnmon, Chris Ré<br />
 </div>
 
 <blockquote>
-<p><b>Data augmentation</b> is a now-ubiquitous technique for increasing the size of labeled training sets by transforming data points in ways that preserve class labels.
-In image classification especially, it is a major factor in most state-of-the-art results.
-However:</p>
+<p><b>Data augmentation</b> is a technique for increasing the size of labeled training sets by applying class-preserving transformations.
+In the image domain, it is a crucial factor in <i>almost every</i> state-of-the-art result today.
+However, the particular types, parameterizations, and composition of transformations applied can have a <i>large</i> effect on performance, and are tricky and time-consuming to tune by hand for a new dataset or task.</p>
+
+<!--<p>At its core, we view data augmentation as a simple, model-agnostic way of <b>specifying invariances</b> and as a valuable form of <b><a href="https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html">weak supervision</a></b>, which we should make <i>easier</i> and <i>faster</i> to provide.-->
+<p>In this blog post we describe our new automated method for data augmentation:</p>
 
 <ul>
-	<li>The particular types, parameterizations, and composition of transformations applied can have a large effect on performance</li>
-	<li>For a new dataset or task--e.g. <b>not</b> MNIST or CIFAR--it can be tricky to choose, tune, and compose a data augmentation strategy</li>
-	<li>For complex tasks, domain-experts can often <i>specify</i> transformation operations easily--but not necessarily the correct way to apply them</li>
-</ul>
-
-<p>At its core, we view data augmentation as a simple, model-agnostic way of <b>specifying invariances</b> and as a valuable form of <b><a href="https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html">weak supervision</a></b>, which we should make <i>easier</i> and <i>faster</i> to provide.
-In this blog post:</p>
-
-<ul>
-	<li>We'll review the prevalence and diversity of heuristic data augmentation techniques to-date</li>
-	<li>We'll describe our new approach of <b>modeling transformations as sequences of incremental, black-box operations</b>, and how we can then <b>learn a generative augmentation model from unlabeled data using adversarial techniques.</b></li>
-	<li>We'll share some of our initial results--<b>3.9 pts. improvement on CIFAR-10, 1.4 F1 pts. on an ACE relation extraction task, and 2.4 pts. on a mammograpy task.</b></li>
+	<li>We start by representing transformations as <b>sequences of incremental black-box operations</b></li>
+	<li>We then learn a <b>generative sequence model</b> that produces realistic, class-preserving augmentations using unlabeled data and adversarial techniques.</li>
+	<li>We get <b>strong gains over heuristic approaches</b>--3.9 pts. improvement on CIFAR-10, 1.4 F1 pts. on an ACE relation extraction task, and 2.4 pts. on a mammograpy task--and demonstrate <b>robustness to user misspecification.</b></li>
 </ul>
 
 <p><b>You can also check out our <a href="#">paper</a> for detail and references, and our <a href="#">code</a> to give it a spin!</b></p>
 </blockquote>
+
+<h1 id="intro">Data Augmentation as Weak Supervision</h1>
 
 <p>Modern machine learning models, such as deep neural networks, may have billions of free parameters and accordingly require massive labeled data sets for training.
 In most settings, labeled data is not available in sufficient quantities to avoid overfitting to the training set.

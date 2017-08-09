@@ -69,7 +69,7 @@ To underscore both the omnipresence and diversity of heuristic data augmentation
 The takeaway? <b>10 out of 10 of the top CIFAR-10 results</b> and <b>9 out of 10 of the top CIFAR-100 results</b> use data augmentation, for average boosts (when reported) of <b>3.71</b> and <b>13.39</b> points in accuracy, respectively.
 Moreover, we see that while some sets of papers inherit a simple data augmentation strategy from prior work (in particular, all the recent ResNet variants), there are still a large variety of approaches. And in general, the particular choice of data augmentation strategy is widely reported to have large effects on performance.</p>
 
-<p><i>Disclaimer: the below table is compiled from <a href="http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html">this wonderful list</a> and from the latest <a href="https://arxiv.org/pdf/1608.06993.pdf">CVPR best paper</a> which achieves new state-of-the-art results. However, we compile it for illustrative purposes and it is not necessarily comprehensive.</i></p>
+<p><i>Disclaimer: the below table is compiled from <a href="http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html">this wonderful list</a> or from the latest <a href="https://arxiv.org/pdf/1608.06993.pdf">CVPR best paper</a> (indicated by a *) which achieves new state-of-the-art results. However, we compile it for illustrative purposes and it is not necessarily comprehensive.</i></p>
 
 <table class="dense-table" style="width:100%; font-size: 10px;">
   	<tr>
@@ -225,22 +225,38 @@ Moreover, we see that while some sets of papers inherit a simple data augmentati
 </table>
 
 <!--<p>We note that CIFAR-10/100 was selected as a representative mid-range image classification task wich is open and well-documented.
-On the high extreme of task complexity—for example ImageNet—competition winning systems are often highly-complex and reported very opaquely, so it is difficult to comprehensively review the use and type of data augmentation strategy as above; however, the importance of data augmentation for these tasks is widely reported in practice.
-On the other extreme—for example MNIST—many systems in fact do not use data augmentation, given the simplicity of the task.
-However, in more chhallenging variants—e.g. 10% or 1% subsampled MNIST—data augmentation is used extensively.</p>-->
+On the high extreme of task complexity--for example ImageNet--competition winning systems are often highly-complex and reported very opaquely, so it is difficult to comprehensively review the use and type of data augmentation strategy as above; however, the importance of data augmentation for these tasks is widely reported in practice.
+On the other extreme--for example MNIST--many systems in fact do not use data augmentation, given the simplicity of the task.
+However, in more challenging variants--e.g. 10% or 1% subsampled MNIST--data augmentation is used extensively.</p>-->
 
 
+<h2 id="learning-how-to-augment-data">Learning to Compose Domain-Specific Transformations</h2>
 
-<h2 id="learning-how-to-augment-data">Learning How to Augment Data</h2>
-
-<p>We model the process of data augmentation as applying a series of TFs, each representing an incremental transformation (such as a small image rotation). This is illustrated for image recognition, natural language processing, and computer-assisted detection in the figure below. Our goal is to automatically compose and parameterize a set of TFs in ways that produce realistic and diverse augmented data points.</p>
+<p>In our setup, we make the novel choice to model data augmentation operations as <b>sequences of black-box user-provided <i>transformation functions (TFs)</i></b>, which we do not assume to be either differentiable or deterministic.
+This representation will allow us to have fine-grained control over both the (discretized) parameterization and order of composition of these TFs, and allows for a wide variety of TFs such as the below examples from our experiments with image recognition and natural language processing tasks.
+Our goal is then to <b>learn a TF sequence generator</b> that results in  realistic and diverse augmented data points.
+</p>
 
 <div class="figure">
 <img src="tanda_figs/example_tfs.png" alt="Example TFs."/>
-<p class="caption"><i>Figure 1: Examples of transformation functions for different domains.</i></p>
 </div>
 
-<p>The core assumption behind standard data augmentation is <em>any</em> sequence of transformation operations applied to <em>any</em> data point will produce an augmented point in the same class. Of course, this is unrealistic and many real-world data augmentation pipelines violate this assumption. Instead, we make a weaker modeling assumption: a sequence of TFs applied to a data point will produce an augmented point either in the same class or in a null class outside the distribution of interest. That is, we can reasonably assume that we won't turn an image of a plane into one of a dog, but we might turn an image of a plane into an indistiguishable garbage image. This critical assumption allows us to use unlabeled data to train our augmentation model.</p>
+
+<h3>Weakening the Class-Invariance Assumption</h3>
+<p>The core assumption behind standard data augmentation in practice is that <em>any</em> sequence of transformation operations applied to <em>any</em> data point will produce an augmented point in the same class. Of course, this is unrealistic and many real-world data augmentation pipelines violate this assumption. Instead, we make a weaker modeling assumption: a sequence of transformation operations applied to a data point will produce an augmented point either in the same class or in a null class outside the distribution of interest. That is, we can reasonably assume that we won't turn an image of a plane into one of a dog, but we might turn it into an indistiguishable garbage image. This critical assumption allows us to use unlabeled data to train our augmentation model.</p>
+
+<div class="figure">
+<img src="tanda_figs/fig3.png" alt="Figure 3"/>
+</div>
+
+<p>For example, in the above figure panel (a), we demonstrate the intuition behind this modeling assumption by taking images from CIFAR-10 (each row) and searching for a transformation sequence that maps them to a different class (eachh column) according to a trained discriminative model.
+We see that the transformed images <i>do not</i> look much like the class they are being mapped to, but often <i>do</i> look like garbage.
+In contrast, we also show the images transformed via our method in (b).</p>
+
+
+<h3>Learning a TF Sequence Model Adversarially from Unlabeled Data</h3>
+
+<p>Armed with our weaker invariance assumption, we can now <b>leverage unlabeled data</b> to train a TF sequence generator, using <b>adversarial techniques</b>.</p>
 
 <div class="figure">
 <img src="tanda_figs/fig2.png" alt="Figure 2"/>
@@ -259,7 +275,6 @@ However, in more chhallenging variants—e.g. 10% or 1% subsampled MNIST—data 
 	<li><strong>Long short-term memory network (LSTM)</strong>: the input to each cell is a one-hot vector of the previously sampled TF, and the output from each cell of the network is a sampling distribution for the next TF. Making state-based decisions is critical when TFs are lossy when applied together, or are non-commutative.</li>
 </ul>
 
-<p>The training procedure for <span class="math inline">\(G_{\theta}\)</span> is completely decoupled from the end task. As a result, we can use <span class="math inline">\(G_{\theta}\)</span> to augment data for use with <em>any</em> end classifier <span class="math inline">\(D^{f}\)</span>.
 
 <h2 id="our-results-with-tanda">Our Results with TANDA</h2>
 

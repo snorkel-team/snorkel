@@ -65,7 +65,12 @@ Finally, these can be used to improve the performance of any end discriminative 
 
 <h2 id="background-in-practice">Heuristic Data Augmentation in Practice</h2>
 
-<p>Data augmentation is the secret sauce in today's state-of-the-art pipelines for benchmark image recognition tasks: it's not the star of the show, but your results won't be nearly as good without it. Here's an overview of top scoring models for CIFAR-10 and CIFAR-100, with and without data augmentation:</p>
+<p>Data augmentation is the secret sauce in today's state-of-the-art pipelines for benchmark image recognition tasks.
+To underscore both the omnipresence and diversity of heuristic data augmentation in practice, we compiled a list of the top ten models for the CIFAR-10 and CIFAR-100 tasks.
+In particular, we note that <b>10/10 of the top CIFAR-10 results</b> and <b>9/10 of the top CIFAR-100 results</b> use data augmentation, for average (when reported) boosts of <b>3.71</b> and <b>13.39</b> pts. in accuracy respectively!
+Moreover, we see that while some sets of papers inhherit a simple data augmentation strategy from prior work (in particular, all the ResNet variants of late), there are still a large variety of approaches--and in general, the particular choice of data augmentation strategy is widely reported to have large effects on performance.</p>
+
+<p><i>Disclaimer: the below table is compiled from <a href="http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html">this wonderful list</a> and from the latest <a hhref="https://arxiv.org/pdf/1608.06993.pdf">CVPR best paper</a> which achieves new state-of-the-art results; however we compile it for illustrative purposes, and it is not necessarily comprehensive!</i></p>
 
 <table class="dense-table" style="width:100%; font-size: 10px;">
   	<tr>
@@ -78,18 +83,18 @@ Finally, these can be used to improve the performance of any end discriminative 
 	</tr>
 	<tr>
 		<td rowspan="10">CIFAR-10</td>
-		<td>1*</td>
+		<td>1</td>
 		<td>DenseNet</td>
 		<td>3.46</td>
 		<td>-</td>
-		<td>Random shifts, flips; note, for their other next-best result, gap from DA is 1.43</td>
+		<td>Random shifts, flips</td>
 	</tr>
 	<tr>
 		<td>2</td>
 		<td>Fractional Max-Pooling</td>
 		<td>3.47</td>
 		<td>-</td>
-		<td>Randomized mix of translations, rotations, reflections, stretching, and shearing operations, and random RGB color shifts</td>
+		<td>Randomized mix of translations, rotations, reflections, stretching, shearing, and random RGB color shift operations</td>
 	</tr>
 	<tr>
 		<td>3*</td>
@@ -103,7 +108,7 @@ Finally, these can be used to improve the performance of any end discriminative 
 		<td>Striving for Simplicity: The All Convolutional Net</td>
 		<td>4.41</td>
 		<td>9.08</td>
-		<td>They also get 7.25% using just hor. Flips, random shifts, other simple ones. They then used “heavy” augmentation: images expanded, then scaled, rotated, color shifted.</td>
+		<td>“Heavy” augmentation: images expanded, then scaled, rotated, color shifted randomly</td>
 	</tr>
 	<tr>
 		<td>5*</td>
@@ -131,7 +136,7 @@ Finally, these can be used to improve the performance of any end discriminative 
 		<td>All You Need is a Good Init</td>
 		<td>5.84</td>
 		<td>-</td>
-		<td>They get their best result using “out of the box” ResNets, which uses random crops, horizontal flips.</td>
+		<td>Random shifts, flips</td>
 	</tr>
 	<tr>
 		<td>9</td>
@@ -153,7 +158,7 @@ Finally, these can be used to improve the performance of any end discriminative 
 		<td>DenseNet</td>
 		<td>17.18</td>
 		<td>-</td>
-		<td>Random shifts, flips; note, for their other next-best result, gap from DA is 2.04</td>
+		<td>Random shifts, flips</td>
 	</tr>
 	<tr>
 		<td>2*</td>
@@ -202,27 +207,32 @@ Finally, these can be used to improve the performance of any end discriminative 
 		<td>Fractional Max-Pooling</td>
 		<td>26.39</td>
 		<td>-</td>
-		<td>Randomized mix of translations, rotations, reflections, stretching, and shearing operations, and random RGB color shifts.</td>
+		<td>Randomized mix of translations, rotations, reflections, stretching, and shearing operations, and random RGB color shifts</td>
 	</tr>
 	<tr>
 		<td>9*</td>
 		<td>ResNet (110-Layer)</td>
 		<td>27.22</td>
 		<td>44.74</td>
-		<td>Random shifts, flips.</td>
+		<td>Random shifts, flips</td>
 	</tr>
 	<tr>
 		<td>10</td>
 		<td>Scalable Bayesian Optimization Using Deep Neural Networks</td>
 		<td>27.4</td>
 		<td>-</td>
-		<td>Hue, saturation, scalings, horizontal flips.</td>
+		<td>Hue, saturation, scalings, horizontal flips</td>
 	</tr>
 </table>
 
+<p>We note that CIFAR-10/100 was selected as a representative mid-range image classification task wich is open and well-documented.
+On the high extreme of task complexity--for example ImageNet--competition winning systems are often highly-complex and reported very opaquely, so it is difficult to comprehensively review the use and type of data augmentation strategy as above; however, the importance of data augmentation for these tasks is widely reported in practice.
+On the other extreme--for example MNIST--many systems in fact do not use data augmentation, given the simplicity of the task.
+However, in more chhallenging variants--e.g. 10% or 1% subsampled MNIST--data augmentation is used extensively.</p>
 
 
-<h1 id="learning-how-to-augment-data">Learning how to augment data</h1>
+
+<h2 id="learning-how-to-augment-data">Learning how to augment data</h2>
 
 <p>We model the process of data augmentation as applying a series of TFs, each representing an incremental transformation (such as a small image rotation). This is illustrated for image recognition, natural language processing, and computer-assisted detection in the figure below. Our goal is to automatically compose and parameterize a set of TFs in ways that produce realistic and diverse augmented data points.</p>
 

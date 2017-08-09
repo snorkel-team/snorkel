@@ -280,7 +280,7 @@ class MTurkHelper(object):
                         consensus = option
                         num_majority += 1
                      
-                
+                labels_by_candidate['val:%d:%d:%d'%(cand[0],cand[1],cand[2])] = consensus
                 valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
             
             print("Unanimous: {}".format(num_unanimous))
@@ -289,7 +289,7 @@ class MTurkHelper(object):
             print("Bad: {}".format(num_bad))
 
             # Link candidates
-            return finished_candidates
+            return labels_by_candidate
             
         
     def postprocess_visual(self, csvpath, candidates=None, verbose=False):
@@ -342,9 +342,14 @@ class MTurkHelper(object):
                     elif header[i].startswith('Input.content'):
                         #The HTML Parsing!
                         parsed_url = field.split('_')
-                        img_indices.append(int(parsed_url[2]))
-                        p_indices.append(int(parsed_url[3]))
-                        b_indices.append(int(parsed_url[4].split('.')[0]))
+                        if len(parsed_url) == 5:
+                            img_indices.append(int(parsed_url[2]))
+                            p_indices.append(int(parsed_url[3]))
+                            b_indices.append(int(parsed_url[4].split('.')[0]))
+                        else:
+                            img_indices.append(int(parsed_url[1]))
+                            p_indices.append(int(parsed_url[2]))
+                            b_indices.append(int(parsed_url[3].split('.')[0]))
                         
                     elif header[i].startswith('Answer.explanation'):
                         explanations.append(field)
@@ -406,9 +411,9 @@ class MTurkHelper(object):
                      
                 assert(consensus is not None)
                 valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
-            assert(all([len(responses) == self.workers_per_hit 
-                 for responses in explanations_by_candidate.values()]))
-            assert(num_unanimous + num_majority + num_split + num_bad == self.num_hits * self.candidates_per_hit)
+            #assert(all([len(responses) == self.workers_per_hit 
+                 #for responses in explanations_by_candidate.values()]))
+            #assert(num_unanimous + num_majority + num_split + num_bad == self.num_hits * self.candidates_per_hit)
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
             print("Split: {}".format(num_split))

@@ -39,26 +39,25 @@ However, the choice of types, parameterizations, and composition of transformati
 
 <h2 id="intro">Automating the Art of Data Augmentation</h2>
 
-<p>Modern machine learning models, such as deep neural networks, may have billions of free parameters and accordingly require massive labeled training sets--which are not usually available.
-The technique of artificially expanding labeled training sets by transforming data points in ways which preserve class labels--known as <i>data augmentation</i>--has quickly become a critical and effective tool for combatting this labeled data scarcity problem.
-And indeed, data augmentation is cited as essential to nearly every state-of-the-art result in image classification (see below), and is becoming increasingly common in other modalities as well.</p>
+<p>Modern machine learning models, such as deep neural networks, may have billions of free parameters and accordingly require massive labeled training sets—which are often not available.
+The technique of artificially expanding labeled training sets by transforming data points in ways which preserve class labels—known as <i>data augmentation</i>—has quickly become a critical and effective tool for combatting this labeled data scarcity problem.
+And indeed, data augmentation is cited as essential to nearly every state-of-the-art result in image classification (<a href="#background-in-practice">see below</a>), and is becoming increasingly common in other modalities as well.</p>
 
-<p>These gains are remarkable for such a simple technique. But like everything in machine learning, there's a hidden cost: the time required to develop data augmentation pipelines.
-For while it's often simple to formulate individual transformation operations, it's generally time-consuming and difficult to find the right parameterizations and compositions of them.
-In particular, many transformation operations will have vastly different effects based on parameterization, the set of other transformations they are applied with, and even their particular order of composition.
-For example, a brightness operation might produce realistic images when applied with a small rotation, but produce a garbage image when applied along with a saturation enhancement.
-This problem is only exacerbated for a new task or domain, where optimal data augmentation strategies have not been worked out by the community over time.
-In general, practitioners generally revert to random application of heuristically-tuned transformations, which while helpful, is far from optimal--and occasionally disastrous!</p>
+<p>For being such a simple technique, data augmentation leads to remarkable gains. But like everything in machine learning, there's a hidden cost: the time required to develop data augmentation pipelines.
+Even though it's often simple to formulate individual transformation operations, it's generally time-consuming and difficult to find the right parameterizations and compositions of them.
+And these choices are critical. Many transformation operations will have vastly different effects based on parameterization, the set of other transformations they are applied with, and even their particular order of composition.
+For example, a brightness shift might produce realistic images when applied with a small rotation, but produce a garbage image when applied along with a saturation enhancement.
+This problem is only exacerbated for a new task or domain, where performant data augmentation strategies have not been worked out by the community over time.
+In general, practitioners generally revert to random application of heuristically tuned transformations, which, while helpful, is far from optimal.</p>
 
-<p>So coming up with an optimal data augmentation pipeline is tricky... but how often do we need to do this anyway?
-In our view, data augmentation can be seen as an important form of <i><a href="https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html">weak supervision</a></i>, providing a way for subject matter experts (SMEs) to leverage their knowledge of invariances in a task or domain to improve model performance even given limited labeled training data.
-As such, our goal is to make it easy enough to deploy for any new, real-world task with its own specific types of invariances and transformation operations--without requiring days or weeks of tuning and tweaking.
-Moreover, an ideal data augmentation system should permit arbitrary, black-box transformation operations--thus serving as a flexible, model-agnostic way for SMEs to inject domain knowledge into machine learning pipelines.
+<p>In our view, data augmentation can be seen as an important form of <i><a href="https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html">weak supervision</a></i>, providing a way for subject matter experts (SMEs) to leverage their knowledge of invariances in a task or domain to improve model performance even given limited labeled training data.
+As such, our goal is to make it easy enough to deploy for any new, real-world task with its own specific types of invariances and transformation operations—without requiring days or weeks of tuning and tweaking.
+Moreover, an ideal data augmentation system should permit arbitrary, black-box transformation operations—thus serving as a flexible, model-agnostic way for SMEs to inject domain knowledge into machine learning pipelines.
 </p>
 
-<p>In <b><a href="#">our proposed system</a></b>, users provide a set of arbitrary, black-box transformation functions (TFs)--representing <i>incremental</i> transformation operations--which need not be differentiable or deterministic, and an unlabeled dataset.
-We the automatically learn a generative sequence model over the TFs, using the unlabeled data and adversarial techniques, so that the generated transformation sequences produce realistic, class-preserving transformations.
-Finally, these can be used to improve the performance of any end discriminative model!</p>
+<p>In <b><a href="#learning-how-to-augment-data">our proposed system</a></b>, users provide a set of arbitrary, black-box transformation functions (TFs)—representing <i>incremental</i> transformation operations—which need not be differentiable nor deterministic, and an unlabeled dataset.
+We then automatically learn a generative sequence model over the TFs using adversarial techniques, so that the generated transformation sequences produce realistic augmented data points.
+Finally, the generative model can be used to improve the performance of any end discriminative model.</p>
 
 <p>In this blog post, we'll start by reviewing the prevalence of heuristic data augmentation in practice, then outline our proposed approach, and finally review our empirical results.</p>
 
@@ -66,12 +65,11 @@ Finally, these can be used to improve the performance of any end discriminative 
 <h2 id="background-in-practice">Heuristic Data Augmentation in Practice</h2>
 
 <p>Data augmentation is the secret sauce in today's state-of-the-art pipelines for benchmark image recognition tasks.
-To underscore both the omnipresence and diversity of heuristic data augmentation in practice, we compiled a list of the top ten models for the CIFAR-10 and CIFAR-100 tasks.
-In particular, we note that <b>10/10 of the top CIFAR-10 results</b> and <b>9/10 of the top CIFAR-100 results</b> use data augmentation, for average (when reported) boosts of <b>3.71</b> and <b>13.39</b> pts. in accuracy respectively!
-Moreover, we see that while some sets of papers inhherit a simple data augmentation strategy from prior work (in particular, all the ResNet variants of late), there are still a large variety of approaches--and in general, the particular choice of data augmentation strategy is widely reported to have large effects on performance.</p>
+To underscore both the omnipresence and diversity of heuristic data augmentation in practice, we compiled a list of the top ten models for the well documented CIFAR-10 and CIFAR-100 tasks. 
+The takeaway? <b>10 out of 10 of the top CIFAR-10 results</b> and <b>9 out of 10 of the top CIFAR-100 results</b> use data augmentation, for average boosts (when reported) of <b>3.71</b> and <b>13.39</b> points in accuracy, respectively.
+Moreover, we see that while some sets of papers inherit a simple data augmentation strategy from prior work (in particular, all the recent ResNet variants), there are still a large variety of approaches. And in general, the particular choice of data augmentation strategy is widely reported to have large effects on performance.</p>
 
-<p><i>Disclaimer: the below table is compiled from <a href="http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html">this wonderful list</a> or from the latest <a href="https://arxiv.org/pdf/1608.06993.pdf">CVPR best paper</a> (indicated by a *), which achieves new state-of-the-art results and also reports other recent ones.
-However we compile this list for illustrative purposes only, and it is not necessarily comprehensive!</i></p>
+<p><i>Disclaimer: the below table is compiled from <a href="http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html">this wonderful list</a> or from the latest <a href="https://arxiv.org/pdf/1608.06993.pdf">CVPR best paper</a> (indicated by a *) which achieves new state-of-the-art results. However, we compile it for illustrative purposes and it is not necessarily comprehensive.</i></p>
 
 <table class="dense-table" style="width:100%; font-size: 10px;">
   	<tr>
@@ -226,10 +224,10 @@ However we compile this list for illustrative purposes only, and it is not neces
 	</tr>
 </table>
 
-<p>We note that CIFAR-10/100 was selected as a representative mid-range image classification task wich is open and well-documented.
+<!--<p>We note that CIFAR-10/100 was selected as a representative mid-range image classification task wich is open and well-documented.
 On the high extreme of task complexity--for example ImageNet--competition winning systems are often highly-complex and reported very opaquely, so it is difficult to comprehensively review the use and type of data augmentation strategy as above; however, the importance of data augmentation for these tasks is widely reported in practice.
 On the other extreme--for example MNIST--many systems in fact do not use data augmentation, given the simplicity of the task.
-However, in more challenging variants--e.g. 10% or 1% subsampled MNIST--data augmentation is used extensively.</p>
+However, in more challenging variants--e.g. 10% or 1% subsampled MNIST--data augmentation is used extensively.</p>-->
 
 
 <h2 id="learning-how-to-augment-data">Learning to Compose Domain-Specific Transformations</h2>

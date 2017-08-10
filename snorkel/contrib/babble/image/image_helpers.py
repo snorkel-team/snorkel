@@ -64,7 +64,7 @@ def geoms_to_points(geoms, side):
 def is_below(geom1, geom2):
     point1, point2 = geoms_to_points([geom1, geom2], 'bottom')
     if None in (point1.y, point2.y):
-        raise Exception('Invalid Comparison')
+        return False # e.g. "right edge of box x is below box y"
     else:
         return point1.y > point2.y
 
@@ -77,7 +77,7 @@ def is_above(geom1, geom2):
 def is_right(geom1, geom2):
     point1, point2 = geoms_to_points([geom1, geom2], 'right')
     if None in (point1.x, point2.x):
-        raise Exception('Invalid Comparison')
+        return False # e.g. "top edge of box x is right of box y"
     else:
         return point1.x > point2.x
 
@@ -89,14 +89,16 @@ def is_left(geom1, geom2):
 
 def is_near(geom1, geom2, thresh=50.0):
     point1, point2 = geoms_to_points([geom1, geom2], 'center')
-    coord1 = (point1.x, point1.y)
-    coord2 = (point2.x, point2.y)
-    
-    if (None in coord1) or (None in coord2):
-        raise Exception('Invalid Distance Comparison')
+    if None in [point1.x, point2.x]:
+        x_diff = 0 # e.g. "top edge of box x is near box y"
     else:
-        dist = np.linalg.norm(np.array([point1.x - point2.x, point1.y - point2.y]))
-        return dist <= thresh
+        x_diff = point1.x - point2.x
+    if None in [point1.y, point2.y]:
+        y_diff = 0
+    else:
+        y_diff = point1.y - point2.y
+    dist = np.linalg.norm(np.array([x_diff, y_diff]))
+    return dist <= thresh
 
 
 def is_far(geom1, geom2):

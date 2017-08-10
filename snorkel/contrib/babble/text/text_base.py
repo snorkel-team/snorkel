@@ -211,5 +211,6 @@ text_grammar = GrammarMixin(
     rules=rules,
     ops=ops,
     helpers=helpers,
-    annotators=annotators
+    annotators=annotators,
+    translate_ops={}
 )

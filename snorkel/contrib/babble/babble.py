@@ -195,11 +195,18 @@ class Babbler(object):
         return sorted([self.explanations_by_name[exp_name] for exp_name in exp_names],
             key=lambda x: x.name)
 
-    def get_parses(self):
-        return sorted(self.parses, key=lambda x: extract_exp_name(x.function))
+    def get_parses(self, translate=True):
+        parses = sorted(self.parses, key=lambda x: extract_exp_name(x.function))
+        if translate:
+            return [self.translate(p.semantics) for p in parses]
+        else:
+            return parses
 
     def get_lfs(self):
         return [parse.function for parse in self.get_parses()]
+
+    def translate(self, semantics):
+        return self.semparser.translate(semantics)
 
     def display_lf_distribution(self):
         def count_parses_by_exp(lfs):

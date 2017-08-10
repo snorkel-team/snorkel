@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from pandas import DataFrame, Series
 
-from core import core_grammar, sem_to_str
+from core import core_grammar
 from text import text_grammar
 from image import image_grammar
 from grammar import Grammar, validate_semantics
@@ -186,7 +186,7 @@ class SemanticParser(object):
             for parse in parses:
                 if show_parse:
                     print("PARSE: {}\n".format(parse))
-                semantics_ = sem_to_str(parse.semantics) if pseudo_python else parse.semantics
+                semantics_ = self.translate(parse.semantics) if pseudo_python else parse.semantics
                 # REDUNDANT
                 if parse.semantics in semantics:
                     if show_redundant: print("R: {}\n".format(semantics_))
@@ -249,18 +249,7 @@ class SemanticParser(object):
         self.results = DataFrame(data=dataframe, index=explanation_names)[col_names]
         return LFs
 
-    def semantics_to_pseudocode(self, sem):
+    def translate(self, sem):
         """Converts a parse's semantics into a pseudocode string."""
         validate_semantics(sem)
-        return sem_to_str(sem)
-        # def recurse(sem):
-        #     if isinstance(sem, tuple):
-        #         if sem[0] in self.pseudocode_ops:
-        #             op = self.pseudocode_ops[sem[0]]
-        #             args_ = [recurse(arg) for arg in sem[1:]]
-        #             return op(*args_) if args_ else op
-        #         else:
-        #             return str(sem)
-        #     else:
-        #         return str(sem)
-        # return recurse(sem)
+        return self.grammar.translate(sem)

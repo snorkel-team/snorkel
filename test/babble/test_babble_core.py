@@ -40,10 +40,10 @@ class TestBabbleCore(unittest.TestCase):
     def test_absorption(self):
         self.check_explanations(core_explanations.absorption)
 
-    def test_pseudocode(self):
+    def test_translate(self):
         semantics = ('.root', ('.label', ('.bool', True), ('.and', ('.bool', True), ('.bool', True))))
         pseudocode = 'return 1 if (True and True) else 0'
-        self.assertEqual(self.sp.semantics_to_pseudocode(semantics), pseudocode)
+        self.assertEqual(self.sp.translate(semantics), pseudocode)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBabbleCore)

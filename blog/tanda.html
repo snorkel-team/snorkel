@@ -229,7 +229,9 @@ Moreover, we see that while some sets of papers inherit a simple data augmentati
 </table>
 
 
-<p>This medley of primarily manual approaches with widely varying results suggests that data augmentation low-hanging fruit for automation. Recent lines of work in this direction all rely on large quantities of labeled data, restricted sets of simple transformations, or consider only local perturbations that are not informed by domain knowledge. However in real-world settings, SMEs rarely have access to massive labeled training sets and best encode domain knowledge in complex, non-differentiable functions. Our approach to learning how to augment data—described in the next section—is motivated by these practical consierations.</p>
+<p>This medley of primarily manual approaches with widely varying results suggests that data augmentation is a prime candidate for automation.
+Indeed, various related lines of work all have interesting takes at automating various aspects of data augmentation--for example learning <a href="https://arxiv.org/abs/1411.1784">class-conditional GANs to generate data</a>, applying transformations adversarially either <a href="http://people.csail.mit.edu/gamir/pubs/TeoGloRowSmo07.pdf">over given sets of invariances</a> or <a href="https://arxiv.org/abs/1507.00677">over learned local adversarial perturbations</a>, or performing data augmentation <a href="https://www.jair.org/media/953/live-953-2037-jair.pdf">via interpolation in feature space</a>, to name a few.
+Our focus is instead on <b>directly leveraging and exploiting SME domain knowledge</b> of transformation operations, <i>without</i> assuming that this domain knowledge will be specified completely or correctly, <i>without</i> assuming access to large labeled datasets, and <i>without</i> assuming that the provided operations will be differentiable or deterministic. Our approach to learning how to augment data—described in the next section—is motivated by these practical consierations.</p>
 
 
 <h2 id="learning-how-to-augment-data">Learning to Compose Domain-Specific Transformations</h2>
@@ -392,7 +394,7 @@ We hope that this code not only helps to improve model performance on a variety 
 <img class="centered" src="tanda_figs/mnist.gif" alt="TANDA MNIST"/>
 </div>
 
-<p><i>Figure: TANDA learning how to augment MNIST images to appear realistic as training progresses.</i></p>
+<p><i>Figure: TANDA learning how to augment MNIST images to appear realistic as training progresses (with minimal diversity objective coefficient, for visual effect!).</i></p>
 
 
 <div id="disqus_thread"></div>

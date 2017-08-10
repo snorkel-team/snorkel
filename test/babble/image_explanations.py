@@ -100,11 +100,17 @@ boxes = [
         label=True,
         candidate=a_and_b,
         semantics=None),
-    # Box near
+    # Box near (point and box)
     Explanation(
         condition="box x is near the top left corner of box y",
         label=True,
         candidate=a_and_b,
+        semantics=None),
+    # Box near (box and box)
+    Explanation(
+        condition="box x is in the same place as box y",
+        label=True,
+        candidate=d_and_c,
         semantics=None),
     # Box far
     Explanation(
@@ -130,6 +136,12 @@ comparisons = [
     # Bottom
     Explanation(
         condition="the bottom of box y is below the bottom of box x",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+    # Past (bottom)
+    Explanation(
+        condition="box y is past the bottom of box x",
         label=True,
         candidate=a_and_b,
         semantics=None),
@@ -178,6 +190,12 @@ quantified = [
         label=True,
         candidate=a_and_c,
         semantics=None),
+    # Same Area
+    Explanation(
+        condition="box X is the same size as box Y",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
     # # Smaller
     # Explanation(
     #     condition="box y is much smaller than box x",
@@ -195,6 +213,12 @@ quantified = [
         condition=" Box X is wider than Box Y",
         label=True,
         candidate=a_and_c,
+        semantics=None),
+    # Same Width
+    Explanation(
+        condition="box X is as wide as box Y",
+        label=True,
+        candidate=a_and_b,
         semantics=None),
     # Overlaps (0.25 thresh)
     Explanation(

@@ -102,7 +102,7 @@ boxes = [
         semantics=None),
     # Box near
     Explanation(
-        condition="box x is near box y",
+        condition="box x is near the top left corner of box y",
         label=True,
         candidate=a_and_b,
         semantics=None),

@@ -1,12 +1,13 @@
+from snorkel.models import Bbox
 from snorkel.contrib.babble import Explanation
-from snorkel.contrib.babble.image import BBox
 
 # Box X = Person (category_id = 1)
 # Box Y = Bike (category_id = 2)
-A = BBox({'bbox': (100, 100, 100, 100), 'category_id': 1}, None)
-B = BBox({'bbox': (150, 150, 100, 100), 'category_id': 2}, None)
-C = BBox({'bbox': (300, 300, 50, 50), 'category_id': 2}, None)
-D = BBox({'bbox': (250, 250, 200, 200), 'category_id': 1}, None)
+
+A = Bbox(top=100, bottom=200, left=100, right=200)
+B = Bbox(top=150, bottom=250, left=150, right=250)
+C = Bbox(top=300, bottom=350, left=300, right=350)
+D = Bbox(top=250, bottom=450, left=250, right=450)
 
 """
 

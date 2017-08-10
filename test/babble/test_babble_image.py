@@ -24,7 +24,7 @@ class TestBabbleImage(unittest.TestCase):
                 print(LF_dict)
                 self.sp.grammar.print_chart()
                 parses = self.sp.parse(e, return_parses=True)
-                #import pdb; pdb.set_trace()
+                import pdb; pdb.set_trace()
             # parses = self.sp.parse(e, return_parses=True)
             if e.semantics:
                 self.assertTrue(len(LF_dict['correct']) > 0)

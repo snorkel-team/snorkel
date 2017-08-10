@@ -343,6 +343,11 @@ img.small {
   max-height:50%;
 }
 
+img.medium {
+  max-width:75%;
+  max-height:75%;
+}
+
 img.centered {
   margin-left: auto;
   margin-right: auto;

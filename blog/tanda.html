@@ -22,7 +22,7 @@ Alex Ratner, Henry Ehrenberg, Zeshan Hussain, Jared Dunnmon, Chris Ré<br />
 </div>
 
 <blockquote>
-<p><b>Data augmentation</b> is a technique for increasing the size of labeled training sets by applying class-preserving transformations to create copies of labeled data points.
+<p><b>Data augmentation</b> is a popular technique for increasing the size of labeled training sets by applying class-preserving transformations to create copies of labeled data points.
 In the image domain, it is a crucial factor in <i>almost every</i> state-of-the-art result today.
 However, the choice of types, parameterizations, and compositions of transformations applied can have a <i>large</i> effect on performance, and is tricky and time-consuming to tune by hand for a new dataset or task.</p>
 
@@ -59,7 +59,7 @@ As such, our goal is to make it easy enough to deploy for any new, real-world ta
 Moreover, an ideal data augmentation system should permit arbitrary, black-box transformation operations—thus serving as a flexible, model-agnostic way for SMEs to inject domain knowledge into machine learning pipelines.
 </p>
 
-<p>In our proposed system, users provide a set of arbitrary, black-box transformation functions (TFs)—representing <i>incremental</i> transformation operations, such as 'rotate 5 degrees' or 'shift by 2 px'—which need not be differentiable nor deterministic, and an unlabeled dataset.
+<p>In our proposed system, users provide a set of arbitrary, black-box transformation functions (TFs)—representing <i>incremental</i> transformation operations, such as "rotate 5 degrees" or "shift by 2 pixels"—which need not be differentiable nor deterministic, and an unlabeled dataset.
 We then automatically learn a generative sequence model over the TFs using adversarial techniques, so that the generated transformation sequences produce realistic augmented data points.
 The generative model can then be used to augment training sets for any end discriminative model.</p>
 
@@ -76,12 +76,6 @@ Moreover, we see that while some sets of papers inherit a simple data augmentati
 <p><i>Disclaimer: the below table is compiled from <a href="http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html">this wonderful list</a> or from the latest <a href="https://arxiv.org/pdf/1608.06993.pdf">CVPR best paper</a> (indicated by a *) which achieves new state-of-the-art results. We compile it for illustrative purposes and it is not necessarily comprehensive.</i></p>
 
 <table class="dense-table" style="width:100%; font-size: 10px;">
-	<col align="left">
-	<col align="center">
-	<col align="center">
-	<col align="center">
-	<col align="center">
-	<col align="left">
   	<tr>
 	    <th>Dataset</th>
 		<th>Pos.</th>
@@ -235,6 +229,9 @@ Moreover, we see that while some sets of papers inherit a simple data augmentati
 </table>
 
 
+<p>This medley of primarily manual approaches with widely varying results suggests that data augmentation low-hanging fruit for automation. Recent lines of work in this direction all rely on large quantities of labeled data, restricted sets of simple transformations, or consider only local perturbations that are not informed by domain knowledge. However in real-world settings, SMEs rarely have access to massive labeled training sets and best encode domain knowledge in complex, non-differentiable functions. Our approach to learning how to augment data—described in the next section—is motivated by these practical consierations.</p>
+
+
 <h2 id="learning-how-to-augment-data">Learning to Compose Domain-Specific Transformations</h2>
 
 <p>In our setup, we make the novel choice to model data augmentation operations as <b>sequences of incremental, black-box <i>transformation functions (TFs)</i></b> provided by users, which we do not assume to be either differentiable or deterministic.
@@ -251,7 +248,7 @@ That is, we can reasonably assume that we won't turn an image of a plane into on
 <img src="tanda_figs/fig3.png" alt="Figure 3"/>
 </div>
 
-<p>For example, in the above figure we demonstrate the intuition behind this modeling assumption by taking images from CIFAR-10 (each row) and searching for a transformation sequence that maps them to a different class (each column) according to a trained discriminative model.
+<p>We demonstrate the intuition behind this modeling assumption in the above figure by taking images from CIFAR-10 (each row) and searching for transformation sequences that map them to different classes (each column) according to a trained discriminative model.
 We see that the transformed images <i>do not</i> look much like the class they are being mapped to, but often <i>do</i> look like garbage.</p>
 
 
@@ -365,7 +362,7 @@ For the DDSM mammogram tumor classification task, we used some generic TFs along
 	</tr>
 </table>
 
-<p>The above table contains our primary results, showing end model performance on subsampled (Dataset %) labeled data using no augmentation (<i>None</i>), simple random crops or equivalent (<i>Basic</i>), heuristic random sequences of TFs (<i>Heur.</i>), or one of our two trained generators (trained on the full unlabeled dataset).
+<p>The above table contains our primary results, showing end model performance on subsampled (<i>Dataset %</i>) labeled data using no augmentation (<i>None</i>), simple random crops or equivalent (<i>Basic</i>), heuristic random sequences of TFs (<i>Heuristic</i>), or one of our two trained generators (trained on the full unlabeled dataset).
 We used off-the-shelf models as our end classifiers in order to focus on relative gains from learning composition models. We used a standard 56-layer ResNet for CIFAR-10, and much simpler convolutional neural networks for MNIST and DDSM. For ACE, we used a bidirectional long short-term memory network with word-level attention.
 In particular we notice:
 <ul>
@@ -386,10 +383,16 @@ Importantly, we see that the model learns to avoid applying the misspecified TFs
 <h2 id="tanda">Using the Approach: TANDA</h2>
 
 <p>Does it sound like learning data augmentation models could help your machine learning pipeline?
-We've open-sourced a TensorFlow-based implementation of our approach, <a href="https://github.com/HazyResearch/tanda">TANDA</a> (Transformation Adversarial Networks for Data Augmentation)
+We've open-sourced a TensorFlow-based implementation of our approach, <b><a href="https://github.com/HazyResearch/tanda">TANDA</a></b> (Transformation Adversarial Networks for Data Augmentation).
 Try it out and let us know what you think!
 We hope that this code not only helps to improve model performance on a variety of new and existing tasks, but also helps the exploration of exciting next-step directions such as adding in more advanced transformation regularization, exploring applications to other modalities, and advancing theoretical understanding of data augmentation!
 </p>
+
+<div class="figure">
+<img class="centered" src="tanda_figs/mnist.gif" alt="TANDA MNIST"/>
+</div>
+
+<p><i>Figure: TANDA learning how to augment MNIST images to appear realistic as training progresses.</i></p>
 
 
 <div id="disqus_thread"></div>

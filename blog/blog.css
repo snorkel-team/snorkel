@@ -332,3 +332,13 @@ p.img {
 .dense-table td {
   padding: 3px 3px;
 }
+
+.dense-table-center td {
+  padding: 3px 3px;
+  text-align: center;
+}
+
+img.small {
+  max-width:50%;
+  max-height:50%;
+}

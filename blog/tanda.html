@@ -31,7 +31,7 @@ However, the choice of types, parameterizations, and composition of transformati
 <ul>
 	<li>We start by representing transformations as <b>sequences of incremental black-box operations</b>.</li>
 	<li>We then learn a <b>generative sequence model</b> that produces realistic, class-preserving augmentations using unlabeled data and adversarial techniques.</li>
-	<li>We get <b>strong gains over heuristic approaches</b>—3.9 point boost on CIFAR-10, 1.4 F1 point boost on a relation extraction task, and 3.4 point boost on a mammograpy task—and demonstrate <b>robustness to user misspecification</b>.</li>
+	<li>We get <b>gains over heuristic approaches</b>—3.9 point boost on CIFAR-10, 1.4 F1 point boost on a relation extraction task, and 3.4 point boost on a mammograpy task—and demonstrate <b>robustness to user misspecification</b>.</li>
 </ul>
 
 <p><b>You can also check out our <a href="#">paper</a> for detail and references, and our <a href="#">code</a> to give it a spin!</b></p>
@@ -361,7 +361,7 @@ For the DDSM mammogram tumor classification task, we used some generic TFs along
 We used off-the-shelf models as our end classifiers in order to focus on relative gains from learning composition models. We used a standard 56-layer ResNet for CIFAR-10, and much simpler convolutional neural networks for MNIST and DDSM. For ACE, we used a bidirectional long short-term memory network with word-level attention.
 In particular we notice:
 <ul>
-	<li>We get strong relative gains over heuristic (random) data augmentation</li>
+	<li>We get gains over heuristic (random) data augmentation!</li>
 	<li>In most cases, modeling the sequences with an LSTM helps!</li>
 	<li>In the DDSM case, we show both with and without the domain specific (DS) TFs; we see that without learning how to apply them, they actually hurt performance- but with our method, they help!</li>
 </ul>

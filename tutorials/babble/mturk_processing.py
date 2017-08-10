@@ -1,15 +1,3 @@
-"""
-Plan:
-Connect to db
-Pull out candidate set
-function:
-    parameters:
-        clicks_per_
-    go through candidates
-    pull out spans' ids
-    pull out sentence
-    modify sentence with highlighting
-"""
 import collections
 import csv
 import itertools
@@ -355,14 +343,17 @@ class MTurkHelper(object):
                         labels.append(field)
 
                 for (img_idx, p_idx, b_idx, explanation, label) in zip(img_indices, p_indices, b_indices, explanations, labels):
-                    #candidate_tuple = create_candidate(img_idx, p_idx, b_idx)
-                    candidate_tuple = (img_idx, p_idx, b_idx)
+                    # candidate_tuple = create_candidate(img_idx, p_idx, b_idx)
+                    # candidate_tuple = (img_idx, p_idx, b_idx)
+                    p_bbox_stable_id = "{}:{}::bbox:{}".format(1, img_idx, p_idx)
+                    b_bbox_stable_id = "{}:{}::bbox:{}".format(1, img_idx, b_idx)
+                    candidate_stable_id = '~~'.join([p_bbox_stable_id, b_bbox_stable_id])
                     label = label_converter[label.lower()]
                     if label is None:
                         exp = None
                     else:
-                        exp = Explanation(explanation, label, candidate=candidate_tuple)
-                    explanations_by_candidate[candidate_tuple].append(exp)
+                        exp = Explanation(explanation, label, candidate=candidate_stable_id)
+                    explanations_by_candidate[candidate_stable_id].append(exp)
                 
             # Sanity check
             print("Num HITs unique: {}".format(len(hits)))
@@ -385,6 +376,11 @@ class MTurkHelper(object):
                 plt.title('Seconds per HIT')
                 plt.show()
 
+            # Link candidates
+            if candidates:
+                self.candidates = candidates
+            if self.candidates:
+                self.link_candidates(explanations_by_candidate)
 
             # Filter and merge data
             num_unanimous = 0
@@ -498,27 +494,8 @@ class MTurkHelper(object):
             # Link candidates
             if candidates:
                 self.candidates = candidates
-            for candidate in self.candidates:
-                stable_id = candidate.get_stable_id()
-                if stable_id in explanations_by_candidate:
-                    for exp in explanations_by_candidate[stable_id]:
-                        if exp is not None:
-                            exp.candidate = candidate
-            unlinked = 0
-            total = 0
-            if candidates:
-                for exp_list in itertools.chain(explanations_by_candidate.values()):
-                    for exp in exp_list:
-                        if exp is None:
-                            continue
-                        total +=1
-                        if isinstance(exp.candidate, basestring):
-                            unlinked += 1
-            if unlinked:
-                print("Warning: {} out of {} non-None explanations could not be "
-                    "linked to candidates.".format(unlinked, total))
-                if unlinked == total:
-                    raise Exception("Candidate linking failed.")
+            if self.candidates:
+                self.link_candidates(explanations_by_candidate)
 
             # Filter and merge data
             num_unanimous = 0
@@ -551,3 +528,27 @@ class MTurkHelper(object):
             # Link candidates
             print("Total explanations: {}".format(len(valid_explanations)))
             return valid_explanations
+
+
+    def link_candidates(self, explanations_by_candidate):
+        for candidate in self.candidates:
+            stable_id = candidate.get_stable_id()
+            if stable_id in explanations_by_candidate:
+                for exp in explanations_by_candidate[stable_id]:
+                    if exp is not None:
+                        exp.candidate = candidate
+        unlinked = 0
+        total = 0
+        for exp_list in itertools.chain(explanations_by_candidate.values()):
+            for exp in exp_list:
+                if exp is None:
+                    continue
+                total +=1
+                if isinstance(exp.candidate, basestring):
+                    unlinked += 1
+                    # import pdb; pdb.set_trace()
+        if unlinked:
+            print("Warning: {} out of {} non-None explanations could not be "
+                "linked to candidates.".format(unlinked, total))
+            if unlinked == total:
+                raise Exception("Candidate linking failed.")

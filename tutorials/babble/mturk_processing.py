@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from snorkel.contrib.babble import Explanation
-from tutorials.babble.bike import BBox
 
 def shuffle_lists(a, b):
     combined = zip(a, b)
@@ -345,8 +344,8 @@ class MTurkHelper(object):
                 for (img_idx, p_idx, b_idx, explanation, label) in zip(img_indices, p_indices, b_indices, explanations, labels):
                     # candidate_tuple = create_candidate(img_idx, p_idx, b_idx)
                     # candidate_tuple = (img_idx, p_idx, b_idx)
-                    p_bbox_stable_id = "{}:{}::bbox:{}".format(1, img_idx, p_idx)
-                    b_bbox_stable_id = "{}:{}::bbox:{}".format(1, img_idx, b_idx)
+                    p_bbox_stable_id = "{}:{}::bbox:{}".format(0, img_idx, p_idx)
+                    b_bbox_stable_id = "{}:{}::bbox:{}".format(0, img_idx, b_idx)
                     candidate_stable_id = '~~'.join([p_bbox_stable_id, b_bbox_stable_id])
                     label = label_converter[label.lower()]
                     if label is None:
@@ -404,10 +403,10 @@ class MTurkHelper(object):
                      
                 assert(consensus is not None)
                 valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
-            assert(all([len(responses) == self.workers_per_hit 
-                 for responses in explanations_by_candidate.values()]))
-            if self.num_hits:
-                assert(num_unanimous + num_majority + num_bad == self.num_hits * self.candidates_per_hit)
+            #assert(all([len(responses) == self.workers_per_hit 
+                 #for responses in explanations_by_candidate.values()]))
+            #if self.num_hits:
+                #assert(num_unanimous + num_majority + num_bad == self.num_hits * self.candidates_per_hit)
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
             print("Bad: {}".format(num_bad))

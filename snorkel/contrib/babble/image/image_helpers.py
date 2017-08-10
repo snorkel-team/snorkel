@@ -64,7 +64,8 @@ def geoms_to_points(geoms, side):
 def is_below(geom1, geom2):
     point1, point2 = geoms_to_points([geom1, geom2], 'bottom')
     if None in (point1.y, point2.y):
-        raise Exception('Invalid Comparison')
+        #raise Exception('Invalid Comparison')
+        return 0
     else:
         return point1.y > point2.y
 
@@ -77,7 +78,8 @@ def is_above(geom1, geom2):
 def is_right(geom1, geom2):
     point1, point2 = geoms_to_points([geom1, geom2], 'right')
     if None in (point1.x, point2.x):
-        raise Exception('Invalid Comparison')
+        #raise Exception('Invalid Comparison')
+        return 0
     else:
         return point1.x > point2.x
 
@@ -93,7 +95,8 @@ def is_near(geom1, geom2, thresh=50.0):
     coord2 = (point2.x, point2.y)
     
     if (None in coord1) or (None in coord2):
-        raise Exception('Invalid Distance Comparison')
+        #raise Exception('Invalid Distance Comparison')
+        return 0.
     else:
         dist = np.linalg.norm(np.array([point1.x - point2.x, point1.y - point2.y]))
         return dist <= thresh

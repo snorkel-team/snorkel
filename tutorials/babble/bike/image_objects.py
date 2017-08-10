@@ -26,6 +26,7 @@ class Image_Candidate(object):
             return bboxes
         self.bboxes = generate_boxes(self)
 
+
 # Deprecated: Use Bbox in context.py instead.        
 # class BBox(object):
     

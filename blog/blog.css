@@ -342,3 +342,9 @@ img.small {
   max-width:50%;
   max-height:50%;
 }
+
+img.centered {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}

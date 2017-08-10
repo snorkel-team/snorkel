@@ -42,3 +42,4 @@ tutorials/tables/data/hardware/
 #Babble Labble Image
 *.csv
 *.log
+*.npy

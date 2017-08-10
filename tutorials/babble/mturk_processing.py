@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from snorkel.contrib.babble import Explanation
-from temp_box_class import BBox
+from tutorials.babble.bike import BBox
 
 def shuffle_lists(a, b):
     combined = zip(a, b)
@@ -260,7 +260,6 @@ class MTurkHelper(object):
             # Filter and merge data
             num_unanimous = 0
             num_majority = 0
-            num_split = 0
             num_bad = 0
             valid_explanations = []
             finished_candidates = []
@@ -285,7 +284,6 @@ class MTurkHelper(object):
             
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
-            print("Split: {}".format(num_split))
             print("Bad: {}".format(num_bad))
 
             # Link candidates

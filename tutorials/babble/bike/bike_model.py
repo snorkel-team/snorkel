@@ -8,16 +8,15 @@ from snorkel.db_helpers import reload_annotator_labels
 from snorkel.contrib.babble import Babbler
 from snorkel.contrib.babble.models import BabbleModel
 
-from tutorials.babble.bike import load_external_labels
 
 class BikeModel(BabbleModel):
 
     def parse(self, anns_path):
         self.anns_path = anns_path
-        train_path = anns_folder + 'train_anns.npy'
-        val_path = anns_folder + 'val_anns.npy'
+        train_path = anns_path + 'train_anns.npy'
+        val_path = anns_path + 'val_anns.npy'
 
-        corpus_extractor = ImageCorpusExtractor(candidate_class=Biker)
+        corpus_extractor = ImageCorpusExtractor(candidate_class=self.candidate_class)
 
         coco_preprocessor = CocoPreprocessor(train_path, source=0)
         corpus_extractor.apply(coco_preprocessor)
@@ -25,12 +24,14 @@ class BikeModel(BabbleModel):
         coco_preprocessor = CocoPreprocessor(val_path, source=1)
         corpus_extractor.apply(coco_preprocessor, clear=False)
 
-        for split in [0, 1]:
-            num_candidates = session.query(Biker).filter(Biker.split == split).count()
-            print("Split {} candidates: {}".format(split, num_candidates))
 
-    def get_candidates(self):
-        
+    def extract(self):
+        print("Extraction was performed during parse stage.")
+        for split in self.config['splits']:
+            num_candidates = self.session.query(self.candidate_class).filter(
+                self.candidate_class.split == split).count()
+            print("Candidates [Split {}]: {}".format(split, num_candidates))
+
 
     def load_gold(self, anns_path=None, annotator_name='gold'):
         if anns_path:

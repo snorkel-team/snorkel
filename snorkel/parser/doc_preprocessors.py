@@ -160,6 +160,8 @@ class TikaPreprocessor(DocPreprocessor):
     import tika
     # automatically downloads tika jar and starts a JVM processif no REST API
     # is configured in ENV
+    import os
+    os.environ["TIKA_LOG_PATH"] = "./"
     tika.initVM()  
     from tika import parser as tk_parser
     parser = tk_parser

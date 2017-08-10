@@ -96,13 +96,13 @@ boxes = [
         semantics=None),
     # Box right
     Explanation(
-        condition="box y is right of box x",
+        condition="box y is to the right of box x",
         label=True,
         candidate=a_and_b,
         semantics=None),
     # Box near
     Explanation(
-        condition="box x is near the top left corner of box y",
+        condition="box x is near box y",
         label=True,
         candidate=a_and_b,
         semantics=None),
@@ -174,7 +174,7 @@ quantified = [
     #     semantics=None),
     # Smaller
     Explanation(
-        condition="box y is smaller than box x",
+        condition="box Y is smaller than box X",
         label=True,
         candidate=a_and_c,
         semantics=None),
@@ -190,9 +190,9 @@ quantified = [
         label=True,
         candidate=a_and_c,
         semantics=None),
-    # Skinnier
+    # Wider
     Explanation(
-        condition="box y is skinnier than box x",
+        condition=" Box X is wider than Box Y",
         label=True,
         candidate=a_and_c,
         semantics=None),
@@ -216,4 +216,19 @@ quantified = [
         semantics=None),
 ]
 
-explanations = (edges + points + comparisons + boxes + quantified)
+parser = [
+    #Period at the end of the sentence, explanation 121
+    Explanation(
+        condition="Box X is much wider than Box Y.",
+        label=True,
+        candidate=a_and_c,
+        semantics=None),
+        #Period at the end of the sentence, explanation 121
+    Explanation(
+        condition="Box Y is to the right of Box X.",
+        label=True,
+        candidate=a_and_c,
+        semantics=None),
+]
+
+explanations = (edges + points + comparisons + boxes + quantified + parser)

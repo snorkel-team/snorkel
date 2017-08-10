@@ -3,8 +3,8 @@ from image_helpers import helpers
 
 lexical_rules = (
     # Box features
-    [Rule('$X', w, ('.int', 0)) for w in ['x']] +
-    [Rule('$Y', w, ('.int', 1)) for w in ['y']] +
+    [Rule('$X', w, ('.int', 0)) for w in ['x', 'x.', 'blue']] +
+    [Rule('$Y', w, ('.int', 1)) for w in ['y', 'y.', 'yellow']] +
     [Rule('$Box', w, '.box') for w in ['box']] +
 
     [Rule('$TopEdge', w, ('.string', 'top')) for w in ['top', 'upper', 'uppermost', 'highest']] +
@@ -15,24 +15,24 @@ lexical_rules = (
     [Rule('$Center', w, '.center') for w in ['center', 'middle']] +
     [Rule('$Corner', w, '.corner') for w in ['corner']] +
 
-    [Rule('$Below', w, '.below') for w in ['below', 'under']] +
-    [Rule('$Above', w, '.above') for w in ['above', 'on top of']] +
+    [Rule('$Below', w, '.below') for w in ['below', 'under', 'underneath', 'lower']] +
+    [Rule('$Above', w, '.above') for w in ['above', 'on top of', 'higher']] +
     [Rule('$Left', w, '.left') for w in ['left']] +
     [Rule('$Right', w, '.right') for w in ['right']] +
-    [Rule('$Near', w, '.near') for w in ['near', 'nearby', 'close', 'over']] +
+    [Rule('$Near', w, '.near') for w in ['near', 'nearby', 'close', 'over', 'in', 'same place', 'at', 'even', 'equal']] +
     [Rule('$Far', w, '.far') for w in ['far', 'distant']] +
 
-    [Rule('$Smaller', w, '.smaller') for w in ['smaller', 'tinier']] +
-    [Rule('$Larger', w, '.larger') for w in ['larger', 'bigger']] +
+    [Rule('$Smaller', w, '.smaller') for w in ['smaller', 'tinier', 'fraction', 'half']] +
+    [Rule('$Larger', w, '.larger') for w in ['larger', 'bigger', 'big']] +
     
-    [Rule('$Wider', w, '.wider') for w in ['wider', 'broader']] +
+    [Rule('$Wider', w, '.wider') for w in ['wider', 'broader', 'long', 'wide', 'broad']] +
     [Rule('$Taller', w, '.taller') for w in ['taller', 'longer']] +
     [Rule('$Skinnier', w, '.skinnier') for w in ['skinnier', 'slimmer']] +
     [Rule('$Shorter', w, '.shorter') for w in ['shorter']] +
     
-    [Rule('$Overlaps', w, '.overlaps') for w in ['overlaps', 'intersects', 'bisects']] +
+    [Rule('$Overlaps', w, '.overlaps') for w in ['overlaps', 'intersects', 'bisects', 'overlapping']] +
     
-    [Rule('$Surrounds', w, '.surrounds') for w in ['encloses', 'envelopes', 'surrounds', 'around']] +
+    [Rule('$Surrounds', w, '.surrounds') for w in ['encloses', 'envelopes', 'surrounds', 'around', 'engulfs', 'includes']] +
     [Rule('$Within', w, '.within') for w in ['within', 'inside', 'enclosed', 'enveloped', 'fits', 'surrounded']] 
     
 )
@@ -54,6 +54,9 @@ unary_rules = [
 
     Rule('$BoxCompare', '$Smaller', sems0),
     Rule('$BoxCompare', '$Larger', sems0),
+    
+    Rule('$BoxCompare', '$Near', sems0),
+    Rule('$BoxCompare', '$Far', sems0),
     
     Rule('$BoxCompare', '$Taller', sems0),
     Rule('$BoxCompare', '$Wider', sems0),

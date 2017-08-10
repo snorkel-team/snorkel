@@ -407,7 +407,7 @@ class Bbox(Context):
             return ("Bbox({}, {}, {}, {})".format(self.top, self.bottom, self.left, self.right))
         else:
             set_idx, image_idx = self.image.name.split(':')
-            set_name = 'val' if set_idx else 'train'
+            set_name = 'val' if int(set_idx) else 'train'
             position = self.position
             category = 'person' if self.category == 1 else 'bike'
         return ("Bbox({}:{}:{}:{}:({}, {}, {}, {}))".format(set_name, image_idx, 

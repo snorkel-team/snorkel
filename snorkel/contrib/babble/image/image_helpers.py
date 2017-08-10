@@ -78,7 +78,7 @@ def is_left(geom1, geom2):
     return not is_right(point1, point2)
 
 
-def is_near(geom1, geom2, thresh=30.0):
+def is_near(geom1, geom2, thresh=50.0):
     point1, point2 = geoms_to_points([geom1, geom2], 'center')
     coord1 = (point1.x, point1.y)
     coord2 = (point2.x, point2.y)
@@ -101,17 +101,33 @@ def is_smaller(bbox1, bbox2, mult=1.0):
 def is_larger(bbox1, bbox2, mult=1.0):
     return bbox1.area() > bbox2.area() * mult
 
+def is_same_area(bbox1, bbox2, thresh=20.):
+     return abs(bbox1.area() - bbox2.area()) <= thresh
+
+
+
 def is_wider(bbox1, bbox2, mult=1.0):
     return bbox1.width > bbox2.width * mult
-
-def is_taller(bbox1, bbox2, mult=1.0):
-    return bbox1.height > bbox2.height * mult
 
 def is_skinnier(bbox1, bbox2, mult=1.0):
     return bbox1.width < bbox2.width / mult
 
+def is_same_width(bbox1, bbox2, thresh=20.):
+    return abs(bbox1.width - bbox2.width) <= thresh
+
+
+
+
+def is_taller(bbox1, bbox2, mult=1.0):
+    return bbox1.height > bbox2.height * mult
+
 def is_shorter(bbox1, bbox2, mult=1.0):
     return bbox1.height < bbox2.height / mult
+
+def is_same_height(bbox1, bbox2, thresh=20.):
+    return abs(bbox1.height - bbox2.height) <= thresh
+
+
 
 def is_overlaps(bbox1, bbox2, thresh=0.25):
     top = max(bbox1.top,bbox2.top)
@@ -155,10 +171,13 @@ helpers = {
     'is_far': is_far, 
     'is_smaller': is_smaller,
     'is_larger': is_larger,
+    'is_same_area': is_same_area,
     'is_wider': is_wider,
-    'is_taller': is_taller,
     'is_skinnier': is_skinnier,
+    'is_same_width': is_same_width,
+    'is_taller': is_taller,
     'is_shorter': is_shorter,
+    'is_same_height': is_same_height,
     'is_aligned': is_aligned, 
     'is_overlaps': is_overlaps,
     'is_surrounds': is_surrounds,

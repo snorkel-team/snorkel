@@ -1,7 +1,7 @@
-from snorkel.contrib.babble import Babbler
-
 from snorkel.annotations import LabelAnnotator
 from snorkel_model import SnorkelModel, TRAIN, DEV, TEST
+
+from snorkel.contrib.babble import Babbler
 
 class BabbleModel(SnorkelModel):
     def babble(self, babbler, **kwargs):

@@ -360,3 +360,67 @@ def construct_stable_id(parent_context, polymorphic_type, relative_char_offset_s
     start = parent_doc_char_start + relative_char_offset_start
     end   = parent_doc_char_start + relative_char_offset_end
     return "%s::%s:%s:%s" % (doc_id, polymorphic_type, start, end)
+
+
+class Image(Context):
+    """
+    A root Context.
+    """
+    __tablename__ = 'image'
+    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    meta = Column(PickleType)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'image',
+    }
+
+    def get_parent(self):
+        return None
+
+    def get_children(self):
+        return self.bboxes
+
+    def __repr__(self):
+        return "Image " + str(self.name)    
+
+
+class Bbox(Context):
+    __tablename__ = 'bbox'
+    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    image_id = Column(Integer, ForeignKey('image.id', ondelete='CASCADE'))
+    position = Column(Integer, nullable=False)
+    image = relationship('Image', backref=backref('bboxes', order_by=position, cascade='all, delete-orphan'), foreign_keys=image_id)
+
+    category = Column(Integer)
+    top = Column(Integer)
+    bottom = Column(Integer)
+    left = Column(Integer)
+    right = Column(Integer)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'bbox',
+    }
+
+    def __repr__(self):
+        if self.image is None:
+            return ("Bbox({}, {}, {}, {})".format(self.top, self.bottom, self.left, self.right))
+        else:
+            set_idx, image_idx = self.image.name.split(':')
+            set_name = 'val' if set_idx else 'train'
+            position = self.position
+            category = 'person' if self.category == 1 else 'bike'
+        return ("Bbox({}:{}:{}:{}:({}, {}, {}, {}))".format(set_name, image_idx, 
+            self.position, category, self.top, self.bottom, self.left, self.right))
+
+    def width(self):
+        return self.right - self.left
+
+    def height(self):
+        return self.bottom - self.top
+
+    def area(self):
+        return self.width() * self.height()
+    
+    def perimeter(self):
+        return 2 * (self.width() + self.height())

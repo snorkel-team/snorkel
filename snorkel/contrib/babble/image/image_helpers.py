@@ -1,7 +1,17 @@
 import numpy as np
 
-from image_objects import Point, BBox
-# Point takes in x and y (left/right and top/bottom)
+from snorkel.models import Bbox
+
+# Helper Objects
+class Point(object):
+    # Point takes in x and y (left/right and top/bottom)
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+    
+    def __repr__(self):
+        return "Point({}, {})".format(self.x, self.y)
+
 
 # Extractor Helper Functions
 def extract_edge(bbox, side):
@@ -33,7 +43,7 @@ def extract_corner(bbox, side1, side2):
     else:
         raise Exception('Side 1 is invalid')
 
-    
+
 def extract_center(bbox):
     coordx = (getattr(bbox, 'left') + getattr(bbox, 'right'))/2.0
     coordy = (getattr(bbox, 'top') + getattr(bbox, 'bottom'))/2.0
@@ -42,13 +52,12 @@ def extract_center(bbox):
 
 def geoms_to_points(geoms, side):
     for i, geom in enumerate(geoms):
-        if isinstance(geom, BBox):
+        if isinstance(geom, Bbox):
             if side == 'center':
                 geoms[i] = extract_center(geom)
             else:
                 geoms[i] = extract_edge(geom, side)
     return geoms
-
 
   
 # Point Comparison Helper Functions
@@ -94,7 +103,7 @@ def is_far(geom1, geom2):
     return not is_near(geom1, geom2, thresh=100.0)
 
 
-# BBox Comparison Helper Functions
+# Bbox Comparison Helper Functions
 def is_smaller(bbox1, bbox2, mult=1.0):
     return bbox1.area() < bbox2.area() / mult
 
@@ -102,16 +111,16 @@ def is_larger(bbox1, bbox2, mult=1.0):
     return bbox1.area() > bbox2.area() * mult
 
 def is_wider(bbox1, bbox2, mult=1.0):
-    return bbox1.width > bbox2.width * mult
+    return bbox1.width() > bbox2.width() * mult
 
 def is_taller(bbox1, bbox2, mult=1.0):
-    return bbox1.height > bbox2.height * mult
+    return bbox1.height() > bbox2.height() * mult
 
 def is_skinnier(bbox1, bbox2, mult=1.0):
-    return bbox1.width < bbox2.width / mult
+    return bbox1.width() < bbox2.width() / mult
 
 def is_shorter(bbox1, bbox2, mult=1.0):
-    return bbox1.height < bbox2.height / mult
+    return bbox1.height() < bbox2.height() / mult
 
 def is_overlaps(bbox1, bbox2, thresh=0.25):
     top = max(bbox1.top,bbox2.top)

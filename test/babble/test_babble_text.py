@@ -8,9 +8,11 @@ from snorkel.parser.spacy_parser import Spacy
 from snorkel.candidates import Ngrams, CandidateExtractor
 from snorkel.matchers import PersonMatcher
 from snorkel.contrib.babble import SemanticParser
+
+from test_babble_base import TestBabbleBase
 import text_explanations
 
-class TestBabbleText(unittest.TestCase):
+class TestBabbleText(TestBabbleBase):
 
     @classmethod
     def setUpClass(cls):
@@ -42,31 +44,13 @@ class TestBabbleText(unittest.TestCase):
 
         cls.sp = SemanticParser(mode='text',
                                 candidate_class=Spouse, 
-                                user_lists=text_explanations.get_user_lists(), 
-                                beam_width=10, 
-                                top_k=-1)
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
-
-    def check_explanations(self, explanations):
-        self.assertTrue(len(explanations))
-        for e in explanations:
-            if e.candidate and not isinstance(e.candidate, tuple):
-                e.candidate = self.candidate_hash[e.candidate]
-            LF_dict = self.sp.parse_and_evaluate(e, show_erroring=True)
-            if e.semantics:
-                self.assertTrue(len(LF_dict['correct']) > 0)
-            else:
-                self.assertTrue(len(LF_dict['passing']) > 0)
-            self.assertTrue(len(LF_dict['correct']) + len(LF_dict['passing']) <= 3)
+                                user_lists=text_explanations.get_user_lists())
 
     def test_strings(self):
         self.check_explanations(text_explanations.strings)
 
     def test_lists(self):
-        self.check_explanations(text_explanations.lists)
+        self.check_explanations(text_explanations.string_lists)
 
     def test_candidate_helpers(self):
         self.check_explanations(text_explanations.candidate_helpers)
@@ -77,8 +61,8 @@ class TestBabbleText(unittest.TestCase):
     def test_pos_ner(self):
         self.check_explanations(text_explanations.pos_ner)
 
-    def test_count(self):
-        self.check_explanations(text_explanations.count)
+    # def test_count(self):
+    #     self.check_explanations(text_explanations.count)
 
     def test_anaphora(self):
         self.check_explanations(text_explanations.anaphora)

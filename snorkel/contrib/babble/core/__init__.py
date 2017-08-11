@@ -1,1 +1,2 @@
 from core_base import core_grammar
+from core_templates import PrimitiveTemplate

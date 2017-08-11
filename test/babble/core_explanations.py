@@ -7,6 +7,8 @@ def get_user_lists():
         'greek':['alpha','beta','gamma'],
         'letters':['a','B','C'],
         'smalls':['a','b','c','d'],
+        'luckies': [7, 8, 9],
+        'unluckies': [0, 13, 66],
     }
 
 # Test candidate (hash: 668761641257950361):
@@ -39,30 +41,30 @@ logic = [
         label=True,
         candidate=('foo', 'bar'),
         semantics=None),
-    # # Not function
-    # Explanation(
-    #     condition="'blue' is not in all caps",
-    #     label=True,
-    #     candidate=('foo', 'bar'),
-    #     semantics=None),
-    # # All
-    # Explanation(
-    #     condition='all of the colors are lowercase',
-    #     label=True,
-    #     candidate=('foo', 'bar'),
-    #     semantics=None),
-    # # Any
-    # Explanation(
-    #     condition='any of the letters are lowercase',
-    #     label=True,
-    #     candidate=('foo', 'bar'),
-    #     semantics=None),
-    # # None
-    # Explanation(
-    #     condition='none of the smalls are capitalized',
-    #     label=True,
-    #     candidate=('foo', 'bar'),
-    #     semantics=None),                
+    # Not function
+    Explanation(
+        condition="2 is not less than 1",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # All
+    Explanation(
+        condition='all of (2, 3, 4) are greater than 1',
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # Any
+    Explanation(
+        condition='any of (3, 1, 4) are less than 2',
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # None
+    Explanation(
+        condition='none of (1, 2, 3) are greater than 4',
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),                
 ]
 
 grouping = [
@@ -113,6 +115,90 @@ integers = [
         semantics=None),    
 ]
 
+lists = [
+    # OrList left
+    Explanation(
+        condition="7 or 5 is larger than 6",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=('.root',('.label',('.bool', True),('.any',('.map', ('.gt', ('.int', 6)), ('.list', ('.int', 7), ('.int', 5))))))),
+    # OrList right
+    Explanation(
+        condition="2 is less than 3 or 1",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=('.root',('.label',('.bool', True),('.call',('.composite_or', ('.lt',), ('.list', ('.int', 3), ('.int', 1))),('.int', 2))))),
+    # AndList left
+    Explanation(
+        condition="8 and 8 are equal to 8",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=('.root',('.label',('.bool', True),('.all',('.map', ('.eq', ('.int', 8)), ('.list', ('.int', 8), ('.int', 8))))))),
+    # AndList right
+    Explanation(
+        condition="2 is less than 3 and 4",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=('.root',('.label',('.bool', True),('.call',('.composite_and', ('.lt',), ('.list', ('.int', 3), ('.int', 4))),('.int', 2))))),
+    # Not AndList
+    Explanation(
+        condition="2 not more than 1 and 3",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=('.root',('.label',('.bool', True),('.not',('.call',('.composite_and', ('.gt',), ('.list', ('.int', 1), ('.int', 3))),('.int', 2)))))),
+    # Not OrList
+    Explanation(
+        condition="2 not more than 3 or 4",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=('.root',('.label',('.bool', True),('.not',('.call',('.composite_or', ('.gt',), ('.list', ('.int', 3), ('.int', 4))),('.int', 2)))))),
+]
+
+membership = [
+    # In
+    Explanation(
+        condition="1 is in (1, 2)",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # In AndList
+    Explanation(
+        condition="1 and 2 are in (1, 2, 3)",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # In OrList
+    Explanation(
+        condition="1 or 2 is in (2, 3)",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # Contains
+    Explanation(
+        condition="(1, 2) contains 2",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # Contains AndList
+    Explanation(
+        condition="(1, 2) contains 2 and 1",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # Contains OrList
+    Explanation(
+        condition="(1, 2) contains 2 or 3",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # UserList
+    Explanation(
+        condition="7 is in the luckies",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),    
+]
+
 absorption = [
     # Partially unparseable
     Explanation(
@@ -123,7 +209,7 @@ absorption = [
 ]
 
 
-explanations = (logic + grouping + integers + absorption)
+explanations = (logic + grouping + integers + lists + membership + absorption)
 
 # TODO: re-add the following:
 #     # # Index OrList right

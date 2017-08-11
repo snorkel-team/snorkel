@@ -1,10 +1,11 @@
 from ..grammar import GrammarMixin, Rule, sems0, sems1, sems_in_order, sems_reversed, flip_dir
+from ..core import PrimitiveTemplate
 from image_helpers import helpers
 
 lexical_rules = (
     # Box features
-    [Rule('$X', w, ('.int', 0)) for w in ['x', 'x.', 'blue']] +
-    [Rule('$Y', w, ('.int', 1)) for w in ['y', 'y.', 'yellow']] +
+    [Rule('$X', w, ('.int', 0)) for w in ['x', 'blue']] +
+    [Rule('$Y', w, ('.int', 1)) for w in ['y', 'yellow']] +
     [Rule('$Box', w, '.box') for w in ['box']] +
 
     [Rule('$TopEdge', w, ('.string', 'top')) for w in ['top', 'upper', 'uppermost', 'highest']] +
@@ -85,14 +86,18 @@ compositional_rules = [
     
     Rule('$PointToBool', '$PointCompare $Point', sems_in_order), # "is below the center of Box X"
     Rule('$PointToBool', '$PointCompare $Bbox', sems_in_order), # "is below Box X (use smart edge choice)"
-    Rule('$Bool', '$Point $PointToBool', lambda (point, cmp): ('.call', cmp, point)),
 
     Rule('$BboxToBool', '$PointCompare $Bbox', sems_in_order), # "is below Box X (use smart edge choice)"
     Rule('$BboxToBool', '$BoxCompare $Bbox', sems_in_order), # "is smaller than Box X"
-    Rule('$Bool', '$Bbox $BboxToBool', lambda (point, cmp): ('.call', cmp, point)),
 ]
 
-rules = lexical_rules + unary_rules + compositional_rules
+template_rules = []
+template_rules = (
+    PrimitiveTemplate('$Bbox') +
+    PrimitiveTemplate('$Point')
+)
+
+rules = lexical_rules + unary_rules + compositional_rules + template_rules
 
 ops = {
     '.box': lambda int_: lambda c: c['candidate'][int_(c)],

@@ -69,6 +69,8 @@ class Grammar(object):
         :param string:
         """
         string = string.lower()
+        if string.endswith('.'):
+            string = string[:-1]
         output = self.parser.parse(None, string).next()
         tokens = map(lambda x: dict(zip(['word', 'pos', 'ner'], x)), 
                      zip(output['words'], output['pos_tags'], output['ner_tags']))

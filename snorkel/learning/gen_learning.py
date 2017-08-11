@@ -1,5 +1,5 @@
 from .classifier import Classifier
-from .utils import MentionScorer
+from numba import jit
 import numbskull
 from numbskull import NumbSkull
 from numbskull.inference import FACTORS
@@ -8,7 +8,7 @@ import numpy as np
 import random
 import scipy.sparse as sparse
 from copy import copy
-from pandas import DataFrame, Series
+from pandas import DataFrame
 from distutils.version import StrictVersion
 from six.moves.cPickle import dump, load
 import os
@@ -17,6 +17,7 @@ DEP_SIMILAR = 0
 DEP_FIXING = 1
 DEP_REINFORCING = 2
 DEP_EXCLUSIVE = 3
+
 
 class GenerativeModel(Classifier):
     """
@@ -51,8 +52,9 @@ class GenerativeModel(Classifier):
         self.lf_class_propensity = lf_class_propensity
         self.weights = None
 
-        self.rng = random.Random()
+        self.rng = np.random.RandomState()
         self.rng.seed(seed)
+        set_numba_seeds(seed)
 
     # These names of factor types are for the convenience of several methods
     # that perform the same operations over multiple types, but this class's
@@ -191,7 +193,7 @@ class GenerativeModel(Classifier):
 
         # Shuffle the data points, cardinalities, and candidate_ranges
         idxs = range(m)
-        np.random.shuffle(idxs)
+        self.rng.shuffle(idxs)
         L = L[idxs, :]
         if candidate_ranges is not None:
             self.cardinalities = self.cardinalities[idxs]
@@ -582,7 +584,7 @@ class GenerativeModel(Classifier):
         # Candidates (variables)
         for i in range(m):
             variable[i]['isEvidence'] = False
-            variable[i]['initialValue'] = self.rng.randrange(0, cardinalities[i])
+            variable[i]['initialValue'] = self.rng.randint(cardinalities[i])
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = cardinalities[i]
 
@@ -893,4 +895,9 @@ class GenerativeModelWeights(object):
             return True
         else:
             return False
-   
+
+
+@jit
+def set_numba_seeds(seed):
+    np.random.seed(seed)
+    random.seed(seed)

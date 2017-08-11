@@ -2,9 +2,11 @@ import os
 import unittest
 
 from snorkel.contrib.babble import SemanticParser
+
+from test_babble_base import TestBabbleBase
 import core_explanations
 
-class TestBabbleCore(unittest.TestCase):
+class TestBabbleCore(TestBabbleBase):
 
     @classmethod
     def setUpClass(cls):
@@ -12,21 +14,6 @@ class TestBabbleCore(unittest.TestCase):
                                 user_lists=core_explanations.get_user_lists(), 
                                 beam_width=10, 
                                 top_k=-1)
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
-
-    def check_explanations(self, explanations):
-        self.assertTrue(len(explanations))
-        for e in explanations:
-            LF_dict = self.sp.parse_and_evaluate(e, show_erroring=True)
-            if e.semantics:
-                self.assertTrue(len(LF_dict['correct']) > 0)
-            else:
-                self.assertTrue(len(LF_dict['passing']) > 0)
-            self.assertTrue(len(LF_dict['correct']) + len(LF_dict['passing']) <= 3)
-
 
     def test_logic(self):
         self.check_explanations(core_explanations.logic)

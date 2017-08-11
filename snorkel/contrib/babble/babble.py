@@ -18,9 +18,11 @@ import collections
 
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.sparse as sparse
 
 from semparser import Explanation, SemanticParser
 from snorkel.annotations import LabelAnnotator
+from snorkel.utils import matrix_tp, matrix_fp, matrix_tn, matrix_fn
 
 class Babbler(object):
     # TODO: convert to UDFRunner 
@@ -30,6 +32,7 @@ class Babbler(object):
                  do_filter_consistency=True, 
                  do_filter_duplicate_signatures=True, 
                  do_filter_uniform_signatures=True,
+                 do_filter_low_accuracy=False, acc_threshold=0.55, gold_labels=None,
                  verbose=True):
         self.candidate_class = candidate_class
         self.user_lists = user_lists
@@ -42,10 +45,13 @@ class Babbler(object):
         self.explanations = explanations
         self.explanations_by_name = {}
         self.update_explanation_map(explanations)
-        self.do_filter_duplicate_semantics = do_filter_duplicate_semantics, 
-        self.do_filter_consistency = do_filter_consistency, 
-        self.do_filter_duplicate_signatures = do_filter_duplicate_signatures, 
-        self.do_filter_uniform_signatures = do_filter_uniform_signatures,
+        self.do_filter_duplicate_semantics = do_filter_duplicate_semantics
+        self.do_filter_consistency = do_filter_consistency
+        self.do_filter_duplicate_signatures = do_filter_duplicate_signatures,
+        self.do_filter_uniform_signatures = do_filter_uniform_signatures
+        self.do_filter_low_accuracy = do_filter_low_accuracy
+        self.gold_labels = gold_labels
+        self.acc_threshold = acc_threshold
         self.verbose = verbose
         self.lfs = []
         self.label_matrix = None
@@ -139,8 +145,7 @@ class Babbler(object):
         return self.label_matrix
 
     def load_matrix(self, session, split=0):
-        if self.labeler is None:
-            self.labeler = LabelAnnotator(lfs=self.lfs)
+        self.labeler = LabelAnnotator(lfs=self.lfs)
         self.label_matrix = self.labeler.load_matrix(session, split=split)
         return self.label_matrix
 
@@ -177,6 +182,34 @@ class Babbler(object):
         print("Filtered to {} LFs with duplicate signatures filter ({} filtered).".format(
             len(non_duplicates), num_lfs - len(non_duplicates)))                
 
+    def filter_low_accuracy(self):
+        """Filters out LFs with accuracy on gold data less than self.acc_threshold."""
+        if self.label_matrix is None:
+            raise Exception("Could not find label_matrix.")
+        if self.gold_labels is None:
+            raise Exception("Could not find gold_labels.")
+        labels = self.gold_labels
+        ls = np.ravel(labels.todense() if sparse.issparse(labels) else labels)
+        tp = matrix_tp(self.label_matrix, ls)
+        fp = matrix_fp(self.label_matrix, ls)
+        tn = matrix_tn(self.label_matrix, ls)
+        fn = matrix_fn(self.label_matrix, ls)
+        ac = (tp+tn).astype(float) / (tp+tn+fp+fn)
+        low_accuracy = []
+        high_accuracy = []
+        num_lfs = self.label_matrix.shape[1]
+        for i, accuracy in enumerate(ac):
+            if accuracy < self.acc_threshold:
+                low_accuracy.append(i)
+            else:
+                high_accuracy.append(i)
+        self.label_matrix = self.label_matrix[:, high_accuracy]
+        self.parses = [parse for i, parse in enumerate(self.parses) if i in set(high_accuracy)]
+        self.lfs = [parse.function for parse in self.parses]
+        print("Filtered to {} LFs with low accuracy filter ({} filtered).".format(
+            len(high_accuracy), num_lfs - len(high_accuracy)))
+        
+
     def apply(self, split=0, parallelism=1):
         """Applies entire Babble Labble pipeline: convert, label, filter."""
         self.generate_lfs()
@@ -189,6 +222,8 @@ class Babbler(object):
             self.filter_uniform_signatures()
         if self.do_filter_duplicate_signatures:
             self.filter_duplicate_signatures()
+        if self.do_filter_low_accuracy:
+            self.filter_low_accuracy()
         return self.label_matrix
 
     def get_explanations(self):

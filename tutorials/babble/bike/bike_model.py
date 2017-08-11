@@ -58,8 +58,12 @@ class BikeModel(BabbleModel):
             annotator_name, split=1, filter_label_split=False)
 
 
-    def babble(self, explanations, user_lists={}, **kwargs):
-        babbler = Babbler(mode='image', candidate_class=self.candidate_class, explanations=explanations)
+    def babble(self, explanations, user_lists={}, gold_labels=None, **kwargs):
+        babbler = Babbler(
+            mode='image', 
+            candidate_class=self.candidate_class, 
+            explanations=explanations,
+            gold_labels=gold_labels)
         super(BikeModel, self).babble(babbler, **kwargs)
 
 

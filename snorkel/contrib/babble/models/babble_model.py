@@ -1,4 +1,4 @@
-from snorkel.annotations import LabelAnnotator
+from snorkel.annotations import LabelAnnotator, load_gold_labels
 from snorkel_model import SnorkelModel, TRAIN, DEV, TEST
 
 from snorkel.contrib.babble import Babbler
@@ -11,6 +11,8 @@ class BabbleModel(SnorkelModel):
         self.lfs = self.babbler.lfs
 
     def label(self, split=None):
+        if config:
+            self.config = config
         if not self.labeler:
             self.labeler = LabelAnnotator(lfs=self.lfs)  
         splits = [split] if split else self.config['splits']
@@ -27,5 +29,6 @@ class BabbleModel(SnorkelModel):
                     num_candidates, num_labels = L.shape
                     print("\nLabeled split {}: ({},{}) sparse (nnz = {})".format(split, num_candidates, num_labels, L.nnz))
                     if self.config['display_accuracies'] and split == DEV:
+                        L_gold_dev = load_gold_labels(self.session, annotator_name='gold', split=1)
                         print(L.lf_stats(self.session, labels=L_gold_dev))
         

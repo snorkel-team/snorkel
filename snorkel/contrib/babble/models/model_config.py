@@ -7,14 +7,25 @@ configuration = {
     'verbose': True,
     'seed': 0,
 
+    # BABBLER
+    'babbler_split': 1,
+    'beam_width': 10,
+    'top_k': -1,
+    # filters
+    'do_filter_duplicate_semantics': True, 
+    'do_filter_consistency': True, 
+    'do_filter_duplicate_signatures': True, 
+    'do_filter_uniform_signatures': True,
+
     # SUPERVISON
-    # source
-    'source': 'py', # {'py', 'nl'}
-    'include': ['correct', 'passing'],
-    'paraphrases': False,
     # settings
     'model_dep': False,
     'majority_vote': False,
+    # gen model paramaters
+    'epochs': 100,
+    'decay': None, # 0.95 OR 0.001 * (1.0 /epochs),
+    'step_size': None, # 0.005 OR 0.1/L_train.shape[0],
+    'reg_param': 1e-6, #1e-3?
     # restrictions
     'max_lfs': None,
     'max_train': None,
@@ -28,16 +39,6 @@ configuration = {
     # testing
     'traditional': False, # e.g, 1000
     'empirical_from_train': False,
-
-    # BABBLER
-    'babbler_split': 1,
-    'beam_width': 10,
-    'top_k': -1,
-    # filters
-    'do_filter_duplicate_semantics': True, 
-    'do_filter_consistency': True, 
-    'do_filter_duplicate_signatures': True, 
-    'do_filter_uniform_signatures': True,
 
     # CLASSIFICATION,
     'disc_model': 'lstm',

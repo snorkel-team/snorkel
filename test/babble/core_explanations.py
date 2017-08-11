@@ -142,13 +142,13 @@ lists = [
         semantics=('.root',('.label',('.bool', True),('.call',('.composite_and', ('.lt',), ('.list', ('.int', 3), ('.int', 4))),('.int', 2))))),
     # Not AndList
     Explanation(
-        condition="2 not more than 1 and 3",
+        condition="2 is not more than 1 and 3",
         label=True,
         candidate=('foo', 'bar'),
         semantics=('.root',('.label',('.bool', True),('.not',('.call',('.composite_and', ('.gt',), ('.list', ('.int', 1), ('.int', 3))),('.int', 2)))))),
     # Not OrList
     Explanation(
-        condition="2 not more than 3 or 4",
+        condition="2 is not more than 3 or 4",
         label=True,
         candidate=('foo', 'bar'),
         semantics=('.root',('.label',('.bool', True),('.not',('.call',('.composite_or', ('.gt',), ('.list', ('.int', 3), ('.int', 4))),('.int', 2)))))),

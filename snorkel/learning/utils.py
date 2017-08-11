@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sparse
 import warnings
+import inspect
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
 try:
@@ -427,6 +428,12 @@ class ModelTester(Process):
                 k, hps = self.params_queue.get(True, QUEUE_TIMEOUT)
                 model_name = '{0}_{1}'.format(self.model.name, k)
 
+                # Pass in the dev set to the train method if applicable, for dev 
+                # set score printing, best-score checkpointing
+                if 'X_dev' in inspect.getargspec(self.model.train):
+                    hps['X_dev'] = self.X_valid
+                    hps['Y_dev'] = self.Y_valid
+
                 # Train model with given hyperparameters
                 if self.Y_train is not None:
                     self.model.train(self.X_train, self.Y_train, **hps)
@@ -496,6 +503,12 @@ class GridSearch(object):
           Non-search parameters are set using model_hyperparameters
         """
         self.model = self.model_class(**self.model_class_params)
+
+        # Pass in the dev set to the train method if applicable, for dev set
+        # score printing, best-score checkpointing
+        if 'X_dev' in inspect.getargspec(self.model.train):
+            model_hyperparams['X_dev'] = X_valid
+            model_hyperparams['Y_dev'] = Y_valid
 
         # Iterate over the param values
         run_stats = []

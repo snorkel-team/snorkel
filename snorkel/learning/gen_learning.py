@@ -52,7 +52,7 @@ class GenerativeModel(Classifier):
         self.lf_class_propensity = lf_class_propensity
         self.weights = None
 
-        self.rng = random.Random()
+        self.rng = np.random.RandomState()
         self.rng.seed(seed)
         set_numba_seeds(seed)
 
@@ -193,7 +193,7 @@ class GenerativeModel(Classifier):
 
         # Shuffle the data points, cardinalities, and candidate_ranges
         idxs = range(m)
-        np.random.shuffle(idxs)
+        self.rng.shuffle(idxs)
         L = L[idxs, :]
         if candidate_ranges is not None:
             self.cardinalities = self.cardinalities[idxs]
@@ -584,7 +584,7 @@ class GenerativeModel(Classifier):
         # Candidates (variables)
         for i in range(m):
             variable[i]['isEvidence'] = False
-            variable[i]['initialValue'] = self.rng.randrange(0, cardinalities[i])
+            variable[i]['initialValue'] = self.rng.randint(cardinalities[i])
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = cardinalities[i]
 

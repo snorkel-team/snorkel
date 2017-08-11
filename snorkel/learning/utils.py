@@ -435,7 +435,7 @@ class ModelTester(Process):
 
                 # Pass in the dev set to the train method if applicable, for dev 
                 # set score printing, best-score checkpointing
-                if 'X_dev' in inspect.getargspec(self.model.train):
+                if 'X_dev' in inspect.getargspec(model.train):
                     hps['X_dev'] = self.X_valid
                     hps['Y_dev'] = self.Y_valid
 
@@ -507,12 +507,6 @@ class GridSearch(object):
           set_unlabeled_as_neg is used to decide class of unlabeled cases for f1
           Non-search parameters are set using model_hyperparameters
         """
-        # Pass in the dev set to the train method if applicable, for dev set
-        # score printing, best-score checkpointing
-        if 'X_dev' in inspect.getargspec(self.model.train):
-            model_hyperparams['X_dev'] = X_valid
-            model_hyperparams['Y_dev'] = Y_valid
-
         # Iterate over the param values
         run_stats = []
         run_score_opt = -1.0
@@ -522,6 +516,12 @@ class GridSearch(object):
             # Some models may have seed set in the init procedure
             model = self.model_class(**self.model_class_params)
             model_name = '{0}_{1}'.format(model.name, k)
+
+            # Pass in the dev set to the train method if applicable, for dev set
+            # score printing, best-score checkpointing
+            if 'X_dev' in inspect.getargspec(model.train):
+                model_hyperparams['X_dev'] = X_valid
+                model_hyperparams['Y_dev'] = Y_valid
 
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):

@@ -7,6 +7,8 @@ def get_user_lists():
         'greek':['alpha','beta','gamma'],
         'letters':['a','B','C'],
         'smalls':['a','b','c','d'],
+        'luckies': [7, 8, 9],
+        'unluckies': [0, 13, 66],
     }
 
 # Test candidate (hash: 668761641257950361):
@@ -39,30 +41,30 @@ logic = [
         label=True,
         candidate=('foo', 'bar'),
         semantics=None),
-    # # Not function
-    # Explanation(
-    #     condition="'blue' is not in all caps",
-    #     label=True,
-    #     candidate=('foo', 'bar'),
-    #     semantics=None),
-    # # All
-    # Explanation(
-    #     condition='all of the colors are lowercase',
-    #     label=True,
-    #     candidate=('foo', 'bar'),
-    #     semantics=None),
-    # # Any
-    # Explanation(
-    #     condition='any of the letters are lowercase',
-    #     label=True,
-    #     candidate=('foo', 'bar'),
-    #     semantics=None),
-    # # None
-    # Explanation(
-    #     condition='none of the smalls are capitalized',
-    #     label=True,
-    #     candidate=('foo', 'bar'),
-    #     semantics=None),                
+    # Not function
+    Explanation(
+        condition="2 is not less than 1",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # All
+    Explanation(
+        condition='all of (2, 3, 4) are greater than 1',
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # Any
+    Explanation(
+        condition='any of (3, 1, 4) are less than 2',
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # None
+    Explanation(
+        condition='none of (1, 2, 3) are greater than 4',
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),                
 ]
 
 grouping = [
@@ -112,6 +114,56 @@ integers = [
         candidate=('foo', 'bar'),
         semantics=None),    
 ]
+lists = [
+    # # In
+    # Explanation(
+    #     condition="1 is in (1, 2)",
+    #     label=True,
+    #     candidate=('foo', 'bar'),
+    #     semantics=None),
+    # # Contains
+    # Explanation(
+    #     condition="(1, 2) contains 2",
+    #     label=True,
+    #     candidate=('foo', 'bar'),
+    #     semantics=None),
+    # # List
+    # Explanation(
+    #     condition="1 equals 2, 1, or 3",
+    #     label=True,
+    #     candidate=('foo', 'bar'),
+    #     semantics=None),
+    # UserList
+    Explanation(
+        condition="7 is in the luckies",
+        label=True,
+        candidate=('foo', 'bar'),
+        semantics=None),
+    # # OrList left
+    # Explanation(
+    #     condition="7 or 6 is in the luckies",
+    #     label=True,
+    #     candidate=('foo', 'bar'),
+    #     semantics=None),
+    # # OrList right
+    # Explanation(
+    #     condition="2 is less than 3 or 1",
+    #     label=True,
+    #     candidate=('foo', 'bar'),
+    #     semantics=None),
+    # # AndList left
+    # Explanation(
+    #     condition="7 and 8 are in the luckies",
+    #     label=True,
+    #     candidate=('foo', 'bar'),
+    #     semantics=None),
+    # # AndList right
+    # Explanation(
+    #     condition="2 is less than 3 and 4",
+    #     label=True,
+    #     candidate=('foo', 'bar'),
+    #     semantics=None),    
+]
 
 absorption = [
     # Partially unparseable
@@ -123,7 +175,7 @@ absorption = [
 ]
 
 
-explanations = (logic + grouping + integers + absorption)
+explanations = (logic + grouping + integers + lists + absorption)
 
 # TODO: re-add the following:
 #     # # Index OrList right

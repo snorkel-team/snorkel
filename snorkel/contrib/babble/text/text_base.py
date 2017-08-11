@@ -1,4 +1,5 @@
 from ..grammar import GrammarMixin, Rule, sems0, sems1, sems_in_order, sems_reversed, flip_dir
+from ..core import PrimitiveTemplate
 from text_helpers import helpers
 from text_annotators import annotators
 
@@ -34,9 +35,6 @@ unary_rules = [
     Rule('$ArgToString', '$CID', lambda sems: (sems[0],)),    
 
     Rule('$StringList', '$UserList', sems0),
-    Rule('$StringList', 'StringListStub', sems0),
-    Rule('$StringList', 'StringListOr', sems0),
-    Rule('$StringList', 'StringListAnd', sems0),
 
     Rule('$UnaryStringToBool', '$Lower', sems0),
     Rule('$UnaryStringToBool', '$Upper', sems0),
@@ -52,7 +50,7 @@ unary_rules = [
 compositional_rules = [
             # make lists
     Rule('$PhraseList', '$Direction $ArgX', lambda (dir_, arg_): (dir_, arg_)),
-    Rule('$PhraseList', '$Between $ArgXAnd', lambda (btw_, arglist_): (btw_, arglist_)),
+    Rule('$PhraseList', '$Between $ArgXListAnd', lambda (btw_, arglist_): (btw_, arglist_)),
     Rule('$PhraseList', '$Sentence', lambda (sent,): (sent,)),
 
         # inverted directions
@@ -82,7 +80,7 @@ compositional_rules = [
             (dir_, arg_, ('.string', cmp_), int_,('.string', (unit_ if unit_ else 'words')))))), 
         
         # "between X and Y"
-    Rule('$StringToBool', '$Between $ArgXAnd', 
+    Rule('$StringToBool', '$Between $ArgXListAnd', 
         lambda (btw_, arglist_): 
             ('.in', ('.extract_text', (btw_, arglist_)))), 
         
@@ -108,28 +106,13 @@ compositional_rules = [
     # Arg lists
     Rule('$String', '$ArgToString $ArgX', lambda (func_, arg_): ('.call', func_, arg_)),
     Rule('$String', '$ArgX $ArgToString', lambda (arg_, func_): ('.call', func_, arg_)),
-    Rule('$StringListAnd', '$ArgToString $ArgXAnd', lambda (func_, args_): ('.map', func_, args_)),
-    Rule('$StringListAnd', '$ArgXAnd $ArgToString', lambda (args_, func_): ('.map', func_, args_)),
+    Rule('$StringListAnd', '$ArgToString $ArgXListAnd', lambda (func_, args_): ('.map', func_, args_)),
+    Rule('$StringListAnd', '$ArgXListAnd $ArgToString', lambda (args_, func_): ('.map', func_, args_)),
     
     # Tuples
     Rule('$StringTuple', '$Tuple $StringListAnd', sems_in_order),
-    Rule('$StringTupleToBool', '$In $List', sems_in_order),
     Rule('$StringTupleToBool', '$Equals $StringTuple', sems_in_order),
-    Rule('$Bool', '$StringTuple $StringTupleToBool', lambda (tup_, func_): ('.call', func_, tup_)),
 
-    Rule('$StringTupleListStub', '$StringTuple ?$Separator $StringTuple', lambda sems: ('.list', sems[0], sems[2])),
-    Rule('$StringTupleListStub', '$StringTupleListStub ?$Separator $StringTuple', lambda sems: tuple((list(sems[0]) + [sems[2]]))),
-    
-    Rule('$StringTupleListOr', '$StringTuple ?$Separator $Or $StringTuple', lambda sems: ('.list', sems[0], sems[3])),
-    Rule('$StringTupleListOr', '$StringTupleListStub ?$Separator $Or $StringTuple', lambda sems: tuple(list(sems[0]) + [sems[3]])),
-
-    Rule('$StringTupleListAnd', '$StringTuple ?$Separator $And $StringTuple', lambda sems: ('.list', sems[0], sems[3])),
-    Rule('$StringTupleListAnd', '$StringTupleListStub ?$Separator $And $StringTuple', lambda sems: tuple(list(sems[0]) + [sems[3]])),
-
-    Rule('$Bool', '$StringTuple $Not $StringTupleToBool', lambda (tup_, not_, func_): (not_, ('.call', func_, tup_))),
-    Rule('$Bool', '$StringTupleListOr $StringTupleToBool', lambda (tuplist_, func_): ('.any', ('.map', func_, tuplist_))),
-    Rule('$Bool', '$StringTupleListAnd $StringTupleToBool', lambda (tuplist_, func_): ('.all', ('.map', func_, tuplist_))),
-    
     # NER/POS
     Rule('$PhraseList', '$POS $PhraseList', lambda sems: ('.filter_by_attr', sems[1], ('.string', 'pos_tags'), sems[0])),
     Rule('$PhraseList', '$NER $PhraseList', lambda sems: ('.filter_by_attr', sems[1], ('.string', 'ner_tags'), sems[0])),
@@ -148,45 +131,21 @@ compositional_rules = [
     Rule('$String', '$Quote $QueryToken $QueryToken $QueryToken $QueryToken $Quote', lambda sems: ('.string', ' '.join(sems[1:5]))),
     Rule('$String', '$Quote $QueryToken $QueryToken $QueryToken $QueryToken $QueryToken $Quote', lambda sems: ('.string', ' '.join(sems[1:6]))),
 
-        # building string lists
-    Rule('$StringListStub', '$String ?$Separator $String', lambda sems: ('.list', sems[0], sems[2])),
-    Rule('$StringListStub', '$StringListStub ?$Separator $String', lambda sems: tuple((list(sems[0]) + [sems[2]]))),
-
-    Rule('$StringListOr', '$String ?$Separator $Or $String', lambda sems: ('.list', sems[0], sems[3])),
-    Rule('$StringListOr', '$StringListStub ?$Separator $Or $String', lambda sems: tuple(list(sems[0]) + [sems[3]])),
-    Rule('$StringListOr', '$OpenParen $StringListStub $CloseParen', sems1),
-
-    Rule('$StringListAnd', '$String ?$Separator $And $String', lambda sems: ('.list', sems[0], sems[3])),
-    Rule('$StringListAnd', '$StringListStub ?$Separator $And $String', lambda sems: tuple(list(sems[0]) + [sems[3]])),
-    Rule('$StringListAnd', '$OpenParen $StringListStub $CloseParen', sems1),
-
-        # applying $StringToBool functions
-    Rule('$Bool', '$String $StringToBool', lambda (str_, func_): ('.call', func_, str_)),
-    Rule('$Bool', '$String $Not $StringToBool', lambda (str_, not_, func_): (not_, ('.call', func_, str_))),
-    Rule('$Bool', '$StringListOr $StringToBool', lambda (strlist_, func_): ('.any', ('.map', func_, strlist_))),
-    Rule('$Bool', '$StringListAnd $StringToBool', lambda (strlist_, func_): ('.all', ('.map', func_, strlist_))),
-    Rule('$BoolList', '$StringList $StringToBool', lambda (strlist_, func_): ('.map', func_, strlist_)),
-    Rule('$Bool', '$Exists $StringList $StringToBool', lambda (exists_, strlist_, func_): ('.any', ('.map', func_, strlist_))),
-    Rule('$Bool', '$StringList $Exists $StringToBool', lambda (strlist_, exists_, func_): ('.any', ('.map', func_, strlist_))),
-
-        # applying inverted $StringToBool functions
-    Rule('$Bool', '$StringToBool $String', lambda (func_, str_): ('.call', func_, str_)),
-    Rule('$Bool', '$StringToBool $String $Not', lambda (func_, str_, not_): (not_, ('.call', func_, str_))),
-    Rule('$Bool', '$StringToBool $StringListOr', lambda (func_, strlist_): ('.any', ('.map', func_, strlist_))),
-    Rule('$Bool', '$StringToBool $StringListAnd', lambda (func_, strlist_): ('.all', ('.map', func_, strlist_))),
-    Rule('$BoolList', '$StringToBool $StringList ', lambda (func_, strlist_): ('.map', func_, strlist_)),
-    Rule('$Bool', '$StringToBool $Exists $StringList ', lambda (func_, exists_, strlist_): ('.any', ('.map', func_, strlist_))),
-
         # defining $StringToBool functions
     Rule('$StringToBool', '$UnaryStringToBool', lambda sems: (sems[0],)),
     Rule('$StringToBool', '$BinaryStringToBool $String', sems_in_order),
-    Rule('$StringToBool', '$In $StringList', sems_in_order),
     Rule('$StringToBool', '$BinaryStringToBool $StringListAnd', lambda sems: ('.composite_and', (sems[0],), sems[1])),
     Rule('$StringToBool', '$BinaryStringToBool $StringListOr', lambda sems: ('.composite_or',  (sems[0],), sems[1])),
     Rule('$StringToBool', '$BinaryStringToBool $UserList', lambda sems: ('.composite_or',  (sems[0],), sems[1])),  
 ]
 
-rules = lexical_rules + unary_rules + compositional_rules
+# template_rules = []
+template_rules = (
+    PrimitiveTemplate(['$String']) +
+    PrimitiveTemplate(['$StringTuple'])
+)
+
+rules = lexical_rules + unary_rules + compositional_rules + template_rules
 
 ops = {
     # string functions

@@ -24,6 +24,9 @@ class TestBabbleCore(TestBabbleBase):
     def test_integers(self):
         self.check_explanations(core_explanations.integers)
 
+    def test_lists(self):
+        self.check_explanations(core_explanations.lists)
+
     def test_absorption(self):
         self.check_explanations(core_explanations.absorption)
 

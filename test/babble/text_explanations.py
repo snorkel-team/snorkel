@@ -49,7 +49,7 @@ strings = [
         semantics=None),
 ]
 
-lists = [
+string_lists = [
     # In
     Explanation(
         condition="'bar' is in 'foobarbaz'",

@@ -50,7 +50,7 @@ class TestBabbleText(TestBabbleBase):
         self.check_explanations(text_explanations.strings)
 
     def test_lists(self):
-        self.check_explanations(text_explanations.lists)
+        self.check_explanations(text_explanations.string_lists)
 
     def test_candidate_helpers(self):
         self.check_explanations(text_explanations.candidate_helpers)

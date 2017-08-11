@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from ..grammar import GrammarMixin, Rule, sems0, sems1, sems_in_order, sems_reversed, flip_dir
+from core_templates import PrimitiveTemplate
 from core_annotators import annotators
 
 # Rules ======================================================================
@@ -31,7 +32,6 @@ lexical_rules = (
     [Rule('$AtMost', w, '.leq') for w in ['at most', 'no larger than', 'less than or equal', 'within', 'no more than', '<=']] +
     [Rule('$AtLeast', w, '.geq') for w in ['at least', 'no less than', 'no smaller than', 'greater than or equal', '>=']] +
     [Rule('$MoreThan', w, '.gt') for w in ['more than', 'greater than', 'larger than', '>']] + 
-    [Rule('$Within', w, '.within') for w in ['within']] +
     [Rule('$In', w, '.in') for w in ['in']] +
     [Rule('$Contains', w, '.contains') for w in ['contains', 'contain', 'containing', 'include', 'includes', 'says', 'states']] +
     [Rule('$StartsWith', w, '.startswith') for w in ['starts with', 'start with', 'starting with']] +
@@ -47,9 +47,9 @@ lexical_rules = (
     [Rule('$ChemicalEntity', w, ('.string', 'Chemical')) for w in ['chemical', 'chemicals']] +
     [Rule('$DiseaseEntity', w, ('.string', 'Disease')) for w in ['disease', 'diseases']] +
     [Rule('$CID', w, '.cid') for w in ['cid', 'cids', 'canonical id', 'canonical ids']] +
-    [Rule('$ArgXAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['them']] +
+    [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['them']] +
     [Rule('$Arg', w, '.arg') for w in ['person']] +
-    [Rule('$ArgXAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['people', 'persons']]
+    [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['people', 'persons']]
     # FIXME
 )
 
@@ -58,6 +58,7 @@ unary_rules = [
     Rule('$ArgX', '$ChemicalEntity', ('.arg', ('.int', 1))),
     Rule('$ArgX', '$DiseaseEntity', ('.arg', ('.int', 2))),
     # FIXME
+    Rule('$List', '$UserList', sems0),
     Rule('$Bool', '$BoolLit', sems0),
     Rule('$BoolLit', '$True', sems0),
     Rule('$BoolLit', '$False', sems0),
@@ -73,18 +74,14 @@ unary_rules = [
     Rule('$Compare', '$AtMost', sems0),
     Rule('$Compare', '$MoreThan', sems0),
     Rule('$Compare', '$AtLeast', sems0),
-    Rule('$WithIO', '$Within', sems0),
-    Rule('$WithIO', '$Without', sems0),
     Rule('$NumToBool', '$AtLeastOne', sems0),
-    Rule('$List', '$BoolList', sems0),
-    Rule('$List', '$StringList', sems0), # Also: UserList ->  StringList -> List
-    Rule('$List', '$IntList', sems0),
-    Rule('$List', '$TokenList', sems0),
 ]
 
 compositional_rules = [
+    ### Top Level ###
     Rule('$ROOT', '$Start $LF $Stop', lambda sems: ('.root', sems[1])),
     Rule('$LF', '$Label $Bool $Because $Bool ?$Punctuation', lambda sems: (sems[0], sems[1], sems[3])),
+
 
     ### Logicals ###
     Rule('$Bool', '$Bool $Conj $Bool', lambda sems: (sems[1], sems[0], sems[2])),
@@ -92,16 +89,25 @@ compositional_rules = [
     Rule('$Bool', '$All $BoolList', sems_in_order),
     Rule('$Bool', '$Any $BoolList', sems_in_order),
     Rule('$Bool', '$None $BoolList', sems_in_order),
-    Rule('$Bool', '$BoolList', lambda (boollist_,): ('.any', boollist_)),
 
-    # Parentheses
+
+    ### BoolLists ###
+        # "to the left of arg 2 is a spouse word"
+        # "more than five of X words are upper"
+    Rule('$Bool', '$BoolList', lambda (boollist_,): ('.any', boollist_)),
+    Rule('$Bool', '$NumToBool $BoolList', lambda (func_,boollist_): ('.call', func_, ('.sum', boollist_))),
+
+
+    ### Grouping ###
     Rule('$Bool', '$OpenParen $Bool $CloseParen', lambda (open_, bool_, close_): bool_),
-    
-    ### Integers ###
-        # applying $NumToBool functions
-    Rule('$Bool', '$Num $NumToBool', lambda sems: ('.call', sems[1], sems[0])),
-    Rule('$BoolList', '$NumList $NumToBool', lambda sems: ('.map', sems[1], sems[0])),
+
+
+    ### Comparisons ###
+        # number comparisons
     Rule('$NumToBool', '$Compare $Num', sems_in_order),
+
+        # maximum munching
+    Rule('$Compare', '$Is $Compare', sems1),
 
         # flipping inequalities
     Rule('$AtMost', '$Not $MoreThan', '.leq'),
@@ -109,19 +115,20 @@ compositional_rules = [
     Rule('$LessThan', '$Not $AtLeast', '.lt'),
     Rule('$MoreThan', '$Not $AtMost', '.gt'),
     Rule('$NotEquals', '$Not $Equals', '.neq'),
-    Rule('$NotEquals', '$Equals $Not', '.neq'), # necessary because 'not' requires a bool, not an NumToBool
-    Rule('$Without', '$Not $Within', '.without'), # necessary because 'not' requires a bool, not an NumToBool
+    Rule('$NotEquals', '$Equals $Not', '.neq'), # necessary because 'not' requires a bool, not a NumToBool
     
-        # "more than five of X words are upper"
-    Rule('$Bool', '$NumToBool $BoolList', lambda (func_,boollist_): ('.call', func_, ('.sum', boollist_))),
 
     ### Context ###
     Rule('$ArgX', '$Arg $Int', sems_in_order),
-    Rule('$ArgXOr', '$ArgX $Or $ArgX', lambda (arg1_, and_, arg2_): ('.list', arg1_, arg2_)),
-    Rule('$ArgXAnd', '$ArgX $And $ArgX', lambda (arg1_, and_, arg2_): ('.list', arg1_, arg2_)),
 ]
 
-rules = lexical_rules + unary_rules + compositional_rules
+# template_rules = []
+template_rules = (
+    PrimitiveTemplate(['$ArgX']) +
+    PrimitiveTemplate(['$Num'])
+)
+
+rules = lexical_rules + unary_rules + compositional_rules + template_rules
 
 ops = {
     # root
@@ -177,7 +184,7 @@ translate_ops = {
     '.int': lambda int_: int(int_),
     
     '.tuple': lambda list_: "tuple({})".format(list_),
-    '.list': lambda *elements: "[{}]".format(','.join(x for x in elements)),
+    '.list': lambda *elements: "[{}]".format(','.join(str(x) for x in elements)),
     '.user_list': lambda name: "${}".format(str(name)),
     '.map': lambda func_, list_: "map({}, {})".format(func_, list_),
     '.call': lambda func_, args_: "call({}, {})".format(func_, args_),
@@ -205,8 +212,8 @@ translate_ops = {
     '.sum': lambda arg_: "sum({})".format(arg_),
 
     '.between': lambda list_: "between({})".format(list_),
-    '.right': lambda *args_: "right({})".format(','.join(x for x in args_)),
-    '.left': lambda *args_: "left({})".format(','.join(x for x in args_)),
+    '.right': lambda *args_: "right({})".format(','.join(str(x) for x in args_)),
+    '.left': lambda *args_: "left({})".format(','.join(str(x) for x in args_)),
     '.sentence': "sentence.phrases",
 
     '.filter_to_tokens': lambda list_: "tokens({})".format(list_),

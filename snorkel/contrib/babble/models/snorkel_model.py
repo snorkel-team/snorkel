@@ -87,7 +87,10 @@ class SnorkelModel(object):
             self.config = config
 
         if not self.labeler:
-            self.labeler = LabelAnnotator(lfs=None)
+            if self.lfs:
+                self.labeler = LabelAnnotator(lfs=self.lfs)
+            else:
+                raise Exception("Cannot load label matrix without having LF list.")
         L_train = self.labeler.load_matrix(self.session, split=TRAIN)
 
         if self.config['traditional']:
@@ -108,10 +111,20 @@ class SnorkelModel(object):
                     deps = ()
             
                 gen_model = GenerativeModel(lf_propensity=True)
+                
+                decay = (self.config['decay'] if self.config['decay'] else 
+                    0.001 * (1.0 /self.config['epochs']))
+                step_size = (self.config['step_size'] if self.config['step_size'] else 
+                    0.1/L_train.shape[0])
                 gen_model.train(
-                    L_train, deps=deps, epochs=100, decay=0.95, 
-                    step_size=0.1/L_train.shape[0], reg_param=1e-6)
+                    L_train, 
+                    deps=deps, 
+                    epochs=self.config['epochs'],
+                    decay=decay,
+                    step_size=step_size,
+                    reg_param=self.config['reg_param'])
 
+                self.gen_model = gen_model
                 train_marginals = gen_model.marginals(L_train)
                 
             if self.config['majority_vote']:

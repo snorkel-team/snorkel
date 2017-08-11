@@ -82,7 +82,7 @@ class SnorkelModel(object):
             L = labeler.apply_existing(split=split, parallelism=self.config['parallelism'])
         return L
     
-    def supervise(self, config=None):
+    def supervise(self, config=None, gen_model=None):
         if config:
             self.config = config
 
@@ -110,19 +110,20 @@ class SnorkelModel(object):
                 else:
                     deps = ()
             
-                gen_model = GenerativeModel(lf_propensity=True)
-                
-                decay = (self.config['decay'] if self.config['decay'] else 
-                    0.001 * (1.0 /self.config['epochs']))
-                step_size = (self.config['step_size'] if self.config['step_size'] else 
-                    0.1/L_train.shape[0])
-                gen_model.train(
-                    L_train, 
-                    deps=deps, 
-                    epochs=self.config['epochs'],
-                    decay=decay,
-                    step_size=step_size,
-                    reg_param=self.config['reg_param'])
+                if gen_model == None:
+                    gen_model = GenerativeModel(lf_propensity=True)
+
+                    decay = (self.config['decay'] if self.config['decay'] else 
+                        0.001 * (1.0 /self.config['epochs']))
+                    step_size = (self.config['step_size'] if self.config['step_size'] else 
+                        0.1/L_train.shape[0])
+                    gen_model.train(
+                        L_train, 
+                        deps=deps, 
+                        epochs=self.config['epochs'],
+                        decay=decay,
+                        step_size=step_size,
+                        reg_param=self.config['reg_param'])
 
                 self.gen_model = gen_model
                 train_marginals = gen_model.marginals(L_train)

@@ -61,8 +61,8 @@ class TestBabbleText(TestBabbleBase):
     def test_pos_ner(self):
         self.check_explanations(text_explanations.pos_ner)
 
-    def test_count(self):
-        self.check_explanations(text_explanations.count)
+    # def test_count(self):
+    #     self.check_explanations(text_explanations.count)
 
     def test_anaphora(self):
         self.check_explanations(text_explanations.anaphora)

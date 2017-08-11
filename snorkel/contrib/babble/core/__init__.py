@@ -1,1 +1,1 @@
-from core_base import core_grammar, sem_to_str
+from core_base import core_grammar

@@ -126,9 +126,42 @@ ops = {
     '.within': lambda g2: lambda c2: lambda g1: lambda c1: c1['helpers']['is_within'](g1(c1), g2(c2)),
 }
 
+
+translate_ops = {
+    '.box': lambda int_: "Box {}".format('X' if int_ == 1 else 'Y'),
+    '.edge': lambda bbox, side: "edge({}, {})".format(bbox, side),
+    '.center': lambda bbox: "center({})".format(bbox),
+    '.corner': lambda bbox, s1, s2: "corner({}, {})".format(bbox, s1, s2),
+
+    '.below': lambda g2: "below({})".format(g2),
+    '.above': lambda g2: "above({})".format(g2),
+    '.left': lambda g2: "left({})".format(g2),
+    '.right': lambda g2: "right({})".format(g2),
+    '.near': lambda g2: "near({})".format(g2),
+    '.far': lambda g2: "far({})".format(g2),
+
+    '.smaller': lambda g2: "smaller({})".format(g2),
+    '.larger': lambda g2: "larger({})".format(g2),
+    '.samearea': lambda g2: "samearea({})".format(g2),
+    
+    '.wider': lambda g2: "wider({})".format(g2),
+    '.taller': lambda g2: "taller({})".format(g2),
+    '.samewidth': lambda g2: "samewidth({})".format(g2),
+
+    '.skinnier': lambda g2: "skinnier({})".format(g2),
+    '.shorter': lambda g2: "shorter({})".format(g2),
+    '.sameheight': lambda g2: "sameheight({})".format(g2),
+
+    '.overlaps': lambda g2: "overlaps({})".format(g2),
+
+    '.surrounds': lambda g2: "surrounds({})".format(g2),
+    '.within': lambda g2: "within({})".format(g2),
+}
+
 image_grammar = GrammarMixin(
     rules=rules,
     ops=ops,
     helpers=helpers,
-    annotators=[]
+    annotators=[],
+    translate_ops=translate_ops
 )

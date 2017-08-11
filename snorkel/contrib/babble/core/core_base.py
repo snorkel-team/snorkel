@@ -169,67 +169,55 @@ ops = {
     }
 
 
-def sem_to_str(sem):
-    str_ops = {
-        '.root': lambda LF: recurse(LF),
-        '.label': lambda label, cond: "return {} if {} else 0".format(1 if recurse(label)=='True' else -1, recurse(cond)),
-        '.bool': lambda bool_: bool_=='True',
-        '.string': lambda str_: "'{}'".format(str_),
-        '.int': lambda int_: int(int_),
-        
-        '.tuple': lambda list_: "tuple({})".format(recurse(list_)),
-        '.list': lambda *elements: "[{}]".format(','.join(recurse(x) for x in elements)),
-        '.user_list': lambda name: "${}".format(str(name)),
-        '.map': lambda func_, list_: "map({}, {})".format(recurse(func_), recurse(list_)),
-        '.call': lambda func_, args_: "call({}, {})".format(recurse(func_), recurse(args_)),
+translate_ops = {
+    '.root': lambda LF: LF,
+    '.label': lambda label, cond: "return {} if {} else 0".format(1 if label else -1, cond),
+    '.bool': lambda bool_: bool_=='True',
+    '.string': lambda str_: "'{}'".format(str_),
+    '.int': lambda int_: int(int_),
+    
+    '.tuple': lambda list_: "tuple({})".format(list_),
+    '.list': lambda *elements: "[{}]".format(','.join(x for x in elements)),
+    '.user_list': lambda name: "${}".format(str(name)),
+    '.map': lambda func_, list_: "map({}, {})".format(func_, list_),
+    '.call': lambda func_, args_: "call({}, {})".format(func_, args_),
 
-        '.and': lambda x, y: "({} and {})".format(recurse(x), recurse(y)),
-        '.or': lambda x, y: "({} or {})".format(recurse(x), recurse(y)),
-        '.not': lambda x: "not ({})".format(recurse(x)),
-        '.all': lambda x: "all({})".format(recurse(x)),
-        '.any': lambda x: "any({})".format(recurse(x)),
-        '.none': lambda x: "not any({})".format(recurse(x)),
+    '.and': lambda x, y: "({} and {})".format(x, y),
+    '.or': lambda x, y: "({} or {})".format(x, y),
+    '.not': lambda x: "not ({})".format(x),
+    '.all': lambda x: "all({})".format(x),
+    '.any': lambda x: "any({})".format(x),
+    '.none': lambda x: "not any({})".format(x),
 
-        # '.composite_and': lambda func_, list_: "all(map({}, {}))".format(recurse(func_), recurse(list_)),
-        # '.composite_or':  lambda x, y, z: lambda cz: any([x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)]),
+    # '.composite_and': lambda func_, list_: "all(map({}, {}))".format(func_, list_),
+    # '.composite_or':  lambda x, y, z: lambda cz: any([x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)]),
 
-        '.eq': lambda x: "(= {})".format(recurse(x)),
-        '.geq': lambda x: "(>= {})".format(recurse(x)),
+    '.eq': lambda x: "(= {})".format(x),
+    '.geq': lambda x: "(>= {})".format(x),
 
-        '.arg': lambda int_: "arg{}".format(int_),
-        '.arg_to_string': lambda arg_: "text({}).strip()".format(recurse(arg_)),
-        '.cid': lambda arg_: "cid({})".format(recurse(arg_)),
+    '.arg': lambda int_: "arg{}".format(int_),
+    '.arg_to_string': lambda arg_: "text({}).strip()".format(arg_),
+    '.cid': lambda arg_: "cid({})".format(arg_),
 
-        '.in': lambda rhs: "in {}".format(recurse(rhs)),
-        '.contains': lambda rhs: "contains({})".format(recurse(rhs)),
-        '.count': lambda list_: "count({})".format(recurse(list_)),
-        '.sum': lambda arg_: "sum({})".format(recurse(arg_)),
+    '.in': lambda rhs: "in {}".format(rhs),
+    '.contains': lambda rhs: "contains({})".format(rhs),
+    '.count': lambda list_: "count({})".format(list_),
+    '.sum': lambda arg_: "sum({})".format(arg_),
 
-        '.between': lambda list_: "between({})".format(recurse(list_)),
-        '.right': lambda *args_: "right({})".format(','.join(recurse(x) for x in args_)),
-        '.left': lambda *args_: "left({})".format(','.join(recurse(x) for x in args_)),
-        '.sentence': "sentence.phrases",
+    '.between': lambda list_: "between({})".format(list_),
+    '.right': lambda *args_: "right({})".format(','.join(x for x in args_)),
+    '.left': lambda *args_: "left({})".format(','.join(x for x in args_)),
+    '.sentence': "sentence.phrases",
 
-        '.filter_to_tokens': lambda list_: "tokens({})".format(list_),
-        '.extract_text': lambda list_: "[p.text.strip() for p in {}]".format(list_),
-    }
-    # NOTE: only partially complete, many ops still missing
-    def recurse(sem):
-        if isinstance(sem, tuple):
-            if sem[0] in str_ops:
-                op = str_ops[sem[0]]
-                args_ = [recurse(arg) for arg in sem[1:]]
-                return op(*args_) if args_ else op
-            else:
-                return str(sem)
-        else:
-            return str(sem)
-    return recurse(sem)
+    '.filter_to_tokens': lambda list_: "tokens({})".format(list_),
+    '.extract_text': lambda list_: "[p.text.strip() for p in {}]".format(list_),
+}
 
 
 core_grammar = GrammarMixin(
     rules=rules,
     ops=ops,
     helpers={},
-    annotators=annotators
+    annotators=annotators,
+    translate_ops=translate_ops
 )

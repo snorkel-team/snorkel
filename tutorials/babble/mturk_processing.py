@@ -269,6 +269,8 @@ class MTurkHelper(object):
                 labels_by_candidate['val:%d:%d:%d'%(cand[0],cand[1],cand[2])] = consensus
                 valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
             
+            print("Warning: expected {} total explanations, found {}.".format(
+                num_expected_explanations, num_actual_explanations))
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
             print("Bad: {}".format(num_bad))
@@ -341,11 +343,13 @@ class MTurkHelper(object):
                     elif header[i].startswith('Answer.label'):
                         labels.append(field)
 
+                TRAIN = 0
+                VAL = 1
                 for (img_idx, p_idx, b_idx, explanation, label) in zip(img_indices, p_indices, b_indices, explanations, labels):
                     # candidate_tuple = create_candidate(img_idx, p_idx, b_idx)
                     # candidate_tuple = (img_idx, p_idx, b_idx)
-                    p_bbox_stable_id = "{}:{}::bbox:{}".format(0, img_idx, p_idx)
-                    b_bbox_stable_id = "{}:{}::bbox:{}".format(0, img_idx, b_idx)
+                    p_bbox_stable_id = "{}:{}::bbox:{}".format(TRAIN, img_idx, p_idx)
+                    b_bbox_stable_id = "{}:{}::bbox:{}".format(TRAIN, img_idx, b_idx)
                     candidate_stable_id = '~~'.join([p_bbox_stable_id, b_bbox_stable_id])
                     label = label_converter[label.lower()]
                     if label is None:
@@ -400,13 +404,18 @@ class MTurkHelper(object):
                     elif labels.count(option) >= np.floor(self.workers_per_hit/2.0 + 1):
                         consensus = option
                         num_majority += 1
-                     
                 assert(consensus is not None)
                 valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
-            #assert(all([len(responses) == self.workers_per_hit 
-                 #for responses in explanations_by_candidate.values()]))
-            #if self.num_hits:
-                #assert(num_unanimous + num_majority + num_bad == self.num_hits * self.candidates_per_hit)
+            for candidate_stable_id, responses in explanations_by_candidate.items():
+                if len(responses) != self.workers_per_hit:
+                    print("Warning: for candidate {}, expected {} responses, found {}.".format(
+                        candidate_stable_id, self.workers_per_hit, len(responses)))
+            if self.num_hits:
+                num_actual_explanations = num_unanimous + num_majority + num_bad
+                num_expected_explanations = self.num_hits * self.candidates_per_hit
+                if num_actual_explanations != num_expected_explanations:
+                    print("Warning: expected {} total explanations, found {}.".format(
+                        num_expected_explanations, num_actual_explanations))
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
             print("Bad: {}".format(num_bad))
@@ -520,6 +529,8 @@ class MTurkHelper(object):
             #     for responses in explanations_by_candidate.values()]))
             if self.num_hits:
                 assert(num_unanimous + num_majority + num_bad == self.num_hits * self.candidates_per_hit)
+                print("Warning: expected {} total explanations, found {}.".format(
+                    num_expected_explanations, num_actual_explanations))
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
             print("Bad: {}".format(num_bad))

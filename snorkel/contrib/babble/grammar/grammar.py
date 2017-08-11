@@ -13,11 +13,12 @@ import utils
 
 
 class GrammarMixin(object):
-    def __init__(self, rules, ops, helpers, annotators):
+    def __init__(self, rules, ops, helpers, annotators, translate_ops):
         self.rules = rules
         self.ops = ops
         self.helpers = helpers
         self.annotators = annotators
+        self.translate_ops = translate_ops
 
 
 class Grammar(object):
@@ -30,11 +31,13 @@ class Grammar(object):
         self.ops = {}
         self.helpers = {}
         self.annotators = []
+        self.translate_ops = {}
         for base in bases:
             rules += base.rules
             self.ops.update(base.ops)
             self.helpers.update(base.helpers)
             self.annotators += base.annotators
+            self.translate_ops.update(base.translate_ops)
         # Add candidate-specific rules and user_lists
         if candidate_class:
             for i, arg in enumerate(candidate_class.__argnames__):
@@ -250,15 +253,28 @@ class Grammar(object):
         chart[(i,j)] = sorted(chart[(i,j)], key=lambda x: x.absorbed)[:self.beam_width]
 
     def evaluate(self, parse):
-        def recurse(semantics):
-            if isinstance(semantics, tuple):
-                op = self.ops[semantics[0]]
-                args = [recurse(arg) for arg in semantics[1:]]
+        def recurse(sem):
+            if isinstance(sem, tuple):
+                op = self.ops[sem[0]]
+                args = [recurse(arg) for arg in sem[1:]]
                 return op(*args) if args else op
             else:
-                return semantics
+                return sem
         LF = recurse(parse.semantics)
         return lambda candidate: LF({'helpers': self.helpers, 'user_lists': self.user_lists, 'candidate': candidate})
+
+    def translate(self, sem):
+        def recurse(sem):
+            if isinstance(sem, tuple):
+                if sem[0] in self.translate_ops:
+                    op = self.translate_ops[sem[0]]
+                    args_ = [recurse(arg) for arg in sem[1:]]
+                    return op(*args_) if args_ else op
+                else:
+                    return str(sem)
+            else:
+                return str(sem)
+        return recurse(sem)
 
     def print_grammar(self):
         def all_rules(rule_index):

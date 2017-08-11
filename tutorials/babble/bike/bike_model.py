@@ -32,7 +32,6 @@ class BikeModel(BabbleModel):
                 self.candidate_class.split == split).count()
             print("Candidates [Split {}]: {}".format(split, num_candidates))
 
-
     def load_gold(self, anns_path=None, annotator_name='gold'):
         if anns_path:
             self.anns_path = anns_path
@@ -60,7 +59,7 @@ class BikeModel(BabbleModel):
 
 
     def babble(self, explanations, user_lists={}, **kwargs):
-        babbler = Babbler(mode='image', candidate_class=None, explanations=explanations)
+        babbler = Babbler(mode='image', candidate_class=self.candidate_class, explanations=explanations)
         super(BikeModel, self).babble(babbler, **kwargs)
 
 

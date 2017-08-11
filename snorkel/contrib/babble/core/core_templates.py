@@ -13,10 +13,7 @@ def PrimitiveTemplate(seed):
     XBinToBool = X + 'BinToBool' # f(X1, X2) = Bool
         
     rules = [
-        # Equality
-        Rule(XBinToBool, '$Equals', sems0),
-        
-        # To Bool
+         # To Bool
             # "'a' is uppercase"
         Rule('$Bool', (X, XToBool), lambda (x, func_): ('.call', func_, x)),
         

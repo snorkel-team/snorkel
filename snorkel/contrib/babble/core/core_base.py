@@ -68,6 +68,7 @@ unary_rules = [
     Rule('$Conj', '$Or', sems0),
     Rule('$Exists', '$Is'),
     Rule('$Equals', '$Is ?$Equals', '.eq'),
+    Rule('$Compare', '$Equals', sems0),
     Rule('$Compare', '$LessThan', sems0),
     Rule('$Compare', '$AtMost', sems0),
     Rule('$Compare', '$MoreThan', sems0),

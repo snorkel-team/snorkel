@@ -40,6 +40,7 @@ unary_rules = [
     Rule('$UnaryStringToBool', '$Upper', sems0),
     Rule('$UnaryStringToBool', '$Capital', sems0),
 
+    Rule('$StringBinToBool', '$Equals', sems0),
     Rule('$StringBinToBool', '$StartsWith', sems0),
     Rule('$StringBinToBool', '$EndsWith', sems0),
 

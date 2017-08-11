@@ -17,7 +17,7 @@ from snorkel.candidates import Ngrams, CandidateExtractor
 from snorkel.matchers import PersonMatcher
 from snorkel.annotations import (FeatureAnnotator, LabelAnnotator, 
     save_marginals, load_marginals, load_gold_labels)
-from snorkel.learning import GenerativeModel, SparseLogisticRegression
+from snorkel.learning import GenerativeModel, SparseLogisticRegression, MajorityVoter
 from snorkel.learning import RandomSearch, ListParameter, RangeParameter
 from snorkel.learning.utils import MentionScorer, training_set_summary_stats
 from snorkel.learning.structure import DependencySelector
@@ -100,7 +100,7 @@ class SnorkelModel(object):
             train_marginals[train_marginals==-1] = 0
         else:
             if self.config['majority_vote']:
-                train_marginals = np.where(np.ravel(np.sum(L_train, axis=1)) <= 0, 0.0, 1.0)
+                self.gen_model = MajorityVoter()
             else:
                 if self.config['model_dep']:
                     ds = DependencySelector()
@@ -110,13 +110,13 @@ class SnorkelModel(object):
                 else:
                     deps = ()
             
-                gen_model = GenerativeModel(lf_propensity=True)
+                self.gen_model = GenerativeModel(lf_propensity=True)
                 
                 decay = (self.config['decay'] if self.config['decay'] else 
                     0.001 * (1.0 /self.config['epochs']))
                 step_size = (self.config['step_size'] if self.config['step_size'] else 
                     0.1/L_train.shape[0])
-                gen_model.train(
+                self.gen_model.train(
                     L_train, 
                     deps=deps, 
                     epochs=self.config['epochs'],
@@ -124,8 +124,7 @@ class SnorkelModel(object):
                     step_size=step_size,
                     reg_param=self.config['reg_param'])
 
-                self.gen_model = gen_model
-                train_marginals = gen_model.marginals(L_train)
+            train_marginals = self.gen_model.marginals(L_train)
                 
             if self.config['majority_vote']:
                 self.lf_stats = None
@@ -137,7 +136,7 @@ class SnorkelModel(object):
                     else:
                         L = self.labeler.load_matrix(self.session, split=DEV)
                         L_gold = load_gold_labels(self.session, annotator_name='gold', split=DEV)
-                    self.lf_stats = L.lf_stats(self.session, L_gold, gen_model.weights.lf_accuracy())
+                    self.lf_stats = L.lf_stats(self.session, L_gold, self.gen_model.weights.lf_accuracy())
                     if self.config['display_correlation']:
                         self.display_accuracy_correlation()
             

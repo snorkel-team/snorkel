@@ -8,7 +8,7 @@ configuration = {
     'seed': 0,
 
     # BABBLER
-    'babbler_split': 1,
+    'babbler_split': 1, # TODO: actually work on Train?
     'beam_width': 10,
     'top_k': -1,
     # filters
@@ -31,6 +31,8 @@ configuration = {
     'max_train': None,
     'threshold': 1.0/3.0,
     # display
+    'display_accuracies': False,
+    'display_learned_accuracies': False,
     'display_correlation': False,
     'display_marginals': False,
     # real-world conditions

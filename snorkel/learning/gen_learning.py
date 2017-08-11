@@ -1,5 +1,5 @@
 from .classifier import Classifier
-from .utils import MentionScorer
+from numba import jit
 import numbskull
 from numbskull import NumbSkull
 from numbskull.inference import FACTORS
@@ -8,7 +8,7 @@ import numpy as np
 import random
 import scipy.sparse as sparse
 from copy import copy
-from pandas import DataFrame, Series
+from pandas import DataFrame
 from distutils.version import StrictVersion
 from six.moves.cPickle import dump, load
 import os
@@ -17,6 +17,7 @@ DEP_SIMILAR = 0
 DEP_FIXING = 1
 DEP_REINFORCING = 2
 DEP_EXCLUSIVE = 3
+
 
 class GenerativeModel(Classifier):
     """
@@ -53,6 +54,7 @@ class GenerativeModel(Classifier):
 
         self.rng = random.Random()
         self.rng.seed(seed)
+        set_numba_seeds(seed)
 
     # These names of factor types are for the convenience of several methods
     # that perform the same operations over multiple types, but this class's
@@ -893,4 +895,9 @@ class GenerativeModelWeights(object):
             return True
         else:
             return False
-   
+
+
+@jit
+def set_numba_seeds(seed):
+    np.random.seed(seed)
+    random.seed(seed)

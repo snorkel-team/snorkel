@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from snorkel.contrib.babble import Explanation
-from tutorials.babble.bike import BBox
 
 def shuffle_lists(a, b):
     combined = zip(a, b)

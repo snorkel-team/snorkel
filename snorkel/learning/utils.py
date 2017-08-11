@@ -405,6 +405,7 @@ class ModelTester(Process):
         set_unlabeled_as_neg=True, save_dir='checkpoints', 
         eval_batch_size=None):
         Process.__init__(self)
+        self.model_class_params = model_class_params
         self.params_queue = params_queue
         self.scores_queue = scores_queue
         self.X_train = X_train
@@ -424,28 +425,28 @@ class ModelTester(Process):
             # Get a new configuration from the queue
             try:
                 k, hps = self.params_queue.get(True, QUEUE_TIMEOUT)
-                
+
                 # Initiate the model from scratch each time
                 # Some models may have seed set in the init procedure
-                self.model = model_class(**model_class_params)
-                model_name = '{0}_{1}'.format(self.model.name, k)
+                model = model_class(**self.model_class_params)
+                model_name = '{0}_{1}'.format(model.name, k)
 
                 # Train model with given hyperparameters
                 if self.Y_train is not None:
-                    self.model.train(self.X_train, self.Y_train, **hps)
+                    model.train(self.X_train, self.Y_train, **hps)
                 else:
-                    self.model.train(self.X_train, **hps)
+                    model.train(self.X_train, **hps)
 
                 # Save the model
                 # NOTE: Currently, we have to save every model because we are
                 # testing asynchronously. This is obviously memory inefficient,
                 # although probably not that much of a problem in practice...
-                self.model.save(model_name=model_name, save_dir=self.save_dir)
+                model.save(model_name=model_name, save_dir=self.save_dir)
 
                 # Test the model
-                run_scores = self.model.score(self.X_valid, self.Y_valid, 
+                run_scores = model.score(self.X_valid, self.Y_valid, 
                     **self.scorer_params)
-                run_scores = [run_scores] if self.model.cardinality > 2 else \
+                run_scores = [run_scores] if model.cardinality > 2 else \
                     list(run_scores)
 
                 # Append score to out queue
@@ -505,8 +506,8 @@ class GridSearch(object):
 
             # Initiate the model from scratch each time
             # Some models may have seed set in the init procedure
-            self.model = self.model_class(**self.model_class_params)
-            model_name = '{0}_{1}'.format(self.model.name, k)
+            model = self.model_class(**self.model_class_params)
+            model_name = '{0}_{1}'.format(model.name, k)
 
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
@@ -520,15 +521,15 @@ class GridSearch(object):
 
             # Train the model
             if self.Y_train is not None:
-                self.model.train(self.X_train,self.Y_train,**model_hyperparams)
+                model.train(self.X_train, self.Y_train, **model_hyperparams)
             else:
-                self.model.train(self.X_train, **model_hyperparams)
+                model.train(self.X_train, **model_hyperparams)
 
             # Test the model
-            run_scores = self.model.score(X_valid, Y_valid, b=b, beta=beta,
+            run_scores = model.score(X_valid, Y_valid, b=b, beta=beta,
                 set_unlabeled_as_neg=set_unlabeled_as_neg,
                 batch_size=eval_batch_size)
-            if self.model.cardinality > 2:
+            if model.cardinality > 2:
                 run_score, run_score_label = run_scores, "Accuracy"
                 run_scores = [run_score]
             else:
@@ -536,27 +537,26 @@ class GridSearch(object):
                 run_score_label = "F-{0} Score".format(beta)
 
             # Add scores to running stats, print, and set as optimal if best
-            print("[{0}] {1}: {2}".format(self.model.name, run_score_label,
-                run_score))
+            print("[{0}] {1}: {2}".format(model.name,run_score_label,run_score))
             run_stats.append(list(param_vals) + list(run_scores))
             if run_score > run_score_opt or k == 0:
-                self.model.save(model_name=model_name, save_dir=save_dir)
-                opt_model = model_name
+                model.save(model_name=model_name, save_dir=save_dir)
+                opt_model_name = model_name
                 run_score_opt = run_score
 
         # Set optimal parameter in the learner model
-        self.model = self.model_class(**self.model_class_params)
-        self.model.load(opt_model, save_dir=save_dir)
+        opt_model = self.model_class(**self.model_class_params)
+        opt_model.load(opt_model_name, save_dir=save_dir)
         
         # Return optimal model & DataFrame of scores
         f_score = 'F-{0}'.format(beta)
-        run_score_labels = ['Acc.'] if self.model.cardinality > 2 else \
+        run_score_labels = ['Acc.'] if opt_model.cardinality > 2 else \
             ['Prec.', 'Rec.', f_score]
-        sort_by = 'Acc.' if self.model.cardinality > 2 else f_score
+        sort_by = 'Acc.' if opt_model.cardinality > 2 else f_score
         self.results = DataFrame.from_records(
             run_stats, columns=self.param_names + run_score_labels
         ).sort_values(by=sort_by, ascending=False)
-        return self.model, self.results
+        return opt_model, self.results
 
     def _fit_mt(self, X_valid, Y_valid, b=0.5, beta=1, 
         set_unlabeled_as_neg=True, validation_kwargs={}, n_threads=2, 

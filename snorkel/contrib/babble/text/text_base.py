@@ -39,12 +39,13 @@ unary_rules = [
     Rule('$UnaryStringToBool', '$Lower', sems0),
     Rule('$UnaryStringToBool', '$Upper', sems0),
     Rule('$UnaryStringToBool', '$Capital', sems0),
-    Rule('$BinaryStringToBool', '$StartsWith', sems0),
-    Rule('$BinaryStringToBool', '$EndsWith', sems0),
 
-    Rule('$BinaryStringToBool', '$In', sems0),
-    Rule('$BinaryStringToBool', '$Contains', sems0),
-    Rule('$BinaryStringToBool', '$Equals', sems0),
+    Rule('$StringBinToBool', '$StartsWith', sems0),
+    Rule('$StringBinToBool', '$EndsWith', sems0),
+
+    # These represent string comparisons (like the letter 'a' in 'cat'), not set comparisons
+    Rule('$StringBinToBool', '$In', sems0),
+    Rule('$StringBinToBool', '$Contains', sems0),
 ]
     
 compositional_rules = [
@@ -83,7 +84,8 @@ compositional_rules = [
     Rule('$StringToBool', '$Between $ArgXListAnd', 
         lambda (btw_, arglist_): 
             ('.in', ('.extract_text', (btw_, arglist_)))), 
-        
+    
+    # TODO: generalize count to other lists?
     # Count
             # "the number of (words left of arg 1) is 5"
     Rule('$Int', '$Count $TokenList', sems_in_order),
@@ -110,7 +112,7 @@ compositional_rules = [
     Rule('$StringListAnd', '$ArgXListAnd $ArgToString', lambda (args_, func_): ('.map', func_, args_)),
     
     # Tuples
-    Rule('$StringTuple', '$Tuple $StringListAnd', sems_in_order),
+    Rule('$StringTuple', '$Tuple $StringList', sems_in_order),
     Rule('$StringTupleToBool', '$Equals $StringTuple', sems_in_order),
 
     # NER/POS
@@ -133,16 +135,12 @@ compositional_rules = [
 
         # defining $StringToBool functions
     Rule('$StringToBool', '$UnaryStringToBool', lambda sems: (sems[0],)),
-    Rule('$StringToBool', '$BinaryStringToBool $String', sems_in_order),
-    Rule('$StringToBool', '$BinaryStringToBool $StringListAnd', lambda sems: ('.composite_and', (sems[0],), sems[1])),
-    Rule('$StringToBool', '$BinaryStringToBool $StringListOr', lambda sems: ('.composite_or',  (sems[0],), sems[1])),
-    Rule('$StringToBool', '$BinaryStringToBool $UserList', lambda sems: ('.composite_or',  (sems[0],), sems[1])),  
 ]
 
 # template_rules = []
 template_rules = (
-    PrimitiveTemplate(['$String']) +
-    PrimitiveTemplate(['$StringTuple'])
+    PrimitiveTemplate('$String') +
+    PrimitiveTemplate('$StringTuple')
 )
 
 rules = lexical_rules + unary_rules + compositional_rules + template_rules

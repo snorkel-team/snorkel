@@ -121,7 +121,7 @@ boxes = [
         semantics=None),
     # Box within
     Explanation(
-        condition="not box x is within box y", #TODO: FIX ME!
+        condition="box x is not within box y",
         label=True,
         candidate=a_and_b,
         semantics=None),

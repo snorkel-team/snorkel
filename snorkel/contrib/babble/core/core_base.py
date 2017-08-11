@@ -67,13 +67,12 @@ unary_rules = [
     Rule('$Conj', '$And', sems0),
     Rule('$Conj', '$Or', sems0),
     Rule('$Exists', '$Is'),
-    Rule('$Equals', '$Is', '.eq'),
-    Rule('$Compare', '$Equals', sems0),
-    Rule('$Compare', '$NotEquals', sems0),
+    Rule('$Equals', '$Is ?$Equals', '.eq'),
     Rule('$Compare', '$LessThan', sems0),
     Rule('$Compare', '$AtMost', sems0),
     Rule('$Compare', '$MoreThan', sems0),
     Rule('$Compare', '$AtLeast', sems0),
+    Rule('$NumBinToBool', '$Compare', sems0),
     Rule('$NumToBool', '$AtLeastOne', sems0),
 ]
 
@@ -82,7 +81,6 @@ compositional_rules = [
     Rule('$ROOT', '$Start $LF $Stop', lambda sems: ('.root', sems[1])),
     Rule('$LF', '$Label $Bool $Because $Bool ?$Punctuation', lambda sems: (sems[0], sems[1], sems[3])),
 
-
     ### Logicals ###
     Rule('$Bool', '$Bool $Conj $Bool', lambda sems: (sems[1], sems[0], sems[2])),
     Rule('$Bool', '$Not $Bool', sems_in_order),
@@ -90,33 +88,15 @@ compositional_rules = [
     Rule('$Bool', '$Any $BoolList', sems_in_order),
     Rule('$Bool', '$None $BoolList', sems_in_order),
 
-
-    ### BoolLists ###
-        # "to the left of arg 2 is a spouse word"
-        # "more than five of X words are upper"
-    Rule('$Bool', '$BoolList', lambda (boollist_,): ('.any', boollist_)),
-    Rule('$Bool', '$NumToBool $BoolList', lambda (func_,boollist_): ('.call', func_, ('.sum', boollist_))),
-
-
     ### Grouping ###
     Rule('$Bool', '$OpenParen $Bool $CloseParen', lambda (open_, bool_, close_): bool_),
 
-
-    ### Comparisons ###
-        # number comparisons
-    Rule('$NumToBool', '$Compare $Num', sems_in_order),
-
-        # maximum munching
-    Rule('$Compare', '$Is $Compare', sems1),
-
-        # flipping inequalities
-    Rule('$AtMost', '$Not $MoreThan', '.leq'),
-    Rule('$AtLeast', '$Not $LessThan', '.geq'),
-    Rule('$LessThan', '$Not $AtLeast', '.lt'),
-    Rule('$MoreThan', '$Not $AtMost', '.gt'),
-    Rule('$NotEquals', '$Not $Equals', '.neq'),
-    Rule('$NotEquals', '$Equals $Not', '.neq'), # necessary because 'not' requires a bool, not a NumToBool
-    
+    ### BoolLists ###
+    # DEPRECATED:
+        # "to the left of arg 2 is a spouse word"
+    # Rule('$Bool', '$BoolList', lambda (boollist_,): ('.any', boollist_)),
+        # "more than five of X words are upper"
+    Rule('$Bool', '$NumToBool $BoolList', lambda (func_,boollist_): ('.call', func_, ('.sum', boollist_))),
 
     ### Context ###
     Rule('$ArgX', '$Arg $Int', sems_in_order),
@@ -124,8 +104,8 @@ compositional_rules = [
 
 # template_rules = []
 template_rules = (
-    PrimitiveTemplate(['$ArgX']) +
-    PrimitiveTemplate(['$Num'])
+    PrimitiveTemplate('$ArgX') +
+    PrimitiveTemplate('$Num')
 )
 
 rules = lexical_rules + unary_rules + compositional_rules + template_rules

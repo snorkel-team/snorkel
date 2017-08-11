@@ -198,10 +198,14 @@ class Babbler(object):
         return sorted([self.explanations_by_name[exp_name] for exp_name in exp_names],
             key=lambda x: x.name)
 
-    def get_parses(self, translate=True):
+    def get_parses(self, semantics=True, translate=True):
         parses = sorted(self.parses, key=lambda x: extract_exp_name(x.function))
-        if translate:
-            return [self.translate(p.semantics) for p in parses]
+        if semantics:
+            semantics = [p.semantics for p in parses]
+            if translate:
+                return [self.translate(s) for s in semantics]
+            else:
+                return semantics
         else:
             return parses
 

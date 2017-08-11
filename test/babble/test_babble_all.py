@@ -1,0 +1,5 @@
+import unittest
+
+from test_babble_core import TestBabbleCore
+from test_babble_image import TestBabbleImage
+from test_babble_text import TestBabbleText

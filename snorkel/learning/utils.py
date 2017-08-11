@@ -405,7 +405,6 @@ class ModelTester(Process):
         set_unlabeled_as_neg=True, save_dir='checkpoints', 
         eval_batch_size=None):
         Process.__init__(self)
-        self.model = model_class(**model_class_params)
         self.params_queue = params_queue
         self.scores_queue = scores_queue
         self.X_train = X_train
@@ -425,6 +424,10 @@ class ModelTester(Process):
             # Get a new configuration from the queue
             try:
                 k, hps = self.params_queue.get(True, QUEUE_TIMEOUT)
+                
+                # Initiate the model from scratch each time
+                # Some models may have seed set in the init procedure
+                self.model = model_class(**model_class_params)
                 model_name = '{0}_{1}'.format(self.model.name, k)
 
                 # Train model with given hyperparameters
@@ -495,12 +498,14 @@ class GridSearch(object):
           set_unlabeled_as_neg is used to decide class of unlabeled cases for f1
           Non-search parameters are set using model_hyperparameters
         """
-        self.model = self.model_class(**self.model_class_params)
-
         # Iterate over the param values
         run_stats = []
         run_score_opt = -1.0
         for k, param_vals in enumerate(self.search_space()):
+
+            # Initiate the model from scratch each time
+            # Some models may have seed set in the init procedure
+            self.model = self.model_class(**self.model_class_params)
             model_name = '{0}_{1}'.format(self.model.name, k)
 
             # Set the new hyperparam configuration to test
@@ -540,6 +545,7 @@ class GridSearch(object):
                 run_score_opt = run_score
 
         # Set optimal parameter in the learner model
+        self.model = self.model_class(**self.model_class_params)
         self.model.load(opt_model, save_dir=save_dir)
         
         # Return optimal model & DataFrame of scores

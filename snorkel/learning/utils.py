@@ -405,6 +405,7 @@ class ModelTester(Process):
         set_unlabeled_as_neg=True, save_dir='checkpoints', 
         eval_batch_size=None):
         Process.__init__(self)
+        self.model_class = model_class
         self.model_class_params = model_class_params
         self.params_queue = params_queue
         self.scores_queue = scores_queue
@@ -428,7 +429,7 @@ class ModelTester(Process):
 
                 # Initiate the model from scratch each time
                 # Some models may have seed set in the init procedure
-                model = model_class(**self.model_class_params)
+                model = self.model_class(**self.model_class_params)
                 model_name = '{0}_{1}'.format(model.name, k)
 
                 # Train model with given hyperparameters

@@ -142,7 +142,7 @@ class TFNoiseAwareModel(Classifier):
         verbose = print_freq > 0
 
         # Set random seed for all numpy operations
-        np.rand_state.seed(self.seed)
+        self.rand_state.seed(self.seed)
 
         # If the data passed in is a feature matrix (representation=False),
         # set the dimensionality here; else assume this is done by sub-class
@@ -168,7 +168,8 @@ class TFNoiseAwareModel(Classifier):
         # Note: rebalancing only for binary setting currently
         if self.cardinality == 2:
             # This removes unlabeled examples and optionally rebalances
-            train_idxs = LabelBalancer(Y_train).get_train_idxs(rebalance)
+            train_idxs = LabelBalancer(Y_train).get_train_idxs(rebalance,
+                rand_state=self.rand_state)
         else:
             # In categorical setting, just remove unlabeled
             diffs = Y_train.max(axis=1) - Y_train.min(axis=1)
@@ -216,7 +217,7 @@ class TFNoiseAwareModel(Classifier):
 
             # Reshuffle training data
             train_idxs = range(n)
-            np.random.shuffle(train_idxs)
+            self.rand_state.shuffle(train_idxs)
             X_train = [X_train[j] for j in train_idxs] if self.representation \
                 else X_train[train_idxs, :]
             Y_train = Y_train[train_idxs]

@@ -67,12 +67,13 @@ class LabelBalancer(object):
         else:
             return self._try_frac(npos, nneg, 1.0-frac_pos)[::-1]
 
-    def get_train_idxs(self, rebalance=False, split=0.5):
+    def get_train_idxs(self, rebalance=False, split=0.5, rand_state=None):
         """Get training indices based on @y
             @rebalance: bool or fraction of positive examples desired
                         If True, default fraction is 0.5. If False no balancing.
             @split: Split point for positive and negative classes
         """
+        rs = np.random if rand_state is None else rand_state
         pos, neg = self._get_pos(split), self._get_neg(split)
         if rebalance:
             if len(pos) == 0:
@@ -81,10 +82,10 @@ class LabelBalancer(object):
                 raise ValueError("No negative labels.")
             p = 0.5 if rebalance == True else rebalance
             n_neg, n_pos = self._get_counts(len(neg), len(pos), p)
-            pos = np.random.choice(pos, size=n_pos, replace=False)
-            neg = np.random.choice(neg, size=n_neg, replace=False)
+            pos = rs.choice(pos, size=n_pos, replace=False)
+            neg = rs.choice(neg, size=n_neg, replace=False)
         idxs = np.concatenate([pos, neg])
-        np.random.shuffle(idxs)
+        rs.shuffle(idxs)
         return idxs
 
 

@@ -349,53 +349,205 @@ def calibration_plots(train_marginals, test_marginals, gold_labels=None):
 ### Grid search
 ############################################################
 
-class Hyperparameter(object):
-    """Base class for a grid search parameter"""
-    def __init__(self, name):
-        self.name = name
-
-    def get_all_values(self):
-        raise NotImplementedError()
-
-    def draw_values(self, n):
-        # Multidim parameters can't use choice directly
-        v = self.get_all_values()
-        return [v[int(i)] for i in np.random.choice(len(v), n)]
-
-
-class ListParameter(Hyperparameter):
-    """List of parameter values for searching"""
-    def __init__(self, name, parameter_list):
-        self.parameter_list = np.array(parameter_list)
-        super(ListParameter, self).__init__(name)
-
-    def get_all_values(self):
-        return self.parameter_list
-
-
-class RangeParameter(Hyperparameter):
+class GridSearch(object):
     """
-    Range of parameter values for searching.
-    min_value and max_value are the ends of the search range
-    If log_base is specified, scale the search range in the log base
-    step is range step size or exponent step size
-    """
-    def __init__(self, name, v1, v2, step=1, log_base=None):
-        self.min_value = min(v1, v2)
-        self.max_value = max(v1, v2)
-        self.step = step
-        self.log_base = log_base
-        super(RangeParameter, self).__init__(name)
+    A class for running a hyperparameter grid search.
 
-    def get_all_values(self):
-        if self.log_base:
-            min_exp = math.log(self.min_value, self.log_base)
-            max_exp = math.log(self.max_value, self.log_base)
-            exps = np.arange(min_exp, max_exp + self.step, step=self.step)
-            return np.power(self.log_base, exps)
-        return np.arange(
-            self.min_value, self.max_value + self.step, step=self.step
-        )
+    :param model_class: The model class being trained
+    :param parameter_dict: A dictionary of (hyperparameter name, list of values)
+        pairs. Note that the hyperparameter name must correspond to a keyword
+        argument in the `model_class.train` method.
+    :param X_train: The training datapoints
+    :param Y_train: If applicable, the training labels / marginals
+    :param model_class_params: Keyword arguments to pass into model_class
+        construction. Note that a new model is constructed for each new 
+        combination of hyperparameters.
+    :param model_hyperparams: Hyperparameters for the model- all must be
+            keyword arguments to the `model_class.train` method. Any that are
+            included in the grid search will be overwritten.
+    """
+    def __init__(self, model_class, parameter_dict, X_train, Y_train=None,
+        model_class_params={}, model_hyperparams={}):
+        self.model_class        = model_class
+        self.parameter_dict     = parameter_dict
+        self.param_names        = parameter_dict.keys()
+        self.X_train            = X_train
+        self.Y_train            = Y_train
+        self.model_class_params = model_class_params
+        self.model_hyperparams  = model_hyperparams
+
+    def search_space(self):
+        return product(*[self.parameter_dict[pn] for pn in self.param_names])
+
+    def fit(self, X_valid, Y_valid, b=0.5, beta=1, set_unlabeled_as_neg=True, 
+        n_threads=1, save_dir='checkpoints', eval_batch_size=None):
+        """
+        Runs grid search, constructing a new instance of model_class for each
+        hyperparameter combination, training on (self.X_train, self.Y_train),
+        and validating on (X_valid, Y_valid). Selects the best model according
+        to F1 score (binary) or accuracy (categorical).
+
+        :param b: Scoring decision threshold (binary)
+        :param beta: F_beta score to select model by (binary)
+        :param set_unlabeled_as_neg: Set labels = 0 -> -1 (binary)
+        :param n_threads: Parallelism to use for the grid search
+        :param save_dir: Directory to save trained models in
+        :param eval_batch_size: The batch_size for model evaluation
+        """
+        if n_threads > 1:
+            opt_model, run_stats = self._fit_mt(X_valid, Y_valid, b=b,
+                beta=beta, set_unlabeled_as_neg=set_unlabeled_as_neg,
+                n_threads=n_threads, save_dir=save_dir,
+                eval_batch_size=eval_batch_size)
+        else:
+            opt_model, run_stats = self._fit_st(X_valid, Y_valid, b=b, 
+                beta=beta, set_unlabeled_as_neg=set_unlabeled_as_neg,
+                save_dir=save_dir, eval_batch_size=eval_batch_size)
+        return opt_model, run_stats
+
+    def _fit_st(self, X_valid, Y_valid, b=0.5, beta=1, save_dir='checkpoints',
+        set_unlabeled_as_neg=True, eval_batch_size=None):
+        """Single-threaded implementation of `GridSearch.fit`."""
+        # Iterate over the param values
+        run_stats = []
+        run_score_opt = -1.0
+        for k, param_vals in enumerate(self.search_space()):
+            hps = self.model_hyperparams.copy()
+
+            # Initiate the model from scratch each time
+            # Some models may have seed set in the init procedure
+            model = self.model_class(**self.model_class_params)
+            model_name = '{0}_{1}'.format(model.name, k)
+
+            # Pass in the dev set to the train method if applicable, for dev set
+            # score printing, best-score checkpointing
+            if 'X_dev' in inspect.getargspec(model.train):
+                hps['X_dev'] = X_valid
+                hps['Y_dev'] = Y_valid
+
+            # Set the new hyperparam configuration to test
+            for pn, pv in zip(self.param_names, param_vals):
+                hps[pn] = pv
+            print("=" * 60)
+            NUMTYPES = [float, int, np.float64]
+            print("[%d] Testing %s" % (k+1, ', '.join([
+                "%s = %s" % (pn, ("%0.2e" % pv) if type(pv) in NUMTYPES else pv)
+                for pn,pv in zip(self.param_names, param_vals)
+            ])))
+            print("=" * 60)
+
+            # Train the model
+            if self.Y_train is not None:
+                model.train(self.X_train, self.Y_train, **hps)
+            else:
+                model.train(self.X_train, **hps)
+
+            # Test the model
+            run_scores = model.score(X_valid, Y_valid, b=b, beta=beta,
+                set_unlabeled_as_neg=set_unlabeled_as_neg,
+                batch_size=eval_batch_size)
+            if model.cardinality > 2:
+                run_score, run_score_label = run_scores, "Accuracy"
+                run_scores = [run_score]
+            else:
+                run_score  = run_scores[-1]
+                run_score_label = "F-{0} Score".format(beta)
+
+            # Add scores to running stats, print, and set as optimal if best
+            print("[{0}] {1}: {2}".format(model.name,run_score_label,run_score))
+            run_stats.append(list(param_vals) + list(run_scores))
+            if run_score > run_score_opt or k == 0:
+                model.save(model_name=model_name, save_dir=save_dir)
+                opt_model_name = model_name
+                run_score_opt = run_score
+
+        # Set optimal parameter in the learner model
+        opt_model = self.model_class(**self.model_class_params)
+        opt_model.load(opt_model_name, save_dir=save_dir)
+        
+        # Return optimal model & DataFrame of scores
+        f_score = 'F-{0}'.format(beta)
+        run_score_labels = ['Acc.'] if opt_model.cardinality > 2 else \
+            ['Prec.', 'Rec.', f_score]
+        sort_by = 'Acc.' if opt_model.cardinality > 2 else f_score
+        self.results = DataFrame.from_records(
+            run_stats, columns=self.param_names + run_score_labels
+        ).sort_values(by=sort_by, ascending=False)
+        return opt_model, self.results
+
+    def _fit_mt(self, X_valid, Y_valid, b=0.5, beta=1, 
+        set_unlabeled_as_neg=True, n_threads=2, save_dir='checkpoints',
+        eval_batch_size=None):
+        """Multi-threaded implementation of `GridSearch.fit`."""
+        # First do a preprocessing pass over the data to make sure it is all
+        # non-lazily loaded
+        # TODO: Better way to go about it than this!!
+        print("Loading data...")
+        model = self.model_class(**self.model_class_params)
+        _ = model._preprocess_data(self.X_train)
+        _ = model._preprocess_data(X_valid)
+
+        # Create queue of hyperparameters to test
+        print("Launching jobs...")
+        params_queue = JoinableQueue()
+        param_val_sets = []
+        for k, param_vals in enumerate(self.search_space()):
+            param_val_sets.append(param_vals)
+            hps = self.model_hyperparams.copy()
+            for pn, pv in zip(self.param_names, param_vals):
+                hps[pn] = pv
+            params_queue.put((k, hps))
+
+        # Create a queue to store output results
+        scores_queue = JoinableQueue()
+
+        # Start UDF Processes
+        ps = []
+        for i in range(n_threads):
+            p = ModelTester(self.model_class, self.model_class_params,
+                    params_queue, scores_queue, self.X_train, X_valid, Y_valid,
+                    Y_train=self.Y_train, b=b, save_dir=save_dir,
+                    set_unlabeled_as_neg=set_unlabeled_as_neg,
+                    eval_batch_size=eval_batch_size)
+            p.start()
+            ps.append(p)
+
+        # Collect scores
+        run_stats = []
+        while any([p.is_alive() for p in ps]):
+            while True:
+                try:
+                    scores = scores_queue.get(True, QUEUE_TIMEOUT)
+                    k = scores[0]
+                    param_vals = param_val_sets[k]
+                    run_stats.append([k] + list(param_vals) + list(scores[1:]))
+                    print("Model {0} Done; score: {1}".format(k, scores[-1]))
+                    scores_queue.task_done()
+                except Empty:
+                    break
+
+        # Terminate the processes
+        for p in ps:
+            p.terminate()
+
+        # Load best model; first element in each row of run_stats is the model
+        # index, last one is the score to sort by
+        # Note: the models may be returned out of order!
+        i_opt = np.argmax([s[-1] for s in run_stats])
+        k_opt = run_stats[i_opt][0]
+        model = self.model_class(**self.model_class_params)
+        model.load('{0}_{1}'.format(model.name, k_opt), save_dir=save_dir)
+
+        # Return model and DataFrame of scores
+        # Test for categorical vs. binary in hack-ey way for now...
+        f_score = 'F-{0}'.format(beta)
+        categorical = (len(scores) == 2)
+        labels = ['Acc.'] if categorical else ['Prec.', 'Rec.', f_score]
+        sort_by = 'Acc.' if categorical else f_score
+        self.results = DataFrame.from_records(
+            run_stats, columns=["Model"] + self.param_names + labels
+        ).sort_values(by=sort_by, ascending=False)
+        return model, self.results
 
 
 QUEUE_TIMEOUT = 3
@@ -463,208 +615,25 @@ class ModelTester(Process):
                 break
 
 
-class GridSearch(object):
-    """
-    Runs hyperparameter grid search over a model object with train and score
-    methods, training data (X), and training_marginals
-    Selects based on maximizing F1 score on a supplied validation set
-    Specify search space with Hyperparameter arguments
-    """
-    def __init__(self, model_class, parameters, X_train, Y_train=None,
-        **model_class_params):
-        self.model_class        = model_class
-        self.params             = parameters
-        self.param_names        = [param.name for param in parameters]
-        self.X_train            = X_train
-        self.Y_train            = Y_train
-        self.model_class_params = model_class_params
-
-    def search_space(self):
-        return product(*[param.get_all_values() for param in self.params])
-
-    def fit(self, X_valid, Y_valid, b=0.5, beta=1, set_unlabeled_as_neg=True, 
-        validation_kwargs={}, n_threads=1, save_dir='checkpoints',
-        eval_batch_size=None, **model_hyperparams):
-        if n_threads > 1:
-            opt_model, run_stats = self._fit_mt(X_valid, Y_valid, b=b,
-                beta=beta, set_unlabeled_as_neg=set_unlabeled_as_neg,
-                validation_kwargs=validation_kwargs, n_threads=n_threads,
-                save_dir=save_dir, eval_batch_size=eval_batch_size,
-                **model_hyperparams)
-        else:
-            opt_model, run_stats = self._fit_st(X_valid, Y_valid, b=b, 
-                beta=beta, set_unlabeled_as_neg=set_unlabeled_as_neg,
-                validation_kwargs=validation_kwargs, save_dir=save_dir, 
-                eval_batch_size=eval_batch_size, **model_hyperparams)
-        return opt_model, run_stats
-
-    def _fit_st(self, X_valid, Y_valid, b=0.5, beta=1, save_dir='checkpoints',
-        set_unlabeled_as_neg=True, validation_kwargs={}, eval_batch_size=None,
-        **model_hyperparams):
-        """
-        Basic method to start grid search, returns DataFrame table of results
-          b specifies the positive class threshold for calculating f1
-          set_unlabeled_as_neg is used to decide class of unlabeled cases for f1
-          Non-search parameters are set using model_hyperparameters
-        """
-        # Iterate over the param values
-        run_stats = []
-        run_score_opt = -1.0
-        for k, param_vals in enumerate(self.search_space()):
-
-            # Initiate the model from scratch each time
-            # Some models may have seed set in the init procedure
-            model = self.model_class(**self.model_class_params)
-            model_name = '{0}_{1}'.format(model.name, k)
-
-            # Pass in the dev set to the train method if applicable, for dev set
-            # score printing, best-score checkpointing
-            if 'X_dev' in inspect.getargspec(model.train):
-                model_hyperparams['X_dev'] = X_valid
-                model_hyperparams['Y_dev'] = Y_valid
-
-            # Set the new hyperparam configuration to test
-            for pn, pv in zip(self.param_names, param_vals):
-                model_hyperparams[pn] = pv
-            print("=" * 60)
-            print("[%d] Testing %s" % (k+1, ', '.join([
-                "%s = %s" % (pn, ("%0.2e" % pv) if type(pv) in [float, int, np.float64] else pv)
-                for pn,pv in zip(self.param_names, param_vals)
-            ])))
-            print("=" * 60)
-
-            # Train the model
-            if self.Y_train is not None:
-                model.train(self.X_train, self.Y_train, **model_hyperparams)
-            else:
-                model.train(self.X_train, **model_hyperparams)
-
-            # Test the model
-            run_scores = model.score(X_valid, Y_valid, b=b, beta=beta,
-                set_unlabeled_as_neg=set_unlabeled_as_neg,
-                batch_size=eval_batch_size)
-            if model.cardinality > 2:
-                run_score, run_score_label = run_scores, "Accuracy"
-                run_scores = [run_score]
-            else:
-                run_score  = run_scores[-1]
-                run_score_label = "F-{0} Score".format(beta)
-
-            # Add scores to running stats, print, and set as optimal if best
-            print("[{0}] {1}: {2}".format(model.name,run_score_label,run_score))
-            run_stats.append(list(param_vals) + list(run_scores))
-            if run_score > run_score_opt or k == 0:
-                model.save(model_name=model_name, save_dir=save_dir)
-                opt_model_name = model_name
-                run_score_opt = run_score
-
-        # Set optimal parameter in the learner model
-        opt_model = self.model_class(**self.model_class_params)
-        opt_model.load(opt_model_name, save_dir=save_dir)
-        
-        # Return optimal model & DataFrame of scores
-        f_score = 'F-{0}'.format(beta)
-        run_score_labels = ['Acc.'] if opt_model.cardinality > 2 else \
-            ['Prec.', 'Rec.', f_score]
-        sort_by = 'Acc.' if opt_model.cardinality > 2 else f_score
-        self.results = DataFrame.from_records(
-            run_stats, columns=self.param_names + run_score_labels
-        ).sort_values(by=sort_by, ascending=False)
-        return opt_model, self.results
-
-    def _fit_mt(self, X_valid, Y_valid, b=0.5, beta=1, 
-        set_unlabeled_as_neg=True, validation_kwargs={}, n_threads=2, 
-        save_dir='checkpoints', eval_batch_size=None, **model_hyperparams):
-        """
-        Basic method to start grid search, returns DataFrame table of results
-          b specifies the positive class threshold for calculating f1
-          set_unlabeled_as_neg is used to decide class of unlabeled cases for f1
-          Non-search parameters are set using model_hyperparameters
-        """
-        # First do a preprocessing pass over the data to make sure it is all
-        # non-lazily loaded
-        # TODO: Better way to go about it than this!!
-        print("Loading data...")
-        model = self.model_class(**self.model_class_params)
-        _ = model._preprocess_data(self.X_train)
-        _ = model._preprocess_data(X_valid)
-
-        # Create queue of hyperparameters to test
-        print("Launching jobs...")
-        params_queue = JoinableQueue()
-        param_val_sets = []
-        for k, param_vals in enumerate(self.search_space()):
-            param_val_sets.append(param_vals)
-            hps = model_hyperparams.copy()
-            for pn, pv in zip(self.param_names, param_vals):
-                hps[pn] = pv
-            params_queue.put((k, hps))
-
-        # Create a queue to store output results
-        scores_queue = JoinableQueue()
-
-        # Start UDF Processes
-        ps = []
-        for i in range(n_threads):
-            p = ModelTester(self.model_class, self.model_class_params,
-                    params_queue, scores_queue, self.X_train, X_valid, Y_valid,
-                    Y_train=self.Y_train, b=b, save_dir=save_dir,
-                    set_unlabeled_as_neg=set_unlabeled_as_neg,
-                    eval_batch_size=eval_batch_size)
-            p.start()
-            ps.append(p)
-
-        # Collect scores
-        run_stats = []
-        while any([p.is_alive() for p in ps]):
-            while True:
-                try:
-                    scores = scores_queue.get(True, QUEUE_TIMEOUT)
-                    k = scores[0]
-                    param_vals = param_val_sets[k]
-                    run_stats.append([k] + list(param_vals) + list(scores[1:]))
-                    print("Model {0} Done; score: {1}".format(k, scores[-1]))
-                    scores_queue.task_done()
-                except Empty:
-                    break
-
-        # Terminate the processes
-        for p in ps:
-            p.terminate()
-
-        # Load best model; first element in each row of run_stats is the model
-        # index, last one is the score to sort by
-        # Note: the models may be returned out of order!
-        i_opt = np.argmax([s[-1] for s in run_stats])
-        k_opt = run_stats[i_opt][0]
-        model = self.model_class(**self.model_class_params)
-        model.load('{0}_{1}'.format(model.name, k_opt), save_dir=save_dir)
-
-        # Return model and DataFrame of scores
-        # Test for categorical vs. binary in hack-ey way for now...
-        f_score = 'F-{0}'.format(beta)
-        categorical = (len(scores) == 2)
-        labels = ['Acc.'] if categorical else ['Prec.', 'Rec.', f_score]
-        sort_by = 'Acc.' if categorical else f_score
-        self.results = DataFrame.from_records(
-            run_stats, columns=["Model"] + self.param_names + labels
-        ).sort_values(by=sort_by, ascending=False)
-        return model, self.results
-
-
 class RandomSearch(GridSearch):
-    def __init__(self, model_class, parameters, X_train, Y_train=None, n=10,
-        **model_class_params):
+    """
+    A GridSearch over a random subsample of the hyperparameter search space.
+
+    :param seed: A seed for the GridSearch instance
+    """
+    def __init__(self, model_class, parameter_dict, X_train, Y_train=None, n=10,
+        model_class_params={}, model_hyperparams={}, seed=123):
         """Search a random sample of size n from a parameter grid"""
+        self.rand_state = np.random.RandomState()
+        self.rand_state.seed(seed)
         self.n = n
-        super(RandomSearch, self).__init__(model_class, parameters, X_train,
-            Y_train=Y_train, **model_class_params)
-        print("Initialized RandomSearch search of size {0}. Search space size = {1}.".format(
-            self.n, np.product([len(param.get_all_values()) for param in self.params])))
+        super(RandomSearch, self).__init__(model_class, parameter_dict, X_train,
+            Y_train=Y_train, model_class_params=model_class_params,
+            model_hyperparams=model_hyperparams)
 
     def search_space(self):
-        return zip(*[param.draw_values(self.n) for param in self.params])
-
+        return zip(*[self.rand_state.choice(self.parameter_dict[pn], self.n)
+            for pn in self.param_names])
 
 
 ############################################################

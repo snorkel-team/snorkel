@@ -425,6 +425,9 @@ class GridSearch(object):
             if 'X_dev' in inspect.getargspec(model.train):
                 hps['X_dev'] = X_valid
                 hps['Y_dev'] = Y_valid
+                # Note: Need to set the save directory since passing in
+                # (X_dev, Y_dev) will by default trigger checkpoint saving
+                hps['save_dir'] = save_dir
 
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):

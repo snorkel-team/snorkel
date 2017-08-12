@@ -381,7 +381,7 @@ class GridSearch(object):
         return product(*[self.parameter_dict[pn] for pn in self.param_names])
 
     def fit(self, X_valid, Y_valid, b=0.5, beta=1, set_unlabeled_as_neg=True, 
-        n_threads=1, save_dir='checkpoints', eval_batch_size=None):
+        n_threads=1, save_dir='grid_search_checkpoints', eval_batch_size=None):
         """
         Runs grid search, constructing a new instance of model_class for each
         hyperparameter combination, training on (self.X_train, self.Y_train),
@@ -406,8 +406,9 @@ class GridSearch(object):
                 save_dir=save_dir, eval_batch_size=eval_batch_size)
         return opt_model, run_stats
 
-    def _fit_st(self, X_valid, Y_valid, b=0.5, beta=1, save_dir='checkpoints',
-        set_unlabeled_as_neg=True, eval_batch_size=None):
+    def _fit_st(self, X_valid, Y_valid, b=0.5, beta=1,
+        save_dir='grid_search_checkpoints', set_unlabeled_as_neg=True,
+        eval_batch_size=None):
         """Single-threaded implementation of `GridSearch.fit`."""
         # Iterate over the param values
         run_stats = []
@@ -480,8 +481,8 @@ class GridSearch(object):
         return opt_model, self.results
 
     def _fit_mt(self, X_valid, Y_valid, b=0.5, beta=1, 
-        set_unlabeled_as_neg=True, n_threads=2, save_dir='checkpoints',
-        eval_batch_size=None):
+        set_unlabeled_as_neg=True, n_threads=2,
+        save_dir='grid_search_checkpoints', eval_batch_size=None):
         """Multi-threaded implementation of `GridSearch.fit`."""
         # First do a preprocessing pass over the data to make sure it is all
         # non-lazily loaded
@@ -559,7 +560,7 @@ QUEUE_TIMEOUT = 3
 class ModelTester(Process):
     def __init__(self, model_class, model_class_params, params_queue, 
         scores_queue, X_train, X_valid, Y_valid, Y_train=None, b=0.5, beta=1,
-        set_unlabeled_as_neg=True, save_dir='checkpoints', 
+        set_unlabeled_as_neg=True, save_dir='grid_search_checkpoints', 
         eval_batch_size=None):
         Process.__init__(self)
         self.model_class = model_class

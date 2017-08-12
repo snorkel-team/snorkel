@@ -350,8 +350,6 @@ def calibration_plots(train_marginals, test_marginals, gold_labels=None):
 ### Grid search
 ############################################################
 
-GS_SAVEDIR = os.path.join('checkpoints', 'grid_search')
-
 class GridSearch(object):
     """
     A class for running a hyperparameter grid search.
@@ -368,9 +366,10 @@ class GridSearch(object):
     :param model_hyperparams: Hyperparameters for the model- all must be
             keyword arguments to the `model_class.train` method. Any that are
             included in the grid search will be overwritten.
+    :param save_dir: Note that checkpoints will be saved in save_dir/grid_search
     """
     def __init__(self, model_class, parameter_dict, X_train, Y_train=None,
-        model_class_params={}, model_hyperparams={}):
+        model_class_params={}, model_hyperparams={}, save_dir='checkpoints'):
         self.model_class        = model_class
         self.parameter_dict     = parameter_dict
         self.param_names        = parameter_dict.keys()
@@ -378,12 +377,13 @@ class GridSearch(object):
         self.Y_train            = Y_train
         self.model_class_params = model_class_params
         self.model_hyperparams  = model_hyperparams
+        self.save_dir           = os.path.join(save_dir, 'grid_search')
 
     def search_space(self):
         return product(*[self.parameter_dict[pn] for pn in self.param_names])
 
     def fit(self, X_valid, Y_valid, b=0.5, beta=1, set_unlabeled_as_neg=True, 
-        n_threads=1, save_dir=GS_SAVEDIR, eval_batch_size=None):
+        n_threads=1, eval_batch_size=None):
         """
         Runs grid search, constructing a new instance of model_class for each
         hyperparameter combination, training on (self.X_train, self.Y_train),
@@ -394,22 +394,20 @@ class GridSearch(object):
         :param beta: F_beta score to select model by (binary)
         :param set_unlabeled_as_neg: Set labels = 0 -> -1 (binary)
         :param n_threads: Parallelism to use for the grid search
-        :param save_dir: Directory to save trained models in
         :param eval_batch_size: The batch_size for model evaluation
         """
         if n_threads > 1:
             opt_model, run_stats = self._fit_mt(X_valid, Y_valid, b=b,
                 beta=beta, set_unlabeled_as_neg=set_unlabeled_as_neg,
-                n_threads=n_threads, save_dir=save_dir,
-                eval_batch_size=eval_batch_size)
+                n_threads=n_threads, eval_batch_size=eval_batch_size)
         else:
             opt_model, run_stats = self._fit_st(X_valid, Y_valid, b=b, 
                 beta=beta, set_unlabeled_as_neg=set_unlabeled_as_neg,
-                save_dir=save_dir, eval_batch_size=eval_batch_size)
+                eval_batch_size=eval_batch_size)
         return opt_model, run_stats
 
     def _fit_st(self, X_valid, Y_valid, b=0.5, beta=1,
-        save_dir=GS_SAVEDIR, set_unlabeled_as_neg=True, eval_batch_size=None):
+        set_unlabeled_as_neg=True, eval_batch_size=None):
         """Single-threaded implementation of `GridSearch.fit`."""
         # Iterate over the param values
         run_stats = []
@@ -429,7 +427,7 @@ class GridSearch(object):
                 hps['Y_dev'] = Y_valid
                 # Note: Need to set the save directory since passing in
                 # (X_dev, Y_dev) will by default trigger checkpoint saving
-                hps['save_dir'] = save_dir
+                hps['save_dir'] = self.save_dir
 
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
@@ -463,13 +461,13 @@ class GridSearch(object):
             print("[{0}] {1}: {2}".format(model.name,run_score_label,run_score))
             run_stats.append(list(param_vals) + list(run_scores))
             if run_score > run_score_opt or k == 0:
-                model.save(model_name=model_name, save_dir=save_dir)
+                model.save(model_name=model_name, save_dir=self.save_dir)
                 opt_model_name = model_name
                 run_score_opt = run_score
 
         # Set optimal parameter in the learner model
         opt_model = self.model_class(**self.model_class_params)
-        opt_model.load(opt_model_name, save_dir=save_dir)
+        opt_model.load(opt_model_name, save_dir=self.save_dir)
         
         # Return optimal model & DataFrame of scores
         f_score = 'F-{0}'.format(beta)
@@ -482,8 +480,7 @@ class GridSearch(object):
         return opt_model, self.results
 
     def _fit_mt(self, X_valid, Y_valid, b=0.5, beta=1, 
-        set_unlabeled_as_neg=True, n_threads=2, save_dir=GS_SAVEDIR,
-        eval_batch_size=None):
+        set_unlabeled_as_neg=True, n_threads=2, eval_batch_size=None):
         """Multi-threaded implementation of `GridSearch.fit`."""
         # First do a preprocessing pass over the data to make sure it is all
         # non-lazily loaded
@@ -512,7 +509,7 @@ class GridSearch(object):
         for i in range(n_threads):
             p = ModelTester(self.model_class, self.model_class_params,
                     params_queue, scores_queue, self.X_train, X_valid, Y_valid,
-                    Y_train=self.Y_train, b=b, save_dir=save_dir,
+                    Y_train=self.Y_train, b=b, save_dir=self.save_dir,
                     set_unlabeled_as_neg=set_unlabeled_as_neg,
                     eval_batch_size=eval_batch_size)
             p.start()
@@ -542,7 +539,7 @@ class GridSearch(object):
         i_opt = np.argmax([s[-1] for s in run_stats])
         k_opt = run_stats[i_opt][0]
         model = self.model_class(**self.model_class_params)
-        model.load('{0}_{1}'.format(model.name, k_opt), save_dir=save_dir)
+        model.load('{0}_{1}'.format(model.name, k_opt), save_dir=self.save_dir)
 
         # Return model and DataFrame of scores
         # Test for categorical vs. binary in hack-ey way for now...
@@ -561,7 +558,8 @@ QUEUE_TIMEOUT = 3
 class ModelTester(Process):
     def __init__(self, model_class, model_class_params, params_queue, 
         scores_queue, X_train, X_valid, Y_valid, Y_train=None, b=0.5, beta=1,
-        set_unlabeled_as_neg=True, save_dir=GS_SAVEDIR, eval_batch_size=None):
+        set_unlabeled_as_neg=True, save_dir='checkpoints',
+        eval_batch_size=None):
         Process.__init__(self)
         self.model_class = model_class
         self.model_class_params = model_class_params
@@ -627,14 +625,15 @@ class RandomSearch(GridSearch):
     :param seed: A seed for the GridSearch instance
     """
     def __init__(self, model_class, parameter_dict, X_train, Y_train=None, n=10,
-        model_class_params={}, model_hyperparams={}, seed=123):
+        model_class_params={}, model_hyperparams={}, seed=123, 
+        save_dir='checkpoints'):
         """Search a random sample of size n from a parameter grid"""
         self.rand_state = np.random.RandomState()
         self.rand_state.seed(seed)
         self.n = n
         super(RandomSearch, self).__init__(model_class, parameter_dict, X_train,
             Y_train=Y_train, model_class_params=model_class_params,
-            model_hyperparams=model_hyperparams)
+            model_hyperparams=model_hyperparams, save_dir=save_dir)
 
     def search_space(self):
         return zip(*[self.rand_state.choice(self.parameter_dict[pn], self.n)

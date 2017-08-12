@@ -14,9 +14,14 @@ class TFNoiseAwareModel(Classifier):
     model architectures which depend on the training data, e.g. vocab size).
     
     :param n_threads: Parallelism to use; single-threaded if None
+    :param seed: Top level seed which is passed into both numpy operations
+        via a RandomState maintained by the class, and into TF as a graph-level
+        seed.
     """
-    def __init__(self, n_threads=None, **kwargs):
+    def __init__(self, n_threads=None, seed=123, **kwargs):
         self.n_threads = n_threads
+        self.seed = seed
+        self.rand_state = np.random.RandomState()
         super(TFNoiseAwareModel, self).__init__(**kwargs)
 
     def _build_model(self, **model_kwargs):
@@ -79,8 +84,12 @@ class TFNoiseAwareModel(Classifier):
         # Create new computation graph
         self.graph = tf.Graph()
 
-        # Build network here in the graph
         with self.graph.as_default():
+
+            # Set graph-level random seed
+            tf.set_random_seed(self.seed)
+
+            # Build network here in the graph
             self._build_model(**model_kwargs)
 
         # Create new session
@@ -130,8 +139,10 @@ class TFNoiseAwareModel(Classifier):
             model will not be able to be reloaded!*
         """
         self._check_input(X_train)
-        np.random.seed(self.seed)
         verbose = print_freq > 0
+
+        # Set random seed for all numpy operations
+        np.rand_state.seed(self.seed)
 
         # If the data passed in is a feature matrix (representation=False),
         # set the dimensionality here; else assume this is done by sub-class
@@ -170,7 +181,7 @@ class TFNoiseAwareModel(Classifier):
         self._build_new_graph_session(**kwargs)
 
         # Build training ops
-        # Note that training_kwargs and model_kwargs are mized together; ideally
+        # Note that training_kwargs and model_kwargs are mixed together; ideally
         # would be separated but no negative effect
         with self.graph.as_default():
             self._build_training_ops(**kwargs)

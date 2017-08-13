@@ -11,10 +11,9 @@ class Classifier(object):
     # otherwise assume X is an AnnotationMatrix
     representation = False
 
-    def __init__(self, cardinality=2, name=None, seed=None):
+    def __init__(self, cardinality=2, name=None):
         self.name = name or self.__class__.__name__
         self.cardinality = cardinality
-        self.seed = seed
 
     def marginals(self, X, batch_size=None, **kwargs):
         raise NotImplementedError()

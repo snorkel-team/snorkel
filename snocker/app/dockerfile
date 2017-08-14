@@ -4,7 +4,7 @@
 ############################################################
 
 # Set the base image to Ubuntu
-FROM phusion/baseimage
+FROM phusion/baseimage:0.9.22
 
 # File Author / Maintainer
 MAINTAINER Phillip Rogers (phillip.h.rogers@accenture.com)
@@ -70,8 +70,12 @@ RUN pip install \
     tika \
     psycopg2
 
+
 RUN jupyter nbextension enable --py widgetsnbextension --sys-prefix
-RUN git clone https://github.com/DrPinkACN/snorkel.git
+RUN git clone https://github.com/HazyResearch/snorkel /home/snorkel
+RUN rm /home/snorkel/run.sh
+ADD app/run.sh /home/snorkel
+RUN chmod 777 /home/snorkel/run.sh
 
 EXPOSE 8887
 
@@ -82,16 +86,16 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 # build app #
 #############
 
-# $> docker build app -t snocker:0.6.2a
+# $ docker build -f app/dockerfile -t snocker:0.6.2 .
 
 ###########
 # run app #
 ###########
 
-# $> docker run -it --name snocker -p 8887:8887 -v ~/some/local/dir/mapped/to/home:/home snocker:0.6.2a
+# $ docker run -it --name snocker -p 8887:8887 -v ~/some/local/dir/mapped/to/snokel/projects:/home/snorkel/projects snocker:0.6.2
 # key: ctrl+p+q
-# $> docker exec -it snocker bash
-# $> mv /snorkel /home
-# $> cd /home/snorkel
-# $> ./run.sh
+# $ docker exec -it snocker bash
+# root@ab1234:/# cd /home/snorkel
+# root@ab1234:/home/snorkel# ./run.sh
 # make sure to copy the token for accessing the notebooks
+# key: ctrl+p+q -to get out of running container

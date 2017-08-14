@@ -9,8 +9,9 @@ class BabbleModel(SnorkelModel):
         self.babbler.apply(split=self.config['babbler_split'], 
                            parallelism=self.config['parallelism'])
         self.lfs = self.babbler.lfs
+        self.labeler = LabelAnnotator(lfs=self.lfs)
 
-    def label(self, split=None):
+    def label(self, config=None, split=None):
         if config:
             self.config = config
         if not self.labeler:

@@ -65,15 +65,3 @@ class BikeModel(BabbleModel):
             explanations=explanations,
             gold_labels=gold_labels)
         super(BikeModel, self).babble(babbler, **kwargs)
-
-
-
-def create_candidate(img_idx, p_idx, b_idx):
-    """
-    Create a BBox tuple with bbox p_idx and b_idx from image img_idx
-    """
-    anns_img = self.anns[img_idx]
-    p_bbox = BBox(anns_img[p_idx],img_idx)
-    b_bbox = BBox(anns_img[b_idx],img_idx)
-    
-    return (p_bbox, b_bbox)

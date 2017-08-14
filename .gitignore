@@ -19,6 +19,9 @@ docs/_build
 # PyCharm
 .idea
 
+# VS Code
+.vscode
+
 # TF models
 *.info
 *.meta

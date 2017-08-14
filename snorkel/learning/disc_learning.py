@@ -22,7 +22,7 @@ class TFNoiseAwareModel(Classifier):
             has no effect (other than potential slight slowdown) for CPU 
             (at least for single-threaded?).
     """
-    def __init__(self, n_threads=None, seed=123, deterministic=False, **kwargs):
+    def __init__(self, n_threads=None, seed=123, deterministic=True, **kwargs):
         self.n_threads = n_threads
         self.seed = seed
         self.rand_state = np.random.RandomState()

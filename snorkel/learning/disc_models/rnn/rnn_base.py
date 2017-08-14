@@ -121,7 +121,17 @@ class RNNBase(TFNoiseAwareModel):
             self.Y = tf.placeholder(tf.float32, [None])
             W = tf.Variable(tf.random_normal((2*dim, 1), stddev=SD, seed=s4))
             b = tf.Variable(0., dtype=tf.float32)
-            self.logits = tf.squeeze(tf.matmul(potentials, W)) + b
+            
+            # Make deterministic
+            # See: https://github.com/tensorflow/tensorflow/pull/10636/files
+            f_matmul_w = tf.matmul(potentials, W)
+            f_matmul_w_temp = tf.concat([f_matmul_w, tf.ones_like(f_matmul_w)], 
+                axis=1)
+            b_temp = tf.stack([tf.ones_like(b), b], axis=0)
+            self.logits = tf.squeeze(tf.matmul(f_matmul_w_temp, b_temp))
+
+            # self.logits = tf.squeeze(tf.matmul(potentials, W)) + b
+            
             self.marginals_op = tf.nn.sigmoid(self.logits)
 
     def _construct_feed_dict(self, X_b, Y_b, lr=0.01, dropout=None, **kwargs):

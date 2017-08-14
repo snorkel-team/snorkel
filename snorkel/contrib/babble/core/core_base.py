@@ -34,22 +34,10 @@ lexical_rules = (
     [Rule('$Separator', w) for w in [',', ';', '/']] +
     [Rule('$Possessive', w) for w in ["'s"]] +
     [Rule('$Count', w, '.count') for w in ['number', 'length', 'count']] +
-    [Rule('$Word', w, 'words') for w in ['word', 'words', 'term', 'terms', 'phrase', 'phrases']] + 
-    [Rule('$Char', w, 'chars') for w in ['character', 'characters', 'letter', 'letters']] + 
     [Rule('$Punctuation', w) for w in ['.', ',', ';', '!', '?']] +
     [Rule('$Tuple', w, '.tuple') for w in ['pair', 'tuple']] +
-    [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['them']] +
-
-    # FIXME: Temporary hardcode
-    [Rule('$ChemicalEntity', w, ('.string', 'Chemical')) for w in ['chemical', 'chemicals']] +
-    [Rule('$DiseaseEntity', w, ('.string', 'Disease')) for w in ['disease', 'diseases']] +
-    [Rule('$ArgX', '$ChemicalEntity', ('.arg', ('.int', 1)))] +
-    [Rule('$ArgX', '$DiseaseEntity', ('.arg', ('.int', 2)))] +
     [Rule('$CID', w, '.cid') for w in ['cid', 'cids', 'canonical id', 'canonical ids']] +
-    
-    [Rule('$Arg', w, '.arg') for w in ['person']] +
-    [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['people', 'persons']]
-    # FIXME
+    [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['them']] +
 )
 
 unary_rules = [

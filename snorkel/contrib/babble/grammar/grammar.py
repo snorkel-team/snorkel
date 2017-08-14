@@ -42,6 +42,7 @@ class Grammar(object):
         if candidate_class:
             for i, arg in enumerate(candidate_class.__argnames__):
                 rules.append(Rule('$ArgX', arg, ('.arg', ('.int', i + 1))))
+                rules.append(Rule('$ArgX', arg + 's', ('.arg', ('.int', i + 1))))
         self.candidate_class = candidate_class
         self.user_lists = user_lists
 

@@ -4,6 +4,8 @@ from text_helpers import helpers
 from text_annotators import annotators
 
 lexical_rules = (
+    [Rule('$Word', w, 'words') for w in ['word', 'words', 'term', 'terms', 'phrase', 'phrases']] + 
+    [Rule('$Char', w, 'chars') for w in ['character', 'characters', 'letter', 'letters']] + 
     [Rule('$Upper', w, '.upper') for w in ['upper', 'uppercase', 'upper case', 'all caps', 'all capitalized']] +
     [Rule('$Lower', w, '.lower') for w in ['lower', 'lowercase', 'lower case']] +
     [Rule('$Capital', w, '.capital') for w in ['capital', 'capitals', 'capitalized']] +
@@ -19,6 +21,11 @@ lexical_rules = (
     [Rule('$PersonNER', w, ('.string', 'PERSON')) for w in ['person', 'people']] +
     [Rule('$LocationNER', w, ('.string', 'LOCATION')) for w in ['location', 'locations', 'place', 'places']] +
     [Rule('$OrganizationNER', w, ('.string', 'ORGANIZATION')) for w in ['organization', 'organizations']]
+
+    # FIXME: Temporary hardcode; replace with "domain_rules" passed to grammar
+    [Rule('$Arg', w, '.arg') for w in ['person']] +
+    [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['people', 'persons']]
+    # FIXME
 )
 
 unary_rules = [

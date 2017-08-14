@@ -256,4 +256,31 @@ parser = [
         semantics=None),
 ]
 
-explanations = (edges + points + comparisons + boxes + quantified + parser)
+possessives = [
+    # Bbox's side
+    Explanation(
+        condition="Box x's top edge is above box y's center.",
+        label=True,
+        candidate=a_and_c,
+        semantics=None),
+    # Bbox's center
+    Explanation(
+        condition="the center of box y is below box x's center",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+    # Bbox's corner
+    Explanation(
+        condition="the bottom right corner of box x, is below box x's left top corner",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+    # Bbox's left/right
+    Explanation(
+        condition="box y is to box x's right",
+        label=True,
+        candidate=a_and_b,
+        semantics=None),
+]
+
+explanations = (edges + points + comparisons + boxes + quantified + parser + possessives)

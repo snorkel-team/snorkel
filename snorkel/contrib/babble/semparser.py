@@ -52,8 +52,6 @@ class SemanticParser(object):
                 if not exp.name:
                     exp.name = "Explanation{}".format(i)
 
-    def preprocess(self, string):
-        return string.replace("'", '"')
 
     def parse(self, explanations, names=None, verbose=False, return_parses=False):
         """
@@ -68,14 +66,10 @@ class SemanticParser(object):
         names = names if isinstance(names, list) or names is None else [names]
         self.name_explanations(explanations, names)
         for i, exp in enumerate(explanations):
-            exp.condition = self.preprocess(exp.condition)
             rule = 'Label {} if {}'.format(exp.label, exp.condition)
-            # print(rule)
             exp_parses = self.grammar.parse_string(rule)
-            # print(len(exp_parses))
             num_parses_by_exp.append(len(exp_parses))
             for j, parse in enumerate(exp_parses):
-                # print(parse.semantics)
                 lf = self.grammar.evaluate(parse)
                 if return_parses:
                     parse.function = lf

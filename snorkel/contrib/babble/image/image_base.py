@@ -39,7 +39,6 @@ lexical_rules = (
     
     [Rule('$Surrounds', w, '.surrounds') for w in ['encloses', 'envelopes', 'surrounds', 'around', 'engulfs', 'includes']] +
     [Rule('$Within', w, '.within') for w in ['within', 'inside', 'enclosed', 'enveloped', 'fits', 'surrounded']] 
-    
 )
 
 unary_rules = [
@@ -80,15 +79,20 @@ unary_rules = [
     
 compositional_rules = [
     Rule('$Bbox', '$Box $BoxId', sems_in_order),
-    Rule('$Point', '$Side $Bbox', lambda (side, bbox): ('.edge', bbox, side)),
-    Rule('$Point', '$Center $Bbox', lambda (side, bbox): ('.center', bbox)),
-    Rule('$Point', '$Side $Side $Corner $Bbox', lambda (s1, s2, _, bbox): ('.corner', bbox, s1, s2)),
+    Rule('$BboxToPoint', '$Side', lambda (side,): ('.edge', side)),
+    Rule('$BboxToPoint', '$Center', lambda (center,): (center,)),
+    Rule('$BboxToPoint', '$Side $Side $Corner', sems_reversed),
+    Rule('$Point', '$BboxToPoint $Bbox', lambda (args_, bbox): tuple([args_[0]] + [bbox] + list(args_[1:]))),
+    Rule('$Point', '$Bbox $Possessive $BboxToPoint', lambda (bbox, _, args_): tuple([args_[0]] + [bbox] + list(args_[1:]))),
     
     Rule('$PointToBool', '$PointCompare $Point', sems_in_order), # "is below the center of Box X"
     Rule('$PointToBool', '$PointCompare $Bbox', sems_in_order), # "is below Box X (use smart edge choice)"
+    Rule('$PointToBool', '$Bbox $Possessive $PointCompare', lambda (bbox, _, cmp_): (cmp_, bbox)), # "is to box's right"
 
     Rule('$BboxToBool', '$PointCompare $Bbox', sems_in_order), # "is below Box X (use smart edge choice)"
+    Rule('$BboxToBool', '$Bbox $Possessive $PointCompare', lambda (bbox, _, cmp_): (cmp_, bbox)), # "is to box's right"
     Rule('$BboxToBool', '$BoxCompare $Bbox', sems_in_order), # "is smaller than Box X"
+
 ]
 
 template_rules = []

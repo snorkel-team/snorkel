@@ -32,5 +32,8 @@ class TestBabbleImage(TestBabbleBase):
     def test_parser(self):
         self.check_explanations(image_explanations.parser)
 
+    def test_possessives(self):
+        self.check_explanations(image_explanations.possessives)
+
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBabbleImage)
 unittest.TextTestRunner(verbosity=2).run(suite)

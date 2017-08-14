@@ -24,9 +24,6 @@ lexical_rules = (
     [Rule('$Int', w,  ('.int', 1)) for w in ['immediately', 'right']] +
     [Rule('$AtLeastOne', 'a', ('.geq', ('.int', 1)))] +
     [Rule('$Because', w) for w in ['because', 'since', 'if']] +
-    [Rule('$Upper', w, '.upper') for w in ['upper', 'uppercase', 'upper case', 'all caps', 'all capitalized']] +
-    [Rule('$Lower', w, '.lower') for w in ['lower', 'lowercase', 'lower case']] +
-    [Rule('$Capital', w, '.capital') for w in ['capital', 'capitals', 'capitalized']] +
     [Rule('$Equals', w, '.eq') for w in ['equal', 'equals', '=', '==', 'same', 'identical', 'exactly']] + 
     [Rule('$LessThan', w, '.lt') for w in ['less than', 'smaller than', '<']] +
     [Rule('$AtMost', w, '.leq') for w in ['at most', 'no larger than', 'less than or equal', 'within', 'no more than', '<=']] +
@@ -34,8 +31,6 @@ lexical_rules = (
     [Rule('$MoreThan', w, '.gt') for w in ['more than', 'greater than', 'larger than', '>']] + 
     [Rule('$In', w, '.in') for w in ['in']] +
     [Rule('$Contains', w, '.contains') for w in ['contains', 'contain', 'containing', 'include', 'includes', 'says', 'states']] +
-    [Rule('$StartsWith', w, '.startswith') for w in ['starts with', 'start with', 'starting with']] +
-    [Rule('$EndsWith', w, '.endswith') for w in ['ends with', 'end with', 'ending with']] +
     [Rule('$Separator', w) for w in [',', ';', '/']] +
     [Rule('$Possessive', w) for w in ["'s"]] +
     [Rule('$Count', w, '.count') for w in ['number', 'length', 'count']] +

@@ -10,6 +10,11 @@ def get_user_lists():
         'spouse':['wife','husband','spouse']
     }
 
+    # Test candidate: 
+    # "City land records show that GM President [Daniel Ammann] and his wife, 
+    # [Pernilla Ammann], bought the 15-bedroom mansion on Balmoral Drive in 
+    # the upscale historic neighborhood on July 31."
+
 strings = [
     # Equals (String)
     Explanation(
@@ -196,7 +201,7 @@ index_comparisons = [
         semantics=None),
     # Index AndList left
     Explanation(
-        condition="not 'husband' and 'wife' are within three words to the left of arg 2",
+        condition="'his' and 'wife' are within three words to the left of arg 2",
         label=True,
         candidate=668761641257950361,
         semantics=None),

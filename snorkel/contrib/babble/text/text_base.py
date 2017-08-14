@@ -4,6 +4,11 @@ from text_helpers import helpers
 from text_annotators import annotators
 
 lexical_rules = (
+    [Rule('$Upper', w, '.upper') for w in ['upper', 'uppercase', 'upper case', 'all caps', 'all capitalized']] +
+    [Rule('$Lower', w, '.lower') for w in ['lower', 'lowercase', 'lower case']] +
+    [Rule('$Capital', w, '.capital') for w in ['capital', 'capitals', 'capitalized']] +
+    [Rule('$StartsWith', w, '.startswith') for w in ['starts with', 'start with', 'starting with']] +
+    [Rule('$EndsWith', w, '.endswith') for w in ['ends with', 'end with', 'ending with']] +
     [Rule('$Left', w, '.left') for w in ['left', 'before', 'precedes', 'preceding', 'followed by']] +
     [Rule('$Right', w, '.right') for w in ['right', 'after', 'preceded by', 'follows', 'following']] +
     [Rule('$Sentence', w, '.sentence') for w in ['sentence', 'text', 'it']] +

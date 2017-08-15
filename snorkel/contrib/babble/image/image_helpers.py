@@ -1,17 +1,12 @@
+
+from collections import namedtuple
+
 import numpy as np
 
 from snorkel.models import Bbox
 
 # Helper Objects
-class Point(object):
-    # Point takes in x and y (left/right and top/bottom)
-    def __init__(self,x,y):
-        self.x = x
-        self.y = y
-    
-    def __repr__(self):
-        return "Point({}, {})".format(self.x, self.y)
-
+Point = namedtuple('Point', ['x', 'y'])
 
 # Extractor Helper Functions
 def extract_edge(bbox, side):

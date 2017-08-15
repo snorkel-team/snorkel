@@ -89,6 +89,7 @@ compositional_rules = [
     Rule('$PointToBool', '$PointCompare $Bbox', sems_in_order), # "is below Box X (use smart edge choice)"
     Rule('$PointToBool', '$Bbox $Possessive $PointCompare', lambda (bbox, _, cmp_): (cmp_, bbox)), # "is to box's right"
 
+    Rule('$BboxToBool', '$PointCompare $Point', sems_in_order), # "is below Box X (use smart edge choice)"
     Rule('$BboxToBool', '$PointCompare $Bbox', sems_in_order), # "is below Box X (use smart edge choice)"
     Rule('$BboxToBool', '$Bbox $Possessive $PointCompare', lambda (bbox, _, cmp_): (cmp_, bbox)), # "is to box's right"
     Rule('$BboxToBool', '$BoxCompare $Bbox', sems_in_order), # "is smaller than Box X"

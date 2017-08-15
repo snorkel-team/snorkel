@@ -4,7 +4,7 @@ This fork of the snorkel repo has been modified slightly to be build and deploye
 Make sure Docker is installed on your run environment and that the Dockerfile is available on the run envinment in a directory named app. Then build the image.
 
 ```
-$ docker build app -t snocker:0.6.2
+$ docker build -f app/dockerfile -t snocker:0.6.2 .
 ```
 
 Now you can run the app. Link the home directory to somewhere easy to find.

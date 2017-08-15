@@ -421,15 +421,6 @@ class GridSearch(object):
             model = self.model_class(**self.model_class_params)
             model_name = '{0}_{1}'.format(model.name, k)
 
-            # Pass in the dev set to the train method if applicable, for dev set
-            # score printing, best-score checkpointing
-            if 'X_dev' in inspect.getargspec(model.train):
-                hps['X_dev'] = X_valid
-                hps['Y_dev'] = Y_valid
-                # Note: Need to set the save directory since passing in
-                # (X_dev, Y_dev) will by default trigger checkpoint saving
-                hps['save_dir'] = self.save_dir
-
             # Set the new hyperparam configuration to test
             for pn, pv in zip(self.param_names, param_vals):
                 hps[pn] = pv
@@ -442,10 +433,19 @@ class GridSearch(object):
             print("=" * 60)
 
             # Train the model
+            train_args = [self.X_train]
             if self.Y_train is not None:
-                model.train(self.X_train, self.Y_train, **hps)
-            else:
-                model.train(self.X_train, **hps)
+                train_args.append(self.Y_train)
+            
+            # Pass in the dev set to the train method if applicable, for dev set
+            # score printing, best-score checkpointing
+            # Note: Need to set the save directory since passing in
+            # (X_dev, Y_dev) will by default trigger checkpoint saving
+            try:
+                model.train(*train_args, X_dev=X_valid, Y_dev=Y_valid, 
+                    save_dir=self.save_dir, **hps)
+            except:
+                model.train(*train_args, **hps)
 
             # Test the model
             run_scores = model.score(X_valid, Y_valid, b=b, beta=beta,

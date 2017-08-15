@@ -288,7 +288,7 @@ def _fit_deps(m, n, j, L, weights, joint, higher_order, propensity, regularizati
             if propensity:
                 weights[last_weight] -= step_size * (joint[0] + joint[2] + joint[3] + joint[5])
                 if L[i, j] != 0:
-                    weights[6 * n] += step_size
+                    weights[last_weight] += step_size
 
             # Third, takes regularization gradient step
             if (t * m + i) % truncation == 0:

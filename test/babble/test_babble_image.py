@@ -17,7 +17,7 @@ class TestBabbleImage(TestBabbleBase):
     def test_edges(self):
         self.check_explanations(image_explanations.edges)
 
-    def test_corners(self):
+    def test_points(self):
         self.check_explanations(image_explanations.points)
  
     def test_boxes(self):

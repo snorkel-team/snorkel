@@ -22,49 +22,49 @@ logic = [
         condition="True",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.bool', True)))),
     # And
     Explanation(
         condition="True and True",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.and', ('.bool', True), ('.bool', True))))),
     # Or
     Explanation(
         condition="False or True",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.or', ('.bool', False), ('.bool', True))))),
     # Not boolean
     Explanation(
         condition="not False",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.not', ('.bool', False))))),
     # Not function
     Explanation(
         condition="2 is not less than 1",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.not', ('.call', ('.lt', ('.int', 1)), ('.int', 2)))))),
     # All
     Explanation(
         condition='all of (2, 3, 4) are greater than 1',
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.all', ('.map', ('.gt', ('.int', 1)), ('.list', ('.int', 2), ('.int', 3), ('.int', 4))))))),
     # Any
     Explanation(
         condition='any of (3, 1, 4) are less than 2',
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.any', ('.map', ('.lt', ('.int', 2)), ('.list', ('.int', 3), ('.int', 1), ('.int', 4))))))),
     # None
     Explanation(
         condition='none of (1, 2, 3) are greater than 4',
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),                
+        semantics=('.root', ('.label', ('.bool', True), ('.none', ('.map', ('.gt', ('.int', 4)), ('.list', ('.int', 1), ('.int', 2), ('.int', 3))))))),                
 ]
 
 grouping = [
@@ -73,7 +73,7 @@ grouping = [
         condition="True or (True and False)",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.or', ('.bool', True), ('.and', ('.bool', True), ('.bool', False)))))),
 ]
 
 integers = [
@@ -82,37 +82,37 @@ integers = [
         condition="1 is equal to 1",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.call', ('.eq', ('.int', 1)), ('.int', 1))))),
     # Integers (digit or text)
     Explanation(
         condition="1 is equal to one",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.call', ('.eq', ('.int', 1)), ('.int', 1))))),
     # Less than
     Explanation(
         condition="1 is less than 2",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.call', ('.lt', ('.int', 2)), ('.int', 1))))),
     # At most
     Explanation(
         condition="2 is less than or equal to 2",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.call', ('.leq', ('.int', 2)), ('.int', 2))))),
     # Greater than
     Explanation(
         condition="2 > 1",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.call', ('.gt', ('.int', 1)), ('.int', 2))))),
     # At least
     Explanation(
         condition="2 is at least 2",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),    
+        semantics=('.root', ('.label', ('.bool', True), ('.call', ('.geq', ('.int', 2)), ('.int', 2))))),    
 ]
 
 lists = [
@@ -160,37 +160,37 @@ membership = [
         condition="1 is in (1, 2)",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.call', ('.in', ('.list', ('.int', 1), ('.int', 2))), ('.int', 1))))),
     # In AndList
     Explanation(
         condition="1 and 2 are in (1, 2, 3)",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.all', ('.map', ('.in', ('.list', ('.int', 1), ('.int', 2), ('.int', 3))), ('.list', ('.int', 1), ('.int', 2))))))),
     # In OrList
     Explanation(
         condition="1 or 2 is in (2, 3)",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.any', ('.map', ('.in', ('.list', ('.int', 2), ('.int', 3))), ('.list', ('.int', 1), ('.int', 2))))))),
     # Contains
     Explanation(
         condition="(1, 2) contains 2",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.call', ('.in', ('.list', ('.int', 1), ('.int', 2))), ('.int', 2))))),
     # Contains AndList
     Explanation(
         condition="(1, 2) contains 2 and 1",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.all', ('.map', ('.in', ('.list', ('.int', 1), ('.int', 2))), ('.list', ('.int', 2), ('.int', 1))))))),
     # Contains OrList
     Explanation(
         condition="(1, 2) contains 2 or 3",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None),
+        semantics=('.root', ('.label', ('.bool', True), ('.any', ('.map', ('.in', ('.list', ('.int', 1), ('.int', 2))), ('.list', ('.int', 2), ('.int', 3))))))),
 ]
 
 absorption = [
@@ -199,7 +199,7 @@ absorption = [
         condition="1 is less than 2 and the moon is full",
         label=True,
         candidate=('foo', 'bar'),
-        semantics=None)
+        semantics=('.root', ('.label', ('.bool', True), ('.call', ('.lt', ('.int', 2)), ('.int', 1)))))
 ]
 
 

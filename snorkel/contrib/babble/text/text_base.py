@@ -4,6 +4,7 @@ from text_helpers import helpers
 from text_annotators import annotators
 
 lexical_rules = (
+    [Rule('$Token', w, 'token') for w in ['token']] + 
     [Rule('$Word', w, 'words') for w in ['word', 'words', 'term', 'terms', 'phrase', 'phrases']] + 
     [Rule('$Char', w, 'chars') for w in ['character', 'characters', 'letter', 'letters']] + 
     [Rule('$Upper', w, '.upper') for w in ['upper', 'uppercase', 'upper case', 'all caps', 'all capitalized']] +
@@ -15,12 +16,15 @@ lexical_rules = (
     [Rule('$Right', w, '.right') for w in ['right', 'after', 'preceded by', 'follows', 'following']] +
     [Rule('$Sentence', w, '.sentence') for w in ['sentence', 'text', 'it']] +
     [Rule('$Between', w, '.between') for w in ['between', 'inbetween', 'sandwiched', 'enclosed']] +
-    [Rule('$NounPOS', w, ('.string', 'NN')) for w in ['noun', 'nouns']] +
-    [Rule('$DateNER', w, ('.string', 'DATE')) for w in ['date', 'dates']] +
-    [Rule('$NumberPOS', w, ('.string', 'CD')) for w in ['number', 'numbers']] +
-    [Rule('$PersonNER', w, ('.string', 'PERSON')) for w in ['person', 'people']] +
-    [Rule('$LocationNER', w, ('.string', 'LOCATION')) for w in ['location', 'locations', 'place', 'places']] +
-    [Rule('$OrganizationNER', w, ('.string', 'ORGANIZATION')) for w in ['organization', 'organizations']] +
+    # TODO: Add more POS options
+    [Rule('$NounPOS', w, ('NN')) for w in ['noun', 'nouns']] +
+    # TODO: Add other Spacy NER options
+    [Rule('$PersonNER', w, ('PERSON')) for w in ['person', 'people']] +
+    [Rule('$LocationNER', w, ('LOC')) for w in ['location', 'locations', 'place', 'places']] +
+    [Rule('$DateNER', w, ('DATE')) for w in ['date', 'dates']] +
+    [Rule('$NumberNER', w, ('ORDINAL|CARDINAL')) for w in ['number', 'numbers']] +
+    [Rule('$OrganizationNER', w, ('ORG')) for w in ['organization', 'organizations', 'company', 'companies', 'agency', 'agencies', 'institution', 'institutions']] +
+    [Rule('$NorpNER', w, ('NORP')) for w in ['political', 'politician', 'religious']] +
 
     # FIXME: Temporary hardcode; replace with "domain_rules" passed to grammar
     [Rule('$Arg', w, '.arg') for w in ['person']] +
@@ -44,9 +48,9 @@ unary_rules = [
 
     # ArgX may be treated as an object or a string (referring to its textual contents)
     Rule('$String', '$ArgX', lambda sems: ('.arg_to_string', sems[0])),
-    Rule('$ArgToString', '$CID', lambda sems: (sems[0],)),    
+    Rule('$ArgToString', '$CID', lambda sems: (sems[0],)),
 
-    Rule('$StringList', '$UserList', sems0),
+    Rule('$StringListOr', '$UserList', sems0),
 
     Rule('$UnaryStringToBool', '$Lower', sems0),
     Rule('$UnaryStringToBool', '$Upper', sems0),
@@ -56,24 +60,18 @@ unary_rules = [
     Rule('$StringBinToBool', '$StartsWith', sems0),
     Rule('$StringBinToBool', '$EndsWith', sems0),
 
-    # These represent string comparisons (like the letter 'a' in 'cat'), not set comparisons
+    # These represent string comparisons (like the letter 'a' in 'cat'), 
+    # not set comparisons (like 'cat' in ['dog', 'cat', 'bird'])
     Rule('$StringBinToBool', '$In', sems0),
     Rule('$StringBinToBool', '$Contains', sems0),
 ]
     
+
 compositional_rules = [
-            # make lists
-    Rule('$PhraseList', '$Direction $ArgX', lambda (dir_, arg_): (dir_, arg_)),
-    Rule('$PhraseList', '$Between $ArgXListAnd', lambda (btw_, arglist_): (btw_, arglist_)),
-    Rule('$PhraseList', '$Sentence', lambda (sent,): (sent,)),
 
-        # inverted directions
-    Rule('$PhraseList', '$ArgX $Direction', lambda (arg_, dir_): (flip_dir(dir_), arg_)),
-
-    ### Direction ###
+    # Direction
         # "is left of Y"
-    Rule('$StringToBool', '$Direction $ArgX',
-        lambda (dir_, arg_): ('.in', ('.extract_text', (dir_, arg_)))),
+    Rule('$StringToBool', '$Direction $ArgX', lambda (dir_, arg_): ('.in', ('.extract_text', (dir_, arg_)))),
 
         # "is two words left of Y"
     Rule('$StringToBool', '$Int ?$Unit $Direction $ArgX', 
@@ -84,39 +82,43 @@ compositional_rules = [
         lambda (arg_, int_, unit_, dir_): ('.in', ('.extract_text', 
             (flip_dir(dir_), arg_, ('.string', '.eq'), int_, ('.string', (unit_ if unit_ else 'words')))))),
         
-        # "is at least 40 words to the left of"
+        # "is at least five words to the left of"
     Rule('$StringToBool', '$Compare $Int ?$Unit $Direction $ArgX', 
         lambda (cmp_, int_, unit_, dir_, arg_): ('.in', ('.extract_text', 
             (dir_, arg_, ('.string', cmp_), int_,('.string', (unit_ if unit_ else 'words')))))), 
-        # "is to the left of Y by at least 40 words"
+        # "is to the left of Y by at least five words"
     Rule('$StringToBool', '$Direction $ArgX $Compare $Int ?$Unit', 
         lambda (dir_, arg_, cmp_, int_, unit_): ('.in', ('.extract_text', 
             (dir_, arg_, ('.string', cmp_), int_,('.string', (unit_ if unit_ else 'words')))))), 
         
         # "between X and Y"
     Rule('$StringToBool', '$Between $ArgXListAnd', 
-        lambda (btw_, arglist_): 
-            ('.in', ('.extract_text', (btw_, arglist_)))), 
+        lambda (btw_, arglist_): ('.in', ('.extract_text', (btw_, arglist_)))), 
+        # "in the sentence"
+    Rule('$StringToBool', '$In $Sentence', 
+        lambda (in_, sent_): ('.in', ('.extract_text', (sent_,)))), 
     
-    # TODO: generalize count to other lists?
+    # Phrases
+        # standard directions: "to the left of arg 1"
+    Rule('$Phrase', '$Direction $ArgX', lambda (dir_, arg_): (dir_, arg_)),
+    Rule('$Phrase', '$Between $ArgXListAnd', lambda (btw_, arglist_): (btw_, arglist_)),
+    Rule('$Phrase', '$Sentence', lambda (sent,): (sent,)),
+        
+        # inverted directions: "arg 1 is right of"
+    Rule('$Phrase', '$ArgX $Direction', lambda (arg_, dir_): (flip_dir(dir_), arg_)),
+
+        # "there are three [nouns in the sentence]"
+    Rule('$TokenList', '$Word $Phrase', lambda (word_, phr_): ('.filter', phr_, 'words', r'\w+\S*')),
+    Rule('$TokenList', '$Char $Phrase', lambda (char_, phr_): ('.filter', phr_, 'chars', None)),
+    Rule('$TokenList', '$POS $Phrase', lambda (pos_, phr_): ('.filter', phr_, 'pos_tags', pos_)),
+    Rule('$TokenList', '$NER $Phrase', lambda (ner_, phr_): ('.filter', phr_, 'ner_tags', ner_)),
+    Rule('$StringList', '$TokenList', sems0),
+
     # Count
-            # "the number of (words left of arg 1) is 5"
-    Rule('$Int', '$Count $TokenList', sems_in_order),
-            # "at least one word is to the left..."
-    Rule('$Bool', '$NumToBool $Word $Exists $TokenList', lambda (func_, word_, exist_, list_): 
-        ('.call', func_, ('.count', list_))),
-            # "at least one noun is to the left..."
-    Rule('$Bool', '$NumToBool $POS $Exists $TokenList', lambda sems: 
-        ('.call', sems[0], ('.count', ('.filter_by_attr', sems[3], ('.string', 'pos_tags'), sems[1])))),
-            # "at least one person is to the left..."
-    Rule('$Bool', '$NumToBool $NER $Exists $TokenList', lambda sems: 
-        ('.call', sems[0], ('.count', ('.filter_by_attr', sems[3], ('.string', 'ner_tags'), sems[1])))), 
-            # "there are not three people to the left..."
-    Rule('$Bool', '$Exists $Not $Int $TokenList', lambda sems: ('.call', ('.neq', sems[2]), ('.count', sems[3]))), 
-            # "there are three nouns to the left..."
-    Rule('$Bool', '$Exists $Int $TokenList', lambda sems: ('.call', ('.eq', sems[1]), ('.count', sems[2]))), 
-            # "there are at least two nouns to the left..."
-    Rule('$Bool', '$Exists $NumToBool $TokenList', lambda sems: ('.call', sems[1], ('.count', sems[2]))),
+        # "the [number of (words left of arg 1)] is larger than five"
+    Rule('$Int', '$Count $Phrase', sems_in_order),         
+    Rule('$Bool', '?$Exists $NumToBool $TokenList', 
+        lambda (exists_, func_, list_): ('.call', func_, ('.count', list_))),
 
     # Arg lists
     Rule('$String', '$ArgToString $ArgX', lambda (func_, arg_): ('.call', func_, arg_)),
@@ -127,12 +129,6 @@ compositional_rules = [
     # Tuples
     Rule('$StringTuple', '$Tuple $StringList', sems_in_order),
     Rule('$StringTupleToBool', '$Equals $StringTuple', sems_in_order),
-
-    # NER/POS
-    Rule('$PhraseList', '$POS $PhraseList', lambda sems: ('.filter_by_attr', sems[1], ('.string', 'pos_tags'), sems[0])),
-    Rule('$PhraseList', '$NER $PhraseList', lambda sems: ('.filter_by_attr', sems[1], ('.string', 'ner_tags'), sems[0])),
-    Rule('$TokenList', '$PhraseList', lambda sems: ('.filter_to_tokens', sems[0])),
-    Rule('$StringList', '$PhraseList', lambda sems: ('.extract_text', sems[0])),
 
     ### Strings ###
         # building strings of arbitrary length
@@ -167,14 +163,23 @@ ops = {
     '.endswith': lambda x: lambda cx: lambda y: lambda cy: y(cy).endswith(x(cx)),
     # context functions
     '.arg_to_string': lambda x: lambda c: x(c).strip() if isinstance(x(c), basestring) else x(c).get_span().strip(),
-    '.left': lambda *x: lambda cx: cx['helpers']['get_left_phrases'](*[xi(cx) for xi in x]),
-    '.right': lambda *x: lambda cx: cx['helpers']['get_right_phrases'](*[xi(cx) for xi in x]),
-    '.between': lambda x: lambda c: c['helpers']['get_between_phrases'](*[xi for xi in x(c)]),
-    '.sentence': lambda c: c['helpers']['get_sentence_phrases'](c['candidate'][0]),
-    '.extract_text': lambda phrlist: lambda c: [getattr(p, 'text').strip() for p in phrlist(c)],
-    '.filter_by_attr': lambda phrlist, attr, val: lambda c: [p for p in phrlist(c) if getattr(p, attr(c))[0] == val(c)],
-    '.filter_to_tokens': lambda phrlist: lambda c: [p for p in phrlist(c) if len(getattr(p, 'words')) == 1], 
+    '.left': lambda *x: lambda cx: cx['helpers']['get_left_phrase'](*[xi(cx) for xi in x]),
+    '.right': lambda *x: lambda cx: cx['helpers']['get_right_phrase'](*[xi(cx) for xi in x]),
+    '.between': lambda x: lambda c: c['helpers']['get_between_phrase'](*[xi for xi in x(c)]),
+    '.sentence': lambda c: c['helpers']['get_sentence_phrase'](c['candidate'][0]),
+    '.extract_text': lambda phr: lambda c: getattr(phr(c), 'text').strip(),
+    '.filter': lambda phr, field, val: lambda c: c['helpers']['phrase_filter'](phr(c), field, val),
     '.cid': lambda c: lambda arg: lambda cx: arg(cx).get_attrib_tokens(a='entity_cids')[0], # take the first token's CID    
+}
+
+translate_ops = {
+    '.between': lambda list_: "between({})".format(list_),
+    '.right': lambda *args_: "right({})".format(','.join(str(x) for x in args_)),
+    '.left': lambda *args_: "left({})".format(','.join(str(x) for x in args_)),
+    '.sentence': "sentence()",
+
+    '.extract_text': lambda phr: "text({})".format(phr),
+    '.filter': lambda phr, field, val: "filter({}, {}, {})".format(phr, field, val),
 }
 
 text_grammar = GrammarMixin(

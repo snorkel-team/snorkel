@@ -49,20 +49,23 @@ class TestBabbleText(TestBabbleBase):
     def test_strings(self):
         self.check_explanations(text_explanations.strings)
 
-    def test_lists(self):
+    def test_string_lists(self):
         self.check_explanations(text_explanations.string_lists)
 
     def test_candidate_helpers(self):
         self.check_explanations(text_explanations.candidate_helpers)
 
-    def test_index_comparisons(self):
-        self.check_explanations(text_explanations.index_comparisons)
+    def test_index_words(self):
+        self.check_explanations(text_explanations.index_words)
+    
+    def test_index_chars(self):
+        self.check_explanations(text_explanations.index_chars)
 
     def test_pos_ner(self):
         self.check_explanations(text_explanations.pos_ner)
 
-    # def test_count(self):
-    #     self.check_explanations(text_explanations.count)
+    def test_count(self):
+        self.check_explanations(text_explanations.count)
 
     def test_anaphora(self):
         self.check_explanations(text_explanations.anaphora)

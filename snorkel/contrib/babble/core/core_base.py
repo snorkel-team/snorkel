@@ -29,7 +29,7 @@ lexical_rules = (
     [Rule('$AtMost', w, '.leq') for w in ['at most', 'no larger than', 'less than or equal', 'within', 'no more than', '<=']] +
     [Rule('$AtLeast', w, '.geq') for w in ['at least', 'no less than', 'no smaller than', 'greater than or equal', '>=']] +
     [Rule('$MoreThan', w, '.gt') for w in ['more than', 'greater than', 'larger than', '>']] + 
-    [Rule('$In', w, '.in') for w in ['in']] +
+    [Rule('$In', w, '.in') for w in ['?is in']] +
     [Rule('$Contains', w, '.contains') for w in ['contains', 'contain', 'containing', 'include', 'includes', 'says', 'states']] +
     [Rule('$Separator', w) for w in [',', ';', '/']] +
     [Rule('$Possessive', w) for w in ["'s"]] +
@@ -41,7 +41,6 @@ lexical_rules = (
 )
 
 unary_rules = [
-    Rule('$List', '$UserList', sems0),
     Rule('$Bool', '$BoolLit', sems0),
     Rule('$BoolLit', '$True', sems0),
     Rule('$BoolLit', '$False', sems0),
@@ -51,7 +50,9 @@ unary_rules = [
     Rule('$Conj', '$Or', sems0),
     Rule('$Exists', '$Is'),
     Rule('$Equals', '$Is ?$Equals', '.eq'),
+    Rule('$NotEquals', '$Equals $Not', '.neq'),
     Rule('$Compare', '$Equals', sems0),
+    Rule('$Compare', '$NotEquals', sems0),
     Rule('$Compare', '$LessThan', sems0),
     Rule('$Compare', '$AtMost', sems0),
     Rule('$Compare', '$MoreThan', sems0),
@@ -163,6 +164,7 @@ translate_ops = {
     # '.composite_and': lambda func_, list_: "all(map({}, {}))".format(func_, list_),
     # '.composite_or':  lambda x, y, z: lambda cz: any([x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)]),
 
+    # TODO: add other inequalities
     '.eq': lambda x: "(= {})".format(x),
     '.geq': lambda x: "(>= {})".format(x),
 
@@ -174,14 +176,6 @@ translate_ops = {
     '.contains': lambda rhs: "contains({})".format(rhs),
     '.count': lambda list_: "count({})".format(list_),
     '.sum': lambda arg_: "sum({})".format(arg_),
-
-    '.between': lambda list_: "between({})".format(list_),
-    '.right': lambda *args_: "right({})".format(','.join(str(x) for x in args_)),
-    '.left': lambda *args_: "left({})".format(','.join(str(x) for x in args_)),
-    '.sentence': "sentence.phrases",
-
-    '.filter_to_tokens': lambda list_: "tokens({})".format(list_),
-    '.extract_text': lambda list_: "[p.text.strip() for p in {}]".format(list_),
 }
 
 

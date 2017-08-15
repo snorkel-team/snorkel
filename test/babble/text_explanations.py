@@ -138,7 +138,7 @@ candidate_helpers = [
         semantics=None),    
 ]
 
-index_comparisons = [
+index_words = [
     # Index left
     Explanation(
         condition="arg 1 is left of arg 2",
@@ -205,6 +205,9 @@ index_comparisons = [
         label=True,
         candidate=668761641257950361,
         semantics=None),
+]
+
+index_chars = [
     # Characters0
     Explanation(
         condition="'wife' is less than 10 characters to the left of arg 2",
@@ -214,6 +217,12 @@ index_comparisons = [
     # Characters1
     Explanation(
         condition="'wife' is more than 5 characters to the right of arg 1",
+        label=True,
+        candidate=668761641257950361,
+        semantics=None),       
+    # Characters2
+    Explanation(
+        condition="there are at least 10 characters between arg 1 and arg 2",
         label=True,
         candidate=668761641257950361,
         semantics=None),       
@@ -255,7 +264,7 @@ count = [
         semantics=None),
     # Count2
     Explanation(
-        condition="there are more than 3 words between arg 1 and arg 2",
+        condition="there are at least two words between arg 1 and arg 2",
         label=True,
         candidate=668761641257950361,
         semantics=None),
@@ -288,7 +297,7 @@ count = [
         condition="at least one word to the left of arg 2 starts with a spouse word",
         label=True,
         candidate=668761641257950361,
-        semantics=None),    
+        semantics=None),
 ]
 
 anaphora = [

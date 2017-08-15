@@ -191,12 +191,6 @@ membership = [
         label=True,
         candidate=('foo', 'bar'),
         semantics=None),
-    # UserList
-    Explanation(
-        condition="7 is in the luckies",
-        label=True,
-        candidate=('foo', 'bar'),
-        semantics=None),    
 ]
 
 absorption = [

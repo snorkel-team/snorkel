@@ -111,6 +111,18 @@ def get_right_phrase(span, cmp='.gt', num=0, unit='words'):
     else:
         return phrase[0:0]
 
+    
+def get_within_phrase(span, num=0, unit='words'):
+    phrase = Phrase(span.get_parent())
+    if unit == 'words':
+        j = span.get_word_start()
+        k = span.get_word_end()
+        return phrase[max(0, j - num):min(k + num + 1, len(phrase))]
+    elif unit == 'chars':
+        raise NotImplementedError
+    else:        
+        raise Exception("Expected unit in ('words', 'chars'), got '{}'".format(unit))
+
 
 def get_between_phrase(span1, span2):
     phrase = Phrase(span1.get_parent())
@@ -129,6 +141,7 @@ helpers = {
     'phrase_filter': phrase_filter,
     'get_left_phrase': get_left_phrase,
     'get_right_phrase': get_right_phrase,
+    'get_within_phrase': get_within_phrase,
     'get_between_phrase': get_between_phrase,
     'get_sentence_phrase': get_sentence_phrase,
 }

@@ -14,6 +14,7 @@ lexical_rules = (
     [Rule('$EndsWith', w, '.endswith') for w in ['ends with', 'end with', 'ending with']] +
     [Rule('$Left', w, '.left') for w in ['left', 'before', 'precedes', 'preceding', 'followed by']] +
     [Rule('$Right', w, '.right') for w in ['right', 'after', 'preceded by', 'follows', 'following']] +
+    [Rule('$Within', w, '.within') for w in ['within']] +
     [Rule('$Sentence', w, '.sentence') for w in ['sentence', 'text', 'it']] +
     [Rule('$Between', w, '.between') for w in ['between', 'inbetween', 'sandwiched', 'enclosed']] +
     # TODO: Add more POS options
@@ -90,7 +91,12 @@ compositional_rules = [
     Rule('$StringToBool', '$Direction $ArgX $Compare $Int ?$Unit', 
         lambda (dir_, arg_, cmp_, int_, unit_): ('.in', ('.extract_text', 
             (dir_, arg_, ('.string', cmp_), int_,('.string', (unit_ if unit_ else 'words')))))), 
-        
+    
+    # Others
+        # "is within 5 words of X"
+    Rule('$StringToBool', '$Within $Int ?$Unit $ArgX', 
+        lambda (win_, int_, unit_, arg_): ('.in', ('.extract_text', 
+            (win_, arg_, int_, ('.string', (unit_ if unit_ else 'words')))))), 
         # "between X and Y"
     Rule('$StringToBool', '$Between $ArgXListAnd', 
         lambda (btw_, arglist_): ('.in', ('.extract_text', (btw_, arglist_)))), 
@@ -101,6 +107,7 @@ compositional_rules = [
     # Phrases
         # standard directions: "to the left of arg 1"
     Rule('$Phrase', '$Direction $ArgX', lambda (dir_, arg_): (dir_, arg_)),
+    Rule('$Phrase', '$Within $ArgX', lambda (dir_, arg_): (dir_, arg_)),
     Rule('$Phrase', '$Between $ArgXListAnd', lambda (btw_, arglist_): (btw_, arglist_)),
     Rule('$Phrase', '$Sentence', lambda (sent,): (sent,)),
         
@@ -165,6 +172,7 @@ ops = {
     '.arg_to_string': lambda x: lambda c: x(c).strip() if isinstance(x(c), basestring) else x(c).get_span().strip(),
     '.left': lambda *x: lambda cx: cx['helpers']['get_left_phrase'](*[xi(cx) for xi in x]),
     '.right': lambda *x: lambda cx: cx['helpers']['get_right_phrase'](*[xi(cx) for xi in x]),
+    '.within': lambda *x: lambda cx: cx['helpers']['get_within_phrase'](*[xi(cx) for xi in x]),
     '.between': lambda x: lambda c: c['helpers']['get_between_phrase'](*[xi for xi in x(c)]),
     '.sentence': lambda c: c['helpers']['get_sentence_phrase'](c['candidate'][0]),
     '.extract_text': lambda phr: lambda c: getattr(phr(c), 'text').strip(),
@@ -187,5 +195,5 @@ text_grammar = GrammarMixin(
     ops=ops,
     helpers=helpers,
     annotators=annotators,
-    translate_ops={}
+    translate_ops=translate_ops,
 )

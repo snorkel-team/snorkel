@@ -193,6 +193,18 @@ index_words = [
         label=True,
         candidate=668761641257950361,
         semantics=None),
+    # Index within (<= or >= left)
+    Explanation(
+        condition="'wife' is within three words of arg 2",
+        label=True,
+        candidate=668761641257950361,
+        semantics=None),
+    # Index within (<= or >= right)
+    Explanation(
+        condition="'bought' is within three words of arg 2",
+        label=True,
+        candidate=668761641257950361,
+        semantics=None),
     # Index OrList left
     Explanation(
         condition="'husband' or 'wife' is within three words to the left of arg 2",

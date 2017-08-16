@@ -73,7 +73,7 @@ class ExplanationIO(object):
                 yield Explanation(
                     condition=condition.strip(),
                     label=bool(label),
-                    candidate=candidate,
+                    candidate=None if candidate == 'None' else candidate,
                     semantics=semantics,
                 )
                 num_read += 1

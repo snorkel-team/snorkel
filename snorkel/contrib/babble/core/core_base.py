@@ -169,7 +169,7 @@ translate_ops = {
     '.geq': lambda x: "(>= {})".format(x),
 
     '.arg': lambda int_: "arg{}".format(int_),
-    '.arg_to_string': lambda arg_: "text({}).strip()".format(arg_),
+    '.arg_to_string': lambda arg_: "text({})".format(arg_),
     '.cid': lambda arg_: "cid({})".format(arg_),
 
     '.in': lambda rhs: "in {}".format(rhs),

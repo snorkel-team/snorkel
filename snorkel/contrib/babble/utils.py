@@ -1,3 +1,7 @@
+import csv
+
+from explanation import Explanation
+
 def link_explanation_candidates(explanations, candidates):
     """Doc string goes here."""
 
@@ -50,3 +54,27 @@ def link_explanation_candidates(explanations, candidates):
     print("Linked {}/{} explanations".format(linked, len(explanations)))
 
     return explanations
+
+
+class ExplanationIO(object):
+
+    def write(self, explanations, fpath):
+        for exp in explanations:
+            with open(fpath, 'w') as tsvfile:
+                tsvwriter = csv.writer(tsvfile)
+                tsvwriter.writerow([exp.candidate, exp.label, exp.condition, exp.semantics])
+        print("Wrote {} explanations to {}".format(len(explanations), fpath))
+
+    def read(self, fpath):
+        with open(fpath, 'r') as tsvfile:
+            tsvreader = csv.reader(tsvfile, delimiter='\t')
+            num_read = 0
+            for (candidate, label, condition, semantics) in tsvreader:
+                yield Explanation(
+                    condition=condition.strip(),
+                    label=bool(label),
+                    candidate=candidate,
+                    semantics=semantics,
+                )
+                num_read += 1
+        print("Read {} explanations from {}".format(num_read, fpath))

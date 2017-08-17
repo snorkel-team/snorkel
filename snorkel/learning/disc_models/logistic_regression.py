@@ -34,7 +34,7 @@ class LogisticRegression(TFNoiseAwareModel):
         # TODO: Implement for categorical as well...
         if self.deterministic:
             # Make deterministic
-            # See: https://github.com/tensorflow/tensorflow/pull/10636/files
+            # See: https://www.twosigma.com/insights/a-workaround-for-non-determinism-in-tensorflow
             f_w = tf.matmul(self.X, self.w)
             print(f_w.get_shape())
             f_w_temp = tf.concat([f_w, tf.ones_like(f_w)], axis=1)
@@ -45,8 +45,8 @@ class LogisticRegression(TFNoiseAwareModel):
         else:
             self.logits = tf.nn.bias_add(tf.matmul(self.X, self.w), self.b)
 
-        if self.cardinality == 2:
-            self.logits = tf.squeeze(self.logits)
+        #if self.cardinality == 2:
+        #    self.logits = tf.squeeze(self.logits)
 
         # Define marginals op
         marginals_fn = tf.nn.softmax if self.cardinality > 2 else tf.nn.sigmoid

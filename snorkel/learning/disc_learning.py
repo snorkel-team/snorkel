@@ -67,10 +67,8 @@ class TFNoiseAwareModel(Classifier):
         # If deterministic=True, avoid use of non-deterministic reduce_ ops
         if self.deterministic:
             l = tf.reshape(loss_fn(logits=self.logits, labels=self.Y), [1, -1])
-            # self.loss = tf.squeeze(tf.matmul(l, tf.ones_like(l), 
-            #     transpose_b=True)) / tf.cast(tf.shape(l)[1], tf.float32)
-            self.loss = tf.matmul(l, tf.ones_like(l), 
-                 transpose_b=True) / tf.cast(tf.shape(l)[1], tf.float32)
+            self.loss = tf.squeeze(tf.matmul(l, tf.ones_like(l), 
+                transpose_b=True)) / tf.cast(tf.shape(l)[1], tf.float32)
         else:
             self.loss = tf.reduce_mean(loss_fn(logits=self.logits, 
                 labels=self.Y))

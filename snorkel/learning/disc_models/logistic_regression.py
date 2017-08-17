@@ -45,8 +45,8 @@ class LogisticRegression(TFNoiseAwareModel):
         else:
             self.logits = tf.nn.bias_add(tf.matmul(self.X, self.w), self.b)
 
-        #if self.cardinality == 2:
-        #    self.logits = tf.squeeze(self.logits)
+        if self.cardinality == 2:
+            self.logits = tf.squeeze(self.logits)
 
         # Define marginals op
         marginals_fn = tf.nn.softmax if self.cardinality > 2 else tf.nn.sigmoid

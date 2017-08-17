@@ -30,7 +30,21 @@ class LogisticRegression(TFNoiseAwareModel):
         k = self.cardinality if self.cardinality > 2 else 1
         self.w = tf.Variable(tf.random_normal((d, k), stddev=SD, seed=s1))
         self.b = tf.Variable(tf.random_normal((k,), stddev=SD, seed=s2))
-        self.logits = tf.nn.bias_add(tf.matmul(self.X, self.w), self.b)
+
+        # TODO: Implement for categorical as well...
+        if self.deterministic:
+            # Make deterministic
+            # See: https://github.com/tensorflow/tensorflow/pull/10636/files
+            f_w = tf.matmul(self.X, self.w)
+            print(f_w.get_shape())
+            f_w_temp = tf.concat([f_w, tf.ones_like(f_w)], axis=1)
+            print(f_w_temp.get_shape())
+            b_temp = tf.stack([tf.ones_like(self.b), self.b], axis=0)
+            print(b_temp.get_shape())
+            self.logits = tf.matmul(f_w_temp, b_temp)
+        else:
+            self.logits = tf.nn.bias_add(tf.matmul(self.X, self.w), self.b)
+
         if self.cardinality == 2:
             self.logits = tf.squeeze(self.logits)
 

@@ -104,9 +104,18 @@ class SparseLogisticRegression(LogisticRegression):
         k = self.cardinality if self.cardinality > 2 else 1
         self.w = tf.Variable(tf.random_normal((d, k), stddev=SD, seed=s1))
         self.b = tf.Variable(tf.random_normal((k,), stddev=SD, seed=s2))
-        z = tf.nn.embedding_lookup_sparse(params=self.w, sp_ids=sparse_ids,
-            sp_weights=sparse_vals, combiner='sum')
-        self.logits = tf.nn.bias_add(z, self.b)
+        if self.deterministic:
+            # Make deterministic
+            f_w = tf.nn.embedding_lookup_sparse(params=self.w, 
+                sp_ids=sparse_ids, sp_weights=sparse_vals, combiner=None)
+            f_w_temp = tf.concat([f_w, tf.ones_like(f_w)], axis=1)
+            b_temp = tf.stack([tf.ones_like(self.b), self.b], axis=0)
+            self.logits = tf.matmul(f_w_temp, b_temp)
+        else:
+            z = tf.nn.embedding_lookup_sparse(params=self.w, sp_ids=sparse_ids,
+                sp_weights=sparse_vals, combiner='sum')
+            self.logits = tf.nn.bias_add(z, self.b)
+        
         if self.cardinality == 2:
             self.logits = tf.squeeze(self.logits)
 

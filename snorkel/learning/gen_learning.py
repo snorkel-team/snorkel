@@ -1,5 +1,5 @@
 from .classifier import Classifier
-from .utils import MentionScorer
+from numba import jit
 import numbskull
 from numbskull import NumbSkull
 from numbskull.inference import FACTORS
@@ -8,7 +8,7 @@ import numpy as np
 import random
 import scipy.sparse as sparse
 from copy import copy
-from pandas import DataFrame, Series
+from pandas import DataFrame
 from distutils.version import StrictVersion
 from six.moves.cPickle import dump, load
 import os
@@ -17,6 +17,7 @@ DEP_SIMILAR = 0
 DEP_FIXING = 1
 DEP_REINFORCING = 2
 DEP_EXCLUSIVE = 3
+
 
 class GenerativeModel(Classifier):
     """
@@ -51,8 +52,9 @@ class GenerativeModel(Classifier):
         self.lf_class_propensity = lf_class_propensity
         self.weights = None
 
-        self.rng = random.Random()
+        self.rng = np.random.RandomState()
         self.rng.seed(seed)
+        set_numba_seeds(seed)
 
     # These names of factor types are for the convenience of several methods
     # that perform the same operations over multiple types, but this class's
@@ -122,7 +124,6 @@ class GenerativeModel(Classifier):
         """
         m, n = L.shape
         step_size = step_size or 0.0001
-        reg_param_scaled = reg_param / L.shape[0]
 
         # Check to make sure matrix is int-valued
         element_type = type(L[0,0])
@@ -175,11 +176,8 @@ class GenerativeModel(Classifier):
             LF_acc_prior_weights.append(label_prior_weight)
             n += 1
 
-        # Make sure is CSR sparse matrix
-        # NB: Can clean up all this copying / etc but is necessary at least once
-        L = L.copy()
-        if not isinstance(L, sparse.csr_matrix):
-            L = sparse.csr_matrix(L)
+        # Reduce overhead of tracking indices by converting L to a CSR sparse matrix.
+        L = sparse.csr_matrix(L).copy()
 
         # If candidate_ranges is provided, remap the values of L using
         # candidate_ranges. This "scoped categorical" approach allows learning
@@ -189,26 +187,13 @@ class GenerativeModel(Classifier):
         # else as constant value.
         self.cardinalities = self.cardinality * np.ones(m, dtype=np.int64)
         self.candidate_ranges = candidate_ranges
-        if candidate_ranges is not None:
-            for i in range(m):
-                c_range = candidate_ranges[i]
-
-                # Confirm that the candidate range has only unique values
-                assert len(c_range) == len(set(c_range))
-                self.cardinalities[i] = len(c_range)
-
-                # Re-map the values of L[i, :]
-                # Assumes L is csr_sparse format at this point
-                for j in range(L[i].data.shape[0]):
-                    val = L[i].data[j]
-                    if val not in c_range:
-                        raise ValueError("""Value {0} is not in supplied range 
-                            for candidate at index {1}""".format(val, i))
-                    L[i, L[i].indices[j]] = c_range.index(val) + 1
+        if self.candidate_ranges is not None:
+            L, self.cardinalities, _ = self._remap_scoped_categoricals(L, 
+                self.candidate_ranges)
 
         # Shuffle the data points, cardinalities, and candidate_ranges
         idxs = range(m)
-        np.random.shuffle(idxs)
+        self.rng.shuffle(idxs)
         L = L[idxs, :]
         if candidate_ranges is not None:
             self.cardinalities = self.cardinalities[idxs]
@@ -226,7 +211,7 @@ class GenerativeModel(Classifier):
             n_learning_epoch=epochs, 
             stepsize=step_size,
             decay=decay,
-            reg_param=reg_param_scaled,
+            reg_param=reg_param,
             regularization=reg_type,
             truncation=truncation,
             quiet=(not verbose),
@@ -246,7 +231,7 @@ class GenerativeModel(Classifier):
 
         # Store info from factor graph
         if self.candidate_ranges is not None:
-            self.cardinality_for_stats = max(self.cardinalities)
+            self.cardinality_for_stats = int(max(self.cardinalities))
         else:
             self.cardinality_for_stats = self.cardinality
         self.learned_weights = fg.factorGraphs[0].weight_value
@@ -265,6 +250,36 @@ class GenerativeModel(Classifier):
         self.fg = fg
         self.nlf = n
         self.cardinality = cardinality
+
+    def _remap_scoped_categoricals(self, L_in, candidate_ranges):
+        """
+        Remap the values of each individual candidate so that they have dense
+        support, returning the remapped label matrix, cardinalities, and
+        inverse mapping.
+        """
+        L = L_in.copy()
+        m, n = L.shape
+        cardinalities = np.ones(m)
+        mappings = []
+        for i in range(m):
+            c_range = candidate_ranges[i]
+
+            # Confirm that the candidate range has only unique values
+            assert len(c_range) == len(set(c_range))
+            cardinalities[i] = len(c_range)
+
+            # Create the inverse mapping
+            mappings.append(dict([(a + 1, b) for a, b in enumerate(c_range)]))
+
+            # Re-map the values of L[i, :]
+            # Assumes L is csr_sparse format at this point
+            for j in range(L[i].data.shape[0]):
+                val = L[i].data[j]
+                if val not in c_range:
+                    raise ValueError("""Value {0} is not in supplied range 
+                        for candidate at index {1}""".format(val, i))
+                L[i, L[i].indices[j]] = c_range.index(val) + 1
+        return L, cardinalities, mappings
 
     def learned_lf_stats(self):
         """
@@ -338,7 +353,7 @@ class GenerativeModel(Classifier):
 
         return DataFrame(stats)
 
-    def marginals(self, L):
+    def marginals(self, L, candidate_ranges=None, batch_size=None):
         """
         Given an M x N label matrix, returns marginal probabilities for each
         candidate, depending on classification setting:
@@ -407,18 +422,27 @@ class GenerativeModel(Classifier):
         else:
             all_marginals = []
 
+            # Handle the scoped categorical case, otherwise get cardinalities
+            # from self.cardinality
+            if candidate_ranges is not None:
+                L, cardinalities, mappings = self._remap_scoped_categoricals(L, 
+                    candidate_ranges)
+            else:
+                cardinalities = self.cardinality * np.ones(m)
+
             # Get the marginal (posterior) probability for each candidate
             for i in range(m):
-                marginals = np.zeros(self.cardinalities[i], dtype=np.float64)
+                cardinality = int(cardinalities[i])
+                marginals = np.zeros(cardinality, dtype=np.float64)
                 # NB: class priors not currently available for categoricals
                 l_i = L[i].tocoo()
                 for l_index1 in range(l_i.nnz):
                     data_j, j = l_i.data[l_index1], l_i.col[l_index1]
                     if (data_j != 0):
-                        if not 1 <= data_j <= self.cardinalities[i]:
+                        if not 1 <= data_j <= cardinality:
                             raise ValueError(
                                 """Illegal value at %d, %d: %d. Must be in 0 to 
-                                %d.""" % (i, j, data_j, self.cardinalities[i]))
+                                %d.""" % (i, j, data_j, cardinality))
                         # NB: LF class propensity not currently available
                         # for categoricals
                         marginals[int(data_j - 1)] += \
@@ -432,11 +456,11 @@ class GenerativeModel(Classifier):
 
             # If candidate_ranges not None, remap back to original values and
             # return as sparse matrix
-            if self.candidate_ranges is not None:
+            if candidate_ranges is not None:
                 M = sparse.coo_matrix((m, self.cardinality), dtype=np.float64)
                 for i, marginals in enumerate(all_marginals):
                     for j, p in enumerate(marginals):
-                        M[i, self.mappings[j-1]] = p
+                        M[i, mappings[i][j]] = p
             else:
                 M = np.vstack(all_marginals)
             return M
@@ -560,7 +584,7 @@ class GenerativeModel(Classifier):
         # Candidates (variables)
         for i in range(m):
             variable[i]['isEvidence'] = False
-            variable[i]['initialValue'] = self.rng.randrange(0, cardinalities[i])
+            variable[i]['initialValue'] = self.rng.randint(cardinalities[i])
             variable[i]["dataType"] = 0
             variable[i]["cardinality"] = cardinalities[i]
 
@@ -601,7 +625,7 @@ class GenerativeModel(Classifier):
                     variable[index]["initialValue"] = data - 1
                 else:
                     raise ValueError("Invalid labeling function output in cell (%d, %d): %d. "
-                                     "Valid values are 0 to %d. " % (i, j, data, self.cardinality))
+                                     "Valid values are 0 to %d. " % (i, j, data, self.cardinalities[i]))
 
         #
         # Compiles factor and ftv matrices
@@ -800,7 +824,10 @@ class GenerativeModel(Classifier):
         # Save other model hyperparameters needed to rebuild model
         save_path2 = os.path.join(save_dir, "{0}.hps.pkl".format(model_name))
         with open(save_path2, 'wb') as f:
-            dump({'cardinality': self.cardinality}, f)
+            dump({
+                'cardinality': self.cardinality,
+                'cardinality_for_stats': self.cardinality_for_stats
+            }, f)
 
         if verbose:
             print("[{0}] Model saved as <{1}>.".format(self.name, model_name))
@@ -814,7 +841,8 @@ class GenerativeModel(Classifier):
         save_path2 = os.path.join(save_dir, "{0}.hps.pkl".format(model_name))
         with open(save_path2, 'rb') as f:
             hps = load(f)
-            self.cardinality = hps['cardinality']
+            for k, v in hps.iteritems():
+                setattr(self, k, v)
         if verbose:
             print("[{0}] Model <{1}> loaded.".format(self.name, model_name))
 
@@ -867,4 +895,9 @@ class GenerativeModelWeights(object):
             return True
         else:
             return False
-   
+
+
+@jit
+def set_numba_seeds(seed):
+    np.random.seed(seed)
+    random.seed(seed)

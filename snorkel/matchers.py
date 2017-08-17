@@ -116,15 +116,15 @@ class DictionaryMatch(NgramMatcher):
         p = self._stem(p) if self.stemmer is not None else p
         return (not self.reverse) if p in self.d else self.reverse
 
-class LambdaFunctionMatch(NgramMatcher):
-    """Selects candidate Ngrams that match against a given list d"""
+class LambdaFunctionMatcher(NgramMatcher):
+    """Selects candidate Ngrams that return True when fed to a function f."""
     def init(self):
         self.ignore_case = self.opts.get('ignore_case', True)
         self.attrib      = self.opts.get('attrib', WORDS)
         try:
             self.func = self.opts['func']
         except KeyError:
-            raise Exception("Please supply a dictionary (list of phrases) d as d=d.")
+            raise Exception("Please supply a function f as func=f.")
     
     def _f(self, c):
         """The internal (non-composed) version of filter function f"""

@@ -66,9 +66,14 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
                 return index, inv_index
             else:
                 idxs = np.arange(self.shape[axis])[s]
-        # csr_matrix._get_submatrix only handles slice or int, so this is int
-        else:
+        elif isinstance(s, int):
             idxs = np.array([s])
+        else: # s is an array of ints
+            idxs = s
+            # If s is the entire slice, skip the remapping step
+            if np.array_equal(idxs, range(len(idxs))):
+                return index, inv_index
+
         index_new, inv_index_new = {}, {}
         for i_new, i in enumerate(idxs):
             k = index[i]
@@ -76,13 +81,18 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
             inv_index_new[k] = i_new
         return index_new, inv_index_new
 
-    def _get_submatrix(self, row_slice, col_slice):
-        # Get the slice of the matrix
-        X = super(csr_AnnotationMatrix, self)._get_submatrix(row_slice,
-            col_slice)
-        X.annotation_key_cls = self.annotation_key_cls
+    def __getitem__(self, key):
+        X = super(csr_AnnotationMatrix, self).__getitem__(key)
 
-        # # Remap the row and column indexes
+        # If X is an integer, just return it
+        if isinstance(X, int):
+            return X
+        # If X is a matrix, make sure it stays a csr_AnnotationMatrix
+        elif not isinstance(X, csr_AnnotationMatrix):
+            X = csr_AnnotationMatrix(X)
+        # X must be a matrix, so update appropriate csr_AnnotationMatrix fields
+        X.annotation_key_cls = self.annotation_key_cls
+        row_slice, col_slice = self._unpack_index(key)
         X.row_index, X.candidate_index = self._get_sliced_indexes(
             row_slice, 0, self.row_index, self.candidate_index)
         X.col_index, X.key_index = self._get_sliced_indexes(
@@ -495,45 +505,49 @@ def save_marginals(session, X, marginals, training=True):
     print("Saved %s marginals" % len(marginals))
 
 
-def load_marginals(session, X=None, split=0, training=True):
+def load_marginals(session, X=None, split=0, cids_query=None, training=True):
     """Load the marginal probs. for a given split of Candidates"""
+    # For candidate ids subquery
+    cids_query = cids_query or session.query(Candidate.id) \
+        .filter(Candidate.split == split)
+    # Ensure ordering by CID
+    cids_query = cids_query.order_by(Candidate.id)
+    cids_sub_query = cids_query.subquery('cids')
 
     # Load marginal tuples from db
-    marginal_tuples = session.query(
-        Marginal.candidate_id,
-        Marginal.value,
-        Marginal.probability
-    ).join(Candidate)\
-        .filter(Candidate.split == split)\
-        .filter(Marginal.training == training).all()
+    marginal_tuples = session.query(Marginal.candidate_id, Marginal.value, 
+        Marginal.probability) \
+        .filter(Marginal.candidate_id == cids_sub_query.c.id) \
+        .filter(Marginal.training == training) \
+        .all()
 
-    # Assemble cols 1,...,K of marginals matrix
+    # If an AnnotationMatrix or list of candidates X is provided, we make sure
+    # that the returned marginals are collated with X.
     if X is not None:
         # For now, handle feature matrix vs. list of objects with try / except
+        # Handle AnnotationMatrix
         try:
             cardinality = X.get_candidate(session, 0).cardinality
             marginals = np.zeros((X.shape[0], cardinality))
-            for cid, k, p in marginal_tuples:
-                marginals[X.candidate_index[cid], k] = p
+            cid_map = X.candidate_index
+        
+        # Handle list of Candidates
         except:
             cardinality = X[0].cardinality
             marginals = np.zeros((len(X), cardinality))
-            candidate_index = dict([(x.id, i) for i, x in enumerate(X)])
-            for cid, k, p in marginal_tuples:
-                marginals[candidate_index[cid], k] = p
+            cid_map = dict([(x.id, i) for i, x in enumerate(X)])
+    
+    # Otherwise if X is not provided, we sort by candidate id, using the
+    # cids_query from above
     else:
-        cardinality = session.query(Candidate).get(marginal_tuples[0][0]).cardinality
+        cardinality = session.query(Candidate) \
+            .get(marginal_tuples[0][0]).cardinality
+        marginals = np.zeros((cids_query.count(), cardinality))
+        cid_map = dict([(cid, i) for i, (cid,) in enumerate(cids_query.all())])
 
-        # Loads cid map
-        cids = session.query(Candidate.id).filter(Candidate.split == split)\
-                .order_by(Candidate.id).all()
-        cid_map = {}
-        for i, (cid,) in enumerate(cids):
-            cid_map[cid] = i
-
-        marginals = np.zeros((len(cid_map), cardinality))
-        for i, (cid, k, p) in enumerate(marginal_tuples):
-            marginals[cid_map[cid], k] = p
+    # Assemble the marginals matrix according to the candidate index of X
+    for cid, k, p in marginal_tuples:
+        marginals[cid_map[cid], k] = p
 
     # Add first column if k > 2, else ravel
     if cardinality > 2:

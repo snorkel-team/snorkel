@@ -1,18 +1,14 @@
 from .constants import *
 from numba import jit
 import numpy as np
-import random
 
 
 class DependencySelector(object):
     """
     Fast method for identifying dependencies among labeling functions.
-
-    :param seed: seed for initializing state of Numbskull variables
     """
-    def __init__(self, seed=271828):
-        self.rng = random.Random()
-        self.rng.seed(seed)
+    def __init__(self):
+        pass
 
     def select(self, L, higher_order=False, propensity=False, threshold=0.05, truncation=10):
         """
@@ -56,11 +52,11 @@ class DependencySelector(object):
         for j in range(n):
             # Initializes weights
             for k in range(n):
-                weights[k] = 1.1 - .2 * self.rng.random()
+                weights[k] = 1.0
             for k in range(n, len(weights)):
                 weights[k] = 0.0
             if propensity:
-                weights[5 * n] = -2.0
+                weights[len(weights) - 1] = 0.0
 
             _fit_deps(m, n, j, L, weights, joint, higher_order, propensity,  threshold, truncation)
 
@@ -85,6 +81,7 @@ def _fit_deps(m, n, j, L, weights, joint, higher_order, propensity, regularizati
     step_size = 1.0 / m
     epochs = 10
     l1delta = regularization * step_size * truncation
+    last_weight = len(weights) - 1
 
     for t in range(epochs):
         for i in range(m):
@@ -169,10 +166,10 @@ def _fit_deps(m, n, j, L, weights, joint, higher_order, propensity, regularizati
                             joint[5] -= weights[5 * n + k]
 
             if propensity:
-                joint[0] += weights[6 * n]
-                joint[2] += weights[6 * n]
-                joint[3] += weights[6 * n]
-                joint[5] += weights[6 * n]
+                joint[0] += weights[last_weight]
+                joint[2] += weights[last_weight]
+                joint[3] += weights[last_weight]
+                joint[5] += weights[last_weight]
 
             joint = np.exp(joint)
             joint /= np.sum(joint)
@@ -289,9 +286,9 @@ def _fit_deps(m, n, j, L, weights, joint, higher_order, propensity, regularizati
                                 weights[5 * n + k] += step_size * -1
 
             if propensity:
-                weights[6 * n] -= step_size * (joint[0] + joint[2] + joint[3] + joint[5])
+                weights[last_weight] -= step_size * (joint[0] + joint[2] + joint[3] + joint[5])
                 if L[i, j] != 0:
-                    weights[6 * n] += step_size
+                    weights[last_weight] += step_size
 
             # Third, takes regularization gradient step
             if (t * m + i) % truncation == 0:

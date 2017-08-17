@@ -50,7 +50,7 @@ class DocPreprocessor(object):
         raise NotImplementedError()
 
     def _can_read(self, fpath):
-        return True
+        return not fpath.startswith('.')
 
     def _get_files(self, path):
         if os.path.isfile(path):
@@ -217,8 +217,8 @@ class XMLMultiDocPreprocessor(DocPreprocessor):
     """
 
     def __init__(self, path, doc='.//document', text='./text/text()',
-        id='./id/text()', keep_xml_tree=False):
-        DocPreprocessor.__init__(self, path)
+        id='./id/text()', keep_xml_tree=False, *args, **kwargs):
+        super(XMLMultiDocPreprocessor, self).__init__(path, *args, **kwargs)
         self.doc = doc
         self.text = text
         self.id = id

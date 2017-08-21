@@ -14,6 +14,9 @@ def get_user_lists():
     # "City land records show that GM President [Daniel Ammann] and his wife, 
     # [Pernilla Ammann], bought the 15-bedroom mansion on Balmoral Drive in 
     # the upscale historic neighborhood on July 31."
+    # hash = 668761641257950361
+    # stable_id = 52a56fa5-91bf-4df1-8443-632f4c1ce88d::span:604:616~~52a56fa5-91bf-4df1-8443-632f4c1ce88d::span:632:646
+    default_candidate = '52a56fa5-91bf-4df1-8443-632f4c1ce88d::span:604:616~~52a56fa5-91bf-4df1-8443-632f4c1ce88d::span:632:646'
 
 strings = [
     # Equals (String)
@@ -116,25 +119,25 @@ candidate_helpers = [
     Explanation(
         condition="'wife' is in the words left of arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None), 
     # Right words (list)
     Explanation(
         condition="'wife' is in the words to the right of arg 1",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None), 
     # Between words (list)
     Explanation(
         condition="'wife' is in the words between arg 1 and arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None), 
     # Sentence (list)
     Explanation(
         condition='"wife" is in the sentence',
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),    
 ]
 
@@ -143,79 +146,79 @@ index_words = [
     Explanation(
         condition="arg 1 is left of arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Index right
     Explanation(
         condition="arg 2 is right of arg 1",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Between
     Explanation(
         condition="'wife' is between arg 1 and arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Index left equality
     Explanation(
         condition="'wife' is two words to the left of arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Index left inequality 0
     Explanation(
         condition="arg 1 is more than three words to the left of arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Index left inequality 1
     Explanation(
         condition="not arg 1 is more than fifty words to the left of arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Index left inequality 2
     Explanation(
         condition="',' is immediately to the left of arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Index left inequality 3
     Explanation(
         condition="',' is right before arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),                      
     # Index within (<=)
     Explanation(
         condition="'wife' is within three words to the left of arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Index within (<= or >= left)
     Explanation(
         condition="'wife' is within three words of arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Index within (<= or >= right)
     Explanation(
         condition="'bought' is within three words of arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Index OrList left
     Explanation(
         condition="'husband' or 'wife' is within three words to the left of arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Index AndList left
     Explanation(
         condition="'his' and 'wife' are within three words to the left of arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
 ]
 
@@ -224,19 +227,19 @@ index_chars = [
     Explanation(
         condition="'wife' is less than 10 characters to the left of arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Characters1
     Explanation(
         condition="'wife' is more than 5 characters to the right of arg 1",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),       
     # Characters2
     Explanation(
         condition="there are at least 10 characters between arg 1 and arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),       
 ]
 
@@ -245,19 +248,19 @@ pos_ner = [
     Explanation(
         condition="at least one word to the left of arg 1 is lower case",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None), 
     # POS
     Explanation(
         condition="at least one noun exists between arg 1 and arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # NER
     Explanation(
         condition="there are no people between arg 1 and arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),     
 ]
 
@@ -266,49 +269,49 @@ count = [
     Explanation(
         condition="there are not three people in the sentence",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Count1
     Explanation(
         condition="the number of words between arg 1 and arg 2 is less than 25",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Count2
     Explanation(
         condition="there are at least two words between arg 1 and arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Count3
     Explanation(
         condition="at least one word exists between arg 1 and arg 2",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Count4
     Explanation(
         condition="there are two nouns to the left of arg 1",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Count5
     Explanation(
         condition="there are less than three nouns to the left of arg 1",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Count6
     Explanation(
         condition="there are not more than two nouns to the left of arg 1",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # Count7
     Explanation(
         condition="at least one word to the left of arg 2 starts with a spouse word",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
 ]
 
@@ -317,7 +320,7 @@ anaphora = [
     Explanation(
         condition="'wife' is between arg 1 and arg 2 and 'divorced' is not between them",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
     # TODO: he/she, his/her, him/her
 ]
@@ -327,7 +330,7 @@ inversion = [
     Explanation(
         condition="to the left of arg 2 is a spouse word",
         label=True,
-        candidate=668761641257950361,
+        candidate=default_candidate,
         semantics=None),
 ]
 

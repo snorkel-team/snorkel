@@ -1,7 +1,9 @@
 import collections
+import codecs
 import csv
 import itertools
 import random
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,7 +18,7 @@ def shuffle_lists(a, b):
 
 
 class MTurkHelper(object):
-    def __init__(self, candidates, labels=[], num_hits=None, candidates_per_hit=4, 
+    def __init__(self, candidates=[], labels=[], num_hits=None, candidates_per_hit=4, 
         workers_per_hit=3, shuffle=True, pct_positive=None, seed=1234, domain=None, 
         anns_path='/dfs/scratch0/paroma/coco/annotations/train_anns.npy'):
         random.seed(seed)
@@ -429,7 +431,7 @@ class MTurkHelper(object):
         HITs are sorted by HITId
         For v0.2 only, pass original candidate list again; otherwise, no need.
         """
-        with open(csvpath, 'rb') as csvfile:
+        with open(csvpath, 'r') as csvfile:
             csvreader = csv.reader(csvfile)
             
             # prep data structures
@@ -465,7 +467,7 @@ class MTurkHelper(object):
                     elif header[i].startswith('Input.goldlabel'):
                         goldlabels.append(field)
                     elif header[i].startswith('Answer.explanation'):
-                        explanations.append(field)
+                        explanations.append(re.sub(r'[\x80-\xff]+', "", field))
                     elif header[i].startswith('Answer.label'):
                         labels.append(field)
 
@@ -528,12 +530,15 @@ class MTurkHelper(object):
             # assert(all([len(responses) == self.workers_per_hit 
             #     for responses in explanations_by_candidate.values()]))
             if self.num_hits:
-                assert(num_unanimous + num_majority + num_bad == self.num_hits * self.candidates_per_hit)
-                print("Warning: expected {} total explanations, found {}.".format(
-                    num_expected_explanations, num_actual_explanations))
+                num_actual_explanations = num_unanimous + num_majority + num_bad
+                num_expected_explanations = self.num_hits * self.candidates_per_hit
+                if num_actual_explanations != num_expected_explanations:
+                    print("Warning: expected {} total explanations, found {}.".format(
+                        num_expected_explanations, num_actual_explanations))
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
             print("Bad: {}".format(num_bad))
+
 
             # Link candidates
             print("Total explanations: {}".format(len(valid_explanations)))

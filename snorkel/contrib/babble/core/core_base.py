@@ -25,6 +25,7 @@ lexical_rules = (
     [Rule('$AtLeastOne', 'a', ('.geq', ('.int', 1)))] +
     [Rule('$Because', w) for w in ['because', 'since', 'if']] +
     [Rule('$Equals', w, '.eq') for w in ['equal', 'equals', '=', '==', 'same', 'identical', 'exactly']] + 
+    [Rule('$NotEquals', w, '.neq') for w in ['different']] + 
     [Rule('$LessThan', w, '.lt') for w in ['less than', 'smaller than', '<']] +
     [Rule('$AtMost', w, '.leq') for w in ['at most', 'no larger than', 'less than or equal', 'within', 'no more than', '<=']] +
     [Rule('$AtLeast', w, '.geq') for w in ['at least', 'no less than', 'no smaller than', 'greater than or equal', '>=']] +

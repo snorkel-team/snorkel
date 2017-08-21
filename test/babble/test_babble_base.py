@@ -19,6 +19,10 @@ class TestBabbleBase(unittest.TestCase):
             if e.candidate and not isinstance(e.candidate, tuple):
                 e.candidate = self.candidate_hash[e.candidate]
             LF_dict = self.sp.parse_and_evaluate(e, show_erroring=True)
+            # TEMP: Use for getting semantics to put in Explanation.semantics
+            # parses = self.sp.parse(e, return_parses=True)
+            # print(parses[0].semantics)
+            # TEMP
             num_correct = len(LF_dict['correct'])
             num_passing = len(LF_dict['passing'])
             num_acceptable = num_correct + num_passing

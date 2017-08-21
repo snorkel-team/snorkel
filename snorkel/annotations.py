@@ -495,7 +495,7 @@ def save_marginals(session, X, marginals, training=True):
             'candidate_id': cid,
             'training': training,
             'value': k,
-            # We cast p in case its a numpy type, which psycopg2 does not handle
+            # We cast p in case it's a numpy type, which psycopg2 does not handle
             'probability': float(p)
         })
 
@@ -506,7 +506,7 @@ def save_marginals(session, X, marginals, training=True):
 
 
 def load_marginals(session, X=None, split=0, cids_query=None, training=True):
-    """Load the marginal probs. for a given split of Candidates"""
+    """Load the marginal probabilities for a given split of Candidates"""
     # For candidate ids subquery
     cids_query = cids_query or session.query(Candidate.id) \
         .filter(Candidate.split == split)

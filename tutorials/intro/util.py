@@ -1,8 +1,11 @@
+import os
+
 import pandas as pd
+
 from snorkel.models import StableLabel
 from snorkel.db_helpers import reload_annotator_labels
 
-FPATH = 'data/gold_labels.tsv'
+FPATH = os.environ['SNORKELHOME'] + '/tutorials/intro/data/gold_labels.tsv'
 
 def number_of_people(sentence):
     active_sequence = False
@@ -16,7 +19,7 @@ def number_of_people(sentence):
     return count
 
 
-def load_external_labels(session, candidate_class, annotator_name='gold', path=FPATH):
+def load_external_labels(session, candidate_class, annotator_name='gold', path=FPATH, splits=[1,2]):
     gold_labels = pd.read_csv(path, sep="\t")
     for index, row in gold_labels.iterrows():    
 
@@ -44,5 +47,11 @@ def load_external_labels(session, candidate_class, annotator_name='gold', path=F
     session.commit()
 
     # Reload annotator labels
-    reload_annotator_labels(session, candidate_class, annotator_name, split=1, filter_label_split=False)
-    reload_annotator_labels(session, candidate_class, annotator_name, split=2, filter_label_split=False)
+    # NOTE: don't load any labels for the train set (split=0)
+    splits = splits if isinstance(splits, list) else [splits]
+    for split in splits:
+        reload_annotator_labels(session, 
+                                candidate_class, 
+                                annotator_name, 
+                                split=split, 
+                                filter_label_split=False)

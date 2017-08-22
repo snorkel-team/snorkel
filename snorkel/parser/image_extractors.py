@@ -45,7 +45,6 @@ class ImageCorpusExtractorUDF(UDF):
         """Given a Document object and its raw text, parse into Sentences"""
         ann, image_idx, source = x
         
-
         # TEMP: overly specific here to bike task
         person_indices = [i for i, box in enumerate(ann) if box['category_id'] == 1]
         bike_indices = [i for i, box in enumerate(ann) if box['category_id'] == 2]
@@ -55,7 +54,7 @@ class ImageCorpusExtractorUDF(UDF):
         if valid_pairs:
             # Make Image objects
             name = "{}:{}".format(source, image_idx)
-            stable_id = "{}::Image".format(name)
+            stable_id = "{}::image".format(name)
             image = Image(name=name, stable_id=stable_id)
             self.session.add(image)
             self.session.flush()

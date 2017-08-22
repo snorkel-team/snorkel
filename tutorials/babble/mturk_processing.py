@@ -1,5 +1,4 @@
 import collections
-import codecs
 import csv
 import itertools
 import random

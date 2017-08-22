@@ -8,25 +8,30 @@ from explanation import Explanation
 class ExplanationIO(object):
 
     def write(self, explanations, fpath):
-        for exp in explanations:
-            with open(fpath, 'w') as tsvfile:
-                tsvwriter = csv.writer(tsvfile)
-                tsvwriter.writerow([exp.candidate, exp.label, exp.condition, exp.semantics])
+        with open(fpath, 'w') as tsvfile:
+            tsvwriter = csv.writer(tsvfile, delimiter='\t')
+            for exp in explanations:
+                tsvwriter.writerow([exp.candidate.get_stable_id(), 
+                                    exp.label, 
+                                    exp.condition, 
+                                    exp.semantics])
         print("Wrote {} explanations to {}".format(len(explanations), fpath))
 
     def read(self, fpath):
         with open(fpath, 'r') as tsvfile:
             tsvreader = csv.reader(tsvfile, delimiter='\t')
             num_read = 0
+            explanations = []
             for (candidate, label, condition, semantics) in tsvreader:
-                yield Explanation(
-                    condition=condition.strip(),
-                    label=bool(label),
-                    candidate=None if candidate == 'None' else candidate,
-                    semantics=semantics,
-                )
+                explanations.append(
+                    Explanation(
+                        condition=condition.strip(),
+                        label=bool(label),
+                        candidate=None if candidate == 'None' else candidate,
+                        semantics=semantics))
                 num_read += 1
         print("Read {} explanations from {}".format(num_read, fpath))
+        return explanations
 
 
 def link_explanation_candidates(explanations, candidates):
@@ -58,12 +63,14 @@ def link_explanation_candidates(explanations, candidates):
             candidate_map[candidate.get_stable_id()] = candidate
     if len(candidate_map) < len(target_candidate_ids):
         num_missing = len(target_candidate_ids) - len(candidate_map)
-        print("Could not find {} target candidates with the following stable_ids:".format(
+        print("Could not find {} target candidates with the following stable_ids (first 5):".format(
             num_missing))
-        for c_hash in target_candidate_ids:
+        for i, c_hash in enumerate(target_candidate_ids):
+            if i >= 5:
+                break
             if c_hash not in candidate_map:
                 print(c_hash)
-        raise Exception("Could not find {} target candidates.".format(num_missing))
+        # raise Exception("Could not find {} target candidates.".format(num_missing))
 
     print("Found {}/{} desired candidates".format(
         len(target_candidate_ids), len(candidate_map)))
@@ -73,10 +80,11 @@ def link_explanation_candidates(explanations, candidates):
         if not isinstance(e.candidate, Candidate):
             try:
                 e.candidate = candidate_map[e.candidate]
+                linked += 1
             except KeyError:
-                raise Exception("Expected candidate with hash {} could not be found.".format(
-                    e.candidate))
-            linked += 1
+                pass
+                # raise Exception("Expected candidate with hash {} could not be found.".format(
+                #     e.candidate))
 
     print("Linked {}/{} explanations".format(linked, len(explanations)))
 

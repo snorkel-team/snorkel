@@ -15,6 +15,7 @@ class ExplanationIO(object):
                                     exp.label, 
                                     exp.condition, 
                                     exp.semantics])
+        fpath = fpath if len(fpath) < 50 else fpath[:20] + '...' + fpath[-30:]
         print("Wrote {} explanations to {}".format(len(explanations), fpath))
 
     def read(self, fpath):
@@ -30,6 +31,7 @@ class ExplanationIO(object):
                         candidate=None if candidate == 'None' else candidate,
                         semantics=semantics))
                 num_read += 1
+        fpath = fpath if len(fpath) < 50 else fpath[:20] + '...' + fpath[-30:]
         print("Read {} explanations from {}".format(num_read, fpath))
         return explanations
 
@@ -65,16 +67,18 @@ def link_explanation_candidates(explanations, candidates):
         num_missing = len(target_candidate_ids) - len(candidate_map)
         print("Could not find {} target candidates with the following stable_ids (first 5):".format(
             num_missing))
-        for i, c_hash in enumerate(target_candidate_ids):
-            if i >= 5:
-                break
+        num_reported = 0
+        for c_hash in enumerate(target_candidate_ids):
             if c_hash not in candidate_map:
                 print(c_hash)
+                num_reported += 1
+                if num_reported >= 5:
+                    break
         # raise Exception("Could not find {} target candidates.".format(num_missing))
 
     print("Found {}/{} desired candidates".format(
-        len(target_candidate_ids), len(candidate_map)))
-    
+        len(candidate_map), len(target_candidate_ids)))
+
     print("Linking explanations to candidates...")
     for e in explanations:
         if not isinstance(e.candidate, Candidate):

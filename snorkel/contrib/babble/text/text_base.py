@@ -28,8 +28,8 @@ lexical_rules = (
     [Rule('$NorpNER', w, ('NORP')) for w in ['political', 'politician', 'religious']] +
 
     # FIXME: Temporary hardcode; replace with "domain_rules" passed to grammar
-    [Rule('$Arg', w, '.arg') for w in ['person']] +
-    [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['people', 'persons']]
+    [Rule('$Arg', w, '.arg') for w in ['person', 'name']] +
+    [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['people', 'persons', 'names']]
     # FIXME
 )
 
@@ -69,6 +69,9 @@ unary_rules = [
     
 
 compositional_rules = [
+    # Text Baseline
+    # Rule('$ROOT', '$Start $String $Stop', lambda (_, str_, _): ('.root', ('.call', ('.in', ('.extract_text', ('.sent',)), str_))))
+    # Rule('$ROOT', '$Start $StringList $Stop', lambda (_, strlist_, _): ('.root', ('.all', ('.map', ('.in', ('.extract_text', ('.sent',)), strlist_)))))
 
     # Direction
         # "is left of Y"
@@ -103,6 +106,9 @@ compositional_rules = [
         # "in the sentence"
     Rule('$StringToBool', '$In $Sentence', 
         lambda (in_, sent_): ('.in', ('.extract_text', (sent_,)))), 
+        # "sentence contains 'foo'"
+    Rule('$Bool', '$Sentence $Contains $String', 
+        lambda (sent_, cont_, str_): ('.call', (cont_, str_), ('.extract_text', (sent_,)))), 
     
     # Phrases
         # standard directions: "to the left of arg 1"

@@ -15,12 +15,12 @@ class TestBabbleBase(unittest.TestCase):
         num_explanations = len(explanations)
         num_parses = 0
         self.assertTrue(len(explanations))
-        for e in explanations:
-            if e.candidate and not isinstance(e.candidate, tuple):
-                e.candidate = self.candidate_map[e.candidate]
-            LF_dict = self.sp.parse_and_evaluate(e, show_erroring=True)
+        for exp in explanations:
+            if exp.candidate and not isinstance(exp.candidate, tuple):
+                exp.candidate = self.candidate_map[exp.candidate]
+            LF_dict = self.sp.parse_and_evaluate(exp, show_erroring=True)
             # TEMP: Use for getting semantics to put in Explanation.semantics
-            # parses = self.sp.parse(e, return_parses=True)
+            # parses = self.sp.parse(exp, return_parses=True)
             # print(parses[0].semantics)
             # TEMP
             num_correct = len(LF_dict['correct'])
@@ -29,9 +29,9 @@ class TestBabbleBase(unittest.TestCase):
             if not num_acceptable > 0:
                 print(LF_dict)
                 self.sp.grammar.print_chart()
-                parses = self.sp.parse(e, return_parses=True)
+                parses = self.sp.parse(exp, return_parses=True)
                 import pdb; pdb.set_trace()
-            if e.semantics:
+            if exp.semantics:
                 self.assertTrue(num_correct > 0)
             else:
                 self.assertTrue(num_passing > 0)

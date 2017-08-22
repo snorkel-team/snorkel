@@ -66,8 +66,8 @@ class SemanticParser(object):
         names = names if isinstance(names, list) or names is None else [names]
         self.name_explanations(explanations, names)
         for i, exp in enumerate(explanations):
-            rule = 'Label {} if {}'.format(exp.label, exp.condition)
-            exp_parses = self.grammar.parse_string(rule)
+            exp_normalized = 'Label {} if {}'.format(exp.label, exp.condition)
+            exp_parses = self.grammar.parse_string(exp_normalized)
             num_parses_by_exp.append(len(exp_parses))
             for j, parse in enumerate(exp_parses):
                 lf = self.grammar.evaluate(parse)

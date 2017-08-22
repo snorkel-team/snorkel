@@ -85,8 +85,8 @@ class Babbler(object):
             raise Exception("Could not find explanations.")
         self.parses = self.semparser.parse(self.explanations, return_parses=True, verbose=self.verbose)
         self.lfs = [parse.function for parse in self.parses]
-        # print("Parsed {} LFs from {} explanations.".format(
-        #     len(self.lfs), len(self.explanations)))
+        print("Parsed {} LFs from {} explanations.".format(
+            len(self.lfs), len(self.explanations)))
         return self.lfs
 
     def filter_duplicate_semantics(self):

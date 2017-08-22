@@ -31,13 +31,15 @@ lexical_rules = (
     [Rule('$AtLeast', w, '.geq') for w in ['at least', 'no less than', 'no smaller than', 'greater than or equal', '>=']] +
     [Rule('$MoreThan', w, '.gt') for w in ['more than', 'greater than', 'larger than', '>']] + 
     [Rule('$In', w, '.in') for w in ['?is in']] +
-    [Rule('$Contains', w, '.contains') for w in ['contains', 'contain', 'containing', 'include', 'includes', 'says', 'states']] +
+    [Rule('$Contains', w, '.contains') for w in ['contains', 'contain', 'containing', 'include', 'includes', 'says', 'states', 'mentions', 'mentioned', 'referred', 'refers']] +
     [Rule('$Separator', w) for w in [',', ';', '/']] +
     [Rule('$Possessive', w) for w in ["'s"]] +
     [Rule('$Count', w, '.count') for w in ['number', 'length', 'count']] +
     [Rule('$Punctuation', w) for w in ['.', ',', ';', '!', '?']] +
     [Rule('$Tuple', w, '.tuple') for w in ['pair', 'tuple']] +
     [Rule('$CID', w, '.cid') for w in ['cid', 'cids', 'canonical id', 'canonical ids']] +
+    [Rule('$ArgNum', w, ('.int', 1)) for w in ['one', '1']] +
+    [Rule('$ArgNum', w, ('.int', 2)) for w in ['two', '2']] +
     [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['them']]
 )
 
@@ -85,7 +87,7 @@ compositional_rules = [
     Rule('$Bool', '$NumToBool $BoolList', lambda (func_,boollist_): ('.call', func_, ('.sum', boollist_))),
 
     ### Context ###
-    Rule('$ArgX', '$Arg $Int', sems_in_order),
+    Rule('$ArgX', '$Arg $ArgNum', sems_in_order),
 ]
 
 # template_rules = []
@@ -138,7 +140,6 @@ ops = {
     '.intersection': lambda x, y: lambda c: list(set(x(c)).intersection(y(c))),
     # context
     '.arg': lambda x: lambda c: c['candidate'][x(c) - 1],
-        # NOTE: For ease of testing, temporarily allow tuples of strings in place of legitimate candidates
     }
 
 

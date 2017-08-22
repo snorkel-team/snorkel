@@ -1,23 +1,27 @@
+import csv
 import os
 import numpy as np
 
 from snorkel.candidates import Ngrams, CandidateExtractor
 from snorkel.matchers import PersonMatcher
-from snorkel.models import Document
+from snorkel.models import Document, StableLabel
 from snorkel.parser import TSVDocPreprocessor
+
 from tutorials.intro import load_external_labels, number_of_people
 
 from snorkel.contrib.babble import Babbler
 from snorkel.contrib.babble.models import BabbleModel
+from snorkel.contrib.babble.models.snorkel_model import TRAIN, DEV, TEST
 
 class SpouseModel(BabbleModel):
     def parse(self, 
               file_path=(os.environ['SNORKELHOME'] + '/tutorials/intro/data/articles.tsv'), 
-              clear=True):
+              clear=True,
+              config=None):
         doc_preprocessor = TSVDocPreprocessor(file_path, max_docs=self.config['max_docs'])
         super(SpouseModel, self).parse(doc_preprocessor, clear=clear)
 
-    def extract(self, clear=True):
+    def extract(self, clear=True, config=None):
         ngrams         = Ngrams(n_max=7)
         person_matcher = PersonMatcher(longest_match_only=True)
         candidate_extractor = CandidateExtractor(
@@ -28,35 +32,45 @@ class SpouseModel(BabbleModel):
         
         docs = self.session.query(Document).order_by(Document.name).all()
 
+        # NOTE: create split_assignments.tsv using the spouse_data_splitter 
+        # notebook. It splits the corpus by document and makes sure that any
+        # documents with candidates that were annotated by MTurkers are placed
+        # in train.
+        assignment_path = (os.environ['SNORKELHOME'] + 
+                  '/tutorials/babble/spouse/data/split_assignments.tsv')
+        with open(assignment_path, 'r') as tsvfile:
+            tsvreader = csv.reader(tsvfile, delimiter='\t')
+            split_assignments = {k: v for k, v in tsvreader}
+
         train_sents = set()
         dev_sents   = set()
         test_sents  = set()
 
         for i, doc in enumerate(docs):
+            split = int(split_assignments[doc.stable_id])
             for s in doc.sentences:
-                if number_of_people(s) <= 5:
-                    if i % 10 == 8:
-                        dev_sents.add(s)
-                    elif i % 10 == 9:
-                        test_sents.add(s)
-                    else:
-                        train_sents.add(s)
+                if number_of_people(s) > 5:
+                    continue
+                if split == TRAIN:
+                    train_sents.add(s)
+                elif split == DEV:
+                    dev_sents.add(s)
+                else:
+                    test_sents.add(s)
 
         for split, sents in enumerate([train_sents, dev_sents, test_sents]):
             if len(sents) > 0 and split in self.config['splits']:
                 super(SpouseModel, self).extract(
                     candidate_extractor, sents, split=split, clear=clear)
 
-    def load_gold(self):
+    def load_gold(self, config=None):
         fpath = os.environ['SNORKELHOME'] + '/tutorials/intro/data/gold_labels.tsv'
         load_external_labels(self.session, self.candidate_class, 
-                             annotator_name='gold', path=fpath)
+                             annotator_name='gold', path=fpath, splits=self.config['splits'])
 
-    def babble(self, explanations, user_lists={}, **kwargs):
-        babbler = Babbler(mode='text', candidate_class=self.candidate_class, 
-                          explanations=explanations, user_lists=user_lists)
-        super(SpouseModel, self).babble(babbler, **kwargs)
-
+    def babble(self, explanations, **kwargs):
+        super(SpouseModel, self).babble('text', explanations, **kwargs)
+  
     def use_intro_lfs(self):
         import re
         from snorkel.lf_helpers import (
@@ -143,3 +157,4 @@ class SpouseModel(BabbleModel):
             LF_no_spouse_in_sentence, LF_and_married, LF_familial_relationship, 
             LF_family_left_window, LF_other_relationship
         ]
+        self.labeler = LabelAnnotator(lfs=self.lfs)

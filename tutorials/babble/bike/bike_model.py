@@ -59,9 +59,4 @@ class BikeModel(BabbleModel):
 
 
     def babble(self, explanations, user_lists={}, gold_labels=None, **kwargs):
-        babbler = Babbler(
-            mode='image', 
-            candidate_class=self.candidate_class, 
-            explanations=explanations,
-            gold_labels=gold_labels)
-        super(BikeModel, self).babble(babbler, **kwargs)
+        super(BikeModel, self).babble('image', explanations, **kwargs)

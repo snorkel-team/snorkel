@@ -112,8 +112,9 @@ class Babbler(object):
         explanation_dict = {}
         for exp in self.explanations:
             if exp.candidate and not isinstance(exp.candidate, self.candidate_class):
-                raise TypeError("Expected type {}, got {} for candidate {}.".format(
-                    self.candidate_class, type(exp.candidate), exp.candidate))
+                pass
+                # raise TypeError("Expected type {}, got {} for candidate {}.".format(
+                #     self.candidate_class, type(exp.candidate), exp.candidate))
             explanation_dict[exp.name] = exp
         consistent = []
         inconsistent = []
@@ -122,7 +123,7 @@ class Babbler(object):
             lf = parse.function
             exp_name = extract_exp_name(lf)
             exp = explanation_dict[exp_name]
-            if exp.candidate:
+            if isinstance(exp.candidate, self.candidate_class):
                 if lf(exp.candidate):
                     consistent.append(parse)
                 else:

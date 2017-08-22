@@ -35,7 +35,7 @@ class TestBabbleText(TestBabbleBase):
         sents = [s for doc in docs for s in doc.sentences]
         cand_extractor.apply(sents, split=0)
 
-        cls.candidate_hash = {hash(c): c for c in session.query(Spouse).all()}
+        cls.candidate_map = {c.get_stable_id(): c for c in session.query(Spouse).all()}
         
         # Test candidate: 
         # "City land records show that GM President [Daniel Ammann] and his wife, 

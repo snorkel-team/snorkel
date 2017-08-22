@@ -1,0 +1,445 @@
+6807fb8a-333f-41fd-bf8b-4b47681a5a08::span:2270:2281~~6807fb8a-333f-41fd-bf8b-4b47681a5a08::span:2370:2378	False	Politicians	
+6807fb8a-333f-41fd-bf8b-4b47681a5a08::span:2270:2281~~6807fb8a-333f-41fd-bf8b-4b47681a5a08::span:2370:2378	False	Dusty Hanson and Rand Paul are commenting on politics for a distribution company.	
+6807fb8a-333f-41fd-bf8b-4b47681a5a08::span:2270:2281~~6807fb8a-333f-41fd-bf8b-4b47681a5a08::span:2370:2378	False	nothing in the text indicates that person1 and person2 are married	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1646:1652~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1707:1711	False	No indication of marriage between these two entities.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1646:1652~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1707:1711	False	person1 merely sent a letter to person2.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1646:1652~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1707:1711	False	the given text does not indicate that person1 and person2 are/were married.	
+3494f8e0-ecd4-4f10-86db-95b920744162::span:18:33~~3494f8e0-ecd4-4f10-86db-95b920744162::span:120:125	True	person2 is named as person1's wife.	
+3494f8e0-ecd4-4f10-86db-95b920744162::span:18:33~~3494f8e0-ecd4-4f10-86db-95b920744162::span:120:125	True	The people highlighted here are married to each other.	
+3494f8e0-ecd4-4f10-86db-95b920744162::span:18:33~~3494f8e0-ecd4-4f10-86db-95b920744162::span:120:125	True	"the text says ""his wife"""	
+292069d7-ba8e-43da-b3c2-81488b552239::span:4807:4819~~292069d7-ba8e-43da-b3c2-81488b552239::span:4909:4914	False	nothing in the text indicates that these people are married	
+292069d7-ba8e-43da-b3c2-81488b552239::span:4807:4819~~292069d7-ba8e-43da-b3c2-81488b552239::span:4909:4914	False	No indication of marriage here.	
+292069d7-ba8e-43da-b3c2-81488b552239::span:4807:4819~~292069d7-ba8e-43da-b3c2-81488b552239::span:4909:4914	False	No indication of marriage.	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1829:1831~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1837:1841	True	"It says they ""tied the knot"""	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1829:1831~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1837:1841	True	text states that person1 and person2 tied the knot	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1829:1831~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1837:1841	True	Kim and Kanye tied the knot	
+5b421541-4922-418f-a054-886ce4965d02::span:549:552~~5b421541-4922-418f-a054-886ce4965d02::span:569:579	True	Depp's wife actress Amber Heard	
+5b421541-4922-418f-a054-886ce4965d02::span:549:552~~5b421541-4922-418f-a054-886ce4965d02::span:569:579	True	"""wife:"	
+5b421541-4922-418f-a054-886ce4965d02::span:549:552~~5b421541-4922-418f-a054-886ce4965d02::span:569:579	True	the text refers to person2 as being the wife of person1	
+bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2027:2030~~bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2055:2066	False	the text indicates that person1 is married to someone who is not person2 and that person2 has a fiance who is not person1	
+bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2027:2030~~bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2055:2066	False	No indication of marriage here.	
+bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2027:2030~~bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2055:2066	False	Lauren Brant and her fiance,' Johns	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2168:2175~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2306:2314	False	person1 and person2 are acts performing at an event.	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2168:2175~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2306:2314	False	Person1 has no second word.	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2168:2175~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2306:2314	False	No indication of marriage between these two entities.	
+c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:7068:7076~~c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:7137:7145	False	Person 1 and person 2 have different last words after the first name.	
+c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:7068:7076~~c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:7137:7145	False	"""Elon Musk"" is the owner of Tesla and not ""Joe Biden's"" mate."	
+c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:7068:7076~~c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:7137:7145	False	"Mush is a ""CEO"""	
+1b0e4c01-d122-4951-ae6d-4f0c8fff9e77::span:413:423~~1b0e4c01-d122-4951-ae6d-4f0c8fff9e77::span:461:476	False	daughter is between the highlighted names	
+1b0e4c01-d122-4951-ae6d-4f0c8fff9e77::span:413:423~~1b0e4c01-d122-4951-ae6d-4f0c8fff9e77::span:461:476	False	"Skyler is a ""newborn baby girl"""	
+1b0e4c01-d122-4951-ae6d-4f0c8fff9e77::span:413:423~~1b0e4c01-d122-4951-ae6d-4f0c8fff9e77::span:461:476	False	Person 1 welcomed a baby girl who is Person 2.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3130:3140~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3146:3154	False	No indication of marriage.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3130:3140~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3146:3154	False	They are not married	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3130:3140~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3146:3154	False	No indication of marriage between these two entities.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:5411:5417~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:5423:5435	True	"It says that they been married for ""19 years"""	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:5411:5417~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:5423:5435	True	The article mentions that Person 1 and Person 2 have been together and married for 19 years.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4710:4712~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4790:4796	False	No indication of marriage between these two entities.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4710:4712~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4790:4796	False	No indication of marriage.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4710:4712~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4790:4796	False	"the word ""daughter"" occurs within three words to the left of person2."	
+cd9b993c-e130-461a-b072-739402ea3d73::span:2366:2371~~cd9b993c-e130-461a-b072-739402ea3d73::span:2394:2398	False	No indication of marriage here.	
+cd9b993c-e130-461a-b072-739402ea3d73::span:2366:2371~~cd9b993c-e130-461a-b072-739402ea3d73::span:2394:2398	False	Refers to Davis denying marriage cert	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1707:1711~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1845:1850	False	not clear if they are married	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1707:1711~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1845:1850	False	nothing in the text indicates that these people are married	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3625:3637~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3643:3657	True	is says  that these two are married.	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3625:3637~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3643:3657	True	"The text states that they are a ""married couple"""	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3625:3637~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3643:3657	True	Finally a correctly highlighted married couple. Great to see here.	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3625:3637~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3643:3657	True	"It says ""married"" couple"	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3625:3637~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3643:3657	True	"I chose this label because of the phrase ""married couple Chris Kennedy and Gabriel Cabrera."""	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3625:3637~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3643:3657	True	The article mentions Person 1 and Person 2 as being a married couple in the same sentence.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2256:2258~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2320:2336	False	No indication of marriage between these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2256:2258~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2320:2336	False	person1 is just friends with person2	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2256:2258~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2320:2336	False	The sentence clearly states that Kim is a close friend and not a wife of  Olivier Rousteing	
+561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:978:983~~561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:989:998	True	they have the same surname	
+561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:978:983~~561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:989:998	True	It sounds as if they are married.	
+69309f26-7206-4d35-9881-4db28038900b::span:1409:1418~~69309f26-7206-4d35-9881-4db28038900b::span:1477:1479	False	No indication of marriage between these two entities.	
+69309f26-7206-4d35-9881-4db28038900b::span:1409:1418~~69309f26-7206-4d35-9881-4db28038900b::span:1477:1479	False	nothing indicates that they are married.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1775:1780~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1845:1850	False	No indication of marriage between these two entities.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1775:1780~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1845:1850	False	person1 is the same as person2	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1775:1780~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1845:1850	False	the first word for person1 and person2 is the same.	
+d6500075-c7f8-40ed-968c-d08f3d66b112::span:6410:6416~~d6500075-c7f8-40ed-968c-d08f3d66b112::span:6496:6510	False	"Arthur Richards is a ""Governor"""	
+d6500075-c7f8-40ed-968c-d08f3d66b112::span:6410:6416~~d6500075-c7f8-40ed-968c-d08f3d66b112::span:6496:6510	False	Person 1 and Person 2 have no relationship according to the article.	
+d6500075-c7f8-40ed-968c-d08f3d66b112::span:6410:6416~~d6500075-c7f8-40ed-968c-d08f3d66b112::span:6496:6510	False	"Refers to someone watching a ""Governor"""	
+cbe5ae49-4d25-4c12-8e47-c85fbf840d60::span:1018:1021~~cbe5ae49-4d25-4c12-8e47-c85fbf840d60::span:1148:1159	True	Person 1 being mentioned as former husband of Person 2.	
+cbe5ae49-4d25-4c12-8e47-c85fbf840d60::span:1018:1021~~cbe5ae49-4d25-4c12-8e47-c85fbf840d60::span:1148:1159	True	"It refers to Nick as ""The former husband"""	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4786:4790~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4796:4809	True	The article mentions Person 1 and Person 2 with the same last name and a daugther.	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4786:4790~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4796:4809	True	"Says the two share a ""daughter"" which means they must have been together at one point in time."	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4786:4790~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4796:4809	True	"It refers to their ""13 year old daughter"""	
+55138a30-e5a7-4a3e-ad24-0a42d125d247::span:3259:3271~~55138a30-e5a7-4a3e-ad24-0a42d125d247::span:3476:3489	False	No indication of marriage between these two entities.	
+55138a30-e5a7-4a3e-ad24-0a42d125d247::span:3259:3271~~55138a30-e5a7-4a3e-ad24-0a42d125d247::span:3476:3489	False	They are not married	
+55138a30-e5a7-4a3e-ad24-0a42d125d247::span:3259:3271~~55138a30-e5a7-4a3e-ad24-0a42d125d247::span:3476:3489	False	The 1st and 2nd person do not share a last name.	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:817:830~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1171:1174	True	ITS TRUE	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:817:830~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1171:1174	True	States they were married	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:817:830~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1171:1174	True	The two people were married.	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1417:1421~~cd9b993c-e130-461a-b072-739402ea3d73::span:1505:1516	False	Davis opposing the marriage	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1417:1421~~cd9b993c-e130-461a-b072-739402ea3d73::span:1505:1516	False	marriage licence is denied here.	
+4dea8778-67ba-40a6-af3f-e4303f2f4dc7::span:463:467~~4dea8778-67ba-40a6-af3f-e4303f2f4dc7::span:482:494	True	Mowry, who married Cory Hardrict	
+4dea8778-67ba-40a6-af3f-e4303f2f4dc7::span:463:467~~4dea8778-67ba-40a6-af3f-e4303f2f4dc7::span:482:494	True	Mowry married Hardrict	
+4dea8778-67ba-40a6-af3f-e4303f2f4dc7::span:463:467~~4dea8778-67ba-40a6-af3f-e4303f2f4dc7::span:482:494	True	the text says that person1 and person2 are married	
+de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:957:966~~de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:1044:1055	False	The article mentions nothing about marriage and they seem to be teammates according to the article.	
+de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:957:966~~de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:1044:1055	False	"""Hand the prestigious medal"" was the only interaction between the two people"	
+de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:957:966~~de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:1044:1055	False	"One's a ""minister"" and the other is a ""fullback"""	
+fb4bf07f-f54d-49bd-938d-00e4368e3365::span:301:309~~fb4bf07f-f54d-49bd-938d-00e4368e3365::span:315:324	False	No indication of marriage between these two entities.	
+fb4bf07f-f54d-49bd-938d-00e4368e3365::span:301:309~~fb4bf07f-f54d-49bd-938d-00e4368e3365::span:315:324	False	"the word ""and"" between person1 and person2 is not also accompanied by the words ""husband"", ""wife"", or ""married"" anywhere in the sentence"	
+fb4bf07f-f54d-49bd-938d-00e4368e3365::span:301:309~~fb4bf07f-f54d-49bd-938d-00e4368e3365::span:315:324	False	nothing indicates that they are married.	
+18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:2042:2056~~18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:2067:2082	False	Person 1 and person 2 have different last names.	
+18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:2042:2056~~18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:2067:2082	False	"""Far more taken"" indicates that they're someone else's interests."	
+18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:2042:2056~~18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:2067:2082	False	"It doesn't say anything about ""marriage""."	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1020:1027~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1271:1278	False	Person 1 and person 2 are the same name and are considered the same person in the article.	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1020:1027~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1271:1278	False	they are the same person	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1020:1027~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1271:1278	False	Kristina is the same person.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3171:3175~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3368:3372	False	"""daughter"", ""son"" or ""child"" occurs to the left of person2"	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3171:3175~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3368:3372	False	Kylie is Norths aunt	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3171:3175~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3368:3372	False	nothing indicates that they are married.	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1018:1030~~cd9b993c-e130-461a-b072-739402ea3d73::span:1040:1044	False	Criminal situation.	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1018:1030~~cd9b993c-e130-461a-b072-739402ea3d73::span:1040:1044	False	the text indicates that person1 is a judge who had person2 in their courtroom, not that they're married	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1018:1030~~cd9b993c-e130-461a-b072-739402ea3d73::span:1040:1044	False	Judge and clerk	
+c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:6043:6049~~c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:6192:6203	False	Person 1 and person 2 have different last words in their name.	
+c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:6043:6049~~c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:6192:6203	False	"""Longtime bandleader"" excludes him from being married to Colbert."	
+c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:6043:6049~~c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:6192:6203	False	mentions they are coworkers	
+18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:1709:1723~~18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:1979:1998	False	No relation	
+18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:1709:1723~~18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:1979:1998	False	The text does not indicate that person1 and person2 are married, and I'm not even sure if person1 is a person	
+18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:1709:1723~~18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:1979:1998	False	person1 is not a person	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:2878:2882~~302c9acb-a874-421b-b926-7426d32e0ef2::span:2916:2919	False	nothing in the text indicates that these people are married	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:2878:2882~~302c9acb-a874-421b-b926-7426d32e0ef2::span:2916:2919	False	No indiction of relationship.	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:2878:2882~~302c9acb-a874-421b-b926-7426d32e0ef2::span:2916:2919	False	No indication of marriage.	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2168:2175~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2279:2288	False	person1 and person2 are acts performing at an event.	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2168:2175~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2279:2288	False	Person1 has no second word.	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2168:2175~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2279:2288	False	No indication of marriage between these two entities.	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3643:3657~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3701:3716	False	there is a couple listed but these two are not it.	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3643:3657~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3701:3716	False	The text states the 2nd name is the singer they were performing.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1717:1722~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1845:1850	False	nothing indicates that they are married.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1717:1722~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1845:1850	False	No indication of marriage.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1717:1722~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1845:1850	False	No indication of marriage between these two entities.	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2715:2724~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2746:2756	False	The texts states the people as co-stars.	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2715:2724~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2746:2756	False	No indication of marriage between these two entities.	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2715:2724~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2746:2756	False	Person1 and Person2 have a different second word.	
+e16a971f-23ce-42e4-81df-b2386126f8b3::span:126:134~~e16a971f-23ce-42e4-81df-b2386126f8b3::span:140:157	False	The texts states the people are co-producers.	
+e16a971f-23ce-42e4-81df-b2386126f8b3::span:126:134~~e16a971f-23ce-42e4-81df-b2386126f8b3::span:140:157	False	No indication of marriage between these two entities.	
+e16a971f-23ce-42e4-81df-b2386126f8b3::span:126:134~~e16a971f-23ce-42e4-81df-b2386126f8b3::span:140:157	False	Person1 and Person2 have a different second word.	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1505:1516~~cd9b993c-e130-461a-b072-739402ea3d73::span:1522:1538	True	the text indicates that person1 and person2 are married	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1505:1516~~cd9b993c-e130-461a-b072-739402ea3d73::span:1522:1538	True	marriage license from same-sex couple April Miller and Karen Ann Roberts	
+de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2600:2605~~de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2608:2611	True	Jodi's husband is Braith	
+de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2600:2605~~de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2608:2611	True	Posing alongside husband Braith, Jodi	
+de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2600:2605~~de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2608:2611	True	The article mentions Person 1 with husband after and talking about Person 2.	
+de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2600:2605~~de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2608:2611	True	"It refers to Briath as Jodi's ""husband"""	
+de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2600:2605~~de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2608:2611	True	the highlighted names have husband before them	
+561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:65:68~~561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:87:91	True	Person 1 alerted his wife Person 2 within the same sentence.	
+561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:65:68~~561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:87:91	True	"Refers to ""His wife"""	
+561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:65:68~~561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:87:91	True	"Refers to Jenny as ""his wife"""	
+0911842a-7202-450d-b54d-21c283f8d3df::span:612:618~~0911842a-7202-450d-b54d-21c283f8d3df::span:945:959	True	person2 is being described as committing a crime of passion against person1 who is listed as her husband.	
+0911842a-7202-450d-b54d-21c283f8d3df::span:612:618~~0911842a-7202-450d-b54d-21c283f8d3df::span:945:959	True	Patrick was the husband of Vernicia Ruguru	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1417:1421~~cd9b993c-e130-461a-b072-739402ea3d73::span:1522:1538	False	I chose this label because Davis is someone in an office refusing to marry the highlighted Karen Ann Roberts and her partner who are his clients.	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1417:1421~~cd9b993c-e130-461a-b072-739402ea3d73::span:1522:1538	False	Davis was the clerk	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1417:1421~~cd9b993c-e130-461a-b072-739402ea3d73::span:1522:1538	False	the text indicates that person2 is married to someone who is not person1	
+0911842a-7202-450d-b54d-21c283f8d3df::span:320:355~~0911842a-7202-450d-b54d-21c283f8d3df::span:771:774	False	No indication in text they are married.	
+0911842a-7202-450d-b54d-21c283f8d3df::span:320:355~~0911842a-7202-450d-b54d-21c283f8d3df::span:771:774	False	The text states the 1st person was the judge.	
+0911842a-7202-450d-b54d-21c283f8d3df::span:320:355~~0911842a-7202-450d-b54d-21c283f8d3df::span:771:774	False	"""Robinson Oigara"" is he person in charge of the case"	
+77c632db-103a-491e-ae8c-cd7ef3aace00::span:3983:3988~~77c632db-103a-491e-ae8c-cd7ef3aace00::span:5704:5709	False	Same person	
+77c632db-103a-491e-ae8c-cd7ef3aace00::span:3983:3988~~77c632db-103a-491e-ae8c-cd7ef3aace00::span:5704:5709	False	Same name, same person.	
+77c632db-103a-491e-ae8c-cd7ef3aace00::span:3983:3988~~77c632db-103a-491e-ae8c-cd7ef3aace00::span:5704:5709	False	person1 and person2 are the same person	
+0911842a-7202-450d-b54d-21c283f8d3df::span:612:618~~0911842a-7202-450d-b54d-21c283f8d3df::span:771:774	False	Slightly unclear of marriage here.	
+0911842a-7202-450d-b54d-21c283f8d3df::span:612:618~~0911842a-7202-450d-b54d-21c283f8d3df::span:771:774	False	person1 is married to a different in the scenario.	
+0911842a-7202-450d-b54d-21c283f8d3df::span:612:618~~0911842a-7202-450d-b54d-21c283f8d3df::span:771:774	False	I think that Njue's is not related to Patrick	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1115:1121~~cd9b993c-e130-461a-b072-739402ea3d73::span:1131:1135	False	Clerk	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1115:1121~~cd9b993c-e130-461a-b072-739402ea3d73::span:1131:1135	False	"""ordered"""	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1115:1121~~cd9b993c-e130-461a-b072-739402ea3d73::span:1131:1135	False	there is nothing in the text that indicates that person1 and person2 are married	
+a682d7fe-d61c-4e78-a5d0-68b95f490ae7::span:6:18~~a682d7fe-d61c-4e78-a5d0-68b95f490ae7::span:99:108	False	"Person is marrying the ""prison guard"""	
+a682d7fe-d61c-4e78-a5d0-68b95f490ae7::span:6:18~~a682d7fe-d61c-4e78-a5d0-68b95f490ae7::span:99:108	False	mentions a different type of relationship	
+1f87433d-31b2-4a5e-848c-521c1cbf5567::span:806:814~~1f87433d-31b2-4a5e-848c-521c1cbf5567::span:851:858	False	No proof, it sounds like a news release	
+1f87433d-31b2-4a5e-848c-521c1cbf5567::span:806:814~~1f87433d-31b2-4a5e-848c-521c1cbf5567::span:851:858	False	Nothing to suggest marriage	
+1f87433d-31b2-4a5e-848c-521c1cbf5567::span:806:814~~1f87433d-31b2-4a5e-848c-521c1cbf5567::span:851:858	False	No indication of marriage here.	
+c24931e6-be98-4056-ae2d-ab91fe5a2514::span:2453:2461~~c24931e6-be98-4056-ae2d-ab91fe5a2514::span:2508:2518	True	married	
+c24931e6-be98-4056-ae2d-ab91fe5a2514::span:2453:2461~~c24931e6-be98-4056-ae2d-ab91fe5a2514::span:2508:2518	True	husband John Legend faithful	
+c24931e6-be98-4056-ae2d-ab91fe5a2514::span:2453:2461~~c24931e6-be98-4056-ae2d-ab91fe5a2514::span:2508:2518	True	Married couple highlighted here.	
+c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:4472:4478~~c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:4625:4630	False	brother is between the names	
+c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:4472:4478~~c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:4625:4630	False	"""George"" is the guest's brother."	
+c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:4472:4478~~c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:4625:4630	False	Person 1 and Person 2 are mentioned as brothers.	
+258873e6-1f83-4f6c-9ddd-7e23b4332e41::span:0:4~~258873e6-1f83-4f6c-9ddd-7e23b4332e41::span:53:64	True	Indication of marriage for these 2 people.	
+258873e6-1f83-4f6c-9ddd-7e23b4332e41::span:0:4~~258873e6-1f83-4f6c-9ddd-7e23b4332e41::span:53:64	True	the text says that person1 married (tied the knot) person2	
+258873e6-1f83-4f6c-9ddd-7e23b4332e41::span:0:4~~258873e6-1f83-4f6c-9ddd-7e23b4332e41::span:53:64	True	Usher has tied the knot with his longtime girlfriend Grace Miguel	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4920:4922~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4951:4963	False	father and daughter	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4920:4922~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4951:4963	False	No marriage indicated for these two entities.	
+6538125b-57a3-4029-b30f-cf9d48e65b2e::span:1242:1246~~6538125b-57a3-4029-b30f-cf9d48e65b2e::span:1349:1353	False	same person highlighted.	
+6538125b-57a3-4029-b30f-cf9d48e65b2e::span:1242:1246~~6538125b-57a3-4029-b30f-cf9d48e65b2e::span:1349:1353	False	person1 and person2 are the same person	
+6538125b-57a3-4029-b30f-cf9d48e65b2e::span:1242:1246~~6538125b-57a3-4029-b30f-cf9d48e65b2e::span:1349:1353	False	Same person	
+393e8800-4272-4309-80d4-ca1d05bb4c53::span:592:597~~393e8800-4272-4309-80d4-ca1d05bb4c53::span:603:608	False	it says they are gangsters	
+393e8800-4272-4309-80d4-ca1d05bb4c53::span:592:597~~393e8800-4272-4309-80d4-ca1d05bb4c53::span:603:608	False	prison mates	
+393e8800-4272-4309-80d4-ca1d05bb4c53::span:592:597~~393e8800-4272-4309-80d4-ca1d05bb4c53::span:603:608	False	No indication of marriage between these two entities.	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1545:1547~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1588:1610	True	The article mentions Person 1 was formerly married to his wife Person 2 in the same sentence.	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1545:1547~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1588:1610	True	"Ben was a ""still formally married"""	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1545:1547~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1588:1610	True	"They were ""formally married"""	
+822d4f7f-e420-4987-9fab-92b0686d65d6::span:1864:1867~~822d4f7f-e420-4987-9fab-92b0686d65d6::span:1877:1879	True	Hall's widow Jan	
+822d4f7f-e420-4987-9fab-92b0686d65d6::span:1864:1867~~822d4f7f-e420-4987-9fab-92b0686d65d6::span:1877:1879	True	The term widow.	
+822d4f7f-e420-4987-9fab-92b0686d65d6::span:1864:1867~~822d4f7f-e420-4987-9fab-92b0686d65d6::span:1877:1879	True	the text refers to person2 as the widow of person1	
+18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:736:741~~18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:898:900	False	not sure	
+18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:736:741~~18855d26-6e9d-47ea-8fa2-bece4d5b3853::span:898:900	False	No indication of these two entities being married here.	
+5de25cfd-d507-4e08-b3ab-c3d5cf1c5595::span:143:155~~5de25cfd-d507-4e08-b3ab-c3d5cf1c5595::span:161:172	False	No indication of marriage between these two entities.	
+5de25cfd-d507-4e08-b3ab-c3d5cf1c5595::span:143:155~~5de25cfd-d507-4e08-b3ab-c3d5cf1c5595::span:161:172	False	person1 and person2 are only united in fashion.	
+5de25cfd-d507-4e08-b3ab-c3d5cf1c5595::span:143:155~~5de25cfd-d507-4e08-b3ab-c3d5cf1c5595::span:161:172	False	They are not married.	
+0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:682:691~~0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:751:756	True	Two highlighted people are married to each other.	
+0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:682:691~~0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:751:756	True	Mrs Robles huband is Damien	
+0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:682:691~~0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:751:756	True	Mrs Robles, an English literature teacher, who is married to husband Damien	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:1522:1528~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1570:1573	True	Rodeman, 35, was married in June and his widow, Kate,	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:1522:1528~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1570:1573	True	widow, married in June.	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:1522:1528~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1570:1573	True	Person 1 was married and his widow mentioned before her name Person 2.	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:1522:1528~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1570:1573	True	"He ""was married"" to the other"	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:1522:1528~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1570:1573	True	"Kate is a ""widow"" to Rodeman."	
+46202c5c-38e8-46c6-acc2-36c8b734b55a::span:426:434~~46202c5c-38e8-46c6-acc2-36c8b734b55a::span:640:645	False	states they are co-workers	
+46202c5c-38e8-46c6-acc2-36c8b734b55a::span:426:434~~46202c5c-38e8-46c6-acc2-36c8b734b55a::span:640:645	False	"one is a ""Governor"" and the other a ""president"""	
+46202c5c-38e8-46c6-acc2-36c8b734b55a::span:426:434~~46202c5c-38e8-46c6-acc2-36c8b734b55a::span:640:645	False	The article mentions nothing about marriage or any other type of relationship.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3395:3397~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3654:3671	False	No indication of marriage between these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3395:3397~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3654:3671	False	Nothing indicates they're a couple. They went to the same event but that's all.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3395:3397~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3654:3671	False	There is no mention of a relationship between the 2.	
+416228c4-81cb-4e38-8c4c-5ca61e385055::span:3931:3944~~416228c4-81cb-4e38-8c4c-5ca61e385055::span:3962:3976	False	no realtion between names	
+416228c4-81cb-4e38-8c4c-5ca61e385055::span:3931:3944~~416228c4-81cb-4e38-8c4c-5ca61e385055::span:3962:3976	False	"Both seem to be part of a ""campaign"""	
+416228c4-81cb-4e38-8c4c-5ca61e385055::span:3931:3944~~416228c4-81cb-4e38-8c4c-5ca61e385055::span:3962:3976	False	The article mentions Person 1 and Person 2 as being friends and celebrating.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1717:1722~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1775:1780	False	nothing indicates that they are married.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1717:1722~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1775:1780	False	No indication of marriage.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1717:1722~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1775:1780	False	No indication of marriage between these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2997:3001~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3035:3050	False	No indication of marriage.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2997:3001~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3035:3050	False	They are not married	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2997:3001~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3035:3050	False	No indication of marriage between these two entities.	
+95f95f3f-8589-4eac-9682-0342b1dd1da0::span:0:11~~95f95f3f-8589-4eac-9682-0342b1dd1da0::span:22:26	False	The first person is a Pope.	
+95f95f3f-8589-4eac-9682-0342b1dd1da0::span:0:11~~95f95f3f-8589-4eac-9682-0342b1dd1da0::span:22:26	False	Person2 has no second word.	
+adad9e82-df6c-44bf-bb04-05bc5df73f87::span:93:104~~adad9e82-df6c-44bf-bb04-05bc5df73f87::span:210:224	False	No indication of marriage here.	
+adad9e82-df6c-44bf-bb04-05bc5df73f87::span:93:104~~adad9e82-df6c-44bf-bb04-05bc5df73f87::span:210:224	False	the text indicates that person1 is married to someone else who is not person2	
+adad9e82-df6c-44bf-bb04-05bc5df73f87::span:93:104~~adad9e82-df6c-44bf-bb04-05bc5df73f87::span:210:224	False	Interviewer	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1646:1652~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1845:1850	False	No indication of marriage between these two entities.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1646:1652~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1845:1850	False	nothing indicates that they are married.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1646:1652~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1845:1850	False	the given text does not indicate that person1 and person2 are/were married.	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4563:4573~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4579:4592	True	They have the same last name and have a son	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4563:4573~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4579:4592	True	text states that person1 and person2 have a son and they have the same last name	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4563:4573~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4579:4592	True	Tom McMahon and Shelly McMahon (CA), whose 24 year-old son, Joe McMahon	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4563:4573~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4579:4592	True	Person 1 and Person 2 have a son and both have the same last name.	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4563:4573~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4579:4592	True	both names have the same last name	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4563:4573~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4579:4592	True	"refers to their ""24 year-old son"""	
+8ba66cef-e24b-4cbc-ab4d-174dfd934b14::span:1539:1547~~8ba66cef-e24b-4cbc-ab4d-174dfd934b14::span:1649:1670	True	text states that person2 is the husband of person1	
+8ba66cef-e24b-4cbc-ab4d-174dfd934b14::span:1539:1547~~8ba66cef-e24b-4cbc-ab4d-174dfd934b14::span:1649:1670	True	French husband Francois-Henri Pinault	
+b5b038c0-f631-496e-bcdb-7895d4d4546c::span:7786:7798~~b5b038c0-f631-496e-bcdb-7895d4d4546c::span:7835:7840	False	nothing in the text indicates that these people are married	
+b5b038c0-f631-496e-bcdb-7895d4d4546c::span:7786:7798~~b5b038c0-f631-496e-bcdb-7895d4d4546c::span:7835:7840	False	No indication of marriage here.	
+b5b038c0-f631-496e-bcdb-7895d4d4546c::span:7786:7798~~b5b038c0-f631-496e-bcdb-7895d4d4546c::span:7835:7840	False	No indication of marriage.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1646:1652~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1775:1780	False	No indication of marriage between these two entities.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1646:1652~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1775:1780	False	n	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1646:1652~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1775:1780	False	the given text does not indicate that person1 and person2 are/were married.	
+b8202a40-f2cf-416b-bf45-f4992a7bd819::span:692:695~~b8202a40-f2cf-416b-bf45-f4992a7bd819::span:768:780	True	John, who has two adopted children with his husband, the Canadian filmmaker David Furnish	
+b8202a40-f2cf-416b-bf45-f4992a7bd819::span:692:695~~b8202a40-f2cf-416b-bf45-f4992a7bd819::span:768:780	True	Same sex married couple	
+b8202a40-f2cf-416b-bf45-f4992a7bd819::span:692:695~~b8202a40-f2cf-416b-bf45-f4992a7bd819::span:768:780	True	the text says that person1's husband is person2	
+a682d7fe-d61c-4e78-a5d0-68b95f490ae7::span:6:18~~a682d7fe-d61c-4e78-a5d0-68b95f490ae7::span:161:170	True	"It states ""will marry"""	
+a682d7fe-d61c-4e78-a5d0-68b95f490ae7::span:6:18~~a682d7fe-d61c-4e78-a5d0-68b95f490ae7::span:161:170	True	"I chose this label, because of the phrase ""will marry prison guard."""	
+a682d7fe-d61c-4e78-a5d0-68b95f490ae7::span:6:18~~a682d7fe-d61c-4e78-a5d0-68b95f490ae7::span:161:170	True	The article mentions that in the future Person 1 and Person 2 are planning to get married.	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4396:4405~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4431:4437	False	Person 1 and Person 2 have different last names and Person 1 attended the event of Person 2.	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4396:4405~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4431:4437	False	no realtion between the highlighted names	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4396:4405~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4431:4437	False	"Giffords is a ""rep"" and a politician."	
+d925621f-5004-4a55-8122-f5da4865a483::span:3757:3762~~d925621f-5004-4a55-8122-f5da4865a483::span:3820:3828	False	person 1 has no identifiable relationship to person 2	
+d925621f-5004-4a55-8122-f5da4865a483::span:3757:3762~~d925621f-5004-4a55-8122-f5da4865a483::span:3820:3828	False	No indication of marriage between these two entities.	
+c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:2849:2852~~c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:2858:2862	True	the text mentions the proposal from person1 to person2	
+c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:2849:2852~~c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:2858:2862	True	best proposal ever	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1646:1652~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1717:1722	False	person1 merely sent a letter to person2.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1646:1652~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1717:1722	False	No indication of marriage.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1646:1652~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1717:1722	False	No indication of marriage between these two entities.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4790:4796~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4920:4922	False	No indication of marriage between these two entities.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4790:4796~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4920:4922	False	No indication of marriage.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4790:4796~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4920:4922	False	"the word ""daughter"" occurs within three words to the left of person1."	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2997:3001~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3021:3024	False	No indication of marriage.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2997:3001~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3021:3024	False	Boyfriend and girlfriend not married	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2997:3001~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3021:3024	False	No indication of marriage between these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2680:2682~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2728:2732	False	nothing indicates that they are married.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2680:2682~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2728:2732	False	No indication of marriage between these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2680:2682~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2728:2732	False	nothing in the text indicates that they are married	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2016:2018~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2036:2045	False	"These two people are married in real life, yet this writing does not indicate marriage here. ""Beau could mean lover, boyfriend, fiance, partner, etc."	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2016:2018~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2036:2045	False	it indicates that person2 is the beau of person1	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2016:2018~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2036:2045	False	"""beau"" is immediately before person 2"	
+8ed8e52a-d1e9-4df2-b7cf-c5bf3961d40d::span:8168:8177~~8ed8e52a-d1e9-4df2-b7cf-c5bf3961d40d::span:8276:8280	False	The article mentions that Person 1 and Person 2 has been enemies and not together.	
+8ed8e52a-d1e9-4df2-b7cf-c5bf3961d40d::span:8168:8177~~8ed8e52a-d1e9-4df2-b7cf-c5bf3961d40d::span:8276:8280	False	"Don was ""Exiled"" by Jeffs"	
+8ed8e52a-d1e9-4df2-b7cf-c5bf3961d40d::span:8168:8177~~8ed8e52a-d1e9-4df2-b7cf-c5bf3961d40d::span:8276:8280	False	"He was ""the first exiled from the community by Jeffs"""	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3305:3317~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3453:3464	False	nothing in the text indicates that these people are married	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3305:3317~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3453:3464	False	No indication of marriage here.	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3305:3317~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3453:3464	False	No indication of marriage.	
+87158208-e400-424a-8cad-da6eb9f2959c::span:406:419~~87158208-e400-424a-8cad-da6eb9f2959c::span:589:599	True	husband	
+87158208-e400-424a-8cad-da6eb9f2959c::span:406:419~~87158208-e400-424a-8cad-da6eb9f2959c::span:589:599	True	husband John Legend faithful	
+cac44ffd-5f6d-42b7-95e8-2c5f9bd76e9a::span:1291:1297~~cac44ffd-5f6d-42b7-95e8-2c5f9bd76e9a::span:1342:1354	True	article mentions Person 1 has been married to Person 2 a start up investor.	
+cac44ffd-5f6d-42b7-95e8-2c5f9bd76e9a::span:1291:1297~~cac44ffd-5f6d-42b7-95e8-2c5f9bd76e9a::span:1342:1354	True	"they are considered to be ""married"""	
+cac44ffd-5f6d-42b7-95e8-2c5f9bd76e9a::span:1291:1297~~cac44ffd-5f6d-42b7-95e8-2c5f9bd76e9a::span:1342:1354	True	the word married is between the names	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:2538:2540~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:2546:2549	True	Article has marriage and Person 1 and Person 2 in the same sentence.	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:2538:2540~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:2546:2549	True	"It refers to their ""marriage breakdown"""	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3021:3024~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3146:3154	False	No indication of marriage between these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3021:3024~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3146:3154	False	They are not married	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3021:3024~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3146:3154	False	there is nothing to indicate a relationship.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2997:3001~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3130:3140	False	No indication of marriage.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2997:3001~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3130:3140	False	They are not married	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2997:3001~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3130:3140	False	No indication of marriage between these two entities.	
+d55b97b4-a758-4bf3-b7e1-ffc3e03d1406::span:319:324~~d55b97b4-a758-4bf3-b7e1-ffc3e03d1406::span:330:337	False	Makes no mention of any personal relationship.	
+d55b97b4-a758-4bf3-b7e1-ffc3e03d1406::span:319:324~~d55b97b4-a758-4bf3-b7e1-ffc3e03d1406::span:330:337	False	no mention of relationship	
+d55b97b4-a758-4bf3-b7e1-ffc3e03d1406::span:319:324~~d55b97b4-a758-4bf3-b7e1-ffc3e03d1406::span:330:337	False	The article mentions Person 1 and Person 2 meeting with women and not partners.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:3945:3951~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:3987:4003	False	person1 has custody of person2	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:3945:3951~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:3987:4003	False	No indication of marriage.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:3945:3951~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:3987:4003	False	No indication of marriage between these two entities.	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:3914:3924~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:3946:3957	True	"Refers to Ronald as Anne's ""husband"""	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:3914:3924~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:3946:3957	True	Person 1 mentions Person 2 as husband.	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:3914:3924~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:3946:3957	True	"Uses the term ""husband"""	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1943:1945~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2036:2045	False	"These two people are married in real life, yet this writing does not indicate marriage here. ""Beau could mean lover, boyfriend, fiance, partner, etc."	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1943:1945~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2036:2045	False	it indicates that person2 is the beau of person1	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1943:1945~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2036:2045	False	"""beau"" is immediately before person 2"	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2997:3001~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3146:3154	False	No indication of marriage between these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2997:3001~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3146:3154	False	They are not married	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:2997:3001~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3146:3154	False	nothing indicates that they are married.	
+f25bae72-a7a2-440d-a903-b5be994bad5e::span:4416:4426~~f25bae72-a7a2-440d-a903-b5be994bad5e::span:4439:4450	False	They are not married	
+f25bae72-a7a2-440d-a903-b5be994bad5e::span:4416:4426~~f25bae72-a7a2-440d-a903-b5be994bad5e::span:4439:4450	False	No indication of marriage between these two entities.	
+53b607a5-64f4-43cf-83c3-169d08fb62e4::span:0:15~~53b607a5-64f4-43cf-83c3-169d08fb62e4::span:79:101	False	the 2 people highlighted here are not married together.	
+53b607a5-64f4-43cf-83c3-169d08fb62e4::span:0:15~~53b607a5-64f4-43cf-83c3-169d08fb62e4::span:79:101	False	the text indicates that person1 is married to someone who is the daughter of person2	
+53b607a5-64f4-43cf-83c3-169d08fb62e4::span:0:15~~53b607a5-64f4-43cf-83c3-169d08fb62e4::span:79:101	False	the daughter	
+1c3d813c-0f47-4477-8bc2-e17d295349f3::span:257:268~~1c3d813c-0f47-4477-8bc2-e17d295349f3::span:342:346	True	"The article mentioned Person 1 celebrated his birthday with Person 2 ""wife"" in between the two."	
+1c3d813c-0f47-4477-8bc2-e17d295349f3::span:257:268~~1c3d813c-0f47-4477-8bc2-e17d295349f3::span:342:346	True	"Refers to ""his wife""."	
+1c3d813c-0f47-4477-8bc2-e17d295349f3::span:257:268~~1c3d813c-0f47-4477-8bc2-e17d295349f3::span:342:346	True	"Has a birthday celebration with ""his wife"""	
+0911842a-7202-450d-b54d-21c283f8d3df::span:320:355~~0911842a-7202-450d-b54d-21c283f8d3df::span:945:959	False	No indication in text they are married.	
+0911842a-7202-450d-b54d-21c283f8d3df::span:320:355~~0911842a-7202-450d-b54d-21c283f8d3df::span:945:959	False	The text states the 1st person was the judge.	
+0911842a-7202-450d-b54d-21c283f8d3df::span:320:355~~0911842a-7202-450d-b54d-21c283f8d3df::span:945:959	False	"""Robinson Oigara"" is the person in charge of overseeing the case"	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3171:3175~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3331:3335	False	Kylie is Kanye sister in law	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3171:3175~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3331:3335	False	nothing indicates that they are married.	
+393e8800-4272-4309-80d4-ca1d05bb4c53::span:1063:1073~~393e8800-4272-4309-80d4-ca1d05bb4c53::span:1113:1118	False	it doesn't mention marriage	
+393e8800-4272-4309-80d4-ca1d05bb4c53::span:1063:1073~~393e8800-4272-4309-80d4-ca1d05bb4c53::span:1113:1118	False	they are brothers	
+393e8800-4272-4309-80d4-ca1d05bb4c53::span:1063:1073~~393e8800-4272-4309-80d4-ca1d05bb4c53::span:1113:1118	False	No indication of marriage between these two entities.	
+c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:7325:7331~~c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:7533:7539	False	"""Colbert"" is referring to the same person."	
+c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:7325:7331~~c393a09d-b1a5-4161-b0e2-073fbcc57cec::span:7533:7539	False	"Person 1 and person 2 are the same person and have the same last name ""colbert""."	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4710:4712~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4920:4922	False	Same person.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4710:4712~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4920:4922	False	No indication of marriage.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4710:4712~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4920:4922	False	person1 and person2 have the same first name.	
+55138a30-e5a7-4a3e-ad24-0a42d125d247::span:5558:5571~~55138a30-e5a7-4a3e-ad24-0a42d125d247::span:5586:5599	True	"The texts states ""and his wife"" in relation to the two people."	
+55138a30-e5a7-4a3e-ad24-0a42d125d247::span:5558:5571~~55138a30-e5a7-4a3e-ad24-0a42d125d247::span:5586:5599	True	The two highlighted people are married to each other.	
+55138a30-e5a7-4a3e-ad24-0a42d125d247::span:5558:5571~~55138a30-e5a7-4a3e-ad24-0a42d125d247::span:5586:5599	True	Person1 and Person2 have the same second word.	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:1011:1017~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1171:1174	True	"The word ""widow"" appears before person2 and after person 1"	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:1011:1017~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1171:1174	True	states they are married	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:1011:1017~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1171:1174	True	"Refers to Kate as his ""widow"""	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:1011:1017~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1171:1174	True	widow is mentioned between the two names	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:1011:1017~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1171:1174	True	The article mentions Person 1 being killed and had widow in front of Person 2.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4710:4712~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4951:4963	False	father and daughter	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4710:4712~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4951:4963	False	No marriage indicated for these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3035:3050~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3130:3140	False	No indication of marriage between these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3035:3050~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3130:3140	False	The last word of person2 is not the same as the last word of person1	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3035:3050~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3130:3140	False	They are not married	
+0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:896:907~~0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:935:940	True	Kerry Robles pictured with her husband Damien	
+0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:896:907~~0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:935:940	True	the text clearly says that person1 and person2 are married	
+0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:896:907~~0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:935:940	True	person2 is listed as person1 husband	
+6d1ef90f-ba46-48f4-91d4-860ba96671f7::span:144:163~~6d1ef90f-ba46-48f4-91d4-860ba96671f7::span:462:474	True	Frank Gifford and Kathie Lee Gifford	
+6d1ef90f-ba46-48f4-91d4-860ba96671f7::span:144:163~~6d1ef90f-ba46-48f4-91d4-860ba96671f7::span:462:474	True	Frank and Kathie Lee Gifford's son	
+0227451c-1209-4708-9310-49c4c3654f0c::span:92:103~~0227451c-1209-4708-9310-49c4c3654f0c::span:259:263	False	"""Blasted the actor"" this is not how married couples treat each other."	
+0227451c-1209-4708-9310-49c4c3654f0c::span:92:103~~0227451c-1209-4708-9310-49c4c3654f0c::span:259:263	False	"Okotie is a ""pastor"" that Emeka is fighting with."	
+77c632db-103a-491e-ae8c-cd7ef3aace00::span:3983:3988~~77c632db-103a-491e-ae8c-cd7ef3aace00::span:6086:6100	False	too many words between the names	
+77c632db-103a-491e-ae8c-cd7ef3aace00::span:3983:3988~~77c632db-103a-491e-ae8c-cd7ef3aace00::span:6086:6100	False	"Buhari is a ""president"" Rauf is a ""governor"""	
+77c632db-103a-491e-ae8c-cd7ef3aace00::span:3983:3988~~77c632db-103a-491e-ae8c-cd7ef3aace00::span:6086:6100	False	Person 1 and person 2 have different last names and are governor and president according to the article.	
+626c6478-e6f5-4da1-af93-b0d177241dee::span:5108:5117~~626c6478-e6f5-4da1-af93-b0d177241dee::span:5153:5163	False	No indicator	
+626c6478-e6f5-4da1-af93-b0d177241dee::span:5108:5117~~626c6478-e6f5-4da1-af93-b0d177241dee::span:5153:5163	False	No indication of these two entities are married here.	
+626c6478-e6f5-4da1-af93-b0d177241dee::span:5108:5117~~626c6478-e6f5-4da1-af93-b0d177241dee::span:5153:5163	False	nothing in the text indicates that these people are married	
+940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:379:398~~940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:431:442	True	"Both are smiths and it refers to Robert as a ""husband"""	
+940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:379:398~~940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:431:442	True	husband is written between the two names	
+940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:379:398~~940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:431:442	True	Person 1 and Person 2 have husband right after the mentioning of their name.	
+0911842a-7202-450d-b54d-21c283f8d3df::span:771:774~~0911842a-7202-450d-b54d-21c283f8d3df::span:945:959	True	"The text states the 1st person is the 2nd person's husband with the words ""the husband"" and showing he was the victim, and her the defendant."	
+0911842a-7202-450d-b54d-21c283f8d3df::span:771:774~~0911842a-7202-450d-b54d-21c283f8d3df::span:945:959	True	"Mentions that it was her ""husband """	
+0911842a-7202-450d-b54d-21c283f8d3df::span:0:14~~0911842a-7202-450d-b54d-21c283f8d3df::span:131:142	True	It stated he was her husband.	
+0911842a-7202-450d-b54d-21c283f8d3df::span:0:14~~0911842a-7202-450d-b54d-21c283f8d3df::span:131:142	True	"The text states the 2nd person is the 1st person's husband with the words ""her husband""."	
+0911842a-7202-450d-b54d-21c283f8d3df::span:0:14~~0911842a-7202-450d-b54d-21c283f8d3df::span:131:142	True	"Text says ""her husband"""	
+78b0b734-c75b-4e25-8770-bf55725ad231::span:261:268~~78b0b734-c75b-4e25-8770-bf55725ad231::span:288:300	True	"It says ""his wife"""	
+78b0b734-c75b-4e25-8770-bf55725ad231::span:261:268~~78b0b734-c75b-4e25-8770-bf55725ad231::span:288:300	True	text states that person2 is the wife of person1	
+78b0b734-c75b-4e25-8770-bf55725ad231::span:261:268~~78b0b734-c75b-4e25-8770-bf55725ad231::span:288:300	True	Travolta, 61, and his wife Kelly Preston	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3331:3335~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3368:3372	False	"the word ""son"" or ""daughter"" appears to the left of person2"	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3331:3335~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3368:3372	False	Father and daughter	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3331:3335~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3368:3372	False	person1 is the father of person2	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3896:3901~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3977:3981	False	it does not say anything about being married.	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3896:3901~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3977:3981	False	The text gives no indication of their relation or status.	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3896:3901~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3977:3981	False	No indication of marriage between these two entities.	
+6c242461-04a2-4d76-89b7-ecf20995032f::span:189:202~~6c242461-04a2-4d76-89b7-ecf20995032f::span:221:227	False	I chose this label because Prince Adeyemo and Stephen are both parts of a name for one person.	
+6c242461-04a2-4d76-89b7-ecf20995032f::span:189:202~~6c242461-04a2-4d76-89b7-ecf20995032f::span:221:227	False	Same person	
+6c242461-04a2-4d76-89b7-ecf20995032f::span:189:202~~6c242461-04a2-4d76-89b7-ecf20995032f::span:221:227	False	person1 and person2 are the same person - both highlights are part of the same name	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1943:1945~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2016:2018	False	"These two people are married in real life, yet this writing does not indicate marriage here. ""Beau could mean lover, boyfriend, fiance, partner, etc."	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1943:1945~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2016:2018	False	person1 is the same as person2	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1943:1945~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2016:2018	False	person 1 and person 2 are the same person	
+561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:0:10~~561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:87:91	True	"Refers to Jenny as ""his wife"""	
+561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:0:10~~561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:87:91	True	Person 2 has wife before name and is referring to Person 1.	
+561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:0:10~~561498c7-eb5a-4ae9-a111-2a6b97a15db4::span:87:91	True	"Uses the term ""wife"" to refer to the woman."	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4790:4796~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4951:4963	False	No indication of marriage between these two entities.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4790:4796~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4951:4963	False	No indication of marriage.	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4790:4796~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:4951:4963	False	person2 is not a person.	
+f73ca03b-96ba-4570-b101-7925a7a00476::span:4005:4009~~f73ca03b-96ba-4570-b101-7925a7a00476::span:4098:4112	False	Brian is the director of the movie that Emily is in	
+f73ca03b-96ba-4570-b101-7925a7a00476::span:4005:4009~~f73ca03b-96ba-4570-b101-7925a7a00476::span:4098:4112	False	There is no relationship between them	
+f73ca03b-96ba-4570-b101-7925a7a00476::span:4005:4009~~f73ca03b-96ba-4570-b101-7925a7a00476::span:4098:4112	False	No indication of marriage here.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3035:3050~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3146:3154	False	No indication of marriage between these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3035:3050~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3146:3154	False	The last word of person1 is not the same as the last word of person2.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3035:3050~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3146:3154	False	They are not married	
+c4631b6d-747f-470d-a8ce-74b5b379cb86::span:3038:3046~~c4631b6d-747f-470d-a8ce-74b5b379cb86::span:3052:3058	True	"Refers to the couple's ""honeymoon"""	
+c4631b6d-747f-470d-a8ce-74b5b379cb86::span:3038:3046~~c4631b6d-747f-470d-a8ce-74b5b379cb86::span:3052:3058	True	Person 1 and Person 2 are honeymooning.	
+c4631b6d-747f-470d-a8ce-74b5b379cb86::span:3038:3046~~c4631b6d-747f-470d-a8ce-74b5b379cb86::span:3052:3058	True	"The pair was ""so in love"""	
+0227451c-1209-4708-9310-49c4c3654f0c::span:61:69~~0227451c-1209-4708-9310-49c4c3654f0c::span:92:103	False	"""The actor called him out"" indicates they do not have a close relationship"	
+0227451c-1209-4708-9310-49c4c3654f0c::span:61:69~~0227451c-1209-4708-9310-49c4c3654f0c::span:92:103	False	"I chose this label because ""called him out"" refers to a marriage, but not between the two."	
+0227451c-1209-4708-9310-49c4c3654f0c::span:61:69~~0227451c-1209-4708-9310-49c4c3654f0c::span:92:103	False	Person 1 and person 2 have different last names after their first name and seem to be enemies.	
+e41391d5-ce1b-4bf6-bf26-3fbdd2625db0::span:1929:1940~~e41391d5-ce1b-4bf6-bf26-3fbdd2625db0::span:2175:2196	False	no evidence	
+e41391d5-ce1b-4bf6-bf26-3fbdd2625db0::span:1929:1940~~e41391d5-ce1b-4bf6-bf26-3fbdd2625db0::span:2175:2196	False	No relation	
+e41391d5-ce1b-4bf6-bf26-3fbdd2625db0::span:1929:1940~~e41391d5-ce1b-4bf6-bf26-3fbdd2625db0::span:2175:2196	False	No indication of marriage here.	
+6d1ef90f-ba46-48f4-91d4-860ba96671f7::span:134:138~~6d1ef90f-ba46-48f4-91d4-860ba96671f7::span:144:163	True	Frank and Kathie Lee Gifford's son	
+6d1ef90f-ba46-48f4-91d4-860ba96671f7::span:134:138~~6d1ef90f-ba46-48f4-91d4-860ba96671f7::span:144:163	True	same last name, Gifford, and a son	
+6d1ef90f-ba46-48f4-91d4-860ba96671f7::span:134:138~~6d1ef90f-ba46-48f4-91d4-860ba96671f7::span:144:163	True	the text indicates that person1 and person2 have a child and they have the same last name	
+bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2027:2030~~bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2035:2045	False	No marriage between the 2 people highlighted here.	
+bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2027:2030~~bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2035:2045	False	Ryan and Beau Ryan refer to the same person	
+bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2027:2030~~bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2035:2045	False	Beau Ryan's (Wife), Lauren Brant	
+c24931e6-be98-4056-ae2d-ab91fe5a2514::span:852:863~~c24931e6-be98-4056-ae2d-ab91fe5a2514::span:1096:1114	False	No relation	
+c24931e6-be98-4056-ae2d-ab91fe5a2514::span:852:863~~c24931e6-be98-4056-ae2d-ab91fe5a2514::span:1096:1114	False	the text indicates that person1 has a partner who is not person2	
+c24931e6-be98-4056-ae2d-ab91fe5a2514::span:852:863~~c24931e6-be98-4056-ae2d-ab91fe5a2514::span:1096:1114	False	person1 is not married, but has a partner which is not person 2	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:809:811~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:829:833	False	sisters	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:809:811~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:829:833	False	No indication of marriage between these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:809:811~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:829:833	False	the text indicates that the two people are half-sisters	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2279:2288~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2306:2314	False	No indication of marriage between these two entities.	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2279:2288~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2306:2314	False	They are not married	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2279:2288~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:2306:2314	False	Nowhere in the text does it talk about any married people.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3395:3397~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3537:3541	False	No indication of marriage between these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3395:3397~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3537:3541	False	There's nothing to indicate they're even a couple, let alone married.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3395:3397~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3537:3541	False	There is no mention of a relationship between the 2.	
+f73ca03b-96ba-4570-b101-7925a7a00476::span:3997:3999~~f73ca03b-96ba-4570-b101-7925a7a00476::span:4005:4009	False	actors, probably not married	
+f73ca03b-96ba-4570-b101-7925a7a00476::span:3997:3999~~f73ca03b-96ba-4570-b101-7925a7a00476::span:4005:4009	False	No indication of marriage between these two entities.	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:3153:3155~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:3177:3191	True	article indicates that Person 1 is husband of Person 2 for 12 years.	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:3153:3155~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:3177:3191	True	"Abbey is ""Ben's wife of 12 years"""	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:3153:3155~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:3177:3191	True	wife is between the two names	
+940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:431:442~~940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:657:663	False	no realtion given between the highlyted names	
+940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:431:442~~940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:657:663	False	"Robert Smith is an ""investor"" and Hendrix is in an unrelated story."	
+940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:431:442~~940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:657:663	False	Person 1 is expecting a child and Person 2 is the older brother.	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:6476:6481~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:6487:6497	True	"Refers to their ""24 year-old"" child."	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:6476:6481~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:6487:6497	True	Person 1 and Person 2 have the same last name and have a son who is 24.	
+80707f8e-7668-43cb-a0a0-04c258274e51::span:575:579~~80707f8e-7668-43cb-a0a0-04c258274e51::span:600:608	False	"Indicated a ""battle"" between ""candidates"	
+80707f8e-7668-43cb-a0a0-04c258274e51::span:575:579~~80707f8e-7668-43cb-a0a0-04c258274e51::span:600:608	False	The article mentions that Person 1 and Person 2 are candidates of another person in the article.	
+80707f8e-7668-43cb-a0a0-04c258274e51::span:575:579~~80707f8e-7668-43cb-a0a0-04c258274e51::span:600:608	False	"Fernandez is an ""anointed candidate"""	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3625:3637~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3701:3716	False	there is a couple listed but these two are not it.	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3625:3637~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3701:3716	False	The text states the 2nd name is the singer they were performing.	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3625:3637~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3701:3716	False	No indication of marriage between these two entities.	
+79c51309-0c1a-4fae-aa7b-d0a6b5bc9434::span:111:116~~79c51309-0c1a-4fae-aa7b-d0a6b5bc9434::span:122:133	False	I actually think these people are married, but the text does not specifically state that they are	
+79c51309-0c1a-4fae-aa7b-d0a6b5bc9434::span:111:116~~79c51309-0c1a-4fae-aa7b-d0a6b5bc9434::span:122:133	False	Possible marriage here, but no clear indication.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3021:3024~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3130:3140	False	No indication of marriage between these two entities.	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3021:3024~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3130:3140	False	They are not married	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3021:3024~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:3130:3140	False	person1 is in a relationship with another person	
+cbe5ae49-4d25-4c12-8e47-c85fbf840d60::span:1148:1159~~cbe5ae49-4d25-4c12-8e47-c85fbf840d60::span:1362:1365	True	"It says ""former husband"""	
+cbe5ae49-4d25-4c12-8e47-c85fbf840d60::span:1148:1159~~cbe5ae49-4d25-4c12-8e47-c85fbf840d60::span:1362:1365	True	"I chose this label because ""Nick"" is identified as ""The former husband of Mariah Carey."""	
+cbe5ae49-4d25-4c12-8e47-c85fbf840d60::span:1148:1159~~cbe5ae49-4d25-4c12-8e47-c85fbf840d60::span:1362:1365	True	The article mentions Person 1 had a former husband and is referring to Person 2.	
+adad9e82-df6c-44bf-bb04-05bc5df73f87::span:26:37~~adad9e82-df6c-44bf-bb04-05bc5df73f87::span:93:104	True	walked down aisle	
+adad9e82-df6c-44bf-bb04-05bc5df73f87::span:26:37~~adad9e82-df6c-44bf-bb04-05bc5df73f87::span:93:104	True	2face Idibia has revealed that since he walked down the aisle with Annie Idibia	
+adad9e82-df6c-44bf-bb04-05bc5df73f87::span:26:37~~adad9e82-df6c-44bf-bb04-05bc5df73f87::span:93:104	True	Two highlighted people are listed as married to each other.	
+f73ca03b-96ba-4570-b101-7925a7a00476::span:3997:3999~~f73ca03b-96ba-4570-b101-7925a7a00476::span:4098:4112	False	Brian is the director	
+f73ca03b-96ba-4570-b101-7925a7a00476::span:3997:3999~~f73ca03b-96ba-4570-b101-7925a7a00476::span:4098:4112	False	There is nothing that indicates that they are married	
+f73ca03b-96ba-4570-b101-7925a7a00476::span:3997:3999~~f73ca03b-96ba-4570-b101-7925a7a00476::span:4098:4112	False	No indication of marriage here.	
+8cf2a99f-ae08-4f65-b204-801de88cf1ec::span:359:367~~8cf2a99f-ae08-4f65-b204-801de88cf1ec::span:387:398	True	Person 1 and Person 2 have wife right after the name and are int he same sentence.	
+8cf2a99f-ae08-4f65-b204-801de88cf1ec::span:359:367~~8cf2a99f-ae08-4f65-b204-801de88cf1ec::span:387:398	True	wife is between the highlighted words	
+8cf2a99f-ae08-4f65-b204-801de88cf1ec::span:359:367~~8cf2a99f-ae08-4f65-b204-801de88cf1ec::span:387:398	True	"Refers to Mary as ""his wife"""	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2004:2013~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2016:2018	False	One is a person, the other is a description of an emotion.	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2004:2013~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2016:2018	False	person 1 is not a person	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2004:2013~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2016:2018	False	Supportive not a person	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1736:1743~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1749:1751	False	"""friendship"" sounds ambiguous at best."	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1736:1743~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1749:1751	False	is vague about the relationship	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1707:1711~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1717:1722	False	not clear if they are married	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1707:1711~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1717:1722	False	No indication of marriage between these two entities.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1707:1711~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1717:1722	False	nothing in the text indicates that these people are married	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1707:1711~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1775:1780	False	not clear if they are married	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1707:1711~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1775:1780	False	No indication of marriage between these two entities.	
+b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1707:1711~~b7452984-5488-43c0-a9f8-b1cc9f91ac36::span:1775:1780	False	nothing in the text indicates that these people are married	
+c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:2765:2768~~c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:2858:2862	True	the text indicates that person1 proposed to person2	
+c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:2765:2768~~c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:2858:2862	True	Adam and Katie, with many hailing it amazing and cute and the best proposal ever	
+87158208-e400-424a-8cad-da6eb9f2959c::span:470:483~~87158208-e400-424a-8cad-da6eb9f2959c::span:589:599	True	husband John Legend	
+87158208-e400-424a-8cad-da6eb9f2959c::span:470:483~~87158208-e400-424a-8cad-da6eb9f2959c::span:589:599	True	"""husband"""	
+c19bb988-3bec-4ceb-b26a-ac0d2c32999d::span:1460:1463~~c19bb988-3bec-4ceb-b26a-ac0d2c32999d::span:1580:1600	False	"She ""joins"" different ""stars"" who don't seem to have relation"	
+c19bb988-3bec-4ceb-b26a-ac0d2c32999d::span:1460:1463~~c19bb988-3bec-4ceb-b26a-ac0d2c32999d::span:1580:1600	False	The article mentions Person 1 and Person 2 has being in a lovely ladies group.	
+c19bb988-3bec-4ceb-b26a-ac0d2c32999d::span:1460:1463~~c19bb988-3bec-4ceb-b26a-ac0d2c32999d::span:1580:1600	False	"both seem to be part of a ""competition show"""	

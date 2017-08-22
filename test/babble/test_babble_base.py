@@ -17,7 +17,7 @@ class TestBabbleBase(unittest.TestCase):
         self.assertTrue(len(explanations))
         for e in explanations:
             if e.candidate and not isinstance(e.candidate, tuple):
-                e.candidate = self.candidate_hash[e.candidate]
+                e.candidate = self.candidate_map[e.candidate]
             LF_dict = self.sp.parse_and_evaluate(e, show_erroring=True)
             # TEMP: Use for getting semantics to put in Explanation.semantics
             # parses = self.sp.parse(e, return_parses=True)

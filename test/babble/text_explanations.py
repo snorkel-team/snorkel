@@ -10,13 +10,13 @@ def get_user_lists():
         'spouse':['wife','husband','spouse']
     }
 
-    # Test candidate: 
-    # "City land records show that GM President [Daniel Ammann] and his wife, 
-    # [Pernilla Ammann], bought the 15-bedroom mansion on Balmoral Drive in 
-    # the upscale historic neighborhood on July 31."
-    # hash = 668761641257950361
-    # stable_id = 52a56fa5-91bf-4df1-8443-632f4c1ce88d::span:604:616~~52a56fa5-91bf-4df1-8443-632f4c1ce88d::span:632:646
-    default_candidate = '52a56fa5-91bf-4df1-8443-632f4c1ce88d::span:604:616~~52a56fa5-91bf-4df1-8443-632f4c1ce88d::span:632:646'
+# Test candidate: 
+# "City land records show that GM President [Daniel Ammann] and his wife, 
+# [Pernilla Ammann], bought the 15-bedroom mansion on Balmoral Drive in 
+# the upscale historic neighborhood on July 31."
+# hash = 668761641257950361
+# stable_id = 52a56fa5-91bf-4df1-8443-632f4c1ce88d::span:604:616~~52a56fa5-91bf-4df1-8443-632f4c1ce88d::span:632:646
+default_candidate = '52a56fa5-91bf-4df1-8443-632f4c1ce88d::span:604:616~~52a56fa5-91bf-4df1-8443-632f4c1ce88d::span:632:646'
 
 strings = [
     # Equals (String)

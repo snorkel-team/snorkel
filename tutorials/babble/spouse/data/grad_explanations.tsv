@@ -1,0 +1,71 @@
+None 	False	there are no words indicating marriage in the sentence.  	None
+None 	False	because no family words in sentence and different last names 	None
+None 	False	because the word 'Mayor' is immediately to the left of person 2, and no word identifying a spouse relationship is present. 	None
+None 	False	because they seem to be related politically related, not through marriage.  	None
+None 	False	because the word "Mayor" is within 1 word of person 2. 	None
+None 	False	because there is no mention of "husband" or "wife" in the sentence, and the two individuals do not share a surname.  	None
+None 	False	because the word "Mayor" appears before person 2. 	None
+None 	False	there are no words indicating marriage in the sentence.  	None
+None 	False	because no family words in sentence and different last names 	None
+None 	False	because the word 'clerk' is immediately to the left of person 2, and no word identifying a spouse relationship is present. 	None
+None 	False	because there is no mention of "husband/wife/family/child" etc., only clerk. 	None
+None 	False	because the word "clerk" is within 1 word of person 2. 	None
+None 	False	because there is no mention of "husband" or "wife" in the sentence, and the two individuals do not share a surname.  	None
+None 	False	because the word "clerk" appears before person 2. 	None
+None 	False	'lawyer for' between the two person indicates a different relationship than marriage. 	None
+None 	False	because no family words in sentence and different last names 	None
+None 	False	because the phrase 'lawyer for' is to the immediate left of of person 2. 	None
+None 	False	one person is the other's lawyer. No mention of other relation. 	None
+None 	False	because the word "lawyer" is within 2 words of person 2. 	None
+None 	False	because there is no mention of "husband" or "wife" in the sentence, and the two individuals do not share a surname.  	None
+None 	False	because the phrase "lawyer for" appears between person 1 and person 2. 	None
+None 	True 	'wife' between the two person names 	None
+None 	True 	because words "his wife" appear immediately before Person 2 	None
+None 	True 	because the phrase 'his wife' immediately precedes person 2. 	None
+None 	True 	due to mention of "his wife" 	None
+None 	True 	because the word "wife" is between person 1 and person 2. 	None
+None 	True 	because the word "wife" immediately precedes the second individual, and a possessive pronoun ("his") precedes "wife".  	None
+None 	True 	because the second individual's surname is not mentioned.  	None
+None 	True 	because the word "wife" appears before person 2. 	None
+None 	False	no words indicating marriage in the sentence 	None
+None 	False	because no family words in sentence and different last names 	None
+None 	False	because there is no word identifying a spouse relationship. 	None
+None 	False	there is no "husband/wife/family/child" mentioned. 	None
+None 	False	because the is no sentence information on person 2. 	None
+None 	False	because there is no mention of "husband" or "wife" in the sentence, and the two individuals do not share a surname.  	None
+None 	False	because "husband", "wife", "married", and "spouse" do not appear in this sentence. 	None
+None 	False	'daughters' right before person1, and many names in the sentence. 	None
+None 	False	although "with wife" appears immediately prior to Person 2, "with wife" modifies "raises" for which Person 1 is not the subject  	None
+None 	False	because the word 'daughters' appears to the left of person 1 and the word 'wife' appears to the left of person 2. 	None
+None 	False	because the two are related as "wife" and "daughter" of someone else.  	None
+None 	False	because the word "daughters" is within 1 word of person 2 	None
+None 	False	because the first individual's name is immediately preceded by the word "daughter", and the first individual's name is a part of a list.  	None
+None 	False	because the word "daughters" appears before person 1. 	None
+None 	False	'brother' between person1 and person2 	None
+None 	False	because "his brother" appears immediately prior to Person 2 	None
+None 	False	because the phrase 'his brother' appears immediately to the left of person 2. 	None
+None 	False	due to mention of "brother" 	None
+None 	False	because the word "brother" is within 1 word of person 2 	None
+None 	False	because the second individual's name is immediately preceded by the word "brother", and the word "brother" is preceded by the possessive pronoun "his".  	None
+None 	False	because "brother" appears before person 2. 	None
+None 	True 	'his wife' immediately before person2, no other names between them. 	None
+None 	True 	because words "his wife" appear immediately before Person 2 	None
+None 	True 	because person 2 appears immediately after the phrase 'his wife'. 	None
+None 	True 	"wife" is mentioned. 	None
+None 	True 	because the word "wife" is between person 1 and person 2 	None
+True 	because the second individual's name is immediately preceded by "wife" and is preceded by the possessive pronoun "his" within two words, and because the first individual's surname and given name None 	are both stated, while only the given name of the second individual is stated.  	None
+None 	True 	because "wife" appears before person 2. 	None
+None 	False	no words indicating marriage in sentence. Maybe no because 'secretary' before person2 could be a different relationship. 	None
+None 	False	because no family words in sentence and different last names 	None
+None 	False	because the word 'Secretary' appears to the left of person 2, person 2 is the object of 'approved by', and there are no words describing the spouse relationship. 	None
+None 	False	one person is "secretary", not "husband/wife/child" 	None
+None 	False	because the phrase "US Defence Secretary" is within 3 words of person 2  	None
+None 	False	because there is no mention of "husband" or "wife" in the sentence, and the two individuals do not share a surname.  	None
+None 	False	because "Secretary" appears before person 2. 	None
+None 	False	no words indicating marriage in the sentence. 	None
+None 	False	because no family words in sentence and different last names 	None
+None 	False	because 'in' comes within 2 words before person 2, and 'vice president' is to the right of person 1. 	None
+None 	False	no mention of personal relation.  	None
+None 	False	because "Flo" is an acronym and the word "in" is within 3 words of person 2. 	None
+None 	False	because the second entity is preceded by the preposition "in" within two words.  	None
+None 	False	because "president" appears between person 1 and person 2. 	None

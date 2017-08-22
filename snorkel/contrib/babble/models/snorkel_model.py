@@ -18,7 +18,7 @@ from snorkel.matchers import PersonMatcher
 from snorkel.annotations import (FeatureAnnotator, LabelAnnotator, 
     save_marginals, load_marginals, load_gold_labels)
 from snorkel.learning import GenerativeModel, SparseLogisticRegression, MajorityVoter
-from snorkel.learning import RandomSearch, ListParameter, RangeParameter
+#from snorkel.learning import RandomSearch, ListParameter, RangeParameter
 from snorkel.learning.utils import MentionScorer, training_set_summary_stats
 from snorkel.learning.structure import DependencySelector
 from snorkel.learning.disc_models.rnn import reRNN
@@ -85,6 +85,9 @@ class SnorkelModel(object):
     def supervise(self, config=None, gen_model=None):
         if config:
             self.config = config
+        
+        if gen_model is None:
+            self.gen_model = GenerativeModel(lf_propensity=True)
 
         if not self.labeler:
             if self.lfs:
@@ -110,14 +113,13 @@ class SnorkelModel(object):
                 else:
                     deps = ()
             
-                if gen_model is None:
-                    gen_model = GenerativeModel(lf_propensity=True)
+                
 
                     decay = (self.config['decay'] if self.config['decay'] else 
                         0.001 * (1.0 /self.config['epochs']))
                     step_size = (self.config['step_size'] if self.config['step_size'] else 
                         0.1/L_train.shape[0])
-                    gen_model.train(
+                    self.gen_model.train(
                         L_train, 
                         deps=deps, 
                         epochs=self.config['epochs'],

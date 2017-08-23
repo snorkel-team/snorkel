@@ -19,8 +19,9 @@ configuration = {
 
     # SUPERVISON
     # settings
-    'model_dep': False,
+    'traditional': False, # e.g, 1000
     'majority_vote': False,
+    'learn_dep': False,
     # gen model paramaters
     'epochs': 100,
     'decay': None, # 0.95 OR 0.001 * (1.0 /epochs),
@@ -39,7 +40,6 @@ configuration = {
     'include_py_only_lfs': False,
     'remove_paren': True,
     # testing
-    'traditional': False, # e.g, 1000
     'empirical_from_train': False,
 
     # CLASSIFICATION,

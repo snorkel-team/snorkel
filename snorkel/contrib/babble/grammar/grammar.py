@@ -23,7 +23,7 @@ class GrammarMixin(object):
 
 class Grammar(object):
     def __init__(self, bases, candidate_class=None, user_lists={}, 
-            beam_width=None, top_k=None, start_symbol='$ROOT'):
+        beam_width=10, top_k=-1, start_symbol='$ROOT'):
        
         # Extract from bases
         bases = bases if isinstance(bases, list) else [bases]
@@ -69,18 +69,27 @@ class Grammar(object):
 
         :param string:
         """
+        # Tokenize input string
         string = string.lower()
         if string.endswith('.'):
             string = string[:-1]
         output = self.parser.parse(None, string).next()
         tokens = map(lambda x: dict(zip(['word', 'pos', 'ner'], x)), 
                      zip(output['words'], output['pos_tags'], output['ner_tags']))
-        # Add start and stop after parsing to not confuse the CoreNLP parser
+        # Add start and stop _after_ parsing to not confuse the CoreNLP parser
         start = {'word': '<START>', 'pos': '<START>', 'ner': '<START>'}
         stop = {'word': '<STOP>', 'pos': '<STOP>', 'ner': '<STOP>'}
         tokens = [start] + tokens + [stop]
         words = [t['word'] for t in tokens]
         self.words = words # (for print_chart)
+        
+        # ABANDONED:
+        # Add temporary string rules
+        # if self.string_format == 'implicit':
+        #     for word in words:
+        #         if word not in stopwords:
+        #             self.add_rule(Rule('$String', word, ('.string', word))))
+
         chart = defaultdict(list)
         for j in range(1, len(tokens) + 1):
             for i in range(j - 1, -1, -1):
@@ -122,7 +131,6 @@ class Grammar(object):
         elif all([utils.is_cat(rhsi) for rhsi in rule.rhs]):
             self.add_n_ary_rule(rule)
         else:
-            # EXERCISE: handle this case.
             raise Exception('RHS mixes terminals and non-terminals: %s' % rule)
 
     def add_rule_containing_optional(self, rule):
@@ -227,7 +235,7 @@ class Grammar(object):
                         if sum(parse.rule.lhs=='$Quote' for p in range(m, n) for parse in chart[(p, p+1)]) % 2 != 0:
                             break
                         for rule in self.binary_rules[(parse_1.rule.lhs, parse_2.rule.lhs)]:
-                            # Don't allow $StringStub's to absorb (to control growth)
+                            # Don't allow $StringStub to absorb (to control growth)
                             if rule.lhs=='$StringStub':
                                 continue
                             absorbed = n - m

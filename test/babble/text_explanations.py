@@ -342,3 +342,42 @@ tuples = [
         candidate=('foo', 'bar'),
         semantics=('.root', ('.label', ('.bool', True), ('.call', ('.eq', ('.tuple', ('.list', ('.string', u'foo'), ('.string', u'bar')))), ('.tuple', ('.list', ('.arg_to_string', ('.arg', ('.int', 1))), ('.arg_to_string', ('.arg', ('.int', 2))))))))),
 ]
+
+implicit_strings = [
+    # Normal
+    Explanation(
+        condition='It says "wife"',
+        label=True,
+        candidate=default_candidate,
+        semantics=None),
+    # Not quoted unigram
+    Explanation(
+        condition='It says wife',
+        label=True,
+        candidate=default_candidate,
+        semantics=None),
+    # Not quoted bigram
+    Explanation(
+        condition='It says historic neighborhood',
+        label=True,
+        candidate=default_candidate,
+        semantics=None),
+    # Not quoted bigram with stopword
+    Explanation(
+        condition='It says his wife',
+        label=True,
+        candidate=default_candidate,
+        semantics=None),
+    # Implicit candidate
+    Explanation(
+        condition='wife comes after Daniel Ammann',
+        label=True,
+        candidate=default_candidate,
+        semantics=None),
+    # Don't quote existing quotation
+    Explanation(
+        condition='It says "the upscale historic neighborhood"',
+        label=True,
+        candidate=default_candidate,
+        semantics=None),
+]

@@ -77,5 +77,8 @@ class TestBabbleText(TestBabbleBase):
     def test_tuples(self):
         self.check_explanations(text_explanations.tuples)
 
+    def test_implicit_strings(self):
+        self.check_explanations(text_explanations.implicit_strings)
+
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBabbleText)
 unittest.TextTestRunner(verbosity=2).run(suite)

@@ -44,7 +44,8 @@ class TestBabbleText(TestBabbleBase):
 
         cls.sp = SemanticParser(mode='text',
                                 candidate_class=Spouse, 
-                                user_lists=text_explanations.get_user_lists())
+                                user_lists=text_explanations.get_user_lists(),
+                                string_format='implicit')
 
     def test_strings(self):
         self.check_explanations(text_explanations.strings)

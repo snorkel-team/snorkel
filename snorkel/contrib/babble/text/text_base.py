@@ -70,8 +70,10 @@ unary_rules = [
 
 compositional_rules = [
     # Text Baseline
-    # Rule('$ROOT', '$Start $String $Stop', lambda (_, str_, _): ('.root', ('.call', ('.in', ('.extract_text', ('.sent',)), str_))))
-    # Rule('$ROOT', '$Start $StringList $Stop', lambda (_, strlist_, _): ('.root', ('.all', ('.map', ('.in', ('.extract_text', ('.sent',)), strlist_)))))
+    # NEW
+    Rule('$ROOT', '$Start $String $Stop', lambda (start_, str_, stop_): ('.root', ('.call', ('.in', ('.extract_text', ('.sentence',))), str_))),
+    Rule('$ROOT', '$Start $StringList $Stop', lambda (start_, strlist_, stop_): ('.root', ('.all', ('.map', ('.in', ('.extract_text', ('.sentence',))), strlist_)))),
+    # NEW
 
     # Direction
         # "is left of Y"

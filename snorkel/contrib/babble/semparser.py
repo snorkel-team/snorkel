@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 from pandas import DataFrame, Series
 
+from snorkel.models import Sentence
+
 from core import core_grammar
 from text import text_grammar
 from image import image_grammar
-from grammar import Grammar, validate_semantics
+from grammar import Grammar, validate_semantics, stopwords
 from explanation import Explanation
 
 class SemanticParser(object):
@@ -18,8 +20,7 @@ class SemanticParser(object):
     --mode: [text/image/table]
         mode-specific rules
     """
-    def __init__(self, mode='core', candidate_class=None, user_lists={}, 
-            beam_width=10, top_k=-1):
+    def __init__(self, mode='core', string_format='implicit', **kwargs):
         grammar_mixins = [core_grammar]
         if mode == 'core':
             pass
@@ -31,12 +32,11 @@ class SemanticParser(object):
             pass
         else:
             raise Exception("You must specify a mode in ['text', 'image', 'table']")
-        self.grammar = Grammar(grammar_mixins,
-                               candidate_class=candidate_class,
-                               user_lists=user_lists,
-                               beam_width=beam_width,
-                               top_k=top_k)
-        # self.pseudocode_ops = pseudocode_ops
+        self.grammar = Grammar(grammar_mixins, **kwargs)
+        self.mode = mode
+        self.string_format = string_format
+        if string_format == 'implicit':
+            self.unquotable = [' '.join(key) for key in self.grammar.lexical_rules] + stopwords
         self.explanation_counter = 0
 
     def name_explanations(self, explanations, names):
@@ -52,7 +52,6 @@ class SemanticParser(object):
                 if not exp.name:
                     exp.name = "Explanation{}".format(i)
 
-
     def parse(self, explanations, names=None, verbose=False, return_parses=False):
         """
         Converts Explanation objects into labeling functions.
@@ -66,7 +65,11 @@ class SemanticParser(object):
         names = names if isinstance(names, list) or names is None else [names]
         self.name_explanations(explanations, names)
         for i, exp in enumerate(explanations):
-            exp_normalized = 'Label {} if {}'.format(exp.label, exp.condition)
+            exp_normalized = 'label {} if {}'.format(exp.label, exp.condition)
+            if (self.mode == 'text' and self.string_format == 'implicit' and 
+                getattr(exp.candidate, 'get_parent', None) and
+                isinstance(exp.candidate.get_parent(), Sentence)):
+                exp_normalized = self.mark_implicit_strings(exp_normalized, exp.candidate)
             exp_parses = self.grammar.parse_string(exp_normalized)
             num_parses_by_exp.append(len(exp_parses))
             for j, parse in enumerate(exp_parses):
@@ -242,6 +245,76 @@ class SemanticParser(object):
         
         self.results = DataFrame(data=dataframe, index=explanation_names)[col_names]
         return LFs
+
+    def mark_implicit_strings(self, condition, candidate):
+        """
+        Puts quotation marks around words that are likely quotes from candidate.
+
+        To be quoted, a phrase must:
+        a) not already be in quotes
+        b) occur in the candidate's sentence
+        c) not be a part of any existing lexical rule in the grammar
+
+        If a phrase is a component span of the candidate, it is replaced with
+        _arg 1_ or _arg 2_ instead (without underscores).
+        """
+        # TEMP
+        # original_condition = condition
+        # TEMP
+
+        # First, replace direct mentions of candidate components with _arg x_
+        candidate_words = set(candidate.get_parent().words)
+        candidate_text = candidate.get_parent().text
+        for argnum in [1, 2]:
+            if candidate[argnum - 1].get_span() in condition:
+                # Replace name with _arg x_
+                condition = condition.replace(candidate[argnum - 1].get_span(), 'arg {}'.format(argnum))
+                # # Remove spurious quotes
+                # condition = condition.replace('"arg {}"'.format(argnum), 'arg {}'.format(argnum))
+                # condition = condition.replace('"arg {}\'s"'.format(argnum), 'arg {}'.format(argnum))
+        
+        # Identify potential quoted words
+        condition_words = condition.split()
+        quote_list = []
+        quoting = False
+        for i, word in enumerate(condition_words):
+            if word.startswith('"'):
+                quoting = True
+            if word in candidate_words and not quoting:
+                if (quote_list and  # There is something to compare to
+                    quote_list[-1][1] == i - 1 and  # The previous word was also added 
+                    ' '.join(condition_words[quote_list[-1][0]:i + 1]) in candidate_text):  # The complete phrase appears in candidate
+                        quote_list[-1] = (quote_list[-1][0], i)
+                else:
+                    quote_list.append((i, i))
+            if word.endswith('"'):
+                quoting = False
+        if not quote_list:
+            return condition
+
+        # Quote the quotable words
+        new_condition_words = []
+        i = 0
+        j = 0
+        while i < len(condition_words):
+            if j < len(quote_list) and i == quote_list[j][0]:
+                text_to_quote = ' '.join(condition_words[quote_list[j][0]:quote_list[j][1] + 1])
+                if text_to_quote.lower() in self.unquotable or all(w in self.unquotable for w in text_to_quote.lower().split()):
+                    j += 1
+                else:
+                    new_condition_words.append('"{}"'.format(text_to_quote))
+                    i = quote_list[j][1] + 1
+                    j += 1
+                    continue
+            new_condition_words.append(condition_words[i])
+            i += 1
+        new_condition = ' '.join(new_condition_words)
+        # TEMP
+        # if condition != new_condition:
+        #     print("Before: {}".format(original_condition))
+        #     print("After:  {}".format(new_condition))
+        # TEMP
+        return new_condition        
 
     def translate(self, sem):
         """Converts a parse's semantics into a pseudocode string."""

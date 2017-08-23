@@ -71,8 +71,12 @@ unary_rules = [
 compositional_rules = [
     # Text Baseline
     # NEW
-    Rule('$ROOT', '$Start $String $Stop', lambda (start_, str_, stop_): ('.root', ('.call', ('.in', ('.extract_text', ('.sentence',))), str_))),
-    Rule('$ROOT', '$Start $StringList $Stop', lambda (start_, strlist_, stop_): ('.root', ('.all', ('.map', ('.in', ('.extract_text', ('.sentence',))), strlist_)))),
+    Rule('$ROOT', '$Start $Label $Bool $Because $String $Stop', 
+        lambda (start_, lab_, bool_, _, str_, stop_): 
+        ('.root', (lab_, bool_, ('.call', ('.in', ('.extract_text', ('.sentence',))), str_)))),
+    Rule('$ROOT', '$Start $Label $Bool $Because $StringList $Stop', 
+        lambda (start_, lab_, bool_, _, strlist_, stop_): 
+        ('.root', (lab_, bool_, ('.all', ('.map', ('.in', ('.extract_text', ('.sentence',))), strlist_))))),
     # NEW
 
     # Direction

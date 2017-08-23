@@ -133,7 +133,7 @@ class SnorkelModel(object):
                         step_size=step_size,
                         reg_param=self.config['reg_param'])
 
-            train_marginals = gen_model.marginals(L_train)
+            train_marginals = self.gen_model.marginals(L_train)
                 
             if self.config['verbose'] and not self.config['majority_vote']:
                 if self.config['empirical_from_train']:

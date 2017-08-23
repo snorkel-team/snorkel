@@ -105,7 +105,7 @@ class SnorkelModel(object):
             L_train, train_marginals = self.traditional_supervision(L_gold_train)
         else:
             if self.config['majority_vote']:  # Majority vote
-                self.gen_model = MajorityVoter()
+                gen_model = MajorityVoter()
             else:  # Generative model
                 if self.config['learn_dep']:
                     deps = self.learn_dependencies(L_train)
@@ -131,7 +131,7 @@ class SnorkelModel(object):
                         step_size=step_size,
                         reg_param=self.config['reg_param'])
 
-            train_marginals = self.gen_model.marginals(L_train)
+            train_marginals = gen_model.marginals(L_train)
                 
             if self.config['verbose'] and not self.config['majority_vote']:
                 if self.config['empirical_from_train']:
@@ -140,10 +140,11 @@ class SnorkelModel(object):
                 else:
                     L = self.labeler.load_matrix(self.session, split=DEV)
                     L_gold = load_gold_labels(self.session, annotator_name='gold', split=DEV)
-                self.lf_stats = L.lf_stats(self.session, L_gold, self.gen_model.weights.lf_accuracy())
+                self.lf_stats = L.lf_stats(self.session, L_gold, gen_model.learned_lf_stats()['Accuracy'])
                 if self.config['display_correlation']:
                     self.display_accuracy_correlation()
 
+        self.gen_model = gen_model
         self.L_train = L_train
         self.train_marginals = train_marginals 
         # save_marginals(self.session, L_train, self.train_marginals)
@@ -158,10 +159,10 @@ class SnorkelModel(object):
         # Confirm you have the requested number of gold labels
         train_size = self.config['traditional']
         if L_gold_train.nnz < train_size:
-            raise Exception("Requested {} traditional supervision labels. Found {}.".format(
+            print("Requested {} traditional labels. Using {} instead...".format(
                 train_size, L_gold_train.nnz))
         # Randomly select the requested number of gold label
-        selected = np.random.permutation(L_gold_train.nonzero()[0])[:train_size]
+        selected = np.random.permutation(L_gold_train.nonzero()[0])[:max(train_size, L_gold_train.nnz)]
         L_train = L_gold_train[selected,:]
         train_marginals = np.array(L_train.todense()).reshape((L_train.shape[0],))
         train_marginals[train_marginals == -1] = 0

@@ -27,7 +27,7 @@ class ExplanationIO(object):
                 explanations.append(
                     Explanation(
                         condition=condition.strip(),
-                        label=bool(label),
+                        label=True if label=='True' else False,
                         candidate=None if candidate == 'None' else candidate,
                         semantics=semantics))
                 num_read += 1

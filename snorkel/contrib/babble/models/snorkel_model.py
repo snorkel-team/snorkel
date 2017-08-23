@@ -108,7 +108,7 @@ class SnorkelModel(object):
             L_train, train_marginals = self.traditional_supervision(L_gold_train)
         else:
             if self.config['majority_vote']:  # Majority vote
-                gen_model = MajorityVoter()
+                self.gen_model = MajorityVoter()
             else:  # Generative model
                 if self.config['learn_dep']:
                     deps = self.learn_dependencies(L_train)
@@ -121,17 +121,17 @@ class SnorkelModel(object):
             
                 
 
-                    decay = (self.config['decay'] if self.config['decay'] else 
-                        0.001 * (1.0 /self.config['epochs']))
-                    step_size = (self.config['step_size'] if self.config['step_size'] else 
-                        0.1/L_train.shape[0])
-                    self.gen_model.train(
-                        L_train, 
-                        deps=deps, 
-                        epochs=self.config['epochs'],
-                        decay=decay,
-                        step_size=step_size,
-                        reg_param=self.config['reg_param'])
+                decay = (self.config['decay'] if self.config['decay'] else 
+                         0.001 * (1.0 /self.config['epochs']))
+                step_size = (self.config['step_size'] if self.config['step_size'] else 
+                             0.1/L_train.shape[0])
+                self.gen_model.train(
+                    L_train, 
+                    deps=deps, 
+                    epochs=self.config['epochs'],
+                    decay=decay,
+                    step_size=step_size,
+                    reg_param=self.config['reg_param'])
 
             train_marginals = self.gen_model.marginals(L_train)
                 

@@ -360,24 +360,24 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
     columns = []
     data = []
 
-    # NOTE: This is much faster as it allows us to skip the above join (which for some reason is
-    # unreasonably slow) by relying on our symbol tables from above; however this will get slower with
-    # The total number of annotations in DB which is weird behavior...
-    q = session.query(annotation_class.candidate_id, annotation_class.key_id, annotation_class.value)
+    # Rely on the core for fast iteration
+    annot_select_query = annotation_class.__table__.select()
 
     # Iteratively construct row index and output sparse matrix
-    # Cycle through each key and rely on select rather than going through the entire table
-    for f_cid in cid_to_row.keys():
+    # Cycles through the entire table to load the data.
+    # Perfornamce may slow down based on table size; however, negligible since 
+    # it takes 8min to go throuh 245M rows (pretty fast).
 
-        for cid, kid, val in q.filter(annotation_class.candidate_id == f_cid).all():
+    for val, cid, kid in session.execute(annot_select_query):
 
-            if cid in cid_to_row and kid in kid_to_col:
-                # Optionally restricts val range to {0,1}, mapping -1 -> 0
-                if zero_one:
-                    val = 1 if val == 1 else 0
-                row.append(cid_to_row[cid])
-                columns.append(kid_to_col[kid])
-                data.append(int(val))
+        if cid in cid_to_row and kid in kid_to_col:
+
+            # Optionally restricts val range to {0,1}, mapping -1 -> 0
+            if zero_one:
+                val = 1 if val == 1 else 0
+            row.append(cid_to_row[cid])
+            columns.append(kid_to_col[kid])
+            data.append(int(val))
 
     X = sparse.coo_matrix((data, (row, columns)), shape=(len(cid_to_row), len(kid_to_col)))
 

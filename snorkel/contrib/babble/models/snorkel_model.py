@@ -92,6 +92,9 @@ class SnorkelModel(object):
         """
         if config:
             self.config = config
+        
+        if gen_model is None:
+            self.gen_model = GenerativeModel(lf_propensity=True)
 
         if self.config['traditional']:  # Traditional supervision
             L_gold_train = load_gold_labels(self.session, annotator_name='gold', split=TRAIN)
@@ -105,7 +108,7 @@ class SnorkelModel(object):
             L_train = self.labeler.load_matrix(self.session, split=TRAIN)
 
             if self.config['majority_vote']:  # Majority vote
-                gen_model = MajorityVoter()
+                self.gen_model = MajorityVoter()
             else:  # Generative model
                 if self.config['learn_dep']:
                     deps = self.learn_dependencies(L_train)
@@ -116,22 +119,21 @@ class SnorkelModel(object):
                 else:
                     deps = ()
             
-                if gen_model is None:
-                    gen_model = GenerativeModel(lf_propensity=True)
+                
 
-                    decay = (self.config['decay'] if self.config['decay'] else 
-                        0.001 * (1.0 /self.config['epochs']))
-                    step_size = (self.config['step_size'] if self.config['step_size'] else 
-                        0.1/L_train.shape[0])
-                    gen_model.train(
-                        L_train, 
-                        deps=deps, 
-                        epochs=self.config['epochs'],
-                        decay=decay,
-                        step_size=step_size,
-                        reg_param=self.config['reg_param'])
+                decay = (self.config['decay'] if self.config['decay'] else 
+                         0.001 * (1.0 /self.config['epochs']))
+                step_size = (self.config['step_size'] if self.config['step_size'] else 
+                             0.1/L_train.shape[0])
+                self.gen_model.train(
+                    L_train, 
+                    deps=deps, 
+                    epochs=self.config['epochs'],
+                    decay=decay,
+                    step_size=step_size,
+                    reg_param=self.config['reg_param'])
 
-            train_marginals = gen_model.marginals(L_train)
+            train_marginals = self.gen_model.marginals(L_train)
                 
             if self.config['verbose'] and not self.config['majority_vote']:
                 L = self.labeler.load_matrix(self.session, split=DEV)

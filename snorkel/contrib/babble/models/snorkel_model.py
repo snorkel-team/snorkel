@@ -108,7 +108,7 @@ class SnorkelModel(object):
             L_train = self.labeler.load_matrix(self.session, split=TRAIN)
 
             if self.config['majority_vote']:  # Majority vote
-                self.gen_model = MajorityVoter()
+                gen_model = MajorityVoter()
             else:  # Generative model
                 if self.config['learn_dep']:
                     deps = self.learn_dependencies(L_train)
@@ -125,7 +125,7 @@ class SnorkelModel(object):
                          0.001 * (1.0 /self.config['epochs']))
                 step_size = (self.config['step_size'] if self.config['step_size'] else 
                              0.1/L_train.shape[0])
-                self.gen_model.train(
+                gen_model.train(
                     L_train, 
                     deps=deps, 
                     epochs=self.config['epochs'],
@@ -133,7 +133,7 @@ class SnorkelModel(object):
                     step_size=step_size,
                     reg_param=self.config['reg_param'])
 
-            train_marginals = self.gen_model.marginals(L_train)
+            train_marginals = gen_model.marginals(L_train)
                 
             if self.config['verbose'] and not self.config['majority_vote']:
                 L = self.labeler.load_matrix(self.session, split=DEV)

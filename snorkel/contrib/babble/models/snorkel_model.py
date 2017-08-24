@@ -93,17 +93,17 @@ class SnorkelModel(object):
         if config:
             self.config = config
 
-        if not self.labeler:
-            if self.lfs:
-                self.labeler = LabelAnnotator(lfs=self.lfs)
-            else:
-                raise Exception("Cannot load label matrix without having LF list.")
-        L_train = self.labeler.load_matrix(self.session, split=TRAIN)
-
         if self.config['traditional']:  # Traditional supervision
             L_gold_train = load_gold_labels(self.session, annotator_name='gold', split=TRAIN)
             L_train, train_marginals = self.traditional_supervision(L_gold_train)
         else:
+            if not self.labeler:
+                if self.lfs:
+                    self.labeler = LabelAnnotator(lfs=self.lfs)
+                else:
+                    raise Exception("Cannot load label matrix without having LF list.")
+            L_train = self.labeler.load_matrix(self.session, split=TRAIN)
+
             if self.config['majority_vote']:  # Majority vote
                 gen_model = MajorityVoter()
             else:  # Generative model
@@ -134,12 +134,8 @@ class SnorkelModel(object):
             train_marginals = gen_model.marginals(L_train)
                 
             if self.config['verbose'] and not self.config['majority_vote']:
-                if self.config['empirical_from_train']:
-                    L = self.labeler.load_matrix(self.session, split=TRAIN)
-                    L_gold = load_gold_labels(self.session, annotator_name='gold', split=TRAIN)
-                else:
-                    L = self.labeler.load_matrix(self.session, split=DEV)
-                    L_gold = load_gold_labels(self.session, annotator_name='gold', split=DEV)
+                L = self.labeler.load_matrix(self.session, split=DEV)
+                L_gold = load_gold_labels(self.session, annotator_name='gold', split=DEV)
                 self.lf_stats = L.lf_stats(self.session, L_gold, gen_model.learned_lf_stats()['Accuracy'])
                 if self.config['display_correlation']:
                     self.display_accuracy_correlation()
@@ -258,10 +254,14 @@ class SnorkelModel(object):
                 'n_epochs':   10,
                 'dropout':    0.25,
                 'print_freq': 1,
-                'max_sentence_length': 100
+                'max_sentence_length': 100,
+                'rebalance': self.config['rebalance'],
             }
             lstm = reRNN(seed=1701, n_threads=None)
             lstm.train(train_cands, self.train_marginals, X_dev=dev_cands, Y_dev=L_gold_dev, **train_kwargs)
+            print("\nDev:")
+            p, r, f1 = lstm.score(dev_cands, L_gold_dev)
+            print("Prec: {0:.3f}, Recall: {1:.3f}, F1 Score: {2:.3f}".format(p, r, f1))
 
             if TEST in self.config['splits']:
                 print("\nTest:")

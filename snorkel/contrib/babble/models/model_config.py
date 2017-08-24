@@ -39,8 +39,6 @@ configuration = {
     # real-world conditions
     'include_py_only_lfs': False,
     'remove_paren': True,
-    # testing
-    'empirical_from_train': False,
 
     # CLASSIFICATION,
     'disc_model': 'lstm',

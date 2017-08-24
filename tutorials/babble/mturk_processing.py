@@ -163,13 +163,14 @@ class MTurkHelper(object):
                 csvwriter.writerow(hit)
         print("Wrote {} HITs with {} candidates per HIT".format(self.num_hits, self.candidates_per_hit))
 
-    def postprocess_labels(self, csvpath, candidates=None, verbose=False):
+    def postprocess_labels(self, csvpath, set_name='val', candidates=None, verbose=False):
         """
         Assumptions:
         HITs are sorted by HITId
         Don't need to pass original candidate list, parsed from $content
         """
-       
+        print "Analyzing {} Set!".format(set_name)
+        
         with open(csvpath, 'rb') as csvfile:
             csvreader = csv.reader(csvfile)
             
@@ -267,11 +268,16 @@ class MTurkHelper(object):
                         consensus = option
                         num_majority += 1
                      
-                labels_by_candidate['val:%d:%d:%d'%(cand[0],cand[1],cand[2])] = consensus
+                labels_by_candidate['%s:%d:%d:%d'%(set_name,cand[0],cand[1],cand[2])] = consensus
                 valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
             
-            print("Warning: expected {} total explanations, found {}.".format(
-                num_expected_explanations, num_actual_explanations))
+            if self.num_hits:
+                num_actual_explanations = num_unanimous + num_majority + num_bad
+                num_expected_explanations = self.num_hits * self.candidates_per_hit
+                if num_actual_explanations != num_expected_explanations:
+                    print("Warning: expected {} total explanations, found {}.".format(
+                        num_expected_explanations, num_actual_explanations))
+                    
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
             print("Bad: {}".format(num_bad))

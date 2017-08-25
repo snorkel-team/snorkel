@@ -110,6 +110,7 @@ class SnorkelModel(object):
             if self.config['majority_vote']:  # Majority vote
                 gen_model = MajorityVoter()
             else:  # Generative model
+                gen_model = GenerativeModel()
                 if self.config['learn_dep']:
                     deps = self.learn_dependencies(L_train)
                     ds = DependencySelector()

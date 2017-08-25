@@ -42,7 +42,6 @@ class MTurkHelper(object):
         
         if domain == 'vg':
             anns = np.load(anns_path)
-
             self.anns = list(anns)
 
     def balance_labels(self, candidates, labels, num_candidates, pct_positive):
@@ -162,146 +161,19 @@ class MTurkHelper(object):
                 hit = contents
                 csvwriter.writerow(hit)
         print("Wrote {} HITs with {} candidates per HIT".format(self.num_hits, self.candidates_per_hit))
-
-    def postprocess_labels(self, csvpath, set_name='val', candidates=None, verbose=False):
-        """
-        Assumptions:
-        HITs are sorted by HITId
-        Don't need to pass original candidate list, parsed from $content
-        """
-        print "Analyzing {} Set!".format(set_name)
-        
-        with open(csvpath, 'rb') as csvfile:
-            csvreader = csv.reader(csvfile)
-            
-            # prep data structures
-            explanations_by_candidate = collections.defaultdict(list)
-            labels_by_candidate = collections.defaultdict(list)
-            label_converter = {
-                'true': True,
-                'false': False,
-                'not_person': None,
-            }
-            hits = collections.Counter()
-            times = []
-            workers = []
-
-            # read data
-            header = csvreader.next()
-            for row in csvreader:
-                img_indices = []             
-                p_indices = []
-                b_indices = []
-                explanations = []
-                labels = []
-                for i, field in enumerate(row):
-                    if header[i] == 'HITId':
-                        hits.update([field])
-                    elif header[i] == 'WorkTimeInSeconds':
-                        times.append(int(field))
-                    elif header[i] == 'WorkerId':
-                        workers.append(field)
-                    elif header[i].startswith('Input.content'):
-                        #The HTML Parsing!
-                        parsed_url = field.split('_')
-                        img_indices.append(int(parsed_url[1]))
-                        p_indices.append(int(parsed_url[2]))
-                        b_indices.append(int(parsed_url[3].split('.')[0]))
-                        explanations.append('a')
-                        
-                    elif header[i].startswith('Answer.explanation'):
-                        explanations.append(field)
-                    elif header[i].startswith('Answer.label'):
-                        labels.append(field)
-
-                for (img_idx, p_idx, b_idx, explanation, label) in zip(img_indices, p_indices, b_indices, explanations, labels):
-                    #candidate_tuple = create_candidate(img_idx, p_idx, b_idx)
-                    candidate_tuple = (img_idx, p_idx, b_idx)
-                    label = label_converter[label.lower()]
-                    if label is None:
-                        exp = None
-                    else:
-                        exp = Explanation(explanation, label, candidate=candidate_tuple)
-                    explanations_by_candidate[candidate_tuple].append(exp)
-                
-            # Sanity check
-            print("Num HITs unique: {}".format(len(hits)))
-            print("Num HITs total: {}".format(sum(hits.values())))
-            #assert(all([n == self.workers_per_hit for n in hits.values()]))
-
-            # Analyze worker distribution
-            if verbose:
-                responses_by_worker = collections.Counter(workers)
-                plt.hist(responses_by_worker.values(), bins='auto')
-                plt.title('# Responses Per Worker')
-                plt.show()
-
-            # Analyze time distribution
-            if verbose:
-                median_time = int(np.median(times))
-                print("Median # seconds/HIT: {:d} ({:.1f} s/explanation)".format(
-                    median_time, median_time/self.candidates_per_hit))
-                plt.hist(times, bins='auto')
-                plt.title('Seconds per HIT')
-                plt.show()
-
-
-            # Filter and merge data
-            num_unanimous = 0
-            num_majority = 0
-            num_bad = 0
-            valid_explanations = []
-            finished_candidates = []
-            for cand, explanations in explanations_by_candidate.items():
-                if None in explanations:
-                    consensus = None
-                    num_bad += 1
-                    continue
-                    
-                labels = [exp.label for exp in explanations]
-                for option in [True, False]:
-                    if labels.count(option) >= self.workers_per_hit:
-                        finished_candidates.append(cand)
-                        consensus = option
-                        num_unanimous += 1
-                    elif labels.count(option) >= np.floor(self.workers_per_hit/2.0 + 1):
-                        consensus = option
-                        num_majority += 1
-                     
-                labels_by_candidate['%s:%d:%d:%d'%(set_name,cand[0],cand[1],cand[2])] = consensus
-                valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
-            
-            if self.num_hits:
-                num_actual_explanations = num_unanimous + num_majority + num_bad
-                num_expected_explanations = self.num_hits * self.candidates_per_hit
-                if num_actual_explanations != num_expected_explanations:
-                    print("Warning: expected {} total explanations, found {}.".format(
-                        num_expected_explanations, num_actual_explanations))
-                    
-            print("Unanimous: {}".format(num_unanimous))
-            print("Majority: {}".format(num_majority))
-            print("Bad: {}".format(num_bad))
-
-            # Link candidates
-            return labels_by_candidate
             
         
-    def postprocess_visual(self, csvpath, candidates=None, verbose=False):
+    def postprocess_visual(self, csvpath, is_gold=False, set_name=None, candidates=None, verbose=False):
         """
         Assumptions:
         HITs are sorted by HITId
         Don't need to pass original candidate list, parsed from $content
         """
         
-        def create_candidate(img_idx, p_idx, b_idx):
-            """
-            Create a BBox tuple with bbox p_idx and b_idx from image img_idx
-            """
-            anns_img = self.anns[img_idx]
-            p_bbox = BBox(anns_img[p_idx],img_idx)
-            b_bbox = BBox(anns_img[b_idx],img_idx)
-            
-            return (p_bbox, b_bbox)
+        if set_name not in ['train','val']:
+            raise ValueError('A valid set name was not passed')
+        else:
+            print 'Reading ' + set_name + ' CSV!'
       
             
         with open(csvpath, 'rb') as csvfile:
@@ -309,6 +181,7 @@ class MTurkHelper(object):
             
             # prep data structures
             explanations_by_candidate = collections.defaultdict(list)
+            labels_by_candidate = collections.defaultdict(list)
             label_converter = {
                 'true': True,
                 'false': False,
@@ -349,14 +222,14 @@ class MTurkHelper(object):
                         explanations.append(field)
                     elif header[i].startswith('Answer.label'):
                         labels.append(field)
+                    if is_gold:
+                            explanations.append('temp exp')
 
-                TRAIN = 0
-                VAL = 1
+                #import pdb; pdb.set_trace()
+                source = {'train': 0, 'val': 1}[set_name]
                 for (img_idx, p_idx, b_idx, explanation, label) in zip(img_indices, p_indices, b_indices, explanations, labels):
-                    # candidate_tuple = create_candidate(img_idx, p_idx, b_idx)
-                    # candidate_tuple = (img_idx, p_idx, b_idx)
-                    p_bbox_stable_id = "{}:{}::bbox:{}".format(TRAIN, img_idx, p_idx)
-                    b_bbox_stable_id = "{}:{}::bbox:{}".format(TRAIN, img_idx, b_idx)
+                    p_bbox_stable_id = "{}:{}::bbox:{}".format(source, img_idx, p_idx)
+                    b_bbox_stable_id = "{}:{}::bbox:{}".format(source, img_idx, b_idx)
                     candidate_stable_id = '~~'.join([p_bbox_stable_id, b_bbox_stable_id])
                     label = label_converter[label.lower()]
                     if label is None:
@@ -364,7 +237,8 @@ class MTurkHelper(object):
                     else:
                         exp = Explanation(explanation, label, candidate=candidate_stable_id)
                     explanations_by_candidate[candidate_stable_id].append(exp)
-                
+
+   
             # Sanity check
             print("Num HITs unique: {}".format(len(hits)))
             print("Num HITs total: {}".format(sum(hits.values())))
@@ -397,7 +271,7 @@ class MTurkHelper(object):
             num_majority = 0
             num_bad = 0
             valid_explanations = []
-            for _, explanations in explanations_by_candidate.items():
+            for cand, explanations in explanations_by_candidate.items():
                 if None in explanations:
                     consensus = None
                     num_bad += 1
@@ -412,22 +286,34 @@ class MTurkHelper(object):
                         consensus = option
                         num_majority += 1
                 assert(consensus is not None)
+                
+                #Hack to maintain label by candidate format for bike_model
+                cand_split = cand.split('~~')
+                img_idx = cand_split[0].split(':')[1]
+                p_idx = cand_split[0].split(':')[4]
+                b_idx = cand_split[1].split(':')[4]
+                labels_by_candidate['%s:%s:%s:%s'%(set_name,img_idx,p_idx,b_idx)] = consensus
+                
+                
                 valid_explanations.extend([exp for exp in explanations if exp.label == consensus])
             for candidate_stable_id, responses in explanations_by_candidate.items():
-                if len(responses) != self.workers_per_hit:
+                if (len(responses) != self.workers_per_hit) and (verbose):
                     print("Warning: for candidate {}, expected {} responses, found {}.".format(
                         candidate_stable_id, self.workers_per_hit, len(responses)))
             if self.num_hits:
                 num_actual_explanations = num_unanimous + num_majority + num_bad
                 num_expected_explanations = self.num_hits * self.candidates_per_hit
-                if num_actual_explanations != num_expected_explanations:
+                if (num_actual_explanations != num_expected_explanations) and (verbose):
                     print("Warning: expected {} total explanations, found {}.".format(
                         num_expected_explanations, num_actual_explanations))
             print("Unanimous: {}".format(num_unanimous))
             print("Majority: {}".format(num_majority))
             print("Bad: {}".format(num_bad))
 
-            return valid_explanations
+            if is_gold:
+                return labels_by_candidate
+            else:
+                return valid_explanations
     
 
     def postprocess(self, csvpath, candidates=None, verbose=False):

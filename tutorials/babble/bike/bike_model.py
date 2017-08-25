@@ -8,6 +8,8 @@ from snorkel.db_helpers import reload_annotator_labels
 from snorkel.contrib.babble import Babbler
 from snorkel.contrib.babble.models import BabbleModel
 
+from tutorials.babble import MTurkHelper
+
 
 class BikeModel(BabbleModel):
 
@@ -35,10 +37,20 @@ class BikeModel(BabbleModel):
     def load_gold(self, anns_path=None, annotator_name='gold'):
         if anns_path:
             self.anns_path = anns_path
-        validation_labels_by_candidate = np.load(
-            self.anns_path + 'labels_by_candidate.npy').tolist()
-        train_labels_by_candidate = np.load(
-            self.anns_path + 'train_labels_by_candidate.npy').tolist()
+            
+        def load_labels(set_name, output_csv_path):
+            helper = MTurkHelper(candidates=[], labels=[], num_hits=None, domain='vg', workers_per_hit=3)
+            labels_by_candidate = helper.postprocess_visual(output_csv_path, 
+                                                            is_gold=True, set_name=set_name, 
+                                                            candidates=[], verbose=False)
+            return labels_by_candidate
+            
+        
+        
+        validation_labels_by_candidate = load_labels('val', self.anns_path+
+                                                     'Labels_for_Visual_Genome_all_out.csv')
+        train_labels_by_candidate = load_labels('train', self.anns_path+
+                                                'Train_Labels_for_Visual_Genome_out.csv')
 
         def assign_gold_labels(labels_by_candidate):
             for candidate_hash, label in labels_by_candidate.items():

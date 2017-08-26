@@ -134,9 +134,9 @@ def generate_label_matrix(weights, m):
         for i in range(weights.n):
             if getattr(weights, optional_name)[i] != 0.0:
                 if optional_name == 'lf_prior' or optional_name == 'lf_propensity':
-                    n_edges += 2
+                    n_edges += 1
                 elif optional_name == 'lf_class_propensity':
-                    n_edges += 3
+                    n_edges += 2
                 else:
                     raise ValueError()
     for dep_name in GenerativeModel.dep_names:

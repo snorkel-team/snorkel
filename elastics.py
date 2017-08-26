@@ -8,10 +8,11 @@ session = SnorkelSession()
 
 class elasticSession:
 	#define document and index names
-	def __init__(self,indexName,docType,fieldName):
-		self.indexName = indexName
-		self.docType = docType
-		self.fieldName=fieldName
+	def __init__(self):
+		self.indexName = "corpus"
+		self.docType = "articles"
+		self.fieldName="sentence"
+		self.elasticIndex()
 
 	#get the index mapping
 	def getIndexMap(self):
@@ -34,7 +35,7 @@ class elasticSession:
 	#Table - Type
 	#Row - Document
 	#Values are the data to be added to each document
-	def elasticIndex(self,Document):
+	def elasticIndex(self):
 		#Define our index mapping
 		request_body = {
 			'settings' : {
@@ -95,8 +96,9 @@ class elasticSession:
 						self.fieldName: i.text,
 						'fillCand':['o']*value
 					})
-		
+		self.getIndices()
 		print '%d items indexed'%docCount
+		
 
 	def generateTags(self,Cands):
 		unique=[]

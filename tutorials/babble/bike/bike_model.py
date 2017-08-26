@@ -8,6 +8,8 @@ from snorkel.db_helpers import reload_annotator_labels
 from snorkel.contrib.babble import Babbler
 from snorkel.contrib.babble.models import BabbleModel
 
+from tutorials.babble import MTurkHelper
+
 
 class BikeModel(BabbleModel):
 
@@ -35,27 +37,44 @@ class BikeModel(BabbleModel):
     def load_gold(self, anns_path=None, annotator_name='gold'):
         if anns_path:
             self.anns_path = anns_path
-        labels_by_candidate = np.load(
-            self.anns_path + 'labels_by_candidate.npy').tolist()
+            
+        def load_labels(set_name, output_csv_path):
+            helper = MTurkHelper(candidates=[], labels=[], num_hits=None, domain='vg', workers_per_hit=3)
+            labels_by_candidate = helper.postprocess_visual(output_csv_path, 
+                                                            is_gold=True, set_name=set_name, 
+                                                            candidates=[], verbose=False)
+            return labels_by_candidate
+            
+        
+        
+        validation_labels_by_candidate = load_labels('val', self.anns_path+
+                                                     'Labels_for_Visual_Genome_all_out.csv')
+        train_labels_by_candidate = load_labels('train', self.anns_path+
+                                                'Train_Labels_for_Visual_Genome_out.csv')
 
-        for candidate_hash, label in labels_by_candidate.items():
-            set_name, image_idx, bbox1_idx, bbox2_idx = candidate_hash.split(':')
-            source = {'train': 0, 'val': 1}[set_name]
-            stable_id_1 = "{}:{}::bbox:{}".format(source, image_idx, bbox1_idx)
-            stable_id_2 = "{}:{}::bbox:{}".format(source, image_idx, bbox2_idx)
-            context_stable_ids = "~~".join([stable_id_1, stable_id_2])
-            query = self.session.query(StableLabel).filter(StableLabel.context_stable_ids == context_stable_ids)
-            query = query.filter(StableLabel.annotator_name == annotator_name)
-            label = 1 if label else -1
-            if query.count() == 0:
-                self.session.add(StableLabel(
-                    context_stable_ids=context_stable_ids,
-                    annotator_name=annotator_name,
-                    value=label))
+        def assign_gold_labels(labels_by_candidate):
+            for candidate_hash, label in labels_by_candidate.items():
+                set_name, image_idx, bbox1_idx, bbox2_idx = candidate_hash.split(':')
+                source = {'train': 0, 'val': 1}[set_name]
+                stable_id_1 = "{}:{}::bbox:{}".format(source, image_idx, bbox1_idx)
+                stable_id_2 = "{}:{}::bbox:{}".format(source, image_idx, bbox2_idx)
+                context_stable_ids = "~~".join([stable_id_1, stable_id_2])
+                query = self.session.query(StableLabel).filter(StableLabel.context_stable_ids == context_stable_ids)
+                query = query.filter(StableLabel.annotator_name == annotator_name)
+                label = 1 if label else -1
+                if query.count() == 0:
+                    self.session.add(StableLabel(
+                        context_stable_ids=context_stable_ids,
+                        annotator_name=annotator_name,
+                        value=label))
 
-        self.session.commit()
-        reload_annotator_labels(self.session, self.candidate_class, 
-            annotator_name, split=1, filter_label_split=False)
+            self.session.commit()
+            reload_annotator_labels(self.session, self.candidate_class, 
+                annotator_name, split=source, filter_label_split=False)
+            
+            
+        assign_gold_labels(validation_labels_by_candidate)
+        assign_gold_labels(train_labels_by_candidate)
 
 
     def babble(self, explanations, user_lists={}, gold_labels=None, **kwargs):

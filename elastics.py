@@ -8,11 +8,13 @@ session = SnorkelSession()
 
 class elasticSession:
 	#define document and index names
-	def __init__(self):
+	def __init__(self,**keyword_parameters):
 		self.indexName = "corpus"
 		self.docType = "articles"
 		self.fieldName="sentence"
 		self.elasticIndex()
+		if "cands" in keyword_parameters:
+			self.generateTags(keyword_parameters['cands'])
 
 	#get the index mapping
 	def getIndexMap(self):
@@ -98,9 +100,12 @@ class elasticSession:
 					})
 		self.getIndices()
 		print '%d items indexed'%docCount
+		print ""
 		
 
 	def generateTags(self,Cands):
+
+		print "Begin generating tags"
 		unique=[]
 		total=0
 		#Get all the sentences in our candidate set
@@ -158,20 +163,21 @@ class elasticSession:
 			turnAr = ' '.join((e).decode('utf-8') for e in hold)
 			es.update(index=self.indexName, doc_type=self.docType, id=sent,
 				body={'doc':{'fillCand':hold,'tagged':turnAr}})
-		print '%d candidates tagged'%(total-flagNum)
-		#return the candidates that could not have been tagged 
-		return flagged	
+
+		#Most candidates that can not be tagged are ones that correspond to punctuation and spaces
+		#those are automatically stripped when the string is tokenized
+		print '%d candidates of %d tagged'%((total-flagNum),(total))
 
 	def searchIndex(self,keyWord,*args,**keyword_parameters):
-		if keyWord == 'entire':
+		if keyWord == 'match':
 			for hold,query in enumerate(args):
 				#Match phrase if there is a slop value
-				if 'distance' in keyword_parameters:
+				if 'slop' in keyword_parameters:
 					sQuery={
 						'match_phrase':{
 							self.fieldName:{
 								'query':query,
-								'slop':keyword_parameters['distance']
+								'slop':keyword_parameters['slop']
 							}
 						}
 					}
@@ -188,8 +194,8 @@ class elasticSession:
 		#position(value1)<position(value2)<position(value3) etc
 		elif keyWord=='position':
 			holdVal=[]
-			if 'distance' in keyword_parameters:
-				dist = keyword_parameters['distance']
+			if 'slop' in keyword_parameters:
+				dist = keyword_parameters['slop']
 			else:
 				dist=0
 
@@ -206,8 +212,8 @@ class elasticSession:
 	 	#the mask searches the tagged for object then switches to the fieldName to search for value
 	 	#before switching back to tagged to search for object again
 		elif keyWord=='inCand':
-			if 'distance' in keyword_parameters:
-				dist = keyword_parameters['distance']
+			if 'slop' in keyword_parameters:
+				dist = keyword_parameters['slop']
 			else:
 				dist=0
 			for hold,value in enumerate(args):
@@ -234,8 +240,8 @@ class elasticSession:
 		#field for the OBJECT tag	
 		elif keyWord == 'bCand':
 			holdVal=[]
-			if 'distance' in keyword_parameters:
-				dist = keyword_parameters['distance']
+			if 'slop' in keyword_parameters:
+				dist = keyword_parameters['slop']
 			else:
 				dist=0
 
@@ -262,8 +268,8 @@ class elasticSession:
 		#Searches the tagged field first for object then switches to the fieldName
 		#for the value
 		elif keyWord == 'aCand':
-			if 'distance' in keyword_parameters:
-				dist = keyword_parameters['distance']
+			if 'slop' in keyword_parameters:
+				dist = keyword_parameters['slop']
 			else:
 				dist=0
 

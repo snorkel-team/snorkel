@@ -272,6 +272,7 @@ class MTurkHelper(object):
             num_bad = 0
             valid_explanations = []
             for cand, explanations in explanations_by_candidate.items():
+                consensus = None
                 if None in explanations:
                     consensus = None
                     num_bad += 1
@@ -282,14 +283,13 @@ class MTurkHelper(object):
                     if labels.count(option) == self.workers_per_hit:
                         consensus = option
                         num_unanimous += 1
-                    elif labels.count(option) >= np.floor(self.workers_per_hit/2.0 + 1):
+                    #Temp Hack to remove 2700 Bad from Train Gold in Drink
+                    elif labels.count(option) >= np.floor(self.workers_per_hit/2.0):
                         consensus = option
                         num_majority += 1
-                    else:
-                        consensus = None
-                        num_bad += 1
-                        continue
-                #assert(consensus is not None)
+                if consensus == None:
+                    print "Bad candidate detected", cand
+
                 
                 #Hack to maintain label by candidate format for bike_model
                 cand_split = cand.split('~~')

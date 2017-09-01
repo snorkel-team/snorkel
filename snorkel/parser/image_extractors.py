@@ -41,13 +41,13 @@ class ImageCorpusExtractorUDF(UDF):
         super(ImageCorpusExtractorUDF, self).__init__(**kwargs)
         self.candidate_class = candidate_class
 
-    def apply(self, x, **kwargs):
+    def apply(self, x, person_id=[1], object_id=[2], **kwargs):
+        # TEMP: overly specific here to bike task
         """Given a Document object and its raw text, parse into Sentences"""
         ann, image_idx, source = x
         
-        # TEMP: overly specific here to bike task
-        person_indices = [i for i, box in enumerate(ann) if box['category_id'] == 1]
-        bike_indices = [i for i, box in enumerate(ann) if box['category_id'] == 2]
+        person_indices = [i for i, box in enumerate(ann) if box['category_id'] in person_id]
+        bike_indices = [i for i, box in enumerate(ann) if box['category_id'] in object_id]
         person_bike_tuples = [(x,y) for x in person_indices for y in bike_indices]
         valid_pairs = get_valid_pairs(ann, person_bike_tuples)
 

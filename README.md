@@ -107,6 +107,18 @@ After installing, just run:
 ./run.sh
 ```
 
+## Docker
+
+To run Snorkel in a [Docker container](https://www.docker.com/what-docker):
+```
+docker-compose up dev
+```
+
+To run some tests inside a Docker container:
+```
+docker-compose up test
+```
+
 ## Issues
 We like [issues](https://github.com/HazyResearch/snorkel/issues) as a place to put bugs, questions, feature requests, etc- don't be shy!
 If submitting an issue about a bug, however, **please provide a pointer to a notebook (and relevant data) to reproduce it.**

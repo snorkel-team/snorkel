@@ -1,0 +1,20 @@
+version: '2'
+services:
+  base:
+    image: $DOCKER_IMAGE
+    build: .
+    working_dir: /snorkel
+    entrypoint:
+      - /snorkel/docker/entry.sh
+  dev:
+    extends: base
+    volumes:
+      - .:/snorkel
+    ports:
+      - $HOST_PORT:8888
+  test:
+    extends: base
+    volumes:
+      - .:/snorkel
+    entrypoint:
+      - /snorkel/test.sh

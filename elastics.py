@@ -321,13 +321,14 @@ class elasticSession:
 				'query': sQuery
 			})
 
+		
+		temp=[]
+		print "Number of hits: %d" %searchResult['hits']['total']
+		#get sentence numbers from the search results
+		for i in searchResult['hits']['hits']:
+		    temp.append(i['_source']['lineNum'])
+		holdCands=[]
 		if check ==1:
-			temp=[]
-			print "Number of hits: %d" %searchResult['hits']['total']
-			#get sentence numbers from the search results
-			for i in searchResult['hits']['hits']:
-			    temp.append(i['_source']['lineNum'])
-			holdCands=[]
 			for i in temp:
 				#query the candidate set for all spans with the sentence number
 			    q = session.query(self.cands)\
@@ -335,21 +336,15 @@ class elasticSession:
 			        .join(Span.sentence).filter(Sentence.id == i).all()
 			    for span in q:
 			    	holdCands.append(span)
-			#returns candidate object
-			return holdCands
 		else:
-			temp=[]
-			print "Number of hits: %d" %searchResult['hits']['total']
-			#get sentence numbers from query
-			for i in searchResult['hits']['hits']:
-			    temp.append(i['_source']['lineNum'])
-			holdCands=[]
-			#get sentence object
 			for i in temp:
+				#get sentence using sentence number
 			    q=session.query(Sentence).filter(Sentence.id ==i).all()
 			    holdCands.append(q[0])
-			#returns sentence object
-			return holdCands
+
+		#returns candidate object
+		return holdCands
+		
 
 #deletes an elasticsearch index taking the index name as a parameter 
 #the _all flag will delete all indecies

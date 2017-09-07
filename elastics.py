@@ -7,32 +7,32 @@ import json
 es = Elasticsearch()
 session = SnorkelSession()
 
-class elasticSession:
+class ElasticSession:
 	#define document and index names
 	def __init__(self,**keyword_parameters):
 		self.indexName = "corpus"
 		self.docType = "articles"
 		self.fieldName = "sentence"
-		self.elasticIndex()
+		self.elastic_index()
 		if "cands" in keyword_parameters:
-			self.generateTags(keyword_parameters['cands'])
+			self.generate_tags(keyword_parameters['cands'])
 
-	def setCand(self, Cands): 
+	def set_cand(self, Cands): 
 		self.cands = Cands
 	#get the index mapping
-	def getIndexMap(self):
+	def get_map(self):
 		mapping = es.indices.get_mapping(self.indexName)
 		print 'Index Mapping'
 		print(json.dumps(mapping, indent=2))
 
 	#get all index information
-	def getIndices(self):
+	def get_index(self):
 		print 'Index Information: '
 		print ' '
 		print es.cat.indices(v='true')
 
 	#get a document by its id number
-	def getDoc(self,iden):
+	def get_doc(self,iden):
 		return es.get(index=self.indexName, doc_type=self.docType, id=iden)
 
 	#Elasticsearch to SQL mapping
@@ -40,7 +40,7 @@ class elasticSession:
 	#Table - Type
 	#Row - Document
 	#Values are the data to be added to each document
-	def elasticIndex(self):
+	def elastic_index(self):
 		#Define our index mapping
 		request_body = {
 			'settings' : {
@@ -101,13 +101,13 @@ class elasticSession:
 						self.fieldName: i.text,
 						'fillCand':['o']*value
 					})
-		self.getIndices()
+		self.get_index()
 		print '%d items indexed'%docCount
 		print ""
 		
 
-	def generateTags(self,Cands):
-		self.setCand(Cands)
+	def generate_tags(self,Cands):
+		self.set_cand(Cands)
 
 		print "Begin generating tags"
 		unique=[]
@@ -172,7 +172,7 @@ class elasticSession:
 		#those are automatically stripped when the string is tokenized
 		print '%d candidates of %d tagged'%((total-flagNum),(total))
 
-	def searchIndex(self,keyWord,*args,**keyword_parameters):
+	def search_index(self,keyWord,*args,**keyword_parameters):
 		check = 0
 
 		if keyWord == 'match':
@@ -217,7 +217,7 @@ class elasticSession:
 		#Query two fields in parallel respective of order
 	 	#the mask searches the tagged for object then switches to the fieldName to search for value
 	 	#before switching back to tagged to search for object again
-		elif keyWord=='inCand':
+		elif keyWord=='between_cand':
 			check=1
 			if 'slop' in keyword_parameters:
 				dist = keyword_parameters['slop']
@@ -245,7 +245,7 @@ class elasticSession:
 		#Query two fields in parallel respective of order
 		#Searches the fieldName first for the value then switches to the tagged 
 		#field for the OBJECT tag	
-		elif keyWord == 'bCand':
+		elif keyWord == 'before_cand':
 			check=1
 			holdVal=[]
 			if 'slop' in keyword_parameters:
@@ -275,7 +275,7 @@ class elasticSession:
 		#Query two fields in parallel respective of order
 		#Searches the tagged field first for object then switches to the fieldName
 		#for the value
-		elif keyWord == 'aCand':
+		elif keyWord == 'after_cand':
 			check=1
 			if 'slop' in keyword_parameters:
 				dist = keyword_parameters['slop']
@@ -348,5 +348,5 @@ class elasticSession:
 
 #deletes an elasticsearch index taking the index name as a parameter 
 #the _all flag will delete all indecies
-def deleteIndex(indexName):
+def delete_index(indexName):
 	print es.indices.delete(index=indexName,ignore=404)

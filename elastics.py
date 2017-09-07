@@ -1,7 +1,8 @@
 from elasticsearch import Elasticsearch,client 
 from snorkel import SnorkelSession
 from snorkel.models import Document, Sentence,Span
-
+from snorkel.viewer import SentenceNgramViewer
+import os 
 import json
 es = Elasticsearch()
 session = SnorkelSession()
@@ -11,11 +12,13 @@ class elasticSession:
 	def __init__(self,**keyword_parameters):
 		self.indexName = "corpus"
 		self.docType = "articles"
-		self.fieldName="sentence"
+		self.fieldName = "sentence"
 		self.elasticIndex()
 		if "cands" in keyword_parameters:
 			self.generateTags(keyword_parameters['cands'])
 
+	def setCand(self, Cands): 
+		self.cands = Cands
 	#get the index mapping
 	def getIndexMap(self):
 		mapping = es.indices.get_mapping(self.indexName)
@@ -84,7 +87,7 @@ class elasticSession:
 					}}}}
 		#create the index
 		es.indices.create(index = self.indexName, body = request_body)
-		print 'Beginning indexing'
+		print 'Begin indexing'
 		docCount=0
 		for p in session.query(Document):
 			docCount+=1
@@ -104,6 +107,7 @@ class elasticSession:
 		
 
 	def generateTags(self,Cands):
+		self.setCand(Cands)
 
 		print "Begin generating tags"
 		unique=[]
@@ -169,6 +173,8 @@ class elasticSession:
 		print '%d candidates of %d tagged'%((total-flagNum),(total))
 
 	def searchIndex(self,keyWord,*args,**keyword_parameters):
+		check = 0
+
 		if keyWord == 'match':
 			for hold,query in enumerate(args):
 				#Match phrase if there is a slop value
@@ -212,6 +218,7 @@ class elasticSession:
 	 	#the mask searches the tagged for object then switches to the fieldName to search for value
 	 	#before switching back to tagged to search for object again
 		elif keyWord=='inCand':
+			check=1
 			if 'slop' in keyword_parameters:
 				dist = keyword_parameters['slop']
 			else:
@@ -239,6 +246,7 @@ class elasticSession:
 		#Searches the fieldName first for the value then switches to the tagged 
 		#field for the OBJECT tag	
 		elif keyWord == 'bCand':
+			check=1
 			holdVal=[]
 			if 'slop' in keyword_parameters:
 				dist = keyword_parameters['slop']
@@ -268,6 +276,7 @@ class elasticSession:
 		#Searches the tagged field first for object then switches to the fieldName
 		#for the value
 		elif keyWord == 'aCand':
+			check=1
 			if 'slop' in keyword_parameters:
 				dist = keyword_parameters['slop']
 			else:
@@ -302,6 +311,7 @@ class elasticSession:
 			numRes = keyword_parameters['size']
 		else:
 			numRes=5
+
 		#Perform the query
 		searchResult = es.search(
 			size =numRes,
@@ -309,25 +319,38 @@ class elasticSession:
 			doc_type=self.docType,
 			body={
 				'query': sQuery
-		})
-		return searchResult
-#print the results of an elasticsearch query
-def printResults(searchResult,*args):
-	hitCount=searchResult['hits']['total']
-	if hitCount>0:
-		print 'Number of hits '
-		print hitCount
-		i=1
-		for items in searchResult['hits']['hits']:
-			print 'Result %d' %(i)
-			i+=1
-			print '-------------------'
-			for hold,fields in enumerate(args):
-				print fields
-				print items['_source'][fields]
-			print ""
-	else:
-		print 'No hits'
+			})
+
+		if check ==1:
+			temp=[]
+			print "Number of hits: %d" %searchResult['hits']['total']
+			#get sentence numbers from the search results
+			for i in searchResult['hits']['hits']:
+			    temp.append(i['_source']['lineNum'])
+			holdCands=[]
+			for i in temp:
+				#query the candidate set for all spans with the sentence number
+			    q = session.query(self.cands)\
+			        .join(Span, getattr(self.cands, self.cands.__argnames__[0] + '_id') == Span.id)\
+			        .join(Span.sentence).filter(Sentence.id == i).all()
+			    for span in q:
+			    	holdCands.append(span)
+			#returns candidate object
+			return holdCands
+		else:
+			temp=[]
+			print "Number of hits: %d" %searchResult['hits']['total']
+			#get sentence numbers from query
+			for i in searchResult['hits']['hits']:
+			    temp.append(i['_source']['lineNum'])
+			holdCands=[]
+			#get sentence object
+			for i in temp:
+			    q=session.query(Sentence).filter(Sentence.id ==i).all()
+			    holdCands.append(q[0])
+			#returns sentence object
+			return holdCands
+
 #deletes an elasticsearch index taking the index name as a parameter 
 #the _all flag will delete all indecies
 def deleteIndex(indexName):

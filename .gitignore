@@ -46,3 +46,4 @@ tutorials/tables/data/hardware/
 *.csv
 *.log
 *.npy
+*.__afsDAC5

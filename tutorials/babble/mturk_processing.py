@@ -225,7 +225,7 @@ class MTurkHelper(object):
                     if is_gold:
                             explanations.append('temp exp')
 
-                #import pdb; pdb.set_trace()
+                #import pdb; pdb.set_trace()                
                 source = {'train': 0, 'val': 1}[set_name]
                 for (img_idx, p_idx, b_idx, explanation, label) in zip(img_indices, p_indices, b_indices, explanations, labels):
                     p_bbox_stable_id = "{}:{}::bbox:{}".format(source, img_idx, p_idx)
@@ -272,6 +272,7 @@ class MTurkHelper(object):
             num_bad = 0
             valid_explanations = []
             for cand, explanations in explanations_by_candidate.items():
+                consensus = None
                 if None in explanations:
                     consensus = None
                     num_bad += 1
@@ -282,10 +283,13 @@ class MTurkHelper(object):
                     if labels.count(option) == self.workers_per_hit:
                         consensus = option
                         num_unanimous += 1
-                    elif labels.count(option) >= np.floor(self.workers_per_hit/2.0 + 1):
+                    #Temp Hack to remove 2700 Bad from Train Gold in Drink
+                    elif labels.count(option) >= np.floor(self.workers_per_hit/2.0):
                         consensus = option
                         num_majority += 1
-                assert(consensus is not None)
+                if consensus == None:
+                    print "Bad candidate detected", cand
+
                 
                 #Hack to maintain label by candidate format for bike_model
                 cand_split = cand.split('~~')

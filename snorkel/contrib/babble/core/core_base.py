@@ -151,8 +151,8 @@ translate_ops = {
     '.int': lambda int_: int(int_),
     
     '.tuple': lambda list_: "tuple({})".format(list_),
-    '.list': lambda *elements: "[{}]".format(','.join(str(x) for x in elements)),
-    '.user_list': lambda name: "${}".format(str(name)),
+    '.list': lambda *elements: "[{}]".format(','.join(x.encode('utf-8') for x in elements)),
+    '.user_list': lambda name: "${}".format(name.encode('utf-8')),
     '.map': lambda func_, list_: "map({}, {})".format(func_, list_),
     '.call': lambda func_, args_: "call({}, {})".format(func_, args_),
 

@@ -152,7 +152,7 @@ translate_ops = {
     
     '.tuple': lambda list_: "tuple({})".format(list_),
     '.list': lambda *elements: "[{}]".format(','.join(x.encode('utf-8') for x in elements)),
-    '.user_list': lambda name: "${}".format(name.encode('utf-8')),
+    '.user_list': lambda name: "${}$".format(name.encode('utf-8')),
     '.map': lambda func_, list_: "map({}, {})".format(func_, list_),
     '.call': lambda func_, args_: "call({}, {})".format(func_, args_),
 
@@ -166,9 +166,11 @@ translate_ops = {
     # '.composite_and': lambda func_, list_: "all(map({}, {}))".format(func_, list_),
     # '.composite_or':  lambda x, y, z: lambda cz: any([x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)]),
 
-    # TODO: add other inequalities
+    '.lt': lambda x: "(< {})".format(x),
+    '.leq': lambda x: "(<= {})".format(x),
     '.eq': lambda x: "(= {})".format(x),
     '.geq': lambda x: "(>= {})".format(x),
+    '.gt': lambda x: "(> {})".format(x),
 
     '.arg': lambda int_: "arg{}".format(int_),
     '.arg_to_string': lambda arg_: "text({})".format(arg_),

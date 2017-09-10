@@ -88,7 +88,7 @@ class SnorkelModel(object):
         traditional: use known 0 or 1 labels from gold data
         majority_vote: use majority vote on LF outputs
         [default]: use generative model
-            learn_dep: learn the dependencies of the generative model
+            learn_deps: learn the dependencies of the generative model
         """
         if config:
             self.config = config
@@ -111,8 +111,7 @@ class SnorkelModel(object):
                 gen_model = MajorityVoter()
             else:  # Generative model
                 gen_model = GenerativeModel()
-                if self.config['learn_dep']:
-                    deps = self.learn_dependencies(L_train)
+                if self.config['learn_deps']:
                     ds = DependencySelector()
                     deps = ds.select(L_train, threshold=self.config['threshold'])
                     if self.config['verbose']:
@@ -140,6 +139,8 @@ class SnorkelModel(object):
                 L = self.labeler.load_matrix(self.session, split=DEV)
                 L_gold = load_gold_labels(self.session, annotator_name='gold', split=DEV)
                 self.lf_stats = L.lf_stats(self.session, L_gold, gen_model.learned_lf_stats()['Accuracy'])
+                if self.config['display_learned_accuracies']:
+                    print(self.lf_stats)
                 if self.config['display_correlation']:
                     self.display_accuracy_correlation()
 
@@ -187,7 +188,7 @@ class SnorkelModel(object):
 
         if self.config['disc_model']=='logreg':
             disc_model = SparseLogisticRegression()
-            self.model = disc_model
+            self.disc_model = disc_model
 
             if not self.featurizer:
                 self.featurizer = FeatureAnnotator()

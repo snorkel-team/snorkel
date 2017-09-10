@@ -76,6 +76,7 @@ def PrimitiveTemplate(seed):
 
         # Membership in lists
         Rule(XToBool, ('$In', XList), sems_in_order),
+        Rule(XToBool, ('$In', '$UserList'), sems_in_order),
         # NOTE: $Contains is still somewhat limited in its functionality
         Rule('$Bool', ('$List', '$Contains', X), lambda (list_, contains_, x): ('.call', ('.in', list_), x)),
         Rule('$Bool', ('$List', '$Contains', XListAnd), lambda (list_, contains_, andlist_): ('.all', ('.map', ('.in', list_), andlist_))),

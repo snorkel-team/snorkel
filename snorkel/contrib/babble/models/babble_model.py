@@ -39,7 +39,7 @@ class BabbleModel(SnorkelModel):
         if any(isinstance(exp.candidate, basestring) for exp in explanations):
             print("Linking candidates...")
             candidates = self.session.query(self.candidate_class).filter(
-                self.candidate_class.split == self.config['babbler_split']).all()
+                self.candidate_class.split == self.config['babbler_candidate_split']).all()
             explanations = link_explanation_candidates(explanations, candidates)
         
         # L_gold_train = load_gold_labels(self.session, annotator_name='gold', split=0)
@@ -54,7 +54,7 @@ class BabbleModel(SnorkelModel):
                                explanations=self.explanations, 
                                candidate_class=self.candidate_class, 
                                user_lists=user_lists)
-        self.babbler.apply(split=self.config['babbler_split'], 
+        self.babbler.apply(split=self.config['babbler_label_split'], 
                            parallelism=self.config['parallelism'])
         self.lfs = self.babbler.lfs
         self.labeler = LabelAnnotator(lfs=self.lfs)

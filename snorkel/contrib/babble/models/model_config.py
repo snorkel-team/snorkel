@@ -8,7 +8,8 @@ configuration = {
     'seed': 0,
 
     # BABBLER
-    'babbler_split': 1, # TODO: actually work on Train?
+    'babbler_candidate_split': 0, # Look for explanation candidates in this split
+    'babbler_label_split': 1, # Check label signatures based on this split
     'beam_width': 10,
     'top_k': -1,
     # filters
@@ -21,7 +22,7 @@ configuration = {
     # settings
     'traditional': False, # e.g, 1000
     'majority_vote': False,
-    'learn_dep': False,
+    'learn_deps': False,
     # gen model paramaters
     'epochs': 100,
     'decay': None, # 0.95 OR 0.001 * (1.0 /epochs),
@@ -32,12 +33,11 @@ configuration = {
     'max_train': None,
     'threshold': 1.0/3.0,
     # display
-    'display_accuracies': False,
-    'display_learned_accuracies': False,
+    'display_accuracies': True,
+    'display_learned_accuracies': True,
     'display_correlation': False,
-    'display_marginals': False,
+    'display_marginals': True,
     # real-world conditions
-    'include_py_only_lfs': False,
     'remove_paren': True,
 
     # CLASSIFICATION,

@@ -7,7 +7,7 @@
 
 This tutorial includes all material presented at the [Mobilize Center's Snorkel Workshop on Rapid Knowledgebase Construction](https://mobilize.stanford.edu/workshop-rapid-biomedical-knowledge-base-construction-from-unstructured-data/)
 
-**Lecture Slides**: [PDF] (slide/Snorkel-Workshop-FINAL.pdf)
+**Lecture Slides**: [PDF](slides/Snorkel-Workshop-FINAL.pdf)
 
 **Workshop Videos**: Coming soon!
 

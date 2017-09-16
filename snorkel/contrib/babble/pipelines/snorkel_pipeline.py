@@ -23,6 +23,8 @@ from snorkel.learning.utils import MentionScorer, training_set_summary_stats
 from snorkel.learning.structure import DependencySelector
 from snorkel.learning.disc_models.rnn import reRNN
 
+# Pipelines
+from utils import STAGES, PrintTimer
 
 TRAIN = 0
 DEV = 1
@@ -44,9 +46,19 @@ class SnorkelPipeline(object):
         self.labeler = None
         self.featurizer = None
 
-    def get_candidates(self, split):
-        return self.session.query(self.candidate_class).filter(
-                self.candidate_class.split == split).order_by(self.candidate_class.id).all()
+    def run(self):
+        def is_valid_stage(stage_id):
+            return (self.config['start_at'] <= stage_id and 
+                    self.config['end_at'] >= stage_id)
+
+        for stage in ['parse', 'extract', 'load_gold', 'collect', 'label', 
+                      'supervise', 'classify']:
+            stage_id = getattr(STAGES, stage.upper())
+            if is_valid_stage(stage_id):
+                with PrintTimer('[{}] {}...'.format(stage_id, stage.capitalize())):
+                    result = getattr(self, stage)()
+
+        return result
 
     def parse(self, doc_preprocessor, parser=Spacy(), fn=None, clear=True):
         corpus_parser = CorpusParser(parser=parser, fn=fn)
@@ -74,6 +86,9 @@ class SnorkelPipeline(object):
         if self.config['verbose']:
             print("\nFeaturized split {}: ({},{}) sparse (nnz = {})".format(split, num_candidates, num_features, F.nnz))
         return F
+
+    def collect(self):
+        raise NotImplementedError
 
     def label(self, labeler, split):
         if split == TRAIN:
@@ -278,6 +293,10 @@ class SnorkelPipeline(object):
 
         else:
             raise NotImplementedError
+
+    def get_candidates(self, split):
+        return self.session.query(self.candidate_class).filter(
+                self.candidate_class.split == split).order_by(self.candidate_class.id).all()
 
     def display_accuracy_correlation(self):
         """Displays ..."""

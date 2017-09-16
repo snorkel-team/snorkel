@@ -1,3 +1,5 @@
+from utils import STAGES
+
 config = {
     # GENERAL
     'domain': None,
@@ -6,6 +8,8 @@ config = {
     'splits': [0, 1, 2],
     'verbose': True,
     'seed': 0,
+    'start_at': STAGES.SETUP, # Stage of pipeline to start at
+    'end_at': STAGES.ALL, # Stage of pipeline to end at (inclusive)
 
     # BABBLER
     'babbler_candidate_split': 0, # Look for explanation candidates in this split

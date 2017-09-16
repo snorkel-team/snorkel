@@ -1,2 +1,2 @@
-from bike_model import BikeModel
+from bike_pipeline import BikePipeline
 from image_objects import BBox

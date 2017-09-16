@@ -10,16 +10,16 @@ from snorkel.parser import TSVDocPreprocessor
 from tutorials.intro import load_external_labels, number_of_people
 
 from snorkel.contrib.babble import Babbler
-from snorkel.contrib.babble.models import BabbleModel
-from snorkel.contrib.babble.models.snorkel_model import TRAIN, DEV, TEST
+from snorkel.contrib.babble.pipelines import BabblePipeline
+from snorkel.contrib.babble.pipelines.snorkel_pipeline import TRAIN, DEV, TEST
 
-class SpouseModel(BabbleModel):
+class SpousePipeline(BabblePipeline):
     def parse(self, 
               file_path=(os.environ['SNORKELHOME'] + '/tutorials/intro/data/articles.tsv'), 
               clear=True,
               config=None):
         doc_preprocessor = TSVDocPreprocessor(file_path, max_docs=self.config['max_docs'])
-        super(SpouseModel, self).parse(doc_preprocessor, clear=clear)
+        super(SpousePipeline, self).parse(doc_preprocessor, clear=clear)
 
     def extract(self, clear=True, config=None):
         ngrams         = Ngrams(n_max=7)
@@ -60,7 +60,7 @@ class SpouseModel(BabbleModel):
 
         for split, sents in enumerate([train_sents, dev_sents, test_sents]):
             if len(sents) > 0 and split in self.config['splits']:
-                super(SpouseModel, self).extract(
+                super(SpousePipeline, self).extract(
                     candidate_extractor, sents, split=split, clear=clear)
 
     def load_gold(self, config=None):
@@ -69,7 +69,7 @@ class SpouseModel(BabbleModel):
                              annotator_name='gold', path=fpath, splits=self.config['splits'])
 
     def babble(self, explanations, **kwargs):
-        super(SpouseModel, self).babble('text', explanations, **kwargs)
+        super(SpousePipeline, self).babble('text', explanations, **kwargs)
   
     def use_intro_lfs(self):
         import re

@@ -1,1 +1,1 @@
-from spouse_model import SpouseModel
+from spouse_pipeline import SpousePipeline

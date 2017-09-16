@@ -2,11 +2,11 @@ from snorkel.annotations import LabelAnnotator, load_gold_labels
 from snorkel.db_helpers import reload_annotator_labels
 from snorkel.models import StableLabel
 
-from snorkel_model import SnorkelModel, TRAIN, DEV, TEST
+from snorkel_pipeline import SnorkelPipeline, TRAIN, DEV, TEST
 
 from snorkel.contrib.babble import Babbler, link_explanation_candidates
 
-class BabbleModel(SnorkelModel):
+class BabblePipeline(SnorkelPipeline):
     
     def load_train_gold(self, annotator_name='gold', config=None):
         # We check if the label already exists, in case this cell was already executed
@@ -78,7 +78,7 @@ class BabbleModel(SnorkelModel):
                     #     L = self.babbler.label_matrix
                     #     print("Reloaded label matrix from babbler for split {}.".format(split))
                     # else:
-                    L = SnorkelModel.label(self, self.labeler, split)
+                    L = SnorkelPipeline.label(self, self.labeler, split)
                     num_candidates, num_labels = L.shape
                     print("\nLabeled split {}: ({},{}) sparse (nnz = {})".format(split, num_candidates, num_labels, L.nnz))
                     if self.config['display_accuracies'] and split == DEV:

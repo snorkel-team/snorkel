@@ -28,7 +28,7 @@ TRAIN = 0
 DEV = 1
 TEST = 2
 
-class SnorkelModel(object):
+class SnorkelPipeline(object):
     """
     A class for running a complete Snorkel pipeline
     """

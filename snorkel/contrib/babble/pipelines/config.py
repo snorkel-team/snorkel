@@ -1,4 +1,4 @@
-configuration = {
+config = {
     # GENERAL
     'domain': None,
     'parallelism': 1,

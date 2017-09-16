@@ -6,12 +6,12 @@ from snorkel.models import StableLabel
 from snorkel.db_helpers import reload_annotator_labels
 
 from snorkel.contrib.babble import Babbler
-from snorkel.contrib.babble.models import BabbleModel
+from snorkel.contrib.babble.pipelines import BabblePipeline
 
 from tutorials.babble import MTurkHelper
 
 
-class BikeModel(BabbleModel):
+class BikePipeline(BabblePipeline):
 
     def parse(self, anns_path):
         self.anns_path = anns_path
@@ -78,4 +78,4 @@ class BikeModel(BabbleModel):
 
 
     def babble(self, explanations, user_lists={}, gold_labels=None, **kwargs):
-        super(BikeModel, self).babble('image', explanations, **kwargs)
+        super(BikePipeline, self).babble('image', explanations, **kwargs)

@@ -8,4 +8,5 @@ elif type wget &>/dev/null; then
     wget -N -nc $url
 fi
 unzip ${PARSER}.zip
+rm ${PARSER}.zip
 mv ${PARSER} parser

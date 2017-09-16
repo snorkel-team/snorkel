@@ -11,6 +11,7 @@ class STAGES:
     CLASSIFY = 7
     ALL = 10
 
+
 class PrintTimer:
     """Prints msg at start, total time taken at end."""
     def __init__(self, msg, prefix="###"):
@@ -23,3 +24,16 @@ class PrintTimer:
 
     def __exit__(self, type, value, traceback):
         print ("{0}Done in {1:.1f}s.\n".format(self.prefix, time() - self.t0))
+
+
+def recursive_merge_dicts(x, y):
+    """
+    Merge dictionary y into x, overwriting elements of x when there is a
+    conflict, except if the element is a dictionary, in which case recurse.
+    """
+    for k, v in y.iteritems():
+        if k in x and isinstance(x[k], dict):
+            x[k] = recursive_merge_dicts(x[k], v)
+        else:
+            x[k] = v
+    return x

@@ -1,7 +1,7 @@
 from snorkel.contrib.babble.pipelines import SnorkelPipeline
 
 class StubPipeline(SnorkelPipeline):
-    def __init__(self, config):
+    def __init__(self, session, candidate_class, config):
         self.config = config
 
     def parse(self):

@@ -71,6 +71,12 @@ class SpousePipeline(BabblePipeline):
     def babble(self, explanations, **kwargs):
         super(SpousePipeline, self).babble('text', explanations, **kwargs)
   
+    # TEMP
+    def supervise(self):
+        print("Look, Mom! I supervised!")
+    # TEMP
+
+
     def use_intro_lfs(self):
         import re
         from snorkel.lf_helpers import (

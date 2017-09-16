@@ -4,7 +4,7 @@ from snorkel import SnorkelSession
 from snorkel.models import candidate_subclass
 from snorkel.contrib.babble.pipelines import config, STAGES
 
-from stub_pipeline import StubPipeline
+from tutorials.babble.stub.stub_pipeline import StubPipeline
 
 class TestPipeline(unittest.TestCase):
 
@@ -20,7 +20,7 @@ class TestPipeline(unittest.TestCase):
         print('\n')
         config['start_at'] = STAGES.COLLECT
         config['end_at'] = STAGES.SUPERVISE
-        pipe = StubPipeline(config)
+        pipe = StubPipeline(None, None, config)
         pipe.run()
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestPipeline)

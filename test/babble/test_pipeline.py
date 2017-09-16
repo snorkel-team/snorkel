@@ -2,7 +2,7 @@ import unittest
 
 from snorkel import SnorkelSession
 from snorkel.models import candidate_subclass
-from snorkel.contrib.babble.pipelines import config, STAGES
+from snorkel.contrib.babble.pipelines import global_config, STAGES
 
 from tutorials.babble.stub.stub_pipeline import StubPipeline
 
@@ -16,8 +16,9 @@ class TestPipeline(unittest.TestCase):
     def tearDownClass(cls):
         pass
 
-    def test_pipeline_creation(self):
+    def test_pipeline_run(self):
         print('\n')
+        config = global_config
         config['start_at'] = STAGES.COLLECT
         config['end_at'] = STAGES.SUPERVISE
         pipe = StubPipeline(None, None, config)

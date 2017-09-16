@@ -1,6 +1,6 @@
 from utils import STAGES
 
-config = {
+global_config = {
     # GENERAL
     'domain': None,
     'parallelism': 1,

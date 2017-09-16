@@ -5,8 +5,8 @@ import os
 from snorkel import SnorkelSession
 from snorkel.models import candidate_subclass
 
-from config import config
-from utils import recursive_merge_dicts
+from config import global_config
+from utils import recursive_merge_dicts, get_local_config, get_local_pipeline
 
 if __name__ == '__main__':
 
@@ -14,7 +14,7 @@ if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description="Run SnorkelPipeline object.")
     
     EXPS = ['spouse', 'cdr', 'bike', 'drink']
-    argparser.add_argument('--exp', type=str, default='stub', choices=EXPS,
+    argparser.add_argument('--domain', type=str, default='stub', choices=EXPS,
         help="Name of experiment subdirectory in tutorials/babble/")
 
     # Control flow args
@@ -35,18 +35,15 @@ if __name__ == '__main__':
     if args.verbose:
         print(args)
 
-    # Resolve config conflicts (args > exp config > global config)
-    local_config_path = os.path.join(os.environ['SNORKELHOME'], 
-        'tutorials', 'babble', args.exp, 'config.py')
-    if os.path.exists(local_config_path):
-        local_config = load_source('local_config', local_config_path)
-        config = recursive_merge_dicts(config, local_config.config)
+    # Resolve config conflicts (args > local config > global config)
+    local_config = get_local_config(args.domain)
+    config = recursive_merge_dicts(global_config, local_config)
     config = recursive_merge_dicts(config, vars(args))
     if args.verbose > 0:
         print(config)
 
     # Get the DB connection string and add to globals
-    DB_NAME = "babble_" + args.exp if args.db_name is None else args.db_name
+    DB_NAME = "babble_" + args.domain if args.db_name is None else args.db_name
     if not args.postgres:
         DB_NAME += ".db"
     DB_TYPE = "postgres" if args.postgres else "sqlite"
@@ -62,11 +59,7 @@ if __name__ == '__main__':
                                          config['candidate_entities'])
 
     # Create pipeline 
-    pipeline_path = os.path.join(os.environ['SNORKELHOME'],
-        'tutorials', 'babble', args.exp, '{}_pipeline.py'.format(args.exp))
-    pipeline_module = load_source('pipeline_module', pipeline_path)
-    pipeline_name = '{}Pipeline'.format(args.exp.capitalize())
-    pipeline = getattr(pipeline_module, pipeline_name)
+    pipeline = get_local_pipeline(args.domain)
     pipe = pipeline(session, candidate_class, config)
 
     # Run!

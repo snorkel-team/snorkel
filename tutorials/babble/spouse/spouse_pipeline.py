@@ -68,15 +68,18 @@ class SpousePipeline(BabblePipeline):
         load_external_labels(self.session, self.candidate_class, 
                              annotator_name='gold', path=fpath, splits=self.config['splits'])
 
-    def babble(self, explanations, **kwargs):
-        super(SpousePipeline, self).babble('text', explanations, **kwargs)
+    def collect(self, lf_source='intro_exps', **kwargs):
+        if lf_source == 'intro_func':
+            self.lfs = self.use_intro_lfs()
+            self.labeler = LabelAnnotator(lfs=self.lfs)
+        elif lf_source == 'intro_exps':
+            from tutorials.babble.spouse.spouse_examples import get_explanations
+            candidates = self.get_candidates(split=self.config['babbler_candidate_split'])
+            explanations = get_explanations(candidates)
+            super(SpousePipeline, self).babble('text', explanations, **kwargs)
+        else:
+            raise Exception('Invalid lf_source {}'.format(lf_source))
   
-    # TEMP
-    def supervise(self):
-        print("Look, Mom! I supervised!")
-    # TEMP
-
-
     def use_intro_lfs(self):
         import re
         from snorkel.lf_helpers import (
@@ -157,10 +160,11 @@ class SpousePipeline(BabblePipeline):
             p1n, p2n = last_name(p1), last_name(p2)
             return 1 if (p1 != p2) and ((p1n, p2n) in last_names or (p2n, p1n) in last_names) else 0
 
-        self.lfs = [
+        lfs = [
             LF_distant_supervision, LF_distant_supervision_last_names, 
             LF_husband_wife, LF_husband_wife_left_window, LF_same_last_name,
             LF_no_spouse_in_sentence, LF_and_married, LF_familial_relationship, 
             LF_family_left_window, LF_other_relationship
         ]
-        self.labeler = LabelAnnotator(lfs=self.lfs)
+
+        return lfs

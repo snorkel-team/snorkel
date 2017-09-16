@@ -21,6 +21,12 @@ if __name__ == '__main__':
     argparser.add_argument('--start_at', type=int)
     argparser.add_argument('--end_at', type=int)
 
+    # Scaling args
+    argparser.add_argument('--max_docs', type=int,
+        help="""[Deprecated] Maximum documents to parse;
+        NOTE: This will also filter dev and test docs. 
+        See --training_docs to limit just training docs.""")
+
     # Display args    
     argparser.add_argument('--verbose', action='store_true')
 

@@ -4,13 +4,12 @@ set -ex
 export DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $DIR/miniconda_env.sh
 
-# Packages required by Snorkel
-conda install --yes numba
-if [ "$TRAVIS" = "true" ]
-then
-  # Install binary distribution of scientific python modules
-  conda install --yes numpy scipy matplotlib pip
-fi
+# Install binary distribution of scientific python modules
+conda config --add channels conda-forge
+conda install --yes \
+  numba numpy scipy matplotlib \
+  tensorflow pandas \
+  spacy nltk jupyter
 
 pip install -r python-package-requirement.txt
 

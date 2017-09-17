@@ -69,11 +69,11 @@ Snorkel uses Python 2.7 and requires [a few python packages](python-package-requ
 Installation is easiest if you download and install [`conda`](https://www.continuum.io/downloads).
 If you are running multiple version of Python, you might need to run:
 ```
-conda create -n py2Env python=2.7 anaconda
+conda create -n py2snorkel python=2.7 anaconda
 ```
 And then run the correct environment:
 ```
-source activate py2Env
+source activate py2snorkel
 ```
 
 ### Installing dependencies

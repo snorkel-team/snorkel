@@ -1,19 +1,28 @@
-FROM python:2
+FROM ubuntu:trusty
 
 WORKDIR /snorkel
 SHELL ["/bin/bash", "-c"]
+ARG DEBIAN_FRONTEND=noninteractive
 
+COPY install/cleanup.sh ./
+COPY install/apt_pkgs.sh ./
+RUN ./apt_pkgs.sh \
+ && ./cleanup.sh
+
+COPY install/corenlp.sh ./
+RUN ./corenlp.sh \
+ && ./cleanup.sh
+
+COPY install/conda.sh ./
+RUN ./conda.sh \
+ && ./cleanup.sh
+
+COPY install/miniconda_env.sh ./
+COPY install/python_pkgs.sh ./
 COPY python-package-requirement.txt ./
-COPY docker/install.sh ./docker/install.sh
-RUN source docker/install.sh &&\
- install_python_pkgs &&\
- cleanup
-
-COPY install-parser.sh ./
-RUN source docker/install.sh &&\
- install_corenlp &&\
- cleanup
+RUN ./python_pkgs.sh \
+ && ./cleanup.sh
 
 COPY . .
-RUN git submodule update --init --recursive
+RUN git submodule update --init --recursive && ls
 ENTRYPOINT /snorkel/docker/entry.sh

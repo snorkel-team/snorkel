@@ -6,15 +6,13 @@ services:
     working_dir: /snorkel
     entrypoint:
       - /snorkel/docker/entry.sh
-  dev:
-    extends: base
     volumes:
       - .:/snorkel
+  dev:
+    extends: base
     ports:
       - $HOST_PORT:8888
   test:
     extends: base
-    volumes:
-      - .:/snorkel
     entrypoint:
-      - /snorkel/test.sh
+      - /snorkel/docker/test.sh

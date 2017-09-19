@@ -23,6 +23,17 @@ if __name__ == '__main__':
     argparser.add_argument('--start_at', type=int)
     argparser.add_argument('--end_at', type=int)
 
+    # Supervision args
+    SUPERVISION = ['traditional', 'majority_vote', 'generative']
+    argparser.add_argument('--supervision', type=str, choices=SUPERVISION)
+    ## model args
+    argparser.add_argument('--class_prior', action='store_true')
+    argparser.add_argument('--lf_prior', action='store_true')
+    argparser.add_argument('--lf_propensity', action='store_true')
+    argparser.add_argument('--lf_class_propensity', action='store_true')
+    ## hyperparameters
+    
+
     # Scaling args
     argparser.add_argument('--max_docs', type=int,
         help="""[Deprecated] Maximum documents to parse;

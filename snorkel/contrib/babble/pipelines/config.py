@@ -54,10 +54,13 @@ global_config = {
     },
     'gen-params-range': {
         'step_size'                   : [1e-2, 1e-3, 1e-4, 1e-5],
+        'decay'                       : [0.9, 0.95, 0.99]
         'reg_param'                   : [0.0, 0.01, 0.1, 0.5],
-        'LF_acc_prior_weights'        : [None],  # only used if lf_prior=True
-        'LF_acc_prior_weight_default' : [0.5, 1.0, 1.5], # only used if lf_prior=True
-        'init_class_prior'            : [-1.0] # only used if class_prior=True
+        # Used iff lf_prior = True
+        # 'LF_acc_prior_weights'        : [None],
+        'LF_acc_prior_weight_default' : [0.5, 1.0, 1.5], # (73%, 88%, 95%)
+        # used iff class_prior = True
+        'init_class_prior'            : [-1.15] # (9%)
     },
     'gen-params-default': {
     	'decay'    : 0.95,

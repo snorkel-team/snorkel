@@ -195,9 +195,9 @@ def final_report(config, scores):
     # Assemble the report, to be saved as a json file
     df_scores = df.to_dict()
     report = {
-        'scores': df_scores,
-        'snorkel-commit': git_commit_hash(path=os.environ['SNORKELHOME']),
-        'config': config,
+        'a_snorkel-commit': git_commit_hash(path=os.environ['SNORKELHOME']),
+        'b_scores': df_scores,
+        'c_config': config,
     }
 
     # Save to file

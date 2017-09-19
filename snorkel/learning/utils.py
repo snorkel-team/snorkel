@@ -408,10 +408,10 @@ class GridSearch(object):
         opt_b = b
         best_score = -1
         for b in [0.1, 0.15, 0.25, 0.5, 0.75, 0.85, 0.9]:
-            run_score = opt_model.score(X_valid, Y_valid, b=b, beta=beta,
+            run_scores = opt_model.score(X_valid, Y_valid, b=b, beta=beta,
                 set_unlabeled_as_neg=set_unlabeled_as_neg,
                 batch_size=eval_batch_size)
-            if run_score > best_score:
+            if run_scores[-1] > best_score:
                 best_score = run_score
                 opt_b = b
         return opt_model, run_stats, opt_b

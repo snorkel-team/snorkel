@@ -68,15 +68,16 @@ class SpousePipeline(BabblePipeline):
         load_external_labels(self.session, self.candidate_class, 
                              annotator_name='gold', path=fpath, splits=self.config['splits'])
 
-    def collect(self, lf_source='intro_exps', **kwargs):
+    def collect(self, lf_source='intro_exps'):
         if lf_source == 'intro_func':
             self.lfs = self.use_intro_lfs()
             self.labeler = LabelAnnotator(lfs=self.lfs)
         elif lf_source == 'intro_exps':
-            from tutorials.babble.spouse.spouse_examples import get_explanations
+            from tutorials.babble.spouse.spouse_examples import (get_explanations, get_user_lists)
             candidates = self.get_candidates(split=self.config['babbler_candidate_split'])
             explanations = get_explanations(candidates)
-            super(SpousePipeline, self).babble('text', explanations, **kwargs)
+            user_lists = get_user_lists()
+            super(SpousePipeline, self).babble('text', explanations, user_lists, self.config)
         else:
             raise Exception('Invalid lf_source {}'.format(lf_source))
   

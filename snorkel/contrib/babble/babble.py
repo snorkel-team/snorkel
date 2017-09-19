@@ -145,13 +145,6 @@ class Babbler(object):
         self.label_matrix = self.labeler.apply(split=split, parallelism=parallelism)
         return self.label_matrix
 
-    # DEPRECATED: instead, just use self.label_matrix to get L for the babble_split
-    # def load_matrix(self, session, split=0):
-    #     print(len(self.lfs))
-    #     self.labeler = LabelAnnotator(lfs=self.lfs)
-    #     self.label_matrix = self.labeler.load_matrix(session, split=split)
-    #     return self.label_matrix
-
     def filter_uniform_signatures(self):
         """Filters out LFs with uniform labeling signatures."""
         if self.label_matrix is None:
@@ -248,7 +241,7 @@ class Babbler(object):
             return parses
 
     def get_lfs(self):
-        return [parse.function for parse in self.get_parses()]
+        return [parse.function for parse in self.get_parses(semantics=False)]
 
     def translate(self, semantics):
         return self.semparser.translate(semantics)

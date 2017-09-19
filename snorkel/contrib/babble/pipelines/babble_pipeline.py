@@ -34,8 +34,6 @@ class BabblePipeline(SnorkelPipeline):
         if config:
             self.config = config
         
-        self.explanations = explanations
-
         if any(isinstance(exp.candidate, basestring) for exp in explanations):
             print("Linking candidates...")
             candidates = self.session.query(self.candidate_class).filter(
@@ -51,12 +49,13 @@ class BabblePipeline(SnorkelPipeline):
 
         print("Calling babbler...")
         self.babbler = Babbler(mode=mode, 
-                               explanations=self.explanations, 
+                               explanations=explanations, 
                                candidate_class=self.candidate_class, 
                                user_lists=user_lists)
         self.babbler.apply(split=self.config['babbler_label_split'], 
                            parallelism=self.config['parallelism'])
-        self.lfs = self.babbler.lfs
+        self.explanations = self.babbler.get_explanations()
+        self.lfs = self.babbler.get_lfs()
         self.labeler = LabelAnnotator(lfs=self.lfs)
 
     def label(self, config=None, split=None):

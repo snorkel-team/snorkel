@@ -14,4 +14,5 @@ python -u snorkel/contrib/babble/pipelines/run.py \
     --domain $DOMAIN \
     --verbose \
     --no_plots \
+    --debug \
     --start_at $START | tee $LOGFILE

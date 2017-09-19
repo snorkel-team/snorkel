@@ -59,7 +59,7 @@ basic = [
         label=False,
         semantics=None),
     Explanation(
-        name='LF_arg1_and_arg2_married',
+        name='LF_married_after',
         condition="the word 'and' is between arg 1 and arg 2 and 'married' or 'marriage' is after arg 2",
         candidate='e522e66f-ad1f-4b8b-a532-4f030a8e7a75::span:4054:4059~~e522e66f-ad1f-4b8b-a532-4f030a8e7a75::span:4085:4091',
         label=True,

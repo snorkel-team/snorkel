@@ -20,6 +20,8 @@ if __name__ == '__main__':
         help="""[Deprecated] Maximum documents to parse;
         NOTE: This will also filter dev and test docs. 
         See --training_docs to limit just training docs.""")
+    argparser.add_argument('--debug', action='store_true',
+        help="""Reduces max_docs, grid search sizes, and num_epochs""")        
 
     # Display args    
     argparser.add_argument('--verbose', action='store_true')
@@ -37,7 +39,8 @@ if __name__ == '__main__':
         print(args)
 
     # Get the DB connection string and add to globals
-    DB_NAME = "babble_" + args.domain if args.db_name is None else args.db_name
+    default_db_name = 'babble_' + args.domain + ('_debug' if args.debug else '')
+    DB_NAME = args.db_name if args.db_name is not None else default_db_name
     if not args.postgres:
         DB_NAME += ".db"
     DB_TYPE = "postgres" if args.postgres else "sqlite"

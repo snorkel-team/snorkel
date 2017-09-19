@@ -52,7 +52,15 @@ class SnorkelPipeline(object):
                     
         if self.config['start_at'] is None or self.config['end_at'] is None:
             raise Exception("At least one of 'start_at' or 'end_at' is not defined.")
-            
+
+        if self.config['debug']:
+            print("NOTE: --debug=True: modifying parameters...")
+            self.config['max_docs'] = 100
+            self.config['gen_model_search_space'] = 2
+            self.config['disc_model_search_space'] = 2
+            self.config['gen-params-default']['epochs'] = 25
+            self.config['disc-params-default']['n_epochs'] = 5
+
         result = None
         for stage in ['parse', 'extract', 'load_gold', 'collect', 'label', 
                       'supervise', 'classify']:
@@ -118,11 +126,11 @@ class SnorkelPipeline(object):
         if config:
             self.config = config
         
-        if not self.labeler:
-            if self.lfs:
-                self.labeler = LabelAnnotator(lfs=self.lfs)
-            else:
-                raise Exception("Cannot load label matrix without having LF list.")
+        # if not self.labeler:
+        #     if self.lfs:
+        #         self.labeler = LabelAnnotator(lfs=self.lfs)
+        #     else:
+        #         raise Exception("Cannot load label matrix without having LF list.")
 
         if self.config['supervision'] == 'traditional':
             L_gold_train = load_gold_labels(self.session, annotator_name='gold', split=TRAIN)
@@ -175,7 +183,7 @@ class SnorkelPipeline(object):
                 gen_params_default['deps'] = deps
 
                 # Train generative model with grid search if applicable
-                gen_model = train_model(
+                gen_model, opt_b = train_model(
                     GenerativeModel,
                     L_train,
                     X_dev=L_dev,
@@ -194,8 +202,8 @@ class SnorkelPipeline(object):
                 train_marginals = gen_model.marginals(L_train)
 
                 if TEST in self.config['splits']:
-                    print("\nGen. model (DP) score on test set:")
-                    _ = gen_model.error_analysis(self.session, L_test, L_gold_test, display=True)
+                    print("\nGen. model (DP) score on test set (b={}):".format(opt_b))
+                    _ = gen_model.error_analysis(self.session, L_test, L_gold_test, b=opt_b, display=True)
 
                 if self.config['verbose']:
                     if self.config['display_marginals'] and not self.config['no_plots']:
@@ -237,7 +245,7 @@ class SnorkelPipeline(object):
         else:
             raise NotImplementedError
 
-        disc_model = train_model(
+        disc_model, opt_b = train_model(
             disc_model_class,
             X_train,
             Y_train=Y_train,
@@ -258,17 +266,20 @@ class SnorkelPipeline(object):
         self.disc_model = disc_model
 
         scores = {}
-        with PrintTimer("[7.2] Evaluate generative model"):
-            # Score generative model on test set
-            L_test = load_label_matrix(self.session, split=TEST)
-            np.random.seed(self.config['seed'])
-            scores['Gen'] = score_marginals(self.gen_model.marginals(L_test), Y_test)
+        with PrintTimer("[7.2] Evaluate generative model (opt_b={})".format(opt_b)):
+            if self.gen_model:
+                # Score generative model on test set
+                L_test = load_label_matrix(self.session, split=TEST)
+                np.random.seed(self.config['seed'])
+                scores['Gen'] = score_marginals(self.gen_model.marginals(L_test), Y_test, b=opt_b)
+            else:
+                print("gen_model is undefined. Skipping.")
 
         with PrintTimer("[7.3] Evaluate discriminative model"):
             # Score discriminative model trained on generative model predictions
             np.random.seed(self.config['seed'])
             scores['Disc'] = score_marginals(self.disc_model.marginals(X_test, 
-                    batch_size=self.config['disc-eval-batch-size']), Y_test)
+                    batch_size=self.config['disc-eval-batch-size']), Y_test, b=opt_b)
 
         final_report(self.config, scores)
 

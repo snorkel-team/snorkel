@@ -70,7 +70,7 @@ def train_model(model_class, X_train, Y_train=None, X_dev=None, Y_dev=None,
             )
             
             # Run random grid search
-            model, run_stats = searcher.fit(X_dev, Y_dev, n_threads=n_threads,
+            model, run_stats, opt_b = searcher.fit(X_dev, Y_dev, n_threads=n_threads,
                 beta=beta, eval_batch_size=eval_batch_size)
             if verbose > 0:
                 print(run_stats)
@@ -88,7 +88,7 @@ def train_model(model_class, X_train, Y_train=None, X_dev=None, Y_dev=None,
 
         # Save model + training marginals in main save_dir (vs save_dir/grid_search)
         model.save(model_name=model_name, save_dir=save_dir)
-        return model
+        return model, opt_b
 
 
 ### SCORING FUNCTIONS

@@ -3,12 +3,20 @@ from imp import load_source
 import os
 
 if __name__ == '__main__':
+    """
+    This launch script exists primarily to add a flag interface for launching
+    pipeline.run(). All flags correspond to values in the global_config file.
+    Documentation and default values for individual config values should be 
+    stored in global_config, not here. Unusued flags will not overwrite the
+    values in config.
+    """
+
 
     # Parse command-line args
     argparser = argparse.ArgumentParser(description="Run SnorkelPipeline object.")
     
-    EXPS = ['spouse', 'cdr', 'bike', 'drink', 'stub']
-    argparser.add_argument('--domain', type=str, default='stub', choices=EXPS,
+    DOMAINS = ['spouse', 'cdr', 'bike', 'drink', 'stub']
+    argparser.add_argument('--domain', type=str, default='stub', choices=DOMAINS,
         help="Name of experiment subdirectory in tutorials/babble/")
 
     # Control flow args
@@ -29,9 +37,10 @@ if __name__ == '__main__':
 
     # DB configuration args
     argparser.add_argument('--db_name', type=str, default=None,
-        help="Name of the database; defaults to snorkel_{exp}")
+        help="Name of the database; defaults to babble_{domain}")
     argparser.add_argument('--db_port', type=str, default=None)
     argparser.add_argument('--postgres', action='store_true')
+    argparser.add_argument('--parallelism', type=int)
 
     # Parse arguments
     args = argparser.parse_args()

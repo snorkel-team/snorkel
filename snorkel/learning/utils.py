@@ -496,8 +496,8 @@ class GridSearch(object):
         # TODO: Better way to go about it than this!!
         print("Loading data...")
         model = self.model_class(**self.model_class_params)
-        _ = model._preprocess_data(self.X_train)
-        _ = model._preprocess_data(X_valid)
+        # _ = model._preprocess_data(self.X_train)
+        # _ = model._preprocess_data(X_valid)
 
         # Create queue of hyperparameters to test
         print("Launching jobs...")

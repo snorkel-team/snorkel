@@ -275,7 +275,7 @@ class SnorkelPipeline(object):
             else:
                 print("gen_model is undefined. Skipping.")
 
-        with PrintTimer("[7.3] Evaluate discriminative model"):
+        with PrintTimer("[7.3] Evaluate discriminative model (opt_b={})".format(opt_b)):
             # Score discriminative model trained on generative model predictions
             np.random.seed(self.config['seed'])
             scores['Disc'] = score_marginals(self.disc_model.marginals(X_test, 

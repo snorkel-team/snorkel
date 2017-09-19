@@ -98,7 +98,7 @@ global_config = {
         'max_sentence_length': 100,
         'print_freq': 1,
     },
-    'disc-eval-batch-size': None,
+    'disc-eval-batch-size': 256,
     
     ## Non-GridSearch parameters
     'b': 0.5,

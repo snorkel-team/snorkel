@@ -12,6 +12,8 @@ downloads/
 **/checkpoints/
 __pycache__
 *corenlp.log
+reports/
+logs/
 
 # Sphinx
 docs/_build

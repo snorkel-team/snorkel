@@ -42,6 +42,6 @@ def recursive_merge_dicts(x, y):
     for k, v in y.iteritems():
         if k in x and isinstance(x[k], dict):
             x[k] = recursive_merge_dicts(x[k], v)
-        else:
+        elif v is not None:
             x[k] = v
     return x

@@ -65,23 +65,19 @@ class BabblePipeline(SnorkelPipeline):
         self.labeler = LabelAnnotator(lfs=self.lfs)  
         splits = [split] if split else self.config['splits']
         for split in self.config['splits']:
-            if split == TEST:
-                # No need for labels on test set
-                continue
-            else:
-                num_candidates = self.session.query(self.candidate_class).filter(self.candidate_class.split == split).count()
-                if num_candidates > 0:
-                    # NOTE: we currently relabel the babbler_split so that 
-                    # apply_existing on the other splits will use the same key set.
+            num_candidates = self.session.query(self.candidate_class).filter(self.candidate_class.split == split).count()
+            if num_candidates > 0:
+                # NOTE: we currently relabel the babbler_split so that 
+                # apply_existing on the other splits will use the same key set.
 
-                    # if split == self.config['babbler_split']:
-                    #     L = self.babbler.label_matrix
-                    #     print("Reloaded label matrix from babbler for split {}.".format(split))
-                    # else:
-                    L = SnorkelPipeline.label(self, self.labeler, split)
-                    num_candidates, num_labels = L.shape
-                    print("\nLabeled split {}: ({},{}) sparse (nnz = {})".format(split, num_candidates, num_labels, L.nnz))
-                    if self.config['display_accuracies'] and split == DEV:
-                        L_gold_dev = load_gold_labels(self.session, annotator_name='gold', split=1)
-                        return L.lf_stats(self.session, labels=L_gold_dev)
+                # if split == self.config['babbler_split']:
+                #     L = self.babbler.label_matrix
+                #     print("Reloaded label matrix from babbler for split {}.".format(split))
+                # else:
+                L = SnorkelPipeline.label(self, self.labeler, split)
+                num_candidates, num_labels = L.shape
+                print("\nLabeled split {}: ({},{}) sparse (nnz = {})".format(split, num_candidates, num_labels, L.nnz))
+                if self.config['display_accuracies'] and split == DEV:
+                    L_gold_dev = load_gold_labels(self.session, annotator_name='gold', split=1)
+                    print(L.lf_stats(self.session, labels=L_gold_dev))
         

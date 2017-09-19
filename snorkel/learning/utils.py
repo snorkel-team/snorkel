@@ -412,6 +412,7 @@ class GridSearch(object):
                 set_unlabeled_as_neg=set_unlabeled_as_neg,
                 batch_size=eval_batch_size)
             if run_score > best_score:
+                best_score = run_score
                 opt_b = b
         return opt_model, run_stats, opt_b
 

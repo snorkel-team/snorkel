@@ -846,6 +846,10 @@ class GenerativeModel(Classifier):
         if verbose:
             print("[{0}] Model <{1}> loaded.".format(self.name, model_name))
 
+    def _preprocess_data(self, X):
+        """Generic preprocessing subclass; may be called by external methods."""
+        return X
+
 
 class GenerativeModelWeights(object):
 

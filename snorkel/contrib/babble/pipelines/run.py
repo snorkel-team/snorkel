@@ -2,6 +2,15 @@ import argparse
 from imp import load_source
 import os
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
 if __name__ == '__main__':
     """
     This launch script exists primarily to add a flag interface for launching
@@ -10,7 +19,6 @@ if __name__ == '__main__':
     stored in global_config, not here. Unusued flags will not overwrite the
     values in config.
     """
-
 
     # Parse command-line args
     argparser = argparse.ArgumentParser(description="Run SnorkelPipeline object.")
@@ -27,12 +35,12 @@ if __name__ == '__main__':
     SUPERVISION = ['traditional', 'majority_vote', 'generative']
     argparser.add_argument('--supervision', type=str, choices=SUPERVISION)
     ## model args
-    argparser.add_argument('--class_prior', action='store_true')
-    argparser.add_argument('--lf_prior', action='store_true')
-    argparser.add_argument('--lf_propensity', action='store_true')
-    argparser.add_argument('--lf_class_propensity', action='store_true')
+    argparser.add_argument('--class_prior', type=str2bool)
+    argparser.add_argument('--lf_prior', type=str2bool)
+    argparser.add_argument('--lf_propensity', type=str2bool)
+    argparser.add_argument('--lf_class_propensity', type=str2bool)
     ## hyperparameters
-    
+
 
     # Scaling args
     argparser.add_argument('--max_docs', type=int,
@@ -41,6 +49,9 @@ if __name__ == '__main__':
         See --training_docs to limit just training docs.""")
     argparser.add_argument('--debug', action='store_true',
         help="""Reduces max_docs, grid search sizes, and num_epochs""")        
+
+    # Logging
+    argparser.add_argument('--reports_dir', type=str)
 
     # Display args    
     argparser.add_argument('--verbose', action='store_true')

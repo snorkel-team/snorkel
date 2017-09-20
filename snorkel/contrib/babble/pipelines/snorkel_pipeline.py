@@ -202,7 +202,7 @@ class SnorkelPipeline(object):
                 train_marginals = gen_model.marginals(L_train)
 
                 print("\nGen. model (DP) score on dev set (b={}):".format(opt_b))
-                _ = gen_model.error_analysis(self.session, L_test, L_gold_dev, b=opt_b, display=True)
+                _ = gen_model.error_analysis(self.session, L_dev, L_gold_dev, b=opt_b, display=True)
 
                 if self.config['verbose']:
                     if self.config['display_marginals'] and not self.config['no_plots']:

@@ -99,7 +99,7 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
             raise ValueError("Number of values must match cardinality.")
         if None in values:
             raise ValueError("`None` is a protected value.")
-        if any([v == 0 for v in values]):
+        if any([type(v) == int and v == 0 for v in values]):
             raise ValueError("0 is a protected value")
         cardinality = len(values)
 

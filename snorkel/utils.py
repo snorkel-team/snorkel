@@ -55,6 +55,14 @@ def camel_to_under(name):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
+def sparse_nonzero(X):
+    """Sparse matrix with value 1 for i,jth entry !=0"""
+    X_nonzero = X.copy()
+    if sparse.isspmatrix_csr(X) or sparse.isspmatrix_csc(X):
+        X_nonzero.data[X_nonzero.data != 0] = 1
+    else:
+        raise ValueError("Only supports CSR/CSC matrices")
+    return X_nonzero
 
 def sparse_abs(X):
     """Element-wise absolute value of sparse matrix- avoids casting to dense matrix!"""
@@ -75,7 +83,7 @@ def matrix_coverage(L):
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates that each LF labels.**
     """
-    return np.ravel(sparse_abs(L).sum(axis=0) / float(L.shape[0]))
+    return np.ravel(sparse_nonzero(L).sum(axis=0) / float(L.shape[0]))
 
 
 def matrix_overlaps(L):
@@ -83,8 +91,8 @@ def matrix_overlaps(L):
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates that each LF _overlaps with other LFs on_.**
     """
-    L_abs = sparse_abs(L)
-    return np.ravel(np.where(L_abs.sum(axis=1) > 1, 1, 0).T * L_abs / float(L.shape[0]))
+    L_nonzero = sparse_nonzero(L)
+    return np.ravel(np.where(L_nonzero.sum(axis=1) > 1, 1, 0).T * L_nonzero / float(L.shape[0]))
 
 
 def matrix_conflicts(L):
@@ -92,8 +100,12 @@ def matrix_conflicts(L):
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates that each LF _conflicts with other LFs on_.**
     """
-    L_abs = sparse_abs(L)
-    return np.ravel(np.where(L_abs.sum(axis=1) != sparse_abs(L.sum(axis=1)), 1, 0).T * L_abs / float(L.shape[0]))
+    B = L.copy()
+    for row in range(0,B.shape[0]):
+        if np.unique(B.getrow(row).data).size == 1:
+            B.data[B.indptr[row]:B.indptr[row+1]] = 0
+    return matrix_coverage(sparse_nonzero(B))
+
 
 def matrix_tp(L, labels):
     return np.ravel([

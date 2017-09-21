@@ -241,7 +241,9 @@ class RegexMatch(NgramMatcher):
         self.sep         = self.opts.get('sep', " ")
 
         # Compile regex matcher
-        # NOTE: Enforce full span matching by ensuring that regex ends with $!
+        # NOTE: Enforce full span matching by ensuring that regex ends with $.
+        # Group self.rgx first so that $ applies to all components of an 'OR'
+        # expression. (e.g., we want r'(a|b)$' instead of r'a|b$')
         self.rgx = self.rgx if self.rgx.endswith('$') else ('(?:' + self.rgx + ')' + '$')
         self.r = re.compile(self.rgx, flags=(re.I if self.ignore_case else 0) | re.UNICODE)
 

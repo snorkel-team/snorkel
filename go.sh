@@ -40,15 +40,15 @@ do
     echo "class_prior = $class_prior"
     echo ""
     python -u snorkel/contrib/babble/pipelines/run.py \
-        --domain stub \
+        --domain $DOMAIN \
         --reports_dir $REPORTS_DIR \
         --gen-init-params:lf_propensity $lf_propensity \
         --gen-init-params:lf_prior $lf_prior \
         --gen-init-params:lf_class_propensity $lf_class_propensity \
         --gen-init-params:class_prior $class_prior \
         --start_at 6 \
-        --parallelism 15 \
         --postgres \
+        --parallelism 15 \
         --gen_model_search_space 15 \
         --disc_model_search_space 15 \
         --seed 111 --verbose --no_plots | tee -a $LOGFILE

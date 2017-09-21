@@ -20,7 +20,8 @@ real-world information extraction!
 ### `Fonduer` Tutorial
 
 For an advanced tutorial for extracting information from _richly formatted
-data_, check out the `Fonduer` tutorials. In the `hardware` tutorial, we extract
-maximum storage temperatures for transistors from their original
-datasheets. In the `paleo` tutorial, we extract formation measurements from
-scientific literature.
+data_, where entity relations are conveyed jointly via textual, structural,
+tabular, and visual expressions (e.g. tables in PDFs/HTML/XML), check out the
+`Fonduer` tutorials. In the `hardware` tutorial, we extract maximum storage
+temperatures for transistors from their original datasheets. In the `paleo`
+tutorial, we extract formation measurements from scientific literature.

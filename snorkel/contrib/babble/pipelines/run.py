@@ -41,6 +41,10 @@ if __name__ == '__main__':
     argparser.add_argument('--lf_class_propensity', type=str2bool)
     ## hyperparameters
 
+    # Search
+    argparser.add_argument('--seed', type=int)
+    argparser.add_argument('--gen_model_search_space', type=int)
+    argparser.add_argument('--disc_model_search_space', type=int)
 
     # Scaling args
     argparser.add_argument('--max_docs', type=int,
@@ -63,7 +67,6 @@ if __name__ == '__main__':
     argparser.add_argument('--db_port', type=str, default=None)
     argparser.add_argument('--postgres', action='store_true')
     argparser.add_argument('--parallelism', type=int)
-    argparser.add_argument('--seed', type=int)
 
     # Parse arguments
     args = argparser.parse_args()

@@ -47,6 +47,8 @@ do
         --class_prior $class_prior \
         --start_at 6 \
         --parallelism 10 \
+        --gen_model_search_space 20
+        --disc_model_search_space 20
         --seed 111 --verbose --no_plots | tee -a $LOGFILE
         # --debug \
 done

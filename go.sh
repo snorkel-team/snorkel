@@ -13,20 +13,43 @@ REPORTS_DIR="reports/gen_tests_$DOMAIN/"
 mkdir -p $REPORTS_DIR
 echo "Saving reports to '$REPORTS_DIR'"
 echo ""
-echo "Note: Consider if pipeline up through stage 5 must have already been run."
+echo "Note: If you are not starting at stage 0, confirm database exists already."
 
-for class_prior in True False
+# Run setup
+# python -u snorkel/contrib/babble/pipelines/run.py \
+#     --domain $DOMAIN \
+#     --end_at 6 \
+#     --debug \
+#     --verbose --no_plots
+
+# Run tests
+for lf_propensity in True False 
+do
+for lf_prior in True False 
+do
+for lf_class_propensity in True False 
+do
+for class_prior in True False 
 do
     echo ""
-    echo "<TEST: Running for class_prior = $class_prior>"
+    echo "<TEST: Running with following params:>"
+    echo "lf_propensity = $lf_propensity" 
+    echo "lf_prior = $lf_prior"
+    echo "lf_class_propensity = $lf_class_propensity"
+    echo "class_prior = $class_prior"
+    echo ""
     python -u snorkel/contrib/babble/pipelines/run.py \
         --domain $DOMAIN \
         --reports_dir $REPORTS_DIR \
+        --lf_propensity $lf_propensity \
+        --lf_prior $lf_prior \
+        --lf_class_propensity $lf_class_propensity \
         --class_prior $class_prior \
-        --postgres \
         --start_at 6 \
-        --debug \
+        --parallelism 10 \
         --verbose --no_plots | tee -a $LOGFILE
         # --debug \
-        # --end_at 6 \
+done
+done
+done
 done

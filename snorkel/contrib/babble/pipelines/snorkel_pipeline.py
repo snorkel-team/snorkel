@@ -47,8 +47,7 @@ class SnorkelPipeline(object):
 
     def run(self):
         def is_valid_stage(stage_id):
-            return (self.config['start_at'] <= stage_id and 
-                    self.config['end_at'] >= stage_id)
+            return self.config['start_at'] <= stage_id < self.config['end_at']
                     
         if self.config['start_at'] is None or self.config['end_at'] is None:
             raise Exception("At least one of 'start_at' or 'end_at' is not defined.")

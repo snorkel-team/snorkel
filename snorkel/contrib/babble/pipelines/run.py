@@ -86,9 +86,6 @@ if __name__ == '__main__':
     # Parse arguments
     args = vars(argparser.parse_args())
     args = expand_dicts(args)
-    if args['verbose']:
-        print(args)
-    import pdb; pdb.set_trace()
 
     # Get the DB connection string and add to globals
     default_db_name = 'babble_' + args['domain'] + ('_debug' if args['debug'] else '')
@@ -110,7 +107,7 @@ if __name__ == '__main__':
     # Resolve config conflicts (args > local config > global config)
     local_config = get_local_config(args['domain'])
     config = recursive_merge_dicts(global_config, local_config)
-    config = recursive_merge_dicts(config, vars(args))
+    config = recursive_merge_dicts(config, args)
     if args['verbose'] > 0:
         print(config)
 

@@ -1,6 +1,7 @@
 source set_env.sh
 
-EXP=$1
+DOMAIN=$1
+EXP=$2
 
 DATE=`date +"%m_%d_%y"`
 TIME=`date +"%H_%M_%S"`
@@ -9,7 +10,7 @@ mkdir -p $LOGDIR
 LOGFILE="$LOGDIR/run_log_{$DOMAIN}_{$EXP}_{$TIME}.log"
 echo "Saving log to '$LOGFILE'"
 
-REPORTS_DIR="reports/{$EXP}_{$DOMAIN}/"
+REPORTS_DIR="reports/{$DOMAIN}_{$EXP}/"
 mkdir -p $REPORTS_DIR
 echo "Saving reports to '$REPORTS_DIR'"
 echo ""
@@ -39,16 +40,17 @@ do
     echo "class_prior = $class_prior"
     echo ""
     python -u snorkel/contrib/babble/pipelines/run.py \
-        --domain spouse \
+        --domain stub \
         --reports_dir $REPORTS_DIR \
-        --lf_propensity $lf_propensity \
-        --lf_prior $lf_prior \
-        --lf_class_propensity $lf_class_propensity \
-        --class_prior $class_prior \
+        --gen-init-params:lf_propensity $lf_propensity \
+        --gen-init-params:lf_prior $lf_prior \
+        --gen-init-params:lf_class_propensity $lf_class_propensity \
+        --gen-init-params:class_prior $class_prior \
         --start_at 6 \
-        --parallelism 10 \
-        --gen_model_search_space 20
-        --disc_model_search_space 20
+        --parallelism 15 \
+        --postgres \
+        --gen_model_search_space 15 \
+        --disc_model_search_space 15 \
         --seed 111 --verbose --no_plots | tee -a $LOGFILE
         # --debug \
 done

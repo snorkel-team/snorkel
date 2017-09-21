@@ -47,7 +47,7 @@ do
         --class_prior $class_prior \
         --start_at 6 \
         --parallelism 10 \
-        --verbose --no_plots | tee -a $LOGFILE
+        --seed 111 --verbose --no_plots | tee -a $LOGFILE
         # --debug \
 done
 done

@@ -1,15 +1,15 @@
 source set_env.sh
 
-DOMAIN=$1
+EXP=$1
 
 DATE=`date +"%m_%d_%y"`
 TIME=`date +"%H_%M_%S"`
 LOGDIR="logs/$DATE"
 mkdir -p $LOGDIR
-LOGFILE="$LOGDIR/run_log_${DOMAIN}_${TIME}.log"
+LOGFILE="$LOGDIR/run_log_{$DOMAIN}_{$EXP}_{$TIME}.log"
 echo "Saving log to '$LOGFILE'"
 
-REPORTS_DIR="reports/gen_tests_$DOMAIN/"
+REPORTS_DIR="reports/{$EXP}_{$DOMAIN}/"
 mkdir -p $REPORTS_DIR
 echo "Saving reports to '$REPORTS_DIR'"
 echo ""
@@ -39,7 +39,7 @@ do
     echo "class_prior = $class_prior"
     echo ""
     python -u snorkel/contrib/babble/pipelines/run.py \
-        --domain $DOMAIN \
+        --domain spouse \
         --reports_dir $REPORTS_DIR \
         --lf_propensity $lf_propensity \
         --lf_prior $lf_prior \

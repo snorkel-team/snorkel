@@ -142,16 +142,18 @@ class SnorkelPipeline(object):
             if TRAIN in self.config['splits']:
                 L_train = load_label_matrix(self.session, split=TRAIN)
                 assert L_train.nnz > 0
+                if self.config['verbose']:
+                    print("Using L_train: {0}".format(L_train.__repr__()))
             if DEV in self.config['splits']:
                 L_dev = load_label_matrix(self.session, split=DEV)
                 assert L_dev.nnz > 0
+                if self.config['verbose']:
+                    print("Using L_dev: {0}".format(L_dev.__repr__()))
             if TEST in self.config['splits']:
                 L_test = load_label_matrix(self.session, split=TEST)
                 assert L_test.nnz > 0
-            if self.config['verbose']:
-                print("Using L_train: {0}".format(L_train.__repr__()))
-                print("Using L_dev: {0}".format(L_dev.__repr__()))
-                print("Using L_test: {0}".format(L_test.__repr__()))
+                if self.config['verbose']:
+                    print("Using L_test: {0}".format(L_test.__repr__()))
 
             # Load dev and test labels
             if DEV in self.config['splits']:

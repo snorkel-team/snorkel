@@ -18,8 +18,7 @@ def shuffle_lists(a, b):
 
 class MTurkHelper(object):
     def __init__(self, candidates=[], labels=[], num_hits=None, candidates_per_hit=4, 
-        workers_per_hit=3, shuffle=True, pct_positive=None, seed=1234, domain=None, 
-        anns_path='/dfs/scratch0/paroma/coco/annotations/train_anns.npy'):
+        workers_per_hit=3, shuffle=True, pct_positive=None, seed=1234, domain=None):
         random.seed(seed)
         if pct_positive:
             assert(0 < pct_positive and pct_positive < 1)
@@ -39,10 +38,6 @@ class MTurkHelper(object):
         self.num_hits = num_hits
         self.candidates_per_hit = candidates_per_hit
         self.workers_per_hit = workers_per_hit
-        
-        if domain == 'vg':
-            anns = np.load(anns_path)
-            self.anns = list(anns)
 
     def balance_labels(self, candidates, labels, num_candidates, pct_positive):
         target_positive = int(num_candidates * pct_positive)

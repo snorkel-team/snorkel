@@ -13,7 +13,7 @@ from tutorials.babble import MTurkHelper
 
 class BikePipeline(BabblePipeline):
 
-    def parse(self, anns_path=os.environ['SNORKELHOME'] + '/tutorials/babble/bike/data/'):
+    def parse(self, anns_path=os.environ['SNORKELHOME'] + '/tutorials/babble/drink/data/'):
         self.anns_path = anns_path
         train_path = anns_path + 'train_anns.npy'
         val_path = anns_path + 'val_anns.npy'
@@ -46,6 +46,7 @@ class BikePipeline(BabblePipeline):
             return labels_by_candidate
             
         
+        
         validation_labels_by_candidate = load_labels('val', self.anns_path+
                                                      'Labels_for_Visual_Genome_all_out.csv')
         train_labels_by_candidate = load_labels('train', self.anns_path+
@@ -75,14 +76,6 @@ class BikePipeline(BabblePipeline):
         assign_gold_labels(validation_labels_by_candidate)
         assign_gold_labels(train_labels_by_candidate)
 
-    def collect(self):
-        helper = MTurkHelper()
-        output_csv_path = (os.environ['SNORKELHOME'] + 
-                        '/tutorials/babble/bike/data/VisualGenome_all_out.csv')
-        explanations = helper.postprocess_visual(output_csv_path, set_name='train', verbose=False)
-        
-        from snorkel.contrib.babble import link_explanation_candidates
-        candidates = self.session.query(self.candidate_class).filter(self.candidate_class.split == self.config['babbler_candidate_split']).all()
-        explanations = link_explanation_candidates(explanations, candidates)
-        user_lists = {}
-        super(BikePipeline, self).babble('image', explanations, user_lists, self.config)
+
+    def babble(self, explanations, user_lists={}, gold_labels=None, **kwargs):
+        super(BikePipeline, self).babble('image', explanations, **kwargs)

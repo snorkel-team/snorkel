@@ -71,21 +71,9 @@ class DrinkPipeline(BabblePipeline):
             reload_annotator_labels(self.session, self.candidate_class, 
                 annotator_name, split=source, filter_label_split=False)
 
-        
-        #validation_labels_by_candidate = load_labels('val', self.anns_path+
-                                                     #'Labels_for_Drink_v0.1_out.csv')
-        #validation_labels_by_candidate = load_labels('val', self.anns_path+
-        #                                             'Reach_Val_Labels_out.csv')                                           
-        #train_labels_by_candidate = load_labels('train', self.anns_path+
-         #                                       'Reach_Train_Labels_out.csv')
-
-        # anns_folder = '/dfs/scratch0/paroma/coco/annotations/'
-        # validation_labels_by_candidate = np.load(anns_folder + 'drink_val_labels_by_candidate.npy').tolist()
-        # train_labels_by_candidate = np.load(anns_folder + 'drink_train_labels_by_candidate.npy').tolist()
             
         assign_gold_labels(validation_labels_by_candidate)
         assign_gold_labels(train_labels_by_candidate)
-
 
     def collect(self):
         helper = MTurkHelper()

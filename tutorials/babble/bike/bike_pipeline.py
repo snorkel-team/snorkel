@@ -162,14 +162,16 @@ class BikePipeline(BabblePipeline):
         #Convert to TFRecords Format
         #TODO: We are loading and converting images every time classify is called!!!
         print ('Loading Images...')
-        os.system('python '+ model_path +'download_and_convert_data.py --dataset_name mscoco --dataset_dir ' + model_path+ '/datasets/mscoco')
+        #os.system('python '+ model_path +'download_and_convert_data.py --dataset_name mscoco --dataset_dir ' + model_path+ '/datasets/mscoco')
         
         #Call TFSlim Model
         print ('Calling TFSlim...')
-        os.system('python '+ model_path +'train_image_classifier.py --train_dir=./datasets/mscoco/ws_results/ \
-            --dataset_name=mscoco --dataset_split_name=train --dataset_dir=./datasets/mscoco/ \
-            --model_name=' + self.config['disc_model_class'] + ' --num_clones=' + str(self.config['parallelism'])
-            + '--learning_rate=50.0 --max_number_of_steps 1000') #don't know the setup of config file for lr etc params
+        train_dir = model_path+ '/datasets/mscoco'
+        dataset_dir = train_dir
+        os.system('python '+ model_path +'train_image_classifier.py --train_dir=' + train_dir + \
+            ' --dataset_name=mscoco --dataset_split_name=train --dataset_dir=' + dataset_dir + \
+            ' --model_name=' + self.config['disc_model_class'] + ' --num_clones=' + str(self.config['parallelism'])
+            + ' --learning_rate=50.0 --max_number_of_steps 1000') #don't know the setup of config file for lr etc params
 
         # scores = {}
         # with PrintTimer("[7.3] Evaluate discriminative model (opt_b={})".format(opt_b)):

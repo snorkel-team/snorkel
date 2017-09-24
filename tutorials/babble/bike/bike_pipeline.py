@@ -91,8 +91,6 @@ class BikePipeline(BabblePipeline):
 
 
     def classify(self, model_path = '/dfs/scratch0/paroma/slim_ws/', opt_b = 0.5):
-        #temp hack to get access to Payal's code
-        #sys.path.append('/dfs/scratch0/paroma/slim_ws/')
         config = self.config
 
         def get_candidates(self, split):
@@ -147,10 +145,10 @@ class BikePipeline(BabblePipeline):
         val_coco_ids, val_labels = link_images_candidates(val_anns, X_val, val_mscoco, Y_val)
         create_csv(val_coco_ids, val_labels, 'validation_images.csv', 'val2017')
 
-        #Depending on value of self.config['traditional'], create train marginals
         train_anns = np.load(self.anns_path + 'train_anns.npy').tolist()
         train_mscoco = np.load(self.anns_path+'train_mscoco.npy')
 
+        #Depending on value of self.config['traditional'], create train marginals
         if self.config['supervision'] == 'traditional':
             train_size = self.config['traditional']
             train_coco_ids, train_labels = link_images_candidates(train_anns, X_train, train_mscoco, Y_train_gold)
@@ -162,7 +160,7 @@ class BikePipeline(BabblePipeline):
         #Convert to TFRecords Format
         #TODO: We are loading and converting images every time classify is called!!!
         print ('Loading Images...')
-        #os.system('python '+ model_path +'download_and_convert_data.py --dataset_name mscoco --dataset_dir ' + model_path+ '/datasets/mscoco')
+        os.system('python '+ model_path +'download_and_convert_data.py --dataset_name mscoco --dataset_dir ' + model_path+ '/datasets/mscoco')
         
         #Call TFSlim Model
         print ('Calling TFSlim...')

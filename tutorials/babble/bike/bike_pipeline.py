@@ -99,7 +99,7 @@ class BikePipeline(BabblePipeline):
             return self.session.query(self.candidate_class).filter(
                 self.candidate_class.split == split)
 
-        def create_csv(coco_ids, labels, filename):
+        def create_csv(coco_ids, labels, filename, setname=None):
             csv_name = model_path+'datasets/mscoco/'+filename
             with open(csv_name, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile)
@@ -108,7 +108,8 @@ class BikePipeline(BabblePipeline):
                     if coco_ids[idx] == 0:
                         continue
                     else:
-                        csvwriter.writerow(['http://mscoco.org/images/'+str(int(coco_ids[idx])),labels[idx]])
+                        url = 'http://images.cocodataset.org/{}/{:012}.jpg'.format(setname,int(coco_ids[idx]))
+                        csvwriter.writerow([url,labels[idx]])
 
         def link_images_candidates(anns, candidates, mscoco, marginals):
             coco_ids =  np.zeros(len(anns))
@@ -144,7 +145,7 @@ class BikePipeline(BabblePipeline):
         val_anns = np.load(self.anns_path + 'val_anns.npy').tolist()
         val_mscoco = np.load(self.anns_path+'val_mscoco.npy')
         val_coco_ids, val_labels = link_images_candidates(val_anns, X_val, val_mscoco, Y_val)
-        create_csv(val_coco_ids, val_labels, 'validation_images.csv')
+        create_csv(val_coco_ids, val_labels, 'validation_images.csv', 'val2017')
 
         #Depending on value of self.config['traditional'], create train marginals
         train_anns = np.load(self.anns_path + 'train_anns.npy').tolist()
@@ -153,19 +154,22 @@ class BikePipeline(BabblePipeline):
         if self.config['supervision'] == 'traditional':
             train_size = self.config['traditional']
             train_coco_ids, train_labels = link_images_candidates(train_anns, X_train, train_mscoco, Y_train_gold)
-            create_csv(train_coco_ids[:train_size], train_labels[:train_size], 'train_marginal_images.csv') #download script reads from one train file
+            create_csv(train_coco_ids[:train_size], train_labels[:train_size], 'train_marginal_images.csv', 'train2017') #download script reads from one train file
         else:
             train_coco_ids, train_labels = link_images_candidates(train_anns, X_train, train_mscoco, Y_train)
-            create_csv(train_coco_ids, train_labels, 'train_marginal_images.csv')
+            create_csv(train_coco_ids, train_labels, 'train_marginal_images.csv', 'train2017')
 
         #Convert to TFRecords Format
+        #TODO: We are loading and converting images every time classify is called!!!
         print ('Loading Images...')
         os.system('python '+ model_path +'download_and_convert_data.py --dataset_name mscoco --dataset_dir ' + model_path+ '/datasets/mscoco')
+        
+        #Call TFSlim Model
         print ('Calling TFSlim...')
         os.system('python '+ model_path +'train_image_classifier.py --train_dir=./datasets/mscoco/ws_results/ \
             --dataset_name=mscoco --dataset_split_name=train --dataset_dir=./datasets/mscoco/ \
             --model_name=' + self.config['disc_model_class'] + ' --num_clones=' + str(self.config['parallelism'])
-            + ' learning_rate 50.0') #don't know the setup of config file for lr etc params
+            + '--learning_rate=50.0 --max_number_of_steps 1000') #don't know the setup of config file for lr etc params
 
         # scores = {}
         # with PrintTimer("[7.3] Evaluate discriminative model (opt_b={})".format(opt_b)):

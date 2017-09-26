@@ -58,10 +58,14 @@ def camel_to_under(name):
 def sparse_nonzero(X):
     """Sparse matrix with value 1 for i,jth entry !=0"""
     X_nonzero = X.copy()
+    if not sparse.issparse(X):
+        X_nonzero[X_nonzero != 0] = 1
     if sparse.isspmatrix_csr(X) or sparse.isspmatrix_csc(X):
         X_nonzero.data[X_nonzero.data != 0] = 1
+    elif sparse.isspmatrix_lil(X):
+        X_nonzero.data = [np.ones(len(L)) for L in X_nonzero.data]
     else:
-        raise ValueError("Only supports CSR/CSC matrices")
+        raise ValueError("Only supports CSR/CSC and LIL matrices")
     return X_nonzero
 
 def sparse_abs(X):
@@ -94,17 +98,17 @@ def matrix_overlaps(L):
     L_nonzero = sparse_nonzero(L)
     return np.ravel(np.where(L_nonzero.sum(axis=1) > 1, 1, 0).T * L_nonzero / float(L.shape[0]))
 
-
 def matrix_conflicts(L):
     """
     Given an N x M matrix where L_{i,j} is the label given by the jth LF to the ith candidate:
     Return the **fraction of candidates that each LF _conflicts with other LFs on_.**
     """
     B = L.copy()
-    for row in range(0,B.shape[0]):
-        if np.unique(B.getrow(row).data).size == 1:
-            B.data[B.indptr[row]:B.indptr[row+1]] = 0
-    return matrix_coverage(sparse_nonzero(B))
+    B_nonzero = sparse_nonzero(B)
+    B_abs = sparse_abs(L)
+    with np.errstate(divide='ignore'): # Suppresses warning occuring when all labeles for candidate are 0
+        return np.ravel(np.where(np.logical_or(np.mod(B.sum(axis=1),B_nonzero.sum(axis=1)) != 0,\
+            B_abs.sum(axis=1) != sparse_abs(B.sum(axis=1)) ),1,0).T * B_nonzero / float(B.shape[0]))
 
 
 def matrix_tp(L, labels):

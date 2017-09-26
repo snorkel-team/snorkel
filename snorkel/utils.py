@@ -60,6 +60,7 @@ def sparse_nonzero(X):
     X_nonzero = X.copy()
     if not sparse.issparse(X):
         X_nonzero[X_nonzero != 0] = 1
+        return X_nonzero
     if sparse.isspmatrix_csr(X) or sparse.isspmatrix_csc(X):
         X_nonzero.data[X_nonzero.data != 0] = 1
     elif sparse.isspmatrix_lil(X):
@@ -104,11 +105,19 @@ def matrix_conflicts(L):
     Return the **fraction of candidates that each LF _conflicts with other LFs on_.**
     """
     B = L.copy()
-    B_nonzero = sparse_nonzero(B)
-    B_abs = sparse_abs(L)
-    with np.errstate(divide='ignore'): # Suppresses warning occuring when all labeles for candidate are 0
-        return np.ravel(np.where(np.logical_or(np.mod(B.sum(axis=1),B_nonzero.sum(axis=1)) != 0,\
-            B_abs.sum(axis=1) != sparse_abs(B.sum(axis=1)) ),1,0).T * B_nonzero / float(B.shape[0]))
+    if not sparse.issparse(B):
+        for row in range(B.shape[0]):
+            if np.unique(np.array(B[row][np.nonzero(B[row])])).size == 1:
+                B[row] = 0
+        return matrix_coverage(sparse_nonzero(B))
+    if not (sparse.isspmatrix_csc(B) or sparse.isspmatrix_lil(B) or sparse.isspmatrix_csr(B)):
+        raise ValueError("Only supports CSR/CSC and LIL matrices")
+    if sparse.isspmatrix_csc(B) or sparse.isspmatrix_lil(B):
+        B = B.tocsr()
+    for row in range(B.shape[0]):
+        if np.unique(B.getrow(row).data).size == 1:
+            B.data[B.indptr[row]:B.indptr[row+1]] = 0
+    return matrix_coverage(sparse_nonzero(B))
 
 
 def matrix_tp(L, labels):

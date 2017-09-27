@@ -57,8 +57,8 @@ class SnorkelPipeline(object):
             self.config['max_docs'] = 100
             self.config['gen_model_search_space'] = 2
             self.config['disc_model_search_space'] = 2
-            self.config['gen-params-default']['epochs'] = 25
-            self.config['disc-params-default']['n_epochs'] = 5
+            self.config['gen_params_default']['epochs'] = 25
+            self.config['disc_params_default']['n_epochs'] = 5
 
         result = None
         for stage in ['parse', 'extract', 'load_gold', 'collect', 'label', 
@@ -180,7 +180,7 @@ class SnorkelPipeline(object):
                     deps = ()
 
                 # Pass in the dependencies via default params
-                gen_params_default = self.config['gen-params-default']
+                gen_params_default = self.config['gen_params_default']
                 gen_params_default['deps'] = deps
 
                 # Train generative model with grid search if applicable
@@ -190,12 +190,12 @@ class SnorkelPipeline(object):
                     X_dev=L_dev,
                     Y_dev=L_gold_dev,
                     search_size=self.config['gen_model_search_space'],
-                    search_params=self.config['gen-params-range'],
+                    search_params=self.config['gen_params_range'],
                     rand_seed=self.config['seed'],
                     n_threads=self.config['parallelism'],
                     verbose=self.config['verbose'],
                     params_default=gen_params_default,
-                    model_init_params=self.config['gen-init-params'],
+                    model_init_params=self.config['gen_init_params'],
                     model_name='generative_{}'.format(self.config['domain']),
                     save_dir='checkpoints',
                     beta=self.config['gen_f_beta']
@@ -240,7 +240,7 @@ class SnorkelPipeline(object):
         X_test = self.get_candidates(TEST)
         Y_test = load_gold_labels(self.session, annotator_name='gold', split=TEST)
 
-        if self.config['disc-model-class'] == 'lstm':
+        if self.config['disc_model_class'] == 'lstm':
             disc_model_class = reRNN
         else:
             raise NotImplementedError
@@ -253,15 +253,15 @@ class SnorkelPipeline(object):
             Y_dev=Y_dev,
             cardinality=2,
             search_size=self.config['disc_model_search_space'],
-            search_params=self.config['disc-params-range'],
+            search_params=self.config['disc_params_range'],
             rand_seed=self.config['seed'],
             n_threads=self.config['parallelism'],
             verbose=self.config['verbose'],
-            params_default=self.config['disc-params-default'],
-            model_init_params=self.config['disc-init-params'],
+            params_default=self.config['disc_params_default'],
+            model_init_params=self.config['disc_init_params'],
             model_name='discriminative_{}'.format(self.config['domain']),
             save_dir='checkpoints',
-            eval_batch_size=self.config['disc-eval-batch-size']
+            eval_batch_size=self.config['disc_eval_batch_size']
         )
         self.disc_model = disc_model
 
@@ -279,7 +279,7 @@ class SnorkelPipeline(object):
             # Score discriminative model trained on generative model predictions
             np.random.seed(self.config['seed'])
             scores['Disc'] = score_marginals(self.disc_model.marginals(X_test, 
-                    batch_size=self.config['disc-eval-batch-size']), Y_test, b=opt_b)
+                    batch_size=self.config['disc_eval_batch_size']), Y_test, b=opt_b)
 
         final_report(self.config, scores)
 

@@ -42,10 +42,10 @@ do
     python -u snorkel/contrib/babble/pipelines/run.py \
         --domain $DOMAIN \
         --reports_dir $REPORTS_DIR \
-        --gen-init-params:lf_propensity $lf_propensity \
-        --gen-init-params:lf_prior $lf_prior \
-        --gen-init-params:lf_class_propensity $lf_class_propensity \
-        --gen-init-params:class_prior $class_prior \
+        --gen_init_params:lf_propensity $lf_propensity \
+        --gen_init_params:lf_prior $lf_prior \
+        --gen_init_params:lf_class_propensity $lf_class_propensity \
+        --gen_init_params:class_prior $class_prior \
         --start_at 6 \
         --postgres \
         --parallelism 15 \

@@ -45,14 +45,14 @@ global_config = {
     ## generative
     'gen_model_search_space': 10,
     'gen_f_beta': 1,
-    'gen-init-params': {
+    'gen_init_params': {
 		'class_prior'           : False,
         'lf_prior'              : False, 
         'lf_propensity'         : True,
         'lf_class_propensity'   : False,
         'seed'                  : 123,
     },
-    'gen-params-range': {
+    'gen_params_range': {
         'step_size'                   : [1e-2, 1e-3, 1e-4, 1e-5],
         'decay'                       : [0.9, 0.95, 0.99],
         'reg_param'                   : [0.0, 0.01, 0.1, 0.25, 0.5],
@@ -62,7 +62,7 @@ global_config = {
         # used iff class_prior = True
         'init_class_prior'            : [-1.15], # (9%)
     },
-    'gen-params-default': {
+    'gen_params_default': {
     	'decay'    : 0.95,
         'epochs'   : 50,
         'reg_param': 0.1,
@@ -70,7 +70,7 @@ global_config = {
 
     # dependencies
     'learn_deps': False,
-    'deps-thresh': 0.01,
+    'deps_thresh': 0.01,
 
     ## display
     'display_accuracies': True,
@@ -79,19 +79,19 @@ global_config = {
     'display_marginals': True,
 
     ### CLASSIFY ###
-    'disc-model-class': 'lstm',
+    'disc_model_class': 'lstm',
     'disc_model_search_space': 10,
-	'disc-init-params': {
+	'disc_init_params': {
         'n_threads': 16,
         'seed'     : 123,
     },
-    'disc-params-range': {
+    'disc_params_range': {
         'lr'        : [1e-2, 1e-3, 1e-4],
         'dim'       : [50, 100],
         'dropout'   : [0.1, 0.25, 0.5],
         'rebalance' : [0.1, 0.25],
     },
-    'disc-params-default': {
+    'disc_params_default': {
         'lr':         0.01,
         'dim':        50,
         'n_epochs':   20,
@@ -101,7 +101,7 @@ global_config = {
         'max_sentence_length': 100,
         'print_freq': 1,
     },
-    'disc-eval-batch-size': 256,
+    'disc_eval_batch_size': 256,
     
     ## Non-GridSearch parameters
     'b': 0.5,

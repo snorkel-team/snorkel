@@ -50,10 +50,10 @@ if __name__ == '__main__':
     SUPERVISION = ['traditional', 'majority_vote', 'generative']
     argparser.add_argument('--supervision', type=str, choices=SUPERVISION)
     ## model args
-    argparser.add_argument('--gen-init-params:class_prior', type=str2bool)
-    argparser.add_argument('--gen-init-params:lf_prior', type=str2bool)
-    argparser.add_argument('--gen-init-params:lf_propensity', type=str2bool)
-    argparser.add_argument('--gen-init-params:lf_class_propensity', type=str2bool)
+    argparser.add_argument('--gen_init_params:class_prior', type=str2bool)
+    argparser.add_argument('--gen_init_params:lf_prior', type=str2bool)
+    argparser.add_argument('--gen_init_params:lf_propensity', type=str2bool)
+    argparser.add_argument('--gen_init_params:lf_class_propensity', type=str2bool)
     ## hyperparameters
 
     # Search
@@ -102,12 +102,10 @@ if __name__ == '__main__':
     from snorkel.models import candidate_subclass
 
     from config import global_config
-    from config_utils import recursive_merge_dicts, get_local_config, get_local_pipeline
+    from config_utils import get_local_pipeline, merge_configs
 
     # Resolve config conflicts (args > local config > global config)
-    local_config = get_local_config(args['domain'])
-    config = recursive_merge_dicts(global_config, local_config)
-    config = recursive_merge_dicts(config, args)
+    config = merge_configs(args)
     if args['verbose'] > 0:
         print(config)
 

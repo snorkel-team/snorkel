@@ -86,6 +86,15 @@ def train_model(model_class, X_train, Y_train=None, X_dev=None, Y_dev=None,
             except TypeError:
                 model.train(X_train, **params_default)
 
+            opt_b = 0.5
+            best_score = -1
+            for b in [0.1, 0.15, 0.25, 0.5, 0.75, 0.85, 0.9]:
+                run_scores = model.score(X_dev, Y_dev, b=b, beta=beta,
+                    batch_size=eval_batch_size)
+                if run_scores[-1] > best_score:
+                    best_score = run_scores[-1]
+                    opt_b = b
+
         # Save model + training marginals in main save_dir (vs save_dir/grid_search)
         model.save(model_name=model_name, save_dir=save_dir)
         return model, opt_b

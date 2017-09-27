@@ -43,5 +43,7 @@ def recursive_merge_dicts(x, y):
         if k in x and isinstance(x[k], dict):
             x[k] = recursive_merge_dicts(x[k], v)
         elif v is not None:
+            if k in x and x[k] != v:
+                print("Overwriting {}={} to {}={}".format(k, x[k], k, v))
             x[k] = v
     return x

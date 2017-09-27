@@ -51,7 +51,7 @@ do
         --parallelism 15 \
         --gen_model_search_space 15 \
         --disc_model_search_space 15 \
-        --seed 111 --verbose --no_plots | tee -a $LOGFILE
+        --seed 926 --verbose --no_plots | tee -a $LOGFILE  # seed = 111
         # --debug \
 done
 done

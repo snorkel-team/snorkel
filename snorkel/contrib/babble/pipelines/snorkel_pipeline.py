@@ -286,7 +286,7 @@ class SnorkelPipeline(object):
 
     def traditional_supervision(self, L_gold_train):
         # Confirm you have the requested number of gold labels
-        train_size = self.config['traditional']
+        train_size = self.config['max_train']
         if L_gold_train.nnz < train_size:
             print("Requested {} traditional labels. Using {} instead...".format(
                 train_size, L_gold_train.nnz))

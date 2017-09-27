@@ -59,13 +59,13 @@ global_config = {
         # Used iff lf_prior = True
         # 'LF_acc_prior_weights'        : [None],
         'LF_acc_prior_weight_default' : [0.5, 1.0, 1.5], # (73%, 88%, 95%)
-        # used iff class_prior = True
-        'init_class_prior'            : [-1.15], # (9%)
     },
     'gen_params_default': {
     	'decay'    : 0.95,
         'epochs'   : 50,
         'reg_param': 0.1,
+        # used iff class_prior = True
+        'init_class_prior' : 0, # 0 = 50% pos, -1.15 = 9% pos
     },
 
     # dependencies

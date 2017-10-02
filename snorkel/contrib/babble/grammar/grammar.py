@@ -114,9 +114,6 @@ class Grammar(object):
                 parses = [p for p in parses if p.absorbed in levels[:k]]
             else:
                 parses = sorted(parses, key=lambda x: x.absorbed)[:self.top_k]
-        # if len(parses) == 0:
-        #     self.print_chart(nested=False)
-        #     import pdb; pdb.set_trace()
         return parses
 
     def add_rule(self, rule):
@@ -226,7 +223,7 @@ class Grammar(object):
                     chart[(i, j)].append(Parse(rule, [parse_1, parse_2]))
     
     def apply_absorb_rules(self, chart, i, j):
-        """Add parses to chart cell (i, j) by applying binary rules."""
+        """Add parses to chart cell (i, j) that require absorbing."""
         if j - i > 2: # Otherwise, there's no chance for absorption
             for m in range(i + 1, j - 1):
                 for n in range(m + 1, j):

@@ -26,7 +26,7 @@ class IntegerAnnotator(Annotator):
                         value = text2int(token)
                     except:
                         pass
-                if value:
+                if value is not None:
                     return [('$Int', ('.int', value))]
         return []
 

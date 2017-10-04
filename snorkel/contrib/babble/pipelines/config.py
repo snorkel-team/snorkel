@@ -9,6 +9,7 @@ global_config = {
     'parallelism': 1,
     'splits': [0, 1, 2],
     'verbose': True,
+    'debug': False,
     'no_plots': False,
     'seed': 0,
     'start_at': STAGES.SETUP, # Stage of pipeline to start at

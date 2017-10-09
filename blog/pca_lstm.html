@@ -1,0 +1,1417 @@
+<!DOCTYPE html><html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <link rel="stylesheet" href="blog.css">
+  <meta charset="utf-8">
+  <meta name="author" content="Jason Fries, Sen Wu, Kristy Choi, Chris Ré" />
+  <title>A Fast Baseline for Sentence Representation Learning</title>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+
+<style type="text/css">
+body {
+  font-family: Helvetica, arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background-color: white;
+  padding: 30px; }
+
+body > *:first-child {
+  margin-top: 0 !important; }
+body > *:last-child {
+  margin-bottom: 0 !important; }
+
+a {
+  color: #4183C4; }
+a.absent {
+  color: #cc0000; }
+a.anchor {
+  display: block;
+  padding-left: 30px;
+  margin-left: -30px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0; }
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 20px 0 10px;
+  padding: 0;
+  font-weight: bold;
+  -webkit-font-smoothing: antialiased;
+  cursor: text;
+  position: relative; }
+
+h1:hover a.anchor, h2:hover a.anchor, h3:hover a.anchor, h4:hover a.anchor, h5:hover a.anchor, h6:hover a.anchor {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA09pVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoMTMuMCAyMDEyMDMwNS5tLjQxNSAyMDEyLzAzLzA1OjIxOjAwOjAwKSAgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OUM2NjlDQjI4ODBGMTFFMTg1ODlEODNERDJBRjUwQTQiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OUM2NjlDQjM4ODBGMTFFMTg1ODlEODNERDJBRjUwQTQiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo5QzY2OUNCMDg4MEYxMUUxODU4OUQ4M0REMkFGNTBBNCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo5QzY2OUNCMTg4MEYxMUUxODU4OUQ4M0REMkFGNTBBNCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PsQhXeAAAABfSURBVHjaYvz//z8DJYCRUgMYQAbAMBQIAvEqkBQWXI6sHqwHiwG70TTBxGaiWwjCTGgOUgJiF1J8wMRAIUA34B4Q76HUBelAfJYSA0CuMIEaRP8wGIkGMA54bgQIMACAmkXJi0hKJQAAAABJRU5ErkJggg==) no-repeat 10px center;
+  text-decoration: none; }
+
+h1 tt, h1 code {
+  font-size: inherit; }
+
+h2 tt, h2 code {
+  font-size: inherit; }
+
+h3 tt, h3 code {
+  font-size: inherit; }
+
+h4 tt, h4 code {
+  font-size: inherit; }
+
+h5 tt, h5 code {
+  font-size: inherit; }
+
+h6 tt, h6 code {
+  font-size: inherit; }
+
+h1 {
+  font-size: 28px;
+  color: black; }
+
+h2 {
+  font-size: 24px;
+  border-bottom: 1px solid #cccccc;
+  color: black; }
+
+h3 {
+  font-size: 18px; }
+
+h4 {
+  font-size: 16px; }
+
+h5 {
+  font-size: 14px; }
+
+h6 {
+  color: #777777;
+  font-size: 14px; }
+
+p, blockquote, ul, ol, dl, li, table, pre {
+  margin: 15px 0; }
+
+hr {
+  background: transparent url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAECAYAAACtBE5DAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBNYWNpbnRvc2giIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OENDRjNBN0E2NTZBMTFFMEI3QjRBODM4NzJDMjlGNDgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OENDRjNBN0I2NTZBMTFFMEI3QjRBODM4NzJDMjlGNDgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo4Q0NGM0E3ODY1NkExMUUwQjdCNEE4Mzg3MkMyOUY0OCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo4Q0NGM0E3OTY1NkExMUUwQjdCNEE4Mzg3MkMyOUY0OCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PqqezsUAAAAfSURBVHjaYmRABcYwBiM2QSA4y4hNEKYDQxAEAAIMAHNGAzhkPOlYAAAAAElFTkSuQmCC) repeat-x 0 0;
+  border: 0 none;
+  color: #cccccc;
+  height: 4px;
+  padding: 0;
+}
+
+body > h2:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+body > h1:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+  body > h1:first-child + h2 {
+    margin-top: 0;
+    padding-top: 0; }
+body > h3:first-child, body > h4:first-child, body > h5:first-child, body > h6:first-child {
+  margin-top: 0;
+  padding-top: 0; }
+
+a:first-child h1, a:first-child h2, a:first-child h3, a:first-child h4, a:first-child h5, a:first-child h6 {
+  margin-top: 0;
+  padding-top: 0; }
+
+h1 p, h2 p, h3 p, h4 p, h5 p, h6 p {
+  margin-top: 0; }
+
+li p.first {
+  display: inline-block; }
+li {
+  margin: 0; }
+ul, ol {
+  padding-left: 30px; }
+
+ul :first-child, ol :first-child {
+  margin-top: 0; }
+
+dl {
+  padding: 0; }
+  dl dt {
+    font-size: 14px;
+    font-weight: bold;
+    font-style: italic;
+    padding: 0;
+    margin: 15px 0 5px; }
+    dl dt:first-child {
+      padding: 0; }
+    dl dt > :first-child {
+      margin-top: 0; }
+    dl dt > :last-child {
+      margin-bottom: 0; }
+  dl dd {
+    margin: 0 0 15px;
+    padding: 0 15px; }
+    dl dd > :first-child {
+      margin-top: 0; }
+    dl dd > :last-child {
+      margin-bottom: 0; }
+
+blockquote {
+  border-left: 4px solid #dddddd;
+  padding: 0 15px;
+  color: #777777; }
+  blockquote > :first-child {
+    margin-top: 0; }
+  blockquote > :last-child {
+    margin-bottom: 0; }
+
+table {
+  padding: 0;border-collapse: collapse; }
+  table tr {
+    border-top: 1px solid #cccccc;
+    background-color: white;
+    margin: 0;
+    padding: 0; }
+    table tr:nth-child(2n) {
+      background-color: #f8f8f8; }
+    table tr th {
+      font-weight: bold;
+      border: 1px solid #cccccc;
+      margin: 0;
+      padding: 6px 13px; }
+    table tr td {
+      border: 1px solid #cccccc;
+      margin: 0;
+      padding: 6px 13px; }
+    table tr th :first-child, table tr td :first-child {
+      margin-top: 0; }
+    table tr th :last-child, table tr td :last-child {
+      margin-bottom: 0; }
+
+img {
+  max-width: 100%; }
+
+span.frame {
+  display: block;
+  overflow: hidden; }
+  span.frame > span {
+    border: 1px solid #dddddd;
+    display: block;
+    float: left;
+    overflow: hidden;
+    margin: 13px 0 0;
+    padding: 7px;
+    width: auto; }
+  span.frame span img {
+    display: block;
+    float: left; }
+  span.frame span span {
+    clear: both;
+    color: #333333;
+    display: block;
+    padding: 5px 0 0; }
+span.align-center {
+  display: block;
+  overflow: hidden;
+  clear: both; }
+  span.align-center > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px auto 0;
+    text-align: center; }
+  span.align-center span img {
+    margin: 0 auto;
+    text-align: center; }
+span.align-right {
+  display: block;
+  overflow: hidden;
+  clear: both; }
+  span.align-right > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px 0 0;
+    text-align: right; }
+  span.align-right span img {
+    margin: 0;
+    text-align: right; }
+span.float-left {
+  display: block;
+  margin-right: 13px;
+  overflow: hidden;
+  float: left; }
+  span.float-left span {
+    margin: 13px 0 0; }
+span.float-right {
+  display: block;
+  margin-left: 13px;
+  overflow: hidden;
+  float: right; }
+  span.float-right > span {
+    display: block;
+    overflow: hidden;
+    margin: 13px auto 0;
+    text-align: right; }
+
+code, tt {
+  margin: 0 2px;
+  padding: 0 5px;
+  white-space: nowrap;
+  border: 1px solid #eaeaea;
+  background-color: #f8f8f8;
+  border-radius: 3px; }
+
+pre code {
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  border: none;
+  background: transparent; }
+
+.highlight pre {
+  background-color: #f8f8f8;
+  border: 1px solid #cccccc;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px; }
+
+pre {
+  background-color: #f8f8f8;
+  border: 1px solid #cccccc;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px; }
+  pre code, pre tt {
+    background-color: transparent;
+    border: none; }
+
+sup {
+    font-size: 0.83em;
+    vertical-align: super;
+    line-height: 0;
+}
+* {
+	-webkit-print-color-adjust: exact;
+}
+@media screen and (min-width: 914px) {
+    body {
+        width: 854px;
+        margin:0 auto;
+    }
+}
+@media print {
+	table, pre {
+		page-break-inside: avoid;
+	}
+	pre {
+		word-wrap: break-word;
+	}
+}
+
+.top-banner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    text-align: center;
+    width: 100%;
+}
+
+#top-banner-img {
+    opacity: 0.5;
+    width: 1200px;
+    height: auto;
+}
+
+#main-title {
+    position: relative;
+    margin-top: 100px;
+    margin-bottom: 100px;
+    padding: 10px;
+    font-size: 40px;
+    background: #333333;
+    color: #f8f8f8;
+    z-index: 10;
+}
+
+blockquote {
+    font-size: large;
+    font-weight: 300;
+}
+
+p.img {
+    text-align: center;
+}
+
+.tt {
+    font-family: Courier, "Courier New", "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
+    font-weight: normal
+}
+
+.centered {
+text-align:center
+}
+
+
+/* Make the page background atleast 100% the height of the view port */
+/* Make the page itself atleast 70% the height of the view port */
+.border-box-sizing {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+}
+
+</style>
+</head>
+
+
+
+
+
+<body>
+<span class="top-banner">
+    <img id="top-banner-img" src="snark_img/kraken.jpg" alt="A Fast Baseline for Sentence Representation Learning">
+</span>
+
+<p id="main-title">A Fast Baseline for Sentence <br>Representation Learning </p>
+
+<p>Jason Fries, Sen Wu, Kristy Choi, Chris Ré<br /><a href="http://snorkel.stanford.edu">Snorkel Blog</a></p>
+
+<p<em>And referencing work by many other <a href="http://cs.stanford.edu/people/chrismre/#students">members of Hazy Research</a></em></p>
+
+<blockquote>
+<p>TL;DR: We describe a computationally fast representation learning model that matches or outperforms basic bidirectional LSTMs on 6 real-world relation extraction tasks, is easier to tune, and has up to an average 270x speedup over BiLSTMs with attention. This baseline applies standard transformations like principal component analysis (PCA) to pre-trained word embeddings to automatically create features for a logistic regression model. We show that classical approaches can still outperform deep learning in some cases, and this document is our first attempt to tease out these cases.</p>
+</blockquote>
+
+
+<h2 id="toc_0">The Value Proposition of Deep Learning</h2>
+
+<img id="spark" src="pca_lstm_img/game-of-lstms-outlined.png" alt="Spark" height="325px" align="right"/>
+
+<p>Deep learning is a powerful tool for building systems that require natural language understanding.
+Measured by recent <a href="http://arXiv.org">arXiv.org</a> papers, a <i>Bidirectional Long Short Term Memory</i> (BiLSTM) is the go-to model for state-of-the-art performance on text classification tasks.
+Stanford’s Christopher Manning calls this the <a href="https://nlp.stanford.edu/manning/talks/Simons-Institute-Manning-2017.pdf">BiLSTM Hegemony</a>: for many NLP tasks, a vanilla BiLSTM with attention is the de facto baseline for evaluating classification performance. </p>
+
+<p>One of the key advantages of a BiLSTM is that it removes manual feature engineering, which is a time-consuming, tedious, and difficult part of model building.
+However, BiLSTMs are not the only method to obviate feature engineering: classical methods like PCA can also automatically obtain features from data.
+When working with <a href="http://snorkel.stanford.edu">Snorkel</a> users, we’ve seen situations in which a classical principal component analysis (PCA)-based technique achieves better performance than BiLSTMs.
+This classical method brings many advantages for end-users like speed, tunability, and more.
+This article explores some of the pros and cons of these classical methods that we’ve observed in our recent work.</p>
+
+<p>The advantages of deep learning are clear and exciting. One can write a BiLSTM in 10-20 lines of Python using frameworks like <a href="http://pytorch.org/">PyTorch</a>.
+There are great tutorials on how to get set up, and often the results are magical!
+However, there are hidden costs to deep learning.</p>
+
+<table class="dense-table-center" style="width: 50%; margin-left: auto; margin-right: auto;">
+	<tr>
+		<td><b>PROS</b></td>
+    <td>
+      <ul>
+         <li>Removes manual feature engineering</li>
+         <li>Easy to use out of the box</li>
+         <li>State-of-the-art performance</li>
+       </ul>
+    </td>
+	</tr>
+	<tr>
+		<td><b>CONS</b></td>
+    <td>
+      <ul>
+         <li>Computationally expensive </li>
+         <li>Tuning is difficult and largely heuristic</li>
+         <li>Difficult to analyze and interpret models</li>
+       </ul>
+    </td>
+	</tr>
+</table>
+
+<p>This blog post explores a classical, PCA-based representation learning method on information extraction problems.
+We explore the performance and computation trade-offs between a simple, fast PCA-based method and several standard BiLSTM models. </p>
+
+
+<h2 id="toc_1">Task and Methods</h2>
+
+<h3 id="toc_1">Relation Extraction</h3>
+
+<p>We study <a href="https://courses.cs.washington.edu/courses/cse517/13wi/slides/cse517wi13-RelationExtraction.pdf"><i>relation extraction</i></a> (RE), considered one of the more difficult tasks in NLP (<a href="http://www.aclweb.org/anthology/D17-1110">Chaganty et al. 2017</a>), for our benchmarks.
+In RE, the goal is to predict a semantic connection between two or more concepts or <i>arguments</i> expressed in text.
+Our experiments assume binary relations in which all arguments are pre-tagged and expressed within a single sentence.
+With a BiLSTM, the goal is to learn a representation of both the sentence and the relation arguments.
+For example, if we were identifying married couples in newswire text, i.e., a <span class="tt">Spouse</span> relation, we would learn a representation of the sentence below.
+</p>
+
+
+<img src="pca_lstm_img/sentence.svg" width=80% style="display: block; margin: 0 auto;"/>
+<p><b>Figure 1</b>: An example <span class="tt">Spouse</span> relation with <span class="tt">Person</span> arguments <span class="tt">(Stephen Colbert, Evelyn)</span></p>
+
+
+<h3 id="toc_1">Creating a Fast Sentence Representation Baseline</h3>
+
+<p>What should a sentence representation encode for relation extraction? Positional information is important for RE (<a href="http://www.aclweb.org/anthology/D17-1004">Zhang et al. 2017</a>).
+As humans, we can easily identify sentence regions or contexts that contain important information for classification: </p>
+
+<ul>
+<li>The relation’s argument mentions: "<b>Stephen Colbert</b>" and "<b>Evelyn</b>" </li>
+<li>The words between arguments: "<b>and his longtime wife</b>"</li>
+<li>Other words from the entire sentence: "<b>their wedding</b>"</li>
+</ul>
+
+<p>A classifier needs to learn where in the sentence to find these types of clues.
+In manual feature engineering, we’d encode these insights directly as features using word <i>n</i>-grams, POS tags, dependency parse trees, etc.
+BiLSTMs can learn most of this structure automatically from labeled data.
+This is a cooler, but more difficult learning objective.
+We model the relational extraction task using context information. Figure 2 shows how a sentence can be partitioned into a set of 4 contexts { cmention1, cmention2, cinner, csentence }.</p>
+
+
+<img src="pca_lstm_img/sentence-contexts.svg" width=80% style="display: block; margin: 0 auto;"/>
+<p><b>Figure 2</b>: Sentence contexts or parts of the sentence where humans expect to find informative features.</p>
+
+
+<p>These contexts are transformed into representations using pre-trained <i>word embeddings</i>, which are low-dimensional vectors that capture semantic and syntactic properties of words,
+commonly generated using word2vec (<a href="https://arxiv.org/pdf/1301.3781.pdf">Mikolov et al. 2013</a>),
+<a href="https://nlp.stanford.edu/projects/glove/">GloVe</a> (<a href="">Pennington et al. 2014</a>), or <i>singular value decomposition</i> (SVD) / PCA (<a href="">Levy and Goldberg 2014</a>).  </p>
+
+<p>Many researchers have generated representations for phrases and sentences by taking the weighted or unweighted mean of stacked word embeddings,
+i.e., “neural bag-of-words models” (<a href="https://arxiv.org/pdf/1404.2188.pdf">Kalchbrenner et al., 2014</a>, <a href="https://www.cs.colorado.edu/~jbg/docs/2015_acl_dan.pdf">Iyver et al. 2015</a>, <a href="http://aclweb.org/anthology/Q15-1017">Yu and Dredze 2015</a>).
+Another common technique is applying dimensionality reduction to the full dictionary of embeddings using SVD/PCA to keep or remove n dominating directions (<a href="https://openreview.net/pdf?id=SyK00v5xx">Arora et al. 2017</a>, <a href="https://arxiv.org/pdf/1702.01417.pdf">Mu et al 2017</a>). </p>
+
+<p>We use these same ideas to define a function \(v(c)\) that takes a context \(c\) and generates a vector representation.
+This amounts to concatenating the mean vector to the top \([r, n+r]\) principal components of a context’s stacked word embedding matrix.
+Here \(r\) is the number of components to remove and \(n\) is the number to keep, with both treated as tunable hyperparameters.
+In our experiments r and n range from 0 - 2.
+We use a classical, exponentially weighted decay technique to mimic local attention (<a class="c11" href="https://www.google.com/url?q=http://proceedings.mlr.press/v37/xuc15.pdf&amp;sa=D&amp;ust=1507487817511000&amp;usg=AFQjCNH3uZBU3ZBjYA0Iyf5-ARIxk-pIlg">Xu et al. 2015</a>), i.e., model the insight that we should give more weight to nearby words.
+Specifically, we weight the stacked word embedding matrix using an exponential decay centered around the relation’s arguments.
+The full pipeline for this process is in Figure 3.</p>
+
+<img src="pca_lstm_img/pipeline.svg" width=100%/>
+
+<p><b>Figure 3</b>: Creating a vector representation of a context, i.e., a subsequence of words from a sentence.</p>
+
+<p>A feature representation for each relation instance \(x_i \in X\) is just the concatenation of all context representations for that relation’s parent sentence 
+<math display="inline">\(s\)</math> 
+</p>
+
+$$x^{s}_{i} = v(c_{mention1}) \frown v(c_{mention2}) \frown v(c_{inner}) \frown v(c_{sentence})$$
+
+<p>To model bidirectionality, we generate \(\overleftarrow{x^{s}_{i}}\) for the same sentence representation, but with all words in reverse order.
+This is concatenated with \(x^{s}_i\) to create the final feature representation. 
+For classification, we use a standard logistic regression model.</p>
+
+<p>This defines a very simple BiLSTM analogue, implemented using textbook statistical learning methods.
+Nothing is groundbreaking here; all the techniques discussed above can be found in any <a href="http://scikit-learn.org/stable/auto_examples/plot_digits_pipe.html">introductory tutorial</a> on using PCA with logistic regression.</p>
+
+<h2 id="toc_1">Experiments</h2>
+
+<h3 id="toc_1">Benchmark Models</h3>
+
+<p>We applied this PCA-based method to 3 real world RE datasets and compared performance to a standard implementation of a BiLSTM with attention model, as described in (<a class="c11" href="https://www.google.com/url?q=http://www.aclweb.org/anthology/P16-2034&amp;sa=D&amp;ust=1507487817514000&amp;usg=AFQjCNElxiYT2xoU7dP0XwtgKlOYbVcw0A">Zhou et al. 2016</a>).
+For this blog, we only evaluate unidirectional PCA models.
+We trained all word embeddings using <a class="c11" href="https://www.google.com/url?q=https://github.com/RaRe-Technologies/gensim&amp;sa=D&amp;ust=1507487817514000&amp;usg=AFQjCNG7atKuRYypLK-LfJRLy64v_U02gA"><span class="tt">word2vec</span></a> and <a class="c11" href="https://www.google.com/url?q=https://github.com/facebookresearch/fastText&amp;sa=D&amp;ust=1507487817514000&amp;usg=AFQjCNHsK5MhrRVRontNW0Lrp0YY2Jal5g"><span class="tt">FastText</span></a> in accordance to best practices outlined in (<a class="c11" href="https://www.google.com/url?q=http://www.aclweb.org/anthology/Q15-1016&amp;sa=D&amp;ust=1507487817514000&amp;usg=AFQjCNEQaRfKY7EAyr4TFtAMOHJRfX19Yw">Levy et al. 2015</a>, <a class="c11" href="https://www.google.com/url?q=http://aclweb.org/anthology/W16-2922&amp;sa=D&amp;ust=1507487817515000&amp;usg=AFQjCNE4zeBqr2owxqHSMEIoJ8VFDnYxhQ">Chiu et al. 2016</a>), using bulk data dumps from PubMed and Wikimedia.
+All models reported here use 300 dimensional word embeddings, which perform better in semantic classification tasks like sentiment analysis (<a class="c11" href="https://www.google.com/url?q=https://arxiv.org/pdf/1601.00893.pdf&amp;sa=D&amp;ust=1507487817515000&amp;usg=AFQjCNGKbj1jI6f1ZqnjltwgftJJO4DkxA">Melamud et al. 2017</a>).
+The same word embedding sets were used to initialize PCA and pre-train the BiLSTMs.
+</p>
+
+<p>To compute speedup measures, we timed 10 trials of the PCA and BiLSTMs models run on all datasets and computed a mean training time per instance.
+All jobs were run serially on the same machine. Time was normalized by number of epochs, training instances, and batch size.
+Timed BiLSTMs used 100 dimensional output embeddings. We report the speedup based on this mean time estimate.
+This is a conservative baseline, as larger output dimensions take longer to train. </p>
+
+<h3 id="toc_1">Datasets</h3>
+
+<p>All RE benchmark datasets are described in the table below.
+Each dataset was split into training, validation, and test sets.
+We used two forms of supervision: traditional supervised learning with hand-labeled training data; and <i>data programming</i> (<a href="https://arxiv.org/pdf/1605.07723.pdf">Ratner et al. 2016</a>) a method for generating large-scale training data using heuristics, knowledge bases, crowdsourcing and other forms of weak supervision. </p>
+
+<table style="width: 75%; margin-left: auto; margin-right: auto;">
+   <tbody>
+      <tr>
+         <td colspan="1" rowspan="1">
+            <p><span class="c22"><b>Dataset</b></span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span class="c22"><b>Task Description</b></span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span class="c22"><b>Domain</b></span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span class="c22"><b>Access</b></span></p>
+         </td>
+      </tr>
+      <tr>
+         <td colspan="1" rowspan="1">
+            <p><span>ACE</span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p ><span class="c23"><a href="https://www.google.com/url?q=https://catalog.ldc.upenn.edu/LDC2011T08&amp;sa=D&amp;ust=1507487817518000&amp;usg=AFQjCNGhA9G159hKf5oJcSB1x_rHP3owJA">Generic Relation Extraction</a></span><br>
+            <span class="tt">Employed(Person, Organization)</span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span>Newswire</span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span>DUA</span></p>
+         </td>
+      </tr>
+      <tr>
+         <td colspan="1" rowspan="1">
+            <p><span>Spouse</span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span><a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro">Extract married couples</a></span><br>
+            <span class="tt">Spouse(Person, Person)</span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span>Newswire</span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span>Public</span></p>
+         </td>
+      </tr>
+      <tr>
+         <td colspan="1" rowspan="1">
+            <p><span>CDR</span> <sup><a href="#ftnt1" id="ftnt_ref1">[1]</a></sup></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span class="c23"><a href="https://www.google.com/url?q=http://www.biocreative.org/tasks/biocreative-v/track-3-cdr/&amp;sa=D&amp;ust=1507487817520000&amp;usg=AFQjCNELxfXyyboKsN7qGfpRIDcdalN4tQ">Biocreative Chemical Disease Relation Task</a></span><br>
+            <span class="tt">Causes(Chemical, Disease)<br>Biomarker(Chemical, Disease)</span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span>Scientific Publications </span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span>Public</span></p>
+         </td>
+      </tr>
+   </tbody>
+</table>
+
+<h3 id="toc_1">Model Selection</h3>
+
+<p>All models were tuned over a search space of 50 models per benchmark dataset using random grid search. Hyperparameter choices were made according to <a href="http://ruder.io/deep-learning-nlp-best-practices/index.html#depth">best practices in deep learning for NLP</a> and empirical guidelines for tuning LSTMs (<a href="https://www.google.com/url?q=http://ieeexplore.ieee.org/abstract/document/7508408/&amp;sa=D&amp;ust=1507487817523000&amp;usg=AFQjCNFAkVOPlt1Xn9BIgKzHWaOVs1c3PA">Greff et al 2016</a>). BiLSTMs were trained for 200 epochs, stopping early after more than 50 epochs without improvement on the validation set. Hyperparameter ranges for the BiLSTM models are below. Where appropriate, we add references justifying parameter choices. PCA configurations are available on our github page</p>
+
+<table style="width: 75%; margin-left: auto; margin-right: auto;">
+   <tbody>
+      <tr>
+         <td colspan="1" rowspan="1">
+            <p ><span class="c22"><b>Hyperparameter</b></span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span class="c22"><b>Discrete Sample Values</b></span></p>
+         </td>
+      </tr>
+      <tr>
+         <td colspan="1" rowspan="1">
+            <p ><span>Learning rate</span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p ><span>[10</span><sup>−4</sup><span>, 10</span><sup>−3</sup><span>, 10</span><sup>−2</sup><span>] (</span><span class="c23"><a href="https://www.google.com/url?q=http://ieeexplore.ieee.org/abstract/document/7508408/&amp;sa=D&amp;ust=1507487817523000&amp;usg=AFQjCNFAkVOPlt1Xn9BIgKzHWaOVs1c3PA">Greff et al 2016</a></span><span>)</span></p>
+         </td>
+      </tr>
+      <tr>
+         <td colspan="1" rowspan="1">
+            <p ><span>Batch Size</span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p ><span>[64, 128, 256] (</span><span class="c23"><a href="https://www.google.com/url?q=https://arxiv.org/pdf/1508.01991.pdf&amp;sa=D&amp;ust=1507487817524000&amp;usg=AFQjCNGB9Qr6zWSj0cNbimLZt4-IxS38Rw">Huang et al 2015</a></span><span>, 
+            <a href="https://www.google.com/url?q=https://arxiv.org/pdf/1707.05589.pdf&amp;sa=D&amp;ust=1507487817524000&amp;usg=AFQjCNHKQmN-jgMqTWSukX0LpxqmqG3cHA">Melis et al 2017</a></span><span>, </span><span class="c23"><a href="https://www.google.com/url?q=https://arxiv.org/pdf/1608.05343.pdf&amp;sa=D&amp;ust=1507487817525000&amp;usg=AFQjCNFyJgtdTgyFBtjuL-uTEDXrm6KPEA">Jaderberg et al. 2017</a></span><span>)</span></p>
+         </td>
+      </tr>
+      <tr>
+         <td colspan="1" rowspan="1">
+            <p><span>Output Layer Size</span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span>[100, </span><span>200, </span><span>400] (</span><span class="c23"><a href="https://www.google.com/url?q=https://arxiv.org/pdf/1609.02745.pdf&amp;sa=D&amp;ust=1507487817525000&amp;usg=AFQjCNHtw_gb1AGbVtoPnvr5ToyiIQg7Cw">Ruder et al 2016</a></span><span>, </span><span class="c23"><a href="https://www.google.com/url?q=https://arxiv.org/pdf/1707.06372.pdf&amp;sa=D&amp;ust=1507487817525000&amp;usg=AFQjCNFjeetWA7R4NzUrxFAX_h532utNoQ">Tay et al. 2017</a></span><span>)</span></p>
+         </td>
+      </tr>
+      <tr>
+         <td colspan="1" rowspan="1">
+            <p><span>Dropout</span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span>[0.25, 0.5] (</span><span class="c23"><a href="https://www.google.com/url?q=https://arxiv.org/pdf/1408.5882.pdf&amp;sa=D&amp;ust=1507487817526000&amp;usg=AFQjCNFXBbk89WSa1Y5TL4ylMzYUzgDskQ">Wells et al. 2014</a></span><span>, </span><span class="c23"><a href="https://www.google.com/url?q=http://www.aclweb.org/anthology/P16-2034&amp;sa=D&amp;ust=1507487817526000&amp;usg=AFQjCNFnhOTUGIf6npfnPLYkQMcCsLODNg">Zhou et al. 2016</a></span><span>)</span></p>
+         </td>
+      </tr>
+      <tr>
+         <td colspan="1" rowspan="1">
+            <p><span>Rebalance Classes</span></p>
+         </td>
+         <td colspan="1" rowspan="1">
+            <p><span>[True, False] </span></p>
+         </td>
+      </tr>
+   </tbody>
+</table>
+
+
+
+<p>To measure model variance and compute statistical significance between PCA and BiLSTM scores, we took the top 5 scoring hyperparameter configurations found during model search and ran 10 small-scale searches using different random seeds. All PCA and BiLSTM models used the same seeds. The distribution of the 10 best scores per dataset was compared across models using Welch’s t-test and reported at significant threshold p < 0.05.</p>
+
+
+<h2 id="toc_1">Results</h2>
+
+<p>Bringing everything together, how does PCA perform? Surprisingly well.
+In all 6 benchmark tasks, the unidirectional PCA performed as well or better than a vanilla BiLSTM.
+In 2/6 tasks, PCA outperformed BiLSTMS by 4 - 7.9% (2.4 - 4.4 F1 points).
+Differences in the mean F1 scores for the remaining 4/6 tasks were not statistically significant.</p> 
+
+<p>Adding attention to BiLSTMs improved performance by an average of 1.3 points, however adding exponentially weighted decay to PCA also improved models by an average of 1.4 F1 points.
+Again, in all 6 tasks PCA with exponential decay performed as well or better than the BiLSTM with attention. Full details are in Tables 1 and 2.</p>
+
+
+<table style="width: 80%; margin-left: auto; margin-right: auto;">
+   <tbody>
+      <tr class="c71">
+         <td class="c67" colspan="1" rowspan="2">
+            <p class="c6 c17"><span class="c7"></span></p>
+            <p class="c6"><span class="c7"><b>Dataset</b></span></p>
+         </td>
+         <td class="c61" colspan="1" rowspan="2">
+            <p class="c6 c17"><span class="c7"></span></p>
+            <p class="c6"><span class="c7"><b>Embeddings</b></span></p>
+         </td>
+         <td class="centered" colspan="3" rowspan="1">
+            <p class="c1"><span class="c7"><b>BiLSTM</b></span></p>
+         </td>
+         <td class="centered" colspan="3" rowspan="1">
+            <p class="c1"><span class="c7"><b>PCA</b></span></p>
+         </td>
+      </tr>
+      <tr class="c62">
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c7"><b>P</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c7"><b>R</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c7"><b>F1</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c7"><b>P</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c7"><b>R</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c7"><b>F1</b></span></p>
+         </td>
+      </tr>
+      <tr class="c10">
+         <td class="c67" colspan="1" rowspan="1">
+            <p class="c6"><span class="c16">ACE-dp</span></p>
+         </td>
+         <td class="c61" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">Wikipedia</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">47.6</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">60.9</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">53.4</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">47.0</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">62.3</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">53.6</span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c67 c50" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c6"><span class="c16">ACE-supervised</span></p>
+         </td>
+         <td class="c50 c61" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">Wikipedia</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">52.5</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c7"><b>59.8</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">55.5</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c7"><b>69.0</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">53.0</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c7"><b>59.9</b></span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c67" colspan="1" rowspan="1">
+            <p class="c6"><span class="c16">CDR-dp</span></p>
+         </td>
+         <td class="c61" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">PubMed</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">43.1</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">82.9</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">56.7</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">42.0</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">84.9</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">56.2</span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c50 c67" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c6"><span class="c16">CDR-supervised</span></p>
+         </td>
+         <td class="c61 c50" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">PubMed</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">52.8</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">66.6</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">58.8</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c7"><b>53.5</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c7"><b>71.5</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c7"><b>61.2</b></span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c67" colspan="1" rowspan="1">
+            <p class="c6"><span class="c16">Spouse-dp</span></p>
+         </td>
+         <td class="c61" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">Wikipedia</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">51.9</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">59.1</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">55.2</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">63.5</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">48.9</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">55.2</span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c67" colspan="1" rowspan="1">
+            <p class="c6"><span class="c16">Spouse-supervised</span></p>
+         </td>
+         <td class="c61" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">Wikipedia</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">59.7</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">52.5</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">55.7</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">61.2</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">45.2</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">51.9</span></p>
+         </td>
+      </tr>
+   </tbody>
+   <caption align="bottom" style="text-align:left"><p style="text-align:left"><b>Table 1</b>: BiLSTM vs PCA using pre-trained word embeddings. All scores are the mean of 10 runs. Light blue cells reflect statistically significant differences in F1 score at p < 0.05.</p></caption>
+</table>
+
+
+<table style="width: 80%; margin-left: auto; margin-right: auto;">
+   <tbody>
+      <tr class="c71">
+         <td class="c66" colspan="1" rowspan="2">
+            <p class="c6"><span class="c45 c32"><b>Dataset</b></span></p>
+         </td>
+         <td class="c20" colspan="1" rowspan="2">
+            <p><b>Embeddings</b></p>
+         </td>
+         <td class="centered" colspan="3" rowspan="1">
+            <p class="c1"><b>BiLSTM + Attention</b></p>
+         </td>
+         <td class="centered" colspan="3" rowspan="1">
+            <p class="c1"><b>PCA + Kernel<br>Exp. Decay Attention</b></p>
+         </td>
+      </tr>
+      <tr class="c62">
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c7"><b>P</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c7"><b>R</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c45 c32"><b>F1</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c7"><b>P</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c7"><b>R</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c7"><b>F1</b></span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c66" colspan="1" rowspan="1">
+            <p class="c6"><span class="c16">ACE-dp</span></p>
+         </td>
+         <td class="c20" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">Wikipedia</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">47.3</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">61.9</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">53.6</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">48.2</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">58.7</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">52.9</span></p>
+         </td>
+      </tr>
+      <tr class="c10">
+         <td class="c66" colspan="1" rowspan="1">
+            <p class="c6"><span class="c16">ACE-supervised</span></p>
+         </td>
+         <td class="c20" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">Wikipedia</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">60.9</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">61.1</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">60.7</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">67.1</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">53.9</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">59.6</span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c66" colspan="1" rowspan="1">
+            <p class="c6"><span class="c16">CDR-dp</span></p>
+         </td>
+         <td class="c20" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">PubMed</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c43">42.3</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c43">86.5</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c43">56.8</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">42.3</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">87</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">56.9</span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c66 c50" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c6"><span class="c16">CDR-supervised</span></p>
+         </td>
+         <td class="c20 c50" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">PubMed</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">52.6</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">67.9</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">59.2</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c7"><b>54.9</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c7"><b>71.2</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c7"><b>62.0</b></span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c66 c50" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c6"><span class="c16">Spouse-dp</span></p>
+         </td>
+         <td class="c20 c50" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">Wikipedia</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c43">51.5</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><b>60.8</b></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c43">55.7</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c7"><b>64.2</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c16">52.8</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c7"><b>57.9</b></span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c66" colspan="1" rowspan="1">
+            <p class="c6"><span class="c16">Spouse-supervised</span></p>
+         </td>
+         <td class="c20" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">Wikipedia</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c43">66.1</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c43">54.6</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c43">59.3</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">67.8</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">49.5</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c16">57.1</span></p>
+         </td>
+      </tr>
+   </tbody>
+   <caption align="bottom" style="text-align:left"><p style="text-align:center"><b>Table 2</b>: LSTM + attention vs PCA + kernel attention. Values are means, computed the same as in Table 1. </p></caption>
+</table>
+
+<p>Tables 3 and 4 provides summary statistics of the 10 runs for each method and dataset.
+In general, PCA models generally have less variance than the BiLSTMs, especially when adding an exponential decay kernel.
+This is visible in the box plots for Figure 1, which show all tasks where there is statistically significant differences between models.
+In the case of the ACE dataset, the median BiLSTM score with attention is higher that all other models, but the overall variability makes it statistically indistinguishable from the PCA approaches.</p>
+
+
+<table style="width: 80%; margin-left: auto; margin-right: auto;">
+   <tbody>
+      <tr class="c71">
+         <td class="c4" colspan="1" rowspan="1">
+            <p class="c6 c17"><span class="c7"></span></p>
+            <p class="c6"><b>Dataset</b></p>
+         </td>
+         <td class="centered" colspan="2" rowspan="1">
+            <p class="c1"><b>BiLSTM (F1)</b><br>
+            <b>Mean (SD) &nbsp; &nbsp;[min, max]</b></p>
+         </td>
+         <td class="centered" colspan="2" rowspan="1">
+            <p class="c1"><span class="c7"><b>PCA (F1)</b></span><br>
+            <b>Mean (SD) &nbsp; &nbsp;[min, max]</b>
+         </td>         
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c45 c32"><b>+/-</b></span></p>
+         </td>
+      </tr>
+      <tr class="c10">
+         <td class="c4" colspan="1" rowspan="1">
+            <p class="c6"><span class="c45">ACE-dp</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c45">53.4 (0.8)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">[51.4, 54.7]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">53.6 (1.2)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">[52.0,</span><span class="c45">&nbsp;55.5</span><span class="c45">]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">+0.2</span></p>
+         </td>
+      </tr>
+      <tr class="c10">
+         <td class="c4 c31" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c6"><span class="c45">ACE-supervised</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c45">55.5 (1.9)</span></p>
+         </td>
+         <td class="c0" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="centered"><span class="c45">[52.0, 59.3]</span></p>
+         </td>
+         <td class="c24 c31" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="centered"><span class="c45 c32"><b>59.9 (0.6)</b></span></p>
+         </td>
+         <td class="c26" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="centered"><span class="c16">[59.2, 60.9] </span></p>
+         </td>
+         <td class="c40 c31" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="centered"><span class="c45 c32"><b>+4.4</b></span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c4" colspan="1" rowspan="1">
+            <p class="c6"><span class="c45">CDR-dp</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c45">56.7 (1.0)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">[54.9, 57.7]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">56.2 (0.7)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">[55.0, </span><span class="c45">57.4</span><span class="c45">]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">-0.5</span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c4 c31" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c6"><span class="c45">CDR-supervised</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c1"><span class="c45">58.8 (1.4)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c45">[56.1, 60.8] </span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c45 c32"><b>61.2 (0.4)</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c16">[60.4, 61.8]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c45 c32"><b>+2.4</b></span></p>
+         </td>
+      </tr>
+      <tr class="c10">
+         <td class="c4 c31" colspan="1" rowspan="1">
+            <p class="c6"><span class="c45">Spouse-dp</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c45">55.2 (0.6)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">[54.4, 56.5]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">55.2 (0.8)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">[53.5, 56.3]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">&lt; </span><span class="c45">0.0</span></p>
+         </td> 
+      </tr>
+      <tr class="c19">
+         <td class="c4 c31" colspan="1" rowspan="1">
+            <p class="c6"><span class="c45">Spouse-supervised</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c1"><span class="c45">55.7 (3.5)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">[49.9, 60.7]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">51.9 (4.8)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">[45.8, 58.8]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c45">-3.8</span></p>
+         </td>
+      </tr>
+   </tbody>
+   <caption align="bottom" style="text-align:left"><b>Table 3</b>: BiLSTM vs PCA 10 runs with different random seeds for model training. Split definitions remain fixes across runs. </caption>
+</table>
+
+
+<table style="width: 80%; margin-left: auto; margin-right: auto;">
+   <tbody>
+      <tr class="c71">
+         <td class="c4" colspan="1" rowspan="1">
+            <p class="c6 c17"><span class="c7"></span></p>
+            <p class="c6"><b>Dataset</b></p>
+         </td>
+         <td class="centered" colspan="2" rowspan="1">
+            <p class="c1"><b>BiLSTM+Attention (F1)</b><br>
+            <b>Mean (SD) &nbsp; &nbsp;[min, max]</b></p>
+         </td>
+         <td class="centered" colspan="2" rowspan="1">
+            <p><b>PCA+Kernel (F1)</b><br>
+            <b>Mean (SD) &nbsp; &nbsp;[min, max]</b></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p><b>+/-</b></p>
+         </td>
+      </tr>
+      <tr class="c10">
+         <td class="c4" colspan="1" rowspan="1">
+            <p class="c6"><span class="c16">ACE-dp</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">53.6 (1.3)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">[51.0, 55.2] </span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">52.9 (0.4)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">[52.5, 53.6]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">-0.6</span></p>
+         </td>
+      </tr>
+      <tr class="c10">
+         <td class="c4 c31" colspan="1" rowspan="1">
+            <p class="c6"><span class="c16">ACE-supervised</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">60.7 (2.0)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">[56.1, 62.7]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">59.6 (0.9)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">[57.6, 61.3]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">-1.1</span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c4" colspan="1" rowspan="1">
+            <p class="c6"><span class="c16">CDR-dp</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c43">56.8 (0.9)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">[55.5, 58.2]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">56.9 (0.6)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">[55.8, 57.7]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">+0.2</span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c4 c31" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c6"><span class="c16">CDR-supervised</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c16">59.2 (1.3)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c16">[56.6, 61.3]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c7"><b>62.0 (0.3)</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c16">[61.5, 62.6]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c7"><b>+2.8</b></span></p>
+         </td>
+      </tr>
+      <tr class="c10">
+         <td class="c4 c31" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c6"><span class="c16">Spouse-dp</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c43">55.7 (1.1)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c16">[53.7, 57.0]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c16"><b>57.9 (0.8)</b></span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c16">[56.6, 58.9]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1" bgcolor="cbe1fb">
+            <p class="c27"><span class="c16"><b>+2.2</b></span></p>
+         </td>
+      </tr>
+      <tr class="c19">
+         <td class="c4 c31" colspan="1" rowspan="1">
+            <p class="c6"><span class="c16">Spouse-supervised</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c43">59.3 (2.3)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">[56.5, 63.3]</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">57.1 (2.1)</span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">[51.7, 59.8] </span></p>
+         </td>
+         <td class="centered" colspan="1" rowspan="1">
+            <p class="c27"><span class="c16">-2.2</span></p>
+         </td>
+      </tr>
+   </tbody>
+   <caption align="bottom" style="text-align:left"><b>Table 4</b>: BiLSTM + Attention vs PCA-Kernel, 10 runs with different random seeds for model training. Split definitions remain fixes across runs.</caption>
+</table>
+
+<img src="pca_lstm_img/ace-cdr-spouse.svg" width="95%" style="display: block; margin: 0 auto;">
+<caption align="bottom" style="text-align:left"><b>Figure 1</b>: Distribution of scores by model for all tasks with statistically significant differences in mean F1 score.</caption>
+</img>
+
+<h3 id="toc_1">Training Speedup</h3>
+
+<p>On the CPU, PCA was dramatically faster to train than the BiLSTM models. In speed tests, controlling for differences in training configurations, PCA with attention is 199x faster than a vanilla BiLSTM and 271x faster than a BiLSTM with attention. Adding attention to PCA via exponential weighting comes with essentially zero computation cost while adding attention to a BiLSTM increases runtimes by 36%. 
+</p>
+
+<h3 id="toc_1">Final Thoughts</h3>
+
+Could we continue to tune our BiLSTMs and eventually exceed these baseline scores for our
+datasets?
+Almost certainly. For some datasets like ACE, more trials could tease out a slight benefit for BiLSTMs.
+But when a classic technique like PCA performs so well — with little engineering effort and up to 270x speedup — then to paraphrase <a class="c11" href="https://www.google.com/url?q=http://www.biorxiv.org/content/biorxiv/early/2017/09/06/185330.full.pdf&amp;sa=D&amp;ust=1507487817602000&amp;usg=AFQjCNGfyo491nAmjxC30HHLCbnQyE61lA">Yaniv Erlich</a>,
+<i>"there is no need to build a spacecraft to travel to the supermarket"</i>, even if the spacecraft is objectively much cooler. 
+
+
+<h3 id="toc_1">Code and Reproducibility </h3>
+
+<ul>
+<li>All our code and complete experimental results are available via <a href="https://github.com/HazyResearch/avast">GitHub</a>. </li>
+<li>All word embeddings are available <a href="">here</a>. Warning these are large files! </li>
+</ul>
+
+
+<h3 id="toc_1">References</h3>
+
+<ol>
+  
+<li>Iyyer, Mohit, et al. "Deep unordered composition rivals syntactic methods for text classification." Proceedings of the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing (Volume 1: Long Papers). Vol. 1. 2015.
+</li>
+
+<li>Kalchbrenner, Nal, Edward Grefenstette, and Phil Blunsom. "A convolutional neural network for modelling sentences." arXiv preprint arXiv:1404.2188 (2014).</li>
+
+<li>Yu, Mo, and Mark Dredze. "Learning composition models for phrase embeddings." Transactions of the Association for Computational Linguistics 3 (2015): 227-242.</li>
+
+<li>Arora, Sanjeev, Yingyu Liang, and Tengyu Ma. "A simple but tough-to-beat baseline for sentence embeddings." (2016).</li>
+
+<li>Mu, Jiaqi, Suma Bhat, and Pramod Viswanath. "All-but-the-Top: Simple and Effective Postprocessing for Word Representations." arXiv preprint arXiv:1702.01417 (2017).</li>
+	
+<li>Levy, Omer, Yoav Goldberg, and Ido Dagan. "Improving distributional similarity with lessons learned from word embeddings." Transactions of the Association for Computational Linguistics 3 (2015): 211-225. </li>
+
+<li>Chiu, Billy, et al. "How to train good word embeddings for biomedical NLP." Proceedings of BioNLP16 (2016): 166. http://aclweb.org/anthology/W16-2922 </li>
+
+<li>Mintz, Mike, et al. "Distant supervision for relation extraction without labeled data." Proceedings of the Joint Conference of the 47th Annual Meeting of the ACL and the 4th International Joint Conference on Natural Language Processing of the AFNLP: Volume 2-Volume 2. Association for Computational Linguistics, 2009. </li>
+
+<li>Levy, Omer, and Yoav Goldberg. "Neural word embedding as implicit matrix factorization." Advances in neural information processing systems. 2014. </li>
+
+<li>Zhang, Yuhao, et al. "Position-aware Attention and Supervised Data Improve Slot Filling." Proceedings of the 2017 Conference on Empirical Methods in Natural Language Processing. 2017.  </li>
+
+<li>Pennington, Jeffrey, Richard Socher, and Christopher Manning. "Glove: Global vectors for word representation." Proceedings of the 2014 conference on empirical methods in natural language processing (EMNLP). 2014. </li>
+
+<li>Chaganty, Arun, et al. "Importance sampling for unbiased on-demand evaluation of knowledge base population." Proceedings of the 2017 Conference on Empirical Methods in Natural Language Processing. 2017. </li>
+	
+<li>Greff, Klaus, et al. "LSTM: A search space odyssey." IEEE transactions on neural networks and learning systems (2016). </li>
+
+<li>Huang, Zhiheng, Wei Xu, and Kai Yu. "Bidirectional LSTM-CRF models for sequence tagging." arXiv preprint arXiv:1508.01991 (2015). </li>
+
+</ol>
+
+
+
+</body>
+
+</html>

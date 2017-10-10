@@ -10,6 +10,7 @@ class Parse(object):
         self.rule = rule
         self.children = tuple(children[:])
         self.semantics = self.compute_semantics()
+        self.function = None
         self.absorbed = absorbed + sum(child.absorbed for child in self.children if isinstance(child, Parse))
         self.validate_parse()
 

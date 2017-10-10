@@ -9,6 +9,8 @@ class Explanation(object):
         :param label: The Boolean label to apply to candidates for which the 
             condition evaluates to True.
         :param candidate: A candidate that the explanation is consistent with.
+            May be a candidate object or the candidate's stable_id (for linking 
+            later.)
         :param name: The name of this explanation.
         :param semantics: The intended semantic representation of the 
             explanation (if known).

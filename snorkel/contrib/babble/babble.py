@@ -19,10 +19,146 @@ import collections
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sparse
+import random
 
-from semparser import Explanation, SemanticParser
 from snorkel.annotations import LabelAnnotator
 from snorkel.utils import matrix_tp, matrix_fp, matrix_tn, matrix_fn
+
+from snorkel.contrib.babble.filter_bank import FilterBank
+from snorkel.contrib.babble.grammar import Parse
+from snorkel.contrib.babble.semparser import Explanation, SemanticParser
+
+# from tutorials.babble.spouse.spouse_examples import get_user_lists, get_explanations
+
+class CandidateGenerator(object):
+    """
+    A generator for returning a list of candidates in a certain order.
+    """
+    def __init__(self, candidates, strategy='linear'):
+        if strategy == 'linear':
+            self.candidate_generator = self.linear_generator(candidates)
+        elif strategy == 'random':
+            self.candidate_generator = self.random_generator(candidates)
+        elif strategy == 'balanced':
+            raise NotImplementedError
+        elif strategy == 'active':
+            raise NotImplementedError
+        else:
+            raise Exception("kwarg 'strategy' must be in "
+                "{'linear', 'random', 'balanced', 'active'}")
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        return self.candidate_generator.next()
+
+    def linear_generator(self, candidates):
+        for c in candidates:
+            yield c
+
+    def random_generator(self, candidates):
+        random.shuffle(candidates)
+        for c in candidates:
+            yield c
+
+
+class BabbleStream(object):
+    """
+    An object for iteratively viewing candidates and parsing corresponding explanations.
+    """
+    def __init__(self, candidates, mode='text', candidate_class=None, 
+                strategy='linear', preload=True, verbose=True):
+        self.candidate_generator = CandidateGenerator(candidates, strategy)
+        self.candidates = candidates
+        self.mode = mode
+        self.candidate_class = candidate_class
+        self.verbose = verbose
+
+        self.semparser = None
+        self.user_lists = {}
+        self.explanations = []
+        self.parses = []
+        self.label_matrix = None
+
+        if preload:
+            self.preload_user_lists()
+            self.preload_explanations()
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        c = self.candidate_generator.next()
+        self.temp_candidate = c
+        return c
+
+    def _build_semparser(self):
+        self.semparser = SemanticParser(
+            mode=self.mode, candidate_class=self.candidate_class, 
+            user_lists=self.user_lists)
+
+    def preload_user_lists(self):
+        """
+        Load pre-written spouse user_lists and rebuilds SemanticParser.
+        """
+        self.user_lists.update(get_user_lists())
+        self._build_semparser()
+
+    def add_user_lists(self, new_user_lists):
+        """
+        Adds additional user_lists and rebuilds SemanticParser.
+        
+        :param new_user_lists: A dict {k: v, ...}
+            k = (string) list name
+            v = (list) words belonging to the user_list
+        """
+        self.user_lists.update(new_user_lists)
+        self._build_semparser()
+
+    def preload_explanations(self):
+        """
+        Load pre-written spouse explanations.
+        """
+        self.explanations += get_explanations(candidates)
+
+    def parse_and_filter(self, label, condition, name=''):
+        if not self.semparser:
+            self._build_semparser()
+
+        # Build explanation object.
+        explanation = Explanation(condition, label, self.temp_candidate, name=name)
+
+        # Parse into LFs.
+        parses = self.semparser.parse(explanation, 
+            return_parses=True, verbose=self.verbose)
+        
+        # Filter
+        filter_bank = FilterBank()
+        parses, label_matrix = filter_bank.apply(parses)
+        
+        self.temp_parses = parses
+        self.temp_label_matrix = label_matrix
+
+        # Report
+        conf_matrix = 0
+        stats = 0
+
+        return parses, conf_matrix, stats
+
+    def commit_lfs(self, idxs):
+        self.parses += self.temp_parses[idxs]
+        if self.verbose:
+            print("Added {} parses to set. (Total # parses = {})".format(
+                len(idxs), len(self.parses)))
+        # TODO: add to label_matrix
+
+
+    def get_label_matrix(self):
+        # TODO: convert label_matrix to csr_AnnotationMatrix
+        return self.label_matrix
+
+
 
 class Babbler(object):
     # TODO: convert to UDFRunner 

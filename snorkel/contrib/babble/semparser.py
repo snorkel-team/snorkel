@@ -81,10 +81,12 @@ class SemanticParser(object):
                 LFs.append(lf)
             self.explanation_counter += 1
         if verbose:
-            return_object = 'parses' if return_parses else "LFs"
-            print("{} {} created from {} out of {} explanation(s)".format(
-                len(LFs), return_object, 
-                len(explanations) - num_parses_by_exp.count(0), len(explanations)))
+            return_object = 'parse(s)' if return_parses else "LF(s)"
+            print("{} out of {} explanation(s) were parseable.".format(
+                len(explanations) - num_parses_by_exp.count(0), 
+                len(explanations)))
+            print("Generated {} {} from {} explanation(s)".format(
+                len(LFs), return_object, len(explanations)))
         if return_parses:
             return parses
         else:

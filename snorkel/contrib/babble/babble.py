@@ -14,7 +14,7 @@ when explanation is received:
 	possibly let them select the better interpretation
 when done, pull out L_train and proceed to generative model
 """
-import collections
+from collections import defaultdict, namedtuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,13 +22,16 @@ import scipy.sparse as sparse
 import random
 
 from snorkel.annotations import LabelAnnotator
-from snorkel.utils import matrix_tp, matrix_fp, matrix_tn, matrix_fn
+from snorkel.lf_helpers import test_LF
+from snorkel.utils import matrix_tp, matrix_fp, matrix_tn, matrix_fn, matrix_coverage
 
 from snorkel.contrib.babble.filter_bank import FilterBank
 from snorkel.contrib.babble.grammar import Parse
 from snorkel.contrib.babble.semparser import Explanation, SemanticParser
 
 # from tutorials.babble.spouse.spouse_examples import get_user_lists, get_explanations
+
+ConfusionMatrix = namedtuple('ConfusionMatrix', ['tp', 'fp', 'tn', 'fn'])
 
 class CandidateGenerator(object):
     """
@@ -67,19 +70,21 @@ class BabbleStream(object):
     """
     An object for iteratively viewing candidates and parsing corresponding explanations.
     """
-    def __init__(self, candidates, mode='text', candidate_class=None, 
+    def __init__(self, session, candidates, mode='text', candidate_class=None, 
                 strategy='linear', preload=True, verbose=True):
-        self.candidate_generator = CandidateGenerator(candidates, strategy)
+        self.session = session
         self.candidates = candidates
         self.mode = mode
         self.candidate_class = candidate_class
         self.verbose = verbose
 
+        self.candidate_generator = CandidateGenerator(candidates, strategy)
         self.semparser = None
         self.user_lists = {}
         self.explanations = []
         self.parses = []
         self.label_matrix = None
+        self.filter_bank = FilterBank(candidate_class)
 
         if preload:
             self.preload_user_lists()
@@ -96,7 +101,7 @@ class BabbleStream(object):
     def _build_semparser(self):
         self.semparser = SemanticParser(
             mode=self.mode, candidate_class=self.candidate_class, 
-            user_lists=self.user_lists)
+            user_lists=self.user_lists) #top_k=-4, beam_width=30)
 
     def preload_user_lists(self):
         """
@@ -122,40 +127,69 @@ class BabbleStream(object):
         """
         self.explanations += get_explanations(candidates)
 
-    def parse_and_filter(self, label, condition, name=''):
+    def apply(self, explanation):
+        parses = self.parse(explanation)
+        parses, label_matrix = self.filter(parses, explanation)
+        conf_matrix_list, stats_list = self.analyze(parses, label_matrix)
+        return conf_matrix_list, stats_list
+
+    def parse(self, explanation):
+        """
+        :param explanation: an Explanation to parse.
+        :return: a list of Parses.
+        """
         if not self.semparser:
             self._build_semparser()
 
-        # Build explanation object.
-        explanation = Explanation(condition, label, self.temp_candidate, name=name)
-
-        # Parse into LFs.
         parses = self.semparser.parse(explanation, 
             return_parses=True, verbose=self.verbose)
-        
+
+        return parses
+    
+    def filter(self, parses, explanation):
+        """
+        :param parses: a Parse or list of Parses.
+        :param explanation: the Explanation from which the parse(s) were produced.
+        :return: a list of Parses, a ConfusionMatrix, and a pandas DataFrame.
+        """
         # Filter
-        filter_bank = FilterBank()
-        parses, label_matrix = filter_bank.apply(parses)
+        parses, label_matrix = self.filter_bank.apply(parses, explanation)
         
+        # Hold results in temporary space until commit
         self.temp_parses = parses
         self.temp_label_matrix = label_matrix
+        
+        return parses, label_matrix
 
+    def analyze(self, parses, label_matrix):
         # Report
-        conf_matrix = 0
-        stats = 0
+        conf_matrix_list = []
+        stats_list = []
+        for parse in parses:
+            tp, fp, tn, fn = test_LF(self.session, parse.function, split=1, 
+                                     annotator_name='gold', display=False)
+            conf_matrix_list.append(ConfusionMatrix(tp, fp, tn, fn))
+            
+            stats_list.append(None)
 
-        return parses, conf_matrix, stats
+        return conf_matrix_list, stats_list
 
-    def commit_lfs(self, idxs):
-        self.parses += self.temp_parses[idxs]
+    def commit_lfs(self, idxs=None):
+        """
+        :param idxs: The indices of the parses (from the most recently returned
+            list of parses) to permanently keep. If None, keep them all.
+        """
+        self.parses += (self.temp_parses[idxs] if idxs else self.temp_parses)
         if self.verbose:
-            print("Added {} parses to set. (Total # parses = {})".format(
-                len(idxs), len(self.parses)))
+            num_added = len(idxs) if idxs else len(self.temp_parses)
+            print("Added {} parse(s) to set. (Total # parses = {})".format(
+                num_added, len(self.parses)))
         # TODO: add to label_matrix
+        print("TODO: add to label_matrix...")
 
 
     def get_label_matrix(self):
-        # TODO: convert label_matrix to csr_AnnotationMatrix
+        # TODO: convert label_matrix to csr_AnnotationMatrix for passing downstream
         return self.label_matrix
 
 
@@ -384,7 +418,7 @@ class Babbler(object):
 
     def display_lf_distribution(self):
         def count_parses_by_exp(lfs):
-            num_parses_by_exp = collections.defaultdict(int)
+            num_parses_by_exp = defaultdict(int)
             for lf in lfs:
                 exp_name = extract_exp_name(lf)
                 num_parses_by_exp[exp_name] += 1

@@ -198,7 +198,7 @@ def rule_regex_search_before_A(candidate, pattern, sign):
 def rule_regex_search_before_B(candidate, pattern, sign):
     return sign if re.search(pattern + r'{{B}}.*{{A}}', get_tagged_text(candidate), flags=re.I) else 0
 
-def test_LF(session, lf, split, annotator_name):
+def test_LF(session, lf, split, annotator_name, **kwargs):
     """
     Gets the accuracy of a single LF on a split of the candidates, w.r.t. annotator labels,
     and also returns the error buckets of the candidates.
@@ -207,4 +207,4 @@ def test_LF(session, lf, split, annotator_name):
     test_labels     = load_gold_labels(session, annotator_name=annotator_name, split=split)
     scorer          = MentionScorer(test_candidates, test_labels)
     test_marginals  = np.array([0.5 * (lf(c) + 1) for c in test_candidates])
-    return scorer.score(test_marginals, set_unlabeled_as_neg=False, set_at_thresh_as_neg=False)
+    return scorer.score(test_marginals, set_unlabeled_as_neg=False, set_at_thresh_as_neg=False, **kwargs)

@@ -82,10 +82,10 @@ class SemanticParser(object):
             self.explanation_counter += 1
         if verbose:
             return_object = 'parse(s)' if return_parses else "LF(s)"
-            print("{} out of {} explanation(s) were parseable.".format(
+            print("{} explanation(s) out of {} were parseable.".format(
                 len(explanations) - num_parses_by_exp.count(0), 
                 len(explanations)))
-            print("Generated {} {} from {} explanation(s)".format(
+            print("{} {} generated from {} explanation(s).".format(
                 len(LFs), return_object, len(explanations)))
         if return_parses:
             return parses

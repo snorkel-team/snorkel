@@ -220,6 +220,12 @@ index_words = [
         label=True,
         candidate=default_candidate,
         semantics=None),
+    # Index AndArgList
+    Explanation(
+        condition="'wife' is within three words to the left of arg 1 or arg 2",
+        label=True,
+        candidate=default_candidate,
+        semantics=None),
 ]
 
 index_chars = [

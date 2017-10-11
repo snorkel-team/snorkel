@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from collections import Iterable
+from six import StringIO
 
 from rule import Rule
 import utils

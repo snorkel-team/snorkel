@@ -3,7 +3,6 @@ from __future__ import print_function
 from collections import defaultdict, namedtuple
 from itertools import product
 
-from six import StringIO
 from types import FunctionType
 
 from snorkel.parser.spacy_parser import Spacy

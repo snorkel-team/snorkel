@@ -267,7 +267,7 @@ class LocationMatcher(RegexMatchEach):
     """
     def __init__(self, *children, **kwargs):
         kwargs['attrib'] = 'ner_tags'
-        kwargs['rgx'] = 'LOCATION'
+        kwargs['rgx'] = 'LOCATION|LOC'
         super(LocationMatcher, self).__init__(*children, **kwargs)
 
 
@@ -280,7 +280,7 @@ class OrganizationMatcher(RegexMatchEach):
     """
     def __init__(self, *children, **kwargs):
         kwargs['attrib'] = 'ner_tags'
-        kwargs['rgx'] = 'ORGANIZATION'
+        kwargs['rgx'] = 'ORGANIZATION|ORG'
         super(OrganizationMatcher, self).__init__(*children, **kwargs)
 
 
@@ -306,7 +306,7 @@ class NumberMatcher(RegexMatchEach):
     """
     def __init__(self, *children, **kwargs):
         kwargs['attrib'] = 'ner_tags'
-        kwargs['rgx'] = 'NUMBER'
+        kwargs['rgx'] = 'NUMBER|QUANTITY'
         super(NumberMatcher, self).__init__(*children, **kwargs)
 
 

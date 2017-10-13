@@ -99,6 +99,8 @@ Finally, enable `ipywidgets`:
 jupyter nbextension enable --py widgetsnbextension --sys-prefix
 ```
 
+_Note: If you are using conda and experience issues with `lxml`, try running `conda install libxml2`._
+
 _Note: Currently the `Viewer` is supported on the following versions:_
 * `jupyter`: 4.1
 * `jupyter notebook`: 4.2

@@ -65,7 +65,7 @@ class SemanticParser(object):
         names = names if isinstance(names, list) or names is None else [names]
         self.name_explanations(explanations, names)
         for i, exp in enumerate(explanations):
-            exp_normalized = 'label {} if {}'.format(exp.label, exp.condition)
+            exp_normalized = u'label {} if {}'.format(exp.label, exp.condition)
             if (self.mode == 'text' and self.string_format == 'implicit' and 
                 getattr(exp.candidate, 'get_parent', None) and
                 isinstance(exp.candidate.get_parent(), Sentence)):

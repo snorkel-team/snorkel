@@ -42,9 +42,8 @@ tutorials/intro/data/articles-test.tsv
 tutorials/intro/data/articles-train.tsv
 tutorials/intro/data/gold_labels.tsv
 
-tutorials/babble/*/data/*
 tutorials/babble/protein/geniatagger*
-
+tutorials/babble/cdr/data/*
 tutorials/tables/data/hardware/
 
 #Babble Labble Image

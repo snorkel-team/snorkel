@@ -11,43 +11,45 @@ class Classifier(object):
     # otherwise assume X is an AnnotationMatrix
     representation = False
 
-    def __init__(self, cardinality=2, name=None, seed=None):
+    def __init__(self, cardinality=2, name=None):
         self.name = name or self.__class__.__name__
         self.cardinality = cardinality
-        self.seed = seed
 
-    def marginals(self, X, **kwargs):
+    def marginals(self, X, batch_size=None, **kwargs):
         raise NotImplementedError()
 
     def save_marginals(self, session, X, training=False):
         """Save the predicted marginal probabilities for the Candidates X."""
         save_marginals(session, X, self.marginals(X), training=training)
 
-    def predictions(self, X, b=0.5):
+    def predictions(self, X, b=0.5, batch_size=None):
         """Return numpy array of elements in {-1,0,1}
         based on predicted marginal probabilities.
         """
         if self.cardinality > 2:
-            return self.marginals(X).argmax(axis=1) + 1
+            return self.marginals(X, batch_size=batch_size).argmax(axis=1) + 1
         else:
             return np.array([1 if p > b else -1 if p < b else 0 
-                for p in self.marginals(X)])
+                for p in self.marginals(X, batch_size=batch_size)])
 
-    def score(self, X_test, Y_test, b=0.5, set_unlabeled_as_neg=True):
+    def score(self, X_test, Y_test, b=0.5, set_unlabeled_as_neg=True, beta=1,
+        batch_size=None):
         """
         Returns the summary scores:
-            * For binary: precision, recall, F1 score
+            * For binary: precision, recall, F-beta score
             * For categorical: accuracy
         
         :param X_test: The input test candidates, as a list or annotation matrix
         :param Y_test: The input test labels, as a list or annotation matrix
         :param b: Decision boundary *for binary setting only*
-        :param set_unlabeled_as_neg: Whether to map 0 labels -> -1, *binary setting.*
+        :param set_unlabeled_as_neg: Whether to map 0 labels -> -1, 
+            *binary setting.*
+        :param beta: For F-beta score; by default beta = 1 => F-1 score.
 
         Note: Unlike in self.error_analysis, this method assumes X_test and
         Y_test are properly collated!
         """
-        predictions = self.predictions(X_test, b=b)
+        predictions = self.predictions(X_test, b=b, batch_size=batch_size)
 
         # Convert Y_test to dense numpy array
         try:
@@ -71,11 +73,16 @@ class Classifier(object):
             # Compute and return precision, recall, and F1 score
             tp = (0.5 * (predictions * Y_test + 1))[predictions == 1].sum()
             pred_pos = predictions[predictions == 1].sum()
-            prec = tp / float(pred_pos) if pred_pos > 0 else 0.0
+            p = tp / float(pred_pos) if pred_pos > 0 else 0.0
             pos = Y_test[Y_test == 1].sum()
-            rec = tp / float(pos) if pos > 0 else 0.0
-            f1 = (2 * prec * rec) / (prec + rec) if prec + rec > 0 else 0.0
-            return prec, rec, f1
+            r = tp / float(pos) if pos > 0 else 0.0
+
+            # Compute general F-beta score
+            if p + r > 0:
+                f_beta = (1 + beta**2) * ((p * r) / (((beta**2) * p) + r))
+            else:
+                f_beta = 0.0
+            return p, r, f_beta
 
     def error_analysis(self, session, X_test, Y_test, 
         gold_candidate_set=None, b=0.5, set_unlabeled_as_neg=True, display=True,

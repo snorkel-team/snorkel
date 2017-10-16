@@ -7,7 +7,6 @@ from six.moves.cPickle import dump, load
 from .classifier import Classifier
 from .utils import reshape_marginals, LabelBalancer
 
-
 class TFNoiseAwareModel(Classifier):
     """
     Generic NoiseAwareModel class for TensorFlow models.
@@ -15,9 +14,14 @@ class TFNoiseAwareModel(Classifier):
     model architectures which depend on the training data, e.g. vocab size).
     
     :param n_threads: Parallelism to use; single-threaded if None
+    :param seed: Top level seed which is passed into both numpy operations
+        via a RandomState maintained by the class, and into TF as a graph-level
+        seed.
     """
-    def __init__(self, n_threads=None, **kwargs):
+    def __init__(self, n_threads=None, seed=123, **kwargs):
         self.n_threads = n_threads
+        self.seed = seed
+        self.rand_state = np.random.RandomState()
         super(TFNoiseAwareModel, self).__init__(**kwargs)
 
     def _build_model(self, **model_kwargs):
@@ -80,8 +84,12 @@ class TFNoiseAwareModel(Classifier):
         # Create new computation graph
         self.graph = tf.Graph()
 
-        # Build network here in the graph
         with self.graph.as_default():
+
+            # Set graph-level random seed
+            tf.set_random_seed(self.seed)
+
+            # Build network here in the graph
             self._build_model(**model_kwargs)
 
         # Create new session
@@ -131,8 +139,10 @@ class TFNoiseAwareModel(Classifier):
             model will not be able to be reloaded!*
         """
         self._check_input(X_train)
-        np.random.seed(self.seed)
         verbose = print_freq > 0
+
+        # Set random seed for all numpy operations
+        self.rand_state.seed(self.seed)
 
         # If the data passed in is a feature matrix (representation=False),
         # set the dimensionality here; else assume this is done by sub-class
@@ -158,7 +168,8 @@ class TFNoiseAwareModel(Classifier):
         # Note: rebalancing only for binary setting currently
         if self.cardinality == 2:
             # This removes unlabeled examples and optionally rebalances
-            train_idxs = LabelBalancer(Y_train).get_train_idxs(rebalance)
+            train_idxs = LabelBalancer(Y_train).get_train_idxs(rebalance,
+                rand_state=self.rand_state)
         else:
             # In categorical setting, just remove unlabeled
             diffs = Y_train.max(axis=1) - Y_train.min(axis=1)
@@ -171,7 +182,7 @@ class TFNoiseAwareModel(Classifier):
         self._build_new_graph_session(**kwargs)
 
         # Build training ops
-        # Note that training_kwargs and model_kwargs are mized together; ideally
+        # Note that training_kwargs and model_kwargs are mixed together; ideally
         # would be separated but no negative effect
         with self.graph.as_default():
             self._build_training_ops(**kwargs)
@@ -206,7 +217,7 @@ class TFNoiseAwareModel(Classifier):
 
             # Reshuffle training data
             train_idxs = range(n)
-            np.random.shuffle(train_idxs)
+            self.rand_state.shuffle(train_idxs)
             X_train = [X_train[j] for j in train_idxs] if self.representation \
                 else X_train[train_idxs, :]
             Y_train = Y_train[train_idxs]
@@ -216,7 +227,7 @@ class TFNoiseAwareModel(Classifier):
                 msg = "[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
                     self.name, t, time() - st, np.mean(epoch_losses))
                 if X_dev is not None:
-                    scores = self.score(X_dev, Y_dev)
+                    scores = self.score(X_dev, Y_dev, batch_size=batch_size)
                     score = scores if self.cardinality > 2 else scores[-1]
                     score_label = "Acc." if self.cardinality > 2 else "F1"
                     msg += '\tDev {0}={1:.2f}'.format(score_label, 100. * score)
@@ -236,6 +247,31 @@ class TFNoiseAwareModel(Classifier):
         # If checkpointing on, load last checkpoint (i.e. best on dev set)
         if dev_ckpt and X_dev is not None and verbose and dev_score_opt > 0:
             self.load(save_dir=save_dir)
+
+    def marginals(self, X, batch_size=None):
+        """
+        Compute the marginals for the given candidates X.
+        Split into batches to avoid OOM errors, then call _marginals_batch;
+        defaults to no batching.
+        """
+        if batch_size is None:
+            return self._marginals_batch(X)
+        else:
+            N = len(X) if self.representation else X.shape[0]
+            n_batches = int(np.floor(N / batch_size))
+
+            # Iterate over batches
+            batch_marginals = []
+            for b in range(0, N, batch_size):
+                batch = self._marginals_batch(X[b:min(N, b+batch_size)])
+                
+                # Note: if a single marginal in *binary* classification is
+                # returned, it will have shape () rather than (1,)- catch here
+                if len(batch.shape) == 0:
+                    batch = batch.reshape(1)
+                    
+                batch_marginals.append(batch)
+            return np.concatenate(batch_marginals)
 
     def save(self, model_name=None, save_dir='checkpoints', verbose=True,
         global_step=0):

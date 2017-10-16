@@ -1,9 +1,11 @@
 import os
 import numpy as np
+import csv
 
 from snorkel.parser import ImageCorpusExtractor, CocoPreprocessor
 from snorkel.models import StableLabel
 from snorkel.db_helpers import reload_annotator_labels
+from snorkel.annotations import load_marginals, load_gold_labels
 
 from snorkel.contrib.babble import Babbler
 from snorkel.contrib.babble.pipelines import BabblePipeline
@@ -86,3 +88,93 @@ class BikePipeline(BabblePipeline):
         explanations = link_explanation_candidates(explanations, candidates)
         user_lists = {}
         super(BikePipeline, self).babble('image', explanations, user_lists, self.config)
+
+
+    def classify(self, model_path = '/dfs/scratch0/paroma/slim_ws/', opt_b = 0.5):
+        config = self.config
+
+        def get_candidates(self, split):
+            return self.session.query(self.candidate_class).filter(
+                self.candidate_class.split == split)
+
+        def create_csv(coco_ids, labels, filename, setname=None):
+            csv_name = model_path+'datasets/mscoco/'+filename
+            with open(csv_name, 'w') as csvfile:
+                csvwriter = csv.writer(csvfile)
+                
+                for idx in range(len(coco_ids)):
+                    if coco_ids[idx] == 0:
+                        continue
+                    else:
+                        url = 'http://images.cocodataset.org/{}/{:012}.jpg'.format(setname,int(coco_ids[idx]))
+                        csvwriter.writerow([url,labels[idx]])
+
+        def link_images_candidates(anns, candidates, mscoco, marginals):
+            coco_ids =  np.zeros(len(anns))
+            labels = np.zeros(len(anns))
+            num_candidates = len(candidates)
+
+            for idx in range(num_candidates):
+                cand = candidates[idx]
+                image_id = int(cand.bike.stable_id.split(":")[1])
+                mscoco_id = mscoco[image_id]
+
+                coco_ids[image_id] = int(mscoco_id)
+                try:
+                    labels[image_id] = max(labels[image_id], max(marginals[idx], 0))
+                except:
+                    import pdb; pdb.set_trace()
+
+            return coco_ids, labels
+
+        if config:
+            self.config = config
+
+        if self.config['seed']:
+            np.random.seed(self.config['seed'])
+
+        X_train = self.get_candidates(0)
+        Y_train = self.train_marginals
+        Y_train_gold = np.array(load_gold_labels(self.session, annotator_name='gold', split=0).todense()).ravel()
+        X_val = self.get_candidates(1)
+        Y_val = np.array(load_gold_labels(self.session, annotator_name='gold', split=1).todense()).ravel()
+
+        #Save out Validation Images and Labels
+        val_anns = np.load(self.anns_path + 'val_anns.npy').tolist()
+        val_mscoco = np.load(self.anns_path+'val_mscoco.npy')
+        val_coco_ids, val_labels = link_images_candidates(val_anns, X_val, val_mscoco, Y_val)
+        create_csv(val_coco_ids, val_labels, 'validation_images.csv', 'val2017')
+
+        train_anns = np.load(self.anns_path + 'train_anns.npy').tolist()
+        train_mscoco = np.load(self.anns_path+'train_mscoco.npy')
+
+        #Depending on value of self.config['traditional'], create train marginals
+        if self.config['supervision'] == 'traditional':
+            train_size = self.config['traditional']
+            train_coco_ids, train_labels = link_images_candidates(train_anns, X_train, train_mscoco, Y_train_gold)
+            create_csv(train_coco_ids[:train_size], train_labels[:train_size], 'train_marginal_images.csv', 'train2017') #download script reads from one train file
+        else:
+            train_coco_ids, train_labels = link_images_candidates(train_anns, X_train, train_mscoco, Y_train)
+            create_csv(train_coco_ids, train_labels, 'train_marginal_images.csv', 'train2017')
+
+        #Convert to TFRecords Format
+        #TODO: We are loading and converting images every time classify is called!!!
+        print ('Loading Images...')
+        os.system('python '+ model_path +'download_and_convert_data.py --dataset_name mscoco --dataset_dir ' + model_path+ '/datasets/mscoco')
+        
+        #Call TFSlim Model
+        print ('Calling TFSlim...')
+        train_dir = model_path+ '/datasets/mscoco'
+        dataset_dir = train_dir
+        os.system('python '+ model_path +'train_image_classifier.py --train_dir=' + train_dir + \
+            ' --dataset_name=mscoco --dataset_split_name=train --dataset_dir=' + dataset_dir + \
+            ' --model_name=' + self.config['disc_model_class'] + ' --num_clones=' + str(self.config['parallelism'])
+            + ' --learning_rate=50.0 --max_number_of_steps 150') #don't know the setup of config file for lr etc params
+
+        # scores = {}
+        # with PrintTimer("[7.3] Evaluate discriminative model (opt_b={})".format(opt_b)):
+        #     # Score discriminative model trained on generative model predictions
+        #     np.random.seed(self.config['seed'])
+        #     scores['Disc'] = score_marginals(val_marginals, Y_val, b=opt_b)
+
+        # final_report(self.config, scores)

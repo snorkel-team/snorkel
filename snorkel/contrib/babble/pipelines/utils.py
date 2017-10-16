@@ -78,6 +78,7 @@ def train_model(model_class, X_train, Y_train=None, X_dev=None, Y_dev=None,
             if verbose > 0:
                 print("Skipping grid search.")
             model = model_class(**model_init_params)
+            opt_b = 0.9 #hardcode in case of no grid search
 
             # Catches disc vs. gen model interface; could be cleaned up...
             try:

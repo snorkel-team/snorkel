@@ -8,7 +8,7 @@ from snorkel.models import StableLabel
 DATA_ROOT = os.environ['SNORKELHOME'] + '/tutorials/babble/protein/data/'
 
 def load_external_labels(session, candidate_class, split, annotator='gold',
-    label_fname='razor10-6-17-influences-dump.csv'):
+    label_fname='candidates-10-16-17.csv'):
     # Load document-level relation annotations
     with open(DATA_ROOT + label_fname, 'rb') as csvfile:
         csvreader = csv.reader(csvfile)
@@ -16,20 +16,23 @@ def load_external_labels(session, candidate_class, split, annotator='gold',
         positives_by_doc = defaultdict(set)
         for i, row in enumerate(csvreader):
             try:
-                (doc_id, text, relation, from_entity, from_start, from_end, 
-                 to_entity, to_start, to_end) = row
+                (cand_id, from_influences_to, to_influences_from,
+                        context_stable_id ) = row
+                [from_stable_id, to_stable_id ] = context_stable_id.split("~~")
+                doc_id = from_stable_id.split(':')[0]
             except:
                 print("Malformed row {}.".format(i + 2))
                 continue
-            label = 1 if relation == 'influences' else -1
+            #proteins are always first, kinases last
+            #indicates protein influences kinase
+            label = 1 if (from_influences_to == 'true') else -1
             if label == 1:
-                from_stable_id = "{}::span:{}:{}".format(doc_id, from_start, from_end)
-                to_stable_id = "{}::span:{}:{}".format(doc_id, to_start, to_end)
-                protein_stable_id = from_stable_id if from_entity == 'Protein' else to_stable_id
-                kinase_stable_id = from_stable_id if from_entity == 'Kinase' else to_stable_id
-                candidate_stable_id = '~~'.join([protein_stable_id, kinase_stable_id])
+                candidate_stable_id = '~~'.join([from_stable_id, to_stable_id])
                 positives_by_doc[doc_id].add(candidate_stable_id)
-            
+            # TODO to_influences_from indicates the kinase influences the
+            # protein.  Add support for candidate extraction and loading of
+            # external relations in the other direction
+
     # Get split candidates
     candidates = session.query(candidate_class).filter(
         candidate_class.split == split

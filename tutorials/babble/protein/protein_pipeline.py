@@ -14,7 +14,7 @@ from snorkel.contrib.babble import Babbler
 from snorkel.contrib.babble.pipelines import BabblePipeline
 from snorkel.contrib.babble.pipelines.snorkel_pipeline import TRAIN, DEV, TEST
 
-from tutorials.babble.protein.utils import RazorTagger
+from tutorials.babble.protein.utils import ProteinKinaseLookupTagger
 from tutorials.babble.protein.load_external_annotations import load_external_labels
 from tutorials.babble.protein.protein_examples import get_explanations, get_user_lists
 
@@ -30,8 +30,8 @@ class ProteinPipeline(BabblePipeline):
             print("WARNING: you are currently using a subset of the data.")
         doc_preprocessor = TSVDocPreprocessor(file_path, 
                                               max_docs=self.config['max_docs'])
-        razor_tagger = RazorTagger()
-        corpus_parser = CorpusParser(fn=razor_tagger.tag, parser=Spacy())
+        pk_lookup_tagger = ProteinKinaseLookupTagger()
+        corpus_parser = CorpusParser(fn=pk_lookup_tagger.tag, parser=Spacy())
         corpus_parser.apply(list(doc_preprocessor), 
                             parallelism=self.config['parallelism'], 
                             clear=clear)

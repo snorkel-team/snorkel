@@ -19,59 +19,7 @@ def offsets_to_token(left, right, offset_array, lemmas, punc=set(punctuation)):
     token_end = token_end - 1 if lemmas[token_end - 1] in punc else token_end
     return range(token_start, token_end)
 
-
-# class CDRTagger(object):
-
-#     def __init__(self, fname='data/unary_tags.pkl.bz2'):   
-#         with bz2.BZ2File(fname, 'rb') as f:
-#             self.tag_dict = load(f)
-
-#     def tag(self, parts):
-#         pubmed_id, _, _, sent_start, sent_end = parts['stable_id'].split(':')
-#         sent_start, sent_end = int(sent_start), int(sent_end)
-#         tags = self.tag_dict.get(pubmed_id, {})
-#         for tag in tags:
-#             if not (sent_start <= tag[1] <= sent_end):
-#                 continue
-#             offsets = [offset + sent_start for offset in parts['char_offsets']]
-#             toks = offsets_to_token(tag[1], tag[2], offsets, parts['lemmas'])
-#             for tok in toks:
-#                 ts = tag[0].split('|')
-#                 parts['entity_types'][tok] = ts[0]
-#                 parts['entity_cids'][tok] = ts[1]
-#         return parts
-
-
-# class TaggerOneTagger(CDRTagger):
-    
-#     def __init__(self, fname_tags='data/taggerone_unary_tags_cdr.pkl.bz2',
-#         fname_mesh='data/chem_dis_mesh_dicts.pkl.bz2'):
-#         with bz2.BZ2File(fname_tags, 'rb') as f:
-#             self.tag_dict = load(f)
-#         with bz2.BZ2File(fname_mesh, 'rb') as f:
-#             self.chem_mesh_dict, self.dis_mesh_dict = load(f)
-
-#     def tag(self, parts):
-#         parts = super(TaggerOneTagger, self).tag(parts)
-#         for i, word in enumerate(parts['words']):
-#             tag = parts['entity_types'][i]
-#             if len(word) > 4 and tag is None:
-#                 wl = word.lower()
-#                 if wl in self.dis_mesh_dict:
-#                     parts['entity_types'][i] = 'Disease'
-#                     parts['entity_cids'][i] = self.dis_mesh_dict[wl]
-#                 elif wl in self.chem_mesh_dict:
-#                     parts['entity_types'][i] = 'Chemical'
-#                     parts['entity_cids'][i] = self.chem_mesh_dict[wl]
-#         return parts
-
-class PKRTagger(object):
-
-    def __init__(self, fname='data/unary_tags.pkl.bz2'):   
-        #TODO create tag_dict with sentences as the key
-        #a hash of values, (start pos can be key) as value
-        with bz2.BZ2File(fname, 'rb') as f:
-            self.tag_dict = load(f)
+class GeniaTagger(object):
 
     def tag(self, parts):
         cwd = os.environ['SNORKELHOME'] + '/tutorials/babble/protein/geniatagger-3.0.2/'
@@ -121,12 +69,30 @@ class PKRTagger(object):
                     parts['ner_tags'][i] = bAndItoProtein(geniaTag)
         return parts
 
+class ProteinKinaseLookupTagger (object):
 
-class RazorTagger(PKRTagger):
-    
-    def __init__(self):
-        print('init RazorTagger')
+    # default dict is unique list of all mouse and human genes
+    # these represent proteins in the given text
+    def __init__(self, fname='data/combined-protein-names.pkl'):
+        cwd = os.environ['SNORKELHOME'] + '/tutorials/babble/protein/'
+        with open('{}{}'.format(cwd,fname), 'rb') as f:
+            self.protein_set = load(f)
+            self.kinase_set = set([ 'pink1',
+                           'lrrk2',
+                           'leucine-rich repeat kinase 2',
+                           'leucine rich repeat kinase 2',
+                           'pten-induced putative kinase 1' ])
 
     def tag(self, parts):
-        parts = super(RazorTagger, self).tag(parts)
+        # print('parts are',parts['words'])
+        for i, word in enumerate(parts['words']):
+            tag = parts['entity_types'][i]
+            if len(word) > 3 and tag in (None,'O'):
+                wl = word.lower()
+                # TODO determine whether populating entity_cids with dummy data
+                # is necessary
+                if wl in self.kinase_set:
+                    parts['entity_types'][i] = 'kinase'
+                elif wl in self.protein_set:
+                    parts['entity_types'][i] = 'protein'
         return parts

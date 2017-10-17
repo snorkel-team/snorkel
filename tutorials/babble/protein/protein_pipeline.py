@@ -22,8 +22,8 @@ DATA_ROOT = os.environ['SNORKELHOME'] + '/tutorials/babble/protein/data/'
 
 class ProteinPipeline(BabblePipeline):
     def parse(self, 
-              file_path=(DATA_ROOT + 'abstracts_subset.txt'), 
-            #   file_path=(DATA_ROOT + 'abstracts_razor_utf8.txt'), 
+              # file_path=(DATA_ROOT + 'abstracts_subset.txt'), 
+              file_path=(DATA_ROOT + 'abstracts_razor_utf8.txt'), 
               clear=True,
               config=None):
         if 'subset' in file_path:
@@ -42,6 +42,7 @@ class ProteinPipeline(BabblePipeline):
     def extract(self, clear=True, config=None):
                 
         with open(DATA_ROOT + 'all_pkr_ids.pkl', 'rb') as f:
+        # with open(DATA_ROOT + 'subset_pkr_ids.pkl', 'rb') as f:
             train_ids, dev_ids, test_ids = load(f)
             train_ids, dev_ids, test_ids = set(train_ids), set(dev_ids), set(test_ids)
 

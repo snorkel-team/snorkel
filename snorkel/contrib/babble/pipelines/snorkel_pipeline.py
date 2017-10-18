@@ -233,6 +233,9 @@ class SnorkelPipeline(object):
         self.train_marginals = train_marginals
         save_marginals(self.session, L_train, train_marginals)
 
+        if self.end_at == STAGES.CLASSIFY:
+            final_report(self.config, self.scores)
+
 
     def classify(self, config=None):
         if config:
@@ -279,23 +282,23 @@ class SnorkelPipeline(object):
         )
         self.disc_model = disc_model
 
-        scores = {}
+        self.scores = {}
         with PrintTimer("[7.2] Evaluate generative model (opt_b={})".format(opt_b)):
             if self.gen_model:
                 # Score generative model on test set
                 L_test = load_label_matrix(self.session, split=TEST)
                 np.random.seed(self.config['seed'])
-                scores['Gen'] = score_marginals(self.gen_model.marginals(L_test), Y_test, b=opt_b)
+                self.scores['Gen'] = score_marginals(self.gen_model.marginals(L_test), Y_test, b=opt_b)
             else:
                 print("gen_model is undefined. Skipping.")
 
         with PrintTimer("[7.3] Evaluate discriminative model (opt_b={})".format(opt_b)):
             # Score discriminative model trained on generative model predictions
             np.random.seed(self.config['seed'])
-            scores['Disc'] = score_marginals(self.disc_model.marginals(X_test, 
+            self.scores['Disc'] = score_marginals(self.disc_model.marginals(X_test, 
                     batch_size=self.config['disc_eval_batch_size']), Y_test, b=opt_b)
 
-        final_report(self.config, scores)
+        final_report(self.config, self.scores)
 
 
     def traditional_supervision(self, L_gold_train):

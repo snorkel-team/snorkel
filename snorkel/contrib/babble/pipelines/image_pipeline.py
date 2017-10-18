@@ -20,6 +20,14 @@ from tutorials.babble import MTurkHelper
 
 class ImagePipeline(BabblePipeline):
 
+    def extract(self):
+        print("Extraction was performed during parse stage.")
+        for split in self.config['splits']:
+            num_candidates = self.session.query(self.candidate_class).filter(
+                self.candidate_class.split == split).count()
+            print("Candidates [Split {}]: {}".format(split, num_candidates))
+
+
     def classify(self, config=None, slim_ws_path=None):
         if config:
             self.config = config

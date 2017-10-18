@@ -28,13 +28,6 @@ class DrinkPipeline(ImagePipeline, BabblePipeline):
         corpus_extractor.apply(coco_preprocessor, person_id=[1], object_id=[44,46,47], clear=False)
 
 
-    def extract(self):
-        print("Extraction was performed during parse stage.")
-        for split in self.config['splits']:
-            num_candidates = self.session.query(self.candidate_class).filter(
-                self.candidate_class.split == split).count()
-            print("Candidates [Split {}]: {}".format(split, num_candidates))
-
     def load_gold(self, anns_path=None, annotator_name='gold'):
         if anns_path:
             self.anns_path = anns_path
@@ -46,9 +39,9 @@ class DrinkPipeline(ImagePipeline, BabblePipeline):
                                                             candidates=[], verbose=False)
             return labels_by_candidate
 
-        validation_labels_by_candidate = load_labels('val', self.anns_path+
+        validation_labels_by_candidate = load_labels('val', self.anns_path +
                                                      'Reach_Val_Labels_out.csv')
-        train_labels_by_candidate = load_labels('train', self.anns_path+
+        train_labels_by_candidate = load_labels('train', self.anns_path +
                                                 'Reach_Train_Labels_out.csv')
             
 

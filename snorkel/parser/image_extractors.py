@@ -43,7 +43,6 @@ class ImageCorpusExtractorUDF(UDF):
 
     def apply(self, x, person_id=[1], object_id=[2], **kwargs):
         # TEMP: overly specific here to bike task
-        """Given a Document object and its raw text, parse into Sentences"""
         ann, image_idx, source = x
         
         person_indices = [i for i, box in enumerate(ann) if box['category_id'] in person_id]

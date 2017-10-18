@@ -17,8 +17,8 @@ class BikePipeline(ImagePipeline, BabblePipeline):
 
     def parse(self):
         self.anns_path = self.config['anns_path']
-        train_path = self.anns_path + 'train_anns.npy'
-        val_path = self.anns_path + 'val_anns.npy'
+        train_path = self.anns_path + self.config['domain'] + '_train_anns.npy'
+        val_path = self.anns_path + self.config['domain'] + '_val_anns.npy'
 
         corpus_extractor = ImageCorpusExtractor(candidate_class=self.candidate_class)
 
@@ -27,14 +27,7 @@ class BikePipeline(ImagePipeline, BabblePipeline):
 
         coco_preprocessor = CocoPreprocessor(val_path, source=1)
         corpus_extractor.apply(coco_preprocessor, clear=False)
-
-
-    def extract(self):
-        print("Extraction was performed during parse stage.")
-        for split in self.config['splits']:
-            num_candidates = self.session.query(self.candidate_class).filter(
-                self.candidate_class.split == split).count()
-            print("Candidates [Split {}]: {}".format(split, num_candidates))
+        
 
     def load_gold(self, anns_path=None, annotator_name='gold'):
         if anns_path:

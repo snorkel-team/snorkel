@@ -194,6 +194,7 @@ class ImagePipeline(BabblePipeline):
                 ' --dataset_dir=' + dataset_dir + \
                 ' --model_name=' + str(self.config['disc_model_class']) + \
                 ' --optimizer=' + str(self.config['optimizer']) + \
+                ' --opt_epsilon=' + str(self.config['opt_epsilon']) + \
                 ' --num_clones=' + str(self.config['parallelism']) + \
                 ' --log_every_n_steps=' + str(self.config['print_freq']) + \
                 ' --learning_rate=' + str(disc_params['lr']) + \

@@ -14,8 +14,9 @@ config = {
     'disc_model_class': 'inception_v3',
     'print_freq': 1,
     'optimizer': 'adam',
+    'opt_epsilon': 1.0,
     'disc_params_search': {
-        'lr'        : [0.1, 1, 10, 100],
-        'max_steps' : [10, 30, 50, 100, 200, 500]
+        'lr'        : [.1, 1, 10, 100, 1000],
+        'max_steps' : [100, 200, 500, 1000]
     },
 }

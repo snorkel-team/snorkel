@@ -67,7 +67,7 @@ global_config = {
         # used iff class_prior = True
         'init_class_prior' : 0, # 0 = 50% pos, -1.15 = 9% pos
     },
-    'tune_b': True # default to True for text, False for image
+    'tune_b': True, # default to True for text, False for image
 
     # dependencies
     'learn_deps': False,

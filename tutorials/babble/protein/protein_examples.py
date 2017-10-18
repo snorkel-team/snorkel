@@ -54,6 +54,6 @@ def extract_explanations(fpath):
 
 
 def get_explanations(candidates, fpath='razor_explanations.csv'):
-    explanations = extract_explanations(fpath)
-    return link_explanation_candidates(explanations, candidates)
+    return extract_explanations(fpath)
+    # return link_explanation_candidates(explanations, candidates)
             

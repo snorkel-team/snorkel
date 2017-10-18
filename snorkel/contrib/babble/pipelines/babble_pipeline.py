@@ -51,7 +51,8 @@ class BabblePipeline(SnorkelPipeline):
         self.babbler = Babbler(mode=mode, 
                                explanations=explanations, 
                                candidate_class=self.candidate_class, 
-                               user_lists=user_lists)
+                               user_lists=user_lists,
+                               do_filter=False)
         self.babbler.apply(split=self.config['babbler_label_split'], 
                            parallelism=self.config['parallelism'])
         self.explanations = self.babbler.get_explanations()

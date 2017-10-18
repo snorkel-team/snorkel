@@ -70,7 +70,6 @@ class ProteinPipeline(BabblePipeline):
 
 
     def load_gold(self, config=None):
-        fpath = os.environ['SNORKELHOME'] + '/tutorials/intro/data/gold_labels.tsv'
         load_external_labels(self.session, self.candidate_class, split=1, annotator='gold')
 
     def collect(self):

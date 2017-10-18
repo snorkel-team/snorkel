@@ -68,7 +68,7 @@ def link_explanation_candidates(explanations, candidates):
         print("Could not find {} target candidates with the following stable_ids (first 5):".format(
             num_missing))
         num_reported = 0
-        for c_hash in enumerate(target_candidate_ids):
+        for i, c_hash in enumerate(target_candidate_ids):
             if c_hash not in candidate_map:
                 print(c_hash)
                 num_reported += 1

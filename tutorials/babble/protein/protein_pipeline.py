@@ -14,7 +14,7 @@ from snorkel.contrib.babble import Babbler
 from snorkel.contrib.babble.pipelines import BabblePipeline
 from snorkel.contrib.babble.pipelines.snorkel_pipeline import TRAIN, DEV, TEST
 
-from tutorials.babble.protein.utils import RazorTagger
+from tutorials.babble.protein.utils import ProteinKinaseLookupTagger
 from tutorials.babble.protein.load_external_annotations import load_external_labels
 from tutorials.babble.protein.protein_examples import get_explanations, get_user_lists
 
@@ -22,16 +22,16 @@ DATA_ROOT = os.environ['SNORKELHOME'] + '/tutorials/babble/protein/data/'
 
 class ProteinPipeline(BabblePipeline):
     def parse(self, 
-              file_path=(DATA_ROOT + 'abstracts_subset.txt'), 
-            #   file_path=(DATA_ROOT + 'abstracts_razor_utf8.txt'), 
+              # file_path=(DATA_ROOT + 'abstracts_subset.txt'), 
+              file_path=(DATA_ROOT + 'abstracts_razor_utf8.txt'), 
               clear=True,
               config=None):
         if 'subset' in file_path:
             print("WARNING: you are currently using a subset of the data.")
         doc_preprocessor = TSVDocPreprocessor(file_path, 
                                               max_docs=self.config['max_docs'])
-        razor_tagger = RazorTagger()
-        corpus_parser = CorpusParser(fn=razor_tagger.tag, parser=Spacy())
+        pk_lookup_tagger = ProteinKinaseLookupTagger()
+        corpus_parser = CorpusParser(fn=pk_lookup_tagger.tag, parser=Spacy())
         corpus_parser.apply(list(doc_preprocessor), 
                             parallelism=self.config['parallelism'], 
                             clear=clear)
@@ -42,6 +42,7 @@ class ProteinPipeline(BabblePipeline):
     def extract(self, clear=True, config=None):
                 
         with open(DATA_ROOT + 'all_pkr_ids.pkl', 'rb') as f:
+        # with open(DATA_ROOT + 'subset_pkr_ids.pkl', 'rb') as f:
             train_ids, dev_ids, test_ids = load(f)
             train_ids, dev_ids, test_ids = set(train_ids), set(dev_ids), set(test_ids)
 

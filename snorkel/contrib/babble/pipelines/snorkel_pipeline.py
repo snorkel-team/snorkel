@@ -203,7 +203,14 @@ class SnorkelPipeline(object):
                 train_marginals = gen_model.marginals(L_train)
 
                 print("\nGen. model (DP) score on dev set (b={}):".format(opt_b))
-                _ = gen_model.error_analysis(self.session, L_dev, L_gold_dev, b=opt_b, display=True)
+                tp, fp, tn, fn = gen_model.error_analysis(self.session, L_dev, L_gold_dev, b=opt_b, display=True)
+                
+                # Record generative model performance
+                precision = float(len(tp))/float(len(tp) + len(fp))
+                recall = float(len(tp))/float(len(tp) + len(fn))
+                f1 = float(2 * precision * recall)/(precision + recall)
+                self.scores = {}
+                self.scores['Gen'] = [precision, recall, f1]
 
                 if self.config['verbose']:
                     if self.config['display_marginals'] and not self.config['no_plots']:
@@ -223,7 +230,8 @@ class SnorkelPipeline(object):
 
         self.gen_model = gen_model
         self.L_train = L_train
-        self.train_marginals = train_marginals 
+        self.train_marginals = train_marginals
+        save_marginals(self.session, L_train, train_marginals)
 
 
     def classify(self, config=None):
@@ -234,11 +242,17 @@ class SnorkelPipeline(object):
             np.random.seed(self.config['seed'])
 
         X_train = self.get_candidates(TRAIN)
-        Y_train = self.train_marginals
+        Y_train = (self.train_marginals if getattr(self, 'train_marginals', False) 
+                    else load_marginals(self.session, split=0))
         X_dev = self.get_candidates(DEV)
         Y_dev = load_gold_labels(self.session, annotator_name='gold', split=DEV)
         X_test = self.get_candidates(TEST)
         Y_test = load_gold_labels(self.session, annotator_name='gold', split=TEST)
+
+        # if isinstance(self, ImagePipeline):
+        #     X_train, Y_train = self.snorkel_to_pixels(X_train, Y_train, split=0)
+        #     X_dev, Y_dev = self.snorkel_to_pixels(X_dev, Y_dev, split=1)
+        #     X_test, Y_test = self.snorkel_to_pixels(X_test, Y_test, split=2)
 
         if self.config['disc_model_class'] == 'lstm':
             disc_model_class = reRNN
@@ -336,3 +350,4 @@ class SnorkelPipeline(object):
         for dep in sorted(deps_decoded):
             (lf1, lf2, d) = dep
             print('{:16}: ({}, {})'.format(d, lf1, lf2))
+

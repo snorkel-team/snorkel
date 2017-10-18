@@ -4,7 +4,7 @@ global_config = {
     ### SETUP ###
     'domain': None,
     'log_dir': 'logs',
-    'reports_dir': 'reports',
+    'reports_dir': 'reports', # nested under $SNORKELHOME/
     'postgres': False,
     'parallelism': 1,
     'splits': [0, 1, 2],

@@ -1,17 +1,18 @@
 import os
+
 import numpy as np
 
 from snorkel.parser import ImageCorpusExtractor, CocoPreprocessor
 from snorkel.models import StableLabel
 from snorkel.db_helpers import reload_annotator_labels
+from snorkel.annotations import load_marginals, load_gold_labels
 
 from snorkel.contrib.babble import Babbler
-from snorkel.contrib.babble.pipelines import BabblePipeline
+from snorkel.contrib.babble.pipelines import BabblePipeline, ImagePipeline, final_report
 
 from tutorials.babble import MTurkHelper
 
-
-class DrinkPipeline(BabblePipeline):
+class DrinkPipeline(ImagePipeline, BabblePipeline):
 
     def parse(self, anns_path=os.environ['SNORKELHOME'] + '/tutorials/babble/drink/data/'):
         self.anns_path = anns_path

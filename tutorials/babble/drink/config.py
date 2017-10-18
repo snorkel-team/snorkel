@@ -9,6 +9,8 @@ config = {
     'anns_path': os.environ['SNORKELHOME'] + '/tutorials/babble/drink/data/',
     'slim_ws_path': '/Users/bradenjh/repos/slim_ws/',
 
+    'tune_b': False,
+
     'disc_model_class': 'inception_v3',
     'print_freq': 1,
     'optimizer': 'adam',

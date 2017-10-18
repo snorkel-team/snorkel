@@ -198,7 +198,8 @@ class SnorkelPipeline(object):
                     model_init_params=self.config['gen_init_params'],
                     model_name='generative_{}'.format(self.config['domain']),
                     save_dir='checkpoints',
-                    beta=self.config['gen_f_beta']
+                    beta=self.config['gen_f_beta'],
+                    tune_b=self.config['tune_b']
                 )
                 train_marginals = gen_model.marginals(L_train)
 
@@ -233,7 +234,7 @@ class SnorkelPipeline(object):
         self.train_marginals = train_marginals
         save_marginals(self.session, L_train, train_marginals)
 
-        if self.end_at == STAGES.CLASSIFY:
+        if self.config['end_at'] == STAGES.CLASSIFY:
             final_report(self.config, self.scores)
 
 

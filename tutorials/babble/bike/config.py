@@ -15,7 +15,7 @@ config = {
     'print_freq': 1,
     'optimizer': 'adam',
     'disc_params_search': {
-        'lr'        : [1, 50],
-        'max_steps' : [3, 5]
+        'lr'        : [0.001, 0.01, 0.1, 1, 10, 100],
+        'max_steps' : [10, 30, 50, 100, 200, 500]
     },
 }

@@ -49,6 +49,7 @@ if __name__ == '__main__':
     # Supervision args
     SUPERVISION = ['traditional', 'majority_vote', 'generative']
     argparser.add_argument('--supervision', type=str, choices=SUPERVISION)
+    argparser.add_argument('--max_train', type=int)
     ## model args
     argparser.add_argument('--gen_init_params:class_prior', type=str2bool)
     argparser.add_argument('--gen_init_params:lf_prior', type=str2bool)

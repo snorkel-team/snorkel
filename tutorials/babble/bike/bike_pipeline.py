@@ -17,8 +17,8 @@ class BikePipeline(ImagePipeline, BabblePipeline):
 
     def parse(self):
         self.anns_path = self.config['anns_path']
-        train_path = anns_path + 'train_anns.npy'
-        val_path = anns_path + 'val_anns.npy'
+        train_path = self.anns_path + 'train_anns.npy'
+        val_path = self.anns_path + 'val_anns.npy'
 
         corpus_extractor = ImageCorpusExtractor(candidate_class=self.candidate_class)
 

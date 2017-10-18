@@ -73,6 +73,9 @@ if __name__ == '__main__':
     # Logging
     argparser.add_argument('--reports_dir', type=str)
 
+    # Data
+    argparser.add_argument('--download_data', action='store_true')
+
     # Display args    
     argparser.add_argument('--verbose', action='store_true')
     argparser.add_argument('--no_plots', action='store_true')

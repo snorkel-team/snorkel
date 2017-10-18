@@ -3,6 +3,7 @@ from itertools import product
 import os
 import random
 import re
+import shutil
 
 import numpy as np
 import pandas as pd
@@ -183,10 +184,13 @@ class ImagePipeline(BabblePipeline):
             print("Running the following configuration:".format(i))
             print_settings(disc_params)
 
-            # print('Calling TFSlim train...')
+            print('Calling TFSlim train...')
             # TODO: launch these in parallel
-            if not os.path.exists(train_dir):
-                os.makedirs(train_dir)
+            # Remove the train_dir so no checkpoints are kept
+            if os.path.exists(train_dir):
+                shutil.rmtree(train_dir)
+            os.makedirs(train_dir)
+            
             train_cmd = 'python ' + slim_ws_path + 'train_image_classifier.py ' + \
                 ' --train_dir=' + train_dir + \
                 ' --dataset_name=mscoco' + \

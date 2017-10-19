@@ -1,26 +1,47 @@
+from snorkel.annotations import LabelAnnotator
 from snorkel.contrib.babble.grammar import Parse
 
 class FilterBank(object):
-    def __init__(self, candidate_class=None, split=1):
+    def __init__(self, session, candidate_class=None, split=1):
+        self.session = session
         self.candidate_class = candidate_class
         self.split = split
+        self.duplicate_semantics = DuplicateSemanticsFilter()
+        self.consistency = ConsistencyFilter(self.candidate_class)
+        # self.f2 = UniformSignatureFilter(???)
+        # self.f3 = DuplicateSignatureFilter(???)
+        self.label_matrix = None
 
     # TODO: make a UDFRunner
     def apply(self, parses, explanations, parallelism=1):
-        f0 = DuplicateSemanticsFilter()
-        f1 = ConsistencyFilter(self.candidate_class, explanations)
-        # f2 = UniformSignatureFilter()
-        # f3 = DuplicateSignatureFilter()
         
-        parses, _ = f0.filter(parses)
-        parses, _ = f1.filter(parses)
+        # PLAN:
+        """
+        apply filters that use parses
+        use LabelAnnotator to get label matrix
+        extract signatures
+        apply filters that use signatures
+        """
+        # Apply structure and consistency based filters
+        parses, _ = self.duplicate_semantics.filter(parses)
+        if not parses: return [], [], []
 
-        return parses, None
+        parses, _ = self.consistency.filter(parses, explanations)
+        if not parses: return [], [], []
+
+        # Label and extract signatures
         # lfs = [parse.function for parse in parses]
         # labeler = LabelAnnotator(lfs=lfs)
-        # # TODO: use apply_existing
-        # self.label_matrix = self.labeler.apply(split=self.split, parallelism=parallelism)
+        # if not self.label_matrix:
+        #     self.label_matrix = labeler.apply(split=self.split, parallelism=parallelism)
+        # else:
+        #     self.label_matrix = labeler.apply_existing(split=self.split, parallelism=parallelism)
 
+        # TODO: complete this code for pulling out signatures from label matrix
+        # for col_idx in range(self.label_matrix.shape[1]):
+        #     print(self.label_matrix.get_key(self.session, 0).name)
+        
+        return parses, None
 
         # self.generate_lfs()
         # if self.do_filter_duplicate_semantics:
@@ -44,21 +65,24 @@ class Filter(object):
     def name(self):
         return type(self).__name__
 
-class ParseFilter(Filter):
-    def filter(self, parses):
+    def validate(self, parses):
         parses = parses if isinstance(parses, list) else [parses]
         if not parses:
-            raise Warning("Filter {} was applied to an empty list.".format(self.name()))
-        if not isinstance(parses[0], Parse):
+            print("Warning: Filter {} was applied to an empty list.".format(self.name()))
+        if parses and not isinstance(parses[0], Parse):
             raise ValueError("Expected: Parse. Got: {}".format(type(parses[0])))
-        return self._filter(parses)
+        return parses
 
-class DuplicateSemanticsFilter(ParseFilter):
+
+class DuplicateSemanticsFilter(Filter):
     """Filters out parses with identical logical forms (keeping one)."""
     def __init__(self):
         self.seen = set()
     
-    def _filter(self, parses):
+    def filter(self, parses):
+        self.validate(parses)
+        if not parses: return [], []
+
         good_parses = []
         bad_parses = []
         for parse in parses:
@@ -72,25 +96,30 @@ class DuplicateSemanticsFilter(ParseFilter):
             len(good_parses), len(bad_parses), self.name()))    
         return good_parses, bad_parses
 
-class ConsistencyFilter(ParseFilter):
-    """Filters out parses that incorrectly label their accompanying candidate."""
-    def __init__(self, candidate_class, explanations):
-        self.candidate_class = candidate_class
-        explanations = explanations if isinstance(explanations, list) else [explanations]
-        self.explanation_dict = {exp.name: exp for exp in explanations}
 
-    def filter(self, parses):
+class ConsistencyFilter(Filter):
+    """Filters out parses that incorrectly label their accompanying candidate."""
+    def __init__(self, candidate_class):
+        self.candidate_class = candidate_class
+
+    def filter(self, parses, explanations):
         """
         If possible, confirm that candidate is of proper type.
-        If candidate_class was not provided, use try/except isntead.
+        If candidate_class was not provided, use try/except instead.
         """
+        self.validate(parses)
+        if not parses: return [], []
+
+        explanations = explanations if isinstance(explanations, list) else [explanations]
+        explanation_dict = {exp.name: exp for exp in explanations}
+        
         good_parses = []
         bad_parses = []
         unknown_parses = []
         for parse in parses:
             lf = parse.function
             exp_name = extract_exp_name(lf)
-            exp = self.explanation_dict[exp_name]
+            exp = explanation_dict[exp_name]
             if self.candidate_class:
                 if isinstance(exp.candidate, self.candidate_class):
                     if lf(exp.candidate):

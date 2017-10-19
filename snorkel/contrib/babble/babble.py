@@ -84,7 +84,7 @@ class BabbleStream(object):
         self.explanations = []
         self.parses = []
         self.label_matrix = None
-        self.filter_bank = FilterBank(candidate_class)
+        self.filter_bank = FilterBank(session, candidate_class)
 
         if preload:
             self.preload_user_lists()
@@ -131,7 +131,7 @@ class BabbleStream(object):
         parses = self.parse(explanation)
         parses, label_matrix = self.filter(parses, explanation)
         conf_matrix_list, stats_list = self.analyze(parses, label_matrix)
-        return conf_matrix_list, stats_list
+        return parses, conf_matrix_list, stats_list
 
     def parse(self, explanation):
         """

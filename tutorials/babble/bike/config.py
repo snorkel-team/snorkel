@@ -13,10 +13,10 @@ config = {
     
     # GENERATIVE
     'gen_params_range': {
-        # 'step_size'                   : [1e-3, 1e-5],
-        # 'decay'                       : [0.9, 0.99],
-        # 'reg_param'                   : [0.0, 0.01, 0.1, 0.25, 0.5],
-        # 'epochs'                      : [50, 100, 200]
+        'step_size'                   : [1e-3, 1e-5],
+        'decay'                       : [0.9, 0.99],
+        'reg_param'                   : [0.0, 0.01, 0.1, 0.25, 0.5],
+        'epochs'                      : [50, 100, 200]
         # 'LF_acc_prior_weights'        : [None], # Used iff lf_prior = True        
     },
     'gen_params_default': {

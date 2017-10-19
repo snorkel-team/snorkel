@@ -44,6 +44,9 @@ tutorials/intro/data/gold_labels.tsv
 
 tutorials/tables/data/hardware/
 
+tutorials/babble/protein/genia*
+tutorials/babble/cdr/data/
+
 #Babble Labble Image
 *.csv
 *.log

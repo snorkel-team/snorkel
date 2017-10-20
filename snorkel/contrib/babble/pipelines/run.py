@@ -60,8 +60,8 @@ if __name__ == '__main__':
     ## hyperparameters
 
     # Classify args
-    argparser.add_argument('--disc_params_search:lr', type=float)
-    argparser.add_argument('--disc_params_search:max_steps', type=float)
+    argparser.add_argument('--disc_params_search:lr', type=float, action='append')
+    argparser.add_argument('--disc_params_search:max_steps', type=int, action='append')
 
 
     # Search

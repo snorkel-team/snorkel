@@ -59,6 +59,11 @@ if __name__ == '__main__':
     argparser.add_argument('--gen_init_params:lf_class_propensity', type=str2bool)
     ## hyperparameters
 
+    # Classify args
+    argparser.add_argument('--disc_params_search:lr', type=float)
+    argparser.add_argument('--disc_params_search:max_steps', type=float)
+
+
     # Search
     argparser.add_argument('--seed', type=int)
     argparser.add_argument('--gen_model_search_space', type=int)

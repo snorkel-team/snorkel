@@ -35,8 +35,8 @@ python -u snorkel/contrib/babble/pipelines/run.py \
     --domain $DOMAIN \
     --reports_dir $REPORTS_DIR \
     --start_at 6 \
-    --end_at 7
-    --supervision $SUPERVISION
+    --end_at 7 \
+    --supervision $SUPERVISION \
     --parallelism 15 \
     --postgres \
     --gen_model_search_space 15 \
@@ -53,8 +53,8 @@ python -u snorkel/contrib/babble/pipelines/run.py \
     --domain $DOMAIN \
     --reports_dir $REPORTS_DIR \
     --start_at 6 \
-    --end_at 7
-    --deps_thresh $THRESH
+    --end_at 7 \
+    --deps_thresh $THRESH \
     --parallelism 15 \
     --postgres \
     --gen_model_search_space 15 \

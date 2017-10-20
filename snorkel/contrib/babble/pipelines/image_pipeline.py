@@ -272,7 +272,7 @@ class ImagePipeline(BabblePipeline):
         print("\nTest Results: {}")
         print(test_df)
 
-        if not getattr(self, scores, False):
+        if not getattr(self, 'scores', False):
             self.scores = {}
         self.scores['Disc'] = [precision, recall, f1]
         print("\nWriting final report to {}".format(self.config['log_dir']))

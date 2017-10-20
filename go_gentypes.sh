@@ -44,6 +44,7 @@ python -u snorkel/contrib/babble/pipelines/run.py \
 done
 
 for THRESH in 0.001 0.005 0.01 0.05 0.1
+do
 echo ""
 echo "<GENERATIVE+DEPS, THRESH:>"
 echo $THRESH
@@ -58,3 +59,4 @@ python -u snorkel/contrib/babble/pipelines/run.py \
     --postgres \
     --gen_model_search_space 15 \
     --seed 1018 --verbose --no_plots | tee -a $LOGFILE
+done

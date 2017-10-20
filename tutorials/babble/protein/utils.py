@@ -92,6 +92,6 @@ class ProteinKinaseLookupTagger (object):
                 # is necessary
                 if wl in self.kinase_set:
                     parts['entity_types'][i] = 'kinase'
-                elif wl in self.protein_set:
+                elif wl.encode('utf-8') in self.protein_set:
                     parts['entity_types'][i] = 'protein'
         return parts

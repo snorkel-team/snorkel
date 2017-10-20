@@ -49,7 +49,7 @@ do
         --start_at 6 \
         --end_at 7 \
         --gen_model_search_space 2 \
-        --seed 926 --verbose --no_plots | tee -a $LOGFILE  # seed = 111
+        --seed 926 --verbose --no_plots |& tee -a $LOGFILE  # seed = 111
         # --parallelism 15 \
         # --postgres \
         # --debug \

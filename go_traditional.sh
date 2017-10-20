@@ -38,7 +38,7 @@ do
         --supervision traditional \
         --max_train $MAX_TRAIN \
         --disc_model_search_space 20 \
-        --seed 926 --verbose --no_plots | tee -a $LOGFILE  # seed = 111
+        --seed 926 --verbose --no_plots |& tee -a $LOGFILE  # seed = 111
         # --parallelism 15 \
         # --postgres \
         # --debug \

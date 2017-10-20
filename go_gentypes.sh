@@ -39,7 +39,7 @@ python -u snorkel/contrib/babble/pipelines/run.py \
     --supervision $SUPERVISION \
     --parallelism 15 \
     --gen_model_search_space 15 \
-    --seed 1018 --verbose --no_plots | tee -a $LOGFILE
+    --seed 1018 --verbose --no_plots |& tee -a $LOGFILE
 done
 
 for THRESH in 0.001 0.005 0.01 0.05 0.1
@@ -56,5 +56,5 @@ python -u snorkel/contrib/babble/pipelines/run.py \
     --deps_thresh $THRESH \
     --parallelism 15 \
     --gen_model_search_space 15 \
-    --seed 1019 --verbose --no_plots | tee -a $LOGFILE
+    --seed 1019 --verbose --no_plots |& tee -a $LOGFILE
 done

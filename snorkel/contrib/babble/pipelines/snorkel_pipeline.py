@@ -234,7 +234,8 @@ class SnorkelPipeline(object):
         self.train_marginals = train_marginals
         save_marginals(self.session, L_train, train_marginals)
 
-        if self.config['end_at'] == STAGES.CLASSIFY:
+        if (not self.config['supervision'] == 'traditional' and 
+            self.config['end_at'] == STAGES.CLASSIFY):
             final_report(self.config, self.scores)
 
 

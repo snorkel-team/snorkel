@@ -86,7 +86,7 @@ class ProteinKinaseLookupTagger (object):
     def tag(self, parts):
         for i, word in enumerate(parts['words']):
             tag = parts['entity_types'][i]
-            if len(word) > 3 and tag in (None,'O'):
+            if len(word) > 2 and tag in (None,'O'):
                 wl = word.lower()
                 # TODO determine whether populating entity_cids with dummy data
                 # is necessary

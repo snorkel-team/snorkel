@@ -7,7 +7,7 @@ config = {
     
     'download_data': False,
     'anns_path': os.environ['SNORKELHOME'] + '/tutorials/babble/bike/data/',
-    'slim_ws_path': '/Users/bradenjh/repos/slim_ws/',
+    'slim_ws_path': '/dfs/scratch0/bradenjh/slim_ws/',
 
     'tune_b': False,
     

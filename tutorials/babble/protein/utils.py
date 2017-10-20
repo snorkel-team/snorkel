@@ -84,7 +84,6 @@ class ProteinKinaseLookupTagger (object):
                            'pten-induced putative kinase 1' ])
 
     def tag(self, parts):
-        # print('parts are',parts['words'])
         for i, word in enumerate(parts['words']):
             tag = parts['entity_types'][i]
             if len(word) > 3 and tag in (None,'O'):

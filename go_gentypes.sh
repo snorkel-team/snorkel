@@ -38,7 +38,6 @@ python -u snorkel/contrib/babble/pipelines/run.py \
     --end_at 7 \
     --supervision $SUPERVISION \
     --parallelism 15 \
-    --postgres \
     --gen_model_search_space 15 \
     --seed 1018 --verbose --no_plots | tee -a $LOGFILE
 done
@@ -56,7 +55,6 @@ python -u snorkel/contrib/babble/pipelines/run.py \
     --end_at 7 \
     --deps_thresh $THRESH \
     --parallelism 15 \
-    --postgres \
     --gen_model_search_space 15 \
-    --seed 1018 --verbose --no_plots | tee -a $LOGFILE
+    --seed 1019 --verbose --no_plots | tee -a $LOGFILE
 done

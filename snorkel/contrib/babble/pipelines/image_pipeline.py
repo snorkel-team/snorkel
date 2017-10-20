@@ -216,7 +216,7 @@ class ImagePipeline(BabblePipeline):
                   ' --eval_dir=' + eval_dir + \
                   ' --dataset_split_name=validation ' + \
                   ' --model_name=' + str(self.config['disc_model_class']) + \
-                  ' &> ' + output_file
+                  ' |& tee -a ' + output_file
             os.system(eval_cmd)
 
             # Scrape results from output.txt 
@@ -256,7 +256,7 @@ class ImagePipeline(BabblePipeline):
                  ' --eval_dir=' + eval_dir + \
                  ' --dataset_split_name=test ' + \
                  ' --model_name=' + str(self.config['disc_model_class']) + \
-                 ' &> ' + test_file)
+                 ' |& tee -a ' + test_file)
         
         accuracy, precision, recall = scrape_output(test_file)
         p, r = precision, recall

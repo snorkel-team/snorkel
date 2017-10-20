@@ -221,6 +221,9 @@ class ImagePipeline(BabblePipeline):
 
             # Scrape results from output.txt 
             accuracy, precision, recall = scrape_output(output_file)
+            print("Accuracy: {}".format(accuracy))
+            print("Precision: {}".format(precision))
+            print("Recall: {}".format(recall))
             accuracies.append(accuracy)
             precisions.append(precision)
             recalls.append(recall)

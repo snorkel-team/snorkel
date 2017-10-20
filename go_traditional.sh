@@ -10,7 +10,7 @@ mkdir -p $LOGDIR
 LOGFILE="$LOGDIR/run_log_${DOMAIN}_${EXP}_${TIME}.log"
 echo "Saving log to '$LOGFILE'"
 
-REPORTS_DIR="reports/${DOMAIN}_${EXP}/"
+REPORTS_DIR="reports/$DATE/${DOMAIN}_${EXP}/"
 mkdir -p $REPORTS_DIR
 echo "Saving reports to '$REPORTS_DIR'"
 echo ""

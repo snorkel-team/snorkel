@@ -24,37 +24,18 @@ echo "Note: If you are not starting at stage 0, confirm database exists already.
 #     --verbose --no_plots
 
 # Run tests
-
-for SUPERVISION in majority_vote generative
-do
 echo ""
-echo "Supervision:"
-echo $SUPERVISION
+echo "<TEST: Running with following params:>"
+echo "max_train = $MAX_TRAIN" 
 echo ""
 python -u snorkel/contrib/babble/pipelines/run.py \
     --domain $DOMAIN \
     --reports_dir $REPORTS_DIR \
-    --start_at 6 \
-    --end_at 7
-    --supervision $SUPERVISION
-    --parallelism 15 \
-    --postgres \
-    --gen_model_search_space 15 \
-    --seed 1018 --verbose --no_plots | tee -a $LOGFILE
-done
-
-for THRESH in 0.001 0.005 0.01 0.05 0.1
-echo ""
-echo "<GENERATIVE+DEPS, THRESH:>"
-echo $THRESH
-echo ""
-python -u snorkel/contrib/babble/pipelines/run.py \
-    --domain $DOMAIN \
-    --reports_dir $REPORTS_DIR \
-    --start_at 6 \
-    --end_at 7
-    --deps_thresh $THRESH
-    --parallelism 15 \
-    --postgres \
-    --gen_model_search_space 15 \
-    --seed 1018 --verbose --no_plots | tee -a $LOGFILE
+    --start_at 7 \
+    --end_at 10 \
+    --supervision traditional \
+    --disc_model_search_space 20 \
+    --seed 926 --verbose --no_plots | tee -a $LOGFILE  # seed = 111
+    # --parallelism 15 \
+    # --postgres \
+    # --debug \

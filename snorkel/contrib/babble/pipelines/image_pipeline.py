@@ -134,7 +134,7 @@ class ImagePipeline(BabblePipeline):
 
         # If we're in traditional supervision mode, use hard marginals from the train set
         if self.config['supervision'] == 'traditional':
-            train_size = self.config['max_train']
+            train_size = self.config['max_train'] if self.config['max_train'] else int(1e9)
             Y_train = Y_train_gold  # use 0/1 labels, not probabilistic labels
             # This zips X and Y, sorts by image_id, keeps only train_size pairs,
             # and returns them to X and Y

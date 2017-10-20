@@ -8,7 +8,6 @@ from snorkel.candidates import Ngrams, PretaggedCandidateExtractor
 from snorkel.matchers import PersonMatcher
 from snorkel.models import Document, Sentence, StableLabel
 from snorkel.parser import CorpusParser, TSVDocPreprocessor
-from snorkel.parser.spacy_parser import Spacy
 
 from snorkel.contrib.babble import Babbler
 from snorkel.contrib.babble.pipelines import BabblePipeline
@@ -31,7 +30,7 @@ class ProteinPipeline(BabblePipeline):
         doc_preprocessor = TSVDocPreprocessor(file_path, 
                                               max_docs=self.config['max_docs'])
         pk_lookup_tagger = ProteinKinaseLookupTagger()
-        corpus_parser = CorpusParser(fn=pk_lookup_tagger.tag, parser=Spacy())
+        corpus_parser = CorpusParser(fn=pk_lookup_tagger.tag)
         corpus_parser.apply(list(doc_preprocessor), 
                             parallelism=self.config['parallelism'], 
                             clear=clear)

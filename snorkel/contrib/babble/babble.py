@@ -260,10 +260,10 @@ class BabbleStream(object):
             self.label_matrix.get_key(self.session, i).name not in keys_to_drop]
         
         num_candidates, num_lfs = self.label_matrix.shape
-        print("With all parses: label_matrix.shape = {}".format(self.label_matrix.shape) # TEMP
+        print("With all parses: label_matrix.shape = {}".format(self.label_matrix.shape)) # TEMP
         if len(cols_to_keep) != num_lfs:
             self.label_matrix = self.label_matrix[:, cols_to_keep]
-        print("After selection: label_matrix.shape = {}".format(self.label_matrix.shape) # TEMP
+        print("After selection: label_matrix.shape = {}".format(self.label_matrix.shape)) # TEMP
 
         self.temp_parses = None
         self.temp_explanations = None

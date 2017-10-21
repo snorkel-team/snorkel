@@ -39,8 +39,8 @@ if [ ! -f "$POPPLER" ]; then
 fi
 
 # Move to snorkel directory
-cd "$SNORKELHOME"
+cd "$FONDUERHOME"
 
 # Launch jupyter notebook!
 echo "Launching Jupyter Notebook..."
-jupyter notebook --notebook-dir="$SNORKELHOME"
+jupyter notebook --notebook-dir="$FONDUERHOME"

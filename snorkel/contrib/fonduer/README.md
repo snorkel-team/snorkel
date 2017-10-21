@@ -35,5 +35,5 @@ which will finish installing the external libraries we use.
 The [`Fonduer` tutorials](https://github.com/HazyResearch/snorkel/tree/fonduer/tutorials/fonduer) cover the `Fonduer` workflow, showing how to extract relations from hardware datasheets and scientific literature.
 The tutorial is available in the following directory:
 ```
-tutorials/fonduer
+tutorials/
 ```

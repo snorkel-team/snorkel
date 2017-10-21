@@ -21,7 +21,8 @@ import numpy as np
 import scipy.sparse as sparse
 import random
 
-from snorkel.annotations import LabelAnnotator
+from snorkel.annotations import LabelAnnotator, load_gold_labels
+from snorkel.learning.utils import MentionScorer
 from snorkel.lf_helpers import test_LF
 from snorkel.utils import matrix_tp, matrix_fp, matrix_tn, matrix_fn, matrix_coverage
 
@@ -32,6 +33,7 @@ from snorkel.contrib.babble.semparser import Explanation, SemanticParser
 # from tutorials.babble.spouse.spouse_examples import get_user_lists, get_explanations
 
 ConfusionMatrix = namedtuple('ConfusionMatrix', ['tp', 'fp', 'tn', 'fn'])
+Statistics = namedtuple('Statistics', ['accuracy', 'class_coverage'])
 
 class CandidateGenerator(object):
     """
@@ -70,25 +72,37 @@ class BabbleStream(object):
     """
     An object for iteratively viewing candidates and parsing corresponding explanations.
     """
-    def __init__(self, session, candidates, mode='text', candidate_class=None, 
-                strategy='linear', preload=True, verbose=True):
+    def __init__(self, session, mode='text', candidate_class=None, 
+                strategy='linear', verbose=True):
         self.session = session
-        self.candidates = candidates
         self.mode = mode
         self.candidate_class = candidate_class
         self.verbose = verbose
 
-        self.candidate_generator = CandidateGenerator(candidates, strategy)
+        self.dev_candidates = session.query(self.candidate_class).filter(self.candidate_class.split == 1).all()
+        self.candidate_generator = CandidateGenerator(self.dev_candidates, strategy)
         self.semparser = None
         self.user_lists = {}
-        self.explanations = []
-        self.parses = []
+        self.explanations = set()
+        self.parses = set()
         self.label_matrix = None
         self.filter_bank = FilterBank(session, candidate_class)
 
-        if preload:
-            self.preload_user_lists()
-            self.preload_explanations()
+        # Prepare database
+        labeler = LabelAnnotator(lfs=[lambda x: x])
+        labeler.clear(session, split=1)
+
+        # Temporary storage
+        self.temp_explanations = None
+        self.temp_parses = None
+
+        # Evaluation tools
+        dev_labels     = load_gold_labels(session, annotator_name='gold', split=1)
+        self.num_dev_total  = len(self.dev_candidates)
+        self.num_dev_pos    = dev_labels.nnz
+        self.num_dev_neg    = self.num_dev_total - self.num_dev_pos
+        self.scorer    = MentionScorer(self.dev_candidates, dev_labels)
+
 
     def __iter__(self):
         return self
@@ -103,13 +117,6 @@ class BabbleStream(object):
             mode=self.mode, candidate_class=self.candidate_class, 
             user_lists=self.user_lists) #top_k=-4, beam_width=30)
 
-    def preload_user_lists(self):
-        """
-        Load pre-written spouse user_lists and rebuilds SemanticParser.
-        """
-        self.user_lists.update(get_user_lists())
-        self._build_semparser()
-
     def add_user_lists(self, new_user_lists):
         """
         Adds additional user_lists and rebuilds SemanticParser.
@@ -121,75 +128,150 @@ class BabbleStream(object):
         self.user_lists.update(new_user_lists)
         self._build_semparser()
 
-    def preload_explanations(self):
+    def preload(self, explanations=None, user_lists=None):
         """
-        Load pre-written spouse explanations.
+        Load and commit the provided user_lists and/or explanations.
         """
-        self.explanations += get_explanations(candidates)
+        if user_lists:
+            self.add_user_lists(user_lists)
+        if explanations:
+            parses, _, _ = self.apply(explanations)
+            if parses:
+                self.commit()
 
-    def apply(self, explanation):
-        parses = self.parse(explanation)
-        parses, label_matrix = self.filter(parses, explanation)
+    def apply(self, explanations):
+        """
+        :param explanations: an Explanation or list of Explanations.
+        """
+        if self.temp_parses:
+            self.commit([])
+            print("All previously uncommitted parses have been flushed.")
+
+        parses = self.parse(explanations)
+        parses, label_matrix = self.filter(parses, explanations)
         conf_matrix_list, stats_list = self.analyze(parses, label_matrix)
+        
+        # Hold results in temporary space until commit
+        self.temp_explanations = explanations if isinstance(explanations, list) else [explanations]
+        self.temp_parses = parses if isinstance(parses, list) else [parses]
+        self.label_matrix = label_matrix
+        
         return parses, conf_matrix_list, stats_list
 
-    def parse(self, explanation):
+    def parse(self, explanations):
         """
-        :param explanation: an Explanation to parse.
+        :param explanations: an Explanation or list of Explanations.
         :return: a list of Parses.
         """
         if not self.semparser:
             self._build_semparser()
 
-        parses = self.semparser.parse(explanation, 
+        parses = self.semparser.parse(explanations, 
             return_parses=True, verbose=self.verbose)
 
         return parses
     
-    def filter(self, parses, explanation):
+    def filter(self, parses, explanations):
         """
         :param parses: a Parse or list of Parses.
-        :param explanation: the Explanation from which the parse(s) were produced.
-        :return: a list of Parses, a ConfusionMatrix, and a pandas DataFrame.
+        :param explanations: the Explanation or list of Explanations from which 
+            the parse(s) were produced.
+        :return: a list of Parses and a label_matrix
         """
         # Filter
-        parses, label_matrix = self.filter_bank.apply(parses, explanation)
-        
-        # Hold results in temporary space until commit
-        self.temp_parses = parses
-        self.temp_label_matrix = label_matrix
+        parses, label_matrix = self.filter_bank.apply(parses, explanations)
         
         return parses, label_matrix
 
     def analyze(self, parses, label_matrix):
-        # Report
+        if not parses:
+            return [], []
+
+        # TODO: improve the efficiency of this by applying labeler object in
+        # parallel mode and extracting stats from label_matrix.
         conf_matrix_list = []
         stats_list = []
         for parse in parses:
-            tp, fp, tn, fn = test_LF(self.session, parse.function, split=1, 
-                                     annotator_name='gold', display=False)
+            lf = parse.function
+            dev_marginals  = np.array([0.5 * (lf(c) + 1) for c in self.dev_candidates])
+            tp, fp, tn, fn = self.scorer.score(dev_marginals, 
+                set_unlabeled_as_neg=False, set_at_thresh_as_neg=False, display=False)
+
             conf_matrix_list.append(ConfusionMatrix(tp, fp, tn, fn))
-            
-            stats_list.append(None)
+            TP, FP, TN, FN = map(lambda x: float(len(x)), [tp, fp, tn, fn])
+            if TP or FP:
+                accuracy = TP/float(TP + FP)
+                class_coverage = float(TP + FP)/self.num_dev_pos
+            elif TN or FN:
+                accuracy = TN/float(TN + FN)
+                class_coverage = float(TN + FN)/self.num_dev_pos
+            else:
+                accuracy = None
+                class_coverage = None
+            stats_list.append(Statistics(accuracy, class_coverage))
 
         return conf_matrix_list, stats_list
 
-    def commit_lfs(self, idxs=None):
+    def commit(self, idxs='all'):
         """
         :param idxs: The indices of the parses (from the most recently returned
-            list of parses) to permanently keep. If None, keep them all.
+            list of parses) to permanently keep. 
+            If idxs = 'all', keep all of the parses.
+            If idxs is an integer, keep just that one parse.
+            If idxs is a list of integers, keep all parses from that list.
+            If idxs = None or [], keep none of the parses.
         """
-        self.parses += (self.temp_parses[idxs] if idxs else self.temp_parses)
-        if self.verbose:
-            num_added = len(idxs) if idxs else len(self.temp_parses)
-            print("Added {} parse(s) to set. (Total # parses = {})".format(
-                num_added, len(self.parses)))
-        # TODO: add to label_matrix
-        print("TODO: add to label_matrix...")
+        if idxs == 'all':
+            idxs = range(len(self.temp_parses))
+        elif isinstance(idxs, int):
+            idxs = [idxs]
+        elif not idxs:
+            idxs = []
+            print("Flushing all parses from previous explanation set.")
+        
+        if (isinstance(idxs, list) and len(idxs) > 0 and 
+            all(isinstance(x, int) for x in idxs)):
+            if max(idxs) >= len(self.temp_parses):
+                raise Exception("Invalid idx: {}.".format(max(idxs)))
 
+            parses_to_add = set(p for i, p in enumerate(self.temp_parses) if i in idxs)
+            parse_names_to_add = [p.function.__name__ for p in parses_to_add]
+            explanations_to_add = set(e for e in self.temp_explanations if 
+                any(pn.startswith(e.name) for pn in parse_names_to_add))
+            num_parses_added = len(parses_to_add - self.parses)
+            num_explanations_added = len(explanations_to_add - self.explanations)
+            self.parses.update(parses_to_add)
+            self.explanations.update(explanations_to_add)
+            if self.verbose:
+                print("Added {} parse(s) to set. (Total # parses = {})".format(
+                    num_parses_added, len(self.parses)))
+                print("Added {} explanation(s) to set. (Total # explanations = {})".format(
+                    num_explanations_added, len(self.parses)))
+        else:
+            parse_names_to_add = []
+        
+        # Permanently store the semantics and signatures in duplicate filters
+        self.filter_bank.commit(idxs)
+
+        # Remove from label matrix any parses that weren't kept
+        keys_to_drop = [p.function.__name__ for p in self.temp_parses 
+            if p.function.__name__ not in set(parse_names_to_add)]
+        cols_to_keep = [i for i in range(self.label_matrix.shape[1]) if 
+            self.label_matrix.get_key(self.session, i).name not in keys_to_drop]
+        
+        num_candidates, num_lfs = self.label_matrix.shape
+        print("With all parses: label_matrix.shape = {}".format(self.label_matrix.shape) # TEMP
+        if len(cols_to_keep) != num_lfs:
+            self.label_matrix = self.label_matrix[:, cols_to_keep]
+        print("After selection: label_matrix.shape = {}".format(self.label_matrix.shape) # TEMP
+
+        self.temp_parses = None
+        self.temp_explanations = None
 
     def get_label_matrix(self):
-        # TODO: convert label_matrix to csr_AnnotationMatrix for passing downstream
+        if self.temp_parses is not None:
+            print("You must commit before retrieving the label matrix.")
+            return None
         return self.label_matrix
 
 

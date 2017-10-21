@@ -120,7 +120,12 @@ additional = [
         semantics=None),
 ]
 
-explanations = basic + distant + additional
+all_explanations = basic + distant + additional
 
-def get_explanations(candidates):
-    return link_explanation_candidates(explanations, candidates)
+def get_explanations(candidates=None):
+    if candidates is None:
+        print("Warning: candidates were not provided and no linking was performed.")
+        explanations = all_explanations
+    else:
+        explanations = link_explanation_candidates(all_explanations, candidates)
+    return explanations

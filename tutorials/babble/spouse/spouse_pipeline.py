@@ -9,7 +9,6 @@ from snorkel.parser import TSVDocPreprocessor
 
 from tutorials.intro import load_external_labels, number_of_people
 
-from snorkel.contrib.babble import Babbler
 from snorkel.contrib.babble.pipelines import BabblePipeline
 from snorkel.contrib.babble.pipelines.snorkel_pipeline import TRAIN, DEV, TEST
 

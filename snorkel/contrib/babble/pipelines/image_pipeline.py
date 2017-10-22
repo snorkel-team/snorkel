@@ -146,10 +146,9 @@ class ImagePipeline(BabblePipeline):
         train_coco_ids, train_labels = link_images_candidates(train_anns, X_train, train_mscoco, Y_train)
         num_train = create_csv(dataset_dir, 'train_images.csv', train_coco_ids, train_labels, 'train2017')
 
-        if self.config['verbose']:
-            print("Train size: {}".format(num_train))
-            print("Dev size: {}".format(num_dev))
-            print("Test size: {}".format(num_test))
+        print("Train size: {}".format(num_train))
+        print("Dev size: {}".format(num_dev))
+        print("Test size: {}".format(num_test))
 
         # Convert to TFRecords Format
         if self.config.get('download_data', False):

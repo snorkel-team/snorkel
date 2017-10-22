@@ -23,7 +23,7 @@ python -u snorkel/contrib/babble/pipelines/run.py \
     --domain $DOMAIN \
     --reports_dir $REPORTS_DIR \
     --start_at 0 \
-    --end_at 10
+    --end_at 10 \
     --parallelism 15 \
     --postgres \
     --gen_model_search_space 1 \

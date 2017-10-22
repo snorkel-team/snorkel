@@ -35,7 +35,7 @@ config = {
     'optimizer': 'adam',
     'opt_epsilon': 1.0,
     'disc_params_search': {
-        'lr'        : [.01, .1, 1, 10, 100],
-        'max_steps' : [100, 200, 500]
+        'lr'        : [.1, 1, 10, 50, 100],
+        'max_steps' : [200, 500, 1000, 2000, 5000]
     },   
 }

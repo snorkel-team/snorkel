@@ -176,6 +176,7 @@ class ImagePipeline(BabblePipeline):
             min(self.config['disc_model_search_space'], len(disc_params_options))))
 
         accuracies, precisions, recalls = [], [], []
+        lrs, weight_decays, max_stepses = [], [], []
         for i, disc_params in enumerate(disc_params_options):
             train_dir = os.path.join(train_root, "config_{}".format(i))
             eval_dir = os.path.join(eval_root, "config_{}".format(i))
@@ -227,6 +228,9 @@ class ImagePipeline(BabblePipeline):
             accuracies.append(accuracy)
             precisions.append(precision)
             recalls.append(recall)
+            lrs.append(disc_params['lr'])
+            weight_decays.append(disc_params['weight_decay'])
+            max_stepses.append(disc_params['max_steps'])
         
         # Calculate F1 scores
         f1s = [float(2 * p * r)/(p + r) if p and r else 0 for p, r in zip(precisions, recalls)]
@@ -234,7 +238,10 @@ class ImagePipeline(BabblePipeline):
             'accuracy':     pd.Series(accuracies),
             'precision':    pd.Series(precisions),
             'recall':       pd.Series(recalls),
-            'f1':           pd.Series(f1s)
+            'f1':           pd.Series(f1s),
+            'lrs':          pd.Series(lrs),
+            'weight_decays':pd.Series(weight_decays),
+            'max_stepses':  pd.Series(max_stepses)
         }
         dev_df = pd.DataFrame(dev_results)
         print("\nDev Results: {}")

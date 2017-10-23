@@ -201,6 +201,7 @@ class ImagePipeline(BabblePipeline):
                 ' --num_clones=' + str(self.config['parallelism']) + \
                 ' --log_every_n_steps=' + str(self.config['print_freq']) + \
                 ' --learning_rate=' + str(disc_params['lr']) + \
+                ' --weight_decay=' + str(disc_params['weight_decay']) + \
                 ' --max_number_of_steps=' + str(disc_params['max_steps'])
             os.system(train_cmd)
 

@@ -61,6 +61,7 @@ if __name__ == '__main__':
 
     # Classify args
     argparser.add_argument('--disc_params_search:lr', type=float, action='append')
+    argparser.add_argument('--disc_params_search:weight_decay', type=float, action='append')
     argparser.add_argument('--disc_params_search:max_steps', type=int, action='append')
 
 

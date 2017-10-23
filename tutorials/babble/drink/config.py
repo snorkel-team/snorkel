@@ -37,7 +37,7 @@ config = {
     'disc_params_search': {
         'lr'        : [1, 50],
         'weight_decay': [1e-5, 1e-4, 1e-3, 1e-2],
-        'max_steps' : [200 1000],
+        'max_steps' : [200, 1000],
     },   
 }
 

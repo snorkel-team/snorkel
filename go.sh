@@ -24,8 +24,6 @@ python -u snorkel/contrib/babble/pipelines/run.py \
     --reports_dir $REPORTS_DIR \
     --start_at 0 \
     --end_at 10 \
-    --parallelism 15 \
-    --postgres \
     --gen_model_search_space 1 \
-    --disc_model_search_space 15 \
-    --seed 1018 --verbose --no_plots |& tee -a $LOGFILE  # seed = 111
+    --disc_model_search_space 16 \
+    --seed 1023 --verbose --no_plots |& tee -a $LOGFILE

@@ -31,12 +31,13 @@ config = {
 
     # DISCRIMINATIVE
     'disc_model_class': 'inception_v3',
-    'print_freq': 1,
+    'print_freq': 5,
     'optimizer': 'adam',
     'opt_epsilon': 1.0,
     'disc_params_search': {
-        'lr'        : [.1, 1, 10, 50, 100],
-        'max_steps' : [200, 500, 1000, 2000, 5000]
+        'lr'        : [1, 50],
+        'weight_decay': [1e-5, 1e-4, 1e-3, 1e-2],
+        'max_steps' : [200 1000],
     },   
 }
 

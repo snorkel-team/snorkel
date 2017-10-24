@@ -1,6 +1,9 @@
 import numpy as np
 
+from scipy.sparse import csr_matrix
+
 from snorkel.annotations import LabelAnnotator, csr_AnnotationMatrix
+from snorkel.utils import ProgressBar
 from snorkel.contrib.babble.grammar import Parse
 
 class FilterBank(object):
@@ -28,27 +31,30 @@ class FilterBank(object):
         if not parses: return [], None
 
         # Label and extract signatures
+        # TODO: replace this naive double for loop with a parallelized solution
+        print("Applying labeling functions to split {}".format(self.split))
         lfs = [parse.function for parse in parses]
-        labeler = LabelAnnotator(lfs=lfs)
+        candidates = self.session.query(self.candidate_class).filter(
+            self.candidate_class.split == self.split).all()
+        dense_label_matrix = np.zeros((len(candidates), len(lfs)))
 
-        if self.label_matrix is None:
-            label_matrix = labeler.apply(split=self.split, parallelism=parallelism)
-        else:
-            label_matrix = labeler.apply_existing(split=self.split, parallelism=parallelism)
+        pb = ProgressBar(len(lfs))
+        for j, lf in enumerate(lfs):
+            pb.bar(j)
+            for i, c in enumerate(candidates):
+                dense_label_matrix[i, j] = lf(c)
+        pb.close()                
+        label_matrix = csr_matrix(dense_label_matrix)
 
         # Apply signature based filters
         parses, rejected, label_matrix = self.uniform_filter.filter(parses, label_matrix)
-        label_matrix = label_matrix
-        if not parses: return [], label_matrix
+        if not parses: return [], None
 
         parses, rejected, label_matrix = self.dup_signature_filter.filter(parses, label_matrix)
-        label_matrix = label_matrix
-        if not parses: return [], label_matrix
+        if not parses: return [], None
 
         return parses, label_matrix
 
-        # for col_idx in range(self.label_matrix.shape[1]):
-        #     print(self.label_matrix.get_key(self.session, 0).name)
 
     def commit(self, idxs):
         self.dup_semantics_filter.commit(idxs)
@@ -160,14 +166,18 @@ class UniformSignatureFilter(Filter):
     def filter(self, parses, label_matrix):
         """
         :param parses: ...
-        :param label_matrix: a label_matrix corresponding to only the remaining 
-            parses from this batch.
+        :param label_matrix: a csr_sparse matrix of shape [M, N] for M 
+            candidates by the N Parses in :param parses.
+        :returns good_parses: a list of Parses to keep
+        :returns bad_parses: a list of Parses to not keep
+        :returns label_matrix: a csr_sparse matrix of shape [M, N'] for M 
+            candidates by the N' Parses in good_parses.
         """
         parses = self.validate(parses)
         if not parses: return [], [], label_matrix
-        if not isinstance(label_matrix, csr_AnnotationMatrix):
+        if not isinstance(label_matrix, csr_matrix):
             raise Exception("Method filter() requires a label_matrix of type "
-                "csr_AnnotationMatrix.")
+                "scipy.sparse.csr_matrix.")
 
         num_candidates, num_lfs = label_matrix.shape
         column_sums = np.asarray(abs(np.sum(label_matrix, 0))).ravel()
@@ -176,24 +186,15 @@ class UniformSignatureFilter(Filter):
         uniform_idxs = labeled_none_idxs + labeled_all_idxs
         nonuniform_idxs = [i for i, sum in enumerate(column_sums) if i not in uniform_idxs]
 
-        if nonuniform_idxs:
-            (good_parse_idxs, good_parses) = zip(*[(i, parse) for i, parse in 
-                enumerate(parses) if i in list(nonuniform_idxs)])
-            (bad_parse_idxs, bad_parses) = zip(*[(i, parse) for i, parse in 
-                enumerate(parses) if i not in list(nonuniform_idxs)])
-        else:
-            good_parses = []
-            good_parse_idxs = []
-            bad_parses = parses
-            bad_parse_idxs = uniform_idxs
+        good_parses = [parse for i, parse in enumerate(parses) if i in nonuniform_idxs]
+        bad_parses = [parse for i, parse in enumerate(parses) if i in uniform_idxs]
         label_matrix = label_matrix[:, nonuniform_idxs]
 
         print("{} parse(s) remain ({} parse(s) removed by {}: ({} None, {} All)).".format(
             len(good_parses), len(bad_parses), self.name(), 
-            len(set(labeled_none_idxs).intersection(bad_parse_idxs)), 
-            len(set(labeled_all_idxs).intersection(bad_parse_idxs))))
+            len(labeled_none_idxs), len(labeled_all_idxs)))
 
-        return list(good_parses), list(bad_parses), label_matrix
+        return good_parses, bad_parses, label_matrix
 
 
 class DuplicateSignatureFilter(Filter):
@@ -210,9 +211,9 @@ class DuplicateSignatureFilter(Filter):
         """
         parses = self.validate(parses)
         if not parses: return [], [], label_matrix
-        if not isinstance(label_matrix, csr_AnnotationMatrix):
+        if not isinstance(label_matrix, csr_matrix):
             raise Exception("Method filter() requires a label_matrix of type "
-                "csr_AnnotationMatrix.")    
+                "scipy.sparse.csr_matrix.")    
 
         num_candidates, num_lfs = label_matrix.shape
         signatures = [hash(label_matrix[:,i].nonzero()[0].tostring()) for i in range(num_lfs)]

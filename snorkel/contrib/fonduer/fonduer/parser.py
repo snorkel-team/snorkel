@@ -589,10 +589,10 @@ class ParaInfo(object):
 def update_coordinates_table(parts, coordinates):
     sep = " "
     words = coordinates["word"][:-1].split(sep)
-    top = coordinates["top"][:-1].split(sep)
-    left = coordinates["left"][:-1].split(sep)
-    bottom = coordinates["bottom"][:-1].split(sep)
-    right = coordinates["right"][:-1].split(sep)
+    top = [float(_) for _ in coordinates["top"][:-1].split(sep)]
+    left = [float(_) for _ in coordinates["left"][:-1].split(sep)]
+    bottom = [float(_) for _ in coordinates["bottom"][:-1].split(sep)]
+    right = [float(_) for _ in coordinates["right"][:-1].split(sep)]
     max_len = len(words)
     i=0
     for word in parts["words"]:
@@ -608,10 +608,10 @@ def update_coordinates_table(parts, coordinates):
 def update_coordinates(parts, coordinates, char_idx):
     sep = " "
     chars = coordinates["char"][:-1].split(sep)
-    top = coordinates["top"][:-1].split(sep)
-    left = coordinates["left"][:-1].split(sep)
-    bottom = coordinates["bottom"][:-1].split(sep)
-    right = coordinates["right"][:-1].split(sep)
+    top = [float(_) for _ in coordinates["top"][:-1].split(sep)]
+    left = [float(_) for _ in coordinates["left"][:-1].split(sep)]
+    bottom = [float(_) for _ in coordinates["bottom"][:-1].split(sep)]
+    right = [float(_) for _ in coordinates["right"][:-1].split(sep)]
     words = []
     for word in parts["words"]:
         curr_word = [word, float("Inf"), float("Inf"), float("-Inf"), float("-Inf")]

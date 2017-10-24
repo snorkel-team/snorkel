@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Text, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Float, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
@@ -9,6 +9,7 @@ from .....models.meta import snorkel_postgres
 from .....models.context import Context, Document, TemporarySpan, split_stable_id
 
 INT_ARRAY_TYPE = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
+FLT_ARRAY_TYPE = postgresql.ARRAY(Float) if snorkel_postgres else PickleType
 STR_ARRAY_TYPE = postgresql.ARRAY(String)  if snorkel_postgres else PickleType
 
 
@@ -369,10 +370,10 @@ class TabularMixin(object):
 class VisualMixin(object):
     """A collection of visual attributes."""
     page   = Column(INT_ARRAY_TYPE)
-    top    = Column(INT_ARRAY_TYPE)
-    left   = Column(INT_ARRAY_TYPE)
-    bottom = Column(INT_ARRAY_TYPE)
-    right  = Column(INT_ARRAY_TYPE)
+    top    = Column(FLT_ARRAY_TYPE)
+    left   = Column(FLT_ARRAY_TYPE)
+    bottom = Column(FLT_ARRAY_TYPE)
+    right  = Column(FLT_ARRAY_TYPE)
 
     def is_visual(self):
         return self.page is not None and self.page[0] is not None

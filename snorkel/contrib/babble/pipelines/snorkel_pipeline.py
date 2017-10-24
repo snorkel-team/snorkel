@@ -124,12 +124,6 @@ class SnorkelPipeline(object):
         """
         if config:
             self.config = config
-        
-        # if not self.labeler:
-        #     if self.lfs:
-        #         self.labeler = LabelAnnotator(lfs=self.lfs)
-        #     else:
-        #         raise Exception("Cannot load label matrix without having LF list.")
 
         if self.config['supervision'] == 'traditional':
             L_gold_train = load_gold_labels(self.session, annotator_name='gold', split=TRAIN)
@@ -139,32 +133,30 @@ class SnorkelPipeline(object):
                 plt.hist(train_marginals, bins=20)
                 plt.show()
         else:
-            if TRAIN in self.config['splits']:
-                L_train = load_label_matrix(self.session, split=TRAIN)
-                assert L_train.nnz > 0
-                if self.config['verbose']:
-                    print("Using L_train: {0}".format(L_train.__repr__()))
+            if not getattr(self, 'L_train', None):
+                self.L_train = load_label_matrix(self.session, split=TRAIN)
+            L_train = self.L_train
+            assert L_train.nnz > 0
+            if self.config['verbose']:
+                print("Using L_train: {0}".format(L_train.__repr__()))
+
+            # Load DEV and TEST labels and gold labels
             if DEV in self.config['splits']:
                 L_dev = load_label_matrix(self.session, split=DEV)
                 assert L_dev.nnz > 0
                 if self.config['verbose']:
                     print("Using L_dev: {0}".format(L_dev.__repr__()))
+                L_gold_dev = load_gold_labels(self.session, annotator_name='gold', split=DEV)
+                assert L_gold_dev.nonzero()[0].shape[0] > 0
             if TEST in self.config['splits']:
                 L_test = load_label_matrix(self.session, split=TEST)
                 assert L_test.nnz > 0
                 if self.config['verbose']:
                     print("Using L_test: {0}".format(L_test.__repr__()))
-
-            # Load dev and test labels
-            if DEV in self.config['splits']:
-                L_gold_dev = load_gold_labels(self.session, annotator_name='gold', split=DEV)
-                assert L_gold_dev.nonzero()[0].shape[0] > 0
-            if TEST in self.config['splits']:
                 L_gold_test = load_gold_labels(self.session, annotator_name='gold', split=TEST)
                 assert L_gold_test.nonzero()[0].shape[0] > 0
 
             if self.config['supervision'] == 'majority_vote':
-                L_train = load_label_matrix(self.session, split=TRAIN)
                 gen_model = MajorityVoter()
                 train_marginals = gen_model.marginals(L_train)
 

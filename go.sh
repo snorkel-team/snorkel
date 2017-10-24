@@ -22,8 +22,10 @@ echo ""
 python -u snorkel/contrib/babble/pipelines/run.py \
     --domain $DOMAIN \
     --reports_dir $REPORTS_DIR \
-    --start_at 0 \
+    --start_at 7 \
     --end_at 10 \
+    --supervision traditional \
     --gen_model_search_space 1 \
-    --disc_model_search_space 16 \
+    --disc_model_search_space 1 \
+    --disc_params_search:max_steps 1 \
     --seed 1023 --verbose --no_plots |& tee -a $LOGFILE

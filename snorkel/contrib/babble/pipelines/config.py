@@ -88,9 +88,9 @@ global_config = {
     },
     'disc_params_range': {
         'lr'        : [1e-2, 1e-3, 1e-4],
-        'dim'       : [50, 100],
+        'dim'       : [64, 128],
         'dropout'   : [0.1, 0.25, 0.5],
-        'rebalance' : [0.1, 0.25],
+        'rebalance' : [0.25, 0.5, False],
     },
     'disc_params_default': {
         'lr':         0.01,

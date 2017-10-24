@@ -602,8 +602,46 @@ def update_coordinates_table(parts, coordinates):
         parts['right'].append(right)
         i += 1
         if i == max_len:
-            break
+            break	
     return parts
+
+def lcs(X , Y):
+    m = len(X)
+    n = len(Y)
+ 
+    L = [[None]*(n+1) for i in xrange(m+1)]
+    d = [[None]*(n+1) for i in xrange(m+1)]
+
+    """Following steps build L[m+1][n+1] in bottom up fashion
+    Note: L[i][j] contains length of LCS of X[0..i-1]
+    and Y[0..j-1]"""
+    matches = []
+    for i in range(m+1):
+        for j in range(n+1):
+            if i == 0 or j == 0 :
+                L[i][j] = 0
+            elif X[i-1] == Y[j-1] and (L[i-1][j-1]+1)>max(L[i-1][j], L[i][j-1]):
+                L[i][j] = L[i-1][j-1]+1
+                d[i][j] = 'd'
+            else:
+                if L[i][j-1] > L[i-1][j]:
+                    d[i][j] = 'u'
+                    L[i][j] = L[i][j-1]
+                else:
+                    d[i][j] = 'l'
+                    L[i][j] = L[i-1][j]
+    i = m
+    j = n
+    while i>=0 and j>=0:
+        if d[i][j] == 'u':
+            j -= 1
+        elif d[i][j] == 'l':
+            i -= 1
+        else:
+            matches.append((i,j))
+            i -= 1
+            j -= 1
+    return matches
 
 def update_coordinates(parts, coordinates, char_idx):
     sep = " "
@@ -613,6 +651,54 @@ def update_coordinates(parts, coordinates, char_idx):
     bottom = [float(_) for _ in coordinates["bottom"][:-1].split(sep)]
     right = [float(_) for _ in coordinates["right"][:-1].split(sep)]
     words = []
+    new_chars = []
+    new_top = []
+    new_left = []
+    new_bottom = []
+    new_right = []
+    for i, char in enumerate(chars):
+        if len(char) > 0:
+            new_chars.append(char)
+            new_top.append(top[i])
+            new_left.append(left[i])
+            new_bottom.append(bottom[i])
+            new_right.append(right[i])
+    chars = new_chars
+    top = new_top
+    left = new_left
+    right = new_right
+    bottom = new_bottom
+    words = []
+    #print "".join(chars)
+    matches = lcs("".join(chars[char_idx:]), "".join(parts["words"]))
+    word_lens = [len(words) for words in parts["words"]]
+    for i, word in enumerate(parts["words"]):
+        curr_word = [word, float("Inf"), float("Inf"), float("-Inf"), float("-Inf")]
+        word_len = 0
+        word_len += sum(word_lens[:i])
+        word_begin = -1
+        word_end = -1
+        for match in matches:
+            if match[1] == word_len:
+                word_begin = match[0]
+            if match[1] == word_len + word_lens[i]:
+                word_end = match[0]
+        if word_begin == -1 or word_end == -1:
+            print "no match found"
+        else:
+            for char_iter in range(word_begin, word_end):
+                curr_word[1] = int(min(curr_word[1], top[char_idx+char_iter]))
+                curr_word[2] = int(min(curr_word[2], left[char_idx+char_iter]))
+                curr_word[3] = int(max(curr_word[3], bottom[char_idx+char_iter]))
+                curr_word[4] = int(max(curr_word[4], right[char_idx+char_iter]))        
+        parts['top'].append(curr_word[1])
+        parts['left'].append(curr_word[2])
+        parts['bottom'].append(curr_word[3])
+        parts['right'].append(curr_word[4])
+    #print char_idx, max([x[0] for x in matches])
+    char_idx += max([x[0] for x in matches])
+    
+    '''
     for word in parts["words"]:
         curr_word = [word, float("Inf"), float("Inf"), float("-Inf"), float("-Inf")]
         len_idx = 0
@@ -636,6 +722,7 @@ def update_coordinates(parts, coordinates, char_idx):
         parts['left'].append(curr_word[2])
         parts['bottom'].append(curr_word[3])
         parts['right'].append(curr_word[4])
+    '''
     return parts, char_idx
 
 class SectionInfo(object):

@@ -5,7 +5,7 @@ PARALLEL = 4 # assuming a quad-core machine
 ATTRIBUTE = "stg_temp_max"
 
 os.environ['SNORKELDBNAME'] = ATTRIBUTE
-os.environ['SNORKELDB'] = 'postgres://localhost:5432/' + os.environ['SNORKELDBNAME']
+os.environ['SNORKELDB'] = 'postgres://pabajaj:123@localhost:5433/' + os.environ['SNORKELDBNAME']
 
 sys.path.append(os.environ['SNORKELHOME'] + '/tutorials/fonduer/hardware/')
 
@@ -21,7 +21,7 @@ pdf_path = os.environ['SNORKELHOME'] + '/tutorials/fonduer/hardware/data/pdf_Tre
 max_docs = 6
 doc_preprocessor = HTMLPreprocessor(docs_path, max_docs=max_docs)
 
-corpus_parser = OmniParser(structural=True, lingual=True, visual=True, pdf_path=pdf_path)
+corpus_parser = OmniParser(structural=True, lingual=True, visual=False, pdf_path=pdf_path)
 corpus_parser.apply(doc_preprocessor, parallelism=PARALLEL)
 
 from snorkel.contrib.fonduer.models import Document, Phrase, Figure, Para

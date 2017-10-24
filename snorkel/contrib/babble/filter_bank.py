@@ -14,7 +14,6 @@ class FilterBank(object):
         self.dup_signature_filter = DuplicateSignatureFilter()
         self.label_matrix = None
 
-    # TODO: make a UDFRunner
     def apply(self, parses, explanations, parallelism=1):
         """
         Returns:
@@ -46,7 +45,6 @@ class FilterBank(object):
         label_matrix = label_matrix
         if not parses: return [], label_matrix
 
-        self.label_matrix = label_matrix 
         return parses, label_matrix
 
         # for col_idx in range(self.label_matrix.shape[1]):
@@ -86,7 +84,7 @@ class DuplicateSemanticsFilter(Filter):
         self.temp_seen = []
     
     def filter(self, parses):
-        self.validate(parses)
+        parses = self.validate(parses)
         if not parses: return [], []
 
         good_parses = []
@@ -118,7 +116,7 @@ class ConsistencyFilter(Filter):
         If possible, confirm that candidate is of proper type.
         If candidate_class was not provided, use try/except instead.
         """
-        self.validate(parses)
+        parses = self.validate(parses)
         if not parses: return [], []
 
         explanations = explanations if isinstance(explanations, list) else [explanations]
@@ -160,7 +158,12 @@ class ConsistencyFilter(Filter):
 class UniformSignatureFilter(Filter):
     """Filters out parses that give all candidates the same label."""
     def filter(self, parses, label_matrix):
-        self.validate(parses)
+        """
+        :param parses: ...
+        :param label_matrix: a label_matrix corresponding to only the remaining 
+            parses from this batch.
+        """
+        parses = self.validate(parses)
         if not parses: return [], [], label_matrix
         if not isinstance(label_matrix, csr_AnnotationMatrix):
             raise Exception("Method filter() requires a label_matrix of type "
@@ -168,15 +171,29 @@ class UniformSignatureFilter(Filter):
 
         num_candidates, num_lfs = label_matrix.shape
         column_sums = np.asarray(abs(np.sum(label_matrix, 0))).ravel()
-        nonuniform_idxs = [i for i, sum in enumerate(column_sums) if sum not in (0, num_candidates)]
+        labeled_none_idxs = [i for i, sum in enumerate(column_sums) if sum == 0]
+        labeled_all_idxs = [i for i, sum in enumerate(column_sums) if sum == num_candidates]
+        uniform_idxs = labeled_none_idxs + labeled_all_idxs
+        nonuniform_idxs = [i for i, sum in enumerate(column_sums) if i not in uniform_idxs]
 
-        good_parses = [parse for i, parse in enumerate(parses) if i in list(nonuniform_idxs)]
-        bad_parses = [parse for i, parse in enumerate(parses) if i not in list(nonuniform_idxs)]
+        if nonuniform_idxs:
+            (good_parse_idxs, good_parses) = zip(*[(i, parse) for i, parse in 
+                enumerate(parses) if i in list(nonuniform_idxs)])
+            (bad_parse_idxs, bad_parses) = zip(*[(i, parse) for i, parse in 
+                enumerate(parses) if i not in list(nonuniform_idxs)])
+        else:
+            good_parses = []
+            good_parse_idxs = []
+            bad_parses = parses
+            bad_parse_idxs = uniform_idxs
         label_matrix = label_matrix[:, nonuniform_idxs]
 
-        print("{} parse(s) remain ({} parse(s) removed by {}).".format(
-            len(good_parses), len(bad_parses), self.name()))    
-        return good_parses, bad_parses, label_matrix
+        print("{} parse(s) remain ({} parse(s) removed by {}: ({} None, {} All)).".format(
+            len(good_parses), len(bad_parses), self.name(), 
+            len(set(labeled_none_idxs).intersection(bad_parse_idxs)), 
+            len(set(labeled_all_idxs).intersection(bad_parse_idxs))))
+
+        return list(good_parses), list(bad_parses), label_matrix
 
 
 class DuplicateSignatureFilter(Filter):
@@ -186,7 +203,12 @@ class DuplicateSignatureFilter(Filter):
         self.temp_seen = []
 
     def filter(self, parses, label_matrix):
-        self.validate(parses)
+        """
+        :param parses: ...
+        :param label_matrix: a label_matrix corresponding to only the remaining 
+            parses from this batch.
+        """
+        parses = self.validate(parses)
         if not parses: return [], [], label_matrix
         if not isinstance(label_matrix, csr_AnnotationMatrix):
             raise Exception("Method filter() requires a label_matrix of type "

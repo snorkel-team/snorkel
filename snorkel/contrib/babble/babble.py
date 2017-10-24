@@ -147,18 +147,17 @@ class BabbleStream(object):
             self.commit([])
             print("All previously uncommitted parses have been flushed.")
 
-        parses = self.parse(explanations)
-        parses, label_matrix = self.filter(parses, explanations)
-        conf_matrix_list, stats_list = self.analyze(parses, label_matrix)
+        parses = self._parse(explanations)
+        parses = self._filter(parses, explanations)
+        conf_matrix_list, stats_list = self.analyze(parses)
         
         # Hold results in temporary space until commit
         self.temp_explanations = explanations if isinstance(explanations, list) else [explanations]
         self.temp_parses = parses if isinstance(parses, list) else [parses]
-        self.label_matrix = label_matrix
         
         return parses, conf_matrix_list, stats_list
 
-    def parse(self, explanations):
+    def _parse(self, explanations):
         """
         :param explanations: an Explanation or list of Explanations.
         :return: a list of Parses.
@@ -171,19 +170,19 @@ class BabbleStream(object):
 
         return parses
     
-    def filter(self, parses, explanations):
+    def _filter(self, parses, explanations):
         """
         :param parses: a Parse or list of Parses.
         :param explanations: the Explanation or list of Explanations from which 
             the parse(s) were produced.
-        :return: a list of Parses and a label_matrix
+        :return: a list of Parses
         """
         # Filter
-        parses, label_matrix = self.filter_bank.apply(parses, explanations)
+        parses = self.filter_bank.apply(parses, explanations)
         
-        return parses, label_matrix
+        return parses
 
-    def analyze(self, parses, label_matrix):
+    def analyze(self, parses):
         if not parses:
             return [], []
 
@@ -254,16 +253,17 @@ class BabbleStream(object):
         self.filter_bank.commit(idxs)
 
         # Remove from label matrix any parses that weren't kept
-        keys_to_drop = [p.function.__name__ for p in self.temp_parses 
-            if p.function.__name__ not in set(parse_names_to_add)]
-        cols_to_keep = [i for i in range(self.label_matrix.shape[1]) if 
-            self.label_matrix.get_key(self.session, i).name not in keys_to_drop]
-        
-        num_candidates, num_lfs = self.label_matrix.shape
-        print("With all parses: label_matrix.shape = {}".format(self.label_matrix.shape)) # TEMP
-        if len(cols_to_keep) != num_lfs:
-            self.label_matrix = self.label_matrix[:, cols_to_keep]
-        print("After selection: label_matrix.shape = {}".format(self.label_matrix.shape)) # TEMP
+        if self.label_matrix is not None and self.label_matrix.shape[1] > 0:
+            keys_to_drop = [p.function.__name__ for p in self.temp_parses 
+                if p.function.__name__ not in set(parse_names_to_add)]
+            cols_to_keep = [i for i in range(self.label_matrix.shape[1]) if 
+                self.label_matrix.get_key(self.session, i).name not in keys_to_drop]
+            
+            num_candidates, num_lfs = self.label_matrix.shape
+            print("With all parses: label_matrix.shape = {}".format(self.label_matrix.shape)) # TEMP
+            if len(cols_to_keep) != num_lfs:
+                self.label_matrix = self.label_matrix[:, cols_to_keep]
+            print("After selection: label_matrix.shape = {}".format(self.label_matrix.shape)) # TEMP
 
         self.temp_parses = None
         self.temp_explanations = None

@@ -13,7 +13,7 @@ from snorkel.contrib.babble import Babbler
 from snorkel.contrib.babble.pipelines import BabblePipeline
 from snorkel.contrib.babble.pipelines.snorkel_pipeline import TRAIN, DEV, TEST
 
-DATA_ROOT = os.environ['SNORKELHOME'] + '/tutorials/intro/data/
+DATA_ROOT = os.environ['SNORKELHOME'] + '/tutorials/intro/data/'
 
 class SpousePipeline(BabblePipeline):
     def parse(self, 

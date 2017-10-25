@@ -218,7 +218,7 @@ class BabbleStream(object):
                                      self.num_dev_total, 
                                      float(TN + FN)/self.num_dev_total)
                 class_coverage = Statistic(TN + FN,
-                                     self.num_dev_pos,
+                                     self.num_dev_neg,
                                      float(TN + FN)/self.num_dev_neg)
             else:
                 conf_matrix = ConfusionMatrix(set(), set(), set(self.dev_candidates))
@@ -270,13 +270,24 @@ class BabbleStream(object):
                     len(parses_to_add), len(self.parses)))
                 print("Added {} explanation(s) to set. (Total # explanations = {})".format(
                     len(explanations_to_add), len(self.parses)))
-        
+
         # Permanently store the semantics and signatures in duplicate filters
         self.filter_bank.commit(idxs)
 
         self.temp_parses = None
         self.temp_explanations = None
         self.temp_label_matrix = None
+
+    def get_global_stats(self):
+        """Calculate stats for the dataset as a whole.
+
+        Note: this only consideres committed LFs
+        """
+        num_labeled = sum(np.asarray(abs(np.sum(self.label_matrix, 1))).ravel() != 0)
+        global_coverage = Statistic(num_labeled, 
+                                    self.num_dev_total, 
+                                    float(num_labeled)/self.num_dev_total)
+        return global_coverage
 
     def get_label_matrix(self):
         if self.temp_parses is not None:

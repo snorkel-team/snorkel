@@ -34,13 +34,42 @@ from snorkel.contrib.babble.semparser import Explanation, SemanticParser
 
 ConfusionMatrix = namedtuple('ConfusionMatrix', ['correct', 'incorrect', 'abstained'])
 Metrics = namedtuple('Metrics', ['accuracy', 'coverage', 'class_coverage'])
-Statistic = namedtuple('Statistic', ['numer', 'denom', 'percent'])
+
+class Statistic(object):
+    def __init__(self, numer, denom):
+        self.numer = int(numer)
+        self.denom = int(denom)
+        self.percent = float(numer)/denom * 100
+    
+    def __repr__(self):
+        return "{}: {:.1f}% ({}/{})".format(
+            type(self).__name__, self.percent, self.numer, self.denom)
+
+class Accuracy(Statistic):
+    """The accuracy of a single labeling function."""
+    pass
+
+class Coverage(Statistic):
+    """The coverage (# labeled/# total) of a single labeling function."""
+    pass
+
+class ClassCoverage(Statistic):
+    """The coverage (# labeled/# total _in class_) of a single labeling function."""
+    pass
+
+class GlobalCoverage(Statistic):
+    """The coverage (# labeled with 1+ label/# total) of all labeling functions."""
+    pass
+
 
 class CandidateGenerator(object):
     """
     A generator for returning a list of candidates in a certain order.
     """
-    def __init__(self, candidates, strategy='linear'):
+    def __init__(self, candidates, strategy='linear', seed=None):
+        if seed is not None:
+            random.seed(seed)
+
         if strategy == 'linear':
             self.candidate_generator = self.linear_generator(candidates)
         elif strategy == 'random':
@@ -74,14 +103,14 @@ class BabbleStream(object):
     An object for iteratively viewing candidates and parsing corresponding explanations.
     """
     def __init__(self, session, mode='text', candidate_class=None, 
-                strategy='linear', verbose=True):
+                strategy='linear', seed=None, verbose=True):
         self.session = session
         self.mode = mode
         self.candidate_class = candidate_class
         self.verbose = verbose
 
         self.dev_candidates = session.query(self.candidate_class).filter(self.candidate_class.split == 1).all()
-        self.candidate_generator = CandidateGenerator(self.dev_candidates, strategy)
+        self.candidate_generator = CandidateGenerator(self.dev_candidates, strategy, seed)
         self.user_lists = {}
         self.semparser = None
         self.filter_bank = FilterBank(session, candidate_class)
@@ -200,31 +229,19 @@ class BabbleStream(object):
             TP, FP, TN, FN = map(lambda x: len(x), [tp, fp, tn, fn])
             if TP or FP:
                 conf_matrix = (ConfusionMatrix(tp, fp, set(self.dev_candidates) - tp - fp))
-                accuracy = Statistic(TP, 
-                                     TP + FP, 
-                                     TP/float(TP + FP))
-                coverage = Statistic(TP + FP, 
-                                     self.num_dev_total, 
-                                     float(TP + FP)/self.num_dev_total)
-                class_coverage = Statistic(TP + FP,
-                                     self.num_dev_pos,
-                                     float(TP + FP)/self.num_dev_pos)
+                accuracy = Accuracy(TP, TP + FP)
+                coverage = Coverage(TP + FP, self.num_dev_total)
+                class_coverage = ClassCoverage(TP + FP, self.num_dev_pos)
             elif TN or FN:
                 conf_matrix = (ConfusionMatrix(tn, fn, set(self.dev_candidates) - tn - fn))
-                accuracy = Statistic(TN, 
-                                     TN + FN, 
-                                     TN/float(TN + FN))
-                coverage = Statistic(TN + FN, 
-                                     self.num_dev_total, 
-                                     float(TN + FN)/self.num_dev_total)
-                class_coverage = Statistic(TN + FN,
-                                     self.num_dev_neg,
-                                     float(TN + FN)/self.num_dev_neg)
+                accuracy = Accuracy(TN, TN + FN)
+                coverage = Coverage(TN + FN, self.num_dev_total)
+                class_coverage = ClassCoverage(TN + FN, self.num_dev_neg)
             else:
                 conf_matrix = ConfusionMatrix(set(), set(), set(self.dev_candidates))
-                accuracy = Statistic(0, self.num_dev_total, 0)
-                coverage = Statistic(0, self.num_dev_total, 0)
-                class_coverage = Statistic(0, self.num_dev_total, 0)
+                accuracy = Accuracy(0, self.num_dev_total)
+                coverage = Coverage(0, self.num_dev_total)
+                class_coverage = ClassCoverage(0, self.num_dev_total)
 
             conf_matrix_list.append(conf_matrix)
             stats_list.append(Metrics(accuracy, coverage, class_coverage))
@@ -284,10 +301,7 @@ class BabbleStream(object):
         Note: this only consideres committed LFs
         """
         num_labeled = sum(np.asarray(abs(np.sum(self.label_matrix, 1))).ravel() != 0)
-        global_coverage = Statistic(num_labeled, 
-                                    self.num_dev_total, 
-                                    float(num_labeled)/self.num_dev_total)
-        return global_coverage
+        return GlobalCoverage(num_labeled, self.num_dev_total)
 
     def get_label_matrix(self):
         if self.temp_parses is not None:

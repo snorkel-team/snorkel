@@ -42,7 +42,7 @@ class SpousePipeline(BabblePipeline):
                     count += 1
                 elif tag != 'PERSON' and active_sequence:
                     active_sequence = False
-            return count <= 5
+            return count > 5
 
         print("Loading predefined splits from file.")
         split_assignments = load_splits(self.session, DATA_ROOT + 'splits.tsv')
@@ -53,15 +53,16 @@ class SpousePipeline(BabblePipeline):
         dev_sents = []
         test_sents = []
         for sent in sents:
-            doc_name = sent.get_parent().name
-            if doc_name in split_assignments[0]:
-                train_sents.append(sent)
-            elif doc_name in split_assignments[1]:
-                dev_sents.append(sent)
-            elif doc_name in split_assignments[2]:
-                test_sents.append(sent)
-            else:
-                raise Exception("Found a Sentence without an assignment!")
+            if not too_many_people(sent):
+                doc_name = sent.get_parent().name
+                if doc_name in split_assignments[0]:
+                    train_sents.append(sent)
+                elif doc_name in split_assignments[1]:
+                    dev_sents.append(sent)
+                elif doc_name in split_assignments[2]:
+                    test_sents.append(sent)
+                else:
+                    raise Exception("Found a Sentence without an assignment!")
 
         # Candidate extraction
         print("Extracting candidates.")

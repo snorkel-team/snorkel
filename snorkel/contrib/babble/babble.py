@@ -32,8 +32,9 @@ from snorkel.contrib.babble.semparser import Explanation, SemanticParser
 
 # from tutorials.babble.spouse.spouse_examples import get_user_lists, get_explanations
 
-ConfusionMatrix = namedtuple('ConfusionMatrix', ['tp', 'fp', 'tn', 'fn'])
-Statistics = namedtuple('Statistics', ['accuracy', 'class_coverage'])
+ConfusionMatrix = namedtuple('ConfusionMatrix', ['correct', 'incorrect', 'abstained'])
+Metrics = namedtuple('Metrics', ['accuracy', 'coverage', 'class_coverage'])
+Statistic = namedtuple('Statistic', ['numer', 'denom', 'percent'])
 
 class CandidateGenerator(object):
     """
@@ -196,18 +197,37 @@ class BabbleStream(object):
             tp, fp, tn, fn = self.scorer.score(dev_marginals, 
                 set_unlabeled_as_neg=False, set_at_thresh_as_neg=False, display=False)
 
-            conf_matrix_list.append(ConfusionMatrix(tp, fp, tn, fn))
-            TP, FP, TN, FN = map(lambda x: float(len(x)), [tp, fp, tn, fn])
+            TP, FP, TN, FN = map(lambda x: len(x), [tp, fp, tn, fn])
             if TP or FP:
-                accuracy = TP/float(TP + FP)
-                class_coverage = float(TP + FP)/self.num_dev_pos
+                conf_matrix = (ConfusionMatrix(tp, fp, set(self.dev_candidates) - tp - fp))
+                accuracy = Statistic(TP, 
+                                     TP + FP, 
+                                     TP/float(TP + FP))
+                coverage = Statistic(TP + FP, 
+                                     self.num_dev_total, 
+                                     float(TP + FP)/self.num_dev_total)
+                class_coverage = Statistic(TP + FP,
+                                     self.num_dev_pos,
+                                     float(TP + FP)/self.num_dev_pos)
             elif TN or FN:
-                accuracy = TN/float(TN + FN)
-                class_coverage = float(TN + FN)/self.num_dev_pos
+                conf_matrix = (ConfusionMatrix(tn, fn, set(self.dev_candidates) - tn - fn))
+                accuracy = Statistic(TN, 
+                                     TN + FN, 
+                                     TN/float(TN + FN))
+                coverage = Statistic(TN + FN, 
+                                     self.num_dev_total, 
+                                     float(TN + FN)/self.num_dev_total)
+                class_coverage = Statistic(TN + FN,
+                                     self.num_dev_pos,
+                                     float(TN + FN)/self.num_dev_neg)
             else:
-                accuracy = None
-                class_coverage = None
-            stats_list.append(Statistics(accuracy, class_coverage))
+                conf_matrix = ConfusionMatrix(set(), set(), set(self.dev_candidates))
+                accuracy = Statistic(0, self.num_dev_total, 0)
+                coverage = Statistic(0, self.num_dev_total, 0)
+                class_coverage = Statistic(0, self.num_dev_total, 0)
+
+            conf_matrix_list.append(conf_matrix)
+            stats_list.append(Metrics(accuracy, coverage, class_coverage))
 
         return conf_matrix_list, stats_list
 

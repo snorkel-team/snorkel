@@ -239,7 +239,7 @@ class SnorkelPipeline(object):
             np.random.seed(self.config['seed'])
 
         X_train = self.get_candidates(TRAIN)
-        Y_train = (self.train_marginals if getattr(self, 'train_marginals', False) 
+        Y_train = (self.train_marginals if getattr(self, 'train_marginals', None) is not None 
                     else load_marginals(self.session, split=0))
         X_dev = self.get_candidates(DEV)
         Y_dev = load_gold_labels(self.session, annotator_name='gold', split=DEV)

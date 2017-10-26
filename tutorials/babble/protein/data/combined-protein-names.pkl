@@ -17758,7 +17758,7 @@ aS'mov10l1'
 p8879
 aS'pnldc1'
 p8880
-aS'\xce\xb1-synuclein'
+aS'alpha-synuclein'
 p8881
 aS'colq'
 p8882
@@ -40743,7 +40743,7 @@ aS'borcs5'
 p20371
 aS'2410089e03rik'
 p20372
-aS'\xce\xb2-tubulin'
+aS'beta-tubulin'
 p20373
 aS'borcs8'
 p20374

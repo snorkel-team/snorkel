@@ -66,21 +66,28 @@ class CandidateGenerator(object):
     """
     A generator for returning a list of candidates in a certain order.
     """
-    def __init__(self, candidates, strategy='linear', seed=None):
+    def __init__(self, babble_stream, seed=None, 
+                 balanced=False, active=False, shuffled=False):
+        """
+        If active = True, return only candidates that have no labels so far
+        If balanced = True, alternate between candidates with True/False gold labels
+        If random = True, return the candidates (passing the above conditions,
+            if applicable) in random order.
+        """
         if seed is not None:
             random.seed(seed)
-
-        if strategy == 'linear':
-            self.candidate_generator = self.linear_generator(candidates)
-        elif strategy == 'random':
-            self.candidate_generator = self.random_generator(candidates)
-        elif strategy == 'balanced':
-            raise NotImplementedError
-        elif strategy == 'active':
+        candidates = babble_stream.dev_candidates
+        labels = np.ravel(babble_stream.dev_labels.todense())
+        
+        if active:
             raise NotImplementedError
         else:
-            raise Exception("kwarg 'strategy' must be in "
-                "{'linear', 'random', 'balanced', 'active'}")
+            if balanced:
+                self.candidate_generator = self.balanced_generator(
+                    candidates, labels, shuffled=shuffled)
+            else:
+                self.candidate_generator = self.linear_generator(
+                    candidates, shuffled=shuffled)
 
     def __iter__(self):
         return self
@@ -88,29 +95,47 @@ class CandidateGenerator(object):
     def next(self):
         return self.candidate_generator.next()
 
-    def linear_generator(self, candidates):
+    @staticmethod
+    def linear_generator(candidates, shuffled=False):
+        if shuffled:
+            random.shuffle(candidates)
         for c in candidates:
             yield c
 
-    def random_generator(self, candidates):
-        random.shuffle(candidates)
-        for c in candidates:
+    @staticmethod
+    def balanced_generator(candidates, labels, shuffled=False):
+        candidates_labels = zip(candidates, labels)
+        if shuffled:
+            random.shuffle(candidates)
+        positives = [c for (c, l) in candidates_labels if l == 1]
+        negatives = [c for (c, l) in candidates_labels if l == -1]
+        candidate_queue = []
+        for i in range(max(len(positives), len(negatives))):
+            if i < len(positives):
+                candidate_queue.append(positives[i])
+            if i < len(negatives):
+                candidate_queue.append(negatives[i])
+        for c in candidate_queue:
             yield c
+
+
 
 
 class BabbleStream(object):
     """
     An object for iteratively viewing candidates and parsing corresponding explanations.
     """
-    def __init__(self, session, mode='text', candidate_class=None, 
-                strategy='linear', seed=None, verbose=True):
+    def __init__(self, session, mode='text', candidate_class=None, seed=None, 
+                verbose=True, **kwargs):
         self.session = session
         self.mode = mode
         self.candidate_class = candidate_class
+        self.seed = seed
         self.verbose = verbose
 
         self.dev_candidates = session.query(self.candidate_class).filter(self.candidate_class.split == 1).all()
-        self.candidate_generator = CandidateGenerator(self.dev_candidates, strategy, seed)
+        self.dev_labels = load_gold_labels(session, annotator_name='gold', split=1)
+        self.candidate_generator_kwargs = kwargs
         self.user_lists = {}
         self.semparser = None
         self.filter_bank = FilterBank(session, candidate_class)
@@ -125,17 +150,19 @@ class BabbleStream(object):
         self.temp_label_matrix = None
 
         # Evaluation tools
-        dev_labels          = load_gold_labels(session, annotator_name='gold', split=1)
         self.num_dev_total  = len(self.dev_candidates)
-        self.num_dev_pos    = dev_labels.nnz
+        self.num_dev_pos    = self.dev_labels.nnz
         self.num_dev_neg    = self.num_dev_total - self.num_dev_pos
-        self.scorer         = MentionScorer(self.dev_candidates, dev_labels)
+        self.scorer         = MentionScorer(self.dev_candidates, self.dev_labels)
 
 
     def __iter__(self):
         return self
 
     def next(self):
+        if not hasattr(self, 'candidate_generator'):
+            self.candidate_generator = CandidateGenerator(self,
+                seed=self.seed, **(self.candidate_generator_kwargs))
         c = self.candidate_generator.next()
         self.temp_candidate = c
         return c

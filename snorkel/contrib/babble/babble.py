@@ -39,10 +39,10 @@ class Statistic(object):
     def __init__(self, numer, denom):
         self.numer = int(numer)
         self.denom = int(denom)
-        self.percent = float(numer)/denom * 100
+        self.percent = float(numer)/denom * 100 if denom else 0
     
     def __repr__(self):
-        return "{}: {:.1f}% ({}/{})".format(
+        return "{}: {:.2f}% ({}/{})".format(
             type(self).__name__, self.percent, self.numer, self.denom)
 
 class Accuracy(Statistic):
@@ -77,7 +77,7 @@ class CandidateGenerator(object):
         if seed is not None:
             random.seed(seed)
         candidates = babble_stream.dev_candidates
-        labels = np.ravel(babble_stream.dev_labels.todense())
+        labels = babble_stream.dev_labels
         
         if active:
             raise NotImplementedError
@@ -134,7 +134,8 @@ class BabbleStream(object):
         self.verbose = verbose
 
         self.dev_candidates = session.query(self.candidate_class).filter(self.candidate_class.split == 1).all()
-        self.dev_labels = load_gold_labels(session, annotator_name='gold', split=1)
+        self.dev_labels = np.ravel((load_gold_labels(session, annotator_name='gold', split=1)).todense())
+    
         self.candidate_generator_kwargs = kwargs
         self.user_lists = {}
         self.semparser = None
@@ -151,8 +152,9 @@ class BabbleStream(object):
 
         # Evaluation tools
         self.num_dev_total  = len(self.dev_candidates)
-        self.num_dev_pos    = self.dev_labels.nnz
-        self.num_dev_neg    = self.num_dev_total - self.num_dev_pos
+        self.num_dev_pos    = sum(self.dev_labels == 1)
+        self.num_dev_neg    = sum(self.dev_labels == -1)
+        assert(self.num_dev_total == self.num_dev_pos + self.num_dev_neg)
         self.scorer         = MentionScorer(self.dev_candidates, self.dev_labels)
 
 

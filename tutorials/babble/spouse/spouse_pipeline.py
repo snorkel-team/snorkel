@@ -8,7 +8,7 @@ from snorkel.matchers import PersonMatcher
 from snorkel.models import Document, Sentence, StableLabel
 from snorkel.parser import TSVDocPreprocessor
 
-from tutorials.intro import load_external_labels
+from tutorials.babble.spouse.utils import load_external_labels
 
 from snorkel.contrib.babble.pipelines import BabblePipeline
 from snorkel.contrib.babble.pipelines.snorkel_pipeline import TRAIN, DEV, TEST
@@ -81,9 +81,14 @@ class SpousePipeline(BabblePipeline):
 
 
     def load_gold(self, config=None):
-        fpath = DATA_ROOT + 'gold_labels.tsv'
+        fpath = DATA_ROOT + 'labels.tsv'
+        # If not using traditional supervision, don't bother loading train gold.
+        if self.config['supervision'] == 'traditional':
+            splits = self.config['splits']
+        else:
+            splits = [split for split in self.config['splits'] if split != 0]
         load_external_labels(self.session, self.candidate_class, 
-                             annotator_name='gold', path=fpath, splits=self.config['splits'])
+                             annotator_name='gold', path=fpath, splits=splits)
 
     def collect(self, lf_source='intro_exps'):
         if lf_source == 'intro_func':

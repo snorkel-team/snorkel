@@ -1,19 +1,19 @@
+from collections import defaultdict
 import csv
 import os
 import numpy as np
 
 from snorkel.candidates import Ngrams, CandidateExtractor
 from snorkel.matchers import PersonMatcher
-from snorkel.models import Document, StableLabel
+from snorkel.models import Document, Sentence, StableLabel
 from snorkel.parser import TSVDocPreprocessor
 
-from tutorials.intro import load_external_labels, number_of_people
+from tutorials.intro import load_external_labels
 
-from snorkel.contrib.babble import Babbler
 from snorkel.contrib.babble.pipelines import BabblePipeline
 from snorkel.contrib.babble.pipelines.snorkel_pipeline import TRAIN, DEV, TEST
 
-DATA_ROOT = os.environ['SNORKELHOME'] + '/tutorials/intro/data/'
+DATA_ROOT = os.environ['SNORKELHOME'] + '/tutorials/babble/spouse/data/'
 
 class SpousePipeline(BabblePipeline):
     def parse(self, 
@@ -24,6 +24,48 @@ class SpousePipeline(BabblePipeline):
         super(SpousePipeline, self).parse(doc_preprocessor, clear=clear)
 
     def extract(self, clear=True, config=None):
+        def load_splits(session, path):
+            """Loads the mapping between context ids and splits from file -> dict."""
+            split_assignments = defaultdict(set)
+            with open(path, 'rb') as f:
+                for line in f:
+                    doc_name, split = line.strip().split("\t")
+                    split_assignments[int(split)].add(doc_name)
+            return split_assignments
+
+        def too_many_people(sentence):
+            active_sequence = False
+            count = 0
+            for tag in sentence.ner_tags:
+                if tag == 'PERSON' and not active_sequence:
+                    active_sequence = True
+                    count += 1
+                elif tag != 'PERSON' and active_sequence:
+                    active_sequence = False
+            return count > 5
+
+        print("Loading predefined splits from file.")
+        split_assignments = load_splits(self.session, DATA_ROOT + 'splits.tsv')
+
+        print("Separating sentences into splits.")
+        sents = self.session.query(Sentence).all()
+        train_sents = []
+        dev_sents = []
+        test_sents = []
+        for sent in sents:
+            if not too_many_people(sent):
+                doc_name = sent.get_parent().name
+                if doc_name in split_assignments[0]:
+                    train_sents.append(sent)
+                elif doc_name in split_assignments[1]:
+                    dev_sents.append(sent)
+                elif doc_name in split_assignments[2]:
+                    test_sents.append(sent)
+                else:
+                    raise Exception("Found a Sentence without an assignment!")
+
+        # Candidate extraction
+        print("Extracting candidates.")
         ngrams         = Ngrams(n_max=7)
         person_matcher = PersonMatcher(longest_match_only=True)
         candidate_extractor = CandidateExtractor(
@@ -31,42 +73,15 @@ class SpousePipeline(BabblePipeline):
             [ngrams, ngrams], 
             [person_matcher, 
             person_matcher])
-        
-        docs = self.session.query(Document).order_by(Document.name).all()
-
-        # NOTE: create split_assignments.tsv using the spouse_data_splitter 
-        # notebook. It splits the corpus by document and makes sure that any
-        # documents with candidates that were annotated by MTurkers are placed
-        # in train.
-        assignment_path = (os.environ['SNORKELHOME'] + 
-                  '/tutorials/babble/spouse/data/split_assignments.tsv')
-        with open(assignment_path, 'r') as tsvfile:
-            tsvreader = csv.reader(tsvfile, delimiter='\t')
-            split_assignments = {k: v for k, v in tsvreader}
-
-        train_sents = set()
-        dev_sents   = set()
-        test_sents  = set()
-
-        for i, doc in enumerate(docs):
-            split = int(split_assignments[doc.stable_id])
-            for s in doc.sentences:
-                if number_of_people(s) > 5:
-                    continue
-                if split == TRAIN:
-                    train_sents.add(s)
-                elif split == DEV:
-                    dev_sents.add(s)
-                else:
-                    test_sents.add(s)
 
         for split, sents in enumerate([train_sents, dev_sents, test_sents]):
             if len(sents) > 0 and split in self.config['splits']:
                 super(SpousePipeline, self).extract(
                     candidate_extractor, sents, split=split, clear=clear)
 
+
     def load_gold(self, config=None):
-        fpath = os.environ['SNORKELHOME'] + '/tutorials/intro/data/gold_labels.tsv'
+        fpath = DATA_ROOT + 'gold_labels.tsv'
         load_external_labels(self.session, self.candidate_class, 
                              annotator_name='gold', path=fpath, splits=self.config['splits'])
 

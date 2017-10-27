@@ -84,15 +84,14 @@ class ProteinKinaseLookupTagger (object):
                            'pten-induced putative kinase 1' ])
 
     def tag(self, parts):
-        # print('parts are',parts['words'])
         for i, word in enumerate(parts['words']):
             tag = parts['entity_types'][i]
-            if len(word) > 3 and tag in (None,'O'):
+            if len(word) > 2 and tag in (None,'O'):
                 wl = word.lower()
                 # TODO determine whether populating entity_cids with dummy data
                 # is necessary
                 if wl in self.kinase_set:
                     parts['entity_types'][i] = 'kinase'
-                elif wl in self.protein_set:
+                elif wl.encode('utf-8') in self.protein_set:
                     parts['entity_types'][i] = 'protein'
         return parts

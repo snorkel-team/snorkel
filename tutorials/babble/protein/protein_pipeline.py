@@ -69,7 +69,9 @@ class ProteinPipeline(BabblePipeline):
 
 
     def load_gold(self, config=None):
+        load_external_labels(self.session, self.candidate_class, split=0, annotator='gold')
         load_external_labels(self.session, self.candidate_class, split=1, annotator='gold')
+        load_external_labels(self.session, self.candidate_class, split=2, annotator='gold')
 
     def collect(self):
         candidates = self.get_candidates(split=self.config['babbler_candidate_split'])

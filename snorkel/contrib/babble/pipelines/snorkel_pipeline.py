@@ -315,13 +315,14 @@ class SnorkelPipeline(object):
         train_size = self.config['max_train']
         
         if train_size is None:
+            print("No value found for max_train. Using all available gold labels.")
             train_size = L_gold_train.nnz
         elif L_gold_train.nnz < train_size:
             print("Requested {} traditional labels. Only {} could be found.".format(
                 train_size, L_gold_train.nnz))
             train_size = L_gold_train.nnz
         
-        print("Using {} traditional labels".format(train_size))
+        print("Using {} traditional gold labels".format(train_size))
 
         # Randomly select the requested number of gold labels out of all train
         # candidates that have non-zero labels (-1, +1).

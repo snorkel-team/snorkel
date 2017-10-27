@@ -140,6 +140,7 @@ class ImagePipeline(BabblePipeline):
             # and returns them to X and Y
             X_train, Y_train = zip(*(sorted(zip(X_train, Y_train), 
                                  key=lambda x: x[0][1].stable_id.split(":")[1])[:train_size]))
+            print("TODO: confirm that traditional supervision is working as expected.")
 
             train_coco_ids, train_labels = link_images_candidates(train_anns, X_train, train_mscoco, Y_train_gold)
 

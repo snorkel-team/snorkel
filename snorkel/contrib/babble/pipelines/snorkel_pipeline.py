@@ -318,7 +318,7 @@ class SnorkelPipeline(object):
                 train_size, L_gold_train.nnz))
             train_size = L_gold_train.nnz
         else:
-            print("Using {} traditional labels".format(train_size)
+            print("Using {} traditional labels".format(train_size))
         # Randomly select the requested number of gold labels out of all train
         # candidates that have non-zero labels (-1, +1).
         selected = sorted(np.random.permutation(L_gold_train.nonzero()[0])[:train_size])

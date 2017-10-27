@@ -43,6 +43,8 @@ class SnorkelPipeline(object):
         self.lfs = None
         self.labeler = None
         self.featurizer = None
+        self.gen_model = None
+        self.disc_model = None
 
 
     def run(self):
@@ -127,7 +129,6 @@ class SnorkelPipeline(object):
 
         if self.config['supervision'] == 'traditional':
             print("In 'traditional' supervision mode...skipping 'supervise' stage.")
-            self.gen_model = None
             return                
 
         if not getattr(self, 'L_train', None):

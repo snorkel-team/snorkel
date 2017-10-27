@@ -17,15 +17,15 @@ echo ""
 echo "Note: If you are not starting at stage 0, confirm database exists already."
 
 # Run setup
-python -u snorkel/contrib/babble/pipelines/run.py \
-    --domain $DOMAIN \
-    --postgres \
-    --parallelism 20 \
-    --end_at 6 \
-    --verbose --no_plots |& tee -a $LOGFILE
+#python -u snorkel/contrib/babble/pipelines/run.py \
+#    --domain $DOMAIN \
+#    --postgres \
+#    --parallelism 20 \
+#    --end_at 6 \
+#    --verbose --no_plots |& tee -a $LOGFILE
 
 # Run tests
-for MAX_TRAIN in 10 50 100 500 1000 5000 10000 23490
+for MAX_TRAIN in 10 50 100 500 1000 5000 10000 25000
 do
     echo ""
     echo "<TEST: Running with following params:>"
@@ -34,13 +34,13 @@ do
     python -u snorkel/contrib/babble/pipelines/run.py \
         --domain $DOMAIN \
         --reports_dir $REPORTS_DIR \
-        --start_at 6 \
+        --start_at 7 \
         --end_at 10 \
 	--postgres \
 	--parallelism 20 \
         --supervision traditional \
         --max_train $MAX_TRAIN \
-	--gen_model_search_space 1
+	--gen_model_search_space 1 \
         --disc_model_search_space 10 \
         --seed $MAX_TRAIN --verbose --no_plots |& tee -a $LOGFILE
 done

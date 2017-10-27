@@ -91,6 +91,9 @@ class SpousePipeline(BabblePipeline):
                              annotator_name='gold', path=fpath, splits=splits)
 
     def collect(self, lf_source='intro_exps'):
+        if self.config['supervision'] == 'traditional':
+            print("In 'traditional' supervision mode...skipping 'collect' stage.")
+            return
         if lf_source == 'intro_func':
             self.lfs = self.use_intro_lfs()
             self.labeler = LabelAnnotator(lfs=self.lfs)

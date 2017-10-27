@@ -34,12 +34,12 @@ def get_user_lists():
     return user_lists
 
 basic = [
-    Explanation(
-        name='LF_spouse_between',
-        condition="there is a spouse word between arg 1 and arg 2",
-        candidate='2ca6dbbb-870c-4e34-8053-0ac2dbd850f5::span:798:808~~2ca6dbbb-870c-4e34-8053-0ac2dbd850f5::span:839:851',
-        label=True,
-        semantics=None),
+    # Explanation(
+    #     name='LF_spouse_between',
+    #     condition="there is a spouse word between arg 1 and arg 2",
+    #     candidate='2ca6dbbb-870c-4e34-8053-0ac2dbd850f5::span:798:808~~2ca6dbbb-870c-4e34-8053-0ac2dbd850f5::span:839:851',
+    #     label=True,
+    #     semantics=None),
     Explanation(
         name='LF_spouse_to_left',
         condition="there is a spouse word within two words to the left of arg 1 or arg 2",

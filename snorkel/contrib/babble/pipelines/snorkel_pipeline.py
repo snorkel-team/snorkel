@@ -127,6 +127,7 @@ class SnorkelPipeline(object):
 
         if self.config['supervision'] == 'traditional':
             print("In 'traditional' supervision mode...skipping 'supervise' stage.")
+            self.gen_model = None
             return                
 
         if not getattr(self, 'L_train', None):
@@ -285,7 +286,7 @@ class SnorkelPipeline(object):
 
         self.scores = {}
         with PrintTimer("[7.2] Evaluate generative model (opt_b={})".format(opt_b)):
-            if self.gen_model:
+            if self.gen_model is not None:
                 # Score generative model on test set
                 L_test = load_label_matrix(self.session, split=TEST)
                 np.random.seed(self.config['seed'])

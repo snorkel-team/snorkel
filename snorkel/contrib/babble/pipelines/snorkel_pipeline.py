@@ -262,7 +262,7 @@ class SnorkelPipeline(object):
         else:
             raise NotImplementedError
 
-        with PrintTimer("[7.1] Begin training discriminative model".format(opt_b))
+        with PrintTimer("[7.1] Begin training discriminative model"):
             disc_model, opt_b = train_model(
                 disc_model_class,
                 X_train,

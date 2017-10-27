@@ -131,27 +131,40 @@ class SnorkelPipeline(object):
             print("In 'traditional' supervision mode...skipping 'supervise' stage.")
             return                
 
-        if not getattr(self, 'L_train', None):
+        if getattr(self, 'L_train', None) is None:
             self.L_train = load_label_matrix(self.session, split=TRAIN)
         L_train = self.L_train
         assert L_train.nnz > 0
+        L_gold_train = load_gold_labels(self.session, annotator_name='gold', split=TRAIN)
         if self.config['verbose']:
             print("Using L_train: {0}".format(L_train.__repr__()))
+            print("Using L_gold_train: {0}".format(L_gold_train.__repr__()))
+            total = L_gold_train.shape[0]
+            positive = float(sum(L_gold_train.todense() == 1))
+            print("Positive Fraction: {:.1f}%\n".format(positive/total * 100))
 
         # Load DEV and TEST labels and gold labels
         if DEV in self.config['splits']:
             L_dev = load_label_matrix(self.session, split=DEV)
             assert L_dev.nnz > 0
+            L_gold_dev = load_gold_labels(self.session, annotator_name='gold', split=DEV)
             if self.config['verbose']:
                 print("Using L_dev: {0}".format(L_dev.__repr__()))
-            L_gold_dev = load_gold_labels(self.session, annotator_name='gold', split=DEV)
+                print("Using L_gold_dev: {0}".format(L_gold_dev.__repr__()))
+                total = L_gold_dev.shape[0]
+                positive = float(sum(L_gold_dev.todense() == 1))
+                print("Positive Fraction: {:.1f}%\n".format(positive/total * 100))
             assert L_gold_dev.nonzero()[0].shape[0] > 0
         if TEST in self.config['splits']:
             L_test = load_label_matrix(self.session, split=TEST)
             assert L_test.nnz > 0
+            L_gold_test = load_gold_labels(self.session, annotator_name='gold', split=TEST)
             if self.config['verbose']:
                 print("Using L_test: {0}".format(L_test.__repr__()))
-            L_gold_test = load_gold_labels(self.session, annotator_name='gold', split=TEST)
+                print("Using L_gold_test: {0}".format(L_gold_test.__repr__()))
+                total = L_gold_test.shape[0]
+                positive = float(sum(L_gold_test.todense() == 1))
+                print("Positive Fraction: {:.1f}%\n".format(positive/total * 100))
             assert L_gold_test.nonzero()[0].shape[0] > 0
 
         if self.config['supervision'] == 'majority_vote':

@@ -15,16 +15,25 @@ when explanation is received:
 when done, pull out L_train and proceed to generative model
 """
 from collections import defaultdict, namedtuple
+import random
 
 import matplotlib.pyplot as plt
 import numpy as np
+from pandas import DataFrame, Series
 import scipy.sparse as sparse
-import random
 
 from snorkel.annotations import LabelAnnotator, load_gold_labels, csr_AnnotationMatrix
 from snorkel.learning.utils import MentionScorer
 from snorkel.lf_helpers import test_LF
-from snorkel.utils import matrix_tp, matrix_fp, matrix_tn, matrix_fn, matrix_coverage
+from snorkel.utils import (
+    matrix_conflicts,
+    matrix_coverage,
+    matrix_overlaps,
+    matrix_tp,
+    matrix_fp,
+    matrix_fn,
+    matrix_tn
+)
 
 from snorkel.contrib.babble.filter_bank import FilterBank
 from snorkel.contrib.babble.grammar import Parse
@@ -74,8 +83,6 @@ class CandidateGenerator(object):
         If random = True, return the candidates (passing the above conditions,
             if applicable) in random order.
         """
-        if seed is not None:
-            random.seed(seed)
         candidates = babble_stream.dev_candidates
         labels = babble_stream.dev_labels
         
@@ -84,10 +91,10 @@ class CandidateGenerator(object):
         else:
             if balanced:
                 self.candidate_generator = self.balanced_generator(
-                    candidates, labels, shuffled=shuffled)
+                    candidates, labels, seed, shuffled=shuffled)
             else:
                 self.candidate_generator = self.linear_generator(
-                    candidates, shuffled=shuffled)
+                    candidates, seed, shuffled=shuffled)
 
     def __iter__(self):
         return self
@@ -96,17 +103,21 @@ class CandidateGenerator(object):
         return self.candidate_generator.next()
 
     @staticmethod
-    def linear_generator(candidates, shuffled=False):
+    def linear_generator(candidates, seed, shuffled=False):
         if shuffled:
+            if seed is not None:
+                random.seed(seed)
             random.shuffle(candidates)
         for c in candidates:
             yield c
 
     @staticmethod
-    def balanced_generator(candidates, labels, shuffled=False):
+    def balanced_generator(candidates, labels, seed, shuffled=False):
         candidates_labels = zip(candidates, labels)
         if shuffled:
-            random.shuffle(candidates)
+            if seed is not None:
+                random.seed(seed)
+            random.shuffle(candidates_labels)
         positives = [c for (c, l) in candidates_labels if l == 1]
         negatives = [c for (c, l) in candidates_labels if l == -1]
         candidate_queue = []
@@ -324,13 +335,65 @@ class BabbleStream(object):
         self.temp_explanations = None
         self.temp_label_matrix = None
 
-    def get_global_stats(self):
+    def get_global_coverage(self):
         """Calculate stats for the dataset as a whole.
 
         Note: this only consideres committed LFs
+        TODO: use sparse_abs from snorkel.utils here and elsewhere.
         """
         num_labeled = sum(np.asarray(abs(np.sum(self.label_matrix, 1))).ravel() != 0)
+
         return GlobalCoverage(num_labeled, self.num_dev_total)
+
+    # def _sparse_to_csr_annotation_matrix(self, label_matrix)
+    #     """Convert a sparse label_matrix into a csr_AnnotationMatrix.
+        
+    #     Note: assumes it will only be applied to dev_candidates.
+    #     """
+    #     candidate_index = {c.id: i for i, c in enumerate(self.dev_candidates)}
+    #     row_index = {v: k for k, v in candidate_index.iteritems()}
+    #     key_index = 
+
+    def get_parses(self, idx=None):
+        if idx is None:
+            parses = self.parses
+        elif isinstance(idx, int):
+            parses = [self.parses[idx]]
+        elif isinstance(idx, list):
+            parses = [parse for i, parse in enumerate(self.parses) if i in idx]
+        return [self.semparser.grammar.translate(parse.semantics) for parse in parses]
+
+    def get_lf_stats(self):
+        """Returns a pandas DataFrame with the LFs and various per-LF statistics.
+        
+        NOTE: assumes you're asking about the dev set.
+        """
+        label_matrix = sparse.csr_matrix(self.label_matrix)
+        labels = self.dev_labels
+        lf_names = [parse.function.__name__ for parse in self.parses]
+
+        # Default LF stats
+        col_names = ['j', 'Coverage', 'Overlaps', 'Conflicts']
+        d = {
+            'j'         : range(label_matrix.shape[1]),
+            'Coverage'  : Series(data=matrix_coverage(label_matrix), index=lf_names),
+            'Overlaps'  : Series(data=matrix_overlaps(label_matrix), index=lf_names),
+            'Conflicts' : Series(data=matrix_conflicts(label_matrix), index=lf_names)
+        }
+        col_names.extend(['TP', 'FP', 'FN', 'TN', 'Empirical Acc.'])
+        tp = matrix_tp(label_matrix, labels)
+        fp = matrix_fp(label_matrix, labels)
+        fn = matrix_fn(label_matrix, labels)
+        tn = matrix_tn(label_matrix, labels)
+        ac = (tp+tn).astype(float) / (tp+tn+fp+fn)
+        d['Empirical Acc.'] = Series(data=ac, index=lf_names)
+        d['TP']             = Series(data=tp, index=lf_names)
+        d['FP']             = Series(data=fp, index=lf_names)
+        d['FN']             = Series(data=fn, index=lf_names)
+        d['TN']             = Series(data=tn, index=lf_names)
+
+        return DataFrame(data=d, index=lf_names)[col_names]
+        
 
     def get_label_matrix(self):
         if self.temp_parses is not None:

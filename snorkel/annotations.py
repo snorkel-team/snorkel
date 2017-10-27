@@ -28,11 +28,11 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
     """
     def __init__(self, arg1, **kwargs):
         # Note: Currently these need to return None if unset, otherwise matrix copy operations break...
-        self.candidate_index    = kwargs.pop('candidate_index', None)
-        self.row_index          = kwargs.pop('row_index', None)
+        self.candidate_index    = kwargs.pop('candidate_index', None)       # (candidate.id: row)
+        self.row_index          = kwargs.pop('row_index', None)             # (row: candidate.id)
         self.annotation_key_cls = kwargs.pop('annotation_key_cls', None)
-        self.key_index          = kwargs.pop('key_index', None)
-        self.col_index          = kwargs.pop('col_index', None)
+        self.key_index          = kwargs.pop('key_index', None)             # (anotation_key_class.id: col)
+        self.col_index          = kwargs.pop('col_index', None)             # (col: annotation_key_cls.id)
 
         # Note that scipy relies on the first three letters of the class to define matrix type...
         super(csr_AnnotationMatrix, self).__init__(arg1, **kwargs)
@@ -51,7 +51,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
                 .filter(self.annotation_key_cls.id == self.col_index[j]).one()
 
     def get_col_index(self, key):
-        """Return the cow index of the AnnotationKey"""
+        """Return the col index of the AnnotationKey"""
         return self.key_index[key.id]
 
     def _get_sliced_indexes(self, s, axis, index, inv_index):

@@ -4,7 +4,7 @@ global_config = {
     ### SETUP ###
     'domain': None,
     'log_dir': 'logs',
-    'reports_dir': 'reports',
+    'reports_dir': 'reports', # nested under $SNORKELHOME/
     'postgres': False,
     'parallelism': 1,
     'splits': [0, 1, 2],
@@ -57,9 +57,8 @@ global_config = {
         'step_size'                   : [1e-2, 1e-3, 1e-4, 1e-5],
         'decay'                       : [0.9, 0.95, 0.99],
         'reg_param'                   : [0.0, 0.01, 0.1, 0.25, 0.5],
-        # Used iff lf_prior = True
-        # 'LF_acc_prior_weights'        : [None],
-        'LF_acc_prior_weight_default' : [0.5, 1.0, 1.5], # (73%, 88%, 95%)
+        # 'LF_acc_prior_weights'        : [None], # Used iff lf_prior = True
+        'LF_acc_prior_weight_default' : [0.5], # [0.5, 1.0, 1.5] = (73%, 88%, 95%) # Used iff lf_prior = True
     },
     'gen_params_default': {
     	'decay'    : 0.95,
@@ -68,6 +67,7 @@ global_config = {
         # used iff class_prior = True
         'init_class_prior' : 0, # 0 = 50% pos, -1.15 = 9% pos
     },
+    'tune_b': True, # default to True for text, False for image
 
     # dependencies
     'learn_deps': False,

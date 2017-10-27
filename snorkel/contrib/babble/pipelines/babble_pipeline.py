@@ -51,7 +51,8 @@ class BabblePipeline(SnorkelPipeline):
         self.babbler = Babbler(mode=mode, 
                                explanations=explanations, 
                                candidate_class=self.candidate_class, 
-                               user_lists=user_lists)
+                               user_lists=user_lists,
+                               do_filter=True)
         self.babbler.apply(split=self.config['babbler_label_split'], 
                            parallelism=self.config['parallelism'])
         self.explanations = self.babbler.get_explanations()
@@ -61,6 +62,9 @@ class BabblePipeline(SnorkelPipeline):
     def label(self, config=None, split=None):
         if config:
             self.config = config
+        if self.config['supervision'] == 'traditional':
+            print("In 'traditional' supervision mode...skipping 'label' stage.")
+            return            
         self.labeler = LabelAnnotator(lfs=self.lfs)  
         splits = [split] if split else self.config['splits']
         for split in self.config['splits']:

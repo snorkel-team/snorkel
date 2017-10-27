@@ -43,6 +43,8 @@ class SnorkelPipeline(object):
         self.lfs = None
         self.labeler = None
         self.featurizer = None
+        self.gen_model = None
+        self.disc_model = None
 
 
     def run(self):
@@ -126,96 +128,118 @@ class SnorkelPipeline(object):
             self.config = config
 
         if self.config['supervision'] == 'traditional':
-            L_gold_train = load_gold_labels(self.session, annotator_name='gold', split=TRAIN)
-            L_train, train_marginals = self.traditional_supervision(L_gold_train)
-            gen_model = None
-            if self.config['display_marginals'] and not self.config['no_plots']:
-                plt.hist(train_marginals, bins=20)
-                plt.show()
-        else:
-            if not getattr(self, 'L_train', None):
-                self.L_train = load_label_matrix(self.session, split=TRAIN)
-            L_train = self.L_train
-            assert L_train.nnz > 0
+            print("In 'traditional' supervision mode...skipping 'supervise' stage.")
+            return                
+
+        if getattr(self, 'L_train', None) is None:
+            self.L_train = load_label_matrix(self.session, split=TRAIN)
+        L_train = self.L_train
+        assert L_train.nnz > 0
+        L_gold_train = load_gold_labels(self.session, annotator_name='gold', split=TRAIN)
+        if self.config['verbose']:
+            print("Using L_train: {0}".format(L_train.__repr__()))
+            print("Using L_gold_train: {0}".format(L_gold_train.__repr__()))
+            total = L_gold_train.shape[0]
+            positive = float(sum(L_gold_train.todense() == 1))
+            print("Positive Fraction: {:.1f}%\n".format(positive/total * 100))
+
+        # Load DEV and TEST labels and gold labels
+        if DEV in self.config['splits']:
+            L_dev = load_label_matrix(self.session, split=DEV)
+            assert L_dev.nnz > 0
+            L_gold_dev = load_gold_labels(self.session, annotator_name='gold', split=DEV)
             if self.config['verbose']:
-                print("Using L_train: {0}".format(L_train.__repr__()))
+                print("Using L_dev: {0}".format(L_dev.__repr__()))
+                print("Using L_gold_dev: {0}".format(L_gold_dev.__repr__()))
+                total = L_gold_dev.shape[0]
+                positive = float(sum(L_gold_dev.todense() == 1))
+                print("Positive Fraction: {:.1f}%\n".format(positive/total * 100))
+            assert L_gold_dev.nonzero()[0].shape[0] > 0
+        if TEST in self.config['splits']:
+            L_test = load_label_matrix(self.session, split=TEST)
+            assert L_test.nnz > 0
+            L_gold_test = load_gold_labels(self.session, annotator_name='gold', split=TEST)
+            if self.config['verbose']:
+                print("Using L_test: {0}".format(L_test.__repr__()))
+                print("Using L_gold_test: {0}".format(L_gold_test.__repr__()))
+                total = L_gold_test.shape[0]
+                positive = float(sum(L_gold_test.todense() == 1))
+                print("Positive Fraction: {:.1f}%\n".format(positive/total * 100))
+            assert L_gold_test.nonzero()[0].shape[0] > 0
 
-            # Load DEV and TEST labels and gold labels
-            if DEV in self.config['splits']:
-                L_dev = load_label_matrix(self.session, split=DEV)
-                assert L_dev.nnz > 0
+        if self.config['supervision'] == 'majority_vote':
+            gen_model = MajorityVoter()
+            train_marginals = gen_model.marginals(L_train)
+
+        elif self.config['supervision'] == 'generative':
+
+            # Learn dependencies
+            if self.config['learn_deps']:
+                ds = DependencySelector()
+                deps = ds.select(L_train, threshold=self.config['threshold'])
                 if self.config['verbose']:
-                    print("Using L_dev: {0}".format(L_dev.__repr__()))
-                L_gold_dev = load_gold_labels(self.session, annotator_name='gold', split=DEV)
-                assert L_gold_dev.nonzero()[0].shape[0] > 0
-            if TEST in self.config['splits']:
-                L_test = load_label_matrix(self.session, split=TEST)
-                assert L_test.nnz > 0
-                if self.config['verbose']:
-                    print("Using L_test: {0}".format(L_test.__repr__()))
-                L_gold_test = load_gold_labels(self.session, annotator_name='gold', split=TEST)
-                assert L_gold_test.nonzero()[0].shape[0] > 0
-
-            if self.config['supervision'] == 'majority_vote':
-                gen_model = MajorityVoter()
-                train_marginals = gen_model.marginals(L_train)
-
-            elif self.config['supervision'] == 'generative':
-
-                # Learn dependencies
-                if self.config['learn_deps']:
-                    ds = DependencySelector()
-                    deps = ds.select(L_train, threshold=self.config['threshold'])
-                    if self.config['verbose']:
-                        self.display_dependencies(deps)
-                else:
-                    deps = ()
-
-                # Pass in the dependencies via default params
-                gen_params_default = self.config['gen_params_default']
-                gen_params_default['deps'] = deps
-
-                # Train generative model with grid search if applicable
-                gen_model, opt_b = train_model(
-                    GenerativeModel,
-                    L_train,
-                    X_dev=L_dev,
-                    Y_dev=L_gold_dev,
-                    search_size=self.config['gen_model_search_space'],
-                    search_params=self.config['gen_params_range'],
-                    rand_seed=self.config['seed'],
-                    n_threads=self.config['parallelism'],
-                    verbose=self.config['verbose'],
-                    params_default=gen_params_default,
-                    model_init_params=self.config['gen_init_params'],
-                    model_name='generative_{}'.format(self.config['domain']),
-                    save_dir='checkpoints',
-                    beta=self.config['gen_f_beta']
-                )
-                train_marginals = gen_model.marginals(L_train)
-
-                print("\nGen. model (DP) score on dev set (b={}):".format(opt_b))
-                _ = gen_model.error_analysis(self.session, L_dev, L_gold_dev, b=opt_b, display=True)
-
-                if self.config['verbose']:
-                    if self.config['display_marginals'] and not self.config['no_plots']:
-                        # Display marginals
-                        plt.hist(train_marginals, bins=20)
-                        plt.show()
-                    if self.config['display_learned_accuracies']:
-                        raise NotImplementedError
-                        # NOTE: Unfortunately, learned accuracies are not available after grid search
-                        # lf_stats = L_dev.lf_stats(self.session, L_gold_dev, 
-                        #     gen_model.learned_lf_stats()['Accuracy'])
-                        # print(lf_stats)
-                        # if self.config['display_correlation']:
-                        #     self.display_accuracy_correlation(lf_stats)
+                    self.display_dependencies(deps)
             else:
-                raise Exception("Invalid value for 'supervision': {}".format(self.config['supervision']))
+                deps = ()
+
+            # Pass in the dependencies via default params
+            gen_params_default = self.config['gen_params_default']
+            gen_params_default['deps'] = deps
+
+            # Train generative model with grid search if applicable
+            gen_model, opt_b = train_model(
+                GenerativeModel,
+                L_train,
+                X_dev=L_dev,
+                Y_dev=L_gold_dev,
+                search_size=self.config['gen_model_search_space'],
+                search_params=self.config['gen_params_range'],
+                rand_seed=self.config['seed'],
+                n_threads=self.config['parallelism'],
+                verbose=self.config['verbose'],
+                params_default=gen_params_default,
+                model_init_params=self.config['gen_init_params'],
+                model_name='generative_{}'.format(self.config['domain']),
+                save_dir='checkpoints',
+                beta=self.config['gen_f_beta'],
+                tune_b=self.config['tune_b']
+            )
+            train_marginals = gen_model.marginals(L_train)
+
+            print("\nGen. model (DP) score on dev set (b={}):".format(opt_b))
+            tp, fp, tn, fn = gen_model.error_analysis(self.session, L_dev, L_gold_dev, b=opt_b, display=True)
+            
+            # Record generative model performance
+            precision = float(len(tp))/float(len(tp) + len(fp))
+            recall = float(len(tp))/float(len(tp) + len(fn))
+            f1 = float(2 * precision * recall)/(precision + recall)
+            self.scores = {}
+            self.scores['Gen'] = [precision, recall, f1]
+
+            if self.config['verbose']:
+                if self.config['display_marginals'] and not self.config['no_plots']:
+                    # Display marginals
+                    plt.hist(train_marginals, bins=20)
+                    plt.show()
+                if self.config['display_learned_accuracies']:
+                    raise NotImplementedError
+                    # NOTE: Unfortunately, learned accuracies are not available after grid search
+                    # lf_stats = L_dev.lf_stats(self.session, L_gold_dev, 
+                    #     gen_model.learned_lf_stats()['Accuracy'])
+                    # print(lf_stats)
+                    # if self.config['display_correlation']:
+                    #     self.display_accuracy_correlation(lf_stats)
+        else:
+            raise Exception("Invalid value for 'supervision': {}".format(self.config['supervision']))
 
         self.gen_model = gen_model
         self.L_train = L_train
-        self.train_marginals = train_marginals 
+        self.train_marginals = train_marginals
+        save_marginals(self.session, L_train, train_marginals)
+
+        if (self.config['supervision'] == 'generative' and 
+            self.config['end_at'] == STAGES.CLASSIFY):
+            final_report(self.config, self.scores)
 
 
     def classify(self, config=None):
@@ -225,8 +249,19 @@ class SnorkelPipeline(object):
         if self.config['seed']:
             np.random.seed(self.config['seed'])
 
-        X_train = self.get_candidates(TRAIN)
-        Y_train = self.train_marginals
+        if self.config['supervision'] == 'traditional':
+            print("In 'traditional' supervision mode...grabbing candidate and gold label subsets.")  
+            candidates_train = self.get_candidates(TRAIN)
+            L_gold_train = load_gold_labels(self.session, annotator_name='gold', split=TRAIN)
+            X_train, Y_train = self.traditional_supervision(candidates_train, L_gold_train)
+            if self.config['display_marginals'] and not self.config['no_plots']:
+                plt.hist(Y_train, bins=20)
+                plt.show()
+        else:
+            X_train = self.get_candidates(TRAIN)
+            Y_train = (self.train_marginals if getattr(self, 'train_marginals', None) is not None 
+                        else load_marginals(self.session, split=0))
+
         X_dev = self.get_candidates(DEV)
         Y_dev = load_gold_labels(self.session, annotator_name='gold', split=DEV)
         X_test = self.get_candidates(TEST)
@@ -237,57 +272,76 @@ class SnorkelPipeline(object):
         else:
             raise NotImplementedError
 
-        disc_model, opt_b = train_model(
-            disc_model_class,
-            X_train,
-            Y_train=Y_train,
-            X_dev=X_dev,
-            Y_dev=Y_dev,
-            cardinality=2,
-            search_size=self.config['disc_model_search_space'],
-            search_params=self.config['disc_params_range'],
-            rand_seed=self.config['seed'],
-            n_threads=self.config['parallelism'],
-            verbose=self.config['verbose'],
-            params_default=self.config['disc_params_default'],
-            model_init_params=self.config['disc_init_params'],
-            model_name='discriminative_{}'.format(self.config['domain']),
-            save_dir='checkpoints',
-            eval_batch_size=self.config['disc_eval_batch_size']
-        )
+        with PrintTimer("[7.1] Begin training discriminative model"):
+            disc_model, opt_b = train_model(
+                disc_model_class,
+                X_train,
+                Y_train=Y_train,
+                X_dev=X_dev,
+                Y_dev=Y_dev,
+                cardinality=2,
+                search_size=self.config['disc_model_search_space'],
+                search_params=self.config['disc_params_range'],
+                rand_seed=self.config['seed'],
+                n_threads=self.config['parallelism'],
+                verbose=self.config['verbose'],
+                params_default=self.config['disc_params_default'],
+                model_init_params=self.config['disc_init_params'],
+                model_name='discriminative_{}'.format(self.config['domain']),
+                save_dir='checkpoints',
+                eval_batch_size=self.config['disc_eval_batch_size']
+            )
         self.disc_model = disc_model
 
-        scores = {}
+        self.scores = {}
         with PrintTimer("[7.2] Evaluate generative model (opt_b={})".format(opt_b)):
-            if self.gen_model:
+            if self.gen_model is not None:
                 # Score generative model on test set
                 L_test = load_label_matrix(self.session, split=TEST)
                 np.random.seed(self.config['seed'])
-                scores['Gen'] = score_marginals(self.gen_model.marginals(L_test), Y_test, b=opt_b)
+                self.scores['Gen'] = score_marginals(self.gen_model.marginals(L_test), Y_test, b=opt_b)
             else:
                 print("gen_model is undefined. Skipping.")
 
         with PrintTimer("[7.3] Evaluate discriminative model (opt_b={})".format(opt_b)):
             # Score discriminative model trained on generative model predictions
             np.random.seed(self.config['seed'])
-            scores['Disc'] = score_marginals(self.disc_model.marginals(X_test, 
+            self.scores['Disc'] = score_marginals(self.disc_model.marginals(X_test, 
                     batch_size=self.config['disc_eval_batch_size']), Y_test, b=opt_b)
 
-        final_report(self.config, scores)
+        final_report(self.config, self.scores)
 
 
-    def traditional_supervision(self, L_gold_train):
+    def traditional_supervision(self, candidates, L_gold_train):
+        """Extract a specified number of train candidates with labels.
+        Args:
+            candidates: list of candidates (for entire TRAIN split)
+            L_gold_train: csr_AnnotationMatrix of gold labels (for entire TRAIN split)
+        Returns:
+            X_train: extracted list of candidates
+            Y_train: extracted array of labels (rescaled from [-1, 1] -> [0, 1])
+        """
         # Confirm you have the requested number of gold labels
         train_size = self.config['max_train']
-        if L_gold_train.nnz < train_size:
-            print("Requested {} traditional labels. Using {} instead...".format(
+        
+        if train_size is None:
+            print("No value found for max_train. Using all available gold labels.")
+            train_size = L_gold_train.nnz
+        elif L_gold_train.nnz < train_size:
+            print("Requested {} traditional labels. Only {} could be found.".format(
                 train_size, L_gold_train.nnz))
-        # Randomly select the requested number of gold label
-        selected = np.random.permutation(L_gold_train.nonzero()[0])[:max(train_size, L_gold_train.nnz)]
+            train_size = L_gold_train.nnz
+        
+        print("Using {} traditional gold labels".format(train_size))
+
+        # Randomly select the requested number of gold labels out of all train
+        # candidates that have non-zero labels (-1, +1).
+        selected = sorted(np.random.permutation(L_gold_train.nonzero()[0])[:train_size])
+        X_train = [c for i, c in enumerate(candidates) if i in set(selected)]
         L_train = L_gold_train[selected,:]
-        train_marginals = np.array(L_train.todense()).reshape((L_train.shape[0],))
-        train_marginals[train_marginals == -1] = 0
-        return L_train, train_marginals
+        Y_train = np.array(L_train.todense()).reshape((L_train.shape[0],))
+        Y_train[Y_train == -1] = 0
+        return X_train, Y_train
 
 
     def get_candidates(self, split):
@@ -328,3 +382,4 @@ class SnorkelPipeline(object):
         for dep in sorted(deps_decoded):
             (lf1, lf2, d) = dep
             print('{:16}: ({}, {})'.format(d, lf1, lf2))
+

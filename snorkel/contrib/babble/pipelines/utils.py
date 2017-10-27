@@ -47,7 +47,7 @@ def git_commit_hash(path=None):
 def train_model(model_class, X_train, Y_train=None, X_dev=None, Y_dev=None, 
     search_size=1, search_params={}, rand_seed=123, n_threads=1, verbose=False,
     cardinality=None, params_default={}, model_init_params={}, model_name=None,
-    save_dir='checkpoints', beta=1.0, eval_batch_size=None):
+    save_dir='checkpoints', beta=1.0, eval_batch_size=None, tune_b=False):
         # Add to model init params
         model_init_params['seed'] = rand_seed
         if cardinality:
@@ -87,13 +87,14 @@ def train_model(model_class, X_train, Y_train=None, X_dev=None, Y_dev=None,
                 model.train(X_train, **params_default)
 
             opt_b = 0.5
-            best_score = -1
-            for b in [0.1, 0.15, 0.25, 0.5, 0.75, 0.85, 0.9]:
-                run_scores = model.score(X_dev, Y_dev, b=b, beta=beta,
-                    batch_size=eval_batch_size)
-                if run_scores[-1] > best_score:
-                    best_score = run_scores[-1]
-                    opt_b = b
+            if tune_b:
+                best_score = -1
+                for b in [0.1, 0.15, 0.25, 0.5, 0.75, 0.85, 0.9]:
+                    run_scores = model.score(X_dev, Y_dev, b=b, beta=beta,
+                        batch_size=eval_batch_size)
+                    if run_scores[-1] > best_score:
+                        best_score = run_scores[-1]
+                        opt_b = b
 
         # Save model + training marginals in main save_dir (vs save_dir/grid_search)
         model.save(model_name=model_name, save_dir=save_dir)
@@ -196,7 +197,6 @@ def final_report(config, scores):
         'Precision' : Series(data=[scores[k][0] for k in ks], index=ks),
         'Recall'    : Series(data=[scores[k][1] for k in ks], index=ks),
         'F1 Score'  : Series(data=[scores[k][2] for k in ks], index=ks),
-        'Coverage'  : Series(data=[scores[k][3] for k in ks], index=ks)
     }
     df = DataFrame(data=d, index=ks)
     print(df)
@@ -210,7 +210,7 @@ def final_report(config, scores):
     }
 
     # Save to file
-    report_dir = os.path.join(config['reports_dir'], strftime("%Y_%m_%d"))
+    report_dir = os.path.join(os.environ['SNORKELHOME'], config['reports_dir'], strftime("%Y_%m_%d"))
     report_name = '{0}_{1}.json'.format(config['domain'], strftime("%H_%M_%S"))
     if not os.path.exists(report_dir):
         os.makedirs(report_dir)

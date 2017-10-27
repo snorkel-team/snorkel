@@ -1,22 +1,24 @@
 import os
+
 import numpy as np
 
 from snorkel.parser import ImageCorpusExtractor, CocoPreprocessor
 from snorkel.models import StableLabel
 from snorkel.db_helpers import reload_annotator_labels
+from snorkel.annotations import load_marginals, load_gold_labels
 
 from snorkel.contrib.babble import Babbler
-from snorkel.contrib.babble.pipelines import BabblePipeline
+from snorkel.contrib.babble.pipelines import BabblePipeline, ImagePipeline, final_report
 
 from tutorials.babble import MTurkHelper
 
 
-class BikePipeline(BabblePipeline):
+class BikePipeline(ImagePipeline, BabblePipeline):
 
-    def parse(self, anns_path=os.environ['SNORKELHOME'] + '/tutorials/babble/bike/data/'):
-        self.anns_path = anns_path
-        train_path = anns_path + 'train_anns.npy'
-        val_path = anns_path + 'val_anns.npy'
+    def parse(self):
+        self.anns_path = self.config['anns_path']
+        train_path = self.anns_path + self.config['domain'] + '_train_anns.npy'
+        val_path = self.anns_path + self.config['domain'] + '_val_anns.npy'
 
         corpus_extractor = ImageCorpusExtractor(candidate_class=self.candidate_class)
 
@@ -25,14 +27,7 @@ class BikePipeline(BabblePipeline):
 
         coco_preprocessor = CocoPreprocessor(val_path, source=1)
         corpus_extractor.apply(coco_preprocessor, clear=False)
-
-
-    def extract(self):
-        print("Extraction was performed during parse stage.")
-        for split in self.config['splits']:
-            num_candidates = self.session.query(self.candidate_class).filter(
-                self.candidate_class.split == split).count()
-            print("Candidates [Split {}]: {}".format(split, num_candidates))
+        
 
     def load_gold(self, anns_path=None, annotator_name='gold'):
         if anns_path:

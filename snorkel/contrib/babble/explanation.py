@@ -27,9 +27,9 @@ class Explanation(object):
 
     def __repr__(self):
         if self.name:
-            return 'Explanation("%s: %s, %s")' % (self.name, self.label, self.condition)
+            return 'Explanation("%s: %s, %s")' % (self.name, self.label, self.condition.encode('utf-8'))
         else:
-            return 'Explanation("%s, %s")' % (self.label, self.condition)
+            return 'Explanation("%s, %s")' % (self.label, self.condition.encode('utf-8'))
     
     def display(self):
         print 'Explanation'

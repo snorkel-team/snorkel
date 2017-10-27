@@ -1,17 +1,18 @@
 import os
+
 import numpy as np
 
 from snorkel.parser import ImageCorpusExtractor, CocoPreprocessor
 from snorkel.models import StableLabel
 from snorkel.db_helpers import reload_annotator_labels
+from snorkel.annotations import load_marginals, load_gold_labels
 
 from snorkel.contrib.babble import Babbler
-from snorkel.contrib.babble.pipelines import BabblePipeline
+from snorkel.contrib.babble.pipelines import BabblePipeline, ImagePipeline, final_report
 
 from tutorials.babble import MTurkHelper
 
-
-class DrinkPipeline(BabblePipeline):
+class DrinkPipeline(ImagePipeline, BabblePipeline):
 
     def parse(self, anns_path=os.environ['SNORKELHOME'] + '/tutorials/babble/drink/data/'):
         self.anns_path = anns_path
@@ -27,13 +28,6 @@ class DrinkPipeline(BabblePipeline):
         corpus_extractor.apply(coco_preprocessor, person_id=[1], object_id=[44,46,47], clear=False)
 
 
-    def extract(self):
-        print("Extraction was performed during parse stage.")
-        for split in self.config['splits']:
-            num_candidates = self.session.query(self.candidate_class).filter(
-                self.candidate_class.split == split).count()
-            print("Candidates [Split {}]: {}".format(split, num_candidates))
-
     def load_gold(self, anns_path=None, annotator_name='gold'):
         if anns_path:
             self.anns_path = anns_path
@@ -45,9 +39,9 @@ class DrinkPipeline(BabblePipeline):
                                                             candidates=[], verbose=False)
             return labels_by_candidate
 
-        validation_labels_by_candidate = load_labels('val', self.anns_path+
+        validation_labels_by_candidate = load_labels('val', self.anns_path +
                                                      'Reach_Val_Labels_out.csv')
-        train_labels_by_candidate = load_labels('train', self.anns_path+
+        train_labels_by_candidate = load_labels('train', self.anns_path +
                                                 'Reach_Train_Labels_out.csv')
             
 

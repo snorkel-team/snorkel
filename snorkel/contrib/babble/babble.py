@@ -415,6 +415,7 @@ class Babbler(object):
     # TODO: convert to UDFRunner 
     def __init__(self, mode, candidate_class=None, explanations=[], exp_names=[], 
                  user_lists={}, string_format='implicit', beam_width=10, top_k=-1,
+                 do_filter=True,
                  do_filter_duplicate_semantics=True, 
                  do_filter_consistency=True, 
                  do_filter_duplicate_signatures=True, 
@@ -432,9 +433,15 @@ class Babbler(object):
         self.explanations = explanations
         self.explanations_by_name = {}
         self.update_explanation_map(explanations)
+        if do_filter == False:
+            do_filter_duplicate_semantics = False
+            do_filter_consistency = False
+            do_filter_duplicate_signatures = False
+            do_filter_uniform_signatures = False
+            do_filter_low_accuracy = False
         self.do_filter_duplicate_semantics = do_filter_duplicate_semantics
         self.do_filter_consistency = do_filter_consistency
-        self.do_filter_duplicate_signatures = do_filter_duplicate_signatures,
+        self.do_filter_duplicate_signatures = do_filter_duplicate_signatures
         self.do_filter_uniform_signatures = do_filter_uniform_signatures
         self.do_filter_low_accuracy = do_filter_low_accuracy
         self.gold_labels = gold_labels

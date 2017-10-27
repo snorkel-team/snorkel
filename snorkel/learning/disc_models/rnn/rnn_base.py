@@ -27,13 +27,13 @@ class RNNBase(TFNoiseAwareModel):
     def _check_max_sentence_length(self, ends, max_len=None):
         """Check that extraction arguments are within @self.max_len"""
         mx = max_len or self.max_len
-        for i, end in enumerate(ends):
-            if end >= mx:
-                w = "Candidate {0} has argument past max length for model:"
-                info = "[arg ends at index {0}; max len {1}]".format(end, mx)
-                warnings.warn('\t'.join([w.format(i), info]))
-                warnings.warn('Additional warnings of this nature will be suppressed.')
-                break
+        # for i, end in enumerate(ends):
+        #     if end >= mx:
+        #         w = "Candidate {0} has argument past max length for model:"
+        #         info = "[arg ends at index {0}; max len {1}]".format(end, mx)
+        #         warnings.warn('\t'.join([w.format(i), info]))
+                # warnings.warn('Additional warnings of this nature will be suppressed.')
+                # break
 
     def _make_tensor(self, x):
         """Construct input tensor with padding

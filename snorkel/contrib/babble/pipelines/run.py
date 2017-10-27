@@ -49,12 +49,21 @@ if __name__ == '__main__':
     # Supervision args
     SUPERVISION = ['traditional', 'majority_vote', 'generative']
     argparser.add_argument('--supervision', type=str, choices=SUPERVISION)
+    argparser.add_argument('--max_train', type=int)
+    argparser.add_argument('--learn_deps', action='store_true')
+    argparser.add_argument('--deps_thresh', type=float)
     ## model args
     argparser.add_argument('--gen_init_params:class_prior', type=str2bool)
     argparser.add_argument('--gen_init_params:lf_prior', type=str2bool)
     argparser.add_argument('--gen_init_params:lf_propensity', type=str2bool)
     argparser.add_argument('--gen_init_params:lf_class_propensity', type=str2bool)
     ## hyperparameters
+
+    # Classify args
+    argparser.add_argument('--disc_params_search:lr', type=float, action='append')
+    argparser.add_argument('--disc_params_search:weight_decay', type=float, action='append')
+    argparser.add_argument('--disc_params_search:max_steps', type=int, action='append')
+
 
     # Search
     argparser.add_argument('--seed', type=int)
@@ -71,6 +80,9 @@ if __name__ == '__main__':
 
     # Logging
     argparser.add_argument('--reports_dir', type=str)
+
+    # Data
+    argparser.add_argument('--download_data', action='store_true')
 
     # Display args    
     argparser.add_argument('--verbose', action='store_true')

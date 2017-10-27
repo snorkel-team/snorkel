@@ -91,8 +91,12 @@ def get_valid_pairs(anns, tuples):
         person_box = anns[person]['bbox']
         bike_box = anns[bike]['bbox']
         
-        if overlap(person_box, bike_box):
-            valid_pairs.append((person,bike))
+        #Temp hack to add all images in anns files
+        valid_pairs.append((person,bike))
+
+        #if overlap(person_box, bike_box):
+        #    valid_pairs.append((person,bike))
+
     
     return valid_pairs
 

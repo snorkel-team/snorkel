@@ -3,6 +3,7 @@ from itertools import product
 import os
 import random
 import re
+import shutil
 
 import numpy as np
 import pandas as pd
@@ -133,22 +134,22 @@ class ImagePipeline(BabblePipeline):
 
         # If we're in traditional supervision mode, use hard marginals from the train set
         if self.config['supervision'] == 'traditional':
-            train_size = self.config['max_train']
+            train_size = self.config['max_train'] if self.config['max_train'] else int(1e9)
             Y_train = Y_train_gold  # use 0/1 labels, not probabilistic labels
             # This zips X and Y, sorts by image_id, keeps only train_size pairs,
             # and returns them to X and Y
             X_train, Y_train = zip(*(sorted(zip(X_train, Y_train), 
                                  key=lambda x: x[0][1].stable_id.split(":")[1])[:train_size]))
+            print("TODO: confirm that traditional supervision is working as expected.")
 
             train_coco_ids, train_labels = link_images_candidates(train_anns, X_train, train_mscoco, Y_train_gold)
 
         train_coco_ids, train_labels = link_images_candidates(train_anns, X_train, train_mscoco, Y_train)
         num_train = create_csv(dataset_dir, 'train_images.csv', train_coco_ids, train_labels, 'train2017')
 
-        if self.config['verbose']:
-            print("Train size: {}".format(num_train))
-            print("Dev size: {}".format(num_dev))
-            print("Test size: {}".format(num_test))
+        print("Train size: {}".format(num_train))
+        print("Dev size: {}".format(num_dev))
+        print("Test size: {}".format(num_test))
 
         # Convert to TFRecords Format
         if self.config.get('download_data', False):
@@ -176,6 +177,7 @@ class ImagePipeline(BabblePipeline):
             min(self.config['disc_model_search_space'], len(disc_params_options))))
 
         accuracies, precisions, recalls = [], [], []
+        lrs, weight_decays, max_stepses = [], [], []
         for i, disc_params in enumerate(disc_params_options):
             train_dir = os.path.join(train_root, "config_{}".format(i))
             eval_dir = os.path.join(eval_root, "config_{}".format(i))
@@ -183,10 +185,13 @@ class ImagePipeline(BabblePipeline):
             print("Running the following configuration:".format(i))
             print_settings(disc_params)
 
-            # print('Calling TFSlim train...')
+            print('Calling TFSlim train...')
             # TODO: launch these in parallel
-            if not os.path.exists(train_dir):
-                os.makedirs(train_dir)
+            # Remove the train_dir so no checkpoints are kept
+            if os.path.exists(train_dir):
+                shutil.rmtree(train_dir)
+            os.makedirs(train_dir)
+            
             train_cmd = 'python ' + slim_ws_path + 'train_image_classifier.py ' + \
                 ' --train_dir=' + train_dir + \
                 ' --dataset_name=mscoco' + \
@@ -194,9 +199,11 @@ class ImagePipeline(BabblePipeline):
                 ' --dataset_dir=' + dataset_dir + \
                 ' --model_name=' + str(self.config['disc_model_class']) + \
                 ' --optimizer=' + str(self.config['optimizer']) + \
+                ' --opt_epsilon=' + str(self.config['opt_epsilon']) + \
                 ' --num_clones=' + str(self.config['parallelism']) + \
                 ' --log_every_n_steps=' + str(self.config['print_freq']) + \
                 ' --learning_rate=' + str(disc_params['lr']) + \
+                ' --weight_decay=' + str(disc_params['weight_decay']) + \
                 ' --max_number_of_steps=' + str(disc_params['max_steps'])
             os.system(train_cmd)
 
@@ -211,14 +218,20 @@ class ImagePipeline(BabblePipeline):
                   ' --eval_dir=' + eval_dir + \
                   ' --dataset_split_name=validation ' + \
                   ' --model_name=' + str(self.config['disc_model_class']) + \
-                  ' &> ' + output_file
+                  ' |& tee -a ' + output_file
             os.system(eval_cmd)
 
             # Scrape results from output.txt 
             accuracy, precision, recall = scrape_output(output_file)
+            print("Accuracy: {}".format(accuracy))
+            print("Precision: {}".format(precision))
+            print("Recall: {}".format(recall))
             accuracies.append(accuracy)
             precisions.append(precision)
             recalls.append(recall)
+            lrs.append(disc_params['lr'])
+            weight_decays.append(disc_params['weight_decay'])
+            max_stepses.append(disc_params['max_steps'])
         
         # Calculate F1 scores
         f1s = [float(2 * p * r)/(p + r) if p and r else 0 for p, r in zip(precisions, recalls)]
@@ -226,7 +239,10 @@ class ImagePipeline(BabblePipeline):
             'accuracy':     pd.Series(accuracies),
             'precision':    pd.Series(precisions),
             'recall':       pd.Series(recalls),
-            'f1':           pd.Series(f1s)
+            'f1':           pd.Series(f1s),
+            'lrs':          pd.Series(lrs),
+            'weight_decays':pd.Series(weight_decays),
+            'max_stepses':  pd.Series(max_stepses)
         }
         dev_df = pd.DataFrame(dev_results)
         print("\nDev Results: {}")
@@ -248,7 +264,7 @@ class ImagePipeline(BabblePipeline):
                  ' --eval_dir=' + eval_dir + \
                  ' --dataset_split_name=test ' + \
                  ' --model_name=' + str(self.config['disc_model_class']) + \
-                 ' &> ' + test_file)
+                 ' |& tee -a ' + test_file)
         
         accuracy, precision, recall = scrape_output(test_file)
         p, r = precision, recall
@@ -264,7 +280,7 @@ class ImagePipeline(BabblePipeline):
         print("\nTest Results: {}")
         print(test_df)
 
-        if not self.scores:
+        if not getattr(self, 'scores', False):
             self.scores = {}
         self.scores['Disc'] = [precision, recall, f1]
         print("\nWriting final report to {}".format(self.config['log_dir']))

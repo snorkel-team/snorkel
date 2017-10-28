@@ -22,7 +22,7 @@ lexical_rules = (
     [Rule('$Exists', w) for w in ['exist', 'exists']] +
     [Rule('$Int', w, ('.int', 0)) for w in ['no']] +
     [Rule('$Int', w,  ('.int', 1)) for w in ['immediately', 'right']] +
-    [Rule('$AtLeastOne', 'a', ('.geq', ('.int', 1)))] +
+    [Rule('$AtLeastOne', w, ('.geq', ('.int', 1))) for w in ['a', 'another']] +
     [Rule('$Because', w) for w in ['because', 'since', 'if']] +
     [Rule('$Equals', w, '.eq') for w in ['equal', 'equals', '=', '==', 'same', 'identical', 'exactly']] + 
     [Rule('$NotEquals', w, '.neq') for w in ['different']] + 
@@ -104,7 +104,7 @@ ops = {
     '.label': lambda x, y: lambda c: (1 if x(c)==True else -1) if y(c)==True else 0,
     # primitives
     '.bool': lambda x: lambda c: x,
-    '.string': lambda x: lambda c: x,
+    '.string': lambda x: lambda c: x.encode('utf-8'),
     '.int': lambda x: lambda c: x,
     # lists
     '.tuple': lambda x: lambda c: tuple(x(c)),

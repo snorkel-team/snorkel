@@ -12,8 +12,8 @@ lexical_rules = (
     [Rule('$Capital', w, '.capital') for w in ['capital', 'capitals', 'capitalized']] +
     [Rule('$StartsWith', w, '.startswith') for w in ['starts with', 'start with', 'starting with']] +
     [Rule('$EndsWith', w, '.endswith') for w in ['ends with', 'end with', 'ending with']] +
-    [Rule('$Left', w, '.left') for w in ['?to ?the left ?of', 'before', 'precedes', 'preceding', 'followed by']] +
-    [Rule('$Right', w, '.right') for w in ['?to ?the right ?of', 'after', 'preceded by', 'follows', 'following']] +
+    [Rule('$Left', w, '.left') for w in ['?to ?the left ?of', 'in front of', 'before', 'precedes', 'preceding', 'followed by']] +
+    [Rule('$Right', w, '.right') for w in ['?to ?the right ?of', 'behind', 'after', 'preceded by', 'follows', 'following']] +
     [Rule('$Within', w, '.within') for w in ['within']] +
     [Rule('$Sentence', w, '.sentence') for w in ['sentence', 'text', 'it']] +
     [Rule('$Between', w, '.between') for w in ['between', 'inbetween', 'sandwiched', 'enclosed']] +

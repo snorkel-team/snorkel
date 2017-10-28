@@ -118,6 +118,7 @@ additional = [
         candidate='c313f020-d5f8-480f-85f5-dc639157f7e5::span:2957:2960~~c313f020-d5f8-480f-85f5-dc639157f7e5::span:3175:3178',
         label=False,
         semantics=None),
+    ### GOOD ONE: "False because a person is between arg 1 and arg2"
 ]
 
 all_explanations = basic + distant + additional

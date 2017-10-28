@@ -12,6 +12,7 @@ class Parse(object):
         self.children = tuple(children[:])
         self.semantics = self.compute_semantics()
         self.function = None
+        self.explanation = None
         self.absorbed = absorbed + sum(child.absorbed for child in self.children if isinstance(child, Parse))
         self.validate_parse()
 
@@ -25,8 +26,12 @@ class Parse(object):
         return hash(self.__repr__())
 
     def __repr__(self):
-        child_strings = [str(child) for child in self.children]
-        return '(%s %s)' % (self.rule.lhs, ' '.join(child_strings))
+        if self.function:
+            return "Parse({})".format(self.function.__name__)
+        else:
+            return "Parse(hash={})".format(hash(self.semantics)[:8])
+        # child_strings = [str(child) for child in self.children]
+        # return '(%s %s)' % (self.rule.lhs, ' '.join(child_strings))
 
     def validate_parse(self):
         assert isinstance(self.rule, Rule), 'Not a Rule: %s' % self.rule

@@ -73,6 +73,7 @@ class SemanticParser(object):
             exp_parses = self.grammar.parse_string(exp_normalized)
             num_parses_by_exp.append(len(exp_parses))
             for j, parse in enumerate(exp_parses):
+                parse.explanation = exp
                 lf = self.grammar.evaluate(parse)
                 if return_parses:
                     parse.function = lf

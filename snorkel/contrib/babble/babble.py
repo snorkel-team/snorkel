@@ -216,7 +216,7 @@ class BabbleStream(object):
             print("All previously uncommitted parses have been flushed.")
 
         parses = self._parse(explanations)
-        parses, label_matrix = self._filter(parses, explanations)
+        parses, filtered_parses, label_matrix = self._filter(parses, explanations)
         conf_matrix_list, stats_list = self.analyze(parses)
         
         # Hold results in temporary space until commit
@@ -224,7 +224,7 @@ class BabbleStream(object):
         self.temp_parses = parses if isinstance(parses, list) else [parses]
         self.temp_label_matrix = label_matrix
         
-        return parses, conf_matrix_list, stats_list
+        return parses, filtered_parses, conf_matrix_list, stats_list
 
     def _parse(self, explanations):
         """
@@ -244,13 +244,10 @@ class BabbleStream(object):
         :param parses: a Parse or list of Parses.
         :param explanations: the Explanation or list of Explanations from which 
             the parse(s) were produced.
-        :return: a list of Parses
-        :return: a sparse.csr_matrix with shape [num_candidates, len(parses)]
+        :return: the outputs from filter_bank.apply()
         """
-        # Filter
-        parses, label_matrix = self.filter_bank.apply(parses, explanations)
-
-        return parses, label_matrix
+        return self.filter_bank.apply(parses, explanations)
+        
 
     def analyze(self, parses):
         if not parses:

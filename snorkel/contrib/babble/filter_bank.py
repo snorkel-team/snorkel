@@ -1,3 +1,4 @@
+from collections import namedtuple
 import numpy as np
 
 from scipy.sparse import csr_matrix
@@ -5,6 +6,8 @@ from scipy.sparse import csr_matrix
 from snorkel.annotations import LabelAnnotator, csr_AnnotationMatrix
 from snorkel.utils import ProgressBar
 from snorkel.contrib.babble.grammar import Parse
+
+# FilteredParses = namedtuple('FilteredParses', ['parses', 'collisions'])
 
 class FilterBank(object):
     def __init__(self, session, candidate_class=None, split=1):
@@ -21,14 +24,19 @@ class FilterBank(object):
         """
         Returns:
             parses: Parses
+            filtered_parses: dict of Parses removed by each Filter
             label_matrix: csr_AnnotationMatrix corresponding to parses
         """
+        filtered_parses = {}
+
         # Apply structure and consistency based filters
         parses, rejected = self.dup_semantics_filter.filter(parses)
-        if not parses: return [], None
+        filtered_parses['duplicate_semantics'] = rejected
+        if not parses: return parses, filtered_parses, None
 
         parses, rejected = self.consistency_filter.filter(parses, explanations)
-        if not parses: return [], None
+        filtered_parses['consistency'] = rejected
+        if not parses: return parses, filtered_parses, None
 
         # Label and extract signatures
         # TODO: replace this naive double for loop with a parallelized solution
@@ -48,12 +56,14 @@ class FilterBank(object):
 
         # Apply signature based filters
         parses, rejected, label_matrix = self.uniform_filter.filter(parses, label_matrix)
-        if not parses: return [], None
+        filtered_parses['uniform_signature'] = rejected
+        if not parses: return parses, filtered_parses, None
 
         parses, rejected, label_matrix = self.dup_signature_filter.filter(parses, label_matrix)
-        if not parses: return [], None
+        filtered_parses['duplicate_signature'] = rejected
+        if not parses: return parses, filtered_parses, None
 
-        return parses, label_matrix
+        return parses, filtered_parses, label_matrix
 
 
     def commit(self, idxs):

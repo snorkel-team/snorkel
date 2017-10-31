@@ -54,6 +54,9 @@ The tutorial is available in the following directory:
 ```
 tutorials/intro
 ```
+You can also check out all the great **[materials](https://simtk.org/frs/?group_id=1263)** from the recent Mobilize Center-hosted [Snorkel workshop](http://mobilize.stanford.edu/events/snorkelworkshop2017/)!
+
+Then, for more content, check out the other tutorials avaliable [here](https://github.com/HazyResearch/snorkel/tree/master/tutorials).
 
 ## Release Notes
 ### Major changes in v0.6:

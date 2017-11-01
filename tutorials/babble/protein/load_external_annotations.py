@@ -14,12 +14,14 @@ def load_external_labels(session, candidate_class, split, annotator='gold',
         csvreader = csv.reader(csvfile)
         csvreader.next()
         positives_by_doc = defaultdict(set)
+        all_labeled_ids = []
         for i, row in enumerate(csvreader):
             try:
                 (cand_id, from_influences_to, to_influences_from,
                         context_stable_id ) = row
                 [from_stable_id, to_stable_id ] = context_stable_id.split("~~")
                 doc_id = from_stable_id.split(':')[0]
+                all_labeled_ids.append(context_stable_id)
             except:
                 print("Malformed row {}.".format(i + 2))
                 continue
@@ -49,7 +51,7 @@ def load_external_labels(session, candidate_class, split, annotator='gold',
         )
         query = query.filter(StableLabel.annotator_name == annotator)
         # If does not already exist, add label
-        if query.count() == 0:
+        if query.count() == 0 and context_stable_ids in all_labeled_ids:
             session.add(StableLabel(
                 context_stable_ids=context_stable_ids,
                 annotator_name=annotator,

@@ -42,6 +42,7 @@ global_config = {
 
     ## traditional
     'max_train': None,  # Number of ground truthed training candidates
+    'traditional_split': 0, # Which split has the candidates/labels to use for trad. sup.
     
     ## generative
     'gen_model_search_space': 10,

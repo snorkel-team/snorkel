@@ -251,9 +251,13 @@ class SnorkelPipeline(object):
 
         if self.config['supervision'] == 'traditional':
             print("In 'traditional' supervision mode...grabbing candidate and gold label subsets.")  
-            candidates_train = self.get_candidates(TRAIN)
-            L_gold_train = load_gold_labels(self.session, annotator_name='gold', split=TRAIN)
-            X_train, Y_train = self.traditional_supervision(candidates_train, L_gold_train)
+            if self.config['traditional_split'] != TRAIN:
+                print("NOTE: using split {} for traditional supervision. "
+                    "Be aware of unfair evaluation.".format(self.config['traditional_split']))
+            candidates = self.get_candidates(split=self.config['traditional_split'])
+            L_gold = load_gold_labels(self.session, annotator_name='gold', 
+                                            split=self.config['traditional_split'])
+            X_train, Y_train = self.traditional_supervision(candidates, L_gold)
             if self.config['display_marginals'] and not self.config['no_plots']:
                 plt.hist(Y_train, bins=20)
                 plt.show()
@@ -312,36 +316,36 @@ class SnorkelPipeline(object):
         final_report(self.config, self.scores)
 
 
-    def traditional_supervision(self, candidates, L_gold_train):
-        """Extract a specified number of train candidates with labels.
+    def traditional_supervision(self, candidates, L_gold):
+        """Extract a specified number of candidates with labels.
         Args:
-            candidates: list of candidates (for entire TRAIN split)
-            L_gold_train: csr_AnnotationMatrix of gold labels (for entire TRAIN split)
+            candidates: list of candidates (for entire split)
+            L_gold: csr_AnnotationMatrix of gold labels (for entire split)
         Returns:
-            X_train: extracted list of candidates
-            Y_train: extracted array of labels (rescaled from [-1, 1] -> [0, 1])
+            X: extracted list of candidates
+            Y: extracted array of labels (rescaled from [-1, 1] -> [0, 1])
         """
         # Confirm you have the requested number of gold labels
         train_size = self.config['max_train']
         
         if train_size is None:
             print("No value found for max_train. Using all available gold labels.")
-            train_size = L_gold_train.nnz
-        elif L_gold_train.nnz < train_size:
+            train_size = L_gold.nnz
+        elif L_gold.nnz < train_size:
             print("Requested {} traditional labels. Only {} could be found.".format(
-                train_size, L_gold_train.nnz))
-            train_size = L_gold_train.nnz
+                train_size, L_gold.nnz))
+            train_size = L_gold.nnz
         
         print("Using {} traditional gold labels".format(train_size))
 
         # Randomly select the requested number of gold labels out of all train
         # candidates that have non-zero labels (-1, +1).
-        selected = sorted(np.random.permutation(L_gold_train.nonzero()[0])[:train_size])
-        X_train = [c for i, c in enumerate(candidates) if i in set(selected)]
-        L_train = L_gold_train[selected,:]
-        Y_train = np.array(L_train.todense()).reshape((L_train.shape[0],))
-        Y_train[Y_train == -1] = 0
-        return X_train, Y_train
+        selected = sorted(np.random.permutation(L_gold.nonzero()[0])[:train_size])
+        X = [c for i, c in enumerate(candidates) if i in set(selected)]
+        L_train = L_gold[selected,:]
+        Y = np.array(L_train.todense()).reshape((L_train.shape[0],))
+        Y[Y == -1] = 0
+        return X, Y
 
 
     def get_candidates(self, split):

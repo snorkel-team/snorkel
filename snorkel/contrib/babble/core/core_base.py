@@ -88,6 +88,8 @@ compositional_rules = [
 
     ### Context ###
     Rule('$ArgX', '$Arg $ArgNum', sems_in_order),
+    Rule('$ArgXListAnd', '$ArgX $And $ArgX', ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))),
+    Rule('$ArgXListOr', '$ArgX $Or $ArgX', ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))),
 ]
 
 # template_rules = []

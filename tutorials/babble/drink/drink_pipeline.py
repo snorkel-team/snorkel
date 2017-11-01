@@ -39,10 +39,10 @@ class DrinkPipeline(ImagePipeline, BabblePipeline):
                                                             candidates=[], verbose=False)
             return labels_by_candidate
 
-        validation_labels_by_candidate = load_labels('val', self.anns_path +
-                                                     'Reach_Val_Labels_out.csv')
         train_labels_by_candidate = load_labels('train', self.anns_path +
                                                 'Reach_Train_Labels_out.csv')
+        validation_labels_by_candidate = load_labels('val', self.anns_path +
+                                                     'Reach_Val_Labels_out.csv')
             
 
         def assign_gold_labels(labels_by_candidate):
@@ -65,9 +65,8 @@ class DrinkPipeline(ImagePipeline, BabblePipeline):
             reload_annotator_labels(self.session, self.candidate_class, 
                 annotator_name, split=source, filter_label_split=False)
 
-            
-        assign_gold_labels(validation_labels_by_candidate)
         assign_gold_labels(train_labels_by_candidate)
+        assign_gold_labels(validation_labels_by_candidate)
 
     def collect(self):
         helper = MTurkHelper()

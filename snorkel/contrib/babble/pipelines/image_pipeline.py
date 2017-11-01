@@ -19,6 +19,11 @@ from snorkel.contrib.babble.pipelines import BabblePipeline, final_report
 
 from tutorials.babble import MTurkHelper
 
+TRAIN = 0
+DEV = 1
+TEST = 2
+
+
 class ImagePipeline(BabblePipeline):
 
     def extract(self):
@@ -104,11 +109,8 @@ class ImagePipeline(BabblePipeline):
         if not os.path.exists(dataset_dir):
             os.makedirs(dataset_dir)
 
-        X_train = self.get_candidates(0)
-        Y_train = (self.train_marginals if getattr(self, 'train_marginals', None) 
-                   is not None else load_marginals(self.session, split=0))
-        Y_train_gold = np.array(load_gold_labels(self.session, annotator_name='gold', split=0).todense()).ravel()
-        X_val = self.get_candidates(1)
+        X_train = self.get_candidates(TRAIN)
+        X_val = self.get_candidates(DEV)
         Y_val = np.array(load_gold_labels(self.session, annotator_name='gold', split=1).todense()).ravel()
 
         # Save out Validation Images and Labels
@@ -134,15 +136,16 @@ class ImagePipeline(BabblePipeline):
 
         # If we're in traditional supervision mode, use hard marginals from the train set
         if self.config['supervision'] == 'traditional':
-            train_size = self.config['max_train'] if self.config['max_train'] else int(1e9)
-            Y_train = Y_train_gold  # use 0/1 labels, not probabilistic labels
-            # This zips X and Y, sorts by image_id, keeps only train_size pairs,
-            # and returns them to X and Y
-            X_train, Y_train = zip(*(sorted(zip(X_train, Y_train), 
-                                 key=lambda x: x[0][1].stable_id.split(":")[1])[:train_size]))
-            print("TODO: confirm that traditional supervision is working as expected.")
-
-            train_coco_ids, train_labels = link_images_candidates(train_anns, X_train, train_mscoco, Y_train_gold)
+            print("In 'traditional' supervision mode...grabbing candidate and gold label subsets.")  
+            candidates_train = self.get_candidates(TRAIN)
+            L_gold_train = load_gold_labels(self.session, annotator_name='gold', split=TRAIN)
+            X_train, Y_train = self.traditional_supervision(candidates_train, L_gold_train)
+            if self.config['display_marginals'] and not self.config['no_plots']:
+                plt.hist(Y_train, bins=20)
+                plt.show()
+        else:
+            Y_train = (self.train_marginals if getattr(self, 'train_marginals', None) 
+                is not None else load_marginals(self.session, split=TRAIN))
 
         train_coco_ids, train_labels = link_images_candidates(train_anns, X_train, train_mscoco, Y_train)
         num_train = create_csv(dataset_dir, 'train_images.csv', train_coco_ids, train_labels, 'train2017')
@@ -218,7 +221,7 @@ class ImagePipeline(BabblePipeline):
                   ' --eval_dir=' + eval_dir + \
                   ' --dataset_split_name=validation ' + \
                   ' --model_name=' + str(self.config['disc_model_class']) + \
-                  ' |& tee -a ' + output_file
+                  ' | tee -a ' + output_file
             os.system(eval_cmd)
 
             # Scrape results from output.txt 
@@ -264,7 +267,7 @@ class ImagePipeline(BabblePipeline):
                  ' --eval_dir=' + eval_dir + \
                  ' --dataset_split_name=test ' + \
                  ' --model_name=' + str(self.config['disc_model_class']) + \
-                 ' |& tee -a ' + test_file)
+                 ' | tee -a ' + test_file)
         
         accuracy, precision, recall = scrape_output(test_file)
         p, r = precision, recall

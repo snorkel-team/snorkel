@@ -4,7 +4,7 @@ from snorkel.models import StableLabel
 
 from snorkel_pipeline import SnorkelPipeline, TRAIN, DEV, TEST
 
-from snorkel.contrib.babble import Babbler, link_explanation_candidates
+from snorkel.contrib.babble import Babbler, BabbleStream, link_explanation_candidates
 
 class BabblePipeline(SnorkelPipeline):
     
@@ -48,12 +48,12 @@ class BabblePipeline(SnorkelPipeline):
         #     self.load_train_gold()
 
         print("Calling babbler...")
-        self.babbler = Babbler(mode=mode, 
-                               explanations=explanations, 
+        self.babbler = Babbler(self.session,
+                               mode=mode, 
                                candidate_class=self.candidate_class, 
-                               user_lists=user_lists,
-                               do_filter=True)
-        self.babbler.apply(split=self.config['babbler_label_split'], 
+                               user_lists=user_lists)
+        self.babbler.apply(explanations, 
+                           split=self.config['babbler_label_split'], 
                            parallelism=self.config['parallelism'])
         self.explanations = self.babbler.get_explanations()
         self.lfs = self.babbler.get_lfs()

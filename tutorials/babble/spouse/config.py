@@ -1,6 +1,7 @@
 config = {
     'candidate_name' : 'Spouse',
     'candidate_entities' : ['person1', 'person2'],
+    'babbler_label_split': 1,
     'gen_init_params': {
 		'class_prior'           : False, # TRUE!?
         'lf_propensity'         : True,

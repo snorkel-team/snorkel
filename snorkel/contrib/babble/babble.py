@@ -153,7 +153,7 @@ class BabbleStream(object):
         self.filter_bank = FilterBank(session, candidate_class)
         
         self.explanations = set()
-        self.parses = set()
+        self.parses = []
         self.label_matrix = None
 
         # Temporary storage
@@ -203,7 +203,7 @@ class BabbleStream(object):
         if user_lists:
             self.add_user_lists(user_lists)
         if explanations:
-            parses, _, _ = self.apply(explanations)
+            parses, _, _, _ = self.apply(explanations)
             if parses:
                 self.commit()
 
@@ -307,12 +307,12 @@ class BabbleStream(object):
             if max(idxs) >= len(self.temp_parses):
                 raise Exception("Invalid idx: {}.".format(max(idxs)))
 
-            parses_to_add = set(p for i, p in enumerate(self.temp_parses) if i in idxs)
+            parses_to_add = [p for i, p in enumerate(self.temp_parses) if i in idxs]
             parse_names_to_add = [p.function.__name__ for p in parses_to_add]
             explanations_to_add = set(e for e in self.temp_explanations if 
                 any(pn.startswith(e.name) for pn in parse_names_to_add))
       
-            self.parses.update(parses_to_add)
+            self.parses.extend(parses_to_add)
             self.explanations.update(explanations_to_add)
             if self.label_matrix is None:
                 self.label_matrix = self.temp_label_matrix

@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 import numpy as np
 
 from scipy.sparse import csr_matrix
@@ -7,7 +7,7 @@ from snorkel.annotations import LabelAnnotator, csr_AnnotationMatrix
 from snorkel.utils import ProgressBar
 from snorkel.contrib.babble.grammar import Parse
 
-# FilteredParses = namedtuple('FilteredParses', ['parses', 'collisions'])
+FilteredParse = namedtuple('FilteredParse', ['parse', 'reason'])
 
 class FilterBank(object):
     def __init__(self, session, candidate_class=None, split=1):
@@ -31,11 +31,11 @@ class FilterBank(object):
 
         # Apply structure and consistency based filters
         parses, rejected = self.dup_semantics_filter.filter(parses)
-        filtered_parses['duplicate_semantics'] = rejected
+        filtered_parses[self.dup_semantics_filter.name()] = rejected
         if not parses: return parses, filtered_parses, None
 
         parses, rejected = self.consistency_filter.filter(parses, explanations)
-        filtered_parses['consistency'] = rejected
+        filtered_parses[self.consistency_filter.name()] = rejected
         if not parses: return parses, filtered_parses, None
 
         # Label and extract signatures
@@ -56,11 +56,11 @@ class FilterBank(object):
 
         # Apply signature based filters
         parses, rejected, label_matrix = self.uniform_filter.filter(parses, label_matrix)
-        filtered_parses['uniform_signature'] = rejected
+        filtered_parses[self.uniform_filter.name()] = rejected
         if not parses: return parses, filtered_parses, None
 
         parses, rejected, label_matrix = self.dup_signature_filter.filter(parses, label_matrix)
-        filtered_parses['duplicate_signature'] = rejected
+        filtered_parses[self.dup_signature_filter.name()] = rejected
         if not parses: return parses, filtered_parses, None
 
         return parses, filtered_parses, label_matrix
@@ -96,8 +96,8 @@ class Filter(object):
 class DuplicateSemanticsFilter(Filter):
     """Filters out parses with identical logical forms (keeping one)."""
     def __init__(self):
-        self.seen = set()
-        self.temp_seen = []
+        self.seen_semantics = {}        # key: semantics, value: parses
+        self.temp_seen_semantics = OrderedDict()   # key: semantics, value: parses
     
     def filter(self, parses):
         parses = self.validate(parses)
@@ -106,20 +106,27 @@ class DuplicateSemanticsFilter(Filter):
         good_parses = []
         bad_parses = []
         for parse in parses:
-            h = hash(parse.semantics) 
-            if h in self.seen or h in self.temp_seen:
-                bad_parses.append(parse)
+            # If a parse collides with a previously committed parse or a newly
+            # seen temporary parse, add it to the bad parses and store the parse
+            # that it collided with, for reference. Otherwise, add to good parses.
+            if parse.semantics in self.seen_semantics:
+                bad_parses.append(FilteredParse(parse, self.seen_semantics[parse.semantics]))
+            elif parse.semantics in self.temp_seen_semantics:
+                # Store the removed parse, and the parse it collided with, for reference.
+                bad_parses.append(FilteredParse(parse, self.temp_seen_semantics[parse.semantics]))
             else:
                 good_parses.append(parse)
-                self.temp_seen.append(h)
+                self.temp_seen_semantics[parse.semantics] = parse
 
         print("{} parse(s) remain ({} parse(s) removed by {}).".format(
             len(good_parses), len(bad_parses), self.name()))    
         return good_parses, bad_parses
 
     def commit(self, idxs):
-        self.seen.update([h for i, h in enumerate(self.temp_seen) if i in idxs])
-        self.temp_seen = []
+        for i, (semantics, parse) in enumerate(self.temp_seen_semantics.items()):
+             if i in idxs:
+                 self.seen_semantics[parse.semantics] =  parse
+        self.temp_seen_semantics = OrderedDict()
 
 
 class ConsistencyFilter(Filter):
@@ -150,7 +157,7 @@ class ConsistencyFilter(Filter):
                     if lf(exp.candidate):
                         good_parses.append(parse)
                     else:
-                        bad_parses.append(parse)
+                        bad_parses.append(FilteredParse(parse, exp.candidate))
                 else:
                     unknown_parses.append(parse)
             else:
@@ -158,7 +165,7 @@ class ConsistencyFilter(Filter):
                     if lf(exp.candidate):
                         good_parses.append(parse)
                     else:
-                        bad_parses.append(parse)
+                        bad_parses.append(FilteredParse(parse, exp.candidate))
                 except:
                     unknown_parses.append(parse)
         if unknown_parses:
@@ -197,7 +204,13 @@ class UniformSignatureFilter(Filter):
         nonuniform_idxs = [i for i, sum in enumerate(column_sums) if i not in uniform_idxs]
 
         good_parses = [parse for i, parse in enumerate(parses) if i in nonuniform_idxs]
-        bad_parses = [parse for i, parse in enumerate(parses) if i in uniform_idxs]
+        bad_parses = []
+        for i, parse in enumerate(parses):
+            if i in labeled_all_idxs:
+                bad_parses.append(FilteredParse(parse, "Labeled all {} candidates".format(num_candidates)))
+            elif i in labeled_none_idxs:
+                bad_parses.append(FilteredParse(parse, "Labeled 0 candidates".format(num_candidates)))
+            
         label_matrix = label_matrix[:, nonuniform_idxs]
 
         print("{} parse(s) remain ({} parse(s) removed by {}: ({} None, {} All)).".format(
@@ -210,8 +223,8 @@ class UniformSignatureFilter(Filter):
 class DuplicateSignatureFilter(Filter):
     """Filters out all but one parse that have the same labeling signature."""
     def __init__(self):
-        self.seen = set()
-        self.temp_seen = []
+        self.seen_signatures = {}        # key: signature hash, value: parse
+        self.temp_seen_signatures = OrderedDict()   # key: signature hash, value: parse
 
     def filter(self, parses, label_matrix):
         """
@@ -227,14 +240,22 @@ class DuplicateSignatureFilter(Filter):
 
         num_candidates, num_lfs = label_matrix.shape
         signatures = [hash(label_matrix[:,i].nonzero()[0].tostring()) for i in range(num_lfs)]
+        good_parses = []
+        bad_parses = []
         nonduplicate_idxs = []
-        for i, sig in enumerate(signatures):
-            if sig not in self.seen and sig not in self.temp_seen:
+        for i, (sig, parse) in enumerate(zip(signatures, parses)):
+            # If a parse collides with a previously committed parse or a newly
+            # seen temporary parse, add it to the bad parses and store the parse
+            # that it collided with, for reference. Otherwise, add to good parses.
+            if sig in self.seen_signatures:
+                bad_parses.append(FilteredParse(parse, self.seen_signatures[sig]))
+            elif sig in self.temp_seen_signatures:
+                bad_parses.append(FilteredParse(parse, self.temp_seen_signatures[sig]))
+            else:
+                good_parses.append(parse)
+                self.temp_seen_signatures[sig] = parse
                 nonduplicate_idxs.append(i)
-            self.temp_seen.append(sig)
 
-        good_parses = [parse for i, parse in enumerate(parses) if i in list(nonduplicate_idxs)]
-        bad_parses = [parse for i, parse in enumerate(parses) if i not in list(nonduplicate_idxs)]        
         label_matrix = label_matrix[:, nonduplicate_idxs]
 
         print("{} parse(s) remain ({} parse(s) removed by {}).".format(
@@ -242,8 +263,10 @@ class DuplicateSignatureFilter(Filter):
         return good_parses, bad_parses, label_matrix
     
     def commit(self, idxs):
-        self.seen.update([h for i, h in enumerate(self.temp_seen) if i in idxs])
-        self.temp_seen = []
+        for i, (sig, parse) in enumerate(self.temp_seen_signatures.items()):
+             if i in idxs:
+                 self.seen_signatures[sig] =  parse
+        self.temp_seen_signatures= OrderedDict()
 
 
 def extract_exp_name(lf):

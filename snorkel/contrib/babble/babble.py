@@ -211,9 +211,8 @@ class BabbleStream(object):
         """
         :param explanations: an Explanation or list of Explanations.
         """
-        if self.temp_parses:
-            self.commit([])
-            print("All previously uncommitted parses have been flushed.")
+        self.commit([])
+        print("All previously uncommitted parses have been flushed.")
 
         parses = self._parse(explanations)
         parses, filtered_parses, label_matrix = self._filter(parses, explanations)
@@ -284,6 +283,38 @@ class BabbleStream(object):
             stats_list.append(Metrics(accuracy, coverage, class_coverage))
 
         return conf_matrix_list, stats_list
+
+    def filtered_analysis(self, filtered_parses):
+        if not any(filtered_parses.values()):
+            print("No filtered parses to analyze.")
+            return
+        for filter_name, parses in filtered_parses.items():
+            if parses:
+                print("Filter {} removed {} parse(s):".format(filter_name, len(parses)))
+            for i, filtered_parse in enumerate(parses):
+                print("\n#{} Filtered parse:".format(i))
+                print("Explanation (source):\n{}".format(
+                    filtered_parse.parse.explanation))
+                print("\nParse (pseudocode):\n{}".format(
+                    self.semparser.grammar.translate(filtered_parse.parse.semantics)))
+
+                if filter_name == 'DuplicateSemanticsFilter':
+                    print("\nReason:\nCollision with parse from this explanation:\n{}".format(
+                        filtered_parse.reason.explanation))
+                    
+                elif filter_name == 'ConsistencyFilter':
+                    candidate = filtered_parse.reason
+                    print('\nReason:\nInconsistent with candidate ({}, {}) from:\n"{}"'.format(
+                        candidate[0].get_span(), candidate[1].get_span(), 
+                        filtered_parse.reason.get_parent().text))
+                    
+                elif filter_name == 'UniformSignatureFilter':
+                    print("\nReason:\n{}".format(filtered_parse.reason))
+                    
+                elif filter_name == 'DuplicateSignatureFilter':
+                    print("\nReason:\nCollision with parse from this explanation:\n{}".format(
+                        filtered_parse.reason.explanation))
+
 
     def commit(self, idxs='all'):
         """

@@ -8,13 +8,13 @@ import shutil
 import numpy as np
 import pandas as pd
 from pprint import pprint
+import matplotlib.pyplot as plt
 
 from snorkel.parser import ImageCorpusExtractor, CocoPreprocessor
 from snorkel.models import StableLabel
 from snorkel.db_helpers import reload_annotator_labels
 from snorkel.annotations import load_marginals, load_gold_labels
 
-from snorkel.contrib.babble import Babbler
 from snorkel.contrib.babble.pipelines import BabblePipeline, final_report
 
 from tutorials.babble import MTurkHelper
@@ -216,12 +216,17 @@ class ImagePipeline(BabblePipeline):
                 os.makedirs(eval_dir)
             eval_cmd = 'python '+ slim_ws_path + 'eval_image_classifier.py ' + \
                   ' --dataset_name=mscoco ' + \
+                  ' --dataset_split_name=validation' + \
                   ' --dataset_dir=' + dataset_dir + \
                   ' --checkpoint_path=' + train_dir + \
                   ' --eval_dir=' + eval_dir + \
                   ' --dataset_split_name=validation ' + \
                   ' --model_name=' + str(self.config['disc_model_class']) + \
+                  ' --batch_size=78' + \
                   ' | tee -a ' + output_file
+            ### TEMP ###
+            # You added the batch_size parameter above
+            ### TEMP ###
             os.system(eval_cmd)
 
             # Scrape results from output.txt 
@@ -262,6 +267,7 @@ class ImagePipeline(BabblePipeline):
         print('\nCalling TFSlim eval on test...')
         os.system('python '+ slim_ws_path + 'eval_image_classifier.py ' + \
                  ' --dataset_name=mscoco '
+                 ' --dataset_split_name=test' + \
                  ' --dataset_dir=' + dataset_dir + \
                  ' --checkpoint_path=' + checkpoint_path + \
                  ' --eval_dir=' + eval_dir + \

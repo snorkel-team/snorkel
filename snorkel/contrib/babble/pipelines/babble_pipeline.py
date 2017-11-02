@@ -64,7 +64,7 @@ class BabblePipeline(SnorkelPipeline):
             self.config = config
         if self.config['supervision'] == 'traditional':
             print("In 'traditional' supervision mode...skipping 'label' stage.")
-            return            
+            return
         self.labeler = LabelAnnotator(lfs=self.lfs)  
         splits = [split] if split else self.config['splits']
         for split in self.config['splits']:

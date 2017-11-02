@@ -152,7 +152,7 @@ class TFNoiseAwareModel(Classifier):
         # Check that the cardinality of the training marginals and model agree
         cardinality = Y_train.shape[1] if len(Y_train.shape) > 1 else 2
         if cardinality != self.cardinality:
-            raise ValueError("Training marginals cardinality ({0}) does not"
+            raise ValueError("Training marginals cardinality ({0}) does not "
                 "match model cardinality ({1}).".format(Y_train.shape[1], 
                     self.cardinality))
         # Make sure marginals are in correct default format
@@ -263,7 +263,7 @@ class TFNoiseAwareModel(Classifier):
             # Iterate over batches
             batch_marginals = []
             for b in range(0, N, batch_size):
-                batch = self._marginals_batch(X[b:b+batch_size])
+                batch = self._marginals_batch(X[b:min(b+batch_size, X.shape[0])])
                 # Note: Make sure a list is returned!
                 if min(b+batch_size, N) - b == 1:
                     batch = np.array([batch])

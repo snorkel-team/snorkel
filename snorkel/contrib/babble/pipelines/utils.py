@@ -13,10 +13,11 @@ class STAGES:
     PARSE = 1
     EXTRACT = 2
     LOAD_GOLD = 3
-    COLLECT = 4
-    LABEL = 5
-    SUPERVISE = 6
-    CLASSIFY = 7
+    FEATURIZE = 4
+    COLLECT = 5
+    LABEL = 6
+    SUPERVISE = 7
+    CLASSIFY = 8
     ALL = 10
 
 ### LOGGING

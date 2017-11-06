@@ -60,14 +60,16 @@ if __name__ == '__main__':
     ## hyperparameters
 
     # Classify args
+    argparser.add_argument('--disc_model_class', type=str)
+
     argparser.add_argument('--disc_params_search:lr', type=float, action='append')
     argparser.add_argument('--disc_params_search:weight_decay', type=float, action='append')
     argparser.add_argument('--disc_params_search:max_steps', type=int, action='append')
     
-    argparser.add_argument('--disc_params_default:batch_size', type=int, action='append')
-    argparser.add_argument('--disc_params_default:n_epochs', type=int, action='append')
-    argparser.add_argument('--disc_params_default:lr', type=float, action='append')
-    argparser.add_argument('--disc_params_default:rebalance', type=float, action='append')
+    argparser.add_argument('--disc_params_default:batch_size', type=int)
+    argparser.add_argument('--disc_params_default:n_epochs', type=int)
+    argparser.add_argument('--disc_params_default:lr', type=float)
+    argparser.add_argument('--disc_params_default:rebalance', type=float)
 
 
     # Search

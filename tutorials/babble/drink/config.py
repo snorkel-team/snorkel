@@ -35,7 +35,7 @@ config = {
     'print_freq': 5,
     'optimizer': 'adam',
     'opt_epsilon': 1.0,
-    'disc_params_search': {
+    'disc_params_range': {
         'lr'        : [1, 50],
         'weight_decay': [1e-5, 1e-4, 1e-3, 1e-2],
         'max_steps' : [200, 1000],

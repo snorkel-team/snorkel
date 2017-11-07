@@ -62,15 +62,15 @@ if __name__ == '__main__':
     # Classify args
     argparser.add_argument('--disc_model_class', type=str)
 
-    argparser.add_argument('--disc_params_search:lr', type=float, action='append')
-    argparser.add_argument('--disc_params_search:weight_decay', type=float, action='append')
-    argparser.add_argument('--disc_params_search:max_steps', type=int, action='append')
-    
     argparser.add_argument('--disc_params_default:batch_size', type=int)
     argparser.add_argument('--disc_params_default:n_epochs', type=int)
     argparser.add_argument('--disc_params_default:lr', type=float)
     argparser.add_argument('--disc_params_default:rebalance', type=float)
-
+    
+    argparser.add_argument('--disc_params_range:batch_size', type=int, action='append')
+    argparser.add_argument('--disc_params_range:n_epochs', type=int, action='append')
+    argparser.add_argument('--disc_params_range:lr', type=float, action='append')
+    argparser.add_argument('--disc_params_range:rebalance', type=float, action='append')
 
     # Search
     argparser.add_argument('--seed', type=int)

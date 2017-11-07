@@ -169,8 +169,8 @@ class ImagePipeline(BabblePipeline):
 
         # Run homemade hacky random search
         # First, make random assignments in space of possible configurations
-        param_names = self.config['disc_params_search'].keys()
-        param_assignments = list(product(*[self.config['disc_params_search'][pn] for pn in param_names]))
+        param_names = self.config['disc_params_range'].keys()
+        param_assignments = list(product(*[self.config['disc_params_range'][pn] for pn in param_names]))
         disc_params_list = [{k: v for k, v in zip(param_names, param_assignments[i])} for i in range(len(param_assignments))]
         # Randomnly select a small number of these to try
         random.shuffle(disc_params_list)

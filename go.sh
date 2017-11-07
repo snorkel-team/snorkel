@@ -27,5 +27,5 @@ python -u snorkel/contrib/babble/pipelines/run.py \
     --supervision traditional \
     --gen_model_search_space 1 \
     --disc_model_search_space 1 \
-    --disc_params_search:max_steps 1 \
+    --disc_params_range:max_steps 1 \
     --seed 1023 --verbose --no_plots |& tee -a $LOGFILE

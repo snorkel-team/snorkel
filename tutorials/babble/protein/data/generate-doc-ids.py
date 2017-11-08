@@ -6,8 +6,8 @@ from six.moves.cPickle import dump
 
 # TODO rename all_ids to unexplained_ids
 def pkr_doc_split(
-    id_fname="./all_ids.txt",
-    unlabeled_id_fname="./unlabelled_ids.txt",
+    labeled_id_fname="./labeled_ids.txt",
+    all_id_fname="./all_ids.txt",
     out_fname='./all_pkr_ids.pkl',
     seed=1701
 ):
@@ -17,22 +17,27 @@ def pkr_doc_split(
             '28582849',
             '28582834'
             ]
-    unexplainedIds = []
-    with open(id_fname, 'rt') as f:
+    labeledIds= []
+    with open(labeled_id_fname, 'rt') as f:
         for line in f:
-            unexplainedIds.append(line.strip('\n'))
-    unlabeledIds= []
-    with open(unlabeled_id_fname, 'rt') as f:
+            labeledIds.append(line.strip('\n'))
+    allIds= []
+    with open(all_id_fname, 'rt') as f:
         for line in f:
-            unlabeledIds.append(line.strip('\n'))
+            allIds.append(line.strip('\n'))
+    unlabeledIds = [val for val in allIds if val not in labeledIds] 
     np.random.seed(seed)
-    np.random.shuffle(unexplainedIds)
+    np.random.shuffle(labeledIds)
+    print('unlabeled length:',len(unlabeledIds))
+    print('explained length:',len(explainedIds))
+    print('lableled length:',len(labeledIds))
     id_dict = {
             'train': unlabeledIds,
-            'dev': explainedIds + unexplainedIds[0:22],
-            'test': unexplainedIds[22:50]
+            'dev': explainedIds + labeledIds[0:255],
+            'test': labeledIds[255:517]
         }
     print("id_dict:",id_dict)
+    print("train dev test:",len(id_dict['train']),len(id_dict['dev']),len(id_dict['test']))
 
     with open(out_fname, 'w') as f:
         dump((id_dict['train'], id_dict['dev'], id_dict['test']), f)

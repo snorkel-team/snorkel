@@ -1,71 +1,148 @@
-None 	False	there are no words indicating marriage in the sentence.  	None
-None 	False	because no family words in sentence and different last names 	None
-None 	False	because the word 'Mayor' is immediately to the left of person 2, and no word identifying a spouse relationship is present. 	None
-None 	False	because they seem to be related politically related, not through marriage.  	None
-None 	False	because the word "Mayor" is within 1 word of person 2. 	None
-None 	False	because there is no mention of "husband" or "wife" in the sentence, and the two individuals do not share a surname.  	None
-None 	False	because the word "Mayor" appears before person 2. 	None
-None 	False	there are no words indicating marriage in the sentence.  	None
-None 	False	because no family words in sentence and different last names 	None
-None 	False	because the word 'clerk' is immediately to the left of person 2, and no word identifying a spouse relationship is present. 	None
-None 	False	because there is no mention of "husband/wife/family/child" etc., only clerk. 	None
-None 	False	because the word "clerk" is within 1 word of person 2. 	None
-None 	False	because there is no mention of "husband" or "wife" in the sentence, and the two individuals do not share a surname.  	None
-None 	False	because the word "clerk" appears before person 2. 	None
-None 	False	'lawyer for' between the two person indicates a different relationship than marriage. 	None
-None 	False	because no family words in sentence and different last names 	None
-None 	False	because the phrase 'lawyer for' is to the immediate left of of person 2. 	None
-None 	False	one person is the other's lawyer. No mention of other relation. 	None
-None 	False	because the word "lawyer" is within 2 words of person 2. 	None
-None 	False	because there is no mention of "husband" or "wife" in the sentence, and the two individuals do not share a surname.  	None
-None 	False	because the phrase "lawyer for" appears between person 1 and person 2. 	None
-None 	True 	'wife' between the two person names 	None
-None 	True 	because words "his wife" appear immediately before Person 2 	None
-None 	True 	because the phrase 'his wife' immediately precedes person 2. 	None
-None 	True 	due to mention of "his wife" 	None
-None 	True 	because the word "wife" is between person 1 and person 2. 	None
-None 	True 	because the word "wife" immediately precedes the second individual, and a possessive pronoun ("his") precedes "wife".  	None
-None 	True 	because the second individual's surname is not mentioned.  	None
-None 	True 	because the word "wife" appears before person 2. 	None
-None 	False	no words indicating marriage in the sentence 	None
-None 	False	because no family words in sentence and different last names 	None
-None 	False	because there is no word identifying a spouse relationship. 	None
-None 	False	there is no "husband/wife/family/child" mentioned. 	None
-None 	False	because the is no sentence information on person 2. 	None
-None 	False	because there is no mention of "husband" or "wife" in the sentence, and the two individuals do not share a surname.  	None
-None 	False	because "husband", "wife", "married", and "spouse" do not appear in this sentence. 	None
-None 	False	'daughters' right before person1, and many names in the sentence. 	None
-None 	False	although "with wife" appears immediately prior to Person 2, "with wife" modifies "raises" for which Person 1 is not the subject  	None
-None 	False	because the word 'daughters' appears to the left of person 1 and the word 'wife' appears to the left of person 2. 	None
-None 	False	because the two are related as "wife" and "daughter" of someone else.  	None
-None 	False	because the word "daughters" is within 1 word of person 2 	None
-None 	False	because the first individual's name is immediately preceded by the word "daughter", and the first individual's name is a part of a list.  	None
-None 	False	because the word "daughters" appears before person 1. 	None
-None 	False	'brother' between person1 and person2 	None
-None 	False	because "his brother" appears immediately prior to Person 2 	None
-None 	False	because the phrase 'his brother' appears immediately to the left of person 2. 	None
-None 	False	due to mention of "brother" 	None
-None 	False	because the word "brother" is within 1 word of person 2 	None
-None 	False	because the second individual's name is immediately preceded by the word "brother", and the word "brother" is preceded by the possessive pronoun "his".  	None
-None 	False	because "brother" appears before person 2. 	None
-None 	True 	'his wife' immediately before person2, no other names between them. 	None
-None 	True 	because words "his wife" appear immediately before Person 2 	None
-None 	True 	because person 2 appears immediately after the phrase 'his wife'. 	None
-None 	True 	"wife" is mentioned. 	None
-None 	True 	because the word "wife" is between person 1 and person 2 	None
-True 	because the second individual's name is immediately preceded by "wife" and is preceded by the possessive pronoun "his" within two words, and because the first individual's surname and given name None 	are both stated, while only the given name of the second individual is stated.  	None
-None 	True 	because "wife" appears before person 2. 	None
-None 	False	no words indicating marriage in sentence. Maybe no because 'secretary' before person2 could be a different relationship. 	None
-None 	False	because no family words in sentence and different last names 	None
-None 	False	because the word 'Secretary' appears to the left of person 2, person 2 is the object of 'approved by', and there are no words describing the spouse relationship. 	None
-None 	False	one person is "secretary", not "husband/wife/child" 	None
-None 	False	because the phrase "US Defence Secretary" is within 3 words of person 2  	None
-None 	False	because there is no mention of "husband" or "wife" in the sentence, and the two individuals do not share a surname.  	None
-None 	False	because "Secretary" appears before person 2. 	None
-None 	False	no words indicating marriage in the sentence. 	None
-None 	False	because no family words in sentence and different last names 	None
-None 	False	because 'in' comes within 2 words before person 2, and 'vice president' is to the right of person 1. 	None
-None 	False	no mention of personal relation.  	None
-None 	False	because "Flo" is an acronym and the word "in" is within 3 words of person 2. 	None
-None 	False	because the second entity is preceded by the preposition "in" within two words.  	None
-None 	False	because "president" appears between person 1 and person 2. 	None
+d83554df-ec54-4ffc-a56d-f7145374dcdd::span:0:3~~d83554df-ec54-4ffc-a56d-f7145374dcdd::span:9:25	True	"The word ""and"" appears between person1 and person2"	
+d6500075-c7f8-40ed-968c-d08f3d66b112::span:1569:1573~~d6500075-c7f8-40ed-968c-d08f3d66b112::span:1720:1739	False	"The word ""Chief"" appears before person2"	
+a587afeb-715c-44ee-bdef-75f61cb7c6e8::span:805:819~~a587afeb-715c-44ee-bdef-75f61cb7c6e8::span:867:881	False	person1 is the same as person2	
+d83554df-ec54-4ffc-a56d-f7145374dcdd::span:3080:3095~~d83554df-ec54-4ffc-a56d-f7145374dcdd::span:3145:3150	False	"The word ""apartment"" appears immediately after person2"	
+14112548-367a-4de1-85a7-11cd145b18e0::span:3687:3693~~14112548-367a-4de1-85a7-11cd145b18e0::span:3699:3702	True	"""wedding"" occurs immediately after person1 and person2"	
+a8488aab-31dc-49d7-83f0-8921c4bda307::span:0:15~~a8488aab-31dc-49d7-83f0-8921c4bda307::span:53:66	True	"""husband"" occurs before person2"	
+258873e6-1f83-4f6c-9ddd-7e23b4332e41::span:950:954~~258873e6-1f83-4f6c-9ddd-7e23b4332e41::span:982:994	True	"""previously married"" occurs between person1 and person2"	
+bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:972:985~~bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:994:1005	True	"""fiance"" occurs between person1 and person2"	
+75e1d890-c481-40fb-8d12-34fe6bcbd56d::span:4417:4422~~75e1d890-c481-40fb-8d12-34fe6bcbd56d::span:4446:4457	False	"""said"" occurs between person1 and person2 and ""investigation"" occurs after person2"	
+7fc3e510-c4e6-44c2-a24b-f9a39bfcfb07::span:6956:6966~~7fc3e510-c4e6-44c2-a24b-f9a39bfcfb07::span:7134:7135	False	person2 is an empty string.	
+d38fa137-ac2d-4e43-b216-18dacf22426d::span:3814:3823~~d38fa137-ac2d-4e43-b216-18dacf22426d::span:3957:3970	False	"The word ""rape"" appears before person1 and the word ""trying"" appears between person1 and person2"	
+c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:582:588~~c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:595:598	False	no words related to marriage appear in the sentence.	
+c03ca255-1e1c-4031-93c0-623d91188e97::span:2237:2244~~c03ca255-1e1c-4031-93c0-623d91188e97::span:2420:2426	False	"the word ""Congress"" appears four words before person2"	
+822d4f7f-e420-4987-9fab-92b0686d65d6::span:2375:2389~~822d4f7f-e420-4987-9fab-92b0686d65d6::span:2403:2415	False	"The word ""Editing"" appears between person1 and person2"	
+c6a853a3-960e-4857-b048-abb692d1b2cc::span:1271:1280~~c6a853a3-960e-4857-b048-abb692d1b2cc::span:1469:1481	True	"""wife"" appears between person1 and person2 and the last word of person1 is the same as the last word of person2"	
+affed66e-3a08-40d0-b11f-51b5727dccc4::span:224:226~~affed66e-3a08-40d0-b11f-51b5727dccc4::span:340:343	True	"""wife"" precedes person1"	
+d83554df-ec54-4ffc-a56d-f7145374dcdd::span:603:618~~d83554df-ec54-4ffc-a56d-f7145374dcdd::span:643:647	True	"""wife"" precedes person2"	
+a8488aab-31dc-49d7-83f0-8921c4bda307::span:315:323~~a8488aab-31dc-49d7-83f0-8921c4bda307::span:329:342	True	"""husband"" is in the sentence before person1"	
+d83554df-ec54-4ffc-a56d-f7145374dcdd::span:1245:1261~~d83554df-ec54-4ffc-a56d-f7145374dcdd::span:1392:1402	True	the last word of person1 is the same as the last word of person2	
+3494f8e0-ecd4-4f10-86db-95b920744162::span:18:33~~3494f8e0-ecd4-4f10-86db-95b920744162::span:120:125	True	"""his wife"" comes after person1 and ""his wife"" comes within three words of person2."	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:3462:3469~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:3540:3546	True	"""ex-husband"" comes after person1, and within 1 word of person2."	
+c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:2765:2768~~c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:2858:2862	True	"""and"" is between person1 and person2, and ""proposal"" follows (person1 and person2) in the sentence."	
+445ee1bb-f00d-4fb6-a917-ad4609c37918::span:1714:1728~~445ee1bb-f00d-4fb6-a917-ad4609c37918::span:1756:1767	False	the last word of person1 is not the same as the last word of person2.	
+df8eb686-7023-4020-ad9b-e05194728ac9::span:0:13~~df8eb686-7023-4020-ad9b-e05194728ac9::span:176:198	False	there's an extra word highlighted.	
+3dc9c69c-3e30-4711-ac8b-7bc2c8d928bf::span:4242:4245~~3dc9c69c-3e30-4711-ac8b-7bc2c8d928bf::span:4273:4288	True	"the words ""and her husband"" appear between person1 and person2. "	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:3625:3637~~302c9acb-a874-421b-b926-7426d32e0ef2::span:3643:3657	True	"of the words ""married couple"" before person1 and the word ""and"" between person1 and person2."	
+940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:67:86~~940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:119:130	True	"the words ""and her husband"" appears between person1 and person2."	
+940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:67:86~~940a06e6-b0e0-4e71-a44b-936700ccd6cc::span:119:130	False	there is no context of relation between person1 and person2.	
+e9f73bb0-d758-40a7-bf59-d42521a88294::span:2287:2291~~e9f73bb0-d758-40a7-bf59-d42521a88294::span:2317:2319	False	"""wife"" occurs after person1 and person2"	
+8cf2a99f-ae08-4f65-b204-801de88cf1ec::span:359:367~~8cf2a99f-ae08-4f65-b204-801de88cf1ec::span:387:398	True	"""wife"" occurs between person1 and person2"	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:3914:3924~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:3946:3957	True	"""husband"" occurs between person1 and person2"	
+c19bb988-3bec-4ceb-b26a-ac0d2c32999d::span:4278:4291~~c19bb988-3bec-4ceb-b26a-ac0d2c32999d::span:4360:4372	False	there is a person between person1 and person2	
+95427cd5-be1a-44f7-aace-ef28d7e9a99e::span:5085:5090~~95427cd5-be1a-44f7-aace-ef28d7e9a99e::span:5096:5107	True	"""engagement"" occurs after person1 and person2 "	
+6538125b-57a3-4029-b30f-cf9d48e65b2e::span:16886:16889~~6538125b-57a3-4029-b30f-cf9d48e65b2e::span:16972:16975	False	"The words ""married"", ""spouse"", ""husband"", and ""wife"" do not occur in the sentence."	
+e868c978-9da9-456a-b16c-2a7d4404666a::span:871:877~~e868c978-9da9-456a-b16c-2a7d4404666a::span:997:1001	False	"The words ""married"" or ""husband"" do not occur between person1 and person2."	
+5e8ee5fd-87f7-49c8-a95c-97fe26b1bf04::span:195:198~~5e8ee5fd-87f7-49c8-a95c-97fe26b1bf04::span:400:417	False	"The words ""her second child"" and ""daughter"" occur between person1 and person2."	
+e2657a53-566f-49d8-a6cf-8d676fd9c429::span:833:846~~e2657a53-566f-49d8-a6cf-8d676fd9c429::span:852:866	True	"The word ""and"" occurs between person1 and person2, and the words ""married couple"" occur after person1 and person2."	
+14112548-367a-4de1-85a7-11cd145b18e0::span:903:915~~14112548-367a-4de1-85a7-11cd145b18e0::span:1046:1059	True	"The words ""his marriage"" and ""wife"" occur between person1 and person2."	
+9fef71ac-1d1e-4819-9ee3-04b994161a80::span:1328:1335~~9fef71ac-1d1e-4819-9ee3-04b994161a80::span:1354:1356	True	"""husband"" occurs immediately before person2"	
+97a66231-bc44-443e-be35-485d82528d2f::span:3056:3066~~97a66231-bc44-443e-be35-485d82528d2f::span:3088:3097	False	"""plays"" occurs between person1 and person2"	
+3ac43fd7-5125-48c3-b944-80741004e326::span:731:734~~3ac43fd7-5125-48c3-b944-80741004e326::span:753:768	False	parentheses occur before and after person2	
+db66aafc-db5d-4c85-8835-56cea44c496c::span:5387:5398~~db66aafc-db5d-4c85-8835-56cea44c496c::span:5652:5660	False	"""head"" occurs after person1 and ""speech"" occurs after person2"	
+d925621f-5004-4a55-8122-f5da4865a483::span:7766:7771~~d925621f-5004-4a55-8122-f5da4865a483::span:7839:7843	False	"""children"" occurs between person1 and person2"	
+176fbe18-c256-4206-be21-6eb361ffd3e4::span:1600:1604~~176fbe18-c256-4206-be21-6eb361ffd3e4::span:1621:1624	True	"person1 is preceded by ""wife"" and person2 occurs within 3 words of person1"	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:2546:2549~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:2582:2584	True	and' occurs between person1 and person2 and 'marriage' occurs one word after person1	
+7aee1545-c945-4e15-ba74-01f063598009::span:553:558~~7aee1545-c945-4e15-ba74-01f063598009::span:575:578	False	There are no words relating to marriage in the sentence	
+fb4bf07f-f54d-49bd-938d-00e4368e3365::span:3060:3064~~fb4bf07f-f54d-49bd-938d-00e4368e3365::span:3096:3111	True	"The phrase ""with estranged wife"" occurs immediately before person2"	
+2a339c82-5086-40e8-91ba-e705418acc0d::span:2635:2636~~2a339c82-5086-40e8-91ba-e705418acc0d::span:2668:2683	False	person2 occurs in a phrase surrounded by quotes	
+c6a853a3-960e-4857-b048-abb692d1b2cc::span:4629:4634~~c6a853a3-960e-4857-b048-abb692d1b2cc::span:4829:4840	True	"The word ""wife"" appears between person1 and person2"	
+9bee5254-643c-47a8-8323-595e07f3e028::span:3507:3511~~9bee5254-643c-47a8-8323-595e07f3e028::span:3547:3556	True	"The word ""married"" appears between person1 and person2"	
+63d7922b-ba07-47d2-88c1-06431c7302a9::span:7837:7847~~63d7922b-ba07-47d2-88c1-06431c7302a9::span:7898:7901	False	"The word ""email"" appears between person1 and person2"	
+6c242461-04a2-4d76-89b7-ecf20995032f::span:572:593~~6c242461-04a2-4d76-89b7-ecf20995032f::span:751:761	False	"The word ""grandfather"" appears one word to the left of person1"	
+c24931e6-be98-4056-ae2d-ab91fe5a2514::span:2054:2065~~c24931e6-be98-4056-ae2d-ab91fe5a2514::span:2087:2095	True	"The words ""pictured together"" appear between person1 and person2"	
+0911842a-7202-450d-b54d-21c283f8d3df::span:0:14~~0911842a-7202-450d-b54d-21c283f8d3df::span:131:142	True	"""her husband"" is before person2"	
+3ac43fd7-5125-48c3-b944-80741004e326::span:731:734~~3ac43fd7-5125-48c3-b944-80741004e326::span:746:750	True	"""his wife"" is between person1 and person2"	
+931042dc-36bd-4b59-8b1d-3b59796ceb59::span:3923:3930~~931042dc-36bd-4b59-8b1d-3b59796ceb59::span:4113:4116	False	"(""sisters"" is before person2) and (person1 and person2 are more than 15 words apart)"	
+6538125b-57a3-4029-b30f-cf9d48e65b2e::span:16805:16822~~6538125b-57a3-4029-b30f-cf9d48e65b2e::span:16886:16889	False	"person1 is followed by ""/"""	
+e7b41f2f-d98a-45a1-9616-1d4a65e24501::span:81:84~~e7b41f2f-d98a-45a1-9616-1d4a65e24501::span:90:104	True	"(person2 contains ""Osteen"") and (person1 contains 1 token) and (""and"" is between person1 and person2)"	
+2b4e8570-08a6-445e-9ca4-d84d4eed102c::span:2035:2039~~2b4e8570-08a6-445e-9ca4-d84d4eed102c::span:2087:2089	True	"""wife"" is immediately before person2"	
+c6a853a3-960e-4857-b048-abb692d1b2cc::span:5882:5889~~c6a853a3-960e-4857-b048-abb692d1b2cc::span:5905:5915	True	"""wife"" is immediately before person2"	
+416228c4-81cb-4e38-8c4c-5ca61e385055::span:2721:2734~~416228c4-81cb-4e38-8c4c-5ca61e385055::span:2876:2886	False	"""executive director"" is between person1 and person2"	
+931042dc-36bd-4b59-8b1d-3b59796ceb59::span:3923:3930~~931042dc-36bd-4b59-8b1d-3b59796ceb59::span:4122:4126	False	"""sisters"" is between person1 and person2"	
+e9f73bb0-d758-40a7-bf59-d42521a88294::span:2297:2302~~e9f73bb0-d758-40a7-bf59-d42521a88294::span:2317:2319	True	the last 3 characters of person2 is the same as the last 3 characters of the person before person1	
+07d7a528-1959-4bc8-8bb2-d2cbf2e1579f::span:1122:1133~~07d7a528-1959-4bc8-8bb2-d2cbf2e1579f::span:1208:1228	True	"the word ""spouse"" is used to describe the relationship between person1 and person2"	
+63d7922b-ba07-47d2-88c1-06431c7302a9::span:8815:8828~~63d7922b-ba07-47d2-88c1-06431c7302a9::span:8873:8883	False	the sentence only suggests that person2 offered condolences to person1 after his defeat	
+8e22cef3-8de7-4a48-8d2f-30e123af3827::span:0:14~~8e22cef3-8de7-4a48-8d2f-30e123af3827::span:137:146	True	"the relationship because person2 is referred to as person1's ""wife"", and because the sentence talks about person1's desire to ""start a family"" with person2"	
+c6a853a3-960e-4857-b048-abb692d1b2cc::span:1042:1056~~c6a853a3-960e-4857-b048-abb692d1b2cc::span:1469:1481	True	"person2 is described as person1's ""second wife"", and person1 and person2 are described as ""a couple"""	
+97a66231-bc44-443e-be35-485d82528d2f::span:17:27~~97a66231-bc44-443e-be35-485d82528d2f::span:408:417	False	person1 plays person2 in a movie -- there is no couple relationship implied in the sentence	
+302c9acb-a874-421b-b926-7426d32e0ef2::span:2525:2530~~302c9acb-a874-421b-b926-7426d32e0ef2::span:2695:2700	False	"""her boys"" occurs between person1 and person2"	
+de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2600:2605~~de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2608:2611	True	"""husband"" occurs right before person1"	
+87158208-e400-424a-8cad-da6eb9f2959c::span:406:419~~87158208-e400-424a-8cad-da6eb9f2959c::span:589:599	True	"""husband"" occurs right before person2"	
+63d7922b-ba07-47d2-88c1-06431c7302a9::span:3887:3901~~63d7922b-ba07-47d2-88c1-06431c7302a9::span:3927:3939	False	"""scornful"" appears after person1 and person2"	
+0669ca8c-fa26-4312-8a88-2c98bfd380dd::span:1494:1505~~0669ca8c-fa26-4312-8a88-2c98bfd380dd::span:1593:1608	True	"""wife"" occurs immediately before person2"	
+8ba66cef-e24b-4cbc-ab4d-174dfd934b14::span:318:328~~8ba66cef-e24b-4cbc-ab4d-174dfd934b14::span:371:387	False	person2 is not a person	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1943:1945~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:2036:2045	False	"person2 is preceded by ""beau"" which indicates a relationship instead of marriage"	
+77c632db-103a-491e-ae8c-cd7ef3aace00::span:14775:14779~~77c632db-103a-491e-ae8c-cd7ef3aace00::span:15046:15050	False	person1 is the same as person2	
+a14862d8-4471-4343-aca8-ccd0e7be74bc::span:515:528~~a14862d8-4471-4343-aca8-ccd0e7be74bc::span:547:559	True	"the phrase ""his former wife"" occurs directly between person1 and person2"	
+affed66e-3a08-40d0-b11f-51b5727dccc4::span:61:64~~affed66e-3a08-40d0-b11f-51b5727dccc4::span:112:121	True	"person2 is the subject of the sentence and person1 is immediately preceded by ""husband"""	
+1c3d813c-0f47-4477-8bc2-e17d295349f3::span:257:268~~1c3d813c-0f47-4477-8bc2-e17d295349f3::span:342:346	True	"""his wife"" follows person1 in the sentence, and ""his wife"" comes within 1 word of person2."	
+7aee1545-c945-4e15-ba74-01f063598009::span:760:768~~7aee1545-c945-4e15-ba74-01f063598009::span:791:804	True	"""her husband"" follows person1 in the sentence, and ""her husband"" comes within 1 word of person2."	
+6f9b06d9-36aa-4fd3-bbfd-5d257957a3a0::span:2061:2066~~6f9b06d9-36aa-4fd3-bbfd-5d257957a3a0::span:2092:2097	True	"""wife"" follows person1 in the sentence, and ""wife"" comes within 1 word of person2."	
+258873e6-1f83-4f6c-9ddd-7e23b4332e41::span:0:4~~258873e6-1f83-4f6c-9ddd-7e23b4332e41::span:53:64	True	"""tied the knot with"" comes after person1 in the sentence, and ""tied the knot with"" is less than 3 words before person2."	
+a8488aab-31dc-49d7-83f0-8921c4bda307::span:1084:1092~~a8488aab-31dc-49d7-83f0-8921c4bda307::span:1175:1188	True	"""and"" is between person1 and person2, and ""their son"" comes less than 10 words after person1 and person2."	
+e329654e-46f6-4f54-b478-d850cf9c1c08::span:728:731~~e329654e-46f6-4f54-b478-d850cf9c1c08::span:850:871	False	"of the words ""her captor"" between person1 and person2."	
+6c242461-04a2-4d76-89b7-ecf20995032f::span:3757:3766~~6c242461-04a2-4d76-89b7-ecf20995032f::span:3782:3786	False	person2 is a location.	
+3dc9c69c-3e30-4711-ac8b-7bc2c8d928bf::span:37:42~~3dc9c69c-3e30-4711-ac8b-7bc2c8d928bf::span:246:256	False	person1 is not a person.	
+8ed8e52a-d1e9-4df2-b7cf-c5bf3961d40d::span:4006:4022~~8ed8e52a-d1e9-4df2-b7cf-c5bf3961d40d::span:4044:4048	True	"of the words ""his wife"" between person1 and person2."	
+b8202a40-f2cf-416b-bf45-f4992a7bd819::span:39:43~~b8202a40-f2cf-416b-bf45-f4992a7bd819::span:135:148	False	person1 and person2 are the same person.	
+d83554df-ec54-4ffc-a56d-f7145374dcdd::span:929:933~~d83554df-ec54-4ffc-a56d-f7145374dcdd::span:1236:1239	True	"""his wife"" is before person1"	
+451184bd-fdc7-4152-9aef-dbc23a71cde2::span:2499:2515~~451184bd-fdc7-4152-9aef-dbc23a71cde2::span:2564:2570	False	"""as his"" is in between person1 and person2"	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:817:830~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1171:1174	True	"""his widow"" is before person2"	
+48eb9031-30b8-4689-987a-5ee3289448ee::span:286:291~~48eb9031-30b8-4689-987a-5ee3289448ee::span:310:318	True	"""'s husband"" is between person1 and person2"	
+b9d99514-0043-4b56-a952-28f977550fcc::span:1032:1050~~b9d99514-0043-4b56-a952-28f977550fcc::span:1064:1080	True	"""and married"" is between person1 and person2"	
+e9f73bb0-d758-40a7-bf59-d42521a88294::span:1917:1921~~e9f73bb0-d758-40a7-bf59-d42521a88294::span:1954:1960	False	"""his dad"" occurs between person1 and person2"	
+d83554df-ec54-4ffc-a56d-f7145374dcdd::span:898:913~~d83554df-ec54-4ffc-a56d-f7145374dcdd::span:929:933	True	"""his wife"" occurs between person1 and person2"	
+bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2055:2066~~bd43aacf-2b13-40fa-bd9d-e08a3f26d89d::span:2128:2136	True	"""Beau Ryan's (Wife)"" occurs before person1"	
+75e1d890-c481-40fb-8d12-34fe6bcbd56d::span:3762:3774~~75e1d890-c481-40fb-8d12-34fe6bcbd56d::span:3973:3978	False	"""School District"" occurs after person1"	
+5967466e-ff22-4edc-8e86-9afdabc93bf8::span:2139:2151~~5967466e-ff22-4edc-8e86-9afdabc93bf8::span:2164:2178	False	"""Sofia"" occurs between person1 and person2"	
+258873e6-1f83-4f6c-9ddd-7e23b4332e41::span:319:324~~258873e6-1f83-4f6c-9ddd-7e23b4332e41::span:373:384	True	"""tied the knot"" is between person1 and person2"	
+eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:275:281~~eb34ebe3-ad33-40b5-825e-28cc8de86af6::span:313:325	True	"""married"" and ""partner"" are between person1 and person2"	
+2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:5944:5946~~2d8e35e7-22b7-48d5-9c07-46dd09f04e44::span:5975:5984	True	"""husband"" is immediately to the right of person2"	
+3fc791ee-95d1-441e-971a-17b56c272da6::span:0:10~~3fc791ee-95d1-441e-971a-17b56c272da6::span:36:48	True	"""marriage"" is between person1 and person2"	
+cd9b993c-e130-461a-b072-739402ea3d73::span:1405:1410~~cd9b993c-e130-461a-b072-739402ea3d73::span:1417:1421	False	"""office"" is immediately after person2"	
+3494f8e0-ecd4-4f10-86db-95b920744162::span:18:33~~3494f8e0-ecd4-4f10-86db-95b920744162::span:120:125	True	"""his wife"" occurs between person1 and person2"	
+451184bd-fdc7-4152-9aef-dbc23a71cde2::span:3195:3198~~451184bd-fdc7-4152-9aef-dbc23a71cde2::span:3204:3212	False	"""feelings"" occurs immediately after person2"	
+f40939d2-dab0-4921-bd60-56ad4e99b94a::span:3462:3469~~f40939d2-dab0-4921-bd60-56ad4e99b94a::span:3540:3546	True	"""ex-husband"" occurs right before person2"	
+c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:2765:2768~~c9062ccc-f63b-4bd1-95e2-3d3ccc6391eb::span:2858:2862	True	"""proposal"" occurs after person1 and person2"	
+445ee1bb-f00d-4fb6-a917-ad4609c37918::span:1714:1728~~445ee1bb-f00d-4fb6-a917-ad4609c37918::span:1756:1767	False	"""books"" occur before person1 and person2"	
+a933e597-8f1f-4ccd-abdc-fadf12afaa88::span:978:981~~a933e597-8f1f-4ccd-abdc-fadf12afaa88::span:1018:1029	False	"of the words ""and her husband"" after person2."	
+c19bb988-3bec-4ceb-b26a-ac0d2c32999d::span:1346:1350~~c19bb988-3bec-4ceb-b26a-ac0d2c32999d::span:1426:1437	False	"of the word ""co-host"" between person1 and person2."	
+48355563-37ab-4fb8-9525-4762d6be7fc8::span:3854:3856~~48355563-37ab-4fb8-9525-4762d6be7fc8::span:3862:3865	True	"""and"" occurs directly between person1 and person2 and the phrase ""they married"" occurs after person2"	
+c4631b6d-747f-470d-a8ce-74b5b379cb86::span:1476:1484~~c4631b6d-747f-470d-a8ce-74b5b379cb86::span:1562:1568	True	"the word ""hubby"" is directly before person2"	
+ef25a434-f534-4957-87bd-2807d46a70a3::span:1007:1012~~ef25a434-f534-4957-87bd-2807d46a70a3::span:1015:1024	False	there are no marriage words in the sentence and person1 and person2 are part of a list of names	
+931042dc-36bd-4b59-8b1d-3b59796ceb59::span:1750:1753~~931042dc-36bd-4b59-8b1d-3b59796ceb59::span:1910:1912	False	person2 is not a person (malformed example)	
+1b0e4c01-d122-4951-ae6d-4f0c8fff9e77::span:413:423~~1b0e4c01-d122-4951-ae6d-4f0c8fff9e77::span:461:476	False	"the phrase ""baby girl named"" occurs directly before person2"	
+9aee8633-0b59-4446-81d9-a7d281be8e09::span:2880:2888~~9aee8633-0b59-4446-81d9-a7d281be8e09::span:2923:2931	True	"The words ""married to"" occur between person1 and person2."	
+d925621f-5004-4a55-8122-f5da4865a483::span:7652:7664~~d925621f-5004-4a55-8122-f5da4865a483::span:7793:7810	False	"The words ""youngest of"" occur before person2 and the word ""children"" occurs after person2. "	
+6d1ef90f-ba46-48f4-91d4-860ba96671f7::span:134:138~~6d1ef90f-ba46-48f4-91d4-860ba96671f7::span:144:163	True	"The word ""and"" occurs between person1 and person2, and the word ""son"" occurs after person2."	
+c2d70dbd-3aaf-4091-ba53-d04abf545c6e::span:3081:3088~~c2d70dbd-3aaf-4091-ba53-d04abf545c6e::span:3153:3164	True	"The words ""husband"" occurs before person2 and the word ""with"" occurs between person1 and person2."	
+60244564-b6a9-4b2e-b35f-a01d07e8f75a::span:1387:1391~~60244564-b6a9-4b2e-b35f-a01d07e8f75a::span:1472:1479	False	person1 and person2 are the same.	
+9aee8633-0b59-4446-81d9-a7d281be8e09::span:2880:2888~~9aee8633-0b59-4446-81d9-a7d281be8e09::span:2950:2957	True	"of the words ""she married"" between person1 and person2."	
+80707f8e-7668-43cb-a0a0-04c258274e51::span:3:13~~80707f8e-7668-43cb-a0a0-04c258274e51::span:66:77	False	person1 is the author of the sentence.	
+5b421541-4922-418f-a054-886ce4965d02::span:549:552~~5b421541-4922-418f-a054-886ce4965d02::span:569:579	True	"of the word ""wife"" between person1 and person2."	
+a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1545:1547~~a24c965c-06d1-4a9e-abf1-aba00eaddb8d::span:1588:1610	False	extra word is highlighted for person2.	
+05ae8661-f643-4974-ab9b-93648737e1ad::span:2206:2215~~05ae8661-f643-4974-ab9b-93648737e1ad::span:2221:2233	False	person1 and person2 are not people.	
+63d7922b-ba07-47d2-88c1-06431c7302a9::span:3765:3769~~63d7922b-ba07-47d2-88c1-06431c7302a9::span:3786:3799	False	"""("" is between person1 and person2"	
+1ca2f108-633f-440a-bd6e-d59f7e01316b::span:786:790~~1ca2f108-633f-440a-bd6e-d59f7e01316b::span:903:914	False	"person1 is followed by "", who"" and ""from"" is before person2"	
+0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:10397:10402~~0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:10411:10416	False	""","" is immediately before person2"	
+0466d5cb-256b-41a0-9cd2-cc41d8916ede::span:6979:6984~~0466d5cb-256b-41a0-9cd2-cc41d8916ede::span:7242:7248	False	person1 is more than 20 words away from person2	
+a587afeb-715c-44ee-bdef-75f61cb7c6e8::span:1108:1117~~a587afeb-715c-44ee-bdef-75f61cb7c6e8::span:1179:1193	True	"""married to"" is between person1 and person2"	
+09cd2a7e-7963-45ea-8bf7-e58de8bbb363::span:6640:6649~~09cd2a7e-7963-45ea-8bf7-e58de8bbb363::span:6658:6662	False	"""sister"" comes immediately after person1, and ""sister"" comes immediately before person2."	
+193ab348-820a-4704-8200-5bf2a38d42e8::span:113:124~~193ab348-820a-4704-8200-5bf2a38d42e8::span:229:261	False	person2 ends with person1.	
+cac44ffd-5f6d-42b7-95e8-2c5f9bd76e9a::span:1291:1297~~cac44ffd-5f6d-42b7-95e8-2c5f9bd76e9a::span:1342:1354	True	"""married to"" comes less than 5 words after person1, and ""married to"" comes less than 3 words before person2."	
+50a06870-afda-45aa-8373-72657369c860::span:3194:3199~~50a06870-afda-45aa-8373-72657369c860::span:3457:3461	False	"""her eldest child"" comes after person1 in the sentence, and ""her eldest child"" comes immediately before person2."	
+bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1829:1831~~bf3a5294-6ccf-4649-a3f3-b9a6cd0aa5f1::span:1837:1841	True	"""and"" is between person1 and person2, and ""tied the knot"" is immediately after (person1 and person2)."	
+355137fd-21b3-426e-a87e-1c81b0f5326b::span:136:145~~355137fd-21b3-426e-a87e-1c81b0f5326b::span:151:166	False	"person1 and person2 only ""almost appeared"" to look like an ""old married couple"""	
+8ed8e52a-d1e9-4df2-b7cf-c5bf3961d40d::span:5098:5102~~8ed8e52a-d1e9-4df2-b7cf-c5bf3961d40d::span:5213:5221	True	"person1 is referred to as person2's ""wife""; person2 also attended person1's memorial service"	
+aa4747c2-f9d0-4514-8259-8ac97cfefa99::span:921:941~~aa4747c2-f9d0-4514-8259-8ac97cfefa99::span:1063:1074	False	"person1 and person2 both went on tour in ""Afghanistan"", but no relationship of marriage is implied in the sentence"	
+cbe5ae49-4d25-4c12-8e47-c85fbf840d60::span:1148:1159~~cbe5ae49-4d25-4c12-8e47-c85fbf840d60::span:1362:1365	True	"person2 is referred to as person1's ""former husband"""	
+c24931e6-be98-4056-ae2d-ab91fe5a2514::span:2453:2461~~c24931e6-be98-4056-ae2d-ab91fe5a2514::span:2508:2518	True	"person1 is said to be ""married"" to person2 ""from 1983 to 1988"" "	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4563:4573~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4579:4592	True	"The word ""and"" occurs between person1 and person2 and the word ""son"" occurs within 6 characters after person2."	
+de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2149:2159~~de7b0df3-ed3a-4f5d-a53a-cd24d91240db::span:2172:2183	True	"The word ""fiancé"" occurs between person1 and person2."	
+72c336af-f0c4-477a-8014-0bf97b6e979e::span:1522:1528~~72c336af-f0c4-477a-8014-0bf97b6e979e::span:1570:1573	True	"The words ""his widow"" occur between person1 and person2."	
+6c242461-04a2-4d76-89b7-ecf20995032f::span:4122:4131~~6c242461-04a2-4d76-89b7-ecf20995032f::span:4143:4157	False	"The words ""husband"", ""wife"", ""spouse"", or ""married"" do not occur in the sentence."	
+4dea8778-67ba-40a6-af3f-e4303f2f4dc7::span:463:467~~4dea8778-67ba-40a6-af3f-e4303f2f4dc7::span:482:494	True	"person1 is said to have ""married"" person2 in ""2008"""	
+e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4786:4790~~e4ecae10-8368-4a2e-80fa-8a7dc1042e60::span:4796:4809	True	"person1 and person2 share a ""13-year-old daughter"""	
+14112548-367a-4de1-85a7-11cd145b18e0::span:0:12~~14112548-367a-4de1-85a7-11cd145b18e0::span:55:68	True	"person2 is referred to as person1's ""wife"" and ""half-Nigerian wife"""	
+0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:682:691~~0e09245b-76c7-4eab-8da5-375ac0e0b6aa::span:751:756	True	"person1 is ""married to husband"" person2"	

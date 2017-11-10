@@ -13,7 +13,7 @@ class ExplanationIO(object):
             for exp in explanations:
                 tsvwriter.writerow([exp.candidate.get_stable_id(), 
                                     exp.label, 
-                                    exp.condition, 
+                                    exp.condition.encode('utf-8'), 
                                     exp.semantics])
         fpath = fpath if len(fpath) < 50 else fpath[:20] + '...' + fpath[-30:]
         print("Wrote {} explanations to {}".format(len(explanations), fpath))

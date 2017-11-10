@@ -50,13 +50,14 @@ config = {
     },
     'disc_params_default': {
         'lr':         0.01,
-        'dim':        50,
         'n_epochs':   20,
-        'dropout':    0.5,
         'rebalance':  0.25,
         'batch_size': 128,
-        'max_sentence_length': 100,
         'print_freq': 5,
+        # LSTM only
+        # 'dim':        50,
+        # 'dropout':    0.5,
+        # 'max_sentence_length': 100,
     },    
     'disc_params_range': {
         'lr'        : [1e-2, 1e-3, 1e-4],

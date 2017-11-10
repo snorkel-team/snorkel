@@ -133,7 +133,6 @@ class BabbleStream(object):
         self.semparser = None
         self.filter_bank = FilterBank(session, candidate_class)
         
-        # self.explanations = []
         self.parses = []
         self.label_matrix = None
 
@@ -329,27 +328,22 @@ class BabbleStream(object):
 
             parses_to_add = [p for i, p in enumerate(self.temp_parses) if i in idxs]
             parse_names_to_add = [p.function.__name__ for p in parses_to_add]
-            # explanations_to_add = [e for e in self.temp_explanations if 
-                # any(pn.startswith(e.name) for pn in parse_names_to_add))]
+            explanations_to_add = set([parse.explanation for parse in parses_to_add])
       
             self.parses.extend(parses_to_add)
-            # self.explanations.extend(explanations_to_add)
             if self.label_matrix is None:
                 self.label_matrix = self.temp_label_matrix
             else:
                 self.label_matrix = sparse.hstack((self.label_matrix, self.temp_label_matrix))
 
             if self.verbose:
-                print("Added {} parse(s) to set. (Total # parses = {})".format(
-                    len(parses_to_add), len(self.parses)))
-                # print("Added {} explanation(s) to set. (Total # explanations = {})".format(
-                #     len(explanations_to_add), len(self.parses)))
+                print("Added {} parse(s) from {} explanations to set. (Total # parses = {})".format(
+                    len(parses_to_add), len(explanations_to_add), len(self.parses)))
 
         # Permanently store the semantics and signatures in duplicate filters
         self.filter_bank.commit(idxs)
 
         self.temp_parses = None
-        # self.temp_explanations = None
         self.temp_label_matrix = None
 
     def get_global_coverage(self):

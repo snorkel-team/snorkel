@@ -2,6 +2,7 @@ from __future__ import print_function
 
 from collections import defaultdict, namedtuple
 from itertools import product
+import re
 
 from types import FunctionType
 
@@ -72,6 +73,7 @@ class Grammar(object):
         string = string.lower()
         if string.endswith('.'):
             string = string[:-1]
+        string = re.sub(r'\s+', ' ', string)
         output = self.parser.parse(None, string).next()
         tokens = map(lambda x: dict(zip(['word', 'pos', 'ner'], x)), 
                      zip(output['words'], output['pos_tags'], output['ner_tags']))

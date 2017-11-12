@@ -71,12 +71,12 @@ class CdrPipeline(BabblePipeline):
 
 
     def load_gold(self, config=None):
-        load_external_labels(self.session, self.candidate_class, split=0, annotator='gold')
-        load_external_labels(self.session, self.candidate_class, split=1, annotator='gold')
-        load_external_labels(self.session, self.candidate_class, split=2, annotator='gold')
+        for split in self.splits:
+            load_external_labels(self.session, self.candidate_class, 
+                                 split=split, annotator='gold')
 
     def collect(self):
         candidates = self.get_candidates(split=self.config['babbler_candidate_split'])
-        explanations = get_explanations(candidates)
+        explanations = get_explanations()
         user_lists = get_user_lists()
         super(CdrPipeline, self).babble('text', explanations, user_lists, self.config)

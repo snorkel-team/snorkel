@@ -25,8 +25,8 @@ global_config = {
     ### COLLECT ###
 
     ## Babbler
-    'babbler_candidate_split': 0, # Look for explanation candidates in this split
-    'babbler_label_split': 0, # Check label signatures based on this split
+    'babbler_candidate_split': 1, # Look for explanation candidates in this split
+    'babbler_label_split': 1, # Check label signatures based on this split
     'beam_width': 10,
     'top_k': -1,
     # filters

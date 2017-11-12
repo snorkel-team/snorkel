@@ -82,13 +82,8 @@ class SpousePipeline(BabblePipeline):
 
     def load_gold(self, config=None):
         fpath = DATA_ROOT + 'labels.tsv'
-        # If not using traditional supervision, don't bother loading train gold.
-        if self.config['supervision'] == 'traditional':
-            splits = self.config['splits']
-        else:
-            splits = [split for split in self.config['splits'] if split != 0]
         load_external_labels(self.session, self.candidate_class, 
-                             annotator_name='gold', path=fpath, splits=splits)
+                             annotator_name='gold', path=fpath, splits=self.splits)
 
     def collect(self, lf_source='intro_exps'):
         if self.config['supervision'] == 'traditional':
@@ -100,7 +95,7 @@ class SpousePipeline(BabblePipeline):
         elif lf_source == 'intro_exps':
             from tutorials.babble.spouse.spouse_examples import (get_explanations, get_user_lists)
             candidates = self.get_candidates(split=self.config['babbler_candidate_split'])
-            explanations = get_explanations(candidates)
+            explanations = get_explanations()
             user_lists = get_user_lists()
             super(SpousePipeline, self).babble('text', explanations, user_lists, self.config)
         else:

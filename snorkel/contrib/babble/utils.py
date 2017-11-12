@@ -43,7 +43,7 @@ def link_explanation_candidates(explanations, candidates):
     linked = 0
     print("Building list of target candidate ids...")
     for e in explanations:
-        if not isinstance(e.candidate, Candidate):
+        if e.candidate is not None and not isinstance(e.candidate, Candidate):
             target_candidate_ids.add(e.candidate)
         elif e.candidate:
             linked += 1

@@ -75,6 +75,6 @@ class ProteinPipeline(BabblePipeline):
 
     def collect(self):
         candidates = self.get_candidates(split=self.config['babbler_candidate_split'])
-        explanations = get_explanations(candidates)
+        explanations = get_explanations()
         user_lists = get_user_lists()
         super(ProteinPipeline, self).babble('text', explanations, user_lists, self.config)

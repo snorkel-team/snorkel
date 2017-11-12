@@ -387,3 +387,42 @@ implicit_strings = [
         candidate=default_candidate,
         semantics=None),
 ]
+
+spouse_aliases = [
+    Explanation(
+        name='LF_arg_1',
+        condition="""arg 1 is equal to 'Alice'""",
+        candidate=('Alice', 'Bob'),
+        label=False,
+        semantics=None),
+    Explanation(
+        name='LF_arg1',
+        condition="""arg1 is equal to 'Alice'""",
+        candidate=('Alice', 'Bob'),
+        label=False,
+        semantics=None),    
+    Explanation(
+        name='LF_person_1',
+        condition="""Person 1 is equal to 'Alice'""",
+        candidate=('Alice', 'Bob'),
+        label=False,
+        semantics=None),
+    Explanation(
+        name='LF_person_1',
+        condition="""Person1 is equal to 'Alice'""",
+        candidate=('Alice', 'Bob'),
+        label=False,
+        semantics=None),    
+    Explanation(
+        name='LF_person_x',
+        condition="""Person x is equal to 'Alice'""",
+        candidate=('Alice', 'Bob'),
+        label=False,
+        semantics=None),
+    Explanation(
+        name='LF_personx',
+        condition="""PersonX is equal to 'Alice'""",
+        candidate=('Alice', 'Bob'),
+        label=False,
+        semantics=None),        
+]

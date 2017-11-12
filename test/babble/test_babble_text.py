@@ -80,5 +80,8 @@ class TestBabbleText(TestBabbleBase):
     def test_implicit_strings(self):
         self.check_explanations(text_explanations.implicit_strings)
 
+    def test_spouse_aliases(self):
+        self.check_explanations(text_explanations.spouse_aliases)
+
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBabbleText)
 unittest.TextTestRunner(verbosity=2).run(suite)

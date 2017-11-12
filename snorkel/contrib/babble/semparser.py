@@ -152,7 +152,7 @@ class SemanticParser(object):
         nErroring = [0] * len(explanations)
         nUnknown = [0] * len(explanations)
 
-        LFs = {
+        parse_dict = {
             'correct'  : [],
             'passing'  : [],
             'failing'  : [],
@@ -191,7 +191,7 @@ class SemanticParser(object):
                 if parse.semantics in semantics:
                     if show_redundant: print("R: {}\n".format(semantics_))
                     nRedundant[i] += 1
-                    LFs['redundant'].append(parse.function)
+                    parse_dict['redundant'].append(parse)
                     continue
                 semantics.add(parse.semantics)
                 # ERRORING
@@ -204,7 +204,7 @@ class SemanticParser(object):
                         print parse.function(explanation.candidate)  # to display traceback
                         import pdb; pdb.set_trace()
                     nErroring[i] += 1 
-                    LFs['erroring'].append(parse.function)
+                    parse_dict['erroring'].append(parse)
                     continue
                 # CORRECT             
                 if explanation.semantics and parse.semantics == explanation.semantics:
@@ -212,24 +212,24 @@ class SemanticParser(object):
                     nCorrect[i] += 1
                     LF = parse.function
                     LF.__name__ = LF.__name__[:(LF.__name__).rindex('_')] + '*'
-                    LFs['correct'].append(parse.function)
+                    parse_dict['correct'].append(parse)
                     continue
                 # PASSING
                 if condition_passes:
                     if show_passing: print("P: {}\n".format(semantics_))
                     nPassing[i] += 1
-                    LFs['passing'].append(parse.function)
+                    parse_dict['passing'].append(parse)
                     continue
                 else:
                 # FAILING
                     if show_failing: print("F: {}\n".format(semantics_))
                     nFailing[i] += 1
-                    LFs['failing'].append(parse.function)
+                    parse_dict['failing'].append(parse)
                     continue
                 # UNKNOWN
                 if explanation.candidate is None:
                     nUnknown[i] += 1
-                    LFs['unknown'].append(parse.function)
+                    parse_dict['unknown'].append(parse)
                     continue
                 raise Error('This should not be reached.')
                             
@@ -247,7 +247,7 @@ class SemanticParser(object):
         dataframe['Index'] = Series(data=indices, index=explanation_names)
         
         self.results = DataFrame(data=dataframe, index=explanation_names)[col_names]
-        return LFs
+        return parse_dict
 
     def mark_implicit_strings(self, condition, candidate):
         """

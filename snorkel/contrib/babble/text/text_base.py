@@ -28,7 +28,11 @@ lexical_rules = (
     [Rule('$NorpNER', w, ('NORP')) for w in ['political', 'politician', 'religious']] +
 
     # FIXME: Temporary hardcode; replace with "domain_rules" passed to grammar
-    [Rule('$Arg', w, '.arg') for w in ['person', 'name']] +
+    [Rule('$X', w, ('.int', 1)) for w in ['x', '1']] +
+    [Rule('$X', w, ('.int', 2)) for w in ['y', '2']] +
+    [Rule('$ArgX', '$PersonNER $X', lambda (person_, idx_): ('.arg', idx_))] +
+    [Rule('$ArgX', w, ('.arg', ('.int', 1))) for w in ['personx', 'person1', 'arg1']] +
+    [Rule('$ArgX', w, ('.arg', ('.int', 2))) for w in ['persony', 'person2', 'arg2']] +
     [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['people', 'persons', 'names']]
     # FIXME
 )

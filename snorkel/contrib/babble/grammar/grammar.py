@@ -70,13 +70,22 @@ class Grammar(object):
         :param string:
         """
         # Tokenize input string
-        string = string.lower()
+        # string = string.lower()
         if string.endswith('.'):
             string = string[:-1]
         string = re.sub(r'\s+', ' ', string)
         output = self.parser.parse(None, string).next()
         tokens = map(lambda x: dict(zip(['word', 'pos', 'ner'], x)), 
                      zip(output['words'], output['pos_tags'], output['ner_tags']))
+        
+        # Lowercase all non-quoted words; doesn't handle nested quotes
+        quoting = False
+        for token in tokens:
+            if not quoting:
+                token['word'] = token['word'].lower()
+            if token['pos'] in ["``", "\'\'"]:
+                quoting = not quoting
+
         # Add start and stop _after_ parsing to not confuse the CoreNLP parser
         start = {'word': '<START>', 'pos': '<START>', 'ner': '<START>'}
         stop = {'word': '<STOP>', 'pos': '<STOP>', 'ner': '<STOP>'}

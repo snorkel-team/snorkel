@@ -145,7 +145,11 @@ class BabbleStream(object):
         self.num_dev_total  = len(self.dev_candidates)
         self.num_dev_pos    = sum(self.dev_labels == 1)
         self.num_dev_neg    = sum(self.dev_labels == -1)
-        assert(self.num_dev_total == self.num_dev_pos + self.num_dev_neg)
+        if self.num_dev_pos + self.num_dev_neg != self.num_dev_total:
+            print("WARNING: Number of candidates ({}) does not equal the number "
+                "of pos ({}) + neg ({}) = {} labels.".format(
+                    self.num_dev_total, self.num_dev_pos, self.num_dev_neg,
+                    self.num_dev_pos + self.num_dev_neg))
         self.scorer         = MentionScorer(self.dev_candidates, self.dev_labels)
 
 
@@ -163,7 +167,7 @@ class BabbleStream(object):
     def _build_semparser(self):
         self.semparser = SemanticParser(
             mode=self.mode, candidate_class=self.candidate_class, 
-            user_lists=self.user_lists) #top_k=-4, beam_width=30)
+            user_lists=self.user_lists, beam_width=10) #top_k=-4, beam_width=30)
 
     def add_user_lists(self, new_user_lists):
         """
@@ -210,7 +214,8 @@ class BabbleStream(object):
         # self.temp_explanations = explanations if isinstance(explanations, list) else [explanations]
         self.temp_parses = parses if isinstance(parses, list) else [parses]
         self.temp_label_matrix = label_matrix
-        
+        self.temp_filtered_parses = filtered_parses
+
         return parses, filtered_parses, conf_matrix_list, stats_list
 
     def _parse(self, explanations):
@@ -272,10 +277,15 @@ class BabbleStream(object):
 
         return conf_matrix_list, stats_list
 
-    def filtered_analysis(self, filtered_parses):
-        if not any(filtered_parses.values()):
+    def filtered_analysis(self, filtered_parses=None):
+        if filtered_parses is None:
+            # Use the last set of filtered parses to be produced.
+            filtered_parses = self.temp_filtered_parses
+
+        if filtered_parses is None or not any(filtered_parses.values()):
             print("No filtered parses to analyze.")
             return
+
         for filter_name, parses in filtered_parses.items():
             if parses:
                 print("Filter {} removed {} parse(s):".format(filter_name, len(parses)))
@@ -294,7 +304,7 @@ class BabbleStream(object):
                     candidate = filtered_parse.reason
                     print('\nReason:\nInconsistent with candidate ({}, {}) from:\n"{}"'.format(
                         candidate[0].get_span(), candidate[1].get_span(), 
-                        filtered_parse.reason.get_parent().text))
+                        filtered_parse.reason.get_parent().text.encode('utf-8')))
                     
                 elif filter_name == 'UniformSignatureFilter':
                     print("\nReason:\n{}".format(filtered_parse.reason))

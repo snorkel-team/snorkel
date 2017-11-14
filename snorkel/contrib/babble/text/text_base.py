@@ -4,9 +4,9 @@ from text_helpers import helpers
 from text_annotators import annotators
 
 lexical_rules = (
-    [Rule('$Token', w, 'token') for w in ['token']] + 
-    [Rule('$Word', w, 'words') for w in ['word', 'words', 'term', 'terms', 'phrase', 'phrases']] + 
-    [Rule('$Char', w, 'chars') for w in ['character', 'characters', 'letter', 'letters']] + 
+    [Rule('$Token', w, 'token') for w in ['token']] +
+    [Rule('$Word', w, 'words') for w in ['word', 'words', 'term', 'terms', 'phrase', 'phrases']] +
+    [Rule('$Char', w, 'chars') for w in ['character', 'characters', 'letter', 'letters']] +
     [Rule('$Upper', w, '.upper') for w in ['upper', 'uppercase', 'upper case', 'all caps', 'all capitalized']] +
     [Rule('$Lower', w, '.lower') for w in ['lower', 'lowercase', 'lower case']] +
     [Rule('$Capital', w, '.capital') for w in ['capital', 'capitals', 'capitalized']] +
@@ -46,7 +46,7 @@ unary_rules = [
     Rule('$NER', '$DateNER', sems0),
     Rule('$NER', '$PersonNER', sems0),
     Rule('$NER', '$LocationNER', sems0),
-    Rule('$NER', '$OrganizationNER', sems0),   
+    Rule('$NER', '$OrganizationNER', sems0),
 
     Rule('$Unit', '$Word', sems0),
     Rule('$Unit', '$Char', sems0),
@@ -66,21 +66,21 @@ unary_rules = [
     Rule('$StringBinToBool', '$StartsWith', sems0),
     Rule('$StringBinToBool', '$EndsWith', sems0),
 
-    # These represent string comparisons (like the letter 'a' in 'cat'), 
+    # These represent string comparisons (like the letter 'a' in 'cat'),
     # not set comparisons (like 'cat' in ['dog', 'cat', 'bird'])
     Rule('$StringBinToBool', '$In', sems0),
     Rule('$StringBinToBool', '$Contains', sems0),
 ]
-    
+
 
 compositional_rules = [
     # Text Baseline
     # NEW
-    Rule('$ROOT', '$Start $Label $Bool $Because $String $Stop', 
-        lambda (start_, lab_, bool_, _, str_, stop_): 
+    Rule('$ROOT', '$Start $Label $Bool $Because $String $Stop',
+        lambda (start_, lab_, bool_, _, str_, stop_):
         ('.root', (lab_, bool_, ('.call', ('.in', ('.extract_text', ('.sentence',))), str_)))),
-    Rule('$ROOT', '$Start $Label $Bool $Because $StringList $Stop', 
-        lambda (start_, lab_, bool_, _, strlist_, stop_): 
+    Rule('$ROOT', '$Start $Label $Bool $Because $StringList $Stop',
+        lambda (start_, lab_, bool_, _, strlist_, stop_):
         ('.root', (lab_, bool_, ('.all', ('.map', ('.in', ('.extract_text', ('.sentence',))), strlist_))))),
     # NEW
 
@@ -89,48 +89,48 @@ compositional_rules = [
     Rule('$StringToBool', '$Direction $ArgX', lambda (dir_, arg_): ('.in', ('.extract_text', (dir_, arg_)))),
 
         # "is two words left of Y"
-    Rule('$StringToBool', '$Int ?$Unit $Direction $ArgX', 
-        lambda (int_, unit_, dir_, arg_): ('.in', ('.extract_text', 
+    Rule('$StringToBool', '$Int ?$Unit $Direction $ArgX',
+        lambda (int_, unit_, dir_, arg_): ('.in', ('.extract_text',
             (dir_, arg_, ('.string', '.eq'), int_, ('.string', (unit_ if unit_ else 'words')))))),
-        # "X is immediately before"    
-    Rule('$StringToBool', '$ArgX $Int ?$Unit $Direction', 
-        lambda (arg_, int_, unit_, dir_): ('.in', ('.extract_text', 
+        # "X is immediately before"
+    Rule('$StringToBool', '$ArgX $Int ?$Unit $Direction',
+        lambda (arg_, int_, unit_, dir_): ('.in', ('.extract_text',
             (flip_dir(dir_), arg_, ('.string', '.eq'), int_, ('.string', (unit_ if unit_ else 'words')))))),
-        
+
         # "is at least five words to the left of"
-    Rule('$StringToBool', '$Compare $Int ?$Unit $Direction $ArgX', 
-        lambda (cmp_, int_, unit_, dir_, arg_): ('.in', ('.extract_text', 
-            (dir_, arg_, ('.string', cmp_), int_, ('.string', (unit_ if unit_ else 'words')))))), 
+    Rule('$StringToBool', '$Compare $Int ?$Unit $Direction $ArgX',
+        lambda (cmp_, int_, unit_, dir_, arg_): ('.in', ('.extract_text',
+            (dir_, arg_, ('.string', cmp_), int_, ('.string', (unit_ if unit_ else 'words')))))),
         # "is to the left of Y by at least five words"
-    Rule('$StringToBool', '$Direction $ArgX $Compare $Int ?$Unit', 
-        lambda (dir_, arg_, cmp_, int_, unit_): ('.in', ('.extract_text', 
-            (dir_, arg_, ('.string', cmp_), int_, ('.string', (unit_ if unit_ else 'words')))))), 
-    
+    Rule('$StringToBool', '$Direction $ArgX $Compare $Int ?$Unit',
+        lambda (dir_, arg_, cmp_, int_, unit_): ('.in', ('.extract_text',
+            (dir_, arg_, ('.string', cmp_), int_, ('.string', (unit_ if unit_ else 'words')))))),
+
     # Others
         # "is within 5 words of X"
-    Rule('$StringToBool', '$Within $Int ?$Unit $ArgX', 
-        lambda (win_, int_, unit_, arg_): ('.in', ('.extract_text', 
-            (win_, arg_, int_, ('.string', (unit_ if unit_ else 'words')))))), 
+    Rule('$StringToBool', '$Within $Int ?$Unit $ArgX',
+         lambda (win_, int_, unit_, arg_): ('.in', ('.extract_text',
+             (win_, arg_, int_, ('.string', (unit_ if unit_ else 'words')))))),
         # "between X and Y"
-    Rule('$StringToBool', '$Between $ArgXListAnd', 
-        lambda (btw_, arglist_): ('.in', ('.extract_text', (btw_, arglist_)))), 
+    Rule('$StringToBool', '$Between $ArgXListAnd',
+        lambda (btw_, arglist_): ('.in', ('.extract_text', (btw_, arglist_)))),
         # "in the sentence"
-    Rule('$StringToBool', '$In $Sentence', 
-        lambda (in_, sent_): ('.in', ('.extract_text', (sent_,)))), 
+    Rule('$StringToBool', '$In $Sentence',
+        lambda (in_, sent_): ('.in', ('.extract_text', (sent_,)))),
         # "sentence contains 'foo'"
-    Rule('$Bool', '$Sentence $Contains $String', 
-        lambda (sent_, cont_, str_): ('.call', (cont_, str_), ('.extract_text', (sent_,)))), 
-    
+    Rule('$Bool', '$Sentence $Contains $String',
+        lambda (sent_, cont_, str_): ('.call', (cont_, str_), ('.extract_text', (sent_,)))),
+
     # Phrases
         # standard directions: "to the left of arg 1"
     Rule('$Phrase', '$Direction $ArgX', lambda (dir_, arg_): (dir_, arg_)),
         # [a word] "within 7 words to the left of arg 1" [is capitalized]
-    Rule('$Phrase', '$Compare $Int ?$Unit $Direction $ArgX', 
-        lambda (cmp_, int_, unit_, dir_, arg_): 
+    Rule('$Phrase', '$Compare $Int ?$Unit $Direction $ArgX',
+        lambda (cmp_, int_, unit_, dir_, arg_):
             (dir_, arg_, ('.string', cmp_), int_, ('.string', (unit_ if unit_ else 'words')))),
     Rule('$Phrase', '$Between $ArgXListAnd', lambda (btw_, arglist_): (btw_, arglist_)),
     Rule('$Phrase', '$Sentence', lambda (sent,): (sent,)),
-        
+
         # inverted directions: "arg 1 is right of"
     Rule('$Phrase', '$ArgX $Direction', lambda (arg_, dir_): (flip_dir(dir_), arg_)),
 
@@ -143,9 +143,9 @@ compositional_rules = [
 
     # Count
         # "the [number of (words left of arg 1)] is larger than five"
-    Rule('$Int', '$Count $Phrase', sems_in_order), 
-        # "There is at least one [person between X and Y]"        
-    Rule('$Bool', '?$Exists $NumToBool $TokenList', 
+    Rule('$Int', '$Count $Phrase', sems_in_order),
+        # "There is at least one [person between X and Y]"
+    Rule('$Bool', '?$Exists $NumToBool $TokenList',
         lambda (exists_, func_, list_): ('.call', func_, ('.count', list_))),
 
     # Arg lists
@@ -153,7 +153,7 @@ compositional_rules = [
     Rule('$String', '$ArgX $ArgToString', lambda (arg_, func_): ('.call', func_, arg_)),
     Rule('$StringListAnd', '$ArgToString $ArgXListAnd', lambda (func_, args_): ('.map', func_, args_)),
     Rule('$StringListAnd', '$ArgXListAnd $ArgToString', lambda (args_, func_): ('.map', func_, args_)),
-    
+
     # Tuples
     Rule('$StringTuple', '$Tuple $StringList', sems_in_order),
     Rule('$StringTupleToBool', '$Equals $StringTuple', sems_in_order),
@@ -198,8 +198,8 @@ ops = {
 
     # context functions
     '.arg_to_string': lambda x: lambda c: x(c).strip() if isinstance(x(c), basestring) else x(c).get_span().strip(),
-    '.cid': lambda c: lambda arg: lambda cx: arg(cx).get_attrib_tokens(a='entity_cids')[0], # take the first token's CID    
-    
+    '.cid': lambda c: lambda arg: lambda cx: arg(cx).get_attrib_tokens(a='entity_cids')[0], # take the first token's CID
+
     '.left': lambda *x: lambda cx: cx['helpers']['get_left_phrase'](*[xi(cx) for xi in x]),
     '.right': lambda *x: lambda cx: cx['helpers']['get_right_phrase'](*[xi(cx) for xi in x]),
     '.within': lambda *x: lambda cx: cx['helpers']['get_within_phrase'](*[xi(cx) for xi in x]),
@@ -219,7 +219,7 @@ translate_ops = {
     '.index_phrase': lambda str_, idx_: "{}[{}]".format(str_, idx_ - 1 if idx_ > 0 else idx_),
 
     '.arg_to_string': lambda arg_: "text({})".format(arg_),
-    '.cid': lambda arg_: "cid({})".format(arg_),    
+    '.cid': lambda arg_: "cid({})".format(arg_),
 
     '.left': lambda *args_: "left({})".format(','.join(str(x) for x in args_)),
     '.right': lambda *args_: "right({})".format(','.join(str(x) for x in args_)),

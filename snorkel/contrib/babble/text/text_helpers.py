@@ -12,7 +12,6 @@ inequalities = {
     '.gt': lambda x, y: x > y,
 }
 
-# VERSION 4
 
 class Phrase(object):
     fields = ['text', 'words', 'char_offsets', 'pos_tags', 'ner_tags', 'entity_types']

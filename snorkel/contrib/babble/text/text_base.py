@@ -174,9 +174,8 @@ compositional_rules = [
     Rule('$StringToBool', '$UnaryStringToBool', lambda sems: (sems[0],)),
 
     # Indexing Strings #
-    Rule('$String', '$Int $Word $Phrase', lambda (idx_, word_, phr_): 
-        phr_.words[idx - 1 if idx > 0 else idx]),
-    Rule('$String', '$Int $Word $String', lambda (idx_, word_, str_): ('.index', str_, idx_)),
+    # Rule('$String', '$Int $Word $Phrase', lambda (idx_, word_, phr_): ('.index_phrase', phr_, idx_)),
+    Rule('$String', '$Int $Word $String', lambda (idx_, word_, str_): ('.index_word', str_, idx_)),
 ]
 
 # template_rules = []
@@ -194,7 +193,8 @@ ops = {
     '.capital': lambda c: lambda x: lambda cx: len(x(cx)) and x(cx)[0].isupper(),
     '.startswith': lambda x: lambda cx: lambda y: lambda cy: y(cy).startswith(x(cx)),
     '.endswith': lambda x: lambda cx: lambda y: lambda cy: y(cy).endswith(x(cx)),
-    '.index': lambda str_, idx_: lambda c: c['helpers']['word_index'](str_(c), idx_(c)),
+    # '.index_phrase': lambda phr_, idx_: lambda c: c['helpers']['index_phrase'](phr_(c), idx_(c)),
+    '.index_word': lambda str_, idx_: lambda c: c['helpers']['index_word'](str_(c), idx_(c)),
 
     # context functions
     '.arg_to_string': lambda x: lambda c: x(c).strip() if isinstance(x(c), basestring) else x(c).get_span().strip(),
@@ -215,7 +215,8 @@ translate_ops = {
     '.capital': "iscapitalized()",
     '.startswith': lambda prefix: "startswith({})".format(prefix),
     '.endswith': lambda suffix: "endswith({})".format(suffix),
-    '.index': lambda str_, idx_: "{}[{}]".format(str_, idx_ - 1 if idx_ > 0 else idx_),
+    '.index_word': lambda str_, idx_: "{}[{}]".format(str_, idx_ - 1 if idx_ > 0 else idx_),
+    '.index_phrase': lambda str_, idx_: "{}[{}]".format(str_, idx_ - 1 if idx_ > 0 else idx_),
 
     '.arg_to_string': lambda arg_: "text({})".format(arg_),
     '.cid': lambda arg_: "cid({})".format(arg_),    

@@ -71,6 +71,7 @@ class Grammar(object):
         """
         # Tokenize input string
         # string = string.lower()
+        string = unicode(string)
         if string.endswith('.'):
             string = string[:-1]
         string = re.sub(r'\s+', ' ', string)

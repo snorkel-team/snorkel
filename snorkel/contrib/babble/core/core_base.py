@@ -156,7 +156,8 @@ translate_ops = {
     '.list': lambda *elements: "[{}]".format(','.join(x.encode('utf-8') for x in elements)),
     '.user_list': lambda name: "${}$".format(name.encode('utf-8')),
     '.map': lambda func_, list_: "map({}, {})".format(func_, list_),
-    '.call': lambda func_, args_: "call({}, {})".format(func_, args_),
+    # '.call': lambda func_, args_: "call({}, {})".format(func_, args_),
+    '.call': lambda func_, args_: "{}.{}".format(args_, func_),
 
     '.and': lambda x, y: "({} and {})".format(x, y),
     '.or': lambda x, y: "({} or {})".format(x, y),
@@ -175,7 +176,6 @@ translate_ops = {
     '.gt': lambda x: "(> {})".format(x),
 
     '.arg': lambda int_: "arg{}".format(int_),
-    '.arg_to_string': lambda arg_: "text({})".format(arg_),
     '.cid': lambda arg_: "cid({})".format(arg_),
 
     '.in': lambda rhs: "in {}".format(rhs),

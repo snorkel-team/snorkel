@@ -46,6 +46,18 @@ class Phrase(object):
     def __repr__(self):
         return 'Phrase("{}" : {} tokens)'.format(self.text.strip(), len(self.words))
 
+def word_index(string, index):
+    words = string.split()
+    if len(words) == 0:
+        return ''
+    if index > 0:
+        index = index - 1
+    elif index < 0:
+        index = len(words) + index
+    try:
+        return words[max(0, min(index, len(words) - 1))]
+    except:
+        import pdb; pdb.set_trace()
 
 def phrase_filter(phr, field, val):
     if field == 'words':
@@ -138,6 +150,7 @@ def get_sentence_phrase(span):
 
 
 helpers = {
+    'word_index': word_index,
     'phrase_filter': phrase_filter,
     'get_left_phrase': get_left_phrase,
     'get_right_phrase': get_right_phrase,

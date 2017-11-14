@@ -22,10 +22,11 @@ lexical_rules = (
     [Rule('$Exists', w) for w in ['exist', 'exists']] +
     [Rule('$Int', w, ('.int', 0)) for w in ['no']] +
     [Rule('$Int', w,  ('.int', 1)) for w in ['immediately', 'right']] +
+    [Rule('$Int', w,  ('.int', -1)) for w in ['last', 'final', 'ending']] +
     [Rule('$AtLeastOne', w, ('.geq', ('.int', 1))) for w in ['a', 'another']] +
     [Rule('$Because', w) for w in ['because', 'since', 'if']] +
     [Rule('$Equals', w, '.eq') for w in ['equal', 'equals', '=', '==', 'same', 'identical', 'exactly']] + 
-    [Rule('$NotEquals', w, '.neq') for w in ['different']] + 
+    [Rule('$NotEquals', w, '.neq') for w in ['different ?than']] + 
     [Rule('$LessThan', w, '.lt') for w in ['less than', 'smaller than', '<']] +
     [Rule('$AtMost', w, '.leq') for w in ['at most', 'no larger than', 'less than or equal', 'within', 'no more than', '<=']] +
     [Rule('$AtLeast', w, '.geq') for w in ['at least', 'no less than', 'no smaller than', 'greater than or equal', '>=']] +
@@ -54,6 +55,7 @@ unary_rules = [
     Rule('$Exists', '$Is'),
     Rule('$Equals', '$Is ?$Equals', '.eq'),
     Rule('$NotEquals', '$Equals $Not', '.neq'),
+    Rule('$NotEquals', '$Is $NotEquals', '.neq'),
     Rule('$Compare', '$Equals', sems0),
     Rule('$Compare', '$NotEquals', sems0),
     Rule('$Compare', '$LessThan', sems0),
@@ -148,6 +150,7 @@ ops = {
 translate_ops = {
     '.root': lambda LF: LF,
     '.label': lambda label, cond: "return {} if {} else 0".format(1 if label else -1, cond),
+    
     '.bool': lambda bool_: bool_=='True',
     '.string': lambda str_: "'{}'".format(str_),
     '.int': lambda int_: int(int_),
@@ -158,6 +161,8 @@ translate_ops = {
     '.map': lambda func_, list_: "map({}, {})".format(func_, list_),
     # '.call': lambda func_, args_: "call({}, {})".format(func_, args_),
     '.call': lambda func_, args_: "{}.{}".format(args_, func_),
+    # '.composite_and': lambda func_, list_: "all(map({}, {}))".format(func_, list_),
+    # '.composite_or':  lambda x, y, z: lambda cz: any([x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)]),
 
     '.and': lambda x, y: "({} and {})".format(x, y),
     '.or': lambda x, y: "({} or {})".format(x, y),
@@ -166,22 +171,20 @@ translate_ops = {
     '.any': lambda x: "any({})".format(x),
     '.none': lambda x: "not any({})".format(x),
 
-    # '.composite_and': lambda func_, list_: "all(map({}, {}))".format(func_, list_),
-    # '.composite_or':  lambda x, y, z: lambda cz: any([x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)]),
-
+    '.eq': lambda x: "(= {})".format(x),
+    '.neq': lambda x: "(!= {})".format(x),
     '.lt': lambda x: "(< {})".format(x),
     '.leq': lambda x: "(<= {})".format(x),
-    '.eq': lambda x: "(= {})".format(x),
     '.geq': lambda x: "(>= {})".format(x),
     '.gt': lambda x: "(> {})".format(x),
-
-    '.arg': lambda int_: "arg{}".format(int_),
-    '.cid': lambda arg_: "cid({})".format(arg_),
 
     '.in': lambda rhs: "in {}".format(rhs),
     '.contains': lambda rhs: "contains({})".format(rhs),
     '.count': lambda list_: "count({})".format(list_),
     '.sum': lambda arg_: "sum({})".format(arg_),
+    '.intersection': lambda arg_: "intersection({})".format(arg_),
+
+    '.arg': lambda int_: "arg{}".format(int_),
 }
 
 

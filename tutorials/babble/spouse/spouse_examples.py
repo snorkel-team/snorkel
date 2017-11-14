@@ -27,7 +27,7 @@ def get_user_lists():
                     'brother', 'brothers', 'son', 'sons', 'daughter', 'daughters',
                     'grandfather', 'grandmother', 'uncle', 'uncles', 'aunt', 'aunts', 
                     'cousin', 'cousins'],
-        'other':  ['boyfriend', 'girlfriend', 'boss', 'employee', 'secretary', 'co-worker'],
+        'friend':  ['boyfriend', 'girlfriend', 'boss', 'employee', 'secretary', 'co-worker'],
         'known_spouses': known_spouses,
         'last_names': last_names}    
     user_lists['family'] += ["{}-in-law".format(f) for f in user_lists['family']]
@@ -58,12 +58,12 @@ basic = [
         candidate='d0de6a86-66d5-40e0-b345-6c86d2047c07::span:1634:1638~~d0de6a86-66d5-40e0-b345-6c86d2047c07::span:1650:1659',
         label=False,
         semantics=None),
-    Explanation(
-        name='LF_married_after',
-        condition="the word 'and' is between arg 1 and arg 2 and 'married' or 'marriage' is after arg 2",
-        candidate='e522e66f-ad1f-4b8b-a532-4f030a8e7a75::span:4054:4059~~e522e66f-ad1f-4b8b-a532-4f030a8e7a75::span:4085:4091',
-        label=True,
-        semantics=None),
+    # Explanation(
+    #     name='LF_married_after',
+    #     condition="the word 'and' is between arg 1 and arg 2 and 'married' or 'marriage' is after arg 2",
+    #     candidate='e522e66f-ad1f-4b8b-a532-4f030a8e7a75::span:4054:4059~~e522e66f-ad1f-4b8b-a532-4f030a8e7a75::span:4085:4091',
+    #     label=True,
+    #     semantics=None),
     Explanation(
         name='LF_family_between',
         condition="there is a family word between arg 1 and arg 2",
@@ -77,8 +77,8 @@ basic = [
         label=False,
         semantics=None),
     Explanation(
-        name='LF_other_between',
-        condition="there is an other word between arg 1 and arg 2",
+        name='LF_friend_between',
+        condition="there is an friend word between arg 1 and arg 2",
         candidate='3375a3c2-9b8a-423a-8334-32fe860be60e::span:3939:3948~~3375a3c2-9b8a-423a-8334-32fe860be60e::span:3967:3981',
         label=False,
         semantics=None),

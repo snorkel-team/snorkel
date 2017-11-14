@@ -16,18 +16,20 @@ class PunctuationAnnotator(Annotator):
 class IntegerAnnotator(Annotator):
     def annotate(self, tokens):
         if len(tokens) == 1:
+            value = None
             if tokens[0]['pos'] == 'CD':
-                value = None
                 try:
                     token = tokens[0]['word']
                     value = int(float(token))
                 except ValueError:
-                    try:
-                        value = text2int(token)
-                    except:
-                        pass
-                if value is not None:
-                    return [('$Int', ('.int', value))]
+                    pass
+            if value is None:
+                try:
+                    value = text2int(tokens[0]['word'])
+                except:
+                    pass
+            if value is not None:
+                return [('$Int', ('.int', value))]
         return []
 
 # Deprecated: CoreNLP implementation

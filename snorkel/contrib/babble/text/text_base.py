@@ -30,7 +30,7 @@ lexical_rules = (
     # FIXME: Temporary hardcode; replace with "domain_rules" passed to grammar
     [Rule('$X', w, ('.int', 1)) for w in ['x', '1']] +
     [Rule('$X', w, ('.int', 2)) for w in ['y', '2']] +
-    [Rule('$ArgX', '$PersonNER $X', lambda (person_, idx_): ('.arg', idx_))] +
+    [Rule('$ArgX', '?$PersonNER $X', lambda (person_, idx_): ('.arg', idx_))] +
     [Rule('$ArgX', w, ('.arg', ('.int', 1))) for w in ['personx', 'person1', 'arg1']] +
     [Rule('$ArgX', w, ('.arg', ('.int', 2))) for w in ['persony', 'person2', 'arg2']] +
     [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['people', 'persons', 'names']]
@@ -99,11 +99,11 @@ compositional_rules = [
         # "is at least five words to the left of"
     Rule('$StringToBool', '$Compare $Int ?$Unit $Direction $ArgX', 
         lambda (cmp_, int_, unit_, dir_, arg_): ('.in', ('.extract_text', 
-            (dir_, arg_, ('.string', cmp_), int_,('.string', (unit_ if unit_ else 'words')))))), 
+            (dir_, arg_, ('.string', cmp_), int_, ('.string', (unit_ if unit_ else 'words')))))), 
         # "is to the left of Y by at least five words"
     Rule('$StringToBool', '$Direction $ArgX $Compare $Int ?$Unit', 
         lambda (dir_, arg_, cmp_, int_, unit_): ('.in', ('.extract_text', 
-            (dir_, arg_, ('.string', cmp_), int_,('.string', (unit_ if unit_ else 'words')))))), 
+            (dir_, arg_, ('.string', cmp_), int_, ('.string', (unit_ if unit_ else 'words')))))), 
     
     # Others
         # "is within 5 words of X"
@@ -123,7 +123,10 @@ compositional_rules = [
     # Phrases
         # standard directions: "to the left of arg 1"
     Rule('$Phrase', '$Direction $ArgX', lambda (dir_, arg_): (dir_, arg_)),
-    Rule('$Phrase', '$Within $ArgX', lambda (dir_, arg_): (dir_, arg_)),
+        # [a word] "within 7 words to the left of arg 1" [is capitalized]
+    Rule('$Phrase', '$Compare $Int ?$Unit $Direction $ArgX', 
+        lambda (cmp_, int_, unit_, dir_, arg_): 
+            (dir_, arg_, ('.string', cmp_), int_, ('.string', (unit_ if unit_ else 'words')))),
     Rule('$Phrase', '$Between $ArgXListAnd', lambda (btw_, arglist_): (btw_, arglist_)),
     Rule('$Phrase', '$Sentence', lambda (sent,): (sent,)),
         
@@ -186,6 +189,8 @@ ops = {
     '.endswith': lambda x: lambda cx: lambda y: lambda cy: y(cy).endswith(x(cx)),
     # context functions
     '.arg_to_string': lambda x: lambda c: x(c).strip() if isinstance(x(c), basestring) else x(c).get_span().strip(),
+    '.cid': lambda c: lambda arg: lambda cx: arg(cx).get_attrib_tokens(a='entity_cids')[0], # take the first token's CID    
+    
     '.left': lambda *x: lambda cx: cx['helpers']['get_left_phrase'](*[xi(cx) for xi in x]),
     '.right': lambda *x: lambda cx: cx['helpers']['get_right_phrase'](*[xi(cx) for xi in x]),
     '.within': lambda *x: lambda cx: cx['helpers']['get_within_phrase'](*[xi(cx) for xi in x]),
@@ -193,17 +198,27 @@ ops = {
     '.sentence': lambda c: c['helpers']['get_sentence_phrase'](c['candidate'][0]),
     '.extract_text': lambda phr: lambda c: getattr(phr(c), 'text').strip(),
     '.filter': lambda phr, field, val: lambda c: c['helpers']['phrase_filter'](phr(c), field, val),
-    '.cid': lambda c: lambda arg: lambda cx: arg(cx).get_attrib_tokens(a='entity_cids')[0], # take the first token's CID    
 }
 
 translate_ops = {
-    '.between': lambda list_: "between({})".format(list_),
-    '.right': lambda *args_: "right({})".format(','.join(str(x) for x in args_)),
+    '.upper': "isupper()",
+    '.lower': "islower()",
+    '.capital': "iscapitalized()",
+    '.startswith': lambda prefix: "startswith({})".format(prefix),
+    '.endswith': lambda suffix: "endswith({})".format(suffix),
+
+    '.arg_to_string': lambda arg_: "text({})".format(arg_),
+    # '.cid': ?
+
     '.left': lambda *args_: "left({})".format(','.join(str(x) for x in args_)),
+    '.right': lambda *args_: "right({})".format(','.join(str(x) for x in args_)),
+    '.within': lambda *args_: "within({})".format(','.join(str(x) for x in args_)),
+    '.between': lambda list_: "between({})".format(list_),
     '.sentence': "sentence()",
 
     '.extract_text': lambda phr: "text({})".format(phr),
-    '.filter': lambda phr, field, val: "filter({}, {}, {})".format(phr, field, val),
+    # '.filter': lambda phr, field, val: "filter({}, {}, {})".format(phr, field, val),
+    '.filter': lambda phr, field, val: "[x for x in {} if re.match(r'{}', x.{})]".format(phr, val, field),
 }
 
 text_grammar = GrammarMixin(

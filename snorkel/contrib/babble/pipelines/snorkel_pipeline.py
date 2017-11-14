@@ -332,7 +332,8 @@ class SnorkelPipeline(object):
                 # Score generative model on test set
                 L_test = load_label_matrix(self.session, split=TEST)
                 np.random.seed(self.config['seed'])
-                self.scores['Gen'] = score_marginals(self.gen_model.marginals(L_test), Y_test, b=opt_b)
+                self.scores['Gen'] = score_marginals(
+                    self.gen_model.marginals(L_test), Y_test, b=opt_b)
             else:
                 print("gen_model is undefined. Skipping.")
 

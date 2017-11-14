@@ -142,7 +142,8 @@ compositional_rules = [
 
     # Count
         # "the [number of (words left of arg 1)] is larger than five"
-    Rule('$Int', '$Count $Phrase', sems_in_order),         
+    Rule('$Int', '$Count $Phrase', sems_in_order), 
+        # "There is at least one [person between X and Y]"        
     Rule('$Bool', '?$Exists $NumToBool $TokenList', 
         lambda (exists_, func_, list_): ('.call', func_, ('.count', list_))),
 
@@ -184,7 +185,7 @@ ops = {
     # string functions
     '.upper': lambda c: lambda x: lambda cx: x(cx).isupper(),
     '.lower': lambda c: lambda x: lambda cx: x(cx).islower(),
-    '.capital': lambda c: lambda x: lambda cx: x(cx)[0].isupper(),
+    '.capital': lambda c: lambda x: lambda cx: len(x(cx)) and x(cx)[0].isupper(),
     '.startswith': lambda x: lambda cx: lambda y: lambda cy: y(cy).startswith(x(cx)),
     '.endswith': lambda x: lambda cx: lambda y: lambda cy: y(cy).endswith(x(cx)),
     # context functions

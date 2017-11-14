@@ -15,8 +15,8 @@ lexical_rules = (
     [Rule('$And', w, '.and') for w in ['and']] +
     [Rule('$Or', w, '.or') for w in ['or', 'nor']] +
     [Rule('$Not', w, '.not') for w in ['not', "n't"]] +
-    [Rule('$All', w, '.all') for w in ['all']] +
-    [Rule('$Any', w, '.any') for w in ['any', 'a']] +
+    [Rule('$All', w, '.all') for w in ['all', 'both']] +
+    [Rule('$Any', w, '.any') for w in ['any', 'a', 'one of']] +
     [Rule('$None', w, '.none') for w in ['none', 'not any', 'neither', 'no']] +
     [Rule('$Is', w) for w in ['is', 'are', 'be', 'comes', 'appears', 'occurs']] +
     [Rule('$Exists', w) for w in ['exist', 'exists']] +

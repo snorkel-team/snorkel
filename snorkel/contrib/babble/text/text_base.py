@@ -19,7 +19,7 @@ lexical_rules = (
     [Rule('$Sentence', w, '.sentence') for w in ['sentence', 'text', 'it']] +
     [Rule('$Between', w, '.between') for w in ['between', 'inbetween', 'sandwiched', 'enclosed']] +
     # TODO: Add more POS options
-    # [Rule('$NounPOS', w, ('NN')) for w in ['noun', 'nouns']] +
+    [Rule('$NounPOS', w, ('NN')) for w in ['noun', 'nouns']] +
     # TODO: Add other Spacy NER options
     [Rule('$PersonNER', w, ('PERSON')) for w in ['person', 'people']] +
     [Rule('$LocationNER', w, ('LOC')) for w in ['location', 'locations', 'place', 'places']] +

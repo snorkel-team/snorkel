@@ -167,8 +167,9 @@ translate_ops = {
     '.map': lambda func_, list_: "map({}, {})".format(func_, list_),
     # '.call': lambda func_, args_: "call({}, {})".format(func_, args_),
     '.call': lambda func_, args_: "{}.{}".format(args_, func_),
-    # '.composite_and': lambda func_, list_: "all(map({}, {}))".format(func_, list_),
-    # '.composite_or':  lambda x, y, z: lambda cz: any([x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)]),
+
+    '.composite_and': lambda func_, args_: "alltrue({}({}))".format(func_, args_),
+    '.composite_or': lambda func_, args_: "anytrue({}({}))".format(func_, args_),
     '.composite_and_func': lambda func_list: "alltrue({})".format(func_list),
     '.composite_or_func': lambda func_list: "anytrue({})".format(func_list), 
 

@@ -72,7 +72,6 @@ def PrimitiveTemplate(seed):
         Rule('$BoolList', (XToBool, XList), lambda (func_, list_): ('.map', func_, list_)),
             # "there is a spouse word in the sentence"
         Rule('$Bool', ('$Exists', XList, XToBool), lambda (exists_, list_, func_): ('.any', ('.map', func_, list_))),
-        
 
         # Membership in lists
         Rule(XToBool, ('$In', XList), sems_in_order),
@@ -81,6 +80,11 @@ def PrimitiveTemplate(seed):
         Rule('$Bool', ('$List', '$Contains', X), lambda (list_, contains_, x): ('.call', ('.in', list_), x)),
         Rule('$Bool', ('$List', '$Contains', XListAnd), lambda (list_, contains_, andlist_): ('.all', ('.map', ('.in', list_), andlist_))),
         Rule('$Bool', ('$List', '$Contains', XListOr), lambda (list_, contains_, orlist_): ('.any', ('.map', ('.in', list_), orlist_))),
+
+
+        # All (not) equal
+        Rule('$Bool', (XListAnd, '$Equals'), lambda (list_, eq_): ('.all_equal', list_)),
+        Rule('$Bool', (XListAnd, '$NotEquals'), lambda (list_, eq_): ('.not', ('.all_equal', list_))),
     ]
     
     return rules

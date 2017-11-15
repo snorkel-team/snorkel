@@ -15,10 +15,11 @@ lexical_rules = (
     [Rule('$Left', w, '.left') for w in ['?to ?the left ?of', 'in front of', 'before', 'precedes', 'preceding', 'followed by']] +
     [Rule('$Right', w, '.right') for w in ['?to ?the right ?of', 'behind', 'after', 'preceded by', 'follows', 'following']] +
     [Rule('$Within', w, '.within') for w in ['within']] +
+    [Rule('$Apart', w) for w in ['apart', 'away']] +
     [Rule('$Sentence', w, '.sentence') for w in ['sentence', 'text', 'it']] +
     [Rule('$Between', w, '.between') for w in ['between', 'inbetween', 'sandwiched', 'enclosed']] +
     # TODO: Add more POS options
-    [Rule('$NounPOS', w, ('NN')) for w in ['noun', 'nouns']] +
+    # [Rule('$NounPOS', w, ('NN')) for w in ['noun', 'nouns']] +
     # TODO: Add other Spacy NER options
     [Rule('$PersonNER', w, ('PERSON')) for w in ['person', 'people']] +
     [Rule('$LocationNER', w, ('LOC')) for w in ['location', 'locations', 'place', 'places']] +
@@ -117,32 +118,26 @@ compositional_rules = [
                 ('.in', ('.extract_text', (dir_, arglist_[2], ('.string', '.eq'), int_, 
                     ('.string', (unit_ if unit_ else 'words')))))))),
 
-    # NOTE: Allowing StringToBool + String -> Bool in addition to 
-    # String StringToBool -> Bool introduces to many false positives to be worth
-    # it. Instead, we just hard code the conversion to bool for this pattern.
-    # TODO: add support for StringListAnd and StringListOr as well? (Usually automatic)
-        # "X is immediately before"
-    Rule('$Bool', '$ArgX $Int ?$Unit $Direction $String',
-        lambda (arg_, int_, unit_, dir_, str_): 
-        ('.call', 
+    # NOTE: String + StringToBool -> Bool, StringToBoolForward + String -> Bool
+    Rule('$StringToBoolForward', '$ArgX $Int ?$Unit $Direction',
+        lambda (arg_, int_, unit_, dir_): 
             ('.in', ('.extract_text', (flip_dir(dir_), arg_, ('.string', '.eq'), int_, 
-            ('.string', (unit_ if unit_ else 'words'))))), str_)),
-    Rule('$Bool', '$ArgXListAnd $Int ?$Unit $Direction $String',
-        lambda (arglist_, int_, unit_, dir_, str_):
-        ('.call', 
+            ('.string', (unit_ if unit_ else 'words')))))),
+    Rule('$StringToBoolForward', '$ArgXListAnd $Int ?$Unit $Direction',
+        lambda (arglist_, int_, unit_, dir_):
             ('.composite_and_func', ('.list',
                 ('.in', ('.extract_text', (flip_dir(dir_), arglist_[1], ('.string', '.eq'), int_, 
                     ('.string', (unit_ if unit_ else 'words'))))),
                 ('.in', ('.extract_text', (flip_dir(dir_), arglist_[2], ('.string', '.eq'), int_, 
-                    ('.string', (unit_ if unit_ else 'words'))))))), str_)),
-    Rule('$Bool', '$ArgXListOr $Int ?$Unit $Direction $String',
-        lambda (arglist_, int_, unit_, dir_, str_):
-        ('.call', 
+                    ('.string', (unit_ if unit_ else 'words')))))))),
+    Rule('$StringToBoolForward', '$ArgXListOr $Int ?$Unit $Direction',
+        lambda (arglist_, int_, unit_, dir_):
             ('.composite_or_func', ('.list',
                 ('.in', ('.extract_text', (flip_dir(dir_), arglist_[1], ('.string', '.eq'), int_, 
                     ('.string', (unit_ if unit_ else 'words'))))),
                 ('.in', ('.extract_text', (flip_dir(dir_), arglist_[2], ('.string', '.eq'), int_, 
-                    ('.string', (unit_ if unit_ else 'words'))))))), str_)),
+                    ('.string', (unit_ if unit_ else 'words')))))))),
+
 
         # "is at least five words to the left of Y"
     Rule('$StringToBool', '$Compare $Int ?$Unit $Direction $ArgX',
@@ -185,7 +180,7 @@ compositional_rules = [
                     ('.string', (unit_ if unit_ else 'words')))))))),
 
     # Others
-        # "is within 5 words of X"
+        # "'foo' is within 5 words of X"
     Rule('$StringToBool', '$Within $Int ?$Unit $ArgX',
          lambda (win_, int_, unit_, arg_): 
             ('.in', ('.extract_text', (win_, arg_, int_, 
@@ -204,6 +199,42 @@ compositional_rules = [
                     ('.string', (unit_ if unit_ else 'words'))))),
                 ('.in', ('.extract_text', (win_, arglist_[2], int_, 
                     ('.string', (unit_ if unit_ else 'words')))))))),
+        # "X is within 5 words of ['foo']"
+    Rule('$StringToBoolForward', '$ArgX $Within $Int ?$Unit',
+         lambda (arg_, win_, int_, unit_): 
+            ('.in', ('.extract_text', (win_, arg_, int_, 
+                ('.string', (unit_ if unit_ else 'words')))))),
+    Rule('$StringToBoolForward', '$ArgXListAnd $Within $Int ?$Unit',
+         lambda (arglist_, win_, int_, unit_): 
+            ('.composite_and_func', ('.list',
+                ('.in', ('.extract_text', (win_, arglist_[1], int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))),
+                ('.in', ('.extract_text', (win_, arglist_[2], int_, 
+                    ('.string', (unit_ if unit_ else 'words')))))))),
+    Rule('$StringToBoolForward', '$ArgXListOr $Within $Int ?$Unit',
+         lambda (arglist_, win_, int_, unit_): 
+            ('.composite_or_func', ('.list',
+                ('.in', ('.extract_text', (win_, arglist_[1], int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))),
+                ('.in', ('.extract_text', (win_, arglist_[2], int_, 
+                    ('.string', (unit_ if unit_ else 'words')))))))),
+
+        # "X and Y are within 3 words of each other"
+    Rule('$Bool', '$ArgXListAnd $Within $Int ?$Unit $EachOther',
+         lambda (arglist_, win_, int_, unit_, eachother_): 
+            ('.call', 
+                ('.in', ('.extract_text', (win_, arglist_[1], int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))), 
+                ('.arg_to_string', arglist_[2]))),
+        # "X and Y are more than 10 words apart" -> 
+        #       "Y is in the words that are more than 10 to the right of Y"
+    Rule('$Bool', '$ArgXListAnd $Compare $Int ?$Unit $Apart',
+        lambda (arglist_, cmp_, int_, unit_, apart_): 
+            ('.call', 
+                ('.in', ('.extract_text', ('.right', arglist_[1], 
+                    ('.string', cmp_), int_, ('.string', (unit_ if unit_ else 'words'))))), 
+                ('.arg_to_string', arglist_[2]))),         
+
         # "between X and Y"
     Rule('$StringToBool', '$Between $ArgXListAnd',
         lambda (btw_, arglist_): ('.in', ('.extract_text', (btw_, arglist_)))),
@@ -265,6 +296,7 @@ compositional_rules = [
 
         # defining $StringToBool functions
     Rule('$StringToBool', '$UnaryStringToBool', lambda sems: (sems[0],)),
+    Rule('$Bool', '$StringToBoolForward $String', lambda (func_, str_): ('.call', func_, str_)),
 
     # Indexing Strings #
     # Rule('$String', '$Int $Word $Phrase', lambda (idx_, word_, phr_): ('.index_phrase', phr_, idx_)),

@@ -41,7 +41,8 @@ lexical_rules = (
     [Rule('$CID', w, '.cid') for w in ['cid', 'cids', 'canonical id', 'canonical ids']] +
     [Rule('$ArgNum', w, ('.int', 1)) for w in ['one', '1']] +
     [Rule('$ArgNum', w, ('.int', 2)) for w in ['two', '2']] +
-    [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['them']]
+    [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['them']] +
+    [Rule('$EachOther', w) for w in ['eachother', 'each other']]
 )
 
 unary_rules = [
@@ -92,6 +93,7 @@ compositional_rules = [
     Rule('$ArgX', '$Arg $ArgNum', sems_in_order),
     Rule('$ArgXListAnd', '$ArgX $And $ArgX', ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))),
     Rule('$ArgXListOr', '$ArgX $Or $ArgX', ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))),
+    # Rule('$Bool', '$ArgListAnd $Equals', lambda ('.allequal', sems))
 ]
 
 # template_rules = []
@@ -145,6 +147,7 @@ ops = {
     '.count': lambda x: lambda c: len(x(c)),
     '.sum': lambda x: lambda c: sum(x(c)),
     '.intersection': lambda x, y: lambda c: list(set(x(c)).intersection(y(c))),
+    '.all_equal': lambda list_: lambda c: (lambda mylist: all(mylist[0] == elem for elem in mylist))(list_(c)),
     # context
     '.arg': lambda x: lambda c: c['candidate'][x(c) - 1],
     }
@@ -188,6 +191,7 @@ translate_ops = {
     '.count': lambda list_: "count({})".format(list_),
     '.sum': lambda arg_: "sum({})".format(arg_),
     '.intersection': lambda arg_: "intersection({})".format(arg_),
+    '.all_equal': lambda list_: "all_equal({})".format(list_),
 
     '.arg': lambda int_: "arg{}".format(int_),
 }

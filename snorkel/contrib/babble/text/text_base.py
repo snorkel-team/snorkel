@@ -76,41 +76,134 @@ unary_rules = [
 compositional_rules = [
     # Text Baseline
     # NEW
-    Rule('$ROOT', '$Start $Label $Bool $Because $String $Stop',
-        lambda (start_, lab_, bool_, _, str_, stop_):
-        ('.root', (lab_, bool_, ('.call', ('.in', ('.extract_text', ('.sentence',))), str_)))),
-    Rule('$ROOT', '$Start $Label $Bool $Because $StringList $Stop',
-        lambda (start_, lab_, bool_, _, strlist_, stop_):
-        ('.root', (lab_, bool_, ('.all', ('.map', ('.in', ('.extract_text', ('.sentence',))), strlist_))))),
+    # Rule('$ROOT', '$Start $Label $Bool $Because $String $Stop',
+    #     lambda (start_, lab_, bool_, _, str_, stop_):
+    #     ('.root', (lab_, bool_, ('.call', ('.in', ('.extract_text', ('.sentence',))), str_)))),
+    # Rule('$ROOT', '$Start $Label $Bool $Because $StringList $Stop',
+    #     lambda (start_, lab_, bool_, _, strlist_, stop_):
+    #     ('.root', (lab_, bool_, ('.all', ('.map', ('.in', ('.extract_text', ('.sentence',))), strlist_))))),
     # NEW
 
     # Direction
         # "is left of Y"
-    Rule('$StringToBool', '$Direction $ArgX', lambda (dir_, arg_): ('.in', ('.extract_text', (dir_, arg_)))),
+    Rule('$StringToBool', '$Direction $ArgX', lambda (dir_, arg_): 
+        ('.in', ('.extract_text', (dir_, arg_)))),
+    Rule('$StringToBool', '$Direction $ArgXListAnd', lambda (dir_, arglist_): 
+        ('.composite_and_func', ('.list', 
+            ('.in', ('.extract_text', (dir_, arglist_[1]))),
+            ('.in', ('.extract_text', (dir_, arglist_[2])))))),
+    Rule('$StringToBool', '$Direction $ArgXListOr', lambda (dir_, arglist_): 
+        ('.composite_or_func', ('.list', 
+            ('.in', ('.extract_text', (dir_, arglist_[1]))),
+            ('.in', ('.extract_text', (dir_, arglist_[2])))))),
 
         # "is two words left of Y"
     Rule('$StringToBool', '$Int ?$Unit $Direction $ArgX',
-        lambda (int_, unit_, dir_, arg_): ('.in', ('.extract_text',
-            (dir_, arg_, ('.string', '.eq'), int_, ('.string', (unit_ if unit_ else 'words')))))),
-        # "X is immediately before"
-    Rule('$StringToBool', '$ArgX $Int ?$Unit $Direction',
-        lambda (arg_, int_, unit_, dir_): ('.in', ('.extract_text',
-            (flip_dir(dir_), arg_, ('.string', '.eq'), int_, ('.string', (unit_ if unit_ else 'words')))))),
+        lambda (int_, unit_, dir_, arg_): 
+            ('.in', ('.extract_text', (dir_, arg_, ('.string', '.eq'), int_, 
+            ('.string', (unit_ if unit_ else 'words')))))),
+    Rule('$StringToBool', '$Int ?$Unit $Direction $ArgXListAnd',
+        lambda (int_, unit_, dir_, arglist_): 
+            ('.composite_and_func', ('.list',
+                ('.in', ('.extract_text', (dir_, arglist_[1], ('.string', '.eq'), int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))),
+                ('.in', ('.extract_text', (dir_, arglist_[2], ('.string', '.eq'), int_, 
+                    ('.string', (unit_ if unit_ else 'words')))))))),
+    Rule('$StringToBool', '$Int ?$Unit $Direction $ArgXListOr',
+        lambda (int_, unit_, dir_, arglist_): 
+            ('.composite_or_func', ('.list',
+                ('.in', ('.extract_text', (dir_, arglist_[1], ('.string', '.eq'), int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))),
+                ('.in', ('.extract_text', (dir_, arglist_[2], ('.string', '.eq'), int_, 
+                    ('.string', (unit_ if unit_ else 'words')))))))),
 
-        # "is at least five words to the left of"
+    # NOTE: Allowing StringToBool + String -> Bool in addition to 
+    # String StringToBool -> Bool introduces to many false positives to be worth
+    # it. Instead, we just hard code the conversion to bool for this pattern.
+    # TODO: add support for StringListAnd and StringListOr as well? (Usually automatic)
+        # "X is immediately before"
+    Rule('$Bool', '$ArgX $Int ?$Unit $Direction $String',
+        lambda (arg_, int_, unit_, dir_, str_): 
+        ('.call', 
+            ('.in', ('.extract_text', (flip_dir(dir_), arg_, ('.string', '.eq'), int_, 
+            ('.string', (unit_ if unit_ else 'words'))))), str_)),
+    Rule('$Bool', '$ArgXListAnd $Int ?$Unit $Direction $String',
+        lambda (arglist_, int_, unit_, dir_, str_):
+        ('.call', 
+            ('.composite_and_func', ('.list',
+                ('.in', ('.extract_text', (flip_dir(dir_), arglist_[1], ('.string', '.eq'), int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))),
+                ('.in', ('.extract_text', (flip_dir(dir_), arglist_[2], ('.string', '.eq'), int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))))), str_)),
+    Rule('$Bool', '$ArgXListOr $Int ?$Unit $Direction $String',
+        lambda (arglist_, int_, unit_, dir_, str_):
+        ('.call', 
+            ('.composite_or_func', ('.list',
+                ('.in', ('.extract_text', (flip_dir(dir_), arglist_[1], ('.string', '.eq'), int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))),
+                ('.in', ('.extract_text', (flip_dir(dir_), arglist_[2], ('.string', '.eq'), int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))))), str_)),
+
+        # "is at least five words to the left of Y"
     Rule('$StringToBool', '$Compare $Int ?$Unit $Direction $ArgX',
-        lambda (cmp_, int_, unit_, dir_, arg_): ('.in', ('.extract_text',
-            (dir_, arg_, ('.string', cmp_), int_, ('.string', (unit_ if unit_ else 'words')))))),
+        lambda (cmp_, int_, unit_, dir_, arg_): 
+            ('.in', ('.extract_text', (dir_, arg_, ('.string', cmp_), int_, 
+                ('.string', (unit_ if unit_ else 'words')))))),
+    Rule('$StringToBool', '$Compare $Int ?$Unit $Direction $ArgXListAnd',
+        lambda (cmp_, int_, unit_, dir_, arglist_):
+            ('.composite_and_func', ('.list',
+                ('.in', ('.extract_text', (dir_, arglist_[1], ('.string', cmp_), int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))),
+                ('.in', ('.extract_text', (dir_, arglist_[2], ('.string', cmp_), int_, 
+                    ('.string', (unit_ if unit_ else 'words')))))))),
+    Rule('$StringToBool', '$Compare $Int ?$Unit $Direction $ArgXListOr',
+        lambda (cmp_, int_, unit_, dir_, arglist_):
+            ('.composite_or_func', ('.list',
+                ('.in', ('.extract_text', (dir_, arglist_[1], ('.string', cmp_), int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))),
+                ('.in', ('.extract_text', (dir_, arglist_[2], ('.string', cmp_), int_, 
+                    ('.string', (unit_ if unit_ else 'words')))))))),
+
         # "is to the left of Y by at least five words"
     Rule('$StringToBool', '$Direction $ArgX $Compare $Int ?$Unit',
-        lambda (dir_, arg_, cmp_, int_, unit_): ('.in', ('.extract_text',
-            (dir_, arg_, ('.string', cmp_), int_, ('.string', (unit_ if unit_ else 'words')))))),
+        lambda (dir_, arg_, cmp_, int_, unit_): 
+            ('.in', ('.extract_text', (dir_, arg_, ('.string', cmp_), int_, 
+                ('.string', (unit_ if unit_ else 'words')))))),
+    Rule('$StringToBool', '$Direction $ArgXListAnd $Compare $Int ?$Unit',
+        lambda (dir_, arglist_, cmp_, int_, unit_): 
+            ('.composite_and_func', ('.list',
+                ('.in', ('.extract_text', (dir_, arglist_[1], ('.string', cmp_), int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))),
+                ('.in', ('.extract_text', (dir_, arglist_[2], ('.string', cmp_), int_, 
+                    ('.string', (unit_ if unit_ else 'words')))))))),
+    Rule('$StringToBool', '$Direction $ArgXListOr $Compare $Int ?$Unit',
+        lambda (dir_, arglist_, cmp_, int_, unit_): 
+            ('.composite_or_func', ('.list',
+                ('.in', ('.extract_text', (dir_, arglist_[1], ('.string', cmp_), int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))),
+                ('.in', ('.extract_text', (dir_, arglist_[2], ('.string', cmp_), int_, 
+                    ('.string', (unit_ if unit_ else 'words')))))))),
 
     # Others
         # "is within 5 words of X"
     Rule('$StringToBool', '$Within $Int ?$Unit $ArgX',
-         lambda (win_, int_, unit_, arg_): ('.in', ('.extract_text',
-             (win_, arg_, int_, ('.string', (unit_ if unit_ else 'words')))))),
+         lambda (win_, int_, unit_, arg_): 
+            ('.in', ('.extract_text', (win_, arg_, int_, 
+                ('.string', (unit_ if unit_ else 'words')))))),
+    Rule('$StringToBool', '$Within $Int ?$Unit $ArgXListAnd',
+         lambda (win_, int_, unit_, arglist_): 
+            ('.composite_and_func', ('.list',
+                ('.in', ('.extract_text', (win_, arglist_[1], int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))),
+                ('.in', ('.extract_text', (win_, arglist_[2], int_, 
+                    ('.string', (unit_ if unit_ else 'words')))))))),
+    Rule('$StringToBool', '$Within $Int ?$Unit $ArgXListOr',
+         lambda (win_, int_, unit_, arglist_): 
+            ('.composite_or_func', ('.list',
+                ('.in', ('.extract_text', (win_, arglist_[1], int_, 
+                    ('.string', (unit_ if unit_ else 'words'))))),
+                ('.in', ('.extract_text', (win_, arglist_[2], int_, 
+                    ('.string', (unit_ if unit_ else 'words')))))))),
         # "between X and Y"
     Rule('$StringToBool', '$Between $ArgXListAnd',
         lambda (btw_, arglist_): ('.in', ('.extract_text', (btw_, arglist_)))),

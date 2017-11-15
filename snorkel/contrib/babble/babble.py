@@ -288,7 +288,7 @@ class BabbleStream(object):
 
         for filter_name, parses in filtered_parses.items():
             if parses:
-                print("Filter {} removed {} parse(s):".format(filter_name, len(parses)))
+                print("\nFilter {} removed {} parse(s):".format(filter_name, len(parses)))
             for i, filtered_parse in enumerate(parses):
                 print("\n#{} Filtered parse:".format(i))
                 print("Explanation (source):\n{}".format(

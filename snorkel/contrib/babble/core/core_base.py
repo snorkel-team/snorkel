@@ -118,9 +118,12 @@ ops = {
     '.map': lambda func_, list_: lambda cxy: [func_(cxy)(lambda c: yi)(cxy) for yi in list_(cxy)],
         # call a 'hungry' evaluated function on one or more arguments
     '.call': lambda *x: lambda c: x[0](c)(x[1])(c), #TODO: extend to more than one argument?
-        # apply an element to a list of functions (then call 'any' or 'all' to convert to boolean)
-    '.composite_and': lambda x, y: lambda cxy: lambda z: lambda cz: all([x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)]),
-    '.composite_or':  lambda x, y: lambda cxy: lambda z: lambda cz: any([x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)]),
+        # apply a list of hungry functions to an element, then call 'any' or 'all' to convert to boolean
+    '.composite_and': lambda x, y: lambda cxy: lambda z: lambda cz: all(x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)),
+    '.composite_or':  lambda x, y: lambda cxy: lambda z: lambda cz: any(x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)),
+        # apply a list of full functions to an element, then call 'any' or 'all' to convert to boolean
+    '.composite_and_func': lambda funclist: lambda cx: lambda z: lambda cz: all(func(z)(cz)==True for func in funclist(cx)),
+    '.composite_or_func': lambda funclist: lambda cx: lambda z: lambda cz: any(func(z)(cz)==True for func in funclist(cx)),
     # logic
         # NOTE: and/or expect individual inputs, not/all/any/none expect a single iterable of inputs
     '.and': lambda x, y: lambda c: x(c)==True and y(c)==True, 
@@ -163,6 +166,8 @@ translate_ops = {
     '.call': lambda func_, args_: "{}.{}".format(args_, func_),
     # '.composite_and': lambda func_, list_: "all(map({}, {}))".format(func_, list_),
     # '.composite_or':  lambda x, y, z: lambda cz: any([x(lambda c: yi)(cxy)(z)(cz)==True for yi in y(cxy)]),
+    '.composite_and_func': lambda func_list: "alltrue({})".format(func_list),
+    '.composite_or_func': lambda func_list: "anytrue({})".format(func_list), 
 
     '.and': lambda x, y: "({} and {})".format(x, y),
     '.or': lambda x, y: "({} or {})".format(x, y),

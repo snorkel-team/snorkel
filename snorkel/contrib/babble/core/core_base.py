@@ -165,13 +165,12 @@ translate_ops = {
     '.list': lambda *elements: "[{}]".format(','.join(x.encode('utf-8') for x in elements)),
     '.user_list': lambda name: "${}$".format(name.encode('utf-8')),
     '.map': lambda func_, list_: "map({}, {})".format(func_, list_),
-    # '.call': lambda func_, args_: "call({}, {})".format(func_, args_),
     '.call': lambda func_, args_: "{}.{}".format(args_, func_),
 
-    '.composite_and': lambda func_, args_: "alltrue({}({}))".format(func_, args_),
-    '.composite_or': lambda func_, args_: "anytrue({}({}))".format(func_, args_),
-    '.composite_and_func': lambda func_list: "alltrue({})".format(func_list),
-    '.composite_or_func': lambda func_list: "anytrue({})".format(func_list), 
+    '.composite_and': lambda func_, args_: "(is all of the following): ({}({}))".format(func_, args_),
+    '.composite_or': lambda func_, args_: "(is at least one of the following): ({}({}))".format(func_, args_),
+    '.composite_and_func': lambda func_list: "(all of the following): ({})".format(func_list),
+    '.composite_or_func': lambda func_list: "(at least one of the following): ({})".format(func_list), 
 
     '.and': lambda x, y: "({} and {})".format(x, y),
     '.or': lambda x, y: "({} or {})".format(x, y),
@@ -187,7 +186,7 @@ translate_ops = {
     '.geq': lambda x: "(>= {})".format(x),
     '.gt': lambda x: "(> {})".format(x),
 
-    '.in': lambda rhs: "in {}".format(rhs),
+    '.in': lambda rhs: "in({})".format(rhs),
     '.contains': lambda rhs: "contains({})".format(rhs),
     '.count': lambda list_: "count({})".format(list_),
     '.sum': lambda arg_: "sum({})".format(arg_),

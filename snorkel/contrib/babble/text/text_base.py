@@ -334,6 +334,15 @@ ops = {
     '.filter': lambda phr, field, val: lambda c: c['helpers']['phrase_filter'](phr(c), field, val),
 }
 
+cmp_converter = {
+    '.eq'   : 'exactly',
+    '.neq'  : 'not',
+    '.lt'   : 'less than',
+    '.leq'  : 'no more than',
+    '.gt'   : 'greater than',
+    '.geq'  : 'at least',
+}
+
 translate_ops = {
     '.upper': "isupper()",
     '.lower': "islower()",
@@ -346,14 +355,16 @@ translate_ops = {
     '.arg_to_string': lambda arg_: "text({})".format(arg_),
     '.cid': lambda arg_: "cid({})".format(arg_),
 
-    '.left': lambda *args_: "left({})".format(','.join(str(x) for x in args_)),
-    '.right': lambda *args_: "right({})".format(','.join(str(x) for x in args_)),
-    '.within': lambda *args_: "within({})".format(','.join(str(x) for x in args_)),
+    '.left': lambda arg_, cmp_, int_, unit_: "{} {} {} to the left of {}".format(
+        cmp_converter[cmp_[1:-1]], int_, unit_[1:-1], arg_),
+    '.right': lambda arg_, cmp_, int_, unit_: "{} {} {} to the right of {}".format(
+        cmp_converter[cmp_[1:-1]], int_, unit_[1:-1], arg_),
+    '.within': lambda arg_, num_, unit_: "within {} {} of {}".format(
+        num_, unit_[1:-1], arg_),
     '.between': lambda list_: "between({})".format(list_),
-    '.sentence': "sentence()",
+    '.sentence': "the sentence",
 
     '.extract_text': lambda phr: "text({})".format(phr),
-    # '.filter': lambda phr, field, val: "filter({}, {}, {})".format(phr, field, val),
     '.filter': lambda phr, field, val: "[x for x in {} if re.match(r'{}', x.{})]".format(phr, val, field),
 }
 

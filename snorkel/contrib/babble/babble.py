@@ -295,6 +295,18 @@ class BabbleStream(object):
             return
 
         num_filtered = 0
+        print("SUMMARY")
+        print("{} TOTAL:".format(
+            sum([len(p) for p in filtered_parses.values()])))
+        print("{} Duplicate Semantics".format(
+            len(filtered_parses['DuplicateSemanticsFilter'])))
+        print("{} Inconsistency with Exmaple".format(
+            len(filtered_parses['ConsistencyFilter'])))
+        print("{} Uniform Signature".format(
+            len(filtered_parses['UniformSignatureFilter'])))
+        print("{} Duplicate Signature".format(
+            len(filtered_parses['DuplicateSignatureFilter'])))
+        
         for filter_name, parses in filtered_parses.items():
             # if parses:
             #     print("\nFilter {} removed {} parse(s):".format(filter_name, len(parses)))

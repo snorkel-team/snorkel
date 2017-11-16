@@ -4,7 +4,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 
 from snorkel.annotations import LabelAnnotator, csr_AnnotationMatrix
-from snorkel.utils import ProgressBar
+from snorkel.utils import ProgressBar, PrintTimer
 from snorkel.contrib.babble.grammar import Parse
 
 FilteredParse = namedtuple('FilteredParse', ['parse', 'reason'])
@@ -40,19 +40,19 @@ class FilterBank(object):
 
         # Label and extract signatures
         # TODO: replace this naive double for loop with a parallelized solution
-        print("Applying labeling functions to split {}".format(self.split))
-        lfs = [parse.function for parse in parses]
-        candidates = self.session.query(self.candidate_class).filter(
-            self.candidate_class.split == self.split).all()
-        dense_label_matrix = np.zeros((len(candidates), len(lfs)))
+        with PrintTimer("Applying labeling functions to split {}".format(self.split)):
+            lfs = [parse.function for parse in parses]
+            candidates = self.session.query(self.candidate_class).filter(
+                self.candidate_class.split == self.split).all()
+            dense_label_matrix = np.zeros((len(candidates), len(lfs)))
 
-        pb = ProgressBar(len(lfs))
-        for j, lf in enumerate(lfs):
-            pb.bar(j)
-            for i, c in enumerate(candidates):
-                dense_label_matrix[i, j] = lf(c)
-        pb.close()                
-        label_matrix = csr_matrix(dense_label_matrix)
+            pb = ProgressBar(len(lfs))
+            for j, lf in enumerate(lfs):
+                pb.bar(j)
+                for i, c in enumerate(candidates):
+                    dense_label_matrix[i, j] = lf(c)
+            pb.close()                
+            label_matrix = csr_matrix(dense_label_matrix)
 
         # Apply signature based filters
         parses, rejected, label_matrix = self.uniform_filter.filter(parses, label_matrix)

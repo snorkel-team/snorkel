@@ -207,9 +207,9 @@ class UniformSignatureFilter(Filter):
         bad_parses = []
         for i, parse in enumerate(parses):
             if i in labeled_all_idxs:
-                bad_parses.append(FilteredParse(parse, "Labeled all {} candidates".format(num_candidates)))
+                bad_parses.append(FilteredParse(parse, "ALL"))
             elif i in labeled_none_idxs:
-                bad_parses.append(FilteredParse(parse, "Labeled 0 candidates".format(num_candidates)))
+                bad_parses.append(FilteredParse(parse, "NONE"))
             
         label_matrix = label_matrix[:, nonuniform_idxs]
 

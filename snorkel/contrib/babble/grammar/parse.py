@@ -50,9 +50,6 @@ class Parse(object):
             child_semantics = [child.semantics for child in self.children]
             return self.rule.apply_semantics(child_semantics)
 
-    def to_python(self):
-        return sem_to_str(self.semantics)
-
     def display(self, indent=0, show_sem=False):
         def indent_string(level):
             return '  ' * level

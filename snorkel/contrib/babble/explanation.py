@@ -17,6 +17,7 @@ class Explanation(object):
         :param paraphrase: A paraphrase of the explanation.
         """
         assert(isinstance(condition, basestring))
+        condition = unicode(condition).replace('\n', '')
         self.condition = condition
         assert(isinstance(label, bool))
         self.label = label

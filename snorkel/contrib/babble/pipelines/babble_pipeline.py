@@ -59,6 +59,11 @@ class BabblePipeline(SnorkelPipeline):
         self.lfs = self.babbler.get_lfs()
         self.labeler = LabelAnnotator(lfs=self.lfs)
 
+    def set_babbler_matrices(self, babbler):
+        self.L_train = babbler.get_label_matrix(split=0)
+        self.L_dev   = babbler.get_label_matrix(split=1)
+        self.L_test  = babbler.get_label_matrix(split=2)
+
     def label(self, config=None, split=None):
         if config:
             self.config = config
@@ -79,7 +84,7 @@ class BabblePipeline(SnorkelPipeline):
                 # else:
                 L = SnorkelPipeline.label(self, self.labeler, split)
                 num_candidates, num_labels = L.shape
-                print("\nLabeled split {}: ({},{}) sparse (nnz = {})".format(split, num_candidates, num_labels, L.nnz))
+                print("Labeled split {}: ({},{}) sparse (nnz = {})\n".format(split, num_candidates, num_labels, L.nnz))
                 if self.config['display_accuracies'] and split == DEV:
                     L_gold_dev = load_gold_labels(self.session, annotator_name='gold', split=1)
                     print(L.lf_stats(self.session, labels=L_gold_dev))

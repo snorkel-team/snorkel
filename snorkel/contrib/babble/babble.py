@@ -4,12 +4,15 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 from pandas import DataFrame, Series
+from scipy.sparse import csr_matrix, coo_matrix
 import scipy.sparse as sparse
 
 from snorkel.annotations import LabelAnnotator, load_gold_labels, csr_AnnotationMatrix
 from snorkel.learning.utils import MentionScorer
 from snorkel.lf_helpers import test_LF
 from snorkel.utils import (
+    PrintTimer,
+    ProgressBar,
     matrix_conflicts,
     matrix_coverage,
     matrix_overlaps,
@@ -135,11 +138,13 @@ class BabbleStream(object):
         
         self.parses = []
         self.label_matrix = None
+        # rows, cols, data, shape:(_, _)
+        self.label_triples = [[[],[],[],0,0], None, [[],[],[],0,0]]
 
         # Temporary storage
-        # self.temp_explanations = None
         self.temp_parses = None
         self.temp_label_matrix = None
+        self.last_parses = []
 
         # Evaluation tools
         self.num_dev_total  = len(self.dev_candidates)
@@ -190,6 +195,9 @@ class BabbleStream(object):
             parses, _, _, _ = self.apply(explanations)
             if parses:
                 self.commit()
+            # Also label train and test
+            self.label_split(0)
+            self.label_split(2)
 
     def apply(self, explanations, split=1, parallelism=1):
         """
@@ -346,15 +354,50 @@ class BabbleStream(object):
             else:
                 self.label_matrix = sparse.hstack((self.label_matrix, self.temp_label_matrix))
 
+            self.last_parses = parses_to_add
             if self.verbose:
                 print("Added {} parse(s) from {} explanations to set. (Total # parses = {})".format(
                     len(parses_to_add), len(explanations_to_add), len(self.parses)))
 
         # Permanently store the semantics and signatures in duplicate filters
-        self.filter_bank.commit(idxs)
+        self.filter_bank.commit(idxs)                
 
         self.temp_parses = None
         self.temp_label_matrix = None
+
+    def label_split(self, split):
+        """Label a single split"""
+        if split == 1:
+            raise Exception("The dev set is labeled during Babbler.apply() by the FilterBank.")
+
+        with PrintTimer("Applying labeling functions to split {}".format(split)):
+            lfs = [parse.function for parse in self.last_parses]
+            candidates = self.session.query(self.candidate_class).filter(
+                self.candidate_class.split == split).all()
+            num_existing_lfs = self.label_triples[split][4]
+
+            rows = []
+            cols = []
+            data = []
+            pb = ProgressBar(len(candidates) * len(lfs))
+            for j, lf in enumerate(lfs):
+                for i, c in enumerate(candidates):
+                    pb.bar(i)
+                    label = lf(c)
+                    if label:
+                        rows.append(i)
+                        cols.append(j + num_existing_lfs)
+                        data.append(label)
+            pb.close()
+            # NOTE: There is potential for things to go wrong if the user calls
+            # this function twice and the label matrix ends up wonky.
+            self.label_triples[split][0].extend(rows)
+            self.label_triples[split][1].extend(cols)
+            self.label_triples[split][2].extend(data)
+            self.label_triples[split][3] = len(candidates)
+            self.label_triples[split][4] += len(lfs)
+            print("Stored {} triples for split {}. Now shape is ({}, {}).".format(
+                len(data), split, self.label_triples[split][3], self.label_triples[split][4]))
 
     def get_global_coverage(self):
         """Calculate stats for the dataset as a whole.
@@ -431,21 +474,24 @@ class BabbleStream(object):
         d['TN']             = Series(data=tn, index=lf_names)
 
         return DataFrame(data=d, index=lf_names)[col_names]
-        
 
-    def get_label_matrix(self):
-        if self.temp_parses is not None:
-            print("You must commit before retrieving the label matrix.")
-            return None
-        # TODO: For now, return a csr_matrix. Later, confirm we don't need to convert.
-        # label_matrix = csr_LabelMatrix(
-        #     self.label_matrix, 
-        #     candidate_index=
-        #     row_index=
-        #     annotation_key_cls=
-        #     key_index=
-        #     col_index=)
-        return self.label_matrix
+    def get_label_matrix(self, split=1):
+        if split == 1:
+            if self.temp_parses is not None:
+                print("You must commit before retrieving the label matrix.")
+                return None
+            label_matrix = self.label_matrix
+        else:
+            rows, cols, data, shape_row, shape_col = self.label_triples[split]
+            label_matrix = coo_matrix((data, (rows, cols)), shape=(shape_row, shape_col)).tocsr()
+        
+        candidates = self.session.query(self.candidate_class).filter(
+            self.candidate_class.split == split).all()
+        candidate_index = {c.id: i for i, c in enumerate(candidates)}
+        row_index = {v: k for k, v in candidate_index.items()}
+        return csr_AnnotationMatrix(label_matrix, 
+                                    candidate_index=candidate_index,
+                                    row_index=row_index)
 
 
 class Babbler(BabbleStream):

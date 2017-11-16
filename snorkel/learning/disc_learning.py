@@ -3,6 +3,7 @@ import numpy as np
 from time import time
 import os
 from six.moves.cPickle import dump, load
+import scipy.sparse as sparse
 
 from .classifier import Classifier
 from .utils import reshape_marginals, LabelBalancer
@@ -263,7 +264,12 @@ class TFNoiseAwareModel(Classifier):
             # Iterate over batches
             batch_marginals = []
             for b in range(0, N, batch_size):
-                batch = self._marginals_batch(X[b:b+batch_size])
+                if isinstance(X, list):
+                    batch = self._marginals_batch(X[b:b+batch_size])
+                elif sparse.issparse(X):
+                    batch = self._marginals_batch(X[b:min(b+batch_size, X.shape[0])])
+                else:
+                    raise Exception("Unrecognized type for X: {}".format(type(X)))
                 # Note: Make sure a list is returned!
                 if min(b+batch_size, N) - b == 1:
                     batch = np.array([batch])

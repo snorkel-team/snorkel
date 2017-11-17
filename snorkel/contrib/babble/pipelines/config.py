@@ -38,7 +38,7 @@ global_config = {
     ### LABEL ###
 
     ### SUPERVISE ###
-    'supervision': 'generative', # ['traditional', 'majority_vote', 'generative'],
+    'supervision': 'generative', # ['traditional', 'majority', 'generative'],
 
     ## traditional
     'max_train': None,  # Number of ground truthed training candidates

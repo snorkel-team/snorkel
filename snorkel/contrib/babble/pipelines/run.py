@@ -47,7 +47,7 @@ if __name__ == '__main__':
     argparser.add_argument('--end_at', type=int)
 
     # Supervision args
-    SUPERVISION = ['traditional', 'majority_vote', 'generative']
+    SUPERVISION = ['traditional', 'majority', 'generative']
     argparser.add_argument('--supervision', type=str, choices=SUPERVISION)
     argparser.add_argument('--max_train', type=int)
     argparser.add_argument('--learn_deps', action='store_true')

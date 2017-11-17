@@ -348,13 +348,20 @@ class SnorkelPipeline(object):
         elif self.config['disc_model_class'] == 'logreg':
             disc_model_class = SparseLogisticRegression
 
-            X_train = load_feature_matrix(self.session, split=TRAIN)
             if self.config['supervision'] == 'traditional':
-                L_train_gold = load_gold_labels(self.session, annotator_name='gold', split=TRAIN)
-                Y_train = np.array(L_train_gold.todense()).reshape((L_train_gold.shape[0],))
+                print("In 'traditional' supervision mode...grabbing candidate and gold label subsets.")  
+                if self.config['traditional_split'] != TRAIN:
+                    print("NOTE: using split {} for traditional supervision. "
+                        "Be aware of unfair evaluation.".format(self.config['traditional_split']))
+                X_train = load_feature_matrix(self.session, 
+                                              split=self.config['traditional_split'])
+                L_gold = load_gold_labels(self.session, annotator_name='gold', 
+                                          split=self.config['traditional_split'])
+                Y_train = np.array(L_gold.todense()).reshape((L_gold.shape[0],))
                 Y_train[Y_train == -1] = 0
                 X_train, Y_train = self.traditional_supervision(X_train, Y_train)
             else:
+                X_train = load_feature_matrix(self.session, split=TRAIN)
                 Y_train = (self.train_marginals if getattr(self, 'train_marginals', None) is not None 
                     else load_marginals(self.session, split=0))
 

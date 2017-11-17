@@ -29,11 +29,10 @@ global_config = {
     'babbler_label_split': 1, # Check label signatures based on this split
     'beam_width': 10,
     'top_k': -1,
-    # filters
-    'do_filter_duplicate_semantics': True, 
-    'do_filter_consistency': True, 
-    'do_filter_duplicate_signatures': True, 
-    'do_filter_uniform_signatures': True,
+    'max_explanations': None,
+
+    ## FilterBank
+    'apply_filters': True,
 
     ### LABEL ###
 
@@ -46,7 +45,7 @@ global_config = {
     
     ## generative
     'gen_model_search_space': 10,
-    'gen_f_beta': 1,
+    'gen_f_beta': 0.5,
     'gen_init_params': {
 		'class_prior'           : False,
         'lf_prior'              : False, 

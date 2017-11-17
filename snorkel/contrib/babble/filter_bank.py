@@ -39,6 +39,20 @@ class FilterBank(object):
         if not parses: return parses, filtered_parses, None
 
         # Label and extract signatures
+        label_matrix = self.label(parses)
+
+        # Apply signature based filters
+        parses, rejected, label_matrix = self.uniform_filter.filter(parses, label_matrix)
+        filtered_parses[self.uniform_filter.name()] = rejected
+        if not parses: return parses, filtered_parses, None
+
+        parses, rejected, label_matrix = self.dup_signature_filter.filter(parses, label_matrix)
+        filtered_parses[self.dup_signature_filter.name()] = rejected
+        if not parses: return parses, filtered_parses, None
+
+        return parses, filtered_parses, label_matrix
+
+    def label(self, parses):
         # TODO: replace this naive double for loop with a parallelized solution
         with PrintTimer("Applying labeling functions to split {}".format(self.split)):
             lfs = [parse.function for parse in parses]
@@ -53,18 +67,7 @@ class FilterBank(object):
                     dense_label_matrix[i, j] = lf(c)
             pb.close()                
             label_matrix = csr_matrix(dense_label_matrix)
-
-        # Apply signature based filters
-        parses, rejected, label_matrix = self.uniform_filter.filter(parses, label_matrix)
-        filtered_parses[self.uniform_filter.name()] = rejected
-        if not parses: return parses, filtered_parses, None
-
-        parses, rejected, label_matrix = self.dup_signature_filter.filter(parses, label_matrix)
-        filtered_parses[self.dup_signature_filter.name()] = rejected
-        if not parses: return parses, filtered_parses, None
-
-        return parses, filtered_parses, label_matrix
-
+            return label_matrix
 
     def commit(self, idxs):
         self.dup_semantics_filter.commit(idxs)
@@ -154,10 +157,14 @@ class ConsistencyFilter(Filter):
             exp = explanation_dict[exp_name]
             if self.candidate_class:
                 if isinstance(exp.candidate, self.candidate_class):
-                    if lf(exp.candidate):
-                        good_parses.append(parse)
-                    else:
-                        bad_parses.append(FilteredParse(parse, exp.candidate))
+                    try:
+                        if lf(exp.candidate):
+                            good_parses.append(parse)
+                        else:
+                            bad_parses.append(FilteredParse(parse, exp.candidate))
+                    except UnicodeDecodeError:
+                        import pdb; pdb.set_trace()
+                        print("Warning: skipped consistency evaluation because of UnicodeDecode error.")
                 else:
                     unknown_parses.append(parse)
             else:

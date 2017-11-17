@@ -123,12 +123,13 @@ class BabbleStream(object):
     An object for iteratively viewing candidates and parsing corresponding explanations.
     """
     def __init__(self, session, mode='text', candidate_class=None, seed=None, 
-                 user_lists={}, verbose=True, **kwargs):
+                 user_lists={}, apply_filters=True, verbose=True, **kwargs):
         self.session = session
         self.mode = mode
         self.candidate_class = candidate_class
         self.seed = seed
         self.verbose = verbose
+        self.apply_filters = apply_filters
 
         self.dev_candidates = session.query(self.candidate_class).filter(self.candidate_class.split == 1).all()
         self.dev_labels = np.ravel((load_gold_labels(session, annotator_name='gold', split=1)).todense())
@@ -218,7 +219,12 @@ class BabbleStream(object):
 
         explanations = explanations if isinstance(explanations, list) else [explanations]
         parses, unparseable_explanations = self._parse(explanations)
-        parses, filtered_parses, label_matrix = self._filter(parses, explanations)
+        if self.apply_filters:
+            parses, filtered_parses, label_matrix = self._filter(parses, explanations)
+        else:
+            print("Because apply_filters=False, no parses are being filtered.")
+            filtered_parses = {}
+            label_matrix = self.filter_bank.label(parses)
         conf_matrix_list, stats_list = self.analyze(parses)
 
         filtered_objects = filtered_parses

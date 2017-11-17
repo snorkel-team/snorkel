@@ -1,3 +1,5 @@
+import random
+
 from snorkel.annotations import LabelAnnotator, load_gold_labels
 from snorkel.db_helpers import reload_annotator_labels
 from snorkel.models import StableLabel
@@ -40,25 +42,26 @@ class BabblePipeline(SnorkelPipeline):
                 self.candidate_class.split == self.config['babbler_candidate_split']).all()
             explanations = link_explanation_candidates(explanations, candidates)
         
-        # L_gold_train = load_gold_labels(self.session, annotator_name='gold', split=0)
-        # if L_gold_train.nnz:
-        #     print("Train gold from explanations has already been loaded...")
-        # else:
-        #     print("Extracting and loading train gold from explanations...")
-        #     self.load_train_gold()
-
+        # Trim number of explanations
+        if self.config['max_explanations']:
+            random.seed(self.config['seed'])
+            explanations = random.sample(explanations, self.config['max_explanations'])
+            print("Reduced number of Explanations to {}".format(self.config['max_explanations']))
+        
         print("Calling babbler...")
         self.babbler = Babbler(self.session,
                                mode=mode, 
                                candidate_class=self.candidate_class, 
-                               user_lists=user_lists)
+                               user_lists=user_lists,
+                               apply_filters=self.config['apply_filters'])
         self.babbler.apply(explanations, 
                            split=self.config['babbler_label_split'], 
                            parallelism=self.config['parallelism'])
         self.explanations = self.babbler.get_explanations()
         self.lfs = self.babbler.get_lfs()
         self.labeler = LabelAnnotator(lfs=self.lfs)
-        # NOTE: This is unnecessary; this info is printed in supervise()
+        # NOTE: This is unnecessary for some runs; 
+        # this info is printed in supervise() when supervise != traditional
         # print(self.babbler.get_lf_stats()) 
 
     def set_babbler_matrices(self, babbler):

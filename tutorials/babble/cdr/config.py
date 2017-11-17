@@ -28,10 +28,6 @@ config = {
     },
     'tune_b': True,
 
-    # dependencies
-    'learn_deps': False,
-    'deps_thresh': 0.01,
-
     # classify
     'disc_model_class': 'logreg',
     'disc_model_search_space': 10,

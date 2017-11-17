@@ -20,7 +20,7 @@ from snorkel.annotations import (FeatureAnnotator, LabelAnnotator, save_marginal
 from snorkel.learning import GenerativeModel, MajorityVoter
 from snorkel.learning.structure import DependencySelector
 from snorkel.learning import reRNN, SparseLogisticRegression
-from snorkel.utils import PrintTimer
+from snorkel.utils import PrintTimer, ProgressBar
 
 # Pipelines
 from utils import STAGES, train_model, score_marginals, final_report
@@ -211,10 +211,44 @@ class SnorkelPipeline(object):
 
             # Learn dependencies
             if self.config['learn_deps']:
-                ds = DependencySelector()
-                deps = ds.select(L_train, threshold=self.config['threshold'])
-                if self.config['verbose']:
-                    self.display_dependencies(deps)
+                if self.config['deps_thresh']:
+                    ds = DependencySelector()
+                    np.random.seed(self.config['seed'])
+                    deps = ds.select(L_train, threshold=config['deps_thresh'])
+                    if args.verbose > 0:
+                        print("Selected {0} dependencies.".format(len(deps)))
+
+                else:
+                    all_deps = []
+                    all_t = [0.02 + 0.02 * dep_t for dep_t in range(0, 25, 1)]
+
+                    # Iterates over selection thresholds
+                    with PrintTimer("Calculating optimal dependency threshold..."):
+                        pb = ProgressBar(len(all_t))
+                        for i, dep_t in enumerate(all_t):
+                            pb.bar(i)
+                            ds = DependencySelector()
+                            deps = ds.select(L_train, propensity=True, threshold=dep_t)
+                            all_deps.append(deps)
+
+                            if len(deps) == 0:
+                                break
+                        pb.close()
+
+                    # Selects point of approximate maximum curvature
+                    max_curvature = float('-Inf')
+                    i_max = None
+                    for i in range(1, len(all_deps) - 1):
+                        curvature = len(all_deps[i+1]) + len(all_deps[i-1]) \
+                                    - 2 * len(all_deps[i])
+                        if curvature > max_curvature:
+                            max_curvature = curvature
+                            i_max = i
+
+                    deps = all_deps[i_max]
+                    print("Selected threshold {0} for {1} dependencies."
+                            .format(all_t[i_max], len(deps)))
+
             else:
                 deps = ()
 

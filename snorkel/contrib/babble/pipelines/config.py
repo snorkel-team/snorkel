@@ -72,7 +72,7 @@ global_config = {
 
     # dependencies
     'learn_deps': False,
-    'deps_thresh': 0.01,
+    'deps_thresh': None,
 
     ## display
     'display_accuracies': True,

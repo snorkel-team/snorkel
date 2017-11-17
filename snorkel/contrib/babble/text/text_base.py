@@ -343,6 +343,31 @@ cmp_converter = {
     '.geq'  : 'at least',
 }
 
+def dir_defaults(x):
+    arg_ = x[0]
+    cmp_ =  cmp_converter[x[1][1:-1] if len(x) > 1 else '.gt']
+    int_ = x[2] if len(x) > 2 else 0
+    unit_ = x[3][1:-1] if len(x) > 3 else 'words'
+    if unit_ == 'words': unit_ = 'word(s)'
+    return cmp_, int_, unit_, arg_
+
+def within_defaults(x):
+    arg_ = x[0]
+    cmp_ = 'within'
+    int_ = x[1] if len(x) > 1 else 0
+    unit_ = x[2][1:-1] if len(x) > 2 else 'words'
+    if unit_ == 'words': unit_ = 'word(s)'
+    return cmp_, int_, unit_, arg_
+
+def filter_defaults(x):
+    phr, field, val = x
+    if field == 'chars':
+        return  "[char(s) {}]".format(phr)
+    elif field == 'words':
+        return  "[w for w in the word(s) {}]".format(phr)
+    else:
+        return  "[w for w in the word(s) {} if w.{} == {}]".format(phr, field, val)
+
 translate_ops = {
     '.upper': "isupper()",
     '.lower': "islower()",
@@ -355,17 +380,14 @@ translate_ops = {
     '.arg_to_string': lambda arg_: "text({})".format(arg_),
     '.cid': lambda arg_: "cid({})".format(arg_),
 
-    '.left': lambda arg_, cmp_, int_, unit_: "{} {} {} to the left of {}".format(
-        cmp_converter[cmp_[1:-1]], int_, unit_[1:-1], arg_),
-    '.right': lambda arg_, cmp_, int_, unit_: "{} {} {} to the right of {}".format(
-        cmp_converter[cmp_[1:-1]], int_, unit_[1:-1], arg_),
-    '.within': lambda arg_, num_, unit_: "within {} {} of {}".format(
-        num_, unit_[1:-1], arg_),
+    '.left': lambda *x: "{} {} {} to the left of {}".format(*dir_defaults(x)),
+    '.right': lambda *x: "{} {} {} to the right of {}".format(*dir_defaults(x)),
+    '.within': lambda *x: "{} {} {} of {}".format(*within_defaults(x)),
     '.between': lambda list_: "between({})".format(list_),
     '.sentence': "the sentence",
 
-    '.extract_text': lambda phr: "text({})".format(phr),
-    '.filter': lambda phr, field, val: "[x for x in {} if re.match(r'{}', x.{})]".format(phr, val, field),
+    '.extract_text': lambda phr: phr if phr in ["X", "Y"] else "text({})".format(phr),
+    '.filter': lambda *x: "{}".format(filter_defaults(x)),
 }
 
 text_grammar = GrammarMixin(

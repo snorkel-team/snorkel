@@ -286,9 +286,17 @@ class Grammar(object):
         def recurse(sem):
             if isinstance(sem, tuple):
                 if sem[0] in self.translate_ops:
-                    op = self.translate_ops[sem[0]] # op: lambda function
+                    op = self.translate_ops[sem[0]] # op is a lambda function
+                    # For these types, leave func as the name of the function
                     if sem[0] in ['.composite_or', '.composite_and']:
                         args_ = [sem[1][0]]
+                        args_.extend([recurse(arg) for arg in sem[2:]])
+                    elif sem[0] in ['.map']:
+                        func = sem[1]
+                        if len(func) == 1:
+                            args_ = ['{}'.format(func[0])]
+                        else:
+                            args_ = [recurse(func)]
                         args_.extend([recurse(arg) for arg in sem[2:]])
                     else:
                         args_ = [recurse(arg) for arg in sem[1:]]

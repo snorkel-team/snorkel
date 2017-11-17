@@ -29,6 +29,8 @@ from snorkel.contrib.babble.semparser import Explanation, SemanticParser
 
 ConfusionMatrix = namedtuple('ConfusionMatrix', ['correct', 'incorrect', 'abstained'])
 Metrics = namedtuple('Metrics', ['accuracy', 'coverage', 'class_coverage'])
+# Use 'parse' as field instead of 'explanation' to match with FilteredParse object.
+FilteredExplanation = namedtuple('FilteredExplanation', ['parse', 'reason'])
 
 class Statistic(object):
     def __init__(self, numer, denom):
@@ -214,17 +216,21 @@ class BabbleStream(object):
         if split != 1:
             raise NotImplementedError("BabbleStream does not yet support splits != 1")
 
-        parses = self._parse(explanations)
+        explanations = explanations if isinstance(explanations, list) else [explanations]
+        parses, unparseable_explanations = self._parse(explanations)
         parses, filtered_parses, label_matrix = self._filter(parses, explanations)
         conf_matrix_list, stats_list = self.analyze(parses)
+
+        filtered_objects = filtered_parses
+        filtered_objects['UnparseableExplanations'] = unparseable_explanations
         
         # Hold results in temporary space until commit
         # self.temp_explanations = explanations if isinstance(explanations, list) else [explanations]
         self.temp_parses = parses if isinstance(parses, list) else [parses]
         self.temp_label_matrix = label_matrix
-        self.temp_filtered_parses = filtered_parses
+        self.temp_filtered_objects = filtered_objects
 
-        return parses, filtered_parses, conf_matrix_list, stats_list
+        return parses, filtered_objects, conf_matrix_list, stats_list
 
     def _parse(self, explanations):
         """
@@ -236,8 +242,11 @@ class BabbleStream(object):
 
         parses = self.semparser.parse(explanations, 
             return_parses=True, verbose=self.verbose)
+        used_explanations = set([p.explanation for p in parses])
+        unparseable_explanations = [FilteredExplanation(exp, 'Unparseable') 
+            for exp in explanations if exp not in used_explanations]
 
-        return parses
+        return parses, unparseable_explanations
     
     def _filter(self, parses, explanations):
         """
@@ -288,39 +297,53 @@ class BabbleStream(object):
     def filtered_analysis(self, filtered_parses=None):
         if filtered_parses is None:
             # Use the last set of filtered parses to be produced.
-            filtered_parses = self.temp_filtered_parses
+            filtered_parses = self.temp_filtered_objects
 
         if filtered_parses is None or not any(filtered_parses.values()):
             print("No filtered parses to analyze.")
             return
 
+        filter_names = [
+            'UnparseableExplanations',
+            'DuplicateSemanticsFilter',
+            'ConsistencyFilter',
+            'UniformSignatureFilter',
+            'DuplicateSignatureFilter',
+        ]
+
         num_filtered = 0
         print("SUMMARY")
         print("{} TOTAL:".format(
             sum([len(p) for p in filtered_parses.values()])))
+        print("{} Unparseable Explanation".format(
+            len(filtered_parses.get('UnparseableExplanations', []))))
         print("{} Duplicate Semantics".format(
-            len(filtered_parses['DuplicateSemanticsFilter'])))
-        print("{} Inconsistency with Exmaple".format(
-            len(filtered_parses['ConsistencyFilter'])))
+            len(filtered_parses.get('DuplicateSemanticsFilter', []))))
+        print("{} Inconsistency with Example".format(
+            len(filtered_parses.get('ConsistencyFilter', []))))
         print("{} Uniform Signature".format(
-            len(filtered_parses['UniformSignatureFilter'])))
+            len(filtered_parses.get('UniformSignatureFilter', []))))
         print("{} Duplicate Signature".format(
-            len(filtered_parses['DuplicateSignatureFilter'])))
-        
-        for filter_name, parses in filtered_parses.items():
-            # if parses:
-            #     print("\nFilter {} removed {} parse(s):".format(filter_name, len(parses)))
+            len(filtered_parses.get('DuplicateSignatureFilter', []))))
+
+        for filter_name in filter_names:
+            parses = filtered_parses.get(filter_name, [])
+
             for filtered_parse in parses:
                 num_filtered += 1
-                # print("Explanation (source):\n{}".format(
-                #     filtered_parse.parse.explanation))
-                # print("\nParse (pseudocode):\n{}".format(
-                #     self.semparser.grammar.translate(filtered_parse.parse.semantics)))
-                parse_str = self.semparser.grammar.translate(filtered_parse.parse.semantics)
 
-                if filter_name == 'DuplicateSemanticsFilter':
+                if filtered_parse.reason == 'Unparseable':
+                    parse_str = filtered_parse.parse.condition
+                else:
+                    parse_str = self.semparser.grammar.translate(filtered_parse.parse.semantics)
+
+                if filter_name == 'UnparseableExplanations':
+                    filter_str = "Unparseable Explanation"
+                    reason_str = "This explanation couldn't be parsed."
+
+                elif filter_name == 'DuplicateSemanticsFilter':
                     filter_str = "Duplicate Semantics"
-                    reason_str = "This parse is identical to one produced by the following explanation:\n\t{}".format(
+                    reason_str = 'This parse is identical to one produced by the following explanation:\n\t"{}"'.format(
                         filtered_parse.reason.explanation.condition)
                     
                 elif filter_name == 'ConsistencyFilter':
@@ -342,7 +365,10 @@ class BabbleStream(object):
 
                 print("\n[#{}]: {}".format(num_filtered, filter_str))
                 # print("\nFilter: {}".format(filter_str))
-                print("\nParse: {}".format(parse_str))
+                if filtered_parse.reason == 'Unparseable':
+                    print("\nExplanation: {}".format(parse_str))
+                else:
+                    print("\nParse: {}".format(parse_str))
                 print("\nReason: {}\n".format(reason_str))
 
 

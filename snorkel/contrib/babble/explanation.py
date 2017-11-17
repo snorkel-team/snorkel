@@ -28,6 +28,9 @@ class Explanation(object):
         self.semantics = semantics
         self.paraphrase = paraphrase
 
+    def __hash__(self):
+        return hash((self.label, self.condition))
+
     def __repr__(self):
         if self.name:
             return 'Explanation("%s: %s, %s")' % (self.name, self.label, self.condition.encode('utf-8'))

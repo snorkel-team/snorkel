@@ -110,7 +110,7 @@ ops = {
     '.label': lambda x, y: lambda c: (1 if x(c)==True else -1) if y(c)==True else 0,
     # primitives
     '.bool': lambda x: lambda c: x,
-    '.string': lambda x: lambda c: x.encode('utf-8'),
+    '.string': lambda x: lambda c: x,
     '.int': lambda x: lambda c: x,
     # lists
     '.tuple': lambda x: lambda c: tuple(x(c)),

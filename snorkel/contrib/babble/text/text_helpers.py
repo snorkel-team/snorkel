@@ -19,6 +19,14 @@ class Phrase(object):
     def __init__(self, sentence=None):
         for field in self.fields:
             setattr(self, field, getattr(sentence, field) if sentence else None)
+            # NOTE: I believe all candidate-related fields are already unicode.
+            # value = getattr(sentence, field) if sentence else None
+            # # Convert all str inputs into unicode
+            # if isinstance(value, str):
+            #     value = value.decode('utf-8')
+            # elif isinstance(value, list) and len(value) and isinstance(value[0], str):
+            #     value = [w.decode('utf-8') for w in value]
+            # setattr(self, field, value)
 
     def __getitem__(self, key):
         if isinstance(key, slice):

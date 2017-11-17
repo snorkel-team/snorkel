@@ -19,7 +19,8 @@ class Explanation(object):
         :param paraphrase: A paraphrase of the explanation.
         """
         assert(isinstance(condition, basestring))
-        condition = re.sub('\s+', ' ', unicode(condition), flags=re.UNICODE)
+        condition = condition.decode('utf-8')
+        condition = re.sub('\s+', ' ', condition, flags=re.UNICODE)
         self.condition = condition
         assert(isinstance(label, bool))
         self.label = label

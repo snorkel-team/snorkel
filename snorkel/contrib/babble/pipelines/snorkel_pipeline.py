@@ -126,7 +126,7 @@ class SnorkelPipeline(object):
                 F = featurizer.apply_existing(split=split, parallelism=self.config['parallelism'])
             num_candidates, num_features = F.shape
             if self.config['verbose']:
-                print("\nFeaturized split {}: ({},{}) sparse (nnz = {})".format(split, num_candidates, num_features, F.nnz))
+                print("Featurized split {}: ({},{}) sparse (nnz = {})".format(split, num_candidates, num_features, F.nnz))
 
 
     def collect(self):

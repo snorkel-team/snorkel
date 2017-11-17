@@ -17,7 +17,7 @@ config = {
         'step_size'     : [1e-2, 1e-3, 1e-4, 1e-5],
         'decay'         : [0.9, 0.95, 0.99],
         'reg_param'     : [0.0, 0.01, 0.1, 0.25, 0.5, 0.75],
-        'epochs'        : [10, 25, 50, 100, 500],
+        'epochs'        : [10, 25, 50, 100],
     },
     'gen_params_default': {
         # Used iff lf_prior = True

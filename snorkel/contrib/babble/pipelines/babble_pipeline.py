@@ -47,7 +47,7 @@ class BabblePipeline(SnorkelPipeline):
             random.seed(self.config['seed'])
             if len(explanations) > self.config['max_explanations']:
                 explanations = random.sample(explanations, self.config['max_explanations'])
-                print("Reduced number of Explanations to {}".format(len(explanations))
+                print("Reduced number of Explanations to {}".format(len(explanations)))
             else:
                 print("Since max_explanations > len(explanations), using all {} Explanations".format(
                     len(explanations)))

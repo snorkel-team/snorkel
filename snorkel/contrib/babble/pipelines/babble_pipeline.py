@@ -45,8 +45,12 @@ class BabblePipeline(SnorkelPipeline):
         # Trim number of explanations
         if self.config['max_explanations']:
             random.seed(self.config['seed'])
-            explanations = random.sample(explanations, self.config['max_explanations'])
-            print("Reduced number of Explanations to {}".format(self.config['max_explanations']))
+            if len(explanations) > self.config['max_explanations']:
+                explanations = random.sample(explanations, self.config['max_explanations'])
+                print("Reduced number of Explanations to {}".format(len(explanations))
+            else:
+                print("Since max_explanations > len(explanations), using all {} Explanations".format(
+                    len(explanations)))
         
         print("Calling babbler...")
         self.babbler = Babbler(self.session,

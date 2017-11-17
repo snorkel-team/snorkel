@@ -205,8 +205,8 @@ class BabbleStream(object):
         :param parallelism: number of threads to use; CURRENTLY UNUSED
         :param split: the split to use for the filter bank; CURRENTLY UNUSED
         """
+        # Flush all uncommmitted results from previous runs
         self.commit([])
-        print("All previously uncommitted parses have been flushed.")
 
         if parallelism != 1:
             raise NotImplementedError("BabbleStream does not yet support parallelism > 1")

@@ -1,3 +1,5 @@
+import re
+
 class Explanation(object):
     def __init__(self, condition, label, candidate=None, name=None, 
                  semantics=None, paraphrase=None):
@@ -17,7 +19,7 @@ class Explanation(object):
         :param paraphrase: A paraphrase of the explanation.
         """
         assert(isinstance(condition, basestring))
-        condition = unicode(condition).replace('\n', '')
+        condition = re.sub('\s+', ' ', unicode(condition), flags=re.UNICODE)
         self.condition = condition
         assert(isinstance(label, bool))
         self.label = label

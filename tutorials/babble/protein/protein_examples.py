@@ -36,7 +36,7 @@ def extract_explanations(fpath):
                     flags=re.UNICODE | re.IGNORECASE)
                 label = label_str.group(1) in ['True', 'true']
 
-                condition = description[len(label_str.group(0)) + 1:]
+                condition = description[len(label_str.group(0)):]
                 # Only one of these will fire
                 condition = re.sub(r"\"entities:[^\"]+\"", 'them', condition, 
                     flags=re.UNICODE | re.IGNORECASE)

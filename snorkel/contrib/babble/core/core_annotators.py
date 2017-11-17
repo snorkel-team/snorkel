@@ -5,7 +5,7 @@ from ..grammar import Annotator
 class PunctuationAnnotator(Annotator):
     def annotate(self, tokens):
         if len(tokens) == 1:
-            if tokens[0]['pos'] in ["``", "\'\'"]:
+            if tokens[0]['pos'] in ["``", "\'\'"] or tokens[0]['word'] in ["'", '"']:
                 return [('$Quote', tokens[0]['word'])]
             elif tokens[0]['pos'] == "-LRB-":
                 return [('$OpenParen', tokens[0]['word'])]

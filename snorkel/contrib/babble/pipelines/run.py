@@ -46,6 +46,10 @@ if __name__ == '__main__':
     argparser.add_argument('--start_at', type=int)
     argparser.add_argument('--end_at', type=int)
 
+    # Babble args
+    argparser.add_argument('--max_explanations', type=int)
+    argparser.add_argument('--apply_filters', type=str2bool)
+
     # Supervision args
     SUPERVISION = ['traditional', 'majority', 'generative']
     argparser.add_argument('--supervision', type=str, choices=SUPERVISION)

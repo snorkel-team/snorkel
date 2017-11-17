@@ -173,7 +173,7 @@ basic = [
         #     'develop' and 'following' is between the disease and the chemical""",
         condition="""a word containing 'develop' appears somewhere before the chemical, 
             and the word 'following' is between the disease and the chemical.""",
-        candidate=None,
+        candidate="14698717::span:322:330~~14698717::span:302:310", # NOTE: This is in TRAIN
         label=True,
         semantics=None), # OLD: ('.root', ('.label', ('.bool', True), ('.and', ('.any', ('.map', ('.contains', ('.string', u'develop')), ('.extract_text', ('.left', ('.arg', ('.int', 1)))))), ('.call', ('.in', ('.extract_text', ('.between', ('.list', ('.arg', ('.int', 2)), ('.arg', ('.int', 1)))))), ('.string', u'following')))))),
     # LF_far_c_d

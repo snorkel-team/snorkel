@@ -83,7 +83,8 @@ class SpousePipeline(BabblePipeline):
     def load_gold(self, config=None):
         fpath = DATA_ROOT + 'labels.tsv'
         load_external_labels(self.session, self.candidate_class, 
-                             annotator_name='gold', path=fpath, splits=self.splits)
+                             annotator_name='gold', path=fpath, 
+                             splits=self.config['splits'])
 
     def collect(self, lf_source='intro_exps'):
         if self.config['supervision'] == 'traditional':

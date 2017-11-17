@@ -71,7 +71,7 @@ class CdrPipeline(BabblePipeline):
 
 
     def load_gold(self, config=None):
-        for split in self.splits:
+        for split in self.config['splits']:
             load_external_labels(self.session, self.candidate_class, 
                                  split=split, annotator='gold')
 

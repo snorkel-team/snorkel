@@ -76,6 +76,19 @@ class SnorkelPipeline(object):
 
         return result
 
+    def db_status(self):
+        num_docs = self.session.query(Document).count()
+        print("Documents: {}".format(num_docs))
+
+        num_candidates = [0] * 3
+        for split in [0,1,2]:
+            num_candidates[split] = self.session.query(self.candidate_class).filter(
+                self.candidate_class.split == split).count()
+        print("Candidates: {}".format(num_candidates))
+
+        # TODO:
+        # How to probe the number of features and gold labels without loading?
+
 
     def parse(self, doc_preprocessor, parser=Spacy(), fn=None, clear=True):
         corpus_parser = CorpusParser(parser=parser, fn=fn)
@@ -103,6 +116,7 @@ class SnorkelPipeline(object):
         
         if self.config['disc_model_class'] == 'lstm':
             print("Using disc_model_class='lstm'...skipping 'featurize' stage.")
+            return
 
         featurizer = FeatureAnnotator()
         for split in self.config['splits']:
@@ -188,7 +202,7 @@ class SnorkelPipeline(object):
                 print("Positive Fraction: {:.1f}%\n".format(positive/total * 100))
             assert L_gold_test.nonzero()[0].shape[0] > 0
 
-        if self.config['supervision'] == 'majority_vote':
+        if self.config['supervision'] == 'majority':
             gen_model = MajorityVoter()
             train_marginals = gen_model.marginals(L_train)
 

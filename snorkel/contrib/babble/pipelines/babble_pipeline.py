@@ -58,7 +58,8 @@ class BabblePipeline(SnorkelPipeline):
         self.explanations = self.babbler.get_explanations()
         self.lfs = self.babbler.get_lfs()
         self.labeler = LabelAnnotator(lfs=self.lfs)
-        print(self.babbler.get_lf_stats())
+        # NOTE: This is unnecessary; this info is printed in supervise()
+        # print(self.babbler.get_lf_stats()) 
 
     def set_babbler_matrices(self, babbler):
         self.L_train = babbler.get_label_matrix(split=0)

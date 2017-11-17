@@ -86,7 +86,7 @@ class SpousePipeline(BabblePipeline):
                              annotator_name='gold', path=fpath, 
                              splits=self.config['splits'])
 
-    def collect(self, lf_source='intro_exps'):
+    def collect(self, lf_source='gradturk'):
         if self.config['supervision'] == 'traditional':
             print("In 'traditional' supervision mode...skipping 'collect' stage.")
             return
@@ -94,10 +94,20 @@ class SpousePipeline(BabblePipeline):
             self.lfs = self.use_intro_lfs()
             self.labeler = LabelAnnotator(lfs=self.lfs)
         elif lf_source == 'intro_exps':
-            from tutorials.babble.spouse.spouse_examples import (get_explanations, get_user_lists)
+            from tutorials.babble.spouse.spouse_examples import (get_explanations, get_user_lists)                        
             candidates = self.get_candidates(split=self.config['babbler_candidate_split'])
             explanations = get_explanations()
             user_lists = get_user_lists()
+            super(SpousePipeline, self).babble('text', explanations, user_lists, self.config)
+        elif lf_source == 'gradturk':
+            from tutorials.babble.spouse.spouse_examples import get_user_lists
+            from snorkel.contrib.babble.utils import ExplanationIO
+            fpath = (os.environ['SNORKELHOME'] + 
+                '/tutorials/babble/spouse/data/gradturk_explanations.tsv')
+            candidates = self.get_candidates(split=self.config['babbler_candidate_split'])
+            exp_reader = ExplanationIO()
+            explanations = exp_reader.read(fpath)
+            user_lists = {}
             super(SpousePipeline, self).babble('text', explanations, user_lists, self.config)
         else:
             raise Exception('Invalid lf_source {}'.format(lf_source))

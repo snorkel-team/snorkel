@@ -79,6 +79,7 @@ class ProteinKinaseLookupTagger (object):
             self.protein_set = load(f)
             self.kinase_set = set([ 'pink1',
                            'lrrk2',
+                           'jnk1',
                            'leucine-rich repeat kinase 2',
                            'leucine rich repeat kinase 2',
                            'pten-induced putative kinase 1' ])

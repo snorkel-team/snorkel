@@ -54,10 +54,6 @@ config = {
         'rebalance':  0.25,
         'batch_size': 128,
         'print_freq': 5,
-        # LSTM only
-        # 'dim':        50,
-        # 'dropout':    0.5,
-        # 'max_sentence_length': 100,
     },    
     'disc_params_range': {
         'lr'        : [1e-2, 1e-3, 1e-4],

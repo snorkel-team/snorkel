@@ -128,6 +128,7 @@ class SnorkelPipeline(object):
             if self.config['verbose']:
                 print("\nFeaturized split {}: ({},{}) sparse (nnz = {})".format(split, num_candidates, num_features, F.nnz))
 
+
     def collect(self):
         raise NotImplementedError
 
@@ -256,8 +257,8 @@ class SnorkelPipeline(object):
                     # Display marginals
                     plt.hist(train_marginals, bins=20)
                     plt.show()
-                if self.config['display_learned_accuracies']:
-                    raise NotImplementedError
+                # if self.config['display_learned_accuracies']:
+                    # raise NotImplementedError
                     # NOTE: Unfortunately, learned accuracies are not available after grid search
                     # lf_stats = L_dev.lf_stats(self.session, L_gold_dev, 
                     #     gen_model.learned_lf_stats()['Accuracy'])

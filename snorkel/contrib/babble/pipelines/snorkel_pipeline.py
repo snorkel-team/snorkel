@@ -338,7 +338,7 @@ class SnorkelPipeline(object):
                                           split=self.config['traditional_split'])
                 Y_train = np.array(L_gold.todense()).reshape((L_gold.shape[0],))
                 Y_train[Y_train == -1] = 0
-                
+
                 X_train, Y_train = self.traditional_supervision(candidates, Y_train)
             else:
                 X_train = self.get_candidates(TRAIN)
@@ -362,6 +362,7 @@ class SnorkelPipeline(object):
                                               split=self.config['traditional_split'])
                 L_gold = load_gold_labels(self.session, annotator_name='gold', 
                                           split=self.config['traditional_split'])
+
                 Y_train = np.array(L_gold.todense()).reshape((L_gold.shape[0],))
                 Y_train[Y_train == -1] = 0
                 
@@ -463,7 +464,7 @@ class SnorkelPipeline(object):
         selected = sorted(np.random.permutation(total_size)[:train_size])
         Y_out = Y[selected]
         if isinstance(X, list):
-            X_out = [c for i, c in enumerate(candidates) if i in set(selected)]
+            X_out = [c for i, c in enumerate(X) if i in set(selected)]
         else:
             X_out = X[selected]
         return X_out, Y_out

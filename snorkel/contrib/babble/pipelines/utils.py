@@ -1,12 +1,8 @@
 import json
 import os
-from subprocess import check_output
-from time import time, strftime
 
 import numpy as np
 from pandas import DataFrame, Series
-
-from snorkel.learning import RandomSearch
 
 class STAGES:
     SETUP = 0

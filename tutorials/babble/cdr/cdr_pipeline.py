@@ -2,8 +2,10 @@ import csv
 import os
 
 import numpy as np
+import random
 from six.moves.cPickle import load
 
+from snorkel.annotations import load_gold_labels
 from snorkel.candidates import Ngrams, PretaggedCandidateExtractor
 from snorkel.matchers import PersonMatcher
 from snorkel.models import Document, Sentence, StableLabel
@@ -69,11 +71,42 @@ class CdrPipeline(BabblePipeline):
                 super(CdrPipeline, self).extract(
                     candidate_extractor, sents, split=split, clear=clear)
 
-
     def load_gold(self, config=None):
         for split in self.config['splits']:
             load_external_labels(self.session, self.candidate_class, 
                                  split=split, annotator='gold')
+        
+            ### SPECIAL: Trim candidate set to meet desired positive pct
+            # Process is deterministic to ensure repeatable results
+            SEED = 123
+            TARGET_PCT = 0.20
+            positives = []
+    
+            candidates = self.session.query(self.candidate_class).filter(
+                self.candidate_class.split == split).all()
+
+            L_gold = load_gold_labels(self.session, annotator_name='gold', split=split)
+            total = len(candidates)
+            positive = float(sum(L_gold.todense() == 1))
+            print("Positive % before pruning: {:.1f}%\n".format(positive/total * 100))
+            
+            for c in candidates:
+                label = L_gold[L_gold.get_row_index(c), 0]
+                if label > 0:
+                    positives.append(c)
+            
+            target = int(TARGET_PCT * total)
+            random.seed(SEED)
+            to_delete = random.sample(positives, len(positives) - target)
+
+            for c in to_delete:
+                self.session.delete(c)
+
+            L_gold = load_gold_labels(self.session, annotator_name='gold', split=split)
+            positive = float(sum(L_gold.todense() == 1))
+            print("Positive % after pruning: {:.1f}%\n".format(positive/total * 100))
+
+            self.session.commit()
 
     def collect(self):
         candidates = self.get_candidates(split=self.config['babbler_candidate_split'])

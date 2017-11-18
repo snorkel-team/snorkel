@@ -130,9 +130,9 @@ if __name__ == '__main__':
 
     # Resolve config conflicts (args > local config > global config)
     config = merge_configs(args)
-    if not self.config['seed']:
+    if not config['seed']:
         seed = random.randint(0,1e6)
-        self.config['seed'] = seed
+        config['seed'] = seed
         print("Chose random seed: {}".format(seed))
 
     if args['verbose'] > 0:

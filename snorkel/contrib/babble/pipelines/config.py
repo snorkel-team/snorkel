@@ -66,7 +66,7 @@ global_config = {
         # used iff class_prior = True
         'init_class_prior' : 0, # logit = ln(p/(1-p)), p = exp(logit)/(1 + exp(logit))
         # Used iff lf_prior = True
-        'LF_acc_prior_weight_default' : [1.0], # [0, 0.5, 1.0, 1.5] = (50%, 62%, 73%, 82%)
+        'LF_acc_prior_weight_default' : 1.0, # [0, 0.5, 1.0, 1.5] = (50%, 62%, 73%, 82%)
         # 'LF_acc_prior_weights'        : [None], # Used iff lf_prior = True
     },
     'tune_b': True, # default to True for text, False for image

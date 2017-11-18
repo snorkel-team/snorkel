@@ -15,6 +15,9 @@ config = {
         'step_size': 1e-4,
         # used iff class_prior = True
         'init_class_prior' : -1.15, # (9%)
+        # Used iff lf_prior = True
+        'LF_acc_prior_weight_default' : 0.5, # [0, 0.5, 1.0, 1.5] = (50%, 62%, 73%, 82%)
+        # logit = ln(p/(1-p)), p = exp(logit)/(1 + exp(logit))
     },
 
     # LSTM

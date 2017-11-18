@@ -285,12 +285,12 @@ class BabbleStream(object):
                 conf_matrix = (ConfusionMatrix(tp, fp, set(self.dev_candidates) - tp - fp))
                 accuracy = Accuracy(TP, TP + FP)
                 coverage = Coverage(TP + FP, self.num_dev_total)
-                class_coverage = ClassCoverage(TP + FP, self.num_dev_pos)
+                class_coverage = ClassCoverage(TP, self.num_dev_pos)
             elif TN or FN:
                 conf_matrix = (ConfusionMatrix(tn, fn, set(self.dev_candidates) - tn - fn))
                 accuracy = Accuracy(TN, TN + FN)
                 coverage = Coverage(TN + FN, self.num_dev_total)
-                class_coverage = ClassCoverage(TN + FN, self.num_dev_neg)
+                class_coverage = ClassCoverage(TN, self.num_dev_neg)
             else:
                 conf_matrix = ConfusionMatrix(set(), set(), set(self.dev_candidates))
                 accuracy = Accuracy(0, self.num_dev_total)

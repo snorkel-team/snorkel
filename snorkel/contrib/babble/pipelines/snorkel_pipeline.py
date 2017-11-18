@@ -280,9 +280,9 @@ class SnorkelPipeline(object):
             tp, fp, tn, fn = gen_model.error_analysis(self.session, L_dev, L_gold_dev, b=opt_b, display=True)
             
             # Record generative model performance
-            precision = float(len(tp))/float(len(tp) + len(fp))
-            recall = float(len(tp))/float(len(tp) + len(fn))
-            f1 = float(2 * precision * recall)/(precision + recall)
+            precision = float(len(tp))/float(len(tp) + len(fp)) if len(tp) + len(fp) else 0
+            recall = float(len(tp))/float(len(tp) + len(fn)) if len(tn) + len(fn) else 0
+            f1 = float(2 * precision * recall)/(precision + recall) if (precision or recall) else 0
             self.scores = {}
             self.scores['Gen'] = [precision, recall, f1]
 

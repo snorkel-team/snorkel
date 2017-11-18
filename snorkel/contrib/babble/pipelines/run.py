@@ -1,6 +1,7 @@
 import argparse
 from imp import load_source
 import os
+import random
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -129,6 +130,11 @@ if __name__ == '__main__':
 
     # Resolve config conflicts (args > local config > global config)
     config = merge_configs(args)
+    if not self.config['seed']:
+        seed = random.randint(0,1e6)
+        self.config['seed'] = seed
+        print("Chose random seed: {}".format(seed))
+
     if args['verbose'] > 0:
         print(config)
 

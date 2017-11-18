@@ -41,7 +41,7 @@ lexical_rules = (
     [Rule('$CID', w, '.cid') for w in ['cid', 'cids', 'canonical id', 'canonical ids']] +
     [Rule('$ArgNum', w, ('.int', 1)) for w in ['one', '1']] +
     [Rule('$ArgNum', w, ('.int', 2)) for w in ['two', '2']] +
-    [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['them', 'entities']] +
+    [Rule('$ArgXListAnd', w, ('.list', ('.arg', ('.int', 1)), ('.arg', ('.int', 2)))) for w in ['they', 'them', 'entities']] +
     [Rule('$EachOther', w) for w in ['eachother', 'each other']]
 )
 

@@ -190,7 +190,7 @@ class BabbleStream(object):
         self.user_lists.update(new_user_lists)
         self._build_semparser()
 
-    def preload(self, explanations=None, user_lists=None):
+    def preload(self, explanations=None, user_lists=None, label_others=True):
         """
         Load and commit the provided user_lists and/or explanations.
         """
@@ -201,8 +201,9 @@ class BabbleStream(object):
             if parses:
                 self.commit()
             # Also label train and test
-            self.label_split(0)
-            self.label_split(2)
+            if label_others:
+                self.label_split(0)
+                self.label_split(2)
 
     def apply(self, explanations, split=1, parallelism=1):
         """

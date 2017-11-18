@@ -14,7 +14,7 @@ lexical_rules = (
     [Rule('$EndsWith', w, '.endswith') for w in ['ends with', 'end with', 'ending with']] +
     [Rule('$Left', w, '.left') for w in ['?to ?the left ?of', 'in front of', 'before', 'precedes', 'preceding', 'followed by']] +
     [Rule('$Right', w, '.right') for w in ['?to ?the right ?of', 'behind', 'after', 'preceded by', 'follows', 'following']] +
-    [Rule('$Within', w, '.within') for w in ['within']] +
+    [Rule('$Within', w, '.within') for w in ['within', 'next']] +
     [Rule('$Apart', w) for w in ['apart', 'away']] +
     [Rule('$Sentence', w, '.sentence') for w in ['sentence', 'text', 'it']] +
     [Rule('$Between', w, '.between') for w in ['between', 'inbetween', 'sandwiched', 'enclosed']] +
@@ -29,8 +29,8 @@ lexical_rules = (
     [Rule('$NorpNER', w, ('NORP')) for w in ['political', 'politician', 'religious']] +
 
     # FIXME: Temporary hardcode; replace with "domain_rules" passed to grammar
-    [Rule('$X', w, ('.int', 1)) for w in ['x', '1']] +
-    [Rule('$X', w, ('.int', 2)) for w in ['y', '2']] +
+    [Rule('$X', w, ('.int', 1)) for w in ['x', 'X', '1']] +
+    [Rule('$X', w, ('.int', 2)) for w in ['y', 'Y', '2']] +
     [Rule('$ArgX', '?$PersonNER $X', lambda (person_, idx_): ('.arg', idx_))] +
     [Rule('$ArgX', w, ('.arg', ('.int', 1))) for w in ['personx', 'person1', 'arg1']] +
     [Rule('$ArgX', w, ('.arg', ('.int', 2))) for w in ['persony', 'person2', 'arg2']] +

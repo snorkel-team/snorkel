@@ -23,7 +23,8 @@ from snorkel.learning import reRNN, SparseLogisticRegression
 from snorkel.utils import PrintTimer, ProgressBar
 
 # Pipelines
-from utils import STAGES, train_model, score_marginals, final_report
+from snorkel.contrib.babble.utils import train_model, score_marginals
+from utils import STAGES, final_report
 
 TRAIN = 0
 DEV = 1
@@ -326,16 +327,16 @@ class SnorkelPipeline(object):
             disc_model_class = reRNN
 
             if self.config['supervision'] == 'traditional':
-                print("Warning: this may be broken; apply Paroma fix ASAP!")
-                raise NotImplementedError
 
                 print("In 'traditional' supervision mode...grabbing candidate and gold label subsets.")  
                 if self.config['traditional_split'] != TRAIN:
                     print("NOTE: using split {} for traditional supervision. "
                         "Be aware of unfair evaluation.".format(self.config['traditional_split']))
+                
                 candidates = self.get_candidates(split=self.config['traditional_split'])
                 L_gold = load_gold_labels(self.session, annotator_name='gold', 
                                           split=self.config['traditional_split'])
+                
                 X_train, Y_train = self.traditional_supervision(candidates, L_gold)
             else:
                 X_train = self.get_candidates(TRAIN)
@@ -349,16 +350,19 @@ class SnorkelPipeline(object):
             disc_model_class = SparseLogisticRegression
 
             if self.config['supervision'] == 'traditional':
+                
                 print("In 'traditional' supervision mode...grabbing candidate and gold label subsets.")  
                 if self.config['traditional_split'] != TRAIN:
                     print("NOTE: using split {} for traditional supervision. "
                         "Be aware of unfair evaluation.".format(self.config['traditional_split']))
+                
                 X_train = load_feature_matrix(self.session, 
                                               split=self.config['traditional_split'])
                 L_gold = load_gold_labels(self.session, annotator_name='gold', 
                                           split=self.config['traditional_split'])
                 Y_train = np.array(L_gold.todense()).reshape((L_gold.shape[0],))
                 Y_train[Y_train == -1] = 0
+                
                 X_train, Y_train = self.traditional_supervision(X_train, Y_train)
             else:
                 X_train = load_feature_matrix(self.session, split=TRAIN)

@@ -8,6 +8,7 @@ from scipy.sparse import csr_matrix, coo_matrix
 import scipy.sparse as sparse
 
 from snorkel.annotations import LabelAnnotator, load_gold_labels, csr_AnnotationMatrix
+from snorkel.learning import MajorityVoter
 from snorkel.learning.utils import MentionScorer
 from snorkel.lf_helpers import test_LF
 from snorkel.utils import (
@@ -25,6 +26,7 @@ from snorkel.utils import (
 from snorkel.contrib.babble.filter_bank import FilterBank
 from snorkel.contrib.babble.grammar import Parse
 from snorkel.contrib.babble.semparser import Explanation, SemanticParser
+from snorkel.contrib.babble.utils import score_marginals
 
 
 ConfusionMatrix = namedtuple('ConfusionMatrix', ['correct', 'incorrect', 'abstained'])
@@ -454,6 +456,21 @@ class BabbleStream(object):
             self.label_triples[split][4] += len(lfs)
             print("Stored {} triples for split {}. Now shape is ({}, {}).".format(
                 len(data), split, self.label_triples[split][3], self.label_triples[split][4]))
+
+    def get_majority_quality(self, split=1):
+        """Calculates the quality on the dev set using simple majority vote."""
+        majority_voter = MajorityVoter()
+
+        L_split = self.get_label_matrix(split=split)
+        if not L_split.nnz:
+            print("Cannot calculate majority quality for split {} because label "
+                "matrix is empty.".format(split))
+            return None
+        
+        Y_split = load_gold_labels(self.session, annotator_name='gold', split=split)
+        
+        pr, re, f1, cov = score_marginals(majority_voter.marginals(L_split), Y_split)
+        return (f1, pr, re)
 
     def get_global_coverage(self):
         """Calculate stats for the dataset as a whole.

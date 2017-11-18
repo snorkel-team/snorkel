@@ -254,7 +254,7 @@ class SnorkelPipeline(object):
 
             # Pass in the dependencies via default params
             gen_params_default = self.config['gen_params_default']
-            gen_params_default['deps'] = deps
+            gen_params_default['deps'] = list(deps)
 
             # Train generative model with grid search if applicable
             gen_model, opt_b = train_model(

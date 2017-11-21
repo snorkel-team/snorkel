@@ -379,7 +379,7 @@ text-align:center
 <p<em>And referencing work by many other <a href="http://cs.stanford.edu/people/chrismre/#students">members of Hazy Research</a></em></p>
 
 <blockquote>
-<p>TL;DR: We describe a computationally fast representation learning model that approaches -- and sometimes surpasses -- the performance of a Bidirectional-LSTM on 6/6 real-world relation extraction benchmarks.
+<p>TL;DR: We describe a computationally fast representation learning model that approaches -- and sometimes surpasses -- the performance of a Bidirectional-LSTM on 6/6 relation extraction benchmarks.
 We use familiar methods like principal component analysis (PCA) and pre-trained word embeddings to automatically create features for a logistic regression model.
 This approach is both easier to tune and up to 270x faster on CPU than BiLSTMs with attention.
 We show that these classical approaches can still outperform deep learning in some cases, and this blog post is our first attempt to tease out these cases.</p>
@@ -443,7 +443,7 @@ In one collaboration, researchers analyzing large-scale patient clinical notes w
 <p>
 After interactions like these, we wondered how well a simple method built on PCA would perform compared to BiLSTMs. 
 Our hypothesis was that we could pay some price in overall performance, but bring end-users the advantages of automatic feature engineering, speed, tunability, and more. 
-Surprisingly, after experiments with real-world information extraction problems, we found that a PCA-based approach actually matched or outperformed BiLSTMs in several cases. 
+Surprisingly, after experiments with collaborator's information extraction problems, we found that a PCA-based approach actually matched or outperformed BiLSTMs in several cases. 
 This blog post is our first step in exploring the performance and computation trade-offs between this simple, fast PCA-based method and several standard BiLSTM models.
 </p>
 
@@ -567,7 +567,7 @@ In our experiments discussed below,  PCA features were fairly consistent even wi
 <p>
 We report comparison scores for the two best models found in our experiments <sup><a href="#fn2" id="ref2">2</a></sup> : BiLSTMs + attention vs. PCA with exponential weighting. 
 We then compare this BiLSTM model with a PCA model incorporating the Procrustes correction. 
-We evaluate performance on 3 real-world RE datasets, using traditionally supervised and weakly supervised labels, and comparing the PCA model performance to a standard implementation of a BiLSTM with attention model, as described in (<a class="c11" href="https://www.google.com/url?q=http://www.aclweb.org/anthology/P16-2034&amp;sa=D&amp;ust=1507487817514000&amp;usg=AFQjCNElxiYT2xoU7dP0XwtgKlOYbVcw0A">Zhou et al. 2016</a>). 
+We evaluate performance on 3 RE datasets, using traditionally supervised and weakly supervised labels, and comparing the PCA model performance to a standard implementation of a BiLSTM with attention model, as described in (<a class="c11" href="https://www.google.com/url?q=http://www.aclweb.org/anthology/P16-2034&amp;sa=D&amp;ust=1507487817514000&amp;usg=AFQjCNElxiYT2xoU7dP0XwtgKlOYbVcw0A">Zhou et al. 2016</a>). 
 For this blog, we only evaluate unidirectional PCA models. 
 The same word embedding sets were used to initialize PCA and pre-train the BiLSTMs.
 </p>

@@ -1,7 +1,6 @@
 import csv
 import json
 import os
-from subprocess import check_output
 from time import time, strftime
 
 import numpy as np

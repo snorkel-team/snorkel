@@ -439,9 +439,11 @@ class BabbleStream(object):
             cols = []
             data = []
             pb = ProgressBar(len(candidates) * len(lfs))
+            count = 0
             for j, lf in enumerate(lfs):
                 for i, c in enumerate(candidates):
-                    pb.bar(i)
+                    pb.bar(count)
+                    count += 1
                     label = lf(c)
                     if label:
                         rows.append(i)

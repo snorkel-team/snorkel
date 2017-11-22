@@ -1132,7 +1132,7 @@ This is semantically related, but not necessarily a direct mapping, which introd
 </p>
 
 
-<h3 id="toc_1">Code, Reproducibility, and Experimental Hygiene</h3>
+<h2 id="toc_1">VI: Code, Reproducibility, and Experimental Hygiene</h2>
 
 <p>
 We strived to make our experimental pipeline as transparent and reproducible as possible. 
@@ -1140,12 +1140,12 @@ We strived to make our experimental pipeline as transparent and reproducible as 
 
 
 <ul>
-<li>All our code and complete experimental results are available via <a href="https://github.com/HazyResearch/avast">GitHub</a>.</li>
+<li>All our code and complete experimental results are available via <a href="https://github.com/HazyResearch/PCA-Relation-Extraction">GitHub</a>.</li>
 <li>We used Stanford’s Snorkel framework, a platform for weak supervision, to tune and train our models.</li>
 <li>We tried to implement the most fair comparison BiLSTM model as possible. If you know a more appropriate implementation, let us know!</li>
 <li>Hyperparameters are based on a literature search across similar tasks and architectures.</li>
-<li>Full results on github include multiple runs and random seeds to generate confidence intervals and assess model variance. </li>
-<li>All embeddings were trained using word2vec and FastText in accordance to best practices outlined in (<a href="">Levy et al. 2015</a>) and (<a href="">Chiu et al. 2016</a>), using bulk data dumps from PubMed and Wikimedia. Embeddings are available <a href="">here</a>. Warning: these are very large files! </li>
+<li>Full results included multiple runs and random seeds to generate confidence intervals and assess model variance. </li>
+<li>All embeddings were trained using word2vec and FastText in accordance to best practices outlined in (<a href="http://www.aclweb.org/anthology/Q15-1016">Levy et al. 2015</a>) and (<a href="http://aclweb.org/anthology/W16-2922">Chiu et al. 2016</a>), using bulk data dumps from PubMed and Wikimedia. Embeddings are available <a href="http://i.stanford.edu/hazy/share/embs/blog.embs.tar.gz">here</a>. Warning: these are very large files! </li>
 <li>One of our datasets can’t be shared due to licensing requirements, but we’ve shared the other two.</li> 
 </ul>
 
@@ -1192,8 +1192,10 @@ and <a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/">here</a>.
 <h3 id="toc_1">References</h3>
 
 <ol>
-<li>Iyyer, Mohit, et al. "Deep unordered composition rivals syntactic methods for text classification." Proceedings of the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing (Volume 1: Long Papers). Vol. 1. 2015.
-</li>
+
+<li>Ratner et al. "Snorkel: Rapid Training Data Creation with Weak Supervision." VLDB. 2018</li>
+
+<li>Iyyer, Mohit, et al. "Deep unordered composition rivals syntactic methods for text classification." Proceedings of the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing (Volume 1: Long Papers). Vol. 1. 2015.</li>
 
 <li>Kalchbrenner, Nal, Edward Grefenstette, and Phil Blunsom. "A convolutional neural network for modelling sentences." arXiv preprint arXiv:1404.2188 (2014).</li>
 

@@ -1,18 +1,13 @@
 import csv
 import json
 import os
-from time import time, strftime
-
-import numpy as np
-
-from snorkel.learning import RandomSearch
-
 
 import numpy as np
 
 from snorkel.models import Candidate
+from snorkel.learning import RandomSearch
 
-from explanation import Explanation
+from .explanation import Explanation
 
 
 class ExplanationIO(object):

@@ -39,7 +39,7 @@ class Explanation(object):
             return 'Explanation("%s, %s")' % (self.label, self.condition.encode('utf-8'))
     
     def display(self):
-        print 'Explanation'
+        print('Explanation')
         print('%-12s %s' % ('condition', self.condition))
         print('%-12s %d' % ('label', self.label))
         print('%-12s %s' % ('candidate', self.candidate))

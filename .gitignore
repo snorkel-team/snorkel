@@ -24,6 +24,9 @@ docs/_build
 # VS Code
 .vscode
 
+# mypy
+.mypy*
+
 # TF models
 *.info
 *.meta

@@ -26,7 +26,7 @@ config = {
         'init_class_prior' : -0.695, # (33.3%, based on dev balance)
         # logit = ln(p/(1-p)), p = exp(logit)/(1 + exp(logit))
     },
-    'tune_b': True,
+    'tune_b': False,
 
     # classify
     'disc_model_class': 'logreg',

@@ -453,13 +453,18 @@ class GridSearch(object):
             try:
                 model.train(*train_args, X_dev=X_valid, Y_dev=Y_valid, 
                     save_dir=self.save_dir, **hps)
+                run_scores = model.score(X_valid, Y_valid, b=b, beta=beta,
+                    set_unlabeled_as_neg=set_unlabeled_as_neg,
+                    batch_size=eval_batch_size)                    
             except:
-                model.train(*train_args, **hps)
+                try:
+                    model.train(*train_args, **hps)
+                    run_scores = model.score(X_valid, Y_valid, b=b, beta=beta,
+                        set_unlabeled_as_neg=set_unlabeled_as_neg,
+                        batch_size=eval_batch_size)
+                except ValueError: # Typically caused by having no positive labels
+                    run_scores = 0
 
-            # Test the model
-            run_scores = model.score(X_valid, Y_valid, b=b, beta=beta,
-                set_unlabeled_as_neg=set_unlabeled_as_neg,
-                batch_size=eval_batch_size)
             if model.cardinality > 2:
                 run_score, run_score_label = run_scores, "Accuracy"
                 run_scores = [run_score]

@@ -6,14 +6,16 @@ from sqlalchemy.sql import text
 from sqlalchemy.types import PickleType
 
 from .....models.meta import snorkel_postgres
-from .....models.context import Context, Document, TemporarySpan, split_stable_id
+from .....models.context import Context, Document, TemporaryContext, TemporarySpan, split_stable_id
 
 INT_ARRAY_TYPE = postgresql.ARRAY(Integer) if snorkel_postgres else PickleType
 STR_ARRAY_TYPE = postgresql.ARRAY(String)  if snorkel_postgres else PickleType
 
 
 class Webpage(Document):
-    """Declares name for storage table."""
+    """
+    Declares name for storage table.
+    """
     __tablename__ = 'webpage'
     id            = Column(Integer, ForeignKey('document.id', ondelete='CASCADE'), primary_key=True)
     # Connects NewType records to generic Context records
@@ -52,6 +54,31 @@ class Table(Context):
 
     def __repr__(self):
         return "Table(Doc: %s, Position: %s)" % (self.document.name.encode('utf-8'), self.position)
+
+    def __gt__(self, other):
+        # Allow sorting by comparing the string representations of each
+        return self.__repr__() > other.__repr__()
+
+
+class Figure(Context):
+    """A figure Context in a Document."""
+    __tablename__ = 'figure'
+    id            = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    document_id   = Column(Integer, ForeignKey('document.id', ondelete='CASCADE'))
+    position      = Column(Integer, nullable=False)
+    document      = relationship('Document', backref=backref('figures', order_by=position, cascade='all, delete-orphan'), foreign_keys=document_id)
+    url = Column(String)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'figure',
+    }
+
+    __table_args__ = (
+        UniqueConstraint(document_id, position),
+    )
+
+    def __repr__(self):
+        return "Figure(Doc: %s, Position: %s)" % (self.document.name.encode('utf-8'), self.position)
 
     def __gt__(self, other):
         # Allow sorting by comparing the string representations of each
@@ -521,3 +548,88 @@ class ImplicitSpan(Context, TemporaryImplicitSpan):
 
     def __hash__(self):
         return id(self)
+
+
+class TemporaryImage(TemporaryContext):
+    """The TemporaryContext version of Figure"""
+    def __init__(self, figure):
+        super(TemporaryImage, self).__init__()
+        self.figure   = figure  # The figure Context
+
+    def __len__(self):
+        return 1
+
+    def __eq__(self, other):
+        try:
+            return self.figure.position == other.figure.position \
+                and self.figure.url == other.figure.url
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        try:
+            return self.figure.position != other.figure.position \
+                or self.figure.url != other.figure.url
+        except AttributeError:
+            return True
+
+    def __contains__(self, other_span):
+        return self.__eq__(other_span)
+
+    def __hash__(self):
+        return hash(self.figure)
+
+    def get_stable_id(self):
+        return "%s::%s:%s" % (self.figure.document.id, self._get_polymorphic_identity(), self.figure.position)
+
+    def _get_table_name(self):
+        return 'image'
+
+    def _get_polymorphic_identity(self):
+        return 'image'
+
+    def _get_insert_query(self):
+        return """INSERT INTO image VALUES(:id, :document_id, :image_id, :url)"""
+
+    def _get_insert_args(self):
+        return {'document_id': self.figure.document.id,
+                'image_id' : self.figure.position,
+                'url'      : self.figure.url}
+
+    def __repr__(self):
+        return '%s(document=%s, position=%s, url=%s)' \
+            % (self.__class__.__name__, self.figure.document.name.encode('utf-8'), \
+                self.figure.position, self.figure.url)
+
+    def _get_instance(self, **kwargs):
+        return TemporaryImage(**kwargs)
+
+
+class Image(Context, TemporaryImage):
+    """
+    A span of characters, identified by Context id and character-index start, end (inclusive).
+
+    char_offsets are **relative to the Context start**
+    """
+    __tablename__ = 'image'
+    id            = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    document_id   = Column(Integer, ForeignKey('document.id', ondelete='CASCADE'))
+    position      = Column(Integer, nullable=False)
+    url           = Column(String)
+    document      = relationship('Document', backref=backref('images', order_by=position, cascade='all, delete-orphan'), foreign_keys=document_id)
+
+
+    __table_args__ = (
+        UniqueConstraint(document_id, position),
+    )
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'image',
+    }
+
+    def __repr__(self):
+        return "Image(Doc: %s, Position: %s, Url: %s)" % (self.document.name.encode('utf-8'), self.position, self.url)
+
+    def __gt__(self, other):
+        # Allow sorting by comparing the string representations of each
+        return self.__repr__() > other.__repr__()

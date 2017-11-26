@@ -12,7 +12,7 @@ from lxml.html import fromstring
 import numpy as np
 
 from ....models import Candidate, Context, Document, construct_stable_id, split_stable_id
-from .models import Table, Cell, Phrase
+from .models import Table, Cell, Figure, Phrase
 
 from ....udf import UDF, UDFRunner
 from .visual import VisualLinker
@@ -61,15 +61,15 @@ class SimpleTokenizer(object):
 
 class OmniParser(UDFRunner):
     def __init__(self,
-                 structural=True,                    # structural
-                 blacklist=["style"],
-                 flatten=['span', 'br'],
+                 structural=True,                    # structural information
+                 blacklist=["style"],                # ignore tag types, default: style
+                 flatten=['span', 'br'],             # flatten tag types, default: span, br
                  flatten_delim='',
-                 lingual=True,                       # lingual
+                 lingual=True,                       # lingual information
                  strip=True,
                  replacements=[(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]', '-')],
-                 tabular=True,                       # tabular
-                 visual=False,
+                 tabular=True,                       # tabular information
+                 visual=False,                       # visual information
                  pdf_path=None):
 
         self.delim = "<NB>"  # NB = New Block
@@ -135,7 +135,7 @@ class OmniParserUDF(UDF):
         for (pattern, replace) in replacements:
             self.replacements.append((re.compile(pattern, flags=re.UNICODE), replace))
         if self.lingual:
-            self.batch_size = 7000  # TODO(bhancock8): what if this is smaller than a block?
+            self.batch_size = 7000
             self.lingual_parser = lingual_parser
             self.req_handler = lingual_parser.connect()
             self.lingual_parse = self.req_handler.parse
@@ -176,6 +176,9 @@ class OmniParserUDF(UDF):
         block_lengths = []
         self.parent = document
 
+        figure_info = FigureInfo(document, parent=document)
+        self.figure_idx = -1
+
         if self.structural:
             xpaths = []
             html_attrs = []
@@ -212,11 +215,13 @@ class OmniParserUDF(UDF):
                         node[j - 1].tail += self.flatten_delim.join(contents)
                     node.remove(child)
 
-        def parse_node(node, table_info=None):
+        def parse_node(node, table_info=None, figure_info=None):
             if node.tag is etree.Comment:
                 return
             if self.blacklist and node.tag in self.blacklist:
                 return
+
+            self.figure_idx = figure_info.enter_figure(node, self.figure_idx)
 
             if self.tabular:
                 self.table_idx = table_info.enter_tabular(node, self.table_idx)
@@ -247,18 +252,22 @@ class OmniParserUDF(UDF):
 
             for child in node:
                 if child.tag == 'table':
-                    parse_node(child, TableInfo(document=table_info.document))
+                    parse_node(child, TableInfo(document=table_info.document), figure_info)
+                elif child.tag == '':
+                    parse_node(child, table_info, FigureInfo(document=figure_info.document))
                 else:
-                    parse_node(child, table_info)
+                    parse_node(child, table_info, figure_info)
 
             if self.tabular:
                 table_info.exit_tabular(node)
+
+            figure_info.exit_figure(node)
 
         # Parse document and store text in self.contents, padded with self.delim
         root = fromstring(text)  # lxml.html.fromstring()
         tree = etree.ElementTree(root)
         document.text = text
-        parse_node(root, table_info)
+        parse_node(root, table_info, figure_info)
         block_char_end = np.cumsum(block_lengths)
 
         content_length = len(self.contents)
@@ -322,8 +331,7 @@ class TableInfo(object):
             self.cell_position = 0
             stable_id = "%s::%s:%s:%s" % \
                 (self.document.name, "table", table_idx, table_idx)
-            self.table = Table(document=self.document, stable_id=stable_id,
-                                position=table_idx)
+            self.table = Table(document=self.document, stable_id=stable_id, position=table_idx)
             self.parent = self.table
         elif node.tag == "tr":
             self.col_idx = 0
@@ -392,3 +400,24 @@ class TableInfo(object):
         else:
             raise NotImplementedError("Phrase parent must be Document, Table, or Cell")
         return parts
+
+
+class FigureInfo(object):
+    def __init__(self, document, figure=None, parent=None):
+        self.document = document
+        self.figure = figure
+        self.parent = parent
+
+    def enter_figure(self, node, figure_idx):
+        if node.tag == "img":
+            figure_idx += 1
+            stable_id = "%s::%s:%s:%s" % \
+                (self.document.name, "figure", figure_idx, figure_idx)
+            self.figure = Figure(document=self.document, stable_id=stable_id, position=figure_idx, url=node.get('src'))
+            self.parent = self.figure
+        return figure_idx
+
+    def exit_figure(self, node):
+        if node.tag == "img":
+            self.figure = None
+            self.parent = self.document

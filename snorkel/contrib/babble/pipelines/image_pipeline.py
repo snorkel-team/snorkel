@@ -202,7 +202,7 @@ class ImagePipeline(BabblePipeline):
                 ' --dataset_name=mscoco' + \
                 ' --dataset_split_name=train' + \
                 ' --dataset_dir=' + dataset_dir + \
-                ' --model_name=' + str(self.config['disc_model_class']) + \
+                ' --model_name=' + self.config['disc_model_class'] + \
                 ' --optimizer=' + str(self.config['optimizer']) + \
                 ' --opt_epsilon=' + str(self.config['opt_epsilon']) + \
                 ' --num_clones=' + str(self.config['parallelism']) + \
@@ -223,7 +223,7 @@ class ImagePipeline(BabblePipeline):
                   ' --checkpoint_path=' + train_dir + \
                   ' --eval_dir=' + eval_dir + \
                   ' --dataset_split_name=validation ' + \
-                  ' --model_name=' + str(self.config['disc_model_class']) + \
+                  ' --model_name=' + self.config['disc_model_class'] + \
                   ' --batch_size=78' + \
                   ' | tee -a ' + output_file
             ### TEMP ###
@@ -232,6 +232,7 @@ class ImagePipeline(BabblePipeline):
             os.system(eval_cmd)
 
             # Scrape results from output.txt 
+            import pdb; pdb.set_trace()
             accuracy, precision, recall = scrape_output(output_file)
             print("Accuracy: {}".format(accuracy))
             print("Precision: {}".format(precision))

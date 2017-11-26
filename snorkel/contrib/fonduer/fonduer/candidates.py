@@ -1,5 +1,7 @@
-from ....candidates import Ngrams
+from ....candidates import CandidateSpace, Ngrams
 from ....models.context import Document
+
+from .models import TemporaryImage
 
 from copy import deepcopy
 from itertools import product
@@ -136,23 +138,57 @@ class CandidateExtractorUDF(UDF):
 
 
 class OmniNgrams(Ngrams):
-    """Defines the space of candidates.
+    """
+    Defines the space of candidates.
 
     Defines the space of candidates as all n-grams (n <= n_max) in a Document _x_,
     divided into Phrases inside of html elements (such as table cells).
     """
 
     def __init__(self, n_max=5, split_tokens=['-', '/']):
-        """Initialize OmniNgrams."""
+        """
+        Initialize OmniNgrams.
+        """
         Ngrams.__init__(self, n_max=n_max, split_tokens=split_tokens)
 
     def apply(self, session, context):
-        """Generate OmniNgrams from a Document by parsing all of its Phrases."""
+        """
+        Generate OmniNgrams from a Document by parsing all of its Phrases.
+        """
         if not isinstance(context, Document):
-            raise TypeError(
-                "Input Contexts to OmniNgrams.apply() must be of type Document")
+            raise TypeError("Input Contexts to OmniNgrams.apply() must be of type Document")
 
         doc = session.query(Document).filter(Document.id == context.id).one()
         for phrase in doc.phrases:
             for ts in Ngrams.apply(self, phrase):
                 yield ts
+
+
+class OmniFigures(CandidateSpace):
+    """
+    Defines the space of candidates as all figures in a Document _x_,
+    indexing by **position offset**.
+    """
+
+    def __init__(self, type=None):
+        """
+        Initialize OmniFigures.
+
+        Only support figure type filter.
+        """
+        CandidateSpace.__init__(self)
+        if type is not None:
+            self.type=type.strip().lower()
+        self.type = None
+
+    def apply(self, session, context):
+        """
+        Generate OmniFigures from a Document by parsing all of its Figures.
+        """
+        if not isinstance(context, Document):
+            raise TypeError("Input Contexts to OmniFigures.apply() must be of type Document")
+
+        doc = session.query(Document).filter(Document.id == context.id).one()
+        for figure in doc.figures:
+            if self.type is None or figure.url.lower().endswith(self.type):
+                yield TemporaryImage(figure)

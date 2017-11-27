@@ -336,6 +336,7 @@ class SnorkelPipeline(object):
                 candidates = self.get_candidates(split=self.config['traditional_split'])
                 L_gold = load_gold_labels(self.session, annotator_name='gold', 
                                           split=self.config['traditional_split'])
+
                 Y_train = np.array(L_gold.todense()).reshape((L_gold.shape[0],))
                 Y_train[Y_train == -1] = 0
 
@@ -363,9 +364,10 @@ class SnorkelPipeline(object):
                 L_gold = load_gold_labels(self.session, annotator_name='gold', 
                                           split=self.config['traditional_split'])
 
+
                 Y_train = np.array(L_gold.todense()).reshape((L_gold.shape[0],))
                 Y_train[Y_train == -1] = 0
-                
+
                 X_train, Y_train = self.traditional_supervision(X_train, Y_train)
             else:
                 X_train = load_feature_matrix(self.session, split=TRAIN)

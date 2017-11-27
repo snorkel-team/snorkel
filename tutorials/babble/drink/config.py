@@ -5,6 +5,8 @@ config = {
     'candidate_entities' : ['person', 'cup'],
     'splits' : [0,1],
 
+    'babbler_candidate_split': 0,
+
     'download_data': False,
     'anns_path': os.environ['SNORKELHOME'] + '/tutorials/babble/drink/data/',
     # 'slim_ws_path': '/dfs/scratch0/bradenjh/slim_ws',

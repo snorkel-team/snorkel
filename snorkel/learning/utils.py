@@ -463,13 +463,13 @@ class GridSearch(object):
                         set_unlabeled_as_neg=set_unlabeled_as_neg,
                         batch_size=eval_batch_size)
                 except ValueError: # Typically caused by having no positive labels
-                    run_scores = 0
+                    run_scores = [0]
 
             if model.cardinality > 2:
                 run_score, run_score_label = run_scores, "Accuracy"
                 run_scores = [run_score]
             else:
-                run_score  = run_scores[-1]
+                run_score = run_scores[-1]
                 run_score_label = "F-{0} Score".format(beta)
 
             # Add scores to running stats, print, and set as optimal if best

@@ -16,16 +16,8 @@ echo "Saving reports to '$REPORTS_DIR'"
 echo ""
 echo "Note: If you are not starting at stage 0, confirm database exists already."
 
-# Run setup
-#python -u snorkel/contrib/babble/pipelines/run.py \
-#    --domain $DOMAIN \
-#    --postgres \
-#    --parallelism 20 \
-#    --end_at 6 \
-#    --verbose --no_plots |& tee -a $LOGFILE
-
 # Run tests
-for MAX_TRAIN in 10 50 100 500 1000 5000 10000 25000
+for MAX_TRAIN in 10 25 50 75 100 150 200 250 300 500 750 1000 1500 2000 3000 5000 7500 10000 12500 15000 17500 20000 22500
 do
     echo ""
     echo "<TEST: Running with following params:>"
@@ -34,13 +26,15 @@ do
     python -u snorkel/contrib/babble/pipelines/run.py \
         --domain $DOMAIN \
         --reports_dir $REPORTS_DIR \
-        --start_at 7 \
+        --start_at 8 \
         --end_at 10 \
-	--postgres \
-	--parallelism 20 \
         --supervision traditional \
         --max_train $MAX_TRAIN \
 	--gen_model_search_space 1 \
-        --disc_model_search_space 10 \
-        --seed $MAX_TRAIN --verbose --no_plots |& tee -a $LOGFILE
+        --disc_model_search_space 1 \
+	--disc_params_default:batch_size 64 \
+	--disc_params_default:n_epochs 30 \
+	--disc_params_default:lr 0.001 \
+	--disc_params_default:rebalance 0.25 \
+        --seed 123 --verbose --no_plots |& tee -a $LOGFILE
 done

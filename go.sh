@@ -14,7 +14,7 @@ echo ""
 echo "<TEST:>"
 echo ""
 
-for temp in 1 2
+for TEMP in 1 2
 do
 
 RUN="${DOMAIN}_${EXP}_${TIME}_${TEMP}"
@@ -35,7 +35,7 @@ python -u snorkel/contrib/babble/pipelines/run.py \
     --gen_model_search_space 1 \
     --max_train 500 \
     --disc_model_class logreg \
-    --disc_model_search_space 2 \
+    --disc_model_search_space 8 \
     --disc_params_range:n_epochs 2 \
     --verbose --no_plots |& tee -a $LOGFILE
 done

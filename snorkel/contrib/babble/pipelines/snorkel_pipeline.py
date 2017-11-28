@@ -176,7 +176,7 @@ class SnorkelPipeline(object):
             if self.L_dev is None:
                 L_dev = load_label_matrix(self.session, split=DEV)
             else:
-                L_dev = self.L_dev            
+                L_dev = self.L_dev
             assert L_dev.nnz > 0
 
             L_gold_dev = load_gold_labels(self.session, annotator_name='gold', split=DEV)

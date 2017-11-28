@@ -14,10 +14,10 @@ echo ""
 echo "<TEST:>"
 echo ""
 
-for ITER in 1 
+for ITER in 1
 do
 
-for MAX_TRAIN in 50 5000
+for MAX_TRAIN in 30 60 90 150 300 1500 3000 6667
 do
 
 RUN="${DOMAIN}_${EXP}_${TIME}_${MAX_TRAIN}_${ITER}"

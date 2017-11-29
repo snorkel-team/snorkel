@@ -135,7 +135,7 @@ class OmniParserUDF(UDF):
         for (pattern, replace) in replacements:
             self.replacements.append((re.compile(pattern, flags=re.UNICODE), replace))
         if self.lingual:
-            self.batch_size = 7000
+            self.batch_size = 7000 # character limit for CoreNLP
             self.lingual_parser = lingual_parser
             self.req_handler = lingual_parser.connect()
             self.lingual_parse = self.req_handler.parse

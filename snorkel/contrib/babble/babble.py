@@ -424,7 +424,7 @@ class BabbleStream(object):
         self.temp_label_matrix = None
 
     def label_split(self, split):
-        """Label a single split"""
+        """Label a single split with the most recently committed LFs."""
         if split == 1:
             raise Exception("The dev set is labeled during Babbler.apply() by the FilterBank.")
 

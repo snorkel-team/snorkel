@@ -180,9 +180,14 @@ class BabbleStream(object):
         ### TEMP HARDCODE ###
         if soft_start:
             priority_ids = [
+                # "'married to' is between X and Y and there are no people are between X and Y"
+                'a587afeb-715c-44ee-bdef-75f61cb7c6e8::span:1108:1117~~a587afeb-715c-44ee-bdef-75f61cb7c6e8::span:1179:1193',
+                # "The word 'son' is immediately to the left of Y"
                 '7fc3e510-c4e6-44c2-a24b-f9a39bfcfb07::span:4942:4950~~7fc3e510-c4e6-44c2-a24b-f9a39bfcfb07::span:4973:4978',
+                # "'wife' is within 5 words of X and Y"
                 '40cb15fa-0186-4868-a5b7-eb2fc6a317cf::span:115:123~~40cb15fa-0186-4868-a5b7-eb2fc6a317cf::span:138:153',
                 '7fc3e510-c4e6-44c2-a24b-f9a39bfcfb07::span:1926:1945~~7fc3e510-c4e6-44c2-a24b-f9a39bfcfb07::span:1956:1968',
+                '55138a30-e5a7-4a3e-ad24-0a42d125d247::span:5558:5571~~55138a30-e5a7-4a3e-ad24-0a42d125d247::span:5586:5599',
             ]
         else:
             priority_ids = []

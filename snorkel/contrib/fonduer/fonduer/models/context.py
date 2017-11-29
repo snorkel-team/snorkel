@@ -78,7 +78,7 @@ class Figure(Context):
     )
 
     def __repr__(self):
-        return "Figure(Doc: %s, Position: %s)" % (self.document.name.encode('utf-8'), self.position)
+        return "Figure(Doc: %s, Position: %s, Url: %s)" % (self.document.name.encode('utf-8'), self.position, self.url)
 
     def __gt__(self, other):
         # Allow sorting by comparing the string representations of each
@@ -607,9 +607,7 @@ class TemporaryImage(TemporaryContext):
 
 class Image(Context, TemporaryImage):
     """
-    A span of characters, identified by Context id and character-index start, end (inclusive).
-
-    char_offsets are **relative to the Context start**
+    A candidate of figure, identified by Context id and position.
     """
     __tablename__ = 'image'
     id            = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)

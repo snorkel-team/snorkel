@@ -224,7 +224,7 @@ class ImagePipeline(BabblePipeline):
                   ' --eval_dir=' + eval_dir + \
                   ' --dataset_split_name=validation ' + \
                   ' --model_name=' + self.config['disc_model_class'] + \
-                  ' --batch_size=78' + \
+                  ' --batch_size=' + self.config['disc_eval_batch_size'] + \
                   ' | tee -a ' + output_file
             ### TEMP ###
             # You added the batch_size parameter above

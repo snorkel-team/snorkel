@@ -253,7 +253,7 @@ class OmniParserUDF(UDF):
             for child in node:
                 if child.tag == 'table':
                     parse_node(child, TableInfo(document=table_info.document), figure_info)
-                elif child.tag == '':
+                elif child.tag == 'img':
                     parse_node(child, table_info, FigureInfo(document=figure_info.document))
                 else:
                     parse_node(child, table_info, figure_info)

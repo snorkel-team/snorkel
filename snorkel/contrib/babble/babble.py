@@ -162,7 +162,6 @@ class BabbleStream(object):
                     self.num_dev_pos + self.num_dev_neg))
         self.scorer         = MentionScorer(self.dev_candidates, self.dev_labels)
 
-
     def __iter__(self):
         return self
 
@@ -201,9 +200,9 @@ class BabbleStream(object):
             if parses:
                 self.commit()
             # Also label train and test
-            if label_others:
-                self.label_split(0)
-                self.label_split(2)
+            # if label_others:
+            #     self.label_split(0)
+            #     self.label_split(2)
 
     def apply(self, explanations, split=1, parallelism=1):
         """
@@ -459,6 +458,23 @@ class BabbleStream(object):
             self.label_triples[split][4] += len(lfs)
             print("Stored {} triples for split {}. Now shape is ({}, {}).".format(
                 len(data), split, self.label_triples[split][3], self.label_triples[split][4]))
+
+    def get_labeled_equivalent(self, f1):
+        """Returns the number of ground truth labels required for the given f1.
+        
+        F1 curve is based on a curve fit to empirical results on an LSTM on
+        the spouse domain.
+        """
+        if f1 < 0.12:
+            return "Same"
+        elif f1 > 0.5:
+            return "20k+"
+        else:
+            # y = ax^2 + bx + c
+            a = -1.27e-9
+            b = 4.48e-5
+            c = 0.121 - f1
+            return int((-b + np.sqrt(b*b - 4*a*c))/float(2*a))
 
     def get_majority_quality(self, split=1):
         """Calculates the quality on the dev set using simple majority vote."""

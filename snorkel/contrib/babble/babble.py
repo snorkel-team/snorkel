@@ -468,7 +468,7 @@ class BabbleStream(object):
         if f1 < 0.12:
             return "Same"
         elif f1 > 0.5:
-            return "20k+"
+            return "20,000+"
         else:
             # y = ax^2 + bx + c
             a = -1.27e-9

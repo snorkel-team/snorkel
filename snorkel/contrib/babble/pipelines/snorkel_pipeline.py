@@ -271,7 +271,7 @@ class SnorkelPipeline(object):
                 params_default=gen_params_default,
                 model_init_params=self.config['gen_init_params'],
                 model_name='generative_{}'.format(self.config['domain']),
-                save_dir=self.config['reports_dir'] + 'checkpoints',
+                save_dir=os.path.join(self.config['reports_dir'], 'checkpoints'),
                 beta=self.config['gen_f_beta'],
                 tune_b=self.config['tune_b'],
             )
@@ -400,7 +400,7 @@ class SnorkelPipeline(object):
                 params_default=self.config['disc_params_default'],
                 model_init_params=self.config['disc_init_params'],
                 model_name='discriminative_{}'.format(self.config['domain']),
-                save_dir=self.config['reports_dir'] + 'checkpoints',
+                save_dir=os.path.join(self.config['reports_dir'], 'checkpoints'),
                 eval_batch_size=self.config['disc_eval_batch_size'],
                 tune_b=self.config['tune_b'],
             )

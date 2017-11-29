@@ -2,7 +2,7 @@ import csv
 
 from scipy.sparse import csr_matrix
 
-from snorkel.annotations import csr_AnnotationMatrix
+from snorkel.annotations import csr_LabelMatrix
 
 NUM_SPLITS = 3
 
@@ -82,6 +82,15 @@ class QalfConverter(object):
         # NOTE: col_ids currently goes unused
         candidate_index = {candidate_id: i for i, candidate_id in enumerate(row_ids)}
         row_index = {v: k for k, v in candidate_index.items()}
-        return csr_AnnotationMatrix(csr, 
+        return csr_LabelMatrix(csr, 
                                     candidate_index=candidate_index,
                                     row_index=row_index)
+
+# NOTE:
+# This is not yet a completely valid LabelMatrix, as we do not create the
+# col_index or key_index. Once you do, you should be able to run the following
+# lines to see a printout of LF performance:
+
+# from snorkel.annotations import load_gold_labels
+# L_gold_dev = load_gold_labels(session, annotator_name='gold', split=1)
+# print(L_dev.lf_stats(session, labels=L_gold_dev))

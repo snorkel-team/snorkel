@@ -466,15 +466,15 @@ class BabbleStream(object):
         the spouse domain.
         """
         if f1 < 0.12:
-            return "Same"
+            return str(len(self.get_explanations()))
         elif f1 > 0.5:
-            return "20,000+"
+            return str("20,000+")
         else:
             # y = ax^2 + bx + c
             a = -1.27e-9
             b = 4.48e-5
             c = 0.121 - f1
-            return int((-b + np.sqrt(b*b - 4*a*c))/float(2*a))
+            return str(int((-b + np.sqrt(b*b - 4*a*c))/float(2*a)))
 
     def get_majority_quality(self, split=1):
         """Calculates the quality on the dev set using simple majority vote."""

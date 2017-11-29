@@ -1,4 +1,5 @@
 from collections import defaultdict, namedtuple
+import itertools
 import random
 
 import matplotlib.pyplot as plt
@@ -66,7 +67,8 @@ class CandidateGenerator(object):
     A generator for returning a list of candidates in a certain order.
     """
     def __init__(self, babble_stream, seed=None, 
-                 balanced=False, active=False, shuffled=False):
+                 balanced=False, active=False, shuffled=False,
+                 priority_candidate_ids=[]):
         """
         If active = True, return only candidates that have no labels so far
         If balanced = True, alternate between candidates with True/False gold labels
@@ -76,21 +78,58 @@ class CandidateGenerator(object):
         candidates = babble_stream.dev_candidates
         labels = babble_stream.dev_labels
         
+        candidates, labels, priority_generator = self.make_priority_generator(
+            candidates, labels, priority_candidate_ids)
+        self.priority_generator = priority_generator
+
         if active:
             raise NotImplementedError
         else:
             if balanced:
-                self.candidate_generator = self.balanced_generator(
-                    candidates, labels, seed, shuffled=shuffled)
+                self.candidate_generator = itertools.chain(
+                    priority_generator, self.balanced_generator(
+                        candidates, labels, seed, shuffled=shuffled))
             else:
-                self.candidate_generator = self.linear_generator(
-                    candidates, seed, shuffled=shuffled)
+                self.candidate_generator = itertools.chain(
+                    priority_generator, self.linear_generator(
+                        candidates, labels, seed, shuffled=shuffled))
 
     def __iter__(self):
         return self
 
     def next(self):
         return self.candidate_generator.next()
+
+    def make_priority_generator(self, candidates, labels, priority_candidate_ids):
+        # Pull out priority candidates if applicable
+        # Go for the slightly more wasteful but easy-to-understand solution
+
+        if priority_candidate_ids:
+            def simple_generator(candidates):
+                for c in candidates:
+                    yield c
+
+            priority_set = set(priority_candidate_ids)
+            priority = []
+            other = []
+
+            # Pull out all priority candidates
+            for c, l in zip(candidates, labels):
+                if c.get_stable_id() in priority_set:
+                    priority.append(c)
+                else:
+                    # Hold on to the labels for a possible balanced_generator downstream
+                    other.append((c, l))
+            # Put them in desired order
+            priority_idxs = {c: i for i, c in enumerate(priority_candidate_ids)}
+            priority.sort(key=lambda x: priority_idxs[x.get_stable_id()])
+            priority_generator = simple_generator(priority)
+            # Restore remaining candidates and labels to normal lists
+            candidates, labels = zip(*other)
+        else:
+            priority_generator = iter(())
+
+        return candidates, labels, priority_generator
 
     @staticmethod
     def linear_generator(candidates, seed, shuffled=False):
@@ -125,7 +164,8 @@ class BabbleStream(object):
     An object for iteratively viewing candidates and parsing corresponding explanations.
     """
     def __init__(self, session, mode='text', candidate_class=None, seed=None, 
-                 user_lists={}, apply_filters=True, verbose=True, **kwargs):
+                 user_lists={}, apply_filters=True, verbose=True, 
+                 soft_start=False, **kwargs):
         self.session = session
         self.mode = mode
         self.candidate_class = candidate_class
@@ -136,7 +176,21 @@ class BabbleStream(object):
         self.dev_candidates = session.query(self.candidate_class).filter(self.candidate_class.split == 1).all()
         self.dev_labels = np.ravel((load_gold_labels(session, annotator_name='gold', split=1)).todense())
     
-        self.candidate_generator_kwargs = kwargs
+        # self.candidate_generator_kwargs = kwargs
+        ### TEMP HARDCODE ###
+        if soft_start:
+            priority_ids = [
+                '7fc3e510-c4e6-44c2-a24b-f9a39bfcfb07::span:4942:4950~~7fc3e510-c4e6-44c2-a24b-f9a39bfcfb07::span:4973:4978',
+                '40cb15fa-0186-4868-a5b7-eb2fc6a317cf::span:115:123~~40cb15fa-0186-4868-a5b7-eb2fc6a317cf::span:138:153',
+                '7fc3e510-c4e6-44c2-a24b-f9a39bfcfb07::span:1926:1945~~7fc3e510-c4e6-44c2-a24b-f9a39bfcfb07::span:1956:1968',
+            ]
+        else:
+            priority_ids = []
+
+        self.candidate_generator = CandidateGenerator(self, seed=self.seed, 
+            priority_candidate_ids=priority_ids, **kwargs)
+        ### TEMP HARDCODE ###
+            
         self.user_lists = user_lists
         self.semparser = None
         self.filter_bank = FilterBank(session, candidate_class)
@@ -165,10 +219,8 @@ class BabbleStream(object):
     def __iter__(self):
         return self
 
+
     def next(self):
-        if not hasattr(self, 'candidate_generator'):
-            self.candidate_generator = CandidateGenerator(self,
-                seed=self.seed, **(self.candidate_generator_kwargs))
         c = self.candidate_generator.next()
         self.temp_candidate = c
         return c

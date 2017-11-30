@@ -191,13 +191,13 @@ class BabbleStream(object):
             ]
         else:
             priority_ids = []
+        ### TEMP HARDCODE ###
 
         self.candidate_generator = CandidateGenerator(self, seed=self.seed, 
             priority_candidate_ids=priority_ids, **kwargs)
-        ### TEMP HARDCODE ###
             
         self.user_lists = user_lists
-        self.semparser = None
+        self._build_semparser()
         self.filter_bank = FilterBank(session, candidate_class)
         
         self.parses = []
@@ -302,8 +302,8 @@ class BabbleStream(object):
         :param explanations: an Explanation or list of Explanations.
         :return: a list of Parses.
         """
-        if not self.semparser:
-            self._build_semparser()
+        # if not self.semparser:
+        #     self._build_semparser()
 
         parses = self.semparser.parse(explanations, 
             return_parses=True, verbose=self.verbose)

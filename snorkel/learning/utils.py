@@ -421,7 +421,8 @@ class GridSearch(object):
         """Single-threaded implementation of `GridSearch.fit`."""
         # Iterate over the param values
         run_stats = []
-        run_score_opt = -1.0
+        run_score_opt = -1
+        opt_model_name = None
         for k, param_vals in enumerate(self.search_space()):
             hps = self.model_hyperparams.copy()
 
@@ -463,22 +464,26 @@ class GridSearch(object):
                         set_unlabeled_as_neg=set_unlabeled_as_neg,
                         batch_size=eval_batch_size)
                 except ValueError: # Typically caused by having no positive labels
-                    run_scores = 0
+                    print("ValueError: Likely no positive labels were found.")
+                    run_scores = [-1]
 
             if model.cardinality > 2:
                 run_score, run_score_label = run_scores, "Accuracy"
                 run_scores = [run_score]
             else:
-                run_score  = run_scores[-1]
+                run_score = run_scores[-1]
                 run_score_label = "F-{0} Score".format(beta)
 
             # Add scores to running stats, print, and set as optimal if best
             print("[{0}] {1}: {2}".format(model.name,run_score_label,run_score))
             run_stats.append(list(param_vals) + list(run_scores))
-            if run_score > run_score_opt or k == 0:
+            if run_score > run_score_opt:
                 model.save(model_name=model_name, save_dir=self.save_dir)
                 opt_model_name = model_name
                 run_score_opt = run_score
+
+        if opt_model_name is None:
+            raise Exception("No models successfully completed.")
 
         # Set optimal parameter in the learner model
         opt_model = self.model_class(**self.model_class_params)

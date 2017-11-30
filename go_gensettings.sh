@@ -1,58 +1,62 @@
-source set_env.sh
-
 DOMAIN=$1
 EXP=$2
 
 DATE=`date +"%m_%d_%y"`
 TIME=`date +"%H_%M_%S"`
+
 LOGDIR="logs/$DATE"
 mkdir -p $LOGDIR
-LOGFILE="$LOGDIR/run_log_${DOMAIN}_${EXP}_${TIME}.log"
-echo "Saving log to '$LOGFILE'"
 
-REPORTS_DIR="reports/$DATE/${DOMAIN}_${EXP}/"
+REPORTS_DIR="reports/$DATE"
 mkdir -p $REPORTS_DIR
-echo "Saving reports to '$REPORTS_DIR'"
+
 echo ""
-echo "Note: If you are not starting at stage 0, confirm database exists already."
+echo "<TEST:>"
+echo ""
 
-# Run setup
-# python -u snorkel/contrib/babble/pipelines/run.py \
-#     --domain $DOMAIN \
-#     --end_at 6 \
-#     --debug \
-#     --verbose --no_plots
-
-# Run tests
-for lf_propensity in True False 
+for ITER in 1 
 do
-for lf_prior in True False 
+
+for learn_deps in True False
+do
+for lf_propensity in True False 
 do
 for lf_class_propensity in True False 
 do
 for class_prior in True False 
 do
-    echo ""
-    echo "<TEST: Running with following params:>"
-    echo "lf_propensity = $lf_propensity" 
-    echo "lf_prior = $lf_prior"
-    echo "lf_class_propensity = $lf_class_propensity"
-    echo "class_prior = $class_prior"
-    echo ""
-    python -u snorkel/contrib/babble/pipelines/run.py \
-        --domain $DOMAIN \
-        --reports_dir $REPORTS_DIR \
-        --gen_init_params:lf_propensity $lf_propensity \
-        --gen_init_params:lf_prior $lf_prior \
-        --gen_init_params:lf_class_propensity $lf_class_propensity \
-        --gen_init_params:class_prior $class_prior \
-        --start_at 6 \
-        --end_at 7 \
-        --gen_model_search_space 2 \
-        --seed 926 --verbose --no_plots |& tee -a $LOGFILE  # seed = 111
-        # --parallelism 15 \
-        # --postgres \
-        # --debug \
+
+
+RUN="${DOMAIN}_${EXP}_${TIME}_${learn_deps}_${lf_propensity}_${lf_class_propensity}_${class_prior}_${ITER}"
+
+DB_NAME="babble_${RUN}"
+echo "Using db: $DB_NAME"
+cp babble_${DOMAIN}_labeled_tocopy.db $DB_NAME.db
+
+REPORTS_SUBDIR="$REPORTS_DIR/$RUN/"
+mkdir -p $REPORTS_SUBDIR
+echo "Saving reports to '$REPORTS_SUBDIR'"
+
+LOGFILE="$LOGDIR/$RUN.log"
+echo "Saving log to '$LOGFILE'"
+
+python -u snorkel/contrib/babble/pipelines/run.py \
+    --domain $DOMAIN \
+    --reports_dir $REPORTS_SUBDIR \
+    --start_at 7 \
+    --end_at 10 \
+    --supervision generative \
+    --learn_deps $learn_deps \
+    --gen_init_params:lf_propensity $lf_propensity \
+    --gen_init_params:lf_class_propensity $lf_class_propensity \
+    --gen_init_params:class_prior $class_prior \
+    --gen_model_search_space 20 \
+    --disc_model_class lstm \
+    --disc_model_search_space 10 \
+    --verbose --no_plots |& tee -a $LOGFILE &
+sleep 3
+
+done
 done
 done
 done

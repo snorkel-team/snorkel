@@ -45,9 +45,11 @@ tutorials/intro/data/articles-test.tsv
 tutorials/intro/data/articles-train.tsv
 tutorials/intro/data/gold_labels.tsv
 
+tutorials/tables/data/hardware/
+
 tutorials/babble/protein/geniatagger*
 tutorials/babble/cdr/data/*
-tutorials/tables/data/hardware/
+tutorials/babble/spouse/data/*.tsv
 
 tutorials/babble/protein/genia*
 tutorials/babble/cdr/data/

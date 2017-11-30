@@ -68,10 +68,13 @@ class BabblePipeline(SnorkelPipeline):
         # this info is printed in supervise() when supervise != traditional
         # print(self.babbler.get_lf_stats()) 
 
-    def set_babbler_matrices(self, babbler):
-        self.L_train = babbler.get_label_matrix(split=0)
-        self.L_dev   = babbler.get_label_matrix(split=1)
-        self.L_test  = babbler.get_label_matrix(split=2)
+    def set_babbler_matrices(self, babbler, split=None):
+        if split == 0 or split is None:
+            self.L_train = babbler.get_label_matrix(split=0)
+        if split == 1 or split is None:
+            self.L_dev   = babbler.get_label_matrix(split=1)
+        if split == 2 or split is None:
+            self.L_test  = babbler.get_label_matrix(split=2)
 
     def label(self, config=None, split=None):
         if config:
@@ -80,8 +83,8 @@ class BabblePipeline(SnorkelPipeline):
             print("In 'traditional' supervision mode...skipping 'label' stage.")
             return
         self.labeler = LabelAnnotator(lfs=self.lfs)  
-        splits = [split] if split else self.config['splits']
-        for split in self.config['splits']:
+        splits = [split] if split is not None else self.config['splits']
+        for split in splits:
             num_candidates = self.session.query(self.candidate_class).filter(self.candidate_class.split == split).count()
             if num_candidates > 0:
                 # NOTE: we currently relabel the babbler_split so that 

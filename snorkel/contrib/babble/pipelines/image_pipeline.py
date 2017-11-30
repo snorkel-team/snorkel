@@ -185,6 +185,7 @@ class ImagePipeline(BabblePipeline):
         lrs, weight_decays, max_stepses = [], [], []
         for i, disc_params in enumerate(disc_params_options):
             train_dir = os.path.join(train_root, "config_{}".format(i))
+            print("\nTrain Directory {}.".format(train_dir))
             eval_dir = os.path.join(eval_root, "config_{}".format(i))
             print("\nConfiguration {}.".format(i, eval_dir))
             print("Running the following configuration:".format(i))
@@ -213,6 +214,8 @@ class ImagePipeline(BabblePipeline):
             os.system(train_cmd)
 
             print('Calling TFSlim eval on validation...')
+            print("\nValidation Directory {}.".format(train_dir))
+            print("\nCheckpoint Directory {}.".format(eval_dir))
             output_file = os.path.join(eval_dir, 'output.txt')
             if not os.path.exists(eval_dir):
                 os.makedirs(eval_dir)
@@ -232,7 +235,7 @@ class ImagePipeline(BabblePipeline):
             os.system(eval_cmd)
 
             # Scrape results from output.txt 
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
             accuracy, precision, recall = scrape_output(output_file)
             print("Accuracy: {}".format(accuracy))
             print("Precision: {}".format(precision))
@@ -276,6 +279,7 @@ class ImagePipeline(BabblePipeline):
                  ' --eval_dir=' + eval_dir + \
                  ' --dataset_split_name=test ' + \
                  ' --model_name=' + str(self.config['disc_model_class']) + \
+                 ' --batch_size=118' + \
                  ' | tee -a ' + test_file)
                 
         

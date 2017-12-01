@@ -191,6 +191,7 @@ class ImagePipeline(BabblePipeline):
             print_settings(disc_params)
 
             print('Calling TFSlim train...')
+            print 'Model saved in: ', train_dir
             # TODO: launch these in parallel
             # Remove the train_dir so no checkpoints are kept
             if os.path.exists(train_dir):
@@ -213,6 +214,7 @@ class ImagePipeline(BabblePipeline):
             os.system(train_cmd)
 
             print('Calling TFSlim eval on validation...')
+            print 'Model read from: ', train_dir
             output_file = os.path.join(eval_dir, 'output.txt')
             if not os.path.exists(eval_dir):
                 os.makedirs(eval_dir)
@@ -224,7 +226,7 @@ class ImagePipeline(BabblePipeline):
                   ' --eval_dir=' + eval_dir + \
                   ' --dataset_split_name=validation ' + \
                   ' --model_name=' + self.config['disc_model_class'] + \
-                  ' --batch_size=' + self.config['disc_eval_batch_size'] + \
+                  ' --batch_size=78' + \
                   ' | tee -a ' + output_file
             ### TEMP ###
             # You added the batch_size parameter above
@@ -232,7 +234,6 @@ class ImagePipeline(BabblePipeline):
             os.system(eval_cmd)
 
             # Scrape results from output.txt 
-            import pdb; pdb.set_trace()
             accuracy, precision, recall = scrape_output(output_file)
             print("Accuracy: {}".format(accuracy))
             print("Precision: {}".format(precision))
@@ -276,6 +277,7 @@ class ImagePipeline(BabblePipeline):
                  ' --eval_dir=' + eval_dir + \
                  ' --dataset_split_name=test ' + \
                  ' --model_name=' + str(self.config['disc_model_class']) + \
+                 ' --batch_size=118' + \
                  ' | tee -a ' + test_file)
                 
         

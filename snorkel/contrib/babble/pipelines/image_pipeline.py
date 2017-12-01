@@ -185,6 +185,7 @@ class ImagePipeline(BabblePipeline):
         lrs, weight_decays, max_stepses = [], [], []
         for i, disc_params in enumerate(disc_params_options):
             train_dir = os.path.join(train_root, "config_{}".format(i))
+            print("\nTrain Directory {}.".format(train_dir))
             eval_dir = os.path.join(eval_root, "config_{}".format(i))
             print("\nConfiguration {}.".format(i, eval_dir))
             print("Running the following configuration:".format(i))

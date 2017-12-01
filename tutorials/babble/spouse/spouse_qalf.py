@@ -83,8 +83,8 @@ class QalfConverter(object):
         candidate_index = {candidate_id: i for i, candidate_id in enumerate(row_ids)}
         row_index = {v: k for k, v in candidate_index.items()}
         return csr_LabelMatrix(csr, 
-                                    candidate_index=candidate_index,
-                                    row_index=row_index)
+                               candidate_index=candidate_index,
+                               row_index=row_index)
 
 # NOTE:
 # This is not yet a completely valid LabelMatrix, as we do not create the

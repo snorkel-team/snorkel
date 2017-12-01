@@ -193,7 +193,7 @@ class SnorkelPipeline(object):
                 L_test = load_label_matrix(self.session, split=TEST)
             else:
                 L_test = self.L_test            
-            assert L_test.nnz > 0            
+            #assert L_test.nnz > 0            
 
             L_gold_test = load_gold_labels(self.session, annotator_name='gold', split=TEST)
             if self.config['verbose']:
@@ -201,8 +201,8 @@ class SnorkelPipeline(object):
                 print("Using L_gold_test: {0}".format(L_gold_test.__repr__()))
                 total = L_gold_test.shape[0]
                 positive = float(sum(L_gold_test.todense() == 1))
-                print("Positive Fraction: {:.1f}%\n".format(positive/total * 100))
-            assert L_gold_test.nonzero()[0].shape[0] > 0
+                #print("Positive Fraction: {:.1f}%\n".format(positive/total * 100))
+            #assert L_gold_test.nonzero()[0].shape[0] > 0
 
         if self.config['supervision'] == 'majority':
             gen_model = MajorityVoter()

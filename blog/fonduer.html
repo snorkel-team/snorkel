@@ -10,14 +10,14 @@
             margin: 0 auto;
         }
 
-        .effectfront:hover {
-            -webkit-transform: scale(1.2);
-            -moz-transform: scale(1.2);
-            -o-transform: scale(1.2);
-            transform: scale(1.2);
-            transition: all 0.3s;
-            -webkit-transition: all 0.3s;
-        }
+        <!-- .effectfront:hover { -->
+        <!--     -webkit-transform: scale(1.2); -->
+        <!--     -moz-transform: scale(1.2); -->
+        <!--     -o-transform: scale(1.2); -->
+        <!--     transform: scale(1.2); -->
+        <!--     transition: all 0.3s; -->
+        <!--     -webkit-transition: all 0.3s; -->
+        <!-- } -->
 
         body {
             font-family: Helvetica, arial, sans-serif;
@@ -492,7 +492,7 @@
             font-size: 40px;
             background: #333333;
             color: #f8f8f8;
-            z-index: 10;
+            <!-- z-index: 10; -->
         }
 
         blockquote {
@@ -513,7 +513,7 @@
 
     <p id="main-title">Fonduer: Knowledge Base Construction from <br> Richly Formatted Data</p>
 
-    <p>Post by <a href="https://stanford.edu/~senwu/" target="_blank">Sen Wu</a>, <a href="https://stanford.edu/~lwhsiao/" target="_blank">Luke Hsiao</a>, and <a href="https://cs.stanford.edu/people/chrismre/" target="_blank">Chris Ré</a><br /><a href="http://snorkel.stanford.edu">Snorkel Blog</a></p>
+    <p>Post by <a href="https://stanford.edu/~senwu/" target="_blank">Sen Wu</a>, <a href="https://stanford.edu/~lwhsiao/" target="_blank">Luke Hsiao</a>, and <a href="https://cs.stanford.edu/people/chrismre/" target="_blank">Chris Ré</a> on the <a href="http://snorkel.stanford.edu">Snorkel Blog</a></p>
 
     <p><em>And referencing work by many other <a href="http://cs.stanford.edu/people/chrismre/#students" target="_blank">members of Hazy Research</a></em></p>
 
@@ -522,7 +522,7 @@
         documents. Why? These answers are often not found in unstructured text. Instead, they are often locked away in troves of <b>richly formatted</b> data, where information is conveyed via combinations of textual, structural, tabular, and
         visual expressions, as seen in webpages, business reports, product specifications, and scientific literature. We walk through a <a href="#case_study">case study</a> on Tesla's spending below.
     </p>
-    <p class="img"><img src="fonduer_img/rfd.png" /></p>
+    <p class="img"><img src="fonduer_img/rfd.png" data-action="zoom"/></p>
     <blockquote>
         <p>
             We describe <a href="https://arxiv.org/abs/1703.05028" target="_blank">Fonduer</a>, the first knowledge base construction framework for richly formatted information extraction. Using Fonduer, our users have achieve high quality knowledge base
@@ -613,7 +613,7 @@
                 </p>
             </blockquote>
 
-            <p class="img"><img class="effectfront" src="fonduer_img/candidates.png" width="900px" /></p>
+            <p class="img"><img class="effectfront" src="fonduer_img/candidates.png" width="900px" data-action="zoom"/></p>
 
             <p>
                 In 10-Q forms, expenses are published in tabular form as shown in above. However, notice that all the challenges and characteristics of richly formatted data come into play. Candidates can be found from all over this example page. In addition, interpreting
@@ -636,7 +636,7 @@
                 </p>
             </blockquote>
 
-            <p class="img"><img class="effectfront" src="fonduer_img/supervision.png" width="850px" /></p>
+            <p class="img"><img class="effectfront" src="fonduer_img/supervision.png" width="850px" data-action="zoom"/></p>
 
             <p>
                 In richly formatted data, useful patterns for classifying whether or not a candidate is true or false are more sparse than in unstructured text. Furthermore, they are hidden in non-textual signals, which motivates the need to exploit overlap and repetition
@@ -660,7 +660,7 @@
                         target="_blank">incremental knowledge base construction</a>.</p>
             </blockquote>
 
-            <p class="img"><img class="effectfront" src="fonduer_img/iterative.png" width="850px" /></p>
+            <p class="img"><img class="effectfront" src="fonduer_img/iterative.png" width="850px" data-action="zoom"/></p>
 
             <p>
 
@@ -705,6 +705,11 @@
       ga('create', 'UA-93927842-1', 'auto');
       ga('send', 'pageview');
 
+    </script>
+
+    <script src="https://unpkg.com/medium-zoom@0/dist/medium-zoom.min.js"></script>
+    <script>
+      mediumZoom('[data-action="zoom"]')
     </script>
 
 </body>

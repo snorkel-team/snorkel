@@ -126,10 +126,9 @@ class GenerativeModel(Classifier):
         step_size = step_size or 0.0001
 
         # Check to make sure matrix is int-valued
-        element_type = type(L[0,0])
-        if not element_type in [np.int64, np.int32, int]:
+        if not (isinstance(L[0,0], np.int64) or isinstance(L[0,0], np.int32) or isinstance(L[0,0], int)):
             raise ValueError("""Label matrix must have int-type elements, 
-                but elements have type %s""" % element_type)
+                but elements have type %s""" % type(L[0,0]))
 
         # Automatically infer cardinality
         # Binary: Values in {-1, 0, 1} [Default]

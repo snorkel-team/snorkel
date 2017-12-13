@@ -355,22 +355,31 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
             kid_to_col[kid] = j
             col_to_kid[j]   = kid
 
-    # Create sparse matrix in LIL format for incremental construction
-    X = sparse.lil_matrix((len(cid_to_row), len(kid_to_col)), dtype=np.int64)
+    # Create sparse matrix in COO format for incremental construction
+    row = []
+    columns = []
+    data = []
 
-    # NOTE: This is much faster as it allows us to skip the above join (which for some reason is
-    # unreasonably slow) by relying on our symbol tables from above; however this will get slower with
-    # The total number of annotations in DB which is weird behavior...
-    q = session.query(annotation_class.candidate_id, annotation_class.key_id, annotation_class.value)
-    q = q.order_by(annotation_class.candidate_id)
+    # Rely on the core for fast iteration
+    annot_select_query = annotation_class.__table__.select()
 
     # Iteratively construct row index and output sparse matrix
-    for cid, kid, val in q.all():
+    # Cycles through the entire table to load the data.
+    # Perfornamce may slow down based on table size; however, negligible since 
+    # it takes 8min to go throuh 245M rows (pretty fast).
+
+    for val, cid, kid in session.execute(annot_select_query):
+
         if cid in cid_to_row and kid in kid_to_col:
+
             # Optionally restricts val range to {0,1}, mapping -1 -> 0
             if zero_one:
                 val = 1 if val == 1 else 0
-            X[cid_to_row[cid], kid_to_col[kid]] = int(val)
+            row.append(cid_to_row[cid])
+            columns.append(kid_to_col[kid])
+            data.append(int(val))
+
+    X = sparse.coo_matrix((data, (row, columns)), shape=(len(cid_to_row), len(kid_to_col)))
 
     # Return as an AnnotationMatrix
     Xr = matrix_class(X, candidate_index=cid_to_row, row_index=row_to_cid,

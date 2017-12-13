@@ -17,11 +17,16 @@ class TFNoiseAwareModel(Classifier):
     :param seed: Top level seed which is passed into both numpy operations
         via a RandomState maintained by the class, and into TF as a graph-level
         seed.
+    :param deterministic [EXPERIMENTAL / in development!] If True, attempts to
+            make the model deterministic on GPU by replacing all reduce_ and 
+            other non-deterministic operations; has no effect (other than 
+            potential slight slowdown) for CPU (at least for single-threaded?).
     """
-    def __init__(self, n_threads=None, seed=123, **kwargs):
+    def __init__(self, n_threads=None, seed=123, deterministic=False, **kwargs):
         self.n_threads = n_threads
         self.seed = seed
         self.rand_state = np.random.RandomState()
+        self.deterministic = deterministic
         super(TFNoiseAwareModel, self).__init__(**kwargs)
 
     def _build_model(self, **model_kwargs):
@@ -58,7 +63,15 @@ class TFNoiseAwareModel(Classifier):
             loss_fn = tf.nn.softmax_cross_entropy_with_logits
         else:
             loss_fn = tf.nn.sigmoid_cross_entropy_with_logits
-        self.loss = tf.reduce_mean(loss_fn(logits=self.logits, labels=self.Y))
+
+        # If deterministic=True, avoid use of non-deterministic reduce_ ops
+        if self.deterministic:
+            l = tf.reshape(loss_fn(logits=self.logits, labels=self.Y), [1, -1])
+            self.loss = tf.squeeze(tf.matmul(l, tf.ones_like(l), 
+                transpose_b=True)) / tf.cast(tf.shape(l)[1], tf.float32)
+        else:
+            self.loss = tf.reduce_mean(loss_fn(logits=self.logits, 
+                labels=self.Y))
         
         # Build training op
         self.lr = tf.placeholder(tf.float32)

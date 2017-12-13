@@ -100,7 +100,7 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
         if None in values:
             raise ValueError("`None` is a protected value.")
         if any([type(v) == int for v in values]):
-            raise ValueError("Values cannot be integers.")
+            raise ValueError("Default usage of values is consecutive integers. Leave values unset if attempting to define values as integers.")
         cardinality = len(values)
 
     # If cardinality is specified but not values, fill in with ints

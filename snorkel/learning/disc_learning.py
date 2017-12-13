@@ -17,10 +17,10 @@ class TFNoiseAwareModel(Classifier):
     :param seed: Top level seed which is passed into both numpy operations
         via a RandomState maintained by the class, and into TF as a graph-level
         seed.
-    :param deterministic: Whether to make the model deterministic on GPU
-            by replacing all reduce_ and other non-deterministic operations;
-            has no effect (other than potential slight slowdown) for CPU 
-            (at least for single-threaded?).
+    :param deterministic [EXPERIMENTAL / in development!] If True, attempts to
+            make the model deterministic on GPU by replacing all reduce_ and 
+            other non-deterministic operations; has no effect (other than 
+            potential slight slowdown) for CPU (at least for single-threaded?).
     """
     def __init__(self, n_threads=None, seed=123, deterministic=False, **kwargs):
         self.n_threads = n_threads

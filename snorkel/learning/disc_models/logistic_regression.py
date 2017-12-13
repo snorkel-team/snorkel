@@ -31,16 +31,17 @@ class LogisticRegression(TFNoiseAwareModel):
         self.w = tf.Variable(tf.random_normal((d, k), stddev=SD, seed=s1))
         self.b = tf.Variable(tf.random_normal((k,), stddev=SD, seed=s2))
 
-        # TODO: Implement for categorical as well...
         if self.deterministic:
+            # TODO: Implement for categorical as well...
+            if self.cardinality > 2:
+                raise NotImplementedError(
+                    "Deterministic mode not implemented for categoricals.")
+
             # Make deterministic
             # See: https://www.twosigma.com/insights/a-workaround-for-non-determinism-in-tensorflow
             f_w = tf.matmul(self.X, self.w)
-            print(f_w.get_shape())
             f_w_temp = tf.concat([f_w, tf.ones_like(f_w)], axis=1)
-            print(f_w_temp.get_shape())
             b_temp = tf.stack([tf.ones_like(self.b), self.b], axis=0)
-            print(b_temp.get_shape())
             self.logits = tf.matmul(f_w_temp, b_temp)
         else:
             self.logits = tf.nn.bias_add(tf.matmul(self.X, self.w), self.b)
@@ -104,8 +105,14 @@ class SparseLogisticRegression(LogisticRegression):
         k = self.cardinality if self.cardinality > 2 else 1
         self.w = tf.Variable(tf.random_normal((d, k), stddev=SD, seed=s1))
         self.b = tf.Variable(tf.random_normal((k,), stddev=SD, seed=s2))
+        
         if self.deterministic:
-            # Make deterministic
+            # TODO: Implement for categorical as well...
+            if self.cardinality > 2:
+                raise NotImplementedError(
+                    "Deterministic mode not implemented for categoricals.")
+
+            # Try to make deterministic...
             f_w = tf.nn.embedding_lookup_sparse(params=self.w, 
                 sp_ids=sparse_ids, sp_weights=sparse_vals, combiner=None)
             f_w_temp = tf.concat([f_w, tf.ones_like(f_w)], axis=1)

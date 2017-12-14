@@ -1,7 +1,7 @@
 bs4
 future
 futures
-ipywidgets
+ipywidgets>=7.0
 jupyter
 lxml==3.6.4
 matplotlib

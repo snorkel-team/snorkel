@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import numpy as np
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
@@ -71,7 +77,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         else: # s is an array of ints
             idxs = s
             # If s is the entire slice, skip the remapping step
-            if np.array_equal(idxs, range(len(idxs))):
+            if np.array_equal(idxs, list(range(len(idxs)))):
                 return index, inv_index
 
         index_new, inv_index_new = {}, {}
@@ -114,7 +120,7 @@ try:
             # Default LF stats
             col_names = ['j', 'Coverage', 'Overlaps', 'Conflicts']
             d = {
-                'j'         : range(self.shape[1]),
+                'j'         : list(range(self.shape[1])),
                 'Coverage'  : Series(data=matrix_coverage(self), index=lf_names),
                 'Overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
                 'Conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
@@ -126,7 +132,7 @@ try:
                 fp = matrix_fp(self, ls)
                 fn = matrix_fn(self, ls)
                 tn = matrix_tn(self, ls)
-                ac = (tp+tn).astype(float) / (tp+tn+fp+fn)
+                ac = (tp+tn) / (tp+tn+fp+fn)
                 d['Empirical Acc.'] = Series(data=ac, index=lf_names)
                 d['TP']             = Series(data=tp, index=lf_names)
                 d['FP']             = Series(data=fp, index=lf_names)

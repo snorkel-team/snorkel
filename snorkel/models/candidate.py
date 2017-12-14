@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 from sqlalchemy import (
     Column, String, Integer, Float, Boolean, ForeignKey, UniqueConstraint,
     MetaData
@@ -105,7 +111,7 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
 
     # If cardinality is specified but not values, fill in with ints
     elif cardinality is not None:
-        values = range(cardinality)
+        values = list(range(cardinality))
 
     class_spec = (args, table_name, cardinality, values)
     if class_name in candidate_subclasses:

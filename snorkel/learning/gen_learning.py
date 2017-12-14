@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 from .classifier import Classifier
 from numba import jit
 import numbskull
@@ -139,7 +145,7 @@ class GenerativeModel(Classifier):
         if cardinality is None:
             # If candidate_ranges is provided, use this to determine cardinality
             if candidate_ranges is not None:
-                cardinality = max(map(max, candidate_ranges))
+                cardinality = max(list(map(max, candidate_ranges)))
             else:
                 # This is just an annoying hack for LIL sparse matrices...
                 try:
@@ -194,7 +200,7 @@ class GenerativeModel(Classifier):
                 self.candidate_ranges)
 
         # Shuffle the data points, cardinalities, and candidate_ranges
-        idxs = range(m)
+        idxs = list(range(m))
         self.rng.shuffle(idxs)
         L = L[idxs, :]
         if candidate_ranges is not None:
@@ -498,7 +504,7 @@ class GenerativeModel(Classifier):
             if dep_type in dep_name_map:
                 dep_mat = getattr(self, dep_name_map[dep_type])
             else:
-                raise ValueError("Unrecognized dependency type: " + unicode(dep_type))
+                raise ValueError("Unrecognized dependency type: " + str(dep_type))
 
             dep_mat[lf1, lf2] = 1
 
@@ -843,7 +849,7 @@ class GenerativeModel(Classifier):
         save_path2 = os.path.join(save_dir, "{0}.hps.pkl".format(model_name))
         with open(save_path2, 'rb') as f:
             hps = load(f)
-            for k, v in hps.iteritems():
+            for k, v in hps.items():
                 setattr(self, k, v)
         if verbose:
             print("[{0}] Model <{1}> loaded.".format(self.name, model_name))

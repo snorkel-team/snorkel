@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import codecs
 import glob
 import os
@@ -181,7 +187,7 @@ class HTMLDocPreprocessor(DocPreprocessor):
     def parse_file(self, fp, file_name):
         with open(fp, 'rb') as f:
             html = BeautifulSoup(f, 'lxml')
-            txt = filter(self._cleaner, html.findAll(text=True))
+            txt = list(filter(self._cleaner, html.findAll(text=True)))
             txt = ' '.join(self._strip_special(s) for s in txt if s != '\n')
             name = os.path.basename(fp).rsplit('.', 1)[0]
             stable_id = self.get_stable_id(name)
@@ -196,7 +202,7 @@ class HTMLDocPreprocessor(DocPreprocessor):
     def _cleaner(self, s):
         if s.parent.name in ['style', 'script', '[document]', 'head', 'title']:
             return False
-        elif re.match('<!--.*-->', unicode(s)):
+        elif re.match('<!--.*-->', str(s)):
             return False
         return True
 
@@ -228,7 +234,7 @@ class XMLMultiDocPreprocessor(DocPreprocessor):
         for i, doc in enumerate(et.parse(f).xpath(self.doc)):
             doc_id = str(doc.xpath(self.id)[0])
             text = '\n'.join(
-                filter(lambda t: t is not None, doc.xpath(self.text))
+                [t for t in doc.xpath(self.text) if t is not None]
             )
             meta = {'file_name': str(file_name)}
             if self.keep_xml_tree:

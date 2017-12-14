@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import os
 import sys
 import json
@@ -141,7 +147,7 @@ class StanfordCoreNLPServer(Parser):
         for name in annotator_opts:
             if not annotator_opts[name]:
                 continue
-            props = ["{}={}".format(key, str(value).lower()) for key, value in annotator_opts[name].items()]
+            props = ["{}={}".format(key, str(value).lower()) for key, value in list(annotator_opts[name].items())]
             opts.append('"{}.options":"{}"'.format(name, ",".join(props)))
 
         props = []
@@ -205,7 +211,7 @@ class StanfordCoreNLPServer(Parser):
             return
 
         # handle encoding (force to unicode)
-        if isinstance(text, unicode):
+        if isinstance(text, str):
             text = text.encode('utf-8', 'error')
 
         # POST request to CoreNLP Server

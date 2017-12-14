@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import tensorflow as tf
 import numpy as np
 from time import time
@@ -229,7 +235,7 @@ class TFNoiseAwareModel(Classifier):
                 epoch_losses.append(epoch_loss)
 
             # Reshuffle training data
-            train_idxs = range(n)
+            train_idxs = list(range(n))
             self.rand_state.shuffle(train_idxs)
             X_train = [X_train[j] for j in train_idxs] if self.representation \
                 else X_train[train_idxs, :]

@@ -1,3 +1,11 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+
 import os
 import math
 import matplotlib
@@ -11,7 +19,7 @@ from multiprocessing import Process, Queue, JoinableQueue
 try:
     from queue import Empty
 except:
-    from Queue import Empty
+    from queue import Empty
 
 from pandas import DataFrame
 
@@ -261,10 +269,10 @@ class MentionScorer(Scorer):
         """
         error_sets = self.score(test_marginals, display=False, **kwargs)
         if len(error_sets) == 4:
-            _, _, f1 = binary_scores_from_counts(*map(len, error_sets))
+            _, _, f1 = binary_scores_from_counts(*list(map(len, error_sets)))
             return f1, "F1 Score"
         else:
-            nc, ninc = map(len, error_sets)
+            nc, ninc = list(map(len, error_sets))
             return nc / float(nc + ninc), "Accuracy"
 
 
@@ -310,7 +318,7 @@ def plot_prediction_probability(probs):
 
 
 def plot_accuracy(probs, ground_truth):
-    x = 0.1 * np.array(range(11))
+    x = 0.1 * np.array(list(range(11)))
     bin_assign = [x[i] for i in np.digitize(probs, x)-1]
     correct = ((2*(probs >= 0.5) - 1) == ground_truth)
     correct_prob = np.array([np.mean(correct[bin_assign == p]) for p in x])
@@ -373,7 +381,7 @@ class GridSearch(object):
         model_class_params={}, model_hyperparams={}, save_dir='checkpoints'):
         self.model_class        = model_class
         self.parameter_dict     = parameter_dict
-        self.param_names        = parameter_dict.keys()
+        self.param_names        = list(parameter_dict.keys())
         self.X_train            = X_train
         self.Y_train            = Y_train
         self.model_class_params = model_class_params
@@ -637,8 +645,8 @@ class RandomSearch(GridSearch):
             model_hyperparams=model_hyperparams, save_dir=save_dir)
 
     def search_space(self):
-        return zip(*[self.rand_state.choice(self.parameter_dict[pn], self.n)
-            for pn in self.param_names])
+        return list(zip(*[self.rand_state.choice(self.parameter_dict[pn], self.n)
+            for pn in self.param_names]))
 
 
 ############################################################

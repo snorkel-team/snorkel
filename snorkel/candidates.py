@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 from collections import defaultdict
 from copy import deepcopy
 from itertools import product
@@ -108,7 +114,7 @@ class CandidateExtractorUDF(UDF):
             # Checking for existence
             if not clear:
                 q = select([self.candidate_class.id])
-                for key, value in candidate_args.items():
+                for key, value in list(candidate_args.items()):
                     q = q.where(getattr(self.candidate_class, key) == value)
                 candidate_id = self.session.execute(q).first()
                 if candidate_id is not None:
@@ -227,8 +233,8 @@ class PretaggedCandidateExtractorUDF(UDF):
         # Form entity Spans
         entity_spans = defaultdict(list)
         entity_cids  = {}
-        for et, cid_idxs in entity_idxs.iteritems():
-            for cid, idxs in entity_idxs[et].iteritems():
+        for et, cid_idxs in entity_idxs.items():
+            for cid, idxs in entity_idxs[et].items():
                 while len(idxs) > 0:
                     i          = idxs.pop(0)
                     char_start = context.char_offsets[i]
@@ -269,7 +275,7 @@ class PretaggedCandidateExtractorUDF(UDF):
             # Checking for existence
             if check_for_existing:
                 q = select([self.candidate_class.id])
-                for key, value in candidate_args.items():
+                for key, value in list(candidate_args.items()):
                     q = q.where(getattr(self.candidate_class, key) == value)
                 candidate_id = self.session.execute(q).first()
                 if candidate_id is not None:

@@ -19,8 +19,13 @@ class Parser(object):
         :return:
         '''
         text = text.encode('utf-8', 'error')
-        text = text.decode('string_escape', errors='ignore')
-        text = text.decode('utf-8')
+        # Python 2
+        try:
+            text = text.decode('string_escape', errors='ignore')
+            text = text.decode('utf-8')
+        # Python 3
+        except LookupError:
+            text = text.decode('unicode_escape', errors='ignore')
         return text
 
     def connect(self):

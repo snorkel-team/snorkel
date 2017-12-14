@@ -6,8 +6,8 @@ from builtins import *
 
 import numpy as np
 
-from rnn_base import RNNBase
-from utils import SymbolTable
+from .rnn_base import RNNBase
+from .utils import SymbolTable
 
 
 class TextRNN(RNNBase):

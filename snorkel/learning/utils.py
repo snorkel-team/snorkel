@@ -8,8 +8,6 @@ from builtins import *
 
 import os
 import math
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sparse
 import warnings
@@ -22,9 +20,6 @@ except:
     from queue import Empty
 
 from pandas import DataFrame
-
-# matplotlib.use('Agg')
-# warnings.filterwarnings("ignore", module="matplotlib")
 
 
 ############################################################
@@ -303,55 +298,6 @@ def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
     print("----------------------------------------")
     print("TP: {} | FP: {} | TN: {} | FN: {}".format(ntp, nfp, ntn, nfn))
     print("========================================\n")
-
-
-
-############################################################
-### Calibration plots (currently unused, but should put back in?)
-############################################################
-
-def plot_prediction_probability(probs):
-    plt.hist(probs, bins=20, normed=False, facecolor='blue')
-    plt.xlim((0,1.025))
-    plt.xlabel("Probability")
-    plt.ylabel("# Predictions")
-
-
-def plot_accuracy(probs, ground_truth):
-    x = 0.1 * np.array(list(range(11)))
-    bin_assign = [x[i] for i in np.digitize(probs, x)-1]
-    correct = ((2*(probs >= 0.5) - 1) == ground_truth)
-    correct_prob = np.array([np.mean(correct[bin_assign == p]) for p in x])
-    xc = x[np.isfinite(correct_prob)]
-    correct_prob = correct_prob[np.isfinite(correct_prob)]
-    plt.plot(x, np.abs(x-0.5) + 0.5, 'b--', xc, correct_prob, 'ro-')
-    plt.xlim((0,1))
-    plt.ylim((0,1))
-    plt.xlabel("Probability")
-    plt.ylabel("Accuracy")
-
-
-def calibration_plots(train_marginals, test_marginals, gold_labels=None):
-    """Show classification accuracy and probability histogram plots"""
-    n_plots = 3 if gold_labels is not None else 1
-
-    # Whole set histogram
-    plt.subplot(1,n_plots,1)
-    plot_prediction_probability(train_marginals)
-    plt.title("(a) # Predictions (training set)")
-
-    if gold_labels is not None:
-
-        # Hold-out histogram
-        plt.subplot(1,n_plots,2)
-        plot_prediction_probability(test_marginals)
-        plt.title("(b) # Predictions (test set)")
-
-        # Classification bucket accuracy
-        plt.subplot(1,n_plots,3)
-        plot_accuracy(test_marginals, gold_labels)
-        plt.title("(c) Accuracy (test set)")
-    plt.show()
 
 
 

@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import *
+from future.utils import iteritems
 
 import os
 import re
@@ -120,7 +121,7 @@ class BratProject(object):
         documents = self.session.query(Document).all()
 
         gold_labels = {label.candidate_id: label for label in self.session.query(GoldLabel).all()}
-        gold_labels = {uid:label for uid, label in gold_labels.items()
+        gold_labels = {uid:label for uid, label in iteritems(gold_labels)
                       if (positive_only_labels and label.value == 1) or not positive_only_labels}
 
         doc_index     = {doc.name:doc for doc in documents}
@@ -191,7 +192,7 @@ class BratProject(object):
             arg2 = "{}{}".format(*entities[c[1]])
             relations[('R',len(relations)+1)] =  "{} Arg1:{} Arg2:{}".format(type(c).__name__, arg1, arg2)
 
-        entities = {uid:span for span,uid in entities.items()}
+        entities = {uid:span for span,uid in iteritems(entities)}
         annotations = []
         # export entities (relation arguments)
         for uid in sorted(entities, key=lambda x:x[-1]):

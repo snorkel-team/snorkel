@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import *
+from future.utils import iteritems
 
 import numpy as np
 import tensorflow as tf
@@ -31,7 +32,7 @@ class SymbolTable(object):
         return self.s
 
     def reverse(self):
-        return {v: k for k, v in self.d.items()}
+        return {v: k for k, v in iteritems(self.d)}
 
 
 def scrub(s):

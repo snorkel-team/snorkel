@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import *
+from future.utils import iteritems
 
 import os
 import sys
@@ -147,7 +148,7 @@ class StanfordCoreNLPServer(Parser):
         for name in annotator_opts:
             if not annotator_opts[name]:
                 continue
-            props = ["{}={}".format(key, str(value).lower()) for key, value in list(annotator_opts[name].items())]
+            props = ["{}={}".format(key, str(value).lower()) for key, value in iteritems(annotator_opts[name])]
             opts.append('"{}.options":"{}"'.format(name, ",".join(props)))
 
         props = []

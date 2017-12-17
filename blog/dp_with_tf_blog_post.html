@@ -12037,7 +12037,7 @@ $$</p>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="(2.ii)-The-labeling-function-model-as-a-matrix-completion-problem">(2.ii) The labeling function model as a matrix completion problem<a class="anchor-link" href="#(2.ii)-The-labeling-function-model-as-a-matrix-completion-problem">&#182;</a></h4><p>The way that we learn the accuracies of the labeling functions is by learning from the overlaps between them. Concretely, given our conditional indpendnce assumptions, we learn the accuracies of the labeling functions that best explain the empirical overlaps we see between them.</p>
+<h4 id="(2.ii)-The-labeling-function-model-as-a-matrix-completion-problem">(2.ii) The labeling function model as a matrix completion problem<a class="anchor-link" href="#(2.ii)-The-labeling-function-model-as-a-matrix-completion-problem">&#182;</a></h4><p>The way that we learn the accuracies of the labeling functions is by learning from the overlaps between them. Concretely, given our conditional independence assumptions, we learn the accuracies of the labeling functions that best explain the empirical overlaps we see between them.</p>
 <p>We start by building an empirical "overlaps matrix" $Z\in [-1,1]^{m\times m}$ where $Z_{i,j} = 2\hat{p}_{i,j} - 1$, with $\hat{p}_{i,j}$ being the empirical probability of labeling functions $i$ and $j$ agreeing.</p>
 
 </div>
@@ -12072,14 +12072,15 @@ $$
 \begin{align*}
 p_{i,j} &= p_ip_j + (1-p_i)(1-p_j)\\
 \end{align*}
-$$<p>However, if you take the dot product of the $\vec{\lambda}$ with its transpose, you get the sum of its agreements minus the sum of its disagreements. If we write those out with the above probabilities and simplify, we see that we can represent the above $Z$ matrix by doing a dot product of the below $q$ vector with its transpose.</p>
+$$<p>However, if you take the outer product of the label matrix with itself (i.e. the Gram matrix), properly normalized for labeling propensity (i.e. how often each labeling function does not abstain) as above, you get the sum of its agreements minus the sum of its disagreements.
+If we write those out with the above probabilities and simplify, we see that we can represent the above $Z$ matrix as the outer product of the below $q$ vector with itself:</p>
 $$
 \begin{align*}
 Z_{i,j} &= (2p_i-1)(2p_j-1) = q_iq_j
 \end{align*}
 $$<p>Where we have defined the rescaled LF accuracies $q_i=2p_i-1$.  So, our objective is now to find the LF accuracies that best match the data, in other words, the low rank approximation problem:</p>
 $$
-\min_q ||Z-qq^T||_2^2
+\min_q ||Z-qq^T||_F^2
 $$
 </div>
 </div>

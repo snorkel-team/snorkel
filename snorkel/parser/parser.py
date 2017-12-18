@@ -24,15 +24,15 @@ class Parser(object):
         :param text:
         :return:
         '''
-        text = text.encode('utf-8', 'error')
-        # Python 2
+        # Python 2 only -- should fail on LookupError in Python 3
         try:
-            text = text.decode('string_escape', errors='ignore')
-            text = text.decode('utf-8')
+            text_alt = text.encode('utf-8', 'error')
+            text_alt = text_alt.decode('string_escape', errors='ignore')
+            text_alt = text_alt.decode('utf-8')
+            return text_alt
         # Python 3
         except LookupError:
-            text = text.decode('unicode_escape', errors='ignore')
-        return text
+            return text
 
     def connect(self):
         '''

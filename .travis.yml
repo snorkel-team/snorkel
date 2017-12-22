@@ -8,6 +8,7 @@ language:
   - python
 python:
   - "2.7"
+  - "3.6"
 jdk:
   - oraclejdk8
 

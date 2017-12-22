@@ -378,9 +378,11 @@ class GridSearch(object):
             for pn, pv in zip(self.param_names, param_vals):
                 hps[pn] = pv
             print("=" * 60)
-            NUMTYPES = [float, int, np.float64]
+            NUMTYPES = (float, int, np.float64)
             print("[%d] Testing %s" % (k+1, ', '.join([
-                "%s = %s" % (pn, ("%0.2e" % pv) if type(pv) in NUMTYPES else pv)
+                "%s = %s" % (
+                    pn,
+                    ("%0.2e" % pv) if isinstance(pv, NUMTYPES) else pv)
                 for pn,pv in zip(self.param_names, param_vals)
             ])))
             print("=" * 60)

@@ -430,7 +430,7 @@ class LabelAnnotator(Annotator):
             for lf_key, label in labels(c):
                 # Note: We assume if the LF output is an int, it is already
                 # mapped correctly
-                if type(label) == int:
+                if isinstance(label, int):
                     yield lf_key, label
                 # None is a protected LF output value corresponding to 0,
                 # representing LF abstaining

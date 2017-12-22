@@ -498,6 +498,10 @@ class GridSearch(object):
         model = self.model_class(**self.model_class_params)
         model.load('{0}_{1}'.format(model.name, k_opt), save_dir=self.save_dir)
 
+        # Also save the best model as separate file
+        model.save(model_name="{0}_best".format(model.name), 
+            save_dir=self.save_dir)
+
         # Return model and DataFrame of scores
         # Test for categorical vs. binary in hack-ey way for now...
         f_score = 'F-{0}'.format(beta)

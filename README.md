@@ -73,13 +73,13 @@ Then, for more content, check out the other tutorials avaliable [here](https://g
 * And many more fixes, additions, and new material!
 
 ## Installation
-Snorkel uses Python 2.7 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
+Snorkel uses Python 2.7 or Python 3 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
 
 ### Setting Up Conda
 Installation is easiest if you download and install [`conda`](https://www.continuum.io/downloads).
 If you are running multiple version of Python, you might need to run:
 ```
-conda create -n py2Env python=2.7 anaconda
+conda create -n py2Env python=[2.7|3.6] anaconda
 ```
 And then run the correct environment:
 ```

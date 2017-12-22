@@ -416,6 +416,9 @@ class GridSearch(object):
             run_stats.append(list(param_vals) + list(run_scores))
             if run_score > run_score_opt or k == 0:
                 model.save(model_name=model_name, save_dir=self.save_dir)
+                # Also save a separate file for easier access
+                model.save(model_name="{0}_best".format(model.name), 
+                    save_dir=self.save_dir)
                 opt_model_name = model_name
                 run_score_opt = run_score
 

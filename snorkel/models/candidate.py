@@ -105,7 +105,8 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
             raise ValueError("Number of values must match cardinality.")
         if None in values:
             raise ValueError("`None` is a protected value.")
-        if any([isinstance(v, int) for v in values]):
+        # Note that bools are instances of ints in Python...
+        if any([isinstance(v, int) and not isinstance(v, bool) for v in values]):
             raise ValueError("Default usage of values is consecutive integers. Leave values unset if attempting to define values as integers.")
         cardinality = len(values)
 

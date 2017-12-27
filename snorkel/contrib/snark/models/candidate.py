@@ -81,7 +81,7 @@ def wrap_candidate(row, class_name='Candidate', argnames=None):
 
     # Create Sentence object
     # Arrays are stored as BLOBs so need to be converted to Python using Pickle
-    sentence_args = dict(list(zip(SENTENCE_COLS, row[-len(SENTENCE_COLS):])))
+    sentence_args = dict(zip(SENTENCE_COLS, row[-len(SENTENCE_COLS):]))
     sentence_args = {k: pickle.loads(v) if isinstance(v, bytearray) else v
                      for k, v in iteritems(sentence_args)}
     sent = Sentence(**sentence_args)
@@ -90,7 +90,7 @@ def wrap_candidate(row, class_name='Candidate', argnames=None):
     spans, cids = [], []
     for i in range(arity):
         j = CONTEXT_OFFSET + i * (len(SPAN_COLS) + 1)
-        span_args = dict(list(zip(SPAN_COLS, row[j+1:j+len(SPAN_COLS)])))
+        span_args = dict(zip(SPAN_COLS, row[j+1:j+len(SPAN_COLS)]))
         span_args = {k: pickle.loads(v) if isinstance(v, bytearray) else v
                 for k, v in iteritems(span_args)}
         span = Span(**span_args)

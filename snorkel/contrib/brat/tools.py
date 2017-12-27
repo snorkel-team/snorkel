@@ -86,7 +86,7 @@ class BratProject(object):
         """
         config_path = "{}/{}".format(input_dir, "annotation.conf")
         if not os.path.exists(config_path):
-            print("{} Fatal error: missing 'annotation.conf' file".format(sys.stderr))
+            print("Fatal error: missing 'annotation.conf' file", file=sys.stderr)
             return
 
         # load brat config (this defines relation and argument types)
@@ -267,7 +267,7 @@ class BratProject(object):
 
                     # discontinuous mentions
                     if len(spans) != 1:
-                        print("{} NotImplementedError: Discontinuous Spans".format(sys.stderr))
+                        print("NotImplementedError: Discontinuous Spans", sys.stderr)
                         continue
 
                     entity = []
@@ -281,7 +281,7 @@ class BratProject(object):
                                      "idx_span":(word_offset, word_offset + len(tokens)), "span":word_mention}
                             entity += [parts]
                         else:
-                            print("{} SUB SPAN ERROR {} ({},{})".format(sys.stderr, text, i, j))
+                            print("SUB SPAN ERROR {} ({},{})".format(text, i, j), file=sys.stderr)
                             continue
 
                     # TODO: we assume continuous spans here
@@ -295,11 +295,11 @@ class BratProject(object):
                     annotations[anno_id] = (rela_type, arg1, arg2)
 
                 elif anno_id_prefix == Brat.EVENT_ID:
-                    print("{} NotImplementedError: Events".format(sys.stderr))
+                    print("NotImplementedError: Events", file=sys.stderr)
                     raise NotImplementedError
 
                 elif anno_id_prefix == Brat.ATTRIB_ID:
-                    print("{} NotImplementedError: Attributes".format(sys.stderr))
+                    print("NotImplementedError: Attributes", file=sys.stderr)
 
         return annotations
 
@@ -377,7 +377,7 @@ class BratProject(object):
 
             # TODO: Assume simple relation types *without* multiple argument types
             if (len(arg1) > 1 or len(arg2) > 1) and arg1 != arg2:
-                print("{} Error: Snorkel currently does not support multiple argument types per relation".format(sys.stderr))
+                print("Error: Snorkel currently does not support multiple argument types per relation", file=sys.stderr)
 
             try:
                 args = sorted(set(arg1 + arg2))

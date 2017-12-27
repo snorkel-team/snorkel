@@ -242,7 +242,7 @@ class BratAnnotator(object):
 
         n, N = len(mapped_cands), len(missed) + len(mapped_cands)
         p = len(mapped_cands)/ float(N)
-        print("{} Mapped {}/{} ({:2.0f}%) of BRAT labels to candidates".format(sys.stderr,n,N,p*100))
+        print("Mapped {}/{} ({:2.0f}%) of BRAT labels to candidates".format(n,N,p*100), file=sys.stderr)
         return mapped_cands, len(missed)
 
     def error_analysis(self, session, candidates, marginals, annotation_dir, b=0.5):
@@ -468,7 +468,7 @@ class BratAnnotator(object):
                 msg = "Warning: {} Span annotations do not match BRAT:[{}]!=SNORKEL:[{}] [{}:{}]".format(
                     document.name, mention, spans[key].get_span(), i, j
                 )
-                print("{} {}".format(sys.stderr, msg.format(key)))
+                print(msg.format(key), file=sys.stderr)
 
         # create relation pairs
         relations = {}
@@ -479,7 +479,7 @@ class BratAnnotator(object):
             # check that our span objects exist
             if arg1 not in spans or arg2 not in spans:
                 msg = "Error: Relation {} missing Span object (check for Span parsing errors)"
-                print("{} {}".format(sys.stderr, msg.format(key)))
+                print(msg.format(key), file=sys.stderr)
             relations[key] = [spans[arg1], spans[arg2]]
 
         return spans, relations
@@ -553,7 +553,7 @@ class StandoffAnnotations(object):
         """
         config_path = "{}/{}".format(input_dir, "annotation.conf")
         if not os.path.exists(config_path):
-            print("{} Fatal error: missing 'annotation.conf' file".format(sys.stderr))
+            print("Fatal error: missing 'annotation.conf' file", file=sys.stderr)
             return
 
         # load brat config (this defines relation and argument types)
@@ -598,14 +598,14 @@ class StandoffAnnotations(object):
 
                     # discontinuous mentions
                     if len(spans) != 1:
-                        print("{} NotImplementedError: Discontinuous spans".format(sys.stderr))
+                        print("NotImplementedError: Discontinuous spans", file=sys.stderr)
                         continue
 
                     i,j = spans[0]
                     mention = doc_str[i:j]
                     # santity check to see if label span matches document span
                     if mention != text:
-                        print("{} Error: Annotation spans do not match {} != {}".format(sys.stderr, mention, text))
+                        print("Error: Annotation spans do not match {} != {}".format(mention, text), file=sys.stderr)
                         continue
 
                     annotations[anno_id] = {"abs_char_start":i, "abs_char_end":j,
@@ -619,11 +619,11 @@ class StandoffAnnotations(object):
                     annotations[anno_id] = (rela_type, arg1, arg2)
 
                 elif anno_id_prefix == StandoffAnnotations.EVENT_ID:
-                    print("{} NotImplementedError: Events".format(sys.stderr))
+                    print("NotImplementedError: Events", file=sys.stderr)
                     raise NotImplementedError
 
                 elif anno_id_prefix == StandoffAnnotations.ATTRIB_ID:
-                    print("{} NotImplementedError: Attributes".format(sys.stderr))
+                    print("NotImplementedError: Attributes", file=sys.stderr)
 
         return annotations
 

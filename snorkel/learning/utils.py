@@ -13,10 +13,7 @@ import warnings
 import inspect
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
-try:
-    from queue import Empty
-except:
-    from queue import Empty
+from queue import Empty
 
 from pandas import DataFrame
 

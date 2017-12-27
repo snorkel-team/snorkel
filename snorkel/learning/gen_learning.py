@@ -146,7 +146,7 @@ class GenerativeModel(Classifier):
         if cardinality is None:
             # If candidate_ranges is provided, use this to determine cardinality
             if candidate_ranges is not None:
-                cardinality = max(list(map(max, candidate_ranges)))
+                cardinality = max(map(max, candidate_ranges))
             else:
                 # This is just an annoying hack for LIL sparse matrices...
                 try:
@@ -201,8 +201,7 @@ class GenerativeModel(Classifier):
                 self.candidate_ranges)
 
         # Shuffle the data points, cardinalities, and candidate_ranges
-        idxs = list(range(m))
-        self.rng.shuffle(idxs)
+        idxs = self.rng.permutation(list(range(m)))
         L = L[idxs, :]
         if candidate_ranges is not None:
             self.cardinalities = self.cardinalities[idxs]

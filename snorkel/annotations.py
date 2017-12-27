@@ -92,9 +92,8 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         X = super(csr_AnnotationMatrix, self).__getitem__(key)
 
         # If X is an integer or float value, just return it
-        element_type = type(X)
-        if element_type in [int, float] or issubclass(element_type, np.integer)\
-            or issubclass(element_type, np.float):
+        if type(X) in [int, float] or issubclass(type(X), np.integer)\
+            or issubclass(type(X), np.float):
             return X
         # If X is a matrix, make sure it stays a csr_AnnotationMatrix
         elif not isinstance(X, csr_AnnotationMatrix):

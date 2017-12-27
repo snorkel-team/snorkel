@@ -7,10 +7,7 @@ standard_library.install_aliases()
 from builtins import *
 
 from multiprocessing import Process, JoinableQueue
-try:
-    from queue import Empty
-except:
-    from queue import Empty
+from queue import Empty
 
 from .models.meta import new_sessionmaker, snorkel_conn_string
 from .utils import ProgressBar

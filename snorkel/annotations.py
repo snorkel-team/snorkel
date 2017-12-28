@@ -380,7 +380,7 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
         # Either way, make sure the order is set here explicitly!
         cid, kid, val = res.candidate_id, res.key_id, res.value
 
-        if (cid in cid_to_row) and (kid in kid_to_col):
+        if cid in cid_to_row and kid in kid_to_col:
 
             # Optionally restricts val range to {0,1}, mapping -1 -> 0
             if zero_one:

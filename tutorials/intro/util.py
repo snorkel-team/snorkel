@@ -52,3 +52,4 @@ def load_external_labels(session, candidate_class, annotator_name='gold'):
     # Reload annotator labels
     reload_annotator_labels(session, candidate_class, annotator_name, split=1, filter_label_split=False)
     reload_annotator_labels(session, candidate_class, annotator_name, split=2, filter_label_split=False)
+    

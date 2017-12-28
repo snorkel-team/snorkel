@@ -260,10 +260,10 @@ class MentionScorer(Scorer):
         """
         error_sets = self.score(test_marginals, display=False, **kwargs)
         if len(error_sets) == 4:
-            _, _, f1 = binary_scores_from_counts(*list(map(len, error_sets)))
+            _, _, f1 = binary_scores_from_counts(*map(len, error_sets))
             return f1, "F1 Score"
         else:
-            nc, ninc = list(map(len, error_sets))
+            nc, ninc = map(len, error_sets)
             return nc / float(nc + ninc), "Accuracy"
 
 
@@ -323,7 +323,7 @@ class GridSearch(object):
         model_class_params={}, model_hyperparams={}, save_dir='checkpoints'):
         self.model_class        = model_class
         self.parameter_dict     = parameter_dict
-        self.param_names        = list(parameter_dict.keys())
+        self.param_names        = list(parameter_dict)
         self.X_train            = X_train
         self.Y_train            = Y_train
         self.model_class_params = model_class_params
@@ -375,7 +375,7 @@ class GridSearch(object):
             for pn, pv in zip(self.param_names, param_vals):
                 hps[pn] = pv
             print("=" * 60)
-            NUMTYPES = (float, int, np.float64)
+            NUMTYPES = float, int, np.float64
             print("[%d] Testing %s" % (k+1, ', '.join([
                 "%s = %s" % (
                     pn,

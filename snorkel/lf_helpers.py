@@ -141,7 +141,7 @@ def contains_token(c, tok, attrib='words', case_sensitive=False):
     except:
         spans = [c]
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return f(tok) in set(chain.from_iterable(list(map(f, span.get_attrib_tokens(attrib)))
+    return f(tok) in set(chain.from_iterable(map(f, span.get_attrib_tokens(attrib))
         for span in spans))
 
 

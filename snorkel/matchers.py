@@ -36,7 +36,7 @@ class Matcher(object):
         Checks for unsupported opts, throws error if found
         NOTE: Must be called _after_ init()
         """
-        for opt in list(self.opts.keys()):
+        for opt in self.opts.keys():
             if not opt in self.__dict__:
                 raise Exception("Unsupported option: %s" % opt)
 

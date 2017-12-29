@@ -121,6 +121,10 @@ class Classifier(object):
         return s.score(test_marginals, train_marginals=None, b=b,
             display=display, set_unlabeled_as_neg=set_unlabeled_as_neg)
 
+    def _preprocess_data(self, X):
+        """Generic preprocessing subclass; may be called by external methods."""
+        return X
+
     def save(self):
         raise NotImplementedError()
 

@@ -345,7 +345,3 @@ class TFNoiseAwareModel(Classifier):
         else:
             raise Exception("[{0}] No model found at <{1}>".format(
                 self.name, model_name))
-
-    def _preprocess_data(self, X):
-        """Generic preprocessing subclass; may be called by external methods."""
-        return X

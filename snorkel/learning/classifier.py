@@ -130,3 +130,6 @@ class Classifier(object):
 
     def load(self):
         raise NotImplementedError()
+
+    def train(self):
+        raise NotImplementedError()

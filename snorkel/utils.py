@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import re
 import sys
 import numpy as np
@@ -158,7 +164,7 @@ def sort_X_on_Y(X, Y):
 def corenlp_cleaner(words):
   d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
        '-RSB-': ']', '-LSB-': '['}
-  return map(lambda w: d[w] if w in d else w, words)
+  return [d[w] if w in d else w for w in words]
 
 
 def tokens_to_ngrams(tokens, n_max=3, delim=' '):

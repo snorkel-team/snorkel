@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import numpy as np
 import tensorflow as tf
 
@@ -155,7 +161,7 @@ class SparseLogisticRegression(LogisticRegression):
                 continue
             # Update indices by position
             max_len = max(max_len, len(row))
-            indices.extend((i, t) for t in xrange(len(row)))
+            indices.extend((i, t) for t in range(len(row)))
             ids.extend(row)
             weights.extend(data)
         shape = (len(X_lil.rows), max_len)

@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import sys
 import requests
 
@@ -18,15 +24,13 @@ class Parser(object):
         :param text:
         :return:
         '''
-        text = text.encode('utf-8', 'error')
-        # Python 2
-        try:
-            text = text.decode('string_escape', errors='ignore')
-            text = text.decode('utf-8')
-        # Python 3
-        except LookupError:
-            text = text.decode('unicode_escape', errors='ignore')
-        return text
+        if sys.version_info[0] < 3:
+            text_alt = text.encode('utf-8', 'error')
+            text_alt = text_alt.decode('string_escape', errors='ignore')
+            text_alt = text_alt.decode('utf-8')
+            return text_alt
+        else:
+            return text
 
     def connect(self):
         '''

@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 from functools import partial
 
 
@@ -9,7 +15,7 @@ def feats_from_matrix_generator(candidate, candidate_index, X, prefix):
     prefix: @string with feature key prefix
     """
     i = candidate_index[candidate.id]
-    for j in xrange(X.shape[1]):
+    for j in range(X.shape[1]):
         yield '{0}_{1}'.format(prefix, j), X[i, j]
 
 

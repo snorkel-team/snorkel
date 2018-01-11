@@ -63,6 +63,10 @@ class GenerativeModel(Classifier):
         self.rng.seed(seed)
         set_numba_seeds(seed)
 
+        # Determine whether predicts single value or (potentially) multiple
+        # For now: Fixed as true in generative model!
+        self.single_value = True
+
     # These names of factor types are for the convenience of several methods
     # that perform the same operations over multiple types, but this class's
     # behavior is not fully specified here. Other methods, such as marginals(),

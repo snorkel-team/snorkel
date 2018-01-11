@@ -122,7 +122,7 @@ class RNNBase(TFNoiseAwareModel):
                 stddev=SD, seed=s4))
             b = tf.Variable(np.zeros(self.cardinality), dtype=tf.float32)
             self.logits = tf.matmul(potentials, W) + b
-            self.marginals_op = tf.nn.softmax(self.logits)
+        
         else:
             self.Y = tf.placeholder(tf.float32, [None])
             W = tf.Variable(tf.random_normal((2*dim, 1), stddev=SD, seed=s4))
@@ -145,7 +145,12 @@ class RNNBase(TFNoiseAwareModel):
                 b = tf.Variable(0., dtype=tf.float32)
                 self.logits = tf.squeeze(tf.matmul(potentials, W)) + b
 
-            self.marginals_op = tf.nn.sigmoid(self.logits)
+        # Define marginals op
+        if self.cardinality > 2 and self.single_value:
+            marginals_fn = tf.nn.softmax
+        else:
+            marginals_fn = tf.nn.sigmoid
+        self.marginals_op = marginals_fn(self.logits)
 
     def _construct_feed_dict(self, X_b, Y_b, lr=0.01, dropout=None, **kwargs):
         X_b, len_b = self._make_tensor(X_b)

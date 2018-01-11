@@ -17,9 +17,13 @@ class Classifier(object):
     # otherwise assume X is an AnnotationMatrix
     representation = False
 
-    def __init__(self, cardinality=2, name=None):
+    def __init__(self, cardinality=2, name=None, single_value=True):
         self.name = name or self.__class__.__name__
         self.cardinality = cardinality
+
+        # Determine whether predicts single value or (potentially) multiple
+        # Only valid when cardinality > 2
+        self.single_value = single_value
 
     def marginals(self, X, batch_size=None, **kwargs):
         raise NotImplementedError()
@@ -32,7 +36,7 @@ class Classifier(object):
         """Return numpy array of elements in {-1,0,1}
         based on predicted marginal probabilities.
         """
-        if self.cardinality > 2:
+        if self.cardinality > 2 and self.single_value:
             return self.marginals(X, batch_size=batch_size).argmax(axis=1) + 1
         else:
             return np.array([1 if p > b else -1 if p < b else 0 

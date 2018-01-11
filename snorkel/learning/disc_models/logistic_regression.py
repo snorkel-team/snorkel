@@ -56,7 +56,10 @@ class LogisticRegression(TFNoiseAwareModel):
             self.logits = tf.squeeze(self.logits)
 
         # Define marginals op
-        marginals_fn = tf.nn.softmax if self.cardinality > 2 else tf.nn.sigmoid
+        if self.cardinality > 2 and self.single_value:
+            marginals_fn = tf.nn.softmax
+        else:
+            marginals_fn = tf.nn.sigmoid
         self.marginals_op = marginals_fn(self.logits)
 
     def _build_training_ops(self, l1_penalty=0.0, l2_penalty=0.0, **kwargs):
@@ -133,7 +136,10 @@ class SparseLogisticRegression(LogisticRegression):
             self.logits = tf.squeeze(self.logits)
 
         # Define marginals op
-        marginals_fn = tf.nn.softmax if self.cardinality > 2 else tf.nn.sigmoid
+        if self.cardinality > 2 and self.single_value:
+            marginals_fn = tf.nn.softmax
+        else:
+            marginals_fn = tf.nn.sigmoid
         self.marginals_op = marginals_fn(self.logits)
 
     def _check_input(self, X):

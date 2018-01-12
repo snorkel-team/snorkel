@@ -38,21 +38,35 @@ class RNNBase(TFNoiseAwareModel):
             Builds a matrix of symbols corresponding to @self.word_dict for the
             current batch and an array of true sentence lengths
         """
-        batch_size = len(x)
+        try :
+            batch_size = len(x)
+        except:
+            batch_size = x.shape[0]
         x_batch    = np.zeros((batch_size, self.max_len), dtype=np.int32)
         len_batch  = np.zeros(batch_size, dtype=np.int32)
         for j, token_ids in enumerate(x):
-            t               = min(len(token_ids), self.max_len)
-            x_batch[j, 0:t] = token_ids[0:t]
+            try :
+                minlen = min(len(token_ids), self.max_len)
+                tokidreshape = token_ids
+            except:
+                if token_ids.shape[0]==1:
+                    minlen = min(token_ids.shape[1], self.max_len)
+                    tokidreshape = token_ids.todense().reshape((token_ids.shape[1],))
+                else:
+                    minlen = min(token_ids.shape[0], self.max_len)
+                    tokidreshape = token_ids.todense().reshape((token_ids.shape[0],))
+
+            t               = minlen
+            x_batch[j, 0:t] = tokidreshape[0:t]
             len_batch[j]    = t
         return x_batch, len_batch
 
     def _build_model(self, dim=50, attn_window=None, max_len=20,
-        cell_type=tf.contrib.rnn.BasicLSTMCell, word_dict=SymbolTable(), 
+        cell_type=tf.contrib.rnn.BasicLSTMCell, word_dict=SymbolTable(),
         **kwargs):
         """
         Build RNN model
-        
+
         :param dim: embedding dimension
         :param attn_window: attention window length (no attention if 0 or None)
         :param cell_type: subclass of tensorflow.python.ops.rnn_cell_impl._RNNCell
@@ -77,7 +91,7 @@ class RNNBase(TFNoiseAwareModel):
             tf.random_normal((vocab_size - 1, dim), stddev=SD, seed=s1))
         embedding = tf.concat([tf.zeros([1, dim]), emb_var], axis=0)
         inputs = tf.nn.embedding_lookup(embedding, self.sentences)
-        
+
         # Build RNN graph
         batch_size = tf.shape(self.sentences)[0]
         init = tf.contrib.layers.xavier_initializer(seed=s2)
@@ -101,10 +115,10 @@ class RNNBase(TFNoiseAwareModel):
                 sequence_length=self.sentence_lengths,
                 initial_state_fw=initial_state_fw,
                 initial_state_bw=initial_state_bw,
-                time_major=False               
+                time_major=False
             )
         potentials = get_bi_rnn_output(rnn_out, dim, self.sentence_lengths)
-        
+
         # Add dropout layer
         self.keep_prob = tf.placeholder(tf.float32)
         potentials_dropout = tf.nn.dropout(potentials, self.keep_prob, seed=s3)
@@ -112,7 +126,7 @@ class RNNBase(TFNoiseAwareModel):
         # Build activation layer
         if self.cardinality > 2:
             self.Y = tf.placeholder(tf.float32, [None, self.cardinality])
-            W = tf.Variable(tf.random_normal((2*dim, self.cardinality), 
+            W = tf.Variable(tf.random_normal((2*dim, self.cardinality),
                 stddev=SD, seed=s4))
             b = tf.Variable(np.zeros(self.cardinality), dtype=tf.float32)
             self.logits = tf.matmul(potentials, W) + b
@@ -134,7 +148,7 @@ class RNNBase(TFNoiseAwareModel):
             self.lr:               lr
         }
 
-    def train(self, X_train, Y_train, X_dev=None, max_sentence_length=None, 
+    def train(self, X_train, Y_train, X_dev=None, max_sentence_length=None,
         **kwargs):
         """
         Perform preprocessing of data, construct dataset-specific model, then
@@ -144,11 +158,11 @@ class RNNBase(TFNoiseAwareModel):
         X_train, ends = self._preprocess_data(X_train, extend=True)
         if X_dev is not None:
             X_dev, _ = self._preprocess_data(X_dev, extend=False)
-        
+
         # Get max sentence size
         max_len = max_sentence_length or max(len(x) for x in X_train)
         self._check_max_sentence_length(ends, max_len=max_len)
-        
+
         # Train model- note we pass word_dict through here so it gets saved...
         super(RNNBase, self).train(X_train, Y_train, X_dev=X_dev,
             word_dict=self.word_dict, max_len=max_len, **kwargs)

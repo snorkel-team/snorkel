@@ -286,13 +286,10 @@ class TFNoiseAwareModel(Classifier):
             # Iterate over batches
             batch_marginals = []
             for b in range(0, N, batch_size):
-                batch = self._marginals_batch(X[b:min(N, b+batch_size)])
-                
-                # Note: if a single marginal in *binary* classification is
-                # returned, it will have shape () rather than (1,)- catch here
-                if len(batch.shape) == 0:
-                    batch = batch.reshape(1)
-                    
+                batch = self._marginals_batch(X[b:b+batch_size])
+                # Note: Make sure a list is returned!
+                if min(b+batch_size, N) - b == 1:
+                    batch = np.array([batch])
                 batch_marginals.append(batch)
             return np.concatenate(batch_marginals)
 

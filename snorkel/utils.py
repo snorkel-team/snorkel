@@ -203,5 +203,5 @@ def remove_files(filename):
     try:
         subprocess.check_output('rm -f %s' % filename, shell=True)
     except OSError as e:
-        print e
+        print(e)
         pass

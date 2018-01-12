@@ -1,3 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+from future.utils import iteritems
+
 from collections import defaultdict
 from copy import deepcopy
 from itertools import product
@@ -46,8 +53,9 @@ class CandidateExtractor(UDFRunner):
 class CandidateExtractorUDF(UDF):
     def __init__(self, candidate_class, cspaces, matchers, self_relations, nested_relations, symmetric_relations, **kwargs):
         self.candidate_class     = candidate_class
-        self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
-        self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
+        # Note: isinstance is the way to check types -- not type(x) in [...]!
+        self.candidate_spaces    = cspaces if isinstance(cspaces, (list, tuple)) else [cspaces]
+        self.matchers            = matchers if isinstance(matchers, (list, tuple)) else [matchers]
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations
         self.symmetric_relations = symmetric_relations
@@ -108,7 +116,7 @@ class CandidateExtractorUDF(UDF):
             # Checking for existence
             if not clear:
                 q = select([self.candidate_class.id])
-                for key, value in candidate_args.items():
+                for key, value in iteritems(candidate_args):
                     q = q.where(getattr(self.candidate_class, key) == value)
                 candidate_id = self.session.execute(q).first()
                 if candidate_id is not None:
@@ -227,8 +235,8 @@ class PretaggedCandidateExtractorUDF(UDF):
         # Form entity Spans
         entity_spans = defaultdict(list)
         entity_cids  = {}
-        for et, cid_idxs in entity_idxs.iteritems():
-            for cid, idxs in entity_idxs[et].iteritems():
+        for et, cid_idxs in iteritems(entity_idxs):
+            for cid, idxs in iteritems(entity_idxs[et]):
                 while len(idxs) > 0:
                     i          = idxs.pop(0)
                     char_start = context.char_offsets[i]
@@ -269,7 +277,7 @@ class PretaggedCandidateExtractorUDF(UDF):
             # Checking for existence
             if check_for_existing:
                 q = select([self.candidate_class.id])
-                for key, value in candidate_args.items():
+                for key, value in iteritems(candidate_args):
                     q = q.where(getattr(self.candidate_class, key) == value)
                 candidate_id = self.session.execute(q).first()
                 if candidate_id is not None:

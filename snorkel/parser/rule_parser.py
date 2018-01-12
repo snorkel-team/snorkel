@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import re
 from collections import defaultdict
 from snorkel.models import construct_stable_id
@@ -109,8 +115,13 @@ class RuleBasedParser(Parser):
     def to_unicode(self, text):
 
         text = text.encode('utf-8', 'error')
-        text = text.decode('string_escape', errors='ignore')
-        text = text.decode('utf-8')
+        # Python 2
+        try:
+            text = text.decode('string_escape', errors='ignore')
+            text = text.decode('utf-8')
+        # Python 3
+        except LookupError:
+            text = text.decode('unicode_escape', errors='ignore')
         return text
 
     def connect(self):
@@ -134,7 +145,7 @@ class RuleBasedParser(Parser):
             if not tokens:
                 continue
 
-            parts['words'], parts['char_offsets'] = zip(*tokens)
+            parts['words'], parts['char_offsets'] = list(zip(*tokens))
             parts['abs_char_offsets'] = [idx + offset for idx in parts['char_offsets']]
             parts['lemmas'] = []
             parts['pos_tags'] = []

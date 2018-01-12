@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import os
 import re
 import warnings
@@ -186,7 +192,7 @@ class SlotFillMatch(NgramMatcher):
 
         # Parse slot fill pattern
         split        = re.split(r'\{(\d+)\}', self.pattern)
-        self._ops    = map(int, split[1::2])
+        self._ops    = list(map(int, split[1::2]))
         self._splits = split[::2]
 
         # NOTE: Must have non-null splits!!

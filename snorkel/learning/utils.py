@@ -1,22 +1,21 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+
 import os
 import math
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sparse
 import warnings
 import inspect
 from itertools import product
 from multiprocessing import Process, Queue, JoinableQueue
-try:
-    from queue import Empty
-except:
-    from Queue import Empty
+from queue import Empty
 
 from pandas import DataFrame
-
-# matplotlib.use('Agg')
-# warnings.filterwarnings("ignore", module="matplotlib")
 
 
 ############################################################
@@ -299,55 +298,6 @@ def print_scores(ntp, nfp, ntn, nfn, title='Scores'):
 
 
 ############################################################
-### Calibration plots (currently unused, but should put back in?)
-############################################################
-
-def plot_prediction_probability(probs):
-    plt.hist(probs, bins=20, normed=False, facecolor='blue')
-    plt.xlim((0,1.025))
-    plt.xlabel("Probability")
-    plt.ylabel("# Predictions")
-
-
-def plot_accuracy(probs, ground_truth):
-    x = 0.1 * np.array(range(11))
-    bin_assign = [x[i] for i in np.digitize(probs, x)-1]
-    correct = ((2*(probs >= 0.5) - 1) == ground_truth)
-    correct_prob = np.array([np.mean(correct[bin_assign == p]) for p in x])
-    xc = x[np.isfinite(correct_prob)]
-    correct_prob = correct_prob[np.isfinite(correct_prob)]
-    plt.plot(x, np.abs(x-0.5) + 0.5, 'b--', xc, correct_prob, 'ro-')
-    plt.xlim((0,1))
-    plt.ylim((0,1))
-    plt.xlabel("Probability")
-    plt.ylabel("Accuracy")
-
-
-def calibration_plots(train_marginals, test_marginals, gold_labels=None):
-    """Show classification accuracy and probability histogram plots"""
-    n_plots = 3 if gold_labels is not None else 1
-
-    # Whole set histogram
-    plt.subplot(1,n_plots,1)
-    plot_prediction_probability(train_marginals)
-    plt.title("(a) # Predictions (training set)")
-
-    if gold_labels is not None:
-
-        # Hold-out histogram
-        plt.subplot(1,n_plots,2)
-        plot_prediction_probability(test_marginals)
-        plt.title("(b) # Predictions (test set)")
-
-        # Classification bucket accuracy
-        plt.subplot(1,n_plots,3)
-        plot_accuracy(test_marginals, gold_labels)
-        plt.title("(c) Accuracy (test set)")
-    plt.show()
-
-
-
-############################################################
 ### Grid search
 ############################################################
 
@@ -373,7 +323,7 @@ class GridSearch(object):
         model_class_params={}, model_hyperparams={}, save_dir='checkpoints'):
         self.model_class        = model_class
         self.parameter_dict     = parameter_dict
-        self.param_names        = parameter_dict.keys()
+        self.param_names        = list(parameter_dict)
         self.X_train            = X_train
         self.Y_train            = Y_train
         self.model_class_params = model_class_params
@@ -425,9 +375,11 @@ class GridSearch(object):
             for pn, pv in zip(self.param_names, param_vals):
                 hps[pn] = pv
             print("=" * 60)
-            NUMTYPES = [float, int, np.float64]
+            NUMTYPES = float, int, np.float64
             print("[%d] Testing %s" % (k+1, ', '.join([
-                "%s = %s" % (pn, ("%0.2e" % pv) if type(pv) in NUMTYPES else pv)
+                "%s = %s" % (
+                    pn,
+                    ("%0.2e" % pv) if isinstance(pv, NUMTYPES) else pv)
                 for pn,pv in zip(self.param_names, param_vals)
             ])))
             print("=" * 60)
@@ -463,6 +415,9 @@ class GridSearch(object):
             run_stats.append(list(param_vals) + list(run_scores))
             if run_score > run_score_opt or k == 0:
                 model.save(model_name=model_name, save_dir=self.save_dir)
+                # Also save a separate file for easier access
+                model.save(model_name="{0}_best".format(model.name), 
+                    save_dir=self.save_dir)
                 opt_model_name = model_name
                 run_score_opt = run_score
 
@@ -541,6 +496,10 @@ class GridSearch(object):
         k_opt = run_stats[i_opt][0]
         model = self.model_class(**self.model_class_params)
         model.load('{0}_{1}'.format(model.name, k_opt), save_dir=self.save_dir)
+
+        # Also save the best model as separate file
+        model.save(model_name="{0}_best".format(model.name), 
+            save_dir=self.save_dir)
 
         # Return model and DataFrame of scores
         # Test for categorical vs. binary in hack-ey way for now...
@@ -637,8 +596,8 @@ class RandomSearch(GridSearch):
             model_hyperparams=model_hyperparams, save_dir=save_dir)
 
     def search_space(self):
-        return zip(*[self.rand_state.choice(self.parameter_dict[pn], self.n)
-            for pn in self.param_names])
+        return list(zip(*[self.rand_state.choice(self.parameter_dict[pn], self.n)
+            for pn in self.param_names]))
 
 
 ############################################################

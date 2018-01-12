@@ -2,7 +2,7 @@ require.undef('viewer');
 
 // NOTE: all elements should be selected using this.$el.find to avoid collisions with other Viewers
 
-define('viewer', ["jupyter-js-widgets"], function(widgets) {
+define('viewer', ["@jupyter-widgets/base"], function(widgets) {
     var ViewerView = widgets.DOMWidgetView.extend({
         render: function() {
             this.cids   = this.model.get('cids');

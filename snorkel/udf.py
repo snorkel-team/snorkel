@@ -1,8 +1,13 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+
 from multiprocessing import Process, JoinableQueue
-try:
-    from queue import Empty
-except:
-    from Queue import Empty
+from queue import Empty
 
 from .models.meta import new_sessionmaker, snorkel_conn_string
 from .utils import ProgressBar

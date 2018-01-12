@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import numpy as np
 import re
 
@@ -18,7 +24,7 @@ def tag_seqs(words, seqs, tags):
   dj = 0
   for i in np.argsort(seqs, axis=0):
     i = int(i[0]) if hasattr(i, '__iter__') else int(i)
-    words_out = tag_seq(words_out, map(lambda j : j - dj, seqs[i]), tags[i])
+    words_out = tag_seq(words_out, [j - dj for j in seqs[i]], tags[i])
     dj += len(seqs[i]) - 1
   return words_out
 

@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 from sqlalchemy import (
     Column, String, Integer, Float, Boolean, ForeignKey, UniqueConstraint,
     MetaData
@@ -99,13 +105,14 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
             raise ValueError("Number of values must match cardinality.")
         if None in values:
             raise ValueError("`None` is a protected value.")
-        if any([type(v) == int for v in values]):
-            raise ValueError("Values cannot be integers.")
+        # Note that bools are instances of ints in Python...
+        if any([isinstance(v, int) and not isinstance(v, bool) for v in values]):
+            raise ValueError("Default usage of values is consecutive integers. Leave values unset if attempting to define values as integers.")
         cardinality = len(values)
 
     # If cardinality is specified but not values, fill in with ints
     elif cardinality is not None:
-        values = range(cardinality)
+        values = list(range(cardinality))
 
     class_spec = (args, table_name, cardinality, values)
     if class_name in candidate_subclasses:

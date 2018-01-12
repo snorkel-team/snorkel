@@ -3,9 +3,8 @@
 
 **_v0.6.2_**
 
-
-[![Documentation](https://readthedocs.org/projects/snorkel/badge/?version=master)](http://snorkel.readthedocs.io/en/master/)
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
+[![Documentation](https://readthedocs.org/projects/snorkel/badge/)](http://snorkel.readthedocs.io/en/master/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Acknowledgements
@@ -36,9 +35,10 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 ## References
 
 ### Best References:
+* **_[Snorkel: Rapid Training Data Creation with Weak Supervision](https://arxiv.org/abs/1711.10160)_ (VLDB 2018)**
 * **_[Data Programming: Creating Large Training Sets, Quickly](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly)_ (NIPS 2016)**
 * **_[Learning the Structure of Generative Models without Labeled Data](https://arxiv.org/abs/1703.00854)_ (ICML 2017)**
-* **_[Snorkel: Fast Training Set Generation for Information Extraction](http://hazyresearch.github.io/snorkel/pdfs/snorkel_demo.pdf)_ (SIGMOD DEMO 2017)**
+* _[Snorkel: Fast Training Set Generation for Information Extraction](http://hazyresearch.github.io/snorkel/pdfs/snorkel_demo.pdf)_ (SIGMOD DEMO 2017)
 * _[Inferring Generative Model Structure with Static Analysis](https://arxiv.org/abs/1709.02477)_ (NIPS 2017)
 * _[Data Programming with DDLite: Putting Humans in a Different Part of the Loop](http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf)_ (HILDA @ SIGMOD 2016; note Snorkel was previously <em>DDLite</em>)
 * _[Socratic Learning: Correcting Misspecified Generative Models using Discriminative Models](https://arxiv.org/abs/1610.08123)_
@@ -73,11 +73,11 @@ Then, for more content, check out the other tutorials avaliable [here](https://g
 * And many more fixes, additions, and new material!
 
 ## Installation
-Snorkel uses Python 2.7 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
+Snorkel uses Python 2.7 or Python 3 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
 
 ### Setting Up Conda
 Installation is easiest if you download and install [`conda`](https://www.continuum.io/downloads).
-If you are running multiple version of Python, you might need to run:
+You can create a new conda environment with e.g.:
 ```
 conda create -n py2Env python=2.7 anaconda
 ```
@@ -110,14 +110,15 @@ _Note: Currently the `Viewer` is supported on the following versions:_
 
 In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
 
-### Frequently Asked Questions
-See [this FAQ](https://hazyresearch.github.io/snorkel/install_faq) for help with common questions that arise.
-
 ## Running
 After installing, just run:
 ```
 ./run.sh
 ```
+
+## Q & A
+**Many questions about Snorkel get answered in the issues section--along with general discussions and conversations of interest.
+We tag these all as "Q&A" and save them [here](https://github.com/HazyResearch/snorkel/issues?utf8=%E2%9C%93&q=is%3Aissue+label%3A%22Q%26A%22+)**
 
 ## Issues
 We like [issues](https://github.com/HazyResearch/snorkel/issues) as a place to put bugs, questions, feature requests, etc- don't be shy!

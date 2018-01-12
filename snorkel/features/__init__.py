@@ -1,6 +1,7 @@
 """
 Submodule for Snorkel featurization.
 """
+from __future__ import absolute_import
 
 from .context_features import (
 	get_document_token_count_feats,

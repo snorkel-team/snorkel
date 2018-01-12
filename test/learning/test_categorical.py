@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import math
 from numbskull.inference import FACTORS
 from scipy import sparse
@@ -105,10 +111,7 @@ class TestCategorical(unittest.TestCase):
         candidate_ranges=None, cardinality=4, tol=0.1, n=10000):
         """Run a suite of tests."""
         # Map to log scale weights
-        LF_acc_prior_weights = map(
-            lambda x: 0.5 * np.log((cardinality - 1.0) * x / (1 - x)),
-            LF_acc_priors
-        )
+        LF_acc_prior_weights = [0.5 * np.log((cardinality - 1.0) * x / (1 - x)) for x in LF_acc_priors]
 
         # Test with priors -- first check init vals are correct
         print("Testing init:")
@@ -192,7 +195,7 @@ class TestCategorical(unittest.TestCase):
         t0 = time()
         gen_model = GenerativeModel(lf_propensity=True)
         bad_prior = [0.9, 0.8, 0.7, 0.6, 0.5]
-        bad_prior_weights = map(lambda x: 0.5 * np.log((cardinality - 1.0) * x / (1 - x)), bad_prior)
+        bad_prior_weights = [0.5 * np.log((cardinality - 1.0) * x / (1 - x)) for x in bad_prior]
         gen_model.train(
             L,
             LF_acc_prior_weights=bad_prior_weights,

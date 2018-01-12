@@ -9,7 +9,7 @@ This tutorial includes all material presented at the [Mobilize Center's Snorkel 
 
 **Lecture Slides**: [PDF](slides/Snorkel-Workshop-FINAL.pdf)
 
-**Workshop Videos**: Coming soon!
+**Workshop Videos**: [Here](https://simtk.org/frs/?group_id=1263)
 
 ### Tutorials
 

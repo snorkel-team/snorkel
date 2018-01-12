@@ -1,3 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+from future.utils import iteritems
+
 import numpy as np
 from pandas import DataFrame, Series
 import scipy.sparse as sparse
@@ -19,7 +26,7 @@ from .utils import (
     matrix_fn,
     matrix_tn
 )
-from future.utils import iteritems
+
 
 class csr_AnnotationMatrix(sparse.csr_matrix):
     """
@@ -71,7 +78,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         else: # s is an array of ints
             idxs = s
             # If s is the entire slice, skip the remapping step
-            if np.array_equal(idxs, range(len(idxs))):
+            if np.array_equal(idxs, list(range(len(idxs)))):
                 return index, inv_index
 
         index_new, inv_index_new = {}, {}
@@ -84,8 +91,9 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
     def __getitem__(self, key):
         X = super(csr_AnnotationMatrix, self).__getitem__(key)
 
-        # If X is an integer, just return it
-        if isinstance(X, int):
+        # If X is an integer or float value, just return it
+        if type(X) in [int, float] or issubclass(type(X), np.integer)\
+            or issubclass(type(X), np.float):
             return X
         # If X is a matrix, make sure it stays a csr_AnnotationMatrix
         elif not isinstance(X, csr_AnnotationMatrix):
@@ -114,7 +122,7 @@ try:
             # Default LF stats
             col_names = ['j', 'Coverage', 'Overlaps', 'Conflicts']
             d = {
-                'j'         : range(self.shape[1]),
+                'j'         : list(range(self.shape[1])),
                 'Coverage'  : Series(data=matrix_coverage(self), index=lf_names),
                 'Overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
                 'Conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
@@ -126,7 +134,7 @@ try:
                 fp = matrix_fp(self, ls)
                 fn = matrix_fn(self, ls)
                 tn = matrix_tn(self, ls)
-                ac = (tp+tn).astype(float) / (tp+tn+fp+fn)
+                ac = (tp+tn) / (tp+tn+fp+fn)
                 d['Empirical Acc.'] = Series(data=ac, index=lf_names)
                 d['TP']             = Series(data=tp, index=lf_names)
                 d['FP']             = Series(data=fp, index=lf_names)
@@ -355,26 +363,38 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
             kid_to_col[kid] = j
             col_to_kid[j]   = kid
 
-    # Create sparse matrix in LIL format for incremental construction
-    X = sparse.lil_matrix((len(cid_to_row), len(kid_to_col)), dtype=np.int64)
+    # Create sparse matrix in COO format for incremental construction
+    row = []
+    columns = []
+    data = []
 
-    # NOTE: This is much faster as it allows us to skip the above join (which for some reason is
-    # unreasonably slow) by relying on our symbol tables from above; however this will get slower with
-    # The total number of annotations in DB which is weird behavior...
-    q = session.query(annotation_class.candidate_id, annotation_class.key_id, annotation_class.value)
-    q = q.order_by(annotation_class.candidate_id)
+    # Rely on the core for fast iteration
+    annot_select_query = annotation_class.__table__.select()
 
     # Iteratively construct row index and output sparse matrix
-    for cid, kid, val in q.all():
+    # Cycles through the entire table to load the data.
+    # Perfornamce may slow down based on table size; however, negligible since 
+    # it takes 8min to go throuh 245M rows (pretty fast).
+    for res in session.execute(annot_select_query):
+        # NOTE: The order of return seems to be switched in Python 3???
+        # Either way, make sure the order is set here explicitly!
+        cid, kid, val = res.candidate_id, res.key_id, res.value
+
         if cid in cid_to_row and kid in kid_to_col:
+
             # Optionally restricts val range to {0,1}, mapping -1 -> 0
             if zero_one:
                 val = 1 if val == 1 else 0
-            X[cid_to_row[cid], kid_to_col[kid]] = int(val)
+            row.append(cid_to_row[cid])
+            columns.append(kid_to_col[kid])
+            data.append(int(val))
+
+    X = sparse.coo_matrix((data, (row, columns)), shape=(len(cid_to_row), len(kid_to_col)))
 
     # Return as an AnnotationMatrix
     Xr = matrix_class(X, candidate_index=cid_to_row, row_index=row_to_cid,
-                        annotation_key_cls=annotation_key_class, key_index=kid_to_col, col_index=col_to_kid)
+            annotation_key_cls=annotation_key_class, key_index=kid_to_col, 
+            col_index=col_to_kid)
     return np.squeeze(Xr.toarray()) if load_as_array else Xr
 
 
@@ -409,7 +429,7 @@ class LabelAnnotator(Annotator):
             for lf_key, label in labels(c):
                 # Note: We assume if the LF output is an int, it is already
                 # mapped correctly
-                if type(label) == int:
+                if isinstance(label, int):
                     yield lf_key, label
                 # None is a protected LF output value corresponding to 0,
                 # representing LF abstaining

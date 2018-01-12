@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
 
 from urllib2 import urlopen, URLError, HTTPError
 
@@ -14,6 +19,6 @@ def download(url, outfname):
         with open(outfname, "wb") as f:
             f.write(data.read())
     except HTTPError, e:
-        print "HTTP Error:", e.code, url
+        print("HTTP Error: {} {}".format(e.code, url))
     except URLError, e:
-        print "URL Error:", e.reason, url
+        print("URL Error: {} {}".format(e.reason, url))

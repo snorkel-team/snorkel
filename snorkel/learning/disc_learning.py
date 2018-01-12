@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import tensorflow as tf
 import numpy as np
 from time import time
@@ -17,11 +23,16 @@ class TFNoiseAwareModel(Classifier):
     :param seed: Top level seed which is passed into both numpy operations
         via a RandomState maintained by the class, and into TF as a graph-level
         seed.
+    :param deterministic [EXPERIMENTAL / in development!] If True, attempts to
+            make the model deterministic on GPU by replacing all reduce_ and 
+            other non-deterministic operations; has no effect (other than 
+            potential slight slowdown) for CPU (at least for single-threaded?).
     """
-    def __init__(self, n_threads=None, seed=123, **kwargs):
+    def __init__(self, n_threads=None, seed=123, deterministic=False, **kwargs):
         self.n_threads = n_threads
         self.seed = seed
         self.rand_state = np.random.RandomState()
+        self.deterministic = deterministic
         super(TFNoiseAwareModel, self).__init__(**kwargs)
 
     def _build_model(self, **model_kwargs):
@@ -58,7 +69,15 @@ class TFNoiseAwareModel(Classifier):
             loss_fn = tf.nn.softmax_cross_entropy_with_logits
         else:
             loss_fn = tf.nn.sigmoid_cross_entropy_with_logits
-        self.loss = tf.reduce_mean(loss_fn(logits=self.logits, labels=self.Y))
+
+        # If deterministic=True, avoid use of non-deterministic reduce_ ops
+        if self.deterministic:
+            l = tf.reshape(loss_fn(logits=self.logits, labels=self.Y), [1, -1])
+            self.loss = tf.squeeze(tf.matmul(l, tf.ones_like(l), 
+                transpose_b=True)) / tf.cast(tf.shape(l)[1], tf.float32)
+        else:
+            self.loss = tf.reduce_mean(loss_fn(logits=self.logits, 
+                labels=self.Y))
         
         # Build training op
         self.lr = tf.placeholder(tf.float32)
@@ -216,8 +235,7 @@ class TFNoiseAwareModel(Classifier):
                 epoch_losses.append(epoch_loss)
 
             # Reshuffle training data
-            train_idxs = range(n)
-            self.rand_state.shuffle(train_idxs)
+            train_idxs = self.rand_state.permutation(list(range(n)))
             X_train = [X_train[j] for j in train_idxs] if self.representation \
                 else X_train[train_idxs, :]
             Y_train = Y_train[train_idxs]
@@ -327,7 +345,3 @@ class TFNoiseAwareModel(Classifier):
         else:
             raise Exception("[{0}] No model found at <{1}>".format(
                 self.name, model_name))
-
-    def _preprocess_data(self, X):
-        """Generic preprocessing subclass; may be called by external methods."""
-        return X

@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 from functools import partial
 
 from models.candidate import wrap_candidate
@@ -7,7 +13,7 @@ from snorkel.models.meta import snorkel_conn_string
 from snorkel.models.views import create_serialized_candidate_view
 
 
-class SparkLabelAnnotator:
+class SparkLabelAnnotator(object):
     """
     Distributes candidates to a Spark cluster and applies labeling functions
     over them. See snorkel.annotations.LabelAnnotator.
@@ -60,7 +66,7 @@ class SparkLabelAnnotator:
                 {'name': lf.__name__, 'group': 0}).inserted_primary_key[0]
 
             labels = self.split_cache[split].map(lambda c: (c.id, lf(c)))
-            labels.filter(lambda (_, value): value != 0 and value is not None)
+            labels.filter(lambda __value: __value[1] != 0 and __value[1] is not None)
             for cid, value in labels.toLocalIterator():
                 label_tuples.append({
                     'candidate_id': cid, 'key_id': lf_id, 'value': value})

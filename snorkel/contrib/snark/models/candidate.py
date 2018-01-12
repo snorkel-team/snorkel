@@ -1,3 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+from future.utils import iteritems
+
 import pickle
 
 from snorkel.models import Sentence, Span
@@ -76,7 +83,7 @@ def wrap_candidate(row, class_name='Candidate', argnames=None):
     # Arrays are stored as BLOBs so need to be converted to Python using Pickle
     sentence_args = dict(zip(SENTENCE_COLS, row[-len(SENTENCE_COLS):]))
     sentence_args = {k: pickle.loads(v) if isinstance(v, bytearray) else v
-                     for k, v in sentence_args.iteritems()}
+                     for k, v in iteritems(sentence_args)}
     sent = Sentence(**sentence_args)
 
     # Create the Span objects
@@ -85,7 +92,7 @@ def wrap_candidate(row, class_name='Candidate', argnames=None):
         j = CONTEXT_OFFSET + i * (len(SPAN_COLS) + 1)
         span_args = dict(zip(SPAN_COLS, row[j+1:j+len(SPAN_COLS)]))
         span_args = {k: pickle.loads(v) if isinstance(v, bytearray) else v
-                for k, v in span_args.iteritems()}
+                for k, v in iteritems(span_args)}
         span = Span(**span_args)
         # Store the Sentence in the Span
         span.sentence = sent

@@ -1,3 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+from future.utils import iteritems
+
 import os
 import re
 import sys
@@ -79,7 +86,7 @@ class BratProject(object):
         """
         config_path = "{}/{}".format(input_dir, "annotation.conf")
         if not os.path.exists(config_path):
-            print>> sys.stderr, "Fatal error: missing 'annotation.conf' file"
+            print("Fatal error: missing 'annotation.conf' file", file=sys.stderr)
             return
 
         # load brat config (this defines relation and argument types)
@@ -114,7 +121,7 @@ class BratProject(object):
         documents = self.session.query(Document).all()
 
         gold_labels = {label.candidate_id: label for label in self.session.query(GoldLabel).all()}
-        gold_labels = {uid:label for uid, label in gold_labels.items()
+        gold_labels = {uid:label for uid, label in iteritems(gold_labels)
                       if (positive_only_labels and label.value == 1) or not positive_only_labels}
 
         doc_index     = {doc.name:doc for doc in documents}
@@ -138,9 +145,9 @@ class BratProject(object):
             fp.write(config)
 
         if self.verbose:
-            print "Export complete"
-            print "\t {} documents".format(len(doc_index))
-            print "\t {} annotations".format( sum([len(cand_index[name]) for name in cand_index] ))
+            print("Export complete")
+            print("\t {} documents".format(len(doc_index)))
+            print("\t {} annotations".format( sum([len(cand_index[name]) for name in cand_index] )))
 
     def _get_arg_type(self, c, span, use_titlecase=True):
         """
@@ -185,7 +192,7 @@ class BratProject(object):
             arg2 = "{}{}".format(*entities[c[1]])
             relations[('R',len(relations)+1)] =  "{} Arg1:{} Arg2:{}".format(type(c).__name__, arg1, arg2)
 
-        entities = {uid:span for span,uid in entities.items()}
+        entities = {uid:span for span,uid in iteritems(entities)}
         annotations = []
         # export entities (relation arguments)
         for uid in sorted(entities, key=lambda x:x[-1]):
@@ -260,7 +267,7 @@ class BratProject(object):
 
                     # discontinuous mentions
                     if len(spans) != 1:
-                        print>> sys.stderr, "NotImplementedError: Discontinuous Spans"
+                        print("NotImplementedError: Discontinuous Spans", sys.stderr)
                         continue
 
                     entity = []
@@ -274,7 +281,7 @@ class BratProject(object):
                                      "idx_span":(word_offset, word_offset + len(tokens)), "span":word_mention}
                             entity += [parts]
                         else:
-                            print>> sys.stderr, "SUB SPAN ERROR", text, (i, j)
+                            print("SUB SPAN ERROR {} ({},{})".format(text, i, j), file=sys.stderr)
                             continue
 
                     # TODO: we assume continuous spans here
@@ -288,11 +295,11 @@ class BratProject(object):
                     annotations[anno_id] = (rela_type, arg1, arg2)
 
                 elif anno_id_prefix == Brat.EVENT_ID:
-                    print>> sys.stderr, "NotImplementedError: Events"
+                    print("NotImplementedError: Events", file=sys.stderr)
                     raise NotImplementedError
 
                 elif anno_id_prefix == Brat.ATTRIB_ID:
-                    print>> sys.stderr, "NotImplementedError: Attributes"
+                    print("NotImplementedError: Attributes", file=sys.stderr)
 
         return annotations
 
@@ -356,7 +363,7 @@ class BratProject(object):
                 if class_name[0] in ['!','-']:
                     continue
                 self.subclasses[class_name] = candidate_subclass(class_name, [class_name.lower()])
-                print 'CREATED TYPE Entity({},[{}])'.format(class_name, class_name.lower())
+                print('CREATED TYPE Entity({},[{}])'.format(class_name, class_name.lower()))
             except:
                 pass
 
@@ -370,7 +377,7 @@ class BratProject(object):
 
             # TODO: Assume simple relation types *without* multiple argument types
             if (len(arg1) > 1 or len(arg2) > 1) and arg1 != arg2:
-                print>>sys.stderr,"Error: Snorkel currently does not support multiple argument types per relation"
+                print("Error: Snorkel currently does not support multiple argument types per relation", file=sys.stderr)
 
             try:
                 args = sorted(set(arg1 + arg2))
@@ -383,9 +390,9 @@ class BratProject(object):
                 name = name.replace("-","_")
 
                 self.subclasses[name] = candidate_subclass(name, args)
-                print 'CREATED TYPE Relation({},{})'.format(name, args)
+                print('CREATED TYPE Relation({},{})'.format(name, args))
             except Exception as e:
-                print e
+                print(e)
 
 
     def _create_config(self, candidate_types):
@@ -483,8 +490,8 @@ class BratProject(object):
                                 tc.load_id_or_insert(self.session)
                                 spans.append(tc)
                             except Exception as e:
-                                print "BRAT candidate conversion error", len(doc.sentences), j
-                                print e
+                                print("BRAT candidate conversion error {} {}".format(len(doc.sentences), j))
+                                print(e)
 
                 entity_types[class_type].append(spans)
 

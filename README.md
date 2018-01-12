@@ -110,8 +110,6 @@ _Note: Currently the `Viewer` is supported on the following versions:_
 
 In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
 
-Also see [this installation FAQ](https://hazyresearch.github.io/snorkel/install_faq) for help with common issues that arise.
-
 ## Running
 After installing, just run:
 ```

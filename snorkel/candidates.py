@@ -49,8 +49,8 @@ class CandidateExtractor(UDFRunner):
 class CandidateExtractorUDF(UDF):
     def __init__(self, candidate_class, cspaces, matchers, candidate_filter, self_relations, nested_relations, symmetric_relations, **kwargs):
         self.candidate_class     = candidate_class
-        self.candidate_spaces    = cspaces if type(cspaces) in [list, tuple] else [cspaces]
-        self.matchers            = matchers if type(matchers) in [list, tuple] else [matchers]
+        self.candidate_spaces    = cspaces if isinstance(cspaces, (list, tuple)) else [cspaces]
+        self.matchers            = matchers if isinstance(matchers, (list, tuple)) else [matchers]
         self.candidate_filter    = candidate_filter
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations

@@ -134,9 +134,9 @@ def sort_X_on_Y(X, Y):
 
 
 def corenlp_cleaner(words):
-    d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
-         '-RSB-': ']', '-LSB-': '['}
-    return map(lambda w: d[w] if w in d else w, words)
+  d = {'-RRB-': ')', '-LRB-': '(', '-RCB-': '}', '-LCB-': '{',
+       '-RSB-': ']', '-LSB-': '['}
+  return [d[w] if w in d else w for w in words]
 
 
 def split_html_attrs(attrs):

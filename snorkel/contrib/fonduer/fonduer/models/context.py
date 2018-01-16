@@ -65,8 +65,7 @@ class Figure(Context):
     """A figure Context in a Document."""
     __tablename__ = 'figure'
     id            = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
-
-    document_id   = Column(Integer, ForeignKey('document.id'), ondelete='CASCADE'))
+    document_id   = Column(Integer, ForeignKey('document.id', ondelete='CASCADE'))
     position      = Column(Integer, nullable=False)
     document      = relationship('Document', backref=backref('figures', order_by=position, cascade='all, delete-orphan'), foreign_keys=document_id)
     url           = Column(String)

@@ -69,6 +69,7 @@ class OmniParser(UDFRunner):
                  flatten=['span', 'br'],             # flatten tag types, default: span, br
                  flatten_delim='',
                  lingual=True,                       # lingual information
+                 lingual_parser=None,
                  strip=True,
                  replacements=[],#[(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]', '-')],
                  tabular=True,                       # tabular information
@@ -77,14 +78,31 @@ class OmniParser(UDFRunner):
 
         self.delim = "<NB>"  # NB = New Block
 
-        self.lingual_parser = StanfordCoreNLPServer(annotator_opts={"tokenize":{"normalizeSpace": False,"normalizeFractions":False,"normalizeParentheses":False,"normalizeOtherBrackets":False,"normalizeCurrency":False,"asciiQuotes": False,"latexQuotes": False, "unicodeQuotes": False, "ptb3Ellipsis": False, "unicodeEllipsis": False, "ptb3Dashes": False,"escapeForwardSlashAsterisk": False,"strictTreebank3": True}}, delimiter=self.delim[1:-1])
+        # Either use the provided parser (e.g. Spacy) or CoreNLP.
+        self.lingual_parser = lingual_parser or StanfordCoreNLPServer(
+            annotator_opts={
+                "tokenize": {"normalizeSpace": False,
+                             "normalizeFractions": False,
+                             "normalizeParentheses": False,
+                             "normalizeOtherBrackets": False,
+                             "normalizeCurrency": False,
+                             "asciiQuotes": False,
+                             "latexQuotes": False,
+                             "unicodeQuotes": False,
+                             "ptb3Ellipsis": False,
+                             "unicodeEllipsis": False,
+                             "ptb3Dashes": False,
+                             "escapeForwardSlashAsterisk": False,
+                             "strictTreebank3": True}
+                }, delimiter=self.delim[1:-1])
 
         super(OmniParser, self).__init__(OmniParserUDF,
                                          structural=structural,
                                          blacklist=blacklist,
                                          flatten=flatten,
                                          flatten_delim=flatten_delim,
-                                         lingual=lingual, strip=strip,
+                                         lingual=lingual,
+                                         strip=strip,
                                          replacements=replacements,
                                          tabular=tabular,
                                          visual=visual,
@@ -208,7 +226,7 @@ class OmniParserUDF(UDF):
 
         self.coordinates = {}
         self.char_idx = {}
-        
+
         if self.structural:
             xpaths = []
             html_attrs = []
@@ -395,7 +413,7 @@ class OmniParserUDF(UDF):
 
                     parent = parents_tabCaption[parent_idx]
                     parts, self.char_idx = tabCaption_info.apply_tabCaption(parts, parent, position, self.coordinates, self.char_idx)
-                    
+
 
                     parent = parents_refList[parent_idx]
                     parts, self.char_idx = refList_info.apply_refList(parts, parent, position, self.coordinates, self.char_idx)
@@ -573,7 +591,7 @@ class ParaInfo(object):
         if node.tag == "paragraph":
             self.para = None
             self.parent = self.document
-        
+
     def apply_para(self, parts, parent, position, coordinates, char_idx):
         parts['position'] = position
         if isinstance(parent, Document):
@@ -601,13 +619,13 @@ def update_coordinates_table(parts, coordinates):
         parts['right'].append(right)
         i += 1
         if i == max_len:
-            break	
+            break
     return parts
 
 def lcs(X , Y):
     m = len(X)
     n = len(Y)
- 
+
     L = [[None]*(n+1) for i in xrange(m+1)]
     d = [[None]*(n+1) for i in xrange(m+1)]
 
@@ -683,20 +701,20 @@ def update_coordinates(parts, coordinates, char_idx):
             if match[1] == word_len + word_lens[i]:
                 word_end = match[0]
         if word_begin == -1 or word_end == -1:
-            print "no match found"
+            print("no match found")
         else:
             for char_iter in range(word_begin, word_end):
                 curr_word[1] = int(min(curr_word[1], top[char_idx+char_iter]))
                 curr_word[2] = int(min(curr_word[2], left[char_idx+char_iter]))
                 curr_word[3] = int(max(curr_word[3], bottom[char_idx+char_iter]))
-                curr_word[4] = int(max(curr_word[4], right[char_idx+char_iter]))        
+                curr_word[4] = int(max(curr_word[4], right[char_idx+char_iter]))
         parts['top'].append(curr_word[1])
         parts['left'].append(curr_word[2])
         parts['bottom'].append(curr_word[3])
         parts['right'].append(curr_word[4])
     #print char_idx, max([x[0] for x in matches])
     char_idx += max([x[0] for x in matches])
-    
+
     '''
     for word in parts["words"]:
         curr_word = [word, float("Inf"), float("Inf"), float("-Inf"), float("-Inf")]

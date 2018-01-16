@@ -1,3 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+from future.utils import iteritems
+
 from .classifier import Classifier
 from numba import jit
 import numbskull
@@ -127,7 +134,9 @@ class GenerativeModel(Classifier):
 
         # Check to make sure matrix is int-valued
         element_type = type(L[0,0])
-        if not element_type in [np.int64, np.int32, int]:
+        # Note: Other simpler forms of this check often don't work; still not
+        # sure why...
+        if not issubclass(element_type, np.integer):
             raise ValueError("""Label matrix must have int-type elements, 
                 but elements have type %s""" % element_type)
 
@@ -192,8 +201,7 @@ class GenerativeModel(Classifier):
                 self.candidate_ranges)
 
         # Shuffle the data points, cardinalities, and candidate_ranges
-        idxs = range(m)
-        self.rng.shuffle(idxs)
+        idxs = self.rng.permutation(list(range(m)))
         L = L[idxs, :]
         if candidate_ranges is not None:
             self.cardinalities = self.cardinalities[idxs]
@@ -496,7 +504,7 @@ class GenerativeModel(Classifier):
             if dep_type in dep_name_map:
                 dep_mat = getattr(self, dep_name_map[dep_type])
             else:
-                raise ValueError("Unrecognized dependency type: " + unicode(dep_type))
+                raise ValueError("Unrecognized dependency type: " + str(dep_type))
 
             dep_mat[lf1, lf2] = 1
 
@@ -841,7 +849,7 @@ class GenerativeModel(Classifier):
         save_path2 = os.path.join(save_dir, "{0}.hps.pkl".format(model_name))
         with open(save_path2, 'rb') as f:
             hps = load(f)
-            for k, v in hps.iteritems():
+            for k, v in iteritems(hps):
                 setattr(self, k, v)
         if verbose:
             print("[{0}] Model <{1}> loaded.".format(self.name, model_name))

@@ -8,6 +8,7 @@ language:
   - python
 python:
   - "2.7"
+  - "3.6"
 jdk:
   - oraclejdk8
 
@@ -32,7 +33,12 @@ before_install:
   - deactivate  # leaving Travis' virtualenv first since otherwise Jupyter/IPython gets confused with conda inside a virtualenv (See: https://github.com/ipython/ipython/issues/8898)
   - mkdir -p download
   - cd download
-  - travis_retry wget -c http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda.sh
+  - rm -rf ~/miniconda
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then  
+      travis_retry wget -c https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      travis_retry wget -c https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
   - chmod +x miniconda.sh
   - bash miniconda.sh -b -f -p ~/miniconda
   - cd ..

@@ -1,4 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 from .models import GoldLabel, StableLabel, GoldLabelKey
 try:
     from IPython.core.display import display, Javascript
@@ -135,7 +140,7 @@ class Viewer(widgets.DOMWidget):
         """
         classes  = ['candidate'] if len(cids) > 0 else []
         classes += ['gold-annotation'] if gold else []
-        classes += map(str, cids)
+        classes += list(map(str, cids))
 
         # Scrub for non-ascii characters; replace with ?
         return u'<span class="{classes}">{html}</span>'.format(classes=' '.join(classes), html=html)

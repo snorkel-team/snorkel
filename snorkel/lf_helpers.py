@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import numpy as np
 import re
 
@@ -101,8 +107,8 @@ def get_left_tokens(c, window=3, attrib='words', n_max=1, case_sensitive=False):
         span = c[0]
         i = span.get_word_start()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return tokens_to_ngrams(map(f,
-        span.get_parent()._asdict()[attrib][max(0, i-window):i]), n_max=n_max)
+    return tokens_to_ngrams(list(map(f,
+        span.get_parent()._asdict()[attrib][max(0, i-window):i])), n_max=n_max)
 
 
 def get_right_tokens(c, window=3, attrib='words', n_max=1,
@@ -121,8 +127,8 @@ def get_right_tokens(c, window=3, attrib='words', n_max=1,
         span = c[-1]
         i = span.get_word_end()
     f = (lambda w: w) if case_sensitive else (lambda w: w.lower())
-    return tokens_to_ngrams(map(f,
-        span.get_parent()._asdict()[attrib][i+1:i+1+window]), n_max=n_max)
+    return tokens_to_ngrams(list(map(f,
+        span.get_parent()._asdict()[attrib][i+1:i+1+window])), n_max=n_max)
 
 
 def contains_token(c, tok, attrib='words', case_sensitive=False):

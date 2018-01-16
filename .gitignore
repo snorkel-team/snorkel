@@ -16,14 +16,6 @@ __pycache__
 # Sphinx
 docs/_build
 
-# Environments
-.env
-.venv
-.virtualenv
-env/
-venv/
-virtualenv/
-
 # PyCharm
 .idea
 

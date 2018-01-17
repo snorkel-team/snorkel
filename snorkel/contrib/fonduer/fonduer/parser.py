@@ -71,7 +71,7 @@ class OmniParser(UDFRunner):
                  lingual=True,                       # lingual information
                  lingual_parser=None,
                  strip=True,
-                 replacements=[],#[(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]', '-')],
+                 replacements=[],  # [(u'[\u2010\u2011\u2012\u2013\u2014\u2212\uf02d]', '-')],
                  tabular=True,                       # tabular information
                  visual=False,                       # visual information
                  pdf_path=None):
@@ -307,6 +307,7 @@ class OmniParserUDF(UDF):
             for field in ['text', 'tail']:
                 text = getattr(node, field)
                 if text is not None:
+                    import pdb; pdb.set_trace()
                     if self.strip:
                         text = text.strip()
                     if len(text):
@@ -371,6 +372,7 @@ class OmniParserUDF(UDF):
         tree = etree.ElementTree(root)
 
         document.text = text#.decode('utf-8')
+        import pdb; pdb.set_trace()
         parse_node(root, table_info, figure_info, para_info, section_info, header_info, figCaption_info, tabCaption_info, refList_info)
         block_char_end = np.cumsum(block_lengths)
         content_length = len(self.contents)
@@ -383,7 +385,7 @@ class OmniParserUDF(UDF):
             batch_end = parsed + \
                         self.contents[parsed:parsed + self.batch_size].rfind(self.delim) + \
                         len(self.delim)
-            for parts in self.lingual_parse(document,self.contents[parsed:batch_end]):
+            for parts in self.lingual_parse(document, self.contents[parsed:batch_end]):
                 # print (self.contents[parsed:batch_end])
                 (_, _, _, char_end) = split_stable_id(parts['stable_id'])
                 try:
@@ -400,9 +402,11 @@ class OmniParserUDF(UDF):
                         parts['html_tag'] = html_tags[parent_idx]
                         parts['html_attrs'] = html_attrs[parent_idx]
                     parent = parents_para[parent_idx]
+                    import pdb; pdb.set_trace()
                     parts, self.char_idx = para_info.apply_para(parts, parent, position, self.coordinates, self.char_idx)
                     # print "here 2"
                     parent = parents_section[parent_idx]
+                    import pdb; pdb.set_trace()
                     parts, self.char_idx = section_info.apply_section(parts, parent, position, self.coordinates, self.char_idx)
 
                     parent = parents_header[parent_idx]

@@ -307,7 +307,6 @@ class OmniParserUDF(UDF):
             for field in ['text', 'tail']:
                 text = getattr(node, field)
                 if text is not None:
-                    import pdb; pdb.set_trace()
                     if self.strip:
                         text = text.strip()
                     if len(text):
@@ -372,7 +371,6 @@ class OmniParserUDF(UDF):
         tree = etree.ElementTree(root)
 
         document.text = text#.decode('utf-8')
-        import pdb; pdb.set_trace()
         parse_node(root, table_info, figure_info, para_info, section_info, header_info, figCaption_info, tabCaption_info, refList_info)
         block_char_end = np.cumsum(block_lengths)
         content_length = len(self.contents)
@@ -402,11 +400,9 @@ class OmniParserUDF(UDF):
                         parts['html_tag'] = html_tags[parent_idx]
                         parts['html_attrs'] = html_attrs[parent_idx]
                     parent = parents_para[parent_idx]
-                    import pdb; pdb.set_trace()
                     parts, self.char_idx = para_info.apply_para(parts, parent, position, self.coordinates, self.char_idx)
                     # print "here 2"
                     parent = parents_section[parent_idx]
-                    import pdb; pdb.set_trace()
                     parts, self.char_idx = section_info.apply_section(parts, parent, position, self.coordinates, self.char_idx)
 
                     parent = parents_header[parent_idx]

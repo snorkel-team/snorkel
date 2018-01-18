@@ -55,6 +55,7 @@ class RNNBase(TFNoiseAwareModel):
                 minlen = min(len(token_ids), self.max_len)
                 tokidreshape = token_ids
             except:
+                print("Exception caught in making tensor")
                 if token_ids.shape[0]==1:
                     minlen = min(token_ids.shape[1], self.max_len)
                     tokidreshape = token_ids.todense().reshape((token_ids.shape[1],))

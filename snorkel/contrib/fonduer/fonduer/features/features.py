@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from .core_features import *
 from .content_features import *
 from .structural_features import *

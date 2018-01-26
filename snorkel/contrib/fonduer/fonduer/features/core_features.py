@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from snorkel.models import TemporarySpan
 from ..models import ImplicitSpan
 

@@ -1,8 +1,14 @@
+from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import zip
+from builtins import range
+from past.utils import old_div
 import codecs
 import subprocess
 import tempfile
 from collections import namedtuple
-from itertools import izip
+
 
 import numpy as np
 import scipy.sparse as sparse
@@ -87,7 +93,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         # Default LF stats
         col_names = ['j', 'Coverage', 'Overlaps', 'Conflicts']
         d = {
-            'j'         : range(self.shape[1]),
+            'j'         : list(range(self.shape[1])),
             'Coverage'  : Series(data=matrix_coverage(self), index=lf_names),
             'Overlaps'  : Series(data=matrix_overlaps(self), index=lf_names),
             'Conflicts' : Series(data=matrix_conflicts(self), index=lf_names)
@@ -99,7 +105,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
             fp = matrix_fp(self, ls)
             fn = matrix_fn(self, ls)
             tn = matrix_tn(self, ls)
-            ac = (tp+tn).astype(float) / (tp+tn+fp+fn)
+            ac = old_div((tp+tn).astype(float), (tp+tn+fp+fn))
             d['Empirical Acc.'] = Series(data=ac, index=lf_names)
             d['TP']             = Series(data=tp, index=lf_names)
             d['FP']             = Series(data=fp, index=lf_names)
@@ -128,7 +134,7 @@ def tsv_escape(s):
     if s is None:
         return '\\N'
     # Make sure feature names are still uniquely encoded in ascii
-    s = unicode(s)
+    s = str(s)
     s = s.replace('\"', '\\\\"').replace('\t', '\\t')
     if any(c in ',{}' for c in s):
         s = '"' + s + '"'
@@ -151,7 +157,7 @@ def copy_postgres(segment_file_blob, table_name, tsv_columns):
     @var tsv_columns: a string listing column names in the segment files
     separated by comma. e.g. "name, age, income"
     """
-    print 'Copying %s to postgres' % table_name
+    print('Copying %s to postgres' % table_name)
     if DBPORT:
         cmd = ('cat %s | psql -p %s %s -U %s -c "COPY %s(%s) '
                 'FROM STDIN" --set=ON_ERROR_STOP=true') % \
@@ -161,7 +167,7 @@ def copy_postgres(segment_file_blob, table_name, tsv_columns):
                 'FROM STDIN" --set=ON_ERROR_STOP=true') % \
                 (segment_file_blob, DBNAME, DBUSER, table_name, tsv_columns)
     _out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-    print _out
+    print(_out)
 
 
 def _segment_filename(db_name, table_name, job_id, start = None, end = None):
@@ -200,10 +206,10 @@ class BatchAnnotatorUDF(UDF):
                     # Runs the actual extraction function
                     nonzero_kvs = [(k,v) for k, v in self.anno_generator(candidate) if v != 0]
                     if nonzero_kvs:
-                        keys, values = zip(*nonzero_kvs)
+                        keys, values = list(zip(*nonzero_kvs))
                     else:
                         keys = values = []
-                    row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
+                    row = [str(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
                     writer.write('\t'.join(row) + '\n')
             else:
                 nonzero_kv_dict = {}
@@ -213,10 +219,10 @@ class BatchAnnotatorUDF(UDF):
                 for i, candidate in enumerate(candidates):
                     nonzero_kvs = nonzero_kv_dict[candidate.id]
                     if nonzero_kvs:
-                        keys, values = zip(*nonzero_kvs)
+                        keys, values = list(zip(*nonzero_kvs))
                     else:
                         keys = values = []
-                    row = [unicode(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
+                    row = [str(candidate.id), array_tsv_escape(keys), array_tsv_escape(values)]
                     writer.write('\t'.join(row) + '\n')
         return
         yield
@@ -246,8 +252,8 @@ class BatchAnnotator(UDFRunner):
             raise ValueError('No candidates in current split')
 
         # Setting up job batches
-        chunks    = cids_count / self.batch_size
-        batch_range = [(i * self.batch_size, (i + 1) * self.batch_size) for i in xrange(chunks)]
+        chunks    = old_div(cids_count, self.batch_size)
+        batch_range = [(i * self.batch_size, (i + 1) * self.batch_size) for i in range(chunks)]
         remainder = cids_count % self.batch_size
         if remainder:
             batch_range.append((chunks * self.batch_size, cids_count))
@@ -408,8 +414,8 @@ def load_annotation_matrix(con, candidates, split, table_name, key_table_name, r
     # TODO: move this for-loop computation to database for automatic parallelization,
     # avoid communication overhead etc. Try to avoid the log sorting factor using unnest
     if storage == 'COO':
-        print 'key size', len(keys)
-        print 'candidate size', len(candidates)
+        print('key size', len(keys))
+        print('candidate size', len(candidates))
         iterator_sql = 'SELECT candidate_id, key, value FROM %s '
         'WHERE candidate_id IN '
         '(SELECT id FROM candidate WHERE split=%d) '
@@ -436,7 +442,7 @@ def load_annotation_matrix(con, candidates, split, table_name, key_table_name, r
         for i, (candidate_id, c_keys, values) in enumerate(con.execute(iterator_sql)):
             candidate_index[candidate_id] = i
             row_index.append(candidate_id)
-            for key, value in izip(c_keys, values):
+            for key, value in zip(c_keys, values):
                 # Only keep known features
                 key_id = key_index.get(key, None)
                 if key_id is not None:

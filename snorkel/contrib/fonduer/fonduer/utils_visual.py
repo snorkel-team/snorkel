@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 from ....models.context import TemporarySpan
 from .models import Phrase
 from collections import namedtuple
@@ -91,4 +93,4 @@ def bbox_vert_aligned_center(box1, box2):
     Returns true if the center of both boxes is within 5 pts
     """
     if not (box1 and box2): return False
-    return abs((box1.right + box1.left) / 2.0 - (box2.right + box2.left) / 2.0) <= 5
+    return abs(old_div((box1.right + box1.left), 2.0) - old_div((box2.right + box2.left), 2.0)) <= 5

@@ -1,3 +1,8 @@
+from __future__ import print_function
+from __future__ import division
+from __future__ import unicode_literals
+from builtins import range
+from past.utils import old_div
 from snorkel.contrib.fonduer.fonduer.models import TemporaryImplicitSpan
 from snorkel.models import Label
 from snorkel.matchers import RegexMatchSpan, Union
@@ -47,7 +52,7 @@ def load_hardware_labels(session, candidate_class, filename, attrib, annotator_n
     candidates = session.query(candidate_class).all()
     gold_dict = get_gold_dict(filename, attribute=attrib)
     cand_total = len(candidates)
-    print 'Loading', cand_total, 'candidate labels'
+    print('Loading', cand_total, 'candidate labels')
     pb = ProgressBar(cand_total)
     labels=[]
     for i, c in enumerate(candidates):
@@ -68,7 +73,7 @@ def load_hardware_labels(session, candidate_class, filename, attrib, annotator_n
     pb.close()
 
     session.commit()
-    print "AnnotatorLabels created: %s" % (len(labels),)
+    print("AnnotatorLabels created: %s" % (len(labels),))
 
 
 def entity_confusion_matrix(pred, gold):
@@ -100,10 +105,10 @@ def entity_level_f1(candidates, gold_file, attribute=None, corpus=None, parts_by
     gold_set = get_gold_dict(gold_file, docs=docs, doc_on=True, part_on=True,
                              val_on=val_on, attribute=attribute)
     if len(gold_set) == 0:
-        print "Gold set is empty."
+        print("Gold set is empty.")
         return
     # Turn CandidateSet into set of tuples
-    print "Preparing candidates..."
+    print("Preparing candidates...")
     pb = ProgressBar(len(candidates))
     entities = set()
     for i, c in enumerate(candidates):
@@ -124,19 +129,19 @@ def entity_level_f1(candidates, gold_file, attribute=None, corpus=None, parts_by
     FP = len(FP_set)
     FN = len(FN_set)
 
-    prec = TP / float(TP + FP) if TP + FP > 0 else float('nan')
-    rec  = TP / float(TP + FN) if TP + FN > 0 else float('nan')
+    prec = old_div(TP, float(TP + FP)) if TP + FP > 0 else float('nan')
+    rec  = old_div(TP, float(TP + FN)) if TP + FN > 0 else float('nan')
     f1   = 2 * (prec * rec) / (prec + rec) if prec + rec > 0 else float('nan')
-    print "========================================"
-    print "Scoring on Entity-Level Gold Data"
-    print "========================================"
-    print "Corpus Precision {:.3}".format(prec)
-    print "Corpus Recall    {:.3}".format(rec)
-    print "Corpus F1        {:.3}".format(f1)
-    print "----------------------------------------"
-    print "TP: {} | FP: {} | FN: {}".format(TP, FP, FN)
-    print "========================================\n"
-    return map(lambda x: sorted(list(x)), [TP_set, FP_set, FN_set])
+    print("========================================")
+    print("Scoring on Entity-Level Gold Data")
+    print("========================================")
+    print("Corpus Precision {:.3}".format(prec))
+    print("Corpus Recall    {:.3}".format(rec))
+    print("Corpus F1        {:.3}".format(f1))
+    print("----------------------------------------")
+    print("TP: {} | FP: {} | FN: {}".format(TP, FP, FN))
+    print("========================================\n")
+    return [sorted(list(x)) for x in [TP_set, FP_set, FN_set]]
 
 
 def get_implied_parts(part, doc, parts_by_doc):

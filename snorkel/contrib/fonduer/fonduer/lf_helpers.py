@@ -1,3 +1,9 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
 from collections import defaultdict
 from itertools import chain
 from lxml import etree
@@ -5,8 +11,8 @@ from lxml.html import fromstring
 import numpy as np
 
 from snorkel.utils import tokens_to_ngrams
-from utils_visual import bbox_from_span, bbox_from_phrase, bbox_horz_aligned, bbox_vert_aligned, bbox_vert_aligned_left, bbox_vert_aligned_right, bbox_vert_aligned_center
-from utils_table import min_row_diff, min_col_diff, is_row_aligned, is_col_aligned, is_axis_aligned
+from .utils_visual import bbox_from_span, bbox_from_phrase, bbox_horz_aligned, bbox_vert_aligned, bbox_vert_aligned_left, bbox_vert_aligned_right, bbox_vert_aligned_center
+from .utils_table import min_row_diff, min_col_diff, is_row_aligned, is_col_aligned, is_axis_aligned
 from ....models.context import TemporarySpan
 from .models import Phrase
 from snorkel.candidates import Ngrams
@@ -107,7 +113,7 @@ def get_matches(lf, candidate_set, match_values=[1, -1]):
         label = lf(c)
         if label in match_values:
             matches.append(c)
-    print("%s matches") % len(matches)
+    print(("%s matches") % len(matches))
     return matches
 
 
@@ -709,7 +715,7 @@ def get_page_vert_percentile(span, page_width=DEFAULT_WIDTH, page_height=DEFAULT
     :rtype: float in [0.0, 1.0]
     """
     span = span if isinstance(span, TemporarySpan) else span[0]
-    return float(bbox_from_span(span).top) / page_height
+    return old_div(float(bbox_from_span(span).top), page_height)
 
 
 def get_page_horz_percentile(span, page_width=DEFAULT_WIDTH, page_height=DEFAULT_HEIGHT):
@@ -748,11 +754,11 @@ def get_page_horz_percentile(span, page_width=DEFAULT_WIDTH, page_height=DEFAULT
     :rtype: float in [0.0, 1.0]
     """
     span = span if isinstance(span, TemporarySpan) else span[0]
-    return float(bbox_from_span(span).left) / page_width
+    return old_div(float(bbox_from_span(span).left), page_width)
 
 
 def _assign_alignment_features(phrases_by_key, align_type):
-    for key, phrases in phrases_by_key.iteritems():
+    for key, phrases in phrases_by_key.items():
         if len(phrases) == 1:
             continue
         context_lemmas = set()
@@ -779,7 +785,7 @@ def _preprocess_visual_features(doc):
         phrase_by_page[phrase.page[0]].append(phrase)
         phrase._aligned_lemmas = set()
 
-    for page, phrases in phrase_by_page.iteritems():
+    for page, phrases in phrase_by_page.items():
         # process per page alignments
         yc_aligned = defaultdict(list)
         x0_aligned = defaultdict(list)
@@ -787,22 +793,22 @@ def _preprocess_visual_features(doc):
         x1_aligned = defaultdict(list)
         for phrase in phrases:
             phrase.bbox = bbox_from_phrase(phrase)
-            phrase.yc = (phrase.bbox.top + phrase.bbox.bottom) / 2
+            phrase.yc = old_div((phrase.bbox.top + phrase.bbox.bottom), 2)
             phrase.x0 = phrase.bbox.left
             phrase.x1 = phrase.bbox.right
-            phrase.xc = (phrase.x0 + phrase.x1) / 2
+            phrase.xc = old_div((phrase.x0 + phrase.x1), 2)
             # index current phrase by different alignment keys
             yc_aligned[phrase.yc].append(phrase)
             x0_aligned[phrase.x0].append(phrase)
             x1_aligned[phrase.x1].append(phrase)
             xc_aligned[phrase.xc].append(phrase)
-        for l in yc_aligned.itervalues():
+        for l in yc_aligned.values():
             l.sort(key=lambda p: p.xc)
-        for l in x0_aligned.itervalues():
+        for l in x0_aligned.values():
             l.sort(key=lambda p: p.yc)
-        for l in x1_aligned.itervalues():
+        for l in x1_aligned.values():
             l.sort(key=lambda p: p.yc)
-        for l in xc_aligned.itervalues():
+        for l in xc_aligned.values():
             l.sort(key=lambda p: p.yc)
         _assign_alignment_features(yc_aligned, 'Y_')
         _assign_alignment_features(x0_aligned, 'LEFT_')

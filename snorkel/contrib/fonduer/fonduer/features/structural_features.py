@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+from builtins import str
 from ..lf_helpers import *
 
 FEAT_PRE = 'STR_'

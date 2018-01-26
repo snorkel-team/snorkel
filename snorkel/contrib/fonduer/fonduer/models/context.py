@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+from builtins import map
+from builtins import object
 from sqlalchemy import Column, String, Integer, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declared_attr

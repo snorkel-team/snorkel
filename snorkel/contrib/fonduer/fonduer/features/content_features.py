@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+from builtins import str
+from builtins import range
 import sys
 import os
 
@@ -32,7 +35,7 @@ def get_content_feats(candidates):
                 get_tdl_feats = compile_entity_feature_generator()
                 sent = get_as_dict(span.parent)
                 xmltree = corenlp_to_xmltree(sent)
-                sidxs = range(span.get_word_start(), span.get_word_end() + 1)
+                sidxs = list(range(span.get_word_start(), span.get_word_end() + 1))
                 if len(sidxs) > 0:
                     # Add DDLIB entity features
                     for f in get_ddlib_feats(span, sent, sidxs):
@@ -56,8 +59,8 @@ def get_content_feats(candidates):
                 sent1 = get_as_dict(span1.sentence)
                 sent2 = get_as_dict(span2.sentence)
                 xmltree = corenlp_to_xmltree(get_as_dict(span1.sentence))
-                s1_idxs = range(span1.get_word_start(), span1.get_word_end() + 1)
-                s2_idxs = range(span2.get_word_start(), span2.get_word_end() + 1)
+                s1_idxs = list(range(span1.get_word_start(), span1.get_word_end() + 1))
+                s2_idxs = list(range(span2.get_word_start(), span2.get_word_end() + 1))
                 if len(s1_idxs) > 0 and len(s2_idxs) > 0:
 
                     # Add DDLIB entity features for relation

@@ -1,3 +1,8 @@
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import chr
+from builtins import str
+from builtins import range
 from snorkel.contrib.fonduer.fonduer.candidates import OmniNgrams
 from snorkel.contrib.fonduer.fonduer.models import TemporaryImplicitSpan
 
@@ -17,11 +22,11 @@ def expand_part_range(text, DEBUG=False):
     """
     ### Regex Patterns compile only once per function call.
     # This range pattern will find text that "looks like" a range.
-    range_pattern = re.compile(ur'^(?P<start>[\w\/]+)(?:\s*(\.{3,}|\~|\-+|to|thru|through|\u2011+|\u2012+|\u2013+|\u2014+|\u2012+|\u2212+)\s*)(?P<end>[\w\/]+)$', re.IGNORECASE | re.UNICODE)
-    suffix_pattern = re.compile(ur'(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)')
-    base_pattern = re.compile(ur'(?P<base>[\w\-]+)(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)?')
+    range_pattern = re.compile(r'^(?P<start>[\w\/]+)(?:\s*(\.{3,}|\~|\-+|to|thru|through|\u2011+|\u2012+|\u2013+|\u2014+|\u2012+|\u2212+)\s*)(?P<end>[\w\/]+)$', re.IGNORECASE | re.UNICODE)
+    suffix_pattern = re.compile(r'(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)')
+    base_pattern = re.compile(r'(?P<base>[\w\-]+)(?P<spacer>(?:,|\/)\s*)(?P<suffix>[\w\-]+)?')
 
-    if DEBUG: print "\n[debug] Text: " + text
+    if DEBUG: print("\n[debug] Text: " + text)
     expanded_parts = set()
     final_set = set()
 
@@ -32,7 +37,7 @@ def expand_part_range(text, DEBUG=False):
         end = m.group("end")
         start_diff = ""
         end_diff = ""
-        if DEBUG: print "[debug]   Start: %s \t End: %s" % (start, end)
+        if DEBUG: print("[debug]   Start: %s \t End: %s" % (start, end))
 
         # Use difflib to find difference. We are interested in 'replace' only
         seqm = SequenceMatcher(None, start, end).get_opcodes();
@@ -48,15 +53,15 @@ def expand_part_range(text, DEBUG=False):
                 start_diff = start[a0:a1]
                 end_diff = end[b0:b1]
             else:
-                raise RuntimeError, "[ERROR] unexpected opcode"
+                raise RuntimeError("[ERROR] unexpected opcode")
 
-        if DEBUG: print "[debug]   start_diff: %s \t end_diff: %s" % (start_diff, end_diff)
+        if DEBUG: print("[debug]   start_diff: %s \t end_diff: %s" % (start_diff, end_diff))
 
         # First, check for number range
         if atoi(start_diff) and atoi(end_diff):
-            if DEBUG: print "[debug]   Enumerate %d to %d" % (atoi(start_diff), atoi(end_diff))
+            if DEBUG: print("[debug]   Enumerate %d to %d" % (atoi(start_diff), atoi(end_diff)))
             # generate a list of the numbers plugged in
-            for number in xrange(atoi(start_diff), atoi(end_diff) + 1):
+            for number in range(atoi(start_diff), atoi(end_diff) + 1):
                 new_part = start.replace(start_diff,str(number))
                 # Produce the strings with the enumerated ranges
                 expanded_parts.add(new_part)
@@ -64,7 +69,7 @@ def expand_part_range(text, DEBUG=False):
         # Second, check for single-letter enumeration
         if len(start_diff) == 1 and len(end_diff) == 1:
             if start_diff.isalpha() and end_diff.isalpha():
-                if DEBUG: print "[debug]   Enumerate %s to %s" % (start_diff, end_diff)
+                if DEBUG: print("[debug]   Enumerate %s to %s" % (start_diff, end_diff))
                 letter_range = char_range(start_diff, end_diff)
                 for letter in letter_range:
                     new_part = start.replace(start_diff,letter)
@@ -87,7 +92,7 @@ def expand_part_range(text, DEBUG=False):
                 expanded_parts.add(split[1])
 
 
-    if DEBUG: print "[debug]   Inferred Text: \n  " + str(sorted(expanded_parts))
+    if DEBUG: print("[debug]   Inferred Text: \n  " + str(sorted(expanded_parts)))
 
     ### Step 2: Expand suffixes for each of the inferred phrases
     # NOTE: this only does the simple case of replacing same-length suffixes.
@@ -121,7 +126,7 @@ def expand_part_range(text, DEBUG=False):
         else:
             if part and (not part.isspace()):
                 final_set.add(part) # no base was found with suffixes to expand
-    if DEBUG: print "[debug]   Final Set: " + str(sorted(final_set))
+    if DEBUG: print("[debug]   Final Set: " + str(sorted(final_set)))
 
     # Also return the original input string
     final_set.add(text)
@@ -152,7 +157,7 @@ def char_range(a, b):
     '''
     Generates the characters from a to b inclusive.
     '''
-    for c in xrange(ord(a), ord(b)+1):
+    for c in range(ord(a), ord(b)+1):
         yield chr(c)
 
 

@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+from builtins import str
+from builtins import range
+from builtins import object
 from bs4 import BeautifulSoup
 import codecs
 from collections import defaultdict
@@ -28,8 +32,8 @@ class HTMLPreprocessor(DocPreprocessor):
             for text in soup.find_all('html'):
                 name = os.path.basename(fp)[:os.path.basename(fp).rfind('.')]
                 stable_id = self.get_stable_id(name)
-                yield Document(name=name, stable_id=stable_id, text=unicode(text),
-                               meta={'file_name' : file_name}), unicode(text)
+                yield Document(name=name, stable_id=stable_id, text=str(text),
+                               meta={'file_name' : file_name}), str(text)
 
     def _can_read(self, fpath):
         return fpath.endswith('html')  # includes both .html and .xhtml
@@ -49,7 +53,7 @@ class SimpleTokenizer(object):
             if not len(text.strip()):
                 continue
             words = text.split()
-            char_offsets = [0] + list(np.cumsum(map(lambda x: len(x) + 1, words)))[:-1]
+            char_offsets = [0] + list(np.cumsum([len(x) + 1 for x in words]))[:-1]
             text = ' '.join(words)
             stable_id = construct_stable_id(document, 'phrase', i, i)
             yield {'text': text,
@@ -248,7 +252,7 @@ class OmniParserUDF(UDF):
                             context_node = node.getparent() if field == 'tail' else node
                             xpaths.append(tree.getpath(context_node))
                             html_tags.append(context_node.tag)
-                            html_attrs.append(map(lambda x: '='.join(x), context_node.attrib.items()))
+                            html_attrs.append(['='.join(x) for x in list(context_node.attrib.items())])
 
             for child in node:
                 if child.tag == 'table':
@@ -351,8 +355,8 @@ class TableInfo(object):
                 col_end += int(node.get("colspan")) - 1
 
             # update table_grid with occupied cells
-            for r, c in itertools.product(range(row_start, row_end + 1),
-                                            range(col_start, col_end + 1)):
+            for r, c in itertools.product(list(range(row_start, row_end + 1)),
+                                            list(range(col_start, col_end + 1))):
                 self.table_grid[r, c] = 1
 
             # construct cell

@@ -1,3 +1,4 @@
+from builtins import object
 import os
 import subprocess
 
@@ -9,7 +10,7 @@ from bs4 import BeautifulSoup
 from IPython.display import display
 
 
-class Visualizer():
+class Visualizer(object):
     """
     Object to display bounding boxes on a pdf document
     """

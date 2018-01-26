@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+from builtins import str
+from builtins import range
 from ..lf_helpers import *
 from ..utils_table import min_row_diff, min_col_diff, num_rows, num_cols
 from ..config import settings

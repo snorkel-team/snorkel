@@ -1,3 +1,4 @@
+from builtins import range
 import itertools
 
 
@@ -8,7 +9,7 @@ def _min_range_diff(a_start, a_end, b_start, b_end, absolute=True):
     # return max(0, max(a_end - b_start, b_end - a_start))
     f = lambda x: (abs(x) if absolute else x)
     return min([f(ii[0] - ii[1]) for ii in itertools.product(
-        range(a_start, a_end + 1), range(b_start, b_end + 1))])
+        list(range(a_start, a_end + 1)), list(range(b_start, b_end + 1)))])
 
 
 def min_row_diff(a, b, absolute=True):

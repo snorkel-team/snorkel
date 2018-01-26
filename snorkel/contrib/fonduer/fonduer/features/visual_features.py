@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from ..lf_helpers import *
 
 FEAT_PRE = 'VIZ_'

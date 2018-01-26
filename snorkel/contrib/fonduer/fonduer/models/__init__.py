@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from .....models.meta import SnorkelSession, SnorkelBase, snorkel_engine
 from .....models.context import Document
 from .....models.candidate import candidate_subclass

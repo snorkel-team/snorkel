@@ -180,11 +180,6 @@ class OmniNgramsPart(OmniNgrams):
             for i, part in enumerate(parts):
                 if ' ' in part:
                     continue # it won't pass the part_matcher
-                # TODO: Is this try/except necessary?
-                try:
-                    part.decode('ascii')
-                except:
-                    continue
                 if part == ts.get_span():
                     yield ts
                 else:

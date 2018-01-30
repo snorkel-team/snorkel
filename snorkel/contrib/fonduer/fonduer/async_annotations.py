@@ -3,7 +3,6 @@ from __future__ import division
 from builtins import str
 from builtins import zip
 from builtins import range
-from past.utils import old_div
 import codecs
 import subprocess
 import tempfile
@@ -105,7 +104,7 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
             fp = matrix_fp(self, ls)
             fn = matrix_fn(self, ls)
             tn = matrix_tn(self, ls)
-            ac = old_div((tp+tn).astype(float), (tp+tn+fp+fn))
+            ac = (tp+tn) / (tp+tn+fp+fn)
             d['Empirical Acc.'] = Series(data=ac, index=lf_names)
             d['TP']             = Series(data=tp, index=lf_names)
             d['FP']             = Series(data=fp, index=lf_names)
@@ -252,7 +251,7 @@ class BatchAnnotator(UDFRunner):
             raise ValueError('No candidates in current split')
 
         # Setting up job batches
-        chunks    = old_div(cids_count, self.batch_size)
+        chunks    = cids_count // self.batch_size
         batch_range = [(i * self.batch_size, (i + 1) * self.batch_size) for i in range(chunks)]
         remainder = cids_count % self.batch_size
         if remainder:

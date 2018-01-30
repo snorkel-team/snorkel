@@ -1,7 +1,6 @@
 from __future__ import print_function
 from __future__ import division
 from builtins import range
-from past.utils import old_div
 from snorkel.contrib.fonduer.fonduer.models import TemporaryImplicitSpan
 from snorkel.models import Label
 from snorkel.matchers import RegexMatchSpan, Union
@@ -128,8 +127,8 @@ def entity_level_f1(candidates, gold_file, attribute=None, corpus=None, parts_by
     FP = len(FP_set)
     FN = len(FN_set)
 
-    prec = old_div(TP, float(TP + FP)) if TP + FP > 0 else float('nan')
-    rec  = old_div(TP, float(TP + FN)) if TP + FN > 0 else float('nan')
+    prec = TP / (TP + FP) if TP + FP > 0 else float('nan')
+    rec  = TP / (TP + FN) if TP + FN > 0 else float('nan')
     f1   = 2 * (prec * rec) / (prec + rec) if prec + rec > 0 else float('nan')
     print("========================================")
     print("Scoring on Entity-Level Gold Data")

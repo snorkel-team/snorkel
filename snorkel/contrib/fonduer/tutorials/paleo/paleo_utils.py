@@ -98,7 +98,7 @@ def entity_to_candidates(entity, candidate_subset):
     matches = []
     for c in candidate_subset:
         c_entity = tuple([c[0].sentence.document.name.upper()] + [c[i].get_span().upper() for i in range(len(c))])
-        c_entity = tuple([x.encode('utf8') for x in c_entity])
+        c_entity = tuple([str(x) for x in c_entity])
         if c_entity == entity:
             matches.append(c)
     return matches

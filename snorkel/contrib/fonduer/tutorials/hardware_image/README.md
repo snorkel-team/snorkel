@@ -1,8 +1,8 @@
 # Extracting Images for Transistors from PDF Datasheets
 
 In this advanced tutorial, we will build a `Fonduer` application to tackle the
-challenging task of extracting images for specific transistor from their 
-datasheets. This is an example of knowledge base construction from 
+challenging task of extracting images for specific transistors from their
+datasheets. This is an example of knowledge base construction from
 _richly formatted data_.
 
 The entire tutorial can be found in

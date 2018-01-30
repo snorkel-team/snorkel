@@ -17,7 +17,7 @@ running the tutorial you will need to:
 
 For example, the simplified datasheet snippet:
 
-![datasheet-snippet](../img/sample-datasheet.png)
+![datasheet-snippet](imgs/sample-datasheet.png)
 
 our goal is to extract the (transistor part number, maximum storage temperature)
  relation pairs:

@@ -9,8 +9,8 @@ from snorkel.utils import get_as_dict
 from ..config import settings
 from ..lf_helpers import get_left_ngrams, get_right_ngrams, tokens_to_ngrams
 
-sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
-from treedlib import compile_relation_feature_generator
+#  sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
+#  from treedlib import compile_relation_feature_generator
 
 DEF_VALUE = 1
 
@@ -54,7 +54,7 @@ def get_content_feats(candidates):
         elif len(args) == 2:
             span1, span2 = args
             if span1.sentence.is_lingual() and span2.sentence.is_lingual():
-                get_tdl_feats = compile_relation_feature_generator()
+                #  get_tdl_feats = compile_relation_feature_generator()
                 sent1 = get_as_dict(span1.sentence)
                 sent2 = get_as_dict(span2.sentence)
                 xmltree = corenlp_to_xmltree(get_as_dict(span1.sentence))
@@ -70,12 +70,12 @@ def get_content_feats(candidates):
                         yield candidate.id, 'DDL_e2_' + f, DEF_VALUE
 
                     # Add TreeDLib relation features
-                    if candidate.id not in binary_tdl_feats:
-                            binary_tdl_feats[candidate.id] = set()
-                            for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs):
-                                binary_tdl_feats[candidate.id].add(f)
-                    for f in binary_tdl_feats[candidate.id]:
-                        yield candidate.id, 'TDL_' + f, DEF_VALUE
+                    #  if candidate.id not in binary_tdl_feats:
+                    #          binary_tdl_feats[candidate.id] = set()
+                    #          for f in get_tdl_feats(xmltree.root, s1_idxs, s2_idxs):
+                    #              binary_tdl_feats[candidate.id].add(f)
+                    #  for f in binary_tdl_feats[candidate.id]:
+                    #      yield candidate.id, 'TDL_' + f, DEF_VALUE
             else:
                 for f in get_word_feats(span1):
                     yield candidate.id, 'BASIC_e1_' + f, DEF_VALUE

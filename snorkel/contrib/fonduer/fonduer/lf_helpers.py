@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from __future__ import division
 from builtins import str
 from builtins import range
-from past.utils import old_div
 from collections import defaultdict
 from itertools import chain
 from lxml import etree
@@ -341,7 +340,7 @@ def get_row_ngrams(span, attrib='words', n_min=1, n_max=1, spread=[0, 0], lower=
     """
     spans = [span] if isinstance(span, TemporarySpan) else span.get_contexts()
     for span in spans:
-        for ngram in _get_axis_ngrams(span, axis='row', attrib=attrib, 
+        for ngram in _get_axis_ngrams(span, axis='row', attrib=attrib,
                                       n_min=n_min, n_max=n_max, spread=spread, lower=lower):
             yield ngram
 
@@ -360,8 +359,8 @@ def get_col_ngrams(span, attrib='words', n_min=1, n_max=1, spread=[0, 0], lower=
     """
     spans = [span] if isinstance(span, TemporarySpan) else span.get_contexts()
     for span in spans:
-        for ngram in _get_axis_ngrams(span, axis='col', attrib=attrib, 
-                                      n_min=n_min, n_max=n_max, spread=spread, 
+        for ngram in _get_axis_ngrams(span, axis='col', attrib=attrib,
+                                      n_min=n_min, n_max=n_max, spread=spread,
                                       lower=lower):
             yield ngram
 
@@ -380,10 +379,10 @@ def get_aligned_ngrams(span, attrib='words', n_min=1, n_max=1, spread=[0, 0], lo
     """
     spans = [span] if isinstance(span, TemporarySpan) else span.get_contexts()
     for span in spans:
-        for ngram in get_row_ngrams(span, attrib=attrib, n_min=n_min, 
+        for ngram in get_row_ngrams(span, attrib=attrib, n_min=n_min,
                                     n_max=n_max, spread=spread, lower=lower):
             yield ngram
-        for ngram in get_col_ngrams(span, attrib=attrib, n_min=n_min, 
+        for ngram in get_col_ngrams(span, attrib=attrib, n_min=n_min,
                                     n_max=n_max, spread=spread, lower=lower):
             yield ngram
 
@@ -715,7 +714,7 @@ def get_page_vert_percentile(span, page_width=DEFAULT_WIDTH, page_height=DEFAULT
     :rtype: float in [0.0, 1.0]
     """
     span = span if isinstance(span, TemporarySpan) else span[0]
-    return old_div(float(bbox_from_span(span).top), page_height)
+    return bbox_from_span(span).top / page_height
 
 
 def get_page_horz_percentile(span, page_width=DEFAULT_WIDTH, page_height=DEFAULT_HEIGHT):
@@ -754,7 +753,7 @@ def get_page_horz_percentile(span, page_width=DEFAULT_WIDTH, page_height=DEFAULT
     :rtype: float in [0.0, 1.0]
     """
     span = span if isinstance(span, TemporarySpan) else span[0]
-    return old_div(float(bbox_from_span(span).left), page_width)
+    return bbox_from_span(span).left, page_width
 
 
 def _assign_alignment_features(phrases_by_key, align_type):
@@ -793,10 +792,10 @@ def _preprocess_visual_features(doc):
         x1_aligned = defaultdict(list)
         for phrase in phrases:
             phrase.bbox = bbox_from_phrase(phrase)
-            phrase.yc = old_div((phrase.bbox.top + phrase.bbox.bottom), 2)
+            phrase.yc = (phrase.bbox.top + phrase.bbox.bottom) / 2
             phrase.x0 = phrase.bbox.left
             phrase.x1 = phrase.bbox.right
-            phrase.xc = old_div((phrase.x0 + phrase.x1), 2)
+            phrase.xc = (phrase.x0 + phrase.x1) / 2
             # index current phrase by different alignment keys
             yc_aligned[phrase.yc].append(phrase)
             x0_aligned[phrase.x0].append(phrase)

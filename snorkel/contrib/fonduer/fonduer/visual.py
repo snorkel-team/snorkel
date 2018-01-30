@@ -6,7 +6,6 @@ from builtins import zip
 from builtins import str
 from builtins import range
 from builtins import object
-from past.utils import old_div
 import http.client
 import os
 import re
@@ -113,7 +112,7 @@ class VisualLinker(object):
             print("Extracted %d html words" % len(self.html_word_list))
 
     def link_lists(self, search_max=100, edit_cost=20, offset_cost=1):
-        # NOTE: there are probably some inefficiencies here from rehashing words 
+        # NOTE: there are probably some inefficiencies here from rehashing words
         # multiple times, but we're not going to worry about that for now
 
         def link_exact(l, u):
@@ -171,7 +170,7 @@ class VisualLinker(object):
                            self.html_word_list[i][1] == self.pdf_word_list[html_to_pdf[i]][1] for i in
                            range(len(self.html_word_list))])
             total = len(self.html_word_list)
-            print("(%d/%d) = %0.2f (%d)" % (matches, total, old_div(float(matches), total)))
+            print("(%d/%d) = %0.2f (%d)" % (matches, total, matches / total))
             return matches
 
         N = len(self.html_word_list)
@@ -179,7 +178,7 @@ class VisualLinker(object):
         assert (N > 0 and M > 0)
         html_to_pdf = [None] * N
         pdf_to_html = [None] * M
-        search_radius = old_div(search_max, 2)
+        search_radius = search_max // 2
 
         # first pass: global search for exact matches
         link_exact(0, N)
@@ -188,13 +187,13 @@ class VisualLinker(object):
             display_match_counts()
 
         # second pass: local search for exact matches
-        for i in range(old_div((N + 2), search_radius) + 1):
+        for i in range(((N + 2) // search_radius) + 1):
             link_exact(max(0, i * search_radius - search_radius), min(N, i * search_radius + search_radius))
         if self.verbose:
             print("Local exact matching:")
 
         # third pass: local search for approximate matches
-        search_order = np.array([(-1) ** (i % 2) * (old_div(i, 2)) for i in range(1, search_max + 1)])
+        search_order = np.array([(-1) ** (i % 2) * (i // 2) for i in range(1, search_max + 1)])
         for i in range(len(html_to_pdf)):
             if html_to_pdf[i] is None:
                 link_fuzzy(i)
@@ -208,7 +207,7 @@ class VisualLinker(object):
                        range(len(self.html_word_list))])
         total = len(self.html_word_list)
         if self.verbose:
-            print("Linked %d/%d (%0.2f) html words exactly" % (matches, total, old_div(float(matches), total)))
+            print("Linked %d/%d (%0.2f) html words exactly" % (matches, total, matches / total))
         self.links = OrderedDict((self.html_word_list[i][0], self.pdf_word_list[html_to_pdf[i]][0]) for i in
                                  range(len(self.html_word_list)))
 
@@ -218,9 +217,9 @@ class VisualLinker(object):
             offsetHist = []
             jHist = []
             editDistHist = 0
-        offset = self._calculate_offset(self.html_word_list, self.pdf_word_list, max(old_div(search_max, 10), 5), search_max)
+        offset = self._calculate_offset(self.html_word_list, self.pdf_word_list, max((search_max // 10), 5), search_max)
         offsets = [offset] * offsetInertia
-        searchOrder = np.array([(-1) ** (i % 2) * (old_div(i, 2)) for i in range(1, search_max + 1)])
+        searchOrder = np.array([(-1) ** (i % 2) * (i // 2) for i in range(1, search_max + 1)])
         links = OrderedDict()
         for i, a in enumerate(self.html_word_list):
             j = 0
@@ -290,7 +289,7 @@ class VisualLinker(object):
             total += 1
             if word == pdf[i]:
                 match += 1
-        print((match, total, old_div(float(match), total)))
+        print((match, total, match / total))
 
         data = {
             # 'i': range(len(self.links)),

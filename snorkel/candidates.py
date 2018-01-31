@@ -76,6 +76,7 @@ class CandidateExtractorUDF(UDF):
 
         super(CandidateExtractorUDF, self).__init__(**kwargs)
 
+
     def apply(self, context, clear, split, **kwargs):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
@@ -123,7 +124,11 @@ class CandidateExtractorUDF(UDF):
                     continue
 
             # Add Candidate to session
-            yield self.candidate_class(**candidate_args)
+            return_type = kwargs.get("return_type","candidate")
+            if return_type == "candidate":
+                yield self.candidate_class(**candidate_args)
+            elif return_type =="dummy":
+                yield 1
 
 
 class CandidateSpace(object):

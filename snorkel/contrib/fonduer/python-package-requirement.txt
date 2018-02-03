@@ -19,3 +19,4 @@ editdistance
 pyyaml
 psycopg2
 tika
+git+https://github.com/HazyResearch/pdftotree@master

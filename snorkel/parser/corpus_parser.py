@@ -73,13 +73,20 @@ class CEFilter(BatchFilter):
         for item in batch_item:
             items.extend(list(udf.apply(item,clear = True,split = 0,return_type = "dummy")))
         #print(len(items))
-        #return len(items) > 0
-        return True
+        return len(items) > 0
 
     def clean_batch(self):
         self.session.query(Context).filter(Context.type=="span").delete()
         self.session.query(Span).delete()
         self.session.commit()
+
+class TrivialFilter(BatchFilter):
+
+    def filter_item(self,batch_item):
+        return True
+
+    def clean_batch(self):
+        pass
 
 
 

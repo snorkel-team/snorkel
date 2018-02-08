@@ -168,7 +168,7 @@ class UDFRunnerBatches(UDFRunner):
 
 
             if (i%self.udf_batch_size == 1):
-                #print("Batch", i)
+                #print("Doc", i)
                 if self.batch_filter is not None:
                     set_yl = self.batch_filter.filter_batch(set_y)
                 else:

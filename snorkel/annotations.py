@@ -326,7 +326,7 @@ class AnnotatorUDF(UDF):
 
 def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
     split=0, cids_query=None, key_group=0, key_names=None, zero_one=False,
-    load_as_array=False):
+    load_as_array=False, coerce_int=True):
     """
     Returns the annotations corresponding to a split of candidates with N members
     and an AnnotationKey group with M distinct keys as an N x M CSR sparse matrix.
@@ -387,7 +387,10 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
                 val = 1 if val == 1 else 0
             row.append(cid_to_row[cid])
             columns.append(kid_to_col[kid])
-            data.append(int(val))
+            if coerce_int:
+                data.append(int(val))
+            else:
+                data.append(val)
 
     X = sparse.coo_matrix((data, (row, columns)), shape=(len(cid_to_row), len(kid_to_col)))
 
@@ -460,7 +463,7 @@ class FeatureAnnotator(Annotator):
         super(FeatureAnnotator, self).__init__(Feature, FeatureKey, f)
 
     def load_matrix(self, session, **kwargs):
-        return load_feature_matrix(session, **kwargs)
+        return load_feature_matrix(session, coerce_int=False, **kwargs)
 
 
 def save_marginals(session, X, marginals, training=True):

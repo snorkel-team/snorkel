@@ -92,7 +92,7 @@ class SpacyTokenizer(Tokenizer):
         :param lang:
         :return:
         '''
-        if SpacyTokenizer.model_installed:
+        if SpacyTokenizer.model_installed(lang):
             model = spacy.load(lang)
         else:
             download(lang)

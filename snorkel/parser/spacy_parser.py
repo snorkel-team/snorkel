@@ -12,7 +12,10 @@ try:
     import spacy
     from spacy.cli import download
     from spacy import util
-    from spacy.deprecated import resolve_model_name
+    try:
+        spacy_version=int(spacy.__version__[0])
+    except:
+        spacy_version=1
 except:
     raise Exception("spaCy not installed. Use `pip install spacy`.")
 
@@ -57,8 +60,12 @@ class Spacy(Parser):
         self.num_threads = num_threads
 
         self.pipeline = []
-        for proc in annotators:
-            self.pipeline += [self.model.__dict__[proc]]
+        if spacy_version==1:
+            for proc in annotators:
+                self.pipeline += [self.model.__dict__[proc]]
+        else:
+            for i,proc in enumerate(['tagger','parser','ner']):
+                self.pipeline += [self.model.pipeline[i][1]]
 
     @staticmethod
     def model_installed(name):
@@ -68,8 +75,7 @@ class Spacy(Parser):
         :return:
         '''
         data_path = util.get_data_path()
-        model_name = resolve_model_name(name)
-        model_path = data_path / model_name
+        model_path = data_path / name
         return model_path.exists()
 
     @staticmethod

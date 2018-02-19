@@ -64,7 +64,8 @@ class Spacy(Parser):
             for proc in annotators:
                 self.pipeline += [self.model.__dict__[proc]]
         else:
-            for i,proc in enumerate(['tagger','parser','ner']):
+            annotators=[i if i!='entity' else 'ner' for i in annotators]
+            for i,proc in enumerate(annotators):
                 self.pipeline += [self.model.pipeline[i][1]]
 
     @staticmethod

@@ -43,7 +43,7 @@ class RegexTokenizer(Tokenizer):
         for t in self.rgx.split(s):
             while t < len(s) and t != s[offset:len(t)]:
                 offset += 1
-                tokens += [(t,offset)]
+            tokens += [(t,offset)]
             offset += len(t)
         return tokens
 

@@ -9,7 +9,8 @@ from .utils import MentionScorer
 from ..annotations import save_marginals
 
 
-class Classifier(object):
+class \
+        Classifier(object):
     """Simple abstract base class for a probabilistic classifier."""
 
     # Set this class variable to True if train, marginals, predict, and score,

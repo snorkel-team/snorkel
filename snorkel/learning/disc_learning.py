@@ -126,7 +126,7 @@ class TFNoiseAwareModel(Classifier):
 
     def train(self, X_train, Y_train, n_epochs=25, lr=0.01, batch_size=256, 
         rebalance=False, X_dev=None, Y_dev=None, print_freq=5, dev_ckpt=True,
-        dev_ckpt_delay=0.75, save_dir='checkpoints', **kwargs):
+        dev_ckpt_delay=0.75, save_dir='checkpoints',beta = 1,adaptive_lr_strategy = None, **kwargs):
         """
         Generic training procedure for TF model
 
@@ -151,6 +151,10 @@ class TFNoiseAwareModel(Classifier):
         :param dev_ckpt_delay: Start dev checkpointing after this portion
             of n_epochs.
         :param save_dir: Save dir path for checkpointing.
+        :param beta: beta used for F-beta score computation
+        :param adaptive_lr_strategy: Strategy used for lr evolution. Currently available:
+                    - None: Constant LR
+                    - {"factor":factor, "frequency": frequency}: LR is multiplicated by factor every frequency epoch
         :param kwargs: All hyperparameters that change how the graph is built 
             must be passed through here to be saved and reloaded to save /
             reload model. *NOTE: If a parameter needed to build the 
@@ -220,13 +224,25 @@ class TFNoiseAwareModel(Classifier):
                 self.name, n, n_epochs, batch_size
             ))
         dev_score_opt = 0.0
+        lr_list = list()
+        lr_list.append(lr)
+        if adaptive_lr_strategy is None:
+            for t in range(1,n_epochs):
+                lr_list.append(lr)
+        else:
+            for t in range(1,n_epochs):
+                if t%adaptive_lr_strategy["frequency"]==0:
+                    lr_list.append(lr_list[-1]*adaptive_lr_strategy["factor"])
+                else:
+                    lr_list.append(lr_list[-1])
+
         for t in range(n_epochs):
             epoch_losses = []
             for i in range(0, n, batch_size):
                 feed_dict = self._construct_feed_dict(
                     X_train[i:min(n, i+batch_size)],
                     Y_train[i:min(n, i+batch_size)],
-                    lr=lr,
+                    lr=lr_list[t],
                     **kwargs
                 )
                 # Run training step and evaluate loss function    
@@ -245,10 +261,12 @@ class TFNoiseAwareModel(Classifier):
                 msg = "[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
                     self.name, t, time() - st, np.mean(epoch_losses))
                 if X_dev is not None:
-                    scores = self.score(X_dev, Y_dev, batch_size=batch_size)
+                    scores = self.score(X_dev, Y_dev, batch_size=batch_size,beta=beta)
                     score = scores if self.cardinality > 2 else scores[-1]
-                    score_label = "Acc." if self.cardinality > 2 else "F1"
+                    score_label = "Acc." if self.cardinality > 2 else "F-{}".format(beta)
                     msg += '\tDev {0}={1:.2f}'.format(score_label, 100. * score)
+                    if adaptive_lr_strategy is not None:
+                        msg += '\tlr = {}'.format(lr_list[t])
                 print(msg)
                     
                 # If best score on dev set so far and dev checkpointing is

@@ -128,6 +128,7 @@ class CandidateExtractorUDF(UDF):
             if return_type == "candidate":
                 yield self.candidate_class(**candidate_args)
             elif return_type =="dummy":
+                #print(candidate_args)
                 yield 1
 
 

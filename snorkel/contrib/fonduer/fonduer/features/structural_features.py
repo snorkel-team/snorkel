@@ -22,7 +22,7 @@ def get_structural_feats(candidates):
                 if span.stable_id not in unary_strlib_feats:
                     unary_strlib_feats[span.stable_id] = set()
                     for f, v in strlib_unary_features(span):
-                        unary_tdl_feats[span.stable_id].add((f, v))
+                        unary_strlib_feats[span.stable_id].add((f, v))
 
                 for f, v in unary_strlib_feats[span.stable_id]:
                     yield candidate.id, FEAT_PRE + f, v

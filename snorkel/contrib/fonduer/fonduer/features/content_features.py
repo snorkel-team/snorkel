@@ -13,7 +13,7 @@ from treedlib import Indicator
 from treedlib import LeftNgrams
 from treedlib import LeftSiblings
 from treedlib import Mention
-from treedlib import Ngram
+from treedlib import Ngrams
 from treedlib import Parents
 from treedlib import RightNgrams
 from treedlib import RightSiblings

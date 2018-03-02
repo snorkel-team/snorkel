@@ -8,6 +8,7 @@ from ..lf_helpers import get_left_ngrams, get_right_ngrams, tokens_to_ngrams
 from snorkel.models import TemporarySpan
 from snorkel.utils import get_as_dict
 from tree_structs import corenlp_to_xmltree
+from treedlib import Compile
 from treedlib import Children
 from treedlib import Indicator
 from treedlib import LeftNgrams

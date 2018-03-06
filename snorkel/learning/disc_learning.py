@@ -126,7 +126,7 @@ class TFNoiseAwareModel(Classifier):
 
     def train(self, X_train, Y_train, n_epochs=25, lr=0.01, batch_size=256, 
         rebalance=False, X_dev=None, Y_dev=None, print_freq=5, dev_ckpt=True,
-        dev_ckpt_delay=0.75, save_dir='checkpoints',beta = 1,adaptive_lr_strategy = None, **kwargs):
+        dev_ckpt_delay=0.75, save_dir='checkpoints',beta = 1,adaptive_lr_strategy = None,allchecks = False, **kwargs):
         """
         Generic training procedure for TF model
 
@@ -275,10 +275,14 @@ class TFNoiseAwareModel(Classifier):
                     t > dev_ckpt_delay * n_epochs and score > dev_score_opt:
                     dev_score_opt = score
                     self.save(save_dir=save_dir, global_step=t)
-        
+            if allchecks:
+                self.save(save_dir=save_dir, global_step=t, model_name=self.name + "_fullchk2_epoch_{}".format(t))
+
         # Conclude training
         if verbose:
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))
+
+
 
         # If checkpointing on, load last checkpoint (i.e. best on dev set)
         if dev_ckpt and X_dev is not None and verbose and dev_score_opt > 0:

@@ -36,6 +36,8 @@ from snorkel.models.annotation import (
     Feature, FeatureKey, Label, LabelKey, GoldLabel, GoldLabelKey, StableLabel,
     Prediction, PredictionKey
 )
+from .tag import SequenceTag
+
 
 # This call must be performed after all classes that extend SnorkelBase are
 # declared to ensure the storage schema is initialized

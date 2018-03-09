@@ -161,8 +161,8 @@ class Spacy(Parser):
                 parts['dep_labels'].append(token.dep_)
 
             # Add null entity array (matching null for CoreNLP)
-            parts['entity_cids'] = ['O' for _ in parts['words']]
-            parts['entity_types'] = ['O' for _ in parts['words']]
+            parts['entity_cids'] = [None for _ in parts['words']]
+            parts['entity_types'] = [None for _ in parts['words']]
 
             # make char_offsets relative to start of sentence
             parts['char_offsets'] = [
@@ -175,8 +175,8 @@ class Spacy(Parser):
             parts['text'] = text
 
             # Add null entity array (matching null for CoreNLP)
-            parts['entity_cids'] = ['O' for _ in parts['words']]
-            parts['entity_types'] = ['O' for _ in parts['words']]
+            parts['entity_cids'] = [None for _ in parts['words']]
+            parts['entity_types'] = [None for _ in parts['words']]
 
             # Assign the stable id as document's stable id plus absolute
             # character offset

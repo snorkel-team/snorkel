@@ -1,5 +1,5 @@
 echo "Downloading paleo tutorial data..."
-url=http://i.stanford.edu/hazy/share/paleo_tutorial_data.tar.gz
+url=http://i.stanford.edu/hazy/share/fonduer/paleo_tutorial_data.tar.gz
 data_tar=paleo_tutorial_data
 if type curl &>/dev/null; then
     curl -RLO $url

@@ -1,5 +1,5 @@
 echo "Downloading hardware image tutorial data..."
-url=http://i.stanford.edu/hazy/share/hardware_image_tutorial_data.tar.gz
+url=http://i.stanford.edu/hazy/share/fonduer/hardware_image_tutorial_data.tar.gz
 data_tar=hardware_image_tutorial_data
 if type curl &>/dev/null; then
     curl -RLO $url

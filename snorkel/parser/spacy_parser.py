@@ -153,7 +153,7 @@ class Spacy(Parser):
                 parts['words'].append(str(token))
                 parts['lemmas'].append(token.lemma_)
                 parts['pos_tags'].append(token.tag_)
-                parts['ner_tags'].append(token.ent_type_ if token.ent_type_ else 'O')
+                parts['ner_tags'].append(token.ent_type_ if token.ent_type_ else None)
                 parts['char_offsets'].append(token.idx)
                 parts['abs_char_offsets'].append(token.idx)
                 head_idx = 0 if token.head is token else token.head.i - sent[0].i + 1

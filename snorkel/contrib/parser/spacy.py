@@ -62,8 +62,8 @@ class SpaCy(Parser):
                 #dep_order.append(deps['dependent'])
 
             # Add null entity array (matching null for CoreNLP)
-            parts['entity_cids'] = ['O' for _ in parts['words']]
-            parts['entity_types'] = ['O' for _ in parts['words']]
+            parts['entity_cids'] = [None for _ in parts['words']]
+            parts['entity_types'] = [None for _ in parts['words']]
 
             # Link the sentence to its parent document object
             parts['document'] = document

@@ -234,7 +234,7 @@ class PretaggedCandidateExtractorUDF(UDF):
             if context.entity_types[i] is not None:
                 ets  = context.entity_types[i].split(self.entity_sep)
                 cids = context.entity_cids[i].split(self.entity_sep)
-                for et, cid in zip(ets, cids):
+                for et, cid in set(list(zip(ets, cids))):
                     if et in entity_idxs:
                         entity_idxs[et][cid].append(i)
 

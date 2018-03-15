@@ -276,7 +276,7 @@ class TFNoiseAwareModel(Classifier):
                     dev_score_opt = score
                     self.save(save_dir=save_dir, global_step=t)
             if allchecks:
-                self.save(save_dir=save_dir, global_step=t, model_name=self.name + "_fullchk4_epoch_{}".format(t))
+                self.save(save_dir=save_dir, global_step=t, model_name=self.name + "_fullchk{}_epoch_{}".format(kwargs.get("prefix","_def_"),t))
 
         # Conclude training
         if verbose:

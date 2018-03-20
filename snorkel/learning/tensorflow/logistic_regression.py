@@ -70,6 +70,8 @@ class LogisticRegression(TFNoiseAwareModel):
         if l2_penalty > 0:
             self.loss += l2_penalty * tf.nn.l2_loss(self.w)
 
+
+
     def _construct_feed_dict(self, X_b, Y_b, lr=0.01, **kwargs):
         return {self.X: X_b, self.Y: Y_b, self.lr: lr}
 

@@ -221,7 +221,7 @@ class PretaggedCandidateExtractorUDF(UDF):
 
         super(PretaggedCandidateExtractorUDF, self).__init__(**kwargs)
 
-    def apply(self, context, clear, split, check_for_existing=True, **kwargs):
+    def apply(self, context, clear, split, check_for_existing=True,safe_add = False, **kwargs):
         """Extract Candidates from a Context"""
         # For now, just handle Sentences
         if not isinstance(context, Sentence):
@@ -259,6 +259,7 @@ class PretaggedCandidateExtractorUDF(UDF):
 
         # Generates and persists candidates
         candidate_args = {'split' : split}
+        return_lst = list()
         for args in product(*[enumerate(entity_spans[et]) for et in self.entity_types]):
 
             # TODO: Make this work for higher-order relations
@@ -280,14 +281,27 @@ class PretaggedCandidateExtractorUDF(UDF):
                 candidate_args[arg_name + '_id'] = args[i][1].id
                 candidate_args[arg_name + '_cid'] = entity_cids[args[i][1].id]
 
-            # Checking for existence
-            if check_for_existing:
-                q = select([self.candidate_class.id])
-                for key, value in iteritems(candidate_args):
-                    q = q.where(getattr(self.candidate_class, key) == value)
-                candidate_id = self.session.execute(q).first()
-                if candidate_id is not None:
-                    continue
 
-            # Add Candidate to session
-            yield self.candidate_class(**candidate_args)
+
+
+                # Checking for existence
+                if check_for_existing:
+                    q = select([self.candidate_class.id])
+                    for key, value in iteritems(candidate_args):
+                        q = q.where(getattr(self.candidate_class, key) == value)
+                    candidate_id = self.session.execute(q).first()
+                    if candidate_id is not None:
+                        continue
+                if not safe_add:
+                    # Add Candidate to session
+                    yield self.candidate_class(**candidate_args)
+
+                else:
+                    return_lst.append(candidate_args)
+
+        if safe_add:
+            new_candidate_args_lst = [dict(list(x)) for x in set([tuple(z.items()) for z in return_lst])]
+            if len(new_candidate_args_lst)!=len(return_lst):
+                print("problem there with {}".format(return_lst[0]))
+            for candargs in new_candidate_args_lst:
+                yield self.candidate_class(**candargs)

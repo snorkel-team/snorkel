@@ -297,11 +297,14 @@ class PretaggedCandidateExtractorUDF(UDF):
                     yield self.candidate_class(**candidate_args)
 
                 else:
-                    return_lst.append(candidate_args)
+		    #print(candidate_args)
+                    return_lst.append(candidate_args.copy())
 
         if safe_add:
             new_candidate_args_lst = [dict(list(x)) for x in set([tuple(z.items()) for z in return_lst])]
-            if len(new_candidate_args_lst)!=len(return_lst):
-                print("problem there with {}".format(return_lst[0]))
+            #if len(new_candidate_args_lst)!=len(return_lst):
+                #print("problem there {} becomes {}".format(len(new_candidate_args_lst),len(return_lst)))
+		#print(new_candidate_args_lst)
+		#print(return_lst)
             for candargs in new_candidate_args_lst:
                 yield self.candidate_class(**candargs)

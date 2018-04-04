@@ -188,6 +188,7 @@ class UDFRunnerBatches(UDFRunner):
                 #print("Batch end")
                 set_y = dict()
                 set_xs = dict()
+                set_yl = dict()
         if len(set_xs)>0:
 
             if self.batch_filter is not None:

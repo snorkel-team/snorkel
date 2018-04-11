@@ -57,12 +57,9 @@ class TFNoiseAwareModel(Classifier):
         """
         raise NotImplementedError()
 
-    def _build_training_ops(self, **training_kwargs):
+    def _build_loss(self, **training_kwargs):
         """
-        Builds the TensorFlow Operations for the training procedure. Must set 
-        the following:
-            - self.loss: Loss function
-            - self.optimizer: Training operation
+        Builds the TensorFlow loss for the training procedure.
         """
         # Define loss and marginals ops
         if self.cardinality > 2:
@@ -73,12 +70,20 @@ class TFNoiseAwareModel(Classifier):
         # If deterministic=True, avoid use of non-deterministic reduce_ ops
         if self.deterministic:
             l = tf.reshape(loss_fn(logits=self.logits, labels=self.Y), [1, -1])
-            self.loss = tf.squeeze(tf.matmul(l, tf.ones_like(l), 
-                transpose_b=True)) / tf.cast(tf.shape(l)[1], tf.float32)
+            self.loss = tf.squeeze(tf.matmul(l, tf.ones_like(l),
+                                             transpose_b=True)) / tf.cast(tf.shape(l)[1], tf.float32)
         else:
-            self.loss = tf.reduce_mean(loss_fn(logits=self.logits, 
-                labels=self.Y))
-        
+            self.loss = tf.reduce_mean(loss_fn(logits=self.logits,
+                                               labels=self.Y))
+
+    def _build_training_ops(self, **training_kwargs):
+        """
+        Builds the TensorFlow Operations for the training procedure. Must set
+        the following:
+            - self.loss: Loss function
+            - self.optimizer: Training operation
+        """
+        self._build_loss(**training_kwargs)
         # Build training op
         self.lr = tf.placeholder(tf.float32)
         self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)

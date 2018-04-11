@@ -467,7 +467,7 @@ class GridSearch(object):
                     params_queue, scores_queue, self.X_train, X_valid, Y_valid,
                     Y_train=self.Y_train, b=b, save_dir=self.save_dir,
                     set_unlabeled_as_neg=set_unlabeled_as_neg,
-                    eval_batch_size=eval_batch_size)
+                    eval_batch_size=eval_batch_size,beta = beta)
             p.start()
             ps.append(p)
 

@@ -14,7 +14,7 @@
 
 ## Getting Started
 
-* Installation instructions [below](#installation--dependencies)
+* Installation instructions [below](#Installation)
 * Get started with the tutorials [below](#learning-how-to-use-snorkel)
 * Documentation [here](http://snorkel.readthedocs.io/en/master/)
 
@@ -75,32 +75,12 @@ Then, for more content, check out the other tutorials avaliable [here](https://g
 ## Installation
 Snorkel uses Python 2.7 or Python 3 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
 
-### Setting Up Conda
-Installation is easiest if you download and install [`conda`](https://www.continuum.io/downloads).
-You can create a new conda environment with e.g.:
-```
-conda create -n py2Env python=2.7 anaconda
-```
-And then run the correct environment:
-```
-source activate py2Env
-```
-
-### Installing dependencies
-First install [NUMBA](https://numba.pydata.org/), a package for high-performance numeric computing in Python via Conda:
+### Installing Dependencies with Conda
+To install the environment, run
 ```bash
-conda install numba
+make install
 ```
-
-Then install the remaining package requirements:
-```bash
-pip install --requirement python-package-requirement.txt
-```
-
-Finally, enable `ipywidgets`:
-```bash
-jupyter nbextension enable --py widgetsnbextension --sys-prefix
-```
+which will install the conda environment from `environment.yaml` and enable `ipywidgets`.
 
 _Note: If you are using conda and experience issues with `lxml`, try running `conda install libxml2`._
 
@@ -108,12 +88,12 @@ _Note: Currently the `Viewer` is supported on the following versions:_
 * `jupyter`: 4.1
 * `jupyter notebook`: 4.2
 
-In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
+In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run the program (see [bellow](#Running))
 
 ## Running
 After installing, just run:
 ```
-./run.sh
+make run
 ```
 
 ## Q & A

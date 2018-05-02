@@ -88,30 +88,29 @@ source activate py2Env
 
 ### Installing dependencies
 
-First install [NUMBA](https://numba.pydata.org/), a package for high-performance numeric computing in Python via Conda:
+This repository uses [conda](http://conda.pydata.org/docs/) to manage its environment as specified in [`environment.yml`](environment.yml).
+For Snorkel development, clone this repository and install the environment using:
 
-```bash
-conda install numba
+```sh
+# From the root direcectory of this repo run the following command.
+conda env create --file=environment.yml
+
+# Activate the conda environment (if using a version of conda below 4.4, use "source" instead of "conda")
+conda activate snorkel
+
+# Install snorkel in development mode
+pip install --editable .
 ```
 
-Then install the remaining package requirements:
+TODO reconcile below
 
-```bash
-# Install requirements
-pip install --requirement python-package-requirement.txt
-
+```
 # Install snorkel from GitHub
-pip install git+https://github.com/HazyResearch/treedlib@master
+pip install git+https://github.com/HazyResearch/snorkel@master
 
 # Alternatively, you can install snorkel for development, by running the
 # following command from within a snorkel repo clone
 pip install --editable .
-```
-
-Finally, enable `ipywidgets`:
-
-```bash
-jupyter nbextension enable --py widgetsnbextension --sys-prefix
 ```
 
 _Note: If you are using conda and experience issues with `lxml`, try running `conda install libxml2`._

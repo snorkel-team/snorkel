@@ -3,20 +3,17 @@
 
 dist: trusty
 sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
-
-language:
-  - python
-python:
-  - "2.7"
-  - "3.6"
+language: generic
+env:
+  matrix:
+    - PYTHON_VERSION=2.7
+    - PYTHON_VERSION=3.6
 jdk:
   - oraclejdk8
 
 cache:
   directories:
     - download
-    - $HOME/.cache/pip
-    - $HOME/miniconda/envs/test      # to avoid repetitively setting up Ana/Miniconda environment
     - parser                         # to avoid repetitively downloading CoreNLP
 
 addons:
@@ -30,20 +27,14 @@ addons:
 # See: https://github.com/Theano/Theano/blob/master/.travis.yml (for caching)
 # See: http://conda.pydata.org/docs/travis.html
 before_install:
-  - deactivate  # leaving Travis' virtualenv first since otherwise Jupyter/IPython gets confused with conda inside a virtualenv (See: https://github.com/ipython/ipython/issues/8898)
-  - mkdir -p download
-  - cd download
-  - rm -rf ~/miniconda
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      travis_retry wget -c https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      travis_retry wget -c https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
-  - chmod +x miniconda.sh
-  - bash miniconda.sh -b -f -p ~/miniconda
-  - cd ..
-  - export PATH=~/miniconda/bin:$PATH
-  - conda update --yes conda
+  - travis_retry
+    wget https://repo.continuum.io/miniconda/Miniconda3-4.5.1-Linux-x86_64.sh
+    --output-document=miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - source $HOME/miniconda/etc/profile.d/conda.sh
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda info --all
 
   # Make sure Java 8 is used
   - export PATH="/usr/lib/jvm/java-8-oracle/bin:$PATH"
@@ -54,21 +45,13 @@ before_install:
   - source set_env.sh
 
 install:
-  # Install binary distribution of scientific python modules
-  - test -e ~/miniconda/envs/test/bin/activate || ( rm -rf ~/miniconda/envs/test; conda create --yes -n test python=$TRAVIS_PYTHON_VERSION )
-  - source activate test
-  - conda install --yes numpy scipy matplotlib pip
-
-  # Install Numba
-  - conda install --yes numba
+  - sed --in-place 's/- python/- python='"$PYTHON_VERSION"'/' environment.yml
+  - conda env create --quiet --file=environment.yml
+  - conda activate snorkel
 
   # Install all remaining dependencies as per our README
-  - pip install --requirement python-package-requirement.txt
   - pip install .
   - test -e parser/corenlp.sh || ./install-parser.sh
-
-  # Use runipy to run Jupyter/IPython notebooks from command-line
-  - pip install runipy
 
 script:
 

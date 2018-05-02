@@ -59,15 +59,14 @@ class LogisticRegression(TFNoiseAwareModel):
         marginals_fn = tf.nn.softmax if self.cardinality > 2 else tf.nn.sigmoid
         self.marginals_op = marginals_fn(self.logits)
 
-    def _build_training_ops(self, l1_penalty=0.0, l2_penalty=0.0, **kwargs):
+    def _build_loss(self, l1_penalty=0.0, l2_penalty=0.0, **kwargs):
         """
         Build training ops, setting loss and train ops
         
         :param l1_penalty: L1 reg. coefficient
         :param l2_penalty: L2 reg. coefficient
         """
-        super(LogisticRegression, self)._build_training_ops()   
-        
+        super(LogisticRegression, self)._build_loss()
         # Add L1 and L2 penalties
         if l1_penalty > 0:
             self.loss += l1_penalty * tf.reduce_sum(tf.abs(self.w))

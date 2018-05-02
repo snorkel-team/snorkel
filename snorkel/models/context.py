@@ -239,6 +239,9 @@ class TemporarySpan(TemporaryContext):
     def get_word_end(self):
         return self.char_to_word_index(self.char_end)
 
+    def get_word_range(self):
+        return self.get_word_start(), self.get_word_end()
+
     def get_n(self):
         return self.get_word_end() - self.get_word_start() + 1
 

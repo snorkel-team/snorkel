@@ -4,7 +4,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import *
 
-import tensorflow as tf
+import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
 from time import time
 import os
@@ -13,68 +14,30 @@ from six.moves.cPickle import dump, load
 from snorkel.learning.classifier import Classifier
 from snorkel.learning.utils import reshape_marginals, LabelBalancer
 
-class TFNoiseAwareModel(Classifier):
+
+class TorchNoiseAwareModel(Classifier):
     """
-    Generic NoiseAwareModel class for TensorFlow models.
-    Note that the actual network is built when train is called (to allow for
-    model architectures which depend on the training data, e.g. vocab size).
+    Generic NoiseAwareModel class for PyTorch models.
     
     :param n_threads: Parallelism to use; single-threaded if None
     :param seed: Top level seed which is passed into both numpy operations
-        via a RandomState maintained by the class, and into TF as a graph-level
-        seed.
-    :param deterministic [EXPERIMENTAL / in development!] If True, attempts to
-            make the model deterministic on GPU by replacing all reduce_ and 
-            other non-deterministic operations; has no effect (other than 
-            potential slight slowdown) for CPU (at least for single-threaded?).
+        via a RandomState maintained by the class, and into PyTorch
     """
-    def __init__(self, n_threads=None, seed=123, deterministic=False, **kwargs):
+    def __init__(self, n_threads=None, seed=123, **kwargs):
         self.n_threads = n_threads
         self.seed = seed
         self.rand_state = np.random.RandomState()
-        self.deterministic = deterministic
-        super(TFNoiseAwareModel, self).__init__(**kwargs)
-
-    def _build_model(self, **model_kwargs):
-        """
-        Builds the TensorFlow Operations for the model. Must set the following:
-            - self.logits: The un-normalized potentials for the variables
-                ("logits" in keeping with TensorFlow terminology)
-            - self.Y: The training marginals to fit to
-            - self.marginals_op: Normalized predicted marginals for the vars
-
-        Additional ops must be set depending on whether the default
-        self._construct_feed_dict method below is used, or a custom one.
-
-        Note that _build_model is called in the train method, allowing for the 
-        network to be constructed dynamically depending on the training set 
-        (e.g., the size of the vocabulary for a text LSTM model)
-
-        Note also that model_kwargs are saved to disk by the self.save method,
-        as they are needed to rebuild / reload the model. *All hyperparameters
-        needed to rebuild the model must be passed in here for model reloading
-        to work!*
-        """
-        raise NotImplementedError()
+        super(TorchNoiseAwareModel, self).__init__(**kwargs)
 
     def _build_loss(self, **training_kwargs):
         """
-        Builds the TensorFlow loss for the training procedure.
+        Builds the PyTorch loss for the training procedure.
         """
         # Define loss and marginals ops
         if self.cardinality > 2:
-            loss_fn = tf.nn.softmax_cross_entropy_with_logits
+            self.loss = F.cross_entropy
         else:
-            loss_fn = tf.nn.sigmoid_cross_entropy_with_logits
-
-        # If deterministic=True, avoid use of non-deterministic reduce_ ops
-        if self.deterministic:
-            l = tf.reshape(loss_fn(logits=self.logits, labels=self.Y), [1, -1])
-            self.loss = tf.squeeze(tf.matmul(l, tf.ones_like(l),
-                                             transpose_b=True)) / tf.cast(tf.shape(l)[1], tf.float32)
-        else:
-            self.loss = tf.reduce_mean(loss_fn(logits=self.logits,
-                                               labels=self.Y))
+            self.loss = nn.BCEWithLogitsLoss
 
     def _build_training_ops(self, **training_kwargs):
         """
@@ -87,43 +50,6 @@ class TFNoiseAwareModel(Classifier):
         # Build training op
         self.lr = tf.placeholder(tf.float32)
         self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
-
-    def _construct_feed_dict(self, X_b, Y_b, lr=0.01, **kwargs):
-        """
-        Given a batch of data and labels, and other necessary hyperparams,
-        construct a python dictionary to use in the training step as feed_dict.
-
-        This method can be overwritten when non-standard arguments are needed.
-
-        NOTE: Using a feed_dict is obviously not the fastest way to pass in data
-            if running a large-scale dataset on a GPU, see Issue #679.
-        """
-        # Note: The below arguments need to be constructed by self._build!
-        return {self.X: X_b, self.Y: Y_b, self.lr: lr}
-
-    def _build_new_graph_session(self, **model_kwargs):
-        """Creates new graph, builds network, and sets new session."""
-        self.model_kwargs = model_kwargs
-
-        # Create new computation graph
-        self.graph = tf.Graph()
-
-        with self.graph.as_default():
-
-            # Set graph-level random seed
-            tf.set_random_seed(self.seed)
-
-            # Build network here in the graph
-            self._build_model(**model_kwargs)
-
-        # Create new session
-        self.session = tf.Session(
-            config=tf.ConfigProto(
-                intra_op_parallelism_threads=self.n_threads,
-                inter_op_parallelism_threads=self.n_threads
-            ),
-            graph=self.graph
-        ) if self.n_threads is not None else tf.Session(graph=self.graph)
 
     def _check_input(self, X):
         """Checks correctness of input; optional to implement."""

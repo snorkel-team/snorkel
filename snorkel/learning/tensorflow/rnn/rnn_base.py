@@ -2,20 +2,16 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-from builtins import *
 
 import numpy as np
-import random
 import tensorflow as tf
-# import tensorflow.contrib.rnn as rnn
+from builtins import *
+
 import warnings
 
-from snorkel.learning.utils import LabelBalancer
-from snorkel.learning.disc_learning import TFNoiseAwareModel
+from snorkel.learning.tensorflow.noise_aware_model import TFNoiseAwareModel
 from snorkel.models import Candidate
 from .utils import get_bi_rnn_output, SymbolTable
-from time import time
-
 
 SD = 0.1
 

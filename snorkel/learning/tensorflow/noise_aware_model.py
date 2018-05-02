@@ -4,14 +4,14 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import *
 
-import tensorflow as tf
+import snorkel.learning.tensorflow as tf
 import numpy as np
 from time import time
 import os
 from six.moves.cPickle import dump, load
 
-from .classifier import Classifier
-from .utils import reshape_marginals, LabelBalancer
+from snorkel.learning.classifier import Classifier
+from snorkel.learning.utils import reshape_marginals, LabelBalancer
 
 class TFNoiseAwareModel(Classifier):
     """

@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 from builtins import *
 from future.utils import iteritems
 
-import numpy as np
 import tensorflow as tf
 
 

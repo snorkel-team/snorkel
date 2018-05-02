@@ -8,6 +8,7 @@ matplotlib
 nltk
 numba
 git+https://github.com/HazyResearch/numbskull@master
+git+https://github.com/HazyResearch/treedlib@master
 numpy>=1.11
 pandas
 requests

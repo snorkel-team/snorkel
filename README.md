@@ -1,7 +1,7 @@
 <img src="figs/logo_01.png" width="150"/>
 
 
-**_v0.6.2_**
+**_v0.6.3_**
 
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 [![Documentation](https://readthedocs.org/projects/snorkel/badge/)](http://snorkel.readthedocs.io/en/master/)

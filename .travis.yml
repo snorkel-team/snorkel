@@ -34,7 +34,7 @@ before_install:
   - mkdir -p download
   - cd download
   - rm -rf ~/miniconda
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then  
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       travis_retry wget -c https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else
       travis_retry wget -c https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
@@ -63,7 +63,8 @@ install:
   - conda install --yes numba
 
   # Install all remaining dependencies as per our README
-  - pip install -r python-package-requirement.txt
+  - pip install --requirement python-package-requirement.txt
+  - pip install .
   - test -e parser/corenlp.sh || ./install-parser.sh
 
   # Use runipy to run Jupyter/IPython notebooks from command-line

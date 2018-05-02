@@ -2,9 +2,6 @@
 source set_env.sh
 cd "$SNORKELHOME"
 
-# Make sure the submodules are installed
-git submodule update --init --recursive
-
 # Make sure parser is installed
 PARSER="parser/stanford-corenlp-3.6.0.jar"
 if [ ! -f "$PARSER" ]; then

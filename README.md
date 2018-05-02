@@ -87,17 +87,29 @@ source activate py2Env
 ```
 
 ### Installing dependencies
+
 First install [NUMBA](https://numba.pydata.org/), a package for high-performance numeric computing in Python via Conda:
+
 ```bash
 conda install numba
 ```
 
 Then install the remaining package requirements:
+
 ```bash
+# Install requirements
 pip install --requirement python-package-requirement.txt
+
+# Install snorkel from GitHub
+pip install git+https://github.com/HazyResearch/treedlib@master
+
+# Alternatively, you can install snorkel for development, by running the
+# following command from within a snorkel repo clone
+pip install --editable .
 ```
 
 Finally, enable `ipywidgets`:
+
 ```bash
 jupyter nbextension enable --py widgetsnbextension --sys-prefix
 ```

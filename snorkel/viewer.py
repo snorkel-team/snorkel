@@ -16,8 +16,7 @@ import getpass
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-HOME = os.environ['SNORKELHOME']
-
+HOME = os.path.abspath(os.path.join(__file__, '..', '..'))
 
 # PAGE LAYOUT TEMPLATES
 LI_HTML = u"""
@@ -78,7 +77,7 @@ class Viewer(widgets.DOMWidget):
         self.gold       = list(gold)
         self.candidates = sorted(list(candidates), key=lambda c : c[0].char_start)
         self.contexts   = list(set(c[0].get_parent() for c in self.candidates + self.gold))
-        
+
         # If committed, sort contexts by id
         try:
             self.contexts = sorted(self.contexts, key=lambda c : c.id)

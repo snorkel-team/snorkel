@@ -19,16 +19,15 @@ import os
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
-os.environ['SNORKELHOME'] = os.path.abspath('..')
 
 # Mock imports for troublesome modules (i.e. any that use C code)
 # See: http://blog.rtwilson.com/how-to-make-your-sphinx-documentation-compile-with-readthedocs-when-youre-using-numpy-and-scipy/
 import mock
 MOCK_MODULES = [
-  'numpy', 'np', 'matplotlib', 'matplotlib.pyplot', 'plt', 'scipy', 
+  'numpy', 'np', 'matplotlib', 'matplotlib.pyplot', 'plt', 'scipy',
   'scipy.sparse', 'sparse', 'pandas', 'tensorflow', 'tensorflow.contrib.rnn',
-  'sparse.csr_matrix', 'numbskull', 'numba', 'numbskull.inference', 
-  'numbskull.numbskulltypes', 'spacy', 'spacy.cli', 'spacy.deprecated', 
+  'sparse.csr_matrix', 'numbskull', 'numba', 'numbskull.inference',
+  'numbskull.numbskulltypes', 'spacy', 'spacy.cli', 'spacy.deprecated',
   'nltk.stem.porter', 'nltk'
 ]
 for mod_name in MOCK_MODULES:

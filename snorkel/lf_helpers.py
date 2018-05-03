@@ -7,11 +7,11 @@ from builtins import *
 import numpy as np
 import re
 
-from .annotations import load_gold_labels
-from .learning.utils import MentionScorer
-from .models import Span, Label, Candidate
+from snorkel.annotations import load_gold_labels
+from snorkel.learning.utils import MentionScorer
+from snorkel.models import Span, Label, Candidate
 from itertools import chain
-from .utils import tokens_to_ngrams
+from snorkel.utils import tokens_to_ngrams
 
 
 def get_text_splits(c):

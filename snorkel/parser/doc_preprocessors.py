@@ -12,7 +12,7 @@ import lxml.etree as et
 
 from bs4 import BeautifulSoup
 
-from ..models import Document
+from snorkel.models import Document
 
 
 class DocPreprocessor(object):
@@ -146,10 +146,10 @@ class CSVPathsPreprocessor(DocPreprocessor):
 
 class TikaPreprocessor(DocPreprocessor):
     """
-    This preprocessor use `Apache Tika <http://tika.apache.org>`_ parser to 
+    This preprocessor use `Apache Tika <http://tika.apache.org>`_ parser to
     retrieve text content from complex file types such as DOCX, HTML and PDFs.
 
-    Documentation for customizing Tika is 
+    Documentation for customizing Tika is
     `here <https://github.com/chrismattmann/tika-python>`_
 
     Example::
@@ -166,7 +166,7 @@ class TikaPreprocessor(DocPreprocessor):
     import tika
     # automatically downloads tika jar and starts a JVM processif no REST API
     # is configured in ENV
-    tika.initVM()  
+    tika.initVM()
     from tika import parser as tk_parser
     parser = tk_parser
 

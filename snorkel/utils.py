@@ -8,32 +8,30 @@ import re
 import sys
 import numpy as np
 import scipy.sparse as sparse
+import subprocess
 
 
 class ProgressBar(object):
     def __init__(self, N, length=40):
-        # Protect against division by zero (N = 0 results in full bar being printed)
         self.N      = max(1, N)
         self.nf     = float(self.N)
         self.length = length
-        # Precalculate the i values that should trigger a write operation
-        self.ticks = set([round(i/100.0 * N) for i in range(101)])
-        self.ticks.add(N-1)
+        self.update_interval = self.nf/100
+        self.current_tick = 0
         self.bar(0)
 
     def bar(self, i):
         """Assumes i ranges through [0, N-1]"""
-        if i in self.ticks:
-            b = int(np.ceil(((i+1) / self.nf) * self.length))
-            sys.stdout.write(
-                "\r[{0}{1}] {2}%".format(
-                    "="*b, " "*(self.length-b), int(100*((i+1) / self.nf))))
+        new_tick = i/self.update_interval
+        if int(new_tick) != int(self.current_tick):
+            b = int(np.ceil((i / self.nf) * self.length))
+            sys.stdout.write("\r[%s%s] %d%%" % ("="*b, " "*(self.length-b), int(100*(i / self.nf))))
             sys.stdout.flush()
+        self.current_tick = new_tick
 
     def close(self):
-        # Move the bar to 100% before closing
-        self.bar(self.N-1)
-        sys.stdout.write("\n\n")
+        b = self.length
+        sys.stdout.write("\r[%s%s] %d%%\n" % ("="*b, " "*(self.length-b), 100))
         sys.stdout.flush()
 
 
@@ -42,8 +40,8 @@ def get_ORM_instance(ORM_class, session, instance):
     Given an ORM class and *either an instance of this class, or the name attribute of an instance
     of this class*, return the instance
     """
-    if isinstance(instance, str):
-        return session.query(ORM_class).filter(ORM_class.name == instance).one()
+    if isinstance(instance, str) or isinstance(instance, unicode):
+        return session.query(ORM_class).filter(ORM_class.name == instance).one_or_none()
     else:
         return instance
 
@@ -126,25 +124,30 @@ def matrix_conflicts(L):
     return matrix_coverage(sparse_nonzero(B))
 
 
+
 def matrix_tp(L, labels):
     return np.ravel([
         np.sum(np.ravel((L[:, j] == 1).todense()) * (labels == 1)) for j in range(L.shape[1])
     ])
+
 
 def matrix_fp(L, labels):
     return np.ravel([
         np.sum(np.ravel((L[:, j] == 1).todense()) * (labels == -1)) for j in range(L.shape[1])
     ])
 
+
 def matrix_tn(L, labels):
     return np.ravel([
         np.sum(np.ravel((L[:, j] == -1).todense()) * (labels == -1)) for j in range(L.shape[1])
     ])
 
+
 def matrix_fn(L, labels):
     return np.ravel([
         np.sum(np.ravel((L[:, j] == -1).todense()) * (labels == 1)) for j in range(L.shape[1])
     ])
+
 
 def get_as_dict(x):
     """Return an object as a dictionary of its attributes"""
@@ -167,8 +170,38 @@ def corenlp_cleaner(words):
   return [d[w] if w in d else w for w in words]
 
 
-def tokens_to_ngrams(tokens, n_max=3, delim=' '):
+def split_html_attrs(attrs):
+    """
+    Given an iterable object of (attr, values) pairs, returns a list of separated
+    "attr=value" strings
+    """
+    html_attrs = []
+    for a in attrs:
+        attr = a[0]
+        values = [v.split(';') for v in a[1]] if isinstance(a[1], list) else [a[1].split(';')]
+        for i in range(len(values)):
+            while isinstance(values[i], list):
+                values[i] = values[i][0]
+        html_attrs += ["=".join([attr, val]) for val in values]
+    return html_attrs
+
+
+def tokens_to_ngrams(tokens, n_min=1, n_max=3, delim=' ', lower=False):
+    f = (lambda x: x.lower()) if lower else (lambda x: x)
     N = len(tokens)
     for root in range(N):
-        for n in range(min(n_max, N - root)):
-            yield delim.join(tokens[root:root+n+1])
+        for n in range(max(n_min - 1, 0), min(n_max, N - root)):
+            yield f(delim.join(tokens[root:root + n + 1]))
+
+
+def get_keys_by_candidate(candidate, annotation_matrix):
+    (r, c, v) = sparse.find(annotation_matrix[annotation_matrix.get_row_index(candidate), :])
+    return [annotation_matrix.get_key(idx).name for idx in c]
+
+
+def remove_files(filename):
+    try:
+        subprocess.check_output('rm -f %s' % filename, shell=True)
+    except OSError as e:
+        print(e)
+        pass

@@ -1,0 +1,25 @@
+featurization:
+  content:
+    window_feature:
+      size: 3
+      combinations: True
+      isolated: True
+    word_feature:
+      window: 7
+  table:
+    unary_features:
+      attrib:
+        - words
+      get_cell_ngrams:
+        max: 2
+      get_head_ngrams:
+        max: 2
+      get_row_ngrams:
+        max: 2
+      get_col_ngrams:
+        max: 2
+    binary_features:
+      min_row_diff:
+        absolute: False
+      min_col_diff:
+        absolute: False

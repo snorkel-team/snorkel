@@ -48,7 +48,7 @@ class Candidate(SnorkelBase):
             raise Exception("Contexts do not all have same parent")
 
     def get_cids(self):
-        """Get a tuple of the canonical IDs (CIDs) of the contexts making up 
+        """Get a tuple of the canonical IDs (CIDs) of the contexts making up
         this candidate"""
         return tuple(getattr(self, name + "_cid") for name in self.__argnames__)
 
@@ -60,9 +60,12 @@ class Candidate(SnorkelBase):
 
     def __repr__(self):
         return "%s(%s)" % (
-            self.__class__.__name__,
-            ", ".join(map(str, self.get_contexts()))
-        )
+            self.__class__.__name__, ", ".join(map(str, self.get_contexts()))
+            )
+
+    def __gt__(self, other_cand):
+        # Allow sorting by comparing the string representations of each
+        return self.__repr__() > other_cand.__repr__()
 
 # This global dictionary contains all classes that have been declared in this Python environment, so
 # that candidate_subclass() can return a class if it already exists and is identical in specification
@@ -72,7 +75,7 @@ candidate_subclasses = {}
 def candidate_subclass(class_name, args, table_name=None, cardinality=None,
     values=None):
     """
-    Creates and returns a Candidate subclass with provided argument names, 
+    Creates and returns a Candidate subclass with provided argument names,
     which are Context type. Creates the table in DB if does not exist yet.
 
     Import using:
@@ -81,11 +84,11 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
 
         from snorkel.models import candidate_subclass
 
-    :param class_name: The name of the class, should be "camel case" e.g. 
+    :param class_name: The name of the class, should be "camel case" e.g.
         NewCandidate
-    :param args: A list of names of consituent arguments, which refer to the 
+    :param args: A list of names of consituent arguments, which refer to the
         Contexts--representing mentions--that comprise the candidate
-    :param table_name: The name of the corresponding table in DB; if not 
+    :param table_name: The name of the corresponding table in DB; if not
         provided, is converted from camel case by default, e.g. new_candidate
     :param cardinality: The cardinality of the variable corresponding to the
         Candidate. By default is 2 i.e. is a binary value, e.g. is or is not
@@ -98,7 +101,7 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
     if cardinality is None and values is None:
         values = [True, False]
         cardinality = 2
-    
+
     # Else use values if present, and validate proper input
     elif values is not None:
         if cardinality is not None and len(values) != cardinality:
@@ -199,12 +202,12 @@ class Marginal(SnorkelBase):
     """
     __tablename__ = 'marginal'
     id           = Column(Integer, primary_key=True)
-    candidate_id = Column(Integer, 
+    candidate_id = Column(Integer,
                         ForeignKey('candidate.id', ondelete='CASCADE'))
     training     = Column(Boolean, default=True)
     value        = Column(Integer, nullable=False, default=1)
     probability  = Column(Float, nullable=False, default=0.0)
-    
+
     __table_args__ = (
         UniqueConstraint(candidate_id, training, value),
     )

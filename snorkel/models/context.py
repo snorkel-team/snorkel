@@ -5,11 +5,14 @@ from __future__ import unicode_literals
 from builtins import *
 
 from .meta import SnorkelBase, snorkel_postgres
+import pickle
 from sqlalchemy import Column, String, Integer, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.types import PickleType
 from sqlalchemy.sql import select, text
+from sqlalchemy.types import PickleType
+
+from .meta import SnorkelBase, snorkel_postgres
 
 
 class Context(SnorkelBase):
@@ -41,9 +44,10 @@ class Document(Context):
     A root Context.
     """
     __tablename__ = 'document'
-    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    meta = Column(PickleType)
+    id            = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    name          = Column(String, unique=True, nullable=False)
+    text          = Column(String)
+    meta          = Column(PickleType)
 
     __mapper_args__ = {
         'polymorphic_identity': 'document',
@@ -60,7 +64,11 @@ class Document(Context):
             yield sentence
 
     def __repr__(self):
-        return "Document " + str(self.name)
+        return "Document " + str(self.name.encode('utf-8'))
+
+    def __gt__(self, other):
+        # Allow sorting by comparing the string representations of each
+        return self.__repr__() > other.__repr__()
 
 
 class Sentence(Context):
@@ -157,6 +165,12 @@ class TemporaryContext(object):
                         {'type': self._get_table_name(), 'stable_id': stable_id}).inserted_primary_key[0]
                 insert_args = self._get_insert_args()
                 insert_args['id'] = self.id
+                for (key, val) in insert_args.items():
+                    if isinstance(val, list):
+                        if snorkel_postgres:
+                            insert_args[key] = val
+                        else:
+                            insert_args[key] = pickle.dumps(val) #NOTE: this works for sqlite, not Postgres
                 session.execute(text(self._get_insert_query()), insert_args)
             else:
                 self.id = id[0]
@@ -190,7 +204,7 @@ class TemporarySpan(TemporaryContext):
     """The TemporaryContext version of Span"""
     def __init__(self, sentence, char_start, char_end, meta=None):
         super(TemporarySpan, self).__init__()
-        self.sentence     = sentence  # The sentence Context of the Span
+        self.sentence   = sentence  # The sentence Context of the Span
         self.char_end   = char_end
         self.char_start = char_start
         self.meta       = meta
@@ -272,7 +286,9 @@ class TemporarySpan(TemporaryContext):
         return self.get_attrib_span('words', sep)
 
     def __contains__(self, other_span):
-        return other_span.char_start >= self.char_start and other_span.char_end <= self.char_end
+        return (self.sentence == other_span.sentence
+            and other_span.char_start >= self.char_start
+            and other_span.char_end <= self.char_end)
 
     def __getitem__(self, key):
         """
@@ -307,11 +323,11 @@ class Span(Context, TemporarySpan):
     char_offsets are **relative to the Context start**
     """
     __tablename__ = 'span'
-    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
-    sentence_id = Column(Integer, ForeignKey('sentence.id', ondelete='CASCADE'))
-    char_start = Column(Integer, nullable=False)
-    char_end = Column(Integer, nullable=False)
-    meta = Column(PickleType)
+    id            = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    sentence_id   = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'))
+    char_start    = Column(Integer, nullable=False)
+    char_end      = Column(Integer, nullable=False)
+    meta          = Column(PickleType)
 
     __table_args__ = (
         UniqueConstraint(sentence_id, char_start, char_end),
@@ -322,7 +338,7 @@ class Span(Context, TemporarySpan):
         'inherit_condition': (id == Context.id)
     }
 
-    sentence = relationship('Sentence', backref=backref('spans', cascade='all, delete-orphan'), order_by=char_start, foreign_keys=sentence_id)
+    sentence = relationship('Context', backref=backref('spans', cascade='all, delete-orphan'), foreign_keys=sentence_id)
 
     def get_parent(self):
         return self.sentence

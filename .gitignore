@@ -3,7 +3,7 @@
 /.virtualenv
 .ipynb_checkpoints
 *.pyc
-parser/
+parser/*
 /stanford-corenlp-*
 *.db*
 downloads/
@@ -36,5 +36,3 @@ tutorials/intro/data/articles-dev.tsv
 tutorials/intro/data/articles-test.tsv
 tutorials/intro/data/articles-train.tsv
 tutorials/intro/data/gold_labels.tsv
-
-tutorials/tables/data/hardware/

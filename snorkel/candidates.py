@@ -27,6 +27,8 @@ class CandidateExtractor(UDFRunner):
                     Contexts to consider
     :param matchers: one or list of :class:`snorkel.matchers.Matcher` objects, one for each relation argument. Only tuples of
                      Contexts for which each element is accepted by the corresponding Matcher will be returned as Candidates
+    :param candidate_filter: an optional function for filtering out candidates which returns a Boolean expressing whether or not
+                      the candidate should be instantiated.
     :param self_relations: Boolean indicating whether to extract Candidates that relate the same context.
                            Only applies to binary relations. Default is False.
     :param nested_relations: Boolean indicating whether to extract Candidates that relate one Context with another
@@ -34,11 +36,12 @@ class CandidateExtractor(UDFRunner):
     :param symmetric_relations: Boolean indicating whether to extract symmetric Candidates, i.e., rel(A,B) and rel(B,A),
                                 where A and B are Contexts. Only applies to binary relations. Default is False.
     """
-    def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=False):
+    def __init__(self, candidate_class, cspaces, matchers, candidate_filter=None, self_relations=False, nested_relations=False, symmetric_relations=False):
         super(CandidateExtractor, self).__init__(CandidateExtractorUDF,
                                                  candidate_class=candidate_class,
                                                  cspaces=cspaces,
                                                  matchers=matchers,
+                                                 candidate_filter=candidate_filter,
                                                  self_relations=self_relations,
                                                  nested_relations=nested_relations,
                                                  symmetric_relations=symmetric_relations)
@@ -51,11 +54,12 @@ class CandidateExtractor(UDFRunner):
 
 
 class CandidateExtractorUDF(UDF):
-    def __init__(self, candidate_class, cspaces, matchers, self_relations, nested_relations, symmetric_relations, **kwargs):
+    def __init__(self, candidate_class, cspaces, matchers, candidate_filter, self_relations, nested_relations, symmetric_relations, **kwargs):
         self.candidate_class     = candidate_class
         # Note: isinstance is the way to check types -- not type(x) in [...]!
         self.candidate_spaces    = cspaces if isinstance(cspaces, (list, tuple)) else [cspaces]
         self.matchers            = matchers if isinstance(matchers, (list, tuple)) else [matchers]
+        self.candidate_filter    = candidate_filter
         self.nested_relations    = nested_relations
         self.self_relations      = self_relations
         self.symmetric_relations = symmetric_relations
@@ -89,6 +93,13 @@ class CandidateExtractorUDF(UDF):
         extracted = set()
         candidate_args = {'split': split}
         for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
+
+            # Apply candidate_filter if one was given
+            # Accepts a tuple of Context objects (e.g., (Span, Span))
+            # (candidate_filter returns whether or not proposed candidate passes throttling condition)
+            if self.candidate_filter:
+                if not self.candidate_filter(tuple(args[i][1] for i in range(self.arity))):
+                    continue
 
             # TODO: Make this work for higher-order relations
             if self.arity == 2:
@@ -147,7 +158,7 @@ class Ngrams(CandidateSpace):
         CandidateSpace.__init__(self)
         self.n_max     = n_max
         self.split_rgx = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
-    
+
     def apply(self, context):
 
         # These are the character offset--**relative to the sentence start**--for each _token_

@@ -1,7 +1,6 @@
 bs4
-future
 futures
-ipywidgets>=7.0
+ipywidgets
 jupyter
 lxml==3.6.4
 matplotlib
@@ -12,10 +11,12 @@ numpy>=1.11
 pandas
 requests
 scipy>=0.18
-six
 sqlalchemy>=1.0.14
 tensorflow>=1.0
-tika
-spacy==1.10.0
+wand
+selenium
+editdistance
+pyyaml
 psycopg2
-py4j
+tika
+git+https://github.com/HazyResearch/pdftotree@master

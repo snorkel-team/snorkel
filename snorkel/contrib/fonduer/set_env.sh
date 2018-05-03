@@ -1,0 +1,8 @@
+export SNORKELHOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../../../ && pwd )"
+export FONDUERHOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+echo "Snorkel home directory: $SNORKELHOME"
+echo "Fonduer home directory: $FONDUERHOME"
+export PYTHONPATH="$PYTHONPATH:$SNORKELHOME:$FONDUERHOME:$SNORKELHOME/treedlib"
+export PATH="$SNORKELHOME:$SNORKELHOME/treedlib:$FONDUERHOME/phantomjs/bin:$FONDUERHOME/poppler/bin:$PATH"
+export LD_LIBRARY_PATH="$FONDUERHOME/poppler/lib:$LD_LIBRARY_PATH"
+echo "Environment variables set!"

@@ -83,11 +83,11 @@ class NgramMatcher(Matcher):
     """Matcher base class for Ngram objects"""
     def _is_subspan(self, c, span):
         """Tests if candidate c is subspan of span, where span is defined specific to candidate type"""
-        return c.char_start >= span[0] and c.char_end <= span[1]
+        return c.sentence.id == span[0] and c.char_start >= span[1] and c.char_end <= span[2]
 
     def _get_span(self, c):
         """Gets a tuple that identifies a span for the specific candidate class that c belongs to"""
-        return (c.char_start, c.char_end)
+        return (c.sentence.id, c.char_start, c.char_end)
 
 
 class DictionaryMatch(NgramMatcher):
@@ -144,6 +144,23 @@ class Union(NgramMatcher):
            if child.f(c) > 0:
                return True
        return False
+
+
+class Intersect(Matcher):
+    """Takes the intersection of candidate sets returned by child operators"""
+    def f(self, c):
+        for child in self.children:
+            if not child.f(c):
+                return False
+        return True
+
+
+class Inverse(Matcher):
+    """Returns the opposite result of its child operator"""
+    # TODO: confirm that this only has one child
+    def f(self, c):
+        for child in self.children:
+            return not child.f(c)
 
 
 class Concat(NgramMatcher):
@@ -230,9 +247,11 @@ class RegexMatch(NgramMatcher):
         self.sep         = self.opts.get('sep', " ")
 
         # Compile regex matcher
-        # NOTE: Enforce full span matching by ensuring that regex ends with $!
-        self.rgx = self.rgx if self.rgx.endswith('$') else self.rgx + r'$'
-        self.r = re.compile(self.rgx, flags=re.I if self.ignore_case else 0)
+        # NOTE: Enforce full span matching by ensuring that regex ends with $.
+        # Group self.rgx first so that $ applies to all components of an 'OR'
+        # expression. (e.g., we want r'(a|b)$' instead of r'a|b$')
+        self.rgx = self.rgx if self.rgx.endswith('$') else ('(' + self.rgx + ')$')
+        self.r = re.compile(self.rgx, flags=(re.I if self.ignore_case else 0) | re.UNICODE)
 
     def _f(self, c):
         raise NotImplementedError()

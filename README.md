@@ -136,14 +136,6 @@ _Note: Currently the `Viewer` is supported on the following versions:_
 * `jupyter`: 4.1
 * `jupyter notebook`: 4.2
 
-In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
-
-## Running
-After installing, just run:
-```
-./run.sh
-```
-
 ## Q & A
 **Many questions about Snorkel get answered in the issues section--along with general discussions and conversations of interest.
 We tag these all as "Q&A" and save them [here](https://github.com/HazyResearch/snorkel/issues?utf8=%E2%9C%93&q=is%3Aissue+label%3A%22Q%26A%22+)**

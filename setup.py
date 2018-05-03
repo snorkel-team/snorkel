@@ -25,7 +25,7 @@ setuptools.setup(
     long_description_content_type='text/markdown',
     long_description=long_description,
     license='Apache License 2.0',
-    packages=['snorkel'],
+    packages=setuptools.find_packages(),
 
     keywords='machine-learning ai information-extraction weak-supervision',
     classifiers=[

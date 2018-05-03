@@ -8,24 +8,11 @@ env:
   matrix:
     - PYTHON_VERSION=2.7
     - PYTHON_VERSION=3.6
-jdk:
-  - oraclejdk8
 
 cache:
   directories:
     - download
-    - parser                         # to avoid repetitively downloading CoreNLP
 
-addons:
-  apt:
-    packages:
-    # CoreNLP needs Java 8
-    - oracle-java8-installer
-
-# Following trick is necessary to get a binary distribution of numpy, scipy, etc. which takes too long to build every time
-# See: http://stackoverflow.com/q/30588634
-# See: https://github.com/Theano/Theano/blob/master/.travis.yml (for caching)
-# See: http://conda.pydata.org/docs/travis.html
 before_install:
   - travis_retry
     wget https://repo.continuum.io/miniconda/Miniconda3-4.5.1-Linux-x86_64.sh
@@ -36,22 +23,11 @@ before_install:
   - conda config --set always_yes yes --set changeps1 no
   - conda info --all
 
-  # Make sure Java 8 is used
-  - export PATH="/usr/lib/jvm/java-8-oracle/bin:$PATH"
-  - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
-  - java -version
-
-  # Set environment variables
-  - source set_env.sh
-
 install:
   - sed --in-place 's/- python/- python='"$PYTHON_VERSION"'/' environment.yml
   - conda env create --quiet --file=environment.yml
   - conda activate snorkel
-
-  # Install all remaining dependencies as per our README
   - pip install .
-  - test -e parser/corenlp.sh || ./install-parser.sh
 
 script:
 

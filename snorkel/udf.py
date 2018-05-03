@@ -9,8 +9,8 @@ from builtins import *
 from multiprocessing import Process, JoinableQueue
 from queue import Empty
 
-from .models.meta import new_sessionmaker, snorkel_conn_string
-from .utils import ProgressBar
+from snorkel.models.meta import new_sessionmaker, snorkel_conn_string
+from snorkel.utils import ProgressBar
 
 
 QUEUE_TIMEOUT = 3
@@ -30,7 +30,7 @@ class UDFRunner(object):
 
     def apply(self, xs, clear=True, parallelism=None, progress_bar=True, count=None, **kwargs):
         """
-        Apply the given UDF to the set of objects xs, either single or multi-threaded, 
+        Apply the given UDF to the set of objects xs, either single or multi-threaded,
         and optionally calling clear() first.
         """
         # Clear everything downstream of this UDF if requested
@@ -61,7 +61,7 @@ class UDFRunner(object):
         if progress_bar and hasattr(xs, '__len__') or count is not None:
             n = count if count is not None else len(xs)
             pb = ProgressBar(n)
-        
+
         # Run single-thread
         for i, x in enumerate(xs):
             if pb:
@@ -69,7 +69,7 @@ class UDFRunner(object):
 
             # Apply UDF and add results to the session
             for y in udf.apply(x, **kwargs):
-                
+
                 # Uf UDF has a reduce step, this will take care of the insert; else add to session
                 if hasattr(self.udf_class, 'reduce'):
                     udf.reduce(y, **kwargs)
@@ -80,7 +80,7 @@ class UDFRunner(object):
         udf.session.commit()
         if pb:
             pb.close()
-        
+
     def apply_mt(self, xs, parallelism, **kwargs):
         """Run the UDF multi-threaded using python multiprocessing"""
         if snorkel_conn_string.startswith('sqlite'):

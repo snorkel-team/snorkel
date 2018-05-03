@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import *
 
-from .models import GoldLabel, StableLabel, GoldLabelKey
+from snorkel.models import GoldLabel, StableLabel, GoldLabelKey
 try:
     from IPython.core.display import display, Javascript
 except:

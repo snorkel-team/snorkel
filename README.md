@@ -73,23 +73,48 @@ Then, for more content, check out the other tutorials avaliable [here](https://g
 * And many more fixes, additions, and new material!
 
 ## Installation
-Snorkel uses Python 2.7 or Python 3 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
 
-### Setting Up Conda
-Installation is easiest if you download and install [`conda`](https://www.continuum.io/downloads).
-You can create a new conda environment with e.g.:
+Starting with version 0.7.0, Snorkel should be installed as a Python package using pip.
+Snorkel can be installed directly from its GitHub repository via:
+
 ```
-conda create -n py2Env python=2.7 anaconda
-```
-And then run the correct environment:
-```
-source activate py2Env
+# WARNING: read sections below before running this command!
+# Note this installs the latest master version. You can change master to tag or commit
+pip install git+https://github.com/HazyResearch/snorkel@master
 ```
 
-### Installing dependencies
+However, installing Snorkel via pip will not install dependencies.
+Instead, to manage its environment, Snorkel uses [conda](http://conda.pydata.org/docs/), which allows specifying dependencies via an `environment.yml` file.
+This documentation covers two common cases (usage and development) for setting up conda environments for Snorkel.
+In both cases, the environment can be activated using `conda activate snorkel` and deactivated using `conda deactivate`.
+With older versions of conda, you may have to replace `conda` with `source` in the above commands.
 
-This repository uses [conda](http://conda.pydata.org/docs/) to manage its environment as specified in [`environment.yml`](environment.yml).
-For Snorkel development, clone this repository and install the environment using:
+### Usage Environment
+
+This setup is intended for users who would like to use Snorkel in their own applications by importing the package.
+In such cases, users should define a custom `environment.yml` to manage their project's dependencies.
+We recommend starting with the [`environment.yml`](environment.yml) in this repository, but making the following modifications:
+
+1. Specifying versions for the listed packages, such as changing `python` to `python=3.6.5`.
+Versioned specification of your environment is critical to reproducibility and ensuring dependency updates do not break your pipeline.
+When first setting your package versions, you likely want to start with the latest versions available on the [conda-forge](https://anaconda.org/conda-forge/) channel, unless you have a reason to do otherwise.
+2. Adding other packages to your environment as required by your use case.
+Consider maintaining alphabetical sorting of packages in `environment.yml` to assist with maintainability.
+In addition, we recommend installing packages via pip, only if they are not available in the conda-forge channel.
+3. Add the `snorkel` package installation to your `environment.yml`, under the `- pip` section.
+Of course, we suggest versioning snorkel, which you can do via a release number or commit hash (to access more bleeding edge functionality)
+  ```yml
+    # Versioned via release tag
+    - git+https://github.com/HazyResearch/snorkel@v0.6.3
+    # Versioned via commit hash (commit hash below is fake to ensure you change it)
+    - git+https://github.com/HazyResearch/snorkel@7eb7076f70078c06bef9752f22acf92fd86e616a
+  ```
+Finally, consider versioning the `numbskull` and `treedlib` pip dependencies by changing `master` to their latest commit hash on GitHub.
+
+### Development Environment
+
+This setup is intended for users who have cloned this repository and would like to access the environment for development.
+This approach installs the `snorkel` package in development mode, meaning that changes you make to the source code will automatically be applied to the `snorkel` package in the environment.
 
 ```sh
 # From the root direcectory of this repo run the following command.
@@ -102,18 +127,10 @@ conda activate snorkel
 pip install --editable .
 ```
 
-TODO reconcile below
+### Additional environment notes
 
-```
-# Install snorkel from GitHub
-pip install git+https://github.com/HazyResearch/snorkel@master
-
-# Alternatively, you can install snorkel for development, by running the
-# following command from within a snorkel repo clone
-pip install --editable .
-```
-
-_Note: If you are using conda and experience issues with `lxml`, try running `conda install libxml2`._
+Users who have cloned this repository to run the example notebooks can use either setup.
+However, long-term users should use the usage environment installation.
 
 _Note: Currently the `Viewer` is supported on the following versions:_
 * `jupyter`: 4.1

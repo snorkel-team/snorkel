@@ -16,7 +16,7 @@ import getpass
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-HOME = os.path.abspath(os.path.join(__file__, '..', '..'))
+directory = os.path.abspath(os.path.dirname(__file__))
 
 # PAGE LAYOUT TEMPLATES
 LI_HTML = u"""
@@ -182,8 +182,8 @@ class Viewer(widgets.DOMWidget):
 
         # Render in primary Viewer template
         self.cids = cids
-        self.html = open(HOME+'/viewer/viewer.html').read() % (self.height, ''.join(pages))
-        display(Javascript(open(HOME + '/viewer/viewer.js').read()))
+        self.html = open(os.path.join(directory, 'viewer.html')).read() % (self.height, ''.join(pages))
+        display(Javascript(os.path.join(directory, 'viewer.js')).read())
 
     def _get_labels(self):
         """

@@ -14,7 +14,7 @@ from treedlib import compile_relation_feature_generator
 from snorkel.features.entity_features import compile_entity_feature_generator, get_ddlib_feats
 from snorkel.models import Span
 from snorkel.utils import get_as_dict
-from tree_structs import corenlp_to_xmltree
+from snorkel.vis.tree_structs import corenlp_to_xmltree
 
 
 def get_span_splits(candidate, stopwords=None):

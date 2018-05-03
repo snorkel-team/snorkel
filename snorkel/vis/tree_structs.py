@@ -4,7 +4,7 @@ import re
 import lxml.etree as et
 from snorkel.utils import corenlp_cleaner
 
-APP_HOME = os.path.abspath(os.path.join(__file__, '..', '..'))
+directory = os.path.abspath(os.path.dirname(__file__))
 
 # Load IPython display functionality libs if possible i.e. if in IPython
 try:
@@ -48,12 +48,12 @@ class XMLTree:
     # HTML
     WORD = '<span class="word-' + self.id + '-%s">%s</span>'
     words = ' '.join(WORD % (i,w) for i,w in enumerate(corenlp_cleaner(self.words))) if self.words else ''
-    html = open('%s/vis/tree-chart.html' % APP_HOME).read() % (self.id, self.id, words)
+    html = open('%s/tree-chart.html' % directory).read() % (self.id, self.id, words)
     display_html(HTML(data=html))
 
     # JS
     JS_LIBS = ["http://d3js.org/d3.v3.min.js"]
-    js = open('%s/vis/tree-chart.js' % APP_HOME).read() % (self.id, json.dumps(self.to_json()), str(highlight))
+    js = open('%s/tree-chart.js' % directory).read() % (self.id, json.dumps(self.to_json()), str(highlight))
     display_javascript(Javascript(data=js, lib=JS_LIBS))
 
 

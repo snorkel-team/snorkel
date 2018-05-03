@@ -1,0 +1,5 @@
+include README.md
+include LICENSE
+include environment.yml
+include snorkel/vis/tree-chart.html
+include snorkel/vis/tree-chart.js

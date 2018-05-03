@@ -7,7 +7,7 @@ from builtins import *
 import re
 from collections import defaultdict
 from snorkel.models import construct_stable_id
-from snorkel.parser import Parser, ParserConnection
+from snorkel.parser.parser import Parser, ParserConnection
 
 try:
     import spacy

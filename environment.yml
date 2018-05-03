@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - beautifulsoup4
+  - future
   - ipywidgets>=7.0
   - jupyter
   - lxml

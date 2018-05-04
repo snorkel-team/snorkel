@@ -68,16 +68,16 @@ class RNNBase(TorchNoiseAwareModel):
                 batch_size = batch_size
             else:
                 batch_size = len(X_test[batch:batch+batch_size])
-            
+            print(batch_size)
+            print("X:", len(X_test[batch:batch+batch_size]))
             hidden_state = self.initalize_hidden_state(batch_size)
             
             max_batch_length = max(map(len, X_test[batch:batch+batch_size]))
-            packed_X_test = torch.autograd.Variable(torch.zeros(batch_size, max_batch_length)).long()
-            
+            padded_X_test = torch.full((batch_size, max_batch_length), 1, dtype=torch.long)
             for idx, seq in enumerate(X_test[batch:batch+batch_size]):
-                packed_X_test[idx, :len(seq)] = torch.LongTensor(seq)
+                padded_X_test[idx, :len(seq)] = torch.LongTensor(seq)
             
-            output = self.forward(packed_X_test, hidden_state)
+            output = self.forward(padded_X_test, hidden_state)
             marginals = torch.cat((marginals, output), 0)
 
         if self.cardinality == 2: 

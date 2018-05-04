@@ -187,13 +187,14 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
             ))
 
         dev_score_opt = 0.0
-        
+        batch_state = batch_size
+
         # Run mini-batch SGD
         for epoch in range(n_epochs):
-            
+            batch_size = batch_state
             epoch_losses = []
-            batch_state = batch_size
-            
+
+
             for batch in range(0, n, batch_size):
                 
                 # zero gradients for each batch
@@ -204,8 +205,10 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
                 else:
                     batch_size = len(X_train[batch:batch+batch_size])
 
+                print(batch_size)
+
                 hidden_state = self.initalize_hidden_state(batch_size)
-                
+
                 #batch Y
                 batch_Y_train = torch.unsqueeze(torch.FloatTensor(Y_train[batch:batch+batch_size]), 1)
                 
@@ -213,11 +216,13 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
                 if hidden_state:     
                     max_batch_length = max(map(len, X_train[batch:batch+batch_size]))
                     
-                    packed_X_train = torch.autograd.Variable(torch.zeros(batch_size, max_batch_length)).long()
+                    padded_X_train = torch.full((batch_size, max_batch_length), 1, dtype=torch.long)
                     for idx, seq in enumerate(X_train[batch:batch+batch_size]):
-                        packed_X_train[idx, :len(seq)] = torch.LongTensor(seq)
+                        # TODO: Don't instantiate tensor for each row
+                        padded_X_train[idx, :len(seq)] = torch.LongTensor(seq)
 
-                    output = self.forward(packed_X_train, hidden_state)
+                    print("Calling forward.")
+                    output = self.forward(padded_X_train, hidden_state)
                 else:
                     output = self.forward(torch.tensor(X_train))
 
@@ -240,9 +245,10 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
             # Print training stats and optionally checkpoint model
             if verbose and (epoch % print_freq == 0 or epoch in [0, (n_epochs-1)]):
                 msg = "[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
-                    self.name, epoch, time() - st, torch.stack(epoch_losses).mean())
+                    self.name, epoch+1, time() - st, torch.stack(epoch_losses).mean())
                 if X_dev is not None:
-                    scores = self.score(X_dev, Y_dev, batch_size=batch_size)
+                    print("Lets evaluate")
+                    scores = self.score(X_dev, Y_dev, batch_size=batch_state)
                     score = scores if self.cardinality > 2 else scores[-1]
                     score_label = "Acc." if self.cardinality > 2 else "F1"
                     msg += '\tDev {0}={1:.2f}'.format(score_label, 100. * score)
@@ -255,7 +261,6 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
                     dev_score_opt = score
                     self.save(save_dir=save_dir, global_step=epoch)
 
-            batch_size = batch_state
         # Conclude training
         if verbose:
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))

@@ -77,14 +77,10 @@ class RNNBase(TorchNoiseAwareModel):
 
             output = self.forward(padded_X, hidden_state)
             
-            #get the marginals
-            marginals = torch.cat((marginals, output), 0)
-            
             if self.cardinality == 2: 
-                marginals = nn.functional.sigmoid(marginals)
-                marginals = marginals.view(-1)
+                marginals = torch.cat((marginals, nn.functional.sigmoid(output.view(-1))), 0)
             else:
-                marginals = nn.functional.softmax(torch.stack(marginals))
+                marginals = torch.cat((marginals, nn.functional.softmax(output)), 0)
 
         return marginals
 

@@ -39,19 +39,18 @@ script:
   - runipy test/learning/test_parallel_grid_search.ipynb
 
   # Runs intro tutorial notebooks
-  - cd tutorials
-  - runipy intro/Intro_Tutorial_1.ipynb
-  - runipy intro/Intro_Tutorial_2.ipynb
-  - runipy intro/Intro_Tutorial_3.ipynb
+  - runipy tutorials/intro/Intro_Tutorial_1.ipynb
+  - runipy tutorials/intro/Intro_Tutorial_2.ipynb
+  - runipy tutorials/intro/Intro_Tutorial_3.ipynb
 
   # Run advanced notebooks
-  - runipy advanced/Categorical_Classes.ipynb
-  - runipy advanced/Structure_Learning.ipynb
+  - runipy tutorials/advanced/Categorical_Classes.ipynb
+  - runipy tutorials/advanced/Structure_Learning.ipynb
 
   # Run CDR tutorials
-  - runipy cdr/CDR_Tutorial_1.ipynb
-  - runipy cdr/CDR_Tutorial_2.ipynb
-  - runipy cdr/CDR_Tutorial_3.ipynb
+  - runipy tutorials/cdr/CDR_Tutorial_1.ipynb
+  - runipy tutorials/cdr/CDR_Tutorial_2.ipynb
+  - runipy tutorials/cdr/CDR_Tutorial_3.ipynb
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

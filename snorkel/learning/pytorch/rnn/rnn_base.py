@@ -43,7 +43,9 @@ def mark_sentence(s, args):
     return x
 
 class RNNBase(TorchNoiseAwareModel):
-    representation=True
+    
+    def initalize_hidden_state(self):
+        raise NotImplementedError
     
     def marginals(self, X, batch_size=None):
         """
@@ -51,40 +53,40 @@ class RNNBase(TorchNoiseAwareModel):
         Split into batches to avoid OOM errors, then call _marginals_batch;
         defaults to no batching.
         """
+        n = len(X)
+        print(n)
         if not batch_size:
             batch_size = len(X)
-    
+        
         if isinstance(X[0], Candidate):
-            X_test = self._preprocess_data(X)
-        else:
-            X_test = X
-    
+            X = self._preprocess_data(X)
+        
         marginals = torch.Tensor([])
-        n = len(X_test)
         
         for batch in range(0, n, batch_size):
             
-            if batch_size < len(X_test[batch:batch+batch_size]):
-                batch_size = batch_size
-            else:
-                batch_size = len(X_test[batch:batch+batch_size])
-            print(batch_size)
-            print("X:", len(X_test[batch:batch+batch_size]))
+            if batch_size > len(X[batch:batch+batch_size]):
+                batch_size = len(X[batch:batch+batch_size])
+    
             hidden_state = self.initalize_hidden_state(batch_size)
+            max_batch_length = max(map(len, X[batch:batch+batch_size]))
             
-            max_batch_length = max(map(len, X_test[batch:batch+batch_size]))
-            padded_X_test = torch.full((batch_size, max_batch_length), 1, dtype=torch.long)
-            for idx, seq in enumerate(X_test[batch:batch+batch_size]):
-                padded_X_test[idx, :len(seq)] = torch.LongTensor(seq)
-            
-            output = self.forward(padded_X_test, hidden_state)
-            marginals = torch.cat((marginals, output), 0)
+            padded_X = torch.full((batch_size, max_batch_length), 1, dtype=torch.long)
+            for idx, seq in enumerate(X[batch:batch+batch_size]):
+                # TODO: Don't instantiate tensor for each row
+                padded_X[idx, :len(seq)] = torch.LongTensor(seq)
 
-        if self.cardinality == 2: 
-            marginals = nn.functional.sigmoid(marginals)
-            marginals = np.array(marginals[:,0].data)
-        else:
-            marginals = nn.functional.softmax(torch.stack(marginals))
+            print("Calling forward.")
+            output = self.forward(padded_X, hidden_state)
+            
+            #get the marginals
+            marginals = torch.cat((marginals, output), 0)
+            
+            if self.cardinality == 2: 
+                marginals = nn.functional.sigmoid(marginals)
+                marginals = marginals.view(-1)
+            else:
+                marginals = nn.functional.softmax(torch.stack(marginals))
 
         return marginals
 

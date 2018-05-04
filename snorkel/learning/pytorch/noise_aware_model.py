@@ -53,6 +53,9 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         raise NotImplementedError
     
     def marginals(self, X, batch_size=100):
+        return self._pytorch_marginals(X, batch_size).detach().numpy()
+
+    def _pytorch_marginals(self, X, batch_size):
         raise NotImplementedError
 
     def load(self, model_name=None, save_dir='checkpoints', verbose=True):
@@ -195,7 +198,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
                 if batch_size > len(X_train[batch:batch+batch_size]):
                     batch_size = len(X_train[batch:batch+batch_size])
 
-                output = self.marginals(X_train[batch:batch+batch_size], None)
+                output = self._pytorch_marginals(X_train[batch:batch+batch_size], None)
                 
                 #Calculate loss
                 calculated_loss = self.loss(output, torch.Tensor(Y_train[batch:batch+batch_size]))

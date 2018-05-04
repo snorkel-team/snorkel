@@ -47,7 +47,7 @@ class RNNBase(TorchNoiseAwareModel):
     def initalize_hidden_state(self):
         raise NotImplementedError
     
-    def marginals(self, X, batch_size=None):
+    def _pytorch_marginals(self, X, batch_size):
         """
         Compute the marginals for the given candidates X.
         Split into batches to avoid OOM errors, then call _marginals_batch;

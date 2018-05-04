@@ -4,18 +4,22 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import *
 
+import os
+from time import time
+import warnings
+
+import numpy as np
+
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from time import time
-import os
-from six.moves.cPickle import dump, load
+import torch.optim as optim
 
 from snorkel.learning.classifier import Classifier
 from snorkel.learning.utils import reshape_marginals, LabelBalancer
 
 
-class TorchNoiseAwareModel(Classifier):
+class TorchNoiseAwareModel(Classifier, nn.Module):
     """
     Generic NoiseAwareModel class for PyTorch models.
     
@@ -24,37 +28,78 @@ class TorchNoiseAwareModel(Classifier):
         via a RandomState maintained by the class, and into PyTorch
     """
     def __init__(self, n_threads=None, seed=123, **kwargs):
+        Classifier.__init__(self, **kwargs)
+        nn.Module.__init__(self)
         self.n_threads = n_threads
         self.seed = seed
         self.rand_state = np.random.RandomState()
-        super(TorchNoiseAwareModel, self).__init__(**kwargs)
+        
 
-    def _build_loss(self, **training_kwargs):
+    def _build_loss(self):
         """
         Builds the PyTorch loss for the training procedure.
         """
         # Define loss and marginals ops
         if self.cardinality > 2:
-            self.loss = F.cross_entropy
+            self.loss = F.cross_entropy()
         else:
-            self.loss = nn.BCEWithLogitsLoss
-
-    def _build_training_ops(self, **training_kwargs):
-        """
-        Builds the TensorFlow Operations for the training procedure. Must set
-        the following:
-            - self.loss: Loss function
-            - self.optimizer: Training operation
-        """
-        self._build_loss(**training_kwargs)
-        # Build training op
-        self.lr = tf.placeholder(tf.float32)
-        self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
-
+            self.loss = nn.BCEWithLogitsLoss()
+    
     def _check_input(self, X):
         """Checks correctness of input; optional to implement."""
         pass
+    
+    def _check_model(self, lr):
+        if not hasattr(self, 'loss'):
+            self._build_loss()
+        if not hasattr(self, 'optimizer'):
+            self.optimizer = optim.Adam(self.parameters(), lr)
+    
+    def build_model(self, **model_kwargs):
+        pass
+    
+    def initalize_hidden_state(self):
+        return None
+    
+    def marginals(self, X, batch_size=100):
+        raise NotImplementedError()
 
+    def load(self, model_name=None, save_dir='checkpoints', verbose=True):
+        """Load model from file and rebuild in new graph / session."""
+        model_name = model_name or self.name
+        model_dir = os.path.join(save_dir, model_name)
+        warnings.warn('Unstable! Please extensively test this part of the code when time permits')
+        
+        self.load_state_dict(
+            torch.load('{}/model.params'.format(model_dir))
+        )
+        if verbose:
+            print("[{0}] Loaded model <{1}>".format(self.name, model_name))
+        else:
+            raise Exception("[{0}] No model found at <{1}>".format(
+                self.name, model_name))
+
+    def save(self, model_name=None, save_dir='checkpoints', verbose=True,
+        global_step=0):
+        """Save current model."""
+        model_name = model_name or self.name
+
+        # Note: Model checkpoints need to be saved in separate directories!
+        model_dir = os.path.join(save_dir, model_name)
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
+
+        warnings.warn('Unstable! Please extensively test this part of the code when time permits')
+        # implement Path here
+        print(model_dir)
+        torch.save(
+            self.state_dict(), 
+            '{}/model.params'.format(model_dir)
+        )
+
+        if verbose:
+            print("[{0}] Model saved as <{1}>".format(self.name, model_name))
+        
     def train(self, X_train, Y_train, n_epochs=25, lr=0.01, batch_size=256, 
         rebalance=False, X_dev=None, Y_dev=None, print_freq=5, dev_ckpt=True,
         dev_ckpt_delay=0.75, save_dir='checkpoints', **kwargs):
@@ -89,6 +134,7 @@ class TorchNoiseAwareModel(Classifier):
             model will not be able to be reloaded!*
         """
         self._check_input(X_train)
+        
         verbose = print_freq > 0
 
         # Set random seed for all numpy operations
@@ -127,21 +173,10 @@ class TorchNoiseAwareModel(Classifier):
         X_train = [X_train[j] for j in train_idxs] if self.representation \
             else X_train[train_idxs, :]
         Y_train = Y_train[train_idxs]
-
-        # Create new graph, build network, and start session
-        self._build_new_graph_session(**kwargs)
-
-        # Build training ops
-        # Note that training_kwargs and model_kwargs are mixed together; ideally
-        # would be separated but no negative effect
-        with self.graph.as_default():
-            self._build_training_ops(**kwargs)
         
-        # Initialize variables
-        with self.graph.as_default():
-            self.session.run(tf.global_variables_initializer())
-
-        # Run mini-batch SGD
+        self.build_model(**kwargs)
+        self._check_model(lr)
+        
         n = len(X_train) if self.representation else X_train.shape[0]
         batch_size = min(batch_size, n)
         if verbose:
@@ -150,31 +185,62 @@ class TorchNoiseAwareModel(Classifier):
             print("[{0}] n_train={1}  #epochs={2}  batch size={3}".format(
                 self.name, n, n_epochs, batch_size
             ))
-        dev_score_opt = 0.0
-        for t in range(n_epochs):
-            epoch_losses = []
-            for i in range(0, n, batch_size):
-                feed_dict = self._construct_feed_dict(
-                    X_train[i:min(n, i+batch_size)],
-                    Y_train[i:min(n, i+batch_size)],
-                    lr=lr,
-                    **kwargs
-                )
-                # Run training step and evaluate loss function    
-                epoch_loss, _ = self.session.run(
-                    [self.loss, self.optimizer], feed_dict=feed_dict)
-                epoch_losses.append(epoch_loss)
 
-            # Reshuffle training data
+        dev_score_opt = 0.0
+        
+        # Run mini-batch SGD
+        for epoch in range(n_epochs):
+            
+            epoch_losses = []
+            batch_state = batch_size
+            
+            for batch in range(0, n, batch_size):
+                
+                # zero gradients for each batch
+                self.optimizer.zero_grad()
+                
+                if batch_size < len(X_train[batch:batch+batch_size]):
+                    batch_size = batch_size
+                else:
+                    batch_size = len(X_train[batch:batch+batch_size])
+
+                hidden_state = self.initalize_hidden_state(batch_size)
+                
+                #batch Y
+                batch_Y_train = torch.unsqueeze(torch.FloatTensor(Y_train[batch:batch+batch_size]), 1)
+                
+                # forward pass
+                if hidden_state:     
+                    max_batch_length = max(map(len, X_train[batch:batch+batch_size]))
+                    
+                    packed_X_train = torch.autograd.Variable(torch.zeros(batch_size, max_batch_length)).long()
+                    for idx, seq in enumerate(X_train[batch:batch+batch_size]):
+                        packed_X_train[idx, :len(seq)] = torch.LongTensor(seq)
+
+                    output = self.forward(packed_X_train, hidden_state)
+                else:
+                    output = self.forward(torch.tensor(X_train))
+
+                #Calculate loss
+                calculated_loss = self.loss(output, batch_Y_train)
+                
+                #Compute gradient
+                calculated_loss.backward()
+                
+                #Step on the optimizer
+                self.optimizer.step()
+                
+                epoch_losses.append(calculated_loss)
+            
             train_idxs = self.rand_state.permutation(list(range(n)))
             X_train = [X_train[j] for j in train_idxs] if self.representation \
                 else X_train[train_idxs, :]
             Y_train = Y_train[train_idxs]
             
             # Print training stats and optionally checkpoint model
-            if verbose and (t % print_freq == 0 or t in [0, (n_epochs-1)]):
+            if verbose and (epoch % print_freq == 0 or epoch in [0, (n_epochs-1)]):
                 msg = "[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
-                    self.name, t, time() - st, np.mean(epoch_losses))
+                    self.name, epoch, time() - st, torch.stack(epoch_losses).mean())
                 if X_dev is not None:
                     scores = self.score(X_dev, Y_dev, batch_size=batch_size)
                     score = scores if self.cardinality > 2 else scores[-1]
@@ -185,94 +251,21 @@ class TorchNoiseAwareModel(Classifier):
                 # If best score on dev set so far and dev checkpointing is
                 # active, save checkpoint
                 if X_dev is not None and dev_ckpt and \
-                    t > dev_ckpt_delay * n_epochs and score > dev_score_opt:
+                    epoch > dev_ckpt_delay * n_epochs and score > dev_score_opt:
                     dev_score_opt = score
-                    self.save(save_dir=save_dir, global_step=t)
-        
+                    self.save(save_dir=save_dir, global_step=epoch)
+
+            batch_size = batch_state
         # Conclude training
         if verbose:
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))
-
+        
         # If checkpointing on, load last checkpoint (i.e. best on dev set)
         if dev_ckpt and X_dev is not None and verbose and dev_score_opt > 0:
             self.load(save_dir=save_dir)
 
-    def marginals(self, X, batch_size=None):
-        """
-        Compute the marginals for the given candidates X.
-        Split into batches to avoid OOM errors, then call _marginals_batch;
-        defaults to no batching.
-        """
-        if batch_size is None:
-            return self._marginals_batch(X)
-        else:
-            N = len(X) if self.representation else X.shape[0]
-            n_batches = int(np.floor(N / batch_size))
-
-            # Iterate over batches
-            batch_marginals = []
-            for b in range(0, N, batch_size):
-                batch = self._marginals_batch(X[b:min(N, b+batch_size)])
-                
-                # Note: if a single marginal in *binary* classification is
-                # returned, it will have shape () rather than (1,)- catch here
-                if len(batch.shape) == 0:
-                    batch = batch.reshape(1)
-                    
-                batch_marginals.append(batch)
-            return np.concatenate(batch_marginals)
-
-    def save(self, model_name=None, save_dir='checkpoints', verbose=True,
-        global_step=0):
-        """Save current model."""
-        model_name = model_name or self.name
-
-        # Note: Model checkpoints need to be saved in separate directories!
-        model_dir = os.path.join(save_dir, model_name)
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
-
-        # Create Saver
-        with self.graph.as_default():
-            saver = tf.train.Saver(tf.global_variables())
-
-        # Save model kwargs needed to rebuild model
-        with open(os.path.join(model_dir, "model_kwargs.pkl"), 'wb') as f:
-            dump(self.model_kwargs, f)
-
-        # Save graph and report if verbose
-        saver.save(
-            self.session,
-            os.path.join(model_dir, model_name),
-            global_step=global_step
-        )
-        if verbose:
-            print("[{0}] Model saved as <{1}>".format(self.name, model_name))
-
-    def load(self, model_name=None, save_dir='checkpoints', verbose=True):
-        """Load model from file and rebuild in new graph / session."""
-        model_name = model_name or self.name
-        model_dir = os.path.join(save_dir, model_name)
-
-        # Load model kwargs needed to rebuild model
-        with open(os.path.join(model_dir, "model_kwargs.pkl"), 'rb') as f:
-            model_kwargs = load(f)
+    
         
-        # Create new graph, build network, and start session
-        self._build_new_graph_session(**model_kwargs)
+    
 
-        # Initialize variables
-        with self.graph.as_default():
-            self.session.run(tf.global_variables_initializer())
-
-        # Load saved checkpoint to populate trained parameters
-        with self.graph.as_default():
-            saver = tf.train.Saver(tf.global_variables())
-            ckpt = tf.train.get_checkpoint_state(model_dir)
-        if ckpt and ckpt.model_checkpoint_path:
-            saver.restore(self.session, ckpt.model_checkpoint_path)
-            if verbose:
-                print("[{0}] Loaded model <{1}>".format(self.name, model_name))
-        else:
-            raise Exception("[{0}] No model found at <{1}>".format(
-                self.name, model_name))
+    

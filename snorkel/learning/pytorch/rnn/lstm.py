@@ -12,7 +12,7 @@ class LSTM(RNNBase):
         self.hidden_dim = hidden_dim
         self.lstm = nn.LSTM(self.embedding_dim, hidden_dim,
                             num_layers=num_layers, bidirectional=bidirectional,
-                            dropout=dropout, batch_first=True
+                            dropout=dropout if num_layers > 1 else None, batch_first=True
                             )
         self.output_layer = nn.Linear(hidden_dim, self.cardinality-1)
         self.dropout_layer = nn.Dropout(p=dropout)

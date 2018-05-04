@@ -112,7 +112,7 @@ class RNNBase(TorchNoiseAwareModel):
         return data
 
 
-    def train(self, X_train, Y_train, X_dev=None, embedding_dim=100, **kwargs):
+    def train(self, X_train, Y_train, X_dev=None, embedding_dim=50, **kwargs):
         """
         Perform preprocessing of data, construct dataset-specific model, then
         train.

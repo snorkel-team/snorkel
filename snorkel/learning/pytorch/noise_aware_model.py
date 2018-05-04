@@ -56,13 +56,13 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
             self.optimizer = optim.Adam(self.parameters(), lr)
     
     def build_model(self, **model_kwargs):
-        pass
+        raise NotImplementedError
     
     def initalize_hidden_state(self):
         return None
     
     def marginals(self, X, batch_size=100):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def load(self, model_name=None, save_dir='checkpoints', verbose=True):
         """Load model from file and rebuild in new graph / session."""

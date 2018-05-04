@@ -15,17 +15,35 @@ class LSTM(RNNBase):
                             dropout=dropout, batch_first=True
                             )
         self.output_layer = nn.Linear(hidden_dim, self.cardinality-1)
+        self.dropout_layer = nn.Dropout(p=dropout)
         
         
     def forward(self, X, hidden_state):
-        X, indicies = X.sort(dim=0, descending=True)
-        X_lens = torch.stack([max(candidate.nonzero())[0] for candidate in X])
+        X_order = sorted(
+            [(idx, int(max(candidate.nonzero())[0].data)) 
+            for idx, candidate in enumerate(X)
+            ],
+            reverse=True, 
+            key=lambda x: x[1]
+        )
+
+        X_sorted_order, X_lens = zip(*X_order)
+        X_sorted_order, X_lens = list(X_sorted_order), list(X_lens)
         encoded_X = self.embedding(X)
-        encoded_X = pack_padded_sequence(encoded_X, X_lens, batch_first = True)
+        encoded_X = pack_padded_sequence(encoded_X[X_sorted_order,:,:], X_lens, batch_first = True)
         output, _ =  self.lstm(encoded_X, hidden_state)
         output, _ = pad_packed_sequence(output, batch_first = True)
-        output = torch.stack([data[X_lens[idx]-1, :] for idx, data in enumerate(output)])
-        return self.output_layer(output)
+        temp_output = list(
+            map(lambda x: x[1],
+                    sorted(
+                    [(idx, data[lens-1, :]) for idx, lens, data in zip(X_sorted_order, X_lens, output)],
+                    key=lambda x: x[0]
+                    )
+               )
+        )
+        output = torch.stack(temp_output)
+        output_layer = nn.Linear(output.size(1), self.cardinality-1)
+        return output_layer(self.dropout_layer(output))
     
     def initalize_hidden_state(self, batch_size):
         return (

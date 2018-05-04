@@ -19,7 +19,6 @@ before_install:
     --output-document=miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - source $HOME/miniconda/etc/profile.d/conda.sh
-  - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda info --all
 
@@ -28,6 +27,7 @@ install:
   - conda env create --quiet --file=environment.yml
   - conda activate snorkel
   - pip install .
+  - conda list
 
 script:
 

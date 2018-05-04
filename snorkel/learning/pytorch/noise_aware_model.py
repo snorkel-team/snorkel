@@ -34,16 +34,6 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         self.seed = seed
         self.rand_state = np.random.RandomState()
         
-
-    def _build_loss(self):
-        """
-        Builds the PyTorch loss for the training procedure.
-        """
-        # Define loss and marginals ops
-        if self.cardinality > 2:
-            self.loss = F.cross_entropy()
-        else:
-            self.loss = nn.BCEWithLogitsLoss()
     
     def _check_input(self, X):
         """Checks correctness of input; optional to implement."""
@@ -51,15 +41,16 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
     
     def _check_model(self, lr):
         if not hasattr(self, 'loss'):
-            self._build_loss()
+            # Define loss and marginals ops
+            if self.cardinality > 2:
+                self.loss = F.cross_entropy()
+            else:
+                self.loss = nn.BCEWithLogitsLoss()
         if not hasattr(self, 'optimizer'):
             self.optimizer = optim.Adam(self.parameters(), lr)
     
     def build_model(self, **model_kwargs):
         raise NotImplementedError
-    
-    def initalize_hidden_state(self):
-        return None
     
     def marginals(self, X, batch_size=100):
         raise NotImplementedError
@@ -140,17 +131,13 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         # Set random seed for all numpy operations
         self.rand_state.seed(self.seed)
 
-        # If the data passed in is a feature matrix (representation=False),
-        # set the dimensionality here; else assume this is done by sub-class
-        if not self.representation:
-            kwargs['d'] = X_train.shape[1]
-
         # Check that the cardinality of the training marginals and model agree
         cardinality = Y_train.shape[1] if len(Y_train.shape) > 1 else 2
         if cardinality != self.cardinality:
             raise ValueError("Training marginals cardinality ({0}) does not"
                 "match model cardinality ({1}).".format(Y_train.shape[1], 
                     self.cardinality))
+
         # Make sure marginals are in correct default format
         Y_train = reshape_marginals(Y_train)
         # Make sure marginals are in [0,1] (v.s e.g. [-1, 1])
@@ -170,15 +157,14 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
             # In categorical setting, just remove unlabeled
             diffs = Y_train.max(axis=1) - Y_train.min(axis=1)
             train_idxs = np.where(diffs > 1e-6)[0]
-        X_train = [X_train[j] for j in train_idxs] if self.representation \
-            else X_train[train_idxs, :]
+
+            
         Y_train = Y_train[train_idxs]
         
         self.build_model(**kwargs)
         self._check_model(lr)
         
-        n = len(X_train) if self.representation else X_train.shape[0]
-        batch_size = min(batch_size, n)
+        n = len(train_idxs)
         if verbose:
             st = time()
             print("[{0}] Training model".format(self.name))
@@ -191,43 +177,30 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
 
         # Run mini-batch SGD
         for epoch in range(n_epochs):
-            batch_size = batch_state
+    
+            # Shuffle training data
+            try:
+                X_train = X_train[train_idxs, :]
+            except:
+                X_train = [X_train[j] for j in train_idxs]
+
+            batch_size = min(batch_state, n) 
             epoch_losses = []
-
-
+            
             for batch in range(0, n, batch_size):
                 
                 # zero gradients for each batch
                 self.optimizer.zero_grad()
                 
-                if batch_size < len(X_train[batch:batch+batch_size]):
-                    batch_size = batch_size
-                else:
+                if batch_size > len(X_train[batch:batch+batch_size]):
                     batch_size = len(X_train[batch:batch+batch_size])
+                    print("SIZE:", len(X_train[batch:batch+batch_size]))
 
                 print(batch_size)
-
-                hidden_state = self.initalize_hidden_state(batch_size)
-
-                #batch Y
-                batch_Y_train = torch.unsqueeze(torch.FloatTensor(Y_train[batch:batch+batch_size]), 1)
+                output = self.marginals(X_train[batch:batch+batch_size], None)
                 
-                # forward pass
-                if hidden_state:     
-                    max_batch_length = max(map(len, X_train[batch:batch+batch_size]))
-                    
-                    padded_X_train = torch.full((batch_size, max_batch_length), 1, dtype=torch.long)
-                    for idx, seq in enumerate(X_train[batch:batch+batch_size]):
-                        # TODO: Don't instantiate tensor for each row
-                        padded_X_train[idx, :len(seq)] = torch.LongTensor(seq)
-
-                    print("Calling forward.")
-                    output = self.forward(padded_X_train, hidden_state)
-                else:
-                    output = self.forward(torch.tensor(X_train))
-
                 #Calculate loss
-                calculated_loss = self.loss(output, batch_Y_train)
+                calculated_loss = self.loss(output, torch.Tensor(Y_train[batch:batch+batch_size]))
                 
                 #Compute gradient
                 calculated_loss.backward()
@@ -237,15 +210,11 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
                 
                 epoch_losses.append(calculated_loss)
             
-            train_idxs = self.rand_state.permutation(list(range(n)))
-            X_train = [X_train[j] for j in train_idxs] if self.representation \
-                else X_train[train_idxs, :]
-            Y_train = Y_train[train_idxs]
-            
             # Print training stats and optionally checkpoint model
             if verbose and (epoch % print_freq == 0 or epoch in [0, (n_epochs-1)]):
                 msg = "[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
                     self.name, epoch+1, time() - st, torch.stack(epoch_losses).mean())
+                
                 if X_dev is not None:
                     print("Lets evaluate")
                     scores = self.score(X_dev, Y_dev, batch_size=batch_state)

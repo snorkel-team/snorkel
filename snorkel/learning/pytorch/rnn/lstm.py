@@ -24,11 +24,11 @@ class LSTM(RNNBase):
         seq_lengths = torch.zeros((X.size(0)), dtype=torch.long)
         for i in range(X.size(0)):
             for j in range(X.size(1)):
-                if X[i, j] == 1:
+                if X[i, j] == 0:
                     seq_lengths[i] = j
                     break
                 seq_lengths[i] = X.size(1)
-            #seq_lengths[i] = (X[i, :] == 1).nonzero()[0] if  (X[i, :] == 1).nonzero().size(0) != 0 else X.size(1)
+
         seq_lengths, perm_idx = seq_lengths.sort(0, descending=True)
         X = X[perm_idx, :]
 

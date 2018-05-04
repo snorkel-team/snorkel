@@ -159,8 +159,6 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
             train_idxs = np.where(diffs > 1e-6)[0]
 
             
-        Y_train = Y_train[train_idxs]
-        
         self.build_model(**kwargs)
         self._check_model(lr)
         
@@ -179,6 +177,8 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         for epoch in range(n_epochs):
     
             # Shuffle training data
+            train_idxs = self.rand_state.permutation(list(range(n)))
+            Y_train = Y_train[train_idxs]
             try:
                 X_train = X_train[train_idxs, :]
             except:
@@ -194,9 +194,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
                 
                 if batch_size > len(X_train[batch:batch+batch_size]):
                     batch_size = len(X_train[batch:batch+batch_size])
-                    print("SIZE:", len(X_train[batch:batch+batch_size]))
 
-                print(batch_size)
                 output = self.marginals(X_train[batch:batch+batch_size], None)
                 
                 #Calculate loss
@@ -216,7 +214,6 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
                     self.name, epoch+1, time() - st, torch.stack(epoch_losses).mean())
                 
                 if X_dev is not None:
-                    print("Lets evaluate")
                     scores = self.score(X_dev, Y_dev, batch_size=batch_state)
                     score = scores if self.cardinality > 2 else scores[-1]
                     score_label = "Acc." if self.cardinality > 2 else "F1"

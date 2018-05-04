@@ -54,7 +54,6 @@ class RNNBase(TorchNoiseAwareModel):
         defaults to no batching.
         """
         n = len(X)
-        print(n)
         if not batch_size:
             batch_size = len(X)
         
@@ -71,12 +70,11 @@ class RNNBase(TorchNoiseAwareModel):
             hidden_state = self.initalize_hidden_state(batch_size)
             max_batch_length = max(map(len, X[batch:batch+batch_size]))
             
-            padded_X = torch.full((batch_size, max_batch_length), 1, dtype=torch.long)
+            padded_X = torch.zeros((batch_size, max_batch_length), dtype=torch.long)
             for idx, seq in enumerate(X[batch:batch+batch_size]):
                 # TODO: Don't instantiate tensor for each row
                 padded_X[idx, :len(seq)] = torch.LongTensor(seq)
 
-            print("Calling forward.")
             output = self.forward(padded_X, hidden_state)
             
             #get the marginals

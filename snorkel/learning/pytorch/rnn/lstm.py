@@ -5,18 +5,17 @@ from __future__ import unicode_literals
 
 import torch
 import torch.nn as nn
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from torch.nn.utils.rnn import pack_padded_sequence
 
 from .rnn_base import RNNBase
 
 
 class LSTM(RNNBase):
     
-    def build_model(self, hidden_dim=50, num_layers=1, dropout=0.25, **kwargs):
-        bidirectional = False
+    def build_model(self, hidden_dim=50, num_layers=1, dropout=0.25, bidirectional=False, **kwargs):
+        self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         self.num_directions = 2 if bidirectional else 1
-        self.hidden_dim = hidden_dim
         self.lstm = nn.LSTM(self.embedding_dim, hidden_dim,
                             num_layers=num_layers, bidirectional=bidirectional,
                             dropout=dropout if num_layers > 1 else 0, batch_first=True
@@ -25,7 +24,6 @@ class LSTM(RNNBase):
         self.dropout_layer = nn.Dropout(p=dropout)
         
     def forward(self, X, hidden_state):
-        # TODO: Make this better
         seq_lengths = torch.zeros((X.size(0)), dtype=torch.long)
         for i in range(X.size(0)):
             for j in range(X.size(1)):
@@ -44,8 +42,8 @@ class LSTM(RNNBase):
 
         return self.output_layer(self.dropout_layer(ht[-1][inv_perm_idx, :]))
     
-    def initalize_hidden_state(self, batch_size):
+    def initialize_hidden_state(self, batch_size):
         return (
-            torch.randn(self.num_layers * self.num_directions, batch_size, self.hidden_dim),
-            torch.randn(self.num_layers * self.num_directions, batch_size, self.hidden_dim)
+            torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_dim),
+            torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_dim)
         )

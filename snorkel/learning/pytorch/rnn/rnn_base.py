@@ -8,13 +8,10 @@ import torch
 import torch.nn as nn
 from builtins import *
 
-import warnings
-
 from snorkel.learning.pytorch.noise_aware_model import TorchNoiseAwareModel
 from snorkel.models import Candidate
 from .utils import candidate_to_tokens, SymbolTable
 
-SD = 0.1
 
 def mark(l, h, idx):
     """Produce markers based on argument positions
@@ -45,14 +42,12 @@ def mark_sentence(s, args):
 
 class RNNBase(TorchNoiseAwareModel):
     
-    def initalize_hidden_state(self):
+    def initialize_hidden_state(self, batch_size):
         raise NotImplementedError
     
     def _pytorch_marginals(self, X, batch_size):
         """
         Compute the marginals for the given candidates X.
-        Split into batches to avoid OOM errors, then call _marginals_batch;
-        defaults to no batching.
         """
         n = len(X)
         if not batch_size:
@@ -68,7 +63,7 @@ class RNNBase(TorchNoiseAwareModel):
             if batch_size > len(X[batch:batch+batch_size]):
                 batch_size = len(X[batch:batch+batch_size])
     
-            hidden_state = self.initalize_hidden_state(batch_size)
+            hidden_state = self.initialize_hidden_state(batch_size)
             max_batch_length = max(map(len, X[batch:batch+batch_size]))
             
             padded_X = torch.zeros((batch_size, max_batch_length), dtype=torch.long)
@@ -77,7 +72,8 @@ class RNNBase(TorchNoiseAwareModel):
                 padded_X[idx, :len(seq)] = torch.LongTensor(seq)
 
             output = self.forward(padded_X, hidden_state)
-            
+
+            # TODO: Does skipping the cat when there is only one batch speed things up significantly?
             if self.cardinality == 2: 
                 marginals = torch.cat((marginals, nn.functional.sigmoid(output.view(-1))), 0)
             else:
@@ -117,7 +113,7 @@ class RNNBase(TorchNoiseAwareModel):
         if X_dev is not None:
             X_dev = self._preprocess_data(X_dev, extend=False)
         self.embedding_dim = embedding_dim
-        self.embedding = nn.Embedding(self.word_dict.len(), self.embedding_dim)
+        self.embedding = nn.Embedding(self.word_dict.len(), self.embedding_dim, padding_idx=0)
 
         # Train model- note we pass word_dict through here so it gets saved...
         super(RNNBase, self).train(X_train, Y_train, X_dev=X_dev,

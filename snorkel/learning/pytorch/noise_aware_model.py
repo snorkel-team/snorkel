@@ -44,14 +44,14 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
             if self.cardinality > 2:
                 self.loss = F.cross_entropy()
             else:
-                self.loss = nn.BCEWithLogitsLoss()
+                self.loss = nn.BCELoss()
         if not hasattr(self, 'optimizer'):
             self.optimizer = optim.Adam(self.parameters(), lr)
     
     def build_model(self, **model_kwargs):
         raise NotImplementedError
     
-    def marginals(self, X, batch_size=256, **kwargs):
+    def marginals(self, X, batch_size=None, **kwargs):
         return self._pytorch_marginals(X, batch_size).detach().numpy()
 
     def _pytorch_marginals(self, X, batch_size):
@@ -94,7 +94,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
             print("[{0}] Model saved as <{1}>".format(self.name, model_name))
         
     def train(self, X_train, Y_train, n_epochs=25, lr=0.01, batch_size=256, 
-        rebalance=False, X_dev=None, Y_dev=None, print_freq=5, dev_ckpt=True,
+        rebalance=False, X_dev=None, Y_dev=None, print_freq=1, dev_ckpt=True,
         dev_ckpt_delay=0.75, save_dir='checkpoints', **kwargs):
         """
         Generic training procedure for PyTorch model

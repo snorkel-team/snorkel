@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from builtins import *
 from future.utils import iteritems
 
+
 class SymbolTable(object):
     """Wrapper for dict to encode unknown symbols"""
     def __init__(self, starting_symbol=2, unknown_symbol=1): 

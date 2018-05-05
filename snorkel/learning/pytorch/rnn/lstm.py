@@ -1,8 +1,14 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 from .rnn_base import RNNBase
+
 
 class LSTM(RNNBase):
     
@@ -18,7 +24,6 @@ class LSTM(RNNBase):
         self.output_layer = nn.Linear(hidden_dim, self.cardinality-1)
         self.dropout_layer = nn.Dropout(p=dropout)
         
-        
     def forward(self, X, hidden_state):
         # TODO: Make this better
         seq_lengths = torch.zeros((X.size(0)), dtype=torch.long)
@@ -31,21 +36,16 @@ class LSTM(RNNBase):
 
         seq_lengths, perm_idx = seq_lengths.sort(0, descending=True)
         X = X[perm_idx, :]
+        inv_perm_idx = torch.tensor([i for i, _ in sorted(enumerate(perm_idx), key=lambda idx: idx[1])], dtype=torch.long)
 
         encoded_X = self.embedding(X)
         encoded_X = pack_padded_sequence(encoded_X, seq_lengths, batch_first=True)
-        output, _ = self.lstm(encoded_X, hidden_state)
-        output, _ = pad_packed_sequence(output, batch_first=True)
+        _, (ht, _) = self.lstm(encoded_X, hidden_state)
 
-        outs = []
-        for i in range(X.size(0)):
-            outs.append(output[i, seq_lengths[i] - 1,:])
-        output = torch.stack(outs, dim=0)
-        return self.output_layer(self.dropout_layer(output))
+        return self.output_layer(self.dropout_layer(ht[-1][inv_perm_idx, :]))
     
     def initalize_hidden_state(self, batch_size):
         return (
             torch.randn(self.num_layers * self.num_directions, batch_size, self.hidden_dim),
             torch.randn(self.num_layers * self.num_directions, batch_size, self.hidden_dim)
         )
-            

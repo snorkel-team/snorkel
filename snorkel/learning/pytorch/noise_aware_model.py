@@ -33,8 +33,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         self.n_threads = n_threads
         self.seed = seed
         self.rand_state = np.random.RandomState()
-        
-    
+
     def _check_input(self, X):
         """Checks correctness of input; optional to implement."""
         pass
@@ -52,7 +51,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
     def build_model(self, **model_kwargs):
         raise NotImplementedError
     
-    def marginals(self, X, batch_size=100):
+    def marginals(self, X, batch_size=256, **kwargs):
         return self._pytorch_marginals(X, batch_size).detach().numpy()
 
     def _pytorch_marginals(self, X, batch_size):
@@ -98,7 +97,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         rebalance=False, X_dev=None, Y_dev=None, print_freq=5, dev_ckpt=True,
         dev_ckpt_delay=0.75, save_dir='checkpoints', **kwargs):
         """
-        Generic training procedure for TF model
+        Generic training procedure for PyTorch model
 
         :param X_train: The training Candidates. If self.representation is True, then
             this is a list of Candidate objects; else is a csr_AnnotationMatrix
@@ -121,7 +120,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         :param dev_ckpt_delay: Start dev checkpointing after this portion
             of n_epochs.
         :param save_dir: Save dir path for checkpointing.
-        :param kwargs: All hyperparameters that change how the graph is built 
+        :param kwargs: All hyperparameters that change how the network is built
             must be passed through here to be saved and reloaded to save /
             reload model. *NOTE: If a parameter needed to build the 
             network and/or is needed at test time is not included here, the
@@ -237,9 +236,3 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         # If checkpointing on, load last checkpoint (i.e. best on dev set)
         if dev_ckpt and X_dev is not None and verbose and dev_score_opt > 0:
             self.load(save_dir=save_dir)
-
-    
-        
-    
-
-    

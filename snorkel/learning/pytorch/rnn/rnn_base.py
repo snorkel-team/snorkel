@@ -42,6 +42,7 @@ def mark_sentence(s, args):
         x.insert(k, v)
     return x
 
+
 class RNNBase(TorchNoiseAwareModel):
     
     def initalize_hidden_state(self):
@@ -84,7 +85,6 @@ class RNNBase(TorchNoiseAwareModel):
 
         return marginals
 
-    
     def _preprocess_data(self, candidates, extend=False):
         """Convert candidate sentences to lookup sequences
         
@@ -106,7 +106,6 @@ class RNNBase(TorchNoiseAwareModel):
             data.append(np.array(list(map(f, s))))
             
         return data
-
 
     def train(self, X_train, Y_train, X_dev=None, embedding_dim=50, **kwargs):
         """

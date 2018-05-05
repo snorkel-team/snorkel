@@ -2,13 +2,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-
-import numpy as np
-import torch.nn as nn
 from builtins import *
+
+import torch.nn as nn
 from scipy.sparse import issparse
 
-from snorkel.learning.pytorch.disc_learning import TorchNoiseAwareModel
+from snorkel.learning.pytorch import TorchNoiseAwareModel
+
 
 class LogisticRegression(TorchNoiseAwareModel):
     representation = False

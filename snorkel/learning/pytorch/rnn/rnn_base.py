@@ -41,6 +41,7 @@ def mark_sentence(s, args):
 
 
 class RNNBase(TorchNoiseAwareModel):
+    representation = True
     
     def initialize_hidden_state(self, batch_size):
         raise NotImplementedError

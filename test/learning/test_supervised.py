@@ -4,12 +4,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import *
 
-import math
-from numbskull.inference import FACTORS
 from scipy import sparse
-from snorkel.learning.gen_learning import (
-    GenerativeModel, DEP_EXCLUSIVE, DEP_REINFORCING, DEP_FIXING, DEP_SIMILAR
-)
+from snorkel.learning.gen_learning import GenerativeModel
+
 import unittest
 import random
 import numpy as np

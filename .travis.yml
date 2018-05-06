@@ -62,7 +62,7 @@ install:
   # Install Numba
   - conda install --yes numba
   # Manually install pytorch 0.4 for now. Should be removed when merged into 0.7.0-alpha
-  - conda install pytorch -c pytorch
+  - conda install --yes pytorch -c pytorch
 
   # Install all remaining dependencies as per our README
   - pip install -r python-package-requirement.txt

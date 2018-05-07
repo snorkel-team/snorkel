@@ -8,9 +8,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from snorkel.learning.pytorch.noise_aware_model import TorchNoiseAwareModel
+from snorkel.learning.pytorch import TorchNoiseAwareModel
 from snorkel.models import Candidate
-from .utils import candidate_to_tokens, SymbolTable
+from snorkel.learning.pytorch.rnn.utils import candidate_to_tokens, SymbolTable
 
 
 def mark(l, h, idx):
@@ -46,9 +46,9 @@ class RNNBase(TorchNoiseAwareModel):
     def initialize_hidden_state(self, batch_size):
         raise NotImplementedError
     
-    def _pytorch_marginals(self, X, batch_size):
+    def _pytorch_outputs(self, X, batch_size):
         """
-        Compute the marginals for the given candidates X.
+        Compute the outputs (unnormalized log marginals) for the given candidates X.
         """
         n = len(X)
         if not batch_size:
@@ -57,7 +57,7 @@ class RNNBase(TorchNoiseAwareModel):
         if isinstance(X[0], Candidate):
             X = self._preprocess_data(X)
         
-        marginals = torch.Tensor([])
+        outputs = torch.Tensor([])
         
         for batch in range(0, n, batch_size):
             
@@ -75,12 +75,9 @@ class RNNBase(TorchNoiseAwareModel):
             output = self.forward(padded_X, hidden_state)
 
             # TODO: Does skipping the cat when there is only one batch speed things up significantly?
-            if self.cardinality == 2: 
-                marginals = torch.cat((marginals, nn.functional.sigmoid(output.view(-1))), 0)
-            else:
-                marginals = torch.cat((marginals, nn.functional.softmax(output)), 0)
+            outputs = torch.cat((outputs, output.view(-1)), 0)
 
-        return marginals
+        return outputs
 
     def _preprocess_data(self, candidates, extend=False):
         """Convert candidate sentences to lookup sequences

@@ -19,6 +19,10 @@ from snorkel.learning.classifier import Classifier
 from snorkel.learning.utils import reshape_marginals, LabelBalancer
 
 
+def cross_entropy_loss(input, target):
+    pass
+
+
 class TorchNoiseAwareModel(Classifier, nn.Module):
     """
     Generic NoiseAwareModel class for PyTorch models.
@@ -42,9 +46,9 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         if not hasattr(self, 'loss'):
             # Define loss and marginals ops
             if self.cardinality > 2:
-                self.loss = F.cross_entropy()
+                self.loss = nn.CrossEntropyLoss()
             else:
-                self.loss = nn.BCELoss()
+                self.loss = nn.BCEWithLogitsLoss()
         if not hasattr(self, 'optimizer'):
             self.optimizer = optim.Adam(self.parameters(), lr)
     
@@ -52,9 +56,11 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         raise NotImplementedError
     
     def marginals(self, X, batch_size=None, **kwargs):
-        return self._pytorch_marginals(X, batch_size).detach().numpy()
+        nn.Module.train(self, False)
+        marginals = self._pytorch_outputs(X, batch_size).detach()
+        return F.sigmoid(marginals).numpy() if self.cardinality == 2 else F.softmax(marginals).numpy()
 
-    def _pytorch_marginals(self, X, batch_size):
+    def _pytorch_outputs(self, X, batch_size):
         raise NotImplementedError
 
     def load(self, model_name=None, save_dir='checkpoints', verbose=True):
@@ -93,7 +99,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         if verbose:
             print("[{0}] Model saved as <{1}>".format(self.name, model_name))
         
-    def train(self, X_train, Y_train, n_epochs=25, lr=0.01, batch_size=256, 
+    def train(self, X_train, Y_train, n_epochs=25, lr=0.01, batch_size=64,
         rebalance=False, X_dev=None, Y_dev=None, print_freq=1, dev_ckpt=True,
         dev_ckpt_delay=0.75, save_dir='checkpoints', **kwargs):
         """
@@ -188,7 +194,8 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
 
             batch_size = min(batch_state, n) 
             epoch_losses = []
-            
+                        
+            nn.Module.train(self)
             for batch in range(0, n, batch_size):
                 
                 # zero gradients for each batch
@@ -197,7 +204,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
                 if batch_size > len(X_train[batch:batch+batch_size]):
                     batch_size = len(X_train[batch:batch+batch_size])
 
-                output = self._pytorch_marginals(X_train[batch:batch+batch_size], None)
+                output = self._pytorch_outputs(X_train[batch:batch + batch_size], None)
                 
                 #Calculate loss
                 calculated_loss = self.loss(output, torch.Tensor(Y_train[batch:batch+batch_size]))

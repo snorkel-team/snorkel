@@ -8,7 +8,7 @@ import tensorflow as tf
 from builtins import *
 from scipy.sparse import issparse
 
-from snorkel.learning.tensorflow.disc_learning import TFNoiseAwareModel
+from snorkel.learning.tensorflow import TFNoiseAwareModel
 
 SD = 0.1
 

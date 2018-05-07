@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pack_padded_sequence
 
-from .rnn_base import RNNBase
+from snorkel.learning.pytorch.rnn.rnn_base import RNNBase
 
 
 class LSTM(RNNBase):
@@ -21,7 +21,7 @@ class LSTM(RNNBase):
                             num_layers=num_layers, bidirectional=bidirectional,
                             dropout=dropout if num_layers > 1 else 0, batch_first=True
                             )
-        self.output_layer = nn.Linear(hidden_dim, self.cardinality-1)
+        self.output_layer = nn.Linear(hidden_dim * self.num_directions, self.cardinality if self.cardinality > 2 else 1)
         self.dropout_layer = nn.Dropout(p=dropout)
         
     def forward(self, X, hidden_state):

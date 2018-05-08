@@ -75,7 +75,10 @@ class RNNBase(TorchNoiseAwareModel):
             output = self.forward(padded_X, hidden_state)
 
             # TODO: Does skipping the cat when there is only one batch speed things up significantly?
-            outputs = torch.cat((outputs, output.view(-1)), 0)
+            if self.cardinality == 2:
+                outputs = torch.cat((outputs, output.view(-1)), 0)
+            else:
+                outputs = torch.cat((outputs, output), 0)
 
         return outputs
 

@@ -20,7 +20,12 @@ from snorkel.learning.utils import reshape_marginals, LabelBalancer
 
 
 def cross_entropy_loss(input, target):
-    pass
+    total_loss = torch.tensor(0.0)
+    for i in range(input.size(1)):
+        cls_idx = torch.full((input.size(0),), i, dtype=torch.long)
+        loss = F.cross_entropy(input, cls_idx, reduce=False)
+        total_loss += target[:, i].dot(loss)
+    return total_loss / input.shape[0]
 
 
 class TorchNoiseAwareModel(Classifier, nn.Module):
@@ -46,7 +51,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         if not hasattr(self, 'loss'):
             # Define loss and marginals ops
             if self.cardinality > 2:
-                self.loss = nn.CrossEntropyLoss()
+                self.loss = cross_entropy_loss
             else:
                 self.loss = nn.BCEWithLogitsLoss()
         if not hasattr(self, 'optimizer'):
@@ -194,7 +199,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
 
             batch_size = min(batch_state, n) 
             epoch_losses = []
-                        
+
             nn.Module.train(self)
             for batch in range(0, n, batch_size):
                 

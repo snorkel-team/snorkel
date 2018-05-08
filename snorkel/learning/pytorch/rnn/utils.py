@@ -5,9 +5,6 @@ from __future__ import unicode_literals
 from builtins import *
 from future.utils import iteritems
 
-import numpy as np
-import tensorflow as tf
-
 
 class SymbolTable(object):
     """Wrapper for dict to encode unknown symbols"""
@@ -42,20 +39,3 @@ def scrub(s):
 def candidate_to_tokens(candidate, token_type='words'):
     tokens = candidate.get_parent().__dict__[token_type]
     return [scrub(w).lower() for w in tokens]
-
-
-def get_rnn_output(output, dim, lengths):
-    batch_size = tf.shape(output)[0]
-    max_length = tf.shape(output)[1]
-    index      = tf.range(0, batch_size) * max_length + (lengths - 1)
-    flat       = tf.reshape(output, [-1, dim])
-    return tf.gather(flat, index)
-
-
-def get_bi_rnn_output(output, dim, lengths):
-    c_output   = tf.concat(output, 2)
-    batch_size = tf.shape(c_output)[0]
-    max_length = tf.shape(c_output)[1]
-    index      = tf.range(0, batch_size) * max_length + (lengths - 1)
-    flat       = tf.reshape(c_output, [-1, 2 * dim])
-    return tf.gather(flat, index)

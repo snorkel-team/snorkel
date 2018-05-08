@@ -10,8 +10,8 @@ from time import time
 import os
 from six.moves.cPickle import dump, load
 
-from .classifier import Classifier
-from .utils import reshape_marginals, LabelBalancer
+from snorkel.learning.classifier import Classifier
+from snorkel.learning.utils import reshape_marginals, LabelBalancer
 
 class TFNoiseAwareModel(Classifier):
     """

@@ -2,16 +2,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-from builtins import *
 
 import numpy as np
 import tensorflow as tf
+from builtins import *
+from scipy.sparse import issparse
 
-from snorkel.learning.disc_learning import TFNoiseAwareModel
-from scipy.sparse import csr_matrix, issparse
-from time import time
-from six.moves.cPickle import dump, load
-from snorkel.learning.utils import LabelBalancer, reshape_marginals
+from snorkel.learning.tensorflow import TFNoiseAwareModel
 
 SD = 0.1
 

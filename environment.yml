@@ -1,6 +1,7 @@
 name: snorkel
 channels:
   - conda-forge
+  - pytorch
 dependencies:
   - beautifulsoup4
   - future
@@ -11,6 +12,7 @@ dependencies:
   - nltk
   - numba
   - numpy>=1.11
+  - pytorch>=0.4
   - pandas
   - psycopg2
   - py4j
@@ -21,7 +23,6 @@ dependencies:
   - six
   - spacy<2
   - sqlalchemy>=1.0.14
-  - tensorflow>=1.0
   - tika
   - pip:
     - git+https://github.com/HazyResearch/numbskull@master

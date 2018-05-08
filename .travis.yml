@@ -27,7 +27,7 @@ install:
   - conda env create --quiet --file=environment.yml
   - conda activate snorkel
   - pip install .
-  - conda install --yes tensorflow # Installs Tensorflow to test optional components
+  - conda install --quiet tensorflow   # Installs Tensorflow to test optional components
   - conda list
 
 script:

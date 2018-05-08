@@ -40,8 +40,9 @@ class LSTM(RNNBase):
         encoded_X = self.embedding(X)
         encoded_X = pack_padded_sequence(encoded_X, seq_lengths, batch_first=True)
         _, (ht, _) = self.lstm(encoded_X, hidden_state)
+        output = ht[-1] if self.num_directions == 1 else torch.cat((ht[0], ht[1]), dim=1)
 
-        return self.output_layer(self.dropout_layer(ht[-1][inv_perm_idx, :]))
+        return self.output_layer(self.dropout_layer(output[inv_perm_idx, :]))
     
     def initialize_hidden_state(self, batch_size):
         return (

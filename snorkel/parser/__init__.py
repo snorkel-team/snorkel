@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
-from .corenlp import *
-from .corpus_parser import *
-from .doc_preprocessors import *
-from .parser import *
-from .spacy_parser import *
-from .rule_parser import *
+from snorkel.parser.corenlp import *
+from snorkel.parser.corpus_parser import *
+from snorkel.parser.doc_preprocessors import *
+from snorkel.parser.parser import *
+from snorkel.parser.spacy_parser import *
+from snorkel.parser.rule_parser import *

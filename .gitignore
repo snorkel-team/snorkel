@@ -11,6 +11,7 @@ downloads/
 **/checkpoint
 **/checkpoints/
 __pycache__
+*.egg-info/
 *corenlp.log
 
 # Sphinx

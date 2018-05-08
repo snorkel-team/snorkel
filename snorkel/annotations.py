@@ -10,14 +10,14 @@ from pandas import DataFrame, Series
 import scipy.sparse as sparse
 from sqlalchemy.sql import bindparam, select
 
-from .features import get_span_feats
-from .models import (
+from snorkel.features import get_span_feats
+from snorkel.models import (
     GoldLabel, GoldLabelKey, Label, LabelKey, Feature, FeatureKey, Candidate,
     Marginal
 )
-from .models.meta import new_sessionmaker
-from .udf import UDF, UDFRunner
-from .utils import (
+from snorkel.models.meta import new_sessionmaker
+from snorkel.udf import UDF, UDFRunner
+from snorkel.utils import (
     matrix_conflicts,
     matrix_coverage,
     matrix_overlaps,
@@ -373,7 +373,7 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
 
     # Iteratively construct row index and output sparse matrix
     # Cycles through the entire table to load the data.
-    # Perfornamce may slow down based on table size; however, negligible since 
+    # Perfornamce may slow down based on table size; however, negligible since
     # it takes 8min to go throuh 245M rows (pretty fast).
     for res in session.execute(annot_select_query):
         # NOTE: The order of return seems to be switched in Python 3???
@@ -396,7 +396,7 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
 
     # Return as an AnnotationMatrix
     Xr = matrix_class(X, candidate_index=cid_to_row, row_index=row_to_cid,
-            annotation_key_cls=annotation_key_class, key_index=kid_to_col, 
+            annotation_key_cls=annotation_key_class, key_index=kid_to_col,
             col_index=col_to_kid)
     return np.squeeze(Xr.toarray()) if load_as_array else Xr
 
@@ -538,7 +538,7 @@ def load_marginals(session, X=None, split=0, cids_query=None, training=True):
     cids_sub_query = cids_query.subquery('cids')
 
     # Load marginal tuples from db
-    marginal_tuples = session.query(Marginal.candidate_id, Marginal.value, 
+    marginal_tuples = session.query(Marginal.candidate_id, Marginal.value,
         Marginal.probability) \
         .filter(Marginal.candidate_id == cids_sub_query.c.id) \
         .filter(Marginal.training == training) \
@@ -553,13 +553,13 @@ def load_marginals(session, X=None, split=0, cids_query=None, training=True):
             cardinality = X.get_candidate(session, 0).cardinality
             marginals = np.zeros((X.shape[0], cardinality))
             cid_map = X.candidate_index
-        
+
         # Handle list of Candidates
         except:
             cardinality = X[0].cardinality
             marginals = np.zeros((len(X), cardinality))
             cid_map = dict([(x.id, i) for i, x in enumerate(X)])
-    
+
     # Otherwise if X is not provided, we sort by candidate id, using the
     # cids_query from above
     else:

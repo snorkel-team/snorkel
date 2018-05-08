@@ -17,9 +17,9 @@ import warnings
 from subprocess import Popen,PIPE
 from collections import defaultdict
 
-from .parser import Parser, URLParserConnection
-from ..models import Candidate, Context, Document, Sentence, construct_stable_id
-from ..utils import sort_X_on_Y
+from snorkel.parser.parser import Parser, URLParserConnection
+from snorkel.models import Candidate, Context, Document, Sentence, construct_stable_id
+from snorkel.utils import sort_X_on_Y
 
 
 class StanfordCoreNLPServer(Parser):
@@ -94,14 +94,15 @@ class StanfordCoreNLPServer(Parser):
         if self.verbose:
             self.summary()
 
-    def _start_server(self, force_load=False):
+    def _start_server(self, force_load=False, parser_directory=None):
         '''
         Launch CoreNLP server
         :param force_load:  Force server to pre-load models vs. on-demand
+        :param parser_directory: Manually specify parser directory
         :return:
         '''
-        loc = os.path.join(os.environ['SNORKELHOME'], 'parser')
-        cmd = 'java -Xmx%s -cp "%s/*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d --threads %d > /dev/null'
+        loc = '-cp "{parser_directory}/*"'.format() if parser_directory else ''
+        cmd = 'java -Xmx%s %s edu.stanford.nlp.pipeline.StanfordCoreNLPServer --port %d --timeout %d --threads %d > /dev/null'
         cmd = [cmd % (self.java_xmx, loc, self.port, self.timeout, self.num_threads)]
 
         # Setting shell=True returns only the pid of the screen, not any spawned child processes

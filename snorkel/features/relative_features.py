@@ -4,20 +4,17 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import *
 
-import os
-import re
-import sys
-
-sys.path.append(os.path.join(os.environ['SNORKELHOME'], 'treedlib'))
-
 from collections import defaultdict
-from snorkel.features.entity_features import compile_entity_feature_generator, get_ddlib_feats
 from functools import partial
+from string import punctuation
+import re
+
+from treedlib import compile_relation_feature_generator
+
+from snorkel.features.entity_features import compile_entity_feature_generator, get_ddlib_feats
 from snorkel.models import Span
 from snorkel.utils import get_as_dict
-from string import punctuation
-from tree_structs import corenlp_to_xmltree
-from treedlib import compile_relation_feature_generator
+from snorkel.vis.tree_structs import corenlp_to_xmltree
 
 
 def get_span_splits(candidate, stopwords=None):
@@ -152,7 +149,7 @@ def get_entity_type_counts(context, entity_types):
 
 
 def get_relative_frequency_feats(candidate, context):
-    """Base getting relative frequency of @candidate entities among 
+    """Base getting relative frequency of @candidate entities among
        entities in @context
     candidate: @Candidate to extract features for
     context: @Context over which to get relative frequency

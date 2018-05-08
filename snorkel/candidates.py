@@ -11,8 +11,8 @@ from itertools import product
 import re
 from sqlalchemy.sql import select
 
-from .models import Candidate, TemporarySpan, Sentence
-from .udf import UDF, UDFRunner
+from snorkel.models import Candidate, TemporarySpan, Sentence
+from snorkel.udf import UDF, UDFRunner
 
 QUEUE_COLLECT_TIMEOUT = 5
 
@@ -147,7 +147,7 @@ class Ngrams(CandidateSpace):
         CandidateSpace.__init__(self)
         self.n_max     = n_max
         self.split_rgx = r'('+r'|'.join(split_tokens)+r')' if split_tokens and len(split_tokens) > 0 else None
-    
+
     def apply(self, context):
 
         # These are the character offset--**relative to the sentence start**--for each _token_

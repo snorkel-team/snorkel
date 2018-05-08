@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import *
 
-from .models import GoldLabel, StableLabel, GoldLabelKey
+from snorkel.models import GoldLabel, StableLabel, GoldLabelKey
 try:
     from IPython.core.display import display, Javascript
 except:
@@ -16,8 +16,7 @@ import getpass
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-HOME = os.environ['SNORKELHOME']
-
+directory = os.path.abspath(os.path.dirname(__file__))
 
 # PAGE LAYOUT TEMPLATES
 LI_HTML = u"""
@@ -78,7 +77,7 @@ class Viewer(widgets.DOMWidget):
         self.gold       = list(gold)
         self.candidates = sorted(list(candidates), key=lambda c : c[0].char_start)
         self.contexts   = list(set(c[0].get_parent() for c in self.candidates + self.gold))
-        
+
         # If committed, sort contexts by id
         try:
             self.contexts = sorted(self.contexts, key=lambda c : c.id)
@@ -183,8 +182,8 @@ class Viewer(widgets.DOMWidget):
 
         # Render in primary Viewer template
         self.cids = cids
-        self.html = open(HOME+'/viewer/viewer.html').read() % (self.height, ''.join(pages))
-        display(Javascript(open(HOME + '/viewer/viewer.js').read()))
+        self.html = open(os.path.join(directory, 'viewer.html')).read() % (self.height, ''.join(pages))
+        display(Javascript(os.path.join(directory, 'viewer.js')).read())
 
     def _get_labels(self):
         """

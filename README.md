@@ -1,7 +1,7 @@
 <img src="figs/logo_01.png" width="150"/>
 
 
-**_v0.6.2_**
+**_v0.6.3_**
 
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 [![Documentation](https://readthedocs.org/projects/snorkel/badge/)](http://snorkel.readthedocs.io/en/master/)
@@ -49,17 +49,43 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 * _[Gaussian Quadrature for Kernel Features](https://arxiv.org/abs/1709.02605)_ (NIPS 2017)
 
 ## Learning how to use Snorkel
-The [introductory tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro) covers the entire Snorkel workflow, showing how to extract spouse relations from news articles.
-The tutorial is available in the following directory:
-```
-tutorials/intro
-```
-You can also check out all the great **[materials](https://simtk.org/frs/?group_id=1263)** from the recent Mobilize Center-hosted [Snorkel workshop](http://mobilize.stanford.edu/events/snorkelworkshop2017/)!
 
-Then, for more content, check out the other tutorials avaliable [here](https://github.com/HazyResearch/snorkel/tree/master/tutorials).
+The [introductory tutorial](tutorials/intro) covers the entire Snorkel workflow, showing how to extract spouse relations from news articles.
+The tutorial is available in the [`tutorials/intro`](tutorials/intro) directory.
+You can also check out all the great [**materials**](https://simtk.org/frs/?group_id=1263) from the recent Mobilize Center-hosted [Snorkel workshop](http://mobilize.stanford.edu/events/snorkelworkshop2017/)!
+Then, for more content, check out the other tutorials available [here](tutorials).
+
+### Tutorial Quick Start
+
+This section has the commands to quickly get started running the tutorial notebooks.
+For more detailed installation instructions, see the [Installation section](#installation) below.
+This instructions assume that you already have [conda](http://conda.pydata.org/docs/) installed (which we use to create a `snorkel` environment).
+
+First, download and extract a copy of the snorkel directory from a [GitHub release](https://github.com/HazyResearch/snorkel/releases) (version 0.7.0 or greater).
+Then navigate to the root of the `snorkel` directory in a terminal and run the following:
+
+```sh
+# Install the environment
+conda env create --file=environment.yml
+
+# Activate the environment
+conda activate snorkel
+
+# Install snorkel in the environment
+pip install .
+
+# Initiate a jupyter notebook server
+jupyter notebook
+```
+
+Then a Jupyter notebook tab will open in your browser.
+From within the Jupyter browser, navigate to the [`tutorials`](tutorials) directory and try out one of the existing notebooks!
+Have fun and get 🏊🏊🏊.
 
 ## Release Notes
+
 ### Major changes in v0.6:
+
 * Support for categorical classification, including "dynamically-scoped" or _blocked_ categoricals (see [tutorial](tutorials/advanced/Categorical_Classes.ipynb))
 * Support for structure learning (see [tutorial](tutorials/advanced/Structure_Learning.ipynb), ICML 2017 paper)
 * Support for labeled data in generative model
@@ -73,48 +99,68 @@ Then, for more content, check out the other tutorials avaliable [here](https://g
 * And many more fixes, additions, and new material!
 
 ## Installation
-Snorkel uses Python 2.7 or Python 3 and requires [a few python packages](python-package-requirement.txt) which can be installed using [`conda`](https://www.continuum.io/downloads) and `pip`.
 
-### Setting Up Conda
-Installation is easiest if you download and install [`conda`](https://www.continuum.io/downloads).
-You can create a new conda environment with e.g.:
-```
-conda create -n py2Env python=2.7 anaconda
-```
-And then run the correct environment:
-```
-source activate py2Env
+Starting with version 0.7.0, Snorkel should be installed as a Python package using pip.
+However, installing Snorkel via pip will not install dependencies, which are required for Snorkel to run.
+To manage its dependencies, Snorkel uses [conda](http://conda.pydata.org/docs/), which allows specifying an environment via an `environment.yml` file.
+
+This documentation covers two common cases (usage and development) for setting up conda environments for Snorkel.
+In both cases, the environment can be activated using `conda activate snorkel` and deactivated using `conda deactivate`
+(for versions of conda prior to 4.4, replace `conda` with `source` in these commands).
+Users just looking to try out a Snorkel tutorial notebook should see the quick-start instructions above.
+
+### Usage Environment
+
+This setup is intended for users who would like to use Snorkel in their own applications by importing the package.
+In such cases, users should define a custom `environment.yml` to manage their project's dependencies.
+We recommend starting with the [`environment.yml`](environment.yml) in this repository, but making the following modifications:
+
+1. Specifying versions for the listed packages, such as changing `python` to `python=3.6.5`.
+Versioned specification of your environment is critical to reproducibility and ensuring dependency updates do not break your pipeline.
+When first setting your package versions, you likely want to start with the latest versions available on the [conda-forge](https://anaconda.org/conda-forge/) channel, unless you have a reason to do otherwise.
+2. Adding other packages to your environment as required by your use case.
+Consider maintaining alphabetical sorting of packages in `environment.yml` to assist with maintainability.
+In addition, we recommend installing packages via pip, only if they are not available in the conda-forge channel.
+3. Add the `snorkel` package installation to your `environment.yml`, under the `- pip` section.
+Of course, we suggest versioning snorkel, which you can do via a release number or commit hash (to access more bleeding edge functionality)
+  ```yml
+    # Versioned via release tag
+    - git+https://github.com/HazyResearch/snorkel@v0.6.3
+    # Versioned via commit hash (commit hash below is fake to ensure you change it)
+    - git+https://github.com/HazyResearch/snorkel@7eb7076f70078c06bef9752f22acf92fd86e616a
+  ```
+Finally, consider versioning the `numbskull` and `treedlib` pip dependencies by changing `master` to their latest commit hash on GitHub.
+
+### Development Environment
+
+This setup is intended for users who have cloned this repository and would like to access the environment for development.
+This approach installs the `snorkel` package in development mode, meaning that changes you make to the source code will automatically be applied to the `snorkel` package in the environment.
+
+```sh
+# From the root direcectory of this repo run the following command.
+conda env create --file=environment.yml
+
+# Activate the conda environment (if using a version of conda below 4.4, use "source" instead of "conda")
+conda activate snorkel
+
+# Install snorkel in development mode
+pip install --editable .
 ```
 
-### Installing dependencies
-First install [NUMBA](https://numba.pydata.org/), a package for high-performance numeric computing in Python via Conda:
-```bash
-conda install numba
-```
+### Additional installation notes
 
-Then install the remaining package requirements:
-```bash
-pip install --requirement python-package-requirement.txt
-```
+Snorkel can be installed directly from its GitHub repository via:
 
-Finally, enable `ipywidgets`:
-```bash
-jupyter nbextension enable --py widgetsnbextension --sys-prefix
 ```
-
-_Note: If you are using conda and experience issues with `lxml`, try running `conda install libxml2`._
+# WARNING: read installation section before running this command! This command
+# does not install any dependencies. It installs the latest master version but
+# you can change master to tag or commit
+pip install git+https://github.com/HazyResearch/snorkel@master
+```
 
 _Note: Currently the `Viewer` is supported on the following versions:_
 * `jupyter`: 4.1
 * `jupyter notebook`: 4.2
-
-In some tutorials, etc. we also use [Stanford CoreNLP](http://stanfordnlp.github.io/CoreNLP/) for pre-processing text; you will be prompted to install this when you run `run.sh`.
-
-## Running
-After installing, just run:
-```
-./run.sh
-```
 
 ## Q & A
 **Many questions about Snorkel get answered in the issues section--along with general discussions and conversations of interest.

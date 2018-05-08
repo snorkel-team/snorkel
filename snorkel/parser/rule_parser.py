@@ -5,9 +5,11 @@ from __future__ import unicode_literals
 from builtins import *
 
 import re
+import pkg_resources
+from pathlib import Path
 from collections import defaultdict
 from snorkel.models import construct_stable_id
-from snorkel.parser import Parser, ParserConnection
+from snorkel.parser.parser import Parser, ParserConnection
 
 try:
     import spacy
@@ -61,17 +63,41 @@ class SpacyTokenizer(Tokenizer):
         return [(t.text, t.idx) for t in doc]
 
     @staticmethod
+    def is_package(name):
+        """Check if string maps to a package installed via pip.
+        name (unicode): Name of package.
+        RETURNS (bool): True if installed package, False if not.
+
+        From https://github.com/explosion/spaCy/blob/master/spacy/util.py
+
+        """
+        name = name.lower()  # compare package name against lowercase name
+        packages = pkg_resources.working_set.by_key.keys()
+        for package in packages:
+            if package.lower().replace('-', '_') == name:
+                return True
+            return False
+
+    @staticmethod
     def model_installed(name):
         '''
         Check if spaCy language model is installed
+
+        From https://github.com/explosion/spaCy/blob/master/spacy/util.py
+
         :param name:
         :return:
         '''
         data_path = util.get_data_path()
-        model_path = data_path / name
-        if not model_path.exists():
-            return False
-        return True
+        if not data_path or not data_path.exists():
+            raise IOError("Can't find spaCy data path: %s" % str(data_path))
+        if name in set([d.name for d in data_path.iterdir()]):
+            return True
+        if SpacyTokenizer.is_package(name): # installed as package
+            return True
+        if Path(name).exists(): # path to model data directory
+            return True
+        return False
 
     @staticmethod
     def load_lang_model(lang):

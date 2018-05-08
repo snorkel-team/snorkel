@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from builtins import *
 from future.utils import iteritems
 
-from .models import StableLabel, GoldLabel, Context, GoldLabelKey
+from snorkel.models import StableLabel, GoldLabel, Context, GoldLabelKey
 from sqlalchemy.orm import object_session
 
 def reload_annotator_labels(session, candidate_class, annotator_name, split, filter_label_split=True, create_missing_cands=False):

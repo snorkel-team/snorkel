@@ -202,7 +202,7 @@ class Annotator(UDFRunner):
 
         # If replace_key_set=False, then we just delete the annotations for candidates in our split
         if not replace_key_set:
-            sub_query = cids_query or session.query(Candidate.id)\
+            sub_query = cids_query or session.query(Candidate.id)
                                              .filter(Candidate.split == split)
             sub_query = sub_query.subquery()
             query = query.filter(self.annotation_class.candidate_id.in_(sub_query))

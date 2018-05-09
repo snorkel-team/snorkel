@@ -76,6 +76,23 @@ class TFNoiseAwareModel(Classifier):
             self.loss = tf.reduce_mean(loss_fn(logits=self.logits,
                                                labels=self.Y))
 
+    def _build_optimizer(self,optimizer_class = "adam",optimizer_params = None,**kwargs):
+        """
+        Build the optimizer for the training procedure
+        :param optimizer_class: class of optimizer to use : "adam" for Adam, "sgd" for SGD + momentum
+        :param optimizer_params: params to be passed to the optimizer for initilization
+        """
+        if optimizer_class=="adam":
+            optim_c = tf.train.AdamOptimizer
+        elif optimizer_class=="sgd":
+            optim_c = tf.train.MomentumOptimizer
+        else:
+            optim_c = optimizer_class
+        if optimizer_params is None:
+            optimizer_params = {}
+        self.lr = tf.placeholder(tf.float32)
+        self.optimizer = optim_c(self.lr,**optimizer_params).minimize(self.loss)
+
     def _build_training_ops(self, **training_kwargs):
         """
         Builds the TensorFlow Operations for the training procedure. Must set 
@@ -83,10 +100,10 @@ class TFNoiseAwareModel(Classifier):
             - self.loss: Loss function
             - self.optimizer: Training operation
         """
+        #Build the loss
         self._build_loss(**training_kwargs)
-        # Build training op
-        self.lr = tf.placeholder(tf.float32)
-        self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
+        # Build the optimizer
+        self._build_optimizer(**training_kwargs)
 
     def _construct_feed_dict(self, X_b, Y_b, lr=0.01, **kwargs):
         """

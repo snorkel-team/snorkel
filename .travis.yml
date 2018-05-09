@@ -36,8 +36,10 @@ script:
   - python test/learning/test_gen_learning.py
   - python test/learning/test_supervised.py
   - python test/learning/test_categorical.py
-  - runipy test/learning/test_TF_notebook.ipynb
-  - runipy test/learning/test_parallel_grid_search.ipynb
+
+  # Tensorflow
+  - runipy test/learning/tensorflow/test_TF_notebook.ipynb
+  - runipy test/learning/tensorflow/test_parallel_grid_search.ipynb
 
   # Runs intro tutorial notebooks
   - runipy tutorials/intro/Intro_Tutorial_1.ipynb

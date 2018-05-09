@@ -30,6 +30,22 @@ class TestLSTM(PyTorchTestBase):
                 _, _, f1 = lstm.score(self.test_cands, self.L_gold_test)
                 self.assertFalse(math.isnan(f1))
 
+    def test_lstm_with_dev_set(self):
+        train_kwargs = {
+            'lr':            0.01,
+            'embedding_dim': 50,
+            'hidden_dim':    50,
+            'n_epochs':      2,
+            'dropout':       0.25,
+            'num_layers':    1,
+            'bidirectional': False
+        }
+
+        lstm = LSTM(seed=1701)
+        lstm.train(self.train_cands, self.train_marginals, X_dev=self.dev_cands, Y_dev=self.L_gold_dev, **train_kwargs)
+        _, _, f1 = lstm.score(self.test_cands, self.L_gold_test)
+        self.assertFalse(math.isnan(f1))
+
 
 if __name__ == '__main__':
     unittest.main()

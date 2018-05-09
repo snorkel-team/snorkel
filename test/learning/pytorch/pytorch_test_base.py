@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from __future__ import unicode_literals
+# Hiding this import for now so that 'Spouse' in setUpClass() passes a string
+# to candidate_subclass, which ultimately calls type(...). So this import can be
+# re-added when Python 2 is no longer supported.
+#from __future__ import unicode_literals
 from builtins import *
 
-from snorkel import SnorkelSession
+import os
 from snorkel.annotations import load_gold_labels, load_marginals
 from snorkel.models import candidate_subclass
 from sqlalchemy import create_engine
@@ -16,7 +19,8 @@ class PyTorchTestBase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        snorkel_engine = create_engine('sqlite:///spouses.db')
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        snorkel_engine = create_engine(os.path.join('sqlite:///' + dir_path, 'spouses.db'))
         SnorkelSession = sessionmaker(bind=snorkel_engine)
         cls.session = SnorkelSession()
 

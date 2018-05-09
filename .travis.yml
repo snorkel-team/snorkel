@@ -32,12 +32,16 @@ install:
 
 script:
 
-  # Run test modules
+  # Run generative model test modules
   - python test/learning/test_gen_learning.py
   - python test/learning/test_supervised.py
   - python test/learning/test_categorical.py
 
-  # Tensorflow
+  # Run PyTorch test modules
+  - python test/learning/pytorch/test_lstm.py
+  - python test/learning/pytorch/test_model_reloading.py
+
+  # Run Tensorflow test modules
   - runipy test/learning/tensorflow/test_TF_notebook.ipynb
   - runipy test/learning/tensorflow/test_parallel_grid_search.ipynb
 

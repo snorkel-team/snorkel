@@ -6,7 +6,6 @@ from builtins import *
 
 import os
 from time import time
-import warnings
 
 import numpy as np
 
@@ -36,12 +35,10 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
     :param seed: Top level seed which is passed into both numpy operations
         via a RandomState maintained by the class, and into PyTorch
     """
-    def __init__(self, n_threads=None, seed=123, **kwargs):
+    def __init__(self, n_threads=None, **kwargs):
         Classifier.__init__(self, **kwargs)
         nn.Module.__init__(self)
         self.n_threads = n_threads
-        self.seed = seed
-        self.rand_state = np.random.RandomState()
         self.model_kwargs = None
 
     def _check_input(self, X):
@@ -104,7 +101,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         
     def train(self, X_train, Y_train, n_epochs=25, lr=0.01, batch_size=64,
         rebalance=False, X_dev=None, Y_dev=None, print_freq=1, dev_ckpt=True,
-        dev_ckpt_delay=0.75, save_dir='checkpoints', **kwargs):
+        dev_ckpt_delay=0.75, save_dir='checkpoints', seed=123, **kwargs):
         """
         Generic training procedure for PyTorch model
 
@@ -135,12 +132,15 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
             network and/or is needed at test time is not included here, the
             model will not be able to be reloaded!*
         """
+        # Sets random seeds
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        random_state = np.random.RandomState(seed=seed)
+
         self._check_input(X_train)
         
         verbose = print_freq > 0
-
-        # Set random seed for all numpy operations
-        self.rand_state.seed(self.seed)
 
         # Check that the cardinality of the training marginals and model agree
         cardinality = Y_train.shape[1] if len(Y_train.shape) > 1 else 2
@@ -163,7 +163,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         if self.cardinality == 2:
             # This removes unlabeled examples and optionally rebalances
             train_idxs = LabelBalancer(Y_train).get_train_idxs(rebalance,
-                rand_state=self.rand_state)
+                rand_state=random_state)
         else:
             # In categorical setting, just remove unlabeled
             diffs = Y_train.max(axis=1) - Y_train.min(axis=1)
@@ -188,7 +188,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         for epoch in range(n_epochs):
     
             # Shuffle training data
-            train_idxs = self.rand_state.permutation(list(range(n)))
+            train_idxs = random_state.permutation(list(range(n)))
             Y_train = Y_train[train_idxs]
             try:
                 X_train = X_train[train_idxs, :]

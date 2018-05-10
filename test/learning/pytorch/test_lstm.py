@@ -25,7 +25,7 @@ class TestLSTM(PyTorchTestBase):
                     'bidirectional': bidirectional
                 }
 
-                lstm = LSTM(seed=1701)
+                lstm = LSTM()
                 lstm.train(self.train_cands, self.train_marginals, **train_kwargs)
                 _, _, f1 = lstm.score(self.test_cands, self.L_gold_test)
                 self.assertFalse(math.isnan(f1))
@@ -41,7 +41,7 @@ class TestLSTM(PyTorchTestBase):
             'bidirectional': False
         }
 
-        lstm = LSTM(seed=1701)
+        lstm = LSTM()
         lstm.train(self.train_cands, self.train_marginals, X_dev=self.dev_cands, Y_dev=self.L_gold_dev, **train_kwargs)
         _, _, f1 = lstm.score(self.test_cands, self.L_gold_test)
         self.assertFalse(math.isnan(f1))

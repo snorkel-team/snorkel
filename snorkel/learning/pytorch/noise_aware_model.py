@@ -42,6 +42,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         self.n_threads = n_threads
         self.seed = seed
         self.rand_state = np.random.RandomState()
+        self.model_kwargs = None
 
     def _check_input(self, X):
         """Checks correctness of input; optional to implement."""
@@ -56,8 +57,8 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
                 self.loss = nn.BCEWithLogitsLoss()
         if not hasattr(self, 'optimizer'):
             self.optimizer = optim.Adam(self.parameters(), lr)
-    
-    def build_model(self, **model_kwargs):
+
+    def _build_model(self, **model_kwargs):
         raise NotImplementedError
     
     def marginals(self, X, batch_size=None, **kwargs):
@@ -72,7 +73,9 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         """Load model from file and rebuild in new graph / session."""
         model_name = model_name or self.name
         model_dir = os.path.join(save_dir, model_name)
-        warnings.warn('Unstable! Please extensively test this part of the code when time permits')
+
+        self.cardinality, self.name, self.model_kwargs = torch.load('{}/model.kwargs'.format(model_dir))
+        self._build_model(**self.model_kwargs)
         
         self.load_state_dict(
             torch.load('{}/model.params'.format(model_dir))
@@ -93,13 +96,8 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
 
-        warnings.warn('Unstable! Please extensively test this part of the code when time permits')
-        # implement Path here
-        print(model_dir)
-        torch.save(
-            self.state_dict(), 
-            '{}/model.params'.format(model_dir)
-        )
+        torch.save((self.cardinality, self.name, self.model_kwargs), '{}/model.kwargs'.format(model_dir))
+        torch.save(self.state_dict(), '{}/model.params'.format(model_dir))
 
         if verbose:
             print("[{0}] Model saved as <{1}>".format(self.name, model_name))
@@ -171,8 +169,8 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
             diffs = Y_train.max(axis=1) - Y_train.min(axis=1)
             train_idxs = np.where(diffs > 1e-6)[0]
 
-            
-        self.build_model(**kwargs)
+        self.model_kwargs = kwargs
+        self._build_model(**kwargs)
         self._check_model(lr)
         
         n = len(train_idxs)

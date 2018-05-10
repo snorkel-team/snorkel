@@ -104,19 +104,17 @@ class RNNBase(TorchNoiseAwareModel):
             
         return data
 
-    def train(self, X_train, Y_train, X_dev=None, embedding_dim=50, **kwargs):
+    def train(self, X_train, Y_train, X_dev=None, **kwargs):
         """
-        Perform preprocessing of data, construct dataset-specific model, then
+        Perform preprocessing of data, construct dataset-specific dictionary, then
         train.
         """
         # Text preprocessing
         X_train = self._preprocess_data(X_train, extend=True)
         if X_dev is not None:
             X_dev = self._preprocess_data(X_dev, extend=False)
-        self.embedding_dim = embedding_dim
-        self.embedding = nn.Embedding(self.word_dict.len(), self.embedding_dim, padding_idx=0)
 
-        # Train model- note we pass word_dict through here so it gets saved...
+        # Note we pass word_dict through here so it gets saved...
         super(RNNBase, self).train(X_train, Y_train, X_dev=X_dev,
             word_dict=self.word_dict, **kwargs)
 

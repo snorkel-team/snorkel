@@ -9,11 +9,17 @@ import torch.nn as nn
 from torch.nn.utils.rnn import pack_padded_sequence
 
 from snorkel.learning.pytorch.rnn.rnn_base import RNNBase
+from snorkel.learning.pytorch.rnn.utils import SymbolTable
 
 
 class LSTM(RNNBase):
     
-    def build_model(self, hidden_dim=50, num_layers=1, dropout=0.25, bidirectional=False, **kwargs):
+    def _build_model(self, embedding_dim=50, hidden_dim=50, num_layers=1, dropout=0.25, bidirectional=False,
+                     word_dict=SymbolTable(), **kwargs):
+        self.word_dict = word_dict
+        self.embedding_dim = embedding_dim
+        self.embedding = nn.Embedding(self.word_dict.len(), self.embedding_dim, padding_idx=0)
+
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         self.num_directions = 2 if bidirectional else 1
@@ -21,6 +27,7 @@ class LSTM(RNNBase):
                             num_layers=num_layers, bidirectional=bidirectional,
                             dropout=dropout if num_layers > 1 else 0, batch_first=True
                             )
+
         self.output_layer = nn.Linear(hidden_dim * self.num_directions, self.cardinality if self.cardinality > 2 else 1)
         self.dropout_layer = nn.Dropout(p=dropout)
         

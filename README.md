@@ -51,7 +51,7 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 
 This section has the commands to quickly get started running the tutorial notebooks.
 For more detailed installation instructions, see the [Installation section](#installation) below.
-This instructions assume that you already have [conda](https://conda.io/) installed.
+These instructions assume that you already have [conda](https://conda.io/) installed.
 
 First, download and extract a copy of the Snorkel directory from a [GitHub release](https://github.com/HazyResearch/snorkel/releases) (version 0.7.0 or greater).
 Then navigate to the root of the `snorkel` directory in a terminal and run the following:

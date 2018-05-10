@@ -59,7 +59,7 @@ Then, for more content, check out the other tutorials available [here](tutorials
 
 This section has the commands to quickly get started running the tutorial notebooks.
 For more detailed installation instructions, see the [Installation section](#installation) below.
-This instructions assume that you already have [conda](http://conda.pydata.org/docs/) installed (which we use to create a `snorkel` environment).
+This instructions assume that you already have [conda](https://conda.io/) installed (which we use to create a `snorkel` environment).
 
 First, download and extract a copy of the snorkel directory from a [GitHub release](https://github.com/HazyResearch/snorkel/releases) (version 0.7.0 or greater).
 Then navigate to the root of the `snorkel` directory in a terminal and run the following:
@@ -84,6 +84,15 @@ Have fun and get 🏊🏊🏊.
 
 ## Release Notes
 
+### Major changes in v0.7:
+* [PyTorch](https://pytorch.org/) classifiers
+* Installation now via [Conda](https://conda.io/) and `pip`
+* Now [spaCy](https://spacy.io/) is the default parser (v1), with support for v2
+
+### Older versions
+
+<details>
+
 ### Major changes in v0.6:
 
 * Support for categorical classification, including "dynamically-scoped" or _blocked_ categoricals (see [tutorial](tutorials/advanced/Categorical_Classes.ipynb))
@@ -91,18 +100,20 @@ Have fun and get 🏊🏊🏊.
 * Support for labeled data in generative model
 * Refactor of TensorFlow bindings; fixes grid search and model saving / reloading issues (see `snorkel/learning`)
 * New, simplified Intro tutorial ([here](tutorials/intro))
-* Refactored parser class and support for [spaCy](https://spacy.io/) as new default parser
+* Refactored parser class and support for [spaCy](https://spacy.io/) as new parser
 * Support for easy use of the [BRAT annotation tool](http://brat.nlplab.org/) (see [tutorial](tutorials/advanced/BRAT_Annotations.ipynb))
 * Initial Spark integration, for scale out of LF application (see [tutorial](tutorials/snark/Snark%20Tutorial.ipynb))
 * Tutorial on using crowdsourced data [here](tutorials/crowdsourcing/Crowdsourced_Sentiment_Analysis.ipynb)
 * Integration with [Apache Tika](http://tika.apache.org/) via the [Tika Python](http://github.com/chrismattmann/tika-python.git) binding.
 * And many more fixes, additions, and new material!
 
+</details>
+
 ## Installation
 
 Starting with version 0.7.0, Snorkel should be installed as a Python package using pip.
 However, installing Snorkel via pip will not install dependencies, which are required for Snorkel to run.
-To manage its dependencies, Snorkel uses [conda](http://conda.pydata.org/docs/), which allows specifying an environment via an `environment.yml` file.
+To manage its dependencies, Snorkel uses [conda](https://conda.io/), which allows specifying an environment via an `environment.yml` file.
 
 This documentation covers two common cases (usage and development) for setting up conda environments for Snorkel.
 In both cases, the environment can be activated using `conda activate snorkel` and deactivated using `conda deactivate`
@@ -114,6 +125,8 @@ Users just looking to try out a Snorkel tutorial notebook should see the quick-s
 This setup is intended for users who would like to use Snorkel in their own applications by importing the package.
 In such cases, users should define a custom `environment.yml` to manage their project's dependencies.
 We recommend starting with the [`environment.yml`](environment.yml) in this repository, but making the following modifications:
+
+<details>
 
 1. Specifying versions for the listed packages, such as changing `python` to `python=3.6.5`.
 Versioned specification of your environment is critical to reproducibility and ensuring dependency updates do not break your pipeline.
@@ -130,6 +143,8 @@ Of course, we suggest versioning snorkel, which you can do via a release number 
     - git+https://github.com/HazyResearch/snorkel@7eb7076f70078c06bef9752f22acf92fd86e616a
   ```
 Finally, consider versioning the `numbskull` and `treedlib` pip dependencies by changing `master` to their latest commit hash on GitHub.
+
+</details>
 
 ### Development Environment
 
@@ -176,6 +191,8 @@ If submitting an issue about a bug, however, **please provide a pointer to a not
 
 Snorkel is built specifically with usage in **Jupyter/IPython notebooks** in mind; an incomplete set of best practices for the notebooks:
 
+<details>
+
 It's usually most convenient to write most code in an external `.py` file, and load as a module that's automatically reloaded; use:
 ```python
 %load_ext autoreload
@@ -186,3 +203,5 @@ A more convenient option is to add these lines to your IPython config file, in `
 c.InteractiveShellApp.extensions = ['autoreload']     
 c.InteractiveShellApp.exec_lines = ['%autoreload 2']
 ```
+
+</details>

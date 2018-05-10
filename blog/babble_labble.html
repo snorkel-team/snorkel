@@ -509,13 +509,19 @@ Consider the task of extracting chemical-disease pairs from the scientific liter
 
 <p class="img"><img src="img_babble/cdr_explanations.png" width=600px/></p>
 
-Using beam search, the 30 explanations were parsed into 61 LFs. Applying the example contradiction filter (using example/explanation pairs) removed 18 of these, the uniform labels filter removed 1, and the redundant signature filter removed 6, resulting in 36 LFs (a “spurious LF” rate of only 17%). The data programming platform, Snorkel, identified 11 dependencies among the LFs, and in one case, a spurious LF ended up having a higher empirical accuracy than the intended one. On this very difficult task:
+Using beam search, the 30 explanations were parsed into 104 LFs. 
+Applying the filters removed 77 of these, resulting in 27 remaining LFs.
+The data programming platform, Snorkel, identified 11 dependencies among 
+the LFs, and in one case, a spurious LF ended up having a higher empirical 
+accuracy than the intended one. On this very difficult task:
 <ul> 
-  <li>Traditional supervision with 1k gold labels achieves an F1 score of 0.53.</li> 
-  <li>Data programming with 30 programmed LFs and a training set of 8k unlabeled examples achieves an F1 score of 0.54.</li>
-  <li>Babble Labble with 30 explanation/example pairs (resulting in 36 natural-language-based LFs) and the same unlabeled training set achieves an F1 score of 0.53.
+  <li>Traditional supervision with 1k gold labels achieves an F1 score of 41.9.</li> 
+  <li>Babble Labble with 30 explanation/example pairs (resulting in 27 natural-language-based LFs) 
+      and a 6.7k unlabeled training set achieves an F1 score of 42.3.
 </ul>
-That is, by utilizing natural language explanations corresponding to 30 labeled examples, we were able to achieve the same quality as a fully supervised system on this task while using <b>33x fewer gold training examples</b>.
+That is, by utilizing natural language explanations corresponding to 30 labeled examples, 
+we were able to achieve the same quality as a fully supervised system on this task 
+while using <b>33x fewer gold training examples</b>.
 
 <p class="img"><img src="img_babble/cdr_results.png" width=500px/></p>
 

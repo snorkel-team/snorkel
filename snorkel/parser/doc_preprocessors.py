@@ -162,13 +162,18 @@ class TikaPreprocessor(DocPreprocessor):
             CSVPathsPreprocessor('input.csv', parser_factory=TikaPreprocessor)
         )
     """
-    # Tika is conditionally imported here
-    import tika
-    # automatically downloads tika jar and starts a JVM processif no REST API
-    # is configured in ENV
-    tika.initVM()
-    from tika import parser as tk_parser
-    parser = tk_parser
+    parser = None
+
+    def __init__(self, path, **kwargs):
+        if type(self).parser is None:
+            # Tika is conditionally imported here
+            import tika
+            # automatically downloads tika jar and starts a JVM processif no REST API
+            # is configured in ENV
+            tika.initVM()
+            from tika import parser as tk_parser
+            type(self).parser = tk_parser
+        super(TikaPreprocessor, self).__init__(path, **kwargs)
 
     def parse_file(self, fp, file_name):
         parsed = type(self).parser.from_file(fp)

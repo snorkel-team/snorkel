@@ -74,7 +74,7 @@ Then a Jupyter notebook tab will open in your browser.
 From within the Jupyter browser, navigate to the [`tutorials`](tutorials) directory and try out one of the existing notebooks!
 
 The [introductory tutorial](tutorials/intro) in `tutorials/intro` covers the entire Snorkel workflow, showing how to extract spouse relations from news articles.
-You can also check out all the great [**materials**](https://simtk.org/frs/?group_id=1263) from the recent Mobilize Center-hosted [Snorkel workshop](http://mobilize.stanford.edu/events/snorkelworkshop2017/)!
+You can also check out all the great [materials](https://simtk.org/frs/?group_id=1263) from the recent Mobilize Center-hosted [Snorkel workshop](http://mobilize.stanford.edu/events/snorkelworkshop2017/)!
 
 Have fun and get 🏊🏊🏊!
 

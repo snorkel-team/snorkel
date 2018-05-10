@@ -1,7 +1,7 @@
 <img src="figs/logo_01.png" width="150"/>
 
 
-**_v0.7.0-alpha_**
+**_v0.7.0-beta_**
 
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 [![Documentation](https://readthedocs.org/projects/snorkel/badge/)](http://snorkel.readthedocs.io/en/master/)
@@ -66,6 +66,9 @@ conda activate snorkel
 # Install snorkel in the environment
 pip install .
 
+# Activate jupyter widgets
+jupyter nbextension enable --py widgetsnbextension
+
 # Initiate a jupyter notebook server
 jupyter notebook
 ```
@@ -84,6 +87,7 @@ Have fun and get 🏊🏊🏊!
 * [PyTorch](https://pytorch.org/) classifiers
 * Installation now via [Conda](https://conda.io/) and `pip`
 * Now [spaCy](https://spacy.io/) is the default parser (v1), with support for v2
+* And many more fixes, additions, and new material!
 
 ### Older versions
 
@@ -120,7 +124,8 @@ Users just looking to try out a Snorkel tutorial notebook should see the quick-s
 
 This setup is intended for users who would like to use Snorkel in their own applications by importing the package.
 In such cases, users should define a custom `environment.yml` to manage their project's dependencies.
-We recommend starting with the [`environment.yml`](environment.yml) in this repository, but making the following modifications:
+We recommend starting with the [`environment.yml`](environment.yml) in this repository.
+The below modifications can help customize it for your needs:
 
 <details>
 

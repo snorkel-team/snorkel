@@ -183,7 +183,7 @@ class Viewer(widgets.DOMWidget):
         # Render in primary Viewer template
         self.cids = cids
         self.html = open(os.path.join(directory, 'viewer.html')).read() % (self.height, ''.join(pages))
-        display(Javascript(os.path.join(directory, 'viewer.js')).read())
+        display(Javascript(open(os.path.join(directory, 'viewer.js')).read()))
 
     def _get_labels(self):
         """

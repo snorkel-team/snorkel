@@ -14,8 +14,7 @@
 
 ## Getting Started
 
-* Installation instructions [below](#installation--dependencies)
-* Get started with the tutorials [below](#learning-how-to-use-snorkel)
+* Get started with the tutorials [below](#tutorial-quick-start)
 * Documentation [here](http://snorkel.readthedocs.io/en/master/)
 
 ## Motivation
@@ -48,20 +47,13 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 * _[Learning to Compose Domain-Specific Transformations for Data Augmentation](https://arxiv.org/abs/1709.01643)_ (NIPS 2017)
 * _[Gaussian Quadrature for Kernel Features](https://arxiv.org/abs/1709.02605)_ (NIPS 2017)
 
-## Learning how to use Snorkel
-
-The [introductory tutorial](tutorials/intro) covers the entire Snorkel workflow, showing how to extract spouse relations from news articles.
-The tutorial is available in the [`tutorials/intro`](tutorials/intro) directory.
-You can also check out all the great [**materials**](https://simtk.org/frs/?group_id=1263) from the recent Mobilize Center-hosted [Snorkel workshop](http://mobilize.stanford.edu/events/snorkelworkshop2017/)!
-Then, for more content, check out the other tutorials available [here](tutorials).
-
-### Tutorial Quick Start
+## Tutorial Quick Start
 
 This section has the commands to quickly get started running the tutorial notebooks.
 For more detailed installation instructions, see the [Installation section](#installation) below.
-This instructions assume that you already have [conda](https://conda.io/) installed (which we use to create a `snorkel` environment).
+This instructions assume that you already have [conda](https://conda.io/) installed.
 
-First, download and extract a copy of the snorkel directory from a [GitHub release](https://github.com/HazyResearch/snorkel/releases) (version 0.7.0 or greater).
+First, download and extract a copy of the Snorkel directory from a [GitHub release](https://github.com/HazyResearch/snorkel/releases) (version 0.7.0 or greater).
 Then navigate to the root of the `snorkel` directory in a terminal and run the following:
 
 ```sh
@@ -80,7 +72,11 @@ jupyter notebook
 
 Then a Jupyter notebook tab will open in your browser.
 From within the Jupyter browser, navigate to the [`tutorials`](tutorials) directory and try out one of the existing notebooks!
-Have fun and get 🏊🏊🏊.
+
+The [introductory tutorial](tutorials/intro) in `tutorials/intro` covers the entire Snorkel workflow, showing how to extract spouse relations from news articles.
+You can also check out all the great [**materials**](https://simtk.org/frs/?group_id=1263) from the recent Mobilize Center-hosted [Snorkel workshop](http://mobilize.stanford.edu/events/snorkelworkshop2017/)!
+
+Have fun and get 🏊🏊🏊!
 
 ## Release Notes
 
@@ -111,8 +107,8 @@ Have fun and get 🏊🏊🏊.
 
 ## Installation
 
-Starting with version 0.7.0, Snorkel should be installed as a Python package using pip.
-However, installing Snorkel via pip will not install dependencies, which are required for Snorkel to run.
+Starting with version 0.7.0, Snorkel should be installed as a Python package using `pip`.
+However, installing Snorkel via `pip` will not install dependencies, which are required for Snorkel to run.
 To manage its dependencies, Snorkel uses [conda](https://conda.io/), which allows specifying an environment via an `environment.yml` file.
 
 This documentation covers two common cases (usage and development) for setting up conda environments for Snorkel.
@@ -164,6 +160,8 @@ pip install --editable .
 
 ### Additional installation notes
 
+<details>
+
 Snorkel can be installed directly from its GitHub repository via:
 
 ```
@@ -176,6 +174,8 @@ pip install git+https://github.com/HazyResearch/snorkel@master
 _Note: Currently the `Viewer` is supported on the following versions:_
 * `jupyter`: 4.1
 * `jupyter notebook`: 4.2
+
+</details>
 
 ## Q & A
 **Many questions about Snorkel get answered in the issues section--along with general discussions and conversations of interest.

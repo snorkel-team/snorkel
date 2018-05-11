@@ -117,7 +117,7 @@ class RNNBase(TFNoiseAwareModel):
             W = tf.Variable(tf.random_normal((2*dim, self.cardinality), 
                 stddev=SD, seed=s4))
             b = tf.Variable(np.zeros(self.cardinality), dtype=tf.float32)
-            self.logits = tf.matmul(potentials, W) + b
+            self.logits = tf.matmul(potentials_dropout, W) + b
             self.marginals_op = tf.nn.softmax(self.logits)
         else:
             self.Y = tf.placeholder(tf.float32, [None])
@@ -133,13 +133,13 @@ class RNNBase(TFNoiseAwareModel):
                 # Make deterministic
                 # See: https://github.com/tensorflow/tensorflow/pull/10636/files
                 b = tf.Variable(np.zeros([1]), dtype=tf.float32)
-                f_w = tf.matmul(potentials, W)
+                f_w = tf.matmul(potentials_dropout, W)
                 f_w_temp = tf.concat([f_w, tf.ones_like(f_w)], axis=1)
                 b_temp = tf.stack([tf.ones_like(b), b], axis=0)
                 self.logits = tf.squeeze(tf.matmul(f_w_temp, b_temp))
             else:
                 b = tf.Variable(0., dtype=tf.float32)
-                self.logits = tf.squeeze(tf.matmul(potentials, W)) + b
+                self.logits = tf.squeeze(tf.matmul(potentials_dropout, W)) + b
 
             self.marginals_op = tf.nn.sigmoid(self.logits)
 

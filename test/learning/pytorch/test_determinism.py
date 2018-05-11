@@ -30,6 +30,11 @@ class TestDeterminism(PyTorchTestBase):
         lstm2 = LSTM()
         lstm2.train(self.train_cands, self.train_marginals, **train_kwargs)
 
+        print(lstm1.output_layer.weight.data)
+        print(lstm2.output_layer.weight.data)
+        print(torch.sum(torch.abs(
+                lstm1.output_layer.weight.data - lstm2.output_layer.weight.data
+                )))
         self.assertTrue(torch.sum(torch.abs(
                 lstm1.output_layer.weight.data - lstm2.output_layer.weight.data
                 )) < 1e-8)

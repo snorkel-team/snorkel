@@ -34,17 +34,5 @@ class TestDeterminism(PyTorchTestBase):
                 lstm1.output_layer.weight.data - lstm2.output_layer.weight.data
                 )) < 1e-4)
 
-        self.assertTrue(torch.sum(torch.abs(
-                lstm1.lstm.weight_hh_l0.data - lstm2.lstm.weight_hh_l0.data
-                )) < 1e-4)
-
-        self.assertTrue(torch.sum(torch.abs(
-                lstm1.lstm.weight_ih_l0.data - lstm2.lstm.weight_ih_l0.data
-                )) < 1e-4)
-
-        self.assertTrue(torch.sum(torch.abs(
-                lstm1.embedding.weight.data - lstm2.embedding.weight.data
-                )) < 1e-4)
-
 if __name__ == '__main__':
     unittest.main()

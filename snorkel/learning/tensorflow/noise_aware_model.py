@@ -148,7 +148,7 @@ class TFNoiseAwareModel(Classifier):
 
     def train(self, X_train, Y_train, n_epochs=25, lr=0.01, batch_size=256, 
         rebalance=False, X_dev=None, Y_dev=None, print_freq=5, dev_ckpt=True,
-        dev_ckpt_delay=0.75, save_dir='checkpoints',beta = 1,adaptive_lr_strategy = None,allchecks = False, **kwargs):
+        dev_ckpt_delay=0.75, save_dir='checkpoints',beta = 1,adaptive_lr_strategy = None,allchecks = False,label_rebalancing_threshold = 0.5, **kwargs):
         """
         Generic training procedure for TF model
 
@@ -214,7 +214,7 @@ class TFNoiseAwareModel(Classifier):
         if self.cardinality == 2:
             # This removes unlabeled examples and optionally rebalances
             train_idxs = LabelBalancer(Y_train).get_train_idxs(rebalance,
-                rand_state=self.rand_state)
+                rand_state=self.rand_state,split = label_rebalancing_threshold)
         else:
             # In categorical setting, just remove unlabeled
             diffs = Y_train.max(axis=1) - Y_train.min(axis=1)

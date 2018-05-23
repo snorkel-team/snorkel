@@ -76,17 +76,34 @@ class TFNoiseAwareModel(Classifier):
             self.loss = tf.reduce_mean(loss_fn(logits=self.logits,
                                                labels=self.Y))
 
+    def _build_optimizer(self,optimizer_class = "adam",optimizer_params = None,**kwargs):
+        """
+        Build the optimizer for the training procedure
+        :param optimizer_class: class of optimizer to use : "adam" for Adam, "sgd" for SGD + momentum
+        :param optimizer_params: params to be passed to the optimizer for initilization
+        """
+        if optimizer_class=="adam":
+            optim_c = tf.train.AdamOptimizer
+        elif optimizer_class=="sgd":
+            optim_c = tf.train.MomentumOptimizer
+        else:
+            optim_c = optimizer_class
+        if optimizer_params is None:
+            optimizer_params = {}
+        self.lr = tf.placeholder(tf.float32)
+        self.optimizer = optim_c(self.lr,**optimizer_params).minimize(self.loss)
+
     def _build_training_ops(self, **training_kwargs):
         """
-        Builds the TensorFlow Operations for the training procedure. Must set
+        Builds the TensorFlow Operations for the training procedure. Must set 
         the following:
             - self.loss: Loss function
             - self.optimizer: Training operation
         """
+        #Build the loss
         self._build_loss(**training_kwargs)
-        # Build training op
-        self.lr = tf.placeholder(tf.float32)
-        self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
+        # Build the optimizer
+        self._build_optimizer(**training_kwargs)
 
     def _construct_feed_dict(self, X_b, Y_b, lr=0.01, **kwargs):
         """
@@ -131,7 +148,7 @@ class TFNoiseAwareModel(Classifier):
 
     def train(self, X_train, Y_train, n_epochs=25, lr=0.01, batch_size=256, 
         rebalance=False, X_dev=None, Y_dev=None, print_freq=5, dev_ckpt=True,
-        dev_ckpt_delay=0.75, save_dir='checkpoints', **kwargs):
+        dev_ckpt_delay=0.75, save_dir='checkpoints',beta = 1,adaptive_lr_strategy = None,allchecks = False,label_rebalancing_threshold = 0.5, **kwargs):
         """
         Generic training procedure for TF model
 
@@ -156,6 +173,10 @@ class TFNoiseAwareModel(Classifier):
         :param dev_ckpt_delay: Start dev checkpointing after this portion
             of n_epochs.
         :param save_dir: Save dir path for checkpointing.
+        :param beta: beta used for F-beta score computation
+        :param adaptive_lr_strategy: Strategy used for lr evolution. Currently available:
+                    - None: Constant LR
+                    - {"factor":factor, "frequency": frequency}: LR is multiplicated by factor every frequency epoch
         :param kwargs: All hyperparameters that change how the graph is built 
             must be passed through here to be saved and reloaded to save /
             reload model. *NOTE: If a parameter needed to build the 
@@ -193,7 +214,7 @@ class TFNoiseAwareModel(Classifier):
         if self.cardinality == 2:
             # This removes unlabeled examples and optionally rebalances
             train_idxs = LabelBalancer(Y_train).get_train_idxs(rebalance,
-                rand_state=self.rand_state)
+                rand_state=self.rand_state,split = label_rebalancing_threshold)
         else:
             # In categorical setting, just remove unlabeled
             diffs = Y_train.max(axis=1) - Y_train.min(axis=1)
@@ -225,13 +246,25 @@ class TFNoiseAwareModel(Classifier):
                 self.name, n, n_epochs, batch_size
             ))
         dev_score_opt = 0.0
+        lr_list = list()
+        lr_list.append(lr)
+        if adaptive_lr_strategy is None:
+            for t in range(1,n_epochs):
+                lr_list.append(lr)
+        else:
+            for t in range(1,n_epochs):
+                if t%adaptive_lr_strategy["frequency"]==0:
+                    lr_list.append(lr_list[-1]*adaptive_lr_strategy["factor"])
+                else:
+                    lr_list.append(lr_list[-1])
+
         for t in range(n_epochs):
             epoch_losses = []
             for i in range(0, n, batch_size):
                 feed_dict = self._construct_feed_dict(
                     X_train[i:min(n, i+batch_size)],
                     Y_train[i:min(n, i+batch_size)],
-                    lr=lr,
+                    lr=lr_list[t],
                     **kwargs
                 )
                 # Run training step and evaluate loss function    
@@ -250,10 +283,12 @@ class TFNoiseAwareModel(Classifier):
                 msg = "[{0}] Epoch {1} ({2:.2f}s)\tAverage loss={3:.6f}".format(
                     self.name, t, time() - st, np.mean(epoch_losses))
                 if X_dev is not None:
-                    scores = self.score(X_dev, Y_dev, batch_size=batch_size)
+                    scores = self.score(X_dev, Y_dev, batch_size=batch_size,beta=beta)
                     score = scores if self.cardinality > 2 else scores[-1]
-                    score_label = "Acc." if self.cardinality > 2 else "F1"
+                    score_label = "Acc." if self.cardinality > 2 else "F-{}".format(beta)
                     msg += '\tDev {0}={1:.2f}'.format(score_label, 100. * score)
+                    if adaptive_lr_strategy is not None:
+                        msg += '\tlr = {}'.format(lr_list[t])
                 print(msg)
                     
                 # If best score on dev set so far and dev checkpointing is
@@ -262,10 +297,14 @@ class TFNoiseAwareModel(Classifier):
                     t > dev_ckpt_delay * n_epochs and score > dev_score_opt:
                     dev_score_opt = score
                     self.save(save_dir=save_dir, global_step=t)
-        
+            if allchecks:
+                self.save(save_dir=save_dir, global_step=t, model_name=self.name + "_fullchk{}_epoch_{}".format(kwargs.get("prefix","_def_"),t))
+
         # Conclude training
         if verbose:
             print("[{0}] Training done ({1:.2f}s)".format(self.name, time()-st))
+
+
 
         # If checkpointing on, load last checkpoint (i.e. best on dev set)
         if dev_ckpt and X_dev is not None and verbose and dev_score_opt > 0:
@@ -287,12 +326,12 @@ class TFNoiseAwareModel(Classifier):
             batch_marginals = []
             for b in range(0, N, batch_size):
                 batch = self._marginals_batch(X[b:min(N, b+batch_size)])
-                
+
                 # Note: if a single marginal in *binary* classification is
                 # returned, it will have shape () rather than (1,)- catch here
                 if len(batch.shape) == 0:
                     batch = batch.reshape(1)
-                    
+
                 batch_marginals.append(batch)
             return np.concatenate(batch_marginals)
 

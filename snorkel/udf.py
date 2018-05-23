@@ -16,6 +16,7 @@ from .utils import ProgressBar
 QUEUE_TIMEOUT = 3
 
 
+
 class UDFRunner(object):
     """Class to run UDFs in parallel using simple queue-based multiprocessing setup"""
     def __init__(self, udf_class, **udf_init_kwargs):
@@ -130,6 +131,87 @@ class UDFRunner(object):
             udf.terminate()
         self.udfs = []
 
+class UDFRunnerBatches(UDFRunner):
+    """Class to run UDFs in parallel using simple queue-based multiprocessing setup, adding the elements to the session batch-wise"""
+    def __init__(self, udf_class,batch_filter = None, udf_batch_size = 1, **udf_init_kwargs):
+        super(UDFRunnerBatches, self).__init__(udf_class, **udf_init_kwargs)
+        self.batch_filter = batch_filter
+        self.udf_batch_size = udf_batch_size
+        print ("Using batches of size {}".format(self.udf_batch_size))
+
+
+    def apply_st(self, xs, progress_bar, count, **kwargs):
+        """Run the UDF single-threaded, optionally with progress bar"""
+        udf = self.udf_class(**self.udf_init_kwargs)
+        ##TODO: handle different sessions cleanly
+        self.batch_filter.session = udf.session
+
+
+        ##
+        # Set up ProgressBar if possible
+        pb = None
+        if progress_bar and hasattr(xs, '__len__') or count is not None:
+            n = count if count is not None else len(xs)
+            pb = ProgressBar(n)
+
+        # Run single-thread
+        set_xs = dict()
+        set_y = dict()
+        for i, x in enumerate(xs):
+            if pb:
+                pb.bar(i)
+            set_xs[i] = x
+            set_y[i] = set()
+            # Apply UDF and add results to the session
+            for y in udf.apply(x, **kwargs):
+                set_y[i].add(y)
+
+
+            if (i%self.udf_batch_size == 1):
+                #print("Doc", i)
+                if self.batch_filter is not None:
+                    set_yl = self.batch_filter.filter_batch(set_y)
+                else:
+                    set_yl = set_y
+                #udf.session.add(set_xs[i][0])
+                print("Selected  {} out of {}".format(len(set_yl),len(set_y)))
+                for sel_k in set_yl.keys():
+                    set_yi  = set_yl[sel_k]
+                    for y in set_yi:
+                        # Uf UDF has a reduce step, this will take care of the insert; else add to session
+                        if hasattr(self.udf_class, 'reduce'):
+                            udf.reduce(y, **kwargs)
+                        else:
+                            udf.session.add(y)
+                udf.session.commit()
+                self.batch_filter.clean_batch()
+                #print("Batch end")
+                set_y = dict()
+                set_xs = dict()
+                set_yl = dict()
+        if len(set_xs)>0:
+
+            if self.batch_filter is not None:
+                set_yl = self.batch_filter.filter_batch(set_y)
+            else:
+                set_yl = set_y
+
+            for set_yi in set_yl.values():
+                for y in set_yi:
+                    # Uf UDF has a reduce step, this will take care of the insert; else add to session
+                    if hasattr(self.udf_class, 'reduce'):
+                        udf.reduce(y, **kwargs)
+                    else:
+                        udf.session.add(y)
+            set_y = dict()
+            set_xs = dict()
+            set_yl = dict()
+
+        # Commit session and close progress bar if applicable
+        udf.session.commit()
+        self.batch_filter.clean_batch()
+        if pb:
+            pb.close()
 
 class UDF(Process):
     def __init__(self, in_queue=None, out_queue=None):

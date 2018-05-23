@@ -76,6 +76,7 @@ class CandidateExtractorUDF(UDF):
 
         super(CandidateExtractorUDF, self).__init__(**kwargs)
 
+
     def apply(self, context, clear, split, **kwargs):
         # Generate TemporaryContexts that are children of the context using the candidate_space and filtered
         # by the Matcher
@@ -123,7 +124,12 @@ class CandidateExtractorUDF(UDF):
                     continue
 
             # Add Candidate to session
-            yield self.candidate_class(**candidate_args)
+            return_type = kwargs.get("return_type","candidate")
+            if return_type == "candidate":
+                yield self.candidate_class(**candidate_args)
+            elif return_type =="dummy":
+                #print(candidate_args)
+                yield 1
 
 
 class CandidateSpace(object):
@@ -215,7 +221,7 @@ class PretaggedCandidateExtractorUDF(UDF):
 
         super(PretaggedCandidateExtractorUDF, self).__init__(**kwargs)
 
-    def apply(self, context, clear, split, check_for_existing=True, **kwargs):
+    def apply(self, context, clear, split, check_for_existing=True,safe_add = False, **kwargs):
         """Extract Candidates from a Context"""
         # For now, just handle Sentences
         if not isinstance(context, Sentence):
@@ -228,7 +234,7 @@ class PretaggedCandidateExtractorUDF(UDF):
             if context.entity_types[i] is not None:
                 ets  = context.entity_types[i].split(self.entity_sep)
                 cids = context.entity_cids[i].split(self.entity_sep)
-                for et, cid in zip(ets, cids):
+                for et, cid in set(list(zip(ets, cids))):
                     if et in entity_idxs:
                         entity_idxs[et][cid].append(i)
 
@@ -253,6 +259,7 @@ class PretaggedCandidateExtractorUDF(UDF):
 
         # Generates and persists candidates
         candidate_args = {'split' : split}
+        return_lst = list()
         for args in product(*[enumerate(entity_spans[et]) for et in self.entity_types]):
 
             # TODO: Make this work for higher-order relations
@@ -274,14 +281,30 @@ class PretaggedCandidateExtractorUDF(UDF):
                 candidate_args[arg_name + '_id'] = args[i][1].id
                 candidate_args[arg_name + '_cid'] = entity_cids[args[i][1].id]
 
-            # Checking for existence
-            if check_for_existing:
-                q = select([self.candidate_class.id])
-                for key, value in iteritems(candidate_args):
-                    q = q.where(getattr(self.candidate_class, key) == value)
-                candidate_id = self.session.execute(q).first()
-                if candidate_id is not None:
-                    continue
 
-            # Add Candidate to session
-            yield self.candidate_class(**candidate_args)
+
+
+                # Checking for existence
+                if check_for_existing:
+                    q = select([self.candidate_class.id])
+                    for key, value in iteritems(candidate_args):
+                        q = q.where(getattr(self.candidate_class, key) == value)
+                    candidate_id = self.session.execute(q).first()
+                    if candidate_id is not None:
+                        continue
+                if not safe_add:
+                    # Add Candidate to session
+                    yield self.candidate_class(**candidate_args)
+
+                else:
+		    #print(candidate_args)
+                    return_lst.append(candidate_args.copy())
+
+        if safe_add:
+            new_candidate_args_lst = [dict(list(x)) for x in set([tuple(z.items()) for z in return_lst])]
+            #if len(new_candidate_args_lst)!=len(return_lst):
+                #print("problem there {} becomes {}".format(len(new_candidate_args_lst),len(return_lst)))
+		#print(new_candidate_args_lst)
+		#print(return_lst)
+            for candargs in new_candidate_args_lst:
+                yield self.candidate_class(**candargs)

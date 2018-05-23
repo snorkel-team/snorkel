@@ -284,21 +284,21 @@ class PretaggedCandidateExtractorUDF(UDF):
 
 
 
-                # Checking for existence
-                if check_for_existing:
-                    q = select([self.candidate_class.id])
-                    for key, value in iteritems(candidate_args):
-                        q = q.where(getattr(self.candidate_class, key) == value)
-                    candidate_id = self.session.execute(q).first()
-                    if candidate_id is not None:
-                        continue
-                if not safe_add:
-                    # Add Candidate to session
-                    yield self.candidate_class(**candidate_args)
+            # Checking for existence
+            if check_for_existing:
+                q = select([self.candidate_class.id])
+                for key, value in iteritems(candidate_args):
+                    q = q.where(getattr(self.candidate_class, key) == value)
+                candidate_id = self.session.execute(q).first()
+                if candidate_id is not None:
+                    continue
+            if not safe_add:
+                # Add Candidate to session
+                yield self.candidate_class(**candidate_args)
 
-                else:
-		    #print(candidate_args)
-                    return_lst.append(candidate_args.copy())
+            else:
+        #print(candidate_args)
+                return_lst.append(candidate_args.copy())
 
         if safe_add:
             new_candidate_args_lst = [dict(list(x)) for x in set([tuple(z.items()) for z in return_lst])]

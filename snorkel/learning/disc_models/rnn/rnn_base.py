@@ -113,7 +113,7 @@ class RNNBase(TFNoiseAwareModel):
         
         # Add dropout layer
         self.keep_prob = tf.placeholder(tf.float32)
-        potentials_dropout = tf.nn.dropout(potentials, self.keep_prob, seed=s3)
+        potentials = tf.nn.dropout(potentials, self.keep_prob, seed=s3)
 
         # Build activation layer
         if self.cardinality > 2:

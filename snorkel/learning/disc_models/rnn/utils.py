@@ -44,18 +44,35 @@ def candidate_to_tokens(candidate, token_type='words'):
     return [scrub(w).lower() for w in tokens]
 
 
-def get_rnn_output(output, dim, lengths):
-    batch_size = tf.shape(output)[0]
-    max_length = tf.shape(output)[1]
-    index      = tf.range(0, batch_size) * max_length + (lengths - 1)
-    flat       = tf.reshape(output, [-1, dim])
-    return tf.gather(flat, index)
+def get_rnn_output(output, dim, lengths, bi=False, pooling='last'):
+    """Take the RNN outputs (state vectors) and pool them according to one of
+    the following strategies:
+    - pooling=last: Take the last vector from each sequence
+    - pooling=mean: Take the mean of the state vectors
+    - pooling=max: Take the max of the state vectors
+    """
+    # Handle bi-directional
+    if bi:
+        c_output = tf.concat(output, 2)
+        d = 2 * dim
+    else:
+        c_output = output
+        d = dim
 
-
-def get_bi_rnn_output(output, dim, lengths):
-    c_output   = tf.concat(output, 2)
     batch_size = tf.shape(c_output)[0]
     max_length = tf.shape(c_output)[1]
-    index      = tf.range(0, batch_size) * max_length + (lengths - 1)
-    flat       = tf.reshape(c_output, [-1, 2 * dim])
-    return tf.gather(flat, index)
+    
+    # Take the last state vector
+    if pooling == 'last':
+        index = tf.range(0, batch_size) * max_length + (lengths - 1)
+        flat  = tf.reshape(c_output, [-1, d])
+        return tf.gather(flat, index)
+    # Take the max of the vectors
+    elif pooling == 'max':
+        return tf.reduce_max(c_output, axis=1)
+    # Take the mean of the vectors
+    elif pooling == 'mean':
+        # TODO
+        raise Exception("TODO: Mean pooling not implemented yet.")
+    else:
+        raise Exception("Pooling argument %s not recognized" % (pooling,))

@@ -54,8 +54,8 @@ class RNNBase(TFNoiseAwareModel):
         return x_batch, len_batch
 
     def _build_model(self, dim=50, attn_window=None, max_len=20,
-        cell_type=tf.contrib.rnn.BasicLSTMCell, word_dict=SymbolTable(), 
-        **kwargs):
+        cell_type=tf.contrib.rnn.BasicLSTMCell, word_dict=SymbolTable(),
+        pooling='last', **kwargs):
         """
         Build RNN model
         
@@ -64,6 +64,8 @@ class RNNBase(TFNoiseAwareModel):
         :param cell_type: subclass of tensorflow.python.ops.rnn_cell_impl._RNNCell
         :param batch_size: batch size for mini-batch SGD
         :param vocab_size: Vocab size for determining size of word embeddings tensor
+        :param pooling: Method to use for aggregating the state vectors for each
+            sequence; by default takes last vector. Options: {last, max, mean}.
         """
         # Set the word dictionary passed in as the word_dict for the instance
         self.max_len = max_len
@@ -109,7 +111,8 @@ class RNNBase(TFNoiseAwareModel):
                 initial_state_bw=initial_state_bw,
                 time_major=False               
             )
-        potentials = get_bi_rnn_output(rnn_out, dim, self.sentence_lengths)
+        potentials = get_rnn_output(rnn_out, dim, self.sentence_lengths,
+            bi=True, pooling=pooling)
         
         # Add dropout layer
         self.keep_prob = tf.placeholder(tf.float32)

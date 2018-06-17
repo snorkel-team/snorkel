@@ -41,7 +41,7 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 * _[Inferring Generative Model Structure with Static Analysis](https://arxiv.org/abs/1709.02477)_ (NIPS 2017)
 * _[Data Programming with DDLite: Putting Humans in a Different Part of the Loop](http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf)_ (HILDA @ SIGMOD 2016; note Snorkel was previously <em>DDLite</em>)
 * _[Socratic Learning: Correcting Misspecified Generative Models using Discriminative Models](https://arxiv.org/abs/1610.08123)_
-* _[Fonduer: Knowledge Base Construction from Richly Formatted Data](https://arxiv.org/abs/1703.05028)_
+* _[Fonduer: Knowledge Base Construction from Richly Formatted Data](https://arxiv.org/abs/1703.05028)_ (SIGMOD 2018)
 
 ### Further Reading:
 * _[Learning to Compose Domain-Specific Transformations for Data Augmentation](https://arxiv.org/abs/1709.01643)_ (NIPS 2017)

@@ -21,7 +21,7 @@ class Classifier(object):
         self.name = name or self.__class__.__name__
         self.cardinality = cardinality
 
-    def marginals(self, X, batch_size=None, **kwargs):
+    def marginals(self, X, batch_size=None):
         raise NotImplementedError()
 
     def save_marginals(self, session, X, training=False):

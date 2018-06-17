@@ -32,8 +32,6 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
     Generic NoiseAwareModel class for PyTorch models.
     
     :param n_threads: Parallelism to use; single-threaded if None
-    :param seed: Top level seed which is passed into both numpy operations
-        via a RandomState maintained by the class, and into PyTorch
     """
     def __init__(self, n_threads=None, **kwargs):
         Classifier.__init__(self, **kwargs)
@@ -58,12 +56,39 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
     def _build_model(self, **model_kwargs):
         raise NotImplementedError
     
-    def marginals(self, X, batch_size=None, **kwargs):
+    def marginals(self, X, batch_size=None):
+        """
+        Computes class probabilities for input data.
+
+        :param X: Collection of candidates to predict labels for
+        :param batch_size: Number of candidates to label at a time. Does not affect
+             predicted probabilities, but useful if all candidates do not fit on GPU.
+             If None, all candidates will be labeled at same time.
+        :return: 1-d numpy array of probabilities that each candidate has positive label
+             if class cardinality is 2. Else, a 2-d numpy array of probabilities where
+             dim. 0 corresponds to candidates and dim. 1 corresponds to class labels
+        """
         nn.Module.train(self, False)
         marginals = self._pytorch_outputs(X, batch_size).detach()
         return F.sigmoid(marginals).numpy() if self.cardinality == 2 else F.softmax(marginals).numpy()
 
     def _pytorch_outputs(self, X, batch_size):
+        """
+        Internal method. Computes scores, i.e., unnormalized log marginals for
+        candidates.
+
+        Public methods like marginals() and train() call _pytorch_outputs() to get scores,
+        which subclasses must implement. It is a wrapper around forward() that performs
+        any necessary preprocessing or batching.
+
+        :param X: Collection of candidates to compute scores for
+        :param batch_size: Number of candidates to score at a time. Does not affect
+             scores, but useful if all candidates do not fit on GPU. If None, all candidates
+             will be scored at same time.
+        :return: 1-d tensor of scores that each candidate has positive label
+             if class cardinality is 2. Else, a 2-d tensor of scores where
+             dim. 0 corresponds to candidates and dim. 1 corresponds to class labels
+        """
         raise NotImplementedError
 
     def load(self, model_name=None, save_dir='checkpoints', verbose=True):
@@ -101,7 +126,7 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         
     def train(self, X_train, Y_train, n_epochs=25, lr=0.01, batch_size=64,
         rebalance=False, X_dev=None, Y_dev=None, print_freq=1, dev_ckpt=True,
-        dev_ckpt_delay=0.75, save_dir='checkpoints', seed=123, **kwargs):
+        dev_ckpt_delay=0.75, save_dir='checkpoints', seed=123, use_cudnn=True, **kwargs):
         """
         Generic training procedure for PyTorch model
 
@@ -126,6 +151,10 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         :param dev_ckpt_delay: Start dev checkpointing after this portion
             of n_epochs.
         :param save_dir: Save dir path for checkpointing.
+        :param seed: random seed used to seed PyTorch modules and random number
+            generator for operations inside this method
+        :param use_cudnn: Whether to use PyTorch's CuDNN backend (if available).
+            Users might wish to disable it, e.g., if CuDNN training is non-deterministic
         :param kwargs: All hyperparameters that change how the network is built
             must be passed through here to be saved and reloaded to save /
             reload model. *NOTE: If a parameter needed to build the 
@@ -137,6 +166,9 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
         random_state = np.random.RandomState(seed=seed)
+
+        # Sets whether to use CuDNN
+        torch.backends.cudnn.enabled = use_cudnn
 
         self._check_input(X_train)
         

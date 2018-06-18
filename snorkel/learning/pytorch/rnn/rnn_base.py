@@ -6,7 +6,6 @@ from builtins import *
 
 import numpy as np
 import torch
-import torch.nn as nn
 
 from snorkel.learning.pytorch import TorchNoiseAwareModel
 from snorkel.models import Candidate
@@ -47,15 +46,12 @@ class RNNBase(TorchNoiseAwareModel):
         raise NotImplementedError
     
     def _pytorch_outputs(self, X, batch_size):
-        """
-        Compute the outputs (unnormalized log marginals) for the given candidates X.
-        """
         n = len(X)
         if not batch_size:
             batch_size = len(X)
         
         if isinstance(X[0], Candidate):
-            X = self._preprocess_data(X)
+            X = self._preprocess_data(X, extend=False)
         
         outputs = torch.Tensor([])
         
@@ -105,11 +101,7 @@ class RNNBase(TorchNoiseAwareModel):
         return data
 
     def train(self, X_train, Y_train, X_dev=None, **kwargs):
-        """
-        Perform preprocessing of data, construct dataset-specific dictionary, then
-        train.
-        """
-        # Text preprocessing
+        # Preprocesses data, including constructing dataset-specific dictionary
         X_train = self._preprocess_data(X_train, extend=True)
         if X_dev is not None:
             X_dev = self._preprocess_data(X_dev, extend=False)

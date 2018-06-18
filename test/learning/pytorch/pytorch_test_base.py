@@ -40,9 +40,9 @@ class PyTorchTestBase(unittest.TestCase):
         # Each candidate is featurized as 10 floats. The first five are between
         # -.25 and 1 if the class label is True and between -1 and .25 if False.
         # The remaining five are between -1 and 1.
-        cls.F_train = load_feature_matrix(cls.session, split=0)
-        cls.F_dev = load_feature_matrix(cls.session, split=1)
-        cls.F_test = load_feature_matrix(cls.session, split=2)
+        cls.F_train = load_feature_matrix(cls.session, split=0, coerce_int=False)
+        cls.F_dev = load_feature_matrix(cls.session, split=1, coerce_int=False)
+        cls.F_test = load_feature_matrix(cls.session, split=2, coerce_int=False)
 
         cls.L_gold_dev  = load_gold_labels(cls.session, annotator_name='gold', split=1)
         cls.L_gold_test = load_gold_labels(cls.session, annotator_name='gold', split=2)

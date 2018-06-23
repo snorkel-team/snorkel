@@ -1,0 +1,25 @@
+dependencies:
+- numba
+- python=2.7
+- lxml
+- pip:
+  - bs4
+  - future
+  - futures
+  - ipywidgets>=7.0
+  - jupyter
+  - matplotlib
+  - nltk
+  - numba
+  - git+https://github.com/HazyResearch/numbskull@master
+  - numpy>=1.11
+  - pandas
+  - requests
+  - scipy>=0.18
+  - six
+  - sqlalchemy>=1.0.14
+  - tensorflow>=1.0
+  - tika
+  - spacy==1.10.0
+  - psycopg2
+  - py4j

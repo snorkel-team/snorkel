@@ -47,9 +47,9 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 * _[Learning to Compose Domain-Specific Transformations for Data Augmentation](https://arxiv.org/abs/1709.01643)_ (NIPS 2017)
 * _[Gaussian Quadrature for Kernel Features](https://arxiv.org/abs/1709.02605)_ (NIPS 2017)
 
-## Tutorial Quick Start
+## Quick Start
 
-This section has the commands to quickly get started running the tutorial notebooks.
+This section has the commands to quickly get started running Snorkel.
 For more detailed installation instructions, see the [Installation section](#installation) below.
 These instructions assume that you already have [conda](https://conda.io/) installed.
 
@@ -73,13 +73,14 @@ jupyter nbextension enable --py widgetsnbextension
 jupyter notebook
 ```
 
-Then a Jupyter notebook tab will open in your browser.
+Then a Jupyter notebook tab will open in your browser. From here you can run existing Snorkel notebooks or create your own.
+
+### Tutorials
+
 From within the Jupyter browser, navigate to the [`tutorials`](tutorials) directory and try out one of the existing notebooks!
 
 The [introductory tutorial](tutorials/intro) in `tutorials/intro` covers the entire Snorkel workflow, showing how to extract spouse relations from news articles.
 You can also check out all the great [materials](https://simtk.org/frs/?group_id=1263) from the recent Mobilize Center-hosted [Snorkel workshop](http://mobilize.stanford.edu/events/snorkelworkshop2017/)!
-
-Have fun and get 🏊🏊🏊!
 
 ## Release Notes
 
@@ -120,7 +121,7 @@ In both cases, the environment can be activated using `conda activate snorkel` a
 (for versions of conda prior to 4.4, replace `conda` with `source` in these commands).
 Users just looking to try out a Snorkel tutorial notebook should see the quick-start instructions above.
 
-### Usage Environment
+### Using Snorkel as a Package
 
 This setup is intended for users who would like to use Snorkel in their own applications by importing the package.
 In such cases, users should define a custom `environment.yml` to manage their project's dependencies.

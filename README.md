@@ -14,7 +14,8 @@
 
 ## Getting Started
 
-* Get started quickly [below](#quick-start)
+* Get set up quickly [below](#quick-start)
+* Try the tutorials with [these instructions](#tutorials)
 * Documentation [here](http://snorkel.readthedocs.io/en/master/)
 
 ## Motivation

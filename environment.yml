@@ -1,0 +1,29 @@
+name: snorkel
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - beautifulsoup4
+  - future
+  - ipywidgets>=7.0
+  - jupyter
+  - lxml
+  - matplotlib
+  - nltk
+  - numba
+  - numpy>=1.11
+  - pytorch>=0.4
+  - pandas
+  - psycopg2
+  - py4j
+  - python
+  - requests
+  - runipy
+  - scipy
+  - six
+  - spacy<2
+  - sqlalchemy>=1.0.14
+  - tika
+  - pip:
+    - git+https://github.com/HazyResearch/numbskull@master
+    - git+https://github.com/HazyResearch/treedlib@master

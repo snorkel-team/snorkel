@@ -21,7 +21,7 @@ class Classifier(object):
         self.name = name or self.__class__.__name__
         self.cardinality = cardinality
 
-    def marginals(self, X, batch_size=None, **kwargs):
+    def marginals(self, X, batch_size=None):
         raise NotImplementedError()
 
     def save_marginals(self, session, X, training=False):
@@ -95,7 +95,7 @@ class Classifier(object):
         scorer=MentionScorer, **kwargs):
         """
         Prints full score analysis using the Scorer class, and then returns the
-        a tuple of sets conatining the test candidates bucketed for error 
+        a tuple of sets containing the test candidates bucketed for error
         analysis, i.e.:
             * For binary: TP, FP, TN, FN
             * For categorical: correct, incorrect

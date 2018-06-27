@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import *
 
-from .meta import SnorkelBase, snorkel_postgres
+from snorkel.models.meta import SnorkelBase, snorkel_postgres
 from sqlalchemy import Column, String, Integer, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship, backref
@@ -239,6 +239,9 @@ class TemporarySpan(TemporaryContext):
     def get_word_end(self):
         return self.char_to_word_index(self.char_end)
 
+    def get_word_range(self):
+        return self.get_word_start(), self.get_word_end()
+
     def get_n(self):
         return self.get_word_end() - self.get_word_start() + 1
 
@@ -272,7 +275,8 @@ class TemporarySpan(TemporaryContext):
         return self.get_attrib_span('words', sep)
 
     def __contains__(self, other_span):
-        return other_span.char_start >= self.char_start and other_span.char_end <= self.char_end
+        return self.sentence == other_span.sentence and other_span.char_start >= self.char_start \
+            and other_span.char_end <= self.char_end
 
     def __getitem__(self, key):
         """

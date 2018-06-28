@@ -11,7 +11,7 @@ class PrimitiveObject(object):
         if len(self.primitive_names) != self.num_primitives:
             Exception('Incorrect number of Primitive Names')
 
-    
+
 def bike_human_nums(object_names):
     names = object_names.split(' , ')[1:]
     num_person = 0
@@ -98,3 +98,4 @@ def bike_human_size(object_names, object_area):
             continue
     
     return area_diff
+

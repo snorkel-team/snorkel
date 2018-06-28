@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import pandas as pd
 from snorkel.models import StableLabel
 from snorkel.db_helpers import reload_annotator_labels
@@ -48,31 +54,6 @@ def load_external_labels(session, candidate_class, annotator_name='gold'):
     reload_annotator_labels(session, candidate_class, annotator_name, split=2, filter_label_split=False)
 
 
-
-# create distant superivsion subset for workshop
-    # from lib.viz import display_candidate
-
-    # known = []
-    # dev_cands = session.query(Candidate).filter(Candidate.split == 1).order_by(Candidate.id).all()
-    # for i in range(L_gold_dev.shape[0]):
-    #     if L_gold_dev[i,0] == 1:
-    #         p1,p2 = dev_cands[i][0].get_span(), dev_cands[i][1].get_span()
-    #         if re.search("(Dr|Mr|Mrs|Sir)",p1 + " "+ p2):
-    #             continue
-    #         if len(p1.split()) > 1 and len(p2.split()) > 1:
-    #             #display_candidate(dev_cands[i])
-    #             known.append( (p1,p2) )
-
-
-    # print len(set(known))
-    # for c in sorted(set(known)):
-    #     print ",".join(c)
-
-
-
-# exercises
-
-
 def check_exercise_1(subclass):
     """
     Check if type is Person
@@ -81,10 +62,11 @@ def check_exercise_1(subclass):
     """
     v = subclass.__mapper_args__['polymorphic_identity'] == "person"
     v &= len(subclass.__argnames__) == 1 and 'person' in subclass.__argnames__
-    print 'Correct!' if v else 'Sorry, try again!'
+    print('Correct!' if v else 'Sorry, try again!')
 
 
 def check_exercise_2(c):
     s1 = c[0].get_span()
     s2 = c[1].get_span()
-    print 'Correct!' if "{} {}".format(s1, s2) == "Katrina Dawson Paul Smith" else 'Sorry, try again!'
+    print('Correct!' if "{} {}".format(s1, s2) == "Katrina Dawson Paul Smith" else 'Sorry, try again!')
+    

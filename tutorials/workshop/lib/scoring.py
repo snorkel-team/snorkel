@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import math
 import numpy as np
 import scipy.sparse as sparse
@@ -20,11 +26,10 @@ def majority_vote_score(L, gold_labels):
     y_true = [1 if y_true[i] == 1 else 0 for i in range(y_true.shape[0])]
     
     pos,neg = y_true.count(1),float(y_true.count(0))
-    print "pos/neg    {:d}:{:d} {:.1f}%/{:.1f}%".format(int(pos), int(neg), pos/(pos+neg)*100, neg/(pos+neg)*100)
-    print "precision  {:.2f}".format( 100 * precision_score(y_true, y_pred) )
-    print "recall     {:.2f}".format( 100 * recall_score(y_true, y_pred) )
-    print "f1         {:.2f}".format( 100 * f1_score(y_true, y_pred) )
-    #print "accuracy  {:.2f}".format( 100 * accuracy_score(y_true, y_pred) 
+    print("pos/neg    {:d}:{:d} {:.1f}%/{:.1f}%".format(int(pos), int(neg), pos/(pos+neg)*100, neg/(pos+neg)*100))
+    print("precision  {:.2f}".format( 100 * precision_score(y_true, y_pred)))
+    print("recall     {:.2f}".format( 100 * recall_score(y_true, y_pred)))
+    print("f1         {:.2f}".format( 100 * f1_score(y_true, y_pred)))
 
 def apply_lfs(session, lf, split=None, cands=None, gold=None):
 
@@ -58,7 +63,7 @@ def coverage(session, lf, split=None, cands=None):
 
     v = float(len(hits)) / len(cands) * 100
 
-    print "Coverage: {:2.2f}% ({}/{})".format(v, len(hits), len(cands))
+    print("Coverage: {:2.2f}% ({}/{})".format(v, len(hits), len(cands)))
     return hits
 
 
@@ -115,7 +120,7 @@ def print_top_k_features(session, model, F_matrix, top_k=25):
     """
     ftrs = session.query(FeatureKey).all()
     ftr_idx = {ftr.id: ftr.name for ftr in ftrs}
-    print len(ftr_idx)
+    print(len(ftr_idx))
 
     w, b = model.get_weights()
 
@@ -126,53 +131,8 @@ def print_top_k_features(session, model, F_matrix, top_k=25):
         weights.append([w[i], ftr_idx[idx]])
 
     for item in sorted(weights)[0:top_k]:
-        print item
-    print "-" * 20
+        print(item)    
+    print("-" * 20)
     for item in sorted(weights)[-top_k+1:]:
-        print item
-
-
-
-
-
-# def mp_apply_lfs(lfs, candidates, nprocs):
-#     '''MP + labeling functions
-#     http://eli.thegreenplace.net/2012/01/16/python-parallelizing-cpu-bound-tasks-with-multiprocessing/
-#     '''
-#
-#     # print "Using {} processes...".format(nprocs)
-#
-#     def worker(idxs, out_queue):
-#         outdict = {}
-#         for i in idxs:
-#             outdict[i] = [lfs[i](c) for c in candidates]
-#         out_queue.put(outdict)
-#
-#     out_queue = Queue()
-#     chunksize = int(math.ceil(len(lfs) / float(nprocs)))
-#     procs = []
-#
-#     nums = range(0, len(lfs))
-#     for i in range(nprocs):
-#         p = Process(
-#             target=worker,
-#             args=(nums[chunksize * i:chunksize * (i + 1)],
-#                   out_queue))
-#         procs.append(p)
-#         p.start()
-#
-#     # Collect all results
-#     resultdict = {}
-#     for i in range(nprocs):
-#         resultdict.update(out_queue.get())
-#
-#     for p in procs:
-#         p.join()
-#
-#     X = sparse.lil_matrix((len(candidates), len(lfs)))
-#     for j in resultdict:
-#         for i, v in enumerate(resultdict[j]):
-#             if v != 0:
-#                 X[i, j] = v
-#
-#     return X.tocsr()
+        print(item)
+        

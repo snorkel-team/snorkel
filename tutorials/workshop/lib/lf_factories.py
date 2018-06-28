@@ -1,4 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import re
+
 from snorkel.lf_helpers import (
     get_left_tokens, get_right_tokens, get_between_tokens,
     get_text_between, get_tagged_text,
@@ -61,7 +67,7 @@ class MatchTerms(PatternMatchFactory):
             else "|window={}".format(self.window))
 
         args = ['LF_TERMS', self.name, params, 'TRUE' if self.label == 1 else 'FALSE']
-        f.__name__ = "_".join(args)
+        f.__name__ = str("_".join(args).decode("utf-8"))
         return f
 
 
@@ -91,7 +97,7 @@ class MatchRegex(PatternMatchFactory):
             else "|window={}".format(self.window))
 
         args = ['LF_REGEX', self.name, params, 'TRUE' if self.label == 1 else 'FALSE']
-        f.__name__ = "_".join(args)
+        f.__name__ = str("_".join(args).decode("utf-8"))
         return f
 
 
@@ -115,5 +121,5 @@ class DistantSupervision(object):
             return 1 if v else 0
 
         args = ['LF_DIST_SUPERVISION', self.name, "TRUE"]
-        f.__name__ = "_".join(args)
+        f.__name__ = str("_".join(args).decode("utf-8"))
         return f

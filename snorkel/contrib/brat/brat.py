@@ -558,7 +558,7 @@ class StandoffAnnotations(object):
 
         # load brat config (this defines relation and argument types)
         config = self._parse_config(config_path)
-        anno_filelist = set([os.path.basename(fn).strip(".ann") for fn in glob.glob(input_dir + "/*.ann")])
+        anno_filelist = set([os.path.basename(fn)[:-4] for fn in glob.glob(input_dir + "/*.ann")])
 
         # import standoff annotations for all documents
         annotations = {}
@@ -650,9 +650,9 @@ class StandoffAnnotations(object):
         """
         entity_defs, rela_defs = [], []
         for stype in candidate_types:
-            rel_type = str(stype.type).rstrip(".type")
-            arg_types = [key.rstrip("_id") for key in stype.__dict__ if "_id" in key]
-            arg_types = [name[0].upper()+name[1:] for name in arg_types]
+            rel_type = str(stype.type)[:-5]
+            arg_types = [key[:-3] for key in stype.__dict__ if "_id" in key]
+            arg_types = [name[0].upper() + name[1:] for name in arg_types]
 
             # HACK: Assume all args that differ by just a number are
             # of the same type, e.g., person1, person2

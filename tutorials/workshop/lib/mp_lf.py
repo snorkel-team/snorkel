@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import *
+
 import math
 import numpy as np
 import scipy.sparse as sparse
@@ -6,9 +12,7 @@ from multiprocessing import Process, Queue
 def mp_apply_lfs(lfs, candidates, nprocs):
     '''MP + labeling functions
     http://eli.thegreenplace.net/2012/01/16/python-parallelizing-cpu-bound-tasks-with-multiprocessing/
-    '''
-    #print "Using {} processes...".format(nprocs)
-    
+    ''' 
     def worker(idxs, out_queue):
         outdict = {}
         for i in idxs:

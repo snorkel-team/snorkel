@@ -1,7 +1,6 @@
 import numpy as np
 
 class PrimitiveObject(object):
-
     def save_primitive_matrix(self,primitive_mtx):
         self.primitive_mtx = primitive_mtx
         self.discrete_primitive_mtx = primitive_mtx
@@ -13,7 +12,6 @@ class PrimitiveObject(object):
             Exception('Incorrect number of Primitive Names')
 
     
-
 def bike_human_nums(object_names):
     names = object_names.split(' , ')[1:]
     num_person = 0
@@ -70,9 +68,6 @@ def bike_human_distance(object_names, object_x, object_y):
             dists.append(np.linalg.norm(coord1-coord2))     
     
     return np.min(dists)
-
-
-
 
 
 def bike_human_size(object_names, object_area):

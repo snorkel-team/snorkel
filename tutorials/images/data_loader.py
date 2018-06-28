@@ -43,7 +43,6 @@ class DataLoader(object):
         
         with open(self.data_path + 'image_data.json') as json_data:
             self.data = json.load(json_data)
-        
 
     
     def show_examples(self, annotated=False, label=-1):
@@ -69,8 +68,6 @@ class DataLoader(object):
                                         edgecolor='cyan',
                                         linewidth=1))
 
-
-
         split_idx = np.where(self.val_ground == label)[0]
         idx_list = np.random.choice(split_idx,3)
 
@@ -83,8 +80,3 @@ class DataLoader(object):
                 show_image(int(self.val_vg_idx[i]))
         plt.suptitle('Query Examples')
 
-
-
-
-
-        

@@ -61,7 +61,7 @@ script:
   - runipy tutorials/cdr/CDR_Tutorial_3.ipynb
 
   # Run Image tutorial
-  - runipy tutorials/images/Image_Tutorial.ipynb
+  - runipy tutorials/images/Images_Tutorial.ipynb
 
   # TODO check outputs, upload results, etc.
   # for more ideas, see: https://github.com/rossant/ipycache/issues/7

@@ -154,7 +154,7 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
 
             # Primary arguments are constituent Contexts, and their ids
             class_attribs[arg + '_id'] = Column(
-                Integer, ForeignKey('context.id', ondelete='CASCADE'))
+                Integer, ForeignKey('context.id', ondelete='CASCADE'), index=True)
             class_attribs[arg] = relationship(
                 'Context',
                 backref=backref(
@@ -200,7 +200,7 @@ class Marginal(SnorkelBase):
     __tablename__ = 'marginal'
     id           = Column(Integer, primary_key=True)
     candidate_id = Column(Integer,
-                        ForeignKey('candidate.id', ondelete='CASCADE'))
+                        ForeignKey('candidate.id', ondelete='CASCADE'), index=True)
     training     = Column(Boolean, default=True)
     value        = Column(Integer, nullable=False, default=1)
     probability  = Column(Float, nullable=False, default=0.0)

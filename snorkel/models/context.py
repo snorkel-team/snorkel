@@ -67,7 +67,7 @@ class Sentence(Context):
     """A sentence Context in a Document."""
     __tablename__ = 'sentence'
     id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
-    document_id = Column(Integer, ForeignKey('document.id', ondelete='CASCADE'))
+    document_id = Column(Integer, ForeignKey('document.id', ondelete='CASCADE'), index=True)
     position = Column(Integer, nullable=False)
     document = relationship('Document', backref=backref('sentences', order_by=position, cascade='all, delete-orphan'), foreign_keys=document_id)
     text = Column(Text, nullable=False)
@@ -312,7 +312,7 @@ class Span(Context, TemporarySpan):
     """
     __tablename__ = 'span'
     id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
-    sentence_id = Column(Integer, ForeignKey('sentence.id', ondelete='CASCADE'))
+    sentence_id = Column(Integer, ForeignKey('sentence.id', ondelete='CASCADE'), index=True)
     char_start = Column(Integer, nullable=False)
     char_end = Column(Integer, nullable=False)
     meta = Column(PickleType)

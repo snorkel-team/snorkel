@@ -8,7 +8,7 @@ import skimage.io as io
 
 
 class DataLoader(object):
-    def __init__(self, data_path='/tutorial_data/'):
+    def __init__(self, data_path='/data/'):
         current_dir = os.getcwd()
         self.data_path = current_dir + data_path
 

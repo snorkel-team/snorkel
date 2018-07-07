@@ -21,6 +21,7 @@ In this tutorial, we focus on a basic introduction to the Snorkel paradigm, its 
 
 ## Lecture & Workshop Materials
 
+0. **LECTURE: Software 2.0 Intro** [Slides](#)
 1. **LECTURE: Snorkel Overview** [Slides](slides/Snorkel-Workshop-FINAL.pdf)
 2. **INTERACTIVE: Writing Labeling Functions**
 
@@ -61,9 +62,11 @@ Below are some links both on Snorkel and related projects, as well as the broade
 For more links, see [the Snorkel home page](snorkel.stanford.edu):
 
 1. [Weak Supervision: The New Programming Language for Software 2.0](https://hazyresearch.github.io/snorkel/blog/snorkel_programming_training_data.html)
-2. [Weak Supervision: The New Programming Paradigm for Machine Learning](https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html)
+2. [Weak Supervision: A Survey Blog Post](https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html)
 3. [A Recent NIPS 2017 Workshop on Weak Supervision](http://lld-workshop.github.io/)
 4. [Exploiting Building Blocks of Data to Efficiently Create Training Sets](http://dawn.cs.stanford.edu/2017/09/14/coral/)
 5. [HoloClean: Data Cleaning using Weak Supervision](https://hazyresearch.github.io/snorkel/blog/holoclean.html)
+6. [BabbleLabble: Using Natural Language to Label Training Data](https://hazyresearch.github.io/snorkel/blog/babble_labble.html)
+7. [Structure Learning: Handling Correlated Sources Automatically](https://hazyresearch.github.io/snorkel/blog/structure_learning.html), [[Tutorial]](https://github.com/HazyResearch/snorkel/blob/master/tutorials/advanced/Structure_Learning.ipynb)
 
 

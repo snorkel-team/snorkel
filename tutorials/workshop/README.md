@@ -1,12 +1,11 @@
-
-<img align:right src="imgs/acm.png" alt="Snorkel" width=700px">
+<img align:right src="imgs/acm.jpg" alt="Snorkel" width=700px">
 # Summer School in Software 2.0
 
 ---
-<img align:right src="imgs/logo_01.png" alt="Snorkel" width=75px">
+<img align:right src="imgs/logo_01.jpg" alt="Snorkel" width=75px">
 <img align:right src="imgs/hazy.jpg" alt="Hazy Research" width=200px/>
 
-## What is Software 2.0 ?
+## What is Software 2.0?
 
 An increasing number of real-world systems today are not just utilizing machine learning as a sub-component, but are in fact wholesale transitioning to “Software 2.0”-style architectures where machine learning models are the principle deployed artifact. Especially for complex tasks e.g. involving vision, speech, control, and more, this approach has the advantages of better generalization as well as a more homogeneous and modular form factor
 
@@ -30,7 +29,7 @@ We discuss how to write how to explore our training data, write _labeling functi
 	2. **[Training the Discrimintive](Workshop_4_Discriminative_Model_Training.ipynb):**
 	Using the output of the generative model above, we train a _noise-aware_ discriminative model (here a deep neural network) to make predictions over the candidates, and evaluating the discriminative model on the development candidate set.
 	
-	3. **[Working with Images](Workshop_4_Discriminative_Model_Training.ipynb):**
+	3. **[Working with Images](https://github.com/HazyResearch/snorkel/blob/master/tutorials/images/Images_Tutorial.ipynb):**
 	Snorkel isn't limited to just text-based classification problems. In this tutorial, we show how Snorkel can be used for computer vision tasks. 
 
 ## Advanced Tutorials

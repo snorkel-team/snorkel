@@ -1,13 +1,23 @@
 <img align:right src="imgs/acm.jpg" alt="Snorkel" width=700px/>
 
-# Summer School in Software 2.0
+# Summer School in Snorkel, Weak Supervision & Software 2.0
 
 ---
 <img align:right src="imgs/hazy.jpg" alt="Hazy Research" width=275px/>
 
-## What is Software 2.0?
+## Programming Software 2.0 with Weak Supervision
 
-An increasing number of real-world systems today are not just utilizing machine learning as a sub-component, but are in fact wholesale transitioning to “Software 2.0”-style architectures where machine learning models are the principle deployed artifact. Especially for complex tasks e.g. involving vision, speech, control, and more, this approach has the advantages of better generalization as well as a more homogeneous and modular form factor
+In the last few years, deep learning models have simultaneously achieved high quality on conventionally challenging tasks and become easy-to-use commodity tools.	
+These factors, combined with the ease of deployment compared to traditional software, have led to deep learning models replacing production software stacks in not only traditional machine learning-driven products including translation and search, but also in many previously heuristic-based applications.
+This new mode of software construction and deployment has been called [Software 2.0](https://medium.com/@karpathy).
+A key bottleneck in the construction of Software 2.0 applications is the need for large, high-quality training sets for each task.
+
+As labeling training data increasingly becomes one of the most central ways in which developers interact with---and _program_---this new Software 2.0 stack, an emerging area of work focuses on _weak supervision_ techniques for generating labeled training data more efficiently using higher-level, more agile interfaces.
+For concreteness, this tutorial focuses on Snorkel, a system that enables users to shape, create, and manage training data for Software 2.0 stacks.
+In Snorkel applications, instead of tediously hand-labeling individual data items, a user implicitly defines large training sets by writing programs, called labeling functions, that assign labels to subsets of data points, albeit noisily.
+This idea of using multiple, imperfect sources of labels builds on previous work in _distant supervision_, and extends it to handle a more diverse range of noisier, biased, and potentially correlated sources.
+
+In this tutorial, we focus on a basic introduction to the Snorkel paradigm, its interface and workflow, and its motivating context and theory.
 
 ## Lecture & Workshop Materials
 
@@ -20,7 +30,7 @@ We introduct `Candidate` and `Context` objects (documents, sentences) and then s
 	2. **[Writing Labeling Functions] (Workshop_2_Writing_Labeling_Functions.ipynb):**
 We discuss how to write how to explore our training data, write _labeling functions_, and use _labeling function factories_ to autogenerate LFs from simple dictionaries and regular expressions.
 
-3. **LECTURE: Weak Supervision Theory**  [Slides](slides/DP_matrix_completion_theory.pdf)
+3. **LECTURE: Data Programming Theory**  [Slides](slides/DP_matrix_approx_theory.pdf)
 
 2. **INTERACTIVE: Writing Labeling Functions**
 	1. **[Training the Generative Model](Workshop_3_Generative_Model_Training.ipynb):**
@@ -47,10 +57,13 @@ How to construct a validation set of human annotated data using BRAT (Brat Rapid
 
 ## Further Reading on Weak Supervision
 
-If you're new, get started with the first blog post on data programming, and then check out the Snorkel intro tutorial!
+Below are some links both on Snorkel and related projects, as well as the broader spectrum of weak supervision work in the community.
+For more links, see [the Snorkel home page](snorkel.stanford.edu):
 
 1. [Weak Supervision: The New Programming Language for Software 2.0](https://hazyresearch.github.io/snorkel/blog/snorkel_programming_training_data.html)
-2. [Systematically Debugging Training Data for Software 2.0](http://dawn.cs.stanford.edu/2018/06/21/debugging/)
-3. [Exploiting Building Blocks of Data to Efficiently Create Training Sets](http://dawn.cs.stanford.edu/2017/09/14/coral/)
-4. [Weak Supervision: The New Programming Paradigm for Machine Learning](https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html)
+2. [Weak Supervision: The New Programming Paradigm for Machine Learning](https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html)
+3. [A Recent NIPS 2017 Workshop on Weak Supervision](http://lld-workshop.github.io/)
+4. [Exploiting Building Blocks of Data to Efficiently Create Training Sets](http://dawn.cs.stanford.edu/2017/09/14/coral/)
+5. [HoloClean: Data Cleaning using Weak Supervision](https://hazyresearch.github.io/snorkel/blog/holoclean.html)
+
 

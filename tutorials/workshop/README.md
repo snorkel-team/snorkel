@@ -20,7 +20,7 @@ We introduct `Candidate` and `Context` objects (documents, sentences) and then s
 	2. **[Writing Labeling Functions] (Workshop_2_Writing_Labeling_Functions.ipynb):**
 We discuss how to write how to explore our training data, write _labeling functions_, and use _labeling function factories_ to autogenerate LFs from simple dictionaries and regular expressions.
 
-3. **LECTURE: Weak Supervision Theory**  [Slides](slides/Snorkel-Workshop-FINAL.pdf)
+3. **LECTURE: Weak Supervision Theory**  [Slides](slides/DP_matrix_completion_theory.pdf)
 
 2. **INTERACTIVE: Writing Labeling Functions**
 	1. **[Training the Generative Model](Workshop_3_Generative_Model_Training.ipynb):**

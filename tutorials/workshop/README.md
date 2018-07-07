@@ -1,9 +1,9 @@
 <img align:right src="imgs/acm.jpg" alt="Snorkel" width=700px/>
+
 # Summer School in Software 2.0
 
 ---
-<img align:right src="imgs/logo_01.jpg" alt="Snorkel" width=75px/>
-<img align:right src="imgs/hazy.jpg" alt="Hazy Research" width=200px/>
+<img align:right src="imgs/hazy.jpg" alt="Hazy Research" width=275px/>
 
 ## What is Software 2.0?
 

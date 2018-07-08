@@ -28,7 +28,7 @@ In this tutorial, we focus on a basic introduction to the Snorkel paradigm, its 
 	1. **[Snorkel API](Workshop_1_Snorkel_API.ipynb):**
 We introduct `Candidate` and `Context` objects (documents, sentences) and then show how to interact with candidates using the Snorkel helper function API. 
 
-	2. **[Writing Labeling Functions] (Workshop_2_Writing_Labeling_Functions.ipynb):**
+	2. **[Writing Labeling Functions](Workshop_2_Writing_Labeling_Functions.ipynb):**
 We discuss how to write how to explore our training data, write _labeling functions_, and use _labeling function factories_ to autogenerate LFs from simple dictionaries and regular expressions.
 
 3. **LECTURE: Data Programming Theory**  [Slides](slides/DP_matrix_approx_theory.pdf)
@@ -37,7 +37,7 @@ We discuss how to write how to explore our training data, write _labeling functi
 	1. **[Training the Generative Model](Workshop_3_Generative_Model_Training.ipynb):**
 	We discuss how to unify the supervision provided by lableing functions in the previous notebook. We show how using a generative model 
 	
-	2. **[Training the Discrimintive](Workshop_4_Discriminative_Model_Training.ipynb):**
+	2. **[Training the Discriminative Model](Workshop_4_Discriminative_Model_Training.ipynb):**
 	Using the output of the generative model above, we train a _noise-aware_ discriminative model (here a deep neural network) to make predictions over the candidates, and evaluating the discriminative model on the development candidate set.
 	
 	3. **[Working with Images](https://github.com/HazyResearch/snorkel/blob/master/tutorials/images/Images_Tutorial.ipynb):**

@@ -67,6 +67,9 @@ conda activate snorkel
 # Install snorkel in the environment
 pip install .
 
+# Optionally: You may need to explicitly set the Jupyter Notebook kernel
+python -m ipykernel install --user --name snorkel --display-name "Python (snorkel)"
+
 # Activate jupyter widgets
 jupyter nbextension enable --py widgetsnbextension
 
@@ -75,6 +78,8 @@ jupyter notebook
 ```
 
 Then a Jupyter notebook tab will open in your browser. From here you can run existing Snorkel notebooks or create your own.
+
+_**Note: This will install the default version of Python on your system; to specify a specific version, change the python version in the dependencies list in `environment.yml`, e.g. to `python=2.7`.**_
 
 ### Tutorials
 

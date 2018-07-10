@@ -67,6 +67,9 @@ conda activate snorkel
 # Install snorkel in the environment
 pip install .
 
+# Optionally: You may need to explicitly set the Jupyter Notebook kernel
+python -m ipykernel install --user --name snorkel --display-name "Python (snorkel)"
+
 # Activate jupyter widgets
 jupyter nbextension enable --py widgetsnbextension
 

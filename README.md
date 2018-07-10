@@ -79,6 +79,8 @@ jupyter notebook
 
 Then a Jupyter notebook tab will open in your browser. From here you can run existing Snorkel notebooks or create your own.
 
+_**Note: This will install the default version of Python on your system; to specify a specific version, change the python version in the dependencies list in `environment.yml`, e.g. to `python=2.7`.**_
+
 ### Tutorials
 
 From within the Jupyter browser, navigate to the [`tutorials`](tutorials) directory and try out one of the existing notebooks!

@@ -18,7 +18,7 @@ def assign_func_name(f, name):
     try:
         f.__name__ = name
     except Exception as e:
-        f.__name__ = 'b{}'.format(name)
+        f.__name__ = b'{}'.format(name)
 
 class PatternMatchFactory(object):
     """

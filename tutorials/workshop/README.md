@@ -21,8 +21,8 @@ In this tutorial, we focus on a basic introduction to the Snorkel paradigm, its 
 
 ## Lecture & Workshop Materials
 
-0. **LECTURE: Software 2.0 Intro** [Slides](#)
-1. **LECTURE: Snorkel Overview** [Slides](slides/Snorkel-Workshop-FINAL.pdf)
+0. **LECTURE: Software 2.0 Intro** [Slides](slides/ACM_Summer_School_CR.pdf)
+1. **LECTURE: Snorkel Overview** [Slides](slides/Snorkel-Workshop-General.pdf)
 2. **INTERACTIVE: Writing Labeling Functions**
 
 	1. **[Snorkel API](Workshop_1_Snorkel_API.ipynb):**

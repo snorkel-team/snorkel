@@ -1,18 +1,12 @@
 import numpy as np
-
-class PrimitiveObject(object):
-    def save_primitive_matrix(self,primitive_mtx):
-        self.primitive_mtx = primitive_mtx
-        self.discrete_primitive_mtx = primitive_mtx
-        self.num_primitives = np.shape(self.primitive_mtx)[1]
-    
-    def save_primitive_names(self,names):
-        self.primitive_names = names
-        if len(self.primitive_names) != self.num_primitives:
-            Exception('Incorrect number of Primitive Names')
-
+import itertools
 
 def bike_human_nums(object_names):
+    '''Returns: (int) categorical index, where
+            0 --> more people than bikes
+            1 --> more bikes than people
+            2 --> same number of bikes and people
+    '''
     names = object_names.split(' , ')[1:]
     num_person = 0
     num_bicycles = 0
@@ -35,6 +29,9 @@ def bike_human_nums(object_names):
 
 
 def bike_human_distance(object_names, object_x, object_y):
+    '''Returns: (np.float) distance between closest person/bike '''
+
+    # get coordinates (positions) of bikes/people
     names = object_names.split(' , ')[1:]
     person_position = np.array([[0,0],[0,0]])
     bicycle_position = np.array([[0,0],[0,0]])
@@ -50,8 +47,8 @@ def bike_human_distance(object_names, object_x, object_y):
     
     if (np.shape(bicycle_position)[0] == 0) or (np.shape(person_position)[0] == 0):
         return -1
-        
-    import itertools
+    
+    # generate all combinations of people/bikes coordinates
     if len(bicycle_position) >= len(person_position):
         list1 = [list(coord) for coord in bicycle_position]
         list2 = [list(coord) for coord in person_position]
@@ -62,6 +59,7 @@ def bike_human_distance(object_names, object_x, object_y):
     coord_comb = [list1, list2]
     person_bike_pairs = itertools.product(*coord_comb)
     
+    # compute pairwise distances between people and bikes
     dists = []
     for pair in person_bike_pairs:
         for coord1, coord2 in pair:
@@ -71,11 +69,13 @@ def bike_human_distance(object_names, object_x, object_y):
 
 
 def bike_human_size(object_names, object_area):
+    '''Returns: (int) pixelwise area difference between humans/bikes '''
+
     names = object_names.split(' , ')[1:]
     person_area = np.array([0])
     bicycle_area = np.array([0])
     
-    
+    # get 'area' for people and bikes
     for i in range(np.shape(names)[0]):
         name = names[i]
         if ('person' in name) or ('man' in name) or ('woman' in name) or ('girl' in name) or ('boy' in name) or ('people' in name):
@@ -86,6 +86,7 @@ def bike_human_size(object_names, object_area):
     person_area = person_area[1:]
     bicycle_area = bicycle_area[1:]
     
+
     if (np.shape(bicycle_area)[0] == 0) or (np.shape(person_area)[0] == 0):
         area_diff = -1
     

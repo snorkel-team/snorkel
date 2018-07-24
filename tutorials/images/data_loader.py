@@ -9,6 +9,9 @@ import skimage.io as io
 
 class DataLoader(object):
     def __init__(self, data_path='/data/'):
+        # fix SSL certificate issues when loading images via HTTPS
+        import ssl; ssl._create_default_https_context = ssl._create_unverified_context
+
         current_dir = os.getcwd()
         self.data_path = current_dir + data_path
 

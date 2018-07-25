@@ -1,6 +1,9 @@
-# This setup script is provided as an unofficial alternative to installing Snorkel using Conda. (See README.md for
-# the recommended installation instructions.) This script will not work on all systems. If you encounter errors, you
-# might be able to resolve them by installing any packages that prefer Conda, such as PyTorch or Numba, before running.
+# This setup script is intended to be used when installing Snorkel using Conda. See README.md for
+# the recommended installation instructions.
+#
+# Unofficially, this script can also be used by pip outside of Conda, but this might not work on all systems. If you
+# encounter errors, you might be able to resolve them by installing any packages that prefer Conda, such as PyTorch
+# or Numba, before running.
 import os
 import re
 

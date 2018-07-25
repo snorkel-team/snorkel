@@ -37,11 +37,14 @@ with open(path) as read_file:
         elif line == "pip:":
             state = "PIP_DEPS"
         elif state == "CONDA_DEPS":
-            # PyTorch requires substituting the recommended pip dependencies
             requirement = Requirement(line)
+            # PyTorch requires substituting the recommended pip dependencies
             if requirement.key == "pytorch":
                 install_requires.append(line.replace("pytorch", "torch", 1))
                 install_requires.append("torchvision")
+            # Python is a valid dependency for Conda but not setuptools, so skip it
+            elif requirement.key == "python":
+                pass
             else:
                 # Appends to dependencies
                 install_requires.append(line)

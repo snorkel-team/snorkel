@@ -92,7 +92,7 @@ You can also check out all the great [materials](https://simtk.org/frs/?group_id
 
 ### Major changes in v0.7:
 * [PyTorch](https://pytorch.org/) classifiers
-* Installation now via [Conda](https://conda.io/) and `pip`
+* Installation now via [Conda](https://conda.io/)
 * Now [spaCy](https://spacy.io/) is the default parser (v1), with support for v2
 * And many more fixes, additions, and new material!
 
@@ -118,9 +118,7 @@ You can also check out all the great [materials](https://simtk.org/frs/?group_id
 
 ## Installation
 
-Starting with version 0.7.0, Snorkel should be installed as a Python package using `pip`.
-However, installing Snorkel via `pip` will not install dependencies, which are required for Snorkel to run.
-To manage its dependencies, Snorkel uses [conda](https://conda.io/), which allows specifying an environment via an `environment.yml` file.
+Starting with version 0.7.0, Snorkel should be installed as a Python package using [Conda](https://conda.io/).
 
 This documentation covers two common cases (usage and development) for setting up conda environments for Snorkel.
 In both cases, the environment can be activated using `conda activate snorkel` and deactivated using `conda deactivate`
@@ -141,7 +139,7 @@ Versioned specification of your environment is critical to reproducibility and e
 When first setting your package versions, you likely want to start with the latest versions available on the [conda-forge](https://anaconda.org/conda-forge/) channel, unless you have a reason to do otherwise.
 2. Adding other packages to your environment as required by your use case.
 Consider maintaining alphabetical sorting of packages in `environment.yml` to assist with maintainability.
-In addition, we recommend installing packages via pip, only if they are not available in the conda-forge channel.
+In addition, we recommend installing packages via pip only if they are not available in the conda-forge channel.
 3. Add the `snorkel` package installation to your `environment.yml`, under the `- pip` section.
 Of course, we suggest versioning snorkel, which you can do via a release number or commit hash (to access more bleeding edge functionality)
   ```yml

@@ -56,16 +56,16 @@ class RNNBase(TorchNoiseAwareModel):
         outputs = torch.Tensor([])
 
         for batch in range(0, n, batch_size):
+            cur_minibatch = X[batch:batch+batch_size]
 
-            if batch_size > len(X[batch:batch+batch_size]):
-                batch_size = len(X[batch:batch+batch_size])
+            if batch_size > len(cur_minibatch):
+                batch_size = len(cur_minibatch)
 
             hidden_state = self.initialize_hidden_state(batch_size)
-            max_batch_length = max(len(cur_x)
-                                   for cur_x in X[batch:batch+batch_size])
+            max_batch_length = max(len(cur_x) for cur_x in cur_minibatch)
 
             padded_X = torch.zeros((batch_size, max_batch_length), dtype=torch.long)
-            for idx, seq in enumerate(X[batch:batch+batch_size]):
+            for idx, seq in enumerate(cur_minibatch):
                 # TODO: Don't instantiate tensor for each row
                 padded_X[idx, :len(seq)] = torch.LongTensor(seq)
 

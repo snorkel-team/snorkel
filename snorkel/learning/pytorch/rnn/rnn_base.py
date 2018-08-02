@@ -14,7 +14,7 @@ from snorkel.learning.pytorch.rnn.utils import candidate_to_tokens, SymbolTable
 
 def mark(l, h, idx):
     """Produce markers based on argument positions
-    
+
     :param l: sentence position of first word in argument
     :param h: sentence position of last word in argument
     :param idx: argument index (1 or 2)
@@ -24,12 +24,12 @@ def mark(l, h, idx):
 
 def mark_sentence(s, args):
     """Insert markers around relation arguments in word sequence
-    
+
     :param s: list of tokens in sentence
     :param args: list of triples (l, h, idx) as per @_mark(...) corresponding
                to relation arguments
-    
-    Example: Then Barack married Michelle.  
+
+    Example: Then Barack married Michelle.
          ->  Then ~~[[1 Barack 1]]~~ married ~~[[2 Michelle 2]]~~.
     """
     marks = sorted([y for m in args for y in mark(*m)], reverse=True)
@@ -41,28 +41,28 @@ def mark_sentence(s, args):
 
 class RNNBase(TorchNoiseAwareModel):
     representation = True
-    
+
     def initialize_hidden_state(self, batch_size):
         raise NotImplementedError
-    
+
     def _pytorch_outputs(self, X, batch_size):
         n = len(X)
         if not batch_size:
             batch_size = len(X)
-        
+
         if isinstance(X[0], Candidate):
             X = self._preprocess_data(X, extend=False)
-        
+
         outputs = torch.Tensor([])
-        
+
         for batch in range(0, n, batch_size):
-            
+
             if batch_size > len(X[batch:batch+batch_size]):
                 batch_size = len(X[batch:batch+batch_size])
-    
+
             hidden_state = self.initialize_hidden_state(batch_size)
             max_batch_length = max(map(len, X[batch:batch+batch_size]))
-            
+
             padded_X = torch.zeros((batch_size, max_batch_length), dtype=torch.long)
             for idx, seq in enumerate(X[batch:batch+batch_size]):
                 # TODO: Don't instantiate tensor for each row
@@ -80,7 +80,7 @@ class RNNBase(TorchNoiseAwareModel):
 
     def _preprocess_data(self, candidates, extend=False):
         """Convert candidate sentences to lookup sequences
-        
+
         :param candidates: candidates to process
         :param extend: extend symbol table for tokens (train), or lookup (test)?
         """
@@ -97,7 +97,7 @@ class RNNBase(TorchNoiseAwareModel):
             # Either extend word table or retrieve from it
             f = self.word_dict.get if extend else self.word_dict.lookup
             data.append(np.array(list(map(f, s))))
-            
+
         return data
 
     def train(self, X_train, Y_train, X_dev=None, **kwargs):

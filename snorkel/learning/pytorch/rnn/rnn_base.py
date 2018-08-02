@@ -89,10 +89,8 @@ class RNNBase(TorchNoiseAwareModel):
             self.word_dict = SymbolTable()
         for candidate in candidates:
             # Mark sentence
-            args = [
-                (candidate[0].get_word_start(), candidate[0].get_word_end(), 1),
-                (candidate[1].get_word_start(), candidate[1].get_word_end(), 2)
-            ]
+            args = [(cur_part.get_word_start(), cur_part.get_word_end(), num+1)
+                    for num, cur_part in enumerate(candidate)]
             s = mark_sentence(candidate_to_tokens(candidate), args)
             # Either extend word table or retrieve from it
             f = self.word_dict.get if extend else self.word_dict.lookup

@@ -61,7 +61,8 @@ class RNNBase(TorchNoiseAwareModel):
                 batch_size = len(X[batch:batch+batch_size])
 
             hidden_state = self.initialize_hidden_state(batch_size)
-            max_batch_length = max(map(len, X[batch:batch+batch_size]))
+            max_batch_length = max(len(cur_x)
+                                   for cur_x in X[batch:batch+batch_size])
 
             padded_X = torch.zeros((batch_size, max_batch_length), dtype=torch.long)
             for idx, seq in enumerate(X[batch:batch+batch_size]):
@@ -96,7 +97,7 @@ class RNNBase(TorchNoiseAwareModel):
             s = mark_sentence(candidate_to_tokens(candidate), args)
             # Either extend word table or retrieve from it
             f = self.word_dict.get if extend else self.word_dict.lookup
-            data.append(np.array(list(map(f, s))))
+            data.append(np.array([f(cur_elem) for cur_elem in s]))
 
         return data
 

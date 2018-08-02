@@ -51,7 +51,7 @@ class RNNBase(TorchNoiseAwareModel):
             batch_size = len(X)
 
         if isinstance(X[0], Candidate):
-            X = self._preprocess_data(X, extend=False)
+            X = list(self._preprocess_data(X, extend=False))
 
         outputs = torch.Tensor([])
 
@@ -87,7 +87,6 @@ class RNNBase(TorchNoiseAwareModel):
         """
         if not hasattr(self, 'word_dict'):
             self.word_dict = SymbolTable()
-        data = []
         for candidate in candidates:
             # Mark sentence
             args = [
@@ -97,15 +96,13 @@ class RNNBase(TorchNoiseAwareModel):
             s = mark_sentence(candidate_to_tokens(candidate), args)
             # Either extend word table or retrieve from it
             f = self.word_dict.get if extend else self.word_dict.lookup
-            data.append(np.array([f(cur_elem) for cur_elem in s]))
-
-        return data
+            yield np.array([f(cur_elem) for cur_elem in s])
 
     def train(self, X_train, Y_train, X_dev=None, **kwargs):
         # Preprocesses data, including constructing dataset-specific dictionary
-        X_train = self._preprocess_data(X_train, extend=True)
+        X_train = list(self._preprocess_data(X_train, extend=True))
         if X_dev is not None:
-            X_dev = self._preprocess_data(X_dev, extend=False)
+            X_dev = list(self._preprocess_data(X_dev, extend=False))
 
         # Note we pass word_dict through here so it gets saved...
         super(RNNBase, self).train(X_train, Y_train, X_dev=X_dev,

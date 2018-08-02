@@ -10,33 +10,6 @@ import numpy as np
 import scipy.sparse as sparse
 
 
-class ProgressBar(object):
-    def __init__(self, N, length=40):
-        # Protect against division by zero (N = 0 results in full bar being printed)
-        self.N      = max(1, N)
-        self.nf     = float(self.N)
-        self.length = length
-        # Precalculate the i values that should trigger a write operation
-        self.ticks = set([round(i/100.0 * N) for i in range(101)])
-        self.ticks.add(N-1)
-        self.bar(0)
-
-    def bar(self, i):
-        """Assumes i ranges through [0, N-1]"""
-        if i in self.ticks:
-            b = int(np.ceil(((i+1) / self.nf) * self.length))
-            sys.stdout.write(
-                "\r[{0}{1}] {2}%".format(
-                    "="*b, " "*(self.length-b), int(100*((i+1) / self.nf))))
-            sys.stdout.flush()
-
-    def close(self):
-        # Move the bar to 100% before closing
-        self.bar(self.N-1)
-        sys.stdout.write("\n\n")
-        sys.stdout.flush()
-
-
 def get_ORM_instance(ORM_class, session, instance):
     """
     Given an ORM class and *either an instance of this class, or the name attribute of an instance

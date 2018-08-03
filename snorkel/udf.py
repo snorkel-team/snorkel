@@ -71,7 +71,7 @@ class UDFRunner(object):
         # Run single-thread
         for i, x in enumerate(xs):
             if self.pb is not None:
-                self.pb.bar(i)
+                self.pb.update(1)
 
             # Apply UDF and add results to the session
             for y in udf.apply(x, **kwargs):

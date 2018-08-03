@@ -126,15 +126,15 @@ class UDFRunner(object):
             else:
                 raise ValueError("Got non-sentinel output without reducer.")
 
-        if self.reducer is not None:
+        if self.reducer is None:
+            for udf in self.udfs:
+                udf.join()
+        else:
             self.reducer.session.commit()
             self.reducer.session.close()
 
-        # Terminate and flush the processes
-        for udf in self.udfs:
-            udf.terminate()
+        # Flush the processes
         self.udfs = []
-
 
 class UDF(Process):
     TASK_DONE_SENTINEL = "done"

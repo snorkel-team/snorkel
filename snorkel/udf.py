@@ -13,7 +13,7 @@ from snorkel.models.meta import new_sessionmaker, snorkel_conn_string
 from tqdm import tqdm
 
 # In seconds
-QUEUE_TIMEOUT = 1
+QUEUE_TIMEOUT = 10
 
 class UDFRunner(object):
     """Class to run UDFs in parallel using simple queue-based multiprocessing setup"""

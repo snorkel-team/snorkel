@@ -98,12 +98,21 @@ class UDFRunner(object):
 
         # If the UDF has a reduce step, we collect the output of apply in a Queue
         out_queue = None
-        if hasattr(self.udf_class, 'reduce'):
+        if self.reducer is not None:
             out_queue = JoinableQueue()
+
+        # Get progress updates via an additional progress queue since updates to
+        # the progress bar have to be made on the main thread
+        progress_queue = JoinableQueue()
+
+        # Keep track of progress counts
+        total_count = in_queue.qsize()
+        count = 0
 
         # Start UDF Processes
         for i in range(parallelism):
-            udf = self.udf_class(in_queue=in_queue, out_queue=out_queue, **self.udf_init_kwargs)
+            udf = self.udf_class(in_queue=in_queue, out_queue=out_queue, 
+                progress_queue=progress_queue, **self.udf_init_kwargs)
             udf.apply_kwargs = kwargs
             self.udfs.append(udf)
 
@@ -111,26 +120,25 @@ class UDFRunner(object):
         for udf in self.udfs:
             udf.start()
 
-        # If there is a reduce step, do now on this thread
-        if hasattr(self.udf_class, 'reduce'):
-            while any([udf.is_alive() for udf in self.udfs]):
-                while True:
-                    try:
-                        y = out_queue.get(True, QUEUE_TIMEOUT)
-                        self.reducer.reduce(y, **kwargs)
-                        out_queue.task_done()
-                        if self.pb is not None:
-                            self.pb.update(1)
+        while any([udf.is_alive() for udf in self.udfs]):
+            try:
+                # If there is a reduce step, do now on this thread
+                if self.reducer is not None: 
+                    y = out_queue.get(True, QUEUE_TIMEOUT)
+                    self.reducer.reduce(y, **kwargs)
+                    out_queue.task_done()
 
-                    except Empty:
-                        break
-                self.reducer.session.commit()
+                # Update progress whenever an item was processed
+                prog = progress_queue.get(True, QUEUE_TIMEOUT)
+                if self.pb is not None:
+                    self.pb.update(prog)
+                    count += prog
+            except Empty:
+                if count == total_count: break
+
+        if self.reducer is not None:
+            self.reducer.session.commit()
             self.reducer.session.close()
-
-        # Otherwise just join on the UDF.apply actions
-        else:
-            for i, udf in enumerate(self.udfs):
-                udf.join()
 
         # Terminate and flush the processes
         for udf in self.udfs:
@@ -139,14 +147,15 @@ class UDFRunner(object):
 
 
 class UDF(Process):
-    def __init__(self, in_queue=None, out_queue=None):
+    def __init__(self, in_queue=None, out_queue=None, progress_queue=None):
         """
         in_queue: A Queue of input objects to process; primarily for running in parallel
         """
         Process.__init__(self)
-        self.daemon       = True
-        self.in_queue     = in_queue
-        self.out_queue    = out_queue
+        self.daemon         = True
+        self.in_queue       = in_queue
+        self.out_queue      = out_queue
+        self.progress_queue = progress_queue
 
         # Each UDF starts its own Engine
         # See http://docs.sqlalchemy.org/en/latest/core/pooling.html#using-connection-pools-with-multiprocessing
@@ -163,7 +172,7 @@ class UDF(Process):
         """
         while True:
             try:
-                x = self.in_queue.get(True, QUEUE_TIMEOUT)
+                x = self.in_queue.get_nowait()
                 for y in self.apply(x, **self.apply_kwargs):
 
                     # If an out_queue is provided, add to that, else add to session
@@ -172,6 +181,7 @@ class UDF(Process):
                     else:
                         self.session.add(y)
                 self.in_queue.task_done()
+                self.progress_queue.put(1)
 
             except Empty:
                 break

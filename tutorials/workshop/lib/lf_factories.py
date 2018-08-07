@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
+from builtins import *
 
 import re
 
@@ -9,6 +10,15 @@ from snorkel.lf_helpers import (
     get_left_tokens, get_right_tokens, get_between_tokens,
     get_text_between, get_tagged_text,
 )
+
+def assign_func_name(f, name):
+    """
+    Deal with unicode conversion in Python 2/3
+    """
+    try:
+        f.__name__ = name
+    except Exception as e:
+        f.__name__ = b'{}'.format(name)
 
 class PatternMatchFactory(object):
     """
@@ -67,7 +77,7 @@ class MatchTerms(PatternMatchFactory):
             else "|window={}".format(self.window))
 
         args = ['LF_TERMS', self.name, params, 'TRUE' if self.label == 1 else 'FALSE']
-        f.__name__ = str("_".join(args).decode("utf-8"))
+        assign_func_name(f, "_".join(args))
         return f
 
 
@@ -97,7 +107,7 @@ class MatchRegex(PatternMatchFactory):
             else "|window={}".format(self.window))
 
         args = ['LF_REGEX', self.name, params, 'TRUE' if self.label == 1 else 'FALSE']
-        f.__name__ = str("_".join(args).decode("utf-8"))
+        assign_func_name(f, "_".join(args))
         return f
 
 
@@ -121,5 +131,5 @@ class DistantSupervision(object):
             return 1 if v else 0
 
         args = ['LF_DIST_SUPERVISION', self.name, "TRUE"]
-        f.__name__ = str("_".join(args).decode("utf-8"))
+        assign_func_name(f, "_".join(args))
         return f

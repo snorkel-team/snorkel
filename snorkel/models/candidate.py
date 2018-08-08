@@ -25,8 +25,16 @@ class Candidate(SnorkelBase):
     """
     __tablename__ = 'candidate'
     id          = Column(Integer, primary_key=True)
-    type        = Column(String, nullable=False)
+    type        = Column(String, nullable=False, index=True)
     split       = Column(Integer, nullable=False, default=0, index=True)
+    
+    # Shortcut backreference to the document that the candidate came from. Used
+    # for quick reconciliation with document-level gold labels.
+    document_id = Column(Integer, ForeignKey('document.id', ondelete='CASCADE'),
+                         index=True)
+    document = relationship('Document', backref=backref('candidates',
+                                cascade='all, delete-orphan'),
+                            foreign_keys=document_id)
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',

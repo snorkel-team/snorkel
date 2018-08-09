@@ -91,7 +91,7 @@ class CandidateExtractorUDF(UDF):
 
         # Generates and persists candidates
         extracted = set()
-        candidate_args = {'split': split, 'document': docparent}
+        candidate_args = {'split': split, 'document_id': docparent.id}
         for args in product(*[enumerate(child_contexts) for child_contexts in self.child_context_sets]):
 
             # TODO: Make this work for higher-order relations

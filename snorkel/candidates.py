@@ -87,7 +87,7 @@ class CandidateExtractorUDF(UDF):
 
         # Get the document origin by climbing up the hierarchy until we get None
         docparent = context
-        while docparent.get_parent(): docparent = context.get_parent()
+        while docparent.get_parent(): docparent = docparent.get_parent()
 
         # Generates and persists candidates
         extracted = set()

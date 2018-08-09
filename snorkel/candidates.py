@@ -86,9 +86,10 @@ class CandidateExtractorUDF(UDF):
                 self.child_context_sets[i].add(tc)
 
         # Get the document origin by climbing up the hierarchy until we get None
-        docparent = context
+        # Start by binding context to our session again
+        docparent = self.session.query(context.__class__).get(context.id)
         while docparent.get_parent(): docparent = docparent.get_parent()
-
+        
         # Generates and persists candidates
         extracted = set()
         candidate_args = {'split': split, 'document_id': docparent.id}

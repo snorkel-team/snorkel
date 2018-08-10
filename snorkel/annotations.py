@@ -204,6 +204,7 @@ class Annotator(UDFRunner):
         # Also, if we try to pass in a query iterator instead, with AUTOCOMMIT
         # on, we get a TXN error...
         cids = cids_query.all()
+        cids = sorted(cids)
         cids_count = len(cids)
 
         # Run the Annotator
@@ -594,6 +595,7 @@ def load_marginals(session, X=None, split=0, cids_query=None, training=True, fea
     else:
         candidate = get_cand_class(feature)
 
+    print(candidate)
     # For candidate ids subquery
     cids_query = cids_query or session.query(candidate.id) \
         .filter(candidate.split == split)
@@ -608,6 +610,7 @@ def load_marginals(session, X=None, split=0, cids_query=None, training=True, fea
         .filter(Marginal.training == training) \
         .all()
 
+    print(len(marginal_tuples))
     # If an AnnotationMatrix or list of candidates X is provided, we make sure
     # that the returned marginals are collated with X.
     if X is not None:

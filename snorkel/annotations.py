@@ -525,7 +525,7 @@ class FeatureAnnotator(Annotator):
         return load_feature_matrix(session, coerce_int=False, **kwargs)
 
 
-def save_marginals(session, X, marginals, training=True):
+def save_marginals(session, X, marginals, training=True, cand_ids=None):
     """Save marginal probabilities for a set of Candidates to db.
 
     :param X: Either an M x N csr_AnnotationMatrix-class matrix, where M
@@ -535,6 +535,7 @@ def save_marginals(session, X, marginals, training=True):
         K is the cardinality of the candidates, OR a M-dim list/array if K=2.
     :param training: If True, these are training marginals / labels; else they
         are saved as end model predictions.
+    :param cand_ids: If not None, these are a list of candidate IDs to clear.
 
     Note: The marginals for k=0 are not stored, only for k = 1,...,K
     """
@@ -557,9 +558,13 @@ def save_marginals(session, X, marginals, training=True):
             if marginals[i, k] > 0:
                 marginal_tuples.append((i, k, marginals[i, k]))
 
-    # NOTE: This will delete all existing marginals of type `training`
-    session.query(Marginal).filter(Marginal.training == training).\
-        delete(synchronize_session='fetch')
+    if cand_ids:
+        session.query(Marginal).filter(Marginal.training == training).\
+            filter(Marginal.candidate_id.in_(cand_ids)).delete(synchronize_session='fetch')
+    else:
+        # NOTE: This will delete all existing marginals of type `training`
+        session.query(Marginal).filter(Marginal.training == training).\
+            delete(synchronize_session='fetch')
 
     # Prepare bulk INSERT query
     q = Marginal.__table__.insert()

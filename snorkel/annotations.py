@@ -192,19 +192,19 @@ class Annotator(UDFRunner):
         SnorkelSession = new_sessionmaker()
         session = SnorkelSession()
         if feature:
-            candidate = get_cand_class(feature)
+            FeatureCandidate = get_cand_class(feature)
         else:
-            candidate = Candidate
+            FeatureCandidate = Candidate
 
-        cids_query = cids_query or session.query(candidate.id)\
-                                          .filter(candidate.split == split)
+        cids_query = cids_query or session.query(FeatureCandidate.id).filter(FeatureCandidate.split == split)
+        cids_query = cids_query.order_by(FeatureCandidate.id)
 
         # Note: In the current UDFRunner implementation, we load all these into memory and fill a
         # multiprocessing JoinableQueue with them before starting... so might as well load them here and pass in.
         # Also, if we try to pass in a query iterator instead, with AUTOCOMMIT
         # on, we get a TXN error...
         cids = cids_query.all()
-        cids = sorted(cids)
+        
         cids_count = len(cids)
 
         # Run the Annotator
@@ -229,12 +229,12 @@ class Annotator(UDFRunner):
         # candidates in our split
         if not replace_key_set:
             if feature is None:
-                candidate = Candidate
+                FeatureCandidate = Candidate
             else:
-                candidate = get_cand_class(feature)
+                FeatureCandidate = get_cand_class(feature)
 
-            sub_query = cids_query or session.query(candidate.id)\
-                                             .filter(candidate.split == split)
+            sub_query = cids_query or session.query(FeatureCandidate.id).order_by(FeatureCandidate.id)\
+                                             .filter(FeatureCandidate.split == split)
             sub_query = sub_query.subquery()
             query = query.filter(
                 self.annotation_class.candidate_id.in_(sub_query))
@@ -382,13 +382,13 @@ def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
     and an AnnotationKey group with M distinct keys as an N x M CSR sparse matrix.
     """
     if feature is None:
-        candidate = Candidate
+        FeatureCandidate = Candidate
     else:
-        candidate = get_cand_class(feature)
+        FeatureCandidate = get_cand_class(feature)
 
-    cid_query = cids_query or session.query(candidate.id)\
-                                     .filter(candidate.split == split)
-    cid_query = cid_query.order_by(candidate.id)
+    cid_query = cids_query or session.query(FeatureCandidate.id)\
+                                     .filter(FeatureCandidate.split == split)
+    cid_query = cid_query.order_by(FeatureCandidate.id)
 
     keys_query = session.query(annotation_key_class.id)
     keys_query = keys_query.filter(annotation_key_class.group == key_group)
@@ -593,14 +593,14 @@ def load_marginals(session, X=None, split=0, cids_query=None, training=True, fea
     if feature is None:
         candidate = Candidate
     else:
-        candidate = get_cand_class(feature)
+        FeatureCandidate = get_cand_class(feature)
 
-    print(candidate)
     # For candidate ids subquery
-    cids_query = cids_query or session.query(candidate.id) \
-        .filter(candidate.split == split)
     # Ensure ordering by CID
-    cids_query = cids_query.order_by(candidate.id)
+    cids_query = cids_query or session.query(FeatureCandidate.id)\
+        .filter(FeatureCandidate.split == split)
+    
+    cids_query = cids_query.order_by(FeatureCandidate.id)
     cids_sub_query = cids_query.subquery('cids')
 
     # Load marginal tuples from db

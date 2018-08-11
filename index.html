@@ -69,9 +69,16 @@ Today's state-of-the-art machine learning models require <i>massive</i> labeled 
 </h1>
 <img align:right src="figs/WS_pipeline.jpg" alt="Snorkel" width=700px/>
 
-Many complex problems today are composed of <i>multiple</i> tasks, and may have many different types of weak supervision that provide labels for one or more of these tasks.
-In <a href="https://github.com/HazyResearch/metal"><b>Snorkel MeTaL</b></a>, we use a new modeling approach to handle 
-<br />
+<p>
+Complex problems are often composed of <i>multiple</i> tasks, and may have many different types of weak supervision that provide labels for one or more of these tasks.
+In <a href="https://github.com/HazyResearch/metal"><b>Snorkel MeTaL</b></a>, we use a new modeling approach to denoise this <b><i>massively multi-task weak supervision</i></b>, and then train an auto-compiled multi-task network with it.
+Check out:
+<ul>
+  <li><a href="https://github.com/HazyResearch/metal"><b>The repo</b></a> (<i>in alpha</i>)</li>
+  <li>A <a href="https://ajratner.github.io/assets/papers/deem-metal-prototype.pdf"><b>SIGMOD DEEM 2018 paper</b></a> on the system architecture</li>
+  <li>A <a href="https://ajratner.github.io/assets/papers/mts-draft.pdf"><b>working technical draft</b></a> on the core method and supporting theory</li>
+</ul>
+</p>
 <hr>
 
 <h2>

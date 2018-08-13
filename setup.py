@@ -23,6 +23,9 @@ version = pattern.search(text).group(1)
 path = os.path.join(directory, 'README.md')
 with open(path) as read_file:
     long_description = read_file.read()
+    # Changes image URLs to have absolute paths
+    long_description = long_description.replace(
+            '<img src="figs/', '<img src="https://github.com/HazyResearch/snorkel/raw/master/figs/')
 
 # Extract package requirements from Conda environment.yml
 install_requires = []
@@ -70,6 +73,7 @@ setuptools.setup(
     keywords='machine-learning weak-supervision information-extraction',
     classifiers=[
         'Intended Audience :: Science/Research',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Topic :: Scientific/Engineering :: Information Analysis',
         'License :: OSI Approved :: Apache Software License',

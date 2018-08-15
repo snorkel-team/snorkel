@@ -35,6 +35,7 @@ class CandidateExtractor(UDFRunner):
                                 where A and B are Contexts. Only applies to binary relations. Default is False.
     """
     def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=False):
+        self.FeatureCandidate = candidate_class
         super(CandidateExtractor, self).__init__(CandidateExtractorUDF,
                                                  candidate_class=candidate_class,
                                                  cspaces=cspaces,
@@ -47,7 +48,9 @@ class CandidateExtractor(UDFRunner):
         super(CandidateExtractor, self).apply(xs, split=split, **kwargs)
 
     def clear(self, session, split, **kwargs):
-        session.query(Candidate).filter(Candidate.split == split).delete()
+        cand_ids = session.query(self.FeatureCandidate.id).filter(self.FeatureCandidate.split == split).all()
+        session.query(Candidate).filter(Candidate.id.in_(cand_ids)).delete(synchronize_session='fetch')
+
 
 
 class CandidateExtractorUDF(UDF):
@@ -196,7 +199,8 @@ class PretaggedCandidateExtractor(UDFRunner):
         super(PretaggedCandidateExtractor, self).apply(xs, split=split, **kwargs)
 
     def clear(self, session, split, **kwargs):
-        session.query(Candidate).filter(Candidate.split == split).delete()
+        cand_ids = session.query(self.FeatureCandidate.id).filter(self.FeatureCandidate.split == split).all()
+        session.query(Candidate).filter(Candidate.id.in_(cand_ids)).delete(synchronize_session='fetch')
 
 
 class PretaggedCandidateExtractorUDF(UDF):

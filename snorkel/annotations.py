@@ -238,6 +238,7 @@ class Annotator(UDFRunner):
             sub_query = sub_query.subquery()
             query = query.filter(
                 self.annotation_class.candidate_id.in_(sub_query))
+
         query.delete(synchronize_session='fetch')
 
         # If we are creating a new key set, delete all old annotation keys
@@ -615,7 +616,6 @@ def load_marginals(session, X=None, split=0, cids_query=None, training=True, fea
         .filter(Marginal.training == training) \
         .all()
 
-    print(len(marginal_tuples))
     # If an AnnotationMatrix or list of candidates X is provided, we make sure
     # that the returned marginals are collated with X.
     if X is not None:

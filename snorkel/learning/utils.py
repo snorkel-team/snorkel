@@ -155,6 +155,10 @@ class MentionScorer(Scorer):
         :param set_at_b_as_neg: set marginals at the decision threshold exactly
             as negative predictions
         :param display: show calibration plots?
+        
+        Note that even when the test_marginals are in the range [0, 1] (like our
+        default b assumes), we still require the test_label to be in the set
+        {-1, 0, +1}.
         """
         test_label_array = []
         tp = set()

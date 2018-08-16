@@ -42,7 +42,7 @@ class UDFRunner(object):
         # Execute the UDF
         print("Running UDF...")
 
-        # Set up ProgressBar if possible
+        # Set up progress bar if possible
         if progress_bar and hasattr(xs, '__len__') or count is not None:
             n = count if count is not None else len(xs)
             self.pb = tqdm(total=n)

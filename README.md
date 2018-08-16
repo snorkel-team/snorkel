@@ -65,7 +65,7 @@ Then navigate to the root of the `snorkel` directory in a terminal and run the f
 conda env create --file=environment.yml
 
 # Activate the environment
-conda activate snorkel
+source activate snorkel
 
 # Install snorkel in the environment
 pip install .

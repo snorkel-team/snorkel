@@ -35,7 +35,7 @@ class CandidateExtractor(UDFRunner):
                                 where A and B are Contexts. Only applies to binary relations. Default is False.
     """
     def __init__(self, candidate_class, cspaces, matchers, self_relations=False, nested_relations=False, symmetric_relations=False):
-        self.FeatureCandidate = candidate_class
+        self.ExtractionCandidate = candidate_class
         super(CandidateExtractor, self).__init__(CandidateExtractorUDF,
                                                  candidate_class=candidate_class,
                                                  cspaces=cspaces,
@@ -48,9 +48,8 @@ class CandidateExtractor(UDFRunner):
         super(CandidateExtractor, self).apply(xs, split=split, **kwargs)
 
     def clear(self, session, split, **kwargs):
-        cand_ids = session.query(self.FeatureCandidate.id).filter(self.FeatureCandidate.split == split).all()
+        cand_ids = session.query(self.ExtractionCandidate.id).filter(self.ExtractionCandidate.split == split).all()
         session.query(Candidate).filter(Candidate.id.in_(cand_ids)).delete(synchronize_session='fetch')
-
 
 
 class CandidateExtractorUDF(UDF):
@@ -188,6 +187,7 @@ class PretaggedCandidateExtractor(UDFRunner):
     """UDFRunner for PretaggedCandidateExtractorUDF"""
     def __init__(self, candidate_class, entity_types, self_relations=False,
      nested_relations=False, symmetric_relations=True, entity_sep='~@~'):
+        self.ExtractionCandidate = candidate_class
         super(PretaggedCandidateExtractor, self).__init__(
             PretaggedCandidateExtractorUDF, candidate_class=candidate_class,
             entity_types=entity_types, self_relations=self_relations,
@@ -199,7 +199,7 @@ class PretaggedCandidateExtractor(UDFRunner):
         super(PretaggedCandidateExtractor, self).apply(xs, split=split, **kwargs)
 
     def clear(self, session, split, **kwargs):
-        cand_ids = session.query(self.FeatureCandidate.id).filter(self.FeatureCandidate.split == split).all()
+        cand_ids = session.query(self.ExtractionCandidate.id).filter(self.ExtractionCandidate.split == split).all()
         session.query(Candidate).filter(Candidate.id.in_(cand_ids)).delete(synchronize_session='fetch')
 
 

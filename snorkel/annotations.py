@@ -27,11 +27,6 @@ from snorkel.utils import (
     matrix_tn
 )
 
-def get_cand_class(feature, values=None):
-    # Note: multiclass support may be needed...
-    return candidate_subclass(feature, ['data'], values=values)
-
-
 class csr_AnnotationMatrix(sparse.csr_matrix):
     """
     An extension of the scipy.sparse.csr_matrix class for holding sparse annotation matrices
@@ -47,11 +42,12 @@ class csr_AnnotationMatrix(sparse.csr_matrix):
         self.key_index = kwargs.pop('key_index', None)
         self.col_index = kwargs.pop('col_index', None)
 
-        feature = kwargs.pop('feature', None)
-        if feature is None:
+        # feature = kwargs.pop('feature', None)
+        candidate_subclass = kwargs.pop('candidate_subclass', None)
+        if candidate_subclass is None:
             self.candidate = Candidate
         else:
-            self.candidate = get_cand_class(feature)
+            self.candidate = candidate_subclass
 
         # Note that scipy relies on the first three letters of the class to
         # define matrix type...
@@ -173,7 +169,7 @@ except:
 class Annotator(UDFRunner):
     """Abstract class for annotating candidates and persisting these annotations to DB"""
 
-    def __init__(self, annotation_class, annotation_key_class, f_gen, feature=None):
+    def __init__(self, annotation_class, annotation_key_class, f_gen, candidate_subclass=None):
         self.annotation_class = annotation_class
         self.annotation_key_class = annotation_key_class
         super(Annotator, self).__init__(AnnotatorUDF,
@@ -181,7 +177,7 @@ class Annotator(UDFRunner):
                                         annotation_key_class=annotation_key_class,
                                         f_gen=f_gen)
 
-    def apply(self, split=0, key_group=0, replace_key_set=True, cids_query=None, feature=None,
+    def apply(self, split=0, key_group=0, replace_key_set=True, cids_query=None, candidate_subclass=None,
               **kwargs):
         # If we are replacing the key set, make sure the reducer key id cache
         # is cleared!
@@ -191,13 +187,13 @@ class Annotator(UDFRunner):
         # Get the cids based on the split, and also the count
         SnorkelSession = new_sessionmaker()
         session = SnorkelSession()
-        if feature:
-            FeatureCandidate = get_cand_class(feature)
+        if candidate_subclass:
+            ExtractionCandidate = candidate_subclass
         else:
-            FeatureCandidate = Candidate
+            ExtractionCandidate = Candidate
 
-        cids_query = cids_query or session.query(FeatureCandidate.id).filter(FeatureCandidate.split == split)
-        cids_query = cids_query.order_by(FeatureCandidate.id)
+        cids_query = cids_query or session.query(ExtractionCandidate.id).filter(ExtractionCandidate.split == split)
+        cids_query = cids_query.order_by(ExtractionCandidate.id)
 
         # Note: In the current UDFRunner implementation, we load all these into memory and fill a
         # multiprocessing JoinableQueue with them before starting... so might as well load them here and pass in.
@@ -206,6 +202,7 @@ class Annotator(UDFRunner):
         cids = cids_query.all()
         
         cids_count = len(cids)
+        print('In labeling, found %d cand IDs for split %d!' % (cids_count, split))
 
         # Run the Annotator
         super(Annotator, self).apply(cids, split=split, key_group=key_group,
@@ -217,7 +214,7 @@ class Annotator(UDFRunner):
                                 key_group=key_group)
 
     def clear(self, session, split=0, key_group=0, replace_key_set=True,
-              cids_query=None, feature=None, **kwargs):
+              cids_query=None, candidate_subclass=None, **kwargs):
         """
         Deletes the Annotations for the Candidates in the given split.
         If replace_key_set=True, deletes *all* Annotations (of this Annotation sub-class)
@@ -228,13 +225,13 @@ class Annotator(UDFRunner):
         # If replace_key_set=False, then we just delete the annotations for
         # candidates in our split
         if not replace_key_set:
-            if feature is None:
-                FeatureCandidate = Candidate
+            if candidate_subclass is None:
+                ExtractionCandidate = Candidate
             else:
-                FeatureCandidate = get_cand_class(feature)
+                ExtractionCandidate = candidate_subclass
 
-            sub_query = cids_query or session.query(FeatureCandidate.id).order_by(FeatureCandidate.id)\
-                                             .filter(FeatureCandidate.split == split)
+            sub_query = cids_query or session.query(ExtractionCandidate.id).order_by(ExtractionCandidate.id)\
+                                             .filter(ExtractionCandidate.split == split)
             sub_query = sub_query.subquery()
             query = query.filter(
                 self.annotation_class.candidate_id.in_(sub_query))
@@ -259,7 +256,7 @@ class Annotator(UDFRunner):
 
 class AnnotatorUDF(UDF):
 
-    def __init__(self, annotation_class, annotation_key_class, f_gen, feature=None, **kwargs):
+    def __init__(self, annotation_class, annotation_key_class, f_gen, candidate_subclass=None, **kwargs):
         self.annotation_class = annotation_class
         self.annotation_key_class = annotation_key_class
 
@@ -273,11 +270,11 @@ class AnnotatorUDF(UDF):
         # For caching key ids during the reduce step
         self.key_cache = {}
 
-        # Convert feature to candidate class
-        if feature is None:
-            self.candidate = Candidate
+        # Get candidate subclass
+        if candidate_subclass is None:
+            self.candidate_class = Candidate
         else:
-            self.candidate = get_cand_class(feature)
+            self.candidate_class = candidate_subclass
 
         super(AnnotatorUDF, self).__init__(**kwargs)
 
@@ -290,7 +287,7 @@ class AnnotatorUDF(UDF):
         """
         seen = set()
         cid = cid[0]
-        c = self.session.query(self.candidate).filter(self.candidate.id == cid).one()
+        c = self.session.query(self.candidate_class).filter(self.candidate_class.id == cid).one()
         for key_name, value in self.anno_generator(c):
 
             # Note: Make sure no duplicates emitted here!
@@ -377,19 +374,19 @@ class AnnotatorUDF(UDF):
 
 def load_matrix(matrix_class, annotation_key_class, annotation_class, session,
                 split=0, cids_query=None, key_group=0, key_names=None, zero_one=False,
-                load_as_array=False, coerce_int=True, feature=None):
+                load_as_array=False, coerce_int=True, candidate_subclass=None):
     """
     Returns the annotations corresponding to a split of candidates with N members
     and an AnnotationKey group with M distinct keys as an N x M CSR sparse matrix.
     """
-    if feature is None:
-        FeatureCandidate = Candidate
+    if candidate_subclass is None:
+        ExtractionCandidate = Candidate
     else:
-        FeatureCandidate = get_cand_class(feature)
+        ExtractionCandidate = candidate_subclass
 
-    cid_query = cids_query or session.query(FeatureCandidate.id)\
-                                     .filter(FeatureCandidate.split == split)
-    cid_query = cid_query.order_by(FeatureCandidate.id)
+    cid_query = cids_query or session.query(ExtractionCandidate.id)\
+                                     .filter(ExtractionCandidate.split == split)
+    cid_query = cid_query.order_by(ExtractionCandidate.id)
 
     keys_query = session.query(annotation_key_class.id)
     keys_query = keys_query.filter(annotation_key_class.group == key_group)
@@ -477,7 +474,7 @@ class LabelAnnotator(Annotator):
     :param lfs: A _list_ of labeling functions (LFs)
     """
 
-    def __init__(self, lfs=None, label_generator=None, feature=None):
+    def __init__(self, lfs=None, label_generator=None, candidate_subclass=None):
         if lfs is not None:
             labels = lambda c: [(lf.__name__, lf(c)) for lf in lfs]
         elif label_generator is not None:
@@ -510,7 +507,7 @@ class LabelAnnotator(Annotator):
                         Unable to parse label with value %s
                         for candidate with values %s""" % (label, c.values))
 
-        super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen, feature)
+        super(LabelAnnotator, self).__init__(Label, LabelKey, f_gen, candidate_subclass)
 
     def load_matrix(self, session, **kwargs):
         return load_label_matrix(session, **kwargs)
@@ -594,19 +591,19 @@ def save_marginals(session, X, marginals, training=True, cand_ids=None):
     print("Saved %s marginals" % len(marginals))
 
 
-def load_marginals(session, X=None, split=0, cids_query=None, training=True, feature=None):
+def load_marginals(session, X=None, split=0, cids_query=None, training=True, candidate_subclass=None):
     """Load the marginal probs. for a given split of Candidates"""
-    if feature is None:
-        candidate = Candidate
+    if candidate_subclass is None:
+        ExtractionCandidate = Candidate
     else:
-        FeatureCandidate = get_cand_class(feature)
+        ExtractionCandidate = candidate_subclass
 
     # For candidate ids subquery
     # Ensure ordering by CID
-    cids_query = cids_query or session.query(FeatureCandidate.id)\
-        .filter(FeatureCandidate.split == split)
+    cids_query = cids_query or session.query(ExtractionCandidate.id)\
+        .filter(ExtractionCandidate.split == split)
     
-    cids_query = cids_query.order_by(FeatureCandidate.id)
+    cids_query = cids_query.order_by(ExtractionCandidate.id)
     cids_sub_query = cids_query.subquery('cids')
 
     # Load marginal tuples from db

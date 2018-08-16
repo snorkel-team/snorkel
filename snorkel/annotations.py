@@ -632,7 +632,7 @@ def load_marginals(session, X=None, split=0, cids_query=None, training=True, can
     # Otherwise if X is not provided, we sort by candidate id, using the
     # cids_query from above
     else:
-        cardinality = session.query(candidate) \
+        cardinality = session.query(ExtractionCandidate) \
             .get(marginal_tuples[0][0]).cardinality
         marginals = np.zeros((cids_query.count(), cardinality))
         cid_map = dict([(cid, i) for i, (cid,) in enumerate(cids_query.all())])

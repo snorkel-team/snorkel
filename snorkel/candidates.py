@@ -257,8 +257,11 @@ class PretaggedCandidateExtractorUDF(UDF):
                     entity_cids[tc.id] = cid
                     entity_spans[et].append(tc)
 
+        docparent = self.session.query(context.__class__).get(context.id)
+        while docparent.get_parent(): docparent = docparent.get_parent()
+
         # Generates and persists candidates
-        candidate_args = {'split' : split}
+        candidate_args = {'split': split, 'document': docparent}
         for args in product(*[enumerate(entity_spans[et]) for et in self.entity_types]):
 
             # TODO: Make this work for higher-order relations

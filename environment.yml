@@ -24,6 +24,7 @@ dependencies:
   - spacy<2
   - sqlalchemy>=1.0.14
   - tika
+  - tqdm
   - pip:
     - git+https://github.com/HazyResearch/numbskull@master
     - git+https://github.com/HazyResearch/treedlib@master

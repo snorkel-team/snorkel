@@ -29,6 +29,9 @@ docs/_build
 # Embedding models
 *.mm
 
+# Sublime convenience
+sftp-config.json
+
 # Tutorial
 tutorials/cdr/data/CDR*.BioC.xml
 tutorials/cdr/data/dicts

@@ -14,8 +14,6 @@ from sqlalchemy.sql import select
 from snorkel.models import Candidate, TemporarySpan, Sentence
 from snorkel.udf import UDF, UDFRunner
 
-QUEUE_COLLECT_TIMEOUT = 5
-
 
 class CandidateExtractor(UDFRunner):
     """

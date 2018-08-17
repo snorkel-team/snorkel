@@ -10,8 +10,7 @@ from multiprocessing import Process, JoinableQueue
 from queue import Empty
 
 from snorkel.models.meta import new_sessionmaker, snorkel_conn_string
-from tqdm.autonotebook import tqdm
-
+from tqdm import tqdm
 
 class UDFRunner(object):
     """Class to run UDFs in parallel using simple queue-based multiprocessing setup"""

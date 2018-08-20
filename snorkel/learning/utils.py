@@ -96,7 +96,8 @@ class LabelBalancer(object):
 
 class Scorer(object):
     """Abstract type for scorers"""
-    def __init__(self, test_candidates, test_labels, gold_candidate_set=None):
+    def __init__(self, test_candidates, test_labels, gold_candidate_set=None,
+        cardinality=None):
         """
         :param test_candidates: A *list of Candidates* corresponding to
             test_labels
@@ -104,13 +105,21 @@ class Scorer(object):
             test candidates
         :param gold_candidate_set: (optional) A *CandidateSet* containing the
             full set of gold labeled candidates
+        :param cardinality: An *int* overwrite for the automatic cardinality
+            inference.
         """
         self.test_candidates    = test_candidates
         self.test_labels        = test_labels
         self.gold_candidate_set = gold_candidate_set
+        self.cardinality        = cardinality
 
     def _get_cardinality(self, marginals):
-        """Get the cardinality based on the marginals returned by the model."""
+        """
+        Get the cardinality based on what we were told or the marginals returned
+        by the model.
+        """
+        if self.cardinality:
+            return self.cardinality
         if len(marginals.shape) == 1 or marginals.shape[1] < 3:
             cardinality = 2
         else:
@@ -193,7 +202,6 @@ class MentionScorer(Scorer):
                     else:
                         fn.add(candidate)
         if display:
-
             # Calculate scores unadjusted for TPs not in our candidate set
             print_scores(len(tp), len(fp), len(tn), len(fn),
                 title="Scores (Un-adjusted)")

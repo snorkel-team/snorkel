@@ -172,7 +172,7 @@ class Ngrams(CandidateSpace):
                         ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, sentence=context)
                         if ts1 not in seen:
                             seen.add(ts1)
-                            yield ts
+                            yield ts1
                         ts2 = TemporarySpan(char_start=start + m.end(1), char_end=end, sentence=context)
                         if ts2 not in seen:
                             seen.add(ts2)

@@ -237,7 +237,10 @@ class MentionScorer(Scorer):
         incorrect = set()
 
         # Get predictions
-        test_pred = test_marginals.argmax(axis=1) + 1
+        if len(test_marginals.shape) > 1:
+            test_pred = test_marginals.argmax(axis=1) + 1
+        else:
+            test_pred = test_marginals
 
         # Bucket the candidates for error analysis
         for i, candidate in enumerate(self.test_candidates):

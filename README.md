@@ -28,7 +28,7 @@ Today's state-of-the-art machine learning models require massive labeled trainin
 
 _Surprisingly_, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models. We see Snorkel as providing a general framework for many [_weak supervision_](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html) techniques, and as defining a new programming model for weakly-supervised machine learning systems.
 
-## Users
+## Users \& Sponsors
 We're lucky to have some amazing collaborators who are currently using Snorkel!
 
 <img src="figs/user_logos.png" width="500" height="200" align="middle" />

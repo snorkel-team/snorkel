@@ -170,11 +170,11 @@ class Ngrams(CandidateSpace):
                     m = re.search(self.split_rgx, context.text[start-offsets[0]:end-offsets[0]+1])
                     if m is not None and l < self.n_max + 1:
                         ts1 = TemporarySpan(char_start=start, char_end=start + m.start(1) - 1, sentence=context)
-                        if ts1 not in seen:
+                        if ts1 not in seen and ts1.get_span():
                             seen.add(ts1)
                             yield ts1
                         ts2 = TemporarySpan(char_start=start + m.end(1), char_end=end, sentence=context)
-                        if ts2 not in seen:
+                        if ts2 not in seen and ts1.get_span():
                             seen.add(ts2)
                             yield ts2
 

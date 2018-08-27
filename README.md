@@ -28,6 +28,15 @@ Today's state-of-the-art machine learning models require massive labeled trainin
 
 _Surprisingly_, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models. We see Snorkel as providing a general framework for many [_weak supervision_](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html) techniques, and as defining a new programming model for weakly-supervised machine learning systems.
 
+### Snorkel @ VLDB 2018
+<img src="figs/vldb2018_logo.png" width="200" height="85" align="middle" />
+
+We're excited to be presenting on Snorkel at this year's [VLDB conference in Rio De Janeiro](http://vldb2018.lncc.br/), on **Tuesday 8/28 in the "Database Techniques for Machine Learning" session**. We're also honored that the corresponding paper, **_[Snorkel: Rapid Training Data Creation with Weak Supervision](https://arxiv.org/abs/1711.10160)_**, has been invited to the annual **"Best Of VLDB" Special Issue!**
+
+* [Poster](https://ajratner.github.io/assets/papers/Snorkel_VLDB_2018_poster.pdf)
+* Slides [Coming Soon]
+* Check out the [Intro Tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro)!
+
 ## Users \& Sponsors
 We're lucky to have some amazing collaborators who are currently using Snorkel!
 

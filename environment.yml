@@ -12,7 +12,7 @@ dependencies:
   - nltk
   - numba
   - numpy>=1.11
-  - pytorch>=0.4
+  - pytorch-cpu>=0.4
   - pandas
   - psycopg2
   - py4j

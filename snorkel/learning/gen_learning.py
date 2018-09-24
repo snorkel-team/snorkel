@@ -41,7 +41,7 @@ class GenerativeModel(Classifier):
     :param seed: seed for initializing state of Numbskull variables
     """
     def __init__(self, class_prior=False, lf_prior=False, lf_propensity=False,
-        lf_class_propensity=False, seed=271828, name=None):
+        lf_class_propensity=False, seed=271828, name=None, cardinality=None):
         self.name = name or self.__class__.__name__
         try:
             numbskull_version = numbskull.__version__
@@ -57,6 +57,7 @@ class GenerativeModel(Classifier):
         self.lf_prior = lf_prior
         self.lf_propensity = lf_propensity
         self.lf_class_propensity = lf_class_propensity
+        self.cardinality = cardinality
         self.weights = None
 
         self.rng = np.random.RandomState()
@@ -143,7 +144,9 @@ class GenerativeModel(Classifier):
         # Automatically infer cardinality
         # Binary: Values in {-1, 0, 1} [Default]
         # Categorical: Values in {0, 1, ..., K}
-        if cardinality is None:
+        if cardinality is not None:
+            self.cardinality = cardinality
+        elif self.cardinality is None:
             # If candidate_ranges is provided, use this to determine cardinality
             if candidate_ranges is not None:
                 cardinality = max(map(max, candidate_ranges))
@@ -162,7 +165,7 @@ class GenerativeModel(Classifier):
                     raise ValueError(
                         "L.max() == %s, cannot infer cardinality." % lmax)
             print("Inferred cardinality: %s" % cardinality)
-        self.cardinality = cardinality
+            self.cardinality = cardinality
 
         # Priors for LFs default to fixed prior value
         # NOTE: Setting default != 0.5 creates a (fixed) factor which increases
@@ -257,7 +260,6 @@ class GenerativeModel(Classifier):
 
         self.fg = fg
         self.nlf = n
-        self.cardinality = cardinality
 
     def _remap_scoped_categoricals(self, L_in, candidate_ranges):
         """

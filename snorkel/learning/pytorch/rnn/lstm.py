@@ -43,9 +43,16 @@ class LSTM(RNNBase):
         seq_lengths, perm_idx = seq_lengths.sort(0, descending=True)
         X = X[perm_idx, :]
         inv_perm_idx = torch.tensor([i for i, _ in sorted(enumerate(perm_idx), key=lambda idx: idx[1])], dtype=torch.long)
-
         encoded_X = self.embedding(X)
-        encoded_X = pack_padded_sequence(encoded_X, seq_lengths, batch_first=True)
+
+        if self.gpu:
+            hidden_state = (hidden_state[0].permute(1,0,2), hidden_state[1].permute(1,0,2))
+            encoded_X = pack_padded_sequence(encoded_X, seq_lengths, batch_first=True).cuda()
+            self.lstm.flatten_parameters()
+        else:
+            encoded_X = pack_padded_sequence(encoded_X, seq_lengths, batch_first=True)
+        
+
         _, (ht, _) = self.lstm(encoded_X, hidden_state)
         output = ht[-1] if self.num_directions == 1 else torch.cat((ht[0], ht[1]), dim=1)
 
@@ -55,4 +62,7 @@ class LSTM(RNNBase):
         return (
             torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_dim),
             torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_dim)
+        ) if self.gpu else (
+            torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_dim).cuda(),
+            torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_dim).cuda()
         )

@@ -68,7 +68,12 @@ class RNNBase(TorchNoiseAwareModel):
                 # TODO: Don't instantiate tensor for each row
                 padded_X[idx, :len(seq)] = torch.LongTensor(seq)
 
-            output = self.forward(padded_X, hidden_state)
+            if self.gpu:
+                padded_X = padded_X.cuda()
+                hidden_state = (hidden_state[0].permute(1,0,2), hidden_state[1].permute(1,0,2))
+                output = nn.parallel.data_parallel(self, (padded_X, hidden_state))
+            else:
+                output = self.forward(padded_X, hidden_state)
 
             # TODO: Does skipping the cat when there is only one batch speed things up significantly?
             if self.cardinality == 2:

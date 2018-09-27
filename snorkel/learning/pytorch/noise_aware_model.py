@@ -33,11 +33,12 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
     
     :param n_threads: Parallelism to use; single-threaded if None
     """
-    def __init__(self, n_threads=None, **kwargs):
+    def __init__(self, n_threads=None, gpu=False, **kwargs):
         Classifier.__init__(self, **kwargs)
         nn.Module.__init__(self)
         self.n_threads = n_threads
         self.model_kwargs = None
+        self.gpu = gpu
 
     def _check_input(self, X):
         """Checks correctness of input; optional to implement."""
@@ -52,6 +53,9 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
                 self.loss = nn.BCEWithLogitsLoss()
         if not hasattr(self, 'optimizer'):
             self.optimizer = optim.Adam(self.parameters(), lr)
+
+        if self.gpu:
+            self.cuda()
 
     def _build_model(self, **model_kwargs):
         raise NotImplementedError
@@ -69,7 +73,12 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
              dim. 0 corresponds to candidates and dim. 1 corresponds to class labels
         """
         nn.Module.train(self, False)
-        marginals = self._pytorch_outputs(X, batch_size).detach()
+        if self.gpu:
+            self.cuda()
+            marginals = self._pytorch_outputs(X, batch_size).detach().cpu()
+        else:
+            marginals = self._pytorch_outputs(X, batch_size).detach()
+
         return F.sigmoid(marginals).numpy() if self.cardinality == 2 else F.softmax(marginals).numpy()
 
     def _pytorch_outputs(self, X, batch_size):
@@ -242,7 +251,10 @@ class TorchNoiseAwareModel(Classifier, nn.Module):
                 output = self._pytorch_outputs(X_train[batch:batch + batch_size], None)
                 
                 #Calculate loss
-                calculated_loss = self.loss(output, torch.Tensor(Y_train[batch:batch+batch_size]))
+                if self.gpu:
+                    calculated_loss = self.loss(output, torch.Tensor(Y_train[batch:batch+batch_size]).cuda())
+                else:
+                    calculated_loss = self.loss(output, torch.Tensor(Y_train[batch:batch+batch_size]))
                 
                 #Compute gradient
                 calculated_loss.backward()

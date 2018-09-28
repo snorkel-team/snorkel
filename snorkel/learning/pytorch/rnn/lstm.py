@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+>from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
@@ -46,6 +46,7 @@ class LSTM(RNNBase):
         encoded_X = self.embedding(X)
 
         if self.gpu:
+            # Switch back the batch axis  and the `num_layers * direction` axis so the lstm module can work.
             hidden_state = (hidden_state[0].permute(1,0,2), hidden_state[1].permute(1,0,2))
             encoded_X = pack_padded_sequence(encoded_X, seq_lengths, batch_first=True).cuda()
             self.lstm.flatten_parameters()
@@ -60,9 +61,9 @@ class LSTM(RNNBase):
     
     def initialize_hidden_state(self, batch_size):
         return (
-            torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_dim),
-            torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_dim)
-        ) if self.gpu else (
             torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_dim).cuda(),
             torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_dim).cuda()
+        ) if self.gpu else (
+            torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_dim),
+            torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_dim)
         )

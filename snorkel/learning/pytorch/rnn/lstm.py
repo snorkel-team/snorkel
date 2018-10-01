@@ -47,7 +47,7 @@ class LSTM(RNNBase):
 
         if self.gpu:
             # Switch back the batch axis  and the `num_layers * direction` axis so the lstm module can work.
-            hidden_state = (hidden_state[0].permute(1,0,2), hidden_state[1].permute(1,0,2))
+            hidden_state = (hidden_state[0].permute(1,0,2).contiguous(), hidden_state[1].permute(1,0,2).contiguous())
             encoded_X = pack_padded_sequence(encoded_X, seq_lengths, batch_first=True).cuda()
             self.lstm.flatten_parameters()
         else:

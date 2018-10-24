@@ -12,19 +12,11 @@ from sqlalchemy.types import PickleType
 from sqlalchemy.sql import select, text
 
 
-class Context(SnorkelBase):
+class Context(object):
     """
     A piece of content from which Candidates are composed.
     """
-    __tablename__ = 'context'
-    id            = Column(Integer, primary_key=True)
-    type          = Column(String, nullable=False)
-    stable_id     = Column(String, unique=True, nullable=False)
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'context',
-        'polymorphic_on': type
-    }
+    stable_id = Column(String, unique=True, nullable=False)
 
     def get_parent(self):
         raise NotImplementedError()
@@ -36,12 +28,12 @@ class Context(SnorkelBase):
         raise NotImplementedError()
 
 
-class Document(Context):
+class Document(SnorkelBase, Context):
     """
     A root Context.
     """
     __tablename__ = 'document'
-    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
     meta = Column(PickleType)
 
@@ -63,10 +55,10 @@ class Document(Context):
         return "Document " + str(self.name)
 
 
-class Sentence(Context):
+class Sentence(SnorkelBase, Context):
     """A sentence Context in a Document."""
     __tablename__ = 'sentence'
-    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    id = Column(Integer, primary_key=True)
     document_id = Column(Integer, ForeignKey('document.id', ondelete='CASCADE'), index=True)
     position = Column(Integer, nullable=False)
     document = relationship('Document', backref=backref('sentences', order_by=position, cascade='all, delete-orphan'), foreign_keys=document_id)
@@ -304,14 +296,14 @@ class TemporarySpan(TemporaryContext):
         return TemporarySpan(**kwargs)
 
 
-class Span(Context, TemporarySpan):
+class Span(SnorkelBase, Context, TemporarySpan):
     """
     A span of characters, identified by Context id and character-index start, end (inclusive).
 
     char_offsets are **relative to the Context start**
     """
     __tablename__ = 'span'
-    id = Column(Integer, ForeignKey('context.id', ondelete='CASCADE'), primary_key=True)
+    id = Column(Integer, primary_key=True)
     sentence_id = Column(Integer, ForeignKey('sentence.id', ondelete='CASCADE'), index=True)
     char_start = Column(Integer, nullable=False)
     char_end = Column(Integer, nullable=False)
@@ -322,8 +314,7 @@ class Span(Context, TemporarySpan):
     )
 
     __mapper_args__ = {
-        'polymorphic_identity': 'span',
-        'inherit_condition': (id == Context.id)
+        'polymorphic_identity': 'span'
     }
 
     sentence = relationship('Sentence', backref=backref('spans', cascade='all, delete-orphan'), order_by=char_start, foreign_keys=sentence_id)

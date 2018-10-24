@@ -31,7 +31,7 @@ class SparkCorpusParser(object):
 
     def _clear(self):
         # TODO
-        # session.query(Context).delete()
+        # session.query(Document).delete()
         # # We cannot cascade up from child contexts to parent Candidates,
         # # so we delete all Candidates too
         # session.query(Candidate).delete()

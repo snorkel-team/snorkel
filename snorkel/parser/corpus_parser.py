@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from builtins import *
 
 from snorkel.parser.spacy_parser import Spacy
-from snorkel.models import Candidate, Context, Sentence
+from snorkel.models import Candidate, Context, Sentence, Document
 from snorkel.udf import UDF, UDFRunner
 
 
@@ -17,7 +17,7 @@ class CorpusParser(UDFRunner):
                                            parser=self.parser,
                                            fn=fn)
     def clear(self, session, **kwargs):
-        session.query(Context).delete()
+        session.query(Document).delete()
         # We cannot cascade up from child contexts to parent Candidates,
         # so we delete all Candidates too
         session.query(Candidate).delete()

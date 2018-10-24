@@ -12,7 +12,7 @@ from sqlalchemy.orm import relationship, backref
 from functools import partial
 
 from snorkel.models.meta import SnorkelBase
-from snorkel.models import snorkel_engine
+from snorkel.models import snorkel_engine, Span
 from snorkel.utils import camel_to_under
 
 
@@ -69,8 +69,7 @@ class Candidate(SnorkelBase):
 # to the requested class
 candidate_subclasses = {}
 
-def candidate_subclass(class_name, args, table_name=None, cardinality=None,
-    values=None):
+def candidate_subclass(class_name, args, table_name=None, cardinality=None, values=None, arg_types=None):
     """
     Creates and returns a Candidate subclass with provided argument names,
     which are Context type. Creates the table in DB if does not exist yet.
@@ -89,7 +88,8 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
         provided, is converted from camel case by default, e.g. new_candidate
     :param cardinality: The cardinality of the variable corresponding to the
         Candidate. By default is 2 i.e. is a binary value, e.g. is or is not
-        a true mention.
+        a true mentione.
+    :param arg_types: The class types of the args. If None, we assume Span.
     """
     if table_name is None:
         table_name = camel_to_under(class_name)
@@ -143,26 +143,30 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None,
             '__mapper_args__' : {'polymorphic_identity': table_name},
 
             # Helper method to get argument names
-            '__argnames__' : args,
+            '__argnames__' : args
         }
+
+        # If arg types aren't specified, assume they are spans
+        if not arg_types:
+            arg_types = [Span]*len(args)
 
         # Create named arguments, i.e. the entity mentions comprising the relation
         # mention
         # For each entity mention: id, cid ("canonical id"), and pointer to Context
         unique_args = []
-        for arg in args:
+        for arg, arg_type in zip(args, arg_types):
 
             # Primary arguments are constituent Contexts, and their ids
             class_attribs[arg + '_id'] = Column(
-                Integer, ForeignKey('context.id', ondelete='CASCADE'), index=True)
+                Integer, ForeignKey(arg_type.__tablename__+'.id', ondelete='CASCADE'), index=True)
             class_attribs[arg] = relationship(
-                'Context',
-                backref=backref(
-                    table_name + '_' + arg + 's',
-                    cascade_backrefs=False,
-                    cascade='all, delete-orphan'
-                ),
-                cascade_backrefs=False,
+                arg_type.__name__,
+                # backref=backref(
+                #     table_name + '_' + arg + 's',
+                #     cascade_backrefs=False,
+                #     cascade='all, delete-orphan'
+                # ),
+                # cascade_backrefs=False,
                 foreign_keys=class_attribs[arg + '_id']
             )
             unique_args.append(class_attribs[arg + '_id'])

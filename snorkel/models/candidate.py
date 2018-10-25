@@ -30,11 +30,13 @@ class Candidate(SnorkelBase):
     
     # Shortcut backreference to the document that the candidate came from. Used
     # for quick reconciliation with document-level gold labels.
+    # Typechecks are disabled to allow subclasses of Document.
     document_id = Column(Integer, ForeignKey('document.id', ondelete='CASCADE'),
                          index=True)
     document = relationship('Document', backref=backref('candidates',
-                                cascade='all, delete-orphan'),
-                            foreign_keys=document_id)
+                                cascade='all, delete-orphan',
+                                enable_typechecks=False),
+                            foreign_keys=document_id, enable_typechecks=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'candidate',

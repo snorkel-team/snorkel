@@ -161,12 +161,12 @@ def candidate_subclass(class_name, args, table_name=None, cardinality=None, valu
                 Integer, ForeignKey(arg_type.__tablename__+'.id', ondelete='CASCADE'), index=True)
             class_attribs[arg] = relationship(
                 arg_type.__name__,
-                # backref=backref(
-                #     table_name + '_' + arg + 's',
-                #     cascade_backrefs=False,
-                #     cascade='all, delete-orphan'
-                # ),
-                # cascade_backrefs=False,
+                backref=backref(
+                    table_name + '_' + arg + 's',
+                    cascade_backrefs=False,
+                    cascade='all, delete-orphan'
+                ),
+                cascade_backrefs=False,
                 foreign_keys=class_attribs[arg + '_id']
             )
             unique_args.append(class_attribs[arg + '_id'])

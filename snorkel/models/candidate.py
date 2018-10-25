@@ -204,6 +204,10 @@ class Marginal(SnorkelBase):
     training     = Column(Boolean, default=True)
     value        = Column(Integer, nullable=False, default=1)
     probability  = Column(Float, nullable=False, default=0.0)
+    candidate    = relationship('Candidate', backref=backref('marginals',
+                            cascade='all, delete-orphan'),
+                        foreign_keys=candidate_id)
+
 
     __table_args__ = (
         UniqueConstraint(candidate_id, training, value),

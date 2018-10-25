@@ -142,16 +142,15 @@ class TemporaryContext(object):
     def load_id_or_insert(self, session):
         if self.id is None:
             stable_id = self.get_stable_id()
-            id = session.execute(select([Context.id]).where(Context.stable_id == stable_id)).first()
-            if id is None:
-                self.id = session.execute(
-                        Context.__table__.insert(),
-                        {'type': self._get_table_name(), 'stable_id': stable_id}).inserted_primary_key[0]
-                insert_args = self._get_insert_args()
-                insert_args['id'] = self.id
-                session.execute(text(self._get_insert_query()), insert_args)
+
+            table_name = self._get_table_name()
+            query_str = "SELECT id from " + table_name + " WHERE " + table_name + ".stable_id = '" + stable_id + "'"
+            existing = session.execute(query_str).fetchall()
+
+            if existing:
+                self.id = existing[0][0]
             else:
-                self.id = id[0]
+                self.id = session.execute(text(self._get_insert_query()), insert_args).inserted_primary_key[0]
 
     def __eq__(self, other):
         raise NotImplementedError()
@@ -217,7 +216,7 @@ class TemporarySpan(TemporaryContext):
         return 'span'
 
     def _get_insert_query(self):
-        return """INSERT INTO span VALUES(:id, :sentence_id, :char_start, :char_end, :meta)"""
+        return """INSERT INTO span VALUES(:sentence_id, :char_start, :char_end, :meta)"""
 
     def _get_insert_args(self):
         return {'sentence_id' : self.sentence.id,

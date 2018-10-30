@@ -152,7 +152,9 @@ class TemporaryContext(object):
             else:
                 insert_args = self._get_insert_args()
                 insert_args['stable_id'] = stable_id
-                self.id = session.execute(text(self._get_insert_query()), insert_args).inserted_primary_key[0]
+                span = Span(**insert_args)
+                session.add(span)
+                self.id = span.id
 
     def __eq__(self, other):
         raise NotImplementedError()
@@ -170,9 +172,6 @@ class TemporaryContext(object):
         raise NotImplementedError()
 
     def _get_table_name(self):
-        raise NotImplementedError()
-
-    def _get_insert_query(self):
         raise NotImplementedError()
 
     def _get_insert_args(self):
@@ -216,16 +215,6 @@ class TemporarySpan(TemporaryContext):
 
     def _get_polymorphic_identity(self):
         return 'span'
-
-    def _get_insert_query(self):
-        # According to the schema: 
-        # stable_id   | character varying | not null
-        # id          | integer           | not null default nextval('span_id_seq'::regclass)
-        # sentence_id | integer           | 
-        # char_start  | integer           | not null
-        # char_end    | integer           | not null
-        # meta        | bytea             | 
-        return """INSERT INTO span VALUES(:stable_id, DEFAULT, :sentence_id, :char_start, :char_end, :meta)"""
 
     def _get_insert_args(self):
         return {'sentence_id' : self.sentence.id,

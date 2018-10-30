@@ -142,13 +142,11 @@ class TemporaryContext(object):
     def load_id_or_insert(self, session):
         if self.id is None:
             stable_id = self.get_stable_id()
-
-            table_name = self._get_table_name()
-            query_str = "SELECT id from " + table_name + " WHERE " + table_name + ".stable_id = '" + stable_id + "'"
-            existing = session.execute(query_str).fetchall()
+            Table = self._get_table_class()
+            existing = session.execute(select([Table.id]).where(Table.stable_id == stable_id)).first()
 
             if existing:
-                self.id = existing[0][0]
+                self.id = existing.id
             else:
                 insert_args = self._get_insert_args()
                 insert_args['stable_id'] = stable_id
@@ -171,7 +169,7 @@ class TemporaryContext(object):
     def get_stable_id(self):
         raise NotImplementedError()
 
-    def _get_table_name(self):
+    def _get_table_class(self):
         raise NotImplementedError()
 
     def _get_insert_args(self):
@@ -210,8 +208,8 @@ class TemporarySpan(TemporaryContext):
     def get_stable_id(self):
         return construct_stable_id(self.sentence, self._get_polymorphic_identity(), self.char_start, self.char_end)
 
-    def _get_table_name(self):
-        return 'span'
+    def _get_table_class(self):
+        return Span
 
     def _get_polymorphic_identity(self):
         return 'span'

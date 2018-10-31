@@ -152,6 +152,12 @@ class TemporaryContext(object):
                 insert_args['stable_id'] = stable_id
                 span = Span(**insert_args)
                 session.add(span)
+
+                # Make sure that the ID gets assigned. This seems inefficient.
+                # The basic issue is that before, Snorkel was executing a manual INSERT statement on the session (also inefficient)...
+                # We call this for every promoted/added Span object such that we can make sure it has a valid ID by the time we want to create the candidate
+                # This is equivalent with the previous behavior, but seems inefficient but we rely on manually pushing these IDs around
+                session.flush()
                 self.id = span.id
 
     def __eq__(self, other):

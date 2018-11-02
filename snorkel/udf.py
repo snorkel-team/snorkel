@@ -162,32 +162,15 @@ class UDF(Process):
         This method is called when the UDF is run as a Process in a multiprocess setting
         The basic routine is: get from JoinableQueue, apply, put / add outputs, loop
         """
-        insert_batch = set()
-        # Every 2,000 objects, we trigger a bulk insert
-        INSERT_BATCH_SIZE = 2000
-
         while True:
             try:
                 x = self.in_queue.get_nowait()
                 for y in self.apply(x, **self.apply_kwargs):
                     # If there's no additional reduce step coming, add to session
                     if self.add_to_session:
-                        # Without batching, we'd just call
-                        #   self.session.add(y)
-                        # However, this seems to get everything inserted at the very end.
-                        insert_batch.add(y)
-
-                        if len(insert_batch) >= INSERT_BATCH_SIZE:
-                            self.session.bulk_save_objects(insert_batch)
-                            insert_batch.clear()
-
+                        self.session.add(y)
                     else:
                         self.out_queue.put(y)
-
-                # Insert the remaining items queued up
-                self.session.bulk_save_objects(insert_batch)
-                insert_batch.clear()
-
                 self.in_queue.task_done()
                 self.out_queue.put(UDF.TASK_DONE_SENTINEL)
 

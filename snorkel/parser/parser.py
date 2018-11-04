@@ -25,7 +25,12 @@ class Parser(object):
         :return:
         '''
         if sys.version_info[0] < 3 and not isinstance(text, unicode):
-            return unicode(text, errors='ignore')
+            try:
+                return unicode(text, errors='ignore')
+            except Exception as error:
+                print("Failed to decode for parsing:")
+                print(text)
+                raise(error)
         else:
             return text
 

@@ -24,7 +24,7 @@ class Parser(object):
         :param text:
         :return:
         '''
-        if sys.version_info[0] < 3:
+        if sys.version_info[0] < 3 and not isinstance(text, unicode):
             text_alt = text.encode('utf-8', 'error')
             text_alt = text_alt.decode('string_escape', errors='ignore')
             text_alt = text_alt.decode('utf-8')

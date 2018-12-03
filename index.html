@@ -17,14 +17,24 @@
       <header>
         <!--<h1>Snorkel</h1>-->
         <img src="figs/logo_01.png" width="100"/>
-        <p>A system for rapidly creating training sets with weak supervision</p>
+        <p>
+          A system for rapidly creating training sets with weak supervision
+        </p>
 
-        <p class="view"><a href="https://github.com/HazyResearch/snorkel">View the Project on GitHub <small>HazyResearch/snorkel</small></a></p>      
+        <p class="view">
+          <a href="https://github.com/HazyResearch/snorkel">View the Project on GitHub <small>HazyResearch/snorkel</small></a>
+        </p>      
 
         <ul>
-          <li><a href="https://github.com/HazyResearch/snorkel/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/HazyResearch/snorkel/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/HazyResearch/snorkel">View On <strong>GitHub</strong></a></li>
+          <li>
+            <a href="https://github.com/HazyResearch/snorkel/zipball/master">Download <strong>ZIP File</strong></a>
+          </li>
+          <li>
+            <a href="https://github.com/HazyResearch/snorkel/tarball/master">Download <strong>TAR Ball</strong></a>
+          </li>
+          <li>
+            <a href="https://github.com/HazyResearch/snorkel">View On <strong>GitHub</strong></a>
+          </li>
         </ul>
       </header>
       <section>
@@ -41,11 +51,15 @@ Snorkel is a system for rapidly <b>creating, modeling, and managing training dat
 Today's state-of-the-art machine learning models require <i>massive</i> labeled training sets--which usually do not exist for real-world applications. Instead, Snorkel is based around the new <a href="https://arxiv.org/abs/1605.07723">data programming</a> paradigm, in which the developer focuses on writing a set of <i>labeling functions</i>, which are just scripts that programmatically label data. The resulting labels are noisy, but Snorkel automatically models this process—learning, essentially, which labeling functions are more accurate than others—and then uses this to train an end model (for example, a deep neural network in TensorFlow).
 </p>
 
+<img align:right src="figs/dp_neurips_2016.png" alt="Snorkel" width=800px /><br />
+
 <p>
 <i>Surprisingly</i>, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models. We see Snorkel as providing a general framework for many <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">weak supervision</a> techniques, and as defining a new <i>programming model for weakly-supervised machine learning systems</i>.
 </p>
 	      
-<p><b>Check out a recent one-pager about <a href="https://cs.stanford.edu/~chrismre/papers/Chris_Re-KDD.pdf">Snorkel and the Software 2.0 vision</a>!</b></p>
+<p>
+  <b>Check out a recent one-pager about <a href="https://cs.stanford.edu/~chrismre/papers/Chris_Re-KDD.pdf">Snorkel and the Software 2.0 vision</a>!</b>
+</p>
 
 <h2>
 <a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Getting Started</h2>
@@ -55,14 +69,68 @@ Today's state-of-the-art machine learning models require <i>massive</i> labeled 
 </li>
 <li>Get started with the tutorials:
 <ul>
-<li><a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro">Intro Tutorial: Extracting Spouse Relations from the News</a></li>
-<li><b>Materials from the recent <a href="http://mobilize.stanford.edu/events/snorkelworkshop2017/">Mobilize Center-hosted Snorkel workshop</a>: <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/workshop">notebooks</a>, and <a href="https://simtk.org/frs/?group_id=1263">lecture materials</a></b></li>
-<li><a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/cdr">Extracting Chemical-Disease Relations from PubMed</a></li>
-<li><a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/snark/Snark%20Tutorial.ipynb"><b>Snorkel + Spark Tutorial</b></a></li>
-<li><a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/crowdsourcing/Crowdsourced_Sentiment_Analysis.ipynb">Crowdsourced Sentiment Analysis using Snorkel</a></li>
+<li>
+  <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro">Intro Tutorial: Extracting Spouse Relations from the News</a>
+</li>
+<li>
+  <b>Materials from the recent <a href="http://mobilize.stanford.edu/events/snorkelworkshop2017/">Mobilize Center-hosted Snorkel workshop</a>: <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/workshop">notebooks</a>, and <a href="https://simtk.org/frs/?group_id=1263">lecture materials</a></b>
+</li>
+<li>
+  <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/cdr">Extracting Chemical-Disease Relations from PubMed</a>
+</li>
+<li>
+  <a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/snark/Snark%20Tutorial.ipynb"><b>Snorkel + Spark Tutorial</b></a>
+</li>
+<li>
+  <a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/crowdsourcing/Crowdsourced_Sentiment_Analysis.ipynb">Crowdsourced Sentiment Analysis using Snorkel</a>
+</li>
 </ul>
 </li>
 </ul>
+
+<hr>
+<h1>
+  <a id="snorkel-vldb" class="anchor" href="#snorkel-vldb" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Snorkel @ NeurIPS 2018
+</h1>
+<img align:right src="figs/snorkel_neurips_KO_keynote.png" alt="Snorkel" width=800px/><br />
+
+<p>
+  We're excited that Snorkel will be featured in <a href="https://nips.cc/Conferences/2018/Schedule?showEvent=12469">Kunle Olukotun's keynote</a> at NeurIPS this year; to support this, we've assembled some pointers:
+  <ul>
+    <!--
+    <li>
+      <a href="#">Blog post</a> on how "Software 2.0" is changing programming
+    </li>-->
+    <li>
+        Our <a href="https://ajratner.github.io/assets/papers/software_2_mmt_vision.pdf">vision for Software 2.0 systems</a>
+    </li>
+    <li>
+      A new report on Snorkel's <a href="snorkel.stanford.edu/figs/snorkel_drybell.pdf">usage at Google</a>
+    </li>
+    <li>
+        <a href="https://github.com/HazyResearch/metal">Snorkel MeTaL</a>, our <i>multi-task supervision</i> version of Snorkel (<a href="https://arxiv.org/abs/1810.02840">AAAI'19</a>)
+      </li>
+    <li>
+      The <a href="https://github.com/HazyResearch/tanda">data augmentation framework</a> that can be used in the training loop of end models (<a href="https://arxiv.org/abs/1709.01643">NeurIPS'17</a>)
+    </li>
+    <li>
+      Recent uses of Snorkel for
+      <ul>
+        <li>
+            <a href="https://arxiv.org/abs/1709.02477">handling image data</a> (NeurIPS'17; <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/images">tutorial</a>)
+        </li>
+        <li>
+            <a href="https://arxiv.org/abs/1805.03818">using natural language as supervision</a> (ACL'18)
+        </li>
+        <li>
+            <a href="https://arxiv.org/abs/1703.05028">handling semi-structured data</a> (SIGMOD'18)
+        </li>
+        <li>
+            <a href="https://www.paroma.xyz/tech_report_reef.pdf">automating training set generation</a> (VLDB'19)
+        </li>
+      </ul>
+    </li>
+  </ul>
 
 <hr>
 <h1>
@@ -73,9 +141,15 @@ Today's state-of-the-art machine learning models require <i>massive</i> labeled 
   We're excited to be presenting on Snorkel at this year's <a href="http://vldb2018.lncc.br/">VLDB conference in Rio De Janeiro</a>, on <b>Tuesday 8/28 in the "Database Techniques for Machine Learning" session.</b>
   We're also honored that the corresponding paper, <b><a href="https://arxiv.org/abs/1711.10160">Snorkel: Rapid Training Data Creation with Weak Supervision</a></b>, has been invited to the annual <b>"Best Of VLDB" Special Issue!</b>
   <ul>
-    <li><a href="https://ajratner.github.io/assets/papers/Snorkel_VLDB_2018_poster.pdf">Poster</a></li>
-    <li><a href="#">Slides</a> [Coming Soon]</li>
-    <li><i>Check out the <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro">Intro Tutorial</a>!</i></li>
+    <li>
+      <a href="https://ajratner.github.io/assets/papers/Snorkel_VLDB_2018_poster.pdf">Poster</a>
+    </li>
+    <li>
+      <a href="#">Slides</a> [Coming Soon]
+    </li>
+    <li>
+      <i>Check out the <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro">Intro Tutorial</a>!</i>
+    </li>
   </ul>
 </p>
 
@@ -142,7 +216,7 @@ Check out the <b><a href="https://github.com/HazyResearch/snorkel/tree/master/tu
 <li><a href="https://arxiv.org/abs/1805.03818">Training Classifiers with Natural Language Explanations</a> (ACL 2018)</li>
 <li><a href="http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf">Data Programming with DDLite: Putting Humans in a Different Part of the Loop</a> (HILDA @ SIGMOD 2016; note Snorkel was previously <em>DDLite</em>)</li>
 <li><a href="https://arxiv.org/abs/1610.08123">Socratic Learning: Correcting Misspecified Generative Models using Discriminative Models</a></li>
-<li><a href="https://arxiv.org/abs/1703.05028" target="_blank">Fonduer: Knowledge Base Construction from Richly Formatted Data</a>
+<li><a href="https://arxiv.org/abs/1703.05028" target="_blank">Fonduer: Knowledge Base Construction from Richly Formatted Data</a> (SIGMOD 2018)
 </li>
 </ul>
 
@@ -159,6 +233,9 @@ Check out the <b><a href="https://github.com/HazyResearch/snorkel/tree/master/tu
 <li><a href="http://stephenbach.net/">Stephen Bach</a></li>
 <li><a href="https://github.com/henryre">Henry Ehrenberg</a></li>
 <li><a href="https://www.bradenhancock.com">Braden Hancock</a></li> 
+<li><a href="https://www.paroma.xyz/">Paroma Varma</a></li> 
+<li><a href="https://jdunnmon.github.io/">Jared Dunnmon</a></li> 
+<li><a href="https://stanford.edu/~fredsala/">Fred Sala</a></li> 
 <li><a href="http://ai.stanford.edu/~bryanhe/">Bryan He</a></li>
 <li><a href="http://nmbl.stanford.edu/people/jason-fries/">Jason Fries</a></li>
 <li><a href="https://stanford.edu/~senwu/">Sen Wu</a></li>

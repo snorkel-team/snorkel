@@ -109,16 +109,16 @@ Today's state-of-the-art machine learning models require <i>massive</i> labeled 
       <a href="#">Blog post</a> on how "Software 2.0" is changing programming
     </li>-->
     <li>
-        Our <a href="https://ajratner.github.io/assets/papers/software_2_mmt_vision.pdf">vision for Software 2.0 systems, and a new (draft) <a href="http://hazyresearch.github.io/snorkel/blog/s2_programming.html">blog post</a> about what Software 2.0 means for programming </a>
+        Our <a href="https://ajratner.github.io/assets/papers/software_2_mmt_vision.pdf">vision for Software 2.0 systems</a>, and a new (draft) <a href="http://hazyresearch.github.io/snorkel/blog/s2_programming.html">blog post</a> about what Software 2.0 means for programming.
     </li>
     <li>
-        <a href="https://github.com/HazyResearch/metal">Snorkel MeTaL</a>, our <i>multi-task supervision</i> version of Snorkel (<a href="https://arxiv.org/abs/1810.02840">AAAI'19</a>)
+        <a href="https://github.com/HazyResearch/metal">Snorkel MeTaL</a>, our <i>multi-task supervision</i> version of Snorkel (<a href="https://arxiv.org/abs/1810.02840">AAAI'19</a>).
       </li>
     <li>
-      The <a href="https://github.com/HazyResearch/tanda">data augmentation framework</a> that can be used in the training loop of end models (<a href="https://arxiv.org/abs/1709.01643">NeurIPS'17</a>)
+      The <a href="https://github.com/HazyResearch/tanda">data augmentation framework</a> that can be used in the training loop of end models (<a href="https://arxiv.org/abs/1709.01643">NeurIPS'17</a>).
     </li>
     <li>
-      Recent uses of Snorkel for
+      Recent uses of Snorkel for:
       <ul>
         <li>
             <a href="https://arxiv.org/abs/1709.02477">handling image data</a> (NeurIPS'17; <a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/images/Images_Tutorial.ipynb">tutorial</a>)
@@ -160,7 +160,7 @@ Today's state-of-the-art machine learning models require <i>massive</i> labeled 
       <a href="https://ajratner.github.io/assets/papers/Snorkel_VLDB_2018_poster.pdf">Poster</a>
     </li>
     <li>
-      <a href="#">Slides</a> [Coming Soon]
+      <a href="https://ajratner.github.io/assets/papers/Snorkel_VLDB_2018_slides.pdf">Slides</a> 
     </li>
     <li>
       <i>Check out the <a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro">Intro Tutorial</a>!</i>
@@ -175,14 +175,20 @@ Today's state-of-the-art machine learning models require <i>massive</i> labeled 
 <img align:right src="figs/WS_pipeline.jpg" alt="Snorkel" width=700px/>
 
 <p>
-Complex problems are often composed of <i>multiple</i> tasks, and may have many different types of weak supervision that provide labels for one or more of these tasks.
-In <a href="https://github.com/HazyResearch/metal"><b>Snorkel MeTaL</b></a>, we use a new modeling approach to denoise this <b><i>massively multi-task weak supervision</i></b>, and then train an auto-compiled multi-task network with it.
-Check out:
-<ul>
-  <li><a href="https://github.com/HazyResearch/metal"><b>The repo</b></a> (<i>in alpha</i>)</li>
-  <li>A <a href="https://arxiv.org/abs/1810.02840"><b>AAAI 2019 paper</b></a> on the core method and supporting theory</li>
-  <li>A <a href="https://ajratner.github.io/assets/papers/deem-metal-prototype.pdf"><b>SIGMOD DEEM 2018 paper</b></a> on the system architecture</li>
-</ul>
+  Complex problems are often composed of <i>multiple</i> tasks, and may have many different types of weak supervision that provide labels for one or more of these tasks.
+  In <a href="https://github.com/HazyResearch/metal"><b>Snorkel MeTaL</b></a>, we use a new modeling approach to denoise this <b><i>massively multi-task weak supervision</i></b>, and then train an auto-compiled multi-task network with it.
+  Check out:
+  <ul>
+    <li>
+      <a href="https://github.com/HazyResearch/metal"><b>The repo</b></a> (<i>in alpha</i>)
+    </li>
+    <li>
+      A <a href="https://arxiv.org/abs/1810.02840"><b>AAAI 2019 paper</b></a> on the core method and supporting theory
+    </li>
+    <li>
+      A <a href="https://ajratner.github.io/assets/papers/deem-metal-prototype.pdf"><b>SIGMOD DEEM 2018 paper</b></a> on the system architecture
+    </li>
+  </ul>
 </p>
 <hr>
 
@@ -195,26 +201,58 @@ Check out the <b><a href="https://github.com/HazyResearch/snorkel/tree/master/tu
 
 
 <!-- BLOG -->
-<h2><a id="blog" class="anchor" href="#blog" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Blog Posts and Tutorials</h2>
-    <i>If you're new, get started with the first blog post on data programming, and then check out the Snorkel intro tutorial!</i>
-    <br />
-    <ul>
-        <li>[12/4/2018] <a href="http://hazyresearch.github.io/snorkel/blog/s2_programming.html">Software 2.0 and the Paradigm Shift in Programming ML Systems</a></li>
-      <li>[06/21/2018] <a href="http://dawn.cs.stanford.edu/2018/06/21/debugging/">Systematically Debugging Training Data for Software 2.0</a></li>
-	<li>[11/30/2017] <a href="https://hazyresearch.github.io/snorkel/blog/snorkel_programming_training_data.html">Weak Supervision: The New Programming Language for Software 2.0</a></li>
-        <li>[09/20/2017] <a href="http://dawn.cs.stanford.edu/2017/09/14/coral/">Exploiting Building Blocks of Data to Efficiently Create Training Sets</a></li>
-        <li>[08/10/2017] <a href="https://hazyresearch.github.io/snorkel/blog/tanda.html">Learning to Compose Domain-Specific Transformations for Data Augmentation</a> [<a href="https://github.com/HazyResearch/tanda">Repo</a>]</li>
-        <li>[07/12/2017] <a href="https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html">Weak Supervision: The New Programming Paradigm for Machine Learning</a></li>
-        <li>[06/05/2017] <a href="https://hazyresearch.github.io/snorkel/blog/snark.html">Scaling Up Snorkel with Spark</a> [<a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/snark/Snark%20Tutorial.ipynb">Tutorial</a>]</li>
-        <li>[05/08/2017] <a href="https://hazyresearch.github.io/snorkel/blog/holoclean.html">HoloClean: Weakly Supervised Data Repairing</a></li>
-        <li>[04/17/2017] <a href="https://hazyresearch.github.io/snorkel/blog/structure_learning.html">Structure Learning: Are Your Sources Only Telling You What You Want to Hear?</a> [<a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/advanced/Structure_Learning.ipynb">Tutorial</a>]</li>
-        <li>[03/21/2017] <a href="https://hazyresearch.github.io/snorkel/blog/babble_labble.html">Babble Labble: Learning from Natural Language Explanations</a></li>
-        <li>[03/16/2017] <a href="https://hazyresearch.github.io/snorkel/blog/fonduer.html">Fonduer: Knowledge Base Construction from Richly Formatted Data</a></li>
-        <li>[12/15/2016] <a href="http://hazyresearch.github.io/snorkel/blog/dp_with_tf_blog_post.html">Data Programming + TensorFlow Tutorial</a> (<a href="http://hazyresearch.github.io/snorkel/blog/DataProgrammingTensorFlow-v2.ipynb">notebook version</a>)</li>
-        <li>[11/24/2016] <a href="http://hazyresearch.github.io/snorkel/blog/slimfast.html">SLiMFast: Assessing the Reliability of Data</a></li>
-        <li>[10/24/2016] <a href="http://hazyresearch.github.io/snorkel/blog/socratic_learning.html">Socratic Learning: Debugging ML Models</a></li>
-        <li>[9/19/2016] <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">Data Programming: ML with Weak Supervision</a> [<a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro">Tutorial</a>]</li>
-    </ul>
+<h2>
+  <a id="blog" class="anchor" href="#blog" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Blog Posts and Tutorials
+</h2>
+<i>If you're new, get started with the first blog post on data programming, and then check out the Snorkel intro tutorial!</i>
+<br />
+<ul>
+  <li>
+    [12/4/2018] <a href="http://hazyresearch.github.io/snorkel/blog/s2_programming.html">Software 2.0 and the Paradigm Shift in Programming ML Systems</a>
+  </li>
+  <li>
+    [06/21/2018] <a href="http://dawn.cs.stanford.edu/2018/06/21/debugging/">Systematically Debugging Training Data for Software 2.0</a>
+  </li>
+	<li>
+    [11/30/2017] <a href="https://hazyresearch.github.io/snorkel/blog/snorkel_programming_training_data.html">Weak Supervision: The New Programming Language for Software 2.0</a>
+  </li>
+  <li>
+    [09/20/2017] <a href="http://dawn.cs.stanford.edu/2017/09/14/coral/">Exploiting Building Blocks of Data to Efficiently Create Training Sets</a>
+  </li>
+  <li>
+    [08/10/2017] <a href="https://hazyresearch.github.io/snorkel/blog/tanda.html">Learning to Compose Domain-Specific Transformations for Data Augmentation</a> [<a href="https://github.com/HazyResearch/tanda">Repo</a>]
+  </li>
+  <li>
+    [07/12/2017] <a href="https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html">Weak Supervision: The New Programming Paradigm for Machine Learning</a>
+  </li>
+  <li>
+    [06/05/2017] <a href="https://hazyresearch.github.io/snorkel/blog/snark.html">Scaling Up Snorkel with Spark</a> [<a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/snark/Snark%20Tutorial.ipynb">Tutorial</a>]
+  </li>
+  <li>
+    [05/08/2017] <a href="https://hazyresearch.github.io/snorkel/blog/holoclean.html">HoloClean: Weakly Supervised Data Repairing</a>
+  </li>
+  <li>
+    [04/17/2017] <a href="https://hazyresearch.github.io/snorkel/blog/structure_learning.html">Structure Learning: Are Your Sources Only Telling You What You Want to Hear?</a> [<a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/advanced/Structure_Learning.ipynb">Tutorial</a>]
+  </li>
+  <li>
+    [03/21/2017] <a href="https://hazyresearch.github.io/snorkel/blog/babble_labble.html">Babble Labble: Learning from Natural Language Explanations</a>
+  </li>
+  <li>
+    [03/16/2017] <a href="https://hazyresearch.github.io/snorkel/blog/fonduer.html">Fonduer: Knowledge Base Construction from Richly Formatted Data</a>
+  </li>
+  <li>
+    [12/15/2016] <a href="http://hazyresearch.github.io/snorkel/blog/dp_with_tf_blog_post.html">Data Programming + TensorFlow Tutorial</a> (<a href="http://hazyresearch.github.io/snorkel/blog/DataProgrammingTensorFlow-v2.ipynb">notebook version</a>)
+  </li>
+  <li>
+    [11/24/2016] <a href="http://hazyresearch.github.io/snorkel/blog/slimfast.html">SLiMFast: Assessing the Reliability of Data</a>
+  </li>
+  <li>
+    [10/24/2016] <a href="http://hazyresearch.github.io/snorkel/blog/socratic_learning.html">Socratic Learning: Debugging ML Models</a>
+  </li>
+  <li>
+    [9/19/2016] <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">Data Programming: ML with Weak Supervision</a> [<a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro">Tutorial</a>]
+  </li>
+</ul>
 
 
 <h2>
@@ -222,72 +260,137 @@ Check out the <b><a href="https://github.com/HazyResearch/snorkel/tree/master/tu
 
 <h3>Best References:</h3>
 <ul>
-<li><b><a href="https://arxiv.org/abs/1711.10160">Snorkel: Rapid Training Data Creation with Weak Supervision</a> (VLDB 2018)</b></li>
-<li><b><a href="https://arxiv.org/abs/1605.07723">Data Programming: Creating Large Training Sets, Quickly</a> (NeurIPS 2016)</b></li>
-<li><b><a href="https://arxiv.org/abs/1703.00854">Learning the Structure of Generative Models without Labeled Data</a> (ICML 2017)</b></li>
-<li><b><a href="https://arxiv.org/abs/1810.02840">Training Complex Models with Multi-Task Weak Supervision</a> (AAAI 2019)</b></li>
-<li><b><a href="https://ajratner.github.io/assets/papers/software_2_mmt_vision.pdf">The Role of Massively Multi-Task and Weak Supervision in Software 2.0</a> (CIDR 2019)</b></li>
-<li><a href="pdfs/snorkel_demo.pdf">Snorkel: Fast Training Set Generation for Information Extraction</a> (SIGMOD DEMO 2017)</li>
-<li><a href="https://arxiv.org/abs/1709.02477">Inferring Generative Model Structure with Static Analysis</a> (NeurIPS 2017)</li>
-<li><a href="https://arxiv.org/abs/1805.03818">Training Classifiers with Natural Language Explanations</a> (ACL 2018)</li>
-<li><a href="http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf">Data Programming with DDLite: Putting Humans in a Different Part of the Loop</a> (HILDA @ SIGMOD 2016; note Snorkel was previously <em>DDLite</em>)</li>
-<li><a href="https://arxiv.org/abs/1610.08123">Socratic Learning: Correcting Misspecified Generative Models using Discriminative Models</a></li>
-<li><a href="https://arxiv.org/abs/1703.05028" target="_blank">Fonduer: Knowledge Base Construction from Richly Formatted Data</a> (SIGMOD 2018)
+  <li>
+    <b><a href="https://arxiv.org/abs/1711.10160">Snorkel: Rapid Training Data Creation with Weak Supervision</a> (VLDB 2018)</b>
+  </li>
+<li>
+  <b><a href="https://arxiv.org/abs/1605.07723">Data Programming: Creating Large Training Sets, Quickly</a> (NeurIPS 2016)</b>
+</li>
+<li>
+  <b><a href="https://arxiv.org/abs/1703.00854">Learning the Structure of Generative Models without Labeled Data</a> (ICML 2017)</b>
+</li>
+<li>
+  <b><a href="https://arxiv.org/abs/1810.02840">Training Complex Models with Multi-Task Weak Supervision</a> (AAAI 2019)</b>
+</li>
+<li>
+  <b><a href="https://ajratner.github.io/assets/papers/software_2_mmt_vision.pdf">The Role of Massively Multi-Task and Weak Supervision in Software 2.0</a> (CIDR 2019)</b>
+</li>
+<li>
+  <a href="pdfs/snorkel_demo.pdf">Snorkel: Fast Training Set Generation for Information Extraction</a> (SIGMOD DEMO 2017)
+</li>
+<li>
+  <a href="https://arxiv.org/abs/1709.02477">Inferring Generative Model Structure with Static Analysis</a> (NeurIPS 2017)
+</li>
+<li>
+  <a href="https://arxiv.org/abs/1805.03818">Training Classifiers with Natural Language Explanations</a> (ACL 2018)
+</li>
+<li>
+  <a href="http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf">Data Programming with DDLite: Putting Humans in a Different Part of the Loop</a> (HILDA @ SIGMOD 2016; note Snorkel was previously <em>DDLite</em>)
+</li>
+<li>
+  <a href="https://arxiv.org/abs/1610.08123">Socratic Learning: Correcting Misspecified Generative Models using Discriminative Models</a>
+</li>
+<li>
+  <a href="https://arxiv.org/abs/1703.05028" target="_blank">Fonduer: Knowledge Base Construction from Richly Formatted Data</a> (SIGMOD 2018)
+
 </li>
 </ul>
 
 <h3>Further Reading:</h3>
 <ul>
-<li><a href="https://arxiv.org/abs/1709.01643">Learning to Compose Domain-Specific Transformations for Data Augmentation</a> (NeurIPS 2017)</li>
-<li><a href="https://arxiv.org/abs/1709.02605">Gaussian Quadrature for Kernel Features</a> (NeurIPS 2017)</li>
+<li>
+  <a href="https://arxiv.org/abs/1709.01643">Learning to Compose Domain-Specific Transformations for Data Augmentation</a> (NeurIPS 2017)
+</li>
+<li>
+  <a href="https://arxiv.org/abs/1709.02605">Gaussian Quadrature for Kernel Features</a> (NeurIPS 2017)
+</li>
 </ul>
 
 <h2>
 <a id="references" class="anchor" href="#references" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contributors</h2>
 <ul>
-<li><a href="http://www.alexratner.com">Alex Ratner</a></li>
-<li><a href="http://stephenbach.net/">Stephen Bach</a></li>
-<li><a href="https://github.com/henryre">Henry Ehrenberg</a></li>
-<li><a href="https://www.bradenhancock.com">Braden Hancock</a></li> 
-<li><a href="https://www.paroma.xyz/">Paroma Varma</a></li> 
-<li><a href="https://jdunnmon.github.io/">Jared Dunnmon</a></li> 
-<li><a href="https://stanford.edu/~fredsala/">Fred Sala</a></li> 
-<li><a href="http://ai.stanford.edu/~bryanhe/">Bryan He</a></li>
-<li><a href="http://nmbl.stanford.edu/people/jason-fries/">Jason Fries</a></li>
-<li><a href="https://stanford.edu/~senwu/">Sen Wu</a></li>
-<li><a href="https://stanford.edu/~thodrek/">Theo Rekatsinas</a></li>	
-<li><a href="https://cs.stanford.edu/people/chrismre/">Chris Ré</a></li>
-<li><i>And many other members of <a href="https://cs.stanford.edu/people/chrismre/#students">Hazy Research</a></i></li>
+<li>
+  <a href="http://www.alexratner.com">Alex Ratner</a>
+</li>
+<li>
+  <a href="http://stephenbach.net/">Stephen Bach</a>
+</li>
+<li>
+  <a href="https://github.com/henryre">Henry Ehrenberg</a>
+</li>
+<li>
+  <a href="https://www.bradenhancock.com">Braden Hancock</a>
+</li> 
+<li>
+  <a href="https://www.paroma.xyz/">Paroma Varma</a>
+</li> 
+<li>
+  <a href="https://jdunnmon.github.io/">Jared Dunnmon</a>
+</li> 
+<li>
+  <a href="https://stanford.edu/~fredsala/">Fred Sala</a>
+</li> 
+<li>
+  <a href="http://ai.stanford.edu/~bryanhe/">Bryan He</a>
+</li>
+<li>
+  <a href="http://nmbl.stanford.edu/people/jason-fries/">Jason Fries</a>
+</li>
+<li>
+  <a href="https://stanford.edu/~senwu/">Sen Wu</a>
+</li>
+<li>
+  <a href="https://stanford.edu/~thodrek/">Theo Rekatsinas</a>
+</li>	
+<li>
+  <a href="https://cs.stanford.edu/people/chrismre/">Chris Ré</a>
+</li>
+<li>
+  <i>And many other members of <a href="https://cs.stanford.edu/people/chrismre/#students">Hazy Research</a></i>
+</li>
 </ul>
 
 <h2>
-    <a id="acknowledgements" class="anchor" href="#acknowledgements" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Acknowledgements</h2>
+  <a id="acknowledgements" class="anchor" href="#acknowledgements" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Acknowledgements
+</h2>
+<p>
+  <img src="figs/darpa.JPG" width="80" height="80" align="middle" />
+  <img src="figs/ONR.jpg" width="100" height="80" align="middle" />
+  <img src="figs/moore_logo.png" width="100" height="60" align="middle" />
+  <img src="figs/nih_logo.png" width="80" height="60" align="middle" />
+  <img src="figs/mobilize_logo.png" width="100" height="60" align="middle" />
+</p>
     
-    <p>
-      <img src="figs/darpa.JPG" width="80" height="80" align="middle" />
-      <img src="figs/ONR.jpg" width="100" height="80" align="middle" />
-      <img src="figs/moore_logo.png" width="100" height="60" align="middle" />
-      <img src="figs/nih_logo.png" width="80" height="60" align="middle" />
-      <img src="figs/mobilize_logo.png" width="100" height="60" align="middle" />
-    </p>
-    
-    <p><em>Sponsored in part by DARPA as part of the <a href="https://www.darpa.mil/program/data-driven-discovery-of-models">D3M</a> program under contract No. FA8750-17-2-0095 and the <a href="http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery">SIMPLEX</a> program under contract No. N66001-15-C-4043, and also by the NIH through the <a href="http://mobilize.stanford.edu/">Mobilize Center</a> under grant number U54EB020405.</em></p>
+<p>
+  <em>Sponsored in part by DARPA as part of the <a href="https://www.darpa.mil/program/data-driven-discovery-of-models">D3M</a> program under contract No. FA8750-17-2-0095 and the <a href="http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery">SIMPLEX</a> program under contract No. N66001-15-C-4043, and also by the NIH through the <a href="http://mobilize.stanford.edu/">Mobilize Center</a> under grant number U54EB020405.</em>
+</p>
 
 <h3>Mailing List</h3>
-<p>Feel free to subscribe to the <a href="https://mailman.stanford.edu/mailman/listinfo/snorkel-dev">Snorkel-dev mailing list</a> for Snorkel-related announcements, notifications, and discussions!</p>
+<p>
+  Feel free to subscribe to the <a href="https://mailman.stanford.edu/mailman/listinfo/snorkel-dev">Snorkel-dev mailing list</a> for Snorkel-related announcements, notifications, and discussions!
+</p>
 	      
 <h3>
 <a id="next-steps" class="anchor" href="#next-steps" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Next Steps</h3>
 
-<p>See <a href="https://github.com/HazyResearch/snorkel">the Snorkel repository</a></p>
-      </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/HazyResearch">HazyResearch</a></p>
-        <p>Part of the <a href="http://dawn.cs.stanford.edu/">Stanford DAWN</a> project</p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
-    </div>
-    <script src="javascripts/scale.fix.js"></script>
+<p>
+  See <a href="https://github.com/HazyResearch/snorkel">the Snorkel repository</a>
+</p>
+      
+</section>
+<footer>
+  <p>
+    This project is maintained by <a href="https://github.com/HazyResearch">HazyResearch</a>
+  </p>
+  <p>
+    Part of the <a href="http://dawn.cs.stanford.edu/">Stanford DAWN</a> project
+  </p>
+  <p>
+    <small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small>
+  </p>
+</footer>
+</div>
+<script src="javascripts/scale.fix.js"></script>
     
   </body>
 </html>

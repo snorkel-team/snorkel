@@ -30,3 +30,15 @@ tutorials/intro/data/gold_labels.tsv
 tutorials/intro/snorkel.db
 
 tutorials/tables/data/hardware/
+
+# Branch cleanup...
+snorkel/learning/structure/**/*.nbi
+snorkel/learning/structure/**/*.nbc
+test/etc/L_conversion.ipynb
+**/checkpoints
+**/corenlp.log
+tutorials/**/*.xml
+tutorials/crowdsourcing/*.data*
+tutorials/crowdsourcing/*.meta*
+tutorials/crowdsourcing/*.index*
+figs/WS_pipeline2.pdf

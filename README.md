@@ -32,6 +32,8 @@ We see Snorkel as providing a general framework for many [_weak supervision_](ht
 
 **Check out a recent one-pager about [Snorkel and the Software 2.0 vision](https://cs.stanford.edu/~chrismre/papers/Chris_Re-KDD.pdf)!**
 
+For an alternative implementation of data programming with improved scalability and support for multi-task supervision, check out [Snorkel MeTaL](https://github.com/HazyResearch/metal).
+
 ## Users \& Sponsors
 We're lucky to have some amazing collaborators who are currently using Snorkel!
 

@@ -17,25 +17,22 @@
 * Get set up quickly [below](#quick-start)
 * Try the tutorials with [these instructions](#tutorials)
 * Documentation [here](http://snorkel.readthedocs.io/en/master/)
+* For blog posts, tutorials, papers, and more, check out [snorkel.stanford.edu](snorkel.stanford.edu)!
 
 ## Motivation
 
+Snorkel is a system for rapidly **creating, modeling, and managing training data.**
+Today's state-of-the-art machine learning models require _massive_ labeled training sets--which usually do not exist for real-world applications. Instead, Snorkel is based around the new [data programming](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly) paradigm, in which the developer focuses on writing a set of labeling functions, which are just scripts that programmatically label data. 
+The resulting labels are noisy, but Snorkel automatically models this process—learning, essentially, which labeling functions are more accurate than others—and then uses this to train an end model (for example, a deep neural network in TensorFlow).
+
+<img src="figs/dp_neurips_2016.png" width="500" align="middle" />
+
+_Surprisingly_, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models.
+We see Snorkel as providing a general framework for many [_weak supervision_](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html) techniques, and as defining a new programming model for weakly-supervised machine learning systems.
+
 **Check out a recent one-pager about [Snorkel and the Software 2.0 vision](https://cs.stanford.edu/~chrismre/papers/Chris_Re-KDD.pdf)!**
 
-Snorkel is a system for rapidly **creating, modeling, and managing training data**, currently focused on accelerating the development of _structured or "dark" data extraction applications_ for domains in which large labeled training sets are not available or easy to obtain.
-
-Today's state-of-the-art machine learning models require massive labeled training sets--which usually do not exist for real-world applications. Instead, Snorkel is based around the new [data programming](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly) paradigm, in which the developer focuses on writing a set of labeling functions, which are just scripts that programmatically label data. The resulting labels are noisy, but Snorkel automatically models this process—learning, essentially, which labeling functions are more accurate than others—and then uses this to train an end model (for example, a deep neural network in TensorFlow).
-
-_Surprisingly_, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models. We see Snorkel as providing a general framework for many [_weak supervision_](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html) techniques, and as defining a new programming model for weakly-supervised machine learning systems.
-
-### Snorkel @ VLDB 2018
-<img src="figs/vldb2018_logo.png" width="200" height="85" align="middle" />
-
-We're excited to be presenting on Snorkel at this year's [VLDB conference in Rio De Janeiro](http://vldb2018.lncc.br/), on **Tuesday 8/28 in the "Database Techniques for Machine Learning" session**. We're also honored that the corresponding paper, **_[Snorkel: Rapid Training Data Creation with Weak Supervision](https://arxiv.org/abs/1711.10160)_**, has been invited to the annual **"Best Of VLDB" Special Issue!**
-
-* [Poster](https://ajratner.github.io/assets/papers/Snorkel_VLDB_2018_poster.pdf)
-* Slides [Coming Soon]
-* Check out the [Intro Tutorial](https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro)!
+For an alternative implementation of data programming with improved scalability and support for multi-task supervision, check out [Snorkel MeTaL](https://github.com/HazyResearch/metal).
 
 ## Users \& Sponsors
 We're lucky to have some amazing collaborators who are currently using Snorkel!
@@ -48,17 +45,19 @@ However, **_Snorkel is very much a work in progress_**, so we're eager for any a
 
 ### Best References:
 * **_[Snorkel: Rapid Training Data Creation with Weak Supervision](https://arxiv.org/abs/1711.10160)_ (VLDB 2018)**
-* **_[Data Programming: Creating Large Training Sets, Quickly](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly)_ (NIPS 2016)**
+* **_[Data Programming: Creating Large Training Sets, Quickly](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly)_ (NeurIPS 2016)**
 * **_[Learning the Structure of Generative Models without Labeled Data](https://arxiv.org/abs/1703.00854)_ (ICML 2017)**
+* **_[Training Complex Models with Multi-Task Weak Supervision](https://arxiv.org/abs/1810.02840)_ (AAAI 2019)**
+* **_[The Role of Massively Multi-Task and Weak Supervision in Software 2.0](https://ajratner.github.io/assets/papers/software_2_mmt_vision.pdf)_ (CIDR 2019)**
 * _[Snorkel: Fast Training Set Generation for Information Extraction](http://hazyresearch.github.io/snorkel/pdfs/snorkel_demo.pdf)_ (SIGMOD DEMO 2017)
-* _[Inferring Generative Model Structure with Static Analysis](https://arxiv.org/abs/1709.02477)_ (NIPS 2017)
+* _[Inferring Generative Model Structure with Static Analysis](https://arxiv.org/abs/1709.02477)_ (NeurIPS 2017)
 * _[Data Programming with DDLite: Putting Humans in a Different Part of the Loop](http://cs.stanford.edu/people/chrismre/papers/DDL_HILDA_2016.pdf)_ (HILDA @ SIGMOD 2016; note Snorkel was previously <em>DDLite</em>)
 * _[Socratic Learning: Correcting Misspecified Generative Models using Discriminative Models](https://arxiv.org/abs/1610.08123)_
 * _[Fonduer: Knowledge Base Construction from Richly Formatted Data](https://arxiv.org/abs/1703.05028)_ (SIGMOD 2018)
 
 ### Further Reading:
-* _[Learning to Compose Domain-Specific Transformations for Data Augmentation](https://arxiv.org/abs/1709.01643)_ (NIPS 2017)
-* _[Gaussian Quadrature for Kernel Features](https://arxiv.org/abs/1709.02605)_ (NIPS 2017)
+* _[Learning to Compose Domain-Specific Transformations for Data Augmentation](https://arxiv.org/abs/1709.01643)_ (NeurIPS 2017)
+* _[Gaussian Quadrature for Kernel Features](https://arxiv.org/abs/1709.02605)_ (NeurIPS 2017)
 
 ## Quick Start
 

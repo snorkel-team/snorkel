@@ -11,7 +11,7 @@ dependencies:
   - matplotlib
   - nltk
   - numba
-  - numpy>=1.11
+  - numpy>=1.16
   - pytorch-cpu>=0.4
   - pandas
   - psycopg2

@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Alex Ratner, Stephen Bach, Chris Ré" />
+  <title>Programming Training Data: The New Interface Layer for ML</title>
+  <link rel="stylesheet" href="blog.css">
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+</head>
+<body>
+<div id="header">
+
+<!-- Title -->
+<h1 class="title">
+    Emerging Topics in Multi-Task Learning Systems
+</h1>
+<h4 style="color:gray">The Transfer Learning Connection, Weaker Supervision, and Massive MTL</h4>
+Alex Ratner, Braden Hancock, and Chris Ré<br />
+<em>And referencing work by many other members of Hazy Research</em><br />
+<a href="http://snorkel.stanford.edu">Back to the Snorkel Blog</a>
+</div>
+
+<!-- Front Material -->
+<p style="color:black">
+Front material goes here.
+</p>
+
+<!-- MTL Intro -->
+<h2>
+    The Resurgence of Multi-Task Learning
+</h2>
+<p style="color:black">
+    MTL text will go here.
+</p>
+
+<div class="figure">
+    <img src="mtl_img/caruana_thesis.png" width="100%" class="centered"/>
+    <p>
+        <b>
+        Fig. 1: A schematic of a multi-task network with a single shared hidden layer, from Rich Caruana’s 1997 thesis. [1]
+        </b>
+    </p>
+</div>
+
+<!-- Information Sharing -->
+<h2>
+    A Unifying Paradigm for Information Sharing
+</h2>
+<p style="color:black">
+    MTL/TL text will go here.
+</p>
+
+<div class="figure">
+    <img src="mtl_img/hard_param_sharing.png" width="100%" class="centered"/>
+    <p>
+        <b>
+        Fig. 2: A basic modern MTL model, with hard parameter sharing: two tasks, A and B, share the same shared layers, while having their own final task head layers.
+        </b>
+    </p>
+</div>
+
+<p style="color:black">
+    More MTL/TL text will go here.
+</p>
+
+<div class="figure">
+    <img src="mtl_img/training_schedule_matrices.png" width="100%" class="centered"/>
+    <p>
+        <b>
+        Fig. 3: Example training schedule matrices depicting three different multi-task or transfer learning techniques for a hard parameter sharing neural network.
+        </b>
+    </p>
+</div>
+
+<p style="color:black">
+    Final MTL/TL text will go here.
+</p>
+
+<!-- Weak Supervision -->
+<h2>
+    Bringing More Signal Into the Fold: Multi-Task Weak Supervision
+</h2>
+<p style="color:black">
+    WS text will go here.
+</p>
+
+<div class="figure">
+    <img src="mtl_img/metal_pipeline.png" width="100%" class="centered"/>
+    <p>
+        <b>
+        Fig. 4: A diagram of our new multi-task supervision approach (featured at AAAI ‘19) for using weaker, more diverse sources of signal to train multi-task models.
+        </b>
+    </p>
+</div>
+
+<p style="color:black">
+    More WS text will go here.
+</p>
+
+<!-- Weak Supervision -->
+<h2>
+    Building Data Management Systems for the Massively Multi-Task Regime
+</h2>
+<p style="color:black">
+    MMTL text will go here.
+</p>
+
+<div class="figure">
+    <img src="mtl_img/mmtl_problem.png" width="100%" class="centered"/>
+    <p>
+        <b>
+        Fig. 5: A growing problem for machine learning workflows in the massively multi-task regime is the increasing number of interacting tasks and models, which introduces complex dependencies and data management issues.
+        </b>
+        For example, in a relation extraction application, the outputs of one model often serve as the supervision, input, and/or features of another (green arrows), and models often share common representations (orange nodes), such as word embeddings or pretrained networks used for fine-tuning.
+    </p>
+</div>
+
+<p style="color:black">
+    More MMTL text will go here.
+</p>
+
+<div class="figure">
+    <img src="mtl_img/mmtl_solution.png" width="100%" class="centered"/>
+    <p>
+        <b>
+        Fig. 6: An envisioned massively multi-task workflow where developers effectively pool and share information in a central multi-task model, which can then be deployed via smaller distilled single-task models (CIDR ‘19).
+        </b>
+    </p>
+</div>
+
+<p style="color:black">
+    Final MMTL text will go here.
+</p>
+
+<!-- References -->
+<h2 id="research-directions">
+  References [double check numbers match]
+</h2>
+<ol>
+  <li>
+    <a href="https://www.bradenhancock.com">One cool dude</a>
+  </li>
+</ol>
+
+
+<br />
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://snorkel-stanford-edu.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+</body>
+</html>

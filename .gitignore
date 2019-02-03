@@ -14,6 +14,12 @@ docs/_build
 # PyCharm
 .idea
 
+# VSCode
+.vscode/
+
+# mypy
+.mypy*
+
 # Tutorial
 tutorial/data/CDR_*.BioC.xml
 tutorial/data/dicts
@@ -42,3 +48,6 @@ tutorials/crowdsourcing/*.data*
 tutorials/crowdsourcing/*.meta*
 tutorials/crowdsourcing/*.index*
 figs/WS_pipeline2.pdf
+logs/
+reports/
+tika*

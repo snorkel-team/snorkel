@@ -17,7 +17,7 @@
 * Get set up quickly [below](#quick-start)
 * Try the tutorials with [these instructions](#tutorials)
 * Documentation [here](http://snorkel.readthedocs.io/en/master/)
-* For blog posts, tutorials, papers, and more, check out [snorkel.stanford.edu](snorkel.stanford.edu)!
+* For blog posts, tutorials, papers, and more, check out [snorkel.stanford.edu](http://snorkel.stanford.edu)!
 
 ## Motivation
 

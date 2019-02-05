@@ -16,27 +16,15 @@
 <h1 class="title">
     Emerging Topics in Multi-Task Learning Systems
 </h1>
-<h4 style="color:gray">The Transfer Learning Connection, Weaker Supervision, and Massive MTL</h4>
+<h4 style="color:gray">New Paradigms for Information Sharing, Weaker Supervision, and Massive MTL</h4>
 Alex Ratner, Braden Hancock, and Chris Ré<br />
 <em>And referencing work by many other members of Hazy Research</em><br />
 <a href="http://snorkel.stanford.edu">Back to the Snorkel Blog</a>
 </div>
 
-<!-- Front Material -->
-<p style="color:black">
-Front material goes here.
-</p>
-
-<!-- MTL Intro -->
-<h2>
-    The Resurgence of Multi-Task Learning
-</h2>
-<p style="color:black">
-    MTL text will go here.
-</p>
 
 <div class="figure">
-    <img src="mtl_img/caruana_thesis.png" width="30%" class="centered"/>
+    <img src="mtl_img/caruana_thesis.png" width="40%" class="centered"/>
     <p>
         <b>
         Fig. 1: A schematic of a multi-task network with a single shared hidden layer, from Rich Caruana’s 1997 thesis. [1]
@@ -44,29 +32,67 @@ Front material goes here.
     </p>
 </div>
 
+
+<!-- Front Material -->
+<p style="color:black">
+    <i>Multi-task learning</i> (MTL), the technique of training a model to predict multiple tasks using a shared representation, has recently experienced an upsurge of interest and usage [3] as a powerful technique for amortizing labeling costs and learning more robust representations across multiple tasks. The idea of multi-task learning was first proposed in the 90’s [1], and has recently reemerged in new forms using modern deep learning techniques, concepts, and tools [3]. While many recent works have focused on novel MTL model <i>architectures</i> (i.e., various models for learning which parameters to share between tasks and to what extent), there are equally important questions about how to build the next generation of MTL <i>systems</i>&mdash;the data management systems and high-level frameworks that support MTL. We focus on three of these in this post:
+    <ul>
+        <li>
+            How do MTL approaches connect with other popular approaches for sharing information between tasks (e.g., transfer learning), and <b>how can we build systems that unify the execution of these information-sharing approaches?</b>
+        </li>
+        <li>
+            Hand-labeling training data is often a prohibitive bottleneck in supervised machine learning, leading to increasing use of weak supervision techniques [1,11]. <b>How does weak supervision change in the MTL setting, and how can we improve it?</b>
+        </li>
+        <li>
+            As tasks increasingly become weakly supervised, the number of tasks, the rate at which they change, and the degree to which they are interdependent in complex ways will all increase drastically (and already has at many large organizations in industry and academia). <b>What new data management systems and formalisms will be needed to handle this new massively multi-task regime?</b>
+        </li>
+    </ul>
+</p>
+
+
+<!-- MTL Intro -->
+<!-- <h2>
+    The Resurgence of Multi-Task Learning
+</h2> -->
+<!-- <p style="color:black">
+    MTL text will go here.
+</p> -->
+
 <!-- Information Sharing -->
 <h2>
     A Unifying Paradigm for Information Sharing
 </h2>
 <p style="color:black">
-    MTL/TL text will go here.
+    One emerging topic in MTL is how it relates to other approaches for sharing information between tasks. For example, a related and quite popular technique is <i>transfer learning</i> (TL), which broadly describes the approach of training a model on some task or dataset A, and then using this model (potentially with some form of fine-tuning) on a separate task or dataset B. While often treated as a separate concept, to a first approximation TL can in fact be viewed as a sub-case of MTL where two tasks are trained in a serial fashion (and potentially over different datasets). Similarly, MTL can be viewed as a natural generalization of TL to multiple tasks, trained jointly and potentially with more complex information sharing patterns.
 </p>
 
 <div class="figure">
     <img src="mtl_img/mtl_layers.png" width="50%" class="centered"/>
     <p>
         <b>
-        Fig. 2: A basic modern MTL model, with hard parameter sharing: two tasks, A and B, share the same shared layers, while having their own final task head layers.
+        Fig. 2: A basic modern MTL model, with hard parameter sharing: two tasks, A and B, have certain <i>shared layers</i> in common, while having their own final <i>task head layers</i>.
         </b>
     </p>
 </div>
 
 <p style="color:black">
-    More MTL/TL text will go here.
+    To make this connection more concrete, one potential formalism is to model the training procedure of a multi-layered neural network with a 2D training schedule matrix:
+    <ul>
+        <li>The rows correspond to layers in the network, with data coming in at the shared layers on bottom and predictions coming out the <i>T</i> (number of tasks) individual task heads on top.</li>
+        <li>The columns represent training time, with the first training epoch on the left and the last one on the right.</li>
+        <li>The entries in the matrix correspond to the learning rate, where a learning rate of 0 means the layer is “frozen” and the parameters are not being updated.</li>
+    </ul>
+    With these two simple axes, we can capture a wide variety of potential information sharing techniques:
+    <ol type="a">
+        <li>MTL (“round robin”): One classic MTL approach is to alternate between batches of task A and task B, freezing the task head that does not correspond to the current batch.</li>
+        <li>TL (“fine-tuning”): A classic TL approach is to first train completely on task A, then freeze those layers and only train the task head for task B.</li>
+        <li>TL (“gradual unfreezing”): (Howard and Ruder, 2018) [7] saw improvements by gradually unfreezing the shared parameters while fine-tuning task B.</li>
+    </ol>
+    Note that for simplicity here, we omit a specification of which dataset is being fed in at each time step; however, this can be easily incorporated as well.
 </p>
 
 <div class="figure">
-    <img src="mtl_img/training_matrices.png" width="100%" class="centered"/>
+    <img src="mtl_img/training_matrices.png" width="95%" class="centered"/>
     <p>
         <b>
         Fig. 3: Example training schedule matrices depicting three different multi-task or transfer learning techniques for a hard parameter sharing neural network.
@@ -75,7 +101,7 @@ Front material goes here.
 </div>
 
 <p style="color:black">
-    Final MTL/TL text will go here.
+    Additional techniques that can be captured by this simple abstraction include learning rate decay (gradual reduction in intensity from left to right), learning rate warmup (gradually increasing from 0 to maximum LR in the first few columns on the left), proportional sampling of batches [8] (rotating between tasks proportional to the number of batches they contribute rather than uniformly), curriculum learning (training on the tasks serially in increasing order of difficulty), and many others. While these simple 2D training matrices do not capture all the possible ways to frame an MTL/TL training procedure (e.g., task-specific loss scaling, “soft” parameter sharing, etc.),  we find this paradigm useful for highlighting some of the differences (and many of the similarities) between these approaches, and are currently exploring its implementation in our prototype MTL system, <a href="https://github.com/HazyResearch/metal" target="_blank">Snorkel MeTaL</a> [4,5].
 </p>
 
 <!-- Weak Supervision -->
@@ -83,20 +109,27 @@ Front material goes here.
     Bringing More Signal Into the Fold: Multi-Task Weak Supervision
 </h2>
 <p style="color:black">
-    WS text will go here.
+    Current MTL approaches generally take advantage of existing hand-labeled training sets. However, labeling training datasets has become one of the most significant bottlenecks in real-world ML development pipelines; this is exacerbated in MTL settings where multiple such datasets are required.
+</p>
+<p>
+    One increasingly popular approach to tackling this training data annotation bottleneck is to use weaker, higher-level supervision&mdash;for example, labels generated by noisy sources and/or specified programmatically [1,11]. So far, systems for managing weak supervision resources&mdash;such as our system Snorkel [2] (<a href="http://snorkel.stanford.edu">snorkel.stanford.edu</a>)&mdash;have mostly focused on modeling the accuracies and correlations of noisy label sources for a single task. But the increasing prevalence of MTL scenarios invites the question: what happens when our noisy, possibly correlated label sources now label multiple related tasks? Can we benefit by modeling the supervision for these tasks jointly?
 </p>
 
 <div class="figure">
-    <img src="mtl_img/metal_pipeline.png" width="100%" class="centered"/>
+    <img src="mtl_img/metal_aaai_2019.png" width="100%" class="centered"/>
     <p>
         <b>
-        Fig. 4: A diagram of our new multi-task supervision approach (featured at AAAI ‘19) for using weaker, more diverse sources of signal to train multi-task models.
+        Fig. 4: A diagram of our new multi-task supervision approach (featured at AAAI ‘19), where weak supervision sources s<sub>1</sub>, s<sub>2</sub>, s<sub>3</sub> output noisy multi-task label vectors (left), which we model and combine using a new matrix completion approach (middle), and finally use to train a multi-task model [5].
         </b>
     </p>
 </div>
 
 <p style="color:black">
-    More WS text will go here.
+    We tackle these questions in a new multitask-aware version of Snorkel, <a href="https://github.com/HazyResearch/metal" target="_blank">Snorkel MeTaL</a> [4,5], which can support multi-task weak supervision sources that provide noisy labels for one or more related tasks. We handle this with a new modeling approach, which we recently presented at AAAI ‘19 [5].  One example we consider is the setting of label sources with different granularities. For example, suppose we are aiming to train a fine-grained named entity recognition (NER) model to tag mentions of specific types of people and locations, and we have some noisy labels that are fine-grained&mdash;e.g. Labeling “Lawyer” vs. “Doctor” or “Bank” vs. “Hospital”&mdash;and some that are coarse-grained, e.g. labeling “Person” vs. “Location”. By representing these sources as labeling different hierarchically-related tasks, we can jointly model their accuracies, and reweight and combine their multi-task labels to create much cleaner, intelligently aggregated multi-task training data that improves the end MTL model performance.
+</p>
+
+<p>
+    Development on Snorkel MeTaL is ongoing, as are collaborations with application partners to try this approach of weakly-supervised MTL on a range of problems involving electronic health records, parole reports, HTML data, and more.  If this sounds interesting to you, please drop us a line&mdash;we’re excited to talk!
 </p>
 
 <!-- Weak Supervision -->
@@ -104,43 +137,60 @@ Front material goes here.
     Building Data Management Systems for the Massively Multi-Task Regime
 </h2>
 <p style="color:black">
-    MMTL text will go here.
+    We believe that the most exciting aspects of building data management systems for MTL will revolve around handling what we refer to as the <i>massively multi-task</i> regime, where tens to hundreds of weakly-supervised (and thus highly dynamic) tasks interact in complex and varied ways. While most MTL work to date has considered tackling a handful of tasks, defined by static hand-labeled training sets, the world is quickly advancing to a state where organizations---whether large companies [9], academic labs, or online communities---maintain tens to hundreds of weakly-supervised, rapidly changing, and interdependent modeling tasks. For example, even a standard text information extraction application today (Fig. 5) contains multiple models that have complex data dependencies (e.g. the output of one model is used both as weak supervision and as input features for a subsequent model) and share representations (e.g. using transfer or multi-task learning). Moreover, because these tasks are weakly supervised, developers can add, remove, or change tasks (i.e. training sets) in hours or days, rather than months or years, potentially necessitating retraining of the entire model.
 </p>
 
 <div class="figure">
     <img src="mtl_img/mmtl_tangle.png" width="80%" class="centered"/>
     <p>
         <b>
-        Fig. 5: A growing problem for machine learning workflows in the massively multi-task regime is the increasing number of interacting tasks and models, which introduces complex dependencies and data management issues.
-        </b>
+        Fig. 5: A growing problem for machine learning workflows in the <i>massively multi-task</i> regime is the increasing number of interacting tasks and models, which introduces complex dependencies and data management issues.
         For example, in a relation extraction application, the outputs of one model often serve as the supervision, input, and/or features of another (green arrows), and models often share common representations (orange nodes), such as word embeddings or pretrained networks used for fine-tuning.
+        </b>
     </p>
 </div>
 
 <p style="color:black">
-    More MMTL text will go here.
+    Handling this new massively multi-task regime requires building data management systems that address a range of questions:
+    <ul>
+        <li>How can we <i></i><b>incrementally maintain and materialize</b> fundamentally dynamic multi-task models, where tasks are rapidly changed (e.g. by changing their training datasets), added, or removed?</li>
+        <li>How can we track and handle the <b>complex data dependencies</b> between multiple tasks that occur <b>outside the traditional MTL model architecture</b>, e.g. where one task’s output is used as part of a weak supervision strategy for another task?</li>
+        <li>How can we <b>formalize and understand</b> these more complex, massively multi-task workflows?</li>
+    </ul>
+</p>
+
+<p>
+    In a recent paper (presented at CIDR ’19 [6]), we outlined some initial thoughts in response to the above questions, envisioning a massively multi-task setting where MTL models effectively function as a central repository for training data that is weakly labeled by different developers, and then combined in a central “mother” multi-task model (Fig. 6).
 </p>
 
 <div class="figure">
     <img src="mtl_img/mmtl.png" width="90%" class="centered"/>
     <p>
         <b>
-        Fig. 6: An envisioned massively multi-task workflow where developers effectively pool and share information in a central multi-task model, which can then be deployed via smaller distilled single-task models (CIDR ‘19).
+        Fig. 6: An envisioned massively multi-task workflow where developers effectively pool and share information in a central multi-task model, which can then be deployed via smaller distilled [10] single-task models (CIDR ‘19) [6].
         </b>
     </p>
 </div>
 
 <p style="color:black">
-    Final MMTL text will go here.
+    Regardless of exact form factor, it is clear there’s lots of exciting progress for MTL techniques ahead---not just new model architectures, but also increasing unification with transfer learning approaches, new weakly-supervised approaches, and new software development and systems paradigms.  We’ll be continuing to post our thoughts and code at <a href="http://snorkel.stanford.edu">snorkel.stanford.edu</a> and the <a href="https://github.com/HazyResearch/metal" target="_blank">Snorkel MeTaL</a> repo--feedback is always welcome!
 </p>
 
 <!-- References -->
 <h2 id="research-directions">
-  References [double check numbers match]
 </h2>
 <ol>
-  <li>
-    <a href="https://www.bradenhancock.com">One cool dude</a>
+    <li>R. Caruana. Multitask learning. Machine Learning, 28(1), 41-75. 1997. (http://reports-archive.adm.cs.cmu.edu/anon/1997/CMU-CS-97-203.pdf)</li>
+    <li>A. Ratner, S. Bach, H. Ehrenberg, J. Fries, S. Wu, C. Ré. Snorkel: Rapid Training Data Creation with Weak Supervision. VLDB 2018. (https://arxiv.org/abs/1711.10160)</li>
+    <li>S. Ruder. An overview of multi-task learning in deep neural networks. arXiv preprint. (https://arxiv.org/abs/1706.05098)</li>
+    <li>A. Ratner, B. Hancock, J. Dunnmon, R. Goldman, and C. Ré. Snorkel MeTaL: Weak supervision for multi-task learning. DEEM 2018. (https://dl.acm.org/citation.cfm?id=3209898) </li>
+    <li>A. Ratner, B. Hancock, J. Dunnmon, F. Sala, S. Pandey, and C. Ré. Training complex models with multi-task weak supervision. AAAI 2019. (https://arxiv.org/abs/1810.02840) </li>
+    <li>A. Ratner, B. Hancock, and C. Ré. The Role of Massively Multi-Task and Weak Supervision in Software 2.0. CIDR 2019.  (http://cidrdb.org/cidr2019/papers/p58-ratner-cidr19.pdf)</li>
+    <li>J. Howard and S. Ruder. Universal Language Model Fine-tuning for Text Classification(ULMFit). ACL 2018. (https://arxiv.org/pdf/1801.06146.pdf)</li>
+    <li>V. Sanh, T. Wolf, and S. Ruder. A Hierarchical Multi-task Approach for Learning Embeddings from Semantic Tasks. AAAI 2019. (https://arxiv.org/pdf/1811.06031.pdf)</li>
+    <li>S. Bach, D. Rodriguez, Y. Liu, C. Luo, H. Shao, C. Xia, ... , and R. Kuchhal. Snorkel DryBell: A Case Study in Deploying Weak Supervision at Industrial Scale. 2018. arXiv preprint. (https://arxiv.org/abs/1812.00417)</li>
+    <li>G. Hinton, O. Vinyals, and J. Dean. 2015. Distilling the knowledge in a neural network. arXiv preprint. (https://arxiv.org/abs/1503.02531)</li>
+    <li>A. Ratner, S. Bach, P. Varma, J. Fries, S. Wu, C. Ré. Weak Supervision: The New Programming Paradigm for Machine Learning (https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html)</li>
   </li>
 </ol>
 

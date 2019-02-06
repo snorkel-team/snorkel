@@ -160,10 +160,6 @@ class Spacy(Parser):
                 parts['dep_parents'].append(head_idx)
                 parts['dep_labels'].append(token.dep_)
 
-            # Add null entity array (matching null for CoreNLP)
-            parts['entity_cids'] = ['O' for _ in parts['words']]
-            parts['entity_types'] = ['O' for _ in parts['words']]
-
             # make char_offsets relative to start of sentence
             parts['char_offsets'] = [
                 p - parts['char_offsets'][0] for p in parts['char_offsets']

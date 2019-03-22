@@ -11,7 +11,7 @@ from itertools import product
 import re
 from sqlalchemy.sql import select
 
-from snorkel.models import Candidate, TemporarySpan, Sentence
+from snorkel.models import Candidate, TemporarySpan, Sentence, TemporaryDocument
 from snorkel.udf import UDF, UDFRunner
 
 

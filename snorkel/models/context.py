@@ -186,6 +186,47 @@ class TemporaryContext(object):
         raise NotImplementedError()
 
 
+class TemporaryDocument(TemporaryContext):
+    """
+    TemporaryContext to hold the entire document.
+    """
+    
+    def __init__(self, document):
+        super(TemporaryDocument, self).__init__()
+        self.document = document
+        self.name = document.name
+        self.meta = document.meta
+        self.id = document.id
+        return
+    
+    def __eq__(self, other):
+        return self.document.id == other.id
+    
+    def __ne__(self, other):
+        return not(self.__eq__(other))
+    
+    def __hash__(self):
+        return hash(self.document.id)
+    
+    def get_stable_id(self):
+        return self.document.id
+    
+    def _get_table_name(self):
+        return 'document'
+    
+    def _get_polymorphic_identity(self):
+        return 'document'
+    
+    def _get_insert_query(self):
+        return """INSERT INTO document VALUES(:id, :name, :meta)"""
+    
+    def _get_insert_args(self):
+        return {'id': self.id, 'name': self.name, 'meta': self.meta}
+    
+    def __repr__(self):
+        return self.document.__repr__()
+
+
 class TemporarySpan(TemporaryContext):
     """The TemporaryContext version of Span"""
     def __init__(self, sentence, char_start, char_end, meta=None):

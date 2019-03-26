@@ -27,7 +27,9 @@ By modeling a noisy training set creation process in this way, we can take poten
 We see Snorkel as providing a general framework for many [_weak supervision_](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html) techniques, and as defining a new programming model for weakly-supervised machine learning systems.
 
 **Check out a new [blog post](https://ai.googleblog.com/2019/03/harnessing-organizational-knowledge-for.html) and accompanying [SIGMOD paper](https://arxiv.org/abs/1812.00417) on Snorkel's usage at Google and some thoughts about applying weak supervision at industrial scale!**
-**Check out a recent one-pager about [Snorkel and the Software 2.0 vision](https://cs.stanford.edu/~chrismre/papers/Chris_Re-KDD.pdf)!**
+
+Read a recent one-pager about [Snorkel and the Software 2.0 vision](https://cs.stanford.edu/~chrismre/papers/Chris_Re-KDD.pdf)!
+
 For an alternative implementation of data programming with improved scalability and support for multi-task supervision, check out [Snorkel MeTaL](https://github.com/HazyResearch/metal).
 
 ## Users \& Sponsors

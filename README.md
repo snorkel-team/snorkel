@@ -7,17 +7,13 @@
 [![Documentation](https://readthedocs.org/projects/snorkel/badge/)](http://snorkel.readthedocs.io/en/master/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-## Acknowledgements
-<img src="figs/darpa.JPG" width="80" height="80" align="middle" /> <img src="figs/ONR.jpg" width="100" height="80" align="middle" /> <img src="figs/moore_logo.png" width="100" height="60" align="middle" /> <img src="figs/nih_logo.png" width="80" height="60" align="middle" /> <img src="figs/mobilize_logo.png" width="100" height="60" align="middle" />
-
-*Sponsored in part by DARPA as part of the [D3M](https://www.darpa.mil/program/data-driven-discovery-of-models) program under contract No. FA8750-17-2-0095 and the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043, and also by the NIH through the [Mobilize Center](http://mobilize.stanford.edu/) under grant number U54EB020405.*
-
 ## Getting Started
 
+* For the latest news, blog posts, tutorials, papers, etc. related to Snorkel, check out [snorkel.stanford.edu](http://snorkel.stanford.edu)!
 * Get set up quickly [below](#quick-start)
 * Try the tutorials with [these instructions](#tutorials)
 * Documentation [here](http://snorkel.readthedocs.io/en/master/)
-* For blog posts, tutorials, papers, and more, check out [snorkel.stanford.edu](http://snorkel.stanford.edu)!
+
 
 ## Motivation
 
@@ -27,11 +23,11 @@ The resulting labels are noisy, but Snorkel automatically models this process—
 
 <img src="figs/dp_neurips_2016.png" width="500" align="middle" />
 
-_Surprisingly_, by modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models.
+By modeling a noisy training set creation process in this way, we can take potentially low-quality labeling functions from the user, and use these to train high-quality end models.
 We see Snorkel as providing a general framework for many [_weak supervision_](http://hazyresearch.github.io/snorkel/blog/weak_supervision.html) techniques, and as defining a new programming model for weakly-supervised machine learning systems.
 
+**Check out a new [blog post](https://ai.googleblog.com/2019/03/harnessing-organizational-knowledge-for.html) and accompanying [SIGMOD paper](https://arxiv.org/abs/1812.00417) on Snorkel's usage at Google and some thoughts about applying weak supervision at industrial scale!**
 **Check out a recent one-pager about [Snorkel and the Software 2.0 vision](https://cs.stanford.edu/~chrismre/papers/Chris_Re-KDD.pdf)!**
-
 For an alternative implementation of data programming with improved scalability and support for multi-task supervision, check out [Snorkel MeTaL](https://github.com/HazyResearch/metal).
 
 ## Users \& Sponsors
@@ -228,3 +224,8 @@ c.InteractiveShellApp.exec_lines = ['%autoreload 2']
 ```
 
 </details>
+
+## Acknowledgements
+<img src="figs/darpa.JPG" width="80" height="80" align="middle" /> <img src="figs/ONR.jpg" width="100" height="80" align="middle" /> <img src="figs/moore_logo.png" width="100" height="60" align="middle" /> <img src="figs/nih_logo.png" width="80" height="60" align="middle" /> <img src="figs/mobilize_logo.png" width="100" height="60" align="middle" />
+
+*Sponsored in part by DARPA as part of the [D3M](https://www.darpa.mil/program/data-driven-discovery-of-models) program under contract No. FA8750-17-2-0095 and the [SIMPLEX](http://www.darpa.mil/program/simplifying-complexity-in-scientific-discovery) program under contract number N66001-15-C-4043, and also by the NIH through the [Mobilize Center](http://mobilize.stanford.edu/) under grant number U54EB020405.*

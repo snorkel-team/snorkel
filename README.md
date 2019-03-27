@@ -9,10 +9,10 @@
 
 ## Getting Started
 
-* For the latest news, blog posts, tutorials, papers, etc. related to Snorkel, check out [snorkel.stanford.edu](http://snorkel.stanford.edu)!
-* Get set up quickly [below](#quick-start)
-* Try the tutorials with [these instructions](#tutorials)
-* Documentation [here](http://snorkel.readthedocs.io/en/master/)
+* For the latest news, blog posts, tutorials, papers, etc. related to Snorkel, check out **[snorkel.stanford.edu](http://snorkel.stanford.edu)**!
+* Get [set up](#quick-start) quickly
+* Try the [tutorials](#tutorials) 
+* Read the [documentation](http://snorkel.readthedocs.io/en/master/)
 
 
 ## Motivation

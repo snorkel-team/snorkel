@@ -11,7 +11,7 @@ from itertools import product
 import re
 from sqlalchemy.sql import select
 
-from snorkel.models import Candidate, TemporarySpan, Sentence
+from snorkel.models import Candidate, TemporarySpan, Sentence, TemporaryDocument
 from snorkel.udf import UDF, UDFRunner
 
 
@@ -134,6 +134,30 @@ class CandidateSpace(object):
 
     def apply(self, x):
         raise NotImplementedError()
+
+
+class DocCandidate(CandidateSpace):
+    """
+    Defines the space of candidates where candidates are entire documents.
+
+    Example usage:
+        # Define a candidate subclass relying on the entire document
+        FullDocCandidate = candidate_subclass('FullDocCandidate', ['docCandidate'])
+
+        # Set up candidate extraction
+        fullDoc = DocCandidate()
+        defaultMatcher = Matcher()
+        cand_extractor = CandidateExtractor(FullDocCandidate, [fullDoc], [defaultMatcher])
+
+        # Get all the documents from the database
+        docs = session.query(Document).order_by(Document.name).all()
+
+        # Extract candidates
+        cand_extractor.apply(set(docs))
+    """
+    
+    def apply(self, docContext):
+        yield TemporaryDocument(docContext)
 
 
 class Ngrams(CandidateSpace):

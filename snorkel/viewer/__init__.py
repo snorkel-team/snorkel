@@ -164,7 +164,7 @@ class Viewer(widgets.DOMWidget):
 
                 # Get the candidates in this context
                 candidates = [c for c in self.candidates if c[0].get_parent() == context]
-                gold = [g for g in self.gold if g.context_id == context.id]
+                gold = [g for g in self.gold if g.get_parent() == context]
 
                 # Construct the <li> and page view elements
                 li_data = self._tag_context(context, candidates, gold)

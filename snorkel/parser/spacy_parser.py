@@ -6,7 +6,6 @@ try:
     import spacy
     from spacy.cli import download
     from spacy import util
-    from spacy.deprecated import resolve_model_name
 except:
     raise Exception("spaCy not installed. Use `pip install spacy`.")
 
@@ -62,8 +61,7 @@ class Spacy(Parser):
         :return:
         '''
         data_path = util.get_data_path()
-        model_name = resolve_model_name(name)
-        model_path = data_path / model_name
+        model_path = data_path / name
         return model_path.exists()
 
     @staticmethod

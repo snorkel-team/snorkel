@@ -7,7 +7,6 @@ try:
     import spacy
     from spacy.cli import download
     from spacy import util
-    from spacy.deprecated import resolve_model_name
 except:
     raise Exception("spacy not installed. Use `pip install spacy`.")
 
@@ -63,8 +62,7 @@ class SpacyTokenizer(Tokenizer):
         :return:
         '''
         data_path = util.get_data_path()
-        model_name = resolve_model_name(name)
-        model_path = data_path / model_name
+        model_path = data_path / name
         if not model_path.exists():
             lang_name = util.get_lang_class(name).lang
             return False

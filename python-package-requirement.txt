@@ -16,5 +16,5 @@ six
 sqlalchemy>=1.0.14
 tensorflow>=1.0
 tika
-spacy
+spacy<2
 psycopg2

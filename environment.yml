@@ -19,7 +19,7 @@ dependencies:
   - python
   - requests
   - runipy
-  - scipy
+  - scipy=1.2.1
   - six
   - spacy<2
   - sqlalchemy>=1.0.14

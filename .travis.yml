@@ -3,11 +3,7 @@
 
 dist: trusty
 sudo: false  # to use container-based infra, see: http://docs.travis-ci.com/user/migrating-from-legacy/
-language: generic
-env:
-  matrix:
-    - PYTHON_VERSION=2.7
-    - PYTHON_VERSION=3.6
+language: python
 
 cache:
   directories:
@@ -23,7 +19,6 @@ before_install:
   - conda info --all
 
 install:
-  - sed --in-place 's/- python/- python='"$PYTHON_VERSION"'/' environment.yml
   - conda env create --quiet --file=environment.yml
   - conda activate snorkel
   - pip install .

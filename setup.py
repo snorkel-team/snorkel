@@ -18,6 +18,7 @@ setup(
     license="Apache License 2.0",
     packages=find_packages(),
     include_package_data=True,
+    install_requires=requirements,
     keywords="machine-learning ai information-extraction weak-supervision",
     classifiers=[
         "Intended Audience :: Science/Research",

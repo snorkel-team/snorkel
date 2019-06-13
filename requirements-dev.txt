@@ -1,5 +1,4 @@
 black
-codecov
 flake8
 isort
 mypy

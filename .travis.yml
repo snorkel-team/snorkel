@@ -22,6 +22,7 @@ jobs:
 install:
   - pip install -U pip setuptools
   - pip install -U tox==3.12.0
+  - pip install -U codecov
   - tox --notest
 
 script:

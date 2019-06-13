@@ -5,6 +5,7 @@ jupyterlab==0.33.12
 networkx==2.2
 numpy==1.16.0
 pandas==0.23.4
+pyarrow==0.12.0
 scikit-learn==0.20.2
 scipy==1.2.0
 spacy==2.1.3

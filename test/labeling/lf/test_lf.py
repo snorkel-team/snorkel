@@ -3,8 +3,8 @@ import unittest
 from collections import namedtuple
 from typing import List
 
-from snorkel.labeling.lf.core import LabelingFunction, labeling_function
-from snorkel.types.data import Example
+from snorkel.labeling.lf import LabelingFunction, labeling_function
+from snorkel.types import Example
 
 ExampleClass = namedtuple("ExampleClass", ("a",))
 

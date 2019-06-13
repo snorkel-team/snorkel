@@ -1,6 +1,6 @@
 from typing import Any, Callable, Mapping, Optional, Tuple
 
-from snorkel.types.data import Example
+from snorkel.types import Example
 
 
 class LabelingFunction:

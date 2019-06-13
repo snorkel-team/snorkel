@@ -10,7 +10,7 @@ cache: pip
 dist: xenial
 
 env:
-  TOXENV=py,check
+  TOXENV=py,check,type
 
 jobs:
   include:

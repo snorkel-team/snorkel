@@ -12,11 +12,9 @@ env:
 
 jobs:
   include:
-  - name: "run tests with python 3.5"
-    python: 3.5
-  - name: "run tests with python 3.6"
+  - name: "Tests: python3.6"
     python: 3.6
-  - name: "run tests with python 3.7"
+  - name: "Tests: python3.7"
     python: 3.7
 
 install:

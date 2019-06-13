@@ -4,3 +4,4 @@ isort
 mypy
 pre-commit
 pytest
+pytest-cov

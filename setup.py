@@ -1,5 +1,3 @@
-import os
-
 from setuptools import find_packages, setup
 
 with open("README.md") as read_file:

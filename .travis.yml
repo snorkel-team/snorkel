@@ -10,19 +10,23 @@ cache: pip
 dist: xenial
 
 env:
-  TOXENV=py,check,type
+  TOXENV=py,check,type,coverage
 
 jobs:
   include:
-  - name: "Tests: python3.6"
-    python: 3.6
-  - name: "Tests: python3.7"
-    python: 3.7
+    - name: "Tests: python3.6"
+      python: 3.6
+    - name: "Tests: python3.7"
+      python: 3.7
 
 install:
-- pip install -U pip setuptools
-- pip install -U tox==3.12.0
-- tox --notest
+  - pip install -U pip setuptools
+  - pip install -U tox==3.12.0
+  - pip install -U codecov
+  - tox --notest
 
 script:
-- tox
+  - tox
+
+after_success:
+  - codecov

@@ -3,14 +3,28 @@ This script is used to manually test
     `snorkel.labeling.apply.lf_applier_spark.SparkLFApplier`
 
 To test on AWS EMR:
-    1. Allocate an EMR cluster (e.g. label 5.20.0) with > 1 worker and
-        `PYSPARK_PYTHON` set to `/usr/bin/python3` in the `yarn-env`
+    1. Allocate an EMR cluster (e.g. label 5.24.0) with > 1 worker and SSH permissions
     2. Clone and pip install snorkel on the master node
+        ```
+        sudo yum install git
+        git clone https://github.com/HazyResearch/snorkel
+        cd snorkel
+        python3 -m pip install -t snorkel-package .
+        cd snorkel-package
+        zip -r ../snorkel-package.zip .
+        cd ..
+        ```
     3. Run
         ```
+        sudo sed -i -e \
+            '$a\export PYSPARK_PYTHON=/usr/bin/python3' \
+            /etc/spark/conf/spark-env.sh
+        ```
+    4. Run
+        ```
         spark-submit \
-            --py-files path/to/snorkel-x.y.zip \
-            lf_applier_spark_test_script.py
+            --py-files snorkel-package.zip \
+            test/labeling/apply/lf_applier_spark_test_script.py
         ```
 """
 
@@ -45,6 +59,7 @@ def build_lf_matrix() -> None:
 
     logging.info("Getting Spark context")
     sc = SparkContext()
+    sc.addPyFile("snorkel-package.zip")
     rdd = sc.parallelize(DATA)
 
     logging.info("Applying LFs")

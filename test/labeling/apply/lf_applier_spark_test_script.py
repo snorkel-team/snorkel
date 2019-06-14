@@ -2,10 +2,16 @@
 This script is used to manually test
     `snorkel.labeling.apply.lf_applier_spark.SparkLFApplier`
 
-To use, run
-    `spark-submit --py-files path/to/snorkel-x.y.zip lf_applier_spark_test_script.py
-from the master node of e.g. an EMR cluster making sure that the env variable
-`PYSPARK_PYTHON` is set to `/usr/bin/python3` in both `spark-env` and `yarn-env`
+To test on AWS EMR:
+    1. Allocate an EMR cluster (e.g. label 5.20.0) with > 1 worker and
+        `PYSPARK_PYTHON` set to `/usr/bin/python3` in the `yarn-env`
+    2. Clone and pip install snorkel on the master node
+    3. Run
+        ```
+        spark-submit \
+            --py-files path/to/snorkel-x.y.zip \
+            lf_applier_spark_test_script.py
+        ```
 """
 
 import logging

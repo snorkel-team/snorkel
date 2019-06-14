@@ -1,5 +1,5 @@
 import unittest
-from collections import namedtuple
+from types import SimpleNamespace
 from typing import List
 
 import numpy as np
@@ -9,18 +9,16 @@ import pyarrow.parquet as pq
 
 from snorkel.labeling.apply import LFApplier, PandasLFApplier
 from snorkel.labeling.lf import labeling_function
-from snorkel.types import Example
-
-ExampleClass = namedtuple("ExampleClass", ("a",))
+from snorkel.types import DataPoint
 
 
 @labeling_function()
-def f(x: Example) -> int:
+def f(x: DataPoint) -> int:
     return 1 if x.a > 42 else 0
 
 
 @labeling_function(resources=dict(db=[3, 6, 9]))
-def g(x: Example, db: List[int]) -> int:
+def g(x: DataPoint, db: List[int]) -> int:
     return 1 if x.a in db else 0
 
 
@@ -30,9 +28,9 @@ L_EXPECTED = np.array([[0, 1], [1, 0], [0, 0], [0, 1]])
 
 class TestLFApplier(unittest.TestCase):
     def test_lf_applier(self) -> None:
-        examples = [ExampleClass(a) for a in DATA]
+        data_points = [SimpleNamespace(a=a) for a in DATA]
         applier = LFApplier([f, g])
-        L = applier.apply(examples)
+        L = applier.apply(data_points)
         np.testing.assert_equal(L.toarray(), L_EXPECTED)
 
     def test_lf_applier_pandas(self) -> None:

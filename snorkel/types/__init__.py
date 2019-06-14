@@ -1,1 +1,1 @@
-from .data import Example  # noqa: F401
+from .data import DataPoint, DataPoints  # noqa: F401

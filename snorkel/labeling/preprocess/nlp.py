@@ -1,8 +1,8 @@
-from typing import List, Mapping
+from typing import List
 
 import spacy
 
-from snorkel.types import Field
+from snorkel.types import FieldMap
 
 from .core import Preprocessor
 
@@ -21,5 +21,5 @@ class SpacyPreprocessor(Preprocessor):
         super().__init__(dict(text=text_field), dict(doc=doc_field))
         self._nlp = spacy.load(language, disable=disable)
 
-    def preprocess(self, text: str) -> Mapping[str, Field]:  # type: ignore
+    def preprocess(self, text: str) -> FieldMap:  # type: ignore
         return dict(doc=self._nlp(text))

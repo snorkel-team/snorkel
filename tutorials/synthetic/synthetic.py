@@ -16,7 +16,7 @@ n = 1000
 d = 10
 cov = np.diag(np.random.random(d))
 X_pos = np.random.multivariate_normal(np.ones(d), cov, int(np.floor(n/2)))
-X_neg = np.random.multivariate_normal(-1*np.ones(d), cov, int(np.ceil(n/2)))
+X_neg = np.random.multivariate_normal(-1 * np.ones(d), cov, int(np.ceil(n/2)))
 
 # Combine and shuffle
 X = np.vstack([X_pos, X_neg])
@@ -36,25 +36,20 @@ plt.scatter(X_neg[:,0], X_neg[:,1], color='blue')
 plt.show()
 
 #%%
-from snorkel.labeling.lf.core import labeling_function
-from snorkel.types.data import Example
+from snorkel.labeling.lf.core import LabelingFunction
+from functools import partial
 
-# TODO: Use an LF generator here
-@labeling_function()
-def lf_0(x: Example) -> int:
-    if x[0] > 0:
+def lf_template(x, index=0):
+    if x[index] > 0:
         return 1
     else:
         return -1
 
-@labeling_function()
-def lf_1(x: Example) -> int:
-    if x[1] > 0:
-        return 1
-    else:
-        return -1
-
-LFS = [lf_0, lf_1]
+# Generate a set of m LFs that each label based on one feature of the data
+m = int(d/2)
+LFS = []
+for i in range(m):
+    LFS.append(LabelingFunction(f"LF_feat_{i}", partial(lf_template, index=i)))
 
 #%%
 from scipy.sparse import lil_matrix

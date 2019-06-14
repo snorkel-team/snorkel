@@ -1,6 +1,6 @@
 from typing import Any, Callable, Mapping, Optional, Tuple
 
-from snorkel.types.data import Example
+from snorkel.types import DataPoint
 
 
 class LabelingFunction:
@@ -19,7 +19,7 @@ class LabelingFunction:
           * name: name of the LF
           * f: function that implements the LF
           * label_space: set of labels the LF can output, including 0
-          * schema: fields of the input Examples the LF needs
+          * schema: fields of the input DataPoints the LF needs
           * resources: labeling resources passed in to f via kwargs
           * fault_tolerant: output 0 if LF execution fails?
         """
@@ -33,7 +33,7 @@ class LabelingFunction:
     def set_fault_tolerant(self, fault_tolerant: bool = True) -> None:
         self.fault_tolerant = fault_tolerant
 
-    def __call__(self, x: Example) -> int:
+    def __call__(self, x: DataPoint) -> int:
         if self.fault_tolerant:
             try:
                 return self._f(x, **self._resources)
@@ -42,7 +42,7 @@ class LabelingFunction:
         return self._f(x, **self._resources)
 
     def __repr__(self) -> str:
-        schema_str = f", Example schema: {self.schema}" if self.schema else ""
+        schema_str = f", DataPoint schema: {self.schema}" if self.schema else ""
         label_str = f", Label space: {self.label_space}" if self.label_space else ""
         return f"Labeling function {self.name}{schema_str}{label_str}"
 
@@ -62,12 +62,12 @@ class labeling_function:
 
         ```
         @labeling_function()
-        def f(x: Example) -> int:
+        def f(x: DataPoint) -> int:
             return 1 if x.a > 42 else 0
         print(f)  # "Labeling function f"
 
         @labeling_function(name="my_lf")
-        def g(x: Example) -> int:
+        def g(x: DataPoint) -> int:
             return 1 if x.a > 42 else 0
         print(g)  # "Labeling function my_lf"
         ```

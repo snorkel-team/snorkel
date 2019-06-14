@@ -1,3 +1,4 @@
-from typing import Any
+from typing import Any, Collection
 
-Example = Any
+DataPoint = Any
+DataPoints = Collection[DataPoint]

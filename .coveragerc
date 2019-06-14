@@ -10,5 +10,6 @@ exclude_lines =
     def __repr__
 ignore_errors = True
 omit =
-    tests/*
+    test/*
     tutorials/*
+    snorkel/labeling/apply/lf_applier_spark.py

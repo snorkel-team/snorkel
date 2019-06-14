@@ -3,17 +3,17 @@ import unittest
 from collections import namedtuple
 from typing import List
 
-from snorkel.labeling.lf.core import LabelingFunction, labeling_function
-from snorkel.types.data import Example
+from snorkel.labeling.lf import LabelingFunction, labeling_function
+from snorkel.types import DataPoint
 
 ExampleClass = namedtuple("ExampleClass", ("a",))
 
 
-def f(x: Example) -> int:
+def f(x: DataPoint) -> int:
     return 1 if x.a > 42 else 0
 
 
-def g(x: Example, db: List[int]) -> int:
+def g(x: DataPoint, db: List[int]) -> int:
     return 1 if x.a in db else 0
 
 
@@ -58,7 +58,7 @@ class TestLabelingFunctionCore(unittest.TestCase):
 
     def test_labeling_function_decorator(self) -> None:
         @labeling_function()
-        def lf(x: Example) -> int:
+        def lf(x: DataPoint) -> int:
             return 1 if x.a > 42 else 0
 
         self.assertEqual(lf.name, "lf")
@@ -67,7 +67,7 @@ class TestLabelingFunctionCore(unittest.TestCase):
 
     def test_labeling_function_decorator_args(self) -> None:
         @labeling_function(name="my_lf", fault_tolerant=True)
-        def lf(x: Example) -> int:
+        def lf(x: DataPoint) -> int:
             return 1 if x.a > 42 else 0
 
         self.assertEqual(lf.name, "my_lf")

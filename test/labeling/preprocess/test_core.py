@@ -60,6 +60,10 @@ class TestPreprocessorCore(unittest.TestCase):
         with self.assertRaises(ValueError):
             square(x)
 
+        square.set_mode(PreprocessorMode.NONE)
+        with self.assertRaises(ValueError):
+            square(x)
+
         square.set_mode(PreprocessorMode.DASK)
         with self.assertRaises(NotImplementedError):
             square(x)

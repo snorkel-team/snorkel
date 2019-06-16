@@ -1,3 +1,14 @@
+"""
+This example script replicates functionality from
+    Snorkel Drybell (https://arxiv.org/abs/1812.00417)
+
+Similar to Section 5.1, an NLP-based labeling function is
+authored using two preprocessors. The LF checks whether the
+title or body of an article contains a person mention. The
+LF is then executed using Spark, returning a label matrix.
+"""
+
+
 import logging
 
 from pyspark import SparkContext

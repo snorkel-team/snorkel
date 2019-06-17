@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-105598606-2"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'UA-105598606-2');
+    </script>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Style-Type" content="text/css" />
+    <meta name="generator" content="pandoc" />
+    <meta name="author" content="Sen Wu, Vincent S. Chen, Braden Hancock, Alex Ratner, Chris Ré" />
+    <title>Powerful Abstractions for Programming Your Training Data</title>
+    <link rel="stylesheet" href="blog.css">
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+</head>
+<body>
+<div id="header">
+
+<!-- Title -->
+<h1 class="title">
+  Powerful Abstractions for Programming Your Training Data
+</h1>
+<h4 style="color:gray"> [June 15, 2019] Achieveing state-of-the-art results on the <a href="https://super.gluebenchmark.com/">SuperGLUE</a> benchmark</h4>
+Sen Wu, Vincent S. Chen, Braden Hancock, Alex Ratner, Chris Ré, <em>and referencing work by many other members of Hazy Research</em><br />
+<a href="http://snorkel.stanford.edu">Back to the Snorkel Blog</a>
+</div>
+
+<blockquote>
+Using standard models (i.e. pretrained BERT) and minimal tuning, we leverage key abstractions for <i>programming your training data</i> to achieve a <mark>state-of-the-art result on <a href="https://super.gluebenchmark.com">SuperGLUE</a></mark>—a benchmark newly curated towards the development of “general-purpose language understanding technologies.”[1] See Snorkel for more about how we’ve deployed these abstractions in even more applications—from industrial scale at <a href="https://ai.googleblog.com/2019/03/harnessing-organizational-knowledge-for.html">Google’s Snorkel Drybell</a> to scientific work in <a href="https://nature-research-under-consideration.nature.com/users/37265-nature-communications/posts/38921-weakly-supervised-classification-of-rare-aortic-valve-malformations-using-unlabeled-cardiac-mri-sequences">MRI classification</a> and <a href="https://ai.stanford.edu/~kuleshov/papers/gwaskb-manuscript.pdf">automated Genome-wide association study (GWAS) curation</a> (both accepted in <a href="https://www.nature.com/ncomms/">Nature Comms</a>)!
+</blockquote>
+
+<h2>Motivation</h2>
+Programming abstractions in machine learning are changing: practitioners are spending less time on architectures and hardware optimizations and, instead, focusing on training data. In this post, we describe three powerful abstractions that practitioners can use to program their training data. We ran an experiment to test the efficacy of a basic model + training data operations—applying a handful of these to the SuperGLUE Benchmark <b>yields new state-of-the-art score results overall and the highest reported score anywhere on a majority of component tasks</b>.
+
+<h2>3 key abstractions for programming your data</h2>
+In our result, as well as more generally, we find that spending our time programmatically building and manipulating the training data—rather than the models— provides a powerful and effective strategy to achieve high performance in ML pipelines. In a past <a href="https://dawn.cs.stanford.edu/2019/03/22/glue/">post</a>, we talked about the value of incorporating more supervision signal from more sources, e.g. multi-task learning and transfer learning, as we achieved SOTA on the GLUE Benchmark (a precursor to SuperGLUE). In this post, we focus on three key abstractions for building and modifying training datasets:
+<ol>
+  <li><b>Labeling data</b>: labeling functions (LFs) [2]</li>
+  <li><b>Augmenting data</b>: transformation functions (TFs) [3,4]</li>
+  <li><b>Partitioning data</b>: slicing functions (SFs) [<i>technical report + blog post coming soon!</i>]</li>
+</ol>
+
+<div class="figure">
+    <img src="superglue_figs/fig_abstractions.png" width="80%" class="centered"/>
+</div>
+
+For the remainder of this post, we use a running example from the Words in Context (WiC) task from SuperGLUE: <i>is the target word being used in the same way in both sentences?</i>
+
+<div class="figure">
+    <img src="superglue_figs/example.png" width="80%" class="centered"/>
+</div>
+
+<h2>1. Weak labeling with labeling functions</h2>
+In many applications, unlabeled data is abundant—it may come from fleets of autonomous vehicles, or large corpuses of unstructured data. Modern architectures are largely unable to take advantage of such potentially rich datasets because labeling them might be intractable, as they are too time or cost ineffective.
+
+In <a href="https://hazyresearch.github.io/snorkel/">Snorkel</a>, we’ve studied the use of <b>labeling functions (LFs)</b> for heuristically labeling training examples. LFs provide domain experts or machine learning practitioners with an intuitive interface to denoise and combine supervision sources from existing datasets, models, or crowd labelers.
+
+
+<div class="figure">
+    <img src="superglue_figs/lf_ex.png" width="80%" class="centered"/>
+    <p>
+      For the WiC task we might consider providing supervision signal for a “sense match” by detecting matching trigrams.
+    </p>
+</div>
+
+<h2>2. Augmenting data with transformation functions</h2>
+Often, people think about data augmentation in terms of simple transformations—randomly rotating or stretching images—but they can often refer to much more diverse range of operations. We see <b>transformation functions (TFs)</b> as a powerful abstraction that heuristically generates new, modified examples from existing ones. For instance, for a medical imaging task, we might write TFs to perform transformations that are specific to our imaging modality—e.g. resampling segmenting tumor masses or resampling background tissue.
+
+We have explored this abstraction in our own work, TANDA [3], which seeks to learn compositions of transformations across domain-specific tasks. AutoAugment [4] from Google builds on this work to automatically learn policies for augmentation strategies.
+
+<div class="figure">
+    <img src="superglue_figs/tf_ex.png" width="80%" class="centered"/>
+    <p>
+      Given that “Sunday” does not change the word sense of “invite”, we might transform a “Sunday” so our model is more robust to different days of the week.
+    </p>
+</div>
+
+<h2>3. Partitioning data with slicing functions (<mark>new idea!</mark>)</h2>
+The aforementioned abstractions occur offline—TFs and LFs largely operate on datasets, prior to model training. However, we’d like to provide a way to indicate to a model subsets of data that we particularly care about—for instance, we would like high-quality model outcomes on safety-critical but rare scenarios in an autonomous driving setting (e.g. detecting cyclists) or lower-frequency healthcare demographics (e.g. younger patients with certain cancers). The technical challenge is to improve slice-level performance while maintaining overall performance.
+
+<b>Slicing functions (SFs)</b> provide an interface for users to coarsely identify data subsets for  which the model should commit additional representational capacity. To address slice-specific representations, practitioners might train many models learning to specialize on particular subsets, and for test-time, to train a mixture of experts (MoE) [5]. However, with the growing size of ML models, MoE is impractical. Another strategy would be to train a single model in the style of multi-task learning (MTL) [6] —while more computationally efficient, this approach expects representation bias across many slice-specific tasks to improve performance—an unreliable approach.
+
+As a quick overview (<i>technical report + blog post coming soon!</i>)— we model slices in the style of multi-task learning, in which slice-based “expert-heads” are used to learn slice-specific representations. Then, an attention-mechanism is then learned over expert heads to determine when and how to combine them on a per-example basis. We consider the following properties of our approach:
+
+<ul>
+  <li>Our approach is <b>model-agnostic</b> — expert heads are learned on top of any backbone architecture (e.g. BERT, ResNET). As a result, practitioners can focus only on the data, and not the model architecture.</li>
+  <li>By learning in a multi-task fashion, we <b>efficiently learn representations</b> without the need to make many copies of the model, i.e. MoE requires too much memory!</li>
+  <li>By incorporating the attention mechanism, we <b>avoid manual tuning</b> of expert-heads—a potentially significant developer cost.</li>
+</ul>
+
+<div class="figure">
+    <img src="superglue_figs/sf_ex.png" width="80%" class="centered"/>
+    <p>
+      From WiC error analysis, we might find that our model often misses “nouns” in context. Using an SF, we tell the model to pay attention if the target word is a noun (as specified by an off-the-shelf tagger, like <a href="https://spacy.io/">Spacy</a>).
+    </p>
+</div>
+
+<h2>Key properties of LFs, TFs, and SFs</h2>
+<ul>
+  <li><b>Intuitive interfaces</b>: These abstractions provide intuitive interfaces  to existing practitioner workflows. They allow insights from debugging/error analysis to be directly encoded to improve models.</li>
+  <li><b>Programming abstractions as weak supervision</b>: Furthermore, in practice, many of these techniques can be viewed as a form of weak supervision, as users specify them in noisy, heuristic, and imprecise ways. Dealing with this is one of the core technical challenges we tackle in frameworks like Snorkel.</li>
+  <li><b>Supervision as code</b>: These types of inputs are ways of supervising a model (i.e. they specify training sets). Concretely, they are also code, and thus carry many of the advantages of code—reusability, modifiability, etc.</li>
+</ul>
+
+For more about how these abstractions have been deployed in applications, please see the <a href="https://github.com/HazyResearch/snorkel">open-source Snorkel repository</a>. In an upcoming release, Snorkel will support all three of these abstractions—stay tuned!
+
+<h2>SuperGLUE Results</h2>
+Using these programming abstractions, we achieve new SOTA on the SuperGLUE Benchmark and 4 of its components tasks. SuperGLUE is similar to GLUE, but contains “more difficult tasks...chosen to maximize difficulty and diversity, and...selected to show a substantial headroom gap between a strong BERT-based baseline and human performance.”
+After reproducing the BERT++ baselines, we minimally tune these models (baseline models, default learning rate, etc.) and find that with applications of the above programming abstractions, we see <mark>improvements of +4.0 points on the SuperGLUE benchmark (21% reduction of the gap to human performance).</mark>
+
+<hr>
+<h3>References</h3>
+<p>[1] Wang, Alex, et al. <a href="https://arxiv.org/abs/1905.00537">"SuperGLUE: A Stickier Benchmark for General-Purpose Language Understanding Systems."</a>. 2019. _SuperGLUE_ consists of 6 datasets: the Commitment Bank (CB, <a href="https://github.com/mcdm/CommitmentBank/">De Marneffe et al., 2019</a>, Choice Of Plausible Alternatives (COPA, <a href="https://www.aaai.org/ocs/index.php/SSS/SSS11/paper/viewPaper/2418">Roemmele et al., 2011</a>), the Multi-Sentence Reading Comprehension dataset (MultiRC, <a href="https://www.aclweb.org/anthology/papers/N/N18/N18-1023/">Khashabi et al., 2018</a>), Recognizing Textual Entailment (merged from RTE1, <a href="https://link.springer.com/chapter/10.1007/11736790_9">Dagan et al. 2006</a>, RTE2, <a href="http://u.cs.biu.ac.il/~nlp/downloads/publications/RTE2-organizers.pdf">Bar Haim et al., 2006</a>, RTE3, <a href="https://dl.acm.org/citation.cfm?id=1654538">Giampiccolo et al., 2007</a>, and RTE5, <a href="http://www.cs.utexas.edu/users/pclark/papers/RTE6_overview.proceedings.pdf">Bentivogli et al., 2009</a>), Word in Context (WiC, <a href="https://www.aclweb.org/anthology/papers/N/N19/N19-1128">Pilehvar and Camacho-Collados, 2019</a>), and the Winograd Schema Challenge (WSC, <a href="https://www.aaai.org/ocs/index.php/KR/KR12/paper/viewPaper/4492">Levesque et al., 2012</a>).</p>
+<p>[2]: Ratner, Alexander J., et al. <a href="http://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly">"Data programming: Creating large training sets, quickly."</a> 2016.</p>
+
+<p>[3] Ratner, Alexander J., et al. <a href="http://papers.nips.cc/paper/6916-learning-to-compose-domain-specific-transformations-for-data-augmentation">"Learning to compose domain-specific transformations for data augmentation."</a> 2017.</p>
+
+<p>[4] Cubuk, Ekin D., et al. <a href="https://arxiv.org/abs/1805.09501">"Autoaugment: Learning augmentation policies from data."</a>. 2018.</p>
+
+<p>[5] Robert A Jacobs, Michael I Jordan, Steven J Nowlan, and Geoffrey E Hinton. ["Adaptive mixtures of local experts."](http://www.csri.utoronto.ca/~hinton/absps/jjnh91.ps) 1991.</li>
+
+<p>[6] Rich Caruana. <a href="https://link.springer.com/article/10.1023/A:1007379606734">"Multitask learning."</a> 1997.
+<br />
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://snorkel-stanford-edu.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+</body>
+</html>

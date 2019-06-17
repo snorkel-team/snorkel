@@ -65,9 +65,9 @@ In <a href="https://hazyresearch.github.io/snorkel/">Snorkel</a>, we’ve studie
 
 <div class="figure">
     <img src="superglue_figs/lf_ex.png" width="80%" class="centered"/>
-    <p>
+    <p><i>
       For the WiC task we might consider providing supervision signal for a “sense match” by detecting matching trigrams.
-    </p>
+    </i></p>
 </div>
 
 <h2>2. Augmenting data with transformation functions</h2>
@@ -77,9 +77,9 @@ We have explored this abstraction in our own work, TANDA [3], which seeks to lea
 
 <div class="figure">
     <img src="superglue_figs/tf_ex.png" width="80%" class="centered"/>
-    <p>
+    <p><i>
       Given that “Sunday” does not change the word sense of “invite”, we might transform a “Sunday” so our model is more robust to different days of the week.
-    </p>
+    </i></p>
 </div>
 
 <h2>3. Partitioning data with slicing functions (<mark>new idea!</mark>)</h2>
@@ -97,9 +97,9 @@ As a quick overview (<i>technical report + blog post coming soon!</i>)— we mod
 
 <div class="figure">
     <img src="superglue_figs/sf_ex.png" width="80%" class="centered"/>
-    <p>
+    <p><i>
       From WiC error analysis, we might find that our model often misses “nouns” in context. Using an SF, we tell the model to pay attention if the target word is a noun (as specified by an off-the-shelf tagger, like <a href="https://spacy.io/">Spacy</a>).
-    </p>
+    </i></p>
 </div>
 
 <h2>Key properties of LFs, TFs, and SFs</h2>
@@ -116,23 +116,32 @@ Using these programming abstractions, we achieve new SOTA on the SuperGLUE Bench
 After reproducing the BERT++ baselines, we minimally tune these models (baseline models, default learning rate, etc.) and find that with applications of the above programming abstractions, we see <mark>improvements of +4.0 points on the SuperGLUE benchmark (21% reduction of the gap to human performance).</mark>
 
 <h2>Snorkel in the Real World</h2>
-<<<<<<< HEAD
-These Snorkel programming abstractions have also been used to fuel progress in high-impact real-world applications.
+<p>
+  These Snorkel programming abstractions have also been used to fuel progress in high-impact real-world applications.
+</p>
 
-<br><br>
-In March of this year, we published a <a href="https://arxiv.org/pdf/1812.00417.pdf">paper</a> and <a href="https://ai.googleblog.com/2019/03/harnessing-organizational-knowledge-for.html">blog post</a> with Google on the lessons learned from deploying Snorkel at industrial scale.
-Relying on diverse sources of knowledge across the organization—heuristics, taggers, knowledge graphs, legacy systems, etc.—they saw significant improvements in quality, by as much as 17.5 F1 points.
+<p>
+  In March of this year, we published a <a href="https://arxiv.org/pdf/1812.00417.pdf">paper</a> and <a href="https://ai.googleblog.com/2019/03/harnessing-organizational-knowledge-for.html">blog post</a> with Google on the lessons learned from deploying Snorkel at industrial scale.
+  Relying on diverse sources of knowledge across the organization—heuristics, taggers, knowledge graphs, legacy systems, etc.—they saw significant improvements in quality, by as much as 17.5 F1 points.
+</p>
 
-<br><br>
-Nature MRI
+<div class="figure">
+    <img src="superglue_figs/bav.jpg" width="90%" class="centered"/>
+    <p><i>
+      Snorkel pipeline, deployed on the BAV classification task, for large collections of up to 4,000 unlabeled MRI sequences. Figure credit to [7].
+    </i></p>
+</div>
+<p>
+  In <a href="  https://www.biorxiv.org/content/10.1101/339630v4.full">recent work</a> that was accepted to Nature Communications, Snorkel was deployed in an ongoing collaboration with <a href="https://priestlab.stanford.edu/">Stanford University Pediatric Cardiology</a>, where labeled training data is a significant practical roadblock to developing automated methods.
+  We focused on bicuspid aortic valve (BAV), the most common congenital heart malformation (with an incidence rate of 0.5-2% in the general population), with risk of adverse downstream health effects.
+  Instead of relying on costly MRI labels from cardiologists, we worked directly with domain experts to develop LFs to generate large-scale training sets for downstream deep learning models.
+  In patients identified by our end-to-end approach, an independent evaluation determined a 1.8-fold increase in risk for major adverse cardiac events.
+</p>
 
-<br><br>
-In another forthcoming Nature Communications <a href="https://ai.stanford.edu/~kuleshov/papers/gwaskb-manuscript.pdf">paper</a>, we showed how Snorkel can be used to automate Gene-Wide Association Study (GWAS) curation.
-On a collection of hundreds of previously published studies reporting significant genotype-phenotype pairs, we auto-labeled a large training set using only labeling functions. The resulting classifier applied to a collection of 598 studies recovered over 3,000 previously documented open-access relations (with an estimated recall of 60-80%) as well as over 2,000 associations not present in existing human curated repositories (with an estimated precision of 82-89%). The resulting database is available for exploration with a user interface at <a href="http://gwaskb.stanford.edu/">http://gwaskb.stanford.edu/</a>.
-=======
-TBD
-
->>>>>>> 6a6b1170382e69c0af766cf949a2cc72fab112de
+<p>
+  In another forthcoming Nature Communications <a href="https://ai.stanford.edu/~kuleshov/papers/gwaskb-manuscript.pdf">paper</a>, we showed how Snorkel can be used to automate Gene-Wide Association Study (GWAS) curation.
+  On a collection of hundreds of previously published studies reporting significant genotype-phenotype pairs, we auto-labeled a large training set using only labeling functions. The resulting classifier applied to a collection of 598 studies recovered over 3,000 previously documented open-access relations (with an estimated recall of 60-80%) as well as over 2,000 associations not present in existing human curated repositories (with an estimated precision of 82-89%). The resulting database is available for exploration with a user interface at <a href="http://gwaskb.stanford.edu/">http://gwaskb.stanford.edu/</a>.
+</p>
 
 <hr>
 <h3>References</h3>
@@ -141,11 +150,13 @@ TBD
 
 <p>[3] Ratner, Alexander J., et al. <a href="http://papers.nips.cc/paper/6916-learning-to-compose-domain-specific-transformations-for-data-augmentation">"Learning to compose domain-specific transformations for data augmentation."</a> 2017.</p>
 
-<p>[4] Cubuk, Ekin D., et al. <a href="https://arxiv.org/abs/1805.09501">"Autoaugment: Learning augmentation policies from data."</a>. 2018.</p>
+<p>[4] Cubuk, Ekin D., et al. <a href="https://arxiv.org/abs/1805.09501">"Autoaugment: Learning augmentation policies from data."</a> 2018.</p>
 
-<p>[5] Robert A Jacobs, Michael I Jordan, Steven J Nowlan, and Geoffrey E Hinton. ["Adaptive mixtures of local experts."](http://www.csri.utoronto.ca/~hinton/absps/jjnh91.ps) 1991.</li>
+<p>[5] Robert A Jacobs, Michael I Jordan, Steven J Nowlan, and Geoffrey E Hinton. ["Adaptive mixtures of local experts."](http://www.csri.utoronto.ca/~hinton/absps/jjnh91.ps) 1991.</pi>
 
-<p>[6] Rich Caruana. <a href="https://link.springer.com/article/10.1023/A:1007379606734">"Multitask learning."</a> 1997.
+<p>[6] Rich Caruana. <a href="https://link.springer.com/article/10.1023/A:1007379606734">"Multitask learning."</a> 1997.</p>
+
+<p>[7] Fries, Jason A., et al. <a href="https://www.biorxiv.org/content/10.1101/339630v4.full">"Weakly supervised classification of rare aortic valve malformations using unlabeled cardiac MRI sequences."</a> 2018. </p>
 <br />
 <div id="disqus_thread"></div>
 <script>

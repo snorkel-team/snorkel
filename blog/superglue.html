@@ -30,11 +30,14 @@ Sen Wu, Vincent S. Chen, Braden Hancock, Alex Ratner, Chris Ré, <em>and referen
 </div>
 
 <blockquote>
-Using standard models (i.e. pretrained BERT) and minimal tuning, we leverage key abstractions for <i>programming your training data</i> to achieve a <mark>state-of-the-art result on <a href="https://super.gluebenchmark.com">SuperGLUE</a></mark>—a benchmark newly curated towards the development of “general-purpose language understanding technologies.”[1] See Snorkel for more about how we’ve deployed these abstractions in even more applications—from industrial scale at <a href="https://ai.googleblog.com/2019/03/harnessing-organizational-knowledge-for.html">Google’s Snorkel Drybell</a> to scientific work in <a href="https://nature-research-under-consideration.nature.com/users/37265-nature-communications/posts/38921-weakly-supervised-classification-of-rare-aortic-valve-malformations-using-unlabeled-cardiac-mri-sequences">MRI classification</a> and <a href="https://ai.stanford.edu/~kuleshov/papers/gwaskb-manuscript.pdf">automated Genome-wide association study (GWAS) curation</a> (both accepted in <a href="https://www.nature.com/ncomms/">Nature Comms</a>)!
+Using standard models (i.e. pretrained BERT) and minimal tuning, we leverage key abstractions for <i>programming your training data</i> with Snorkel to achieve a <mark>state-of-the-art result on <a href="https://super.gluebenchmark.com">SuperGLUE</a></mark>—a newly curated benchmark towards the development of “general-purpose language understanding technologies.”[1] We also give updates on Snorkel's use in the real world with even more applications—from industrial scale at <a href="https://ai.googleblog.com/2019/03/harnessing-organizational-knowledge-for.html">Google’s Snorkel Drybell</a> to scientific work in <a href="https://nature-research-under-consideration.nature.com/users/37265-nature-communications/posts/38921-weakly-supervised-classification-of-rare-aortic-valve-malformations-using-unlabeled-cardiac-mri-sequences">MRI classification</a> and <a href="https://ai.stanford.edu/~kuleshov/papers/gwaskb-manuscript.pdf">automated Genome-wide association study (GWAS) curation</a> (both accepted in <a href="https://www.nature.com/ncomms/">Nature Comms</a>)!
 </blockquote>
 
 <h2>Motivation</h2>
 Programming abstractions in machine learning are changing: practitioners are spending less time on architectures and hardware optimizations and, instead, focusing on training data. In this post, we describe three powerful abstractions that practitioners can use to program their training data. We ran an experiment to test the efficacy of a basic model + training data operations—applying a handful of these to the SuperGLUE Benchmark <b>yields new state-of-the-art score results overall and the highest reported score anywhere on a majority of component tasks</b>.
+
+<br><br>
+We will be releasing code in the <a href="https://github.com/HazyResearch/snorkel">Snorkel repo</a> for reproducing and building on our results in conjunction with a 2-day <mark><b>Snorkel workshop</b></mark> on 6/24-6/25 with collaborators from science, industry, and government. This workshop is already oversubscribed, but if you would like to be notified of future Snorkel workshops, give us your name and contact information <a href="TBD link to Google Form">here</a>.
 
 <h2>3 key abstractions for programming your data</h2>
 In our result, as well as more generally, we find that spending our time programmatically building and manipulating the training data—rather than the models— provides a powerful and effective strategy to achieve high performance in ML pipelines. In a past <a href="https://dawn.cs.stanford.edu/2019/03/22/glue/">post</a>, we talked about the value of incorporating more supervision signal from more sources, e.g. multi-task learning and transfer learning, as we achieved SOTA on the GLUE Benchmark (a precursor to SuperGLUE). In this post, we focus on three key abstractions for building and modifying training datasets:
@@ -111,6 +114,10 @@ For more about how these abstractions have been deployed in applications, please
 <h2>SuperGLUE Results</h2>
 Using these programming abstractions, we achieve new SOTA on the SuperGLUE Benchmark and 4 of its components tasks. SuperGLUE is similar to GLUE, but contains “more difficult tasks...chosen to maximize difficulty and diversity, and...selected to show a substantial headroom gap between a strong BERT-based baseline and human performance.”
 After reproducing the BERT++ baselines, we minimally tune these models (baseline models, default learning rate, etc.) and find that with applications of the above programming abstractions, we see <mark>improvements of +4.0 points on the SuperGLUE benchmark (21% reduction of the gap to human performance).</mark>
+
+<h2>Snorkel in the Real World</h2>
+TBD
+
 
 <hr>
 <h3>References</h3>

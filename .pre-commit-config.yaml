@@ -12,7 +12,3 @@ repos:
     rev: master
     hooks:
     - id: flake8
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: master
-    hooks:
-    - id: mypy

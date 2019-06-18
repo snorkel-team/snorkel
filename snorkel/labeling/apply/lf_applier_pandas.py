@@ -6,6 +6,7 @@ from pandas import DataFrame
 from tqdm import tqdm
 
 from snorkel.labeling.lf import LabelingFunction
+from snorkel.labeling.preprocess import PreprocessorMode
 from snorkel.types import DataPoint
 
 from .lf_applier import BaseLFApplier
@@ -24,6 +25,7 @@ def apply_lfs_to_data_point(x: DataPoint, lfs: List[LabelingFunction]) -> Pandas
 
 class PandasLFApplier(BaseLFApplier):
     def apply(self, df: DataFrame) -> sparse.csr_matrix:  # type: ignore
+        self._set_lf_preprocessor_mode(PreprocessorMode.PANDAS)
         apply_fn = partial(apply_lfs_to_data_point, lfs=self._lfs)
         tqdm.pandas()
         labels = df.progress_apply(apply_fn, axis=1)

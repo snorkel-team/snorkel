@@ -1,6 +1,8 @@
-from typing import Any, Callable, Mapping, Optional, Tuple
+from typing import Any, Callable, List, Mapping, Optional, Tuple
 
 from snorkel.types import DataPoint
+
+from .preprocess import Preprocessor, PreprocessorMode
 
 
 class LabelingFunction:
@@ -11,6 +13,7 @@ class LabelingFunction:
         label_space: Optional[Tuple[int, ...]] = None,
         schema: Optional[Mapping[str, type]] = None,
         resources: Optional[Mapping[str, Any]] = None,
+        preprocessors: Optional[List[Preprocessor]] = None,
         fault_tolerant: bool = False,
     ) -> None:
         """Base object for labeling functions, containing metadata and extra
@@ -21,6 +24,7 @@ class LabelingFunction:
           * label_space: set of labels the LF can output, including 0
           * schema: fields of the input DataPoints the LF needs
           * resources: labeling resources passed in to f via kwargs
+          * preprocessors: list of Preprocessors to run on data points
           * fault_tolerant: output 0 if LF execution fails?
         """
         self.name = name
@@ -29,11 +33,22 @@ class LabelingFunction:
         self.fault_tolerant = fault_tolerant
         self._f = f
         self._resources = resources or {}
+        self._preprocessors = preprocessors or []
 
     def set_fault_tolerant(self, fault_tolerant: bool = True) -> None:
         self.fault_tolerant = fault_tolerant
 
+    def set_preprocessor_mode(self, mode: PreprocessorMode) -> None:
+        for preprocessor in self._preprocessors:
+            preprocessor.set_mode(mode)
+
+    def _preprocess_data_point(self, x: DataPoint) -> DataPoint:
+        for preprocessor in self._preprocessors:
+            x = preprocessor(x)
+        return x
+
     def __call__(self, x: DataPoint) -> int:
+        x = self._preprocess_data_point(x)
         if self.fault_tolerant:
             try:
                 return self._f(x, **self._resources)
@@ -44,7 +59,8 @@ class LabelingFunction:
     def __repr__(self) -> str:
         schema_str = f", DataPoint schema: {self.schema}" if self.schema else ""
         label_str = f", Label space: {self.label_space}" if self.label_space else ""
-        return f"Labeling function {self.name}{schema_str}{label_str}"
+        preprocessor_str = f", Preprocessors: {self._preprocessors}"
+        return f"Labeling function {self.name}{schema_str}{label_str}{preprocessor_str}"
 
 
 class labeling_function:
@@ -54,6 +70,7 @@ class labeling_function:
         label_space: Optional[Tuple[int, ...]] = None,
         schema: Optional[Mapping[str, type]] = None,
         resources: Optional[Mapping[str, Any]] = None,
+        preprocessors: Optional[List[Preprocessor]] = None,
         fault_tolerant: bool = False,
     ) -> None:
         """Decorator to define a LabelingFunction object from a function
@@ -76,6 +93,7 @@ class labeling_function:
         self.label_space = label_space
         self.schema = schema
         self.resources = resources
+        self.preprocessors = preprocessors
         self.fault_tolerant = fault_tolerant
 
     def __call__(self, f: Callable[..., int]) -> LabelingFunction:
@@ -86,5 +104,6 @@ class labeling_function:
             label_space=self.label_space,
             schema=self.schema,
             resources=self.resources,
+            preprocessors=self.preprocessors,
             fault_tolerant=self.fault_tolerant,
         )

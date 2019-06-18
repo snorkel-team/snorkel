@@ -1,12 +1,19 @@
 import pickle
 import unittest
-from collections import namedtuple
+from types import SimpleNamespace
 from typing import List
 
 from snorkel.labeling.lf import LabelingFunction, labeling_function
-from snorkel.types import DataPoint
+from snorkel.labeling.preprocess import Preprocessor, PreprocessorMode
+from snorkel.types import DataPoint, FieldMap
 
-ExampleClass = namedtuple("ExampleClass", ("a",))
+
+class SquarePreprocessor(Preprocessor):
+    def __init__(self, x_field: str, squared_x_field: str) -> None:
+        super().__init__(dict(x=x_field), dict(x=squared_x_field))
+
+    def preprocess(self, x: float) -> FieldMap:  # type: ignore
+        return dict(x=x ** 2)
 
 
 def f(x: DataPoint) -> int:
@@ -19,18 +26,18 @@ def g(x: DataPoint, db: List[int]) -> int:
 
 class TestLabelingFunctionCore(unittest.TestCase):
     def _run_lf(self, lf: LabelingFunction) -> None:
-        x_43 = ExampleClass(43)
-        x_19 = ExampleClass(19)
+        x_43 = SimpleNamespace(a=43)
+        x_19 = SimpleNamespace(a=19)
         self.assertEqual(lf(x_43), 1)
         self.assertEqual(lf(x_19), 0)
 
     def _run_lf_raise(self, lf: LabelingFunction) -> None:
-        x_none = ExampleClass(None)
+        x_none = SimpleNamespace(a=None)
         with self.assertRaises(TypeError):
             lf(x_none)
 
     def _run_lf_no_raise(self, lf: LabelingFunction) -> None:
-        x_none = ExampleClass(None)
+        x_none = SimpleNamespace(a=None)
         self.assertEqual(lf(x_none), 0)
 
     def test_labeling_function(self) -> None:
@@ -48,6 +55,17 @@ class TestLabelingFunctionCore(unittest.TestCase):
         lf = LabelingFunction(name="my_lf", f=g, resources=dict(db=db))
         self._run_lf(lf)
         self._run_lf_no_raise(lf)
+
+    def test_labeling_function_preprocessor(self) -> None:
+        p = SquarePreprocessor(x_field="a", squared_x_field="a")
+        lf = LabelingFunction(name="my_lf", f=f, preprocessors=[p, p])
+        lf.set_preprocessor_mode(PreprocessorMode.NAMESPACE)
+        x_43 = SimpleNamespace(a=43)
+        x_6 = SimpleNamespace(a=6)
+        x_2 = SimpleNamespace(a=2)
+        self.assertEqual(lf(x_43), 1)
+        self.assertEqual(lf(x_6), 1)
+        self.assertEqual(lf(x_2), 0)
 
     def test_labeling_function_serialize(self) -> None:
         db = [3, 6, 43]

@@ -5,6 +5,7 @@ import scipy.sparse as sparse
 from tqdm import tqdm
 
 from snorkel.labeling.lf import LabelingFunction
+from snorkel.labeling.preprocess import PreprocessorMode
 from snorkel.types import DataPoint, DataPoints
 
 RowData = List[Tuple[int, int, int]]
@@ -18,6 +19,10 @@ class BaseLFApplier:
         row, col, data = zip(*chain.from_iterable(labels))
         n, m = len(labels), len(self._lfs)
         return sparse.csr_matrix((data, (row, col)), shape=(n, m))
+
+    def _set_lf_preprocessor_mode(self, mode: PreprocessorMode) -> None:
+        for lf in self._lfs:
+            lf.set_preprocessor_mode(mode)
 
     def apply(self, data_points: Any, *args: Any, **kwargs: Any) -> sparse.csr_matrix:
         raise NotImplementedError
@@ -36,6 +41,7 @@ def apply_lfs_to_data_point(
 
 class LFApplier(BaseLFApplier):
     def apply(self, data_points: DataPoints) -> sparse.csr_matrix:  # type: ignore
+        self._set_lf_preprocessor_mode(PreprocessorMode.NAMESPACE)
         labels = []
         for i, x in tqdm(enumerate(data_points)):
             labels.append(apply_lfs_to_data_point(x, i, self._lfs))

@@ -22,7 +22,7 @@
 
 <!-- Title -->
 <h1 class="title">
-  Powerful Abstractions for Programming Your Training Data
+  Powerful Abstractions for Programmatically Building and Managing Training Sets
 </h1>
 <h4 style="color:gray"> [June 15, 2019] Achieveing state-of-the-art results on the <a href="https://super.gluebenchmark.com/">SuperGLUE</a> benchmark</h4>
 Vincent S. Chen, Sen Wu, Braden Hancock, Alex Ratner, Chris Ré, <em>and referencing work by many other members of Hazy Research</em><br />
@@ -30,7 +30,7 @@ Vincent S. Chen, Sen Wu, Braden Hancock, Alex Ratner, Chris Ré, <em>and referen
 </div>
 
 <blockquote>
-Using standard models (i.e. pretrained BERT) and minimal tuning, we leverage key abstractions for <i>programming your training data</i> with Snorkel to achieve a <mark>state-of-the-art result on <a href="https://super.gluebenchmark.com">SuperGLUE</a></mark>—a newly curated benchmark towards the development of “general-purpose language understanding technologies.”[1] We also give updates on Snorkel's use in the real world with even more applications—from industrial scale at <a href="https://ai.googleblog.com/2019/03/harnessing-organizational-knowledge-for.html">Google’s Snorkel Drybell</a> to scientific work in <a href="https://nature-research-under-consideration.nature.com/users/37265-nature-communications/posts/38921-weakly-supervised-classification-of-rare-aortic-valve-malformations-using-unlabeled-cardiac-mri-sequences">MRI classification</a> and <a href="https://ai.stanford.edu/~kuleshov/papers/gwaskb-manuscript.pdf">automated Genome-wide association study (GWAS) curation</a> (both accepted in <a href="https://www.nature.com/ncomms/">Nature Comms</a>)!
+Using standard models (i.e. pretrained BERT) and minimal tuning, we leverage key abstractions for <i>programmatically building and managing training data</i> with Snorkel to achieve a <mark>state-of-the-art result on <a href="https://super.gluebenchmark.com">SuperGLUE</a></mark>—a newly curated benchmark with six tasks for evaluating “general-purpose language understanding technologies.”[1] We also give updates on Snorkel's use in the real world with even more applications—from industrial scale at <a href="https://ai.googleblog.com/2019/03/harnessing-organizational-knowledge-for.html">Google’s Snorkel Drybell</a> to scientific work in <a href="https://nature-research-under-consideration.nature.com/users/37265-nature-communications/posts/38921-weakly-supervised-classification-of-rare-aortic-valve-malformations-using-unlabeled-cardiac-mri-sequences">MRI classification</a> and <a href="https://ai.stanford.edu/~kuleshov/papers/gwaskb-manuscript.pdf">automated Genome-wide association study (GWAS) curation</a> (both accepted in <a href="https://www.nature.com/ncomms/">Nature Comms</a>)!
 </blockquote>
 
 <h2>Motivation</h2>
@@ -39,20 +39,22 @@ Programming abstractions in machine learning are changing: practitioners are spe
 <br><br>
 We will be releasing code in the <a href="https://github.com/HazyResearch/snorkel">Snorkel repo</a> for reproducing and building on our results in conjunction with a 2-day <mark><b>Snorkel workshop</b></mark> on 6/24-6/25 with collaborators from science, industry, and government. This workshop is unfortunately already completely full, but if you would like to be notified of future Snorkel workshops, give us your name and contact information <a href="https://docs.google.com/forms/d/e/1FAIpQLScOpiImyBA3uk_CnJ03R1b7Ese9VA3XjfLnemCO76WyTwrO5Q/viewform?usp=sf_link">here</a>.
 
-<h2>Three key abstractions for programming your data</h2>
+<h2>Three key abstractions</h2>
 In our result, as well as more generally, we find that spending our time programmatically building and manipulating the training data—rather than the models— provides a powerful and effective strategy to achieve high performance in ML pipelines. In a past <a href="https://dawn.cs.stanford.edu/2019/03/22/glue/">post</a>, we talked about the value of incorporating more supervision signal from more sources, e.g. multi-task learning and transfer learning, as we achieved SOTA on the GLUE Benchmark (a precursor to SuperGLUE). In this post, we focus on three key abstractions for building and modifying training datasets:
 <ol>
-  <li><b>Labeling data</b>: labeling functions (LFs) [2]</li>
-  <li><b>Augmenting data</b>: transformation functions (TFs) [3,4]</li>
-  <li><b>Partitioning data</b>: slicing functions (SFs) [<i>technical report + blog post coming soon!</i>]</li>
+  <li><b>Labeling data</b> with labeling functions (LFs) [2]</li>
+  <li><b>Transforming data</b> with transformation functions (TFs) [3,4]</li>
+  <li><b>Slicing data</b> with slicing functions (SFs) [<i>technical report + blog post coming soon!</i>]</li>
 </ol>
 
 <div class="figure">
     <img src="superglue_figs/fig_abstractions.png" width="80%" class="centered"/>
 </div>
 
-For the remainder of this post, we use a running example from the Words in Context (WiC) task from SuperGLUE: <i>is the target word being used in the same way in both sentences?</i>
+<h3> Running Example</h3>
 
+For the remainder of this post, we use a running example from the Words in Context (WiC) task from SuperGLUE: <i>is the target word being used in the same way in both sentences?</i>
+<br><br>
 <div class="figure">
     <img src="superglue_figs/example.png" width="80%" class="centered"/>
 </div>
@@ -83,13 +85,13 @@ We have explored this abstraction in our own work, TANDA [3], which seeks to lea
     </i></p>
 </div>
 
-<h2>3. Partitioning data with slicing functions (<mark>new idea!</mark>)</h2>
+<h2>3. Slicing data with slicing functions (<mark>new idea!</mark>)</h2>
 In many datasets, especially in real-world applications, there are subsets of the data that our model underperforms on, or that we care more about performing well on than others.
 For example, a model may underperform on lower-frequency healthcare demographics (e.g. younger patients with certain cancers) or we may care extra about model performance on safety-critical but rare scenarios in an autonomous driving setting, such as detecting cyclists.
 We call these data subsets <i>slices</i>.
 The technical challenge often faced by practitioners is to improve performance on these slices while maintaining overall performance.
 
-<br>
+<br><br>
 <b>Slicing functions (SFs)</b> provide an interface for users to coarsely identify data subsets for which the model should commit additional representational capacity. 
 To address slice-specific representations, practitioners might train many models that each specialize on particular subsets, and then combine these with a mixture-of-experts (MoE) approach [5]. 
 However, with the growing size of ML models, MoE is often impractical. 
@@ -98,7 +100,7 @@ While more computationally efficient, this approach expects representation bias 
 As a quick overview (<i>technical report + blog post coming soon!</i>)— we model slices in the style of multi-task learning, in which slice-based “expert-heads” are used to learn slice-specific representations. 
 Then, an attention mechanism is learned over expert heads to determine when and how to combine the representations learned by these slice heads on a per-example basis. 
 
-<br>
+<br><br>
 We consider the following properties of our approach:
 
 <ul>

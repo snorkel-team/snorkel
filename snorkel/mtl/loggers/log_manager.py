@@ -9,7 +9,6 @@ from snorkel.mtl.loggers import logging_default_config
 from snorkel.mtl.loggers.checkpointer import Checkpointer
 from snorkel.mtl.loggers.log_writer import LogWriter
 from snorkel.mtl.loggers.tensorboard_writer import TensorBoardWriter
-from snorkel.mtl.model import MultitaskModel
 from snorkel.mtl.utils import recursive_merge_dicts
 from snorkel.types import Config
 
@@ -121,7 +120,7 @@ class LogManager(object):
 
     def checkpoint_model(
         self,
-        model: MultitaskModel,
+        model,
         optimizer: torch.optim.Optimizer,
         lr_scheduler: torch.optim.lr_scheduler,
         metric_dict: Dict[str, str],
@@ -130,7 +129,7 @@ class LogManager(object):
             self.unit_total, model, optimizer, lr_scheduler, metric_dict
         )
 
-    def close(self, model: MultitaskModel) -> MultitaskModel:
+    def close(self, model):
         if self.writer:
             self.writer.close()
         if self.checkpointing:

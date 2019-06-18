@@ -11,7 +11,7 @@ def strip_special(s):
 
 # Read in known spouse pairs and save as set of tuples
 try:
-    with bz2.open('data/spouses_dbpedia.csv.bz2', "rt") as f:    
+    with bz2.open('data/spouses_dbpedia.csv.bz2', "rt", encoding="utf8") as f:    
         known_spouses = set(
             tuple(x.strip().split(',')) for x in f.readlines()
         )

@@ -39,7 +39,7 @@ Programming abstractions in machine learning are changing: practitioners are spe
 <br><br>
 We will be releasing code in the <a href="https://github.com/HazyResearch/snorkel">Snorkel repo</a> for reproducing and building on our results in conjunction with a 2-day <mark><b>Snorkel workshop</b></mark> on 6/24-6/25 with collaborators from science, industry, and government. This workshop is already oversubscribed, but if you would like to be notified of future Snorkel workshops, give us your name and contact information <a href="TBD link to Google Form">here</a>.
 
-<h2>3 key abstractions for programming your data</h2>
+<h2>Three key abstractions for programming your data</h2>
 In our result, as well as more generally, we find that spending our time programmatically building and manipulating the training data—rather than the models— provides a powerful and effective strategy to achieve high performance in ML pipelines. In a past <a href="https://dawn.cs.stanford.edu/2019/03/22/glue/">post</a>, we talked about the value of incorporating more supervision signal from more sources, e.g. multi-task learning and transfer learning, as we achieved SOTA on the GLUE Benchmark (a precursor to SuperGLUE). In this post, we focus on three key abstractions for building and modifying training datasets:
 <ol>
   <li><b>Labeling data</b>: labeling functions (LFs) [2]</li>
@@ -58,62 +58,75 @@ For the remainder of this post, we use a running example from the Words in Conte
 </div>
 
 <h2>1. Weak labeling with labeling functions</h2>
-In many applications, unlabeled data is abundant—it may come from fleets of autonomous vehicles, or large corpuses of unstructured data. Modern architectures are largely unable to take advantage of such potentially rich datasets because labeling them might be intractable, as they are too time or cost ineffective.
+In many applications, unlabeled data is abundant—it may come from fleets of autonomous vehicles, or large corpora of unstructured data. Modern architectures are largely unable to take advantage of such potentially rich datasets because labeling them is intractable due to time or cost.
 
-In <a href="https://hazyresearch.github.io/snorkel/">Snorkel</a>, we’ve studied the use of <b>labeling functions (LFs)</b> for heuristically labeling training examples. LFs provide domain experts or machine learning practitioners with an intuitive interface to denoise and combine supervision sources from existing datasets, models, or crowd labelers.
+With <a href="https://hazyresearch.github.io/snorkel/">Snorkel</a>, we’ve studied for years the use of <b>labeling functions (LFs)</b> for heuristically labeling training examples. LFs provide domain experts or machine learning practitioners with an intuitive interface for denoising and combining supervision sources from existing datasets, models, or crowd labelers.
 
-
+<br>
 <div class="figure">
     <img src="superglue_figs/lf_ex.png" width="80%" class="centered"/>
     <p><i>
-      For the WiC task we might consider providing supervision signal for a “sense match” by detecting matching trigrams.
+      For the WiC task (identifying whether a target word is used with the same "sense" in two sentences) we might consider weakly labeling examples based on whether or not they share a trigram including the target word.
     </i></p>
 </div>
 
 <h2>2. Augmenting data with transformation functions</h2>
-Often, people think about data augmentation in terms of simple transformations—randomly rotating or stretching images—but they can often refer to much more diverse range of operations. We see <b>transformation functions (TFs)</b> as a powerful abstraction that heuristically generates new, modified examples from existing ones. For instance, for a medical imaging task, we might write TFs to perform transformations that are specific to our imaging modality—e.g. resampling segmenting tumor masses or resampling background tissue.
+Often, people think about data augmentation in terms of simple transformations—randomly rotating or stretching images—but they can refer to much more diverse range of operations. We see <b>transformation functions (TFs)</b> as a powerful abstraction that heuristically generates new, modified examples from existing ones. For instance, for a medical imaging task, we might write TFs to perform transformations that are specific to our imaging modality—e.g. resampling segmenting tumor masses or resampling background tissue.
 
 We have explored this abstraction in our own work, TANDA [3], which seeks to learn compositions of transformations across domain-specific tasks. AutoAugment [4] from Google builds on this work to automatically learn policies for augmentation strategies.
 
+    <br>
 <div class="figure">
     <img src="superglue_figs/tf_ex.png" width="80%" class="centered"/>
     <p><i>
-      Given that “Sunday” does not change the word sense of “invite”, we might transform a “Sunday” so our model is more robust to different days of the week.
+      Given that “Sunday” does not change the word sense of “invite”, we can transform an example that includes the word “Sunday” into many copies of that example with different days of the week so that our model is likely to overfit.
     </i></p>
 </div>
 
 <h2>3. Partitioning data with slicing functions (<mark>new idea!</mark>)</h2>
-The aforementioned abstractions occur offline—TFs and LFs largely operate on datasets, prior to model training. However, we’d like to provide a way to indicate to a model subsets of data that we particularly care about—for instance, we would like high-quality model outcomes on safety-critical but rare scenarios in an autonomous driving setting (e.g. detecting cyclists) or lower-frequency healthcare demographics (e.g. younger patients with certain cancers). The technical challenge is to improve slice-level performance while maintaining overall performance.
+In many datasets, especially in real-world applications, there are subsets of the data that our model underperforms on, or that we care more about performing well on than others.
+For example, a model may underperform on lower-frequency healthcare demographics (e.g. younger patients with certain cancers) or we may care extra about model performance on safety-critical but rare scenarios in an autonomous driving setting, such as detecting cyclists.
+We call these data subsets <i>slices</i>.
+The technical challenge often faced by practitioners is to improve performance on these slices while maintaining overall performance.
 
-<b>Slicing functions (SFs)</b> provide an interface for users to coarsely identify data subsets for  which the model should commit additional representational capacity. To address slice-specific representations, practitioners might train many models learning to specialize on particular subsets, and for test-time, to train a mixture of experts (MoE) [5]. However, with the growing size of ML models, MoE is impractical. Another strategy would be to train a single model in the style of multi-task learning (MTL) [6] —while more computationally efficient, this approach expects representation bias across many slice-specific tasks to improve performance—an unreliable approach.
+<br>
+<b>Slicing functions (SFs)</b> provide an interface for users to coarsely identify data subsets for which the model should commit additional representational capacity. 
+To address slice-specific representations, practitioners might train many models that each specialize on particular subsets, and then combine these with a mixture-of-experts (MoE) approach [5]. 
+However, with the growing size of ML models, MoE is often impractical. 
+Another strategy would be to train a single model in the style of multi-task learning (MTL) with hard parameter sharing [6].
+While more computationally efficient, this approach expects representation bias across many slice-specific tasks to improve performance—an often unreliable approach.
+As a quick overview (<i>technical report + blog post coming soon!</i>)— we model slices in the style of multi-task learning, in which slice-based “expert-heads” are used to learn slice-specific representations. 
+Then, an attention mechanism is learned over expert heads to determine when and how to combine the representations learned by these slice heads on a per-example basis. 
 
-As a quick overview (<i>technical report + blog post coming soon!</i>)— we model slices in the style of multi-task learning, in which slice-based “expert-heads” are used to learn slice-specific representations. Then, an attention-mechanism is then learned over expert heads to determine when and how to combine them on a per-example basis. We consider the following properties of our approach:
+<br>
+We consider the following properties of our approach:
 
 <ul>
-  <li>Our approach is <b>model-agnostic</b> — expert heads are learned on top of any backbone architecture (e.g. BERT, ResNET). As a result, practitioners can focus only on the data, and not the model architecture.</li>
-  <li>By learning in a multi-task fashion, we <b>efficiently learn representations</b> without the need to make many copies of the model, i.e. MoE requires too much memory!</li>
-  <li>By incorporating the attention mechanism, we <b>avoid manual tuning</b> of expert-heads—a potentially significant developer cost.</li>
+  <li>Our approach is <b>model-agnostic</b> — expert heads are learned on top of any backbone architecture (e.g. BERT, ResNET). As a result, practitioners improving performance with slicing functions can focus on the data rather than the model architecture.</li>
+  <li>By learning in a multi-task fashion, we <b>efficiently learn representations</b> without the need to make many copies of the model (i.e. MoE requires too much memory)!</li>
+  <li>By incorporating the attention mechanism, we <b>avoid manual tuning</b> of expert-heads—an otherwise significant developer cost.</li>
 </ul>
 
+<br>
 <div class="figure">
     <img src="superglue_figs/sf_ex.png" width="80%" class="centered"/>
     <p><i>
-      From WiC error analysis, we might find that our model often misses “nouns” in context. Using an SF, we tell the model to pay attention if the target word is a noun (as specified by an off-the-shelf tagger, like <a href="https://spacy.io/">Spacy</a>).
+      From WiC error analysis, we might find that our model appears to perform worse on examples where the target word is a noun instead of a verb. 
+      Using an SF, we tell the model to pay attention to the differences between these slices and use a slightly different representation when making predictions for target words that it believes are nouns.
     </i></p>
 </div>
 
 <h2>Key properties of LFs, TFs, and SFs</h2>
 <ul>
-  <li><b>Intuitive interfaces</b>: These abstractions provide intuitive interfaces  to existing practitioner workflows. They allow insights from debugging/error analysis to be directly encoded to improve models.</li>
-  <li><b>Programming abstractions as weak supervision</b>: Furthermore, in practice, many of these techniques can be viewed as a form of weak supervision, as users specify them in noisy, heuristic, and imprecise ways. Dealing with this is one of the core technical challenges we tackle in frameworks like Snorkel.</li>
+  <li><b>Intuitive interfaces</b>: These abstractions provide intuitive interfaces to existing practitioner workflows. They allow insights from debugging/error analysis to be directly encoded to improve models.</li>
+  <li><b>Programming abstractions as weak supervision</b>: In practice, many of these techniques can be viewed as a form of weak supervision, as users specify them in noisy, heuristic, and imprecise ways. Dealing with this is one of the core technical challenges we tackle with Snorkel.</li>
   <li><b>Supervision as code</b>: These types of inputs are ways of supervising a model (i.e. they specify training sets). Concretely, they are also code, and thus carry many of the advantages of code—reusability, modifiability, etc.</li>
 </ul>
 
-For more about how these abstractions have been deployed in applications, please see the <a href="https://github.com/HazyResearch/snorkel">open-source Snorkel repository</a>. In an upcoming release, Snorkel will support all three of these abstractions—stay tuned!
-
 <h2>SuperGLUE Results</h2>
-Using these programming abstractions, we achieve new SOTA on the SuperGLUE Benchmark and 4 of its components tasks. SuperGLUE is similar to GLUE, but contains “more difficult tasks...chosen to maximize difficulty and diversity, and...selected to show a substantial headroom gap between a strong BERT-based baseline and human performance.”
-After reproducing the BERT++ baselines, we minimally tune these models (baseline models, default learning rate, etc.) and find that with applications of the above programming abstractions, we see <mark>improvements of +4.0 points on the SuperGLUE benchmark (21% reduction of the gap to human performance).</mark>
+Using these programming abstractions, we achieved a new state-of-the-art score on the SuperGLUE Benchmark and 4 of its components tasks. 
+    SuperGLUE is similar to <a href="https://gluebenchmark.com/">GLUE</a>, but contains “more difficult tasks...chosen to maximize difficulty and diversity, and...selected to show a substantial headroom gap between a strong BERT-based baseline and human performance.”
+After reproducing the BERT++ baselines, we minimally tuned these models (baseline models, default learning rate, etc.) and found that with a handful of applications of the above programming abstractions, we saw <mark>improvements of +4.0 points on the SuperGLUE benchmark (21% reduction of the gap to human performance).</mark>
 
 <h2>Snorkel in the Real World</h2>
 <p>
@@ -125,10 +138,11 @@ After reproducing the BERT++ baselines, we minimally tune these models (baseline
   Relying on diverse sources of knowledge across the organization—heuristics, taggers, knowledge graphs, legacy systems, etc.—they saw significant improvements in quality, by as much as 17.5 F1 points.
 </p>
 
+<br>
 <div class="figure">
     <img src="superglue_figs/bav.jpg" width="90%" class="centered"/>
     <p><i>
-      Snorkel pipeline, deployed on the BAV classification task, for large collections of up to 4,000 unlabeled MRI sequences. Figure credit to [7].
+      The Snorkel pipeline, deployed on the BAV classification task for large collections of up to 4,000 unlabeled MRI sequences. Figure credit to [7].
     </i></p>
 </div>
 <p>
@@ -142,6 +156,14 @@ After reproducing the BERT++ baselines, we minimally tune these models (baseline
   In another forthcoming Nature Communications <a href="https://ai.stanford.edu/~kuleshov/papers/gwaskb-manuscript.pdf">paper</a>, we showed how Snorkel can be used to automate Gene-Wide Association Study (GWAS) curation.
   On a collection of hundreds of previously published studies reporting significant genotype-phenotype pairs, we auto-labeled a large training set using only labeling functions. The resulting classifier applied to a collection of 598 studies recovered over 3,000 previously documented open-access relations (with an estimated recall of 60-80%) as well as over 2,000 associations not present in existing human curated repositories (with an estimated precision of 82-89%). The resulting database is available for exploration with a user interface at <a href="http://gwaskb.stanford.edu/">http://gwaskb.stanford.edu/</a>.
 </p>
+
+<h2>Stay Tuned</h2>
+The Snorkel project is active and ongoing.
+A code release later this month will include significant infrastructural improvements and tutorials for how to apply LFs, TFs, and SFs to SuperGLUE and other tasks.
+If you've used Snorkel for your own applications, we'd love to hear about it!
+For updates on Snorkel developments and applications, you can always visit the Snorkel <a href="http://snorkel.stanford.edu">landing page</a> or <a href="https://github.com/HazyResearch/snorkel">open-source repository</a>.
+
+For more about how these abstractions have been deployed in applications, please see the . In an upcoming release, Snorkel will support all three of these abstractions—stay tuned!
 
 <hr>
 <h3>References</h3>

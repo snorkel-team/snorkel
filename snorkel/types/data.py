@@ -1,7 +1,4 @@
-from typing import Any, Collection, Mapping
+from typing import Any, Collection
 
 DataPoint = Any
 DataPoints = Collection[DataPoint]
-
-Field = Any
-FieldMap = Mapping[str, Field]

@@ -30,50 +30,75 @@
         <p class="view">
           <a href="https://github.com/HazyResearch/snorkel">View the Project on GitHub
         </p>
-<!-- 
-        <a class="github-button" href="https://github.com/HazyResearch/snorkel/archive/master.zip" data-icon="octicon-cloud-download" data-size="large" aria-label="Download HazyResearch/snorkel on GitHub">Download</a> -->
 
         <a class="github-button" href="https://github.com/HazyResearch/snorkel" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star HazyResearch/snorkel on GitHub">Star</a>
 
         <a class="github-button" href="https://github.com/HazyResearch/snorkel/fork" data-icon="octicon-repo-forked" data-size="large" data-show-count="true" aria-label="Fork HazyResearch/snorkel on GitHub">Fork</a>
 
-        <!-- <a class="github-button" href="https://github.com/HazyResearch/snorkel/subscription" data-icon="octicon-eye" data-size="large" data-show-count="true" aria-label="Watch HazyResearch/snorkel on GitHub">Watch</a> -->
-
         <p></p>
         <h2>
             <a id="motivation" class="anchor" href="#motivation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>News</h2>
 
-            <p>[6/15/19] Snorkel achieves <a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">SOTA on SuperGLUE Benchmark</a></p> 
+            <p>[6/4/19] Two papers using Snorkel (<a href="https://nature-research-under-consideration.nature.com/users/37265-nature-communications/posts/38921-weakly-supervised-classification-of-rare-aortic-valve-malformations-using-unlabeled-cardiac-mri-sequences">cardiac MRI imaging</a>, <a href="https://ai.stanford.edu/~kuleshov/papers/gwaskb-manuscript.pdf">GWAS studies</a>) accepted to Nature Communications</p> 
             <p></p> 
-            <p>[6/4/19] Two papers using Snorkel (<a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">cardiac MRI imaging</a>, <a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">GWAS studies</a>) accepted to Nature Communications</p> 
+
+            <p>[4/21/19] Two papers around <a href="https://arxiv.org/abs/1903.05844">learning weak supervision structure</a> and <a href="https://arxiv.org/abs/1803.06084">augmentation theory</a> accepted to ICML 2019</p>
             <p></p> 
-            <p>[4/21/19] Two papers around <a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">learning LF structure</a> and <a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">augmentation theory</a> accepted to ICML 2019!</p> 
-            
+
+            <p>[3/14/19] <a href="https://arxiv.org/abs/1812.00417">SIGMOD paper</a> and <a href="https://ai.googleblog.com/2019/03/harnessing-organizational-knowledge-for.html">Google AI blog</a> on Snorkel's usage at Google</p>  
+
+
+            <!-- MAX 3 ITEMS -->
+            <a onclick="news()">More... </a>
+            <p></p>
+            <div id="news"style="display:none">
+                <p>[3/29/19] <a href="https://nature-research-under-consideration.nature.com/users/37265-nature-communications/posts/47370-cross-modal-data-programming-enables-rapid-medical-machine-learning">Manuscript</a>  on applying Snorkel to radiology and neurology applications posted</p>
+                <p></p> 
+
+                <p>[3/21/19] Snorkel achieves <a href="https://dawn.cs.stanford.edu/2019/03/22/glue/">SOTA on GLUE Benchmark</a></p> 
+                <p></p> 
+
+                <p>[12/05/18] Snorkel shout-out in Kunle Olukotun's <a href="https://nips.cc/Conferences/2018/Schedule?showEvent=12469">keynote at NeurIPS 2018</a> </p>
+                <p></p>
+
+            </div>
+
       </header>
       <div>
+          <p></p>
+          <p></p>
         <section>
-<p></p>
-
-<h2>
-<a id="motivation" class="anchor" href="#motivation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Snorkel: Building and Managing Training Data</h2>
 
 
+<h2>Snorkel: Building and Managing Training Data</h2>
 <p>
-  Programming abstractions in machine learning are changing: practitioners are spending less time on architectures and hardware optimizations and, instead, focusing on training data. We find that spending time <b><font color="6699CC">programmatically building and manipulating the training data</font></b> provides a powerful and effective strategy to achieve high performance in ML pipelines. Snorkel focuses on three key abstractions for building and managing training datasets: <b><font color="6699CC">labeling data, transforming data, and partitioning data.</font></b> 
+  Programming abstractions in machine learning are changing: practitioners are spending less time on architectures and hardware optimizations and, instead, focusing on training data. We find that spending time <b><font color="6699CC">programmatically building and manipulating the training data</font></b> provides a powerful and effective strategy to achieve high performance in ML pipelines. Snorkel focuses on three key abstractions for building and managing training datasets: <b><font color="6699CC">labeling data, transforming data, and slicing data.</font></b> 
 </p>
-<img align:right src="figs/fig_abstractions.png" alt="Snorkel" width=800px /><br />
+<img align:center src="figs/fig_abstractions.png" alt="Snorkel" width=90% />
 
 <p></p>
 <hr>
-<h2>
-    <a id="users" class="anchor" href="#users" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Snorkel in the Wild!
-</h2>
+<h2>Snorkel in the Wild!</h2>
 
+<img align:right src="figs/logos.png" width="90%"  />
+<p></p>
+
+<h3>Snorkel in Industry</h3>
 <p>
-    Snorkel has been used from <b><font color="6699CC"><a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">industrial scale at Google</a></font></b> in Snorkel Drybell to scientific work in MRI image classification and automated GWAS curation featured in <b><font color="6699CC">Nature Communications</font></b>  to achieve state-of-the-art performance on the <b><font color="6699CC"><a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">SuperGLUE language understanding benchmark</a></font></b>! 
+    Snorkel has been used from <b><font color="6699CC"><a href="https://ai.googleblog.com/2019/03/harnessing-organizational-knowledge-for.html">industrial scale at Google</a></font></b> in Snorkel Drybell, <b><font color="6699CC"><a href="https://arxiv.org/pdf/1812.06176.pdf">IBM bootstrapping conversational agents</a></font></b>,  <b><font color="6699CC"><a href="https://www.edsurge.com/news/2018-03-01-cheating-on-chegg-maybe-not-on-its-tutoring-platform">Chegg catching cheating</a></font></b>, and  <b><font color="6699CC"><a href="https://ajratner.github.io/assets/papers/Osprey_DEEM.pdf">Intel extracting rare relations</a></font></b>. 
 </p>
+<p>
+    Snorkel has also achieved state-of-the-art performance on the <b><font color="6699CC"><a href="https://dawn.cs.stanford.edu/2019/03/22/glue/">GLUE</a></font></b> and
+    <b><font color="6699CC"><a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">SuperGLUE language understanding benchmark</a></font></b>! 
+</p>
+<p></p>
 
-<img src="figs/logos.png" width="100%" align="middle" /><br />
+<h3>Snorkel in Academia</h3>
+<p>
+    Snorkel has been used extensively in medical settings, with two Nature Communication publications around <b><font color="6699CC"><a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">automated GWAS curation</a></font></b> and <b><font color="6699CC"><a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">cardiac MRI classification</a></font></b>. Snorkel can also handle <b><font color="6699CC"><a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">cross-modal</a></font></b> classification to label radiographs and EEG signals based on labels applied to associated text reports. 
+</p>
+<p></p>
+<img align:center src="figs/nature.png" alt="Snorkel" width=100% />
 
 <p></p>
 <p>
@@ -85,34 +110,36 @@
 
 <p></p>
 <hr>
-<h2>
-    <a id="users" class="anchor" href="#users" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What powers Snorkel?
-</h2>
+<h2>What does Snorkel do?</h2>
+
 <p>
-    Snorkel is a general framework that encapsulates several <b><font color="6699CC"><a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">weak supervision techniques</a></font></b> and allows domain experts to encode their knowledge programmatically to provide supervision through the following techniques:
+    Snorkel is a general framework that encapsulates several <b><font color="6699CC"><a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">weak supervision techniques</a></font></b> and allows domain experts to encode their knowledge programmatically to provide supervision through the following techniques:
 </p>
  
 <h3>
     <a id="users" class="anchor" href="#users" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Labeling
 </h3>
 
+<img align:center src="figs/lfs.png" alt="Snorkel" width=100% />
+<p></p>
+
 <p>
     Snorkel takes as input labeling functions (LFs) to heuristically label training examples. It denoises these LFs by learning their accuracies and correlation structure without using any hand-labeled data. Read more here:
     <ul>
         <li>
-            <a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">Blog on using Labeling Functions to Efficiently Label Training Data</a>
+            <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">Blog on using Labeling Functions to Efficiently Label Training Data</a>
         </li>
 
         <li>
-            <a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">NeurIPS'16 Paper on Data Programming</a> 
+            <a href="https://arxiv.org/abs/1605.07723">NeurIPS'16 Paper on Data Programming</a> 
         </li>
 
         <li>
-            <a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">AAAI'19 Paper on Core Method and Supporting Theory</a>
+            <a href="https://arxiv.org/abs/1711.10160">VLDB'18 Paper on System for Labeling with LFs</a>
         </li>
 
         <li>
-            <a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">VLDB'18 Paper on System for Labeling with LFs</a>
+            <a href="https://arxiv.org/abs/1810.02840">AAAI'19 Paper on Core Method and Supporting Theory</a>
         </li>
       </ul>
 </p>
@@ -121,23 +148,27 @@
 <h3>
     <a id="users" class="anchor" href="#users" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Tranforming
 </h3>
+<img align:center src="figs/tfs.png" alt="Snorkel" width=100% />
+<p></p>
 
 <p>
     Snorkel takes as input transformation functions (TFs) to heuristically generate new, modified training examples. It learns compositions of transformations across various domain-specific tasks to optimize for a representative training set. Read more here:
     <ul>
         <li>
-          <a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">Blog on using Transformation Functions to Augment Training Set</a>
+          <a href="https://hazyresearch.github.io/snorkel/blog/tanda.html">Blog on using Transformation Functions to Augment Training Set</a>
         </li>
 
         <li>
-          <a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">NeurIPS'17 Paper on Core Method and Supporting Theory</a>
+          <a href="https://arxiv.org/abs/1709.01643">NeurIPS'17 Paper on Core Method and Supporting Theory</a>
         </li>
+
+        <li>
+            <a href="https://ai.googleblog.com/2018/06/improving-deep-learning-performance.html">Follow Up: Google's AutoAugment to Learn Augmentation Policies</a>
+          </li>
       </ul>
 </p>
 
-<h3>
-    <a id="users" class="anchor" href="#users" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Partitioning
-</h3>
+<h3>Slicing</h3>
 
 <p>
     Snorkel takes as input slicing functions (SFs) to heuristically identify subsets of the data the model should particularly care about. It models slices in the style of multi-task learning and an attention-mechanism is then learned over these heads. Read more here:
@@ -148,14 +179,16 @@
       </ul>
 </p>
 
+<p>
+    Snorkel can also operate over other forms of weak supervision like crowdsourcing by modeling individual workers as labeling functions. To properly take advantage of all supervision signal available, Snorkel can takes advantage of multi-task learning and transfer learning, moving towards <b><font color="6699CC"><a href="https://ajratner.github.io/assets/papers/software_2_mmt_vision.pdf">massive multi-task learnings</a></font></b> to facilitate incorporating diverse and varying granularities of supervision at a large scale. 
+</p>
+
 <hr>
-<h2>
-    <a id="users" class="anchor" href="#users" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Additional Resources
-</h2>
+<h2>Additional Resources</h2>
 
 
-<h3><a onclick="blogs()">More Blogs and Tutorials </a></h3>
-<div id="blogs" style="display:none">
+<h3><a onclick="blogs()">Blogs and Tutorials </a></h3>
+<div id="blogs">
   <ul>
       <li>
         [3/23/2019] <a href="https://dawn.cs.stanford.edu/2019/03/22/glue/">Massive Multi-Task Learning with Snorkel MeTaL: Bringing More Supervision to Bear</a>
@@ -213,7 +246,7 @@
 
 <p></p>
 <h3><a onclick="papers()">Papers and Pre-Prints</a></h3>
-<div id="papers" style="display:none">
+<div id="papers">
     <ul>
         <li>
           <b><a href="https://arxiv.org/abs/1711.10160">Snorkel: Rapid Training Data Creation with Weak Supervision</a> (VLDB 2018)</b>
@@ -264,7 +297,8 @@
 
 <p></p>
 <h3><a onclick="uses()">Snorkel Use Cases</a></h3>
-<div id="uses" style="display:none">
+<div id="uses">
+  <ul>
 <li>
     Conversational agents at IBM: <a href="https://arxiv.org/pdf/1812.06176.pdf">Bootstrapping Conversational Agents With Weak Supervision (AAAI 2019)</a>
   </li>
@@ -295,18 +329,27 @@
   <li>
     GWAS KBC with Stanford Genomics: <a href="https://ajratner.github.io/assets/papers/neurips2016-healthcare.pdf">A Machine-Compiled Database of Genome-Wide Association Studies (NeurIPS ML4H 2016)</a>
   </li>
+</ul>
 
 </section>
-<footer>
+<!-- <footer>
 
   <p>
     <small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small>
   </p>
-</footer>
+</footer> -->
 </div>
 <script src="javascripts/scale.fix.js"></script>
 
 <script>
+    function news() {
+      var x = document.getElementById("news");
+      if (x.style.display === "none") {
+        x.style.display = "block";
+      } else {
+        x.style.display = "none";
+      }
+    }
     function papers() {
       var x = document.getElementById("papers");
       if (x.style.display === "none") {

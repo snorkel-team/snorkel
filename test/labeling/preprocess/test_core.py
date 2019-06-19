@@ -1,7 +1,7 @@
 import unittest
 from types import SimpleNamespace
 
-from snorkel.labeling.preprocess import Preprocessor, PreprocessorMode
+from snorkel.labeling.preprocess import Preprocessor, PreprocessorMode, preprocessor
 from snorkel.types import FieldMap
 
 
@@ -15,12 +15,9 @@ class SplitWordsPreprocessor(Preprocessor):
         return dict(lower=text.lower(), words=text.split())
 
 
-class SquarePreprocessor(Preprocessor):
-    def __init__(self, x_field: str, squared_x_field: str) -> None:
-        super().__init__(dict(x=x_field), dict(x=squared_x_field))
-
-    def preprocess(self, x: float) -> FieldMap:  # type: ignore
-        return dict(x=x ** 2)
+@preprocessor(dict(x="a"), dict(x="c"))
+def square(x: float) -> FieldMap:
+    return dict(x=x ** 2)
 
 
 class TestPreprocessorCore(unittest.TestCase):
@@ -28,7 +25,6 @@ class TestPreprocessorCore(unittest.TestCase):
         return SimpleNamespace(a=8, b="Henry has fun")
 
     def test_numeric_preprocessor(self) -> None:
-        square = SquarePreprocessor("a", "c")
         square.set_mode(PreprocessorMode.NAMESPACE)
         x_preprocessed = square(self._get_x())
         self.assertEqual(x_preprocessed.a, 8)
@@ -53,7 +49,6 @@ class TestPreprocessorCore(unittest.TestCase):
         self.assertEqual(x_preprocessed.c, ["Henry", "has", "fun"])
 
     def test_preprocessor_mode(self) -> None:
-        square = SquarePreprocessor("a", "c")
         x = self._get_x()
 
         square.set_mode(18)  # type: ignore

@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from types import SimpleNamespace
-from typing import Any, Mapping, NamedTuple, Union
+from typing import Any, Callable, Mapping, NamedTuple, Union
 
 from snorkel.types import DataPoint, FieldMap
 
@@ -82,3 +82,38 @@ class Preprocessor:
             raise ValueError(
                 f"Preprocessor mode {self.mode} not recognized. Options: {PreprocessorMode}."
             )
+
+
+class LambdaPreprocessor(Preprocessor):
+    def __init__(
+        self,
+        f: Callable[..., FieldMap],
+        field_names: Mapping[str, str],
+        preprocessed_field_names: Mapping[str, str],
+        mode: PreprocessorMode = PreprocessorMode.NONE,
+    ) -> None:
+        super().__init__(field_names, preprocessed_field_names, mode)
+        self._f = f
+
+    def preprocess(self, **kwargs: Any) -> FieldMap:
+        return self._f(**kwargs)
+
+
+class preprocessor:
+    def __init__(
+        self,
+        field_names: Mapping[str, str],
+        preprocessed_field_names: Mapping[str, str],
+        mode: PreprocessorMode = PreprocessorMode.NONE,
+    ) -> None:
+        self.field_names = field_names
+        self.preprocessed_field_names = preprocessed_field_names
+        self.mode = mode
+
+    def __call__(self, f: Callable[..., FieldMap]) -> LambdaPreprocessor:
+        return LambdaPreprocessor(
+            f=f,
+            field_names=self.field_names,
+            preprocessed_field_names=self.preprocessed_field_names,
+            mode=self.mode,
+        )

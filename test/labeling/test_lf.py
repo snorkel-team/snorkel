@@ -4,16 +4,13 @@ from types import SimpleNamespace
 from typing import List
 
 from snorkel.labeling.lf import LabelingFunction, labeling_function
-from snorkel.labeling.preprocess import Preprocessor, PreprocessorMode
+from snorkel.labeling.preprocess import PreprocessorMode, preprocessor
 from snorkel.types import DataPoint, FieldMap
 
 
-class SquarePreprocessor(Preprocessor):
-    def __init__(self, x_field: str, squared_x_field: str) -> None:
-        super().__init__(dict(x=x_field), dict(x=squared_x_field))
-
-    def preprocess(self, x: float) -> FieldMap:  # type: ignore
-        return dict(x=x ** 2)
+@preprocessor(dict(x="a"), dict(x="a"))
+def square(x: float) -> FieldMap:
+    return dict(x=x ** 2)
 
 
 def f(x: DataPoint) -> int:
@@ -57,8 +54,7 @@ class TestLabelingFunctionCore(unittest.TestCase):
         self._run_lf_no_raise(lf)
 
     def test_labeling_function_preprocessor(self) -> None:
-        p = SquarePreprocessor(x_field="a", squared_x_field="a")
-        lf = LabelingFunction(name="my_lf", f=f, preprocessors=[p, p])
+        lf = LabelingFunction(name="my_lf", f=f, preprocessors=[square, square])
         lf.set_preprocessor_mode(PreprocessorMode.NAMESPACE)
         x_43 = SimpleNamespace(a=43)
         x_6 = SimpleNamespace(a=6)

@@ -134,7 +134,9 @@ class Logger(object):
                     data_loader, return_probs=True
                 )
                 for metric in target_standard_metrics:
-                    score = metric_score(Y, Y_preds, metric, probs=Y_probs)
+                    score = metric_score(
+                        gold=Y, pred=Y_preds, prob=Y_probs, metric=metric
+                    )
                     metrics_dict[self.add_split_prefix(metric, split)] = score
         return metrics_dict
 

@@ -139,7 +139,9 @@ class Classifier(nn.Module):
         metric_list = metric if isinstance(metric, list) else [metric]
         scores = []
         for metric in metric_list:
-            score = metric_score(Y, Y_p, metric, probs=Y_s, ignore_in_gold=[0])
+            score = metric_score(
+                gold=Y, pred=Y_p, prob=Y_s, metric=metric, ignore_in_gold=[0]
+            )
             scores.append(score)
             if verbose:
                 print(f"{metric.capitalize()}: {score:.3f}")

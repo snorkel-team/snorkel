@@ -1,19 +1,26 @@
+import os
+import shutil
 import unittest
 
 from snorkel.mtl.loggers.log_manager import LogManager
+
+TEST_LOG_DIR = "test/mtl/loggers/logs"
 
 
 class TestLogManager(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        pass
+        if not os.path.exists(TEST_LOG_DIR):
+            os.makedirs(TEST_LOG_DIR)
 
     @classmethod
     def tearDownClass(cls):
-        pass
+        if os.path.exists(TEST_LOG_DIR):
+            shutil.rmtree(TEST_LOG_DIR)
 
     def test_log_manager_points(self) -> None:
         config = {
+            "log_dir": TEST_LOG_DIR,
             "counter_unit": "points",
             "evaluation_freq": 10,
             "checkpointer_config": {"checkpoint_factor": 2},

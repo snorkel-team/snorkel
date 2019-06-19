@@ -36,7 +36,7 @@ plt.scatter(X_neg[:,0], X_neg[:,1], color='blue')
 plt.show()
 
 #%%
-from snorkel.labeling.lf.core import LabelingFunction
+from snorkel.labeling.lf import LabelingFunction
 from functools import partial
 
 def lf_template(x, index=0):
@@ -47,20 +47,16 @@ def lf_template(x, index=0):
 
 # Generate a set of m LFs that each label based on one feature of the data
 m = int(d/2)
-LFS = []
+LFs = []
 for i in range(m):
-    LFS.append(LabelingFunction(f"LF_feat_{i}", partial(lf_template, index=i)))
+    LFs.append(LabelingFunction(f"LF_feat_{i}", partial(lf_template, index=i)))
 
 #%%
-from scipy.sparse import lil_matrix
+from snorkel.labeling.apply import LFApplier
 
-# TODO: Replace this with an LF applier
-m = len(LFS)
-L = lil_matrix((n, m))
-for i in range(n):
-    for j, lf in enumerate(LFS):
-        L[i,j] = lf(X[i,:])
-L = L.tocsr()
+# Apply the labeling functions to the data
+lf_applier = LFApplier(LFs)
+L = lf_applier.apply(X)
 
 #%%
 # Compute the true (empirical) LF accuracies

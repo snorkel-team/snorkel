@@ -4,7 +4,7 @@ from collections import defaultdict
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from snorkel.mtl.utils import list_to_tensor
+from .utils import list_to_tensor
 
 
 class MultitaskDataset(Dataset):

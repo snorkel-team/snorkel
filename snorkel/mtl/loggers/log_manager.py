@@ -5,11 +5,12 @@ from typing import Dict
 
 import torch
 
-from snorkel.mtl.loggers.checkpointer import Checkpointer
-from snorkel.mtl.loggers.log_writer import LogWriter
-from snorkel.mtl.loggers.tensorboard_writer import TensorBoardWriter
 from snorkel.mtl.utils import recursive_merge_dicts
 from snorkel.types import Config
+
+from .checkpointer import Checkpointer
+from .log_writer import LogWriter
+from .tensorboard_writer import TensorBoardWriter
 
 logger_default_config = {
     "counter_unit": "batches",  # [points, batches, epochs]

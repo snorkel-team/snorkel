@@ -1,7 +1,8 @@
 from tensorboardX import SummaryWriter
 
-from snorkel.mtl.loggers.log_writer import LogWriter
 from snorkel.types import Config, Path
+
+from .log_writer import LogWriter
 
 
 class TensorBoardWriter(LogWriter):

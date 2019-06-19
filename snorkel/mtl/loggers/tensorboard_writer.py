@@ -1,6 +1,6 @@
 from tensorboardX import SummaryWriter
 
-from snorkel.types import Config, Path
+from snorkel.types import Config
 
 from .log_writer import LogWriter
 
@@ -8,7 +8,7 @@ from .log_writer import LogWriter
 class TensorBoardWriter(LogWriter):
     """A class for logging to Tensorboard during training process."""
 
-    def __init__(self, log_dir: Path):
+    def __init__(self, log_dir):
         super().__init__(log_dir)
         self.writer = SummaryWriter(log_dir)
 

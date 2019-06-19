@@ -26,7 +26,7 @@ class MetricsTest(unittest.TestCase):
         gold = [1, 1, 1, 2, 2]
         pred = [1, 1, 1, 2, 1]
         acc = accuracy_score(gold, pred)
-        met = metric_score(gold, pred, metric="accuracy")
+        met = metric_score(gold, pred, prob=None, metric="accuracy")
         self.assertAlmostEqual(acc, met)
 
     def test_bad_inputs(self):
@@ -98,8 +98,9 @@ class MetricsTest(unittest.TestCase):
 
     def test_roc_auc(self):
         gold = [1, 1, 2, 2]
-        probs = np.array([[0.9, 0.1], [0.6, 0.4], [0.65, 0.35], [0.2, 0.8]])
-        score = roc_auc_score(gold, probs)
+        pred = [1, 1, 1, 2]
+        prob = np.array([[0.9, 0.1], [0.6, 0.4], [0.65, 0.35], [0.2, 0.8]])
+        score = roc_auc_score(gold, pred, prob)
         self.assertEqual(score, 0.75)
 
 

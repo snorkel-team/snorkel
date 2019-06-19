@@ -1,5 +1,6 @@
 import unittest
 from types import SimpleNamespace
+from typing import Dict
 
 from snorkel.map import Mapper, MapperMode, lambda_mapper
 from snorkel.types import FieldMap
@@ -25,9 +26,18 @@ def square(num: float) -> FieldMap:
     return dict(num_squared=num ** 2)
 
 
+@lambda_mapper
+def modify_in_place(d: Dict[str, int]) -> FieldMap:
+    d["my_key"] = 0
+    return dict(d=d, d_new=d)
+
+
 class TestMapperCore(unittest.TestCase):
     def _get_x(self) -> SimpleNamespace:
         return SimpleNamespace(num=8, text="Henry has fun")
+
+    def _get_x_dict(self) -> SimpleNamespace:
+        return SimpleNamespace(num=8, d=dict(my_key=1))
 
     def test_numeric_mapper(self) -> None:
         square.set_mode(MapperMode.NAMESPACE)
@@ -48,7 +58,11 @@ class TestMapperCore(unittest.TestCase):
     def test_mapper_same_field(self) -> None:
         split_words = SplitWordsMapper("text", "text", "text_words")
         split_words.set_mode(MapperMode.NAMESPACE)
-        x_mapped = split_words(self._get_x())
+        x = self._get_x()
+        x_mapped = split_words(x)
+        self.assertEqual(x.num, 8)
+        self.assertEqual(x.text, "Henry has fun")
+        self.assertFalse(hasattr(x, "text_words"))
         self.assertEqual(x_mapped.num, 8)
         self.assertEqual(x_mapped.text, "henry has fun")
         self.assertEqual(x_mapped.text_words, ["Henry", "has", "fun"])
@@ -61,6 +75,17 @@ class TestMapperCore(unittest.TestCase):
         self.assertEqual(x_mapped.text, "Henry has fun")
         self.assertEqual(x_mapped.lower, "henry has fun")
         self.assertEqual(x_mapped.words, ["Henry", "has", "fun"])
+
+    def test_mapper_in_place(self) -> None:
+        modify_in_place.set_mode(MapperMode.NAMESPACE)
+        x = self._get_x_dict()
+        x_mapped = modify_in_place(x)
+        self.assertEqual(x.num, 8)
+        self.assertEqual(x.d, dict(my_key=1))
+        self.assertFalse(hasattr(x, "d_new"))
+        self.assertEqual(x_mapped.num, 8)
+        self.assertEqual(x_mapped.d, dict(my_key=0))
+        self.assertEqual(x_mapped.d_new, dict(my_key=0))
 
     def test_mapper_mode(self) -> None:
         x = self._get_x()

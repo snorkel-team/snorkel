@@ -1,7 +1,8 @@
 import inspect
 from enum import Enum, auto
-from types import SimpleNamespace
-from typing import Any, Callable, List, Mapping, NamedTuple, Optional, Union
+from typing import Any, Callable, List, Mapping, Optional
+
+import dill
 
 from snorkel.types import DataPoint, FieldMap
 
@@ -12,13 +13,6 @@ class MapperMode(Enum):
     PANDAS = auto()
     DASK = auto()
     SPARK = auto()
-
-
-def namespace_to_dict(x: Union[SimpleNamespace, NamedTuple]) -> dict:
-    """Convert a SimpleNamespace or NamedTuple to a dict"""
-    if isinstance(x, SimpleNamespace):
-        return vars(x)
-    return x._asdict()
 
 
 def get_parameters(
@@ -74,6 +68,7 @@ class Mapper:
         raise NotImplementedError
 
     def __call__(self, x: DataPoint) -> DataPoint:
+        x = dill.loads(dill.dumps(x))
         field_map = {k: getattr(x, v) for k, v in self.field_names.items()}
         mapped_fields = self.run(**field_map)
         assert isinstance(mapped_fields, dict)
@@ -83,15 +78,10 @@ class Mapper:
             }
         if self.mode == MapperMode.NONE:
             raise ValueError("No Mapper mode set. Use `Mapper.set_mode(...)`.")
-        if self.mode == MapperMode.NAMESPACE:
-            values = namespace_to_dict(x)
-            values.update(mapped_fields)
-            return SimpleNamespace(**values)
-        if self.mode == MapperMode.PANDAS:
-            x_mapped = x.copy()
+        if self.mode in (MapperMode.NAMESPACE, MapperMode.PANDAS):
             for k, v in mapped_fields.items():
-                x_mapped.loc[k] = v
-            return x_mapped
+                setattr(x, k, v)
+            return x
         if self.mode == MapperMode.DASK:
             raise NotImplementedError("Dask Mapper mode not implemented")
         if self.mode == MapperMode.SPARK:

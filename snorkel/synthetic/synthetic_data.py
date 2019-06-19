@@ -3,7 +3,6 @@ from types import SimpleNamespace
 from typing import List, Optional
 
 import numpy as np
-import pandas as pd
 
 from snorkel.labeling.lf import LabelingFunction
 from snorkel.types import DataPoint
@@ -11,7 +10,7 @@ from snorkel.types import DataPoint
 
 def generate_mog_dataset(
     n: int, d: int, cov: Optional[np.ndarray] = None
-) -> pd.DataFrame:
+) -> List[DataPoint]:
     """
     Generates a simple mixture-of-gaussians (MOG) dataset consisting of
     d-dim vectors x \in \mathbb{R}^d, and binary labels y \in {-1,1}.

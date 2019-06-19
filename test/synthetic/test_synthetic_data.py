@@ -50,7 +50,7 @@ class TestGenerateSingleFeatureLFs(unittest.TestCase):
         L = lf_applier.apply(data)
 
         # Get accuracies
-        Ld = np.array(L.todense())
+        Ld = L.todense()
         Y = np.array([d.y for d in data])
         accs = Ld.T @ Y / self.n
         self.assertEqual(accs[0], 1.0)
@@ -68,7 +68,7 @@ class TestGenerateSingleFeatureLFs(unittest.TestCase):
 
         # Get average abstain rate
         abstain_rate_est = 1 - np.abs(L).sum() / (self.n * m)
-        self.assertAlmostEqual(abstain_rate, abstain_rate_est, delta=0.01)
+        self.assertAlmostEqual(abstain_rate, abstain_rate_est, delta=0.025)
 
 
 if __name__ == "__main__":

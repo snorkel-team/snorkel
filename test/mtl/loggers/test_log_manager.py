@@ -23,10 +23,11 @@ class TestLogManager(unittest.TestCase):
             "log_dir": TEST_LOG_DIR,
             "counter_unit": "points",
             "evaluation_freq": 10,
+            "checkpointing": True,
             "checkpointer_config": {"checkpoint_factor": 2},
         }
 
-        log_manager = LogManager(config, n_batches_per_epoch=10)
+        log_manager = LogManager(n_batches_per_epoch=10, **config)
 
         log_manager.update(5)
         assert log_manager.trigger_evaluation() is False
@@ -55,10 +56,11 @@ class TestLogManager(unittest.TestCase):
         config = {
             "counter_unit": "batches",
             "evaluation_freq": 2,
+            "checkpointing": True,
             "checkpointer_config": {"checkpoint_factor": 2},
         }
 
-        log_manager = LogManager(config, n_batches_per_epoch=5)
+        log_manager = LogManager(n_batches_per_epoch=5, **config)
 
         log_manager.update(5)
         assert log_manager.trigger_evaluation() is False
@@ -86,10 +88,11 @@ class TestLogManager(unittest.TestCase):
         config = {
             "counter_unit": "epochs",
             "evaluation_freq": 1,
+            "checkpointing": True,
             "checkpointer_config": {"checkpoint_factor": 2},
         }
 
-        log_manager = LogManager(config, n_batches_per_epoch=2)
+        log_manager = LogManager(n_batches_per_epoch=2, **config)
 
         log_manager.update(5)
         assert log_manager.trigger_evaluation() is False

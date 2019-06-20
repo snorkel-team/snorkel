@@ -76,7 +76,7 @@ class Trainer(object):
         if not train_dataloaders:
             raise ValueError(
                 f"Cannot find the specified train_split "
-                f'{self.config["train_split"]} in datloaders.'
+                f'{self.config["train_split"]} in dataloaders.'
             )
 
         # Calculate the total number of batches per epoch

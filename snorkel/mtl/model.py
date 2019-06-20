@@ -2,6 +2,7 @@ import logging
 import os
 from collections import defaultdict
 from collections.abc import Iterable
+from typing import Dict, List
 
 import numpy as np
 import torch
@@ -21,12 +22,10 @@ class MultitaskModel(nn.Module):
     """A class to build multi-task model.
 
     :param name: Name of the model
-    :type name: str
-    :param tasks: a list of Task that trains jointly
-    :type tasks: list of Task project
+    :param tasks: a list of Tasks to be trained jointly
     """
 
-    def __init__(self, name=None, tasks=None, **kwargs):
+    def __init__(self, name: str, tasks: List[Task], **kwargs) -> None:
         super().__init__()
         self.config = recursive_merge_dicts(
             model_default_config, kwargs, misses="insert"
@@ -42,16 +41,19 @@ class MultitaskModel(nn.Module):
         self.scorers = dict()
 
         # Build network with given tasks
-        if tasks is not None:
-            self._build_network(tasks)
+        self._build_network(tasks)
 
         logging.info(
             f"Created multi-task model {self.name} that contains "
-            f"task {self.task_names}."
+            f"task(s) {self.task_names}."
         )
 
         # Move model to specified device
         self._move_to_device()
+
+    def __repr__(self):
+        cls_name = type(self).__name__
+        return f"{cls_name}(name={self.name})"
 
     def _move_to_device(self):
         """Move model to specified device."""
@@ -63,7 +65,7 @@ class MultitaskModel(nn.Module):
             else:
                 logging.info("No cuda device available. Switch to cpu instead.")
 
-    def _build_network(self, tasks):
+    def _build_network(self, tasks: List[Task]):
         """Build the MTL network using all tasks"""
 
         if not isinstance(tasks, Iterable):
@@ -78,88 +80,14 @@ class MultitaskModel(nn.Module):
                 raise ValueError(f"Unrecognized task type {task}.")
             self.add_task(task)
 
-    def add_task(self, task):
-        """Add a single task into MTL network"""
-
-        # Combine module_pool from all tasks
-        for key in task.module_pool.keys():
-            if key in self.module_pool.keys():
-                if self.config["dataparallel"]:
-                    task.module_pool[key] = nn.DataParallel(self.module_pool[key])
-                else:
-                    task.module_pool[key] = self.module_pool[key]
-            else:
-                if self.config["dataparallel"]:
-                    self.module_pool[key] = nn.DataParallel(task.module_pool[key])
-                else:
-                    self.module_pool[key] = task.module_pool[key]
-        # Collect task names
-        self.task_names.add(task.name)
-        # Collect task flows
-        self.task_flows[task.name] = task.task_flow
-        # Collect loss functions
-        self.loss_funcs[task.name] = task.loss_func
-        # Collect output functions
-        self.output_funcs[task.name] = task.output_func
-        # Collect scorers
-        self.scorers[task.name] = task.scorer
-
-        # Move model to specified device
-        self._move_to_device()
-
-    def update_task(self, task):
-        """Update a existing task in MTL network"""
-
-        # Update module_pool with task
-        for key in task.module_pool.keys():
-            # Update the model's module with the task's module
-            if self.config["dataparallel"]:
-                self.module_pool[key] = nn.DataParallel(task.module_pool[key])
-            else:
-                self.module_pool[key] = task.module_pool[key]
-        # Update task flows
-        self.task_flows[task.name] = task.task_flow
-        # Update loss functions
-        self.loss_funcs[task.name] = task.loss_func
-        # Update output functions
-        self.output_funcs[task.name] = task.output_func
-        # Collect scorers
-        self.scorers[task.name] = task.scorer
-
-        # Move model to specified device
-        self._move_to_device()
-
-    def remove_task(self, task_name):
-        """Remove a existing task from MTL network"""
-        if task_name not in self.task_flows:
-            logging.info(f"Task ({task_name}) not in the current model, skip...")
-            return
-
-        # Remove task by task_name
-        logging.info(f"Removing Task {task_name}.")
-
-        self.task_names.remove(task_name)
-        del self.task_flows[task_name]
-        del self.loss_funcs[task_name]
-        del self.output_funcs[task_name]
-        del self.scorers[task_name]
-        # TODO: remove the modules only associate with that task
-
-    def __repr__(self):
-        cls_name = type(self).__name__
-        return f"{cls_name}(name={self.name})"
-
-    def forward(self, X_dict, task_names):
-        """Forward based on input and task
-        Note: We assume that all shared the modules from all tasks are based on the
-        the same input.
+    def forward(
+        self, X_dict: Dict[str, torch.Tensor], task_names: List[str]
+    ) -> Dict[str, Dict[str, torch.Tensor]]:
+        """Forward pass through the network
 
         :param X_dict: The input data
-        :type X_dict: dict of tensor
         :param task_names: The task names that needs to forward
-        :type task_names: list of str
         :return: The output of all forwarded modules
-        :rtype: dict
         """
 
         X_dict = move_to_device(X_dict, self.config["device"])
@@ -167,44 +95,47 @@ class MultitaskModel(nn.Module):
         outputs = dict()
         outputs["_input_"] = X_dict
 
-        # Call forward for each task
+        # Call forward for each task, using cached result if available
+        # Each task flow consists of one or more operations that are executed in order
         for task_name in task_names:
             task_flow = self.task_flows[task_name]
 
-            for action in task_flow:
-                if action["name"] not in outputs:
-                    if action["inputs"]:
+            for operation in task_flow:
+                if operation["name"] not in outputs:
+                    if operation["inputs"]:
                         try:
                             input = [
-                                outputs[action_name][output_index]
-                                for action_name, output_index in action["inputs"]
+                                outputs[operation_name][output_index]
+                                for operation_name, output_index in operation["inputs"]
                             ]
                         except Exception:
-                            raise ValueError(f"Unrecognized action {action}.")
-                        output = self.module_pool[action["module"]].forward(*input)
+                            raise ValueError(f"Unrecognized operation {operation}.")
+                        output = self.module_pool[operation["module"]].forward(*input)
                     else:
-                        output = self.module_pool[action["module"]].forward(outputs)
+                        output = self.module_pool[operation["module"]].forward(outputs)
                     if isinstance(output, tuple):
                         output = list(output)
                     if not isinstance(output, list):
                         output = [output]
-                    outputs[action["name"]] = output
+                    outputs[operation["name"]] = output
 
         return outputs
 
-    def calculate_loss(self, X_dict, Y_dict, task_to_label_dict, data_name, split):
+    def calculate_loss(
+        self,
+        X_dict: Dict[str, torch.Tensor],
+        Y_dict: Dict[str, torch.Tensor],
+        task_to_label_dict: Dict[str, str],
+        data_name: str,
+        split: str,
+    ):
         """Calculate the loss
 
         :param X_dict: The input data
-        :type X_dict: dict of tensors
         :param Y_dict: The output data
-        :type Y_dict: dict of tensors
         :param task_to_label_dict: The task to label mapping
-        :type task_to_label_dict: dict
         :param data_name: The dataset name
-        :type data_name: str
         :param split: The data split
-        :type split: str
         :return: The loss and the number of samples in the batch of all tasks
         :rtype: dict, dict
         """
@@ -239,13 +170,11 @@ class MultitaskModel(nn.Module):
         return loss_dict, count_dict
 
     @torch.no_grad()
-    def _calculate_probs(self, X_dict, task_names):
+    def _calculate_probs(self, X_dict: Dict[str, torch.Tensor], task_names: List[str]):
         """Calculate the probs given the features
 
         :param X_dict: The input data
-        :type X_dict: dict of tensor
         :param task_names: The task names that needs to forward
-        :type task_names: list of str
         """
 
         self.eval()

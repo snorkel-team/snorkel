@@ -10,11 +10,11 @@ from snorkel.mtl.task import Task
 
 
 class TaskTest(unittest.TestCase):
-    def create_task(self, task_name, mod_suffixes):
+    def create_task(self, task_name, module_suffixes):
         module_pool = nn.ModuleDict(
             {
-                f"linear1{mod_suffixes[0]}": nn.Linear(2, 10),
-                f"linear2{mod_suffixes[1]}": nn.Linear(10, 1),
+                f"linear1{module_suffixes[0]}": nn.Linear(2, 10),
+                f"linear2{module_suffixes[1]}": nn.Linear(10, 2),
             }
         )
 
@@ -39,7 +39,7 @@ class TaskTest(unittest.TestCase):
         return task
 
     def test_onetask_model(self):
-        task1 = self.create_task("task1", mod_suffixes=["A", "A"])
+        task1 = self.create_task("task1", module_suffixes=["A", "A"])
         model = MultitaskModel(name="MyOneTaskModel", tasks=[task1])
         self.assertEqual(len(model.task_names), 1)
         self.assertEqual(len(model.task_flows), 1)
@@ -47,8 +47,8 @@ class TaskTest(unittest.TestCase):
 
     def test_twotask_all_overlap_model(self):
         """Add two tasks with identical modules and flows"""
-        task1 = self.create_task("task1", mod_suffixes=["A", "A"])
-        task2 = self.create_task("task2", mod_suffixes=["A", "A"])
+        task1 = self.create_task("task1", module_suffixes=["A", "A"])
+        task2 = self.create_task("task2", module_suffixes=["A", "A"])
         model = MultitaskModel(name="MyTwoTaskModel", tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
         self.assertEqual(len(model.task_flows), 2)
@@ -56,8 +56,8 @@ class TaskTest(unittest.TestCase):
 
     def test_twotask_none_overlap_model(self):
         """Add two tasks with totally separate modules and flows"""
-        task1 = self.create_task("task1", mod_suffixes=["A", "A"])
-        task2 = self.create_task("task2", mod_suffixes=["B", "B"])
+        task1 = self.create_task("task1", module_suffixes=["A", "A"])
+        task2 = self.create_task("task2", module_suffixes=["B", "B"])
         model = MultitaskModel(name="MyTwoTaskModel", tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
         self.assertEqual(len(model.task_flows), 2)
@@ -65,8 +65,8 @@ class TaskTest(unittest.TestCase):
 
     def test_twotask_partial_overlap_model(self):
         """Add two tasks with overlapping modules and flows"""
-        task1 = self.create_task("task1", mod_suffixes=["A", "A"])
-        task2 = self.create_task("task2", mod_suffixes=["A", "B"])
+        task1 = self.create_task("task1", module_suffixes=["A", "A"])
+        task2 = self.create_task("task2", module_suffixes=["A", "B"])
         model = MultitaskModel(name="MyTwoTaskModel", tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
         self.assertEqual(len(model.task_flows), 2)

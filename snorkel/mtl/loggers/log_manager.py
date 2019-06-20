@@ -6,18 +6,17 @@ from typing import Dict
 import torch
 
 from snorkel.mtl.utils import recursive_merge_dicts
-from snorkel.types import Config
 
 from .checkpointer import Checkpointer
 from .log_writer import LogWriter
 from .tensorboard_writer import TensorBoardWriter
 
 logger_default_config = {
-    "counter_unit": "batches",  # [points, batches, epochs]
     "log_dir": "logs",  # The path to the directory under which logs will be written
+    "counter_unit": "batches",  # [points, batches, epochs]
     "evaluation_freq": 2,  # Evaluate performance every this many counter_units
-    "writer_config": {"writer": "tensorboard", "verbose": True},  # [json, tensorboard]
-    "checkpointing": True,
+    "writer_config": {"writer": None, "verbose": True},  # [json, tensorboard]
+    "checkpointing": False,
     "checkpointer_config": {
         "checkpoint_dir": None,
         "checkpoint_factor": 1,  # Checkpoint every this many evaluations
@@ -38,9 +37,9 @@ class LogManager(object):
     :type verbose: bool
     """
 
-    def __init__(self, config: Config, n_batches_per_epoch: int) -> None:
+    def __init__(self, n_batches_per_epoch: int, **kwargs) -> None:
 
-        self.config = recursive_merge_dicts(logger_default_config, config)
+        self.config = recursive_merge_dicts(logger_default_config, kwargs)
         self.n_batches_per_epoch = n_batches_per_epoch
 
         # Create log directory for this run

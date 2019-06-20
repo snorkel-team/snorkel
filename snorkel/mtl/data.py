@@ -19,18 +19,12 @@ class MultitaskDataset(Dataset):
     :param Y_dict: the label dict where key is the label name and value is
     the label
     :type Y_dict: dict
-    :param uid: the unique id key in the X_dict (default: None)
-    :type uid: str
     """
 
-    def __init__(self, name, X_dict, Y_dict, uid=None):
+    def __init__(self, name, X_dict, Y_dict):
         self.name = name
         self.X_dict = X_dict
         self.Y_dict = Y_dict
-        self.uid = uid
-
-        if self.uid and self.uid not in self.X_dict:
-            raise ValueError(f"Cannot find {self.uid} in X_dict.")
 
         for name, label in self.Y_dict.items():
             if not isinstance(label, torch.Tensor):

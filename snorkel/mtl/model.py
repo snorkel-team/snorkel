@@ -187,7 +187,7 @@ class MultitaskModel(nn.Module):
                 active = torch.any(Y.detach() != 0, dim=1)
 
             # Only calculate the loss when active example exists
-            if 1 in active:
+            if active.any():
                 count_dict[identifier] = active.sum().item()
 
                 loss_dict[identifier] = self.loss_funcs[task_name](
@@ -219,7 +219,7 @@ class MultitaskModel(nn.Module):
         return prob_dict
 
     @torch.no_grad()
-    def predict(self, dataloader, return_preds=False, return_uids=False):
+    def predict(self, dataloader, return_preds=False):
 
         self.eval()
 
@@ -275,14 +275,12 @@ class MultitaskModel(nn.Module):
         metric_score_dict = dict()
 
         for dataloader in dataloaders:
-            return_uids = True if dataloader.dataset.uid else False
-            preds = self.predict(dataloader, return_preds=True, return_uids=return_uids)
+            preds = self.predict(dataloader, return_preds=True)
             for task_name in preds["golds"].keys():
                 metric_score = self.scorers[task_name].score(
                     preds["golds"][task_name],
-                    preds["probs"][task_name],
                     preds["preds"][task_name],
-                    preds["uids"][task_name] if return_uids else None,
+                    preds["probs"][task_name],
                 )
                 for metric_name, metric_value in metric_score.items():
                     identifier = "/".join(

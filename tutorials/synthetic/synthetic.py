@@ -1,7 +1,9 @@
 #%%
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 
+from snorkel.end_model import LogisticRegression
 from snorkel.labeling.analysis import lf_empirical_accuracies
 from snorkel.labeling.apply import LFApplier
 from snorkel.labeling.model.label_model import LabelModel
@@ -67,5 +69,24 @@ Y_prob = label_model.predict_proba(L)
 label_model.score((L, Y))
 
 #%%
+# Convert to torch format
+# TODO: This code should go away...
+X = torch.from_numpy(np.vstack([d.x for d in data])).float()
+Y_prob_t = torch.from_numpy(Y_prob).float()
+
 # Run the EndModel to make final predictions
-# TODO
+end_model = LogisticRegression(d)
+# TODO: Fix defaults so it doesn't throw error if checkpoint=True but no dev set
+end_model.train_model((X, Y_prob_t), checkpoint=False)
+
+#%%
+# Sample a new dataset to test on
+test_data = generate_mog_dataset(n, d, cov=cov)
+
+# Convert to torch format
+# TODO: This code should go away...
+X_test = torch.from_numpy(np.vstack([d.x for d in test_data])).float()
+Y_test = torch.from_numpy(np.array([d.y for d in test_data])).int()
+
+# Score end model
+end_model.score((X_test, Y_test))

@@ -4,6 +4,33 @@ import numpy as np
 import torch
 
 
+def prob_to_pred(probs):
+    """Identify the class with the maximum probability (add 1 since we assume label
+    class starts from 1)
+
+    :param probs: probabilities
+    :type probs: np.array
+    """
+
+    return np.argmax(probs, axis=-1) + 1
+
+
+def pred_to_prob(preds, n_classes):
+    """Converts predicted labels to probabilistic labels
+
+    :param preds: predicted labels
+    :type probs: np.array
+    """
+
+    preds = preds.reshape(-1)
+    probs = np.zeros((preds.shape[0], n_classes))
+
+    for idx, class_idx in enumerate(preds):
+        probs[idx, class_idx - 1] = 1.0
+
+    return probs
+
+
 def list_to_tensor(item_list):
     """Convert a list of torch.Tensor into a single torch.Tensor."""
 
@@ -127,3 +154,27 @@ def recursive_merge_dicts(x, y, misses="report", verbose=None):
     z = copy.deepcopy(x)
     recurse(z, y, misses, verbose)
     return z
+
+
+def move_to_device(obj, device=-1):
+    """
+    Given a structure (possibly) containing Tensors on the CPU, move all the Tensors
+    to the specified GPU (or do nothing, if they should beon the CPU).
+    device = -1 -> "cpu"
+    device =  0 -> "cuda:0"
+    Originally from:
+    https://github.com/HazyResearch/metal/blob/mmtl_clean/metal/utils.py
+    """
+
+    if device < 0 or not torch.cuda.is_available():
+        return obj
+    elif isinstance(obj, torch.Tensor):
+        return obj.cuda(device)
+    elif isinstance(obj, dict):
+        return {key: move_to_device(value, device) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [move_to_device(item, device) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple([move_to_device(item, device) for item in obj])
+    else:
+        return obj

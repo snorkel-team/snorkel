@@ -13,7 +13,7 @@ def generate_mog_dataset(
 ) -> List[DataPoint]:
     """
     Generates a simple mixture-of-gaussians (MOG) dataset consisting of
-    d-dim vectors x \in \mathbb{R}^d, and binary labels y \in {-1,1}.
+    d-dim vectors x \in \mathbb{R}^d, and binary labels y \in {1,2}.
     Returns as a pandas DataFrame
     """
     ones = np.ones(d)
@@ -25,7 +25,7 @@ def generate_mog_dataset(
 
     # Combine and shuffle
     X = np.vstack([X_pos, X_neg])
-    Y = np.concatenate([np.ones(nh), -1 * np.ones(n - nh)]).astype(int)
+    Y = np.concatenate([np.ones(nh), 2 * np.ones(n - nh)]).astype(int)
     order = list(range(n))
     np.random.shuffle(order)
     X = X[order]
@@ -46,7 +46,7 @@ def lf_template(x: DataPoint, index: int = 0, abstain_rate: float = 0.0) -> int:
     elif x.x[index] > 0:
         return 1
     else:
-        return -1
+        return 2
 
 
 def generate_single_feature_LFs(

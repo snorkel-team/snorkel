@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from snorkel.labeling.analysis import lf_empirical_accuracies
 from snorkel.labeling.apply import LFApplier
 from snorkel.labeling.model.label_model import LabelModel
 from snorkel.synthetic.synthetic_data import (
@@ -46,18 +47,14 @@ lf_applier = LFApplier(LFs)
 L = lf_applier.apply(data)
 
 #%%
-# Compute the true (empirical) LF accuracies
-# Shifting {1,2} -> {-1,1} for convenience here
-# TODO: Replace this with a utility function
-Ld = np.array(L.todense())
-Ld[Ld == 2] = -1
-Y = np.array([1 if d.y == 1 else -1 for d in data])
-accs_emp = 0.5 * Ld.T @ Y / n + 0.5
-
-#%%
 # Run the LabelModel to estimate the LF accuracies
 label_model = LabelModel()
 label_model.train_model(L)
+
+#%%
+# Compare to the true (empirical) accuracies
+Y = np.array([d.y for d in data])
+accs_emp = lf_empirical_accuracies(L, Y)
 accs_est = label_model.get_accuracies()
 print(f"Avg. LF accuracy estimation error: {np.mean(np.abs(accs_emp - accs_est))}")
 
@@ -65,11 +62,9 @@ print(f"Avg. LF accuracy estimation error: {np.mean(np.abs(accs_emp - accs_est))
 # Get probabilistic training labels
 Y_prob = label_model.predict_proba(L)
 
-# Get the hard-thresholded predictions and compute the accuracy
-# TODO: Replace this with a utility function
-Y_pred = np.argmax(Y_prob, axis=1) + 1  # {1,2}
-label_acc = 1 - np.where(Y == 2 * (Y_pred - 1) - 1, 1, 0).sum() / n  # {-1,1}
-print(f"Label model accuracy: {label_acc}")
+# Get the predictive performance of the LabelModel, i.e. the accuracy of the
+# hard-thresholded probabilistic labels
+label_model.score((L, Y))
 
 #%%
 # Run the EndModel to make final predictions

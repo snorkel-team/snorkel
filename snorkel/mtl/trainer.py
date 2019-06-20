@@ -8,8 +8,8 @@ from tqdm import tqdm
 
 from snorkel.mtl.loggers.log_manager import LogManager, logger_default_config
 from snorkel.mtl.model import MultitaskModel
-from snorkel.mtl.schedulers.round_robin_scheduler import RoundRobinScheduler
 from snorkel.mtl.schedulers.sequential_scheduler import SequentialScheduler
+from snorkel.mtl.schedulers.shuffled_scheduler import ShuffledScheduler
 from snorkel.mtl.utils import recursive_merge_dicts
 
 trainer_default_config = {
@@ -38,7 +38,7 @@ trainer_default_config = {
         "exponential_config": {"gamma": 0.9},
         "plateau_config": {"factor": 0.5, "patience": 10, "threshold": 0.0001},
     },
-    "task_scheduler": "round_robin",  # [sequential, round_robin, proportional]
+    "task_scheduler": "shuffled",  # [sequential, shuffled]
 }
 
 
@@ -296,8 +296,8 @@ class Trainer(object):
         # TODO: Restore ProportionalScheduler
         if opt == "sequential":
             self.task_scheduler = SequentialScheduler()
-        elif opt == "round_robin":
-            self.task_scheduler = RoundRobinScheduler()
+        elif opt == "shuffled":
+            self.task_scheduler = ShuffledScheduler()
         else:
             raise ValueError(f"Unrecognized task scheduler option '{opt}'")
 

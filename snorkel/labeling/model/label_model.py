@@ -251,6 +251,14 @@ class LabelModel(Classifier):
         else:
             return c_probs
 
+    def get_accuracies(self):
+        """Returns the vector of LF accuracies, computed using get_conditional_probs"""
+        accs = np.zeros(self.m)
+        for i in range(self.m):
+            cps = self.get_conditional_probs(source=i)[1:, :]
+            accs[i] = np.diag(cps @ self.P.numpy()).sum()
+        return accs
+
     def predict_proba(self, L):
         """Returns the [n,k] matrix of label probabilities P(Y | \lambda)
 

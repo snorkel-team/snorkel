@@ -1,6 +1,6 @@
-from snorkel.map import LambdaMapper, Mapper, MapperMode, mapper
+from snorkel.map import LambdaMapper, Mapper, MapperMode, lambda_mapper
 
 Preprocessor = Mapper
 LambdaPreprocessor = LambdaMapper
 PreprocessorMode = MapperMode
-preprocessor = mapper
+preprocessor = lambda_mapper

@@ -1,7 +1,7 @@
 import unittest
 from types import SimpleNamespace
 
-from snorkel.map import Mapper, MapperMode, mapper
+from snorkel.map import Mapper, MapperMode, lambda_mapper
 from snorkel.types import FieldMap
 
 
@@ -15,7 +15,12 @@ class SplitWordsMapper(Mapper):
         return dict(lower=text.lower(), words=text.split())
 
 
-@mapper
+class SplitWordsMapperDefaultArgs(Mapper):
+    def run(self, text: str) -> FieldMap:  # type: ignore
+        return dict(lower=text.lower(), words=text.split())
+
+
+@lambda_mapper
 def square(num: float) -> FieldMap:
     return dict(num_squared=num ** 2)
 
@@ -40,7 +45,7 @@ class TestMapperCore(unittest.TestCase):
         self.assertEqual(x_mapped.text_lower, "henry has fun")
         self.assertEqual(x_mapped.text_words, ["Henry", "has", "fun"])
 
-    def test_preprocessor_same_field(self) -> None:
+    def test_mapper_same_field(self) -> None:
         split_words = SplitWordsMapper("text", "text", "text_words")
         split_words.set_mode(MapperMode.NAMESPACE)
         x_mapped = split_words(self._get_x())
@@ -48,7 +53,16 @@ class TestMapperCore(unittest.TestCase):
         self.assertEqual(x_mapped.text, "henry has fun")
         self.assertEqual(x_mapped.text_words, ["Henry", "has", "fun"])
 
-    def test_preprocessor_mode(self) -> None:
+    def test_mapper_default_args(self) -> None:
+        split_words = SplitWordsMapperDefaultArgs()
+        split_words.set_mode(MapperMode.NAMESPACE)
+        x_mapped = split_words(self._get_x())
+        self.assertEqual(x_mapped.num, 8)
+        self.assertEqual(x_mapped.text, "Henry has fun")
+        self.assertEqual(x_mapped.lower, "henry has fun")
+        self.assertEqual(x_mapped.words, ["Henry", "has", "fun"])
+
+    def test_mapper_mode(self) -> None:
         x = self._get_x()
 
         square.set_mode(18)  # type: ignore

@@ -1,1 +1,1 @@
-from .core import LambdaMapper, Mapper, MapperMode, mapper  # noqa: F401
+from .core import LambdaMapper, Mapper, MapperMode, lambda_mapper  # noqa: F401

@@ -1,6 +1,7 @@
+import inspect
 from enum import Enum, auto
 from types import SimpleNamespace
-from typing import Any, Mapping, NamedTuple, Union
+from typing import Any, Callable, Mapping, NamedTuple, Optional, Union
 
 from snorkel.types import DataPoint, FieldMap
 
@@ -24,8 +25,7 @@ class Preprocessor:
     def __init__(
         self,
         field_names: Mapping[str, str],
-        preprocessed_field_names: Mapping[str, str],
-        mode: PreprocessorMode = PreprocessorMode.NONE,
+        preprocessed_field_names: Optional[Mapping[str, str]] = None,
     ) -> None:
         """Preprocess data points by adding additional information
         or decomposing into primitives. A Preprocesser maps an data point to
@@ -41,13 +41,11 @@ class Preprocessor:
                 `preprocess(...)` method
             * preprocessed_field_names: a map from output keys of the
                 `preprocess(...)` method to attribute names of the
-                output data points
-            * mode: a PreprocessorMode that specifies the type of the
-                output data point
+                output data points. If None, uses raw output keys.
         """
         self.field_names = field_names
         self.preprocessed_field_names = preprocessed_field_names
-        self.mode = mode
+        self.mode = PreprocessorMode.NONE
 
     def set_mode(self, mode: PreprocessorMode) -> None:
         self.mode = mode
@@ -58,9 +56,11 @@ class Preprocessor:
     def __call__(self, x: DataPoint) -> DataPoint:
         field_map = {k: getattr(x, v) for k, v in self.field_names.items()}
         preprocessed_fields = self.preprocess(**field_map)
-        preprocessed_fields = {
-            v: preprocessed_fields[k] for k, v in self.preprocessed_field_names.items()
-        }
+        if self.preprocessed_field_names is not None:
+            preprocessed_fields = {
+                v: preprocessed_fields[k]
+                for k, v in self.preprocessed_field_names.items()
+            }
         if self.mode == PreprocessorMode.NONE:
             raise ValueError(
                 "No preprocessor mode set. Use `Preprocessor.set_mode(...)`."
@@ -82,3 +82,36 @@ class Preprocessor:
             raise ValueError(
                 f"Preprocessor mode {self.mode} not recognized. Options: {PreprocessorMode}."
             )
+
+
+class LambdaPreprocessor(Preprocessor):
+    def __init__(self, f: Callable[..., FieldMap]) -> None:
+        """Convenience class for Preprocessors that execute a simple
+        function with no set up. The function arguments are parsed
+        to determine the input field names of the data points.
+
+        Args:
+            * f: the function executing the preprocessing operation
+        """
+        self._f = f
+        field_names = {k: k for k in inspect.getfullargspec(f)[0]}
+        super().__init__(field_names=field_names, preprocessed_field_names=None)
+
+    def preprocess(self, **kwargs: Any) -> FieldMap:
+        return self._f(**kwargs)
+
+
+def preprocessor(f: Callable[..., FieldMap]) -> LambdaPreprocessor:
+    """Decorator to define a LambdaPreprocessor object from a function
+
+        Example usage:
+
+        ```
+        @preprocessor()
+        def concatenate_text(title: str, body: str) -> FieldMap:
+            return f"{title} {body}"
+
+        isinstance(concatenate_text, Preprocessor)  # true
+        ```
+        """
+    return LambdaPreprocessor(f=f)

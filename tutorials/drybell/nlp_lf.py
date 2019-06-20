@@ -16,7 +16,7 @@ from pyspark.sql import Row
 
 from snorkel.labeling.apply.lf_applier_spark import SparkLFApplier
 from snorkel.labeling.lf import labeling_function
-from snorkel.labeling.preprocess import Preprocessor
+from snorkel.labeling.preprocess import preprocessor
 from snorkel.labeling.preprocess.nlp import SpacyPreprocessor
 from snorkel.types import DataPoint, FieldMap
 
@@ -39,17 +39,11 @@ DATA = [
 ]
 
 
-class CombineTextPreprocessor(Preprocessor):
-    def __init__(self, title_field, body_field, article_field):
-        super().__init__(
-            dict(title=title_field, body=body_field), dict(article=article_field)
-        )
-
-    def preprocess(self, title: str, body: str) -> FieldMap:  # type: ignore
-        return dict(article=f"{title} {body}")
+@preprocessor()
+def combine_text_preprocessor(title: str, body: str) -> FieldMap:
+    return dict(article=f"{title} {body}")
 
 
-combine_text_preprocessor = CombineTextPreprocessor("title", "body", "article")
 spacy_preprocessor = SpacyPreprocessor("article", "article")
 
 

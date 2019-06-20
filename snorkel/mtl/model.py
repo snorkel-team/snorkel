@@ -80,6 +80,35 @@ class MultitaskModel(nn.Module):
                 raise ValueError(f"Unrecognized task type {task}.")
             self.add_task(task)
 
+    def add_task(self, task):
+        """Add a single task into MTL network"""
+
+        # Combine module_pool from all tasks
+        for key in task.module_pool.keys():
+            if key in self.module_pool.keys():
+                if self.config["dataparallel"]:
+                    task.module_pool[key] = nn.DataParallel(self.module_pool[key])
+                else:
+                    task.module_pool[key] = self.module_pool[key]
+            else:
+                if self.config["dataparallel"]:
+                    self.module_pool[key] = nn.DataParallel(task.module_pool[key])
+                else:
+                    self.module_pool[key] = task.module_pool[key]
+        # Collect task names
+        self.task_names.add(task.name)
+        # Collect task flows
+        self.task_flows[task.name] = task.task_flow
+        # Collect loss functions
+        self.loss_funcs[task.name] = task.loss_func
+        # Collect output functions
+        self.output_funcs[task.name] = task.output_func
+        # Collect scorers
+        self.scorers[task.name] = task.scorer
+
+        # Move model to specified device
+        self._move_to_device()
+
     def forward(
         self, X_dict: Dict[str, torch.Tensor], task_names: List[str]
     ) -> Dict[str, Dict[str, torch.Tensor]]:

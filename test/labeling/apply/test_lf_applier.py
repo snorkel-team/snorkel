@@ -14,9 +14,9 @@ from snorkel.labeling.preprocess.nlp import SpacyPreprocessor
 from snorkel.types import DataPoint, FieldMap
 
 
-@preprocessor(dict(x="a"), dict(x="a"))
-def square(x: float) -> FieldMap:
-    return dict(x=x ** 2)
+@preprocessor
+def square(num: float) -> FieldMap:
+    return dict(num_squared=num ** 2)
 
 
 spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
@@ -24,17 +24,17 @@ spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
 
 @labeling_function()
 def f(x: DataPoint) -> int:
-    return 1 if x.a > 42 else 0
+    return 1 if x.num > 42 else 0
 
 
 @labeling_function(preprocessors=[square])
 def fp(x: DataPoint) -> int:
-    return 1 if x.a > 42 else 0
+    return 1 if x.num_squared > 42 else 0
 
 
 @labeling_function(resources=dict(db=[3, 6, 9]))
 def g(x: DataPoint, db: List[int]) -> int:
-    return 1 if x.a in db else 0
+    return 1 if x.num in db else 0
 
 
 @labeling_function(preprocessors=[spacy])
@@ -57,25 +57,25 @@ L_TEXT_EXPECTED = np.array([[1, 0], [1, 1]])
 
 class TestLFApplier(unittest.TestCase):
     def test_lf_applier(self) -> None:
-        data_points = [SimpleNamespace(a=a) for a in DATA]
+        data_points = [SimpleNamespace(num=num) for num in DATA]
         applier = LFApplier([f, g])
         L = applier.apply(data_points)
         np.testing.assert_equal(L.toarray(), L_EXPECTED)
 
     def test_lf_applier_preprocessor(self) -> None:
-        data_points = [SimpleNamespace(a=a) for a in DATA]
+        data_points = [SimpleNamespace(num=num) for num in DATA]
         applier = LFApplier([f, fp])
         L = applier.apply(data_points)
         np.testing.assert_equal(L.toarray(), L_PREPROCESS_EXPECTED)
 
     def test_lf_applier_pandas(self) -> None:
-        df = pd.DataFrame(dict(a=DATA))
+        df = pd.DataFrame(dict(num=DATA))
         applier = PandasLFApplier([f, g])
         L = applier.apply(df)
         np.testing.assert_equal(L.toarray(), L_EXPECTED)
 
     def test_lf_applier_pandas_preprocessor(self) -> None:
-        df = pd.DataFrame(dict(a=DATA))
+        df = pd.DataFrame(dict(num=DATA))
         applier = PandasLFApplier([f, fp])
         L = applier.apply(df)
         np.testing.assert_equal(L.toarray(), L_PREPROCESS_EXPECTED)
@@ -87,7 +87,7 @@ class TestLFApplier(unittest.TestCase):
         np.testing.assert_equal(L.toarray(), L_TEXT_EXPECTED)
 
     def test_lf_applier_pandas_parquet(self) -> None:
-        table_write = pa.Table.from_pandas(pd.DataFrame(dict(a=DATA)))
+        table_write = pa.Table.from_pandas(pd.DataFrame(dict(num=DATA)))
         stream = pa.BufferOutputStream()
         pq.write_table(table_write, stream)
         buffer = stream.getvalue()

@@ -6,9 +6,11 @@ First things first: read our [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## Development environment
 
-We recommend using our [tox](https://tox.readthedocs.io/en/) setup to manage your development environment.
-First, [install tox](https://tox.readthedocs.io/en/latest/install.html), clone Snorkel,
-then use `tox` to create a development environment.
+### Installing
+
+Snorkel uses [tox](https://tox.readthedocs.io/en/) to manage development environments.
+To get started, [install tox](https://tox.readthedocs.io/en/latest/install.html),
+clone Snorkel, then use `tox` to create a development environment:
 
 ```bash
 git clone https://github.com/HazyResearch/snorkel
@@ -20,7 +22,17 @@ tox -e dev
 Running `tox -e dev` will install the required packages in `requirements-dev.txt`
 and create a virtual environment with Snorkel and all of its dependencies installed
 in the directory `.env`.
-This can be used in a number of ways, e.g. with `conda activate` or for linting in VSCode.
+This can be used in a number of ways, e.g. with `conda activate`
+or for [linting in VSCode](https://code.visualstudio.com/docs/python/environments#_where-the-extension-looks-for-environments).
+For example, you can simply activate this environment and start using Snorkel:
+
+```bash
+source .env/bin/activate
+
+python3 -c "import snorkel; print(dir(snorkel))"
+```
+
+### Testing and committing
 
 There are a number of useful tox commands defined:
 
@@ -32,7 +44,7 @@ tox -e fix  # Fix style issues with black and isort
 tox  # Run unit tests, style checks, linting, and type checking
 ```
 
-We recommend running `tox` before committing.
+Make sure to run `tox` before committing.
 CI won't pass without `tox` succeeding.
 
 As noted, we use a few additional tools that help to ensure that any commits or pull requests you submit conform with our established standards.

@@ -62,5 +62,15 @@ accs_est = label_model.get_accuracies()
 print(f"Avg. LF accuracy estimation error: {np.mean(np.abs(accs_emp - accs_est))}")
 
 #%%
+# Get probabilistic training labels
+Y_prob = label_model.predict_proba(L)
+
+# Get the hard-thresholded predictions and compute the accuracy
+# TODO: Replace this with a utility function
+Y_pred = np.argmax(Y_prob, axis=1) + 1  # {1,2}
+label_acc = 1 - np.where(Y == 2 * (Y_pred - 1) - 1, 1, 0).sum() / n  # {-1,1}
+print(f"Label model accuracy: {label_acc}")
+
+#%%
 # Run the EndModel to make final predictions
 # TODO

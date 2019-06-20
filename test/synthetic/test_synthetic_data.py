@@ -52,7 +52,7 @@ class TestGenerateSingleFeatureLFs(unittest.TestCase):
         # Get accuracies
         # TODO: Replace this with a generic utility function
         Y = np.array([d.y for d in data])
-        acc = np.where(L.getcol(0).toarray().reshape(-1) == Y, 1, 0).sum() / self.n
+        acc = np.where(L[:, 0].toarray().reshape(-1) == Y, 1, 0).sum() / self.n
         self.assertEqual(acc, 1.0)
 
     def test_abstain_rate(self) -> None:

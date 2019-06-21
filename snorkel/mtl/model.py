@@ -8,14 +8,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from snorkel.mtl.snorkel_config import default_config
 from snorkel.mtl.task import Task
 from snorkel.mtl.utils import move_to_device, prob_to_pred, recursive_merge_dicts
-
-model_default_config = {
-    "model_path": None,  # the path to a saved checkpoint to initialize with
-    "device": 0,  # gpu id (int) or -1 for cpu
-    "dataparallel": True,
-}
 
 
 class MultitaskModel(nn.Module):
@@ -28,7 +23,7 @@ class MultitaskModel(nn.Module):
     def __init__(self, name: str, tasks: List[Task], **kwargs) -> None:
         super().__init__()
         self.config = recursive_merge_dicts(
-            model_default_config, kwargs, misses="insert"
+            default_config["model_config"], kwargs, misses="insert"
         )
         self.name = name if name is not None else type(self).__name__
 
@@ -275,12 +270,12 @@ class MultitaskModel(nn.Module):
         metric_score_dict = dict()
 
         for dataloader in dataloaders:
-            preds = self.predict(dataloader, return_preds=True)
-            for task_name in preds["golds"].keys():
+            results = self.predict(dataloader, return_preds=True)
+            for task_name in results["golds"].keys():
                 metric_score = self.scorers[task_name].score(
-                    preds["golds"][task_name],
-                    preds["preds"][task_name],
-                    preds["probs"][task_name],
+                    results["golds"][task_name],
+                    results["preds"][task_name],
+                    results["probs"][task_name],
                 )
                 for metric_name, metric_value in metric_score.items():
                     identifier = "/".join(

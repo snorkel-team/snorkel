@@ -6,23 +6,33 @@ from typing import Dict, List
 
 import torch
 
-from snorkel.types import Config
+from snorkel.mtl.snorkel_config import default_config
+from snorkel.mtl.utils import recursive_merge_dicts
 
 
 class Checkpointer(object):
     """Checkpointing Training logging class to log train infomation"""
 
-    def __init__(self, config: Config):
+    def __init__(self, **kwargs):
 
-        self.logging_config = config
-        self.config = config["checkpointer_config"]
+        # Checkpointer requires both checkpointer_config and log_manager_config
+        checkpointer_config = recursive_merge_dicts(
+            default_config["checkpointer_config"],
+            default_config["log_manager_config"],
+            misses="insert",
+        )
+        self.config = recursive_merge_dicts(checkpointer_config, kwargs)
 
         # Pull out checkpoint settings
-        self.checkpoint_unit = self.logging_config["counter_unit"]
         self.checkpoint_dir = self.config["checkpoint_dir"]
+        self.checkpoint_unit = self.config["counter_unit"]
         self.checkpoint_clear = self.config["checkpoint_clear"]
         self.checkpoint_runway = self.config["checkpoint_runway"]
+        self.checkpoint_factor = self.config["checkpoint_factor"]
         self.checkpoint_condition_met = False
+
+        if self.checkpoint_dir is None:
+            raise Exception("Checkpointing is on but no checkpoint_dir was specified.")
 
         # Collect all metrics to checkpoint
         self.checkpoint_metric = self._make_metric_map(
@@ -39,7 +49,7 @@ class Checkpointer(object):
 
         # Set checkpoint frequency
         self.checkpoint_freq = (
-            self.logging_config["evaluation_freq"] * self.config["checkpoint_factor"]
+            self.config["evaluation_freq"] * self.config["checkpoint_factor"]
         )
         if self.checkpoint_freq <= 0:
             raise ValueError(

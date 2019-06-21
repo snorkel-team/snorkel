@@ -85,7 +85,7 @@ class Checkpointer(object):
         checkpoint_dir = f"{self.checkpoint_dir}/checkpoint_{iteration}.pth"
         torch.save(state_dict, checkpoint_dir)
         logging.info(
-            f"Save checkpoint of {iteration} {self.checkpoint_unit} "
+            f"Save checkpoint at {iteration} {self.checkpoint_unit} "
             f"at {checkpoint_dir}."
         )
 

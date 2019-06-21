@@ -20,12 +20,12 @@ class MultitaskModel(nn.Module):
     :param tasks: a list of Tasks to be trained jointly
     """
 
-    def __init__(self, name: str, tasks: List[Task], **kwargs) -> None:
+    def __init__(self, tasks: List[Task], name=None, **kwargs) -> None:
         super().__init__()
         self.config = recursive_merge_dicts(
             default_config["model_config"], kwargs, misses="insert"
         )
-        self.name = name if name is not None else type(self).__name__
+        self.name = name or type(self).__name__
 
         # Initiate the model attributes
         self.module_pool = nn.ModuleDict()

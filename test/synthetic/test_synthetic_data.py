@@ -27,9 +27,9 @@ class TestGenerateMOGDataset(unittest.TestCase):
     def test_dataset_means(self) -> None:
         # Compute the means of the two gaussians and confirm that they
         # are different
-        m0 = np.mean([d.x for d in self.data if d.y == -1])
         m1 = np.mean([d.x for d in self.data if d.y == 1])
-        dist = np.linalg.norm(m1 - m0)
+        m2 = np.mean([d.x for d in self.data if d.y == 2])
+        dist = np.linalg.norm(m1 - m2)
         self.assertGreater(dist, 1)
 
 
@@ -50,10 +50,10 @@ class TestGenerateSingleFeatureLFs(unittest.TestCase):
         L = lf_applier.apply(data)
 
         # Get accuracies
-        Ld = L.todense()
+        # TODO: Replace this with a generic utility function
         Y = np.array([d.y for d in data])
-        accs = Ld.T @ Y / self.n
-        self.assertEqual(accs[0], 1.0)
+        acc = np.where(L[:, 0].toarray().reshape(-1) == Y, 1, 0).sum() / self.n
+        self.assertEqual(acc, 1.0)
 
     def test_abstain_rate(self) -> None:
         # Generate a dataset
@@ -67,7 +67,7 @@ class TestGenerateSingleFeatureLFs(unittest.TestCase):
         L = lf_applier.apply(data)
 
         # Get average abstain rate
-        abstain_rate_est = 1 - np.abs(L).sum() / (self.n * m)
+        abstain_rate_est = 1 - np.where(L.todense() != 0, 1, 0).sum() / (self.n * m)
         self.assertAlmostEqual(abstain_rate, abstain_rate_est, delta=0.025)
 
 

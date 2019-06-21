@@ -1,1 +1,6 @@
-from .core import Preprocessor, PreprocessorMode  # noqa: F401
+from .core import (  # noqa: F401
+    LambdaPreprocessor,
+    Preprocessor,
+    PreprocessorMode,
+    preprocessor,
+)

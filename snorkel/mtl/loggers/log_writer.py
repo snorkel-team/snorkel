@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from collections import defaultdict
 from datetime import datetime
@@ -8,11 +9,7 @@ from snorkel.mtl.utils import recursive_merge_dicts
 
 
 class LogWriter:
-    """A class for logging during training process.
-
-    :param object: [description]
-    :type object: [type]
-    """
+    """A class for writing logs"""
 
     def __init__(self, **kwargs):
         self.config = recursive_merge_dicts(default_config["log_writer_config"], kwargs)
@@ -52,7 +49,9 @@ class LogWriter:
     def write_json(self, dict_to_write, filename):
         """Dump the log to file"""
         if not filename.endswith(".json"):
-            filename += ".json"
+            logging.warning(
+                f"Using write_json() method with a filename without a .json extension: {filename}"
+            )
         log_path = os.path.join(self.log_dir, filename)
         with open(log_path, "w") as f:
             json.dump(dict_to_write, f)

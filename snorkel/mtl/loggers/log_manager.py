@@ -1,7 +1,12 @@
 import logging
+from typing import Any, Optional
 
+from snorkel.mtl.model import MultitaskModel
 from snorkel.mtl.snorkel_config import default_config
 from snorkel.mtl.utils import recursive_merge_dicts
+
+from .checkpointer import Checkpointer
+from .log_writer import LogWriter
 
 
 class LogManager(object):
@@ -14,7 +19,11 @@ class LogManager(object):
     """
 
     def __init__(
-        self, n_batches_per_epoch: int, log_writer=None, checkpointer=None, **kwargs
+        self,
+        n_batches_per_epoch: int,
+        log_writer: Optional[LogWriter] = None,
+        checkpointer: Optional[Checkpointer] = None,
+        **kwargs: Any,
     ) -> None:
 
         self.config = recursive_merge_dicts(
@@ -100,7 +109,7 @@ class LogManager(object):
         self.epoch_count = 0
         self.unit_count = 0
 
-    def close(self, model):
+    def close(self, model: MultitaskModel) -> MultitaskModel:
         if self.log_writer is not None:
             self.log_writer.close()
         if self.checkpointer is not None:

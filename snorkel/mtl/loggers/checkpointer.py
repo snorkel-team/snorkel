@@ -16,11 +16,8 @@ class Checkpointer(object):
     def __init__(self, **kwargs):
 
         # Checkpointer requires both checkpointer_config and log_manager_config
-        checkpointer_config = recursive_merge_dicts(
-            default_config["checkpointer_config"],
-            default_config["log_manager_config"],
-            misses="insert",
-        )
+        checkpointer_config = default_config["checkpointer_config"]
+        checkpointer_config.update(default_config["log_manager_config"])
         self.config = recursive_merge_dicts(checkpointer_config, kwargs)
 
         # Pull out checkpoint settings
@@ -32,7 +29,7 @@ class Checkpointer(object):
         self.checkpoint_condition_met = False
 
         if self.checkpoint_dir is None:
-            raise Exception("Checkpointing is on but no checkpoint_dir was specified.")
+            raise ValueError("Checkpointing is on but no checkpoint_dir was specified.")
 
         # Collect all metrics to checkpoint
         self.checkpoint_metric = self._make_metric_map(
@@ -48,9 +45,7 @@ class Checkpointer(object):
             os.makedirs(self.checkpoint_dir)
 
         # Set checkpoint frequency
-        self.checkpoint_freq = (
-            self.config["evaluation_freq"] * self.config["checkpoint_factor"]
-        )
+        self.checkpoint_freq = self.config["evaluation_freq"] * self.checkpoint_factor
         if self.checkpoint_freq <= 0:
             raise ValueError(
                 f"Invalid checkpoint freq {self.checkpoint_freq}, "

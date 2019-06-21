@@ -2,7 +2,7 @@ import logging
 import os
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import torch
@@ -20,7 +20,9 @@ class MultitaskModel(nn.Module):
     :param tasks: a list of Tasks to be trained jointly
     """
 
-    def __init__(self, tasks: List[Task], name=None, **kwargs) -> None:
+    def __init__(
+        self, tasks: List[Task], name: Optional[str] = None, **kwargs: Any
+    ) -> None:
         super().__init__()
         self.config = recursive_merge_dicts(
             default_config["model_config"], kwargs, misses="insert"
@@ -60,7 +62,7 @@ class MultitaskModel(nn.Module):
             else:
                 logging.info("No cuda device available. Switch to cpu instead.")
 
-    def _build_network(self, tasks: List[Task]):
+    def _build_network(self, tasks: List[Task]) -> None:
         """Build the MTL network using all tasks"""
 
         if not isinstance(tasks, Iterable):

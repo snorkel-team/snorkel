@@ -19,10 +19,14 @@ class TaskTest(unittest.TestCase):
         )
 
         task_flow = [
-            {"name": "first_layer", "module": "linear1", "inputs": [("_input_", 0)]},
+            {
+                "name": "first_layer",
+                "module": f"linear1{module_suffixes[0]}",
+                "inputs": [("_input_", 0)],
+            },
             {
                 "name": "second_layer",
-                "module": "linear2",
+                "module": f"linear2{module_suffixes[1]}",
                 "inputs": [("first_layer", 0)],
             },
         ]

@@ -39,7 +39,7 @@ DATA = [
 ]
 
 
-@preprocessor()
+@preprocessor
 def combine_text_preprocessor(title: str, body: str) -> FieldMap:
     return dict(article=f"{title} {body}")
 

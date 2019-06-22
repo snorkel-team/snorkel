@@ -26,7 +26,7 @@ class TrainerTest(unittest.TestCase):
         """Train a single-task model"""
         set_seed(SEED)
         task1 = create_task("task1", module_suffixes=["A", "A"])
-        model = MultitaskModel(name="MyOneTaskModel", tasks=[task1])
+        model = MultitaskModel(tasks=[task1])
         dataloaders = create_dataloaders(num_tasks=1)
         scores = model.score(dataloaders)
         self.assertLess(scores["task1/TestData/test/accuracy"], 0.7)
@@ -39,7 +39,7 @@ class TrainerTest(unittest.TestCase):
         """Train a model with overlapping modules and flows"""
         task1 = create_task("task1", module_suffixes=["A", "A"])
         task2 = create_task("task2", module_suffixes=["A", "B"])
-        model = MultitaskModel(name="MyTwoTaskModel", tasks=[task1, task2])
+        model = MultitaskModel(tasks=[task1, task2])
         dataloaders = create_dataloaders(num_tasks=2)
         scores = model.score(dataloaders)
         self.assertLess(scores["task1/TestData/test/accuracy"], 0.7)

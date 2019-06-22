@@ -19,10 +19,14 @@ class TaskTest(unittest.TestCase):
         )
 
         task_flow = [
-            {"name": "first_layer", "module": "linear1", "inputs": [("_input_", 0)]},
+            {
+                "name": "first_layer",
+                "module": f"linear1{module_suffixes[0]}",
+                "inputs": [("_input_", 0)],
+            },
             {
                 "name": "second_layer",
-                "module": "linear2",
+                "module": f"linear2{module_suffixes[1]}",
                 "inputs": [("first_layer", 0)],
             },
         ]
@@ -40,7 +44,7 @@ class TaskTest(unittest.TestCase):
 
     def test_onetask_model(self):
         task1 = self.create_task("task1", module_suffixes=["A", "A"])
-        model = MultitaskModel(name="MyOneTaskModel", tasks=[task1])
+        model = MultitaskModel(tasks=[task1])
         self.assertEqual(len(model.task_names), 1)
         self.assertEqual(len(model.task_flows), 1)
         self.assertEqual(len(model.module_pool), 2)
@@ -49,7 +53,7 @@ class TaskTest(unittest.TestCase):
         """Add two tasks with identical modules and flows"""
         task1 = self.create_task("task1", module_suffixes=["A", "A"])
         task2 = self.create_task("task2", module_suffixes=["A", "A"])
-        model = MultitaskModel(name="MyTwoTaskModel", tasks=[task1, task2])
+        model = MultitaskModel(tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
         self.assertEqual(len(model.task_flows), 2)
         self.assertEqual(len(model.module_pool), 2)
@@ -58,7 +62,7 @@ class TaskTest(unittest.TestCase):
         """Add two tasks with totally separate modules and flows"""
         task1 = self.create_task("task1", module_suffixes=["A", "A"])
         task2 = self.create_task("task2", module_suffixes=["B", "B"])
-        model = MultitaskModel(name="MyTwoTaskModel", tasks=[task1, task2])
+        model = MultitaskModel(tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
         self.assertEqual(len(model.task_flows), 2)
         self.assertEqual(len(model.module_pool), 4)
@@ -67,7 +71,7 @@ class TaskTest(unittest.TestCase):
         """Add two tasks with overlapping modules and flows"""
         task1 = self.create_task("task1", module_suffixes=["A", "A"])
         task2 = self.create_task("task2", module_suffixes=["A", "B"])
-        model = MultitaskModel(name="MyTwoTaskModel", tasks=[task1, task2])
+        model = MultitaskModel(tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
         self.assertEqual(len(model.task_flows), 2)
         self.assertEqual(len(model.module_pool), 3)

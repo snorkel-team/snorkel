@@ -2,20 +2,15 @@ import logging
 import os
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import torch
 import torch.nn as nn
 
+from snorkel.mtl.snorkel_config import default_config
 from snorkel.mtl.task import Task
 from snorkel.mtl.utils import move_to_device, prob_to_pred, recursive_merge_dicts
-
-model_default_config = {
-    "model_path": None,  # the path to a saved checkpoint to initialize with
-    "device": 0,  # gpu id (int) or -1 for cpu
-    "dataparallel": True,
-}
 
 
 class MultitaskModel(nn.Module):
@@ -25,12 +20,14 @@ class MultitaskModel(nn.Module):
     :param tasks: a list of Tasks to be trained jointly
     """
 
-    def __init__(self, name: str, tasks: List[Task], **kwargs) -> None:
+    def __init__(
+        self, tasks: List[Task], name: Optional[str] = None, **kwargs: Any
+    ) -> None:
         super().__init__()
         self.config = recursive_merge_dicts(
-            model_default_config, kwargs, misses="insert"
+            default_config["model_config"], kwargs, misses="insert"
         )
-        self.name = name if name is not None else type(self).__name__
+        self.name = name or type(self).__name__
 
         # Initiate the model attributes
         self.module_pool = nn.ModuleDict()
@@ -65,7 +62,7 @@ class MultitaskModel(nn.Module):
             else:
                 logging.info("No cuda device available. Switch to cpu instead.")
 
-    def _build_network(self, tasks: List[Task]):
+    def _build_network(self, tasks: List[Task]) -> None:
         """Build the MTL network using all tasks"""
 
         if not isinstance(tasks, Iterable):
@@ -275,12 +272,12 @@ class MultitaskModel(nn.Module):
         metric_score_dict = dict()
 
         for dataloader in dataloaders:
-            preds = self.predict(dataloader, return_preds=True)
-            for task_name in preds["golds"].keys():
+            results = self.predict(dataloader, return_preds=True)
+            for task_name in results["golds"].keys():
                 metric_score = self.scorers[task_name].score(
-                    preds["golds"][task_name],
-                    preds["preds"][task_name],
-                    preds["probs"][task_name],
+                    results["golds"][task_name],
+                    results["preds"][task_name],
+                    results["probs"][task_name],
                 )
                 for metric_name, metric_value in metric_score.items():
                     identifier = "/".join(

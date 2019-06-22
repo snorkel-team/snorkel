@@ -6,40 +6,12 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 
-from snorkel.mtl.loggers.log_manager import LogManager, logger_default_config
+from snorkel.mtl.loggers import Checkpointer, LogManager, LogWriter, TensorBoardWriter
 from snorkel.mtl.model import MultitaskModel
 from snorkel.mtl.schedulers.sequential_scheduler import SequentialScheduler
 from snorkel.mtl.schedulers.shuffled_scheduler import ShuffledScheduler
+from snorkel.mtl.snorkel_config import default_config
 from snorkel.mtl.utils import recursive_merge_dicts
-
-trainer_default_config = {
-    "n_epochs": 1,  # total number of learning epochs
-    "train_split": "train",  # the split for training, accepts str or list of strs
-    "valid_split": "valid",  # the split for validation, accepts str or list of strs
-    "test_split": "test",  # the split for testing, accepts str or list of strs
-    "progress_bar": True,
-    "logger_config": logger_default_config,
-    "optimizer_config": {
-        "optimizer": "adam",  # [sgd, adam]
-        "lr": 0.001,  # learing rate
-        "l2": 0.0,  # l2 regularization
-        "grad_clip": 1.0,  # gradient clipping
-        "sgd_config": {"momentum": 0.9},
-        "adam_config": {"betas": (0.9, 0.999), "amsgrad": False},
-        "adamax_config": {"betas": (0.9, 0.999), "eps": 0.00000001},
-    },
-    "lr_scheduler_config": {
-        "lr_scheduler": "constant",  # [constant, linear, exponential, step, multi_step, reduce_on_plateau]
-        "warmup_steps": 0,  # warm up steps
-        "warmup_unit": "batches",  # [epochs, batches]
-        "warmup_percentage": 0.0,  # warm up percentage
-        "min_lr": 0.0,  # minimum learning rate
-        "linear_config": {"min_lr": 0.0},
-        "exponential_config": {"gamma": 0.9},
-        "plateau_config": {"factor": 0.5, "patience": 10, "threshold": 0.0001},
-    },
-    "task_scheduler": "shuffled",  # [sequential, shuffled]
-}
 
 
 class Trainer(object):
@@ -50,9 +22,7 @@ class Trainer(object):
     """
 
     def __init__(self, name=None, **kwargs):
-        self.config = recursive_merge_dicts(
-            trainer_default_config, kwargs, misses="insert"
-        )
+        self.config = recursive_merge_dicts(default_config, kwargs, misses="insert")
         self.name = name if name is not None else type(self).__name__
 
     def train_model(self, model: MultitaskModel, dataloaders):
@@ -85,7 +55,9 @@ class Trainer(object):
         )
 
         # Set training helpers
-        self._set_logging_manager()
+        self._set_log_writer()
+        self._set_checkpointer()
+        self._set_log_manager()
         self._set_optimizer(model)
         self._set_lr_scheduler(model)
         self._set_task_scheduler(model, dataloaders)
@@ -152,12 +124,42 @@ class Trainer(object):
 
                 batches.set_postfix(self.metrics)
 
-        model = self.logging_manager.close(model)
+        model = self.log_manager.close(model)
 
-    def _set_logging_manager(self):
+    def _set_checkpointer(self):
+        if self.config["checkpointing"]:
+            checkpointer_config = self.config["checkpointer_config"]
+            log_manager_config = self.config["log_manager_config"]
+
+            # Default checkpoint_dir to log_dir if available
+            if checkpointer_config["checkpoint_dir"] is None and self.config["logging"]:
+                checkpointer_config["checkpoint_dir"] = self.log_writer.log_dir
+
+            self.checkpointer = Checkpointer(
+                **checkpointer_config, **log_manager_config
+            )
+        else:
+            self.checkpointer = None
+
+    def _set_log_writer(self):
+        if self.config["logging"]:
+            config = self.config["log_writer_config"]
+            if config["writer"] == "json":
+                self.log_writer = LogWriter(**config)
+            elif config["writer"] == "tensorboard":
+                self.log_writer = TensorBoardWriter(**config)
+            else:
+                raise ValueError(f"Unrecognized writer option: {config['writer']}")
+        else:
+            self.log_writer = None
+
+    def _set_log_manager(self):
         """Set logging manager."""
-        self.logging_manager = LogManager(
-            self.n_batches_per_epoch, **self.config["logger_config"]
+        self.log_manager = LogManager(
+            self.n_batches_per_epoch,
+            log_writer=self.log_writer,
+            checkpointer=self.checkpointer,
+            **self.config["log_manager_config"],
         )
 
     def _set_optimizer(self, model):
@@ -318,39 +320,50 @@ class Trainer(object):
         # Switch to eval mode for evaluation
         model.eval()
 
-        metric_dict = dict()
-
-        self.logging_manager.update(batch_size)
+        self.log_manager.update(batch_size)
 
         # Log the loss and lr
+        metric_dict = dict()
         metric_dict.update(self._aggregate_losses())
 
         # Evaluate the model and log the metric
-        if self.logging_manager.trigger_evaluation():
+        if self.log_manager.trigger_evaluation():
 
-            # Log task specific metric
+            # Log metrics
             metric_dict.update(
                 self._evaluate(model, dataloaders, self.config["valid_split"])
             )
 
-            self.logging_manager.write_log(metric_dict)
+            if self.config["logging"]:
+                self._log_metrics(metric_dict)
 
             self._reset_losses()
 
         # Checkpoint the model
-        if self.logging_manager.trigger_checkpointing():
-            self.logging_manager.checkpoint_model(
-                model, self.optimizer, self.lr_scheduler, metric_dict
-            )
-
-            self.logging_manager.write_log(metric_dict)
+        if self.log_manager.trigger_checkpointing():
+            if self.config["checkpointing"]:
+                self._checkpoint_model(model, metric_dict)
 
             self._reset_losses()
 
-        # Switch to train mode
+        # Switch back to train mode
         model.train()
-
         return metric_dict
+
+    def _log_metrics(self, metric_dict):
+        for metric_name, metric_value in metric_dict.items():
+            self.log_writer.add_scalar(
+                metric_name, metric_value, self.log_manager.point_total
+            )
+
+    def _checkpoint_model(self, model, metric_dict):
+        self.checkpointer.checkpoint(
+            self.log_manager.unit_total,
+            model,
+            self.optimizer,
+            self.lr_scheduler,
+            metric_dict,
+        )
 
     def _aggregate_losses(self):
         """Calculate the task specific loss, average micro loss and learning rate."""

@@ -6,6 +6,7 @@ import torch
 from scipy.sparse import csr_matrix
 from torch import nn
 
+from snorkel.model.utils import convert_labels
 from snorkel.mtl.data import MultitaskDataLoader
 from snorkel.mtl.modules.utils import ce_loss, softmax
 from snorkel.mtl.scorer import Scorer
@@ -17,7 +18,7 @@ from .modules.slice_combiner import SliceCombinerModule
 def add_slice_labels(
     base_task: Task,
     dataloader: MultitaskDataLoader,
-    slice_labels: csr_matrix,  # [n, m]
+    slice_labels: csr_matrix,
     slice_names: List[str],
 ):
     slice_labels = slice_labels.toarray()
@@ -28,8 +29,9 @@ def add_slice_labels(
     for i, slice_name in enumerate(slice_names):
 
         # Convert labels
-        ind_labels = torch.LongTensor(slice_labels[:, i])  # [n, 1]
-        pred_labels = ind_labels * labels
+        indicators = torch.LongTensor(slice_labels[:, i])
+        ind_labels = convert_labels(indicators, source="onezero", target="categorical")
+        pred_labels = indicators * labels
 
         ind_task_name = f"{base_task.name}_slice:{slice_name}_ind"
         pred_task_name = f"{base_task.name}_slice:{slice_name}_pred"

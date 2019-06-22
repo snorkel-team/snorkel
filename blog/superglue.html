@@ -92,13 +92,13 @@ We call these data subsets <i>slices</i>.
 The technical challenge often faced by practitioners is to improve performance on these slices while maintaining overall performance.
 
 <br><br>
-<b>Slicing functions (SFs)</b> provide an interface for users to coarsely identify data subsets for which the model should commit additional representational capacity. 
-To address slice-specific representations, practitioners might train many models that each specialize on particular subsets, and then combine these with a mixture-of-experts (MoE) approach [5]. 
-However, with the growing size of ML models, MoE is often impractical. 
+<b>Slicing functions (SFs)</b> provide an interface for users to coarsely identify data subsets for which the model should commit additional representational capacity.
+To address slice-specific representations, practitioners might train many models that each specialize on particular subsets, and then combine these with a mixture-of-experts (MoE) approach [5].
+However, with the growing size of ML models, MoE is often impractical.
 Another strategy would be to train a single model in the style of multi-task learning (MTL) with hard parameter sharing [6].
 While more computationally efficient, this approach expects representation bias across many slice-specific tasks to improve performance—an often unreliable approach.
-As a quick overview (<i>technical report + blog post coming soon!</i>)— we model slices in the style of multi-task learning, in which slice-based “expert-heads” are used to learn slice-specific representations. 
-Then, an attention mechanism is learned over expert heads to determine when and how to combine the representations learned by these slice heads on a per-example basis. 
+As a quick overview (<i>technical report + blog post coming soon!</i>)— we model slices in the style of multi-task learning, in which slice-based “expert-heads” are used to learn slice-specific representations.
+Then, an attention mechanism is learned over expert heads to determine when and how to combine the representations learned by these slice heads on a per-example basis.
 
 <br><br>
 We consider the following properties of our approach:
@@ -113,7 +113,7 @@ We consider the following properties of our approach:
 <div class="figure">
     <img src="superglue_figs/sf_ex.png" width="80%" class="centered"/>
     <p><i>
-      From WiC error analysis, we might find that our model appears to perform worse on examples where the target word is a noun instead of a verb. 
+      From WiC error analysis, we might find that our model appears to perform worse on examples where the target word is a noun instead of a verb.
       Using an SF, we tell the model to pay attention to the differences between these slices and use a slightly different representation when making predictions for target words that it believes are nouns.
     </i></p>
 </div>
@@ -126,7 +126,7 @@ We consider the following properties of our approach:
 </ul>
 
 <h2>SuperGLUE Results</h2>
-Using these programming abstractions, we achieved a new state-of-the-art score on the SuperGLUE Benchmark and 4 of its components tasks. 
+Using these programming abstractions, we achieved a new state-of-the-art score on the SuperGLUE Benchmark and 4 of its components tasks.
     SuperGLUE is similar to <a href="https://gluebenchmark.com/">GLUE</a>, but contains “more difficult tasks...chosen to maximize difficulty and diversity, and...selected to show a substantial headroom gap between a strong BERT-based baseline and human performance.”
 After reproducing the BERT++ baselines, we minimally tuned these models (baseline models, default learning rate, etc.) and found that with a handful of applications of the above programming abstractions, we saw <mark>improvements of +4.0 points on the SuperGLUE benchmark (21% reduction of the gap to human performance).</mark>
 

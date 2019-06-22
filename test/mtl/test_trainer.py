@@ -20,7 +20,6 @@ class TrainerTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.trainer_config = {"n_epochs": 3, "progress_bar": False}
-        cls.logger_config = {"counter_unit": "epochs", "evaluation_freq": 0.25}
 
     def test_trainer_onetask(self):
         """Train a single-task model"""
@@ -30,7 +29,7 @@ class TrainerTest(unittest.TestCase):
         dataloaders = create_dataloaders(num_tasks=1)
         scores = model.score(dataloaders)
         self.assertLess(scores["task1/TestData/test/accuracy"], 0.7)
-        trainer = Trainer(**self.trainer_config, **self.logger_config)
+        trainer = Trainer(**self.trainer_config)
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
         self.assertGreater(scores["task1/TestData/test/accuracy"], 0.9)
@@ -45,7 +44,7 @@ class TrainerTest(unittest.TestCase):
         scores = model.score(dataloaders)
         self.assertLess(scores["task1/TestData/test/accuracy"], 0.7)
         self.assertLess(scores["task2/TestData/test/accuracy"], 0.7)
-        trainer = Trainer(**self.trainer_config, **self.logger_config)
+        trainer = Trainer(**self.trainer_config)
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
         self.assertGreater(scores["task1/TestData/test/accuracy"], 0.9)

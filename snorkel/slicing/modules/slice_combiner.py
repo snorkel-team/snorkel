@@ -3,12 +3,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class SliceMasterModule(nn.Module):
+class SliceCombinerModule(nn.Module):
+    """A module for combining the weighted representations learned by slices"""
     def __init__(
         self,
-        slice_ind_key="_slice_ind_",
-        slice_pred_key="_slice_pred_",
-        slice_pred_feat_key="_slice_feat_",
+        slice_ind_key="_ind",
+        slice_pred_key="_pred",
+        slice_pred_feat_key="_pred_transform",
     ):
         super().__init__()
 
@@ -18,33 +19,31 @@ class SliceMasterModule(nn.Module):
 
     def forward(self, outputs):
         # Gather names of slice heads (both indicator and predictor heads)
-        slice_ind_names = sorted(
+        slice_ind_op_names = sorted(
             [
                 flow_name
                 for flow_name in outputs.keys()
                 if self.slice_ind_key in flow_name
             ]
         )
-        slice_pred_names = sorted(
+        slice_pred_op_names = sorted(
             [
                 flow_name
                 for flow_name in outputs.keys()
                 if self.slice_pred_key in flow_name
             ]
         )
-
-        # Gather names of slice heads (both indicator and predictor heads)
         indicator_preds = torch.cat(
             [
                 F.softmax(outputs[slice_ind_name][0])[:, 0].unsqueeze(1)
-                for slice_ind_name in slice_ind_names
+                for slice_ind_name in slice_ind_op_names
             ],
             dim=-1,
         )
         predictor_preds = torch.cat(
             [
                 F.softmax(outputs[slice_pred_name][0])[:, 0].unsqueeze(1)
-                for slice_pred_name in slice_pred_names
+                for slice_pred_name in slice_pred_op_names
             ],
             dim=-1,
         )

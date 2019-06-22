@@ -129,6 +129,7 @@ class MultitaskModel(nn.Module):
             for operation in task_flow:
                 if operation["name"] not in outputs:
                     if operation["inputs"]:
+                        # Feed the inputs the module requested in the reqested order
                         try:
                             input = [
                                 outputs[operation_name][output_index]
@@ -138,6 +139,7 @@ class MultitaskModel(nn.Module):
                             raise ValueError(f"Unrecognized operation {operation}.")
                         output = self.module_pool[operation["module"]].forward(*input)
                     else:
+                        # Feed the entire outputs dict for the module to pull
                         output = self.module_pool[operation["module"]].forward(outputs)
                     if isinstance(output, tuple):
                         output = list(output)

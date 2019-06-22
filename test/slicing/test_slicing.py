@@ -24,12 +24,12 @@ SEED = 123
 # TODO: update me!
 @slicing_function()
 def f(x: DataPoint) -> int:
-    return 1 if x.x1 > 0.75 else 0
+    return 1 if x.x1 > x.x2 + 0.5 else 0
 
 
 @slicing_function()
 def g(x: DataPoint) -> int:
-    return 1 if x.x2 > 0.75 else 0
+    return 1 if x.x1 > x.x2 + 0.3 else 0
 
 
 N_TRAIN = 1000
@@ -39,8 +39,7 @@ N_VALID = 100
 class SlicingTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.trainer_config = {"n_epochs": 2, "progress_bar": False}
-        cls.logger_config = {"counter_unit": "epochs", "evaluation_freq": 0.25}
+        cls.trainer_config = {"n_epochs": 3, "progress_bar": False}
 
     def test_slicing(self):
         """Define two slices for task1 and no slices for task2"""
@@ -85,10 +84,10 @@ class SlicingTest(unittest.TestCase):
         model = MultitaskModel(tasks=tasks)
 
         # Train
-        trainer = Trainer(**self.trainer_config, **self.logger_config)
+        trainer = Trainer(**self.trainer_config)
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
-
+        print(scores)
         self.assertGreater(scores["task1/TestData/train/accuracy"], 0.9)
         self.assertGreater(scores["task1/TestData/valid/accuracy"], 0.9)
         self.assertGreater(scores["task1_slice:f_ind/TestData/valid/accuracy"], 0.9)

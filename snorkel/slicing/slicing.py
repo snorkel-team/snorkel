@@ -73,7 +73,7 @@ def add_slice_tasks(task_name, base_task, slice_func_dict, hidden_dim=1024):
             base_module_pool[f"{task_name}_pred_head"].module.out_features,
         )
 
-    # remove the origin head
+    # remove the original head
     del base_module_pool[f"{task_name}_pred_head"]
     for idx, i in enumerate(base_task_flow):
         if i["name"] == f"{task_name}_pred_head":

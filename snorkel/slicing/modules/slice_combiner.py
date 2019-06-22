@@ -5,6 +5,7 @@ import torch.nn.functional as F
 
 class SliceCombinerModule(nn.Module):
     """A module for combining the weighted representations learned by slices"""
+
     def __init__(
         self,
         slice_ind_key="_ind",

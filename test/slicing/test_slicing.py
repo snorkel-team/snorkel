@@ -7,14 +7,14 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-from snorkel.slicing.apply import PandasSFApplier
-from snorkel.slicing.sf import slicing_function 
 from snorkel.mtl.data import MultitaskDataLoader, MultitaskDataset
 from snorkel.mtl.model import MultitaskModel
 from snorkel.mtl.modules.utils import ce_loss, softmax
 from snorkel.mtl.scorer import Scorer
 from snorkel.mtl.task import Task
 from snorkel.mtl.trainer import Trainer
+from snorkel.slicing.apply import PandasSFApplier
+from snorkel.slicing.sf import slicing_function
 from snorkel.slicing.utils import add_slice_labels, convert_to_slice_tasks
 from snorkel.types import DataPoint
 
@@ -40,8 +40,8 @@ class SlicingTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.trainer_config = {"n_epochs": 2, "progress_bar": False}
-        cls.logger_config = {"counter_unit": "epochs", "evaluation_freq": 0.25}    
-    
+        cls.logger_config = {"counter_unit": "epochs", "evaluation_freq": 0.25}
+
     def test_slicing(self):
         """Define two slices for task1 and no slices for task2"""
         df_train = create_data(N_TRAIN)
@@ -83,7 +83,7 @@ class SlicingTest(unittest.TestCase):
         task1_tasks = convert_to_slice_tasks(task1, slice_names)
         tasks = task1_tasks + [task2]
         model = MultitaskModel(tasks=tasks)
-        
+
         # Train
         trainer = Trainer(**self.trainer_config, **self.logger_config)
         trainer.train_model(model, dataloaders)
@@ -99,7 +99,7 @@ class SlicingTest(unittest.TestCase):
         self.assertGreater(scores["task1_slice:base_pred/TestData/valid/accuracy"], 0.9)
         self.assertGreater(scores["task2/TestData/valid/accuracy"], 0.9)
         self.assertGreater(scores["task2/TestData/valid/accuracy"], 0.9)
-        
+
         scores = model.score(dataloaders)
         print(scores)
 
@@ -116,32 +116,29 @@ def create_data(n):
     Y = np.zeros((n, 2))
     Y[:, 0] = (X[:, 0] > X[:, 1] + 0.5).astype(int) + 1
     Y[:, 1] = (X[:, 0] > X[:, 1] + 0.25).astype(int) + 1
-    
-    df = pd.DataFrame(
-        {"x1": X[:,0],
-         "x2": X[:,1],
-         "y1": Y[:,0],
-         "y2": Y[:,1],
-        }
-    )
+
+    df = pd.DataFrame({"x1": X[:, 0], "x2": X[:, 1], "y1": Y[:, 0], "y2": Y[:, 1]})
     return df
 
 
 def create_dataloader(df, split):
     Y_dict = {}
     task_to_label_dict = {}
-    
+
     Y_dict[f"task1_labels"] = torch.LongTensor(df["y1"])
     task_to_label_dict["task1"] = "task1_labels"
-    
+
     Y_dict[f"task2_labels"] = torch.LongTensor(df["y2"])
     task_to_label_dict["task2"] = "task2_labels"
 
     dataset = MultitaskDataset(
-        name="TestData", 
-        X_dict={"coordinates": 
-                torch.stack((torch.Tensor(df["x1"]), torch.Tensor(df["x2"])), dim=1)}, 
-        Y_dict=Y_dict
+        name="TestData",
+        X_dict={
+            "coordinates": torch.stack(
+                (torch.Tensor(df["x1"]), torch.Tensor(df["x2"])), dim=1
+            )
+        },
+        Y_dict=Y_dict,
     )
 
     dataloader = MultitaskDataLoader(

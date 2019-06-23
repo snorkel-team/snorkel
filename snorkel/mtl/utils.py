@@ -92,6 +92,7 @@ def recursive_merge_dicts(x, y, misses="report", verbose=None):
     Merge dictionary y into a copy of x, overwriting elements of x when there
     is a conflict, except if the element is a dictionary, in which case recurse.
 
+    # TODO: Make misses an Enum
     misses: what to do if a key in y is not in x
         'insert'    -> set x[key] = value
         'exception' -> raise an exception

@@ -1,15 +1,16 @@
 import itertools
+from collections import Counter
+from typing import List
+
 import torch
 import torch.nn as nn
-
-from collections import Counter
-from snorkel.mtl.data import MultitaskDataset, MultitaskDataLoader
 import torch.nn.functional as F
-from torch.nn.utils.rnn import pad_sequence
 import torch.nn.utils.rnn as rnn_utils
+from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from torchtext.vocab import Vocab
-from typing import List
+
+from snorkel.mtl.data import MultitaskDataLoader, MultitaskDataset
 
 
 def upgrade_dataloaders(dataloaders: List[DataLoader]):
@@ -18,19 +19,20 @@ def upgrade_dataloaders(dataloaders: List[DataLoader]):
         dataset = dataloader.dataset
 
         new_dataset = MultitaskDataset(
-            name=f"data_{dataloader.split}", 
+            name=f"data_{dataloader.split}",
             X_dict={"data": dataset.X},  # This op is specific to TensorDataset
-            Y_dict={"labels": dataset.Y} # Maybe
+            Y_dict={"labels": dataset.Y},  # Maybe
         )
         new_dataloader = MultitaskDataLoader(
             task_to_label_dict={"task": "labels"},
             dataset=new_dataset,
             split=dataloader.split,
             batch_size=dataloader.batch_size,
-            shuffle=(dataloader.split == "train")
+            shuffle=(dataloader.split == "train"),
         )
         new_dataloaders.append(new_dataloader)
     return new_dataloaders
+
 
 class Encoder(nn.Module):
     """The Encoder implements the encode() method, which maps a batch of data to
@@ -134,7 +136,8 @@ class EmbeddingsEncoder(Encoder):
             the batch, or 0 for padding.
         """
         return self.embeddings(X.long())
-                  
+
+
 class LSTMModule(nn.Module):
     """An LSTM-based input module"""
 
@@ -273,7 +276,6 @@ class LSTMModule(nn.Module):
         return reduced[inv_perm_idx, :]
 
 
-                  
 class Featurizer(object):
     def fit(self, input):
         """
@@ -298,6 +300,7 @@ class Featurizer(object):
         self.fit(input)
         X = self.transform(input)
         return X
+
 
 class EmbeddingFeaturizer(Featurizer):
     """Converts lists of tokens into a padded Tensor of embedding indices."""

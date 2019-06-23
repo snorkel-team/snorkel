@@ -1,5 +1,5 @@
 from snorkel.labeling.preprocess import preprocessor
-from snorkel.types import FieldMap
+from snorkel.types import DataPoint
 
 
 def get_person_text(cand):
@@ -30,58 +30,54 @@ def get_person_last_names(cand):
 
 
 @preprocessor
-def get_text_between(tokens, person1_word_idx, person2_word_idx) -> FieldMap:
+def get_text_between(cand: DataPoint) -> DataPoint:
     """
     Returns the text between the two person mentions in the sentence for a candidate
     """
-    start = person1_word_idx[1] + 1
-    end = person2_word_idx[0]
-    text_between = " ".join(tokens[start:end])
-    return dict(text_between=text_between)
+    start = cand.person1_word_idx[1] + 1
+    end = cand.person2_word_idx[0]
+    cand.text_between = " ".join(cand.tokens[start:end])
+    return cand
 
 
 @preprocessor
-def get_between_tokens(tokens, person1_word_idx, person2_word_idx) -> FieldMap:
+def get_between_tokens(cand: DataPoint) -> DataPoint:
     """
     Returns the tokens between the two person mentions in the sentence for a candidate
     """
-    start = person1_word_idx[1] + 1
-    end = person2_word_idx[0]
-    return dict(between_tokens=tokens[start:end])
+    start = cand.person1_word_idx[1] + 1
+    end = cand.person2_word_idx[0]
+    cand.between_tokens = cand.tokens[start:end]
+    return cand
 
 
 @preprocessor
-def get_left_tokens(tokens, person1_word_idx, person2_word_idx) -> FieldMap:
+def get_left_tokens(cand: DataPoint) -> DataPoint:
     """
     Returns the length window tokens between to the left of the person mentions
     """
     # TODO: need to pass window as input params
     window = 3
 
-    end = person1_word_idx[0]
-    person1_left_tokens = tokens[0:end][-1 - window : -1]
+    end = cand.person1_word_idx[0]
+    cand.person1_left_tokens = cand.tokens[0:end][-1 - window : -1]
 
-    end = person2_word_idx[0]
-    person2_left_tokens = tokens[0:end][-1 - window : -1]
-    return dict(
-        person1_left_tokens=person1_left_tokens, person2_left_tokens=person2_left_tokens
-    )
+    end = cand.person2_word_idx[0]
+    cand.person2_left_tokens = cand.tokens[0:end][-1 - window : -1]
+    return cand
 
 
 @preprocessor
-def get_right_tokens(tokens, person1_word_idx, person2_word_idx) -> FieldMap:
+def get_right_tokens(cand: DataPoint) -> DataPoint:
     """
     Returns the length window tokens between to the right of the person mentions
     """
     # TODO: need to pass window as input params
     window = 3
 
-    start = person1_word_idx[1] + 1
-    person1_right_tokens = tokens[start::][0 : window + 1]
+    start = cand.person1_word_idx[1] + 1
+    cand.person1_right_tokens = cand.tokens[start::][0 : window + 1]
 
-    start = person2_word_idx[1] + 1
-    person2_right_tokens = tokens[start::][0 : window + 1]
-    return dict(
-        person1_right_tokens=person1_right_tokens,
-        person2_right_tokens=person2_right_tokens,
-    )
+    start = cand.person2_word_idx[1] + 1
+    cand.person2_right_tokens = cand.tokens[start::][0 : window + 1]
+    return cand

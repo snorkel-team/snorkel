@@ -20,9 +20,10 @@ def add_slice_labels(
     dataloader: MultitaskDataLoader,
     slice_labels: csr_matrix,
     slice_names: List[str],
-):
+) -> MultitaskDataLoader:
     slice_labels = slice_labels.toarray()
     slice_labels, slice_names = _add_base_slice(slice_labels, slice_names)
+    assert slice_labels.shape[1] == len(slice_names)
 
     label_name = dataloader.task_to_label_dict[base_task.name]
     labels = dataloader.dataset.Y_dict[label_name]
@@ -45,7 +46,7 @@ def add_slice_labels(
     return dataloader
 
 
-def convert_to_slice_tasks(base_task: Task, slice_names: List[str]):
+def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task]:
     """Adds slice labels to dataloader and creates new slice tasks (including base slice)
 
     Each slice will get two slice-specific heads:
@@ -54,9 +55,9 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]):
 
     The base task's head is replaced by a master head that makes predictions based on
     a combination of the predictor heads' predictions that are weighted by the
-    indicator heads' predictions.
+    indicator heads' prediction confidences.
 
-    NOTE: The current implementation pollutes the module_pool---the indicator's task's
+    NOTE: The current implementation pollutes the module_pool---the indicator task's
     module_pool includes predictor modules and vice versa since both are modified in
     place. This does not affect the result because the task flows dictate which modules
     get used, and those do not include the extra modules. An alternative would be to
@@ -83,7 +84,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]):
 
     # Remove the slice-unaware head module from module pool and task flow
     del base_task.module_pool[head_module_op.module_name]
-    base_task.task_flow = base_task.task_flow[:-1]
+    body_flow = base_task.task_flow[:-1]
 
     # Create slice indicator tasks
     for slice_name in slice_names:
@@ -91,6 +92,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]):
         ind_task_name = f"{base_task.name}_slice:{slice_name}_ind"
 
         ind_head_module_name = f"{ind_task_name}_ind_head"
+        # Indicator head always predicts "in the slice or not", so is always binary
         ind_head_module = nn.Linear(neck_size, 2)
 
         # Create module_pool
@@ -101,7 +103,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]):
         ind_head_op = Operation(
             module_name=ind_head_module_name, inputs=head_module_op.inputs
         )
-        ind_task_flow = base_task.task_flow + [ind_head_op]
+        ind_task_flow = body_flow + [ind_head_op]
 
         # Create ind task
         ind_task = Task(
@@ -110,7 +112,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]):
             task_flow=ind_task_flow,
             loss_func=partial(ce_loss, ind_head_op.name),
             output_func=partial(softmax, ind_head_op.name),
-            scorer=Scorer(metrics=["accuracy"]),
+            scorer=Scorer(metrics=["f1"]),
         )
         tasks.append(ind_task)
 
@@ -137,7 +139,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]):
         pred_head_op = Operation(
             module_name=pred_head_module_name, inputs=[(pred_transform_op.name, 0)]
         )
-        pred_task_flow = base_task.task_flow + [pred_transform_op, pred_head_op]
+        pred_task_flow = body_flow + [pred_transform_op, pred_head_op]
 
         # Create pred task
         pred_task = Task(

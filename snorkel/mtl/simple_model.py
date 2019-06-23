@@ -11,9 +11,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from snorkel.mtl.model import MultitaskModel
-from snorkel.mtl.task import Task
-from snorkel.mtl.scorer import Scorer
 from snorkel.mtl.modules.utils import ce_loss, softmax
+from snorkel.mtl.scorer import Scorer
+from snorkel.mtl.task import Task
 
 # def ce_loss(X, Y):
 #     return F.cross_entropy(X, Y - 1)
@@ -44,18 +44,14 @@ class SimpleModel(MultitaskModel):
                 if dropout > 0:
                     args.append(nn.Dropout(dropout))
             module_block = nn.Sequential(*args)
-                    
+
             module_pool[f"module{i}"] = module_block
             if i == 0:
                 inputs = [("_input_", "data")]
             else:
                 inputs = [(task_flow[-1]["name"], 0)]
             task_flow.append(
-                {
-                    "name": f"op{i}",
-                    "module": f"module{i}",
-                    "inputs": inputs,
-                }
+                {"name": f"op{i}", "module": f"module{i}", "inputs": inputs}
             )
 
         last_op = f"op{len(modules) - 1}"

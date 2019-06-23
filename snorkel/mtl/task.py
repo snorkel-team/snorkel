@@ -1,10 +1,25 @@
 import logging
-from typing import Any, Callable, Dict, List
+from typing import Callable, List
 
 import torch
 from torch import nn
 
 from snorkel.mtl.scorer import Scorer
+
+
+class Operation:
+    """A single operation to execute in a task flow
+
+    The `name` attributes defaults to `module_name` since most of the time, each module
+    is used only once per task flow. For more advanced flows where the same module is
+    used multiple times per forward pass, a name may be explicitly given to
+    differentiate the Operations.
+    """
+
+    def __init__(self, module_name, inputs, name=None):
+        self.name = name or module_name
+        self.module_name = module_name
+        self.inputs = inputs
 
 
 class Task:
@@ -22,7 +37,7 @@ class Task:
         self,
         name: str,
         module_pool: nn.ModuleDict,
-        task_flow: List[Dict[str, Any]],
+        task_flow: List[Operation],
         loss_func: Callable[..., torch.Tensor],
         output_func: Callable[..., torch.Tensor],
         scorer: Scorer,

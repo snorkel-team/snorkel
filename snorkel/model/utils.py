@@ -509,8 +509,7 @@ def move_to_device(obj, device=-1):
         return obj
 
 
-def set_seed(seed):
-    seed = int(seed)
+def set_seed(seed: int):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)

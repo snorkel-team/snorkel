@@ -8,7 +8,6 @@ from typing import Callable, List
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from snorkel.mtl.model import MultitaskModel
 from snorkel.mtl.modules.utils import ce_loss, softmax

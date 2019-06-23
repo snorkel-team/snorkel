@@ -15,7 +15,10 @@ class TaskTest(unittest.TestCase):
         module2_name = f"linear2{module_suffixes[1]}"
 
         module_pool = nn.ModuleDict(
-            {module1_name: nn.Linear(2, 10), module2_name: nn.Linear(10, 2)}
+            {
+                module1_name: nn.Sequential(nn.Linear(2, 10), nn.ReLU()),
+                module2_name: nn.Linear(10, 2),
+            }
         )
 
         op1 = Operation(module_name=module1_name, inputs=[("_input_", "coordinates")])

@@ -8,7 +8,6 @@ from snorkel.model.utils import set_seed
 
 
 class ClassBalanceModelTest(unittest.TestCase):
-
     def _generate_class_balance(self, k):
         """Generate class balance"""
         p_Y = np.random.random(k)

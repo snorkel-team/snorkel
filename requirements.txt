@@ -2,6 +2,7 @@ dask[complete]==1.2.1
 dill==0.2.9
 jupyter==1.0.0
 jupyterlab==0.33.12
+matplotlib==3.0.1
 networkx==2.2
 numpy==1.16.0
 pandas==0.24.0

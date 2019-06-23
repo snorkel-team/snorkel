@@ -11,7 +11,7 @@ default_config = {
     },
     "log_manager_config": {
         "counter_unit": "epochs",  # [points, batches, epochs]
-        "evaluation_freq": 0.25,  # Evaluate performance every this many counter_units
+        "evaluation_freq": 1.0,  # Evaluate performance every this many counter_units
     },
     "checkpointing": False,  # Whether to save checkpoints of best performing models
     "checkpointer_config": {  # Note that checkpointer behavior also depends on log_manager_config

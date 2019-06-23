@@ -120,10 +120,10 @@ class MultitaskDataLoader(DataLoader):
     dataset belongs to) information.
 
     :param task_to_label_dict: the task to label mapping where key is the task name and
-    value is the label(s) for that task and should be the key in Y_dict
+    value is the labels for that task and should be the key in Y_dict
     :type task_to_label_dict: dict
     :param dataset: the dataset to construct the dataloader
-    :type dataset: torch.utils.data.Datasetwe
+    :type dataset: torch.utils.data.Dataset
     :param split: the split information, defaults to "train"
     :param split: str, optional
     :param collate_fn: the function that merges a list of samples to form a

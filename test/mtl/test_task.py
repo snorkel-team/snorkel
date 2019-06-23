@@ -13,7 +13,10 @@ TASK_NAME = "TestTask"
 class TaskTest(unittest.TestCase):
     def test_task_creation(self):
         module_pool = nn.ModuleDict(
-            {"linear1": nn.Linear(2, 10), "linear2": nn.Linear(10, 1)}
+            {
+                "linear1": nn.Sequential(nn.Linear(2, 10), nn.ReLU()),
+                "linear2": nn.Linear(10, 1),
+            }
         )
 
         task_flow = [

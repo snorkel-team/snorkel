@@ -16,6 +16,14 @@ def square(x: DataPoint) -> DataPoint:
 
 
 @transformation_function
+def square_returns_none(x: DataPoint) -> DataPoint:
+    if x.num == 2:
+        return None
+    x.num = x.num ** 2
+    return x
+
+
+@transformation_function
 def modify_in_place(x: DataPoint) -> DataPoint:
     x.d["my_key"] = 0
     return x
@@ -67,6 +75,14 @@ class TestTFApplier(unittest.TestCase):
         self.assertEqual(vals, [1, 1, 1, 2, 16, 16, 3, 81, 81])
         self.assertEqual([x.num for x in data], DATA)
 
+    def test_tf_applier_returns_none(self):
+        data = self._get_x_namespace()
+        applier = TFApplier([square_returns_none], policy, k=2, keep_original=True)
+        data_augmented = applier.apply(data)
+        vals = [x.num for x in data_augmented]
+        self.assertEqual(vals, [1, 1, 1, 2, 3, 81, 81])
+        self.assertEqual([x.num for x in data], DATA)
+
     def test_tf_applier_keep_original_modify_in_place(self):
         data = self._get_x_namespace_dict()
         applier = TFApplier(
@@ -110,6 +126,18 @@ class TestPandasTFApplier(unittest.TestCase):
         df_augmented = applier.apply(df)
         df_expected = pd.DataFrame(
             dict(num=[1, 1, 1, 2, 16, 16, 3, 81, 81]), index=[0, 0, 0, 1, 1, 1, 2, 2, 2]
+        )
+        self.assertTrue(df_augmented.equals(df_expected))
+        self.assertEqual(df.num.tolist(), DATA)
+
+    def test_tf_applier_returns_none(self):
+        df = self._get_x_df()
+        applier = PandasTFApplier(
+            [square_returns_none], policy, k=2, keep_original=True
+        )
+        df_augmented = applier.apply(df)
+        df_expected = pd.DataFrame(
+            dict(num=[1, 1, 1, 2, 3, 81, 81]), index=[0, 0, 0, 1, 2, 2, 2]
         )
         self.assertTrue(df_augmented.equals(df_expected))
         self.assertEqual(df.num.tolist(), DATA)

@@ -5,13 +5,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from snorkel.model.utils import set_seed
 from snorkel.mtl.data import MultitaskDataLoader, MultitaskDataset
 from snorkel.mtl.model import MultitaskModel
 from snorkel.mtl.modules.utils import ce_loss, softmax
 from snorkel.mtl.scorer import Scorer
 from snorkel.mtl.task import Operation, Task
 from snorkel.mtl.trainer import Trainer
-from snorkel.mtl.utils import set_seed
 
 SEED = 123
 

@@ -16,11 +16,12 @@ from .modules.slice_combiner import SliceCombinerModule
 
 
 def add_slice_labels(
-    base_task: Task,
     dataloader: MultitaskDataLoader,
+    base_task: Task,
     slice_labels: csr_matrix,
     slice_names: List[str],
-) -> MultitaskDataLoader:
+) -> None:
+    """Modifies a dataloader in place, adding labels for slice tasks"""
     slice_labels = slice_labels.toarray()
     slice_labels, slice_names = _add_base_slice(slice_labels, slice_names)
     assert slice_labels.shape[1] == len(slice_names)
@@ -43,7 +44,6 @@ def add_slice_labels(
 
         dataloader.task_to_label_dict[ind_task_name] = ind_task_name
         dataloader.task_to_label_dict[pred_task_name] = pred_task_name
-    return dataloader
 
 
 def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task]:

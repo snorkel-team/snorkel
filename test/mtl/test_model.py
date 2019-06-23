@@ -6,37 +6,29 @@ import torch.nn as nn
 from snorkel.mtl.model import MultitaskModel
 from snorkel.mtl.modules.utils import ce_loss, softmax
 from snorkel.mtl.scorer import Scorer
-from snorkel.mtl.task import Task
+from snorkel.mtl.task import Operation, Task
 
 
 class TaskTest(unittest.TestCase):
     def create_task(self, task_name, module_suffixes):
+        module1_name = f"linear1{module_suffixes[0]}"
+        module2_name = f"linear2{module_suffixes[1]}"
+
         module_pool = nn.ModuleDict(
-            {
-                f"linear1{module_suffixes[0]}": nn.Linear(2, 10),
-                f"linear2{module_suffixes[1]}": nn.Linear(10, 2),
-            }
+            {module1_name: nn.Linear(2, 10), module2_name: nn.Linear(10, 2)}
         )
 
-        task_flow = [
-            {
-                "name": "first_layer",
-                "module": f"linear1{module_suffixes[0]}",
-                "inputs": [("_input_", 0)],
-            },
-            {
-                "name": "second_layer",
-                "module": f"linear2{module_suffixes[1]}",
-                "inputs": [("first_layer", 0)],
-            },
-        ]
+        op1 = Operation(module_name=module1_name, inputs=[("_input_", "coordinates")])
+        op2 = Operation(module_name=module2_name, inputs=[(op1.name, 0)])
+
+        task_flow = [op1, op2]
 
         task = Task(
             name=task_name,
             module_pool=module_pool,
             task_flow=task_flow,
-            loss_func=partial(ce_loss, "second_layer"),
-            output_func=partial(softmax, "second_layer"),
+            loss_func=partial(ce_loss, op2.name),
+            output_func=partial(softmax, op2.name),
             scorer=Scorer(metrics=["accuracy"]),
         )
 

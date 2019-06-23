@@ -33,11 +33,15 @@ class BaseTFApplier:
             x_transformed.append(x)
         for _ in range(self._k):
             x_t = x
+            transform_applied = False
             for tf_idx in self._policy.generate():
                 tf = self._tfs[tf_idx]
                 x_t_raw = tf(x_t)
-                x_t = x_t if x_t_raw is None else x_t_raw
-            x_transformed.append(x_t)
+                if x_t_raw is not None:
+                    transform_applied = True
+                    x_t = x_t_raw
+            if transform_applied:
+                x_transformed.append(x_t)
         return x_transformed
 
     def apply(self, data_points: Any, *args: Any, **kwargs: Any) -> Any:

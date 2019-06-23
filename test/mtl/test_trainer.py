@@ -9,7 +9,7 @@ from snorkel.mtl.data import MultitaskDataLoader, MultitaskDataset
 from snorkel.mtl.model import MultitaskModel
 from snorkel.mtl.modules.utils import ce_loss, softmax
 from snorkel.mtl.scorer import Scorer
-from snorkel.mtl.task import Task
+from snorkel.mtl.task import Operation, Task
 from snorkel.mtl.trainer import Trainer
 from snorkel.mtl.utils import set_seed
 
@@ -19,8 +19,7 @@ SEED = 123
 class TrainerTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.trainer_config = {"n_epochs": 2, "progress_bar": False}
-        cls.logger_config = {"counter_unit": "epochs", "evaluation_freq": 0.25}
+        cls.trainer_config = {"n_epochs": 3, "progress_bar": False}
 
     def test_trainer_onetask(self):
         """Train a single-task model"""
@@ -30,13 +29,14 @@ class TrainerTest(unittest.TestCase):
         dataloaders = create_dataloaders(num_tasks=1)
         scores = model.score(dataloaders)
         self.assertLess(scores["task1/TestData/test/accuracy"], 0.7)
-        trainer = Trainer(**self.trainer_config, **self.logger_config)
+        trainer = Trainer(**self.trainer_config)
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
         self.assertGreater(scores["task1/TestData/test/accuracy"], 0.9)
 
     def test_trainer_twotask(self):
         """Train a model with overlapping modules and flows"""
+        set_seed(SEED)
         task1 = create_task("task1", module_suffixes=["A", "A"])
         task2 = create_task("task2", module_suffixes=["A", "B"])
         model = MultitaskModel(tasks=[task1, task2])
@@ -44,7 +44,7 @@ class TrainerTest(unittest.TestCase):
         scores = model.score(dataloaders)
         self.assertLess(scores["task1/TestData/test/accuracy"], 0.7)
         self.assertLess(scores["task2/TestData/test/accuracy"], 0.7)
-        trainer = Trainer(**self.trainer_config, **self.logger_config)
+        trainer = Trainer(**self.trainer_config)
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
         self.assertGreater(scores["task1/TestData/test/accuracy"], 0.9)
@@ -91,32 +91,24 @@ def create_dataloaders(num_tasks=1):
 
 
 def create_task(task_name, module_suffixes):
+    module1_name = f"linear1{module_suffixes[0]}"
+    module2_name = f"linear2{module_suffixes[1]}"
+
     module_pool = nn.ModuleDict(
-        {
-            f"linear1{module_suffixes[0]}": nn.Linear(2, 10),
-            f"linear2{module_suffixes[1]}": nn.Linear(10, 2),
-        }
+        {module1_name: nn.Linear(2, 10), module2_name: nn.Linear(10, 2)}
     )
 
-    task_flow = [
-        {
-            "name": "first_layer",
-            "module": f"linear1{module_suffixes[0]}",
-            "inputs": [("_input_", "coordinates")],
-        },
-        {
-            "name": "second_layer",
-            "module": f"linear2{module_suffixes[1]}",
-            "inputs": [("first_layer", 0)],
-        },
-    ]
+    op1 = Operation(module_name=module1_name, inputs=[("_input_", "coordinates")])
+    op2 = Operation(module_name=module2_name, inputs=[(op1.name, 0)])
+
+    task_flow = [op1, op2]
 
     task = Task(
         name=task_name,
         module_pool=module_pool,
         task_flow=task_flow,
-        loss_func=partial(ce_loss, "second_layer"),
-        output_func=partial(softmax, "second_layer"),
+        loss_func=partial(ce_loss, op2.name),
+        output_func=partial(softmax, op2.name),
         scorer=Scorer(metrics=["accuracy"]),
     )
 

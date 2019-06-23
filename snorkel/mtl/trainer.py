@@ -33,6 +33,7 @@ class Trainer(object):
         :param dataloaders: a list of dataloaders used to learn the model
         :type dataloaders: list
         """
+        self._check_dataloaders(dataloaders)
 
         # Generate the list of dataloaders for learning process
         train_split = self.config["train_split"]
@@ -125,6 +126,25 @@ class Trainer(object):
                 batches.set_postfix(self.metrics)
 
         model = self.log_manager.close(model)
+
+    def _check_dataloaders(self, dataloaders):
+        """ Validates dataloaders given training config"""
+
+        train_split = self.config["train_split"]
+        if isinstance(train_split, str):
+            train_split = [train_split]
+
+        valid_split = self.config["valid_split"]
+        if isinstance(valid_split, str):
+            valid_split = [valid_split]
+
+        test_split = self.config["test_split"]
+        if isinstance(test_split, str):
+            test_split = [test_split]
+
+        all_splits = train_split + valid_split + test_split
+        if not all([dl.split in all_splits for dl in dataloaders]):
+            raise ValueError(f"Dataloader splits must be one of {all_splits}")
 
     def _set_checkpointer(self):
         if self.config["checkpointing"]:

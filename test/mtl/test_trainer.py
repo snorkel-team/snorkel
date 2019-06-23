@@ -1,4 +1,3 @@
-import random
 import unittest
 from functools import partial
 
@@ -12,6 +11,7 @@ from snorkel.mtl.modules.utils import ce_loss, softmax
 from snorkel.mtl.scorer import Scorer
 from snorkel.mtl.task import Task
 from snorkel.mtl.trainer import Trainer
+from snorkel.mtl.utils import set_seed
 
 SEED = 123
 
@@ -49,12 +49,6 @@ class TrainerTest(unittest.TestCase):
         scores = model.score(dataloaders)
         self.assertGreater(scores["task1/TestData/test/accuracy"], 0.9)
         self.assertGreater(scores["task2/TestData/test/accuracy"], 0.9)
-
-
-def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
 
 
 def create_dataloaders(num_tasks=1):

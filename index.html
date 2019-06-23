@@ -70,7 +70,7 @@
         <section>
 
 
-<h2>Snorkel: The System for Building and Managing Training Data</h2>
+<h2>Snorkel: The System for Programmatically Building and Managing Training Data</h2>
 <p>
   <b>
     Snorkel is a system for programmatically <i>building and managing</i> training datasets to rapidly and flexibly fuel machine learning models.
@@ -79,10 +79,10 @@
 <p>
   Today's state-of-the-art machine learning models are more powerful and easy to use than ever before- however, they require massive <i>training datasets</i>.
   Traditionally, these training datasets require slow and often prohibitively expensive manual labeling by domain experts.
-  Instead, in Snorkel, users write programmatic operations to <i>label, transform, and structure</i> training datasets for machine learning, without needing to hand label <i>any</i> training data; Snorkel then uses modern, theoretically-grounded modeling techniques to clean and integrate the resulting training data.
+  Instead, in Snorkel, <b>users write programmatic operations to <i>label, transform, and structure</i> training datasets</b> for machine learning, without needing to hand label <i>any</i> training data; Snorkel then uses modern, theoretically-grounded modeling techniques to clean and integrate the resulting training data.
 </p>
 <p>
-  In a wide range of applications---from medical image monitoring to text information extraction to industrial deployments over web data---Snorkel provides a radically faster and more flexible to build machine learning applications, by letting users <i>programmatically build and manipulate training data</i> rather than label it by hand. Snorkel focuses on three key operations: <i>labeling</i> data, for example using heuristic rules or distant supervision techniques; <i>transforming</i> data, for example to perform data augmentation and express invariances in the data; and <i>slicing</i> data into different critical subsets.
+  In a wide range of applications---from medical image monitoring to text information extraction to industrial deployments over web data---Snorkel provides a radically faster and more flexible to build machine learning applications, by letting users <b>programmatically build and manipulate training data</b> rather than label it by hand. Snorkel focuses on three key operations: <b>labeling data</b>, for example using heuristic rules or distant supervision techniques; <b>transforming data</b>, for example to perform data augmentation and express invariances in the data; and <b>slicing data</b> into different critical subsets.
 </p>
 <img align:center src="figs/fig_abstractions.png" alt="Snorkel" width=90% />
 
@@ -104,7 +104,7 @@ Snorkel is grateful to many users and sponsors, including:
 <img align:center src="figs/nature.png" alt="Snorkel" width=100% />
 
 <p>
-    Snorkel has been used extensively in medical settings, highlighted by two recent <em><font color="6699CC">Nature Communication</font></em> publications around <b><font color="6699CC"><a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">automated GWAS curation</a></font></b> and <b><font color="6699CC"><a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">cardiac MRI classification</a></font></b>, as well as in various <a href="https://arxiv.org/abs/1903.11101">radiology and neurological monitoring settings</a> where it has been used to replace person months of hand-labeling, and to extract information from electronic health record (EHR) data, offering a scalable solution for national <b><font color="6699CC"><a href="https://arxiv.org/abs/1904.07640">medical device surveillance</a></font></b>.
+    Snorkel has been used extensively in medical settings, highlighted by two recent Nature Communication publications around <b><font color="6699CC"><a href="https://ai.stanford.edu/~kuleshov/papers/gwaskb-manuscript.pdf">automated GWAS curation</a></font></b> and <b><font color="6699CC"><a href="https://nature-research-under-consideration.nature.com/users/37265-nature-communications/posts/38921-weakly-supervised-classification-of-rare-aortic-valve-malformations-using-unlabeled-cardiac-mri-sequences">cardiac MRI classification</a></font></b>, in various <b><font color="6699CC"><a href="https://arxiv.org/abs/1903.11101">radiology and neurological monitoring settings</a></font></b> where it has been used to replace person months of hand-labeling, and to extract information from electronic health record (EHR) data, offering a scalable solution for national <b><font color="6699CC"><a href="https://arxiv.org/abs/1904.07640">medical device surveillance</a></font></b>.
 </p>
 <p>
   For more use cases, as well as the various academic publications explaining the technical work underlying Snorkel, see the References section below.
@@ -127,7 +127,7 @@ Snorkel is grateful to many users and sponsors, including:
 <p></p>
 
 <p>
-    Rather than requiring users to label training data points by hand, Snorkel takes as input <i>labeling functions (LFs)</i>, functions that heuristically or noisily label some subset of the training examples. Snorkel then models the quality and correlations of these LFs using novel, theoretically-grounded statistical modeling techniques. Read more here:
+    Rather than requiring users to label training data points by hand, Snorkel takes as input <b>labeling functions (LFs)</b>, functions that heuristically or noisily label some subset of the training examples. Snorkel then models the quality and correlations of these LFs using novel, theoretically-grounded statistical modeling techniques. Read more here:
     <ul>
         <li>
             <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">Blog on using Labeling Functions to Efficiently Label Training Data</a>
@@ -155,7 +155,7 @@ Snorkel is grateful to many users and sponsors, including:
 <p></p>
 
 <p>
-    Snorkel also lets users write <i>transformation functions (TFs)</i> to heuristically generate new, modified training examples by transforming existing ones---a strategy often referred to as <i>data augmentation</i>. Rather than requiring users to tune these data augmentation or transformation strategies by hand, Snorkel learns compositions of transformations across various domain-specific tasks to optimize for a representative training set. Read more here:
+    Snorkel also lets users write <b>transformation functions (TFs)</b> to heuristically generate new, modified training examples by transforming existing ones---a strategy often referred to as <i>data augmentation</i>. Rather than requiring users to tune these data augmentation or transformation strategies by hand, Snorkel learns compositions of transformations across various domain-specific tasks to optimize for a representative training set. Read more here:
     <ul>
         <li>
           <a href="https://hazyresearch.github.io/snorkel/blog/tanda.html">Blog on using Transformation Functions to Augment Training Set</a>
@@ -177,8 +177,10 @@ Snorkel is grateful to many users and sponsors, including:
 
 <h3>Slicing</h3>
 
+<img align:center src="figs/sfs.png" alt="Snorkel" width=100% />
+<p></p>
 <p>
-    Finally, Snorkel also lets users write <i>slicing functions (SFs)</i> to heuristically identify subsets of the data the model should particularly care about, e.g. have extra representative capacity for, due to their difficulty and/or importance. It models slices in the style of multi-task learning and an attention-mechanism is then learned over these heads. Read more here:
+    Finally, Snorkel also lets users write <b>slicing functions (SFs)</b> to heuristically identify subsets of the data the model should particularly care about, e.g. have extra representative capacity for, due to their difficulty and/or importance. It models slices in the style of multi-task learning and an attention-mechanism is then learned over these heads. Read more here:
     <ul>
         <li>
             <a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">Blog on using Slicing Functions to achieves SOTA Performance</a>
@@ -194,8 +196,7 @@ Snorkel is grateful to many users and sponsors, including:
 <h2>References</h2>
 
 
-<h3><a onclick="blogs()">Blogs and Tutorials </a></h3>
-<div id="blogs">
+<h3>Blogs and Tutorials</h3>
   <ul>
       <li>
         [3/23/2019] <a href="https://dawn.cs.stanford.edu/2019/03/22/glue/">Massive Multi-Task Learning with Snorkel MeTaL: Bringing More Supervision to Bear</a>
@@ -216,44 +217,42 @@ Snorkel is grateful to many users and sponsors, including:
         [09/20/2017] <a href="http://dawn.cs.stanford.edu/2017/09/14/coral/">Exploiting Building Blocks of Data to Efficiently Create Training Sets</a>
       </li>
       <li>
-        [08/10/2017] <a href="https://hazyresearch.github.io/snorkel/blog/tanda.html">Learning to Compose Domain-Specific Transformations for Data Augmentation</a> [<a href="https://github.com/HazyResearch/tanda">Repo</a>]
-      </li>
-      <li>
-        [07/12/2017] <a href="https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html">Weak Supervision: The New Programming Paradigm for Machine Learning</a>
-      </li>
-      <li>
-        [06/05/2017] <a href="https://hazyresearch.github.io/snorkel/blog/snark.html">Scaling Up Snorkel with Spark</a> [<a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/snark/Snark%20Tutorial.ipynb">Tutorial</a>]
-      </li>
-      <li>
-        [05/08/2017] <a href="https://hazyresearch.github.io/snorkel/blog/holoclean.html">HoloClean: Weakly Supervised Data Repairing</a>
-      </li>
-      <li>
-        [04/17/2017] <a href="https://hazyresearch.github.io/snorkel/blog/structure_learning.html">Structure Learning: Are Your Sources Only Telling You What You Want to Hear?</a> [<a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/advanced/Structure_Learning.ipynb">Tutorial</a>]
-      </li>
-      <li>
-        [03/21/2017] <a href="https://hazyresearch.github.io/snorkel/blog/babble_labble.html">Babble Labble: Learning from Natural Language Explanations</a>
-      </li>
-      <li>
-        [03/16/2017] <a href="https://hazyresearch.github.io/snorkel/blog/fonduer.html">Fonduer: Knowledge Base Construction from Richly Formatted Data</a>
-      </li>
-      <li>
-        [12/15/2016] <a href="http://hazyresearch.github.io/snorkel/blog/dp_with_tf_blog_post.html">Data Programming + TensorFlow Tutorial</a> (<a href="http://hazyresearch.github.io/snorkel/blog/DataProgrammingTensorFlow-v2.ipynb">notebook version</a>)
-      </li>
-      <li>
-        [11/24/2016] <a href="http://hazyresearch.github.io/snorkel/blog/slimfast.html">SLiMFast: Assessing the Reliability of Data</a>
-      </li>
-      <li>
-        [10/24/2016] <a href="http://hazyresearch.github.io/snorkel/blog/socratic_learning.html">Socratic Learning: Debugging ML Models</a>
-      </li>
-      <li>
-        [9/19/2016] <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">Data Programming: ML with Weak Supervision</a> [<a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro">Tutorial</a>]
-      </li>
-      </ul>
-</div>
+          [08/10/2017] <a href="https://hazyresearch.github.io/snorkel/blog/tanda.html">Learning to Compose Domain-Specific Transformations for Data Augmentation</a> [<a href="https://github.com/HazyResearch/tanda">Repo</a>]
+        </li>
+        <li>
+          [07/12/2017] <a href="https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html">Weak Supervision: The New Programming Paradigm for Machine Learning</a>
+        </li>
+        <li>
+          [06/05/2017] <a href="https://hazyresearch.github.io/snorkel/blog/snark.html">Scaling Up Snorkel with Spark</a> [<a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/snark/Snark%20Tutorial.ipynb">Tutorial</a>]
+        </li>
+        <li>
+          [05/08/2017] <a href="https://hazyresearch.github.io/snorkel/blog/holoclean.html">HoloClean: Weakly Supervised Data Repairing</a>
+        </li>
+        <li>
+          [04/17/2017] <a href="https://hazyresearch.github.io/snorkel/blog/structure_learning.html">Structure Learning: Are Your Sources Only Telling You What You Want to Hear?</a> [<a href="https://github.com/HazyResearch/snorkel/blob/master/tutorials/advanced/Structure_Learning.ipynb">Tutorial</a>]
+        </li>
+        <li>
+          [03/21/2017] <a href="https://hazyresearch.github.io/snorkel/blog/babble_labble.html">Babble Labble: Learning from Natural Language Explanations</a>
+        </li>
+        <li>
+          [03/16/2017] <a href="https://hazyresearch.github.io/snorkel/blog/fonduer.html">Fonduer: Knowledge Base Construction from Richly Formatted Data</a>
+        </li>
+        <li>
+          [12/15/2016] <a href="http://hazyresearch.github.io/snorkel/blog/dp_with_tf_blog_post.html">Data Programming + TensorFlow Tutorial</a> (<a href="http://hazyresearch.github.io/snorkel/blog/DataProgrammingTensorFlow-v2.ipynb">notebook version</a>)
+        </li>
+        <li>
+          [11/24/2016] <a href="http://hazyresearch.github.io/snorkel/blog/slimfast.html">SLiMFast: Assessing the Reliability of Data</a>
+        </li>
+        <li>
+          [10/24/2016] <a href="http://hazyresearch.github.io/snorkel/blog/socratic_learning.html">Socratic Learning: Debugging ML Models</a>
+        </li>
+        <li>
+          [9/19/2016] <a href="http://hazyresearch.github.io/snorkel/blog/weak_supervision.html">Data Programming: ML with Weak Supervision</a> [<a href="https://github.com/HazyResearch/snorkel/tree/master/tutorials/intro">Tutorial</a>]
+        </li>
+        </ul>
 
 <p></p>
-<h3><a onclick="papers()">Papers and Pre-Prints</a></h3>
-<div id="papers">
+<h3>Papers and Pre-Prints</h3>
     <ul>
         <li>
           <b><a href="https://arxiv.org/abs/1711.10160">Snorkel: Rapid Training Data Creation with Weak Supervision</a> (VLDB 2018)</b>
@@ -300,12 +299,10 @@ Snorkel is grateful to many users and sponsors, including:
           <a href="https://arxiv.org/abs/1709.02605">Gaussian Quadrature for Kernel Features</a> (NeurIPS 2017)
         </li>
       </ul>
-</div>
 
 <p></p>
-<h3><a onclick="uses()">Snorkel Use Cases</a></h3>
-<div id="uses">
-  <ul>
+<h3>Snorkel Use Cases</h3>
+<ul>
 <li>
     Conversational agents at IBM: <a href="https://arxiv.org/pdf/1812.06176.pdf">Bootstrapping Conversational Agents With Weak Supervision (AAAI 2019)</a>
   </li>
@@ -351,32 +348,6 @@ Snorkel is grateful to many users and sponsors, including:
 <script>
     function news() {
       var x = document.getElementById("news");
-      if (x.style.display === "none") {
-        x.style.display = "block";
-      } else {
-        x.style.display = "none";
-      }
-    }
-    function papers() {
-      var x = document.getElementById("papers");
-      if (x.style.display === "none") {
-        x.style.display = "block";
-      } else {
-        x.style.display = "none";
-      }
-    }
-
-    function blogs() {
-      var x = document.getElementById("blogs");
-      if (x.style.display === "none") {
-        x.style.display = "block";
-      } else {
-        x.style.display = "none";
-      }
-    }
-
-    function uses() {
-      var x = document.getElementById("uses");
       if (x.style.display === "none") {
         x.style.display = "block";
       } else {

@@ -5,12 +5,18 @@ from typing import List
 
 from snorkel.labeling.lf import LabelingFunction, labeling_function
 from snorkel.labeling.preprocess import PreprocessorMode, preprocessor
-from snorkel.types import DataPoint, FieldMap
+from snorkel.types import DataPoint
 
 
 @preprocessor
-def square(num: float) -> FieldMap:
-    return dict(num=num ** 2)
+def square(x: DataPoint) -> DataPoint:
+    x.num = x.num ** 2
+    return x
+
+
+@preprocessor
+def returns_none(x: DataPoint) -> DataPoint:
+    return None
 
 
 def f(x: DataPoint) -> int:
@@ -62,6 +68,13 @@ class TestLabelingFunctionCore(unittest.TestCase):
         self.assertEqual(lf(x_43), 1)
         self.assertEqual(lf(x_6), 1)
         self.assertEqual(lf(x_2), 0)
+
+    def test_labeling_function_returns_none(self) -> None:
+        lf = LabelingFunction(name="my_lf", f=f, preprocessors=[square, returns_none])
+        lf.set_preprocessor_mode(PreprocessorMode.NAMESPACE)
+        x_43 = SimpleNamespace(num=43)
+        with self.assertRaises(ValueError):
+            lf(x_43)
 
     def test_labeling_function_serialize(self) -> None:
         db = [3, 6, 43]

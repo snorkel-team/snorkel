@@ -3,27 +3,37 @@ from typing import Any, List
 from tqdm import tqdm
 
 from snorkel.augmentation.policy import AugmentationPolicy
-from snorkel.augmentation.tf import TransformationFunctionMode
+from snorkel.augmentation.tf import TransformationFunction, TransformationFunctionMode
 from snorkel.types import DataPoint
 
 
 class BaseTFApplier:
     def __init__(
-        self, policy: AugmentationPolicy, k: int = 1, keep_original: bool = True
+        self,
+        tfs: List[TransformationFunction],
+        policy: AugmentationPolicy,
+        k: int = 1,
+        keep_original: bool = True,
     ) -> None:
+        self._tfs = tfs
         self._policy = policy
         self._k = k
         self._keep_original = keep_original
 
     def _set_tf_mode(self, mode: TransformationFunctionMode) -> None:
-        self._policy.set_tf_mode(mode)
+        for tf in self._tfs:
+            tf.set_mode(mode)
 
     def _apply_policy_to_data_point(self, x: DataPoint) -> List[DataPoint]:
         x_transformed = []
         if self._keep_original:
             x_transformed.append(x)
         for _ in range(self._k):
-            x_transformed.append(self._policy.apply(x))
+            x_t = x
+            for tf_idx in self._policy.generate():
+                tf = self._tfs[tf_idx]
+                x_t = tf(x_t)
+            x_transformed.append(x_t)
         return x_transformed
 
     def apply(self, data_points: Any, *args: Any, **kwargs: Any) -> Any:

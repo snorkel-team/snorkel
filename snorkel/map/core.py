@@ -1,8 +1,7 @@
 import inspect
+import pickle
 from enum import Enum, auto
 from typing import Any, Callable, List, Mapping, Optional
-
-import dill
 
 from snorkel.types import DataPoint, FieldMap
 
@@ -68,7 +67,10 @@ class Mapper:
         raise NotImplementedError
 
     def __call__(self, x: DataPoint) -> DataPoint:
-        x = dill.loads(dill.dumps(x))
+        # NB: using pickle roundtrip as a more robust deepcopy
+        # As an example, calling deepcopy on a pd.Series or SimpleNamespace
+        # with a dictionary attribute won't create a copy of the dictionary
+        x = pickle.loads(pickle.dumps(x))
         field_map = {k: getattr(x, v) for k, v in self.field_names.items()}
         mapped_fields = self.run(**field_map)
         assert isinstance(mapped_fields, dict)

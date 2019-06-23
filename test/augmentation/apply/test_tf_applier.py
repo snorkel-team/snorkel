@@ -21,8 +21,8 @@ def modify_in_place(d: Dict[str, int]) -> FieldMap:
     return dict(d=d)
 
 
-policy = RandomAugmentationPolicy([square], sequence_length=2)
-policy_modify_in_place = RandomAugmentationPolicy([modify_in_place], sequence_length=1)
+policy = RandomAugmentationPolicy(1, sequence_length=2)
+policy_modify_in_place = RandomAugmentationPolicy(1, sequence_length=1)
 
 
 DATA = [1, 2, 3]
@@ -45,7 +45,7 @@ class TestTFApplier(unittest.TestCase):
 
     def test_tf_applier(self):
         data = self._get_x_namespace()
-        applier = TFApplier(policy, k=1, keep_original=False)
+        applier = TFApplier([square], policy, k=1, keep_original=False)
         data_augmented = applier.apply(data)
         vals = [x.num for x in data_augmented]
         self.assertEqual(vals, [1, 16, 81])
@@ -53,7 +53,7 @@ class TestTFApplier(unittest.TestCase):
 
     def test_tf_applier_multi(self):
         data = self._get_x_namespace()
-        applier = TFApplier(policy, k=2, keep_original=False)
+        applier = TFApplier([square], policy, k=2, keep_original=False)
         data_augmented = applier.apply(data)
         vals = [x.num for x in data_augmented]
         self.assertEqual(vals, [1, 1, 16, 16, 81, 81])
@@ -61,7 +61,7 @@ class TestTFApplier(unittest.TestCase):
 
     def test_tf_applier_keep_original(self):
         data = self._get_x_namespace()
-        applier = TFApplier(policy, k=2, keep_original=True)
+        applier = TFApplier([square], policy, k=2, keep_original=True)
         data_augmented = applier.apply(data)
         vals = [x.num for x in data_augmented]
         self.assertEqual(vals, [1, 1, 1, 2, 16, 16, 3, 81, 81])
@@ -69,7 +69,9 @@ class TestTFApplier(unittest.TestCase):
 
     def test_tf_applier_keep_original_modify_in_place(self):
         data = self._get_x_namespace_dict()
-        applier = TFApplier(policy_modify_in_place, k=2, keep_original=True)
+        applier = TFApplier(
+            [modify_in_place], policy_modify_in_place, k=2, keep_original=True
+        )
         data_augmented = applier.apply(data)
         self.assertTrue(
             all(x.d == d for x, d in zip(data_augmented, DATA_IN_PLACE_EXPECTED))
@@ -86,7 +88,7 @@ class TestPandasTFApplier(unittest.TestCase):
 
     def test_tf_applier_pandas(self):
         df = self._get_x_df()
-        applier = PandasTFApplier(policy, k=1, keep_original=False)
+        applier = PandasTFApplier([square], policy, k=1, keep_original=False)
         df_augmented = applier.apply(df)
         df_expected = pd.DataFrame(dict(num=[1, 16, 81]), index=[0, 1, 2])
         self.assertTrue(df_augmented.equals(df_expected))
@@ -94,7 +96,7 @@ class TestPandasTFApplier(unittest.TestCase):
 
     def test_tf_applier_pandas_multi(self):
         df = self._get_x_df()
-        applier = PandasTFApplier(policy, k=2, keep_original=False)
+        applier = PandasTFApplier([square], policy, k=2, keep_original=False)
         df_augmented = applier.apply(df)
         df_expected = pd.DataFrame(
             dict(num=[1, 1, 16, 16, 81, 81]), index=[0, 0, 1, 1, 2, 2]
@@ -104,7 +106,7 @@ class TestPandasTFApplier(unittest.TestCase):
 
     def test_tf_applier_pandas_keep_original(self):
         df = self._get_x_df()
-        applier = PandasTFApplier(policy, k=2, keep_original=True)
+        applier = PandasTFApplier([square], policy, k=2, keep_original=True)
         df_augmented = applier.apply(df)
         df_expected = pd.DataFrame(
             dict(num=[1, 1, 1, 2, 16, 16, 3, 81, 81]), index=[0, 0, 0, 1, 1, 1, 2, 2, 2]
@@ -114,7 +116,9 @@ class TestPandasTFApplier(unittest.TestCase):
 
     def test_tf_applier_pandas_modify_in_place(self):
         df = self._get_x_df_dict()
-        applier = PandasTFApplier(policy_modify_in_place, k=2, keep_original=True)
+        applier = PandasTFApplier(
+            [modify_in_place], policy_modify_in_place, k=2, keep_original=True
+        )
         df_augmented = applier.apply(df)
         idx = [0, 0, 0, 1, 1, 1, 2, 2, 2]
         df_expected = pd.DataFrame(dict(d=DATA_IN_PLACE_EXPECTED), index=idx)

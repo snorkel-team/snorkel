@@ -1,4 +1,5 @@
 default_config = {
+    "seed": None,  # Random seed for reproducibility; if None, seed is not set.
     "n_epochs": 1,  # total number of learning epochs
     "train_split": "train",  # the split for training, accepts str or list of strs
     "valid_split": "valid",  # the split for validation, accepts str or list of strs
@@ -11,7 +12,7 @@ default_config = {
     },
     "log_manager_config": {
         "counter_unit": "epochs",  # [points, batches, epochs]
-        "evaluation_freq": 1,  # Evaluate performance every this many counter_units
+        "evaluation_freq": 1.0,  # Evaluate performance every this many counter_units
     },
     "checkpointing": False,  # Whether to save checkpoints of best performing models
     "checkpointer_config": {  # Note that checkpointer behavior also depends on log_manager_config

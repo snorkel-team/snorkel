@@ -20,8 +20,8 @@ def get_person_last_names(cand):
     Returns the last names for the two person mentions in candidate cand
     """
     person1_name, person2_name = get_person_text(cand)
-    person1_lastname = person1_name.split(' ')[-1] if len(person1_name.split(' ')) > 0 else None
-    person2_lastname = person2_name.split(' ')[-1] if len(person2_name.split(' ')) > 0 else None
+    person1_lastname = person1_name.split(' ')[-1] if len(person1_name.split(' ')) > 1 else None
+    person2_lastname = person2_name.split(' ')[-1] if len(person2_name.split(' ')) > 1 else None
     return person1_lastname, person2_lastname
 
 

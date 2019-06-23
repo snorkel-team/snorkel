@@ -1,5 +1,6 @@
-from snorkel.map import LambdaMapper, Mapper, MapperMode, lambda_mapper
+from snorkel.map import BaseMapper, LambdaMapper, Mapper, MapperMode, lambda_mapper
 
+BaseTransformationFunction = BaseMapper
 TransformationFunction = Mapper
 LambdaTransformationFunction = LambdaMapper
 TransformationFunctionMode = MapperMode

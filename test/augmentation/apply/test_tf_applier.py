@@ -1,24 +1,24 @@
 import unittest
 from types import SimpleNamespace
-from typing import Dict
 
 import pandas as pd
 
 from snorkel.augmentation.apply import PandasTFApplier, TFApplier
 from snorkel.augmentation.policy import RandomAugmentationPolicy
 from snorkel.augmentation.tf import transformation_function
-from snorkel.types import FieldMap
+from snorkel.types import DataPoint
 
 
 @transformation_function
-def square(num: int) -> FieldMap:
-    return dict(num=num ** 2)
+def square(x: DataPoint) -> DataPoint:
+    x.num = x.num ** 2
+    return x
 
 
 @transformation_function
-def modify_in_place(d: Dict[str, int]) -> FieldMap:
-    d["my_key"] = 0
-    return dict(d=d)
+def modify_in_place(x: DataPoint) -> DataPoint:
+    x.d["my_key"] = 0
+    return x
 
 
 policy = RandomAugmentationPolicy(1, sequence_length=2)

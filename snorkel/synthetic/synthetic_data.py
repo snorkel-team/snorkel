@@ -4,9 +4,12 @@ from typing import List, Optional, Union
 import numpy as np
 import pandas as pd
 
-from snorkel.augmentation.tf import LambdaTransformationFunction, TransformationFunction
+from snorkel.augmentation.tf import (
+    BaseTransformationFunction,
+    LambdaTransformationFunction,
+)
 from snorkel.labeling.lf import LabelingFunction
-from snorkel.types import DataPoint, FieldMap
+from snorkel.types import DataPoint
 
 
 def generate_mog_dataset(
@@ -62,7 +65,7 @@ def generate_single_feature_lfs(
     input DataPoint x.x.
     """
     if isinstance(dims, int):
-        dims = range(dims)
+        dims = list(range(dims))
     return [
         LabelingFunction(
             f"LF_feature_{i}", partial(lf_template, index=i, abstain_rate=abstain_rate)
@@ -71,14 +74,14 @@ def generate_single_feature_lfs(
     ]
 
 
-def tf_template(x: np.ndarray, i: int) -> FieldMap:
-    x[i] = np.random.rand()
-    return dict(x=x)
+def tf_template(x: DataPoint, i: int) -> DataPoint:
+    x.x[i] = np.random.rand()
+    return x
 
 
 def generate_resampling_tfs(
     dims: Union[int, List[int]]
-) -> List[TransformationFunction]:
+) -> List[BaseTransformationFunction]:
     if isinstance(dims, int):
-        dims = range(dims)
+        dims = list(range(dims))
     return [LambdaTransformationFunction(partial(tf_template, i=i)) for i in dims]

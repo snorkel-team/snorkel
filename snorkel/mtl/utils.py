@@ -5,12 +5,6 @@ import numpy as np
 import torch
 
 
-def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-
-
 def prob_to_pred(probs):
     """Identify the class with the maximum probability (add 1 since we assume label
     class starts from 1)

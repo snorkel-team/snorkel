@@ -1,9 +1,8 @@
 import unittest
 from types import SimpleNamespace
-from typing import Dict
 
 from snorkel.map import Mapper, MapperMode, lambda_mapper
-from snorkel.types import FieldMap
+from snorkel.types import DataPoint, FieldMap
 
 
 class SplitWordsMapper(Mapper):
@@ -22,14 +21,16 @@ class SplitWordsMapperDefaultArgs(Mapper):
 
 
 @lambda_mapper
-def square(num: float) -> FieldMap:
-    return dict(num_squared=num ** 2)
+def square(x: DataPoint) -> DataPoint:
+    x.num_squared = x.num ** 2
+    return x
 
 
 @lambda_mapper
-def modify_in_place(d: Dict[str, int]) -> FieldMap:
-    d["my_key"] = 0
-    return dict(d=d, d_new=d)
+def modify_in_place(x: DataPoint) -> DataPoint:
+    x.d["my_key"] = 0
+    x.d_new = x.d
+    return x
 
 
 class TestMapperCore(unittest.TestCase):
@@ -89,19 +90,20 @@ class TestMapperCore(unittest.TestCase):
 
     def test_mapper_mode(self) -> None:
         x = self._get_x()
+        split_words = SplitWordsMapper("text", "text_lower", "text_words")
 
-        square.set_mode(18)  # type: ignore
+        split_words.set_mode(18)  # type: ignore
         with self.assertRaises(ValueError):
-            square(x)
+            split_words(x)
 
-        square.set_mode(MapperMode.NONE)
+        split_words.set_mode(MapperMode.NONE)
         with self.assertRaises(ValueError):
-            square(x)
+            split_words(x)
 
-        square.set_mode(MapperMode.DASK)
+        split_words.set_mode(MapperMode.DASK)
         with self.assertRaises(NotImplementedError):
-            square(x)
+            split_words(x)
 
-        square.set_mode(MapperMode.SPARK)
+        split_words.set_mode(MapperMode.SPARK)
         with self.assertRaises(NotImplementedError):
-            square(x)
+            split_words(x)

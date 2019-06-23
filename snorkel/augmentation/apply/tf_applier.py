@@ -3,14 +3,17 @@ from typing import Any, List
 from tqdm import tqdm
 
 from snorkel.augmentation.policy import AugmentationPolicy
-from snorkel.augmentation.tf import TransformationFunction, TransformationFunctionMode
+from snorkel.augmentation.tf import (
+    BaseTransformationFunction,
+    TransformationFunctionMode,
+)
 from snorkel.types import DataPoint
 
 
 class BaseTFApplier:
     def __init__(
         self,
-        tfs: List[TransformationFunction],
+        tfs: List[BaseTransformationFunction],
         policy: AugmentationPolicy,
         k: int = 1,
         keep_original: bool = True,
@@ -32,7 +35,8 @@ class BaseTFApplier:
             x_t = x
             for tf_idx in self._policy.generate():
                 tf = self._tfs[tf_idx]
-                x_t = tf(x_t)
+                x_t_raw = tf(x_t)
+                x_t = x_t if x_t_raw is None else x_t_raw
             x_transformed.append(x_t)
         return x_transformed
 

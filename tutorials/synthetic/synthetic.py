@@ -44,7 +44,7 @@ plt.show()
 m = 4
 tfs = generate_resampling_tfs(list(range(d, d + n_noise_dim)))
 policy = RandomAugmentationPolicy(len(tfs), sequence_length=1)
-tf_applier = PandasTFApplier(tfs, policy, k=4, keep_original=True)
+tf_applier = PandasTFApplier(tfs, policy, k=1, keep_original=True)
 data_augmented = tf_applier.apply(data)
 
 

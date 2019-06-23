@@ -25,7 +25,22 @@ def get_parameters(
     return params[0]
 
 
-class Mapper:
+class BaseMapper:
+    def _generate_mapped_data_point(self, x: DataPoint) -> DataPoint:
+        raise NotImplementedError
+
+    def set_mode(self, mode: MapperMode) -> None:
+        self.mode = mode
+
+    def __call__(self, x: DataPoint) -> DataPoint:
+        # NB: using pickle roundtrip as a more robust deepcopy
+        # As an example, calling deepcopy on a pd.Series or SimpleNamespace
+        # with a dictionary attribute won't create a copy of the dictionary
+        x = pickle.loads(pickle.dumps(x))
+        return self._generate_mapped_data_point(x)
+
+
+class Mapper(BaseMapper):
     def __init__(
         self,
         field_names: Optional[Mapping[str, str]] = None,
@@ -60,19 +75,14 @@ class Mapper:
         self.mapped_field_names = mapped_field_names
         self.mode = MapperMode.NONE
 
-    def set_mode(self, mode: MapperMode) -> None:
-        self.mode = mode
-
-    def run(self, **kwargs: Any) -> FieldMap:
+    def run(self, **kwargs: Any) -> Optional[FieldMap]:
         raise NotImplementedError
 
-    def __call__(self, x: DataPoint) -> DataPoint:
-        # NB: using pickle roundtrip as a more robust deepcopy
-        # As an example, calling deepcopy on a pd.Series or SimpleNamespace
-        # with a dictionary attribute won't create a copy of the dictionary
-        x = pickle.loads(pickle.dumps(x))
+    def _generate_mapped_data_point(self, x: DataPoint) -> Optional[DataPoint]:
         field_map = {k: getattr(x, v) for k, v in self.field_names.items()}
         mapped_fields = self.run(**field_map)
+        if mapped_fields is None:
+            return None
         assert isinstance(mapped_fields, dict)
         if self.mapped_field_names is not None:
             mapped_fields = {
@@ -94,34 +104,34 @@ class Mapper:
             )
 
 
-class LambdaMapper(Mapper):
-    def __init__(self, f: Callable[..., FieldMap]) -> None:
+class LambdaMapper(BaseMapper):
+    def __init__(self, f: Callable[[DataPoint], Optional[DataPoint]]) -> None:
         """Convenience class for Mappers that execute a simple
-        function with no set up. The function arguments are parsed
-        to determine the input field names of the data points.
+        function with no set up. The function should map from
+        an input DataPoint to a new DataPoint. The original DataPoint
+        will not be updated, so in-place operations are safe.
 
         Args:
             * f: the function executing the mapping operation
         """
         self._f = f
-        field_names = {k: k for k in get_parameters(f)}
-        super().__init__(field_names=field_names, mapped_field_names=None)
 
-    def run(self, **kwargs: Any) -> FieldMap:
-        return self._f(**kwargs)
+    def _generate_mapped_data_point(self, x: DataPoint) -> Optional[DataPoint]:
+        return self._f(x)
 
 
-def lambda_mapper(f: Callable[..., FieldMap]) -> LambdaMapper:
+def lambda_mapper(f: Callable[[DataPoint], Optional[DataPoint]]) -> LambdaMapper:
     """Decorator to define a LambdaMapper object from a function
 
         Example usage:
 
         ```
         @lambda_mapper()
-        def concatenate_text(title: str, body: str) -> FieldMap:
-            return dict(article=f"{title} {body}")
+        def concatenate_text(x: DataPoint) -> DataPoint:
+            x.article = f"{title} {body}"
+            return x
 
-        isinstance(concatenate_text, Mapper)  # true
+        isinstance(concatenate_text, LambdaMapper)  # true
         ```
         """
     return LambdaMapper(f=f)

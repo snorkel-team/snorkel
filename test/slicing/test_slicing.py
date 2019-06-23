@@ -65,8 +65,8 @@ class SlicingTest(unittest.TestCase):
         self.assertEqual(S_valid.shape, (N_VALID, len(slicing_functions)))
 
         # Add slice labels
-        dataloaders[0] = add_slice_labels(task1, dataloaders[0], S_train, slice_names)
-        dataloaders[1] = add_slice_labels(task1, dataloaders[1], S_valid, slice_names)
+        add_slice_labels(dataloaders[0], task1, S_train, slice_names)
+        add_slice_labels(dataloaders[1], task1, S_valid, slice_names)
 
         self.assertEqual(len(dataloaders[0].task_to_label_dict), 8)
         self.assertIn("task1", dataloaders[0].task_to_label_dict)
@@ -151,7 +151,10 @@ def create_task(task_name, module_suffixes):
     module2_name = f"linear2{module_suffixes[1]}"
 
     module_pool = nn.ModuleDict(
-        {module1_name: nn.Linear(2, 10), module2_name: nn.Linear(10, 2)}
+        {
+            module1_name: nn.Sequential(nn.Linear(2, 10), nn.ReLU()),
+            module2_name: nn.Linear(10, 2),
+        }
     )
 
     op1 = Operation(module_name=module1_name, inputs=[("_input_", "coordinates")])

@@ -1,5 +1,4 @@
 import os
-import random
 
 import numpy as np
 import torch
@@ -11,7 +10,7 @@ from torch.utils.data import DataLoader, Dataset, TensorDataset
 from .analysis import confusion_matrix
 from .logging import Checkpointer, Logger, LogWriter, TensorBoardWriter
 from .metrics import metric_score
-from .utils import place_on_gpu, recursive_merge_dicts
+from .utils import place_on_gpu, recursive_merge_dicts, set_seed
 
 # Import tqdm_notebook if in Jupyter notebook
 try:
@@ -65,7 +64,8 @@ class Classifier(nn.Module):
         # Set random seed
         if self.config["seed"] is None:
             self.config["seed"] = np.random.randint(1e6)
-        self._set_seed(self.config["seed"])
+        self.seed = self.config["seed"]
+        set_seed(self.seed)
 
         # Confirm that cuda is available if config is using CUDA
         if self.config["device"] != "cpu" and not torch.cuda.is_available():
@@ -408,15 +408,6 @@ class Classifier(nn.Module):
             return DataLoader(self._create_dataset(*data), **config)
         else:
             raise ValueError("Input data type not recognized.")
-
-    def _set_seed(self, seed):
-        self.seed = seed
-        if self.config["device"] != "cpu":
-            torch.backends.cudnn.enabled = True
-            torch.cuda.manual_seed(seed)
-        torch.manual_seed(seed)
-        np.random.seed(seed)
-        random.seed(seed)
 
     def _set_writer(self, train_config):
         if train_config["writer"] is None:

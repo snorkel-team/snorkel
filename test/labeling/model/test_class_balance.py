@@ -4,13 +4,10 @@ import numpy as np
 import torch
 
 from snorkel.labeling.model.class_balance import ClassBalanceModel
+from snorkel.model.utils import set_seed
 
 
 class ClassBalanceModelTest(unittest.TestCase):
-    def _set_seed(self, seed):
-        torch.manual_seed(seed)
-        np.random.seed(seed)
-
     def _generate_class_balance(self, k):
         """Generate class balance"""
         p_Y = np.random.random(k)
@@ -101,24 +98,24 @@ class ClassBalanceModelTest(unittest.TestCase):
         self._test_model(model, p_Y, C, L=L, tol=1e-2)
 
     def test_class_balance_estimation_2(self):
-        self._set_seed(123)
+        set_seed(123)
         self._test_class_balance_estimation(2, 25)
 
     def test_class_balance_estimation_3(self):
-        self._set_seed(123)
+        set_seed(123)
         self._test_class_balance_estimation(3, 25)
 
     # Note: This should pass! However, commented out because too slow...
     # def test_class_balance_estimation_5(self):
-    #     self._set_seed(123)
+    #     set_seed(123)
     #     self._test_class_balance_estimation(5, 25)
 
     def test_class_balance_estimation_2_abstains(self):
-        self._set_seed(123)
+        set_seed(123)
         self._test_class_balance_estimation(2, 25, abstains=True)
 
     def test_class_balance_estimation_2_noisy(self):
-        self._set_seed(123)
+        set_seed(123)
         self._test_class_balance_estimation_noisy(2, 25, 10000, abstains=True)
 
 

@@ -11,12 +11,13 @@ from snorkel.labeling.apply import LFApplier, PandasLFApplier
 from snorkel.labeling.lf import labeling_function
 from snorkel.labeling.preprocess import preprocessor
 from snorkel.labeling.preprocess.nlp import SpacyPreprocessor
-from snorkel.types import DataPoint, FieldMap
+from snorkel.types import DataPoint
 
 
 @preprocessor
-def square(num: float) -> FieldMap:
-    return dict(num_squared=num ** 2)
+def square(x: DataPoint) -> DataPoint:
+    x.num_squared = x.num ** 2
+    return x
 
 
 spacy = SpacyPreprocessor(text_field="text", doc_field="doc")

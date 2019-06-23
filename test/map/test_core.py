@@ -2,7 +2,7 @@ import unittest
 from types import SimpleNamespace
 
 from snorkel.map import Mapper, MapperMode, lambda_mapper
-from snorkel.types import FieldMap
+from snorkel.types import DataPoint, FieldMap
 
 
 class SplitWordsMapper(Mapper):
@@ -21,13 +21,24 @@ class SplitWordsMapperDefaultArgs(Mapper):
 
 
 @lambda_mapper
-def square(num: float) -> FieldMap:
-    return dict(num_squared=num ** 2)
+def square(x: DataPoint) -> DataPoint:
+    x.num_squared = x.num ** 2
+    return x
+
+
+@lambda_mapper
+def modify_in_place(x: DataPoint) -> DataPoint:
+    x.d["my_key"] = 0
+    x.d_new = x.d
+    return x
 
 
 class TestMapperCore(unittest.TestCase):
     def _get_x(self) -> SimpleNamespace:
         return SimpleNamespace(num=8, text="Henry has fun")
+
+    def _get_x_dict(self) -> SimpleNamespace:
+        return SimpleNamespace(num=8, d=dict(my_key=1))
 
     def test_numeric_mapper(self) -> None:
         square.set_mode(MapperMode.NAMESPACE)
@@ -48,7 +59,11 @@ class TestMapperCore(unittest.TestCase):
     def test_mapper_same_field(self) -> None:
         split_words = SplitWordsMapper("text", "text", "text_words")
         split_words.set_mode(MapperMode.NAMESPACE)
-        x_mapped = split_words(self._get_x())
+        x = self._get_x()
+        x_mapped = split_words(x)
+        self.assertEqual(x.num, 8)
+        self.assertEqual(x.text, "Henry has fun")
+        self.assertFalse(hasattr(x, "text_words"))
         self.assertEqual(x_mapped.num, 8)
         self.assertEqual(x_mapped.text, "henry has fun")
         self.assertEqual(x_mapped.text_words, ["Henry", "has", "fun"])
@@ -62,21 +77,33 @@ class TestMapperCore(unittest.TestCase):
         self.assertEqual(x_mapped.lower, "henry has fun")
         self.assertEqual(x_mapped.words, ["Henry", "has", "fun"])
 
+    def test_mapper_in_place(self) -> None:
+        modify_in_place.set_mode(MapperMode.NAMESPACE)
+        x = self._get_x_dict()
+        x_mapped = modify_in_place(x)
+        self.assertEqual(x.num, 8)
+        self.assertEqual(x.d, dict(my_key=1))
+        self.assertFalse(hasattr(x, "d_new"))
+        self.assertEqual(x_mapped.num, 8)
+        self.assertEqual(x_mapped.d, dict(my_key=0))
+        self.assertEqual(x_mapped.d_new, dict(my_key=0))
+
     def test_mapper_mode(self) -> None:
         x = self._get_x()
+        split_words = SplitWordsMapper("text", "text_lower", "text_words")
 
-        square.set_mode(18)  # type: ignore
+        split_words.set_mode(18)  # type: ignore
         with self.assertRaises(ValueError):
-            square(x)
+            split_words(x)
 
-        square.set_mode(MapperMode.NONE)
+        split_words.set_mode(MapperMode.NONE)
         with self.assertRaises(ValueError):
-            square(x)
+            split_words(x)
 
-        square.set_mode(MapperMode.DASK)
+        split_words.set_mode(MapperMode.DASK)
         with self.assertRaises(NotImplementedError):
-            square(x)
+            split_words(x)
 
-        square.set_mode(MapperMode.SPARK)
+        split_words.set_mode(MapperMode.SPARK)
         with self.assertRaises(NotImplementedError):
-            square(x)
+            split_words(x)

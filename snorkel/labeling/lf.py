@@ -2,7 +2,7 @@ from typing import Any, Callable, List, Mapping, Optional, Tuple
 
 from snorkel.types import DataPoint
 
-from .preprocess import Preprocessor, PreprocessorMode
+from .preprocess import BasePreprocessor, PreprocessorMode
 
 
 class LabelingFunction:
@@ -13,7 +13,7 @@ class LabelingFunction:
         label_space: Optional[Tuple[int, ...]] = None,
         schema: Optional[Mapping[str, type]] = None,
         resources: Optional[Mapping[str, Any]] = None,
-        preprocessors: Optional[List[Preprocessor]] = None,
+        preprocessors: Optional[List[BasePreprocessor]] = None,
         fault_tolerant: bool = False,
     ) -> None:
         """Base object for labeling functions, containing metadata and extra
@@ -45,6 +45,8 @@ class LabelingFunction:
     def _preprocess_data_point(self, x: DataPoint) -> DataPoint:
         for preprocessor in self._preprocessors:
             x = preprocessor(x)
+            if x is None:
+                raise ValueError("Preprocessor should not return None")
         return x
 
     def __call__(self, x: DataPoint) -> int:
@@ -70,7 +72,7 @@ class labeling_function:
         label_space: Optional[Tuple[int, ...]] = None,
         schema: Optional[Mapping[str, type]] = None,
         resources: Optional[Mapping[str, Any]] = None,
-        preprocessors: Optional[List[Preprocessor]] = None,
+        preprocessors: Optional[List[BasePreprocessor]] = None,
         fault_tolerant: bool = False,
     ) -> None:
         """Decorator to define a LabelingFunction object from a function

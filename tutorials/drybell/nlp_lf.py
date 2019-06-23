@@ -18,7 +18,7 @@ from snorkel.labeling.apply.lf_applier_spark import SparkLFApplier
 from snorkel.labeling.lf import labeling_function
 from snorkel.labeling.preprocess import preprocessor
 from snorkel.labeling.preprocess.nlp import SpacyPreprocessor
-from snorkel.types import DataPoint, FieldMap
+from snorkel.types import DataPoint
 
 logging.basicConfig(level=logging.INFO)
 
@@ -40,8 +40,9 @@ DATA = [
 
 
 @preprocessor
-def combine_text_preprocessor(title: str, body: str) -> FieldMap:
-    return dict(article=f"{title} {body}")
+def combine_text_preprocessor(x: DataPoint) -> DataPoint:
+    x.article = f"{x.title} {x.body}"
+    return x
 
 
 spacy_preprocessor = SpacyPreprocessor("article", "article")

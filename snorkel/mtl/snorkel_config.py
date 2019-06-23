@@ -18,7 +18,7 @@ default_config = {
     "checkpointer_config": {  # Note that checkpointer behavior also depends on log_manager_config
         "checkpoint_dir": None,  # Trainer will set this to log_dir if None
         "checkpoint_factor": 1,  # Checkpoint every this many evaluations
-        "checkpoint_metric": "model/train/all/loss:min",
+        "checkpoint_metric": "model/all/train/loss:min",
         "checkpoint_task_metrics": None,  # task_metric_name:mode
         "checkpoint_runway": 0,  # checkpointing runway (no checkpointing before k unit)
         "checkpoint_clear": True,  # whether to clear intermediate checkpoints

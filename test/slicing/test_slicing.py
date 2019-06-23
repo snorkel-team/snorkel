@@ -65,8 +65,8 @@ class SlicingTest(unittest.TestCase):
         self.assertEqual(S_valid.shape, (N_VALID, len(slicing_functions)))
 
         # Add slice labels
-        dataloaders[0] = add_slice_labels(task1, dataloaders[0], S_train, slice_names)
-        dataloaders[1] = add_slice_labels(task1, dataloaders[1], S_valid, slice_names)
+        add_slice_labels(dataloaders[0], task1, S_train, slice_names)
+        add_slice_labels(dataloaders[1], task1, S_valid, slice_names)
 
         self.assertEqual(len(dataloaders[0].task_to_label_dict), 8)
         self.assertIn("task1", dataloaders[0].task_to_label_dict)

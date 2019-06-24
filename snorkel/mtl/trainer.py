@@ -401,10 +401,10 @@ class Trainer(object):
         total_loss = sum(self.running_losses.values())
         total_count = sum(self.running_counts.values())
         if total_count > 0:
-            metric_dict["model/train/all/loss"] = total_loss / total_count
+            metric_dict["model/all/train/loss"] = total_loss / total_count
 
         # Log the learning rate
-        metric_dict["model/train/all/lr"] = self.optimizer.param_groups[0]["lr"]
+        metric_dict["model/all/train/lr"] = self.optimizer.param_groups[0]["lr"]
 
         return metric_dict
 

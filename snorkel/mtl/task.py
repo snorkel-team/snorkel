@@ -21,6 +21,13 @@ class Operation:
         self.module_name = module_name
         self.inputs = inputs
 
+    def __repr__(self):
+        return (
+            f"Operation(name={self.name}, "
+            f"module_name={self.module_name}, "
+            f"inputs={self.inputs}"
+        )
+
 
 class Task:
     """A single Task in a multi-task problem

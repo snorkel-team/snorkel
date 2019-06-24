@@ -2,13 +2,15 @@ dask[complete]==1.2.1
 dill==0.2.9
 jupyter==1.0.0
 jupyterlab==0.33.12
+matplotlib==3.0.1
 networkx==2.2
 numpy==1.16.0
-pandas==0.23.4
+pandas==0.24.0
 pyarrow==0.12.0
 scikit-learn==0.20.2
 scipy==1.2.0
 spacy==2.1.3
 tensorboardX==1.6
 torch==1.1.0
+torchtext==0.3.1
 tqdm==4.29.1

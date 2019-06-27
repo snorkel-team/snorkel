@@ -90,7 +90,7 @@ class TestAnalysis(unittest.TestCase):
                 "Emp. Acc.": [1 / 3, 0, 1 / 3, 1 / 2, 1 / 2, 2 / 4],
             }
         )
-        self.assertTrue(df.round(6).equals(df_expected.round(6)))
+        pd.testing.assert_frame_equal(df.round(6), df_expected.round(6))
 
         df = lf_summary(self.L, Y=None, lf_names=None, est_accs=None)
         df_expected = pd.DataFrame(
@@ -101,7 +101,7 @@ class TestAnalysis(unittest.TestCase):
                 "Conflicts": [3 / 6, 0, 2 / 6, 1 / 6, 2 / 6, 3 / 6],
             }
         )
-        self.assertTrue(df.round(6).equals(df_expected.round(6)))
+        pd.testing.assert_frame_equal(df.round(6), df_expected.round(6))
 
         est_accs = [1, 0, 1, 1, 1, 0.5]
         names = list("abcdef")
@@ -119,7 +119,7 @@ class TestAnalysis(unittest.TestCase):
                 "Learned Acc.": [1, 0, 1, 1, 1, 0.5],
             }
         ).set_index(pd.Index(names))
-        self.assertTrue(df.round(6).equals(df_expected.round(6)))
+        pd.testing.assert_frame_equal(df.round(6), df_expected.round(6))
 
     def test_single_lf_summary(self) -> None:
         df = single_lf_summary(self.L[:, 0].toarray(), self.Y)
@@ -132,7 +132,7 @@ class TestAnalysis(unittest.TestCase):
                 "Emp. Acc.": [1 / 3],
             }
         )
-        self.assertTrue(df.round(6).equals(df_expected.round(6)))
+        pd.testing.assert_frame_equal(df.round(6), df_expected.round(6))
 
     def test_error_buckets(self) -> None:
         pred = [2, 1, 3, 1, 1, 3]

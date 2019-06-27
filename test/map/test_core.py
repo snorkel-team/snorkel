@@ -1,5 +1,6 @@
 import unittest
 from types import SimpleNamespace
+from typing import Any, Optional
 
 from snorkel.map import Mapper, MapperMode, lambda_mapper
 from snorkel.types import DataPoint, FieldMap
@@ -18,6 +19,21 @@ class SplitWordsMapper(Mapper):
 class SplitWordsMapperDefaultArgs(Mapper):
     def run(self, text: str) -> FieldMap:  # type: ignore
         return dict(lower=text.lower(), words=text.split())
+
+
+class MapperReturnsNone(Mapper):
+    def run(self, text: str) -> Optional[FieldMap]:  # type: ignore
+        return None
+
+
+class MapperWithArgs(Mapper):
+    def run(self, text: str, *args: Any) -> Optional[FieldMap]:  # type: ignore
+        return None
+
+
+class MapperWithKwargs(Mapper):
+    def run(self, text: str, **kwargs: Any) -> Optional[FieldMap]:  # type: ignore
+        return None
 
 
 @lambda_mapper
@@ -87,6 +103,19 @@ class TestMapperCore(unittest.TestCase):
         self.assertEqual(x_mapped.num, 8)
         self.assertEqual(x_mapped.d, dict(my_key=0))
         self.assertEqual(x_mapped.d_new, dict(my_key=0))
+
+    def test_mapper_returns_none(self) -> None:
+        mapper = MapperReturnsNone()
+        mapper.set_mode(MapperMode.NAMESPACE)
+        x_mapped = mapper(self._get_x())
+        self.assertIsNone(x_mapped)
+
+    def test_mapper_with_args_kwargs(self) -> None:
+        with self.assertRaises(ValueError):
+            MapperWithArgs()
+
+        with self.assertRaises(ValueError):
+            MapperWithKwargs()
 
     def test_mapper_mode(self) -> None:
         x = self._get_x()

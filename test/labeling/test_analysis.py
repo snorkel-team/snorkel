@@ -5,20 +5,19 @@ import pandas as pd
 import scipy.sparse as sparse
 
 from snorkel.labeling.analysis import (
+    confusion_matrix,
+    error_buckets,
+    label_conflict,
     label_coverage,
     label_overlap,
-    label_conflict,
     lf_conflicts,
     lf_coverages,
     lf_empirical_accuracies,
     lf_overlaps,
     lf_polarities,
-    error_buckets,
     lf_summary,
     single_lf_summary,
-    confusion_matrix,
 )
-
 
 L = [
     [0, 0, 1, 0, 0, 1],
@@ -167,5 +166,7 @@ class TestAnalysis(unittest.TestCase):
         mat = confusion_matrix(
             gold, pred, null_pred=True, null_gold=True, normalize=False
         )
-        mat_expected = np.array([[1, 1, 0, 0], [0, 0, 1, 1], [0, 0, 2, 0], [1, 0, 0, 1]])
+        mat_expected = np.array(
+            [[1, 1, 0, 0], [0, 0, 1, 1], [0, 0, 2, 0], [1, 0, 0, 1]]
+        )
         np.testing.assert_array_equal(mat, mat_expected)

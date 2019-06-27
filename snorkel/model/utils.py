@@ -4,8 +4,8 @@ import random
 from collections import defaultdict
 
 import numpy as np
-import torch
 import scipy.sparse as sparse
+import torch
 from torch.utils.data import Dataset
 
 from snorkel.types import ArrayLike

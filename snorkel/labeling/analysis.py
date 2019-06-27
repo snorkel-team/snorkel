@@ -1,13 +1,13 @@
 from collections import Counter, defaultdict
 from typing import (
     Any,
-    Mapping,
-    Tuple,
-    Sequence,
-    List,
-    Union,
-    Optional,
     Counter as CounterType,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
 )
 
 import numpy as np
@@ -17,7 +17,6 @@ from pandas import DataFrame, Series
 
 from snorkel.model.utils import arraylike_to_numpy
 from snorkel.types import ArrayLike
-
 
 Matrix = Union[np.ndarray, sparse.csr_matrix]
 Tensor = Union[np.ndarray, torch.Tensor]

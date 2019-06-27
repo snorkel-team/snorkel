@@ -53,6 +53,7 @@ We use the following packages:
 * [black](https://black.readthedocs.io/en/stable/): automatic code formatting
 * [flake8](http://flake8.pycqa.org/en/latest/): PEP8 linting
 * [mypy](http://mypy-lang.org/): static type checking
+* [pydocstyle](http://mypy-lang.org/): docstring compliance
 
 ## PRs
 

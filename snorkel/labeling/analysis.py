@@ -12,14 +12,12 @@ from typing import (
 
 import numpy as np
 import scipy.sparse as sparse
-import torch
 from pandas import DataFrame, Series
 
 from snorkel.model.utils import arraylike_to_numpy
 from snorkel.types import ArrayLike
 
 Matrix = Union[np.ndarray, sparse.csr_matrix]
-Tensor = Union[np.ndarray, torch.Tensor]
 
 
 ############################################################
@@ -197,7 +195,7 @@ def lf_summary(
     return DataFrame(data=d, index=lf_names)[col_names]
 
 
-def single_lf_summary(Y_p: ArrayLike, Y: Optional[Tensor] = None) -> DataFrame:
+def single_lf_summary(Y_p: ArrayLike, Y: Optional[ArrayLike] = None) -> DataFrame:
     """Calculates coverage, overlap, conflicts, and accuracy for a single LF
 
     Args:

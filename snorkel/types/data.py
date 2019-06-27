@@ -2,7 +2,7 @@ from typing import Any, Collection, Mapping, Union
 
 import numpy as np
 import scipy.sparse as sparse
-import torch
+from torch import Tensor
 
 DataPoint = Any
 DataPoints = Collection[DataPoint]
@@ -10,4 +10,4 @@ DataPoints = Collection[DataPoint]
 Field = Any
 FieldMap = Mapping[str, Field]
 
-ArrayLike = Union[np.ndarray, list, sparse.spmatrix, torch.Tensor]
+ArrayLike = Union[np.ndarray, list, sparse.spmatrix, Tensor]

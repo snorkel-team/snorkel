@@ -4,8 +4,6 @@ from typing import List
 
 import numpy as np
 import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 
 from snorkel.labeling.apply import LFApplier, PandasLFApplier
 from snorkel.labeling.lf import labeling_function
@@ -86,14 +84,3 @@ class TestLFApplier(unittest.TestCase):
         applier = PandasLFApplier([first_is_name, has_verb])
         L = applier.apply(df)
         np.testing.assert_equal(L.toarray(), L_TEXT_EXPECTED)
-
-    def test_lf_applier_pandas_parquet(self) -> None:
-        table_write = pa.Table.from_pandas(pd.DataFrame(dict(num=DATA)))
-        stream = pa.BufferOutputStream()
-        pq.write_table(table_write, stream)
-        buffer = stream.getvalue()
-        reader = pa.BufferReader(buffer)
-        table = pq.read_table(reader)
-        applier = PandasLFApplier([f, g])
-        L = applier.apply(table.to_pandas())
-        np.testing.assert_equal(L.toarray(), L_EXPECTED)

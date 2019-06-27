@@ -1,13 +1,14 @@
 import argparse
 import copy
 import random
-import warnings
 from collections import defaultdict
 
 import numpy as np
+import scipy.sparse as sparse
 import torch
-from scipy.sparse import issparse
 from torch.utils.data import Dataset
+
+from snorkel.types import ArrayLike
 
 
 class MetalDataset(Dataset):
@@ -66,7 +67,7 @@ def pred_to_prob(Y_h, k):
     return Y_s
 
 
-def arraylike_to_numpy(array_like):
+def arraylike_to_numpy(array_like: ArrayLike) -> np.ndarray:
     """Convert a 1d array-like (e.g,. list, tensor, etc.) to an np.ndarray"""
 
     orig_type = type(array_like)
@@ -76,7 +77,7 @@ def arraylike_to_numpy(array_like):
         pass
     elif isinstance(array_like, list):
         array_like = np.array(array_like)
-    elif issparse(array_like):
+    elif isinstance(array_like, sparse.spmatrix):
         array_like = array_like.toarray()
     elif isinstance(array_like, torch.Tensor):
         array_like = array_like.numpy()
@@ -452,25 +453,6 @@ def padded_tensor(items, pad_idx=0, left_padded=False, max_len=None):
     return output
 
 
-global warnings_given
-warnings_given = set([])
-
-
-def warn_once(self, msg, msg_name=None):
-    """Prints a warning statement just once
-
-    Args:
-        msg: The warning message
-        msg_name: [optional] The name of the warning. If None, the msg_name
-            will be the msg itself.
-    """
-    assert isinstance(msg, str)
-    msg_name = msg_name if msg_name else msg
-    if msg_name not in warnings_given:
-        warnings.warn(msg)
-    warnings_given.add(msg_name)
-
-
 # DEPRECATION: This is replaced by move_to_device
 def place_on_gpu(data):
     """Utility to place data on GPU, where data could be a torch.Tensor, a tuple
@@ -514,5 +496,6 @@ def set_seed(seed: int):
     np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
-        torch.backends.cudnn.enabled = True  # Is this necessary?
-        torch.cuda.manual_seed(seed)
+        # Is this necessary?
+        torch.backends.cudnn.enabled = True  # type: ignore
+        torch.cuda.manual_seed(seed)  # type: ignore

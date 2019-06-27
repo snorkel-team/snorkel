@@ -27,7 +27,7 @@ def g(x: DataPoint, db: List[int]) -> int:
     return 1 if x.num in db else 0
 
 
-class TestLabelingFunctionCore(unittest.TestCase):
+class TestLabelingFunction(unittest.TestCase):
     def _run_lf(self, lf: LabelingFunction) -> None:
         x_43 = SimpleNamespace(num=43)
         x_19 = SimpleNamespace(num=19)

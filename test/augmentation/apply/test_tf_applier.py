@@ -107,7 +107,7 @@ class TestPandasTFApplier(unittest.TestCase):
         applier = PandasTFApplier([square], policy, k=1, keep_original=False)
         df_augmented = applier.apply(df)
         df_expected = pd.DataFrame(dict(num=[1, 16, 81]), index=[0, 1, 2])
-        self.assertTrue(df_augmented.equals(df_expected))
+        pd.testing.assert_frame_equal(df_augmented, df_expected)
         self.assertEqual(df.num.tolist(), DATA)
 
     def test_tf_applier_pandas_multi(self):
@@ -117,7 +117,7 @@ class TestPandasTFApplier(unittest.TestCase):
         df_expected = pd.DataFrame(
             dict(num=[1, 1, 16, 16, 81, 81]), index=[0, 0, 1, 1, 2, 2]
         )
-        self.assertTrue(df_augmented.equals(df_expected))
+        pd.testing.assert_frame_equal(df_augmented, df_expected)
         self.assertEqual(df.num.tolist(), DATA)
 
     def test_tf_applier_pandas_keep_original(self):
@@ -127,7 +127,7 @@ class TestPandasTFApplier(unittest.TestCase):
         df_expected = pd.DataFrame(
             dict(num=[1, 1, 1, 2, 16, 16, 3, 81, 81]), index=[0, 0, 0, 1, 1, 1, 2, 2, 2]
         )
-        self.assertTrue(df_augmented.equals(df_expected))
+        pd.testing.assert_frame_equal(df_augmented, df_expected)
         self.assertEqual(df.num.tolist(), DATA)
 
     def test_tf_applier_returns_none(self):
@@ -139,7 +139,7 @@ class TestPandasTFApplier(unittest.TestCase):
         df_expected = pd.DataFrame(
             dict(num=[1, 1, 1, 2, 3, 81, 81]), index=[0, 0, 0, 1, 2, 2, 2]
         )
-        self.assertTrue(df_augmented.equals(df_expected))
+        pd.testing.assert_frame_equal(df_augmented, df_expected)
         self.assertEqual(df.num.tolist(), DATA)
 
     def test_tf_applier_pandas_modify_in_place(self):
@@ -150,5 +150,5 @@ class TestPandasTFApplier(unittest.TestCase):
         df_augmented = applier.apply(df)
         idx = [0, 0, 0, 1, 1, 1, 2, 2, 2]
         df_expected = pd.DataFrame(dict(d=DATA_IN_PLACE_EXPECTED), index=idx)
-        self.assertTrue(df_augmented.equals(df_expected))
+        pd.testing.assert_frame_equal(df_augmented, df_expected)
         self.assertEqual(df.d.tolist(), get_data_dict())

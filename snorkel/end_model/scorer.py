@@ -1,6 +1,6 @@
 import logging
 
-from snorkel.model.metrics import METRICS
+from snorkel.analysis.metrics import METRICS
 
 logger = logging.getLogger(__name__)
 

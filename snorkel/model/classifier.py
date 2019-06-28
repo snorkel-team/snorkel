@@ -7,9 +7,10 @@ import torch.optim as optim
 from scipy.sparse import issparse
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 
-from .analysis import confusion_matrix
+from snorkel.analysis.error_analysis import confusion_matrix
+from snorkel.analysis.metrics import metric_score
+
 from .logging import Checkpointer, Logger, LogWriter, TensorBoardWriter
-from .metrics import metric_score
 from .utils import place_on_gpu, recursive_merge_dicts, set_seed
 
 # Import tqdm_notebook if in Jupyter notebook

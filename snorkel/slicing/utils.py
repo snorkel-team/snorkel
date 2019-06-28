@@ -6,7 +6,7 @@ import torch
 from scipy.sparse import csr_matrix
 from torch import nn
 
-from snorkel.model.utils import convert_labels
+from snorkel.analysis.utils import convert_labels
 from snorkel.end_model.data import MultitaskDataLoader
 from snorkel.end_model.modules.utils import ce_loss, softmax
 from snorkel.end_model.scorer import Scorer

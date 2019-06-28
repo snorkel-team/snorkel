@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+import torch
 
 from snorkel.labeling.model.label_model import LabelModel
 
@@ -28,7 +29,7 @@ class LabelModelTest(unittest.TestCase):
         # Test class balance
         Y_dev = np.array([1, 1, 2, 2, 1, 1, 1, 1, 2, 2])
         label_model._set_class_balance(class_balance=None, Y_dev=Y_dev)
-        np.testing.assertArrayAlmostEquals(label_model.p, np.array([0.6, 0.4]))
+        np.testing.assert_array_almost_equal(label_model.p, np.array([0.6, 0.4]))
 
     def test_generate_O(self):
         label_model = LabelModel(k=2, verbose=False)
@@ -49,7 +50,7 @@ class LabelModelTest(unittest.TestCase):
                 [1.0 / 4.0, 0.0, 0.0, 1.0 / 4.0, 0.0, 1.0 / 4.0],
             ]
         )
-        np.testing.assertArrayAlmostEquals(label_model.O.numpy(), true_O)
+        np.testing.assert_array_almost_equal(label_model.O.numpy(), true_O)
 
     def test_augmented_L_construction(self):
         # 5 LFs: a triangle, a connected edge to it, and a singleton source
@@ -91,29 +92,6 @@ class LabelModelTest(unittest.TestCase):
         self.assertEqual(L_aug[1, j], 1)
         self.assertEqual(L_aug[2, j], 1)
 
-    def test_loss(self):
-        label_model = LabelModel(k=2, verbose=False)
-
-        L = np.array([[1, 2, 1], [1, 2, 1]])
-        label_model._set_constants(L)
-        label_model._set_dependencies(deps=[])
-        label_model._generate_O(L)
-        label_model.inv_form = False
-        label_model._init_params()
-
-        total_loss = label_model.loss_mu()
-        self.assertAlmostEquals(total_loss, 8.8193)
-
-        L = np.array([[1, 0, 1], [1, 2, 1]])
-        label_model._set_constants(L)
-        label_model._set_dependencies(deps=[])
-        label_model._generate_O(L)
-        label_model.inv_form = False
-        label_model._init_params()
-
-        total_loss = label_model.loss_mu()
-        self.assertAlmostEquals(total_loss, 2.1485)
-
     def test_conditional_probs(self):
         label_model = LabelModel(k=2, verbose=False)
 
@@ -122,6 +100,7 @@ class LabelModelTest(unittest.TestCase):
         label_model._set_dependencies(deps=[])
         label_model._generate_O(L)
         label_model.inv_form = False
+        label_model._set_class_balance(class_balance=[0.6, 0.4], Y_dev=None)
         label_model._init_params()
 
         probs = label_model.get_conditional_probs()
@@ -130,7 +109,6 @@ class LabelModelTest(unittest.TestCase):
 
     def test_get_accuracy(self):
         label_model = LabelModel(k=2, verbose=False)
-
         probs = np.array(
             [
                 [0.99, 0.01],
@@ -146,9 +124,9 @@ class LabelModelTest(unittest.TestCase):
 
         label_model.m = 2
         label_model.k = 2
-        label_model.P = np.array([[0.5, 0.0], [0.0, 0.5]])
+        label_model.P = torch.Tensor([[0.5, 0.0], [0.0, 0.5]])
         accs = label_model.get_accuracies(probs=probs)
-        np.testing.assertArrayAlmostEquals(accs, np.array([0.7, 0.825]))
+        np.testing.assert_array_almost_equal(accs, np.array([0.7, 0.825]))
 
 
 if __name__ == "__main__":

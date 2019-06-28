@@ -29,4 +29,4 @@ script:
   - tox
 
 after_success:
-  - codecov
+  - travis_retry codecov

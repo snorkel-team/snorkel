@@ -11,6 +11,7 @@ from snorkel.end_model.data import MultitaskDataLoader
 from snorkel.end_model.modules.utils import ce_loss, softmax
 from snorkel.end_model.scorer import Scorer
 from snorkel.end_model.task import Operation, Task
+from snorkel.model.utils import convert_labels
 
 from .modules.slice_combiner import SliceCombinerModule
 

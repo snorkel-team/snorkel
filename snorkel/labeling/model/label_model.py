@@ -251,11 +251,14 @@ class LabelModel(Classifier):
         else:
             return c_probs
 
-    def get_accuracies(self):
+    def get_accuracies(self, probs=None):
         """Returns the vector of LF accuracies, computed using get_conditional_probs"""
         accs = np.zeros(self.m)
         for i in range(self.m):
-            cps = self.get_conditional_probs(source=i)[1:, :]
+            if probs is None:
+                cps = self.get_conditional_probs(source=i)[1:, :]
+            else:
+                cps = probs[i * (self.k + 1) : (i + 1) * (self.k + 1)][1:, :]
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
         return accs
 

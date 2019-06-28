@@ -18,7 +18,9 @@ def accuracy_score(golds, preds, probs=None, ignore_in_gold=[], ignore_in_pred=[
     Returns:
         A float, the (micro) accuracy score
     """
-    golds, preds, probs = _preprocess(golds, preds, probs, ignore_in_gold, ignore_in_pred)
+    golds, preds, probs = _preprocess(
+        golds, preds, probs, ignore_in_gold, ignore_in_pred
+    )
 
     if len(golds) and len(preds):
         acc = np.sum(golds == preds) / len(golds)
@@ -43,7 +45,9 @@ def coverage_score(golds, preds, probs=None, ignore_in_gold=[], ignore_in_pred=[
     Returns:
         A float, the (global) coverage score
     """
-    golds, preds, probs = _preprocess(golds, preds, probs, ignore_in_gold, ignore_in_pred)
+    golds, preds, probs = _preprocess(
+        golds, preds, probs, ignore_in_gold, ignore_in_pred
+    )
 
     return np.sum(preds != 0) / len(preds)
 
@@ -66,7 +70,9 @@ def precision_score(
     Returns:
         pre: The (float) precision score
     """
-    golds, preds, probs = _preprocess(golds, preds, probs, ignore_in_gold, ignore_in_pred)
+    golds, preds, probs = _preprocess(
+        golds, preds, probs, ignore_in_gold, ignore_in_pred
+    )
 
     positives = np.where(preds == pos_label, 1, 0).astype(bool)
     trues = np.where(golds == pos_label, 1, 0).astype(bool)
@@ -99,7 +105,9 @@ def recall_score(
     Returns:
         rec: The (float) recall score
     """
-    golds, preds, probs = _preprocess(golds, preds, probs, ignore_in_gold, ignore_in_pred)
+    golds, preds, probs = _preprocess(
+        golds, preds, probs, ignore_in_gold, ignore_in_pred
+    )
 
     positives = np.where(preds == pos_label, 1, 0).astype(bool)
     trues = np.where(golds == pos_label, 1, 0).astype(bool)
@@ -115,7 +123,13 @@ def recall_score(
 
 
 def fbeta_score(
-    golds, preds, probs=None, pos_label=1, beta=1.0, ignore_in_gold=[], ignore_in_pred=[]
+    golds,
+    preds,
+    probs=None,
+    pos_label=1,
+    beta=1.0,
+    ignore_in_gold=[],
+    ignore_in_pred=[],
 ):
     """
     Calculate recall for a single class.
@@ -133,7 +147,9 @@ def fbeta_score(
     Returns:
         fbeta: The (float) f-beta score
     """
-    golds, preds, probs = _preprocess(golds, preds, probs, ignore_in_gold, ignore_in_pred)
+    golds, preds, probs = _preprocess(
+        golds, preds, probs, ignore_in_gold, ignore_in_pred
+    )
     pre = precision_score(golds, preds, pos_label=pos_label)
     rec = recall_score(golds, preds, pos_label=pos_label)
 
@@ -181,7 +197,7 @@ METRICS = {
 }
 
 
-def metric_score(golds, preds, probs, metric, probs=None, **kwargs):
+def metric_score(golds, preds, metric, probs=None, **kwargs):
     if metric not in METRICS:
         msg = f"The metric you provided ({metric}) is not supported."
         raise ValueError(msg)

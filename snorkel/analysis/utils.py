@@ -5,12 +5,12 @@ import torch
 from snorkel.types import ArrayLike
 
 
-def prob_to_pred(prob: np.ndarray) -> np.ndarray:
+def prob_to_pred(probs: np.ndarray) -> np.ndarray:
     """Convert an array of probabilistic labels into an array of predictions
 
     Parameters
     ----------
-    prob
+    probs
         A [num_datapoints, num_classes] array of probabilistic labels such that each
         row sums to 1.
 
@@ -19,24 +19,24 @@ def prob_to_pred(prob: np.ndarray) -> np.ndarray:
     np.ndarray
         A [num_datapoints, 1] array of predictions (integers in [1, ..., num_classes])
     """
-    assert prob.ndim == 2
-    assert (prob <= 1).all()
+    assert probs.ndim == 2
+    assert (probs <= 1).all()
 
-    pred = np.argmax(prob, axis=1) + 1
+    preds = np.argmax(probs, axis=1) + 1
 
-    n, k = prob.shape
-    assert (pred >= 1).all()
-    assert (pred <= k).all()
+    n, k = probs.shape
+    assert (preds >= 1).all()
+    assert (preds <= k).all()
 
-    return pred
+    return preds
 
 
-def pred_to_prob(pred: np.ndarray, num_classes: int) -> np.ndarray:
+def pred_to_prob(preds: np.ndarray, num_classes: int) -> np.ndarray:
     """Convert an array of probabilistic labels into an array of predictions
 
     Parameters
     ----------
-    pred
+    preds
         A [num_datapoints] or [num_datapoints], 1] array of predictions
 
     Returns
@@ -45,15 +45,15 @@ def pred_to_prob(pred: np.ndarray, num_classes: int) -> np.ndarray:
         A [num_datapoints, num_classes] array of probabilistic labels with probability
         of 1.0 in the column corresponding to the prediction
     """
-    pred = pred.reshape(-1, 1)
-    n = pred.shape[0]
+    preds = preds.reshape(-1, 1)
+    n = preds.shape[0]
 
-    prob = np.zeros((n, num_classes))
+    probs = np.zeros((n, num_classes))
 
-    for idx, class_idx in enumerate(pred):
-        prob[idx, class_idx - 1] = 1.0
+    for idx, class_idx in enumerate(preds):
+        probs[idx, class_idx - 1] = 1.0
 
-    return prob
+    return probs
 
 
 def arraylike_to_numpy(array_like: ArrayLike) -> np.ndarray:

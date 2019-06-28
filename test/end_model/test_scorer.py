@@ -11,7 +11,7 @@ class ScorerTest(unittest.TestCase):
         preds = np.array([1, 0, 1, 1, 0])
         probs = np.array([0.8, 0.6, 0.9, 0.7, 0.4])
 
-        def sum(gold, pred, prob):
+        def sum(golds, preds, probs):
             return np.sum(preds)
 
         scorer = Scorer(metrics=["accuracy", "f1"], custom_metric_funcs={"sum": sum})

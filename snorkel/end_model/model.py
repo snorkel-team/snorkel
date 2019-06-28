@@ -251,8 +251,8 @@ class MultitaskModel(nn.Module):
 
         if return_preds:
             pred_dict = defaultdict(list)
-            for task_name, prob in prob_dict.items():
-                pred_dict[task_name] = prob_to_pred(prob)
+            for task_name, probs in prob_dict.items():
+                pred_dict[task_name] = prob_to_pred(probs)
 
         results = {"golds": gold_dict, "probs": prob_dict}
 

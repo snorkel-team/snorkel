@@ -11,7 +11,7 @@ class Scorer(object):
     :param metrics: a list of metric names which provides in emmental (e.g., accuracy)
     :type metrics: list
     :param custom_metric_funcs: a dict of custom metrics where key is the metric
-    name and value is the metric function which takes gold, pred, prob as input
+    name and value is the metric function which takes golds, preds, probs as input
     :type custom_metric_funcs: dict
     """
 
@@ -24,16 +24,16 @@ class Scorer(object):
 
         self.metrics.update(custom_metric_funcs)
 
-    def score(self, gold, pred, prob):
+    def score(self, golds, preds, probs):
         metric_dict = dict()
 
         for metric_name, metric in self.metrics.items():
             # Handle no examples
-            if len(gold) == 0:
+            if len(golds) == 0:
                 metric_dict[metric_name] = float("nan")
                 continue
 
-            score = metric(gold, pred, prob)
+            score = metric(golds, preds, probs)
 
             if isinstance(score, dict):
                 metric_dict.update(score)

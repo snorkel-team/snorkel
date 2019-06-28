@@ -6,7 +6,12 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 
-from snorkel.end_model.loggers import Checkpointer, LogManager, LogWriter, TensorBoardWriter
+from snorkel.end_model.loggers import (
+    Checkpointer,
+    LogManager,
+    LogWriter,
+    TensorBoardWriter,
+)
 from snorkel.end_model.model import MultitaskModel
 from snorkel.end_model.schedulers.sequential_scheduler import SequentialScheduler
 from snorkel.end_model.schedulers.shuffled_scheduler import ShuffledScheduler

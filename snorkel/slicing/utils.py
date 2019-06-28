@@ -141,7 +141,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         )
         pred_task_flow = body_flow + [pred_transform_op, pred_head_op]
 
-        # Create pred task
+        # Create preds task
         pred_task = Task(
             name=pred_task_name,
             module_pool=pred_module_pool,

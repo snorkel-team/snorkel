@@ -1,3 +1,5 @@
+from typing import List, Optional, Tuple, Union
+
 import numpy as np
 import scipy.sparse as sparse
 import torch
@@ -5,12 +7,12 @@ import torch
 from snorkel.types import ArrayLike
 
 
-def prob_to_pred(prob: np.ndarray) -> np.ndarray:
+def prob_to_pred(probs: np.ndarray) -> np.ndarray:
     """Convert an array of probabilistic labels into an array of predictions
 
     Parameters
     ----------
-    prob
+    probs
         A [num_datapoints, num_classes] array of probabilistic labels such that each
         row sums to 1.
 
@@ -19,16 +21,25 @@ def prob_to_pred(prob: np.ndarray) -> np.ndarray:
     np.ndarray
         A [num_datapoints, 1] array of predictions (integers in [1, ..., num_classes])
     """
-    return np.argmax(prob, axis=1) + 1
+    assert probs.ndim == 2
+    assert (probs <= 1).all()
+
+    preds = np.argmax(probs, axis=1) + 1
+
+    n, k = probs.shape
+    assert (preds >= 1).all()
+    assert (preds <= k).all()
+
+    return preds
 
 
-def pred_to_prob(pred: np.ndarray, num_classes: int) -> np.ndarray:
+def pred_to_prob(preds: np.ndarray, num_classes: int) -> np.ndarray:
     """Convert an array of probabilistic labels into an array of predictions
 
     Parameters
     ----------
-    pred
-        A [num_datapoints] or [num_datapoints, 1] array of predictions
+    preds
+        A [num_datapoints] or [num_datapoints], 1] array of predictions
 
     Returns
     -------
@@ -36,11 +47,45 @@ def pred_to_prob(pred: np.ndarray, num_classes: int) -> np.ndarray:
         A [num_datapoints, num_classes] array of probabilistic labels with probability
         of 1.0 in the column corresponding to the prediction
     """
-    return np.eye(num_classes)[pred.squeeze() - 1]
+    preds = preds.reshape(-1, 1)
+    n = preds.shape[0]
+
+    probs = np.zeros((n, num_classes))
+
+    for idx, class_idx in enumerate(preds):
+        probs[idx, class_idx - 1] = 1.0
+
+    return probs
 
 
-def arraylike_to_numpy(array_like: ArrayLike) -> np.ndarray:
-    """Convert a 1d array-like (e.g,. list, tensor, etc.) to an np.ndarray"""
+def arraylike_to_numpy(
+    array_like: ArrayLike, flatten: bool = True, cast_to_int: bool = True
+) -> np.ndarray:
+    """Convert an ArrayLike (e.g., list, tensor, etc.) to a numpy array
+
+    Also optionally flatten [n, 1] arrays to [n] and cast all values to ints.
+    This method is typically used to sanitize labels before use with analysis tools or
+    metrics that expect 1D numpy arrays as inputs.
+
+    Parameters
+    ----------
+    array_like
+        An Arraylike to convert
+    flatten
+        If True, flatten numpy array into a 1D array
+    cast_to_int
+        If True, cast all values to ints
+
+    Returns
+    -------
+    np.ndarray
+        The input converted to an np.ndarray
+
+    Raises
+    ------
+    ValueError
+        Provided input could not be converted to an np.ndarray
+    """
 
     orig_type = type(array_like)
 
@@ -56,24 +101,26 @@ def arraylike_to_numpy(array_like: ArrayLike) -> np.ndarray:
     elif not isinstance(array_like, np.ndarray):
         array_like = np.array(array_like)
     else:
-        msg = f"Input of type {orig_type} could not be converted to 1d " "np.ndarray"
+        msg = f"Input of type {orig_type} could not be converted to an np.ndarray"
         raise ValueError(msg)
 
     # Correct shape
-    if (array_like.ndim > 1) and (1 in array_like.shape):
-        array_like = array_like.flatten()
-    if array_like.ndim != 1:
-        raise ValueError("Input could not be converted to 1d np.array")
+    if flatten:
+        if (array_like.ndim > 1) and (1 in array_like.shape):
+            array_like = array_like.flatten()
+        if array_like.ndim != 1:
+            raise ValueError("Input could not be converted to 1d np.array")
 
     # Convert to ints
-    if any(array_like % 1):
-        raise ValueError("Input contains at least one non-integer value.")
-    array_like = array_like.astype(np.dtype(int))
+    if cast_to_int:
+        if any(array_like % 1):
+            raise ValueError("Input contains at least one non-integer value.")
+        array_like = array_like.astype(np.dtype(int))
 
     return array_like
 
 
-def convert_labels(Y: ArrayLike, source: str, target: str):
+def convert_labels(Y: ArrayLike, source: str, target: str) -> ArrayLike:
     """Convert a matrix from one label type to another
 
     Args:
@@ -105,9 +152,117 @@ def convert_labels(Y: ArrayLike, source: str, target: str):
     return Y
 
 
-def plusminus_to_categorical(Y):
+def plusminus_to_categorical(Y: ArrayLike) -> ArrayLike:
+    """Convert labels from plus-minus to categorical
+
+    Parameters
+    ----------
+    Y
+        Integer labels in plus-minus form plus-minus: (-1 = neg, 0 = abstain, +1 = pos)
+
+    Returns
+    -------
+    ArrayLike
+        Integer labels in categorical form categorical: (0 = abstain, 1 = pos, 2 = neg)
+    """
     return convert_labels(Y, "plusminus", "categorical")
 
 
-def categorical_to_plusminus(Y):
+def categorical_to_plusminus(Y: ArrayLike) -> ArrayLike:
+    """Convert labels from categorical to plus-minus
+
+    Parameters
+    ----------
+    Y
+        Integer labels in categorical form (0 = abstain, 1 = pos, 2 = neg)
+
+    Returns
+    -------
+    ArrayLike
+        Integer labels in plus-minus form (-1 = neg, 0 = abstain, +1 = pos)
+    """
     return convert_labels(Y, "categorical", "plusminus")
+
+
+def filter_labels(
+    golds: ArrayLike,
+    preds: ArrayLike,
+    probs: Optional[ArrayLike] = None,
+    ignore_in_golds: List[int] = [],
+    ignore_in_preds: List[int] = [],
+) -> Tuple[ArrayLike, ArrayLike, Optional[ArrayLike]]:
+    """Converts golds, preds, and probs to `np.ndarray`s and filters out examples
+
+    Parameters
+    ----------
+    golds
+        Gold labels [n_datapoints, 1]
+    preds
+        Prediction labels [n_datapoints, 1]
+    probs
+        Probablistic labels [n_datapoints, n_classes]
+    ignore_in_golds
+        A list of integer gold labels corresponding to examples to filter out
+    ignore_in_preds
+        A list of integer prediction labels corresponding to examples to filter out
+
+    Returns
+    -------
+    Tuple[
+        Union[np.ndarray, None],
+        Union[np.ndarray, None],
+        Union[np.ndarray, None]
+    ]
+        Filtered versions of golds, preds, probs
+    """
+    golds = arraylike_to_numpy(golds) if golds is not None else None
+    preds = arraylike_to_numpy(preds) if preds is not None else None
+    probs = (
+        arraylike_to_numpy(probs, flatten=False, cast_to_int=False)
+        if probs is not None
+        else None
+    )
+
+    mask = _get_mask(golds, preds, ignore_in_golds, ignore_in_preds)
+    golds = golds[mask] if golds is not None else None
+    preds = preds[mask] if preds is not None else None
+    probs = probs[mask] if probs is not None else None
+
+    return golds, preds, probs
+
+
+def _get_mask(
+    golds: Union[np.ndarray, None],
+    preds: Union[np.ndarray, None],
+    ignore_in_golds: List[int] = [],
+    ignore_in_preds: List[int] = [],
+) -> np.ndarray:
+    """Return a boolean mask for which examples to keep/filter based on user args
+
+    Parameters
+    ----------
+    golds
+        Gold labels [n_datapoints, 1]
+    preds
+        Prediction labels [n_datapoints, 1]
+    ignore_in_golds
+        A list of integer gold labels corresponding to examples to filter out
+    ignore_in_preds
+        A list of integer prediction labels corresponding to examples to filter out
+
+    Returns
+    -------
+    np.ndarray
+        A boolean mask indicating whether to keep (1) or filter (0) each example
+    """
+    mask = np.ones_like(golds).astype(bool)
+
+    if golds is not None:
+        for x in ignore_in_golds:
+            mask *= np.where(golds != x, 1, 0).astype(bool)
+
+    if preds is not None:
+        for x in ignore_in_preds:
+            mask *= np.where(preds != x, 1, 0).astype(bool)
+
+    return mask

@@ -251,8 +251,8 @@ class MultitaskModel(nn.Module):
 
         if return_preds:
             pred_dict = defaultdict(list)
-            for task_name, prob in prob_dict.items():
-                pred_dict[task_name] = prob_to_pred(prob)
+            for task_name, probs in prob_dict.items():
+                pred_dict[task_name] = prob_to_pred(probs)
 
         results = {"golds": gold_dict, "probs": prob_dict}
 
@@ -279,12 +279,12 @@ class MultitaskModel(nn.Module):
         for dataloader in dataloaders:
             results = self.predict(dataloader, return_preds=True)
             for task_name in results["golds"].keys():
-                metric_score = self.scorers[task_name].score(
+                metric_scores = self.scorers[task_name].score(
                     results["golds"][task_name],
                     results["preds"][task_name],
                     results["probs"][task_name],
                 )
-                for metric_name, metric_value in metric_score.items():
+                for metric_name, metric_value in metric_scores.items():
                     identifier = "/".join(
                         [task_name, dataloader.data_name, dataloader.split, metric_name]
                     )

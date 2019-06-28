@@ -11,6 +11,30 @@ from snorkel.types import DataPoint
 
 
 class BaseTFApplier:
+    """Base class for TF applier objects.
+
+    Base class for TF applier objects, which execute a set of TF
+    on a collection of data points. Subclasses should operate on
+    a single data point collection format (e.g. `DataFrame`).
+    Subclasses must implement the `apply` method.
+
+    Parameters
+    ----------
+    tfs
+        TFs that this applier executes on examples
+    policy
+        Augmentation policy used to generate sequences of TFs
+    k
+        Number of transformed data points per original
+    keep_original
+        Keep untransformed data point in augmented data set?
+
+    Raises
+    ------
+    NotImplementedError
+        `apply` method must be implemented by subclasses
+    """
+
     def __init__(
         self,
         tfs: List[BaseTransformationFunction],
@@ -45,11 +69,47 @@ class BaseTFApplier:
         return x_transformed
 
     def apply(self, data_points: Any, *args: Any, **kwargs: Any) -> Any:
+        """Label collection of data points with LFs.
+
+        Parameters
+        ----------
+        data_points
+            Collection of data points to be transformed by TFs and policy. Subclasses
+            implement functionality for a specific format (e.g. `DataFrame`).
+
+        Returns
+        -------
+        Any
+            Collection of data points in augmented data set
+
+        Raises
+        ------
+        NotImplementedError
+            This method must be implemented by subclasses
+        """
         raise NotImplementedError
 
 
 class TFApplier(BaseTFApplier):
+    """TF applier for a list of data points.
+
+    Augments a list of data points (e.g. `SimpleNamespace`). Primarily
+    useful for testing.
+    """
+
     def apply(self, data_points: List[DataPoint]) -> List[DataPoint]:  # type: ignore
+        """Augment a list of data points using TFs and policy.
+
+        Parameters
+        ----------
+        data_points
+            List containing data points to be transformed
+
+        Returns
+        -------
+        List[DataPoint]
+            Augmented list of data points
+        """
         self._set_tf_mode(TransformationFunctionMode.NAMESPACE)
         x_transformed = []
         for x in tqdm(data_points):

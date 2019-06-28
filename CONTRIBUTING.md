@@ -55,6 +55,20 @@ We use the following packages:
 * [mypy](http://mypy-lang.org/): static type checking
 * [pydocstyle](http://mypy-lang.org/): docstring compliance
 
+The Snorkel maintainers are big fans of [VSCode](https://code.visualstudio.com/)'s Python tooling.
+Here's a `settings.json` that takes advantage of the packages above (except isort) with in-line linting:
+
+```json
+{
+    "python.jediEnabled": true,
+    "python.formatting.provider": "black",
+    "python.linting.flake8Enabled": true,
+    "python.linting.mypyEnabled": true,
+    "python.linting.pydocstyleEnabled": true,
+    "python.linting.pylintEnabled": false,
+}
+```
+
 ## PRs
 
 ### Submitting PRs

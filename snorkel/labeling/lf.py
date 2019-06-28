@@ -36,6 +36,7 @@ class LabelingFunction:
     ValueError
         Calling incorrectly defined preprocessors
     """
+
     def __init__(
         self,
         name: str,
@@ -147,6 +148,7 @@ class labeling_function:
     print(g)  # "Labeling function my_lf"
     ```
     """
+
     def __init__(
         self,
         name: Optional[str] = None,

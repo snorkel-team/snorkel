@@ -45,6 +45,7 @@ class PandasLFApplier(BaseLFApplier):
     is single-process and can be slow for large DataFrames.
     For large datasets, consider `DaskLFApplier` or `SparkLFApplier`.
     """
+
     def apply(self, df: DataFrame) -> sparse.csr_matrix:  # type: ignore
         """Label Pandas DataFrame of data points with LFs.
 

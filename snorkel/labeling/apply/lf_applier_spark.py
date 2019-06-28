@@ -20,6 +20,7 @@ class SparkLFApplier(BaseLFApplier):
     example usage with AWS EMR instructions, see
     `test/labeling/apply/lf_applier_spark_test_script.py`.
     """
+
     def apply(self, data_points: RDD) -> sparse.csr_matrix:  # type: ignore
         """Label PySpark RDD of data points with LFs.
 
@@ -33,6 +34,7 @@ class SparkLFApplier(BaseLFApplier):
         sparse.csr_matrix
             Sparse matrix of labels emitted by LFs
         """
+
         def map_fn(args: Tuple[DataPoint, int]) -> RowData:
             return apply_lfs_to_data_point(*args, lfs=self._lfs)
 

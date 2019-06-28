@@ -29,6 +29,7 @@ class BaseLFApplier:
     NotImplementedError
         `apply` method must be implemented by subclasses
     """
+
     def __init__(self, lfs: List[LabelingFunction]) -> None:
         self._lfs = lfs
 
@@ -96,6 +97,7 @@ class LFApplier(BaseLFApplier):
     Labels a list of data points (e.g. `SimpleNamespace`). Primarily
     useful for testing.
     """
+
     def apply(self, data_points: DataPoints) -> sparse.csr_matrix:  # type: ignore
         """Label list of data points with LFs.
 

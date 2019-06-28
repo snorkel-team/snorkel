@@ -26,6 +26,7 @@ class SpacyPreprocessor(Preprocessor):
         List of pipeline components to disable, by default DEFAULT_DISABLE.
         See https://spacy.io/usage/processing-pipelines#disabling
     """
+
     def __init__(
         self,
         text_field: str,

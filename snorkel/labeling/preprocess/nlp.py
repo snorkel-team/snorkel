@@ -25,10 +25,10 @@ class SpacyPreprocessor(Preprocessor):
     doc_field
         Name of data point field to output parsed document to
     language
-        SpaCy model to load, by default EN_CORE_WEB_SM.
+        SpaCy model to load
         See https://spacy.io/usage/models#usage
     disable
-        List of pipeline components to disable, by default DEFAULT_DISABLE.
+        List of pipeline components to disable
         See https://spacy.io/usage/processing-pipelines#disabling
     """
 
@@ -53,6 +53,7 @@ class SpacyPreprocessor(Preprocessor):
         Returns
         -------
         FieldMap
-            Mapping containing parsed document
+            Dictionary with a single key (`"doc"`), mapping to the
+            parsed SpaCy `Doc` object
         """
         return dict(doc=self._nlp(text))

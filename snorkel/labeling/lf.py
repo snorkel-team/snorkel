@@ -26,15 +26,15 @@ class LabelingFunction:
     f
         Function that implements the core LF logic
     label_space
-        Set of labels the LF can output, including 0. By default None.
+        Set of labels the LF can output, including 0
     schema
-        Fields of the input `DataPoint`s the LF accesses, by default None
+        Fields of the input `DataPoint`s the LF accesses
     resources
-        Labeling resources passed in to `f` via `kwargs`, by default None
+        Labeling resources passed in to `f` via `kwargs`
     preprocessors
-        Preprocessors to run on data points before LF execution, by default None
+        Preprocessors to run on data points before LF execution
     fault_tolerant
-        Output 0 if LF execution fails? By default False.
+        Output 0 if LF execution fails?
 
     Attributes
     ----------
@@ -74,10 +74,13 @@ class LabelingFunction:
     def set_fault_tolerant(self, fault_tolerant: bool = True) -> None:
         """Change LF fault tolerance mode.
 
+        If set to fault tolerant mode, the LF returns 0 if
+        an exception is raised during execution.
+
         Parameters
         ----------
         fault_tolerant
-            Set to fault tolerant mode? By default True
+            Set to fault tolerant mode?
         """
         self.fault_tolerant = fault_tolerant
 
@@ -137,18 +140,17 @@ class labeling_function:
     Parameters
     ----------
     name
-        Name of the LF, by default None which uses the name of the
-        wrapped function.
+        Name of the LF. If None, uses the name of the wrapped function.
     label_space
-        Set of labels the LF can output, including 0. By default None.
+        Set of labels the LF can output, including 0
     schema
-        Fields of the input `DataPoint`s the LF accesses, by default None
+        Fields of the input `DataPoint`s the LF accesses
     resources
-        Labeling resources passed in to `f` via `kwargs`, by default None
+        Labeling resources passed in to `f` via `kwargs`
     preprocessors
-        Preprocessors to run on data points before LF execution, by default None
+        Preprocessors to run on data points before LF execution
     fault_tolerant
-        Output 0 if LF execution fails? By default False
+        Output 0 if LF execution fails?
 
     Examples
     --------
@@ -192,7 +194,7 @@ class labeling_function:
         Returns
         -------
         LabelingFunction
-            New `LabelFunction` executing logic in wrapped function
+            New `LabelingFunction` executing logic in wrapped function
         """
         name = self.name or f.__name__
         return LabelingFunction(

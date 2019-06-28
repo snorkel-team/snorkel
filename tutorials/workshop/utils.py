@@ -10,7 +10,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from torchtext.vocab import Vocab
 
-from snorkel.mtl.data import MultitaskDataLoader, MultitaskDataset
+from snorkel.end_model.data import MultitaskDataLoader, MultitaskDataset
 
 
 def upgrade_dataloaders(dataloaders: List[DataLoader]):

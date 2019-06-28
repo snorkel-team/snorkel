@@ -7,12 +7,12 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-from snorkel.mtl.data import MultitaskDataLoader, MultitaskDataset
-from snorkel.mtl.model import MultitaskModel
-from snorkel.mtl.modules.utils import ce_loss, softmax
-from snorkel.mtl.scorer import Scorer
-from snorkel.mtl.task import Operation, Task
-from snorkel.mtl.trainer import Trainer
+from snorkel.end_model.data import MultitaskDataLoader, MultitaskDataset
+from snorkel.end_model.model import MultitaskModel
+from snorkel.end_model.modules.utils import ce_loss, softmax
+from snorkel.end_model.scorer import Scorer
+from snorkel.end_model.task import Operation, Task
+from snorkel.end_model.trainer import Trainer
 from snorkel.slicing.apply import PandasSFApplier
 from snorkel.slicing.sf import slicing_function
 from snorkel.slicing.utils import add_slice_labels, convert_to_slice_tasks

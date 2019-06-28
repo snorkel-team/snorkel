@@ -3,9 +3,9 @@ from functools import partial
 
 import torch.nn as nn
 
-from snorkel.mtl.modules.utils import ce_loss, softmax
-from snorkel.mtl.scorer import Scorer
-from snorkel.mtl.task import Task
+from snorkel.end_model.modules.utils import ce_loss, softmax
+from snorkel.end_model.scorer import Scorer
+from snorkel.end_model.task import Task
 
 TASK_NAME = "TestTask"
 

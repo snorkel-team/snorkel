@@ -19,27 +19,7 @@ class MapperMode(Enum):
 def get_parameters(
     f: Callable[..., Any], allow_args: bool = False, allow_kwargs: bool = False
 ) -> List[str]:
-    """Get names of function parameters.
-
-    Parameters
-    ----------
-    f
-        Function to read parameters of
-    allow_args
-        Allow function to have `*args`? By default False.
-    allow_kwargs
-        Allow function to have `**kwargs`? By default False.
-
-    Returns
-    -------
-    List[str]
-        Function parameter names
-
-    Raises
-    ------
-    ValueError
-        If function signature has `*args` or `**kwargs` and not allowed
-    """
+    """Get names of function parameters."""
     params = inspect.getfullargspec(f)
     if not allow_args and params[1] is not None:
         raise ValueError(f"Function {f.__name__} should not have *args")
@@ -106,8 +86,11 @@ class Mapper(BaseMapper):
 
     A Mapper maps an data point to a new data point, possibly with
     a different schema. Subclasses of Mapper need to implement the
-    `run(...)` method, which takes fields of the data point as input
+    `run` method, which takes fields of the data point as input
     and outputs new fields for the mapped data point as a dictionary.
+    The `run` method should only be called internally by the `Mapper`
+    object, not directly by a user.
+
     For an example of a Mapper, see
         `snorkel.labeling.preprocess.nlp.SpacyPreprocessor`
 

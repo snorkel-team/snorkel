@@ -8,6 +8,7 @@ from snorkel.types import DataPoint, FieldMap
 
 class MapperMode(Enum):
     """Enum defining mode for mapper depending on data point format."""
+
     NONE = auto()
     NAMESPACE = auto()
     PANDAS = auto()
@@ -57,6 +58,7 @@ class BaseMapper:
     NotImplementedError
         Subclasses need to implement `_generate_mapped_data_point`
     """
+
     def _generate_mapped_data_point(self, x: DataPoint) -> DataPoint:
         raise NotImplementedError
 
@@ -128,6 +130,7 @@ class Mapper(BaseMapper):
     ValueError
         Mapper mode must be set to a valid value
     """
+
     def __init__(
         self,
         field_names: Optional[Mapping[str, str]] = None,
@@ -200,6 +203,7 @@ class LambdaMapper(BaseMapper):
     f
         Function executing the mapping operation
     """
+
     def __init__(self, f: Callable[[DataPoint], Optional[DataPoint]]) -> None:
         self._f = f
 

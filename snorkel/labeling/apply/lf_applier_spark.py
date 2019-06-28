@@ -14,9 +14,9 @@ from .lf_applier import BaseLFApplier, RowData, apply_lfs_to_data_point
 class SparkLFApplier(BaseLFApplier):
     """LF applier for a Spark RDD.
 
-    Data points are stored as Rows in an RDD, and a Spark
+    Data points are stored as `Row`s in an RDD, and a Spark
     `map` job is submitted to execute the LFs. A common
-    way to obtain an RDD is via a Spark DataFrame. For an
+    way to obtain an RDD is via a PySpark DataFrame. For an
     example usage with AWS EMR instructions, see
     `test/labeling/apply/lf_applier_spark_test_script.py`.
     """

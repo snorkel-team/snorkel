@@ -40,7 +40,7 @@ def apply_lfs_to_data_point(x: DataPoint, lfs: List[LabelingFunction]) -> Pandas
 class PandasLFApplier(BaseLFApplier):
     """LF applier for a Pandas DataFrame.
 
-    Data points are stored as Series in a DataFrame. The LFs
+    Data points are stored as `Series` in a DataFrame. The LFs
     are executed via a `pandas.DataFrame.apply` call, which
     is single-process and can be slow for large DataFrames.
     For large datasets, consider `DaskLFApplier` or `SparkLFApplier`.

@@ -14,7 +14,7 @@ RowData = List[Tuple[int, int, int]]
 class BaseLFApplier:
     """Base class for LF applier objects.
 
-    Base class for LF applier objects, which execute a set of LFs
+    Base class for LF applier objects, which executes a set of LFs
     on a collection of data points. Subclasses should operate on
     a single data point collection format (e.g. `DataFrame`).
     Subclasses must implement the `apply` method.

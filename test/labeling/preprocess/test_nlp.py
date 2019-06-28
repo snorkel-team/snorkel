@@ -4,12 +4,10 @@ from types import SimpleNamespace
 from snorkel.labeling.preprocess import PreprocessorMode
 from snorkel.labeling.preprocess.nlp import SpacyPreprocessor
 
-DATA = ["Jane", "Jane plays soccer."]
-
 
 class TestSpacyPreprocessor(unittest.TestCase):
     def test_spacy_preprocessor(self) -> None:
-        x = SimpleNamespace(text=DATA[1])
+        x = SimpleNamespace(text="Jane plays soccer.")
         preprocessor = SpacyPreprocessor("text", "doc")
         preprocessor.set_mode(PreprocessorMode.NAMESPACE)
         x_preprocessed = preprocessor(x)

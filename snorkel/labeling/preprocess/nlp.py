@@ -13,6 +13,11 @@ EN_CORE_WEB_SM = "en_core_web_sm"
 class SpacyPreprocessor(Preprocessor):
     """Preprocessor that parses input text via a SpaCy model.
 
+    A common approach to writing LFs over text is to first use
+    a natural language parser to decompose the text into tokens,
+    part-of-speech tags, etc. SpaCy (https://spacy.io/) is a
+    popular tool for doing this.
+
     Parameters
     ----------
     text_field

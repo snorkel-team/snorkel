@@ -34,7 +34,18 @@ class LabelingFunction:
     preprocessors
         Preprocessors to run on data points before LF execution, by default None
     fault_tolerant
-        Output 0 if LF execution fails? By default False
+        Output 0 if LF execution fails? By default False.
+
+    Attributes
+    ----------
+    name
+        See above
+    label_space
+        See above
+    schema
+        See above
+    fault_tolerant
+        See above
 
     Raises
     ------

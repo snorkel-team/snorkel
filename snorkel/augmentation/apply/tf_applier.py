@@ -25,9 +25,9 @@ class BaseTFApplier:
     policy
         Augmentation policy used to generate sequences of TFs
     k
-        Number of transformed data points per original, by default 1
+        Number of transformed data points per original
     keep_original
-        Keep untransformed data point in augmented data set? By default True.
+        Keep untransformed data point in augmented data set?
 
     Raises
     ------

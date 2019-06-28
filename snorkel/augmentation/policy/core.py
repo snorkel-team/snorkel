@@ -51,7 +51,7 @@ class RandomAugmentationPolicy(AugmentationPolicy):
     n_tfs
         Total number of TFs
     sequence_length
-        Number of TFs to run on each data point, by default 1
+        Number of TFs to run on each data point
     """
 
     def __init__(self, n_tfs: int, sequence_length: int = 1) -> None:

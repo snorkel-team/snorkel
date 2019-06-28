@@ -106,6 +106,16 @@ class Mapper(BaseMapper):
         names of the output data points. If None, the original
         output keys are used. By default None.
 
+    Attributes
+    ----------
+    field_names
+        See above
+    mapped_field_names
+        See above
+    mode
+        Mapper mode, corresponding to input data point format.
+        See `MapperMode`.
+
     Raises
     ------
     NotImplementedError

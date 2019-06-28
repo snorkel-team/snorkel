@@ -100,11 +100,10 @@ class Mapper(BaseMapper):
         A map from attribute names of the incoming data points
         to the input argument names of the `run` method. If None,
         the parameter names in the function signature are used.
-        By default None.
     mapped_field_names
         A map from output keys of the `run` method to attribute
         names of the output data points. If None, the original
-        output keys are used. By default None.
+        output keys are used.
 
     Attributes
     ----------

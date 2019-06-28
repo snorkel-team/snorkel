@@ -47,7 +47,7 @@ class TestAnalysis(unittest.TestCase):
 
     def test_lf_polarities(self) -> None:
         polarities = lf_polarities(self.L)
-        self.assertEqual(polarities, [[2, 3], [], [1, 3], 3, [1, 2], 1])
+        self.assertEqual(polarities, [[2, 3], [], [1, 3], [3], [1, 2], [1]])
 
     def test_lf_coverages(self) -> None:
         coverages = lf_coverages(self.L)
@@ -81,7 +81,7 @@ class TestAnalysis(unittest.TestCase):
         df = lf_summary(self.L, self.Y, lf_names=None, est_accs=None)
         df_expected = pd.DataFrame(
             {
-                "Polarity": [[2, 3], [], [1, 3], 3, [1, 2], 1],
+                "Polarity": [[2, 3], [], [1, 3], [3], [1, 2], [1]],
                 "Coverage": [3 / 6, 0, 3 / 6, 2 / 6, 2 / 6, 4 / 6],
                 "Overlaps": [3 / 6, 0, 3 / 6, 1 / 6, 2 / 6, 4 / 6],
                 "Conflicts": [3 / 6, 0, 2 / 6, 1 / 6, 2 / 6, 3 / 6],
@@ -95,7 +95,7 @@ class TestAnalysis(unittest.TestCase):
         df = lf_summary(self.L, Y=None, lf_names=None, est_accs=None)
         df_expected = pd.DataFrame(
             {
-                "Polarity": [[2, 3], [], [1, 3], 3, [1, 2], 1],
+                "Polarity": [[2, 3], [], [1, 3], [3], [1, 2], [1]],
                 "Coverage": [3 / 6, 0, 3 / 6, 2 / 6, 2 / 6, 4 / 6],
                 "Overlaps": [3 / 6, 0, 3 / 6, 1 / 6, 2 / 6, 4 / 6],
                 "Conflicts": [3 / 6, 0, 2 / 6, 1 / 6, 2 / 6, 3 / 6],
@@ -109,7 +109,7 @@ class TestAnalysis(unittest.TestCase):
         df_expected = pd.DataFrame(
             {
                 "j": [0, 1, 2, 3, 4, 5],
-                "Polarity": [[2, 3], [], [1, 3], 3, [1, 2], 1],
+                "Polarity": [[2, 3], [], [1, 3], [3], [1, 2], [1]],
                 "Coverage": [3 / 6, 0, 3 / 6, 2 / 6, 2 / 6, 4 / 6],
                 "Overlaps": [3 / 6, 0, 3 / 6, 1 / 6, 2 / 6, 4 / 6],
                 "Conflicts": [3 / 6, 0, 2 / 6, 1 / 6, 2 / 6, 3 / 6],

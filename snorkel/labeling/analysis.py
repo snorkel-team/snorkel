@@ -70,15 +70,14 @@ def label_conflict(L: sparse.spmatrix) -> float:
     return _conflicted_data_points(L).sum() / L.shape[0]
 
 
-def lf_polarities(L: Matrix) -> List[Union[int, List[int]]]:
+def lf_polarities(L: Matrix) -> List[List[int]]:
     """Return the polarities of each LF based on evidence in a label matrix.
 
     Args:
         L: an n x m scipy.sparse matrix where L_{i,j} is the label given by the
             jth LF to the ith candidate
     """
-    polarities = [sorted(list(set(L[:, i].data))) for i in range(L.shape[1])]
-    return [p[0] if len(p) == 1 else p for p in polarities]
+    return [sorted(list(set(L[:, i].data))) for i in range(L.shape[1])]
 
 
 def lf_coverages(L: Matrix) -> np.ravel:

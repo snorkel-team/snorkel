@@ -280,3 +280,9 @@ class TestGetHashable(unittest.TestCase):
         x_hashable = get_hashable(x)
         x_expected = (8, frozenset((("a", v.data.tobytes()),)))
         self.assertEqual(x_hashable, x_expected)
+
+    def test_get_hashable_unhashable(self) -> None:
+        v = pd.DataFrame(dict(a=[4, 5], b=[1, 2]))
+        x = (8, dict(a=v))
+        with self.assertRaises(ValueError):
+            get_hashable(x)

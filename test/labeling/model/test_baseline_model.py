@@ -25,7 +25,7 @@ class BaselineModelTest(unittest.TestCase):
         Y_p = mc_voter.predict_proba(L)
 
         Y_p_true = np.array([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [1.0, 0.0]])
-        np.testing.assert_array_almost_equal(Y_p, Y_p_true))
+        np.testing.assert_array_almost_equal(Y_p, Y_p_true)
 
     def test_majority_label_vote(self):
         L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [0, 0, 2]])
@@ -34,7 +34,7 @@ class BaselineModelTest(unittest.TestCase):
         Y_p = ml_voter.predict_proba(L)
 
         Y_p_true = np.array([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
-        np.testing.assert_array_almost_equalY_p, Y_p_true))
+        np.testing.assert_array_almost_equal(Y_p, Y_p_true)
 
 
 if __name__ == "__main__":

@@ -53,6 +53,7 @@ def get_hashable(obj: Any) -> Hashable:
     This helper is used for caching mapper outputs of data points.
     For common data point formats (e.g. SimpleNamespace, pandas.Series),
     produces hashable representations of the values using a `frozenset`.
+    For objects like `pandas.Series`, the name/index indentifier is dropped.
 
     Parameters
     ----------
@@ -62,12 +63,12 @@ def get_hashable(obj: Any) -> Hashable:
     Returns
     -------
     Hashable
-        [description]
+        Hashable representation of object values
 
     Raises
     ------
     ValueError
-        [description]
+        No hashable proxy for object
     """
     # If hashable already, just return
     if is_hashable(obj):

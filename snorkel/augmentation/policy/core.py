@@ -39,6 +39,32 @@ class AugmentationPolicy:
         raise NotImplementedError
 
 
+class ApplyAllAugmentationPolicy(AugmentationPolicy):
+    """Apply all TFs in order to each data point.
+
+    Parameters
+    ----------
+    n_tfs
+        Total number of TFs
+    """
+
+    def generate(self) -> List[int]:
+        """Generate indices of all TFs in order.
+
+        Returns
+        -------
+        List[int]
+            Indices of all TFs in order.
+        """
+        return list(range(self._n))
+
+
+class ApplyOneAugmentationPolicy(ApplyAllAugmentationPolicy):
+    """Apply a single TF to each data point."""
+    def __init__(self):
+        super().__init__(n_tfs=1)
+
+
 class RandomAugmentationPolicy(AugmentationPolicy):
     """Naive random augmentation policy.
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Sequence
 
 import numpy as np
 
@@ -42,6 +42,9 @@ class AugmentationPolicy:
 class ApplyAllAugmentationPolicy(AugmentationPolicy):
     """Apply all TFs in order to each data point.
 
+    While this can be used as a baseline policy, using a
+    random policy is more standard. See `RandomAugmentationPolicy`.
+
     Parameters
     ----------
     n_tfs
@@ -61,6 +64,7 @@ class ApplyAllAugmentationPolicy(AugmentationPolicy):
 
 class ApplyOneAugmentationPolicy(ApplyAllAugmentationPolicy):
     """Apply a single TF to each data point."""
+
     def __init__(self):
         super().__init__(n_tfs=1)
 
@@ -68,9 +72,12 @@ class ApplyOneAugmentationPolicy(ApplyAllAugmentationPolicy):
 class RandomAugmentationPolicy(AugmentationPolicy):
     """Naive random augmentation policy.
 
-    Samples sequences of TF indices a specified length uniformly
-    at random from the total number of TFs. This is a common
-    baseline approach to data augmentation.
+    Samples sequences of TF indices a specified length at random
+    from the total number of TFs. Sampling uniformly at random is
+    a common baseline approach to data augmentation. A distribution
+    over TFs can also be specified. This can be learned by a TANDA
+    mean-field model, for example.
+    See https://hazyresearch.github.io/snorkel/blog/tanda.html
 
     Parameters
     ----------
@@ -78,18 +85,24 @@ class RandomAugmentationPolicy(AugmentationPolicy):
         Total number of TFs
     sequence_length
         Number of TFs to run on each data point
+    p
+        Probability distribution from which to sample TF indices.
+        Must have length `n_tfs` and be a valid distribution.
     """
 
-    def __init__(self, n_tfs: int, sequence_length: int = 1) -> None:
+    def __init__(
+        self, n_tfs: int, sequence_length: int = 1, p: Optional[Sequence[float]] = None
+    ) -> None:
         self._k = sequence_length
+        self._p = p
         super().__init__(n_tfs)
 
     def generate(self) -> List[int]:
-        """Generate a sequence of TF indices by sampling uniformly at random.
+        """Generate a sequence of TF indices by sampling at random.
 
         Returns
         -------
         List[int]
             Indices of TFs to run on data point in order.
         """
-        return np.random.choice(self._n, size=self._k).tolist()
+        return np.random.choice(self._n, size=self._k, p=self._p).tolist()

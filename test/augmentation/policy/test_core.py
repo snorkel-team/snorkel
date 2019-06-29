@@ -17,3 +17,9 @@ class TestAugmentationPolicy(unittest.TestCase):
         self.assertGreater(c_ct, 0)
         self.assertGreater(d_ct, 0)
         self.assertEqual(a_ct + b_ct + c_ct + d_ct, n_samples)
+
+    def test_random_augmentation_policy_distribution(self):
+        policy = RandomAugmentationPolicy(2, sequence_length=2, p=[1, 0])
+        n_samples = 100
+        samples = [policy.generate() for _ in range(n_samples)]
+        self.assertEqual(samples.count([0, 0]), n_samples)

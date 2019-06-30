@@ -1,5 +1,6 @@
 import unittest
 from types import SimpleNamespace
+from typing import List
 
 import pandas as pd
 
@@ -45,13 +46,13 @@ def get_data_dict():
 
 
 class TestTFApplier(unittest.TestCase):
-    def _get_x_namespace(self):
+    def _get_x_namespace(self) -> List[SimpleNamespace]:
         return [SimpleNamespace(num=num) for num in DATA]
 
-    def _get_x_namespace_dict(self):
+    def _get_x_namespace_dict(self) -> List[SimpleNamespace]:
         return [SimpleNamespace(d=d) for d in get_data_dict()]
 
-    def test_tf_applier(self):
+    def test_tf_applier(self) -> None:
         data = self._get_x_namespace()
         applier = TFApplier([square], policy, k=1, keep_original=False)
         data_augmented = applier.apply(data)
@@ -59,7 +60,7 @@ class TestTFApplier(unittest.TestCase):
         self.assertEqual(vals, [1, 16, 81])
         self.assertEqual([x.num for x in data], DATA)
 
-    def test_tf_applier_multi(self):
+    def test_tf_applier_multi(self) -> None:
         data = self._get_x_namespace()
         applier = TFApplier([square], policy, k=2, keep_original=False)
         data_augmented = applier.apply(data)
@@ -67,7 +68,7 @@ class TestTFApplier(unittest.TestCase):
         self.assertEqual(vals, [1, 1, 16, 16, 81, 81])
         self.assertEqual([x.num for x in data], DATA)
 
-    def test_tf_applier_keep_original(self):
+    def test_tf_applier_keep_original(self) -> None:
         data = self._get_x_namespace()
         applier = TFApplier([square], policy, k=2, keep_original=True)
         data_augmented = applier.apply(data)
@@ -75,7 +76,7 @@ class TestTFApplier(unittest.TestCase):
         self.assertEqual(vals, [1, 1, 1, 2, 16, 16, 3, 81, 81])
         self.assertEqual([x.num for x in data], DATA)
 
-    def test_tf_applier_returns_none(self):
+    def test_tf_applier_returns_none(self) -> None:
         data = self._get_x_namespace()
         applier = TFApplier([square_returns_none], policy, k=2, keep_original=True)
         data_augmented = applier.apply(data)
@@ -83,7 +84,7 @@ class TestTFApplier(unittest.TestCase):
         self.assertEqual(vals, [1, 1, 1, 2, 3, 81, 81])
         self.assertEqual([x.num for x in data], DATA)
 
-    def test_tf_applier_keep_original_modify_in_place(self):
+    def test_tf_applier_keep_original_modify_in_place(self) -> None:
         data = self._get_x_namespace_dict()
         applier = TFApplier(
             [modify_in_place], policy_modify_in_place, k=2, keep_original=True
@@ -93,6 +94,9 @@ class TestTFApplier(unittest.TestCase):
             all(x.d == d for x, d in zip(data_augmented, DATA_IN_PLACE_EXPECTED))
         )
         self.assertTrue(all(x.d == y for x, y in zip(data, get_data_dict())))
+
+    def test_tf_applier_generator(self) -> None:
+        pass
 
 
 class TestPandasTFApplier(unittest.TestCase):

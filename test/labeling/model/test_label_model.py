@@ -210,24 +210,73 @@ class LabelModelTest(unittest.TestCase):
         probs = label_model.predict_proba(L)
 
         true_probs = np.array([[0.99, 0.01], [0.99, 0.01]])
-
         np.testing.assert_array_almost_equal(probs, true_probs)
 
         label_model = LabelModel(k=2, verbose=False)
         L = np.array([[1, 2, 1], [1, 2, 0]])
         label_model._set_constants(L)
-        label_model._set_dependencies(deps=[])
+        label_model._set_dependencies(deps=[(1, 2)])
         label_model._generate_O(L)
         label_model._build_mask()
+        label_model._get_augmented_label_matrix(L, higher_order=True)
         label_model.inv_form = False
-        label_model._set_class_balance(class_balance=[0.45, 0.55], Y_dev=None)
+        label_model._set_class_balance(class_balance=[0.5, 0.5], Y_dev=None)
         label_model._init_params()
 
         label_model.mu = nn.Parameter(label_model.mu_init.clone())
         probs = label_model.predict_proba(L)
 
-        true_probs = np.array([0.45, 0.55])
+        true_probs = np.array([0.99, 0.01])
         np.testing.assert_array_almost_equal(probs[1, :], true_probs)
+
+    def test_l2_loss(self):
+        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[1, 0, 1], [1, 2, 0]])
+        label_model._set_constants(L)
+        label_model._set_dependencies(deps=[])
+        label_model._generate_O(L)
+        label_model._build_mask()
+        label_model._get_augmented_label_matrix(L, higher_order=True)
+        label_model.inv_form = False
+        label_model._set_class_balance(class_balance=[0.5, 0.5], Y_dev=None)
+        label_model._init_params()
+
+        label_model.mu = nn.Parameter(label_model.mu_init.clone() + 0.05)
+        self.assertAlmostEqual(label_model.loss_l2(l2=1.).detach().numpy().ravel()[0], 0.03)
+
+    def test_mu_loss(self):
+        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[1, 0, 1], [1, 2, 0]])
+        label_model._set_constants(L)
+        label_model._set_dependencies(deps=[])
+        label_model._generate_O(L)
+        label_model._build_mask()
+        label_model._get_augmented_label_matrix(L, higher_order=True)
+        label_model.inv_form = False
+        label_model._set_class_balance(class_balance=[0.5, 0.5], Y_dev=None)
+        label_model._init_params()
+
+        label_model.mu = nn.Parameter(label_model.mu_init.clone() + 0.05)
+        self.assertAlmostEqual(label_model.loss_l2(l2=1.).detach().numpy().ravel()[0], 0.03)
+        self.assertAlmostEqual(label_model.loss_mu().detach().numpy().ravel()[0], 0.6751751)
+
+    def test_inv_loss(self):
+        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[1, 0, 1], [1, 2, 1]])
+
+        label_model._set_class_balance(class_balance=[0.5, 0.5], Y_dev=None)
+        label_model._set_constants(L)
+        label_model._set_dependencies(deps=[(1,2)])
+        label_model._generate_O(L)
+
+        label_model.inv_form = True
+        label_model._init_params()
+
+        label_model.Z = nn.Parameter(torch.ones(label_model.d, label_model.k)).float()
+
+        Q = label_model.get_Q()
+        self.assertAlmostEqual(Q[0, 0], 0.89285714)
+
 
 
 if __name__ == "__main__":

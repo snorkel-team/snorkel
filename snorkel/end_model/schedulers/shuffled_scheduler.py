@@ -1,6 +1,6 @@
 import random
 
-from snorkel.mtl.schedulers.scheduler import Scheduler
+from snorkel.end_model.schedulers.scheduler import Scheduler
 
 
 class ShuffledScheduler(Scheduler):

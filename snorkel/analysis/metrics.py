@@ -7,6 +7,8 @@ from .utils import filter_labels
 
 
 class Metric(NamedTuple):
+    """Specifies a metric function and the subset of [golds, preds, probs] it expects"""
+
     func: Callable[..., float]
     inputs: List[str] = ["golds", "preds"]
 
@@ -20,6 +22,35 @@ def metric_score(
     ignore_in_preds: List[int] = [],
     **kwargs,
 ) -> float:
+    """A method for evaluating a standard metric on a set of predictions/probabilities
+
+    Parameters
+    ----------
+    golds
+        An array of gold (int) labels
+    preds
+        An array of (int) predictions
+    probs
+        An [n_datapoints, n_classes] array of probabilistic predictions
+    metric
+        The name of the metric to calculate
+    ignore_in_golds
+        A list of labels in golds whose corresponding examples should be ignored
+    ignore_in_preds
+        A list of labels in predictions whose corresponding examples should be ignored
+
+    Returns
+    -------
+    float
+        The value of the requested metric
+
+    Raises
+    ------
+    ValueError
+        The requested metric is not currently supported
+    ValueError
+        The user attempted to calculate roc_auc score for a non-binary problem
+    """
     if metric not in METRICS:
         msg = f"The metric you provided ({metric}) is not currently implemented."
         raise ValueError(msg)
@@ -38,10 +69,12 @@ def metric_score(
 
 
 def coverage_score(preds: np.ndarray) -> float:
+    """A helper used by metric_score() to calculate coverage (percent not abstained)"""
     return np.sum(preds != 0) / len(preds)
 
 
 def roc_auc_score(golds: np.ndarray, probs: np.ndarray) -> float:
+    """A helper used by metric_score() to calculate roc_auc score (see sklearn)"""
     if not probs.shape[1] == 2:
         raise ValueError(
             "Metric roc_auc is currently only defined for binary problems."

@@ -43,3 +43,7 @@ class ErrorAnalysisTest(unittest.TestCase):
             [[1, 1, 0, 0], [0, 0, 1, 1], [0, 0, 2, 0], [1, 0, 0, 1]]
         )
         np.testing.assert_array_equal(mat, mat_expected)
+
+
+if __name__ == "__main__":
+    unittest.main()

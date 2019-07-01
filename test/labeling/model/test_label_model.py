@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 from snorkel.labeling.model.label_model import LabelModel
 
@@ -193,6 +194,40 @@ class LabelModelTest(unittest.TestCase):
             [[1.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.5], [1.0, 0.0], [0.0, 0.0]]
         )
         np.testing.assert_array_equal(mu_init, true_mu_init)
+
+    def test_predict_proba(self):
+        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[1, 2, 1], [1, 2, 1]])
+        label_model._set_constants(L)
+        label_model._set_dependencies(deps=[])
+        label_model._generate_O(L)
+        label_model._build_mask()
+        label_model.inv_form = False
+        label_model._set_class_balance(class_balance=[0.5, 0.5], Y_dev=None)
+        label_model._init_params()
+
+        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        probs = label_model.predict_proba(L)
+
+        true_probs = np.array([[0.99, 0.01], [0.99, 0.01]])
+
+        np.testing.assert_array_almost_equal(probs, true_probs)
+
+        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[1, 2, 1], [1, 2, 0]])
+        label_model._set_constants(L)
+        label_model._set_dependencies(deps=[])
+        label_model._generate_O(L)
+        label_model._build_mask()
+        label_model.inv_form = False
+        label_model._set_class_balance(class_balance=[0.45, 0.55], Y_dev=None)
+        label_model._init_params()
+
+        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        probs = label_model.predict_proba(L)
+
+        true_probs = np.array([0.45, 0.55])
+        np.testing.assert_array_almost_equal(probs[1, :], true_probs)
 
 
 if __name__ == "__main__":

@@ -128,8 +128,7 @@ class Classifier(nn.Module):
                 verbose=False)
 
         Returns:
-            scores: A (float) score or a list of such scores if kwarg metric
-                is a list
+            scores: A (float) score or a list of such scores if kwarg metric is a list
         """
         Y_p, Y, Y_s = self._get_predictions(
             data, break_ties=break_ties, return_probs=True, **kwargs

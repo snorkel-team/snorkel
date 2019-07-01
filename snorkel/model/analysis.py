@@ -1,39 +1,8 @@
-from collections import Counter, defaultdict
-from typing import Any, List, Mapping, Optional, Sequence, Tuple
+from collections import Counter
 
 import numpy as np
 
-from snorkel.types import ArrayLike
-
 from .utils import arraylike_to_numpy
-
-
-def error_buckets(
-    gold: ArrayLike, pred: ArrayLike, X: Optional[Sequence[Any]] = None
-) -> Mapping[Tuple[int, int], Any]:
-    """Group items by error buckets
-
-    Args:
-        gold: an array-like of gold labels (ints)
-        pred: an array-like of predictions (ints)
-        X: an iterable of items
-    Returns:
-        buckets: A dict of items where buckets[i,j] is a list of items with
-            predicted label i and true label j. If X is None, return indices
-            instead.
-
-    For a binary problem with (1=positive, 2=negative):
-        buckets[1,1] = true positives
-        buckets[1,2] = false positives
-        buckets[2,1] = false negatives
-        buckets[2,2] = true negatives
-    """
-    buckets: Mapping[Tuple[int, int], List[Any]] = defaultdict(list)
-    gold = arraylike_to_numpy(gold)
-    pred = arraylike_to_numpy(pred)
-    for i, (y, l) in enumerate(zip(pred, gold)):
-        buckets[y, l].append(X[i] if X is not None else i)
-    return dict(buckets)
 
 
 def confusion_matrix(

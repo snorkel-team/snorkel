@@ -4,6 +4,33 @@ import numpy as np
 import torch
 
 
+def prob_to_pred(probs):
+    """Identify the class with the maximum probability (add 1 since we assume label
+    class starts from 1)
+
+    :param probs: probabilities
+    :type probs: np.array
+    """
+
+    return np.argmax(probs, axis=-1) + 1
+
+
+def pred_to_prob(preds, n_classes):
+    """Converts predicted labels to probabilistic labels
+
+    :param preds: predicted labels
+    :type probs: np.array
+    """
+
+    preds = preds.reshape(-1)
+    probs = np.zeros((preds.shape[0], n_classes))
+
+    for idx, class_idx in enumerate(preds):
+        probs[idx, class_idx - 1] = 1.0
+
+    return probs
+
+
 def list_to_tensor(item_list):
     """Convert a list of torch.Tensor into a single torch.Tensor."""
 

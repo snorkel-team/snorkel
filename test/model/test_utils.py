@@ -5,10 +5,23 @@ import numpy as np
 import scipy.sparse as sparse
 import torch
 
-from snorkel.model.utils import recursive_merge_dicts, split_data
+from snorkel.model.utils import pred_to_prob, rargmax, recursive_merge_dicts, split_data
 
 
 class UtilsTest(unittest.TestCase):
+    def test_rargmax(self):
+        x = np.array([2, 1, 2])
+        np.random.seed(1)
+        self.assertEqual(sorted(list(set(rargmax(x) for _ in range(10)))), [0, 2])
+
+    def test_pred_to_prob(self):
+        x = torch.tensor([1, 2, 2, 1])
+        target = torch.tensor([[1, 0], [0, 1], [0, 1], [1, 0]])
+        self.assertTrue(
+            (pred_to_prob(x, 2).float() == target.float()).sum()
+            == torch.prod(torch.tensor(target.shape))
+        )
+
     def test_recursive_merge_dicts(self):
         x = {"foo": {"Foo": {"FOO": 1}}, "bar": 2, "baz": 3}
         y = {"FOO": 4, "bar": 5}

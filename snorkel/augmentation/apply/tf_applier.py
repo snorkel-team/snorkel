@@ -27,7 +27,10 @@ class BaseTFApplier:
     k
         Number of transformed data points per original
     keep_original
-        Keep untransformed data point in augmented data set?
+        Keep untransformed data point in augmented data set? Note that
+        even if in-place modifications are made to the original data
+        point by the TFs being applied, the original data point will
+        remain unchanged.
 
     Raises
     ------

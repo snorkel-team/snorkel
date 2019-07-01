@@ -1,8 +1,9 @@
 from functools import partial
 from typing import Union
 
+import pandas as pd
 import scipy.sparse as sparse
-from dask import dataframe as DataFrame
+from dask import dataframe as dd
 from dask.distributed import Client
 
 from snorkel.labeling.preprocess import PreprocessorMode
@@ -21,14 +22,14 @@ class DaskLFApplier(BaseLFApplier):
     For more information, see https://docs.dask.org/en/stable/dataframe.html
     """
 
-    def apply(
-        self, df: DataFrame, scheduler: Scheduler = "processes"
-    ) -> sparse.csr_matrix:  # type: ignore
+    def apply(  # type: ignore
+        self, df: dd, scheduler: Scheduler = "processes"
+    ) -> sparse.csr_matrix:
         """Label Dask DataFrame of data points with LFs.
 
         Parameters
         ----------
-        data_points
+        df
             Dask DataFrame containing data points to be labeled by LFs
         scheduler
             A Dask scheduling configuration: either a string option or
@@ -46,3 +47,43 @@ class DaskLFApplier(BaseLFApplier):
         labels = map_fn.compute(scheduler=scheduler)
         labels_with_index = rows_to_triplets(labels)
         return self._matrix_from_row_data(labels_with_index)
+
+
+class PandasParallelLFApplier(DaskLFApplier):
+    """Parallel LF applier for a Pandas DataFrame.
+
+    Creates a Dask DataFrame from a Pandas DataFrame, then uses
+    `DaskLFApplier` to label data in parallel. See `DaskLFApplier`.
+    """
+
+    def apply(  # type: ignore
+        self, df: pd.DataFrame, n_parallel: int = 2, scheduler: Scheduler = "processes"
+    ) -> sparse.csr_matrix:
+        """Label Pandas DataFrame of data points with LFs in parallel using Dask.
+
+        Parameters
+        ----------
+        df
+            Pandas DataFrame containing data points to be labeled by LFs
+        n_parallel
+            Parallelism level for LF application. Corresponds to `npartitions`
+            in constructed Dask DataFrame. For `scheduler="processes"`, number
+            of processes launched. Recommended to be no more than the number
+            of cores on the running machine.
+        scheduler
+            A Dask scheduling configuration: either a string option or
+            a `Client`. For more information, see
+            https://docs.dask.org/en/stable/scheduling.html#
+
+        Returns
+        -------
+        sparse.csr_matrix
+            Sparse matrix of labels emitted by LFs
+        """
+        if n_parallel < 2:
+            raise ValueError(
+                "n_parallel should be >= 2. "
+                "For single process Pandas, use PandasLFApplier."
+            )
+        df = dd.from_pandas(df, npartitions=n_parallel)
+        return super().apply(df, scheduler=scheduler)

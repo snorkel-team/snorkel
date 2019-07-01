@@ -6,7 +6,12 @@ import numpy as np
 import pandas as pd
 from dask import dataframe as dd
 
-from snorkel.labeling.apply import DaskLFApplier, LFApplier, PandasLFApplier
+from snorkel.labeling.apply import (
+    DaskLFApplier,
+    LFApplier,
+    PandasLFApplier,
+    PandasParallelLFApplier,
+)
 from snorkel.labeling.lf import labeling_function
 from snorkel.labeling.preprocess import preprocessor
 from snorkel.labeling.preprocess.nlp import SpacyPreprocessor
@@ -110,3 +115,15 @@ class TestDaskApplier(unittest.TestCase):
         applier = DaskLFApplier([first_is_name, has_verb])
         L = applier.apply(df)
         np.testing.assert_equal(L.toarray(), L_TEXT_EXPECTED)
+
+    def test_lf_applier_pandas_parallel(self) -> None:
+        df = pd.DataFrame(dict(num=DATA))
+        applier = PandasParallelLFApplier([f, g])
+        L = applier.apply(df, n_parallel=2)
+        np.testing.assert_equal(L.toarray(), L_EXPECTED)
+
+    def test_lf_applier_pandas_parallel_raises(self) -> None:
+        df = pd.DataFrame(dict(num=DATA))
+        applier = PandasParallelLFApplier([f, g])
+        with self.assertRaises(ValueError):
+            applier.apply(df, n_parallel=1)

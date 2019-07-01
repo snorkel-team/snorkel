@@ -59,7 +59,7 @@ class PandasLFApplier(BaseLFApplier):
 
         Parameters
         ----------
-        data_points
+        df
             Pandas DataFrame containing data points to be labeled by LFs
 
         Returns

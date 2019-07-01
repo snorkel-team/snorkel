@@ -1,5 +1,3 @@
-from typing import List
-
 import pandas as pd
 from tqdm import tqdm
 
@@ -17,38 +15,6 @@ class PandasTFApplier(BaseTFApplier):
     For large datasets, consider `DaskTFApplier` or `SparkTFApplier`.
     """
 
-    def apply_generator(  # type: ignore
-        self, df: pd.DataFrame, batch_size: int
-    ) -> pd.DataFrame:
-        """Augment a Pandas DataFrame of data points using TFs and policy in batches.
-
-        This method acts as a generator, yielding augmented data points for
-        a given input batch of data points. This can be useful in a training
-        loop when it is too memory-intensive to pregenerate all transformed
-        examples.
-
-        Parameters
-        ----------
-        df
-            Pandas DataFrame containing data points to be transformed
-        batch_size
-            Batch size for generator. Yields augmented data points
-            for the next `batch_size` input data points.
-
-        Returns
-        -------
-        pd.DataFrame
-            Pandas DataFrame of data points in augmented data set
-        """
-        self._set_tf_mode(TransformationFunctionMode.PANDAS)
-        batch_transformed: List[pd.Series] = []
-        for i, (_, x) in enumerate(df.iterrows()):
-            batch_transformed.extend(self._apply_policy_to_data_point(x))
-            if (i + 1) % batch_size == 0:
-                yield pd.concat(batch_transformed, axis=1).T
-                batch_transformed = []
-        yield pd.concat(batch_transformed, axis=1).T
-
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:  # type: ignore
         """Augment a Pandas DataFrame of data points using TFs and policy.
 
@@ -60,10 +26,10 @@ class PandasTFApplier(BaseTFApplier):
         Returns
         -------
         pd.DataFrame
-            Pandas DataFrame of data points in augmented data set
+            Augmented DataFrame of data points
         """
         self._set_tf_mode(TransformationFunctionMode.PANDAS)
-        x_transformed: List[pd.Series] = []
+        x_transformed = []
         for _, x in tqdm(df.iterrows(), total=len(df)):
             x_transformed.extend(self._apply_policy_to_data_point(x))
         return pd.concat(x_transformed, axis=1).T

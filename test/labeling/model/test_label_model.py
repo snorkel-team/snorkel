@@ -137,12 +137,16 @@ class LabelModelTest(unittest.TestCase):
         label_model._build_mask()
         mask = label_model.mask.numpy()
 
-        true_mask = np.array([[0, 0, 1, 1, 1, 1],
-            [0, 0, 1, 1, 1, 1],
-            [1, 1, 0, 0, 1, 1],
-            [1, 1, 0, 0, 1, 1],
-            [1, 1, 1, 1, 0, 0],
-            [1, 1, 1, 1, 0, 0]])
+        true_mask = np.array(
+            [
+                [0, 0, 1, 1, 1, 1],
+                [0, 0, 1, 1, 1, 1],
+                [1, 1, 0, 0, 1, 1],
+                [1, 1, 0, 0, 1, 1],
+                [1, 1, 1, 1, 0, 0],
+                [1, 1, 1, 1, 0, 0],
+            ]
+        )
 
         np.testing.assert_array_equal(mask, true_mask)
 
@@ -151,14 +155,44 @@ class LabelModelTest(unittest.TestCase):
         label_model._build_mask()
         mask = label_model.mask.numpy()
 
-        true_mask = np.array([[0, 0, 1, 1, 1, 1],
-            [0, 0, 1, 1, 1, 1],
-            [1, 1, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0]])
+        true_mask = np.array(
+            [
+                [0, 0, 1, 1, 1, 1],
+                [0, 0, 1, 1, 1, 1],
+                [1, 1, 0, 0, 0, 0],
+                [1, 1, 0, 0, 0, 0],
+                [1, 1, 0, 0, 0, 0],
+                [1, 1, 0, 0, 0, 0],
+            ]
+        )
 
         np.testing.assert_array_equal(mask, true_mask)
+
+    def test_init_params(self):
+        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[1, 2, 1], [1, 0, 1]])
+        label_model._set_constants(L)
+        label_model._set_dependencies(deps=[])
+        label_model._generate_O(L)
+        label_model._build_mask()
+        label_model.inv_form = False
+        label_model._set_class_balance(class_balance=[0.6, 0.4], Y_dev=None)
+        label_model._init_params()
+
+        mu_init = label_model.mu_init.numpy()
+        true_mu_init = np.array(
+            [[1.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.8750], [1.0, 0.0], [0.0, 0.0]]
+        )
+        np.testing.assert_array_equal(mu_init, true_mu_init)
+
+        label_model._set_class_balance(class_balance=[0.3, 0.7], Y_dev=None)
+        label_model._init_params()
+
+        mu_init = label_model.mu_init.numpy()
+        true_mu_init = np.array(
+            [[1.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.5], [1.0, 0.0], [0.0, 0.0]]
+        )
+        np.testing.assert_array_equal(mu_init, true_mu_init)
 
 
 if __name__ == "__main__":

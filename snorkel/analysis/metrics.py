@@ -1,189 +1,63 @@
+from typing import Callable, List, NamedTuple
+
 import numpy as np
+import sklearn.metrics as skmetrics
 
-from .utils import arraylike_to_numpy
-
-
-def accuracy_score(gold, pred, prob=None, ignore_in_gold=[], ignore_in_pred=[]):
-    """
-    Calculate (micro) accuracy.
-    Args:
-        gold: A 1d array-like of gold labels
-        pred: A 1d array-like of predicted labels (assuming abstain = 0)
-        prob: Unused (kept for compatibility with expected metric func signature)
-        ignore_in_gold: A list of labels for which elements having that gold
-            label will be ignored.
-        ignore_in_pred: A list of labels for which elements having that pred
-            label will be ignored.
-
-    Returns:
-        A float, the (micro) accuracy score
-    """
-    gold, pred, prob = _preprocess(gold, pred, prob, ignore_in_gold, ignore_in_pred)
-
-    if len(gold) and len(pred):
-        acc = np.sum(gold == pred) / len(gold)
-    else:
-        acc = 0
-
-    return acc
+from .utils import filter_labels
 
 
-def coverage_score(gold, pred, prob=None, ignore_in_gold=[], ignore_in_pred=[]):
-    """
-    Calculate (global) coverage.
-    Args:
-        gold: A 1d array-like of gold labels
-        pred: A 1d array-like of predicted labels (assuming abstain = 0)
-        prob: Unused (kept for compatibility with expected metric func signature)
-        ignore_in_gold: A list of labels for which elements having that gold
-            label will be ignored.
-        ignore_in_pred: A list of labels for which elements having that pred
-            label will be ignored.
-
-    Returns:
-        A float, the (global) coverage score
-    """
-    gold, pred, prob = _preprocess(gold, pred, prob, ignore_in_gold, ignore_in_pred)
-
-    return np.sum(pred != 0) / len(pred)
+class Metric(NamedTuple):
+    func: Callable[..., float]
+    inputs: List[str] = ["golds", "preds"]
 
 
-def precision_score(
-    gold, pred, prob=None, pos_label=1, ignore_in_gold=[], ignore_in_pred=[]
-):
-    """
-    Calculate precision for a single class.
-    Args:
-        gold: A 1d array-like of gold labels
-        pred: A 1d array-like of predicted labels (assuming abstain = 0)
-        prob: Unused (kept for compatibility with expected metric func signature)
-        ignore_in_gold: A list of labels for which elements having that gold
-            label will be ignored.
-        ignore_in_pred: A list of labels for which elements having that pred
-            label will be ignored.
-        pos_label: The class label to treat as positive for precision
-
-    Returns:
-        pre: The (float) precision score
-    """
-    gold, pred, prob = _preprocess(gold, pred, prob, ignore_in_gold, ignore_in_pred)
-
-    positives = np.where(pred == pos_label, 1, 0).astype(bool)
-    trues = np.where(gold == pos_label, 1, 0).astype(bool)
-    TP = np.sum(positives * trues)
-    FP = np.sum(positives * np.logical_not(trues))
-
-    if TP or FP:
-        pre = TP / (TP + FP)
-    else:
-        pre = 0
-
-    return pre
-
-
-def recall_score(
-    gold, pred, prob=None, pos_label=1, ignore_in_gold=[], ignore_in_pred=[]
-):
-    """
-    Calculate recall for a single class.
-    Args:
-        gold: A 1d array-like of gold labels
-        pred: A 1d array-like of predicted labels (assuming abstain = 0)
-        prob: Unused (kept for compatibility with expected metric func signature)
-        ignore_in_gold: A list of labels for which elements having that gold
-            label will be ignored.
-        ignore_in_pred: A list of labels for which elements having that pred
-            label will be ignored.
-        pos_label: The class label to treat as positive for recall
-
-    Returns:
-        rec: The (float) recall score
-    """
-    gold, pred, prob = _preprocess(gold, pred, prob, ignore_in_gold, ignore_in_pred)
-
-    positives = np.where(pred == pos_label, 1, 0).astype(bool)
-    trues = np.where(gold == pos_label, 1, 0).astype(bool)
-    TP = np.sum(positives * trues)
-    FN = np.sum(np.logical_not(positives) * trues)
-
-    if TP or FN:
-        rec = TP / (TP + FN)
-    else:
-        rec = 0
-
-    return rec
-
-
-def fbeta_score(
-    gold, pred, prob=None, pos_label=1, beta=1.0, ignore_in_gold=[], ignore_in_pred=[]
-):
-    """
-    Calculate recall for a single class.
-    Args:
-        gold: A 1d array-like of gold labels
-        pred: A 1d array-like of predicted labels (assuming abstain = 0)
-        prob: Unused (kept for compatibility with expected metric func signature)
-        ignore_in_gold: A list of labels for which elements having that gold
-            label will be ignored.
-        ignore_in_pred: A list of labels for which elements having that pred
-            label will be ignored.
-        pos_label: The class label to treat as positive for f-beta
-        beta: The beta to use in the f-beta score calculation
-
-    Returns:
-        fbeta: The (float) f-beta score
-    """
-    gold, pred, prob = _preprocess(gold, pred, prob, ignore_in_gold, ignore_in_pred)
-    pre = precision_score(gold, pred, pos_label=pos_label)
-    rec = recall_score(gold, pred, pos_label=pos_label)
-
-    if pre or rec:
-        fbeta = (1 + beta ** 2) * (pre * rec) / ((beta ** 2 * pre) + rec)
-    else:
-        fbeta = 0
-
-    return fbeta
-
-
-def f1_score(gold, pred, prob=None, **kwargs):
-    return fbeta_score(gold, pred, prob, beta=1.0, **kwargs)
-
-
-def _get_mask(gold, pred, ignore_in_gold, ignore_in_pred):
-    """Remove from gold, pred all items with labels designated to ignore."""
-    mask = np.ones_like(gold).astype(bool)
-    for x in ignore_in_gold:
-        mask *= np.where(gold != x, 1, 0).astype(bool)
-    for x in ignore_in_pred:
-        mask *= np.where(pred != x, 1, 0).astype(bool)
-
-    return mask
-
-
-def _preprocess(gold, pred, prob, ignore_in_gold, ignore_in_pred):
-    gold = arraylike_to_numpy(gold) if gold is not None else None
-    pred = arraylike_to_numpy(pred) if pred is not None else None
-    if ignore_in_gold or ignore_in_pred:
-        mask = _get_mask(gold, pred, ignore_in_gold, ignore_in_pred)
-        gold = gold[mask] if gold is not None else None
-        pred = pred[mask] if pred is not None else None
-        prob = prob[mask] if prob is not None else None
-    return gold, pred, prob
-
-
-METRICS = {
-    "accuracy": accuracy_score,
-    "coverage": coverage_score,
-    "precision": precision_score,
-    "recall": recall_score,
-    "f1": f1_score,
-    "fbeta": fbeta_score,
-}
-
-
-def metric_score(gold, pred, prob, metric, probs=None, **kwargs):
+def metric_score(
+    golds: np.ndarray,
+    preds: np.ndarray,
+    probs: np.ndarray,
+    metric: str,
+    ignore_in_golds: List[int] = [],
+    ignore_in_preds: List[int] = [],
+    **kwargs,
+) -> float:
     if metric not in METRICS:
-        msg = f"The metric you provided ({metric}) is not supported."
+        msg = f"The metric you provided ({metric}) is not currently implemented."
         raise ValueError(msg)
-    else:
-        return METRICS[metric](gold, pred, prob, **kwargs)
+
+    # Optionally filter out examples (e.g., abstain predictions or unknown labels)
+    golds, preds, probs = filter_labels(
+        golds, preds, probs, ignore_in_golds, ignore_in_preds
+    )
+
+    # Pass the metric function its requested args
+    func, input_names = METRICS[metric]
+    input_map = {"golds": golds, "preds": preds, "probs": probs}
+    inputs = [input_map[input] for input in input_names]
+
+    return func(*inputs, **kwargs)
+
+
+def coverage_score(preds: np.ndarray) -> float:
+    return np.sum(preds != 0) / len(preds)
+
+
+def roc_auc_score(golds: np.ndarray, probs: np.ndarray) -> float:
+    if not probs.shape[1] == 2:
+        raise ValueError(
+            "Metric roc_auc is currently only defined for binary problems."
+        )
+    return skmetrics.roc_auc_score(golds, probs[:, 0])
+
+
+# See https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
+# for details on the definitions and available kwargs for all metrics from scikit-learn
+METRICS = {
+    "accuracy": Metric(skmetrics.accuracy_score),
+    "coverage": Metric(coverage_score, ["preds"]),
+    "precision": Metric(skmetrics.precision_score),
+    "recall": Metric(skmetrics.recall_score),
+    "f1": Metric(skmetrics.f1_score),
+    "fbeta": Metric(skmetrics.fbeta_score),
+    "matthews_corrcoef": Metric(skmetrics.matthews_corrcoef),
+    "roc_auc": Metric(roc_auc_score, ["golds", "probs"]),
+}

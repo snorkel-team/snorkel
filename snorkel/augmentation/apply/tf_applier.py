@@ -151,7 +151,7 @@ class TFApplier(BaseTFApplier):
         List[DataPoint]
             List of data points in augmented data set for batches of inputs
         """
-        for i in range(0, len(data_points), step=batch_size):
+        for i in range(0, len(data_points), batch_size):
             batch_transformed: List[DataPoint] = []
             for x in data_points[i : i + batch_size]:
                 batch_transformed.extend(self._apply_policy_to_data_point(x))

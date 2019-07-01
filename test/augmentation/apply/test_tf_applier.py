@@ -40,6 +40,10 @@ DATA_IN_PLACE_EXPECTED = [
 ]
 
 
+def make_df(values: list, index: list, key: str = "num") -> pd.DataFrame:
+    return pd.DataFrame({key: values}, index=index)
+
+
 # NB: reconstruct each time to avoid inplace updates
 def get_data_dict():
     return [dict(my_key=num) for num in DATA]
@@ -96,7 +100,51 @@ class TestTFApplier(unittest.TestCase):
         self.assertTrue(all(x.d == y for x, y in zip(data, get_data_dict())))
 
     def test_tf_applier_generator(self) -> None:
-        pass
+        data = self._get_x_namespace()
+        applier = TFApplier([square], policy, k=1, keep_original=False)
+        batches_expected = [[1, 16], [81]]
+        gen = applier.apply_generator(data, batch_size=2)
+        for batch, batch_expected in zip(gen, batches_expected):
+            self.assertEqual([x.num for x in batch], batch_expected)
+        self.assertEqual([x.num for x in data], DATA)
+
+    def test_tf_applier_multi_generator(self) -> None:
+        data = self._get_x_namespace()
+        applier = TFApplier([square], policy, k=2, keep_original=False)
+        batches_expected = [[1, 1, 16, 16], [81, 81]]
+        gen = applier.apply_generator(data, batch_size=2)
+        for batch, batch_expected in zip(gen, batches_expected):
+            self.assertEqual([x.num for x in batch], batch_expected)
+        self.assertEqual([x.num for x in data], DATA)
+
+    def test_tf_applier_keep_original_generator(self) -> None:
+        data = self._get_x_namespace()
+        applier = TFApplier([square], policy, k=2, keep_original=True)
+        batches_expected = [[1, 1, 1, 2, 16, 16], [3, 81, 81]]
+        gen = applier.apply_generator(data, batch_size=2)
+        for batch, batch_expected in zip(gen, batches_expected):
+            self.assertEqual([x.num for x in batch], batch_expected)
+        self.assertEqual([x.num for x in data], DATA)
+
+    def test_tf_applier_returns_none_generator(self) -> None:
+        data = self._get_x_namespace()
+        applier = TFApplier([square_returns_none], policy, k=2, keep_original=True)
+        batches_expected = [[1, 1, 1, 2], [3, 81, 81]]
+        gen = applier.apply_generator(data, batch_size=2)
+        for batch, batch_expected in zip(gen, batches_expected):
+            self.assertEqual([x.num for x in batch], batch_expected)
+        self.assertEqual([x.num for x in data], DATA)
+
+    def test_tf_applier_keep_original_modify_in_place_generator(self) -> None:
+        data = self._get_x_namespace_dict()
+        applier = TFApplier(
+            [modify_in_place], policy_modify_in_place, k=2, keep_original=True
+        )
+        batches_expected = [DATA_IN_PLACE_EXPECTED[:6], DATA_IN_PLACE_EXPECTED[6:]]
+        gen = applier.apply_generator(data, batch_size=2)
+        for batch, batch_expected in zip(gen, batches_expected):
+            self.assertTrue(all(x.d == d for x, d in zip(batch, batch_expected)))
+        self.assertTrue(all(x.d == y for x, y in zip(data, get_data_dict())))
 
 
 class TestPandasTFApplier(unittest.TestCase):
@@ -155,4 +203,63 @@ class TestPandasTFApplier(unittest.TestCase):
         idx = [0, 0, 0, 1, 1, 1, 2, 2, 2]
         df_expected = pd.DataFrame(dict(d=DATA_IN_PLACE_EXPECTED), index=idx)
         pd.testing.assert_frame_equal(df_augmented, df_expected)
+        self.assertEqual(df.d.tolist(), get_data_dict())
+
+    def test_tf_applier_pandas_generator(self):
+        df = self._get_x_df()
+        applier = PandasTFApplier([square], policy, k=1, keep_original=False)
+        gen = applier.apply_generator(df, batch_size=2)
+        df_expected = [make_df([1, 16], [0, 1]), make_df([81], [2])]
+        for df_batch, df_batch_expected in zip(gen, df_expected):
+            pd.testing.assert_frame_equal(df_batch, df_batch_expected)
+        self.assertEqual(df.num.tolist(), DATA)
+
+    def test_tf_applier_pandas_multi_generator(self):
+        df = self._get_x_df()
+        applier = PandasTFApplier([square], policy, k=2, keep_original=False)
+        gen = applier.apply_generator(df, batch_size=2)
+        df_expected = [make_df([1, 1, 16, 16], [0, 0, 1, 1]), make_df([81, 81], [2, 2])]
+        for df_batch, df_batch_expected in zip(gen, df_expected):
+            pd.testing.assert_frame_equal(df_batch, df_batch_expected)
+        self.assertEqual(df.num.tolist(), DATA)
+
+    def test_tf_applier_pandas_keep_original_generator(self):
+        df = self._get_x_df()
+        applier = PandasTFApplier([square], policy, k=2, keep_original=True)
+        gen = applier.apply_generator(df, batch_size=2)
+        df_expected = [
+            make_df([1, 1, 1, 2, 16, 16], [0, 0, 0, 1, 1, 1]),
+            make_df([3, 81, 81], [2, 2, 2]),
+        ]
+        for df_batch, df_batch_expected in zip(gen, df_expected):
+            pd.testing.assert_frame_equal(df_batch, df_batch_expected)
+        self.assertEqual(df.num.tolist(), DATA)
+
+    def test_tf_applier_returns_none_generator(self):
+        df = self._get_x_df()
+        applier = PandasTFApplier(
+            [square_returns_none], policy, k=2, keep_original=True
+        )
+        gen = applier.apply_generator(df, batch_size=2)
+        df_expected = [
+            make_df([1, 1, 1, 2], [0, 0, 0, 1]),
+            make_df([3, 81, 81], [2, 2, 2]),
+        ]
+        for df_batch, df_batch_expected in zip(gen, df_expected):
+            pd.testing.assert_frame_equal(df_batch, df_batch_expected)
+        self.assertEqual(df.num.tolist(), DATA)
+
+    def test_tf_applier_pandas_modify_in_place_generator(self):
+        df = self._get_x_df_dict()
+        applier = PandasTFApplier(
+            [modify_in_place], policy_modify_in_place, k=2, keep_original=True
+        )
+        gen = applier.apply_generator(df, batch_size=2)
+        idx = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+        df_expected = [
+            make_df(DATA_IN_PLACE_EXPECTED[:6], idx[:6], key="d"),
+            make_df(DATA_IN_PLACE_EXPECTED[6:], idx[6:], key="d"),
+        ]
+        for df_batch, df_batch_expected in zip(gen, df_expected):
+            pd.testing.assert_frame_equal(df_batch, df_batch_expected)
         self.assertEqual(df.d.tolist(), get_data_dict())

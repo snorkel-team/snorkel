@@ -96,6 +96,21 @@ def recursive_merge_dicts(x, y, misses="report", verbose=None):
     return z
 
 
+# DEPRECATION: This is replaced by move_to_device
+def place_on_gpu(data):
+    """Utility to place data on GPU, where data could be a torch.Tensor, a tuple
+    or list of Tensors, or a tuple or list of tuple or lists of Tensors"""
+    data_type = type(data)
+    if data_type in (list, tuple):
+        data = [place_on_gpu(data[i]) for i in range(len(data))]
+        data = data_type(data)
+        return data
+    elif isinstance(data, torch.Tensor):
+        return data.cuda()
+    else:
+        return ValueError(f"Data type {type(data)} not recognized.")
+
+
 def recursive_transform(x, test_func, transform):
     """Applies a transformation recursively to each member of a dictionary
 

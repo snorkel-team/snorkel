@@ -428,31 +428,14 @@ class LabelModel(Classifier):
         # expects training data to feed to the loss functions.
         dataset = MetalDataset([0], [0])
         train_loader = DataLoader(dataset)
-        if self.inv_form:
-            # Compute O, O^{-1}, and initialize params
-            if self.config["verbose"]:
-                print("Computing O^{-1}...")
-            self._generate_O_inv(L_train)
-            self._init_params()
+        
+        # Compute O and initialize params
+        if self.config["verbose"]:
+            print("Computing O...")
+        self._generate_O(L_train)
+        self._init_params()
 
-            # Estimate Z, compute Q = \mu P \mu^T
-            if self.config["verbose"]:
-                print("Estimating Z...")
-            self._train_model(train_loader, self.loss_inv_Z)
-            self.Q = torch.from_numpy(self.get_Q()).float()
-
-            # Estimate \mu
-            if self.config["verbose"]:
-                print("Estimating \mu...")
-            self._train_model(train_loader, partial(self.loss_inv_mu, l2=l2))
-        else:
-            # Compute O and initialize params
-            if self.config["verbose"]:
-                print("Computing O...")
-            self._generate_O(L_train)
-            self._init_params()
-
-            # Estimate \mu
-            if self.config["verbose"]:
-                print("Estimating \mu...")
-            self._train_model(train_loader, partial(self.loss_mu, l2=l2))
+        # Estimate \mu
+        if self.config["verbose"]:
+            print("Estimating \mu...")
+        self._train_model(train_loader, partial(self.loss_mu, l2=l2))

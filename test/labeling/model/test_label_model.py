@@ -128,6 +128,38 @@ class LabelModelTest(unittest.TestCase):
         accs = label_model.get_accuracies(probs=probs)
         np.testing.assert_array_almost_equal(accs, np.array([0.7, 0.825]))
 
+    def test_build_mask(self):
+        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[1, 2, 1], [1, 2, 1]])
+        label_model._set_constants(L)
+        label_model._set_dependencies(deps=[])
+        label_model._generate_O(L)
+        label_model._build_mask()
+        mask = label_model.mask.numpy()
+
+        true_mask = np.array([[0, 0, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1, 1],
+            [1, 1, 0, 0, 1, 1],
+            [1, 1, 0, 0, 1, 1],
+            [1, 1, 1, 1, 0, 0],
+            [1, 1, 1, 1, 0, 0]])
+
+        np.testing.assert_array_equal(mask, true_mask)
+
+        label_model._set_dependencies(deps=[(1, 2)])
+        label_model._generate_O(L)
+        label_model._build_mask()
+        mask = label_model.mask.numpy()
+
+        true_mask = np.array([[0, 0, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1, 1],
+            [1, 1, 0, 0, 0, 0],
+            [1, 1, 0, 0, 0, 0],
+            [1, 1, 0, 0, 0, 0],
+            [1, 1, 0, 0, 0, 0]])
+
+        np.testing.assert_array_equal(mask, true_mask)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -19,16 +19,7 @@ def prob_to_pred(prob: np.ndarray) -> np.ndarray:
     np.ndarray
         A [num_datapoints, 1] array of predictions (integers in [1, ..., num_classes])
     """
-    assert prob.ndim == 2
-    assert (prob <= 1).all()
-
-    pred = np.argmax(prob, axis=1) + 1
-
-    n, k = prob.shape
-    assert (pred >= 1).all()
-    assert (pred <= k).all()
-
-    return pred
+    return np.argmax(prob, axis=1) + 1
 
 
 def pred_to_prob(pred: np.ndarray, num_classes: int) -> np.ndarray:
@@ -37,7 +28,7 @@ def pred_to_prob(pred: np.ndarray, num_classes: int) -> np.ndarray:
     Parameters
     ----------
     pred
-        A [num_datapoints] or [num_datapoints], 1] array of predictions
+        A [num_datapoints] or [num_datapoints, 1] array of predictions
 
     Returns
     -------
@@ -45,15 +36,7 @@ def pred_to_prob(pred: np.ndarray, num_classes: int) -> np.ndarray:
         A [num_datapoints, num_classes] array of probabilistic labels with probability
         of 1.0 in the column corresponding to the prediction
     """
-    pred = pred.reshape(-1, 1)
-    n = pred.shape[0]
-
-    prob = np.zeros((n, num_classes))
-
-    for idx, class_idx in enumerate(pred):
-        prob[idx, class_idx - 1] = 1.0
-
-    return prob
+    return np.eye(num_classes)[pred.squeeze() - 1]
 
 
 def arraylike_to_numpy(array_like: ArrayLike) -> np.ndarray:

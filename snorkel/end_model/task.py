@@ -4,7 +4,7 @@ from typing import Callable, List
 import torch
 from torch import nn
 
-from snorkel.mtl.scorer import Scorer
+from snorkel.end_model.scorer import Scorer
 
 
 class Operation:

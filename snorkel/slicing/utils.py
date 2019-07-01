@@ -6,11 +6,11 @@ import torch
 from scipy.sparse import csr_matrix
 from torch import nn
 
+from snorkel.end_model.data import MultitaskDataLoader
+from snorkel.end_model.modules.utils import ce_loss, softmax
+from snorkel.end_model.scorer import Scorer
+from snorkel.end_model.task import Operation, Task
 from snorkel.model.utils import convert_labels
-from snorkel.mtl.data import MultitaskDataLoader
-from snorkel.mtl.modules.utils import ce_loss, softmax
-from snorkel.mtl.scorer import Scorer
-from snorkel.mtl.task import Operation, Task
 
 from .modules.slice_combiner import SliceCombinerModule
 

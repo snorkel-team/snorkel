@@ -1,9 +1,9 @@
 import logging
 from typing import Any, Optional
 
-from snorkel.mtl.model import MultitaskModel
-from snorkel.mtl.snorkel_config import default_config
-from snorkel.mtl.utils import recursive_merge_dicts
+from snorkel.end_model.model import MultitaskModel
+from snorkel.end_model.snorkel_config import default_config
+from snorkel.end_model.utils import recursive_merge_dicts
 
 from .checkpointer import Checkpointer
 from .log_writer import LogWriter

@@ -8,9 +8,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from snorkel.mtl.snorkel_config import default_config
-from snorkel.mtl.task import Task
-from snorkel.mtl.utils import move_to_device, prob_to_pred, recursive_merge_dicts
+from snorkel.end_model.snorkel_config import default_config
+from snorkel.end_model.task import Task
+from snorkel.end_model.utils import move_to_device, prob_to_pred, recursive_merge_dicts
 
 
 class MultitaskModel(nn.Module):

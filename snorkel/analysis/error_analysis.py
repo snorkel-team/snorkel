@@ -9,13 +9,13 @@ from .utils import arraylike_to_numpy
 
 
 def error_buckets(
-    golds: ArrayLike, preds: ArrayLike, X: Optional[Sequence[Any]] = None
+    gold: ArrayLike, pred: ArrayLike, X: Optional[Sequence[Any]] = None
 ) -> Mapping[Tuple[int, int], Any]:
     """Group items by error buckets
 
     Args:
-        golds: an array-like of golds labels (ints)
-        preds: an array-like of predictions (ints)
+        gold: an array-like of gold labels (ints)
+        pred: an array-like of predictions (ints)
         X: an iterable of items
     Returns:
         buckets: A dict of items where buckets[i,j] is a list of items with
@@ -29,34 +29,34 @@ def error_buckets(
         buckets[2,2] = true negatives
     """
     buckets: Mapping[Tuple[int, int], List[Any]] = defaultdict(list)
-    golds = arraylike_to_numpy(golds)
-    preds = arraylike_to_numpy(preds)
-    for i, (y, l) in enumerate(zip(preds, golds)):
+    gold = arraylike_to_numpy(gold)
+    pred = arraylike_to_numpy(pred)
+    for i, (y, l) in enumerate(zip(pred, gold)):
         buckets[y, l].append(X[i] if X is not None else i)
     return dict(buckets)
 
 
 def confusion_matrix(
-    golds, preds, null_pred=False, null_gold=False, normalize=False, pretty_print=True
+    gold, pred, null_pred=False, null_gold=False, normalize=False, pretty_print=True
 ):
     """A shortcut method for building a confusion matrix all at once.
 
     Args:
-        golds: an array-like of golds labels (ints)
-        preds: an array-like of predictions (ints)
+        gold: an array-like of gold labels (ints)
+        pred: an array-like of predictions (ints)
         null_pred: If True, include the row corresponding to null predictions
-        null_gold: If True, include the col corresponding to null golds labels
+        null_gold: If True, include the col corresponding to null gold labels
         normalize: if True, divide counts by the total number of items
         pretty_print: if True, pretty-print the matrix before returning
     """
     conf = ConfusionMatrix(null_pred=null_pred, null_gold=null_gold)
-    golds = arraylike_to_numpy(golds)
-    preds = arraylike_to_numpy(preds)
-    conf.add(golds, preds)
+    gold = arraylike_to_numpy(gold)
+    pred = arraylike_to_numpy(pred)
+    conf.add(gold, pred)
     mat = conf.compile()
 
     if normalize:
-        mat = mat / len(golds)
+        mat = mat / len(gold)
 
     if pretty_print:
         conf.display(normalize=normalize)
@@ -76,7 +76,7 @@ class ConfusionMatrix(object):
         Args:
             null_pred: If True, include the row corresponding to null
                 predictions
-            null_gold: If True, include the col corresponding to null golds
+            null_gold: If True, include the col corresponding to null gold
                 labels
 
         """
@@ -90,13 +90,13 @@ class ConfusionMatrix(object):
             self.compile()
         return str(self.mat)
 
-    def add(self, golds, preds):
+    def add(self, gold, pred):
         """
         Args:
-            golds: a np.ndarray of golds labels (ints)
-            preds: a np.ndarray of predictions (ints)
+            gold: a np.ndarray of gold labels (ints)
+            pred: a np.ndarray of predictions (ints)
         """
-        self.counter.update(zip(golds, preds))
+        self.counter.update(zip(gold, pred))
 
     def compile(self, trim=True):
         k = max([max(tup) for tup in self.counter.keys()]) + 1  # include 0
@@ -134,7 +134,7 @@ class ConfusionMatrix(object):
                 continue
             s = margin + f" l={i} " + tab
             for j in range(n):
-                # Skip null golds if necessary
+                # Skip null gold if necessary
                 if j == 0 and not self.null_gold:
                     continue
                 else:

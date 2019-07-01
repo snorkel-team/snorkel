@@ -242,7 +242,7 @@ class LabelModel(Classifier):
             c_probs[i * (self.k + 1) + 1 : (i + 1) * (self.k + 1), :] = mu_i
 
             # The 0th row (corresponding to abstains) is the difference between
-            # the sums of the other rows and one, by law of total probs
+            # the sums of the other rows and one, by law of total prob
             c_probs[i * (self.k + 1), :] = 1 - mu_i.sum(axis=0)
         c_probs = np.clip(c_probs, 0.01, 0.99)
 

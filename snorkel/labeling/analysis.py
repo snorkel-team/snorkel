@@ -125,7 +125,7 @@ def lf_empirical_accuracies(L: Matrix, Y: ArrayLike) -> np.ndarray:
     Args:
         L: an n x m scipy.sparse matrix where L_{i,j} is the label given by the
             jth LF to the ith candidate
-        Y: an [n] or [n, 1] np.ndarray of golds labels
+        Y: an [n] or [n, 1] np.ndarray of gold labels
     """
     # Assume labeled set is small, work with dense matrices
     Y = arraylike_to_numpy(Y)
@@ -145,7 +145,7 @@ def lf_summary(
     Args:
         L: an n x m scipy.sparse matrix where L_{i,j} is the label given by the
             jth LF to the ith candidate
-        Y: an [n] or [n, 1] np.ndarray of golds labels.
+        Y: an [n] or [n, 1] np.ndarray of gold labels.
             If provided, the empirical accuracy for each LF will be calculated
     """
     n, m = L.shape

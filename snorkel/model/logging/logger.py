@@ -1,7 +1,7 @@
 import time
 from collections import defaultdict
 
-from snorkel.analysis.metrics import METRICS as standard_metric_names, metric_score
+from snorkel.model.metrics import METRICS as standard_metric_names, metric_score
 
 
 class Logger(object):

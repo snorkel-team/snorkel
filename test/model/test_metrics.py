@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import torch
 
-from snorkel.analysis.metrics import (
+from snorkel.model.metrics import (
     accuracy_score,
     coverage_score,
     f1_score,
@@ -11,6 +11,7 @@ from snorkel.analysis.metrics import (
     metric_score,
     precision_score,
     recall_score,
+    roc_auc_score,
 )
 
 
@@ -94,6 +95,13 @@ class MetricsTest(unittest.TestCase):
         rec = recall_score(gold, pred)
         self.assertEqual(pre, fbeta_score(gold, pred, beta=0))
         self.assertAlmostEqual(rec, fbeta_score(gold, pred, beta=1000), places=4)
+
+    def test_roc_auc(self):
+        gold = [1, 1, 2, 2]
+        pred = [1, 1, 1, 2]
+        prob = np.array([[0.9, 0.1], [0.6, 0.4], [0.65, 0.35], [0.2, 0.8]])
+        score = roc_auc_score(gold, pred, prob)
+        self.assertEqual(score, 0.75)
 
 
 if __name__ == "__main__":

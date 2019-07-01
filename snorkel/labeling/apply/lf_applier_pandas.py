@@ -9,7 +9,7 @@ from snorkel.labeling.lf import LabelingFunction
 from snorkel.labeling.preprocess import PreprocessorMode
 from snorkel.types import DataPoint
 
-from .lf_applier import BaseLFApplier
+from .lf_applier import BaseLFApplier, RowData
 
 PandasRowData = List[Tuple[int, int]]
 
@@ -35,6 +35,14 @@ def apply_lfs_to_data_point(x: DataPoint, lfs: List[LabelingFunction]) -> Pandas
         if y != 0:
             labels.append((j, y))
     return labels
+
+
+def rows_to_triplets(labels: List[PandasRowData]) -> List[RowData]:
+    """Convert list of list sparse matrix representation to list of triplets."""
+    return [
+        [(index, j, y) for j, y in row_labels]
+        for index, row_labels in enumerate(labels)
+    ]
 
 
 class PandasLFApplier(BaseLFApplier):
@@ -63,8 +71,5 @@ class PandasLFApplier(BaseLFApplier):
         apply_fn = partial(apply_lfs_to_data_point, lfs=self._lfs)
         tqdm.pandas()
         labels = df.progress_apply(apply_fn, axis=1)
-        labels_with_index = [
-            [(index, j, y) for j, y in row_labels]
-            for index, row_labels in enumerate(labels)
-        ]
+        labels_with_index = rows_to_triplets(labels)
         return self._matrix_from_row_data(labels_with_index)

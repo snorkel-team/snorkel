@@ -1,11 +1,11 @@
-from typing import Any, Collection, Mapping, Union
+from typing import Any, Mapping, Sequence, Union
 
 import numpy as np
 import scipy.sparse as sparse
 from torch import Tensor
 
 DataPoint = Any
-DataPoints = Collection[DataPoint]
+DataPoints = Sequence[DataPoint]
 
 Field = Any
 FieldMap = Mapping[str, Field]

@@ -4,11 +4,8 @@ import random
 from collections import defaultdict
 
 import numpy as np
-import scipy.sparse as sparse
 import torch
 from torch.utils.data import Dataset
-
-from snorkel.types import ArrayLike
 
 
 class MetalDataset(Dataset):
@@ -30,115 +27,6 @@ class MetalDataset(Dataset):
 
     def __len__(self):
         return len(self.X)
-
-
-def rargmax(x, eps=1e-8):
-    """Argmax with random tie-breaking
-
-    Args:
-        x: a 1-dim numpy array
-    Returns:
-        the argmax index
-    """
-    idxs = np.where(abs(x - np.max(x, axis=0)) < eps)[0]
-    return np.random.choice(idxs)
-
-
-def pred_to_prob(Y_h, k):
-    """Converts a 1D tensor of predicted labels into a 2D tensor of probabilistic labels
-
-    Args:
-        Y_h: an [n], or [n,1] tensor of predicted (int) labels in {1,...,k}
-        k: the largest possible label in Y_h
-    Returns:
-        Y_s: a torch.FloatTensor of shape [n, k] where Y_s[i, j-1] is the probabilistic
-            label for item i and label j
-    """
-    Y_h = Y_h.clone()
-    if Y_h.dim() > 1:
-        Y_h = Y_h.squeeze()
-    assert Y_h.dim() == 1
-    assert (Y_h >= 1).all()
-    assert (Y_h <= k).all()
-    n = Y_h.shape[0]
-    Y_s = torch.zeros((n, k), dtype=Y_h.dtype, device=Y_h.device)
-    for i, j in enumerate(Y_h):
-        Y_s[i, j - 1] = 1.0
-    return Y_s
-
-
-def arraylike_to_numpy(array_like: ArrayLike) -> np.ndarray:
-    """Convert a 1d array-like (e.g,. list, tensor, etc.) to an np.ndarray"""
-
-    orig_type = type(array_like)
-
-    # Convert to np.ndarray
-    if isinstance(array_like, np.ndarray):
-        pass
-    elif isinstance(array_like, list):
-        array_like = np.array(array_like)
-    elif isinstance(array_like, sparse.spmatrix):
-        array_like = array_like.toarray()
-    elif isinstance(array_like, torch.Tensor):
-        array_like = array_like.numpy()
-    elif not isinstance(array_like, np.ndarray):
-        array_like = np.array(array_like)
-    else:
-        msg = f"Input of type {orig_type} could not be converted to 1d " "np.ndarray"
-        raise ValueError(msg)
-
-    # Correct shape
-    if (array_like.ndim > 1) and (1 in array_like.shape):
-        array_like = array_like.flatten()
-    if array_like.ndim != 1:
-        raise ValueError("Input could not be converted to 1d np.array")
-
-    # Convert to ints
-    if any(array_like % 1):
-        raise ValueError("Input contains at least one non-integer value.")
-    array_like = array_like.astype(np.dtype(int))
-
-    return array_like
-
-
-def convert_labels(Y, source, target):
-    """Convert a matrix from one label type to another
-
-    Args:
-        Y: A np.ndarray or torch.Tensor of labels (ints) using source convention
-        source: The convention the labels are currently expressed in
-        target: The convention to convert the labels to
-    Returns:
-        Y: an np.ndarray or torch.Tensor of labels (ints) using the target convention
-
-    Conventions:
-        'categorical': [0: abstain, 1: positive, 2: negative]
-        'plusminus': [0: abstain, 1: positive, -1: negative]
-        'onezero': [0: negative, 1: positive]
-
-    Note that converting to 'onezero' will combine abstain and negative labels.
-    """
-    if Y is None:
-        return Y
-    if isinstance(Y, np.ndarray):
-        Y = Y.copy()
-        assert Y.dtype == np.int64
-    elif isinstance(Y, torch.Tensor):
-        Y = Y.clone()
-        assert isinstance(Y, torch.LongTensor)
-    else:
-        raise ValueError("Unrecognized label data type.")
-    negative_map = {"categorical": 2, "plusminus": -1, "onezero": 0}
-    Y[Y == negative_map[source]] = negative_map[target]
-    return Y
-
-
-def plusminus_to_categorical(Y):
-    return convert_labels(Y, "plusminus", "categorical")
-
-
-def categorical_to_plusminus(Y):
-    return convert_labels(Y, "categorical", "plusminus")
 
 
 def label_matrix_to_one_hot(L, k=None):

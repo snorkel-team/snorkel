@@ -14,8 +14,8 @@ def error_buckets(
     """Group items by error buckets
 
     Args:
-        gold: an array-like of gold labels (ints)
-        pred: an array-like of predictions (ints)
+        golds: an array-like of gold labels (ints)
+        preds: an array-like of predictions (ints)
         X: an iterable of items
     Returns:
         buckets: A dict of items where buckets[i,j] is a list of items with
@@ -42,8 +42,8 @@ def confusion_matrix(
     """A shortcut method for building a confusion matrix all at once.
 
     Args:
-        gold: an array-like of gold labels (ints)
-        pred: an array-like of predictions (ints)
+        golds: an array-like of gold labels (ints)
+        preds: an array-like of predictions (ints)
         null_pred: If True, include the row corresponding to null predictions
         null_gold: If True, include the col corresponding to null gold labels
         normalize: if True, divide counts by the total number of items
@@ -93,8 +93,8 @@ class ConfusionMatrix(object):
     def add(self, gold, pred):
         """
         Args:
-            gold: a np.ndarray of gold labels (ints)
-            pred: a np.ndarray of predictions (ints)
+            golds: a np.ndarray of gold labels (ints)
+            preds: a np.ndarray of predictions (ints)
         """
         self.counter.update(zip(gold, pred))
 

@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from snorkel.analysis.utils import prob_to_pred
+from snorkel.analysis.utils import probs_to_preds
 from snorkel.end_model.snorkel_config import default_config
 from snorkel.end_model.task import Task
 from snorkel.end_model.utils import move_to_device, recursive_merge_dicts
@@ -252,7 +252,7 @@ class MultitaskModel(nn.Module):
         if return_preds:
             pred_dict = defaultdict(list)
             for task_name, probs in prob_dict.items():
-                pred_dict[task_name] = prob_to_pred(probs)
+                pred_dict[task_name] = probs_to_preds(probs)
 
         results = {"golds": gold_dict, "probs": prob_dict}
 

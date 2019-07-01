@@ -5,7 +5,7 @@ import torch
 from snorkel.types import ArrayLike
 
 
-def prob_to_pred(prob: np.ndarray) -> np.ndarray:
+def probs_to_preds(probs: np.ndarray) -> np.ndarray:
     """Convert an array of probabilistic labels into an array of predictions
 
     Parameters
@@ -22,7 +22,7 @@ def prob_to_pred(prob: np.ndarray) -> np.ndarray:
     return np.argmax(prob, axis=1) + 1
 
 
-def pred_to_prob(pred: np.ndarray, num_classes: int) -> np.ndarray:
+def preds_to_probs(preds: np.ndarray, num_classes: int) -> np.ndarray:
     """Convert an array of probabilistic labels into an array of predictions
 
     Parameters

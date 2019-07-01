@@ -428,7 +428,7 @@ class LabelModel(Classifier):
         # expects training data to feed to the loss functions.
         dataset = MetalDataset([0], [0])
         train_loader = DataLoader(dataset)
-        
+
         # Compute O and initialize params
         if self.config["verbose"]:
             print("Computing O...")

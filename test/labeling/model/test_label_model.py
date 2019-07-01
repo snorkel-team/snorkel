@@ -242,7 +242,9 @@ class LabelModelTest(unittest.TestCase):
         label_model._init_params()
 
         label_model.mu = nn.Parameter(label_model.mu_init.clone() + 0.05)
-        self.assertAlmostEqual(label_model.loss_l2(l2=1.).detach().numpy().ravel()[0], 0.03)
+        self.assertAlmostEqual(
+            label_model.loss_l2(l2=1.0).detach().numpy().ravel()[0], 0.03
+        )
 
     def test_mu_loss(self):
         label_model = LabelModel(k=2, verbose=False)
@@ -257,8 +259,12 @@ class LabelModelTest(unittest.TestCase):
         label_model._init_params()
 
         label_model.mu = nn.Parameter(label_model.mu_init.clone() + 0.05)
-        self.assertAlmostEqual(label_model.loss_l2(l2=1.).detach().numpy().ravel()[0], 0.03)
-        self.assertAlmostEqual(label_model.loss_mu().detach().numpy().ravel()[0], 0.6751751)
+        self.assertAlmostEqual(
+            label_model.loss_l2(l2=1.0).detach().numpy().ravel()[0], 0.03
+        )
+        self.assertAlmostEqual(
+            label_model.loss_mu().detach().numpy().ravel()[0], 0.6751751
+        )
 
     def test_inv_loss(self):
         label_model = LabelModel(k=2, verbose=False)
@@ -266,7 +272,7 @@ class LabelModelTest(unittest.TestCase):
 
         label_model._set_class_balance(class_balance=[0.5, 0.5], Y_dev=None)
         label_model._set_constants(L)
-        label_model._set_dependencies(deps=[(1,2)])
+        label_model._set_dependencies(deps=[(1, 2)])
         label_model._generate_O(L)
 
         label_model.inv_form = True
@@ -276,7 +282,6 @@ class LabelModelTest(unittest.TestCase):
 
         Q = label_model.get_Q()
         self.assertAlmostEqual(Q[0, 0], 0.89285714)
-
 
 
 if __name__ == "__main__":

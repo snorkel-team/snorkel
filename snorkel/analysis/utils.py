@@ -19,7 +19,7 @@ def probs_to_preds(probs: np.ndarray) -> np.ndarray:
     np.ndarray
         A [num_datapoints, 1] array of predictions (integers in [1, ..., num_classes])
     """
-    return np.argmax(prob, axis=1) + 1
+    return np.argmax(probs, axis=1) + 1
 
 
 def preds_to_probs(preds: np.ndarray, num_classes: int) -> np.ndarray:
@@ -36,7 +36,7 @@ def preds_to_probs(preds: np.ndarray, num_classes: int) -> np.ndarray:
         A [num_datapoints, num_classes] array of probabilistic labels with probability
         of 1.0 in the column corresponding to the prediction
     """
-    return np.eye(num_classes)[pred.squeeze() - 1]
+    return np.eye(num_classes)[preds.squeeze() - 1]
 
 
 def arraylike_to_numpy(array_like: ArrayLike) -> np.ndarray:

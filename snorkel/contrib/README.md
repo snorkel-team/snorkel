@@ -24,4 +24,4 @@ of project `foo`, and their full paths are `contrib/foo/snorkel/labeling/foo_ops
 and `contrib/foo/test/labeling/foo_ops_test.py`.
 
 
-*Adapted from [TensorFlow contrib](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib).
+*Adapted from [TensorFlow contrib](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib).*

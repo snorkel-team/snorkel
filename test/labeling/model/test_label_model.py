@@ -216,7 +216,7 @@ class LabelModelTest(unittest.TestCase):
             label_model.loss_l2(l2=1.0).detach().numpy().ravel()[0], 0.03
         )
         self.assertAlmostEqual(
-            label_model.loss_l2(l2=np.ones(6,)).detach().numpy().ravel()[0], 0.03
+            label_model.loss_l2(l2=np.ones(6)).detach().numpy().ravel()[0], 0.03
         )
         self.assertAlmostEqual(
             label_model.loss_mu().detach().numpy().ravel()[0], 0.6751751
@@ -237,7 +237,7 @@ class LabelModelTest(unittest.TestCase):
 
         label_model.train_model(L, n_epochs=1, prec_init=1.0)
         self.assertAlmostEqual(label_model.prec_init.detach().numpy().ravel()[0], 1.0)
-        
+
     def test_loss_decrease(self):
         L = np.array([[1, 0, 1], [1, 2, 1]])
         label_model = self._set_up_model(L)

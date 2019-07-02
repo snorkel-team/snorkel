@@ -5,15 +5,10 @@ import torch
 import torch.nn as nn
 
 from snorkel.labeling.model.label_model import LabelModel
+from scipy.sparse import csr_matrix
 
 
 class LabelModelTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.n_iters = 1
-        cls.n = 10000
-        cls.m = 10
-        cls.k = 2
 
     def _set_up_model(self, L, deps=[], class_balance=[0.5, 0.5]):
         label_model = LabelModel(k=2, verbose=False)
@@ -28,11 +23,16 @@ class LabelModelTest(unittest.TestCase):
 
         return label_model
 
-    def test_model_constants(self):
+    def test_L_form(self):
         label_model = LabelModel(k=2, verbose=False)
 
         # Test dimension constants
-        L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 2]])
+        L = np.array([[1, 2, 1], [1, 0, 1], [2, 1, 1], [1, 2, -1]])
+        L_sparse = csr_matrix(L)
+        with self.assertRaises(ValueError):
+            self._check_L(L_sparse)
+
+        L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 1]])
         label_model._set_constants(L)
         self.assertEqual(label_model.n, 4)
         self.assertEqual(label_model.m, 3)

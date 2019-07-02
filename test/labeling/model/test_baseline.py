@@ -13,10 +13,12 @@ class BaselineModelTest(unittest.TestCase):
     def test_random_vote(self):
         L = np.array([[1, 2, 1], [0, 4, 3], [3, 0, 0], [1, 2, 2]])
         rand_voter = RandomVoter()
-        rand_voter.train_model()
         Y_p = rand_voter.predict_proba(L)
         self.assertLessEqual(Y_p.max(), 1.0)
         self.assertGreaterEqual(Y_p.min(), 0.0)
+        np.testing.assert_array_almost_equal(
+            np.sum(Y_p, axis=1), np.ones(np.shape(L)[0])
+        )
 
     def test_majority_class_vote(self):
         L = np.array([[1, 2, 1], [2, 2, 1], [2, 2, 1], [0, 0, 2]])
@@ -30,7 +32,6 @@ class BaselineModelTest(unittest.TestCase):
     def test_majority_label_vote(self):
         L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [0, 0, 2]])
         ml_voter = MajorityLabelVoter()
-        ml_voter.train_model()
         Y_p = ml_voter.predict_proba(L)
 
         Y_p_true = np.array([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [0.0, 1.0]])

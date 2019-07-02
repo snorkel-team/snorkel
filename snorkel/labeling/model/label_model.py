@@ -183,8 +183,8 @@ class LabelModel(Classifier):
             prec_init = train_config["prec_init"] * torch.ones(self.m)
         else:
             prec_init = torch.from_numpy(train_config["prec_init"])
-            if prec_init.shape[0] != self.m:
-                raise ValueError(f"prec_init must have shape {self.m}.")
+        if prec_init.shape[0] != self.m:
+            raise ValueError(f"prec_init must have shape {self.m}.")
 
         # Get the per-value labeling propensities
         # Note that self.O must have been computed already!

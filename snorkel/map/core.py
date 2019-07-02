@@ -167,12 +167,10 @@ class Mapper(BaseMapper):
             }
         if self.mode == MapperMode.NONE:
             raise ValueError("No Mapper mode set. Use `Mapper.set_mode(...)`.")
-        if self.mode in (MapperMode.NAMESPACE, MapperMode.PANDAS):
+        if self.mode in (MapperMode.NAMESPACE, MapperMode.PANDAS, MapperMode.DASK):
             for k, v in mapped_fields.items():
                 setattr(x, k, v)
             return x
-        if self.mode == MapperMode.DASK:
-            raise NotImplementedError("Dask Mapper mode not implemented")
         if self.mode == MapperMode.SPARK:
             raise NotImplementedError("Spark Mapper mode not implemented")
         else:

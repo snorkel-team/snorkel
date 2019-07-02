@@ -129,10 +129,6 @@ class TestMapperCore(unittest.TestCase):
         with self.assertRaises(ValueError):
             split_words(x)
 
-        split_words.set_mode(MapperMode.DASK)
-        with self.assertRaises(NotImplementedError):
-            split_words(x)
-
         split_words.set_mode(MapperMode.SPARK)
         with self.assertRaises(NotImplementedError):
             split_words(x)

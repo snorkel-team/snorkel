@@ -1,4 +1,3 @@
-import random
 import unittest
 from functools import partial
 
@@ -87,12 +86,6 @@ class SlicingTest(unittest.TestCase):
         trainer = Trainer(**self.trainer_config)
         trainer.train_model(model, dataloaders)
         model.score(dataloaders)
-
-
-def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
 
 
 def create_data(n):

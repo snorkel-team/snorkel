@@ -68,12 +68,12 @@ def metric_score(
     return func(*inputs, **kwargs)
 
 
-def coverage_score(preds: np.ndarray) -> float:
+def _coverage_score(preds: np.ndarray) -> float:
     """A helper used by metric_score() to calculate coverage (percent not abstained)"""
     return np.sum(preds != 0) / len(preds)
 
 
-def roc_auc_score(golds: np.ndarray, probs: np.ndarray) -> float:
+def _roc_auc_score(golds: np.ndarray, probs: np.ndarray) -> float:
     """A helper used by metric_score() to calculate roc_auc score (see sklearn)"""
     if not probs.shape[1] == 2:
         raise ValueError(
@@ -86,11 +86,11 @@ def roc_auc_score(golds: np.ndarray, probs: np.ndarray) -> float:
 # for details on the definitions and available kwargs for all metrics from scikit-learn
 METRICS = {
     "accuracy": Metric(skmetrics.accuracy_score),
-    "coverage": Metric(coverage_score, ["preds"]),
+    "coverage": Metric(_coverage_score, ["preds"]),
     "precision": Metric(skmetrics.precision_score),
     "recall": Metric(skmetrics.recall_score),
     "f1": Metric(skmetrics.f1_score),
     "fbeta": Metric(skmetrics.fbeta_score),
     "matthews_corrcoef": Metric(skmetrics.matthews_corrcoef),
-    "roc_auc": Metric(roc_auc_score, ["golds", "probs"]),
+    "roc_auc": Metric(_roc_auc_score, ["golds", "probs"]),
 }

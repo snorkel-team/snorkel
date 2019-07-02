@@ -164,11 +164,6 @@ class LabelModel(Classifier):
         self.d = L_aug.shape[1]
         self.O = torch.from_numpy(L_aug.T @ L_aug / self.n).float()
 
-    def _generate_O_inv(self, L):
-        """Form the *inverse* overlaps matrix"""
-        self._generate_O(L)
-        self.O_inv = torch.from_numpy(np.linalg.inv(self.O.numpy())).float()
-
     def _init_params(self):
         """Initialize the learned params
 
@@ -327,14 +322,6 @@ class LabelModel(Classifier):
 
         # Note that mu is a matrix and this is the *Frobenius norm*
         return torch.norm(D @ (self.mu - self.mu_init)) ** 2
-
-    def loss_inv_Z(self, *args):
-        return torch.norm((self.O_inv + self.Z @ self.Z.t())[self.mask]) ** 2
-
-    def loss_inv_mu(self, *args, l2=0):
-        loss_1 = torch.norm(self.Q - self.mu @ self.P @ self.mu.t()) ** 2
-        loss_2 = torch.norm(torch.sum(self.mu @ self.P, 1) - torch.diag(self.O)) ** 2
-        return loss_1 + loss_2 + self.loss_l2(l2=l2)
 
     def loss_mu(self, *args, l2=0):
         loss_1 = torch.norm((self.O - self.mu @ self.P @ self.mu.t())[self.mask]) ** 2

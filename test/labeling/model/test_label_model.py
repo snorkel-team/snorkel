@@ -15,6 +15,19 @@ class LabelModelTest(unittest.TestCase):
         cls.m = 10
         cls.k = 2
 
+    def _set_up_model(self, L, deps=[], class_balance=[0.5, 0.5]):
+        label_model = LabelModel(k=2, verbose=False)
+        label_model._set_constants(L)
+        label_model._set_dependencies(deps=deps)
+        label_model._generate_O(L)
+        label_model._build_mask()
+        label_model._get_augmented_label_matrix(L, higher_order=True)
+        label_model.inv_form = False
+        label_model._set_class_balance(class_balance=class_balance, Y_dev=None)
+        label_model._init_params()
+
+        return label_model
+
     def test_model_constants(self):
         label_model = LabelModel(k=2, verbose=False)
 
@@ -33,13 +46,8 @@ class LabelModelTest(unittest.TestCase):
         np.testing.assert_array_almost_equal(label_model.p, np.array([0.6, 0.4]))
 
     def test_generate_O(self):
-        label_model = LabelModel(k=2, verbose=False)
-
-        # Test inverse from L
         L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 2]])
-        label_model._set_constants(L)
-        label_model._set_dependencies(deps=[])
-        label_model._generate_O(L)
+        label_model = self._set_up_model(L)
 
         true_O = np.array(
             [
@@ -94,16 +102,8 @@ class LabelModelTest(unittest.TestCase):
         self.assertEqual(L_aug[2, j], 1)
 
     def test_conditional_probs(self):
-        label_model = LabelModel(k=2, verbose=False)
-
         L = np.array([[1, 2, 1], [1, 2, 1]])
-        label_model._set_constants(L)
-        label_model._set_dependencies(deps=[])
-        label_model._generate_O(L)
-        label_model.inv_form = False
-        label_model._set_class_balance(class_balance=[0.6, 0.4], Y_dev=None)
-        label_model._init_params()
-
+        label_model = self._set_up_model(L, class_balance=[0.6, 0.4])
         probs = label_model.get_conditional_probs()
         self.assertLessEqual(probs.max(), 1.0)
         self.assertGreaterEqual(probs.min(), 0.0)
@@ -130,13 +130,9 @@ class LabelModelTest(unittest.TestCase):
         np.testing.assert_array_almost_equal(accs, np.array([0.7, 0.825]))
 
     def test_build_mask(self):
-        label_model = LabelModel(k=2, verbose=False)
+
         L = np.array([[1, 2, 1], [1, 2, 1]])
-        label_model._set_constants(L)
-        label_model._set_dependencies(deps=[])
-        label_model._generate_O(L)
-        label_model._build_mask()
-        mask = label_model.mask.numpy()
+        label_model = self._set_up_model(L)
 
         true_mask = np.array(
             [
@@ -149,13 +145,10 @@ class LabelModelTest(unittest.TestCase):
             ]
         )
 
+        mask = label_model.mask.numpy()
         np.testing.assert_array_equal(mask, true_mask)
 
-        label_model._set_dependencies(deps=[(1, 2)])
-        label_model._generate_O(L)
-        label_model._build_mask()
-        mask = label_model.mask.numpy()
-
+        label_model = self._set_up_model(L, deps=[(1, 2)])
         true_mask = np.array(
             [
                 [0, 0, 1, 1, 1, 1],
@@ -167,18 +160,12 @@ class LabelModelTest(unittest.TestCase):
             ]
         )
 
+        mask = label_model.mask.numpy()
         np.testing.assert_array_equal(mask, true_mask)
 
     def test_init_params(self):
-        label_model = LabelModel(k=2, verbose=False)
         L = np.array([[1, 2, 1], [1, 0, 1]])
-        label_model._set_constants(L)
-        label_model._set_dependencies(deps=[])
-        label_model._generate_O(L)
-        label_model._build_mask()
-        label_model.inv_form = False
-        label_model._set_class_balance(class_balance=[0.6, 0.4], Y_dev=None)
-        label_model._init_params()
+        label_model = self._set_up_model(L, class_balance=[0.6, 0.4])
 
         mu_init = label_model.mu_init.numpy()
         true_mu_init = np.array(
@@ -196,15 +183,8 @@ class LabelModelTest(unittest.TestCase):
         np.testing.assert_array_equal(mu_init, true_mu_init)
 
     def test_predict_proba(self):
-        label_model = LabelModel(k=2, verbose=False)
         L = np.array([[1, 2, 1], [1, 2, 1]])
-        label_model._set_constants(L)
-        label_model._set_dependencies(deps=[])
-        label_model._generate_O(L)
-        label_model._build_mask()
-        label_model.inv_form = False
-        label_model._set_class_balance(class_balance=[0.5, 0.5], Y_dev=None)
-        label_model._init_params()
+        label_model = self._set_up_model(L)
 
         label_model.mu = nn.Parameter(label_model.mu_init.clone())
         probs = label_model.predict_proba(L)
@@ -212,16 +192,9 @@ class LabelModelTest(unittest.TestCase):
         true_probs = np.array([[0.99, 0.01], [0.99, 0.01]])
         np.testing.assert_array_almost_equal(probs, true_probs)
 
-        label_model = LabelModel(k=2, verbose=False)
         L = np.array([[1, 2, 1], [1, 2, 0]])
-        label_model._set_constants(L)
-        label_model._set_dependencies(deps=[(1, 2)])
-        label_model._generate_O(L)
-        label_model._build_mask()
+        label_model = self._set_up_model(L, deps=[(1, 2)])
         label_model._get_augmented_label_matrix(L, higher_order=True)
-        label_model.inv_form = False
-        label_model._set_class_balance(class_balance=[0.5, 0.5], Y_dev=None)
-        label_model._init_params()
 
         label_model.mu = nn.Parameter(label_model.mu_init.clone())
         probs = label_model.predict_proba(L)
@@ -230,16 +203,8 @@ class LabelModelTest(unittest.TestCase):
         np.testing.assert_array_almost_equal(probs[1, :], true_probs)
 
     def test_l2_loss(self):
-        label_model = LabelModel(k=2, verbose=False)
         L = np.array([[1, 0, 1], [1, 2, 0]])
-        label_model._set_constants(L)
-        label_model._set_dependencies(deps=[])
-        label_model._generate_O(L)
-        label_model._build_mask()
-        label_model._get_augmented_label_matrix(L, higher_order=True)
-        label_model.inv_form = False
-        label_model._set_class_balance(class_balance=[0.5, 0.5], Y_dev=None)
-        label_model._init_params()
+        label_model = self._set_up_model(L)
 
         label_model.mu = nn.Parameter(label_model.mu_init.clone() + 0.05)
         self.assertAlmostEqual(
@@ -247,16 +212,9 @@ class LabelModelTest(unittest.TestCase):
         )
 
     def test_mu_loss(self):
-        label_model = LabelModel(k=2, verbose=False)
         L = np.array([[1, 0, 1], [1, 2, 0]])
-        label_model._set_constants(L)
-        label_model._set_dependencies(deps=[])
-        label_model._generate_O(L)
-        label_model._build_mask()
+        label_model = self._set_up_model(L)
         label_model._get_augmented_label_matrix(L, higher_order=True)
-        label_model.inv_form = False
-        label_model._set_class_balance(class_balance=[0.5, 0.5], Y_dev=None)
-        label_model._init_params()
 
         label_model.mu = nn.Parameter(label_model.mu_init.clone() + 0.05)
         self.assertAlmostEqual(
@@ -267,30 +225,23 @@ class LabelModelTest(unittest.TestCase):
         )
 
     def test_inv_loss(self):
-        label_model = LabelModel(k=2, verbose=False)
         L = np.array([[1, 0, 1], [1, 2, 1]])
-
-        label_model._set_class_balance(class_balance=[0.5, 0.5], Y_dev=None)
-        label_model._set_constants(L)
-        label_model._set_dependencies(deps=[(1, 2)])
-        label_model._generate_O(L)
-
+        label_model = self._set_up_model(L, deps=[(1, 2)])
         label_model.inv_form = True
-        label_model._init_params()
 
         label_model.Z = nn.Parameter(torch.ones(label_model.d, label_model.k)).float()
 
         Q = label_model.get_Q()
         self.assertAlmostEqual(Q[0, 0], 0.89285714)
 
-    def test_train_model(self):
-        label_model = LabelModel(k=2, verbose=False)
+    def test_loss_decrease(self):
         L = np.array([[1, 0, 1], [1, 2, 1]])
+        label_model = self._set_up_model(L)
 
         label_model.train_model(L, n_epochs=1)
         init_loss = label_model.loss_mu().detach().numpy().ravel()[0]
 
-        label_model.train_model(L, n_epochs=1)
+        label_model.train_model(L, n_epochs=10)
         next_loss = label_model.loss_mu().detach().numpy().ravel()[0]
 
         self.assertLessEqual(next_loss, init_loss)

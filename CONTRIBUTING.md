@@ -69,6 +69,23 @@ Here's a `settings.json` that takes advantage of the packages above (except isor
 }
 ```
 
+### Docstrings
+
+Snorkel ♥ documentation.
+We expect all PRs to add or update API documentation for any affected pieces of code.
+We use [NumPy style docstrings](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html), and enforce style compliance with pydocstyle as indicated above.
+Docstrings can be cumbersome to write, so we encourage people to use tooling to speed up the process.
+For VSCode, we like [autoDocstring](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring).
+Just install the extension and add the following configuration to the `settings.json` example above.
+Note that we use PEP 484 type hints, so parameter types should be removed from the docstring.
+
+```json
+{
+    "autoDocstring.docstringFormat": "numpy"
+}
+```
+
+
 ## PRs
 
 ### Submitting PRs

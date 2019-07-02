@@ -3,13 +3,12 @@ import unittest
 import numpy as np
 import torch
 import torch.nn as nn
+from scipy.sparse import csr_matrix
 
 from snorkel.labeling.model.label_model import LabelModel
-from scipy.sparse import csr_matrix
 
 
 class LabelModelTest(unittest.TestCase):
-
     def _set_up_model(self, L, deps=[], class_balance=[0.5, 0.5]):
         label_model = LabelModel(k=2, verbose=False)
         label_model._set_constants(L)
@@ -17,7 +16,7 @@ class LabelModelTest(unittest.TestCase):
         label_model._generate_O(L)
         label_model._build_mask()
         label_model._get_augmented_label_matrix(L, higher_order=True)
-        label_model.inv_form = False
+        label_model.inv_form = len(deps) > 0
         label_model._set_class_balance(class_balance=class_balance, Y_dev=None)
         label_model._init_params()
 
@@ -30,7 +29,7 @@ class LabelModelTest(unittest.TestCase):
         L = np.array([[1, 2, 1], [1, 0, 1], [2, 1, 1], [1, 2, -1]])
         L_sparse = csr_matrix(L)
         with self.assertRaises(ValueError):
-            self._check_L(L_sparse)
+            label_model._check_L(L_sparse)
 
         L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 1]])
         label_model._set_constants(L)
@@ -233,6 +232,11 @@ class LabelModelTest(unittest.TestCase):
 
         Q = label_model.get_Q()
         self.assertAlmostEqual(Q[0, 0], 0.89285714)
+
+        with self.assertRaises(ValueError):
+            label_model.train_model(L, n_epochs=1, prec_init=np.array([1, 0.3]))
+
+        label_model.train_model(L, n_epochs=1)
 
     def test_loss_decrease(self):
         L = np.array([[1, 0, 1], [1, 2, 1]])

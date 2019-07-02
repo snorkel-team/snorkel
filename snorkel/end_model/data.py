@@ -86,22 +86,15 @@ class MultitaskDataLoader(DataLoader):
     """
 
     def __init__(
-        self,
-        task_to_label_dict,
-        dataset,
-        split="train",
-        collate_fn=collate_dicts,
-        **kwargs,
+        self, dataset, collate_fn=collate_dicts, task_to_label_dict=None, **kwargs
     ):
 
         assert isinstance(dataset, MultitaskDataset)
         super().__init__(dataset, collate_fn=collate_fn, **kwargs)
 
-        self.task_to_label_dict = task_to_label_dict
-        self.data_name = dataset.name
-        self.split = split
+        self.task_to_label_dict = task_to_label_dict or {}
 
-        for label in task_to_label_dict.values():
+        for label in self.task_to_label_dict.values():
             if label not in dataset.Y_dict:
                 raise ValueError(
                     f"Label {label} specified in task_to_label_dict could not be found in Y_dict"

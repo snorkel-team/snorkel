@@ -20,37 +20,12 @@ class DatasetTest(unittest.TestCase):
         y1 = torch.Tensor([0, 0, 0, 0, 0])
 
         dataset = MultitaskDataset(
-            X_dict={"data1": x1}, Y_dict={"label1": y1}, name="new_data"
+            X_dict={"data1": x1}, Y_dict={"label1": y1}, name="new_data", split="train"
         )
 
         # Check if the dataset is correctly constructed
         self.assertTrue(torch.equal(dataset[0][0]["data1"], x1[0]))
         self.assertTrue(torch.equal(dataset[0][1]["label1"], y1[0]))
-
-        x2 = [
-            torch.Tensor([1, 2, 3, 4, 5]),
-            torch.Tensor([1, 2, 3, 4]),
-            torch.Tensor([1, 2, 3]),
-            torch.Tensor([1, 2]),
-            torch.Tensor([1]),
-        ]
-
-        dataset.add_features(X_dict={"data2": x2})
-
-        # Check add one more feature to dataset
-        self.assertTrue(torch.equal(dataset[0][0]["data2"], x2[0]))
-
-        y2 = torch.Tensor([1, 1, 1, 1, 1])
-
-        dataset.add_labels(Y_dict={"label2": y2})
-
-        # Check add one more label to dataset
-        self.assertTrue(torch.equal(dataset[0][1]["label2"], y2[0]))
-
-        dataset.remove_label(label_name="label1")
-
-        # Check remove one more label to dataset
-        self.assertTrue("label1" not in dataset.Y_dict)
 
     def test_mtl_dataloader(self):
         """Unit test of MultitaskDataloader"""
@@ -76,16 +51,14 @@ class DatasetTest(unittest.TestCase):
         y2 = torch.Tensor([1, 1, 1, 1, 1])
 
         dataset = MultitaskDataset(
+            name="new_data",
+            split="train",
             X_dict={"data1": x1, "data2": x2},
             Y_dict={"label1": y1, "label2": y2},
-            name="new_data",
         )
 
         dataloader1 = MultitaskDataLoader(
-            task_to_label_dict={"task1": "label1"},
-            dataset=dataset,
-            split="train",
-            batch_size=2,
+            task_to_label_dict={"task1": "label1"}, dataset=dataset, batch_size=2
         )
 
         x_batch, y_batch = next(iter(dataloader1))
@@ -155,3 +128,7 @@ class DatasetTest(unittest.TestCase):
             )
         )
         self.assertTrue(torch.equal(y_batch["label2"], torch.Tensor([[2], [2], [2]])))
+
+
+if __name__ == "__main__":
+    unittest.main()

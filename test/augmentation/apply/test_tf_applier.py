@@ -4,10 +4,7 @@ from types import SimpleNamespace
 import pandas as pd
 
 from snorkel.augmentation.apply import PandasTFApplier, TFApplier
-from snorkel.augmentation.policy import (
-    ApplyOneAugmentationPolicy,
-    RandomAugmentationPolicy,
-)
+from snorkel.augmentation.policy import ApplyOnePolicy, RandomPolicy
 from snorkel.augmentation.tf import transformation_function
 from snorkel.types import DataPoint
 
@@ -32,8 +29,8 @@ def modify_in_place(x: DataPoint) -> DataPoint:
     return x
 
 
-policy = RandomAugmentationPolicy(1, sequence_length=2)
-policy_modify_in_place = ApplyOneAugmentationPolicy()
+policy = RandomPolicy(1, sequence_length=2)
+policy_modify_in_place = ApplyOnePolicy()
 
 
 DATA = [1, 2, 3]

@@ -2,7 +2,7 @@ from typing import Any, List
 
 from tqdm import tqdm
 
-from snorkel.augmentation.policy import AugmentationPolicy
+from snorkel.augmentation.policy import Policy
 from snorkel.augmentation.tf import (
     BaseTransformationFunction,
     TransformationFunctionMode,
@@ -38,7 +38,7 @@ class BaseTFApplier:
     def __init__(
         self,
         tfs: List[BaseTransformationFunction],
-        policy: AugmentationPolicy,
+        policy: Policy,
         k: int = 1,
         keep_original: bool = True,
     ) -> None:

@@ -307,7 +307,7 @@ class LabelModel(Classifier):
         if isinstance(l2, (int, float)):
             D = l2 * torch.eye(self.d)
         else:
-            D = torch.diag(torch.from_numpy(l2)).type(torch.FloatTensor)
+            D = torch.diag(torch.from_numpy(l2)).type(torch.float32)
 
         # Note that mu is a matrix and this is the *Frobenius norm*
         return torch.norm(D @ (self.mu - self.mu_init)) ** 2

@@ -102,7 +102,6 @@ class TestPandasApplier(unittest.TestCase):
         np.testing.assert_equal(L.toarray(), L_PREPROCESS_EXPECTED)
 
     def test_lf_applier_pandas_preprocessor_memoized(self) -> None:
-        df = pd.DataFrame(dict(num=DATA))
         square_hit_tracker = SquareHitTracker()
 
         @preprocessor(memoize=True)
@@ -114,6 +113,7 @@ class TestPandasApplier(unittest.TestCase):
         def fp_memoized(x: DataPoint) -> int:
             return 1 if x.num_squared > 42 else 0
 
+        df = pd.DataFrame(dict(num=DATA))
         applier = PandasLFApplier([f, fp_memoized])
         L = applier.apply(df)
         np.testing.assert_equal(L.toarray(), L_PREPROCESS_EXPECTED)
@@ -137,7 +137,7 @@ class TestPandasApplier(unittest.TestCase):
 
     def test_lf_applier_pandas_spacy_preprocessor_memoized(self) -> None:
         spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
-        spacy.memoize_outputs(True)
+        spacy.memoize = True
 
         @labeling_function(preprocessors=[spacy])
         def first_is_name(x: DataPoint) -> int:
@@ -169,8 +169,42 @@ class TestDaskApplier(unittest.TestCase):
         L = applier.apply(df)
         np.testing.assert_equal(L.toarray(), L_PREPROCESS_EXPECTED)
 
+    def test_lf_applier_pandas_preprocessor_memoized(self) -> None:
+        @preprocessor(memoize=True)
+        def square_memoize(x: DataPoint) -> DataPoint:
+            x.num_squared = x.num ** 2
+            return x
+
+        @labeling_function(preprocessors=[square_memoize])
+        def fp_memoized(x: DataPoint) -> int:
+            return 1 if x.num_squared > 42 else 0
+
+        df = pd.DataFrame(dict(num=DATA))
+        df = dd.from_pandas(df, npartitions=2)
+        applier = DaskLFApplier([f, fp_memoized])
+        L = applier.apply(df)
+        np.testing.assert_equal(L.toarray(), L_PREPROCESS_EXPECTED)
+
     def test_lf_applier_dask_spacy_preprocessor(self) -> None:
         spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
+
+        @labeling_function(preprocessors=[spacy])
+        def first_is_name(x: DataPoint) -> int:
+            return 1 if x.doc[0].pos_ == "PROPN" else 0
+
+        @labeling_function(preprocessors=[spacy])
+        def has_verb(x: DataPoint) -> int:
+            return 1 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else 0
+
+        df = pd.DataFrame(dict(text=TEXT_DATA))
+        df = dd.from_pandas(df, npartitions=2)
+        applier = DaskLFApplier([first_is_name, has_verb])
+        L = applier.apply(df)
+        np.testing.assert_equal(L.toarray(), L_TEXT_EXPECTED)
+
+    def test_lf_applier_pandas_spacy_preprocessor_memoized(self) -> None:
+        spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
+        spacy.memoize = True
 
         @labeling_function(preprocessors=[spacy])
         def first_is_name(x: DataPoint) -> int:

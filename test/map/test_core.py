@@ -71,7 +71,6 @@ class TestMapperCore(unittest.TestCase):
         return SimpleNamespace(num=8, d=dict(my_key=1))
 
     def test_numeric_mapper(self) -> None:
-        square.set_mode(MapperMode.NAMESPACE)
         x_mapped = square(self._get_x())
         # NB: not using `self.assertIsNotNone` due to mypy
         # See https://github.com/python/mypy/issues/5088
@@ -82,7 +81,7 @@ class TestMapperCore(unittest.TestCase):
 
     def test_text_mapper(self) -> None:
         split_words = SplitWordsMapper("text", "text_lower", "text_words")
-        split_words.set_mode(MapperMode.NAMESPACE)
+        split_words.mode = MapperMode.NAMESPACE
         x_mapped = split_words(self._get_x())
         assert x_mapped is not None
         self.assertEqual(x_mapped.num, 8)
@@ -92,7 +91,7 @@ class TestMapperCore(unittest.TestCase):
 
     def test_mapper_same_field(self) -> None:
         split_words = SplitWordsMapper("text", "text", "text_words")
-        split_words.set_mode(MapperMode.NAMESPACE)
+        split_words.mode = MapperMode.NAMESPACE
         x = self._get_x()
         x_mapped = split_words(x)
         self.assertEqual(x.num, 8)
@@ -105,7 +104,7 @@ class TestMapperCore(unittest.TestCase):
 
     def test_mapper_default_args(self) -> None:
         split_words = SplitWordsMapperDefaultArgs()
-        split_words.set_mode(MapperMode.NAMESPACE)
+        split_words.mode = MapperMode.NAMESPACE
         x_mapped = split_words(self._get_x())
         assert x_mapped is not None
         self.assertEqual(x_mapped.num, 8)
@@ -114,7 +113,6 @@ class TestMapperCore(unittest.TestCase):
         self.assertEqual(x_mapped.words, ["Henry", "has", "fun"])
 
     def test_mapper_in_place(self) -> None:
-        modify_in_place.set_mode(MapperMode.NAMESPACE)
         x = self._get_x_dict()
         x_mapped = modify_in_place(x)
         self.assertEqual(x.num, 8)
@@ -127,7 +125,7 @@ class TestMapperCore(unittest.TestCase):
 
     def test_mapper_returns_none(self) -> None:
         mapper = MapperReturnsNone()
-        mapper.set_mode(MapperMode.NAMESPACE)
+        mapper.mode = MapperMode.NAMESPACE
         x_mapped = mapper(self._get_x())
         self.assertIsNone(x_mapped)
 
@@ -139,7 +137,6 @@ class TestMapperCore(unittest.TestCase):
             x.num_squared = square_hit_tracker(x.num)
             return x
 
-        square.set_mode(MapperMode.NAMESPACE)
         x8 = self._get_x()
         x9 = self._get_x(9)
         x8_mapped = square(x8)
@@ -175,7 +172,6 @@ class TestMapperCore(unittest.TestCase):
                 return None
             return x
 
-        square.set_mode(MapperMode.NAMESPACE)
         x21 = self._get_x(21)
         x21_mapped = square(x21)
         self.assertIsNone(x21_mapped)
@@ -192,7 +188,6 @@ class TestMapperCore(unittest.TestCase):
             x.num_squared = square_hit_tracker(x.num)
             return x
 
-        square.set_mode(MapperMode.NAMESPACE)
         x8 = self._get_x()
         x9 = self._get_x(9)
         x8_mapped = square(x8)
@@ -223,15 +218,15 @@ class TestMapperCore(unittest.TestCase):
         x = self._get_x()
         split_words = SplitWordsMapper("text", "text_lower", "text_words")
 
-        split_words.set_mode(18)  # type: ignore
+        split_words.mode = 18  # type: ignore
         with self.assertRaises(ValueError):
             split_words(x)
 
-        split_words.set_mode(MapperMode.NONE)
+        split_words.mode = MapperMode.NONE
         with self.assertRaises(ValueError):
             split_words(x)
 
-        split_words.set_mode(MapperMode.SPARK)
+        split_words.mode = MapperMode.SPARK
         with self.assertRaises(NotImplementedError):
             split_words(x)
 

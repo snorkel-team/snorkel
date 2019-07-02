@@ -94,6 +94,19 @@ class BaseMapper:
 
     Implements mode setting, memoization, and deep copy functionality.
 
+    Parameters
+    ----------
+    memoize
+        Memoize mapper outputs?
+
+    Attributes
+    ----------
+    mode
+        Mapper mode, corresponding to input data point format.
+        See `MapperMode`.
+    memoize
+        Memoize mapper outputs?
+
     Raises
     ------
     NotImplementedError
@@ -101,32 +114,13 @@ class BaseMapper:
     """
 
     def __init__(self, memoize: bool) -> None:
-        self.memoize_outputs(memoize)
+        self.mode = MapperMode.NONE
+        self.memoize = memoize
         self.reset_cache()
-
-    def memoize_outputs(self, mode: bool) -> None:
-        """Set memoization mode.
-
-        Parameters
-        ----------
-        mode
-            Memoize mapper outputs?
-        """
-        self._memoize_outputs = mode
 
     def reset_cache(self) -> None:
         """Reset the memoization cache."""
         self._cache: Dict[DataPoint, DataPoint] = {}
-
-    def set_mode(self, mode: MapperMode) -> None:
-        """Change mapper mode, depending on data point format.
-
-        Parameters
-        ----------
-        mode
-            Mode to set mapper to
-        """
-        self.mode = mode
 
     def _generate_mapped_data_point(self, x: DataPoint) -> Optional[DataPoint]:
         raise NotImplementedError
@@ -135,7 +129,10 @@ class BaseMapper:
         """Run mapping function on input data point.
 
         Deep copies the data point first so as not to make
-        accidental in-place changes.
+        accidental in-place changes. If `memoize` is set to
+        `True`, an internal cache is checked for results. If
+        no cached results are found, the computed results are
+        added to the cache.
 
         Parameters
         ----------
@@ -147,7 +144,7 @@ class BaseMapper:
         DataPoint
             Mapped data point of same format but possibly different fields
         """
-        if self._memoize_outputs:
+        if self.memoize:
             # NB: don't do `self._cache.get(...)` first in case cached value is `None`
             x_hashable = get_hashable(x)
             if x_hashable in self._cache:
@@ -157,7 +154,7 @@ class BaseMapper:
         # with a dictionary attribute won't create a copy of the dictionary
         x = pickle.loads(pickle.dumps(x))
         x_mapped = self._generate_mapped_data_point(x)
-        if self._memoize_outputs:
+        if self.memoize:
             self._cache[x_hashable] = x_mapped
         return x_mapped
 
@@ -203,6 +200,8 @@ class Mapper(BaseMapper):
     mode
         Mapper mode, corresponding to input data point format.
         See `MapperMode`.
+    memoize
+        Memoize mapper outputs?
 
     Raises
     ------
@@ -223,7 +222,6 @@ class Mapper(BaseMapper):
             field_names = {k: k for k in get_parameters(self.run)[1:]}
         self.field_names = field_names
         self.mapped_field_names = mapped_field_names
-        self.mode = MapperMode.NONE
         super().__init__(memoize)
 
     def run(self, **kwargs: Any) -> Optional[FieldMap]:
@@ -257,7 +255,7 @@ class Mapper(BaseMapper):
                 v: mapped_fields[k] for k, v in self.mapped_field_names.items()
             }
         if self.mode == MapperMode.NONE:
-            raise ValueError("No Mapper mode set. Use `Mapper.set_mode(...)`.")
+            raise ValueError("No Mapper mode set. Use `Mapper.mode = ...`.")
         if self.mode in (MapperMode.NAMESPACE, MapperMode.PANDAS, MapperMode.DASK):
             for k, v in mapped_fields.items():
                 setattr(x, k, v)
@@ -305,6 +303,11 @@ class lambda_mapper:
     memoize
         Memoize mapper outputs?
 
+    Attributes
+    ----------
+    memoize
+        Memoize mapper outputs?
+
     Example
     -------
 
@@ -314,7 +317,7 @@ class lambda_mapper:
         x.article = f"{title} {body}"
         return x
 
-    isinstance(concatenate_text, LambdaMapper)  # true
+    isinstance(concatenate_text, LambdaMapper)  # True
     ```
     """
 

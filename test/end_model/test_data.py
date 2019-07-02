@@ -65,7 +65,7 @@ class DatasetTest(unittest.TestCase):
 
         # Check if the dataloader is correctly constructed
         self.assertEqual(dataloader1.task_to_label_dict, {"task1": "label1"})
-        self.assertEqual(dataloader1.split, "train")
+        self.assertEqual(dataloader1.dataset.split, "train")
         self.assertTrue(torch.equal(x_batch["data1"], torch.Tensor([[1, 0], [1, 2]])))
         self.assertTrue(
             torch.equal(
@@ -78,7 +78,6 @@ class DatasetTest(unittest.TestCase):
         dataloader2 = MultitaskDataLoader(
             task_to_label_dict={"task2": "label2"},
             dataset=dataset,
-            split="test",
             batch_size=3,
         )
 
@@ -86,7 +85,7 @@ class DatasetTest(unittest.TestCase):
 
         # Check if the dataloader with differet batch size is correctly constructed
         self.assertEqual(dataloader2.task_to_label_dict, {"task2": "label2"})
-        self.assertEqual(dataloader2.split, "test")
+        self.assertEqual(dataloader2.dataset.split, "train")
         self.assertTrue(
             torch.equal(
                 x_batch["data1"], torch.Tensor([[1, 0, 0], [1, 2, 0], [1, 2, 3]])

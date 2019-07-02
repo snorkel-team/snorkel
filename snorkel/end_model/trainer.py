@@ -45,7 +45,7 @@ class Trainer(object):
             train_split = [train_split]
 
         train_dataloaders = [
-            dataloader for dataloader in dataloaders if dataloader.split in train_split
+            dl for dl in dataloaders if dl.dataset.split in train_split
         ]
 
         if not train_dataloaders:
@@ -156,7 +156,7 @@ class Trainer(object):
             test_split = [test_split]
 
         all_splits = train_split + valid_split + test_split
-        if not all([dl.split in all_splits for dl in dataloaders]):
+        if not all([dl.dataset.split in all_splits for dl in dataloaders]):
             raise ValueError(f"Dataloader splits must be one of {all_splits}")
 
     def _set_checkpointer(self):
@@ -339,7 +339,7 @@ class Trainer(object):
             valid_split = split
 
         valid_dataloaders = [
-            dataloader for dataloader in dataloaders if dataloader.split in valid_split
+            dl for dl in dataloaders if dl.dataset.split in valid_split
         ]
         return model.score(valid_dataloaders)
 

@@ -81,7 +81,6 @@ Note that we use PEP 484 type hints, so parameter types should be removed from t
 
 ```json
 {
-    // ...
     "autoDocstring.docstringFormat": "numpy"
 }
 ```

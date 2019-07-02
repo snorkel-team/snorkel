@@ -50,11 +50,11 @@ class LabelModelTest(unittest.TestCase):
 
         true_O = np.array(
             [
-                [3 / 4, 0, 0, 3 / 4, 1.0 / 2.0, 1 / 4],
+                [3 / 4, 0, 0, 3 / 4, 1.0 / 2, 1 / 4],
                 [0, 1 / 4, 1 / 4, 0, 1 / 4, 0],
                 [0, 1 / 4, 1 / 4, 0, 1 / 4, 0],
-                [3 / 4, 0, 0, 3 / 4, 1.0 / 2.0, 1 / 4],
-                [1.0 / 2.0, 1 / 4, 1 / 4, 1.0 / 2.0, 3 / 4, 0],
+                [3 / 4, 0, 0, 3 / 4, 1 / 2, 1 / 4],
+                [1 / 2, 1 / 4, 1 / 4, 1 / 2, 3 / 4, 0],
                 [1 / 4, 0, 0, 1 / 4, 0, 1 / 4],
             ]
         )
@@ -201,16 +201,7 @@ class LabelModelTest(unittest.TestCase):
         true_probs = np.array([0.99, 0.01])
         np.testing.assert_array_almost_equal(probs[1, :], true_probs)
 
-    def test_l2_loss(self):
-        L = np.array([[1, 0, 1], [1, 2, 0]])
-        label_model = self._set_up_model(L)
-
-        label_model.mu = nn.Parameter(label_model.mu_init.clone() + 0.05)
-        self.assertAlmostEqual(
-            label_model.loss_l2(l2=1.0).detach().numpy().ravel()[0], 0.03
-        )
-
-    def test_mu_loss(self):
+    def test_loss(self):
         L = np.array([[1, 0, 1], [1, 2, 0]])
         label_model = self._set_up_model(L)
         label_model._get_augmented_label_matrix(L, higher_order=True)

@@ -87,16 +87,6 @@ class SlicingTest(unittest.TestCase):
         trainer = Trainer(**self.trainer_config)
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
-        # self.assertGreater(scores["task1/TestData/train/accuracy"], 0.9)
-        # self.assertGreater(scores["task1/TestData/valid/accuracy"], 0.9)
-        # self.assertGreater(scores["task1_slice:f_ind/TestData/valid/f1"], 0.9)
-        # self.assertGreater(scores["task1_slice:f_pred/TestData/valid/accuracy"], 0.9)
-        # self.assertGreater(scores["task1_slice:g_ind/TestData/valid/f1"], 0.9)
-        # self.assertGreater(scores["task1_slice:g_pred/TestData/valid/accuracy"], 0.9)
-        # self.assertGreater(scores["task1_slice:base_ind/TestData/valid/f1"], 0.9)
-        # self.assertGreater(scores["task1_slice:base_pred/TestData/valid/accuracy"], 0.9)
-        # self.assertGreater(scores["task2/TestData/valid/accuracy"], 0.9)
-        # self.assertGreater(scores["task2/TestData/valid/accuracy"], 0.9)
 
 
 def set_seed(seed):

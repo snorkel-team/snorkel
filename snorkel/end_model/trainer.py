@@ -6,6 +6,7 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 
+from snorkel.end_model.batch_schedulers import batch_schedulers
 from snorkel.end_model.loggers import (
     Checkpointer,
     LogManager,
@@ -13,8 +14,6 @@ from snorkel.end_model.loggers import (
     TensorBoardWriter,
 )
 from snorkel.end_model.model import MultitaskModel
-from snorkel.end_model.schedulers.sequential_scheduler import SequentialScheduler
-from snorkel.end_model.schedulers.shuffled_scheduler import ShuffledScheduler
 from snorkel.end_model.snorkel_config import default_config
 from snorkel.end_model.utils import recursive_merge_dicts
 
@@ -66,7 +65,7 @@ class Trainer(object):
         self._set_log_manager()
         self._set_optimizer(model)
         self._set_lr_scheduler(model)
-        self._set_task_scheduler(model, dataloaders)
+        self._set_batch_scheduler()
 
         # Set to training mode
         model.train()
@@ -78,7 +77,7 @@ class Trainer(object):
 
         for epoch_num in range(self.config["n_epochs"]):
             batches = tqdm(
-                enumerate(self.task_scheduler.get_batches(train_dataloaders)),
+                enumerate(self.batch_scheduler.get_batches(train_dataloaders)),
                 total=self.n_batches_per_epoch,
                 disable=(not self.config["progress_bar"]),
                 desc=f"Epoch {epoch_num}:",
@@ -316,17 +315,13 @@ class Trainer(object):
             if min_lr and self.optimizer.param_groups[0]["lr"] < min_lr:
                 self.optimizer.param_groups[0]["lr"] = min_lr
 
-    def _set_task_scheduler(self, model, dataloaders):
+    def _set_batch_scheduler(self):
         """Set task scheduler for learning process"""
-        opt = self.config["task_scheduler"]
+        scheduler_class = batch_schedulers.get(self.config["batch_scheduler"])
+        if not scheduler_class:
+            raise ValueError(f"Unrecognized batch scheduler option '{scheduler_class}'")
 
-        # TODO: Restore ProportionalScheduler
-        if opt == "sequential":
-            self.task_scheduler = SequentialScheduler()
-        elif opt == "shuffled":
-            self.task_scheduler = ShuffledScheduler()
-        else:
-            raise ValueError(f"Unrecognized task scheduler option '{opt}'")
+        self.batch_scheduler = scheduler_class()
 
     def _evaluate(self, model, dataloaders, split):
         if not isinstance(split, list):

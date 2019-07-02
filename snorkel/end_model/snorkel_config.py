@@ -47,5 +47,5 @@ default_config = {
         "exponential_config": {"gamma": 0.9},
         "plateau_config": {"factor": 0.5, "patience": 10, "threshold": 0.0001},
     },
-    "task_scheduler": "shuffled",  # [sequential, shuffled]
+    "batch_scheduler": "shuffled",  # [sequential, shuffled]
 }

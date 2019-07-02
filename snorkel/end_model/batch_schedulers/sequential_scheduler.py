@@ -1,16 +1,14 @@
-import random
-
-from snorkel.end_model.schedulers.scheduler import Scheduler
+from .scheduler import Scheduler
 
 
-class ShuffledScheduler(Scheduler):
-    """Return batches from all dataloaders in shuffled order for each epoch"""
+class SequentialScheduler(Scheduler):
+    """Return batches from all dataloaders in sequential order."""
 
     def __init__(self):
         super().__init__()
 
     def get_batches(self, dataloaders):
-        """Return batches in shuffled order.
+        """Return batches in sequential order.
 
         :param dataloaders: a list of dataloaders
         :type dataloaders: list
@@ -26,13 +24,8 @@ class ShuffledScheduler(Scheduler):
         data_loaders = [iter(dataloader) for dataloader in dataloaders]
         splits = [dataloader.split for dataloader in dataloaders]
 
-        dataloader_indexer = []
-        for idx, count in enumerate(batch_counts):
-            dataloader_indexer.extend([idx] * count)
-
-        random.shuffle(dataloader_indexer)
-
-        for index in dataloader_indexer:
-            yield next(data_loaders[index]), task_to_label_dicts[index], data_names[
-                index
-            ], splits[index]
+        for task_to_label_dict, data_name, batch_count, data_loader, split in zip(
+            task_to_label_dicts, data_names, batch_counts, data_loaders, splits
+        ):
+            for batch in range(batch_count):
+                yield next(data_loader), task_to_label_dict, data_name, split

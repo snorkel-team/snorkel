@@ -82,7 +82,7 @@ class Trainer(object):
                 disable=(not self.config["progress_bar"]),
                 desc=f"Epoch {epoch_num}:",
             )
-            for batch_num, (batch, task_to_label_dict, data_name, split) in batches:
+            for batch_num, (batch, dataloader) in batches:
                 X_dict, Y_dict = batch
 
                 total_batch_num = epoch_num * self.n_batches_per_epoch + batch_num
@@ -96,15 +96,23 @@ class Trainer(object):
 
                 # Perform forward pass and calcualte the loss and count
                 loss_dict, count_dict = model.calculate_loss(
-                    X_dict, Y_dict, task_to_label_dict, data_name, split
+                    X_dict, Y_dict, dataloader.task_to_label_dict
                 )
 
                 # Update running loss and count
-                for identifier in loss_dict.keys():
-                    self.running_losses[identifier] += (
-                        loss_dict[identifier].item() * count_dict[identifier]
+                for task_name in loss_dict.keys():
+                    identifier = "/".join(
+                        [
+                            task_name,
+                            dataloader.dataset.name,
+                            dataloader.dataset.split,
+                            "loss",
+                        ]
                     )
-                    self.running_counts[identifier] += count_dict[identifier]
+                    self.running_losses[identifier] += (
+                        loss_dict[task_name].item() * count_dict[task_name]
+                    )
+                    self.running_counts[task_name] += count_dict[task_name]
 
                 # Skip the backward pass if no loss is calcuated
                 if not loss_dict:
@@ -125,6 +133,7 @@ class Trainer(object):
                 # Update the parameters
                 self.optimizer.step()
 
+                # Update metrics
                 self.metrics.update(self._logging(model, dataloaders, batch_size))
 
                 batches.set_postfix(self.metrics)

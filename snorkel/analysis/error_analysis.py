@@ -1,5 +1,6 @@
+import typing
 from collections import Counter, defaultdict
-from typing import Any, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -108,7 +109,7 @@ class ConfusionMatrix(object):
         null_gold
             If True, include the col corresponding to null gold labels
         """
-        self.counter = Counter()
+        self.counter: typing.Counter = Counter()
         self.mat = None
         self.null_pred = null_pred
         self.null_gold = null_gold
@@ -118,7 +119,7 @@ class ConfusionMatrix(object):
             self.compile()
         return str(self.mat)
 
-    def add(self, golds: ArrayLike, preds: ArrayLike) -> None:
+    def add(self, golds: Iterable[Any], preds: Iterable[Any]) -> None:
         """
         Parameters
         ----------

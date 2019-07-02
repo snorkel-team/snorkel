@@ -1,17 +1,29 @@
 import logging
 import os
 from collections import defaultdict
-from collections.abc import Iterable
-from typing import Any, Dict, List, Optional
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import torch
 import torch.nn as nn
 
 from snorkel.analysis.utils import probs_to_preds
-from snorkel.end_model.snorkel_config import default_config
-from snorkel.end_model.task import Task
-from snorkel.end_model.utils import move_to_device, recursive_merge_dicts
+
+from .scorer import Scorer
+from .snorkel_config import default_config
+from .task import Operation, Task
+from .utils import move_to_device, recursive_merge_dicts
 
 
 class MultitaskModel(nn.Module):
@@ -32,11 +44,11 @@ class MultitaskModel(nn.Module):
 
         # Initiate the model attributes
         self.module_pool = nn.ModuleDict()
-        self.task_names = set()
-        self.task_flows = dict()
-        self.loss_funcs = dict()
-        self.output_funcs = dict()
-        self.scorers = dict()
+        self.task_names: Set[str] = set()
+        self.task_flows: Dict[str, List[Operation]] = dict()
+        self.loss_funcs: Dict[str, Callable[..., torch.Tensor]] = dict()
+        self.output_funcs: Dict[str, Callable[..., torch.Tensor]] = dict()
+        self.scorers: Dict[str, Scorer] = dict()
 
         # Build network with given tasks
         self._build_network(tasks)
@@ -66,8 +78,6 @@ class MultitaskModel(nn.Module):
     def _build_network(self, tasks: List[Task]) -> None:
         """Build the MTL network using all tasks"""
 
-        if not isinstance(tasks, Iterable):
-            tasks = [tasks]
         for task in tasks:
             if task.name in self.task_names:
                 raise ValueError(
@@ -107,9 +117,9 @@ class MultitaskModel(nn.Module):
         # Move model to specified device
         self._move_to_device()
 
-    def forward(
-        self, X_dict: Dict[str, torch.Tensor], task_names: List[str]
-    ) -> Dict[str, Dict[str, torch.Tensor]]:
+    def forward(  # type: ignore
+        self, X_dict: Mapping[Union[str, int], Any], task_names: Iterable[str]
+    ) -> Dict[str, Mapping[Union[str, int], Any]]:
         """Forward pass through the network
 
         :param X_dict: The input data
@@ -119,7 +129,7 @@ class MultitaskModel(nn.Module):
 
         X_dict = move_to_device(X_dict, self.config["device"])
 
-        outputs = dict()
+        outputs: Dict[str, Mapping[Union[str, int], Any]] = {}
         outputs["_input_"] = X_dict
 
         # Call forward for each task, using cached result if available
@@ -154,12 +164,12 @@ class MultitaskModel(nn.Module):
 
     def calculate_loss(
         self,
-        X_dict: Dict[str, torch.Tensor],
+        X_dict: Mapping[Union[str, int], torch.Tensor],
         Y_dict: Dict[str, torch.Tensor],
         task_to_label_dict: Dict[str, str],
         data_name: str,
         split: str,
-    ):
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, int]]:
         """Calculate the loss
 
         :param X_dict: The input data
@@ -190,7 +200,7 @@ class MultitaskModel(nn.Module):
 
             # Only calculate the loss when active example exists
             if active.any():
-                count_dict[identifier] = active.sum().item()
+                count_dict[identifier] = int(active.sum().item())
 
                 loss_dict[identifier] = self.loss_funcs[task_name](
                     outputs,
@@ -201,7 +211,9 @@ class MultitaskModel(nn.Module):
         return loss_dict, count_dict
 
     @torch.no_grad()
-    def _calculate_probs(self, X_dict: Dict[str, torch.Tensor], task_names: List[str]):
+    def _calculate_probs(
+        self, X_dict: Mapping[Union[str, int], torch.Tensor], task_names: Iterable[str]
+    ):
         """Calculate the probs given the features
 
         :param X_dict: The input data

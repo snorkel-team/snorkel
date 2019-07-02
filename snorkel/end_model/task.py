@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, List
+from typing import Callable, List, Sequence, Tuple, Union
 
 import torch
 from torch import nn
@@ -16,12 +16,17 @@ class Operation:
     differentiate the Operations.
     """
 
-    def __init__(self, module_name, inputs, name=None):
+    def __init__(
+        self,
+        module_name: str,
+        inputs: Sequence[Tuple[str, Union[str, int]]],
+        name: str = None,
+    ) -> None:
         self.name = name or module_name
         self.module_name = module_name
         self.inputs = inputs
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"Operation(name={self.name}, "
             f"module_name={self.module_name}, "

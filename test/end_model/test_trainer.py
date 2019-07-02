@@ -116,3 +116,7 @@ def create_task(task_name, module_suffixes):
     )
 
     return task
+
+
+if __name__ == "__main__":
+    unittest.main()

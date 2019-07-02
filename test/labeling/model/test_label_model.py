@@ -219,7 +219,7 @@ class LabelModelTest(unittest.TestCase):
             label_model.loss_l2(l2=np.ones(6)).detach().numpy().ravel()[0], 0.03
         )
         self.assertAlmostEqual(
-            label_model.loss_mu().detach().numpy().ravel()[0], 0.6751751
+            label_model.loss_mu().detach().numpy().ravel()[0], 0.675, 3
         )
 
     def test_inv_loss(self):
@@ -230,7 +230,7 @@ class LabelModelTest(unittest.TestCase):
         label_model.Z = nn.Parameter(torch.ones(label_model.d, label_model.k)).float()
 
         Q = label_model.get_Q()
-        self.assertAlmostEqual(Q[0, 0], 0.89285714)
+        self.assertAlmostEqual(Q[0, 0], 0.893, 3)
 
         with self.assertRaises(ValueError):
             label_model.train_model(L, n_epochs=1, prec_init=np.array([1, 0.3]))

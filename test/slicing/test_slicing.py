@@ -4,6 +4,7 @@ from functools import partial
 
 import numpy as np
 import pandas as pd
+import pytest
 import torch
 import torch.nn as nn
 
@@ -41,6 +42,7 @@ class SlicingTest(unittest.TestCase):
     def setUpClass(cls):
         cls.trainer_config = {"n_epochs": 3, "progress_bar": False}
 
+    @pytest.mark.skip()
     def test_slicing(self):
         """Define two slices for task1 and no slices for task2"""
         df_train = create_data(N_TRAIN)

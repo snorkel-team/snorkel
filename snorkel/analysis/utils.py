@@ -135,38 +135,6 @@ def convert_labels(Y: ArrayLike, source: str, target: str) -> ArrayLike:
     return Y
 
 
-def plusminus_to_categorical(Y: ArrayLike) -> ArrayLike:
-    """Convert labels from plus-minus to categorical
-
-    Parameters
-    ----------
-    Y
-        Integer labels in plus-minus form plus-minus: (-1 = neg, 0 = abstain, +1 = pos)
-
-    Returns
-    -------
-    ArrayLike
-        Integer labels in categorical form categorical: (0 = abstain, 1 = pos, 2 = neg)
-    """
-    return convert_labels(Y, "plusminus", "categorical")
-
-
-def categorical_to_plusminus(Y: ArrayLike) -> ArrayLike:
-    """Convert labels from categorical to plus-minus
-
-    Parameters
-    ----------
-    Y
-        Integer labels in categorical form (0 = abstain, 1 = pos, 2 = neg)
-
-    Returns
-    -------
-    ArrayLike
-        Integer labels in plus-minus form (-1 = neg, 0 = abstain, +1 = pos)
-    """
-    return convert_labels(Y, "categorical", "plusminus")
-
-
 def filter_labels(
     golds: ArrayLike,
     preds: ArrayLike,

@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import spacy
 
-from snorkel.map import Mapper, MapperMode, lambda_mapper
+from snorkel.map import Mapper, lambda_mapper
 from snorkel.map.core import get_hashable
 from snorkel.types import DataPoint, FieldMap
 
@@ -81,7 +81,6 @@ class TestMapperCore(unittest.TestCase):
 
     def test_text_mapper(self) -> None:
         split_words = SplitWordsMapper("text", "text_lower", "text_words")
-        split_words.mode = MapperMode.NAMESPACE
         x_mapped = split_words(self._get_x())
         assert x_mapped is not None
         self.assertEqual(x_mapped.num, 8)
@@ -91,7 +90,6 @@ class TestMapperCore(unittest.TestCase):
 
     def test_mapper_same_field(self) -> None:
         split_words = SplitWordsMapper("text", "text", "text_words")
-        split_words.mode = MapperMode.NAMESPACE
         x = self._get_x()
         x_mapped = split_words(x)
         self.assertEqual(x.num, 8)
@@ -104,7 +102,6 @@ class TestMapperCore(unittest.TestCase):
 
     def test_mapper_default_args(self) -> None:
         split_words = SplitWordsMapperDefaultArgs()
-        split_words.mode = MapperMode.NAMESPACE
         x_mapped = split_words(self._get_x())
         assert x_mapped is not None
         self.assertEqual(x_mapped.num, 8)
@@ -125,7 +122,6 @@ class TestMapperCore(unittest.TestCase):
 
     def test_mapper_returns_none(self) -> None:
         mapper = MapperReturnsNone()
-        mapper.mode = MapperMode.NAMESPACE
         x_mapped = mapper(self._get_x())
         self.assertIsNone(x_mapped)
 
@@ -213,22 +209,6 @@ class TestMapperCore(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             MapperWithKwargs()
-
-    def test_mapper_mode(self) -> None:
-        x = self._get_x()
-        split_words = SplitWordsMapper("text", "text_lower", "text_words")
-
-        split_words.mode = 18  # type: ignore
-        with self.assertRaises(ValueError):
-            split_words(x)
-
-        split_words.mode = MapperMode.NONE
-        with self.assertRaises(ValueError):
-            split_words(x)
-
-        split_words.mode = MapperMode.SPARK
-        with self.assertRaises(NotImplementedError):
-            split_words(x)
 
 
 class TestGetHashable(unittest.TestCase):

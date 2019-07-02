@@ -5,7 +5,6 @@ from typing import Tuple
 import scipy.sparse as sparse
 from pyspark import RDD
 
-from snorkel.labeling.preprocess import PreprocessorMode
 from snorkel.types import DataPoint
 
 from .lf_applier import BaseLFApplier, RowData, apply_lfs_to_data_point
@@ -38,6 +37,5 @@ class SparkLFApplier(BaseLFApplier):
         def map_fn(args: Tuple[DataPoint, int]) -> RowData:
             return apply_lfs_to_data_point(*args, lfs=self._lfs)
 
-        self._set_lf_preprocessor_mode(PreprocessorMode.SPARK)
         labels = data_points.zipWithIndex().map(map_fn).collect()
         return self._matrix_from_row_data(labels)

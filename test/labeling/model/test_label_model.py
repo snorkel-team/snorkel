@@ -108,7 +108,8 @@ class LabelModelTest(unittest.TestCase):
         self.assertGreaterEqual(probs.min(), 0.0)
 
     def test_get_accuracy(self):
-        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[1, 2], [1, 0]])
+        label_model = self._set_up_model(L)
         probs = np.array(
             [
                 [0.99, 0.01],
@@ -127,6 +128,10 @@ class LabelModelTest(unittest.TestCase):
         label_model.P = torch.Tensor([[0.5, 0.0], [0.0, 0.5]])
         accs = label_model.get_accuracies(probs=probs)
         np.testing.assert_array_almost_equal(accs, np.array([0.7, 0.825]))
+
+        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        accs = label_model.get_accuracies(probs=None)
+        np.testing.assert_array_almost_equal(accs, np.array([0.5, 0.355]))
 
     def test_build_mask(self):
 
@@ -211,6 +216,9 @@ class LabelModelTest(unittest.TestCase):
             label_model.loss_l2(l2=1.0).detach().numpy().ravel()[0], 0.03
         )
         self.assertAlmostEqual(
+            label_model.loss_l2(l2=np.ones(6,)).detach().numpy().ravel()[0], 0.03
+        )
+        self.assertAlmostEqual(
             label_model.loss_mu().detach().numpy().ravel()[0], 0.6751751
         )
 
@@ -227,8 +235,9 @@ class LabelModelTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             label_model.train_model(L, n_epochs=1, prec_init=np.array([1, 0.3]))
 
-        label_model.train_model(L, n_epochs=1)
-
+        label_model.train_model(L, n_epochs=1, prec_init=1.0)
+        self.assertAlmostEqual(label_model.prec_init.detach().numpy().ravel()[0], 1.0)
+        
     def test_loss_decrease(self):
         L = np.array([[1, 0, 1], [1, 2, 1]])
         label_model = self._set_up_model(L)

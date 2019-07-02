@@ -1,9 +1,7 @@
 from typing import List
 
-import numpy as np
 
-
-class AugmentationPolicy:
+class Policy:
     """Base class for augmentation policies.
 
     Augmentation policies generate sequences of indices, corresponding
@@ -39,31 +37,31 @@ class AugmentationPolicy:
         raise NotImplementedError
 
 
-class RandomAugmentationPolicy(AugmentationPolicy):
-    """Naive random augmentation policy.
+class ApplyAllPolicy(Policy):
+    """Apply all TFs in order to each data point.
 
-    Samples sequences of TF indices a specified length uniformly
-    at random from the total number of TFs. This is a common
-    baseline approach to data augmentation.
+    While this can be used as a baseline policy, using a
+    random policy is more standard. See `RandomPolicy`.
 
     Parameters
     ----------
     n_tfs
         Total number of TFs
-    sequence_length
-        Number of TFs to run on each data point
     """
 
-    def __init__(self, n_tfs: int, sequence_length: int = 1) -> None:
-        self._k = sequence_length
-        super().__init__(n_tfs)
-
     def generate(self) -> List[int]:
-        """Generate a sequence of TF indices by sampling uniformly at random.
+        """Generate indices of all TFs in order.
 
         Returns
         -------
         List[int]
-            Indices of TFs to run on data point in order.
+            Indices of all TFs in order.
         """
-        return np.random.choice(self._n, size=self._k).tolist()
+        return list(range(self._n))
+
+
+class ApplyOnePolicy(ApplyAllPolicy):
+    """Apply a single TF to each data point."""
+
+    def __init__(self):
+        super().__init__(n_tfs=1)

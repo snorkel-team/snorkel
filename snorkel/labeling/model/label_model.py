@@ -50,10 +50,6 @@ class LabelModel(Classifier):
 
         Note that no column is required for 0 (abstain) labels.
         """
-        # TODO: Update LabelModel to keep L variants as sparse matrices
-        # throughout and remove this line.
-        if issparse(L):
-            L = L.todense()
 
         L_ind = np.zeros((self.n, self.m * self.k))
         for y in range(1, self.k + 1):
@@ -178,12 +174,10 @@ class LabelModel(Classifier):
         # value, prec_i = P(Y=y|\lf=y), and use:
         #   mu_init = P(\lf=y|Y=y) = P(\lf=y) * prec_i / P(Y=y)
 
-        # Handle single or per-LF values
+        # Handle single values
         if isinstance(train_config["prec_init"], (int, float)):
-            prec_init = train_config["prec_init"] * torch.ones(self.m)
-        else:
-            prec_init = torch.from_numpy(train_config["prec_init"])
-        if prec_init.shape[0] != self.m:
+            self.prec_init = train_config["prec_init"] * torch.ones(self.m)
+        if self.prec_init.shape[0] != self.m:
             raise ValueError(f"prec_init must have shape {self.m}.")
 
         # Get the per-value labeling propensities
@@ -195,7 +189,7 @@ class LabelModel(Classifier):
         for i in range(self.m):
             for y in range(self.k):
                 idx = i * self.k + y
-                mu_init = torch.clamp(lps[idx] * prec_init[i] / self.p[y], 0, 1)
+                mu_init = torch.clamp(lps[idx] * self.prec_init[i] / self.p[y], 0, 1)
                 self.mu_init[idx, y] += mu_init
 
         # Initialize randomly based on self.mu_init
@@ -313,7 +307,7 @@ class LabelModel(Classifier):
         if isinstance(l2, (int, float)):
             D = l2 * torch.eye(self.d)
         else:
-            D = torch.diag(torch.from_numpy(l2))
+            D = torch.diag(torch.from_numpy(l2)).type(torch.FloatTensor)
 
         # Note that mu is a matrix and this is the *Frobenius norm*
         return torch.norm(D @ (self.mu - self.mu_init)) ** 2
@@ -412,12 +406,12 @@ class LabelModel(Classifier):
         train_loader = DataLoader(dataset)
 
         # Compute O and initialize params
-        if self.config["verbose"]:
+        if self.config["verbose"]:  # pragma: no cover
             print("Computing O...")
         self._generate_O(L_train)
         self._init_params()
 
         # Estimate \mu
-        if self.config["verbose"]:
+        if self.config["verbose"]:  # pragma: no cover
             print("Estimating \mu...")
         self._train_model(train_loader, partial(self.loss_mu, l2=l2))

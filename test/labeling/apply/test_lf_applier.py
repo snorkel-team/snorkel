@@ -4,8 +4,14 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+from dask import dataframe as dd
 
-from snorkel.labeling.apply import LFApplier, PandasLFApplier
+from snorkel.labeling.apply import (
+    DaskLFApplier,
+    LFApplier,
+    PandasLFApplier,
+    PandasParallelLFApplier,
+)
 from snorkel.labeling.lf import labeling_function
 from snorkel.labeling.preprocess import preprocessor
 from snorkel.labeling.preprocess.nlp import SpacyPreprocessor
@@ -67,6 +73,8 @@ class TestLFApplier(unittest.TestCase):
         L = applier.apply(data_points)
         np.testing.assert_equal(L.toarray(), L_PREPROCESS_EXPECTED)
 
+
+class TestPandasApplier(unittest.TestCase):
     def test_lf_applier_pandas(self) -> None:
         df = pd.DataFrame(dict(num=DATA))
         applier = PandasLFApplier([f, g])
@@ -84,3 +92,38 @@ class TestLFApplier(unittest.TestCase):
         applier = PandasLFApplier([first_is_name, has_verb])
         L = applier.apply(df)
         np.testing.assert_equal(L.toarray(), L_TEXT_EXPECTED)
+
+
+class TestDaskApplier(unittest.TestCase):
+    def test_lf_applier_dask(self) -> None:
+        df = pd.DataFrame(dict(num=DATA))
+        df = dd.from_pandas(df, npartitions=2)
+        applier = DaskLFApplier([f, g])
+        L = applier.apply(df)
+        np.testing.assert_equal(L.toarray(), L_EXPECTED)
+
+    def test_lf_applier_dask_preprocessor(self) -> None:
+        df = pd.DataFrame(dict(num=DATA))
+        df = dd.from_pandas(df, npartitions=2)
+        applier = DaskLFApplier([f, fp])
+        L = applier.apply(df)
+        np.testing.assert_equal(L.toarray(), L_PREPROCESS_EXPECTED)
+
+    def test_lf_applier_dask_spacy_preprocessor(self) -> None:
+        df = pd.DataFrame(dict(text=TEXT_DATA))
+        df = dd.from_pandas(df, npartitions=2)
+        applier = DaskLFApplier([first_is_name, has_verb])
+        L = applier.apply(df)
+        np.testing.assert_equal(L.toarray(), L_TEXT_EXPECTED)
+
+    def test_lf_applier_pandas_parallel(self) -> None:
+        df = pd.DataFrame(dict(num=DATA))
+        applier = PandasParallelLFApplier([f, g])
+        L = applier.apply(df, n_parallel=2)
+        np.testing.assert_equal(L.toarray(), L_EXPECTED)
+
+    def test_lf_applier_pandas_parallel_raises(self) -> None:
+        df = pd.DataFrame(dict(num=DATA))
+        applier = PandasParallelLFApplier([f, g])
+        with self.assertRaises(ValueError):
+            applier.apply(df, n_parallel=1)

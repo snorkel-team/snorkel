@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from snorkel.augmentation.apply import PandasTFApplier
-from snorkel.augmentation.policy import RandomAugmentationPolicy
+from snorkel.augmentation.policy import ApplyOnePolicy
 from snorkel.labeling.apply import PandasLFApplier
 from snorkel.synthetic.synthetic_data import (
     generate_mog_dataset,
@@ -86,7 +86,7 @@ class TestGenerateResamplingTFs(unittest.TestCase):
         data = generate_mog_dataset(10, 4)
         tf_dim = 0
         tfs = generate_resampling_tfs(dims=[tf_dim])
-        policy = RandomAugmentationPolicy(len(tfs), sequence_length=1)
+        policy = ApplyOnePolicy()
         applier = PandasTFApplier(tfs, policy, keep_original=False)
         data_augmented = applier.apply(data)
         X = np.array(data.x.tolist())

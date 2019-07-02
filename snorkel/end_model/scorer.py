@@ -1,5 +1,5 @@
 from functools import partial
-from typing import List
+from typing import Callable, Dict, List, Optional, Union
 
 from snorkel.analysis.metrics import METRICS, metric_score
 
@@ -15,13 +15,24 @@ class Scorer(object):
     :type custom_metric_funcs: dict
     """
 
-    def __init__(self, metrics: List[str] = [], custom_metric_funcs={}):
-        for metric in metrics:
-            if metric not in METRICS:
-                raise ValueError(f"Unrecognized metric: {metric}")
+    def __init__(
+        self,
+        metrics: Optional[List[str]] = None,
+        custom_metric_funcs: Optional[
+            Dict[str, Callable[..., Union[float, Dict[str, float]]]]
+        ] = None,
+    ):
 
-        self.metrics = {m: partial(metric_score, metric=m) for m in metrics}
-        self.metrics.update(custom_metric_funcs)
+        if metrics:
+            for metric in metrics:
+                if metric not in METRICS:
+                    raise ValueError(f"Unrecognized metric: {metric}")
+            self.metrics = {m: partial(metric_score, metric=m) for m in metrics}
+        else:
+            self.metrics = {}
+
+        if custom_metric_funcs:
+            self.metrics.update(custom_metric_funcs)
 
     def score(self, golds, preds, probs):
         metric_dict = dict()

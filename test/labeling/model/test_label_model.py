@@ -283,6 +283,18 @@ class LabelModelTest(unittest.TestCase):
         Q = label_model.get_Q()
         self.assertAlmostEqual(Q[0, 0], 0.89285714)
 
+    def test_train_model(self):
+        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[1, 0, 1], [1, 2, 1]])
+
+        label_model.train_model(L, n_epochs=1)
+        init_loss = label_model.loss_mu().detach().numpy().ravel()[0]
+
+        label_model.train_model(L, n_epochs=1)
+        next_loss = label_model.loss_mu().detach().numpy().ravel()[0]
+
+        self.assertLessEqual(next_loss, init_loss)
+
 
 if __name__ == "__main__":
     unittest.main()

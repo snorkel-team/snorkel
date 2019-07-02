@@ -40,11 +40,11 @@ class MetricsTest(unittest.TestCase):
         score = metric_score(golds, preds, probs=None, metric="accuracy")
         self.assertAlmostEqual(score, 0.6)
         score = metric_score(
-            golds, preds, probs=None, metric="accuracy", ignore_in_preds=[0]
+            golds, preds, probs=None, metric="accuracy", filter_dict={"preds": [0]}
         )
         self.assertAlmostEqual(score, 0.75)
         score = metric_score(
-            golds, preds, probs=None, metric="accuracy", ignore_in_golds=[1]
+            golds, preds, probs=None, metric="accuracy", filter_dict={"golds": [1]}
         )
         self.assertAlmostEqual(score, 0.5)
         score = metric_score(
@@ -52,8 +52,7 @@ class MetricsTest(unittest.TestCase):
             preds,
             probs=None,
             metric="accuracy",
-            ignore_in_golds=[2],
-            ignore_in_preds=[0],
+            filter_dict={"golds": [2], "preds": [0]},
         )
         self.assertAlmostEqual(score, 1.0)
 
@@ -63,7 +62,7 @@ class MetricsTest(unittest.TestCase):
         score = metric_score(golds, preds, probs=None, metric="coverage")
         self.assertAlmostEqual(score, 0.6)
         score = metric_score(
-            golds, preds, probs=None, ignore_in_golds=[2], metric="coverage"
+            golds, preds, probs=None, filter_dict={"golds": [2]}, metric="coverage"
         )
         self.assertAlmostEqual(score, 0.5)
 

@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List
 
 import numpy as np
 import scipy.sparse as sparse
@@ -25,7 +25,7 @@ def probs_to_preds(probs: np.ndarray) -> np.ndarray:
 
 
 def preds_to_probs(preds: np.ndarray, num_classes: int) -> np.ndarray:
-    """Convert an array of probabilistic labels into an array of predictions
+    """Convert an array of predictions into an array of probabilistic labels
 
     Parameters
     ----------
@@ -124,10 +124,8 @@ def convert_labels(Y: ArrayLike, source: str, target: str) -> ArrayLike:
         return Y
     if isinstance(Y, np.ndarray):
         Y = Y.copy()
-        assert Y.dtype == np.int64
     elif isinstance(Y, torch.Tensor):
         Y = Y.clone()
-        assert isinstance(Y, torch.LongTensor)
     else:
         raise ValueError("Unrecognized label data type.")
     negative_map = {"categorical": 2, "plusminus": -1, "onezero": 0}
@@ -136,84 +134,71 @@ def convert_labels(Y: ArrayLike, source: str, target: str) -> ArrayLike:
 
 
 def filter_labels(
-    golds: ArrayLike,
-    preds: ArrayLike,
-    probs: Optional[ArrayLike] = None,
-    ignore_in_golds: List[int] = [],
-    ignore_in_preds: List[int] = [],
-) -> Tuple[ArrayLike, ArrayLike, Optional[ArrayLike]]:
-    """Converts golds, preds, and probs to `np.ndarray`s and filters out examples
+    label_dict: Dict[str, np.ndarray], filter_dict: Dict[str, List[int]]
+) -> Dict[str, np.ndarray]:
+    """Filters out examples from arrays based on specified labels to filter
+
+    The most common use of this method is to remove examples whose gold label is
+    unknown (marked with a 0) or examples whose predictions were abstains (also 0)
+    before calculating metrics.
+
+    NB: If an example matches the filter criteria for any label set, it will be removed
+    from all label sets (so that the returned arrays are of the same size and still
+    aligned).
+
+    Example usage:
+    golds = [0, 1, 1, 2, 2]
+    preds = [1, 1, 1, 2, 0]
+    filtered = filter_labels(
+        label_dict={"golds": golds, "preds": preds},
+        filter_dict={"golds": [0], "preds": [0]}
+    )
+    filtered["golds"] == [1, 1, 2]
+    filtered["preds"] == [1, 1, 2]
 
     Parameters
     ----------
-    golds
-        Gold labels [n_datapoints, 1]
-    preds
-        Prediction labels [n_datapoints, 1]
-    probs
-        Probablistic labels [n_datapoints, n_classes]
-    ignore_in_golds
-        A list of integer gold labels corresponding to examples to filter out
-    ignore_in_preds
-        A list of integer prediction labels corresponding to examples to filter out
+    label_dict
+        A mapping from label set name to the array of labels
+        The arrays in a label_dict.values() are assumed to be aligned
+    filter_dict
+        A mapping from label set name to the labels that should be filtered out for
+        that label set
 
     Returns
     -------
-    Tuple[
-        Union[np.ndarray, None],
-        Union[np.ndarray, None],
-        Union[np.ndarray, None]
-    ]
-        Filtered versions of golds, preds, probs
+    Dict[str, np.ndarray]
+        A mapping with the same keys as label_dict but with filtered arrays as values
     """
-    golds = arraylike_to_numpy(golds) if golds is not None else None
-    preds = arraylike_to_numpy(preds) if preds is not None else None
-    probs = (
-        arraylike_to_numpy(probs, flatten=False, cast_to_int=False)
-        if probs is not None
-        else None
-    )
+    masks = []
+    for label_name, filter_values in filter_dict.items():
+        if label_dict[label_name] is not None:
+            masks.append(_get_mask(label_dict[label_name], filter_values))
+    mask = np.multiply(*masks) if len(masks) > 1 else masks[0]
 
-    mask = _get_mask(golds, preds, ignore_in_golds, ignore_in_preds)
-    golds = golds[mask] if golds is not None else None
-    preds = preds[mask] if preds is not None else None
-    probs = probs[mask] if probs is not None else None
-
-    return golds, preds, probs
+    filtered = {}
+    for label_name, label_array in label_dict.items():
+        filtered[label_name] = label_array[mask] if label_array is not None else None
+    return filtered
 
 
-def _get_mask(
-    golds: Union[np.ndarray, None],
-    preds: Union[np.ndarray, None],
-    ignore_in_golds: List[int] = [],
-    ignore_in_preds: List[int] = [],
-) -> np.ndarray:
-    """Return a boolean mask for which examples to keep/filter based on user args
+def _get_mask(label_array: np.ndarray, filter_values: List[int]) -> np.ndarray:
+    """Return a boolean mask marking which labels are not in filter_values
 
     Parameters
     ----------
-    golds
-        Gold labels [n_datapoints, 1]
-    preds
-        Prediction labels [n_datapoints, 1]
-    ignore_in_golds
-        A list of integer gold labels corresponding to examples to filter out
-    ignore_in_preds
-        A list of integer prediction labels corresponding to examples to filter out
+    label_array
+        An array of labels
+    filter_values
+        A list of values that should be filtered out of the label array
 
     Returns
     -------
     np.ndarray
         A boolean mask indicating whether to keep (1) or filter (0) each example
     """
-    mask = np.ones_like(golds).astype(bool)
-
-    if golds is not None:
-        for x in ignore_in_golds:
-            mask *= np.where(golds != x, 1, 0).astype(bool)
-
-    if preds is not None:
-        for x in ignore_in_preds:
-            mask *= np.where(preds != x, 1, 0).astype(bool)
+    mask = np.ones_like(label_array).astype(bool)
+    for value in filter_values:
+        mask *= np.where(label_array != value, 1, 0).astype(bool)
 
     return mask

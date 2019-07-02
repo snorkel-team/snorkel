@@ -1,9 +1,9 @@
-from typing import Callable, List, NamedTuple
+from typing import Callable, Dict, List, NamedTuple, Optional
 
 import numpy as np
 import sklearn.metrics as skmetrics
 
-from .utils import filter_labels
+from .utils import arraylike_to_numpy, filter_labels
 
 
 class Metric(NamedTuple):
@@ -18,8 +18,7 @@ def metric_score(
     preds: np.ndarray,
     probs: np.ndarray,
     metric: str,
-    ignore_in_golds: List[int] = [],
-    ignore_in_preds: List[int] = [],
+    filter_dict: Optional[Dict[str, List[int]]] = None,
     **kwargs,
 ) -> float:
     """A method for evaluating a standard metric on a set of predictions/probabilities
@@ -34,10 +33,9 @@ def metric_score(
         An [n_datapoints, n_classes] array of probabilistic predictions
     metric
         The name of the metric to calculate
-    ignore_in_golds
-        A list of labels in golds whose corresponding examples should be ignored
-    ignore_in_preds
-        A list of labels in predictions whose corresponding examples should be ignored
+    filter_dict
+        A mapping from label set name to the labels that should be filtered out for
+        that label set
 
     Returns
     -------
@@ -55,15 +53,27 @@ def metric_score(
         msg = f"The metric you provided ({metric}) is not currently implemented."
         raise ValueError(msg)
 
-    # Optionally filter out examples (e.g., abstain predictions or unknown labels)
-    golds, preds, probs = filter_labels(
-        golds, preds, probs, ignore_in_golds, ignore_in_preds
+    # Convert to numpy
+    golds = arraylike_to_numpy(golds) if golds is not None else None
+    preds = arraylike_to_numpy(preds) if preds is not None else None
+    probs = (
+        arraylike_to_numpy(probs, flatten=False, cast_to_int=False)
+        if probs is not None
+        else None
     )
 
+    # Optionally filter out examples (e.g., abstain predictions or unknown labels)
+    label_dict = {"golds": golds, "preds": preds, "probs": probs}
+    if filter_dict:
+        if set(filter_dict.keys()).difference(set(label_dict.keys())):
+            raise ValueError(
+                "filter_dict must only include keys in ['golds', 'preds', 'probs']"
+            )
+        label_dict = filter_labels(label_dict, filter_dict)
+
     # Pass the metric function its requested args
-    func, input_names = METRICS[metric]
-    input_map = {"golds": golds, "preds": preds, "probs": probs}
-    inputs = [input_map[input] for input in input_names]
+    func, label_names = METRICS[metric]
+    inputs = [label_dict[label_name] for label_name in label_names]
 
     return func(*inputs, **kwargs)
 

@@ -140,7 +140,7 @@ class Classifier(nn.Module):
         scores = []
         for metric in metric_list:
             score = metric_score(
-                golds=Y, preds=Y_p, probs=Y_s, metric=metric, ignore_in_golds=[0]
+                golds=Y, preds=Y_p, probs=Y_s, metric=metric, filter_dict={"golds": [0]}
             )
             scores.append(score)
             if verbose:

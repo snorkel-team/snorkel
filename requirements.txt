@@ -1,15 +1,58 @@
-dask[complete]==1.2.1
-dill==0.2.9
-jupyter==1.0.0
-jupyterlab==0.33.12
-matplotlib==3.0.1
-networkx==2.2
-numpy==1.16.0
-pandas==0.24.0
-scikit-learn==0.20.2
-scipy==1.2.0
-spacy==2.1.3
-tensorboardX==1.6
-torch==1.1.0
-torchtext==0.3.1
-tqdm==4.29.1
+# Library dependencies for Python code.  You need to install these with
+# `pip install -r requirements.txt` or
+# `conda install --file requirements.txt`
+# to ensure that you can use all Snorkel code.
+# NOTE: all essential packages must be placed under a section named
+# '#### ESSENTIAL ...' so that the script `./scripts/check_requirements.py`
+# can find them.
+
+#### ESSENTIAL LIBRARIES
+
+# General scientific computing
+numpy>=1.16.0
+scipy>=1.2.0
+
+# Data storage and function application
+pandas>=0.24.0
+tqdm>=4.29.0
+
+# Internal models
+scikit-learn>=0.20.2
+torch>=1.1.0
+
+# LF dependency learning
+networkx>=2.2
+
+
+#### EXTRA LIBRARIES
+
+# Notebook usage (may be ported to tutorials repo)
+jupyter>=1.0.0
+matplotlib>=3.0.1
+
+# NLP applications
+spacy>=2.1.3
+torchtext>=0.3.1
+
+# Model introspection tools
+tensorboardX>=1.6
+
+# Scale-up/out
+dask[complete]>=1.2.1
+
+# Note: you may want to remove PySpark from the 
+# required installs. Installing a new version may
+# overwrite your existing system install.
+pyspark>=2.4.3
+
+
+#### DEV TOOLS
+
+black
+flake8
+isort
+mypy
+pydocstyle
+pytest
+pytest-cov
+tox

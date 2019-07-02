@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from snorkel.mtl.data import MultitaskDataLoader, MultitaskDataset
+from snorkel.end_model.data import MultitaskDataLoader, MultitaskDataset
 
 
 class DatasetTest(unittest.TestCase):

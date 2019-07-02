@@ -9,10 +9,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from snorkel.mtl.model import MultitaskModel
-from snorkel.mtl.modules.utils import ce_loss, softmax
-from snorkel.mtl.scorer import Scorer
-from snorkel.mtl.task import Operation, Task
+from snorkel.end_model.model import MultitaskModel
+from snorkel.end_model.modules.utils import ce_loss, softmax
+from snorkel.end_model.scorer import Scorer
+from snorkel.end_model.task import Operation, Task
 
 # def ce_loss(X, Y):
 #     return F.cross_entropy(X, Y - 1)

@@ -6,8 +6,8 @@ from typing import Dict, List
 
 import torch
 
-from snorkel.mtl.snorkel_config import default_config
-from snorkel.mtl.utils import recursive_merge_dicts
+from snorkel.end_model.snorkel_config import default_config
+from snorkel.end_model.utils import recursive_merge_dicts
 
 
 class Checkpointer(object):

@@ -9,7 +9,7 @@ class TestSpacyPreprocessor(unittest.TestCase):
     def test_spacy_preprocessor(self) -> None:
         x = SimpleNamespace(text="Jane plays soccer.")
         preprocessor = SpacyPreprocessor("text", "doc")
-        preprocessor.set_mode(PreprocessorMode.NAMESPACE)
+        preprocessor.mode = PreprocessorMode.NAMESPACE
         x_preprocessed = preprocessor(x)
         self.assertEqual(len(x_preprocessed.doc), 4)
         token = x_preprocessed.doc[0]

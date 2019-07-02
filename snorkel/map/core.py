@@ -1,7 +1,12 @@
 import inspect
 import pickle
+from collections import Hashable
 from enum import Enum, auto
-from typing import Any, Callable, List, Mapping, Optional
+from types import SimpleNamespace
+from typing import Any, Callable, Dict, List, Mapping, Optional
+
+import numpy as np
+import pandas as pd
 
 from snorkel.types import DataPoint, FieldMap
 
@@ -28,10 +33,79 @@ def get_parameters(
     return params[0]
 
 
+def is_hashable(obj: Any) -> bool:
+    """Test if object is hashable via duck typing.
+
+    NB: not using `collections.Hashable` as some objects
+    (e.g. pandas.Series) have a `__hash__` method to throw
+    a more specific exception.
+    """
+    try:
+        hash(obj)
+        return True
+    except Exception:
+        return False
+
+
+def get_hashable(obj: Any) -> Hashable:
+    """Get a hashable version of a potentially unhashable object.
+
+    This helper is used for caching mapper outputs of data points.
+    For common data point formats (e.g. SimpleNamespace, pandas.Series),
+    produces hashable representations of the values using a `frozenset`.
+    For objects like `pandas.Series`, the name/index indentifier is dropped.
+
+    Parameters
+    ----------
+    obj
+        Object to get hashable version of
+
+    Returns
+    -------
+    Hashable
+        Hashable representation of object values
+
+    Raises
+    ------
+    ValueError
+        No hashable proxy for object
+    """
+    # If hashable already, just return
+    if is_hashable(obj):
+        return obj
+    # Get dictionary from SimpleNamespace
+    if isinstance(obj, SimpleNamespace):
+        obj = vars(obj)
+    # For dictionaries or pd.Series, construct a frozenset from items
+    # Also recurse on values in case they aren't hashable
+    if isinstance(obj, (dict, pd.Series)):
+        return frozenset((k, get_hashable(v)) for k, v in obj.items())
+    # For lists, recurse on values
+    if isinstance(obj, (list, tuple)):
+        return tuple(get_hashable(v) for v in obj)
+    # For NumPy arrays, hash the byte representation of the data array
+    if isinstance(obj, np.ndarray):
+        return obj.data.tobytes()
+    raise ValueError(f"Object {obj} has no hashing proxy.")
+
+
 class BaseMapper:
     """Base class for `Mapper` and `LambdaMapper`.
 
-    Implements mode setting and deep copy functionality.
+    Implements mode setting, memoization, and deep copy functionality.
+
+    Parameters
+    ----------
+    memoize
+        Memoize mapper outputs?
+
+    Attributes
+    ----------
+    mode
+        Mapper mode, corresponding to input data point format.
+        See `MapperMode`.
+    memoize
+        Memoize mapper outputs?
 
     Raises
     ------
@@ -39,24 +113,26 @@ class BaseMapper:
         Subclasses need to implement `_generate_mapped_data_point`
     """
 
-    def _generate_mapped_data_point(self, x: DataPoint) -> DataPoint:
+    def __init__(self, memoize: bool) -> None:
+        self.mode = MapperMode.NONE
+        self.memoize = memoize
+        self.reset_cache()
+
+    def reset_cache(self) -> None:
+        """Reset the memoization cache."""
+        self._cache: Dict[DataPoint, DataPoint] = {}
+
+    def _generate_mapped_data_point(self, x: DataPoint) -> Optional[DataPoint]:
         raise NotImplementedError
 
-    def set_mode(self, mode: MapperMode) -> None:
-        """Change mapper mode, depending on data point format.
-
-        Parameters
-        ----------
-        mode
-            Mode to set mapper to
-        """
-        self.mode = mode
-
-    def __call__(self, x: DataPoint) -> DataPoint:
+    def __call__(self, x: DataPoint) -> Optional[DataPoint]:
         """Run mapping function on input data point.
 
         Deep copies the data point first so as not to make
-        accidental in-place changes.
+        accidental in-place changes. If `memoize` is set to
+        `True`, an internal cache is checked for results. If
+        no cached results are found, the computed results are
+        added to the cache.
 
         Parameters
         ----------
@@ -68,11 +144,19 @@ class BaseMapper:
         DataPoint
             Mapped data point of same format but possibly different fields
         """
+        if self.memoize:
+            # NB: don't do `self._cache.get(...)` first in case cached value is `None`
+            x_hashable = get_hashable(x)
+            if x_hashable in self._cache:
+                return self._cache[x_hashable]
         # NB: using pickle roundtrip as a more robust deepcopy
         # As an example, calling deepcopy on a pd.Series or SimpleNamespace
         # with a dictionary attribute won't create a copy of the dictionary
         x = pickle.loads(pickle.dumps(x))
-        return self._generate_mapped_data_point(x)
+        x_mapped = self._generate_mapped_data_point(x)
+        if self.memoize:
+            self._cache[x_hashable] = x_mapped
+        return x_mapped
 
 
 class Mapper(BaseMapper):
@@ -104,6 +188,8 @@ class Mapper(BaseMapper):
         A map from output keys of the `run` method to attribute
         names of the output data points. If None, the original
         output keys are used.
+    memoize
+        Memoize mapper outputs?
 
     Attributes
     ----------
@@ -114,6 +200,8 @@ class Mapper(BaseMapper):
     mode
         Mapper mode, corresponding to input data point format.
         See `MapperMode`.
+    memoize
+        Memoize mapper outputs?
 
     Raises
     ------
@@ -127,13 +215,14 @@ class Mapper(BaseMapper):
         self,
         field_names: Optional[Mapping[str, str]] = None,
         mapped_field_names: Optional[Mapping[str, str]] = None,
+        memoize: bool = False,
     ) -> None:
         if field_names is None:
             # Parse field names from `run(...)` if not provided
             field_names = {k: k for k in get_parameters(self.run)[1:]}
         self.field_names = field_names
         self.mapped_field_names = mapped_field_names
-        self.mode = MapperMode.NONE
+        super().__init__(memoize)
 
     def run(self, **kwargs: Any) -> Optional[FieldMap]:
         """Run the mapping operation using the input fields.
@@ -166,7 +255,7 @@ class Mapper(BaseMapper):
                 v: mapped_fields[k] for k, v in self.mapped_field_names.items()
             }
         if self.mode == MapperMode.NONE:
-            raise ValueError("No Mapper mode set. Use `Mapper.set_mode(...)`.")
+            raise ValueError("No Mapper mode set. Use `Mapper.mode = ...`.")
         if self.mode in (MapperMode.NAMESPACE, MapperMode.PANDAS, MapperMode.DASK):
             for k, v in mapped_fields.items():
                 setattr(x, k, v)
@@ -192,33 +281,60 @@ class LambdaMapper(BaseMapper):
     ----------
     f
         Function executing the mapping operation
+    memoize
+        Memoize mapper outputs?
     """
 
-    def __init__(self, f: Callable[[DataPoint], Optional[DataPoint]]) -> None:
+    def __init__(
+        self, f: Callable[[DataPoint], Optional[DataPoint]], memoize: bool = False
+    ) -> None:
         self._f = f
+        super().__init__(memoize)
 
     def _generate_mapped_data_point(self, x: DataPoint) -> Optional[DataPoint]:
         return self._f(x)
 
 
-def lambda_mapper(f: Callable[[DataPoint], Optional[DataPoint]]) -> LambdaMapper:
+class lambda_mapper:
     """Decorate a function to define a LambdaMapper object.
 
     Parameters
     ----------
-    f
-        Function executing the mapping operation
+    memoize
+        Memoize mapper outputs?
+
+    Attributes
+    ----------
+    memoize
+        Memoize mapper outputs?
 
     Example
     -------
 
     ```
-    @lambda_mapper
+    @lambda_mapper()
     def concatenate_text(x: DataPoint) -> DataPoint:
         x.article = f"{title} {body}"
         return x
 
-    isinstance(concatenate_text, LambdaMapper)  # true
+    isinstance(concatenate_text, LambdaMapper)  # True
     ```
     """
-    return LambdaMapper(f=f)
+
+    def __init__(self, memoize: bool = False) -> None:
+        self.memoize = memoize
+
+    def __call__(self, f: Callable[[DataPoint], Optional[DataPoint]]) -> LambdaMapper:
+        """Wrap a function to create a `LambdaMapper`.
+
+        Parameters
+        ----------
+        f
+            Function executing the mapping operation
+
+        Returns
+        -------
+        LambdaMapper
+            New `LambdaMapper` executing operation in wrapped function
+        """
+        return LambdaMapper(f=f, memoize=self.memoize)

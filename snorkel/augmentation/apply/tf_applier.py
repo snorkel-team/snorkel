@@ -52,7 +52,7 @@ class BaseTFApplier:
 
     def _set_tf_mode(self, mode: TransformationFunctionMode) -> None:
         for tf in self._tfs:
-            tf.set_mode(mode)
+            tf.mode = mode
 
     def _apply_policy_to_data_point(self, x: DataPoint) -> DataPoints:
         x_transformed = []

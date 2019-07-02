@@ -86,7 +86,7 @@ class SlicingTest(unittest.TestCase):
         # Train
         trainer = Trainer(**self.trainer_config)
         trainer.train_model(model, dataloaders)
-        scores = model.score(dataloaders)
+        model.score(dataloaders)
 
 
 def set_seed(seed):

@@ -8,13 +8,13 @@ from snorkel.labeling.preprocess import PreprocessorMode, preprocessor
 from snorkel.types import DataPoint
 
 
-@preprocessor
+@preprocessor()
 def square(x: DataPoint) -> DataPoint:
     x.num = x.num ** 2
     return x
 
 
-@preprocessor
+@preprocessor()
 def returns_none(x: DataPoint) -> DataPoint:
     return None
 

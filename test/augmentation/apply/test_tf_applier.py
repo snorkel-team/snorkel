@@ -10,13 +10,13 @@ from snorkel.augmentation.tf import transformation_function
 from snorkel.types import DataPoint
 
 
-@transformation_function
+@transformation_function()
 def square(x: DataPoint) -> DataPoint:
     x.num = x.num ** 2
     return x
 
 
-@transformation_function
+@transformation_function()
 def square_returns_none(x: DataPoint) -> DataPoint:
     if x.num == 2:
         return None
@@ -24,7 +24,7 @@ def square_returns_none(x: DataPoint) -> DataPoint:
     return x
 
 
-@transformation_function
+@transformation_function()
 def modify_in_place(x: DataPoint) -> DataPoint:
     x.d["my_key"] = 0
     return x

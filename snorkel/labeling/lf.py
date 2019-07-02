@@ -93,7 +93,7 @@ class LabelingFunction:
             Mode to set preprocessors to
         """
         for preprocessor in self._preprocessors:
-            preprocessor.set_mode(mode)
+            preprocessor.mode = mode
 
     def _preprocess_data_point(self, x: DataPoint) -> DataPoint:
         for preprocessor in self._preprocessors:

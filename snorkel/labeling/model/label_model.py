@@ -119,14 +119,9 @@ class LabelModel(Classifier):
                             L_C[:, i] *= L_ind[:, members[j] * self.k + v]
 
                     # Add to L_aug and store the indices
-                    if L_aug is not None:
-                        C["start_index"] = L_aug.shape[1]
-                        C["end_index"] = L_aug.shape[1] + L_C.shape[1]
-                        L_aug = np.hstack([L_aug, L_C])
-                    else:
-                        C["start_index"] = 0
-                        C["end_index"] = L_C.shape[1]
-                        L_aug = L_C
+                    C["start_index"] = L_aug.shape[1]
+                    C["end_index"] = L_aug.shape[1] + L_C.shape[1]
+                    L_aug = np.hstack([L_aug, L_C])
 
                     # Add to self.c_data as well
                     id = tuple(members) if len(members) > 1 else members[0]

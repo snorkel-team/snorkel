@@ -1,7 +1,7 @@
 import time
 from collections import defaultdict
 
-from snorkel.model.metrics import METRICS as standard_metric_names, metric_score
+from snorkel.analysis.metrics import METRICS as standard_metric_names, metric_score
 
 
 class Logger(object):
@@ -135,7 +135,7 @@ class Logger(object):
                 )
                 for metric in target_standard_metrics:
                     score = metric_score(
-                        gold=Y, pred=Y_preds, prob=Y_probs, metric=metric
+                        golds=Y, preds=Y_preds, probs=Y_probs, metric=metric
                     )
                     metrics_dict[self.add_split_prefix(metric, split)] = score
         return metrics_dict

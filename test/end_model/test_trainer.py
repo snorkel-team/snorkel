@@ -12,20 +12,16 @@ from snorkel.end_model.scorer import Scorer
 from snorkel.end_model.task import Operation, Task
 from snorkel.end_model.trainer import Trainer
 
-SEED = 123
+trainer_config = {"n_epochs": 2, "progress_bar": False}
 
 
 class TrainerTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.trainer_config = {"n_epochs": 2, "progress_bar": False}
-
     def test_trainer_onetask(self):
         """Train a single-task model"""
         task1 = create_task("task1", module_suffixes=["A", "A"])
         model = MultitaskModel(tasks=[task1])
         dataloaders = create_dataloaders(num_tasks=1)
-        trainer = Trainer(**self.trainer_config)
+        trainer = Trainer(**trainer_config)
         trainer.train_model(model, dataloaders)
 
     def test_trainer_twotask(self):
@@ -34,7 +30,7 @@ class TrainerTest(unittest.TestCase):
         task2 = create_task("task2", module_suffixes=["A", "B"])
         model = MultitaskModel(tasks=[task1, task2])
         dataloaders = create_dataloaders(num_tasks=2)
-        trainer = Trainer(**self.trainer_config)
+        trainer = Trainer(**trainer_config)
         trainer.train_model(model, dataloaders)
 
 

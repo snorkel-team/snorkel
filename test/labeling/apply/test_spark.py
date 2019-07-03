@@ -7,7 +7,7 @@ import pytest
 from pyspark import SparkContext
 from pyspark.sql import Row, SQLContext
 
-from snorkel.labeling.apply.lf_applier_spark import SparkLFApplier
+from snorkel.labeling.apply.spark import SparkLFApplier
 from snorkel.labeling.lf import labeling_function
 from snorkel.labeling.preprocess import preprocessor
 from snorkel.types import DataPoint

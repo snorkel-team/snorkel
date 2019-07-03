@@ -6,14 +6,14 @@ from .preprocess import BasePreprocessor
 
 
 class LabelingFunction:
-    """Base object for labeling functions.
+    """Base class for labeling functions.
 
     A labeling function (LF) is a function that takes a data point
     as input and produces an integer label, corresponding to a
     class. A labeling function can also abstain from voting by
     outputting 0. For examples, see the Snorkel tutorials.
 
-    This object wraps a Python function outputting a label. Metadata
+    This class wraps a Python function outputting a label. Metadata
     about the input data types and label space are stored. Extra
     functionality, such as running preprocessors and storing
     resources, is provided. Simple LFs can be defined via a

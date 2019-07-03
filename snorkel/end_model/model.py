@@ -157,16 +157,12 @@ class MultitaskModel(nn.Module):
         X_dict: Dict[str, torch.Tensor],
         Y_dict: Dict[str, torch.Tensor],
         task_to_label_dict: Dict[str, str],
-        data_name: str,
-        split: str,
     ):
         """Calculate the loss
 
         :param X_dict: The input data
         :param Y_dict: The output data
         :param task_to_label_dict: The task to label mapping
-        :param data_name: The dataset name
-        :param split: The data split
         :return: The loss and the number of samples in the batch of all tasks
         :rtype: dict, dict
         """
@@ -174,11 +170,11 @@ class MultitaskModel(nn.Module):
         loss_dict = dict()
         count_dict = dict()
 
-        outputs = self.forward(X_dict, task_to_label_dict.keys())
+        task_names = task_to_label_dict.keys()
+        outputs = self.forward(X_dict, task_names)
 
         # Calculate loss for each task
         for task_name, label_name in task_to_label_dict.items():
-            identifier = "/".join([task_name, data_name, split, "loss"])
 
             Y = Y_dict[label_name]
 
@@ -190,11 +186,11 @@ class MultitaskModel(nn.Module):
 
             # Only calculate the loss when active example exists
             if active.any():
-                count_dict[identifier] = active.sum().item()
+                count_dict[task_name] = active.sum().item()
 
-                loss_dict[identifier] = self.loss_funcs[task_name](
+                loss_dict[task_name] = self.loss_funcs[task_name](
                     outputs,
-                    move_to_device(Y_dict[label_name], self.config["device"]),
+                    move_to_device(Y, self.config["device"]),
                     move_to_device(active, self.config["device"]),
                 )
 
@@ -286,7 +282,12 @@ class MultitaskModel(nn.Module):
                 )
                 for metric_name, metric_value in metric_scores.items():
                     identifier = "/".join(
-                        [task_name, dataloader.data_name, dataloader.split, metric_name]
+                        [
+                            task_name,
+                            dataloader.dataset.name,
+                            dataloader.dataset.split,
+                            metric_name,
+                        ]
                     )
                     metric_score_dict[identifier] = metric_value
 

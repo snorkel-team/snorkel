@@ -6,6 +6,7 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 
+from snorkel.end_model.batch_schedulers import batch_schedulers
 from snorkel.end_model.loggers import (
     Checkpointer,
     LogManager,
@@ -13,8 +14,6 @@ from snorkel.end_model.loggers import (
     TensorBoardWriter,
 )
 from snorkel.end_model.model import MultitaskModel
-from snorkel.end_model.schedulers.sequential_scheduler import SequentialScheduler
-from snorkel.end_model.schedulers.shuffled_scheduler import ShuffledScheduler
 from snorkel.end_model.snorkel_config import default_config
 from snorkel.end_model.utils import recursive_merge_dicts
 
@@ -46,7 +45,7 @@ class Trainer(object):
             train_split = [train_split]
 
         train_dataloaders = [
-            dataloader for dataloader in dataloaders if dataloader.split in train_split
+            dl for dl in dataloaders if dl.dataset.split in train_split
         ]
 
         if not train_dataloaders:
@@ -66,7 +65,7 @@ class Trainer(object):
         self._set_log_manager()
         self._set_optimizer(model)
         self._set_lr_scheduler(model)
-        self._set_task_scheduler(model, dataloaders)
+        self._set_batch_scheduler()
 
         # Set to training mode
         model.train()
@@ -78,12 +77,12 @@ class Trainer(object):
 
         for epoch_num in range(self.config["n_epochs"]):
             batches = tqdm(
-                enumerate(self.task_scheduler.get_batches(train_dataloaders)),
+                enumerate(self.batch_scheduler.get_batches(train_dataloaders)),
                 total=self.n_batches_per_epoch,
                 disable=(not self.config["progress_bar"]),
                 desc=f"Epoch {epoch_num}:",
             )
-            for batch_num, (batch, task_to_label_dict, data_name, split) in batches:
+            for batch_num, (batch, dataloader) in batches:
                 X_dict, Y_dict = batch
 
                 total_batch_num = epoch_num * self.n_batches_per_epoch + batch_num
@@ -97,15 +96,23 @@ class Trainer(object):
 
                 # Perform forward pass and calcualte the loss and count
                 loss_dict, count_dict = model.calculate_loss(
-                    X_dict, Y_dict, task_to_label_dict, data_name, split
+                    X_dict, Y_dict, dataloader.task_to_label_dict
                 )
 
                 # Update running loss and count
-                for identifier in loss_dict.keys():
-                    self.running_losses[identifier] += (
-                        loss_dict[identifier].item() * count_dict[identifier]
+                for task_name in loss_dict.keys():
+                    identifier = "/".join(
+                        [
+                            task_name,
+                            dataloader.dataset.name,
+                            dataloader.dataset.split,
+                            "loss",
+                        ]
                     )
-                    self.running_counts[identifier] += count_dict[identifier]
+                    self.running_losses[identifier] += (
+                        loss_dict[task_name].item() * count_dict[task_name]
+                    )
+                    self.running_counts[task_name] += count_dict[task_name]
 
                 # Skip the backward pass if no loss is calcuated
                 if not loss_dict:
@@ -126,6 +133,7 @@ class Trainer(object):
                 # Update the parameters
                 self.optimizer.step()
 
+                # Update metrics
                 self.metrics.update(self._logging(model, dataloaders, batch_size))
 
                 batches.set_postfix(self.metrics)
@@ -148,7 +156,7 @@ class Trainer(object):
             test_split = [test_split]
 
         all_splits = train_split + valid_split + test_split
-        if not all([dl.split in all_splits for dl in dataloaders]):
+        if not all([dl.dataset.split in all_splits for dl in dataloaders]):
             raise ValueError(f"Dataloader splits must be one of {all_splits}")
 
     def _set_checkpointer(self):
@@ -316,17 +324,13 @@ class Trainer(object):
             if min_lr and self.optimizer.param_groups[0]["lr"] < min_lr:
                 self.optimizer.param_groups[0]["lr"] = min_lr
 
-    def _set_task_scheduler(self, model, dataloaders):
+    def _set_batch_scheduler(self):
         """Set task scheduler for learning process"""
-        opt = self.config["task_scheduler"]
+        scheduler_class = batch_schedulers.get(self.config["batch_scheduler"])
+        if not scheduler_class:
+            raise ValueError(f"Unrecognized batch scheduler option '{scheduler_class}'")
 
-        # TODO: Restore ProportionalScheduler
-        if opt == "sequential":
-            self.task_scheduler = SequentialScheduler()
-        elif opt == "shuffled":
-            self.task_scheduler = ShuffledScheduler()
-        else:
-            raise ValueError(f"Unrecognized task scheduler option '{opt}'")
+        self.batch_scheduler = scheduler_class()
 
     def _evaluate(self, model, dataloaders, split):
         if not isinstance(split, list):
@@ -335,7 +339,7 @@ class Trainer(object):
             valid_split = split
 
         valid_dataloaders = [
-            dataloader for dataloader in dataloaders if dataloader.split in valid_split
+            dl for dl in dataloaders if dl.dataset.split in valid_split
         ]
         return model.score(valid_dataloaders)
 

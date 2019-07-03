@@ -107,8 +107,8 @@ class AdvancedClassifier(nn.Module):
         self._move_to_device()
 
     def forward(  # type: ignore
-        self, X_dict: Mapping[Union[str, int], Any], task_names: Iterable[str]
-    ) -> Dict[str, Mapping[Union[str, int], Any]]:
+        self, X_dict: Mapping[str, Any], task_names: Iterable[str]
+    ) -> Any:
         """Forward pass through the network
 
         :param X_dict: The input data
@@ -119,7 +119,7 @@ class AdvancedClassifier(nn.Module):
         X_dict = move_to_device(X_dict, self.config["device"])
 
         outputs: Dict[str, Mapping[Union[str, int], Any]] = {}
-        outputs["_input_"] = X_dict
+        outputs["_input_"] = X_dict  # type: ignore
 
         # Call forward for each task, using cached result if available
         # Each task flow consists of one or more operations that are executed in order
@@ -149,11 +149,14 @@ class AdvancedClassifier(nn.Module):
                         output = [output]
                     outputs[operation.name] = output
 
+        # Note: We return all outputs to enable advanced workflows such as multi-task
+        # learning (where we want to calculate loss from multiple head modules on some
+        # forward passes).
         return outputs
 
     def calculate_loss(
         self,
-        X_dict: Mapping[Union[str, int], torch.Tensor],
+        X_dict: Mapping[str, Any],
         Y_dict: Dict[str, torch.Tensor],
         task_to_label_dict: Dict[str, str],
     ):
@@ -196,9 +199,7 @@ class AdvancedClassifier(nn.Module):
         return loss_dict, count_dict
 
     @torch.no_grad()
-    def _calculate_probs(
-        self, X_dict: Mapping[Union[str, int], torch.Tensor], task_names: Iterable[str]
-    ):
+    def _calculate_probs(self, X_dict: Mapping[str, Any], task_names: Iterable[str]):
         """Calculate the probs given the features
 
         :param X_dict: The input data

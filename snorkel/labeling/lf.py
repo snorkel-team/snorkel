@@ -2,7 +2,7 @@ from typing import Any, Callable, List, Mapping, Optional, Tuple
 
 from snorkel.types import DataPoint
 
-from .preprocess import BasePreprocessor, PreprocessorMode
+from .preprocess import BasePreprocessor
 
 
 class LabelingFunction:
@@ -70,30 +70,6 @@ class LabelingFunction:
         self._f = f
         self._resources = resources or {}
         self._preprocessors = preprocessors or []
-
-    def set_fault_tolerant(self, fault_tolerant: bool = True) -> None:
-        """Change LF fault tolerance mode.
-
-        If set to fault tolerant mode, the LF returns 0 if
-        an exception is raised during execution.
-
-        Parameters
-        ----------
-        fault_tolerant
-            Set to fault tolerant mode?
-        """
-        self.fault_tolerant = fault_tolerant
-
-    def set_preprocessor_mode(self, mode: PreprocessorMode) -> None:
-        """Change LF preprocessor mode.
-
-        Parameters
-        ----------
-        mode
-            Mode to set preprocessors to
-        """
-        for preprocessor in self._preprocessors:
-            preprocessor.mode = mode
 
     def _preprocess_data_point(self, x: DataPoint) -> DataPoint:
         for preprocessor in self._preprocessors:

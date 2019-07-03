@@ -6,8 +6,6 @@ import scipy.sparse as sparse
 from dask import dataframe as dd
 from dask.distributed import Client
 
-from snorkel.labeling.preprocess import PreprocessorMode
-
 from .lf_applier import BaseLFApplier
 from .lf_applier_pandas import apply_lfs_to_data_point, rows_to_triplets
 
@@ -41,7 +39,6 @@ class DaskLFApplier(BaseLFApplier):
         sparse.csr_matrix
             Sparse matrix of labels emitted by LFs
         """
-        self._set_lf_preprocessor_mode(PreprocessorMode.DASK)
         apply_fn = partial(apply_lfs_to_data_point, lfs=self._lfs)
         map_fn = df.map_partitions(lambda p_df: p_df.apply(apply_fn, axis=1))
         labels = map_fn.compute(scheduler=scheduler)

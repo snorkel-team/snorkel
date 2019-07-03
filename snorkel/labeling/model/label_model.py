@@ -1,6 +1,6 @@
 from collections import Counter
 from functools import partial
-from itertools import chain, product
+from itertools import chain
 
 import numpy as np
 import torch
@@ -94,39 +94,15 @@ class LabelModel(Classifier):
             for item in chain(self.c_tree.nodes(), self.c_tree.edges()):
                 if isinstance(item, int):
                     C = self.c_tree.node[item]
-                    C_type = "node"
                 elif isinstance(item, tuple):
                     C = self.c_tree[item[0]][item[1]]
-                    C_type = "edge"
                 else:
                     raise ValueError(item)
                 members = list(C["members"])
-                nc = len(members)
 
-                # If a unary maximal clique, just store its existing index
-                if nc == 1:
-                    C["start_index"] = members[0] * self.k
-                    C["end_index"] = (members[0] + 1) * self.k
-
-                # Else add one column for each possible value
-                else:
-                    L_C = np.ones((self.n, self.k ** nc))
-                    for i, vals in enumerate(product(range(self.k), repeat=nc)):
-                        for j, v in enumerate(vals):
-                            L_C[:, i] *= L_ind[:, members[j] * self.k + v]
-
-                    # Add to L_aug and store the indices
-                    C["start_index"] = L_aug.shape[1]
-                    C["end_index"] = L_aug.shape[1] + L_C.shape[1]
-                    L_aug = np.hstack([L_aug, L_C])
-
-                    # Add to self.c_data as well
-                    id = tuple(members) if len(members) > 1 else members[0]
-                    self.c_data[id] = {
-                        "start_index": C["start_index"],
-                        "end_index": C["end_index"],
-                        "max_cliques": set([item]) if C_type == "node" else set(item),
-                    }
+                # With unary maximal clique, just store its existing index
+                C["start_index"] = members[0] * self.k
+                C["end_index"] = (members[0] + 1) * self.k
             return L_aug
         else:
             return L_ind

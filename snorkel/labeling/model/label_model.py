@@ -145,14 +145,14 @@ class LabelModel(Classifier):
                     self.mask[si:ei, sj:ej] = 0
                     self.mask[sj:ej, si:ei] = 0
 
-    def _generate_O(self, L):
+    def _generate_O(self, L, higher_order=False):
         """Form the overlaps matrix, which is just all the different observed
         combinations of values of pairs of sources
 
         Note that we only include the k non-abstain values of each source,
         otherwise the model not minimal --> leads to singular matrix
         """
-        L_aug = self._get_augmented_label_matrix(L)
+        L_aug = self._get_augmented_label_matrix(L, higher_order=higher_order)
         self.d = L_aug.shape[1]
         self.O = torch.from_numpy(L_aug.T @ L_aug / self.n).float()
 

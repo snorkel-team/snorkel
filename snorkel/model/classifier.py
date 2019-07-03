@@ -1,32 +1,16 @@
-import os
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from scipy.sparse import issparse
 from torch.utils.data import DataLoader, Dataset, TensorDataset
+from tqdm import tqdm
 
 from snorkel.analysis.error_analysis import confusion_matrix
 from snorkel.analysis.metrics import metric_score
 
 from .logging import Checkpointer, Logger, LogWriter, TensorBoardWriter
 from .utils import place_on_gpu, recursive_merge_dicts, set_seed
-
-# Import tqdm_notebook if in Jupyter notebook
-try:
-    from IPython import get_ipython
-
-    if "IPKernelApp" not in get_ipython().config:
-        raise ImportError("console")
-except (AttributeError, ImportError):
-    from tqdm import tqdm
-else:
-    # Only use tqdm notebook if not in travis testing
-    if "CI" not in os.environ:
-        from tqdm import tqdm_notebook as tqdm
-    else:
-        from tqdm import tqdm
 
 
 class Classifier(nn.Module):

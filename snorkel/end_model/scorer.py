@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, List, Mapping, Optional
 
 from snorkel.analysis.metrics import METRICS, metric_score
 
@@ -18,9 +18,7 @@ class Scorer(object):
     def __init__(
         self,
         metrics: Optional[List[str]] = None,
-        custom_metric_funcs: Optional[
-            Dict[str, Callable[..., Union[float, Dict[str, float]]]]
-        ] = None,
+        custom_metric_funcs: Optional[Mapping[str, Callable[..., float]]] = None,
     ):
 
         if metrics:
@@ -31,7 +29,7 @@ class Scorer(object):
         else:
             self.metrics = {}
 
-        if custom_metric_funcs:
+        if custom_metric_funcs is not None:
             self.metrics.update(custom_metric_funcs)
 
     def score(self, golds, preds, probs):

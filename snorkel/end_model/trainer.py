@@ -119,7 +119,7 @@ class Trainer(object):
                     continue
 
                 # Calculate the average loss
-                loss = sum(loss_dict.values())
+                loss = torch.stack(list(loss_dict.values())).sum()
 
                 # Perform backward pass to calculate gradients
                 loss.backward()

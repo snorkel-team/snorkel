@@ -1,7 +1,6 @@
 import inspect
 import pickle
 from collections import Hashable
-from enum import Enum, auto
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
@@ -9,16 +8,6 @@ import numpy as np
 import pandas as pd
 
 from snorkel.types import DataPoint, FieldMap
-
-
-class MapperMode(Enum):
-    """Enum defining mode for mapper depending on data point format."""
-
-    NONE = auto()
-    NAMESPACE = auto()
-    PANDAS = auto()
-    DASK = auto()
-    SPARK = auto()
 
 
 def get_parameters(
@@ -92,7 +81,7 @@ def get_hashable(obj: Any) -> Hashable:
 class BaseMapper:
     """Base class for `Mapper` and `LambdaMapper`.
 
-    Implements mode setting, memoization, and deep copy functionality.
+    Implements memoization and deep copy functionality.
 
     Parameters
     ----------
@@ -101,9 +90,6 @@ class BaseMapper:
 
     Attributes
     ----------
-    mode
-        Mapper mode, corresponding to input data point format.
-        See `MapperMode`.
     memoize
         Memoize mapper outputs?
 
@@ -114,7 +100,6 @@ class BaseMapper:
     """
 
     def __init__(self, memoize: bool) -> None:
-        self.mode = MapperMode.NONE
         self.memoize = memoize
         self.reset_cache()
 
@@ -175,6 +160,11 @@ class Mapper(BaseMapper):
     The `run` method should only be called internally by the `Mapper`
     object, not directly by a user.
 
+    Mapper derivatives work for data points that have mutable attributes,
+    like `SimpleNamespace`, `pd.Series`, or `dask.Series`. An example
+    of a data point type without mutable fields is `pyspark.sql.Row`.
+    Use `snorkel.map.spark.SparkMapper` for PySpark compatibility.
+
     For an example of a Mapper, see
         `snorkel.labeling.preprocess.nlp.SpacyPreprocessor`
 
@@ -197,9 +187,6 @@ class Mapper(BaseMapper):
         See above
     mapped_field_names
         See above
-    mode
-        Mapper mode, corresponding to input data point format.
-        See `MapperMode`.
     memoize
         Memoize mapper outputs?
 
@@ -207,8 +194,6 @@ class Mapper(BaseMapper):
     ------
     NotImplementedError
         Subclasses must implement the `run` method
-    ValueError
-        Mapper mode must be set to a valid value
     """
 
     def __init__(
@@ -244,28 +229,23 @@ class Mapper(BaseMapper):
         """
         raise NotImplementedError
 
+    def _update_fields(self, x: DataPoint, mapped_fields: FieldMap) -> DataPoint:
+        # `SimpleNamespace`, `pd.Series`, and `dask.Series` objects all
+        # have attribute setting.
+        for k, v in mapped_fields.items():
+            setattr(x, k, v)
+        return x
+
     def _generate_mapped_data_point(self, x: DataPoint) -> Optional[DataPoint]:
         field_map = {k: getattr(x, v) for k, v in self.field_names.items()}
         mapped_fields = self.run(**field_map)
         if mapped_fields is None:
             return None
-        assert isinstance(mapped_fields, dict)
         if self.mapped_field_names is not None:
             mapped_fields = {
                 v: mapped_fields[k] for k, v in self.mapped_field_names.items()
             }
-        if self.mode == MapperMode.NONE:
-            raise ValueError("No Mapper mode set. Use `Mapper.mode = ...`.")
-        if self.mode in (MapperMode.NAMESPACE, MapperMode.PANDAS, MapperMode.DASK):
-            for k, v in mapped_fields.items():
-                setattr(x, k, v)
-            return x
-        if self.mode == MapperMode.SPARK:
-            raise NotImplementedError("Spark Mapper mode not implemented")
-        else:
-            raise ValueError(
-                f"Mapper mode {self.mode} not recognized. Options: {MapperMode}."
-            )
+        return self._update_fields(x, mapped_fields)
 
 
 class LambdaMapper(BaseMapper):

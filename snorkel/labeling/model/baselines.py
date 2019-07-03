@@ -3,13 +3,15 @@ import numpy as np
 from .label_model import LabelModel
 
 
-class RandomVoter(LabelModel):
+class BaselineVoter(LabelModel):
+    def train_model(self, *args, **kwargs):
+        pass
+
+
+class RandomVoter(BaselineVoter):
     """
     A class that votes randomly among the available labels
     """
-
-    def train_model(self, *args, **kwargs):
-        pass
 
     def predict_proba(self, L):
         """
@@ -24,7 +26,7 @@ class RandomVoter(LabelModel):
         return Y_p
 
 
-class MajorityClassVoter(RandomVoter):
+class MajorityClassVoter(LabelModel):
     """
     A class that places all probability on the majority class based on class
     balance (and ignoring the label matrix).
@@ -50,16 +52,13 @@ class MajorityClassVoter(RandomVoter):
         return Y_p
 
 
-class MajorityLabelVoter(RandomVoter):
+class MajorityLabelVoter(BaselineVoter):
     """
     A class that places all probability on the majority label from all
     non-abstaining LFs for that task.
 
     Note that in the case of ties, non-integer probabilities are possible.
     """
-
-    def train_model(self, *args, **kwargs):
-        pass
 
     def predict_proba(self, L):
         L = self._to_numpy(L).astype(int)

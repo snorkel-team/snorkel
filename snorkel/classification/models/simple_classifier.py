@@ -1,5 +1,5 @@
 """A proof-of-concept that we can create a simple single-task model interface while
-primarily using the MultitaskModel class.
+primarily using the AdvancedClassifier class.
 """
 
 from functools import partial
@@ -9,13 +9,12 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from snorkel.end_model.model import MultitaskModel
-from snorkel.end_model.modules.utils import ce_loss, softmax
-from snorkel.end_model.scorer import Scorer
-from snorkel.end_model.task import Operation, Task
+from snorkel.classification.models.advanced import AdvancedClassifier, Operation, Task
+from snorkel.classification.models.advanced.utils import ce_loss, softmax
+from snorkel.classification.scorer import Scorer
 
 
-class SimpleModel(MultitaskModel):
+class SimpleClassifier(AdvancedClassifier):
     def __init__(
         self,
         modules: List[nn.Module],

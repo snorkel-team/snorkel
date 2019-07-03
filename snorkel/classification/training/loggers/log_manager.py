@@ -1,9 +1,9 @@
 import logging
 from typing import Any, Optional
 
-from snorkel.end_model.model import MultitaskModel
-from snorkel.end_model.snorkel_config import default_config
-from snorkel.end_model.utils import recursive_merge_dicts
+from snorkel.classification.models.advanced import AdvancedClassifier
+from snorkel.classification.snorkel_config import default_config
+from snorkel.classification.utils import recursive_merge_dicts
 
 from .checkpointer import Checkpointer
 from .log_writer import LogWriter
@@ -109,7 +109,7 @@ class LogManager(object):
         self.epoch_count = 0
         self.unit_count = 0
 
-    def close(self, model: MultitaskModel) -> MultitaskModel:
+    def close(self, model: AdvancedClassifier) -> AdvancedClassifier:
         if self.log_writer is not None:
             self.log_writer.close()
         if self.checkpointer is not None:

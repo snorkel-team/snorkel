@@ -1,6 +1,6 @@
 from typing import Any, Dict, Sequence, Tuple
 
-from snorkel.end_model.data import MultitaskDataLoader
+from snorkel.classification.data import MultitaskDataLoader
 
 from .scheduler import Scheduler
 

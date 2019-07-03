@@ -3,10 +3,9 @@ from functools import partial
 
 import torch.nn as nn
 
-from snorkel.end_model.model import MultitaskModel
-from snorkel.end_model.modules.utils import ce_loss, softmax
-from snorkel.end_model.scorer import Scorer
-from snorkel.end_model.task import Operation, Task
+from snorkel.classification.models.advanced import AdvancedClassifier, Operation, Task
+from snorkel.classification.models.advanced.utils import ce_loss, softmax
+from snorkel.classification.scorer import Scorer
 
 
 class TaskTest(unittest.TestCase):
@@ -39,7 +38,7 @@ class TaskTest(unittest.TestCase):
 
     def test_onetask_model(self):
         task1 = self.create_task("task1", module_suffixes=["A", "A"])
-        model = MultitaskModel(tasks=[task1])
+        model = AdvancedClassifier(tasks=[task1])
         self.assertEqual(len(model.task_names), 1)
         self.assertEqual(len(model.task_flows), 1)
         self.assertEqual(len(model.module_pool), 2)
@@ -48,7 +47,7 @@ class TaskTest(unittest.TestCase):
         """Add two tasks with identical modules and flows"""
         task1 = self.create_task("task1", module_suffixes=["A", "A"])
         task2 = self.create_task("task2", module_suffixes=["A", "A"])
-        model = MultitaskModel(tasks=[task1, task2])
+        model = AdvancedClassifier(tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
         self.assertEqual(len(model.task_flows), 2)
         self.assertEqual(len(model.module_pool), 2)
@@ -57,7 +56,7 @@ class TaskTest(unittest.TestCase):
         """Add two tasks with totally separate modules and flows"""
         task1 = self.create_task("task1", module_suffixes=["A", "A"])
         task2 = self.create_task("task2", module_suffixes=["B", "B"])
-        model = MultitaskModel(tasks=[task1, task2])
+        model = AdvancedClassifier(tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
         self.assertEqual(len(model.task_flows), 2)
         self.assertEqual(len(model.module_pool), 4)
@@ -66,7 +65,7 @@ class TaskTest(unittest.TestCase):
         """Add two tasks with overlapping modules and flows"""
         task1 = self.create_task("task1", module_suffixes=["A", "A"])
         task2 = self.create_task("task2", module_suffixes=["A", "B"])
-        model = MultitaskModel(tasks=[task1, task2])
+        model = AdvancedClassifier(tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
         self.assertEqual(len(model.task_flows), 2)
         self.assertEqual(len(model.module_pool), 3)

@@ -3,8 +3,11 @@ import unittest
 import torch
 
 from snorkel.analysis.utils import set_seed
-from snorkel.end_model.batch_schedulers import SequentialScheduler, ShuffledScheduler
-from snorkel.end_model.data import MultitaskDataLoader, MultitaskDataset
+from snorkel.classification.data import MultitaskDataLoader, MultitaskDataset
+from snorkel.classification.training.schedulers import (
+    SequentialScheduler,
+    ShuffledScheduler,
+)
 
 dataset1 = MultitaskDataset(
     "d1",

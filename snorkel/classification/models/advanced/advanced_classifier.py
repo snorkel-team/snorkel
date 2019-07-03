@@ -1,32 +1,21 @@
 import logging
 import os
 from collections import defaultdict
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-)
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Set, Union
 
 import numpy as np
 import torch
 import torch.nn as nn
 
 from snorkel.analysis.utils import probs_to_preds
+from snorkel.classification.scorer import Scorer
+from snorkel.classification.snorkel_config import default_config
+from snorkel.classification.utils import move_to_device, recursive_merge_dicts
 
-from .scorer import Scorer
-from .snorkel_config import default_config
 from .task import Operation, Task
-from .utils import move_to_device, recursive_merge_dicts
 
 
-class MultitaskModel(nn.Module):
+class AdvancedClassifier(nn.Module):
     """A class to build multi-task model.
 
     :param name: Name of the model

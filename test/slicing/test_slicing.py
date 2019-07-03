@@ -6,12 +6,11 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-from snorkel.end_model.data import MultitaskDataLoader, MultitaskDataset
-from snorkel.end_model.model import MultitaskModel
-from snorkel.end_model.modules.utils import ce_loss, softmax
-from snorkel.end_model.scorer import Scorer
-from snorkel.end_model.task import Operation, Task
-from snorkel.end_model.trainer import Trainer
+from snorkel.classification.data import MultitaskDataLoader, MultitaskDataset
+from snorkel.classification.models.advanced import AdvancedClassifier, Operation, Task
+from snorkel.classification.models.advanced.utils import ce_loss, softmax
+from snorkel.classification.scorer import Scorer
+from snorkel.classification.training import Trainer
 from snorkel.slicing.apply import PandasSFApplier
 from snorkel.slicing.sf import slicing_function
 from snorkel.slicing.utils import add_slice_labels, convert_to_slice_tasks
@@ -80,7 +79,7 @@ class SlicingTest(unittest.TestCase):
         # Convert to slice tasks
         task1_tasks = convert_to_slice_tasks(task1, slice_names)
         tasks = task1_tasks + [task2]
-        model = MultitaskModel(tasks=tasks)
+        model = AdvancedClassifier(tasks=tasks)
 
         # Train
         trainer = Trainer(**self.trainer_config)

@@ -8,7 +8,7 @@ from tqdm import tqdm
 from snorkel.labeling.lf import LabelingFunction
 from snorkel.types import DataPoint
 
-from .lf_applier import BaseLFApplier, RowData
+from .core import BaseLFApplier, RowData
 
 PandasRowData = List[Tuple[int, int]]
 

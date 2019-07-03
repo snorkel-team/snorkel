@@ -3,27 +3,27 @@ import unittest
 import torch
 
 from snorkel.analysis.utils import set_seed
-from snorkel.classification.data import MultitaskDataLoader, MultitaskDataset
+from snorkel.classification.data import ClassifierDataLoader, ClassifierDataset
 from snorkel.classification.training.schedulers import (
     SequentialScheduler,
     ShuffledScheduler,
 )
 
-dataset1 = MultitaskDataset(
+dataset1 = ClassifierDataset(
     "d1",
     "train",
     X_dict={"data": [0, 1, 2, 3, 4]},
     Y_dict={"labels": torch.LongTensor([1, 1, 1, 1, 1])},
 )
-dataset2 = MultitaskDataset(
+dataset2 = ClassifierDataset(
     "d2",
     "train",
     X_dict={"data": [5, 6, 7, 8, 9]},
     Y_dict={"labels": torch.LongTensor([2, 2, 2, 2, 2])},
 )
 
-dataloader1 = MultitaskDataLoader(dataset1, batch_size=2)
-dataloader2 = MultitaskDataLoader(dataset2, batch_size=2)
+dataloader1 = ClassifierDataLoader(dataset1, batch_size=2)
+dataloader2 = ClassifierDataLoader(dataset2, batch_size=2)
 dataloaders = [dataloader1, dataloader2]
 
 

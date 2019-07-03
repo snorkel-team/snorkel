@@ -10,7 +10,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from torchtext.vocab import Vocab
 
-from snorkel.classification.data import MultitaskDataLoader, MultitaskDataset
+from snorkel.classification.data import ClassifierDataLoader, ClassifierDataset
 
 
 def upgrade_dataloaders(dataloaders: List[DataLoader]):
@@ -18,12 +18,12 @@ def upgrade_dataloaders(dataloaders: List[DataLoader]):
     for dataloader in dataloaders:
         dataset = dataloader.dataset
 
-        new_dataset = MultitaskDataset(
+        new_dataset = ClassifierDataset(
             name=f"data_{dataloader.split}",
             X_dict={"data": dataset.X},  # This op is specific to TensorDataset
             Y_dict={"labels": dataset.Y},  # Maybe
         )
-        new_dataloader = MultitaskDataLoader(
+        new_dataloader = ClassifierDataLoader(
             task_to_label_dict={"task": "labels"},
             dataset=new_dataset,
             split=dataloader.split,

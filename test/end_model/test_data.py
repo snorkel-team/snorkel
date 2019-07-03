@@ -1,15 +1,9 @@
 import unittest
-from collections import Counter
 
 import numpy as np
-import scipy.sparse as sparse
 import torch
 
-from snorkel.classification.data import (
-    ClassifierDataLoader,
-    ClassifierDataset,
-    split_data,
-)
+from snorkel.classification.data import ClassifierDataLoader, ClassifierDataset, split_data
 
 
 class DatasetTest(unittest.TestCase):
@@ -186,6 +180,7 @@ class DatasetTest(unittest.TestCase):
         splits = [0.75, 0.25]
         Ws = split_data(W, splits=splits, shuffle=True, seed=123)
         self.assertEqual(Ws[0].shape, (3, 4))
+
 
 
 if __name__ == "__main__":

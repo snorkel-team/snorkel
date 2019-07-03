@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, Dataset
 from .utils import list_to_tensor
 
 
-class MultitaskDataset(Dataset):
+class SnorkelDataset(Dataset):
     """An advanced dataset class to handle input data with multipled fields and output
     data with multiple label sets
 
@@ -68,7 +68,7 @@ def collate_dicts(batch):
     return dict(X_batch), dict(Y_batch)
 
 
-class MultitaskDataLoader(DataLoader):
+class SnorkelDataLoader(DataLoader):
     """An advanced dataloader class which contains mapping from task to label (which
     label(s) to use in dataset's Y_dict for this task), and split (which part this
     dataset belongs to) information.
@@ -89,7 +89,7 @@ class MultitaskDataLoader(DataLoader):
         self, dataset, collate_fn=collate_dicts, task_to_label_dict=None, **kwargs
     ):
 
-        assert isinstance(dataset, MultitaskDataset)
+        assert isinstance(dataset, SnorkelDataset)
         super().__init__(dataset, collate_fn=collate_fn, **kwargs)
 
         self.task_to_label_dict = task_to_label_dict or {}

@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from snorkel.end_model.data import MultitaskDataLoader, MultitaskDataset
+from snorkel.end_model.data import SnorkelDataLoader, SnorkelDataset
 from snorkel.end_model.model import MultitaskModel
 from snorkel.end_model.modules.utils import ce_loss, softmax
 from snorkel.end_model.scorer import Scorer
@@ -62,11 +62,11 @@ def create_dataloaders(num_tasks=1):
             Y_dict["task2_labels"] = Y_split[:, 1]
             task_to_label_dict["task2"] = "task2_labels"
 
-        dataset = MultitaskDataset(
+        dataset = SnorkelDataset(
             name="dataset", split=split, X_dict={"coordinates": X_split}, Y_dict=Y_dict
         )
 
-        dataloader = MultitaskDataLoader(
+        dataloader = SnorkelDataLoader(
             task_to_label_dict=task_to_label_dict,
             dataset=dataset,
             batch_size=4,

@@ -2,7 +2,7 @@ from snorkel.labeling.apply import LFApplier, PandasLFApplier
 
 
 class SFApplier(LFApplier):
-    """Label a single data point with a set of LFs.
+    """SF applier for a list of data points.
 
     See `snorkel.labeling.core.LFApplier` for details.
     """
@@ -10,7 +10,7 @@ class SFApplier(LFApplier):
 
 
 class PandasSFApplier(PandasLFApplier):
-    """Label a single data point with a set of LFs.
+    """SF applier for a Pandas DataFrame.
 
     See `snorkel.labeling.core.PandasLFApplier` for details.
     """

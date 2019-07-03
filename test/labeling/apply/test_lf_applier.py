@@ -6,12 +6,8 @@ import numpy as np
 import pandas as pd
 from dask import dataframe as dd
 
-from snorkel.labeling.apply import (
-    DaskLFApplier,
-    LFApplier,
-    PandasLFApplier,
-    PandasParallelLFApplier,
-)
+from snorkel.labeling.apply import LFApplier, PandasLFApplier
+from snorkel.labeling.apply.dask import DaskLFApplier, PandasParallelLFApplier
 from snorkel.labeling.lf import labeling_function
 from snorkel.labeling.preprocess import preprocessor
 from snorkel.labeling.preprocess.nlp import SpacyPreprocessor

@@ -1,6 +1,6 @@
 import typing
 from collections import defaultdict
-from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, Counter
+from typing import Any, Counter, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 

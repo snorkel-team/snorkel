@@ -4,7 +4,7 @@ from typing import Callable, List, Sequence, Tuple, Union
 import torch
 from torch import nn
 
-from snorkel.end_model.scorer import Scorer
+from snorkel.classification.scorer import Scorer
 
 
 class Operation:

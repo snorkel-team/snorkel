@@ -6,16 +6,16 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 
-from snorkel.end_model.batch_schedulers import batch_schedulers
-from snorkel.end_model.loggers import (
+from snorkel.classification.models.advanced import AdvancedClassifier
+from snorkel.classification.snorkel_config import default_config
+from snorkel.classification.training import (
     Checkpointer,
     LogManager,
     LogWriter,
     TensorBoardWriter,
 )
-from snorkel.end_model.model import MultitaskModel
-from snorkel.end_model.snorkel_config import default_config
-from snorkel.end_model.utils import recursive_merge_dicts
+from snorkel.classification.training.schedulers import batch_schedulers
+from snorkel.classification.utils import recursive_merge_dicts
 
 
 class Trainer(object):
@@ -29,11 +29,11 @@ class Trainer(object):
         self.config = recursive_merge_dicts(default_config, kwargs, misses="insert")
         self.name = name if name is not None else type(self).__name__
 
-    def train_model(self, model: MultitaskModel, dataloaders):
+    def train_model(self, model: AdvancedClassifier, dataloaders):
         """The learning procedure of MTL
 
         :param model: The multi-task model that needs to learn
-        :type model: MultitaskModel
+        :type model: AdvancedClassifier
         :param dataloaders: a list of dataloaders used to learn the model
         :type dataloaders: list
         """

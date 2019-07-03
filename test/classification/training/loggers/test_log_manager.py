@@ -2,8 +2,7 @@ import os
 import shutil
 import unittest
 
-from snorkel.end_model.loggers.checkpointer import Checkpointer
-from snorkel.end_model.loggers.log_manager import LogManager
+from snorkel.classification.training import Checkpointer, LogManager
 
 TEST_LOG_DIR = "test/mtl/loggers/logs"
 

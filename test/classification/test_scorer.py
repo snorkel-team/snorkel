@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from snorkel.end_model.scorer import Scorer
+from snorkel.classification.scorer import Scorer
 
 
 class ScorerTest(unittest.TestCase):

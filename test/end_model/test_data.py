@@ -76,9 +76,7 @@ class DatasetTest(unittest.TestCase):
         self.assertTrue(torch.equal(y_batch["label2"], torch.Tensor([1, 1])))
 
         dataloader2 = MultitaskDataLoader(
-            task_to_label_dict={"task2": "label2"},
-            dataset=dataset,
-            batch_size=3,
+            task_to_label_dict={"task2": "label2"}, dataset=dataset, batch_size=3
         )
 
         x_batch, y_batch = next(iter(dataloader2))

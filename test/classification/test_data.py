@@ -13,7 +13,7 @@ from snorkel.classification.data import (
 
 
 class DatasetTest(unittest.TestCase):
-    def test_mtl_dataset(self):
+    def test_classifier_dataset(self):
         """Unit test of ClassifierDataset"""
 
         x1 = [
@@ -34,7 +34,7 @@ class DatasetTest(unittest.TestCase):
         self.assertTrue(torch.equal(dataset[0][0]["data1"], x1[0]))
         self.assertTrue(torch.equal(dataset[0][1]["label1"], y1[0]))
 
-    def test_mtl_dataloader(self):
+    def test_classifier_dataloader(self):
         """Unit test of ClassifierDataLoader"""
 
         x1 = [

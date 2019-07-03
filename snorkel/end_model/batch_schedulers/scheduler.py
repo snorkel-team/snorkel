@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Sequence, Tuple
 
-from snorkel.classification.data import MultitaskDataLoader
+from snorkel.classification.data import ClassifierDataLoader
 
 
 class Scheduler(ABC):
@@ -13,8 +13,8 @@ class Scheduler(ABC):
 
     @abstractmethod
     def get_batches(
-        self, dataloaders: Sequence[MultitaskDataLoader]
-    ) -> Tuple[Tuple[Dict[str, Any], Dict[str, Any]], MultitaskDataLoader]:
+        self, dataloaders: Sequence[ClassifierDataLoader]
+    ) -> Tuple[Tuple[Dict[str, Any], Dict[str, Any]], ClassifierDataLoader]:
         """Return batches in shuffled order from dataloaders
 
         Parameters

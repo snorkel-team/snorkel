@@ -7,7 +7,7 @@ from scipy.sparse import csr_matrix
 from torch import nn
 
 from snorkel.analysis.utils import convert_labels
-from snorkel.classification.data import MultitaskDataLoader
+from snorkel.classification.data import ClassifierDataLoader
 from snorkel.classification.models.advanced import Operation, Task
 from snorkel.classification.models.advanced.utils import ce_loss, softmax
 from snorkel.classification.scorer import Scorer
@@ -16,7 +16,7 @@ from .modules.slice_combiner import SliceCombinerModule
 
 
 def add_slice_labels(
-    dataloader: MultitaskDataLoader,
+    dataloader: ClassifierDataLoader,
     base_task: Task,
     slice_labels: csr_matrix,
     slice_names: List[str],

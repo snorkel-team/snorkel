@@ -85,6 +85,17 @@ Note that we use PEP 484 type hints, so parameter types should be removed from t
 }
 ```
 
+### PySpark tests
+PySpark tests are invoked separately from the rest since they require
+installing Java and the large PySpark package.
+They are executed on Travis, but not by default for a local `tox` command.
+If you're making changes to Spark-based operators, make sure you have
+Java 8 installed locally and then run `tox -e spark`.
+If you add a test that imports PySpark mark it with the 
+`@pytest.mark.spark` decorator.
+Add the `@pytest.mark.complex` decorator as well if it runs a Spark
+action (e.g. `.collect()`).
+
 
 ## PRs
 

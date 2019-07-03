@@ -3,7 +3,7 @@ primarily using the MultitaskModel class.
 """
 
 from functools import partial
-from typing import Callable, List
+from typing import Callable, Dict, List, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -14,27 +14,21 @@ from snorkel.end_model.modules.utils import ce_loss, softmax
 from snorkel.end_model.scorer import Scorer
 from snorkel.end_model.task import Operation, Task
 
-# def ce_loss(X, Y):
-#     return F.cross_entropy(X, Y - 1)
-
-
-# def softmax(X):
-#     return F.softmax(X, dim=1).cpu().numpy()
-
 
 class SimpleModel(MultitaskModel):
     def __init__(
         self,
         modules: List[nn.Module],
         dropout: float = 0.0,
-        loss_func: Callable[[torch.Tensor], torch.FloatTensor] = ce_loss,
-        output_func: Callable[[torch.Tensor], np.ndarray] = softmax,
+        loss_func: Callable[..., torch.FloatTensor] = ce_loss,
+        output_func: Callable[..., np.ndarray] = softmax,
         metrics: List[str] = ["accuracy"],
         **kwargs,
     ):
 
-        module_pool = {}
-        task_flow = []
+        module_pool: Dict[str, nn.Module] = {}
+        task_flow: List[Operation] = []
+        inputs: Sequence[Tuple[str, Union[str, int]]]
         for i, module in enumerate(modules):
 
             args = [module]

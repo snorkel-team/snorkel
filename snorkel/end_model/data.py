@@ -1,4 +1,3 @@
-import logging
 import random
 from collections import defaultdict
 
@@ -23,8 +22,9 @@ class MultitaskDataset(Dataset):
     :type Y_dict: dict
     """
 
-    def __init__(self, name, X_dict, Y_dict):
+    def __init__(self, name, split, X_dict, Y_dict):
         self.name = name
+        self.split = split
         self.X_dict = X_dict
         self.Y_dict = Y_dict
 
@@ -41,57 +41,9 @@ class MultitaskDataset(Dataset):
 
     def __len__(self):
         try:
-            return len(next(iter(self.X_dict.values())))
+            return len(next(iter(self.Y_dict.values())))
         except StopIteration:
             return 0
-
-    def _update_dict(self, old_dict, new_dict):
-        for key, value in new_dict.items():
-            old_dict[key] = value
-
-    def _remove_key(self, old_dict, key):
-        if key in old_dict:
-            del old_dict[key]
-
-    def add_features(self, X_dict):
-        """Add new features into X_dict
-
-        :param X_dict: the new feature dict to add into the existing feature dict
-        :type X_dict: dict
-        """
-
-        self._update_dict(self.X_dict, X_dict)
-
-    def add_labels(self, Y_dict):
-        """Add new labels into Y_dict
-
-        :param Y_dict: the new label dict to add into the existing label dict
-        :type Y_dict: dict
-        """
-
-        for name, label in Y_dict.items():
-            if not isinstance(label, torch.Tensor):
-                raise ValueError(f"Label {name} should be torch.Tensor.")
-
-        self._update_dict(self.Y_dict, Y_dict)
-
-    def remove_feature(self, feature_name):
-        """Remove one feature from feature dict
-
-        :param feature_name: the feature that removes from feature dict
-        :type feature_name: str
-        """
-
-        self._remove_key(self.X_dict, feature_name)
-
-    def remove_label(self, label_name):
-        """Remove one label from label dict
-
-        :param label_name: the label that removes from label dict
-        :type label_name: str
-        """
-
-        self._remove_key(self.Y_dict, label_name)
 
 
 def collate_dicts(batch):
@@ -134,32 +86,19 @@ class MultitaskDataLoader(DataLoader):
     """
 
     def __init__(
-        self,
-        task_to_label_dict,
-        dataset,
-        split="train",
-        collate_fn=collate_dicts,
-        **kwargs,
+        self, dataset, collate_fn=collate_dicts, task_to_label_dict=None, **kwargs
     ):
 
         assert isinstance(dataset, MultitaskDataset)
         super().__init__(dataset, collate_fn=collate_fn, **kwargs)
 
-        self.task_to_label_dict = task_to_label_dict
-        self.data_name = dataset.name
-        self.split = split
+        self.task_to_label_dict = task_to_label_dict or {}
 
-        for task_name, label_names in task_to_label_dict.items():
-            if not isinstance(label_names, list):
-                label_names = [label_names]
-            unrecognized_labels = set(label_names) - set(dataset.Y_dict.keys())
-            if len(unrecognized_labels) > 0:
-                msg = (
-                    f"Unrecognized Label {unrecognized_labels} of Task {task_name} in "
-                    f"dataset {dataset.name}"
+        for label in self.task_to_label_dict.values():
+            if label not in dataset.Y_dict:
+                raise ValueError(
+                    f"Label {label} specified in task_to_label_dict could not be found in Y_dict"
                 )
-                logging.warn(msg)
-                raise ValueError(msg)
 
 
 def split_data(

@@ -1,4 +1,7 @@
 import random
+from typing import Any, Dict, Sequence, Tuple
+
+from snorkel.end_model.data import MultitaskDataLoader
 
 from .scheduler import Scheduler
 
@@ -9,30 +12,32 @@ class ShuffledScheduler(Scheduler):
     def __init__(self):
         super().__init__()
 
-    def get_batches(self, dataloaders):
-        """Return batches in shuffled order.
+    def get_batches(
+        self, dataloaders: Sequence[MultitaskDataLoader]
+    ) -> Tuple[Tuple[Dict[str, Any], Dict[str, Any]], MultitaskDataLoader]:
+        """Return batches in shuffled order from dataloaders
 
-        :param dataloaders: a list of dataloaders
-        :type dataloaders: list
-        :return: A generator of all batches
-        :rtype: genertor
+        Parameters
+        ----------
+        dataloaders
+            A sequence of dataloaders to get batches from
+
+        Yields
+        -------
+        (batch, dataloader)
+            batch is a tuple of (X_dict, Y_dict) and dataloader is the dataloader
+            that that batch came from. That dataloader will not be accessed by the
+            model; it is passed primarily so that the model can pull the necessary
+            metadata to know what to do with the batch it has been given.
         """
+        batch_counts = [len(dl) for dl in dataloaders]
+        dataloader_iters = [iter(dl) for dl in dataloaders]
 
-        task_to_label_dicts = [
-            dataloader.task_to_label_dict for dataloader in dataloaders
-        ]
-        data_names = [dataloader.data_name for dataloader in dataloaders]
-        batch_counts = [len(dataloader) for dataloader in dataloaders]
-        data_loaders = [iter(dataloader) for dataloader in dataloaders]
-        splits = [dataloader.split for dataloader in dataloaders]
-
-        dataloader_indexer = []
+        dataloader_indices = []
         for idx, count in enumerate(batch_counts):
-            dataloader_indexer.extend([idx] * count)
+            dataloader_indices.extend([idx] * count)
 
-        random.shuffle(dataloader_indexer)
+        random.shuffle(dataloader_indices)
 
-        for index in dataloader_indexer:
-            yield next(data_loaders[index]), task_to_label_dicts[index], data_names[
-                index
-            ], splits[index]
+        for index in dataloader_indices:
+            yield next(dataloader_iters[index]), dataloaders[index]

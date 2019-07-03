@@ -111,6 +111,7 @@ def create_dataloader(df, split):
 
     dataset = MultitaskDataset(
         name="TestData",
+        split=split,
         X_dict={
             "coordinates": torch.stack(
                 (torch.Tensor(df["x1"]), torch.Tensor(df["x2"])), dim=1
@@ -122,9 +123,8 @@ def create_dataloader(df, split):
     dataloader = MultitaskDataLoader(
         task_to_label_dict=task_to_label_dict,
         dataset=dataset,
-        split=split,
         batch_size=4,
-        shuffle=(split == "train"),
+        shuffle=(dataset.split == "train"),
     )
     return dataloader
 
@@ -155,3 +155,7 @@ def create_task(task_name, module_suffixes):
     )
 
     return task
+
+
+if __name__ == "__main__":
+    unittest.main()

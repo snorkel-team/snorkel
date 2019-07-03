@@ -1,3 +1,7 @@
+from typing import Any, Dict, Sequence, Tuple
+
+from snorkel.end_model.data import MultitaskDataLoader
+
 from .scheduler import Scheduler
 
 
@@ -7,25 +11,24 @@ class SequentialScheduler(Scheduler):
     def __init__(self):
         super().__init__()
 
-    def get_batches(self, dataloaders):
-        """Return batches in sequential order.
+    def get_batches(
+        self, dataloaders: Sequence[MultitaskDataLoader]
+    ) -> Tuple[Tuple[Dict[str, Any], Dict[str, Any]], MultitaskDataLoader]:
+        """Return batches from dataloaders sequentially in the order they were given.
 
-        :param dataloaders: a list of dataloaders
-        :type dataloaders: list
-        :return: A generator of all batches
-        :rtype: genertor
+        Parameters
+        ----------
+        dataloaders
+            A sequence of dataloaders to get batches from
+
+        Yields
+        -------
+        (batch, dataloader)
+            batch is a tuple of (X_dict, Y_dict) and dataloader is the dataloader
+            that that batch came from. That dataloader will not be accessed by the
+            model; it is passed primarily so that the model can pull the necessary
+            metadata to know what to do with the batch it has been given.
         """
-
-        task_to_label_dicts = [
-            dataloader.task_to_label_dict for dataloader in dataloaders
-        ]
-        data_names = [dataloader.data_name for dataloader in dataloaders]
-        batch_counts = [len(dataloader) for dataloader in dataloaders]
-        data_loaders = [iter(dataloader) for dataloader in dataloaders]
-        splits = [dataloader.split for dataloader in dataloaders]
-
-        for task_to_label_dict, data_name, batch_count, data_loader, split in zip(
-            task_to_label_dicts, data_names, batch_counts, data_loaders, splits
-        ):
-            for batch in range(batch_count):
-                yield next(data_loader), task_to_label_dict, data_name, split
+        for dataloader in dataloaders:
+            for batch in dataloader:
+                yield batch, dataloader

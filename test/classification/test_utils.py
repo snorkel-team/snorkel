@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from snorkel.end_model.utils import list_to_tensor, pad_batch
+from snorkel.classification.utils import list_to_tensor, pad_batch
 
 
 class UtilsTest(unittest.TestCase):

@@ -5,12 +5,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from snorkel.end_model.data import MultitaskDataLoader, MultitaskDataset
-from snorkel.end_model.model import MultitaskModel
-from snorkel.end_model.modules.utils import ce_loss, softmax
-from snorkel.end_model.scorer import Scorer
-from snorkel.end_model.task import Operation, Task
-from snorkel.end_model.trainer import Trainer
+from snorkel.classification.data import ClassifierDataLoader, ClassifierDataset
+from snorkel.classification.models.advanced import AdvancedClassifier, Operation, Task
+from snorkel.classification.models.advanced.utils import ce_loss, softmax
+from snorkel.classification.scorer import Scorer
+from snorkel.classification.training import Trainer
 
 trainer_config = {"n_epochs": 2, "progress_bar": False}
 
@@ -19,7 +18,7 @@ class TrainerTest(unittest.TestCase):
     def test_trainer_onetask(self):
         """Train a single-task model"""
         task1 = create_task("task1", module_suffixes=["A", "A"])
-        model = MultitaskModel(tasks=[task1])
+        model = AdvancedClassifier(tasks=[task1])
         dataloaders = create_dataloaders(num_tasks=1)
         trainer = Trainer(**trainer_config)
         trainer.train_model(model, dataloaders)
@@ -28,7 +27,7 @@ class TrainerTest(unittest.TestCase):
         """Train a model with overlapping modules and flows"""
         task1 = create_task("task1", module_suffixes=["A", "A"])
         task2 = create_task("task2", module_suffixes=["A", "B"])
-        model = MultitaskModel(tasks=[task1, task2])
+        model = AdvancedClassifier(tasks=[task1, task2])
         dataloaders = create_dataloaders(num_tasks=2)
         trainer = Trainer(**trainer_config)
         trainer.train_model(model, dataloaders)
@@ -58,11 +57,11 @@ def create_dataloaders(num_tasks=1):
             Y_dict["task2_labels"] = Y_split[:, 1]
             task_to_label_dict["task2"] = "task2_labels"
 
-        dataset = MultitaskDataset(
+        dataset = ClassifierDataset(
             name="dataset", split=split, X_dict={"coordinates": X_split}, Y_dict=Y_dict
         )
 
-        dataloader = MultitaskDataLoader(
+        dataloader = ClassifierDataLoader(
             task_to_label_dict=task_to_label_dict,
             dataset=dataset,
             batch_size=4,

@@ -1,20 +1,21 @@
+from abc import ABC, abstractmethod
 from typing import Any, Dict, Sequence, Tuple
 
-from snorkel.end_model.data import MultitaskDataLoader
-
-from .scheduler import Scheduler
+from snorkel.classification.data import ClassifierDataLoader
 
 
-class SequentialScheduler(Scheduler):
-    """Return batches from all dataloaders in sequential order."""
+class Scheduler(ABC):
+    """Return batches from all dataloaders in a specified order
+    """
 
     def __init__(self):
-        super().__init__()
+        pass
 
+    @abstractmethod
     def get_batches(
-        self, dataloaders: Sequence[MultitaskDataLoader]
-    ) -> Tuple[Tuple[Dict[str, Any], Dict[str, Any]], MultitaskDataLoader]:
-        """Return batches from dataloaders sequentially in the order they were given.
+        self, dataloaders: Sequence[ClassifierDataLoader]
+    ) -> Tuple[Tuple[Dict[str, Any], Dict[str, Any]], ClassifierDataLoader]:
+        """Return batches in shuffled order from dataloaders
 
         Parameters
         ----------
@@ -29,6 +30,3 @@ class SequentialScheduler(Scheduler):
             model; it is passed primarily so that the model can pull the necessary
             metadata to know what to do with the batch it has been given.
         """
-        for dataloader in dataloaders:
-            for batch in dataloader:
-                yield batch, dataloader

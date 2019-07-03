@@ -4,8 +4,8 @@ import os
 from collections import defaultdict
 from datetime import datetime
 
-from snorkel.end_model.snorkel_config import default_config
-from snorkel.end_model.utils import recursive_merge_dicts
+from snorkel.classification.snorkel_config import default_config
+from snorkel.classification.utils import recursive_merge_dicts
 
 
 class LogWriter:

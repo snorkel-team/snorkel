@@ -6,6 +6,7 @@ class DaskSFApplier(DaskLFApplier):  # pragma: no cover
 
     See `snorkel.labeling.apply.dask.DaskLFApplier` for details.
     """
+
     pass
 
 
@@ -14,4 +15,5 @@ class ParallelPandasSFApplier(PandasParallelLFApplier):  # pragma: no cover
 
     See `snorkel.labeling.apply.dask.PandasParallelLFApplier` for details.
     """
+
     pass

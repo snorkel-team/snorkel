@@ -6,6 +6,7 @@ class SlicingFunction(LabelingFunction):
 
     See `snorkel.labeling.lf.LabelingFunction` for details.
     """
+
     pass
 
 
@@ -14,4 +15,5 @@ class slicing_function(labeling_function):
 
     See `snorkel.labeling.lf.labeling_function` for details.
     """
+
     pass

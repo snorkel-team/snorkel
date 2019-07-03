@@ -3,8 +3,6 @@ from typing import List
 import pandas as pd
 from tqdm import tqdm
 
-from snorkel.augmentation.tf import TransformationFunctionMode
-
 from .tf_applier import BaseTFApplier
 
 
@@ -40,7 +38,6 @@ class PandasTFApplier(BaseTFApplier):
         pd.DataFrame
             Pandas DataFrame of data points in augmented data set
         """
-        self._set_tf_mode(TransformationFunctionMode.PANDAS)
         batch_transformed: List[pd.Series] = []
         for i, (_, x) in enumerate(df.iterrows()):
             batch_transformed.extend(self._apply_policy_to_data_point(x))
@@ -62,7 +59,6 @@ class PandasTFApplier(BaseTFApplier):
         pd.DataFrame
             Pandas DataFrame of data points in augmented data set
         """
-        self._set_tf_mode(TransformationFunctionMode.PANDAS)
         x_transformed: List[pd.Series] = []
         for _, x in tqdm(df.iterrows(), total=len(df)):
             x_transformed.extend(self._apply_policy_to_data_point(x))

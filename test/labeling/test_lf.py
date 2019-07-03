@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from typing import List
 
 from snorkel.labeling.lf import LabelingFunction, labeling_function
-from snorkel.labeling.preprocess import PreprocessorMode, preprocessor
+from snorkel.labeling.preprocess import preprocessor
 from snorkel.types import DataPoint
 
 
@@ -61,7 +61,6 @@ class TestLabelingFunction(unittest.TestCase):
 
     def test_labeling_function_preprocessor(self) -> None:
         lf = LabelingFunction(name="my_lf", f=f, preprocessors=[square, square])
-        lf.set_preprocessor_mode(PreprocessorMode.NAMESPACE)
         x_43 = SimpleNamespace(num=43)
         x_6 = SimpleNamespace(num=6)
         x_2 = SimpleNamespace(num=2)
@@ -71,7 +70,6 @@ class TestLabelingFunction(unittest.TestCase):
 
     def test_labeling_function_returns_none(self) -> None:
         lf = LabelingFunction(name="my_lf", f=f, preprocessors=[square, returns_none])
-        lf.set_preprocessor_mode(PreprocessorMode.NAMESPACE)
         x_43 = SimpleNamespace(num=43)
         with self.assertRaises(ValueError):
             lf(x_43)

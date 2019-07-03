@@ -12,4 +12,4 @@ ignore_errors = True
 omit =
     test/*
     tutorials/*
-    snorkel/labeling/apply/lf_applier_spark.py
+    *spark.py

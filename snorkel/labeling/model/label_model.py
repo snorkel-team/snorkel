@@ -59,7 +59,7 @@ class LabelModel(Classifier):
             L_ind[:, (y - 1) :: self.k] = np.where(L == y, 1, 0)
         return L_ind
 
-    def _get_augmented_label_matrix(self, L, higher_order=True):
+    def _get_augmented_label_matrix(self, L, higher_order=False):
         """Returns an augmented version of L where each column is an indicator
         for whether a certain source or clique of sources voted in a certain
         pattern.
@@ -176,8 +176,8 @@ class LabelModel(Classifier):
 
         # Handle single values
         if isinstance(train_config["prec_init"], (int, float)):
-            self.prec_init = train_config["prec_init"] * torch.ones(self.m)
-        if self.prec_init.shape[0] != self.m:
+            self._prec_init = train_config["prec_init"] * torch.ones(self.m)
+        if self._prec_init.shape[0] != self.m:
             raise ValueError(f"prec_init must have shape {self.m}.")
 
         # Get the per-value labeling propensities
@@ -189,7 +189,7 @@ class LabelModel(Classifier):
         for i in range(self.m):
             for y in range(self.k):
                 idx = i * self.k + y
-                mu_init = torch.clamp(lps[idx] * self.prec_init[i] / self.p[y], 0, 1)
+                mu_init = torch.clamp(lps[idx] * self._prec_init[i] / self.p[y], 0, 1)
                 self.mu_init[idx, y] += mu_init
 
         # Initialize randomly based on self.mu_init

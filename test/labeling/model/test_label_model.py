@@ -59,6 +59,27 @@ class LabelModelTest(unittest.TestCase):
         )
         np.testing.assert_array_almost_equal(label_model.O.numpy(), true_O)
 
+        L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 2]])
+        label_model = self._set_up_model(L)
+
+        label_model._generate_O(L, higher_order=False)
+        true_O = np.array(
+            [
+                [3 / 4, 0, 0, 3 / 4, 1.0 / 2, 1 / 4],
+                [0, 1 / 4, 1 / 4, 0, 1 / 4, 0],
+                [0, 1 / 4, 1 / 4, 0, 1 / 4, 0],
+                [3 / 4, 0, 0, 3 / 4, 1 / 2, 1 / 4],
+                [1 / 2, 1 / 4, 1 / 4, 1 / 2, 3 / 4, 0],
+                [1 / 4, 0, 0, 1 / 4, 0, 1 / 4],
+            ]
+        )
+        np.testing.assert_array_almost_equal(label_model.O.numpy(), true_O)
+
+        # Higher order returns same matrix (num source = num cliques)
+        # Need to test c_tree form
+        label_model._generate_O(L, higher_order=True)
+        np.testing.assert_array_almost_equal(label_model.O.numpy(), true_O)
+
     def test_augmented_L_construction(self):
         # 5 LFs
         n = 3

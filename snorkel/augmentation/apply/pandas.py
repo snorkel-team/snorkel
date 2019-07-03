@@ -3,7 +3,7 @@ from typing import List
 import pandas as pd
 from tqdm import tqdm
 
-from .tf_applier import BaseTFApplier
+from .core import BaseTFApplier
 
 
 class PandasTFApplier(BaseTFApplier):

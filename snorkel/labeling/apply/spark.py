@@ -7,7 +7,7 @@ from pyspark import RDD
 
 from snorkel.types import DataPoint
 
-from .lf_applier import BaseLFApplier, RowData, apply_lfs_to_data_point
+from .core import BaseLFApplier, RowData, apply_lfs_to_data_point
 
 
 class SparkLFApplier(BaseLFApplier):

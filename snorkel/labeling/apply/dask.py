@@ -6,8 +6,8 @@ import scipy.sparse as sparse
 from dask import dataframe as dd
 from dask.distributed import Client
 
-from .lf_applier import BaseLFApplier
-from .lf_applier_pandas import apply_lfs_to_data_point, rows_to_triplets
+from .core import BaseLFApplier
+from .pandas import apply_lfs_to_data_point, rows_to_triplets
 
 Scheduler = Union[str, Client]
 

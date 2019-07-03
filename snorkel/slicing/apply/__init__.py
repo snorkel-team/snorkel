@@ -1,2 +1,5 @@
-from .sf_applier import SFApplier  # noqa: F401
-from .sf_applier_pandas import PandasSFApplier  # noqa: F401
+from snorkel.labeling.apply import (  # noqa: F401
+    DaskLFApplier as DaskSFApplier,
+    LFApplier as SFApplier,
+    PandasLFApplier as PandasSFApplier,
+)

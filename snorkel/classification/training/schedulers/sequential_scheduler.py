@@ -1,4 +1,6 @@
-from typing import Any, Dict, Sequence, Tuple
+from typing import Any, Dict, Iterator, Sequence, Tuple
+
+from torch import Tensor
 
 from snorkel.classification.data import ClassifierDataLoader
 
@@ -13,7 +15,9 @@ class SequentialScheduler(Scheduler):
 
     def get_batches(
         self, dataloaders: Sequence[ClassifierDataLoader]
-    ) -> Tuple[Tuple[Dict[str, Any], Dict[str, Any]], ClassifierDataLoader]:
+    ) -> Iterator[
+        Tuple[Tuple[Dict[str, Any], Dict[str, Tensor]], ClassifierDataLoader]
+    ]:
         """Return batches from dataloaders sequentially in the order they were given.
 
         Parameters

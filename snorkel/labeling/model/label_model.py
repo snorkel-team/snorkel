@@ -16,7 +16,7 @@ from .lm_defaults import lm_default_config
 
 
 class LabelModel(Classifier):
-    """A LabelModel...TBD
+    """A conditionally independent LabelModel to learn labeling function accuracies and assign probabilistic labels
 
     Args:
         k: (int) the cardinality of the classifier
@@ -31,13 +31,14 @@ class LabelModel(Classifier):
 
     def _check_L(self, L):
         """Run some basic checks on L."""
-        # TODO: Take this out?
         if issparse(L):
             L = L.todense()
 
         # Check for correct values, e.g. warning if in {-1,0,1}
         if np.any(L < 0):
             raise ValueError("L must have values in {0,1,...,k}.")
+
+        return L
 
     def _create_L_ind(self, L):
         """Convert a label matrix with labels in 0...k to a one-hot format
@@ -50,10 +51,6 @@ class LabelModel(Classifier):
 
         Note that no column is required for 0 (abstain) labels.
         """
-        # TODO: Update LabelModel to keep L variants as sparse matrices
-        # throughout and remove this line.
-        if issparse(L):
-            L = L.todense()
 
         L_ind = np.zeros((self.n, self.m * self.k))
         for y in range(1, self.k + 1):
@@ -62,7 +59,7 @@ class LabelModel(Classifier):
             L_ind[:, (y - 1) :: self.k] = np.where(L == y, 1, 0)
         return L_ind
 
-    def _get_augmented_label_matrix(self, L, higher_order=False):
+    def _get_augmented_label_matrix(self, L, higher_order=True):
         """Returns an augmented version of L where each column is an indicator
         for whether a certain source or clique of sources voted in a certain
         pattern.
@@ -119,14 +116,9 @@ class LabelModel(Classifier):
                             L_C[:, i] *= L_ind[:, members[j] * self.k + v]
 
                     # Add to L_aug and store the indices
-                    if L_aug is not None:
-                        C["start_index"] = L_aug.shape[1]
-                        C["end_index"] = L_aug.shape[1] + L_C.shape[1]
-                        L_aug = np.hstack([L_aug, L_C])
-                    else:
-                        C["start_index"] = 0
-                        C["end_index"] = L_C.shape[1]
-                        L_aug = L_C
+                    C["start_index"] = L_aug.shape[1]
+                    C["end_index"] = L_aug.shape[1] + L_C.shape[1]
+                    L_aug = np.hstack([L_aug, L_C])
 
                     # Add to self.c_data as well
                     id = tuple(members) if len(members) > 1 else members[0]
@@ -164,11 +156,6 @@ class LabelModel(Classifier):
         self.d = L_aug.shape[1]
         self.O = torch.from_numpy(L_aug.T @ L_aug / self.n).float()
 
-    def _generate_O_inv(self, L):
-        """Form the *inverse* overlaps matrix"""
-        self._generate_O(L)
-        self.O_inv = torch.from_numpy(np.linalg.inv(self.O.numpy())).float()
-
     def _init_params(self):
         """Initialize the learned params
 
@@ -179,7 +166,6 @@ class LabelModel(Classifier):
             self.mu[i*self.k + j, y] = P(\lambda_i = j | Y = y)
 
         and similarly for higher-order cliques.
-        - Z is the inverse form version of \mu.
         """
         train_config = self.config["train_config"]
 
@@ -188,13 +174,11 @@ class LabelModel(Classifier):
         # value, prec_i = P(Y=y|\lf=y), and use:
         #   mu_init = P(\lf=y|Y=y) = P(\lf=y) * prec_i / P(Y=y)
 
-        # Handle single or per-LF values
+        # Handle single values
         if isinstance(train_config["prec_init"], (int, float)):
-            prec_init = train_config["prec_init"] * torch.ones(self.m)
-        else:
-            prec_init = torch.from_numpy(train_config["prec_init"])
-            if prec_init.shape[0] != self.m:
-                raise ValueError(f"prec_init must have shape {self.m}.")
+            self.prec_init = train_config["prec_init"] * torch.ones(self.m)
+        if self.prec_init.shape[0] != self.m:
+            raise ValueError(f"prec_init must have shape {self.m}.")
 
         # Get the per-value labeling propensities
         # Note that self.O must have been computed already!
@@ -205,17 +189,13 @@ class LabelModel(Classifier):
         for i in range(self.m):
             for y in range(self.k):
                 idx = i * self.k + y
-                mu_init = torch.clamp(lps[idx] * prec_init[i] / self.p[y], 0, 1)
+                mu_init = torch.clamp(lps[idx] * self.prec_init[i] / self.p[y], 0, 1)
                 self.mu_init[idx, y] += mu_init
 
         # Initialize randomly based on self.mu_init
         self.mu = nn.Parameter(self.mu_init.clone() * np.random.random()).float()
 
-        if self.inv_form:
-            self.Z = nn.Parameter(torch.randn(self.d, self.k)).float()
-
         # Build the mask over O^{-1}
-        # TODO: Put this elsewhere?
         self._build_mask()
 
     def get_conditional_probs(self, source=None):
@@ -251,11 +231,14 @@ class LabelModel(Classifier):
         else:
             return c_probs
 
-    def get_accuracies(self):
+    def get_accuracies(self, probs=None):
         """Returns the vector of LF accuracies, computed using get_conditional_probs"""
         accs = np.zeros(self.m)
         for i in range(self.m):
-            cps = self.get_conditional_probs(source=i)[1:, :]
+            if probs is None:
+                cps = self.get_conditional_probs(source=i)[1:, :]
+            else:
+                cps = probs[i * (self.k + 1) : (i + 1) * (self.k + 1)][1:, :]
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
         return accs
 
@@ -269,38 +252,12 @@ class LabelModel(Classifier):
 
         L_aug = self._get_augmented_label_matrix(L)
         mu = np.clip(self.mu.detach().clone().numpy(), 0.01, 0.99)
-
-        # Create a "junction tree mask" over the columns of L_aug / mu
-        if len(self.deps) > 0:
-            jtm = np.zeros(L_aug.shape[1])
-
-            # All maximal cliques are +1
-            for i in self.c_tree.nodes():
-                node = self.c_tree.node[i]
-                jtm[node["start_index"] : node["end_index"]] = 1
-
-            # All separator sets are -1
-            for i, j in self.c_tree.edges():
-                edge = self.c_tree[i][j]
-                jtm[edge["start_index"] : edge["end_index"]] = 1
-        else:
-            jtm = np.ones(L_aug.shape[1])
+        jtm = np.ones(L_aug.shape[1])
 
         # Note: We omit abstains, effectively assuming uniform distribution here
         X = np.exp(L_aug @ np.diag(jtm) @ np.log(mu) + np.log(self.p))
         Z = np.tile(X.sum(axis=1).reshape(-1, 1), self.k)
         return X / Z
-
-    def get_Q(self):
-        """Get the model's estimate of Q = \mu P \mu^T
-
-        We can then separately extract \mu subject to additional constraints,
-        e.g. \mu P 1 = diag(O).
-        """
-        Z = self.Z.detach().clone().numpy()
-        O = self.O.numpy()
-        I_k = np.eye(self.k)
-        return O @ Z @ np.linalg.inv(I_k + Z.T @ O @ Z) @ Z.T @ O
 
     # These loss functions get all their data directly from the LabelModel
     # (for better or worse). The unused *args make these compatible with the
@@ -320,18 +277,10 @@ class LabelModel(Classifier):
         if isinstance(l2, (int, float)):
             D = l2 * torch.eye(self.d)
         else:
-            D = torch.diag(torch.from_numpy(l2))
+            D = torch.diag(torch.from_numpy(l2)).type(torch.float32)
 
         # Note that mu is a matrix and this is the *Frobenius norm*
         return torch.norm(D @ (self.mu - self.mu_init)) ** 2
-
-    def loss_inv_Z(self, *args):
-        return torch.norm((self.O_inv + self.Z @ self.Z.t())[self.mask]) ** 2
-
-    def loss_inv_mu(self, *args, l2=0):
-        loss_1 = torch.norm(self.Q - self.mu @ self.P @ self.mu.t()) ** 2
-        loss_2 = torch.norm(torch.sum(self.mu @ self.P, 1) - torch.diag(self.O)) ** 2
-        return loss_1 + loss_2 + self.loss_l2(l2=l2)
 
     def loss_mu(self, *args, l2=0):
         loss_1 = torch.norm((self.O - self.mu @ self.P @ self.mu.t())[self.mask]) ** 2
@@ -360,45 +309,27 @@ class LabelModel(Classifier):
         self.n, self.m = L.shape
         self.t = 1
 
-    def _set_dependencies(self, deps):
+    def _create_tree(self):
         nodes = range(self.m)
-        self.deps = deps
-        self.c_tree = get_clique_tree(nodes, deps)
+        self.c_tree = get_clique_tree(nodes, [])
 
     def train_model(
-        self,
-        L_train,
-        Y_dev=None,
-        deps=[],
-        class_balance=None,
-        log_writer=None,
-        **kwargs,
+        self, L_train, Y_dev=None, class_balance=None, log_writer=None, **kwargs
     ):
-        """Train the model (i.e. estimate mu) in one of two ways, depending on
-        whether source dependencies are provided or not:
+        """Train the model (i.e. estimate mu):
 
         Args:
             L_train: An [n,m] scipy.sparse matrix with values in {0,1,...,k}
                 corresponding to labels from supervision sources on the
                 training set
             Y_dev: Target labels for the dev set, for estimating class_balance
-            deps: (list of tuples) known dependencies between supervision
-                sources. If not provided, sources are assumed to be independent.
-                TODO: add automatic dependency-learning code
             class_balance: (np.array) each class's percentage of the population
 
-        (1) No dependencies (conditionally independent sources): Estimate mu
+        No dependencies (conditionally independent sources): Estimate mu
         subject to constraints:
             (1a) O_{B(i,j)} - (mu P mu.T)_{B(i,j)} = 0, for i != j, where B(i,j)
                 is the block of entries corresponding to sources i,j
             (1b) np.sum( mu P, 1 ) = diag(O)
-
-        (2) Source dependencies:
-            - First, estimate Z subject to the inverse form
-            constraint:
-                (2a) O_\Omega + (ZZ.T)_\Omega = 0, \Omega is the deps mask
-            - Then, compute Q = mu P mu.T
-            - Finally, estimate mu subject to mu P mu.T = Q and (1b)
         """
         self.config = recursive_merge_dicts(self.config, kwargs, misses="ignore")
         train_config = self.config["train_config"]
@@ -410,46 +341,24 @@ class LabelModel(Classifier):
         # Note that the LabelModel class implements its own (centered) L2 reg.
         l2 = train_config.get("l2", 0)
 
+        L_train = self._check_L(L_train)
         self._set_class_balance(class_balance, Y_dev)
         self._set_constants(L_train)
-        self._set_dependencies(deps)
-        self._check_L(L_train)
-
-        # Whether to take the simple conditionally independent approach, or the
-        # "inverse form" approach for handling dependencies
-        # This flag allows us to eg test the latter even with no deps present
-        self.inv_form = len(self.deps) > 0
+        self._create_tree()
 
         # Creating this faux dataset is necessary for now because the LabelModel
         # loss functions do not accept inputs, but Classifer._train_model()
         # expects training data to feed to the loss functions.
         dataset = MetalDataset([0], [0])
         train_loader = DataLoader(dataset)
-        if self.inv_form:
-            # Compute O, O^{-1}, and initialize params
-            if self.config["verbose"]:
-                print("Computing O^{-1}...")
-            self._generate_O_inv(L_train)
-            self._init_params()
 
-            # Estimate Z, compute Q = \mu P \mu^T
-            if self.config["verbose"]:
-                print("Estimating Z...")
-            self._train_model(train_loader, self.loss_inv_Z)
-            self.Q = torch.from_numpy(self.get_Q()).float()
+        # Compute O and initialize params
+        if self.config["verbose"]:  # pragma: no cover
+            print("Computing O...")
+        self._generate_O(L_train)
+        self._init_params()
 
-            # Estimate \mu
-            if self.config["verbose"]:
-                print("Estimating \mu...")
-            self._train_model(train_loader, partial(self.loss_inv_mu, l2=l2))
-        else:
-            # Compute O and initialize params
-            if self.config["verbose"]:
-                print("Computing O...")
-            self._generate_O(L_train)
-            self._init_params()
-
-            # Estimate \mu
-            if self.config["verbose"]:
-                print("Estimating \mu...")
-            self._train_model(train_loader, partial(self.loss_mu, l2=l2))
+        # Estimate \mu
+        if self.config["verbose"]:  # pragma: no cover
+            print("Estimating \mu...")
+        self._train_model(train_loader, partial(self.loss_mu, l2=l2))

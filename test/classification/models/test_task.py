@@ -44,3 +44,7 @@ class TaskTest(unittest.TestCase):
         # Task has no functionality on its own
         # Here we only confirm that the object was initialized
         self.assertEqual(task.name, TASK_NAME)
+
+
+if __name__ == "__main__":
+    unittest.main()

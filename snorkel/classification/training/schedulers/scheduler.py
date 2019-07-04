@@ -5,6 +5,8 @@ from torch import Tensor
 
 from snorkel.classification.data import ClassifierDataLoader
 
+BatchIterator = Iterator[Tuple[Tuple[Dict[str, Any], Dict[str, Tensor]], ClassifierDataLoader]]
+
 
 class Scheduler(ABC):
     """Return batches from all dataloaders in a specified order
@@ -16,9 +18,7 @@ class Scheduler(ABC):
     @abstractmethod
     def get_batches(
         self, dataloaders: Sequence[ClassifierDataLoader]
-    ) -> Iterator[
-        Tuple[Tuple[Dict[str, Any], Dict[str, Tensor]], ClassifierDataLoader]
-    ]:
+    ) -> BatchIterator:
         """Return batches in shuffled order from dataloaders
 
         Parameters

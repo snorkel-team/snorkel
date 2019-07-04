@@ -1,7 +1,8 @@
 from functools import partial
-from typing import Callable, List, Mapping, Optional
+from typing import Callable, Dict, List, Mapping, Optional
 
 from snorkel.analysis.metrics import METRICS, metric_score
+from snorkel.types import ArrayLike
 
 
 class Scorer(object):
@@ -21,6 +22,7 @@ class Scorer(object):
         custom_metric_funcs: Optional[Mapping[str, Callable[..., float]]] = None,
     ):
 
+        self.metrics: Dict[str, Callable[..., float]]
         if metrics:
             for metric in metrics:
                 if metric not in METRICS:
@@ -32,12 +34,14 @@ class Scorer(object):
         if custom_metric_funcs is not None:
             self.metrics.update(custom_metric_funcs)
 
-    def score(self, golds, preds, probs):
+    def score(
+        self, golds: ArrayLike, preds: ArrayLike, probs: ArrayLike
+    ) -> Dict[str, float]:
         metric_dict = dict()
 
         for metric_name, metric in self.metrics.items():
             # Handle no examples
-            if len(golds) == 0:
+            if len(golds) == 0:  # type: ignore
                 metric_dict[metric_name] = float("nan")
                 continue
 

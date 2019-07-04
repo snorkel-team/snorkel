@@ -1,9 +1,9 @@
 import random
-from typing import Any, Dict, Sequence, Tuple
+from typing import Sequence
 
 from snorkel.classification.data import ClassifierDataLoader
 
-from .scheduler import Scheduler
+from .scheduler import BatchIterator, Scheduler
 
 
 class ShuffledScheduler(Scheduler):
@@ -12,10 +12,11 @@ class ShuffledScheduler(Scheduler):
     def __init__(self):
         super().__init__()
 
-    def get_batches(
-        self, dataloaders: Sequence[ClassifierDataLoader]
-    ) -> Tuple[Tuple[Dict[str, Any], Dict[str, Any]], ClassifierDataLoader]:
+    def get_batches(self, dataloaders: Sequence[ClassifierDataLoader]) -> BatchIterator:
         """Return batches in shuffled order from dataloaders
+
+        Note that this shuffles the batch order, but it does not shuffle the datasets
+        themselves; shuffling the datasets is specified in the DataLoaders directly.
 
         Parameters
         ----------

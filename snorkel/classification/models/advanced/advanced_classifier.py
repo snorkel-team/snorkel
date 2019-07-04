@@ -1,7 +1,8 @@
+from functools import partial
 import logging
 import os
 from collections import defaultdict
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Set, Union
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Set, Union, Sequence, Tuple
 
 import numpy as np
 import torch
@@ -13,6 +14,7 @@ from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.utils import move_to_device, recursive_merge_dicts
 
 from .task import Operation, Task
+from .utils import ce_loss, softmax
 
 
 class AdvancedClassifier(nn.Module):
@@ -53,16 +55,6 @@ class AdvancedClassifier(nn.Module):
     def __repr__(self):
         cls_name = type(self).__name__
         return f"{cls_name}(name={self.name})"
-
-    def _move_to_device(self):
-        """Move model to specified device."""
-
-        if self.config["device"] >= 0:
-            if torch.cuda.is_available():
-                logging.info(f"Moving model to GPU " f"(cuda:{self.config['device']}).")
-                self.to(torch.device(f"cuda:{self.config['device']}"))
-            else:
-                logging.info("No cuda device available. Switch to cpu instead.")
 
     def _build_network(self, tasks: List[Task]) -> None:
         """Build the MTL network using all tasks"""
@@ -311,69 +303,37 @@ class AdvancedClassifier(nn.Module):
 
         return metric_score_dict
 
-    def save(self, model_path):
-        """Save the current model
-        :param model_path: Saved model path.
-        :type model_path: str
-        """
-
-        # Check existence of model saving directory and create if does not exist.
+    def save(self, model_path: str):
         if not os.path.exists(os.path.dirname(model_path)):
             os.makedirs(os.path.dirname(model_path))
 
-        state_dict = {
-            "model": {"name": self.name, "module_pool": self.collect_state_dict()}
-        }
-
         try:
-            torch.save(state_dict, model_path)
+            torch.save(self.state_dict(), model_path)
         except BaseException:
             logging.warning("Saving failed... continuing anyway.")
 
         logging.info(f"[{self.name}] Model saved in {model_path}")
 
-    def load(self, model_path):
-        """Load model state_dict from file and reinitialize the model weights.
-        :param model_path: Saved model path.
-        :type model_path: str
-        """
-
+    def load(self, model_path: str):
         if not os.path.exists(model_path):
             logging.error("Loading failed... Model does not exist.")
 
         try:
-            checkpoint = torch.load(model_path, map_location=torch.device("cpu"))
+            self.load_state_dict(
+                torch.load(model_path, map_location=torch.device("cpu"))
+            )
         except BaseException:
             logging.error(f"Loading failed... Cannot load model from {model_path}")
             raise
 
-        self.load_state_dict(checkpoint["model"]["module_pool"])
-
         logging.info(f"[{self.name}] Model loaded from {model_path}")
-
-        # Move model to specified device
         self._move_to_device()
 
-    def collect_state_dict(self):
-        state_dict = defaultdict(list)
-
-        for module_name, module in self.module_pool.items():
-            if self.config["dataparallel"]:
-                state_dict[module_name] = module.module.state_dict()
+    def _move_to_device(self):
+        device = self.config["device"]
+        if device >= 0:
+            if torch.cuda.is_available():
+                logging.info(f"Moving model to GPU (cuda:{device}).")
+                self.to(torch.device(f"cuda:{device}"))
             else:
-                state_dict[module_name] = module.state_dict()
-
-        return state_dict
-
-    def load_state_dict(self, state_dict):
-
-        for module_name, module_state_dict in state_dict.items():
-            if module_name in self.module_pool:
-                if self.config["dataparallel"]:
-                    self.module_pool[module_name].module.load_state_dict(
-                        module_state_dict
-                    )
-                else:
-                    self.module_pool[module_name].load_state_dict(module_state_dict)
-            else:
-                logging.info(f"Missing {module_name} in module_pool, skip it..")
+                logging.info("No cuda device available. Switch to cpu instead.")

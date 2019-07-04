@@ -107,8 +107,8 @@ class AdvancedClassifier(nn.Module):
         self._move_to_device()
 
     def forward(  # type: ignore
-        self, X_dict: Mapping[Union[str, int], Any], task_names: Iterable[str]
-    ) -> Dict[str, Mapping[Union[str, int], Any]]:
+        self, X_dict: Mapping[str, Any], task_names: Iterable[str]
+    ) -> Any:
         """Forward pass through the network
 
         :param X_dict: The input data
@@ -119,7 +119,7 @@ class AdvancedClassifier(nn.Module):
         X_dict = move_to_device(X_dict, self.config["device"])
 
         outputs: Dict[str, Mapping[Union[str, int], Any]] = {}
-        outputs["_input_"] = X_dict
+        outputs["_input_"] = X_dict  # type: ignore
 
         # Call forward for each task, using cached result if available
         # Each task flow consists of one or more operations that are executed in order
@@ -131,29 +131,48 @@ class AdvancedClassifier(nn.Module):
                     if operation.inputs:
                         # Feed the inputs the module requested in the reqested order
                         try:
-                            input = [
-                                outputs[operation_name][output_index]
-                                for operation_name, output_index in operation.inputs
-                            ]
+                            inputs = []
+                            for op_input in operation.inputs:
+                                if isinstance(op_input[1], int):
+                                    # The output of the indicated operation has only
+                                    # one field; use that as the input to the current op
+                                    op_name, field_idx = op_input
+                                    inputs.append(outputs[op_name][field_idx])
+                                elif isinstance(op_input[1], str):
+                                    # The output of the indicated operation has a dict
+                                    # of fields; extract the designated field by name
+                                    op_name, field_key = op_input
+                                    inputs.append(outputs[op_name][field_key])
+                                else:
+                                    raise ValueError(
+                                        f"Invalid input to operation {operation}: "
+                                        f"{op_input}. Expected an input specification "
+                                        f"of type (str, int) or (str, str)."
+                                    )
                         except Exception:
                             raise ValueError(f"Unrecognized operation {operation}.")
-                        output = self.module_pool[operation.module_name].forward(*input)
+                        output = self.module_pool[operation.module_name].forward(
+                            *inputs
+                        )
                     else:
-                        # Feed the entire outputs dict for the module to pull
+                        # Feed the entire outputs dict for the module to pull from
+                        # TODO: Remove this option (only slice combiner module uses it)
                         output = self.module_pool[operation.module_name].forward(
                             outputs
                         )
-                    if isinstance(output, tuple):
-                        output = list(output)
-                    if not isinstance(output, list):
+                    if not isinstance(output, Mapping):
+                        # Make output a singleton list so it becomes a valid Mapping
                         output = [output]
                     outputs[operation.name] = output
 
+        # Note: We return all outputs to enable advanced workflows such as multi-task
+        # learning (where we want to calculate loss from multiple head modules on
+        # forward passes).
         return outputs
 
     def calculate_loss(
         self,
-        X_dict: Mapping[Union[str, int], torch.Tensor],
+        X_dict: Mapping[str, Any],
         Y_dict: Dict[str, torch.Tensor],
         task_to_label_dict: Dict[str, str],
     ):
@@ -196,9 +215,7 @@ class AdvancedClassifier(nn.Module):
         return loss_dict, count_dict
 
     @torch.no_grad()
-    def _calculate_probs(
-        self, X_dict: Mapping[Union[str, int], torch.Tensor], task_names: Iterable[str]
-    ):
+    def _calculate_probs(self, X_dict: Mapping[str, Any], task_names: Iterable[str]):
         """Calculate the probs given the features
 
         :param X_dict: The input data

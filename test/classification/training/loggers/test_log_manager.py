@@ -4,7 +4,7 @@ import unittest
 
 from snorkel.classification.training import Checkpointer, LogManager
 
-TEST_LOG_DIR = "test/mtl/loggers/logs"
+TEST_LOG_DIR = "test/classification/training/loggers/logs"
 
 
 class TestLogManager(unittest.TestCase):

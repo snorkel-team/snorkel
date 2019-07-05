@@ -4,6 +4,8 @@ import os
 from shutil import copyfile
 from typing import Dict, List
 
+import torch
+
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.utils import recursive_merge_dicts
 
@@ -72,11 +74,14 @@ class Checkpointer(object):
                 f"checkpoint_runway condition has been met. Start checkpointing."
             )
 
-        checkpoint_path = f"{self.checkpoint_dir}/checkpoint_{iteration}.pth"
-        model.save(checkpoint_path)
+        state_dict = self.collect_state_dict(
+            iteration, model, optimizer, lr_scheduler, metric_dict
+        )
+        checkpoint_dir = f"{self.checkpoint_dir}/checkpoint_{iteration}.pth"
+        torch.save(state_dict, checkpoint_dir)
         logging.info(
             f"Save checkpoint at {iteration} {self.checkpoint_unit} "
-            f"at {checkpoint_path}."
+            f"at {checkpoint_dir}."
         )
 
         if not set(self.checkpoint_task_metrics.keys()).isdisjoint(
@@ -85,7 +90,7 @@ class Checkpointer(object):
             new_best_metrics = self.is_new_best(metric_dict)
             for metric in new_best_metrics:
                 copyfile(
-                    checkpoint_path,
+                    checkpoint_dir,
                     f"{self.checkpoint_dir}/best_model_"
                     f"{metric.replace('/', '_')}.pth",
                 )
@@ -126,6 +131,21 @@ class Checkpointer(object):
             for file in file_list:
                 os.remove(file)
 
+    def collect_state_dict(
+        self, iteration, model, optimizer, lr_scheduler, metric_dict
+    ):
+        """Generate the state dict of the model."""
+
+        model_params = {"name": model.name, "module_pool": model.collect_state_dict()}
+
+        state_dict = {
+            "iteration": iteration,
+            "model": model_params,
+            "metric_dict": metric_dict,
+        }
+
+        return state_dict
+
     def load_best_model(self, model):
         """Load the best model from the checkpoint."""
         if list(self.checkpoint_metric.keys())[0] not in self.best_metric_dict:
@@ -137,7 +157,11 @@ class Checkpointer(object):
                 f"{self.checkpoint_dir}/best_model_{metric.replace('/', '_')}.pth"
             )
             logging.info(f"Loading the best model from {best_model_path}.")
-            model.load(best_model_path)
+            checkpoint = torch.load(best_model_path, map_location=torch.device("cpu"))
+            model.name = checkpoint["model"]["name"]
+            model.load_state_dict(checkpoint["model"]["module_pool"])
+
+            model._move_to_device()
 
         return model
 

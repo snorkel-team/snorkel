@@ -1,18 +1,33 @@
 import logging
 import os
 from collections import defaultdict
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Set, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import torch
 import torch.nn as nn
 
 from snorkel.analysis.utils import probs_to_preds
+from snorkel.classification.data import ClassifierDataLoader
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.utils import move_to_device, recursive_merge_dicts
+from snorkel.types import ArrayLike
 
 from .task import Operation, Task
+
+OutputDict = Dict[str, Mapping[Union[str, int], Any]]
 
 
 class AdvancedClassifier(nn.Module):
@@ -50,17 +65,16 @@ class AdvancedClassifier(nn.Module):
         # Move model to specified device
         self._move_to_device()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         cls_name = type(self).__name__
         return f"{cls_name}(name={self.name})"
 
     def _move_to_device(self):
-        """Move model to specified device."""
-
-        if self.config["device"] >= 0:
+        device = self.config["device"]
+        if device >= 0:
             if torch.cuda.is_available():
-                logging.info(f"Moving model to GPU " f"(cuda:{self.config['device']}).")
-                self.to(torch.device(f"cuda:{self.config['device']}"))
+                logging.info(f"Moving model to GPU (cuda:{device}).")
+                self.to(torch.device(f"cuda:{device}"))
             else:
                 logging.info("No cuda device available. Switch to cpu instead.")
 
@@ -77,7 +91,7 @@ class AdvancedClassifier(nn.Module):
                 raise ValueError(f"Unrecognized task type {task}.")
             self.add_task(task)
 
-    def add_task(self, task):
+    def add_task(self, task: Task) -> None:
         """Add a single task into MTL network"""
 
         # Combine module_pool from all tasks
@@ -108,7 +122,7 @@ class AdvancedClassifier(nn.Module):
 
     def forward(  # type: ignore
         self, X_dict: Mapping[str, Any], task_names: Iterable[str]
-    ) -> Any:
+    ) -> OutputDict:
         """Forward pass through the network
 
         :param X_dict: The input data
@@ -118,8 +132,7 @@ class AdvancedClassifier(nn.Module):
 
         X_dict = move_to_device(X_dict, self.config["device"])
 
-        outputs: Dict[str, Mapping[Union[str, int], Any]] = {}
-        outputs["_input_"] = X_dict  # type: ignore
+        outputs: OutputDict = {"_input_": X_dict}  # type: ignore
 
         # Call forward for each task, using cached result if available
         # Each task flow consists of one or more operations that are executed in order
@@ -175,7 +188,7 @@ class AdvancedClassifier(nn.Module):
         X_dict: Mapping[str, Any],
         Y_dict: Dict[str, torch.Tensor],
         task_to_label_dict: Dict[str, str],
-    ):
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, float]]:
         """Calculate the loss
 
         :param X_dict: The input data
@@ -215,7 +228,9 @@ class AdvancedClassifier(nn.Module):
         return loss_dict, count_dict
 
     @torch.no_grad()
-    def _calculate_probs(self, X_dict: Mapping[str, Any], task_names: Iterable[str]):
+    def _calculate_probs(
+        self, X_dict: Mapping[str, Any], task_names: Iterable[str]
+    ) -> Dict[str, Iterable[torch.Tensor]]:
         """Calculate the probs given the features
 
         :param X_dict: The input data
@@ -235,26 +250,32 @@ class AdvancedClassifier(nn.Module):
         return prob_dict
 
     @torch.no_grad()
-    def predict(self, dataloader, return_preds=False):
+    def predict(
+        self, dataloader: ClassifierDataLoader, return_preds: bool = False
+    ) -> Dict[str, Dict[str, torch.Tensor]]:
 
         self.eval()
 
-        gold_dict = defaultdict(list)
-        prob_dict = defaultdict(list)
+        gold_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
+        prob_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
 
         for batch_num, (X_batch_dict, Y_batch_dict) in enumerate(dataloader):
             prob_batch_dict = self._calculate_probs(
                 X_batch_dict, dataloader.task_to_label_dict.keys()
             )
             for task_name in dataloader.task_to_label_dict.keys():
-                prob_dict[task_name].extend(prob_batch_dict[task_name])
-                gold_dict[task_name].extend(
+                prob_dict_list[task_name].extend(prob_batch_dict[task_name])
+                gold_dict_list[task_name].extend(
                     Y_batch_dict[dataloader.task_to_label_dict[task_name]].cpu().numpy()
                 )
-        for task_name in gold_dict:
-            gold_dict[task_name] = np.array(gold_dict[task_name])
-            prob_dict[task_name] = np.array(prob_dict[task_name])
-            if len(gold_dict[task_name].shape) == 1:
+
+        gold_dict: Dict[str, np.ndarray] = {}
+        prob_dict: Dict[str, np.ndarray] = {}
+
+        for task_name in gold_dict_list:
+            gold_dict[task_name] = np.array(gold_dict_list[task_name])
+            prob_dict[task_name] = np.array(prob_dict_list[task_name])
+            if gold_dict[task_name].ndim == 1:
                 active = (gold_dict[task_name] != 0).reshape(-1)
             else:
                 active = np.sum(gold_dict[task_name] == 0, axis=1) > 0
@@ -264,7 +285,7 @@ class AdvancedClassifier(nn.Module):
                 prob_dict[task_name] = prob_dict[task_name][active]
 
         if return_preds:
-            pred_dict = defaultdict(list)
+            pred_dict: Dict[str, ArrayLike] = defaultdict(list)
             for task_name, probs in prob_dict.items():
                 pred_dict[task_name] = probs_to_preds(probs)
 
@@ -276,7 +297,7 @@ class AdvancedClassifier(nn.Module):
         return results
 
     @torch.no_grad()
-    def score(self, dataloaders):
+    def score(self, dataloaders: List[ClassifierDataLoader]) -> Dict[str, float]:
         """Score the data from dataloader with the model
 
         :param dataloaders: the dataloader that performs scoring
@@ -284,9 +305,6 @@ class AdvancedClassifier(nn.Module):
         """
 
         self.eval()
-
-        if not isinstance(dataloaders, list):
-            dataloaders = [dataloaders]
 
         metric_score_dict = dict()
 
@@ -299,11 +317,14 @@ class AdvancedClassifier(nn.Module):
                     results["probs"][task_name],
                 )
                 for metric_name, metric_value in metric_scores.items():
+                    # Type ignore statements are necessary because the DataLoader class
+                    # that ClassifierDataLoader inherits from is what actually sets
+                    # the class of Dataset, and it doesn't know about name and split.
                     identifier = "/".join(
                         [
                             task_name,
-                            dataloader.dataset.name,
-                            dataloader.dataset.split,
+                            dataloader.dataset.name,  # type: ignore
+                            dataloader.dataset.split,  # type: ignore
                             metric_name,
                         ]
                     )
@@ -311,7 +332,7 @@ class AdvancedClassifier(nn.Module):
 
         return metric_score_dict
 
-    def save(self, model_path):
+    def save(self, model_path: str) -> None:
         """Save the current model
         :param model_path: Saved model path.
         :type model_path: str
@@ -332,7 +353,7 @@ class AdvancedClassifier(nn.Module):
 
         logging.info(f"[{self.name}] Model saved in {model_path}")
 
-    def load(self, model_path):
+    def load(self, model_path: str) -> None:
         """Load model state_dict from file and reinitialize the model weights.
         :param model_path: Saved model path.
         :type model_path: str

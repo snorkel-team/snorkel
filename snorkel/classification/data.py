@@ -1,11 +1,17 @@
 import random
 from collections import defaultdict
+from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import torch
+from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
 
 from .utils import list_to_tensor
+
+XDict = Dict[str, Any]
+YDict = Dict[str, torch.Tensor]
+Batch = Tuple[XDict, YDict]
 
 
 class ClassifierDataset(Dataset):
@@ -22,34 +28,34 @@ class ClassifierDataset(Dataset):
     :type Y_dict: dict
     """
 
-    def __init__(self, name, split, X_dict, Y_dict):
+    def __init__(self, name: str, split: str, X_dict: XDict, Y_dict: YDict):
         self.name = name
         self.split = split
         self.X_dict = X_dict
         self.Y_dict = Y_dict
 
         for name, label in self.Y_dict.items():
-            if not isinstance(label, torch.Tensor):
+            if not isinstance(label, Tensor):
                 raise ValueError(
                     f"Label {name} should be torch.Tensor, not {type(label)}."
                 )
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> Tuple[XDict, YDict]:
         x_dict = {name: feature[index] for name, feature in self.X_dict.items()}
         y_dict = {name: label[index] for name, label in self.Y_dict.items()}
         return x_dict, y_dict
 
-    def __len__(self):
+    def __len__(self) -> int:
         try:
-            return len(next(iter(self.Y_dict.values())))
+            return len(next(iter(self.Y_dict.values())))  # type: ignore
         except StopIteration:
             return 0
 
 
-def collate_dicts(batch):
+def collate_dicts(batch: List[Batch]) -> Batch:
 
-    X_batch = defaultdict(list)
-    Y_batch = defaultdict(list)
+    X_batch: Dict[str, Any] = defaultdict(list)
+    Y_batch: Dict[str, Any] = defaultdict(list)
 
     for x_dict, y_dict in batch:
         for field_name, value in x_dict.items():
@@ -59,7 +65,7 @@ def collate_dicts(batch):
 
     for field_name, values in X_batch.items():
         # Only merge list of tensors
-        if isinstance(values[0], torch.Tensor):
+        if isinstance(values[0], Tensor):
             X_batch[field_name] = list_to_tensor(values)
 
     for label_name, values in Y_batch.items():
@@ -86,8 +92,12 @@ class ClassifierDataLoader(DataLoader):
     """
 
     def __init__(
-        self, dataset, collate_fn=collate_dicts, task_to_label_dict=None, **kwargs
-    ):
+        self,
+        dataset: ClassifierDataset,
+        collate_fn: Callable[..., Any] = collate_dicts,
+        task_to_label_dict: Dict[str, str] = None,
+        **kwargs,
+    ) -> None:
 
         assert isinstance(dataset, ClassifierDataset)
         super().__init__(dataset, collate_fn=collate_fn, **kwargs)

@@ -1,10 +1,11 @@
 import copy
+from typing import List
 
 import numpy as np
 import torch
 
 
-def list_to_tensor(item_list):
+def list_to_tensor(item_list: List[torch.Tensor]) -> torch.Tensor:
     """Convert a list of torch.Tensor into a single torch.Tensor."""
 
     # Convert single value tensor

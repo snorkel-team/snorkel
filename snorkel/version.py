@@ -1,6 +1,6 @@
 _MAJOR = "0"
 _MINOR = "9"
-_REVISION = "0-prerelease"
+_REVISION = "0+dev"
 
-VERSION_SHORT = "{0}.{1}".format(_MAJOR, _MINOR)
-VERSION = "{0}.{1}.{2}".format(_MAJOR, _MINOR, _REVISION)
+VERSION_SHORT = f"{_MAJOR}.{_MINOR}"
+VERSION = f"{_MAJOR}.{_MINOR}.{_REVISION}"

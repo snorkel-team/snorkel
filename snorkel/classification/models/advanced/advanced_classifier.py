@@ -259,7 +259,7 @@ class AdvancedClassifier(nn.Module):
             )
             for task_name in dataloader.task_to_label_dict.keys():
                 prob_dict_list[task_name].extend(
-                    prob_batch_dict[task_name].cpu().numpy()
+                    prob_batch_dict[task_name]
                 )
                 gold_dict_list[task_name].extend(
                     Y_batch_dict[dataloader.task_to_label_dict[task_name]].cpu().numpy()

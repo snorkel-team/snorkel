@@ -1,20 +1,36 @@
-from functools import partial
 import logging
 import os
 from collections import defaultdict
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Set, Union, Sequence, Tuple
+from functools import partial
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import torch
 import torch.nn as nn
 
 from snorkel.analysis.utils import probs_to_preds
+from snorkel.classification.data import ClassifierDataLoader
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.utils import move_to_device, recursive_merge_dicts
+from snorkel.types import ArrayLike
 
 from .task import Operation, Task
 from .utils import ce_loss, softmax
+
+OutputDict = Dict[str, Mapping[Union[str, int], Any]]
 
 
 class AdvancedClassifier(nn.Module):
@@ -52,7 +68,7 @@ class AdvancedClassifier(nn.Module):
         # Move model to specified device
         self._move_to_device()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         cls_name = type(self).__name__
         return f"{cls_name}(name={self.name})"
 
@@ -69,7 +85,7 @@ class AdvancedClassifier(nn.Module):
                 raise ValueError(f"Unrecognized task type {task}.")
             self.add_task(task)
 
-    def add_task(self, task):
+    def add_task(self, task: Task) -> None:
         """Add a single task into MTL network"""
 
         # Combine module_pool from all tasks
@@ -100,7 +116,7 @@ class AdvancedClassifier(nn.Module):
 
     def forward(  # type: ignore
         self, X_dict: Mapping[str, Any], task_names: Iterable[str]
-    ) -> Any:
+    ) -> OutputDict:
         """Forward pass through the network
 
         :param X_dict: The input data
@@ -110,8 +126,7 @@ class AdvancedClassifier(nn.Module):
 
         X_dict = move_to_device(X_dict, self.config["device"])
 
-        outputs: Dict[str, Mapping[Union[str, int], Any]] = {}
-        outputs["_input_"] = X_dict  # type: ignore
+        outputs: OutputDict = {"_input_": X_dict}  # type: ignore
 
         # Call forward for each task, using cached result if available
         # Each task flow consists of one or more operations that are executed in order
@@ -167,7 +182,7 @@ class AdvancedClassifier(nn.Module):
         X_dict: Mapping[str, Any],
         Y_dict: Dict[str, torch.Tensor],
         task_to_label_dict: Dict[str, str],
-    ):
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, float]]:
         """Calculate the loss
 
         :param X_dict: The input data
@@ -207,7 +222,9 @@ class AdvancedClassifier(nn.Module):
         return loss_dict, count_dict
 
     @torch.no_grad()
-    def _calculate_probs(self, X_dict: Mapping[str, Any], task_names: Iterable[str]):
+    def _calculate_probs(
+        self, X_dict: Mapping[str, Any], task_names: Iterable[str]
+    ) -> Dict[str, torch.Tensor]:
         """Calculate the probs given the features
 
         :param X_dict: The input data
@@ -227,26 +244,34 @@ class AdvancedClassifier(nn.Module):
         return prob_dict
 
     @torch.no_grad()
-    def predict(self, dataloader, return_preds=False):
+    def predict(
+        self, dataloader: ClassifierDataLoader, return_preds: bool = False
+    ) -> Dict[str, Dict[str, torch.Tensor]]:
 
         self.eval()
 
-        gold_dict = defaultdict(list)
-        prob_dict = defaultdict(list)
+        gold_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
+        prob_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
 
         for batch_num, (X_batch_dict, Y_batch_dict) in enumerate(dataloader):
             prob_batch_dict = self._calculate_probs(
                 X_batch_dict, dataloader.task_to_label_dict.keys()
             )
             for task_name in dataloader.task_to_label_dict.keys():
-                prob_dict[task_name].extend(prob_batch_dict[task_name])
-                gold_dict[task_name].extend(
+                prob_dict_list[task_name].extend(
+                    prob_batch_dict[task_name].cpu().numpy()
+                )
+                gold_dict_list[task_name].extend(
                     Y_batch_dict[dataloader.task_to_label_dict[task_name]].cpu().numpy()
                 )
-        for task_name in gold_dict:
-            gold_dict[task_name] = np.array(gold_dict[task_name])
-            prob_dict[task_name] = np.array(prob_dict[task_name])
-            if len(gold_dict[task_name].shape) == 1:
+
+        gold_dict: Dict[str, np.ndarray] = {}
+        prob_dict: Dict[str, np.ndarray] = {}
+
+        for task_name in gold_dict_list:
+            gold_dict[task_name] = np.array(gold_dict_list[task_name])
+            prob_dict[task_name] = np.array(prob_dict_list[task_name])
+            if gold_dict[task_name].ndim == 1:
                 active = (gold_dict[task_name] != 0).reshape(-1)
             else:
                 active = np.sum(gold_dict[task_name] == 0, axis=1) > 0
@@ -256,7 +281,7 @@ class AdvancedClassifier(nn.Module):
                 prob_dict[task_name] = prob_dict[task_name][active]
 
         if return_preds:
-            pred_dict = defaultdict(list)
+            pred_dict: Dict[str, ArrayLike] = defaultdict(list)
             for task_name, probs in prob_dict.items():
                 pred_dict[task_name] = probs_to_preds(probs)
 
@@ -268,7 +293,7 @@ class AdvancedClassifier(nn.Module):
         return results
 
     @torch.no_grad()
-    def score(self, dataloaders):
+    def score(self, dataloaders: List[ClassifierDataLoader]) -> Dict[str, float]:
         """Score the data from dataloader with the model
 
         :param dataloaders: the dataloader that performs scoring
@@ -276,9 +301,6 @@ class AdvancedClassifier(nn.Module):
         """
 
         self.eval()
-
-        if not isinstance(dataloaders, list):
-            dataloaders = [dataloaders]
 
         metric_score_dict = dict()
 
@@ -291,11 +313,14 @@ class AdvancedClassifier(nn.Module):
                     results["probs"][task_name],
                 )
                 for metric_name, metric_value in metric_scores.items():
+                    # Type ignore statements are necessary because the DataLoader class
+                    # that ClassifierDataLoader inherits from is what actually sets
+                    # the class of Dataset, and it doesn't know about name and split.
                     identifier = "/".join(
                         [
                             task_name,
-                            dataloader.dataset.name,
-                            dataloader.dataset.split,
+                            dataloader.dataset.name,  # type: ignore
+                            dataloader.dataset.split,  # type: ignore
                             metric_name,
                         ]
                     )
@@ -346,11 +371,43 @@ class AdvancedClassifier(nn.Module):
         loss_func: Callable[..., torch.FloatTensor] = ce_loss,
         output_func: Callable[..., np.ndarray] = softmax,
         metrics: List[str] = ["accuracy"],
+        task_name: str = "task",
+        data_name: str = "data",
         **kwargs,
     ):
-        """Define a simple AdvancedClassifier from `Module`s instead of `Tasks
+        """Instantiates a simple AdvancedClassifier from `Module`s instead of `Task`s
 
-        TBD
+        This is intended as a convenience method for quickly creating an
+        AdvancedClassifier in certain situations where many defaults can be inferred.
+        Only use this method of instantiation if all of the following properties apply:
+        - Your problem has only one task
+            - That task name is the only key in dataloader.task_to_label_dict
+        - Your data has only one field
+            - The `data_name` you pass here and that field name in the X_dict match
+        - Your architecture is a simple sequential path using each Module exactly once
+        - You don't require passing any custom metric functions to the Scorer
+
+        Parameters
+        ----------
+        modules
+            A list of modules to run in sequence (ReLUs will be added between them)
+        dropout
+            An optional dropout rate (if non-zero, dropout is added between modules)
+        loss_func
+            A loss function (see `Task` for details)
+        output_func
+            An output function (see `Task` for details)
+        metrics
+            A list of metrics for the Scorer to calculate
+        task_name
+            The name of the single task in your network
+        data_name
+            The name of the single field in your X_dict
+
+        Returns
+        -------
+        AdvancedClassifier
+            An instance of AdvancedClassifier created from your specification
         """
         module_pool: Dict[str, nn.Module] = {}
         task_flow: List[Operation] = []
@@ -366,7 +423,7 @@ class AdvancedClassifier(nn.Module):
 
             module_pool[f"module{i}"] = module_block
             if i == 0:
-                inputs = [("_input_", "data")]
+                inputs = [("_input_", data_name)]
             else:
                 inputs = [(task_flow[-1].name, 0)]
             op = Operation(name=f"op{i}", module_name=f"module{i}", inputs=inputs)
@@ -374,7 +431,7 @@ class AdvancedClassifier(nn.Module):
 
         last_op = f"op{len(modules) - 1}"
         task = Task(
-            name="task",
+            name=task_name,
             module_pool=nn.ModuleDict(module_pool),
             task_flow=task_flow,
             loss_func=partial(ce_loss, last_op),

@@ -332,69 +332,28 @@ class AdvancedClassifier(nn.Module):
 
         return metric_score_dict
 
-    def save(self, model_path: str) -> None:
-        """Save the current model
-        :param model_path: Saved model path.
-        :type model_path: str
-        """
-
-        # Check existence of model saving directory and create if does not exist.
+    def save(self, model_path: str):
         if not os.path.exists(os.path.dirname(model_path)):
             os.makedirs(os.path.dirname(model_path))
 
-        state_dict = {
-            "model": {"name": self.name, "module_pool": self.collect_state_dict()}
-        }
-
         try:
-            torch.save(state_dict, model_path)
+            torch.save(self.state_dict(), model_path)
         except BaseException:
             logging.warning("Saving failed... continuing anyway.")
 
         logging.info(f"[{self.name}] Model saved in {model_path}")
 
-    def load(self, model_path: str) -> None:
-        """Load model state_dict from file and reinitialize the model weights.
-        :param model_path: Saved model path.
-        :type model_path: str
-        """
-
+    def load(self, model_path: str):
         if not os.path.exists(model_path):
             logging.error("Loading failed... Model does not exist.")
 
         try:
-            checkpoint = torch.load(model_path, map_location=torch.device("cpu"))
+            self.load_state_dict(
+                torch.load(model_path, map_location=torch.device("cpu"))
+            )
         except BaseException:
             logging.error(f"Loading failed... Cannot load model from {model_path}")
             raise
 
-        self.load_state_dict(checkpoint["model"]["module_pool"])
-
         logging.info(f"[{self.name}] Model loaded from {model_path}")
-
-        # Move model to specified device
         self._move_to_device()
-
-    def collect_state_dict(self):
-        state_dict = defaultdict(list)
-
-        for module_name, module in self.module_pool.items():
-            if self.config["dataparallel"]:
-                state_dict[module_name] = module.module.state_dict()
-            else:
-                state_dict[module_name] = module.state_dict()
-
-        return state_dict
-
-    def load_state_dict(self, state_dict):
-
-        for module_name, module_state_dict in state_dict.items():
-            if module_name in self.module_pool:
-                if self.config["dataparallel"]:
-                    self.module_pool[module_name].module.load_state_dict(
-                        module_state_dict
-                    )
-                else:
-                    self.module_pool[module_name].load_state_dict(module_state_dict)
-            else:
-                logging.info(f"Missing {module_name} in module_pool, skip it..")

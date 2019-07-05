@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader, Dataset
 from .utils import list_to_tensor
 
 XDict = Dict[str, Any]
-YDict = Dict[str, torch.Tensor]
+YDict = Dict[str, Tensor]
 Batch = Tuple[XDict, YDict]
 
 

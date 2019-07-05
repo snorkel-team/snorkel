@@ -1,7 +1,7 @@
-import unittest
-from functools import partial
 import os
 import shutil
+import unittest
+from functools import partial
 
 import torch
 import torch.nn as nn
@@ -12,7 +12,6 @@ from snorkel.classification.scorer import Scorer
 
 
 class TaskTest(unittest.TestCase):
-
     def test_onetask_model(self):
         task1 = create_task("task1")
         model = AdvancedClassifier(tasks=[task1])
@@ -67,12 +66,24 @@ class TaskTest(unittest.TestCase):
         modules1 = [nn.Linear(2, 4), nn.Linear(4, 2)]
 
         model = AdvancedClassifier.from_modules(modules=modules0)
-        self.assertTrue(torch.eq(modules0[0].weight, model.module_pool["module0"].module[0].weight).all())
+        self.assertTrue(
+            torch.eq(
+                modules0[0].weight, model.module_pool["module0"].module[0].weight
+            ).all()
+        )
         model.save(CHECKPOINT_PATH)
         model = AdvancedClassifier.from_modules(modules=modules1)
-        self.assertFalse(torch.eq(modules0[0].weight, model.module_pool["module0"].module[0].weight).all())
+        self.assertFalse(
+            torch.eq(
+                modules0[0].weight, model.module_pool["module0"].module[0].weight
+            ).all()
+        )
         model.load(CHECKPOINT_PATH)
-        self.assertTrue(torch.eq(modules0[0].weight, model.module_pool["module0"].module[0].weight).all())
+        self.assertTrue(
+            torch.eq(
+                modules0[0].weight, model.module_pool["module0"].module[0].weight
+            ).all()
+        )
 
         if os.path.exists(CHECKPOINT_DIR):
             shutil.rmtree(CHECKPOINT_DIR)
@@ -108,4 +119,3 @@ def create_task(task_name, module_suffixes=("", "")):
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -69,15 +69,6 @@ class AdvancedClassifier(nn.Module):
         cls_name = type(self).__name__
         return f"{cls_name}(name={self.name})"
 
-    def _move_to_device(self):
-        device = self.config["device"]
-        if device >= 0:
-            if torch.cuda.is_available():
-                logging.info(f"Moving model to GPU (cuda:{device}).")
-                self.to(torch.device(f"cuda:{device}"))
-            else:
-                logging.info("No cuda device available. Switch to cpu instead.")
-
     def _build_network(self, tasks: List[Task]) -> None:
         """Build the MTL network using all tasks"""
 
@@ -331,6 +322,15 @@ class AdvancedClassifier(nn.Module):
                     metric_score_dict[identifier] = metric_value
 
         return metric_score_dict
+
+    def _move_to_device(self):
+        device = self.config["device"]
+        if device >= 0:
+            if torch.cuda.is_available():
+                logging.info(f"Moving model to GPU (cuda:{device}).")
+                self.to(torch.device(f"cuda:{device}"))
+            else:
+                logging.info("No cuda device available. Switch to cpu instead.")
 
     def save(self, model_path: str):
         if not os.path.exists(os.path.dirname(model_path)):

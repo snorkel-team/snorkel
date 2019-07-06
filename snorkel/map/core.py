@@ -81,10 +81,12 @@ def get_hashable(obj: Any) -> Hashable:
 class BaseMapper:
     """Base class for `Mapper` and `LambdaMapper`.
 
-    Implements memoization and deep copy functionality.
+    Implements nesting, memoization, and deep copy functionality.
 
     Parameters
     ----------
+    pre
+        Mappers to run before this mapper is executed
     memoize
         Memoize mapper outputs?
 
@@ -99,7 +101,8 @@ class BaseMapper:
         Subclasses need to implement `_generate_mapped_data_point`
     """
 
-    def __init__(self, memoize: bool) -> None:
+    def __init__(self, pre: List["BaseMapper"], memoize: bool) -> None:
+        self._pre = pre
         self.memoize = memoize
         self.reset_cache()
 
@@ -137,8 +140,10 @@ class BaseMapper:
         # NB: using pickle roundtrip as a more robust deepcopy
         # As an example, calling deepcopy on a pd.Series or SimpleNamespace
         # with a dictionary attribute won't create a copy of the dictionary
-        x = pickle.loads(pickle.dumps(x))
-        x_mapped = self._generate_mapped_data_point(x)
+        x_mapped = pickle.loads(pickle.dumps(x))
+        for mapper in self._pre:
+            x_mapped = mapper(x_mapped)
+        x_mapped = self._generate_mapped_data_point(x_mapped)
         if self.memoize:
             self._cache[x_hashable] = x_mapped
         return x_mapped
@@ -178,6 +183,8 @@ class Mapper(BaseMapper):
         A map from output keys of the `run` method to attribute
         names of the output data points. If None, the original
         output keys are used.
+    pre
+        Mappers to run before this mapper is executed
     memoize
         Memoize mapper outputs?
 
@@ -200,6 +207,7 @@ class Mapper(BaseMapper):
         self,
         field_names: Optional[Mapping[str, str]] = None,
         mapped_field_names: Optional[Mapping[str, str]] = None,
+        pre: Optional[List[BaseMapper]] = None,
         memoize: bool = False,
     ) -> None:
         if field_names is None:
@@ -207,7 +215,7 @@ class Mapper(BaseMapper):
             field_names = {k: k for k in get_parameters(self.run)[1:]}
         self.field_names = field_names
         self.mapped_field_names = mapped_field_names
-        super().__init__(memoize)
+        super().__init__(pre or [], memoize)
 
     def run(self, **kwargs: Any) -> Optional[FieldMap]:
         """Run the mapping operation using the input fields.
@@ -261,15 +269,20 @@ class LambdaMapper(BaseMapper):
     ----------
     f
         Function executing the mapping operation
+    pre
+        Mappers to run before this mapper is executed
     memoize
         Memoize mapper outputs?
     """
 
     def __init__(
-        self, f: Callable[[DataPoint], Optional[DataPoint]], memoize: bool = False
+        self,
+        f: Callable[[DataPoint], Optional[DataPoint]],
+        pre: Optional[List[BaseMapper]] = None,
+        memoize: bool = False,
     ) -> None:
         self._f = f
-        super().__init__(memoize)
+        super().__init__(pre or [], memoize)
 
     def _generate_mapped_data_point(self, x: DataPoint) -> Optional[DataPoint]:
         return self._f(x)
@@ -280,6 +293,8 @@ class lambda_mapper:
 
     Parameters
     ----------
+    pre
+        Mappers to run before this mapper is executed
     memoize
         Memoize mapper outputs?
 
@@ -301,7 +316,10 @@ class lambda_mapper:
     ```
     """
 
-    def __init__(self, memoize: bool = False) -> None:
+    def __init__(
+        self, pre: Optional[List[BaseMapper]] = None, memoize: bool = False
+    ) -> None:
+        self.pre = pre
         self.memoize = memoize
 
     def __call__(self, f: Callable[[DataPoint], Optional[DataPoint]]) -> LambdaMapper:
@@ -317,4 +335,4 @@ class lambda_mapper:
         LambdaMapper
             New `LambdaMapper` executing operation in wrapped function
         """
-        return LambdaMapper(f=f, memoize=self.memoize)
+        return LambdaMapper(f=f, pre=self.pre, memoize=self.memoize)

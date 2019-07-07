@@ -9,7 +9,6 @@ processing is concatenating the title and body of an article. For a
 more complex example, see ``snorkel.labeling.preprocess.nlp.SpacyPreprocessor``.
 """
 
-
 BasePreprocessor = BaseMapper
 
 

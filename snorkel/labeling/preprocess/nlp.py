@@ -1,10 +1,10 @@
-from typing import List
+from typing import List, Optional
 
 import spacy
 
 from snorkel.types import FieldMap
 
-from .core import Preprocessor
+from .core import BasePreprocessor, Preprocessor
 
 DEFAULT_DISABLE = ["parser", "ner"]
 EN_CORE_WEB_SM = "en_core_web_sm"
@@ -30,6 +30,10 @@ class SpacyPreprocessor(Preprocessor):
     disable
         List of pipeline components to disable
         See https://spacy.io/usage/processing-pipelines#disabling
+    preprocessors
+        Preprocessors to run before this preprocessor is executed
+    memoize
+        Memoize preprocessor outputs?
     """
 
     def __init__(
@@ -38,9 +42,17 @@ class SpacyPreprocessor(Preprocessor):
         doc_field: str,
         language: str = EN_CORE_WEB_SM,
         disable: List[str] = DEFAULT_DISABLE,
+        preprocessors: Optional[List[BasePreprocessor]] = None,
+        memoize: bool = False,
     ) -> None:
         name = type(self).__name__
-        super().__init__(name, dict(text=text_field), dict(doc=doc_field))
+        super().__init__(
+            name,
+            field_names=dict(text=text_field),
+            mapped_field_names=dict(doc=doc_field),
+            pre=preprocessors,
+            memoize=memoize,
+        )
         self._nlp = spacy.load(language, disable=disable)
 
     def run(self, text: str) -> FieldMap:  # type: ignore

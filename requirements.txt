@@ -28,7 +28,7 @@ networkx>=2.2
 
 # Notebook usage (may be ported to tutorials repo)
 jupyter>=1.0.0
-matplotlib>=3.0.1
+matplotlib==3.0.1
 
 # NLP applications
 spacy>=2.1.3
@@ -38,12 +38,7 @@ torchtext>=0.3.1
 tensorboardX>=1.6
 
 # Scale-up/out
-dask[complete]>=1.2.1
-
-# Note: you may want to remove PySpark from the 
-# required installs. Installing a new version may
-# overwrite your existing system install.
-pyspark>=2.4.3
+dask[complete]>=2.0.0
 
 
 #### DEV TOOLS

@@ -2,18 +2,18 @@ from typing import Any, Callable, List, Mapping, Optional, Tuple
 
 from snorkel.types import DataPoint
 
-from .preprocess import BasePreprocessor, PreprocessorMode
+from .preprocess import BasePreprocessor
 
 
 class LabelingFunction:
-    """Base object for labeling functions.
+    """Base class for labeling functions.
 
     A labeling function (LF) is a function that takes a data point
     as input and produces an integer label, corresponding to a
     class. A labeling function can also abstain from voting by
     outputting 0. For examples, see the Snorkel tutorials.
 
-    This object wraps a Python function outputting a label. Metadata
+    This class wraps a Python function outputting a label. Metadata
     about the input data types and label space are stored. Extra
     functionality, such as running preprocessors and storing
     resources, is provided. Simple LFs can be defined via a
@@ -70,30 +70,6 @@ class LabelingFunction:
         self._f = f
         self._resources = resources or {}
         self._preprocessors = preprocessors or []
-
-    def set_fault_tolerant(self, fault_tolerant: bool = True) -> None:
-        """Change LF fault tolerance mode.
-
-        If set to fault tolerant mode, the LF returns 0 if
-        an exception is raised during execution.
-
-        Parameters
-        ----------
-        fault_tolerant
-            Set to fault tolerant mode?
-        """
-        self.fault_tolerant = fault_tolerant
-
-    def set_preprocessor_mode(self, mode: PreprocessorMode) -> None:
-        """Change LF preprocessor mode.
-
-        Parameters
-        ----------
-        mode
-            Mode to set preprocessors to
-        """
-        for preprocessor in self._preprocessors:
-            preprocessor.mode = mode
 
     def _preprocess_data_point(self, x: DataPoint) -> DataPoint:
         for preprocessor in self._preprocessors:

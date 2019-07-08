@@ -4,10 +4,7 @@ from typing import List, Optional, Union
 import numpy as np
 import pandas as pd
 
-from snorkel.augmentation.tf import (
-    BaseTransformationFunction,
-    LambdaTransformationFunction,
-)
+from snorkel.augmentation.tf import LambdaTransformationFunction
 from snorkel.labeling.lf import LabelingFunction
 from snorkel.types import DataPoint
 
@@ -81,7 +78,7 @@ def tf_template(x: DataPoint, i: int) -> DataPoint:
 
 def generate_resampling_tfs(
     dims: Union[int, List[int]]
-) -> List[BaseTransformationFunction]:
+) -> List[LambdaTransformationFunction]:
     if isinstance(dims, int):
         dims = list(range(dims))
     return [LambdaTransformationFunction(partial(tf_template, i=i)) for i in dims]

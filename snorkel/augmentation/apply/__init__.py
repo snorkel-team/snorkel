@@ -1,2 +1,2 @@
-from .tf_applier import TFApplier  # noqa: F401
-from .tf_applier_pandas import PandasTFApplier  # noqa: F401
+from .core import TFApplier  # noqa: F401
+from .pandas import PandasTFApplier  # noqa: F401

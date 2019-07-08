@@ -1,5 +1,5 @@
 from functools import partial
-from typing import List
+from typing import Dict, List
 
 import numpy as np
 import torch
@@ -7,16 +7,17 @@ from scipy.sparse import csr_matrix
 from torch import nn
 
 from snorkel.analysis.utils import convert_labels
-from snorkel.end_model.data import MultitaskDataLoader
-from snorkel.end_model.modules.utils import ce_loss, softmax
-from snorkel.end_model.scorer import Scorer
-from snorkel.end_model.task import Operation, Task
+from snorkel.classification.data import ClassifierDataLoader
+from snorkel.classification.models.advanced import Operation, Task
+from snorkel.classification.models.advanced.utils import ce_loss, softmax
+from snorkel.classification.scorer import Scorer
+from snorkel.types import ArrayLike
 
 from .modules.slice_combiner import SliceCombinerModule
 
 
 def add_slice_labels(
-    dataloader: MultitaskDataLoader,
+    dataloader: ClassifierDataLoader,
     base_task: Task,
     slice_labels: csr_matrix,
     slice_names: List[str],
@@ -27,11 +28,12 @@ def add_slice_labels(
     assert slice_labels.shape[1] == len(slice_names)
 
     label_name = dataloader.task_to_label_dict[base_task.name]
-    labels = dataloader.dataset.Y_dict[label_name]
+    Y_dict: Dict[str, ArrayLike] = dataloader.dataset.Y_dict  # type: ignore
+    labels = Y_dict[label_name]
     for i, slice_name in enumerate(slice_names):
 
         # Convert labels
-        indicators = torch.LongTensor(slice_labels[:, i])
+        indicators = torch.LongTensor(slice_labels[:, i])  # type: ignore
         ind_labels = convert_labels(indicators, source="onezero", target="categorical")
         pred_labels = indicators * labels
 
@@ -39,8 +41,8 @@ def add_slice_labels(
         pred_task_name = f"{base_task.name}_slice:{slice_name}_pred"
 
         # Update dataloaders
-        dataloader.dataset.Y_dict[ind_task_name] = ind_labels
-        dataloader.dataset.Y_dict[pred_task_name] = pred_labels
+        Y_dict[ind_task_name] = ind_labels
+        Y_dict[pred_task_name] = pred_labels
 
         dataloader.task_to_label_dict[ind_task_name] = ind_task_name
         dataloader.task_to_label_dict[pred_task_name] = pred_task_name

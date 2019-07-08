@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import spacy
 
-from snorkel.map import Mapper, MapperMode, lambda_mapper
+from snorkel.map import Mapper, lambda_mapper
 from snorkel.map.core import get_hashable
 from snorkel.types import DataPoint, FieldMap
 
@@ -39,6 +39,16 @@ class MapperWithArgs(Mapper):
 class MapperWithKwargs(Mapper):
     def run(self, text: str, **kwargs: Any) -> Optional[FieldMap]:  # type: ignore
         return None
+
+
+class MapperWithPre(Mapper):
+    def run(self, num_squared: float) -> Optional[FieldMap]:  # type: ignore
+        return dict(double_num_squared=2 * num_squared)
+
+
+class MapperWithPre2(Mapper):
+    def run(self, double_num_squared: float) -> Optional[FieldMap]:  # type: ignore
+        return dict(double_num_squared_plus_1=double_num_squared + 1)
 
 
 class SquareHitTracker:
@@ -75,59 +85,128 @@ class TestMapperCore(unittest.TestCase):
         # NB: not using `self.assertIsNotNone` due to mypy
         # See https://github.com/python/mypy/issues/5088
         assert x_mapped is not None
-        self.assertEqual(x_mapped.num, 8)
-        self.assertEqual(x_mapped.text, "Henry has fun")
-        self.assertEqual(x_mapped.num_squared, 64)
+        x_expected = SimpleNamespace(num=8, text="Henry has fun", num_squared=64)
+        self.assertEqual(x_mapped, x_expected)
 
     def test_text_mapper(self) -> None:
         split_words = SplitWordsMapper("text", "text_lower", "text_words")
-        split_words.mode = MapperMode.NAMESPACE
         x_mapped = split_words(self._get_x())
         assert x_mapped is not None
-        self.assertEqual(x_mapped.num, 8)
-        self.assertEqual(x_mapped.text, "Henry has fun")
-        self.assertEqual(x_mapped.text_lower, "henry has fun")
-        self.assertEqual(x_mapped.text_words, ["Henry", "has", "fun"])
+        x_expected = SimpleNamespace(
+            num=8,
+            text="Henry has fun",
+            text_lower="henry has fun",
+            text_words=["Henry", "has", "fun"],
+        )
+        self.assertEqual(x_mapped, x_expected)
 
     def test_mapper_same_field(self) -> None:
         split_words = SplitWordsMapper("text", "text", "text_words")
-        split_words.mode = MapperMode.NAMESPACE
         x = self._get_x()
         x_mapped = split_words(x)
-        self.assertEqual(x.num, 8)
-        self.assertEqual(x.text, "Henry has fun")
-        self.assertFalse(hasattr(x, "text_words"))
+        self.assertEqual(x, self._get_x())
         assert x_mapped is not None
-        self.assertEqual(x_mapped.num, 8)
-        self.assertEqual(x_mapped.text, "henry has fun")
-        self.assertEqual(x_mapped.text_words, ["Henry", "has", "fun"])
+        x_expected = SimpleNamespace(
+            num=8, text="henry has fun", text_words=["Henry", "has", "fun"]
+        )
+        self.assertEqual(x_mapped, x_expected)
 
     def test_mapper_default_args(self) -> None:
         split_words = SplitWordsMapperDefaultArgs()
-        split_words.mode = MapperMode.NAMESPACE
         x_mapped = split_words(self._get_x())
         assert x_mapped is not None
-        self.assertEqual(x_mapped.num, 8)
-        self.assertEqual(x_mapped.text, "Henry has fun")
-        self.assertEqual(x_mapped.lower, "henry has fun")
-        self.assertEqual(x_mapped.words, ["Henry", "has", "fun"])
+        x_expected = SimpleNamespace(
+            num=8,
+            text="Henry has fun",
+            lower="henry has fun",
+            words=["Henry", "has", "fun"],
+        )
+        self.assertEqual(x_mapped, x_expected)
 
     def test_mapper_in_place(self) -> None:
         x = self._get_x_dict()
         x_mapped = modify_in_place(x)
-        self.assertEqual(x.num, 8)
-        self.assertEqual(x.d, dict(my_key=1))
-        self.assertFalse(hasattr(x, "d_new"))
+        self.assertEqual(x, self._get_x_dict())
         assert x_mapped is not None
-        self.assertEqual(x_mapped.num, 8)
-        self.assertEqual(x_mapped.d, dict(my_key=0))
-        self.assertEqual(x_mapped.d_new, dict(my_key=0))
+        x_expected = SimpleNamespace(num=8, d=dict(my_key=0), d_new=dict(my_key=0))
+        self.assertEqual(x_mapped, x_expected)
 
     def test_mapper_returns_none(self) -> None:
         mapper = MapperReturnsNone()
-        mapper.mode = MapperMode.NAMESPACE
         x_mapped = mapper(self._get_x())
         self.assertIsNone(x_mapped)
+
+    def test_mapper_pre(self) -> None:
+        mapper_no_pre = MapperWithPre()
+        x = self._get_x(3)
+        with self.assertRaises(AttributeError):
+            x_mapped = mapper_no_pre(x)
+
+        mapper_pre = MapperWithPre(pre=[square])
+        x = self._get_x(3)
+        x_mapped = mapper_pre(x)
+        self.assertEqual(x, self._get_x(3))
+        assert x_mapped is not None
+        x_expected = SimpleNamespace(
+            num=3, num_squared=9, double_num_squared=18, text="Henry has fun"
+        )
+        self.assertEqual(x_mapped, x_expected)
+
+        mapper_pre_2 = MapperWithPre2(pre=[mapper_pre])
+        x = self._get_x(3)
+        x_mapped = mapper_pre_2(x)
+        self.assertEqual(x, self._get_x(3))
+        assert x_mapped is not None
+        x_expected = SimpleNamespace(
+            num=3,
+            num_squared=9,
+            double_num_squared=18,
+            double_num_squared_plus_1=19,
+            text="Henry has fun",
+        )
+        self.assertEqual(x_mapped, x_expected)
+
+    def test_mapper_pre_decorator(self) -> None:
+        @lambda_mapper()
+        def mapper_no_pre(x: DataPoint) -> DataPoint:
+            x.double_num_squared = 2 * x.num_squared
+            return x
+
+        x = self._get_x(3)
+        with self.assertRaises(AttributeError):
+            x_mapped = mapper_no_pre(x)
+
+        @lambda_mapper(pre=[square])
+        def mapper_pre(x: DataPoint) -> DataPoint:
+            x.double_num_squared = 2 * x.num_squared
+            return x
+
+        x = self._get_x(3)
+        x_mapped = mapper_pre(x)
+        self.assertEqual(x, self._get_x(3))
+        assert x_mapped is not None
+        x_expected = SimpleNamespace(
+            num=3, num_squared=9, double_num_squared=18, text="Henry has fun"
+        )
+        self.assertEqual(x_mapped, x_expected)
+
+        @lambda_mapper(pre=[mapper_pre])
+        def mapper_pre_2(x: DataPoint) -> DataPoint:
+            x.double_num_squared_plus_1 = x.double_num_squared + 1
+            return x
+
+        x = self._get_x(3)
+        x_mapped = mapper_pre_2(x)
+        self.assertEqual(x, self._get_x(3))
+        assert x_mapped is not None
+        x_expected = SimpleNamespace(
+            num=3,
+            num_squared=9,
+            double_num_squared=18,
+            double_num_squared_plus_1=19,
+            text="Henry has fun",
+        )
+        self.assertEqual(x_mapped, x_expected)
 
     def test_decorator_mapper_memoized(self) -> None:
         square_hit_tracker = SquareHitTracker()
@@ -147,9 +226,9 @@ class TestMapperCore(unittest.TestCase):
         assert x8_mapped is not None
         self.assertEqual(x8_mapped.num_squared, 64)
         self.assertEqual(square_hit_tracker.n_hits, 1)
-        x19_mapped = square(x9)
-        assert x19_mapped is not None
-        self.assertEqual(x19_mapped.num_squared, 81)
+        x9_mapped = square(x9)
+        assert x9_mapped is not None
+        self.assertEqual(x9_mapped.num_squared, 81)
         self.assertEqual(square_hit_tracker.n_hits, 2)
         x8_mapped = square(x8)
         assert x8_mapped is not None
@@ -207,28 +286,50 @@ class TestMapperCore(unittest.TestCase):
         self.assertEqual(x8_mapped.num_squared, 64)
         self.assertEqual(square_hit_tracker.n_hits, 4)
 
+    def test_mapper_pre_memoized(self) -> None:
+        square_hit_tracker = SquareHitTracker()
+
+        @lambda_mapper(memoize=False)
+        def square(x: DataPoint) -> DataPoint:
+            x.num_squared = square_hit_tracker(x.num)
+            return x
+
+        @lambda_mapper(pre=[square], memoize=True)
+        def mapper_pre(x: DataPoint) -> DataPoint:
+            x.double_num_squared = 2 * x.num_squared
+            return x
+
+        x8 = self._get_x()
+        x9 = self._get_x(9)
+        x8_mapped = mapper_pre(x8)
+        assert x8_mapped is not None
+        self.assertEqual(x8_mapped.double_num_squared, 128)
+        self.assertEqual(square_hit_tracker.n_hits, 1)
+        x8_mapped = mapper_pre(x8)
+        assert x8_mapped is not None
+        self.assertEqual(x8_mapped.double_num_squared, 128)
+        self.assertEqual(square_hit_tracker.n_hits, 1)
+        x9_mapped = mapper_pre(x9)
+        assert x9_mapped is not None
+        self.assertEqual(x9_mapped.double_num_squared, 162)
+        self.assertEqual(square_hit_tracker.n_hits, 2)
+        x8_mapped = mapper_pre(x8)
+        assert x8_mapped is not None
+        self.assertEqual(x8_mapped.double_num_squared, 128)
+        self.assertEqual(square_hit_tracker.n_hits, 2)
+
+        mapper_pre.reset_cache()
+        x8_mapped = mapper_pre(x8)
+        assert x8_mapped is not None
+        self.assertEqual(x8_mapped.double_num_squared, 128)
+        self.assertEqual(square_hit_tracker.n_hits, 3)
+
     def test_mapper_with_args_kwargs(self) -> None:
         with self.assertRaises(ValueError):
             MapperWithArgs()
 
         with self.assertRaises(ValueError):
             MapperWithKwargs()
-
-    def test_mapper_mode(self) -> None:
-        x = self._get_x()
-        split_words = SplitWordsMapper("text", "text_lower", "text_words")
-
-        split_words.mode = 18  # type: ignore
-        with self.assertRaises(ValueError):
-            split_words(x)
-
-        split_words.mode = MapperMode.NONE
-        with self.assertRaises(ValueError):
-            split_words(x)
-
-        split_words.mode = MapperMode.SPARK
-        with self.assertRaises(NotImplementedError):
-            split_words(x)
 
 
 class TestGetHashable(unittest.TestCase):

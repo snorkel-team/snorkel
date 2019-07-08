@@ -1,72 +1,103 @@
 import unittest
 
 import numpy as np
+import torch
+import torch.nn as nn
+from scipy.sparse import csr_matrix
 
-from snorkel.labeling.model.baselines import MajorityLabelVoter
 from snorkel.labeling.model.label_model import LabelModel
 
-from .synthetic import SingleTaskTreeDepsGenerator
 
-
-# TODO: Put in tests for LabelModel baselines again!
 class LabelModelTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.n_iters = 1
-        cls.n = 10000
-        cls.m = 10
-        cls.k = 2
+    def _set_up_model(self, L, class_balance=[0.5, 0.5]):
+        label_model = LabelModel(k=2, verbose=False)
+        label_model._set_constants(L)
+        label_model._create_tree()
+        label_model._generate_O(L)
+        label_model._build_mask()
+        label_model._get_augmented_label_matrix(L)
+        label_model._set_class_balance(class_balance=class_balance, Y_dev=None)
+        label_model._init_params()
 
-    def _test_label_model(self, data, test_acc=True):
-        label_model = LabelModel(k=data.k, verbose=False)
-        label_model.train_model(
-            data.L,
-            deps=data.E,
-            class_balance=data.p,
-            n_epochs=1000,
-            log_train_every=200,
+        return label_model
+
+    def test_L_form(self):
+        label_model = LabelModel(k=2, verbose=False)
+
+        # Test dimension constants
+        L = np.array([[1, 2, 1], [1, 0, 1], [2, 1, 1], [1, 2, -1]])
+        L_sparse = csr_matrix(L)
+        with self.assertRaises(ValueError):
+            label_model._check_L(L_sparse)
+
+        L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 1]])
+        label_model._set_constants(L)
+        self.assertEqual(label_model.n, 4)
+        self.assertEqual(label_model.m, 3)
+
+    def test_class_balance(self):
+        label_model = LabelModel(k=2, verbose=False)
+
+        # Test class balance
+        Y_dev = np.array([1, 1, 2, 2, 1, 1, 1, 1, 2, 2])
+        label_model._set_class_balance(class_balance=None, Y_dev=Y_dev)
+        np.testing.assert_array_almost_equal(label_model.p, np.array([0.6, 0.4]))
+
+    def test_generate_O(self):
+        L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 2]])
+        label_model = self._set_up_model(L)
+
+        # O = (1/n) * L^TL = L^TL/4
+        true_O = np.array(
+            [
+                [3 / 4, 0, 0, 3 / 4, 1 / 2, 1 / 4],
+                [0, 1 / 4, 1 / 4, 0, 1 / 4, 0],
+                [0, 1 / 4, 1 / 4, 0, 1 / 4, 0],
+                [3 / 4, 0, 0, 3 / 4, 1 / 2, 1 / 4],
+                [1 / 2, 1 / 4, 1 / 4, 1 / 2, 3 / 4, 0],
+                [1 / 4, 0, 0, 1 / 4, 0, 1 / 4],
+            ]
         )
+        np.testing.assert_array_almost_equal(label_model.O.numpy(), true_O)
 
-        # Test parameter estimation error
-        c_probs_est = label_model.get_conditional_probs()
-        err = np.mean(np.abs(data.c_probs - c_probs_est))
-        self.assertLess(err, 0.025)
+        L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 2]])
+        label_model = self._set_up_model(L)
 
-        # Test label prediction accuracy
-        if test_acc:
-            score = label_model.score((data.L, data.Y), verbose=False)
-            self.assertGreater(score, 0.95)
+        label_model._generate_O(L, higher_order=False)
+        true_O = np.array(
+            [
+                [3 / 4, 0, 0, 3 / 4, 1 / 2, 1 / 4],
+                [0, 1 / 4, 1 / 4, 0, 1 / 4, 0],
+                [0, 1 / 4, 1 / 4, 0, 1 / 4, 0],
+                [3 / 4, 0, 0, 3 / 4, 1 / 2, 1 / 4],
+                [1 / 2, 1 / 4, 1 / 4, 1 / 2, 3 / 4, 0],
+                [1 / 4, 0, 0, 1 / 4, 0, 1 / 4],
+            ]
+        )
+        np.testing.assert_array_almost_equal(label_model.O.numpy(), true_O)
 
-            # Test against baseline
-            mv = MajorityLabelVoter()
-            mv_score = mv.score((data.L, data.Y), verbose=False)
-            self.assertGreater(score, mv_score)
-
-    def test_no_deps(self):
-        for seed in range(self.n_iters):
-            np.random.seed(seed)
-            data = SingleTaskTreeDepsGenerator(self.n, self.m, k=self.k, edge_prob=0.0)
-            self._test_label_model(data)
+        # Higher order returns same matrix (num source = num cliques)
+        # Need to test c_tree form
+        label_model._generate_O(L, higher_order=True)
+        np.testing.assert_array_almost_equal(label_model.O.numpy(), true_O)
 
     def test_augmented_L_construction(self):
-        # 5 LFs: a triangle, a connected edge to it, and a singleton source
+        # 5 LFs
         n = 3
         m = 5
         k = 2
-        E = [(0, 1), (1, 2), (2, 0), (0, 3)]
         L = np.array([[1, 1, 1, 2, 1], [1, 2, 2, 1, 0], [1, 1, 1, 1, 0]])
         lm = LabelModel(k=k, verbose=False)
         lm._set_constants(L)
-        lm._set_dependencies(E)
+        lm._create_tree()
         L_aug = lm._get_augmented_label_matrix(L, higher_order=True)
 
-        # Should have 22 columns:
+        # Should have 10 columns:
         # - 5 * 2 = 10 for the sources
-        # - 8 + 4 for the 3- and 2-clique resp. --> = 22
-        self.assertEqual(L_aug.shape, (3, 22))
+        self.assertEqual(L_aug.shape, (3, 10))
 
-        # Same as above but minus 2 abstains = 19 total nonzero entries
-        self.assertEqual(L_aug.sum(), 19)
+        # 13 total nonzero entries
+        self.assertEqual(L_aug.sum(), 13)
 
         # Next, check the singleton entries
         for i in range(n):
@@ -75,24 +106,145 @@ class LabelModelTest(unittest.TestCase):
                     self.assertEqual(L_aug[i, j * k + L[i, j] - 1], 1)
 
         # Finally, check the clique entries
-        # Triangle clique
-        self.assertEqual(len(lm.c_tree.node[1]["members"]), 3)
+        # Singleton clique 1
+        self.assertEqual(len(lm.c_tree.node[1]["members"]), 1)
         j = lm.c_tree.node[1]["start_index"]
         self.assertEqual(L_aug[0, j], 1)
-        self.assertEqual(L_aug[1, j + 3], 1)
-        self.assertEqual(L_aug[2, j], 1)
-        # Binary clique
-        self.assertEqual(len(lm.c_tree.node[2]["members"]), 2)
-        j = lm.c_tree.node[2]["start_index"]
-        self.assertEqual(L_aug[0, j + 1], 1)
-        self.assertEqual(L_aug[1, j], 1)
-        self.assertEqual(L_aug[2, j], 1)
 
-    def test_with_deps(self):
-        for seed in range(self.n_iters):
-            np.random.seed(seed)
-            data = SingleTaskTreeDepsGenerator(self.n, self.m, k=self.k, edge_prob=1.0)
-            self._test_label_model(data, test_acc=False)
+        # Singleton clique 2
+        self.assertEqual(len(lm.c_tree.node[2]["members"]), 1)
+        j = lm.c_tree.node[2]["start_index"]
+        self.assertEqual(L_aug[0, j + 1], 0)
+
+    def test_conditional_probs(self):
+        L = np.array([[1, 2, 1], [1, 2, 1]])
+        label_model = self._set_up_model(L, class_balance=[0.6, 0.4])
+        probs = label_model.get_conditional_probs()
+        self.assertLessEqual(probs.max(), 1.0)
+        self.assertGreaterEqual(probs.min(), 0.0)
+
+    def test_get_accuracy(self):
+        L = np.array([[1, 2], [1, 0]])
+        label_model = self._set_up_model(L)
+        probs = np.array(
+            [
+                [0.99, 0.01],
+                [0.5, 0.5],
+                [0.9, 0.9],
+                [0.99, 0.01],
+                [0.9, 0.9],
+                [0.5, 0.75],
+                [0.9, 0.9],
+                [0.9, 0.1],
+            ]
+        )
+
+        label_model.m = 2
+        label_model.k = 2
+        label_model.P = torch.Tensor([[0.5, 0.0], [0.0, 0.5]])
+        accs = label_model.get_accuracies(probs=probs)
+
+        # accs[i] = sum(diag(probs[i*(k+1):(i+1)*(k+1)][1:,:]) * P)
+        # accs[0] = 0.5*0.9 + 0.5*0.5 = 0.7
+        # accs[1] = 0.5*0.9 + 0.5*0.75 = 0.825
+        np.testing.assert_array_almost_equal(accs, np.array([0.7, 0.825]))
+
+        # accs[i] = sum(diag(probs[i*(k+1):(i+1)*(k+1)][1:,:]) * P)
+        # accs[0] = 0.5*0.5 + 0.5*0.5 = 0.5 since (P(\lambda_0 = 1 | Y = y) = 0.5)
+        # accs[1] = 0.5*0.7 + 0.5*0.01 = 0.355 since (P(\lambda_1 = 1 | Y = 1) = 0.7)
+        # default prec_init = 0.7, clamp lowest prob to 0.01
+        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        accs = label_model.get_accuracies(probs=None)
+        np.testing.assert_array_almost_equal(accs, np.array([0.5, 0.355]))
+
+    def test_build_mask(self):
+
+        L = np.array([[1, 2, 1], [1, 2, 1]])
+        label_model = self._set_up_model(L)
+
+        # block diagonal with 0s for dependent LFs
+        # without deps, k X k block of 0s down diagonal
+        true_mask = np.array(
+            [
+                [0, 0, 1, 1, 1, 1],
+                [0, 0, 1, 1, 1, 1],
+                [1, 1, 0, 0, 1, 1],
+                [1, 1, 0, 0, 1, 1],
+                [1, 1, 1, 1, 0, 0],
+                [1, 1, 1, 1, 0, 0],
+            ]
+        )
+
+        mask = label_model.mask.numpy()
+        np.testing.assert_array_equal(mask, true_mask)
+
+    def test_init_params(self):
+        L = np.array([[1, 2, 1], [1, 0, 1]])
+        label_model = self._set_up_model(L, class_balance=[0.6, 0.4])
+
+        # mu_init = P(\lf=y|Y=y) = clamp(P(\lf=y) * prec_i / P(Y=y), (0,1))
+        # mu_init[lf0, lf2 = 1 | Y = 1] = clamp(1.0 * 0.7 / 0.6) = 1.0 since P(lf = 1) = 1.0
+        # mu_init[lf1 | Y = 2] = clamp(0.5 * 0.7 / 0.4) = 0.875 since P(lf = 2) = 0.5
+        mu_init = label_model.mu_init.numpy()
+        true_mu_init = np.array(
+            [[1.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.875], [1.0, 0.0], [0.0, 0.0]]
+        )
+        np.testing.assert_array_equal(mu_init, true_mu_init)
+
+        # mu_init = P(\lf=y|Y=y) = clamp(P(\lf=y) * prec_i / P(Y=y), (0,1))
+        # mu_init[lf0, lf2 = 1 | Y = 1] = clamp(1.0 * 0.7 / 0.6) = 1.0 since P(lf = 1) = 1.0
+        # mu_init[lf1 = 2 | Y = 2] = clamp(0.5 * 0.7 / 0.7) = 0.5 since P(lf = 2) = 0.5
+        label_model._set_class_balance(class_balance=[0.3, 0.7], Y_dev=None)
+        label_model._init_params()
+
+        mu_init = label_model.mu_init.numpy()
+        true_mu_init = np.array(
+            [[1.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.5], [1.0, 0.0], [0.0, 0.0]]
+        )
+        np.testing.assert_array_equal(mu_init, true_mu_init)
+
+    def test_predict_proba(self):
+        L = np.array([[1, 2, 1], [1, 2, 1]])
+        label_model = self._set_up_model(L)
+
+        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        probs = label_model.predict_proba(L)
+
+        # with matching labels from 3 LFs, predicted probs clamped at (0.99,0.01)
+        true_probs = np.array([[0.99, 0.01], [0.99, 0.01]])
+        np.testing.assert_array_almost_equal(probs, true_probs)
+
+    def test_loss(self):
+        L = np.array([[1, 0, 1], [1, 2, 0]])
+        label_model = self._set_up_model(L)
+        label_model._get_augmented_label_matrix(L, higher_order=True)
+
+        label_model.mu = nn.Parameter(label_model.mu_init.clone() + 0.05)
+
+        # l2_loss = l2*M*K*||mu - mu_init||_2 = 3*2*(0.05^2) = 0.03
+        self.assertAlmostEqual(
+            label_model.loss_l2(l2=1.0).detach().numpy().ravel()[0], 0.03
+        )
+        self.assertAlmostEqual(
+            label_model.loss_l2(l2=np.ones(6)).detach().numpy().ravel()[0], 0.03
+        )
+
+        # mu_loss = ||O - \mu^T P \mu||_2 + ||\mu^T P - diag(O)||_2
+        self.assertAlmostEqual(
+            label_model.loss_mu().detach().numpy().ravel()[0], 0.675, 3
+        )
+
+    def test_train_model(self):
+        L = np.array([[1, 0, 1], [1, 2, 1]])
+        label_model = self._set_up_model(L)
+
+        label_model.train_model(L, n_epochs=1, lr=0.01, momentum=0.9)
+        init_loss = label_model.loss_mu().detach().numpy().ravel()[0]
+
+        label_model.train_model(L, n_epochs=10, lr=0.01, momentum=0.9)
+        next_loss = label_model.loss_mu().detach().numpy().ravel()[0]
+
+        self.assertLessEqual(next_loss, init_loss)
 
 
 if __name__ == "__main__":

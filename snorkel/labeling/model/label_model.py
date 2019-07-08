@@ -12,8 +12,8 @@ from tqdm import tqdm
 
 from .graph_utils import get_clique_tree
 from .lm_defaults import lm_default_config
-from .logging import Checkpointer, Logger, LogWriter, TensorBoardWriter
-from .utils import MetalDataset, place_on_gpu, recursive_merge_dicts, set_seed
+from .logger import Logger
+from .utils import LabelModelDataset, place_on_gpu, recursive_merge_dicts, set_seed
 
 
 def to_numpy(Z):
@@ -449,47 +449,13 @@ class LabelModel(nn.Module):
             self.running_loss = 0.0
             self.running_examples = 0
 
-        # Checkpoint if applicable
-        self._checkpoint(metrics_dict)
-
         self.train()
         return metrics_dict
-
-    def _set_checkpointer(self, train_config):
-        if train_config["checkpoint"]:
-            # Default to valid split for checkpoint metric
-            checkpoint_config = train_config["checkpoint_config"]
-            checkpoint_metric = checkpoint_config["checkpoint_metric"]
-            if checkpoint_metric.count("/") == 0:
-                checkpoint_config["checkpoint_metric"] = f"valid/{checkpoint_metric}"
-            self.checkpointer = Checkpointer(
-                checkpoint_config, verbose=self.config["verbose"]
-            )
-        else:
-            self.checkpointer = None
-
-    def _checkpoint(self, metrics_dict):
-        if self.checkpointer is None:
-            return
-        iteration = self.logger.unit_total
-        self.checkpointer.checkpoint(
-            metrics_dict, iteration, self, self.optimizer, self.lr_scheduler
-        )
-
-    def _set_writer(self, train_config):
-        if train_config["writer"] is None:
-            self.writer = None
-        elif train_config["writer"] == "json":
-            self.writer = LogWriter(**(train_config["writer_config"]))
-        elif train_config["writer"] == "tensorboard":
-            self.writer = TensorBoardWriter(**(train_config["writer_config"]))
-        else:
-            raise Exception(f"Unrecognized writer: {train_config['writer']}")
 
     def _set_logger(self, train_config, epoch_size):
         self.logger = Logger(
             train_config["logger_config"],
-            self.writer,
+            None,
             epoch_size,
             verbose=self.config["verbose"],
         )
@@ -589,9 +555,7 @@ class LabelModel(nn.Module):
         self.to(self.config["device"])
 
         # Set training components
-        self._set_writer(train_config)
         self._set_logger(train_config, epoch_size)
-        self._set_checkpointer(train_config)
         self._set_optimizer(train_config)
         self._set_scheduler(train_config)
 
@@ -651,23 +615,11 @@ class LabelModel(nn.Module):
 
         self.eval()
 
-        # Restore best model if applicable
-        if self.checkpointer and self.checkpointer.checkpoint_best:
-            self.checkpointer.load_best_model(model=self)
-
-        # Write log if applicable
-        if self.writer:
-            if self.writer.include_config:
-                self.writer.add_config(self.config)
-            self.writer.close()
-
         # Print confusion matrix if applicable
         if self.config["verbose"]:
             print("Finished Training")
 
-    def train_model(
-        self, L_train, Y_dev=None, class_balance=None, log_writer=None, **kwargs
-    ):
+    def train_model(self, L_train, Y_dev=None, class_balance=None, **kwargs):
         """Train the model (i.e. estimate mu):
 
         Args:
@@ -686,10 +638,6 @@ class LabelModel(nn.Module):
         self.config = recursive_merge_dicts(self.config, kwargs, misses="ignore")
         train_config = self.config["train_config"]
 
-        # TODO: Implement logging for label model?
-        if log_writer is not None:
-            raise NotImplementedError("Logging for LabelModel.")
-
         # Note that the LabelModel class implements its own (centered) L2 reg.
         l2 = train_config.get("l2", 0)
 
@@ -701,7 +649,7 @@ class LabelModel(nn.Module):
         # Creating this faux dataset is necessary for now because the LabelModel
         # loss functions do not accept inputs, but Classifer._train_model()
         # expects training data to feed to the loss functions.
-        dataset = MetalDataset([0], [0])
+        dataset = LabelModelDataset([0], [0])
         train_loader = DataLoader(dataset)
 
         # Compute O and initialize params

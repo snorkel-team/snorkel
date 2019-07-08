@@ -31,7 +31,7 @@ lm_default_config = {
         # Logger (see metal/logging/writer.py for descriptions)
         "logger": True,
         "logger_config": {
-            "log_unit": "epochs",  # ['seconds', 'examples', 'batches', 'epochs']
+            "log_unit": "epochs",  # ['examples', 'batches', 'epochs']
             "log_train_every": 1,  # How often train loss is reported
             "log_train_metrics": ["train/loss"],
             "log_train_metrics_func": None,
@@ -39,9 +39,5 @@ lm_default_config = {
             "log_valid_metrics": [],
             "log_valid_metrics_func": None,
         },
-        # Writer
-        "writer": None,
-        # Checkpointer
-        "checkpoint": False,
     },
 }

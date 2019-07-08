@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import Dataset
 
 
-class MetalDataset(Dataset):
+class LabelModelDataset(Dataset):
     """A dataset that group each item in X with its label from Y
 
     Args:
@@ -109,22 +109,6 @@ def place_on_gpu(data):
         return data.cuda()
     else:
         return ValueError(f"Data type {type(data)} not recognized.")
-
-
-def recursive_transform(x, test_func, transform):
-    """Applies a transformation recursively to each member of a dictionary
-
-    Args:
-        x: a (possibly nested) dictionary
-        test_func: a function that returns whether this element should be transformed
-        transform: a function that transforms a value
-    """
-    for k, v in x.items():
-        if test_func(v):
-            x[k] = transform(v)
-        if isinstance(v, dict):
-            recursive_transform(v, test_func, transform)
-    return x
 
 
 def set_seed(seed: int):

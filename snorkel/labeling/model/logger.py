@@ -1,10 +1,9 @@
-import time
 from collections import defaultdict
 
 from snorkel.analysis.metrics import METRICS as standard_metric_names, metric_score
 
 
-class Logger(object):
+class Logger:
     """Tracks when it is time to calculate train/valid metrics and logs them"""
 
     def __init__(self, config, writer={}, epoch_size=None, verbose=True):
@@ -19,9 +18,6 @@ class Logger(object):
         self.unit_count = 0
         self.unit_total = 0
         self.log_count = 0  # Count how many times logging has occurred
-
-        # Specific to log_unit == "seconds"
-        self.timer = Timer() if self.log_unit == "seconds" else None
 
         # Normalize all target metric names to include split prefix
         self.log_train_metrics = [
@@ -43,10 +39,7 @@ class Logger(object):
         """Update the total and relative unit counts"""
         self.example_count += batch_size
         self.example_total += batch_size
-        if self.log_unit == "seconds":
-            self.unit_count = int(self.timer.elapsed())
-            self.unit_total = int(self.timer.total_elapsed())
-        elif self.log_unit == "examples":
+        if self.log_unit == "examples":
             self.unit_count = self.example_count
             self.unit_total = self.example_total
         elif self.log_unit == "batches":
@@ -234,30 +227,3 @@ class Logger(object):
     def reset(self):
         self.unit_count = 0
         self.example_count = 0
-        if self.timer is not None:
-            self.timer.update()
-
-
-class Timer(object):
-    """Computes elapsed time."""
-
-    def __init__(self):
-        """Initialize timer"""
-        self.reset()
-
-    def reset(self):
-        """Reset timer, completely obliterating history"""
-        self.start = time.time()
-        self.update()
-
-    def update(self):
-        """Update timer with most recent click point"""
-        self.click = time.time()
-
-    def elapsed(self):
-        """Get time elapsed since last recorded click"""
-        elapsed = time.time() - self.click
-        return elapsed
-
-    def total_elapsed(self):
-        return time.time() - self.start

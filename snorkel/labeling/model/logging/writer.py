@@ -5,7 +5,7 @@ from collections import defaultdict
 from subprocess import check_output
 from time import strftime
 
-from snorkel.model.utils import recursive_transform
+from snorkel.labeling.model.utils import recursive_transform
 
 
 class LogWriter(object):

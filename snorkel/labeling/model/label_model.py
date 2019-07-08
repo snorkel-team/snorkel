@@ -5,29 +5,98 @@ from itertools import chain
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.optim as optim
 from scipy.sparse import issparse
-from torch.utils.data import DataLoader
-
-from snorkel.model.classifier import Classifier
-from snorkel.model.utils import MetalDataset, recursive_merge_dicts
+from torch.utils.data import DataLoader, Dataset, TensorDataset
+from tqdm import tqdm
 
 from .graph_utils import get_clique_tree
 from .lm_defaults import lm_default_config
+from .logging import Checkpointer, Logger, LogWriter, TensorBoardWriter
+from .utils import MetalDataset, place_on_gpu, recursive_merge_dicts, set_seed
 
 
-class LabelModel(Classifier):
+def to_numpy(Z):
+    """Converts a None, list, np.ndarray, or torch.Tensor to np.ndarray;
+    also handles converting sparse input to dense."""
+    if Z is None:
+        return Z
+    elif issparse(Z):
+        return Z.toarray()
+    elif isinstance(Z, np.ndarray):
+        return Z
+    elif isinstance(Z, list):
+        return np.array(Z)
+    elif isinstance(Z, torch.Tensor):
+        return Z.cpu().numpy()
+    else:
+        msg = (
+            f"Expected None, list, numpy.ndarray or torch.Tensor, "
+            f"got {type(Z)} instead."
+        )
+        raise Exception(msg)
+
+
+def to_torch(Z, dtype=None):
+    """Converts a None, list, np.ndarray, or torch.Tensor to torch.Tensor;
+    also handles converting sparse input to dense."""
+    if Z is None:
+        return None
+    elif issparse(Z):
+        Z = torch.from_numpy(Z.toarray())
+    elif isinstance(Z, torch.Tensor):
+        pass
+    elif isinstance(Z, list):
+        Z = torch.from_numpy(np.array(Z))
+    elif isinstance(Z, np.ndarray):
+        Z = torch.from_numpy(Z)
+    else:
+        msg = (
+            f"Expected list, numpy.ndarray or torch.Tensor, " f"got {type(Z)} instead."
+        )
+        raise Exception(msg)
+
+    return Z.type(dtype) if dtype else Z
+
+
+def stack_batches(X):
+    """Stack a list of np.ndarrays along the first axis, returning an
+    np.ndarray; note this is mainly for smooth hanlding of the multi-task
+    setting."""
+    X = [to_numpy(Xb) for Xb in X]
+    if len(X[0].shape) == 1:
+        return np.hstack(X)
+    elif len(X[0].shape) == 2:
+        return np.vstack(X)
+    else:
+        raise ValueError(f"Can't stack {len(X[0].shape)}-dim batches.")
+
+
+class LabelModel(nn.Module):
     """A conditionally independent LabelModel to learn labeling function accuracies and assign probabilistic labels
 
     Args:
         k: (int) the cardinality of the classifier
     """
 
-    # This class variable is explained in the Classifier class
-    implements_l2 = True
-
     def __init__(self, k=2, **kwargs):
-        config = recursive_merge_dicts(lm_default_config, kwargs)
-        super().__init__(k, config)
+        super().__init__()
+        self.config = recursive_merge_dicts(lm_default_config, kwargs)
+        self.multitask = False
+        self.k = k
+
+        # Set random seed
+        if self.config["seed"] is None:
+            self.config["seed"] = np.random.randint(1e6)
+        self.seed = self.config["seed"]
+        set_seed(self.seed)
+
+        # Confirm that cuda is available if config is using CUDA
+        if self.config["device"] != "cpu" and not torch.cuda.is_available():
+            raise ValueError("device=cuda but CUDA not available.")
+
+        # By default, put model in eval mode; switch to train mode in training
+        self.eval()
 
     def _check_L(self, L):
         """Run some basic checks on L."""
@@ -289,6 +358,313 @@ class LabelModel(Classifier):
         nodes = range(self.m)
         self.c_tree = get_clique_tree(nodes, [])
 
+    def _create_dataset(self, *data):
+        """Converts input data to the appropriate Dataset"""
+        # Make sure data is a tuple of dense tensors
+        data = [self._to_torch(x, dtype=torch.FloatTensor) for x in data]
+        return TensorDataset(*data)
+
+    def _create_data_loader(self, data, **kwargs):
+        """Converts input data into a DataLoader"""
+        if data is None:
+            return None
+
+        # Set DataLoader config
+        # NOTE: Not applicable if data is already a DataLoader
+        config = {
+            **self.config["train_config"]["data_loader_config"],
+            **kwargs,
+            "pin_memory": self.config["device"] != "cpu",
+        }
+        # Return data as DataLoader
+        if isinstance(data, DataLoader):
+            return data
+        elif isinstance(data, Dataset):
+            return DataLoader(data, **config)
+        elif isinstance(data, (tuple, list)):
+            return DataLoader(self._create_dataset(*data), **config)
+        else:
+            raise ValueError("Input data type not recognized.")
+
+    def _get_predictions(self, data, break_ties="random", return_probs=False, **kwargs):
+        """Computes predictions in batch, given a labeled dataset
+
+        Args:
+            data: a Pytorch DataLoader, Dataset, or tuple with Tensors (X,Y):
+                X: The input for the predict method
+                Y: An [n] or [n, 1] torch.Tensor or np.ndarray of target labels
+                    in {1,...,k}
+            break_ties: How to break ties when making predictions
+            return_probs: Return the predicted probabilities as well
+
+        Returns:
+            Y_p: A Tensor of predictions
+            Y: A Tensor of labels
+            [Optionally: Y_s: An [n, k] np.ndarray of predicted probabilities]
+        """
+        data_loader = self._create_data_loader(data)
+        Y_p = []
+        Y = []
+        Y_s = []
+
+        # Do batch evaluation by default, getting the predictions and labels
+        for batch_num, data in enumerate(data_loader):
+            Xb, Yb = data
+            Y.append(self._to_numpy(Yb))
+
+            # Optionally move to device
+            if self.config["device"] != "cpu":
+                Xb = place_on_gpu(Xb)
+
+            # Append predictions and labels from DataLoader
+            Y_pb, Y_sb = self.predict(
+                Xb, break_ties=break_ties, return_probs=True, **kwargs
+            )
+            Y_p.append(self._to_numpy(Y_pb))
+            Y_s.append(self._to_numpy(Y_sb))
+        Y_p, Y, Y_s = map(stack_batches, [Y_p, Y, Y_s])
+        if return_probs:
+            return Y_p, Y, Y_s
+        else:
+            return Y_p, Y
+
+    def _execute_logging(self, train_loader, loss, batch_size):
+        self.eval()
+        self.running_loss += loss.item() * batch_size
+        self.running_examples += batch_size
+
+        # Initialize metrics dict
+        metrics_dict = {}
+        # Always add average loss
+        metrics_dict["train/loss"] = self.running_loss / self.running_examples
+
+        if self.logger.check(batch_size):
+            logger_metrics = self.logger.calculate_metrics(
+                self, train_loader, None, metrics_dict
+            )
+            metrics_dict.update(logger_metrics)
+            self.logger.log(metrics_dict)
+
+            # Reset running loss and examples counts
+            self.running_loss = 0.0
+            self.running_examples = 0
+
+        # Checkpoint if applicable
+        self._checkpoint(metrics_dict)
+
+        self.train()
+        return metrics_dict
+
+    def _set_checkpointer(self, train_config):
+        if train_config["checkpoint"]:
+            # Default to valid split for checkpoint metric
+            checkpoint_config = train_config["checkpoint_config"]
+            checkpoint_metric = checkpoint_config["checkpoint_metric"]
+            if checkpoint_metric.count("/") == 0:
+                checkpoint_config["checkpoint_metric"] = f"valid/{checkpoint_metric}"
+            self.checkpointer = Checkpointer(
+                checkpoint_config, verbose=self.config["verbose"]
+            )
+        else:
+            self.checkpointer = None
+
+    def _checkpoint(self, metrics_dict):
+        if self.checkpointer is None:
+            return
+        iteration = self.logger.unit_total
+        self.checkpointer.checkpoint(
+            metrics_dict, iteration, self, self.optimizer, self.lr_scheduler
+        )
+
+    def _set_writer(self, train_config):
+        if train_config["writer"] is None:
+            self.writer = None
+        elif train_config["writer"] == "json":
+            self.writer = LogWriter(**(train_config["writer_config"]))
+        elif train_config["writer"] == "tensorboard":
+            self.writer = TensorBoardWriter(**(train_config["writer_config"]))
+        else:
+            raise Exception(f"Unrecognized writer: {train_config['writer']}")
+
+    def _set_logger(self, train_config, epoch_size):
+        self.logger = Logger(
+            train_config["logger_config"],
+            self.writer,
+            epoch_size,
+            verbose=self.config["verbose"],
+        )
+
+    def _set_optimizer(self, train_config):
+        optimizer_config = train_config["optimizer_config"]
+        opt = optimizer_config["optimizer"]
+
+        parameters = filter(lambda p: p.requires_grad, self.parameters())
+        if opt == "sgd":
+            optimizer = optim.SGD(
+                parameters,
+                **optimizer_config["optimizer_common"],
+                **optimizer_config["sgd_config"],
+            )
+        elif opt == "rmsprop":
+            optimizer = optim.RMSprop(
+                parameters,
+                **optimizer_config["optimizer_common"],
+                **optimizer_config["rmsprop_config"],
+            )
+        elif opt == "adam":
+            optimizer = optim.Adam(
+                parameters,
+                **optimizer_config["optimizer_common"],
+                **optimizer_config["adam_config"],
+            )
+        elif opt == "sparseadam":
+            optimizer = optim.SparseAdam(
+                parameters,
+                **optimizer_config["optimizer_common"],
+                **optimizer_config["adam_config"],
+            )
+        else:
+            raise ValueError(f"Did not recognize optimizer option '{opt}'")
+        self.optimizer = optimizer
+
+    def _set_scheduler(self, train_config):
+        lr_scheduler = train_config["lr_scheduler"]
+        if lr_scheduler is None:
+            lr_scheduler = None
+        else:
+            lr_scheduler_config = train_config["lr_scheduler_config"]
+            if lr_scheduler == "exponential":
+                lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(
+                    self.optimizer, **lr_scheduler_config["exponential_config"]
+                )
+            elif lr_scheduler == "reduce_on_plateau":
+                lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                    self.optimizer, **lr_scheduler_config["plateau_config"]
+                )
+            else:
+                raise ValueError(
+                    f"Did not recognize lr_scheduler option '{lr_scheduler}'"
+                )
+        self.lr_scheduler = lr_scheduler
+
+    def _update_scheduler(self, epoch, metrics_dict):
+        train_config = self.config["train_config"]
+        if self.lr_scheduler is not None:
+            lr_scheduler_config = train_config["lr_scheduler_config"]
+            if epoch + 1 >= lr_scheduler_config["lr_freeze"]:
+                if train_config["lr_scheduler"] == "reduce_on_plateau":
+                    checkpoint_config = train_config["checkpoint_config"]
+                    metric_name = checkpoint_config["checkpoint_metric"]
+                    score = metrics_dict.get(metric_name, None)
+                    if score is not None:
+                        self.lr_scheduler.step(score)
+                else:
+                    self.lr_scheduler.step()
+
+    def _train_model(self, train_data, loss_fn):
+        """The internal training routine called by train_model() after setup
+
+        Args:
+            train_data: a tuple of Tensors (X,Y), a Dataset, or a DataLoader of
+                X (data) and Y (labels) for the train split
+            loss_fn: the loss function to minimize (maps *data -> loss)
+            valid_data: a tuple of Tensors (X,Y), a Dataset, or a DataLoader of
+                X (data) and Y (labels) for the dev split
+            restore_state: a dictionary containing model weights (optimizer, main network) and training information
+
+        If valid_data is not provided, then no checkpointing or
+        evaluation on the dev set will occur.
+        """
+        # Set model to train mode
+        self.train()
+        train_config = self.config["train_config"]
+
+        # Convert data to DataLoaders
+        train_loader = self._create_data_loader(train_data)
+        epoch_size = len(train_loader.dataset)
+
+        # Move model to GPU
+        if self.config["verbose"] and self.config["device"] != "cpu":
+            print("Using GPU...")
+        self.to(self.config["device"])
+
+        # Set training components
+        self._set_writer(train_config)
+        self._set_logger(train_config, epoch_size)
+        self._set_checkpointer(train_config)
+        self._set_optimizer(train_config)
+        self._set_scheduler(train_config)
+
+        # Restore model if necessary
+        start_iteration = 0
+
+        # Train the model
+        metrics_hist = {}  # The most recently seen value for all metrics
+        for epoch in range(start_iteration, train_config["n_epochs"]):
+            progress_bar = (
+                train_config["progress_bar"]
+                and self.config["verbose"]
+                and self.logger.log_unit == "epochs"
+            )
+
+            t = tqdm(
+                enumerate(train_loader),
+                total=len(train_loader),
+                disable=(not progress_bar),
+            )
+
+            self.running_loss = 0.0
+            self.running_examples = 0
+            for batch_num, data in t:
+                # NOTE: actual batch_size may not equal config's target batch_size
+                batch_size = len(data[0])
+
+                # Moving data to device
+                if self.config["device"] != "cpu":
+                    data = place_on_gpu(data)
+
+                # Zero the parameter gradients
+                self.optimizer.zero_grad()
+
+                # Forward pass to calculate the average loss per example
+                loss = loss_fn(*data)
+                if torch.isnan(loss):
+                    msg = "Loss is NaN. Consider reducing learning rate."
+                    raise Exception(msg)
+
+                # Backward pass to calculate gradients
+                # Loss is an average loss per example
+                loss.backward()
+
+                # Perform optimizer step
+                self.optimizer.step()
+
+                # Calculate metrics, log, and checkpoint as necessary
+                metrics_dict = self._execute_logging(train_loader, loss, batch_size)
+                metrics_hist.update(metrics_dict)
+
+                # tqdm output
+                t.set_postfix(loss=metrics_dict["train/loss"])
+
+            # Apply learning rate scheduler
+            self._update_scheduler(epoch, metrics_hist)
+
+        self.eval()
+
+        # Restore best model if applicable
+        if self.checkpointer and self.checkpointer.checkpoint_best:
+            self.checkpointer.load_best_model(model=self)
+
+        # Write log if applicable
+        if self.writer:
+            if self.writer.include_config:
+                self.writer.add_config(self.config)
+            self.writer.close()
+
+        # Print confusion matrix if applicable
+        if self.config["verbose"]:
+            print("Finished Training")
+
     def train_model(
         self, L_train, Y_dev=None, class_balance=None, log_writer=None, **kwargs
     ):
@@ -338,3 +714,25 @@ class LabelModel(Classifier):
         if self.config["verbose"]:  # pragma: no cover
             print("Estimating \mu...")
         self._train_model(train_loader, partial(self.loss_mu, l2=l2))
+
+    def save(self, destination, **kwargs):
+        """Serialize and save a model.
+
+        Example:
+            end_model = EndModel(...)
+            end_model.train_model(...)
+            end_model.save("my_end_model.pkl")
+        """
+        with open(destination, "wb") as f:
+            torch.save(self, f, **kwargs)
+
+    @staticmethod
+    def load(source, **kwargs):
+        """Deserialize and load a model.
+
+        Example:
+            end_model = EndModel.load("my_end_model.pkl")
+            end_model.score(...)
+        """
+        with open(source, "rb") as f:
+            return torch.load(f, **kwargs)

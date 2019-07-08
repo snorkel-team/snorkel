@@ -1,6 +1,6 @@
 import unittest
 
-from snorkel.model.utils import recursive_merge_dicts
+from snorkel.labeling.model.utils import recursive_merge_dicts
 
 
 class UtilsTest(unittest.TestCase):

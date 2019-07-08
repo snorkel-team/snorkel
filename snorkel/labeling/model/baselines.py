@@ -1,6 +1,6 @@
 import numpy as np
 
-from .label_model import LabelModel
+from .label_model import LabelModel, to_numpy
 
 
 class BaselineVoter(LabelModel):
@@ -61,7 +61,7 @@ class MajorityLabelVoter(BaselineVoter):
     """
 
     def predict_proba(self, L):
-        L = self._to_numpy(L).astype(int)
+        L = to_numpy(L).astype(int)
         n, m = L.shape
         Y_p = np.zeros((n, self.k))
         for i in range(n):

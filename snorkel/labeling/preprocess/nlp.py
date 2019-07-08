@@ -6,7 +6,6 @@ from snorkel.types import FieldMap
 
 from .core import BasePreprocessor, Preprocessor
 
-DEFAULT_DISABLE = ["parser", "ner"]
 EN_CORE_WEB_SM = "en_core_web_sm"
 
 
@@ -41,7 +40,7 @@ class SpacyPreprocessor(Preprocessor):
         text_field: str,
         doc_field: str,
         language: str = EN_CORE_WEB_SM,
-        disable: List[str] = DEFAULT_DISABLE,
+        disable: Optional[List[str]] = None,
         preprocessors: Optional[List[BasePreprocessor]] = None,
         memoize: bool = False,
     ) -> None:
@@ -53,7 +52,7 @@ class SpacyPreprocessor(Preprocessor):
             pre=preprocessors,
             memoize=memoize,
         )
-        self._nlp = spacy.load(language, disable=disable)
+        self._nlp = spacy.load(language, disable=disable or [])
 
     def run(self, text: str) -> FieldMap:  # type: ignore
         """Run the SpaCy model on input text.

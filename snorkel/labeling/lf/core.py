@@ -100,14 +100,7 @@ class labeling_function:
 
     Parameters
     ----------
-    name
-        Name of the LF. If None, uses the name of the wrapped function.
-    resources
-        Labeling resources passed in to ``f`` via ``kwargs``
-    preprocessors
-        Preprocessors to run on data points before LF execution
-    fault_tolerant
-        Output 0 if LF execution fails?
+    See ``LabelingFunction``.
 
     Examples
     --------

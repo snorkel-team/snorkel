@@ -1,11 +1,7 @@
 from typing import Any, Callable, List, Mapping, NamedTuple, Optional
 
 from snorkel.labeling.preprocess import BasePreprocessor
-from snorkel.labeling.preprocess.nlp import (
-    DEFAULT_DISABLE,
-    EN_CORE_WEB_SM,
-    SpacyPreprocessor,
-)
+from snorkel.labeling.preprocess.nlp import EN_CORE_WEB_SM, SpacyPreprocessor
 
 from .core import LabelingFunction
 
@@ -16,7 +12,7 @@ class SpacyPreprocessorParameters(NamedTuple):
     text_field: str
     doc_field: str
     language: str
-    disable: List[str]
+    disable: Optional[List[str]]
     preprocessors: List[BasePreprocessor]
     memoize: bool
 
@@ -31,16 +27,14 @@ class SpacyPreprocessorConfig(NamedTuple):
 class NLPLabelingFunction(LabelingFunction):
     """Special labeling function type for SpaCy-based LFs.
 
-    A labeling function (LF) is a function that takes a data point
-    as input and produces an integer label, corresponding to a
-    class. A labeling function can also abstain from voting by
-    outputting 0. For examples, see the Snorkel tutorials.
+    This class is a special version of `LabelingFunction`. It
+    has a `SpacyPreprocessor` integrated which shares a cache
+    with all other `NLPLabelingFunction` instances. This makes
+    it easy to define LFs that have a text input field and have
+    logic written over SpaCy `Doc` objects.
 
-    This class wraps a Python function outputting a label. Metadata
-    about the input data types and label space are stored. Extra
-    functionality, such as running preprocessors and storing
-    resources, is provided. Simple LFs can be defined via a
-    decorator. See `labeling_function`.
+    Simple `NLPLabelingFunction`s can be defined via a
+    decorator. See `nlp_labeling_function`.
 
     Parameters
     ----------
@@ -83,12 +77,12 @@ class NLPLabelingFunction(LabelingFunction):
     _nlp_config: SpacyPreprocessorConfig
 
     @classmethod
-    def _create_preprocessor(
+    def _create_or_check_preprocessor(
         cls,
         text_field: str,
         doc_field: str,
         language: str,
-        disable: List[str],
+        disable: Optional[List[str]],
         preprocessors: List[BasePreprocessor],
         memoize: bool,
     ) -> None:
@@ -102,8 +96,8 @@ class NLPLabelingFunction(LabelingFunction):
             preprocessors=preprocessors,
             memoize=memoize,
         )
-        if cls._nlp_config is None:
-            nlp = SpacyPreprocessor(**parameters)
+        if not hasattr(cls, "_nlp_config"):
+            nlp = SpacyPreprocessor(**parameters._asdict())
             cls._nlp_config = SpacyPreprocessorConfig(nlp=nlp, parameters=parameters)
         elif parameters != cls._nlp_config.parameters:
             raise ValueError(
@@ -121,17 +115,17 @@ class NLPLabelingFunction(LabelingFunction):
         text_field: str = "text",
         doc_field: str = "doc",
         language: str = EN_CORE_WEB_SM,
-        disable: List[str] = DEFAULT_DISABLE,
+        disable: Optional[List[str]] = None,
         memoize: bool = True,
     ) -> None:
-        self._create_preprocessor(
+        self._create_or_check_preprocessor(
             text_field, doc_field, language, disable, preprocessors or [], memoize
         )
         super().__init__(
             name,
             f,
-            preprocessors=[self._nlp_config.nlp],
             resources=resources,
+            preprocessors=[self._nlp_config.nlp],
             fault_tolerant=fault_tolerant,
         )
 
@@ -141,26 +135,7 @@ class nlp_labeling_function:
 
     Parameters
     ----------
-    name
-        Name of the LF. If None, uses the name of the wrapped function.
-    resources
-        Labeling resources passed in to `f` via `kwargs`
-    preprocessors
-        Preprocessors to run before SpacyPreprocessor is executed
-    fault_tolerant
-        Output 0 if LF execution fails?
-    text_field
-        Name of data point text field to input
-    doc_field
-        Name of data point field to output parsed document to
-    language
-        SpaCy model to load
-        See https://spacy.io/usage/models#usage
-    disable
-        List of pipeline components to disable
-        See https://spacy.io/usage/processing-pipelines#disabling
-    memoize
-        Memoize preprocessor outputs?
+    See `NLPLabelingFunction`.
 
 
     Examples
@@ -170,20 +145,23 @@ class nlp_labeling_function:
     def has_person_mention(x: DataPoint) -> int:
         person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
         return 1 if len(person_ents) > 0 else 0
-    print(f)  # "NLPLabelingFunction f"
+    print(f)  # "NLPLabelingFunction has_person_mention"
+
+    x = SimpleNamespace(text="The movie was good.")
+    has_person_mention(x)  # 0
     ```
     """
 
     def __init__(
         self,
-        name: str,
+        name: Optional[str] = None,
         resources: Optional[Mapping[str, Any]] = None,
         preprocessors: Optional[List[BasePreprocessor]] = None,
         fault_tolerant: bool = False,
         text_field: str = "text",
         doc_field: str = "doc",
         language: str = EN_CORE_WEB_SM,
-        disable: List[str] = DEFAULT_DISABLE,
+        disable: Optional[List[str]] = None,
         memoize: bool = True,
     ) -> None:
         self.name = name

@@ -5,10 +5,10 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-from snorkel.classification.data import ClassifierDataLoader, ClassifierDataset
+from snorkel.classification.data import DictDataLoader, DictDataset
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import (
-    AdvancedClassifier,
+    SnorkelClassifier,
     Operation,
     Task,
 )
@@ -81,7 +81,7 @@ class SlicingTest(unittest.TestCase):
         # Convert to slice tasks
         task1_tasks = convert_to_slice_tasks(task1, slice_names)
         tasks = task1_tasks + [task2]
-        model = AdvancedClassifier(tasks=tasks)
+        model = SnorkelClassifier(tasks=tasks)
 
         # Train
         trainer = Trainer(**self.trainer_config)
@@ -110,7 +110,7 @@ def create_dataloader(df, split):
     Y_dict[f"task2_labels"] = torch.LongTensor(df["y2"])
     task_to_label_dict["task2"] = "task2_labels"
 
-    dataset = ClassifierDataset(
+    dataset = DictDataset(
         name="TestData",
         split=split,
         X_dict={
@@ -121,7 +121,7 @@ def create_dataloader(df, split):
         Y_dict=Y_dict,
     )
 
-    dataloader = ClassifierDataLoader(
+    dataloader = DictDataLoader(
         task_to_label_dict=task_to_label_dict,
         dataset=dataset,
         batch_size=4,

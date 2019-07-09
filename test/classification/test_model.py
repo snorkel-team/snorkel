@@ -1,5 +1,4 @@
 import os
-import shutil
 import tempfile
 import unittest
 
@@ -7,7 +6,11 @@ import torch
 import torch.nn as nn
 
 from snorkel.classification.scorer import Scorer
-from snorkel.classification.snorkel_classifier import Operation, AdvancedClassifier, Task
+from snorkel.classification.snorkel_classifier import (
+    AdvancedClassifier,
+    Operation,
+    Task,
+)
 
 
 class TaskTest(unittest.TestCase):

@@ -6,7 +6,11 @@ import torch.nn as nn
 
 from snorkel.classification.data import ClassifierDataLoader, ClassifierDataset
 from snorkel.classification.scorer import Scorer
-from snorkel.classification.snorkel_classifier import Operation, AdvancedClassifier, Task
+from snorkel.classification.snorkel_classifier import (
+    AdvancedClassifier,
+    Operation,
+    Task,
+)
 from snorkel.classification.training import Trainer
 
 trainer_config = {"n_epochs": 2, "progress_bar": False}

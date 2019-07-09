@@ -7,7 +7,11 @@ import torch.nn as nn
 
 from snorkel.classification.data import ClassifierDataLoader, ClassifierDataset
 from snorkel.classification.scorer import Scorer
-from snorkel.classification.snorkel_classifier import Operation, AdvancedClassifier, Task
+from snorkel.classification.snorkel_classifier import (
+    AdvancedClassifier,
+    Operation,
+    Task,
+)
 from snorkel.classification.training import Trainer
 from snorkel.slicing.apply import PandasSFApplier
 from snorkel.slicing.sf import slicing_function

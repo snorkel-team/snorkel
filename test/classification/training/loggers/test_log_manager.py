@@ -2,8 +2,8 @@ import shutil
 import tempfile
 import unittest
 
-from snorkel.classification.training import Checkpointer, LogManager, LogWriter
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
+from snorkel.classification.training import Checkpointer, LogManager, LogWriter
 
 
 class TestLogManager(unittest.TestCase):
@@ -112,7 +112,9 @@ class TestLogManager(unittest.TestCase):
     def test_close(self) -> None:
         log_writer = LogWriter()
         checkpointer = Checkpointer(checkpoint_dir=self.test_dir)
-        log_manager = LogManager(n_batches_per_epoch=2, checkpointer=checkpointer, log_writer=log_writer)
+        log_manager = LogManager(
+            n_batches_per_epoch=2, checkpointer=checkpointer, log_writer=log_writer
+        )
 
         classifier = SnorkelClassifier([])
         best_classifier = log_manager.close(classifier)

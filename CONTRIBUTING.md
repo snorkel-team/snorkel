@@ -41,6 +41,8 @@ tox -e py36  # Run unit tests pytest in Python 3.6
 tox -e check  # Check style/linting with black, isort, and flake8
 tox -e type  # Run static type checking with mypy
 tox -e fix  # Fix style issues with black and isort
+tox -e spark  # Run spark-based tests (marked with @pytest.mark.spark)
+tox -e complex  # Run more complex, integration tests (marked with @pytest.mark.complex)
 tox  # Run unit tests, style checks, linting, and type checking
 ```
 

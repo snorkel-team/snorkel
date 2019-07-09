@@ -46,16 +46,6 @@ class TaskTest(unittest.TestCase):
         self.assertEqual(len(model.task_flows), 2)
         self.assertEqual(len(model.module_pool), 3)
 
-    def test_from_modules(self):
-        task = create_task("task")
-        modules = [task.module_pool["linear1"][0], task.module_pool["linear2"]]
-        model_t = AdvancedClassifier(tasks=[task])
-        model_m = AdvancedClassifier.from_modules(modules=modules)
-        X_dict = {"data": torch.Tensor([0.4, 0.6])}
-        t_out = model_t.forward(X_dict, ["task"])
-        m_out = model_m.forward(X_dict, ["task"])
-        self.assertTrue(torch.eq(t_out["op1"][0], m_out["op1"][0]).all())
-
     def test_save_load(self):
         CHECKPOINT_DIR = "test/classification/models/advanced/checkpoints"
         CHECKPOINT_PATH = os.path.join(CHECKPOINT_DIR, "model.pth")

@@ -27,9 +27,6 @@ from snorkel.classification.utils import move_to_device, recursive_merge_dicts
 from snorkel.types import ArrayLike
 
 from .task import Operation, Task
-from .utils import ce_loss, softmax
-
-OutputDict = Dict[str, Mapping[Union[str, int], Any]]
 
 OutputDict = Dict[str, Mapping[Union[str, int], Any]]
 

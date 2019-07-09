@@ -7,8 +7,7 @@ import torch
 import torch.nn as nn
 
 from snorkel.classification.data import DictDataLoader, DictDataset
-from snorkel.classification.models.advanced import SnorkelClassifier, Operation, Task
-from snorkel.classification.models.advanced.utils import ce_loss, softmax
+from snorkel.classification.snorkel_classifier import SnorkelClassifier, Operation, Task
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.training import Trainer
 from snorkel.slicing.apply import PandasSFApplier
@@ -148,8 +147,6 @@ def create_task(task_name, module_suffixes):
         name=task_name,
         module_pool=module_pool,
         task_flow=task_flow,
-        loss_func=partial(ce_loss, op2.name),
-        output_func=partial(softmax, op2.name),
         scorer=Scorer(metrics=["accuracy"]),
     )
 

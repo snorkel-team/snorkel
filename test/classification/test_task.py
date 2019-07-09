@@ -3,8 +3,7 @@ from functools import partial
 
 import torch.nn as nn
 
-from snorkel.classification.models.advanced import Task
-from snorkel.classification.models.advanced.utils import ce_loss, softmax
+from snorkel.classification.snorkel_classifier import Task
 from snorkel.classification.scorer import Scorer
 
 TASK_NAME = "TestTask"
@@ -36,8 +35,6 @@ class TaskTest(unittest.TestCase):
             name=TASK_NAME,
             module_pool=module_pool,
             task_flow=task_flow,
-            loss_func=partial(ce_loss, "the_second_layer"),
-            output_func=partial(softmax, "the_second_layer"),
             scorer=Scorer(metrics=["accuracy"]),
         )
 

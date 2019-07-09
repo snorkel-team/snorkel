@@ -6,8 +6,7 @@ from functools import partial
 import torch
 import torch.nn as nn
 
-from snorkel.classification.models.advanced import SnorkelClassifier, Operation, Task
-from snorkel.classification.models.advanced.utils import ce_loss, softmax
+from snorkel.classification.snorkel_classifier import SnorkelClassifier, Operation, Task
 from snorkel.classification.scorer import Scorer
 
 
@@ -49,29 +48,31 @@ class TaskTest(unittest.TestCase):
     def test_save_load(self):
         CHECKPOINT_DIR = "test/classification/models/advanced/checkpoints"
         CHECKPOINT_PATH = os.path.join(CHECKPOINT_DIR, "model.pth")
+        # TODO: use tempfile
+
         if not os.path.exists(CHECKPOINT_DIR):
             os.makedirs(CHECKPOINT_DIR)
 
-        modules0 = [nn.Linear(2, 4), nn.Linear(4, 2)]
-        modules1 = [nn.Linear(2, 4), nn.Linear(4, 2)]
+        task1 = create_task("task1")
+        task2 = create_task("task2")
 
-        model = SnorkelClassifier.from_modules(modules=modules0)
+        model = SnorkelClassifier([task1])
         self.assertTrue(
             torch.eq(
-                modules0[0].weight, model.module_pool["module0"].module[0].weight
+                task1.module_pool["linear2"].weight, model.module_pool["linear2"].module.weight
             ).all()
         )
         model.save(CHECKPOINT_PATH)
-        model = SnorkelClassifier.from_modules(modules=modules1)
+        model = SnorkelClassifier([task2])
         self.assertFalse(
             torch.eq(
-                modules0[0].weight, model.module_pool["module0"].module[0].weight
+                task1.module_pool["linear2"].weight, model.module_pool["linear2"].module.weight
             ).all()
         )
         model.load(CHECKPOINT_PATH)
         self.assertTrue(
             torch.eq(
-                modules0[0].weight, model.module_pool["module0"].module[0].weight
+                task1.module_pool["linear2"].weight, model.module_pool["linear2"].module.weight
             ).all()
         )
 
@@ -99,8 +100,6 @@ def create_task(task_name, module_suffixes=("", "")):
         name=task_name,
         module_pool=module_pool,
         task_flow=task_flow,
-        loss_func=partial(ce_loss, op1.name),
-        output_func=partial(softmax, op1.name),
         scorer=Scorer(metrics=["accuracy"]),
     )
 

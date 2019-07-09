@@ -1,7 +1,6 @@
 import logging
 import os
 from collections import defaultdict
-from functools import partial
 from typing import (
     Any,
     Callable,
@@ -46,6 +45,7 @@ class SnorkelClassifier(nn.Module):
             default_config["model_config"], kwargs, misses="insert"
         )
         self.name = name or type(self).__name__
+        tasks = tasks if isinstance(tasks, list) else [tasks]
 
         # Initiate the model attributes
         self.module_pool = nn.ModuleDict()

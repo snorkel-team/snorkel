@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Optional
 
-from snorkel.classification.models.advanced import SnorkelClassifier
+from snorkel.classification.snorkel_classifier import SnorkelClassifier
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.utils import recursive_merge_dicts
 

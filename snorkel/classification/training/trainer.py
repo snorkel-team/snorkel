@@ -6,7 +6,7 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 
-from snorkel.classification.models.advanced import SnorkelClassifier
+from snorkel.classification.snorkel_classifier import SnorkelClassifier
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.training import (
     Checkpointer,

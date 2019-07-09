@@ -8,8 +8,7 @@ from torch import nn
 
 from snorkel.analysis.utils import convert_labels
 from snorkel.classification.data import DictDataLoader
-from snorkel.classification.models.advanced import Operation, Task
-from snorkel.classification.models.advanced.utils import ce_loss, softmax
+from snorkel.classification.snorkel_classifier import Operation, Task
 from snorkel.classification.scorer import Scorer
 from snorkel.types import ArrayLike
 
@@ -112,8 +111,6 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
             name=ind_task_name,
             module_pool=ind_module_pool,
             task_flow=ind_task_flow,
-            loss_func=partial(ce_loss, ind_head_op.name),
-            output_func=partial(softmax, ind_head_op.name),
             scorer=Scorer(metrics=["f1"]),
         )
         tasks.append(ind_task)
@@ -148,8 +145,6 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
             name=pred_task_name,
             module_pool=pred_module_pool,
             task_flow=pred_task_flow,
-            loss_func=partial(ce_loss, pred_head_op.name),
-            output_func=partial(softmax, pred_head_op.name),
             scorer=base_task.scorer,
         )
         tasks.append(pred_task)
@@ -186,8 +181,6 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         name=master_task_name,
         module_pool=master_module_pool,
         task_flow=master_task_flow,
-        loss_func=partial(ce_loss, master_head_op.name),
-        output_func=partial(softmax, master_head_op.name),
         scorer=base_task.scorer,
     )
     tasks.append(master_task)

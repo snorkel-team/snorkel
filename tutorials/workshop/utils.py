@@ -21,10 +21,9 @@ def upgrade_dataloaders(dataloaders: List[DataLoader]):
         new_dataset = DictDataset(
             name=f"data_{dataloader.split}",
             X_dict={"data": dataset.X},  # This op is specific to TensorDataset
-            Y_dict={"labels": dataset.Y},  # Maybe
+            Y_dict={"task": dataset.Y},  # Maybe
         )
         new_dataloader = DictDataLoader(
-            task_to_label_dict={"task": "labels"},
             dataset=new_dataset,
             split=dataloader.split,
             batch_size=dataloader.batch_size,

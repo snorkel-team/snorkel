@@ -45,7 +45,6 @@ class SnorkelClassifier(nn.Module):
             default_config["model_config"], kwargs, misses="insert"
         )
         self.name = name or type(self).__name__
-        tasks = tasks if isinstance(tasks, list) else [tasks]
 
         # Initiate the model attributes
         self.module_pool = nn.ModuleDict()
@@ -69,15 +68,6 @@ class SnorkelClassifier(nn.Module):
     def __repr__(self) -> str:
         cls_name = type(self).__name__
         return f"{cls_name}(name={self.name})"
-
-    def _move_to_device(self):
-        device = self.config["device"]
-        if device >= 0:
-            if torch.cuda.is_available():
-                logging.info(f"Moving model to GPU (cuda:{device}).")
-                self.to(torch.device(f"cuda:{device}"))
-            else:
-                logging.info("No cuda device available. Switch to cpu instead.")
 
     def _build_network(self, tasks: List[Task]) -> None:
         """Build the MTL network using all tasks"""

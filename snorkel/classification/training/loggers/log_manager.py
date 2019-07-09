@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Optional
 
-from snorkel.classification.models.advanced import AdvancedClassifier
+from snorkel.classification.snorkel_classifier import SnorkelClassifier
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.utils import recursive_merge_dicts
 
@@ -109,7 +109,7 @@ class LogManager(object):
         self.epoch_count = 0
         self.unit_count = 0
 
-    def close(self, model: AdvancedClassifier) -> AdvancedClassifier:
+    def close(self, model: SnorkelClassifier) -> SnorkelClassifier:
         if self.log_writer is not None:
             self.log_writer.close()
         if self.checkpointer is not None:

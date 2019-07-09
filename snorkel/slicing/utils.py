@@ -1,4 +1,3 @@
-from functools import partial
 from typing import Dict, List
 
 import numpy as np
@@ -7,17 +6,16 @@ from scipy.sparse import csr_matrix
 from torch import nn
 
 from snorkel.analysis.utils import convert_labels
-from snorkel.classification.data import ClassifierDataLoader
-from snorkel.classification.models.advanced import Operation, Task
-from snorkel.classification.models.advanced.utils import ce_loss, softmax
+from snorkel.classification.data import DictDataLoader
 from snorkel.classification.scorer import Scorer
+from snorkel.classification.snorkel_classifier import Operation, Task
 from snorkel.types import ArrayLike
 
 from .modules.slice_combiner import SliceCombinerModule
 
 
 def add_slice_labels(
-    dataloader: ClassifierDataLoader,
+    dataloader: DictDataLoader,
     base_task: Task,
     slice_labels: csr_matrix,
     slice_names: List[str],
@@ -27,9 +25,8 @@ def add_slice_labels(
     slice_labels, slice_names = _add_base_slice(slice_labels, slice_names)
     assert slice_labels.shape[1] == len(slice_names)
 
-    label_name = dataloader.task_to_label_dict[base_task.name]
     Y_dict: Dict[str, ArrayLike] = dataloader.dataset.Y_dict  # type: ignore
-    labels = Y_dict[label_name]
+    labels = Y_dict[base_task.name]
     for i, slice_name in enumerate(slice_names):
 
         # Convert labels
@@ -43,9 +40,6 @@ def add_slice_labels(
         # Update dataloaders
         Y_dict[ind_task_name] = ind_labels
         Y_dict[pred_task_name] = pred_labels
-
-        dataloader.task_to_label_dict[ind_task_name] = ind_task_name
-        dataloader.task_to_label_dict[pred_task_name] = pred_task_name
 
 
 def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task]:
@@ -112,8 +106,6 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
             name=ind_task_name,
             module_pool=ind_module_pool,
             task_flow=ind_task_flow,
-            loss_func=partial(ce_loss, ind_head_op.name),
-            output_func=partial(softmax, ind_head_op.name),
             scorer=Scorer(metrics=["f1"]),
         )
         tasks.append(ind_task)
@@ -148,8 +140,6 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
             name=pred_task_name,
             module_pool=pred_module_pool,
             task_flow=pred_task_flow,
-            loss_func=partial(ce_loss, pred_head_op.name),
-            output_func=partial(softmax, pred_head_op.name),
             scorer=base_task.scorer,
         )
         tasks.append(pred_task)
@@ -186,8 +176,6 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         name=master_task_name,
         module_pool=master_module_pool,
         task_flow=master_task_flow,
-        loss_func=partial(ce_loss, master_head_op.name),
-        output_func=partial(softmax, master_head_op.name),
         scorer=base_task.scorer,
     )
     tasks.append(master_task)

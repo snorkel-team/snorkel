@@ -1,7 +1,9 @@
 import logging
-from typing import Callable, List, Sequence, Tuple, Union
+from functools import partial
+from typing import Callable, List, Optional, Sequence, Tuple, Union
 
 import torch
+import torch.nn.functional as F
 from torch import nn
 
 from snorkel.classification.scorer import Scorer
@@ -50,16 +52,18 @@ class Task:
         name: str,
         module_pool: nn.ModuleDict,
         task_flow: List[Operation],
-        loss_func: Callable[..., torch.Tensor],
-        output_func: Callable[..., torch.Tensor],
         scorer: Scorer,
+        loss_func: Optional[Callable[..., torch.Tensor]] = None,
+        output_func: Optional[Callable[..., torch.Tensor]] = None,
     ) -> None:
         self.name = name
         assert isinstance(module_pool, nn.ModuleDict) is True
         self.module_pool = module_pool
         self.task_flow = task_flow
-        self.loss_func = loss_func
-        self.output_func = output_func
+        # By default, apply cross entropy loss and softmax to the output of the last
+        # operation in the task flow.
+        self.loss_func = loss_func or partial(ce_loss, task_flow[-1].name)
+        self.output_func = output_func or partial(softmax, task_flow[-1].name)
         self.scorer = scorer
 
         logging.info(f"Created task: {self.name}")
@@ -67,3 +71,13 @@ class Task:
     def __repr__(self) -> str:
         cls_name = type(self).__name__
         return f"{cls_name}(name={self.name})"
+
+
+def ce_loss(module_name, outputs, Y, active):
+    # Subtract 1 from hard labels in Y to account for Snorkel reserving the label 0 for
+    # abstains while F.cross_entropy() expects 0-indexed labels
+    return F.cross_entropy(outputs[module_name][0][active], (Y.view(-1) - 1)[active])
+
+
+def softmax(module_name, outputs):
+    return F.softmax(outputs[module_name][0], dim=1)

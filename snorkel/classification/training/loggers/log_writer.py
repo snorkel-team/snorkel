@@ -18,8 +18,7 @@ class LogWriter:
         time = datetime.now().strftime("%H_%M_%S")
         self.run_name = self.config["run_name"] or f"{date}/{time}/"
 
-        self.log_root = self.config["log_root"]
-        self.log_dir = os.path.join(self.log_root, self.run_name)
+        self.log_dir = os.path.join(self.config["log_dir"], self.run_name)
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
 

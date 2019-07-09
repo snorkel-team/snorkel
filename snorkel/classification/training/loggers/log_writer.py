@@ -26,7 +26,8 @@ class LogWriter:
 
     def add_scalar(self, name, value, step):
         """Log a scalar variable"""
-        self.run_log[name].append((step, value))
+        # Note: storing as list for JSON roundtripping
+        self.run_log[name].append([step, value])
 
     def write_config(self, config, config_filename="config.json"):
         """Dump the config to file
@@ -47,7 +48,7 @@ class LogWriter:
 
     def write_json(self, dict_to_write, filename):
         """Dump the log to file"""
-        if not filename.endswith(".json"):
+        if not filename.endswith(".json"):  # pragma: no cover
             logging.warning(
                 f"Using write_json() method with a filename without a .json extension: {filename}"
             )

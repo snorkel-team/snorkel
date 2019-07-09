@@ -6,7 +6,7 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 
-from snorkel.classification.models.advanced import AdvancedClassifier
+from snorkel.classification.models.advanced import SnorkelClassifier
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.training import (
     Checkpointer,
@@ -29,11 +29,11 @@ class Trainer(object):
         self.config = recursive_merge_dicts(default_config, kwargs, misses="insert")
         self.name = name if name is not None else type(self).__name__
 
-    def train_model(self, model: AdvancedClassifier, dataloaders):
+    def train_model(self, model: SnorkelClassifier, dataloaders):
         """The learning procedure of MTL
 
         :param model: The multi-task model that needs to learn
-        :type model: AdvancedClassifier
+        :type model: SnorkelClassifier
         :param dataloaders: a list of dataloaders used to learn the model
         :type dataloaders: list
         """

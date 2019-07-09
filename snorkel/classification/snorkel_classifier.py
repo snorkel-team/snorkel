@@ -31,7 +31,7 @@ from .task import Operation, Task
 OutputDict = Dict[str, Mapping[Union[str, int], Any]]
 
 
-class AdvancedClassifier(nn.Module):
+class SnorkelClassifier(nn.Module):
     """A class to build multi-task model.
 
     :param name: Name of the model

@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 
 from snorkel.classification.data import ClassifierDataLoader, ClassifierDataset
-from snorkel.classification.models.advanced import AdvancedClassifier, Operation, Task
+from snorkel.classification.models.advanced import SnorkelClassifier, Operation, Task
 from snorkel.classification.models.advanced.utils import ce_loss, softmax
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.training import Trainer
@@ -79,7 +79,7 @@ class SlicingTest(unittest.TestCase):
         # Convert to slice tasks
         task1_tasks = convert_to_slice_tasks(task1, slice_names)
         tasks = task1_tasks + [task2]
-        model = AdvancedClassifier(tasks=tasks)
+        model = SnorkelClassifier(tasks=tasks)
 
         # Train
         trainer = Trainer(**self.trainer_config)

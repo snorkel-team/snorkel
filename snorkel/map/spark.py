@@ -5,7 +5,7 @@ from snorkel.types import FieldMap
 from .core import Mapper
 
 
-def _update_fields(self, x: Row, mapped_fields: FieldMap) -> Row:
+def _update_fields(x: Row, mapped_fields: FieldMap) -> Row:
     # `pyspark.sql.Row` objects are not mutable, so need to
     # reconstruct
     all_fields = x.asDict()

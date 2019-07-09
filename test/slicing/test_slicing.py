@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 import pandas as pd
+import pytest
 import torch
 import torch.nn as nn
 
@@ -17,7 +18,6 @@ from snorkel.types import DataPoint
 SEED = 123
 
 
-# TODO: update me!
 @slicing_function()
 def f(x: DataPoint) -> int:
     return 1 if x.x1 > x.x2 + 0.5 else 0
@@ -37,6 +37,7 @@ class SlicingTest(unittest.TestCase):
     def setUpClass(cls):
         cls.trainer_config = {"n_epochs": 3, "progress_bar": False}
 
+    @pytest.mark.complex
     def test_slicing(self):
         """Define two slices for task1 and no slices for task2"""
         df_train = create_data(N_TRAIN)

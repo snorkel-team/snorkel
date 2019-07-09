@@ -1,13 +1,12 @@
 import os
 import shutil
 import unittest
-from functools import partial
 
 import torch
 import torch.nn as nn
 
-from snorkel.classification.snorkel_classifier import SnorkelClassifier, Operation, Task
 from snorkel.classification.scorer import Scorer
+from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
 
 
 class TaskTest(unittest.TestCase):
@@ -59,20 +58,23 @@ class TaskTest(unittest.TestCase):
         model = SnorkelClassifier([task1])
         self.assertTrue(
             torch.eq(
-                task1.module_pool["linear2"].weight, model.module_pool["linear2"].module.weight
+                task1.module_pool["linear2"].weight,
+                model.module_pool["linear2"].module.weight,
             ).all()
         )
         model.save(CHECKPOINT_PATH)
         model = SnorkelClassifier([task2])
         self.assertFalse(
             torch.eq(
-                task1.module_pool["linear2"].weight, model.module_pool["linear2"].module.weight
+                task1.module_pool["linear2"].weight,
+                model.module_pool["linear2"].module.weight,
             ).all()
         )
         model.load(CHECKPOINT_PATH)
         self.assertTrue(
             torch.eq(
-                task1.module_pool["linear2"].weight, model.module_pool["linear2"].module.weight
+                task1.module_pool["linear2"].weight,
+                model.module_pool["linear2"].module.weight,
             ).all()
         )
 

@@ -1,4 +1,3 @@
-from functools import partial
 from typing import Dict, List
 
 import numpy as np
@@ -8,8 +7,8 @@ from torch import nn
 
 from snorkel.analysis.utils import convert_labels
 from snorkel.classification.data import DictDataLoader
-from snorkel.classification.snorkel_classifier import Operation, Task
 from snorkel.classification.scorer import Scorer
+from snorkel.classification.snorkel_classifier import Operation, Task
 from snorkel.types import ArrayLike
 
 from .modules.slice_combiner import SliceCombinerModule

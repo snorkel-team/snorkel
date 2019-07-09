@@ -1,10 +1,10 @@
 import logging
 from functools import partial
-from typing import Callable, List, Sequence, Tuple, Union, Optional
+from typing import Callable, List, Optional, Sequence, Tuple, Union
 
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
 from snorkel.classification.scorer import Scorer
 

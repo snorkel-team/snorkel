@@ -77,11 +77,12 @@ We use [NumPy style docstrings](https://sphinxcontrib-napoleon.readthedocs.io/en
 Docstrings can be cumbersome to write, so we encourage people to use tooling to speed up the process.
 For VSCode, we like [autoDocstring](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring).
 Just install the extension and add the following configuration to the `settings.json` example above.
-Note that we use PEP 484 type hints, so parameter types should be removed from the docstring.
+Note that we use PEP 484 type hints, so parameter types should be removed from the docstring (although note that return types should still be included).
 
 ```json
 {
-    "autoDocstring.docstringFormat": "numpy"
+    "autoDocstring.docstringFormat": "numpy",
+    "autoDocstring.guessTypes": false
 }
 ```
 

@@ -1,33 +1,45 @@
 from collections import Counter
-from functools import partial
 from itertools import chain
 
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.optim as optim
 from scipy.sparse import issparse
-from torch.utils.data import DataLoader
 
-from snorkel.model.classifier import Classifier
-from snorkel.model.utils import MetalDataset, recursive_merge_dicts
+from snorkel.analysis.utils import set_seed
+from snorkel.classification.utils import recursive_merge_dicts
 
 from .graph_utils import get_clique_tree
 from .lm_defaults import lm_default_config
+from .logger import Logger
 
 
-class LabelModel(Classifier):
-    """A conditionally independent LabelModel to learn labeling function accuracies and assign probabilistic labels
+class LabelModel(nn.Module):
+    """A conditionally independent LabelModel to learn labeling function
+    accuracies and assign probabilistic labels
 
     Args:
         k: (int) the cardinality of the classifier
     """
 
-    # This class variable is explained in the Classifier class
-    implements_l2 = True
+    def __init__(self, cardinality=2, **kwargs):
+        super().__init__()
+        self.config = recursive_merge_dicts(lm_default_config, kwargs)
+        self.cardinality = cardinality
 
-    def __init__(self, k=2, **kwargs):
-        config = recursive_merge_dicts(lm_default_config, kwargs)
-        super().__init__(k, config)
+        # Set random seed
+        if self.config["seed"] is None:
+            self.config["seed"] = np.random.randint(1e6)
+        self.seed = self.config["seed"]
+        set_seed(self.seed)
+
+        # Confirm that cuda is available if config is using CUDA
+        if self.config["device"] != "cpu" and not torch.cuda.is_available():
+            raise ValueError("device=cuda but CUDA not available.")
+
+        # By default, put model in eval mode; switch to train mode in training
+        self.eval()
 
     def _check_L(self, L):
         """Run some basic checks on L."""
@@ -52,11 +64,11 @@ class LabelModel(Classifier):
         Note that no column is required for 0 (abstain) labels.
         """
 
-        L_ind = np.zeros((self.n, self.m * self.k))
-        for y in range(1, self.k + 1):
+        L_ind = np.zeros((self.n, self.m * self.cardinality))
+        for y in range(1, self.cardinality + 1):
             # A[x::y] slices A starting at x at intervals of y
             # e.g., np.arange(9)[0::3] == np.array([0,3,6])
-            L_ind[:, (y - 1) :: self.k] = np.where(L == y, 1, 0)
+            L_ind[:, (y - 1) :: self.cardinality] = np.where(L == y, 1, 0)
         return L_ind
 
     def _get_augmented_label_matrix(self, L, higher_order=False):
@@ -73,8 +85,8 @@ class LabelModel(Classifier):
         self.c_data = {}
         for i in range(self.m):
             self.c_data[i] = {
-                "start_index": i * self.k,
-                "end_index": (i + 1) * self.k,
+                "start_index": i * self.cardinality,
+                "end_index": (i + 1) * self.cardinality,
                 "max_cliques": set(
                     [
                         j
@@ -101,8 +113,8 @@ class LabelModel(Classifier):
                 members = list(C["members"])
 
                 # With unary maximal clique, just store its existing index
-                C["start_index"] = members[0] * self.k
-                C["end_index"] = (members[0] + 1) * self.k
+                C["start_index"] = members[0] * self.cardinality
+                C["end_index"] = (members[0] + 1) * self.cardinality
             return L_aug
         else:
             return L_ind
@@ -139,7 +151,7 @@ class LabelModel(Classifier):
         the probability of a clique C emitting a specific combination of labels,
         conditioned on different values of Y (for each column); that is:
 
-            self.mu[i*self.k + j, y] = P(\lambda_i = j | Y = y)
+            self.mu[i*self.cardinality + j, y] = P(\lambda_i = j | Y = y)
 
         and similarly for higher-order cliques.
         """
@@ -161,10 +173,10 @@ class LabelModel(Classifier):
         lps = torch.diag(self.O).numpy()
 
         # TODO: Update for higher-order cliques!
-        self.mu_init = torch.zeros(self.d, self.k)
+        self.mu_init = torch.zeros(self.d, self.cardinality)
         for i in range(self.m):
-            for y in range(self.k):
-                idx = i * self.k + y
+            for y in range(self.cardinality):
+                idx = i * self.cardinality + y
                 mu_init = torch.clamp(lps[idx] * self._prec_init[i] / self.p[y], 0, 1)
                 self.mu_init[idx, y] += mu_init
 
@@ -187,23 +199,27 @@ class LabelModel(Classifier):
 
         If `source` is not None, returns only the corresponding block.
         """
-        c_probs = np.zeros((self.m * (self.k + 1), self.k))
+        c_probs = np.zeros((self.m * (self.cardinality + 1), self.cardinality))
         mu = self.mu.detach().clone().numpy()
 
         for i in range(self.m):
             # si = self.c_data[(i,)]['start_index']
             # ei = self.c_data[(i,)]['end_index']
             # mu_i = mu[si:ei, :]
-            mu_i = mu[i * self.k : (i + 1) * self.k, :]
-            c_probs[i * (self.k + 1) + 1 : (i + 1) * (self.k + 1), :] = mu_i
+            mu_i = mu[i * self.cardinality : (i + 1) * self.cardinality, :]
+            c_probs[
+                i * (self.cardinality + 1) + 1 : (i + 1) * (self.cardinality + 1), :
+            ] = mu_i
 
             # The 0th row (corresponding to abstains) is the difference between
             # the sums of the other rows and one, by law of total prob
-            c_probs[i * (self.k + 1), :] = 1 - mu_i.sum(axis=0)
+            c_probs[i * (self.cardinality + 1), :] = 1 - mu_i.sum(axis=0)
         c_probs = np.clip(c_probs, 0.01, 0.99)
 
         if source is not None:
-            return c_probs[source * (self.k + 1) : (source + 1) * (self.k + 1)]
+            return c_probs[
+                source * (self.cardinality + 1) : (source + 1) * (self.cardinality + 1)
+            ]
         else:
             return c_probs
 
@@ -214,7 +230,9 @@ class LabelModel(Classifier):
             if probs is None:
                 cps = self.get_conditional_probs(source=i)[1:, :]
             else:
-                cps = probs[i * (self.k + 1) : (i + 1) * (self.k + 1)][1:, :]
+                cps = probs[
+                    i * (self.cardinality + 1) : (i + 1) * (self.cardinality + 1)
+                ][1:, :]
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
         return accs
 
@@ -232,7 +250,7 @@ class LabelModel(Classifier):
 
         # Note: We omit abstains, effectively assuming uniform distribution here
         X = np.exp(L_aug @ np.diag(jtm) @ np.log(mu) + np.log(self.p))
-        Z = np.tile(X.sum(axis=1).reshape(-1, 1), self.k)
+        Z = np.tile(X.sum(axis=1).reshape(-1, 1), self.cardinality)
         return X / Z
 
     # These loss functions get all their data directly from the LabelModel
@@ -258,7 +276,7 @@ class LabelModel(Classifier):
         # Note that mu is a matrix and this is the *Frobenius norm*
         return torch.norm(D @ (self.mu - self.mu_init)) ** 2
 
-    def loss_mu(self, *args, l2=0):
+    def loss_mu(self, l2=0):
         loss_1 = torch.norm((self.O - self.mu @ self.P @ self.mu.t())[self.mask]) ** 2
         loss_2 = torch.norm(torch.sum(self.mu @ self.P, 1) - torch.diag(self.O)) ** 2
         return loss_1 + loss_2 + self.loss_l2(l2=l2)
@@ -278,7 +296,7 @@ class LabelModel(Classifier):
             sorted_counts = np.array([v for k, v in sorted(class_counts.items())])
             self.p = sorted_counts / sum(sorted_counts)
         else:
-            self.p = (1 / self.k) * np.ones(self.k)
+            self.p = (1 / self.cardinality) * np.ones(self.cardinality)
         self.P = torch.diag(torch.from_numpy(self.p)).float()
 
     def _set_constants(self, L):
@@ -289,9 +307,95 @@ class LabelModel(Classifier):
         nodes = range(self.m)
         self.c_tree = get_clique_tree(nodes, [])
 
-    def train_model(
-        self, L_train, Y_dev=None, class_balance=None, log_writer=None, **kwargs
-    ):
+    def _execute_logging(self, loss):
+        self.eval()
+        self.running_loss += loss.item()
+        self.running_examples += 1
+
+        # Always add average loss
+        metrics_dict = {"train/loss": self.running_loss / self.running_examples}
+
+        if self.logger.check():
+            self.logger.log(metrics_dict)
+
+            # Reset running loss and examples counts
+            self.running_loss = 0.0
+            self.running_examples = 0
+
+        self.train()
+        return metrics_dict
+
+    def _set_logger(self, train_config, epoch_size):
+        self.logger = Logger(train_config["log_train_every"])
+
+    def _set_optimizer(self, train_config):
+        optimizer_config = train_config["optimizer_config"]
+        opt = optimizer_config["optimizer"]
+
+        parameters = filter(lambda p: p.requires_grad, self.parameters())
+        if opt == "sgd":
+            optimizer = optim.SGD(
+                parameters,
+                **optimizer_config["optimizer_common"],
+                **optimizer_config["sgd_config"],
+            )
+        elif opt == "rmsprop":
+            optimizer = optim.RMSprop(
+                parameters,
+                **optimizer_config["optimizer_common"],
+                **optimizer_config["rmsprop_config"],
+            )
+        elif opt == "adam":
+            optimizer = optim.Adam(
+                parameters,
+                **optimizer_config["optimizer_common"],
+                **optimizer_config["adam_config"],
+            )
+        elif opt == "sparseadam":
+            optimizer = optim.SparseAdam(
+                parameters,
+                **optimizer_config["optimizer_common"],
+                **optimizer_config["adam_config"],
+            )
+        else:
+            raise ValueError(f"Did not recognize optimizer option '{opt}'")
+        self.optimizer = optimizer
+
+    def _set_scheduler(self, train_config):
+        lr_scheduler = train_config["lr_scheduler"]
+        if lr_scheduler is None:
+            lr_scheduler = None
+        else:
+            lr_scheduler_config = train_config["lr_scheduler_config"]
+            if lr_scheduler == "exponential":
+                lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(
+                    self.optimizer, **lr_scheduler_config["exponential_config"]
+                )
+            elif lr_scheduler == "reduce_on_plateau":
+                lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                    self.optimizer, **lr_scheduler_config["plateau_config"]
+                )
+            else:
+                raise ValueError(
+                    f"Did not recognize lr_scheduler option '{lr_scheduler}'"
+                )
+        self.lr_scheduler = lr_scheduler
+
+    def _update_scheduler(self, epoch, metrics_dict):
+        train_config = self.config["train_config"]
+        if self.lr_scheduler is not None:
+            lr_scheduler_config = train_config["lr_scheduler_config"]
+            if epoch + 1 >= lr_scheduler_config["lr_freeze"]:
+                if train_config["lr_scheduler"] == "reduce_on_plateau":
+                    checkpoint_config = train_config["checkpoint_config"]
+                    metric_name = checkpoint_config["checkpoint_metric"]
+                    score = metrics_dict.get(metric_name, None)
+                    if score is not None:
+                        self.lr_scheduler.step(score)
+                else:
+                    self.lr_scheduler.step()
+
+    def train_model(self, L_train, Y_dev=None, class_balance=None, **kwargs):
         """Train the model (i.e. estimate mu):
 
         Args:
@@ -310,23 +414,10 @@ class LabelModel(Classifier):
         self.config = recursive_merge_dicts(self.config, kwargs, misses="ignore")
         train_config = self.config["train_config"]
 
-        # TODO: Implement logging for label model?
-        if log_writer is not None:
-            raise NotImplementedError("Logging for LabelModel.")
-
-        # Note that the LabelModel class implements its own (centered) L2 reg.
-        l2 = train_config.get("l2", 0)
-
         L_train = self._check_L(L_train)
         self._set_class_balance(class_balance, Y_dev)
         self._set_constants(L_train)
         self._create_tree()
-
-        # Creating this faux dataset is necessary for now because the LabelModel
-        # loss functions do not accept inputs, but Classifer._train_model()
-        # expects training data to feed to the loss functions.
-        dataset = MetalDataset([0], [0])
-        train_loader = DataLoader(dataset)
 
         # Compute O and initialize params
         if self.config["verbose"]:  # pragma: no cover
@@ -337,4 +428,65 @@ class LabelModel(Classifier):
         # Estimate \mu
         if self.config["verbose"]:  # pragma: no cover
             print("Estimating \mu...")
-        self._train_model(train_loader, partial(self.loss_mu, l2=l2))
+
+        # Set model to train mode
+        self.train()
+        train_config = self.config["train_config"]
+        l2 = train_config.get("l2", 0)
+
+        # Move model to GPU
+        if self.config["verbose"] and self.config["device"] != "cpu":
+            print("Using GPU...")
+        self.to(self.config["device"])
+
+        # Set training components
+        self._set_logger(train_config, epoch_size=1)
+        self._set_optimizer(train_config)
+        self._set_scheduler(train_config)
+
+        # Restore model if necessary
+        start_iteration = 0
+
+        # Train the model
+        metrics_hist = {}  # The most recently seen value for all metrics
+        for epoch in range(start_iteration, train_config["n_epochs"]):
+            self.running_loss = 0.0
+            self.running_examples = 0
+
+            # Zero the parameter gradients
+            self.optimizer.zero_grad()
+
+            # Forward pass to calculate the average loss per example
+            loss = self.loss_mu(l2=l2)
+            if torch.isnan(loss):
+                msg = "Loss is NaN. Consider reducing learning rate."
+                raise Exception(msg)
+
+            # Backward pass to calculate gradients
+            # Loss is an average loss per example
+            loss.backward()
+
+            # Perform optimizer step
+            self.optimizer.step()
+
+            # Calculate metrics, log, and checkpoint as necessary
+            metrics_dict = self._execute_logging(loss)
+            metrics_hist.update(metrics_dict)
+
+            # Apply learning rate scheduler
+            self._update_scheduler(epoch, metrics_hist)
+
+        self.eval()
+
+        # Print confusion matrix if applicable
+        if self.config["verbose"]:
+            print("Finished Training")
+
+    def save(self, destination, **kwargs):
+        with open(destination, "wb") as f:
+            torch.save(self, f, **kwargs)
+
+    @staticmethod
+    def load(source, **kwargs):
+        with open(source, "rb") as f:
+            return torch.load(f, **kwargs)

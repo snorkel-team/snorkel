@@ -13,7 +13,7 @@ YDict = Dict[str, Tensor]
 Batch = Tuple[XDict, YDict]
 
 
-class ClassifierDataset(Dataset):
+class DictDataset(Dataset):
     """An advanced dataset class to handle input data with multipled fields and output
     data with multiple label sets
 
@@ -73,7 +73,7 @@ def collate_dicts(batch: List[Batch]) -> Batch:
     return dict(X_batch), dict(Y_batch)
 
 
-class ClassifierDataLoader(DataLoader):
+class DictDataLoader(DataLoader):
     """An advanced dataloader class which contains mapping from task to label (which
     label(s) to use in dataset's Y_dict for this task), and split (which part this
     dataset belongs to) information.
@@ -92,13 +92,13 @@ class ClassifierDataLoader(DataLoader):
 
     def __init__(
         self,
-        dataset: ClassifierDataset,
+        dataset: DictDataset,
         collate_fn: Callable[..., Any] = collate_dicts,
         task_to_label_dict: Dict[str, str] = None,
         **kwargs,
     ) -> None:
 
-        assert isinstance(dataset, ClassifierDataset)
+        assert isinstance(dataset, DictDataset)
         super().__init__(dataset, collate_fn=collate_fn, **kwargs)
 
         self.task_to_label_dict = task_to_label_dict or {}

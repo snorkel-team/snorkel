@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-from snorkel.classification.data import ClassifierDataLoader, ClassifierDataset
+from snorkel.classification.data import DictDataLoader, DictDataset
 from snorkel.classification.models.advanced import SnorkelClassifier, Operation, Task
 from snorkel.classification.models.advanced.utils import ce_loss, softmax
 from snorkel.classification.scorer import Scorer
@@ -108,7 +108,7 @@ def create_dataloader(df, split):
     Y_dict[f"task2_labels"] = torch.LongTensor(df["y2"])
     task_to_label_dict["task2"] = "task2_labels"
 
-    dataset = ClassifierDataset(
+    dataset = DictDataset(
         name="TestData",
         split=split,
         X_dict={
@@ -119,7 +119,7 @@ def create_dataloader(df, split):
         Y_dict=Y_dict,
     )
 
-    dataloader = ClassifierDataLoader(
+    dataloader = DictDataLoader(
         task_to_label_dict=task_to_label_dict,
         dataset=dataset,
         batch_size=4,

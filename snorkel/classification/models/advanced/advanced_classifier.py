@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn
 
 from snorkel.analysis.utils import probs_to_preds
-from snorkel.classification.data import ClassifierDataLoader
+from snorkel.classification.data import DictDataLoader
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.utils import move_to_device, recursive_merge_dicts
@@ -252,7 +252,7 @@ class SnorkelClassifier(nn.Module):
 
     @torch.no_grad()
     def predict(
-        self, dataloader: ClassifierDataLoader, return_preds: bool = False
+        self, dataloader: DictDataLoader, return_preds: bool = False
     ) -> Dict[str, Dict[str, torch.Tensor]]:
 
         self.eval()
@@ -298,7 +298,7 @@ class SnorkelClassifier(nn.Module):
         return results
 
     @torch.no_grad()
-    def score(self, dataloaders: List[ClassifierDataLoader]) -> Dict[str, float]:
+    def score(self, dataloaders: List[DictDataLoader]) -> Dict[str, float]:
         """Score the data from dataloader with the model
 
         :param dataloaders: the dataloader that performs scoring
@@ -319,7 +319,7 @@ class SnorkelClassifier(nn.Module):
                 )
                 for metric_name, metric_value in metric_scores.items():
                     # Type ignore statements are necessary because the DataLoader class
-                    # that ClassifierDataLoader inherits from is what actually sets
+                    # that DictDataLoader inherits from is what actually sets
                     # the class of Dataset, and it doesn't know about name and split.
                     identifier = "/".join(
                         [

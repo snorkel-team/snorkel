@@ -5,11 +5,7 @@ import numpy as np
 import scipy.sparse as sparse
 import torch
 
-from snorkel.classification.data import (
-    DictDataLoader,
-    DictDataset,
-    split_data,
-)
+from snorkel.classification.data import DictDataLoader, DictDataset, split_data
 
 
 class DatasetTest(unittest.TestCase):

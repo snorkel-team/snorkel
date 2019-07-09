@@ -6,11 +6,7 @@ import torch
 import torch.nn as nn
 
 from snorkel.classification.scorer import Scorer
-from snorkel.classification.snorkel_classifier import (
-    SnorkelClassifier,
-    Operation,
-    Task,
-)
+from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
 
 
 class TaskTest(unittest.TestCase):

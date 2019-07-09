@@ -39,20 +39,10 @@ class Trainer(object):
         """
         self._check_dataloaders(dataloaders)
 
-        # Generate the list of dataloaders for learning process
-        train_split = self.config["train_split"]
-        if isinstance(train_split, str):
-            train_split = [train_split]
-
+        # Identify the dataloaders to train on
         train_dataloaders = [
-            dl for dl in dataloaders if dl.dataset.split in train_split
+            dl for dl in dataloaders if dl.dataset.split == self.config["train_split"]
         ]
-
-        if not train_dataloaders:
-            raise ValueError(
-                f"Cannot find the specified train_split "
-                f'{self.config["train_split"]} in dataloaders.'
-            )
 
         # Calculate the total number of batches per epoch
         self.n_batches_per_epoch = sum(
@@ -140,22 +130,22 @@ class Trainer(object):
 
     def _check_dataloaders(self, dataloaders):
         """ Validates dataloaders given training config"""
+        if not isinstance(dataloaders, list):
+            raise Exception("Trainer.train_model() expects a list of DictDataLoaders.")
 
         train_split = self.config["train_split"]
-        if isinstance(train_split, str):
-            train_split = [train_split]
-
         valid_split = self.config["valid_split"]
-        if isinstance(valid_split, str):
-            valid_split = [valid_split]
-
         test_split = self.config["test_split"]
-        if isinstance(test_split, str):
-            test_split = [test_split]
 
-        all_splits = train_split + valid_split + test_split
+        all_splits = [train_split, valid_split, test_split]
         if not all([dl.dataset.split in all_splits for dl in dataloaders]):
             raise ValueError(f"Dataloader splits must be one of {all_splits}")
+
+        if not any([dl.dataset.split == train_split for dl in dataloaders]):
+            raise ValueError(
+                f"Cannot find any dataloaders with split matching train split: "
+                f'{self.config["train_split"]}.'
+            )
 
     def _set_checkpointer(self):
         if self.config["checkpointing"]:

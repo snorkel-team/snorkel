@@ -6,6 +6,7 @@ import pytest
 import torch
 import torch.nn as nn
 
+from snorkel.analysis.utils import set_seed
 from snorkel.classification.data import DictDataLoader, DictDataset
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
@@ -15,31 +16,35 @@ from snorkel.slicing.sf import slicing_function
 from snorkel.slicing.utils import add_slice_labels, convert_to_slice_tasks
 from snorkel.types import DataPoint
 
-SEED = 123
 
-
+# Define SFs specifying points inside a circle
 @slicing_function()
 def f(x: DataPoint) -> int:
-    return 1 if x.x1 > x.x2 + 0.5 else 0
-
+    radius = 0.3
+    h, k = (-0.15, -0.3) # center
+    return np.sqrt((x.x1 - h)** 2 + (x.x2 - k) ** 2) < radius
 
 @slicing_function()
 def g(x: DataPoint) -> int:
-    return 1 if x.x1 > x.x2 + 0.3 else 0
+    radius = 0.3
+    h, k = (0.25, 0.0) # center
+    return np.sqrt((x.x1 - h)** 2 + (x.x2 - k) ** 2) < radius
 
 
-N_TRAIN = 1000
-N_VALID = 100
-
+SEED = 123
+N_TRAIN = 1500
+N_VALID = 300
 
 class SlicingConvergenceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.trainer_config = {"n_epochs": 3, "progress_bar": False}
+        cls.trainer_config = {"lr": 0.01, "n_epochs": 30, "progress_bar": False, "verbose": True}
 
     @pytest.mark.complex
     def test_convergence(self):
-        """Define two slices for task1 and no slices for task2"""
+        """Define a base task and 2 corresponding slice tasks"""
+        set_seed(SEED)
+
         df_train = create_data(N_TRAIN)
         df_valid = create_data(N_VALID)
 
@@ -48,8 +53,7 @@ class SlicingConvergenceTest(unittest.TestCase):
             dataloader = create_dataloader(df, split)
             dataloaders.append(dataloader)
 
-        task1 = create_task("task1", module_suffixes=["A", "A"])
-        task2 = create_task("task2", module_suffixes=["A", "B"])
+        base_task = create_task("task", module_suffixes=["A", "B"])
 
         # Apply SFs
         slicing_functions = [f, g]
@@ -62,36 +66,49 @@ class SlicingConvergenceTest(unittest.TestCase):
         self.assertEqual(S_valid.shape, (N_VALID, len(slicing_functions)))
 
         # Add slice labels
-        add_slice_labels(dataloaders[0], task1, S_train, slice_names)
-        add_slice_labels(dataloaders[1], task1, S_valid, slice_names)
+        add_slice_labels(dataloaders[0], base_task, S_train, slice_names)
+        add_slice_labels(dataloaders[1], base_task, S_valid, slice_names)
+
+        # Test that slice labels have been added
+        Y_dict_train = dataloaders[0].dataset.Y_dict
+        self.assertIn("task", Y_dict_train.keys())
+        self.assertIn("task_slice:base_ind", Y_dict_train.keys())
+        self.assertIn("task_slice:base_pred", Y_dict_train.keys())
+        self.assertIn("task_slice:f_ind", Y_dict_train.keys())
+        self.assertIn("task_slice:f_pred", Y_dict_train.keys())
+        self.assertIn("task_slice:g_ind", Y_dict_train.keys())
+        self.assertIn("task_slice:g_pred", Y_dict_train.keys())
 
         # Convert to slice tasks
-        task1_tasks = convert_to_slice_tasks(task1, slice_names)
-        tasks = task1_tasks + [task2]
+        tasks = convert_to_slice_tasks(base_task, slice_names)
         model = SnorkelClassifier(tasks=tasks)
 
         # Train
         trainer = Trainer(**self.trainer_config)
         trainer.train_model(model, dataloaders)
-        model.score(dataloaders)
+        scores = model.score(dataloaders)
+
+        # Confirm reasonably converged scores
+        self.assertEqual(scores["task_slice:base_ind/TestData/valid/f1"], 1.0)
+        self.assertGreater(scores["task_slice:base_pred/TestData/valid/f1"], 0.8)
+        self.assertGreater(scores["task_slice:f_ind/TestData/valid/f1"], 0.8)
+        self.assertGreater(scores["task_slice:f_pred/TestData/valid/f1"], 0.8)
+        self.assertGreater(scores["task_slice:g_ind/TestData/train/f1"], 0.8)
+        self.assertGreater(scores["task_slice:g_pred/TestData/train/f1"], 0.8)
 
 
 def create_data(n):
-
     X = np.random.random((n, 2)) * 2 - 1
-    Y = np.zeros((n, 2))
-    Y[:, 0] = (X[:, 0] > X[:, 1] + 0.5).astype(int) + 1
-    Y[:, 1] = (X[:, 0] > X[:, 1] + 0.25).astype(int) + 1
+    Y = (X[:, 0] > X[:, 1] + 0.25).astype(int) + 1
 
-    df = pd.DataFrame({"x1": X[:, 0], "x2": X[:, 1], "y1": Y[:, 0], "y2": Y[:, 1]})
+    df = pd.DataFrame({"x1": X[:, 0], "x2": X[:, 1], "y": Y})
     return df
 
 
 def create_dataloader(df, split):
     Y_dict = {}
 
-    Y_dict[f"task1"] = torch.LongTensor(df["y1"])
-    Y_dict[f"task2"] = torch.LongTensor(df["y2"])
+    Y_dict[f"task"] = torch.LongTensor(df["y"])
 
     dataset = DictDataset(
         name="TestData",
@@ -116,8 +133,8 @@ def create_task(task_name, module_suffixes):
 
     module_pool = nn.ModuleDict(
         {
-            module1_name: nn.Sequential(nn.Linear(2, 10), nn.ReLU()),
-            module2_name: nn.Linear(10, 2),
+            module1_name: nn.Sequential(nn.Linear(2, 20), nn.ReLU()),
+            module2_name: nn.Linear(20, 2),
         }
     )
 
@@ -130,7 +147,7 @@ def create_task(task_name, module_suffixes):
         name=task_name,
         module_pool=module_pool,
         task_flow=task_flow,
-        scorer=Scorer(metrics=["accuracy"]),
+        scorer=Scorer(metrics=["f1", "accuracy"]),
     )
 
     return task

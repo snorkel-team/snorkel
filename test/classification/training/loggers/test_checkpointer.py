@@ -50,7 +50,7 @@ class TestLogManager(unittest.TestCase):
         model = SnorkelClassifier([])
         checkpointer.checkpoint(1, model, dict(f1=0.8))
         expected_files = ["checkpoint_1.pth", "best_model_f1.pth"]
-        self.assertEqual(os.listdir(checkpoint_dir), expected_files)
+        self.assertEqual(set(os.listdir(checkpoint_dir)), set(expected_files))
         checkpointer.clear()
         expected_files = ["best_model_f1.pth"]
         self.assertEqual(os.listdir(checkpoint_dir), expected_files)

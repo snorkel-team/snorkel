@@ -384,13 +384,7 @@ class Trainer(object):
             )
 
     def _checkpoint_model(self, model, metric_dict):
-        self.checkpointer.checkpoint(
-            self.log_manager.unit_total,
-            model,
-            self.optimizer,
-            self.lr_scheduler,
-            metric_dict,
-        )
+        self.checkpointer.checkpoint(self.log_manager.unit_total, model, metric_dict)
 
     def _aggregate_losses(self):
         """Calculate the task specific loss, average micro loss and learning rate."""

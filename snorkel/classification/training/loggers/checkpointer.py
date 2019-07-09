@@ -62,7 +62,7 @@ class Checkpointer(object):
 
         self.best_metric_dict: Dict[str, float] = {}
 
-    def checkpoint(self, iteration, model, optimizer, lr_scheduler, metric_dict):
+    def checkpoint(self, iteration, model, metric_dict):
         # Check if the checkpoint_runway condition is met
         if iteration < self.checkpoint_runway:
             return
@@ -123,16 +123,16 @@ class Checkpointer(object):
         if self.checkpoint_clear:
             logging.info("Clear all immediate checkpoints.")
             file_list = glob.glob(f"{self.checkpoint_dir}/checkpoint_*.pth")
-            for file in file_list:
-                os.remove(file)
+            for fname in file_list:
+                os.remove(fname)
 
     def load_best_model(self, model):
         """Load the best model from the checkpoint."""
-        if list(self.checkpoint_metric.keys())[0] not in self.best_metric_dict:
+        metric = list(self.checkpoint_metric.keys())[0]
+        if metric not in self.best_metric_dict:  # pragma: no cover
             logging.info(f"No best model found, use the original model.")
         else:
             # Load the best model of checkpoint_metric
-            metric = list(self.checkpoint_metric.keys())[0]
             best_model_path = (
                 f"{self.checkpoint_dir}/best_model_{metric.replace('/', '_')}.pth"
             )

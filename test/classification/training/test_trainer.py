@@ -18,10 +18,7 @@ def create_dataloader(task_name="task", split="train"):
     Y = torch.LongTensor([1, 1, 2, 2])
 
     dataset = DictDataset(
-        name="dataset",
-        split=split,
-        X_dict={"data": X},
-        Y_dict={task_name: Y},
+        name="dataset", split=split, X_dict={"data": X}, Y_dict={task_name: Y}
     )
 
     dataloader = DictDataLoader(dataset, batch_size=2)
@@ -62,7 +59,6 @@ tasks = [
 
 
 class TrainerTest(unittest.TestCase):
-
     def test_trainer_onetask(self):
         """Train a single-task model"""
         model = SnorkelClassifier([tasks[0]])

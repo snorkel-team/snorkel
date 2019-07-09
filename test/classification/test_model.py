@@ -1,5 +1,6 @@
 import os
 import shutil
+import tempfile
 import unittest
 
 import torch
@@ -45,12 +46,7 @@ class TaskTest(unittest.TestCase):
         self.assertEqual(len(model.module_pool), 3)
 
     def test_save_load(self):
-        CHECKPOINT_DIR = "test/classification/models/advanced/checkpoints"
-        CHECKPOINT_PATH = os.path.join(CHECKPOINT_DIR, "model.pth")
-        # TODO: use tempfile
-
-        if not os.path.exists(CHECKPOINT_DIR):
-            os.makedirs(CHECKPOINT_DIR)
+        fd, checkpoint_path = tempfile.mkstemp()
 
         task1 = create_task("task1")
         task2 = create_task("task2")
@@ -62,7 +58,7 @@ class TaskTest(unittest.TestCase):
                 model.module_pool["linear2"].module.weight,
             ).all()
         )
-        model.save(CHECKPOINT_PATH)
+        model.save(checkpoint_path)
         model = SnorkelClassifier([task2])
         self.assertFalse(
             torch.eq(
@@ -70,7 +66,7 @@ class TaskTest(unittest.TestCase):
                 model.module_pool["linear2"].module.weight,
             ).all()
         )
-        model.load(CHECKPOINT_PATH)
+        model.load(checkpoint_path)
         self.assertTrue(
             torch.eq(
                 task1.module_pool["linear2"].weight,
@@ -78,8 +74,7 @@ class TaskTest(unittest.TestCase):
             ).all()
         )
 
-        if os.path.exists(CHECKPOINT_DIR):
-            shutil.rmtree(CHECKPOINT_DIR)
+        os.close(fd)
 
 
 def create_task(task_name, module_suffixes=("", "")):

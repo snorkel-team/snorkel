@@ -1,29 +1,8 @@
 import numpy as np
-import torch
-from scipy.sparse import issparse
+
+from snorkel.analysis.utils import arraylike_to_numpy
 
 from .label_model import LabelModel
-
-
-def to_numpy(Z):
-    """Converts a None, list, np.ndarray, or torch.Tensor to np.ndarray;
-    also handles converting sparse input to dense."""
-    if Z is None:
-        return Z
-    elif issparse(Z):
-        return Z.toarray()
-    elif isinstance(Z, np.ndarray):
-        return Z
-    elif isinstance(Z, list):
-        return np.array(Z)
-    elif isinstance(Z, torch.Tensor):
-        return Z.cpu().numpy()
-    else:
-        msg = (
-            f"Expected None, list, numpy.ndarray or torch.Tensor, "
-            f"got {type(Z)} instead."
-        )
-        raise Exception(msg)
 
 
 class BaselineVoter(LabelModel):
@@ -44,7 +23,7 @@ class RandomVoter(BaselineVoter):
             output: A [n, k] np.ndarray of probabilistic labels
         """
         n = L.shape[0]
-        Y_p = np.random.rand(n, self.k)
+        Y_p = np.random.rand(n, self.cardinality)
         Y_p /= Y_p.sum(axis=1).reshape(-1, 1)
         return Y_p
 
@@ -67,7 +46,7 @@ class MajorityClassVoter(LabelModel):
 
     def predict_proba(self, L):
         n = L.shape[0]
-        Y_p = np.zeros((n, self.k))
+        Y_p = np.zeros((n, self.cardinality))
         max_classes = np.where(self.balance == max(self.balance))
         for c in max_classes:
             Y_p[:, c] = 1.0
@@ -84,11 +63,11 @@ class MajorityLabelVoter(BaselineVoter):
     """
 
     def predict_proba(self, L):
-        L = to_numpy(L).astype(int)
+        L = arraylike_to_numpy(L, flatten=False)
         n, m = L.shape
-        Y_p = np.zeros((n, self.k))
+        Y_p = np.zeros((n, self.cardinality))
         for i in range(n):
-            counts = np.zeros(self.k)
+            counts = np.zeros(self.cardinality)
             for j in range(m):
                 if L[i, j]:
                     counts[L[i, j] - 1] += 1

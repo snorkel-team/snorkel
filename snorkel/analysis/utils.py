@@ -103,7 +103,7 @@ def arraylike_to_numpy(
 
     # Convert to ints
     if cast_to_int:
-        if any(array_like % 1):
+        if np.any(np.not_equal(np.mod(array_like, 1), 0)):
             raise ValueError("Input contains at least one non-integer value.")
         array_like = array_like.astype(np.dtype(int))
 

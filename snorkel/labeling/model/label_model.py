@@ -7,23 +7,26 @@ import torch.nn as nn
 import torch.optim as optim
 from scipy.sparse import issparse
 
+from snorkel.analysis.utils import set_seed
+from snorkel.classification.utils import recursive_merge_dicts
+
 from .graph_utils import get_clique_tree
 from .lm_defaults import lm_default_config
 from .logger import Logger
-from .utils import recursive_merge_dicts, set_seed
 
 
 class LabelModel(nn.Module):
-    """A conditionally independent LabelModel to learn labeling function accuracies and assign probabilistic labels
+    """A conditionally independent LabelModel to learn labeling function
+    accuracies and assign probabilistic labels
 
     Args:
         k: (int) the cardinality of the classifier
     """
 
-    def __init__(self, k=2, **kwargs):
+    def __init__(self, cardinality=2, **kwargs):
         super().__init__()
         self.config = recursive_merge_dicts(lm_default_config, kwargs)
-        self.k = k
+        self.cardinality = cardinality
 
         # Set random seed
         if self.config["seed"] is None:
@@ -61,11 +64,11 @@ class LabelModel(nn.Module):
         Note that no column is required for 0 (abstain) labels.
         """
 
-        L_ind = np.zeros((self.n, self.m * self.k))
-        for y in range(1, self.k + 1):
+        L_ind = np.zeros((self.n, self.m * self.cardinality))
+        for y in range(1, self.cardinality + 1):
             # A[x::y] slices A starting at x at intervals of y
             # e.g., np.arange(9)[0::3] == np.array([0,3,6])
-            L_ind[:, (y - 1) :: self.k] = np.where(L == y, 1, 0)
+            L_ind[:, (y - 1) :: self.cardinality] = np.where(L == y, 1, 0)
         return L_ind
 
     def _get_augmented_label_matrix(self, L, higher_order=False):
@@ -82,8 +85,8 @@ class LabelModel(nn.Module):
         self.c_data = {}
         for i in range(self.m):
             self.c_data[i] = {
-                "start_index": i * self.k,
-                "end_index": (i + 1) * self.k,
+                "start_index": i * self.cardinality,
+                "end_index": (i + 1) * self.cardinality,
                 "max_cliques": set(
                     [
                         j
@@ -110,8 +113,8 @@ class LabelModel(nn.Module):
                 members = list(C["members"])
 
                 # With unary maximal clique, just store its existing index
-                C["start_index"] = members[0] * self.k
-                C["end_index"] = (members[0] + 1) * self.k
+                C["start_index"] = members[0] * self.cardinality
+                C["end_index"] = (members[0] + 1) * self.cardinality
             return L_aug
         else:
             return L_ind
@@ -148,7 +151,7 @@ class LabelModel(nn.Module):
         the probability of a clique C emitting a specific combination of labels,
         conditioned on different values of Y (for each column); that is:
 
-            self.mu[i*self.k + j, y] = P(\lambda_i = j | Y = y)
+            self.mu[i*self.cardinality + j, y] = P(\lambda_i = j | Y = y)
 
         and similarly for higher-order cliques.
         """
@@ -170,10 +173,10 @@ class LabelModel(nn.Module):
         lps = torch.diag(self.O).numpy()
 
         # TODO: Update for higher-order cliques!
-        self.mu_init = torch.zeros(self.d, self.k)
+        self.mu_init = torch.zeros(self.d, self.cardinality)
         for i in range(self.m):
-            for y in range(self.k):
-                idx = i * self.k + y
+            for y in range(self.cardinality):
+                idx = i * self.cardinality + y
                 mu_init = torch.clamp(lps[idx] * self._prec_init[i] / self.p[y], 0, 1)
                 self.mu_init[idx, y] += mu_init
 
@@ -196,23 +199,27 @@ class LabelModel(nn.Module):
 
         If `source` is not None, returns only the corresponding block.
         """
-        c_probs = np.zeros((self.m * (self.k + 1), self.k))
+        c_probs = np.zeros((self.m * (self.cardinality + 1), self.cardinality))
         mu = self.mu.detach().clone().numpy()
 
         for i in range(self.m):
             # si = self.c_data[(i,)]['start_index']
             # ei = self.c_data[(i,)]['end_index']
             # mu_i = mu[si:ei, :]
-            mu_i = mu[i * self.k : (i + 1) * self.k, :]
-            c_probs[i * (self.k + 1) + 1 : (i + 1) * (self.k + 1), :] = mu_i
+            mu_i = mu[i * self.cardinality : (i + 1) * self.cardinality, :]
+            c_probs[
+                i * (self.cardinality + 1) + 1 : (i + 1) * (self.cardinality + 1), :
+            ] = mu_i
 
             # The 0th row (corresponding to abstains) is the difference between
             # the sums of the other rows and one, by law of total prob
-            c_probs[i * (self.k + 1), :] = 1 - mu_i.sum(axis=0)
+            c_probs[i * (self.cardinality + 1), :] = 1 - mu_i.sum(axis=0)
         c_probs = np.clip(c_probs, 0.01, 0.99)
 
         if source is not None:
-            return c_probs[source * (self.k + 1) : (source + 1) * (self.k + 1)]
+            return c_probs[
+                source * (self.cardinality + 1) : (source + 1) * (self.cardinality + 1)
+            ]
         else:
             return c_probs
 
@@ -223,7 +230,9 @@ class LabelModel(nn.Module):
             if probs is None:
                 cps = self.get_conditional_probs(source=i)[1:, :]
             else:
-                cps = probs[i * (self.k + 1) : (i + 1) * (self.k + 1)][1:, :]
+                cps = probs[
+                    i * (self.cardinality + 1) : (i + 1) * (self.cardinality + 1)
+                ][1:, :]
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
         return accs
 
@@ -241,7 +250,7 @@ class LabelModel(nn.Module):
 
         # Note: We omit abstains, effectively assuming uniform distribution here
         X = np.exp(L_aug @ np.diag(jtm) @ np.log(mu) + np.log(self.p))
-        Z = np.tile(X.sum(axis=1).reshape(-1, 1), self.k)
+        Z = np.tile(X.sum(axis=1).reshape(-1, 1), self.cardinality)
         return X / Z
 
     # These loss functions get all their data directly from the LabelModel
@@ -287,7 +296,7 @@ class LabelModel(nn.Module):
             sorted_counts = np.array([v for k, v in sorted(class_counts.items())])
             self.p = sorted_counts / sum(sorted_counts)
         else:
-            self.p = (1 / self.k) * np.ones(self.k)
+            self.p = (1 / self.cardinality) * np.ones(self.cardinality)
         self.P = torch.diag(torch.from_numpy(self.p)).float()
 
     def _set_constants(self, L):

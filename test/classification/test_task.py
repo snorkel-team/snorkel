@@ -3,7 +3,7 @@ from functools import partial
 
 import torch.nn as nn
 
-from snorkel.classification.snorkel_classifier import Task
+from snorkel.classification.snorkel_classifier import Task, Operation
 from snorkel.classification.scorer import Scorer
 
 TASK_NAME = "TestTask"
@@ -19,16 +19,16 @@ class TaskTest(unittest.TestCase):
         )
 
         task_flow = [
-            {
-                "name": "the_first_layer",
-                "module": "linear1",
-                "inputs": [("_input_", 0)],
-            },
-            {
-                "name": "the_second_layer",
-                "module": "linear2",
-                "inputs": [("the_first_layer", 0)],
-            },
+            Operation(
+                name="the_first_layer",
+                module_name="linear1",
+                inputs=[("_input_", 0)],
+            ),
+            Operation(
+                name="the_second_layer",
+                module_name="linear2",
+                inputs=[("the_first_layer", 0)],
+            ),
         ]
 
         task = Task(

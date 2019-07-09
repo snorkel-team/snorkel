@@ -26,7 +26,7 @@ default_config = {
     "logging": False,  # Whether to write logs (to json/tensorboard)
     "log_writer_config": {
         "writer": "tensorboard",  # [json, tensorboard]
-        "log_root": "logs",  # The path to the root of the directory where logs are written
+        "log_dir": "logs",  # The path to the root of the directory where logs are written
         "run_name": None,  # The name of this particular run (default to date/time)
     },
     "optimizer_config": {
@@ -39,13 +39,13 @@ default_config = {
         "adamax_config": {"betas": (0.9, 0.999), "eps": 0.00000001},
     },
     "lr_scheduler_config": {
-        "lr_scheduler": "constant",  # [constant, linear, exponential, step, multi_step, reduce_on_plateau]
+        "lr_scheduler": "constant",  # [constant, linear, exponential, step]
         "warmup_steps": 0,  # warm up steps
         "warmup_unit": "batches",  # [epochs, batches]
         "warmup_percentage": 0.0,  # warm up percentage
         "min_lr": 0.0,  # minimum learning rate
         "exponential_config": {"gamma": 0.9},
-        "plateau_config": {"factor": 0.5, "patience": 10, "threshold": 0.0001},
+        "step_config": {"step_size": 5, "gamma": 0.9},
     },
     "batch_scheduler": "shuffled",  # [sequential, shuffled]
 }

@@ -351,29 +351,17 @@ class LabelModel(nn.Module):
                 **optimizer_config["optimizer_common"],
                 **optimizer_config["adam_config"],
             )
-        elif opt == "sparseadam":
-            optimizer = optim.SparseAdam(
-                parameters,
-                **optimizer_config["optimizer_common"],
-                **optimizer_config["adam_config"],
-            )
         else:
             raise ValueError(f"Did not recognize optimizer option '{opt}'")
         self.optimizer = optimizer
 
     def _set_scheduler(self, train_config):
         lr_scheduler = train_config["lr_scheduler"]
-        if lr_scheduler is None:
-            lr_scheduler = None
-        else:
+        if lr_scheduler is not None:
             lr_scheduler_config = train_config["lr_scheduler_config"]
             if lr_scheduler == "exponential":
                 lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(
                     self.optimizer, **lr_scheduler_config["exponential_config"]
-                )
-            elif lr_scheduler == "reduce_on_plateau":
-                lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-                    self.optimizer, **lr_scheduler_config["plateau_config"]
                 )
             else:
                 raise ValueError(
@@ -386,14 +374,7 @@ class LabelModel(nn.Module):
         if self.lr_scheduler is not None:
             lr_scheduler_config = train_config["lr_scheduler_config"]
             if epoch + 1 >= lr_scheduler_config["lr_freeze"]:
-                if train_config["lr_scheduler"] == "reduce_on_plateau":
-                    checkpoint_config = train_config["checkpoint_config"]
-                    metric_name = checkpoint_config["checkpoint_metric"]
-                    score = metrics_dict.get(metric_name, None)
-                    if score is not None:
-                        self.lr_scheduler.step(score)
-                else:
-                    self.lr_scheduler.step()
+                self.lr_scheduler.step()
 
     def train_model(self, L_train, Y_dev=None, class_balance=None, **kwargs):
         """Train the model (i.e. estimate mu):
@@ -435,7 +416,9 @@ class LabelModel(nn.Module):
         l2 = train_config.get("l2", 0)
 
         # Move model to GPU
-        if self.config["verbose"] and self.config["device"] != "cpu":
+        if (
+            self.config["verbose"] and self.config["device"] != "cpu"
+        ):  # pragma: no cover
             print("Using GPU...")
         self.to(self.config["device"])
 
@@ -479,7 +462,7 @@ class LabelModel(nn.Module):
         self.eval()
 
         # Print confusion matrix if applicable
-        if self.config["verbose"]:
+        if self.config["verbose"]:  # pragma: no cover
             print("Finished Training")
 
     def save(self, destination, **kwargs):

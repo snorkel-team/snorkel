@@ -19,7 +19,7 @@ class TestTensorBoardWriter(unittest.TestCase):
         # tensorboardX's unit tests for correctness.
         run_name = "my_run"
         config = dict(a=8, b="my text")
-        writer = TensorBoardWriter(run_name=run_name, log_root=self.test_dir)
+        writer = TensorBoardWriter(run_name=run_name, log_dir=self.test_dir)
         writer.add_scalar("my_value", value=0.5, step=2)
         writer.write_config(config)
         log_path = os.path.join(self.test_dir, run_name, "config.json")

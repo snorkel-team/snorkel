@@ -19,14 +19,12 @@ class MetricsTest(unittest.TestCase):
     def test_bad_input(self):
         not_array = "112200"
         Y_nparray = np.ones((3,))
-        self.assertRaises(ValueError, arraylike_to_numpy, not_array)
-        self.assertRaises(
-            ValueError,
-            convert_labels,
-            Y=not_array,
-            source="categorical",
-            target="plusminus",
-        )
+        with self.assertRaisesRegex(ValueError, "Input could not be converted"):
+            arraylike_to_numpy(not_array)
+
+        with self.assertRaisesRegex(ValueError, "Unrecognized label data type"):
+            convert_labels(Y=not_array, source="categorical", target="plusminus")
+
         self.assertIsNone(
             convert_labels(Y=None, source="categorical", target="plusminus")
         )

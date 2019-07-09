@@ -18,27 +18,30 @@ class MetricsTest(unittest.TestCase):
         pred1 = [1, 1, 1, 2, 0.5]
         pred2 = "1 1 1 2 2"
         pred3 = np.array([[1, 1, 1, 1, 1], [2, 2, 2, 2, 2]])
-        self.assertRaises(
-            ValueError, metric_score, golds, pred1, probs=None, metric="accuracy"
-        )
-        self.assertRaises(
-            ValueError, metric_score, golds, pred2, probs=None, metric="accuracy"
-        )
-        self.assertRaises(
-            ValueError, metric_score, golds, pred3, probs=None, metric="accuracy"
-        )
-        self.assertRaises(
-            ValueError, metric_score, golds, pred3, probs=None, metric="bad_metric"
-        )
-        self.assertRaises(
-            ValueError,
-            metric_score,
-            golds,
-            pred3,
-            probs=None,
-            metric="accuracy",
-            filter_dict={"bad_map": [0]},
-        )
+        with self.assertRaisesRegex(
+            ValueError, "Input contains at least one non-integer"
+        ):
+            metric_score(golds, pred1, probs=None, metric="accuracy")
+
+        with self.assertRaisesRegex(ValueError, "Input could not be converted"):
+            metric_score(golds, pred2, probs=None, metric="accuracy")
+
+        with self.assertRaisesRegex(ValueError, "Input could not be converted"):
+            metric_score(golds, pred3, probs=None, metric="accuracy")
+
+        with self.assertRaisesRegex(ValueError, "The metric you provided"):
+            metric_score(golds, pred3, probs=None, metric="bad_metric")
+
+        with self.assertRaisesRegex(
+            ValueError, "filter_dict must only include keys in"
+        ):
+            metric_score(
+                golds,
+                golds,
+                probs=None,
+                metric="accuracy",
+                filter_dict={"bad_map": [0]},
+            )
 
     def test_array_conversion(self):
         golds = torch.Tensor([1, 1, 1, 2, 2])
@@ -148,14 +151,10 @@ class MetricsTest(unittest.TestCase):
         roc_auc = metric_score(golds, preds=None, probs=probs, metric="roc_auc")
         self.assertAlmostEqual(roc_auc, 1.0)
 
-        self.assertRaises(
-            ValueError,
-            metric_score,
-            golds,
-            preds=None,
-            probs=probs_nonbinary,
-            metric="roc_auc",
-        )
+        with self.assertRaisesRegex(
+            ValueError, "Metric roc_auc is currently only defined for binary"
+        ):
+            metric_score(golds, preds=None, probs=probs_nonbinary, metric="roc_auc")
 
 
 if __name__ == "__main__":

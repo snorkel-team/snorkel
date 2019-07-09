@@ -1,11 +1,9 @@
 import unittest
-from functools import partial
 
 import torch.nn as nn
 
-from snorkel.classification.models.advanced import Task
-from snorkel.classification.models.advanced.utils import ce_loss, softmax
 from snorkel.classification.scorer import Scorer
+from snorkel.classification.snorkel_classifier import Operation, Task
 
 TASK_NAME = "TestTask"
 
@@ -20,24 +18,20 @@ class TaskTest(unittest.TestCase):
         )
 
         task_flow = [
-            {
-                "name": "the_first_layer",
-                "module": "linear1",
-                "inputs": [("_input_", 0)],
-            },
-            {
-                "name": "the_second_layer",
-                "module": "linear2",
-                "inputs": [("the_first_layer", 0)],
-            },
+            Operation(
+                name="the_first_layer", module_name="linear1", inputs=[("_input_", 0)]
+            ),
+            Operation(
+                name="the_second_layer",
+                module_name="linear2",
+                inputs=[("the_first_layer", 0)],
+            ),
         ]
 
         task = Task(
             name=TASK_NAME,
             module_pool=module_pool,
             task_flow=task_flow,
-            loss_func=partial(ce_loss, "the_second_layer"),
-            output_func=partial(softmax, "the_second_layer"),
             scorer=Scorer(metrics=["accuracy"]),
         )
 

@@ -1,7 +1,7 @@
 import random
 from typing import Sequence
 
-from snorkel.classification.data import ClassifierDataLoader
+from snorkel.classification.data import DictDataLoader
 
 from .scheduler import BatchIterator, Scheduler
 
@@ -12,7 +12,7 @@ class ShuffledScheduler(Scheduler):
     def __init__(self):
         super().__init__()
 
-    def get_batches(self, dataloaders: Sequence[ClassifierDataLoader]) -> BatchIterator:
+    def get_batches(self, dataloaders: Sequence[DictDataLoader]) -> BatchIterator:
         """Return batches in shuffled order from dataloaders
 
         Note that this shuffles the batch order, but it does not shuffle the datasets

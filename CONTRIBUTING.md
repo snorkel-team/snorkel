@@ -8,7 +8,7 @@ First things first: read our [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ### Installing
 
-Snorkel uses [tox](https://tox.readthedocs.io/en/) to manage development environments.
+Snorkel uses [tox](https://tox.readthedocs.io) to manage development environments.
 To get started, [install tox](https://tox.readthedocs.io/en/latest/install.html),
 clone Snorkel, then use `tox` to create a development environment:
 

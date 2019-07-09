@@ -326,7 +326,7 @@ class LabelModel(nn.Module):
         return metrics_dict
 
     def _set_logger(self, train_config, epoch_size):
-        self.logger = Logger(train_config["logger_config"])
+        self.logger = Logger(train_config["log_train_every"])
 
     def _set_optimizer(self, train_config):
         optimizer_config = train_config["optimizer_config"]

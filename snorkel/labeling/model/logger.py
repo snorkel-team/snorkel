@@ -2,8 +2,8 @@ from collections import defaultdict
 
 
 class Logger:
-    def __init__(self, config):
-        self.log_train_every = config["log_train_every"]
+    def __init__(self, log_train_every):
+        self.log_train_every = log_train_every
         self.unit_count = 0
 
     def check(self):

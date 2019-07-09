@@ -37,16 +37,15 @@ class Scorer(object):
     def score(
         self, golds: ArrayLike, preds: ArrayLike, probs: ArrayLike
     ) -> Dict[str, float]:
+
+        if len(golds) == 0:  # type: ignore
+            raise ValueError("Cannot score empty labels")
+
         metric_dict = dict()
 
         for metric_name, metric in self.metrics.items():
-            # Handle no examples
-            if len(golds) == 0:  # type: ignore
-                metric_dict[metric_name] = float("nan")
-                continue
 
-            if metric_name in self.metrics:
-                score = metric(golds, preds, probs)
+            score = metric(golds, preds, probs)
 
             if isinstance(score, dict):
                 metric_dict.update(score)

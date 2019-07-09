@@ -27,7 +27,7 @@ class LabelModelTest(unittest.TestCase):
         # Test dimension constants
         L = np.array([[1, 2, 1], [1, 0, 1], [2, 1, 1], [1, 2, -1]])
         L_sparse = csr_matrix(L)
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "L must have values in {0,1,...,k}"):
             label_model._check_L(L_sparse)
 
         L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 1]])
@@ -245,7 +245,10 @@ class LabelModelTest(unittest.TestCase):
         next_loss = label_model.loss_mu().detach().numpy().ravel()[0]
 
         self.assertLessEqual(next_loss, init_loss)
-        self.assertRaises(Exception, label_model.train_model, L, n_epochs=10, lr=1e8)
+        with self.assertRaisesRegex(
+            Exception, "Loss is NaN. Consider reducing learning rate"
+        ):
+            label_model.train_model(L, n_epochs=10, lr=1e8)
 
     def test_optimizer(self):
         L = np.array([[1, 0, 1], [1, 2, 1]])
@@ -253,9 +256,8 @@ class LabelModelTest(unittest.TestCase):
 
         label_model.train_model(L, n_epochs=1, optimizer="rmsprop")
         label_model.train_model(L, n_epochs=1, optimizer="adam")
-        self.assertRaises(
-            ValueError, label_model.train_model, L, n_epochs=1, optimizer="bad_opt"
-        )
+        with self.assertRaisesRegex(ValueError, "Did not recognize optimizer option"):
+            label_model.train_model(L, n_epochs=1, optimizer="bad_opt")
 
     def test_lr_scheduler(self):
         L = np.array([[1, 0, 1], [1, 2, 1]])
@@ -263,13 +265,10 @@ class LabelModelTest(unittest.TestCase):
 
         label_model.train_model(L, n_epochs=1, lr_scheduler=None)
         label_model.train_model(L, n_epochs=1, lr_scheduler="exponential")
-        self.assertRaises(
-            ValueError,
-            label_model.train_model,
-            L,
-            n_epochs=1,
-            lr_scheduler="bad_scheduler",
-        )
+        with self.assertRaisesRegex(
+            ValueError, "Did not recognize lr_scheduler option"
+        ):
+            label_model.train_model(L, n_epochs=1, lr_scheduler="bad_scheduler")
 
     def test_save_and_load(self):
         L = np.array([[1, 0, 1], [1, 2, 1]])

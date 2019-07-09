@@ -6,17 +6,13 @@ import torch
 import torch.nn as nn
 
 from snorkel.classification.scorer import Scorer
-from snorkel.classification.snorkel_classifier import (
-    AdvancedClassifier,
-    Operation,
-    Task,
-)
+from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
 
 
 class TaskTest(unittest.TestCase):
     def test_onetask_model(self):
         task1 = create_task("task1")
-        model = AdvancedClassifier(tasks=[task1])
+        model = SnorkelClassifier(tasks=[task1])
         self.assertEqual(len(model.task_names), 1)
         self.assertEqual(len(model.task_flows), 1)
         self.assertEqual(len(model.module_pool), 2)
@@ -25,7 +21,7 @@ class TaskTest(unittest.TestCase):
         """Add two tasks with identical modules and flows"""
         task1 = create_task("task1")
         task2 = create_task("task2")
-        model = AdvancedClassifier(tasks=[task1, task2])
+        model = SnorkelClassifier(tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
         self.assertEqual(len(model.task_flows), 2)
         self.assertEqual(len(model.module_pool), 2)
@@ -34,7 +30,7 @@ class TaskTest(unittest.TestCase):
         """Add two tasks with totally separate modules and flows"""
         task1 = create_task("task1", module_suffixes=["A", "A"])
         task2 = create_task("task2", module_suffixes=["B", "B"])
-        model = AdvancedClassifier(tasks=[task1, task2])
+        model = SnorkelClassifier(tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
         self.assertEqual(len(model.task_flows), 2)
         self.assertEqual(len(model.module_pool), 4)
@@ -43,7 +39,7 @@ class TaskTest(unittest.TestCase):
         """Add two tasks with overlapping modules and flows"""
         task1 = create_task("task1", module_suffixes=["A", "A"])
         task2 = create_task("task2", module_suffixes=["A", "B"])
-        model = AdvancedClassifier(tasks=[task1, task2])
+        model = SnorkelClassifier(tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
         self.assertEqual(len(model.task_flows), 2)
         self.assertEqual(len(model.module_pool), 3)
@@ -54,7 +50,7 @@ class TaskTest(unittest.TestCase):
         task1 = create_task("task1")
         task2 = create_task("task2")
 
-        model = AdvancedClassifier([task1])
+        model = SnorkelClassifier([task1])
         self.assertTrue(
             torch.eq(
                 task1.module_pool["linear2"].weight,
@@ -62,7 +58,7 @@ class TaskTest(unittest.TestCase):
             ).all()
         )
         model.save(checkpoint_path)
-        model = AdvancedClassifier([task2])
+        model = SnorkelClassifier([task2])
         self.assertFalse(
             torch.eq(
                 task1.module_pool["linear2"].weight,

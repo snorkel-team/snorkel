@@ -4,13 +4,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from snorkel.classification.data import ClassifierDataLoader, ClassifierDataset
+from snorkel.classification.data import DictDataLoader, DictDataset
 from snorkel.classification.scorer import Scorer
-from snorkel.classification.snorkel_classifier import (
-    AdvancedClassifier,
-    Operation,
-    Task,
-)
+from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
 from snorkel.classification.training import Trainer
 
 trainer_config = {"n_epochs": 2, "progress_bar": False}
@@ -20,7 +16,7 @@ class TrainerTest(unittest.TestCase):
     def test_trainer_onetask(self):
         """Train a single-task model"""
         task1 = create_task("task1", module_suffixes=["A", "A"])
-        model = AdvancedClassifier(tasks=[task1])
+        model = SnorkelClassifier(tasks=[task1])
         dataloaders = create_dataloaders(num_tasks=1)
         trainer = Trainer(**trainer_config)
         trainer.train_model(model, dataloaders)
@@ -29,7 +25,7 @@ class TrainerTest(unittest.TestCase):
         """Train a model with overlapping modules and flows"""
         task1 = create_task("task1", module_suffixes=["A", "A"])
         task2 = create_task("task2", module_suffixes=["A", "B"])
-        model = AdvancedClassifier(tasks=[task1, task2])
+        model = SnorkelClassifier(tasks=[task1, task2])
         dataloaders = create_dataloaders(num_tasks=2)
         trainer = Trainer(**trainer_config)
         trainer.train_model(model, dataloaders)
@@ -53,21 +49,16 @@ def create_dataloaders(num_tasks=1):
     splits = ["train", "valid", "test"]
     for X_split, Y_split, split in zip(Xs, Ys, splits):
 
-        Y_dict = {"task1_labels": Y_split[:, 0]}
-        task_to_label_dict = {"task1": "task1_labels"}
+        Y_dict = {"task1": Y_split[:, 0]}
         if num_tasks == 2:
-            Y_dict["task2_labels"] = Y_split[:, 1]
-            task_to_label_dict["task2"] = "task2_labels"
+            Y_dict["task2"] = Y_split[:, 1]
 
-        dataset = ClassifierDataset(
+        dataset = DictDataset(
             name="dataset", split=split, X_dict={"coordinates": X_split}, Y_dict=Y_dict
         )
 
-        dataloader = ClassifierDataLoader(
-            task_to_label_dict=task_to_label_dict,
-            dataset=dataset,
-            batch_size=4,
-            shuffle=(dataset.split == "train"),
+        dataloader = DictDataLoader(
+            dataset=dataset, batch_size=4, shuffle=(dataset.split == "train")
         )
         dataloaders.append(dataloader)
     return dataloaders

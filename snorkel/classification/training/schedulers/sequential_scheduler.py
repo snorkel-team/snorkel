@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from snorkel.classification.data import ClassifierDataLoader
+from snorkel.classification.data import DictDataLoader
 
 from .scheduler import BatchIterator, Scheduler
 
@@ -11,7 +11,7 @@ class SequentialScheduler(Scheduler):
     def __init__(self):
         super().__init__()
 
-    def get_batches(self, dataloaders: Sequence[ClassifierDataLoader]) -> BatchIterator:
+    def get_batches(self, dataloaders: Sequence[DictDataLoader]) -> BatchIterator:
         """Return batches from dataloaders sequentially in the order they were given.
 
         Parameters

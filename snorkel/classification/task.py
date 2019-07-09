@@ -60,6 +60,8 @@ class Task:
         assert isinstance(module_pool, nn.ModuleDict) is True
         self.module_pool = module_pool
         self.task_flow = task_flow
+        # By default, apply cross entropy loss and softmax to the output of the last
+        # operation in the task flow.
         self.loss_func = loss_func or partial(ce_loss, task_flow[-1].name)
         self.output_func = output_func or partial(softmax, task_flow[-1].name)
         self.scorer = scorer

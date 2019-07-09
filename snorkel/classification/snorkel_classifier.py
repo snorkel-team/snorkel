@@ -19,7 +19,7 @@ import torch
 import torch.nn as nn
 
 from snorkel.analysis.utils import probs_to_preds
-from snorkel.classification.data import ClassifierDataLoader
+from snorkel.classification.data import DictDataLoader
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.utils import move_to_device, recursive_merge_dicts
@@ -30,7 +30,7 @@ from .task import Operation, Task
 OutputDict = Dict[str, Mapping[Union[str, int], Any]]
 
 
-class AdvancedClassifier(nn.Module):
+class SnorkelClassifier(nn.Module):
     """A class to build multi-task model.
 
     :param name: Name of the model
@@ -175,16 +175,12 @@ class AdvancedClassifier(nn.Module):
         return outputs
 
     def calculate_loss(
-        self,
-        X_dict: Mapping[str, Any],
-        Y_dict: Dict[str, torch.Tensor],
-        task_to_label_dict: Dict[str, str],
+        self, X_dict: Mapping[str, Any], Y_dict: Dict[str, torch.Tensor]
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, float]]:
         """Calculate the loss
 
         :param X_dict: The input data
         :param Y_dict: The output data
-        :param task_to_label_dict: The task to label mapping
         :return: The loss and the number of samples in the batch of all tasks
         :rtype: dict, dict
         """
@@ -192,13 +188,11 @@ class AdvancedClassifier(nn.Module):
         loss_dict = dict()
         count_dict = dict()
 
-        task_names = task_to_label_dict.keys()
+        task_names = Y_dict.keys()
         outputs = self.forward(X_dict, task_names)
 
         # Calculate loss for each task
-        for task_name, label_name in task_to_label_dict.items():
-
-            Y = Y_dict[label_name]
+        for task_name, Y in Y_dict.items():
 
             # Select the active samples
             if len(Y.size()) == 1:
@@ -242,7 +236,7 @@ class AdvancedClassifier(nn.Module):
 
     @torch.no_grad()
     def predict(
-        self, dataloader: ClassifierDataLoader, return_preds: bool = False
+        self, dataloader: DictDataLoader, return_preds: bool = False
     ) -> Dict[str, Dict[str, torch.Tensor]]:
 
         self.eval()
@@ -251,14 +245,10 @@ class AdvancedClassifier(nn.Module):
         prob_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
 
         for batch_num, (X_batch_dict, Y_batch_dict) in enumerate(dataloader):
-            prob_batch_dict = self._calculate_probs(
-                X_batch_dict, dataloader.task_to_label_dict.keys()
-            )
-            for task_name in dataloader.task_to_label_dict.keys():
+            prob_batch_dict = self._calculate_probs(X_batch_dict, Y_batch_dict.keys())
+            for task_name, Y in Y_batch_dict.items():
                 prob_dict_list[task_name].extend(prob_batch_dict[task_name])
-                gold_dict_list[task_name].extend(
-                    Y_batch_dict[dataloader.task_to_label_dict[task_name]].cpu().numpy()
-                )
+                gold_dict_list[task_name].extend(Y.cpu().numpy())
 
         gold_dict: Dict[str, np.ndarray] = {}
         prob_dict: Dict[str, np.ndarray] = {}
@@ -288,7 +278,7 @@ class AdvancedClassifier(nn.Module):
         return results
 
     @torch.no_grad()
-    def score(self, dataloaders: List[ClassifierDataLoader]) -> Dict[str, float]:
+    def score(self, dataloaders: List[DictDataLoader]) -> Dict[str, float]:
         """Score the data from dataloader with the model
 
         :param dataloaders: the dataloader that performs scoring
@@ -309,7 +299,7 @@ class AdvancedClassifier(nn.Module):
                 )
                 for metric_name, metric_value in metric_scores.items():
                     # Type ignore statements are necessary because the DataLoader class
-                    # that ClassifierDataLoader inherits from is what actually sets
+                    # that DictDataLoader inherits from is what actually sets
                     # the class of Dataset, and it doesn't know about name and split.
                     identifier = "/".join(
                         [

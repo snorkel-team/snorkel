@@ -7,7 +7,7 @@ import unittest
 from snorkel.classification.training import TensorBoardWriter
 
 
-class TestLogManager(unittest.TestCase):
+class TestTensorBoardWriter(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
 

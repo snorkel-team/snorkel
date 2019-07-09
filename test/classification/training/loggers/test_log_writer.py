@@ -7,7 +7,7 @@ import unittest
 from snorkel.classification.training import LogWriter
 
 
-class TestLogManager(unittest.TestCase):
+class TestLogWriter(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
 

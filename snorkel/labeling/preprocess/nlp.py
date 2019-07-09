@@ -39,7 +39,8 @@ class SpacyPreprocessor(Preprocessor):
         language: str = EN_CORE_WEB_SM,
         disable: List[str] = DEFAULT_DISABLE,
     ) -> None:
-        super().__init__(dict(text=text_field), dict(doc=doc_field))
+        name = type(self).__name__
+        super().__init__(name, dict(text=text_field), dict(doc=doc_field))
         self._nlp = spacy.load(language, disable=disable)
 
     def run(self, text: str) -> FieldMap:  # type: ignore

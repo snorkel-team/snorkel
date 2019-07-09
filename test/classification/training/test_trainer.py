@@ -83,12 +83,12 @@ class TrainerTest(unittest.TestCase):
         # No train split
         trainer = Trainer(**trainer_config)
         dataloader.dataset.split = "valid"
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Cannot find any dataloaders"):
             trainer.train_model(model, [dataloader])
 
         # Unused split
         trainer = Trainer(**trainer_config, valid_split="val")
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Dataloader splits must be"):
             trainer.train_model(model, [dataloader])
 
     def test_checkpointer_init(self):
@@ -126,7 +126,7 @@ class TrainerTest(unittest.TestCase):
             trainer.train_model(model, [dataloaders[0]])
             self.assertIsInstance(trainer.log_writer, TensorBoardWriter)
 
-            with self.assertRaises(ValueError):
+            with self.assertRaisesRegex(ValueError, "Unrecognized writer"):
                 trainer = Trainer(
                     **trainer_config, logging=True, log_dir=temp_dir, writer="foo"
                 )
@@ -145,7 +145,7 @@ class TrainerTest(unittest.TestCase):
         trainer.train_model(model, [dataloaders[0]])
         self.assertIsInstance(trainer.optimizer, optim.Adamax)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Unrecognized optimizer"):
             trainer = Trainer(**trainer_config, optimizer="foo")
             trainer.train_model(model, [dataloaders[0]])
 
@@ -162,7 +162,7 @@ class TrainerTest(unittest.TestCase):
         trainer.train_model(model, [dataloaders[0]])
         self.assertIsInstance(trainer.lr_scheduler, optim.lr_scheduler.StepLR)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Unrecognized lr scheduler"):
             trainer = Trainer(**trainer_config, lr_scheduler="foo")
             trainer.train_model(model, [dataloaders[0]])
 

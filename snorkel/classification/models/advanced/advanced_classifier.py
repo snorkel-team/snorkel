@@ -1,6 +1,7 @@
 import logging
 import os
 from collections import defaultdict
+from functools import partial
 from typing import (
     Any,
     Callable,
@@ -26,6 +27,9 @@ from snorkel.classification.utils import move_to_device, recursive_merge_dicts
 from snorkel.types import ArrayLike
 
 from .task import Operation, Task
+from .utils import ce_loss, softmax
+
+OutputDict = Dict[str, Mapping[Union[str, int], Any]]
 
 OutputDict = Dict[str, Mapping[Union[str, int], Any]]
 
@@ -332,22 +336,21 @@ class AdvancedClassifier(nn.Module):
 
         return metric_score_dict
 
-    def save(self, model_path: str) -> None:
-        """Save the current model
-        :param model_path: Saved model path.
-        :type model_path: str
-        """
+    def _move_to_device(self):
+        device = self.config["device"]
+        if device >= 0:
+            if torch.cuda.is_available():
+                logging.info(f"Moving model to GPU (cuda:{device}).")
+                self.to(torch.device(f"cuda:{device}"))
+            else:
+                logging.info("No cuda device available. Switch to cpu instead.")
 
-        # Check existence of model saving directory and create if does not exist.
+    def save(self, model_path: str):
         if not os.path.exists(os.path.dirname(model_path)):
             os.makedirs(os.path.dirname(model_path))
 
-        state_dict = {
-            "model": {"name": self.name, "module_pool": self.collect_state_dict()}
-        }
-
         try:
-            torch.save(state_dict, model_path)
+            torch.save(self.state_dict(), model_path)
         except BaseException:
             logging.warning("Saving failed... continuing anyway.")
 
@@ -363,38 +366,86 @@ class AdvancedClassifier(nn.Module):
             logging.error("Loading failed... Model does not exist.")
 
         try:
-            checkpoint = torch.load(model_path, map_location=torch.device("cpu"))
+            self.load_state_dict(
+                torch.load(model_path, map_location=torch.device("cpu"))
+            )
         except BaseException:
             logging.error(f"Loading failed... Cannot load model from {model_path}")
             raise
 
-        self.load_state_dict(checkpoint["model"]["module_pool"])
-
         logging.info(f"[{self.name}] Model loaded from {model_path}")
-
-        # Move model to specified device
         self._move_to_device()
 
-    def collect_state_dict(self):
-        state_dict = defaultdict(list)
+    @classmethod
+    def from_modules(
+        self,
+        modules: List[nn.Module],
+        dropout: float = 0.0,
+        loss_func: Callable[..., torch.FloatTensor] = ce_loss,
+        output_func: Callable[..., np.ndarray] = softmax,
+        metrics: List[str] = ["accuracy"],
+        task_name: str = "task",
+        data_name: str = "data",
+        **kwargs,
+    ):
+        """Instantiates a simple AdvancedClassifier from `Module`s instead of `Task`s
+        This is intended as a convenience method for quickly creating an
+        AdvancedClassifier in certain situations where many defaults can be inferred.
+        Only use this method of instantiation if all of the following properties apply:
+        - Your problem has only one task
+            - That task name is the only key in dataloader.task_to_label_dict
+        - Your data has only one field
+            - The `data_name` you pass here and that field name in the X_dict match
+        - Your architecture is a simple sequential path using each Module exactly once
+        - You don't require passing any custom metric functions to the Scorer
+        Parameters
+        ----------
+        modules
+            A list of modules to run in sequence (ReLUs will be added between them)
+        dropout
+            An optional dropout rate (if non-zero, dropout is added between modules)
+        loss_func
+            A loss function (see `Task` for details)
+        output_func
+            An output function (see `Task` for details)
+        metrics
+            A list of metrics for the Scorer to calculate
+        task_name
+            The name of the single task in your network
+        data_name
+            The name of the single field in your X_dict
+        Returns
+        -------
+        AdvancedClassifier
+            An instance of AdvancedClassifier created from your specification
+        """
+        module_pool: Dict[str, nn.Module] = {}
+        task_flow: List[Operation] = []
+        inputs: Sequence[Tuple[str, Union[str, int]]]
+        for i, module in enumerate(modules):
 
-        for module_name, module in self.module_pool.items():
-            if self.config["dataparallel"]:
-                state_dict[module_name] = module.module.state_dict()
+            args = [module]
+            if i < len(modules) - 1:
+                args.append(nn.ReLU())
+                if dropout > 0:
+                    args.append(nn.Dropout(dropout))
+            module_block = nn.Sequential(*args)
+
+            module_pool[f"module{i}"] = module_block
+            if i == 0:
+                inputs = [("_input_", data_name)]
             else:
-                state_dict[module_name] = module.state_dict()
+                inputs = [(task_flow[-1].name, 0)]
+            op = Operation(name=f"op{i}", module_name=f"module{i}", inputs=inputs)
+            task_flow.append(op)
 
-        return state_dict
-
-    def load_state_dict(self, state_dict):
-
-        for module_name, module_state_dict in state_dict.items():
-            if module_name in self.module_pool:
-                if self.config["dataparallel"]:
-                    self.module_pool[module_name].module.load_state_dict(
-                        module_state_dict
-                    )
-                else:
-                    self.module_pool[module_name].load_state_dict(module_state_dict)
-            else:
-                logging.info(f"Missing {module_name} in module_pool, skip it..")
+        last_op = f"op{len(modules) - 1}"
+        task = Task(
+            name=task_name,
+            module_pool=nn.ModuleDict(module_pool),
+            task_flow=task_flow,
+            loss_func=partial(ce_loss, last_op),
+            output_func=partial(output_func, last_op),
+            scorer=Scorer(metrics=metrics),
+        )
+        return AdvancedClassifier([task], **kwargs)

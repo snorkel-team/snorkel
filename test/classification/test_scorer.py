@@ -14,13 +14,15 @@ class ScorerTest(unittest.TestCase):
         return golds, preds, probs
 
     def test_scorer(self) -> None:
-        def sum(golds, preds, probs):
+        def pred_sum(golds, preds, probs):
             return np.sum(preds)
 
-        scorer = Scorer(metrics=["accuracy", "f1"], custom_metric_funcs=dict(sum=sum))
+        scorer = Scorer(
+            metrics=["accuracy", "f1"], custom_metric_funcs=dict(pred_sum=pred_sum)
+        )
 
         results = scorer.score(*self._get_labels())
-        results_expected = dict(accuracy=0.6, f1=2 / 3, sum=3)
+        results_expected = dict(accuracy=0.6, f1=2 / 3, pred_sum=3)
         self.assertEqual(results, results_expected)
 
     def test_dict_metric(self) -> None:

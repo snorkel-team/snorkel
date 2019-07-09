@@ -7,7 +7,7 @@ import unittest
 from snorkel.classification.training import LogWriter
 
 
-class TestLogManager(unittest.TestCase):
+class TestLogWriter(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
 
@@ -16,7 +16,7 @@ class TestLogManager(unittest.TestCase):
 
     def test_log_writer(self):
         run_name = "my_run"
-        log_writer = LogWriter(run_name=run_name, log_root=self.test_dir)
+        log_writer = LogWriter(run_name=run_name, log_dir=self.test_dir)
         log_writer.add_scalar("my_value", value=0.5, step=2)
 
         log_filename = "my_log.json"
@@ -33,7 +33,7 @@ class TestLogManager(unittest.TestCase):
         run_name = "my_run"
         filename = "my_text.txt"
         text = "my log text"
-        log_writer = LogWriter(run_name=run_name, log_root=self.test_dir)
+        log_writer = LogWriter(run_name=run_name, log_dir=self.test_dir)
         log_writer.write_text(text, filename)
         log_path = os.path.join(self.test_dir, run_name, filename)
         with open(log_path, "r") as f:
@@ -43,7 +43,7 @@ class TestLogManager(unittest.TestCase):
     def test_write_config(self) -> None:
         run_name = "my_run"
         config = dict(a=8, b="my text")
-        log_writer = LogWriter(run_name=run_name, log_root=self.test_dir)
+        log_writer = LogWriter(run_name=run_name, log_dir=self.test_dir)
         log_writer.write_config(config)
         log_path = os.path.join(self.test_dir, run_name, "config.json")
         with open(log_path, "r") as f:

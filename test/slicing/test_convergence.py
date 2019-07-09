@@ -32,13 +32,13 @@ N_TRAIN = 1000
 N_VALID = 100
 
 
-class SlicingTest(unittest.TestCase):
+class SlicingConvergenceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.trainer_config = {"n_epochs": 3, "progress_bar": False}
 
     @pytest.mark.complex
-    def test_slicing(self):
+    def test_convergence(self):
         """Define two slices for task1 and no slices for task2"""
         df_train = create_data(N_TRAIN)
         df_valid = create_data(N_VALID)

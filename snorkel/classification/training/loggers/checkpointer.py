@@ -14,8 +14,12 @@ class Checkpointer(object):
     def __init__(self, **kwargs):
 
         # Checkpointer requires both checkpointer_config and log_manager_config
-        checkpointer_config = default_config["checkpointer_config"]
-        checkpointer_config.update(default_config["log_manager_config"])
+        # Use recursive_merge_dict instead of dict.update() to ensure copies are made
+        checkpointer_config = recursive_merge_dicts(
+            default_config["checkpointer_config"],
+            default_config["log_manager_config"],
+            misses="insert",
+        )
         self.config = recursive_merge_dicts(checkpointer_config, kwargs)
 
         # Pull out checkpoint settings

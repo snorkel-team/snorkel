@@ -1,70 +1,37 @@
+import copy
+import tempfile
 import unittest
 
-import numpy as np
 import torch
 import torch.nn as nn
+import torch.optim as optim
 
 from snorkel.classification.data import DictDataLoader, DictDataset
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
 from snorkel.classification.training import Trainer
+from snorkel.classification.training.loggers import LogWriter, TensorBoardWriter
 
-trainer_config = {"n_epochs": 2, "progress_bar": False}
-
-
-class TrainerTest(unittest.TestCase):
-    def test_trainer_onetask(self):
-        """Train a single-task model"""
-        task1 = create_task("task1", module_suffixes=["A", "A"])
-        model = SnorkelClassifier(tasks=[task1])
-        dataloaders = create_dataloaders(num_tasks=1)
-        trainer = Trainer(**trainer_config)
-        trainer.train_model(model, dataloaders)
-
-    def test_trainer_twotask(self):
-        """Train a model with overlapping modules and flows"""
-        task1 = create_task("task1", module_suffixes=["A", "A"])
-        task2 = create_task("task2", module_suffixes=["A", "B"])
-        model = SnorkelClassifier(tasks=[task1, task2])
-        dataloaders = create_dataloaders(num_tasks=2)
-        trainer = Trainer(**trainer_config)
-        trainer.train_model(model, dataloaders)
+TASK_NAMES = ["task1", "task2"]
+trainer_config = {"n_epochs": 1, "progress_bar": False}
+NUM_EXAMPLES = 6
+BATCH_SIZE = 2
+BATCHES_PER_EPOCH = NUM_EXAMPLES / BATCH_SIZE
 
 
-def create_dataloaders(num_tasks=1):
-    n = 1200
+def create_dataloader(task_name="task", split="train"):
+    X = torch.FloatTensor([[i, i] for i in range(NUM_EXAMPLES)])
+    Y = torch.ones(NUM_EXAMPLES, 1).long()
 
-    X = np.random.random((n, 2)) * 2 - 1
-    Y = np.zeros((n, 2))
-    Y[:, 0] = (X[:, 0] > X[:, 1] + 0.5).astype(int) + 1
-    Y[:, 1] = (X[:, 0] > X[:, 1] + 0.25).astype(int) + 1
+    dataset = DictDataset(
+        name="dataset", split=split, X_dict={"data": X}, Y_dict={task_name: Y}
+    )
 
-    X = torch.tensor(X, dtype=torch.float)
-    Y = torch.tensor(Y, dtype=torch.long)
-
-    Xs = [X[:1000], X[1000:1100], X[1100:]]
-    Ys = [Y[:1000], Y[1000:1100], Y[1100:]]
-
-    dataloaders = []
-    splits = ["train", "valid", "test"]
-    for X_split, Y_split, split in zip(Xs, Ys, splits):
-
-        Y_dict = {"task1": Y_split[:, 0]}
-        if num_tasks == 2:
-            Y_dict["task2"] = Y_split[:, 1]
-
-        dataset = DictDataset(
-            name="dataset", split=split, X_dict={"coordinates": X_split}, Y_dict=Y_dict
-        )
-
-        dataloader = DictDataLoader(
-            dataset=dataset, batch_size=4, shuffle=(dataset.split == "train")
-        )
-        dataloaders.append(dataloader)
-    return dataloaders
+    dataloader = DictDataLoader(dataset, batch_size=BATCH_SIZE)
+    return dataloader
 
 
-def create_task(task_name, module_suffixes):
+def create_task(task_name, module_suffixes=("", "")):
     module1_name = f"linear1{module_suffixes[0]}"
     module2_name = f"linear2{module_suffixes[1]}"
 
@@ -75,7 +42,7 @@ def create_task(task_name, module_suffixes):
         }
     )
 
-    op1 = Operation(module_name=module1_name, inputs=[("_input_", "coordinates")])
+    op1 = Operation(module_name=module1_name, inputs=[("_input_", "data")])
     op2 = Operation(module_name=module2_name, inputs=[(op1.name, 0)])
 
     task_flow = [op1, op2]
@@ -88,6 +55,129 @@ def create_task(task_name, module_suffixes):
     )
 
     return task
+
+
+dataloaders = [create_dataloader(task_name) for task_name in TASK_NAMES]
+tasks = [
+    create_task(TASK_NAMES[0], module_suffixes=["A", "A"]),
+    create_task(TASK_NAMES[1], module_suffixes=["A", "B"]),
+]
+model = SnorkelClassifier([tasks[0]])
+
+
+class TrainerTest(unittest.TestCase):
+    def test_trainer_onetask(self):
+        """Train a single-task model"""
+        trainer = Trainer(**trainer_config)
+        trainer.train_model(model, [dataloaders[0]])
+
+    def test_trainer_twotask(self):
+        """Train a model with overlapping modules and flows"""
+        multitask_model = SnorkelClassifier(tasks)
+        trainer = Trainer(**trainer_config)
+        trainer.train_model(multitask_model, dataloaders)
+
+    def test_trainer_errors(self):
+        dataloader = copy.deepcopy(dataloaders[0])
+
+        # No train split
+        trainer = Trainer(**trainer_config)
+        dataloader.dataset.split = "valid"
+        with self.assertRaisesRegex(ValueError, "Cannot find any dataloaders"):
+            trainer.train_model(model, [dataloader])
+
+        # Unused split
+        trainer = Trainer(**trainer_config, valid_split="val")
+        with self.assertRaisesRegex(ValueError, "Dataloader splits must be"):
+            trainer.train_model(model, [dataloader])
+
+    def test_checkpointer_init(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            trainer = Trainer(
+                **trainer_config, checkpointing=True, checkpoint_dir=temp_dir
+            )
+            trainer.train_model(model, [dataloaders[0]])
+            self.assertIsNotNone(trainer.checkpointer)
+
+            trainer = Trainer(
+                **trainer_config,
+                checkpointing=True,
+                logging=True,
+                log_dir=temp_dir,
+                checkpoint_dir=None,
+            )
+            trainer.train_model(model, [dataloaders[0]])
+            self.assertIsNotNone(trainer.checkpointer)
+            self.assertEqual(
+                trainer.checkpointer.checkpoint_dir, trainer.log_writer.log_dir
+            )
+
+    def test_log_writer_init(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            trainer = Trainer(
+                **trainer_config, logging=True, log_dir=temp_dir, writer="json"
+            )
+            trainer.train_model(model, [dataloaders[0]])
+            self.assertIsInstance(trainer.log_writer, LogWriter)
+
+            trainer = Trainer(
+                **trainer_config, logging=True, log_dir=temp_dir, writer="tensorboard"
+            )
+            trainer.train_model(model, [dataloaders[0]])
+            self.assertIsInstance(trainer.log_writer, TensorBoardWriter)
+
+            with self.assertRaisesRegex(ValueError, "Unrecognized writer"):
+                trainer = Trainer(
+                    **trainer_config, logging=True, log_dir=temp_dir, writer="foo"
+                )
+                trainer.train_model(model, [dataloaders[0]])
+
+    def test_optimizer_init(self):
+        trainer = Trainer(**trainer_config, optimizer="sgd")
+        trainer.train_model(model, [dataloaders[0]])
+        self.assertIsInstance(trainer.optimizer, optim.SGD)
+
+        trainer = Trainer(**trainer_config, optimizer="adam")
+        trainer.train_model(model, [dataloaders[0]])
+        self.assertIsInstance(trainer.optimizer, optim.Adam)
+
+        trainer = Trainer(**trainer_config, optimizer="adamax")
+        trainer.train_model(model, [dataloaders[0]])
+        self.assertIsInstance(trainer.optimizer, optim.Adamax)
+
+        with self.assertRaisesRegex(ValueError, "Unrecognized optimizer"):
+            trainer = Trainer(**trainer_config, optimizer="foo")
+            trainer.train_model(model, [dataloaders[0]])
+
+    def test_scheduler_init(self):
+        trainer = Trainer(**trainer_config, lr_scheduler="linear")
+        trainer.train_model(model, [dataloaders[0]])
+        self.assertIsInstance(trainer.lr_scheduler, optim.lr_scheduler.LambdaLR)
+
+        trainer = Trainer(**trainer_config, lr_scheduler="exponential")
+        trainer.train_model(model, [dataloaders[0]])
+        self.assertIsInstance(trainer.lr_scheduler, optim.lr_scheduler.ExponentialLR)
+
+        trainer = Trainer(**trainer_config, lr_scheduler="step")
+        trainer.train_model(model, [dataloaders[0]])
+        self.assertIsInstance(trainer.lr_scheduler, optim.lr_scheduler.StepLR)
+
+        with self.assertRaisesRegex(ValueError, "Unrecognized lr scheduler"):
+            trainer = Trainer(**trainer_config, lr_scheduler="foo")
+            trainer.train_model(model, [dataloaders[0]])
+
+    def test_warmup(self):
+        trainer = Trainer(**trainer_config, warmup_steps=1, warmup_unit="batches")
+        trainer.train_model(model, [dataloaders[0]])
+        self.assertEqual(trainer.warmup_steps, 1)
+
+        trainer = Trainer(**trainer_config, warmup_steps=1, warmup_unit="epochs")
+        trainer.train_model(model, [dataloaders[0]])
+        self.assertEqual(trainer.warmup_steps, BATCHES_PER_EPOCH)
+
+        trainer = Trainer(**trainer_config, warmup_percentage=1 / BATCHES_PER_EPOCH)
+        trainer.train_model(model, [dataloaders[0]])
+        self.assertEqual(trainer.warmup_steps, 1)
 
 
 if __name__ == "__main__":

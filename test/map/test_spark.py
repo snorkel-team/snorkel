@@ -10,9 +10,11 @@ from snorkel.types import DataPoint, FieldMap
 
 
 class SplitWordsMapper(SparkMapper):
-    def __init__(self, text_field: str, lower_field: str, words_field: str) -> None:
+    def __init__(
+        self, name: str, text_field: str, lower_field: str, words_field: str
+    ) -> None:
         super().__init__(
-            dict(text=text_field), dict(lower=lower_field, words=words_field)
+            name, dict(text=text_field), dict(lower=lower_field, words=words_field)
         )
 
     def run(self, text: str) -> FieldMap:  # type: ignore
@@ -80,7 +82,9 @@ class TestMapperCore(unittest.TestCase):
 
     @pytest.mark.spark
     def test_text_mapper(self) -> None:
-        split_words = SplitWordsMapper("text", "text_lower", "text_words")
+        split_words = SplitWordsMapper(
+            "split_words", "text", "text_lower", "text_words"
+        )
         x_mapped = split_words(self._get_x())
         assert x_mapped is not None
         self.assertEqual(x_mapped.num, 8)
@@ -90,7 +94,7 @@ class TestMapperCore(unittest.TestCase):
 
     @pytest.mark.spark
     def test_mapper_same_field(self) -> None:
-        split_words = SplitWordsMapper("text", "text", "text_words")
+        split_words = SplitWordsMapper("split_words", "text", "text", "text_words")
         x = self._get_x()
         x_mapped = split_words(x)
         self.assertEqual(x.num, 8)
@@ -103,7 +107,7 @@ class TestMapperCore(unittest.TestCase):
 
     @pytest.mark.spark
     def test_mapper_default_args(self) -> None:
-        split_words = SplitWordsMapperDefaultArgs()
+        split_words = SplitWordsMapperDefaultArgs("split_words")
         x_mapped = split_words(self._get_x())
         assert x_mapped is not None
         self.assertEqual(x_mapped.num, 8)
@@ -125,7 +129,7 @@ class TestMapperCore(unittest.TestCase):
 
     @pytest.mark.spark
     def test_mapper_returns_none(self) -> None:
-        mapper = MapperReturnsNone()
+        mapper = MapperReturnsNone("none_mapper")
         x_mapped = mapper(self._get_x())
         self.assertIsNone(x_mapped)
 
@@ -212,11 +216,3 @@ class TestMapperCore(unittest.TestCase):
         assert x8_mapped is not None
         self.assertEqual(x8_mapped.num_squared, 64)
         self.assertEqual(square_hit_tracker.n_hits, 4)
-
-    @pytest.mark.spark
-    def test_mapper_with_args_kwargs(self) -> None:
-        with self.assertRaises(ValueError):
-            MapperWithArgs()
-
-        with self.assertRaises(ValueError):
-            MapperWithKwargs()

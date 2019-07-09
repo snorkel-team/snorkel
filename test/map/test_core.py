@@ -12,9 +12,11 @@ from snorkel.types import DataPoint, FieldMap
 
 
 class SplitWordsMapper(Mapper):
-    def __init__(self, text_field: str, lower_field: str, words_field: str) -> None:
+    def __init__(
+        self, name: str, text_field: str, lower_field: str, words_field: str
+    ) -> None:
         super().__init__(
-            dict(text=text_field), dict(lower=lower_field, words=words_field)
+            name, dict(text=text_field), dict(lower=lower_field, words=words_field)
         )
 
     def run(self, text: str) -> FieldMap:  # type: ignore
@@ -89,7 +91,9 @@ class TestMapperCore(unittest.TestCase):
         self.assertEqual(x_mapped, x_expected)
 
     def test_text_mapper(self) -> None:
-        split_words = SplitWordsMapper("text", "text_lower", "text_words")
+        split_words = SplitWordsMapper(
+            "split_words", "text", "text_lower", "text_words"
+        )
         x_mapped = split_words(self._get_x())
         assert x_mapped is not None
         x_expected = SimpleNamespace(
@@ -101,7 +105,7 @@ class TestMapperCore(unittest.TestCase):
         self.assertEqual(x_mapped, x_expected)
 
     def test_mapper_same_field(self) -> None:
-        split_words = SplitWordsMapper("text", "text", "text_words")
+        split_words = SplitWordsMapper("split_words", "text", "text", "text_words")
         x = self._get_x()
         x_mapped = split_words(x)
         self.assertEqual(x, self._get_x())
@@ -112,7 +116,7 @@ class TestMapperCore(unittest.TestCase):
         self.assertEqual(x_mapped, x_expected)
 
     def test_mapper_default_args(self) -> None:
-        split_words = SplitWordsMapperDefaultArgs()
+        split_words = SplitWordsMapperDefaultArgs("split_words")
         x_mapped = split_words(self._get_x())
         assert x_mapped is not None
         x_expected = SimpleNamespace(
@@ -132,17 +136,17 @@ class TestMapperCore(unittest.TestCase):
         self.assertEqual(x_mapped, x_expected)
 
     def test_mapper_returns_none(self) -> None:
-        mapper = MapperReturnsNone()
+        mapper = MapperReturnsNone("none_mapper")
         x_mapped = mapper(self._get_x())
         self.assertIsNone(x_mapped)
 
     def test_mapper_pre(self) -> None:
-        mapper_no_pre = MapperWithPre()
+        mapper_no_pre = MapperWithPre("pre_mapper")
         x = self._get_x(3)
         with self.assertRaises(AttributeError):
             x_mapped = mapper_no_pre(x)
 
-        mapper_pre = MapperWithPre(pre=[square])
+        mapper_pre = MapperWithPre("pre_mapper", pre=[square])
         x = self._get_x(3)
         x_mapped = mapper_pre(x)
         self.assertEqual(x, self._get_x(3))
@@ -152,7 +156,7 @@ class TestMapperCore(unittest.TestCase):
         )
         self.assertEqual(x_mapped, x_expected)
 
-        mapper_pre_2 = MapperWithPre2(pre=[mapper_pre])
+        mapper_pre_2 = MapperWithPre2("pre_mapper", pre=[mapper_pre])
         x = self._get_x(3)
         x_mapped = mapper_pre_2(x)
         self.assertEqual(x, self._get_x(3))
@@ -326,10 +330,10 @@ class TestMapperCore(unittest.TestCase):
 
     def test_mapper_with_args_kwargs(self) -> None:
         with self.assertRaises(ValueError):
-            MapperWithArgs()
+            MapperWithArgs("my_mapper")
 
         with self.assertRaises(ValueError):
-            MapperWithKwargs()
+            MapperWithKwargs("my_mapper")
 
 
 class TestGetHashable(unittest.TestCase):

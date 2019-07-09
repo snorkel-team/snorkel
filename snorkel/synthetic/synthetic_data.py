@@ -81,4 +81,6 @@ def generate_resampling_tfs(
 ) -> List[LambdaTransformationFunction]:
     if isinstance(dims, int):
         dims = list(range(dims))
-    return [LambdaTransformationFunction(partial(tf_template, i=i)) for i in dims]
+    return [
+        LambdaTransformationFunction(f"tf_{i}", partial(tf_template, i=i)) for i in dims
+    ]

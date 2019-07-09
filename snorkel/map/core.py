@@ -85,6 +85,8 @@ class BaseMapper:
 
     Parameters
     ----------
+    name
+        Name of the mapper
     pre
         Mappers to run before this mapper is executed
     memoize
@@ -101,7 +103,8 @@ class BaseMapper:
         Subclasses need to implement `_generate_mapped_data_point`
     """
 
-    def __init__(self, pre: List["BaseMapper"], memoize: bool) -> None:
+    def __init__(self, name: str, pre: List["BaseMapper"], memoize: bool) -> None:
+        self.name = name
         self._pre = pre
         self.memoize = memoize
         self.reset_cache()
@@ -148,6 +151,10 @@ class BaseMapper:
             self._cache[x_hashable] = x_mapped
         return x_mapped
 
+    def __repr__(self) -> str:
+        pre_str = f", Pre: {self._pre}"
+        return f"{type(self).__name__} {self.name}{pre_str}"
+
 
 class Mapper(BaseMapper):
     """Base class for any data point to data point mapping in the pipeline.
@@ -175,6 +182,8 @@ class Mapper(BaseMapper):
 
     Parameters
     ----------
+    name
+        Name of mapper
     field_names
         A map from attribute names of the incoming data points
         to the input argument names of the `run` method. If None,
@@ -205,6 +214,7 @@ class Mapper(BaseMapper):
 
     def __init__(
         self,
+        name: str,
         field_names: Optional[Mapping[str, str]] = None,
         mapped_field_names: Optional[Mapping[str, str]] = None,
         pre: Optional[List[BaseMapper]] = None,
@@ -215,7 +225,7 @@ class Mapper(BaseMapper):
             field_names = {k: k for k in get_parameters(self.run)[1:]}
         self.field_names = field_names
         self.mapped_field_names = mapped_field_names
-        super().__init__(pre or [], memoize)
+        super().__init__(name, pre or [], memoize)
 
     def run(self, **kwargs: Any) -> Optional[FieldMap]:
         """Run the mapping operation using the input fields.
@@ -267,6 +277,8 @@ class LambdaMapper(BaseMapper):
 
     Parameters
     ----------
+    name:
+        Name of mapper
     f
         Function executing the mapping operation
     pre
@@ -277,12 +289,13 @@ class LambdaMapper(BaseMapper):
 
     def __init__(
         self,
+        name: str,
         f: Callable[[DataPoint], Optional[DataPoint]],
         pre: Optional[List[BaseMapper]] = None,
         memoize: bool = False,
     ) -> None:
         self._f = f
-        super().__init__(pre or [], memoize)
+        super().__init__(name, pre or [], memoize)
 
     def _generate_mapped_data_point(self, x: DataPoint) -> Optional[DataPoint]:
         return self._f(x)
@@ -293,6 +306,8 @@ class lambda_mapper:
 
     Parameters
     ----------
+    name
+        Name of mapper. If None, uses the name of the wrapped function.
     pre
         Mappers to run before this mapper is executed
     memoize
@@ -317,8 +332,12 @@ class lambda_mapper:
     """
 
     def __init__(
-        self, pre: Optional[List[BaseMapper]] = None, memoize: bool = False
+        self,
+        name: Optional[str] = None,
+        pre: Optional[List[BaseMapper]] = None,
+        memoize: bool = False,
     ) -> None:
+        self.name = name
         self.pre = pre
         self.memoize = memoize
 
@@ -335,4 +354,5 @@ class lambda_mapper:
         LambdaMapper
             New `LambdaMapper` executing operation in wrapped function
         """
-        return LambdaMapper(f=f, pre=self.pre, memoize=self.memoize)
+        name = self.name or f.__name__
+        return LambdaMapper(name=name, f=f, pre=self.pre, memoize=self.memoize)

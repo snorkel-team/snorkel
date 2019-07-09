@@ -39,20 +39,10 @@ class Trainer(object):
         """
         self._check_dataloaders(dataloaders)
 
-        # Generate the list of dataloaders for learning process
-        train_split = self.config["train_split"]
-        if isinstance(train_split, str):
-            train_split = [train_split]
-
+        # Identify the dataloaders to train on
         train_dataloaders = [
-            dl for dl in dataloaders if dl.dataset.split in train_split
+            dl for dl in dataloaders if dl.dataset.split == self.config["train_split"]
         ]
-
-        if not train_dataloaders:
-            raise ValueError(
-                f"Cannot find the specified train_split "
-                f'{self.config["train_split"]} in dataloaders.'
-            )
 
         # Calculate the total number of batches per epoch
         self.n_batches_per_epoch = sum(
@@ -140,22 +130,34 @@ class Trainer(object):
 
     def _check_dataloaders(self, dataloaders):
         """ Validates dataloaders given training config"""
+        if not isinstance(dataloaders, list):
+            raise Exception("Trainer.train_model() expects a list of DictDataLoaders.")
 
         train_split = self.config["train_split"]
-        if isinstance(train_split, str):
-            train_split = [train_split]
-
         valid_split = self.config["valid_split"]
-        if isinstance(valid_split, str):
-            valid_split = [valid_split]
-
         test_split = self.config["test_split"]
-        if isinstance(test_split, str):
-            test_split = [test_split]
 
-        all_splits = train_split + valid_split + test_split
+        all_splits = [train_split, valid_split, test_split]
         if not all([dl.dataset.split in all_splits for dl in dataloaders]):
             raise ValueError(f"Dataloader splits must be one of {all_splits}")
+
+        if not any([dl.dataset.split == train_split for dl in dataloaders]):
+            raise ValueError(
+                f"Cannot find any dataloaders with split matching train split: "
+                f'{self.config["train_split"]}.'
+            )
+
+    def _set_log_writer(self):
+        if self.config["logging"]:
+            config = self.config["log_writer_config"]
+            if config["writer"] == "json":
+                self.log_writer = LogWriter(**config)
+            elif config["writer"] == "tensorboard":
+                self.log_writer = TensorBoardWriter(**config)
+            else:
+                raise ValueError(f"Unrecognized writer option: {config['writer']}")
+        else:
+            self.log_writer = None
 
     def _set_checkpointer(self):
         if self.config["checkpointing"]:
@@ -171,18 +173,6 @@ class Trainer(object):
             )
         else:
             self.checkpointer = None
-
-    def _set_log_writer(self):
-        if self.config["logging"]:
-            config = self.config["log_writer_config"]
-            if config["writer"] == "json":
-                self.log_writer = LogWriter(**config)
-            elif config["writer"] == "tensorboard":
-                self.log_writer = TensorBoardWriter(**config)
-            else:
-                raise ValueError(f"Unrecognized writer option: {config['writer']}")
-        else:
-            self.log_writer = None
 
     def _set_log_manager(self):
         """Set logging manager."""
@@ -253,21 +243,11 @@ class Trainer(object):
             )
         elif opt == "exponential":
             lr_scheduler = optim.lr_scheduler.ExponentialLR(
-                self.optimizer, **lr_scheduler_config["exponential_config"]
+                self.optimizer, **lr_scheduler_config.get("exponential_config", {})
             )
         elif opt == "step":
             lr_scheduler = optim.lr_scheduler.StepLR(
-                self.optimizer, **lr_scheduler_config["step_config"]
-            )
-        elif opt == "multi_step":
-            lr_scheduler = optim.lr_scheduler.MultiStepLR(
-                self.optimizer, **lr_scheduler_config["multi_step_config"]
-            )
-        elif opt == "reduce_on_plateau":
-            lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-                self.optimizer,
-                min_lr=lr_scheduler_config["min_lr"],
-                **lr_scheduler_config["plateau_config"],
+                self.optimizer, **lr_scheduler_config.get("step_config", {})
             )
         else:
             raise ValueError(f"Unrecognized lr scheduler option '{opt}'")
@@ -282,19 +262,19 @@ class Trainer(object):
             if warmup_steps < 0:
                 raise ValueError(f"warmup_steps much greater or equal than 0.")
             warmup_unit = self.config["lr_scheduler_config"]["warmup_unit"]
-            if warmup_unit == "epoch":
+            if warmup_unit == "epochs":
                 self.warmup_steps = int(warmup_steps * self.n_batches_per_epoch)
-            elif warmup_unit == "batch":
+            elif warmup_unit == "batches":
                 self.warmup_steps = int(warmup_steps)
             else:
                 raise ValueError(
-                    f"warmup_unit must be 'batch' or 'epoch', but {warmup_unit} found."
+                    f"warmup_unit must be 'batches' or 'epochs', but {warmup_unit} found."
                 )
             linear_warmup_func = lambda x: x / self.warmup_steps
             warmup_scheduler = optim.lr_scheduler.LambdaLR(
                 self.optimizer, linear_warmup_func
             )
-            logging.info(f"Warmup {self.warmup_steps} batchs.")
+            logging.info(f"Warmup {self.warmup_steps} batches.")
         elif self.config["lr_scheduler_config"]["warmup_percentage"]:
             warmup_percentage = self.config["lr_scheduler_config"]["warmup_percentage"]
             self.warmup_steps = int(
@@ -304,7 +284,7 @@ class Trainer(object):
             warmup_scheduler = optim.lr_scheduler.LambdaLR(
                 self.optimizer, linear_warmup_func
             )
-            logging.info(f"Warmup {self.warmup_steps} batchs.")
+            logging.info(f"Warmup {self.warmup_steps} batches.")
         else:
             warmup_scheduler = None
             self.warmup_steps = 0
@@ -331,15 +311,7 @@ class Trainer(object):
         self.batch_scheduler = scheduler_class()
 
     def _evaluate(self, model, dataloaders, split):
-        if not isinstance(split, list):
-            valid_split = [split]
-        else:
-            valid_split = split
-
-        valid_dataloaders = [
-            dl for dl in dataloaders if dl.dataset.split in valid_split
-        ]
-        return model.score(valid_dataloaders)
+        return model.score([dl for dl in dataloaders if dl.dataset.split in split])
 
     def _logging(self, model, dataloaders, batch_size):
         """Checking if it's time to evaluting or checkpointing"""

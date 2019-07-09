@@ -175,16 +175,12 @@ class SnorkelClassifier(nn.Module):
         return outputs
 
     def calculate_loss(
-        self,
-        X_dict: Mapping[str, Any],
-        Y_dict: Dict[str, torch.Tensor],
-        task_to_label_dict: Dict[str, str],
+        self, X_dict: Mapping[str, Any], Y_dict: Dict[str, torch.Tensor]
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, float]]:
         """Calculate the loss
 
         :param X_dict: The input data
         :param Y_dict: The output data
-        :param task_to_label_dict: The task to label mapping
         :return: The loss and the number of samples in the batch of all tasks
         :rtype: dict, dict
         """
@@ -192,13 +188,11 @@ class SnorkelClassifier(nn.Module):
         loss_dict = dict()
         count_dict = dict()
 
-        task_names = task_to_label_dict.keys()
+        task_names = Y_dict.keys()
         outputs = self.forward(X_dict, task_names)
 
         # Calculate loss for each task
-        for task_name, label_name in task_to_label_dict.items():
-
-            Y = Y_dict[label_name]
+        for task_name, Y in Y_dict.items():
 
             # Select the active samples
             if len(Y.size()) == 1:
@@ -251,14 +245,10 @@ class SnorkelClassifier(nn.Module):
         prob_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
 
         for batch_num, (X_batch_dict, Y_batch_dict) in enumerate(dataloader):
-            prob_batch_dict = self._calculate_probs(
-                X_batch_dict, dataloader.task_to_label_dict.keys()
-            )
-            for task_name in dataloader.task_to_label_dict.keys():
+            prob_batch_dict = self._calculate_probs(X_batch_dict, Y_batch_dict.keys())
+            for task_name, Y in Y_batch_dict.items():
                 prob_dict_list[task_name].extend(prob_batch_dict[task_name])
-                gold_dict_list[task_name].extend(
-                    Y_batch_dict[dataloader.task_to_label_dict[task_name]].cpu().numpy()
-                )
+                gold_dict_list[task_name].extend(Y.cpu().numpy())
 
         gold_dict: Dict[str, np.ndarray] = {}
         prob_dict: Dict[str, np.ndarray] = {}

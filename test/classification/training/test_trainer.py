@@ -49,21 +49,16 @@ def create_dataloaders(num_tasks=1):
     splits = ["train", "valid", "test"]
     for X_split, Y_split, split in zip(Xs, Ys, splits):
 
-        Y_dict = {"task1_labels": Y_split[:, 0]}
-        task_to_label_dict = {"task1": "task1_labels"}
+        Y_dict = {"task1": Y_split[:, 0]}
         if num_tasks == 2:
-            Y_dict["task2_labels"] = Y_split[:, 1]
-            task_to_label_dict["task2"] = "task2_labels"
+            Y_dict["task2"] = Y_split[:, 1]
 
         dataset = DictDataset(
             name="dataset", split=split, X_dict={"coordinates": X_split}, Y_dict=Y_dict
         )
 
         dataloader = DictDataLoader(
-            task_to_label_dict=task_to_label_dict,
-            dataset=dataset,
-            batch_size=4,
-            shuffle=(dataset.split == "train"),
+            dataset=dataset, batch_size=4, shuffle=(dataset.split == "train")
         )
         dataloaders.append(dataloader)
     return dataloaders

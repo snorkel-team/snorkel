@@ -64,16 +64,6 @@ class SlicingTest(unittest.TestCase):
         add_slice_labels(dataloaders[0], task1, S_train, slice_names)
         add_slice_labels(dataloaders[1], task1, S_valid, slice_names)
 
-        self.assertEqual(len(dataloaders[0].task_to_label_dict), 8)
-        self.assertIn("task1", dataloaders[0].task_to_label_dict)
-        self.assertIn("task1_slice:f_ind", dataloaders[0].task_to_label_dict)
-        self.assertIn("task1_slice:f_pred", dataloaders[0].task_to_label_dict)
-        self.assertIn("task1_slice:g_ind", dataloaders[0].task_to_label_dict)
-        self.assertIn("task1_slice:g_pred", dataloaders[0].task_to_label_dict)
-        self.assertIn("task1_slice:base_ind", dataloaders[0].task_to_label_dict)
-        self.assertIn("task1_slice:base_pred", dataloaders[0].task_to_label_dict)
-        self.assertIn("task2", dataloaders[0].task_to_label_dict)
-
         # Convert to slice tasks
         task1_tasks = convert_to_slice_tasks(task1, slice_names)
         tasks = task1_tasks + [task2]
@@ -98,13 +88,9 @@ def create_data(n):
 
 def create_dataloader(df, split):
     Y_dict = {}
-    task_to_label_dict = {}
 
-    Y_dict[f"task1_labels"] = torch.LongTensor(df["y1"])
-    task_to_label_dict["task1"] = "task1_labels"
-
-    Y_dict[f"task2_labels"] = torch.LongTensor(df["y2"])
-    task_to_label_dict["task2"] = "task2_labels"
+    Y_dict[f"task1"] = torch.LongTensor(df["y1"])
+    Y_dict[f"task2"] = torch.LongTensor(df["y2"])
 
     dataset = DictDataset(
         name="TestData",
@@ -118,10 +104,7 @@ def create_dataloader(df, split):
     )
 
     dataloader = DictDataLoader(
-        task_to_label_dict=task_to_label_dict,
-        dataset=dataset,
-        batch_size=4,
-        shuffle=(dataset.split == "train"),
+        dataset=dataset, batch_size=4, shuffle=(dataset.split == "train")
     )
     return dataloader
 

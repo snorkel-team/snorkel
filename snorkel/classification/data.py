@@ -78,9 +78,7 @@ class DictDataLoader(DataLoader):
     label(s) to use in dataset's Y_dict for this task), and split (which part this
     dataset belongs to) information.
 
-    :param task_to_label_dict: the task to label mapping where key is the task name and
     value is the labels for that task and should be the key in Y_dict
-    :type task_to_label_dict: dict
     :param dataset: the dataset to construct the dataloader
     :type dataset: torch.utils.data.Dataset
     :param split: the split information, defaults to "train"
@@ -94,20 +92,11 @@ class DictDataLoader(DataLoader):
         self,
         dataset: DictDataset,
         collate_fn: Callable[..., Any] = collate_dicts,
-        task_to_label_dict: Dict[str, str] = None,
         **kwargs,
     ) -> None:
 
         assert isinstance(dataset, DictDataset)
         super().__init__(dataset, collate_fn=collate_fn, **kwargs)
-
-        self.task_to_label_dict = task_to_label_dict or {}
-
-        for label in self.task_to_label_dict.values():
-            if label not in dataset.Y_dict:
-                raise ValueError(
-                    f"Label {label} specified in task_to_label_dict could not be found in Y_dict"
-                )
 
 
 def split_data(

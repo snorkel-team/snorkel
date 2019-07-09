@@ -95,9 +95,7 @@ class Trainer(object):
                 self.optimizer.zero_grad()
 
                 # Perform forward pass and calcualte the loss and count
-                loss_dict, count_dict = model.calculate_loss(
-                    X_dict, Y_dict, dataloader.task_to_label_dict
-                )
+                loss_dict, count_dict = model.calculate_loss(X_dict, Y_dict)
 
                 # Update running loss and count
                 for task_name in loss_dict.keys():

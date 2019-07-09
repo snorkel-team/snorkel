@@ -1,5 +1,4 @@
 from collections import Counter
-from functools import partial
 from itertools import chain
 
 import numpy as np
@@ -7,69 +6,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from scipy.sparse import issparse
-from torch.utils.data import DataLoader, Dataset, TensorDataset
-from tqdm import tqdm
 
 from .graph_utils import get_clique_tree
 from .lm_defaults import lm_default_config
 from .logger import Logger
-from .utils import LabelModelDataset, place_on_gpu, recursive_merge_dicts, set_seed
-
-
-def to_numpy(Z):
-    """Converts a None, list, np.ndarray, or torch.Tensor to np.ndarray;
-    also handles converting sparse input to dense."""
-    if Z is None:
-        return Z
-    elif issparse(Z):
-        return Z.toarray()
-    elif isinstance(Z, np.ndarray):
-        return Z
-    elif isinstance(Z, list):
-        return np.array(Z)
-    elif isinstance(Z, torch.Tensor):
-        return Z.cpu().numpy()
-    else:
-        msg = (
-            f"Expected None, list, numpy.ndarray or torch.Tensor, "
-            f"got {type(Z)} instead."
-        )
-        raise Exception(msg)
-
-
-def to_torch(Z, dtype=None):
-    """Converts a None, list, np.ndarray, or torch.Tensor to torch.Tensor;
-    also handles converting sparse input to dense."""
-    if Z is None:
-        return None
-    elif issparse(Z):
-        Z = torch.from_numpy(Z.toarray())
-    elif isinstance(Z, torch.Tensor):
-        pass
-    elif isinstance(Z, list):
-        Z = torch.from_numpy(np.array(Z))
-    elif isinstance(Z, np.ndarray):
-        Z = torch.from_numpy(Z)
-    else:
-        msg = (
-            f"Expected list, numpy.ndarray or torch.Tensor, " f"got {type(Z)} instead."
-        )
-        raise Exception(msg)
-
-    return Z.type(dtype) if dtype else Z
-
-
-def stack_batches(X):
-    """Stack a list of np.ndarrays along the first axis, returning an
-    np.ndarray; note this is mainly for smooth hanlding of the multi-task
-    setting."""
-    X = [to_numpy(Xb) for Xb in X]
-    if len(X[0].shape) == 1:
-        return np.hstack(X)
-    elif len(X[0].shape) == 2:
-        return np.vstack(X)
-    else:
-        raise ValueError(f"Can't stack {len(X[0].shape)}-dim batches.")
+from .utils import recursive_merge_dicts, set_seed
 
 
 class LabelModel(nn.Module):
@@ -82,7 +23,6 @@ class LabelModel(nn.Module):
     def __init__(self, k=2, **kwargs):
         super().__init__()
         self.config = recursive_merge_dicts(lm_default_config, kwargs)
-        self.multitask = False
         self.k = k
 
         # Set random seed
@@ -327,7 +267,7 @@ class LabelModel(nn.Module):
         # Note that mu is a matrix and this is the *Frobenius norm*
         return torch.norm(D @ (self.mu - self.mu_init)) ** 2
 
-    def loss_mu(self, *args, l2=0):
+    def loss_mu(self, l2=0):
         loss_1 = torch.norm((self.O - self.mu @ self.P @ self.mu.t())[self.mask]) ** 2
         loss_2 = torch.norm(torch.sum(self.mu @ self.P, 1) - torch.diag(self.O)) ** 2
         return loss_1 + loss_2 + self.loss_l2(l2=l2)
@@ -358,91 +298,15 @@ class LabelModel(nn.Module):
         nodes = range(self.m)
         self.c_tree = get_clique_tree(nodes, [])
 
-    def _create_dataset(self, *data):
-        """Converts input data to the appropriate Dataset"""
-        # Make sure data is a tuple of dense tensors
-        data = [self._to_torch(x, dtype=torch.FloatTensor) for x in data]
-        return TensorDataset(*data)
-
-    def _create_data_loader(self, data, **kwargs):
-        """Converts input data into a DataLoader"""
-        if data is None:
-            return None
-
-        # Set DataLoader config
-        # NOTE: Not applicable if data is already a DataLoader
-        config = {
-            **self.config["train_config"]["data_loader_config"],
-            **kwargs,
-            "pin_memory": self.config["device"] != "cpu",
-        }
-        # Return data as DataLoader
-        if isinstance(data, DataLoader):
-            return data
-        elif isinstance(data, Dataset):
-            return DataLoader(data, **config)
-        elif isinstance(data, (tuple, list)):
-            return DataLoader(self._create_dataset(*data), **config)
-        else:
-            raise ValueError("Input data type not recognized.")
-
-    def _get_predictions(self, data, break_ties="random", return_probs=False, **kwargs):
-        """Computes predictions in batch, given a labeled dataset
-
-        Args:
-            data: a Pytorch DataLoader, Dataset, or tuple with Tensors (X,Y):
-                X: The input for the predict method
-                Y: An [n] or [n, 1] torch.Tensor or np.ndarray of target labels
-                    in {1,...,k}
-            break_ties: How to break ties when making predictions
-            return_probs: Return the predicted probabilities as well
-
-        Returns:
-            Y_p: A Tensor of predictions
-            Y: A Tensor of labels
-            [Optionally: Y_s: An [n, k] np.ndarray of predicted probabilities]
-        """
-        data_loader = self._create_data_loader(data)
-        Y_p = []
-        Y = []
-        Y_s = []
-
-        # Do batch evaluation by default, getting the predictions and labels
-        for batch_num, data in enumerate(data_loader):
-            Xb, Yb = data
-            Y.append(self._to_numpy(Yb))
-
-            # Optionally move to device
-            if self.config["device"] != "cpu":
-                Xb = place_on_gpu(Xb)
-
-            # Append predictions and labels from DataLoader
-            Y_pb, Y_sb = self.predict(
-                Xb, break_ties=break_ties, return_probs=True, **kwargs
-            )
-            Y_p.append(self._to_numpy(Y_pb))
-            Y_s.append(self._to_numpy(Y_sb))
-        Y_p, Y, Y_s = map(stack_batches, [Y_p, Y, Y_s])
-        if return_probs:
-            return Y_p, Y, Y_s
-        else:
-            return Y_p, Y
-
-    def _execute_logging(self, train_loader, loss, batch_size):
+    def _execute_logging(self, loss):
         self.eval()
-        self.running_loss += loss.item() * batch_size
-        self.running_examples += batch_size
+        self.running_loss += loss.item()
+        self.running_examples += 1
 
-        # Initialize metrics dict
-        metrics_dict = {}
         # Always add average loss
-        metrics_dict["train/loss"] = self.running_loss / self.running_examples
+        metrics_dict = {"train/loss": self.running_loss / self.running_examples}
 
-        if self.logger.check(batch_size):
-            logger_metrics = self.logger.calculate_metrics(
-                self, train_loader, None, metrics_dict
-            )
-            metrics_dict.update(logger_metrics)
+        if self.logger.check():
             self.logger.log(metrics_dict)
 
             # Reset running loss and examples counts
@@ -453,12 +317,7 @@ class LabelModel(nn.Module):
         return metrics_dict
 
     def _set_logger(self, train_config, epoch_size):
-        self.logger = Logger(
-            train_config["logger_config"],
-            None,
-            epoch_size,
-            verbose=self.config["verbose"],
-        )
+        self.logger = Logger(train_config["logger_config"])
 
     def _set_optimizer(self, train_config):
         optimizer_config = train_config["optimizer_config"]
@@ -527,98 +386,6 @@ class LabelModel(nn.Module):
                 else:
                     self.lr_scheduler.step()
 
-    def _train_model(self, train_data, loss_fn):
-        """The internal training routine called by train_model() after setup
-
-        Args:
-            train_data: a tuple of Tensors (X,Y), a Dataset, or a DataLoader of
-                X (data) and Y (labels) for the train split
-            loss_fn: the loss function to minimize (maps *data -> loss)
-            valid_data: a tuple of Tensors (X,Y), a Dataset, or a DataLoader of
-                X (data) and Y (labels) for the dev split
-            restore_state: a dictionary containing model weights (optimizer, main network) and training information
-
-        If valid_data is not provided, then no checkpointing or
-        evaluation on the dev set will occur.
-        """
-        # Set model to train mode
-        self.train()
-        train_config = self.config["train_config"]
-
-        # Convert data to DataLoaders
-        train_loader = self._create_data_loader(train_data)
-        epoch_size = len(train_loader.dataset)
-
-        # Move model to GPU
-        if self.config["verbose"] and self.config["device"] != "cpu":
-            print("Using GPU...")
-        self.to(self.config["device"])
-
-        # Set training components
-        self._set_logger(train_config, epoch_size)
-        self._set_optimizer(train_config)
-        self._set_scheduler(train_config)
-
-        # Restore model if necessary
-        start_iteration = 0
-
-        # Train the model
-        metrics_hist = {}  # The most recently seen value for all metrics
-        for epoch in range(start_iteration, train_config["n_epochs"]):
-            progress_bar = (
-                train_config["progress_bar"]
-                and self.config["verbose"]
-                and self.logger.log_unit == "epochs"
-            )
-
-            t = tqdm(
-                enumerate(train_loader),
-                total=len(train_loader),
-                disable=(not progress_bar),
-            )
-
-            self.running_loss = 0.0
-            self.running_examples = 0
-            for batch_num, data in t:
-                # NOTE: actual batch_size may not equal config's target batch_size
-                batch_size = len(data[0])
-
-                # Moving data to device
-                if self.config["device"] != "cpu":
-                    data = place_on_gpu(data)
-
-                # Zero the parameter gradients
-                self.optimizer.zero_grad()
-
-                # Forward pass to calculate the average loss per example
-                loss = loss_fn(*data)
-                if torch.isnan(loss):
-                    msg = "Loss is NaN. Consider reducing learning rate."
-                    raise Exception(msg)
-
-                # Backward pass to calculate gradients
-                # Loss is an average loss per example
-                loss.backward()
-
-                # Perform optimizer step
-                self.optimizer.step()
-
-                # Calculate metrics, log, and checkpoint as necessary
-                metrics_dict = self._execute_logging(train_loader, loss, batch_size)
-                metrics_hist.update(metrics_dict)
-
-                # tqdm output
-                t.set_postfix(loss=metrics_dict["train/loss"])
-
-            # Apply learning rate scheduler
-            self._update_scheduler(epoch, metrics_hist)
-
-        self.eval()
-
-        # Print confusion matrix if applicable
-        if self.config["verbose"]:
-            print("Finished Training")
-
     def train_model(self, L_train, Y_dev=None, class_balance=None, **kwargs):
         """Train the model (i.e. estimate mu):
 
@@ -638,19 +405,10 @@ class LabelModel(nn.Module):
         self.config = recursive_merge_dicts(self.config, kwargs, misses="ignore")
         train_config = self.config["train_config"]
 
-        # Note that the LabelModel class implements its own (centered) L2 reg.
-        l2 = train_config.get("l2", 0)
-
         L_train = self._check_L(L_train)
         self._set_class_balance(class_balance, Y_dev)
         self._set_constants(L_train)
         self._create_tree()
-
-        # Creating this faux dataset is necessary for now because the LabelModel
-        # loss functions do not accept inputs, but Classifer._train_model()
-        # expects training data to feed to the loss functions.
-        dataset = LabelModelDataset([0], [0])
-        train_loader = DataLoader(dataset)
 
         # Compute O and initialize params
         if self.config["verbose"]:  # pragma: no cover
@@ -661,26 +419,65 @@ class LabelModel(nn.Module):
         # Estimate \mu
         if self.config["verbose"]:  # pragma: no cover
             print("Estimating \mu...")
-        self._train_model(train_loader, partial(self.loss_mu, l2=l2))
+
+        # Set model to train mode
+        self.train()
+        train_config = self.config["train_config"]
+        l2 = train_config.get("l2", 0)
+
+        # Move model to GPU
+        if self.config["verbose"] and self.config["device"] != "cpu":
+            print("Using GPU...")
+        self.to(self.config["device"])
+
+        # Set training components
+        self._set_logger(train_config, epoch_size=1)
+        self._set_optimizer(train_config)
+        self._set_scheduler(train_config)
+
+        # Restore model if necessary
+        start_iteration = 0
+
+        # Train the model
+        metrics_hist = {}  # The most recently seen value for all metrics
+        for epoch in range(start_iteration, train_config["n_epochs"]):
+            self.running_loss = 0.0
+            self.running_examples = 0
+
+            # Zero the parameter gradients
+            self.optimizer.zero_grad()
+
+            # Forward pass to calculate the average loss per example
+            loss = self.loss_mu(l2=l2)
+            if torch.isnan(loss):
+                msg = "Loss is NaN. Consider reducing learning rate."
+                raise Exception(msg)
+
+            # Backward pass to calculate gradients
+            # Loss is an average loss per example
+            loss.backward()
+
+            # Perform optimizer step
+            self.optimizer.step()
+
+            # Calculate metrics, log, and checkpoint as necessary
+            metrics_dict = self._execute_logging(loss)
+            metrics_hist.update(metrics_dict)
+
+            # Apply learning rate scheduler
+            self._update_scheduler(epoch, metrics_hist)
+
+        self.eval()
+
+        # Print confusion matrix if applicable
+        if self.config["verbose"]:
+            print("Finished Training")
 
     def save(self, destination, **kwargs):
-        """Serialize and save a model.
-
-        Example:
-            end_model = EndModel(...)
-            end_model.train_model(...)
-            end_model.save("my_end_model.pkl")
-        """
         with open(destination, "wb") as f:
             torch.save(self, f, **kwargs)
 
     @staticmethod
     def load(source, **kwargs):
-        """Deserialize and load a model.
-
-        Example:
-            end_model = EndModel.load("my_end_model.pkl")
-            end_model.score(...)
-        """
         with open(source, "rb") as f:
             return torch.load(f, **kwargs)

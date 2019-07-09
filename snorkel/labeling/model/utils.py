@@ -3,28 +3,6 @@ import random
 
 import numpy as np
 import torch
-from torch.utils.data import Dataset
-
-
-class LabelModelDataset(Dataset):
-    """A dataset that group each item in X with its label from Y
-
-    Args:
-        X: an n-dim iterable of items
-        Y: a torch.Tensor of labels
-            This may be predicted (int) labels [n] or probabilistic (float) labels [n, k]
-    """
-
-    def __init__(self, X, Y):
-        self.X = X
-        self.Y = Y
-        assert len(X) == len(Y)
-
-    def __getitem__(self, index):
-        return tuple([self.X[index], self.Y[index]])
-
-    def __len__(self):
-        return len(self.X)
 
 
 def recursive_merge_dicts(x, y, misses="report", verbose=None):
@@ -94,21 +72,6 @@ def recursive_merge_dicts(x, y, misses="report", verbose=None):
     z = copy.deepcopy(x)
     recurse(z, y, misses, verbose)
     return z
-
-
-# DEPRECATION: This is replaced by move_to_device
-def place_on_gpu(data):
-    """Utility to place data on GPU, where data could be a torch.Tensor, a tuple
-    or list of Tensors, or a tuple or list of tuple or lists of Tensors"""
-    data_type = type(data)
-    if data_type in (list, tuple):
-        data = [place_on_gpu(data[i]) for i in range(len(data))]
-        data = data_type(data)
-        return data
-    elif isinstance(data, torch.Tensor):
-        return data.cuda()
-    else:
-        return ValueError(f"Data type {type(data)} not recognized.")
 
 
 def set_seed(seed: int):

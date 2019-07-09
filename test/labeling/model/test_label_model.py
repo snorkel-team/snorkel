@@ -234,7 +234,7 @@ class LabelModelTest(unittest.TestCase):
             label_model.loss_mu().detach().numpy().ravel()[0], 0.675, 3
         )
 
-    def test_train_model(self):
+    def test_model_loss(self):
         L = np.array([[1, 0, 1], [1, 2, 1]])
         label_model = self._set_up_model(L)
 
@@ -245,6 +245,39 @@ class LabelModelTest(unittest.TestCase):
         next_loss = label_model.loss_mu().detach().numpy().ravel()[0]
 
         self.assertLessEqual(next_loss, init_loss)
+        self.assertRaises(Exception, label_model.train_model, L, n_epochs=10, lr=1e8)
+
+    def test_optimizer(self):
+        L = np.array([[1, 0, 1], [1, 2, 1]])
+        label_model = self._set_up_model(L)
+
+        label_model.train_model(L, n_epochs=1, optimizer="rmsprop")
+        label_model.train_model(L, n_epochs=1, optimizer="adam")
+        self.assertRaises(
+            ValueError, label_model.train_model, L, n_epochs=1, optimizer="bad_opt"
+        )
+
+    def test_lr_scheduler(self):
+        L = np.array([[1, 0, 1], [1, 2, 1]])
+        label_model = self._set_up_model(L)
+
+        label_model.train_model(L, n_epochs=1, lr_scheduler=None)
+        label_model.train_model(L, n_epochs=1, lr_scheduler="exponential")
+        self.assertRaises(
+            ValueError,
+            label_model.train_model,
+            L,
+            n_epochs=1,
+            lr_scheduler="bad_scheduler",
+        )
+
+    def test_save_and_load(self):
+        L = np.array([[1, 0, 1], [1, 2, 1]])
+        label_model = self._set_up_model(L)
+
+        label_model.train_model(L, n_epochs=1, lr_scheduler=None)
+        label_model.save("./test_save")
+        label_model.load("./test_save")
 
 
 if __name__ == "__main__":

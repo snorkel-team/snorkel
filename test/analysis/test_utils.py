@@ -16,7 +16,7 @@ PREDS_ROUND = np.array([[0, 1], [1, 0]])
 
 
 class MetricsTest(unittest.TestCase):
-    def test_bad_input(self):
+    def test_inputs(self):
         not_array = "112200"
         Y_nparray = np.ones((3,))
         with self.assertRaisesRegex(ValueError, "Input could not be converted"):

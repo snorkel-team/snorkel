@@ -5,12 +5,12 @@ import numpy as np
 import scipy.sparse as sparse
 import torch
 
-from snorkel.classification.data import DictDataLoader, DictDataset, split_data
+from snorkel.classification.data import ClassifierDataLoader, ClassifierDataset, split_data
 
 
 class DatasetTest(unittest.TestCase):
     def test_classifier_dataset(self):
-        """Unit test of DictDataset"""
+        """Unit test of ClassifierDataset"""
 
         x1 = [
             torch.Tensor([1]),
@@ -22,7 +22,7 @@ class DatasetTest(unittest.TestCase):
 
         y1 = torch.Tensor([0, 0, 0, 0, 0])
 
-        dataset = DictDataset(
+        dataset = ClassifierDataset(
             X_dict={"data1": x1}, Y_dict={"label1": y1}, name="new_data", split="train"
         )
 
@@ -31,7 +31,7 @@ class DatasetTest(unittest.TestCase):
         self.assertTrue(torch.equal(dataset[0][1]["label1"], y1[0]))
 
     def test_classifier_dataloader(self):
-        """Unit test of DictDataLoader"""
+        """Unit test of ClassifierDataLoader"""
 
         x1 = [
             torch.Tensor([1]),
@@ -53,14 +53,14 @@ class DatasetTest(unittest.TestCase):
 
         y2 = torch.Tensor([1, 1, 1, 1, 1])
 
-        dataset = DictDataset(
+        dataset = ClassifierDataset(
             name="new_data",
             split="train",
             X_dict={"data1": x1, "data2": x2},
             Y_dict={"label1": y1, "label2": y2},
         )
 
-        dataloader1 = DictDataLoader(
+        dataloader1 = ClassifierDataLoader(
             task_to_label_dict={"task1": "label1"}, dataset=dataset, batch_size=2
         )
 
@@ -78,7 +78,7 @@ class DatasetTest(unittest.TestCase):
         self.assertTrue(torch.equal(y_batch["label1"], torch.Tensor([0, 0])))
         self.assertTrue(torch.equal(y_batch["label2"], torch.Tensor([1, 1])))
 
-        dataloader2 = DictDataLoader(
+        dataloader2 = ClassifierDataLoader(
             task_to_label_dict={"task2": "label2"}, dataset=dataset, batch_size=3
         )
 

@@ -27,6 +27,18 @@ class MetricsTest(unittest.TestCase):
         self.assertRaises(
             ValueError, metric_score, golds, pred3, probs=None, metric="accuracy"
         )
+        self.assertRaises(
+            ValueError, metric_score, golds, pred3, probs=None, metric="bad_metric"
+        )
+        self.assertRaises(
+            ValueError,
+            metric_score,
+            golds,
+            pred3,
+            probs=None,
+            metric="accuracy",
+            filter_dict={"bad_map": [0]},
+        )
 
     def test_array_conversion(self):
         golds = torch.Tensor([1, 1, 1, 2, 2])
@@ -120,11 +132,30 @@ class MetricsTest(unittest.TestCase):
     def test_roc_auc(self):
         golds = [1, 1, 1, 1, 2]
         probs = np.array([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
+        probs_nonbinary = np.array(
+            [
+                [1.0, 0.0, 0.0],
+                [0.7, 0.0, 0.3],
+                [0.8, 0.0, 0.2],
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+            ]
+        )
+
         roc_auc = metric_score(golds, preds=None, probs=probs, metric="roc_auc")
         self.assertAlmostEqual(roc_auc, 0.0)
         probs = np.fliplr(probs)
         roc_auc = metric_score(golds, preds=None, probs=probs, metric="roc_auc")
         self.assertAlmostEqual(roc_auc, 1.0)
+
+        self.assertRaises(
+            ValueError,
+            metric_score,
+            golds,
+            preds=None,
+            probs=probs_nonbinary,
+            metric="roc_auc",
+        )
 
 
 if __name__ == "__main__":

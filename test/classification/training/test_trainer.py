@@ -1,6 +1,6 @@
+import copy
 import unittest
 
-import numpy as np
 import torch
 import torch.nn as nn
 
@@ -9,62 +9,26 @@ from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
 from snorkel.classification.training import Trainer
 
+TASK_NAMES = ["task1", "task2"]
 trainer_config = {"n_epochs": 2, "progress_bar": False}
 
 
-class TrainerTest(unittest.TestCase):
-    def test_trainer_onetask(self):
-        """Train a single-task model"""
-        task1 = create_task("task1", module_suffixes=["A", "A"])
-        model = SnorkelClassifier(tasks=[task1])
-        dataloaders = create_dataloaders(num_tasks=1)
-        trainer = Trainer(**trainer_config)
-        trainer.train_model(model, dataloaders)
+def create_dataloader(task_name="task", split="train"):
+    X = torch.FloatTensor([[1, 1], [2, 2], [3, 3], [4, 4]])
+    Y = torch.LongTensor([1, 1, 2, 2])
 
-    def test_trainer_twotask(self):
-        """Train a model with overlapping modules and flows"""
-        task1 = create_task("task1", module_suffixes=["A", "A"])
-        task2 = create_task("task2", module_suffixes=["A", "B"])
-        model = SnorkelClassifier(tasks=[task1, task2])
-        dataloaders = create_dataloaders(num_tasks=2)
-        trainer = Trainer(**trainer_config)
-        trainer.train_model(model, dataloaders)
+    dataset = DictDataset(
+        name="dataset",
+        split=split,
+        X_dict={"data": X},
+        Y_dict={task_name: Y},
+    )
+
+    dataloader = DictDataLoader(dataset, batch_size=2)
+    return dataloader
 
 
-def create_dataloaders(num_tasks=1):
-    n = 1200
-
-    X = np.random.random((n, 2)) * 2 - 1
-    Y = np.zeros((n, 2))
-    Y[:, 0] = (X[:, 0] > X[:, 1] + 0.5).astype(int) + 1
-    Y[:, 1] = (X[:, 0] > X[:, 1] + 0.25).astype(int) + 1
-
-    X = torch.tensor(X, dtype=torch.float)
-    Y = torch.tensor(Y, dtype=torch.long)
-
-    Xs = [X[:1000], X[1000:1100], X[1100:]]
-    Ys = [Y[:1000], Y[1000:1100], Y[1100:]]
-
-    dataloaders = []
-    splits = ["train", "valid", "test"]
-    for X_split, Y_split, split in zip(Xs, Ys, splits):
-
-        Y_dict = {"task1": Y_split[:, 0]}
-        if num_tasks == 2:
-            Y_dict["task2"] = Y_split[:, 1]
-
-        dataset = DictDataset(
-            name="dataset", split=split, X_dict={"coordinates": X_split}, Y_dict=Y_dict
-        )
-
-        dataloader = DictDataLoader(
-            dataset=dataset, batch_size=4, shuffle=(dataset.split == "train")
-        )
-        dataloaders.append(dataloader)
-    return dataloaders
-
-
-def create_task(task_name, module_suffixes):
+def create_task(task_name, module_suffixes=("", "")):
     module1_name = f"linear1{module_suffixes[0]}"
     module2_name = f"linear2{module_suffixes[1]}"
 
@@ -75,7 +39,7 @@ def create_task(task_name, module_suffixes):
         }
     )
 
-    op1 = Operation(module_name=module1_name, inputs=[("_input_", "coordinates")])
+    op1 = Operation(module_name=module1_name, inputs=[("_input_", "data")])
     op2 = Operation(module_name=module2_name, inputs=[(op1.name, 0)])
 
     task_flow = [op1, op2]
@@ -88,6 +52,43 @@ def create_task(task_name, module_suffixes):
     )
 
     return task
+
+
+dataloaders = [create_dataloader(task_name) for task_name in TASK_NAMES]
+tasks = [
+    create_task(TASK_NAMES[0], module_suffixes=["A", "A"]),
+    create_task(TASK_NAMES[1], module_suffixes=["A", "B"]),
+]
+
+
+class TrainerTest(unittest.TestCase):
+
+    def test_trainer_onetask(self):
+        """Train a single-task model"""
+        model = SnorkelClassifier([tasks[0]])
+        trainer = Trainer(**trainer_config)
+        trainer.train_model(model, [dataloaders[0]])
+
+    def test_trainer_twotask(self):
+        """Train a model with overlapping modules and flows"""
+        model = SnorkelClassifier(tasks)
+        trainer = Trainer(**trainer_config)
+        trainer.train_model(model, dataloaders)
+
+    def test_trainer_errors(self):
+        model = SnorkelClassifier([tasks[0]])
+        dataloader = copy.deepcopy(dataloaders[0])
+
+        # No train split
+        trainer = Trainer(**trainer_config)
+        dataloader.dataset.split = "valid"
+        with self.assertRaises(ValueError):
+            trainer.train_model(model, [dataloader])
+
+        # Unused split
+        trainer = Trainer(**trainer_config, valid_split="val")
+        with self.assertRaises(ValueError):
+            trainer.train_model(model, [dataloader])
 
 
 if __name__ == "__main__":

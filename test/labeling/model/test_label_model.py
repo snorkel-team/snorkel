@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 
 import numpy as np
@@ -275,8 +277,12 @@ class LabelModelTest(unittest.TestCase):
         label_model = self._set_up_model(L)
 
         label_model.train_model(L, n_epochs=1, lr_scheduler=None)
-        label_model.save("./test_save")
-        label_model.load("./test_save")
+        fd, path = tempfile.mkstemp()
+        try:
+            label_model.save(path)
+            label_model.load(path)
+        finally:
+            os.remove(path)
 
 
 if __name__ == "__main__":

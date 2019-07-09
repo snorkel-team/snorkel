@@ -21,24 +21,31 @@ from snorkel.types import DataPoint
 @slicing_function()
 def f(x: DataPoint) -> int:
     radius = 0.3
-    h, k = (-0.15, -0.3) # center
-    return np.sqrt((x.x1 - h)** 2 + (x.x2 - k) ** 2) < radius
+    h, k = (-0.15, -0.3)  # center
+    return np.sqrt((x.x1 - h) ** 2 + (x.x2 - k) ** 2) < radius
+
 
 @slicing_function()
 def g(x: DataPoint) -> int:
     radius = 0.3
-    h, k = (0.25, 0.0) # center
-    return np.sqrt((x.x1 - h)** 2 + (x.x2 - k) ** 2) < radius
+    h, k = (0.25, 0.0)  # center
+    return np.sqrt((x.x1 - h) ** 2 + (x.x2 - k) ** 2) < radius
 
 
 SEED = 123
 N_TRAIN = 1500
 N_VALID = 300
 
+
 class SlicingConvergenceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.trainer_config = {"lr": 0.01, "n_epochs": 30, "progress_bar": False, "verbose": True}
+        cls.trainer_config = {
+            "lr": 0.01,
+            "n_epochs": 30,
+            "progress_bar": False,
+            "verbose": True,
+        }
 
     @pytest.mark.complex
     def test_convergence(self):

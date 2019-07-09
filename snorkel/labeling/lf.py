@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Mapping, Optional, Tuple
+from typing import Any, Callable, List, Mapping, Optional
 
 from snorkel.types import DataPoint
 
@@ -25,10 +25,6 @@ class LabelingFunction:
         Name of the LF
     f
         Function that implements the core LF logic
-    label_space
-        Set of labels the LF can output, including 0
-    schema
-        Fields of the input `DataPoint`s the LF accesses
     resources
         Labeling resources passed in to `f` via `kwargs`
     preprocessors
@@ -39,10 +35,6 @@ class LabelingFunction:
     Attributes
     ----------
     name
-        See above
-    label_space
-        See above
-    schema
         See above
     fault_tolerant
         See above
@@ -57,15 +49,11 @@ class LabelingFunction:
         self,
         name: str,
         f: Callable[..., int],
-        label_space: Optional[Tuple[int, ...]] = None,
-        schema: Optional[Mapping[str, type]] = None,
         resources: Optional[Mapping[str, Any]] = None,
         preprocessors: Optional[List[BasePreprocessor]] = None,
         fault_tolerant: bool = False,
     ) -> None:
         self.name = name
-        self.label_space = label_space
-        self.schema = schema
         self.fault_tolerant = fault_tolerant
         self._f = f
         self._resources = resources or {}
@@ -104,10 +92,8 @@ class LabelingFunction:
         return self._f(x, **self._resources)
 
     def __repr__(self) -> str:
-        schema_str = f", DataPoint schema: {self.schema}" if self.schema else ""
-        label_str = f", Label space: {self.label_space}" if self.label_space else ""
         preprocessor_str = f", Preprocessors: {self._preprocessors}"
-        return f"Labeling function {self.name}{schema_str}{label_str}{preprocessor_str}"
+        return f"{type(self).__name__} {self.name}{preprocessor_str}"
 
 
 class labeling_function:
@@ -117,10 +103,6 @@ class labeling_function:
     ----------
     name
         Name of the LF. If None, uses the name of the wrapped function.
-    label_space
-        Set of labels the LF can output, including 0
-    schema
-        Fields of the input `DataPoint`s the LF accesses
     resources
         Labeling resources passed in to `f` via `kwargs`
     preprocessors
@@ -146,15 +128,11 @@ class labeling_function:
     def __init__(
         self,
         name: Optional[str] = None,
-        label_space: Optional[Tuple[int, ...]] = None,
-        schema: Optional[Mapping[str, type]] = None,
         resources: Optional[Mapping[str, Any]] = None,
         preprocessors: Optional[List[BasePreprocessor]] = None,
         fault_tolerant: bool = False,
     ) -> None:
         self.name = name
-        self.label_space = label_space
-        self.schema = schema
         self.resources = resources
         self.preprocessors = preprocessors
         self.fault_tolerant = fault_tolerant
@@ -176,8 +154,6 @@ class labeling_function:
         return LabelingFunction(
             name=name,
             f=f,
-            label_space=self.label_space,
-            schema=self.schema,
             resources=self.resources,
             preprocessors=self.preprocessors,
             fault_tolerant=self.fault_tolerant,

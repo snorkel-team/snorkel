@@ -14,7 +14,7 @@ NUM_EXAMPLES = 10
 BATCH_SIZE = 2
 
 
-def create_dataloader(task_name="task", split="train"):
+def create_dataloader(task_name="task", split="train", **kwargs):
     X = torch.FloatTensor([[i, i] for i in range(NUM_EXAMPLES)])
     Y = torch.ones(NUM_EXAMPLES, 1).long()
 
@@ -22,7 +22,7 @@ def create_dataloader(task_name="task", split="train"):
         name="dataset", split=split, X_dict={"data": X}, Y_dict={task_name: Y}
     )
 
-    dataloader = DictDataLoader(dataset, batch_size=BATCH_SIZE)
+    dataloader = DictDataLoader(dataset, batch_size=BATCH_SIZE, **kwargs)
     return dataloader
 
 
@@ -105,6 +105,14 @@ class ClassifierTest(unittest.TestCase):
         results = model.predict(dataloader, return_preds=True)
         self.assertEqual(sorted(list(results.keys())), ["golds", "preds", "probs"])
         self.assertEqual(results["preds"]["task1"].shape, (NUM_EXAMPLES,))
+
+    def test_empty_batch(self):
+        # Make the first BATCH_SIZE labels 0 so that one batch will have no labels
+        dataloader = create_dataloader("task1", shuffle=False)
+        for i in range(BATCH_SIZE):
+            dataloader.dataset.Y_dict["task1"][i] = 0
+        model = SnorkelClassifier([task1])
+        model.predict(dataloader)
 
     def test_score(self):
         model = SnorkelClassifier([task1])

@@ -161,19 +161,15 @@ def create_data(n: int) -> pd.DataFrame:
 
 
 def create_dataloader(df: pd.DataFrame, split: str) -> DictDataLoader:
-    Y_dict = {}
-
-    Y_dict[f"task"] = torch.LongTensor(df["y"])
-
     dataset = DictDataset(
         name="TestData",
         split=split,
         X_dict={
             "coordinates": torch.stack(
-                (torch.Tensor(df["x1"]), torch.Tensor(df["x2"])), dim=1
+                (torch.tensor(df["x1"]), torch.tensor(df["x2"])), dim=1
             )
         },
-        Y_dict=Y_dict,
+        Y_dict={"task": torch.tensor(df["y"], dtype=torch.long)},
     )
 
     dataloader = DictDataLoader(

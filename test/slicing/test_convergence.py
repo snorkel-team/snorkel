@@ -42,24 +42,26 @@ def h(x: DataPoint) -> int:
     return np.sqrt((x.x1 - h) ** 2 + (x.x2 - k) ** 2) < radius
 
 
-SEED = 123
-N_TRAIN = 1500
-N_VALID = 300
-
-
 class SlicingConvergenceTest(unittest.TestCase):
+    @classmethod
+    def setup_class(cls):
+        # Create raw data
+        cls.N_TRAIN = 1500
+        cls.N_VALID = 300
+
+        cls.df_train = create_data(cls.N_TRAIN)
+        cls.df_valid = create_data(cls.N_VALID)
+
+        # Ensure deterministic training
+        set_seed(123)
+
     @pytest.mark.complex
     def test_convergence(self):
         """ Test slicing convergence with 1 slice task that represents ~25% of
         the data. """
 
-        set_seed(SEED)
-
-        df_train = create_data(N_TRAIN)
-        df_valid = create_data(N_VALID)
-
         dataloaders = []
-        for df, split in [(df_train, "train"), (df_valid, "valid")]:
+        for df, split in [(self.df_train, "train"), (self.df_valid, "valid")]:
             dataloader = create_dataloader(df, split)
             dataloaders.append(dataloader)
 
@@ -69,11 +71,11 @@ class SlicingConvergenceTest(unittest.TestCase):
         slicing_functions = [h]  # high coverage slice
         slice_names = [sf.name for sf in slicing_functions]
         applier = PandasSFApplier(slicing_functions)
-        S_train = applier.apply(df_train)
-        S_valid = applier.apply(df_valid)
+        S_train = applier.apply(self.df_train)
+        S_valid = applier.apply(self.df_valid)
 
-        self.assertEqual(S_train.shape, (N_TRAIN, len(slicing_functions)))
-        self.assertEqual(S_valid.shape, (N_VALID, len(slicing_functions)))
+        self.assertEqual(S_train.shape, (self.N_TRAIN, len(slicing_functions)))
+        self.assertEqual(S_valid.shape, (self.N_VALID, len(slicing_functions)))
 
         # Add slice labels
         add_slice_labels(dataloaders[0], base_task, S_train, slice_names)
@@ -111,13 +113,8 @@ class SlicingConvergenceTest(unittest.TestCase):
         """ Test slicing performance with 2 corresponding slice tasks that
         represent roughly <10% of the data. """
 
-        set_seed(SEED)
-
-        df_train = create_data(N_TRAIN)
-        df_valid = create_data(N_VALID)
-
         dataloaders = []
-        for df, split in [(df_train, "train"), (df_valid, "valid")]:
+        for df, split in [(self.df_train, "train"), (self.df_valid, "valid")]:
             dataloader = create_dataloader(df, split)
             dataloaders.append(dataloader)
 
@@ -127,11 +124,8 @@ class SlicingConvergenceTest(unittest.TestCase):
         slicing_functions = [f, g]  # low-coverage slices
         slice_names = [sf.name for sf in slicing_functions]
         applier = PandasSFApplier(slicing_functions)
-        S_train = applier.apply(df_train)
-        S_valid = applier.apply(df_valid)
-
-        self.assertEqual(S_train.shape, (N_TRAIN, len(slicing_functions)))
-        self.assertEqual(S_valid.shape, (N_VALID, len(slicing_functions)))
+        S_train = applier.apply(self.df_train)
+        S_valid = applier.apply(self.df_valid)
 
         # Add slice labels
         add_slice_labels(dataloaders[0], base_task, S_train, slice_names)

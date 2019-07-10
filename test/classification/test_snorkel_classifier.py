@@ -6,9 +6,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from snorkel.classification.data import DictDataLoader, DictDataset
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
-from snorkel.classification.data import DictDataset, DictDataLoader
 
 NUM_EXAMPLES = 10
 BATCH_SIZE = 2
@@ -99,7 +99,9 @@ class ClassifierTest(unittest.TestCase):
         model = SnorkelClassifier([task1])
         results = model.predict(dataloader)
         self.assertEqual(sorted(list(results.keys())), ["golds", "probs"])
-        np.testing.assert_array_equal(results["golds"]["task1"], dataloader.dataset.Y_dict["task1"].numpy())
+        np.testing.assert_array_equal(
+            results["golds"]["task1"], dataloader.dataset.Y_dict["task1"].numpy()
+        )
         self.assertEqual(results["probs"]["task1"].shape, (NUM_EXAMPLES, 2))
 
         results = model.predict(dataloader, return_preds=True)

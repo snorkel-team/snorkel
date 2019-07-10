@@ -1,11 +1,12 @@
 from collections import Counter
 from itertools import chain
+from typing import Any, Dict, List, NamedTuple, Optional, Set, Union
 
 import numpy as np
+import scipy.sparse as sparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from scipy.sparse import issparse
 
 from snorkel.analysis.utils import set_seed
 from snorkel.classification.utils import recursive_merge_dicts
@@ -13,6 +14,16 @@ from snorkel.classification.utils import recursive_merge_dicts
 from .graph_utils import get_clique_tree
 from .lm_defaults import lm_default_config
 from .logger import Logger
+
+Matrix = Union[np.ndarray, sparse.spmatrix]
+TrainConfig = Dict[str, Any]
+Metrics = Dict[str, float]
+
+
+class _CData(NamedTuple):
+    start_index: int
+    end_index: int
+    max_cliques: Set[int]
 
 
 class LabelModel(nn.Module):
@@ -23,7 +34,7 @@ class LabelModel(nn.Module):
         k: (int) the cardinality of the classifier
     """
 
-    def __init__(self, cardinality=2, **kwargs):
+    def __init__(self, cardinality: int = 2, **kwargs: Any) -> None:
         super().__init__()
         self.config = recursive_merge_dicts(lm_default_config, kwargs)
         self.cardinality = cardinality
@@ -31,7 +42,7 @@ class LabelModel(nn.Module):
         # Set random seed
         if self.config["seed"] is None:
             self.config["seed"] = np.random.randint(1e6)
-        self.seed = self.config["seed"]
+        self.seed: int = self.config["seed"]  # type: ignore
         set_seed(self.seed)
 
         # Confirm that cuda is available if config is using CUDA
@@ -41,9 +52,9 @@ class LabelModel(nn.Module):
         # By default, put model in eval mode; switch to train mode in training
         self.eval()
 
-    def _check_L(self, L):
+    def _check_L(self, L: Matrix) -> np.ndarray:
         """Run some basic checks on L."""
-        if issparse(L):
+        if sparse.issparse(L):
             L = L.todense()
 
         # Check for correct values, e.g. warning if in {-1,0,1}
@@ -52,7 +63,7 @@ class LabelModel(nn.Module):
 
         return L
 
-    def _create_L_ind(self, L):
+    def _create_L_ind(self, L: Matrix) -> np.ndarray:
         """Convert a label matrix with labels in 0...k to a one-hot format
 
         Args:
@@ -71,7 +82,9 @@ class LabelModel(nn.Module):
             L_ind[:, (y - 1) :: self.cardinality] = np.where(L == y, 1, 0)
         return L_ind
 
-    def _get_augmented_label_matrix(self, L, higher_order=False):
+    def _get_augmented_label_matrix(
+        self, L: Matrix, higher_order: bool = False
+    ) -> np.ndarray:
         """Returns an augmented version of L where each column is an indicator
         for whether a certain source or clique of sources voted in a certain
         pattern.
@@ -82,19 +95,19 @@ class LabelModel(nn.Module):
         # Create a helper data structure which maps cliques (as tuples of member
         # sources) --> {start_index, end_index, maximal_cliques}, where
         # the last value is a set of indices in this data structure
-        self.c_data = {}
+        self.c_data: Dict[int, _CData] = {}
         for i in range(self.m):
-            self.c_data[i] = {
-                "start_index": i * self.cardinality,
-                "end_index": (i + 1) * self.cardinality,
-                "max_cliques": set(
+            self.c_data[i] = _CData(
+                start_index=i * self.cardinality,
+                end_index=(i + 1) * self.cardinality,
+                max_cliques=set(
                     [
                         j
                         for j in self.c_tree.nodes()
                         if i in self.c_tree.node[j]["members"]
                     ]
                 ),
-            }
+            )
 
         L_ind = self._create_L_ind(L)
 
@@ -119,21 +132,22 @@ class LabelModel(nn.Module):
         else:
             return L_ind
 
-    def _build_mask(self):
+    def _build_mask(self) -> None:
         """Build mask applied to O^{-1}, O for the matrix approx constraint"""
         self.mask = torch.ones(self.d, self.d).byte()
         for ci in self.c_data.values():
-            si, ei = ci["start_index"], ci["end_index"]
+            si = ci.start_index
+            ei = ci.end_index
             for cj in self.c_data.values():
-                sj, ej = cj["start_index"], cj["end_index"]
+                sj, ej = cj.start_index, cj.end_index
 
                 # Check if ci and cj are part of the same maximal clique
                 # If so, mask out their corresponding blocks in O^{-1}
-                if len(ci["max_cliques"].intersection(cj["max_cliques"])) > 0:
+                if len(ci.max_cliques.intersection(cj.max_cliques)) > 0:
                     self.mask[si:ei, sj:ej] = 0
                     self.mask[sj:ej, si:ei] = 0
 
-    def _generate_O(self, L, higher_order=False):
+    def _generate_O(self, L: Matrix, higher_order: bool = False) -> None:
         """Form the overlaps matrix, which is just all the different observed
         combinations of values of pairs of sources
 
@@ -144,7 +158,7 @@ class LabelModel(nn.Module):
         self.d = L_aug.shape[1]
         self.O = torch.from_numpy(L_aug.T @ L_aug / self.n).float()
 
-    def _init_params(self):
+    def _init_params(self) -> None:
         """Initialize the learned params
 
         - \mu is the primary learned parameter, where each row corresponds to
@@ -186,7 +200,7 @@ class LabelModel(nn.Module):
         # Build the mask over O^{-1}
         self._build_mask()
 
-    def get_conditional_probs(self, source=None):
+    def get_conditional_probs(self, source: Optional[int] = None) -> np.ndarray:
         """Returns the full conditional probabilities table as a numpy array,
         where row i*(k+1) + ly is the conditional probabilities of source i
         emmiting label ly (including abstains 0), conditioned on different
@@ -223,7 +237,7 @@ class LabelModel(nn.Module):
         else:
             return c_probs
 
-    def get_accuracies(self, probs=None):
+    def get_accuracies(self, probs: Optional[np.ndarray] = None) -> np.ndarray:
         """Returns the vector of LF accuracies, computed using get_conditional_probs"""
         accs = np.zeros(self.m)
         for i in range(self.m):
@@ -236,7 +250,7 @@ class LabelModel(nn.Module):
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
         return accs
 
-    def predict_proba(self, L):
+    def predict_proba(self, L: Matrix) -> np.ndarray:
         """Returns the [n,k] matrix of label probabilities P(Y | \lambda)
 
         Args:
@@ -257,7 +271,7 @@ class LabelModel(nn.Module):
     # (for better or worse). The unused *args make these compatible with the
     # Classifer._train() method which expect loss functions to accept an input.
 
-    def loss_l2(self, l2=0):
+    def loss_l2(self, l2: float = 0) -> torch.Tensor:
         """L2 loss centered around mu_init, scaled optionally per-source.
 
         In other words, diagonal Tikhonov regularization,
@@ -276,12 +290,14 @@ class LabelModel(nn.Module):
         # Note that mu is a matrix and this is the *Frobenius norm*
         return torch.norm(D @ (self.mu - self.mu_init)) ** 2
 
-    def loss_mu(self, l2=0):
+    def loss_mu(self, l2: float = 0) -> torch.Tensor:
         loss_1 = torch.norm((self.O - self.mu @ self.P @ self.mu.t())[self.mask]) ** 2
         loss_2 = torch.norm(torch.sum(self.mu @ self.P, 1) - torch.diag(self.O)) ** 2
         return loss_1 + loss_2 + self.loss_l2(l2=l2)
 
-    def _set_class_balance(self, class_balance, Y_dev):
+    def _set_class_balance(
+        self, class_balance: Optional[List[float]], Y_dev: np.ndarray
+    ) -> None:
         """Set a prior for the class balance
 
         In order of preference:
@@ -299,16 +315,18 @@ class LabelModel(nn.Module):
             self.p = (1 / self.cardinality) * np.ones(self.cardinality)
         self.P = torch.diag(torch.from_numpy(self.p)).float()
 
-    def _set_constants(self, L):
+    def _set_constants(self, L: Matrix) -> None:
         self.n, self.m = L.shape
         self.t = 1
 
-    def _create_tree(self):
+    def _create_tree(self) -> None:
         nodes = range(self.m)
         self.c_tree = get_clique_tree(nodes, [])
 
-    def _execute_logging(self, loss):
+    def _execute_logging(self, loss: torch.Tensor) -> Metrics:
         self.eval()
+        self.running_examples: int
+        self.running_loss: float
         self.running_loss += loss.item()
         self.running_examples += 1
 
@@ -325,34 +343,34 @@ class LabelModel(nn.Module):
         self.train()
         return metrics_dict
 
-    def _set_logger(self, train_config, epoch_size):
+    def _set_logger(self, train_config: TrainConfig, epoch_size: int) -> None:
         self.logger = Logger(train_config["log_train_every"])
 
-    def _set_optimizer(self, train_config):
+    def _set_optimizer(self, train_config: TrainConfig) -> None:
         optimizer_config = train_config["optimizer_config"]
         opt = optimizer_config["optimizer"]
 
         parameters = filter(lambda p: p.requires_grad, self.parameters())
         if opt == "sgd":
-            optimizer = optim.SGD(
+            optimizer = optim.SGD(  # type: ignore
                 parameters,
                 **optimizer_config["optimizer_common"],
                 **optimizer_config["sgd_config"],
             )
         elif opt == "rmsprop":
-            optimizer = optim.RMSprop(
+            optimizer = optim.RMSprop(  # type: ignore
                 parameters,
                 **optimizer_config["optimizer_common"],
                 **optimizer_config["rmsprop_config"],
             )
         elif opt == "adam":
-            optimizer = optim.Adam(
+            optimizer = optim.Adam(  # type: ignore
                 parameters,
                 **optimizer_config["optimizer_common"],
                 **optimizer_config["adam_config"],
             )
         elif opt == "sparseadam":
-            optimizer = optim.SparseAdam(
+            optimizer = optim.SparseAdam(  # type: ignore
                 parameters,
                 **optimizer_config["optimizer_common"],
                 **optimizer_config["adam_config"],
@@ -361,7 +379,7 @@ class LabelModel(nn.Module):
             raise ValueError(f"Did not recognize optimizer option '{opt}'")
         self.optimizer = optimizer
 
-    def _set_scheduler(self, train_config):
+    def _set_scheduler(self, train_config: TrainConfig) -> None:
         lr_scheduler = train_config["lr_scheduler"]
         if lr_scheduler is None:
             lr_scheduler = None
@@ -381,7 +399,7 @@ class LabelModel(nn.Module):
                 )
         self.lr_scheduler = lr_scheduler
 
-    def _update_scheduler(self, epoch, metrics_dict):
+    def _update_scheduler(self, epoch: int, metrics_dict: Metrics) -> None:
         train_config = self.config["train_config"]
         if self.lr_scheduler is not None:
             lr_scheduler_config = train_config["lr_scheduler_config"]
@@ -395,7 +413,13 @@ class LabelModel(nn.Module):
                 else:
                     self.lr_scheduler.step()
 
-    def train_model(self, L_train, Y_dev=None, class_balance=None, **kwargs):
+    def train_model(
+        self,
+        L_train: Matrix,
+        Y_dev: Optional[np.ndarray] = None,
+        class_balance: Optional[List[float]] = None,
+        **kwargs: Any,
+    ) -> None:
         """Train the model (i.e. estimate mu):
 
         Args:
@@ -482,11 +506,11 @@ class LabelModel(nn.Module):
         if self.config["verbose"]:
             print("Finished Training")
 
-    def save(self, destination, **kwargs):
+    def save(self, destination: str, **kwargs: Any) -> None:
         with open(destination, "wb") as f:
             torch.save(self, f, **kwargs)
 
     @staticmethod
-    def load(source, **kwargs):
+    def load(source: str, **kwargs: Any) -> Any:
         with open(source, "rb") as f:
             return torch.load(f, **kwargs)

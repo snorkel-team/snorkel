@@ -41,6 +41,7 @@ class SnorkelClassifier(nn.Module):
         self, tasks: List[Task], name: Optional[str] = None, **kwargs: Any
     ) -> None:
         super().__init__()
+        assert isinstance(default_config["model_config"], dict)
         self.config = recursive_merge_dicts(
             default_config["model_config"], kwargs, misses="insert"
         )
@@ -112,7 +113,7 @@ class SnorkelClassifier(nn.Module):
         self._move_to_device()
 
     def forward(  # type: ignore
-        self, X_dict: Mapping[str, Any], task_names: Iterable[str]
+        self, X_dict: Dict[str, Any], task_names: Iterable[str]
     ) -> OutputDict:
         """Forward pass through the network
 
@@ -121,9 +122,9 @@ class SnorkelClassifier(nn.Module):
         :return: The output of all forwarded modules
         """
 
-        X_dict = move_to_device(X_dict, self.config["device"])
+        X_dict_moved = move_to_device(X_dict, self.config["device"])
 
-        outputs: OutputDict = {"_input_": X_dict}  # type: ignore
+        outputs: OutputDict = {"_input_": X_dict_moved}  # type: ignore
 
         # Call forward for each task, using cached result if available
         # Each task flow consists of one or more operations that are executed in order
@@ -175,7 +176,7 @@ class SnorkelClassifier(nn.Module):
         return outputs
 
     def calculate_loss(
-        self, X_dict: Mapping[str, Any], Y_dict: Dict[str, torch.Tensor]
+        self, X_dict: Dict[str, Any], Y_dict: Dict[str, torch.Tensor]
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, float]]:
         """Calculate the loss
 
@@ -214,7 +215,7 @@ class SnorkelClassifier(nn.Module):
 
     @torch.no_grad()
     def _calculate_probs(
-        self, X_dict: Mapping[str, Any], task_names: Iterable[str]
+        self, X_dict: Dict[str, Any], task_names: Iterable[str]
     ) -> Dict[str, Iterable[torch.Tensor]]:
         """Calculate the probs given the features
 
@@ -313,7 +314,7 @@ class SnorkelClassifier(nn.Module):
 
         return metric_score_dict
 
-    def _move_to_device(self):
+    def _move_to_device(self) -> None:
         device = self.config["device"]
         if device >= 0:
             if torch.cuda.is_available():
@@ -322,7 +323,7 @@ class SnorkelClassifier(nn.Module):
             else:
                 logging.info("No cuda device available. Switch to cpu instead.")
 
-    def save(self, model_path: str):
+    def save(self, model_path: str) -> None:
         if not os.path.exists(os.path.dirname(model_path)):
             os.makedirs(os.path.dirname(model_path))
 

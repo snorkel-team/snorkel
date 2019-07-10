@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
@@ -183,7 +183,9 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
     return tasks
 
 
-def _add_base_slice(slice_labels, slice_names):
+def _add_base_slice(
+    slice_labels: np.ndarray, slice_names: List[str]
+) -> Tuple[np.ndarray, List[str]]:
     # Add base slice
     if "base" not in slice_names:
         num_points, num_slices = slice_labels.shape

@@ -20,9 +20,7 @@ class DaskLFApplier(BaseLFApplier):
     For more information, see https://docs.dask.org/en/stable/dataframe.html
     """
 
-    def apply(  # type: ignore
-        self, df: dd, scheduler: Scheduler = "processes"
-    ) -> sparse.csr_matrix:
+    def apply(self, df: dd, scheduler: Scheduler = "processes") -> sparse.csr_matrix:
         """Label Dask DataFrame of data points with LFs.
 
         Parameters

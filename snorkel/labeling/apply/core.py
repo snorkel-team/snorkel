@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
 import scipy.sparse as sparse
 from tqdm import tqdm
@@ -37,27 +37,6 @@ class BaseLFApplier:
         n, m = len(labels), len(self._lfs)
         return sparse.csr_matrix((data, (row, col)), shape=(n, m))
 
-    def apply(self, data_points: Any, *args: Any, **kwargs: Any) -> sparse.csr_matrix:
-        """Label collection of data points with LFs.
-
-        Parameters
-        ----------
-        data_points
-            Collection of data points to be labeled by LFs. Subclasses
-            implement functionality for a specific format (e.g. `DataFrame`).
-
-        Returns
-        -------
-        sparse.csr_matrix
-            Sparse matrix of labels emitted by LFs
-
-        Raises
-        ------
-        NotImplementedError
-            `apply` method must be implemented by subclasses
-        """
-        raise NotImplementedError
-
 
 def apply_lfs_to_data_point(
     x: DataPoint, index: int, lfs: List[LabelingFunction]
@@ -93,7 +72,7 @@ class LFApplier(BaseLFApplier):
     useful for testing.
     """
 
-    def apply(self, data_points: DataPoints) -> sparse.csr_matrix:  # type: ignore
+    def apply(self, data_points: DataPoints) -> sparse.csr_matrix:
         """Label list of data points with LFs.
 
         Parameters

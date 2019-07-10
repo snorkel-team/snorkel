@@ -1,10 +1,23 @@
 import random
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Tuple
+from typing import (
+    Any,
+    Callable,
+    DefaultDict,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
+import scipy.sparse as sparse
 from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
+
+from snorkel.types import ArrayLike
 
 from .utils import list_to_tensor
 
@@ -27,7 +40,7 @@ class DictDataset(Dataset):
     :type Y_dict: dict
     """
 
-    def __init__(self, name: str, split: str, X_dict: XDict, Y_dict: YDict):
+    def __init__(self, name: str, split: str, X_dict: XDict, Y_dict: YDict) -> None:
         self.name = name
         self.split = split
         self.X_dict = X_dict
@@ -92,7 +105,7 @@ class DictDataLoader(DataLoader):
         self,
         dataset: DictDataset,
         collate_fn: Callable[..., Any] = collate_dicts,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
 
         assert isinstance(dataset, DictDataset)
@@ -100,13 +113,13 @@ class DictDataLoader(DataLoader):
 
 
 def split_data(
-    *inputs,
-    splits=[0.5, 0.5],
-    shuffle=True,
-    stratify_by=None,
-    index_only=False,
-    seed=None,
-):
+    *inputs: ArrayLike,
+    splits: List[float] = [0.5, 0.5],
+    shuffle: bool = True,
+    stratify_by: Optional[np.ndarray] = None,
+    index_only: bool = False,
+    seed: Optional[Iterable[int]] = None,
+) -> Union[List[List[int]], List[List[ArrayLike]], List[ArrayLike]]:
     """Splits inputs into multiple splits of defined sizes
 
     Args:
@@ -130,14 +143,14 @@ def split_data(
         but with support for more than two splits.
     """
 
-    def fractions_to_counts(fracs, n):
+    def fractions_to_counts(fracs: Iterable[float], n: int) -> List[int]:
         """Converts a list of fractions to a list of counts that sum to n"""
         counts = [int(np.round(n * frac)) for frac in fracs]
         # Ensure sum of split counts sums to n
         counts[-1] = n - sum(counts[:-1])
         return counts
 
-    def slice_data(data, indices):
+    def slice_data(data: ArrayLike, indices: List[int]) -> ArrayLike:
         if isinstance(data, list) or isinstance(data, tuple):
             return [d for i, d in enumerate(data) if i in set(indices)]
         else:
@@ -156,8 +169,9 @@ def split_data(
         random.seed(seed)
 
     try:
-        n = len(inputs[0])
+        n = len(inputs[0])  # type: ignore
     except TypeError:
+        assert isinstance(inputs[0], (np.ndarray, Tensor, sparse.spmatrix))
         n = inputs[0].shape[0]
     num_splits = len(splits)
 
@@ -181,13 +195,13 @@ def split_data(
     if stratify_by is None:
         pools = [np.arange(n)]
     else:
-        pools = defaultdict(list)
+        pools_dict: DefaultDict[int, List[int]] = defaultdict(list)
         for i, val in enumerate(stratify_by):
-            pools[val].append(i)
-        pools = list(pools.values())
+            pools_dict[val].append(i)
+        pools = list(pools_dict.values())
 
     # Make index assignments
-    assignments = [[] for _ in range(num_splits)]
+    assignments: List[List[int]] = [[] for _ in range(num_splits)]
     for pool in pools:
         if shuffle or stratify_by is not None:
             random.shuffle(pool)

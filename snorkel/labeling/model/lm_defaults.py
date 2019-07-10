@@ -16,9 +16,18 @@ lm_default_config = {
             "optimizer_common": {"lr": 0.01},
             # Optimizer - SGD
             "sgd_config": {"momentum": 0.9},
+            # Optimizer - RMSProp
+            "rmsprop_config": {"momentum": 0.9},
+            # Optimizer - Adam, SparseAdam
+            "adam_config": {"betas": (0.9, 0.999)},
         },
         # Scheduler
         "lr_scheduler": None,
+        "lr_scheduler_config": {
+            "lr_freeze": 0,
+            # Optimizer - Exponential
+            "exponential_config": {"gamma": 0.9},
+        },
         # Train loop
         "n_epochs": 100,
         "log_train_every": 1,

@@ -41,6 +41,8 @@ tox -e py36  # Run unit tests pytest in Python 3.6
 tox -e check  # Check style/linting with black, isort, and flake8
 tox -e type  # Run static type checking with mypy
 tox -e fix  # Fix style issues with black and isort
+tox -e spark  # Run Spark-based tests (marked with @pytest.mark.spark)
+tox -e complex  # Run more complex, integration tests (marked with @pytest.mark.complex)
 tox  # Run unit tests, style checks, linting, and type checking
 ```
 
@@ -77,11 +79,12 @@ We use [NumPy style docstrings](https://sphinxcontrib-napoleon.readthedocs.io/en
 Docstrings can be cumbersome to write, so we encourage people to use tooling to speed up the process.
 For VSCode, we like [autoDocstring](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring).
 Just install the extension and add the following configuration to the `settings.json` example above.
-Note that we use PEP 484 type hints, so parameter types should be removed from the docstring.
+Note that we use PEP 484 type hints, so parameter types should be removed from the docstring (although note that return types should still be included).
 
 ```json
 {
-    "autoDocstring.docstringFormat": "numpy"
+    "autoDocstring.docstringFormat": "numpy",
+    "autoDocstring.guessTypes": false
 }
 ```
 

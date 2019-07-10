@@ -14,7 +14,7 @@ class Scheduler(ABC):
     """Return batches from all dataloaders in a specified order
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @abstractmethod

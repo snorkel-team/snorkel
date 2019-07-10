@@ -20,7 +20,7 @@ class SparkLFApplier(BaseLFApplier):
     `test/labeling/apply/lf_applier_spark_test_script.py`.
     """
 
-    def apply(self, data_points: RDD) -> sparse.csr_matrix:  # type: ignore
+    def apply(self, data_points: RDD) -> sparse.csr_matrix:
         """Label PySpark RDD of data points with LFs.
 
         Parameters

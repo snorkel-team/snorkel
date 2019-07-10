@@ -1,4 +1,4 @@
-import os
+import shutil
 import tempfile
 import unittest
 
@@ -29,7 +29,7 @@ class LabelModelTest(unittest.TestCase):
         # Test dimension constants
         L = np.array([[1, 2, 1], [1, 0, 1], [2, 1, 1], [1, 2, -1]])
         L_sparse = csr_matrix(L)
-        with self.assertRaisesRegex(ValueError, "L must have values in {0,1,...,k}"):
+        with self.assertRaisesRegex(ValueError, "L must have values in"):
             label_model._check_L(L_sparse)
 
         L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 1]])
@@ -247,9 +247,7 @@ class LabelModelTest(unittest.TestCase):
         next_loss = label_model.loss_mu().detach().numpy().ravel()[0]
 
         self.assertLessEqual(next_loss, init_loss)
-        with self.assertRaisesRegex(
-            Exception, "Loss is NaN. Consider reducing learning rate"
-        ):
+        with self.assertRaisesRegex(Exception, "Loss is NaN."):
             label_model.train_model(L, n_epochs=10, lr=1e8)
 
     def test_optimizer(self):
@@ -258,7 +256,7 @@ class LabelModelTest(unittest.TestCase):
 
         label_model.train_model(L, n_epochs=1, optimizer="rmsprop")
         label_model.train_model(L, n_epochs=1, optimizer="adam")
-        with self.assertRaisesRegex(ValueError, "Did not recognize optimizer option"):
+        with self.assertRaisesRegex(ValueError, "Did not recognize optimizer"):
             label_model.train_model(L, n_epochs=1, optimizer="bad_opt")
 
     def test_lr_scheduler(self):
@@ -277,12 +275,11 @@ class LabelModelTest(unittest.TestCase):
         label_model = self._set_up_model(L)
 
         label_model.train_model(L, n_epochs=1, lr_scheduler=None)
-        fd, path = tempfile.mkstemp()
-        try:
-            label_model.save(path)
-            label_model.load(path)
-        finally:
-            os.remove(path)
+        dir_path = tempfile.mkdtemp()
+        save_path = dir_path + "label_model"
+        label_model.save(save_path)
+        label_model.load(save_path)
+        shutil.rmtree(dir_path)
 
 
 if __name__ == "__main__":

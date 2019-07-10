@@ -2,6 +2,7 @@ import unittest
 from types import SimpleNamespace
 
 import dill
+import pytest
 
 from snorkel.labeling.lf.nlp import NLPLabelingFunction, nlp_labeling_function
 from snorkel.labeling.preprocess import preprocessor
@@ -46,6 +47,7 @@ class TestNLPLabelingFunction(unittest.TestCase):
         self._run_lf(lf)
         self.assertEqual(len(lf._nlp_config.nlp._cache), 2)
 
+    @pytest.mark.complex
     def test_labeling_function_serialize(self) -> None:
         lf = NLPLabelingFunction(
             name="my_lf", f=has_person_mention, preprocessors=[combine_text]

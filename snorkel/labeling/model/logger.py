@@ -1,25 +1,27 @@
 from collections import defaultdict
+from typing import DefaultDict, Dict, List, Optional
 
 
 class Logger:
-    def __init__(self, log_train_every):
+    def __init__(self, log_train_every: int) -> None:
         self.log_train_every = log_train_every
         self.unit_count = 0
 
-    def check(self):
+    def check(self) -> bool:
         """Returns True if the logging frequency has been met."""
         self.unit_count += 1
         return self.unit_count >= self.log_train_every
 
-    def log(self, metrics_dict):
+    def log(self, metrics_dict: Dict[str, float]) -> None:
         """Print calculated metrics and optionally write to file (json/tb)"""
         self.print_to_screen(metrics_dict)
         self.unit_count = 0
 
-    def print_to_screen(self, metrics_dict):
+    def print_to_screen(self, metrics_dict: Dict[str, float]) -> None:
         """Print all metrics in metrics_dict to screen"""
-        score_strings = defaultdict(list)
+        score_strings: DefaultDict[str, List[str]] = defaultdict(list)
         for full_name, value in metrics_dict.items():
+            task: Optional[str]
             if full_name.count("/") == 2:
                 task, split, metric = full_name.split("/")
             elif full_name.count("/") == 1:

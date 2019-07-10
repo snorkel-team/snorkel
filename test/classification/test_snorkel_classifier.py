@@ -65,11 +65,11 @@ class ClassifierTest(unittest.TestCase):
         np.testing.assert_array_equal(
             results["golds"]["task1"], self.dataloader.dataset.Y_dict["task1"].numpy()
         )
-        self.assertEqual(results["probs"]["task1"].shape, (NUM_EXAMPLES, 2))
+        np.testing.assert_array_equal(results["probs"]["task1"], np.ones((NUM_EXAMPLES, 2)) * 0.5)
 
         results = model.predict(self.dataloader, return_preds=True)
         self.assertEqual(sorted(list(results.keys())), ["golds", "preds", "probs"])
-        self.assertEqual(results["preds"]["task1"].shape, (NUM_EXAMPLES,))
+        np.testing.assert_array_equal(results["preds"]["task1"], np.ones((NUM_EXAMPLES,)))
 
     def test_empty_batch(self):
         # Make the first BATCH_SIZE labels 0 so that one batch will have no labels
@@ -83,7 +83,7 @@ class ClassifierTest(unittest.TestCase):
     def test_score(self):
         model = SnorkelClassifier([self.task1])
         metrics = model.score([self.dataloader])
-        self.assertIsInstance(metrics["task1/dataset/train/accuracy"], float)
+        self.assertEqual(metrics["task1/dataset/train/accuracy"], 1.0)
 
     def test_save_load(self):
         fd, checkpoint_path = tempfile.mkstemp()

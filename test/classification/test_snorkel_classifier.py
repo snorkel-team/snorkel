@@ -44,6 +44,13 @@ class TaskTest(unittest.TestCase):
         self.assertEqual(len(model.task_flows), 2)
         self.assertEqual(len(model.module_pool), 3)
 
+    def test_bad_tasks(self):
+        task1 = create_task("task1", module_suffixes=["A", "A"])
+        with self.assertRaisesRegex(ValueError, "Found duplicate task"):
+            SnorkelClassifier(tasks=[task1, task1])
+        with self.assertRaisesRegex(ValueError, "Unrecognized task type"):
+            SnorkelClassifier(tasks=[task1, {"fake_task": 42}])
+
     def test_save_load(self):
         fd, checkpoint_path = tempfile.mkstemp()
 

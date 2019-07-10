@@ -74,13 +74,13 @@ class SnorkelClassifier(nn.Module):
         """Build the MTL network using all tasks"""
 
         for task in tasks:
+            if not isinstance(task, Task):
+                raise ValueError(f"Unrecognized task type {task}.")
             if task.name in self.task_names:
                 raise ValueError(
                     f"Found duplicate task {task.name}, different task should use "
                     f"different task name."
                 )
-            if not isinstance(task, Task):
-                raise ValueError(f"Unrecognized task type {task}.")
             self.add_task(task)
 
     def add_task(self, task: Task) -> None:
@@ -314,7 +314,7 @@ class SnorkelClassifier(nn.Module):
 
         return metric_score_dict
 
-    def _move_to_device(self) -> None:
+    def _move_to_device(self) -> None:  # pragma: no cover
         device = self.config["device"]
         if device >= 0:
             if torch.cuda.is_available():
@@ -329,7 +329,7 @@ class SnorkelClassifier(nn.Module):
 
         try:
             torch.save(self.state_dict(), model_path)
-        except BaseException:
+        except BaseException:  # pragma: no cover
             logging.warning("Saving failed... continuing anyway.")
 
         logging.info(f"[{self.name}] Model saved in {model_path}")
@@ -339,16 +339,15 @@ class SnorkelClassifier(nn.Module):
         :param model_path: Saved model path.
         :type model_path: str
         """
-
-        if not os.path.exists(model_path):
-            logging.error("Loading failed... Model does not exist.")
-
         try:
             self.load_state_dict(
                 torch.load(model_path, map_location=torch.device("cpu"))
             )
-        except BaseException:
-            logging.error(f"Loading failed... Cannot load model from {model_path}")
+        except BaseException:  # pragma: no cover
+            if not os.path.exists(model_path):
+                logging.error("Loading failed... Model does not exist.")
+            else:
+                logging.error(f"Loading failed... Cannot load model from {model_path}")
             raise
 
         logging.info(f"[{self.name}] Model loaded from {model_path}")

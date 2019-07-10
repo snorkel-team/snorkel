@@ -9,7 +9,7 @@ from .scheduler import BatchIterator, Scheduler
 class ShuffledScheduler(Scheduler):
     """Return batches from all dataloaders in shuffled order for each epoch"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def get_batches(self, dataloaders: Sequence[DictDataLoader]) -> BatchIterator:

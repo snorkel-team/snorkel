@@ -25,7 +25,7 @@ class LogManager(object):
         checkpointer: Optional[Checkpointer] = None,
         **kwargs: Any,
     ) -> None:
-
+        assert isinstance(default_config["log_manager_config"], dict)
         self.config = recursive_merge_dicts(
             default_config["log_manager_config"], kwargs
         )

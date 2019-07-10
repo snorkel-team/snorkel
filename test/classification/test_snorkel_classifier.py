@@ -65,11 +65,15 @@ class ClassifierTest(unittest.TestCase):
         np.testing.assert_array_equal(
             results["golds"]["task1"], self.dataloader.dataset.Y_dict["task1"].numpy()
         )
-        np.testing.assert_array_equal(results["probs"]["task1"], np.ones((NUM_EXAMPLES, 2)) * 0.5)
+        np.testing.assert_array_equal(
+            results["probs"]["task1"], np.ones((NUM_EXAMPLES, 2)) * 0.5
+        )
 
         results = model.predict(self.dataloader, return_preds=True)
         self.assertEqual(sorted(list(results.keys())), ["golds", "preds", "probs"])
-        np.testing.assert_array_equal(results["preds"]["task1"], np.ones((NUM_EXAMPLES,)))
+        np.testing.assert_array_equal(
+            results["preds"]["task1"], np.ones((NUM_EXAMPLES,))
+        )
 
     def test_empty_batch(self):
         # Make the first BATCH_SIZE labels 0 so that one batch will have no labels
@@ -144,10 +148,7 @@ def create_task(task_name, module_suffixes=("", "")):
     linear2.bias.data.copy_(torch.zeros((2,)))
 
     module_pool = nn.ModuleDict(
-        {
-            module1_name: nn.Sequential(linear1, nn.ReLU()),
-            module2_name: linear2,
-        }
+        {module1_name: nn.Sequential(linear1, nn.ReLU()), module2_name: linear2}
     )
 
     op0 = Operation(module_name=module1_name, inputs=[("_input_", "data")], name="op0")

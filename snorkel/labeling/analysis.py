@@ -1,3 +1,4 @@
+from itertools import product
 from typing import List, Optional, Union
 
 import numpy as np
@@ -132,6 +133,46 @@ def lf_empirical_accuracies(L: Matrix, Y: ArrayLike) -> np.ndarray:
     L = L.toarray()
     X = np.where(L == 0, 0, np.where(L == np.vstack([Y] * L.shape[1]).T, 1, -1))
     return np.nan_to_num(0.5 * (X.sum(axis=0) / (L != 0).sum(axis=0) + 1))
+
+
+def lf_empirical_probs(L: Matrix, Y: ArrayLike, k: Optional[int] = None) -> np.ndarray:
+    """Returns the conditional probability tables, P(L | Y), for each of the labeling
+    functions, computed empirically using the provided true labels Y.
+
+    Parameters
+    ----------
+    L
+        The n x m matrix of LF labels, where n is # of datapoints and m is # of LFs
+    Y
+        The n-dim array of true labels in {1,...,k}
+    k
+        The cardinality i.e. number of classes; if not provided, defaults to max value
+        in Y
+
+    Returns
+    -------
+    np.ndarray
+        An m x (k+1) x k np.ndarray representing the m (k+1) x k conditional probability
+        tables P_i, where P_i[l,y] represents P(LF_i = l | Y = y) empirically calculated
+    """
+    n, m = L.shape
+
+    # Assume labeled set is small, work with dense matrices
+    Y = arraylike_to_numpy(Y)
+    L = L.toarray()
+
+    # Infer cardinality if not provided
+    if k is None:
+        k = Y.max()
+
+    # Compute empirical conditional probabilities
+    # Note: Can do this more efficiently...
+    P = np.zeros((m, k + 1, k))
+    for y in range(1, k + 1):
+        is_y = np.where(Y == y, 1, 0)
+        for j, l in product(range(m), range(k + 1)):
+            P[j, l, y - 1] = np.where(L[:, j] == l, 1, 0) @ is_y / is_y.sum()
+    return P
 
 
 def lf_summary(

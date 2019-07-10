@@ -63,5 +63,5 @@ class ApplyAllPolicy(Policy):
 class ApplyOnePolicy(ApplyAllPolicy):
     """Apply a single TF to each data point."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(n_tfs=1)

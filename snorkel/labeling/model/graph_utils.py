@@ -1,7 +1,9 @@
+from typing import Iterable, List, Tuple
+
 import networkx as nx
 
 
-def get_clique_tree(nodes, edges):
+def get_clique_tree(nodes: Iterable[int], edges: List[Tuple[int, int]]) -> nx.Graph:
     """Given a set of int nodes i and edges (i,j), returns an nx.Graph object G
     which is a clique tree, where:
         - G.node[i]['members'] contains the set of original nodes in the ith

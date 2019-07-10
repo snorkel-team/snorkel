@@ -1,8 +1,10 @@
 import copy
-from typing import List
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import torch
+
+TensorCollection = Union[torch.Tensor, dict, list, tuple]
 
 
 def list_to_tensor(item_list: List[torch.Tensor]) -> torch.Tensor:
@@ -24,7 +26,12 @@ def list_to_tensor(item_list: List[torch.Tensor]) -> torch.Tensor:
     return item_tensor
 
 
-def pad_batch(batch, max_len=0, pad_value=0, left_padded=False):
+def pad_batch(
+    batch: List[torch.Tensor],
+    max_len: int = 0,
+    pad_value: int = 0,
+    left_padded: bool = False,
+) -> Tuple[torch.Tensor, torch.Tensor]:
     """Convert the batch into a padded tensor and mask tensor.
 
     :param batch: The data for padding.
@@ -40,7 +47,7 @@ def pad_batch(batch, max_len=0, pad_value=0, left_padded=False):
     """
 
     batch_size = len(batch)
-    max_seq_len = int(np.max([len(item) for item in batch]))
+    max_seq_len = int(np.max([len(item) for item in batch]))  # type: ignore
 
     if max_len > 0 and max_len < max_seq_len:
         max_seq_len = max_len
@@ -48,7 +55,7 @@ def pad_batch(batch, max_len=0, pad_value=0, left_padded=False):
     padded_batch = batch[0].new_full((batch_size, max_seq_len), pad_value)
 
     for i, item in enumerate(batch):
-        length = min(len(item), max_seq_len)
+        length = min(len(item), max_seq_len)  # type: ignore
         if left_padded:
             padded_batch[i, -length:] = item[-length:]
         else:
@@ -61,7 +68,9 @@ def pad_batch(batch, max_len=0, pad_value=0, left_padded=False):
     return padded_batch, mask_batch
 
 
-def recursive_merge_dicts(x, y, misses="report", verbose=None):
+def recursive_merge_dicts(
+    x: dict, y: dict, misses: str = "report", verbose: Optional[int] = None
+) -> dict:
     """
     Merge dictionary y into a copy of x, overwriting elements of x when there
     is a conflict, except if the element is a dictionary, in which case recurse.
@@ -77,7 +86,7 @@ def recursive_merge_dicts(x, y, misses="report", verbose=None):
     TODO: give example here (pull from tests)
     """
 
-    def recurse(x, y, misses="report", verbose=1):
+    def recurse(x: dict, y: dict, misses: str = "report", verbose: int = 1) -> bool:
         found = True
         for k, v in y.items():
             found = False
@@ -125,13 +134,14 @@ def recursive_merge_dicts(x, y, misses="report", verbose=None):
     # (Do this because 'verbose' kwarg is often inside one or both of x and y)
     if verbose is None:
         verbose = y.get("verbose", x.get("verbose", 1))
+        assert isinstance(verbose, int)
 
     z = copy.deepcopy(x)
     recurse(z, y, misses, verbose)
     return z
 
 
-def move_to_device(obj, device=-1):
+def move_to_device(obj: TensorCollection, device: int = -1) -> TensorCollection:
     """
     Given a structure (possibly) containing Tensors on the CPU, move all the Tensors
     to the specified GPU (or do nothing, if they should beon the CPU).
@@ -144,7 +154,7 @@ def move_to_device(obj, device=-1):
     if device < 0 or not torch.cuda.is_available():
         return obj
     elif isinstance(obj, torch.Tensor):
-        return obj.cuda(device)
+        return obj.cuda(device)  # type: ignore
     elif isinstance(obj, dict):
         return {key: move_to_device(value, device) for key, value in obj.items()}
     elif isinstance(obj, list):

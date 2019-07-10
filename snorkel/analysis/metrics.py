@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, NamedTuple, Optional
+from typing import Any, Callable, Dict, List, NamedTuple, Optional
 
 import numpy as np
 import sklearn.metrics as skmetrics
@@ -19,7 +19,7 @@ def metric_score(
     probs: np.ndarray,
     metric: str,
     filter_dict: Optional[Dict[str, List[int]]] = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> float:
     """A method for evaluating a standard metric on a set of predictions/probabilities
 

@@ -100,12 +100,12 @@ class SlicingConvergenceTest(unittest.TestCase):
         train_loss_output = model.calculate_loss(
             train_dataset.X_dict, train_dataset.Y_dict
         )
-        train_loss = float(train_loss_output[0]["task"].detach().numpy())
+        train_loss = train_loss_output[0]["task"].item()
         self.assertLess(train_loss, 0.1)
 
         val_dataset = dataloaders[1].dataset
         val_loss_output = model.calculate_loss(val_dataset.X_dict, val_dataset.Y_dict)
-        val_loss = float(val_loss_output[0]["task"].detach().numpy())
+        val_loss = val_loss_output[0]["task"].item()
         self.assertLess(val_loss, 0.1)
 
     @pytest.mark.complex

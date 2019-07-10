@@ -1,6 +1,5 @@
 from snorkel.map import BaseMapper, LambdaMapper, Mapper, lambda_mapper
 
-
 """Base classes for preprocessors.
 
 A preprocessor is a data point to data point mapping in a labeling
@@ -11,13 +10,7 @@ more complex example, see `snorkel.labeling.preprocess.nlp.SpacyPreprocessor`.
 """
 
 
-class BasePreprocessor(BaseMapper):
-    """Base class for `Preprocessor` and `preprocessor`.
-
-    See `snorkel.map.core.Mapper` for details.
-    """
-
-    pass
+BasePreprocessor = BaseMapper
 
 
 class Preprocessor(Mapper):

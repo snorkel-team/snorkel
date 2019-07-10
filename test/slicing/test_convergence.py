@@ -48,10 +48,6 @@ N_VALID = 300
 
 
 class SlicingConvergenceTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.trainer_config = {"lr": 0.01, "n_epochs": 30, "progress_bar": False}
-
     @pytest.mark.complex
     def test_convergence(self):
         """ Test slicing convergence with 1 slice task that represents ~25% of
@@ -88,7 +84,7 @@ class SlicingConvergenceTest(unittest.TestCase):
         model = SnorkelClassifier(tasks=tasks)
 
         # Train
-        trainer = Trainer(**self.trainer_config)
+        trainer = Trainer(lr=0.01, n_epochs=30, progress_bar=False)
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
 
@@ -146,7 +142,7 @@ class SlicingConvergenceTest(unittest.TestCase):
         model = SnorkelClassifier(tasks=tasks)
 
         # Train
-        trainer = Trainer(**self.trainer_config)
+        trainer = Trainer(lr=0.01, n_epochs=30, progress_bar=False)
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
 

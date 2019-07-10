@@ -4,6 +4,7 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+import pytest
 from dask import dataframe as dd
 
 from snorkel.labeling.apply import LFApplier, PandasLFApplier
@@ -181,6 +182,7 @@ class TestDaskApplier(unittest.TestCase):
         L = applier.apply(df)
         np.testing.assert_equal(L.toarray(), L_PREPROCESS_EXPECTED)
 
+    @pytest.mark.complex
     def test_lf_applier_dask_spacy_preprocessor(self) -> None:
         spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
 
@@ -198,6 +200,7 @@ class TestDaskApplier(unittest.TestCase):
         L = applier.apply(df)
         np.testing.assert_equal(L.toarray(), L_TEXT_EXPECTED)
 
+    @pytest.mark.complex
     def test_lf_applier_pandas_spacy_preprocessor_memoized(self) -> None:
         spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
         spacy.memoize = True

@@ -11,7 +11,7 @@ cache: pip
 dist: xenial
 
 env:
-  TOXENV=coverage,spark,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+  TOXENV=coverage,spark,complex,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 
 jobs:
   include:

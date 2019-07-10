@@ -1,10 +1,13 @@
 import unittest
+from typing import Tuple
 
 import numpy as np
+import pytest
 import torch
 import torch.nn as nn
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, lil_matrix
 
+from snorkel.labeling.analysis import lf_empirical_probs
 from snorkel.labeling.model.label_model import LabelModel
 
 
@@ -245,6 +248,64 @@ class LabelModelTest(unittest.TestCase):
         next_loss = label_model.loss_mu().detach().numpy().ravel()[0]
 
         self.assertLessEqual(next_loss, init_loss)
+
+
+@pytest.mark.complex
+class LabelModelTestAdvanced(unittest.TestCase):
+    """Advanced (marked complex) tests for the LabelModel."""
+
+    def setUp(self) -> None:
+        """Set constants for the tests."""
+        self.m = 10  # Number of LFs
+        self.n = 10000  # Number of data points
+        self.k = 2  # Number of classes
+
+    def _generate_data(self) -> Tuple[np.ndarray, np.ndarray, csr_matrix]:
+        """Generate a synthetic dataset.
+
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray, csr_matrix]
+            A tuple containing the LF conditional probabilities P, the true labels Y, and the output label matrix L
+        """
+        # Generate the conditional probability tables for the LFs
+        # The first axis is LF, second is LF output label, third is true class label
+        # Note that we include abstains in the LF output space, and that we bias the
+        # conditional probabilities towards being non-adversarial
+        P = []
+        for i in range(self.m):
+            p = np.random.rand(self.k + 1, self.k)
+            p[1:, :] += (self.k - 1) * np.eye(self.k)
+            P.append(p @ np.diag(1 / p.sum(axis=0)))
+        P = np.array(P)
+
+        # Generate the true datapoint labels
+        # Note: Assuming balanced classes to start
+        Y = np.random.choice(self.k, self.n) + 1  # Note y \in {1,...,self.k}
+
+        # Generate the label matrix L
+        L = lil_matrix((self.n, self.m))
+        for i in range(self.n):
+            for j in range(self.m):
+                L[i, j] = np.random.choice(self.k + 1, p=P[j, :, Y[i] - 1])
+        L = L.tocsr()
+        return P, Y, L
+
+    def test_generate_L(self) -> None:
+        """Test the generated dataset for consistency."""
+        np.random.seed(123)
+        P, Y, L = self._generate_data()
+        P_emp = lf_empirical_probs(L, Y, k=self.k)
+        np.testing.assert_array_almost_equal(P, P_emp, decimal=2)
+
+    def test_label_model(self) -> None:
+        """Test the LabelModel's estimate of P and Y."""
+        np.random.seed(123)
+        P, Y, L = self._generate_data()
+        label_model = LabelModel(k=self.k, verbose=False)
+        label_model.train_model(L)
+        P_lm = label_model.get_conditional_probs().reshape((self.m, self.k + 1, -1))
+        np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 
 
 if __name__ == "__main__":

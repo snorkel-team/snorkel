@@ -8,7 +8,7 @@ from .scheduler import BatchIterator, Scheduler
 class SequentialScheduler(Scheduler):
     """Return batches from all dataloaders in sequential order."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def get_batches(self, dataloaders: Sequence[DictDataLoader]) -> BatchIterator:

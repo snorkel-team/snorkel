@@ -1,12 +1,16 @@
+from typing import Any
+
 import numpy as np
+import scipy.sparse as sparse
 
 from snorkel.analysis.utils import arraylike_to_numpy
+from snorkel.types import ArrayLike
 
 from .label_model import LabelModel
 
 
 class BaselineVoter(LabelModel):
-    def train_model(self, *args, **kwargs):
+    def train_model(self, *args: Any, **kwargs: Any) -> None:
         pass
 
 
@@ -15,7 +19,7 @@ class RandomVoter(BaselineVoter):
     A class that votes randomly among the available labels
     """
 
-    def predict_proba(self, L):
+    def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
         """
         Args:
             L: An [n, m] scipy.sparse matrix of labels
@@ -36,7 +40,9 @@ class MajorityClassVoter(LabelModel):
     Note that in the case of ties, non-integer probabilities are possible.
     """
 
-    def train_model(self, balance, *args, **kwargs):
+    def train_model(  # type: ignore
+        self, balance: ArrayLike, *args: Any, **kwargs: Any
+    ) -> None:
         """
         Args:
             balance: A 1d arraylike that sums to 1, corresponding to the
@@ -44,7 +50,7 @@ class MajorityClassVoter(LabelModel):
         """
         self.balance = np.array(balance)
 
-    def predict_proba(self, L):
+    def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
         n = L.shape[0]
         Y_p = np.zeros((n, self.cardinality))
         max_classes = np.where(self.balance == max(self.balance))
@@ -62,7 +68,7 @@ class MajorityLabelVoter(BaselineVoter):
     Note that in the case of ties, non-integer probabilities are possible.
     """
 
-    def predict_proba(self, L):
+    def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
         L = arraylike_to_numpy(L, flatten=False)
         n, m = L.shape
         Y_p = np.zeros((n, self.cardinality))

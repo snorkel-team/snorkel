@@ -1,11 +1,13 @@
 import logging
 from collections import defaultdict
-from typing import Dict
+from typing import Any, DefaultDict, Dict, List, Optional
 
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 
+from snorkel.classification.data import DictDataLoader
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.training import (
@@ -17,19 +19,23 @@ from snorkel.classification.training import (
 from snorkel.classification.training.schedulers import batch_schedulers
 from snorkel.classification.utils import recursive_merge_dicts
 
+Metrics = Dict[str, float]
 
-class Trainer(object):
+
+class Trainer:
     """A class for multi-task learning.
 
     :param config: The learning config
     :type config: dict
     """
 
-    def __init__(self, name=None, **kwargs):
+    def __init__(self, name: Optional[str] = None, **kwargs: Any) -> None:
         self.config = recursive_merge_dicts(default_config, kwargs, misses="insert")
         self.name = name if name is not None else type(self).__name__
 
-    def train_model(self, model: SnorkelClassifier, dataloaders):
+    def train_model(
+        self, model: SnorkelClassifier, dataloaders: List[DictDataLoader]
+    ) -> None:
         """The learning procedure of MTL
 
         :param model: The multi-task model that needs to learn
@@ -41,7 +47,9 @@ class Trainer(object):
 
         # Identify the dataloaders to train on
         train_dataloaders = [
-            dl for dl in dataloaders if dl.dataset.split == self.config["train_split"]
+            dl
+            for dl in dataloaders
+            if dl.dataset.split == self.config["train_split"]  # type: ignore
         ]
 
         # Calculate the total number of batches per epoch
@@ -54,7 +62,7 @@ class Trainer(object):
         self._set_checkpointer()
         self._set_log_manager()
         self._set_optimizer(model)
-        self._set_lr_scheduler(model)
+        self._set_lr_scheduler()
         self._set_batch_scheduler()
 
         # Set to training mode
@@ -79,7 +87,7 @@ class Trainer(object):
                 batch_size = len(next(iter(Y_dict.values())))
 
                 # Update lr using lr scheduler
-                self._update_lr_scheduler(model, total_batch_num)
+                self._update_lr_scheduler(total_batch_num)
 
                 # Set gradients of all model parameters to zero
                 self.optimizer.zero_grad()
@@ -128,26 +136,24 @@ class Trainer(object):
 
         model = self.log_manager.close(model)
 
-    def _check_dataloaders(self, dataloaders):
+    def _check_dataloaders(self, dataloaders: List[DictDataLoader]) -> None:
         """ Validates dataloaders given training config"""
-        if not isinstance(dataloaders, list):
-            raise Exception("Trainer.train_model() expects a list of DictDataLoaders.")
-
         train_split = self.config["train_split"]
         valid_split = self.config["valid_split"]
         test_split = self.config["test_split"]
 
         all_splits = [train_split, valid_split, test_split]
-        if not all([dl.dataset.split in all_splits for dl in dataloaders]):
+        if not all(d.dataset.split in all_splits for d in dataloaders):  # type: ignore
             raise ValueError(f"Dataloader splits must be one of {all_splits}")
 
-        if not any([dl.dataset.split == train_split for dl in dataloaders]):
+        if not any(d.dataset.split == train_split for d in dataloaders):  # type: ignore
             raise ValueError(
                 f"Cannot find any dataloaders with split matching train split: "
                 f'{self.config["train_split"]}.'
             )
 
-    def _set_log_writer(self):
+    def _set_log_writer(self) -> None:
+        self.log_writer: Optional[LogWriter]
         if self.config["logging"]:
             config = self.config["log_writer_config"]
             if config["writer"] == "json":
@@ -159,13 +165,18 @@ class Trainer(object):
         else:
             self.log_writer = None
 
-    def _set_checkpointer(self):
+    def _set_checkpointer(self) -> None:
+        self.checkpointer: Optional[Checkpointer]
+
         if self.config["checkpointing"]:
             checkpointer_config = self.config["checkpointer_config"]
             log_manager_config = self.config["log_manager_config"]
 
             # Default checkpoint_dir to log_dir if available
-            if checkpointer_config["checkpoint_dir"] is None and self.config["logging"]:
+            if (
+                checkpointer_config["checkpoint_dir"] is None
+                and self.log_writer is not None
+            ):
                 checkpointer_config["checkpoint_dir"] = self.log_writer.log_dir
 
             self.checkpointer = Checkpointer(
@@ -174,7 +185,7 @@ class Trainer(object):
         else:
             self.checkpointer = None
 
-    def _set_log_manager(self):
+    def _set_log_manager(self) -> None:
         """Set logging manager."""
         self.log_manager = LogManager(
             self.n_batches_per_epoch,
@@ -183,7 +194,7 @@ class Trainer(object):
             **self.config["log_manager_config"],
         )
 
-    def _set_optimizer(self, model):
+    def _set_optimizer(self, model: nn.Module) -> None:
         """Set optimizer for learning process."""
 
         # TODO: add more optimizer support and fp16
@@ -192,8 +203,10 @@ class Trainer(object):
 
         parameters = filter(lambda p: p.requires_grad, model.parameters())
 
+        optimizer: optim.Optimizer  # type: ignore
+
         if opt == "sgd":
-            optimizer = optim.SGD(
+            optimizer = optim.SGD(  # type: ignore
                 parameters,
                 lr=optimizer_config["lr"],
                 **optimizer_config["sgd_config"],
@@ -203,15 +216,15 @@ class Trainer(object):
             optimizer = optim.Adam(
                 parameters,
                 lr=optimizer_config["lr"],
-                **optimizer_config["adam_config"],
                 weight_decay=optimizer_config["l2"],
+                **optimizer_config["adam_config"],
             )
         elif opt == "adamax":
-            optimizer = optim.Adamax(
+            optimizer = optim.Adamax(  # type: ignore
                 parameters,
                 lr=optimizer_config["lr"],
-                **optimizer_config["adamax_config"],
                 weight_decay=optimizer_config["l2"],
+                **optimizer_config["adamax_config"],
             )
         else:
             raise ValueError(f"Unrecognized optimizer option '{opt}'")
@@ -220,16 +233,17 @@ class Trainer(object):
 
         self.optimizer = optimizer
 
-    def _set_lr_scheduler(self, model):
+    def _set_lr_scheduler(self) -> None:
         """Set learning rate scheduler for learning process."""
 
         # Set warmup scheduler
-        self._set_warmup_scheduler(model)
+        self._set_warmup_scheduler()
 
         # Set lr scheduler
         # TODO: add more lr scheduler support
         opt = self.config["lr_scheduler_config"]["lr_scheduler"]
         lr_scheduler_config = self.config["lr_scheduler_config"]
+        lr_scheduler: Optional[optim.lr_scheduler._LRScheduler]
 
         if opt == "constant":
             lr_scheduler = None
@@ -238,7 +252,7 @@ class Trainer(object):
             linear_decay_func = lambda x: (total_steps - self.warmup_steps - x) / (
                 total_steps - self.warmup_steps
             )
-            lr_scheduler = optim.lr_scheduler.LambdaLR(
+            lr_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
                 self.optimizer, linear_decay_func
             )
         elif opt == "exponential":
@@ -254,8 +268,10 @@ class Trainer(object):
 
         self.lr_scheduler = lr_scheduler
 
-    def _set_warmup_scheduler(self, model):
+    def _set_warmup_scheduler(self) -> None:
         """Set warmup learning rate scheduler for learning process."""
+
+        warmup_scheduler: Optional[optim.lr_scheduler.LambdaLR]
 
         if self.config["lr_scheduler_config"]["warmup_steps"]:
             warmup_steps = self.config["lr_scheduler_config"]["warmup_steps"]
@@ -271,7 +287,7 @@ class Trainer(object):
                     f"warmup_unit must be 'batches' or 'epochs', but {warmup_unit} found."
                 )
             linear_warmup_func = lambda x: x / self.warmup_steps
-            warmup_scheduler = optim.lr_scheduler.LambdaLR(
+            warmup_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
                 self.optimizer, linear_warmup_func
             )
             logging.info(f"Warmup {self.warmup_steps} batches.")
@@ -281,7 +297,7 @@ class Trainer(object):
                 warmup_percentage * self.config["n_epochs"] * self.n_batches_per_epoch
             )
             linear_warmup_func = lambda x: x / self.warmup_steps
-            warmup_scheduler = optim.lr_scheduler.LambdaLR(
+            warmup_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
                 self.optimizer, linear_warmup_func
             )
             logging.info(f"Warmup {self.warmup_steps} batches.")
@@ -291,29 +307,37 @@ class Trainer(object):
 
         self.warmup_scheduler = warmup_scheduler
 
-    def _update_lr_scheduler(self, model, step):
+    def _update_lr_scheduler(self, step: int) -> None:
         """Update the lr using lr_scheduler with each batch."""
 
         if self.warmup_scheduler and step < self.warmup_steps:
-            self.warmup_scheduler.step()
+            self.warmup_scheduler.step()  # type: ignore
         elif self.lr_scheduler is not None:
-            self.lr_scheduler.step()
+            self.lr_scheduler.step()  # type: ignore
             min_lr = self.config["lr_scheduler_config"]["min_lr"]
             if min_lr and self.optimizer.param_groups[0]["lr"] < min_lr:
                 self.optimizer.param_groups[0]["lr"] = min_lr
 
-    def _set_batch_scheduler(self):
+    def _set_batch_scheduler(self) -> None:
         """Set task scheduler for learning process"""
         scheduler_class = batch_schedulers.get(self.config["batch_scheduler"])
         if not scheduler_class:
             raise ValueError(f"Unrecognized batch scheduler option '{scheduler_class}'")
 
-        self.batch_scheduler = scheduler_class()
+        self.batch_scheduler = scheduler_class()  # type: ignore
 
-    def _evaluate(self, model, dataloaders, split):
-        return model.score([dl for dl in dataloaders if dl.dataset.split in split])
+    def _evaluate(
+        self, model: SnorkelClassifier, dataloaders: List[DictDataLoader], split: str
+    ) -> Metrics:
+        loaders = [d for d in dataloaders if d.dataset.split in split]  # type: ignore
+        return model.score(loaders)
 
-    def _logging(self, model, dataloaders, batch_size):
+    def _logging(
+        self,
+        model: SnorkelClassifier,
+        dataloaders: List[DictDataLoader],
+        batch_size: int,
+    ) -> Metrics:
         """Checking if it's time to evaluting or checkpointing"""
 
         # Switch to eval mode for evaluation
@@ -322,7 +346,7 @@ class Trainer(object):
         self.log_manager.update(batch_size)
 
         # Log the loss and lr
-        metric_dict = dict()
+        metric_dict: Metrics = dict()
         metric_dict.update(self._aggregate_losses())
 
         # Evaluate the model and log the metric
@@ -332,38 +356,39 @@ class Trainer(object):
             metric_dict.update(
                 self._evaluate(model, dataloaders, self.config["valid_split"])
             )
-
-            if self.config["logging"]:
-                self._log_metrics(metric_dict)
-
+            self._log_metrics(metric_dict)
             self._reset_losses()
 
         # Checkpoint the model
         if self.log_manager.trigger_checkpointing():
-            if self.config["checkpointing"]:
-                self._checkpoint_model(model, metric_dict)
-
+            self._checkpoint_model(model, metric_dict)
             self._reset_losses()
 
         # Switch back to train mode
         model.train()
         return metric_dict
 
-    def _log_metrics(self, metric_dict):
-        for metric_name, metric_value in metric_dict.items():
-            self.log_writer.add_scalar(
-                metric_name, metric_value, self.log_manager.point_total
+    def _log_metrics(self, metric_dict: Metrics) -> None:
+        if self.log_writer is not None:
+            for metric_name, metric_value in metric_dict.items():
+                self.log_writer.add_scalar(
+                    metric_name, metric_value, self.log_manager.point_total
+                )
+
+    def _checkpoint_model(self, model: SnorkelClassifier, metric_dict: Metrics) -> None:
+        if self.checkpointer is not None:
+            self.checkpointer.checkpoint(
+                self.log_manager.unit_total, model, metric_dict
             )
 
-    def _checkpoint_model(self, model, metric_dict):
-        self.checkpointer.checkpoint(self.log_manager.unit_total, model, metric_dict)
-
-    def _aggregate_losses(self):
+    def _aggregate_losses(self) -> Metrics:
         """Calculate the task specific loss, average micro loss and learning rate."""
 
         metric_dict = dict()
 
         # Log task specific loss
+        self.running_losses: DefaultDict[str, float]
+        self.running_counts: DefaultDict[str, float]
         for identifier in self.running_losses.keys():
             if self.running_counts[identifier] > 0:
                 metric_dict[identifier] = (
@@ -381,6 +406,6 @@ class Trainer(object):
 
         return metric_dict
 
-    def _reset_losses(self):
+    def _reset_losses(self) -> None:
         self.running_losses = defaultdict(float)
         self.running_counts = defaultdict(int)

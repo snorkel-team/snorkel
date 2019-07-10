@@ -2,19 +2,24 @@ import glob
 import logging
 import os
 from shutil import copyfile
-from typing import Dict, List
+from typing import Any, Dict, List, Set
 
+from snorkel.classification.snorkel_classifier import SnorkelClassifier
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.utils import recursive_merge_dicts
+
+Metrics = Dict[str, float]
 
 
 class Checkpointer(object):
     """Checkpointing Training logging class to log train infomation"""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
 
         # Checkpointer requires both checkpointer_config and log_manager_config
         # Use recursive_merge_dict instead of dict.update() to ensure copies are made
+        assert isinstance(default_config["checkpointer_config"], dict)
+        assert isinstance(default_config["log_manager_config"], dict)
         checkpointer_config = recursive_merge_dicts(
             default_config["checkpointer_config"],
             default_config["log_manager_config"],
@@ -66,7 +71,9 @@ class Checkpointer(object):
 
         self.best_metric_dict: Dict[str, float] = {}
 
-    def checkpoint(self, iteration, model, metric_dict):
+    def checkpoint(
+        self, iteration: float, model: SnorkelClassifier, metric_dict: Metrics
+    ) -> None:
         # Check if the checkpoint_runway condition is met
         if iteration < self.checkpoint_runway:
             return
@@ -99,7 +106,7 @@ class Checkpointer(object):
                     f"/best_model_{metric.replace('/', '_')}.pth"
                 )
 
-    def is_new_best(self, metric_dict):
+    def is_new_best(self, metric_dict: Metrics) -> Set[str]:
         best_metric = set()
 
         for metric in metric_dict:
@@ -123,14 +130,14 @@ class Checkpointer(object):
 
         return best_metric
 
-    def clear(self):
+    def clear(self) -> None:
         if self.checkpoint_clear:
             logging.info("Clear all immediate checkpoints.")
             file_list = glob.glob(f"{self.checkpoint_dir}/checkpoint_*.pth")
             for fname in file_list:
                 os.remove(fname)
 
-    def load_best_model(self, model):
+    def load_best_model(self, model: SnorkelClassifier) -> SnorkelClassifier:
         """Load the best model from the checkpoint."""
         metric = list(self.checkpoint_metric.keys())[0]
         if metric not in self.best_metric_dict:  # pragma: no cover
@@ -145,7 +152,7 @@ class Checkpointer(object):
 
         return model
 
-    def _make_metric_map(self, metric_mode_list: List[str]):
+    def _make_metric_map(self, metric_mode_list: List[str]) -> Dict[str, str]:
         if metric_mode_list is None:
             return {}
 

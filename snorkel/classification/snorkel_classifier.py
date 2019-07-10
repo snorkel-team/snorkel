@@ -260,7 +260,7 @@ class SnorkelClassifier(nn.Module):
             if gold_dict[task_name].ndim == 1:
                 active = (gold_dict[task_name] != 0).reshape(-1)
             else:
-                active = np.sum(gold_dict[task_name] == 0, axis=1) > 0
+                active = np.sum(gold_dict[task_name] != 0, axis=1) > 0
 
             if 0 in active:
                 gold_dict[task_name] = gold_dict[task_name][active]

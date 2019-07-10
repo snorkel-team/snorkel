@@ -141,7 +141,9 @@ def recursive_merge_dicts(
     return z
 
 
-def move_to_device(obj: TensorCollection, device: int = -1) -> TensorCollection:  # pragma: no cover
+def move_to_device(
+    obj: TensorCollection, device: int = -1
+) -> TensorCollection:  # pragma: no cover
     """
     Given a structure (possibly) containing Tensors on the CPU, move all the Tensors
     to the specified GPU (or do nothing, if they should beon the CPU).

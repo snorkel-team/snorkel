@@ -314,7 +314,7 @@ class SnorkelClassifier(nn.Module):
 
         return metric_score_dict
 
-    def _move_to_device(self):  # pragma: no cover
+    def _move_to_device(self) -> None:  # pragma: no cover
         device = self.config["device"]
         if device >= 0:
             if torch.cuda.is_available():

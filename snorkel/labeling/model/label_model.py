@@ -474,6 +474,8 @@ class LabelModel(nn.Module):
         # Train the model
         metrics_hist = {}  # The most recently seen value for all metrics
         for epoch in range(start_iteration, train_config["n_epochs"]):
+            self.running_loss = 0.0
+            self.running_examples = 0
 
             # Zero the parameter gradients
             self.optimizer.zero_grad()

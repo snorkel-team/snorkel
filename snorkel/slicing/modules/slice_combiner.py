@@ -2,23 +2,25 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from typing import Dict
+
 
 class SliceCombinerModule(nn.Module):
     """A module for combining the weighted representations learned by slices"""
 
     def __init__(
         self,
-        slice_ind_key="_ind",
-        slice_pred_key="_pred",
-        slice_pred_feat_key="_pred_transform",
-    ):
+        slice_ind_key: str = "_ind",
+        slice_pred_key: str = "_pred",
+        slice_pred_feat_key: str = "_pred_transform",
+    ) -> None:
         super().__init__()
 
         self.slice_ind_key = slice_ind_key
         self.slice_pred_key = slice_pred_key
         self.slice_pred_feat_key = slice_pred_feat_key
 
-    def forward(self, outputs):
+    def forward(self, outputs: Dict[str, torch.Tensor]) -> torch.Tensor:  # type: ignore
         # Gather names of slice heads (both indicator and predictor heads)
         slice_ind_op_names = sorted(
             [

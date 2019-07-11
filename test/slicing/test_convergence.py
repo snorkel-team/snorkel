@@ -87,14 +87,14 @@ class SlicingConvergenceTest(unittest.TestCase):
         model = SnorkelClassifier(tasks=tasks)
 
         # Train
-        trainer = Trainer(lr=0.01, n_epochs=30, progress_bar=False)
+        trainer = Trainer(lr=0.01, n_epochs=50, progress_bar=False)
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
 
         # Confirm near perfect scores
-        self.assertGreater(scores["task/TestData/valid/accuracy"], 0.9)
-        self.assertGreater(scores["task_slice:h_pred/TestData/valid/accuracy"], 0.9)
-        self.assertGreater(scores["task_slice:h_ind/TestData/valid/f1"], 0.9)
+        self.assertGreater(scores["task/TestData/valid/accuracy"], 0.95)
+        self.assertGreater(scores["task_slice:h_pred/TestData/valid/accuracy"], 0.95)
+        self.assertGreater(scores["task_slice:h_ind/TestData/valid/f1"], 0.95)
 
         # Calculate/check train/val loss
         train_dataset = dataloaders[0].dataset
@@ -102,12 +102,12 @@ class SlicingConvergenceTest(unittest.TestCase):
             train_dataset.X_dict, train_dataset.Y_dict
         )
         train_loss = train_loss_output[0]["task"].item()
-        self.assertLess(train_loss, 0.5)
+        self.assertLess(train_loss, 0.1)
 
         val_dataset = dataloaders[1].dataset
         val_loss_output = model.calculate_loss(val_dataset.X_dict, val_dataset.Y_dict)
         val_loss = val_loss_output[0]["task"].item()
-        self.assertLess(val_loss, 0.5)
+        self.assertLess(val_loss, 0.1)
 
     @pytest.mark.complex
     def test_performance(self):
@@ -137,17 +137,17 @@ class SlicingConvergenceTest(unittest.TestCase):
         model = SnorkelClassifier(tasks=tasks)
 
         # Train
-        trainer = Trainer(lr=0.01, n_epochs=30, progress_bar=False)
+        trainer = Trainer(lr=0.01, n_epochs=50, progress_bar=False)
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
 
         # Confirm reasonably high slice scores
-        self.assertGreater(scores["task/TestData/valid/f1"], 0.8)
-        self.assertGreater(scores["task_slice:f_pred/TestData/valid/f1"], 0.8)
-        self.assertGreater(scores["task_slice:f_ind/TestData/valid/f1"], 0.8)
-        self.assertGreater(scores["task_slice:g_pred/TestData/train/f1"], 0.8)
-        self.assertGreater(scores["task_slice:g_ind/TestData/train/f1"], 0.8)
-        self.assertGreater(scores["task_slice:base_pred/TestData/valid/f1"], 0.8)
+        self.assertGreater(scores["task/TestData/valid/f1"], 0.95)
+        self.assertGreater(scores["task_slice:f_pred/TestData/valid/f1"], 0.95)
+        self.assertGreater(scores["task_slice:f_ind/TestData/valid/f1"], 0.95)
+        self.assertGreater(scores["task_slice:g_pred/TestData/train/f1"], 0.95)
+        self.assertGreater(scores["task_slice:g_ind/TestData/train/f1"], 0.95)
+        self.assertGreater(scores["task_slice:base_pred/TestData/valid/f1"], 0.95)
         # base_ind is trivial: all labels are positive
         self.assertEqual(scores["task_slice:base_ind/TestData/valid/f1"], 1.0)
 

@@ -57,6 +57,12 @@ class ClassifierTest(unittest.TestCase):
             SnorkelClassifier(tasks=[self.task1, self.task1])
         with self.assertRaisesRegex(ValueError, "Unrecognized task type"):
             SnorkelClassifier(tasks=[self.task1, {"fake_task": 42}])
+        with self.assertRaisesRegex(ValueError, "Unsuccessful operation"):
+            task1 = create_task("task1")
+            task1.task_flow[0].inputs[0] = (0, 0)
+            model = SnorkelClassifier(tasks=[task1])
+            X_dict = self.dataloader.dataset.X_dict
+            model.forward(X_dict, [task1.name])
 
     def test_predict(self):
         model = SnorkelClassifier([self.task1])

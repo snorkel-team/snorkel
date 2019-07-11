@@ -1,1 +1,1 @@
-from snorkel.map.spark import SparkMapper as SparkPreprocessor  # noqa: F401
+from snorkel.map.spark import make_spark_mapper as make_spark_preprocessor  # noqa: F401

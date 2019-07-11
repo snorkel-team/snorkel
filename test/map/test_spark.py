@@ -1,15 +1,15 @@
 import unittest
-from typing import Any, Optional
+from typing import Optional
 
 import pytest
 from pyspark.sql import Row
 
-from snorkel.map import lambda_mapper
-from snorkel.map.spark import SparkMapper
+from snorkel.map import Mapper, lambda_mapper
+from snorkel.map.spark import make_spark_mapper
 from snorkel.types import DataPoint, FieldMap
 
 
-class SplitWordsMapper(SparkMapper):
+class SplitWordsMapper(Mapper):
     def __init__(
         self, name: str, text_field: str, lower_field: str, words_field: str
     ) -> None:
@@ -21,23 +21,13 @@ class SplitWordsMapper(SparkMapper):
         return dict(lower=text.lower(), words=text.split())
 
 
-class SplitWordsMapperDefaultArgs(SparkMapper):
+class SplitWordsMapperDefaultArgs(Mapper):
     def run(self, text: str) -> FieldMap:  # type: ignore
         return dict(lower=text.lower(), words=text.split())
 
 
-class MapperReturnsNone(SparkMapper):
+class MapperReturnsNone(Mapper):
     def run(self, text: str) -> Optional[FieldMap]:  # type: ignore
-        return None
-
-
-class MapperWithArgs(SparkMapper):
-    def run(self, text: str, *args: Any) -> Optional[FieldMap]:  # type: ignore
-        return None
-
-
-class MapperWithKwargs(SparkMapper):
-    def run(self, text: str, **kwargs: Any) -> Optional[FieldMap]:  # type: ignore
         return None
 
 
@@ -85,7 +75,8 @@ class TestMapperCore(unittest.TestCase):
         split_words = SplitWordsMapper(
             "split_words", "text", "text_lower", "text_words"
         )
-        x_mapped = split_words(self._get_x())
+        split_words_spark = make_spark_mapper(split_words)
+        x_mapped = split_words_spark(self._get_x())
         assert x_mapped is not None
         self.assertEqual(x_mapped.num, 8)
         self.assertEqual(x_mapped.text, "Henry has fun")
@@ -95,8 +86,9 @@ class TestMapperCore(unittest.TestCase):
     @pytest.mark.spark
     def test_mapper_same_field(self) -> None:
         split_words = SplitWordsMapper("split_words", "text", "text", "text_words")
+        split_words_spark = make_spark_mapper(split_words)
         x = self._get_x()
-        x_mapped = split_words(x)
+        x_mapped = split_words_spark(x)
         self.assertEqual(x.num, 8)
         self.assertEqual(x.text, "Henry has fun")
         self.assertFalse(hasattr(x, "text_words"))
@@ -108,7 +100,8 @@ class TestMapperCore(unittest.TestCase):
     @pytest.mark.spark
     def test_mapper_default_args(self) -> None:
         split_words = SplitWordsMapperDefaultArgs("split_words")
-        x_mapped = split_words(self._get_x())
+        split_words_spark = make_spark_mapper(split_words)
+        x_mapped = split_words_spark(self._get_x())
         assert x_mapped is not None
         self.assertEqual(x_mapped.num, 8)
         self.assertEqual(x_mapped.text, "Henry has fun")
@@ -130,7 +123,8 @@ class TestMapperCore(unittest.TestCase):
     @pytest.mark.spark
     def test_mapper_returns_none(self) -> None:
         mapper = MapperReturnsNone("none_mapper")
-        x_mapped = mapper(self._get_x())
+        mapper_spark = make_spark_mapper(mapper)
+        x_mapped = mapper_spark(self._get_x())
         self.assertIsNone(x_mapped)
 
     @pytest.mark.spark

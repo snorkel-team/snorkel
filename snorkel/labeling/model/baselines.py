@@ -28,22 +28,18 @@ class BaselineVoter(LabelModel):
 class RandomVoter(BaselineVoter):
     """Random vote label model.
 
-    Examples
-    --------
-    L = np.array([[1,1,0],[0,1,2],[2,0,1]])
+    Example
+    -------
+    ```
+    L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
     random_voter = RandomVoter()
-    predictions = random_voter.predict_proba()
+    predictions = random_voter.predict_proba(L)
+    ```
     """
 
     def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
         """
         Assign random votes to the data points.
-
-        Examples
-        --------
-        L = np.array([[1,1,0],[0,1,2],[2,0,1]])
-        random_voter = RandomVoter()
-        predictions = random_voter.predict_proba()
 
         Parameters
         ----------
@@ -54,6 +50,14 @@ class RandomVoter(BaselineVoter):
         -------
         np.ndarray
             A [n, k] array of probabilistic labels
+
+        Example
+        -------
+        ```
+        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        random_voter = RandomVoter()
+        predictions = random_voter.predict_proba(L)
+        ```
         """
         n = L.shape[0]
         Y_p = np.random.rand(n, self.cardinality)
@@ -64,12 +68,14 @@ class RandomVoter(BaselineVoter):
 class MajorityClassVoter(LabelModel):
     """Majority class label model.
 
-    Examples
-    --------
-    L = np.array([[1,1,0],[0,1,2],[2,0,1]])
+    Example
+    -------
+    ```
+    L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
     maj_class_voter = MajorityClassVoter()
-    maj_class_voter.train(balance=[0.8,0.2])
-    predictions = maj_class_voter.predict_proba()
+    maj_class_voter.train(balance=[0.8, 0.2])
+    predictions = maj_class_voter.predict_proba(L)  # np.array([1.0, 0.0], [1.0, 0.0], [1.0, 0.0])
+    ```
     """
 
     def train_model(  # type: ignore
@@ -79,17 +85,19 @@ class MajorityClassVoter(LabelModel):
 
         Set class balance for majority class label model.
 
-        Examples
-        --------
-        L = np.array([[1,1,0],[0,1,2],[2,0,1]])
-        maj_class_voter = MajorityClassVoter()
-        maj_class_voter.train(balance=[0.8,0.2])
-        predictions = maj_class_voter.predict_proba()
-
         Parameters
         ----------
         balance
             A [1, k] array of class probabilities
+
+        Example
+        -------
+        ```
+        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        maj_class_voter = MajorityClassVoter()
+        maj_class_voter.train_model(balance=[0.8, 0.2])
+        predictions = maj_class_voter.predict_proba(L)  # np.array([1.0, 0.0], [1.0, 0.0], [1.0, 0.0])
+        ```
         """
         self.balance = np.array(balance)
 
@@ -99,12 +107,6 @@ class MajorityClassVoter(LabelModel):
         Assign majority class vote to each datapoint.
         In case of multiple majority classes, assign equal probabilities among them.
 
-        Examples
-        --------
-        L = np.array([[1,1,0],[0,1,2],[2,0,1]])
-        maj_class_voter = MajorityClassVoter()
-        maj_class_voter.train(balance=[0.8,0.2])
-        predictions = maj_class_voter.predict_proba()
 
         Parameters
         ----------
@@ -115,6 +117,15 @@ class MajorityClassVoter(LabelModel):
         -------
         np.ndarray
             A [n, k] array of probabilistic labels
+
+        Example
+        -------
+        ```
+        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        maj_class_voter = MajorityClassVoter()
+        maj_class_voter.train_model(balance=[0.8, 0.2])
+        predictions = maj_class_voter.predict_proba(L)  # np.array([1.0, 0.0], [1.0, 0.0], [1.0, 0.0])
+        ```
         """
         n = L.shape[0]
         Y_p = np.zeros((n, self.cardinality))
@@ -128,11 +139,13 @@ class MajorityClassVoter(LabelModel):
 class MajorityLabelVoter(BaselineVoter):
     """Majority vote label model.
 
-    Examples
-    --------
-    L = np.array([[1,1,0],[0,1,2],[2,0,1]])
+    Example
+    -------
+    ```
+    L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
     maj_voter = MajorityLabelVoter()
-    predictions = maj_voter.predict_proba()
+    predictions = maj_voter.predict_proba(L)  # np.array([[1., 0.], [0.5, 0.5], [0.5, 0.5]])
+    ```
     """
 
     def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
@@ -140,12 +153,6 @@ class MajorityLabelVoter(BaselineVoter):
 
         Assign vote by calculating majority vote across all labeling functions.
         In case of ties, non-integer probabilities are possible.
-
-        Examples
-        --------
-        L = np.array([[1,1,0],[0,1,2],[2,0,1]])
-        maj_voter = MajorityLabelVoter()
-        predictions = maj_voter.predict_proba()
 
         Parameters
         ----------
@@ -156,6 +163,14 @@ class MajorityLabelVoter(BaselineVoter):
         -------
         np.ndarray
             A [n, k] array of probabilistic labels
+
+        Example
+        -------
+        ```
+        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        maj_voter = MajorityLabelVoter()
+        predictions = maj_voter.predict_proba(L)  # np.array([[1., 0.], [0.5, 0.5], [0.5, 0.5]])
+        ```
         """
         L = arraylike_to_numpy(L, flatten=False)
         n, m = L.shape

@@ -226,27 +226,21 @@ class LabelModelTest(unittest.TestCase):
         label_model.mu = nn.Parameter(label_model.mu_init.clone() + 0.05)
 
         # l2_loss = l2*M*K*||mu - mu_init||_2 = 3*2*(0.05^2) = 0.03
-        self.assertAlmostEqual(
-            label_model._loss_l2(l2=1.0).detach().numpy().ravel()[0], 0.03
-        )
-        self.assertAlmostEqual(
-            label_model._loss_l2(l2=np.ones(6)).detach().numpy().ravel()[0], 0.03
-        )
+        self.assertAlmostEqual(label_model._loss_l2(l2=1.0).item(), 0.03)
+        self.assertAlmostEqual(label_model._loss_l2(l2=np.ones(6)).item(), 0.03)
 
         # mu_loss = ||O - \mu^T P \mu||_2 + ||\mu^T P - diag(O)||_2
-        self.assertAlmostEqual(
-            label_model._loss_mu().detach().numpy().ravel()[0], 0.675, 3
-        )
+        self.assertAlmostEqual(label_model._loss_mu().item(), 0.675, 3)
 
     def test_model_loss(self):
         L = np.array([[1, 0, 1], [1, 2, 1]])
         label_model = self._set_up_model(L)
 
         label_model.train_model(L, n_epochs=1, lr=0.01, momentum=0.9)
-        init_loss = label_model._loss_mu().detach().numpy().ravel()[0]
+        init_loss = label_model._loss_mu().item()
 
         label_model.train_model(L, n_epochs=10, lr=0.01, momentum=0.9)
-        next_loss = label_model._loss_mu().detach().numpy().ravel()[0]
+        next_loss = label_model._loss_mu().item()
 
         self.assertLessEqual(next_loss, init_loss)
         with self.assertRaisesRegex(Exception, "Loss is NaN."):

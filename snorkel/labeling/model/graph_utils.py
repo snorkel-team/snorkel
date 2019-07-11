@@ -20,13 +20,12 @@ def get_clique_tree(nodes: Iterable[int], edges: List[Tuple[int, int]]) -> nx.Gr
     ----------
     nodes
         A list of nodes indices
-
     edges
         A list of tuples, where each tuple has indices for connected nodes
 
     Returns
     -------
-    nx.Graph
+    networkx.Graph
         An object G representing clique tree
     """
     # Form the original graph G1

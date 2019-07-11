@@ -14,7 +14,6 @@ class Logger:
     ----------
     log_train_every
         Number of units at which to log model
-
     unit_count
         Running total of number of units passed without logging
     """
@@ -44,8 +43,11 @@ class Logger:
 
         Example
         -------
+        ```
+        logger = Logger(log_train_every=5)
         metrics_dict = {"train/loss": 5.00}
-        logger.log(metrics_dict)
+        logger.log(metrics_dict)  # prints [0 epochs]: TRAIN:[loss=5.000]
+        ```
         """
         self.print_to_screen(metrics_dict)
         self.unit_count = 0
@@ -62,6 +64,13 @@ class Logger:
         ------
         Exception
             If metric names formatted incorrectly
+
+        Example
+        -------
+        ```
+        metrics_dict = {"train/loss": 5.00}
+        logger.print_to_screen(metrics_dict)  # prints [0 epochs]: TRAIN:[loss=5.000]
+        ```
         """
         score_strings: DefaultDict[str, List[str]] = defaultdict(list)
         for full_name, value in metrics_dict.items():

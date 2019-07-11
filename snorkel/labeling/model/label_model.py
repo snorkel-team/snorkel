@@ -28,18 +28,10 @@ class _CData(NamedTuple):
 class LabelModel(nn.Module):
     """A conditionally independent LabelModel to learn LF accuracies and assign training labels.
 
-    Examples
-    --------
-    label_model = LabelModel()
-    label_model = LabelModel(cardinality=3)
-    label_model = LabelModel(cardinality=3, device='cpu')
-    label_model = LabelModel(cardinality=3, seed=1234)
-
     Parameters
     ----------
-    cardinality : optional
+    cardinality
         Number of classes, by default 2
-
     **kwargs
         Arguments for changing config defaults
 
@@ -47,10 +39,8 @@ class LabelModel(nn.Module):
     ----------
     cardinality
         Number of classes, by default 2
-
     config
         Training configuration
-
     seed
         Random seed
 
@@ -58,6 +48,15 @@ class LabelModel(nn.Module):
     ------
     ValueError
         If config device set to cuda but only cpu is available
+
+    Examples
+    --------
+    ```
+    label_model = LabelModel()
+    label_model = LabelModel(cardinality=3)
+    label_model = LabelModel(cardinality=3, device='cpu')
+    label_model = LabelModel(cardinality=3, seed=1234)
+    ```
     """
 
     def __init__(self, cardinality: int = 2, **kwargs: Any) -> None:
@@ -140,7 +139,7 @@ class LabelModel(nn.Module):
         ----------
         L
             An [n,m] label matrix with values in {0,1,...,k}
-        higher_order: optional
+        higher_order
             Whether to include higher-order correlations (e.g. LF pairs) in matrix, by default False
 
         Returns
@@ -189,13 +188,7 @@ class LabelModel(nn.Module):
             return L_ind
 
     def _build_mask(self) -> None:
-        """Build mask applied to O^{-1}, O for the matrix approx constraint.
-
-        Attributes
-        ----------
-        mask
-            Binary matrix with 0s for entries not included in matrix approximation
-        """
+        """Build mask applied to O^{-1}, O for the matrix approx constraint."""
         self.mask = torch.ones(self.d, self.d).byte()
         for ci in self.c_data.values():
             si = ci.start_index
@@ -216,7 +209,7 @@ class LabelModel(nn.Module):
         ----------
         L
             An [n,m] label matrix with values in {0,1,...,k}
-        higher_order: optional
+        higher_order
             Whether to include higher-order correlations (e.g. LF pairs) in matrix, by default False
         """
         L_aug = self._get_augmented_label_matrix(L, higher_order=higher_order)
@@ -286,7 +279,7 @@ class LabelModel(nn.Module):
 
         Parameters
         ----------
-        source : optional
+        source
             Index of source to generate conditional probabilities for, by default None
 
         Returns
@@ -321,19 +314,23 @@ class LabelModel(nn.Module):
     def get_accuracies(self, probs: Optional[np.ndarray] = None) -> np.ndarray:
         """Return the vector of LF accuracies.
 
-        Example
-        -------
-        label_model.get_accuracies()
-
         Parameters
         ----------
-        probs : optional
+        probs
             Conditional probabilities, by default None
 
         Returns
         -------
         np.ndarray
             [m,1] vector of LF accuracies
+
+        Example
+        -------
+        ```
+        L = np.array([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        label_model = LabelModel()
+        label_model.train_model(L)
+        label_model.get_accuracies()  # np.array([0.9, 0.9, 0.01])
         """
         accs = np.zeros(self.m)
         for i in range(self.m):
@@ -349,11 +346,6 @@ class LabelModel(nn.Module):
     def predict_proba(self, L: Matrix) -> np.ndarray:
         r"""Return label probabilities P(Y | \lambda).
 
-        Examples
-        --------
-        label_model.train_model(L)
-        label_model.predict_proba(L)
-
         Parameters
         ----------
         L
@@ -363,6 +355,14 @@ class LabelModel(nn.Module):
         -------
         np.ndarray
             An [n,k] array of probabilistic labels
+
+        Example
+        -------
+        ```
+        L = np.array([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        label_model.train_model(L)
+        label_model.predict_proba(L)  # np.array([1.0, 0.0], [0.0, 1.0], [1.0, 0.0])
+        ```
         """
         self._set_constants(L)
 
@@ -388,9 +388,9 @@ class LabelModel(nn.Module):
 
         Parameters
         ----------
-        l2 : optional
+        l2
             A float or np.array representing the per-source regularization
-                strengths to use, by default 0
+            strengths to use, by default 0
 
         Returns
         -------
@@ -410,7 +410,7 @@ class LabelModel(nn.Module):
 
         Parameters
         ----------
-        l2 : optional
+        l2
             A float or np.array representing the per-source regularization
                 strengths to use, by default 0
 
@@ -533,22 +533,13 @@ class LabelModel(nn.Module):
 
         Train label model to estimate mu, the parameters related to accuracies of LFs.
 
-        Examples
-        --------
-        L = np.array([[1,1,0],[0,1,2],[2,0,1]])
-        Y_dev = [1,2,1]
-
-        label_model.train(L)
-        label_model.train(L, Y_dev=Y_dev)
-        label_model.train(L, class_balance=[0.7, 0.3])
-
         Parameters
         ----------
         L_train
             An [n,m] matrix with values in {0,1,...,k}
-        Y_dev : optional
+        Y_dev
             Gold labels for dev set for estimating class_balance, by default None
-        class_balance : optional
+        class_balance
             Each class's percentage of the population, by default None
         **kwargs
             Arguments for changing train config defaults
@@ -557,6 +548,17 @@ class LabelModel(nn.Module):
         ------
         Exception
             If loss in NaN
+
+        Examples
+        --------
+        ```
+        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        Y_dev = [1, 2, 1]
+
+        label_model.train_model(L)
+        label_model.train_model(L, Y_dev=Y_dev)
+        label_model.train_model(L, class_balance=[0.7, 0.3])
+        ```
         """
         self.config = recursive_merge_dicts(self.config, kwargs, misses="ignore")
         train_config = self.config["train_config"]
@@ -634,17 +636,18 @@ class LabelModel(nn.Module):
     def save(self, destination: str, **kwargs: Any) -> None:
         """Save label model.
 
-        Examples
-        --------
-        label_model.save('./saved_label_model')
-
         Parameters
         ----------
         destination
             File location for saving model
-
         **kwargs
             Arguments for torch.save
+
+        Example
+        -------
+        ```
+        label_model.save('./saved_label_model')
+        ```
         """
         with open(destination, "wb") as f:
             torch.save(self, f, **kwargs)
@@ -653,16 +656,10 @@ class LabelModel(nn.Module):
     def load(source: str, **kwargs: Any) -> Any:
         """Load existing label model.
 
-        Examples
-        --------
-        label_model = LabelModel()
-        label_model.load('./saved_label_model')
-
         Parameters
         ----------
         source
             File location from where to load model
-
         **kwargs
             Arguments for torch.load
 
@@ -670,6 +667,13 @@ class LabelModel(nn.Module):
         -------
         LabelModel
             LabelModel with appropriate loaded parameters
+
+        Example
+        -------
+        ```
+        label_model = LabelModel()
+        label_model.load('./saved_label_model') # Load parameters saved in saved_label_model
+        ```
         """
         with open(source, "rb") as f:
             return torch.load(f, **kwargs)

@@ -21,7 +21,7 @@ class TestGenerateSimpleLabelMatrix(unittest.TestCase):
     def setUp(self) -> None:
         """Set constants for the tests."""
         self.m = 10  # Number of LFs
-        self.n = 10000  # Number of data points
+        self.n = 1000  # Number of data points
 
     def _test_generate_L(self, k: int, decimal: Optional[int] = 2) -> None:
         """Test generated label matrix L for consistency with P, Y.
@@ -44,7 +44,7 @@ class TestGenerateSimpleLabelMatrix(unittest.TestCase):
 
     def test_generate_L(self) -> None:
         """Test the generated dataset for consistency."""
-        self._test_generate_L(2)
+        self._test_generate_L(2, decimal=1)
 
     def test_generate_L_multiclass(self) -> None:
         """Test the generated dataset for consistency with cardinality=3."""

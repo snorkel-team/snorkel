@@ -12,12 +12,22 @@ Outputs = Mapping[str, List[torch.Tensor]]
 
 
 class Operation:
-    """A single operation to execute in a task flow
+    """A single operation (forward pass of a module) to execute in a task flow.
 
-    The `name` attributes defaults to `module_name` since most of the time, each module
-    is used only once per task flow. For more advanced flows where the same module is
-    used multiple times per forward pass, a name may be explicitly given to
-    differentiate the Operations.
+    See `Task` for more detail on the usage and semantics of an Operation.
+
+    Parameters
+    ----------
+    name
+        The name of this operation (defaults to module_name since for most workflows,
+        each module is only used once per forward pass)
+    module_name
+        The name of the module in the module pool that this operation uses
+    inputs
+        The inputs that the specified module expects, given as tuples which reference a
+        previous operation (or the original input) and an index (if the specified
+        operation outputs a single value or sequence of values) or a key (if the
+        specified operation outputs a dictionary of values)
     """
 
     def __init__(
@@ -39,14 +49,23 @@ class Operation:
 
 
 class Task:
-    """A single Task in a multi-task problem
+    """A single task (a collection of modules and specified path through them).
 
-    :param name: The name of the task (Primary key)
-    :param module_pool: A dict of all modules that are used by the task
-    :param task_flow: The task flow among modules to define how the data flows
-    :param loss_func: The function to calculate the loss
-    :param output_func: The function to generate the output
-    :param scorer: A Scorer defining the metrics to evaluate on the task
+    Parameters
+    ----------
+    name
+        The name of the task
+    module_pool
+        A ModuleDict mapping module names to the modules themselves
+    task_flow
+        A list of `Operation`s to execute in order, defining the flow of information
+        through the network for this task
+    scorer
+        A `Scorer` with the desired metrics to calculate for this task
+    loss_func
+        A function that converts final logits into loss values
+    output_func
+        A function that converts final logits into 'outputs' (e.g. probabilities)
     """
 
     def __init__(
@@ -77,10 +96,42 @@ class Task:
 def ce_loss(
     module_name: str, outputs: Outputs, Y: torch.Tensor, active: torch.Tensor
 ) -> torch.Tensor:
+    """Calculate cross-entropy loss for the outputs of the specified module.
+
+    Parameters
+    ----------
+    module_name
+        The name of the module whose output should be used for calculating loss
+    outputs
+        The dictionary of operation outputs
+    Y
+        The gold labels to calculate loss from
+    active
+        A mask of which data points to consider when calculating loss
+
+    Returns
+    -------
+    torch.Tensor
+        The calculated loss
+    """
     # Subtract 1 from hard labels in Y to account for Snorkel reserving the label 0 for
     # abstains while F.cross_entropy() expects 0-indexed labels
     return F.cross_entropy(outputs[module_name][0][active], (Y.view(-1) - 1)[active])
 
 
 def softmax(module_name: str, outputs: Outputs) -> torch.Tensor:
+    """Calculate the softmax of the outputs of the specified module.
+
+    Parameters
+    ----------
+    module_name
+        The name of the module whose output should be used for calculating loss
+    outputs
+        The dictionary of operation outputs
+
+    Returns
+    -------
+    torch.Tensor
+        The probabilities resulting from the softmax calculation
+    """
     return F.softmax(outputs[module_name][0], dim=1)

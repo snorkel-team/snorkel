@@ -251,7 +251,7 @@ class LabelModelTest(unittest.TestCase):
 
 
 @pytest.mark.complex
-class LabelModelTestAdvanced(unittest.TestCase):
+class TestLabelModelAdvanced(unittest.TestCase):
     """Advanced (marked complex) tests for the LabelModel."""
 
     def setUp(self) -> None:
@@ -272,12 +272,11 @@ class LabelModelTestAdvanced(unittest.TestCase):
         # The first axis is LF, second is LF output label, third is true class label
         # Note that we include abstains in the LF output space, and that we bias the
         # conditional probabilities towards being non-adversarial
-        P = []
+        P = np.zeros((self.m, self.k + 1, self.k))
         for i in range(self.m):
             p = np.random.rand(self.k + 1, self.k)
             p[1:, :] += (self.k - 1) * np.eye(self.k)
-            P.append(p @ np.diag(1 / p.sum(axis=0)))
-        P = np.array(P)
+            P[i] = p @ np.diag(1 / p.sum(axis=0))
 
         # Generate the true datapoint labels
         # Note: Assuming balanced classes to start
@@ -302,8 +301,8 @@ class LabelModelTestAdvanced(unittest.TestCase):
         """Test the LabelModel's estimate of P and Y."""
         np.random.seed(123)
         P, Y, L = self._generate_data()
-        label_model = LabelModel(k=self.k, verbose=False)
-        label_model.train_model(L)
+        label_model = LabelModel(cardinality=self.k, verbose=False)
+        label_model.train_model(L, lr=0.01, l2=0.0, n_epochs=100)
         P_lm = label_model.get_conditional_probs().reshape((self.m, self.k + 1, -1))
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 

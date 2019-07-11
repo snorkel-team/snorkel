@@ -135,7 +135,7 @@ def lf_empirical_accuracies(L: Matrix, Y: ArrayLike) -> np.ndarray:
     return np.nan_to_num(0.5 * (X.sum(axis=0) / (L != 0).sum(axis=0) + 1))
 
 
-def lf_empirical_probs(L: Matrix, Y: ArrayLike, k: Optional[int] = None) -> np.ndarray:
+def lf_empirical_probs(L: Matrix, Y: ArrayLike, k: int) -> np.ndarray:
     """Returns the conditional probability tables, P(L | Y), for each of the labeling
     functions, computed empirically using the provided true labels Y.
 
@@ -160,10 +160,6 @@ def lf_empirical_probs(L: Matrix, Y: ArrayLike, k: Optional[int] = None) -> np.n
     # Assume labeled set is small, work with dense matrices
     Y = arraylike_to_numpy(Y)
     L = L.toarray()
-
-    # Infer cardinality if not provided
-    if k is None:
-        k = Y.max()
 
     # Compute empirical conditional probabilities
     # Note: Can do this more efficiently...

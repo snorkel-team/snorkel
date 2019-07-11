@@ -77,7 +77,7 @@ class TestAnalysis(unittest.TestCase):
         np.testing.assert_array_almost_equal(accs, np.array(accs_expected))
 
     def test_lf_empirical_probs(self) -> None:
-        P_emp = lf_empirical_probs(self.L, self.Y)
+        P_emp = lf_empirical_probs(self.L, self.Y, 3)
         P = np.array(
             [
                 [[1 / 2, 1, 0], [0, 0, 0], [1 / 2, 0, 1 / 2], [0, 0, 1 / 2]],
@@ -88,7 +88,7 @@ class TestAnalysis(unittest.TestCase):
                 [[0, 1, 0], [1, 0, 1], [0, 0, 0], [0, 0, 0]],
             ]
         )
-        np.testing.assert_array_almost_equal(P, np.array(P_emp))
+        np.testing.assert_array_almost_equal(P, P_emp)
 
     def test_lf_summary(self) -> None:
         df = lf_summary(self.L, self.Y, lf_names=None, est_accs=None)

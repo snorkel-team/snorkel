@@ -3,11 +3,13 @@ import tempfile
 import unittest
 
 import numpy as np
+import pytest
 import torch
 import torch.nn as nn
 from scipy.sparse import csr_matrix
 
 from snorkel.labeling.model.label_model import LabelModel
+from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
 
 
 class LabelModelTest(unittest.TestCase):
@@ -280,6 +282,36 @@ class LabelModelTest(unittest.TestCase):
         label_model.save(save_path)
         label_model.load(save_path)
         shutil.rmtree(dir_path)
+
+
+@pytest.mark.complex
+class TestLabelModelAdvanced(unittest.TestCase):
+    """Advanced (marked complex) tests for the LabelModel."""
+
+    def setUp(self) -> None:
+        """Set constants for the tests."""
+        self.m = 10  # Number of LFs
+        self.n = 10000  # Number of data points
+        self.k = 2  # Number of classes
+
+    def test_label_model(self) -> None:
+        """Test the LabelModel's estimate of P and Y."""
+        np.random.seed(123)
+        P, Y, L = generate_simple_label_matrix(self.n, self.m, self.k)
+
+        # Train LabelModel
+        label_model = LabelModel(cardinality=self.k, verbose=False)
+        label_model.train_model(L, lr=0.01, l2=0.0, n_epochs=100)
+
+        # Test estimated LF conditional probabilities
+        P_lm = label_model.get_conditional_probs().reshape((self.m, self.k + 1, -1))
+        np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
+
+        # Test predicted labels
+        L = L.todense()  # Note: Remove once Label Model L typing is cleaned up!
+        Y_lm = label_model.predict_proba(L).argmax(axis=1) + 1
+        err = np.where(Y != Y_lm, 1, 0).sum() / self.n
+        self.assertLess(err, 0.1)
 
 
 if __name__ == "__main__":

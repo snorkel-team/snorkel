@@ -542,7 +542,6 @@ class LabelModel(nn.Module):
         label_model.train(L, Y_dev=Y_dev)
         label_model.train(L, class_balance=[0.7, 0.3])
 
-
         Parameters
         ----------
         L_train
@@ -551,6 +550,8 @@ class LabelModel(nn.Module):
             Gold labels for dev set for estimating class_balance, by default None
         class_balance : optional
             Each class's percentage of the population, by default None
+        **kwargs
+            Arguments for changing train config defaults
 
         Raises
         ------
@@ -641,6 +642,9 @@ class LabelModel(nn.Module):
         ----------
         destination
             File location for saving model
+
+        **kwargs
+            Arguments for torch.save
         """
         with open(destination, "wb") as f:
             torch.save(self, f, **kwargs)
@@ -658,6 +662,9 @@ class LabelModel(nn.Module):
         ----------
         source
             File location from where to load model
+
+        **kwargs
+            Arguments for torch.load
 
         Returns
         -------

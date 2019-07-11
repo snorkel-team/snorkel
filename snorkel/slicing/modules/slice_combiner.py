@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 
 class SliceCombinerModule(nn.Module):
-    """A module for combining the weighted representations learned by slices"""
+    """A module for combining the weighted representations learned by slices."""
 
     def __init__(
         self,
@@ -21,6 +21,8 @@ class SliceCombinerModule(nn.Module):
         self.slice_pred_feat_key = slice_pred_feat_key
 
     def forward(self, outputs: Dict[str, torch.Tensor]) -> torch.Tensor:  # type: ignore
+        """Reweights and combines predictor representations."""
+
         # Gather names of slice heads (both indicator and predictor heads)
         slice_ind_op_names = sorted(
             [

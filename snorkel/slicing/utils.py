@@ -20,7 +20,20 @@ def add_slice_labels(
     slice_labels: csr_matrix,
     slice_names: List[str],
 ) -> None:
-    """Modifies a dataloader in place, adding labels for slice tasks"""
+    """Modify a dataloader in-place, adding labels for slice tasks.
+
+    Parameters
+    ----------
+    dataloader
+        A DictDataLoader whose dataset.Y_dict attribute will be modified in place
+    base_task
+       The Task for which we want corresponding slice tasks/labels
+    slice_labels
+        A [num_examples x num_slices] slice matrix (output of SFApplier)
+    slice_names
+        A list of slice names corresponding to columns of `slice_labels`
+    """
+
     slice_labels = slice_labels.toarray()
     slice_labels, slice_names = _add_base_slice(slice_labels, slice_names)
     assert slice_labels.shape[1] == len(slice_names)
@@ -43,7 +56,7 @@ def add_slice_labels(
 
 
 def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task]:
-    """Adds slice labels to dataloader and creates new slice tasks (including base slice)
+    """Add slice labels to dataloader and creates new slice tasks (including base slice).
 
     Each slice will get two slice-specific heads:
     - an indicator head that learns to identify when DataPoints are in that slice
@@ -53,7 +66,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
     a combination of the predictor heads' predictions that are weighted by the
     indicator heads' prediction confidences.
 
-    NOTE: The current implementation pollutes the module_pool---the indicator task's
+    WARNING: The current implementation pollutes the module_pool---the indicator task's
     module_pool includes predictor modules and vice versa since both are modified in
     place. This does not affect the result because the task flows dictate which modules
     get used, and those do not include the extra modules. An alternative would be to
@@ -61,7 +74,23 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
     extra copies of (potentially very large) modules that will be merged in a moment
     away in the model since they have the same name. We leave resolution of this issue
     for a future release.
+
+
+    Parameters
+    ----------
+    base_task
+        Task for which we are adding slice tasks. As noted in the WARNING, this task's
+        module_pool will currently be modified in place for efficiency purposes.
+    slice_names
+        List of slice names corresponding to the columns of the slice matrix.
+
+    Returns
+    -------
+    List[Task]
+        Containins original base_task, pred/ind tasks for the base slice, and pred/ind
+        tasks for each of the specified slice_names
     """
+
     if "base" not in slice_names:
         slice_names = slice_names + ["base"]
 
@@ -186,6 +215,8 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
 def _add_base_slice(
     slice_labels: np.ndarray, slice_names: List[str]
 ) -> Tuple[np.ndarray, List[str]]:
+    """Add the base slice to a list of slice_labels/slice_names (if unspecified)."""
+
     # Add base slice
     if "base" not in slice_names:
         num_points, num_slices = slice_labels.shape

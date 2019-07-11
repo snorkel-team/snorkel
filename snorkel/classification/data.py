@@ -26,6 +26,17 @@ class DictDataset(Dataset):
     Y_dict
         A map from task name to its corresponding set of labels
 
+    Attributes
+    ----------
+    name
+        See above
+    split
+        See above
+    X_dict
+        See above
+    Y_dict
+        See above
+
     Raises
     ------
     ValueError
@@ -95,11 +106,13 @@ class DictDataLoader(DataLoader):
     Parameters
     ----------
     dataset
-        A DictDataset to wrap
+        A dataset to wrap
     collate_fn
         The collate function to use when combining multiple indexed examples for a
         single batch. Usually the default collate_dicts() method should be used, but
         it can be overriden if you want to use different collate logic.
+    kwargs
+        Keyword arguments to pass on to DataLoader.__init__()
     """
 
     def __init__(

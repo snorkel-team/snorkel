@@ -5,7 +5,7 @@ from snorkel.analysis.metrics import METRICS, metric_score
 from snorkel.types import ArrayLike
 
 
-class Scorer(object):
+class Scorer:
     """Calculate one or more scores from user-specified and/or user-defined metrics.
 
     Parameters
@@ -19,6 +19,11 @@ class Scorer(object):
         single score (float) or a dictionary of metric names to scores (if the function
         calculates multiple values, for example). See the unit tests for an example.
 
+    Attributes
+    ----------
+    metrics
+        A dictionary mapping metric names to the corresponding functions for calculating
+        that metric
 
     Raises
     ------
@@ -30,7 +35,7 @@ class Scorer(object):
         self,
         metrics: Optional[List[str]] = None,
         custom_metric_funcs: Optional[Mapping[str, Callable[..., float]]] = None,
-    ):
+    ) -> None:
 
         self.metrics: Dict[str, Callable[..., float]]
         if metrics:
@@ -57,6 +62,11 @@ class Scorer(object):
             Predictions (integers)
         probs:
             Probabilities (floats)
+
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary mapping metric names to metric scores
 
         Raises
         ------

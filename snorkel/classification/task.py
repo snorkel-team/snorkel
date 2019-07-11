@@ -28,6 +28,15 @@ class Operation:
         previous operation (or the original input) and an index (if the specified
         operation outputs a single value or sequence of values) or a key (if the
         specified operation outputs a dictionary of values)
+
+    Attributes
+    ----------
+    name
+        See above
+    module_name
+        See above
+    inputs
+        See above
     """
 
     def __init__(
@@ -66,6 +75,21 @@ class Task:
         A function that converts final logits into loss values
     output_func
         A function that converts final logits into 'outputs' (e.g. probabilities)
+
+    Attributes
+    ----------
+    name
+        See above
+    module_pool
+        See above
+    task_flow
+        See above
+    scorer
+        See above
+    loss_func
+        See above
+    output_func
+        See above
     """
 
     def __init__(

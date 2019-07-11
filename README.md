@@ -3,7 +3,16 @@
 # ANNOUNCEMENT:
 **Snorkel v0.9 is being released this summer** and we are absolutely certain you're going to love the new version!
 
-Why is it 0.9 when the last version was 0.7? Because this is more than just an incremental change. It's a total rewrite from the ground up with portability, scalability, and extensibility in mind, including full unit test coverage, type checking, upgraded docstrings, and a fresh batch of tutorials demonstrating different use cases and integrations! The new version will be available via `pip` and `conda` but **will not be backwards compatible**. The current (v0.7) Snorkel code will be moved to another repository to continue to support existing applications that depend on it.
+Why is it 0.9 when the last version was 0.7? Because this is more than just an incremental change. It's a full redesign from the ground up, including:
+* Support for new training data operators: labeling functions (LFs), transformation functions (TFs), and slicing functions (SFs)
+* A new matrix-completion-based approach for learning the LF accuracies and correlation structure
+* Native support for multi-task learning (MTL), transfer learning (TL), and complex model flows
+* A more modular form factor that makes it easier to integrate with other libraries
+* Significantly improved nuts and bolts: full coverage for unit tests, type checking, and doc strings
+* A fresh batch of tutorials demonstrating different use cases and integrations
+* A Snorkel 101 guide that provides a gentle introduction to the technology and API for first-time users
+
+The new version will be available via `pip` and `conda` but **will not be backwards compatible**. The current (v0.7) Snorkel code will be moved to another repository to continue to support existing applications that depend on it.
 
 As part of this refactor, we will be bringing under one roof a number of projects in the Snorkel ecosystem that have previously been posted in separate repositories—[Snorkel](https://github.com/HazyResearch/snorkel), [Snorkel MeTaL](https://github.com/HazyResearch/metal), [TANDA](https://github.com/HazyResearch/tanda), etc.—and which have been used to achieve state-of-the-art results on the [GLUE](https://dawn.cs.stanford.edu/2019/03/22/glue/) and [SuperGLUE](https://hazyresearch.github.io/snorkel/blog/superglue.html) benchmarks, automate [cardiac MRI classification](https://www.biorxiv.org/content/10.1101/339630v1) and [genetic research database curation](https://ai.stanford.edu/~kuleshov/papers/gwaskb-manuscript.pdf) (as featured in two forthcoming Nature papers), and extract information from electronic health record (EHR) data for national [medical device surveillance](https://arxiv.org/abs/1904.07640).
 
@@ -21,14 +30,14 @@ If you'd like to stay in the loop on the latest news in the Snorkel ecosystem, j
 
 * For the latest news, blog posts, tutorials, papers, etc. related to Snorkel, check out **[snorkel.stanford.edu](http://snorkel.stanford.edu)**!
 * Get [set up](#quick-start) quickly
-* Try the [tutorials](#tutorials) 
+* Try the [tutorials](#tutorials)
 * Read the [documentation](http://snorkel.readthedocs.io/en/master/)
 
 
 ## Motivation
 
 Snorkel is a system for rapidly **creating, modeling, and managing training data.**
-Today's state-of-the-art machine learning models require _massive_ labeled training sets--which usually do not exist for real-world applications. Instead, Snorkel is based around the new [data programming](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly) paradigm, in which the developer focuses on writing a set of labeling functions, which are just scripts that programmatically label data. 
+Today's state-of-the-art machine learning models require _massive_ labeled training sets--which usually do not exist for real-world applications. Instead, Snorkel is based around the new [data programming](https://papers.nips.cc/paper/6523-data-programming-creating-large-training-sets-quickly) paradigm, in which the developer focuses on writing a set of labeling functions, which are just scripts that programmatically label data.
 The resulting labels are noisy, but Snorkel automatically models this process—learning, essentially, which labeling functions are more accurate than others—and then uses this to train an end model (for example, a deep neural network in TensorFlow).
 
 <img src="figs/dp_neurips_2016.png" width="500" align="middle" />
@@ -229,7 +238,7 @@ It's usually most convenient to write most code in an external `.py` file, and l
 ```
 A more convenient option is to add these lines to your IPython config file, in `~/.ipython/profile_default/ipython_config.py`:
 ```
-c.InteractiveShellApp.extensions = ['autoreload']     
+c.InteractiveShellApp.extensions = ['autoreload']
 c.InteractiveShellApp.exec_lines = ['%autoreload 2']
 ```
 

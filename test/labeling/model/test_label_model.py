@@ -1,13 +1,11 @@
 import unittest
-from typing import Tuple
 
 import numpy as np
 import pytest
 import torch
 import torch.nn as nn
-from scipy.sparse import csr_matrix, lil_matrix
+from scipy.sparse import csr_matrix
 
-from snorkel.labeling.analysis import lf_empirical_probs
 from snorkel.labeling.model.label_model import LabelModel
 from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
 

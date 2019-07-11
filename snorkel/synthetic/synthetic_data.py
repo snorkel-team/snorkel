@@ -1,5 +1,5 @@
 from functools import partial
-from typing import List, Tuple, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ def generate_simple_label_matrix(
     This function generates a set of labeling function conditional probability tables,
     P(LF=l | Y=y), stored as a matrix P, and true labels Y, and then generates the
     resulting label matrix L.
-    
+
     Parameters
     ----------
     n
@@ -27,7 +27,7 @@ def generate_simple_label_matrix(
         Number of labeling functions
     k
         Cardinality of true labels (i.e. not including abstains)
-    
+
     Returns
     -------
     Tuple[np.ndarray, np.ndarray, csr_matrix]

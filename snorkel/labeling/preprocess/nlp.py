@@ -68,4 +68,6 @@ class SpacyPreprocessor(Preprocessor):
             Dictionary with a single key (``"doc"``), mapping to the
             parsed SpaCy ``Doc`` object
         """
+        # Note: not trying to add the fields of `Doc` to top-level
+        # as most are Cython property methods computed on the fly.
         return dict(doc=self._nlp(text))

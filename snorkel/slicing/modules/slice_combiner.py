@@ -15,12 +15,21 @@ class SliceCombinerModule(nn.Module):
 
     Parameters
     ----------
-    slice_ind_key : optional
+    slice_ind_key
         Suffix of operation corresponding to the slice indicator heads
-    slice_pred_key : optional
+    slice_pred_key
         Suffix of operation corresponding to the slice predictor heads
-    slice_pred_feat_key : optional
+    slice_pred_feat_key
         Suffix of operation corresponding to the slice predictor features heads
+
+    Attributes
+    ----------
+    slice_ind_key
+        See above
+    slice_pred_key
+        See above
+    slice_pred_feat_key
+        See above
     """
 
     def __init__(
@@ -41,8 +50,9 @@ class SliceCombinerModule(nn.Module):
         Parameters
         ----------
         outputs
-            A dict of data fields containing indicator, predictor, and predictor
-            transform ops
+            A dict of data fields from slicing task flow containing specific keys
+            from indicator ops, pred ops, and pred transform ops (slice_ind_key,
+            slice_pred_key, slice_pred_feat_key) for each slice
 
         Returns
         -------
@@ -104,13 +114,12 @@ class SliceCombinerModule(nn.Module):
         )
 
         # Attention weights used to combine each of the slice_representations
-        A = (
-            # Combine the indicator (whether we are in the slice or not) and
-            # predictor (confidence of a learned slice head) as attention weights
-            F.softmax(indicator_preds * predictor_preds, dim=1)
-            # Match the dimensions of the slice_representations
-            .unsqueeze(-1).expand([-1, -1, slice_representations.size(-1)])
-        )
+        # incorporates the indicator (whether we are in the slice or not) and
+        # predictor (confidence of a learned slice head)
+        A = F.softmax(indicator_preds * predictor_preds, dim=1)
+
+        # Match the dimensions of the slice_representations
+        A = A.unsqueeze(-1).expand([-1, -1, slice_representations.size(-1)])
 
         # Reweight representations by class Sum across all classes
         reweighted_rep = torch.sum(A * slice_representations, dim=1)

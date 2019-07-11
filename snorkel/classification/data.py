@@ -1,23 +1,8 @@
-import random
 from collections import defaultdict
-from typing import (
-    Any,
-    Callable,
-    DefaultDict,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Any, Callable, Dict, List, Tuple
 
-import numpy as np
-import scipy.sparse as sparse
 from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
-
-from snorkel.types import ArrayLike
 
 from .utils import list_to_tensor
 

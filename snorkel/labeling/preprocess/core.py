@@ -38,7 +38,6 @@ class preprocessor(lambda_mapper):
 
     Example
     -------
-
     ```
     @preprocessor()
     def combine_text_preprocessor(x: DataPoint) -> DataPoint:

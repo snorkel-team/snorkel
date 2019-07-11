@@ -121,7 +121,7 @@ class LabelModelTest(unittest.TestCase):
     def test_conditional_probs(self):
         L = np.array([[1, 2, 1], [1, 2, 1]])
         label_model = self._set_up_model(L, class_balance=[0.6, 0.4])
-        probs = label_model.get_conditional_probs()
+        probs = label_model._get_conditional_probs()
         self.assertLessEqual(probs.max(), 1.0)
         self.assertGreaterEqual(probs.min(), 0.0)
 
@@ -225,15 +225,15 @@ class LabelModelTest(unittest.TestCase):
 
         # l2_loss = l2*M*K*||mu - mu_init||_2 = 3*2*(0.05^2) = 0.03
         self.assertAlmostEqual(
-            label_model.loss_l2(l2=1.0).detach().numpy().ravel()[0], 0.03
+            label_model._loss_l2(l2=1.0).detach().numpy().ravel()[0], 0.03
         )
         self.assertAlmostEqual(
-            label_model.loss_l2(l2=np.ones(6)).detach().numpy().ravel()[0], 0.03
+            label_model._loss_l2(l2=np.ones(6)).detach().numpy().ravel()[0], 0.03
         )
 
         # mu_loss = ||O - \mu^T P \mu||_2 + ||\mu^T P - diag(O)||_2
         self.assertAlmostEqual(
-            label_model.loss_mu().detach().numpy().ravel()[0], 0.675, 3
+            label_model._loss_mu().detach().numpy().ravel()[0], 0.675, 3
         )
 
     def test_model_loss(self):
@@ -241,10 +241,10 @@ class LabelModelTest(unittest.TestCase):
         label_model = self._set_up_model(L)
 
         label_model.train_model(L, n_epochs=1, lr=0.01, momentum=0.9)
-        init_loss = label_model.loss_mu().detach().numpy().ravel()[0]
+        init_loss = label_model._loss_mu().detach().numpy().ravel()[0]
 
         label_model.train_model(L, n_epochs=10, lr=0.01, momentum=0.9)
-        next_loss = label_model.loss_mu().detach().numpy().ravel()[0]
+        next_loss = label_model._loss_mu().detach().numpy().ravel()[0]
 
         self.assertLessEqual(next_loss, init_loss)
         with self.assertRaisesRegex(Exception, "Loss is NaN."):

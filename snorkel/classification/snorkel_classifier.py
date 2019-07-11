@@ -39,6 +39,25 @@ class SnorkelClassifier(nn.Module):
         A list of `Task`s to build a model from
     name
         The name of the classifier
+
+    Attributes
+    ----------
+    config
+        The config dict containing the settings for this model
+    name
+        See above
+    module_pool
+        A dictionary of all modules used by any of the tasks (See Task docstring)
+    task_names
+        See Task docstring
+    task_flows
+        See Task docstring
+    loss_funcs
+        See Task docstring
+    output_funcs
+        See Task docstring
+    scorers
+        See Task docstring
     """
 
     def __init__(

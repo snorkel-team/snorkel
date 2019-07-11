@@ -5,22 +5,37 @@ from snorkel.analysis.metrics import METRICS, metric_score
 from snorkel.types import ArrayLike
 
 
-class Scorer(object):
-    """A class to score tasks
+class Scorer:
+    """Calculate one or more scores from user-specified and/or user-defined metrics.
 
-    :param metrics: a list of metric names which provides in emmental (e.g., accuracy)
-    :type metrics: list
-    :param custom_metric_funcs: a dict of custom metrics where key is the metric
-    name and value is the metric function which takes golds, preds, probs as input
-    and returns either a dict of metric names and scores or a single score
-    :type custom_metric_funcs: dict
+    Parameters
+    ----------
+    metrics
+        A list of metric names, all of which are defined in METRICS
+    custom_metric_funcs:
+        An optional dictionary mapping the names of custom metrics to the functions
+        that produce them. Each custom metric function should accept golds, preds, and
+        probs as input (just like the standard metrics in METRICS) and return either a
+        single score (float) or a dictionary of metric names to scores (if the function
+        calculates multiple values, for example). See the unit tests for an example.
+
+    Attributes
+    ----------
+    metrics
+        A dictionary mapping metric names to the corresponding functions for calculating
+        that metric
+
+    Raises
+    ------
+    ValueError
+        If a specified standard metric is not found in the METRICS dictionary
     """
 
     def __init__(
         self,
         metrics: Optional[List[str]] = None,
         custom_metric_funcs: Optional[Mapping[str, Callable[..., float]]] = None,
-    ):
+    ) -> None:
 
         self.metrics: Dict[str, Callable[..., float]]
         if metrics:
@@ -37,7 +52,27 @@ class Scorer(object):
     def score(
         self, golds: ArrayLike, preds: ArrayLike, probs: ArrayLike
     ) -> Dict[str, float]:
+        """Calculate one or more scores from user-specified and/or user-defined metrics.
 
+        Parameters
+        ----------
+        golds
+            Gold (aka ground truth) labels (integers)
+        preds
+            Predictions (integers)
+        probs:
+            Probabilities (floats)
+
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary mapping metric names to metric scores
+
+        Raises
+        ------
+        ValueError
+            If no gold labels were provided
+        """
         if len(golds) == 0:  # type: ignore
             raise ValueError("Cannot score empty labels")
 

@@ -296,15 +296,25 @@ class TestLabelModelAdvanced(unittest.TestCase):
         P, Y, L = self._generate_data()
         P_emp = lf_empirical_probs(L, Y, k=self.k)
         np.testing.assert_array_almost_equal(P, P_emp, decimal=2)
-
+    
     def test_label_model(self) -> None:
         """Test the LabelModel's estimate of P and Y."""
         np.random.seed(123)
         P, Y, L = self._generate_data()
+
+        # Train LabelModel
         label_model = LabelModel(cardinality=self.k, verbose=False)
         label_model.train_model(L, lr=0.01, l2=0.0, n_epochs=100)
+
+        # Test estimated LF conditional probabilities
         P_lm = label_model.get_conditional_probs().reshape((self.m, self.k + 1, -1))
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
+
+        # Test predicted labels
+        L = L.todense()  # Note: Remove once Label Model L typing is cleaned up!
+        Y_lm = label_model.predict_proba(L).argmax(axis=1) + 1
+        err = np.where(Y != Y_lm, 1, 0).sum() / self.n
+        self.assertLess(err, 0.1)
 
 
 if __name__ == "__main__":

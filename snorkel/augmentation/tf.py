@@ -44,7 +44,6 @@ class transformation_function(lambda_mapper):
 
     Example
     -------
-
     ```
     @transformation_function()
     def square(x: DataPoint) -> DataPoint:

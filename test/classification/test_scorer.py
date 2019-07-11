@@ -8,8 +8,8 @@ from snorkel.classification.scorer import Scorer
 
 class ScorerTest(unittest.TestCase):
     def _get_labels(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        golds = np.array([1, 0, 1, 0, 1])
-        preds = np.array([1, 0, 1, 1, 0])
+        golds = np.array([1, 2, 1, 2, 1])
+        preds = np.array([1, 2, 1, 1, 2])
         probs = np.array([0.8, 0.6, 0.9, 0.7, 0.4])
         return golds, preds, probs
 
@@ -22,7 +22,7 @@ class ScorerTest(unittest.TestCase):
         )
 
         results = scorer.score(*self._get_labels())
-        results_expected = dict(accuracy=0.6, f1=2 / 3, pred_sum=3)
+        results_expected = dict(accuracy=0.6, f1=2 / 3, pred_sum=7)
         self.assertEqual(results, results_expected)
 
     def test_dict_metric(self) -> None:

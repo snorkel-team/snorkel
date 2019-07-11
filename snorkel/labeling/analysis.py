@@ -144,7 +144,7 @@ def lf_polarities(L: Matrix) -> List[List[int]]:
     return [sorted(list(set(L[:, i].data))) for i in range(L.shape[1])]
 
 
-def lf_coverages(L: Matrix) -> np.ravel:
+def lf_coverages(L: Matrix) -> np.ndarray:
     """Compute frac. of examples each LF labels.
 
     Parameters
@@ -282,8 +282,10 @@ def lf_empirical_accuracies(L: Matrix, Y: ArrayLike) -> np.ndarray:
 
 
 def lf_empirical_probs(L: Matrix, Y: ArrayLike, k: int) -> np.ndarray:
-    """Returns the conditional probability tables, P(L | Y), for each of the labeling
-    functions, computed empirically using the provided true labels Y.
+    """Estimate conditional probability tables for each LF.
+
+    Computes conditional probability tables, P(L | Y), for each LF using
+    the provided true labels Y.
 
     Parameters
     ----------

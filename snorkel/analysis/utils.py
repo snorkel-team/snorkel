@@ -1,5 +1,5 @@
 import random
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import scipy.sparse as sparse
@@ -9,13 +9,14 @@ from snorkel.types import ArrayLike
 
 
 def set_seed(seed: int) -> None:
+    """Set the Python, NumPy, and PyTorch random seeds."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
 
 
 def probs_to_preds(probs: np.ndarray) -> np.ndarray:
-    """Convert an array of probabilistic labels into an array of predictions
+    """Convert an array of probabilistic labels into an array of predictions.
 
     Parameters
     ----------
@@ -32,7 +33,7 @@ def probs_to_preds(probs: np.ndarray) -> np.ndarray:
 
 
 def preds_to_probs(preds: np.ndarray, num_classes: int) -> np.ndarray:
-    """Convert an array of predictions into an array of probabilistic labels
+    """Convert an array of predictions into an array of probabilistic labels.
 
     Parameters
     ----------
@@ -51,7 +52,7 @@ def preds_to_probs(preds: np.ndarray, num_classes: int) -> np.ndarray:
 def arraylike_to_numpy(
     array_like: ArrayLike, flatten: bool = True, cast_to_int: bool = True
 ) -> np.ndarray:
-    """Convert an ArrayLike (e.g., list, tensor, etc.) to a numpy array
+    """Convert an ArrayLike (e.g., list, tensor, etc.) to a numpy array.
 
     Also optionally flatten [n, 1] arrays to [n] and cast all values to ints.
     This method is typically used to sanitize labels before use with analysis tools or
@@ -110,22 +111,35 @@ def arraylike_to_numpy(
     return array_like
 
 
-def convert_labels(Y: ArrayLike, source: str, target: str) -> ArrayLike:
-    """Convert a matrix from one label type to another
+def convert_labels(
+    Y: Optional[Union[np.ndarray, torch.Tensor]], source: str, target: str
+) -> ArrayLike:
+    """Convert a matrix from one label type convention to another.
 
-    Args:
-        Y: A np.ndarray or torch.Tensor of labels (ints) using source convention
-        source: The convention the labels are currently expressed in
-        target: The convention to convert the labels to
-    Returns:
-        Y: an np.ndarray or torch.Tensor of labels (ints) using the target convention
+    The conventions are:
 
-    Conventions:
-        'categorical': [0: abstain, 1: positive, 2: negative]
-        'plusminus': [0: abstain, 1: positive, -1: negative]
-        'onezero': [0: negative, 1: positive]
+    "categorical": [0: abstain, 1: positive, 2: negative]
+    "plusminus": [0: abstain, 1: positive, -1: negative]
+    "onezero": [0: negative, 1: positive]
 
-    Note that converting to 'onezero' will combine abstain and negative labels.
+    Parameters
+    ----------
+    Y
+        A np.ndarray or torch.Tensor of labels (ints) using source convention
+    source
+        The convention the labels are currently expressed in
+    target
+        The convention to convert the labels to
+
+    Returns
+    -------
+    ArrayLike
+        An np.ndarray or torch.Tensor of labels (ints) using the target convention
+
+    Raises
+    ------
+    ValueError
+        Incorrect input array format
     """
     if Y is None:
         return Y
@@ -143,7 +157,7 @@ def convert_labels(Y: ArrayLike, source: str, target: str) -> ArrayLike:
 def filter_labels(
     label_dict: Dict[str, np.ndarray], filter_dict: Dict[str, List[int]]
 ) -> Dict[str, np.ndarray]:
-    """Filters out examples from arrays based on specified labels to filter
+    """Filter out examples from arrays based on specified labels to filter.
 
     The most common use of this method is to remove examples whose gold label is
     unknown (marked with a 0) or examples whose predictions were abstains (also 0)
@@ -152,16 +166,6 @@ def filter_labels(
     NB: If an example matches the filter criteria for any label set, it will be removed
     from all label sets (so that the returned arrays are of the same size and still
     aligned).
-
-    Example usage:
-    golds = [0, 1, 1, 2, 2]
-    preds = [1, 1, 1, 2, 0]
-    filtered = filter_labels(
-        label_dict={"golds": golds, "preds": preds},
-        filter_dict={"golds": [0], "preds": [0]}
-    )
-    filtered["golds"] == [1, 1, 2]
-    filtered["preds"] == [1, 1, 2]
 
     Parameters
     ----------
@@ -176,6 +180,19 @@ def filter_labels(
     -------
     Dict[str, np.ndarray]
         A mapping with the same keys as label_dict but with filtered arrays as values
+
+    Example
+    -------
+    ```
+    golds = [0, 1, 1, 2, 2]
+    preds = [1, 1, 1, 2, 0]
+    filtered = filter_labels(
+        label_dict={"golds": golds, "preds": preds},
+        filter_dict={"golds": [0], "preds": [0]}
+    )
+    filtered["golds"] == [1, 1, 2]
+    filtered["preds"] == [1, 1, 2]
+    ```
     """
     masks = []
     for label_name, filter_values in filter_dict.items():
@@ -190,7 +207,7 @@ def filter_labels(
 
 
 def _get_mask(label_array: np.ndarray, filter_values: List[int]) -> np.ndarray:
-    """Return a boolean mask marking which labels are not in filter_values
+    """Return a boolean mask marking which labels are not in filter_values.
 
     Parameters
     ----------

@@ -7,7 +7,7 @@ from .utils import arraylike_to_numpy, filter_labels
 
 
 class Metric(NamedTuple):
-    """Specifies a metric function and the subset of [golds, preds, probs] it expects"""
+    """Specification for a metric and the subset of [golds, preds, probs] it expects."""
 
     func: Callable[..., float]
     inputs: List[str] = ["golds", "preds"]
@@ -21,7 +21,7 @@ def metric_score(
     filter_dict: Optional[Dict[str, List[int]]] = None,
     **kwargs: Any,
 ) -> float:
-    """A method for evaluating a standard metric on a set of predictions/probabilities
+    """Evaluate a standard metric on a set of predictions/probabilities.
 
     Parameters
     ----------
@@ -82,12 +82,10 @@ def metric_score(
 
 
 def _coverage_score(preds: np.ndarray) -> float:
-    """A helper used by metric_score() to calculate coverage (percent not abstained)"""
     return np.sum(preds != 0) / len(preds)
 
 
 def _roc_auc_score(golds: np.ndarray, probs: np.ndarray) -> float:
-    """A helper used by metric_score() to calculate roc_auc score (see sklearn)"""
     if not probs.shape[1] == 2:
         raise ValueError(
             "Metric roc_auc is currently only defined for binary problems."

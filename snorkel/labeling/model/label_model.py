@@ -28,6 +28,13 @@ class _CData(NamedTuple):
 class LabelModel(nn.Module):
     """A conditionally independent LabelModel to learn LF accuracies and assign training labels.
 
+    Examples
+    --------
+    label_model = LabelModel()
+    label_model = LabelModel(cardinality=3)
+    label_model = LabelModel(cardinality=3, device='cpu')
+    label_model = LabelModel(cardinality=3, seed=1234)
+
     Parameters
     ----------
     cardinality : optional
@@ -626,6 +633,10 @@ class LabelModel(nn.Module):
     def save(self, destination: str, **kwargs: Any) -> None:
         """Save label model.
 
+        Examples
+        --------
+        label_model.save('./saved_label_model')
+
         Parameters
         ----------
         destination
@@ -637,6 +648,11 @@ class LabelModel(nn.Module):
     @staticmethod
     def load(source: str, **kwargs: Any) -> Any:
         """Load existing label model.
+
+        Examples
+        --------
+        label_model = LabelModel()
+        label_model.load('./saved_label_model')
 
         Parameters
         ----------

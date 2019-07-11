@@ -171,17 +171,11 @@ class SnorkelClassifier(nn.Module):
                                     # one field; use that as the input to the current op
                                     op_name, field_idx = op_input
                                     inputs.append(outputs[op_name][field_idx])
-                                elif isinstance(op_input[1], str):
+                                else:  # isinstance(op_input[1], str)
                                     # The output of the indicated operation has a dict
                                     # of fields; extract the designated field by name
                                     op_name, field_key = op_input
                                     inputs.append(outputs[op_name][field_key])
-                                else:
-                                    raise TypeError(
-                                        f"Invalid input to operation {operation}: "
-                                        f"{op_input}. Expected an input specification "
-                                        f"of type (str, int) or (str, str)."
-                                    )
                         except Exception:
                             raise ValueError(f"Unsuccessful operation {operation}.")
                         output = self.module_pool[operation.module_name].forward(

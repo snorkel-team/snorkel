@@ -43,11 +43,11 @@ dask[complete]>=2.0.0
 
 #### DEV TOOLS
 
-black
-flake8
-isort
-mypy
-pydocstyle
-pytest
-pytest-cov
-tox
+black==19.3b0
+flake8==3.7.8
+isort==4.3.21
+mypy==0.711
+pydocstyle==4.0.0
+pytest==5.0.1
+pytest-cov==2.7.1
+tox==3.13.2

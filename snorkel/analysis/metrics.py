@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, NamedTuple
+from typing import Any, Callable, Dict, List, NamedTuple, Optional
 
 import numpy as np
 import sklearn.metrics as skmetrics
@@ -18,7 +18,7 @@ def metric_score(
     preds: np.ndarray,
     probs: np.ndarray,
     metric: str,
-    filter_dict: Dict[str, List[int]] = {"golds": [0]},
+    filter_dict: Optional[Dict[str, List[int]]] = None,
     **kwargs: Any,
 ) -> float:
     """A method for evaluating a standard metric on a set of predictions/probabilities
@@ -52,6 +52,9 @@ def metric_score(
     if metric not in METRICS:
         msg = f"The metric you provided ({metric}) is not currently implemented."
         raise ValueError(msg)
+
+    if filter_dict is None:
+        filter_dict = {"golds": [0]}
 
     # Convert to numpy
     golds = arraylike_to_numpy(golds) if golds is not None else None

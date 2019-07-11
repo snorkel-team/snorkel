@@ -11,7 +11,14 @@ from .utils import arraylike_to_numpy
 def error_buckets(
     golds: ArrayLike, preds: ArrayLike, X: Optional[Sequence[Any]] = None
 ) -> Mapping[Tuple[int, int], Any]:
-    """Returns examples (or their indices) bucketed by gold label/pred label combination
+    """Return examples (or their indices) bucketed by gold label/pred label combination.
+
+    Returned buckets[i,j] is a list of items with predicted label i and true label j.
+    For a binary problem with (1=positive, 2=negative):
+        buckets[1,1] = true positives
+        buckets[1,2] = false positives
+        buckets[2,1] = false negatives
+        buckets[2,2] = true negatives
 
     Parameters
     ----------
@@ -29,13 +36,6 @@ def error_buckets(
         A mapping of each error bucket to its corresponding indices/examples
         If X is None, return indices
             instead.
-
-    Returned buckets[i,j] is a list of items with predicted label i and true label j.
-    For a binary problem with (1=positive, 2=negative):
-        buckets[1,1] = true positives
-        buckets[1,2] = false positives
-        buckets[2,1] = false negatives
-        buckets[2,2] = true negatives
     """
     buckets: Mapping[Tuple[int, int], List[Any]] = defaultdict(list)
     golds = arraylike_to_numpy(golds)
@@ -53,7 +53,7 @@ def confusion_matrix(
     normalize: bool = False,
     pretty_print: bool = True,
 ) -> np.ndarray:
-    """Returns a confusion matrix for a set of golds/preds
+    """Construct a confusion matrix for a set of golds/preds.
 
     Parameters
     ----------
@@ -94,20 +94,19 @@ def confusion_matrix(
 
 class ConfusionMatrix(object):
     """
-    An iteratively built abstention-aware confusion matrix with pretty printing
+    An iteratively built abstention-aware confusion matrix with pretty printing.
 
     Assumed axes are true label on top, predictions on the side.
+
+    Parameters
+    ----------
+    null_pred
+        If True, include the row corresponding to null predictions
+    null_gold
+        If True, include the col corresponding to null gold labels
     """
 
     def __init__(self, null_pred: bool = False, null_gold: bool = False) -> None:
-        """
-        Parameters
-        ----------
-        null_pred
-            If True, include the row corresponding to null predictions
-        null_gold
-            If True, include the col corresponding to null gold labels
-        """
         self.counter: Counter = Counter()
         self.mat = None
         self.null_pred = null_pred
@@ -119,7 +118,8 @@ class ConfusionMatrix(object):
         return str(self.mat)
 
     def add(self, golds: Iterable[Any], preds: Iterable[Any]) -> None:
-        """
+        """Add a set of gold labels and corresponding predictions.
+
         Parameters
         ----------
         golds
@@ -130,7 +130,7 @@ class ConfusionMatrix(object):
         self.counter.update(zip(golds, preds))
 
     def compile(self) -> np.ndarray:
-        """Compile a confusion matrix from the stored (gold, pred) pairs
+        """Compile a confusion matrix from the stored (gold, pred) pairs.
 
         Returns
         -------
@@ -159,7 +159,7 @@ class ConfusionMatrix(object):
         decimals: int = 3,
         mark_diag: bool = True,
     ) -> None:
-        """Displays a pretty printed confusion matrix
+        """Display a pretty printed confusion matrix.
 
         Parameters
         ----------

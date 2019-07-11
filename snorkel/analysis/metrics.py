@@ -53,6 +53,9 @@ def metric_score(
         msg = f"The metric you provided ({metric}) is not currently implemented."
         raise ValueError(msg)
 
+    if filter_dict is None:
+        filter_dict = {"golds": [0]}
+
     # Convert to numpy
     golds = arraylike_to_numpy(golds) if golds is not None else None
     preds = arraylike_to_numpy(preds) if preds is not None else None

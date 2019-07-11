@@ -36,6 +36,17 @@ class LabelModel(nn.Module):
     **kwargs
         Arguments for changing config defaults
 
+    Attributes
+    ----------
+    cardinality
+        Number of classes, by default 2
+
+    config
+        Training configuration
+
+    seed
+        Random seed
+
     Raises
     ------
     ValueError

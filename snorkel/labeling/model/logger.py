@@ -9,6 +9,14 @@ class Logger:
     ----------
     log_train_every
         Number of units at which to log model
+
+    Attributes
+    ----------
+    log_train_every
+        Number of units at which to log model
+
+    unit_count
+        Running total of number of units passed without logging
     """
 
     def __init__(self, log_train_every: int) -> None:

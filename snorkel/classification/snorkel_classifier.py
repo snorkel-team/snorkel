@@ -257,14 +257,6 @@ class SnorkelClassifier(nn.Module):
         for task_name in gold_dict_list:
             gold_dict[task_name] = np.array(gold_dict_list[task_name])
             prob_dict[task_name] = np.array(prob_dict_list[task_name])
-            if gold_dict[task_name].ndim == 1:
-                active = (gold_dict[task_name] != 0).reshape(-1)
-            else:
-                active = np.sum(gold_dict[task_name] == 0, axis=1) > 0
-
-            if 0 in active:
-                gold_dict[task_name] = gold_dict[task_name][active]
-                prob_dict[task_name] = prob_dict[task_name][active]
 
         if return_preds:
             pred_dict: Dict[str, ArrayLike] = defaultdict(list)

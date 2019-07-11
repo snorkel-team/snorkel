@@ -1,7 +1,17 @@
 <img src="figs/logo_01.png" width="150"/>
 
+# ANNOUNCEMENT:
+**Snorkel v0.9 is being released this summer** and we are absolutely certain you're going to love the new version!
 
-**_v0.7.0-beta_**
+Why is it 0.9 when the last version was 0.7? Because this is more than just an incremental change. It's a total rewrite from the ground up with portability, scalability, and extensibility in mind, including full unit test coverage, type checking, upgraded docstrings, and a fresh batch of tutorials demonstrating different use cases and integrations! The new version will be available via `pip` and `conda` but **will not be backwards compatible**. The current (v0.7) Snorkel code will be moved to another repository to continue to support existing applications that depend on it.
+
+As part of this refactor, we will be bringing under one roof a number of projects in the Snorkel ecosystem that have previously been posted in separate repositories—[Snorkel](https://github.com/HazyResearch/snorkel), [Snorkel MeTaL](https://github.com/HazyResearch/metal), [TANDA](https://github.com/HazyResearch/tanda), etc.—and which have been used to achieve state-of-the-art results on the [GLUE](https://dawn.cs.stanford.edu/2019/03/22/glue/) and [SuperGLUE](https://hazyresearch.github.io/snorkel/blog/superglue.html) benchmarks, automate [cardiac MRI classification](https://www.biorxiv.org/content/10.1101/339630v1) and [genetic research database curation](https://ai.stanford.edu/~kuleshov/papers/gwaskb-manuscript.pdf) (as featured in two forthcoming Nature papers), and extract information from electronic health record (EHR) data for national [medical device surveillance](https://arxiv.org/abs/1904.07640).
+
+If you'd like to stay in the loop on the latest news in the Snorkel ecosystem, join the [Snorkel Google Group](https://groups.google.com/forum/#!forum/snorkel-ml). We'll keep you posted!
+
+---
+
+**_v0.7.0_**
 
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=master)](https://travis-ci.org/HazyResearch/snorkel)
 [![Documentation](https://readthedocs.org/projects/snorkel/badge/)](http://snorkel.readthedocs.io/en/master/)

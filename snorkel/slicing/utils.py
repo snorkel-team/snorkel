@@ -135,6 +135,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
             name=ind_task_name,
             module_pool=ind_module_pool,
             task_flow=ind_task_flow,
+            # NOTE: F1 by default because indicator task is often class imbalanced 
             scorer=Scorer(metrics=["f1"]),
         )
         tasks.append(ind_task)

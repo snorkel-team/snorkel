@@ -320,7 +320,6 @@ class lambda_mapper:
 
     Example
     -------
-
     ```
     @lambda_mapper()
     def concatenate_text(x: DataPoint) -> DataPoint:

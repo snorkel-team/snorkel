@@ -20,7 +20,7 @@ class SequentialScheduler(Scheduler):
             A sequence of dataloaders to get batches from
 
         Yields
-        -------
+        ------
         (batch, dataloader)
             batch is a tuple of (X_dict, Y_dict) and dataloader is the dataloader
             that that batch came from. That dataloader will not be accessed by the

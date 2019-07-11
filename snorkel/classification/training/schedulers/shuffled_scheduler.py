@@ -7,13 +7,13 @@ from .scheduler import BatchIterator, Scheduler
 
 
 class ShuffledScheduler(Scheduler):
-    """Return batches from all dataloaders in shuffled order for each epoch"""
+    """Return batches from all dataloaders in shuffled order for each epoch."""
 
     def __init__(self) -> None:
         super().__init__()
 
     def get_batches(self, dataloaders: Sequence[DictDataLoader]) -> BatchIterator:
-        """Return batches in shuffled order from dataloaders
+        """Return batches in shuffled order from dataloaders.
 
         Note that this shuffles the batch order, but it does not shuffle the datasets
         themselves; shuffling the datasets is specified in the DataLoaders directly.
@@ -24,7 +24,7 @@ class ShuffledScheduler(Scheduler):
             A sequence of dataloaders to get batches from
 
         Yields
-        -------
+        ------
         (batch, dataloader)
             batch is a tuple of (X_dict, Y_dict) and dataloader is the dataloader
             that that batch came from. That dataloader will not be accessed by the

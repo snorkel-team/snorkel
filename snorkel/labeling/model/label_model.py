@@ -10,9 +10,9 @@ from scipy.sparse import issparse
 from snorkel.analysis.utils import set_seed
 from snorkel.classification.utils import recursive_merge_dicts
 
-from .graph_utils import get_clique_tree
-from .lm_defaults import lm_default_config
-from .logger import Logger
+from snorkel.labeling.model.graph_utils import get_clique_tree
+from snorkel.labeling.model.lm_defaults import lm_default_config
+from snorkel.labeling.model.logger import Logger
 
 
 class LabelModel(nn.Module):

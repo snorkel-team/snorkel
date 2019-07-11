@@ -31,10 +31,14 @@ OutputDict = Dict[str, Mapping[Union[str, int], Any]]
 
 
 class SnorkelClassifier(nn.Module):
-    """A class to build multi-task model.
+    """A classifier built from one or more tasks to support advanced workflows.
 
-    :param name: Name of the model
-    :param tasks: a list of Tasks to be trained jointly
+    Parameters
+    ----------
+    tasks
+        A list of `Task`s to build a model from
+    name
+        The name of the classifier
     """
 
     def __init__(
@@ -71,8 +75,13 @@ class SnorkelClassifier(nn.Module):
         return f"{cls_name}(name={self.name})"
 
     def _build_network(self, tasks: List[Task]) -> None:
-        """Build the MTL network using all tasks"""
+        """Construct the network from a list of `Task`s by adding them one by one.
 
+        Parameters
+        ----------
+        tasks
+            A list of `Task`s
+        """
         for task in tasks:
             if not isinstance(task, Task):
                 raise ValueError(f"Unrecognized task type {task}.")
@@ -84,8 +93,13 @@ class SnorkelClassifier(nn.Module):
             self.add_task(task)
 
     def add_task(self, task: Task) -> None:
-        """Add a single task into MTL network"""
+        """Add a single task to the network.
 
+        Parameters
+        ----------
+        task
+            A `Task` to add
+        """
         # Combine module_pool from all tasks
         for key in task.module_pool.keys():
             if key in self.module_pool.keys():
@@ -115,13 +129,27 @@ class SnorkelClassifier(nn.Module):
     def forward(  # type: ignore
         self, X_dict: Dict[str, Any], task_names: Iterable[str]
     ) -> OutputDict:
-        """Forward pass through the network
+        """Do a forward pass through the network for all specified tasks.
 
-        :param X_dict: The input data
-        :param task_names: The task names that needs to forward
-        :return: The output of all forwarded modules
+        Parameters
+        ----------
+        X_dict
+            A dict of data fields
+        task_names
+            The names of the tasks to execute the forward pass for
+
+        Returns
+        -------
+        OutputDict
+            A dict mapping each operation name to its corresponding output
+
+        Raises
+        ------
+        TypeError
+            If an Operation input has an invalid type
+        ValueError
+            If a specified Operation failed to execute
         """
-
         X_dict_moved = move_to_device(X_dict, self.config["device"])
 
         outputs: OutputDict = {"_input_": X_dict_moved}  # type: ignore
@@ -149,13 +177,13 @@ class SnorkelClassifier(nn.Module):
                                     op_name, field_key = op_input
                                     inputs.append(outputs[op_name][field_key])
                                 else:
-                                    raise ValueError(
+                                    raise TypeError(
                                         f"Invalid input to operation {operation}: "
                                         f"{op_input}. Expected an input specification "
                                         f"of type (str, int) or (str, str)."
                                     )
                         except Exception:
-                            raise ValueError(f"Unrecognized operation {operation}.")
+                            raise ValueError(f"Unsuccessful operation {operation}.")
                         output = self.module_pool[operation.module_name].forward(
                             *inputs
                         )
@@ -178,12 +206,19 @@ class SnorkelClassifier(nn.Module):
     def calculate_loss(
         self, X_dict: Dict[str, Any], Y_dict: Dict[str, torch.Tensor]
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, float]]:
-        """Calculate the loss
+        """Calculate the loss for each task and the number of data points contributing.
 
-        :param X_dict: The input data
-        :param Y_dict: The output data
-        :return: The loss and the number of samples in the batch of all tasks
-        :rtype: dict, dict
+        Parameters
+        ----------
+        X_dict
+            A dict of data fields
+        Y_dict
+            A dict from task names to label sets
+
+        Returns
+        -------
+        Dict[str, torch.Tensor], Dict[str, float]
+            A dict of losses by task name and seen examples by task name
         """
 
         loss_dict = dict()
@@ -217,10 +252,19 @@ class SnorkelClassifier(nn.Module):
     def _calculate_probs(
         self, X_dict: Dict[str, Any], task_names: Iterable[str]
     ) -> Dict[str, Iterable[torch.Tensor]]:
-        """Calculate the probs given the features
+        """Calculate the probabilities for each task.
 
-        :param X_dict: The input data
-        :param task_names: The task names that needs to forward
+        Parameters
+        ----------
+        X_dict
+            A dict of data fields
+        task_names
+            A list of task names to calculate probabilities for
+
+        Returns
+        -------
+        Dict[str, Iterable[torch.Tensor]]
+            A dictionary mapping task name to probabilities
         """
 
         self.eval()
@@ -229,7 +273,6 @@ class SnorkelClassifier(nn.Module):
 
         outputs = self.forward(X_dict, task_names)
 
-        # Calculate prediction for each task
         for task_name in task_names:
             prob_dict[task_name] = self.output_funcs[task_name](outputs).cpu().numpy()
 
@@ -239,7 +282,20 @@ class SnorkelClassifier(nn.Module):
     def predict(
         self, dataloader: DictDataLoader, return_preds: bool = False
     ) -> Dict[str, Dict[str, torch.Tensor]]:
+        """Calculate probabilities, (optionally) predictions, and pull out gold labels.
 
+        Parameters
+        ----------
+        dataloader
+            A DictDataLoader to make predictions for
+        return_preds
+            If True, include predictions in the return dict (not just probabilities)
+
+        Returns
+        -------
+        Dict[str, Dict[str, torch.Tensor]]
+            A dictionary mapping label type ('golds', 'probs', 'preds') to values
+        """
         self.eval()
 
         gold_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
@@ -272,10 +328,18 @@ class SnorkelClassifier(nn.Module):
 
     @torch.no_grad()
     def score(self, dataloaders: List[DictDataLoader]) -> Dict[str, float]:
-        """Score the data from dataloader with the model
+        """Calculate scores for the provided DictDataLoaders.
 
-        :param dataloaders: the dataloader that performs scoring
-        :type dataloaders: dataloader
+        Parameters
+        ----------
+        dataloaders
+            A list of DictDataLoaders to calculate scores for
+
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary mapping metric names to corresponding scores
+            Metric names will be of the form "task/dataset/split/metric"
         """
 
         self.eval()
@@ -307,6 +371,7 @@ class SnorkelClassifier(nn.Module):
         return metric_score_dict
 
     def _move_to_device(self) -> None:  # pragma: no cover
+        """Move the model to the device specified in the model config."""
         device = self.config["device"]
         if device >= 0:
             if torch.cuda.is_available():
@@ -316,6 +381,18 @@ class SnorkelClassifier(nn.Module):
                 logging.info("No cuda device available. Switch to cpu instead.")
 
     def save(self, model_path: str) -> None:
+        """Save the model to the specified file path.
+
+        Parameters
+        ----------
+        model_path
+            The path where the model should be saved
+
+        Raises
+        ------
+        BaseException
+            If the torch.save() method fails
+        """
         if not os.path.exists(os.path.dirname(model_path)):
             os.makedirs(os.path.dirname(model_path))
 
@@ -327,9 +404,12 @@ class SnorkelClassifier(nn.Module):
         logging.info(f"[{self.name}] Model saved in {model_path}")
 
     def load(self, model_path: str) -> None:
-        """Load model state_dict from file and reinitialize the model weights.
-        :param model_path: Saved model path.
-        :type model_path: str
+        """Load a saved model from the provided file path and moves it to a device.
+
+        Parameters
+        ----------
+        model_path
+            The path to a saved model
         """
         try:
             self.load_state_dict(

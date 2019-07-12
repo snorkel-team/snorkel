@@ -16,8 +16,17 @@ and our `tutorials repo <https://github.com/HazyResearch/snorkel/>`_.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Package Reference
 
+   source/snorkel.analysis
+   source/snorkel.augmentation
+   source/snorkel.classification
+   source/snorkel.contrib
+   source/snorkel.labeling
+   source/snorkel.map
+   source/snorkel.slicing
+   source/snorkel.synthetic
+   source/snorkel.types
 
 
 Indices and tables

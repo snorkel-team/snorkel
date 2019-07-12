@@ -12,7 +12,6 @@
 
 import os
 import sys
-from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -35,15 +34,7 @@ release = VERSION["VERSION"]
 # -- General configuration ---------------------------------------------------
 
 # Mock imports for troublesome modules (i.e. any that use C code)
-# See: https://docs.readthedocs.io/en/stable/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return MagicMock()
-
-
-MOCK_MODULES = [
+autodoc_mock_imports = [
     "dask",
     "dask.distributed",
     "networkx",
@@ -65,8 +56,6 @@ MOCK_MODULES = [
     "torch.utils.data",
     "tqdm",
 ]
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
-
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom

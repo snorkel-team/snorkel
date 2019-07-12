@@ -137,7 +137,8 @@ class SlicingConvergenceTest(unittest.TestCase):
         model = SnorkelClassifier(tasks=tasks)
 
         # Train
-        trainer = Trainer(lr=0.01, n_epochs=50, progress_bar=False)
+        # NOTE: Needs more epochs to convergence with more heads
+        trainer = Trainer(lr=0.01, n_epochs=70, progress_bar=False)
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
 

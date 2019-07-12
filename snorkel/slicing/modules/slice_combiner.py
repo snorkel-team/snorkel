@@ -106,21 +106,20 @@ class SliceCombinerModule(nn.Module):
 
         # Concatenate each predictor feature into [batch_size x 1 x feat_dim] tensor
         slice_representations = torch.cat(
-            [
-                outputs[slice_feat_name][0].unsqueeze(1)
-                for slice_feat_name in slice_feat_names
-            ],
-            dim=1,
+            [outputs[slice_feat_name][0] for slice_feat_name in slice_feat_names], dim=1
         )
+
+        # Compute the "confidence" [bach_size x 1] of the prediction using the max score
+        predictor_confidence = torch.max(predictor_preds, dim=1).values.unsqueeze(-1)
 
         # Attention weights used to combine each of the slice_representations
         # incorporates the indicator (whether we are in the slice or not) and
         # predictor (confidence of a learned slice head)
-        A = F.softmax(indicator_preds * predictor_preds, dim=1)
+        A = torch.sigmoid(indicator_preds * predictor_confidence)
 
-        # Match the dimensions of the slice_representations
-        A = A.unsqueeze(-1).expand([-1, -1, slice_representations.size(-1)])
+        # Expand weights and match dims [bach_size x feat_dim] of slice_representations
+        A = A.expand([-1, slice_representations.size(-1)])
 
-        # Reweight representations by class Sum across all classes
-        reweighted_rep = torch.sum(A * slice_representations, dim=1)
+        # Reweight representations with elementwise product
+        reweighted_rep = A * slice_representations
         return reweighted_rep

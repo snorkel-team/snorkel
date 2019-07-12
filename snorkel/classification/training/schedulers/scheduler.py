@@ -11,15 +11,14 @@ BatchIterator = Iterator[
 
 
 class Scheduler(ABC):
-    """Return batches from all dataloaders in a specified order
-    """
+    """Return batches from all dataloaders according to a specified strategy."""
 
     def __init__(self) -> None:
         pass
 
     @abstractmethod
     def get_batches(self, dataloaders: Sequence[DictDataLoader]) -> BatchIterator:
-        """Return batches in shuffled order from dataloaders
+        """Return batches from dataloaders according to a specified strategy.
 
         Parameters
         ----------
@@ -27,7 +26,7 @@ class Scheduler(ABC):
             A sequence of dataloaders to get batches from
 
         Yields
-        -------
+        ------
         (batch, dataloader)
             batch is a tuple of (X_dict, Y_dict) and dataloader is the dataloader
             that that batch came from. That dataloader will not be accessed by the

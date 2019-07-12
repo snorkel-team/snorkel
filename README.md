@@ -1,16 +1,16 @@
 <img src="figs/logo_01.png" width="150"/>
 
 # ANNOUNCEMENT:
-**Snorkel v0.9 is being released this summer** and we are absolutely certain you're going to love the new version!
+**Snorkel v0.9 is being released this summer!**
 
 Why is it 0.9 when the last version was 0.7? Because this is more than just an incremental change. It's a full redesign from the ground up, including:
 * Support for new training data operators: labeling functions (LFs), transformation functions (TFs), and slicing functions (SFs)
-* A new matrix-completion-based approach for learning the LF accuracies and correlation structure
+* A new matrix-completion-based approach for learning LF accuracies and correlation structure
 * Native support for multi-task learning (MTL), transfer learning (TL), and complex model flows
-* A more modular form factor that makes it easier to integrate with other libraries
-* Significantly improved nuts and bolts: full coverage for unit tests, type checking, and doc strings
-* A fresh batch of tutorials demonstrating different use cases and integrations
 * A Snorkel 101 guide that provides a gentle introduction to the technology and API for first-time users
+* A fresh batch of tutorials demonstrating different use cases and integrations
+* A more modular form factor that makes it easier to integrate with other libraries
+* A commitment to stability, with full coverage unit tests, type checking, and doc strings
 
 The new version will be available via `pip` and `conda` but **will not be backwards compatible**. The current (v0.7) Snorkel code will be moved to another repository to continue to support existing applications that depend on it.
 

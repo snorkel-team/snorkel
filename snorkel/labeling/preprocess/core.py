@@ -38,22 +38,23 @@ class preprocessor(lambda_mapper):
 
     Example
     -------
-    ```
-    @preprocessor()
-    def combine_text_preprocessor(x: DataPoint) -> DataPoint:
-        x.article = f"{x.title} {x.body}"
-        return x
+    >>> @preprocessor()
+    ... def combine_text_preprocessor(x):
+    ...     x.article = f"{x.title} {x.body}"
+    ...     return x
+    >>> from snorkel.labeling.preprocess.nlp import SpacyPreprocessor
+    >>> spacy_preprocessor = SpacyPreprocessor("article", "article_parsed")
 
-    spacy_preprocessor = SpacyPreprocessor("article", "article_parsed")
+    We can now add our preprocessors to an LF.
 
-    preprocessors = [combine_text_preprocessor, spacy_preprocessor]
-    @labeling_function(preprocessors=preprocessors)
-    def article_mentions_person(x: DataPoint) -> int:
-        for ent in x.article_parsed.ents:
-            if ent.label_ == "PERSON":
-                return ABSTAIN
-        return NEGATIVE
-    ```
+    >>> preprocessors = [combine_text_preprocessor, spacy_preprocessor]
+    >>> from snorkel.labeling.lf import labeling_function
+    >>> @labeling_function(preprocessors=preprocessors)
+    ... def article_mentions_person(x):
+    ...     for ent in x.article_parsed.ents:
+    ...         if ent.label_ == "PERSON":
+    ...             return ABSTAIN
+    ...     return NEGATIVE
     """
 
     pass

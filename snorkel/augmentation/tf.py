@@ -44,14 +44,13 @@ class transformation_function(lambda_mapper):
 
     Example
     -------
-    ```
-    @transformation_function()
-    def square(x: DataPoint) -> DataPoint:
-        x.num = x.num ** 2
-        return x
-
-    square(SimpleNamespace(num=2))  # SimpleNamespace(num=4)
-    ```
+    >>> @transformation_function()
+    ... def square(x):
+    ...     x.num = x.num ** 2
+    ...     return x
+    >>> from types import SimpleNamespace
+    >>> square(SimpleNamespace(num=2))
+    namespace(num=4)
     """
 
     pass

@@ -179,8 +179,6 @@ def gaussian_bags_of_words(Y, vocab=vocab1k, sigma=1, bag_size=[25, 50], **kwarg
     The sentences are conditionally independent, given a label.
     Note that technically we use a half-normal distribution here because we
         take the absolute value of the normal distribution.
-    Example:
-        TBD
     """
 
     def make_distribution(sigma, num_words):

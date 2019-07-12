@@ -28,12 +28,24 @@ class _CData(NamedTuple):
 class LabelModel(nn.Module):
     """A conditionally independent LabelModel to learn LF accuracies and assign training labels.
 
+    Examples
+    --------
+    >>> label_model = LabelModel()
+    >>> label_model = LabelModel(cardinality=3)
+    >>> label_model = LabelModel(cardinality=3, device='cpu')
+    >>> label_model = LabelModel(cardinality=3, seed=1234)
+
     Parameters
     ----------
     cardinality
         Number of classes, by default 2
     **kwargs
         Arguments for changing config defaults
+
+    Raises
+    ------
+    ValueError
+        If config device set to cuda but only cpu is available
 
     Attributes
     ----------
@@ -43,20 +55,6 @@ class LabelModel(nn.Module):
         Training configuration
     seed
         Random seed
-
-    Raises
-    ------
-    ValueError
-        If config device set to cuda but only cpu is available
-
-    Examples
-    --------
-    ```
-    label_model = LabelModel()
-    label_model = LabelModel(cardinality=3)
-    label_model = LabelModel(cardinality=3, device='cpu')
-    label_model = LabelModel(cardinality=3, seed=1234)
-    ```
     """
 
     def __init__(self, cardinality: int = 2, **kwargs: Any) -> None:
@@ -326,11 +324,11 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        ```
-        L = np.array([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
-        label_model = LabelModel()
-        label_model.train_model(L)
-        label_model.get_accuracies()  # np.array([0.9, 0.9, 0.01])
+        >>> L = np.array([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> label_model = LabelModel()
+        >>> label_model.train_model(L)
+        >>> label_model.get_accuracies()
+        array([0.9, 0.9, 0.01])
         """
         accs = np.zeros(self.m)
         for i in range(self.m):
@@ -358,11 +356,11 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        ```
-        L = np.array([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
-        label_model.train_model(L)
-        label_model.predict_proba(L)  # np.array([1.0, 0.0], [0.0, 1.0], [1.0, 0.0])
-        ```
+        >>> L = np.array([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> label_model = LabelModel()
+        >>> label_model.train_model(L)
+        >>> label_model.predict_proba(L)
+        np.array([1.0, 0.0], [0.0, 1.0], [1.0, 0.0])
         """
         self._set_constants(L)
 
@@ -551,14 +549,12 @@ class LabelModel(nn.Module):
 
         Examples
         --------
-        ```
-        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
-        Y_dev = [1, 2, 1]
-
-        label_model.train_model(L)
-        label_model.train_model(L, Y_dev=Y_dev)
-        label_model.train_model(L, class_balance=[0.7, 0.3])
-        ```
+        >>> L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        >>> Y_dev = [1, 2, 1]
+        >>> label_model = LabelModel()
+        >>> label_model.train_model(L)
+        >>> label_model.train_model(L, Y_dev=Y_dev)
+        >>> label_model.train_model(L, class_balance=[0.7, 0.3])
         """
         self.config = recursive_merge_dicts(self.config, kwargs, misses="ignore")
         train_config = self.config["train_config"]
@@ -645,9 +641,7 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        ```
-        label_model.save('./saved_label_model')
-        ```
+        >>> label_model.save('./saved_label_model')
         """
         with open(destination, "wb") as f:
             torch.save(self, f, **kwargs)
@@ -670,10 +664,9 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        ```
-        label_model = LabelModel()
-        label_model.load('./saved_label_model') # Load parameters saved in saved_label_model
-        ```
+        Load parameters saved in `saved_label_model`
+
+        >>> label_model.load('./saved_label_model')
         """
         with open(source, "rb") as f:
             return torch.load(f, **kwargs)

@@ -1,8 +1,7 @@
 from typing import Any, Callable, List, Mapping, Optional
 
+from snorkel.labeling.preprocess import BasePreprocessor
 from snorkel.types import DataPoint
-
-from .preprocess import BasePreprocessor
 
 
 class LabelingFunction:
@@ -32,17 +31,17 @@ class LabelingFunction:
     fault_tolerant
         Output 0 if LF execution fails?
 
+    Raises
+    ------
+    ValueError
+        Calling incorrectly defined preprocessors
+
     Attributes
     ----------
     name
         See above
     fault_tolerant
         See above
-
-    Raises
-    ------
-    ValueError
-        Calling incorrectly defined preprocessors
     """
 
     def __init__(
@@ -112,17 +111,17 @@ class labeling_function:
 
     Examples
     --------
-    ```
-    @labeling_function()
-    def f(x: DataPoint) -> int:
-        return 1 if x.a > 42 else 0
-    print(f)  # "Labeling function f"
+    >>> @labeling_function()
+    ... def f(x: DataPoint) -> int:
+    ...     return 1 if x.a > 42 else 0
+    >>> f
+    LabelingFunction f, Preprocessors: []
 
-    @labeling_function(name="my_lf")
-    def g(x: DataPoint) -> int:
-        return 1 if x.a > 42 else 0
-    print(g)  # "Labeling function my_lf"
-    ```
+    >>> @labeling_function(name="my_lf")
+    ... def g(x: DataPoint) -> int:
+    ...     return 1 if x.a > 42 else 0
+    >>> g
+    LabelingFunction my_lf, Preprocessors: []
     """
 
     def __init__(

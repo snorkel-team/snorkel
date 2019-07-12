@@ -183,16 +183,16 @@ def filter_labels(
 
     Example
     -------
-    ```
-    golds = [0, 1, 1, 2, 2]
-    preds = [1, 1, 1, 2, 0]
-    filtered = filter_labels(
-        label_dict={"golds": golds, "preds": preds},
-        filter_dict={"golds": [0], "preds": [0]}
-    )
-    filtered["golds"] == [1, 1, 2]
-    filtered["preds"] == [1, 1, 2]
-    ```
+    >>> golds = np.array([0, 1, 1, 2, 2])
+    >>> preds = np.array([1, 1, 1, 2, 0])
+    >>> filtered = filter_labels(
+    ...     label_dict={"golds": golds, "preds": preds},
+    ...     filter_dict={"golds": [0], "preds": [0]}
+    ... )
+    >>> filtered["golds"]
+    array([1, 1, 2])
+    >>> filtered["preds"]
+    array([1, 1, 2])
     """
     masks = []
     for label_name, filter_values in filter_dict.items():

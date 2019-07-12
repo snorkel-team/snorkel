@@ -92,15 +92,15 @@ class BaseMapper:
     memoize
         Memoize mapper outputs?
 
-    Attributes
-    ----------
-    memoize
-        Memoize mapper outputs?
-
     Raises
     ------
     NotImplementedError
         Subclasses need to implement `_generate_mapped_data_point`
+
+    Attributes
+    ----------
+    memoize
+        Memoize mapper outputs?
     """
 
     def __init__(self, name: str, pre: List["BaseMapper"], memoize: bool) -> None:
@@ -197,6 +197,11 @@ class Mapper(BaseMapper):
     memoize
         Memoize mapper outputs?
 
+    Raises
+    ------
+    NotImplementedError
+        Subclasses must implement the `run` method
+
     Attributes
     ----------
     field_names
@@ -205,11 +210,6 @@ class Mapper(BaseMapper):
         See above
     memoize
         Memoize mapper outputs?
-
-    Raises
-    ------
-    NotImplementedError
-        Subclasses must implement the `run` method
     """
 
     def __init__(
@@ -304,6 +304,15 @@ class LambdaMapper(BaseMapper):
 class lambda_mapper:
     """Decorate a function to define a LambdaMapper object.
 
+    Example
+    -------
+    >>> @lambda_mapper()
+    ... def concatenate_text(x):
+    ...     x.article = f"{title} {body}"
+    ...     return x
+    >>> isinstance(concatenate_text, LambdaMapper)
+    True
+
     Parameters
     ----------
     name
@@ -317,17 +326,6 @@ class lambda_mapper:
     ----------
     memoize
         Memoize mapper outputs?
-
-    Example
-    -------
-    ```
-    @lambda_mapper()
-    def concatenate_text(x: DataPoint) -> DataPoint:
-        x.article = f"{title} {body}"
-        return x
-
-    isinstance(concatenate_text, LambdaMapper)  # True
-    ```
     """
 
     def __init__(

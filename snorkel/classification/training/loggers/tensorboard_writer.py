@@ -19,6 +19,7 @@ class TensorBoardWriter(LogWriter):
     ----------
     writer
         tensorboardX `SummaryWriter` for logging and visualization
+    
     See `LogWriter`.
     """
 

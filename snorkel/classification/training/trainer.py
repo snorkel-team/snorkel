@@ -23,10 +23,33 @@ Metrics = Dict[str, float]
 
 
 class Trainer:
-    """A class for multi-task learning.
+    """A class for training a SnorkelClassifier.
 
-    :param config: The learning config
-    :type config: dict
+    Parameters
+    ----------
+    name
+        An optional name for this trainer object
+    kwargs
+        Settings to be merged into the default Trainer config dict
+
+    Attributes
+    ----------
+    name
+        See above
+    config
+        The config dict with the settings for the Trainer
+    checkpointer
+        Saves the best model seen during training
+    log_manager
+        Identifies when its time to log or evaluate on the valid set
+    log_writer
+        Writes training statistics to file or TensorBoard
+    optimizer
+        Updates model weights based on the loss
+    lr_scheduler
+        Adjusts the learning rate over the course of training
+    batch_scheduler
+        Returns batches from the DataLoaders in a particular order for training
     """
 
     def __init__(self, name: Optional[str] = None, **kwargs: Any) -> None:
@@ -36,12 +59,15 @@ class Trainer:
     def train_model(
         self, model: SnorkelClassifier, dataloaders: List[DictDataLoader]
     ) -> None:
-        """The learning procedure of MTL
+        """Train a SnorkelClassifier.
 
-        :param model: The multi-task model that needs to learn
-        :type model: SnorkelClassifier
-        :param dataloaders: a list of dataloaders used to learn the model
-        :type dataloaders: list
+        Parameters
+        ----------
+        model
+            The model to train
+        dataloaders
+            A list of DataLoaders. These will split into train, valid, and test splits
+            based on the `split` attribute of the DataLoaders.
         """
         self._check_dataloaders(dataloaders)
 
@@ -137,7 +163,7 @@ class Trainer:
         model = self.log_manager.close(model)
 
     def _check_dataloaders(self, dataloaders: List[DictDataLoader]) -> None:
-        """ Validates dataloaders given training config"""
+        """Validate the dataloader splits."""
         train_split = self.config["train_split"]
         valid_split = self.config["valid_split"]
         test_split = self.config["test_split"]
@@ -186,7 +212,6 @@ class Trainer:
             self.checkpointer = None
 
     def _set_log_manager(self) -> None:
-        """Set logging manager."""
         self.log_manager = LogManager(
             self.n_batches_per_epoch,
             log_writer=self.log_writer,
@@ -195,8 +220,6 @@ class Trainer:
         )
 
     def _set_optimizer(self, model: nn.Module) -> None:
-        """Set optimizer for learning process."""
-
         # TODO: add more optimizer support and fp16
         optimizer_config = self.config["optimizer_config"]
         opt = optimizer_config["optimizer"]
@@ -234,8 +257,6 @@ class Trainer:
         self.optimizer = optimizer
 
     def _set_lr_scheduler(self) -> None:
-        """Set learning rate scheduler for learning process."""
-
         # Set warmup scheduler
         self._set_warmup_scheduler()
 
@@ -269,8 +290,6 @@ class Trainer:
         self.lr_scheduler = lr_scheduler
 
     def _set_warmup_scheduler(self) -> None:
-        """Set warmup learning rate scheduler for learning process."""
-
         warmup_scheduler: Optional[optim.lr_scheduler.LambdaLR]
 
         if self.config["lr_scheduler_config"]["warmup_steps"]:
@@ -308,8 +327,6 @@ class Trainer:
         self.warmup_scheduler = warmup_scheduler
 
     def _update_lr_scheduler(self, step: int) -> None:
-        """Update the lr using lr_scheduler with each batch."""
-
         if self.warmup_scheduler and step < self.warmup_steps:
             self.warmup_scheduler.step()  # type: ignore
         elif self.lr_scheduler is not None:
@@ -319,7 +336,6 @@ class Trainer:
                 self.optimizer.param_groups[0]["lr"] = min_lr
 
     def _set_batch_scheduler(self) -> None:
-        """Set task scheduler for learning process"""
         scheduler_class = batch_schedulers.get(self.config["batch_scheduler"])
         if not scheduler_class:
             raise ValueError(f"Unrecognized batch scheduler option '{scheduler_class}'")
@@ -329,6 +345,7 @@ class Trainer:
     def _evaluate(
         self, model: SnorkelClassifier, dataloaders: List[DictDataLoader], split: str
     ) -> Metrics:
+        """Evalute the current quality of the model on data for the requested split."""
         loaders = [d for d in dataloaders if d.dataset.split in split]  # type: ignore
         return model.score(loaders)
 
@@ -338,7 +355,7 @@ class Trainer:
         dataloaders: List[DictDataLoader],
         batch_size: int,
     ) -> Metrics:
-        """Checking if it's time to evaluting or checkpointing"""
+        """Log and checkpoint if it is time to do so."""
 
         # Switch to eval mode for evaluation
         model.eval()
@@ -376,6 +393,7 @@ class Trainer:
                 )
 
     def _checkpoint_model(self, model: SnorkelClassifier, metric_dict: Metrics) -> None:
+        """Save the current model."""
         if self.checkpointer is not None:
             self.checkpointer.checkpoint(
                 self.log_manager.unit_total, model, metric_dict
@@ -407,5 +425,6 @@ class Trainer:
         return metric_dict
 
     def _reset_losses(self) -> None:
+        """Reset the loss counters."""
         self.running_losses = defaultdict(float)
         self.running_counts = defaultdict(int)

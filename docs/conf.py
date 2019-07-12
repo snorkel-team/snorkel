@@ -12,6 +12,7 @@
 
 import os
 import sys
+from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -34,8 +35,15 @@ release = VERSION["VERSION"]
 # -- General configuration ---------------------------------------------------
 
 # Mock imports for troublesome modules (i.e. any that use C code)
-# See: http://blog.rtwilson.com/how-to-make-your-sphinx-documentation-compile-with-readthedocs-when-youre-using-numpy-and-scipy/
-autodoc_mock_imports = [
+# See: https://docs.readthedocs.io/en/stable/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return MagicMock()
+
+
+MOCK_MODULES = [
     "dask",
     "dask.distributed",
     "networkx",
@@ -57,6 +65,8 @@ autodoc_mock_imports = [
     "torch.utils.data",
     "tqdm",
 ]
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -92,6 +102,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
+html_theme_options = {"navigation_depth": -1, "titles_only": True}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

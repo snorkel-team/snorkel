@@ -12,7 +12,13 @@ Metrics = Dict[str, float]
 
 
 class Checkpointer(object):
-    """Checkpointing Training logging class to log train infomation"""
+    """Manager for checkpointing model.
+
+    Parameters
+    ----------
+    kwargs
+        Config merged with `default_config["checkpointer_config"]`
+    """
 
     def __init__(self, **kwargs: Any) -> None:
 
@@ -74,6 +80,17 @@ class Checkpointer(object):
     def checkpoint(
         self, iteration: float, model: SnorkelClassifier, metric_dict: Metrics
     ) -> None:
+        """Check if iteration and current metrics necessitate a checkpoint.
+
+        Parameters
+        ----------
+        iteration
+            Current training iteration
+        model
+            Model to checkpoint
+        metric_dict
+            Current performance metrics for model
+        """
         # Check if the checkpoint_runway condition is met
         if iteration < self.checkpoint_runway:
             return
@@ -93,7 +110,7 @@ class Checkpointer(object):
         if not set(self.checkpoint_task_metrics.keys()).isdisjoint(
             set(metric_dict.keys())
         ):
-            new_best_metrics = self.is_new_best(metric_dict)
+            new_best_metrics = self._is_new_best(metric_dict)
             for metric in new_best_metrics:
                 copyfile(
                     checkpoint_path,
@@ -106,7 +123,8 @@ class Checkpointer(object):
                     f"/best_model_{metric.replace('/', '_')}.pth"
                 )
 
-    def is_new_best(self, metric_dict: Metrics) -> Set[str]:
+    def _is_new_best(self, metric_dict: Metrics) -> Set[str]:
+
         best_metric = set()
 
         for metric in metric_dict:
@@ -131,6 +149,7 @@ class Checkpointer(object):
         return best_metric
 
     def clear(self) -> None:
+        """Clear existing checkpoint files, besides the best-yet model."""
         if self.checkpoint_clear:
             logging.info("Clear all immediate checkpoints.")
             file_list = glob.glob(f"{self.checkpoint_dir}/checkpoint_*.pth")

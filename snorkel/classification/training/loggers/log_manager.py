@@ -10,12 +10,18 @@ from .log_writer import LogWriter
 
 
 class LogManager(object):
-    """A class to manage logging during training progress
+    """A class to manage logging during training progress.
 
-    :param n_batches_per_epoch: total number batches per epoch
-    :type n_batches_per_epoch: int
-    :param verbose: print out the log or not
-    :type verbose: bool
+    Parameters
+    ----------
+    n_batches_per_epoch
+        Total number batches per epoch
+    log_writer
+        `LogWriter` for current run logs
+    checkpointer
+        `Checkpointer` for current model
+    kwargs
+        Config merged with `default_config["log_manager_config"]`
     """
 
     def __init__(
@@ -60,7 +66,7 @@ class LogManager(object):
         self.trigger_count = 0
 
     def update(self, batch_size: int) -> None:
-        """Update the count and total number"""
+        """Update the count and total number."""
 
         # Update number of points
         self.point_count += batch_size
@@ -86,7 +92,7 @@ class LogManager(object):
             self.unit_total = self.epoch_total
 
     def trigger_evaluation(self) -> bool:
-        """Check if triggers the evaluation"""
+        """Check if current counts trigger evaluation."""
         satisfied = self.unit_count >= self.evaluation_freq
         if satisfied:
             self.trigger_count += 1
@@ -94,7 +100,7 @@ class LogManager(object):
         return satisfied
 
     def trigger_checkpointing(self) -> bool:
-        """Check if triggers the checkpointing"""
+        """Check if current counts trigger  checkpointing."""
         if self.checkpointer is None:
             return False
         satisfied = self.trigger_count >= self.checkpointer.checkpoint_factor
@@ -103,13 +109,14 @@ class LogManager(object):
         return satisfied
 
     def reset(self) -> None:
-        """Reset the counter"""
+        """Reset counters."""
         self.point_count = 0
         self.batch_count = 0
         self.epoch_count = 0
         self.unit_count = 0
 
     def close(self, model: SnorkelClassifier) -> SnorkelClassifier:
+        """Close the log writer and checkpointer if needed. Reload best model."""
         if self.log_writer is not None:
             self.log_writer.close()
         if self.checkpointer is not None:

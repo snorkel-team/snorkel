@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 
-from snorkel.classification.data import DictDataLoader
+from snorkel.classification.data import DictDataLoader  # noqa: F401
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.training import (

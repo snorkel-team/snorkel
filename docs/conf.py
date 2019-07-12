@@ -10,11 +10,12 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-import mock
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('..'))
+import mock
+
+sys.path.insert(0, os.path.abspath(".."))
 
 
 # -- Project information -----------------------------------------------------
@@ -22,6 +23,7 @@ sys.path.insert(0, os.path.abspath('..'))
 project = "Snorkel"
 copyright = "2019, Snorkel Team"
 author = "Snorkel Team"
+master_doc = "index"
 
 VERSION = {}
 with open("../snorkel/version.py", "r") as version_file:
@@ -37,14 +39,18 @@ release = VERSION["VERSION"]
 # See: http://blog.rtwilson.com/how-to-make-your-sphinx-documentation-compile-with-readthedocs-when-youre-using-numpy-and-scipy/
 MOCK_MODULES = [
     "dask",
+    "dask.distributed",
+    "networkx",
     "numpy",
     "pandas",
     "pyspark",
+    "pyspark.sql",
     "scipy",
     "scipy.sparse",
     "sklearn",
     "sklearn.metrics",
     "spacy",
+    "tensorboardX",
     "torch",
     "torch.nn",
     "torch.nn.functional",

@@ -13,8 +13,6 @@
 import os
 import sys
 
-import mock
-
 sys.path.insert(0, os.path.abspath(".."))
 
 
@@ -37,7 +35,7 @@ release = VERSION["VERSION"]
 
 # Mock imports for troublesome modules (i.e. any that use C code)
 # See: http://blog.rtwilson.com/how-to-make-your-sphinx-documentation-compile-with-readthedocs-when-youre-using-numpy-and-scipy/
-MOCK_MODULES = [
+autodoc_mock_imports = [
     "dask",
     "dask.distributed",
     "networkx",
@@ -59,9 +57,6 @@ MOCK_MODULES = [
     "torch.utils.data",
     "tqdm",
 ]
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
-
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom

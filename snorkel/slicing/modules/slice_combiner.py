@@ -34,8 +34,8 @@ class SliceCombinerModule(nn.Module):
 
     def __init__(
         self,
-        slice_ind_key: str = "_ind",
-        slice_pred_key: str = "_pred",
+        slice_ind_key: str = "_ind_head",
+        slice_pred_key: str = "_pred_head",
         slice_pred_feat_key: str = "_pred_transform",
     ) -> None:
         super().__init__()
@@ -86,9 +86,12 @@ class SliceCombinerModule(nn.Module):
             ],
             dim=-1,
         )
-        predictor_preds = torch.cat(
+        predictor_confidences = torch.cat(
             [
-                F.softmax(outputs[slice_pred_name][0])[:, 0].unsqueeze(1)
+                F.softmax(
+                    # Compute the "confidence" using the max score across classes
+                    torch.max(outputs[slice_pred_name][0], dim=1).values
+                ).unsqueeze(1)
                 for slice_pred_name in slice_pred_op_names
             ],
             dim=-1,
@@ -106,20 +109,21 @@ class SliceCombinerModule(nn.Module):
 
         # Concatenate each predictor feature into [batch_size x 1 x feat_dim] tensor
         slice_representations = torch.cat(
-            [outputs[slice_feat_name][0] for slice_feat_name in slice_feat_names], dim=1
+            [
+                outputs[slice_feat_name][0].unsqueeze(1)
+                for slice_feat_name in slice_feat_names
+            ],
+            dim=1,
         )
-
-        # Compute the "confidence" [bach_size x 1] of the prediction using the max score
-        predictor_confidence = torch.max(predictor_preds, dim=1).values.unsqueeze(-1)
 
         # Attention weights used to combine each of the slice_representations
         # incorporates the indicator (whether we are in the slice or not) and
         # predictor (confidence of a learned slice head)
-        A = torch.sigmoid(indicator_preds * predictor_confidence)
+        A = torch.softmax(indicator_preds * predictor_confidences, dim=1)
 
-        # Expand weights and match dims [bach_size x feat_dim] of slice_representations
-        A = A.expand([-1, slice_representations.size(-1)])
+        # Expand weights and match dims [bach_size x num_slices x feat_dim] of slice_representations
+        A = A.unsqueeze(-1).expand([-1, -1, slice_representations.size(-1)])
 
-        # Reweight representations with elementwise product
-        reweighted_rep = A * slice_representations
+        # Reweight representations with weighted sum across slices
+        reweighted_rep = torch.sum(A * slice_representations, dim=1)
         return reweighted_rep

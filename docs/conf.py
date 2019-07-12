@@ -22,6 +22,7 @@ project = "Snorkel"
 copyright = "2019, Snorkel Team"
 author = "Snorkel Team"
 master_doc = "index"
+html_theme = "sphinx_rtd_theme"
 
 VERSION = {}
 with open("../snorkel/version.py", "r") as version_file:

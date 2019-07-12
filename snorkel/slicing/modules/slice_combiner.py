@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 import torch
 import torch.nn as nn
@@ -60,60 +60,37 @@ class SliceCombinerModule(nn.Module):
             The reweighted predictor representation
         """
 
-        # Gather names of slice heads (both indicator and predictor heads)
-        # This provides a static ordering by which to index into the 'outputs' dict
-        slice_ind_op_names = sorted(
-            [
-                flow_name
-                for flow_name in outputs.keys()
-                if self.slice_ind_key in flow_name
-            ]
+        # Concatenate indicator head predictions into tensor [batch_size x num_slices]
+        indicator_outputs = self._collect_flow_outputs_by_key(
+            outputs, self.slice_ind_key
         )
-        slice_pred_op_names = sorted(
-            [
-                flow_name
-                for flow_name in outputs.keys()
-                if self.slice_pred_key in flow_name
-            ]
+        indicator_preds = torch.cat(
+            [F.softmax(output)[:, 0].unsqueeze(1) for output in indicator_outputs],
+            dim=-1,
         )
 
-        # Concatenate the predictions from the predictor head/indicator head
-        # into a [batch_size x num_slices] tensor
-        indicator_preds = torch.cat(
-            [
-                F.softmax(outputs[slice_ind_name][0])[:, 0].unsqueeze(1)
-                for slice_ind_name in slice_ind_op_names
-            ],
-            dim=-1,
+        # Concatenate predictor head confidences into tensor [batch_size x num_slices]
+        predictor_outputs = self._collect_flow_outputs_by_key(
+            outputs, self.slice_pred_key
         )
         predictor_confidences = torch.cat(
             [
                 F.softmax(
                     # Compute the "confidence" using the max score across classes
-                    torch.max(outputs[slice_pred_name][0], dim=1).values
+                    torch.max(output, dim=1)[0]
                 ).unsqueeze(1)
-                for slice_pred_name in slice_pred_op_names
+                for output in predictor_outputs
             ],
             dim=-1,
         )
 
-        # Collect names of predictor "features" that will be combined into the final
-        # reweighted representation
-        slice_feat_names = sorted(
-            [
-                flow_name
-                for flow_name in outputs.keys()
-                if self.slice_pred_feat_key in flow_name
-            ]
+        # Concatenate each predictor feature (to be combined into reweighted
+        # representation) into [batch_size x 1 x feat_dim] tensor
+        predictor_feat_outputs = self._collect_flow_outputs_by_key(
+            outputs, self.slice_pred_feat_key
         )
-
-        # Concatenate each predictor feature into [batch_size x 1 x feat_dim] tensor
         slice_representations = torch.cat(
-            [
-                outputs[slice_feat_name][0].unsqueeze(1)
-                for slice_feat_name in slice_feat_names
-            ],
-            dim=1,
+            [output.unsqueeze(1) for output in predictor_feat_outputs], dim=1
         )
 
         # Attention weights used to combine each of the slice_representations
@@ -121,9 +98,19 @@ class SliceCombinerModule(nn.Module):
         # predictor (confidence of a learned slice head)
         A = torch.softmax(indicator_preds * predictor_confidences, dim=1)
 
-        # Expand weights and match dims [bach_size x num_slices x feat_dim] of slice_representations
+        # Match dims [bach_size x num_slices x feat_dim] of slice_representations
         A = A.unsqueeze(-1).expand([-1, -1, slice_representations.size(-1)])
 
         # Reweight representations with weighted sum across slices
         reweighted_rep = torch.sum(A * slice_representations, dim=1)
         return reweighted_rep
+
+    def _collect_flow_outputs_by_key(
+        self, flow_dict: Dict[str, torch.Tensor], key: str
+    ) -> List[torch.Tensor]:
+        """Return flow_dict outputs specified by key, ordered by sorted flow_name."""
+        return [
+            flow_dict[flow_name][0]
+            for flow_name in sorted(flow_dict.keys())
+            if key in flow_name
+        ]

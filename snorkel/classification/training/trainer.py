@@ -18,6 +18,7 @@ from snorkel.classification.training import (
 )
 from snorkel.classification.training.schedulers import batch_schedulers
 from snorkel.classification.utils import recursive_merge_dicts
+from snorkel.types import Config
 
 Metrics = Dict[str, float]
 
@@ -186,14 +187,15 @@ class Trainer:
             elif self.config["log_writer"] == "tensorboard":
                 self.log_writer = TensorBoardWriter(**self.config["log_writer_config"])
             else:
-                raise ValueError(f"Unrecognized writer option: {self.config['log_writer']}")
+                raise ValueError(
+                    f"Unrecognized writer option: {self.config['log_writer']}"
+                )
 
     def _set_checkpointer(self) -> None:
         self.checkpointer: Optional[Checkpointer]
 
         if self.config["checkpointing"]:
             checkpointer_config = self.config["checkpointer_config"]
-            log_manager_config = self.config["log_manager_config"]
 
             # Default checkpoint_dir to log_dir if available
             if (
@@ -202,8 +204,10 @@ class Trainer:
             ):
                 checkpointer_config["checkpoint_dir"] = self.log_writer.log_dir
 
+            evaluation_freq = self.config["log_manager_config"]["evaluation_freq"]
+            counter_unit = self.config["log_manager_config"]["counter_unit"]
             self.checkpointer = Checkpointer(
-                **checkpointer_config, **log_manager_config
+                counter_unit, evaluation_freq, **checkpointer_config
             )
         else:
             self.checkpointer = None

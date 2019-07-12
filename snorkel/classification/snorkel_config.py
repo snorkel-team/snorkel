@@ -5,11 +5,7 @@ default_config = {
     "valid_split": "valid",  # the split to use for validation
     "test_split": "test",  # the split to use for testing
     "progress_bar": True,
-    "model_config": {
-        "model_path": None,  # the path to a saved checkpoint to initialize with
-        "device": 0,  # gpu id (int) or -1 for cpu
-        "dataparallel": True,
-    },
+    "model_config": {"device": 0, "dataparallel": True},  # gpu id (int) or -1 for cpu
     "log_manager_config": {
         "counter_unit": "epochs",  # [points, batches, epochs]
         "evaluation_freq": 1.0,  # Evaluate performance every this many counter_units

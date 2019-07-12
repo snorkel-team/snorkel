@@ -2,13 +2,27 @@ import glob
 import logging
 import os
 from shutil import copyfile
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
-from snorkel.classification.snorkel_config import default_config
-from snorkel.classification.utils import recursive_merge_dicts
+from snorkel.types import Config
 
 Metrics = Dict[str, float]
+
+
+class CheckpointerConfig(Config):
+    """[summary]
+
+    Parameters
+    ----------
+    TBD
+    """
+    checkpoint_dir: Optional[str] = None  # Trainer will set this to log_dir if None
+    checkpoint_factor: int = 1  # Checkpoint every this many evaluations
+    checkpoint_metric: str = "modelall/train/loss:min"
+    checkpoint_task_metrics: Optional[Dict[str, str]] = None  # task_metric_name:mode
+    checkpoint_runway: int = 0  # checkpointing runway (no checkpointing before k unit)
+    checkpoint_clear: bool = True  # whether
 
 
 class Checkpointer(object):
@@ -20,36 +34,24 @@ class Checkpointer(object):
         Config merged with `default_config["checkpointer_config"]`
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-
-        # Checkpointer requires both checkpointer_config and log_manager_config
-        # Use recursive_merge_dict instead of dict.update() to ensure copies are made
-        assert isinstance(default_config["checkpointer_config"], dict)
-        assert isinstance(default_config["log_manager_config"], dict)
-        checkpointer_config = recursive_merge_dicts(
-            default_config["checkpointer_config"],
-            default_config["log_manager_config"],
-            misses="insert",
-        )
-        self.config = recursive_merge_dicts(checkpointer_config, kwargs)
+    def __init__(self, counter_unit, evaluation_freq, **kwargs: Any) -> None:
+        self.config = CheckpointerConfig(**kwargs)
 
         # Pull out checkpoint settings
-        self.checkpoint_dir = self.config["checkpoint_dir"]
-        self.checkpoint_unit = self.config["counter_unit"]
-        self.checkpoint_clear = self.config["checkpoint_clear"]
-        self.checkpoint_runway = self.config["checkpoint_runway"]
-        self.checkpoint_factor = self.config["checkpoint_factor"]
+        self.checkpoint_unit = counter_unit
+        self.checkpoint_dir = self.config.checkpoint_dir
+        self.checkpoint_clear = self.config.checkpoint_clear
+        self.checkpoint_runway = self.config.checkpoint_runway
+        self.checkpoint_factor = self.config.checkpoint_factor
         self.checkpoint_condition_met = False
 
         if self.checkpoint_dir is None:
             raise ValueError("Checkpointing is on but no checkpoint_dir was specified.")
 
         # Collect all metrics to checkpoint
-        self.checkpoint_metric = self._make_metric_map(
-            [self.config["checkpoint_metric"]]
-        )
+        self.checkpoint_metric = self._make_metric_map([self.config.checkpoint_metric])
         self.checkpoint_task_metrics = self._make_metric_map(
-            self.config["checkpoint_task_metrics"]
+            self.config.checkpoint_task_metrics
         )
         self.checkpoint_task_metrics.update(self.checkpoint_metric)
 
@@ -58,7 +60,7 @@ class Checkpointer(object):
             os.makedirs(self.checkpoint_dir)
 
         # Set checkpoint frequency
-        self.checkpoint_freq = self.config["evaluation_freq"] * self.checkpoint_factor
+        self.checkpoint_freq = evaluation_freq * self.checkpoint_factor
         if self.checkpoint_freq <= 0:
             raise ValueError(
                 f"Invalid checkpoint freq {self.checkpoint_freq}, "

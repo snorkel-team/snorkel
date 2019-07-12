@@ -21,13 +21,26 @@ import torch.nn as nn
 from snorkel.analysis.utils import probs_to_preds
 from snorkel.classification.data import DictDataLoader
 from snorkel.classification.scorer import Scorer
-from snorkel.classification.snorkel_config import default_config
-from snorkel.classification.utils import move_to_device, recursive_merge_dicts
-from snorkel.types import ArrayLike
+from snorkel.classification.utils import move_to_device
+from snorkel.types import ArrayLike, Config
 
 from .task import Operation, Task
 
 OutputDict = Dict[str, Mapping[Union[str, int], Any]]
+
+
+class ClassifierConfig(Config):
+    """[summary]
+
+    Parameters
+    ----------
+    device
+        # gpu id (int) or -1 for cpu
+    dataparallel
+    """
+
+    device: int = 0
+    dataparallel: bool = True
 
 
 class SnorkelClassifier(nn.Module):
@@ -64,10 +77,7 @@ class SnorkelClassifier(nn.Module):
         self, tasks: List[Task], name: Optional[str] = None, **kwargs: Any
     ) -> None:
         super().__init__()
-        assert isinstance(default_config["model_config"], dict)
-        self.config = recursive_merge_dicts(
-            default_config["model_config"], kwargs, misses="insert"
-        )
+        self.config = ClassifierConfig(**kwargs)
         self.name = name or type(self).__name__
 
         # Initiate the model attributes
@@ -122,12 +132,12 @@ class SnorkelClassifier(nn.Module):
         # Combine module_pool from all tasks
         for key in task.module_pool.keys():
             if key in self.module_pool.keys():
-                if self.config["dataparallel"]:
+                if self.config.dataparallel:
                     task.module_pool[key] = nn.DataParallel(self.module_pool[key])
                 else:
                     task.module_pool[key] = self.module_pool[key]
             else:
-                if self.config["dataparallel"]:
+                if self.config.dataparallel:
                     self.module_pool[key] = nn.DataParallel(task.module_pool[key])
                 else:
                     self.module_pool[key] = task.module_pool[key]
@@ -169,7 +179,7 @@ class SnorkelClassifier(nn.Module):
         ValueError
             If a specified Operation failed to execute
         """
-        X_dict_moved = move_to_device(X_dict, self.config["device"])
+        X_dict_moved = move_to_device(X_dict, self.config.device)
 
         outputs: OutputDict = {"_input_": X_dict_moved}  # type: ignore
 
@@ -255,8 +265,8 @@ class SnorkelClassifier(nn.Module):
 
                 loss_dict[task_name] = self.loss_funcs[task_name](
                     outputs,
-                    move_to_device(Y, self.config["device"]),
-                    move_to_device(active, self.config["device"]),
+                    move_to_device(Y, self.config.device),
+                    move_to_device(active, self.config.device),
                 )
 
         return loss_dict, count_dict
@@ -385,7 +395,7 @@ class SnorkelClassifier(nn.Module):
 
     def _move_to_device(self) -> None:  # pragma: no cover
         """Move the model to the device specified in the model config."""
-        device = self.config["device"]
+        device = self.config.device
         if device >= 0:
             if torch.cuda.is_available():
                 logging.info(f"Moving model to GPU (cuda:{device}).")

@@ -34,16 +34,21 @@ def pad_batch(
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Convert the batch into a padded tensor and mask tensor.
 
-    :param batch: The data for padding.
-    :type batch: list of torch.Tensor
-    :param max_len: Max length of sequence of padding.
-    :type max_len: int
-    :param pad_value: The value to use for padding
-    :type pad_value: int
-    :param left_padding: if True, pad on the left, otherwise on the right.
-    :type left_padding: boolean
-    :return: The padded matrix and correspoing mask matrix.
-    :rtype: pair of torch.Tensors with shape (batch_size, max_seq_len)
+    Parameters
+    ----------
+    batch
+        The data for padding
+    max_len
+        Max length of sequence of padding
+    pad_value
+        The value to use for padding
+    left_padded
+        If True, pad on the left, otherwise on the right
+
+    Returns
+    -------
+    Tuple[torch.Tensor, torch.Tensor]
+        The padded matrix and correspoing mask matrix.
     """
 
     batch_size = len(batch)
@@ -71,20 +76,7 @@ def pad_batch(
 def recursive_merge_dicts(
     x: dict, y: dict, misses: str = "report", verbose: Optional[int] = None
 ) -> dict:
-    """
-    Merge dictionary y into a copy of x, overwriting elements of x when there
-    is a conflict, except if the element is a dictionary, in which case recurse.
-
-    # TODO: Make misses an Enum
-    misses: what to do if a key in y is not in x
-        'insert'    -> set x[key] = value
-        'exception' -> raise an exception
-        'report'    -> report the name of the missing key
-        'ignore'    -> do nothing
-    verbose: If verbose is None, look for a value for verbose in y first, then x
-
-    TODO: give example here (pull from tests)
-    """
+    """Merge dictionary y into a copy of x."""
 
     def recurse(x: dict, y: dict, misses: str = "report", verbose: int = 1) -> bool:
         found = True
@@ -144,13 +136,22 @@ def recursive_merge_dicts(
 def move_to_device(
     obj: TensorCollection, device: int = -1
 ) -> TensorCollection:  # pragma: no cover
-    """
+    """Recursively move torch.Tensors to a given CUDA device.
+
     Given a structure (possibly) containing Tensors on the CPU, move all the Tensors
     to the specified GPU (or do nothing, if they should beon the CPU).
-    device = -1 -> "cpu"
-    device =  0 -> "cuda:0"
+
     Originally from:
     https://github.com/HazyResearch/metal/blob/mmtl_clean/metal/utils.py
+
+    Paramters
+    ---------
+    obj
+        Tensor or collection of Tensors to move
+    device
+        Device to move Tensors to
+        device = -1 -> "cpu"
+        device =  0 -> "cuda:0"
     """
 
     if device < 0 or not torch.cuda.is_available():

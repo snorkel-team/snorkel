@@ -179,7 +179,6 @@ class Trainer:
             )
 
     def _set_log_writer(self) -> None:
-        """Set the log writer."""
         self.log_writer: Optional[LogWriter]
         if self.config["logging"]:
             config = self.config["log_writer_config"]
@@ -193,7 +192,6 @@ class Trainer:
             self.log_writer = None
 
     def _set_checkpointer(self) -> None:
-        """Set the checkpointer."""
         self.checkpointer: Optional[Checkpointer]
 
         if self.config["checkpointing"]:
@@ -214,7 +212,6 @@ class Trainer:
             self.checkpointer = None
 
     def _set_log_manager(self) -> None:
-        """Set logging manager."""
         self.log_manager = LogManager(
             self.n_batches_per_epoch,
             log_writer=self.log_writer,
@@ -223,8 +220,6 @@ class Trainer:
         )
 
     def _set_optimizer(self, model: nn.Module) -> None:
-        """Set the optimizer for updating parameters."""
-
         # TODO: add more optimizer support and fp16
         optimizer_config = self.config["optimizer_config"]
         opt = optimizer_config["optimizer"]
@@ -262,8 +257,6 @@ class Trainer:
         self.optimizer = optimizer
 
     def _set_lr_scheduler(self) -> None:
-        """Set learning rate scheduler for learning process."""
-
         # Set warmup scheduler
         self._set_warmup_scheduler()
 
@@ -297,8 +290,6 @@ class Trainer:
         self.lr_scheduler = lr_scheduler
 
     def _set_warmup_scheduler(self) -> None:
-        """Set warmup learning rate scheduler for learning process."""
-
         warmup_scheduler: Optional[optim.lr_scheduler.LambdaLR]
 
         if self.config["lr_scheduler_config"]["warmup_steps"]:
@@ -336,8 +327,6 @@ class Trainer:
         self.warmup_scheduler = warmup_scheduler
 
     def _update_lr_scheduler(self, step: int) -> None:
-        """Update the lr using lr_scheduler with each batch."""
-
         if self.warmup_scheduler and step < self.warmup_steps:
             self.warmup_scheduler.step()  # type: ignore
         elif self.lr_scheduler is not None:
@@ -347,7 +336,6 @@ class Trainer:
                 self.optimizer.param_groups[0]["lr"] = min_lr
 
     def _set_batch_scheduler(self) -> None:
-        """Set the scheduler for ordering batches."""
         scheduler_class = batch_schedulers.get(self.config["batch_scheduler"])
         if not scheduler_class:
             raise ValueError(f"Unrecognized batch scheduler option '{scheduler_class}'")
@@ -398,7 +386,6 @@ class Trainer:
         return metric_dict
 
     def _log_metrics(self, metric_dict: Metrics) -> None:
-        """Write metrics."""
         if self.log_writer is not None:
             for metric_name, metric_value in metric_dict.items():
                 self.log_writer.add_scalar(

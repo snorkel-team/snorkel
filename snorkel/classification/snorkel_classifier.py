@@ -340,7 +340,7 @@ class SnorkelClassifier(nn.Module):
         return results
 
     @torch.no_grad()
-    def score(self, dataloaders: List[DictDataLoader]) -> Dict[str, float]:
+    def score(self, dataloaders: List["DictDataLoader"]) -> Dict[str, float]:
         """Calculate scores for the provided DictDataLoaders.
 
         Parameters

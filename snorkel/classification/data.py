@@ -101,7 +101,7 @@ def collate_dicts(batch: List[Batch]) -> Batch:
 
 
 class DictDataLoader(DataLoader):
-    """A DataLoader that uses the appropriate collate_fn for a `DictDataset`.
+    """A DataLoader that uses the appropriate collate_fn for a ``DictDataset``.
 
     Parameters
     ----------

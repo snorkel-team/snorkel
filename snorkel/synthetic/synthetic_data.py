@@ -88,10 +88,10 @@ def generate_mog_dataset(
 
 
 def lf_template(x: DataPoint, index: int = 0, abstain_rate: float = 0.0) -> int:
-    r"""LF templates that votes based on attribute x `index`.
+    r"""LF templates that votes based on attribute x ``index``.
 
     Takes as input a DataPoint x with attribute x \in \mathbb{R}^d, and outputs
-    based on the `index`th entry, with probability `abstain_rate` of outputting 0 (abstain).
+    based on the ``index``th entry, with probability ``abstain_rate`` of outputting 0 (abstain).
     """
     if np.random.random() < abstain_rate:
         return 0
@@ -106,7 +106,7 @@ def generate_single_feature_lfs(
 ) -> List[LabelingFunction]:
     """Generate a list of m labeling functions (LFs) based on a single attribute 'x'.
 
-    Each LF abstains with probability `abstain_rate`, else label based on the
+    Each LF abstains with probability ``abstain_rate``, else label based on the
     ith entry of the input DataPoint x.x.
     """
     if isinstance(dims, int):
@@ -123,7 +123,7 @@ def tf_template(x: DataPoint, i: int) -> DataPoint:
     r"""TF template that transforms data attribute x.x randomly.
 
     Takes as input a DataPoint x with attribute x \in \mathbb{R}^d and randomly
-    transforms `index`th value.
+    transforms ``index``th value.
     """
     x.x[i] = np.random.rand()
     return x

@@ -180,7 +180,7 @@ def lf_overlaps(L: Matrix, normalize_by_coverage: bool = False) -> np.ndarray:
     (non-abstain) label for.
 
     Note that the maximum possible overlap fraction for an LF is the LF's
-    coverage, unless `normalize_by_coverage=True`, in which case it is 1.
+    coverage, unless ``normalize_by_coverage=True``, in which case it is 1.
 
     Parameters
     ----------
@@ -223,7 +223,7 @@ def lf_conflicts(L: sparse.spmatrix, normalize_by_overlaps: bool = False) -> np.
     different (non-abstain) label for.
 
     Note that the maximum possible conflict fraction for an LF is the LF's
-    overlaps fraction, unless `normalize_by_overlaps=True`, in which case it is 1.
+    overlaps fraction, unless ``normalize_by_overlaps=True``, in which case it is 1.
 
     Parameters
     ----------

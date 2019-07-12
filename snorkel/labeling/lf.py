@@ -16,7 +16,7 @@ class LabelingFunction:
     about the input data types and label space are stored. Extra
     functionality, such as running preprocessors and storing
     resources, is provided. Simple LFs can be defined via a
-    decorator. See `labeling_function`.
+    decorator. See ``labeling_function``.
 
     Parameters
     ----------
@@ -25,7 +25,7 @@ class LabelingFunction:
     f
         Function that implements the core LF logic
     resources
-        Labeling resources passed in to `f` via `kwargs`
+        Labeling resources passed in to ``f`` via ``kwargs``
     preprocessors
         Preprocessors to run on data points before LF execution
     fault_tolerant
@@ -103,7 +103,7 @@ class labeling_function:
     name
         Name of the LF. If None, uses the name of the wrapped function.
     resources
-        Labeling resources passed in to `f` via `kwargs`
+        Labeling resources passed in to ``f`` via ``kwargs``
     preprocessors
         Preprocessors to run on data points before LF execution
     fault_tolerant
@@ -137,7 +137,7 @@ class labeling_function:
         self.fault_tolerant = fault_tolerant
 
     def __call__(self, f: Callable[..., int]) -> LabelingFunction:
-        """Wrap a function to create a `LabelingFunction`.
+        """Wrap a function to create a ``LabelingFunction``.
 
         Parameters
         ----------
@@ -147,7 +147,7 @@ class labeling_function:
         Returns
         -------
         LabelingFunction
-            New `LabelingFunction` executing logic in wrapped function
+            New ``LabelingFunction`` executing logic in wrapped function
         """
         name = self.name or f.__name__
         return LabelingFunction(

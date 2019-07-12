@@ -54,7 +54,7 @@ class SpacyPreprocessor(Preprocessor):
         Returns
         -------
         FieldMap
-            Dictionary with a single key (`"doc"`), mapping to the
-            parsed SpaCy `Doc` object
+            Dictionary with a single key (``"doc"``), mapping to the
+            parsed SpaCy ``Doc`` object
         """
         return dict(doc=self._nlp(text))

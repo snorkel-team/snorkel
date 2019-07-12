@@ -273,7 +273,7 @@ class LabelModel(nn.Module):
         Note that this simply involves inferring the kth row by law of total
         probability and adding in to mu.
 
-        If `source` is not None, returns only the corresponding block.
+        If ``source`` is not None, returns only the corresponding block.
 
         Parameters
         ----------
@@ -664,7 +664,7 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        Load parameters saved in `saved_label_model`
+        Load parameters saved in ``saved_label_model``
 
         >>> label_model.load('./saved_label_model')
         """

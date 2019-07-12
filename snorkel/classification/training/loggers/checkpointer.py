@@ -17,7 +17,7 @@ class Checkpointer:
     Parameters
     ----------
     kwargs
-        Config merged with `default_config["checkpointer_config"]`
+        Config merged with ``default_config["checkpointer_config"]``
     """
 
     def __init__(self, **kwargs: Any) -> None:

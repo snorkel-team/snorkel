@@ -67,7 +67,7 @@ class Trainer:
             The model to train
         dataloaders
             A list of DataLoaders. These will split into train, valid, and test splits
-            based on the `split` attribute of the DataLoaders.
+            based on the ``split`` attribute of the DataLoaders.
         """
         self._check_dataloaders(dataloaders)
 

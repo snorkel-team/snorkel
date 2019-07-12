@@ -17,11 +17,11 @@ class LogManager:
     n_batches_per_epoch
         Total number batches per epoch
     log_writer
-        `LogWriter` for current run logs
+        ``LogWriter`` for current run logs
     checkpointer
-        `Checkpointer` for current model
+        ``Checkpointer`` for current model
     kwargs
-        Config merged with `default_config["log_manager_config"]`
+        Config merged with ``default_config["log_manager_config"]``
     """
 
     def __init__(

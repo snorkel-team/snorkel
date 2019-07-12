@@ -13,14 +13,14 @@ class TensorBoardWriter(LogWriter):
     Parameters
     ----------
     kwargs
-        Passed to `LogWriter` initializer
+        Passed to ``LogWriter`` initializer
 
     Attributes
     ----------
     writer
-        tensorboardX `SummaryWriter` for logging and visualization
+        tensorboardX ``SummaryWriter`` for logging and visualization
 
-    See `LogWriter`.
+    See ``LogWriter``.
     """
 
     def __init__(self, **kwargs: Any) -> None:
@@ -57,5 +57,5 @@ class TensorBoardWriter(LogWriter):
         self.writer.add_text(tag="config", text_string=str(config))
 
     def close(self) -> None:
-        """Close the `SummaryWriter`."""
+        """Close the ``SummaryWriter``."""
         self.writer.close()

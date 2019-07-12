@@ -15,5 +15,4 @@ formats: all
 # Optionally set the version of Python and requirements required to build your docs
 python:
   version: 3
-  install:
   system_packages: true

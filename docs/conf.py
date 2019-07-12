@@ -11,9 +11,10 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 # import os
-# import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import sys
+import mock
 
 # -- Project information -----------------------------------------------------
 
@@ -30,6 +31,18 @@ release = VERSION["VERSION"]
 
 
 # -- General configuration ---------------------------------------------------
+
+# Mock imports for troublesome modules (i.e. any that use C code)
+# See: http://blog.rtwilson.com/how-to-make-your-sphinx-documentation-compile-with-readthedocs-when-youre-using-numpy-and-scipy/
+MOCK_MODULES = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "torch",
+]
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
+
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom

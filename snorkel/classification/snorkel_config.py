@@ -24,8 +24,8 @@ default_config = {
         "checkpoint_clear": True,  # whether to clear intermediate checkpoints
     },
     "logging": False,  # Whether to write logs (to json/tensorboard)
+    "log_writer": "tensorboard",  # [json, tensorboard]
     "log_writer_config": {
-        "writer": "tensorboard",  # [json, tensorboard]
         "log_dir": "logs",  # The path to the root of the directory where logs are written
         "run_name": None,  # The name of this particular run (default to date/time)
     },

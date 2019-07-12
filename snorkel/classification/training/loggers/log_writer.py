@@ -3,11 +3,24 @@ import logging
 import os
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, DefaultDict, List, Mapping
+from typing import Any, DefaultDict, List, Mapping, Optional
 
-from snorkel.classification.snorkel_config import default_config
-from snorkel.classification.utils import recursive_merge_dicts
 from snorkel.types import Config
+
+
+class LogWriterConfig(Config):
+    """[summary]
+
+    Parameters
+    ----------
+    log_dir
+        [description]
+    run_name
+        [description]
+    """
+
+    log_dir: str = "logs"
+    run_name: Optional[str] = None
 
 
 class LogWriter:
@@ -16,7 +29,7 @@ class LogWriter:
     Parameters
     ----------
     kwargs
-        Configuration merged with `default_config["log_writer_config"]`
+        Settings to merge into LogWriterConfig
 
     Attributes
     ----------
@@ -31,14 +44,15 @@ class LogWriter:
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        assert isinstance(default_config["log_writer_config"], dict)
-        self.config = recursive_merge_dicts(default_config["log_writer_config"], kwargs)
+        self.config = LogWriterConfig(**kwargs)
 
-        date = datetime.now().strftime("%Y_%m_%d")
-        time = datetime.now().strftime("%H_%M_%S")
-        self.run_name = self.config["run_name"] or f"{date}/{time}/"
+        self.run_name = self.config.run_name
+        if self.run_name is None:
+            date = datetime.now().strftime("%Y_%m_%d")
+            time = datetime.now().strftime("%H_%M_%S")
+            self.run_name = f"{date}/{time}/"
 
-        self.log_dir = os.path.join(self.config["log_dir"], self.run_name)
+        self.log_dir = os.path.join(self.config.log_dir, self.run_name)
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
 
@@ -71,6 +85,7 @@ class LogWriter:
         config_filename
             Name of file in logging directory to write to
         """
+        # TODO: convert Config into nested dicts for writing to JSON
         self.write_json(config, config_filename)
 
     def write_log(self, log_filename: str) -> None:

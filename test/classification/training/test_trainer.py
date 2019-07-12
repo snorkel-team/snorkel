@@ -115,20 +115,23 @@ class TrainerTest(unittest.TestCase):
     def test_log_writer_init(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             trainer = Trainer(
-                **trainer_config, logging=True, log_dir=temp_dir, writer="json"
+                **trainer_config, logging=True, log_dir=temp_dir, log_writer="json"
             )
             trainer.train_model(model, [dataloaders[0]])
             self.assertIsInstance(trainer.log_writer, LogWriter)
 
             trainer = Trainer(
-                **trainer_config, logging=True, log_dir=temp_dir, writer="tensorboard"
+                **trainer_config,
+                logging=True,
+                log_dir=temp_dir,
+                log_writer="tensorboard",
             )
             trainer.train_model(model, [dataloaders[0]])
             self.assertIsInstance(trainer.log_writer, TensorBoardWriter)
 
             with self.assertRaisesRegex(ValueError, "Unrecognized writer"):
                 trainer = Trainer(
-                    **trainer_config, logging=True, log_dir=temp_dir, writer="foo"
+                    **trainer_config, logging=True, log_dir=temp_dir, log_writer="foo"
                 )
                 trainer.train_model(model, [dataloaders[0]])
 

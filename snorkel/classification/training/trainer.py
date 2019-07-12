@@ -179,17 +179,14 @@ class Trainer:
             )
 
     def _set_log_writer(self) -> None:
-        self.log_writer: Optional[LogWriter]
+        self.log_writer: Optional[LogWriter] = None
         if self.config["logging"]:
-            config = self.config["log_writer_config"]
-            if config["writer"] == "json":
-                self.log_writer = LogWriter(**config)
-            elif config["writer"] == "tensorboard":
-                self.log_writer = TensorBoardWriter(**config)
+            if self.config["log_writer"] == "json":
+                self.log_writer = LogWriter(**self.config["log_writer_config"])
+            elif self.config["log_writer"] == "tensorboard":
+                self.log_writer = TensorBoardWriter(**self.config["log_writer_config"])
             else:
-                raise ValueError(f"Unrecognized writer option: {config['writer']}")
-        else:
-            self.log_writer = None
+                raise ValueError(f"Unrecognized writer option: {self.config['log_writer']}")
 
     def _set_checkpointer(self) -> None:
         self.checkpointer: Optional[Checkpointer]

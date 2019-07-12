@@ -10,21 +10,54 @@ from .label_model import LabelModel
 
 
 class BaselineVoter(LabelModel):
+    """Parent baseline label model class with method train_model()."""
+
     def train_model(self, *args: Any, **kwargs: Any) -> None:
+        """Train majority class model.
+
+        Set class balance for majority class label model.
+
+        Parameters
+        ----------
+        balance
+            A [1, k] array of class probabilities
+        """
         pass
 
 
 class RandomVoter(BaselineVoter):
-    """
-    A class that votes randomly among the available labels
+    """Random vote label model.
+
+    Example
+    -------
+    ```
+    L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+    random_voter = RandomVoter()
+    predictions = random_voter.predict_proba(L)
+    ```
     """
 
     def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
         """
-        Args:
-            L: An [n, m] scipy.sparse matrix of labels
-        Returns:
-            output: A [n, k] np.ndarray of probabilistic labels
+        Assign random votes to the data points.
+
+        Parameters
+        ----------
+        L
+            An [n, m] matrix of labels
+
+        Returns
+        -------
+        np.ndarray
+            A [n, k] array of probabilistic labels
+
+        Example
+        -------
+        ```
+        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        random_voter = RandomVoter()
+        predictions = random_voter.predict_proba(L)
+        ```
         """
         n = L.shape[0]
         Y_p = np.random.rand(n, self.cardinality)
@@ -33,24 +66,67 @@ class RandomVoter(BaselineVoter):
 
 
 class MajorityClassVoter(LabelModel):
-    """
-    A class that places all probability on the majority class based on class
-    balance (and ignoring the label matrix).
+    """Majority class label model.
 
-    Note that in the case of ties, non-integer probabilities are possible.
+    Example
+    -------
+    ```
+    L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+    maj_class_voter = MajorityClassVoter()
+    maj_class_voter.train(balance=[0.8, 0.2])
+    predictions = maj_class_voter.predict_proba(L)  # np.array([1.0, 0.0], [1.0, 0.0], [1.0, 0.0])
+    ```
     """
 
     def train_model(  # type: ignore
         self, balance: ArrayLike, *args: Any, **kwargs: Any
     ) -> None:
-        """
-        Args:
-            balance: A 1d arraylike that sums to 1, corresponding to the
-                (possibly estimated) class balance.
+        """Train majority class model.
+
+        Set class balance for majority class label model.
+
+        Parameters
+        ----------
+        balance
+            A [1, k] array of class probabilities
+
+        Example
+        -------
+        ```
+        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        maj_class_voter = MajorityClassVoter()
+        maj_class_voter.train_model(balance=[0.8, 0.2])
+        predictions = maj_class_voter.predict_proba(L)  # np.array([1.0, 0.0], [1.0, 0.0], [1.0, 0.0])
+        ```
         """
         self.balance = np.array(balance)
 
     def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
+        """Predict probabilities using majority class.
+
+        Assign majority class vote to each datapoint.
+        In case of multiple majority classes, assign equal probabilities among them.
+
+
+        Parameters
+        ----------
+        L
+            An [n, m] matrix of labels
+
+        Returns
+        -------
+        np.ndarray
+            A [n, k] array of probabilistic labels
+
+        Example
+        -------
+        ```
+        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        maj_class_voter = MajorityClassVoter()
+        maj_class_voter.train_model(balance=[0.8, 0.2])
+        predictions = maj_class_voter.predict_proba(L)  # np.array([1.0, 0.0], [1.0, 0.0], [1.0, 0.0])
+        ```
+        """
         n = L.shape[0]
         Y_p = np.zeros((n, self.cardinality))
         max_classes = np.where(self.balance == max(self.balance))
@@ -61,14 +137,41 @@ class MajorityClassVoter(LabelModel):
 
 
 class MajorityLabelVoter(BaselineVoter):
-    """
-    A class that places all probability on the majority label from all
-    non-abstaining LFs for that task.
+    """Majority vote label model.
 
-    Note that in the case of ties, non-integer probabilities are possible.
+    Example
+    -------
+    ```
+    L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+    maj_voter = MajorityLabelVoter()
+    predictions = maj_voter.predict_proba(L)  # np.array([[1., 0.], [0.5, 0.5], [0.5, 0.5]])
+    ```
     """
 
     def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
+        """Predict probabilities using majority vote.
+
+        Assign vote by calculating majority vote across all labeling functions.
+        In case of ties, non-integer probabilities are possible.
+
+        Parameters
+        ----------
+        L
+            An [n, m] matrix of labels
+
+        Returns
+        -------
+        np.ndarray
+            A [n, k] array of probabilistic labels
+
+        Example
+        -------
+        ```
+        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        maj_voter = MajorityLabelVoter()
+        predictions = maj_voter.predict_proba(L)  # np.array([[1., 0.], [0.5, 0.5], [0.5, 0.5]])
+        ```
+        """
         L = arraylike_to_numpy(L, flatten=False)
         n, m = L.shape
         Y_p = np.zeros((n, self.cardinality))

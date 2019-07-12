@@ -22,7 +22,7 @@ def indpm(x, y):
 ################################################################################
 
 
-class SingleTaskTreeDepsGenerator(object):
+class SingleTaskTreeDepsGenerator:
     """Generates a synthetic single-task L and Y matrix with dependencies
 
     Args:

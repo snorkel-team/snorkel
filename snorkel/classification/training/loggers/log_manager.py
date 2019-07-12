@@ -9,7 +9,7 @@ from .checkpointer import Checkpointer
 from .log_writer import LogWriter
 
 
-class LogManager(object):
+class LogManager:
     """A class to manage logging during training progress.
 
     Parameters

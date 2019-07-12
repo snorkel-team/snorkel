@@ -4,15 +4,29 @@ import networkx as nx
 
 
 def get_clique_tree(nodes: Iterable[int], edges: List[Tuple[int, int]]) -> nx.Graph:
-    """Given a set of int nodes i and edges (i,j), returns an nx.Graph object G
-    which is a clique tree, where:
-        - G.node[i]['members'] contains the set of original nodes in the ith
-            maximal clique
-        - G[i][j]['members'] contains the set of original nodes in the seperator
-            set between maximal cliques i and j
+    """
+    Given a set of int nodes i and edges (i,j), returns a clique tree.
+
+    Clique tree is an object G for which:
+    - G.node[i]['members'] contains the set of original nodes in the ith
+        maximal clique
+    - G[i][j]['members'] contains the set of original nodes in the seperator
+        set between maximal cliques i and j
 
     Note: This method is currently only implemented for chordal graphs; TODO:
     add a step to triangulate non-chordal graphs.
+
+    Parameters
+    ----------
+    nodes
+        A list of nodes indices
+    edges
+        A list of tuples, where each tuple has indices for connected nodes
+
+    Returns
+    -------
+    networkx.Graph
+        An object G representing clique tree
     """
     # Form the original graph G1
     G1 = nx.Graph()

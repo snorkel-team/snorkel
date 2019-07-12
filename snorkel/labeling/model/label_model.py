@@ -26,11 +26,37 @@ class _CData(NamedTuple):
 
 
 class LabelModel(nn.Module):
-    """A conditionally independent LabelModel to learn labeling function
-    accuracies and assign probabilistic labels
+    """A conditionally independent LabelModel to learn LF accuracies and assign training labels.
 
-    Args:
-        k: (int) the cardinality of the classifier
+    Parameters
+    ----------
+    cardinality
+        Number of classes, by default 2
+    **kwargs
+        Arguments for changing config defaults
+
+    Attributes
+    ----------
+    cardinality
+        Number of classes, by default 2
+    config
+        Training configuration
+    seed
+        Random seed
+
+    Raises
+    ------
+    ValueError
+        If config device set to cuda but only cpu is available
+
+    Examples
+    --------
+    ```
+    label_model = LabelModel()
+    label_model = LabelModel(cardinality=3)
+    label_model = LabelModel(cardinality=3, device='cpu')
+    label_model = LabelModel(cardinality=3, seed=1234)
+    ```
     """
 
     def __init__(self, cardinality: int = 2, **kwargs: Any) -> None:
@@ -52,7 +78,24 @@ class LabelModel(nn.Module):
         self.eval()
 
     def _check_L(self, L: Matrix) -> np.ndarray:
-        """Run some basic checks on L."""
+        """
+        Check label matrix format and content. Convert to dense matrix if needed.
+
+        Parameters
+        ----------
+        L
+            A [n, m] matrix of labels
+
+        Returns
+        -------
+        np.ndarray
+            A [n, m] dense matrix of labels
+
+        Raises
+        ------
+        ValueError
+            If values in L are less than 0
+        """
         if sparse.issparse(L):
             L = L.todense()
 
@@ -63,17 +106,19 @@ class LabelModel(nn.Module):
         return L
 
     def _create_L_ind(self, L: Matrix) -> np.ndarray:
-        """Convert a label matrix with labels in 0...k to a one-hot format
-
-        Args:
-            L: An [n,m] scipy.sparse label matrix with values in {0,1,...,k}
-
-        Returns:
-            L_ind: An [n,m*k] dense np.ndarray with values in {0,1}
-
-        Note that no column is required for 0 (abstain) labels.
         """
+        Convert a label matrix with labels in 0...k to a one-hot format.
 
+        Parameters
+        ----------
+        L
+            An [n,m] label matrix with values in {0,1,...,k}
+
+        Returns
+        -------
+        np.ndarray
+            An [n,m*k] dense np.ndarray with values in {0,1}
+        """
         L_ind = np.zeros((self.n, self.m * self.cardinality))
         for y in range(1, self.cardinality + 1):
             # A[x::y] slices A starting at x at intervals of y
@@ -84,12 +129,23 @@ class LabelModel(nn.Module):
     def _get_augmented_label_matrix(
         self, L: Matrix, higher_order: bool = False
     ) -> np.ndarray:
-        """Returns an augmented version of L where each column is an indicator
+        """Create augmented version of label matrix.
+
+        In augmented version, each column is an indicator
         for whether a certain source or clique of sources voted in a certain
         pattern.
 
-        Args:
-            L: An [n,m] scipy.sparse label matrix with values in {0,1,...,k}
+        Parameters
+        ----------
+        L
+            An [n,m] label matrix with values in {0,1,...,k}
+        higher_order
+            Whether to include higher-order correlations (e.g. LF pairs) in matrix, by default False
+
+        Returns
+        -------
+        np.ndarray
+            An [n,m*k] dense np.ndarray with values in {0,1}
         """
         # Create a helper data structure which maps cliques (as tuples of member
         # sources) --> {start_index, end_index, maximal_cliques}, where
@@ -132,7 +188,7 @@ class LabelModel(nn.Module):
             return L_ind
 
     def _build_mask(self) -> None:
-        """Build mask applied to O^{-1}, O for the matrix approx constraint"""
+        """Build mask applied to O^{-1}, O for the matrix approx constraint."""
         self.mask = torch.ones(self.d, self.d).byte()
         for ci in self.c_data.values():
             si = ci.start_index
@@ -147,18 +203,21 @@ class LabelModel(nn.Module):
                     self.mask[sj:ej, si:ei] = 0
 
     def _generate_O(self, L: Matrix, higher_order: bool = False) -> None:
-        """Form the overlaps matrix, which is just all the different observed
-        combinations of values of pairs of sources
+        """Generate overlaps and conflicts matrix from label matrix.
 
-        Note that we only include the k non-abstain values of each source,
-        otherwise the model not minimal --> leads to singular matrix
+        Parameters
+        ----------
+        L
+            An [n,m] label matrix with values in {0,1,...,k}
+        higher_order
+            Whether to include higher-order correlations (e.g. LF pairs) in matrix, by default False
         """
         L_aug = self._get_augmented_label_matrix(L, higher_order=higher_order)
         self.d = L_aug.shape[1]
         self.O = torch.from_numpy(L_aug.T @ L_aug / self.n).float()
 
     def _init_params(self) -> None:
-        """Initialize the learned params
+        r"""Initialize the learned params.
 
         - \mu is the primary learned parameter, where each row corresponds to
         the probability of a clique C emitting a specific combination of labels,
@@ -167,6 +226,11 @@ class LabelModel(nn.Module):
             self.mu[i*self.cardinality + j, y] = P(\lambda_i = j | Y = y)
 
         and similarly for higher-order cliques.
+
+        Raises
+        ------
+        ValueError
+            If prec_init shape does not match number of LFs
         """
         train_config = self.config["train_config"]
 
@@ -199,9 +263,10 @@ class LabelModel(nn.Module):
         # Build the mask over O^{-1}
         self._build_mask()
 
-    def get_conditional_probs(self, source: Optional[int] = None) -> np.ndarray:
-        """Returns the full conditional probabilities table as a numpy array,
-        where row i*(k+1) + ly is the conditional probabilities of source i
+    def _get_conditional_probs(self, source: Optional[int] = None) -> np.ndarray:
+        r"""Return the full conditional probabilities table.
+
+        In cond. prob. table, row i*(k+1) + ly is the conditional probabilities of source i
         emmiting label ly (including abstains 0), conditioned on different
         values of Y, i.e.:
 
@@ -211,6 +276,16 @@ class LabelModel(nn.Module):
         probability and adding in to mu.
 
         If `source` is not None, returns only the corresponding block.
+
+        Parameters
+        ----------
+        source
+            Index of source to generate conditional probabilities for, by default None
+
+        Returns
+        -------
+        np.ndarray
+            Conditional probabilities table if source is None, else corresponding block
         """
         c_probs = np.zeros((self.m * (self.cardinality + 1), self.cardinality))
         mu = self.mu.detach().clone().numpy()
@@ -237,11 +312,30 @@ class LabelModel(nn.Module):
             return c_probs
 
     def get_accuracies(self, probs: Optional[np.ndarray] = None) -> np.ndarray:
-        """Returns the vector of LF accuracies, computed using get_conditional_probs"""
+        """Return the vector of LF accuracies.
+
+        Parameters
+        ----------
+        probs
+            Conditional probabilities, by default None
+
+        Returns
+        -------
+        np.ndarray
+            [m,1] vector of LF accuracies
+
+        Example
+        -------
+        ```
+        L = np.array([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        label_model = LabelModel()
+        label_model.train_model(L)
+        label_model.get_accuracies()  # np.array([0.9, 0.9, 0.01])
+        """
         accs = np.zeros(self.m)
         for i in range(self.m):
             if probs is None:
-                cps = self.get_conditional_probs(source=i)[1:, :]
+                cps = self._get_conditional_probs(source=i)[1:, :]
             else:
                 cps = probs[
                     i * (self.cardinality + 1) : (i + 1) * (self.cardinality + 1)
@@ -250,10 +344,25 @@ class LabelModel(nn.Module):
         return accs
 
     def predict_proba(self, L: Matrix) -> np.ndarray:
-        """Returns the [n,k] matrix of label probabilities P(Y | \lambda)
+        r"""Return label probabilities P(Y | \lambda).
 
-        Args:
-            L: An [n,m] scipy.sparse label matrix with values in {0,1,...,k}
+        Parameters
+        ----------
+        L
+            An [n,m] matrix with values in {0,1,...,k}
+
+        Returns
+        -------
+        np.ndarray
+            An [n,k] array of probabilistic labels
+
+        Example
+        -------
+        ```
+        L = np.array([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        label_model.train_model(L)
+        label_model.predict_proba(L)  # np.array([1.0, 0.0], [0.0, 1.0], [1.0, 0.0])
+        ```
         """
         self._set_constants(L)
 
@@ -270,16 +379,23 @@ class LabelModel(nn.Module):
     # (for better or worse). The unused *args make these compatible with the
     # Classifer._train() method which expect loss functions to accept an input.
 
-    def loss_l2(self, l2: float = 0) -> torch.Tensor:
-        """L2 loss centered around mu_init, scaled optionally per-source.
+    def _loss_l2(self, l2: float = 0) -> torch.Tensor:
+        r"""L2 loss centered around mu_init, scaled optionally per-source.
 
         In other words, diagonal Tikhonov regularization,
             ||D(\mu-\mu_{init})||_2^2
         where D is diagonal.
 
-        Args:
-            - l2: A float or np.array representing the per-source regularization
-                strengths to use
+        Parameters
+        ----------
+        l2
+            A float or np.array representing the per-source regularization
+            strengths to use, by default 0
+
+        Returns
+        -------
+        torch.Tensor
+            L2 loss between learned mu and initial mu
         """
         if isinstance(l2, (int, float)):
             D = l2 * torch.eye(self.d)
@@ -289,15 +405,28 @@ class LabelModel(nn.Module):
         # Note that mu is a matrix and this is the *Frobenius norm*
         return torch.norm(D @ (self.mu - self.mu_init)) ** 2
 
-    def loss_mu(self, l2: float = 0) -> torch.Tensor:
+    def _loss_mu(self, l2: float = 0) -> torch.Tensor:
+        r"""Overall mu loss.
+
+        Parameters
+        ----------
+        l2
+            A float or np.array representing the per-source regularization
+                strengths to use, by default 0
+
+        Returns
+        -------
+        torch.Tensor
+            Overall mu loss between learned mu and initial mu
+        """
         loss_1 = torch.norm((self.O - self.mu @ self.P @ self.mu.t())[self.mask]) ** 2
         loss_2 = torch.norm(torch.sum(self.mu @ self.P, 1) - torch.diag(self.O)) ** 2
-        return loss_1 + loss_2 + self.loss_l2(l2=l2)
+        return loss_1 + loss_2 + self._loss_l2(l2=l2)
 
     def _set_class_balance(
         self, class_balance: Optional[List[float]], Y_dev: np.ndarray
     ) -> None:
-        """Set a prior for the class balance
+        """Set a prior for the class balance.
 
         In order of preference:
         1) Use user-provided class_balance
@@ -400,20 +529,36 @@ class LabelModel(nn.Module):
         class_balance: Optional[List[float]] = None,
         **kwargs: Any,
     ) -> None:
-        """Train the model (i.e. estimate mu):
+        """Train label model.
 
-        Args:
-            L_train: An [n,m] scipy.sparse matrix with values in {0,1,...,k}
-                corresponding to labels from supervision sources on the
-                training set
-            Y_dev: Target labels for the dev set, for estimating class_balance
-            class_balance: (np.array) each class's percentage of the population
+        Train label model to estimate mu, the parameters related to accuracies of LFs.
 
-        No dependencies (conditionally independent sources): Estimate mu
-        subject to constraints:
-            (1a) O_{B(i,j)} - (mu P mu.T)_{B(i,j)} = 0, for i != j, where B(i,j)
-                is the block of entries corresponding to sources i,j
-            (1b) np.sum( mu P, 1 ) = diag(O)
+        Parameters
+        ----------
+        L_train
+            An [n,m] matrix with values in {0,1,...,k}
+        Y_dev
+            Gold labels for dev set for estimating class_balance, by default None
+        class_balance
+            Each class's percentage of the population, by default None
+        **kwargs
+            Arguments for changing train config defaults
+
+        Raises
+        ------
+        Exception
+            If loss in NaN
+
+        Examples
+        --------
+        ```
+        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        Y_dev = [1, 2, 1]
+
+        label_model.train_model(L)
+        label_model.train_model(L, Y_dev=Y_dev)
+        label_model.train_model(L, class_balance=[0.7, 0.3])
+        ```
         """
         self.config = recursive_merge_dicts(self.config, kwargs, misses="ignore")
         train_config = self.config["train_config"]
@@ -463,7 +608,7 @@ class LabelModel(nn.Module):
             self.optimizer.zero_grad()
 
             # Forward pass to calculate the average loss per example
-            loss = self.loss_mu(l2=l2)
+            loss = self._loss_mu(l2=l2)
             if torch.isnan(loss):
                 msg = "Loss is NaN. Consider reducing learning rate."
                 raise Exception(msg)
@@ -489,10 +634,46 @@ class LabelModel(nn.Module):
             print("Finished Training")
 
     def save(self, destination: str, **kwargs: Any) -> None:
+        """Save label model.
+
+        Parameters
+        ----------
+        destination
+            File location for saving model
+        **kwargs
+            Arguments for torch.save
+
+        Example
+        -------
+        ```
+        label_model.save('./saved_label_model')
+        ```
+        """
         with open(destination, "wb") as f:
             torch.save(self, f, **kwargs)
 
     @staticmethod
     def load(source: str, **kwargs: Any) -> Any:
+        """Load existing label model.
+
+        Parameters
+        ----------
+        source
+            File location from where to load model
+        **kwargs
+            Arguments for torch.load
+
+        Returns
+        -------
+        LabelModel
+            LabelModel with appropriate loaded parameters
+
+        Example
+        -------
+        ```
+        label_model = LabelModel()
+        label_model.load('./saved_label_model') # Load parameters saved in saved_label_model
+        ```
+        """
         with open(source, "rb") as f:
             return torch.load(f, **kwargs)

@@ -59,10 +59,10 @@ def generate_simple_label_matrix(
 def generate_mog_dataset(
     n: int, d: int, cov: Optional[np.ndarray] = None, n_noise_dim: int = 0
 ) -> pd.DataFrame:
-    """
-    Generates a simple mixture-of-gaussians (MOG) dataset consisting of
-    d-dim vectors x \in \mathbb{R}^d, and binary labels y \in {1,2}.
-    Returns as a pandas DataFrame
+    r"""Generate a simple mixture-of-gaussians (MOG) dataset.
+    
+    Consists of d-dim vectors x \in \mathbb{R}^d, and binary labels y \in {1,2}.
+    Returns as a pandas DataFrame.
     """
     ones = np.ones(d)
     nh = int(np.floor(n / 2))
@@ -88,9 +88,10 @@ def generate_mog_dataset(
 
 
 def lf_template(x: DataPoint, index: int = 0, abstain_rate: float = 0.0) -> int:
-    """
-    Takes as input a DataPoint x with attribute x \in \mathbb{R}^d, and
-    outputs based on the `index`th entry, with probability `abstain_rate` of outputting 0 (abstain).
+    r"""LF templates that votes based on attribute x `index`.
+
+    Takes as input a DataPoint x with attribute x \in \mathbb{R}^d, and outputs 
+    based on the `index`th entry, with probability `abstain_rate` of outputting 0 (abstain).
     """
     if np.random.random() < abstain_rate:
         return 0
@@ -103,10 +104,10 @@ def lf_template(x: DataPoint, index: int = 0, abstain_rate: float = 0.0) -> int:
 def generate_single_feature_lfs(
     dims: Union[int, List[int]], abstain_rate: float = 0.0
 ) -> List[LabelingFunction]:
-    """
-    Generates a list of m labeling functions (LFs) that each abstain randomly
-    with probability `abstain_rate`, else label based on the ith entry of
-    input DataPoint x.x.
+    """Generate a list of m labeling functions (LFs) based on a single attribute 'x'.
+
+    Each LF abstains with probability `abstain_rate`, else label based on the 
+    ith entry of the input DataPoint x.x.
     """
     if isinstance(dims, int):
         dims = list(range(dims))
@@ -119,6 +120,11 @@ def generate_single_feature_lfs(
 
 
 def tf_template(x: DataPoint, i: int) -> DataPoint:
+    r"""TF template that transforms data attribute x.x randomly.
+
+    Takes as input a DataPoint x with attribute x \in \mathbb{R}^d and randomly 
+    transforms `index`th value.
+    """
     x.x[i] = np.random.rand()
     return x
 
@@ -126,6 +132,7 @@ def tf_template(x: DataPoint, i: int) -> DataPoint:
 def generate_resampling_tfs(
     dims: Union[int, List[int]]
 ) -> List[LambdaTransformationFunction]:
+    """Generate a list of transformation functions (TFs) that transform attribute 'x'."""
     if isinstance(dims, int):
         dims = list(range(dims))
     return [

@@ -36,14 +36,21 @@ release = VERSION["VERSION"]
 # Mock imports for troublesome modules (i.e. any that use C code)
 # See: http://blog.rtwilson.com/how-to-make-your-sphinx-documentation-compile-with-readthedocs-when-youre-using-numpy-and-scipy/
 MOCK_MODULES = [
+    "dask",
     "numpy",
     "pandas",
-    "sklearn",
+    "pyspark",
     "scipy",
     "scipy.sparse",
+    "sklearn",
+    "sklearn.metrics",
+    "spacy",
     "torch",
     "torch.nn",
+    "torch.nn.functional",
+    "torch.optim",
     "torch.utils",
+    "torch.utils.data",
     "tqdm",
 ]
 for mod_name in MOCK_MODULES:

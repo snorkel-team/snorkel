@@ -38,8 +38,13 @@ release = VERSION["VERSION"]
 MOCK_MODULES = [
     "numpy",
     "pandas",
+    "sklearn",
     "scipy",
+    "scipy.sparse",
     "torch",
+    "torch.nn",
+    "torch.utils",
+    "tqdm",
 ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()

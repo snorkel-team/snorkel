@@ -44,9 +44,9 @@ class SliceCombinerModule(nn.Module):
         self.slice_pred_key = slice_pred_key
         self.slice_pred_feat_key = slice_pred_feat_key
 
-    def forward(
+    def forward(  # type:ignore
         self, flow_dict: Dict[str, torch.Tensor]
-    ) -> torch.Tensor:  # type:ignore
+    ) -> torch.Tensor:
         """Reweights and combines predictor representations given output dict.
 
         Parameters
@@ -54,8 +54,8 @@ class SliceCombinerModule(nn.Module):
         flow_dict
             A dict of data fields from slicing task flow containing specific keys
             from indicator ops, pred ops, and pred transform ops (slice_ind_key,
-            slice_pred_key, slice_pred_feat_key) for each slice. 
-            
+            slice_pred_key, slice_pred_feat_key) for each slice.
+
             NOTE: The flow_dict outputs for the ind/pred heads must be raw logits.
 
         Returns

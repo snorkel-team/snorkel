@@ -118,8 +118,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
     for slice_name in slice_names:
 
         ind_task_name = f"{base_task.name}_slice:{slice_name}_ind"
-
-        ind_head_module_name = f"{ind_task_name}_ind_head"
+        ind_head_module_name = f"{ind_task_name}_head"
         # Indicator head always predicts "in the slice or not", so is always binary
         ind_head_module = nn.Linear(neck_size, 2)
 
@@ -151,8 +150,8 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
 
         pred_task_name = f"{base_task.name}_slice:{slice_name}_pred"
 
-        pred_head_module_name = f"{pred_task_name}_pred_head"
-        pred_transform_module_name = f"{pred_task_name}_pred_transform"
+        pred_head_module_name = f"{pred_task_name}_head"
+        pred_transform_module_name = f"{pred_task_name}_transform"
         pred_transform_module = nn.Linear(neck_size, neck_size)
 
         # Create module_pool

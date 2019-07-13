@@ -67,7 +67,7 @@ class SliceCombinerModule(nn.Module):
             flow_dict, self.slice_ind_key
         )
         indicator_preds = torch.cat(
-            [F.softmax(output)[:, 0].unsqueeze(1) for output in indicator_outputs],
+            [F.softmax(output, dim=1)[:, 0].unsqueeze(1) for output in indicator_outputs],
             dim=-1,
         )
 
@@ -77,10 +77,8 @@ class SliceCombinerModule(nn.Module):
         )
         predictor_confidences = torch.cat(
             [
-                F.softmax(
-                    # Compute the "confidence" using the max score across classes
-                    torch.max(output, dim=1)[0]
-                ).unsqueeze(1)
+                # Compute the "confidence" using the max score across classes
+                torch.max(output, dim=1)[0].unsqueeze(1)
                 for output in predictor_outputs
             ],
             dim=-1,
@@ -98,7 +96,7 @@ class SliceCombinerModule(nn.Module):
         # Attention weights used to combine each of the slice_representations
         # incorporates the indicator (whether we are in the slice or not) and
         # predictor (confidence of a learned slice head)
-        A = torch.softmax(indicator_preds * predictor_confidences, dim=1)
+        A = F.softmax(indicator_preds * predictor_confidences, dim=1)
 
         # Match dims [bach_size x num_slices x feat_dim] of slice_representations
         A = A.unsqueeze(-1).expand([-1, -1, slice_representations.size(-1)])

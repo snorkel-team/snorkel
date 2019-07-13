@@ -34,7 +34,14 @@ release = VERSION["VERSION"]
 # -- General configuration ---------------------------------------------------
 
 # Mock imports for troublesome modules (i.e. any that use C code)
-autodoc_mock_imports = ["pyspark", "pyspark.sql"]
+autodoc_mock_imports = [
+    "dask",
+    "dask.distributed",
+    "pyspark",
+    "pyspark.sql",
+    "spacy",
+    "tensorboardX",
+]
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom

@@ -34,28 +34,28 @@ release = VERSION["VERSION"]
 # -- General configuration ---------------------------------------------------
 
 # Mock imports for troublesome modules (i.e. any that use C code)
-autodoc_mock_imports = [
-    "dask",
-    "dask.distributed",
-    "networkx",
-    "numpy",
-    "pandas",
-    "pyspark",
-    "pyspark.sql",
-    "scipy",
-    "scipy.sparse",
-    "sklearn",
-    "sklearn.metrics",
-    "spacy",
-    "tensorboardX",
-    "torch",
-    "torch.nn",
-    "torch.nn.functional",
-    "torch.optim",
-    "torch.utils",
-    "torch.utils.data",
-    "tqdm",
-]
+# autodoc_mock_imports = [
+#     "dask",
+#     "dask.distributed",
+#     "networkx",
+#     "numpy",
+#     "pandas",
+#     "pyspark",
+#     "pyspark.sql",
+#     "scipy",
+#     "scipy.sparse",
+#     "sklearn",
+#     "sklearn.metrics",
+#     "spacy",
+#     "tensorboardX",
+#     "torch",
+#     "torch.nn",
+#     "torch.nn.functional",
+#     "torch.optim",
+#     "torch.utils",
+#     "torch.utils.data",
+#     "tqdm",
+# ]
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom

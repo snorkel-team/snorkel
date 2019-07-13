@@ -44,9 +44,7 @@ class SliceCombinerModule(nn.Module):
         self.slice_pred_key = slice_pred_key
         self.slice_pred_feat_key = slice_pred_feat_key
 
-    def forward(
-        self, flow_dict: Dict[str, torch.Tensor]
-    ) -> torch.Tensor:  # type: ignore
+    def forward(self, flow_dict: Dict[str, torch.Tensor]) -> torch.Tensor: # type:ignore
         """Reweights and combines predictor representations given output dict.
 
         Parameters

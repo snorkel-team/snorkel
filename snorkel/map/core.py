@@ -25,8 +25,8 @@ def get_parameters(
 def is_hashable(obj: Any) -> bool:
     """Test if object is hashable via duck typing.
 
-    NB: not using `collections.Hashable` as some objects
-    (e.g. pandas.Series) have a `__hash__` method to throw
+    NB: not using ``collections.Hashable`` as some objects
+    (e.g. pandas.Series) have a ``__hash__`` method to throw
     a more specific exception.
     """
     try:
@@ -41,8 +41,8 @@ def get_hashable(obj: Any) -> Hashable:
 
     This helper is used for caching mapper outputs of data points.
     For common data point formats (e.g. SimpleNamespace, pandas.Series),
-    produces hashable representations of the values using a `frozenset`.
-    For objects like `pandas.Series`, the name/index indentifier is dropped.
+    produces hashable representations of the values using a ``frozenset``.
+    For objects like ``pandas.Series``, the name/index indentifier is dropped.
 
     Parameters
     ----------
@@ -79,7 +79,7 @@ def get_hashable(obj: Any) -> Hashable:
 
 
 class BaseMapper:
-    """Base class for `Mapper` and `LambdaMapper`.
+    """Base class for ``Mapper`` and ``LambdaMapper``.
 
     Implements nesting, memoization, and deep copy functionality.
 
@@ -92,15 +92,15 @@ class BaseMapper:
     memoize
         Memoize mapper outputs?
 
+    Raises
+    ------
+    NotImplementedError
+        Subclasses need to implement ``_generate_mapped_data_point``
+
     Attributes
     ----------
     memoize
         Memoize mapper outputs?
-
-    Raises
-    ------
-    NotImplementedError
-        Subclasses need to implement `_generate_mapped_data_point`
     """
 
     def __init__(self, name: str, pre: List["BaseMapper"], memoize: bool) -> None:
@@ -120,8 +120,8 @@ class BaseMapper:
         """Run mapping function on input data point.
 
         Deep copies the data point first so as not to make
-        accidental in-place changes. If `memoize` is set to
-        `True`, an internal cache is checked for results. If
+        accidental in-place changes. If ``memoize`` is set to
+        ``True``, an internal cache is checked for results. If
         no cached results are found, the computed results are
         added to the cache.
 
@@ -136,7 +136,7 @@ class BaseMapper:
             Mapped data point of same format but possibly different fields
         """
         if self.memoize:
-            # NB: don't do `self._cache.get(...)` first in case cached value is `None`
+            # NB: don't do ``self._cache.get(...)`` first in case cached value is ``None``
             x_hashable = get_hashable(x)
             if x_hashable in self._cache:
                 return self._cache[x_hashable]
@@ -161,24 +161,24 @@ class Mapper(BaseMapper):
 
     Map data points to new data points by transforming, adding
     additional information, or decomposing into primitives. This module
-    provides base classes for other operators like `TransformationFunction`
-    and `Preprocessor`. We don't expect people to construct `Mapper`
+    provides base classes for other operators like ``TransformationFunction``
+    and ``Preprocessor``. We don't expect people to construct ``Mapper``
     objects directly.
 
     A Mapper maps an data point to a new data point, possibly with
     a different schema. Subclasses of Mapper need to implement the
-    `run` method, which takes fields of the data point as input
+    ``run`` method, which takes fields of the data point as input
     and outputs new fields for the mapped data point as a dictionary.
-    The `run` method should only be called internally by the `Mapper`
+    The ``run`` method should only be called internally by the ``Mapper``
     object, not directly by a user.
 
     Mapper derivatives work for data points that have mutable attributes,
-    like `SimpleNamespace`, `pd.Series`, or `dask.Series`. An example
-    of a data point type without mutable fields is `pyspark.sql.Row`.
-    Use `snorkel.map.spark.make_spark_mapper` for PySpark compatibility.
+    like ``SimpleNamespace``, ``pd.Series``, or ``dask.Series``. An example
+    of a data point type without mutable fields is ``pyspark.sql.Row``.
+    Use ``snorkel.map.spark.make_spark_mapper`` for PySpark compatibility.
 
     For an example of a Mapper, see
-        `snorkel.labeling.preprocess.nlp.SpacyPreprocessor`
+        ``snorkel.labeling.preprocess.nlp.SpacyPreprocessor``
 
     Parameters
     ----------
@@ -186,16 +186,21 @@ class Mapper(BaseMapper):
         Name of mapper
     field_names
         A map from attribute names of the incoming data points
-        to the input argument names of the `run` method. If None,
+        to the input argument names of the ``run`` method. If None,
         the parameter names in the function signature are used.
     mapped_field_names
-        A map from output keys of the `run` method to attribute
+        A map from output keys of the ``run`` method to attribute
         names of the output data points. If None, the original
         output keys are used.
     pre
         Mappers to run before this mapper is executed
     memoize
         Memoize mapper outputs?
+
+    Raises
+    ------
+    NotImplementedError
+        Subclasses must implement the ``run`` method
 
     Attributes
     ----------
@@ -205,11 +210,6 @@ class Mapper(BaseMapper):
         See above
     memoize
         Memoize mapper outputs?
-
-    Raises
-    ------
-    NotImplementedError
-        Subclasses must implement the `run` method
     """
 
     def __init__(
@@ -221,7 +221,7 @@ class Mapper(BaseMapper):
         memoize: bool = False,
     ) -> None:
         if field_names is None:
-            # Parse field names from `run(...)` if not provided
+            # Parse field names from ``run(...)`` if not provided
             field_names = {k: k for k in get_parameters(self.run)[1:]}
         self.field_names = field_names
         self.mapped_field_names = mapped_field_names
@@ -231,8 +231,8 @@ class Mapper(BaseMapper):
         """Run the mapping operation using the input fields.
 
         The inputs to this function are fed by extracting the fields of
-        the input data point using the keys of `field_names`. The output field
-        names are converted using `mapped_field_names` and added to the
+        the input data point using the keys of ``field_names``. The output field
+        names are converted using ``mapped_field_names`` and added to the
         data point.
 
         Returns
@@ -248,7 +248,7 @@ class Mapper(BaseMapper):
         raise NotImplementedError
 
     def _update_fields(self, x: DataPoint, mapped_fields: FieldMap) -> DataPoint:
-        # `SimpleNamespace`, `pd.Series`, and `dask.Series` objects all
+        # ``SimpleNamespace``, ``pd.Series``, and ``dask.Series`` objects all
         # have attribute setting.
         for k, v in mapped_fields.items():
             setattr(x, k, v)
@@ -272,7 +272,7 @@ class LambdaMapper(BaseMapper):
     Convenience class for mappers that execute a simple
     function with no set up. The function should map from
     an input data point to a new data point directly, unlike
-    `Mapper.run`. The original data point will not be updated,
+    ``Mapper.run``. The original data point will not be updated,
     so in-place operations are safe.
 
     Parameters
@@ -304,6 +304,15 @@ class LambdaMapper(BaseMapper):
 class lambda_mapper:
     """Decorate a function to define a LambdaMapper object.
 
+    Example
+    -------
+    >>> @lambda_mapper()
+    ... def concatenate_text(x):
+    ...     x.article = f"{title} {body}"
+    ...     return x
+    >>> isinstance(concatenate_text, LambdaMapper)
+    True
+
     Parameters
     ----------
     name
@@ -317,17 +326,6 @@ class lambda_mapper:
     ----------
     memoize
         Memoize mapper outputs?
-
-    Example
-    -------
-    ```
-    @lambda_mapper()
-    def concatenate_text(x: DataPoint) -> DataPoint:
-        x.article = f"{title} {body}"
-        return x
-
-    isinstance(concatenate_text, LambdaMapper)  # True
-    ```
     """
 
     def __init__(
@@ -341,7 +339,7 @@ class lambda_mapper:
         self.memoize = memoize
 
     def __call__(self, f: Callable[[DataPoint], Optional[DataPoint]]) -> LambdaMapper:
-        """Wrap a function to create a `LambdaMapper`.
+        """Wrap a function to create a ``LambdaMapper``.
 
         Parameters
         ----------
@@ -351,7 +349,7 @@ class lambda_mapper:
         Returns
         -------
         LambdaMapper
-            New `LambdaMapper` executing operation in wrapped function
+            New ``LambdaMapper`` executing operation in wrapped function
         """
         name = self.name or f.__name__
         return LambdaMapper(name=name, f=f, pre=self.pre, memoize=self.memoize)

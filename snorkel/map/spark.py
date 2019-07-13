@@ -6,7 +6,7 @@ from .core import Mapper
 
 
 def _update_fields(x: Row, mapped_fields: FieldMap) -> Row:
-    # `pyspark.sql.Row` objects are not mutable, so need to
+    # ``pyspark.sql.Row`` objects are not mutable, so need to
     # reconstruct
     all_fields = x.asDict()
     all_fields.update(mapped_fields)
@@ -14,7 +14,7 @@ def _update_fields(x: Row, mapped_fields: FieldMap) -> Row:
 
 
 def make_spark_mapper(mapper: Mapper) -> Mapper:
-    """Convert `Mapper` to be compatible with PySpark.
+    """Convert ``Mapper`` to be compatible with PySpark.
 
     Parameters
     ----------

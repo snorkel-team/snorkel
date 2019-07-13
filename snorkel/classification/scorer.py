@@ -19,16 +19,16 @@ class Scorer:
         single score (float) or a dictionary of metric names to scores (if the function
         calculates multiple values, for example). See the unit tests for an example.
 
+    Raises
+    ------
+    ValueError
+        If a specified standard metric is not found in the METRICS dictionary
+
     Attributes
     ----------
     metrics
         A dictionary mapping metric names to the corresponding functions for calculating
         that metric
-
-    Raises
-    ------
-    ValueError
-        If a specified standard metric is not found in the METRICS dictionary
     """
 
     def __init__(

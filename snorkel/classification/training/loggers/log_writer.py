@@ -16,7 +16,7 @@ class LogWriter:
     Parameters
     ----------
     kwargs
-        Configuration merged with `default_config["log_writer_config"]`
+        Configuration merged with ``default_config["log_writer_config"]``
 
     Attributes
     ----------

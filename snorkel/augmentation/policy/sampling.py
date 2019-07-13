@@ -21,7 +21,7 @@ class MeanFieldPolicy(Policy):
         Number of TFs to run on each data point
     p
         Probability distribution from which to sample TF indices.
-        Must have length `n_tfs` and be a valid distribution.
+        Must have length ``n_tfs`` and be a valid distribution.
     """
 
     def __init__(

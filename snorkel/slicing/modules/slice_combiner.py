@@ -44,7 +44,9 @@ class SliceCombinerModule(nn.Module):
         self.slice_pred_key = slice_pred_key
         self.slice_pred_feat_key = slice_pred_feat_key
 
-    def forward(self, flow_dict: Dict[str, torch.Tensor]) -> torch.Tensor: # type:ignore
+    def forward(
+        self, flow_dict: Dict[str, torch.Tensor]
+    ) -> torch.Tensor:  # type:ignore
         """Reweights and combines predictor representations given output dict.
 
         Parameters
@@ -52,7 +54,9 @@ class SliceCombinerModule(nn.Module):
         flow_dict
             A dict of data fields from slicing task flow containing specific keys
             from indicator ops, pred ops, and pred transform ops (slice_ind_key,
-            slice_pred_key, slice_pred_feat_key) for each slice
+            slice_pred_key, slice_pred_feat_key) for each slice. 
+            
+            NOTE: The flow_dict outputs for the ind/pred heads must be raw logits.
 
         Returns
         -------
@@ -65,7 +69,10 @@ class SliceCombinerModule(nn.Module):
             flow_dict, self.slice_ind_key
         )
         indicator_preds = torch.cat(
-            [F.softmax(output, dim=1)[:, 0].unsqueeze(1) for output in indicator_outputs],
+            [
+                F.softmax(output, dim=1)[:, 0].unsqueeze(1)
+                for output in indicator_outputs
+            ],
             dim=-1,
         )
 
@@ -73,10 +80,11 @@ class SliceCombinerModule(nn.Module):
         predictor_outputs = self._collect_flow_outputs_by_key(
             flow_dict, self.slice_pred_key
         )
+
         predictor_confidences = torch.cat(
             [
                 # Compute the "confidence" using the max score across classes
-                torch.max(output, dim=1)[0].unsqueeze(1)
+                torch.max(F.softmax(output, dim=1), dim=1)[0].unsqueeze(1)
                 for output in predictor_outputs
             ],
             dim=-1,

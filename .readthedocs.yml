@@ -14,9 +14,7 @@ formats: all
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
-  version: 3
+  version: 3.6
   install:
       - requirements: docs/requirements-doc.txt
-      - method: pip
-        path: .
   system_packages: true

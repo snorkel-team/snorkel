@@ -99,7 +99,7 @@ We exclude long-running tests from the default `tox` and Travis builds
 on non-master and non-release branches to keep things moving fast.
 If you're touching areas of the code that could break a long-running test,
 you should include the results of `tox -e complex` in the PR's test plan.
-In order to see the durations of the 10 longest-running tests, run
+To see the durations of the 10 longest-running tests, run
 `tox -e py3 -- -m 'not complex and not spark' --durations 10`.
 
 

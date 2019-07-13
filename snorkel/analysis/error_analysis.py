@@ -92,7 +92,7 @@ def confusion_matrix(
     return mat
 
 
-class ConfusionMatrix(object):
+class ConfusionMatrix:
     """
     An iteratively built abstention-aware confusion matrix with pretty printing.
 

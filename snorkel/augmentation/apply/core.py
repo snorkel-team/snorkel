@@ -12,8 +12,8 @@ class BaseTFApplier:
 
     Base class for TF applier objects, which execute a set of TF
     on a collection of data points. Subclasses should operate on
-    a single data point collection format (e.g. `DataFrame`).
-    Subclasses must implement the `apply` method.
+    a single data point collection format (e.g. ``DataFrame``).
+    Subclasses must implement the ``apply`` method.
 
     Parameters
     ----------
@@ -32,7 +32,7 @@ class BaseTFApplier:
     Raises
     ------
     NotImplementedError
-        `apply` method must be implemented by subclasses
+        ``apply`` method must be implemented by subclasses
     """
 
     def __init__(
@@ -71,7 +71,7 @@ class BaseTFApplier:
         ----------
         data_points
             Collection of data points to be transformed by TFs and policy. Subclasses
-            implement functionality for a specific format (e.g. `DataFrame`).
+            implement functionality for a specific format (e.g. ``DataFrame``).
 
         Returns
         -------
@@ -99,10 +99,10 @@ class BaseTFApplier:
         ----------
         data_points
             Collection of data points to be transformed by TFs and policy. Subclasses
-            implement functionality for a specific format (e.g. `DataFrame`).
+            implement functionality for a specific format (e.g. ``DataFrame``).
         batch_size
             Batch size for generator. Yields augmented data points
-            for the next `batch_size` input data points.
+            for the next ``batch_size`` input data points.
 
         Yields
         ------
@@ -120,7 +120,7 @@ class BaseTFApplier:
 class TFApplier(BaseTFApplier):
     """TF applier for a list of data points.
 
-    Augments a list of data points (e.g. `SimpleNamespace`). Primarily
+    Augments a list of data points (e.g. ``SimpleNamespace``). Primarily
     useful for testing.
     """
 
@@ -140,7 +140,7 @@ class TFApplier(BaseTFApplier):
             List containing data points to be transformed
         batch_size
             Batch size for generator. Yields augmented data points
-            for the next `batch_size` input data points.
+            for the next ``batch_size`` input data points.
 
         Yields
         ------

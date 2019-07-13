@@ -15,8 +15,8 @@ class BaseLFApplier:
 
     Base class for LF applier objects, which executes a set of LFs
     on a collection of data points. Subclasses should operate on
-    a single data point collection format (e.g. `DataFrame`).
-    Subclasses must implement the `apply` method.
+    a single data point collection format (e.g. ``DataFrame``).
+    Subclasses must implement the ``apply`` method.
 
     Parameters
     ----------
@@ -26,7 +26,7 @@ class BaseLFApplier:
     Raises
     ------
     NotImplementedError
-        `apply` method must be implemented by subclasses
+        ``apply`` method must be implemented by subclasses
     """
 
     def __init__(self, lfs: List[LabelingFunction]) -> None:
@@ -50,7 +50,7 @@ def apply_lfs_to_data_point(
     index
         Index of the data point
     lfs
-        Set of LFs to label `x` with
+        Set of LFs to label ``x`` with
 
     Returns
     -------
@@ -68,7 +68,7 @@ def apply_lfs_to_data_point(
 class LFApplier(BaseLFApplier):
     """LF applier for a list of data points.
 
-    Labels a list of data points (e.g. `SimpleNamespace`). Primarily
+    Labels a list of data points (e.g. ``SimpleNamespace``). Primarily
     useful for testing.
     """
 

@@ -3,10 +3,10 @@ from typing import Any, Dict, Iterator, Sequence, Tuple
 
 from torch import Tensor
 
-from snorkel.classification.data import DictDataLoader
+from snorkel.classification.data import DictDataLoader  # noqa: F401
 
 BatchIterator = Iterator[
-    Tuple[Tuple[Dict[str, Any], Dict[str, Tensor]], DictDataLoader]
+    Tuple[Tuple[Dict[str, Any], Dict[str, Tensor]], "DictDataLoader"]
 ]
 
 
@@ -17,7 +17,7 @@ class Scheduler(ABC):
         pass
 
     @abstractmethod
-    def get_batches(self, dataloaders: Sequence[DictDataLoader]) -> BatchIterator:
+    def get_batches(self, dataloaders: Sequence["DictDataLoader"]) -> BatchIterator:
         """Return batches from dataloaders according to a specified strategy.
 
         Parameters

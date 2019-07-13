@@ -43,16 +43,16 @@ def label_coverage(L: Matrix) -> float:
 
     Example
     -------
-    ```
-    L = np.array([
-        [0, 1, 1],
-        [0, 0, 0],
-        [2, 1, 0],
-        [0, 1, 0],
-        [1, 1, 1],
-    ])
-    label_coverage(L)  # 0.8
-    ```
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> label_coverage(L)
+    0.8
     """
     return _covered_data_points(L).sum() / L.shape[0]
 
@@ -72,16 +72,16 @@ def label_overlap(L: Matrix) -> float:
 
     Example
     -------
-    ```
-    L = np.array([
-        [0, 1, 1],
-        [0, 0, 0],
-        [2, 1, 0],
-        [0, 1, 0],
-        [1, 1, 1],
-    ])
-    label_overlap(L)  # 0.6
-    ```
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> label_overlap(L)
+    0.6
     """
     return _overlapped_data_points(L).sum() / L.shape[0]
 
@@ -101,16 +101,16 @@ def label_conflict(L: sparse.spmatrix) -> float:
 
     Example
     -------
-    ```
-    L = np.array([
-        [0, 1, 1],
-        [0, 0, 0],
-        [2, 1, 0],
-        [0, 1, 0],
-        [1, 1, 1],
-    ])
-    label_conflict(L)  # 0.2
-    ```
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> label_conflict(L)
+    0.2
     """
     return _conflicted_data_points(L).sum() / L.shape[0]
 
@@ -130,16 +130,16 @@ def lf_polarities(L: Matrix) -> List[List[int]]:
 
     Example
     -------
-    ```
-    L = np.array([
-        [0, 1, 1],
-        [0, 0, 0],
-        [2, 1, 0],
-        [0, 1, 0],
-        [1, 1, 1],
-    ])
-    lf_polarities(L)  # [[1, 2], [1], [1]]
-    ```
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> lf_polarities(L)
+    [[1, 2], [1], [1]]
     """
     return [sorted(list(set(L[:, i].data))) for i in range(L.shape[1])]
 
@@ -159,16 +159,16 @@ def lf_coverages(L: Matrix) -> np.ndarray:
 
     Example
     -------
-    ```
-    L = np.array([
-        [0, 1, 1],
-        [0, 0, 0],
-        [2, 1, 0],
-        [0, 1, 0],
-        [1, 1, 1],
-    ])
-    lf_coverages(L)  # np.array([0.4, 0.8, 0.4])
-    ```
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> lf_coverages(L)
+    array([0.4, 0.8, 0.4])
     """
     return np.ravel((L != 0).sum(axis=0)) / L.shape[0]
 
@@ -180,7 +180,7 @@ def lf_overlaps(L: Matrix, normalize_by_coverage: bool = False) -> np.ndarray:
     (non-abstain) label for.
 
     Note that the maximum possible overlap fraction for an LF is the LF's
-    coverage, unless `normalize_by_coverage=True`, in which case it is 1.
+    coverage, unless ``normalize_by_coverage=True``, in which case it is 1.
 
     Parameters
     ----------
@@ -197,17 +197,18 @@ def lf_overlaps(L: Matrix, normalize_by_coverage: bool = False) -> np.ndarray:
 
     Example
     -------
-    ```
-    L = np.array([
-        [0, 1, 1],
-        [0, 0, 0],
-        [2, 1, 0],
-        [0, 1, 0],
-        [1, 1, 1],
-    ])
-    lf_overlaps(L)  # np.array([0.4, 0.6, 0.4])
-    lf_overlaps(L, normalize_by_coverage=True)  # np.array([1., 0.75, 1.])
-    ```
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> lf_overlaps(L)
+    array([0.4, 0.6, 0.4])
+    >>> lf_overlaps(L, normalize_by_coverage=True)
+    array([1.  , 0.75, 1.  ])
     """
     overlaps = (L != 0).T @ _overlapped_data_points(L) / L.shape[0]
     if normalize_by_coverage:
@@ -222,7 +223,7 @@ def lf_conflicts(L: sparse.spmatrix, normalize_by_overlaps: bool = False) -> np.
     different (non-abstain) label for.
 
     Note that the maximum possible conflict fraction for an LF is the LF's
-    overlaps fraction, unless `normalize_by_overlaps=True`, in which case it is 1.
+    overlaps fraction, unless ``normalize_by_overlaps=True``, in which case it is 1.
 
     Parameters
     ----------
@@ -239,17 +240,18 @@ def lf_conflicts(L: sparse.spmatrix, normalize_by_overlaps: bool = False) -> np.
 
     Example
     -------
-    ```
-    L = np.array([
-        [0, 1, 1],
-        [0, 0, 0],
-        [2, 1, 0],
-        [0, 1, 0],
-        [1, 1, 1],
-    ])
-    lf_conflicts(L)  # np.array([0.2, 0.2, 0.])
-    lf_conflicts(L, normalize_by_overlaps=True)  # np.array([0.5, 0.333, 0.])
-    ```
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> lf_conflicts(L)
+    array([0.2, 0.2, 0. ])
+    >>> lf_conflicts(L, normalize_by_overlaps=True)
+    array([0.5       , 0.33333333, 0.        ])
     """
     conflicts = (L != 0).T @ _conflicted_data_points(L) / L.shape[0]
     if normalize_by_overlaps:

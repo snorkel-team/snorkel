@@ -15,7 +15,7 @@ class Policy:
     Raises
     ------
     NotImplementedError
-        Subclasses need to implement the `generate` method
+        Subclasses need to implement the ``generate`` method
     """
 
     def __init__(self, n_tfs: int) -> None:
@@ -41,7 +41,7 @@ class ApplyAllPolicy(Policy):
     """Apply all TFs in order to each data point.
 
     While this can be used as a baseline policy, using a
-    random policy is more standard. See `RandomPolicy`.
+    random policy is more standard. See ``RandomPolicy``.
 
     Parameters
     ----------

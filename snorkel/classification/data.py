@@ -26,6 +26,11 @@ class DictDataset(Dataset):
     Y_dict
         A map from task name to its corresponding set of labels
 
+    Raises
+    ------
+    ValueError
+        All values in the Y_dict must be of type torch.Tensor
+
     Attributes
     ----------
     name
@@ -36,11 +41,6 @@ class DictDataset(Dataset):
         See above
     Y_dict
         See above
-
-    Raises
-    ------
-    ValueError
-        All values in the Y_dict must be of type torch.Tensor
     """
 
     def __init__(self, name: str, split: str, X_dict: XDict, Y_dict: YDict) -> None:
@@ -101,7 +101,7 @@ def collate_dicts(batch: List[Batch]) -> Batch:
 
 
 class DictDataLoader(DataLoader):
-    """A DataLoader that uses the appropriate collate_fn for a `DictDataset`.
+    """A DataLoader that uses the appropriate collate_fn for a ``DictDataset``.
 
     Parameters
     ----------

@@ -11,13 +11,13 @@ from snorkel.classification.utils import recursive_merge_dicts
 Metrics = Dict[str, float]
 
 
-class Checkpointer(object):
+class Checkpointer:
     """Manager for checkpointing model.
 
     Parameters
     ----------
     kwargs
-        Config merged with `default_config["checkpointer_config"]`
+        Config merged with ``default_config["checkpointer_config"]``
     """
 
     def __init__(self, **kwargs: Any) -> None:

@@ -114,6 +114,5 @@ autodoc_default_options = {
     "show-inheritance": None,
 }
 
-
 # Subclasses should show parent classes docstrings if they don't override them.
 autodoc_inherit_docstrings = True

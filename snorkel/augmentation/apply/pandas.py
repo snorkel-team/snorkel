@@ -10,9 +10,9 @@ class PandasTFApplier(BaseTFApplier):
     """TF applier for a Pandas DataFrame.
 
     Data points are stored as Series in a DataFrame. The TFs
-    run on data points obtained via a `pandas.DataFrame.iterrows`
+    run on data points obtained via a ``pandas.DataFrame.iterrows``
     call, which is single-process and can be slow for large DataFrames.
-    For large datasets, consider `DaskTFApplier` or `SparkTFApplier`.
+    For large datasets, consider ``DaskTFApplier`` or ``SparkTFApplier``.
     """
 
     def apply_generator(  # type: ignore
@@ -31,7 +31,7 @@ class PandasTFApplier(BaseTFApplier):
             Pandas DataFrame containing data points to be transformed
         batch_size
             Batch size for generator. Yields augmented data points
-            for the next `batch_size` input data points.
+            for the next ``batch_size`` input data points.
 
         Returns
         -------

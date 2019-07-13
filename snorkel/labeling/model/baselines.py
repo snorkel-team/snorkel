@@ -4,9 +4,8 @@ import numpy as np
 import scipy.sparse as sparse
 
 from snorkel.analysis.utils import arraylike_to_numpy
+from snorkel.labeling.model.label_model import LabelModel
 from snorkel.types import ArrayLike
-
-from .label_model import LabelModel
 
 
 class BaselineVoter(LabelModel):
@@ -30,11 +29,9 @@ class RandomVoter(BaselineVoter):
 
     Example
     -------
-    ```
-    L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
-    random_voter = RandomVoter()
-    predictions = random_voter.predict_proba(L)
-    ```
+    >>> L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+    >>> random_voter = RandomVoter()
+    >>> predictions = random_voter.predict_proba(L)
     """
 
     def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
@@ -53,11 +50,9 @@ class RandomVoter(BaselineVoter):
 
         Example
         -------
-        ```
-        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
-        random_voter = RandomVoter()
-        predictions = random_voter.predict_proba(L)
-        ```
+        >>> L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        >>> random_voter = RandomVoter()
+        >>> predictions = random_voter.predict_proba(L)
         """
         n = L.shape[0]
         Y_p = np.random.rand(n, self.cardinality)
@@ -66,17 +61,7 @@ class RandomVoter(BaselineVoter):
 
 
 class MajorityClassVoter(LabelModel):
-    """Majority class label model.
-
-    Example
-    -------
-    ```
-    L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
-    maj_class_voter = MajorityClassVoter()
-    maj_class_voter.train(balance=[0.8, 0.2])
-    predictions = maj_class_voter.predict_proba(L)  # np.array([1.0, 0.0], [1.0, 0.0], [1.0, 0.0])
-    ```
-    """
+    """Majority class label model."""
 
     def train_model(  # type: ignore
         self, balance: ArrayLike, *args: Any, **kwargs: Any
@@ -89,15 +74,6 @@ class MajorityClassVoter(LabelModel):
         ----------
         balance
             A [1, k] array of class probabilities
-
-        Example
-        -------
-        ```
-        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
-        maj_class_voter = MajorityClassVoter()
-        maj_class_voter.train_model(balance=[0.8, 0.2])
-        predictions = maj_class_voter.predict_proba(L)  # np.array([1.0, 0.0], [1.0, 0.0], [1.0, 0.0])
-        ```
         """
         self.balance = np.array(balance)
 
@@ -120,12 +96,13 @@ class MajorityClassVoter(LabelModel):
 
         Example
         -------
-        ```
-        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
-        maj_class_voter = MajorityClassVoter()
-        maj_class_voter.train_model(balance=[0.8, 0.2])
-        predictions = maj_class_voter.predict_proba(L)  # np.array([1.0, 0.0], [1.0, 0.0], [1.0, 0.0])
-        ```
+        >>> L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        >>> maj_class_voter = MajorityClassVoter()
+        >>> maj_class_voter.train_model(balance=[0.8, 0.2])
+        >>> maj_class_voter.predict_proba(L)
+        array([[1., 0.],
+               [1., 0.],
+               [1., 0.]])
         """
         n = L.shape[0]
         Y_p = np.zeros((n, self.cardinality))
@@ -137,16 +114,7 @@ class MajorityClassVoter(LabelModel):
 
 
 class MajorityLabelVoter(BaselineVoter):
-    """Majority vote label model.
-
-    Example
-    -------
-    ```
-    L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
-    maj_voter = MajorityLabelVoter()
-    predictions = maj_voter.predict_proba(L)  # np.array([[1., 0.], [0.5, 0.5], [0.5, 0.5]])
-    ```
-    """
+    """Majority vote label model."""
 
     def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
         """Predict probabilities using majority vote.
@@ -166,11 +134,12 @@ class MajorityLabelVoter(BaselineVoter):
 
         Example
         -------
-        ```
-        L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
-        maj_voter = MajorityLabelVoter()
-        predictions = maj_voter.predict_proba(L)  # np.array([[1., 0.], [0.5, 0.5], [0.5, 0.5]])
-        ```
+        >>> L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        >>> maj_voter = MajorityLabelVoter()
+        >>> maj_voter.predict_proba(L)
+        array([[1. , 0. ],
+               [0.5, 0.5],
+               [0.5, 0.5]])
         """
         L = arraylike_to_numpy(L, flatten=False)
         n, m = L.shape

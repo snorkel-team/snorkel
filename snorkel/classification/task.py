@@ -14,7 +14,7 @@ Outputs = Mapping[str, List[torch.Tensor]]
 class Operation:
     """A single operation (forward pass of a module) to execute in a task flow.
 
-    See `Task` for more detail on the usage and semantics of an Operation.
+    See ``Task`` for more detail on the usage and semantics of an Operation.
 
     Parameters
     ----------
@@ -67,10 +67,10 @@ class Task:
     module_pool
         A ModuleDict mapping module names to the modules themselves
     task_flow
-        A list of `Operation`s to execute in order, defining the flow of information
+        A list of ``Operation``s to execute in order, defining the flow of information
         through the network for this task
     scorer
-        A `Scorer` with the desired metrics to calculate for this task
+        A ``Scorer`` with the desired metrics to calculate for this task
     loss_func
         A function that converts final logits into loss values
     output_func

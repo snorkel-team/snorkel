@@ -21,7 +21,7 @@ def apply_lfs_to_data_point(x: DataPoint, lfs: List[LabelingFunction]) -> Pandas
     x
         Data point to label
     lfs
-        Set of LFs to label `x` with
+        Set of LFs to label ``x`` with
 
     Returns
     -------
@@ -47,10 +47,10 @@ def rows_to_triplets(labels: List[PandasRowData]) -> List[RowData]:
 class PandasLFApplier(BaseLFApplier):
     """LF applier for a Pandas DataFrame.
 
-    Data points are stored as `Series` in a DataFrame. The LFs
-    are executed via a `pandas.DataFrame.apply` call, which
+    Data points are stored as ``Series`` in a DataFrame. The LFs
+    are executed via a ``pandas.DataFrame.apply`` call, which
     is single-process and can be slow for large DataFrames.
-    For large datasets, consider `DaskLFApplier` or `SparkLFApplier`.
+    For large datasets, consider ``DaskLFApplier`` or ``SparkLFApplier``.
     """
 
     def apply(self, df: DataFrame) -> sparse.csr_matrix:  # type: ignore

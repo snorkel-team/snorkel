@@ -29,7 +29,7 @@ class DaskLFApplier(BaseLFApplier):
             Dask DataFrame containing data points to be labeled by LFs
         scheduler
             A Dask scheduling configuration: either a string option or
-            a `Client`. For more information, see
+            a ``Client``. For more information, see
             https://docs.dask.org/en/stable/scheduling.html#
 
         Returns
@@ -48,7 +48,7 @@ class PandasParallelLFApplier(DaskLFApplier):
     """Parallel LF applier for a Pandas DataFrame.
 
     Creates a Dask DataFrame from a Pandas DataFrame, then uses
-    `DaskLFApplier` to label data in parallel. See `DaskLFApplier`.
+    ``DaskLFApplier`` to label data in parallel. See ``DaskLFApplier``.
     """
 
     def apply(  # type: ignore
@@ -61,13 +61,13 @@ class PandasParallelLFApplier(DaskLFApplier):
         df
             Pandas DataFrame containing data points to be labeled by LFs
         n_parallel
-            Parallelism level for LF application. Corresponds to `npartitions`
-            in constructed Dask DataFrame. For `scheduler="processes"`, number
+            Parallelism level for LF application. Corresponds to ``npartitions``
+            in constructed Dask DataFrame. For ``scheduler="processes"``, number
             of processes launched. Recommended to be no more than the number
             of cores on the running machine.
         scheduler
             A Dask scheduling configuration: either a string option or
-            a `Client`. For more information, see
+            a ``Client``. For more information, see
             https://docs.dask.org/en/stable/scheduling.html#
 
         Returns

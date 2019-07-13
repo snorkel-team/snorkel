@@ -144,8 +144,8 @@ def move_to_device(
     Originally from:
     https://github.com/HazyResearch/metal/blob/mmtl_clean/metal/utils.py
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     obj
         Tensor or collection of Tensors to move
     device

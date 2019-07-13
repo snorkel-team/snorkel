@@ -175,7 +175,7 @@ class Mapper(BaseMapper):
     Mapper derivatives work for data points that have mutable attributes,
     like ``SimpleNamespace``, ``pd.Series``, or ``dask.Series``. An example
     of a data point type without mutable fields is ``pyspark.sql.Row``.
-    Use ``snorkel.map.spark.SparkMapper`` for PySpark compatibility.
+    Use ``snorkel.map.spark.make_spark_mapper`` for PySpark compatibility.
 
     For an example of a Mapper, see
         ``snorkel.labeling.preprocess.nlp.SpacyPreprocessor``

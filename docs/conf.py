@@ -60,21 +60,7 @@ autodoc_mock_imports = [
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.napoleon", "sphinx_autodoc_typehints"]
-
-# Napoleon settings
-napoleon_google_docstring = False
-napoleon_numpy_docstring = True
-napoleon_include_init_with_doc = False
-napoleon_include_private_with_doc = False
-napoleon_include_special_with_doc = False
-napoleon_use_admonition_for_examples = False
-napoleon_use_admonition_for_notes = False
-napoleon_use_admonition_for_references = False
-napoleon_use_ivar = False
-napoleon_use_param = True
-napoleon_use_rtype = True
-
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx_autodoc_typehints"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -97,3 +83,37 @@ html_theme_options = {"navigation_depth": -1, "titles_only": True}
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+
+# -- Options for napoleon extension -------------------------------------------
+
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+napoleon_include_init_with_doc = False
+napoleon_include_private_with_doc = False
+napoleon_include_special_with_doc = False
+napoleon_use_admonition_for_examples = False
+napoleon_use_admonition_for_notes = False
+napoleon_use_admonition_for_references = False
+napoleon_use_ivar = False
+napoleon_use_param = True
+napoleon_use_rtype = True
+
+# -- Options for autodoc extension -------------------------------------------
+
+# his value selects what content will be inserted into the main body of an autoclass
+# directive
+#
+# http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#directive-autoclass
+autoclass_content = "both"
+
+# Default options to an ..autoXXX directive.
+autodoc_default_options = {
+    "members": None,
+    "inherited-members": None,
+    "show-inheritance": None,
+}
+
+
+# Subclasses should show parent classes docstrings if they don't override them.
+autodoc_inherit_docstrings = True

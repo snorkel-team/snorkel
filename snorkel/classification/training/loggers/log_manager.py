@@ -2,7 +2,6 @@ import logging
 from typing import Any, Optional
 
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
-from snorkel.classification.snorkel_config import default_config
 from snorkel.types import Config
 
 from .checkpointer import Checkpointer
@@ -26,7 +25,7 @@ class LogManager(object):
     checkpointer
         `Checkpointer` for current model
     kwargs
-        Config merged with `default_config["log_manager_config"]`
+        Settings to update in LogManagerConfig
     """
 
     def __init__(
@@ -36,7 +35,6 @@ class LogManager(object):
         checkpointer: Optional[Checkpointer] = None,
         **kwargs: Any,
     ) -> None:
-        assert isinstance(default_config["log_manager_config"], dict)
         self.config = LogManagerConfig(**kwargs)
         self.n_batches_per_epoch = n_batches_per_epoch
 

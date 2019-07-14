@@ -1,8 +1,10 @@
 import copy
-from typing import List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
+
+from snorkel.types import Config
 
 TensorCollection = Union[torch.Tensor, dict, list, tuple]
 
@@ -71,6 +73,19 @@ def pad_batch(
     )
 
     return padded_batch, mask_batch
+
+
+def merge_config(config: Config, config_updates: Dict[str, Any]) -> Config:
+    """Merge a (potentially nested) dict of kwargs into a config (NamedTuple).
+
+    TBD
+    """
+    for key, value in config_updates.items():
+        if key.endswith("_config") and isinstance(value, dict):
+            config = config._replace(**{key: merge_config(getattr(config, key), value)})
+        else:
+            config = config._replace(**{key: value})
+    return config
 
 
 def recursive_merge_dicts(

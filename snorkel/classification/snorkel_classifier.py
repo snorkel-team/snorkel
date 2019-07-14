@@ -30,15 +30,6 @@ OutputDict = Dict[str, Mapping[Union[str, int], Any]]
 
 
 class ClassifierConfig(Config):
-    """[summary]
-
-    Parameters
-    ----------
-    device
-        # gpu id (int) or -1 for cpu
-    dataparallel
-    """
-
     device: int = 0
     dataparallel: bool = True
 

@@ -9,16 +9,6 @@ from snorkel.types import Config
 
 
 class LogWriterConfig(Config):
-    """[summary]
-
-    Parameters
-    ----------
-    log_dir
-        [description]
-    run_name
-        [description]
-    """
-
     log_dir: str = "logs"
     run_name: Optional[str] = None
 

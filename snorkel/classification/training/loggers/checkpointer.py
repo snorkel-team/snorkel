@@ -11,12 +11,6 @@ Metrics = Dict[str, float]
 
 
 class CheckpointerConfig(Config):
-    """[summary]
-
-    Parameters
-    ----------
-    TBD
-    """
     checkpoint_dir: Optional[str] = None  # Trainer will set this to log_dir if None
     checkpoint_factor: int = 1  # Checkpoint every this many evaluations
     checkpoint_metric: str = "modelall/train/loss:min"

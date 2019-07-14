@@ -3,7 +3,6 @@ from typing import Any, Optional
 
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
 from snorkel.classification.snorkel_config import default_config
-from snorkel.classification.utils import recursive_merge_dicts
 from snorkel.types import Config
 
 from .checkpointer import Checkpointer
@@ -11,12 +10,6 @@ from .log_writer import LogWriter
 
 
 class LogManagerConfig(Config):
-    """[summary]
-
-    Parameters
-    ----------
-    TBD
-    """
     counter_unit: str = "epochs"  # [points, batches, epochs]
     evaluation_freq: float = 1.0  # Evaluate performance every this many counter_units
 

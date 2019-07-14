@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from typing import Any, DefaultDict, Dict, List, Optional
+from typing import Any, DefaultDict, Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -8,19 +8,86 @@ import torch.optim as optim
 from tqdm import tqdm
 
 from snorkel.classification.data import DictDataLoader
-from snorkel.classification.snorkel_classifier import SnorkelClassifier
-from snorkel.classification.snorkel_config import default_config
+from snorkel.classification.snorkel_classifier import (
+    ClassifierConfig,
+    SnorkelClassifier,
+)
 from snorkel.classification.training import (
     Checkpointer,
+    CheckpointerConfig,
     LogManager,
+    LogManagerConfig,
     LogWriter,
+    LogWriterConfig,
     TensorBoardWriter,
 )
 from snorkel.classification.training.schedulers import batch_schedulers
-from snorkel.classification.utils import recursive_merge_dicts
+from snorkel.classification.utils import merge_config
 from snorkel.types import Config
 
 Metrics = Dict[str, float]
+
+
+class SGDOptimizerConfig(Config):
+    momentum: float = 0.9
+
+
+class AdamOptimizerConfig(Config):
+    amsgrad: bool = False
+    betas: Tuple[float, float] = (0.9, 0.999)
+
+
+class AdamaxOptimizerConfig(Config):
+    betas: Tuple[float, float] = (0.9, 0.999)
+    eps: float = 1e-8
+
+
+class OptimizerConfig(Config):
+    lr: float = 0.001  # learing rate
+    l2: float = 0.0  # l2 regularization
+    grad_clip: float = 1.0  # gradient clipping
+    sgd_config: SGDOptimizerConfig = SGDOptimizerConfig()
+    adam_config: AdamOptimizerConfig = AdamOptimizerConfig()
+    adamax_config: AdamaxOptimizerConfig = AdamaxOptimizerConfig()
+
+
+class ExponentialLRSchedulerConfig(Config):
+    gamma: float = 0.9
+
+
+class StepLRSchedulerConfig(Config):
+    gamma: float = 0.9
+    step_size: int = 5
+
+
+class LRSchedulerConfig(Config):
+    warmup_steps: float = 0  # warm up steps
+    warmup_unit: str = "batches"  # [epochs, batches]
+    warmup_percentage: float = 0.0  # warm up percentage
+    min_lr: float = 0.0  # minimum learning rate
+    exponential_config: ExponentialLRSchedulerConfig = ExponentialLRSchedulerConfig()
+    step_config: StepLRSchedulerConfig = StepLRSchedulerConfig()
+
+
+class TrainerConfig(Config):
+    seed: Optional[int] = None  # Random seed; if None, seed is not set.
+    n_epochs: int = 1  # total number of learning epochs
+    train_split: str = "train"  # the split to use for training
+    valid_split: str = "valid"  # the split to use for validation
+    test_split: str = "test"  # the split to use for testing
+    progress_bar: bool = True
+    model_config: ClassifierConfig = ClassifierConfig()
+    log_manager_config: LogManagerConfig = LogManagerConfig()
+    checkpointing: bool = False  # Whether to save checkpoints of best performing models
+    checkpointer_config: CheckpointerConfig = CheckpointerConfig()
+    logging: bool = False  # Whether to write logs (to json/tensorboard)
+    log_writer: str = "tensorboard"  # [json, tensorboard]
+    log_writer_config: LogWriterConfig = LogWriterConfig()
+    optimizer: str = "adam"  # [sgd, adam]
+    optimizer_config: OptimizerConfig = OptimizerConfig()
+    lr_scheduler: str = "constant"  # [constant, linear, exponential, step]
+    lr_scheduler_config: LRSchedulerConfig = LRSchedulerConfig()
+    batch_scheduler: str = "shuffled"  # [sequential, shuffled]
 
 
 class Trainer:
@@ -54,7 +121,7 @@ class Trainer:
     """
 
     def __init__(self, name: Optional[str] = None, **kwargs: Any) -> None:
-        self.config = recursive_merge_dicts(default_config, kwargs, misses="insert")
+        self.config = merge_config(TrainerConfig(), kwargs)
         self.name = name if name is not None else type(self).__name__
 
     def train_model(
@@ -76,7 +143,7 @@ class Trainer:
         train_dataloaders = [
             dl
             for dl in dataloaders
-            if dl.dataset.split == self.config["train_split"]  # type: ignore
+            if dl.dataset.split == self.config.train_split  # type: ignore
         ]
 
         # Calculate the total number of batches per epoch
@@ -100,11 +167,11 @@ class Trainer:
         self.metrics: Dict[str, float] = dict()
         self._reset_losses()
 
-        for epoch_num in range(self.config["n_epochs"]):
+        for epoch_num in range(self.config.n_epochs):
             batches = tqdm(
                 enumerate(self.batch_scheduler.get_batches(train_dataloaders)),
                 total=self.n_batches_per_epoch,
-                disable=(not self.config["progress_bar"]),
+                disable=(not self.config.progress_bar),
                 desc=f"Epoch {epoch_num}:",
             )
             for batch_num, (batch, dataloader) in batches:
@@ -148,9 +215,9 @@ class Trainer:
                 loss.backward()
 
                 # Clip gradient norm
-                if self.config["optimizer_config"]["grad_clip"]:
+                if self.config.optimizer_config.grad_clip:
                     torch.nn.utils.clip_grad_norm_(
-                        model.parameters(), self.config["optimizer_config"]["grad_clip"]
+                        model.parameters(), self.config.optimizer_config.grad_clip
                     )
 
                 # Update the parameters
@@ -165,9 +232,9 @@ class Trainer:
 
     def _check_dataloaders(self, dataloaders: List[DictDataLoader]) -> None:
         """Validate the dataloader splits."""
-        train_split = self.config["train_split"]
-        valid_split = self.config["valid_split"]
-        test_split = self.config["test_split"]
+        train_split = self.config.train_split
+        valid_split = self.config.valid_split
+        test_split = self.config.test_split
 
         all_splits = [train_split, valid_split, test_split]
         if not all(d.dataset.split in all_splits for d in dataloaders):  # type: ignore
@@ -176,38 +243,42 @@ class Trainer:
         if not any(d.dataset.split == train_split for d in dataloaders):  # type: ignore
             raise ValueError(
                 f"Cannot find any dataloaders with split matching train split: "
-                f'{self.config["train_split"]}.'
+                f"{self.config.train_split}."
             )
 
     def _set_log_writer(self) -> None:
         self.log_writer: Optional[LogWriter] = None
-        if self.config["logging"]:
-            if self.config["log_writer"] == "json":
-                self.log_writer = LogWriter(**self.config["log_writer_config"])
-            elif self.config["log_writer"] == "tensorboard":
-                self.log_writer = TensorBoardWriter(**self.config["log_writer_config"])
+        if self.config.logging:
+            if self.config.log_writer == "json":
+                self.log_writer = LogWriter(**self.config.log_writer_config._asdict())
+            elif self.config.log_writer == "tensorboard":
+                self.log_writer = TensorBoardWriter(
+                    **self.config.log_writer_config._asdict()
+                )
             else:
                 raise ValueError(
-                    f"Unrecognized writer option: {self.config['log_writer']}"
+                    f"Unrecognized writer option: {self.config.log_writer}"
                 )
 
     def _set_checkpointer(self) -> None:
         self.checkpointer: Optional[Checkpointer]
 
-        if self.config["checkpointing"]:
-            checkpointer_config = self.config["checkpointer_config"]
+        if self.config.checkpointing:
+            checkpointer_config = self.config.checkpointer_config
 
             # Default checkpoint_dir to log_dir if available
             if (
-                checkpointer_config["checkpoint_dir"] is None
+                checkpointer_config.checkpoint_dir is None
                 and self.log_writer is not None
             ):
-                checkpointer_config["checkpoint_dir"] = self.log_writer.log_dir
+                checkpointer_config = checkpointer_config._replace(
+                    checkpoint_dir=self.log_writer.log_dir
+                )
 
-            evaluation_freq = self.config["log_manager_config"]["evaluation_freq"]
-            counter_unit = self.config["log_manager_config"]["counter_unit"]
+            evaluation_freq = self.config.log_manager_config.evaluation_freq
+            counter_unit = self.config.log_manager_config.counter_unit
             self.checkpointer = Checkpointer(
-                counter_unit, evaluation_freq, **checkpointer_config
+                counter_unit, evaluation_freq, **checkpointer_config._asdict()
             )
         else:
             self.checkpointer = None
@@ -217,41 +288,41 @@ class Trainer:
             self.n_batches_per_epoch,
             log_writer=self.log_writer,
             checkpointer=self.checkpointer,
-            **self.config["log_manager_config"],
+            **self.config.log_manager_config._asdict(),
         )
 
     def _set_optimizer(self, model: nn.Module) -> None:
         # TODO: add more optimizer support and fp16
-        optimizer_config = self.config["optimizer_config"]
-        opt = optimizer_config["optimizer"]
+        optimizer_config = self.config.optimizer_config
+        optimizer_name = self.config.optimizer
 
         parameters = filter(lambda p: p.requires_grad, model.parameters())
 
         optimizer: optim.Optimizer  # type: ignore
 
-        if opt == "sgd":
+        if optimizer_name == "sgd":
             optimizer = optim.SGD(  # type: ignore
                 parameters,
-                lr=optimizer_config["lr"],
-                **optimizer_config["sgd_config"],
-                weight_decay=optimizer_config["l2"],
+                lr=optimizer_config.lr,
+                weight_decay=optimizer_config.l2,
+                **optimizer_config.sgd_config._asdict(),
             )
-        elif opt == "adam":
+        elif optimizer_name == "adam":
             optimizer = optim.Adam(
                 parameters,
-                lr=optimizer_config["lr"],
-                weight_decay=optimizer_config["l2"],
-                **optimizer_config["adam_config"],
+                lr=optimizer_config.lr,
+                weight_decay=optimizer_config.l2,
+                **optimizer_config.adam_config._asdict(),
             )
-        elif opt == "adamax":
+        elif optimizer_name == "adamax":
             optimizer = optim.Adamax(  # type: ignore
                 parameters,
-                lr=optimizer_config["lr"],
-                weight_decay=optimizer_config["l2"],
-                **optimizer_config["adamax_config"],
+                lr=optimizer_config.lr,
+                weight_decay=optimizer_config.l2,
+                **optimizer_config.adamax_config._asdict(),
             )
         else:
-            raise ValueError(f"Unrecognized optimizer option '{opt}'")
+            raise ValueError(f"Unrecognized optimizer option '{optimizer_name}'")
 
         logging.info(f"Using optimizer {optimizer}")
 
@@ -263,41 +334,41 @@ class Trainer:
 
         # Set lr scheduler
         # TODO: add more lr scheduler support
-        opt = self.config["lr_scheduler_config"]["lr_scheduler"]
-        lr_scheduler_config = self.config["lr_scheduler_config"]
+        lr_scheduler_name = self.config.lr_scheduler
+        lr_scheduler_config = self.config.lr_scheduler_config
         lr_scheduler: Optional[optim.lr_scheduler._LRScheduler]
 
-        if opt == "constant":
+        if lr_scheduler_name == "constant":
             lr_scheduler = None
-        elif opt == "linear":
-            total_steps = self.n_batches_per_epoch * self.config["n_epochs"]
+        elif lr_scheduler_name == "linear":
+            total_steps = self.n_batches_per_epoch * self.config.n_epochs
             linear_decay_func = lambda x: (total_steps - self.warmup_steps - x) / (
                 total_steps - self.warmup_steps
             )
             lr_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
                 self.optimizer, linear_decay_func
             )
-        elif opt == "exponential":
+        elif lr_scheduler_name == "exponential":
             lr_scheduler = optim.lr_scheduler.ExponentialLR(
-                self.optimizer, **lr_scheduler_config.get("exponential_config", {})
+                self.optimizer, **lr_scheduler_config.exponential_config._asdict()
             )
-        elif opt == "step":
+        elif lr_scheduler_name == "step":
             lr_scheduler = optim.lr_scheduler.StepLR(
-                self.optimizer, **lr_scheduler_config.get("step_config", {})
+                self.optimizer, **lr_scheduler_config.step_config._asdict()
             )
         else:
-            raise ValueError(f"Unrecognized lr scheduler option '{opt}'")
+            raise ValueError(f"Unrecognized lr scheduler option '{lr_scheduler_name}'")
 
         self.lr_scheduler = lr_scheduler
 
     def _set_warmup_scheduler(self) -> None:
         warmup_scheduler: Optional[optim.lr_scheduler.LambdaLR]
 
-        if self.config["lr_scheduler_config"]["warmup_steps"]:
-            warmup_steps = self.config["lr_scheduler_config"]["warmup_steps"]
+        if self.config.lr_scheduler_config.warmup_steps:
+            warmup_steps = self.config.lr_scheduler_config.warmup_steps
             if warmup_steps < 0:
                 raise ValueError(f"warmup_steps much greater or equal than 0.")
-            warmup_unit = self.config["lr_scheduler_config"]["warmup_unit"]
+            warmup_unit = self.config.lr_scheduler_config.warmup_unit
             if warmup_unit == "epochs":
                 self.warmup_steps = int(warmup_steps * self.n_batches_per_epoch)
             elif warmup_unit == "batches":
@@ -311,10 +382,10 @@ class Trainer:
                 self.optimizer, linear_warmup_func
             )
             logging.info(f"Warmup {self.warmup_steps} batches.")
-        elif self.config["lr_scheduler_config"]["warmup_percentage"]:
-            warmup_percentage = self.config["lr_scheduler_config"]["warmup_percentage"]
+        elif self.config.lr_scheduler_config.warmup_percentage:
+            warmup_percentage = self.config.lr_scheduler_config.warmup_percentage
             self.warmup_steps = int(
-                warmup_percentage * self.config["n_epochs"] * self.n_batches_per_epoch
+                warmup_percentage * self.config.n_epochs * self.n_batches_per_epoch
             )
             linear_warmup_func = lambda x: x / self.warmup_steps
             warmup_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
@@ -332,12 +403,12 @@ class Trainer:
             self.warmup_scheduler.step()  # type: ignore
         elif self.lr_scheduler is not None:
             self.lr_scheduler.step()  # type: ignore
-            min_lr = self.config["lr_scheduler_config"]["min_lr"]
+            min_lr = self.config.lr_scheduler_config.min_lr
             if min_lr and self.optimizer.param_groups[0]["lr"] < min_lr:
                 self.optimizer.param_groups[0]["lr"] = min_lr
 
     def _set_batch_scheduler(self) -> None:
-        scheduler_class = batch_schedulers.get(self.config["batch_scheduler"])
+        scheduler_class = batch_schedulers.get(self.config.batch_scheduler)
         if not scheduler_class:
             raise ValueError(f"Unrecognized batch scheduler option '{scheduler_class}'")
 
@@ -372,7 +443,7 @@ class Trainer:
 
             # Log metrics
             metric_dict.update(
-                self._evaluate(model, dataloaders, self.config["valid_split"])
+                self._evaluate(model, dataloaders, self.config.valid_split)
             )
             self._log_metrics(metric_dict)
             self._reset_losses()

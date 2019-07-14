@@ -28,7 +28,9 @@ class Checkpointer(object):
         Config merged with `default_config["checkpointer_config"]`
     """
 
-    def __init__(self, counter_unit: str, evaluation_freq: int, **kwargs: Any) -> None:
+    def __init__(
+        self, counter_unit: str, evaluation_freq: float, **kwargs: Any
+    ) -> None:
         self.config = CheckpointerConfig(**kwargs)
 
         # Pull out checkpoint settings

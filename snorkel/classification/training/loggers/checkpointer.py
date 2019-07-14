@@ -2,7 +2,7 @@ import glob
 import logging
 import os
 from shutil import copyfile
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, Iterable, Optional, Set
 
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
 from snorkel.types import Config
@@ -28,7 +28,7 @@ class Checkpointer(object):
         Config merged with `default_config["checkpointer_config"]`
     """
 
-    def __init__(self, counter_unit, evaluation_freq, **kwargs: Any) -> None:
+    def __init__(self, counter_unit: str, evaluation_freq: int, **kwargs: Any) -> None:
         self.config = CheckpointerConfig(**kwargs)
 
         # Pull out checkpoint settings
@@ -167,12 +167,14 @@ class Checkpointer(object):
 
         return model
 
-    def _make_metric_map(self, metric_mode_list: List[str]) -> Dict[str, str]:
-        if metric_mode_list is None:
+    def _make_metric_map(
+        self, metric_mode_iter: Optional[Iterable[str]]
+    ) -> Dict[str, str]:
+        if metric_mode_iter is None:
             return {}
 
         metric_mode_map = dict()
-        for metric_mode in metric_mode_list:
+        for metric_mode in metric_mode_iter:
             try:
                 metric, mode = metric_mode.split(":")
             except ValueError:

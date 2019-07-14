@@ -75,8 +75,7 @@ class LogWriter:
         config_filename
             Name of file in logging directory to write to
         """
-        # TODO: convert Config into nested dicts for writing to JSON
-        self.write_json(config, config_filename)
+        self.write_json(config._asdict(), config_filename)
 
     def write_log(self, log_filename: str) -> None:
         """Dump the scalar value log to file.

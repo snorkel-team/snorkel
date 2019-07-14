@@ -46,9 +46,9 @@ class OptimizerConfig(Config):
     lr: float = 0.001  # learing rate
     l2: float = 0.0  # l2 regularization
     grad_clip: float = 1.0  # gradient clipping
-    sgd_config: SGDOptimizerConfig = SGDOptimizerConfig()
-    adam_config: AdamOptimizerConfig = AdamOptimizerConfig()
-    adamax_config: AdamaxOptimizerConfig = AdamaxOptimizerConfig()
+    sgd_config: SGDOptimizerConfig = SGDOptimizerConfig()  # type:ignore
+    adam_config: AdamOptimizerConfig = AdamOptimizerConfig()  # type:ignore
+    adamax_config: AdamaxOptimizerConfig = AdamaxOptimizerConfig()  # type:ignore
 
 
 class ExponentialLRSchedulerConfig(Config):
@@ -65,8 +65,8 @@ class LRSchedulerConfig(Config):
     warmup_unit: str = "batches"  # [epochs, batches]
     warmup_percentage: float = 0.0  # warm up percentage
     min_lr: float = 0.0  # minimum learning rate
-    exponential_config: ExponentialLRSchedulerConfig = ExponentialLRSchedulerConfig()
-    step_config: StepLRSchedulerConfig = StepLRSchedulerConfig()
+    exponential_config: ExponentialLRSchedulerConfig = ExponentialLRSchedulerConfig()  # type:ignore
+    step_config: StepLRSchedulerConfig = StepLRSchedulerConfig()  # type:ignore
 
 
 class TrainerConfig(Config):
@@ -76,17 +76,17 @@ class TrainerConfig(Config):
     valid_split: str = "valid"  # the split to use for validation
     test_split: str = "test"  # the split to use for testing
     progress_bar: bool = True
-    model_config: ClassifierConfig = ClassifierConfig()
-    log_manager_config: LogManagerConfig = LogManagerConfig()
+    model_config: ClassifierConfig = ClassifierConfig()  # type:ignore
+    log_manager_config: LogManagerConfig = LogManagerConfig()  # type:ignore
     checkpointing: bool = False  # Whether to save checkpoints of best performing models
-    checkpointer_config: CheckpointerConfig = CheckpointerConfig()
+    checkpointer_config: CheckpointerConfig = CheckpointerConfig()  # type:ignore
     logging: bool = False  # Whether to write logs (to json/tensorboard)
     log_writer: str = "tensorboard"  # [json, tensorboard]
-    log_writer_config: LogWriterConfig = LogWriterConfig()
+    log_writer_config: LogWriterConfig = LogWriterConfig()  # type:ignore
     optimizer: str = "adam"  # [sgd, adam]
-    optimizer_config: OptimizerConfig = OptimizerConfig()
+    optimizer_config: OptimizerConfig = OptimizerConfig()  # type:ignore
     lr_scheduler: str = "constant"  # [constant, linear, exponential, step]
-    lr_scheduler_config: LRSchedulerConfig = LRSchedulerConfig()
+    lr_scheduler_config: LRSchedulerConfig = LRSchedulerConfig()  # type:ignore
     batch_scheduler: str = "shuffled"  # [sequential, shuffled]
 
 
@@ -121,7 +121,9 @@ class Trainer:
     """
 
     def __init__(self, name: Optional[str] = None, **kwargs: Any) -> None:
-        self.config = merge_config(TrainerConfig(), kwargs)
+        self.config: TrainerConfig = merge_config(
+            TrainerConfig(), kwargs
+        )  # type:ignore
         self.name = name if name is not None else type(self).__name__
 
     def train_model(

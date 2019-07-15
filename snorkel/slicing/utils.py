@@ -211,8 +211,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         task_flow=master_task_flow,
         scorer=base_task.scorer,
     )
-    tasks = slice_tasks + [master_task]
-    return tasks
+    return slice_tasks + [master_task]
 
 
 def _add_base_slice(

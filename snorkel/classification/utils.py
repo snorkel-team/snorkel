@@ -169,7 +169,7 @@ def move_to_device(
 
 
 def collect_flow_outputs_by_suffix(
-    flow_dict: Dict[str, torch.Tensor], suffix: str
+    flow_dict: Dict[str, List[torch.Tensor]], suffix: str
 ) -> List[torch.Tensor]:
     """Return flow_dict outputs specified by suffix, ordered by sorted flow_name."""
     return [

@@ -42,7 +42,7 @@ class SliceCombinerModule(nn.Module):
         slice_ind_key: str = "_ind_head",
         slice_pred_key: str = "_pred_head",
         slice_pred_feat_key: str = "_pred_transform",
-        tau: int = 0.1,
+        tau: float = 0.1,
     ) -> None:
         super().__init__()
 

@@ -152,7 +152,7 @@ class SliceCombinerTest(unittest.TestCase):
                     torch.ones(batch_size, num_classes) * -20.0
                 ]
 
-        combiner_module = SliceCombinerModule()
+        combiner_module = SliceCombinerModule(tau=1.0)
         combined_rep = combiner_module(outputs)
         self.assertTrue(torch.allclose(combined_rep, torch.ones(batch_size, h_dim) * 3))
 
@@ -194,7 +194,7 @@ class SliceCombinerTest(unittest.TestCase):
             "task_slice:b_pred_transform": [torch.ones(batch_size, h_dim) * 2],
             "task_slice:b_pred_head": [pred_outputs_b],
         }
-        combiner_module = SliceCombinerModule()
+        combiner_module = SliceCombinerModule(tau=1.0)
         combined_rep = combiner_module(outputs)
         # higher tolerance because randomness in non-max class outputs -> for softmax
         self.assertTrue(

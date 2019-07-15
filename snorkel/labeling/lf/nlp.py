@@ -7,7 +7,10 @@ from .core import LabelingFunction
 
 
 class SpacyPreprocessorParameters(NamedTuple):
-    """Parameters need to construct a SpacyPreprocessor."""
+    """Parameters needed to construct a SpacyPreprocessor.
+
+    See ``snorkel.labeling.preprocess.nlp.SpacyPreprocessor``.
+    """
 
     text_field: str
     doc_field: str
@@ -27,14 +30,18 @@ class SpacyPreprocessorConfig(NamedTuple):
 class NLPLabelingFunction(LabelingFunction):
     """Special labeling function type for SpaCy-based LFs.
 
-    This class is a special version of `LabelingFunction`. It
-    has a `SpacyPreprocessor` integrated which shares a cache
-    with all other `NLPLabelingFunction` instances. This makes
+    This class is a special version of ``LabelingFunction``. It
+    has a ``SpacyPreprocessor`` integrated which shares a cache
+    with all other ``NLPLabelingFunction`` instances. This makes
     it easy to define LFs that have a text input field and have
-    logic written over SpaCy `Doc` objects.
+    logic written over SpaCy ``Doc`` objects. Examples passed
+    into an ``NLPLabelingFunction`` will have a new field which
+    can be accessed which contains a SpaCy ``Doc``. By default,
+    this field is called ``doc``. For details of SpaCy ``Doc``
+    objects and a full attribute listing, see https://spacy.io/api/doc.
 
-    Simple `NLPLabelingFunction`s can be defined via a
-    decorator. See `nlp_labeling_function`.
+    Simple ``NLPLabelingFunction``s can be defined via a
+    decorator. See ``nlp_labeling_function``.
 
     Parameters
     ----------
@@ -43,7 +50,7 @@ class NLPLabelingFunction(LabelingFunction):
     f
         Function that implements the core LF logic
     resources
-        Labeling resources passed in to `f` via `kwargs`
+        Labeling resources passed in to ``f`` via ``kwargs``
     preprocessors
         Preprocessors to run before SpacyPreprocessor is executed
     fault_tolerant
@@ -135,21 +142,22 @@ class nlp_labeling_function:
 
     Parameters
     ----------
-    See `NLPLabelingFunction`.
+    See ``NLPLabelingFunction``.
 
 
     Examples
     --------
-    ```
-    @nlp_labeling_function()
-    def has_person_mention(x: DataPoint) -> int:
-        person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
-        return 1 if len(person_ents) > 0 else 0
-    print(f)  # "NLPLabelingFunction has_person_mention"
+    >>> @nlp_labeling_function()
+    ... def has_person_mention(x: DataPoint) -> int:
+    ...     person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
+    ...     return 1 if len(person_ents) > 0 else 0
+    >>> has_person_mention
+    NLPLabelingFunction has_person_mention
 
-    x = SimpleNamespace(text="The movie was good.")
-    has_person_mention(x)  # 0
-    ```
+    >>> from types import SimpleNamespace
+    >>> x = SimpleNamespace(text="The movie was good.")
+    >>> has_person_mention(x)
+    0
     """
 
     def __init__(
@@ -175,7 +183,7 @@ class nlp_labeling_function:
         self.memoize = memoize
 
     def __call__(self, f: Callable[..., int]) -> NLPLabelingFunction:
-        """Wrap a function to create an `NLPLabelingFunction`.
+        """Wrap a function to create an ``NLPLabelingFunction``.
 
         Parameters
         ----------
@@ -185,7 +193,7 @@ class nlp_labeling_function:
         Returns
         -------
         NLPLabelingFunction
-            New `NLPLabelingFunction` executing logic in wrapped function
+            New ``NLPLabelingFunction`` executing logic in wrapped function
         """
         name = self.name or f.__name__
         return NLPLabelingFunction(

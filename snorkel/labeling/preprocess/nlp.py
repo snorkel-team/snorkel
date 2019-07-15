@@ -15,7 +15,8 @@ class SpacyPreprocessor(Preprocessor):
     A common approach to writing LFs over text is to first use
     a natural language parser to decompose the text into tokens,
     part-of-speech tags, etc. SpaCy (https://spacy.io/) is a
-    popular tool for doing this.
+    popular tool for doing this. For details of SpaCy ``Doc``objects
+    and a full attribute listing, see https://spacy.io/api/doc.
 
     Parameters
     ----------

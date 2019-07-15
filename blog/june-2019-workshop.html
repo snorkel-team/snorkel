@@ -1,0 +1,294 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-105598606-2"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'UA-105598606-2');
+  </script>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Henry Ehrenberg, Alex Ratner, Paroma Varma, Braden Hancock, Vincent Chen, Chris Ré" />
+  <title>Recap of June's Snorkel Workshop</title>
+  <link rel="stylesheet" href="blog.css">
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full"
+    type="text/javascript"></script>
+</head>
+
+<body>
+  <div id="header">
+
+    <!-- Title -->
+    <h1 class="title">
+      Recap of June's Snorkel Workshop
+    </h1>
+    <a href='https://github.com/henryre/'>Henry Ehrenberg</a>, <a href='https://ajratner.github.io'>Alex Ratner</a>, <a
+      href='https://www.paroma.xyz/'>Paroma Varma</a>, <a href='https://www.bradenhancock.com'>Braden Hancock</a>, <a
+      href='https://vincentsc.com'>Vincent S. Chen</a>, <a href='https://cs.stanford.edu/people/chrismre/'>Chris Ré</a>,
+    <em>and referencing work by <a href='https://cs.stanford.edu/people/chrismre/#students'>many
+        other members of Hazy Lab</a></em></br>
+    <br>
+    <a href="http://snorkel.stanford.edu">Back to the Snorkel Blog</a>
+  </div>
+
+  <br>
+
+  <div class="figure">
+    <img src="june-2019-workshop-figs/workshop.png" width="50%" class="centered" />
+  </div>
+
+  <br>
+
+  On June 24th and 25th, we hosted a workshop at Stanford to talk about
+  recent research around Snorkel, discuss applications and extensions, and most
+  importantly from our end, get feedback on the upcoming v0.9 release of Snorkel.
+  <b>This upcoming release is our most significant upgrade yet,
+  integrating research work from the last two years</b>
+  (<a href="https://arxiv.org/abs/1711.10160">VLDBJ 2019</a>,
+  <a href="https://arxiv.org/abs/1903.05844">ICML 2019</a>,
+  <a href="https://arxiv.org/abs/1812.00417">SIGMOD 2019</a>,
+  <a href="https://arxiv.org/abs/1810.02840">AAAI 2019</a>,
+  <a href="https://ajratner.github.io/assets/papers/deem-metal-prototype.pdf">DEEM 2018</a>,
+  <a href="https://arxiv.org/abs/1709.01643">NeurIPS 2017</a>),
+  new operators for building and managing training data, scripts demonstrating how to
+  reproduce our recent state-of-the-art results on the public benchmark
+  <a href="http://hazyresearch.github.io/snorkel/blog/superglue.html">SuperGLUE</a>,
+  and a full redesign of the core library!
+
+  <br><br>
+
+  We were lucky enough to have 55 of our collaborators and users attend this workshop,
+  including members of industry (Google, Microsoft, Facebook, and others), government,
+  and medicine.
+  In this blog post, we’ll describe some of the upcoming changes in v0.9 we’re most
+  excited about, summarize and share the workshop contents, and most importantly invite
+  your feedback as we prepare for the v0.9 release this August!
+
+  <h2>Snorkel v0.9 Teaser</h2>
+  Snorkel v0.9 integrates our recent research advances and Snorkel-based open source projects into
+  <b>one modern Python library for building and managing training datasets</b>.
+  In this release, we are:
+
+  <ul>
+    <li>Adding two new core data set operators &mdash; <i>transformation functions</i> and
+      <i>slicing functions</i> &mdash; alongside labeling functions</li>
+    <li>Upgrading the labeling pipeline using the latest frameworks and algorithmic research</li>
+    <li>Redesigning the codebase to be a more general purpose and modular engine</li>
+  </ul>
+
+  We previewed these changes at the workshop, and are now sharing the
+  <a href="#workshop-contents">workshop contents</a>
+  below to get your feedback as well leading up to the release in August!
+
+  <h3>New core data set operations: transforming and slicing</h3>
+
+  We started building Snorkel in 2016, motivated by the increasing commoditization of ML models
+  and infrastructure, and the increasing primacy of training data.
+  We set out to create a framework where building and managing training data in programmatic,
+  heuristic, or otherwise noisy ways was the primary mode of interaction with machine learning.
+  To begin, we focused on one aspect of this broader set of activities: labeling training data,
+  by writing heuristic <i>labeling functions</i>
+  (<a href="https://arxiv.org/abs/1605.07723">NeurIPS 2016</a>,
+  <a href="https://hazyresearch.github.io/snorkel/blog/weak_supervision.html">blog</a>).
+
+  <br><br>
+
+  <b>Our upcoming release adds two new core operations as first class citizens in addition to
+  programmatic labeling.</b>
+  The first is <i>transforming</i> data points with transformation functions (TFs), our
+  general
+  <a href="https://hazyresearch.github.io/snorkel/blog/tanda.html">framework for data augmentation</a>.
+  The second is
+  <a href="https://dawn.cs.stanford.edu/2019/06/15/superglue/"><i>slicing</i> training data</a>
+  with slicing functions (SFs), in order to monitor and focus model attention on subsets of the
+  training dataset where classification is more critical or difficult.
+
+  <br><br>
+
+  <div class="figure">
+    <img src="june-2019-workshop-figs/fig_abstractions.png" width="60%" class="centered" />
+  </div>
+
+  <br><br>
+
+  We’re excited to bring these concepts to the forefront of programmatic data set creation.
+  Snorkel provides users with a flexible interface for applying state-of-the-art automated data
+  augmentation techniques like
+  <a href="https://hazyresearch.github.io/snorkel/blog/tanda.html">TANDA (NeurIPS 2017)</a>
+  to their problems.
+  Using this interface, attendees were able to reproduce state-of-the-art data augmentation
+  techniques for text applications &mdash; as well as create original ones &mdash; in a single work session.
+
+  <br><br>
+
+  Slicing is a more recent research advance, but has already powered state-of-the-art results like
+  our SuperGLUE system.
+  Workshop participants were interested in more academic literature on slicing, which we’ll be
+  releasing in the coming months.
+  In the meantime, check out our
+  <a href="https://dawn.cs.stanford.edu/2019/06/15/superglue/">blog post on slicing in SuperGLUE</a>
+  and the slicing
+  <a href="#workshop-contents">workshop materials</a> below.
+
+  <h3>Upgraded labeling pipeline</h3>
+
+  The programmatic labeling engine is getting updated to the latest and greatest.
+  The new core generative label model uses the matrix-completion approach studied in our
+  <a href="https://arxiv.org/abs/1810.02840">AAAI 2019</a> and
+  <a href="https://arxiv.org/abs/1903.05844">ICML 2019</a> 
+  papers and implemented in
+  <a href="https://github.com/HazyResearch/metal/">Snorkel MeTaL</a>.
+  The label model is currently implemented in PyTorch, but we’re starting work on a
+  TensorFlow-based and TFX servable version that many workshop participants requested.
+
+  <br><br>
+
+  <b>We're also providing native support for applying labeling functions using Spark and Dask</b>,
+  making it easier to work with massive data sets.
+  Spark integration in particular has been a common feature request, and this was echoed
+  by the workshop attendees.
+
+  <h3>General purpose engine for building and managing training data</h3>
+
+  We redesigned Snorkel in version 0.9 to be a general purpose engine
+  for programmatically building and managing training data sets across different domains
+  and ML problem types.
+  Whereas the current version of Snorkel is an end-to-end application for constructing
+  information extraction models, version 0.9 is a library of modules that can be used
+  in a wide range of applications.
+  We’re keeping the core programmatic labeling functionality from the current version,
+  but removing the extraction-specific tooling and database from the central library.
+  <b>Workshop attendees were excited about this change, as they could see how to apply Snorkel to their
+  ML use cases &mdash; whether they used text, image, or tabular data &mdash; in a straightforward way
+  and integrate with their existing data infrastructure.</b>
+
+  <br><br>
+
+  Many of our workshop participants also expressed their interest in continued support of the
+  current information extraction application version of Snorkel.
+  We’ll absolutely be doing this, hosted in a new GitHub repo called <pre>snorkel-extraction</pre>
+  which imports the central library in order to get access to the upgraded label model.
+
+  <br><br>
+
+  Our information extraction system is just one example of a Snorkel-powered
+  end-to-end application.
+  <b>We'll be releasing a host of other tutorials and examples in the next couple months.</b>
+  They’ll have a new home in a dedicated tutorials repo, where you'll be able to see Snorkel
+  applied to a wide variety of ML problems.
+
+  <h3>A modern Python library</h3>
+
+  Workshop participants were excited to learn that Snorkel will have modern installation support
+  with pip and conda, as well as lots and lots of unit and integration testing.
+  We also completed full API documentation &mdash; requested by just about every participant &mdash;
+  during a sprint following the workshop.
+  All of this will make it easier to get started with, receive support, and contribute to Snorkel.
+
+  <br><br>
+
+  Stay tuned for the full Snorkel v0.9 release post, where we’ll share more details and resources!
+
+
+  <h2 id="workshop-contents">Overview of Workshop Sessions</h2>
+
+  <br>
+
+  <div class="figure">
+    <img src="june-2019-workshop-figs/workshop-2.png" width="50%" class="centered" />
+  </div>
+
+  <br>
+
+  The workshop was structured around the three core Snorkel operations: labeling,
+  transforming, and slicing.
+  Labeling functions were covered on the first day, and transformation and slicing
+  functions covered on the second day.
+  We also explored code from our state-of-the-art SuperGLUE submission,
+  demonstrating transformation and slicing on several of the tasks.
+
+  <br><br>
+
+  The first half of each day was divided between presentations (both high-level and
+  technical or theoretical deep dives for those interested) and Jupyter notebook-based
+  tutorials.
+  We had two hours of open "office hours"-style sessions in the afternoon during which
+  participants could discuss potential use cases of Snorkel with us and each other,
+  as well as explore the tutorial notebooks and ask questions.
+  You can find workshop materials below!
+
+  <ul>
+    
+    <li>Introduction to Snorkel
+      (<a href="https://www.dropbox.com/sh/ipxmm6twu4p2qo1/AACztdxm-GTWxOkA7PfX2ooaa/Day%201?dl=0&preview=02_Snorkel.pdf&subfolder_nav_tracking=1">slides</a>)</li>
+    
+    <li>Designing and Iterating on Labeling Functions
+      (<a href="https://www.dropbox.com/sh/ipxmm6twu4p2qo1/AACztdxm-GTWxOkA7PfX2ooaa/Day%201?dl=0&preview=03_Tutorial.pdf&subfolder_nav_tracking=1">slides</a> | <a href="https://github.com/HazyResearch/snorkel/tree/redux/tutorials/workshop">tutorial</a>)</li>
+  
+    <li>Theory Introduction and Designing Snorkel Applications
+      (<a href="https://www.dropbox.com/sh/ipxmm6twu4p2qo1/AACztdxm-GTWxOkA7PfX2ooaa/Day%201?dl=0&preview=04_Theory_Apps.pdf&subfolder_nav_tracking=1">slides</a>)</li>
+  
+    <li>Introduction to Slicing Functions
+      (<a href="https://www.dropbox.com/sh/ipxmm6twu4p2qo1/AABUdQ0i0UOt46q11Ldgy6z7a/Day%202?dl=0&preview=02_Slicing.pdf&subfolder_nav_tracking=1">slides</a> | <a href="https://github.com/HazyResearch/snorkel-superglue/blob/master/tutorials/WiC_slicing_tutorial.ipynb">tutorial</a>)</li>
+  
+    <li>Introduction to Transformation Functions
+      (<a href="https://www.dropbox.com/sh/ipxmm6twu4p2qo1/AABUdQ0i0UOt46q11Ldgy6z7a/Day%202?dl=0&preview=03_Augmentation.pdf&subfolder_nav_tracking=1">slides</a> | <a href="https://github.com/HazyResearch/snorkel-superglue/blob/master/tutorials/WiC_augmentation_tutorial.ipynb">tutorial</a>)</li>
+  
+    <li>Multi-task and Transfer Learning
+      (<a href="https://www.dropbox.com/sh/ipxmm6twu4p2qo1/AABUdQ0i0UOt46q11Ldgy6z7a/Day%202?dl=0&preview=04_MTL.pdf&subfolder_nav_tracking=1">slides</a> | <a href="">tutorial</a>)</li>
+  
+    <li>Beating GLUE and SuperGLUE with Training Data
+      (<a href="https://www.dropbox.com/sh/ipxmm6twu4p2qo1/AABUdQ0i0UOt46q11Ldgy6z7a/Day%202?dl=0&preview=05_SuperGLUE.pdf&subfolder_nav_tracking=1">slides</a> | <a href="https://github.com/HazyResearch/snorkel-superglue/blob/master/tutorials/COPA_pretrain_tutorial.ipynb">tutorial 1</a> | <a href="https://github.com/HazyResearch/snorkel-superglue/blob/master/tutorials/RTE_slicing_tutorial.ipynb">tutorial 2</a>)</li>
+  
+  </ul>
+
+  Many of the tutorials as posted here were under active development.
+  The workshop attendees asked for updated versions with the initial Snorkel v0.9
+  release along with full GLUE and SuperGLUE code, which we’ll be providing in the new tutorials repo.
+
+
+
+  <h2>Looking Ahead</h2>
+  We’ve been working hard on Snorkel v0.9, and we hope this blog post has convinced you to try it out
+  when it's <b>released this August</b>.
+  And we want to give our workshop participants a massive thank you for their enthusiasm and feedback.
+  <b>If you’re interested in attending the next workshop following the release or staying up-to-date on
+  the latest developments, we encourage you to
+  <a href="https://groups.google.com/forum/#!forum/snorkel-ml">join our mailing list</a>
+  </b>(infrequent posts, we promise).
+  We’re excited to share Snorkel v0.9 with you and even more excited to hear your feedback,
+  so stay tuned for our full release announcement!
+
+  <br><br>
+
+    <div id="disqus_thread"></div>
+    <script>
+
+      /**
+      *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+      *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+      /*
+      var disqus_config = function () {
+      this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+      this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+      };
+      */
+      (function () { // DON'T EDIT BELOW THIS LINE
+        var d = document, s = d.createElement('script');
+        s.src = 'https://snorkel-stanford-edu.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+      })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by
+        Disqus.</a></noscript>
+
+</body>
+
+</html>

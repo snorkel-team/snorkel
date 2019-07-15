@@ -23,6 +23,9 @@ class SliceCombinerModule(nn.Module):
         Suffix of operation corresponding to the slice predictor heads
     slice_pred_feat_key
         Suffix of operation corresponding to the slice predictor features heads
+    tau
+        Temperature constant for scaling the weighting between indicator prediction
+        and predictor confidences: SoftMax(indicator_pred * predictor_confidence / tau)
 
     Attributes
     ----------
@@ -39,12 +42,14 @@ class SliceCombinerModule(nn.Module):
         slice_ind_key: str = "_ind_head",
         slice_pred_key: str = "_pred_head",
         slice_pred_feat_key: str = "_pred_transform",
+        tau: int = 0.1,
     ) -> None:
         super().__init__()
 
         self.slice_ind_key = slice_ind_key
         self.slice_pred_key = slice_pred_key
         self.slice_pred_feat_key = slice_pred_feat_key
+        self.tau = tau
 
     def forward(  # type:ignore
         self, flow_dict: Dict[str, List[torch.Tensor]]
@@ -102,7 +107,7 @@ class SliceCombinerModule(nn.Module):
         # Attention weights used to combine each of the slice_representations
         # incorporates the indicator (whether we are in the slice or not) and
         # predictor (confidence of a learned slice head)
-        A = F.softmax(indicator_preds * predictor_confidences, dim=1)
+        A = F.softmax(indicator_preds * predictor_confidences / self.tau, dim=1)
 
         # Match dims [batch_size x num_slices x feat_dim] of slice_representations
         A = A.unsqueeze(-1).expand([-1, -1, slice_representations.size(-1)])

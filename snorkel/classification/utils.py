@@ -103,7 +103,7 @@ def merge_config(config: Config, config_updates: Dict[str, Any]) -> Config:
     ```
     """
     for key, value in config_updates.items():
-        if key.endswith("_config") and isinstance(value, dict):
+        if isinstance(value, dict):
             config = config._replace(**{key: merge_config(getattr(config, key), value)})
         else:
             config = config._replace(**{key: value})

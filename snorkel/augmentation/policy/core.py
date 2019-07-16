@@ -78,7 +78,7 @@ class ApplyAllPolicy(Policy):
     n_tfs
         Total number of TFs
     n_per_original
-        Number of transformed data points per original
+        Number of transformed data points for each original data point
     keep_original
         Keep untransformed data point in augmented data set? Note that
         even if in-place modifications are made to the original data

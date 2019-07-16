@@ -3,7 +3,7 @@ from typing import Any, Counter, Iterable, List, Mapping, Optional, Sequence, Tu
 
 import numpy as np
 
-from .utils import to_flattened_int_array
+from .utils import to_int_label_array
 
 
 def error_buckets(
@@ -36,8 +36,8 @@ def error_buckets(
             instead.
     """
     buckets: Mapping[Tuple[int, int], List[Any]] = defaultdict(list)
-    golds = to_flattened_int_array(golds)
-    preds = to_flattened_int_array(preds)
+    golds = to_int_label_array(golds)
+    preds = to_int_label_array(preds)
     for i, (y, l) in enumerate(zip(preds, golds)):
         buckets[y, l].append(X[i] if X is not None else i)
     return dict(buckets)
@@ -76,8 +76,8 @@ def confusion_matrix(
     """
 
     conf = ConfusionMatrix(null_pred=null_pred, null_gold=null_gold)
-    golds = to_flattened_int_array(golds)
-    preds = to_flattened_int_array(preds)
+    golds = to_int_label_array(golds)
+    preds = to_int_label_array(preds)
     conf.add(golds, preds)
     mat = conf.compile()
 

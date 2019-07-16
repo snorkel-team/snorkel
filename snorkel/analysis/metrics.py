@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional
 import numpy as np
 import sklearn.metrics as skmetrics
 
-from .utils import filter_labels, to_flattened_int_array
+from .utils import filter_labels, to_int_label_array
 
 
 class Metric(NamedTuple):
@@ -57,13 +57,8 @@ def metric_score(
         filter_dict = {"golds": [0]}
 
     # Convert to numpy
-    golds = to_flattened_int_array(golds) if golds is not None else None
-    preds = to_flattened_int_array(preds) if preds is not None else None
-    probs = (
-        to_flattened_int_array(probs, flatten=False, cast_to_int=False)
-        if probs is not None
-        else None
-    )
+    golds = to_int_label_array(golds) if golds is not None else None
+    preds = to_int_label_array(preds) if preds is not None else None
 
     # Optionally filter out examples (e.g., abstain predictions or unknown labels)
     label_dict = {"golds": golds, "preds": preds, "probs": probs}

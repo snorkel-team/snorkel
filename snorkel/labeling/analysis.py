@@ -6,7 +6,7 @@ import scipy.sparse as sparse
 from pandas import DataFrame, Series
 
 from snorkel.analysis.error_analysis import confusion_matrix
-from snorkel.analysis.utils import to_flattened_int_array
+from snorkel.analysis.utils import to_int_label_array
 
 Matrix = Union[np.ndarray, sparse.csr_matrix]
 
@@ -276,7 +276,7 @@ def lf_empirical_accuracies(L: sparse.spmatrix, Y: np.ndarray) -> np.ndarray:
         Empirical accuracies for each LF
     """
     # Assume labeled set is small, work with dense matrices
-    Y = to_flattened_int_array(Y)
+    Y = to_int_label_array(Y)
     L = L.toarray()
     X = np.where(L == 0, 0, np.where(L == np.vstack([Y] * L.shape[1]).T, 1, -1))
     return np.nan_to_num(0.5 * (X.sum(axis=0) / (L != 0).sum(axis=0) + 1))
@@ -307,7 +307,7 @@ def lf_empirical_probs(L: sparse.spmatrix, Y: np.ndarray, k: int) -> np.ndarray:
     n, m = L.shape
 
     # Assume labeled set is small, work with dense matrices
-    Y = to_flattened_int_array(Y)
+    Y = to_int_label_array(Y)
     L = L.toarray()
 
     # Compute empirical conditional probabilities
@@ -397,6 +397,6 @@ def single_lf_summary(Y_p: np.ndarray, Y: Optional[np.ndarray] = None) -> DataFr
     pandas.DataFrame
         Summary statistics for LF
     """
-    L = sparse.csr_matrix(to_flattened_int_array(Y_p).reshape(-1, 1))
+    L = sparse.csr_matrix(to_int_label_array(Y_p).reshape(-1, 1))
     summary = lf_summary(L, Y)
     return summary[["Polarity", "Coverage", "Correct", "Incorrect", "Emp. Acc."]]

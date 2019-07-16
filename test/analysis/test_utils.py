@@ -7,7 +7,7 @@ from snorkel.analysis.utils import (
     filter_labels,
     preds_to_probs,
     probs_to_preds,
-    to_flattened_int_array,
+    to_int_label_array,
 )
 
 PROBS = np.array([[0.1, 0.9], [0.7, 0.3]])
@@ -26,23 +26,23 @@ class MetricsTest(unittest.TestCase):
             np.array([1, 1, 1]),
         )
 
-    def test_to_flattened_int_array(self):
-        X = np.array([[0.5]])
-        Y = to_flattened_int_array(X, cast_to_int=False, flatten=False)
-        np.testing.assert_array_equal(X, Y)
-
+    def test_to_int_label_array(self):
         X = np.array([[1], [0], [2.0]])
         Y_expected = np.array([1, 0, 2])
-        Y = to_flattened_int_array(X, cast_to_int=True, flatten=True)
+        Y = to_int_label_array(X, flatten=True)
+        np.testing.assert_array_equal(Y, Y_expected)
+
+        Y = to_int_label_array(X, flatten=False)
+        Y_expected = np.array([[1], [0], [2]])
         np.testing.assert_array_equal(Y, Y_expected)
 
         X = np.array([[1], [0], [2.1]])
         with self.assertRaisesRegex(ValueError, "non-integer value"):
-            to_flattened_int_array(X, cast_to_int=True)
+            to_int_label_array(X)
 
         X = np.array([[1, 0], [0, 1]])
         with self.assertRaisesRegex(ValueError, "1d np.array"):
-            to_flattened_int_array(X, flatten=True)
+            to_int_label_array(X, flatten=True)
 
     def test_pred_to_prob(self):
         np.testing.assert_array_equal(preds_to_probs(PREDS, 2), PREDS_ROUND)

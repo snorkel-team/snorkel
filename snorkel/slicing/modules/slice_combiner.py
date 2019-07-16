@@ -23,7 +23,7 @@ class SliceCombinerModule(nn.Module):
         Suffix of operation corresponding to the slice predictor heads
     slice_pred_feat_key
         Suffix of operation corresponding to the slice predictor features heads
-    tau
+    temperature
         Temperature constant for scaling the weighting between indicator prediction
         and predictor confidences: SoftMax(indicator_pred * predictor_confidence / tau)
 
@@ -42,14 +42,14 @@ class SliceCombinerModule(nn.Module):
         slice_ind_key: str = "_ind_head",
         slice_pred_key: str = "_pred_head",
         slice_pred_feat_key: str = "_pred_transform",
-        tau: float = 0.1,
+        temperature: float = 1.0,
     ) -> None:
         super().__init__()
 
         self.slice_ind_key = slice_ind_key
         self.slice_pred_key = slice_pred_key
         self.slice_pred_feat_key = slice_pred_feat_key
-        self.tau = tau
+        self.temperature = temperature
 
     def forward(  # type:ignore
         self, flow_dict: Dict[str, List[torch.Tensor]]
@@ -59,7 +59,7 @@ class SliceCombinerModule(nn.Module):
         Parameters
         ----------
         flow_dict
-            A dict of data fields cached operation outputs from indicator head,
+            A dict of data fields containing operation outputs from indicator head,
             predictor head, and predictor transform (corresponding to slice_ind_key,
             slice_pred_key, slice_pred_feat_key, respectively).
 
@@ -107,11 +107,15 @@ class SliceCombinerModule(nn.Module):
         # Attention weights used to combine each of the slice_representations
         # incorporates the indicator (whether we are in the slice or not) and
         # predictor (confidence of a learned slice head)
-        A = F.softmax(indicator_preds * predictor_confidences / self.tau, dim=1)
+        attention_weights = F.softmax(
+            indicator_preds * predictor_confidences / self.temperature, dim=1
+        )
 
         # Match dims [batch_size x num_slices x feat_dim] of slice_representations
-        A = A.unsqueeze(-1).expand([-1, -1, slice_representations.size(-1)])
+        attention_weights = attention_weights.unsqueeze(-1).expand(
+            [-1, -1, slice_representations.size(-1)]
+        )
 
         # Reweight representations with weighted sum across slices
-        reweighted_rep = torch.sum(A * slice_representations, dim=1)
+        reweighted_rep = torch.sum(attention_weights * slice_representations, dim=1)
         return reweighted_rep

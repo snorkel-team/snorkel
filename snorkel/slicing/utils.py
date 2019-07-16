@@ -126,13 +126,15 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         ind_module_pool = base_task.module_pool
         ind_module_pool[ind_head_module_name] = ind_head_module
 
-        # Create task_flow
+        # Define operations for task head
         ind_head_op = Operation(
             module_name=ind_head_module_name, inputs=head_module_op.inputs
         )
         ind_task_ops = [ind_head_op]
-        ind_task_flow = body_flow + ind_task_ops
         slice_task_ops.extend(ind_task_ops)
+
+        # Create task flow
+        ind_task_flow = body_flow + ind_task_ops
 
         # Create ind task
         ind_task = Task(
@@ -160,7 +162,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         pred_module_pool[pred_transform_module_name] = pred_transform_module
         pred_module_pool[pred_head_module_name] = shared_pred_head_module
 
-        # Create task_flow
+        # Define operations for task head
         pred_transform_op = Operation(
             module_name=pred_transform_module_name, inputs=head_module_op.inputs
         )
@@ -168,8 +170,10 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
             module_name=pred_head_module_name, inputs=[(pred_transform_op.name, 0)]
         )
         pred_task_ops = [pred_transform_op, pred_head_op]
-        pred_task_flow = body_flow + pred_task_ops
         slice_task_ops.extend(pred_task_ops)
+
+        # Create task flow
+        pred_task_flow = body_flow + pred_task_ops
 
         # Create pred task
         pred_task = Task(

@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 
-from snorkel.classification.data import DictDataLoader
+from snorkel.classification.data import DictDataLoader  # noqa: F401
 from snorkel.classification.snorkel_classifier import (
     ClassifierConfig,
     SnorkelClassifier,
@@ -203,9 +203,7 @@ class Trainer:
         self.name = name if name is not None else type(self).__name__
 
     def train_model(
-        self,
-        model: SnorkelClassifier,
-        dataloaders: List["DictDataLoader"],  # noqa: F401
+        self, model: SnorkelClassifier, dataloaders: List["DictDataLoader"]
     ) -> None:
         """Train a SnorkelClassifier.
 

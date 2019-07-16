@@ -203,7 +203,9 @@ class Trainer:
         self.name = name if name is not None else type(self).__name__
 
     def train_model(
-        self, model: SnorkelClassifier, dataloaders: List["DictDataLoader"]  # noqa: F401
+        self,
+        model: SnorkelClassifier,
+        dataloaders: List["DictDataLoader"],  # noqa: F401
     ) -> None:
         """Train a SnorkelClassifier.
 

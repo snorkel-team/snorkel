@@ -125,8 +125,8 @@ class TestGenerateResamplingTFs(unittest.TestCase):
         data = generate_mog_dataset(10, 4)
         tf_dim = 0
         tfs = generate_resampling_tfs(dims=[tf_dim])
-        policy = ApplyOnePolicy()
-        applier = PandasTFApplier(tfs, policy, keep_original=False)
+        policy = ApplyOnePolicy(keep_original=False)
+        applier = PandasTFApplier(tfs, policy)
         data_augmented = applier.apply(data)
         X = np.array(data.x.tolist())
         X_augmented = np.array(data_augmented.x.tolist())

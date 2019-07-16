@@ -15,9 +15,7 @@ class PandasTFApplier(BaseTFApplier):
     For large datasets, consider ``DaskTFApplier`` or ``SparkTFApplier``.
     """
 
-    def apply_generator(  # type: ignore
-        self, df: pd.DataFrame, batch_size: int
-    ) -> pd.DataFrame:
+    def apply_generator(self, df: pd.DataFrame, batch_size: int) -> pd.DataFrame:
         """Augment a Pandas DataFrame of data points using TFs and policy in batches.
 
         This method acts as a generator, yielding augmented data points for
@@ -46,7 +44,7 @@ class PandasTFApplier(BaseTFApplier):
                 batch_transformed = []
         yield pd.concat(batch_transformed, axis=1).T
 
-    def apply(self, df: pd.DataFrame) -> pd.DataFrame:  # type: ignore
+    def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         """Augment a Pandas DataFrame of data points using TFs and policy.
 
         Parameters

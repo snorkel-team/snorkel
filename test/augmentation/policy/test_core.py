@@ -1,25 +1,15 @@
 import unittest
 
-from snorkel.augmentation.policy import MeanFieldPolicy, RandomPolicy
+from snorkel.augmentation.policy import ApplyAllPolicy, ApplyEachPolicy
 
 
-class TestAugmentationPolicy(unittest.TestCase):
-    def test_random_augmentation_policy(self):
-        policy = RandomPolicy(2, sequence_length=2)
-        n_samples = 100
-        samples = [policy.generate() for _ in range(n_samples)]
-        a_ct = samples.count([0, 0])
-        b_ct = samples.count([0, 1])
-        c_ct = samples.count([1, 0])
-        d_ct = samples.count([1, 1])
-        self.assertGreater(a_ct, 0)
-        self.assertGreater(b_ct, 0)
-        self.assertGreater(c_ct, 0)
-        self.assertGreater(d_ct, 0)
-        self.assertEqual(a_ct + b_ct + c_ct + d_ct, n_samples)
+class TestPolicy(unittest.TestCase):
+    def test_apply_each_policy(self):
+        policy = ApplyEachPolicy(3, keep_original=True)
+        samples = policy.generate_for_example()
+        self.assertEqual(samples, [[], [0], [1], [2]])
 
-    def test_mean_field_augmentation_policy(self):
-        policy = MeanFieldPolicy(2, sequence_length=2, p=[1, 0])
-        n_samples = 100
-        samples = [policy.generate() for _ in range(n_samples)]
-        self.assertEqual(samples.count([0, 0]), n_samples)
+    def test_apply_all_policy(self):
+        policy = ApplyAllPolicy(3, n_per_original=2, keep_original=False)
+        samples = policy.generate_for_example()
+        self.assertEqual(samples, [[0, 1, 2], [0, 1, 2]])

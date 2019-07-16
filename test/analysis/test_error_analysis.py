@@ -15,8 +15,8 @@ class ErrorAnalysisTest(unittest.TestCase):
         )
 
     def test_confusion_matrix(self) -> None:
-        preds = [0, 2, 2, 3, 1, 0, 1, 3]
-        golds = [1, 2, 2, 0, 3, 0, 2, 3]
+        preds = np.array([0, 2, 2, 3, 1, 0, 1, 3])
+        golds = np.array([1, 2, 2, 0, 3, 0, 2, 3])
 
         mat = confusion_matrix(
             golds, preds, null_pred=False, null_gold=False, normalize=False

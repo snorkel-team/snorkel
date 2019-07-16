@@ -1,8 +1,9 @@
 from functools import partial
 from typing import Callable, Dict, List, Mapping, Optional
 
+import numpy as np
+
 from snorkel.analysis.metrics import METRICS, metric_score
-from snorkel.types import ArrayLike
 
 
 class Scorer:
@@ -50,7 +51,7 @@ class Scorer:
             self.metrics.update(custom_metric_funcs)
 
     def score(
-        self, golds: ArrayLike, preds: ArrayLike, probs: ArrayLike
+        self, golds: np.ndarray, preds: np.ndarray, probs: np.ndarray
     ) -> Dict[str, float]:
         """Calculate one or more scores from user-specified and/or user-defined metrics.
 

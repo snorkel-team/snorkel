@@ -23,7 +23,6 @@ from snorkel.classification.data import DictDataLoader
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_config import default_config
 from snorkel.classification.utils import move_to_device, recursive_merge_dicts
-from snorkel.types import ArrayLike
 
 from .task import Operation, Task
 
@@ -328,7 +327,7 @@ class SnorkelClassifier(nn.Module):
             prob_dict[task_name] = np.array(prob_dict_list[task_name])
 
         if return_preds:
-            pred_dict: Dict[str, ArrayLike] = defaultdict(list)
+            pred_dict: Dict[str, np.ndarray] = defaultdict(list)
             for task_name, probs in prob_dict.items():
                 pred_dict[task_name] = probs_to_preds(probs)
 

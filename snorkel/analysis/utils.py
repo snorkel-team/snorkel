@@ -2,10 +2,7 @@ import random
 from typing import Dict, List, Optional, Union
 
 import numpy as np
-import scipy.sparse as sparse
 import torch
-
-from snorkel.types import ArrayLike
 
 
 def set_seed(seed: int) -> None:
@@ -49,71 +46,53 @@ def preds_to_probs(preds: np.ndarray, num_classes: int) -> np.ndarray:
     return np.eye(num_classes)[preds.squeeze() - 1]
 
 
-def arraylike_to_numpy(
-    array_like: ArrayLike, flatten: bool = True, cast_to_int: bool = True
+def to_flattened_int_array(
+    X: np.ndarray, flatten: bool = True, cast_to_int: bool = True
 ) -> np.ndarray:
-    """Convert an ArrayLike (e.g., list, tensor, etc.) to a numpy array.
+    """Convert an array to a flattened vector of ints.
 
-    Also optionally flatten [n, 1] arrays to [n] and cast all values to ints.
+    Flatten [n, 1] arrays to [n] and cast all values to ints.
     This method is typically used to sanitize labels before use with analysis tools or
-    metrics that expect 1D numpy arrays as inputs.
+    metrics that expect 1D arrays as inputs.
 
     Parameters
     ----------
-    array_like
-        An Arraylike to convert
+    X
+        An array to possibly flatten and possibly cast to int
     flatten
-        If True, flatten numpy array into a 1D array
+        If True, flatten array into a 1D array
     cast_to_int
         If True, cast all values to ints
 
     Returns
     -------
     np.ndarray
-        The input converted to an np.ndarray
+        The converted array
 
     Raises
     ------
     ValueError
         Provided input could not be converted to an np.ndarray
     """
-
-    orig_type = type(array_like)
-
-    # Convert to np.ndarray
-    if isinstance(array_like, np.ndarray):
-        pass
-    elif isinstance(array_like, list):
-        array_like = np.array(array_like)
-    elif isinstance(array_like, sparse.spmatrix):
-        array_like = array_like.toarray()
-    elif isinstance(array_like, torch.Tensor):
-        array_like = array_like.numpy()
-    elif not isinstance(array_like, np.ndarray):
-        array_like = np.array(array_like)
-    else:
-        msg = f"Input of type {orig_type} could not be converted to an np.ndarray"
-        raise ValueError(msg)
-
     # Correct shape
     if flatten:
-        if (array_like.ndim > 1) and (1 in array_like.shape):
-            array_like = array_like.flatten()
-        if array_like.ndim != 1:
+        if (X.ndim > 1) and (1 in X.shape):
+            X = X.flatten()
+        if X.ndim != 1:
             raise ValueError("Input could not be converted to 1d np.array")
 
     # Convert to ints
     if cast_to_int:
-        if np.any(np.not_equal(np.mod(array_like, 1), 0)):
+        if np.any(np.not_equal(np.mod(X, 1), 0)):
             raise ValueError("Input contains at least one non-integer value.")
-        array_like = array_like.astype(np.dtype(int))
+        X = X.astype(np.dtype(int))
 
-    return array_like
+    return X
 
 
 def convert_labels(
     Y: Optional[Union[np.ndarray, torch.Tensor]], source: str, target: str
-) -> ArrayLike:
+) -> Union[np.ndarray, torch.Tensor]:
     """Convert a matrix from one label type convention to another.
 
     The conventions are:

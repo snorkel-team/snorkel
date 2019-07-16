@@ -6,8 +6,7 @@ import scipy.sparse as sparse
 from pandas import DataFrame, Series
 
 from snorkel.analysis.error_analysis import confusion_matrix
-from snorkel.analysis.utils import arraylike_to_numpy
-from snorkel.types import ArrayLike
+from snorkel.analysis.utils import to_flattened_int_array
 
 Matrix = Union[np.ndarray, sparse.csr_matrix]
 
@@ -259,7 +258,7 @@ def lf_conflicts(L: sparse.spmatrix, normalize_by_overlaps: bool = False) -> np.
     return np.nan_to_num(conflicts)
 
 
-def lf_empirical_accuracies(L: sparse.spmatrix, Y: ArrayLike) -> np.ndarray:
+def lf_empirical_accuracies(L: sparse.spmatrix, Y: np.ndarray) -> np.ndarray:
     """Compute empirical accuracy against a set of labels Y for each LF.
 
     Usually, Y represents development set labels.
@@ -277,13 +276,13 @@ def lf_empirical_accuracies(L: sparse.spmatrix, Y: ArrayLike) -> np.ndarray:
         Empirical accuracies for each LF
     """
     # Assume labeled set is small, work with dense matrices
-    Y = arraylike_to_numpy(Y)
+    Y = to_flattened_int_array(Y)
     L = L.toarray()
     X = np.where(L == 0, 0, np.where(L == np.vstack([Y] * L.shape[1]).T, 1, -1))
     return np.nan_to_num(0.5 * (X.sum(axis=0) / (L != 0).sum(axis=0) + 1))
 
 
-def lf_empirical_probs(L: sparse.spmatrix, Y: ArrayLike, k: int) -> np.ndarray:
+def lf_empirical_probs(L: sparse.spmatrix, Y: np.ndarray, k: int) -> np.ndarray:
     """Estimate conditional probability tables for each LF.
 
     Computes conditional probability tables, P(L | Y), for each LF using
@@ -308,7 +307,7 @@ def lf_empirical_probs(L: sparse.spmatrix, Y: ArrayLike, k: int) -> np.ndarray:
     n, m = L.shape
 
     # Assume labeled set is small, work with dense matrices
-    Y = arraylike_to_numpy(Y)
+    Y = to_flattened_int_array(Y)
     L = L.toarray()
 
     # Compute empirical conditional probabilities
@@ -323,7 +322,7 @@ def lf_empirical_probs(L: sparse.spmatrix, Y: ArrayLike, k: int) -> np.ndarray:
 
 def lf_summary(
     L: sparse.spmatrix,
-    Y: Optional[ArrayLike] = None,
+    Y: Optional[np.ndarray] = None,
     lf_names: Optional[Union[List[str], List[int]]] = None,
     est_accs: Optional[np.ndarray] = None,
 ) -> DataFrame:
@@ -365,7 +364,7 @@ def lf_summary(
     if Y is not None:
         col_names.extend(["Correct", "Incorrect", "Emp. Acc."])
         confusions = [
-            confusion_matrix(Y, L[:, i], pretty_print=False) for i in range(m)
+            confusion_matrix(Y, L[:, i].toarray(), pretty_print=False) for i in range(m)
         ]
         corrects = [np.diagonal(conf).sum() for conf in confusions]
         incorrects = [
@@ -383,7 +382,7 @@ def lf_summary(
     return DataFrame(data=d, index=lf_names)[col_names]
 
 
-def single_lf_summary(Y_p: ArrayLike, Y: Optional[ArrayLike] = None) -> DataFrame:
+def single_lf_summary(Y_p: np.ndarray, Y: Optional[np.ndarray] = None) -> DataFrame:
     """Calculate coverage, overlap, conflicts, and accuracy for a single LF.
 
     Parameters
@@ -398,6 +397,6 @@ def single_lf_summary(Y_p: ArrayLike, Y: Optional[ArrayLike] = None) -> DataFram
     pandas.DataFrame
         Summary statistics for LF
     """
-    L = sparse.csr_matrix(arraylike_to_numpy(Y_p).reshape(-1, 1))
+    L = sparse.csr_matrix(to_flattened_int_array(Y_p).reshape(-1, 1))
     summary = lf_summary(L, Y)
     return summary[["Polarity", "Coverage", "Correct", "Incorrect", "Emp. Acc."]]

@@ -9,6 +9,16 @@ from snorkel.types import Config
 
 
 class LogWriterConfig(Config):
+    """Manager for checkpointing model.
+
+    Parameters
+    ----------
+    log_dir
+        The root directory where logs should be saved
+    run_name
+        The name of this particular run (defaults to date-time combination if None)
+    """
+
     log_dir: str = "logs"
     run_name: Optional[str] = None
 
@@ -28,7 +38,7 @@ class LogWriter:
     run_name
         Name of run if provided, otherwise date-time combination
     log_dir
-        Path root logging directory
+        The root directory where logs should be saved
     run_log
         Dictionary of scalar values to log, keyed by value name
     """

@@ -2,7 +2,7 @@ import glob
 import logging
 import os
 from shutil import copyfile
-from typing import Any, Dict, Iterable, Optional, Set
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
 from snorkel.types import Config
@@ -11,12 +11,36 @@ Metrics = Dict[str, float]
 
 
 class CheckpointerConfig(Config):
-    checkpoint_dir: Optional[str] = None  # Trainer will set this to log_dir if None
-    checkpoint_factor: int = 1  # Checkpoint every this many evaluations
-    checkpoint_metric: str = "modelall/train/loss:min"
-    checkpoint_task_metrics: Optional[Dict[str, str]] = None  # task_metric_name:mode
-    checkpoint_runway: int = 0  # checkpointing runway (no checkpointing before k unit)
-    checkpoint_clear: bool = True  # whether
+    """Manager for checkpointing model.
+
+    Parameters
+    ----------
+    checkpoint_dir
+        The path to a directory where checkpoints will be saved
+        The Trainer will set this to the log directory if it is None
+    checkpoint_factor
+        Check for a best model every this many evaluations. For example, if
+        evaluation_freq is 0.5 epochs and checkpoint_factor is 2, then checkpointing
+        will be attempted every 1 epochs.
+    checkpoint_metric
+        The metric to checkpoint on, of the form "task/dataset/split/metric:mode" where
+        mode is "min" or "max".
+    checkpoint_task_metrics
+        Additional metrics to save best models for. Note that the best model according
+        to `checkpoint_metric` will be the one that is loaded after training and used
+        for early stopping.
+    checkpoint_runway
+        No checkpointing will occur for the first this many checkpoint_units
+    checkpoint_clear
+        If True, clear all checkpoints besides the best so far.
+    """
+
+    checkpoint_dir: Optional[str] = None
+    checkpoint_factor: int = 1
+    checkpoint_metric: str = "model/all/train/loss:min"
+    checkpoint_task_metrics: Optional[List[str]] = None
+    checkpoint_runway: int = 0
+    checkpoint_clear: bool = True
 
 
 class Checkpointer(object):
@@ -24,6 +48,12 @@ class Checkpointer(object):
 
     Parameters
     ----------
+    counter_unit
+        The unit to use when determining when its time to checkpoint (one of
+        ["epochs", "batches", "points"]); must match the counter_unit of LogManager
+    evaluation_freq
+        How frequently the model is being evaluated (this is the maximum frequency that
+        checkpointing can occur, which will happen if checkpoint_factor==1)
     kwargs
         Config merged with `default_config["checkpointer_config"]`
     """
@@ -149,7 +179,7 @@ class Checkpointer(object):
     def clear(self) -> None:
         """Clear existing checkpoint files, besides the best-yet model."""
         if self.checkpoint_clear:
-            logging.info("Clear all immediate checkpoints.")
+            logging.info("Clear all checkpoints other than best so far.")
             file_list = glob.glob(f"{self.checkpoint_dir}/checkpoint_*.pth")
             for fname in file_list:
                 os.remove(fname)

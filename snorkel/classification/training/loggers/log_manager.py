@@ -9,8 +9,19 @@ from .log_writer import LogWriter
 
 
 class LogManagerConfig(Config):
-    counter_unit: str = "epochs"  # [points, batches, epochs]
-    evaluation_freq: float = 1.0  # Evaluate performance every this many counter_units
+    """Manager for checkpointing model.
+
+    Parameters
+    ----------
+    counter_unit
+        The unit to use when assessing when it's time to log.
+        Options are ["epochs", "batches", "points"]
+    evaluation_freq:
+        Evaluate performance on the validation set every this many counter_units
+    """
+
+    counter_unit: str = "epochs"
+    evaluation_freq: float = 1.0
 
 
 class LogManager(object):

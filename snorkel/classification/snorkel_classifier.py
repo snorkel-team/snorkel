@@ -30,6 +30,18 @@ OutputDict = Dict[str, Mapping[Union[str, int], Any]]
 
 
 class ClassifierConfig(Config):
+    """A classifier built from one or more tasks to support advanced workflows.
+
+    Parameters
+    ----------
+    device
+        The device (GPU) to move the model to (-1 is CPU), but device will also be
+        moved to CPU if no GPU device is available
+    dataparallel
+        Whether or not to use PyTorch DataParallel wrappers to automatically utilize
+        multiple GPUs if available
+    """
+
     device: int = 0
     dataparallel: bool = True
 

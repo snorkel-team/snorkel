@@ -29,38 +29,71 @@ Metrics = Dict[str, float]
 
 
 class SGDOptimizerConfig(Config):
+    """Settings for SGD optimizer."""
+
     momentum: float = 0.9
 
 
 class AdamOptimizerConfig(Config):
+    """Settings for Adam optimizer."""
+
     amsgrad: bool = False
     betas: Tuple[float, float] = (0.9, 0.999)
 
 
 class AdamaxOptimizerConfig(Config):
+    """Settings for Adamax optimizer."""
+
     betas: Tuple[float, float] = (0.9, 0.999)
     eps: float = 1e-8
 
 
 class OptimizerConfig(Config):
-    lr: float = 0.001  # learing rate
-    l2: float = 0.0  # l2 regularization
-    grad_clip: float = 1.0  # gradient clipping
+    """Settings common to all optimizers."""
+
+    lr: float = 0.001
+    l2: float = 0.0
+    grad_clip: float = 1.0
     sgd_config: SGDOptimizerConfig = SGDOptimizerConfig()  # type:ignore
     adam_config: AdamOptimizerConfig = AdamOptimizerConfig()  # type:ignore
     adamax_config: AdamaxOptimizerConfig = AdamaxOptimizerConfig()  # type:ignore
 
 
 class ExponentialLRSchedulerConfig(Config):
+    """Settings for Exponential decay learning rate scheduler."""
+
     gamma: float = 0.9
 
 
 class StepLRSchedulerConfig(Config):
+    """Settings for Step decay learning rate scheduler."""
+
     gamma: float = 0.9
     step_size: int = 5
 
 
 class LRSchedulerConfig(Config):
+    """Manager for checkpointing model.
+
+    Parameters
+    ----------
+    warmup_steps
+        The number of warmup_units over which to perform learning rate warmup (a linear
+        increase from 0 to the specified lr)
+    warmup_unit
+        The unit to use when counting warmup (one of ["batches", "epochs"])
+    warmup_percentage
+        The percentage of the training procedure to warm up over (ignored if
+        warmup_steps is non-zero)
+    min_lr
+        The minimum learning rate to use during training (the learning rate specified
+        by a learning rate scheduler will be rounded up to this if it is lower)
+    exponential_config
+        Extra settings for the ExponentialLRScheduler
+    step_config
+        Extra settings for the StepLRScheduler
+    """
+
     warmup_steps: float = 0  # warm up steps
     warmup_unit: str = "batches"  # [epochs, batches]
     warmup_percentage: float = 0.0  # warm up percentage
@@ -70,24 +103,67 @@ class LRSchedulerConfig(Config):
 
 
 class TrainerConfig(Config):
-    seed: Optional[int] = None  # Random seed; if None, seed is not set.
-    n_epochs: int = 1  # total number of learning epochs
-    train_split: str = "train"  # the split to use for training
-    valid_split: str = "valid"  # the split to use for validation
-    test_split: str = "test"  # the split to use for testing
+    """Manager for checkpointing model.
+
+    Parameters
+    ----------
+    seed
+        A random seed to set before training; if None, no seed is set
+    n_epochs
+        The number of epochs to train
+    train_split
+        The name of the split to use as the training set
+    valid_split
+        The name of the split to use as the validation set
+    test_split
+        The name of the split to use as the test set
+    progress_bar
+        If True, print a tqdm progress bar during training
+    model_config
+        Settings for the SnorkelClassifier
+    log_manager_config
+        Settings for the LogManager
+    checkpointing
+        If True, use a Checkpointer to save the best model during training
+    checkpointer_config
+        Settings for the Checkpointer
+    logging
+        If True, log metrics (to file or Tensorboard) during training
+    log_writer
+        The type of LogWriter to use (one of ["json", "tensorboard"])
+    log_writer_config
+        Settings for the LogWriter
+    optimizer
+        Which optimizer to use (one of ["sgd", "adam"])
+    optimizer_config
+        Settings for the optimizer
+    lr_scheduler
+        Which lr_scheduler to use (one of ["constant", "linear", "exponential", "step"])
+    lr_scheduler_config
+        Settings for the LRScheduler
+    batch_scheduler
+        Which batch scheduler to use (in what order batches will be drawn from multiple
+        tasks)
+    """
+
+    seed: Optional[int] = None
+    n_epochs: int = 1
+    train_split: str = "train"
+    valid_split: str = "valid"
+    test_split: str = "test"
     progress_bar: bool = True
     model_config: ClassifierConfig = ClassifierConfig()  # type:ignore
     log_manager_config: LogManagerConfig = LogManagerConfig()  # type:ignore
-    checkpointing: bool = False  # Whether to save checkpoints of best performing models
+    checkpointing: bool = False
     checkpointer_config: CheckpointerConfig = CheckpointerConfig()  # type:ignore
-    logging: bool = False  # Whether to write logs (to json/tensorboard)
-    log_writer: str = "tensorboard"  # [json, tensorboard]
+    logging: bool = False
+    log_writer: str = "tensorboard"
     log_writer_config: LogWriterConfig = LogWriterConfig()  # type:ignore
-    optimizer: str = "adam"  # [sgd, adam]
+    optimizer: str = "adam"
     optimizer_config: OptimizerConfig = OptimizerConfig()  # type:ignore
-    lr_scheduler: str = "constant"  # [constant, linear, exponential, step]
+    lr_scheduler: str = "constant"
     lr_scheduler_config: LRSchedulerConfig = LRSchedulerConfig()  # type:ignore
-    batch_scheduler: str = "shuffled"  # [sequential, shuffled]
+    batch_scheduler: str = "shuffled"
 
 
 class Trainer:
@@ -121,9 +197,9 @@ class Trainer:
     """
 
     def __init__(self, name: Optional[str] = None, **kwargs: Any) -> None:
-        self.config: TrainerConfig = merge_config(
-            TrainerConfig(), kwargs
-        )  # type:ignore
+        self.config: TrainerConfig = merge_config(  # type:ignore
+            TrainerConfig(), kwargs  # type:ignore
+        )
         self.name = name if name is not None else type(self).__name__
 
     def train_model(
@@ -294,7 +370,6 @@ class Trainer:
         )
 
     def _set_optimizer(self, model: nn.Module) -> None:
-        # TODO: add more optimizer support and fp16
         optimizer_config = self.config.optimizer_config
         optimizer_name = self.config.optimizer
 
@@ -335,7 +410,6 @@ class Trainer:
         self._set_warmup_scheduler()
 
         # Set lr scheduler
-        # TODO: add more lr scheduler support
         lr_scheduler_name = self.config.lr_scheduler
         lr_scheduler_config = self.config.lr_scheduler_config
         lr_scheduler: Optional[optim.lr_scheduler._LRScheduler]

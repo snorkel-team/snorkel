@@ -203,7 +203,7 @@ class Trainer:
         self.name = name if name is not None else type(self).__name__
 
     def train_model(
-        self, model: SnorkelClassifier, dataloaders: List[DictDataLoader]
+        self, model: SnorkelClassifier, dataloaders: List["DictDataLoader"]  # noqa: F401
     ) -> None:
         """Train a SnorkelClassifier.
 
@@ -213,7 +213,7 @@ class Trainer:
             The model to train
         dataloaders
             A list of DataLoaders. These will split into train, valid, and test splits
-            based on the `split` attribute of the DataLoaders.
+            based on the ``split`` attribute of the DataLoaders.
         """
         self._check_dataloaders(dataloaders)
 
@@ -308,7 +308,7 @@ class Trainer:
 
         model = self.log_manager.close(model)
 
-    def _check_dataloaders(self, dataloaders: List[DictDataLoader]) -> None:
+    def _check_dataloaders(self, dataloaders: List["DictDataLoader"]) -> None:
         """Validate the dataloader splits."""
         train_split = self.config.train_split
         valid_split = self.config.valid_split
@@ -491,7 +491,7 @@ class Trainer:
         self.batch_scheduler = scheduler_class()  # type: ignore
 
     def _evaluate(
-        self, model: SnorkelClassifier, dataloaders: List[DictDataLoader], split: str
+        self, model: SnorkelClassifier, dataloaders: List["DictDataLoader"], split: str
     ) -> Metrics:
         """Evalute the current quality of the model on data for the requested split."""
         loaders = [d for d in dataloaders if d.dataset.split in split]  # type: ignore
@@ -500,7 +500,7 @@ class Trainer:
     def _logging(
         self,
         model: SnorkelClassifier,
-        dataloaders: List[DictDataLoader],
+        dataloaders: List["DictDataLoader"],
         batch_size: int,
     ) -> Metrics:
         """Log and checkpoint if it is time to do so."""

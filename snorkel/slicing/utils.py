@@ -31,7 +31,7 @@ def add_slice_labels(
     slice_labels
         A [num_examples x num_slices] slice matrix (output of SFApplier)
     slice_names
-        A list of slice names corresponding to columns of `slice_labels`
+        A list of slice names corresponding to columns of ``slice_labels``
     """
 
     slice_labels = slice_labels.toarray()

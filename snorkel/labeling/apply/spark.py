@@ -13,11 +13,11 @@ from .core import BaseLFApplier, RowData, apply_lfs_to_data_point
 class SparkLFApplier(BaseLFApplier):
     """LF applier for a Spark RDD.
 
-    Data points are stored as `Row`s in an RDD, and a Spark
-    `map` job is submitted to execute the LFs. A common
+    Data points are stored as ``Row``s in an RDD, and a Spark
+    ``map`` job is submitted to execute the LFs. A common
     way to obtain an RDD is via a PySpark DataFrame. For an
     example usage with AWS EMR instructions, see
-    `test/labeling/apply/lf_applier_spark_test_script.py`.
+    ``test/labeling/apply/lf_applier_spark_test_script.py``.
     """
 
     def apply(self, data_points: RDD) -> sparse.csr_matrix:

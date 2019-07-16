@@ -275,7 +275,7 @@ class LSTMModule(nn.Module):
         return reduced[inv_perm_idx, :]
 
 
-class Featurizer(object):
+class Featurizer:
     def fit(self, input):
         """
         Args:

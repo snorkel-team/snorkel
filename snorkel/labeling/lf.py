@@ -1,8 +1,7 @@
 from typing import Any, Callable, List, Mapping, Optional
 
+from snorkel.labeling.preprocess import BasePreprocessor
 from snorkel.types import DataPoint
-
-from .preprocess import BasePreprocessor
 
 
 class LabelingFunction:
@@ -17,7 +16,7 @@ class LabelingFunction:
     about the input data types and label space are stored. Extra
     functionality, such as running preprocessors and storing
     resources, is provided. Simple LFs can be defined via a
-    decorator. See `labeling_function`.
+    decorator. See ``labeling_function``.
 
     Parameters
     ----------
@@ -26,11 +25,16 @@ class LabelingFunction:
     f
         Function that implements the core LF logic
     resources
-        Labeling resources passed in to `f` via `kwargs`
+        Labeling resources passed in to ``f`` via ``kwargs``
     preprocessors
         Preprocessors to run on data points before LF execution
     fault_tolerant
         Output 0 if LF execution fails?
+
+    Raises
+    ------
+    ValueError
+        Calling incorrectly defined preprocessors
 
     Attributes
     ----------
@@ -38,11 +42,6 @@ class LabelingFunction:
         See above
     fault_tolerant
         See above
-
-    Raises
-    ------
-    ValueError
-        Calling incorrectly defined preprocessors
     """
 
     def __init__(
@@ -104,7 +103,7 @@ class labeling_function:
     name
         Name of the LF. If None, uses the name of the wrapped function.
     resources
-        Labeling resources passed in to `f` via `kwargs`
+        Labeling resources passed in to ``f`` via ``kwargs``
     preprocessors
         Preprocessors to run on data points before LF execution
     fault_tolerant
@@ -112,17 +111,17 @@ class labeling_function:
 
     Examples
     --------
-    ```
-    @labeling_function()
-    def f(x: DataPoint) -> int:
-        return 1 if x.a > 42 else 0
-    print(f)  # "Labeling function f"
+    >>> @labeling_function()
+    ... def f(x: DataPoint) -> int:
+    ...     return 1 if x.a > 42 else 0
+    >>> f
+    LabelingFunction f, Preprocessors: []
 
-    @labeling_function(name="my_lf")
-    def g(x: DataPoint) -> int:
-        return 1 if x.a > 42 else 0
-    print(g)  # "Labeling function my_lf"
-    ```
+    >>> @labeling_function(name="my_lf")
+    ... def g(x: DataPoint) -> int:
+    ...     return 1 if x.a > 42 else 0
+    >>> g
+    LabelingFunction my_lf, Preprocessors: []
     """
 
     def __init__(
@@ -138,7 +137,7 @@ class labeling_function:
         self.fault_tolerant = fault_tolerant
 
     def __call__(self, f: Callable[..., int]) -> LabelingFunction:
-        """Wrap a function to create a `LabelingFunction`.
+        """Wrap a function to create a ``LabelingFunction``.
 
         Parameters
         ----------
@@ -148,7 +147,7 @@ class labeling_function:
         Returns
         -------
         LabelingFunction
-            New `LabelingFunction` executing logic in wrapped function
+            New ``LabelingFunction`` executing logic in wrapped function
         """
         name = self.name or f.__name__
         return LabelingFunction(

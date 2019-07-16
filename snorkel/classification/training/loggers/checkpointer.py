@@ -43,7 +43,7 @@ class CheckpointerConfig(Config):
     checkpoint_clear: bool = True
 
 
-class Checkpointer(object):
+class Checkpointer:
     """Manager for checkpointing model.
 
     Parameters
@@ -55,7 +55,7 @@ class Checkpointer(object):
         How frequently the model is being evaluated (this is the maximum frequency that
         checkpointing can occur, which will happen if checkpoint_factor==1)
     kwargs
-        Config merged with `default_config["checkpointer_config"]`
+        Config merged with ``default_config["checkpointer_config"]``
     """
 
     def __init__(

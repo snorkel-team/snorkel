@@ -10,15 +10,24 @@ cache: pip
 # python3.7 only available on xenial
 dist: xenial
 
-env:
-  TOXENV=coverage,spark,complex,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-
 jobs:
   include:
-    - name: "Tests: python3.6"
+    - if: type = pull_request
+      name: "Python 3.6: unit tests"
       python: 3.6
-    - name: "Tests: python3.7"
+      env: TOXENV=coverage,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    - if: type = pull_request
+      name: "Python 3.7: unit tests"
       python: 3.7
+      env: TOXENV=coverage,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    - if: type != pull_request
+      name: "Python 3.6: unit + integration tests"
+      python: 3.6
+      env: TOXENV=coverage,complex,spark,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    - if: type != pull_request
+      name: "Python 3.7: unit + integration tests"
+      python: 3.7
+      env: TOXENV=coverage,complex,spark,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 
 # Install JDK8 for PySpark tests
 before_install:

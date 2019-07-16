@@ -30,10 +30,6 @@ def modify_in_place(x: DataPoint) -> DataPoint:
     return x
 
 
-policy = RandomPolicy(1, sequence_length=2)
-policy_modify_in_place = ApplyOnePolicy()
-
-
 DATA = [1, 2, 3]
 DATA_IN_PLACE_EXPECTED = [
     dict(my_key=(1 + i // 3) if i % 3 == 0 else 0) for i in range(9)
@@ -58,23 +54,21 @@ class TestTFApplier(unittest.TestCase):
 
     def test_tf_applier(self) -> None:
         data = self._get_x_namespace()
-        applier = TFApplier([square], policy, k=1, keep_original=False)
+        policy = RandomPolicy(
+            1, sequence_length=2, n_per_original=1, keep_original=False
+        )
+        applier = TFApplier([square], policy)
         data_augmented = applier.apply(data)
         vals = [x.num for x in data_augmented]
         self.assertEqual(vals, [1, 16, 81])
         self.assertEqual([x.num for x in data], DATA)
 
-    def test_tf_applier_multi(self) -> None:
-        data = self._get_x_namespace()
-        applier = TFApplier([square], policy, k=2, keep_original=False)
-        data_augmented = applier.apply(data)
-        vals = [x.num for x in data_augmented]
-        self.assertEqual(vals, [1, 1, 16, 16, 81, 81])
-        self.assertEqual([x.num for x in data], DATA)
-
     def test_tf_applier_keep_original(self) -> None:
         data = self._get_x_namespace()
-        applier = TFApplier([square], policy, k=2, keep_original=True)
+        policy = RandomPolicy(
+            1, sequence_length=2, n_per_original=2, keep_original=True
+        )
+        applier = TFApplier([square], policy)
         data_augmented = applier.apply(data)
         vals = [x.num for x in data_augmented]
         self.assertEqual(vals, [1, 1, 1, 2, 16, 16, 3, 81, 81])
@@ -82,7 +76,10 @@ class TestTFApplier(unittest.TestCase):
 
     def test_tf_applier_returns_none(self) -> None:
         data = self._get_x_namespace()
-        applier = TFApplier([square_returns_none], policy, k=2, keep_original=True)
+        policy = RandomPolicy(
+            1, sequence_length=2, n_per_original=2, keep_original=True
+        )
+        applier = TFApplier([square_returns_none], policy)
         data_augmented = applier.apply(data)
         vals = [x.num for x in data_augmented]
         self.assertEqual(vals, [1, 1, 1, 2, 3, 81, 81])
@@ -90,9 +87,8 @@ class TestTFApplier(unittest.TestCase):
 
     def test_tf_applier_keep_original_modify_in_place(self) -> None:
         data = self._get_x_namespace_dict()
-        applier = TFApplier(
-            [modify_in_place], policy_modify_in_place, k=2, keep_original=True
-        )
+        policy = ApplyOnePolicy(n_per_original=2, keep_original=True)
+        applier = TFApplier([modify_in_place], policy)
         data_augmented = applier.apply(data)
         self.assertTrue(
             all(x.d == d for x, d in zip(data_augmented, DATA_IN_PLACE_EXPECTED))
@@ -101,16 +97,10 @@ class TestTFApplier(unittest.TestCase):
 
     def test_tf_applier_generator(self) -> None:
         data = self._get_x_namespace()
-        applier = TFApplier([square], policy, k=1, keep_original=False)
-        batches_expected = [[1, 16], [81]]
-        gen = applier.apply_generator(data, batch_size=2)
-        for batch, batch_expected in zip(gen, batches_expected):
-            self.assertEqual([x.num for x in batch], batch_expected)
-        self.assertEqual([x.num for x in data], DATA)
-
-    def test_tf_applier_multi_generator(self) -> None:
-        data = self._get_x_namespace()
-        applier = TFApplier([square], policy, k=2, keep_original=False)
+        policy = RandomPolicy(
+            1, sequence_length=2, n_per_original=2, keep_original=False
+        )
+        applier = TFApplier([square], policy)
         batches_expected = [[1, 1, 16, 16], [81, 81]]
         gen = applier.apply_generator(data, batch_size=2)
         for batch, batch_expected in zip(gen, batches_expected):
@@ -119,7 +109,10 @@ class TestTFApplier(unittest.TestCase):
 
     def test_tf_applier_keep_original_generator(self) -> None:
         data = self._get_x_namespace()
-        applier = TFApplier([square], policy, k=2, keep_original=True)
+        policy = RandomPolicy(
+            1, sequence_length=2, n_per_original=2, keep_original=True
+        )
+        applier = TFApplier([square], policy)
         batches_expected = [[1, 1, 1, 2, 16, 16], [3, 81, 81]]
         gen = applier.apply_generator(data, batch_size=2)
         for batch, batch_expected in zip(gen, batches_expected):
@@ -128,7 +121,10 @@ class TestTFApplier(unittest.TestCase):
 
     def test_tf_applier_returns_none_generator(self) -> None:
         data = self._get_x_namespace()
-        applier = TFApplier([square_returns_none], policy, k=2, keep_original=True)
+        policy = RandomPolicy(
+            1, sequence_length=2, n_per_original=2, keep_original=True
+        )
+        applier = TFApplier([square_returns_none], policy)
         batches_expected = [[1, 1, 1, 2], [3, 81, 81]]
         gen = applier.apply_generator(data, batch_size=2)
         for batch, batch_expected in zip(gen, batches_expected):
@@ -137,9 +133,8 @@ class TestTFApplier(unittest.TestCase):
 
     def test_tf_applier_keep_original_modify_in_place_generator(self) -> None:
         data = self._get_x_namespace_dict()
-        applier = TFApplier(
-            [modify_in_place], policy_modify_in_place, k=2, keep_original=True
-        )
+        policy = ApplyOnePolicy(n_per_original=2, keep_original=True)
+        applier = TFApplier([modify_in_place], policy)
         batches_expected = [DATA_IN_PLACE_EXPECTED[:6], DATA_IN_PLACE_EXPECTED[6:]]
         gen = applier.apply_generator(data, batch_size=2)
         for batch, batch_expected in zip(gen, batches_expected):
@@ -156,25 +151,21 @@ class TestPandasTFApplier(unittest.TestCase):
 
     def test_tf_applier_pandas(self):
         df = self._get_x_df()
-        applier = PandasTFApplier([square], policy, k=1, keep_original=False)
+        policy = RandomPolicy(
+            1, sequence_length=2, n_per_original=1, keep_original=False
+        )
+        applier = PandasTFApplier([square], policy)
         df_augmented = applier.apply(df)
         df_expected = pd.DataFrame(dict(num=[1, 16, 81]), index=[0, 1, 2])
         pd.testing.assert_frame_equal(df_augmented, df_expected)
         self.assertEqual(df.num.tolist(), DATA)
 
-    def test_tf_applier_pandas_multi(self):
-        df = self._get_x_df()
-        applier = PandasTFApplier([square], policy, k=2, keep_original=False)
-        df_augmented = applier.apply(df)
-        df_expected = pd.DataFrame(
-            dict(num=[1, 1, 16, 16, 81, 81]), index=[0, 0, 1, 1, 2, 2]
-        )
-        pd.testing.assert_frame_equal(df_augmented, df_expected)
-        self.assertEqual(df.num.tolist(), DATA)
-
     def test_tf_applier_pandas_keep_original(self):
         df = self._get_x_df()
-        applier = PandasTFApplier([square], policy, k=2, keep_original=True)
+        policy = RandomPolicy(
+            1, sequence_length=2, n_per_original=2, keep_original=True
+        )
+        applier = PandasTFApplier([square], policy)
         df_augmented = applier.apply(df)
         df_expected = pd.DataFrame(
             dict(num=[1, 1, 1, 2, 16, 16, 3, 81, 81]), index=[0, 0, 0, 1, 1, 1, 2, 2, 2]
@@ -184,9 +175,10 @@ class TestPandasTFApplier(unittest.TestCase):
 
     def test_tf_applier_returns_none(self):
         df = self._get_x_df()
-        applier = PandasTFApplier(
-            [square_returns_none], policy, k=2, keep_original=True
+        policy = RandomPolicy(
+            1, sequence_length=2, n_per_original=2, keep_original=True
         )
+        applier = PandasTFApplier([square_returns_none], policy)
         df_augmented = applier.apply(df)
         df_expected = pd.DataFrame(
             dict(num=[1, 1, 1, 2, 3, 81, 81]), index=[0, 0, 0, 1, 2, 2, 2]
@@ -196,9 +188,8 @@ class TestPandasTFApplier(unittest.TestCase):
 
     def test_tf_applier_pandas_modify_in_place(self):
         df = self._get_x_df_dict()
-        applier = PandasTFApplier(
-            [modify_in_place], policy_modify_in_place, k=2, keep_original=True
-        )
+        policy = ApplyOnePolicy(n_per_original=2, keep_original=True)
+        applier = PandasTFApplier([modify_in_place], policy)
         df_augmented = applier.apply(df)
         idx = [0, 0, 0, 1, 1, 1, 2, 2, 2]
         df_expected = pd.DataFrame(dict(d=DATA_IN_PLACE_EXPECTED), index=idx)
@@ -207,16 +198,10 @@ class TestPandasTFApplier(unittest.TestCase):
 
     def test_tf_applier_pandas_generator(self):
         df = self._get_x_df()
-        applier = PandasTFApplier([square], policy, k=1, keep_original=False)
-        gen = applier.apply_generator(df, batch_size=2)
-        df_expected = [make_df([1, 16], [0, 1]), make_df([81], [2])]
-        for df_batch, df_batch_expected in zip(gen, df_expected):
-            pd.testing.assert_frame_equal(df_batch, df_batch_expected)
-        self.assertEqual(df.num.tolist(), DATA)
-
-    def test_tf_applier_pandas_multi_generator(self):
-        df = self._get_x_df()
-        applier = PandasTFApplier([square], policy, k=2, keep_original=False)
+        policy = RandomPolicy(
+            1, sequence_length=2, n_per_original=2, keep_original=False
+        )
+        applier = PandasTFApplier([square], policy)
         gen = applier.apply_generator(df, batch_size=2)
         df_expected = [make_df([1, 1, 16, 16], [0, 0, 1, 1]), make_df([81, 81], [2, 2])]
         for df_batch, df_batch_expected in zip(gen, df_expected):
@@ -225,7 +210,10 @@ class TestPandasTFApplier(unittest.TestCase):
 
     def test_tf_applier_pandas_keep_original_generator(self):
         df = self._get_x_df()
-        applier = PandasTFApplier([square], policy, k=2, keep_original=True)
+        policy = RandomPolicy(
+            1, sequence_length=2, n_per_original=2, keep_original=True
+        )
+        applier = PandasTFApplier([square], policy)
         gen = applier.apply_generator(df, batch_size=2)
         df_expected = [
             make_df([1, 1, 1, 2, 16, 16], [0, 0, 0, 1, 1, 1]),
@@ -237,9 +225,10 @@ class TestPandasTFApplier(unittest.TestCase):
 
     def test_tf_applier_returns_none_generator(self):
         df = self._get_x_df()
-        applier = PandasTFApplier(
-            [square_returns_none], policy, k=2, keep_original=True
+        policy = RandomPolicy(
+            1, sequence_length=2, n_per_original=2, keep_original=True
         )
+        applier = PandasTFApplier([square_returns_none], policy)
         gen = applier.apply_generator(df, batch_size=2)
         df_expected = [
             make_df([1, 1, 1, 2], [0, 0, 0, 1]),
@@ -251,9 +240,8 @@ class TestPandasTFApplier(unittest.TestCase):
 
     def test_tf_applier_pandas_modify_in_place_generator(self):
         df = self._get_x_df_dict()
-        applier = PandasTFApplier(
-            [modify_in_place], policy_modify_in_place, k=2, keep_original=True
-        )
+        policy = ApplyOnePolicy(n_per_original=2, keep_original=True)
+        applier = PandasTFApplier([modify_in_place], policy)
         gen = applier.apply_generator(df, batch_size=2)
         idx = [0, 0, 0, 1, 1, 1, 2, 2, 2]
         df_expected = [

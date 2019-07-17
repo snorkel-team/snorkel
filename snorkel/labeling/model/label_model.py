@@ -450,8 +450,10 @@ class LabelModel(nn.Module):
         >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
         >>> label_model = LabelModel()
         >>> label_model.train_model(L)
-        >>> label_model.predict(L)
-        np.array([1, 2, 1])
+        >>> label_model.score(L, Y=np.array([1, 1, 1]))
+        {'accuracy': 0.66667}
+        >>> label_model.score(L, Y=np.array([1, 1, 1]), metrics=["f1"])
+        {'f1': 0.8}
         """
         Y_pred, Y_prob = self.predict(
             L, return_probs=True, tie_break_policy=tie_break_policy

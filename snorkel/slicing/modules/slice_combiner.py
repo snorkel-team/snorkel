@@ -1,8 +1,10 @@
-from typing import Dict
+from typing import Dict, List
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from snorkel.classification.utils import collect_flow_outputs_by_suffix
 
 
 class SliceCombinerModule(nn.Module):
@@ -21,6 +23,9 @@ class SliceCombinerModule(nn.Module):
         Suffix of operation corresponding to the slice predictor heads
     slice_pred_feat_key
         Suffix of operation corresponding to the slice predictor features heads
+    temperature
+        Temperature constant for scaling the weighting between indicator prediction
+        and predictor confidences: SoftMax(indicator_pred * predictor_confidence / tau)
 
     Attributes
     ----------
@@ -34,25 +39,31 @@ class SliceCombinerModule(nn.Module):
 
     def __init__(
         self,
-        slice_ind_key: str = "_ind",
-        slice_pred_key: str = "_pred",
+        slice_ind_key: str = "_ind_head",
+        slice_pred_key: str = "_pred_head",
         slice_pred_feat_key: str = "_pred_transform",
+        temperature: float = 1.0,
     ) -> None:
         super().__init__()
 
         self.slice_ind_key = slice_ind_key
         self.slice_pred_key = slice_pred_key
         self.slice_pred_feat_key = slice_pred_feat_key
+        self.temperature = temperature
 
-    def forward(self, outputs: Dict[str, torch.Tensor]) -> torch.Tensor:  # type: ignore
-        """Reweights and combines predictor representations given output dict.
+    def forward(  # type:ignore
+        self, flow_dict: Dict[str, List[torch.Tensor]]
+    ) -> torch.Tensor:
+        """Reweight and combine predictor representations given output dict.
 
         Parameters
         ----------
-        outputs
-            A dict of data fields from slicing task flow containing specific keys
-            from indicator ops, pred ops, and pred transform ops (slice_ind_key,
-            slice_pred_key, slice_pred_feat_key) for each slice
+        flow_dict
+            A dict of data fields containing operation outputs from indicator head,
+            predictor head, and predictor transform (corresponding to slice_ind_key,
+            slice_pred_key, slice_pred_feat_key, respectively).
+
+            NOTE: The flow_dict outputs for the ind/pred heads must be raw logits.
 
         Returns
         -------
@@ -60,67 +71,51 @@ class SliceCombinerModule(nn.Module):
             The reweighted predictor representation
         """
 
-        # Gather names of slice heads (both indicator and predictor heads)
-        # This provides a static ordering by which to index into the 'outputs' dict
-        slice_ind_op_names = sorted(
-            [
-                flow_name
-                for flow_name in outputs.keys()
-                if self.slice_ind_key in flow_name
-            ]
+        # Concatenate indicator head predictions into tensor [batch_size x num_slices]
+        indicator_outputs = collect_flow_outputs_by_suffix(
+            flow_dict, self.slice_ind_key
         )
-        slice_pred_op_names = sorted(
-            [
-                flow_name
-                for flow_name in outputs.keys()
-                if self.slice_pred_key in flow_name
-            ]
-        )
-
-        # Concatenate the predictions from the predictor head/indicator head
-        # into a [batch_size x num_slices] tensor
         indicator_preds = torch.cat(
             [
-                F.softmax(outputs[slice_ind_name][0])[:, 0].unsqueeze(1)
-                for slice_ind_name in slice_ind_op_names
-            ],
-            dim=-1,
-        )
-        predictor_preds = torch.cat(
-            [
-                F.softmax(outputs[slice_pred_name][0])[:, 0].unsqueeze(1)
-                for slice_pred_name in slice_pred_op_names
+                F.softmax(output, dim=1)[:, 0].unsqueeze(1)
+                for output in indicator_outputs
             ],
             dim=-1,
         )
 
-        # Collect names of predictor "features" that will be combined into the final
-        # reweighted representation
-        slice_feat_names = sorted(
-            [
-                flow_name
-                for flow_name in outputs.keys()
-                if self.slice_pred_feat_key in flow_name
-            ]
+        # Concatenate predictor head confidences into tensor [batch_size x num_slices]
+        predictor_outputs = collect_flow_outputs_by_suffix(
+            flow_dict, self.slice_pred_key
         )
 
-        # Concatenate each predictor feature into [batch_size x 1 x feat_dim] tensor
-        slice_representations = torch.cat(
+        predictor_confidences = torch.cat(
             [
-                outputs[slice_feat_name][0].unsqueeze(1)
-                for slice_feat_name in slice_feat_names
+                # Compute the "confidence" using the max score across classes
+                torch.max(F.softmax(output, dim=1), dim=1)[0].unsqueeze(1)
+                for output in predictor_outputs
             ],
-            dim=1,
+            dim=-1,
         )
+
+        # Concatenate each predictor feature (to be combined into reweighted
+        # representation) into [batch_size x 1 x feat_dim] tensor
+        predictor_feat_outputs = collect_flow_outputs_by_suffix(
+            flow_dict, self.slice_pred_feat_key
+        )
+        slice_representations = torch.stack(predictor_feat_outputs, dim=1)
 
         # Attention weights used to combine each of the slice_representations
         # incorporates the indicator (whether we are in the slice or not) and
         # predictor (confidence of a learned slice head)
-        A = F.softmax(indicator_preds * predictor_preds, dim=1)
+        attention_weights = F.softmax(
+            indicator_preds * predictor_confidences / self.temperature, dim=1
+        )
 
-        # Match the dimensions of the slice_representations
-        A = A.unsqueeze(-1).expand([-1, -1, slice_representations.size(-1)])
+        # Match dims [batch_size x num_slices x feat_dim] of slice_representations
+        attention_weights = attention_weights.unsqueeze(-1).expand(
+            [-1, -1, slice_representations.size(-1)]
+        )
 
-        # Reweight representations by class Sum across all classes
-        reweighted_rep = torch.sum(A * slice_representations, dim=1)
+        # Reweight representations with weighted sum across slices
+        reweighted_rep = torch.sum(attention_weights * slice_representations, dim=1)
         return reweighted_rep

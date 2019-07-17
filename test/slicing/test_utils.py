@@ -71,6 +71,7 @@ class UtilsTest(unittest.TestCase):
     def test_convert_to_slice_tasks(self):
         task_name = "TestTask"
         task = create_dummy_task(task_name)
+
         slice_names = ["slice_a", "slice_b", "slice_c"]
         slice_tasks = convert_to_slice_tasks(task, slice_names)
 
@@ -85,15 +86,40 @@ class UtilsTest(unittest.TestCase):
 
         self.assertEqual(len(slice_tasks), 2 * (len(slice_names) + 1) + 1)
 
+        # Test that modules share the same body flow operations
+        # NOTE: Use "is" comparison to check object equality
+        body_flow = task.task_flow[:-1]
+        ind_and_pred_tasks = [
+            t for t in slice_tasks if "_ind" in t.name or "_pred" in t.name
+        ]
+        for op in body_flow:
+            for slice_task in ind_and_pred_tasks:
+                self.assertTrue(
+                    slice_task.module_pool[op.module_name]
+                    is task.module_pool[op.module_name]
+                )
+
+        # Test that pred tasks share the same predictor head
+        pred_tasks = [t for t in slice_tasks if "_pred" in t.name]
+        predictor_head_name = pred_tasks[0].task_flow[-1].module_name
+        shared_predictor_head = pred_tasks[0].module_pool[predictor_head_name]
+        for pred_task in pred_tasks[1:]:
+            self.assertTrue(
+                pred_task.module_pool[predictor_head_name] is shared_predictor_head
+            )
+
 
 def create_dummy_task(task_name):
     # Create dummy task
-    module_pool = nn.ModuleDict({"linear1": nn.Linear(1, 1)})
+    module_pool = nn.ModuleDict(
+        {"linear1": nn.Linear(2, 10), "linear2": nn.Linear(10, 2)}
+    )
 
     task_flow = [
+        Operation(name="encoder", module_name="linear1", inputs=[("_input_", 0)]),
         Operation(
-            name="the_first_layer", module_name="linear1", inputs=[("_input_", 0)]
-        )
+            name="prediction_head", module_name="linear2", inputs=[("encoder", 0)]
+        ),
     ]
 
     task = Task(

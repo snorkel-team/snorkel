@@ -2,7 +2,12 @@ import unittest
 
 import torch
 
-from snorkel.classification.utils import list_to_tensor, merge_config, pad_batch
+from snorkel.classification.utils import (
+    collect_flow_outputs_by_suffix,
+    list_to_tensor, 
+    merge_config, 
+    pad_batch,
+)
 from snorkel.types import Config
 
 
@@ -121,6 +126,7 @@ class UtilsTest(unittest.TestCase):
             )
         )
 
+
     def test_merge_config(self):
         config_updates = {"a": 2, "foo_config": {"a": 0.75}}
         bar_config = merge_config(BarConfig(), config_updates)
@@ -128,5 +134,16 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(bar_config.foo_config.a, 0.75)
 
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_collect_flow_outputs_by_suffix(self):
+        flow_dict = {
+            "a_pred_head": torch.Tensor([1]),
+            "b_pred_head": torch.Tensor([2]),
+            "c_pred": torch.Tensor([3]),
+        }
+        outputs = collect_flow_outputs_by_suffix(flow_dict, "_head")
+        self.assertIn(torch.Tensor([1]), outputs)
+        self.assertIn(torch.Tensor([2]), outputs)
+        
+
+    if __name__ == "__main__":
+        unittest.main()

@@ -259,7 +259,7 @@ def lf_conflicts(L: sparse.spmatrix, normalize_by_overlaps: bool = False) -> np.
     return np.nan_to_num(conflicts)
 
 
-def lf_empirical_accuracies(L: Matrix, Y: ArrayLike) -> np.ndarray:
+def lf_empirical_accuracies(L: sparse.spmatrix, Y: ArrayLike) -> np.ndarray:
     """Compute empirical accuracy against a set of labels Y for each LF.
 
     Usually, Y represents development set labels.
@@ -283,7 +283,7 @@ def lf_empirical_accuracies(L: Matrix, Y: ArrayLike) -> np.ndarray:
     return np.nan_to_num(0.5 * (X.sum(axis=0) / (L != 0).sum(axis=0) + 1))
 
 
-def lf_empirical_probs(L: Matrix, Y: ArrayLike, k: int) -> np.ndarray:
+def lf_empirical_probs(L: sparse.spmatrix, Y: ArrayLike, k: int) -> np.ndarray:
     """Estimate conditional probability tables for each LF.
 
     Computes conditional probability tables, P(L | Y), for each LF using
@@ -322,7 +322,7 @@ def lf_empirical_probs(L: Matrix, Y: ArrayLike, k: int) -> np.ndarray:
 
 
 def lf_summary(
-    L: Matrix,
+    L: sparse.spmatrix,
     Y: Optional[ArrayLike] = None,
     lf_names: Optional[Union[List[str], List[int]]] = None,
     est_accs: Optional[np.ndarray] = None,

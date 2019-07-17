@@ -94,7 +94,10 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
     if "base" not in slice_names:
         slice_names = slice_names + ["base"]
 
-    tasks = []
+    slice_tasks = []
+
+    # Keep track of all operations related to slice tasks
+    slice_task_ops = []
 
     # NOTE: We assume here that the last operation uses the head module
     # Identify base task head module
@@ -115,8 +118,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
     for slice_name in slice_names:
 
         ind_task_name = f"{base_task.name}_slice:{slice_name}_ind"
-
-        ind_head_module_name = f"{ind_task_name}_ind_head"
+        ind_head_module_name = f"{ind_task_name}_head"
         # Indicator head always predicts "in the slice or not", so is always binary
         ind_head_module = nn.Linear(neck_size, 2)
 
@@ -124,11 +126,15 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         ind_module_pool = base_task.module_pool
         ind_module_pool[ind_head_module_name] = ind_head_module
 
-        # Create task_flow
+        # Define operations for task head
         ind_head_op = Operation(
             module_name=ind_head_module_name, inputs=head_module_op.inputs
         )
-        ind_task_flow = body_flow + [ind_head_op]
+        ind_task_ops = [ind_head_op]
+        slice_task_ops.extend(ind_task_ops)
+
+        # Create task flow
+        ind_task_flow = body_flow + ind_task_ops
 
         # Create ind task
         ind_task = Task(
@@ -138,7 +144,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
             # NOTE: F1 by default because indicator task is often class imbalanced
             scorer=Scorer(metrics=["f1"]),
         )
-        tasks.append(ind_task)
+        slice_tasks.append(ind_task)
 
     # Create slice predictor tasks
     shared_pred_head_module = nn.Linear(neck_size, base_task_cardinality)
@@ -146,8 +152,8 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
 
         pred_task_name = f"{base_task.name}_slice:{slice_name}_pred"
 
-        pred_head_module_name = f"{pred_task_name}_pred_head"
-        pred_transform_module_name = f"{pred_task_name}_pred_transform"
+        pred_head_module_name = f"{pred_task_name}_head"
+        pred_transform_module_name = f"{pred_task_name}_transform"
         pred_transform_module = nn.Linear(neck_size, neck_size)
 
         # Create module_pool
@@ -156,14 +162,18 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         pred_module_pool[pred_transform_module_name] = pred_transform_module
         pred_module_pool[pred_head_module_name] = shared_pred_head_module
 
-        # Create task_flow
+        # Define operations for task head
         pred_transform_op = Operation(
             module_name=pred_transform_module_name, inputs=head_module_op.inputs
         )
         pred_head_op = Operation(
             module_name=pred_head_module_name, inputs=[(pred_transform_op.name, 0)]
         )
-        pred_task_flow = body_flow + [pred_transform_op, pred_head_op]
+        pred_task_ops = [pred_transform_op, pred_head_op]
+        slice_task_ops.extend(pred_task_ops)
+
+        # Create task flow
+        pred_task_flow = body_flow + pred_task_ops
 
         # Create pred task
         pred_task = Task(
@@ -172,11 +182,10 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
             task_flow=pred_task_flow,
             scorer=base_task.scorer,
         )
-        tasks.append(pred_task)
+        slice_tasks.append(pred_task)
 
     # Create master task
     master_task_name = base_task.name
-
     master_combiner_module_name = f"{base_task.name}_master_combiner"
     master_combiner_module = SliceCombinerModule()
     master_head_module_name = f"{base_task.name}_master_head"
@@ -190,7 +199,6 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         }
     )
 
-    # Create task_flow
     master_combiner_op = Operation(module_name=master_combiner_module_name, inputs=[])
     master_head_op = Operation(
         module_name=master_head_module_name, inputs=[(master_combiner_op.name, 0)]
@@ -198,9 +206,8 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
 
     # NOTE: See note in doc string about module_pool polution
 
-    master_task_flow = (
-        ind_task_flow + pred_task_flow + [master_combiner_op, master_head_op]
-    )
+    # Create task_flow
+    master_task_flow = body_flow + slice_task_ops + [master_combiner_op, master_head_op]
 
     master_task = Task(
         name=master_task_name,
@@ -208,9 +215,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         task_flow=master_task_flow,
         scorer=base_task.scorer,
     )
-    tasks.append(master_task)
-
-    return tasks
+    return slice_tasks + [master_task]
 
 
 def _add_base_slice(

@@ -14,7 +14,6 @@ from snorkel.types import DataPoint
 
 
 class LabelingConvergenceTest(unittest.TestCase):
-
     @classmethod
     def setup_class(cls):
         # Ensure deterministic runs
@@ -32,8 +31,9 @@ class LabelingConvergenceTest(unittest.TestCase):
     def test_labeling_convergence(self) -> None:
         """Test convergence of end to end labeling pipeline."""
         # Apply LFs
-        labeling_functions = [f] + [get_labeling_function(divisor)
-                                    for divisor in range(2, 6)]
+        labeling_functions = [f] + [
+            get_labeling_function(divisor) for divisor in range(2, 6)
+        ]
         lf_names = [lf.name for lf in labeling_functions]
         applier = PandasLFApplier(labeling_functions)
         L_train = applier.apply(self.df_train)
@@ -61,6 +61,7 @@ def create_data(n: int) -> pd.DataFrame:
 
 def get_labeling_function(divisor: int) -> LabelingFunction:
     """Get LabelingFunction that abstains unless idx is divisible by divisor."""
+
     def f(x: DataPoint) -> int:
         if x.idx % divisor != 0:
             return 0
@@ -68,6 +69,7 @@ def get_labeling_function(divisor: int) -> LabelingFunction:
             return 2
         else:
             return 1
+
     return LabelingFunction(f"lf_{divisor}", f)
 
 

@@ -353,10 +353,8 @@ class LabelModel(nn.Module):
         >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
-        >>> np.around(label_model.predict_proba(L), 1)
-        array([[1., 0.],
-               [0., 1.],
-               [1., 0.]])
+        >>> label_model.predict_proba(L)
+        np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 0.0]])
         """
         L = L.todense()
         self._set_constants(L)
@@ -369,6 +367,79 @@ class LabelModel(nn.Module):
         X = np.exp(L_aug @ np.diag(jtm) @ np.log(mu) + np.log(self.p))
         Z = np.tile(X.sum(axis=1).reshape(-1, 1), self.cardinality)
         return X / Z
+
+    def _break_ties(self, Y_prob: np.ndarray, break_ties: Optional[str] = 'abstain') -> np.ndarray:
+        """Break ties among probabilistic labels according to given policy.
+
+        Policies to break ties include:
+        "abstain": return an abstain vote (0)
+        "random": randomly choose among the tied options
+        NOTE: if break_ties="random", repeated runs may have slightly different results due to difference in broken ties
+
+        Parameters
+        ----------
+        Y_prob
+            An [n,k] array of probabilistic labels
+        break_ties
+            Policy to break ties, by default 'random'
+
+        Returns
+        -------
+        np.ndarray
+            An [n,k] array of integer labels
+        """
+
+        n, k = Y_prob.shape
+        Y_pred = np.zeros(n)
+        diffs = np.abs(Y_prob - Y_prob.max(axis=1).reshape(-1, 1))
+
+        TOL = 1e-5
+        for i in range(n):
+            max_idxs = np.where(diffs[i, :] < TOL)[0]
+            if len(max_idxs) == 1:
+                Y_pred[i] = max_idxs[0] + 1
+            # Deal with "tie votes" according to the specified policy
+            elif break_ties == "random":
+                Y_pred[i] = np.random.choice(max_idxs) + 1
+            elif break_ties == "abstain":
+                Y_pred[i] = 0
+            else:
+                raise ValueError(f"break_ties={break_ties} policy not recognized.")
+        return Y_pred
+
+    def predict(self, L: sparse.spmatrix, break_ties: Optional[str] = 'abstain') -> np.ndarray:
+        """Return predicted labels, with ties broken according to policy.
+
+        Policies to break ties include:
+        "abstain": return an abstain vote (0)
+        "random": randomly choose among the tied options
+        NOTE: if break_ties="random", repeated runs may have slightly different results due to difference in broken ties
+
+
+        Parameters
+        ----------
+        L
+            An [n,m] matrix with values in {0,1,...,k}
+        break_ties
+            Policy to break ties when converting probabilistic labels to predictions
+
+        Returns
+        -------
+        np.ndarray
+            An [n,k] array of integer labels
+
+        Example
+        -------
+        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> label_model = LabelModel()
+        >>> label_model.train_model(L)
+        >>> label_model.predict(L)
+        np.array([1, 2, 1])
+        """
+        Y_probs = self.predict_proba(L)
+        Y_p = self._break_ties(Y_probs, break_ties).astype(np.int)
+        return Y_p
+
 
     # These loss functions get all their data directly from the LabelModel
     # (for better or worse). The unused *args make these compatible with the

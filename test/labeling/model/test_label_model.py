@@ -218,6 +218,44 @@ class LabelModelTest(unittest.TestCase):
         true_probs = np.array([[0.99, 0.01], [0.99, 0.01]])
         np.testing.assert_array_almost_equal(probs, true_probs)
 
+    def test_predict(self):
+        L = np.array([[1, 2, 1], [1, 2, 1]])
+        label_model = self._set_up_model(L)
+
+        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        preds = label_model.predict(csr_matrix(L))
+
+        true_preds = np.array([1, 1])
+        np.testing.assert_array_equal(preds, true_preds)
+
+    def test_break_ties(self):
+        #abtains with ties
+        label_model = LabelModel(k=3)
+        probs = np.array([[0.33, 0.33, 0.33]])
+        preds = label_model._break_ties(probs, break_ties='abstain')
+        true_preds = np.array([0.])
+        np.testing.assert_array_equal(preds, true_preds)
+
+        #random with ties
+        probs = np.array([[0.33, 0.33, 0.33]])
+        random_preds = []
+        for seed in range(10):
+            label_model = LabelModel(k=3, seed=seed)
+            preds = label_model._break_ties(probs, break_ties='random')
+            random_preds.append(preds[0])
+
+        #check predicted labels within range
+        self.assertLessEqual(max(random_preds), 3)
+        self.assertGreaterEqual(min(random_preds), 1)
+
+        #check labels are different across seeds
+        for class_idx in range(1, 4):
+            self.assertGreaterEqual(random_preds.count(class_idx), 1)
+
+        #check invalid policy
+        with self.assertRaises(ValueError):
+            preds = label_model._break_ties(probs, break_ties='negative')
+
     def test_loss(self):
         L = np.array([[1, 0, 1], [1, 2, 0]])
         label_model = self._set_up_model(L)

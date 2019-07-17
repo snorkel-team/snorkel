@@ -29,10 +29,10 @@ class MetricsTest(unittest.TestCase):
     def test_to_int_label_array(self):
         X = np.array([[1], [0], [2.0]])
         Y_expected = np.array([1, 0, 2])
-        Y = to_int_label_array(X, flatten=True)
+        Y = to_int_label_array(X, flatten_vector=True)
         np.testing.assert_array_equal(Y, Y_expected)
 
-        Y = to_int_label_array(X, flatten=False)
+        Y = to_int_label_array(X, flatten_vector=False)
         Y_expected = np.array([[1], [0], [2]])
         np.testing.assert_array_equal(Y, Y_expected)
 
@@ -42,7 +42,7 @@ class MetricsTest(unittest.TestCase):
 
         X = np.array([[1, 0], [0, 1]])
         with self.assertRaisesRegex(ValueError, "1d np.array"):
-            to_int_label_array(X, flatten=True)
+            to_int_label_array(X, flatten_vector=True)
 
     def test_pred_to_prob(self):
         np.testing.assert_array_equal(preds_to_probs(PREDS, 2), PREDS_ROUND)

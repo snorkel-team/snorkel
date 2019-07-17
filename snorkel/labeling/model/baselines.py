@@ -141,7 +141,7 @@ class MajorityLabelVoter(BaselineVoter):
                [0.5, 0.5]])
         """
         L = L.todense()
-        L = to_int_label_array(L, flatten=False)
+        L = to_int_label_array(L, flatten_vector=False)
         n, m = L.shape
         Y_p = np.zeros((n, self.cardinality))
         for i in range(n):

@@ -46,7 +46,7 @@ def preds_to_probs(preds: np.ndarray, num_classes: int) -> np.ndarray:
     return np.eye(num_classes)[preds.squeeze() - 1]
 
 
-def to_int_label_array(X: np.ndarray, flatten: bool = True) -> np.ndarray:
+def to_int_label_array(X: np.ndarray, flatten_vector: bool = True) -> np.ndarray:
     """Convert an array to a (possibly flattened) array of ints.
 
     Cast all values to ints and possibly flatten [n, 1] arrays to [n].
@@ -57,7 +57,7 @@ def to_int_label_array(X: np.ndarray, flatten: bool = True) -> np.ndarray:
     ----------
     X
         An array to possibly flatten and possibly cast to int
-    flatten
+    flatten_vector
         If True, flatten array into a 1D array
 
     Returns
@@ -73,14 +73,11 @@ def to_int_label_array(X: np.ndarray, flatten: bool = True) -> np.ndarray:
     if np.any(np.not_equal(np.mod(X, 1), 0)):
         raise ValueError("Input contains at least one non-integer value.")
     X = X.astype(np.dtype(int))
-
     # Correct shape
-    if flatten:
-        if (X.ndim > 1) and (1 in X.shape):
-            X = X.flatten()
+    if flatten_vector:
+        X = X.squeeze()
         if X.ndim != 1:
             raise ValueError("Input could not be converted to 1d np.array")
-
     return X
 
 

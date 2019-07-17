@@ -32,7 +32,7 @@ def get_positive_labeling_function(divisor: int) -> LabelingFunction:
         else:
             return 0
 
-    return LabelingFunction(f"lf_{divisor}", f)
+    return LabelingFunction(f"lf_pos_{divisor}", f)
 
 
 def get_negative_labeling_function(divisor: int) -> LabelingFunction:
@@ -44,7 +44,7 @@ def get_negative_labeling_function(divisor: int) -> LabelingFunction:
         else:
             return 0
 
-    return LabelingFunction(f"lf_{divisor}", f)
+    return LabelingFunction(f"lf_neg_{divisor}", f)
 
 
 @preprocessor()
@@ -54,10 +54,10 @@ def copy_features(x: DataPoint) -> DataPoint:
     return x
 
 
-@labeling_function(preprocessors=[copy_features], resources=dict(divisor=10))
+@labeling_function(preprocessors=[copy_features], resources=dict(divisor=3))
 def f(x: DataPoint, divisor: int) -> int:
     # Abstain unless x0 is divisible by divisor.
-    if x.x0 % divisor == 0 and x.x1 > x.x3:
+    if x.x0 % divisor == 1 and x.x1 > x.x3:
         return 2
     else:
         return 0
@@ -95,7 +95,7 @@ class LabelingConvergenceTest(unittest.TestCase):
         Y_lm = label_model.predict_proba(L_train.todense()).argmax(axis=1) + 1
         Y = self.df_train.y
         err = np.where(Y != Y_lm, 1, 0).sum() / self.N_TRAIN
-        self.assertLess(err, 0.2)
+        self.assertLess(err, 0.05)
 
 
 if __name__ == "__main__":

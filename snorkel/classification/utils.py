@@ -104,10 +104,8 @@ def merge_config(config: Config, config_updates: Dict[str, Any]) -> Config:
     """
     for key, value in config_updates.items():
         if isinstance(value, dict):
-            config = config._replace(**{key: merge_config(getattr(config, key), value)})
-        else:
-            config = config._replace(**{key: value})
-    return config
+            config_updates[key] = merge_config(getattr(config, key), value)
+    return config._replace(**config_updates)
 
 
 def recursive_merge_dicts(

@@ -3,7 +3,6 @@ import unittest
 import numpy as np
 import pandas as pd
 import pytest
-import torch
 
 from snorkel.analysis.utils import set_seed
 from snorkel.labeling.apply.pandas import PandasLFApplier
@@ -34,7 +33,6 @@ class LabelingConvergenceTest(unittest.TestCase):
         labeling_functions = [f] + [
             get_labeling_function(divisor) for divisor in range(2, 6)
         ]
-        lf_names = [lf.name for lf in labeling_functions]
         applier = PandasLFApplier(labeling_functions)
         L_train = applier.apply(self.df_train)
         L_valid = applier.apply(self.df_valid)

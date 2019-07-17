@@ -3,13 +3,11 @@ from typing import Any, Counter, Iterable, List, Mapping, Optional, Sequence, Tu
 
 import numpy as np
 
-from snorkel.types import ArrayLike
-
-from .utils import arraylike_to_numpy
+from .utils import to_int_label_array
 
 
 def error_buckets(
-    golds: ArrayLike, preds: ArrayLike, X: Optional[Sequence[Any]] = None
+    golds: np.ndarray, preds: np.ndarray, X: Optional[Sequence[Any]] = None
 ) -> Mapping[Tuple[int, int], Any]:
     """Return examples (or their indices) bucketed by gold label/pred label combination.
 
@@ -23,9 +21,9 @@ def error_buckets(
     Parameters
     ----------
     gold
-        An ArrayLike of gold (int) labels
+        An np.ndarray of gold (int) labels
     pred
-        An ArrayLike of (int) predictions
+        An np.ndarray of (int) predictions
     X
         Optional, a sequence of examples corresponding to golds/preds
         If not provided, indices will be returned instead
@@ -38,16 +36,16 @@ def error_buckets(
             instead.
     """
     buckets: Mapping[Tuple[int, int], List[Any]] = defaultdict(list)
-    golds = arraylike_to_numpy(golds)
-    preds = arraylike_to_numpy(preds)
+    golds = to_int_label_array(golds)
+    preds = to_int_label_array(preds)
     for i, (y, l) in enumerate(zip(preds, golds)):
         buckets[y, l].append(X[i] if X is not None else i)
     return dict(buckets)
 
 
 def confusion_matrix(
-    golds: ArrayLike,
-    preds: ArrayLike,
+    golds: np.ndarray,
+    preds: np.ndarray,
     null_pred: bool = False,
     null_gold: bool = False,
     normalize: bool = False,
@@ -58,9 +56,9 @@ def confusion_matrix(
     Parameters
     ----------
     golds
-        an ArrayLike of gold (int) labels
+        an np.ndarray of gold (int) labels
     preds
-        An Arraylike of (int) predictions
+        An np.ndarray of (int) predictions
     null_pred
         If True, include the row corresponding to null predictions
     null_gold
@@ -78,8 +76,8 @@ def confusion_matrix(
     """
 
     conf = ConfusionMatrix(null_pred=null_pred, null_gold=null_gold)
-    golds = arraylike_to_numpy(golds)
-    preds = arraylike_to_numpy(preds)
+    golds = to_int_label_array(golds)
+    preds = to_int_label_array(preds)
     conf.add(golds, preds)
     mat = conf.compile()
 

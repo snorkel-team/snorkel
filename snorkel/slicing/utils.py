@@ -9,7 +9,6 @@ from snorkel.analysis.utils import convert_labels
 from snorkel.classification.data import DictDataLoader
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, Task
-from snorkel.types import ArrayLike
 
 from .modules.slice_combiner import SliceCombinerModule
 
@@ -38,7 +37,7 @@ def add_slice_labels(
     slice_labels, slice_names = _add_base_slice(slice_labels, slice_names)
     assert slice_labels.shape[1] == len(slice_names)
 
-    Y_dict: Dict[str, ArrayLike] = dataloader.dataset.Y_dict  # type: ignore
+    Y_dict: Dict[str, np.ndarray] = dataloader.dataset.Y_dict  # type: ignore
     labels = Y_dict[base_task.name]
     for i, slice_name in enumerate(slice_names):
 

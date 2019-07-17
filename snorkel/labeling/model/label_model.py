@@ -368,7 +368,9 @@ class LabelModel(nn.Module):
         Z = np.tile(X.sum(axis=1).reshape(-1, 1), self.cardinality)
         return X / Z
 
-    def _break_ties(self, Y_prob: np.ndarray, break_ties: Optional[str] = 'abstain') -> np.ndarray:
+    def _break_ties(
+        self, Y_prob: np.ndarray, break_ties: Optional[str] = "abstain"
+    ) -> np.ndarray:
         """Break ties among probabilistic labels according to given policy.
 
         Policies to break ties include:
@@ -407,7 +409,9 @@ class LabelModel(nn.Module):
                 raise ValueError(f"break_ties={break_ties} policy not recognized.")
         return Y_pred
 
-    def predict(self, L: sparse.spmatrix, break_ties: Optional[str] = 'abstain') -> np.ndarray:
+    def predict(
+        self, L: sparse.spmatrix, break_ties: Optional[str] = "abstain"
+    ) -> np.ndarray:
         """Return predicted labels, with ties broken according to policy.
 
         Policies to break ties include:
@@ -439,7 +443,6 @@ class LabelModel(nn.Module):
         Y_probs = self.predict_proba(L)
         Y_p = self._break_ties(Y_probs, break_ties).astype(np.int)
         return Y_p
-
 
     # These loss functions get all their data directly from the LabelModel
     # (for better or worse). The unused *args make these compatible with the

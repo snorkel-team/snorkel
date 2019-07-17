@@ -247,34 +247,6 @@ class LabelModelTest(unittest.TestCase):
         results_expected = dict(accuracy=0.5, f1=2 / 3)
         self.assertEqual(results, results_expected)
 
-    def test_break_ties(self):
-        #abtains with ties
-        label_model = LabelModel(k=3)
-        probs = np.array([[0.33, 0.33, 0.33]])
-        preds = label_model._break_ties(probs, break_ties='abstain')
-        true_preds = np.array([0.])
-        np.testing.assert_array_equal(preds, true_preds)
-
-        #random with ties
-        probs = np.array([[0.33, 0.33, 0.33]])
-        random_preds = []
-        for seed in range(10):
-            label_model = LabelModel(k=3, seed=seed)
-            preds = label_model._break_ties(probs, break_ties='random')
-            random_preds.append(preds[0])
-
-        #check predicted labels within range
-        self.assertLessEqual(max(random_preds), 3)
-        self.assertGreaterEqual(min(random_preds), 1)
-
-        #check labels are different across seeds
-        for class_idx in range(1, 4):
-            self.assertGreaterEqual(random_preds.count(class_idx), 1)
-
-        #check invalid policy
-        with self.assertRaises(ValueError):
-            preds = label_model._break_ties(probs, break_ties='negative')
-
     def test_loss(self):
         L = np.array([[1, 0, 1], [1, 2, 0]])
         label_model = self._set_up_model(L)

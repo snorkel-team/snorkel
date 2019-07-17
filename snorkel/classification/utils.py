@@ -1,5 +1,5 @@
 import copy
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -166,3 +166,14 @@ def move_to_device(
         return tuple([move_to_device(item, device) for item in obj])
     else:
         return obj
+
+
+def collect_flow_outputs_by_suffix(
+    flow_dict: Dict[str, List[torch.Tensor]], suffix: str
+) -> List[torch.Tensor]:
+    """Return flow_dict outputs specified by suffix, ordered by sorted flow_name."""
+    return [
+        flow_dict[flow_name][0]
+        for flow_name in sorted(flow_dict.keys())
+        if flow_name.endswith(suffix)
+    ]

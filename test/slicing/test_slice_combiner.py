@@ -125,14 +125,16 @@ class SliceCombinerTest(unittest.TestCase):
         self.assertTrue(torch.allclose(combined_rep, torch.ones(batch_size, h_dim) * 3))
 
     def test_many_slices(self):
-        """Test combiner on 1000 synthetic generated slices."""
+        """Test combiner on 100 synthetic generated slices."""
 
         batch_size = 4
         h_dim = 20
         num_classes = 2
 
         outputs = {}
-        for i in range(1000):
+        # Generate 100 slices, half voting in one direction (index i) and
+        # half in another (index i%2), resulting in averaged weights
+        for i in range(100):
             if i % 2 == 0:
                 outputs[f"task_slice:{i}_ind_head"] = [torch.ones(batch_size, 2) * 20.0]
                 outputs[f"task_slice:{i}_pred_transform"] = [
@@ -152,7 +154,7 @@ class SliceCombinerTest(unittest.TestCase):
                     torch.ones(batch_size, num_classes) * -20.0
                 ]
 
-        combiner_module = SliceCombinerModule(tau=1.0)
+        combiner_module = SliceCombinerModule()
         combined_rep = combiner_module(outputs)
         self.assertTrue(torch.allclose(combined_rep, torch.ones(batch_size, h_dim) * 3))
 
@@ -194,9 +196,63 @@ class SliceCombinerTest(unittest.TestCase):
             "task_slice:b_pred_transform": [torch.ones(batch_size, h_dim) * 2],
             "task_slice:b_pred_head": [pred_outputs_b],
         }
-        combiner_module = SliceCombinerModule(tau=1.0)
+
+        # Ensure smoother temperature for multi-class
+        combiner_module = SliceCombinerModule()
         combined_rep = combiner_module(outputs)
         # higher tolerance because randomness in non-max class outputs -> for softmax
         self.assertTrue(
             torch.allclose(combined_rep, torch.ones(batch_size, h_dim) * 3, atol=1e-2)
         )
+
+    def test_temperature(self):
+        """Test temperature parameter for attention weights."""
+        batch_size = 4
+        h_dim = 20
+        num_classes = 3
+
+        # Add noise to each set of inputs to attention weights
+        epsilon = 1e-5
+        outputs = {
+            "task_slice:a_ind_head": [
+                torch.ones(batch_size, 2) * 10.0
+                + torch.FloatTensor(batch_size, 2).normal_(0.0, epsilon)
+            ],
+            "task_slice:a_pred_transform": [
+                torch.ones(batch_size, h_dim) * 4
+                + torch.FloatTensor(batch_size, h_dim).normal_(0.0, epsilon)
+            ],
+            "task_slice:a_pred_head": [
+                torch.ones(batch_size, num_classes) * 10.0
+                + torch.FloatTensor(batch_size, num_classes).normal_(0.0, epsilon)
+            ],
+            "task_slice:b_ind_head": [
+                torch.ones(batch_size, 2) * -10.0
+                + torch.FloatTensor(batch_size, 2).normal_(0.0, epsilon)
+            ],
+            "task_slice:b_pred_transform": [
+                torch.ones(batch_size, h_dim) * 2
+                + torch.FloatTensor(batch_size, h_dim).normal_(0.0, epsilon)
+            ],
+            "task_slice:b_pred_head": [
+                torch.ones(batch_size, num_classes) * -10.0
+                + torch.FloatTensor(batch_size, num_classes).normal_(0.0, epsilon)
+            ],
+        }
+
+        # With larger temperature, attention is smoother and reweighted rep is closer
+        # closer to true average, despite noise
+        combiner_module = SliceCombinerModule(temperature=1e5)
+        combined_rep = combiner_module(outputs)
+        self.assertTrue(torch.allclose(combined_rep, torch.ones(batch_size, h_dim) * 3))
+
+        # With (impractically) small temperature, attention peaks/biases towards in
+        # some direction of noisy attention weights
+        combiner_module = SliceCombinerModule(temperature=1e-15)
+        combined_rep = combiner_module(outputs)
+
+        # Check number of elements that match either of the original weights
+        num_matching_original = torch.sum(
+            torch.isclose(combined_rep, torch.ones(batch_size, h_dim) * 2)
+        ) + torch.sum(torch.isclose(combined_rep, torch.ones(batch_size, h_dim) * 4))
+        self.assertEqual(num_matching_original, batch_size * h_dim)

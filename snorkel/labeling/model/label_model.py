@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from snorkel.analysis.utils import set_seed
+from snorkel.classification.scorer import Scorer
 from snorkel.classification.utils import recursive_merge_dicts
 from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.lm_defaults import lm_default_config
@@ -444,10 +445,48 @@ class LabelModel(nn.Module):
         Y_p = self._break_ties(Y_probs, break_ties).astype(np.int)
         return Y_p
 
+    def score(
+        self,
+        L: sparse.spmatrix,
+        Y: np.ndarray,
+        metrics: Optional[List[str]] = ["accuracy"],
+    ) -> Dict[str, float]:
+        """Calculate one or more scores from user-specified and/or user-defined metrics.
+
+        Parameters
+        ----------
+        L
+            An [n,m] matrix with values in {0,1,...,k}
+        Y
+            Gold labels associated with datapoints in L
+        metrics
+            A list of metric names, by default ["accuracy"]
+
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary mapping metric names to metric scores
+
+        Example
+        -------
+        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> label_model = LabelModel()
+        >>> label_model.train_model(L)
+        >>> label_model.score(L, Y=np.array([1, 1, 1]))
+        {'accuracy': 0.66667}
+        >>> label_model.score(L, Y=np.array([1, 1, 1], metrics=["f1"]))
+        {'accuracy': 0.66667}
+        """
+        Y_prob = self.predict_proba(L)
+        Y_pred = self.predict(L)
+
+        scorer = Scorer(metrics=metrics)
+        results = scorer.score(Y, Y_pred, Y_prob)
+        return results
+
     # These loss functions get all their data directly from the LabelModel
     # (for better or worse). The unused *args make these compatible with the
     # Classifer._train() method which expect loss functions to accept an input.
-
     def _loss_l2(self, l2: float = 0) -> torch.Tensor:
         r"""L2 loss centered around mu_init, scaled optionally per-source.
 

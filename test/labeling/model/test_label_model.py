@@ -253,8 +253,23 @@ class LabelModelTest(unittest.TestCase):
             self.assertGreaterEqual(random_preds.count(class_idx), 1)
 
         # check invalid policy
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegexp(ValueError, "policy not recognized"):
             preds = label_model._break_ties(probs, break_ties="negative")
+
+    def test_score(self):
+        L = np.array([[1, 2, 1], [1, 2, 1]])
+        label_model = self._set_up_model(L)
+        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+
+        results = label_model.score(csr_matrix(L), Y=np.array([1, 2]))
+        results_expected = dict(accuracy=0.5)
+        self.assertEqual(results, results_expected)
+
+        results = label_model.score(
+            L=csr_matrix(L), Y=np.array([2, 1]), metrics=["accuracy", "f1"]
+        )
+        results_expected = dict(accuracy=0.5, f1=2 / 3.0)
+        self.assertEqual(results, results_expected)
 
     def test_loss(self):
         L = np.array([[1, 0, 1], [1, 2, 0]])

@@ -233,7 +233,7 @@ class LabelModelTest(unittest.TestCase):
         self.assertAlmostEqual(label_model._loss_mu().item(), 0.675, 3)
 
     def test_model_loss(self):
-        L = csr_matrix(np.array([[1, 0, 1], [1, 2, 1]]))
+        L = csr_matrix([[1, 0, 1], [1, 2, 1]])
         label_model = LabelModel(k=2, verbose=False)
 
         label_model.train_model(L, n_epochs=1, lr=0.01, momentum=0.9)
@@ -247,7 +247,7 @@ class LabelModelTest(unittest.TestCase):
             label_model.train_model(L, n_epochs=10, lr=1e8)
 
     def test_optimizer(self):
-        L = csr_matrix(np.array([[1, 0, 1], [1, 2, 1]]))
+        L = csr_matrix([[1, 0, 1], [1, 2, 1]])
         label_model = LabelModel(k=2, verbose=False)
         label_model.train_model(L, n_epochs=1, optimizer="rmsprop")
         label_model.train_model(L, n_epochs=1, optimizer="adam")
@@ -255,7 +255,7 @@ class LabelModelTest(unittest.TestCase):
             label_model.train_model(L, n_epochs=1, optimizer="bad_opt")
 
     def test_lr_scheduler(self):
-        L = csr_matrix(np.array([[1, 0, 1], [1, 2, 1]]))
+        L = csr_matrix([[1, 0, 1], [1, 2, 1]])
         label_model = LabelModel(k=2, verbose=False)
         label_model.train_model(L, n_epochs=1, lr_scheduler=None)
         label_model.train_model(L, n_epochs=1, lr_scheduler="exponential")
@@ -265,7 +265,7 @@ class LabelModelTest(unittest.TestCase):
             label_model.train_model(L, n_epochs=1, lr_scheduler="bad_scheduler")
 
     def test_save_and_load(self):
-        L = csr_matrix(np.array([[1, 0, 1], [1, 2, 1]]))
+        L = csr_matrix([[1, 0, 1], [1, 2, 1]])
         label_model = LabelModel(k=2, verbose=False)
         label_model.train_model(L, n_epochs=1, lr_scheduler=None)
         dir_path = tempfile.mkdtemp()

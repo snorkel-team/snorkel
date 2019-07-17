@@ -3,9 +3,8 @@ from typing import Any
 import numpy as np
 import scipy.sparse as sparse
 
-from snorkel.analysis.utils import arraylike_to_numpy
+from snorkel.analysis.utils import to_int_label_array
 from snorkel.labeling.model.label_model import LabelModel
-from snorkel.types import ArrayLike
 
 
 class BaselineVoter(LabelModel):
@@ -64,7 +63,7 @@ class MajorityClassVoter(LabelModel):
     """Majority class label model."""
 
     def train_model(  # type: ignore
-        self, balance: ArrayLike, *args: Any, **kwargs: Any
+        self, balance: np.ndarray, *args: Any, **kwargs: Any
     ) -> None:
         """Train majority class model.
 
@@ -141,7 +140,8 @@ class MajorityLabelVoter(BaselineVoter):
                [0.5, 0.5],
                [0.5, 0.5]])
         """
-        L = arraylike_to_numpy(L, flatten=False)
+        L = L.todense()
+        L = to_int_label_array(L, flatten_vector=False)
         n, m = L.shape
         Y_p = np.zeros((n, self.cardinality))
         for i in range(n):

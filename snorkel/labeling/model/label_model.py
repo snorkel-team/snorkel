@@ -350,7 +350,7 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = sparse.csr_matrix(np.array([[1, 1, 0], [2, 2, 0], [1, 1, 0]]))
+        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
         >>> label_model = LabelModel()
         >>> label_model.train_model(L)
         >>> label_model.predict_proba(L)

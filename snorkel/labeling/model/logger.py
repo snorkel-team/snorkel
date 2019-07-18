@@ -31,7 +31,7 @@ class Logger:
             Whether to log or not based on logging frequency
         """
         self.unit_count += 1
-        return self.unit_count >= self.log_train_every
+        return self.unit_count - 1 % self.log_train_every == 0
 
     def log(self, metrics_dict: Dict[str, float]) -> None:
         """Print calculated metrics and optionally write to file (json/tb).
@@ -49,7 +49,6 @@ class Logger:
         [0 epochs]: TRAIN:[loss=5.000]
         """
         self.print_to_screen(metrics_dict)
-        self.unit_count = 0
 
     def print_to_screen(self, metrics_dict: Dict[str, float]) -> None:
         """Print all metrics in metrics_dict to screen.

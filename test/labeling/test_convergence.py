@@ -65,7 +65,7 @@ def f(x: DataPoint, divisor: int) -> int:
 
 class LabelingConvergenceTest(unittest.TestCase):
     @classmethod
-    def setup_class(cls):
+    def setUpClass(cls):
         # Ensure deterministic runs
         set_seed(123)
 

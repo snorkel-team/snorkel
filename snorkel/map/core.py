@@ -82,6 +82,7 @@ class BaseMapper:
     """Base class for ``Mapper`` and ``LambdaMapper``.
 
     Implements nesting, memoization, and deep copy functionality.
+    Used primarily for type checking.
 
     Parameters
     ----------

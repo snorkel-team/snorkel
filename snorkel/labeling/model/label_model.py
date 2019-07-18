@@ -463,45 +463,6 @@ class LabelModel(nn.Module):
         results = scorer.score(Y, Y_pred, Y_prob)
         return results
 
-    def score(
-        self,
-        L: sparse.spmatrix,
-        Y: np.ndarray,
-        metrics: Optional[List[str]] = ["accuracy"],
-    ) -> Dict[str, float]:
-        """Calculate one or more scores from user-specified and/or user-defined metrics.
-
-        Parameters
-        ----------
-        L
-            An [n,m] matrix with values in {0,1,...,k}
-        Y
-            Gold labels associated with datapoints in L
-        metrics
-            A list of metric names, by default ["accuracy"]
-
-        Returns
-        -------
-        Dict[str, float]
-            A dictionary mapping metric names to metric scores
-
-        Example
-        -------
-        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
-        >>> label_model = LabelModel()
-        >>> label_model.train_model(L)
-        >>> label_model.score(L, Y=np.array([1, 1, 1]))
-        {'accuracy': 0.66667}
-        >>> label_model.score(L, Y=np.array([1, 1, 1], metrics=["f1"]))
-        {'accuracy': 0.66667}
-        """
-        Y_prob = self.predict_proba(L)
-        Y_pred = self.predict(L)
-
-        scorer = Scorer(metrics=metrics)
-        results = scorer.score(Y, Y_pred, Y_prob)
-        return results
-
     # These loss functions get all their data directly from the LabelModel
     # (for better or worse). The unused *args make these compatible with the
     # Classifer._train() method which expect loss functions to accept an input.

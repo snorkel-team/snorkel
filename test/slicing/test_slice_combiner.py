@@ -9,7 +9,7 @@ from snorkel.slicing.modules.slice_combiner import SliceCombinerModule
 
 class SliceCombinerTest(unittest.TestCase):
     @classmethod
-    def setup_class(cls):
+    def setUpClass(cls):
         set_seed(123)
 
     def test_forward_shape(self):

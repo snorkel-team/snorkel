@@ -47,3 +47,9 @@ script:
 
 after_success:
   - travis_retry codecov
+
+notifications:
+  slack:
+    on_success: change # default: change [change, always, never]
+    on_failure: change # default: always
+    secure: xYSWI2NgYmQ0X0U+WPYnUAWDnu56UueP70FSCx9GBNKJJZMAfavzQGSYimy7lQGTxy37gXAmfeQH9SM/DXfZLq/tplvLxq25rlMnOKSDXSvFv3hloCb4kBszpBfJugIaPoq83+CFOjUKyYsAWnxY2Y66+XI4NQQz6IhysiyNtFaOOlGIUO6E39I1kLfXz42lcp+XwjaVbj8ibpQajGdnbXvxKZEFIutQAOq4m10CHVyEdtCl5ck+jHDFgMkrM+0yycRCDsFgphMsKXQ5czThyW6knkOLOqFunQCDOE2UjavpSeNtdKmRQViA81Jj5YSh6RxnEesG1Eu2LAfz/2MJv42E4FmK76/K6UqettFoKbOwAtva7k5T83tQ3ZSXWzgsswqdkajX4fejSR1eYvhW9PvUf9bZAsu36o5wuXyDXK43cN8C1lSGZy+GK07rFWLPzKfdJ63HNkexdI/zkyCcRtVGrqh2qbzAotDK8yg3FJYpLAHSh1P6Zhbz+tsc0/kHRBmuqyNuILpbd/WQtxEDO8wTld1fsBrjwTW0/YgKequHv9bumIeeAW5hMZpv8VWvN5vEVJpSNg3/hd1MgAlhZupWj9ttJvj77PuhUlsJOCRX//Z+RVdcL1roMJ+IEN90y7+S1gEH2VUbpzf46zdH9oBUc4EQseCCYLWkLGnsxRA=

@@ -5,14 +5,13 @@ import pandas as pd
 import scipy.sparse as sparse
 
 from snorkel.labeling.analysis import (
-    confusion_matrix,
-    error_buckets,
     label_conflict,
     label_coverage,
     label_overlap,
     lf_conflicts,
     lf_coverages,
     lf_empirical_accuracies,
+    lf_empirical_probs,
     lf_overlaps,
     lf_polarities,
     lf_summary,
@@ -33,7 +32,7 @@ Y = [1, 2, 3, 1, 2, 3]
 
 class TestAnalysis(unittest.TestCase):
     def setUp(self) -> None:
-        self.L = sparse.csr_matrix(np.array(L))
+        self.L = sparse.csr_matrix(L)
         self.Y = np.array(Y)
 
     def test_label_coverage(self) -> None:
@@ -76,6 +75,20 @@ class TestAnalysis(unittest.TestCase):
         accs = lf_empirical_accuracies(self.L, self.Y)
         accs_expected = [1 / 3, 0, 1 / 3, 1 / 2, 1 / 2, 2 / 4]
         np.testing.assert_array_almost_equal(accs, np.array(accs_expected))
+
+    def test_lf_empirical_probs(self) -> None:
+        P_emp = lf_empirical_probs(self.L, self.Y, 3)
+        P = np.array(
+            [
+                [[1 / 2, 1, 0], [0, 0, 0], [1 / 2, 0, 1 / 2], [0, 0, 1 / 2]],
+                [[1, 1, 1], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                [[0, 1, 1 / 2], [1 / 2, 0, 1 / 2], [0, 0, 0], [1 / 2, 0, 0]],
+                [[1, 1 / 2, 1 / 2], [0, 0, 0], [0, 0, 0], [0, 1 / 2, 1 / 2]],
+                [[1 / 2, 1, 1 / 2], [1 / 2, 0, 0], [0, 0, 1 / 2], [0, 0, 0]],
+                [[0, 1, 0], [1, 0, 1], [0, 0, 0], [0, 0, 0]],
+            ]
+        )
+        np.testing.assert_array_almost_equal(P, P_emp)
 
     def test_lf_summary(self) -> None:
         df = lf_summary(self.L, self.Y, lf_names=None, est_accs=None)
@@ -133,40 +146,3 @@ class TestAnalysis(unittest.TestCase):
             }
         )
         pd.testing.assert_frame_equal(df.round(6), df_expected.round(6))
-
-    def test_error_buckets(self) -> None:
-        pred = [2, 1, 3, 1, 1, 3]
-        buckets = error_buckets(self.Y, pred, X=None)
-        self.assertEqual(
-            buckets, {(2, 1): [0], (1, 2): [1, 4], (3, 3): [2, 5], (1, 1): [3]}
-        )
-
-    def test_confusion_matrix(self) -> None:
-        pred = [0, 2, 2, 3, 1, 0, 1, 3]
-        gold = [1, 2, 2, 0, 3, 0, 2, 3]
-
-        mat = confusion_matrix(
-            gold, pred, null_pred=False, null_gold=False, normalize=False
-        )
-        mat_expected = np.array([[0, 1, 1], [0, 2, 0], [0, 0, 1]])
-        np.testing.assert_array_equal(mat, mat_expected)
-
-        mat = confusion_matrix(
-            gold, pred, null_pred=False, null_gold=False, normalize=True
-        )
-        mat_expected = np.array([[0, 1 / 8, 1 / 8], [0, 2 / 8, 0], [0, 0, 1 / 8]])
-        np.testing.assert_array_equal(mat, mat_expected)
-
-        mat = confusion_matrix(
-            gold, pred, null_pred=True, null_gold=False, normalize=False
-        )
-        mat_expected = np.array([[1, 0, 0], [0, 1, 1], [0, 2, 0], [0, 0, 1]])
-        np.testing.assert_array_equal(mat, mat_expected)
-
-        mat = confusion_matrix(
-            gold, pred, null_pred=True, null_gold=True, normalize=False
-        )
-        mat_expected = np.array(
-            [[1, 1, 0, 0], [0, 0, 1, 1], [0, 0, 2, 0], [1, 0, 0, 1]]
-        )
-        np.testing.assert_array_equal(mat, mat_expected)

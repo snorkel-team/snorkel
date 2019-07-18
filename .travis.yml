@@ -1,6 +1,7 @@
 # Only run CI on master, release branches, tags, and PRs
-if: tag IS present OR type = pull_request OR ((branch = master OR branch =~ release-*) AND type = push)
+if: tag IS present OR type = pull_request OR ((branch = master OR branch = redux OR branch =~ release-*) AND type = push)
 
+# Main dist is Python
 language: python
 
 # Cache package wheels
@@ -9,15 +10,31 @@ cache: pip
 # python3.7 only available on xenial
 dist: xenial
 
-env:
-  TOXENV=py,check,coverage
-
 jobs:
   include:
-    - name: "Tests: python3.6"
+    - if: type = pull_request
+      name: "Python 3.6: unit tests"
       python: 3.6
-    - name: "Tests: python3.7"
+      env: TOXENV=coverage,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    - if: type = pull_request
+      name: "Python 3.7: unit tests"
       python: 3.7
+      env: TOXENV=coverage,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    - if: type != pull_request
+      name: "Python 3.6: unit + integration tests"
+      python: 3.6
+      env: TOXENV=coverage,complex,spark,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    - if: type != pull_request
+      name: "Python 3.7: unit + integration tests"
+      python: 3.7
+      env: TOXENV=coverage,complex,spark,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+# Install JDK8 for PySpark tests
+before_install:
+  - sudo add-apt-repository -y ppa:openjdk-r/ppa
+  - sudo apt-get -qq update
+  - sudo apt-get install -y openjdk-8-jdk --no-install-recommends
+  - sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
 
 install:
   - pip install -U pip setuptools
@@ -29,4 +46,10 @@ script:
   - tox
 
 after_success:
-  - codecov
+  - travis_retry codecov
+
+notifications:
+  slack:
+    on_success: change # default: change [change, always, never]
+    on_failure: change # default: always
+    secure: "jOmNYn8hbBGypqYFht+3tUxbJVL15ClqVHt0xNX5WU2aTOk3V8x6p3xnTIyX4rwBq1Ix50Sc690CiowJyCGlwoCkV11PuaFU4wEEZQyUZmuaVBoxXYLEqo6ObEpMbFM4Kg7VqoR0u3pZdoYEGC+LgWcwcvfnqL3Ju+9tB1rr5/Yclo/pO5Pi/dJ0/NOwKZsLyB8dZr0tMJ9EXgW79yi154g/af4HlX02/oOzx2CmpU0JnsLv1WyluxYrteSq4+z0Kdwmpk7MXPIArQaUIzMVZhm4cOUxRHSejJW/zGSSugpw+GBm4dCiNeaslu0gT021Mv73HnV2OL5H90dbdSUVnPO6Ld+mQbD44de8Z0Ce+FtP6geGoYL38It+tlA6sTpsf3W+k3xBQvq9S/dQySsAwl3d8iQXfB6u0EGJh39j4QNtsyJqLRoeW7KOjBl3KtYpxSfOafNdySvKbRxKbtKCuwVSDFf7rxKyKCA7Ew1PAXaqM0K6Sft73BExgSo6IL22JnD9ZIRZLaP5zGjsbUELnu++itsrzk7NjuLiNNLoTYOgkBR8xgGNd4R/lttDswh4l2tPQ/yFsUZvNwCEG2s2SXkvGobuOEjdJvi84DpKEAyZLZKRxNr6oKQMNEK9MSGj9O2kHjgme8ja6BesVVSv+2bPz3cyJmb7tbdc0i5tXRg="

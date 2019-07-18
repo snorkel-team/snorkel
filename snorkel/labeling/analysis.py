@@ -1,106 +1,213 @@
-from collections import Counter, defaultdict
-from typing import (
-    Any,
-    Counter as CounterType,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
+from itertools import product
+from typing import List, Optional, Union
 
 import numpy as np
 import scipy.sparse as sparse
 from pandas import DataFrame, Series
 
-from snorkel.model.utils import arraylike_to_numpy
-from snorkel.types import ArrayLike
+from snorkel.analysis.error_analysis import confusion_matrix
+from snorkel.analysis.utils import to_int_label_array
 
 Matrix = Union[np.ndarray, sparse.csr_matrix]
 
 
-############################################################
-# Label Matrix Diagnostics
-############################################################
 def _covered_data_points(L: Matrix) -> np.ndarray:
-    """Returns an indicator vector where ith element = 1 if x_i is labeled by at
-    least one LF."""
+    """Get indicator vector z where z_i = 1 if x_i is labeled by at least one LF."""
     return np.ravel(np.where(L.sum(axis=1) != 0, 1, 0))
 
 
 def _overlapped_data_points(L: Matrix) -> np.ndarray:
-    """Returns an indicator vector where ith element = 1 if x_i is labeled by
-    more than one LF."""
+    """Get indicator vector z where z_i = 1 if x_i is labeled by more than one LF."""
     return np.where(np.ravel((L != 0).sum(axis=1)) > 1, 1, 0)
 
 
 def _conflicted_data_points(L: sparse.spmatrix) -> np.ndarray:
-    """Returns an indicator vector where ith element = 1 if x_i is labeled by
-    at least two LFs that give it disagreeing labels."""
+    """Get indicator vector z where z_i = 1 if x_i is labeled differently by two LFs."""
     m = sparse.diags(np.ravel(L.max(axis=1).todense()))
     return np.ravel(np.max(m @ (L != 0) != L, axis=1).astype(int).todense())
 
 
 def label_coverage(L: Matrix) -> float:
-    """Returns the **fraction of data points with > 0 (non-zero) labels**
-    Args:
-        L: an n x m scipy.sparse matrix where L_{i,j} is the label given by the
-            jth LF to the ith item
+    """Compute the fraction of data points with at least one label.
+
+    Parameters
+    ----------
+    L
+        Matrix where L_{i,j} is the label given by the jth LF to the ith candidate
+
+    Returns
+    -------
+    float
+        Fraction of data points with labels
+
+    Example
+    -------
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> label_coverage(L)
+    0.8
     """
     return _covered_data_points(L).sum() / L.shape[0]
 
 
 def label_overlap(L: Matrix) -> float:
-    """Returns the **fraction of data points with > 1 (non-zero) labels**
-    Args:
-        L: an n x m scipy.sparse matrix where L_{i,j} is the label given by the
-            jth LF to the ith item
+    """Compute the fraction of data points with at least two (non-abstain) labels.
+
+    Parameters
+    ----------
+    L
+        Matrix where L_{i,j} is the label given by the jth LF to the ith candidate
+
+    Returns
+    -------
+    float
+        Fraction of data points with overlapping labels
+
+    Example
+    -------
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> label_overlap(L)
+    0.6
     """
     return _overlapped_data_points(L).sum() / L.shape[0]
 
 
 def label_conflict(L: sparse.spmatrix) -> float:
-    """Returns the **fraction of data points with conflicting (disagreeing)
-    labels.**
-    Args:
-        L: an n x m scipy.sparse matrix where L_{i,j} is the label given by the
-            jth LF to the ith item
+    """Compute the fraction of data points with conflicting (non-abstain) labels.
+
+    Parameters
+    ----------
+    L
+        Matrix where L_{i,j} is the label given by the jth LF to the ith candidate
+
+    Returns
+    -------
+    float
+        Fraction of data points with conflicting labels
+
+    Example
+    -------
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> label_conflict(L)
+    0.2
     """
     return _conflicted_data_points(L).sum() / L.shape[0]
 
 
 def lf_polarities(L: Matrix) -> List[List[int]]:
-    """Return the polarities of each LF based on evidence in a label matrix.
+    """Infer the polarities of each LF based on evidence in a label matrix.
 
-    Args:
-        L: an n x m scipy.sparse matrix where L_{i,j} is the label given by the
-            jth LF to the ith candidate
+    Parameters
+    ----------
+    L
+        Matrix where L_{i,j} is the label given by the jth LF to the ith candidate
+
+    Returns
+    -------
+    List[List[int]]
+        Unique output labels for each LF
+
+    Example
+    -------
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> lf_polarities(L)
+    [[1, 2], [1], [1]]
     """
     return [sorted(list(set(L[:, i].data))) for i in range(L.shape[1])]
 
 
-def lf_coverages(L: Matrix) -> np.ravel:
-    """Return the **fraction of data points that each LF labels.**
-    Args:
-        L: an n x m scipy.sparse matrix where L_{i,j} is the label given by the
-            jth LF to the ith candidate
+def lf_coverages(L: Matrix) -> np.ndarray:
+    """Compute frac. of examples each LF labels.
+
+    Parameters
+    ----------
+    L
+        Matrix where L_{i,j} is the label given by the jth LF to the ith candidate
+
+    Returns
+    -------
+    numpy.ndarray
+        Fraction of labeled examples for each LF
+
+    Example
+    -------
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> lf_coverages(L)
+    array([0.4, 0.8, 0.4])
     """
     return np.ravel((L != 0).sum(axis=0)) / L.shape[0]
 
 
 def lf_overlaps(L: Matrix, normalize_by_coverage: bool = False) -> np.ndarray:
-    """Return the **fraction of items each LF labels that are also labeled by at
-     least one other LF.**
+    """Compute frac. of examples each LF labels that are labeled by another LF.
+
+    An overlapping example is one that at least one other LF returns a
+    (non-abstain) label for.
 
     Note that the maximum possible overlap fraction for an LF is the LF's
-    coverage, unless `normalize_by_coverage=True`, in which case it is 1.
+    coverage, unless ``normalize_by_coverage=True``, in which case it is 1.
 
-    Args:
-        L: an n x m scipy.sparse matrix where L_{i,j} is the label given by the
-            jth LF to the ith candidate
-        normalize_by_coverage: Normalize by coverage of the LF, so that it
-            returns the percent of LF labels that have overlaps.
+    Parameters
+    ----------
+    L
+        Matrix where L_{i,j} is the label given by the jth LF to the ith candidate
+    normalize_by_coverage
+        Normalize by coverage of the LF, so that it returns the percent of LF labels
+        that have overlaps.
+
+    Returns
+    -------
+    numpy.ndarray
+        Fraction of overlapping examples for each LF
+
+    Example
+    -------
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> lf_overlaps(L)
+    array([0.4, 0.6, 0.4])
+    >>> lf_overlaps(L, normalize_by_coverage=True)
+    array([1.  , 0.75, 1.  ])
     """
     overlaps = (L != 0).T @ _overlapped_data_points(L) / L.shape[0]
     if normalize_by_coverage:
@@ -109,18 +216,41 @@ def lf_overlaps(L: Matrix, normalize_by_coverage: bool = False) -> np.ndarray:
 
 
 def lf_conflicts(L: sparse.spmatrix, normalize_by_overlaps: bool = False) -> np.ndarray:
-    """Return the **fraction of items each LF labels that are also given a
-    different (non-abstain) label by at least one other LF.**
+    """Compute frac. of examples each LF labels and labeled differently by another LF.
+
+    A conflicting example is one that at least one other LF returns a
+    different (non-abstain) label for.
 
     Note that the maximum possible conflict fraction for an LF is the LF's
-        overlaps fraction, unless `normalize_by_overlaps=True`, in which case it
-        is 1.
+    overlaps fraction, unless ``normalize_by_overlaps=True``, in which case it is 1.
 
-    Args:
-        L: an n x m scipy.sparse matrix where L_{i,j} is the label given by the
-            jth LF to the ith candidate
-        normalize_by_overlaps: Normalize by overlaps of the LF, so that it
-            returns the percent of LF overlaps that have conflicts.
+    Parameters
+    ----------
+    L
+        Matrix where L_{i,j} is the label given by the jth LF to the ith candidate
+    normalize_by_overlaps
+        Normalize by overlaps of the LF, so that it returns the percent of LF
+        overlaps that have conflicts.
+
+    Returns
+    -------
+    numpy.ndarray
+        Fraction of conflicting examples for each LF
+
+    Example
+    -------
+    >>> L = np.array([
+    ...     [0, 1, 1],
+    ...     [0, 0, 0],
+    ...     [2, 1, 0],
+    ...     [0, 1, 0],
+    ...     [1, 1, 1],
+    ... ])
+    >>> L = sparse.csr_matrix(L)
+    >>> lf_conflicts(L)
+    array([0.2, 0.2, 0. ])
+    >>> lf_conflicts(L, normalize_by_overlaps=True)
+    array([0.5       , 0.33333333, 0.        ])
     """
     conflicts = (L != 0).T @ _conflicted_data_points(L) / L.shape[0]
     if normalize_by_overlaps:
@@ -128,34 +258,92 @@ def lf_conflicts(L: sparse.spmatrix, normalize_by_overlaps: bool = False) -> np.
     return np.nan_to_num(conflicts)
 
 
-def lf_empirical_accuracies(L: Matrix, Y: ArrayLike) -> np.ndarray:
-    """Return the **empirical accuracy** against a set of labels Y (e.g. dev
-    set) for each LF.
-    Args:
-        L: an n x m scipy.sparse matrix where L_{i,j} is the label given by the
-            jth LF to the ith candidate
-        Y: an [n] or [n, 1] np.ndarray of gold labels
+def lf_empirical_accuracies(L: sparse.spmatrix, Y: np.ndarray) -> np.ndarray:
+    """Compute empirical accuracy against a set of labels Y for each LF.
+
+    Usually, Y represents development set labels.
+
+    Parameters
+    ----------
+    L
+        Matrix where L_{i,j} is the label given by the jth LF to the ith candidate
+    Y
+        [n] or [n, 1] np.ndarray of gold labels
+
+    Returns
+    -------
+    numpy.ndarray
+        Empirical accuracies for each LF
     """
     # Assume labeled set is small, work with dense matrices
-    Y = arraylike_to_numpy(Y)
+    Y = to_int_label_array(Y)
     L = L.toarray()
     X = np.where(L == 0, 0, np.where(L == np.vstack([Y] * L.shape[1]).T, 1, -1))
     return np.nan_to_num(0.5 * (X.sum(axis=0) / (L != 0).sum(axis=0) + 1))
 
 
+def lf_empirical_probs(L: sparse.spmatrix, Y: np.ndarray, k: int) -> np.ndarray:
+    """Estimate conditional probability tables for each LF.
+
+    Computes conditional probability tables, P(L | Y), for each LF using
+    the provided true labels Y.
+
+    Parameters
+    ----------
+    L
+        The n x m matrix of LF labels, where n is # of datapoints and m is # of LFs
+    Y
+        The n-dim array of true labels in {1,...,k}
+    k
+        The cardinality i.e. number of classes; if not provided, defaults to max value
+        in Y
+
+    Returns
+    -------
+    np.ndarray
+        An m x (k+1) x k np.ndarray representing the m (k+1) x k conditional probability
+        tables P_i, where P_i[l,y] represents P(LF_i = l | Y = y) empirically calculated
+    """
+    n, m = L.shape
+
+    # Assume labeled set is small, work with dense matrices
+    Y = to_int_label_array(Y)
+    L = L.toarray()
+
+    # Compute empirical conditional probabilities
+    # Note: Can do this more efficiently...
+    P = np.zeros((m, k + 1, k))
+    for y in range(1, k + 1):
+        is_y = np.where(Y == y, 1, 0)
+        for j, l in product(range(m), range(k + 1)):
+            P[j, l, y - 1] = np.where(L[:, j] == l, 1, 0) @ is_y / is_y.sum()
+    return P
+
+
 def lf_summary(
-    L: Matrix,
-    Y: Optional[ArrayLike] = None,
+    L: sparse.spmatrix,
+    Y: Optional[np.ndarray] = None,
     lf_names: Optional[Union[List[str], List[int]]] = None,
     est_accs: Optional[np.ndarray] = None,
 ) -> DataFrame:
-    """Returns a pandas DataFrame with the various per-LF statistics.
+    """Create a pandas DataFrame with the various per-LF statistics.
 
-    Args:
-        L: an n x m scipy.sparse matrix where L_{i,j} is the label given by the
-            jth LF to the ith candidate
-        Y: an [n] or [n, 1] np.ndarray of gold labels.
-            If provided, the empirical accuracy for each LF will be calculated
+    Parameters
+    ----------
+    L
+        Matrix where L_{i,j} is the label given by the jth LF to the ith candidate
+    Y
+        [n] or [n, 1] np.ndarray of gold labels. If provided, the empirical accuracy
+        for each LF will be calculated.
+    lf_names
+        Name of each LF. If None, indices are used.
+    est_accs
+        Learned accuracies for each LF
+
+    Returns
+    -------
+    pandas.DataFrame
+        Summary statistics for each LF
     """
     n, m = L.shape
     if lf_names is not None:
@@ -176,7 +364,7 @@ def lf_summary(
     if Y is not None:
         col_names.extend(["Correct", "Incorrect", "Emp. Acc."])
         confusions = [
-            confusion_matrix(Y, L[:, i], pretty_print=False) for i in range(m)
+            confusion_matrix(Y, L[:, i].toarray(), pretty_print=False) for i in range(m)
         ]
         corrects = [np.diagonal(conf).sum() for conf in confusions]
         incorrects = [
@@ -194,164 +382,21 @@ def lf_summary(
     return DataFrame(data=d, index=lf_names)[col_names]
 
 
-def single_lf_summary(Y_p: ArrayLike, Y: Optional[ArrayLike] = None) -> DataFrame:
-    """Calculates coverage, overlap, conflicts, and accuracy for a single LF
+def single_lf_summary(Y_p: np.ndarray, Y: Optional[np.ndarray] = None) -> DataFrame:
+    """Calculate coverage, overlap, conflicts, and accuracy for a single LF.
 
-    Args:
-        Y_p: a np.array or torch.Tensor of predicted labels
-        Y: a np.array or torch.Tensor of true labels (if known)
+    Parameters
+    ----------
+    Y_p
+        Array of predicted labels
+    Y
+        Array of true labels (if known)
+
+    Returns
+    -------
+    pandas.DataFrame
+        Summary statistics for LF
     """
-    L = sparse.csr_matrix(arraylike_to_numpy(Y_p).reshape(-1, 1))
+    L = sparse.csr_matrix(to_int_label_array(Y_p).reshape(-1, 1))
     summary = lf_summary(L, Y)
     return summary[["Polarity", "Coverage", "Correct", "Incorrect", "Emp. Acc."]]
-
-
-def error_buckets(
-    gold: ArrayLike, pred: ArrayLike, X: Optional[Sequence[Any]] = None
-) -> Mapping[Tuple[int, int], Any]:
-    """Group items by error buckets
-
-    Args:
-        gold: an array-like of gold labels (ints)
-        pred: an array-like of predictions (ints)
-        X: an iterable of items
-    Returns:
-        buckets: A dict of items where buckets[i,j] is a list of items with
-            predicted label i and true label j. If X is None, return indices
-            instead.
-
-    For a binary problem with (1=positive, 2=negative):
-        buckets[1,1] = true positives
-        buckets[1,2] = false positives
-        buckets[2,1] = false negatives
-        buckets[2,2] = true negatives
-    """
-    buckets: Mapping[Tuple[int, int], List[Any]] = defaultdict(list)
-    gold = arraylike_to_numpy(gold)
-    pred = arraylike_to_numpy(pred)
-    for i, (y, l) in enumerate(zip(pred, gold)):
-        buckets[y, l].append(X[i] if X is not None else i)
-    return dict(buckets)
-
-
-def confusion_matrix(
-    gold: ArrayLike,
-    pred: ArrayLike,
-    null_pred: bool = False,
-    null_gold: bool = False,
-    normalize: bool = False,
-    pretty_print: bool = True,
-) -> np.ndarray:
-    """A shortcut method for building a confusion matrix all at once.
-
-    Args:
-        gold: an array-like of gold labels (ints)
-        pred: an array-like of predictions (ints)
-        null_pred: If True, include the row corresponding to null predictions
-        null_gold: If True, include the col corresponding to null gold labels
-        normalize: if True, divide counts by the total number of items
-        pretty_print: if True, pretty-print the matrix before returning
-    """
-    conf = ConfusionMatrix(null_pred=null_pred, null_gold=null_gold)
-    gold = arraylike_to_numpy(gold)
-    pred = arraylike_to_numpy(pred)
-    conf.add(gold, pred)
-    mat = conf.compile()
-
-    if normalize:
-        mat = mat / len(gold)
-
-    if pretty_print:
-        conf.display(normalize=normalize)
-
-    return mat
-
-
-class ConfusionMatrix:
-    """
-    An iteratively built abstention-aware confusion matrix with pretty printing
-
-    Assumed axes are true label on top, predictions on the side.
-    """
-
-    def __init__(self, null_pred: bool = False, null_gold: bool = False) -> None:
-        """
-        Args:
-            null_pred: If True, include the row corresponding to null
-                predictions
-            null_gold: If True, include the col corresponding to null gold
-                labels
-
-        """
-        self.counter: CounterType = Counter()
-        self.mat = None
-        self.null_pred = null_pred
-        self.null_gold = null_gold
-
-    def __repr__(self) -> str:
-        if self.mat is None:
-            self.compile()
-        return str(self.mat)
-
-    def add(self, gold: np.ndarray, pred: np.ndarray) -> np.ndarray:
-        """
-        Args:
-            gold: a np.ndarray of gold labels (ints)
-            pred: a np.ndarray of predictions (ints)
-        """
-        self.counter.update(zip(gold, pred))
-
-    def compile(self, trim: bool = True) -> np.ndarray:
-        k = max([max(tup) for tup in self.counter.keys()]) + 1  # include 0
-
-        mat = np.zeros((k, k), dtype=int)
-        for (y, l), v in self.counter.items():
-            mat[l, y] = v
-
-        if trim and not self.null_pred:
-            mat = mat[1:, :]
-        if trim and not self.null_gold:
-            mat = mat[:, 1:]
-
-        self.mat = mat
-        return mat
-
-    def display(  # pragma: no cover
-        self,
-        normalize: bool = False,
-        indent: int = 0,
-        spacing: int = 2,
-        decimals: int = 3,
-        mark_diag: bool = True,
-    ):
-        mat = self.compile(trim=False)
-        m, n = mat.shape
-        tab = " " * spacing
-        margin = " " * indent
-
-        # Print headers
-        s = margin + " " * (5 + spacing)
-        for j in range(n):
-            if j == 0 and not self.null_gold:
-                continue
-            s += f" y={j} " + tab
-        print(s)
-
-        # Print data
-        for i in range(m):
-            # Skip null predictions row if necessary
-            if i == 0 and not self.null_pred:
-                continue
-            s = margin + f" l={i} " + tab
-            for j in range(n):
-                # Skip null gold if necessary
-                if j == 0 and not self.null_gold:
-                    continue
-                else:
-                    if i == j and mark_diag and normalize:
-                        s = s[:-1] + "*"
-                    if normalize:
-                        s += f"{mat[i,j]/sum(mat[i,1:]):>5.3f}" + tab
-                    else:
-                        s += f"{mat[i,j]:^5d}" + tab
-            print(s)

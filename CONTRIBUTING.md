@@ -8,7 +8,7 @@ First things first: read our [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ### Installing
 
-Snorkel uses [tox](https://tox.readthedocs.io/en/) to manage development environments.
+Snorkel uses [tox](https://tox.readthedocs.io) to manage development environments.
 To get started, [install tox](https://tox.readthedocs.io/en/latest/install.html),
 clone Snorkel, then use `tox` to create a development environment:
 
@@ -41,6 +41,8 @@ tox -e py36  # Run unit tests pytest in Python 3.6
 tox -e check  # Check style/linting with black, isort, and flake8
 tox -e type  # Run static type checking with mypy
 tox -e fix  # Fix style issues with black and isort
+tox -e spark  # Run Spark-based tests (marked with @pytest.mark.spark)
+tox -e complex  # Run more complex, integration tests (marked with @pytest.mark.complex)
 tox  # Run unit tests, style checks, linting, and type checking
 ```
 
@@ -68,6 +70,51 @@ Here's a `settings.json` that takes advantage of the packages above (except isor
     "python.linting.pylintEnabled": false,
 }
 ```
+
+### Docstrings
+
+Snorkel ♥ documentation.
+We expect all PRs to add or update API documentation for any affected pieces of code.
+We use [NumPy style docstrings](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html), and enforce style compliance with pydocstyle as indicated above.
+Docstrings can be cumbersome to write, so we encourage people to use tooling to speed up the process.
+For VSCode, we like [autoDocstring](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring).
+Just install the extension and add the following configuration to the `settings.json` example above.
+Note that we use PEP 484 type hints, so parameter types should be removed from the docstring (although note that return types should still be included).
+
+```json
+{
+    "autoDocstring.docstringFormat": "numpy",
+    "autoDocstring.guessTypes": false
+}
+```
+
+
+### Complex/integration/long-running tests
+
+Any test that runs longer than half a second should be marked with the
+`@pytest.mark.complex` decorator.
+Typically, these will be integration tests or tests that verify complex
+properties like model convergence.
+We exclude long-running tests from the default `tox` and Travis builds
+on non-master and non-release branches to keep things moving fast.
+If you're touching areas of the code that could break a long-running test,
+you should include the results of `tox -e complex` in the PR's test plan.
+To see the durations of the 10 longest-running tests, run
+`tox -e py3 -- -m 'not complex and not spark' --durations 10`.
+
+
+### PySpark tests
+
+PySpark tests are invoked separately from the rest since they require
+installing Java and the large PySpark package.
+They are executed on Travis, but not by default for a local `tox` command.
+If you're making changes to Spark-based operators, make sure you have
+Java 8 installed locally and then run `tox -e spark`.
+If you add a test that imports PySpark mark it with the 
+`@pytest.mark.spark` decorator.
+Add the `@pytest.mark.complex` decorator as well if it runs a Spark
+action (e.g. `.collect()`).
+
 
 ## PRs
 

@@ -1,91 +1,160 @@
 from collections import Counter
-from functools import partial
-from itertools import chain, product
+from itertools import chain
+from typing import Any, Dict, List, NamedTuple, Optional, Set, Union
 
 import numpy as np
+import scipy.sparse as sparse
 import torch
 import torch.nn as nn
-from scipy.sparse import issparse
-from torch.utils.data import DataLoader
+import torch.optim as optim
 
-from snorkel.model.classifier import Classifier
-from snorkel.model.utils import MetalDataset, recursive_merge_dicts
+from snorkel.analysis.utils import set_seed
+from snorkel.classification.utils import recursive_merge_dicts
+from snorkel.labeling.model.graph_utils import get_clique_tree
+from snorkel.labeling.model.lm_defaults import lm_default_config
+from snorkel.labeling.model.logger import Logger
 
-from .graph_utils import get_clique_tree
-from .lm_defaults import lm_default_config
+TrainConfig = Dict[str, Any]
+Metrics = Dict[str, float]
 
 
-class LabelModel(Classifier):
-    """A LabelModel...TBD
+class _CData(NamedTuple):
+    start_index: int
+    end_index: int
+    max_cliques: Set[int]
 
-    Args:
-        k: (int) the cardinality of the classifier
+
+class LabelModel(nn.Module):
+    """A conditionally independent LabelModel to learn LF accuracies and assign training labels.
+
+    Examples
+    --------
+    >>> label_model = LabelModel()
+    >>> label_model = LabelModel(cardinality=3)
+    >>> label_model = LabelModel(cardinality=3, device='cpu')
+    >>> label_model = LabelModel(cardinality=3, seed=1234)
+
+    Parameters
+    ----------
+    cardinality
+        Number of classes, by default 2
+    **kwargs
+        Arguments for changing config defaults
+
+    Raises
+    ------
+    ValueError
+        If config device set to cuda but only cpu is available
+
+    Attributes
+    ----------
+    cardinality
+        Number of classes, by default 2
+    config
+        Training configuration
+    seed
+        Random seed
     """
 
-    # This class variable is explained in the Classifier class
-    implements_l2 = True
+    def __init__(self, cardinality: int = 2, **kwargs: Any) -> None:
+        super().__init__()
+        self.config = recursive_merge_dicts(lm_default_config, kwargs)
+        self.cardinality = cardinality
 
-    def __init__(self, k=2, **kwargs):
-        config = recursive_merge_dicts(lm_default_config, kwargs)
-        super().__init__(k, config)
+        # Set random seed
+        if self.config["seed"] is None:
+            self.config["seed"] = np.random.randint(1e6)
+        self.seed: int = self.config["seed"]  # type: ignore
+        set_seed(self.seed)
 
-    def _check_L(self, L):
-        """Run some basic checks on L."""
-        # TODO: Take this out?
-        if issparse(L):
-            L = L.todense()
+        # Confirm that cuda is available if config is using CUDA
+        if self.config["device"] != "cpu" and not torch.cuda.is_available():
+            raise ValueError("device=cuda but CUDA not available.")
 
+        # By default, put model in eval mode; switch to train mode in training
+        self.eval()
+
+    def _check_L(self, L: np.ndarray) -> np.ndarray:
+        """Check label matrix format and content.
+
+        Parameters
+        ----------
+        L
+            A [n, m] matrix of labels
+
+        Returns
+        -------
+        np.ndarray
+            A [n, m] dense matrix of labels
+
+        Raises
+        ------
+        ValueError
+            If values in L are less than 0
+        """
         # Check for correct values, e.g. warning if in {-1,0,1}
         if np.any(L < 0):
             raise ValueError("L must have values in {0,1,...,k}.")
 
-    def _create_L_ind(self, L):
-        """Convert a label matrix with labels in 0...k to a one-hot format
+        return L
 
-        Args:
-            L: An [n,m] scipy.sparse label matrix with values in {0,1,...,k}
+    def _create_L_ind(self, L: np.ndarray) -> np.ndarray:
+        """Convert a label matrix with labels in 0...k to a one-hot format.
 
-        Returns:
-            L_ind: An [n,m*k] dense np.ndarray with values in {0,1}
+        Parameters
+        ----------
+        L
+            An [n,m] label matrix with values in {0,1,...,k}
 
-        Note that no column is required for 0 (abstain) labels.
+        Returns
+        -------
+        np.ndarray
+            An [n,m*k] dense np.ndarray with values in {0,1}
         """
-        # TODO: Update LabelModel to keep L variants as sparse matrices
-        # throughout and remove this line.
-        if issparse(L):
-            L = L.todense()
-
-        L_ind = np.zeros((self.n, self.m * self.k))
-        for y in range(1, self.k + 1):
+        L_ind = np.zeros((self.n, self.m * self.cardinality))
+        for y in range(1, self.cardinality + 1):
             # A[x::y] slices A starting at x at intervals of y
             # e.g., np.arange(9)[0::3] == np.array([0,3,6])
-            L_ind[:, (y - 1) :: self.k] = np.where(L == y, 1, 0)
+            L_ind[:, (y - 1) :: self.cardinality] = np.where(L == y, 1, 0)
         return L_ind
 
-    def _get_augmented_label_matrix(self, L, higher_order=False):
-        """Returns an augmented version of L where each column is an indicator
+    def _get_augmented_label_matrix(
+        self, L: np.ndarray, higher_order: bool = False
+    ) -> np.ndarray:
+        """Create augmented version of label matrix.
+
+        In augmented version, each column is an indicator
         for whether a certain source or clique of sources voted in a certain
         pattern.
 
-        Args:
-            L: An [n,m] scipy.sparse label matrix with values in {0,1,...,k}
+        Parameters
+        ----------
+        L
+            An [n,m] label matrix with values in {0,1,...,k}
+        higher_order
+            Whether to include higher-order correlations (e.g. LF pairs) in matrix
+
+        Returns
+        -------
+        np.ndarray
+            An [n,m*k] dense matrix with values in {0,1}
         """
         # Create a helper data structure which maps cliques (as tuples of member
         # sources) --> {start_index, end_index, maximal_cliques}, where
         # the last value is a set of indices in this data structure
-        self.c_data = {}
+        self.c_data: Dict[int, _CData] = {}
         for i in range(self.m):
-            self.c_data[i] = {
-                "start_index": i * self.k,
-                "end_index": (i + 1) * self.k,
-                "max_cliques": set(
+            self.c_data[i] = _CData(
+                start_index=i * self.cardinality,
+                end_index=(i + 1) * self.cardinality,
+                max_cliques=set(
                     [
                         j
                         for j in self.c_tree.nodes()
                         if i in self.c_tree.node[j]["members"]
                     ]
                 ),
-            }
+            )
 
         L_ind = self._create_L_ind(L)
 
@@ -97,89 +166,63 @@ class LabelModel(Classifier):
             for item in chain(self.c_tree.nodes(), self.c_tree.edges()):
                 if isinstance(item, int):
                     C = self.c_tree.node[item]
-                    C_type = "node"
                 elif isinstance(item, tuple):
                     C = self.c_tree[item[0]][item[1]]
-                    C_type = "edge"
                 else:
                     raise ValueError(item)
                 members = list(C["members"])
-                nc = len(members)
 
-                # If a unary maximal clique, just store its existing index
-                if nc == 1:
-                    C["start_index"] = members[0] * self.k
-                    C["end_index"] = (members[0] + 1) * self.k
-
-                # Else add one column for each possible value
-                else:
-                    L_C = np.ones((self.n, self.k ** nc))
-                    for i, vals in enumerate(product(range(self.k), repeat=nc)):
-                        for j, v in enumerate(vals):
-                            L_C[:, i] *= L_ind[:, members[j] * self.k + v]
-
-                    # Add to L_aug and store the indices
-                    if L_aug is not None:
-                        C["start_index"] = L_aug.shape[1]
-                        C["end_index"] = L_aug.shape[1] + L_C.shape[1]
-                        L_aug = np.hstack([L_aug, L_C])
-                    else:
-                        C["start_index"] = 0
-                        C["end_index"] = L_C.shape[1]
-                        L_aug = L_C
-
-                    # Add to self.c_data as well
-                    id = tuple(members) if len(members) > 1 else members[0]
-                    self.c_data[id] = {
-                        "start_index": C["start_index"],
-                        "end_index": C["end_index"],
-                        "max_cliques": set([item]) if C_type == "node" else set(item),
-                    }
+                # With unary maximal clique, just store its existing index
+                C["start_index"] = members[0] * self.cardinality
+                C["end_index"] = (members[0] + 1) * self.cardinality
             return L_aug
         else:
             return L_ind
 
-    def _build_mask(self):
-        """Build mask applied to O^{-1}, O for the matrix approx constraint"""
+    def _build_mask(self) -> None:
+        """Build mask applied to O^{-1}, O for the matrix approx constraint."""
         self.mask = torch.ones(self.d, self.d).byte()
         for ci in self.c_data.values():
-            si, ei = ci["start_index"], ci["end_index"]
+            si = ci.start_index
+            ei = ci.end_index
             for cj in self.c_data.values():
-                sj, ej = cj["start_index"], cj["end_index"]
+                sj, ej = cj.start_index, cj.end_index
 
                 # Check if ci and cj are part of the same maximal clique
                 # If so, mask out their corresponding blocks in O^{-1}
-                if len(ci["max_cliques"].intersection(cj["max_cliques"])) > 0:
+                if len(ci.max_cliques.intersection(cj.max_cliques)) > 0:
                     self.mask[si:ei, sj:ej] = 0
                     self.mask[sj:ej, si:ei] = 0
 
-    def _generate_O(self, L):
-        """Form the overlaps matrix, which is just all the different observed
-        combinations of values of pairs of sources
+    def _generate_O(self, L: np.ndarray, higher_order: bool = False) -> None:
+        """Generate overlaps and conflicts matrix from label matrix.
 
-        Note that we only include the k non-abstain values of each source,
-        otherwise the model not minimal --> leads to singular matrix
+        Parameters
+        ----------
+        L
+            An [n,m] label matrix with values in {0,1,...,k}
+        higher_order
+            Whether to include higher-order correlations (e.g. LF pairs) in matrix
         """
-        L_aug = self._get_augmented_label_matrix(L)
+        L_aug = self._get_augmented_label_matrix(L, higher_order=higher_order)
         self.d = L_aug.shape[1]
         self.O = torch.from_numpy(L_aug.T @ L_aug / self.n).float()
 
-    def _generate_O_inv(self, L):
-        """Form the *inverse* overlaps matrix"""
-        self._generate_O(L)
-        self.O_inv = torch.from_numpy(np.linalg.inv(self.O.numpy())).float()
-
-    def _init_params(self):
-        """Initialize the learned params
+    def _init_params(self) -> None:
+        r"""Initialize the learned params.
 
         - \mu is the primary learned parameter, where each row corresponds to
         the probability of a clique C emitting a specific combination of labels,
         conditioned on different values of Y (for each column); that is:
 
-            self.mu[i*self.k + j, y] = P(\lambda_i = j | Y = y)
+            self.mu[i*self.cardinality + j, y] = P(\lambda_i = j | Y = y)
 
         and similarly for higher-order cliques.
-        - Z is the inverse form version of \mu.
+
+        Raises
+        ------
+        ValueError
+            If prec_init shape does not match number of LFs
         """
         train_config = self.config["train_config"]
 
@@ -188,39 +231,34 @@ class LabelModel(Classifier):
         # value, prec_i = P(Y=y|\lf=y), and use:
         #   mu_init = P(\lf=y|Y=y) = P(\lf=y) * prec_i / P(Y=y)
 
-        # Handle single or per-LF values
+        # Handle single values
         if isinstance(train_config["prec_init"], (int, float)):
-            prec_init = train_config["prec_init"] * torch.ones(self.m)
-        else:
-            prec_init = torch.from_numpy(train_config["prec_init"])
-            if prec_init.shape[0] != self.m:
-                raise ValueError(f"prec_init must have shape {self.m}.")
+            self._prec_init = train_config["prec_init"] * torch.ones(self.m)
+        if self._prec_init.shape[0] != self.m:
+            raise ValueError(f"prec_init must have shape {self.m}.")
 
         # Get the per-value labeling propensities
         # Note that self.O must have been computed already!
         lps = torch.diag(self.O).numpy()
 
         # TODO: Update for higher-order cliques!
-        self.mu_init = torch.zeros(self.d, self.k)
+        self.mu_init = torch.zeros(self.d, self.cardinality)
         for i in range(self.m):
-            for y in range(self.k):
-                idx = i * self.k + y
-                mu_init = torch.clamp(lps[idx] * prec_init[i] / self.p[y], 0, 1)
+            for y in range(self.cardinality):
+                idx = i * self.cardinality + y
+                mu_init = torch.clamp(lps[idx] * self._prec_init[i] / self.p[y], 0, 1)
                 self.mu_init[idx, y] += mu_init
 
         # Initialize randomly based on self.mu_init
         self.mu = nn.Parameter(self.mu_init.clone() * np.random.random()).float()
 
-        if self.inv_form:
-            self.Z = nn.Parameter(torch.randn(self.d, self.k)).float()
-
         # Build the mask over O^{-1}
-        # TODO: Put this elsewhere?
         self._build_mask()
 
-    def get_conditional_probs(self, source=None):
-        """Returns the full conditional probabilities table as a numpy array,
-        where row i*(k+1) + ly is the conditional probabilities of source i
+    def _get_conditional_probs(self, source: Optional[int] = None) -> np.ndarray:
+        r"""Return the full conditional probabilities table.
+
+        In cond. prob. table, row i*(k+1) + ly is the conditional probabilities of source i
         emmiting label ly (including abstains 0), conditioned on different
         values of Y, i.e.:
 
@@ -229,117 +267,159 @@ class LabelModel(Classifier):
         Note that this simply involves inferring the kth row by law of total
         probability and adding in to mu.
 
-        If `source` is not None, returns only the corresponding block.
+        If ``source`` is not None, returns only the corresponding block.
+
+        Parameters
+        ----------
+        source
+            Index of source to generate conditional probabilities for, by default None
+
+        Returns
+        -------
+        np.ndarray
+            Conditional probabilities table if source is None, else corresponding block
         """
-        c_probs = np.zeros((self.m * (self.k + 1), self.k))
+        c_probs = np.zeros((self.m * (self.cardinality + 1), self.cardinality))
         mu = self.mu.detach().clone().numpy()
 
         for i in range(self.m):
             # si = self.c_data[(i,)]['start_index']
             # ei = self.c_data[(i,)]['end_index']
             # mu_i = mu[si:ei, :]
-            mu_i = mu[i * self.k : (i + 1) * self.k, :]
-            c_probs[i * (self.k + 1) + 1 : (i + 1) * (self.k + 1), :] = mu_i
+            mu_i = mu[i * self.cardinality : (i + 1) * self.cardinality, :]
+            c_probs[
+                i * (self.cardinality + 1) + 1 : (i + 1) * (self.cardinality + 1), :
+            ] = mu_i
 
             # The 0th row (corresponding to abstains) is the difference between
             # the sums of the other rows and one, by law of total prob
-            c_probs[i * (self.k + 1), :] = 1 - mu_i.sum(axis=0)
+            c_probs[i * (self.cardinality + 1), :] = 1 - mu_i.sum(axis=0)
         c_probs = np.clip(c_probs, 0.01, 0.99)
 
         if source is not None:
-            return c_probs[source * (self.k + 1) : (source + 1) * (self.k + 1)]
+            return c_probs[
+                source * (self.cardinality + 1) : (source + 1) * (self.cardinality + 1)
+            ]
         else:
             return c_probs
 
-    def get_accuracies(self):
-        """Returns the vector of LF accuracies, computed using get_conditional_probs"""
+    def get_accuracies(self, probs: Optional[np.ndarray] = None) -> np.ndarray:
+        """Return the vector of LF accuracies.
+
+        Parameters
+        ----------
+        probs
+            Conditional probabilities, by default None
+
+        Returns
+        -------
+        np.ndarray
+            [m,1] vector of LF accuracies
+
+        Example
+        -------
+        >>> L = np.array([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> label_model = LabelModel()
+        >>> label_model.train_model(L)
+        >>> label_model.get_accuracies()
+        array([0.9, 0.9, 0.01])
+        """
         accs = np.zeros(self.m)
         for i in range(self.m):
-            cps = self.get_conditional_probs(source=i)[1:, :]
+            if probs is None:
+                cps = self._get_conditional_probs(source=i)[1:, :]
+            else:
+                cps = probs[
+                    i * (self.cardinality + 1) : (i + 1) * (self.cardinality + 1)
+                ][1:, :]
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
         return accs
 
-    def predict_proba(self, L):
-        """Returns the [n,k] matrix of label probabilities P(Y | \lambda)
+    def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
+        r"""Return label probabilities P(Y | \lambda).
 
-        Args:
-            L: An [n,m] scipy.sparse label matrix with values in {0,1,...,k}
+        Parameters
+        ----------
+        L
+            An [n,m] matrix with values in {0,1,...,k}
+
+        Returns
+        -------
+        np.ndarray
+            An [n,k] array of probabilistic labels
+
+        Example
+        -------
+        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> label_model = LabelModel()
+        >>> label_model.train_model(L)
+        >>> label_model.predict_proba(L)
+        np.array([1.0, 0.0], [0.0, 1.0], [1.0, 0.0])
         """
+        L = L.todense()
         self._set_constants(L)
 
         L_aug = self._get_augmented_label_matrix(L)
         mu = np.clip(self.mu.detach().clone().numpy(), 0.01, 0.99)
-
-        # Create a "junction tree mask" over the columns of L_aug / mu
-        if len(self.deps) > 0:
-            jtm = np.zeros(L_aug.shape[1])
-
-            # All maximal cliques are +1
-            for i in self.c_tree.nodes():
-                node = self.c_tree.node[i]
-                jtm[node["start_index"] : node["end_index"]] = 1
-
-            # All separator sets are -1
-            for i, j in self.c_tree.edges():
-                edge = self.c_tree[i][j]
-                jtm[edge["start_index"] : edge["end_index"]] = 1
-        else:
-            jtm = np.ones(L_aug.shape[1])
+        jtm = np.ones(L_aug.shape[1])
 
         # Note: We omit abstains, effectively assuming uniform distribution here
         X = np.exp(L_aug @ np.diag(jtm) @ np.log(mu) + np.log(self.p))
-        Z = np.tile(X.sum(axis=1).reshape(-1, 1), self.k)
+        Z = np.tile(X.sum(axis=1).reshape(-1, 1), self.cardinality)
         return X / Z
-
-    def get_Q(self):
-        """Get the model's estimate of Q = \mu P \mu^T
-
-        We can then separately extract \mu subject to additional constraints,
-        e.g. \mu P 1 = diag(O).
-        """
-        Z = self.Z.detach().clone().numpy()
-        O = self.O.numpy()
-        I_k = np.eye(self.k)
-        return O @ Z @ np.linalg.inv(I_k + Z.T @ O @ Z) @ Z.T @ O
 
     # These loss functions get all their data directly from the LabelModel
     # (for better or worse). The unused *args make these compatible with the
     # Classifer._train() method which expect loss functions to accept an input.
 
-    def loss_l2(self, l2=0):
-        """L2 loss centered around mu_init, scaled optionally per-source.
+    def _loss_l2(self, l2: float = 0) -> torch.Tensor:
+        r"""L2 loss centered around mu_init, scaled optionally per-source.
 
         In other words, diagonal Tikhonov regularization,
             ||D(\mu-\mu_{init})||_2^2
         where D is diagonal.
 
-        Args:
-            - l2: A float or np.array representing the per-source regularization
-                strengths to use
+        Parameters
+        ----------
+        l2
+            A float or np.array representing the per-source regularization
+            strengths to use, by default 0
+
+        Returns
+        -------
+        torch.Tensor
+            L2 loss between learned mu and initial mu
         """
         if isinstance(l2, (int, float)):
             D = l2 * torch.eye(self.d)
         else:
-            D = torch.diag(torch.from_numpy(l2))
+            D = torch.diag(torch.from_numpy(l2)).type(torch.float32)
 
         # Note that mu is a matrix and this is the *Frobenius norm*
         return torch.norm(D @ (self.mu - self.mu_init)) ** 2
 
-    def loss_inv_Z(self, *args):
-        return torch.norm((self.O_inv + self.Z @ self.Z.t())[self.mask]) ** 2
+    def _loss_mu(self, l2: float = 0) -> torch.Tensor:
+        r"""Overall mu loss.
 
-    def loss_inv_mu(self, *args, l2=0):
-        loss_1 = torch.norm(self.Q - self.mu @ self.P @ self.mu.t()) ** 2
-        loss_2 = torch.norm(torch.sum(self.mu @ self.P, 1) - torch.diag(self.O)) ** 2
-        return loss_1 + loss_2 + self.loss_l2(l2=l2)
+        Parameters
+        ----------
+        l2
+            A float or np.array representing the per-source regularization
+                strengths to use, by default 0
 
-    def loss_mu(self, *args, l2=0):
+        Returns
+        -------
+        torch.Tensor
+            Overall mu loss between learned mu and initial mu
+        """
         loss_1 = torch.norm((self.O - self.mu @ self.P @ self.mu.t())[self.mask]) ** 2
         loss_2 = torch.norm(torch.sum(self.mu @ self.P, 1) - torch.diag(self.O)) ** 2
-        return loss_1 + loss_2 + self.loss_l2(l2=l2)
+        return loss_1 + loss_2 + self._loss_l2(l2=l2)
 
-    def _set_class_balance(self, class_balance, Y_dev):
-        """Set a prior for the class balance
+    def _set_class_balance(
+        self, class_balance: Optional[List[float]], Y_dev: np.ndarray
+    ) -> None:
+        """Set a prior for the class balance.
 
         In order of preference:
         1) Use user-provided class_balance
@@ -353,103 +433,236 @@ class LabelModel(Classifier):
             sorted_counts = np.array([v for k, v in sorted(class_counts.items())])
             self.p = sorted_counts / sum(sorted_counts)
         else:
-            self.p = (1 / self.k) * np.ones(self.k)
+            self.p = (1 / self.cardinality) * np.ones(self.cardinality)
         self.P = torch.diag(torch.from_numpy(self.p)).float()
 
-    def _set_constants(self, L):
+    def _set_constants(self, L: Union[np.ndarray, sparse.spmatrix]) -> None:
         self.n, self.m = L.shape
         self.t = 1
 
-    def _set_dependencies(self, deps):
+    def _create_tree(self) -> None:
         nodes = range(self.m)
-        self.deps = deps
-        self.c_tree = get_clique_tree(nodes, deps)
+        self.c_tree = get_clique_tree(nodes, [])
+
+    def _execute_logging(self, loss: torch.Tensor) -> Metrics:
+        self.eval()
+        self.running_examples: int
+        self.running_loss: float
+        self.running_loss += loss.item()
+        self.running_examples += 1
+
+        # Always add average loss
+        metrics_dict = {"train/loss": self.running_loss / self.running_examples}
+
+        if self.logger.check():
+            self.logger.log(metrics_dict)
+
+            # Reset running loss and examples counts
+            self.running_loss = 0.0
+            self.running_examples = 0
+
+        self.train()
+        return metrics_dict
+
+    def _set_logger(self, train_config: TrainConfig, epoch_size: int) -> None:
+        self.logger = Logger(train_config["log_train_every"])
+
+    def _set_optimizer(self, train_config: TrainConfig) -> None:
+        optimizer_config = train_config["optimizer_config"]
+        opt = optimizer_config["optimizer"]
+
+        parameters = filter(lambda p: p.requires_grad, self.parameters())
+        if opt == "sgd":
+            optimizer = optim.SGD(  # type: ignore
+                parameters,
+                **optimizer_config["optimizer_common"],
+                **optimizer_config["sgd_config"],
+            )
+        elif opt == "rmsprop":
+            optimizer = optim.RMSprop(  # type: ignore
+                parameters,
+                **optimizer_config["optimizer_common"],
+                **optimizer_config["rmsprop_config"],
+            )
+        elif opt == "adam":
+            optimizer = optim.Adam(  # type: ignore
+                parameters,
+                **optimizer_config["optimizer_common"],
+                **optimizer_config["adam_config"],
+            )
+        else:
+            raise ValueError(f"Did not recognize optimizer option '{opt}'")
+        self.optimizer = optimizer
+
+    def _set_scheduler(self, train_config: TrainConfig) -> None:
+        lr_scheduler = train_config["lr_scheduler"]
+        if lr_scheduler is not None:
+            lr_scheduler_config = train_config["lr_scheduler_config"]
+            if lr_scheduler == "exponential":
+                lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(
+                    self.optimizer, **lr_scheduler_config["exponential_config"]
+                )
+            else:
+                raise ValueError(
+                    f"Did not recognize lr_scheduler option '{lr_scheduler}'"
+                )
+        self.lr_scheduler = lr_scheduler
+
+    def _update_scheduler(self, epoch: int, metrics_dict: Metrics) -> None:
+        train_config = self.config["train_config"]
+        if self.lr_scheduler is not None:
+            lr_scheduler_config = train_config["lr_scheduler_config"]
+            if epoch + 1 >= lr_scheduler_config["lr_freeze"]:
+                self.lr_scheduler.step()
 
     def train_model(
         self,
-        L_train,
-        Y_dev=None,
-        deps=[],
-        class_balance=None,
-        log_writer=None,
-        **kwargs,
-    ):
-        """Train the model (i.e. estimate mu) in one of two ways, depending on
-        whether source dependencies are provided or not:
+        L_train: sparse.spmatrix,
+        Y_dev: Optional[np.ndarray] = None,
+        class_balance: Optional[List[float]] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Train label model.
 
-        Args:
-            L_train: An [n,m] scipy.sparse matrix with values in {0,1,...,k}
-                corresponding to labels from supervision sources on the
-                training set
-            Y_dev: Target labels for the dev set, for estimating class_balance
-            deps: (list of tuples) known dependencies between supervision
-                sources. If not provided, sources are assumed to be independent.
-                TODO: add automatic dependency-learning code
-            class_balance: (np.array) each class's percentage of the population
+        Train label model to estimate mu, the parameters related to accuracies of LFs.
 
-        (1) No dependencies (conditionally independent sources): Estimate mu
-        subject to constraints:
-            (1a) O_{B(i,j)} - (mu P mu.T)_{B(i,j)} = 0, for i != j, where B(i,j)
-                is the block of entries corresponding to sources i,j
-            (1b) np.sum( mu P, 1 ) = diag(O)
+        Parameters
+        ----------
+        L_train
+            An [n,m] matrix with values in {0,1,...,k}
+        Y_dev
+            Gold labels for dev set for estimating class_balance, by default None
+        class_balance
+            Each class's percentage of the population, by default None
+        **kwargs
+            Arguments for changing train config defaults
 
-        (2) Source dependencies:
-            - First, estimate Z subject to the inverse form
-            constraint:
-                (2a) O_\Omega + (ZZ.T)_\Omega = 0, \Omega is the deps mask
-            - Then, compute Q = mu P mu.T
-            - Finally, estimate mu subject to mu P mu.T = Q and (1b)
+        Raises
+        ------
+        Exception
+            If loss in NaN
+
+        Examples
+        --------
+        >>> L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        >>> Y_dev = [1, 2, 1]
+        >>> label_model = LabelModel()
+        >>> label_model.train_model(L)
+        >>> label_model.train_model(L, Y_dev=Y_dev)
+        >>> label_model.train_model(L, class_balance=[0.7, 0.3])
         """
         self.config = recursive_merge_dicts(self.config, kwargs, misses="ignore")
         train_config = self.config["train_config"]
 
-        # TODO: Implement logging for label model?
-        if log_writer is not None:
-            raise NotImplementedError("Logging for LabelModel.")
-
-        # Note that the LabelModel class implements its own (centered) L2 reg.
-        l2 = train_config.get("l2", 0)
-
+        L_train = L_train.todense()
+        L_train = self._check_L(L_train)
         self._set_class_balance(class_balance, Y_dev)
         self._set_constants(L_train)
-        self._set_dependencies(deps)
-        self._check_L(L_train)
+        self._create_tree()
 
-        # Whether to take the simple conditionally independent approach, or the
-        # "inverse form" approach for handling dependencies
-        # This flag allows us to eg test the latter even with no deps present
-        self.inv_form = len(self.deps) > 0
+        # Compute O and initialize params
+        if self.config["verbose"]:  # pragma: no cover
+            print("Computing O...")
+        self._generate_O(L_train)
+        self._init_params()
 
-        # Creating this faux dataset is necessary for now because the LabelModel
-        # loss functions do not accept inputs, but Classifer._train_model()
-        # expects training data to feed to the loss functions.
-        dataset = MetalDataset([0], [0])
-        train_loader = DataLoader(dataset)
-        if self.inv_form:
-            # Compute O, O^{-1}, and initialize params
-            if self.config["verbose"]:
-                print("Computing O^{-1}...")
-            self._generate_O_inv(L_train)
-            self._init_params()
+        # Estimate \mu
+        if self.config["verbose"]:  # pragma: no cover
+            print("Estimating \mu...")
 
-            # Estimate Z, compute Q = \mu P \mu^T
-            if self.config["verbose"]:
-                print("Estimating Z...")
-            self._train_model(train_loader, self.loss_inv_Z)
-            self.Q = torch.from_numpy(self.get_Q()).float()
+        # Set model to train mode
+        self.train()
+        train_config = self.config["train_config"]
+        l2 = train_config.get("l2", 0)
 
-            # Estimate \mu
-            if self.config["verbose"]:
-                print("Estimating \mu...")
-            self._train_model(train_loader, partial(self.loss_inv_mu, l2=l2))
-        else:
-            # Compute O and initialize params
-            if self.config["verbose"]:
-                print("Computing O...")
-            self._generate_O(L_train)
-            self._init_params()
+        # Move model to GPU
+        if (
+            self.config["verbose"] and self.config["device"] != "cpu"
+        ):  # pragma: no cover
+            print("Using GPU...")
+        self.to(self.config["device"])
 
-            # Estimate \mu
-            if self.config["verbose"]:
-                print("Estimating \mu...")
-            self._train_model(train_loader, partial(self.loss_mu, l2=l2))
+        # Set training components
+        self._set_logger(train_config, epoch_size=1)
+        self._set_optimizer(train_config)
+        self._set_scheduler(train_config)
+
+        # Restore model if necessary
+        start_iteration = 0
+
+        # Train the model
+        metrics_hist = {}  # The most recently seen value for all metrics
+        for epoch in range(start_iteration, train_config["n_epochs"]):
+            self.running_loss = 0.0
+            self.running_examples = 0
+
+            # Zero the parameter gradients
+            self.optimizer.zero_grad()
+
+            # Forward pass to calculate the average loss per example
+            loss = self._loss_mu(l2=l2)
+            if torch.isnan(loss):
+                msg = "Loss is NaN. Consider reducing learning rate."
+                raise Exception(msg)
+
+            # Backward pass to calculate gradients
+            # Loss is an average loss per example
+            loss.backward()
+
+            # Perform optimizer step
+            self.optimizer.step()
+
+            # Calculate metrics, log, and checkpoint as necessary
+            metrics_dict = self._execute_logging(loss)
+            metrics_hist.update(metrics_dict)
+
+            # Apply learning rate scheduler
+            self._update_scheduler(epoch, metrics_hist)
+
+        self.eval()
+
+        # Print confusion matrix if applicable
+        if self.config["verbose"]:  # pragma: no cover
+            print("Finished Training")
+
+    def save(self, destination: str, **kwargs: Any) -> None:
+        """Save label model.
+
+        Parameters
+        ----------
+        destination
+            File location for saving model
+        **kwargs
+            Arguments for torch.save
+
+        Example
+        -------
+        >>> label_model.save('./saved_label_model')
+        """
+        with open(destination, "wb") as f:
+            torch.save(self, f, **kwargs)
+
+    @staticmethod
+    def load(source: str, **kwargs: Any) -> Any:
+        """Load existing label model.
+
+        Parameters
+        ----------
+        source
+            File location from where to load model
+        **kwargs
+            Arguments for torch.load
+
+        Returns
+        -------
+        LabelModel
+            LabelModel with appropriate loaded parameters
+
+        Example
+        -------
+        Load parameters saved in ``saved_label_model``
+
+        >>> label_model.load('./saved_label_model')
+        """
+        with open(source, "rb") as f:
+            return torch.load(f, **kwargs)

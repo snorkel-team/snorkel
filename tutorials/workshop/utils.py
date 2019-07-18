@@ -10,7 +10,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from torchtext.vocab import Vocab
 
-from snorkel.mtl.data import MultitaskDataLoader, MultitaskDataset
+from snorkel.classification.data import DictDataLoader, DictDataset
 
 
 def upgrade_dataloaders(dataloaders: List[DataLoader]):
@@ -18,13 +18,12 @@ def upgrade_dataloaders(dataloaders: List[DataLoader]):
     for dataloader in dataloaders:
         dataset = dataloader.dataset
 
-        new_dataset = MultitaskDataset(
+        new_dataset = DictDataset(
             name=f"data_{dataloader.split}",
             X_dict={"data": dataset.X},  # This op is specific to TensorDataset
-            Y_dict={"labels": dataset.Y},  # Maybe
+            Y_dict={"task": dataset.Y},  # Maybe
         )
-        new_dataloader = MultitaskDataLoader(
-            task_to_label_dict={"task": "labels"},
+        new_dataloader = DictDataLoader(
             dataset=new_dataset,
             split=dataloader.split,
             batch_size=dataloader.batch_size,
@@ -276,7 +275,7 @@ class LSTMModule(nn.Module):
         return reduced[inv_perm_idx, :]
 
 
-class Featurizer(object):
+class Featurizer:
     def fit(self, input):
         """
         Args:

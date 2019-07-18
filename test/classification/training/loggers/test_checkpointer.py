@@ -6,6 +6,8 @@ import unittest
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
 from snorkel.classification.training import Checkpointer
 
+log_manager_config = {"counter_unit": "epochs", "evaluation_freq": 1}
+
 
 class TestLogManager(unittest.TestCase):
     def setUp(self) -> None:
@@ -16,6 +18,7 @@ class TestLogManager(unittest.TestCase):
 
     def test_checkpointer(self) -> None:
         checkpointer = Checkpointer(
+            **log_manager_config,
             checkpoint_dir=self.test_dir,
             checkpoint_runway=3,
             checkpoint_metric="f1:max",
@@ -30,6 +33,7 @@ class TestLogManager(unittest.TestCase):
 
     def test_checkpointer_min(self) -> None:
         checkpointer = Checkpointer(
+            **log_manager_config,
             checkpoint_dir=self.test_dir,
             checkpoint_runway=3,
             checkpoint_metric="f1:min",
@@ -43,6 +47,7 @@ class TestLogManager(unittest.TestCase):
     def test_checkpointer_clear(self) -> None:
         checkpoint_dir = os.path.join(self.test_dir, "clear")
         checkpointer = Checkpointer(
+            **log_manager_config,
             checkpoint_dir=checkpoint_dir,
             checkpoint_metric="f1:max",
             checkpoint_clear=True,
@@ -58,7 +63,9 @@ class TestLogManager(unittest.TestCase):
     def test_checkpointer_load_best(self) -> None:
         checkpoint_dir = os.path.join(self.test_dir, "clear")
         checkpointer = Checkpointer(
-            checkpoint_dir=checkpoint_dir, checkpoint_metric="f1:max"
+            **log_manager_config,
+            checkpoint_dir=checkpoint_dir,
+            checkpoint_metric="f1:max",
         )
         model = SnorkelClassifier([])
         checkpointer.checkpoint(1, model, dict(f1=0.8))
@@ -67,15 +74,25 @@ class TestLogManager(unittest.TestCase):
 
     def test_no_checkpoint_dir(self) -> None:
         with self.assertRaisesRegex(ValueError, "no checkpoint_dir"):
-            Checkpointer(checkpoint_dir=None)
+            Checkpointer(**log_manager_config, checkpoint_dir=None)
 
     def test_no_zero_frequency(self) -> None:
         with self.assertRaisesRegex(ValueError, "checkpoint freq"):
-            Checkpointer(checkpoint_dir=self.test_dir, checkpoint_factor=0)
+            Checkpointer(
+                **log_manager_config, checkpoint_dir=self.test_dir, checkpoint_factor=0
+            )
 
     def test_bad_metric_name(self) -> None:
         with self.assertRaisesRegex(ValueError, "metric_name:mode"):
-            Checkpointer(checkpoint_dir=self.test_dir, checkpoint_metric="f1-min")
+            Checkpointer(
+                **log_manager_config,
+                checkpoint_dir=self.test_dir,
+                checkpoint_metric="f1-min",
+            )
 
         with self.assertRaisesRegex(ValueError, "metric mode"):
-            Checkpointer(checkpoint_dir=self.test_dir, checkpoint_metric="f1:mode")
+            Checkpointer(
+                **log_manager_config,
+                checkpoint_dir=self.test_dir,
+                checkpoint_metric="f1:mode",
+            )

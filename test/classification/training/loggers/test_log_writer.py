@@ -5,6 +5,12 @@ import tempfile
 import unittest
 
 from snorkel.classification.training import LogWriter
+from snorkel.types import Config
+
+
+class TempConfig(Config):
+    a: int = 42
+    b: str = "foo"
 
 
 class TestLogWriter(unittest.TestCase):
@@ -42,10 +48,14 @@ class TestLogWriter(unittest.TestCase):
 
     def test_write_config(self) -> None:
         run_name = "my_run"
-        config = dict(a=8, b="my text")
+        config = TempConfig(b="bar")
         log_writer = LogWriter(run_name=run_name, log_dir=self.test_dir)
         log_writer.write_config(config)
         log_path = os.path.join(self.test_dir, run_name, "config.json")
         with open(log_path, "r") as f:
             file_config = json.load(f)
-        self.assertEqual(config, file_config)
+        self.assertEqual(config._asdict(), file_config)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -3,11 +3,24 @@ import logging
 import os
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, DefaultDict, List, Mapping
+from typing import Any, DefaultDict, List, Mapping, Optional
 
-from snorkel.classification.snorkel_config import default_config
-from snorkel.classification.utils import recursive_merge_dicts
 from snorkel.types import Config
+
+
+class LogWriterConfig(Config):
+    """Manager for checkpointing model.
+
+    Parameters
+    ----------
+    log_dir
+        The root directory where logs should be saved
+    run_name
+        The name of this particular run (defaults to date-time combination if None)
+    """
+
+    log_dir: str = "logs"
+    run_name: Optional[str] = None
 
 
 class LogWriter:
@@ -16,7 +29,7 @@ class LogWriter:
     Parameters
     ----------
     kwargs
-        Configuration merged with ``default_config["log_writer_config"]``
+        Settings to merge into LogWriterConfig
 
     Attributes
     ----------
@@ -25,20 +38,21 @@ class LogWriter:
     run_name
         Name of run if provided, otherwise date-time combination
     log_dir
-        Path root logging directory
+        The root directory where logs should be saved
     run_log
         Dictionary of scalar values to log, keyed by value name
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        assert isinstance(default_config["log_writer_config"], dict)
-        self.config = recursive_merge_dicts(default_config["log_writer_config"], kwargs)
+        self.config = LogWriterConfig(**kwargs)
 
-        date = datetime.now().strftime("%Y_%m_%d")
-        time = datetime.now().strftime("%H_%M_%S")
-        self.run_name = self.config["run_name"] or f"{date}/{time}/"
+        self.run_name = self.config.run_name
+        if self.run_name is None:
+            date = datetime.now().strftime("%Y_%m_%d")
+            time = datetime.now().strftime("%H_%M_%S")
+            self.run_name = f"{date}/{time}/"
 
-        self.log_dir = os.path.join(self.config["log_dir"], self.run_name)
+        self.log_dir = os.path.join(self.config.log_dir, self.run_name)
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
 
@@ -71,7 +85,7 @@ class LogWriter:
         config_filename
             Name of file in logging directory to write to
         """
-        self.write_json(config, config_filename)
+        self.write_json(config._asdict(), config_filename)
 
     def write_log(self, log_filename: str) -> None:
         """Dump the scalar value log to file.

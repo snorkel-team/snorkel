@@ -2,13 +2,45 @@ import glob
 import logging
 import os
 from shutil import copyfile
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
-from snorkel.classification.snorkel_config import default_config
-from snorkel.classification.utils import recursive_merge_dicts
+from snorkel.types import Config
 
 Metrics = Dict[str, float]
+
+
+class CheckpointerConfig(Config):
+    """Manager for checkpointing model.
+
+    Parameters
+    ----------
+    checkpoint_dir
+        The path to a directory where checkpoints will be saved
+        The Trainer will set this to the log directory if it is None
+    checkpoint_factor
+        Check for a best model every this many evaluations. For example, if
+        evaluation_freq is 0.5 epochs and checkpoint_factor is 2, then checkpointing
+        will be attempted every 1 epochs.
+    checkpoint_metric
+        The metric to checkpoint on, of the form "task/dataset/split/metric:mode" where
+        mode is "min" or "max".
+    checkpoint_task_metrics
+        Additional metrics to save best models for. Note that the best model according
+        to `checkpoint_metric` will be the one that is loaded after training and used
+        for early stopping.
+    checkpoint_runway
+        No checkpointing will occur for the first this many checkpoint_units
+    checkpoint_clear
+        If True, clear all checkpoints besides the best so far.
+    """
+
+    checkpoint_dir: Optional[str] = None
+    checkpoint_factor: int = 1
+    checkpoint_metric: str = "model/all/train/loss:min"
+    checkpoint_task_metrics: Optional[List[str]] = None
+    checkpoint_runway: int = 0
+    checkpoint_clear: bool = True
 
 
 class Checkpointer:
@@ -16,40 +48,36 @@ class Checkpointer:
 
     Parameters
     ----------
+    counter_unit
+        The unit to use when determining when its time to checkpoint (one of
+        ["epochs", "batches", "points"]); must match the counter_unit of LogManager
+    evaluation_freq
+        How frequently the model is being evaluated (this is the maximum frequency that
+        checkpointing can occur, which will happen if checkpoint_factor==1)
     kwargs
         Config merged with ``default_config["checkpointer_config"]``
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-
-        # Checkpointer requires both checkpointer_config and log_manager_config
-        # Use recursive_merge_dict instead of dict.update() to ensure copies are made
-        assert isinstance(default_config["checkpointer_config"], dict)
-        assert isinstance(default_config["log_manager_config"], dict)
-        checkpointer_config = recursive_merge_dicts(
-            default_config["checkpointer_config"],
-            default_config["log_manager_config"],
-            misses="insert",
-        )
-        self.config = recursive_merge_dicts(checkpointer_config, kwargs)
+    def __init__(
+        self, counter_unit: str, evaluation_freq: float, **kwargs: Any
+    ) -> None:
+        self.config = CheckpointerConfig(**kwargs)
 
         # Pull out checkpoint settings
-        self.checkpoint_dir = self.config["checkpoint_dir"]
-        self.checkpoint_unit = self.config["counter_unit"]
-        self.checkpoint_clear = self.config["checkpoint_clear"]
-        self.checkpoint_runway = self.config["checkpoint_runway"]
-        self.checkpoint_factor = self.config["checkpoint_factor"]
+        self.checkpoint_unit = counter_unit
+        self.checkpoint_dir = self.config.checkpoint_dir
+        self.checkpoint_clear = self.config.checkpoint_clear
+        self.checkpoint_runway = self.config.checkpoint_runway
+        self.checkpoint_factor = self.config.checkpoint_factor
         self.checkpoint_condition_met = False
 
         if self.checkpoint_dir is None:
             raise ValueError("Checkpointing is on but no checkpoint_dir was specified.")
 
         # Collect all metrics to checkpoint
-        self.checkpoint_metric = self._make_metric_map(
-            [self.config["checkpoint_metric"]]
-        )
+        self.checkpoint_metric = self._make_metric_map([self.config.checkpoint_metric])
         self.checkpoint_task_metrics = self._make_metric_map(
-            self.config["checkpoint_task_metrics"]
+            self.config.checkpoint_task_metrics
         )
         self.checkpoint_task_metrics.update(self.checkpoint_metric)
 
@@ -58,7 +86,7 @@ class Checkpointer:
             os.makedirs(self.checkpoint_dir)
 
         # Set checkpoint frequency
-        self.checkpoint_freq = self.config["evaluation_freq"] * self.checkpoint_factor
+        self.checkpoint_freq = evaluation_freq * self.checkpoint_factor
         if self.checkpoint_freq <= 0:
             raise ValueError(
                 f"Invalid checkpoint freq {self.checkpoint_freq}, "
@@ -151,7 +179,7 @@ class Checkpointer:
     def clear(self) -> None:
         """Clear existing checkpoint files, besides the best-yet model."""
         if self.checkpoint_clear:
-            logging.info("Clear all immediate checkpoints.")
+            logging.info("Clear all checkpoints other than best so far.")
             file_list = glob.glob(f"{self.checkpoint_dir}/checkpoint_*.pth")
             for fname in file_list:
                 os.remove(fname)
@@ -171,12 +199,14 @@ class Checkpointer:
 
         return model
 
-    def _make_metric_map(self, metric_mode_list: List[str]) -> Dict[str, str]:
-        if metric_mode_list is None:
+    def _make_metric_map(
+        self, metric_mode_iter: Optional[Iterable[str]]
+    ) -> Dict[str, str]:
+        if metric_mode_iter is None:
             return {}
 
         metric_mode_map = dict()
-        for metric_mode in metric_mode_list:
+        for metric_mode in metric_mode_iter:
             try:
                 metric, mode = metric_mode.split(":")
             except ValueError:

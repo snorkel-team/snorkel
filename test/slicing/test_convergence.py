@@ -45,7 +45,7 @@ def h(x: DataPoint) -> int:
 
 class SlicingConvergenceTest(unittest.TestCase):
     @classmethod
-    def setup_class(cls):
+    def setUpClass(cls):
         # Ensure deterministic runs
         set_seed(123)
 
@@ -87,7 +87,9 @@ class SlicingConvergenceTest(unittest.TestCase):
         model = SnorkelClassifier(tasks=tasks)
 
         # Train
-        trainer = Trainer(lr=0.001, n_epochs=50, progress_bar=False)
+        trainer = Trainer(
+            **{"optimizer_config": {"lr": 0.001}}, n_epochs=50, progress_bar=False
+        )
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
 
@@ -138,7 +140,9 @@ class SlicingConvergenceTest(unittest.TestCase):
 
         # Train
         # NOTE: Needs more epochs to convergence with more heads
-        trainer = Trainer(lr=0.001, n_epochs=110, progress_bar=False)
+        trainer = Trainer(
+            **{"optimizer_config": {"lr": 0.001}}, n_epochs=110, progress_bar=False
+        )
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
 

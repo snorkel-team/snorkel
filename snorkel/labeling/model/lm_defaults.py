@@ -30,6 +30,6 @@ lm_default_config = {
         },
         # Train loop
         "n_epochs": 100,
-        "log_train_every": 1,
+        "log_train_every": 10,
     },
 }

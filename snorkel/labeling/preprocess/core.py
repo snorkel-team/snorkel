@@ -9,7 +9,8 @@ processing is concatenating the title and body of an article. For a
 more complex example, see ``snorkel.labeling.preprocess.nlp.SpacyPreprocessor``.
 """
 
-
+# Used for type checking only
+# Note: subclassing as below trips up mypy
 BasePreprocessor = BaseMapper
 
 

@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 import unittest
+from typing import List
 
 import numpy as np
 import pytest
@@ -13,7 +14,7 @@ from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
 
 
 class LabelModelTest(unittest.TestCase):
-    def _set_up_model(self, L, class_balance=[0.5, 0.5]):
+    def _set_up_model(self, L: np.ndarray, class_balance: List[float] = [0.5, 0.5]):
         label_model = LabelModel(k=2, verbose=False)
         label_model._set_constants(L)
         label_model._create_tree()
@@ -30,9 +31,8 @@ class LabelModelTest(unittest.TestCase):
 
         # Test dimension constants
         L = np.array([[1, 2, 1], [1, 0, 1], [2, 1, 1], [1, 2, -1]])
-        L_sparse = csr_matrix(L)
         with self.assertRaisesRegex(ValueError, "L must have values in"):
-            label_model._check_L(L_sparse)
+            label_model._check_L(L)
 
         L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 1]])
         label_model._set_constants(L)
@@ -212,7 +212,7 @@ class LabelModelTest(unittest.TestCase):
         label_model = self._set_up_model(L)
 
         label_model.mu = nn.Parameter(label_model.mu_init.clone())
-        probs = label_model.predict_proba(L)
+        probs = label_model.predict_proba(csr_matrix(L))
 
         # with matching labels from 3 LFs, predicted probs clamped at (0.99,0.01)
         true_probs = np.array([[0.99, 0.01], [0.99, 0.01]])
@@ -233,8 +233,8 @@ class LabelModelTest(unittest.TestCase):
         self.assertAlmostEqual(label_model._loss_mu().item(), 0.675, 3)
 
     def test_model_loss(self):
-        L = np.array([[1, 0, 1], [1, 2, 1]])
-        label_model = self._set_up_model(L)
+        L = csr_matrix([[1, 0, 1], [1, 2, 1]])
+        label_model = LabelModel(k=2, verbose=False)
 
         label_model.train_model(L, n_epochs=1, lr=0.01, momentum=0.9)
         init_loss = label_model._loss_mu().item()
@@ -247,18 +247,16 @@ class LabelModelTest(unittest.TestCase):
             label_model.train_model(L, n_epochs=10, lr=1e8)
 
     def test_optimizer(self):
-        L = np.array([[1, 0, 1], [1, 2, 1]])
-        label_model = self._set_up_model(L)
-
+        L = csr_matrix([[1, 0, 1], [1, 2, 1]])
+        label_model = LabelModel(k=2, verbose=False)
         label_model.train_model(L, n_epochs=1, optimizer="rmsprop")
         label_model.train_model(L, n_epochs=1, optimizer="adam")
         with self.assertRaisesRegex(ValueError, "Did not recognize optimizer"):
             label_model.train_model(L, n_epochs=1, optimizer="bad_opt")
 
     def test_lr_scheduler(self):
-        L = np.array([[1, 0, 1], [1, 2, 1]])
-        label_model = self._set_up_model(L)
-
+        L = csr_matrix([[1, 0, 1], [1, 2, 1]])
+        label_model = LabelModel(k=2, verbose=False)
         label_model.train_model(L, n_epochs=1, lr_scheduler=None)
         label_model.train_model(L, n_epochs=1, lr_scheduler="exponential")
         with self.assertRaisesRegex(
@@ -267,9 +265,8 @@ class LabelModelTest(unittest.TestCase):
             label_model.train_model(L, n_epochs=1, lr_scheduler="bad_scheduler")
 
     def test_save_and_load(self):
-        L = np.array([[1, 0, 1], [1, 2, 1]])
-        label_model = self._set_up_model(L)
-
+        L = csr_matrix([[1, 0, 1], [1, 2, 1]])
+        label_model = LabelModel(k=2, verbose=False)
         label_model.train_model(L, n_epochs=1, lr_scheduler=None)
         dir_path = tempfile.mkdtemp()
         save_path = dir_path + "label_model"
@@ -302,7 +299,6 @@ class TestLabelModelAdvanced(unittest.TestCase):
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 
         # Test predicted labels
-        L = L.todense()  # Note: Remove once Label Model L typing is cleaned up!
         Y_lm = label_model.predict_proba(L).argmax(axis=1) + 1
         err = np.where(Y != Y_lm, 1, 0).sum() / self.n
         self.assertLess(err, 0.1)

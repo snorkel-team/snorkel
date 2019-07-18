@@ -32,7 +32,7 @@ Y = [1, 2, 3, 1, 2, 3]
 
 class TestAnalysis(unittest.TestCase):
     def setUp(self) -> None:
-        self.L = sparse.csr_matrix(np.array(L))
+        self.L = sparse.csr_matrix(L)
         self.Y = np.array(Y)
 
     def test_label_coverage(self) -> None:

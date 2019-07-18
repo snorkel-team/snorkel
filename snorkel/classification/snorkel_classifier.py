@@ -341,7 +341,7 @@ class SnorkelClassifier(nn.Module):
             prob_dict[task_name] = np.array(prob_dict_list[task_name])
 
         if return_preds:
-            pred_dict: Dict[str, ArrayLike] = defaultdict(list)
+            pred_dict: Dict[str, np.ndarray] = defaultdict(list)
             for task_name, probs in prob_dict.items():
                 pred_dict[task_name] = probs_to_preds(probs)
 

@@ -14,7 +14,6 @@ from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.lm_defaults import lm_default_config
 from snorkel.labeling.model.logger import Logger
 
-Matrix = Union[np.ndarray, sparse.spmatrix]
 TrainConfig = Dict[str, Any]
 Metrics = Dict[str, float]
 
@@ -75,9 +74,8 @@ class LabelModel(nn.Module):
         # By default, put model in eval mode; switch to train mode in training
         self.eval()
 
-    def _check_L(self, L: Matrix) -> np.ndarray:
-        """
-        Check label matrix format and content. Convert to dense matrix if needed.
+    def _check_L(self, L: np.ndarray) -> np.ndarray:
+        """Check label matrix format and content.
 
         Parameters
         ----------
@@ -94,18 +92,14 @@ class LabelModel(nn.Module):
         ValueError
             If values in L are less than 0
         """
-        if sparse.issparse(L):
-            L = L.todense()
-
         # Check for correct values, e.g. warning if in {-1,0,1}
         if np.any(L < 0):
             raise ValueError("L must have values in {0,1,...,k}.")
 
         return L
 
-    def _create_L_ind(self, L: Matrix) -> np.ndarray:
-        """
-        Convert a label matrix with labels in 0...k to a one-hot format.
+    def _create_L_ind(self, L: np.ndarray) -> np.ndarray:
+        """Convert a label matrix with labels in 0...k to a one-hot format.
 
         Parameters
         ----------
@@ -125,7 +119,7 @@ class LabelModel(nn.Module):
         return L_ind
 
     def _get_augmented_label_matrix(
-        self, L: Matrix, higher_order: bool = False
+        self, L: np.ndarray, higher_order: bool = False
     ) -> np.ndarray:
         """Create augmented version of label matrix.
 
@@ -138,12 +132,12 @@ class LabelModel(nn.Module):
         L
             An [n,m] label matrix with values in {0,1,...,k}
         higher_order
-            Whether to include higher-order correlations (e.g. LF pairs) in matrix, by default False
+            Whether to include higher-order correlations (e.g. LF pairs) in matrix
 
         Returns
         -------
         np.ndarray
-            An [n,m*k] dense np.ndarray with values in {0,1}
+            An [n,m*k] dense matrix with values in {0,1}
         """
         # Create a helper data structure which maps cliques (as tuples of member
         # sources) --> {start_index, end_index, maximal_cliques}, where
@@ -200,7 +194,7 @@ class LabelModel(nn.Module):
                     self.mask[si:ei, sj:ej] = 0
                     self.mask[sj:ej, si:ei] = 0
 
-    def _generate_O(self, L: Matrix, higher_order: bool = False) -> None:
+    def _generate_O(self, L: np.ndarray, higher_order: bool = False) -> None:
         """Generate overlaps and conflicts matrix from label matrix.
 
         Parameters
@@ -208,7 +202,7 @@ class LabelModel(nn.Module):
         L
             An [n,m] label matrix with values in {0,1,...,k}
         higher_order
-            Whether to include higher-order correlations (e.g. LF pairs) in matrix, by default False
+            Whether to include higher-order correlations (e.g. LF pairs) in matrix
         """
         L_aug = self._get_augmented_label_matrix(L, higher_order=higher_order)
         self.d = L_aug.shape[1]
@@ -341,7 +335,7 @@ class LabelModel(nn.Module):
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
         return accs
 
-    def predict_proba(self, L: Matrix) -> np.ndarray:
+    def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
         r"""Return label probabilities P(Y | \lambda).
 
         Parameters
@@ -356,12 +350,13 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = np.array([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
         >>> label_model = LabelModel()
         >>> label_model.train_model(L)
         >>> label_model.predict_proba(L)
         np.array([1.0, 0.0], [0.0, 1.0], [1.0, 0.0])
         """
+        L = L.todense()
         self._set_constants(L)
 
         L_aug = self._get_augmented_label_matrix(L)
@@ -441,7 +436,7 @@ class LabelModel(nn.Module):
             self.p = (1 / self.cardinality) * np.ones(self.cardinality)
         self.P = torch.diag(torch.from_numpy(self.p)).float()
 
-    def _set_constants(self, L: Matrix) -> None:
+    def _set_constants(self, L: Union[np.ndarray, sparse.spmatrix]) -> None:
         self.n, self.m = L.shape
         self.t = 1
 
@@ -522,7 +517,7 @@ class LabelModel(nn.Module):
 
     def train_model(
         self,
-        L_train: Matrix,
+        L_train: sparse.spmatrix,
         Y_dev: Optional[np.ndarray] = None,
         class_balance: Optional[List[float]] = None,
         **kwargs: Any,
@@ -559,6 +554,7 @@ class LabelModel(nn.Module):
         self.config = recursive_merge_dicts(self.config, kwargs, misses="ignore")
         train_config = self.config["train_config"]
 
+        L_train = L_train.todense()
         L_train = self._check_L(L_train)
         self._set_class_balance(class_balance, Y_dev)
         self._set_constants(L_train)

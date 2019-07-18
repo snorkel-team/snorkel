@@ -15,8 +15,14 @@ class SpacyPreprocessor(Preprocessor):
     A common approach to writing LFs over text is to first use
     a natural language parser to decompose the text into tokens,
     part-of-speech tags, etc. SpaCy (https://spacy.io/) is a
-    popular tool for doing this. For details of SpaCy ``Doc``objects
-    and a full attribute listing, see https://spacy.io/api/doc.
+    popular tool for doing this. This preprocessor adds a
+    SpaCy ``Doc`` object to the data point. A ``Doc`` object is
+    a sequence of ``Token`` objects, which contain information
+    on lemmatization, parts-of-speech, etc. ``Doc`` objects also
+    contain fields like ``Doc.ents``, a list of named entities,
+    and ``Doc.noun_chunks``, a list of noun phrases. For details
+    of SpaCy ``Doc`` objects and a full attribute listing,
+    see https://spacy.io/api/doc.
 
     Parameters
     ----------

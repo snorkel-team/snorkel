@@ -37,8 +37,13 @@ class NLPLabelingFunction(LabelingFunction):
     logic written over SpaCy ``Doc`` objects. Examples passed
     into an ``NLPLabelingFunction`` will have a new field which
     can be accessed which contains a SpaCy ``Doc``. By default,
-    this field is called ``doc``. For details of SpaCy ``Doc``
-    objects and a full attribute listing, see https://spacy.io/api/doc.
+    this field is called ``doc``. A ``Doc`` object is
+    a sequence of ``Token`` objects, which contain information
+    on lemmatization, parts-of-speech, etc. ``Doc`` objects also
+    contain fields like ``Doc.ents``, a list of named entities,
+    and ``Doc.noun_chunks``, a list of noun phrases. For details
+    of SpaCy ``Doc`` objects and a full attribute listing,
+    see https://spacy.io/api/doc.
 
     Simple ``NLPLabelingFunction``s can be defined via a
     decorator. See ``nlp_labeling_function``.
@@ -68,17 +73,31 @@ class NLPLabelingFunction(LabelingFunction):
     memoize
         Memoize preprocessor outputs?
 
+    Raises
+    ------
+    ValueError
+        Calling incorrectly defined preprocessors
+
+    Example
+    -------
+    >>> def f(x: DataPoint) -> int:
+    ...     person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
+    ...     return 1 if len(person_ents) > 0 else 0
+    >>> has_person_mention = NLPLabelingFunction(name="has_person_mention", f=f)
+    >>> has_person_mention
+    NLPLabelingFunction has_person_mention
+
+    >>> from types import SimpleNamespace
+    >>> x = SimpleNamespace(text="The movie was good.")
+    >>> has_person_mention(x)
+    0
+
     Attributes
     ----------
     name
         See above
     fault_tolerant
         See above
-
-    Raises
-    ------
-    ValueError
-        Calling incorrectly defined preprocessors
     """
 
     _nlp_config: SpacyPreprocessorConfig
@@ -145,8 +164,8 @@ class nlp_labeling_function:
     See ``NLPLabelingFunction``.
 
 
-    Examples
-    --------
+    Example
+    -------
     >>> @nlp_labeling_function()
     ... def has_person_mention(x: DataPoint) -> int:
     ...     person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]

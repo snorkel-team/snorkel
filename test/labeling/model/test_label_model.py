@@ -253,7 +253,7 @@ class LabelModelTest(unittest.TestCase):
             self.assertGreaterEqual(random_preds.count(class_idx), 1)
 
         # check invalid policy
-        with self.assertRaisesRegexp(ValueError, "policy not recognized"):
+        with self.assertRaisesRegex(ValueError, "policy not recognized"):
             preds = label_model._break_ties(probs, break_ties="negative")
 
     def test_score(self):

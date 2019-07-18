@@ -24,7 +24,7 @@ torch>=1.1.0
 networkx>=2.2
 
 
-#### EXTRA LIBRARIES
+#### EXTRA/TEST LIBRARIES
 
 # NLP applications
 spacy>=2.1.3
@@ -35,6 +35,9 @@ tensorboardX>=1.6
 
 # Scale-up/out
 dask[complete]>=2.0.0
+
+# Serialization
+dill>=0.3.0
 
 
 #### DEV TOOLS

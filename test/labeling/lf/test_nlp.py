@@ -1,0 +1,94 @@
+import unittest
+from types import SimpleNamespace
+
+import dill
+import pytest
+
+from snorkel.labeling.lf.nlp import NLPLabelingFunction, nlp_labeling_function
+from snorkel.labeling.preprocess import preprocessor
+from snorkel.types import DataPoint
+
+
+@preprocessor()
+def combine_text(x: DataPoint) -> DataPoint:
+    x.text = f"{x.title} {x.article}"
+    return x
+
+
+def has_person_mention(x: DataPoint) -> int:
+    person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
+    print(x.doc.ents)
+    return 1 if len(person_ents) > 0 else 0
+
+
+class TestNLPLabelingFunction(unittest.TestCase):
+    def _run_lf(self, lf: NLPLabelingFunction) -> None:
+        x = SimpleNamespace(
+            num=8, title="Great film!", article="The movie is really great!"
+        )
+        self.assertEqual(lf(x), 0)
+        x = SimpleNamespace(num=8, title="Nice movie!", article="Jane Doe acted well.")
+        self.assertEqual(lf(x), 1)
+
+    def test_nlp_labeling_function(self) -> None:
+        lf = NLPLabelingFunction(
+            name="my_lf", f=has_person_mention, preprocessors=[combine_text]
+        )
+        self._run_lf(lf)
+
+    def test_nlp_labeling_function_memoized(self) -> None:
+        lf = NLPLabelingFunction(
+            name="my_lf", f=has_person_mention, preprocessors=[combine_text]
+        )
+        lf._nlp_config.nlp.reset_cache()
+        self.assertEqual(len(lf._nlp_config.nlp._cache), 0)
+        self._run_lf(lf)
+        self.assertEqual(len(lf._nlp_config.nlp._cache), 2)
+        self._run_lf(lf)
+        self.assertEqual(len(lf._nlp_config.nlp._cache), 2)
+
+    @pytest.mark.complex
+    def test_labeling_function_serialize(self) -> None:
+        lf = NLPLabelingFunction(
+            name="my_lf", f=has_person_mention, preprocessors=[combine_text]
+        )
+        lf_load = dill.loads(dill.dumps(lf))
+        self._run_lf(lf_load)
+
+    def test_nlp_labeling_function_decorator(self) -> None:
+        @nlp_labeling_function(preprocessors=[combine_text])
+        def has_person_mention(x: DataPoint) -> int:
+            person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
+            return 1 if len(person_ents) > 0 else 0
+
+        self.assertIsInstance(has_person_mention, NLPLabelingFunction)
+        self.assertEqual(has_person_mention.name, "has_person_mention")
+        self._run_lf(has_person_mention)
+
+    def test_nlp_labeling_function_shared_cache(self) -> None:
+        lf = NLPLabelingFunction(
+            name="my_lf", f=has_person_mention, preprocessors=[combine_text]
+        )
+
+        @nlp_labeling_function(preprocessors=[combine_text])
+        def lf2(x: DataPoint) -> int:
+            return 1 if len(x.doc) < 9 else 0
+
+        lf._nlp_config.nlp.reset_cache()
+        self.assertEqual(len(lf._nlp_config.nlp._cache), 0)
+        self.assertEqual(len(lf2._nlp_config.nlp._cache), 0)
+        self._run_lf(lf)
+        self.assertEqual(len(lf._nlp_config.nlp._cache), 2)
+        self.assertEqual(len(lf2._nlp_config.nlp._cache), 2)
+        self._run_lf(lf2)
+        self.assertEqual(len(lf._nlp_config.nlp._cache), 2)
+        self.assertEqual(len(lf2._nlp_config.nlp._cache), 2)
+
+    def test_nlp_labeling_function_raises(self) -> None:
+
+        with self.assertRaisesRegex(ValueError, "different parameters"):
+
+            @nlp_labeling_function()
+            def has_person_mention(x: DataPoint) -> int:
+                person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
+                return 1 if len(person_ents) > 0 else 0

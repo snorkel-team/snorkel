@@ -86,6 +86,7 @@ class TestLabelingFunction(unittest.TestCase):
         def lf(x: DataPoint) -> int:
             return 1 if x.num > 42 else 0
 
+        self.assertIsInstance(lf, LabelingFunction)
         self.assertEqual(lf.name, "lf")
         self._run_lf(lf)
         self._run_lf_raise(lf)
@@ -95,6 +96,7 @@ class TestLabelingFunction(unittest.TestCase):
         def lf(x: DataPoint) -> int:
             return 1 if x.num > 42 else 0
 
+        self.assertIsInstance(lf, LabelingFunction)
         self.assertEqual(lf.name, "my_lf")
         self._run_lf(lf)
         self._run_lf_no_raise(lf)

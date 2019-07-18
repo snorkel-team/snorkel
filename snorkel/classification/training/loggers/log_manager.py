@@ -2,11 +2,26 @@ import logging
 from typing import Any, Optional
 
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
-from snorkel.classification.snorkel_config import default_config
-from snorkel.classification.utils import recursive_merge_dicts
+from snorkel.types import Config
 
 from .checkpointer import Checkpointer
 from .log_writer import LogWriter
+
+
+class LogManagerConfig(Config):
+    """Manager for checkpointing model.
+
+    Parameters
+    ----------
+    counter_unit
+        The unit to use when assessing when it's time to log.
+        Options are ["epochs", "batches", "points"]
+    evaluation_freq:
+        Evaluate performance on the validation set every this many counter_units
+    """
+
+    counter_unit: str = "epochs"
+    evaluation_freq: float = 1.0
 
 
 class LogManager:
@@ -21,7 +36,7 @@ class LogManager:
     checkpointer
         ``Checkpointer`` for current model
     kwargs
-        Config merged with ``default_config["log_manager_config"]``
+        Settings to update in LogManagerConfig
     """
 
     def __init__(
@@ -31,22 +46,19 @@ class LogManager:
         checkpointer: Optional[Checkpointer] = None,
         **kwargs: Any,
     ) -> None:
-        assert isinstance(default_config["log_manager_config"], dict)
-        self.config = recursive_merge_dicts(
-            default_config["log_manager_config"], kwargs
-        )
+        self.config = LogManagerConfig(**kwargs)
         self.n_batches_per_epoch = n_batches_per_epoch
 
         self.log_writer = log_writer
         self.checkpointer = checkpointer
 
         # Set up counter unit
-        self.counter_unit = self.config["counter_unit"]
+        self.counter_unit = self.config.counter_unit
         if self.counter_unit not in ["points", "batches", "epochs"]:
             raise ValueError(f"Unrecognized counter_unit: {self.counter_unit}")
 
         # Set up evaluation frequency
-        self.evaluation_freq = self.config["evaluation_freq"]
+        self.evaluation_freq = self.config.evaluation_freq
         logging.info(f"Evaluating every {self.evaluation_freq} {self.counter_unit}.")
 
         # Set up number of X passed since last evaluation/checkpointing and total

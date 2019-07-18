@@ -103,7 +103,7 @@ def convert_labels(
 
     Returns
     -------
-    ArrayLike
+    Union[np.ndarray, torch.Tensor]
         An np.ndarray or torch.Tensor of labels (ints) using the target convention
 
     Raises

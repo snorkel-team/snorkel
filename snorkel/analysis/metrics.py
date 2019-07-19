@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional
 import numpy as np
 import sklearn.metrics as skmetrics
 
-from .utils import filter_labels, probs_to_preds, to_int_label_array
+from .utils import filter_labels, to_int_label_array
 
 
 class Metric(NamedTuple):
@@ -69,16 +69,8 @@ def metric_score(
             )
         label_dict = filter_labels(label_dict, filter_dict)
 
-    # If preds are required but only probs were given, calculate preds from probs
-    func, label_names = METRICS[metric]
-    if (
-        "preds" in label_names
-        and label_dict["preds"] is None
-        and label_dict["probs"] is not None
-    ):
-        label_dict["preds"] = probs_to_preds(label_dict["probs"])
-
     # Confirm that required label sets are available
+    func, label_names = METRICS[metric]
     for label_name in label_names:
         if label_dict[label_name] is None:
             raise ValueError("Metric {metric} requires access to {label_name}.")

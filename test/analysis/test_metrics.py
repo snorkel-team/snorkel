@@ -150,11 +150,6 @@ class MetricsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "requires access to"):
             metric_score(golds=golds, metric="accuracy")
 
-    def test_probs_to_preds_conversion(self):
-        golds = np.array([1, 1, 2, 2])
-        probs = np.array([[0.5, 0.5], [0.5, 0.5], [0.5, 0.5], [0.5, 0.5]])
-        self.assertEqual(metric_score(golds=golds, probs=probs, metric="accuracy"), 0.5)
-
 
 if __name__ == "__main__":
     unittest.main()

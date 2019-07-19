@@ -34,23 +34,6 @@ class Logger:
         return self.unit_count - 1 % self.log_train_every == 0
 
     def log(self, metrics_dict: Dict[str, float]) -> None:
-        """Print calculated metrics and optionally write to file (json/tb).
-
-        Parameters
-        ----------
-        metrics_dict
-            Dictionary of metric names (keys) and values to log
-
-        Example
-        -------
-        >>> logger = Logger(log_train_every=5)
-        >>> metrics_dict = {"train/loss": 5.00}
-        >>> logger.log(metrics_dict)
-        [0 epochs]: TRAIN:[loss=5.000]
-        """
-        self.print_to_screen(metrics_dict)
-
-    def print_to_screen(self, metrics_dict: Dict[str, float]) -> None:
         """Print all metrics in metrics_dict to screen.
 
         Parameters
@@ -67,7 +50,7 @@ class Logger:
         -------
         >>> logger = Logger(log_train_every=5)
         >>> metrics_dict = {"train/loss": 5.00}
-        >>> logger.print_to_screen(metrics_dict)
+        >>> logger.log(metrics_dict)
         [0 epochs]: TRAIN:[loss=5.000]
         """
         score_strings: DefaultDict[str, List[str]] = defaultdict(list)

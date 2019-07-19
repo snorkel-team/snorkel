@@ -80,12 +80,12 @@ class NLPLabelingFunction(LabelingFunction):
 
     Example
     -------
-    >>> def f(x: DataPoint) -> int:
+    >>> def f(x):
     ...     person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
     ...     return 1 if len(person_ents) > 0 else 0
     >>> has_person_mention = NLPLabelingFunction(name="has_person_mention", f=f)
     >>> has_person_mention
-    NLPLabelingFunction has_person_mention
+    NLPLabelingFunction has_person_mention, Preprocessors: [SpacyPreprocessor...]
 
     >>> from types import SimpleNamespace
     >>> x = SimpleNamespace(text="The movie was good.")
@@ -167,11 +167,11 @@ class nlp_labeling_function:
     Example
     -------
     >>> @nlp_labeling_function()
-    ... def has_person_mention(x: DataPoint) -> int:
+    ... def has_person_mention(x):
     ...     person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
     ...     return 1 if len(person_ents) > 0 else 0
     >>> has_person_mention
-    NLPLabelingFunction has_person_mention
+    NLPLabelingFunction has_person_mention, Preprocessors: [SpacyPreprocessor...]
 
     >>> from types import SimpleNamespace
     >>> x = SimpleNamespace(text="The movie was good.")

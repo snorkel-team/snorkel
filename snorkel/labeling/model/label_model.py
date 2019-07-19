@@ -318,11 +318,11 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = np.array([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
-        >>> label_model = LabelModel()
+        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
-        >>> label_model.get_accuracies()
-        array([0.9, 0.9, 0.01])
+        >>> np.around(label_model.get_accuracies(), 2)
+        array([0.9 , 0.9 , 0.01])
         """
         accs = np.zeros(self.m)
         for i in range(self.m):
@@ -351,10 +351,12 @@ class LabelModel(nn.Module):
         Example
         -------
         >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
-        >>> label_model = LabelModel()
+        >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
-        >>> label_model.predict_proba(L)
-        np.array([1.0, 0.0], [0.0, 1.0], [1.0, 0.0])
+        >>> np.around(label_model.predict_proba(L), 1)
+        array([[1., 0.],
+               [0., 1.],
+               [1., 0.]])
         """
         L = L.todense()
         self._set_constants(L)
@@ -455,7 +457,7 @@ class LabelModel(nn.Module):
         metrics_dict = {"train/loss": self.running_loss / self.running_examples}
 
         if self.logger.check():
-            self.logger.log(metrics_dict)
+            self.logger.log(metrics_dict if self.config["verbose"] else None)
 
             # Reset running loss and examples counts
             self.running_loss = 0.0
@@ -544,9 +546,9 @@ class LabelModel(nn.Module):
 
         Examples
         --------
-        >>> L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        >>> L = sparse.csr_matrix([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
         >>> Y_dev = [1, 2, 1]
-        >>> label_model = LabelModel()
+        >>> label_model = LabelModel(n_epochs=10, verbose=False)
         >>> label_model.train_model(L)
         >>> label_model.train_model(L, Y_dev=Y_dev)
         >>> label_model.train_model(L, class_balance=[0.7, 0.3])
@@ -637,7 +639,7 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> label_model.save('./saved_label_model')
+        >>> label_model.save('./saved_label_model')  # doctest: +SKIP
         """
         with open(destination, "wb") as f:
             torch.save(self, f, **kwargs)
@@ -662,7 +664,7 @@ class LabelModel(nn.Module):
         -------
         Load parameters saved in ``saved_label_model``
 
-        >>> label_model.load('./saved_label_model')
+        >>> label_model.load('./saved_label_model')  # doctest: +SKIP
         """
         with open(source, "rb") as f:
             return torch.load(f, **kwargs)

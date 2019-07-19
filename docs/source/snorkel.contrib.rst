@@ -5,6 +5,6 @@ Module contents
 ---------------
 
 .. automodule:: snorkel.contrib
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

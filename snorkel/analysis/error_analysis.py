@@ -37,8 +37,8 @@ def error_buckets(
     buckets: Mapping[Tuple[int, int], List[Any]] = defaultdict(list)
     golds = to_int_label_array(golds)
     preds = to_int_label_array(preds)
-    for i, (y, l) in enumerate(zip(preds, golds)):
-        buckets[y, l].append(X[i] if X is not None else i)
+    for i, (l, y) in enumerate(zip(preds, golds)):
+        buckets[(l, y)].append(X[i] if X is not None else i)
     return dict(buckets)
 
 

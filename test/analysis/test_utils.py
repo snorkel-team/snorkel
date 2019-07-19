@@ -3,7 +3,10 @@ import unittest
 import numpy as np
 
 from snorkel.analysis.utils import (
+<<<<<<< HEAD
     _hash,
+=======
+>>>>>>> d012aefb... move tie_break, add tie_break to predict, add tests for tie break
     break_ties,
     convert_labels,
     filter_labels,

@@ -76,7 +76,9 @@ def metric_score(
     return func(*inputs, **kwargs)
 
 
-def predictions_score(golds, preds, metric, **kwargs):
+def predictions_score(
+    golds: np.ndarray, preds: np.ndarray, metric: np.ndarray, **kwargs: Any
+) -> float:
     """Wrap metric_score() and pass probs=None."""
     if "probs" in METRICS[metric].inputs:
         raise ValueError(
@@ -86,7 +88,9 @@ def predictions_score(golds, preds, metric, **kwargs):
     return metric_score(golds=golds, preds=preds, probs=None, metric=metric, **kwargs)
 
 
-def probabilities_score(golds, probs, metric, **kwargs):
+def probabilities_score(
+    golds: np.ndarray, probs: np.ndarray, metric: np.ndarray, **kwargs: Any
+) -> float:
     """Wrap metric_score() and pass preds=None."""
     if "preds" in METRICS[metric].inputs:
         raise ValueError(

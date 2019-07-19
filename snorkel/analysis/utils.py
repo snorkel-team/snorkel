@@ -12,7 +12,57 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
 
 
-def probs_to_preds(probs: np.ndarray) -> np.ndarray:
+def break_ties(
+    Y_prob: np.ndarray, tie_break_policy: Optional[str] = "random"
+) -> np.ndarray:
+    """Break ties among probabilistic labels according to given policy.
+
+    Policies to break ties include:
+    "abstain": return an abstain vote (0)
+    "true-random": randomly choose among the tied options
+    "random": randomly choose among tied option using deterministic hash
+
+    NOTE: if tie_break_policy="true-random", repeated runs may have slightly different results due to difference in broken ties
+
+    Parameters
+    ----------
+    Y_prob
+        An [n,k] array of probabilistic labels
+    tie_break_policy
+        Policy to break ties, by default 'random'
+
+    Returns
+    -------
+    np.ndarray
+        An [n,1] array of integer labels
+    """
+
+    n, k = Y_prob.shape
+    Y_pred = np.zeros(n)
+    diffs = np.abs(Y_prob - Y_prob.max(axis=1).reshape(-1, 1))
+
+    TOL = 1e-5
+    for i in range(n):
+        max_idxs = np.where(diffs[i, :] < TOL)[0]
+        if len(max_idxs) == 1:
+            Y_pred[i] = max_idxs[0] + 1
+        # Deal with "tie votes" according to the specified policy
+        elif tie_break_policy == "random":
+            Y_pred[i] = max_idxs[i % len(max_idxs)] + 1
+        elif tie_break_policy == "true-random":
+            Y_pred[i] = np.random.choice(max_idxs) + 1
+        elif tie_break_policy == "abstain":
+            Y_pred[i] = 0
+        else:
+            raise ValueError(
+                f"tie_break_policy={tie_break_policy} policy not recognized."
+            )
+    return Y_pred
+
+
+def probs_to_preds(
+    probs: np.ndarray, tie_break_policy: Optional[str] = "random"
+) -> np.ndarray:
     """Convert an array of probabilistic labels into an array of predictions.
 
     Parameters
@@ -20,13 +70,15 @@ def probs_to_preds(probs: np.ndarray) -> np.ndarray:
     prob
         A [num_datapoints, num_classes] array of probabilistic labels such that each
         row sums to 1.
+    tie_break_policy
+            Policy to break ties when converting probabilistic labels to predictions, by default 'abstain'
 
     Returns
     -------
     np.ndarray
         A [num_datapoints, 1] array of predictions (integers in [1, ..., num_classes])
     """
-    return np.argmax(probs, axis=1) + 1
+    return break_ties(probs, tie_break_policy)
 
 
 def preds_to_probs(preds: np.ndarray, num_classes: int) -> np.ndarray:

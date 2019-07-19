@@ -228,33 +228,9 @@ class LabelModelTest(unittest.TestCase):
         true_preds = np.array([1, 1])
         np.testing.assert_array_equal(preds, true_preds)
 
-    def test_break_ties(self):
-        # abtains with ties
-        label_model = LabelModel(k=3)
-        probs = np.array([[0.33, 0.33, 0.33]])
-        preds = label_model._break_ties(probs, break_ties="abstain")
-        true_preds = np.array([0.0])
-        np.testing.assert_array_equal(preds, true_preds)
-
-        # random with ties
-        probs = np.array([[0.33, 0.33, 0.33]])
-        random_preds = []
-        for seed in range(10):
-            label_model = LabelModel(k=3, seed=seed)
-            preds = label_model._break_ties(probs, break_ties="random")
-            random_preds.append(preds[0])
-
-        # check predicted labels within range
-        self.assertLessEqual(max(random_preds), 3)
-        self.assertGreaterEqual(min(random_preds), 1)
-
-        # check labels are different across seeds
-        for class_idx in range(1, 4):
-            self.assertGreaterEqual(random_preds.count(class_idx), 1)
-
-        # check invalid policy
-        with self.assertRaisesRegex(ValueError, "policy not recognized"):
-            preds = label_model._break_ties(probs, break_ties="negative")
+        preds, probs = label_model.predict(csr_matrix(L), return_probs=True)
+        true_probs = np.array([[0.99, 0.01], [0.99, 0.01]])
+        np.testing.assert_array_almost_equal(probs, true_probs)
 
     def test_score(self):
         L = np.array([[1, 2, 1], [1, 2, 1]])
@@ -268,7 +244,7 @@ class LabelModelTest(unittest.TestCase):
         results = label_model.score(
             L=csr_matrix(L), Y=np.array([2, 1]), metrics=["accuracy", "f1"]
         )
-        results_expected = dict(accuracy=0.5, f1=2 / 3.0)
+        results_expected = dict(accuracy=0.5, f1=2 / 3)
         self.assertEqual(results, results_expected)
 
     def test_loss(self):

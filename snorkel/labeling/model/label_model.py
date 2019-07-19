@@ -1,6 +1,6 @@
 from collections import Counter
 from itertools import chain
-from typing import Any, Dict, List, NamedTuple, Optional, Set, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple, Union
 
 import numpy as np
 import scipy.sparse as sparse
@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from snorkel.analysis.utils import set_seed
+from snorkel.analysis.utils import probs_to_preds, set_seed
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.utils import recursive_merge_dicts
 from snorkel.labeling.model.graph_utils import get_clique_tree
@@ -320,7 +320,7 @@ class LabelModel(nn.Module):
         Example
         -------
         >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
-        >>> label_model = LabelModel(verbose=False)
+        >>> label_model = LabelModel()
         >>> label_model.train_model(L)
         >>> np.around(label_model.get_accuracies(), 2)
         array([0.9 , 0.9 , 0.01])
@@ -369,69 +369,39 @@ class LabelModel(nn.Module):
         Z = np.tile(X.sum(axis=1).reshape(-1, 1), self.cardinality)
         return X / Z
 
-    def _break_ties(
-        self, Y_prob: np.ndarray, break_ties: Optional[str] = "abstain"
-    ) -> np.ndarray:
-        """Break ties among probabilistic labels according to given policy.
-
-        Policies to break ties include:
-        "abstain": return an abstain vote (0)
-        "random": randomly choose among the tied options
-        NOTE: if break_ties="random", repeated runs may have slightly different results due to difference in broken ties
-
-        Parameters
-        ----------
-        Y_prob
-            An [n,k] array of probabilistic labels
-        break_ties
-            Policy to break ties, by default 'random'
-
-        Returns
-        -------
-        np.ndarray
-            An [n,k] array of integer labels
-        """
-
-        n, k = Y_prob.shape
-        Y_pred = np.zeros(n)
-        diffs = np.abs(Y_prob - Y_prob.max(axis=1).reshape(-1, 1))
-
-        TOL = 1e-5
-        for i in range(n):
-            max_idxs = np.where(diffs[i, :] < TOL)[0]
-            if len(max_idxs) == 1:
-                Y_pred[i] = max_idxs[0] + 1
-            # Deal with "tie votes" according to the specified policy
-            elif break_ties == "random":
-                Y_pred[i] = np.random.choice(max_idxs) + 1
-            elif break_ties == "abstain":
-                Y_pred[i] = 0
-            else:
-                raise ValueError(f"break_ties={break_ties} policy not recognized.")
-        return Y_pred
-
     def predict(
-        self, L: sparse.spmatrix, break_ties: Optional[str] = "abstain"
-    ) -> np.ndarray:
+        self,
+        L: sparse.spmatrix,
+        return_probs: Optional[bool] = False,
+        tie_break_policy: Optional[str] = "random",
+    ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """Return predicted labels, with ties broken according to policy.
 
         Policies to break ties include:
         "abstain": return an abstain vote (0)
-        "random": randomly choose among the tied options
-        NOTE: if break_ties="random", repeated runs may have slightly different results due to difference in broken ties
+        "true-random": randomly choose among the tied options
+        "random": randomly choose among tied option using deterministic hash
+
+        NOTE: if tie_break_policy="true-random", repeated runs may have slightly different results due to difference in broken ties
 
 
         Parameters
         ----------
         L
             An [n,m] matrix with values in {0,1,...,k}
-        break_ties
-            Policy to break ties when converting probabilistic labels to predictions
+        return_probs
+            Whether to return probs along with preds, by default False
+        tie_break_policy
+            Policy to break ties when converting probabilistic labels to predictions, by default 'random'
 
         Returns
         -------
         np.ndarray
-            An [n,k] array of integer labels
+            An [n,1] array of integer labels
+
+        (np.ndarray, np.ndarray)
+            An [n,1] array of integer labels and an [n,k] array of probabilistic labels
+
 
         Example
         -------
@@ -440,9 +410,13 @@ class LabelModel(nn.Module):
         >>> label_model.train_model(L)
         >>> label_model.predict(L)
         np.array([1, 2, 1])
+        >>> label_model.predict(L, return_probs=True)
+        (np.array([1, 2, 1]),  np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 0.0]]))
         """
         Y_probs = self.predict_proba(L)
-        Y_p = self._break_ties(Y_probs, break_ties).astype(np.int)
+        Y_p = probs_to_preds(Y_probs, tie_break_policy).astype(np.int)
+        if return_probs:
+            return Y_p, Y_probs
         return Y_p
 
     def score(
@@ -450,6 +424,7 @@ class LabelModel(nn.Module):
         L: sparse.spmatrix,
         Y: np.ndarray,
         metrics: Optional[List[str]] = ["accuracy"],
+        tie_break_policy: Optional[str] = "random",
     ) -> Dict[str, float]:
         """Calculate one or more scores from user-specified and/or user-defined metrics.
 
@@ -461,6 +436,9 @@ class LabelModel(nn.Module):
             Gold labels associated with datapoints in L
         metrics
             A list of metric names, by default ["accuracy"]
+        tie_break_policy
+            Policy to break ties when converting probabilistic labels to predictions, by default 'random'
+
 
         Returns
         -------
@@ -474,11 +452,12 @@ class LabelModel(nn.Module):
         >>> label_model.train_model(L)
         >>> label_model.score(L, Y=np.array([1, 1, 1]))
         {'accuracy': 0.66667}
-        >>> label_model.score(L, Y=np.array([1, 1, 1], metrics=["f1"]))
-        {'accuracy': 0.66667}
+        >>> label_model.score(L, Y=np.array([1, 1, 1]), metrics=["f1"])
+        {'f1': 0.8}
         """
-        Y_prob = self.predict_proba(L)
-        Y_pred = self.predict(L)
+        Y_pred, Y_prob = self.predict(
+            L, return_probs=True, tie_break_policy=tie_break_policy
+        )
 
         scorer = Scorer(metrics=metrics)
         results = scorer.score(Y, Y_pred, Y_prob)
@@ -753,7 +732,8 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> label_model.save('./saved_label_model')  # doctest: +SKIP
+        >>> label_model = LabelModel()
+        >>> label_model.save('./saved_label_model')
         """
         with open(destination, "wb") as f:
             torch.save(self, f, **kwargs)
@@ -778,7 +758,8 @@ class LabelModel(nn.Module):
         -------
         Load parameters saved in ``saved_label_model``
 
-        >>> label_model.load('./saved_label_model')  # doctest: +SKIP
+        >>> label_model = LabelModel()
+        >>> label_model.load('./saved_label_model')
         """
         with open(source, "rb") as f:
             return torch.load(f, **kwargs)

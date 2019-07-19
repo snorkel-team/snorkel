@@ -133,7 +133,7 @@ class MajorityLabelVoter(BaselineVoter):
 
         Example
         -------
-        >>> L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        >>> L = sparse.csr_matrix([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
         >>> maj_voter = MajorityLabelVoter()
         >>> maj_voter.predict_proba(L)
         array([[1. , 0. ],

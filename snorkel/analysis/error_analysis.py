@@ -20,9 +20,9 @@ def error_buckets(
 
     Parameters
     ----------
-    gold
+    golds
         An np.ndarray of gold (int) labels
-    pred
+    preds
         An np.ndarray of (int) predictions
     X
         Optional, a sequence of examples corresponding to golds/preds
@@ -32,8 +32,7 @@ def error_buckets(
     -------
     Dict
         A mapping of each error bucket to its corresponding indices/examples
-        If X is None, return indices
-            instead.
+        If X is None, return indices instead.
     """
     buckets: Mapping[Tuple[int, int], List[Any]] = defaultdict(list)
     golds = to_int_label_array(golds)

@@ -2,11 +2,7 @@ import unittest
 
 import numpy as np
 
-from snorkel.analysis.metrics import (
-    metric_score,
-    predictions_score,
-    probabilities_score,
-)
+from snorkel.analysis.metrics import metric_score
 
 
 class MetricsTest(unittest.TestCase):
@@ -149,19 +145,15 @@ class MetricsTest(unittest.TestCase):
         ):
             metric_score(golds, preds=None, probs=probs_nonbinary, metric="roc_auc")
 
-    def test_predictions_score(self):
+    def test_missing_preds(self):
         golds = np.array([1, 1, 2, 2])
-        preds = np.array([1, 2, 1, 2])
-        self.assertEqual(predictions_score(golds, preds, "accuracy"), 0.5)
-        with self.assertRaisesRegex(ValueError, "is not compatible with"):
-            predictions_score(golds, preds, "roc_auc")
+        with self.assertRaisesRegex(ValueError, "requires access to"):
+            metric_score(golds=golds, metric="accuracy")
 
-    def test_probabilities_score(self):
+    def test_probs_to_preds_conversion(self):
         golds = np.array([1, 1, 2, 2])
         probs = np.array([[0.5, 0.5], [0.5, 0.5], [0.5, 0.5], [0.5, 0.5]])
-        self.assertEqual(probabilities_score(golds, probs, "roc_auc"), 0.5)
-        with self.assertRaisesRegex(ValueError, "is not compatible with"):
-            probabilities_score(golds, probs, "accuracy")
+        self.assertEqual(metric_score(golds=golds, probs=probs, metric="accuracy"), 0.5)
 
 
 if __name__ == "__main__":

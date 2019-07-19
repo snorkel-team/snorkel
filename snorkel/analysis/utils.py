@@ -168,7 +168,7 @@ def filter_labels(
     for label_name, filter_values in filter_dict.items():
         if label_dict[label_name] is not None:
             masks.append(_get_mask(label_dict[label_name], filter_values))
-    mask = np.multiply(*masks) if len(masks) > 1 else masks[0]
+    mask = (np.multiply(*masks) if len(masks) > 1 else masks[0]).squeeze()
 
     filtered = {}
     for label_name, label_array in label_dict.items():

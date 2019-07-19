@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional
 import numpy as np
 import sklearn.metrics as skmetrics
 
-from .utils import filter_labels, to_int_label_array
+from .utils import filter_labels, probs_to_preds, to_int_label_array
 
 
 class Metric(NamedTuple):
@@ -14,10 +14,10 @@ class Metric(NamedTuple):
 
 
 def metric_score(
-    golds: np.ndarray,
-    preds: np.ndarray,
-    probs: np.ndarray,
-    metric: str,
+    golds: Optional[np.ndarray] = None,
+    preds: Optional[np.ndarray] = None,
+    probs: Optional[np.ndarray] = None,
+    metric: str = "accuracy",
     filter_dict: Optional[Dict[str, List[int]]] = None,
     **kwargs: Any,
 ) -> float:
@@ -54,9 +54,9 @@ def metric_score(
         raise ValueError(msg)
 
     if filter_dict is None:
-        filter_dict = {"golds": [0]}
+        filter_dict = {"golds": [0]}  # Assumes 0 = ABSTAIN
 
-    # Convert to numpy
+    # Print helpful error messages if golds or preds has invalid shape or type
     golds = to_int_label_array(golds) if golds is not None else None
     preds = to_int_label_array(preds) if preds is not None else None
 
@@ -69,35 +69,22 @@ def metric_score(
             )
         label_dict = filter_labels(label_dict, filter_dict)
 
-    # Pass the metric function its requested args
+    # If preds are required but only probs were given, calculate preds from probs
     func, label_names = METRICS[metric]
-    inputs = [label_dict[label_name] for label_name in label_names]
+    if (
+        "preds" in label_names
+        and label_dict["preds"] is None
+        and label_dict["probs"] is not None
+    ):
+        label_dict["preds"] = probs_to_preds(label_dict["probs"])
 
-    return func(*inputs, **kwargs)
+    # Confirm that required label sets are available
+    for label_name in label_names:
+        if label_dict[label_name] is None:
+            raise ValueError("Metric {metric} requires access to {label_name}.")
 
-
-def predictions_score(
-    golds: np.ndarray, preds: np.ndarray, metric: np.ndarray, **kwargs: Any
-) -> float:
-    """Wrap metric_score() and pass probs=None."""
-    if "probs" in METRICS[metric].inputs:
-        raise ValueError(
-            f"predictions_score() is not compatible with metric {metric}. "
-            "Use metric_score() or probability_score() instead."
-        )
-    return metric_score(golds=golds, preds=preds, probs=None, metric=metric, **kwargs)
-
-
-def probabilities_score(
-    golds: np.ndarray, probs: np.ndarray, metric: np.ndarray, **kwargs: Any
-) -> float:
-    """Wrap metric_score() and pass preds=None."""
-    if "preds" in METRICS[metric].inputs:
-        raise ValueError(
-            f"probabilities_score() is not compatible with metric {metric}. "
-            "Use metric_score() or predictions_score() instead."
-        )
-    return metric_score(golds=golds, preds=None, probs=probs, metric=metric, **kwargs)
+    label_sets = [label_dict[label_name] for label_name in label_names]
+    return func(*label_sets, **kwargs)
 
 
 def _coverage_score(preds: np.ndarray) -> float:

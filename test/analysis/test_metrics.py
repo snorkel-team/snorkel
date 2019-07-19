@@ -145,6 +145,11 @@ class MetricsTest(unittest.TestCase):
         ):
             metric_score(golds, preds=None, probs=probs_nonbinary, metric="roc_auc")
 
+    def test_missing_preds(self):
+        golds = np.array([1, 1, 2, 2])
+        with self.assertRaisesRegex(ValueError, "requires access to"):
+            metric_score(golds=golds, metric="accuracy")
+
 
 if __name__ == "__main__":
     unittest.main()

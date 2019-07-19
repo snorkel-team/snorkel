@@ -14,10 +14,10 @@ class Metric(NamedTuple):
 
 
 def metric_score(
-    golds: np.ndarray,
-    preds: np.ndarray,
-    probs: np.ndarray,
-    metric: str,
+    golds: Optional[np.ndarray] = None,
+    preds: Optional[np.ndarray] = None,
+    probs: Optional[np.ndarray] = None,
+    metric: str = "accuracy",
     filter_dict: Optional[Dict[str, List[int]]] = None,
     **kwargs: Any,
 ) -> float:
@@ -54,9 +54,9 @@ def metric_score(
         raise ValueError(msg)
 
     if filter_dict is None:
-        filter_dict = {"golds": [0]}
+        filter_dict = {"golds": [0]}  # Assumes 0 = ABSTAIN
 
-    # Convert to numpy
+    # Print helpful error messages if golds or preds has invalid shape or type
     golds = to_int_label_array(golds) if golds is not None else None
     preds = to_int_label_array(preds) if preds is not None else None
 
@@ -69,11 +69,14 @@ def metric_score(
             )
         label_dict = filter_labels(label_dict, filter_dict)
 
-    # Pass the metric function its requested args
+    # Confirm that required label sets are available
     func, label_names = METRICS[metric]
-    inputs = [label_dict[label_name] for label_name in label_names]
+    for label_name in label_names:
+        if label_dict[label_name] is None:
+            raise ValueError("Metric {metric} requires access to {label_name}.")
 
-    return func(*inputs, **kwargs)
+    label_sets = [label_dict[label_name] for label_name in label_names]
+    return func(*label_sets, **kwargs)
 
 
 def _coverage_score(preds: np.ndarray) -> float:

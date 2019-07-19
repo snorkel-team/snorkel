@@ -50,7 +50,7 @@ class Logger:
         -------
         >>> logger = Logger(log_train_every=5)
         >>> metrics_dict = {"train/loss": 5.00}
-        >>> logger.print_to_screen(metrics_dict)
+        >>> logger.log(metrics_dict)
         [0 epochs]: TRAIN:[loss=5.000]
         """
         score_strings: DefaultDict[str, List[str]] = defaultdict(list)

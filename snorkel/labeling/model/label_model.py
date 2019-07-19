@@ -457,7 +457,8 @@ class LabelModel(nn.Module):
         metrics_dict = {"train/loss": self.running_loss / self.running_examples}
 
         if self.logger.check():
-            self.logger.log(metrics_dict if self.config["verbose"] else None)
+            if self.config["verbose"]:
+                self.logger.log(metrics_dict)
 
             # Reset running loss and examples counts
             self.running_loss = 0.0

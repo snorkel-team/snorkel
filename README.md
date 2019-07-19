@@ -1,7 +1,7 @@
 <img src="figs/logo_01.png" width="150"/>
 
 [![Build Status](https://travis-ci.org/HazyResearch/snorkel.svg?branch=redux)](https://travis-ci.org/HazyResearch/snorkel?branch=redux)
-[![Documentation](https://readthedocs.org/projects/snorkel/badge/?version=redux)](https://snorkel.readthedocs.io/en/master/?badge=redux)
+[![Documentation](https://readthedocs.org/projects/snorkel/badge/?version=redux)](https://snorkel.readthedocs.io/en/redux)
 [![codecov](https://codecov.io/gh/HazyResearch/snorkel/branch/redux/graph/badge.svg)](https://codecov.io/gh/HazyResearch/snorkel/branch/redux)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 

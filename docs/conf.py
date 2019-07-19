@@ -87,7 +87,7 @@ napoleon_use_rtype = True
 
 # -- Options for autodoc extension -------------------------------------------
 
-# his value selects what content will be inserted into the main body of an autoclass
+# This value selects what content will be inserted into the main body of an autoclass
 # directive
 #
 # http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#directive-autoclass

@@ -52,8 +52,8 @@ notifications:
   email: 
     recipients:
       secure: "d91inMv9lhRuSDEbT+aRtsrGC0M8VSvloPSoDt1k9k1y1EuduRF3+QuE3kd1T2sz0ARypWvDj1M89Gyfnbdrg/rphmBIIOaLQdjA+zueid6Dpc/6Xxe2nnXCjS+7PL7CkKjHo7iE3XW97Hep7WUEv3A60bD5O9kx0mS9qbKeO5KJTmb7zctVF6s1jz8VGewS+XybDW5ZJ0KDVhvlvunJt+PCDXfGAFxdEuXGF6dOtyAXzZ5h7aRooj06QQPyDO8sDmpbwritR2SXw3OBZi3xO4qZOfLyFWtuo6VvMRTaNa4UNnyP0QGZbHuzZe6/SAqPrU417XwuklVHJQchRFPFrQxcRgNKjOXgD8KM5cuQJJEJIIpppEp0fO902F13Kci9D4Fysd2rCFZWzStTyeyDWYMPtkiNZfWlBVxPUFQcXRAXyz3e7kz6kIVUGnBiuruYrmBb5iuz9dlB8vJfeIml4iAoPnUs1J+NNiirqqRPt629Y3LaISWxcIN/v+oQp+W1XxmwjSf/FhpTDsqG1if7ks4VMjdoFgR76bZ8qBiKBLsdggJPyTljoOs+Tnhe18P2szfNyL47u+/QaZtliR2+bS7dmr9Sd5ol4cfb71xgGJBcJGf3e5OcgAgy3vZdshEGTGHxN+ykRRK4iOcFPjnyLwJmUUEbbn6jpFE0H3N1r2s="
-    on_success: always # default: change [change, always, never]
-    on_failure: always # default: always
+    on_success: change # default: change [change, always, never]
+    on_failure: change # default: always
   slack:
     on_success: change # default: change
     on_failure: change # default: always

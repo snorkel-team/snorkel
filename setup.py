@@ -37,7 +37,7 @@ setup(
     install_requires=[
         "numpy>=1.16.0",
         "scipy>=1.2.0",
-        "pandas>=0.24.0",
+        "pandas>=0.24.0,<0.25.0",
         "tqdm>=4.29.0",
         "scikit-learn>=0.20.2",
         "torch>=1.1.0",

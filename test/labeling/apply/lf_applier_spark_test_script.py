@@ -34,7 +34,7 @@ from typing import List
 import numpy as np
 from pyspark import SparkContext
 
-from snorkel.labeling.apply.lf_applier_spark import SparkLFApplier
+from snorkel.labeling.apply.spark import SparkLFApplier
 from snorkel.labeling.lf import labeling_function
 from snorkel.types import DataPoint
 

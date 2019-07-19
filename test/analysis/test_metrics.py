@@ -2,7 +2,11 @@ import unittest
 
 import numpy as np
 
-from snorkel.analysis.metrics import metric_score, predictions_score, probabilities_score
+from snorkel.analysis.metrics import (
+    metric_score,
+    predictions_score,
+    probabilities_score,
+)
 
 
 class MetricsTest(unittest.TestCase):

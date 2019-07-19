@@ -77,16 +77,22 @@ def metric_score(
 
 
 def predictions_score(golds, preds, metric, **kwargs):
-    """A thin wrapper around metric_score() that passes probs=None"""
+    """Wrap metric_score() and pass probs=None."""
     if "probs" in METRICS[metric].inputs:
-        raise ValueError(f"predictions_score() is not compatible with metric {metric}. Use metric_score() or probability_score() instead.")
+        raise ValueError(
+            f"predictions_score() is not compatible with metric {metric}. "
+            "Use metric_score() or probability_score() instead."
+        )
     return metric_score(golds=golds, preds=preds, probs=None, metric=metric, **kwargs)
 
 
 def probabilities_score(golds, probs, metric, **kwargs):
-    """A thin wrapper around metric_score() that passes preds=None"""
+    """Wrap metric_score() and pass preds=None."""
     if "preds" in METRICS[metric].inputs:
-        raise ValueError(f"probabilities_score() is not compatible with metric {metric}. Use metric_score() or predictions_score() instead.")
+        raise ValueError(
+            f"probabilities_score() is not compatible with metric {metric}. "
+            "Use metric_score() or predictions_score() instead."
+        )
     return metric_score(golds=golds, preds=None, probs=probs, metric=metric, **kwargs)
 
 

@@ -49,7 +49,13 @@ after_success:
   - travis_retry codecov
 
 notifications:
+  email: 
+    recipients:
+      secure: "R4xcDI/tTBK2Wwi2S1xYLjDJvmVQbKBLHqsrkckCNjUWni2nLiXr1BzqKGst5/jVjbTuftVW2wXukaLFnAmbu2IuncQGiODQouuuj+ZetLl6y+ROgUOVZkxGxVNzJIm6v71KWsYSk2zC7b4JaFTXb7mP8blT/WHYSIShN79IQI702fNwsLHygvLC2pbAzzUbmGomlD3JxWsIIWoi39HhD9JvlZPRGM0fgPV7UX8jhEYAKCOMO0OOusm4Vtiu81tvxKpNaEOuCydEup5cR84c2RGNNLpckH44O/o35K76AtBPVP6+pa3b0cglSPbzUuqLwqi/3kElZz5dYnz0LxXFizSTmwlriDTWala1aXgXpHLPyIG0QAXj4Jk5i9WpHM7Cd/Z+Bk3/xKFnUNHWxBuzZ0K0yTgDGilWCiHD1Ig1Wg0IdRsEBesSUxaHQIBDWX1BIImj4q7sHMZ/Iwtl0MvjRJ0/C8MXrryorpWBk21ufO2zTnrNFW5eiqn6BUflZ2jtqBk1eEM0Ytx6r4X9e1aTTUxc9M2BPRRzfUV1icr+R7Jy4sECQRu/JlCmRb0DrF7osw3qP7M8HM0y5zwEITF42742JWnUnHxDqRTJPlPNJLIefHMwYXNWA5FrnmBceyK7XIEhX2eCJZAMYVfpfZVqzcqQ98FX2HrnGmZi/B6VSSg="
+    on_success: always # default: change [change, always, never]
+    on_failure: always # default: always
   slack:
-    on_success: change # default: change [change, always, never]
+    on_success: change # default: change
     on_failure: change # default: always
+    on_pull_requests: false
     secure: "jOmNYn8hbBGypqYFht+3tUxbJVL15ClqVHt0xNX5WU2aTOk3V8x6p3xnTIyX4rwBq1Ix50Sc690CiowJyCGlwoCkV11PuaFU4wEEZQyUZmuaVBoxXYLEqo6ObEpMbFM4Kg7VqoR0u3pZdoYEGC+LgWcwcvfnqL3Ju+9tB1rr5/Yclo/pO5Pi/dJ0/NOwKZsLyB8dZr0tMJ9EXgW79yi154g/af4HlX02/oOzx2CmpU0JnsLv1WyluxYrteSq4+z0Kdwmpk7MXPIArQaUIzMVZhm4cOUxRHSejJW/zGSSugpw+GBm4dCiNeaslu0gT021Mv73HnV2OL5H90dbdSUVnPO6Ld+mQbD44de8Z0Ce+FtP6geGoYL38It+tlA6sTpsf3W+k3xBQvq9S/dQySsAwl3d8iQXfB6u0EGJh39j4QNtsyJqLRoeW7KOjBl3KtYpxSfOafNdySvKbRxKbtKCuwVSDFf7rxKyKCA7Ew1PAXaqM0K6Sft73BExgSo6IL22JnD9ZIRZLaP5zGjsbUELnu++itsrzk7NjuLiNNLoTYOgkBR8xgGNd4R/lttDswh4l2tPQ/yFsUZvNwCEG2s2SXkvGobuOEjdJvi84DpKEAyZLZKRxNr6oKQMNEK9MSGj9O2kHjgme8ja6BesVVSv+2bPz3cyJmb7tbdc0i5tXRg="

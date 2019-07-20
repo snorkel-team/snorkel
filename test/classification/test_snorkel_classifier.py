@@ -77,8 +77,10 @@ class ClassifierTest(unittest.TestCase):
 
         results = model.predict(self.dataloader, return_preds=True)
         self.assertEqual(sorted(list(results.keys())), ["golds", "preds", "probs"])
+        # deterministic random tie breaking alternates predicted labels
         np.testing.assert_array_equal(
-            results["preds"]["task1"], np.ones((NUM_EXAMPLES,))
+            results["preds"]["task1"],
+            np.array([1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0]),
         )
 
     def test_empty_batch(self):
@@ -93,7 +95,8 @@ class ClassifierTest(unittest.TestCase):
     def test_score(self):
         model = SnorkelClassifier([self.task1])
         metrics = model.score([self.dataloader])
-        self.assertEqual(metrics["task1/dataset/train/accuracy"], 1.0)
+        # deterministic random tie breaking alternates predicted labels
+        self.assertEqual(metrics["task1/dataset/train/accuracy"], 0.6)
 
     def test_save_load(self):
         fd, checkpoint_path = tempfile.mkstemp()

@@ -218,6 +218,35 @@ class LabelModelTest(unittest.TestCase):
         true_probs = np.array([[0.99, 0.01], [0.99, 0.01]])
         np.testing.assert_array_almost_equal(probs, true_probs)
 
+    def test_predict(self):
+        L = np.array([[1, 2, 1], [1, 2, 1]])
+        label_model = self._set_up_model(L)
+
+        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        preds = label_model.predict(csr_matrix(L))
+
+        true_preds = np.array([1, 1])
+        np.testing.assert_array_equal(preds, true_preds)
+
+        preds, probs = label_model.predict(csr_matrix(L), return_probs=True)
+        true_probs = np.array([[0.99, 0.01], [0.99, 0.01]])
+        np.testing.assert_array_almost_equal(probs, true_probs)
+
+    def test_score(self):
+        L = np.array([[1, 2, 1], [1, 2, 1]])
+        label_model = self._set_up_model(L)
+        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+
+        results = label_model.score(csr_matrix(L), Y=np.array([1, 2]))
+        results_expected = dict(accuracy=0.5)
+        self.assertEqual(results, results_expected)
+
+        results = label_model.score(
+            L=csr_matrix(L), Y=np.array([2, 1]), metrics=["accuracy", "f1"]
+        )
+        results_expected = dict(accuracy=0.5, f1=2 / 3)
+        self.assertEqual(results, results_expected)
+
     def test_loss(self):
         L = np.array([[1, 0, 1], [1, 2, 0]])
         label_model = self._set_up_model(L)

@@ -13,7 +13,7 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
 
 
-def _hash(i):
+def _hash(i: int) -> int:
     """Deterministic hash function."""
     byte_string = str(i).encode("utf-8")
     return int(hashlib.sha1(byte_string).hexdigest(), 16)

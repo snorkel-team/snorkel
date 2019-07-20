@@ -320,7 +320,7 @@ class LabelModel(nn.Module):
         Example
         -------
         >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
-        >>> label_model = LabelModel()
+        >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
         >>> np.around(label_model.get_accuracies(), 2)
         array([0.9 , 0.9 , 0.01])
@@ -756,6 +756,7 @@ class LabelModel(nn.Module):
         Example
         -------
         Load parameters saved in ``saved_label_model``
+
         >>> label_model.load('./saved_label_model')  # doctest: +SKIP
         """
         with open(source, "rb") as f:

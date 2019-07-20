@@ -354,8 +354,10 @@ class LabelModel(nn.Module):
         >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
-        >>> label_model.predict_proba(L)
-        np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 0.0]])
+        >>> np.around(label_model.predict_proba(L), 1)
+        array([[1., 0.],
+               [0., 1.],
+               [1., 0.]])
         """
         L = L.todense()
         self._set_constants(L)
@@ -406,7 +408,7 @@ class LabelModel(nn.Module):
         Example
         -------
         >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
-        >>> label_model = LabelModel()
+        >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
         >>> label_model.predict(L)
         np.array([1, 2, 1])
@@ -448,7 +450,7 @@ class LabelModel(nn.Module):
         Example
         -------
         >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
-        >>> label_model = LabelModel()
+        >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
         >>> label_model.score(L, Y=np.array([1, 1, 1]))
         {'accuracy': 0.66667}
@@ -732,8 +734,7 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> label_model = LabelModel()
-        >>> label_model.save('./saved_label_model')
+        >>> label_model.save('./saved_label_model')  # doctest: +SKIP
         """
         with open(destination, "wb") as f:
             torch.save(self, f, **kwargs)
@@ -757,9 +758,7 @@ class LabelModel(nn.Module):
         Example
         -------
         Load parameters saved in ``saved_label_model``
-
-        >>> label_model = LabelModel()
-        >>> label_model.load('./saved_label_model')
+        >>> label_model.load('./saved_label_model')  # doctest: +SKIP
         """
         with open(source, "rb") as f:
             return torch.load(f, **kwargs)

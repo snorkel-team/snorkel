@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 from snorkel.analysis.utils import (
+    _hash,
     break_ties,
     convert_labels,
     filter_labels,
@@ -48,6 +49,11 @@ class MetricsTest(unittest.TestCase):
     def test_pred_to_prob(self):
         np.testing.assert_array_equal(preds_to_probs(PREDS, 2), PREDS_ROUND)
 
+    def test_hash(self):
+        last_hash = _hash("hashtest")
+        for _ in range(4):
+            self.assertEqual(_hash("hashtest"), last_hash)
+
     def test_break_ties(self):
         # abtains with ties
         probs = np.array([[0.33, 0.33, 0.33]])
@@ -71,7 +77,7 @@ class MetricsTest(unittest.TestCase):
             [[0.33, 0.33, 0.33], [0.0, 0.5, 0.5], [0.33, 0.33, 0.33], [0.5, 0.5, 0]]
         )
         random_preds = []
-        for seed in range(10):
+        for _ in range(10):
             preds = break_ties(probs, tie_break_policy="random")
             random_preds.append(preds)
 

@@ -1,3 +1,4 @@
+import hashlib
 import random
 from typing import Dict, List, Optional, Union
 
@@ -10,6 +11,12 @@ def set_seed(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+
+
+def _hash(i):
+    """Deterministic hash function."""
+    byte_string = str(i).encode("utf-8")
+    return int(hashlib.sha1(byte_string).hexdigest(), 16)
 
 
 def break_ties(
@@ -34,7 +41,7 @@ def break_ties(
     Returns
     -------
     np.ndarray
-        An [n,1] array of integer labels
+        An [n] array of integer labels
     """
 
     n, k = Y_prob.shape
@@ -48,7 +55,7 @@ def break_ties(
             Y_pred[i] = max_idxs[0] + 1
         # Deal with "tie votes" according to the specified policy
         elif tie_break_policy == "random":
-            Y_pred[i] = max_idxs[i % len(max_idxs)] + 1
+            Y_pred[i] = max_idxs[_hash(i) % len(max_idxs)] + 1
         elif tie_break_policy == "true-random":
             Y_pred[i] = np.random.choice(max_idxs) + 1
         elif tie_break_policy == "abstain":

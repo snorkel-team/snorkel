@@ -1,3 +1,4 @@
+import hashlib
 import random
 from typing import Dict, List, Optional, Union
 
@@ -12,21 +13,67 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
 
 
-def probs_to_preds(probs: np.ndarray) -> np.ndarray:
+def _hash(i: int) -> int:
+    """Deterministic hash function."""
+    byte_string = str(i).encode("utf-8")
+    return int(hashlib.sha1(byte_string).hexdigest(), 16)
+
+
+def probs_to_preds(
+    probs: np.ndarray, tie_break_policy: Optional[str] = "random", tol: float = 1e-5
+) -> np.ndarray:
     """Convert an array of probabilistic labels into an array of predictions.
+
+    Policies to break ties include:
+    "abstain": return an abstain vote (0)
+    "true-random": randomly choose among the tied options
+    "random": randomly choose among tied option using deterministic hash
+
+    NOTE: if tie_break_policy="true-random", repeated runs may have slightly different results due to difference in broken ties
 
     Parameters
     ----------
     prob
         A [num_datapoints, num_classes] array of probabilistic labels such that each
         row sums to 1.
+    tie_break_policy
+        Policy to break ties when converting probabilistic labels to predictions, by default 'abstain'
+    tol
+        The minimum difference among probabilities to be considered a tie, by deafult 1e-5
+
 
     Returns
     -------
     np.ndarray
-        A [num_datapoints, 1] array of predictions (integers in [1, ..., num_classes])
+        A [n] array of predictions (integers in [1, ..., num_classes])
+
+    Examples
+    --------
+    >>> probs_to_preds(np.array([[0.5, 0.5, 0.5]]), tie_break_policy="abstain")
+    array([0])
+    >>> probs_to_preds(np.array([[0.8, 0.1, 0.1]]))
+    array([1])
     """
-    return np.argmax(probs, axis=1) + 1
+    n, k = probs.shape
+    Y_pred = np.zeros(n)
+    diffs = np.abs(probs - probs.max(axis=1).reshape(-1, 1))
+
+    for i in range(n):
+        max_idxs = np.where(diffs[i, :] < tol)[0]
+        if len(max_idxs) == 1:
+            Y_pred[i] = max_idxs[0] + 1
+        # Deal with "tie votes" according to the specified policy
+        elif tie_break_policy == "random":
+            Y_pred[i] = max_idxs[_hash(i) % len(max_idxs)] + 1
+        elif tie_break_policy == "true-random":
+            Y_pred[i] = np.random.choice(max_idxs) + 1
+        elif tie_break_policy == "abstain":
+            Y_pred[i] = 0
+        else:
+            raise ValueError(
+                f"tie_break_policy={tie_break_policy} policy not recognized."
+            )
+    return Y_pred.astype(np.int)
 
 
 def preds_to_probs(preds: np.ndarray, num_classes: int) -> np.ndarray:

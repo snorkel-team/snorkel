@@ -1,6 +1,6 @@
 from collections import Counter
 from itertools import chain
-from typing import Any, Dict, List, NamedTuple, Optional, Set, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple, Union
 
 import numpy as np
 import scipy.sparse as sparse
@@ -8,7 +8,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from snorkel.analysis.utils import set_seed
+from snorkel.analysis.utils import probs_to_preds, set_seed
+from snorkel.classification.scorer import Scorer
 from snorkel.classification.utils import recursive_merge_dicts
 from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.lm_defaults import lm_default_config
@@ -370,10 +371,101 @@ class LabelModel(nn.Module):
         Z = np.tile(X.sum(axis=1).reshape(-1, 1), self.cardinality)
         return X / Z
 
+    def predict(
+        self,
+        L: sparse.spmatrix,
+        return_probs: Optional[bool] = False,
+        tie_break_policy: Optional[str] = "random",
+    ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+        """Return predicted labels, with ties broken according to policy.
+
+        Policies to break ties include:
+        "abstain": return an abstain vote (0)
+        "true-random": randomly choose among the tied options
+        "random": randomly choose among tied option using deterministic hash
+
+        NOTE: if tie_break_policy="true-random", repeated runs may have slightly different results due to difference in broken ties
+
+
+        Parameters
+        ----------
+        L
+            An [n,m] matrix with values in {0,1,...,k}
+        return_probs
+            Whether to return probs along with preds, by default False
+        tie_break_policy
+            Policy to break ties when converting probabilistic labels to predictions, by default 'random'
+
+        Returns
+        -------
+        np.ndarray
+            An [n,1] array of integer labels
+
+        (np.ndarray, np.ndarray)
+            An [n,1] array of integer labels and an [n,k] array of probabilistic labels
+
+
+        Example
+        -------
+        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> label_model = LabelModel(verbose=False)
+        >>> label_model.train_model(L)
+        >>> label_model.predict(L)
+        array([1, 2, 1])
+        """
+        Y_probs = self.predict_proba(L)
+        Y_p = probs_to_preds(Y_probs, tie_break_policy)
+        if return_probs:
+            return Y_p, Y_probs
+        return Y_p
+
+    def score(
+        self,
+        L: sparse.spmatrix,
+        Y: np.ndarray,
+        metrics: Optional[List[str]] = ["accuracy"],
+        tie_break_policy: Optional[str] = "random",
+    ) -> Dict[str, float]:
+        """Calculate one or more scores from user-specified and/or user-defined metrics.
+
+        Parameters
+        ----------
+        L
+            An [n,m] matrix with values in {0,1,...,k}
+        Y
+            Gold labels associated with datapoints in L
+        metrics
+            A list of metric names, by default ["accuracy"]
+        tie_break_policy
+            Policy to break ties when converting probabilistic labels to predictions, by default 'random'
+
+
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary mapping metric names to metric scores
+
+        Example
+        -------
+        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> label_model = LabelModel(verbose=False)
+        >>> label_model.train_model(L)
+        >>> label_model.score(L, Y=np.array([1, 1, 1]))
+        {'accuracy': 0.6666666666666666}
+        >>> label_model.score(L, Y=np.array([1, 1, 1]), metrics=["f1"])
+        {'f1': 0.8}
+        """
+        Y_pred, Y_prob = self.predict(
+            L, return_probs=True, tie_break_policy=tie_break_policy
+        )
+
+        scorer = Scorer(metrics=metrics)
+        results = scorer.score(Y, Y_pred, Y_prob)
+        return results
+
     # These loss functions get all their data directly from the LabelModel
     # (for better or worse). The unused *args make these compatible with the
     # Classifer._train() method which expect loss functions to accept an input.
-
     def _loss_l2(self, l2: float = 0) -> torch.Tensor:
         r"""L2 loss centered around mu_init, scaled optionally per-source.
 

@@ -49,11 +49,6 @@ class MetricsTest(unittest.TestCase):
     def test_pred_to_prob(self):
         np.testing.assert_array_equal(preds_to_probs(PREDS, 2), PREDS_ROUND)
 
-    def test_hash(self):
-        last_hash = _hash("hashtest")
-        for _ in range(4):
-            self.assertEqual(_hash("hashtest"), last_hash)
-
     def test_break_ties(self):
         # abtains with ties
         probs = np.array([[0.33, 0.33, 0.33]])

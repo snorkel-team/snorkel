@@ -411,9 +411,7 @@ class LabelModel(nn.Module):
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
         >>> label_model.predict(L)
-        np.array([1, 2, 1])
-        >>> label_model.predict(L, return_probs=True)
-        (np.array([1, 2, 1]),  np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 0.0]]))
+        array([1, 2, 1])
         """
         Y_probs = self.predict_proba(L)
         Y_p = probs_to_preds(Y_probs, tie_break_policy).astype(np.int)
@@ -453,7 +451,7 @@ class LabelModel(nn.Module):
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
         >>> label_model.score(L, Y=np.array([1, 1, 1]))
-        {'accuracy': 0.66667}
+        {'accuracy': 0.6666666666666666}
         >>> label_model.score(L, Y=np.array([1, 1, 1]), metrics=["f1"])
         {'f1': 0.8}
         """

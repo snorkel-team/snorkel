@@ -50,6 +50,44 @@ class MetricsTest(unittest.TestCase):
     def test_prob_to_pred(self):
         np.testing.assert_array_equal(probs_to_preds(PROBS), PREDS)
 
+        # abtains with ties
+        probs = np.array([[0.33, 0.33, 0.33]])
+        preds = probs_to_preds(probs, tie_break_policy="abstain")
+        true_preds = np.array([0.0])
+        np.testing.assert_array_equal(preds, true_preds)
+
+        # true random with ties
+        probs = np.array([[0.33, 0.33, 0.33]])
+        random_preds = []
+        for seed in range(10):
+            preds = probs_to_preds(probs, tie_break_policy="true-random")
+            random_preds.append(preds[0])
+
+        # check predicted labels within range
+        self.assertLessEqual(max(random_preds), 3)
+        self.assertGreaterEqual(min(random_preds), 1)
+
+        # deterministic random with ties
+        probs = np.array(
+            [[0.33, 0.33, 0.33], [0.0, 0.5, 0.5], [0.33, 0.33, 0.33], [0.5, 0.5, 0]]
+        )
+        random_preds = []
+        for _ in range(10):
+            preds = probs_to_preds(probs, tie_break_policy="random")
+            random_preds.append(preds)
+
+        # check labels are same across seeds
+        for i in range(len(random_preds) - 1):
+            np.testing.assert_array_equal(random_preds[i], random_preds[i + 1])
+
+        # check predicted labels within range (only one instance since should all be same)
+        self.assertLessEqual(max(random_preds[0]), 3)
+        self.assertGreaterEqual(min(random_preds[0]), 1)
+
+        # check invalid policy
+        with self.assertRaisesRegex(ValueError, "policy not recognized"):
+            preds = probs_to_preds(probs, tie_break_policy="negative")
+
     def test_filter_labels(self):
         golds = np.array([0, 1, 1, 2, 2])
         preds = np.array([1, 1, 2, 2, 0])

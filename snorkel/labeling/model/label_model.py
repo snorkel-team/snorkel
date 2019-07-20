@@ -414,7 +414,7 @@ class LabelModel(nn.Module):
         array([1, 2, 1])
         """
         Y_probs = self.predict_proba(L)
-        Y_p = probs_to_preds(Y_probs, tie_break_policy).astype(np.int)
+        Y_p = probs_to_preds(Y_probs, tie_break_policy)
         if return_probs:
             return Y_p, Y_probs
         return Y_p

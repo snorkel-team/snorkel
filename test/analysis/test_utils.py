@@ -3,8 +3,6 @@ import unittest
 import numpy as np
 
 from snorkel.analysis.utils import (
-    _hash,
-    break_ties,
     convert_labels,
     filter_labels,
     preds_to_probs,
@@ -49,10 +47,12 @@ class MetricsTest(unittest.TestCase):
     def test_pred_to_prob(self):
         np.testing.assert_array_equal(preds_to_probs(PREDS, 2), PREDS_ROUND)
 
-    def test_break_ties(self):
+    def test_prob_to_pred(self):
+        np.testing.assert_array_equal(probs_to_preds(PROBS), PREDS)
+
         # abtains with ties
         probs = np.array([[0.33, 0.33, 0.33]])
-        preds = break_ties(probs, tie_break_policy="abstain")
+        preds = probs_to_preds(probs, tie_break_policy="abstain")
         true_preds = np.array([0.0])
         np.testing.assert_array_equal(preds, true_preds)
 
@@ -60,7 +60,7 @@ class MetricsTest(unittest.TestCase):
         probs = np.array([[0.33, 0.33, 0.33]])
         random_preds = []
         for seed in range(10):
-            preds = break_ties(probs, tie_break_policy="true-random")
+            preds = probs_to_preds(probs, tie_break_policy="true-random")
             random_preds.append(preds[0])
 
         # check predicted labels within range
@@ -73,7 +73,7 @@ class MetricsTest(unittest.TestCase):
         )
         random_preds = []
         for _ in range(10):
-            preds = break_ties(probs, tie_break_policy="random")
+            preds = probs_to_preds(probs, tie_break_policy="random")
             random_preds.append(preds)
 
         # check labels are same across seeds
@@ -86,10 +86,7 @@ class MetricsTest(unittest.TestCase):
 
         # check invalid policy
         with self.assertRaisesRegex(ValueError, "policy not recognized"):
-            preds = break_ties(probs, tie_break_policy="negative")
-
-    def test_prob_to_pred(self):
-        np.testing.assert_array_equal(probs_to_preds(PROBS), PREDS)
+            preds = probs_to_preds(probs, tie_break_policy="negative")
 
     def test_filter_labels(self):
         golds = np.array([0, 1, 1, 2, 2])

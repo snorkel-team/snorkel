@@ -31,7 +31,7 @@ class Logger:
             Whether to log or not based on logging frequency
         """
         self.unit_count += 1
-        return self.unit_count - 1 % self.log_train_every == 0
+        return (self.unit_count - 1) % self.log_train_every == 0
 
     def log(self, metrics_dict: Dict[str, float]) -> None:
         """Print all metrics in metrics_dict to screen.

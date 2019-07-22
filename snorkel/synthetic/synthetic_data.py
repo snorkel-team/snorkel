@@ -11,7 +11,7 @@ from snorkel.types import DataPoint
 
 
 def generate_simple_label_matrix(
-    n: int, m: int, k: int
+    n: int, m: int, cardinality: int
 ) -> Tuple[np.ndarray, np.ndarray, csr_matrix]:
     """Generate a synthetic label matrix with true parameters and labels.
 
@@ -25,7 +25,7 @@ def generate_simple_label_matrix(
         Number of data points
     m
         Number of labeling functions
-    k
+    cardinality
         Cardinality of true labels (i.e. not including abstains)
 
     Returns
@@ -37,21 +37,21 @@ def generate_simple_label_matrix(
     # The first axis is LF, second is LF output label, third is true class label
     # Note that we include abstains in the LF output space, and that we bias the
     # conditional probabilities towards being non-adversarial
-    P = np.zeros((m, k + 1, k))
+    P = np.zeros((m, cardinality + 1, cardinality))
     for i in range(m):
-        p = np.random.rand(k + 1, k)
-        p[1:, :] += (k - 1) * np.eye(k)
+        p = np.random.rand(cardinality + 1, cardinality)
+        p[1:, :] += (cardinality - 1) * np.eye(cardinality)
         P[i] = p @ np.diag(1 / p.sum(axis=0))
 
     # Generate the true datapoint labels
     # Note: Assuming balanced classes to start
-    Y = np.random.choice(k, n) + 1  # Note y \in {1,...,self.cardinality}
+    Y = np.random.choice(cardinality, n) + 1  # Note y \in {1,...,self.cardinality}
 
     # Generate the label matrix L
     L = lil_matrix((n, m))
     for i in range(n):
         for j in range(m):
-            L[i, j] = np.random.choice(k + 1, p=P[j, :, Y[i] - 1])
+            L[i, j] = np.random.choice(cardinality + 1, p=P[j, :, Y[i] - 1])
     L = L.tocsr()
     return P, Y, L
 

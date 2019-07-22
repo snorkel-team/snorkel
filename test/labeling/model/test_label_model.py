@@ -324,7 +324,9 @@ class TestLabelModelAdvanced(unittest.TestCase):
         label_model.train_model(L, lr=0.01, l2=0.0, n_epochs=100)
 
         # Test estimated LF conditional probabilities
-        P_lm = label_model._get_conditional_probs().reshape((self.m, self.cardinality + 1, -1))
+        P_lm = label_model._get_conditional_probs().reshape(
+            (self.m, self.cardinality + 1, -1)
+        )
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 
         # Test predicted labels

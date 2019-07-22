@@ -137,7 +137,11 @@ class SingleTaskTreeDepsGenerator:
                 p_j = self.parent.get(j, 0)
                 prob_y = self.P_conditional(j, y, p_j, self.L[i, p_j], y)
                 prob_0 = self.P_conditional(j, 0, p_j, self.L[i, p_j], y)
-                p = np.ones(self.cardinality + 1) * (1 - prob_y - prob_0) / (self.cardinality - 1)
+                p = (
+                    np.ones(self.cardinality + 1)
+                    * (1 - prob_y - prob_0)
+                    / (self.cardinality - 1)
+                )
                 p[0] = prob_0
                 p[y] = prob_y
                 self.L[i, j] = choice(self.cardinality + 1, p=p)

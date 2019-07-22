@@ -5,7 +5,6 @@ import torch
 from scipy.sparse import csr_matrix
 from torch import nn
 
-from snorkel.analysis.utils import convert_labels
 from snorkel.classification.data import DictDataLoader
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, Task
@@ -42,9 +41,8 @@ def add_slice_labels(
     for i, slice_name in enumerate(slice_names):
 
         # Convert labels
-        indicators = torch.LongTensor(slice_labels[:, i])  # type: ignore
-        ind_labels = convert_labels(indicators, source="onezero", target="categorical")
-        pred_labels = indicators * labels
+        ind_labels = torch.LongTensor(slice_labels[:, i])  # type: ignore
+        pred_labels = ind_labels * labels
 
         ind_task_name = f"{base_task.name}_slice:{slice_name}_ind"
         pred_task_name = f"{base_task.name}_slice:{slice_name}_pred"

@@ -4,8 +4,8 @@ from typing import List, Optional, Union
 import numpy as np
 import scipy.sparse as sparse
 from pandas import DataFrame, Series
+from sklearn.metrics import confusion_matrix
 
-from snorkel.analysis.error_analysis import confusion_matrix
 from snorkel.analysis.utils import to_int_label_array
 
 Matrix = Union[np.ndarray, sparse.csr_matrix]
@@ -364,7 +364,7 @@ def lf_summary(
     if Y is not None:
         col_names.extend(["Correct", "Incorrect", "Emp. Acc."])
         confusions = [
-            confusion_matrix(Y, L[:, i].toarray(), pretty_print=False) for i in range(m)
+            confusion_matrix(Y, L[:, i])[1:, 1:] for i in range(m)
         ]
         corrects = [np.diagonal(conf).sum() for conf in confusions]
         incorrects = [

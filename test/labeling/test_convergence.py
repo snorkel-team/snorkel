@@ -72,7 +72,7 @@ class LabelingConvergenceTest(unittest.TestCase):
         # Create raw data
         cls.N_TRAIN = 1500
 
-        cls.k = 2
+        cls.cardinality = 2
         cls.df_train = create_data(cls.N_TRAIN)
 
     @pytest.mark.complex

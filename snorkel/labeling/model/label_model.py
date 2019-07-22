@@ -279,13 +279,15 @@ class LabelModel(nn.Module):
         else:
             return c_probs
 
-    def get_accuracies(self, probs: Optional[np.ndarray] = None) -> np.ndarray:
+    def get_accuracies(self, L: Union[np.ndarray, sparse.spmatrix], probs: Optional[np.ndarray] = None) -> np.ndarray:
         """Return the vector of LF accuracies.
 
         Parameters
         ----------
         probs
             Conditional probabilities, by default None
+        L
+            An [n,m] matrix with values in {0,1,...,k}
 
         Returns
         -------
@@ -297,7 +299,7 @@ class LabelModel(nn.Module):
         >>> L = np.array([[0, 0, -1], [1, 1, -1], [0, 0, -1]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
-        >>> np.around(label_model.get_accuracies(), 2)
+        >>> np.around(label_model.get_accuracies(L), 2)
         array([0.9 , 0.9 , 0.01])
         """
         accs = np.zeros(self.m)
@@ -309,7 +311,9 @@ class LabelModel(nn.Module):
                     i * (self.cardinality + 1) : (i + 1) * (self.cardinality + 1)
                 ][1:, :]
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
-        return accs
+
+        coverage = np.mean(L != 0, axis=0)
+        return accs / coverage
 
     def predict_proba(self, L: np.ndarray) -> np.ndarray:
         r"""Return label probabilities P(Y | \lambda).

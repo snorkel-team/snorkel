@@ -47,7 +47,7 @@ class SingleTaskTreeDepsGenerator:
         self,
         n,
         m,
-        k=2,
+        cardinality=2,
         class_balance=None,
         theta_range=(0, 1.5),
         edge_prob=0.0,
@@ -56,7 +56,7 @@ class SingleTaskTreeDepsGenerator:
     ):
         self.n = n
         self.m = m
-        self.cardinality = k
+        self.cardinality = cardinality
 
         # Generate correlation structure: edges self.E, parents dict self.parent
         self._generate_edges(edge_prob)
@@ -66,7 +66,7 @@ class SingleTaskTreeDepsGenerator:
 
         # Generate class balance self.p
         if class_balance is None:
-            self.p = np.full(k, 1 / k)
+            self.p = np.full(self.cardinality, 1 / self.cardinality)
         else:
             self.p = class_balance
 

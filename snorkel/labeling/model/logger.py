@@ -45,13 +45,6 @@ class Logger:
         ------
         Exception
             If metric names formatted incorrectly
-
-        Example
-        -------
-        >>> logger = Logger(log_train_every=5)
-        >>> metrics_dict = {"train/loss": 5.00}
-        >>> logger.log(metrics_dict)
-        [-1 epochs]: TRAIN:[loss=5.000]
         """
         score_strings: DefaultDict[str, List[str]] = defaultdict(list)
         for full_name, value in metrics_dict.items():

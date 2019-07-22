@@ -5,7 +5,6 @@ from typing import List
 
 import numpy as np
 import pytest
-import torch
 import torch.nn as nn
 
 from snorkel.labeling.model.label_model import LabelModel
@@ -13,6 +12,27 @@ from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
 
 
 class LabelModelTest(unittest.TestCase):
+    def _create_L(
+        self, accs=[0.95, 0.6, 0.7, 0.55, 0.8], coverage=[1.0, 0.8, 1.0, 1.0, 1.0]
+    ):
+        def opp(x):
+            if x == 2:
+                return 1
+            if x == 1:
+                return 2
+
+        L = np.zeros((1000, len(accs)))
+        Y = np.zeros(1000)
+
+        for i in range(1000):
+            Y[i] = 1 if np.random.rand() <= 0.5 else 2
+
+            for j in range(5):
+                if np.random.rand() <= coverage[j]:
+                    L[i, j] = Y[i] if np.random.rand() <= accs[j] else opp(Y[i])
+
+        return csr_matrix(L), accs
+
     def _set_up_model(self, L: np.ndarray, class_balance: List[float] = [0.5, 0.5]):
         label_model = LabelModel(cardinality=2, verbose=False)
         L_aug = L + 1
@@ -148,9 +168,10 @@ class LabelModelTest(unittest.TestCase):
         # accs[0] = 0.5*0.5 + 0.5*0.5 = 0.5 since (P(\lambda_0 = 1 | Y = y) = 0.5)
         # accs[1] = 0.5*0.7 + 0.5*0.01 = 0.355 since (P(\lambda_1 = 1 | Y = 1) = 0.7)
         # default prec_init = 0.7, clamp lowest prob to 0.01
-        label_model.mu = nn.Parameter(label_model.mu_init.clone())
-        accs = label_model.get_accuracies(probs=None)
-        np.testing.assert_array_almost_equal(accs, np.array([0.5, 0.355]))
+        accs = label_model.get_accuracies()
+        for i in range(len(accs)):
+            true_acc = true_accs[i]
+            self.assertAlmostEqual(accs[i], true_acc, 1)
 
     def test_build_mask(self):
 

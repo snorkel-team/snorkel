@@ -279,13 +279,11 @@ class LabelModel(nn.Module):
         else:
             return c_probs
 
-    def get_accuracies(self, L: Union[np.ndarray, sparse.spmatrix], probs: Optional[np.ndarray] = None) -> np.ndarray:
+    def get_accuracies(self) -> np.ndarray:
         """Return the vector of LF accuracies.
 
         Parameters
         ----------
-        probs
-            Conditional probabilities, by default None
         L
             An [n,m] matrix with values in {0,1,...,k}
 
@@ -299,21 +297,16 @@ class LabelModel(nn.Module):
         >>> L = np.array([[0, 0, -1], [1, 1, -1], [0, 0, -1]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
-        >>> np.around(label_model.get_accuracies(L), 2)
-        array([0.9 , 0.9 , 0.01])
+        >>> np.around(label_model.get_accuracies(), 2)
+        array([0.9, 0.9])
         """
         accs = np.zeros(self.m)
         for i in range(self.m):
-            if probs is None:
-                cps = self._get_conditional_probs(source=i)[1:, :]
-            else:
-                cps = probs[
-                    i * (self.cardinality + 1) : (i + 1) * (self.cardinality + 1)
-                ][1:, :]
+            cps = self._get_conditional_probs(source=i)[1:, :]
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
 
-        coverage = np.mean(L != 0, axis=0)
-        return accs / coverage
+        coverage = np.mean(np.asarray(self.L_train) != 0, axis=0)
+        return np.clip(accs / coverage, 0.01, 1.0)
 
     def predict_proba(self, L: np.ndarray) -> np.ndarray:
         r"""Return label probabilities P(Y | \lambda).
@@ -632,6 +625,7 @@ class LabelModel(nn.Module):
         self._set_class_balance(class_balance, Y_dev)
         self._set_constants(L_shift)
         self._create_tree()
+        self.L_train = L_train
 
         # Compute O and initialize params
         if self.config["verbose"]:  # pragma: no cover

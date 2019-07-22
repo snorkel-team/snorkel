@@ -45,7 +45,7 @@ def generate_simple_label_matrix(
 
     # Generate the true datapoint labels
     # Note: Assuming balanced classes to start
-    Y = np.random.choice(k, n) + 1  # Note y \in {1,...,self.k}
+    Y = np.random.choice(k, n) + 1  # Note y \in {1,...,self.cardinality}
 
     # Generate the label matrix L
     L = lil_matrix((n, m))

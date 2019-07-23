@@ -7,19 +7,19 @@ class Logger:
 
     Parameters
     ----------
-    log_train_every
+    log_freq
         Number of units at which to log model
 
     Attributes
     ----------
-    log_train_every
+    log_freq
         Number of units at which to log model
     unit_count
         Running total of number of units passed without logging
     """
 
-    def __init__(self, log_train_every: int) -> None:
-        self.log_train_every = log_train_every
+    def __init__(self, log_freq: int) -> None:
+        self.log_freq = log_freq
         self.unit_count = -1
 
     def check(self) -> bool:
@@ -31,7 +31,7 @@ class Logger:
             Whether to log or not based on logging frequency
         """
         self.unit_count += 1
-        return self.unit_count % self.log_train_every == 0
+        return self.unit_count % self.log_freq == 0
 
     def log(self, metrics_dict: Dict[str, float]) -> None:
         """Print all metrics in metrics_dict to screen.

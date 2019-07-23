@@ -9,32 +9,32 @@
 #### ESSENTIAL LIBRARIES
 
 # General scientific computing
-numpy>=1.16.0,<1.17.0
-scipy>=1.3.0,<1.4.0
+numpy>=1.16.0,<2.0.0
+scipy>=1.2.0,<2.0.0
 
 # Data storage and function application
 pandas>=0.24.0,<0.25.0
-tqdm>=4.32.0,<4.33.0
+tqdm>=4.32.0,<5.0.0
 
 # Internal models
 scikit-learn>=0.21.0,<0.22.0
-torch>=1.1.0,<1.2.0
+torch>=1.1.0,<2.0.0
 
 # LF dependency learning
-networkx>=2.3,<2.4
+networkx>=2.3,<3.0
 
 
 #### EXTRA/TEST LIBRARIES
 
 # NLP applications
-spacy>=2.1.0,<2.2.0
+spacy>=2.1.0,<3.0.0
 torchtext>=0.3.0,<0.4.0
 
 # Model introspection tools
-tensorboardX>=1.8,<1.9
+tensorboardX>=1.8,<2.0
 
 # Scale-up/out
-dask[complete]>=2.1.0,<2.2.0
+dask[complete]>=2.1.0,<3.0.0
 
 # Serialization
 dill>=0.3.0,<0.4.0
@@ -43,11 +43,11 @@ dill>=0.3.0,<0.4.0
 #### DEV TOOLS
 
 black>=19.3b0,<20.0
-flake8>=3.7.0,<3.8.0
-isort>=4.3.0,<4.4.0
+flake8>=3.7.0,<4.0.0
+isort>=4.3.0,<5.0.0
 mypy>=0.720,<0.730
-pydocstyle>=4.0.0,<4.1.0
-pytest>=5.0.0,<5.1.0
-pytest-cov>=2.7.0,<2.8.0
+pydocstyle>=4.0.0,<5.0.0
+pytest>=5.0.0,<6.0.0
+pytest-cov>=2.7.0,<3.0.0
 pytest-doctestplus>=0.3.0,<0.4.0
-tox>=3.13.0,<3.14.0
+tox>=3.13.0,<4.0.0

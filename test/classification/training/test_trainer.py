@@ -107,7 +107,7 @@ class TrainerTest(unittest.TestCase):
                 "checkpointer_config": {"checkpoint_dir": None},
                 "log_writer_config": {"log_dir": temp_dir},
             }
-            with self.assertRaisesRegex(ValueError, "Checkpointing is on but"):
+            with self.assertRaises(TypeError):
                 trainer = Trainer(**base_config, **broken_config, logging=False)
                 trainer.train_model(model, [dataloaders[0]])
 

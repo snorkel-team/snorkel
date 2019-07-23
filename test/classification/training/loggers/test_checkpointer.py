@@ -80,10 +80,6 @@ class TestLogManager(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "checkpoint_runway"):
             Checkpointer(**log_manager_config, checkpoint_runway=-1)
 
-    def test_no_checkpoint_dir(self) -> None:
-        with self.assertRaisesRegex(ValueError, "no checkpoint_dir"):
-            Checkpointer(**log_manager_config, checkpoint_dir=None)
-
     def test_no_zero_frequency(self) -> None:
         with self.assertRaisesRegex(ValueError, "checkpoint freq"):
             Checkpointer(

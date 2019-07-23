@@ -199,9 +199,6 @@ class Checkpointer:
         return model
 
     def _validate_config(self) -> None:
-        if self.config.checkpoint_dir is None:
-            raise ValueError("Checkpointing is on but no checkpoint_dir was specified.")
-
         split_checkpoint_metric = self.config.checkpoint_metric.split("/")
         if len(split_checkpoint_metric) != 4:
             raise ValueError(
@@ -211,7 +208,7 @@ class Checkpointer:
         if self.config.checkpoint_runway < 0:
             raise ValueError(
                 f"Invalid checkpoint_runway {self.config.checkpoint_runway}, "
-                f"must be greater than 0."
+                f"must be greater than or equal to 0."
             )
 
     def _make_metric_map(

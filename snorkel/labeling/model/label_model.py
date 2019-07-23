@@ -649,7 +649,9 @@ class LabelModel(nn.Module):
             if warmup_unit == "epochs":
                 self.warmup_steps = int(warmup_steps)
             else:
-                raise ValueError("LabelModel does not support any warmup_unit other than 'epochs'.")
+                raise ValueError(
+                    "LabelModel does not support any warmup_unit other than 'epochs'."
+                )
 
             linear_warmup_func = lambda x: x / self.warmup_steps
             warmup_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore

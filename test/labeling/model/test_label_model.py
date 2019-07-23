@@ -312,7 +312,9 @@ class LabelModelTest(unittest.TestCase):
         self.assertIsInstance(label_model.lr_scheduler, optim.lr_scheduler.LambdaLR)
 
         label_model.fit(L, lr_scheduler="exponential", n_epochs=1)
-        self.assertIsInstance(label_model.lr_scheduler, optim.lr_scheduler.ExponentialLR)
+        self.assertIsInstance(
+            label_model.lr_scheduler, optim.lr_scheduler.ExponentialLR
+        )
 
         label_model.fit(L, lr_scheduler="step", n_epochs=1)
         self.assertIsInstance(label_model.lr_scheduler, optim.lr_scheduler.StepLR)
@@ -332,7 +334,6 @@ class LabelModelTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "LabelModel does not support"):
             lr_scheduler_config = {"warmup_steps": 1, "warmup_unit": "batches"}
             label_model.fit(L, lr_scheduler_config=lr_scheduler_config)
-
 
 
 @pytest.mark.complex

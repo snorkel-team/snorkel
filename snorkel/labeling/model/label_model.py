@@ -290,7 +290,7 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = np.array([[0, 0, -1], [1, 1, -1], [0, 0, -1]])
+        >>> L = np.array([[0, 0], [1, 1], [0, 0]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
         >>> np.around(label_model.get_accuracies(), 2)

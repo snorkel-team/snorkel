@@ -290,11 +290,11 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = np.array([[0, 0], [1, 1], [0, 0]])
+        >>> L = np.array([[1, 1, 1], [1, 1, -1], [-1, 0, 0], [0, 0, 0]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
         >>> np.around(label_model.get_accuracies(), 2)
-        array([0.9, 0.9])
+        array([0.99, 0.99, 0.99])
         """
         accs = np.zeros(self.m)
         for i in range(self.m):

@@ -73,7 +73,7 @@ def metric_score(
     func, label_names = METRICS[metric]
     for label_name in label_names:
         if label_dict[label_name] is None:
-            raise ValueError("Metric {metric} requires access to {label_name}.")
+            raise ValueError(f"Metric {metric} requires access to {label_name}.")
 
     label_sets = [label_dict[label_name] for label_name in label_names]
     return func(*label_sets, **kwargs)

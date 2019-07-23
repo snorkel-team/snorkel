@@ -26,9 +26,6 @@ class AdamaxOptimizerConfig(Config):
 class OptimizerConfig(Config):
     """Settings common to all optimizers."""
 
-    lr: float = 0.001
-    l2: float = 0.0
-    grad_clip: float = 1.0
     sgd_config: SGDOptimizerConfig = SGDOptimizerConfig()  # type:ignore
     adam_config: AdamOptimizerConfig = AdamOptimizerConfig()  # type:ignore
     adamax_config: AdamaxOptimizerConfig = AdamaxOptimizerConfig()  # type:ignore

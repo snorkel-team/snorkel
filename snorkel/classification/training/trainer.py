@@ -39,6 +39,12 @@ class TrainerConfig(Config):
         A random seed to set before training; if None, no seed is set
     n_epochs
         The number of epochs to train
+    lr
+        Base learning rate (will also be affected by lr_scheduler choice and settings)
+    l2
+        L2 regularization coefficient (weight decay)
+    grad_clip
+        The value that the gradient norm will be clipped to if it exceeds it
     train_split
         The name of the split to use as the training set
     valid_split
@@ -76,6 +82,9 @@ class TrainerConfig(Config):
 
     seed: Optional[int] = None
     n_epochs: int = 1
+    lr: float = 0.01
+    l2: float = 0.0
+    grad_clip: float = 1.0
     train_split: str = "train"
     valid_split: str = "valid"
     test_split: str = "test"
@@ -221,9 +230,9 @@ class Trainer:
                 loss.backward()
 
                 # Clip gradient norm
-                if self.config.optimizer_config.grad_clip:
+                if self.config.grad_clip:
                     torch.nn.utils.clip_grad_norm_(
-                        model.parameters(), self.config.optimizer_config.grad_clip
+                        model.parameters(), self.config.grad_clip
                     )
 
                 # Update the parameters
@@ -308,22 +317,22 @@ class Trainer:
         if optimizer_name == "sgd":
             optimizer = optim.SGD(  # type: ignore
                 parameters,
-                lr=optimizer_config.lr,
-                weight_decay=optimizer_config.l2,
+                lr=self.config.lr,
+                weight_decay=self.config.l2,
                 **optimizer_config.sgd_config._asdict(),
             )
         elif optimizer_name == "adam":
             optimizer = optim.Adam(
                 parameters,
-                lr=optimizer_config.lr,
-                weight_decay=optimizer_config.l2,
+                lr=self.config.lr,
+                weight_decay=self.config.l2,
                 **optimizer_config.adam_config._asdict(),
             )
         elif optimizer_name == "adamax":
             optimizer = optim.Adamax(  # type: ignore
                 parameters,
-                lr=optimizer_config.lr,
-                weight_decay=optimizer_config.l2,
+                lr=self.config.lr,
+                weight_decay=self.config.l2,
                 **optimizer_config.adamax_config._asdict(),
             )
         else:

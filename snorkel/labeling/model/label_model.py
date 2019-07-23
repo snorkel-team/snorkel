@@ -27,8 +27,10 @@ class TrainConfig(Config):
     ----------
     n_epochs
         The number of epochs to train (where each epoch is a single optimization step)
+    lr
+        Base learning rate (will also be affected by lr_scheduler choice and settings)
     l2
-        Centered L2 regularization strength (int, float, or np.array)
+        Centered L2 regularization strength
     optimizer
         Which optimizer to use (one of ["sgd", "adam", "adamax"])
     optimizer_config
@@ -45,7 +47,8 @@ class TrainConfig(Config):
         Report loss every this many epochs (steps)
     """
 
-    n_epochs: int = 1000
+    n_epochs: int = 100
+    lr: float = 0.01
     l2: float = 0.0
     optimizer: str = "sgd"
     optimizer_config: OptimizerConfig = OptimizerConfig()  # type: ignore
@@ -53,7 +56,7 @@ class TrainConfig(Config):
     lr_scheduler_config: LRSchedulerConfig = LRSchedulerConfig()  # type: ignore
     prec_init: float = 0.7
     seed: int = np.random.randint(1e6)
-    log_freq: int = 100
+    log_freq: int = 10
 
 
 class LabelModelConfig(Config):
@@ -583,22 +586,22 @@ class LabelModel(nn.Module):
         if optimizer_name == "sgd":
             optimizer = optim.SGD(  # type: ignore
                 parameters,
-                lr=optimizer_config.lr,
-                weight_decay=optimizer_config.l2,
+                lr=self.train_config.lr,
+                weight_decay=self.train_config.l2,
                 **optimizer_config.sgd_config._asdict(),
             )
         elif optimizer_name == "adam":
             optimizer = optim.Adam(
                 parameters,
-                lr=optimizer_config.lr,
-                weight_decay=optimizer_config.l2,
+                lr=self.train_config.lr,
+                weight_decay=self.train_config.l2,
                 **optimizer_config.adam_config._asdict(),
             )
         elif optimizer_name == "adamax":
             optimizer = optim.Adamax(  # type: ignore
                 parameters,
-                lr=optimizer_config.lr,
-                weight_decay=optimizer_config.l2,
+                lr=self.train_config.lr,
+                weight_decay=self.train_config.l2,
                 **optimizer_config.adamax_config._asdict(),
             )
         else:

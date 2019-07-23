@@ -253,7 +253,7 @@ class LabelModelTest(unittest.TestCase):
         self.assertLessEqual(next_loss, init_loss)
 
         with self.assertRaisesRegex(Exception, "Loss is NaN."):
-            label_model.fit(L, n_epochs=10, optimizer_config={"lr": 1e8})
+            label_model.fit(L, n_epochs=10, lr=1e8)
 
     def test_optimizer(self):
         L = np.array([[0, -1, 0], [0, 1, 0]])
@@ -353,7 +353,7 @@ class TestLabelModelAdvanced(unittest.TestCase):
 
         # Train LabelModel
         label_model = LabelModel(cardinality=self.cardinality, verbose=False)
-        label_model.fit(L, n_epochs=200, optimizer_config={"lr": 0.01}, seed=123)
+        label_model.fit(L, n_epochs=200, lr=0.01, seed=123)
 
         # Test estimated LF conditional probabilities
         P_lm = label_model._get_conditional_probs().reshape(

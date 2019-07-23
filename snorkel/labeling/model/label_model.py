@@ -10,6 +10,7 @@ import torch.optim as optim
 from snorkel.analysis.utils import probs_to_preds, set_seed
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.utils import recursive_merge_dicts
+from snorkel.labeling.analysis import LFAnalysis
 from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.lm_defaults import lm_default_config
 from snorkel.labeling.model.logger import Logger
@@ -279,13 +280,8 @@ class LabelModel(nn.Module):
         else:
             return c_probs
 
-    def get_accuracies(self, probs: Optional[np.ndarray] = None) -> np.ndarray:
+    def get_accuracies(self) -> np.ndarray:
         """Return the vector of LF accuracies.
-
-        Parameters
-        ----------
-        probs
-            Conditional probabilities, by default None
 
         Returns
         -------
@@ -294,22 +290,18 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = np.array([[0, 0, -1], [1, 1, -1], [0, 0, -1]])
+        >>> L = np.array([[1, 1, 1], [1, 1, -1], [-1, 0, 0], [0, 0, 0]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
         >>> np.around(label_model.get_accuracies(), 2)
-        array([0.9 , 0.9 , 0.01])
+        array([0.99, 0.99, 0.99])
         """
         accs = np.zeros(self.m)
         for i in range(self.m):
-            if probs is None:
-                cps = self._get_conditional_probs(source=i)[1:, :]
-            else:
-                cps = probs[
-                    i * (self.cardinality + 1) : (i + 1) * (self.cardinality + 1)
-                ][1:, :]
+            cps = self._get_conditional_probs(source=i)[1:, :]
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
-        return accs
+
+        return np.clip(accs / self.coverage, 1e-6, 1.0)
 
     def predict_proba(self, L: np.ndarray) -> np.ndarray:
         r"""Return label probabilities P(Y | \lambda).
@@ -628,6 +620,8 @@ class LabelModel(nn.Module):
         self._set_class_balance(class_balance, Y_dev)
         self._set_constants(L_shift)
         self._create_tree()
+        lf_analysis = LFAnalysis(L_train)
+        self.coverage = lf_analysis.lf_coverages()
 
         # Compute O and initialize params
         if self.config["verbose"]:  # pragma: no cover

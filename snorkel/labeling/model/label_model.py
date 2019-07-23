@@ -301,7 +301,7 @@ class LabelModel(nn.Module):
             cps = self._get_conditional_probs(source=i)[1:, :]
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
 
-        return np.clip(accs / self.coverage, 0.01, 1.0)
+        return np.clip(accs / self.coverage, 1e-6, 1.0)
 
     def predict_proba(self, L: np.ndarray) -> np.ndarray:
         r"""Return label probabilities P(Y | \lambda).

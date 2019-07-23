@@ -27,7 +27,7 @@ def get_positive_labeling_function(divisor: int) -> LabelingFunction:
     """Get LabelingFunction that abstains unless x0 is divisible by divisor."""
 
     def f(x):
-        return 1 if x.x0 % divisor == 0 and x.x1 > x.x2 + 0.25 else None
+        return 1 if x.x0 % divisor == 0 and x.x1 > x.x2 + 0.25 else -1
 
     return LabelingFunction(f"lf_pos_{divisor}", f)
 
@@ -36,7 +36,7 @@ def get_negative_labeling_function(divisor: int) -> LabelingFunction:
     """Get LabelingFunction that abstains unless x0 is divisible by divisor."""
 
     def f(x):
-        return 0 if x.x0 % divisor == 0 and x.x1 <= x.x2 + 0.25 else None
+        return 0 if x.x0 % divisor == 0 and x.x1 <= x.x2 + 0.25 else -1
 
     return LabelingFunction(f"lf_neg_{divisor}", f)
 
@@ -49,9 +49,9 @@ def copy_features(x: DataPoint) -> DataPoint:
 
 
 @labeling_function(preprocessors=[copy_features], resources=dict(divisor=3))
-def f(x, divisor):
+def f(x: DataPoint, divisor: int) -> int:
     # Abstain unless x0 is divisible by divisor.
-    return 1 if x.x0 % divisor == 1 and x.x1 > x.x3 else 0
+    return 0 if x.x0 % divisor == 1 and x.x1 > x.x3 else -1
 
 
 class LabelingConvergenceTest(unittest.TestCase):

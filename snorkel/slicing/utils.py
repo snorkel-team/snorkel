@@ -2,7 +2,6 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
-from scipy.sparse import csr_matrix
 from torch import nn
 
 from snorkel.classification.data import DictDataLoader
@@ -15,7 +14,7 @@ from .modules.slice_combiner import SliceCombinerModule
 def add_slice_labels(
     dataloader: DictDataLoader,
     base_task: Task,
-    slice_labels: csr_matrix,
+    slice_labels: np.ndarray,
     slice_names: List[str],
 ) -> None:
     """Modify a dataloader in-place, adding labels for slice tasks.
@@ -32,7 +31,6 @@ def add_slice_labels(
         A list of slice names corresponding to columns of ``slice_labels``
     """
 
-    slice_labels = slice_labels.toarray()
     slice_labels, slice_names = _add_base_slice(slice_labels, slice_names)
     assert slice_labels.shape[1] == len(slice_names)
 

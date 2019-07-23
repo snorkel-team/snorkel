@@ -10,11 +10,10 @@ from snorkel.classification.snorkel_classifier import Operation, Task
 from snorkel.slicing.apply import PandasSFApplier
 from snorkel.slicing.sf import slicing_function
 from snorkel.slicing.utils import add_slice_labels, convert_to_slice_tasks
-from snorkel.types import DataPoint
 
 
 @slicing_function()
-def f(x: DataPoint) -> int:
+def f(x):
     return x.val < 0.25
 
 

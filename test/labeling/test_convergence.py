@@ -91,7 +91,7 @@ class LabelingConvergenceTest(unittest.TestCase):
 
         # Train LabelModel
         label_model = LabelModel(cardinality=self.cardinality, verbose=False)
-        label_model.train_model(L_train, lr=0.01, l2=0.0, n_epochs=100)
+        label_model.fit(L_train, lr=0.01, l2=0.0, n_epochs=100)
         Y_lm = label_model.predict_proba(L_train).argmax(axis=1) + 1
         Y = self.df_train.y
         err = np.where(Y != Y_lm, 1, 0).sum() / self.N_TRAIN

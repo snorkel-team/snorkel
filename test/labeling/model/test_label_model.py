@@ -9,13 +9,14 @@ import torch
 import torch.nn as nn
 from scipy.sparse import csr_matrix
 
-from snorkel.labeling.model.label_model import LabelModel
+from snorkel.labeling.model.label_model import LabelModel, TrainConfig
 from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
 
 
 class LabelModelTest(unittest.TestCase):
     def _set_up_model(self, L: np.ndarray, class_balance: List[float] = [0.5, 0.5]):
-        label_model = LabelModel(k=2, verbose=False)
+        label_model = LabelModel(cardinality=2, verbose=False)
+        label_model.train_config = TrainConfig()  # type: ignore
         label_model._set_constants(L)
         label_model._create_tree()
         label_model._generate_O(L)
@@ -27,7 +28,7 @@ class LabelModelTest(unittest.TestCase):
         return label_model
 
     def test_L_form(self):
-        label_model = LabelModel(k=2, verbose=False)
+        label_model = LabelModel(cardinality=2, verbose=False)
 
         # Test dimension constants
         L = np.array([[1, 2, 1], [1, 0, 1], [2, 1, 1], [1, 2, -1]])
@@ -40,7 +41,7 @@ class LabelModelTest(unittest.TestCase):
         self.assertEqual(label_model.m, 3)
 
     def test_class_balance(self):
-        label_model = LabelModel(k=2, verbose=False)
+        label_model = LabelModel(cardinality=2, verbose=False)
 
         # Test class balance
         Y_dev = np.array([1, 1, 2, 2, 1, 1, 1, 1, 2, 2])
@@ -91,7 +92,7 @@ class LabelModelTest(unittest.TestCase):
         m = 5
         k = 2
         L = np.array([[1, 1, 1, 2, 1], [1, 2, 2, 1, 0], [1, 1, 1, 1, 0]])
-        lm = LabelModel(k=k, verbose=False)
+        lm = LabelModel(cardinality=k, verbose=False)
         lm._set_constants(L)
         lm._create_tree()
         L_aug = lm._get_augmented_label_matrix(L, higher_order=True)
@@ -263,40 +264,41 @@ class LabelModelTest(unittest.TestCase):
 
     def test_model_loss(self):
         L = csr_matrix([[1, 0, 1], [1, 2, 1]])
-        label_model = LabelModel(k=2, verbose=False)
+        label_model = LabelModel(cardinality=2, verbose=False)
 
-        label_model.train_model(L, n_epochs=1, lr=0.01, momentum=0.9)
+        label_model.fit(L, n_epochs=1)
         init_loss = label_model._loss_mu().item()
 
-        label_model.train_model(L, n_epochs=10, lr=0.01, momentum=0.9)
+        label_model.fit(L, n_epochs=10)
         next_loss = label_model._loss_mu().item()
 
         self.assertLessEqual(next_loss, init_loss)
         with self.assertRaisesRegex(Exception, "Loss is NaN."):
-            label_model.train_model(L, n_epochs=10, lr=1e8)
+            label_model.fit(L, n_epochs=10, optimizer_config={"lr": 1e8})
 
     def test_optimizer(self):
         L = csr_matrix([[1, 0, 1], [1, 2, 1]])
-        label_model = LabelModel(k=2, verbose=False)
-        label_model.train_model(L, n_epochs=1, optimizer="rmsprop")
-        label_model.train_model(L, n_epochs=1, optimizer="adam")
-        with self.assertRaisesRegex(ValueError, "Did not recognize optimizer"):
-            label_model.train_model(L, n_epochs=1, optimizer="bad_opt")
+        label_model = LabelModel(cardinality=2, verbose=False)
+        label_model.fit(L, n_epochs=1, optimizer="sgd")
+        label_model.fit(L, n_epochs=1, optimizer="adam")
+        label_model.fit(L, n_epochs=1, optimizer="adamax")
+        with self.assertRaisesRegex(ValueError, "Unrecognized optimizer option"):
+            label_model.fit(L, n_epochs=1, optimizer="bad_opt")
 
     def test_lr_scheduler(self):
         L = csr_matrix([[1, 0, 1], [1, 2, 1]])
-        label_model = LabelModel(k=2, verbose=False)
-        label_model.train_model(L, n_epochs=1, lr_scheduler=None)
-        label_model.train_model(L, n_epochs=1, lr_scheduler="exponential")
-        with self.assertRaisesRegex(
-            ValueError, "Did not recognize lr_scheduler option"
-        ):
-            label_model.train_model(L, n_epochs=1, lr_scheduler="bad_scheduler")
+        label_model = LabelModel(cardinality=2, verbose=False)
+        label_model.fit(L, n_epochs=1, lr_scheduler="constant")
+        label_model.fit(L, n_epochs=1, lr_scheduler="linear")
+        label_model.fit(L, n_epochs=1, lr_scheduler="exponential")
+        label_model.fit(L, n_epochs=1, lr_scheduler="step")
+        with self.assertRaisesRegex(ValueError, "Unrecognized lr scheduler option"):
+            label_model.fit(L, n_epochs=1, lr_scheduler="bad_scheduler")
 
     def test_save_and_load(self):
         L = csr_matrix([[1, 0, 1], [1, 2, 1]])
-        label_model = LabelModel(k=2, verbose=False)
-        label_model.train_model(L, n_epochs=1, lr_scheduler=None)
+        label_model = LabelModel(cardinality=2, verbose=False)
+        label_model.fit(L, n_epochs=1)
         dir_path = tempfile.mkdtemp()
         save_path = dir_path + "label_model"
         label_model.save(save_path)
@@ -321,7 +323,7 @@ class TestLabelModelAdvanced(unittest.TestCase):
 
         # Train LabelModel
         label_model = LabelModel(cardinality=self.cardinality, verbose=False)
-        label_model.train_model(L, lr=0.01, l2=0.0, n_epochs=100)
+        label_model.fit(L, n_epochs=100, optimizer_config={"lr": 0.01})
 
         # Test estimated LF conditional probabilities
         P_lm = label_model._get_conditional_probs().reshape(

@@ -10,16 +10,68 @@ import torch.optim as optim
 
 from snorkel.analysis.utils import probs_to_preds, set_seed
 from snorkel.classification.scorer import Scorer
-from snorkel.classification.utils import recursive_merge_dicts
+from snorkel.classification.utils import merge_config
 from snorkel.labeling.model.graph_utils import get_clique_tree
-from snorkel.labeling.model.lm_defaults import lm_default_config
 from snorkel.labeling.model.logger import Logger
+from snorkel.types import Config
+from snorkel.utils.lr_schedulers import LRSchedulerConfig
+from snorkel.utils.optimizers import OptimizerConfig
 
-TrainConfig = Dict[str, Any]
 Metrics = Dict[str, float]
 
 
-class _CData(NamedTuple):
+class TrainConfig(Config):
+    """Settings for the fit() method of LabelModel.
+
+    Parameters
+    ----------
+    n_epochs
+        The number of epochs to train (where each epoch is a single optimization step)
+    l2
+        Centered L2 regularization strength (int, float, or np.array)
+    optimizer
+        Which optimizer to use (one of ["sgd", "adam", "adamax"])
+    optimizer_config
+        Settings for the optimizer
+    lr_scheduler
+        Which lr_scheduler to use (one of ["constant", "linear", "exponential", "step"])
+    lr_scheduler_config
+        Settings for the LRScheduler
+    prec_init
+        LF precision initializations / priors
+    seed
+        A random seed to initialize the random number generator with
+    log_freq
+        Report loss every this many epochs (steps)
+    """
+
+    n_epochs: int = 100
+    l2: float = 0.0
+    optimizer: str = "sgd"
+    optimizer_config: OptimizerConfig = OptimizerConfig()  # type: ignore
+    lr_scheduler: str = "constant"
+    lr_scheduler_config: LRSchedulerConfig = LRSchedulerConfig()  # type: ignore
+    prec_init: float = 0.7
+    seed: int = np.random.randint(1e6)
+    log_freq: int = 10
+
+
+class LabelModelConfig(Config):
+    """Settings for the LabelModel initialization.
+
+    Parameters
+    ----------
+    verbose
+        Whether to include print statements
+    device
+        What device to place the model on ('cpu' or 'cuda:0', for example)
+    """
+
+    verbose: bool = True
+    device: str = "cpu"
+
+
+class _CliqueData(NamedTuple):
     start_index: int
     end_index: int
     max_cliques: Set[int]
@@ -33,7 +85,7 @@ class LabelModel(nn.Module):
     >>> label_model = LabelModel()
     >>> label_model = LabelModel(cardinality=3)
     >>> label_model = LabelModel(cardinality=3, device='cpu')
-    >>> label_model = LabelModel(cardinality=3, seed=1234)
+    >>> label_model = LabelModel(cardinality=3)
 
     Parameters
     ----------
@@ -59,17 +111,11 @@ class LabelModel(nn.Module):
 
     def __init__(self, cardinality: int = 2, **kwargs: Any) -> None:
         super().__init__()
-        self.config = recursive_merge_dicts(lm_default_config, kwargs)
+        self.config: LabelModelConfig = LabelModelConfig(**kwargs)
         self.cardinality = cardinality
 
-        # Set random seed
-        if self.config["seed"] is None:
-            self.config["seed"] = np.random.randint(1e6)
-        self.seed: int = self.config["seed"]  # type: ignore
-        set_seed(self.seed)
-
         # Confirm that cuda is available if config is using CUDA
-        if self.config["device"] != "cpu" and not torch.cuda.is_available():
+        if self.config.device != "cpu" and not torch.cuda.is_available():
             raise ValueError("device=cuda but CUDA not available.")
 
         # By default, put model in eval mode; switch to train mode in training
@@ -143,9 +189,9 @@ class LabelModel(nn.Module):
         # Create a helper data structure which maps cliques (as tuples of member
         # sources) --> {start_index, end_index, maximal_cliques}, where
         # the last value is a set of indices in this data structure
-        self.c_data: Dict[int, _CData] = {}
+        self.c_data: Dict[int, _CliqueData] = {}
         for i in range(self.m):
-            self.c_data[i] = _CData(
+            self.c_data[i] = _CliqueData(
                 start_index=i * self.cardinality,
                 end_index=(i + 1) * self.cardinality,
                 max_cliques=set(
@@ -225,16 +271,14 @@ class LabelModel(nn.Module):
         ValueError
             If prec_init shape does not match number of LFs
         """
-        train_config = self.config["train_config"]
-
         # Initialize mu so as to break basic reflective symmetry
         # Note that we are given either a single or per-LF initial precision
         # value, prec_i = P(Y=y|\lf=y), and use:
         #   mu_init = P(\lf=y|Y=y) = P(\lf=y) * prec_i / P(Y=y)
 
         # Handle single values
-        if isinstance(train_config["prec_init"], (int, float)):
-            self._prec_init = train_config["prec_init"] * torch.ones(self.m)
+        if isinstance(self.train_config.prec_init, (int, float)):
+            self._prec_init = self.train_config.prec_init * torch.ones(self.m)
         if self._prec_init.shape[0] != self.m:
             raise ValueError(f"prec_init must have shape {self.m}.")
 
@@ -321,9 +365,9 @@ class LabelModel(nn.Module):
         -------
         >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.train_model(L)
+        >>> label_model.fit(L, seed=123)
         >>> np.around(label_model.get_accuracies(), 2)
-        array([0.9 , 0.9 , 0.01])
+        array([0.79, 0.79, 0.01])
         """
         accs = np.zeros(self.m)
         for i in range(self.m):
@@ -353,7 +397,7 @@ class LabelModel(nn.Module):
         -------
         >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.train_model(L)
+        >>> label_model.fit(L, seed=123)
         >>> np.around(label_model.predict_proba(L), 1)
         array([[1., 0.],
                [0., 1.],
@@ -409,7 +453,7 @@ class LabelModel(nn.Module):
         -------
         >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.train_model(L)
+        >>> label_model.fit(L, seed=123)
         >>> label_model.predict(L)
         array([1, 2, 1])
         """
@@ -449,7 +493,7 @@ class LabelModel(nn.Module):
         -------
         >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.train_model(L)
+        >>> label_model.fit(L, seed=123)
         >>> label_model.score(L, Y=np.array([1, 1, 1]))
         {'accuracy': 0.6666666666666666}
         >>> label_model.score(L, Y=np.array([1, 1, 1]), metrics=["f1"])
@@ -549,7 +593,7 @@ class LabelModel(nn.Module):
         metrics_dict = {"train/loss": self.running_loss / self.running_examples}
 
         if self.logger.check():
-            if self.config["verbose"]:
+            if self.config.verbose:
                 self.logger.log(metrics_dict)
 
             # Reset running loss and examples counts
@@ -559,58 +603,125 @@ class LabelModel(nn.Module):
         self.train()
         return metrics_dict
 
-    def _set_logger(self, train_config: TrainConfig, epoch_size: int) -> None:
-        self.logger = Logger(train_config["log_train_every"])
+    def _set_logger(self) -> None:
+        self.logger = Logger(self.train_config.log_freq)
 
-    def _set_optimizer(self, train_config: TrainConfig) -> None:
-        optimizer_config = train_config["optimizer_config"]
-        opt = optimizer_config["optimizer"]
-
+    def _set_optimizer(self) -> None:
         parameters = filter(lambda p: p.requires_grad, self.parameters())
-        if opt == "sgd":
+
+        optimizer_config = self.train_config.optimizer_config
+        optimizer_name = self.train_config.optimizer
+        optimizer: optim.Optimizer  # type: ignore
+
+        if optimizer_name == "sgd":
             optimizer = optim.SGD(  # type: ignore
                 parameters,
-                **optimizer_config["optimizer_common"],
-                **optimizer_config["sgd_config"],
+                lr=optimizer_config.lr,
+                weight_decay=optimizer_config.l2,
+                **optimizer_config.sgd_config._asdict(),
             )
-        elif opt == "rmsprop":
-            optimizer = optim.RMSprop(  # type: ignore
+        elif optimizer_name == "adam":
+            optimizer = optim.Adam(
                 parameters,
-                **optimizer_config["optimizer_common"],
-                **optimizer_config["rmsprop_config"],
+                lr=optimizer_config.lr,
+                weight_decay=optimizer_config.l2,
+                **optimizer_config.adam_config._asdict(),
             )
-        elif opt == "adam":
-            optimizer = optim.Adam(  # type: ignore
+        elif optimizer_name == "adamax":
+            optimizer = optim.Adamax(  # type: ignore
                 parameters,
-                **optimizer_config["optimizer_common"],
-                **optimizer_config["adam_config"],
+                lr=optimizer_config.lr,
+                weight_decay=optimizer_config.l2,
+                **optimizer_config.adamax_config._asdict(),
             )
         else:
-            raise ValueError(f"Did not recognize optimizer option '{opt}'")
+            raise ValueError(f"Unrecognized optimizer option '{optimizer_name}'")
+
         self.optimizer = optimizer
 
-    def _set_scheduler(self, train_config: TrainConfig) -> None:
-        lr_scheduler = train_config["lr_scheduler"]
-        if lr_scheduler is not None:
-            lr_scheduler_config = train_config["lr_scheduler_config"]
-            if lr_scheduler == "exponential":
-                lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(
-                    self.optimizer, **lr_scheduler_config["exponential_config"]
-                )
-            else:
-                raise ValueError(
-                    f"Did not recognize lr_scheduler option '{lr_scheduler}'"
-                )
+    def _set_lr_scheduler(self) -> None:
+        # Set warmup scheduler
+        self._set_warmup_scheduler()
+
+        # Set lr scheduler
+        lr_scheduler_name = self.train_config.lr_scheduler
+        lr_scheduler_config = self.train_config.lr_scheduler_config
+        lr_scheduler: Optional[optim.lr_scheduler._LRScheduler]
+
+        if lr_scheduler_name == "constant":
+            lr_scheduler = None
+        elif lr_scheduler_name == "linear":
+            total_steps = self.train_config.n_epochs
+            linear_decay_func = lambda x: (total_steps - self.warmup_steps - x) / (
+                total_steps - self.warmup_steps
+            )
+            lr_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
+                self.optimizer, linear_decay_func
+            )
+        elif lr_scheduler_name == "exponential":
+            lr_scheduler = optim.lr_scheduler.ExponentialLR(
+                self.optimizer, **lr_scheduler_config.exponential_config._asdict()
+            )
+        elif lr_scheduler_name == "step":
+            lr_scheduler = optim.lr_scheduler.StepLR(
+                self.optimizer, **lr_scheduler_config.step_config._asdict()
+            )
+        else:
+            raise ValueError(f"Unrecognized lr scheduler option '{lr_scheduler_name}'")
+
         self.lr_scheduler = lr_scheduler
 
-    def _update_scheduler(self, epoch: int, metrics_dict: Metrics) -> None:
-        train_config = self.config["train_config"]
-        if self.lr_scheduler is not None:
-            lr_scheduler_config = train_config["lr_scheduler_config"]
-            if epoch + 1 >= lr_scheduler_config["lr_freeze"]:
-                self.lr_scheduler.step()
+    def _set_warmup_scheduler(self) -> None:
+        warmup_scheduler: Optional[optim.lr_scheduler.LambdaLR]
 
-    def train_model(
+        if self.train_config.lr_scheduler_config.warmup_steps:
+            warmup_steps = self.train_config.lr_scheduler_config.warmup_steps
+            if warmup_steps < 0:
+                raise ValueError(f"warmup_steps much greater or equal than 0.")
+            warmup_unit = self.train_config.lr_scheduler_config.warmup_unit
+            if warmup_unit == "epochs":
+                self.warmup_steps = int(warmup_steps * self.n_batches_per_epoch)
+            elif warmup_unit == "batches":
+                self.warmup_steps = int(warmup_steps)
+            else:
+                raise ValueError(
+                    f"warmup_unit must be 'batches' or 'epochs', but {warmup_unit} found."
+                )
+            linear_warmup_func = lambda x: x / self.warmup_steps
+            warmup_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
+                self.optimizer, linear_warmup_func
+            )
+            if self.verbose:
+                print(f"Warmup {self.warmup_steps} batches.")
+        elif self.train_config.lr_scheduler_config.warmup_percentage:
+            warmup_percentage = self.train_config.lr_scheduler_config.warmup_percentage
+            self.warmup_steps = int(
+                warmup_percentage
+                * self.train_config.n_epochs
+                * self.n_batches_per_epoch
+            )
+            linear_warmup_func = lambda x: x / self.warmup_steps
+            warmup_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
+                self.optimizer, linear_warmup_func
+            )
+            if self.verbose:
+                print(f"Warmup {self.warmup_steps} batches.")
+        else:
+            warmup_scheduler = None
+            self.warmup_steps = 0
+
+        self.warmup_scheduler = warmup_scheduler
+
+    def _update_lr_scheduler(self, step: int) -> None:
+        if self.warmup_scheduler and step < self.warmup_steps:
+            self.warmup_scheduler.step()  # type: ignore
+        elif self.lr_scheduler is not None:
+            self.lr_scheduler.step()  # type: ignore
+            min_lr = self.train_config.lr_scheduler_config.min_lr
+            if min_lr and self.optimizer.param_groups[0]["lr"] < min_lr:
+                self.optimizer.param_groups[0]["lr"] = min_lr
+
+    def fit(
         self,
         L_train: sparse.spmatrix,
         Y_dev: Optional[np.ndarray] = None,
@@ -641,13 +752,17 @@ class LabelModel(nn.Module):
         --------
         >>> L = sparse.csr_matrix([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
         >>> Y_dev = [1, 2, 1]
-        >>> label_model = LabelModel(n_epochs=10, verbose=False)
-        >>> label_model.train_model(L)
-        >>> label_model.train_model(L, Y_dev=Y_dev)
-        >>> label_model.train_model(L, class_balance=[0.7, 0.3])
+        >>> label_model = LabelModel(verbose=False)
+        >>> label_model.fit(L, n_epochs=1)
+        >>> label_model.fit(L, Y_dev=Y_dev)
+        >>> label_model.fit(L, class_balance=[0.7, 0.3])
         """
-        self.config = recursive_merge_dicts(self.config, kwargs, misses="ignore")
-        train_config = self.config["train_config"]
+        # Set random seed
+        self.train_config: TrainConfig = merge_config(  # type:ignore
+            TrainConfig(), kwargs  # type:ignore
+        )
+        # Update base config so that it includes all parameters
+        set_seed(self.train_config.seed)
 
         L_train = L_train.todense()
         L_train = self._check_L(L_train)
@@ -656,38 +771,34 @@ class LabelModel(nn.Module):
         self._create_tree()
 
         # Compute O and initialize params
-        if self.config["verbose"]:  # pragma: no cover
+        if self.config.verbose:  # pragma: no cover
             print("Computing O...")
         self._generate_O(L_train)
         self._init_params()
 
         # Estimate \mu
-        if self.config["verbose"]:  # pragma: no cover
+        if self.config.verbose:  # pragma: no cover
             print("Estimating \mu...")
 
         # Set model to train mode
         self.train()
-        train_config = self.config["train_config"]
-        l2 = train_config.get("l2", 0)
 
         # Move model to GPU
-        if (
-            self.config["verbose"] and self.config["device"] != "cpu"
-        ):  # pragma: no cover
+        if self.config.verbose and self.config.device != "cpu":  # pragma: no cover
             print("Using GPU...")
-        self.to(self.config["device"])
+        self.to(self.config.device)
 
         # Set training components
-        self._set_logger(train_config, epoch_size=1)
-        self._set_optimizer(train_config)
-        self._set_scheduler(train_config)
+        self._set_logger()
+        self._set_optimizer()
+        self._set_lr_scheduler()
 
         # Restore model if necessary
         start_iteration = 0
 
         # Train the model
         metrics_hist = {}  # The most recently seen value for all metrics
-        for epoch in range(start_iteration, train_config["n_epochs"]):
+        for epoch in range(start_iteration, self.train_config.n_epochs):
             self.running_loss = 0.0
             self.running_examples = 0
 
@@ -695,7 +806,7 @@ class LabelModel(nn.Module):
             self.optimizer.zero_grad()
 
             # Forward pass to calculate the average loss per example
-            loss = self._loss_mu(l2=l2)
+            loss = self._loss_mu(l2=self.train_config.l2)
             if torch.isnan(loss):
                 msg = "Loss is NaN. Consider reducing learning rate."
                 raise Exception(msg)
@@ -711,13 +822,13 @@ class LabelModel(nn.Module):
             metrics_dict = self._execute_logging(loss)
             metrics_hist.update(metrics_dict)
 
-            # Apply learning rate scheduler
-            self._update_scheduler(epoch, metrics_hist)
+            # Update learning rate
+            self._update_lr_scheduler(epoch)
 
         self.eval()
 
         # Print confusion matrix if applicable
-        if self.config["verbose"]:  # pragma: no cover
+        if self.config.verbose:  # pragma: no cover
             print("Finished Training")
 
     def save(self, destination: str, **kwargs: Any) -> None:

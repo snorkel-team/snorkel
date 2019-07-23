@@ -55,7 +55,7 @@ def probs_to_preds(
     array([1])
     """
     num_datapoints, num_classes = probs.shape
-    if k <= 1:
+    if num_classes <= 1:
         raise ValueError(
             f"probs must have probabilities for at least 2 classes. "
             f"Instead, got {num_classes} classes."

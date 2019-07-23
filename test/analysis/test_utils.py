@@ -89,7 +89,7 @@ class MetricsTest(unittest.TestCase):
             preds = probs_to_preds(probs, tie_break_policy="negative")
 
         # check invalid input
-        with self.assertRaisesRegex(ValueError, "probs must have at least 2"):
+        with self.assertRaisesRegex(ValueError, "probs must have probabilities"):
             preds = probs_to_preds(np.array([[0.33], [0.33]]))
 
     def test_filter_labels(self):

@@ -10,7 +10,7 @@ import torch.optim as optim
 from snorkel.analysis.utils import probs_to_preds, set_seed
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.utils import recursive_merge_dicts
-from snorkel.labeling.analysis import lf_coverages
+from snorkel.labeling.analysis import LFAnalysis
 from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.lm_defaults import lm_default_config
 from snorkel.labeling.model.logger import Logger
@@ -620,7 +620,8 @@ class LabelModel(nn.Module):
         self._set_class_balance(class_balance, Y_dev)
         self._set_constants(L_shift)
         self._create_tree()
-        self.coverage = lf_coverages(L_train)
+        lf_analysis = LFAnalysis(L_train)
+        self.coverage = lf_analysis.lf_coverages()
 
         # Compute O and initialize params
         if self.config["verbose"]:  # pragma: no cover

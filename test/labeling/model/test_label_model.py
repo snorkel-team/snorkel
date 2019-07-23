@@ -121,21 +121,19 @@ class LabelModelTest(unittest.TestCase):
         # set up L matrix
         true_accs = [0.95, 0.6, 0.7, 0.55, 0.8]
         coverage = [1.0, 0.8, 1.0, 1.0, 1.0]
-        L = np.zeros((1000, len(true_accs)))
+        L = -1 * np.ones((1000, len(true_accs)))
         Y = np.zeros(1000)
 
         for i in range(1000):
-            Y[i] = 1 if np.random.rand() <= 0.5 else 2
+            Y[i] = 1 if np.random.rand() <= 0.5 else 0
             for j in range(5):
                 if np.random.rand() <= coverage[j]:
                     L[i, j] = (
-                        Y[i] if np.random.rand() <= true_accs[j] else -1 * Y[i] + 3
+                        Y[i] if np.random.rand() <= true_accs[j] else np.abs(Y[i] - 1)
                     )
 
-        # accs[i] = sum(diag(probs[i*(k+1):(i+1)*(k+1)][1:,:]) * P)
-        # accs[0] = 0.5*0.9 + 0.5*0.5 = 0.7
-        # accs[1] = 0.5*0.9 + 0.5*0.75 = 0.825
-        np.testing.assert_array_almost_equal(accs, np.array([0.7, 0.825]))
+        label_model = LabelModel(cardinality=2)
+        label_model.train_model(L)
 
         accs = label_model.get_accuracies()
         for i in range(len(accs)):

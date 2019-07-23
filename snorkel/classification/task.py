@@ -140,7 +140,7 @@ def ce_loss(
     """
     # Subtract 1 from hard labels in Y to account for Snorkel reserving the label 0 for
     # abstains while F.cross_entropy() expects 0-indexed labels
-    return F.cross_entropy(outputs[module_name][0][active], (Y.view(-1) - 1)[active])
+    return F.cross_entropy(outputs[module_name][0][active], (Y.view(-1))[active])
 
 
 def softmax(module_name: str, outputs: Outputs) -> torch.Tensor:

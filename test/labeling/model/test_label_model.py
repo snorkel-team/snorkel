@@ -5,7 +5,6 @@ from typing import List
 
 import numpy as np
 import pytest
-import torch
 import torch.nn as nn
 
 from snorkel.labeling.model.label_model import LabelModel
@@ -119,38 +118,27 @@ class LabelModelTest(unittest.TestCase):
         self.assertGreaterEqual(probs.min(), 0.0)
 
     def test_get_accuracy(self):
-        L = np.array([[0, 1], [0, -1]])
-        label_model = self._set_up_model(L)
-        probs = np.array(
-            [
-                [0.99, 0.01],
-                [0.5, 0.5],
-                [0.9, 0.9],
-                [0.99, 0.01],
-                [0.9, 0.9],
-                [0.5, 0.75],
-                [0.9, 0.9],
-                [0.9, 0.1],
-            ]
-        )
+        # set up L matrix
+        true_accs = [0.95, 0.6, 0.7, 0.55, 0.8]
+        coverage = [1.0, 0.8, 1.0, 1.0, 1.0]
+        L = -1 * np.ones((1000, len(true_accs)))
+        Y = np.zeros(1000)
 
-        label_model.m = 2
-        label_model.k = 2
-        label_model.P = torch.Tensor([[0.5, 0.0], [0.0, 0.5]])
-        accs = label_model.get_accuracies(probs=probs)
+        for i in range(1000):
+            Y[i] = 1 if np.random.rand() <= 0.5 else 0
+            for j in range(5):
+                if np.random.rand() <= coverage[j]:
+                    L[i, j] = (
+                        Y[i] if np.random.rand() <= true_accs[j] else np.abs(Y[i] - 1)
+                    )
 
-        # accs[i] = sum(diag(probs[i*(k+1):(i+1)*(k+1)][1:,:]) * P)
-        # accs[0] = 0.5*0.9 + 0.5*0.5 = 0.7
-        # accs[1] = 0.5*0.9 + 0.5*0.75 = 0.825
-        np.testing.assert_array_almost_equal(accs, np.array([0.7, 0.825]))
+        label_model = LabelModel(cardinality=2)
+        label_model.train_model(L)
 
-        # accs[i] = sum(diag(probs[i*(k+1):(i+1)*(k+1)][1:,:]) * P)
-        # accs[0] = 0.5*0.5 + 0.5*0.5 = 0.5 since (P(\lambda_0 = 1 | Y = y) = 0.5)
-        # accs[1] = 0.5*0.7 + 0.5*0.01 = 0.355 since (P(\lambda_1 = 1 | Y = 1) = 0.7)
-        # default prec_init = 0.7, clamp lowest prob to 0.01
-        label_model.mu = nn.Parameter(label_model.mu_init.clone())
-        accs = label_model.get_accuracies(probs=None)
-        np.testing.assert_array_almost_equal(accs, np.array([0.5, 0.355]))
+        accs = label_model.get_accuracies()
+        for i in range(len(accs)):
+            true_acc = true_accs[i]
+            self.assertAlmostEqual(accs[i], true_acc, 1)
 
     def test_build_mask(self):
 

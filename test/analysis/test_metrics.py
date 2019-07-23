@@ -88,11 +88,19 @@ class MetricsTest(unittest.TestCase):
         score = metric_score(golds, preds, probs=None, metric="f1")
         self.assertAlmostEqual(score, 0.4)
 
-        # Test Multiclass F1
         golds = np.array([0, 0, 1, 1, 2])
         preds = np.array([1, 1, 0, 1, 2])
-        score = metric_score(golds, preds, probs=None, metric="f1")
+        with self.assertRaisesRegex(ValueError, "f1 not supported for multiclass"):
+            score = metric_score(golds, preds, probs=None, metric="f1")
+
+    def test_f1_multiclass(self):
+        golds = np.array([0, 0, 1, 1, 2])
+        preds = np.array([1, 1, 0, 1, 2])
+        score = metric_score(golds, preds, probs=None, metric="f1_micro")
         self.assertAlmostEqual(score, 0.4)
+
+        score = metric_score(golds, preds, probs=None, metric="f1_macro")
+        self.assertAlmostEqual(score, 0.47, 2)
 
     def test_fbeta(self):
         golds = np.array([0, 0, 0, 0, 1])

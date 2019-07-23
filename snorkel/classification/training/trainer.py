@@ -343,16 +343,6 @@ class Trainer:
 
         if self.config.checkpointing:
             checkpointer_config = self.config.checkpointer_config
-
-            # Default checkpoint_dir to log_dir if available
-            if (
-                checkpointer_config.checkpoint_dir is None
-                and self.log_writer is not None
-            ):
-                checkpointer_config = checkpointer_config._replace(
-                    checkpoint_dir=self.log_writer.log_dir
-                )
-
             evaluation_freq = self.config.log_manager_config.evaluation_freq
             counter_unit = self.config.log_manager_config.counter_unit
             self.checkpointer = Checkpointer(

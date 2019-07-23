@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from typing import Any, DefaultDict, Dict, List, Optional, Tuple
+from typing import Any, DefaultDict, Dict, List, Optional
 
 import torch
 import torch.nn as nn
@@ -24,86 +24,14 @@ from snorkel.classification.training import (
 from snorkel.classification.training.schedulers import batch_schedulers
 from snorkel.classification.utils import merge_config
 from snorkel.types import Config
+from snorkel.utils.lr_schedulers import LRSchedulerConfig
+from snorkel.utils.optimizers import OptimizerConfig
 
 Metrics = Dict[str, float]
 
 
-class SGDOptimizerConfig(Config):
-    """Settings for SGD optimizer."""
-
-    momentum: float = 0.9
-
-
-class AdamOptimizerConfig(Config):
-    """Settings for Adam optimizer."""
-
-    amsgrad: bool = False
-    betas: Tuple[float, float] = (0.9, 0.999)
-
-
-class AdamaxOptimizerConfig(Config):
-    """Settings for Adamax optimizer."""
-
-    betas: Tuple[float, float] = (0.9, 0.999)
-    eps: float = 1e-8
-
-
-class OptimizerConfig(Config):
-    """Settings common to all optimizers."""
-
-    lr: float = 0.001
-    l2: float = 0.0
-    grad_clip: float = 1.0
-    sgd_config: SGDOptimizerConfig = SGDOptimizerConfig()  # type:ignore
-    adam_config: AdamOptimizerConfig = AdamOptimizerConfig()  # type:ignore
-    adamax_config: AdamaxOptimizerConfig = AdamaxOptimizerConfig()  # type:ignore
-
-
-class ExponentialLRSchedulerConfig(Config):
-    """Settings for Exponential decay learning rate scheduler."""
-
-    gamma: float = 0.9
-
-
-class StepLRSchedulerConfig(Config):
-    """Settings for Step decay learning rate scheduler."""
-
-    gamma: float = 0.9
-    step_size: int = 5
-
-
-class LRSchedulerConfig(Config):
-    """Manager for checkpointing model.
-
-    Parameters
-    ----------
-    warmup_steps
-        The number of warmup_units over which to perform learning rate warmup (a linear
-        increase from 0 to the specified lr)
-    warmup_unit
-        The unit to use when counting warmup (one of ["batches", "epochs"])
-    warmup_percentage
-        The percentage of the training procedure to warm up over (ignored if
-        warmup_steps is non-zero)
-    min_lr
-        The minimum learning rate to use during training (the learning rate specified
-        by a learning rate scheduler will be rounded up to this if it is lower)
-    exponential_config
-        Extra settings for the ExponentialLRScheduler
-    step_config
-        Extra settings for the StepLRScheduler
-    """
-
-    warmup_steps: float = 0  # warm up steps
-    warmup_unit: str = "batches"  # [epochs, batches]
-    warmup_percentage: float = 0.0  # warm up percentage
-    min_lr: float = 0.0  # minimum learning rate
-    exponential_config: ExponentialLRSchedulerConfig = ExponentialLRSchedulerConfig()  # type:ignore
-    step_config: StepLRSchedulerConfig = StepLRSchedulerConfig()  # type:ignore
-
-
 class TrainerConfig(Config):
-    """Manager for checkpointing model.
+    """Settings for the Trainer.
 
     Parameters
     ----------
@@ -134,7 +62,7 @@ class TrainerConfig(Config):
     log_writer_config
         Settings for the LogWriter
     optimizer
-        Which optimizer to use (one of ["sgd", "adam"])
+        Which optimizer to use (one of ["sgd", "adam", "adamax"])
     optimizer_config
         Settings for the optimizer
     lr_scheduler
